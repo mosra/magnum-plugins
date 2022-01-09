@@ -80,14 +80,9 @@ Containers::Array<char> convertLevelsToData(Containers::ArrayView<const BasicIma
     /** @todo Handle different image types (cube/array/volume) once this can be
         queried from images */
     Math::Vector<dimensions, Int> mipMask{1};
-    if(dimensions == 1) {
-        /* Basis doesn't support 1D images, we treat them as 2D images with
-           height 1 */
-        Warning{} << "Trade::BasisImageConverter::convertToData(): exporting 1D image as a 2D image with height 1";
+    if(dimensions == 2) {
         params.m_tex_type = basist::basis_texture_type::cBASISTexType2D;
-    } else if(dimensions == 2) {
-        params.m_tex_type = basist::basis_texture_type::cBASISTexType2D;
-    } else {
+    } else if(dimensions == 3) {
         /* Encoding 3D images as KTX2 always produces 2D array images and mip
            levels in .basis files are inherently 2D images, so we always export
            2D array images. This affects the expected mip sizes and prevents
@@ -95,7 +90,8 @@ Containers::Array<char> convertLevelsToData(Containers::ArrayView<const BasicIma
         Warning{} << "Trade::BasisImageConverter::convertToData(): exporting 3D image as a 2D array image";
         params.m_tex_type = basist::basis_texture_type::cBASISTexType2DArray;
         mipMask[dimensions - 1] = 0;
-    }
+    } else
+        CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
 
     const auto baseSize = imageLevels.front().size();
     const UnsignedInt numMipmaps = Math::min<UnsignedInt>(imageLevels.size(), Math::log2((baseSize*mipMask).max()) + 1);
@@ -271,36 +267,22 @@ Containers::Array<char> convertLevelsToData(Containers::ArrayView<const BasicIma
     for(UnsignedInt level = 0; level != numMipmaps; ++level) {
         const auto mipSize = Math::max(baseSize >> level, 1)*mipMask + baseSize*(Math::Vector<dimensions, Int>{1} - mipMask);
         const auto& image = imageLevels[level];
-        const auto imageBaseSize = image.size();
-        if(imageBaseSize != mipSize) {
+        if(image.size() != mipSize) {
             Error{} << "Trade::BasisImageConverter::convertToData(): expected "
-                "size" << mipSize << "for level" << level << "but got" << imageBaseSize;
+                "size" << mipSize << "for level" << level << "but got" << image.size();
             return {};
         }
 
-        /* Make size 1 in missing dimensions for simpler calculations */
-        const Vector3i imageSize = Vector3i::pad(imageBaseSize, 1);
-
-        /* Insert extra dimensions in the front to always get a 3D view,
-            generalizes indexing for all image types. For e.g. 1D images the
-            view has size (1, 1, width). Last dimensions's stride equals the
-            format size so we can simply arrayCast later for copying. New
-            dimensions have stride 0 so all elements are read from the same
-            address, but that's fine since new dimensions all have size 1. */
-        const std::size_t size[3]{std::size_t(imageSize.z()), std::size_t(imageSize.y()), std::size_t(imageSize.x())};
-        std::ptrdiff_t stride[3]{0, 0, channelCount};
-        for(UnsignedInt i = 0; i != dimensions - 1; ++i)
-            stride[i + 3 - dimensions] = image.pixels().stride()[i];
-        const auto pixelView = Containers::arrayView(static_cast<const char*>(image.pixels().data()), image.pixels().stride()[0] * image.pixels().size()[0]);
-        const Containers::StridedArrayView3D<const char> srcData{pixelView, size, stride};
+        /* Always get a 3D view to generalize indexing for 2D and 3D images */
+        const ImageView3D image3D{image};
 
         for(UnsignedInt slice = 0; slice != numImages; ++slice) {
             /* Copy image data into the basis image. There is no way to construct a
                basis image from existing data as it is based on basisu::vector,
                moreover we need to tightly pack it and flip Y. */
             basisu::image& basisImage = level > 0 ? params.m_source_mipmap_images[slice][level - 1] : params.m_source_images[slice];
-            basisImage.resize(imageSize.x(), imageSize.y());
-            auto dst = Containers::arrayCast<Color4ub>(Containers::StridedArrayView2D<basisu::color_rgba>({basisImage.get_ptr(), basisImage.get_total_pixels()}, {std::size_t(imageSize.y()), std::size_t(imageSize.x())}));
+            basisImage.resize(mipSize[0], mipSize[1]);
+            auto dst = Containers::arrayCast<Color4ub>(Containers::StridedArrayView2D<basisu::color_rgba>({basisImage.get_ptr(), basisImage.get_total_pixels()}, {std::size_t(mipSize[1]), std::size_t(mipSize[0])}));
             /* Y-flip the view to make the following loops simpler. basisu doesn't
                apply m_y_flip to user-supplied mipmaps, so only do this for the
                base image:
@@ -310,19 +292,19 @@ Containers::Array<char> convertLevelsToData(Containers::ArrayView<const BasicIma
 
             /* basis image is always RGBA, fill in alpha if necessary */
             if(channelCount == 4) {
-                const auto src = Containers::arrayCast<const Math::Vector<4, UnsignedByte>>(srcData[slice]);
+                const auto src = image3D.pixels<Math::Vector<4, UnsignedByte>>()[slice];
                 for(std::size_t y = 0; y != src.size()[0]; ++y)
                     for(std::size_t x = 0; x != src.size()[1]; ++x)
                         dst[y][x] = src[y][x];
 
             } else if(channelCount == 3) {
-                const auto src = Containers::arrayCast<const Math::Vector<3, UnsignedByte>>(srcData[slice]);
+                const auto src = image3D.pixels<Math::Vector<3, UnsignedByte>>()[slice];
                 for(std::size_t y = 0; y != src.size()[0]; ++y)
                     for(std::size_t x = 0; x != src.size()[1]; ++x)
                         dst[y][x] = Vector3ub{src[y][x]}; /* Alpha implicitly 255 */
 
             } else if(channelCount == 2) {
-                const auto src = Containers::arrayCast<const Math::Vector<2, UnsignedByte>>(srcData[slice]);
+                const auto src = image3D.pixels<Math::Vector<2, UnsignedByte>>()[slice];
                 /* If the user didn't specify a custom swizzle, assume they want
                    the two channels compressed in separate slices, R in RGB and G
                    in Alpha. This significantly improves quality. */
@@ -336,7 +318,7 @@ Containers::Array<char> convertLevelsToData(Containers::ArrayView<const BasicIma
                             dst[y][x] = Vector3ub::pad(src[y][x]); /* Alpha implicitly 255 */
 
             } else if(channelCount == 1) {
-                const auto src = Containers::arrayCast<const Math::Vector<1, UnsignedByte>>(srcData[slice]);
+                const auto src = image3D.pixels<Math::Vector<1, UnsignedByte>>()[slice];
                 /* If the user didn't specify a custom swizzle, assume they want
                    a gray-scale image. Alpha is always implicitly 255. */
                 if(swizzle.empty())
@@ -348,7 +330,7 @@ Containers::Array<char> convertLevelsToData(Containers::ArrayView<const BasicIma
                         for(std::size_t x = 0; x != src.size()[1]; ++x)
                             dst[y][x] = Vector3ub::pad(src[y][x]);
 
-            } else CORRADE_INTERNAL_ASSERT_UNREACHABLE();
+            } else CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
         }
     }
 
@@ -419,11 +401,7 @@ BasisImageConverter::BasisImageConverter(PluginManager::AbstractManager& manager
 }
 
 ImageConverterFeatures BasisImageConverter::doFeatures() const {
-    return ImageConverterFeature::ConvertLevels1DToData | ImageConverterFeature::ConvertLevels2DToData | ImageConverterFeature::ConvertLevels3DToData;
-}
-
-Containers::Array<char> BasisImageConverter::doConvertToData(Containers::ArrayView<const ImageView1D> imageLevels) {
-    return convertLevelsToData(imageLevels, configuration(), flags(), _format);
+    return ImageConverterFeature::ConvertLevels2DToData | ImageConverterFeature::ConvertLevels3DToData;
 }
 
 Containers::Array<char> BasisImageConverter::doConvertToData(Containers::ArrayView<const ImageView2D> imageLevels) {
@@ -455,10 +433,6 @@ bool BasisImageConverter::convertLevelsToFile(const Containers::ArrayView<const 
     /* Restore the previous format and return the result */
     _format = previousFormat;
     return out;
-}
-
-bool BasisImageConverter::doConvertToFile(Containers::ArrayView<const ImageView1D> imageLevels, const Containers::StringView filename) {
-    return convertLevelsToFile(imageLevels, filename);
 }
 
 bool BasisImageConverter::doConvertToFile(Containers::ArrayView<const ImageView2D> imageLevels, const Containers::StringView filename) {

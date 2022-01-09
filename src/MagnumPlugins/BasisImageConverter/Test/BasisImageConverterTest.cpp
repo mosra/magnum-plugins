@@ -67,9 +67,6 @@ struct BasisImageConverterTest: TestSuite::Tester {
     void configPerceptual();
     void configMipGen();
 
-    void convert1D();
-    void convert1DMipmaps();
-
     void convert2DR();
     void convert2DRg();
     void convert2DRgb();
@@ -80,7 +77,6 @@ struct BasisImageConverterTest: TestSuite::Tester {
     void convert2DArrayOneLayer();
     void convert2DArrayMipmaps();
 
-    void convertToFile1D();
     void convertToFile2D();
     void convertToFile3D();
 
@@ -102,7 +98,6 @@ constexpr struct {
     const Vector3i size;
     const char* message;
 } TooManyLevelsData[]{
-    {"1D", {1, 0, 0}, "there can be only 1 levels with base image size Vector(1) but got 2"},
     {"2D", {1, 1, 0}, "there can be only 1 levels with base image size Vector(1, 1) but got 2"},
     /* 3D images are treated like and exported as 2D array images */
     {"2D array", {1, 1, 2}, "there can be only 1 levels with base image size Vector(1, 1, 2) but got 2"}
@@ -113,7 +108,6 @@ constexpr struct {
     const Vector3i sizes[2];
     const char* message;
 } LevelWrongSizeData[]{
-    {"1D", {{4, 0, 0}, {3, 0, 0}}, "expected size Vector(2) for level 1 but got Vector(3)"},
     {"2D", {{4, 5, 0}, {2, 1, 0}}, "expected size Vector(2, 2) for level 1 but got Vector(2, 1)"},
     /* 3D images are treated like and exported as 2D array images */
     {"2D array", {{4, 5, 3}, {2, 2, 1}}, "expected size Vector(2, 2, 3) for level 1 but got Vector(2, 2, 1)"}
@@ -206,9 +200,6 @@ BasisImageConverterTest::BasisImageConverterTest() {
               &BasisImageConverterTest::configPerceptual,
               &BasisImageConverterTest::configMipGen});
 
-    addTests({&BasisImageConverterTest::convert1D,
-              &BasisImageConverterTest::convert1DMipmaps});
-
     addInstancedTests({&BasisImageConverterTest::convert2DR,
                        &BasisImageConverterTest::convert2DRg,
                        &BasisImageConverterTest::convert2DRgb,
@@ -226,8 +217,7 @@ BasisImageConverterTest::BasisImageConverterTest() {
 
     /* Just testing that image levels and file type get forwarded to
        doConvertToData(), anything else is tested in convert*() */
-    addInstancedTests({&BasisImageConverterTest::convertToFile1D,
-                       &BasisImageConverterTest::convertToFile2D,
+    addInstancedTests({&BasisImageConverterTest::convertToFile2D,
                        &BasisImageConverterTest::convertToFile3D},
         Containers::arraySize(ConvertToFileData));
 
@@ -490,128 +480,6 @@ Image<dimensions> copyImageWithSkip(const BasicImageView<dimensions>& image, Mat
     return imageWithSkip;
 }
 
-/* Add/remove dimensions, e.g. turn 1D image into Wx1 2D image or create a 1D
-   image from the first row of a 2D image */
-template<UnsignedInt newDimensions, UnsignedInt dimensions>
-BasicImageView<newDimensions> padImageView(const BasicImageView<dimensions>& image, Int slice = 0) {
-    CORRADE_INTERNAL_ASSERT(image.storage().skip() == Vector3i{});
-    std::size_t stride;
-    const void* data;
-    if(newDimensions < dimensions) {
-        stride = image.pixels().stride()[0];
-        data = image.pixels().slice(slice, slice + 1).data();
-    } else {
-        stride = image.pixels().stride()[0]*image.size()[dimensions - 1];
-        data = image.pixels().data();
-    }
-    return BasicImageView<newDimensions>{image.storage(), image.format(),
-        Math::Vector<newDimensions, Int>::pad(image.size(), 1), Containers::arrayView(data, stride)};
-}
-
-void BasisImageConverterTest::convert1D() {
-    if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
-        CORRADE_SKIP("PngImporter plugin not found, cannot test contents");
-
-    Containers::Pointer<AbstractImporter> pngImporter = _manager.instantiate("PngImporter");
-    CORRADE_VERIFY(pngImporter->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-63x27.png")));
-    const auto originalImage = pngImporter->image2D(0);
-    CORRADE_VERIFY(originalImage);
-
-    /* Use the first row of the original image and add a skip to ensure the
-       converter reads the image data properly */
-    const ImageView1D originalImage1D = padImageView<1>(ImageView2D(*originalImage));
-    const Image1D imageWithSkip = copyImageWithSkip<Color4ub>(originalImage1D, {7});
-
-    std::ostringstream out;
-    Warning redirectWarning{&out};
-
-    Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("BasisImageConverter");
-    const auto compressedData = converter->convertToData(imageWithSkip);
-    CORRADE_VERIFY(compressedData);
-    CORRADE_COMPARE(out.str(), "Trade::BasisImageConverter::convertToData(): exporting 1D image as a 2D image with height 1\n");
-
-    if(_manager.loadState("BasisImporter") == PluginManager::LoadState::NotFound)
-        CORRADE_SKIP("BasisImporter plugin not found, cannot test");
-
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporterRGBA8");
-    CORRADE_VERIFY(importer->openData(compressedData));
-    /* BasisImageConverter writes 1D images as 2D images with height 1 */
-    CORRADE_COMPARE(importer->image1DCount(), 0);
-    CORRADE_COMPARE(importer->image2DCount(), 1);
-
-    const auto image = importer->image2D(0);
-    CORRADE_VERIFY(image);
-    CORRADE_COMPARE(image->size().y(), 1);
-    CORRADE_COMPARE_WITH(*image, padImageView<2>(originalImage1D),
-        /* There are moderately significant compression artifacts */
-        (DebugTools::CompareImage{42.25f, 5.048f}));
-}
-
-void BasisImageConverterTest::convert1DMipmaps() {
-    if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
-        CORRADE_SKIP("PngImporter plugin not found, cannot test contents");
-
-    Containers::Pointer<AbstractImporter> pngImporter = _manager.instantiate("PngImporter");
-
-    struct Level {
-        const char* file;
-        Containers::Optional<ImageData2D> originalImage;
-        Containers::Optional<ImageView1D> originalImage1D;
-        Containers::Optional<Image1D> imageWithSkip;
-        Containers::Optional<ImageData2D> result;
-    } levels[3] {
-        {"rgba-63x27.png", {}, {}, {}, {}},
-        {"rgba-31x13.png", {}, {}, {}, {}},
-        {"rgba-15x6.png", {}, {}, {}, {}}
-    };
-
-    for(Level& level: levels) {
-        CORRADE_ITERATION(level.file);
-        CORRADE_VERIFY(pngImporter->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR, level.file)));
-        level.originalImage = pngImporter->image2D(0);
-        CORRADE_VERIFY(level.originalImage);
-        /* Use the first rows of the original images and add a skip to ensure
-           the converter reads the image data properly.
-           We keep originalImage for later because padImageView() doesn't allow
-           non-zero skip to keep it simple, so we can't use imageWithSkip. */
-        level.originalImage1D = padImageView<1>(ImageView2D(*level.originalImage));
-        level.imageWithSkip = copyImageWithSkip<Color4ub>(*level.originalImage1D, {7});
-    }
-
-    /* Interaction with mip_gen config option is tested in convert2DMipmaps() */
-
-    Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("BasisImageConverter");
-    const auto compressedData = converter->convertToData({*levels[0].imageWithSkip, *levels[1].imageWithSkip, *levels[2].imageWithSkip});
-    CORRADE_VERIFY(compressedData);
-
-    if(_manager.loadState("BasisImporter") == PluginManager::LoadState::NotFound)
-        CORRADE_SKIP("BasisImporter plugin not found, cannot test");
-
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporterRGBA8");
-    CORRADE_VERIFY(importer->openData(compressedData));
-    /* BasisImageConverter writes 1D images as 2D images with height 1 */
-    CORRADE_COMPARE(importer->image1DCount(), 0);
-    CORRADE_COMPARE(importer->image2DCount(), 1);
-    CORRADE_COMPARE(importer->image2DLevelCount(0), Containers::arraySize(levels));
-
-    for(std::size_t i = 0; i != Containers::arraySize(levels); ++i) {
-        CORRADE_ITERATION("level" << i);
-        levels[i].result = importer->image2D(0, i);
-        CORRADE_VERIFY(levels[i].result);
-        CORRADE_COMPARE(levels[i].result->size().y(), 1);
-    }
-
-    CORRADE_COMPARE_WITH(*levels[0].result, padImageView<2>(ImageView2D(*levels[0].originalImage1D)),
-        /* There are moderately significant compression artifacts */
-        (DebugTools::CompareImage{41.25f, 4.981f}));
-    CORRADE_COMPARE_WITH(*levels[1].result, padImageView<2>(ImageView2D(*levels[1].originalImage1D)),
-        /* There are moderately significant compression artifacts */
-        (DebugTools::CompareImage{30.25f, 6.646f}));
-    CORRADE_COMPARE_WITH(*levels[2].result, padImageView<2>(ImageView2D(*levels[2].originalImage1D)),
-        /* There are moderately significant compression artifacts */
-        (DebugTools::CompareImage{24.0f, 7.4f}));
-}
-
 void BasisImageConverterTest::convert2DR() {
     auto&& data = FormatTransferFunctionData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
@@ -849,6 +717,12 @@ void BasisImageConverterTest::convert2DMipmaps() {
         (DebugTools::CompareImageToFile{_manager, 76.25f, 24.5f}));
 }
 
+ImageView2D imageViewSlice(const ImageView3D& image, Int slice) {
+    CORRADE_INTERNAL_ASSERT(image.storage().skip() == Vector3i{});
+    return ImageView2D{image.storage(), image.format(), image.size().xy(),
+        Containers::arrayView(image.pixels()[slice].data(), image.pixels().stride()[0])};
+}
+
 void BasisImageConverterTest::convert2DArray() {
     if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("PngImporter plugin not found, cannot test contents");
@@ -894,13 +768,13 @@ void BasisImageConverterTest::convert2DArray() {
     const auto image = importer->image3D(0);
 
     /* CompareImage only supports 2D images, compare each layer individually */
-    CORRADE_COMPARE_WITH(image->pixels<Color4ub>()[0], padImageView<2>(ImageView3D(originalImage), 0),
+    CORRADE_COMPARE_WITH(image->pixels<Color4ub>()[0], imageViewSlice(ImageView3D(originalImage), 0),
         /* There are moderately significant compression artifacts */
         (DebugTools::CompareImage{97.25f, 7.89f}));
-    CORRADE_COMPARE_WITH(image->pixels<Color4ub>()[1], padImageView<2>(ImageView3D(originalImage), 1),
+    CORRADE_COMPARE_WITH(image->pixels<Color4ub>()[1], imageViewSlice(ImageView3D(originalImage), 1),
         /* There are moderately significant compression artifacts */
         (DebugTools::CompareImage{97.25f, 7.735f}));
-    CORRADE_COMPARE_WITH(image->pixels<Color4ub>()[2], padImageView<2>(ImageView3D(originalImage), 2),
+    CORRADE_COMPARE_WITH(image->pixels<Color4ub>()[2], imageViewSlice(ImageView3D(originalImage), 2),
         /* There are moderately significant compression artifacts */
         (DebugTools::CompareImage{96.5f, 6.928f}));
 }
@@ -921,13 +795,11 @@ void BasisImageConverterTest::convert2DArrayOneLayer() {
     const auto originalImage = pngImporter->image2D(0);
     CORRADE_VERIFY(originalImage);
 
-    const ImageView3D originalImage3D = padImageView<3>(ImageView2D(*originalImage));
-
     std::ostringstream out;
     Warning redirectWarning{&out};
 
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate(data.pluginName);
-    const auto compressedData = converter->convertToData(originalImage3D);
+    const auto compressedData = converter->convertToData(ImageView3D{ImageView2D(*originalImage)});
     CORRADE_VERIFY(compressedData);
     CORRADE_COMPARE(out.str(), "Trade::BasisImageConverter::convertToData(): exporting 3D image as a 2D array image\n");
 
@@ -958,9 +830,9 @@ void BasisImageConverterTest::convert2DArrayMipmaps() {
         Containers::Optional<Image3D> imageWithSkip;
         Containers::Optional<ImageData3D> result;
     } levels[3] {
-        {"rgba-63x27.png", {}, {}},
-        {"rgba-31x13.png", {}, {}},
-        {"rgba-15x6.png", {}, {}}
+        {"rgba-63x27.png", {}, {}, {}},
+        {"rgba-31x13.png", {}, {}, {}},
+        {"rgba-15x6.png", {}, {}, {}}
     };
 
     for(Level& level: levels) {
@@ -1016,68 +888,23 @@ void BasisImageConverterTest::convert2DArrayMipmaps() {
     for(Int i = 0; i != levels[0].originalImage->size().z(); ++i) {
         CORRADE_ITERATION("level 0, layer" << i);
         CORRADE_COMPARE_WITH(levels[0].result->pixels<Color4ub>()[i],
-            padImageView<2>(ImageView3D(*levels[0].originalImage), i),
+            imageViewSlice(ImageView3D(*levels[0].originalImage), i),
             /* There are moderately significant compression artifacts */
             (DebugTools::CompareImage{97.25f, 7.914f}));
     }
     for(Int i = 0; i != levels[0].originalImage->size().z(); ++i) {
         CORRADE_ITERATION("level 1, layer" << i);
         CORRADE_COMPARE_WITH(levels[1].result->pixels<Color4ub>()[i],
-            padImageView<2>(ImageView3D(*levels[1].originalImage), i),
+            imageViewSlice(ImageView3D(*levels[1].originalImage), i),
             /* There are moderately significant compression artifacts */
             (DebugTools::CompareImage{87.0f, 14.453f}));
     }
     for(Int i = 0; i != levels[0].originalImage->size().z(); ++i) {
         CORRADE_ITERATION("level 2, layer" << i);
         CORRADE_COMPARE_WITH(levels[2].result->pixels<Color4ub>()[i],
-            padImageView<2>(ImageView3D(*levels[2].originalImage), i),
+            imageViewSlice(ImageView3D(*levels[2].originalImage), i),
             /* There are moderately significant compression artifacts */
             (DebugTools::CompareImage{80.5f, 23.878f}));
-    }
-}
-
-void BasisImageConverterTest::convertToFile1D() {
-    auto&& data = ConvertToFileData[testCaseInstanceId()];
-    setTestCaseDescription(data.name);
-
-    if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
-        CORRADE_SKIP("PngImporter plugin not found, cannot test contents");
-
-    Containers::Pointer<AbstractImporter> pngImporter = _manager.instantiate("PngImporter");
-    CORRADE_VERIFY(pngImporter->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-63x27.png")));
-    const auto originalImage = pngImporter->image2D(0);
-    CORRADE_VERIFY(originalImage);
-
-    const ImageView1D originalImage1D = padImageView<1>(ImageView2D(*originalImage));
-
-    Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate(data.pluginName);
-    std::string filename = Utility::Directory::join(BASISIMAGECONVERTER_TEST_OUTPUT_DIR, data.filename);
-    CORRADE_VERIFY(converter->convertToFile({originalImage1D}, filename));
-
-    /* Verify it's actually the right format */
-    /** @todo use TestSuite::Compare::StringHasPrefix once it exists */
-    CORRADE_VERIFY(Containers::StringView{Containers::ArrayView<const char>(Utility::Directory::read(filename))}.hasPrefix(data.prefix));
-
-    if(_manager.loadState("BasisImporter") == PluginManager::LoadState::NotFound)
-        CORRADE_SKIP("BasisImporter plugin not found, cannot test");
-
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporterRGBA8");
-    CORRADE_VERIFY(importer->openFile(filename));
-    CORRADE_COMPARE(importer->image2DCount(), 1);
-
-    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
-    CORRADE_VERIFY(image);
-
-    CORRADE_COMPARE_WITH(*image, padImageView<2>(originalImage1D),
-        /* There are moderately significant compression artifacts */
-        (DebugTools::CompareImage{42.25f, 5.048f}));
-
-    /* The format should get reset again after so convertToData() isn't left
-       with some random format after */
-    if(data.pluginName == "BasisImageConverter"_s) {
-        const auto compressedData = converter->convertToData({originalImage1D});
-        CORRADE_VERIFY(compressedData);
-        CORRADE_VERIFY(Containers::StringView{Containers::arrayView(compressedData)}.hasPrefix(BasisFileMagic));
     }
 }
 
@@ -1149,7 +976,7 @@ void BasisImageConverterTest::convertToFile3D() {
     const auto originalImage = pngImporter->image2D(0);
     CORRADE_VERIFY(originalImage);
 
-    const ImageView3D originalImage3D = padImageView<3>(ImageView2D(*originalImage));
+    const ImageView3D originalImage3D{ImageView2D(*originalImage)};
 
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate(data.pluginName);
     std::string filename = Utility::Directory::join(BASISIMAGECONVERTER_TEST_OUTPUT_DIR, data.filename);

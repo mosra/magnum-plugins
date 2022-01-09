@@ -61,7 +61,7 @@ namespace Magnum { namespace Trade {
 @m_keywords{BasisKtxImageConverter}
 
 Creates [Basis Universal](https://github.com/binomialLLC/basis_universal)
-compressed image files (`*.basis` or `*.ktx2`) from 1D, 2D and 3D images with
+compressed image files (`*.basis` or `*.ktx2`) from 2D and 2D array images with
 optional mip levels. You can use @ref BasisImporter to import images in this
 format.
 
@@ -127,8 +127,6 @@ The @ref PixelFormat::R8Unorm, @relativeref{PixelFormat,R8Srgb},
 formats are supported.
 
 @subsection Trade-BasisImageConverter-behavior-types Image types
-
-1D images will be saved as 2D images with height 1.
 
 Cube map images can be written but there is currently no way to mark them
 properly in the metadata. Exported files will be 2D array images with faces
@@ -238,14 +236,12 @@ class MAGNUM_BASISIMAGECONVERTER_EXPORT BasisImageConverter: public AbstractImag
     private:
         MAGNUM_BASISIMAGECONVERTER_LOCAL ImageConverterFeatures doFeatures() const override;
 
-        MAGNUM_BASISIMAGECONVERTER_LOCAL Containers::Array<char> doConvertToData(Containers::ArrayView<const ImageView1D> imageLevels) override;
         MAGNUM_BASISIMAGECONVERTER_LOCAL Containers::Array<char> doConvertToData(Containers::ArrayView<const ImageView2D> imageLevels) override;
         MAGNUM_BASISIMAGECONVERTER_LOCAL Containers::Array<char> doConvertToData(Containers::ArrayView<const ImageView3D> imageLevels) override;
 
         template<UnsignedInt dimensions>
         bool convertLevelsToFile(const Containers::ArrayView<const BasicImageView<dimensions>> imageLevels, const Containers::StringView filename);
 
-        MAGNUM_BASISIMAGECONVERTER_LOCAL bool doConvertToFile(const Containers::ArrayView<const ImageView1D> imageLevels, const Containers::StringView filename) override;
         MAGNUM_BASISIMAGECONVERTER_LOCAL bool doConvertToFile(const Containers::ArrayView<const ImageView2D> imageLevels, const Containers::StringView filename) override;
         MAGNUM_BASISIMAGECONVERTER_LOCAL bool doConvertToFile(const Containers::ArrayView<const ImageView3D> imageLevels, const Containers::StringView filename) override;
 
