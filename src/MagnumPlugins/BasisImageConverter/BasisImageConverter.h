@@ -233,7 +233,7 @@ class MAGNUM_BASISIMAGECONVERTER_EXPORT BasisImageConverter: public AbstractImag
         MAGNUM_BASISIMAGECONVERTER_LOCAL Containers::Array<char> doConvertToData(Containers::ArrayView<const ImageView2D> imageLevels) override;
         MAGNUM_BASISIMAGECONVERTER_LOCAL Containers::Array<char> doConvertToData(Containers::ArrayView<const ImageView3D> imageLevels) override;
 
-        template<UnsignedInt dimensions> bool convertLevelsToFile(const Containers::ArrayView<const BasicImageView<dimensions>> imageLevels, const Containers::StringView filename);
+        template<UnsignedInt dimensions> MAGNUM_BASISIMAGECONVERTER_LOCAL bool convertLevelsToFile(const Containers::ArrayView<const BasicImageView<dimensions>> imageLevels, const Containers::StringView filename);
 
         MAGNUM_BASISIMAGECONVERTER_LOCAL bool doConvertToFile(const Containers::ArrayView<const ImageView2D> imageLevels, const Containers::StringView filename) override;
         MAGNUM_BASISIMAGECONVERTER_LOCAL bool doConvertToFile(const Containers::ArrayView<const ImageView3D> imageLevels, const Containers::StringView filename) override;

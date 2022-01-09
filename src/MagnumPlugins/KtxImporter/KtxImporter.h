@@ -199,6 +199,8 @@ class MAGNUM_KTXIMPORTER_EXPORT KtxImporter: public AbstractImporter {
         MAGNUM_KTXIMPORTER_LOCAL void doClose() override;
         MAGNUM_KTXIMPORTER_LOCAL void doOpenData(Containers::Array<char>&& data, DataFlags dataFlags) override;
 
+        template<UnsignedInt dimensions> MAGNUM_KTXIMPORTER_LOCAL ImageData<dimensions> doImage(UnsignedInt id, UnsignedInt level);
+
         MAGNUM_KTXIMPORTER_LOCAL UnsignedInt doImage1DCount() const override;
         MAGNUM_KTXIMPORTER_LOCAL UnsignedInt doImage1DLevelCount(UnsignedInt id) override;
         MAGNUM_KTXIMPORTER_LOCAL Containers::Optional<ImageData1D> doImage1D(UnsignedInt id, UnsignedInt level) override;
@@ -214,12 +216,9 @@ class MAGNUM_KTXIMPORTER_EXPORT KtxImporter: public AbstractImporter {
         MAGNUM_KTXIMPORTER_LOCAL UnsignedInt doTextureCount() const override;
         MAGNUM_KTXIMPORTER_LOCAL Containers::Optional<TextureData> doTexture(UnsignedInt id) override;
 
-    private:
         struct File;
         Containers::Pointer<File> _f;
         Containers::Pointer<AbstractImporter> _basisImporter;
-
-        template<UnsignedInt dimensions> ImageData<dimensions> doImage(UnsignedInt id, UnsignedInt level);
 };
 
 }}
