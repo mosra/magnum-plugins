@@ -139,15 +139,15 @@ class MAGNUM_KTXIMAGECONVERTER_EXPORT KtxImageConverter: public AbstractImageCon
         explicit KtxImageConverter(PluginManager::AbstractManager& manager, const std::string& plugin);
 
     private:
-        ImageConverterFeatures MAGNUM_KTXIMAGECONVERTER_LOCAL doFeatures() const override;
+        MAGNUM_KTXIMAGECONVERTER_LOCAL ImageConverterFeatures doFeatures() const override;
 
-        Containers::Array<char> MAGNUM_KTXIMAGECONVERTER_LOCAL doConvertToData(Containers::ArrayView<const ImageView1D> imageLevels) override;
-        Containers::Array<char> MAGNUM_KTXIMAGECONVERTER_LOCAL doConvertToData(Containers::ArrayView<const ImageView2D> imageLevels) override;
-        Containers::Array<char> MAGNUM_KTXIMAGECONVERTER_LOCAL doConvertToData(Containers::ArrayView<const ImageView3D> imageLevels) override;
+        MAGNUM_KTXIMAGECONVERTER_LOCAL Containers::Array<char> doConvertToData(Containers::ArrayView<const ImageView1D> imageLevels) override;
+        MAGNUM_KTXIMAGECONVERTER_LOCAL Containers::Array<char> doConvertToData(Containers::ArrayView<const ImageView2D> imageLevels) override;
+        MAGNUM_KTXIMAGECONVERTER_LOCAL Containers::Array<char> doConvertToData(Containers::ArrayView<const ImageView3D> imageLevels) override;
 
-        Containers::Array<char> MAGNUM_KTXIMAGECONVERTER_LOCAL doConvertToData(Containers::ArrayView<const CompressedImageView1D> imageLevels) override;
-        Containers::Array<char> MAGNUM_KTXIMAGECONVERTER_LOCAL doConvertToData(Containers::ArrayView<const CompressedImageView2D> imageLevels) override;
-        Containers::Array<char> MAGNUM_KTXIMAGECONVERTER_LOCAL doConvertToData(Containers::ArrayView<const CompressedImageView3D> imageLevels) override;
+        MAGNUM_KTXIMAGECONVERTER_LOCAL Containers::Array<char> doConvertToData(Containers::ArrayView<const CompressedImageView1D> imageLevels) override;
+        MAGNUM_KTXIMAGECONVERTER_LOCAL Containers::Array<char> doConvertToData(Containers::ArrayView<const CompressedImageView2D> imageLevels) override;
+        MAGNUM_KTXIMAGECONVERTER_LOCAL Containers::Array<char> doConvertToData(Containers::ArrayView<const CompressedImageView3D> imageLevels) override;
 };
 
 }}

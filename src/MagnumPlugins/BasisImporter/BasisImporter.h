@@ -376,6 +376,8 @@ class MAGNUM_BASISIMPORTER_EXPORT BasisImporter: public AbstractImporter {
         MAGNUM_BASISIMPORTER_LOCAL void doClose() override;
         MAGNUM_BASISIMPORTER_LOCAL void doOpenData(Containers::Array<char>&& data, DataFlags dataFlags) override;
 
+        template<UnsignedInt dimensions> MAGNUM_BASISIMPORTER_LOCAL Containers::Optional<ImageData<dimensions>> doImage(UnsignedInt id, UnsignedInt level);
+
         MAGNUM_BASISIMPORTER_LOCAL UnsignedInt doImage2DCount() const override;
         MAGNUM_BASISIMPORTER_LOCAL UnsignedInt doImage2DLevelCount(UnsignedInt id) override;
         MAGNUM_BASISIMPORTER_LOCAL Containers::Optional<ImageData2D> doImage2D(UnsignedInt id, UnsignedInt level) override;
@@ -389,8 +391,6 @@ class MAGNUM_BASISIMPORTER_EXPORT BasisImporter: public AbstractImporter {
 
         struct State;
         Containers::Pointer<State> _state;
-
-        template<UnsignedInt dimensions> Containers::Optional<ImageData<dimensions>> doImage(UnsignedInt id, UnsignedInt level);
 };
 
 }}
