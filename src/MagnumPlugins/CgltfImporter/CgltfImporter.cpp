@@ -652,6 +652,8 @@ void CgltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags d
 
     /* Check required extensions. Every extension in extensionsRequired is
        required to "load and/or render an asset". */
+    /** @todo Allow ignoring specific extensions through a config option, e.g.
+        ignoreRequiredExtension=KHR_materials_volume */
     const bool ignoreRequiredExtensions = configuration().value<bool>("ignoreRequiredExtensions");
 
     constexpr Containers::StringView supportedExtensions[]{
@@ -2570,10 +2572,11 @@ Containers::Optional<MaterialData> CgltfImporter::doMaterial(const UnsignedInt i
     /* Import extensions with non-standard layer/attribute types that are
        already parsed by cgltf and hence don't appear in the extension list
        anymore. We use the original attribute names as found in the extension
-       specifications. To imitate actual unknown extension import below,
-       all Int and UnsignedInt attributes must be converted to Float.
-       Note that these custom layers will have to be duplicated for backwards
-       compatibility even if they're ever turned into standard layers. */
+       specifications. To imitate actual unknown extension import below, all
+       Int and UnsignedInt attributes must be converted to Float. */
+    /** @todo If these are turned into standard layer types they will have to
+        be duplicated for backwards compatibility, with the old names and type
+        conversion. */
     if(material.has_ior) {
         arrayAppend(layers, UnsignedInt(attributes.size()));
         arrayAppend(attributes, InPlaceInit, MaterialAttribute::LayerName, "#KHR_materials_ior"_s);
