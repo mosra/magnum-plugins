@@ -4047,9 +4047,9 @@ void CgltfImporterTest::materialRaw() {
 
     compareMaterials(*material, expected);
 
-    /* MAGNUM_material_forbidden_types produces all kinds of warnings.
-       Attributes are sorted by name. */
+
     CORRADE_COMPARE(out.str(),
+        /* MAGNUM_material_forbidden_types. Attributes are sorted by name. */
         "Trade::CgltfImporter::material(): extension with an empty name, skipping\n"
         "Trade::CgltfImporter::material(): property with an empty name, skipping\n"
         "Trade::CgltfImporter::material(): property Texture has non-texture object type, skipping\n"
@@ -4071,6 +4071,8 @@ void CgltfImporterTest::materialRaw() {
         "Trade::CgltfImporter::material(): property null has unsupported type, skipping\n"
         "Trade::CgltfImporter::material(): property oversizedArray has unsupported type, skipping\n"
         "Trade::CgltfImporter::material(): property stringArray has unsupported type, skipping\n"
+        /* MAGNUM_material_type_zoo */
+        "Trade::CgltfImporter::material(): property invalid has unsupported type, skipping\n"
         "Trade::CgltfImporter::material(): extension name VENDOR_material_thisnameiswaytoolongforalayername! is too long with 50 characters, skipping\n");
 }
 
