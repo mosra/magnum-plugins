@@ -70,6 +70,7 @@
                     "encodedString": "\uB9C8\uC774\uD06C \uCCB4\uD06C",
                     "emptyString": "",
                     "UppercaseName":  true ,
+                    "invalid": ["just checking if it keeps parsing after a warning"],
                     "vec1": [9.12e+1],
                     "vec2": [
                         9  ,
