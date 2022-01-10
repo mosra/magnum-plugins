@@ -2228,6 +2228,144 @@ bool checkMaterialAttributeSize(Containers::StringView name, MaterialAttributeTy
     return true;
 }
 
+Containers::Optional<MaterialAttributeData> parseMaterialAttribute(Containers::StringView json, Containers::ArrayView<const jsmntok_t> tokens) {
+    std::size_t tokenIndex = 0;
+
+    CORRADE_INTERNAL_ASSERT(tokens[tokenIndex].type == JSMN_STRING);
+
+    Containers::StringView name = tokenString(json, tokens[tokenIndex]);
+    if(name.isEmpty()) {
+        Warning{} << "Trade::CgltfImporter::material(): property with an empty name, skipping";
+        return Containers::NullOpt;
+    }
+
+    ++tokenIndex;
+    const jsmntok_t& token = tokens[tokenIndex];
+
+    /* We only need temporary storage for parsing primitive (arrays) as bool/
+       Float/Vector[2/3/4]. Other types/sizes are either converted or ignored,
+       so we know the upper limit on the data size. The alignas prevents
+       unaligned reads for individual floats. For strings,
+       MaterialAttributeData expects a pointer to StringView. */
+    alignas(4) char attributeData[16];
+    Containers::String attributeString;
+    Containers::StringView attributeStringView;
+    MaterialAttributeType type{};
+    if(token.type == JSMN_OBJECT) {
+        /* Not parsing textureInfo objects here because they're only needed by
+           extensions but not by extras. They may also append more than one
+           attribute, so this is handled directly in the extension parsing
+           loop. */
+        Warning{} << "Trade::CgltfImporter::material(): property" << name << "is an object, skipping";
+        return Containers::NullOpt;
+
+    /* A primitive is anything that's not a string, object or array. We ignore
+       non-primitive arrays, so we can handle both in one place. */
+    } else if(token.type == JSMN_PRIMITIVE || token.type == JSMN_ARRAY) {
+        const UnsignedInt start = tokenIndex + UnsignedInt(token.type == JSMN_ARRAY);
+        /* Primitive token size is 0, but we can't use max() because
+            that would allow empty arrays */
+        const UnsignedInt count = token.type == JSMN_PRIMITIVE ? 1 : token.size;
+
+        /* No use importing arbitrarily-sized arrays of primitives, those are
+           currently not used in any glTF extension */
+        if(count >= 1 && count <= 4) {
+            /* This still works for non-primitive array members (like objects
+               or nested arrays), because we instantly abort when we find one
+               of those, so we never need more than four tokens */
+            for(const jsmntok_t& element: tokens.slice(start, start + count)) {
+                if(element.type != JSMN_PRIMITIVE) {
+                    type = MaterialAttributeType{};
+                    break;
+                }
+
+                /* Jsmn only checks the first character, which allows some
+                   invalid values like nnn. We perform basic type detection and
+                   invalid values result in 0. This matches cgltf behaviour. */
+                const Containers::StringView value = tokenString(json, element);
+                if(value == "true"_s || value == "false"_s) {
+                    /* MaterialAttributeType has no bool vectors, and
+                       converting to a number needlessly complicates parsing
+                       later. So far there is no glTF extension that uses bool
+                       vectors. */
+                    if(count > 1) {
+                        type = MaterialAttributeType{};
+                        break;
+                    }
+                    type = MaterialAttributeType::Bool;
+                } else if(value != "null"_s) {
+                    /* Always interpret numbers as floats because the type can
+                       be ambiguous. E.g. integer attributes may use exponent
+                       notation and decimal points, making correct type
+                       detection depend on glTF exporter behaviour. */
+                    type = MaterialAttributeType::Float;
+                } else {
+                    type = MaterialAttributeType{};
+                    break;
+                }
+            }
+        }
+
+        if(type == MaterialAttributeType{}) {
+            Warning{} << "Trade::CgltfImporter::material(): property" << name << "has unsupported type, skipping";
+            return Containers::NullOpt;
+        }
+
+        if(type == MaterialAttributeType::Float) {
+            constexpr MaterialAttributeType vectorType[4] {
+                MaterialAttributeType::Float, MaterialAttributeType::Vector2,
+                MaterialAttributeType::Vector3, MaterialAttributeType::Vector4
+            };
+            type = vectorType[count - 1];
+
+            Vector4& data = *reinterpret_cast<Vector4*>(attributeData);
+            for(UnsignedInt i = 0; i != count; ++i)
+                data[i] = cgltf_json_to_float(&tokens[start + i], reinterpret_cast<const uint8_t*>(json.data()));
+
+        } else if(type == MaterialAttributeType::Bool) {
+            CORRADE_INTERNAL_ASSERT(count == 1);
+            bool& data = *reinterpret_cast<bool*>(attributeData);
+            data = cgltf_json_to_bool(&tokens[start], reinterpret_cast<const uint8_t*>(json.data()));
+
+        } else
+            CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+
+    } else if(token.type == JSMN_STRING) {
+        const Containers::StringView value = tokenString(json, token);
+        Containers::Optional<Containers::String> decoded = decodeString(value);
+        if(decoded) {
+            attributeString = std::move(*decoded);
+            attributeStringView = attributeString;
+        } else
+            attributeStringView = value;
+        type = MaterialAttributeType::String;
+
+    } else {
+        /* JSMN_UNDEFINED, should never happen for valid JSON files */
+        CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+    }
+
+    CORRADE_INTERNAL_ASSERT(type != MaterialAttributeType{});
+
+    const void* valuePointer = type == MaterialAttributeType::String ?
+        static_cast<const void*>(&attributeStringView) : static_cast<const void*>(attributeData);
+    if(!checkMaterialAttributeSize(name, type, valuePointer))
+        return Containers::NullOpt;
+
+    /* Uppercase attribute names are reserved. Standard glTF (extension)
+       attributes should all be lowercase but we don't have this guarantee for
+       extras attributes. Can't use String::nullTerminatedView() here because
+       JSON tokens are not null-terminated. */
+    Containers::String nameLowercase;
+    if(!name.isEmpty() && std::isupper(static_cast<unsigned char>(name.front()))) {
+        nameLowercase = name;
+        nameLowercase[0] = std::tolower(static_cast<unsigned char>(name.front()));
+        name = nameLowercase;
+    }
+
+    return MaterialAttributeData{name, type, valuePointer};
+}
+
 }
 
 void CgltfImporter::Document::materialTexture(const cgltf_texture_view& texture, Containers::Array<MaterialAttributeData>& attributes, Containers::StringView attribute, Containers::StringView matrixAttribute, Containers::StringView coordinateAttribute) const {
@@ -2511,6 +2649,63 @@ Containers::Optional<MaterialData> CgltfImporter::doMaterial(const UnsignedInt i
             arrayAppend(attributes, InPlaceInit, MaterialAttribute::DiffuseTextureCoordinates, *diffuseTextureCoordinates);
     }
 
+    /* Extras -- application-specific data, added to the base layer */
+    if(material.extras.start_offset) {
+        CORRADE_INTERNAL_ASSERT(material.extras.end_offset > material.extras.start_offset);
+        const Containers::StringView json{
+            _d->data->json + material.extras.start_offset,
+            material.extras.end_offset - material.extras.start_offset};
+        /* Theoretically extras can be any token type but the glTF spec
+           recommends objects for interoperability, makes our life easier, too:
+           https://www.khronos.org/registry/glTF/specs/2.0/glTF-2.0.html#reference-extras
+           Cgltf directly gives us the JSON value string instead of a token so
+           we can only check the type like this. */
+        if(json[0] == '{') {
+            const auto tokens = parseJson(json);
+            /* This is checked by jsmn */
+            CORRADE_INTERNAL_ASSERT(!tokens.empty() && tokens[0].type == JSMN_OBJECT);
+
+            UnsignedInt numAttributes = tokens[0].size;
+            Containers::Array<UnsignedInt> attributeTokens;
+            Containers::arrayReserve(attributeTokens, numAttributes);
+            for(UnsignedInt t = 1; t + 1 < tokens.size();) {
+                /* This is checked by jsmn */
+                CORRADE_INTERNAL_ASSERT(tokens[t].type == JSMN_STRING && tokens[t].size == 1);
+                Containers::arrayAppend(attributeTokens, InPlaceInit, t);
+                t = skipJson(tokens, t + 1);
+            }
+
+            /* Sort and mark duplicates, those will be skipped later. We don't
+               need to cross-check for duplicates in the base layer because
+               those are all internal uppercase names and we make all names
+               lowercase. */
+            std::stable_sort(attributeTokens.begin(), attributeTokens.end(), [&](UnsignedInt a, UnsignedInt b) {
+                return tokenString(json, tokens[a]) < tokenString(json, tokens[b]);
+            });
+
+            for(std::size_t i = 0; i + 1 < attributeTokens.size(); ++i) {
+                if(tokenString(json, tokens[attributeTokens[i]]) == tokenString(json, tokens[attributeTokens[i + 1]])) {
+                    --numAttributes;
+                    /* We can use 0 as an invalid token to mark attributes to skip.
+                       Token 0 is always the extras object itself. */
+                    attributeTokens[i] = 0u;
+                }
+            }
+
+            Containers::arrayReserve(attributes, attributes.size() + numAttributes);
+            for(UnsignedInt tokenIndex: attributeTokens) {
+                if(tokenIndex == 0u) continue;
+
+                const Containers::Optional<MaterialAttributeData> parsed = parseMaterialAttribute(
+                    json, tokens.suffix(tokenIndex));
+                if(parsed)
+                    Containers::arrayAppend(attributes, *parsed);
+            }
+
+        } else
+            Warning{} << "Trade::CgltfImporter::material(): extras property is not an object, skipping";
+    }
+
     /* Clear coat layer -- needs to be after all base material attributes */
     if(material.has_clearcoat) {
         types |= MaterialType::PbrClearCoat;
@@ -2782,25 +2977,13 @@ Containers::Optional<MaterialData> CgltfImporter::doMaterial(const UnsignedInt i
         for(UnsignedInt tokenIndex: attributeTokens) {
             if(tokenIndex == 0u) continue;
 
-            Containers::StringView name = tokenString(json, tokens[tokenIndex]);
+            const Containers::StringView name = tokenString(json, tokens[tokenIndex]);
             if(name.isEmpty()) {
                 Warning{} << "Trade::CgltfImporter::material(): property with an empty name, skipping";
                 continue;
             }
 
-            ++tokenIndex;
-            const jsmntok_t& token = tokens[tokenIndex];
-
-            /* We only need temporary storage for parsing primitive (arrays) as
-               bool/Float/Vector[2/3/4]. Other types/sizes are either converted
-               or ignored, so we know the upper limit on the data size. The
-               alignas prevents unaligned reads for individual floats. For
-               strings, MaterialAttributeData expects a pointer to StringView. */
-            alignas(4) char attributeData[16];
-            Containers::String attributeString;
-            Containers::StringView attributeStringView;
-            MaterialAttributeType type{};
-            if(token.type == JSMN_OBJECT) {
+            if(tokens[tokenIndex + 1].type == JSMN_OBJECT) {
                 /* Parse glTF textureInfo objects. Any objects without the
                    correct suffix and type are ignored. */
                 if(name.size() < 8 || !name.hasSuffix("Texture")) {
@@ -2809,7 +2992,7 @@ Containers::Optional<MaterialData> CgltfImporter::doMaterial(const UnsignedInt i
                 }
 
                 cgltf_texture_view textureView{};
-                const bool valid = cgltf_parse_json_texture_view(&_d->options, tokens, tokenIndex,
+                const bool valid = cgltf_parse_json_texture_view(&_d->options, tokens, tokenIndex + 1,
                     reinterpret_cast<const uint8_t*>(json.data()), &textureView) >= 0;
                 /* Free memory allocated by cgltf. We're only interested in
                    KHR_texture_transform and that's already parsed into
@@ -2857,125 +3040,20 @@ Containers::Optional<MaterialData> CgltfImporter::doMaterial(const UnsignedInt i
                             scaleName, textureView.scale);
                 }
 
-                /* We added all attributes, nothing left to do */
-                continue;
-
-            /* A primitive is anything that's not a string, object or array. We
-               ignore non-primitive arrays, so we can handle both in one place. */
-            } else if(token.type == JSMN_PRIMITIVE || token.type == JSMN_ARRAY) {
-                const UnsignedInt start = tokenIndex + UnsignedInt(token.type == JSMN_ARRAY);
-                /* Primitive token size is 0, but we can't use max() because
-                   that would allow empty arrays */
-                const UnsignedInt count = token.type == JSMN_PRIMITIVE ? 1 : token.size;
-
-                /* No use importing arbitrarily-sized arrays of primitives,
-                   those are currently not used in any glTF extension */
-                if(count >= 1 && count <= 4) {
-                    /* This still works for non-primitive array members (like
-                       objects or nested arrays), because we instantly abort
-                       when we find one of those, so we never need more than
-                       four tokens */
-                    for(const jsmntok_t& element: tokens.slice(start, start + count)) {
-                        if(element.type != JSMN_PRIMITIVE) {
-                            type = MaterialAttributeType{};
-                            break;
-                        }
-
-                        /* Jsmn only checks the first character, which allows
-                           some invalid values like nnn. We perform basic type
-                           detection and invalid values result in 0. This
-                           matches cgltf behaviour. */
-                        const Containers::StringView value = tokenString(json, element);
-                        if(value == "true"_s || value == "false"_s) {
-                            /* MaterialAttributeType has no bool vectors, and
-                               converting to a number needlessly complicates
-                               parsing later. So far there is no glTF extension
-                               that uses bool vectors. */
-                            if(count > 1) {
-                                type = MaterialAttributeType{};
-                                break;
-                            }
-                            type = MaterialAttributeType::Bool;
-                        } else if(value != "null"_s) {
-                            /* Always interpret numbers as floats because the
-                               type can be ambiguous. E.g. integer attributes
-                               may use exponent notation and decimal points,
-                               making correct type detection depend on glTF
-                               exporter behaviour. */
-                            type = MaterialAttributeType::Float;
-                        } else {
-                            type = MaterialAttributeType{};
-                            break;
-                        }
-                    }
-                }
-
-                if(type == MaterialAttributeType{}) {
-                    Warning{} << "Trade::CgltfImporter::material(): property" << name << "has unsupported type, skipping";
-                    continue;
-                }
-
-                if(type == MaterialAttributeType::Float) {
-                    constexpr MaterialAttributeType vectorType[4] {
-                        MaterialAttributeType::Float, MaterialAttributeType::Vector2,
-                        MaterialAttributeType::Vector3, MaterialAttributeType::Vector4
-                    };
-                    type = vectorType[count - 1];
-
-                    Vector4& data = *reinterpret_cast<Vector4*>(attributeData);
-                    for(UnsignedInt i = 0; i != count; ++i)
-                        data[i] = cgltf_json_to_float(&tokens[start + i], reinterpret_cast<const uint8_t*>(json.data()));
-
-                } else if(type == MaterialAttributeType::Bool) {
-                    CORRADE_INTERNAL_ASSERT(count == 1);
-                    bool& data = *reinterpret_cast<bool*>(attributeData);
-                    data = cgltf_json_to_bool(&tokens[start], reinterpret_cast<const uint8_t*>(json.data()));
-
-                } else
-                    CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
-
-            } else if(token.type == JSMN_STRING) {
-                const Containers::StringView value = tokenString(json, token);
-                Containers::Optional<Containers::String> decoded = decodeString(value);
-                if(decoded) {
-                    attributeString = std::move(*decoded);
-                    attributeStringView = attributeString;
-                } else
-                    attributeStringView = value;
-                type = MaterialAttributeType::String;
-
             } else {
-                /* JSMN_UNDEFINED, should never happen for valid JSON files */
-                CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+                /* All other attribute types: bool, numbers, strings */
+                const Containers::Optional<MaterialAttributeData> parsed = parseMaterialAttribute(
+                    json, tokens.suffix(tokenIndex));
+                if(parsed)
+                    Containers::arrayAppend(extensionAttributes, *parsed);
             }
-
-            CORRADE_INTERNAL_ASSERT(type != MaterialAttributeType{});
-
-            const void* valuePointer = type == MaterialAttributeType::String ?
-                static_cast<const void*>(&attributeStringView) : static_cast<const void*>(attributeData);
-            if(!checkMaterialAttributeSize(name, type, valuePointer))
-                continue;
-
-            /* Uppercase attribute names are reserved. This shouldn't really
-               happen since virtually all existing glTF extension attributes
-               are lowercase, but better to be safe. Can't use
-               String::nullTerminatedView() here because JSON tokens are not
-               null-terminated. */
-            Containers::String nameLowercase;
-            if(!name.isEmpty() && std::isupper(static_cast<unsigned char>(name.front()))) {
-                nameLowercase = name;
-                nameLowercase[0] = std::tolower(static_cast<unsigned char>(name.front()));
-                name = nameLowercase;
-            }
-
-            arrayAppend(extensionAttributes, InPlaceInit, name, type, valuePointer);
         }
 
         /* Only add a layer if the extension contains any attributes */
         if(!extensionAttributes.empty()) {
             /* Uppercase layer names are reserved. Since all extension names
                start with an uppercase vendor identifier, making the first
-               character lower-case seems silly, so we use a unique prefix. */
+               character lowercase seems silly, so we use a unique prefix. */
             Containers::String layerName{NoInit, extensionName.size() + 1};
             Utility::formatInto(layerName, "#{}", extensionName);
 
