@@ -338,6 +338,11 @@ fail.
     If you handle any of these custom material extensions, it may make sense
     to enable the @cb{.ini} ignoreRequiredExtensions @ce
     @ref Trade-CgltfImporter-configuration "configuration option".
+-   [Extras](https://www.khronos.org/registry/glTF/specs/2.0/glTF-2.0.html#reference-extras)
+    metadata is imported into the base material layer. The `extras` attribute
+    must be an object. Type support is the same as for unrecognized material
+    extensions, except for [textureInfo](https://www.khronos.org/registry/glTF/specs/2.0/glTF-2.0.html#reference-textureinfo)
+    objects which are ignored.
 -   If the on-by-default @cb{.ini} phongMaterialFallback @ce
     @ref Trade-CgltfImporter-configuration "configuration option" is
     enabled, the importer provides a Phong fallback for backwards

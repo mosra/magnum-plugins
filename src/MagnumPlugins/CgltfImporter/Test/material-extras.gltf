@@ -1,0 +1,99 @@
+{
+    "asset": {
+        "version": "2.0"
+    },
+    "materials": [
+        {
+            "name": "primitive",
+            "extras": 0.5
+        },
+        {
+            "name": "string",
+            "extras": "Ignored"
+        },
+        {
+            "name": "array",
+            "extras": [ 1.2 ]
+        },
+        {
+            "name": "empty",
+            "extras": {}
+        },
+        {
+            "name": "invalid",
+            "extras": {
+                "nestedObject": {
+                    "this": "should be ignored"
+                },
+                "nestedObjectTexture": {
+                    "this": "should also be ignored",
+                    "index": 0
+                },
+                "null": null,
+                "emptyArray": [],
+                "oversizedArray": [9.1, 8.2, 7.3, 6.4, 5.5],
+                "stringArray": ["one", "two", "", "four"],
+                "boolArray": [true, false],
+                "mixedStringArray": ["1", "2", 3, "4"],
+                "mixedBoolArray": [1, 2, 3, false],
+                "mixedObjectArray": [1, 2, 3, {"4": "5", "6": "7"}],
+                "anIncrediblyLongNameThatSadlyWontFitPaddingPaddingPadding!!": 0,
+                "aValueThatWontFit": "1 pound ground turkey, 1 medium-sized onion, 1 cup celery (diced)",
+                "": "Empty attributes are ignored"
+            }
+        },
+        {
+            "name": "extras",
+            "pbrMetallicRoughness": {
+                "baseColorFactor": [0.8, 0.2, 0.4, 0.3],
+                "baseColorTexture": {
+                    "index": 0
+                }
+            },
+            "doubleSided": true,
+            "extensions": {
+                "KHR_materials_clearcoat": {
+                    "clearcoatFactor": 0.5
+                }
+            },
+            "extras": {
+                "duplicate": "overwritten by later values",
+                "boolTrue": true,
+                "boolFalse": false,
+                "int": -7992835,
+                "unsignedInt": 109835761,
+                "float": 4.321,
+                "string": "Ribbit -- ribbit",
+                "encodedString": "\uB9C8\uC774\uD06C \uCCB4\uD06C",
+                "emptyString": "",
+                "DoubleSided": false,
+                "invalid": ["just checking if it keeps parsing after a warning"],
+                "vec1": [9.12e+1],
+                "vec2": [
+                    9  ,
+                    8  ],
+                "vec3": [9, 8E-2, 7.3141],
+                "vec4": [-9, 8, 7, -6],
+                "duplicate": 0.2,
+                "duplicate": true
+            }
+        }
+    ],
+    "samplers": [
+        {}
+    ],
+    "textures": [
+        {
+            "sampler": 0,
+            "source": 0
+        }
+    ],
+    "images": [
+        {
+            "uri": "nonexistent.png"
+        }
+    ],
+    "extensionsUsed": [
+        "KHR_materials_clearcoat"
+    ]
+}

@@ -121,6 +121,7 @@ corrade_add_test(CgltfImporterTest
         light-missing-spot.gltf
         material-common.gltf
         material-clearcoat.gltf
+        material-extras.gltf
         material-invalid-alpha-mode.gltf
         material-invalid-clearcoat-factor-oob.gltf
         material-invalid-clearcoat-normal-oob.gltf

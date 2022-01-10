@@ -149,6 +149,7 @@ struct CgltfImporterTest: TestSuite::Tester {
     void materialPbrSpecularGlossiness();
     void materialCommon();
     void materialUnlit();
+    void materialExtras();
     void materialClearCoat();
     void materialPhongFallback();
     void materialRaw();
@@ -776,6 +777,7 @@ CgltfImporterTest::CgltfImporterTest() {
               &CgltfImporterTest::materialPbrSpecularGlossiness,
               &CgltfImporterTest::materialCommon,
               &CgltfImporterTest::materialUnlit,
+              &CgltfImporterTest::materialExtras,
               &CgltfImporterTest::materialClearCoat,
               &CgltfImporterTest::materialPhongFallback,
               &CgltfImporterTest::materialRaw,
@@ -3700,6 +3702,143 @@ void CgltfImporterTest::materialUnlit() {
     CORRADE_COMPARE(flat.texture(), 1);
 }
 
+void compareMaterials(const MaterialData& actual, const MaterialData& expected) {
+    CORRADE_COMPARE(actual.types(), expected.types());
+    CORRADE_COMPARE(actual.layerCount(), expected.layerCount());
+
+    for(UnsignedInt layer = 0; layer != expected.layerCount(); ++layer) {
+        CORRADE_ITERATION(expected.layerName(layer));
+        CORRADE_COMPARE(actual.layerName(layer), expected.layerName(layer));
+        CORRADE_COMPARE(actual.attributeCount(layer), expected.attributeCount(layer));
+        for(UnsignedInt i = 0; i != expected.attributeCount(layer); ++i) {
+            const Containers::StringView name = expected.attributeName(layer, i);
+            CORRADE_ITERATION(name);
+            CORRADE_VERIFY(actual.hasAttribute(layer, name));
+            const MaterialAttributeType type = expected.attributeType(layer, name);
+            CORRADE_COMPARE(actual.attributeType(layer, name), type);
+            switch(type) {
+                #define _v(type, valueType) case MaterialAttributeType::type: \
+                    CORRADE_COMPARE(actual.attribute<valueType>(layer, name), expected.attribute<valueType>(layer, name)); \
+                    break;
+                #define _c(type) _v(type, type)
+                _c(UnsignedInt)
+                _c(Float)
+                _c(Vector2)
+                _c(Vector3)
+                _c(Vector4)
+                _c(Matrix3x3)
+                _v(Bool, bool)
+                _v(String, Containers::StringView)
+                _v(TextureSwizzle, MaterialTextureSwizzle)
+                #undef _c
+                #undef _v
+                default:
+                    CORRADE_FAIL_IF(true, "Unexpected attribute type" << type);
+            }
+        }
+    }
+}
+
+void CgltfImporterTest::materialExtras() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
+    importer->configuration().setValue("phongMaterialFallback", false);
+
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR,
+        "material-extras.gltf")));
+
+    {
+        for(const char* name: {"primitive", "string", "array"}) {
+            CORRADE_ITERATION(name);
+            Containers::Optional<MaterialData> material;
+            std::ostringstream out;
+            {
+                Warning redirectWarning{&out};
+                material = importer->material(name);
+            }
+            CORRADE_VERIFY(material);
+            CORRADE_COMPARE(material->layerCount(), 1);
+            CORRADE_COMPARE(material->attributeCount(), 0);
+
+            CORRADE_COMPARE(out.str(), "Trade::CgltfImporter::material(): extras property is not an object, skipping\n");
+        }
+    } {
+        const char* name = "empty";
+        CORRADE_ITERATION(name);
+        const auto material = importer->material(name);
+        CORRADE_VERIFY(material);
+        CORRADE_COMPARE(material->layerCount(), 1);
+        CORRADE_COMPARE(material->attributeCount(), 0);
+    } {
+        const char* name = "invalid";
+        CORRADE_ITERATION(name);
+        Containers::Optional<MaterialData> material;
+        std::ostringstream out;
+        {
+            Warning redirectWarning{&out};
+            material = importer->material(name);
+        }
+        CORRADE_VERIFY(material);
+        /* All attributes are invalid and ignored */
+        CORRADE_COMPARE(material->layerCount(), 1);
+        CORRADE_COMPARE(material->attributeCount(), 0);
+
+        CORRADE_COMPARE(out.str(),
+            "Trade::CgltfImporter::material(): property with an empty name, skipping\n"
+            "Trade::CgltfImporter::material(): property aValueThatWontFit is too large with 84 bytes, skipping\n"
+            "Trade::CgltfImporter::material(): property anIncrediblyLongNameThatSadlyWontFitPaddingPaddingPadding!! is too large with 63 bytes, skipping\n"
+            "Trade::CgltfImporter::material(): property boolArray has unsupported type, skipping\n"
+            "Trade::CgltfImporter::material(): property emptyArray has unsupported type, skipping\n"
+            "Trade::CgltfImporter::material(): property mixedBoolArray has unsupported type, skipping\n"
+            "Trade::CgltfImporter::material(): property mixedObjectArray has unsupported type, skipping\n"
+            "Trade::CgltfImporter::material(): property mixedStringArray has unsupported type, skipping\n"
+            "Trade::CgltfImporter::material(): property nestedObject is an object, skipping\n"
+            "Trade::CgltfImporter::material(): property nestedObjectTexture is an object, skipping\n"
+            "Trade::CgltfImporter::material(): property null has unsupported type, skipping\n"
+            "Trade::CgltfImporter::material(): property oversizedArray has unsupported type, skipping\n"
+            "Trade::CgltfImporter::material(): property stringArray has unsupported type, skipping\n");
+    } {
+        const char* name = "extras";
+        CORRADE_ITERATION(name);
+        Containers::Optional<MaterialData> material;
+        std::ostringstream out;
+        {
+            Warning redirectWarning{&out};
+            material = importer->material(name);
+        }
+        CORRADE_VERIFY(material);
+
+        const MaterialData expected{MaterialType::PbrMetallicRoughness|MaterialType::PbrClearCoat, {
+            {MaterialAttribute::BaseColor, Color4{0.8f, 0.2f, 0.4f, 0.3f}},
+            {MaterialAttribute::BaseColorTexture, 0u},
+            {MaterialAttribute::DoubleSided, true},
+
+            /* Extras are in the base layer */
+            {"boolTrue"_s, true},
+            {"boolFalse"_s, false},
+            {"int"_s, -7992835.0f},
+            {"unsignedInt"_s, 109835761.0f},
+            {"float"_s, 4.321f},
+            {"string"_s, "Ribbit -- ribbit"_s},
+            {"encodedString"_s, "마이크 체크"_s},
+            {"emptyString"_s, ""_s},
+            {"doubleSided"_s, false},
+            {"vec1"_s, 91.2f},
+            {"vec2"_s, Vector2{9.0f, 8.0f}},
+            {"vec3"_s, Vector3{9.0f, 0.08f, 7.3141f}},
+            {"vec4"_s, Vector4{-9.0f, 8.0f, 7.0f, -6.0f}},
+            {"duplicate"_s, true},
+
+            {Trade::MaterialAttribute::LayerName, "ClearCoat"_s},
+            {MaterialAttribute::LayerFactor, 0.5f},
+            {MaterialAttribute::Roughness, 0.0f}
+        }, {17, 20}};
+
+        compareMaterials(*material, expected);
+
+        CORRADE_COMPARE(out.str(), "Trade::CgltfImporter::material(): property invalid has unsupported type, skipping\n");
+    }
+}
+
 void CgltfImporterTest::materialClearCoat() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
 
@@ -3944,43 +4083,6 @@ void CgltfImporterTest::materialPhongFallback() {
         CORRADE_COMPARE(material->types(), MaterialType::Phong|MaterialType::Flat);
         CORRADE_COMPARE(material->layerCount(), 1);
         CORRADE_COMPARE(material->attributeCount(), 0);
-    }
-}
-
-void compareMaterials(const MaterialData& actual, const MaterialData& expected) {
-    CORRADE_COMPARE(actual.types(), expected.types());
-    CORRADE_COMPARE(actual.layerCount(), expected.layerCount());
-
-    for(UnsignedInt layer = 0; layer != expected.layerCount(); ++layer) {
-        CORRADE_ITERATION(expected.layerName(layer));
-        CORRADE_COMPARE(actual.layerName(layer), expected.layerName(layer));
-        CORRADE_COMPARE(actual.attributeCount(layer), expected.attributeCount(layer));
-        for(UnsignedInt i = 0; i != expected.attributeCount(layer); ++i) {
-            const Containers::StringView name = expected.attributeName(layer, i);
-            CORRADE_ITERATION(name);
-            CORRADE_VERIFY(actual.hasAttribute(layer, name));
-            const MaterialAttributeType type = expected.attributeType(layer, name);
-            CORRADE_COMPARE(actual.attributeType(layer, name), type);
-            switch(type) {
-                #define _v(type, valueType) case MaterialAttributeType::type: \
-                    CORRADE_COMPARE(actual.attribute<valueType>(layer, name), expected.attribute<valueType>(layer, name)); \
-                    break;
-                #define _c(type) _v(type, type)
-                _c(UnsignedInt)
-                _c(Float)
-                _c(Vector2)
-                _c(Vector3)
-                _c(Vector4)
-                _c(Matrix3x3)
-                _v(Bool, bool)
-                _v(String, Containers::StringView)
-                _v(TextureSwizzle, MaterialTextureSwizzle)
-                #undef _c
-                #undef _v
-                default:
-                    CORRADE_FAIL_IF(true, "Unexpected attribute type" << type);
-            }
-        }
     }
 }
 
