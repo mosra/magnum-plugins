@@ -4,7 +4,7 @@ if "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2015" set GENERATOR=Visual 
 if "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2017" set GENERATOR=Visual Studio 15 2017
 set PATH=%APPVEYOR_BUILD_FOLDER%\deps-native\bin;%PATH%
 
-git clone --depth 1 git://github.com/mosra/corrade.git || exit /b
+git clone --depth 1 https://github.com/mosra/corrade.git || exit /b
 cd corrade || exit /b
 
 rem Build native corrade-rc
@@ -34,7 +34,7 @@ cmake --build . --config Release --target install -- /m /v:m || exit /b
 cd .. && cd ..
 
 rem Crosscompile Magnum
-git clone --depth 1 git://github.com/mosra/magnum.git || exit /b
+git clone --depth 1 https://github.com/mosra/magnum.git || exit /b
 cd magnum || exit /b
 mkdir build-rt && cd build-rt || exit /b
 cmake .. ^
