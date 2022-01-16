@@ -319,8 +319,8 @@ class MAGNUM_BASISIMPORTER_EXPORT BasisImporter: public AbstractImporter {
 
             /**
              * Uncompressed 32-bit RGBA. Loaded as
-             * @ref PixelFormat::RGBA8Unorm/@ref PixelFormat::RGBA8Srgb. If no
-             * concrete format is specified, the importer will fall back to
+             * @ref PixelFormat::RGBA8Unorm / @ref PixelFormat::RGBA8Srgb. If
+             * no concrete format is specified, the importer will fall back to
              * this.
              */
             RGBA8 = 13,
