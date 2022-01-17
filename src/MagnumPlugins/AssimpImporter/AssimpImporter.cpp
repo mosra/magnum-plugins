@@ -334,6 +334,7 @@ UnsignedInt flagsFromConfiguration(Utility::ConfigurationGroup& conf) {
 
     const Utility::ConfigurationGroup& postprocess = *conf.group("postprocess");
     #define _c(val) if(postprocess.value<bool>(#val)) flags |= aiProcess_ ## val;
+    _c(CalcTangentSpace)
     /* Without aiProcess_JoinIdenticalVertices all meshes are deindexed (wtf?) */
     _c(JoinIdenticalVertices) /* enabled by default */
     _c(Triangulate) /* enabled by default */
@@ -355,6 +356,8 @@ UnsignedInt flagsFromConfiguration(Utility::ConfigurationGroup& conf) {
     _c(OptimizeGraph)
     _c(FlipUVs)
     _c(FlipWindingOrder)
+    _c(SplitByBoneCount)
+    _c(Debone)
     #undef _c
     return flags;
 }

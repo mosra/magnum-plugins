@@ -96,6 +96,9 @@ namespace Magnum {
 -   The workaround for an Assimp 4.1 white ambient bug in
     @ref Trade::AssimpImporter "AssimpImporter" can now be disabled using the
     @cb{.ini} forceWhiteAmbientToBlack @ce @ref Trade-AssimpImporter-configuration "plugin-specific option".
+-   Exposed missing @ref Trade::AssimpImporter "AssimpImporter" postprocess
+    options @cb{.ini} CalcTangentSpace @ce, @cb{.ini} SplitByBoneCount @ce and
+    @cb{.ini} Debone @ce
 -   @ref Text::FreeTypeFont "FreeTypeFont" now treats its internal global
     library handle as thread-local on all platforms except Windows, making it
     possible to be used in multi-threaded environments
