@@ -404,7 +404,9 @@ void MeshOptimizerSceneConverterTest::inPlaceOptimizeOverdrawPositionsNotFourByt
     MeshData icosphere = MeshTools::interleave(
         Primitives::icosphereSolid(1),
         {MeshAttributeData{1}});
-    /* Should be not divisible by 4 (which meshoptimizer expects) */
+    /* Should be not divisible by 4 (which meshoptimizer expects). This will
+       cause the implementation to make its own aligned copy, same as if the
+       positions were packed. */
     CORRADE_COMPARE(icosphere.attributeStride(MeshAttribute::Position), 25);
 
     CORRADE_VERIFY(converter->convertInPlace(icosphere));

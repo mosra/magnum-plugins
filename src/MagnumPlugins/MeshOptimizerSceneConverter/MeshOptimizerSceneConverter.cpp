@@ -250,7 +250,6 @@ bool MeshOptimizerSceneConverter::doConvertInPlace(MeshData& mesh) {
         }
     }
 
-
     if(configuration().value<bool>("simplify") ||
        configuration().value<bool>("simplifySloppy"))
     {
