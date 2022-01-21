@@ -121,16 +121,19 @@ plugin-specific options:
 
 The optimizations can be done either in-place using @ref convertInPlace(MeshData&),
 in which case the input is required to be an indexed triangle mesh with mutable
-index data and, in case of @cb{.ini} optimizeVertexFetch @ce, also mutable
-vertex data. Alternatively, the operation can be performed using
-@ref convert(const MeshData&), which accepts also triangle strips and fans,
-returning always an indexed triangle mesh without requiring the input to be
-mutable.
+contiguous index buffer of a non-implementation-specific index type and, in
+case of @cb{.ini} optimizeVertexFetch @ce, also mutable vertex data.
+Alternatively, the operation can be performed using @ref convert(const MeshData&),
+which accepts also triangle strips and fans or non-contiguous index buffers of
+non-implementation-specific index types, returning always an indexed triangle
+mesh without requiring the input to be mutable.
 
 The output has the same index type as input and all attributes are preserved,
 including custom attributes and attributes with implementation-specific vertex
 formats, except for @cb{.ini} optimizeOverdraw @ce, which needs a position
-attribute in a known type.
+attribute in a known type. Attributes with zero or negative stride are allowed
+on input but the output will always have an interleaved layout with positive
+strides.
 
 When @ref SceneConverterFlag::Verbose is enabled, the plugin prints the output
 from meshoptimizer's [efficiency analyzers](https://github.com/zeux/meshoptimizer#efficiency-analyzers)

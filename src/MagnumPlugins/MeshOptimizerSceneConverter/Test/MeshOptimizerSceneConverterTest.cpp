@@ -49,11 +49,13 @@ struct MeshOptimizerSceneConverterTest: TestSuite::Tester {
 
     void notTriangles();
     void notIndexed();
+    void implementationSpecificIndexType();
     void immutableIndexData();
 
     void inPlaceOptimizeVertexFetchImmutableVertexData();
     void inPlaceOptimizeVertexFetchNotInterleaved();
     void inPlaceOptimizeOverdrawNoPositions();
+    void inPlaceNonContiguousIndexBuffer();
 
     void inPlaceOptimizeNone();
 
@@ -73,6 +75,8 @@ struct MeshOptimizerSceneConverterTest: TestSuite::Tester {
     void copy();
     void copyTriangleStrip2DPositions();
     void copyTriangleFanIndexed();
+    template<class T> void copyNonContiguousIndexBuffer();
+    void copyNegativeAttributeStride();
 
     void simplifyInPlace();
     void simplifyNoPositions();
@@ -97,10 +101,12 @@ MeshOptimizerSceneConverterTest::MeshOptimizerSceneConverterTest() {
     addTests({
         &MeshOptimizerSceneConverterTest::notTriangles,
         &MeshOptimizerSceneConverterTest::notIndexed,
+        &MeshOptimizerSceneConverterTest::implementationSpecificIndexType,
         &MeshOptimizerSceneConverterTest::immutableIndexData,
         &MeshOptimizerSceneConverterTest::inPlaceOptimizeVertexFetchImmutableVertexData,
         &MeshOptimizerSceneConverterTest::inPlaceOptimizeVertexFetchNotInterleaved,
         &MeshOptimizerSceneConverterTest::inPlaceOptimizeOverdrawNoPositions,
+        &MeshOptimizerSceneConverterTest::inPlaceNonContiguousIndexBuffer,
 
         &MeshOptimizerSceneConverterTest::inPlaceOptimizeNone,
 
@@ -130,7 +136,11 @@ MeshOptimizerSceneConverterTest::MeshOptimizerSceneConverterTest() {
 
         &MeshOptimizerSceneConverterTest::copy,
         &MeshOptimizerSceneConverterTest::copyTriangleStrip2DPositions,
-        &MeshOptimizerSceneConverterTest::copyTriangleFanIndexed});
+        &MeshOptimizerSceneConverterTest::copyTriangleFanIndexed,
+        &MeshOptimizerSceneConverterTest::copyNonContiguousIndexBuffer<UnsignedByte>,
+        &MeshOptimizerSceneConverterTest::copyNonContiguousIndexBuffer<UnsignedShort>,
+        &MeshOptimizerSceneConverterTest::copyNonContiguousIndexBuffer<UnsignedInt>,
+        &MeshOptimizerSceneConverterTest::copyNegativeAttributeStride});
 
     addInstancedTests({
         &MeshOptimizerSceneConverterTest::simplifyInPlace,
@@ -177,6 +187,23 @@ void MeshOptimizerSceneConverterTest::notIndexed() {
     CORRADE_COMPARE(out.str(),
         "Trade::MeshOptimizerSceneConverter::convert(): expected an indexed mesh\n"
         "Trade::MeshOptimizerSceneConverter::convertInPlace(): expected an indexed mesh\n");
+}
+
+void MeshOptimizerSceneConverterTest::implementationSpecificIndexType() {
+    Containers::Pointer<AbstractSceneConverter> converter = _manager.instantiate("MeshOptimizerSceneConverter");
+
+    Containers::Array<char> indexData{3};
+    Containers::StridedArrayView1D<UnsignedByte> indices = Containers::arrayCast<UnsignedByte>(indexData);
+    MeshData mesh{MeshPrimitive::Triangles,
+        std::move(indexData), MeshIndexData{meshIndexTypeWrap(0xcaca), indices}, 1};
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!converter->convert(mesh));
+    CORRADE_VERIFY(!converter->convertInPlace(mesh));
+    CORRADE_COMPARE(out.str(),
+        "Trade::MeshOptimizerSceneConverter::convert(): can't perform any operation on an implementation-specific index type 0xcaca\n"
+        "Trade::MeshOptimizerSceneConverter::convertInPlace(): can't perform any operation on an implementation-specific index type 0xcaca\n");
 }
 
 void MeshOptimizerSceneConverterTest::immutableIndexData() {
@@ -265,6 +292,25 @@ void MeshOptimizerSceneConverterTest::inPlaceOptimizeOverdrawNoPositions() {
     CORRADE_COMPARE(out.str(),
         "Trade::MeshOptimizerSceneConverter::convert(): optimizeOverdraw and simplify require the mesh to have positions\n"
         "Trade::MeshOptimizerSceneConverter::convertInPlace(): optimizeOverdraw and simplify require the mesh to have positions\n");
+}
+
+void MeshOptimizerSceneConverterTest::inPlaceNonContiguousIndexBuffer() {
+    Containers::Pointer<AbstractSceneConverter> converter = _manager.instantiate("MeshOptimizerSceneConverter");
+    /* This is checked even if nothing is enabled, same as it's always checked
+       that the mesh is indexed */
+    converter->configuration().setValue("optimizeVertexCache", false);
+    converter->configuration().setValue("optimizeOverdraw", false);
+    converter->configuration().setValue("optimizeVertexFetch", false);
+
+    constexpr UnsignedByte indices[3]{};
+    MeshData mesh{MeshPrimitive::Triangles,
+        {}, indices, MeshIndexData{Containers::stridedArrayView(indices).flipped<0>()}, 1};
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!converter->convertInPlace(mesh));
+    CORRADE_COMPARE(out.str(),
+        "Trade::MeshOptimizerSceneConverter::convertInPlace(): in-place conversion is possible only with contiguous index buffers\n");
 }
 
 void MeshOptimizerSceneConverterTest::inPlaceOptimizeNone() {
@@ -404,9 +450,7 @@ void MeshOptimizerSceneConverterTest::inPlaceOptimizeOverdrawPositionsNotFourByt
     MeshData icosphere = MeshTools::interleave(
         Primitives::icosphereSolid(1),
         {MeshAttributeData{1}});
-    /* Should be not divisible by 4 (which meshoptimizer expects). This will
-       cause the implementation to make its own aligned copy, same as if the
-       positions were packed. */
+    /* Should be not divisible by 4 (which meshoptimizer expects) */
     CORRADE_COMPARE(icosphere.attributeStride(MeshAttribute::Position), 25);
 
     CORRADE_VERIFY(converter->convertInPlace(icosphere));
@@ -774,6 +818,97 @@ void MeshOptimizerSceneConverterTest::copyTriangleFanIndexed() {
             {-0.5f, 0.866025f, 0.0f},
             {-0.5f, -0.866025f, 0.0f},
             {1.0f, 0.0f, 0.0f}
+        }), TestSuite::Compare::Container);
+}
+
+template<class T> void MeshOptimizerSceneConverterTest::copyNonContiguousIndexBuffer() {
+    setTestCaseTemplateName(Math::TypeTraits<T>::name());
+
+    Containers::Pointer<AbstractSceneConverter> converter = _manager.instantiate("MeshOptimizerSceneConverter");
+
+    /* Like copyTriangleStrip2DPositions() but with the index buffer expanded,
+       stored in reverse order and negative stride */
+    const T indicesReversed[]{3, 1, 2, 2, 1, 0};
+    const Vector2 positions[]{
+        { 1.0f, -1.0f},
+        { 1.0f,  1.0f},
+        {-1.0f, -1.0f},
+        {-1.0f,  1.0f}
+    };
+    MeshData original{MeshPrimitive::Triangles, {}, indicesReversed,
+        MeshIndexData{Containers::stridedArrayView(indicesReversed).template flipped<0>()},
+        {}, positions, {
+            MeshAttributeData{MeshAttribute::Position, Containers::arrayView(positions)},
+        }
+    };
+    Containers::Optional<MeshData> optimized = converter->convert(original);
+
+    /* Same as in copyTriangleStrip2DPositions() */
+    CORRADE_VERIFY(optimized);
+    CORRADE_COMPARE(optimized->primitive(), MeshPrimitive::Triangles);
+    CORRADE_COMPARE(optimized->indexCount(), 6);
+    CORRADE_COMPARE(optimized->vertexCount(), original.vertexCount());
+    CORRADE_COMPARE(optimized->attributeCount(), original.attributeCount());
+    CORRADE_COMPARE(optimized->indexDataFlags(), DataFlag::Owned|DataFlag::Mutable);
+    CORRADE_COMPARE(optimized->vertexDataFlags(), DataFlag::Owned|DataFlag::Mutable);
+
+    /* Indices should get tightly packed, but keeping their type */
+    CORRADE_COMPARE(optimized->indexType(), Implementation::meshIndexTypeFor<T>());
+    CORRADE_COMPARE(optimized->indexStride(), sizeof(T));
+    CORRADE_COMPARE_AS(optimized->indices<T>(), Containers::arrayView<T>({
+        0, 1, 2, 2, 1, 3
+    }), TestSuite::Compare::Container);
+
+    CORRADE_COMPARE_AS(optimized->attribute<Vector2>(MeshAttribute::Position),
+        Containers::arrayView<Vector2>({
+            { 1.0f, -1.0f},
+            { 1.0f,  1.0f},
+            {-1.0f, -1.0f},
+            {-1.0f,  1.0f}
+        }), TestSuite::Compare::Container);
+}
+
+void MeshOptimizerSceneConverterTest::copyNegativeAttributeStride() {
+    Containers::Pointer<AbstractSceneConverter> converter = _manager.instantiate("MeshOptimizerSceneConverter");
+
+    /* Like copyTriangleStrip2DPositions() but with the index buffer expanded,
+       stored in reverse order and negative stride */
+    const UnsignedShort indices[]{0, 1, 2, 2, 1, 3};
+    const Vector2 positionsReversed[]{
+        {-1.0f,  1.0f},
+        {-1.0f, -1.0f},
+        { 1.0f,  1.0f},
+        { 1.0f, -1.0f}
+    };
+    MeshData original{MeshPrimitive::Triangles, {}, indices,
+        MeshIndexData{indices},
+        {}, positionsReversed, {
+            MeshAttributeData{MeshAttribute::Position, Containers::stridedArrayView(positionsReversed).flipped<0>()},
+        }
+    };
+    Containers::Optional<MeshData> optimized = converter->convert(original);
+
+    /* Same as in copyTriangleStrip2DPositions() */
+    CORRADE_VERIFY(optimized);
+    CORRADE_COMPARE(optimized->primitive(), MeshPrimitive::Triangles);
+    CORRADE_COMPARE(optimized->indexCount(), 6);
+    CORRADE_COMPARE(optimized->vertexCount(), original.vertexCount());
+    CORRADE_COMPARE(optimized->attributeCount(), original.attributeCount());
+    CORRADE_COMPARE(optimized->indexDataFlags(), DataFlag::Owned|DataFlag::Mutable);
+    CORRADE_COMPARE(optimized->vertexDataFlags(), DataFlag::Owned|DataFlag::Mutable);
+
+    CORRADE_COMPARE_AS(optimized->indices<UnsignedShort>(), Containers::arrayView<UnsignedShort>({
+        0, 1, 2, 2, 1, 3
+    }), TestSuite::Compare::Container);
+
+    /* Positions should get a positive stride */
+    CORRADE_COMPARE(optimized->attributeStride(MeshAttribute::Position), sizeof(Vector2));
+    CORRADE_COMPARE_AS(optimized->attribute<Vector2>(MeshAttribute::Position),
+        Containers::arrayView<Vector2>({
+            { 1.0f, -1.0f},
+            { 1.0f,  1.0f},
+            {-1.0f, -1.0f},
+            {-1.0f,  1.0f}
         }), TestSuite::Compare::Container);
 }
 

@@ -52,7 +52,7 @@ SceneConverterFeatures MeshOptimizerSceneConverter::doFeatures() const {
 namespace {
 
 template<class T> void analyze(const MeshData& mesh, const Utility::ConfigurationGroup& configuration, const UnsignedInt vertexSize, const Containers::StridedArrayView1D<const Vector3> positions, meshopt_VertexCacheStatistics& vertexCacheStats, meshopt_VertexFetchStatistics& vertexFetchStats, meshopt_OverdrawStatistics& overdrawStats) {
-    const auto indices = mesh.indices<T>();
+    const auto indices = mesh.indices<T>().asContiguous();
     vertexCacheStats = meshopt_analyzeVertexCache(indices.data(), mesh.indexCount(), mesh.vertexCount(), configuration.value<UnsignedInt>("analyzeCacheSize"), configuration.value<UnsignedInt>("analyzeWarpSize"), configuration.value<UnsignedInt>("analyzePrimitiveGroupSize"));
     if(vertexSize) vertexFetchStats = meshopt_analyzeVertexFetch(indices.data(), mesh.indexCount(), mesh.vertexCount(), vertexSize);
     if(positions) overdrawStats = meshopt_analyzeOverdraw(indices.data(), mesh.indexCount(), static_cast<const float*>(positions.data()), mesh.vertexCount(), positions.stride());
@@ -174,13 +174,13 @@ bool convertInPlaceInternal(const char* prefix, MeshData& mesh, const SceneConve
     /* Vertex cache optimization. Goes first. */
     if(configuration.value<bool>("optimizeVertexCache")) {
         if(mesh.indexType() == MeshIndexType::UnsignedInt) {
-            Containers::ArrayView<UnsignedInt> indices = mesh.mutableIndices<UnsignedInt>();
+            Containers::ArrayView<UnsignedInt> indices = mesh.mutableIndices<UnsignedInt>().asContiguous();
             meshopt_optimizeVertexCache(indices.data(), indices.data(), mesh.indexCount(), mesh.vertexCount());
         } else if(mesh.indexType() == MeshIndexType::UnsignedShort) {
-            Containers::ArrayView<UnsignedShort> indices = mesh.mutableIndices<UnsignedShort>();
+            Containers::ArrayView<UnsignedShort> indices = mesh.mutableIndices<UnsignedShort>().asContiguous();
             meshopt_optimizeVertexCache(indices.data(), indices.data(), mesh.indexCount(), mesh.vertexCount());
         } else if(mesh.indexType() == MeshIndexType::UnsignedByte) {
-            Containers::ArrayView<UnsignedByte> indices = mesh.mutableIndices<UnsignedByte>();
+            Containers::ArrayView<UnsignedByte> indices = mesh.mutableIndices<UnsignedByte>().asContiguous();
             meshopt_optimizeVertexCache(indices.data(), indices.data(), mesh.indexCount(), mesh.vertexCount());
         } else CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
     }
@@ -190,13 +190,13 @@ bool convertInPlaceInternal(const char* prefix, MeshData& mesh, const SceneConve
         const Float optimizeOverdrawThreshold = configuration.value<Float>("optimizeOverdrawThreshold");
 
         if(mesh.indexType() == MeshIndexType::UnsignedInt) {
-            Containers::ArrayView<UnsignedInt> indices = mesh.mutableIndices<UnsignedInt>();
+            Containers::ArrayView<UnsignedInt> indices = mesh.mutableIndices<UnsignedInt>().asContiguous();
             meshopt_optimizeOverdraw(indices.data(), indices.data(), mesh.indexCount(), static_cast<const Float*>(positions.data()), mesh.vertexCount(), positions.stride(), optimizeOverdrawThreshold);
         } else if(mesh.indexType() == MeshIndexType::UnsignedShort) {
-            Containers::ArrayView<UnsignedShort> indices = mesh.mutableIndices<UnsignedShort>();
+            Containers::ArrayView<UnsignedShort> indices = mesh.mutableIndices<UnsignedShort>().asContiguous();
             meshopt_optimizeOverdraw(indices.data(), indices.data(), mesh.indexCount(), static_cast<const Float*>(positions.data()), mesh.vertexCount(), positions.stride(), optimizeOverdrawThreshold);
         } else if(mesh.indexType() == MeshIndexType::UnsignedByte) {
-            Containers::ArrayView<UnsignedByte> indices = mesh.mutableIndices<UnsignedByte>();
+            Containers::ArrayView<UnsignedByte> indices = mesh.mutableIndices<UnsignedByte>().asContiguous();
             meshopt_optimizeOverdraw(indices.data(), indices.data(), mesh.indexCount(), static_cast<const Float*>(positions.data()), mesh.vertexCount(), positions.stride(), optimizeOverdrawThreshold);
         } else CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
     }
@@ -212,13 +212,13 @@ bool convertInPlaceInternal(const char* prefix, MeshData& mesh, const SceneConve
         Containers::StridedArrayView2D<char> interleavedData = MeshTools::interleavedMutableData(mesh);
 
         if(mesh.indexType() == MeshIndexType::UnsignedInt) {
-            Containers::ArrayView<UnsignedInt> indices = mesh.mutableIndices<UnsignedInt>();
+            Containers::ArrayView<UnsignedInt> indices = mesh.mutableIndices<UnsignedInt>().asContiguous();
             meshopt_optimizeVertexFetch(interleavedData.data(), indices.data(), mesh.indexCount(), interleavedData.data(), mesh.vertexCount(), interleavedData.stride()[0]);
         } else if(mesh.indexType() == MeshIndexType::UnsignedShort) {
-            Containers::ArrayView<UnsignedShort> indices = mesh.mutableIndices<UnsignedShort>();
+            Containers::ArrayView<UnsignedShort> indices = mesh.mutableIndices<UnsignedShort>().asContiguous();
             meshopt_optimizeVertexFetch(interleavedData.data(), indices.data(), mesh.indexCount(), interleavedData.data(), mesh.vertexCount(), interleavedData.stride()[0]);
         } else if(mesh.indexType() == MeshIndexType::UnsignedByte) {
-            Containers::ArrayView<UnsignedByte> indices = mesh.mutableIndices<UnsignedByte>();
+            Containers::ArrayView<UnsignedByte> indices = mesh.mutableIndices<UnsignedByte>().asContiguous();
             meshopt_optimizeVertexFetch(interleavedData.data(), indices.data(), mesh.indexCount(), interleavedData.data(), mesh.vertexCount(), interleavedData.stride()[0]);
         } else CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
     }
@@ -257,6 +257,20 @@ bool MeshOptimizerSceneConverter::doConvertInPlace(MeshData& mesh) {
         return false;
     }
 
+    /* Errors for non-indexed meshes and implementation-specific index buffers
+       are printed directly in convertInPlaceInternal() */
+    if(mesh.isIndexed()) {
+        if(isMeshIndexTypeImplementationSpecific(mesh.indexType())) {
+            Error{} << "Trade::MeshOptimizerSceneConverter::convertInPlace(): can't perform any operation on an implementation-specific index type" << reinterpret_cast<void*>(meshIndexTypeUnwrap(mesh.indexType()));
+            return false;
+        }
+
+        if(Short(meshIndexTypeSize(mesh.indexType())) != mesh.indexStride()) {
+            Error{} << "Trade::MeshOptimizerSceneConverter::convertInPlace(): in-place conversion is possible only with contiguous index buffers";
+            return false;
+        }
+    }
+
     meshopt_VertexCacheStatistics vertexCacheStatsBefore;
     meshopt_VertexFetchStatistics vertexFetchStatsBefore;
     meshopt_OverdrawStatistics overdrawStatsBefore;
@@ -273,9 +287,21 @@ bool MeshOptimizerSceneConverter::doConvertInPlace(MeshData& mesh) {
 }
 
 Containers::Optional<MeshData> MeshOptimizerSceneConverter::doConvert(const MeshData& mesh) {
-    /* Make the mesh interleaved and owned first */
+    /* If the mesh is indexed with an implementation-specific index type,
+       interleave() won't be able to turn its index buffer into a contiguous
+       one. So fail early if that's the case. The mesh doesn't necessarily have
+       to be indexed though -- it could be e.g. a triangle strip which we turn
+       into an indexed mesh right after. */
+    if(mesh.isIndexed() && isMeshIndexTypeImplementationSpecific(mesh.indexType())) {
+        Error{} << "Trade::MeshOptimizerSceneConverter::convert(): can't perform any operation on an implementation-specific index type" << reinterpret_cast<void*>(meshIndexTypeUnwrap(mesh.indexType()));
+        return {};
+    }
+
+    /* Make the mesh interleaved (with a contiguous index array) and owned
+       first */
     MeshData out = MeshTools::owned(MeshTools::interleave(mesh));
     CORRADE_INTERNAL_ASSERT(MeshTools::isInterleaved(out));
+    CORRADE_INTERNAL_ASSERT(!out.isIndexed() || out.indices().isContiguous());
 
     /* Convert to an indexed triangle mesh if we have a strip or a fan */
     if(out.primitive() == MeshPrimitive::TriangleStrip || out.primitive() == MeshPrimitive::TriangleFan) {
@@ -303,7 +329,7 @@ Containers::Optional<MeshData> MeshOptimizerSceneConverter::doConvert(const Mesh
         Containers::Array<UnsignedInt> inputIndicesStorage;
         Containers::ArrayView<const UnsignedInt> inputIndices;
         if(out.indexType() == MeshIndexType::UnsignedInt)
-            inputIndices = out.indices<UnsignedInt>();
+            inputIndices = out.indices<UnsignedInt>().asContiguous();
         else {
             inputIndicesStorage = out.indicesAsArray();
             inputIndices = inputIndicesStorage;
