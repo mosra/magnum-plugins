@@ -1279,7 +1279,10 @@ Containers::String customMaterialKey(Containers::StringView key, const aiTexture
             #define _f(type) case AssimpOptionalTextureType_ ## type <aiTextureType>::Value: \
                 keyExtra = #type ## _s;                                       \
                 break;
-            #ifdef _MSC_VER
+            #ifdef CORRADE_TARGET_GCC
+            #pragma GCC diagnostic push
+            #pragma GCC diagnostic ignored "-Wswitch"
+            #elif defined(CORRADE_TARGET_MSVC)
             #pragma warning(push)
             #pragma warning(disable: 4063) /* not a valid value for switch of enum 'aiTextureType' */
             #endif
@@ -1294,7 +1297,9 @@ Containers::String customMaterialKey(Containers::StringView key, const aiTexture
             _f(SHEEN)
             _f(CLEARCOAT)
             _f(TRANSMISSION)
-            #ifdef _MSC_VER
+            #ifdef CORRADE_TARGET_GCC
+            #pragma GCC diagnostic pop
+            #elif defined(CORRADE_TARGET_MSVC)
             #pragma warning(pop)
             #endif
             #undef _f
