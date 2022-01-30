@@ -400,7 +400,7 @@ BasisImageConverter::BasisImageConverter(PluginManager::AbstractManager& manager
 }
 
 ImageConverterFeatures BasisImageConverter::doFeatures() const {
-    return ImageConverterFeature::ConvertLevels2DToData | ImageConverterFeature::ConvertLevels3DToData;
+    return ImageConverterFeature::ConvertLevels2DToData|ImageConverterFeature::ConvertLevels3DToData;
 }
 
 Containers::Array<char> BasisImageConverter::doConvertToData(Containers::ArrayView<const ImageView2D> imageLevels) {
