@@ -322,9 +322,11 @@ fail.
     -   All numbers as @ref MaterialAttributeType::Float to avoid inconsistency
         with different glTF exporters. The only exception are texture indices
         and coordinate sets inside [textureInfo](https://www.khronos.org/registry/glTF/specs/2.0/glTF-2.0.html#reference-textureinfo)
-        objects.
-    -   Number arrays as @ref MaterialAttributeType::Vector2/
-        @ref MaterialAttributeType::Vector3/
+        objects, which get imported as @ref MaterialAttributeType::UnsignedInt,
+        consistently with types of builtin `*Texture` and `*TextureCoordinates`
+        @ref MaterialAttribute entries.
+    -   Number arrays as @ref MaterialAttributeType::Vector2 /
+        @ref MaterialAttributeType::Vector3 /
         @ref MaterialAttributeType::Vector4.
         Empty arrays, arrays of size 5 or higher as well as arrays containing
         anything that isn't a number are ignored.
@@ -333,16 +335,18 @@ fail.
         attributes are prefixed by the name of the object: e.g. if an extension
         has a `someTexture` property, the texture index, matrix, coordinate set
         and scale would be imported as `someTexture`, `someTextureMatrix`,
-        `someTextureCoordinates` and `someTextureScale`. Non-texture object
-        types are ignored.
+        `someTextureCoordinates` and `someTextureScale`, consistently with
+        builtin texture-related @ref MaterialAttribute names. Non-texture
+        object types are ignored.
     If you handle any of these custom material extensions, it may make sense
     to enable the @cb{.ini} ignoreRequiredExtensions @ce
     @ref Trade-CgltfImporter-configuration "configuration option".
 -   [Extras](https://www.khronos.org/registry/glTF/specs/2.0/glTF-2.0.html#reference-extras)
     metadata is imported into the base material layer. The `extras` attribute
-    must be an object. Type support is the same as for unrecognized material
-    extensions, except for [textureInfo](https://www.khronos.org/registry/glTF/specs/2.0/glTF-2.0.html#reference-textureinfo)
-    objects which are ignored.
+    must be an object, otherwise it's ignored with a warning. Type support is
+    the same as for unrecognized material extensions, except for [textureInfo](https://www.khronos.org/registry/glTF/specs/2.0/glTF-2.0.html#reference-textureinfo)
+    objects --- contrary to glTF material extensions, where sub-objects can be
+    assumed to contain texture info, the `extras` can contain just anything.
 -   If the on-by-default @cb{.ini} phongMaterialFallback @ce
     @ref Trade-CgltfImporter-configuration "configuration option" is
     enabled, the importer provides a Phong fallback for backwards
