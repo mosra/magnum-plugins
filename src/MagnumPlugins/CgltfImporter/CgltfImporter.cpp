@@ -2210,7 +2210,7 @@ std::string CgltfImporter::doMaterialName(const UnsignedInt id) {
 
 namespace {
 
-bool checkMaterialAttributeSize(Containers::StringView name, MaterialAttributeType type, const void* value = nullptr) {
+bool checkMaterialAttributeSize(const Containers::StringView name, const MaterialAttributeType type, const void* const value = nullptr) {
     std::size_t valueSize;
     if(type == MaterialAttributeType::String) {
         CORRADE_INTERNAL_ASSERT(value);
@@ -2229,7 +2229,7 @@ bool checkMaterialAttributeSize(Containers::StringView name, MaterialAttributeTy
     return true;
 }
 
-Containers::Optional<MaterialAttributeData> parseMaterialAttribute(Containers::StringView json, Containers::ArrayView<const jsmntok_t> tokens) {
+Containers::Optional<MaterialAttributeData> parseMaterialAttribute(const Containers::StringView json, const Containers::ArrayView<const jsmntok_t> tokens) {
     std::size_t tokenIndex = 0;
 
     CORRADE_INTERNAL_ASSERT(tokens[tokenIndex].type == JSMN_STRING);
@@ -2348,7 +2348,7 @@ Containers::Optional<MaterialAttributeData> parseMaterialAttribute(Containers::S
 
     CORRADE_INTERNAL_ASSERT(type != MaterialAttributeType{});
 
-    const void* valuePointer = type == MaterialAttributeType::String ?
+    const void* const valuePointer = type == MaterialAttributeType::String ?
         static_cast<const void*>(&attributeStringView) : static_cast<const void*>(attributeData);
     if(!checkMaterialAttributeSize(name, type, valuePointer))
         return Containers::NullOpt;
