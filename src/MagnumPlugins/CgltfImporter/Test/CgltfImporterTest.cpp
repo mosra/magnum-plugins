@@ -4149,7 +4149,6 @@ void CgltfImporterTest::materialRaw() {
 
     compareMaterials(*material, expected);
 
-
     CORRADE_COMPARE(out.str(),
         /* MAGNUM_material_forbidden_types. Attributes are sorted by name. */
         "Trade::CgltfImporter::material(): extension with an empty name, skipping\n"

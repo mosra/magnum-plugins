@@ -2328,8 +2328,7 @@ Containers::Optional<MaterialAttributeData> parseMaterialAttribute(const Contain
             bool& data = *reinterpret_cast<bool*>(attributeData);
             data = cgltf_json_to_bool(&tokens[start], reinterpret_cast<const uint8_t*>(json.data()));
 
-        } else
-            CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+        } else CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
 
     } else if(token.type == JSMN_STRING) {
         const Containers::StringView value = tokenString(json, token);
@@ -2341,10 +2340,8 @@ Containers::Optional<MaterialAttributeData> parseMaterialAttribute(const Contain
             attributeStringView = value;
         type = MaterialAttributeType::String;
 
-    } else {
-        /* JSMN_UNDEFINED, should never happen for valid JSON files */
-        CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
-    }
+    /* JSMN_UNDEFINED, should never happen for valid JSON files */
+    } else CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
 
     CORRADE_INTERNAL_ASSERT(type != MaterialAttributeType{});
 
@@ -2445,7 +2442,8 @@ Containers::Optional<MaterialData> CgltfImporter::doMaterial(const UnsignedInt i
     else if(material.alpha_mode == cgltf_alpha_mode_mask)
         arrayAppend(attributes, InPlaceInit, MaterialAttribute::AlphaMask, material.alpha_cutoff);
     else if(material.alpha_mode != cgltf_alpha_mode_opaque) {
-        /* This should never be reached, cgltf treats invalid alpha modes as opaque */
+        /* This should never be reached, cgltf treats invalid alpha modes as
+           opaque */
         CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
     }
 
@@ -2687,8 +2685,8 @@ Containers::Optional<MaterialData> CgltfImporter::doMaterial(const UnsignedInt i
             for(std::size_t i = 0; i + 1 < attributeTokens.size(); ++i) {
                 if(tokenString(json, tokens[attributeTokens[i]]) == tokenString(json, tokens[attributeTokens[i + 1]])) {
                     --numAttributes;
-                    /* We can use 0 as an invalid token to mark attributes to skip.
-                       Token 0 is always the extras object itself. */
+                    /* We can use 0 as an invalid token to mark attributes to
+                       skip. Token 0 is always the extras object itself. */
                     attributeTokens[i] = 0u;
                 }
             }
@@ -2703,8 +2701,7 @@ Containers::Optional<MaterialData> CgltfImporter::doMaterial(const UnsignedInt i
                     arrayAppend(attributes, *parsed);
             }
 
-        } else
-            Warning{} << "Trade::CgltfImporter::material(): extras property is not an object, skipping";
+        } else Warning{} << "Trade::CgltfImporter::material(): extras property is not an object, skipping";
     }
 
     /* Clear coat layer -- needs to be after all base material attributes */
@@ -2911,8 +2908,8 @@ Containers::Optional<MaterialData> CgltfImporter::doMaterial(const UnsignedInt i
         extensionOrder[i] = i;
 
     std::stable_sort(extensionOrder.begin(), extensionOrder.end(), [&](UnsignedInt a, UnsignedInt b) {
-            return std::strcmp(material.extensions[a].name, material.extensions[b].name) < 0;
-        });
+        return std::strcmp(material.extensions[a].name, material.extensions[b].name) < 0;
+    });
 
     /* Mark duplicates, those will be skipped later */
     for(std::size_t i = 0; i + 1 < extensionOrder.size(); ++i) {
