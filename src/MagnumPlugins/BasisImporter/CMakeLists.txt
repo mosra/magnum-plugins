@@ -70,6 +70,7 @@ target_link_libraries(BasisImporter
 # link the plugin to pthread. Can't do it directly in the Find module directly
 # for BasisUniversal::Transcoder for reasons described there.
 if(BasisUniversalZstd_DIR AND NOT CORRADE_TARGET_EMSCRIPTEN)
+    set(THREADS_PREFER_PTHREAD_FLAG TRUE)
     find_package(Threads REQUIRED)
     target_link_libraries(BasisImporter PRIVATE Threads::Threads)
 endif()

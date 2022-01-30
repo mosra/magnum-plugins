@@ -24,6 +24,7 @@
 #
 
 if(NOT CORRADE_TARGET_EMSCRIPTEN)
+    set(THREADS_PREFER_PTHREAD_FLAG TRUE)
     find_package(Threads REQUIRED)
 endif()
 

@@ -31,7 +31,16 @@ find_package(Magnum REQUIRED DebugTools)
 find_package(Magnum COMPONENTS AnyImageImporter)
 
 # See BasisImageConverter.h for details -- the plugin itself can't be linked to
-# pthread, the app has to be instead
+# pthread, the app has to be instead. As of 2022-01-28, the CI nondeprecated
+# (w/o asserts, Release) build started mysteriously failing unless
+# THREADS_PREFER_PTHREAD_FLAG is set, with -lpthread doing nothing and the test
+# then aborting due to pthread not being linked. The regular build works
+# properly, -lpthread linking everything. Didn't investigate further (could it
+# be due to the removed assertions which kinda implied pthread being needed or
+# some such?), might've been caused by some glibc update(?) that dropped some
+# old aspects of -lpthread which are assumed to not be used anymore AND YET
+# CMAKE STILL DEFAULTS TO THAT.
+set(THREADS_PREFER_PTHREAD_FLAG TRUE)
 find_package(Threads REQUIRED)
 
 if(CORRADE_TARGET_EMSCRIPTEN OR CORRADE_TARGET_ANDROID)

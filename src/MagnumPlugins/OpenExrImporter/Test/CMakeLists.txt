@@ -24,7 +24,11 @@
 #
 
 # See OpenExrImporter.h for details -- the plugin itself can't be linked to
-# pthread, the app has to be instead
+# pthread, the app has to be instead. As of 2022-01-28, the CI nondeprecated
+# (w/o asserts, Release) build started mysteriously failing unless
+# THREADS_PREFER_PTHREAD_FLAG is set, with -lpthread doing nothing. See
+# BasisImageConverter/Test/CMakeLists.txt for further details.
+set(THREADS_PREFER_PTHREAD_FLAG TRUE)
 find_package(Threads REQUIRED)
 
 if(CORRADE_TARGET_EMSCRIPTEN OR CORRADE_TARGET_ANDROID)
