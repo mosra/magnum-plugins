@@ -2210,6 +2210,8 @@ std::string CgltfImporter::doMaterialName(const UnsignedInt id) {
 
 namespace {
 
+/** @todo turn this into a helper API on MaterialAttributeData and then drop
+    from here and AssimpImporter */
 bool checkMaterialAttributeSize(const Containers::StringView name, const MaterialAttributeType type, const void* const value = nullptr) {
     std::size_t valueSize;
     if(type == MaterialAttributeType::String) {
