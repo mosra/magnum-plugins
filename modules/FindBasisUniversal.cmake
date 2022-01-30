@@ -96,14 +96,16 @@ macro(_basis_setup_source_file source)
     # ones which are hard to suppress on old GCCs (which have just -pedantic),
     # so simply give up and disable all.
     if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CORRADE_TARGET_EMSCRIPTEN)
-        set_property(SOURCE ${source} APPEND PROPERTY COMPILE_OPTIONS
-            -w)
+        # COMPILE_OPTIONS is supported on source files only since CMake 3.11
+        set_property(SOURCE ${source} APPEND_STRING PROPERTY COMPILE_FLAGS
+            " -w")
     # Clang supports -w, but it doesn't have any effect on all the
     # -Wall -Wold-style-cast etc flags specified before. -Wno-everything does.
     # Funnily enough this is not an issue on Emscripten.
     elseif(CMAKE_CXX_COMPILER_ID MATCHES "(Apple)?Clang" AND NOT CMAKE_CXX_SIMULATE_ID STREQUAL "MSVC")
-        set_property(SOURCE ${source} APPEND PROPERTY COMPILE_OPTIONS
-            -Wno-everything)
+        # COMPILE_OPTIONS is supported on source files only since CMake 3.11
+        set_property(SOURCE ${source} APPEND_STRING PROPERTY COMPILE_FLAGS
+            " -Wno-everything")
     endif()
 endmacro()
 
