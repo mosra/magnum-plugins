@@ -61,6 +61,7 @@ namespace Magnum {
     receive new features, among which is so far:
     -   [MSFT_texture_dds](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Vendor/MSFT_texture_dds/README.md)
     -   [KHR_texture_basisu](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_texture_basisu/README.md)
+    -   Import for arbitrary material extensions and `extra`s (see [mosra/magnum-plugins#117](https://github.com/mosra/magnum-plugins/pull/117))
 -   @ref Trade::TinyGltfImporter "TinyGltfImporter" material import was
     reworked for the new @ref Trade::MaterialData API, supporting all core
     properties as well as everything from the
@@ -87,9 +88,10 @@ namespace Magnum {
     plugins were updated to Basis 1.15 with UASTC and KTX2 support, in addition
     it's now also possible to supply custom mip levels, sRGB formats get
     properly recognized both on import and during conversion, and array and
-    cubemap are supported as well (see
+    cubemap images are supported as well (see
     [mosra/magnum-plugins#86](https://github.com/mosra/magnum-plugins/issues/86),
-    [mosra/magnum-plugins#112](https://github.com/mosra/magnum-plugins/pull/112))
+    [mosra/magnum-plugins#112](https://github.com/mosra/magnum-plugins/pull/112),
+    [mosra/magnum-plugins#118](https://github.com/mosra/magnum-plugins/pull/118))
 
 @subsection changelog-plugins-latest-changes Changes and improvements
 
