@@ -3049,18 +3049,15 @@ Containers::Optional<MaterialData> CgltfImporter::doMaterial(const UnsignedInt i
             }
         }
 
-        /* Only add a layer if the extension contains any attributes */
-        if(!extensionAttributes.empty()) {
-            /* Uppercase layer names are reserved. Since all extension names
-               start with an uppercase vendor identifier, making the first
-               character lowercase seems silly, so we use a unique prefix. */
-            Containers::String layerName{NoInit, extensionName.size() + 1};
-            Utility::formatInto(layerName, "#{}", extensionName);
+        /* Uppercase layer names are reserved. Since all extension names start
+           with an uppercase vendor identifier, making the first character
+           lowercase seems silly, so we use a unique prefix. */
+        Containers::String layerName{NoInit, extensionName.size() + 1};
+        Utility::formatInto(layerName, "#{}", extensionName);
 
-            arrayAppend(layers, UnsignedInt(attributes.size()));
-            arrayAppend(attributes, InPlaceInit, MaterialAttribute::LayerName, layerName);
-            arrayAppend(attributes, Containers::arrayView<const MaterialAttributeData>(extensionAttributes));
-        }
+        arrayAppend(layers, UnsignedInt(attributes.size()));
+        arrayAppend(attributes, InPlaceInit, MaterialAttribute::LayerName, layerName);
+        arrayAppend(attributes, Containers::arrayView<const MaterialAttributeData>(extensionAttributes));
     }
 
     /* If there's any layer, add the final attribute count */

@@ -4112,6 +4112,10 @@ void CgltfImporterTest::materialRaw() {
         {MaterialAttribute::LayerFactor, 0.5f},
         {MaterialAttribute::Roughness, 0.0f},
 
+        /* All attributes in this extension have invalid types or are too
+           large, and hence are skipped */
+        {Trade::MaterialAttribute::LayerName, "#MAGNUM_material_forbidden_types"_s},
+
         /* Unknown extension with a textureInfo object */
         {Trade::MaterialAttribute::LayerName, "#MAGNUM_material_snake"_s},
         {"snakeFactor"_s, 6.6f},
@@ -4141,11 +4145,13 @@ void CgltfImporterTest::materialRaw() {
         {"vec2"_s, Vector2{9.0f, 8.0f}},
         {"vec3"_s, Vector3{9.0f, 0.08f, 7.3141f}},
         {"vec4"_s, Vector4{-9.0f, 8.0f, 7.0f, -6.0f}},
-        {"duplicate"_s, true}
+        {"duplicate"_s, true},
 
-        /* No layer for MAGNUM_material_forbidden_types because all attributes
-           have invalid types or are too large, and hence are skipped */
-    }, {3, 6, 13, 28}};
+        /* Empty extensions are preserved -- this is mainly for use cases like
+           KHR_materials_unlit, where just the presence of the extension alone
+           affects material properties */
+        {Trade::MaterialAttribute::LayerName, "#VENDOR_empty_extension_object"_s},
+    }, {3, 6, 7, 14, 29, 30}};
 
     compareMaterials(*material, expected);
 
