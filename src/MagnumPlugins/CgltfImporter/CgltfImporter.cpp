@@ -712,7 +712,7 @@ void CgltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags d
 
     /* Treat meshes with multiple primitives as separate meshes. Each mesh gets
        duplicated as many times as is the size of the primitives array. */
-    Containers::arrayReserve(_d->meshMap, _d->data->meshes_count);
+    arrayReserve(_d->meshMap, _d->data->meshes_count);
     _d->meshSizeOffsets = Containers::Array<std::size_t>{_d->data->meshes_count + 1};
 
     _d->meshSizeOffsets[0] = 0;
@@ -727,7 +727,7 @@ void CgltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags d
 
     /* In order to support multi-primitive meshes, we need to duplicate the
        nodes as well */
-    Containers::arrayReserve(_d->nodeMap, _d->data->nodes_count);
+    arrayReserve(_d->nodeMap, _d->data->nodes_count);
     _d->nodeSizeOffsets = Containers::Array<std::size_t>{_d->data->nodes_count + 1};
 
     _d->nodeSizeOffsets[0] = 0;
@@ -2668,11 +2668,11 @@ Containers::Optional<MaterialData> CgltfImporter::doMaterial(const UnsignedInt i
 
             UnsignedInt numAttributes = tokens[0].size;
             Containers::Array<UnsignedInt> attributeTokens;
-            Containers::arrayReserve(attributeTokens, numAttributes);
+            arrayReserve(attributeTokens, numAttributes);
             for(UnsignedInt t = 1; t + 1 < tokens.size();) {
                 /* This is checked by jsmn */
                 CORRADE_INTERNAL_ASSERT(tokens[t].type == JSMN_STRING && tokens[t].size == 1);
-                Containers::arrayAppend(attributeTokens, InPlaceInit, t);
+                arrayAppend(attributeTokens, InPlaceInit, t);
                 t = skipJson(tokens, t + 1);
             }
 
@@ -2693,14 +2693,14 @@ Containers::Optional<MaterialData> CgltfImporter::doMaterial(const UnsignedInt i
                 }
             }
 
-            Containers::arrayReserve(attributes, attributes.size() + numAttributes);
+            arrayReserve(attributes, attributes.size() + numAttributes);
             for(UnsignedInt tokenIndex: attributeTokens) {
                 if(tokenIndex == 0u) continue;
 
                 const Containers::Optional<MaterialAttributeData> parsed = parseMaterialAttribute(
                     json, tokens.suffix(tokenIndex));
                 if(parsed)
-                    Containers::arrayAppend(attributes, *parsed);
+                    arrayAppend(attributes, *parsed);
             }
 
         } else
@@ -2951,11 +2951,11 @@ Containers::Optional<MaterialData> CgltfImporter::doMaterial(const UnsignedInt i
 
         UnsignedInt numAttributes = tokens[0].size;
         Containers::Array<UnsignedInt> attributeTokens;
-        Containers::arrayReserve(attributeTokens, numAttributes);
+        arrayReserve(attributeTokens, numAttributes);
         for(UnsignedInt t = 1; t + 1 < tokens.size();) {
             /* This is checked by jsmn */
             CORRADE_INTERNAL_ASSERT(tokens[t].type == JSMN_STRING && tokens[t].size == 1);
-            Containers::arrayAppend(attributeTokens, InPlaceInit, t);
+            arrayAppend(attributeTokens, InPlaceInit, t);
             t = skipJson(tokens, t + 1);
         }
 
@@ -2974,7 +2974,7 @@ Containers::Optional<MaterialData> CgltfImporter::doMaterial(const UnsignedInt i
         }
 
         Containers::Array<MaterialAttributeData> extensionAttributes;
-        Containers::arrayReserve(extensionAttributes, numAttributes);
+        arrayReserve(extensionAttributes, numAttributes);
         for(UnsignedInt tokenIndex: attributeTokens) {
             if(tokenIndex == 0u) continue;
 
@@ -3046,7 +3046,7 @@ Containers::Optional<MaterialData> CgltfImporter::doMaterial(const UnsignedInt i
                 const Containers::Optional<MaterialAttributeData> parsed = parseMaterialAttribute(
                     json, tokens.suffix(tokenIndex));
                 if(parsed)
-                    Containers::arrayAppend(extensionAttributes, *parsed);
+                    arrayAppend(extensionAttributes, *parsed);
             }
         }
 
