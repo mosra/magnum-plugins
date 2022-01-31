@@ -122,6 +122,13 @@ add_subdirectory(magnum-plugins EXCLUDE_FROM_ALL)
 add_dependencies(your-app MagnumPlugins::BasisImageConverter)
 @endcode
 
+When compiling Basis from source with `BASIS_UNIVERSAL_DIR`, Basis will be
+built with OpenCL support if the [OpenCL package](https://cmake.org/cmake/help/v3.1/module/FindOpenCL.html)
+is found. To build Basis without a hard dependency on OpenCL, pass
+`-DCMAKE_DISABLE_FIND_PACKAGE_OpenCL=ON` to CMake, or  @cmake set() @ce it
+before the @cmake add_subdirectory() @ce call if  using Magnum Plugins as a
+subproject.
+
 To use as a static plugin or as a dependency of another plugin with CMake, put
 [FindMagnumPlugins.cmake](https://github.com/mosra/magnum-plugins/blob/master/modules/FindMagnumPlugins.cmake)
 and [FindBasisUniversal.cmake](https://github.com/mosra/magnum-plugins/blob/master/modules/FindBasisUniversal.cmake)
@@ -267,6 +274,16 @@ class MAGNUM_BASISIMAGECONVERTER_EXPORT BasisImageConverter: public AbstractImag
          * @see @ref Trade-BasisImageConverter-behavior-multithreading
          */
         static void initialize();
+
+        /**
+         * @brief Finalize Basis encoder
+         * @m_since_latest
+         *
+         * If the class is instantiated directly (not through a plugin
+         * manager), this function has to be called explicitly after
+         * destroying the last instance.
+         */
+        static void finalize();
 
         /**
          * @brief Default constructor

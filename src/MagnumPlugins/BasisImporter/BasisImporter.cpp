@@ -137,8 +137,11 @@ template<> struct ConfigurationValue<Magnum::Trade::BasisImporter::TargetFormat>
 namespace Magnum { namespace Trade {
 
 struct BasisImporter::State {
+    /* Basis 1.16 got rid of global selector palettes */
+    #if BASISD_LIB_VERSION < 116
     /* There is only this type of codebook */
     basist::etc1_global_selector_codebook codebook;
+    #endif
 
     /* One transcoder for each supported file type, and of course they have
        wildly different interfaces. ktx2_transcoder is only defined if
@@ -172,8 +175,11 @@ struct BasisImporter::State {
     bool noTranscodeFormatWarningPrinted = false;
     bool yFlipNotPossibleWarningPrinted = false;
 
-    explicit State(): codebook(basist::g_global_selector_cb_size,
-        basist::g_global_selector_cb) {}
+    explicit State()
+    #if BASISD_LIB_VERSION < 116
+        : codebook(basist::g_global_selector_cb_size, basist::g_global_selector_cb)
+    #endif
+    {}
 };
 
 void BasisImporter::initialize() {
@@ -267,7 +273,11 @@ void BasisImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFla
 
     #if BASISD_SUPPORT_KTX2
     if(isKTX2) {
-        state->ktx2Transcoder.emplace(&state->codebook);
+        state->ktx2Transcoder.emplace(
+            #if BASISD_LIB_VERSION < 116
+            &state->codebook
+            #endif
+        );
 
         /* init() handles all the validation checks, there's no extra function
            for that */
@@ -340,7 +350,11 @@ void BasisImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFla
     #endif
     {
         /* .basis file */
-        state->basisTranscoder.emplace(&state->codebook);
+        state->basisTranscoder.emplace(
+            #if BASISD_LIB_VERSION < 116
+            &state->codebook
+            #endif
+        );
 
         if(!state->basisTranscoder->validate_header(state->in.data(), state->in.size())) {
             Error{} << "Trade::BasisImporter::openData(): invalid basis header";

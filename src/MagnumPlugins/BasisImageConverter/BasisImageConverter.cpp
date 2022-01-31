@@ -46,6 +46,9 @@
 #include <basisu_enc.h>
 #include <basisu_comp.h>
 #include <basisu_file_headers.h>
+#if BASISU_LIB_VERSION >= 116
+#include <basisu_opencl.h>
+#endif
 
 namespace Magnum { namespace Trade {
 
@@ -139,7 +142,11 @@ template<UnsignedInt dimensions> Containers::Optional<Containers::Array<char>> c
     PARAM_CONFIG(quality_level, int);
     PARAM_CONFIG(perceptual, bool);
     PARAM_CONFIG(debug, bool);
+    #if BASISU_LIB_VERSION >= 116
+    PARAM_CONFIG_FIX_NAME(validate_etc1s, bool, "validate");
+    #else
     PARAM_CONFIG(validate, bool);
+    #endif
     PARAM_CONFIG(debug_images, bool);
     PARAM_CONFIG(compute_stats, bool);
     PARAM_CONFIG(compression_level, int);
@@ -242,6 +249,16 @@ template<UnsignedInt dimensions> Containers::Optional<Containers::Array<char>> c
     basist::ktx2_transcoder::key_value& keyValue = *params.m_ktx2_key_values.enlarge(1);
     keyValue.m_key.append(reinterpret_cast<const uint8_t*>(OrientationKey), sizeof(OrientationKey));
     keyValue.m_key.append(reinterpret_cast<const uint8_t*>(orientationValue), sizeof(orientationValue));
+
+    /* OpenCL */
+    #if BASISU_LIB_VERSION >= 116
+    PARAM_CONFIG(use_opencl, bool);
+
+    if(params.m_use_opencl && !basisu::opencl_is_available()) {
+        Warning{} << "Trade::BasisImageConverter::convertToData(): OpenCL not supported, falling back to CPU encoding";
+        params.m_use_opencl = false;
+    }
+    #endif
 
     /* Set various fields in the Basis file header */
     PARAM_CONFIG(userdata0, int);
@@ -359,6 +376,9 @@ template<UnsignedInt dimensions> Containers::Optional<Containers::Array<char>> c
             /* process() will have printed additional error information to stderr */
             Error{} << "Trade::BasisImageConverter::convertToData(): frontend processing failed";
             return {};
+        case basisu::basis_compressor::error_code::cECFailedFontendExtract:
+            Error{} << "Trade::BasisImageConverter::convertToData(): frontend extraction failed";
+            return {};
         case basisu::basis_compressor::error_code::cECFailedBackend:
             Error{} << "Trade::BasisImageConverter::convertToData(): encoding failed";
             return {};
@@ -374,14 +394,26 @@ template<UnsignedInt dimensions> Containers::Optional<Containers::Array<char>> c
             return {};
 
         /* LCOV_EXCL_START */
-        case basisu::basis_compressor::error_code::cECFailedFontendExtract:
-            /* This error will actually never be raised from basis_universal code */
+        #if BASISU_LIB_VERSION >= 116
+        case basisu::basis_compressor::error_code::cECFailedInitializing:
+            /* This error is returned by the parallel compression API if
+               basis_compressor::init() returns false */
+        #endif
         case basisu::basis_compressor::error_code::cECFailedWritingOutput:
             /* We do not write any files, just data */
         default:
             CORRADE_INTERNAL_ASSERT_UNREACHABLE();
         /* LCOV_EXCL_STOP */
     }
+
+    #if BASISU_LIB_VERSION >= 116
+    /* If OpenCL fails at any stage of encoding, Basis falls back to encoding
+       on the CPU. It also spams stderr but printing to Warning is still useful
+       for anyone parsing or redirecting it. */
+    if(params.m_use_opencl && basis.get_opencl_failed()) {
+        Warning{} << "Trade::BasisImageConverter::convertToData(): OpenCL encoding failed, fell back to CPU encoding";
+    }
+    #endif
 
     const basisu::uint8_vec& out = params.m_create_ktx2_file ? basis.get_output_ktx2_file() : basis.get_output_basis_file();
 
@@ -408,7 +440,17 @@ template<UnsignedInt dimensions> Containers::Optional<Containers::Array<char>> c
 }
 
 void BasisImageConverter::initialize() {
+    #if BASISU_LIB_VERSION >= 116
+    basisu::basisu_encoder_init(true);
+    #else
     basisu::basisu_encoder_init();
+    #endif
+}
+
+void BasisImageConverter::finalize() {
+    #if BASISU_LIB_VERSION >= 116
+    basisu::basisu_encoder_deinit();
+    #endif
 }
 
 BasisImageConverter::BasisImageConverter(Format format): _format{format} {

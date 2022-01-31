@@ -87,6 +87,8 @@ macro(_basis_setup_source_file source)
 
     # Basis shouldn't override the MSVC iterator debug level as it would make
     # it inconsistent with the rest of the code
+    # Only needed until 1.15, in later versions this doesn't do
+    # anything anymore.
     if(CORRADE_TARGET_WINDOWS)
         set_property(SOURCE ${source} APPEND PROPERTY COMPILE_DEFINITIONS
             BASISU_NO_ITERATOR_DEBUG_LEVEL)
@@ -161,8 +163,6 @@ foreach(_component ${BasisUniversal_FIND_COMPONENTS})
                 # Alternatively, look into creating stubs for the library
                 # functions used by basis_universal.
                 set(BasisUniversalEncoder_SOURCES
-                    ${BasisUniversalEncoder_DIR}/apg_bmp.c
-                    ${BasisUniversalEncoder_DIR}/basisu_astc_decomp.cpp
                     ${BasisUniversalEncoder_DIR}/basisu_backend.cpp
                     ${BasisUniversalEncoder_DIR}/basisu_basis_file.cpp
                     ${BasisUniversalEncoder_DIR}/basisu_bc7enc.cpp
@@ -170,7 +170,6 @@ foreach(_component ${BasisUniversal_FIND_COMPONENTS})
                     ${BasisUniversalEncoder_DIR}/basisu_enc.cpp
                     ${BasisUniversalEncoder_DIR}/basisu_etc.cpp
                     ${BasisUniversalEncoder_DIR}/basisu_frontend.cpp
-                    ${BasisUniversalEncoder_DIR}/basisu_global_selector_palette_helpers.cpp
                     ${BasisUniversalEncoder_DIR}/basisu_gpu_texture.cpp
                     ${BasisUniversalEncoder_DIR}/basisu_kernels_sse.cpp
                     ${BasisUniversalEncoder_DIR}/basisu_pvrtc1_4.cpp
@@ -178,12 +177,44 @@ foreach(_component ${BasisUniversal_FIND_COMPONENTS})
                     ${BasisUniversalEncoder_DIR}/basisu_resample_filters.cpp
                     ${BasisUniversalEncoder_DIR}/basisu_ssim.cpp
                     ${BasisUniversalEncoder_DIR}/basisu_uastc_enc.cpp
-                    ${BasisUniversalEncoder_DIR}/jpgd.cpp
-                    ${BasisUniversalEncoder_DIR}/lodepng.cpp)
+                    ${BasisUniversalEncoder_DIR}/jpgd.cpp)
+
+                # Files not present in all supported basis versions, treat them
+                # as optional and do nothing if not found.
+                foreach(_file
+                    # Removed in 1.16
+                    apg_bmp.c
+                    basisu_astc_decomp.cpp
+                    basisu_global_selector_palette_helpers.cpp
+                    lodepng.cpp
+                    # Added in 1.16
+                    basisu_opencl.cpp
+                    pvpngreader.cpp)
+                    # Disable the find root path here, it overrides the
+                    # CMAKE_FIND_ROOT_PATH_MODE_INCLUDE setting potentially set in
+                    # toolchains.
+                    find_file(BasisUniversalEncoder_${_file}_SOURCE NAMES ${_file}
+                        HINTS ${BasisUniversalEncoder_DIR} NO_CMAKE_FIND_ROOT_PATH)
+
+                    if(BasisUniversalEncoder_${_file}_SOURCE)
+                        list(APPEND BasisUniversalEncoder_SOURCES
+                            ${BasisUniversalEncoder_${_file}_SOURCE})
+                    endif()
+                endforeach()
 
                 foreach(_file ${BasisUniversalEncoder_SOURCES})
                     _basis_setup_source_file(${_file})
                 endforeach()
+
+                set(BasisUniversalEncoder_DEFINITIONS "BASISU_NO_ITERATOR_DEBUG_LEVEL")
+
+                # Try to find an external OpenCL library and enable support for
+                # it in basis if found.
+                find_package(OpenCL)
+                if(OpenCL_FOUND)
+                    list(APPEND BasisUniversalEncoder_DEFINITIONS
+                        "BASISU_SUPPORT_OPENCL=1")
+                endif()
 
                 # Disable the find root path here, it overrides the
                 # CMAKE_FIND_ROOT_PATH_MODE_INCLUDE setting potentially set in
@@ -197,7 +228,15 @@ foreach(_component ${BasisUniversal_FIND_COMPONENTS})
                 set_property(TARGET BasisUniversal::Encoder APPEND PROPERTY
                     INTERFACE_INCLUDE_DIRECTORIES ${BasisUniversalEncoder_INCLUDE_DIR})
                 set_property(TARGET BasisUniversal::Encoder APPEND PROPERTY
+                    INTERFACE_COMPILE_DEFINITIONS ${BasisUniversalEncoder_DEFINITIONS})
+                set_property(TARGET BasisUniversal::Encoder APPEND PROPERTY
                     INTERFACE_SOURCES "${BasisUniversalEncoder_SOURCES}")
+                if(OpenCL_FOUND)
+                    set_property(TARGET BasisUniversal::Encoder APPEND PROPERTY
+                        INTERFACE_INCLUDE_DIRECTORIES ${OpenCL_INCLUDE_DIRS})
+                    set_property(TARGET BasisUniversal::Encoder APPEND PROPERTY
+                        INTERFACE_LINK_LIBRARIES ${OpenCL_LIBRARIES})
+                endif()
                 # Explicitly *not* linking this to Threads::Threads because
                 # when done like that, std::thread creation will die on a null
                 # function pointer call (inside __gthread_create, which weakly
@@ -214,8 +253,6 @@ foreach(_component ${BasisUniversal_FIND_COMPONENTS})
                 # itself.
                 set_property(TARGET BasisUniversal::Encoder APPEND PROPERTY
                     INTERFACE_LINK_LIBRARIES BasisUniversal::Transcoder)
-                set_property(TARGET BasisUniversal::Encoder APPEND PROPERTY
-                    INTERFACE_COMPILE_DEFINITIONS "BASISU_NO_ITERATOR_DEBUG_LEVEL")
             endif()
         else()
             set(BasisUniversal_Encoder_FOUND TRUE)
