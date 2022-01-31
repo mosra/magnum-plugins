@@ -269,6 +269,16 @@ class MAGNUM_BASISIMAGECONVERTER_EXPORT BasisImageConverter: public AbstractImag
         static void initialize();
 
         /**
+         * @brief Finalize Basis encoder
+         * @m_since_latest
+         *
+         * If the class is instantiated directly (not through a plugin
+         * manager), this function has to be called explicitly after
+         * destroying the last instance.
+         */
+        static void finalize();
+
+        /**
          * @brief Default constructor
          *
          * The converter outputs files in format defined by @ref Format.
