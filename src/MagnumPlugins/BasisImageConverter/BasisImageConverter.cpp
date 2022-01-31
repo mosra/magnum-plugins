@@ -192,14 +192,6 @@ template<UnsignedInt dimensions> Containers::Array<char> convertLevelsToData(Con
     PARAM_CONFIG(no_endpoint_rdo, bool);
     PARAM_CONFIG_FIX_NAME(endpoint_rdo_thresh, float, "endpoint_rdo_threshold");
 
-    /* Hierarchical virtual selector codebook options */
-    PARAM_CONFIG_FIX_NAME(global_sel_pal, bool, "global_selector_palette");
-    PARAM_CONFIG_FIX_NAME(auto_global_sel_pal, bool, "auto_global_selector_palette");
-    PARAM_CONFIG_FIX_NAME(no_hybrid_sel_cb, bool, "no_hybrid_selector_codebook");
-    PARAM_CONFIG_FIX_NAME(global_pal_bits, int, "global_palette_bits");
-    PARAM_CONFIG_FIX_NAME(global_mod_bits, int, "global_modifier_bits");
-    PARAM_CONFIG_FIX_NAME(hybrid_sel_cb_quality_thresh, float, "hybrid_sel_codebook_quality_threshold");
-
     /* UASTC options */
     PARAM_CONFIG(uastc, bool);
     params.m_pack_uastc_flags = configuration.value<Int>("pack_uastc_level");
@@ -248,10 +240,6 @@ template<UnsignedInt dimensions> Containers::Array<char> convertLevelsToData(Con
        filesystem and then writes basis files there also. DO NOT WANT. */
     params.m_read_source_images = false;
     params.m_write_output_basis_files = false;
-
-    const basist::etc1_global_selector_codebook sel_codebook(basist::g_global_selector_cb_size, basist::g_global_selector_cb);
-    params.m_pSel_codebook = &sel_codebook;
-
     /* One image per slice. The base mip is in m_source_images, mip 1 and
        higher go into m_source_mipmap_images. */
     const UnsignedInt numImages = Vector3i::pad(baseSize, 1).z();
