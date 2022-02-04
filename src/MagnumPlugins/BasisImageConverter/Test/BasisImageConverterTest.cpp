@@ -73,6 +73,8 @@ struct BasisImageConverterTest: TestSuite::Tester {
     void convert2DRgba();
     void convert2DMipmaps();
 
+    void convertUastcPatchAwaySrgb();
+
     void convert2DArray();
     void convert2DArrayOneLayer();
     void convert2DArrayMipmaps();
@@ -132,6 +134,55 @@ constexpr struct {
     {"Unorm UASTC", true, TransferFunction::Linear},
     {"Srgb ETC1S", false, TransferFunction::Srgb},
     {"Srgb UASTC", true, TransferFunction::Srgb}
+};
+
+const struct {
+    const char* name;
+    const char* pluginName;
+    PixelFormat format;
+    const char* perceptual;
+    bool uastc;
+    bool verbose;
+    PixelFormat expected;
+    const char* message;
+} ConvertUastcPatchAwaySrgbData[]{
+    /* Basis container has sRGB always set for UASTC, needs patching away if
+       linear is desired either via a format or via a flag */
+    {"Unorm ETC1S Basis", "BasisImageConverter",
+        PixelFormat::RGBA8Unorm, "", false, true, PixelFormat::RGBA8Unorm,
+        ""},
+    {"Unorm ETC1S Basis, perceptual=true", "BasisImageConverter",
+        PixelFormat::RGBA8Unorm, "true", false, true, PixelFormat::RGBA8Srgb,
+        ""},
+    {"Unorm UASTC Basis, quiet", "BasisImageConverter",
+        PixelFormat::RGBA8Unorm, "", true, false, PixelFormat::RGBA8Unorm,
+        ""},
+    {"Unorm UASTC Basis", "BasisImageConverter",
+        PixelFormat::RGBA8Unorm, "", true, true, PixelFormat::RGBA8Unorm,
+        "Trade::BasisImageConverter::convertToData(): patching away an incorrect sRGB flag in the output Basis file\n"},
+    {"Unorm UASTC Basis, perceptual=true", "BasisImageConverter",
+        PixelFormat::RGBA8Unorm, "true", true, true, PixelFormat::RGBA8Srgb,
+        ""},
+    {"Srgb ETC1S Basis", "BasisImageConverter",
+        PixelFormat::RGBA8Srgb, "", false, true, PixelFormat::RGBA8Srgb,
+        ""},
+    {"Srgb ETC1S Basis, perceptual=false", "BasisImageConverter",
+        PixelFormat::RGBA8Srgb, "false", false, true, PixelFormat::RGBA8Unorm,
+        ""},
+    {"Srgb UASTC Basis", "BasisImageConverter",
+        PixelFormat::RGBA8Srgb, "", true, true, PixelFormat::RGBA8Srgb,
+        ""},
+    {"Srgb UASTC Basis, perceptual=false", "BasisImageConverter",
+        PixelFormat::RGBA8Srgb, "false", true, true, PixelFormat::RGBA8Unorm,
+        "Trade::BasisImageConverter::convertToData(): patching away an incorrect sRGB flag in the output Basis file\n"},
+
+    /* The KTX container doesn't suffer from this problem */
+    {"Unorm UASTC KTX2", "BasisKtxImageConverter",
+        PixelFormat::RGBA8Unorm, "", true, true, PixelFormat::RGBA8Unorm,
+        ""},
+    {"Srgb UASTC KTX2, perceptual=false", "BasisKtxImageConverter",
+        PixelFormat::RGBA8Srgb, "false", true, true, PixelFormat::RGBA8Unorm,
+        ""},
 };
 
 constexpr struct {
@@ -208,6 +259,9 @@ BasisImageConverterTest::BasisImageConverterTest() {
                        &BasisImageConverterTest::convert2DRgb,
                        &BasisImageConverterTest::convert2DRgba},
         Containers::arraySize(EncodingFormatTransferFunctionData));
+
+    addInstancedTests({&BasisImageConverterTest::convertUastcPatchAwaySrgb},
+        Containers::arraySize(ConvertUastcPatchAwaySrgbData));
 
     addTests({&BasisImageConverterTest::convert2DMipmaps,
 
@@ -656,6 +710,37 @@ void BasisImageConverterTest::convert2DRgba() {
         Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-63x27.png"),
         /* There are moderately significant compression artifacts */
         (DebugTools::CompareImageToFile{_manager, 97.25f, 8.547f}));
+}
+
+void BasisImageConverterTest::convertUastcPatchAwaySrgb() {
+    auto&& data = ConvertUastcPatchAwaySrgbData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate(data.pluginName);
+    if(data.verbose) converter->addFlags(ImageConverterFlag::Verbose);
+    converter->configuration().setValue("uastc", data.uastc);
+    converter->configuration().setValue("perceptual", data.perceptual);
+
+    const char imageData[4*4*4]{};
+
+    std::ostringstream out;
+    Containers::Array<char> compressedData;
+    {
+        Debug redirectOutput{&out};
+        compressedData = converter->convertToData(ImageView2D{data.format, {4, 4}, Containers::arrayView(imageData)});
+        CORRADE_VERIFY(compressedData);
+    }
+
+    if(_manager.loadState("BasisImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("BasisImporter plugin not found, cannot test");
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporterRGBA8");
+    CORRADE_VERIFY(importer->openData(compressedData));
+    Containers::Optional<ImageData2D> image = importer->image2D(0);
+    CORRADE_VERIFY(image);
+    CORRADE_VERIFY(!image->isCompressed());
+    CORRADE_COMPARE(image->format(), data.expected);
+    CORRADE_COMPARE(out.str(), data.message);
 }
 
 void BasisImageConverterTest::convert2DMipmaps() {

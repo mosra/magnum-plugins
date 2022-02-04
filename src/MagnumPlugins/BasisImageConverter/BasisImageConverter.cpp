@@ -370,6 +370,19 @@ template<UnsignedInt dimensions> Containers::Array<char> convertLevelsToData(Con
     Containers::Array<char> fileData{NoInit, out.size()};
     Utility::copy(Containers::arrayCast<const char>(Containers::arrayView(out.data(), out.size())), fileData);
 
+    /* UASTC output in a Basis container has the sRGB flag set always, patch it
+       away if the data is not sRGB. Doesn't happen with ETC1S and doesn't
+       happen with the KTX container either. */
+    if(!params.m_create_ktx2_file) {
+        auto& header = *reinterpret_cast<basist::basis_file_header*>(fileData.data());
+        if(!params.m_perceptual && (header.m_flags & basist::basis_header_flags::cBASISHeaderFlagSRGB)) {
+            if(flags & ImageConverterFlag::Verbose) Debug{} <<
+                "Trade::BasisImageConverter::convertToData(): patching away an incorrect sRGB flag in the output Basis file";
+            header.m_flags = header.m_flags & ~basist::basis_header_flags::cBASISHeaderFlagSRGB;
+            header.m_header_crc16 = basist::crc16(&header.m_data_size, sizeof(basist::basis_file_header) - offsetof(basist::basis_file_header, m_data_size), 0);
+        }
+    }
+
     return fileData;
 }
 
