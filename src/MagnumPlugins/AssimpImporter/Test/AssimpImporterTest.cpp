@@ -402,11 +402,11 @@ void AssimpImporterTest::openData() {
 }
 
 void AssimpImporterTest::openDataFailed() {
-    /* With Assimp 5.1.0 this fires an assert in <vector> because Assimp tries
-       to load *anything* with X3DImporter and it doesn't perform any checks:
+    /* This fired an assert in <vector> because Assimp tried to load *anything*
+       with X3DImporter and it didn't perform any checks:
        https://github.com/assimp/assimp/issues/4177 */
-    if(_assimpVersion >= 510 && aiGetImporterDesc("x3d"))
-        CORRADE_SKIP("Current version of assimp would assert on this test.");
+    if(_assimpVersion >= 510 && _assimpVersion < 513 && aiGetImporterDesc("x3d"))
+        CORRADE_SKIP("Assimp 5.1.0 to 5.1.2 would assert on this test.");
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
 
