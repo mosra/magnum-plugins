@@ -108,29 +108,33 @@ if(PluginManager::PluginMetadata* metadata = manager.metadata("BasisImporter")) 
     #endif
     {
         metadata->configuration().setValue("format", "Bc3RGBA");
-    }
-    #ifndef MAGNUM_TARGET_GLES2
-    else
-    #ifndef MAGNUM_TARGET_GLES
+    } else
+    /* ES3 (but not WebGL 2) has ETC always, so none of these ifs is there */
+    #ifdef MAGNUM_TARGET_WEBGL
+    if(context.isExtensionSupported<WEBGL::compressed_texture_etc>())
+    #elif defined(MAGNUM_TARGET_GLES2)
+    if(context.isExtensionSupported<ANGLE::compressed_texture_etc>())
+    #elif !defined(MAGNUM_TARGET_GLES)
     if(context.isExtensionSupported<ARB::ES3_compatibility>())
     #endif
     {
         metadata->configuration().setValue("format", "Etc2RGBA");
     }
-    #else /* For ES2, fall back to PVRTC as ETC2 is not available */
-    else
+    /* On ES2 or WebGL fall back to PVRTC if ETC2 is not available */
+    #if defined(MAGNUM_TARGET_GLES2) || defined(MAGNUM_TARGET_WEBGL)
     #ifdef MAGNUM_TARGET_WEBGL
-    if(context.isExtensionSupported<WEBGL::compressed_texture_pvrtc>())
+    else if(context.isExtensionSupported<WEBGL::compressed_texture_pvrtc>())
     #else
-    if(context.isExtensionSupported<IMG::texture_compression_pvrtc>())
+    else if(context.isExtensionSupported<IMG::texture_compression_pvrtc>())
     #endif
     {
         metadata->configuration().setValue("format", "PvrtcRGBA4bpp");
     }
     #endif
-    #if defined(MAGNUM_TARGET_GLES2) || !defined(MAGNUM_TARGET_GLES)
-    else /* ES3 has ETC2 always */
-    {
+    /* And then, for everything except ES3 (but not WebGL 2) which already
+       stopped at ETC, fall back to uncompressed */
+    #if !defined(MAGNUM_TARGET_GLES) || defined(MAGNUM_TARGET_GLES2) || defined(MAGNUM_TARGET_WEBGL)
+    else {
         /* Fall back to uncompressed if nothing else is supported */
         metadata->configuration().setValue("format", "RGBA8");
     }
