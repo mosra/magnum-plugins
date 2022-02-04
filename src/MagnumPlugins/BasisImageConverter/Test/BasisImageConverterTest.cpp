@@ -125,10 +125,13 @@ constexpr PixelFormat TransferFunctionFormats[2][4]{
 
 constexpr struct {
     const char* name;
+    bool uastc;
     const TransferFunction transferFunction;
-} FormatTransferFunctionData[]{
-    {"Unorm", TransferFunction::Linear},
-    {"Srgb", TransferFunction::Srgb}
+} EncodingFormatTransferFunctionData[]{
+    {"Unorm ETC1S", false, TransferFunction::Linear},
+    {"Unorm UASTC", true, TransferFunction::Linear},
+    {"Srgb ETC1S", false, TransferFunction::Srgb},
+    {"Srgb UASTC", true, TransferFunction::Srgb}
 };
 
 constexpr struct {
@@ -204,7 +207,7 @@ BasisImageConverterTest::BasisImageConverterTest() {
                        &BasisImageConverterTest::convert2DRg,
                        &BasisImageConverterTest::convert2DRgb,
                        &BasisImageConverterTest::convert2DRgba},
-        Containers::arraySize(FormatTransferFunctionData));
+        Containers::arraySize(EncodingFormatTransferFunctionData));
 
     addTests({&BasisImageConverterTest::convert2DMipmaps,
 
@@ -481,7 +484,7 @@ Image<dimensions> copyImageWithSkip(const BasicImageView<dimensions>& image, Mat
 }
 
 void BasisImageConverterTest::convert2DR() {
-    auto&& data = FormatTransferFunctionData[testCaseInstanceId()];
+    auto&& data = EncodingFormatTransferFunctionData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
     if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
@@ -499,6 +502,8 @@ void BasisImageConverterTest::convert2DR() {
         ImageView2D(*originalImage), {7, 8}, TransferFunctionFormats[data.transferFunction][0]);
 
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("BasisImageConverter");
+    if(data.uastc) converter->configuration().setValue("uastc", true);
+    else CORRADE_VERIFY(!converter->configuration().value<bool>("uastc"));
     const auto compressedData = converter->convertToData(imageWithSkip);
     CORRADE_VERIFY(compressedData);
 
@@ -528,7 +533,7 @@ void BasisImageConverterTest::convert2DR() {
 }
 
 void BasisImageConverterTest::convert2DRg() {
-    auto&& data = FormatTransferFunctionData[testCaseInstanceId()];
+    auto&& data = EncodingFormatTransferFunctionData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
     if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
@@ -546,6 +551,8 @@ void BasisImageConverterTest::convert2DRg() {
         ImageView2D(*originalImage), {7, 8}, TransferFunctionFormats[data.transferFunction][1]);
 
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("BasisImageConverter");
+    if(data.uastc) converter->configuration().setValue("uastc", true);
+    else CORRADE_VERIFY(!converter->configuration().value<bool>("uastc"));
     const auto compressedData = converter->convertToData(imageWithSkip);
     CORRADE_VERIFY(compressedData);
 
@@ -574,7 +581,7 @@ void BasisImageConverterTest::convert2DRg() {
 }
 
 void BasisImageConverterTest::convert2DRgb() {
-    auto&& data = FormatTransferFunctionData[testCaseInstanceId()];
+    auto&& data = EncodingFormatTransferFunctionData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
     if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
@@ -591,6 +598,8 @@ void BasisImageConverterTest::convert2DRgb() {
         ImageView2D(*originalImage), {7, 8}, TransferFunctionFormats[data.transferFunction][2]);
 
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("BasisImageConverter");
+    if(data.uastc) converter->configuration().setValue("uastc", true);
+    else CORRADE_VERIFY(!converter->configuration().value<bool>("uastc"));
     const auto compressedData = converter->convertToData(imageWithSkip);
     CORRADE_VERIFY(compressedData);
 
@@ -611,7 +620,7 @@ void BasisImageConverterTest::convert2DRgb() {
 }
 
 void BasisImageConverterTest::convert2DRgba() {
-    auto&& data = FormatTransferFunctionData[testCaseInstanceId()];
+    auto&& data = EncodingFormatTransferFunctionData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
     if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
@@ -628,6 +637,8 @@ void BasisImageConverterTest::convert2DRgba() {
         ImageView2D(*originalImage), {7, 8}, TransferFunctionFormats[data.transferFunction][3]);
 
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("BasisImageConverter");
+    if(data.uastc) converter->configuration().setValue("uastc", true);
+    else CORRADE_VERIFY(!converter->configuration().value<bool>("uastc"));
     const auto compressedData = converter->convertToData(imageWithSkip);
     CORRADE_VERIFY(compressedData);
 
