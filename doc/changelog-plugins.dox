@@ -74,7 +74,8 @@ namespace Magnum {
     @ref Trade::AbstractImporter::skin3D(), @ref Trade::MeshObjectData3D::skin()
     and related APIs
 -   @ref Trade::AssimpImporter "AssimpImporter" now imports ambient lights,
-    light attenuation and spotlight cone angle properties
+    light attenuation and spotlight cone angle properties. See also
+    [mosra/magnum-plugins#120](https://github.com/mosra/magnum-plugins/issues/120).
 -   @ref Trade::AssimpImporter "AssimpImporter" now imports camera, light and
     scene names, orthographic camera properties and custom material properties
     (see [mosra/magnum-plugins#116](https://github.com/mosra/magnum-plugins/pull/116))
