@@ -1762,8 +1762,8 @@ Containers::Optional<MeshData> CgltfImporter::doMesh(const UnsignedInt id, Unsig
         attributeOrder[i] = i;
 
     std::stable_sort(attributeOrder.begin(), attributeOrder.end(), [&](UnsignedInt a, UnsignedInt b) {
-            return std::strcmp(primitive.attributes[a].name, primitive.attributes[b].name) < 0;
-        });
+        return std::strcmp(primitive.attributes[a].name, primitive.attributes[b].name) < 0;
+    });
 
     /* Find and remove duplicate attributes. This mimics tinygltf behaviour
        which replaces the previous attribute of the same name. */
