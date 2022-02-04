@@ -97,7 +97,6 @@ using namespace Containers::Literals;
 struct AssimpImporter::File {
     Containers::Optional<std::string> filePath;
     bool importerIsGltf = false;
-    bool importerIsFbx = false;
     const aiScene* scene = nullptr;
     /* Index -> pointer, pointer -> index conversion for nodes as they're
        represented in a tree. Needed by objectCount() (which is const) so can't
@@ -404,7 +403,6 @@ void AssimpImporter::doOpenData(Containers::Array<char>&& data, DataFlags) {
             const aiImporterDesc* info = _importer->GetImporterInfo(importerIndex);
             if(info) {
                 _f->importerIsGltf = info->mName == "glTF2 Importer"_s;
-                _f->importerIsFbx  = info->mName == "Autodesk FBX Importer"_s;
             }
         }
     }
@@ -1987,17 +1985,15 @@ Containers::Optional<AnimationData> AssimpImporter::doAnimation(UnsignedInt id) 
                https://github.com/assimp/assimp/commit/09d80ff478d825a80bce6fb787e8b19df9f321a8
                but can be assumed to always be 1000.
 
-               FBX files since https://github.com/assimp/assimp/commit/b3e1ee3ca0d825d384044867fc30cd0bc8417be6
-               report incorrect mTicksPerSecond but it should be 1000:
-               https://github.com/assimp/assimp/issues/4197 */
+               FBX files reported incorrect mTicksPerSecond in versions 5.1.0
+               to 5.1.3, but the fix in 5.1.4 broke the detection and
+               workaround we had so we no longer patch anything for these
+               versions. https://github.com/assimp/assimp/issues/4197 */
             constexpr Double CorrectTicksPerSecond = 1000.0;
-            if((_f->importerIsGltf || (_f->importerIsFbx && ASSIMP_HAS_BROKEN_FBX_TICKS_PER_SECOND)) &&
-                !Math::equal(ticksPerSecond, CorrectTicksPerSecond))
-            {
+            if(_f->importerIsGltf && !Math::equal(ticksPerSecond, CorrectTicksPerSecond)) {
                 if(verbose) Debug{}
                     << "Trade::AssimpImporter::animation():" << Float(ticksPerSecond)
-                    << "ticks per second is incorrect for"
-                    << (_f->importerIsGltf ? "glTF," : "FBX,") << "patching to"
+                    << "ticks per second is incorrect for glTF, patching to"
                     << Float(CorrectTicksPerSecond);
                 ticksPerSecond = CorrectTicksPerSecond;
             }

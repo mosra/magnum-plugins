@@ -44,7 +44,11 @@ int main() {
     /* Version that breaks aiAnimation::mTicksPerSecond for FBX:
        https://github.com/assimp/assimp/commit/b3e1ee3ca0d825d384044867fc30cd0bc8417be6
        Check for aiQuaternion::operation *= added in
-       https://github.com/assimp/assimp/commit/89d4d6b68f720aaf545dba9d6a701426b948df15 */
+       https://github.com/assimp/assimp/commit/89d4d6b68f720aaf545dba9d6a701426b948df15
+
+       This is fixed as of 5.1.4 and isn't handled by the importer anymore, but
+       the check is still used to XFAIL the corresponding test on those
+       versions. */
     #if CHECK_VERSION >= 20210102
     aiQuaternion quat;
     quat *= aiMatrix4x4();

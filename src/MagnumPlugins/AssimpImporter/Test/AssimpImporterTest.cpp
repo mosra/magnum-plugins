@@ -92,10 +92,9 @@ struct AssimpImporterTest: TestSuite::Tester {
     void animationGltfSpline();
 
     void animationGltfTicksPerSecondPatching();
-    void animationFbxTicksPerSecondPatching();
-
     void animationDummyTracksRemovalEnabled();
     void animationDummyTracksRemovalDisabled();
+
     void animationShortestPathOptimizationEnabled();
     void animationShortestPathOptimizationDisabled();
     void animationQuaternionNormalizationEnabled();
@@ -229,7 +228,6 @@ AssimpImporterTest::AssimpImporterTest() {
               &AssimpImporterTest::animationGltfSpline});
 
     addInstancedTests({&AssimpImporterTest::animationGltfTicksPerSecondPatching,
-                       &AssimpImporterTest::animationFbxTicksPerSecondPatching,
                        &AssimpImporterTest::animationDummyTracksRemovalEnabled,
                        &AssimpImporterTest::animationDummyTracksRemovalDisabled},
         Containers::arraySize(VerboseData));
@@ -579,12 +577,25 @@ void AssimpImporterTest::animation() {
 
         /* Be lenient, resampling during export takes its toll */
         constexpr Vector3 Epsilon{0.005f};
+
+        /* FBX files reported incorrect mTicksPerSecond in versions 5.1.0 to
+           5.1.3, but the fix in 5.1.4 broke the detection and workaround we
+           had so we no longer patch anything for these versions.
+           https://github.com/assimp/assimp/issues/4197 */
+        const bool fbxBroken = i == 1 && data.name == "FBX"_s && ASSIMP_VERSION >= 20210102 && _assimpVersion < 514;
+
+        CORRADE_EXPECT_FAIL_IF(fbxBroken,
+            "FBX animations are broken in Assimp 5.1.0 to 5.1.3.");
+
         CORRADE_COMPARE_WITH(rotation, rotationData[i],
             TestSuite::Compare::around(Epsilon));
         CORRADE_COMPARE_WITH(scaling, scalingData[i],
             TestSuite::Compare::around(Epsilon));
         CORRADE_COMPARE_WITH(translation, translationData[i],
             TestSuite::Compare::around(Epsilon));
+
+        /* Don't spam the output, all following keys are broken */
+        if(fbxBroken) return;
     }
 }
 
@@ -891,32 +902,6 @@ void AssimpImporterTest::animationGltfTicksPerSecondPatching() {
     if(data.flags >= ImporterFlag::Verbose) {
         CORRADE_VERIFY(Containers::StringView{out.str()}.contains(
             " ticks per second is incorrect for glTF, patching to 1000\n"));
-    } else
-        CORRADE_COMPARE(out.str(), "");
-}
-
-void AssimpImporterTest::animationFbxTicksPerSecondPatching() {
-    auto&& data = VerboseData[testCaseInstanceId()];
-    setTestCaseDescription(data.name);
-
-    #if !ASSIMP_HAS_BROKEN_FBX_TICKS_PER_SECOND
-        CORRADE_SKIP("Current version of assimp correctly sets FBX ticks per second.");
-    #endif
-
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
-    importer->setFlags(data.flags);
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR,
-        "exported-animation.fbx")));
-
-    std::ostringstream out;
-    {
-        Debug redirectDebug{&out};
-        CORRADE_VERIFY(importer->animation(0));
-    }
-
-    if(data.flags >= ImporterFlag::Verbose) {
-        CORRADE_VERIFY(Containers::StringView{out.str()}.contains(
-            " ticks per second is incorrect for FBX, patching to 1000\n"));
     } else
         CORRADE_COMPARE(out.str(), "");
 }
