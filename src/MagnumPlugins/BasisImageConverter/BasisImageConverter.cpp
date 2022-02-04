@@ -375,6 +375,10 @@ template<UnsignedInt dimensions> Containers::Array<char> convertLevelsToData(Con
 
 }
 
+void BasisImageConverter::initialize() {
+    basisu::basisu_encoder_init();
+}
+
 BasisImageConverter::BasisImageConverter(Format format): _format{format} {
     /* Passing an invalid Format enum is user error, we'll assert on that in
        the convertToData() function */

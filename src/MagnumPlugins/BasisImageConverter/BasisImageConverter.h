@@ -6,7 +6,7 @@
     Copyright © 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019,
                 2020, 2021 Vladimír Vondruš <mosra@centrum.cz>
     Copyright © 2019 Jonathan Hale <squareys@googlemail.com>
-    Copyright © 2021 Pablo Escobar <mail@rvrs.in>
+    Copyright © 2021, 2022 Pablo Escobar <mail@rvrs.in>
 
     Permission is hereby granted, free of charge, to any person obtaining a
     copy of this software and associated documentation files (the "Software"),
@@ -188,6 +188,15 @@ find_package(Threads REQUIRED)
 target_link_libraries(your-application PRIVATE Threads::Threads)
 @endcode
 
+@subsection Trade-BasisImageConverter-behavior-multithreading Thread safety
+
+While the encoder library *should* behave in a way that doesn't modify any
+global state, in versions before 1.16 the library initialization done at plugin
+load time (or using @ref initialize() when using the class witout a plugin
+manager) is populating global safe in a non-thread-safe way. Thus you have to
+ensure that the plugin isn't loaded from multiple threads at the same time, or
+loaded while being already used from another thread.
+
 @section Trade-BasisImageConverter-configuration Plugin-specific configuration
 
 Basis compression can be configured to produce better quality or reduce
@@ -216,6 +225,18 @@ class MAGNUM_BASISIMAGECONVERTER_EXPORT BasisImageConverter: public AbstractImag
             Basis = 1,    /**< Output Basis images */
             Ktx,          /**< Output KTX2 images */
         };
+
+        /**
+         * @brief Initialize Basis encoder
+         * @m_since_latest
+         *
+         * If the class is instantiated directly (not through a plugin
+         * manager), this function has to be called explicitly before using
+         * any instance.
+         *
+         * @see @ref Trade-BasisImageConverter-behavior-multithreading
+         */
+        static void initialize();
 
         /**
          * @brief Default constructor
