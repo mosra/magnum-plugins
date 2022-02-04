@@ -1671,6 +1671,7 @@ void AssimpImporterTest::light() {
            color */
         CORRADE_COMPARE(light->color(), (Color3{1.0f, 0.15f, 0.45f})*10.0f);
         CORRADE_COMPARE(light->intensity(), 1.0f);
+        CORRADE_COMPARE(light->attenuation(), (Vector3{1.0f, 0.0f, 0.0f}));
 
     /* Ambient light */
     } {
