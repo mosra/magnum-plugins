@@ -889,10 +889,19 @@ Containers::Optional<LightData> AssimpImporter::doLight(UnsignedInt id) {
         return {};
     }
 
-    return LightData{lightType, color, 1.0f,
-        /* For a DIRECTIONAL and AMBIENT light this is (1, 0, 0), which is
-           exactly what we expect (yay!) */
-        {l->mAttenuationConstant, l->mAttenuationLinear, l->mAttenuationQuadratic},
+    /* In case of COLLADA, for a DIRECTIONAL and AMBIENT light this is (1, 0,
+       0), which is exactly what we expect (yay). In case of Blend files
+       however, this is (1, 0.16, 0.0064) or some other value, so we have to
+       patch it to avoid an assert in LightData later. */
+    /** @todo for blender the values are calculated from max distance, which
+        could be used to restore the `range` property: https://github.com/assimp/assimp/blob/985a5b9667b25390a00e217ee2086882a101d74a/code/AssetLib/Blender/BlenderLoader.cpp#L1251-L1262 */
+    Vector3 attenuation{l->mAttenuationConstant, l->mAttenuationLinear, l->mAttenuationQuadratic};
+    if((lightType == LightData::Type::Directional || lightType == LightData::Type::Ambient) && attenuation != Vector3{1.0f, 0.0f, 0.0f}) {
+        Warning{} << "Trade::AssimpImporter::light(): patching attenuation" << attenuation << "to" << Vector3{1.0f, 0.0f, 0.0f} << "for" << lightType;
+        attenuation = {1.0f, 0.0f, 0.0f};
+    }
+
+    return LightData{lightType, color, 1.0f, attenuation,
         Rad{l->mAngleInnerCone}, Rad{l->mAngleOuterCone},
         l};
 }

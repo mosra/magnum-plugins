@@ -110,6 +110,7 @@ struct AssimpImporterTest: TestSuite::Tester {
     void camera();
     void cameraOrthographic();
     void light();
+    void lightDirectionalBlender();
     void lightUnsupported();
     void cameraLightReferencedByTwoNodes();
 
@@ -249,6 +250,7 @@ AssimpImporterTest::AssimpImporterTest() {
               &AssimpImporterTest::camera,
               &AssimpImporterTest::cameraOrthographic,
               &AssimpImporterTest::light,
+              &AssimpImporterTest::lightDirectionalBlender,
               &AssimpImporterTest::lightUnsupported,
               &AssimpImporterTest::cameraLightReferencedByTwoNodes,
 
@@ -1704,6 +1706,29 @@ void AssimpImporterTest::light() {
     CORRADE_COMPARE_AS(scene->field<UnsignedInt>(SceneField::Light), Containers::arrayView<UnsignedInt>({
         0, 1, 2, 3
     }), TestSuite::Compare::Container);
+}
+
+void AssimpImporterTest::lightDirectionalBlender() {
+    /* Versions before 5.1.3 say "BLEND: Expected at least one object with no
+       parent". */
+    if(_assimpVersion < 513)
+        CORRADE_SKIP("Blender 2.8+ files are supported only since Assimp 5.1.3.");
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "light-directional.blend")));
+
+    /* While COLLADA files (the light() test above) have the attenuation as
+       expected, Assimp's Blender importer encodes max distance into it, which
+       has to be patched away */
+    std::ostringstream out;
+    Warning redirectWarning{&out};
+    Containers::Optional<LightData> light = importer->light("Sun");
+    CORRADE_VERIFY(light);
+    CORRADE_COMPARE(light->type(), LightData::Type::Directional);
+    CORRADE_COMPARE(light->color(), (Color3{0.3f, 0.4f, 0.5f}));
+    CORRADE_COMPARE(light->intensity(), 1.0f);
+    CORRADE_COMPARE(light->attenuation(), (Vector3{1.0f, 0.0f, 0.0f}));
+    CORRADE_COMPARE(out.str(), "Trade::AssimpImporter::light(): patching attenuation Vector(1, 0.16, 0.0064) to Vector(1, 0, 0) for Trade::LightData::Type::Directional\n");
 }
 
 void AssimpImporterTest::lightUnsupported() {
