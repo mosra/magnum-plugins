@@ -16,13 +16,38 @@ environment:
     APPVEYOR_JOB_NAME: windows-msvc2019
   - TARGET: desktop
     COMPILER: msvc
+    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2022
+    APPVEYOR_JOB_NAME: windows-msvc2022
+  - TARGET: desktop
+    COMPILER: msvc
     APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
     APPVEYOR_JOB_NAME: windows-static-msvc2019
+    BUILD_STATIC: ON
+  - TARGET: desktop
+    COMPILER: msvc
+    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2022
+    APPVEYOR_JOB_NAME: windows-static-msvc2022
     BUILD_STATIC: ON
   - TARGET: desktop
     COMPILER: msvc-clang
     APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
     APPVEYOR_JOB_NAME: windows-msvc2019-clang
+  - TARGET: desktop
+    COMPILER: msvc-clang
+    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2022
+    APPVEYOR_JOB_NAME: windows-msvc2022-clang
+  - TARGET: desktop
+    COMPILER: msvc
+    # Same reasoning as in Corrade for /EHsc
+    COMPILER_EXTRA: -DCMAKE_CXX_FLAGS="/permissive- /EHsc" -DMSVC_COMPATIBILITY=OFF
+    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
+    APPVEYOR_JOB_NAME: windows-conforming-msvc2019
+  - TARGET: desktop
+    COMPILER: msvc
+    # Not playing with fire and using /EHsc on 2022 as well
+    COMPILER_EXTRA: -DCMAKE_CXX_FLAGS="/permissive- /EHsc" -DMSVC_COMPATIBILITY=OFF
+    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2022
+    APPVEYOR_JOB_NAME: windows-conforming-msvc2022
   - TARGET: desktop
     COMPILER: mingw
     APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
@@ -44,7 +69,8 @@ install:
 - set PATH=C:/Sys/bin;C:/tools/ninja;%PATH%
 - IF "%TARGET%" == "desktop" IF "%COMPILER%" == "mingw" pip install codecov
 
-# assimp, for MSVC 2019, 2017, clang-cl and MinGW
+# assimp, for MSVC 2022, 2019, 2017, clang-cl and MinGW
+- IF "%TARGET%" == "desktop" IF "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2022" IF "%COMPILER:~0,4%" == "msvc" appveyor DownloadFile https://ci.magnum.graphics/assimp-5.1.2-windows-2019-debug.zip && 7z x assimp-5.1.2-windows-2019-debug.zip -o%APPVEYOR_BUILD_FOLDER%\deps
 - IF "%TARGET%" == "desktop" IF "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2019" IF "%COMPILER:~0,4%" == "msvc" appveyor DownloadFile https://ci.magnum.graphics/assimp-5.1.2-windows-2019-debug.zip && 7z x assimp-5.1.2-windows-2019-debug.zip -o%APPVEYOR_BUILD_FOLDER%\deps
 - IF "%TARGET%" == "desktop" IF "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2017" IF "%COMPILER:~0,4%" == "msvc" appveyor DownloadFile https://ci.magnum.graphics/assimp-5.1.2-windows-2016-debug.zip && 7z x assimp-5.1.2-windows-2016-debug.zip -o%APPVEYOR_BUILD_FOLDER%\deps
 # Plugin built against 5.1.2 fails to link due to
@@ -52,8 +78,9 @@ install:
 # I have NO PATIENCE with this library. NONE. Going back to 5.0.1, then.
 - IF "%TARGET%" == "desktop" IF "%COMPILER%" == "mingw" appveyor DownloadFile https://ci.magnum.graphics/assimp-5.0.1-windows-mingw.zip && 7z x assimp-5.0.1-windows-mingw.zip -o%APPVEYOR_BUILD_FOLDER%\deps
 
-# libjpeg-turbo, for MSVC 2019, 2017 and clang-cl only; MinGW builds it because
-# FFS
+# libjpeg-turbo, for MSVC 2022, 2019, 2017 and clang-cl only; MinGW builds it
+# because FFS
+- IF "%TARGET%" == "desktop" IF "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2022" IF "%COMPILER:~0,4%" == "msvc" appveyor DownloadFile https://ci.magnum.graphics/libjpeg-turbo-2.0.6-windows-2019.zip && 7z x libjpeg-turbo-2.0.6-windows-2019.zip -o%APPVEYOR_BUILD_FOLDER%\deps
 - IF "%TARGET%" == "desktop" IF "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2019" IF "%COMPILER:~0,4%" == "msvc" appveyor DownloadFile https://ci.magnum.graphics/libjpeg-turbo-2.0.6-windows-2019.zip && 7z x libjpeg-turbo-2.0.6-windows-2019.zip -o%APPVEYOR_BUILD_FOLDER%\deps
 - IF "%TARGET%" == "desktop" IF "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2017" IF "%COMPILER:~0,4%" == "msvc" appveyor DownloadFile https://ci.magnum.graphics/libjpeg-turbo-2.0.6-windows-2016.zip && 7z x libjpeg-turbo-2.0.6-windows-2016.zip -o%APPVEYOR_BUILD_FOLDER%\deps
 
@@ -64,7 +91,9 @@ install:
 # here we need to do that ourselves as we don't have Magnum's build dir in PATH
 - IF "%TARGET%" == "desktop" ren openal\bin\Win64\soft_oal.dll OpenAL32.dll
 
-# openexr, for MSVC 2019, 2017, clang-cl and MinGW. Needs also zlib (below).
+# openexr, for MSVC 2022, 2019, 2017, clang-cl and MinGW. Needs also zlib
+# (below).
+- IF "%TARGET%" == "desktop" IF "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2022" IF "%COMPILER:~0,4%" == "msvc" appveyor DownloadFile https://ci.magnum.graphics/openexr-2.5.5-windows-2019-debug.zip && 7z x openexr-2.5.5-windows-2019-debug.zip -o%APPVEYOR_BUILD_FOLDER%\deps
 - IF "%TARGET%" == "desktop" IF "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2019" IF "%COMPILER:~0,4%" == "msvc" appveyor DownloadFile https://ci.magnum.graphics/openexr-2.5.5-windows-2019-debug.zip && 7z x openexr-2.5.5-windows-2019-debug.zip -o%APPVEYOR_BUILD_FOLDER%\deps
 - IF "%TARGET%" == "desktop" IF "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2017" IF "%COMPILER:~0,4%" == "msvc" appveyor DownloadFile https://ci.magnum.graphics/openexr-2.5.5-windows-2016-debug.zip && 7z x openexr-2.5.5-windows-2016-debug.zip -o%APPVEYOR_BUILD_FOLDER%\deps
 - IF "%TARGET%" == "desktop" IF "%COMPILER%" == "mingw" appveyor DownloadFile https://ci.magnum.graphics/openexr-2.5.5-windows-mingw.zip && 7z x openexr-2.5.5-windows-mingw.zip -o%APPVEYOR_BUILD_FOLDER%\deps
@@ -73,7 +102,8 @@ install:
 - IF NOT "%TARGET%" == "rt" IF NOT EXIST %APPVEYOR_BUILD_FOLDER%\DevIL-SDK-x64-1.7.8.zip appveyor DownloadFile http://downloads.sourceforge.net/openil/DevIL-SDK-x64-1.7.8.zip
 - IF NOT "%TARGET%" == "rt" mkdir devil && cd devil && 7z x ..\DevIL-SDK-x64-1.7.8.zip && mkdir lib && move unicode\*.lib lib\ && cd ..
 
-# FreeType, for MSVC 2019, 2017 and clang-cl only
+# FreeType, for MSVC 2022, 2019, 2017 and clang-cl only
+- IF "%TARGET%" == "desktop" IF "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2022" IF "%COMPILER:~0,4%" == "msvc" appveyor DownloadFile https://ci.magnum.graphics/freetype-2.10.4-windows-2019.zip && 7z x freetype-2.10.4-windows-2019.zip -o%APPVEYOR_BUILD_FOLDER%\deps
 - IF "%TARGET%" == "desktop" IF "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2019" IF "%COMPILER:~0,4%" == "msvc" appveyor DownloadFile https://ci.magnum.graphics/freetype-2.10.4-windows-2019.zip && 7z x freetype-2.10.4-windows-2019.zip -o%APPVEYOR_BUILD_FOLDER%\deps
 - IF "%TARGET%" == "desktop" IF "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2017" IF "%COMPILER:~0,4%" == "msvc" appveyor DownloadFile https://ci.magnum.graphics/freetype-2.10.4-windows-2016.zip && 7z x freetype-2.10.4-windows-2016.zip -o%APPVEYOR_BUILD_FOLDER%\deps
 
@@ -84,18 +114,21 @@ install:
 - IF NOT EXIST %APPVEYOR_BUILD_FOLDER%\v%BASIS_VERSION%.zip appveyor DownloadFile https://github.com/BinomialLLC/basis_universal/archive/v%BASIS_VERSION%.zip
 - 7z x v%BASIS_VERSION%.zip && ren basis_universal-%BASIS_VERSION% basis_universal
 
-# SPIRV-Tools, for MSVC 2019, 2017 and clang-cl only
+# SPIRV-Tools, for MSVC 2022, 2019, 2017 and clang-cl only
 # This line REQUIRES the COMPILER variable to be set on rt builds, otherwise it
 # complains that "The syntax of the command is incorrect.". The same done in
 # build_script below works without problems. What the hell.
+- IF "%TARGET%" == "desktop" IF "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2022" IF "%COMPILER:~0,4%" == "msvc" appveyor DownloadFile https://ci.magnum.graphics/spirv-tools-2020.4-windows-2019-debug.zip && 7z x spirv-tools-2020.4-windows-2019-debug.zip -o%APPVEYOR_BUILD_FOLDER%\deps
 - IF "%TARGET%" == "desktop" IF "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2019" IF "%COMPILER:~0,4%" == "msvc" appveyor DownloadFile https://ci.magnum.graphics/spirv-tools-2020.4-windows-2019-debug.zip && 7z x spirv-tools-2020.4-windows-2019-debug.zip -o%APPVEYOR_BUILD_FOLDER%\deps
 - IF "%TARGET%" == "desktop" IF "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2017" IF "%COMPILER:~0,4%" == "msvc" appveyor DownloadFile https://ci.magnum.graphics/spirv-tools-2020.4-windows-2016-debug.zip && 7z x spirv-tools-2020.4-windows-2016-debug.zip -o%APPVEYOR_BUILD_FOLDER%\deps
 
-# Glslang, for MSVC 2019, 2017 and clang-cl only
+# Glslang, for MSVC 2022, 2019, 2017 and clang-cl only
+- IF "%TARGET%" == "desktop" IF "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2022" IF "%COMPILER:~0,4%" == "msvc" appveyor DownloadFile https://ci.magnum.graphics/glslang-8.13.3743-windows-2019-debug.zip && 7z x glslang-8.13.3743-windows-2019-debug.zip -o%APPVEYOR_BUILD_FOLDER%\deps
 - IF "%TARGET%" == "desktop" IF "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2019" IF "%COMPILER:~0,4%" == "msvc" appveyor DownloadFile https://ci.magnum.graphics/glslang-8.13.3743-windows-2019-debug.zip && 7z x glslang-8.13.3743-windows-2019-debug.zip -o%APPVEYOR_BUILD_FOLDER%\deps
 - IF "%TARGET%" == "desktop" IF "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2017" IF "%COMPILER:~0,4%" == "msvc" appveyor DownloadFile https://ci.magnum.graphics/glslang-8.13.3743-windows-2016-debug.zip && 7z x glslang-8.13.3743-windows-2016-debug.zip -o%APPVEYOR_BUILD_FOLDER%\deps
 
-# zlib, for MSVC 2019, 2017, clang-cl and MinGW. Needed by OpenEXR above.
+# zlib, for MSVC 2022, 2019, 2017, clang-cl and MinGW. Needed by OpenEXR above.
+- IF "%TARGET%" == "desktop" IF "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2022" IF "%COMPILER:~0,4%" == "msvc" appveyor DownloadFile https://ci.magnum.graphics/zlib-1.2.11-windows-2019.zip && 7z x zlib-1.2.11-windows-2019.zip -o%APPVEYOR_BUILD_FOLDER%\deps
 - IF "%TARGET%" == "desktop" IF "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2019" IF "%COMPILER:~0,4%" == "msvc" appveyor DownloadFile https://ci.magnum.graphics/zlib-1.2.11-windows-2019.zip && 7z x zlib-1.2.11-windows-2019.zip -o%APPVEYOR_BUILD_FOLDER%\deps
 - IF "%TARGET%" == "desktop" IF "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2017" IF "%COMPILER:~0,4%" == "msvc" appveyor DownloadFile https://ci.magnum.graphics/zlib-1.2.11-windows-2016.zip && 7z x zlib-1.2.11-windows-2016.zip -o%APPVEYOR_BUILD_FOLDER%\deps
 # For some reason zlibstatic.a is already present? let's overwrite
