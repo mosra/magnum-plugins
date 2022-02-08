@@ -34,6 +34,8 @@ namespace Magnum {
 
 @subsection changelog-plugins-latest-new New features
 
+-   MSVC 2022 support. See also [mosra/corrade#124](https://github.com/mosra/corrade/issues/124)
+    and [mosra/magnum#552](https://github.com/mosra/magnum/issues/552).
 -   New @ref ShaderTools::SpirvToolsConverter "SpirvToolsShaderConverter"
     plugin for SPIR-V shader (dis)assembly and validation
 -   New @ref ShaderTools::GlslangConverter "GlslangShaderConverter" plugin for
