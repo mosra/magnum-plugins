@@ -1,6 +1,0 @@
-ply
-format binary_little_endian 1.0
-element vertex 25
-property float x
-property float z
-end_header

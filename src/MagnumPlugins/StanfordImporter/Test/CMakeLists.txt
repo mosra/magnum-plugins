@@ -47,6 +47,7 @@ corrade_add_test(StanfordImporterTest StanfordImporterTest.cpp
     LIBRARIES Magnum::Trade
     FILES
         colors-not-same-type.ply
+        colors-not-all.ply
         colors-not-tightly-packed.ply
         colors-unsupported-type.ply
         colors4-not-same-type.ply
@@ -61,7 +62,6 @@ corrade_add_test(StanfordImporterTest StanfordImporterTest.cpp
         format-too-late.ply
         format-unsupported.ply
         incomplete-face-specification.ply
-        incomplete-vertex-specification.ply
         invalid-face-index-type.ply
         invalid-face-property.ply
         invalid-face-size-type.ply
@@ -70,6 +70,7 @@ corrade_add_test(StanfordImporterTest StanfordImporterTest.cpp
         invalid-vertex-property.ply
         invalid-vertex-type.ply
         normals-not-same-type.ply
+        normals-not-all.ply
         normals-not-tightly-packed.ply
         normals-unsupported-type.ply
         objectid-unsupported-type.ply
@@ -84,10 +85,13 @@ corrade_add_test(StanfordImporterTest StanfordImporterTest.cpp
         positions-short-colors-uchar-texcoords-ushort-indices-char.ply
         positions-uchar-normals-char-objectid-short-indices-ushort.ply
         positions-ushort-normals-short-objectid-uchar-indices-uchar-be.ply
+        positions-missing.ply
         positions-not-same-type.ply
+        positions-not-all.ply
         positions-not-tightly-packed.ply
         positions-unsupported-type.ply
         texcoords-not-same-type.ply
+        texcoords-not-all.ply
         texcoords-not-tightly-packed.ply
         texcoords-unsupported-type.ply
         triangle-fast-path-be.ply

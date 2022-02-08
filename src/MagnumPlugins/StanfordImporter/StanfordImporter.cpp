@@ -155,7 +155,7 @@ std::string extractLine(Containers::ArrayView<const char>& in) {
 template<std::size_t size> bool checkVectorAttributeValidity(const Math::Vector<size, VertexFormat>& formats, const Math::Vector<size, UnsignedInt>& offsets, const char* name) {
     /* Check that we have the same type for all position coordinates */
     if(formats != Math::Vector<size, VertexFormat>{formats[0]}) {
-        Error{} << "Trade::StanfordImporter::openData(): expecting all" << name << "components to have the same type but got" << formats;
+        Error{} << "Trade::StanfordImporter::openData(): expecting all" << name << "components to be present and have the same type but got" << formats;
         return false;
     }
 
@@ -480,10 +480,6 @@ void StanfordImporter::doOpenData(Containers::Array<char>&& data, const DataFlag
     }
 
     /* Check header consistency */
-    if((positionOffsets >= Vector3ui{~UnsignedInt{}}).any()) {
-        Error{} << "Trade::StanfordImporter::openData(): incomplete vertex specification";
-        return;
-    }
     if(state->faceSizeType == MeshIndexType{} || state->faceIndexType == MeshIndexType{}) {
         Error{} << "Trade::StanfordImporter::openData(): incomplete face specification";
         return;
@@ -504,8 +500,12 @@ void StanfordImporter::doOpenData(Containers::Array<char>&& data, const DataFlag
 
     /* Wrap up positions */
     {
-        /* Check that all components have the same type and right after each
-           other */
+        /* Check that positions are there at all and that all components have
+           the same type and are right after each other */
+        if((positionOffsets >= Vector3ui{~UnsignedInt{}}).all()) {
+            Error{} << "Trade::StanfordImporter::openData(): no position components present";
+            return;
+        }
         if(!checkVectorAttributeValidity(positionFormats, positionOffsets, "position"))
             return;
 

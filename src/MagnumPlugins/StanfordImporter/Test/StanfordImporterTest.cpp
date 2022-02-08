@@ -95,23 +95,27 @@ constexpr struct {
     {"invalid-face-size-type", "invalid face size type float", true},
     {"invalid-face-index-type", "invalid face index type float", true},
 
-    {"incomplete-vertex-specification", "incomplete vertex specification", true},
     {"incomplete-face-specification", "incomplete face specification", true},
 
-    {"positions-not-same-type", "expecting all position components to have the same type but got Vector(VertexFormat::UnsignedShort, VertexFormat::UnsignedByte, VertexFormat::UnsignedShort)", true},
+    {"positions-missing", "no position components present", true},
+    {"positions-not-same-type", "expecting all position components to be present and have the same type but got Vector(VertexFormat::UnsignedShort, VertexFormat::UnsignedByte, VertexFormat::UnsignedShort)", true},
+    {"positions-not-all", "expecting all position components to be present and have the same type but got Vector(VertexFormat::UnsignedShort, VertexFormat(0x0), VertexFormat::UnsignedShort)", true},
     {"positions-not-tightly-packed", "expecting position components to be tightly packed, but got offsets Vector(0, 4, 2) for a 2-byte type", true},
     {"positions-unsupported-type", "unsupported position component type VertexFormat::Double", true},
 
-    {"normals-not-same-type", "expecting all normal components to have the same type but got Vector(VertexFormat::Short, VertexFormat::Float, VertexFormat::Short)", true},
+    {"normals-not-same-type", "expecting all normal components to be present and have the same type but got Vector(VertexFormat::Short, VertexFormat::Float, VertexFormat::Short)", true},
+    {"normals-not-all", "expecting all normal components to be present and have the same type but got Vector(VertexFormat(0x0), VertexFormat::Short, VertexFormat::Short)", true},
     {"normals-not-tightly-packed", "expecting normal components to be tightly packed, but got offsets Vector(14, 13, 12) for a 1-byte type", true},
     {"normals-unsupported-type", "unsupported normal component type VertexFormat::UnsignedByte", true},
 
-    {"texcoords-not-same-type", "expecting all texture coordinate components to have the same type but got Vector(VertexFormat::UnsignedShort, VertexFormat::Float)", true},
+    {"texcoords-not-same-type", "expecting all texture coordinate components to be present and have the same type but got Vector(VertexFormat::UnsignedShort, VertexFormat::Float)", true},
+    {"texcoords-not-all", "expecting all texture coordinate components to be present and have the same type but got Vector(VertexFormat(0x0), VertexFormat::UnsignedByte)", true},
     {"texcoords-not-tightly-packed", "expecting texture coordinate components to be tightly packed, but got offsets Vector(13, 0) for a 1-byte type", true},
     {"texcoords-unsupported-type", "unsupported texture coordinate component type VertexFormat::Short", true},
 
-    {"colors-not-same-type", "expecting all color components to have the same type but got Vector(VertexFormat::UnsignedByte, VertexFormat::Float, VertexFormat::UnsignedByte)", true},
-    {"colors4-not-same-type", "expecting all color components to have the same type but got Vector(VertexFormat::UnsignedByte, VertexFormat::UnsignedByte, VertexFormat::UnsignedByte, VertexFormat::Float)", true},
+    {"colors-not-same-type", "expecting all color components to be present and have the same type but got Vector(VertexFormat::UnsignedByte, VertexFormat::Float, VertexFormat::UnsignedByte)", true},
+    {"colors4-not-same-type", "expecting all color components to be present and have the same type but got Vector(VertexFormat::UnsignedByte, VertexFormat::UnsignedByte, VertexFormat::UnsignedByte, VertexFormat::Float)", true},
+    {"colors-not-all", "expecting all color components to be present and have the same type but got Vector(VertexFormat::UnsignedByte, VertexFormat::UnsignedByte, VertexFormat(0x0))", true},
     {"colors-not-tightly-packed", "expecting color components to be tightly packed, but got offsets Vector(12, 14, 13) for a 1-byte type", true},
     {"colors4-not-tightly-packed", "expecting color components to be tightly packed, but got offsets Vector(13, 14, 15, 12) for a 1-byte type", true},
     {"colors-unsupported-type", "unsupported color component type VertexFormat::Int", true},
