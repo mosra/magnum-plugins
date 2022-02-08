@@ -93,6 +93,15 @@ Containers::Array<char> StanfordSceneConverter::doConvertToData(const MeshData& 
             "format binary_little_endian 1.0\n";
     }
 
+    /* Require positions to be present -- otherwise the StanfordImporter won't
+       be able to open the file, and neither most other libraries. This
+       restriction could eventually be lifted, but so far I don't have a use
+       case, so better be strict. */
+    if(!triangles.hasAttribute(MeshAttribute::Position)) {
+        Error{} << "Trade::StanfordSceneConverter::convertToData(): the mesh has no positions";
+        return nullptr;
+    }
+
     /* Write attribute header and calculate offsets for copying later.
        Attributes that can't be written because the type is not supported by
        PLY or the name is unknown will have offset kept at ~std::size_t{}. */

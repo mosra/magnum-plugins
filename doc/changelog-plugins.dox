@@ -110,6 +110,10 @@ namespace Magnum {
 -   @ref Trade::StanfordImporter "StanfordImporter" now supports also indices
     specified as `vertex_index`, which is what Assimp uses for export (see
     [mosra/magnum-plugins#94](https://github.com/mosra/magnum-plugins/pull/94))
+-   @relativeref{Trade,StanfordSceneConverter} now requires the input mesh to
+    always have a position attribute. This was not enforced before, leading to
+    files that couldn't be opened with @relativeref{Trade,StanfordImporter} nor
+    with most other libraries.
 -   @ref Trade::TinyGltfImporter "TinyGltfImporter" now performs range checks
     on scene, node, camera, mesh, material, child and light references in the
     scene hierarchy for more robust handling of broken files

@@ -105,13 +105,13 @@ endian swap on the output data.
 Exports the following attributes, custom attributes and attributes not listed
 below are skipped with a warning:
 
--   @ref MeshAttribute::Position, written as `x`/`y`/`z`. 2D positions are not
-    supported.
--   @ref MeshAttribute::Normal as `nx`/`ny`/`nz`
--   @ref MeshAttribute::TextureCoordinates as `u`/`v`
--   @ref MeshAttribute::Color as `red`/`green`/`blue` and optional `alpha`, if
-    the input is four-channel
--   @ref MeshAttribute::ObjectId by default as `object_id`, use the
+-   @ref MeshAttribute::Position, written as `x`/`y`/`z`. The position
+    attribute has to be always present, 2D positions are not supported.
+-   @ref MeshAttribute::Normal as `nx`/`ny`/`nz`, if present
+-   @ref MeshAttribute::TextureCoordinates as `u`/`v`, if present
+-   @ref MeshAttribute::Color as `red`/`green`/`blue`, if present, and optional
+    `alpha`, if the input is four-channel
+-   @ref MeshAttribute::ObjectId by default as `object_id`, if present, use the
     @cb{.ini} objectIdAttribute @ce
     @ref Trade-StanfordImporter-configuration "configuration option" to change
     the identifier that's being written.

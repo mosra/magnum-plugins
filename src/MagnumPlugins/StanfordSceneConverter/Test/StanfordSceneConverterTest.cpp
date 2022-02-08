@@ -53,6 +53,7 @@ struct StanfordSceneConverterTest: TestSuite::Tester {
     void empty();
 
     void lines();
+    void positionsMissing();
     void twoComponentPositions();
     void invalidEndianness();
 
@@ -121,6 +122,7 @@ StanfordSceneConverterTest::StanfordSceneConverterTest() {
               &StanfordSceneConverterTest::empty,
 
               &StanfordSceneConverterTest::lines,
+              &StanfordSceneConverterTest::positionsMissing,
               &StanfordSceneConverterTest::twoComponentPositions,
               &StanfordSceneConverterTest::invalidEndianness});
 
@@ -492,7 +494,9 @@ void StanfordSceneConverterTest::empty() {
     Containers::Pointer<AbstractSceneConverter> converter =  _converterMnager.instantiate("StanfordSceneConverter");
     converter->configuration().setValue("endianness", "little");
 
-    Containers::Array<char> out = converter->convertToData(MeshData{MeshPrimitive::Triangles, 0});
+    Containers::Array<char> out = converter->convertToData(MeshData{MeshPrimitive::Triangles, nullptr, {
+        MeshAttributeData{MeshAttribute::Position, VertexFormat::Vector3, nullptr}
+    }, 0});
     CORRADE_VERIFY(out);
     CORRADE_COMPARE_AS((std::string{out.data(), out.size()}),
         Utility::Directory::join(STANFORDSCENECONVERTER_TEST_DIR, "empty-le.ply"),
@@ -507,6 +511,16 @@ void StanfordSceneConverterTest::lines() {
     CORRADE_VERIFY(!converter->convertToData(MeshData{MeshPrimitive::Lines, 0}));
     CORRADE_COMPARE(out.str(),
         "Trade::StanfordSceneConverter::convertToData(): expected a triangle mesh, got MeshPrimitive::Lines\n");
+}
+
+void StanfordSceneConverterTest::positionsMissing() {
+    Containers::Pointer<AbstractSceneConverter> converter =  _converterMnager.instantiate("StanfordSceneConverter");
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!converter->convertToData(MeshData{MeshPrimitive::Triangles, 0}));
+    CORRADE_COMPARE(out.str(),
+        "Trade::StanfordSceneConverter::convertToData(): the mesh has no positions\n");
 }
 
 void StanfordSceneConverterTest::twoComponentPositions() {
