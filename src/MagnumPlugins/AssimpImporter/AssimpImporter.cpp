@@ -1328,7 +1328,7 @@ Containers::String customMaterialKey(Containers::StringView key, const aiTexture
 
 #ifndef _CORRADE_HELPER_DEFER
 template<std::size_t size> constexpr Containers::StringView extractMaterialKey(const char(&data)[size], int, int) {
-    return Containers::Literals::operator"" _s(data, size - 1);
+    return Containers::Literals::operator""_s(data, size - 1);
 }
 #endif
 
