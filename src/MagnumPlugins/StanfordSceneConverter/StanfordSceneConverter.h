@@ -137,7 +137,6 @@ and @ref MeshPrimitive::TriangleFan meshes are converted to indexed
 @ref MeshPrimitive::Triangles first; points, lines and other primitives are
 not supported.
 
-
 @section Trade-StanfordSceneConverter-configuration Plugin-specific config
 
 It's possible to tune various import options through @ref configuration(). See
