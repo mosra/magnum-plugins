@@ -60,6 +60,7 @@
 #  MeshTools                    - MeshTools library
 #  Primitives                   - Primitives library
 #  SceneGraph                   - SceneGraph library
+#  SceneTools                   - SceneTools library
 #  Shaders                      - Shaders library
 #  ShaderTools                  - ShaderTools library
 #  Text                         - Text library
@@ -229,7 +230,7 @@ foreach(_component ${Magnum_FIND_COMPONENTS})
 
     # Unrolling the transitive dependencies here so this doesn't need to be
     # after resolving inter-component dependencies. Listing also all plugins.
-    if(_component MATCHES "^(Audio|DebugTools|MeshTools|Primitives|ShaderTools|Text|TextureTools|Trade|.+Importer|.+ImageConverter|.+Font|.+ShaderConverter)$")
+    if(_component MATCHES "^(Audio|DebugTools|MeshTools|Primitives|SceneTools|ShaderTools|Text|TextureTools|Trade|.+Importer|.+ImageConverter|.+Font|.+ShaderConverter)$")
         set(_MAGNUM_${_COMPONENT}_CORRADE_DEPENDENCIES PluginManager)
     endif()
 
@@ -354,8 +355,8 @@ endif()
 # Component distinction (listing them explicitly to avoid mistakes with finding
 # components from other repositories)
 set(_MAGNUM_LIBRARY_COMPONENTS
-    Audio DebugTools GL MeshTools Primitives SceneGraph Shaders ShaderTools
-    Text TextureTools Trade
+    Audio DebugTools GL MeshTools Primitives SceneGraph SceneTools Shaders
+    ShaderTools Text TextureTools Trade
     WindowlessEglApplication EglContext OpenGLTester)
 set(_MAGNUM_PLUGIN_COMPONENTS
     AnyAudioImporter AnyImageConverter AnyImageImporter AnySceneConverter
@@ -387,8 +388,7 @@ if(CORRADE_TARGET_EMSCRIPTEN)
 endif()
 if(CORRADE_TARGET_IOS)
     list(APPEND _MAGNUM_LIBRARY_COMPONENTS WindowlessIosApplication)
-endif()
-if(CORRADE_TARGET_APPLE AND NOT CORRADE_TARGET_IOS)
+elseif(CORRADE_TARGET_APPLE AND NOT MAGNUM_TARGET_GLES)
     list(APPEND _MAGNUM_LIBRARY_COMPONENTS WindowlessCglApplication CglContext)
 endif()
 if(CORRADE_TARGET_UNIX AND NOT CORRADE_TARGET_APPLE)
@@ -430,7 +430,7 @@ if(MAGNUM_TARGET_HEADLESS OR CORRADE_TARGET_EMSCRIPTEN OR CORRADE_TARGET_ANDROID
     list(APPEND _MAGNUM_OpenGLTester_DEPENDENCIES WindowlessEglApplication)
 elseif(CORRADE_TARGET_IOS)
     list(APPEND _MAGNUM_OpenGLTester_DEPENDENCIES WindowlessIosApplication)
-elseif(CORRADE_TARGET_APPLE)
+elseif(CORRADE_TARGET_APPLE AND NOT MAGNUM_TARGET_GLES)
     list(APPEND _MAGNUM_OpenGLTester_DEPENDENCIES WindowlessCglApplication)
 elseif(CORRADE_TARGET_UNIX)
     if(MAGNUM_TARGET_GLES AND NOT MAGNUM_TARGET_DESKTOP_GLES)
@@ -451,8 +451,11 @@ if(MAGNUM_TARGET_GL)
     # GL not required by Primitives themselves, but transitively by MeshTools
     list(APPEND _MAGNUM_Primitives_DEPENDENCIES GL)
 endif()
+
 set(_MAGNUM_SceneGraph_DEPENDENCIES )
+set(_MAGNUM_SceneTools_DEPENDENCIES Trade)
 set(_MAGNUM_Shaders_DEPENDENCIES GL)
+
 set(_MAGNUM_Text_DEPENDENCIES TextureTools)
 if(MAGNUM_TARGET_GL)
     list(APPEND _MAGNUM_Text_DEPENDENCIES GL)
@@ -466,6 +469,7 @@ endif()
 set(_MAGNUM_Trade_DEPENDENCIES )
 set(_MAGNUM_VulkanTester_DEPENDENCIES Vk)
 set(_MAGNUM_AndroidApplication_DEPENDENCIES GL)
+
 set(_MAGNUM_EmscriptenApplication_DEPENDENCIES)
 if(MAGNUM_TARGET_GL)
     list(APPEND _MAGNUM_EmscriptenApplication_DEPENDENCIES GL)
@@ -608,7 +612,7 @@ foreach(_component ${Magnum_FIND_COMPONENTS})
 
             # Dynamic plugins don't have any prefix (e.g. `lib` on Linux),
             # search with empty prefix and then reset that back so we don't
-            # accidentaly break something else
+            # accidentally break something else
             set(_tmp_prefixes "${CMAKE_FIND_LIBRARY_PREFIXES}")
             set(CMAKE_FIND_LIBRARY_PREFIXES "${CMAKE_FIND_LIBRARY_PREFIXES};")
 
