@@ -147,3 +147,6 @@ ninja $NINJA_JOBS
 
 # Test
 CORRADE_TEST_COLOR=ON ctest -V
+
+# Test install, after running the tests as for them it shouldn't be needed
+ninja install

@@ -100,3 +100,6 @@ ninja $NINJA_JOBS
 # not a problem when testing a statically built library.
 ASAN_OPTIONS="color=always" LSAN_OPTIONS="color=always suppressions=$(pwd)/../package/ci/leaksanitizer.conf" TSAN_OPTIONS="color=always" CORRADE_TEST_COLOR=ON ctest -V -E "DevIl"
 ASAN_OPTIONS="color=always" LSAN_OPTIONS="color=always suppressions=$(pwd)/../package/ci/leaksanitizer-devil.conf" TSAN_OPTIONS="color=always" CORRADE_TEST_COLOR=ON ctest -V -R DevIl
+
+# Test install, after running the tests as for them it shouldn't be needed
+ninja install
