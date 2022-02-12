@@ -143,8 +143,7 @@ cmake .. \
     -DBUILD_TESTS=ON \
     -DBUILD_GL_TESTS=ON \
     -G Ninja
-# Otherwise the job gets killed (probably because using too much memory)
-ninja -j4
+ninja $NINJA_JOBS
 
 # Test
 CORRADE_TEST_COLOR=ON ctest -V

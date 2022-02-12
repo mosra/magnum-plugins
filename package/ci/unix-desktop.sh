@@ -94,9 +94,7 @@ cmake .. \
     -DBUILD_STATIC=$BUILD_STATIC \
     -DBUILD_PLUGINS_STATIC=$BUILD_STATIC \
     -G Ninja
-# Otherwise the job gets killed (probably because using too much memory)
-ninja -j4
-ninja install # for Any*Importer tests
+ninja $NINJA_JOBS
 
 # DevIL tests "leak" since testing directly the dlopen()ed dynamic plugin, was
 # not a problem when testing a statically built library.
