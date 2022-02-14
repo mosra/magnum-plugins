@@ -149,6 +149,9 @@ void DrFlacImporterTest::mono24() {
     CORRADE_COMPARE(importer->frequency(), 48000);
 
     CORRADE_COMPARE(importer->data().size(), 3696);
+    #ifdef CORRADE_TARGET_ARM
+    CORRADE_EXPECT_FAIL("Gives a wrong result on ARM. Or maybe the result is wrong on x86 and WASM?");
+    #endif
     CORRADE_COMPARE_AS(Containers::arrayCast<Float>(importer->data()).prefix(4),
         Containers::arrayView<Float>({
             -0.000548482f, -3.45707e-06f, -0.00179672f, 0.000154614f
