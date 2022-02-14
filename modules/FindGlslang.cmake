@@ -98,6 +98,10 @@ if(TARGET glslang)
     return()
 endif()
 
+# The library depends on SPIRV-Tools, except if that's disabled, which we have
+# no way to check anyway.
+find_package(SpirvTools REQUIRED)
+
 # Libraries. The debug suffix is used only on Windows.
 find_library(Glslang_LIBRARY_RELEASE NAMES glslang)
 find_library(Glslang_LIBRARY_DEBUG NAMES glslangd)
@@ -172,10 +176,10 @@ foreach(_library SPIRV ${_GLSLANG_STATIC_LIBRARIES} ${_GLSLANG_STATIC_LIBRARIES_
                 IMPORTED_LOCATION_DEBUG ${Glslang_${_library}_LIBRARY_DEBUG})
         endif()
 
-        # SPIRV depends on glslang (which is created later)
+        # SPIRV depends on SpirvTools and glslang (which is created later)
         if(_library STREQUAL SPIRV)
             set_property(TARGET Glslang::${_library} APPEND PROPERTY
-                INTERFACE_LINK_LIBRARIES Glslang::Glslang)
+                INTERFACE_LINK_LIBRARIES SpirvTools::SpirvTools SpirvTools::Opt Glslang::Glslang)
         endif()
 
         # OGLCompiler needs pthread
