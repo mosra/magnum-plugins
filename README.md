@@ -3,7 +3,6 @@ import and conversion, text rendering and more.
 
 [![Join the chat at https://gitter.im/mosra/magnum](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/mosra/magnum?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 [![Build Status](https://circleci.com/gh/mosra/magnum-plugins.svg?style=shield)](https://circleci.com/gh/mosra/magnum-plugins)
-[![Build Status](https://travis-ci.com/mosra/magnum-plugins.svg?branch=master)](https://travis-ci.com/mosra/magnum-plugins)
 [![Build Status](https://ci.appveyor.com/api/projects/status/nkdlwaxm2i9d6vpx/branch/master?svg=true)](https://ci.appveyor.com/project/mosra/magnum-plugins/branch/master)
 [![Coverage Status](https://codecov.io/gh/mosra/magnum-plugins/branch/master/graph/badge.svg)](https://codecov.io/gh/mosra/magnum-plugins)
 [![MIT License](https://img.shields.io/badge/license-MIT-green.svg)](https://opensource.org/licenses/MIT)

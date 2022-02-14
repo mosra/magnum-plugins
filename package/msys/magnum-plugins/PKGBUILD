@@ -22,10 +22,10 @@ depends=("${MINGW_PACKAGE_PREFIX}-magnum>=$pkgver"
          "${MINGW_PACKAGE_PREFIX}-libpng"
          "${MINGW_PACKAGE_PREFIX}-spirv-tools")
 makedepends=("${MINGW_PACKAGE_PREFIX}-cmake" "${MINGW_PACKAGE_PREFIX}-ninja" 'git')
-# The .tar.gz / .zip download contains symlinks (.travis.yml), making tar and
-# unzip on Windows grumpy because dangling symlinks are created. Could be fixed
-# by manually extracting everything except symlinks, but that's hard to
-# maintain. Downloading a Git tag works.
+# The .tar.gz / .zip download contains symlinks, making tar and unzip on
+# Windows grumpy because dangling symlinks are created. Could be fixed by
+# manually extracting everything except symlinks, but that's hard to maintain.
+# Downloading a Git tag works.
 source=("${_realname}-${pkgver}"::"git+https://github.com/mosra/magnum-plugins.git#tag=v$pkgver")
 sha1sums=('SKIP')
 
