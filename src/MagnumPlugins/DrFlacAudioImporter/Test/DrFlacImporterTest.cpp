@@ -199,13 +199,12 @@ void DrFlacImporterTest::stereo24() {
 
     CORRADE_COMPARE(importer->data().size(), 187944);
     /** @todo find some range that isn't mostly zeros */
-    CORRADE_COMPARE_AS(importer->data().prefix(32),
-        Containers::arrayView<char>({
-            0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 56, 0, 0, -128, 56, 0,
-            0, -64, -72, 0, 0, 0, 0
-        }), TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(importer->data().prefix(32), Containers::arrayView({
+        '\x00', '\x00', '\x00', '\x00', '\x00', '\x00', '\x00', '\x00',
+        '\x00', '\x00', '\x00', '\x00', '\x00', '\x00', '\x00', '\x00',
+        '\x00', '\x00', '\x00', '\x38', '\x00', '\x00', '\x80', '\x38',
+        '\x00', '\x00', '\xc0', '\xb8', '\x00', '\x00', '\x00', '\x00'
+    }), TestSuite::Compare::Container);
 }
 
 void DrFlacImporterTest::quad16() {
