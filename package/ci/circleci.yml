@@ -10,6 +10,10 @@ executors:
   xcode-10_3:
     macos:
       xcode: 10.3.0
+  xcode-11_4:
+    macos:
+      # xcbeautify (for the iOS build) requires Xcode 11.4
+      xcode: 11.4.1
   emscripten:
     docker:
     # 1.39.0 is the oldest on Docker. Anything before 1.39.2 is useless as emar
@@ -525,6 +529,17 @@ jobs:
     - build:
         script: android-x86.sh
 
+  ios:
+    executor: xcode-11_4
+    steps:
+    - install-base-macos:
+        extra: xcbeautify wget
+    # Zstd built inside ios-simulator.sh instead of using install-zstd as it
+    # needs the toolchain etc
+    - install-basis
+    - build:
+        script: ios-simulator.sh
+
 workflows:
   version: 2
   build:
@@ -539,3 +554,4 @@ workflows:
     - macos-static
     - emscripten
     - android-x86
+    - ios
