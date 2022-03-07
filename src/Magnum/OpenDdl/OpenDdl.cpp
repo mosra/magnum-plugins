@@ -23,7 +23,7 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-#include <algorithm>
+#include <algorithm> /* std::find(), std::find_if() */
 #include <tuple>
 #include <Corrade/Utility/Debug.h>
 #include <Corrade/Utility/DebugStl.h>

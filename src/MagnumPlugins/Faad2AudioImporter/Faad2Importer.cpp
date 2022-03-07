@@ -26,7 +26,7 @@
 #include "Faad2Importer.h"
 
 #include <cstring>
-#include <algorithm>
+#include <algorithm> /* std::copy_n() */ /** @todo remove */
 #include <Corrade/Containers/Array.h>
 #include <Corrade/Containers/ScopeGuard.h>
 #include <Corrade/Utility/Assert.h>

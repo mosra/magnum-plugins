@@ -24,7 +24,7 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-#include <algorithm>
+#include <algorithm> /* std::find() */
 #include <sstream>
 #include <unordered_map>
 #include <Corrade/Containers/Array.h>

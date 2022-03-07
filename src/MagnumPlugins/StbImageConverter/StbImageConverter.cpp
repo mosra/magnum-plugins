@@ -25,7 +25,7 @@
 
 #include "StbImageConverter.h"
 
-#include <algorithm>
+#include <algorithm> /* std::copy() */ /** @todo remove */
 #include <Corrade/Containers/Array.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/DebugStl.h>

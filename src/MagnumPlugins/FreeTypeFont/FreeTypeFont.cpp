@@ -25,7 +25,7 @@
 
 #include "FreeTypeFont.h"
 
-#include <algorithm>
+#include <algorithm> /* std::transform(), std::sort(), std::unique() */
 #include <ft2build.h>
 #include FT_FREETYPE_H
 #include <Corrade/PluginManager/AbstractManager.h>

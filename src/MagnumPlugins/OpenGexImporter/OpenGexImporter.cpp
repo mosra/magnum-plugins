@@ -26,7 +26,7 @@
 
 #include "OpenGexImporter.h"
 
-#include <algorithm>
+#include <algorithm> /* std::find() */
 #include <limits>
 #include <unordered_map>
 #include <Corrade/Containers/ArrayTuple.h>

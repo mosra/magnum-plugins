@@ -25,7 +25,7 @@
 
 #include "MiniExrImageConverter.h"
 
-#include <algorithm>
+#include <algorithm> /* std::copy_n() */ /** @todo remove */
 #include <Corrade/Containers/Array.h>
 #include <Magnum/ImageView.h>
 #include <Magnum/PixelFormat.h>

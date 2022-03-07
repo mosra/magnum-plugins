@@ -26,7 +26,7 @@
 #include "PngImageConverter.h"
 
 #include <cstring>
-#include <algorithm>
+#include <algorithm> /* std::copy() */ /** @todo remove */
 #include <png.h>
 /*
     The <csetjmp> header has to be included *after* png.h, otherwise older

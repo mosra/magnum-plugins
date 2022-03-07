@@ -25,7 +25,7 @@
 
 #include "StbTrueTypeFont.h"
 
-#include <algorithm>
+#include <algorithm> /* std::transform(), std::sort(), std::unique() */
 #include <Corrade/PluginManager/AbstractManager.h>
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/Unicode.h>

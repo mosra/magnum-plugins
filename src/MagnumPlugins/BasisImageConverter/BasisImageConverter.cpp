@@ -28,7 +28,6 @@
 #include "BasisImageConverter.h"
 
 #include <cstring>
-#include <algorithm>
 #include <thread>
 #include <Corrade/Containers/Array.h>
 #include <Corrade/Containers/ArrayView.h>

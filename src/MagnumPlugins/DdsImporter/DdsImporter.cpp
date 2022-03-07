@@ -27,7 +27,7 @@
 #include "DdsImporter.h"
 
 #include <cstring>
-#include <algorithm>
+#include <algorithm> /* std::transform() */
 #include <vector>
 #include <Corrade/Containers/ArrayView.h>
 #include <Corrade/Containers/Optional.h>
