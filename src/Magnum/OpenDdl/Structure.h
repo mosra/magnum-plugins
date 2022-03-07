@@ -29,11 +29,9 @@
  * @brief Class @ref Magnum::OpenDdl::Structure, enum @ref Magnum::OpenDdl::Type
  */
 
-#ifdef _MSC_VER
-#include <algorithm> /* For std::min() */
-#endif
 #include <Corrade/Containers/Reference.h>
 #include <Corrade/Utility/Assert.h>
+#include <Corrade/Utility/Math.h>
 
 #include "Magnum/OpenDdl/Document.h"
 
@@ -83,7 +81,7 @@ class MAGNUM_OPENDDL_EXPORT Structure {
          *
          * @see @ref isCustom(), @ref identifier()
          */
-        Type type() const { return std::min(Type::Custom, _data.get().primitive.type); }
+        Type type() const { return Utility::min(Type::Custom, _data.get().primitive.type); }
 
         /**
          * @brief Custom structure identifier
