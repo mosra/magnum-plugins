@@ -41,7 +41,7 @@
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/DebugStl.h>
 #include <Corrade/Utility/Directory.h>
-#include <Corrade/Utility/FormatStl.h>
+#include <Corrade/Utility/Format.h>
 #include <Corrade/Utility/String.h>
 #include <Magnum/FileCallback.h>
 #include <Magnum/Mesh.h>
@@ -1317,10 +1317,7 @@ Containers::String customMaterialKey(Containers::StringView key, const aiTexture
         }
 
         CORRADE_INTERNAL_ASSERT(!keyExtra.isEmpty());
-
-        /** @todo use format() and drop FormatStl include when format() is
-            converted to StringViews */
-        keyString = Utility::formatString("{}.{}", key, keyExtra);
+        keyString = Utility::format("{}.{}", key, keyExtra);
     }
 
     return keyString;

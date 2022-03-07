@@ -363,7 +363,7 @@ void SpirvToolsConverterTest::validateFailFileWhole() {
     converter->configuration().setValue("maxIdBound", 15);
 
     CORRADE_COMPARE(converter->validateFile({}, data.filename),
-        std::make_pair(false, Utility::formatString("{}: Invalid SPIR-V.  The id bound is larger than the max id bound 15.", data.filename)));
+        std::make_pair(false, Utility::format("{}: Invalid SPIR-V.  The id bound is larger than the max id bound 15.", data.filename)));
     /* Validating data again should not be using the stale filename */
     CORRADE_COMPARE(converter->validateData({}, file),
         std::make_pair(false, "<data>: Invalid SPIR-V.  The id bound is larger than the max id bound 15."));
@@ -394,10 +394,10 @@ void SpirvToolsConverterTest::validateFailFileInstruction() {
         #endif
         ;
     CORRADE_COMPARE(converter->validateFile({}, data.filename),
-        std::make_pair(false, Utility::formatString("{}:5: {}", data.filename, expected)));
+        std::make_pair(false, Utility::format("{}:5: {}", data.filename, expected)));
     /* Validating data again should not be using the stale filename */
     CORRADE_COMPARE(converter->validateData({}, file),
-        std::make_pair(false, Utility::formatString("<data>:5: {}", expected)));
+        std::make_pair(false, Utility::format("<data>:5: {}", expected)));
 }
 
 void SpirvToolsConverterTest::validateFailAssemble() {

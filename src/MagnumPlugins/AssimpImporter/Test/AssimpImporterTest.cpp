@@ -43,7 +43,7 @@
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/DebugStl.h>
 #include <Corrade/Utility/Directory.h>
-#include <Corrade/Utility/FormatStl.h>
+#include <Corrade/Utility/Format.h>
 #include <Corrade/Utility/String.h>
 #include <Magnum/FileCallback.h>
 #include <Magnum/Mesh.h>
@@ -950,17 +950,17 @@ void AssimpImporterTest::animationDummyTracksRemovalEnabled() {
     if(data.flags >= ImporterFlag::Verbose) {
         const std::string str = out.str();
         CORRADE_VERIFY(Containers::StringView{str}.contains(
-            Utility::formatString(
+            Utility::format(
                 "Trade::AssimpImporter::animation(): ignoring dummy translation track in animation 1, channel {}\n"
                 "Trade::AssimpImporter::animation(): ignoring dummy scaling track in animation 1, channel {}\n",
                 targets[0].channel, targets[0].channel)));
         CORRADE_VERIFY(Containers::StringView{str}.contains(
-            Utility::formatString(
+            Utility::format(
                 "Trade::AssimpImporter::animation(): ignoring dummy rotation track in animation 1, channel {}\n"
                 "Trade::AssimpImporter::animation(): ignoring dummy scaling track in animation 1, channel {}\n",
                 targets[1].channel, targets[1].channel)));
         CORRADE_VERIFY(Containers::StringView{str}.contains(
-            Utility::formatString(
+            Utility::format(
                 "Trade::AssimpImporter::animation(): ignoring dummy translation track in animation 1, channel {}\n"
                 "Trade::AssimpImporter::animation(): ignoring dummy rotation track in animation 1, channel {}\n",
                 targets[2].channel, targets[2].channel)));

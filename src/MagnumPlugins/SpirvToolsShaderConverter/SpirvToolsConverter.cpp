@@ -29,7 +29,7 @@
 #include <Corrade/Containers/ScopeGuard.h>
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
-#include <Corrade/Utility/FormatStl.h> /** @todo remove once format() produces a String */
+#include <Corrade/Utility/Format.h>
 
 #include "spirv-tools/libspirv.h"
 /* Unfortunately the C optimizer interface is so minimal that it's useless. No
@@ -277,7 +277,7 @@ std::pair<bool, Containers::String> SpirvToolsConverter::doValidateData(Stage, c
 
         /* Drop trailing newline, if any. Messages that print disassembled
            instructions have those. */
-        return {false, Utility::formatString(
+        return {false, Utility::format(
             diagnostic->position.index ? "{}:{}: {}" : "{0}: {2}",
             inputFilename.isEmpty() ? "<data>" : inputFilename,
             diagnostic->position.index,

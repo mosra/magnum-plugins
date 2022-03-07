@@ -699,7 +699,7 @@ void GlslangConverterTest::validateFailIncludeNotFound() {
     std::ostringstream out;
     Error redirectError{&out};
     CORRADE_COMPARE(converter->validateFile({}, Utility::Directory::join(GLSLANGSHADERCONVERTER_TEST_DIR, "includes.vert")),
-        std::make_pair(false, Utility::formatString(
+        std::make_pair(false, Utility::format(
             "ERROR: {0}:10: '#include' : Could not process include directive for header name: ../notfound.glsl\n"
             "ERROR: 1 compilation errors.  No code generated.", Utility::Directory::join(GLSLANGSHADERCONVERTER_TEST_DIR, "includes.vert"))));
     CORRADE_COMPARE(out.str(),
