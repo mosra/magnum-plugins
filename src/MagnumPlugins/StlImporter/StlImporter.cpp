@@ -30,7 +30,6 @@
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/DebugStl.h>
-#include <Corrade/Utility/Directory.h>
 #include <Corrade/Utility/Endianness.h>
 #include <Corrade/Utility/EndiannessBatch.h>
 #include <Magnum/Math/Functions.h>
