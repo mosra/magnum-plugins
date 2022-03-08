@@ -30,6 +30,7 @@
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
 #include <Corrade/TestSuite/Compare/Numeric.h>
+#include <Corrade/TestSuite/Compare/String.h>
 #include <Corrade/Utility/DebugStl.h>
 #include <Corrade/Utility/Directory.h>
 #include <Corrade/Utility/FormatStl.h>
@@ -1015,7 +1016,10 @@ void OpenGexImporterTest::imageNotFound() {
        the message should get printed just once */
     CORRADE_VERIFY(!importer->image2D(1));
     CORRADE_VERIFY(!importer->image2D(1));
-    CORRADE_COMPARE(out.str(), "Trade::AbstractImporter::openFile(): cannot open file /nonexistent.tga\n");
+    /* There's an error from Path::read() before */
+    CORRADE_COMPARE_AS(out.str(),
+        "\nTrade::AbstractImporter::openFile(): cannot open file /nonexistent.tga\n",
+        TestSuite::Compare::StringHasSuffix);
 }
 
 void OpenGexImporterTest::imageUnique() {
@@ -1040,7 +1044,10 @@ void OpenGexImporterTest::imageUnique() {
         std::ostringstream out;
         Error redirectError{&out};
         CORRADE_VERIFY(!importer->image2D(texture0->image()));
-        CORRADE_COMPARE(out.str(), "Trade::AbstractImporter::openFile(): cannot open file /tex1.tga\n");
+        /* There's an error from Path::read() before */
+        CORRADE_COMPARE_AS(out.str(),
+            "\nTrade::AbstractImporter::openFile(): cannot open file /tex1.tga\n",
+            TestSuite::Compare::StringHasSuffix);
     } {
         Containers::Optional<TextureData> texture1 = importer->texture(1);
         CORRADE_VERIFY(texture1);
@@ -1053,7 +1060,10 @@ void OpenGexImporterTest::imageUnique() {
         std::ostringstream out;
         Error redirectError{&out};
         CORRADE_VERIFY(!importer->image2D(texture1->image()));
-        CORRADE_COMPARE(out.str(), "Trade::AbstractImporter::openFile(): cannot open file /tex2.tga\n");
+        /* There's an error from Path::read() before */
+        CORRADE_COMPARE_AS(out.str(),
+            "\nTrade::AbstractImporter::openFile(): cannot open file /tex2.tga\n",
+            TestSuite::Compare::StringHasSuffix);
     } {
         Containers::Optional<TextureData> texture2 = importer->texture(2);
         CORRADE_VERIFY(texture2);
@@ -1062,7 +1072,10 @@ void OpenGexImporterTest::imageUnique() {
         std::ostringstream out;
         Error redirectError{&out};
         CORRADE_VERIFY(!importer->image2D(texture2->image()));
-        CORRADE_COMPARE(out.str(), "Trade::AbstractImporter::openFile(): cannot open file /tex3.tga\n");
+        /* There's an error from Path::read() before */
+        CORRADE_COMPARE_AS(out.str(),
+            "\nTrade::AbstractImporter::openFile(): cannot open file /tex3.tga\n",
+            TestSuite::Compare::StringHasSuffix);
     }
 }
 

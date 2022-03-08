@@ -33,6 +33,7 @@
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
 #include <Corrade/TestSuite/Compare/Numeric.h>
+#include <Corrade/TestSuite/Compare/String.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/DebugStl.h>
 #include <Corrade/Utility/Directory.h>
@@ -3851,7 +3852,10 @@ void TinyGltfImporterTest::imageExternalNotFound() {
     std::ostringstream out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->image2D(0));
-    CORRADE_COMPARE(out.str(), "Trade::AbstractImporter::openFile(): cannot open file /nonexistent.png\n");
+    /* There's an error from Path:.read() first */
+    CORRADE_COMPARE_AS(out.str(),
+        "\nTrade::AbstractImporter::openFile(): cannot open file /nonexistent.png\n",
+        TestSuite::Compare::StringHasSuffix);
 }
 
 void TinyGltfImporterTest::imageExternalNoPathNoCallback() {

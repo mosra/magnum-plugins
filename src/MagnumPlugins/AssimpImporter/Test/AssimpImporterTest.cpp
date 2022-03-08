@@ -40,6 +40,7 @@
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Numeric.h>
 #include <Corrade/TestSuite/Compare/Container.h>
+#include <Corrade/TestSuite/Compare/String.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/DebugStl.h>
 #include <Corrade/Utility/Directory.h>
@@ -3432,13 +3433,24 @@ void AssimpImporterTest::imageExternalNotFound() {
 
     CORRADE_COMPARE(importer->image2DCount(), 1);
 
-    std::ostringstream out;
-    Error redirectError{&out};
+    {
+        std::ostringstream out;
+        Error redirectError{&out};
+        CORRADE_VERIFY(!importer->image2D(0));
+        /* There's an error from Path::read() before */
+        CORRADE_COMPARE_AS(out.str(),
+            "\nTrade::AbstractImporter::openFile(): cannot open file /not-found.png\n",
+            TestSuite::Compare::StringHasSuffix);
+    }
+
     /* The (failed) importer should get cached even in case of failure, so
        the message should get printed just once */
-    CORRADE_VERIFY(!importer->image2D(0));
-    CORRADE_VERIFY(!importer->image2D(0));
-    CORRADE_COMPARE(out.str(), "Trade::AbstractImporter::openFile(): cannot open file /not-found.png\n");
+    {
+        std::ostringstream out;
+        Error redirectError{&out};
+        CORRADE_VERIFY(!importer->image2D(0));
+        CORRADE_COMPARE(out.str(), "");
+    }
 }
 
 void AssimpImporterTest::imageExternalNoPathNoCallback() {
