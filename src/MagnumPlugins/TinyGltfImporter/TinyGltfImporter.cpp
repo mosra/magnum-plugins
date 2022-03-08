@@ -35,11 +35,12 @@
 #include <Corrade/Containers/ArrayView.h>
 #include <Corrade/Containers/ArrayViewStl.h>
 #include <Corrade/Containers/Optional.h>
+#include <Corrade/Containers/Pair.h>
 #include <Corrade/Containers/StaticArray.h>
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/DebugStl.h>
-#include <Corrade/Utility/Directory.h>
+#include <Corrade/Utility/Path.h>
 #include <Corrade/Utility/String.h>
 #include <Magnum/FileCallback.h>
 #include <Magnum/Mesh.h>
@@ -189,7 +190,7 @@ Containers::StringView attributeSemantic(Containers::StringView attribute) {
 }
 
 struct TinyGltfImporter::Document {
-    Containers::Optional<std::string> filePath;
+    Containers::Optional<Containers::String> filePath;
 
     tinygltf::Model model;
 
@@ -274,7 +275,10 @@ void TinyGltfImporter::doClose() { _d = nullptr; }
 
 void TinyGltfImporter::doOpenFile(const std::string& filename) {
     _d.reset(new Document);
-    _d->filePath = Utility::Directory::path(filename);
+    /** @todo once AbstractImporter is <string>-free, consider storing a
+        nullTerminatedGlobalView() here (but the split path is not
+        null-terminated, ugh) */
+    _d->filePath.emplace(Utility::Path::split(filename).first());
     AbstractImporter::doOpenFile(filename);
 }
 
@@ -301,7 +305,7 @@ void TinyGltfImporter::doOpenData(Containers::Array<char>&& data, DataFlags) {
     };
     if(fileCallback()) callbacks.ReadWholeFile = [](std::vector<unsigned char>* out, std::string* err, const std::string& filename, void* userData) {
             auto& self = *static_cast<TinyGltfImporter*>(userData);
-            const std::string fullPath = Utility::Directory::join(self._d->filePath ? *self._d->filePath : "", filename);
+            const Containers::String fullPath = Utility::Path::join(self._d->filePath ? *self._d->filePath : "", filename);
             Containers::Optional<Containers::ArrayView<const char>> data = self.fileCallback()(fullPath, InputFileCallbackPolicy::LoadTemporary, self.fileCallbackUserData());
             if(!data) {
                 *err = "file callback failed";
@@ -316,13 +320,13 @@ void TinyGltfImporter::doOpenData(Containers::Array<char>&& data, DataFlags) {
                 *err = "external buffers can be imported only when opening files from the filesystem or if a file callback is present";
                 return false;
             }
-            const std::string fullPath = Utility::Directory::join(*self._d->filePath, filename);
-            if(!Utility::Directory::exists(fullPath)) {
-                *err = "file not found";
+            const Containers::String fullPath = Utility::Path::join(*self._d->filePath, filename);
+            Containers::Optional<Containers::Array<char>> data = Utility::Path::read(fullPath);
+            if(!data) {
+                *err = "file reading failed";
                 return false;
             }
-            Containers::Array<char> data = Utility::Directory::read(fullPath);
-            out->assign(data.begin(), data.end());
+            out->assign(data->begin(), data->end());
             return true;
         };
     /* This field is not used (we're just importing here) but GCC 10 warns
@@ -2587,7 +2591,7 @@ AbstractImporter* TinyGltfImporter::setupOrReuseImporterForImage(const UnsignedI
     }
 
     Containers::Optional<ImageData2D> imageData;
-    if(!importer.openFile(Utility::Directory::join(_d->filePath ? *_d->filePath : "", image.uri)))
+    if(!importer.openFile(Utility::Path::join(_d->filePath ? *_d->filePath : "", image.uri)))
         return nullptr;
     return &_d->imageImporter.emplace(std::move(importer));
 }

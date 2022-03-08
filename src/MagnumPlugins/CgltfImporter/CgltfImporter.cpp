@@ -42,8 +42,8 @@
 #include <Corrade/Containers/StringView.h>
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
-#include <Corrade/Utility/Directory.h>
 #include <Corrade/Utility/Format.h>
+#include <Corrade/Utility/Path.h>
 #include <Corrade/Utility/MurmurHash2.h>
 #include <Magnum/FileCallback.h>
 #include <Magnum/Mesh.h>
@@ -267,7 +267,7 @@ std::size_t skipJson(Containers::ArrayView<const jsmntok_t> tokens, std::size_t 
 struct CgltfImporter::Document {
     ~Document();
 
-    Containers::Optional<std::string> filePath;
+    Containers::Optional<Containers::String> filePath;
     Containers::Array<char> fileData;
 
     cgltf_options options;
@@ -398,10 +398,10 @@ Containers::Optional<Containers::ArrayView<const char>> CgltfImporter::Document:
         storage = Containers::Array<char>{static_cast<char*>(decoded), size};
         return Containers::arrayCast<const char>(storage);
     } else if(importer.fileCallback()) {
-        const std::string fullPath = Utility::Directory::join(filePath ? *filePath : "", decodeUri(decodeCachedString(uri)));
+        const Containers::String fullPath = Utility::Path::join(filePath ? *filePath : "", decodeUri(decodeCachedString(uri)));
         Containers::Optional<Containers::ArrayView<const char>> view = importer.fileCallback()(fullPath, InputFileCallbackPolicy::LoadPermanent, importer.fileCallbackUserData());
         if(!view) {
-            Error{} << "Trade::CgltfImporter::" << Debug::nospace << function << Debug::nospace << "(): error opening file:" << Containers::StringView{fullPath} << ": file callback failed";
+            Error{} << "Trade::CgltfImporter::" << Debug::nospace << function << Debug::nospace << "(): error opening" << fullPath << "through a file callback";
             return Containers::NullOpt;
         }
         return *view;
@@ -410,12 +410,13 @@ Containers::Optional<Containers::ArrayView<const char>> CgltfImporter::Document:
             Error{} << "Trade::CgltfImporter::" << Debug::nospace << function << Debug::nospace << "(): external buffers can be imported only when opening files from the filesystem or if a file callback is present";
             return Containers::NullOpt;
         }
-        const std::string fullPath = Utility::Directory::join(*filePath, decodeUri(decodeCachedString(uri)));
-        if(!Utility::Directory::exists(fullPath)) {
-            Error{} << "Trade::CgltfImporter::" << Debug::nospace << function << Debug::nospace << "(): error opening file:" << Containers::StringView{fullPath} << ": file not found";
+        const Containers::String fullPath = Utility::Path::join(*filePath, decodeUri(decodeCachedString(uri)));
+        Containers::Optional<Containers::Array<char>> data = Utility::Path::read(fullPath);
+        if(!data) {
+            Error{} << "Trade::CgltfImporter::" << Debug::nospace << function << Debug::nospace << "(): error opening" << fullPath;
             return Containers::NullOpt;
         }
-        storage = Utility::Directory::read(fullPath);
+        storage = *std::move(data);
         return Containers::arrayCast<const char>(storage);
     }
 }
@@ -531,7 +532,10 @@ void CgltfImporter::doClose() { _d = nullptr; }
 
 void CgltfImporter::doOpenFile(const std::string& filename) {
     _d.reset(new Document);
-    _d->filePath = Utility::Directory::path(filename);
+    /** @todo once AbstractImporter is <string>-free, consider storing a
+        nullTerminatedGlobalView() here (but the split path is not
+        null-terminated, ugh) */
+    _d->filePath.emplace(Utility::Path::split(filename).first());
     AbstractImporter::doOpenFile(filename);
 }
 
@@ -3347,7 +3351,7 @@ AbstractImporter* CgltfImporter::setupOrReuseImporterForImage(const UnsignedInt 
         return nullptr;
     }
 
-    if(!importer.openFile(Utility::Directory::join(_d->filePath ? *_d->filePath : "", decodeUri(_d->decodeCachedString(image.uri)))))
+    if(!importer.openFile(Utility::Path::join(_d->filePath ? *_d->filePath : "", decodeUri(_d->decodeCachedString(image.uri)))))
         return nullptr;
     return &_d->imageImporter.emplace(std::move(importer));
 }
