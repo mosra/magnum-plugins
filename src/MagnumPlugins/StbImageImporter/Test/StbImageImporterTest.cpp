@@ -31,7 +31,7 @@
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/DebugStl.h>
-#include <Corrade/Utility/Directory.h>
+#include <Corrade/Utility/Path.h>
 #include <Magnum/PixelFormat.h>
 #include <Magnum/Math/Color.h>
 #include <Magnum/Trade/AbstractImporter.h>
@@ -174,7 +174,7 @@ void StbImageImporterTest::invalid() {
 
 void StbImageImporterTest::grayPng() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StbImageImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, "gray.png")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(PNGIMPORTER_TEST_DIR, "gray.png")));
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
@@ -189,7 +189,7 @@ void StbImageImporterTest::grayPng() {
 
 void StbImageImporterTest::grayPngFourChannel() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StbImageImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, "gray.png")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(PNGIMPORTER_TEST_DIR, "gray.png")));
 
     importer->configuration().setValue("forceChannelCount", 4);
 
@@ -211,7 +211,7 @@ void StbImageImporterTest::grayPngFourChannel() {
 
 void StbImageImporterTest::grayPngFiveChannel() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StbImageImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, "gray.png")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(PNGIMPORTER_TEST_DIR, "gray.png")));
 
     importer->configuration().setValue("forceChannelCount", 5);
 
@@ -223,7 +223,7 @@ void StbImageImporterTest::grayPngFiveChannel() {
 
 void StbImageImporterTest::grayPng16() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StbImageImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, "gray16.png")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(PNGIMPORTER_TEST_DIR, "gray16.png")));
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
@@ -240,7 +240,7 @@ void StbImageImporterTest::grayPng16() {
 
 void StbImageImporterTest::grayPng16FourChannel() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StbImageImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, "gray16.png")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(PNGIMPORTER_TEST_DIR, "gray16.png")));
 
     importer->configuration().setValue("forceChannelCount", 4);
 
@@ -260,7 +260,7 @@ void StbImageImporterTest::grayPng16FourChannel() {
 
 void StbImageImporterTest::grayJpeg() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StbImageImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(JPEGIMPORTER_TEST_DIR, "gray.jpg")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(JPEGIMPORTER_TEST_DIR, "gray.jpg")));
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
@@ -275,7 +275,7 @@ void StbImageImporterTest::grayJpeg() {
 
 void StbImageImporterTest::rgbPng() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StbImageImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, "rgb.png")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(PNGIMPORTER_TEST_DIR, "rgb.png")));
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
@@ -294,7 +294,7 @@ void StbImageImporterTest::rgbPng() {
 
 void StbImageImporterTest::rgbPngOneChannel() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StbImageImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, "rgb.png")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(PNGIMPORTER_TEST_DIR, "rgb.png")));
 
     importer->configuration().setValue("forceChannelCount", 1);
 
@@ -312,7 +312,7 @@ void StbImageImporterTest::rgbPngOneChannel() {
 
 void StbImageImporterTest::rgbPng16() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StbImageImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, "rgb16.png")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(PNGIMPORTER_TEST_DIR, "rgb16.png")));
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
@@ -329,7 +329,7 @@ void StbImageImporterTest::rgbPng16() {
 
 void StbImageImporterTest::rgbPng16OneChannel() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StbImageImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, "rgb16.png")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(PNGIMPORTER_TEST_DIR, "rgb16.png")));
 
     importer->configuration().setValue("forceChannelCount", 1);
 
@@ -351,7 +351,7 @@ void StbImageImporterTest::rgbPng16OneChannel() {
 
 void StbImageImporterTest::rgbJpeg() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StbImageImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(JPEGIMPORTER_TEST_DIR, "rgb.jpg")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(JPEGIMPORTER_TEST_DIR, "rgb.jpg")));
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
@@ -371,7 +371,7 @@ void StbImageImporterTest::rgbJpeg() {
 
 void StbImageImporterTest::rgbHdr() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StbImageImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STBIMAGEIMPORTER_TEST_DIR, "rgb.hdr")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(STBIMAGEIMPORTER_TEST_DIR, "rgb.hdr")));
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
@@ -391,7 +391,7 @@ void StbImageImporterTest::rgbHdrOneChannel() {
 
     importer->configuration().setValue("forceChannelCount", 1);
 
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STBIMAGEIMPORTER_TEST_DIR, "rgb.hdr")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(STBIMAGEIMPORTER_TEST_DIR, "rgb.hdr")));
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
@@ -411,7 +411,7 @@ void StbImageImporterTest::rgbHdrFourChannels() {
 
     importer->configuration().setValue("forceChannelCount", 4);
 
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STBIMAGEIMPORTER_TEST_DIR, "rgb.hdr")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(STBIMAGEIMPORTER_TEST_DIR, "rgb.hdr")));
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
@@ -444,7 +444,7 @@ void StbImageImporterTest::rgbaPng() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StbImageImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, data.filename)));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(PNGIMPORTER_TEST_DIR, data.filename)));
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
@@ -464,7 +464,7 @@ void StbImageImporterTest::rgbaPng() {
 void StbImageImporterTest::animatedGif() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StbImageImporter");
 
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STBIMAGEIMPORTER_TEST_DIR, "dispose_bgnd.gif")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(STBIMAGEIMPORTER_TEST_DIR, "dispose_bgnd.gif")));
     CORRADE_COMPARE(importer->image2DCount(), 5);
 
     /* Importer state should expose the delays, in milliseconds */
@@ -508,8 +508,9 @@ void StbImageImporterTest::openMemory() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StbImageImporter");
-    Containers::Array<char> memory = Utility::Directory::read(Utility::Directory::join(PNGIMPORTER_TEST_DIR, "gray.png"));
-    CORRADE_VERIFY(data.open(*importer, memory));
+    Containers::Optional<Containers::Array<char>> memory = Utility::Path::read(Utility::Path::join(PNGIMPORTER_TEST_DIR, "gray.png"));
+    CORRADE_VERIFY(memory);
+    CORRADE_VERIFY(data.open(*importer, *memory));
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
@@ -525,15 +526,15 @@ void StbImageImporterTest::openMemory() {
 void StbImageImporterTest::openTwice() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StbImageImporter");
 
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, "gray.png")));
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, "gray.png")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(PNGIMPORTER_TEST_DIR, "gray.png")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(PNGIMPORTER_TEST_DIR, "gray.png")));
 
     /* Shouldn't crash, leak or anything */
 }
 
 void StbImageImporterTest::importTwice() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StbImageImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, "gray.png")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(PNGIMPORTER_TEST_DIR, "gray.png")));
 
     /* Verify that everything is working the same way on second use */
     {

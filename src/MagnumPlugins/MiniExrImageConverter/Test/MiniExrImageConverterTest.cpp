@@ -25,10 +25,11 @@
 
 #include <sstream>
 #include <Corrade/Containers/Array.h>
+#include <Corrade/Containers/String.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/StringToFile.h>
 #include <Corrade/Utility/DebugStl.h>
-#include <Corrade/Utility/Directory.h>
+#include <Corrade/Utility/Path.h>
 #include <Magnum/ImageView.h>
 #include <Magnum/PixelFormat.h>
 #include <Magnum/Trade/AbstractImageConverter.h>
@@ -95,8 +96,8 @@ void MiniExrImageConverterTest::wrongFormat() {
 void MiniExrImageConverterTest::rgb() {
     const auto data = _manager.instantiate("MiniExrImageConverter")->convertToData(Rgb);
 
-    CORRADE_COMPARE_AS((std::string{data, data.size()}),
-        Utility::Directory::join(MINIEXRIMAGECONVERTER_TEST_DIR, "image.exr"),
+    CORRADE_COMPARE_AS((Containers::StringView{data, data.size()}),
+        Utility::Path::join(MINIEXRIMAGECONVERTER_TEST_DIR, "image.exr"),
         TestSuite::Compare::StringToFile);
 }
 
@@ -104,8 +105,8 @@ void MiniExrImageConverterTest::rgba() {
     const auto data = _manager.instantiate("MiniExrImageConverter")->convertToData(Rgba);
 
     /* Alpha is ignored, so it is the same file */
-    CORRADE_COMPARE_AS((std::string{data, data.size()}),
-        Utility::Directory::join(MINIEXRIMAGECONVERTER_TEST_DIR, "image.exr"),
+    CORRADE_COMPARE_AS((Containers::StringView{data, data.size()}),
+        Utility::Path::join(MINIEXRIMAGECONVERTER_TEST_DIR, "image.exr"),
         TestSuite::Compare::StringToFile);
 }
 

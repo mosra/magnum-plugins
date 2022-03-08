@@ -33,8 +33,8 @@
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/DebugStl.h>
-#include <Corrade/Utility/Directory.h>
 #include <Corrade/Utility/FormatStl.h>
+#include <Corrade/Utility/Path.h>
 #include <Magnum/PixelFormat.h>
 #include <Magnum/Math/Half.h>
 #include <Magnum/Trade/AbstractImporter.h>
@@ -262,7 +262,8 @@ void OpenExrImporterTest::emptyFile() {
 void OpenExrImporterTest::shortFile() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenExrImporter");
 
-    CORRADE_VERIFY(importer->openData(Utility::Directory::read(Utility::Directory::join(OPENEXRIMPORTER_TEST_DIR, "rgba32f.exr")).except(1)));
+    Containers::Optional<Containers::Array<char>> data = Utility::Path::read(Utility::Path::join(OPENEXRIMPORTER_TEST_DIR, "rgba32f.exr"));
+    CORRADE_VERIFY(importer->openData(data->except(1)));
 
     std::ostringstream out;
     Error redirectError{&out};
@@ -272,7 +273,7 @@ void OpenExrImporterTest::shortFile() {
 
 void OpenExrImporterTest::inconsistentFormat() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenExrImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENEXRIMPORTER_TEST_DIR, "rgb32fa32ui.exr")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(OPENEXRIMPORTER_TEST_DIR, "rgb32fa32ui.exr")));
 
     /* Opening succeeds, but the image import won't */
     std::ostringstream out;
@@ -283,7 +284,7 @@ void OpenExrImporterTest::inconsistentFormat() {
 
 void OpenExrImporterTest::inconsistentDepthFormat() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenExrImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENEXRIMPORTER_TEST_DIR, "depth32ui.exr")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(OPENEXRIMPORTER_TEST_DIR, "depth32ui.exr")));
 
     std::ostringstream out;
     Error redirectError{&out};
@@ -300,7 +301,7 @@ void OpenExrImporterTest::rgb16f() {
     std::ostringstream out;
     {
         Warning redirectWarning{&out};
-        CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENEXRIMPORTER_TEST_DIR, data.filename)));
+        CORRADE_VERIFY(importer->openFile(Utility::Path::join(OPENEXRIMPORTER_TEST_DIR, data.filename)));
     }
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
@@ -326,7 +327,7 @@ void OpenExrImporterTest::rgb16f() {
 
 void OpenExrImporterTest::rgba32f() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenExrImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENEXRIMPORTER_TEST_DIR, "rgba32f.exr")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(OPENEXRIMPORTER_TEST_DIR, "rgba32f.exr")));
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
@@ -343,7 +344,7 @@ void OpenExrImporterTest::rgba32f() {
 
 void OpenExrImporterTest::rg32ui() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenExrImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENEXRIMPORTER_TEST_DIR, "rg32ui.exr")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(OPENEXRIMPORTER_TEST_DIR, "rg32ui.exr")));
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
@@ -359,7 +360,7 @@ void OpenExrImporterTest::rg32ui() {
 
 void OpenExrImporterTest::depth32f() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenExrImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENEXRIMPORTER_TEST_DIR, "depth32f.exr")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(OPENEXRIMPORTER_TEST_DIR, "depth32f.exr")));
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
@@ -378,7 +379,7 @@ void OpenExrImporterTest::cubeMap() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenExrImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENEXRIMPORTER_TEST_DIR, data.filename)));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(OPENEXRIMPORTER_TEST_DIR, data.filename)));
 
     /* A cube map image should be exposed only as a 3D image, not 2D */
     CORRADE_COMPARE(importer->image2DCount(), 0);
@@ -411,7 +412,7 @@ void OpenExrImporterTest::cubeMap() {
 
 void OpenExrImporterTest::forceChannelCountMore() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenExrImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENEXRIMPORTER_TEST_DIR, "rg32ui.exr")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(OPENEXRIMPORTER_TEST_DIR, "rg32ui.exr")));
 
     /* Missing channels should be filled */
     importer->configuration().setValue("forceChannelCount", 4);
@@ -427,7 +428,7 @@ void OpenExrImporterTest::forceChannelCountMore() {
 
 void OpenExrImporterTest::forceChannelCountLess() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenExrImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENEXRIMPORTER_TEST_DIR, "rgba32f.exr")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(OPENEXRIMPORTER_TEST_DIR, "rgba32f.exr")));
 
     /* Excessive channels should be ignored */
     importer->configuration().setValue("forceChannelCount", 2);
@@ -444,7 +445,7 @@ void OpenExrImporterTest::forceChannelCountLess() {
 
 void OpenExrImporterTest::forceChannelCountWrong() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenExrImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENEXRIMPORTER_TEST_DIR, "rgba32f.exr")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(OPENEXRIMPORTER_TEST_DIR, "rgba32f.exr")));
 
     importer->configuration().setValue("forceChannelCount", 5);
     std::ostringstream out;
@@ -455,7 +456,7 @@ void OpenExrImporterTest::forceChannelCountWrong() {
 
 void OpenExrImporterTest::customChannels() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenExrImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENEXRIMPORTER_TEST_DIR, "rgba32f-custom-channels.exr")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(OPENEXRIMPORTER_TEST_DIR, "rgba32f-custom-channels.exr")));
 
     /* Should work directly before opening the image */
     importer->configuration().setValue("layer", "tangent");
@@ -479,7 +480,7 @@ void OpenExrImporterTest::customChannels() {
 void OpenExrImporterTest::customChannelsDuplicated() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenExrImporter");
     importer->configuration().setValue("a", "G");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENEXRIMPORTER_TEST_DIR, "rgba32f.exr")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(OPENEXRIMPORTER_TEST_DIR, "rgba32f.exr")));
 
     std::ostringstream out;
     Error redirectError{&out};
@@ -489,7 +490,7 @@ void OpenExrImporterTest::customChannelsDuplicated() {
 
 void OpenExrImporterTest::customChannelsSomeUnassinged() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenExrImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENEXRIMPORTER_TEST_DIR, "rgba32f.exr")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(OPENEXRIMPORTER_TEST_DIR, "rgba32f.exr")));
 
     importer->configuration().setValue("r", "");
     importer->configuration().setValue("g", "");
@@ -514,7 +515,7 @@ void OpenExrImporterTest::customChannelsSomeUnassinged() {
 
 void OpenExrImporterTest::customChannelsAllUnassinged() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenExrImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENEXRIMPORTER_TEST_DIR, "rgba32f.exr")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(OPENEXRIMPORTER_TEST_DIR, "rgba32f.exr")));
 
     /* Not even forceChannelCount will help here, as at least one channel has
        to match to pick RGBA */
@@ -533,7 +534,7 @@ void OpenExrImporterTest::customChannelsAllUnassinged() {
 
 void OpenExrImporterTest::customChannelsFilled() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenExrImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENEXRIMPORTER_TEST_DIR, "rgba32f.exr")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(OPENEXRIMPORTER_TEST_DIR, "rgba32f.exr")));
 
     importer->configuration().setValue("r", "Red");
     /* G left as-is, as otherwise we'd get a failure because no channels match */
@@ -560,7 +561,7 @@ void OpenExrImporterTest::customChannelsDepth() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenExrImporter");
     importer->configuration().setValue("layer", "left");
     importer->configuration().setValue("depth", "height");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENEXRIMPORTER_TEST_DIR, "depth32f-custom-channels.exr")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(OPENEXRIMPORTER_TEST_DIR, "depth32f-custom-channels.exr")));
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
@@ -576,7 +577,7 @@ void OpenExrImporterTest::customChannelsDepth() {
 
 void OpenExrImporterTest::customChannelsDepthUnassigned() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenExrImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENEXRIMPORTER_TEST_DIR, "depth32f.exr")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(OPENEXRIMPORTER_TEST_DIR, "depth32f.exr")));
 
     /* This will fail the same way as customChannelsAllUnassinged(), as there's
        no reason to not import anything */
@@ -591,7 +592,7 @@ void OpenExrImporterTest::customChannelsDepthUnassigned() {
 
 void OpenExrImporterTest::customChannelsNoMatch() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenExrImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENEXRIMPORTER_TEST_DIR, "rgba32f.exr")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(OPENEXRIMPORTER_TEST_DIR, "rgba32f.exr")));
 
     /* Even just setting a layer should make it fail */
     importer->configuration().setValue("layer", "left");
@@ -608,7 +609,7 @@ void OpenExrImporterTest::levels2D() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenExrImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENEXRIMPORTER_TEST_DIR, data.filename)));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(OPENEXRIMPORTER_TEST_DIR, data.filename)));
     CORRADE_COMPARE(importer->image2DCount(), 1);
     CORRADE_COMPARE(importer->image2DLevelCount(0), 3);
 
@@ -668,7 +669,7 @@ void OpenExrImporterTest::levels2DIncomplete() {
     std::ostringstream out;
     {
         Debug redirectDebug{&out};
-        CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENEXRIMPORTER_TEST_DIR, data.filename)));
+        CORRADE_VERIFY(importer->openFile(Utility::Path::join(OPENEXRIMPORTER_TEST_DIR, data.filename)));
     }
 
     CORRADE_COMPARE(importer->image2DCount(), 1);
@@ -709,7 +710,7 @@ void OpenExrImporterTest::levels2DIncomplete() {
 
 void OpenExrImporterTest::levelsCubeMap() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenExrImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENEXRIMPORTER_TEST_DIR, "levels-cube.exr")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(OPENEXRIMPORTER_TEST_DIR, "levels-cube.exr")));
     CORRADE_COMPARE(importer->image3DCount(), 1);
     CORRADE_COMPARE(importer->image3DLevelCount(0), 3);
 
@@ -802,7 +803,7 @@ void OpenExrImporterTest::levelsCubeMapIncomplete() {
     std::ostringstream out;
     {
         Debug redirectDebug{&out};
-        CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENEXRIMPORTER_TEST_DIR, data.filename)));
+        CORRADE_VERIFY(importer->openFile(Utility::Path::join(OPENEXRIMPORTER_TEST_DIR, data.filename)));
     }
 
     CORRADE_COMPARE(importer->image3DCount(), 1);
@@ -887,7 +888,7 @@ void OpenExrImporterTest::threads() {
     std::ostringstream out;
     {
         Debug redirectOutput{&out};
-        CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENEXRIMPORTER_TEST_DIR, "rgb16f.exr")));
+        CORRADE_VERIFY(importer->openFile(Utility::Path::join(OPENEXRIMPORTER_TEST_DIR, "rgb16f.exr")));
     }
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
@@ -921,8 +922,9 @@ void OpenExrImporterTest::openMemory() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenExrImporter");
-    Containers::Array<char> memory = Utility::Directory::read(Utility::Directory::join(OPENEXRIMPORTER_TEST_DIR, "rgba32f.exr"));
-    CORRADE_VERIFY(data.open(*importer, memory));
+    Containers::Optional<Containers::Array<char>> memory = Utility::Path::read(Utility::Path::join(OPENEXRIMPORTER_TEST_DIR, "rgba32f.exr"));
+    CORRADE_VERIFY(memory);
+    CORRADE_VERIFY(data.open(*importer, *memory));
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
@@ -940,15 +942,15 @@ void OpenExrImporterTest::openMemory() {
 void OpenExrImporterTest::openTwice() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenExrImporter");
 
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENEXRIMPORTER_TEST_DIR, "rgb16f.exr")));
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENEXRIMPORTER_TEST_DIR, "rgb16f.exr")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(OPENEXRIMPORTER_TEST_DIR, "rgb16f.exr")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(OPENEXRIMPORTER_TEST_DIR, "rgb16f.exr")));
 
     /* Shouldn't crash, leak or anything */
 }
 
 void OpenExrImporterTest::importTwice() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenExrImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENEXRIMPORTER_TEST_DIR, "rgb16f.exr")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(OPENEXRIMPORTER_TEST_DIR, "rgb16f.exr")));
 
     /* Verify that everything is working the same way on second use */
     {

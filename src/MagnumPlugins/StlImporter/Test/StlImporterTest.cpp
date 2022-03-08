@@ -31,8 +31,8 @@
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/DebugStl.h>
-#include <Corrade/Utility/Directory.h>
 #include <Corrade/Utility/FormatStl.h>
+#include <Corrade/Utility/Path.h>
 #include <Magnum/Math/Vector3.h>
 #include <Magnum/Trade/AbstractImporter.h>
 #include <Magnum/Trade/MeshData.h>
@@ -174,7 +174,7 @@ void StlImporterTest::ascii() {
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(!importer->openFile(Utility::Directory::join(STLIMPORTER_TEST_DIR, "ascii.stl")));
+    CORRADE_VERIFY(!importer->openFile(Utility::Path::join(STLIMPORTER_TEST_DIR, "ascii.stl")));
     CORRADE_COMPARE(out.str(), "Trade::StlImporter::openData(): ASCII STL files are not supported, sorry\n");
 }
 
@@ -235,7 +235,7 @@ void StlImporterTest::binary() {
     if(!data.perFaceToPerVertex)
         importer->configuration().setValue("perFaceToPerVertex", data.perFaceToPerVertex);
 
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STLIMPORTER_TEST_DIR, "binary.stl")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(STLIMPORTER_TEST_DIR, "binary.stl")));
 
     CORRADE_COMPARE(importer->meshCount(), 1);
     CORRADE_COMPARE(importer->meshLevelCount(0), data.levelCount);
@@ -291,8 +291,9 @@ void StlImporterTest::openMemory() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StlImporter");
-    Containers::Array<char> memory = Utility::Directory::read(Utility::Directory::join(STLIMPORTER_TEST_DIR, "binary.stl"));
-    CORRADE_VERIFY(data.open(*importer, memory));
+    Containers::Optional<Containers::Array<char>> memory = Utility::Path::read(Utility::Path::join(STLIMPORTER_TEST_DIR, "binary.stl"));
+    CORRADE_VERIFY(memory);
+    CORRADE_VERIFY(data.open(*importer, *memory));
     CORRADE_COMPARE(importer->meshCount(), 1);
 
     Containers::Optional<MeshData> mesh = importer->mesh(0);
@@ -312,15 +313,15 @@ void StlImporterTest::openMemory() {
 void StlImporterTest::openTwice() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StlImporter");
 
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STLIMPORTER_TEST_DIR, "binary.stl")));
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STLIMPORTER_TEST_DIR, "binary.stl")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(STLIMPORTER_TEST_DIR, "binary.stl")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(STLIMPORTER_TEST_DIR, "binary.stl")));
 
     /* Shouldn't crash, leak or anything */
 }
 
 void StlImporterTest::importTwice() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StlImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STLIMPORTER_TEST_DIR, "binary.stl")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(STLIMPORTER_TEST_DIR, "binary.stl")));
 
     /* Verify that everything is working the same way on second use */
     {

@@ -25,11 +25,13 @@
 
 #include <sstream>
 #include <Corrade/Containers/Optional.h>
+#include <Corrade/Containers/String.h>
+#include <Corrade/Containers/StringStl.h> /** @todo remove once AbstractImporter is <string>-free */
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/DebugStl.h>
-#include <Corrade/Utility/Directory.h>
+#include <Corrade/Utility/Path.h>
 #include <Magnum/PixelFormat.h>
 #include <Magnum/Trade/AbstractImporter.h>
 #include <Magnum/Trade/ImageData.h>
@@ -121,7 +123,7 @@ void JpegImporterTest::invalid() {
 
 void JpegImporterTest::gray() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("JpegImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(JPEGIMPORTER_TEST_DIR, "gray.jpg")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(JPEGIMPORTER_TEST_DIR, "gray.jpg")));
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
@@ -141,7 +143,7 @@ void JpegImporterTest::gray() {
 
 void JpegImporterTest::rgb() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("JpegImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(JPEGIMPORTER_TEST_DIR, "rgb.jpg")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(JPEGIMPORTER_TEST_DIR, "rgb.jpg")));
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
@@ -175,8 +177,9 @@ void JpegImporterTest::openMemory() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("JpegImporter");
-    Containers::Array<char> memory = Utility::Directory::read(Utility::Directory::join(JPEGIMPORTER_TEST_DIR, "gray.jpg"));
-    CORRADE_VERIFY(data.open(*importer, memory));
+    Containers::Optional<Containers::Array<char>> memory = Utility::Path::read(Utility::Path::join(JPEGIMPORTER_TEST_DIR, "gray.jpg"));
+    CORRADE_VERIFY(memory);
+    CORRADE_VERIFY(data.open(*importer, *memory));
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
@@ -197,15 +200,15 @@ void JpegImporterTest::openMemory() {
 void JpegImporterTest::openTwice() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("JpegImporter");
 
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(JPEGIMPORTER_TEST_DIR, "gray.jpg")));
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(JPEGIMPORTER_TEST_DIR, "gray.jpg")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(JPEGIMPORTER_TEST_DIR, "gray.jpg")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(JPEGIMPORTER_TEST_DIR, "gray.jpg")));
 
     /* Shouldn't crash, leak or anything */
 }
 
 void JpegImporterTest::importTwice() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("JpegImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(JPEGIMPORTER_TEST_DIR, "gray.jpg")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(JPEGIMPORTER_TEST_DIR, "gray.jpg")));
 
     /* Verify that everything is working the same way on second use */
     {

@@ -28,6 +28,7 @@
 #include <Corrade/Containers/Array.h>
 #include <Corrade/Containers/ArrayView.h>
 #include <Corrade/Containers/Optional.h>
+#include <Corrade/Containers/Pair.h>
 #include <Corrade/Containers/ScopeGuard.h>
 #include <Corrade/Containers/StridedArrayView.h>
 #include <Corrade/Containers/StringStl.h>
@@ -35,13 +36,14 @@
 #include <Corrade/PluginManager/PluginMetadata.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
+#include <Corrade/TestSuite/Compare/Numeric.h>
 #include <Corrade/TestSuite/Compare/StringToFile.h>
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/DebugStl.h>
-#include <Corrade/Utility/Directory.h>
 #include <Corrade/Utility/Endianness.h>
 #include <Corrade/Utility/FormatStl.h>
+#include <Corrade/Utility/Path.h>
 #include <Magnum/PixelFormat.h>
 #include <Magnum/PixelStorage.h>
 #include <Magnum/Math/Color.h>
@@ -625,13 +627,14 @@ void KtxImporterTest::openShort() {
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
 
-    const auto fileData = Utility::Directory::read(Utility::Directory::join(KTXIMPORTER_TEST_DIR, "2d-rgb.ktx2"));
-    CORRADE_INTERNAL_ASSERT(data.length < fileData.size());
+    Containers::Optional<Containers::Array<char>> fileData = Utility::Path::read(Utility::Path::join(KTXIMPORTER_TEST_DIR, "2d-rgb.ktx2"));
+    CORRADE_VERIFY(fileData);
+    CORRADE_COMPARE_AS(data.length, fileData->size(), TestSuite::Compare::Less);
 
     std::ostringstream out;
     Error redirectError{&out};
 
-    CORRADE_VERIFY(!importer->openData(fileData.prefix(data.length)));
+    CORRADE_VERIFY(!importer->openData(fileData->prefix(data.length)));
     CORRADE_COMPARE(out.str(), Utility::formatString("Trade::KtxImporter::openData(): {}\n", data.message));
 }
 
@@ -640,15 +643,15 @@ void KtxImporterTest::invalid() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
-    auto fileData = Utility::Directory::read(Utility::Directory::join(KTXIMPORTER_TEST_DIR, data.file));
-    CORRADE_INTERNAL_ASSERT(data.offset < fileData.size());
+    Containers::Optional<Containers::Array<char>> fileData = Utility::Path::read(Utility::Path::join(KTXIMPORTER_TEST_DIR, data.file));
+    CORRADE_COMPARE_AS(data.offset, fileData->size(), TestSuite::Compare::Less);
 
-    fileData[data.offset] = data.value;
+    (*fileData)[data.offset] = data.value;
 
     std::ostringstream out;
     Error redirectError{&out};
 
-    CORRADE_VERIFY(!importer->openData(fileData));
+    CORRADE_VERIFY(!importer->openData(*fileData));
     CORRADE_COMPARE(out.str(), Utility::formatString("Trade::KtxImporter::openData(): {}\n", data.message));
 }
 
@@ -658,17 +661,18 @@ void KtxImporterTest::invalidVersion() {
     std::ostringstream out;
     Error redirectError{&out};
 
-    CORRADE_VERIFY(!importer->openFile(Utility::Directory::join(KTXIMPORTER_TEST_DIR, "version1.ktx")));
+    CORRADE_VERIFY(!importer->openFile(Utility::Path::join(KTXIMPORTER_TEST_DIR, "version1.ktx")));
     CORRADE_COMPARE(out.str(), "Trade::KtxImporter::openData(): unsupported KTX version, expected 20 but got 11\n");
 }
 
 void KtxImporterTest::invalidFormat() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
 
-    auto fileData = Utility::Directory::read(Utility::Directory::join(KTXIMPORTER_TEST_DIR, "2d-rgb.ktx2"));
-    CORRADE_VERIFY(fileData.size() >= sizeof(Implementation::KtxHeader));
+    Containers::Optional<Containers::Array<char>> fileData = Utility::Path::read(Utility::Path::join(KTXIMPORTER_TEST_DIR, "2d-rgb.ktx2"));
+    CORRADE_VERIFY(fileData);
+    CORRADE_COMPARE_AS(fileData->size(), sizeof(Implementation::KtxHeader), TestSuite::Compare::GreaterOrEqual);
 
-    Implementation::KtxHeader& header = *reinterpret_cast<Implementation::KtxHeader*>(fileData.data());
+    Implementation::KtxHeader& header = *reinterpret_cast<Implementation::KtxHeader*>(fileData->data());
 
     /* Selected unsupported formats. Implementation::VkFormat only contains
        swizzled 8-bit formats so we have to define our own.
@@ -711,7 +715,7 @@ void KtxImporterTest::invalidFormat() {
 
         std::ostringstream out;
         Error redirectError{&out};
-        CORRADE_VERIFY(!importer->openData(fileData));
+        CORRADE_VERIFY(!importer->openData(*fileData));
         CORRADE_COMPARE(out.str(), Utility::formatString("Trade::KtxImporter::openData(): unsupported format {}\n", UnsignedInt(formats[i])));
     }
 }
@@ -721,7 +725,7 @@ void KtxImporterTest::texture() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(KTXIMPORTER_TEST_DIR, data.file)));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(KTXIMPORTER_TEST_DIR, data.file)));
 
     const Vector3ui counts{
         importer->image1DCount(),
@@ -769,7 +773,7 @@ void KtxImporterTest::texture() {
 
 void KtxImporterTest::imageRgba() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(KTXIMPORTER_TEST_DIR, "2d-rgba.ktx2")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(KTXIMPORTER_TEST_DIR, "2d-rgba.ktx2")));
 
     CORRADE_COMPARE(importer->image2DCount(), 1);
     CORRADE_COMPARE(importer->image2DLevelCount(0), 1);
@@ -792,7 +796,7 @@ void KtxImporterTest::imageRgba() {
 
 void KtxImporterTest::imageRgb32U() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(KTXIMPORTER_TEST_DIR, "2d-rgb32.ktx2")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(KTXIMPORTER_TEST_DIR, "2d-rgb32.ktx2")));
 
     CORRADE_COMPARE(importer->image2DCount(), 1);
     CORRADE_COMPARE(importer->image2DLevelCount(0), 1);
@@ -825,7 +829,7 @@ void KtxImporterTest::imageRgb32U() {
 
 void KtxImporterTest::imageRgb32F() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(KTXIMPORTER_TEST_DIR, "2d-rgbf32.ktx2")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(KTXIMPORTER_TEST_DIR, "2d-rgbf32.ktx2")));
 
     CORRADE_COMPARE(importer->image2DCount(), 1);
     CORRADE_COMPARE(importer->image2DLevelCount(0), 1);
@@ -861,7 +865,7 @@ void KtxImporterTest::imageDepthStencil() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(KTXIMPORTER_TEST_DIR, data.file)));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(KTXIMPORTER_TEST_DIR, data.file)));
 
     CORRADE_COMPARE(importer->image2DCount(), 1);
     CORRADE_COMPARE(importer->image2DLevelCount(0), 1);
@@ -884,7 +888,7 @@ void KtxImporterTest::imageDepthStencil() {
 
 void KtxImporterTest::image1D() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(KTXIMPORTER_TEST_DIR, "1d.ktx2")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(KTXIMPORTER_TEST_DIR, "1d.ktx2")));
 
     CORRADE_COMPARE(importer->image1DCount(), 1);
     CORRADE_COMPARE(importer->image1DLevelCount(0), 1);
@@ -907,7 +911,7 @@ void KtxImporterTest::image1D() {
 
 void KtxImporterTest::image1DMipmaps() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(KTXIMPORTER_TEST_DIR, "1d-mipmaps.ktx2")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(KTXIMPORTER_TEST_DIR, "1d-mipmaps.ktx2")));
 
     const auto mip0 = Containers::arrayView(PatternRgb1DData[0]);
     const Color3ub mip1[2]{0xffffff_rgb, 0x007f7f_rgb};
@@ -944,7 +948,7 @@ void KtxImporterTest::image1DMipmaps() {
 
 void KtxImporterTest::image1DLayers() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(KTXIMPORTER_TEST_DIR, "1d-layers.ktx2")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(KTXIMPORTER_TEST_DIR, "1d-layers.ktx2")));
 
     CORRADE_COMPARE(importer->image2DCount(), 1);
     CORRADE_COMPARE(importer->image2DLevelCount(0), 1);
@@ -970,7 +974,7 @@ void KtxImporterTest::image1DCompressed() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(KTXIMPORTER_TEST_DIR, data.file)));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(KTXIMPORTER_TEST_DIR, data.file)));
 
     CORRADE_COMPARE(importer->image1DCount(), 1);
     CORRADE_COMPARE(importer->image1DLevelCount(0), 1);
@@ -993,14 +997,14 @@ void KtxImporterTest::image1DCompressed() {
     const Vector3i blockSize = compressedBlockSize(data.format);
     const Vector3i blockCount = (Vector3i::pad(data.size, 1) + (blockSize - Vector3i{1}))/blockSize;
     CORRADE_COMPARE(image->data().size(), blockCount.product()*compressedBlockDataSize(data.format));
-    CORRADE_COMPARE_AS(std::string(image->data().data(), image->data().size()),
-        Utility::Directory::join(KTXIMPORTER_TEST_DIR, Utility::Directory::splitExtension(data.file).first + ".bin"),
+    CORRADE_COMPARE_AS((Containers::StringView{image->data().data(), image->data().size()}),
+        Utility::Path::join(KTXIMPORTER_TEST_DIR, Utility::Path::splitExtension(data.file).first() + ".bin"),
         TestSuite::Compare::StringToFile);
 }
 
 void KtxImporterTest::image1DCompressedMipmaps() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(KTXIMPORTER_TEST_DIR, "1d-compressed-mipmaps.ktx2")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(KTXIMPORTER_TEST_DIR, "1d-compressed-mipmaps.ktx2")));
 
     CORRADE_COMPARE(importer->image1DCount(), 1);
     CORRADE_COMPARE(importer->image1DLevelCount(0), 3);
@@ -1022,8 +1026,8 @@ void KtxImporterTest::image1DCompressedMipmaps() {
         /* This is suboptimal because when generating ground-truth data with
            --save-diagnostic the test needs to be run 4 times to save all mips.
            But hopefully this won't really be necessary. */
-        CORRADE_COMPARE_AS(std::string(image->data().data(), image->data().size()),
-            Utility::Directory::join(KTXIMPORTER_TEST_DIR, Utility::formatString("1d-compressed-mipmaps-mip{}.bin", i)),
+        CORRADE_COMPARE_AS((Containers::StringView{image->data().data(), image->data().size()}),
+            Utility::Path::join(KTXIMPORTER_TEST_DIR, Utility::formatString("1d-compressed-mipmaps-mip{}.bin", i)),
             TestSuite::Compare::StringToFile);
 
         mipSize = Math::max(mipSize >> 1, 1);
@@ -1032,7 +1036,7 @@ void KtxImporterTest::image1DCompressedMipmaps() {
 
 void KtxImporterTest::image2D() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(KTXIMPORTER_TEST_DIR, "2d-rgb.ktx2")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(KTXIMPORTER_TEST_DIR, "2d-rgb.ktx2")));
 
     CORRADE_COMPARE(importer->image2DCount(), 1);
     CORRADE_COMPARE(importer->image2DLevelCount(0), 1);
@@ -1055,7 +1059,7 @@ void KtxImporterTest::image2D() {
 
 void KtxImporterTest::image2DMipmaps() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(KTXIMPORTER_TEST_DIR, "2d-mipmaps.ktx2")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(KTXIMPORTER_TEST_DIR, "2d-mipmaps.ktx2")));
 
     /* Is there a nicer way to get a flat view for a multi-dimensional array? */
     const auto mip0 = Containers::arrayCast<const Color3ub>(PatternRgbData[0]);
@@ -1093,7 +1097,7 @@ void KtxImporterTest::image2DMipmaps() {
 
 void KtxImporterTest::image2DMipmapsIncomplete() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(KTXIMPORTER_TEST_DIR, "2d-mipmaps-incomplete.ktx2")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(KTXIMPORTER_TEST_DIR, "2d-mipmaps-incomplete.ktx2")));
 
     const auto mip0 = Containers::arrayCast<const Color3ub>(PatternRgbData[0]);
     const Color3ub mip1[2]{0xffffff_rgb, 0x007f7f_rgb};
@@ -1119,7 +1123,7 @@ void KtxImporterTest::image2DMipmapsIncomplete() {
 
 void KtxImporterTest::image2DLayers() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(KTXIMPORTER_TEST_DIR, "2d-layers.ktx2")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(KTXIMPORTER_TEST_DIR, "2d-layers.ktx2")));
 
     CORRADE_COMPARE(importer->image3DCount(), 1);
     CORRADE_COMPARE(importer->image3DLevelCount(0), 1);
@@ -1142,7 +1146,7 @@ void KtxImporterTest::image2DLayers() {
 
 void KtxImporterTest::image2DMipmapsAndLayers() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(KTXIMPORTER_TEST_DIR, "2d-mipmaps-and-layers.ktx2")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(KTXIMPORTER_TEST_DIR, "2d-mipmaps-and-layers.ktx2")));
 
     const auto mip0 = Containers::arrayCast<const Color3ub>(PatternRgbData);
     /* Mip data generated by PVRTexTool since it doesn't allow specifying our
@@ -1193,7 +1197,7 @@ void KtxImporterTest::image2DCompressed() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(KTXIMPORTER_TEST_DIR, data.file)));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(KTXIMPORTER_TEST_DIR, data.file)));
 
     CORRADE_COMPARE(importer->image2DCount(), 1);
     CORRADE_COMPARE(importer->image2DLevelCount(0), 1);
@@ -1213,14 +1217,14 @@ void KtxImporterTest::image2DCompressed() {
     const Vector3i blockSize = compressedBlockSize(data.format);
     const Vector3i blockCount = (Vector3i::pad(data.size, 1) + (blockSize - Vector3i{1}))/blockSize;
     CORRADE_COMPARE(image->data().size(), blockCount.product()*compressedBlockDataSize(data.format));
-    CORRADE_COMPARE_AS(std::string(image->data().data(), image->data().size()),
-        Utility::Directory::join(KTXIMPORTER_TEST_DIR, Utility::Directory::splitExtension(data.file).first + ".bin"),
+    CORRADE_COMPARE_AS((Containers::StringView{image->data().data(), image->data().size()}),
+        Utility::Path::join(KTXIMPORTER_TEST_DIR, Utility::Path::splitExtension(data.file).first() + ".bin"),
         TestSuite::Compare::StringToFile);
 }
 
 void KtxImporterTest::image2DCompressedMipmaps() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(KTXIMPORTER_TEST_DIR, "2d-compressed-mipmaps.ktx2")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(KTXIMPORTER_TEST_DIR, "2d-compressed-mipmaps.ktx2")));
 
     CORRADE_COMPARE(importer->image2DCount(), 1);
     CORRADE_COMPARE(importer->image2DLevelCount(0), 4);
@@ -1239,8 +1243,8 @@ void KtxImporterTest::image2DCompressedMipmaps() {
         const Vector3i blockSize = compressedBlockSize(image->compressedFormat());
         const Vector3i blockCount = (Vector3i::pad(mipSize, 1) + (blockSize - Vector3i{1}))/blockSize;
         CORRADE_COMPARE(image->data().size(), blockCount.product()*compressedBlockDataSize(image->compressedFormat()));
-        CORRADE_COMPARE_AS(std::string(image->data().data(), image->data().size()),
-            Utility::Directory::join(KTXIMPORTER_TEST_DIR, Utility::formatString("2d-compressed-mipmaps-mip{}.bin", i)),
+        CORRADE_COMPARE_AS((Containers::StringView{image->data().data(), image->data().size()}),
+            Utility::Path::join(KTXIMPORTER_TEST_DIR, Utility::formatString("2d-compressed-mipmaps-mip{}.bin", i)),
             TestSuite::Compare::StringToFile);
 
         mipSize = Math::max(mipSize >> 1, 1);
@@ -1249,7 +1253,7 @@ void KtxImporterTest::image2DCompressedMipmaps() {
 
 void KtxImporterTest::image2DCompressedLayers() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(KTXIMPORTER_TEST_DIR, "2d-compressed-layers.ktx2")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(KTXIMPORTER_TEST_DIR, "2d-compressed-layers.ktx2")));
 
     CORRADE_COMPARE(importer->image3DCount(), 1);
     CORRADE_COMPARE(importer->image3DLevelCount(0), 1);
@@ -1264,8 +1268,8 @@ void KtxImporterTest::image2DCompressedLayers() {
     const Vector3i blockSize = compressedBlockSize(image->compressedFormat());
     const Vector3i blockCount = (Vector3i::pad(image->size(), 1) + (blockSize - Vector3i{1}))/blockSize;
     CORRADE_COMPARE(image->data().size(), blockCount.product()*compressedBlockDataSize(image->compressedFormat()));
-    CORRADE_COMPARE_AS(std::string(image->data().data(), image->data().size()),
-        Utility::Directory::join(KTXIMPORTER_TEST_DIR, "2d-compressed-layers.bin"),
+    CORRADE_COMPARE_AS((Containers::StringView{image->data().data(), image->data().size()}),
+        Utility::Path::join(KTXIMPORTER_TEST_DIR, "2d-compressed-layers.bin"),
         TestSuite::Compare::StringToFile);
 }
 
@@ -1314,24 +1318,27 @@ const Color3ub FacesRgbData[2][6][2][2]{
 
 void KtxImporterTest::imageCubeMapIncomplete() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
-    auto fileData = Utility::Directory::read(Utility::Directory::join(KTXIMPORTER_TEST_DIR, "cubemap.ktx2"));
-    CORRADE_VERIFY(fileData.size() >= sizeof(Implementation::KtxHeader));
+    Containers::Optional<Containers::Array<char>> fileData = Utility::Path::read(Utility::Path::join(KTXIMPORTER_TEST_DIR, "cubemap.ktx2"));
+    CORRADE_VERIFY(fileData);
+    CORRADE_COMPARE_AS(fileData->size(),
+        sizeof(Implementation::KtxHeader),
+        TestSuite::Compare::GreaterOrEqual);
 
     /* All 6 bits set, should still emit a warning because the check only happens
        when face count is not 6 */
     const char data[1]{0x3f};
     /* Not a string, so no terminating 0 */
     const auto keyValueData = createKeyValueData("KTXcubemapIncomplete"_s, Containers::arrayView(data));
-    patchKeyValueData(keyValueData, fileData);
+    patchKeyValueData(keyValueData, *fileData);
 
-    Implementation::KtxHeader& header = *reinterpret_cast<Implementation::KtxHeader*>(fileData.data());
+    Implementation::KtxHeader& header = *reinterpret_cast<Implementation::KtxHeader*>(fileData->data());
     header.layerCount = Utility::Endianness::littleEndian(6u);
     header.faceCount = Utility::Endianness::littleEndian(1u);
 
     std::ostringstream outWarning;
     Warning redirectWarning{&outWarning};
 
-    CORRADE_VERIFY(importer->openData(fileData));
+    CORRADE_VERIFY(importer->openData(*fileData));
     CORRADE_COMPARE(outWarning.str(),
         "Trade::KtxImporter::openData(): missing or invalid orientation, assuming right, down\n"
         "Trade::KtxImporter::openData(): image contains incomplete cube map faces, importing faces as array layers\n");
@@ -1361,7 +1368,7 @@ void KtxImporterTest::imageCubeMapIncomplete() {
 
 void KtxImporterTest::imageCubeMap() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(KTXIMPORTER_TEST_DIR, "cubemap.ktx2")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(KTXIMPORTER_TEST_DIR, "cubemap.ktx2")));
 
     CORRADE_COMPARE(importer->image3DCount(), 1);
     CORRADE_COMPARE(importer->image3DLevelCount(0), 1);
@@ -1384,7 +1391,7 @@ void KtxImporterTest::imageCubeMap() {
 
 void KtxImporterTest::imageCubeMapMipmaps() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(KTXIMPORTER_TEST_DIR, "cubemap-mipmaps.ktx2")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(KTXIMPORTER_TEST_DIR, "cubemap-mipmaps.ktx2")));
 
     const auto mip0 = Containers::arrayCast<const Color3ub>(FacesRgbData[0]);
     const Color3ub mip1[1*1*6]{
@@ -1417,7 +1424,7 @@ void KtxImporterTest::imageCubeMapMipmaps() {
 
 void KtxImporterTest::imageCubeMapLayers() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(KTXIMPORTER_TEST_DIR, "cubemap-layers.ktx2")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(KTXIMPORTER_TEST_DIR, "cubemap-layers.ktx2")));
 
     CORRADE_COMPARE(importer->image3DCount(), 1);
     CORRADE_COMPARE(importer->image3DLevelCount(0), 1);
@@ -1447,7 +1454,7 @@ void KtxImporterTest::imageCubeMapLayers() {
 
 void KtxImporterTest::image3D() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(KTXIMPORTER_TEST_DIR, "3d.ktx2")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(KTXIMPORTER_TEST_DIR, "3d.ktx2")));
 
     CORRADE_COMPARE(importer->image3DCount(), 1);
     CORRADE_COMPARE(importer->image3DLevelCount(0), 1);
@@ -1473,7 +1480,7 @@ void KtxImporterTest::image3D() {
 
 void KtxImporterTest::image3DMipmaps() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(KTXIMPORTER_TEST_DIR, "3d-mipmaps.ktx2")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(KTXIMPORTER_TEST_DIR, "3d-mipmaps.ktx2")));
 
     const auto mip0 = Containers::arrayCast<const Color3ub>(PatternRgbData);
     const Color3ub mip1[2]{0xffffff_rgb, 0x007f7f_rgb};
@@ -1510,7 +1517,7 @@ void KtxImporterTest::image3DMipmaps() {
 
 void KtxImporterTest::image3DLayers() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(KTXIMPORTER_TEST_DIR, "3d-layers.ktx2")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(KTXIMPORTER_TEST_DIR, "3d-layers.ktx2")));
 
     const auto layer0 = Containers::arrayCast<const Color3ub>(PatternRgbData);
     /* Pattern, black, black */
@@ -1545,7 +1552,7 @@ void KtxImporterTest::image3DLayers() {
 
 void KtxImporterTest::image3DCompressed() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(KTXIMPORTER_TEST_DIR, "3d-compressed.ktx2")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(KTXIMPORTER_TEST_DIR, "3d-compressed.ktx2")));
 
     CORRADE_COMPARE(importer->image3DCount(), 1);
     CORRADE_COMPARE(importer->image3DLevelCount(0), 1);
@@ -1568,14 +1575,14 @@ void KtxImporterTest::image3DCompressed() {
     const Vector3i blockSize = compressedBlockSize(format);
     const Vector3i blockCount = (size + (blockSize - Vector3i{1}))/blockSize;
     CORRADE_COMPARE(image->data().size(), blockCount.product()*compressedBlockDataSize(format));
-    CORRADE_COMPARE_AS(std::string(image->data().data(), image->data().size()),
-        Utility::Directory::join(KTXIMPORTER_TEST_DIR, "3d-compressed.bin"),
+    CORRADE_COMPARE_AS((Containers::StringView{image->data().data(), image->data().size()}),
+        Utility::Path::join(KTXIMPORTER_TEST_DIR, "3d-compressed.bin"),
         TestSuite::Compare::StringToFile);
 }
 
 void KtxImporterTest::image3DCompressedMipmaps() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(KTXIMPORTER_TEST_DIR, "3d-compressed-mipmaps.ktx2")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(KTXIMPORTER_TEST_DIR, "3d-compressed-mipmaps.ktx2")));
 
     CORRADE_COMPARE(importer->image3DCount(), 1);
     CORRADE_COMPARE(importer->image3DLevelCount(0), 4);
@@ -1596,9 +1603,11 @@ void KtxImporterTest::image3DCompressedMipmaps() {
         CORRADE_COMPARE(image->data().size(), blockCount.product()*compressedBlockDataSize(image->compressedFormat()));
         /* Compressed .bin data is manually generated in generate.sh, don't
            need to save it like the 1D/2D files */
-        const auto data = Utility::Directory::read(
-            Utility::Directory::join(KTXIMPORTER_TEST_DIR, Utility::formatString("3d-compressed-mipmaps-mip{}.bin", i)));
-        CORRADE_COMPARE_AS(image->data(), data, TestSuite::Compare::Container);
+        /** @todo Compare::DataToFile */
+        Containers::Optional<Containers::Array<char>> data = Utility::Path::read(
+            Utility::Path::join(KTXIMPORTER_TEST_DIR, Utility::format("3d-compressed-mipmaps-mip{}.bin", i)));
+        CORRADE_VERIFY(data);
+        CORRADE_COMPARE_AS(image->data(), *data, TestSuite::Compare::Container);
 
         mipSize = Math::max(mipSize >> 1, 1);
     }
@@ -1620,7 +1629,7 @@ void KtxImporterTest::forwardBasis() {
     std::ostringstream out;
     {
         Debug redirectDebug{&out};
-        CORRADE_VERIFY(importer->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR, data.file)));
+        CORRADE_VERIFY(importer->openFile(Utility::Path::join(BASISIMPORTER_TEST_DIR, data.file)));
     }
     CORRADE_COMPARE(out.str(), data.verboseMessage);
 
@@ -1684,7 +1693,7 @@ void KtxImporterTest::forwardBasisFormat() {
 
     std::ostringstream out;
     Warning redirectWarning{&out};
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba.ktx2")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(BASISIMPORTER_TEST_DIR, "rgba.ktx2")));
     CORRADE_COMPARE(importer->image2DCount(), 1);
     CORRADE_COMPARE(out.str(), data.expectedWarning);
 
@@ -1704,13 +1713,14 @@ void KtxImporterTest::forwardBasisInvalid() {
 
     Containers::Pointer<AbstractImporter> importer = _managerWithBasisImporter.instantiate("KtxImporter");
 
-    auto fileData = Utility::Directory::read(Utility::Directory::join(BASISIMPORTER_TEST_DIR, data.file));
-    CORRADE_VERIFY(fileData.size() >= data.offset);
-    fileData[data.offset] = data.value;
+    Containers::Optional<Containers::Array<char>> fileData = Utility::Path::read(Utility::Path::join(BASISIMPORTER_TEST_DIR, data.file));
+    CORRADE_VERIFY(fileData);
+    CORRADE_COMPARE_AS(fileData->size(), data.offset, TestSuite::Compare::Greater);
+    (*fileData)[data.offset] = data.value;
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(!importer->openData(fileData));
+    CORRADE_VERIFY(!importer->openData(*fileData));
     CORRADE_COMPARE(out.str(), data.message);
 }
 
@@ -1723,7 +1733,7 @@ void KtxImporterTest::forwardBasisPluginNotFound() {
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(!importer->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba.ktx2")));
+    CORRADE_VERIFY(!importer->openFile(Utility::Path::join(BASISIMPORTER_TEST_DIR, "rgba.ktx2")));
     #ifndef CORRADE_PLUGINMANAGER_NO_DYNAMIC_PLUGIN_SUPPORT
     CORRADE_COMPARE(out.str(),
         "PluginManager::Manager::load(): plugin BasisImporter is not static and was not found in nonexistent\n"
@@ -1737,16 +1747,19 @@ void KtxImporterTest::forwardBasisPluginNotFound() {
 
 void KtxImporterTest::keyValueDataEmpty() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
-    auto fileData = Utility::Directory::read(Utility::Directory::join(KTXIMPORTER_TEST_DIR, "2d-rgb.ktx2"));
-    CORRADE_VERIFY(fileData.size() >= sizeof(Implementation::KtxHeader));
+    Containers::Optional<Containers::Array<char>> fileData = Utility::Path::read(Utility::Path::join(KTXIMPORTER_TEST_DIR, "2d-rgb.ktx2"));
+    CORRADE_VERIFY(fileData);
+    CORRADE_COMPARE_AS(fileData->size(),
+        sizeof(Implementation::KtxHeader),
+        TestSuite::Compare::GreaterOrEqual);
 
-    Implementation::KtxHeader& header = *reinterpret_cast<Implementation::KtxHeader*>(fileData.data());
+    Implementation::KtxHeader& header = *reinterpret_cast<Implementation::KtxHeader*>(fileData->data());
     header.kvdByteLength = Utility::Endianness::littleEndian(0u);
 
     std::ostringstream outWarning;
     Warning redirectWarning{&outWarning};
 
-    CORRADE_VERIFY(importer->openData(fileData));
+    CORRADE_VERIFY(importer->openData(*fileData));
     /* This test doubles for empty orientation data, but there should be no
        other warnings */
     CORRADE_COMPARE(outWarning.str(), "Trade::KtxImporter::openData(): missing or invalid orientation, assuming right, down\n");
@@ -1760,15 +1773,16 @@ void KtxImporterTest::keyValueDataInvalid() {
        should warn and try to continue the import */
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
-    auto fileData = Utility::Directory::read(Utility::Directory::join(KTXIMPORTER_TEST_DIR, "2d-rgb.ktx2"));
+    Containers::Optional<Containers::Array<char>> fileData = Utility::Path::read(Utility::Path::join(KTXIMPORTER_TEST_DIR, "2d-rgb.ktx2"));
+    CORRADE_VERIFY(fileData);
 
-    patchKeyValueData(data.data, fileData);
+    patchKeyValueData(data.data, *fileData);
 
     std::ostringstream outWarning;
     Warning redirectWarning{&outWarning};
 
     /* Import succeeds with a warning */
-    CORRADE_VERIFY(importer->openData(fileData));
+    CORRADE_VERIFY(importer->openData(*fileData));
     CORRADE_COMPARE(outWarning.str(), Utility::formatString(
         "Trade::KtxImporter::openData(): {}\n"
         "Trade::KtxImporter::openData(): missing or invalid orientation, assuming right, down\n",
@@ -1783,15 +1797,16 @@ void KtxImporterTest::keyValueDataInvalidIgnored() {
        ignored without warning because it doesn't affect the import */
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
-    auto fileData = Utility::Directory::read(Utility::Directory::join(KTXIMPORTER_TEST_DIR, "2d-rgb.ktx2"));
+    Containers::Optional<Containers::Array<char>> fileData = Utility::Path::read(Utility::Path::join(KTXIMPORTER_TEST_DIR, "2d-rgb.ktx2"));
+    CORRADE_VERIFY(fileData);
 
-    patchKeyValueData(data.data, fileData);
+    patchKeyValueData(data.data, *fileData);
 
     std::ostringstream outWarning;
     Warning redirectWarning{&outWarning};
 
     /* No warning besides missing orientation */
-    CORRADE_VERIFY(importer->openData(fileData));
+    CORRADE_VERIFY(importer->openData(*fileData));
     CORRADE_COMPARE(outWarning.str(), "Trade::KtxImporter::openData(): missing or invalid orientation, assuming right, down\n");
 }
 
@@ -1800,12 +1815,14 @@ void KtxImporterTest::orientationInvalid() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
-    auto fileData = Utility::Directory::read(Utility::Directory::join(KTXIMPORTER_TEST_DIR, data.file));
-    patchKeyValueData(createKeyValueData("KTXorientation"_s, data.orientation), fileData);
+    Containers::Optional<Containers::Array<char>> fileData = Utility::Path::read(Utility::Path::join(KTXIMPORTER_TEST_DIR, data.file));
+    CORRADE_VERIFY(fileData);
+
+    patchKeyValueData(createKeyValueData("KTXorientation"_s, data.orientation), *fileData);
 
     std::ostringstream outWarning;
     Warning redirectWarning{&outWarning};
-    CORRADE_VERIFY(importer->openData(fileData));
+    CORRADE_VERIFY(importer->openData(*fileData));
 
     constexpr Containers::StringView orientations[]{"right"_s, "down"_s, "forward"_s};
     const Containers::String orientationString = ", "_s.join(Containers::arrayView(orientations).prefix(data.dimensions));
@@ -1817,10 +1834,12 @@ void KtxImporterTest::orientationFlip() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
-    auto fileData = Utility::Directory::read(Utility::Directory::join(KTXIMPORTER_TEST_DIR, data.file));
-    patchKeyValueData(createKeyValueData("KTXorientation"_s, data.name), fileData);
+    Containers::Optional<Containers::Array<char>> fileData = Utility::Path::read(Utility::Path::join(KTXIMPORTER_TEST_DIR, data.file));
+    CORRADE_VERIFY(fileData);
 
-    CORRADE_VERIFY(importer->openData(fileData));
+    patchKeyValueData(createKeyValueData("KTXorientation"_s, data.name), *fileData);
+
+    CORRADE_VERIFY(importer->openData(*fileData));
 
     const Vector3i size = Math::max(data.size, 1);
     const Int dimensions = Math::min(data.size, 1).sum();
@@ -1875,7 +1894,7 @@ void KtxImporterTest::orientationFlipCompressed() {
     std::ostringstream outWarning;
     Warning redirectWarning{&outWarning};
 
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(KTXIMPORTER_TEST_DIR, "2d-compressed-bc1.ktx2")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(KTXIMPORTER_TEST_DIR, "2d-compressed-bc1.ktx2")));
     CORRADE_COMPARE(outWarning.str(),
         "Trade::KtxImporter::openData(): block-compressed image "
         "was encoded with non-default axis orientations, imported data "
@@ -1889,20 +1908,22 @@ void KtxImporterTest::swizzle() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
     importer->addFlags(ImporterFlag::Verbose);
 
-    auto fileData = Utility::Directory::read(Utility::Directory::join(KTXIMPORTER_TEST_DIR, data.file));
-    CORRADE_VERIFY(fileData.size() > sizeof(Implementation::KtxHeader));
+    Containers::Optional<Containers::Array<char>> fileData = Utility::Path::read(Utility::Path::join(KTXIMPORTER_TEST_DIR, data.file));
+    CORRADE_VERIFY(fileData);
+    CORRADE_COMPARE_AS(fileData->size(), sizeof(Implementation::KtxHeader),
+        TestSuite::Compare::Greater);
 
     /* toktx lets us swizzle the input data, but doesn't turn the format into
        a swizzled one. Patch the header manually. */
     if(data.vkFormat != Implementation::VK_FORMAT_UNDEFINED) {
-        auto& header = *reinterpret_cast<Implementation::KtxHeader*>(fileData.data());
+        auto& header = *reinterpret_cast<Implementation::KtxHeader*>(fileData->data());
         header.vkFormat = Utility::Endianness::littleEndian(data.vkFormat);
     }
 
     std::ostringstream outDebug;
     Debug redirectDebug{&outDebug};
 
-    CORRADE_VERIFY(importer->openData(fileData));
+    CORRADE_VERIFY(importer->openData(*fileData));
 
     std::string expectedMessage = "Trade::KtxImporter::openData(): image will be flipped along y\n";
     if(data.message)
@@ -1924,7 +1945,7 @@ void KtxImporterTest::swizzleMultipleBytes() {
     std::ostringstream outDebug;
     Debug redirectDebug{&outDebug};
 
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(KTXIMPORTER_TEST_DIR, "bgr-swizzle-bgr-16bit.ktx2")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(KTXIMPORTER_TEST_DIR, "bgr-swizzle-bgr-16bit.ktx2")));
 
     CORRADE_COMPARE(outDebug.str(),
         "Trade::KtxImporter::openData(): image will be flipped along y\n"
@@ -1962,7 +1983,7 @@ void KtxImporterTest::swizzleIdentity() {
     /* RGB1 swizzle. This also checks that the correct prefix based on channel
        count is used, since swizzle is always a constant length 4 in the
        key/value data. */
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(KTXIMPORTER_TEST_DIR, "swizzle-identity.ktx2")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(KTXIMPORTER_TEST_DIR, "swizzle-identity.ktx2")));
     /* No message about format requiring conversion */
     CORRADE_COMPARE(out.str(), "Trade::KtxImporter::openData(): image will be flipped along y\n");
 }
@@ -1976,20 +1997,20 @@ void KtxImporterTest::swizzleUnsupported() {
     /* Only identity (RG?B?A?), BGR and BGRA swizzle supported. This is the same
        swizzle string as in swizzle-identity.ktx2, but this file is RGBA instead
        of RGB, so the 1 shouldn't be ignored. */
-    CORRADE_VERIFY(!importer->openFile(Utility::Directory::join(KTXIMPORTER_TEST_DIR, "swizzle-unsupported.ktx2")));
+    CORRADE_VERIFY(!importer->openFile(Utility::Path::join(KTXIMPORTER_TEST_DIR, "swizzle-unsupported.ktx2")));
     CORRADE_COMPARE(out.str(), "Trade::KtxImporter::openData(): unsupported channel mapping rgb1\n");
 }
 
 void KtxImporterTest::swizzleCompressed() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
 
-    auto fileData = Utility::Directory::read(Utility::Directory::join(KTXIMPORTER_TEST_DIR, "2d-compressed-bc1.ktx2"));
-    patchKeyValueData(createKeyValueData("KTXswizzle"_s, "bgra"_s), fileData);
+    Containers::Optional<Containers::Array<char>> fileData = Utility::Path::read(Utility::Path::join(KTXIMPORTER_TEST_DIR, "2d-compressed-bc1.ktx2"));
+    CORRADE_VERIFY(fileData);
+    patchKeyValueData(createKeyValueData("KTXswizzle"_s, "bgra"_s), *fileData);
 
     std::ostringstream out;
     Error redirectError{&out};
-
-    CORRADE_VERIFY(!importer->openData(fileData));
+    CORRADE_VERIFY(!importer->openData(*fileData));
     CORRADE_COMPARE(out.str(), "Trade::KtxImporter::openData(): unsupported channel mapping bgra\n");
 }
 
@@ -2001,8 +2022,9 @@ void KtxImporterTest::openMemory() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
-    Containers::Array<char> memory = Utility::Directory::read(Utility::Directory::join(KTXIMPORTER_TEST_DIR, "2d-rgba.ktx2"));
-    CORRADE_VERIFY(data.open(*importer, memory));
+    Containers::Optional<Containers::Array<char>> memory = Utility::Path::read(Utility::Path::join(KTXIMPORTER_TEST_DIR, "2d-rgba.ktx2"));
+    CORRADE_VERIFY(memory);
+    CORRADE_VERIFY(data.open(*importer, *memory));
 
     CORRADE_COMPARE(importer->image2DCount(), 1);
     CORRADE_COMPARE(importer->image2DLevelCount(0), 1);
@@ -2026,11 +2048,11 @@ void KtxImporterTest::openMemory() {
 void KtxImporterTest::openTwice() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
 
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(KTXIMPORTER_TEST_DIR, "2d-rgb.ktx2")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(KTXIMPORTER_TEST_DIR, "2d-rgb.ktx2")));
     CORRADE_COMPARE(importer->image2DCount(), 1);
     CORRADE_COMPARE(importer->textureCount(), 1);
 
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(KTXIMPORTER_TEST_DIR, "2d-rgb.ktx2")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(KTXIMPORTER_TEST_DIR, "2d-rgb.ktx2")));
     CORRADE_COMPARE(importer->image2DCount(), 1);
     CORRADE_COMPARE(importer->textureCount(), 1);
 
@@ -2044,7 +2066,7 @@ void KtxImporterTest::openNormalAfterBasis() {
     Containers::Pointer<AbstractImporter> importer = _managerWithBasisImporter.instantiate("KtxImporter");
 
     importer->configuration().group("basis")->setValue("format", "Etc2RGBA");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba.ktx2")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(BASISIMPORTER_TEST_DIR, "rgba.ktx2")));
 
     CORRADE_COMPARE(importer->image2DCount(), 1);
     {
@@ -2056,7 +2078,7 @@ void KtxImporterTest::openNormalAfterBasis() {
 
     /* Loading a normal KTX afterwards should work */
 
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(KTXIMPORTER_TEST_DIR, "2d-rgb.ktx2")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(KTXIMPORTER_TEST_DIR, "2d-rgb.ktx2")));
 
     CORRADE_COMPARE(importer->image2DCount(), 1);
     {
@@ -2070,7 +2092,7 @@ void KtxImporterTest::openNormalAfterBasis() {
 
 void KtxImporterTest::importTwice() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(KTXIMPORTER_TEST_DIR, "2d-rgb.ktx2")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(KTXIMPORTER_TEST_DIR, "2d-rgb.ktx2")));
 
     /* Verify that everything is working the same way on second use */
     {

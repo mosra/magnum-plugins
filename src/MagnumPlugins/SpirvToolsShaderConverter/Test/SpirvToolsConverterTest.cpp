@@ -35,8 +35,8 @@
 #include <Corrade/TestSuite/Compare/Numeric.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/DebugStl.h>
-#include <Corrade/Utility/Directory.h>
 #include <Corrade/Utility/FormatStl.h>
+#include <Corrade/Utility/Path.h>
 #include <Magnum/ShaderTools/AbstractConverter.h>
 
 #include "configure.h"
@@ -236,7 +236,9 @@ void SpirvToolsConverterTest::validate() {
        would not even validate as SPIR-V. */
     converter->setOutputFormat({}, "spv1.2");
 
-    CORRADE_COMPARE(converter->validateData({}, Utility::Directory::read(Utility::Directory::join(SPIRVTOOLSSHADERCONVERTER_TEST_DIR, data.filename))),
+    Containers::Optional<Containers::Array<char>> file = Utility::Path::read(Utility::Path::join(SPIRVTOOLSSHADERCONVERTER_TEST_DIR, data.filename));
+    CORRADE_VERIFY(file);
+    CORRADE_COMPARE(converter->validateData({}, *file),
         std::make_pair(true, Containers::String{}));
 }
 
@@ -252,7 +254,7 @@ void SpirvToolsConverterTest::validateFile() {
        would not even validate as SPIR-V. */
     converter->setOutputFormat({}, "spv1.2");
 
-    CORRADE_COMPARE(converter->validateFile({}, Utility::Directory::join(SPIRVTOOLSSHADERCONVERTER_TEST_DIR, data.filename)),
+    CORRADE_COMPARE(converter->validateFile({}, Utility::Path::join(SPIRVTOOLSSHADERCONVERTER_TEST_DIR, data.filename)),
         std::make_pair(true, Containers::String{}));
 }
 
@@ -318,7 +320,9 @@ void SpirvToolsConverterTest::validateFailWhole() {
     converter->setOutputFormat({}, "spv1.2");
     converter->configuration().setValue("maxIdBound", 15);
 
-    CORRADE_COMPARE(converter->validateData({}, Utility::Directory::read(Utility::Directory::join(SPIRVTOOLSSHADERCONVERTER_TEST_DIR, data.filename))),
+    Containers::Optional<Containers::Array<char>> file = Utility::Path::read(Utility::Path::join(SPIRVTOOLSSHADERCONVERTER_TEST_DIR, data.filename));
+    CORRADE_VERIFY(file);
+    CORRADE_COMPARE(converter->validateData({}, *file),
         /* Wow fuck me why the double spaces. IT'S NOT A TYPEWRITER AGE ANYMORE
            RECONSIDER YOUR LIFE CHOICES FFS */
         std::make_pair(false, "<data>: Invalid SPIR-V.  The id bound is larger than the max id bound 15."));
@@ -341,7 +345,9 @@ void SpirvToolsConverterTest::validateFailInstruction() {
         "<data>:5: In the Vulkan environment, the OriginLowerLeft execution mode must not be used.\n  OpExecutionMode %2 OriginLowerLeft"
         #endif
         ;
-    CORRADE_COMPARE(converter->validateData({}, Utility::Directory::read(Utility::Directory::join(SPIRVTOOLSSHADERCONVERTER_TEST_DIR, data.filename))),
+    Containers::Optional<Containers::Array<char>> file = Utility::Path::read(Utility::Path::join(SPIRVTOOLSSHADERCONVERTER_TEST_DIR, data.filename));
+    CORRADE_VERIFY(file);
+    CORRADE_COMPARE(converter->validateData({}, *file),
         std::make_pair(false, expected));
 }
 
@@ -353,10 +359,11 @@ void SpirvToolsConverterTest::validateFailFileWhole() {
 
     /* Fake the file loading via a callback so we don't have a YUUGE path in
        the output */
-    const Containers::Array<char> file = Utility::Directory::read(Utility::Directory::join(SPIRVTOOLSSHADERCONVERTER_TEST_DIR, data.filename));
+    const Containers::Optional<Containers::Array<char>> file = Utility::Path::read(Utility::Path::join(SPIRVTOOLSSHADERCONVERTER_TEST_DIR, data.filename));
+    CORRADE_VERIFY(file);
     converter->setInputFileCallback([](const std::string&, InputFileCallbackPolicy, const Containers::Array<char>& file) -> Containers::Optional<Containers::ArrayView<const char>> {
         return arrayView(file);
-    }, file);
+    }, *file);
 
     /* Set ID limit too low to make it fail */
     converter->setOutputFormat({}, "spv1.2");
@@ -365,7 +372,7 @@ void SpirvToolsConverterTest::validateFailFileWhole() {
     CORRADE_COMPARE(converter->validateFile({}, data.filename),
         std::make_pair(false, Utility::format("{}: Invalid SPIR-V.  The id bound is larger than the max id bound 15.", data.filename)));
     /* Validating data again should not be using the stale filename */
-    CORRADE_COMPARE(converter->validateData({}, file),
+    CORRADE_COMPARE(converter->validateData({}, *file),
         std::make_pair(false, "<data>: Invalid SPIR-V.  The id bound is larger than the max id bound 15."));
 }
 
@@ -377,10 +384,11 @@ void SpirvToolsConverterTest::validateFailFileInstruction() {
 
     /* Fake the file loading via a callback so we don't have a YUUGE path in
        the output */
-    const Containers::Array<char> file = Utility::Directory::read(Utility::Directory::join(SPIRVTOOLSSHADERCONVERTER_TEST_DIR, data.filename));
+    const Containers::Optional<Containers::Array<char>> file = Utility::Path::read(Utility::Path::join(SPIRVTOOLSSHADERCONVERTER_TEST_DIR, data.filename));
+    CORRADE_VERIFY(file);
     converter->setInputFileCallback([](const std::string&, InputFileCallbackPolicy, const Containers::Array<char>& file) -> Containers::Optional<Containers::ArrayView<const char>> {
         return arrayView(file);
-    }, file);
+    }, *file);
 
     /* Valid SPIR-V 1.2, but isn't valid for Vulkan 1.1 because of a lower-left
        origin */
@@ -396,7 +404,7 @@ void SpirvToolsConverterTest::validateFailFileInstruction() {
     CORRADE_COMPARE(converter->validateFile({}, data.filename),
         std::make_pair(false, Utility::format("{}:5: {}", data.filename, expected)));
     /* Validating data again should not be using the stale filename */
-    CORRADE_COMPARE(converter->validateData({}, file),
+    CORRADE_COMPARE(converter->validateData({}, *file),
         std::make_pair(false, Utility::format("<data>:5: {}", expected)));
 }
 
@@ -493,9 +501,9 @@ void SpirvToolsConverterTest::convertDisassemble() {
     converter->configuration().setValue("friendlyNames", false);
     converter->configuration().setValue("header", false);
 
-    /** @todo ugh the casts are AWFUL, FIX FFS */
-    CORRADE_COMPARE_AS(Containers::StringView{Containers::ArrayView<const char>{converter->convertFileToData({}, Utility::Directory::join(SPIRVTOOLSSHADERCONVERTER_TEST_DIR, "triangle-shaders.spv"))}},
-        Utility::Directory::join(SPIRVTOOLSSHADERCONVERTER_TEST_DIR, "triangle-shaders.spvasm"),
+    /** @todo Compare::DataToFile */
+    CORRADE_COMPARE_AS(Containers::ArrayView<const char>{converter->convertFileToData({}, Utility::Path::join(SPIRVTOOLSSHADERCONVERTER_TEST_DIR, "triangle-shaders.spv"))},
+        Utility::Path::join(SPIRVTOOLSSHADERCONVERTER_TEST_DIR, "triangle-shaders.spvasm"),
         TestSuite::Compare::StringToFile);
 }
 
@@ -518,7 +526,7 @@ void SpirvToolsConverterTest::convertAssemble() {
     /* Otherwise the output will not be roundtrippable */
     converter->configuration().setValue("preserveNumericIds", true);
 
-    Containers::Array<char> out = converter->convertFileToData({}, Utility::Directory::join(SPIRVTOOLSSHADERCONVERTER_TEST_DIR, "triangle-shaders.spvasm"));
+    Containers::Array<char> out = converter->convertFileToData({}, Utility::Path::join(SPIRVTOOLSSHADERCONVERTER_TEST_DIR, "triangle-shaders.spvasm"));
     CORRADE_COMPARE_AS(out.size(), 5*4, TestSuite::Compare::Greater);
 
     /* The output generator ID is something from Khronos, patch it back to ours
@@ -527,9 +535,9 @@ void SpirvToolsConverterTest::convertAssemble() {
         0x70000);
     Containers::arrayCast<UnsignedInt>(out.prefix(5*4))[2] = 0xdeadc0de;
 
-    /** @todo ugh the casts are AWFUL, FIX FFS */
-    CORRADE_COMPARE_AS(Containers::StringView{Containers::ArrayView<const char>{out}},
-        Utility::Directory::join(SPIRVTOOLSSHADERCONVERTER_TEST_DIR, "triangle-shaders.spv"),
+    /** @todo Compare::DataToFile */
+    CORRADE_COMPARE_AS(Containers::ArrayView<const char>{out},
+        Utility::Path::join(SPIRVTOOLSSHADERCONVERTER_TEST_DIR, "triangle-shaders.spv"),
         TestSuite::Compare::StringToFile);
 }
 
@@ -546,13 +554,13 @@ void SpirvToolsConverterTest::convertDisassembleFile() {
     converter->configuration().setValue("friendlyNames", false);
     converter->configuration().setValue("header", false);
 
-    const std::string filename = Utility::Directory::join(SPIRVTOOLSSHADERCONVERTER_TEST_OUTPUT_DIR, data.outputFilenameDisssemble);
+    Containers::String filename = Utility::Path::join(SPIRVTOOLSSHADERCONVERTER_TEST_OUTPUT_DIR, data.outputFilenameDisssemble);
     CORRADE_VERIFY(converter->convertFileToFile({},
-        Utility::Directory::join(SPIRVTOOLSSHADERCONVERTER_TEST_DIR, "triangle-shaders.spv"),
+        Utility::Path::join(SPIRVTOOLSSHADERCONVERTER_TEST_DIR, "triangle-shaders.spv"),
         filename));
 
     CORRADE_COMPARE_AS(filename,
-        Utility::Directory::join(SPIRVTOOLSSHADERCONVERTER_TEST_DIR, "triangle-shaders.spvasm"),
+        Utility::Path::join(SPIRVTOOLSSHADERCONVERTER_TEST_DIR, "triangle-shaders.spvasm"),
         TestSuite::Compare::File);
 }
 
@@ -573,23 +581,24 @@ void SpirvToolsConverterTest::convertAssembleFile() {
     /* Otherwise the output will not be roundtrippable */
     converter->configuration().setValue("preserveNumericIds", true);
 
-    const std::string filename = Utility::Directory::join(SPIRVTOOLSSHADERCONVERTER_TEST_OUTPUT_DIR, data.outputFilenameAssemble);
+    Containers::String filename = Utility::Path::join(SPIRVTOOLSSHADERCONVERTER_TEST_OUTPUT_DIR, data.outputFilenameAssemble);
     CORRADE_VERIFY(converter->convertFileToFile({},
-        Utility::Directory::join(SPIRVTOOLSSHADERCONVERTER_TEST_DIR, "triangle-shaders.spvasm"),
+        Utility::Path::join(SPIRVTOOLSSHADERCONVERTER_TEST_DIR, "triangle-shaders.spvasm"),
         filename));
 
-    Containers::Array<char> out = Utility::Directory::read(filename);
-    CORRADE_COMPARE_AS(out.size(), 5*4, TestSuite::Compare::Greater);
+    Containers::Optional<Containers::Array<char>> out = Utility::Path::read(filename);
+    CORRADE_VERIFY(out);
+    CORRADE_COMPARE_AS(out->size(), 5*4, TestSuite::Compare::Greater);
 
     /* The output generator ID is something from Khronos, patch it back to ours
        so the file compares equal. */
-    CORRADE_COMPARE(Containers::arrayCast<UnsignedInt>(out.prefix(5*4))[2],
+    CORRADE_COMPARE(Containers::arrayCast<UnsignedInt>(out->prefix(5*4))[2],
         0x70000);
-    Containers::arrayCast<UnsignedInt>(out.prefix(5*4))[2] = 0xdeadc0de;
+    Containers::arrayCast<UnsignedInt>(out->prefix(5*4))[2] = 0xdeadc0de;
 
-    /** @todo ugh the casts are AWFUL, FIX FFS */
-    CORRADE_COMPARE_AS(Containers::StringView{Containers::ArrayView<const char>{out}},
-        Utility::Directory::join(SPIRVTOOLSSHADERCONVERTER_TEST_DIR, "triangle-shaders.spv"),
+    /** @todo Compare::DataToFile */
+    CORRADE_COMPARE_AS(Containers::ArrayView<const char>{*out},
+        Utility::Path::join(SPIRVTOOLSSHADERCONVERTER_TEST_DIR, "triangle-shaders.spv"),
         TestSuite::Compare::StringToFile);
 }
 
@@ -819,7 +828,7 @@ void SpirvToolsConverterTest::convertOptimize() {
     converter->setOutputFormat(data.outputFormat, "spv1.2");
 
     Containers::Array<char> out = converter->convertFileToData({},
-        Utility::Directory::join(SPIRVTOOLSSHADERCONVERTER_TEST_DIR, data.input));
+        Utility::Path::join(SPIRVTOOLSSHADERCONVERTER_TEST_DIR, data.input));
     CORRADE_COMPARE_AS(out.size(), 5*4, TestSuite::Compare::Greater);
 
     /* If we end up with a binary and the input was an assembly, the output
@@ -828,9 +837,9 @@ void SpirvToolsConverterTest::convertOptimize() {
     if(data.outputFormat == Format::Spirv && Containers::arrayCast<UnsignedInt>(out.prefix(5*4))[2] == 0x70000)
         Containers::arrayCast<UnsignedInt>(out.prefix(5*4))[2] = 0xdeadc0de;
 
-    /** @todo ugh the casts are AWFUL, FIX FFS */
-    CORRADE_COMPARE_AS(Containers::StringView{Containers::ArrayView<const char>{out}},
-        Utility::Directory::join(SPIRVTOOLSSHADERCONVERTER_TEST_DIR, data.expected),
+    /** @todo Compare::DataToFile */
+    CORRADE_COMPARE_AS(Containers::ArrayView<const char>{out},
+        Utility::Path::join(SPIRVTOOLSSHADERCONVERTER_TEST_DIR, data.expected),
         TestSuite::Compare::StringToFile);
 }
 
@@ -846,7 +855,7 @@ void SpirvToolsConverterTest::convertOptimizeFail() {
     std::ostringstream out;
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->convertFileToData({},
-        Utility::Directory::join(SPIRVTOOLSSHADERCONVERTER_TEST_DIR, "triangle-shaders.noopt.spv")));
+        Utility::Path::join(SPIRVTOOLSSHADERCONVERTER_TEST_DIR, "triangle-shaders.noopt.spv")));
 
     const char* const expected =
         #if SPIRVTOOLS_VERSION >= 202007

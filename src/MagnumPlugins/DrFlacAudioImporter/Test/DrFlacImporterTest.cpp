@@ -26,10 +26,12 @@
 
 #include <sstream>
 #include <Corrade/Containers/Array.h>
+#include <Corrade/Containers/String.h>
+#include <Corrade/Containers/StringStl.h> /** @todo remove once AbstractImporter is <string>-free */
 #include <Corrade/TestSuite/Compare/Container.h>
 #include <Corrade/TestSuite/Tester.h>
-#include <Corrade/Utility/Directory.h>
 #include <Corrade/Utility/DebugStl.h>
+#include <Corrade/Utility/Path.h>
 #include <Magnum/Audio/AbstractImporter.h>
 
 #include "configure.h"
@@ -108,7 +110,7 @@ void DrFlacImporterTest::zeroSamples() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DrFlacAudioImporter");
 
     /* No error should happen, it should just give an empty buffer back */
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(DRFLACAUDIOIMPORTER_TEST_DIR, "zeroSamples.flac")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(DRFLACAUDIOIMPORTER_TEST_DIR, "zeroSamples.flac")));
     CORRADE_COMPARE(importer->format(), BufferFormat::Mono16);
     CORRADE_COMPARE(importer->frequency(), 22050);
     CORRADE_VERIFY(importer->data().empty());
@@ -116,7 +118,7 @@ void DrFlacImporterTest::zeroSamples() {
 
 void DrFlacImporterTest::mono8() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DrFlacAudioImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(DRFLACAUDIOIMPORTER_TEST_DIR, "mono8.flac")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(DRFLACAUDIOIMPORTER_TEST_DIR, "mono8.flac")));
 
     CORRADE_COMPARE(importer->format(), BufferFormat::Mono8);
     CORRADE_COMPARE(importer->frequency(), 22050);
@@ -130,7 +132,7 @@ void DrFlacImporterTest::mono8() {
 
 void DrFlacImporterTest::mono16() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DrFlacAudioImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(DRFLACAUDIOIMPORTER_TEST_DIR, "mono16.flac")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(DRFLACAUDIOIMPORTER_TEST_DIR, "mono16.flac")));
 
     CORRADE_COMPARE(importer->format(), BufferFormat::Mono16);
     CORRADE_COMPARE(importer->frequency(), 44000);
@@ -143,7 +145,7 @@ void DrFlacImporterTest::mono16() {
 
 void DrFlacImporterTest::mono24() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DrFlacAudioImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(DRFLACAUDIOIMPORTER_TEST_DIR, "mono24.flac")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(DRFLACAUDIOIMPORTER_TEST_DIR, "mono24.flac")));
 
     CORRADE_COMPARE(importer->format(), BufferFormat::MonoFloat);
     CORRADE_COMPARE(importer->frequency(), 48000);
@@ -163,13 +165,13 @@ void DrFlacImporterTest::mono32() {
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(!importer->openFile(Utility::Directory::join(DRFLACAUDIOIMPORTER_TEST_DIR, "mono32.flac")));
+    CORRADE_VERIFY(!importer->openFile(Utility::Path::join(DRFLACAUDIOIMPORTER_TEST_DIR, "mono32.flac")));
     CORRADE_COMPARE(out.str(), "Audio::DrFlacImporter::openData(): unsupported channel count 1 with 32 bits per sample\n");
 }
 
 void DrFlacImporterTest::stereo8() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DrFlacAudioImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(DRFLACAUDIOIMPORTER_TEST_DIR, "stereo8.flac")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(DRFLACAUDIOIMPORTER_TEST_DIR, "stereo8.flac")));
 
     CORRADE_COMPARE(importer->format(), BufferFormat::Stereo8);
     CORRADE_COMPARE(importer->frequency(), 96000);
@@ -182,7 +184,7 @@ void DrFlacImporterTest::stereo8() {
 
 void DrFlacImporterTest::stereo16() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DrFlacAudioImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(DRFLACAUDIOIMPORTER_TEST_DIR, "stereo16.flac")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(DRFLACAUDIOIMPORTER_TEST_DIR, "stereo16.flac")));
 
     CORRADE_COMPARE(importer->format(), BufferFormat::Stereo16);
     CORRADE_COMPARE(importer->frequency(), 44100);
@@ -195,7 +197,7 @@ void DrFlacImporterTest::stereo16() {
 
 void DrFlacImporterTest::stereo24() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DrFlacAudioImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(DRFLACAUDIOIMPORTER_TEST_DIR, "stereo24.flac")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(DRFLACAUDIOIMPORTER_TEST_DIR, "stereo24.flac")));
 
     CORRADE_COMPARE(importer->format(), BufferFormat::StereoFloat);
     CORRADE_COMPARE(importer->frequency(), 8000);
@@ -212,7 +214,7 @@ void DrFlacImporterTest::stereo24() {
 
 void DrFlacImporterTest::quad16() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DrFlacAudioImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(DRFLACAUDIOIMPORTER_TEST_DIR, "quad16.flac")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(DRFLACAUDIOIMPORTER_TEST_DIR, "quad16.flac")));
 
     CORRADE_COMPARE(importer->format(), BufferFormat::Quad16);
     CORRADE_COMPARE(importer->frequency(), 44100);
@@ -220,7 +222,7 @@ void DrFlacImporterTest::quad16() {
 
 void DrFlacImporterTest::quad24() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DrFlacAudioImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(DRFLACAUDIOIMPORTER_TEST_DIR, "quad24.flac")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(DRFLACAUDIOIMPORTER_TEST_DIR, "quad24.flac")));
 
     CORRADE_COMPARE(importer->format(), BufferFormat::Quad32);
     CORRADE_COMPARE(importer->frequency(), 44100);
@@ -228,7 +230,7 @@ void DrFlacImporterTest::quad24() {
 
 void DrFlacImporterTest::surround51Channel16() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DrFlacAudioImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(DRFLACAUDIOIMPORTER_TEST_DIR, "surround51Channel16.flac")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(DRFLACAUDIOIMPORTER_TEST_DIR, "surround51Channel16.flac")));
 
     CORRADE_COMPARE(importer->format(), BufferFormat::Surround51Channel16);
     CORRADE_COMPARE(importer->frequency(), 48000);
@@ -236,7 +238,7 @@ void DrFlacImporterTest::surround51Channel16() {
 
 void DrFlacImporterTest::surround51Channel24() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DrFlacAudioImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(DRFLACAUDIOIMPORTER_TEST_DIR, "surround51Channel24.flac")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(DRFLACAUDIOIMPORTER_TEST_DIR, "surround51Channel24.flac")));
 
     CORRADE_COMPARE(importer->format(), BufferFormat::Surround51Channel32);
     CORRADE_COMPARE(importer->frequency(), 48000);
@@ -244,7 +246,7 @@ void DrFlacImporterTest::surround51Channel24() {
 
 void DrFlacImporterTest::surround71Channel24() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DrFlacAudioImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(DRFLACAUDIOIMPORTER_TEST_DIR, "surround71Channel24.flac")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(DRFLACAUDIOIMPORTER_TEST_DIR, "surround71Channel24.flac")));
 
     CORRADE_COMPARE(importer->format(), BufferFormat::Surround71Channel32);
     CORRADE_COMPARE(importer->frequency(), 48000);

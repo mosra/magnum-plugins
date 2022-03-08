@@ -26,11 +26,13 @@
 
 #include <sstream>
 #include <Corrade/Containers/Array.h>
+#include <Corrade/Containers/String.h>
+#include <Corrade/Containers/StringStl.h> /** @todo remove once AbstractImporter is <string>-free */
 #include <Corrade/TestSuite/Compare/Container.h>
 #include <Corrade/TestSuite/Compare/Numeric.h>
 #include <Corrade/TestSuite/Tester.h>
-#include <Corrade/Utility/Directory.h>
 #include <Corrade/Utility/DebugStl.h>
+#include <Corrade/Utility/Path.h>
 #include <Magnum/Audio/AbstractImporter.h>
 
 #include "configure.h"
@@ -83,7 +85,7 @@ void DrMp3ImporterTest::zeroSamples() {
     /* No error should happen, it should just give an empty buffer back */
     {
         CORRADE_EXPECT_FAIL("dr_mp3 treats 0 frames as an error, because it returns 0 also for malloc failure and such.");
-        CORRADE_VERIFY(importer->openFile(Utility::Directory::join(DRMP3AUDIOIMPORTER_TEST_DIR, "zeroSamples.mp3")));
+        CORRADE_VERIFY(importer->openFile(Utility::Path::join(DRMP3AUDIOIMPORTER_TEST_DIR, "zeroSamples.mp3")));
         if(!importer->isOpened()) return;
     }
     CORRADE_COMPARE(importer->format(), BufferFormat::Mono16);
@@ -93,7 +95,7 @@ void DrMp3ImporterTest::zeroSamples() {
 
 void DrMp3ImporterTest::mono16() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DrMp3AudioImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(DRMP3AUDIOIMPORTER_TEST_DIR, "mono16.mp3")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(DRMP3AUDIOIMPORTER_TEST_DIR, "mono16.mp3")));
 
     CORRADE_COMPARE(importer->format(), BufferFormat::Mono16);
     CORRADE_COMPARE(importer->frequency(), 44100);
@@ -107,7 +109,7 @@ void DrMp3ImporterTest::mono16() {
 
 void DrMp3ImporterTest::stereo16() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DrMp3AudioImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(DRMP3AUDIOIMPORTER_TEST_DIR, "stereo16.mp3")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(DRMP3AUDIOIMPORTER_TEST_DIR, "stereo16.mp3")));
 
     CORRADE_COMPARE(importer->format(), BufferFormat::Stereo16);
     CORRADE_COMPARE(importer->frequency(), 44100);

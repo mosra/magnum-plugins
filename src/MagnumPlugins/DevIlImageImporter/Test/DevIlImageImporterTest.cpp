@@ -31,7 +31,7 @@
 #include <Corrade/TestSuite/Compare/Container.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/DebugStl.h>
-#include <Corrade/Utility/Directory.h>
+#include <Corrade/Utility/Path.h>
 #include <Magnum/PixelFormat.h>
 #include <Magnum/Math/Color.h>
 #include <Magnum/Trade/ImageData.h>
@@ -153,7 +153,7 @@ void DevIlImageImporterTest::invalid() {
 
 void DevIlImageImporterTest::grayPng() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DevIlImageImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, "gray.png")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(PNGIMPORTER_TEST_DIR, "gray.png")));
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
@@ -168,7 +168,7 @@ void DevIlImageImporterTest::grayPng() {
 
 void DevIlImageImporterTest::grayJpeg() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DevIlImageImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(JPEGIMPORTER_TEST_DIR, "gray.jpg")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(JPEGIMPORTER_TEST_DIR, "gray.jpg")));
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
@@ -183,7 +183,7 @@ void DevIlImageImporterTest::grayJpeg() {
 
 void DevIlImageImporterTest::rgbPng() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DevIlImageImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, "rgb.png")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(PNGIMPORTER_TEST_DIR, "rgb.png")));
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
@@ -202,7 +202,7 @@ void DevIlImageImporterTest::rgbPng() {
 
 void DevIlImageImporterTest::rgbJpeg() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DevIlImageImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(JPEGIMPORTER_TEST_DIR, "rgb.jpg")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(JPEGIMPORTER_TEST_DIR, "rgb.jpg")));
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
@@ -222,7 +222,7 @@ void DevIlImageImporterTest::rgbJpeg() {
 
 void DevIlImageImporterTest::rgbaPng() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DevIlImageImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, "rgba.png")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(PNGIMPORTER_TEST_DIR, "rgba.png")));
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
@@ -300,16 +300,20 @@ void DevIlImageImporterTest::icoBmp() {
 
     /* Open a file or data -- the ICO format has no magic header or anything,
        so we can use it to test file format autodetection and forcing. */
-    std::string filename = Utility::Directory::join(ICOIMPORTER_TEST_DIR, "bmp+png.ico");
+    Containers::String filename = Utility::Path::join(ICOIMPORTER_TEST_DIR, "bmp+png.ico");
     if(data.openFile) {
         /* Copy to a differently named file, if desired */
         if(data.filename) {
-            CORRADE_VERIFY(Utility::Directory::copy(filename, Utility::Directory::join(DEVILIMAGEIMPORTER_WRITE_TEST_DIR, data.filename)));
+            CORRADE_VERIFY(Utility::Path::copy(filename, Utility::Path::join(DEVILIMAGEIMPORTER_WRITE_TEST_DIR, data.filename)));
             filename = data.filename;
         }
 
         CORRADE_COMPARE(importer->openFile(filename), data.succeeds);
-    } else CORRADE_COMPARE(importer->openData(Utility::Directory::read(filename)), data.succeeds);
+    } else {
+        Containers::Optional<Containers::Array<char>> read = Utility::Path::read(filename);
+        CORRADE_VERIFY(read);
+        CORRADE_COMPARE(importer->openData(*read), data.succeeds);
+    }
     if(!data.succeeds) return;
 
     {
@@ -344,7 +348,7 @@ void DevIlImageImporterTest::icoPng() {
     CORRADE_SKIP("DevIL crashes on some ICOs with embedded PNGs, skipping the test.");
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DevIlImageImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ICOIMPORTER_TEST_DIR, "pngs.ico")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(ICOIMPORTER_TEST_DIR, "pngs.ico")));
 
     {
         CORRADE_EXPECT_FAIL("DevIL does not report ICO sizes as image levels, but instead as separate images.");
@@ -367,7 +371,7 @@ void DevIlImageImporterTest::animatedGif() {
     /* Basically the same as StbImageImporterTest::animatedGif(), except that
        we don't import image delays here */
 
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STBIMAGEIMPORTER_TEST_DIR, "dispose_bgnd.gif")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(STBIMAGEIMPORTER_TEST_DIR, "dispose_bgnd.gif")));
     CORRADE_COMPARE(importer->image2DCount(), 5);
 
     /* All images should have the same format & size */
@@ -399,15 +403,15 @@ void DevIlImageImporterTest::animatedGif() {
 void DevIlImageImporterTest::openTwice() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DevIlImageImporter");
 
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, "gray.png")));
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, "gray.png")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(PNGIMPORTER_TEST_DIR, "gray.png")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(PNGIMPORTER_TEST_DIR, "gray.png")));
 
     /* Shouldn't crash, leak or anything */
 }
 
 void DevIlImageImporterTest::importTwice() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DevIlImageImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, "rgba.png")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(PNGIMPORTER_TEST_DIR, "rgba.png")));
 
     /* Verify that everything is working the same way on second use and that
        the data are the same -- some APIs (such as iluFlipImage()) mutate the
@@ -429,8 +433,8 @@ void DevIlImageImporterTest::twoImporters() {
     Containers::Pointer<AbstractImporter> a = _manager.instantiate("DevIlImageImporter");
     Containers::Pointer<AbstractImporter> b = _manager.instantiate("DevIlImageImporter");
 
-    CORRADE_VERIFY(a->openFile(Utility::Directory::join(JPEGIMPORTER_TEST_DIR, "rgb.jpg")));
-    CORRADE_VERIFY(b->openFile(Utility::Directory::join(STBIMAGEIMPORTER_TEST_DIR, "dispose_bgnd.gif")));
+    CORRADE_VERIFY(a->openFile(Utility::Path::join(JPEGIMPORTER_TEST_DIR, "rgb.jpg")));
+    CORRADE_VERIFY(b->openFile(Utility::Path::join(STBIMAGEIMPORTER_TEST_DIR, "dispose_bgnd.gif")));
 
     /* Ask for image A metadata after loading file B to test that the two
        importers don't get their state mixed together */
@@ -457,8 +461,8 @@ void DevIlImageImporterTest::twoImporters() {
 void DevIlImageImporterTest::utf8Filename() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DevIlImageImporter");
 
-    std::string filename = Utility::Directory::join(DEVILIMAGEIMPORTER_WRITE_TEST_DIR, "hýždě.png");
-    CORRADE_VERIFY(Utility::Directory::copy(Utility::Directory::join(PNGIMPORTER_TEST_DIR, "gray.png"), filename));
+    Containers::String filename = Utility::Path::join(DEVILIMAGEIMPORTER_WRITE_TEST_DIR, "hýždě.png");
+    CORRADE_VERIFY(Utility::Path::copy(Utility::Path::join(PNGIMPORTER_TEST_DIR, "gray.png"), filename));
     CORRADE_VERIFY(importer->openFile(filename));
 
     /* Same as in grayPng() */

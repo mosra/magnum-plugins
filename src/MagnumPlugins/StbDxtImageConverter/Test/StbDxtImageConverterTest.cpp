@@ -29,7 +29,7 @@
 #include <Corrade/TestSuite/Compare/StringToFile.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/DebugStl.h>
-#include <Corrade/Utility/Directory.h>
+#include <Corrade/Utility/Path.h>
 #include <Magnum/ImageView.h>
 #include <Magnum/PixelFormat.h>
 #include <Magnum/Trade/AbstractImageConverter.h>
@@ -119,7 +119,7 @@ void StbDxtImageConverterTest::rgba() {
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("StbImageImporter");
     /* Force four channels */
     importer->configuration().setValue("forceChannelCount", 4);
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STBDXTIMAGECONVERTER_TEST_DIR, "ship.jpg")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(STBDXTIMAGECONVERTER_TEST_DIR, "ship.jpg")));
     Containers::Optional<Trade::ImageData2D> uncompressed = importer->image2D(0);
     CORRADE_VERIFY(uncompressed);
     CORRADE_COMPARE(uncompressed->format(), PixelFormat::RGBA8Unorm);
@@ -145,8 +145,9 @@ void StbDxtImageConverterTest::rgba() {
     CORRADE_COMPARE(compressed->data().size(),
         compressed->size().product()*(!data.alpha || *data.alpha ? 16 : 8)/16);
 
-    CORRADE_COMPARE_AS((std::string{compressed->data(), compressed->data().size()}),
-        Utility::Directory::join(STBDXTIMAGECONVERTER_TEST_DIR, data.expectedFile),
+    /** @todo Compare::DataToFile */
+    CORRADE_COMPARE_AS((Containers::StringView{compressed->data(), compressed->data().size()}),
+        Utility::Path::join(STBDXTIMAGECONVERTER_TEST_DIR, data.expectedFile),
         TestSuite::Compare::StringToFile);
 }
 

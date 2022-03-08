@@ -25,9 +25,11 @@
 
 #include <sstream>
 #include <Corrade/Containers/Array.h>
+#include <Corrade/Containers/String.h>
+#include <Corrade/Containers/StringStl.h> /** @todo remove once AbstractImporter is <string>-free */
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/Utility/DebugStl.h>
-#include <Corrade/Utility/Directory.h>
+#include <Corrade/Utility/Path.h>
 #include <Magnum/ImageView.h>
 #include <Magnum/PixelFormat.h>
 #include <Magnum/Audio/AbstractImporter.h>
@@ -83,13 +85,13 @@ void Faad2ImporterTest::error() {
     Error redirectError{&out};
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("Faad2AudioImporter");
-    CORRADE_VERIFY(!importer->openFile(Utility::Directory::join(FAAD2AUDIOIMPORTER_TEST_DIR, "error.aac")));
+    CORRADE_VERIFY(!importer->openFile(Utility::Path::join(FAAD2AUDIOIMPORTER_TEST_DIR, "error.aac")));
     CORRADE_COMPARE(out.str(), "Audio::Faad2Importer::openData(): decoding error\n");
 }
 
 void Faad2ImporterTest::mono() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("Faad2AudioImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(FAAD2AUDIOIMPORTER_TEST_DIR, "mono.aac")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(FAAD2AUDIOIMPORTER_TEST_DIR, "mono.aac")));
 
     {
         CORRADE_EXPECT_FAIL("Even though `file` reports mono.aac as mono, FAAD2 decodes it as stereo.");
@@ -118,7 +120,7 @@ void Faad2ImporterTest::mono() {
 
 void Faad2ImporterTest::stereo() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("Faad2AudioImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(FAAD2AUDIOIMPORTER_TEST_DIR, "stereo.aac")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(FAAD2AUDIOIMPORTER_TEST_DIR, "stereo.aac")));
 
     CORRADE_COMPARE(importer->format(), BufferFormat::Stereo16);
     CORRADE_COMPARE(importer->frequency(), 44100);

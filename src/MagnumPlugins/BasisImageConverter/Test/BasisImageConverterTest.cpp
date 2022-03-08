@@ -33,11 +33,12 @@
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
 #include <Corrade/TestSuite/Compare/Numeric.h>
+#include <Corrade/TestSuite/Compare/String.h>
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/DebugStl.h>
-#include <Corrade/Utility/Directory.h>
 #include <Corrade/Utility/FormatStl.h>
+#include <Corrade/Utility/Path.h>
 #include <Magnum/DebugTools/CompareImage.h>
 #include <Magnum/Image.h>
 #include <Magnum/ImageView.h>
@@ -310,7 +311,7 @@ BasisImageConverterTest::BasisImageConverterTest() {
     #endif
 
     /* Create the output directory if it doesn't exist yet */
-    CORRADE_INTERNAL_ASSERT_OUTPUT(Utility::Directory::mkpath(BASISIMAGECONVERTER_TEST_OUTPUT_DIR));
+    CORRADE_INTERNAL_ASSERT_OUTPUT(Utility::Path::make(BASISIMAGECONVERTER_TEST_OUTPUT_DIR));
 }
 
 void BasisImageConverterTest::wrongFormat() {
@@ -346,7 +347,7 @@ void BasisImageConverterTest::unknownOutputFormatFile() {
 
     const char data[4]{};
     const ImageView2D image{PixelFormat::RGB8Unorm, {1, 1}, data};
-    const std::string filename = Utility::Directory::join(BASISIMAGECONVERTER_TEST_OUTPUT_DIR, "file.foo");
+    Containers::String filename = Utility::Path::join(BASISIMAGECONVERTER_TEST_OUTPUT_DIR, "file.foo");
     CORRADE_VERIFY(converter->convertToFile(image, filename));
 
     if(_manager.loadState("BasisImporter") == PluginManager::LoadState::NotFound)
@@ -545,7 +546,7 @@ void BasisImageConverterTest::convert2DR() {
         CORRADE_SKIP("PngImporter plugin not found, cannot test contents");
 
     Containers::Pointer<AbstractImporter> pngImporter = _manager.instantiate("PngImporter");
-    CORRADE_VERIFY(pngImporter->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgb-63x27.png")));
+    CORRADE_VERIFY(pngImporter->openFile(Utility::Path::join(BASISIMPORTER_TEST_DIR, "rgb-63x27.png")));
     const auto originalImage = pngImporter->image2D(0);
     CORRADE_VERIFY(originalImage);
 
@@ -594,7 +595,7 @@ void BasisImageConverterTest::convert2DRg() {
         CORRADE_SKIP("PngImporter plugin not found, cannot test contents");
 
     Containers::Pointer<AbstractImporter> pngImporter = _manager.instantiate("PngImporter");
-    CORRADE_VERIFY(pngImporter->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgb-63x27.png")));
+    CORRADE_VERIFY(pngImporter->openFile(Utility::Path::join(BASISIMPORTER_TEST_DIR, "rgb-63x27.png")));
     const auto originalImage = pngImporter->image2D(0);
     CORRADE_VERIFY(originalImage);
 
@@ -642,7 +643,7 @@ void BasisImageConverterTest::convert2DRgb() {
         CORRADE_SKIP("PngImporter plugin not found, cannot test contents");
 
     Containers::Pointer<AbstractImporter> pngImporter = _manager.instantiate("PngImporter");
-    CORRADE_VERIFY(pngImporter->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgb-63x27.png")));
+    CORRADE_VERIFY(pngImporter->openFile(Utility::Path::join(BASISIMPORTER_TEST_DIR, "rgb-63x27.png")));
     const auto originalImage = pngImporter->image2D(0);
     CORRADE_VERIFY(originalImage);
 
@@ -668,7 +669,7 @@ void BasisImageConverterTest::convert2DRgb() {
     CORRADE_COMPARE(image->format(), TransferFunctionFormats[data.transferFunction][3]);
 
     CORRADE_COMPARE_WITH(Containers::arrayCast<const Color3ub>(image->pixels<Color4ub>()),
-        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgb-63x27.png"),
+        Utility::Path::join(BASISIMPORTER_TEST_DIR, "rgb-63x27.png"),
         /* There are moderately significant compression artifacts */
         (DebugTools::CompareImageToFile{_manager, 61.0f, 6.622f}));
 }
@@ -681,7 +682,7 @@ void BasisImageConverterTest::convert2DRgba() {
         CORRADE_SKIP("PngImporter plugin not found, cannot test contents");
 
     Containers::Pointer<AbstractImporter> pngImporter = _manager.instantiate("PngImporter");
-    CORRADE_VERIFY(pngImporter->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-63x27.png")));
+    CORRADE_VERIFY(pngImporter->openFile(Utility::Path::join(BASISIMPORTER_TEST_DIR, "rgba-63x27.png")));
     const auto originalImage = pngImporter->image2D(0);
     CORRADE_VERIFY(originalImage);
 
@@ -707,7 +708,7 @@ void BasisImageConverterTest::convert2DRgba() {
     CORRADE_COMPARE(image->format(), TransferFunctionFormats[data.transferFunction][3]);
 
     CORRADE_COMPARE_WITH(image->pixels<Color4ub>(),
-        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-63x27.png"),
+        Utility::Path::join(BASISIMPORTER_TEST_DIR, "rgba-63x27.png"),
         /* There are moderately significant compression artifacts */
         (DebugTools::CompareImageToFile{_manager, 97.25f, 8.547f}));
 }
@@ -761,7 +762,7 @@ void BasisImageConverterTest::convert2DMipmaps() {
 
     for(Level& level: levels) {
         CORRADE_ITERATION(level.file);
-        CORRADE_VERIFY(pngImporter->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR, level.file)));
+        CORRADE_VERIFY(pngImporter->openFile(Utility::Path::join(BASISIMPORTER_TEST_DIR, level.file)));
         const auto originalImage = pngImporter->image2D(0);
         CORRADE_VERIFY(originalImage);
         /* Use the original images and add a skip to ensure the converter reads
@@ -800,15 +801,15 @@ void BasisImageConverterTest::convert2DMipmaps() {
     }
 
     CORRADE_COMPARE_WITH(*levels[0].result,
-        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-63x27.png"),
+        Utility::Path::join(BASISIMPORTER_TEST_DIR, "rgba-63x27.png"),
         /* There are moderately significant compression artifacts */
         (DebugTools::CompareImageToFile{_manager, 97.25f, 7.882f}));
     CORRADE_COMPARE_WITH(*levels[1].result,
-        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-31x13.png"),
+        Utility::Path::join(BASISIMPORTER_TEST_DIR, "rgba-31x13.png"),
         /* There are moderately significant compression artifacts */
         (DebugTools::CompareImageToFile{_manager, 81.0f, 14.33f}));
     CORRADE_COMPARE_WITH(*levels[2].result,
-        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-15x6.png"),
+        Utility::Path::join(BASISIMPORTER_TEST_DIR, "rgba-15x6.png"),
         /* There are moderately significant compression artifacts */
         (DebugTools::CompareImageToFile{_manager, 76.25f, 24.5f}));
 }
@@ -824,7 +825,7 @@ void BasisImageConverterTest::convert2DArray() {
         CORRADE_SKIP("PngImporter plugin not found, cannot test contents");
 
     Containers::Pointer<AbstractImporter> pngImporter = _manager.instantiate("PngImporter");
-    CORRADE_VERIFY(pngImporter->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-63x27.png")));
+    CORRADE_VERIFY(pngImporter->openFile(Utility::Path::join(BASISIMPORTER_TEST_DIR, "rgba-63x27.png")));
     const auto originalSlice = pngImporter->image2D(0);
     CORRADE_VERIFY(originalSlice);
 
@@ -887,7 +888,7 @@ void BasisImageConverterTest::convert2DArrayOneLayer() {
        https://github.com/BinomialLLC/basis_universal/blob/928a0caa3e5db2d4748bce6b23507757f9867d14/encoder/basisu_comp.cpp#L1809 */
 
     Containers::Pointer<AbstractImporter> pngImporter = _manager.instantiate("PngImporter");
-    CORRADE_VERIFY(pngImporter->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-63x27.png")));
+    CORRADE_VERIFY(pngImporter->openFile(Utility::Path::join(BASISIMPORTER_TEST_DIR, "rgba-63x27.png")));
     const auto originalImage = pngImporter->image2D(0);
     CORRADE_VERIFY(originalImage);
 
@@ -933,7 +934,7 @@ void BasisImageConverterTest::convert2DArrayMipmaps() {
 
     for(Level& level: levels) {
         CORRADE_ITERATION(level.file);
-        CORRADE_VERIFY(pngImporter->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR, level.file)));
+        CORRADE_VERIFY(pngImporter->openFile(Utility::Path::join(BASISIMPORTER_TEST_DIR, level.file)));
         const auto originalSlice = pngImporter->image2D(0);
         CORRADE_VERIFY(originalSlice);
 
@@ -1012,9 +1013,9 @@ void BasisImageConverterTest::convertToFile2D() {
         CORRADE_SKIP("PngImporter plugin not found, cannot test contents");
 
     Containers::Pointer<AbstractImporter> pngImporter = _manager.instantiate("PngImporter");
-    CORRADE_VERIFY(pngImporter->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-63x27.png")));
+    CORRADE_VERIFY(pngImporter->openFile(Utility::Path::join(BASISIMPORTER_TEST_DIR, "rgba-63x27.png")));
     const auto originalLevel0 = pngImporter->image2D(0);
-    CORRADE_VERIFY(pngImporter->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-31x13.png")));
+    CORRADE_VERIFY(pngImporter->openFile(Utility::Path::join(BASISIMPORTER_TEST_DIR, "rgba-31x13.png")));
     const auto originalLevel1 = pngImporter->image2D(0);
     CORRADE_VERIFY(originalLevel0);
     CORRADE_VERIFY(originalLevel1);
@@ -1022,12 +1023,15 @@ void BasisImageConverterTest::convertToFile2D() {
     const ImageView2D originalLevels[2]{*originalLevel0, *originalLevel1};
 
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate(data.pluginName);
-    std::string filename = Utility::Directory::join(BASISIMAGECONVERTER_TEST_OUTPUT_DIR, data.filename);
+    Containers::String filename = Utility::Path::join(BASISIMAGECONVERTER_TEST_OUTPUT_DIR, data.filename);
     CORRADE_VERIFY(converter->convertToFile(originalLevels, filename));
 
     /* Verify it's actually the right format */
-    /** @todo use TestSuite::Compare::StringHasPrefix once it exists */
-    CORRADE_VERIFY(Containers::StringView{Containers::ArrayView<const char>(Utility::Directory::read(filename))}.hasPrefix(data.prefix));
+    /** @todo some FileHasPrefix, and possibly optimization for binary data? */
+    Containers::Optional<Containers::String> output = Utility::Path::readString(filename);
+    CORRADE_VERIFY(output);
+    CORRADE_COMPARE_AS(*output, data.prefix,
+        TestSuite::Compare::StringHasPrefix);
 
     if(_manager.loadState("BasisImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("BasisImporter plugin not found, cannot test");
@@ -1043,11 +1047,11 @@ void BasisImageConverterTest::convertToFile2D() {
     CORRADE_VERIFY(level1);
 
     CORRADE_COMPARE_WITH(*level0,
-        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-63x27.png"),
+        Utility::Path::join(BASISIMPORTER_TEST_DIR, "rgba-63x27.png"),
         /* There are moderately significant compression artifacts */
         (DebugTools::CompareImageToFile{_manager, 97.25f, 7.882f}));
     CORRADE_COMPARE_WITH(*level1,
-        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-31x13.png"),
+        Utility::Path::join(BASISIMPORTER_TEST_DIR, "rgba-31x13.png"),
         /* There are moderately significant compression artifacts */
         (DebugTools::CompareImageToFile{_manager, 81.0f, 14.31f}));
 
@@ -1068,19 +1072,22 @@ void BasisImageConverterTest::convertToFile3D() {
         CORRADE_SKIP("PngImporter plugin not found, cannot test contents");
 
     Containers::Pointer<AbstractImporter> pngImporter = _manager.instantiate("PngImporter");
-    CORRADE_VERIFY(pngImporter->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-63x27.png")));
+    CORRADE_VERIFY(pngImporter->openFile(Utility::Path::join(BASISIMPORTER_TEST_DIR, "rgba-63x27.png")));
     const auto originalImage = pngImporter->image2D(0);
     CORRADE_VERIFY(originalImage);
 
     const ImageView3D originalImage3D{ImageView2D(*originalImage)};
 
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate(data.pluginName);
-    std::string filename = Utility::Directory::join(BASISIMAGECONVERTER_TEST_OUTPUT_DIR, data.filename);
+    Containers::String filename = Utility::Path::join(BASISIMAGECONVERTER_TEST_OUTPUT_DIR, data.filename);
     CORRADE_VERIFY(converter->convertToFile({originalImage3D}, filename));
 
     /* Verify it's actually the right format */
-    /** @todo use TestSuite::Compare::StringHasPrefix once it exists */
-    CORRADE_VERIFY(Containers::StringView{Containers::ArrayView<const char>(Utility::Directory::read(filename))}.hasPrefix(data.prefix));
+    /** @todo some FileHasPrefix, and possibly optimization for binary data? */
+    Containers::Optional<Containers::String> output = Utility::Path::readString(filename);
+    CORRADE_VERIFY(output);
+    CORRADE_COMPARE_AS(*output, data.prefix,
+        TestSuite::Compare::StringHasPrefix);
 
     if(_manager.loadState("BasisImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("BasisImporter plugin not found, cannot test");
@@ -1121,7 +1128,7 @@ void BasisImageConverterTest::threads() {
         CORRADE_SKIP("PngImporter plugin not found, cannot test contents");
 
     Containers::Pointer<AbstractImporter> pngImporter = _manager.instantiate("PngImporter");
-    CORRADE_VERIFY(pngImporter->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-63x27.png")));
+    CORRADE_VERIFY(pngImporter->openFile(Utility::Path::join(BASISIMPORTER_TEST_DIR, "rgba-63x27.png")));
     const auto originalImage = pngImporter->image2D(0);
     CORRADE_VERIFY(originalImage);
 
@@ -1143,7 +1150,7 @@ void BasisImageConverterTest::threads() {
     CORRADE_VERIFY(image);
 
     CORRADE_COMPARE_WITH(image->pixels<Color4ub>(),
-        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-63x27.png"),
+        Utility::Path::join(BASISIMPORTER_TEST_DIR, "rgba-63x27.png"),
         /* There are moderately significant compression artifacts */
         (DebugTools::CompareImageToFile{_manager, 97.25f, 7.914f}));
 }
@@ -1156,7 +1163,7 @@ void BasisImageConverterTest::ktx() {
         CORRADE_SKIP("PngImporter plugin not found, cannot test contents");
 
     Containers::Pointer<AbstractImporter> pngImporter = _manager.instantiate("PngImporter");
-    CORRADE_VERIFY(pngImporter->openFile(Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-63x27.png")));
+    CORRADE_VERIFY(pngImporter->openFile(Utility::Path::join(BASISIMPORTER_TEST_DIR, "rgba-63x27.png")));
     const auto originalImage = pngImporter->image2D(0);
     CORRADE_VERIFY(originalImage);
 
@@ -1190,7 +1197,7 @@ void BasisImageConverterTest::ktx() {
     auto pixels = image->pixels<Color4ub>();
     if(!data.yFlip) pixels = pixels.flipped<0>();
     CORRADE_COMPARE_WITH(pixels,
-        Utility::Directory::join(BASISIMPORTER_TEST_DIR, "rgba-63x27.png"),
+        Utility::Path::join(BASISIMPORTER_TEST_DIR, "rgba-63x27.png"),
         /* There are moderately significant compression artifacts */
         (DebugTools::CompareImageToFile{_manager, 97.25f, 9.398f}));
 }

@@ -26,11 +26,13 @@
 #include <sstream>
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/StridedArrayView.h>
+#include <Corrade/Containers/String.h>
+#include <Corrade/Containers/StringStl.h> /** @todo remove once AbstractImporter is <string>-free */
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
 #include <Corrade/Utility/Algorithms.h>
-#include <Corrade/Utility/Directory.h>
 #include <Corrade/Utility/DebugStl.h>
+#include <Corrade/Utility/Path.h>
 #include <Corrade/Utility/FormatStl.h>
 #include <Magnum/PixelFormat.h>
 #include <Magnum/Math/Color.h>
@@ -208,7 +210,7 @@ void PngImporterTest::gray() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("PngImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, data.filename)));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(PNGIMPORTER_TEST_DIR, data.filename)));
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
@@ -228,7 +230,7 @@ void PngImporterTest::gray() {
 
 void PngImporterTest::gray16() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("PngImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, "gray16.png")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(PNGIMPORTER_TEST_DIR, "gray16.png")));
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
@@ -247,7 +249,7 @@ void PngImporterTest::grayAlpha() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("PngImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, data.filename)));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(PNGIMPORTER_TEST_DIR, data.filename)));
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
@@ -271,7 +273,7 @@ void PngImporterTest::rgb() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("PngImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, data.filename)));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(PNGIMPORTER_TEST_DIR, data.filename)));
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
@@ -298,7 +300,7 @@ void PngImporterTest::rgb() {
 
 void PngImporterTest::rgb16() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("PngImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, "rgb16.png")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(PNGIMPORTER_TEST_DIR, "rgb16.png")));
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
@@ -318,7 +320,7 @@ void PngImporterTest::rgbPalette1bit() {
     /* convert IcoImporter/Test/icon256x256.png rgb-palette-1bit.png
        (the file is all 0x0000ff, so I guess that makes it a 1-bit palette).
        Taking this file as a repro case because it crashed the importer. */
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, "rgb-palette1.png")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(PNGIMPORTER_TEST_DIR, "rgb-palette1.png")));
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
@@ -333,7 +335,7 @@ void PngImporterTest::rgba() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("PngImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, data.filename)));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(PNGIMPORTER_TEST_DIR, data.filename)));
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     {
@@ -364,8 +366,9 @@ void PngImporterTest::openMemory() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("PngImporter");
-    Containers::Array<char> memory = Utility::Directory::read(Utility::Directory::join(PNGIMPORTER_TEST_DIR, "gray16.png"));
-    CORRADE_VERIFY(data.open(*importer, memory));
+    Containers::Optional<Containers::Array<char>> memory = Utility::Path::read(Utility::Path::join(PNGIMPORTER_TEST_DIR, "gray16.png"));
+    CORRADE_VERIFY(memory);
+    CORRADE_VERIFY(data.open(*importer, *memory));
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
@@ -382,15 +385,15 @@ void PngImporterTest::openMemory() {
 void PngImporterTest::openTwice() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("PngImporter");
 
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, "gray.png")));
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, "gray.png")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(PNGIMPORTER_TEST_DIR, "gray.png")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(PNGIMPORTER_TEST_DIR, "gray.png")));
 
     /* Shouldn't crash, leak or anything */
 }
 
 void PngImporterTest::importTwice() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("PngImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(PNGIMPORTER_TEST_DIR, "gray.png")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(PNGIMPORTER_TEST_DIR, "gray.png")));
 
     /* Verify that everything is working the same way on second use */
     {

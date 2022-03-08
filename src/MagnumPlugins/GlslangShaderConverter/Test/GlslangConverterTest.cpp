@@ -34,8 +34,8 @@
 #include <Corrade/TestSuite/Compare/String.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/DebugStl.h>
-#include <Corrade/Utility/Directory.h>
 #include <Corrade/Utility/FormatStl.h>
+#include <Corrade/Utility/Path.h>
 #include <Magnum/FileCallback.h>
 #include <Magnum/ShaderTools/AbstractConverter.h>
 #include <Magnum/ShaderTools/Stage.h>
@@ -400,10 +400,11 @@ void GlslangConverterTest::validate() {
     converter->setOutputFormat(data.outputFormat, data.outputVersion);
 
     /* Fake the file loading via a callback */
-    const Containers::Array<char> file = Utility::Directory::read(Utility::Directory::join(GLSLANGSHADERCONVERTER_TEST_DIR, data.filename));
+    const Containers::Optional<Containers::Array<char>> file = Utility::Path::read(Utility::Path::join(GLSLANGSHADERCONVERTER_TEST_DIR, data.filename));
+    CORRADE_VERIFY(file);
     converter->setInputFileCallback([](const std::string&, InputFileCallbackPolicy, const Containers::Array<char>& file) -> Containers::Optional<Containers::ArrayView<const char>> {
         return arrayView(file);
-    }, file);
+    }, *file);
 
     CORRADE_COMPARE(converter->validateFile(data.stage, data.alias ? data.alias : data.filename),
         std::make_pair(true, ""));
@@ -412,7 +413,7 @@ void GlslangConverterTest::validate() {
 void GlslangConverterTest::validateIncludes() {
     Containers::Pointer<AbstractConverter> converter = _converterManager.instantiate("GlslangShaderConverter");
 
-    CORRADE_COMPARE(converter->validateFile({}, Utility::Directory::join(GLSLANGSHADERCONVERTER_TEST_DIR, "includes.vert")),
+    CORRADE_COMPARE(converter->validateFile({}, Utility::Path::join(GLSLANGSHADERCONVERTER_TEST_DIR, "includes.vert")),
         std::make_pair(true, ""));
 }
 
@@ -436,10 +437,10 @@ void GlslangConverterTest::validateIncludesCallback() {
         /* Extract from an archive if not there yet; fail if not extraction
            failed */
         if(found == files.end()) {
-            Containers::Array<char> file = Utility::Directory::read(Utility::Directory::join(GLSLANGSHADERCONVERTER_TEST_DIR, filename));
+            Containers::Optional<Containers::Array<char>> file = Utility::Path::read(Utility::Path::join(GLSLANGSHADERCONVERTER_TEST_DIR, filename));
             CORRADE_VERIFY(file);
 
-            found = files.emplace(filename, std::move(file)).first;
+            found = files.emplace(filename, *std::move(file)).first;
         }
 
         return Containers::ArrayView<const char>{found->second};
@@ -595,7 +596,9 @@ void GlslangConverterTest::validateFailWrongStage() {
 
     /* Don't specify the stage -- vertex will be assumed, which doesn't have
        gl_FragCoord */
-    CORRADE_COMPARE(converter->validateData(Stage::Unspecified, Utility::Directory::read(Utility::Directory::join(GLSLANGSHADERCONVERTER_TEST_DIR, "shader.vk.frag"))),
+    Containers::Optional<Containers::Array<char>> data = Utility::Path::read(Utility::Path::join(GLSLANGSHADERCONVERTER_TEST_DIR, "shader.vk.frag"));
+    CORRADE_VERIFY(data);
+    CORRADE_COMPARE(converter->validateData(Stage::Unspecified, *data),
         std::make_pair(false, /* Yes, trailing whitespace. Fuck me. */
             "ERROR: 0:35: 'gl_FragCoord' : undeclared identifier \n"
             "ERROR: 0:35: '' : compilation terminated \n"
@@ -615,10 +618,11 @@ void GlslangConverterTest::validateFailFileWrongStage() {
     converter->configuration().setValue("cascadingErrors", false);
 
     /* Fake the file loading via a callback */
-    const Containers::Array<char> file = Utility::Directory::read(Utility::Directory::join(GLSLANGSHADERCONVERTER_TEST_DIR, "shader.vk.frag"));
+    const Containers::Optional<Containers::Array<char>> file = Utility::Path::read(Utility::Path::join(GLSLANGSHADERCONVERTER_TEST_DIR, "shader.vk.frag"));
+    CORRADE_VERIFY(file);
     converter->setInputFileCallback([](const std::string&, InputFileCallbackPolicy, const Containers::Array<char>& file) -> Containers::Optional<Containers::ArrayView<const char>> {
         return arrayView(file);
-    }, file);
+    }, *file);
 
     /* And supply a generic filename to cause the stage to be not detected. The
        filename should be also shown in the output. */
@@ -699,13 +703,13 @@ void GlslangConverterTest::validateFailIncludeNotFound() {
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_COMPARE(converter->validateFile({}, Utility::Directory::join(GLSLANGSHADERCONVERTER_TEST_DIR, "includes.vert")),
+    CORRADE_COMPARE(converter->validateFile({}, Utility::Path::join(GLSLANGSHADERCONVERTER_TEST_DIR, "includes.vert")),
         std::make_pair(false, Utility::format(
             "ERROR: {0}:10: '#include' : Could not process include directive for header name: ../notfound.glsl\n"
-            "ERROR: 1 compilation errors.  No code generated.", Utility::Directory::join(GLSLANGSHADERCONVERTER_TEST_DIR, "includes.vert"))));
+            "ERROR: 1 compilation errors.  No code generated.", Utility::Path::join(GLSLANGSHADERCONVERTER_TEST_DIR, "includes.vert"))));
     /* Verify just the prefix, the actual message is OS-specific */
     CORRADE_COMPARE_AS(out.str(),
-        Utility::formatString("Utility::Path::read(): can't open {}: error ", Utility::Directory::join(GLSLANGSHADERCONVERTER_TEST_DIR, "../notfound.glsl")),
+        Utility::format("Utility::Path::read(): can't open {}: error ", Utility::Path::join(GLSLANGSHADERCONVERTER_TEST_DIR, "../notfound.glsl")),
         TestSuite::Compare::StringHasPrefix);
 }
 
@@ -739,10 +743,11 @@ void GlslangConverterTest::convert() {
         converter->setDebugInfoLevel(data.debugInfoLevel);
 
     /* Fake the file loading via a callback */
-    const Containers::Array<char> file = Utility::Directory::read(Utility::Directory::join(GLSLANGSHADERCONVERTER_TEST_DIR, data.filename));
+    const Containers::Optional<Containers::Array<char>> file = Utility::Path::read(Utility::Path::join(GLSLANGSHADERCONVERTER_TEST_DIR, data.filename));
+    CORRADE_VERIFY(file);
     converter->setInputFileCallback([](const std::string&, InputFileCallbackPolicy, const Containers::Array<char>& file) -> Containers::Optional<Containers::ArrayView<const char>> {
         return arrayView(file);
-    }, file);
+    }, *file);
 
     Containers::Array<char> output = converter->convertFileToData(data.stage, data.alias ? data.alias : data.filename);
 
@@ -753,7 +758,7 @@ void GlslangConverterTest::convert() {
         words[2] = 524298;
 
     CORRADE_COMPARE_AS((std::string{output.begin(), output.end()}),
-        Utility::Directory::join(GLSLANGSHADERCONVERTER_TEST_DIR, data.output),
+        Utility::Path::join(GLSLANGSHADERCONVERTER_TEST_DIR, data.output),
         TestSuite::Compare::StringToFile);
 }
 
@@ -762,8 +767,8 @@ void GlslangConverterTest::convertIncludes() {
 
     /* Checking just that it passed, the rest was verified for validate()
        already */
-    CORRADE_VERIFY(converter->convertFileToFile({}, Utility::Directory::join(GLSLANGSHADERCONVERTER_TEST_DIR, "includes.vert"),
-        Utility::Directory::join(GLSLANGSHADERCONVERTER_TEST_OUTPUT_DIR, "includes.spv")));
+    CORRADE_VERIFY(converter->convertFileToFile({}, Utility::Path::join(GLSLANGSHADERCONVERTER_TEST_DIR, "includes.vert"),
+        Utility::Path::join(GLSLANGSHADERCONVERTER_TEST_OUTPUT_DIR, "includes.spv")));
 }
 
 void GlslangConverterTest::convertPreprocessOnlyNotImplemented() {
@@ -894,11 +899,13 @@ void GlslangConverterTest::convertFailWrongStage() {
     /* We're interested in the first error only */
     converter->configuration().setValue("cascadingErrors", false);
 
+    Containers::Optional<Containers::Array<char>> data = Utility::Path::read(Utility::Path::join(GLSLANGSHADERCONVERTER_TEST_DIR, "shader.vk.frag"));
+
     /* Don't specify the stage -- vertex will be assumed, which doesn't have
        gl_FragCoord */
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(!converter->convertDataToData(Stage::Unspecified, Utility::Directory::read(Utility::Directory::join(GLSLANGSHADERCONVERTER_TEST_DIR, "shader.vk.frag"))));
+    CORRADE_VERIFY(!converter->convertDataToData(Stage::Unspecified, *data));
     CORRADE_COMPARE(out.str(), /* Yes, trailing whitespace. Fuck me. */
         "ShaderTools::GlslangConverter::convertDataToData(): compilation failed:\n"
         "ERROR: 0:35: 'gl_FragCoord' : undeclared identifier \n"
@@ -919,10 +926,11 @@ void GlslangConverterTest::convertFailFileWrongStage() {
     converter->configuration().setValue("cascadingErrors", false);
 
     /* Fake the file loading via a callback */
-    const Containers::Array<char> file = Utility::Directory::read(Utility::Directory::join(GLSLANGSHADERCONVERTER_TEST_DIR, "shader.vk.frag"));
+    const Containers::Optional<Containers::Array<char>> file = Utility::Path::read(Utility::Path::join(GLSLANGSHADERCONVERTER_TEST_DIR, "shader.vk.frag"));
+    CORRADE_VERIFY(file);
     converter->setInputFileCallback([](const std::string&, InputFileCallbackPolicy, const Containers::Array<char>& file) -> Containers::Optional<Containers::ArrayView<const char>> {
         return arrayView(file);
-    }, file);
+    }, *file);
 
     /* And supply a generic filename to cause the stage to be not detected. The
        filename should be also shown in the output. */
@@ -950,16 +958,19 @@ void GlslangConverterTest::vulkanNoExplicitLayout() {
     /* We're interested in the first error only */
     converter->configuration().setValue("cascadingErrors", false);
 
+    Containers::Optional<Containers::Array<char>> file = Utility::Path::read(Utility::Path::join(GLSLANGSHADERCONVERTER_TEST_DIR, "shader.vk.frag"));
+    CORRADE_VERIFY(file);
+
     /* Glslang SPIR-V validation rules can be enforced via multiple different
        settings and each setting affect only a subset of these, so verify that
        we're consistent in all cases */
-    std::pair<bool, Containers::String> result = converter->validateData(Stage::Fragment, Utility::Directory::read(Utility::Directory::join(GLSLANGSHADERCONVERTER_TEST_DIR, "shader.vk.frag")));
+    std::pair<bool, Containers::String> result = converter->validateData(Stage::Fragment, *file);
     CORRADE_COMPARE(result, std::make_pair(false, data.error));
 
     /* Conversion should result in exactly the same */
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(!converter->convertDataToData(Stage::Fragment, Utility::Directory::read(Utility::Directory::join(GLSLANGSHADERCONVERTER_TEST_DIR, "shader.vk.frag"))));
+    CORRADE_VERIFY(!converter->convertDataToData(Stage::Fragment, *file));
     CORRADE_COMPARE(out.str(), Utility::formatString("ShaderTools::GlslangConverter::convertDataToData(): compilation failed:\n{}\n", data.error));
 }
 

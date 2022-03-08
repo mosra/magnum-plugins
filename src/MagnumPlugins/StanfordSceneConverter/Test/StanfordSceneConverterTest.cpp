@@ -30,7 +30,7 @@
 #include <Corrade/TestSuite/Compare/StringToFile.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/DebugStl.h>
-#include <Corrade/Utility/Directory.h>
+#include <Corrade/Utility/Path.h>
 #include <Corrade/Utility/FormatStl.h>
 #include <Magnum/Math/Color.h>
 #include <Magnum/Trade/AbstractImporter.h>
@@ -199,8 +199,9 @@ void StanfordSceneConverterTest::nonIndexedAllAttributes() {
 
     Containers::Array<char> out = converter->convertToData(mesh);
     CORRADE_VERIFY(out);
-    CORRADE_COMPARE_AS((std::string{out.data(), out.size()}),
-        Utility::Directory::join(STANFORDSCENECONVERTER_TEST_DIR, data.file),
+    /** @todo Compare::DataToFile */
+    CORRADE_COMPARE_AS((Containers::StringView{out.data(), out.size()}),
+        Utility::Path::join(STANFORDSCENECONVERTER_TEST_DIR, data.file),
         TestSuite::Compare::StringToFile);
 
     if(_importerManager.loadState("StanfordImporter") == PluginManager::LoadState::NotFound)
@@ -300,8 +301,9 @@ template<class T> void StanfordSceneConverterTest::indexed() {
 
     Containers::Array<char> out = converter->convertToData(mesh);
     CORRADE_VERIFY(out);
-    CORRADE_COMPARE_AS((std::string{out.data(), out.size()}),
-        Utility::Directory::join(STANFORDSCENECONVERTER_TEST_DIR,
+    /** @todo Compare::DataToFile */
+    CORRADE_COMPARE_AS((Containers::StringView{out.data(), out.size()}),
+        Utility::Path::join(STANFORDSCENECONVERTER_TEST_DIR,
             Utility::formatString(IndexTypeData<T>::file(), data.fileSuffix)),
         TestSuite::Compare::StringToFile);
 
@@ -352,8 +354,9 @@ void StanfordSceneConverterTest::threeComponentColors() {
 
     Containers::Array<char> out = converter->convertToData(mesh);
     CORRADE_VERIFY(out);
-    CORRADE_COMPARE_AS((std::string{out.data(), out.size()}),
-        Utility::Directory::join(STANFORDSCENECONVERTER_TEST_DIR, "three-component-color-le.ply"),
+    /** @todo Compare::DataToFile */
+    CORRADE_COMPARE_AS((Containers::StringView{out.data(), out.size()}),
+        Utility::Path::join(STANFORDSCENECONVERTER_TEST_DIR, "three-component-color-le.ply"),
         TestSuite::Compare::StringToFile);
 
     if(_importerManager.loadState("StanfordImporter") == PluginManager::LoadState::NotFound)
@@ -408,8 +411,9 @@ void StanfordSceneConverterTest::triangleFan() {
 
     Containers::Array<char> out = converter->convertToData(mesh);
     CORRADE_VERIFY(out);
-    CORRADE_COMPARE_AS((std::string{out.data(), out.size()}),
-        Utility::Directory::join(STANFORDSCENECONVERTER_TEST_DIR, "triangle-fan-le.ply"),
+    /** @todo Compare::DataToFile */
+    CORRADE_COMPARE_AS((Containers::StringView{out.data(), out.size()}),
+        Utility::Path::join(STANFORDSCENECONVERTER_TEST_DIR, "triangle-fan-le.ply"),
         TestSuite::Compare::StringToFile);
 
     if(_importerManager.loadState("StanfordImporter") == PluginManager::LoadState::NotFound)
@@ -457,8 +461,9 @@ void StanfordSceneConverterTest::indexedTriangleStrip() {
 
     Containers::Array<char> out = converter->convertToData(mesh);
     CORRADE_VERIFY(out);
-    CORRADE_COMPARE_AS((std::string{out.data(), out.size()}),
-        Utility::Directory::join(STANFORDSCENECONVERTER_TEST_DIR, "indexed-triangle-strip-le.ply"),
+    /** @todo Compare::DataToFile */
+    CORRADE_COMPARE_AS((Containers::StringView{out.data(), out.size()}),
+        Utility::Path::join(STANFORDSCENECONVERTER_TEST_DIR, "indexed-triangle-strip-le.ply"),
         TestSuite::Compare::StringToFile);
 
     if(_importerManager.loadState("StanfordImporter") == PluginManager::LoadState::NotFound)
@@ -498,8 +503,9 @@ void StanfordSceneConverterTest::empty() {
         MeshAttributeData{MeshAttribute::Position, VertexFormat::Vector3, nullptr}
     }, 0});
     CORRADE_VERIFY(out);
-    CORRADE_COMPARE_AS((std::string{out.data(), out.size()}),
-        Utility::Directory::join(STANFORDSCENECONVERTER_TEST_DIR, "empty-le.ply"),
+    /** @todo Compare::DataToFile */
+    CORRADE_COMPARE_AS((Containers::StringView{out.data(), out.size()}),
+        Utility::Path::join(STANFORDSCENECONVERTER_TEST_DIR, "empty-le.ply"),
         TestSuite::Compare::StringToFile);
 }
 
@@ -590,8 +596,9 @@ void StanfordSceneConverterTest::ignoredAttributes() {
     CORRADE_COMPARE(wout.str(),
         Utility::formatString("Trade::StanfordSceneConverter::convertToData(): {}\n", data.message));
     CORRADE_VERIFY(out);
-    CORRADE_COMPARE_AS((std::string{out.data(), out.size()}),
-        Utility::Directory::join(STANFORDSCENECONVERTER_TEST_DIR, "indexed-ushort-le.ply"),
+    /** @todo Compare::DataToFile */
+    CORRADE_COMPARE_AS((Containers::StringView{out.data(), out.size()}),
+        Utility::Path::join(STANFORDSCENECONVERTER_TEST_DIR, "indexed-ushort-le.ply"),
         TestSuite::Compare::StringToFile);
 
     if(_importerManager.loadState("StanfordImporter") == PluginManager::LoadState::NotFound)

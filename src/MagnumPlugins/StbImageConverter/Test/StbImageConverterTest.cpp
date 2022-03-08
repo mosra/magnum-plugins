@@ -27,10 +27,11 @@
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
+#include <Corrade/TestSuite/Compare/String.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/DebugStl.h>
-#include <Corrade/Utility/Directory.h>
 #include <Corrade/Utility/FormatStl.h>
+#include <Corrade/Utility/Path.h>
 #include <Magnum/ImageView.h>
 #include <Magnum/PixelFormat.h>
 #include <Magnum/DebugTools/CompareImage.h>
@@ -129,7 +130,7 @@ StbImageConverterTest::StbImageConverterTest() {
     #endif
 
     /* Create the output directory if it doesn't exist yet */
-    CORRADE_INTERNAL_ASSERT_OUTPUT(Utility::Directory::mkpath(STBIMAGECONVERTER_TEST_OUTPUT_DIR));
+    CORRADE_INTERNAL_ASSERT_OUTPUT(Utility::Path::make(STBIMAGECONVERTER_TEST_OUTPUT_DIR));
 }
 
 void StbImageConverterTest::wrongFormat() {
@@ -166,7 +167,7 @@ void StbImageConverterTest::unknownOutputFormatFile() {
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("StbImageConverter");
 
     const char data[4]{};
-    std::string filename = Utility::Directory::join(STBIMAGECONVERTER_TEST_OUTPUT_DIR, "file.foo");
+    Containers::String filename = Utility::Path::join(STBIMAGECONVERTER_TEST_OUTPUT_DIR, "file.foo");
 
     std::ostringstream out;
     Error redirectError{&out};
@@ -673,13 +674,15 @@ void StbImageConverterTest::convertToFile() {
     ImageView2D image{PixelStorage{}.setAlignment(1), PixelFormat::RGB8Unorm, {2, 3}, RgbData};
 
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate(data.pluginName);
-    std::string filename = Utility::Directory::join(STBIMAGECONVERTER_TEST_OUTPUT_DIR, data.filename);
+    Containers::String filename = Utility::Path::join(STBIMAGECONVERTER_TEST_OUTPUT_DIR, data.filename);
     CORRADE_VERIFY(converter->convertToFile(image, filename));
 
     /* Verify it's actually the right format */
-    /** @todo use TestSuite::Compare::StringHasPrefix once it exists */
-    if(!data.prefix.isEmpty())
-        CORRADE_VERIFY(Containers::StringView{Containers::ArrayView<const char>(Utility::Directory::read(filename))}.hasPrefix(data.prefix));
+    if(!data.prefix.isEmpty()) {
+        Containers::Optional<Containers::String> out = Utility::Path::readString(filename);
+        CORRADE_VERIFY(out);
+        CORRADE_COMPARE_AS(*out, data.prefix, TestSuite::Compare::StringHasPrefix);
+    }
 
     if(_importerManager.loadState("StbImageImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("StbImageImporter plugin not found, cannot test");

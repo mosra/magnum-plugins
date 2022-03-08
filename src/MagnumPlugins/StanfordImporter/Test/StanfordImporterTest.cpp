@@ -32,8 +32,8 @@
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/DebugStl.h>
-#include <Corrade/Utility/Directory.h>
 #include <Corrade/Utility/FormatStl.h>
+#include <Corrade/Utility/Path.h>
 #include <Corrade/Utility/String.h>
 #include <Magnum/Math/Color.h>
 #include <Magnum/Math/Vector3.h>
@@ -320,7 +320,7 @@ void StanfordImporterTest::invalid() {
 
     std::ostringstream out;
     Error redirectError{&out};
-    const bool failed = !importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, Utility::formatString("{}.ply", data.filename)));
+    const bool failed = !importer->openFile(Utility::Path::join(STANFORDIMPORTER_TEST_DIR, Utility::format("{}.ply", data.filename)));
     CORRADE_VERIFY(failed == data.duringOpen);
     if(!failed) {
         CORRADE_VERIFY(!importer->mesh(0));
@@ -345,11 +345,13 @@ void StanfordImporterTest::fileTooShort() {
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
 
-    Containers::Array<char> file = Utility::Directory::read(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "positions-float-indices-uint.ply"));
+    Containers::Optional<Containers::Array<char>> file = Utility::Path::read(Utility::Path::join(STANFORDIMPORTER_TEST_DIR, "positions-float-indices-uint.ply"));
+    CORRADE_VERIFY(file);
+    CORRADE_COMPARE_AS(file->size(), data.prefix, TestSuite::Compare::Greater);
 
     std::ostringstream out;
     Error redirectError{&out};
-    const bool failed = !importer->openData(file.prefix(data.prefix));
+    const bool failed = !importer->openData(file->prefix(data.prefix));
     CORRADE_VERIFY(failed == data.duringOpen);
     if(!failed) {
         CORRADE_VERIFY(!importer->mesh(0));
@@ -433,7 +435,7 @@ void StanfordImporterTest::parse() {
     if(data.objectIdAttribute)
         importer->configuration().setValue("objectIdAttribute", data.objectIdAttribute);
 
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, Utility::formatString("{}.ply", data.filename))));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(STANFORDIMPORTER_TEST_DIR, Utility::format("{}.ply", data.filename))));
     CORRADE_COMPARE(importer->meshCount(), 1);
     CORRADE_COMPARE(importer->meshLevelCount(0), 2);
 
@@ -520,7 +522,7 @@ void StanfordImporterTest::parsePerFace() {
     importer->configuration().setValue("perFaceToPerVertex", false);
     importer->configuration().setValue("objectIdAttribute", "objectid");
 
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, data.filename)));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(STANFORDIMPORTER_TEST_DIR, data.filename)));
     CORRADE_COMPARE(importer->meshCount(), 1);
     CORRADE_COMPARE(importer->meshLevelCount(0), 2);
 
@@ -589,7 +591,7 @@ void StanfordImporterTest::parsePerFaceToPerVertex() {
     //importer->configuration().setValue("perFaceToPerVertex", true);
     importer->configuration().setValue("objectIdAttribute", "objectid");
 
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, data.filename)));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(STANFORDIMPORTER_TEST_DIR, data.filename)));
     CORRADE_COMPARE(importer->meshCount(), 1);
     CORRADE_COMPARE(importer->meshLevelCount(0), 1);
 
@@ -684,7 +686,7 @@ void StanfordImporterTest::empty() {
 
     importer->configuration().setValue("perFaceToPerVertex", data.perFaceToPerVertex);
 
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "empty.ply")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(STANFORDIMPORTER_TEST_DIR, "empty.ply")));
     CORRADE_COMPARE(importer->meshCount(), 1);
 
     auto mesh = importer->mesh(0);
@@ -722,7 +724,7 @@ void StanfordImporterTest::customAttributes() {
 
     importer->configuration().setValue("perFaceToPerVertex", false);
 
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, Utility::formatString("{}.ply", data.filename))));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(STANFORDIMPORTER_TEST_DIR, Utility::format("{}.ply", data.filename))));
 
     /* The mapping should be available even before the mesh is imported */
     const MeshAttribute indexAttribute = importer->meshAttributeForName("index");
@@ -802,7 +804,7 @@ void StanfordImporterTest::customAttributesPerFaceToPerVertex() {
     /* Done by default */
     //importer->configuration().setValue("perFaceToPerVertex", true);
 
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, Utility::formatString("{}.ply", data.filename))));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(STANFORDIMPORTER_TEST_DIR, Utility::format("{}.ply", data.filename))));
 
     const MeshAttribute indexAttribute = importer->meshAttributeForName("index");
     const MeshAttribute weightAttribute = importer->meshAttributeForName("weight");
@@ -860,7 +862,7 @@ void StanfordImporterTest::customAttributesPerFaceToPerVertex() {
 void StanfordImporterTest::customAttributesDuplicate() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
 
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "custom-components-duplicate.ply")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(STANFORDIMPORTER_TEST_DIR, "custom-components-duplicate.ply")));
 
     /* Disabling this to check that names can be shared across
        per-face/per-vertex attributes as well */
@@ -933,7 +935,7 @@ void StanfordImporterTest::triangleFastPath() {
     importer->configuration().setValue("triangleFastPath", data.enabled);
     importer->configuration().setValue("perFaceToPerVertex", false);
 
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "triangle-fast-path-be.ply")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(STANFORDIMPORTER_TEST_DIR, "triangle-fast-path-be.ply")));
 
     auto mesh = importer->mesh(0);
     CORRADE_VERIFY(mesh);
@@ -983,7 +985,7 @@ void StanfordImporterTest::triangleFastPathPerFaceToPerVertex() {
     /* Done by default */
     //importer->configuration().setValue("perFaceToPerVertex", true);
 
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "triangle-fast-path-be.ply")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(STANFORDIMPORTER_TEST_DIR, "triangle-fast-path-be.ply")));
 
     auto mesh = importer->mesh(0);
     CORRADE_VERIFY(mesh);
@@ -1027,8 +1029,9 @@ void StanfordImporterTest::openMemory() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
-    Containers::Array<char> memory = Utility::Directory::read(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "positions-float-indices-uint.ply"));
-    CORRADE_VERIFY(data.open(*importer, memory));
+    Containers::Optional<Containers::Array<char>> memory = Utility::Path::read(Utility::Path::join(STANFORDIMPORTER_TEST_DIR, "positions-float-indices-uint.ply"));
+    CORRADE_VERIFY(memory);
+    CORRADE_VERIFY(data.open(*importer, *memory));
     CORRADE_COMPARE(importer->meshCount(), 1);
 
     auto mesh = importer->mesh(0);
@@ -1041,15 +1044,15 @@ void StanfordImporterTest::openMemory() {
 void StanfordImporterTest::openTwice() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
 
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "positions-float-indices-uint.ply")));
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "positions-float-indices-uint.ply")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(STANFORDIMPORTER_TEST_DIR, "positions-float-indices-uint.ply")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(STANFORDIMPORTER_TEST_DIR, "positions-float-indices-uint.ply")));
 
     /* Shouldn't crash, leak or anything */
 }
 
 void StanfordImporterTest::importTwice() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STANFORDIMPORTER_TEST_DIR, "positions-float-indices-uint.ply")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(STANFORDIMPORTER_TEST_DIR, "positions-float-indices-uint.ply")));
 
     /* Verify that everything is working the same way on second use */
     {

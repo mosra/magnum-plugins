@@ -27,13 +27,15 @@
 #include <sstream>
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/StridedArrayView.h>
+#include <Corrade/Containers/String.h>
+#include <Corrade/Containers/StringStl.h> /** @todo remove once AbstractImporter is <string>-free */
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
 #include <Corrade/TestSuite/Compare/Numeric.h>
 #include <Corrade/Utility/Algorithms.h>
-#include <Corrade/Utility/Directory.h>
 #include <Corrade/Utility/DebugStl.h>
 #include <Corrade/Utility/FormatStl.h>
+#include <Corrade/Utility/Path.h>
 #include <Magnum/PixelFormat.h>
 #include <Magnum/Math/Color.h>
 #include <Magnum/Trade/AbstractImporter.h>
@@ -122,15 +124,15 @@ void IcoImporterTest::tooShort() {
     auto&& data = TooShortData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
-    Containers::Array<char> file = Utility::Directory::read(Utility::Directory::join(ICOIMPORTER_TEST_DIR, "pngs.ico"));
+    Containers::Optional<Containers::Array<char>> file = Utility::Path::read(Utility::Path::join(ICOIMPORTER_TEST_DIR, "pngs.ico"));
     CORRADE_VERIFY(file);
-    CORRADE_COMPARE_AS(file.size(), data.prefix, TestSuite::Compare::Greater);
+    CORRADE_COMPARE_AS(file->size(), data.prefix, TestSuite::Compare::Greater);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("IcoImporter");
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(!importer->openData(file.prefix(data.prefix)));
+    CORRADE_VERIFY(!importer->openData(file->prefix(data.prefix)));
     CORRADE_COMPARE(out.str(), Utility::formatString("Trade::IcoImporter::openData(): {}\n", data.message));
 }
 
@@ -143,7 +145,7 @@ void IcoImporterTest::pngImporterNotFound() {
         CORRADE_SKIP("PngImporter is available, can't test.");
 
     Containers::Pointer<AbstractImporter> importer = manager.instantiate("IcoImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ICOIMPORTER_TEST_DIR, "pngs.ico")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(ICOIMPORTER_TEST_DIR, "pngs.ico")));
 
     std::ostringstream out;
     Error redirectError{&out};
@@ -154,14 +156,15 @@ void IcoImporterTest::pngImporterNotFound() {
 }
 
 void IcoImporterTest::pngLoadFailed() {
-    Containers::Array<char> file = Utility::Directory::read(Utility::Directory::join(ICOIMPORTER_TEST_DIR, "pngs.ico"));
+    Containers::Optional<Containers::Array<char>> file = Utility::Path::read(Utility::Path::join(ICOIMPORTER_TEST_DIR, "pngs.ico"));
     CORRADE_VERIFY(file);
+    CORRADE_COMPARE_AS(file->size(), 6 + 3*16 + 8, TestSuite::Compare::Greater);
     /* Break the PNG data, but not the signature, as we need that to detect
        embedded PNGs */
-    file[6 + 3*16 + 8] = 'X';
+    (*file)[6 + 3*16 + 8] = 'X';
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("IcoImporter");
-    CORRADE_VERIFY(importer->openData(file));
+    CORRADE_VERIFY(importer->openData(*file));
 
     std::ostringstream out;
     Error redirectError{&out};
@@ -171,7 +174,7 @@ void IcoImporterTest::pngLoadFailed() {
 
 void IcoImporterTest::bmp() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("IcoImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ICOIMPORTER_TEST_DIR, "bmp+png.ico")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(ICOIMPORTER_TEST_DIR, "bmp+png.ico")));
 
     /* Opening the file shouldn't fail -- if we have a mixed bmp+png file, it
        should allow to open at least the PNGs */
@@ -200,7 +203,7 @@ void IcoImporterTest::bmp() {
 
 void IcoImporterTest::png() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("IcoImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ICOIMPORTER_TEST_DIR, "pngs.ico")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(ICOIMPORTER_TEST_DIR, "pngs.ico")));
 
     CORRADE_COMPARE(importer->image2DCount(), 1);
     CORRADE_COMPARE(importer->image2DLevelCount(0), 3);
@@ -234,8 +237,9 @@ void IcoImporterTest::openMemory() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("IcoImporter");
-    Containers::Array<char> memory = Utility::Directory::read(Utility::Directory::join(ICOIMPORTER_TEST_DIR, "pngs.ico"));
-    CORRADE_VERIFY(data.open(*importer, memory));
+    Containers::Optional<Containers::Array<char>> memory = Utility::Path::read(Utility::Path::join(ICOIMPORTER_TEST_DIR, "pngs.ico"));
+    CORRADE_VERIFY(memory);
+    CORRADE_VERIFY(data.open(*importer, *memory));
     CORRADE_COMPARE(importer->image2DCount(), 1);
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
@@ -248,15 +252,15 @@ void IcoImporterTest::openMemory() {
 void IcoImporterTest::openTwice() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("IcoImporter");
 
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ICOIMPORTER_TEST_DIR, "pngs.ico")));
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ICOIMPORTER_TEST_DIR, "pngs.ico")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(ICOIMPORTER_TEST_DIR, "pngs.ico")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(ICOIMPORTER_TEST_DIR, "pngs.ico")));
 
     /* Shouldn't crash, leak or anything */
 }
 
 void IcoImporterTest::importTwice() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("IcoImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ICOIMPORTER_TEST_DIR, "pngs.ico")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(ICOIMPORTER_TEST_DIR, "pngs.ico")));
 
     /* Verify that everything is working the same way on second use */
     {

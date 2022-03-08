@@ -32,8 +32,8 @@
 #include <Corrade/TestSuite/Compare/Container.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/DebugStl.h>
-#include <Corrade/Utility/Directory.h>
 #include <Corrade/Utility/FormatStl.h>
+#include <Corrade/Utility/Path.h>
 #include <Magnum/ImageView.h>
 #include <Magnum/PixelFormat.h>
 #include <Magnum/DebugTools/CompareImage.h>
@@ -346,8 +346,10 @@ void OpenExrImageConverterTest::rgb16f() {
         converter->configuration().setValue("forceTiledOutput", true);
 
     const auto out = converter->convertToData(Rgb16f);
-    CORRADE_COMPARE_AS((std::string{out, out.size()}),
-        Utility::Directory::join(OPENEXRIMPORTER_TEST_DIR, data.filename),
+
+    /** @todo Compare::DataToFile */
+    CORRADE_COMPARE_AS((Containers::StringView{out, out.size()}),
+        Utility::Path::join(OPENEXRIMPORTER_TEST_DIR, data.filename),
         TestSuite::Compare::StringToFile);
 
     /* By default we're exporting scanline files, so the metadata should
@@ -383,8 +385,9 @@ void OpenExrImageConverterTest::rgba32f() {
 
     const auto data = converter->convertToData(Rgba32f);
 
-    CORRADE_COMPARE_AS((std::string{data, data.size()}),
-        Utility::Directory::join(OPENEXRIMPORTER_TEST_DIR, "rgba32f.exr"),
+    /** @todo Compare::DataToFile */
+    CORRADE_COMPARE_AS((Containers::StringView{data, data.size()}),
+        Utility::Path::join(OPENEXRIMPORTER_TEST_DIR, "rgba32f.exr"),
         TestSuite::Compare::StringToFile);
 
     if(_importerManager.loadState("OpenExrImporter") == PluginManager::LoadState::NotFound)
@@ -409,8 +412,9 @@ void OpenExrImageConverterTest::rg32ui() {
 
     const auto data = converter->convertToData(Rg32ui);
 
-    CORRADE_COMPARE_AS((std::string{data, data.size()}),
-        Utility::Directory::join(OPENEXRIMPORTER_TEST_DIR, "rg32ui.exr"),
+    /** @todo Compare::DataToFile */
+    CORRADE_COMPARE_AS((Containers::StringView{data, data.size()}),
+        Utility::Path::join(OPENEXRIMPORTER_TEST_DIR, "rg32ui.exr"),
         TestSuite::Compare::StringToFile);
 
     if(_importerManager.loadState("OpenExrImporter") == PluginManager::LoadState::NotFound)
@@ -429,8 +433,8 @@ void OpenExrImageConverterTest::rg32ui() {
 void OpenExrImageConverterTest::depth32f() {
     const auto data = _manager.instantiate("OpenExrImageConverter")->convertToData(Depth32f);
 
-    CORRADE_COMPARE_AS((std::string{data, data.size()}),
-        Utility::Directory::join(OPENEXRIMPORTER_TEST_DIR, "depth32f.exr"),
+    CORRADE_COMPARE_AS((Containers::StringView{data, data.size()}),
+        Utility::Path::join(OPENEXRIMPORTER_TEST_DIR, "depth32f.exr"),
         TestSuite::Compare::StringToFile);
 
     if(_importerManager.loadState("OpenExrImporter") == PluginManager::LoadState::NotFound)
@@ -456,10 +460,11 @@ void OpenExrImageConverterTest::envmap2DLatLong() {
 
     /* The width needs to be 2*height, abuse existing data for that */
     const ImageView2D R32ui{PixelFormat::R32UI, {4, 2}, Rg32uiData};
-
     const auto data = converter->convertToData(R32ui);
-    CORRADE_COMPARE_AS((std::string{data, data.size()}),
-        Utility::Directory::join(OPENEXRIMAGECONVERTER_TEST_DIR, "envmap-latlong.exr"),
+
+    /** @todo Compare::DataToFile */
+    CORRADE_COMPARE_AS((Containers::StringView{data, data.size()}),
+        Utility::Path::join(OPENEXRIMAGECONVERTER_TEST_DIR, "envmap-latlong.exr"),
         TestSuite::Compare::StringToFile);
 
     /* The metadata has no effect on the actual saved data, so no point in
@@ -499,8 +504,9 @@ void OpenExrImageConverterTest::envmap3DCubeMap() {
 
     const auto data = converter->convertToData(CubeRg16f);
 
-    CORRADE_COMPARE_AS((std::string{data, data.size()}),
-        Utility::Directory::join(OPENEXRIMPORTER_TEST_DIR, "envmap-cube.exr"),
+    /** @todo Compare::DataToFile */
+    CORRADE_COMPARE_AS((Containers::StringView{data, data.size()}),
+        Utility::Path::join(OPENEXRIMPORTER_TEST_DIR, "envmap-cube.exr"),
         TestSuite::Compare::StringToFile);
 
     /* The metadata has no effect on the actual saved data, so no point in
@@ -585,8 +591,9 @@ void OpenExrImageConverterTest::customChannels() {
 
     const auto data = converter->convertToData(Rgba32f);
 
-    CORRADE_COMPARE_AS((std::string{data, data.size()}),
-        Utility::Directory::join(OPENEXRIMPORTER_TEST_DIR, "rgba32f-custom-channels.exr"),
+    /** @todo Compare::DataToFile */
+    CORRADE_COMPARE_AS((Containers::StringView{data, data.size()}),
+        Utility::Path::join(OPENEXRIMPORTER_TEST_DIR, "rgba32f-custom-channels.exr"),
         TestSuite::Compare::StringToFile);
 
     if(_importerManager.loadState("OpenExrImporter") == PluginManager::LoadState::NotFound)
@@ -629,8 +636,8 @@ void OpenExrImageConverterTest::customChannelsSomeUnassigned() {
     converter->configuration().setValue("a", "");
     const auto data = converter->convertToData(Rgba32f);
 
-    CORRADE_COMPARE_AS((std::string{data, data.size()}),
-        Utility::Directory::join(OPENEXRIMAGECONVERTER_TEST_DIR, "rb32f-custom-channels.exr"),
+    CORRADE_COMPARE_AS((Containers::StringView{data, data.size()}),
+        Utility::Path::join(OPENEXRIMAGECONVERTER_TEST_DIR, "rb32f-custom-channels.exr"),
         TestSuite::Compare::StringToFile);
 
     if(_importerManager.loadState("OpenExrImporter") == PluginManager::LoadState::NotFound)
@@ -672,8 +679,9 @@ void OpenExrImageConverterTest::customChannelsDepth() {
     converter->configuration().setValue("depth", "height");
     const auto data = converter->convertToData(Depth32f);
 
-    CORRADE_COMPARE_AS((std::string{data, data.size()}),
-        Utility::Directory::join(OPENEXRIMPORTER_TEST_DIR, "depth32f-custom-channels.exr"),
+    /** @todo Compare::DataToFile */
+    CORRADE_COMPARE_AS((Containers::StringView{data, data.size()}),
+        Utility::Path::join(OPENEXRIMPORTER_TEST_DIR, "depth32f-custom-channels.exr"),
         TestSuite::Compare::StringToFile);
 
     if(_importerManager.loadState("OpenExrImporter") == PluginManager::LoadState::NotFound)
@@ -714,8 +722,9 @@ void OpenExrImageConverterTest::customWindows() {
 
     const auto data = converter->convertToData(Rgb16f);
 
-    CORRADE_COMPARE_AS((std::string{data, data.size()}),
-        Utility::Directory::join(OPENEXRIMPORTER_TEST_DIR, "rgb16f-custom-windows.exr"),
+    /** @todo Compare::DataToFile */
+    CORRADE_COMPARE_AS((Containers::StringView{data, data.size()}),
+        Utility::Path::join(OPENEXRIMPORTER_TEST_DIR, "rgb16f-custom-windows.exr"),
         TestSuite::Compare::StringToFile);
 
     if(_importerManager.loadState("OpenExrImporter") == PluginManager::LoadState::NotFound)
@@ -744,8 +753,9 @@ void OpenExrImageConverterTest::customWindowsCubeMap() {
 
     const auto data = converter->convertToData(CubeRg16f);
 
-    CORRADE_COMPARE_AS((std::string{data, data.size()}),
-        Utility::Directory::join(OPENEXRIMPORTER_TEST_DIR, "envmap-cube-custom-windows.exr"),
+    /** @todo Compare::DataToFile */
+    CORRADE_COMPARE_AS((Containers::StringView{data, data.size()}),
+        Utility::Path::join(OPENEXRIMPORTER_TEST_DIR, "envmap-cube-custom-windows.exr"),
         TestSuite::Compare::StringToFile);
 
     if(_importerManager.loadState("OpenExrImporter") == PluginManager::LoadState::NotFound)
@@ -905,8 +915,10 @@ void OpenExrImageConverterTest::levels2D() {
     ImageView2D image1{PixelStorage{}.setAlignment(1), PixelFormat::R16F, {2, 1}, data1};
     ImageView2D image2{PixelStorage{}.setAlignment(1), PixelFormat::R16F, {1, 1}, data2};
     Containers::Array<char> out = converter->convertToData({image0, image1, image2});
-    CORRADE_COMPARE_AS((std::string{out, out.size()}),
-        Utility::Directory::join(OPENEXRIMPORTER_TEST_DIR, data.filename),
+
+    /** @todo Compare::DataToFile */
+    CORRADE_COMPARE_AS((Containers::StringView{out, out.size()}),
+        Utility::Path::join(OPENEXRIMPORTER_TEST_DIR, data.filename),
         TestSuite::Compare::StringToFile);
 
     if(_importerManager.loadState("OpenExrImporter") == PluginManager::LoadState::NotFound)
@@ -949,8 +961,10 @@ void OpenExrImageConverterTest::levels2DIncomplete() {
     ImageView2D image0{PixelStorage{}.setAlignment(1), PixelFormat::R16F, {5, 3}, data0};
     ImageView2D image1{PixelStorage{}.setAlignment(1), PixelFormat::R16F, {2, 1}, data1};
     Containers::Array<char> data = converter->convertToData({image0, image1});
-    CORRADE_COMPARE_AS((std::string{data, data.size()}),
-        Utility::Directory::join(OPENEXRIMPORTER_TEST_DIR, "levels2D-incomplete.exr"),
+
+    /** @todo Compare::DataToFile */
+    CORRADE_COMPARE_AS((Containers::StringView{data, data.size()}),
+        Utility::Path::join(OPENEXRIMPORTER_TEST_DIR, "levels2D-incomplete.exr"),
         TestSuite::Compare::StringToFile);
 
     if(_importerManager.loadState("OpenExrImporter") == PluginManager::LoadState::NotFound)
@@ -1074,8 +1088,10 @@ void OpenExrImageConverterTest::levelsCubeMap() {
     ImageView3D image1{PixelStorage{}.setAlignment(1), PixelFormat::R16F, {2, 2, 6}, data1};
     ImageView3D image2{PixelStorage{}.setAlignment(1), PixelFormat::R16F, {1, 1, 6}, data2};
     Containers::Array<char> data = converter->convertToData({image0, image1, image2});
-    CORRADE_COMPARE_AS((std::string{data, data.size()}),
-        Utility::Directory::join(OPENEXRIMPORTER_TEST_DIR, "levels-cube.exr"),
+
+    /** @todo Compare::DataToFile */
+    CORRADE_COMPARE_AS((Containers::StringView{data, data.size()}),
+        Utility::Path::join(OPENEXRIMPORTER_TEST_DIR, "levels-cube.exr"),
         TestSuite::Compare::StringToFile);
 
     if(_importerManager.loadState("OpenExrImporter") == PluginManager::LoadState::NotFound)
@@ -1177,8 +1193,10 @@ void OpenExrImageConverterTest::levelsCubeMapIncomplete() {
     ImageView3D image0{PixelStorage{}.setAlignment(1), PixelFormat::R16F, {4, 4, 6}, data0};
     ImageView3D image1{PixelStorage{}.setAlignment(1), PixelFormat::R16F, {2, 2, 6}, data1};
     Containers::Array<char> out = converter->convertToData({image0, image1});
-    CORRADE_COMPARE_AS((std::string{out, out.size()}),
-        Utility::Directory::join(OPENEXRIMPORTER_TEST_DIR, "levels-cube-incomplete.exr"),
+
+    /** @todo Compare::DataToFile */
+    CORRADE_COMPARE_AS((Containers::StringView{out, out.size()}),
+        Utility::Path::join(OPENEXRIMPORTER_TEST_DIR, "levels-cube-incomplete.exr"),
         TestSuite::Compare::StringToFile);
 
     if(_importerManager.loadState("OpenExrImporter") == PluginManager::LoadState::NotFound)
@@ -1284,8 +1302,9 @@ void OpenExrImageConverterTest::threads() {
     Containers::Array<char> outData = converter->convertToData(Rgb16f);
 
     /* The file should be always the same, no need to test the contents */
-    CORRADE_COMPARE_AS((std::string{outData, outData.size()}),
-        Utility::Directory::join(OPENEXRIMPORTER_TEST_DIR, "rgb16f.exr"),
+    /** @todo Compare::DataToFile */
+    CORRADE_COMPARE_AS((Containers::StringView{outData, outData.size()}),
+        Utility::Path::join(OPENEXRIMPORTER_TEST_DIR, "rgb16f.exr"),
         TestSuite::Compare::StringToFile);
     CORRADE_COMPARE(out.str(), Utility::formatString(data.message,
         std::thread::hardware_concurrency(),

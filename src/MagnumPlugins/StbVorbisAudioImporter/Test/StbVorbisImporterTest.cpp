@@ -26,10 +26,12 @@
 
 #include <sstream>
 #include <Corrade/Containers/Array.h>
+#include <Corrade/Containers/String.h>
+#include <Corrade/Containers/StringStl.h> /** @todo remove when AbstractImporter is <string>-free */
 #include <Corrade/TestSuite/Compare/Container.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/Utility/DebugStl.h>
-#include <Corrade/Utility/Directory.h>
+#include <Corrade/Utility/Path.h>
 #include <Magnum/Audio/AbstractImporter.h>
 
 #include "configure.h"
@@ -86,7 +88,7 @@ void StbVorbisImporterTest::wrongSignature() {
     Error redirectError{&out};
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StbVorbisAudioImporter");
-    CORRADE_VERIFY(!importer->openFile(Utility::Directory::join(STBVORBISAUDIOIMPORTER_TEST_DIR, "wrongSignature.ogg")));
+    CORRADE_VERIFY(!importer->openFile(Utility::Path::join(STBVORBISAUDIOIMPORTER_TEST_DIR, "wrongSignature.ogg")));
     CORRADE_COMPARE(out.str(), "Audio::StbVorbisImporter::openData(): the file signature is invalid\n");
 }
 
@@ -95,7 +97,7 @@ void StbVorbisImporterTest::unsupportedChannelCount() {
     Error redirectError{&out};
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StbVorbisAudioImporter");
-    CORRADE_VERIFY(!importer->openFile(Utility::Directory::join(STBVORBISAUDIOIMPORTER_TEST_DIR, "unsupportedChannelCount.ogg")));
+    CORRADE_VERIFY(!importer->openFile(Utility::Path::join(STBVORBISAUDIOIMPORTER_TEST_DIR, "unsupportedChannelCount.ogg")));
     CORRADE_COMPARE(out.str(), "Audio::StbVorbisImporter::openData(): unsupported channel count 5 with 16 bits per sample\n");
 }
 
@@ -103,7 +105,7 @@ void StbVorbisImporterTest::zeroSamples() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StbVorbisAudioImporter");
 
     /* No error should happen, it should just give an empty buffer back */
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STBVORBISAUDIOIMPORTER_TEST_DIR, "zeroSamples.ogg")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(STBVORBISAUDIOIMPORTER_TEST_DIR, "zeroSamples.ogg")));
     CORRADE_COMPARE(importer->format(), BufferFormat::Mono16);
     CORRADE_COMPARE(importer->frequency(), 96000);
     CORRADE_VERIFY(importer->data().empty());
@@ -111,7 +113,7 @@ void StbVorbisImporterTest::zeroSamples() {
 
 void StbVorbisImporterTest::mono16() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StbVorbisAudioImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STBVORBISAUDIOIMPORTER_TEST_DIR, "mono16.ogg")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(STBVORBISAUDIOIMPORTER_TEST_DIR, "mono16.ogg")));
 
     CORRADE_COMPARE(importer->format(), BufferFormat::Mono16);
     CORRADE_COMPARE(importer->frequency(), 96000);
@@ -123,7 +125,7 @@ void StbVorbisImporterTest::mono16() {
 
 void StbVorbisImporterTest::stereo8() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StbVorbisAudioImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(STBVORBISAUDIOIMPORTER_TEST_DIR, "stereo8.ogg")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(STBVORBISAUDIOIMPORTER_TEST_DIR, "stereo8.ogg")));
 
     CORRADE_COMPARE(importer->format(), BufferFormat::Stereo16);
     CORRADE_COMPARE(importer->frequency(), 96000);
