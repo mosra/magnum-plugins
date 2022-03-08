@@ -27,9 +27,10 @@
 
 #include <algorithm> /* std::copy() */ /** @todo remove */
 #include <Corrade/Containers/Array.h>
+#include <Corrade/Containers/Pair.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/DebugStl.h>
-#include <Corrade/Utility/Directory.h>
+#include <Corrade/Utility/Path.h>
 #include <Corrade/Utility/String.h>
 
 #include <Magnum/ImageView.h>
@@ -181,7 +182,7 @@ bool StbImageConverter::doConvertToFile(const ImageView2D& image, const Containe
                 normalized.hasSuffix( ".vst"_s))
             _format = Format::Tga;
         else {
-            Error{} << "Trade::StbImageConverter::convertToFile(): cannot determine output format for" << Utility::Directory::filename(filename) << "(plugin loaded as" << plugin() << Error::nospace << ", use one of the Stb{Bmp,Hdr,Jpeg,Png,Tga}ImageConverter aliases or a corresponding file extension)";
+            Error{} << "Trade::StbImageConverter::convertToFile(): cannot determine output format for" << Utility::Path::split(filename).second() << "(plugin loaded as" << plugin() << Error::nospace << ", use one of the Stb{Bmp,Hdr,Jpeg,Png,Tga}ImageConverter aliases or a corresponding file extension)";
             return false;
         }
     }
