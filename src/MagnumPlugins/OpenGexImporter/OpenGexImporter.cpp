@@ -32,9 +32,12 @@
 #include <Corrade/Containers/ArrayTuple.h>
 #include <Corrade/Containers/ArrayView.h>
 #include <Corrade/Containers/GrowableArray.h>
+#include <Corrade/Containers/Pair.h>
+#include <Corrade/Containers/String.h>
+#include <Corrade/Containers/StringStl.h> /** @todo remove once AbstractImporter is <string>-free */
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/DebugStl.h>
-#include <Corrade/Utility/Directory.h>
+#include <Corrade/Utility/Path.h>
 #include <Magnum/Mesh.h>
 #include <Magnum/Math/Matrix4.h>
 #include <Magnum/Math/Quaternion.h>
@@ -67,7 +70,7 @@ struct OpenGexImporter::Document {
     Float timeMultiplier = 1.0f;
     bool yUp = false;
 
-    Containers::Optional<std::string> filePath;
+    Containers::Optional<Containers::String> filePath;
 
     std::vector<OpenDdl::Structure> nodes,
         cameras,
@@ -232,7 +235,10 @@ void OpenGexImporter::doOpenFile(const std::string& filename) {
     AbstractImporter::doOpenFile(filename);
 
     /* If succeeded, save file path for later */
-    if(_d) _d->filePath = Utility::Directory::path(filename);
+    /** @todo once AbstractImporter is <string>-free, consider storing a
+        nullTerminatedGlobalView() here (but the split path is not
+        null-terminated, ugh) */
+    if(_d) _d->filePath.emplace(Utility::Path::split(filename).first());
 }
 
 void OpenGexImporter::doClose() { _d = nullptr; }
@@ -949,7 +955,7 @@ AbstractImporter* OpenGexImporter::setupOrReuseImporterForImage(const UnsignedIn
     AnyImageImporter importer{*manager()};
     if(fileCallback()) importer.setFileCallback(fileCallback(), fileCallbackUserData());
 
-    const std::string imageFile = Utility::Directory::join(_d->filePath ? *_d->filePath : "", _d->images[id]);
+    const Containers::String imageFile = Utility::Path::join(_d->filePath ? *_d->filePath : "", _d->images[id]);
     if(!importer.openFile(imageFile))
         return nullptr;
     return &_d->imageImporter.emplace(std::move(importer));

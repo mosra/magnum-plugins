@@ -27,13 +27,15 @@
 #include <sstream>
 #include <unordered_map>
 #include <Corrade/Containers/ArrayView.h>
+#include <Corrade/Containers/String.h>
+#include <Corrade/Containers/StringStl.h> /** @todo remove once AbstractImporter is <string>-free */
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
 #include <Corrade/TestSuite/Compare/Numeric.h>
 #include <Corrade/TestSuite/Compare/String.h>
 #include <Corrade/Utility/DebugStl.h>
-#include <Corrade/Utility/Directory.h>
 #include <Corrade/Utility/FormatStl.h>
+#include <Corrade/Utility/Path.h>
 #include <Corrade/Utility/String.h>
 #include <Magnum/FileCallback.h>
 #include <Magnum/Mesh.h>
@@ -276,7 +278,7 @@ Metric (key = "distance") { string { "0.5" } }
 
 void OpenGexImporterTest::camera() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "camera.ogex")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(OPENGEXIMPORTER_TEST_DIR, "camera.ogex")));
     CORRADE_COMPARE(importer->cameraCount(), 2);
 
     /* Everything specified */
@@ -299,7 +301,7 @@ void OpenGexImporterTest::camera() {
 
 void OpenGexImporterTest::cameraMetrics() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "camera-metrics.ogex")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(OPENGEXIMPORTER_TEST_DIR, "camera-metrics.ogex")));
     CORRADE_COMPARE(importer->cameraCount(), 1);
 
     Containers::Optional<CameraData> camera = importer->camera(0);
@@ -311,7 +313,7 @@ void OpenGexImporterTest::cameraMetrics() {
 
 void OpenGexImporterTest::cameraInvalid() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "camera-invalid.ogex")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(OPENGEXIMPORTER_TEST_DIR, "camera-invalid.ogex")));
     CORRADE_COMPARE(importer->cameraCount(), 1);
 
     std::ostringstream out;
@@ -322,7 +324,7 @@ void OpenGexImporterTest::cameraInvalid() {
 
 void OpenGexImporterTest::scene() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "scene.ogex")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(OPENGEXIMPORTER_TEST_DIR, "scene.ogex")));
     CORRADE_COMPARE(importer->defaultScene(), 0);
     CORRADE_COMPARE(importer->sceneCount(), 1);
 
@@ -407,7 +409,7 @@ void OpenGexImporterTest::scene() {
 
 void OpenGexImporterTest::sceneCamera() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "scene-camera.ogex")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(OPENGEXIMPORTER_TEST_DIR, "scene-camera.ogex")));
 
     Containers::Optional<SceneData> scene = importer->scene(0);
     CORRADE_VERIFY(scene);
@@ -431,7 +433,7 @@ void OpenGexImporterTest::sceneCamera() {
 
 void OpenGexImporterTest::sceneLight() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "scene-light.ogex")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(OPENGEXIMPORTER_TEST_DIR, "scene-light.ogex")));
 
     Containers::Optional<SceneData> scene = importer->scene(0);
     CORRADE_VERIFY(scene);
@@ -455,7 +457,7 @@ void OpenGexImporterTest::sceneLight() {
 
 void OpenGexImporterTest::sceneMesh() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "scene-geometry.ogex")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(OPENGEXIMPORTER_TEST_DIR, "scene-geometry.ogex")));
 
     Containers::Optional<SceneData> scene = importer->scene(0);
     CORRADE_VERIFY(scene);
@@ -487,7 +489,7 @@ void OpenGexImporterTest::sceneMesh() {
 
 void OpenGexImporterTest::sceneTransformation() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "scene-transformation.ogex")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(OPENGEXIMPORTER_TEST_DIR, "scene-transformation.ogex")));
 
     Containers::Optional<SceneData> scene = importer->scene(0);
     CORRADE_VERIFY(scene);
@@ -509,7 +511,7 @@ void OpenGexImporterTest::sceneTransformation() {
 
 void OpenGexImporterTest::sceneTranslation() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "scene-translation.ogex")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(OPENGEXIMPORTER_TEST_DIR, "scene-translation.ogex")));
 
     Containers::Optional<SceneData> scene = importer->scene(0);
     CORRADE_VERIFY(scene);
@@ -541,7 +543,7 @@ void OpenGexImporterTest::sceneTranslation() {
 
 void OpenGexImporterTest::sceneRotation() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "scene-rotation.ogex")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(OPENGEXIMPORTER_TEST_DIR, "scene-rotation.ogex")));
 
     Containers::Optional<SceneData> scene = importer->scene(0);
     CORRADE_VERIFY(scene);
@@ -576,7 +578,7 @@ void OpenGexImporterTest::sceneRotation() {
 
 void OpenGexImporterTest::sceneScaling() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "scene-scaling.ogex")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(OPENGEXIMPORTER_TEST_DIR, "scene-scaling.ogex")));
 
     Containers::Optional<SceneData> scene = importer->scene(0);
     CORRADE_VERIFY(scene);
@@ -608,7 +610,7 @@ void OpenGexImporterTest::sceneScaling() {
 
 void OpenGexImporterTest::sceneTransformationConcatentation() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "scene-transformation-concatenation.ogex")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(OPENGEXIMPORTER_TEST_DIR, "scene-transformation-concatenation.ogex")));
 
     Containers::Optional<SceneData> scene = importer->scene(0);
     CORRADE_VERIFY(scene);
@@ -629,7 +631,7 @@ void OpenGexImporterTest::sceneTransformationConcatentation() {
 
 void OpenGexImporterTest::sceneTransformationMetrics() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "scene-transformation-metrics.ogex")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(OPENGEXIMPORTER_TEST_DIR, "scene-transformation-metrics.ogex")));
 
     Containers::Optional<SceneData> scene = importer->scene(0);
     CORRADE_VERIFY(scene);
@@ -665,7 +667,7 @@ void OpenGexImporterTest::sceneInvalid() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, Utility::formatString("scene-invalid-{}.ogex", Utility::String::replaceAll(data.name, " ", "-")))));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(OPENGEXIMPORTER_TEST_DIR, Utility::format("scene-invalid-{}.ogex", Utility::String::replaceAll(data.name, " ", "-")))));
 
     std::ostringstream out;
     Error redirectError{&out};
@@ -676,7 +678,7 @@ void OpenGexImporterTest::sceneInvalid() {
 
 void OpenGexImporterTest::light() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "light.ogex")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(OPENGEXIMPORTER_TEST_DIR, "light.ogex")));
     CORRADE_COMPARE(importer->lightCount(), 3);
 
     /* Infinite light, everything specified */
@@ -707,7 +709,7 @@ void OpenGexImporterTest::light() {
 
 void OpenGexImporterTest::lightInvalid() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "light-invalid.ogex")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(OPENGEXIMPORTER_TEST_DIR, "light-invalid.ogex")));
     CORRADE_COMPARE(importer->lightCount(), 4);
 
     {
@@ -735,7 +737,7 @@ void OpenGexImporterTest::lightInvalid() {
 
 void OpenGexImporterTest::mesh() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "mesh.ogex")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(OPENGEXIMPORTER_TEST_DIR, "mesh.ogex")));
 
     Containers::Optional<MeshData> mesh = importer->mesh(0);
     CORRADE_VERIFY(mesh);
@@ -767,7 +769,7 @@ void OpenGexImporterTest::mesh() {
 
 void OpenGexImporterTest::meshIndexed() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "mesh.ogex")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(OPENGEXIMPORTER_TEST_DIR, "mesh.ogex")));
 
     Containers::Optional<MeshData> mesh = importer->mesh(1);
     CORRADE_VERIFY(mesh);
@@ -791,7 +793,7 @@ void OpenGexImporterTest::meshIndexed() {
 void OpenGexImporterTest::meshMetrics() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
 
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "mesh-metrics.ogex")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(OPENGEXIMPORTER_TEST_DIR, "mesh-metrics.ogex")));
     Containers::Optional<MeshData> mesh = importer->mesh(0);
     CORRADE_VERIFY(mesh);
 
@@ -823,7 +825,7 @@ void OpenGexImporterTest::meshMetrics() {
 
 void OpenGexImporterTest::meshInvalidPrimitive() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "mesh-invalid.ogex")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(OPENGEXIMPORTER_TEST_DIR, "mesh-invalid.ogex")));
     CORRADE_COMPARE(importer->meshCount(), 6);
 
     std::ostringstream out;
@@ -834,7 +836,7 @@ void OpenGexImporterTest::meshInvalidPrimitive() {
 
 void OpenGexImporterTest::meshUnsupportedSize() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "mesh-invalid.ogex")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(OPENGEXIMPORTER_TEST_DIR, "mesh-invalid.ogex")));
     CORRADE_COMPARE(importer->meshCount(), 6);
 
     std::ostringstream out;
@@ -850,7 +852,7 @@ void OpenGexImporterTest::meshUnsupportedSize() {
 
 void OpenGexImporterTest::meshMismatchedSizes() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "mesh-invalid.ogex")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(OPENGEXIMPORTER_TEST_DIR, "mesh-invalid.ogex")));
     CORRADE_COMPARE(importer->meshCount(), 6);
 
     std::ostringstream out;
@@ -861,7 +863,7 @@ void OpenGexImporterTest::meshMismatchedSizes() {
 
 void OpenGexImporterTest::meshInvalidIndexArraySubArraySize() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "mesh-invalid.ogex")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(OPENGEXIMPORTER_TEST_DIR, "mesh-invalid.ogex")));
     CORRADE_COMPARE(importer->meshCount(), 6);
 
     std::ostringstream out;
@@ -873,7 +875,7 @@ void OpenGexImporterTest::meshInvalidIndexArraySubArraySize() {
 #ifndef CORRADE_TARGET_EMSCRIPTEN
 void OpenGexImporterTest::meshUnsupportedIndexType() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "mesh-invalid-int64.ogex")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(OPENGEXIMPORTER_TEST_DIR, "mesh-invalid-int64.ogex")));
     CORRADE_COMPARE(importer->meshCount(), 1);
 
     std::ostringstream out;
@@ -885,7 +887,7 @@ void OpenGexImporterTest::meshUnsupportedIndexType() {
 
 void OpenGexImporterTest::materialDefaults() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "material.ogex")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(OPENGEXIMPORTER_TEST_DIR, "material.ogex")));
 
     Containers::Optional<MaterialData> material = importer->material(0);
     CORRADE_VERIFY(material);
@@ -902,7 +904,7 @@ void OpenGexImporterTest::materialDefaults() {
 void OpenGexImporterTest::materialColors() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
 
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "material.ogex")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(OPENGEXIMPORTER_TEST_DIR, "material.ogex")));
     CORRADE_COMPARE(importer->materialCount(), 4);
 
     Containers::Optional<MaterialData> material = importer->material(1);
@@ -923,7 +925,7 @@ void OpenGexImporterTest::materialColors() {
 void OpenGexImporterTest::materialTextured() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
 
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "material.ogex")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(OPENGEXIMPORTER_TEST_DIR, "material.ogex")));
     CORRADE_COMPARE(importer->materialCount(), 4);
     CORRADE_COMPARE(importer->textureCount(), 4);
 
@@ -954,7 +956,7 @@ void OpenGexImporterTest::materialTextured() {
 
 void OpenGexImporterTest::materialInvalidColor() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "material-invalid.ogex")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(OPENGEXIMPORTER_TEST_DIR, "material-invalid.ogex")));
     CORRADE_COMPARE(importer->materialCount(), 1);
 
     std::ostringstream out;
@@ -966,7 +968,7 @@ void OpenGexImporterTest::materialInvalidColor() {
 void OpenGexImporterTest::texture() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
 
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "texture.ogex")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(OPENGEXIMPORTER_TEST_DIR, "texture.ogex")));
     CORRADE_COMPARE(importer->textureCount(), 2);
 
     Containers::Optional<TextureData> texture = importer->texture(1);
@@ -979,7 +981,7 @@ void OpenGexImporterTest::texture() {
 
 void OpenGexImporterTest::textureInvalidCoordinateSet() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "texture-invalid.ogex")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(OPENGEXIMPORTER_TEST_DIR, "texture-invalid.ogex")));
     CORRADE_COMPARE(importer->textureCount(), 2);
 
     std::ostringstream out;
@@ -993,7 +995,7 @@ void OpenGexImporterTest::image() {
         CORRADE_SKIP("TgaImporter plugin not found, cannot test");
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "texture.ogex")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(OPENGEXIMPORTER_TEST_DIR, "texture.ogex")));
     CORRADE_COMPARE(importer->image2DCount(), 2);
 
     /* Check only size, as it is good enough proof that it is working */
@@ -1007,7 +1009,7 @@ void OpenGexImporterTest::imageNotFound() {
         CORRADE_SKIP("TgaImporter plugin not found, cannot test");
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "texture-invalid.ogex")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(OPENGEXIMPORTER_TEST_DIR, "texture-invalid.ogex")));
     CORRADE_COMPARE(importer->image2DCount(), 2);
 
     std::ostringstream out;
@@ -1027,7 +1029,7 @@ void OpenGexImporterTest::imageUnique() {
         CORRADE_SKIP("TgaImporter plugin not found, cannot test");
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "texture-unique.ogex")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(OPENGEXIMPORTER_TEST_DIR, "texture-unique.ogex")));
     CORRADE_COMPARE(importer->textureCount(), 5);
     CORRADE_COMPARE(importer->image2DCount(), 3);
 
@@ -1086,7 +1088,7 @@ void OpenGexImporterTest::imageMipLevels() {
         CORRADE_SKIP("DdsImporter plugin not found, cannot test");
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "texture-mips.ogex")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(OPENGEXIMPORTER_TEST_DIR, "texture-mips.ogex")));
     CORRADE_COMPARE(importer->image2DCount(), 2);
     CORRADE_COMPARE(importer->image2DLevelCount(0), 2);
     CORRADE_COMPARE(importer->image2DLevelCount(1), 1);
@@ -1128,7 +1130,9 @@ void OpenGexImporterTest::imageMipLevels() {
 
 void OpenGexImporterTest::imageNoPathNoCallback() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
-    CORRADE_VERIFY(importer->openData(Utility::Directory::read(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "texture.ogex"))));
+    Containers::Optional<Containers::Array<char>> data = Utility::Path::read(Utility::Path::join(OPENGEXIMPORTER_TEST_DIR, "texture.ogex"));
+    CORRADE_VERIFY(data);
+    CORRADE_VERIFY(importer->openData(*data));
     CORRADE_COMPARE(importer->image2DCount(), 2);
 
     std::ostringstream out;
@@ -1139,7 +1143,7 @@ void OpenGexImporterTest::imageNoPathNoCallback() {
 
 void OpenGexImporterTest::extension() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "extension.ogex")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(OPENGEXIMPORTER_TEST_DIR, "extension.ogex")));
 
     /* Version info */
     {
@@ -1197,8 +1201,12 @@ void OpenGexImporterTest::fileCallbackImage() {
     CORRADE_VERIFY(importer->features() & ImporterFeature::FileCallback);
 
     std::unordered_map<std::string, Containers::Array<char>> files;
-    files["not/a/path/something.ogex"] = Utility::Directory::read(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "texture.ogex"));
-    files["not/a/path/image.tga"] = Utility::Directory::read(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "image.tga"));
+    Containers::Optional<Containers::Array<char>> ogex = Utility::Path::read(Utility::Path::join(OPENGEXIMPORTER_TEST_DIR, "texture.ogex"));
+    Containers::Optional<Containers::Array<char>> tga = Utility::Path::read(Utility::Path::join(OPENGEXIMPORTER_TEST_DIR, "image.tga"));
+    CORRADE_VERIFY(ogex);
+    CORRADE_VERIFY(tga);
+    files["not/a/path/something.ogex"] = *std::move(ogex);
+    files["not/a/path/image.tga"] = *std::move(tga);
     importer->setFileCallback([](const std::string& filename, InputFileCallbackPolicy policy,
         std::unordered_map<std::string, Containers::Array<char>>& files) {
             Debug{} << "Loading" << filename << "with" << policy;
@@ -1225,7 +1233,9 @@ void OpenGexImporterTest::fileCallbackImageNotFound() {
             return Containers::Optional<Containers::ArrayView<const char>>{};
         });
 
-    CORRADE_VERIFY(importer->openData(Utility::Directory::read(Utility::Directory::join(OPENGEXIMPORTER_TEST_DIR, "texture.ogex"))));
+    Containers::Optional<Containers::Array<char>> data = Utility::Path::read(Utility::Path::join(OPENGEXIMPORTER_TEST_DIR, "texture.ogex"));
+    CORRADE_VERIFY(data);
+    CORRADE_VERIFY(importer->openData(*data));
     CORRADE_COMPARE(importer->image2DCount(), 2);
 
     std::ostringstream out;
