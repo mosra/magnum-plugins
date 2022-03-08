@@ -206,7 +206,8 @@ bool isDataUri(Containers::StringView uri) {
 
 /* Decode percent-encoded characters in URIs:
    https://datatracker.ietf.org/doc/html/rfc3986#section-2.1
-   This returns std::string because we only use it with Directory::join(). */
+   This returns std::string because we don't have growable Containers::String
+   yet. */
 std::string decodeUri(Containers::StringView uri) {
     std::string decoded = uri;
     const std::size_t decodedSize = cgltf_decode_uri(&decoded[0]);
