@@ -29,12 +29,13 @@
 #include <Corrade/Containers/ArrayView.h>
 #include <Corrade/Containers/ArrayViewStl.h>
 #include <Corrade/Containers/Optional.h>
+#include <Corrade/Containers/Pair.h>
 #include <Corrade/Containers/StaticArray.h>
 #include <Corrade/Containers/String.h>
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
-#include <Corrade/Utility/Directory.h>
 #include <Corrade/Utility/FormatStl.h>
+#include <Corrade/Utility/Path.h>
 #include <Magnum/FileCallback.h>
 #include <Magnum/ShaderTools/Stage.h>
 
@@ -305,7 +306,7 @@ struct Includer: glslang::TShader::Includer {
     IncludeResult* includeLocal(const char* const headerName, const char* const includerName, std::size_t) override {
         /* If path/to/shader.glsl includes ../definitions.glsl, it should
            resolves to path/to/../definitions.glsl */
-        const std::string fullPath = Utility::Directory::join(Utility::Directory::path(includerName), headerName);
+        const Containers::String fullPath = Utility::Path::join(Utility::Path::split(includerName).first(), headerName);
 
         /* If one header is included recursively (for whatever reason), glslang
            calls the includer multiple times, followed by calling
@@ -404,10 +405,10 @@ std::pair<bool, bool> compileAndLinkShader(glslang::TShader& shader, glslang::TP
 
             /* Read if not there yet */
             if(found == files.end()) {
-                Containers::Array<char> file = Utility::Directory::read(filename);
+                Containers::Optional<Containers::Array<char>> file = Utility::Path::read(filename);
                 if(!file) return {};
 
-                found = files.emplace(filename, std::move(file)).first;
+                found = files.emplace(filename, *std::move(file)).first;
             }
 
             return Containers::ArrayView<const char>{found->second};
