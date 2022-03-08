@@ -31,6 +31,7 @@
 #include <Corrade/Containers/String.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/StringToFile.h>
+#include <Corrade/TestSuite/Compare/String.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/DebugStl.h>
 #include <Corrade/Utility/Directory.h>
@@ -702,8 +703,10 @@ void GlslangConverterTest::validateFailIncludeNotFound() {
         std::make_pair(false, Utility::format(
             "ERROR: {0}:10: '#include' : Could not process include directive for header name: ../notfound.glsl\n"
             "ERROR: 1 compilation errors.  No code generated.", Utility::Directory::join(GLSLANGSHADERCONVERTER_TEST_DIR, "includes.vert"))));
-    CORRADE_COMPARE(out.str(),
-        Utility::formatString("Utility::Directory::read(): can't open {}\n", Utility::Directory::join(GLSLANGSHADERCONVERTER_TEST_DIR, "../notfound.glsl")));
+    /* Verify just the prefix, the actual message is OS-specific */
+    CORRADE_COMPARE_AS(out.str(),
+        Utility::formatString("Utility::Directory::read(): can't open {}: error ", Utility::Directory::join(GLSLANGSHADERCONVERTER_TEST_DIR, "../notfound.glsl")),
+        TestSuite::Compare::StringHasPrefix);
 }
 
 void GlslangConverterTest::convert() {
