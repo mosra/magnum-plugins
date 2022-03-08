@@ -705,7 +705,7 @@ void GlslangConverterTest::validateFailIncludeNotFound() {
             "ERROR: 1 compilation errors.  No code generated.", Utility::Directory::join(GLSLANGSHADERCONVERTER_TEST_DIR, "includes.vert"))));
     /* Verify just the prefix, the actual message is OS-specific */
     CORRADE_COMPARE_AS(out.str(),
-        Utility::formatString("Utility::Directory::read(): can't open {}: error ", Utility::Directory::join(GLSLANGSHADERCONVERTER_TEST_DIR, "../notfound.glsl")),
+        Utility::formatString("Utility::Path::read(): can't open {}: error ", Utility::Directory::join(GLSLANGSHADERCONVERTER_TEST_DIR, "../notfound.glsl")),
         TestSuite::Compare::StringHasPrefix);
 }
 
