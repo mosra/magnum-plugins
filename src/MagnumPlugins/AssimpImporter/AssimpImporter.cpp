@@ -37,12 +37,12 @@
 #include <Corrade/Containers/BigEnumSet.h>
 #include <Corrade/Containers/GrowableArray.h>
 #include <Corrade/Containers/Optional.h>
+#include <Corrade/Containers/Pair.h>
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/DebugStl.h>
-#include <Corrade/Utility/Directory.h>
 #include <Corrade/Utility/Format.h>
-#include <Corrade/Utility/String.h>
+#include <Corrade/Utility/Path.h>
 #include <Magnum/FileCallback.h>
 #include <Magnum/Mesh.h>
 #include <Magnum/Math/Matrix3.h>
@@ -95,7 +95,7 @@ namespace Magnum { namespace Trade {
 using namespace Containers::Literals;
 
 struct AssimpImporter::File {
-    Containers::Optional<std::string> filePath;
+    Containers::Optional<Containers::String> filePath;
     bool importerIsGltf = false;
     const aiScene* scene = nullptr;
     /* Index -> pointer, pointer -> index conversion for nodes as they're
@@ -554,7 +554,7 @@ void AssimpImporter::doOpenData(Containers::Array<char>&& data, DataFlags) {
 void AssimpImporter::doOpenState(const void* state, const std::string& filePath) {
     _f.reset(new File);
     _f->scene = static_cast<const aiScene*>(state);
-    _f->filePath = filePath;
+    _f->filePath.emplace(filePath);
 
     doOpenData({}, {});
 }
@@ -563,7 +563,7 @@ void AssimpImporter::doOpenFile(const std::string& filename) {
     if(!_importer) _importer = createImporter(configuration());
 
     _f.reset(new File);
-    _f->filePath = Utility::Directory::path(filename);
+    _f->filePath.emplace(Utility::Path::split(filename).first());
 
     /* File callbacks are set up in doSetFileCallback() */
     if(!(_f->scene = _importer->ReadFile(filename, flagsFromConfiguration(configuration())))) {
@@ -1760,7 +1760,7 @@ AbstractImporter* AssimpImporter::setupOrReuseImporterForImage(const UnsignedInt
         std::replace(path.begin(), path.end(), '\\', '/');
         /* Assimp doesn't trim spaces from the end of image paths in OBJ
            materials so we have to. See the image-filename-space.mtl test. */
-        if(!importer.openFile(Utility::String::trim(Utility::Directory::join(_f->filePath ? *_f->filePath : "", path))))
+        if(!importer.openFile(Utility::Path::join(_f->filePath ? *_f->filePath : "", path).trimmed()))
             return nullptr;
         return &_f->imageImporter.emplace(std::move(importer));
     }

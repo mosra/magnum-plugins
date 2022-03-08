@@ -43,8 +43,8 @@
 #include <Corrade/TestSuite/Compare/String.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/DebugStl.h>
-#include <Corrade/Utility/Directory.h>
 #include <Corrade/Utility/Format.h>
+#include <Corrade/Utility/Path.h>
 #include <Corrade/Utility/String.h>
 #include <Magnum/FileCallback.h>
 #include <Magnum/Mesh.h>
@@ -362,7 +362,7 @@ void AssimpImporterTest::openFile() {
     {
         Debug redirectOutput{&out};
 
-        CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "scene.dae")));
+        CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "scene.dae")));
         CORRADE_VERIFY(importer->importerState());
         CORRADE_COMPARE(importer->sceneCount(), 1);
         CORRADE_COMPARE(importer->objectCount(), 2);
@@ -392,8 +392,8 @@ void AssimpImporterTest::openFileFailed() {
 void AssimpImporterTest::openData() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
 
-    auto data = Utility::Directory::read(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "scene.dae"));
-    CORRADE_VERIFY(importer->openData(data));
+    Containers::Optional<Containers::Array<char>> data = Utility::Path::read(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "scene.dae"));
+    CORRADE_VERIFY(importer->openData(*data));
     CORRADE_COMPARE(importer->sceneCount(), 1);
     CORRADE_COMPARE(importer->objectCount(), 2);
     CORRADE_COMPARE(importer->meshCount(), 0);
@@ -452,8 +452,7 @@ void AssimpImporterTest::animation() {
        Assimp outputs. */
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR,
-        "exported-animation" + std::string{data.suffix})));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "exported-animation"_s + data.suffix)));
 
     struct Node {
         const char* name;
@@ -622,8 +621,7 @@ void AssimpImporterTest::animationGltf() {
        scene, because Assimp refuses to import animations if there is no scene. */
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR,
-        "animation.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "animation.gltf")));
 
     CORRADE_COMPARE(importer->animationCount(), 3);
     CORRADE_COMPARE(importer->animationName(0), "empty");
@@ -743,8 +741,7 @@ void AssimpImporterTest::animationGltfNoScene() {
 
     /* This reuses the CgltfImporter test files, not the corrected ones used by other tests. */
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(CGLTFIMPORTER_TEST_DIR,
-        "animation.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "animation.gltf")));
 
     CORRADE_EXPECT_FAIL("Assimp refuses to import glTF animations if the file has no scenes.");
     CORRADE_COMPARE(importer->animationCount(), 3);
@@ -762,8 +759,7 @@ void AssimpImporterTest::animationGltfBrokenSplineWarning() {
     std::ostringstream out;
     {
         Warning redirectWarning{&out};
-        CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR,
-            "animation.gltf")));
+        CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "animation.gltf")));
     }
     CORRADE_COMPARE(out.str(), "Trade::AssimpImporter::openData(): spline-interpolated animations imported "
         "from this file are most likely broken using this version of Assimp. Consult the "
@@ -776,8 +772,7 @@ void AssimpImporterTest::animationGltfSpline() {
         CORRADE_SKIP("glTF 2 animation is not supported with the current version of Assimp");
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR,
-        "animation.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "animation.gltf")));
 
     CORRADE_COMPARE(importer->animationCount(), 3);
     CORRADE_COMPARE(importer->animationName(2), "TRS animation, splines");
@@ -893,8 +888,7 @@ void AssimpImporterTest::animationGltfTicksPerSecondPatching() {
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
     importer->setFlags(data.flags);
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR,
-        "animation.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "animation.gltf")));
 
     std::ostringstream out;
     {
@@ -923,8 +917,7 @@ void AssimpImporterTest::animationDummyTracksRemovalEnabled() {
     importer->setFlags(data.flags);
     /* Enabled by default */
     CORRADE_VERIFY(importer->configuration().value<bool>("removeDummyAnimationTracks"));
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR,
-        "animation.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "animation.gltf")));
 
     Containers::Optional<AnimationData> animation;
     std::ostringstream out;
@@ -980,8 +973,7 @@ void AssimpImporterTest::animationDummyTracksRemovalDisabled() {
     importer->setFlags(data.flags);
     /* Explicitly disable */
     importer->configuration().setValue("removeDummyAnimationTracks", false);
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR,
-        "animation.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "animation.gltf")));
 
     Containers::Optional<AnimationData> animation;
     std::ostringstream out;
@@ -1035,8 +1027,7 @@ void AssimpImporterTest::animationShortestPathOptimizationEnabled() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
     /* Enabled by default */
     CORRADE_VERIFY(importer->configuration().value<bool>("optimizeQuaternionShortestPath"));
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR,
-        "animation-patching.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "animation-patching.gltf")));
 
     auto animation = importer->animation("Quaternion shortest-path patching");
     CORRADE_VERIFY(animation);
@@ -1084,8 +1075,7 @@ void AssimpImporterTest::animationShortestPathOptimizationDisabled() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
     /* Explicitly disable */
     importer->configuration().setValue("optimizeQuaternionShortestPath", false);
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR,
-        "animation-patching.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "animation-patching.gltf")));
 
     auto animation = importer->animation("Quaternion shortest-path patching");
     CORRADE_VERIFY(animation);
@@ -1154,8 +1144,7 @@ void AssimpImporterTest::animationQuaternionNormalizationEnabled() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
     /* Enabled by default */
     CORRADE_VERIFY(importer->configuration().value<bool>("normalizeQuaternions"));
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR,
-        "animation-patching.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "animation-patching.gltf")));
 
     Containers::Optional<AnimationData> animation;
     std::ostringstream out;
@@ -1190,8 +1179,7 @@ void AssimpImporterTest::animationQuaternionNormalizationDisabled() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
     /* Explicitly disable */
     CORRADE_VERIFY(importer->configuration().setValue("normalizeQuaternions", false));
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR,
-        "animation-patching.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "animation-patching.gltf")));
 
     auto animation = importer->animation("Quaternion normalization patching");
     CORRADE_VERIFY(animation);
@@ -1215,8 +1203,7 @@ void AssimpImporterTest::animationMergeEmpty() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
     /* Enable animation merging */
     importer->configuration().setValue("mergeAnimationClips", true);
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR,
-        "empty.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "empty.gltf")));
 
     CORRADE_COMPARE(importer->animationCount(), 0);
     CORRADE_COMPARE(importer->animationForName(""), -1);
@@ -1230,8 +1217,7 @@ void AssimpImporterTest::animationMerge() {
     /* Enable animation merging, disabled by default */
     CORRADE_VERIFY(!importer->configuration().value<bool>("mergeAnimationClips"));
     importer->configuration().setValue("mergeAnimationClips", true);
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR,
-        "animation.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "animation.gltf")));
 
     CORRADE_COMPARE(importer->animationCount(), 1);
     CORRADE_COMPARE(importer->animationName(0), "");
@@ -1353,8 +1339,7 @@ void AssimpImporterTest::skin() {
     /* Skinned mesh imported into Blender and then exported */
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR,
-        "skin" + std::string{data.suffix})));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "skin"_s + data.suffix)));
 
     /* Two skins with their own meshes, one unskinned mesh */
     CORRADE_COMPARE(importer->meshCount(), 3);
@@ -1453,7 +1438,7 @@ void AssimpImporterTest::skinNoMeshes() {
         CORRADE_SKIP("glTF 2 skinning is not supported with the current version of Assimp");
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "skin-no-mesh.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "skin-no-mesh.gltf")));
 
     /* Assimp only lets us access joints for each mesh. No mesh = no joints. */
     CORRADE_COMPARE(importer->meshCount(), 0);
@@ -1464,7 +1449,7 @@ void AssimpImporterTest::skinMergeEmpty() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
     /* Enable skin merging */
     importer->configuration().setValue("mergeSkins", true);
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "mesh.dae")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "mesh.dae")));
 
     CORRADE_COMPARE(importer->skin3DCount(), 0);
     CORRADE_COMPARE(importer->skin3DForName(""), -1);
@@ -1485,7 +1470,7 @@ void AssimpImporterTest::skinMerge() {
     CORRADE_VERIFY(!importer->configuration().value<bool>("mergeSkins"));
     /* Enable skin merging */
     importer->configuration().setValue("mergeSkins", true);
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "skin-shared.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "skin-shared.gltf")));
 
     CORRADE_COMPARE(importer->skin3DCount(), 1);
     CORRADE_COMPARE(importer->skin3DName(0), "");
@@ -1541,7 +1526,7 @@ void AssimpImporterTest::skinMerge() {
 
 void AssimpImporterTest::camera() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "camera.dae")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "camera.dae")));
 
     /* The first camera is a dummy one to test non-trivial camera assignment in
        the scene */
@@ -1599,7 +1584,7 @@ void AssimpImporterTest::cameraOrthographic() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
     /* Assimp 5.1.0 refuses to load glTF files without a default scene so we
        can't reuse CgltfImporter's test file */
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "camera-orthographic.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "camera-orthographic.gltf")));
     CORRADE_COMPARE(importer->cameraCount(), 1);
 
     Containers::Optional<CameraData> camera = importer->camera(0);
@@ -1624,7 +1609,7 @@ void AssimpImporterTest::cameraOrthographic() {
 
 void AssimpImporterTest::light() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "light.dae")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "light.dae")));
 
     CORRADE_COMPARE(importer->lightCount(), 4);
     CORRADE_COMPARE(importer->lightName(1), "Spot");
@@ -1716,7 +1701,7 @@ void AssimpImporterTest::lightDirectionalBlender() {
         CORRADE_SKIP("Blender 2.8+ files are supported only since Assimp 5.1.3.");
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "light-directional.blend")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "light-directional.blend")));
 
     /* While COLLADA files (the light() test above) have the attenuation as
        expected, Assimp's Blender importer encodes max distance into it, which
@@ -1740,7 +1725,7 @@ void AssimpImporterTest::lightUnsupported() {
        opening that, but somehow the light lost its area type in process and
        it's now UNKNOWN instead. Which is fine I guess as I want to test just
        the failure anyway. */
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "light-area.fbx")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "light-area.fbx")));
     CORRADE_COMPARE(importer->lightCount(), 1);
 
     std::ostringstream out;
@@ -1757,7 +1742,7 @@ void AssimpImporterTest::cameraLightReferencedByTwoNodes() {
        reference the same camera. But in reality, the camera / light just gets
        duplicated (at least in case of COLLADA) so I have no way to test the
        behavior mentioned in the docs. */
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "camera-light-referenced-by-two-nodes.dae")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "camera-light-referenced-by-two-nodes.dae")));
 
     {
         CORRADE_EXPECT_FAIL("Assimp duplicates cameras / lights referenced by multiple nodes.");
@@ -1819,7 +1804,7 @@ void AssimpImporterTest::materialColor() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
     /* Unrecognized materials are tested separately in materialRaw() */
     importer->configuration().setValue("ignoreUnrecognizedMaterialData", true);
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "material-color.dae")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "material-color.dae")));
 
     /* The first material is a dummy one to test non-trivial material
        assignment in the scene */
@@ -1883,7 +1868,7 @@ void AssimpImporterTest::materialColor() {
 void AssimpImporterTest::materialTexture() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
     importer->configuration().setValue("ignoreUnrecognizedMaterialData", true);
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "material-texture.dae")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "material-texture.dae")));
 
     CORRADE_COMPARE(importer->materialCount(), 1);
 
@@ -1921,7 +1906,7 @@ void AssimpImporterTest::materialTexture() {
 void AssimpImporterTest::materialColorTexture() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
     importer->configuration().setValue("ignoreUnrecognizedMaterialData", true);
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "material-color-texture.obj")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "material-color-texture.obj")));
 
     {
         CORRADE_EXPECT_FAIL("Assimp reports one material more than it should for OBJ and the first is always useless.");
@@ -1957,7 +1942,7 @@ void AssimpImporterTest::materialColorTexture() {
 
 void AssimpImporterTest::materialStlWhiteAmbientPatch() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "quad.stl")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "quad.stl")));
 
     CORRADE_COMPARE(importer->materialCount(), 1);
 
@@ -1999,7 +1984,7 @@ void AssimpImporterTest::materialStlWhiteAmbientPatch() {
 
 void AssimpImporterTest::materialWhiteAmbientTexture() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "texture-ambient.obj")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "texture-ambient.obj")));
 
     /* ASS IMP reports TWO materials for an OBJ. The parser code is so lazy
        that it just has the first material totally empty. Wonderful. Lost one
@@ -2028,7 +2013,7 @@ void AssimpImporterTest::materialWhiteAmbientTexture() {
 
 void AssimpImporterTest::materialMultipleTextures() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "multiple-textures.obj")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "multiple-textures.obj")));
 
     /* See materialWhiteAmbientTexture() for a rant. */
     {
@@ -2139,7 +2124,7 @@ void AssimpImporterTest::materialMultipleTextures() {
 void AssimpImporterTest::materialTextureCoordinateSets() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
 
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "material-coordinate-sets.dae")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "material-coordinate-sets.dae")));
 
     Containers::Optional<MaterialData> material = importer->material(0);
     CORRADE_VERIFY(material);
@@ -2161,7 +2146,7 @@ void AssimpImporterTest::materialTextureLayers() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
     importer->configuration().setValue("ignoreUnrecognizedMaterialData", true);
 
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "material-layers.fbx")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "material-layers.fbx")));
     CORRADE_COMPARE(importer->materialCount(), 1);
 
     const auto material = importer->material(0);
@@ -2225,7 +2210,7 @@ void AssimpImporterTest::materialRawUnrecognized() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
     /* Disabled by default */
     CORRADE_VERIFY(!importer->configuration().value<bool>("ignoreUnrecognizedMaterialData"));
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "material-raw.fbx")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "material-raw.fbx")));
 
     CORRADE_COMPARE(importer->materialCount(), 2);
 
@@ -2263,7 +2248,7 @@ void AssimpImporterTest::materialRaw() {
     CORRADE_VERIFY(!importer->configuration().value<bool>("forceRawMaterialData"));
     importer->configuration().setValue("forceRawMaterialData", true);
 
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "material-raw.fbx")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "material-raw.fbx")));
     CORRADE_COMPARE(importer->materialCount(), 2);
 
     Containers::Optional<MaterialData> material;
@@ -2332,7 +2317,7 @@ void AssimpImporterTest::materialRaw() {
         CORRADE_SKIP("glTF 2 is supported since Assimp 4.1.");
 
     /* glTF covers a few types/sizes not covered by FBX */
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "material-raw.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "material-raw.gltf")));
     {
         /* There's an extra material with only default values */
         CORRADE_EXPECT_FAIL("glTF files are imported with a dummy material.");
@@ -2428,7 +2413,7 @@ void AssimpImporterTest::materialRawTextureLayers() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
     importer->configuration().setValue("forceRawMaterialData", true);
 
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "material-layers.fbx")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "material-layers.fbx")));
     CORRADE_COMPARE(importer->materialCount(), 1);
 
     const auto material = importer->material(0);
@@ -2526,7 +2511,7 @@ void AssimpImporterTest::materialRawTextureLayers() {
 
 void AssimpImporterTest::mesh() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "mesh.dae")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "mesh.dae")));
 
     /* The first mesh is a dummy one to test non-trivial mesh assignment in the
        scene */
@@ -2615,7 +2600,7 @@ void AssimpImporterTest::mesh() {
 
 void AssimpImporterTest::pointMesh() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "points.obj")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "points.obj")));
 
     CORRADE_COMPARE(importer->meshCount(), 1);
 
@@ -2637,7 +2622,7 @@ void AssimpImporterTest::pointMesh() {
 
 void AssimpImporterTest::lineMesh() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "line.dae")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "line.dae")));
 
     CORRADE_COMPARE(importer->meshCount(), 1);
 
@@ -2659,7 +2644,7 @@ void AssimpImporterTest::lineMesh() {
 
 void AssimpImporterTest::polygonMesh() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "polygon.obj")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "polygon.obj")));
 
     /* Just testing that triangulation doesn't break anything */
 
@@ -2684,8 +2669,7 @@ void AssimpImporterTest::polygonMesh() {
 
 void AssimpImporterTest::meshCustomAttributes() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR,
-        "mesh.dae")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "mesh.dae")));
 
     /* Custom attributes should be available right after loading a file,
        even for files without joint weights */
@@ -2738,8 +2722,7 @@ void AssimpImporterTest::meshSkinningAttributes() {
         CORRADE_SKIP("Skin data for this file type is not supported with the current version of Assimp");
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR,
-        "skin" + std::string{data.suffix})));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "skin"_s + data.suffix)));
 
     const MeshAttribute jointsAttribute = importer->meshAttributeForName("JOINTS");
     const MeshAttribute weightsAttribute = importer->meshAttributeForName("WEIGHTS");
@@ -2785,7 +2768,7 @@ void AssimpImporterTest::meshSkinningAttributesMultiple() {
     /* Disable default limit, 0 = no limit  */
     CORRADE_COMPARE(importer->configuration().value<UnsignedInt>("maxJointWeights"), 4);
     importer->configuration().setValue("maxJointWeights", 0);
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "skin-multiple-sets.dae")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "skin-multiple-sets.dae")));
 
     const MeshAttribute jointsAttribute = importer->meshAttributeForName("JOINTS");
     const MeshAttribute weightsAttribute = importer->meshAttributeForName("WEIGHTS");
@@ -2825,11 +2808,11 @@ void AssimpImporterTest::meshSkinningAttributesMultipleGltf() {
     importer->configuration().setValue("maxJointWeights", 0);
 
     if(_assimpVersion >= 510) {
-        CORRADE_VERIFY(!importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "skin-multiple-sets.gltf")));
+        CORRADE_VERIFY(!importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "skin-multiple-sets.gltf")));
         CORRADE_SKIP("Current version of assimp fails to import files with multiple sets of skinning attributes");
     }
 
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "skin-multiple-sets.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "skin-multiple-sets.gltf")));
 
     const MeshAttribute jointsAttribute = importer->meshAttributeForName("JOINTS");
     const MeshAttribute weightsAttribute = importer->meshAttributeForName("WEIGHTS");
@@ -2886,7 +2869,7 @@ void AssimpImporterTest::meshSkinningAttributesMultipleGltf() {
 void AssimpImporterTest::meshSkinningAttributesMaxJointWeights() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
     importer->configuration().setValue("maxJointWeights", 6);
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "skin-multiple-sets.dae")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "skin-multiple-sets.dae")));
 
     const MeshAttribute jointsAttribute = importer->meshAttributeForName("JOINTS");
     const MeshAttribute weightsAttribute = importer->meshAttributeForName("WEIGHTS");
@@ -2924,7 +2907,7 @@ void AssimpImporterTest::meshSkinningAttributesDummyWeightRemoval() {
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
     importer->configuration().setValue("maxJointWeights", 0);
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "skin-dummy-weights.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "skin-dummy-weights.gltf")));
 
     const MeshAttribute jointsAttribute = importer->meshAttributeForName("JOINTS");
     const MeshAttribute weightsAttribute = importer->meshAttributeForName("WEIGHTS");
@@ -2951,7 +2934,7 @@ void AssimpImporterTest::meshSkinningAttributesDummyWeightRemoval() {
 void AssimpImporterTest::meshSkinningAttributesMerge() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
     importer->configuration().setValue("mergeSkins", true);
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "skin.dae")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "skin.dae")));
 
     const MeshAttribute jointsAttribute = importer->meshAttributeForName("JOINTS");
     const MeshAttribute weightsAttribute = importer->meshAttributeForName("WEIGHTS");
@@ -3012,8 +2995,7 @@ void AssimpImporterTest::meshMultiplePrimitives() {
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
 
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR,
-        "mesh-multiple-primitives.dae")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "mesh-multiple-primitives.dae")));
 
     /* Two meshes, but one has two primitives and one three. */
     CORRADE_COMPARE(importer->meshCount(), 5);
@@ -3083,7 +3065,7 @@ void AssimpImporterTest::emptyCollada() {
        behavior, but whatever. It's also INTERESTING that supplying an empty
        DAE through file callbacks results in a completely different message --
        see fileCallbackEmptyFile(). */
-    CORRADE_VERIFY(!importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "empty.dae")));
+    CORRADE_VERIFY(!importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "empty.dae")));
 }
 
 void AssimpImporterTest::emptyGltf() {
@@ -3094,7 +3076,7 @@ void AssimpImporterTest::emptyGltf() {
 
     /* We can't reuse CgltfImporter's empty.gltf since Assimp 5.1 complains
        about a missing scene property (which is not required by the glTF spec) */
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "empty.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "empty.gltf")));
     {
         CORRADE_EXPECT_FAIL_IF(_assimpVersion < 510, "Assimp versions before 5.1.0 ignore empty glTF scenes.");
         CORRADE_COMPARE(importer->defaultScene(), 0);
@@ -3109,7 +3091,7 @@ void AssimpImporterTest::emptyGltf() {
 
 void AssimpImporterTest::scene() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "scene.dae")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "scene.dae")));
 
     CORRADE_COMPARE(importer->defaultScene(), 0);
     CORRADE_COMPARE(importer->sceneCount(), 1);
@@ -3182,7 +3164,7 @@ void AssimpImporterTest::sceneName() {
     #endif
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "scene-name.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "scene-name.gltf")));
 
     CORRADE_COMPARE(importer->sceneCount(), 1);
     CORRADE_COMPARE(importer->sceneName(0), "This is the scene");
@@ -3209,7 +3191,7 @@ void AssimpImporterTest::sceneCollapsedNode() {
        by adding an (otherwise unused/untested) mesh to the file. */
     importer->configuration().group("postprocess")->setValue("PreTransformVertices", true);
 
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "scene+mesh.dae")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "scene+mesh.dae")));
 
     CORRADE_COMPARE(importer->defaultScene(), 0);
     CORRADE_COMPARE(importer->sceneCount(), 1);
@@ -3268,7 +3250,7 @@ void AssimpImporterTest::upDirectionPatching() {
         importer->configuration().setValue("ImportColladaIgnoreUpDirection", true);
     importer->configuration().setValue("ImportColladaIgnoreUpDirection",
         data.importColladaIgnoreUpDirection);
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, data.file)));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, data.file)));
 
     CORRADE_COMPARE(importer->meshCount(), 1);
     CORRADE_COMPARE(importer->sceneCount(), 1);
@@ -3345,7 +3327,7 @@ void AssimpImporterTest::upDirectionPatchingPreTransformVertices() {
         importer->configuration().setValue("ImportColladaIgnoreUpDirection", true);
     importer->configuration().group("postprocess")->setValue("PreTransformVertices", true);
 
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, data.file)));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, data.file)));
 
     CORRADE_COMPARE(importer->meshCount(), 1);
     CORRADE_COMPARE(importer->sceneCount(), 1);
@@ -3391,7 +3373,9 @@ void AssimpImporterTest::imageEmbedded() {
 
     /* Open as data, so we verify opening embedded images from data does not
        cause any problems even when no file callbacks are set */
-    CORRADE_VERIFY(importer->openData(Utility::Directory::read(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "embedded-texture.blend"))));
+    Containers::Optional<Containers::Array<char>> data = Utility::Path::read(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "embedded-texture.blend"));
+    CORRADE_VERIFY(data);
+    CORRADE_VERIFY(importer->openData(*data));
 
     CORRADE_COMPARE(importer->image2DCount(), 1);
     Containers::Optional<ImageData2D> image = importer->image2D(0);
@@ -3410,7 +3394,7 @@ void AssimpImporterTest::imageExternal() {
         CORRADE_SKIP("PngImporter plugin not found, cannot test");
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "material-texture.dae")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "material-texture.dae")));
 
     CORRADE_COMPARE(importer->image2DCount(), 2);
     Containers::Optional<ImageData2D> image = importer->image2D(1);
@@ -3429,7 +3413,7 @@ void AssimpImporterTest::imageExternalNotFound() {
         CORRADE_SKIP("PngImporter plugin not found, cannot test");
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "image-not-found.dae")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "image-not-found.dae")));
 
     CORRADE_COMPARE(importer->image2DCount(), 1);
 
@@ -3458,8 +3442,11 @@ void AssimpImporterTest::imageExternalNoPathNoCallback() {
     if(_assimpVersion < 320)
         CORRADE_SKIP("Current version of assimp would SEGFAULT on this test.");
 
+    Containers::Optional<Containers::Array<char>> data = Utility::Path::read(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "material-texture.dae"));
+    CORRADE_VERIFY(data);
+
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
-    CORRADE_VERIFY(importer->openData(Utility::Directory::read(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "material-texture.dae"))));
+    CORRADE_VERIFY(importer->openData(*data));
     CORRADE_COMPARE(importer->image2DCount(), 2);
 
     std::ostringstream out;
@@ -3473,7 +3460,7 @@ void AssimpImporterTest::imagePathMtlSpaceAtTheEnd() {
         CORRADE_SKIP("PngImporter plugin not found, cannot test");
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "image-filename-trailing-space.obj")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "image-filename-trailing-space.obj")));
 
     CORRADE_COMPARE(importer->image2DCount(), 1);
     Containers::Optional<ImageData2D> image = importer->image2D(0);
@@ -3488,7 +3475,7 @@ void AssimpImporterTest::imagePathBackslash() {
         CORRADE_SKIP("PngImporter plugin not found, cannot test");
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "image-filename-backslash.obj")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "image-filename-backslash.obj")));
 
     CORRADE_COMPARE(importer->image2DCount(), 1);
     Containers::Optional<ImageData2D> image = importer->image2D(0);
@@ -3505,7 +3492,7 @@ void AssimpImporterTest::imageMipLevels() {
         CORRADE_SKIP("DdsImporter plugin not found, cannot test");
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "image-mips.obj")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "image-mips.obj")));
     CORRADE_COMPARE(importer->image2DCount(), 2);
     CORRADE_COMPARE(importer->image2DLevelCount(0), 2);
     CORRADE_COMPARE(importer->image2DLevelCount(1), 1);
@@ -3552,7 +3539,7 @@ void AssimpImporterTest::texture() {
         CORRADE_SKIP("PngImporter plugin not found, cannot test");
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "material-texture.dae")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "material-texture.dae")));
     CORRADE_COMPARE(importer->textureCount(), 4);
 
     /* Diffuse texture */
@@ -3607,7 +3594,7 @@ void AssimpImporterTest::openState() {
     /* Explicitly *not* setting AI_CONFIG_IMPORT_NO_SKELETON_MESHES here to
        verify that we survive all the shit it summons from within the bug
        swamp. */
-    const aiScene* sc = _importer.ReadFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "scene.dae"), aiProcess_Triangulate | aiProcess_SortByPType | aiProcess_JoinIdenticalVertices);
+    const aiScene* sc = _importer.ReadFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "scene.dae"), aiProcess_Triangulate | aiProcess_SortByPType | aiProcess_JoinIdenticalVertices);
     CORRADE_VERIFY(sc != nullptr);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
@@ -3680,7 +3667,7 @@ void AssimpImporterTest::openStateTexture() {
         CORRADE_SKIP("PngImporter plugin not found, cannot test");
 
     Assimp::Importer _importer;
-    const aiScene* sc = _importer.ReadFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "material-texture.dae"), aiProcess_Triangulate | aiProcess_SortByPType | aiProcess_JoinIdenticalVertices);
+    const aiScene* sc = _importer.ReadFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "material-texture.dae"), aiProcess_Triangulate | aiProcess_SortByPType | aiProcess_JoinIdenticalVertices);
     CORRADE_VERIFY(sc != nullptr);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
@@ -3709,7 +3696,7 @@ void AssimpImporterTest::openStateTexture() {
 void AssimpImporterTest::configurePostprocessFlipUVs() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
     importer->configuration().group("postprocess")->setValue("FlipUVs", true);
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "mesh.dae")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "mesh.dae")));
 
     CORRADE_COMPARE(importer->meshCount(), 2);
 
@@ -3731,8 +3718,11 @@ void AssimpImporterTest::fileCallback() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
     CORRADE_VERIFY(importer->features() & ImporterFeature::FileCallback);
 
+    Containers::Optional<Containers::Array<char>> dae = Utility::Path::read(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "mesh.dae"));
+    CORRADE_VERIFY(dae);
+
     std::unordered_map<std::string, Containers::Array<char>> files;
-    files["not/a/path/mesh.dae"] = Utility::Directory::read(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "mesh.dae"));
+    files["not/a/path/mesh.dae"] = *std::move(dae);
     importer->setFileCallback([](const std::string& filename, InputFileCallbackPolicy policy,
         std::unordered_map<std::string, Containers::Array<char>>& files) {
             Debug{} << "Loading" << filename << "with" << policy;
@@ -3847,9 +3837,14 @@ void AssimpImporterTest::fileCallbackImage() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
     CORRADE_VERIFY(importer->features() & ImporterFeature::FileCallback);
 
+    Containers::Optional<Containers::Array<char>> dae = Utility::Path::read(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "material-texture.dae"));
+    Containers::Optional<Containers::Array<char>> png = Utility::Path::read(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "diffuse_texture.png"));
+    CORRADE_VERIFY(dae);
+    CORRADE_VERIFY(png);
+
     std::unordered_map<std::string, Containers::Array<char>> files;
-    files["not/a/path/texture.dae"] = Utility::Directory::read(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "material-texture.dae"));
-    files["not/a/path/diffuse_texture.png"] = Utility::Directory::read(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "diffuse_texture.png"));
+    files["not/a/path/texture.dae"] = *std::move(dae);
+    files["not/a/path/diffuse_texture.png"] = *std::move(png);
     importer->setFileCallback([](const std::string& filename, InputFileCallbackPolicy policy,
         std::unordered_map<std::string, Containers::Array<char>>& files) {
             Debug{} << "Loading" << filename << "with" << policy;
@@ -3881,7 +3876,9 @@ void AssimpImporterTest::fileCallbackImageNotFound() {
             return Containers::Optional<Containers::ArrayView<const char>>{};
         });
 
-    CORRADE_VERIFY(importer->openData(Utility::Directory::read(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "material-texture.dae"))));
+    Containers::Optional<Containers::Array<char>> data = Utility::Path::read(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "material-texture.dae"));
+    CORRADE_VERIFY(data);
+    CORRADE_VERIFY(importer->openData(*data));
     CORRADE_COMPARE(importer->image2DCount(), 2);
 
     std::ostringstream out;
@@ -3893,15 +3890,15 @@ void AssimpImporterTest::fileCallbackImageNotFound() {
 void AssimpImporterTest::openTwice() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
 
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "scene.dae")));
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "scene.dae")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "scene.dae")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "scene.dae")));
 
     /* Shouldn't crash, leak or anything */
 }
 
 void AssimpImporterTest::importTwice() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Directory::join(ASSIMPIMPORTER_TEST_DIR, "camera.dae")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "camera.dae")));
     CORRADE_COMPARE(importer->cameraCount(), 3);
 
     /* Verify that everything is working the same way on second use. It's only
