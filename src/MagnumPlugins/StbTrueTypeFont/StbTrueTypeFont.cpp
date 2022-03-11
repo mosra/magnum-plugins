@@ -85,7 +85,7 @@ bool StbTrueTypeFont::doIsOpened() const { return !!_font; }
 auto StbTrueTypeFont::doOpenData(const Containers::ArrayView<const char> data, const Float size) -> Metrics {
     /* stbtt_GetFontOffsetForIndex() fails hard when passed it an empty file
        (because of course it doesn't take a size, ffs), check explicitly */
-    if(data.empty()) {
+    if(data.isEmpty()) {
         Error{} << "Text::StbTrueTypeFont::openData(): the file is empty";
         return {};
     }

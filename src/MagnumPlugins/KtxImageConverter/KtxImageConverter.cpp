@@ -525,7 +525,7 @@ Containers::Pair<UnsignedInt, UnsignedInt> channelMapping(Implementation::VkForm
 
 template<typename Format> Containers::Array<char> fillDataFormatDescriptor(Format format, Implementation::VkFormatSuffix suffix) {
     const auto sampleData = samples(format);
-    CORRADE_INTERNAL_ASSERT(!sampleData.second().empty());
+    CORRADE_INTERNAL_ASSERT(!sampleData.second().isEmpty());
 
     /* Calculate total size. Header + one sample block per channel. */
     const std::size_t dfdSamplesSize = sampleData.second().size()*sizeof(Implementation::KdfBasicBlockSample);
@@ -536,13 +536,13 @@ template<typename Format> Containers::Array<char> fillDataFormatDescriptor(Forma
     Containers::Array<char> data{ValueInit, dfdSize};
     std::size_t offset = 0;
 
-    UnsignedInt& length = *reinterpret_cast<UnsignedInt*>(data.suffix(offset).data());
+    UnsignedInt& length = *reinterpret_cast<UnsignedInt*>(data.exceptPrefix(offset).data());
     offset += sizeof(length);
 
     length = dfdSize;
 
     /* Basic block header */
-    Implementation::KdfBasicBlockHeader& header = *reinterpret_cast<Implementation::KdfBasicBlockHeader*>(data.suffix(offset).data());
+    Implementation::KdfBasicBlockHeader& header = *reinterpret_cast<Implementation::KdfBasicBlockHeader*>(data.exceptPrefix(offset).data());
     offset += sizeof(header);
 
     header.vendorId = Implementation::KdfBasicBlockHeader::VendorId::Khronos;
@@ -568,7 +568,7 @@ template<typename Format> Containers::Array<char> fillDataFormatDescriptor(Forma
     }
 
     /* Sample blocks, one per channel */
-    auto samples = Containers::arrayCast<Implementation::KdfBasicBlockSample>(data.suffix(offset));
+    auto samples = Containers::arrayCast<Implementation::KdfBasicBlockSample>(data.exceptPrefix(offset));
     offset += dfdSamplesSize;
 
     constexpr bool isCompressedFormat = std::is_same<Format, CompressedPixelFormat>::value;
@@ -748,8 +748,8 @@ template<UnsignedInt dimensions, template<UnsignedInt, typename> class View> Con
                 /* Error{} prints char as int value so use StringViews to get
                    text output */
                 Error{} << "Trade::KtxImageConverter::convertToData(): invalid character in orientation, expected" <<
-                    ValidOrientations[i].prefix(1) << "or" << ValidOrientations[i].suffix(1) <<
-                    "but got" << Containers::StringView{orientation}.suffix(i).prefix(1);
+                    ValidOrientations[i].prefix(1) << "or" << ValidOrientations[i].exceptPrefix(1) <<
+                    "but got" << Containers::StringView{orientation}.exceptPrefix(i).prefix(1);
                 return {};
             }
         }
@@ -790,12 +790,12 @@ template<UnsignedInt dimensions, template<UnsignedInt, typename> class View> Con
             const auto key = entry.first();
             const auto value = entry.second();
             const UnsignedInt length = key.size() + 1 + value.size() + 1;
-            *reinterpret_cast<UnsignedInt*>(keyValueData.suffix(kvdOffset).data()) = length;
+            *reinterpret_cast<UnsignedInt*>(keyValueData.exceptPrefix(kvdOffset).data()) = length;
             Utility::Endianness::littleEndianInPlace(length);
             kvdOffset += sizeof(length);
-            Utility::copy(key, keyValueData.suffix(kvdOffset).prefix(key.size()));
+            Utility::copy(key, keyValueData.exceptPrefix(kvdOffset).prefix(key.size()));
             kvdOffset += entry.first().size() + 1;
-            Utility::copy(value, keyValueData.suffix(kvdOffset).prefix(value.size()));
+            Utility::copy(value, keyValueData.exceptPrefix(kvdOffset).prefix(value.size()));
             kvdOffset += entry.second().size() + 1;
             kvdOffset = (kvdOffset + 3)/4*4;
         }
@@ -874,7 +874,7 @@ template<UnsignedInt dimensions, template<UnsignedInt, typename> class View> Con
     for(UnsignedInt i = 0; i != levelIndex.size(); ++i) {
         const Implementation::KtxLevel& level = levelIndex[i];
         const auto& image = imageLevels[i];
-        const auto pixels = data.suffix(level.byteOffset).prefix(level.byteLength);
+        const auto pixels = data.exceptPrefix(level.byteOffset).prefix(level.byteLength);
         copyPixels(image, pixels);
 
         endianSwap(pixels, header.typeSize);
@@ -884,20 +884,20 @@ template<UnsignedInt dimensions, template<UnsignedInt, typename> class View> Con
             level.uncompressedByteLength);
     }
 
-    Utility::copy(Containers::arrayCast<const char>(levelIndex), data.suffix(offset).prefix(levelIndexSize));
+    Utility::copy(Containers::arrayCast<const char>(levelIndex), data.exceptPrefix(offset).prefix(levelIndexSize));
     offset += levelIndexSize;
 
     header.dfdByteOffset = offset;
     header.dfdByteLength = dataFormatDescriptor.size();
     offset += header.dfdByteLength;
 
-    Utility::copy(dataFormatDescriptor, data.suffix(header.dfdByteOffset).prefix(header.dfdByteLength));
+    Utility::copy(dataFormatDescriptor, data.exceptPrefix(header.dfdByteOffset).prefix(header.dfdByteLength));
 
-    if(!keyValueData.empty()) {
+    if(!keyValueData.isEmpty()) {
         header.kvdByteOffset = offset;
         header.kvdByteLength = keyValueData.size();
 
-        Utility::copy(keyValueData, data.suffix(header.kvdByteOffset).prefix(header.kvdByteLength));
+        Utility::copy(keyValueData, data.exceptPrefix(header.kvdByteOffset).prefix(header.kvdByteLength));
     }
 
     /* Endian-swap once we're done using the header data */

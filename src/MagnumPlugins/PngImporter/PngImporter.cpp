@@ -68,7 +68,7 @@ void PngImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFlags
        can't do the full import here because then doImage2D() would need to
        copy the imported data instead anyway (and the uncompressed size is much
        larger). This way it'll also work nicely with a future openMemory(). */
-    if(data.empty()) {
+    if(data.isEmpty()) {
         Error{} << "Trade::PngImporter::openData(): the file is empty";
         return;
     }
@@ -127,14 +127,14 @@ Containers::Optional<ImageData2D> PngImporter::doImage2D(UnsignedInt, UnsignedIn
         Error{} << "Trade::PngImporter::image2D(): signature too short";
         return Containers::NullOpt;
     }
-    Containers::ArrayView<char> input = _in.suffix(8);
+    Containers::ArrayView<char> input = _in.exceptPrefix(8);
 
     /* Set functions for reading */
     png_set_read_fn(file, &input, [](const png_structp file, const png_bytep data, const png_size_t length) {
         auto&& input = *reinterpret_cast<Containers::ArrayView<char>*>(png_get_io_ptr(file));
         if(input.size() < length) png_error(file, "file too short");
         std::copy_n(input.begin(), length, data);
-        input = input.suffix(length);
+        input = input.exceptPrefix(length);
     });
 
     /* The signature is already read */

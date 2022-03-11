@@ -130,9 +130,9 @@ enum: std::size_t {
 };
 
 bool checkReferencePrefix(Containers::Optional<Structure> s, Containers::ArrayView<const char> prefix) {
-    const bool isLocal = !prefix.empty() && prefix[0] == '%';
+    const bool isLocal = !prefix.isEmpty() && prefix[0] == '%';
 
-    while(!prefix.empty()) {
+    while(!prefix.isEmpty()) {
         /* No parent structure and the prefix was not fully consumed, nothing
            found */
         if(!s) return false;
@@ -161,7 +161,7 @@ bool checkReferencePrefix(Containers::Optional<Structure> s, Containers::ArrayVi
 }
 
 std::size_t Document::dereference(const std::size_t originatingStructure, const Containers::ArrayView<const char> reference) const {
-    CORRADE_INTERNAL_ASSERT(!reference.empty());
+    CORRADE_INTERNAL_ASSERT(!reference.isEmpty());
 
     const Containers::ArrayView<const char> leafName = reference.suffix(Implementation::findLastOf(reference, "$%"));
 
@@ -300,7 +300,7 @@ bool Document::parse(Containers::ArrayView<const char> data, const std::initiali
     /* Everything parsed, dereference references */
     for(const std::pair<std::size_t, Containers::ArrayView<const char>>& reference: references) {
         /* Null reference */
-        if(reference.second.empty())
+        if(reference.second.isEmpty())
             _references.push_back(NullReference);
 
         /* Non-null, try to dereference */

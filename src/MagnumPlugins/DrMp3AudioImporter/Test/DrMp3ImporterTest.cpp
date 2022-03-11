@@ -90,7 +90,7 @@ void DrMp3ImporterTest::zeroSamples() {
     }
     CORRADE_COMPARE(importer->format(), BufferFormat::Mono16);
     CORRADE_COMPARE(importer->frequency(), 44100);
-    CORRADE_VERIFY(importer->data().empty());
+    CORRADE_VERIFY(importer->data().isEmpty());
 }
 
 void DrMp3ImporterTest::mono16() {

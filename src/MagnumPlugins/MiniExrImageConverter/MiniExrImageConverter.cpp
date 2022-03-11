@@ -60,7 +60,7 @@ Containers::Array<char> MiniExrImageConverter::doConvertToData(const ImageView2D
     /* Get data properties and calculate the initial slice based on subimage
        offset */
     const std::pair<Math::Vector2<std::size_t>, Math::Vector2<std::size_t>> dataProperties = image.dataProperties();
-    Containers::ArrayView<const char> inputData = image.data().suffix(dataProperties.first.sum());
+    Containers::ArrayView<const char> inputData = image.data().exceptPrefix(dataProperties.first.sum());
 
     /* Do Y-flip and tight packing of image data */
     const std::size_t rowSize = image.size().x()*image.pixelSize();
@@ -68,7 +68,7 @@ Containers::Array<char> MiniExrImageConverter::doConvertToData(const ImageView2D
     const std::size_t packedDataSize = rowSize*image.size().y();
     Containers::Array<char> reversedPackedData{NoInit, packedDataSize};
     for(std::int_fast32_t y = 0; y != image.size().y(); ++y)
-        std::copy_n(inputData.suffix((image.size().y() - y - 1)*rowStride).data(), rowSize, reversedPackedData + y*rowSize);
+        std::copy_n(inputData.exceptPrefix((image.size().y() - y - 1)*rowStride).data(), rowSize, reversedPackedData + y*rowSize);
 
     std::size_t size;
     unsigned char* const data = miniexr_write(image.size().x(), image.size().y(), components, reversedPackedData, &size);

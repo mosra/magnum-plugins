@@ -218,7 +218,7 @@ void BasisImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFla
        can't do the full import here because then doImage2D() would need to
        copy the imported data instead anyway (and the uncompressed size is much
        larger). This way it'll also work nicely with a future openMemory(). */
-    if(data.empty()) {
+    if(data.isEmpty()) {
         Error{} << "Trade::BasisImporter::openData(): the file is empty";
         return;
     }

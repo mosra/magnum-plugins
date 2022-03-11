@@ -165,7 +165,7 @@ const char* whitespace(const Containers::ArrayView<const char> data) {
 
 std::pair<const char*, char> escapedChar(const Containers::ArrayView<const char> data, ParseError& error) {
     /* Escape sequence is not standalone, thus we can't expect it anywhere */
-    CORRADE_INTERNAL_ASSERT(!data.empty() && *data == '\\');
+    CORRADE_INTERNAL_ASSERT(!data.isEmpty() && *data == '\\');
 
     if(data.size() < 2) {
         error = {ParseErrorType::InvalidEscapeSequence, data};
@@ -198,7 +198,7 @@ std::pair<const char*, char> escapedChar(const Containers::ArrayView<const char>
 
 const char* escapedUnicode(const Containers::ArrayView<const char> data, std::string& out, ParseError& error) {
     /* Escape sequence is not standalone, thus we can't expect it anywhere */
-    CORRADE_INTERNAL_ASSERT(!data.empty() && *data == '\\');
+    CORRADE_INTERNAL_ASSERT(!data.isEmpty() && *data == '\\');
 
     if(data.size() < 2) {
         error = {ParseErrorType::InvalidEscapeSequence, data};
@@ -228,7 +228,7 @@ const char* identifier(const Containers::ArrayView<const char> data, ParseError&
     /* Propagate errors */
     if(!data) return nullptr;
 
-    if(data.empty()) {
+    if(data.isEmpty()) {
         error = {ParseErrorType::ExpectedIdentifier};
         return nullptr;
     }
@@ -271,7 +271,7 @@ std::pair<const char*, char> characterLiteral(const Containers::ArrayView<const 
         if(data[1] == '\\') {
             const char* i;
             char result;
-            std::tie(i, result) = escapedChar(data.suffix(1), error);
+            std::tie(i, result) = escapedChar(data.exceptPrefix(1), error);
             if(i && i != data.end() && *i == '\'') return {i + 1, result};
         }
     }
@@ -429,7 +429,7 @@ template<class T> std::tuple<const char*, T, Int> integralLiteral(const Containe
     /* Propagate errors */
     if(!data) return {};
 
-    if(data.empty()) {
+    if(data.isEmpty()) {
         error = {ParseErrorType::ExpectedLiteral, typeFor<T>(), data};
         return {};
     }
@@ -515,7 +515,7 @@ template<class T> std::pair<const char*, T> floatingPointLiteral(const Container
     /* Propagate errors */
     if(!data) return {};
 
-    if(data.empty()) {
+    if(data.isEmpty()) {
         error = {ParseErrorType::ExpectedLiteral, Type::Float, data};
         return {};
     }
@@ -603,7 +603,7 @@ std::pair<const char*, std::string> stringLiteral(const Containers::ArrayView<co
     /* Propagate errors */
     if(!data) return {};
 
-    if(data.empty() || *data != '"') {
+    if(data.isEmpty() || *data != '"') {
         error = {ParseErrorType::ExpectedLiteral, Type::String, data};
         return {};
     }
@@ -647,7 +647,7 @@ std::pair<const char*, std::string> nameLiteral(const Containers::ArrayView<cons
     /* Propagate errors */
     if(!data) return {};
 
-    if(data.empty()) {
+    if(data.isEmpty()) {
         error = {ParseErrorType::ExpectedName, data};
         return {};
     }
@@ -666,7 +666,7 @@ std::pair<const char*, Containers::ArrayView<const char>> referenceLiteral(const
     /* Propagate errors */
     if(!data) return {};
 
-    if(data.empty()) {
+    if(data.isEmpty()) {
         error = {ParseErrorType::ExpectedLiteral, Type::Reference};
         return {};
     }
@@ -680,7 +680,7 @@ std::pair<const char*, Containers::ArrayView<const char>> referenceLiteral(const
         return {};
     }
 
-    i = identifier(data.suffix(1), error);
+    i = identifier(data.exceptPrefix(1), error);
 
     for(; i && i != data.end(); ) {
         if(*i != '%') break;
@@ -719,7 +719,7 @@ std::pair<const char*, Type> typeLiteral(const Containers::ArrayView<const char>
     /* Propagate errors */
     if(!data) return {};
 
-    if(data.empty()) {
+    if(data.isEmpty()) {
         error = {ParseErrorType::ExpectedLiteral, Type::Type, data};
         return {};
     }
@@ -737,7 +737,7 @@ std::pair<const char*, InternalPropertyType> propertyValue(const Containers::Arr
     /* Propagate errors */
     if(!data) return {};
 
-    if(data.empty()) {
+    if(data.isEmpty()) {
         error = {ParseErrorType::ExpectedPropertyValue};
         return {};
     }

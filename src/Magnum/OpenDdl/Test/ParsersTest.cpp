@@ -591,7 +591,7 @@ void ParsersTest::referenceLiteralNull() {
     Containers::ArrayView<const char> value;
     std::tie(ai, value) = Implementation::referenceLiteral(a, error);
     VERIFY_PARSED(error, a, ai, "null");
-    CORRADE_VERIFY(value.empty());
+    CORRADE_VERIFY(value.isEmpty());
 }
 
 void ParsersTest::referenceLiteral() {
@@ -793,7 +793,7 @@ void ParsersTest::propertyValueReferenceNull() {
     std::tie(ai, type) = Implementation::propertyValue(a, boolValue, integerValue, floatingPointValue, stringValue, referenceValue, typeValue, buffer, error);
     VERIFY_PARSED(error, a, ai, "null");
     CORRADE_COMPARE(type, Implementation::InternalPropertyType::Reference);
-    CORRADE_VERIFY(referenceValue.empty());
+    CORRADE_VERIFY(referenceValue.isEmpty());
 }
 
 void ParsersTest::propertyValueType() {

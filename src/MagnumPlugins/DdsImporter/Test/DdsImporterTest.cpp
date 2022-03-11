@@ -243,7 +243,7 @@ void DdsImporterTest::insufficientData() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
     Containers::Optional<Containers::Array<char>> data = Utility::Path::read(Utility::Path::join(DDSIMPORTER_TEST_DIR, "rgb_uncompressed.dds"));
     CORRADE_VERIFY(data);
-    CORRADE_VERIFY(!importer->openData(data->except(1)));
+    CORRADE_VERIFY(!importer->openData(data->exceptSuffix(1)));
     CORRADE_COMPARE(out.str(), "Trade::DdsImporter::openData(): not enough image data\n");
 }
 

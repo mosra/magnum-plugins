@@ -632,7 +632,7 @@ void AssimpImporterTest::animationGltf() {
     {
         auto animation = importer->animation("empty");
         CORRADE_VERIFY(animation);
-        CORRADE_VERIFY(animation->data().empty());
+        CORRADE_VERIFY(animation->data().isEmpty());
         CORRADE_COMPARE(animation->trackCount(), 0);
 
     /* Translation/rotation/scaling animation */

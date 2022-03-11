@@ -933,7 +933,7 @@ Containers::Optional<AnimationData> CgltfImporter::doAnimation(UnsignedInt id) {
     Containers::Array<char> data{dataSize};
     for(const std::pair<const cgltf_accessor* const, SamplerData>& view: samplerData) {
         Containers::StridedArrayView2D<const char> src = view.second.src;
-        Containers::StridedArrayView2D<char> dst{data.suffix(view.second.outputOffset),
+        Containers::StridedArrayView2D<char> dst{data.exceptPrefix(view.second.outputOffset),
             src.size()};
         Utility::copy(src, dst);
     }
@@ -981,7 +981,7 @@ Containers::Optional<AnimationData> CgltfImporter::doAnimation(UnsignedInt id) {
             const auto inputDataFound = samplerData.find(input);
             CORRADE_INTERNAL_ASSERT(inputDataFound != samplerData.end());
             const auto keys = Containers::arrayCast<Float>(
-                data.suffix(inputDataFound->second.outputOffset).prefix(
+                data.exceptPrefix(inputDataFound->second.outputOffset).prefix(
                     inputDataFound->second.src.size()[0]*
                     inputDataFound->second.src.size()[1]));
 
@@ -1007,7 +1007,7 @@ Containers::Optional<AnimationData> CgltfImporter::doAnimation(UnsignedInt id) {
             Animation::TrackViewStorage<const Float> track;
             const auto outputDataFound = samplerData.find(output);
             CORRADE_INTERNAL_ASSERT(outputDataFound != samplerData.end());
-            const auto outputData = data.suffix(outputDataFound->second.outputOffset)
+            const auto outputData = data.exceptPrefix(outputDataFound->second.outputOffset)
                 .prefix(outputDataFound->second.src.size()[0]*
                         outputDataFound->second.src.size()[1]);
             const cgltf_accessor*& timeTrackUsed = outputDataFound->second.timeTrack;
@@ -2669,7 +2669,7 @@ Containers::Optional<MaterialData> CgltfImporter::doMaterial(const UnsignedInt i
         if(json[0] == '{') {
             const auto tokens = parseJson(json);
             /* This is checked by jsmn */
-            CORRADE_INTERNAL_ASSERT(!tokens.empty() && tokens[0].type == JSMN_OBJECT);
+            CORRADE_INTERNAL_ASSERT(!tokens.isEmpty() && tokens[0].type == JSMN_OBJECT);
 
             UnsignedInt numAttributes = tokens[0].size;
             Containers::Array<UnsignedInt> attributeTokens;
@@ -2703,7 +2703,7 @@ Containers::Optional<MaterialData> CgltfImporter::doMaterial(const UnsignedInt i
                 if(tokenIndex == 0u) continue;
 
                 const Containers::Optional<MaterialAttributeData> parsed = parseMaterialAttribute(
-                    json, tokens.suffix(tokenIndex));
+                    json, tokens.exceptPrefix(tokenIndex));
                 if(parsed)
                     arrayAppend(attributes, *parsed);
             }
@@ -2951,7 +2951,7 @@ Containers::Optional<MaterialData> CgltfImporter::doMaterial(const UnsignedInt i
         const auto tokens = parseJson(json);
         /* First token is the extension object. This is checked by cgltf. If
            the object is empty, tokens.size() is 1. */
-        CORRADE_INTERNAL_ASSERT(!tokens.empty() && tokens[0].type == JSMN_OBJECT);
+        CORRADE_INTERNAL_ASSERT(!tokens.isEmpty() && tokens[0].type == JSMN_OBJECT);
 
         UnsignedInt numAttributes = tokens[0].size;
         Containers::Array<UnsignedInt> attributeTokens;
@@ -3029,7 +3029,7 @@ Containers::Optional<MaterialData> CgltfImporter::doMaterial(const UnsignedInt i
                     extensionAttributes,
                     name,
                     nameBuffer.prefix(name.size() + 6),
-                    nameBuffer.suffix(name.size() + 6));
+                    nameBuffer.exceptPrefix(name.size() + 6));
 
                 /** @todo If there are ever extensions that reference texture
                     types other than textureInfo and normalTextureInfo, we
@@ -3048,7 +3048,7 @@ Containers::Optional<MaterialData> CgltfImporter::doMaterial(const UnsignedInt i
             } else {
                 /* All other attribute types: bool, numbers, strings */
                 const Containers::Optional<MaterialAttributeData> parsed = parseMaterialAttribute(
-                    json, tokens.suffix(tokenIndex));
+                    json, tokens.exceptPrefix(tokenIndex));
                 if(parsed)
                     arrayAppend(extensionAttributes, *parsed);
             }
@@ -3130,7 +3130,7 @@ Containers::Optional<TextureData> CgltfImporter::doTexture(const UnsignedInt id)
                     const Containers::StringView json = tex.extensions[i].data;
                     const auto tokens = parseJson(tex.extensions[i].data);
                     /* This is checked by cgltf */
-                    CORRADE_INTERNAL_ASSERT(!tokens.empty() && tokens[0].type == JSMN_OBJECT);
+                    CORRADE_INTERNAL_ASSERT(!tokens.isEmpty() && tokens[0].type == JSMN_OBJECT);
 
                     Containers::Optional<Int> source;
                     std::size_t t = 1;

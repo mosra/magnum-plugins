@@ -291,7 +291,7 @@ Containers::Array<char> StanfordSceneConverter::doConvertToData(const MeshData& 
     }
 
     /* Copy the indices. For a non-indexed mesh make a trivial index array. */
-    Containers::ArrayView<char> indexData = out.suffix(header.size() + vertexDataSize);
+    Containers::ArrayView<char> indexData = out.exceptPrefix(header.size() + vertexDataSize);
     Containers::StridedArrayView3D<char> indices;
     if(!triangles.isIndexed()) {
         const Containers::StridedArrayView2D<UnsignedInt> indices32{indexData,

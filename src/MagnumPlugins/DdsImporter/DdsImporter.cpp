@@ -509,7 +509,7 @@ void DdsImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dat
     std::size_t offset = MagicNumberSize;
 
     /* read in DDS header */
-    const DdsHeader& ddsh = *reinterpret_cast<const DdsHeader*>(f->in.suffix(offset).data());
+    const DdsHeader& ddsh = *reinterpret_cast<const DdsHeader*>(f->in.exceptPrefix(offset).data());
     offset += sizeof(DdsHeader);
 
     bool hasDxt10Extension = false;
@@ -535,11 +535,11 @@ void DdsImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dat
             case DdsCompressionType::DXT10: {
                     hasDxt10Extension = true;
 
-                    if(f->in.suffix(offset).size() < sizeof(DdsHeaderDxt10)) {
+                    if(f->in.exceptPrefix(offset).size() < sizeof(DdsHeaderDxt10)) {
                         Error() << "Trade::DdsImporter::openData(): fourcc was DX10 but file is too short to contain DXT10 header";
                         return;
                     }
-                    const DdsHeaderDxt10& dxt10 = *reinterpret_cast<const DdsHeaderDxt10*>(f->in.suffix(offset).data());
+                    const DdsHeaderDxt10& dxt10 = *reinterpret_cast<const DdsHeaderDxt10*>(f->in.exceptPrefix(offset).data());
                     offset += sizeof(DdsHeaderDxt10);
 
                     f->pixelFormat.uncompressed = dxgiToGl(dxt10.dxgiFormat);

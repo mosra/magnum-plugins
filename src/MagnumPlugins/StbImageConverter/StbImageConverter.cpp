@@ -117,7 +117,7 @@ Containers::Array<char> StbImageConverter::doConvertToData(const ImageView2D& im
        offset */
     const std::pair<Math::Vector2<std::size_t>, Math::Vector2<std::size_t>> dataProperties = image.dataProperties();
     auto inputData = Containers::arrayCast<const unsigned char>(image.data())
-        .suffix(dataProperties.first.sum());
+        .exceptPrefix(dataProperties.first.sum());
 
     /* Reverse rows in image data. There is stbi_flip_vertically_on_write() but
        can't use that because the input image might be sparse (having padded
@@ -125,8 +125,8 @@ Containers::Array<char> StbImageConverter::doConvertToData(const ImageView2D& im
     Containers::Array<unsigned char> reversedData{NoInit, image.pixelSize()*image.size().product()};
     std::size_t outputStride = image.pixelSize()*image.size().x();
     for(Int y = 0; y != image.size().y(); ++y) {
-        auto row = inputData.suffix(y*dataProperties.second.x()).prefix(outputStride);
-        std::copy(row.begin(), row.end(), reversedData.suffix((image.size().y() - y - 1)*outputStride).begin());
+        auto row = inputData.exceptPrefix(y*dataProperties.second.x()).prefix(outputStride);
+        std::copy(row.begin(), row.end(), reversedData.exceptPrefix((image.size().y() - y - 1)*outputStride).begin());
     }
 
     std::string data;

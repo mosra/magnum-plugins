@@ -1149,7 +1149,7 @@ void CgltfImporterTest::animation() {
     {
         auto animation = importer->animation("empty");
         CORRADE_VERIFY(animation);
-        CORRADE_VERIFY(animation->data().empty());
+        CORRADE_VERIFY(animation->data().isEmpty());
         CORRADE_COMPARE(animation->trackCount(), 0);
 
     /* Empty translation/rotation/scaling animation */
@@ -1164,18 +1164,18 @@ void CgltfImporterTest::animation() {
 
         CORRADE_COMPARE(animation->trackTargetType(0), AnimationTrackTargetType::Rotation3D);
         auto rotation = animation->track(0);
-        CORRADE_VERIFY(rotation.keys().empty());
-        CORRADE_VERIFY(rotation.values().empty());
+        CORRADE_VERIFY(rotation.keys().isEmpty());
+        CORRADE_VERIFY(rotation.values().isEmpty());
 
         CORRADE_COMPARE(animation->trackTargetType(1), AnimationTrackTargetType::Translation3D);
         auto translation = animation->track(1);
-        CORRADE_VERIFY(translation.keys().empty());
-        CORRADE_VERIFY(translation.values().empty());
+        CORRADE_VERIFY(translation.keys().isEmpty());
+        CORRADE_VERIFY(translation.values().isEmpty());
 
         CORRADE_COMPARE(animation->trackTargetType(2), AnimationTrackTargetType::Scaling3D);
         auto scaling = animation->track(2);
-        CORRADE_VERIFY(scaling.keys().empty());
-        CORRADE_VERIFY(scaling.values().empty());
+        CORRADE_VERIFY(scaling.keys().isEmpty());
+        CORRADE_VERIFY(scaling.values().isEmpty());
 
     /* Translation/rotation/scaling animation */
     } {
@@ -1733,8 +1733,8 @@ void CgltfImporterTest::animationMerge() {
     CORRADE_COMPARE(animation->trackTarget(0), 0);
     Animation::TrackViewStorage<const Float> rotation = animation->track(0);
     CORRADE_COMPARE(rotation.interpolation(), Animation::Interpolation::Linear);
-    CORRADE_VERIFY(rotation.keys().empty());
-    CORRADE_VERIFY(rotation.values().empty());
+    CORRADE_VERIFY(rotation.keys().isEmpty());
+    CORRADE_VERIFY(rotation.values().isEmpty());
 
     /* Translation, empty */
     CORRADE_COMPARE(animation->trackType(1), AnimationTrackType::Vector3);
@@ -1742,8 +1742,8 @@ void CgltfImporterTest::animationMerge() {
     CORRADE_COMPARE(animation->trackTarget(1), 1);
     Animation::TrackViewStorage<const Float> translation = animation->track(1);
     CORRADE_COMPARE(translation.interpolation(), Animation::Interpolation::Constant);
-    CORRADE_VERIFY(translation.keys().empty());
-    CORRADE_VERIFY(translation.values().empty());
+    CORRADE_VERIFY(translation.keys().isEmpty());
+    CORRADE_VERIFY(translation.values().isEmpty());
 
     /* Scaling, empty */
     CORRADE_COMPARE(animation->trackType(2), AnimationTrackType::Vector3);
@@ -1751,8 +1751,8 @@ void CgltfImporterTest::animationMerge() {
     CORRADE_COMPARE(animation->trackTarget(2), 2);
     Animation::TrackViewStorage<const Float> scaling = animation->track(2);
     CORRADE_COMPARE(scaling.interpolation(), Animation::Interpolation::Linear);
-    CORRADE_VERIFY(scaling.keys().empty());
-    CORRADE_VERIFY(scaling.values().empty());
+    CORRADE_VERIFY(scaling.keys().isEmpty());
+    CORRADE_VERIFY(scaling.values().isEmpty());
 
     /* Rotation, linearly interpolated */
     CORRADE_COMPARE(animation->trackType(3), AnimationTrackType::Quaternion);

@@ -113,7 +113,7 @@ void DrFlacImporterTest::zeroSamples() {
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(DRFLACAUDIOIMPORTER_TEST_DIR, "zeroSamples.flac")));
     CORRADE_COMPARE(importer->format(), BufferFormat::Mono16);
     CORRADE_COMPARE(importer->frequency(), 22050);
-    CORRADE_VERIFY(importer->data().empty());
+    CORRADE_VERIFY(importer->data().isEmpty());
 }
 
 void DrFlacImporterTest::mono8() {

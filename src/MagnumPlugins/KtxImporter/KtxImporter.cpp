@@ -325,7 +325,7 @@ void KtxImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFlags
         /* Print a useful error for a KTX file with an unsupported version.
            KTX1 uses the same magic string but with a different version string. */
         if(identifier.hasPrefix(expected.prefix(Implementation::KtxFileVersionOffset))) {
-            const Containers::StringView version = identifier.suffix(Implementation::KtxFileVersionOffset).prefix(Implementation::KtxFileVersionLength);
+            const Containers::StringView version = identifier.exceptPrefix(Implementation::KtxFileVersionOffset).prefix(Implementation::KtxFileVersionLength);
             if(version != "20"_s) {
                 Error{} << "Trade::KtxImporter::openData(): unsupported KTX version, expected 20 but got" << version;
                 return;
@@ -448,7 +448,7 @@ void KtxImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFlags
             }
 
             const auto& dfd = *reinterpret_cast<const Implementation::KdfBasicBlockHeader*>(
-                data.suffix(header.dfdByteOffset + sizeof(UnsignedInt)).data());
+                data.exceptPrefix(header.dfdByteOffset + sizeof(UnsignedInt)).data());
 
             /* colorModel is a byte, no need to endian-swap */
             if(dfd.colorModel != Implementation::KdfBasicBlockHeader::ColorModel::BasisUastc) {
@@ -548,7 +548,7 @@ void KtxImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFlags
        layers, faces/slices, rows, columns. */
     const std::size_t levelIndexSize = numMipmaps*sizeof(Implementation::KtxLevel);
     const auto levelIndex = Containers::arrayCast<Implementation::KtxLevel>(
-        f->in.suffix(sizeof(Implementation::KtxHeader)).prefix(levelIndexSize));
+        f->in.exceptPrefix(sizeof(Implementation::KtxHeader)).prefix(levelIndexSize));
 
     /* Extract image data views. Only one image with extra dimensions for array
        layers and/or cube map faces, except for 3D array images where it's one
@@ -606,7 +606,7 @@ void KtxImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFlags
 
         for(UnsignedInt image = 0; image != numImages; ++image) {
             const std::size_t offset = level.byteOffset + image*imageLength;
-            f->imageData[image][i] = {levelSize, f->in.suffix(offset).prefix(imageLength)};
+            f->imageData[image][i] = {levelSize, f->in.exceptPrefix(offset).prefix(imageLength)};
         }
 
         /* Halve each dimension, rounding down */
@@ -632,7 +632,7 @@ void KtxImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFlags
     };
 
     if(header.kvdByteLength > 0) {
-        Containers::ArrayView<const char> keyValueData{f->in.suffix(header.kvdByteOffset).prefix(header.kvdByteLength)};
+        Containers::ArrayView<const char> keyValueData{f->in.exceptPrefix(header.kvdByteOffset).prefix(header.kvdByteLength)};
         /* Loop through entries, each one consisting of:
 
            UnsignedInt length
@@ -646,12 +646,12 @@ void KtxImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFlags
         UnsignedInt current = 0;
         while(current + sizeof(UnsignedInt) < keyValueData.size()) {
             /* Length without padding */
-            const UnsignedInt length = *reinterpret_cast<const UnsignedInt*>(keyValueData.suffix(current).data());
+            const UnsignedInt length = *reinterpret_cast<const UnsignedInt*>(keyValueData.exceptPrefix(current).data());
             Utility::Endianness::littleEndianInPlace(length);
             current += sizeof(length);
 
             if(current + length <= keyValueData.size()) {
-                const Containers::StringView entry{keyValueData.suffix(current).prefix(length)};
+                const Containers::StringView entry{keyValueData.exceptPrefix(current).prefix(length)};
                 const Containers::Array3<Containers::StringView> split = entry.partition('\0');
                 const auto key = split[0];
                 const auto value = split[2];
@@ -661,7 +661,7 @@ void KtxImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFlags
                 else {
                     for(UnsignedInt i = 0; i != Containers::arraySize(keyValueEntries); ++i) {
                         if(key == keyValueEntries[i].key) {
-                            if(!keyValueEntries[i].value.empty())
+                            if(!keyValueEntries[i].value.isEmpty())
                                 Warning{} << "Trade::KtxImporter::openData(): key" << key << "already set, skipping";
                             else
                                 keyValueEntries[i].value = value;
@@ -737,7 +737,7 @@ void KtxImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFlags
 
     /* Incomplete cube maps are a 'feature' of KTX files. We just import them
        as layers (which is how they're exposed to us). */
-    if(numFaces != 6 && !keyValueEntries[KeyValueType::CubeMapIncomplete].value.empty()) {
+    if(numFaces != 6 && !keyValueEntries[KeyValueType::CubeMapIncomplete].value.isEmpty()) {
         Warning{} << "Trade::KtxImporter::openData(): image contains incomplete "
             "cube map faces, importing faces as array layers";
     }

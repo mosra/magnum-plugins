@@ -263,7 +263,7 @@ void OpenExrImporterTest::shortFile() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenExrImporter");
 
     Containers::Optional<Containers::Array<char>> data = Utility::Path::read(Utility::Path::join(OPENEXRIMPORTER_TEST_DIR, "rgba32f.exr"));
-    CORRADE_VERIFY(importer->openData(data->except(1)));
+    CORRADE_VERIFY(importer->openData(data->exceptSuffix(1)));
 
     std::ostringstream out;
     Error redirectError{&out};

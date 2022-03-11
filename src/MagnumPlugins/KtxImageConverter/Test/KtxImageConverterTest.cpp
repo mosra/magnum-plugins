@@ -293,7 +293,7 @@ Containers::Array<char> readDataFormatDescriptor(Containers::ArrayView<const cha
     const UnsignedInt offset = Utility::Endianness::littleEndian(header.dfdByteOffset);
     const UnsignedInt length = Utility::Endianness::littleEndian(header.dfdByteLength);
     Containers::Array<char> data{ValueInit, length};
-    Utility::copy(fileData.suffix(offset).prefix(length), data);
+    Utility::copy(fileData.exceptPrefix(offset).prefix(length), data);
 
     return data;
 }
@@ -305,7 +305,7 @@ Containers::String readKeyValueData(Containers::ArrayView<const char> fileData) 
     const UnsignedInt offset = Utility::Endianness::littleEndian(header.kvdByteOffset);
     const UnsignedInt length = Utility::Endianness::littleEndian(header.kvdByteLength);
     Containers::String data{ValueInit, length};
-    Utility::copy(fileData.suffix(offset).prefix(length), data);
+    Utility::copy(fileData.exceptPrefix(offset).prefix(length), data);
 
     return data;
 }
@@ -386,7 +386,7 @@ KtxImageConverterTest::KtxImageConverterTest() {
 
     /* Extract VkFormat and DFD content from merged DFD file */
     dfdData = *CORRADE_INTERNAL_ASSERT_EXPRESSION(Utility::Path::read(Utility::Path::join(KTXIMAGECONVERTER_TEST_DIR, "dfd-data.bin")));
-    CORRADE_INTERNAL_ASSERT(!dfdData.empty());
+    CORRADE_INTERNAL_ASSERT(!dfdData.isEmpty());
     CORRADE_INTERNAL_ASSERT(dfdData.size()%4 == 0);
     std::size_t offset = 0;
     while(offset < dfdData.size()) {
@@ -397,7 +397,7 @@ KtxImageConverterTest::KtxImageConverterTest() {
         const UnsignedInt size = *reinterpret_cast<UnsignedInt*>(dfdData.data() + offset);
         CORRADE_INTERNAL_ASSERT(size > 0);
         CORRADE_INTERNAL_ASSERT(size%4 == 0);
-        dfdMap.emplace(format, dfdData.suffix(offset).prefix(size));
+        dfdMap.emplace(format, dfdData.exceptPrefix(offset).prefix(size));
         offset += size;
     }
     CORRADE_INTERNAL_ASSERT(offset == dfdData.size());

@@ -629,7 +629,7 @@ void BasisImageConverterTest::convert2DRg() {
        from our RG8 image data. We chose the B and A channels from the imported
        image to compare to our original data. */
     CORRADE_COMPARE_WITH(
-        (Containers::arrayCast<2, const Math::Vector2<UnsignedByte>>(image->pixels().suffix({0, 0, 2}))),
+        (Containers::arrayCast<2, const Math::Vector2<UnsignedByte>>(image->pixels().exceptPrefix({0, 0, 2}))),
         imageViewUnorm,
         /* There are moderately significant compression artifacts */
         (DebugTools::CompareImage{22.0f, 1.039f}));

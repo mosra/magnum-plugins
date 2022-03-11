@@ -520,7 +520,7 @@ void SpirvToolsConverterTest::convertAssemble() {
        only with null-terminated strings */
     {
         using namespace Containers::Literals;
-        converter->setOutputFormat(data.outputFormatAssemble, "spv1.23"_s.except(1));
+        converter->setOutputFormat(data.outputFormatAssemble, "spv1.23"_s.exceptSuffix(1));
     }
 
     /* Otherwise the output will not be roundtrippable */
@@ -575,7 +575,7 @@ void SpirvToolsConverterTest::convertAssembleFile() {
        only with null-terminated strings */
     {
         using namespace Containers::Literals;
-        converter->setOutputFormat(data.outputFormatAssemble, "spv1.23"_s.except(1));
+        converter->setOutputFormat(data.outputFormatAssemble, "spv1.23"_s.exceptSuffix(1));
     }
 
     /* Otherwise the output will not be roundtrippable */

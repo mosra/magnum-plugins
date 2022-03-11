@@ -620,7 +620,7 @@ Containers::Optional<AnimationData> TinyGltfImporter::doAnimation(UnsignedInt id
         std::size_t outputOffset;
         std::tie(src, outputOffset, std::ignore) = view.second;
 
-        Containers::StridedArrayView2D<char> dst{data.suffix(outputOffset),
+        Containers::StridedArrayView2D<char> dst{data.exceptPrefix(outputOffset),
             src.size()};
         Utility::copy(src, dst);
     }
@@ -658,7 +658,7 @@ Containers::Optional<AnimationData> TinyGltfImporter::doAnimation(UnsignedInt id
             const auto inputDataFound = samplerData.find(sampler.input);
             CORRADE_INTERNAL_ASSERT(inputDataFound != samplerData.end());
             const auto keys = Containers::arrayCast<Float>(
-                data.suffix(std::get<1>(inputDataFound->second)).prefix(
+                data.exceptPrefix(std::get<1>(inputDataFound->second)).prefix(
                     std::get<0>(inputDataFound->second).size()[0]*
                     std::get<0>(inputDataFound->second).size()[1]));
 
@@ -683,7 +683,7 @@ Containers::Optional<AnimationData> TinyGltfImporter::doAnimation(UnsignedInt id
             Animation::TrackViewStorage<const Float> track;
             const auto outputDataFound = samplerData.find(sampler.output);
             CORRADE_INTERNAL_ASSERT(outputDataFound != samplerData.end());
-            const auto outputData = data.suffix(std::get<1>(outputDataFound->second))
+            const auto outputData = data.exceptPrefix(std::get<1>(outputDataFound->second))
                 .prefix(std::get<0>(outputDataFound->second).size()[0]*
                         std::get<0>(outputDataFound->second).size()[1]);
             std::size_t& timeTrackUsed = std::get<2>(outputDataFound->second);

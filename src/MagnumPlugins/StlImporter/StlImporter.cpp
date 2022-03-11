@@ -102,7 +102,7 @@ Containers::Optional<MeshData> StlImporter::doMesh(UnsignedInt, UnsignedInt leve
     const bool perFaceToPerVertex = configuration().value<bool>("perFaceToPerVertex");
     CORRADE_INTERNAL_ASSERT(!(level == 1 && perFaceToPerVertex));
 
-    Containers::ArrayView<const char> in = _in->suffix(84);
+    Containers::ArrayView<const char> in = _in->exceptPrefix(84);
 
     /* Make 2D views on input normals and positions */
     const std::size_t triangleCount = in.size()/InputTriangleStride;

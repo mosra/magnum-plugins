@@ -492,9 +492,9 @@ Containers::Array<char> createKeyValueData(Containers::StringView key, Container
     std::size_t offset = 0;
     *reinterpret_cast<UnsignedInt*>(keyValueData.data()) = Utility::Endianness::littleEndian(size);
     offset += sizeof(size);
-    Utility::copy(key, keyValueData.suffix(offset).prefix(key.size()));
+    Utility::copy(key, keyValueData.exceptPrefix(offset).prefix(key.size()));
     offset += key.size() + 1;
-    Utility::copy(value, keyValueData.suffix(offset).prefix(value.size()));
+    Utility::copy(value, keyValueData.exceptPrefix(offset).prefix(value.size()));
 
     return keyValueData;
 }
@@ -511,7 +511,7 @@ void patchKeyValueData(Containers::ArrayView<const char> keyValueData, Container
     CORRADE_INTERNAL_ASSERT(header.kvdByteOffset + keyValueData.size() <= fileData.size());
     CORRADE_INTERNAL_ASSERT(header.kvdByteLength >= keyValueData.size());
     header.kvdByteLength = keyValueData.size();
-    Utility::copy(keyValueData, fileData.suffix(header.kvdByteOffset).prefix(header.kvdByteLength));
+    Utility::copy(keyValueData, fileData.exceptPrefix(header.kvdByteOffset).prefix(header.kvdByteLength));
 
     Utility::Endianness::littleEndianInPlace(header.kvdByteOffset, header.kvdByteLength);
 }
@@ -1448,7 +1448,7 @@ void KtxImporterTest::imageCubeMapLayers() {
 
     for(UnsignedInt i = 0; i != NumLayers; ++i) {
         CORRADE_ITERATION(i);
-        CORRADE_COMPARE_AS(image->data().suffix(i*faceSize).prefix(faceSize), Containers::arrayCast<const char>(FacesRgbData[i]), TestSuite::Compare::Container);
+        CORRADE_COMPARE_AS(image->data().exceptPrefix(i*faceSize).prefix(faceSize), Containers::arrayCast<const char>(FacesRgbData[i]), TestSuite::Compare::Container);
     }
 }
 

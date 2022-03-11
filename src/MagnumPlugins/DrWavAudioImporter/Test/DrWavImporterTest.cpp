@@ -223,7 +223,7 @@ void DrWavImporterTest::zeroSamples() {
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(DRWAVAUDIOIMPORTER_TEST_DIR, "zeroSamples.wav")));
     CORRADE_COMPARE(importer->format(), BufferFormat::MonoFloat);
     CORRADE_COMPARE(importer->frequency(), 44000);
-    CORRADE_VERIFY(importer->data().empty());
+    CORRADE_VERIFY(importer->data().isEmpty());
 }
 
 void DrWavImporterTest::mono8() {

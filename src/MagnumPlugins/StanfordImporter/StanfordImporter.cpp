@@ -142,7 +142,7 @@ std::string extractLine(Containers::ArrayView<const char>& in) {
     for(const char& i: in) if(i == '\n') {
         std::size_t end = &i - in;
         auto out = in.prefix(end);
-        in = in.suffix(end + 1);
+        in = in.exceptPrefix(end + 1);
         return {out.begin(), out.end()};
     }
 
@@ -180,7 +180,7 @@ void StanfordImporter::doOpenData(Containers::Array<char>&& data, const DataFlag
        can't do the full import here because then doImage2D() would need to
        copy the imported data instead anyway (and the uncompressed size is much
        larger). This way it'll also work nicely with a future openMemory(). */
-    if(data.empty()) {
+    if(data.isEmpty()) {
         Error{} << "Trade::StanfordImporter::openData(): the file is empty";
         return;
     }
@@ -662,7 +662,7 @@ Containers::Optional<MeshData> StanfordImporter::doMesh(UnsignedInt, const Unsig
     const bool parsePerFaceAttributes = level == 1 ||
         configuration().value<bool>("perFaceToPerVertex");
 
-    Containers::ArrayView<const char> in = _state->data.suffix(_state->headerSize);
+    Containers::ArrayView<const char> in = _state->data.exceptPrefix(_state->headerSize);
 
     /* Copy all vertex data */
     Containers::Array<char> vertexData;
@@ -671,7 +671,7 @@ Containers::Optional<MeshData> StanfordImporter::doMesh(UnsignedInt, const Unsig
         _state->vertexStride*_state->vertexCount};
         Utility::copy(in.prefix(vertexData.size()), vertexData);
     }
-    in = in.suffix(_state->vertexStride*_state->vertexCount);
+    in = in.exceptPrefix(_state->vertexStride*_state->vertexCount);
 
     /* Parse faces, keeping the original index type */
     Containers::Array<char> faceData;
@@ -709,8 +709,8 @@ Containers::Optional<MeshData> StanfordImporter::doMesh(UnsignedInt, const Unsig
                 src.prefix({_state->faceCount, _state->faceIndicesOffset}),
                 dst.prefix({_state->faceCount, _state->faceIndicesOffset}));
             Utility::copy(
-                src.suffix({0, _state->faceIndicesOffset + faceSizeTypeSize + 3*faceIndexTypeSize}),
-                dst.suffix({0, _state->faceIndicesOffset}));
+                src.exceptPrefix({0, _state->faceIndicesOffset + faceSizeTypeSize + 3*faceIndexTypeSize}),
+                dst.exceptPrefix({0, _state->faceIndicesOffset}));
         }
 
     /* Otherwise reserve optimistically amount for all-triangle faces, and let
@@ -730,11 +730,11 @@ Containers::Optional<MeshData> StanfordImporter::doMesh(UnsignedInt, const Unsig
 
             /* Copy all face attributes that are before the index */
             const Containers::ArrayView<const char> faceDataBeforeIndices = in.prefix(_state->faceIndicesOffset);
-            in = in.suffix(_state->faceIndicesOffset);
+            in = in.exceptPrefix(_state->faceIndicesOffset);
 
             /* Get face size */
             const Containers::ArrayView<const char> faceSizeData = in.prefix(faceSizeTypeSize);
-            in = in.suffix(faceSizeTypeSize);
+            in = in.exceptPrefix(faceSizeTypeSize);
             const UnsignedInt faceSize = extractIndexValue<UnsignedInt>(faceSizeData, _state->faceSizeType, _state->fileFormatNeedsEndianSwapping);
             if(faceSize < 3 || faceSize > 4) {
                 Error() << "Trade::StanfordImporter::mesh(): unsupported face size" << faceSize;
@@ -748,9 +748,9 @@ Containers::Optional<MeshData> StanfordImporter::doMesh(UnsignedInt, const Unsig
             }
 
             const Containers::ArrayView<const char> faceIndexData = in.prefix(faceIndexTypeSize*faceSize);
-            in = in.suffix(faceIndexTypeSize*faceSize);
+            in = in.exceptPrefix(faceIndexTypeSize*faceSize);
             const Containers::ArrayView<const char> faceDataAfterIndices = in.prefix(_state->faceSkip);
-            in = in.suffix(_state->faceSkip);
+            in = in.exceptPrefix(_state->faceSkip);
 
             /* Append either the triangle or the first triangle of the quad */
             Containers::arrayAppend<ArrayAllocator>(indexData,
@@ -852,7 +852,7 @@ Containers::Optional<MeshData> StanfordImporter::doMesh(UnsignedInt, const Unsig
 
     /* Turn per-face attributes into per-vertex, if desired (and if there are
        any) */
-    if(level == 0 && configuration().value<bool>("perFaceToPerVertex") && !faceAttributeData.empty()) {
+    if(level == 0 && configuration().value<bool>("perFaceToPerVertex") && !faceAttributeData.isEmpty()) {
         if(flags() & ImporterFlag::Verbose)
             Debug{} << "Trade::StanfordImporter::mesh(): converting" << faceAttributeData.size() << "per-face attributes to per-vertex";
 

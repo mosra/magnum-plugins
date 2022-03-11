@@ -108,7 +108,7 @@ void StbVorbisImporterTest::zeroSamples() {
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(STBVORBISAUDIOIMPORTER_TEST_DIR, "zeroSamples.ogg")));
     CORRADE_COMPARE(importer->format(), BufferFormat::Mono16);
     CORRADE_COMPARE(importer->frequency(), 96000);
-    CORRADE_VERIFY(importer->data().empty());
+    CORRADE_VERIFY(importer->data().isEmpty());
 }
 
 void StbVorbisImporterTest::mono16() {
