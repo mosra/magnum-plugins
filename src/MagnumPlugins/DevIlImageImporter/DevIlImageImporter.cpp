@@ -83,7 +83,7 @@ void DevIlImageImporter::doOpenData(Containers::Array<char>&& data, DataFlags) {
     _image = image;
 }
 
-void DevIlImageImporter::doOpenFile(const std::string& filename) {
+void DevIlImageImporter::doOpenFile(const Containers::StringView filename) {
     UnsignedInt image;
     ilGenImages(1, &image);
     ilBindImage(image);
@@ -209,4 +209,4 @@ Containers::Optional<ImageData2D> DevIlImageImporter::doImage2D(UnsignedInt id, 
 }}
 
 CORRADE_PLUGIN_REGISTER(DevIlImageImporter, Magnum::Trade::DevIlImageImporter,
-    "cz.mosra.magnum.Trade.AbstractImporter/0.4")
+    "cz.mosra.magnum.Trade.AbstractImporter/0.5")

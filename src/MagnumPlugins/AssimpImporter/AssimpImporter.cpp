@@ -40,7 +40,6 @@
 #include <Corrade/Containers/Pair.h>
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
-#include <Corrade/Utility/DebugStl.h>
 #include <Corrade/Utility/Format.h>
 #include <Corrade/Utility/Path.h>
 #include <Magnum/FileCallback.h>
@@ -551,18 +550,20 @@ void AssimpImporter::doOpenData(Containers::Array<char>&& data, DataFlags) {
     }
 }
 
-void AssimpImporter::doOpenState(const void* state, const std::string& filePath) {
+void AssimpImporter::doOpenState(const void* state, const Containers::StringView filePath) {
     _f.reset(new File);
     _f->scene = static_cast<const aiScene*>(state);
-    _f->filePath.emplace(filePath);
+    _f->filePath.emplace(Containers::String::nullTerminatedGlobalView(filePath));
 
     doOpenData({}, {});
 }
 
-void AssimpImporter::doOpenFile(const std::string& filename) {
+void AssimpImporter::doOpenFile(const Containers::StringView filename) {
     if(!_importer) _importer = createImporter(configuration());
 
     _f.reset(new File);
+    /* Since the slice won't be null terminated, nullTerminatedGlobalView()
+       won't help anything here */
     _f->filePath.emplace(Utility::Path::split(filename).first());
 
     /* File callbacks are set up in doSetFileCallback() */
@@ -585,16 +586,17 @@ Int AssimpImporter::doDefaultScene() const { return _f->scene->mRootNode ? 0 : -
 
 UnsignedInt AssimpImporter::doSceneCount() const { return _f->scene->mRootNode ? 1 : 0; }
 
-Int AssimpImporter::doSceneForName(const std::string& name) {
-    static_cast<void>(name);
+Int AssimpImporter::doSceneForName(const Containers::StringView name) {
     #if ASSIMP_HAS_SCENE_NAME
     if(_f->scene->mRootNode && name == _f->scene->mName.C_Str())
         return 0;
+    #else
+    static_cast<void>(name);
     #endif
     return -1;
 }
 
-std::string AssimpImporter::doSceneName(UnsignedInt) {
+Containers::String AssimpImporter::doSceneName(UnsignedInt) {
     #if ASSIMP_HAS_SCENE_NAME
     return _f->scene->mName.C_Str();
     #else
@@ -798,12 +800,12 @@ UnsignedLong AssimpImporter::doObjectCount() const {
     return _f->nodes.size();
 }
 
-Long AssimpImporter::doObjectForName(const std::string& name) {
+Long AssimpImporter::doObjectForName(const Containers::StringView name) {
     const aiNode* found = _f->scene->mRootNode->FindNode(aiString(name));
     return found ? Long(_f->nodeIndices.at(found)) : -1;
 }
 
-std::string AssimpImporter::doObjectName(const UnsignedLong id) {
+Containers::String AssimpImporter::doObjectName(const UnsignedLong id) {
     return _f->nodes[id]->mName.C_Str();
 }
 
@@ -811,7 +813,7 @@ UnsignedInt AssimpImporter::doCameraCount() const {
     return _f->scene->mNumCameras;
 }
 
-Int AssimpImporter::doCameraForName(const std::string& name) {
+Int AssimpImporter::doCameraForName(const Containers::StringView name) {
     if(!_f->camerasForName) {
         _f->camerasForName.emplace();
         _f->camerasForName->reserve(_f->scene->mNumCameras);
@@ -823,7 +825,7 @@ Int AssimpImporter::doCameraForName(const std::string& name) {
     return found == _f->camerasForName->end() ? -1 : found->second;
 }
 
-std::string AssimpImporter::doCameraName(const UnsignedInt id) {
+Containers::String AssimpImporter::doCameraName(const UnsignedInt id) {
     return _f->scene->mCameras[id]->mName.C_Str();
 }
 
@@ -850,7 +852,7 @@ UnsignedInt AssimpImporter::doLightCount() const {
     return _f->scene->mNumLights;
 }
 
-Int AssimpImporter::doLightForName(const std::string& name) {
+Int AssimpImporter::doLightForName(const Containers::StringView name) {
     if(!_f->lightsForName) {
         _f->lightsForName.emplace();
         _f->lightsForName->reserve(_f->scene->mNumLights);
@@ -862,7 +864,7 @@ Int AssimpImporter::doLightForName(const std::string& name) {
     return found == _f->lightsForName->end() ? -1 : found->second;
 }
 
-std::string AssimpImporter::doLightName(const UnsignedInt id) {
+Containers::String AssimpImporter::doLightName(const UnsignedInt id) {
     return _f->scene->mLights[id]->mName.C_Str();
 }
 
@@ -910,7 +912,7 @@ UnsignedInt AssimpImporter::doMeshCount() const {
     return _f->scene->mNumMeshes;
 }
 
-Int AssimpImporter::doMeshForName(const std::string& name) {
+Int AssimpImporter::doMeshForName(const Containers::StringView name) {
     if(!_f->meshesForName) {
         _f->meshesForName.emplace();
         _f->meshesForName->reserve(_f->scene->mNumMeshes);
@@ -923,7 +925,7 @@ Int AssimpImporter::doMeshForName(const std::string& name) {
     return found == _f->meshesForName->end() ? -1 : found->second;
 }
 
-std::string AssimpImporter::doMeshName(const UnsignedInt id) {
+Containers::String AssimpImporter::doMeshName(const UnsignedInt id) {
     return _f->scene->mMeshes[id]->mName.C_Str();
 }
 
@@ -1194,23 +1196,23 @@ Containers::Optional<MeshData> AssimpImporter::doMesh(const UnsignedInt id, Unsi
         MeshData::ImplicitVertexCount, mesh};
 }
 
-std::string AssimpImporter::doMeshAttributeName(UnsignedShort name) {
+MeshAttribute AssimpImporter::doMeshAttributeForName(const Containers::StringView name) {
+    return _f ? _f->meshAttributesForName[name] : MeshAttribute{};
+}
+
+Containers::String AssimpImporter::doMeshAttributeName(UnsignedShort name) {
     return _f && name < _f->meshAttributeNames.size() ?
         _f->meshAttributeNames[name] : "";
 }
 
-MeshAttribute AssimpImporter::doMeshAttributeForName(const std::string& name) {
-    return _f ? _f->meshAttributesForName[name] : MeshAttribute{};
-}
-
 UnsignedInt AssimpImporter::doMaterialCount() const { return _f->scene->mNumMaterials; }
 
-Int AssimpImporter::doMaterialForName(const std::string& name) {
+Int AssimpImporter::doMaterialForName(const Containers::StringView name) {
     auto found = _f->materialIndicesForName.find(name);
     return found != _f->materialIndicesForName.end() ? found->second : -1;
 }
 
-std::string AssimpImporter::doMaterialName(const UnsignedInt id) {
+Containers::String AssimpImporter::doMaterialName(const UnsignedInt id) {
     const aiMaterial* mat = _f->scene->mMaterials[id];
     aiString name;
     mat->Get(AI_MATKEY_NAME, name);
@@ -1796,7 +1798,7 @@ UnsignedInt AssimpImporter::doAnimationCount() const {
     return _f->scene->mNumAnimations;
 }
 
-Int AssimpImporter::doAnimationForName(const std::string& name) {
+Int AssimpImporter::doAnimationForName(const Containers::StringView name) {
     /* If the animations are merged, don't report any names */
     if(configuration().value<bool>("mergeAnimationClips")) return -1;
 
@@ -1811,7 +1813,7 @@ Int AssimpImporter::doAnimationForName(const std::string& name) {
     return found == _f->animationsForName->end() ? -1 : found->second;
 }
 
-std::string AssimpImporter::doAnimationName(UnsignedInt id) {
+Containers::String AssimpImporter::doAnimationName(UnsignedInt id) {
     /* If the animations are merged, don't report any names */
     if(configuration().value<bool>("mergeAnimationClips")) return {};
     return _f->scene->mAnimations[id]->mName.C_Str();
@@ -2121,7 +2123,7 @@ UnsignedInt AssimpImporter::doSkin3DCount() const {
     return _f->meshesWithBones.size();
 }
 
-Int AssimpImporter::doSkin3DForName(const std::string& name) {
+Int AssimpImporter::doSkin3DForName(const Containers::StringView name) {
     /* If the skins are merged, don't report any names */
     if(_f->mergeSkins) return -1;
 
@@ -2137,7 +2139,7 @@ Int AssimpImporter::doSkin3DForName(const std::string& name) {
     return found == _f->skinsForName->end() ? -1 : found->second;
 }
 
-std::string AssimpImporter::doSkin3DName(const UnsignedInt id) {
+Containers::String AssimpImporter::doSkin3DName(const UnsignedInt id) {
     /* If the skins are merged, don't report any names */
     if(_f->mergeSkins) return {};
     return _f->scene->mMeshes[_f->meshesWithBones[id]]->mName.C_Str();
@@ -2179,4 +2181,4 @@ const void* AssimpImporter::doImporterState() const {
 }}
 
 CORRADE_PLUGIN_REGISTER(AssimpImporter, Magnum::Trade::AssimpImporter,
-    "cz.mosra.magnum.Trade.AbstractImporter/0.4")
+    "cz.mosra.magnum.Trade.AbstractImporter/0.5")

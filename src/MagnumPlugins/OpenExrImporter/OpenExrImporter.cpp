@@ -30,8 +30,8 @@
 #include <Corrade/Containers/GrowableArray.h>
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Utility/Algorithms.h>
-#include <Corrade/Utility/DebugStl.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
+#include <Corrade/Utility/DebugStl.h> /** @todo remove once Configuration is <string>-free */
 #include <Magnum/Trade/ImageData.h>
 #include <Magnum/PixelFormat.h>
 
@@ -650,4 +650,4 @@ Containers::Optional<ImageData3D> OpenExrImporter::doImage3D(UnsignedInt, const 
 }}
 
 CORRADE_PLUGIN_REGISTER(OpenExrImporter, Magnum::Trade::OpenExrImporter,
-    "cz.mosra.magnum.Trade.AbstractImporter/0.4")
+    "cz.mosra.magnum.Trade.AbstractImporter/0.5")

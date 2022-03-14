@@ -498,65 +498,65 @@ class MAGNUM_TINYGLTFIMPORTER_EXPORT TinyGltfImporter: public AbstractImporter {
         MAGNUM_TINYGLTFIMPORTER_LOCAL bool doIsOpened() const override;
 
         MAGNUM_TINYGLTFIMPORTER_LOCAL void doOpenData(Containers::Array<char>&& data, DataFlags dataFlags) override;
-        MAGNUM_TINYGLTFIMPORTER_LOCAL void doOpenFile(const std::string& filename) override;
+        MAGNUM_TINYGLTFIMPORTER_LOCAL void doOpenFile(Containers::StringView filename) override;
         MAGNUM_TINYGLTFIMPORTER_LOCAL void doClose() override;
 
         MAGNUM_TINYGLTFIMPORTER_LOCAL UnsignedInt doAnimationCount() const override;
-        MAGNUM_TINYGLTFIMPORTER_LOCAL std::string doAnimationName(UnsignedInt id) override;
-        MAGNUM_TINYGLTFIMPORTER_LOCAL Int doAnimationForName(const std::string& name) override;
+        MAGNUM_TINYGLTFIMPORTER_LOCAL Containers::String doAnimationName(UnsignedInt id) override;
+        MAGNUM_TINYGLTFIMPORTER_LOCAL Int doAnimationForName(Containers::StringView name) override;
         MAGNUM_TINYGLTFIMPORTER_LOCAL Containers::Optional<AnimationData> doAnimation(UnsignedInt id) override;
 
         MAGNUM_TINYGLTFIMPORTER_LOCAL Containers::Optional<CameraData> doCamera(UnsignedInt id) override;
-        MAGNUM_TINYGLTFIMPORTER_LOCAL Int doCameraForName(const std::string& name) override;
-        MAGNUM_TINYGLTFIMPORTER_LOCAL std::string doCameraName(UnsignedInt id) override;
+        MAGNUM_TINYGLTFIMPORTER_LOCAL Int doCameraForName(Containers::StringView name) override;
+        MAGNUM_TINYGLTFIMPORTER_LOCAL Containers::String doCameraName(UnsignedInt id) override;
         MAGNUM_TINYGLTFIMPORTER_LOCAL UnsignedInt doCameraCount() const override;
 
         MAGNUM_TINYGLTFIMPORTER_LOCAL Containers::Optional<LightData> doLight(UnsignedInt id) override;
-        MAGNUM_TINYGLTFIMPORTER_LOCAL Int doLightForName(const std::string& name) override;
-        MAGNUM_TINYGLTFIMPORTER_LOCAL std::string doLightName(UnsignedInt id) override;
+        MAGNUM_TINYGLTFIMPORTER_LOCAL Int doLightForName(Containers::StringView name) override;
+        MAGNUM_TINYGLTFIMPORTER_LOCAL Containers::String doLightName(UnsignedInt id) override;
         MAGNUM_TINYGLTFIMPORTER_LOCAL UnsignedInt doLightCount() const override;
 
         MAGNUM_TINYGLTFIMPORTER_LOCAL Int doDefaultScene() const override;
 
         MAGNUM_TINYGLTFIMPORTER_LOCAL Containers::Optional<SceneData> doScene(UnsignedInt id) override;
-        MAGNUM_TINYGLTFIMPORTER_LOCAL Int doSceneForName(const std::string& name) override;
-        MAGNUM_TINYGLTFIMPORTER_LOCAL std::string doSceneName(UnsignedInt id) override;
+        MAGNUM_TINYGLTFIMPORTER_LOCAL Int doSceneForName(Containers::StringView name) override;
+        MAGNUM_TINYGLTFIMPORTER_LOCAL Containers::String doSceneName(UnsignedInt id) override;
         MAGNUM_TINYGLTFIMPORTER_LOCAL UnsignedInt doSceneCount() const override;
 
         MAGNUM_TINYGLTFIMPORTER_LOCAL UnsignedLong doObjectCount() const override;
-        MAGNUM_TINYGLTFIMPORTER_LOCAL Long doObjectForName(const std::string& name) override;
-        MAGNUM_TINYGLTFIMPORTER_LOCAL std::string doObjectName(UnsignedLong id) override;
+        MAGNUM_TINYGLTFIMPORTER_LOCAL Long doObjectForName(Containers::StringView name) override;
+        MAGNUM_TINYGLTFIMPORTER_LOCAL Containers::String doObjectName(UnsignedLong id) override;
 
         MAGNUM_TINYGLTFIMPORTER_LOCAL UnsignedInt doSkin3DCount() const override;
-        MAGNUM_TINYGLTFIMPORTER_LOCAL Int doSkin3DForName(const std::string& name) override;
-        MAGNUM_TINYGLTFIMPORTER_LOCAL std::string doSkin3DName(UnsignedInt id) override;
+        MAGNUM_TINYGLTFIMPORTER_LOCAL Int doSkin3DForName(Containers::StringView name) override;
+        MAGNUM_TINYGLTFIMPORTER_LOCAL Containers::String doSkin3DName(UnsignedInt id) override;
         MAGNUM_TINYGLTFIMPORTER_LOCAL Containers::Optional<SkinData3D> doSkin3D(UnsignedInt id) override;
 
         MAGNUM_TINYGLTFIMPORTER_LOCAL UnsignedInt doMeshCount() const override;
-        MAGNUM_TINYGLTFIMPORTER_LOCAL Int doMeshForName(const std::string& name) override;
-        MAGNUM_TINYGLTFIMPORTER_LOCAL std::string doMeshName(UnsignedInt id) override;
+        MAGNUM_TINYGLTFIMPORTER_LOCAL Int doMeshForName(Containers::StringView name) override;
+        MAGNUM_TINYGLTFIMPORTER_LOCAL Containers::String doMeshName(UnsignedInt id) override;
         MAGNUM_TINYGLTFIMPORTER_LOCAL Containers::Optional<MeshData> doMesh(UnsignedInt id, UnsignedInt level) override;
-        MAGNUM_TINYGLTFIMPORTER_LOCAL MeshAttribute doMeshAttributeForName(const std::string& name) override;
-        MAGNUM_TINYGLTFIMPORTER_LOCAL std::string doMeshAttributeName(UnsignedShort name) override;
+        MAGNUM_TINYGLTFIMPORTER_LOCAL MeshAttribute doMeshAttributeForName(Containers::StringView name) override;
+        MAGNUM_TINYGLTFIMPORTER_LOCAL Containers::String doMeshAttributeName(UnsignedShort name) override;
 
         MAGNUM_TINYGLTFIMPORTER_LOCAL bool materialTexture(const char* name, UnsignedInt texture, UnsignedInt texCoord, const tinygltf::Value& extensions, Containers::Array<MaterialAttributeData>& attributes, MaterialAttribute attribute, MaterialAttribute matrixAttribute, MaterialAttribute coordinateAttribute) const;
 
         MAGNUM_TINYGLTFIMPORTER_LOCAL UnsignedInt doMaterialCount() const override;
-        MAGNUM_TINYGLTFIMPORTER_LOCAL Int doMaterialForName(const std::string& name) override;
-        MAGNUM_TINYGLTFIMPORTER_LOCAL std::string doMaterialName(UnsignedInt id) override;
+        MAGNUM_TINYGLTFIMPORTER_LOCAL Int doMaterialForName(Containers::StringView name) override;
+        MAGNUM_TINYGLTFIMPORTER_LOCAL Containers::String doMaterialName(UnsignedInt id) override;
         MAGNUM_TINYGLTFIMPORTER_LOCAL Containers::Optional<MaterialData> doMaterial(UnsignedInt id) override;
 
         MAGNUM_TINYGLTFIMPORTER_LOCAL UnsignedInt doTextureCount() const override;
-        MAGNUM_TINYGLTFIMPORTER_LOCAL Int doTextureForName(const std::string& name) override;
-        MAGNUM_TINYGLTFIMPORTER_LOCAL std::string doTextureName(UnsignedInt id) override;
+        MAGNUM_TINYGLTFIMPORTER_LOCAL Int doTextureForName(Containers::StringView name) override;
+        MAGNUM_TINYGLTFIMPORTER_LOCAL Containers::String doTextureName(UnsignedInt id) override;
         MAGNUM_TINYGLTFIMPORTER_LOCAL Containers::Optional<TextureData> doTexture(UnsignedInt id) override;
 
         MAGNUM_TINYGLTFIMPORTER_LOCAL AbstractImporter* setupOrReuseImporterForImage(UnsignedInt id, const char* errorPrefix);
 
         MAGNUM_TINYGLTFIMPORTER_LOCAL UnsignedInt doImage2DCount() const override;
         MAGNUM_TINYGLTFIMPORTER_LOCAL UnsignedInt doImage2DLevelCount(UnsignedInt id) override;
-        MAGNUM_TINYGLTFIMPORTER_LOCAL Int doImage2DForName(const std::string& name) override;
-        MAGNUM_TINYGLTFIMPORTER_LOCAL std::string doImage2DName(UnsignedInt id) override;
+        MAGNUM_TINYGLTFIMPORTER_LOCAL Int doImage2DForName(Containers::StringView name) override;
+        MAGNUM_TINYGLTFIMPORTER_LOCAL Containers::String doImage2DName(UnsignedInt id) override;
         MAGNUM_TINYGLTFIMPORTER_LOCAL Containers::Optional<ImageData2D> doImage2D(UnsignedInt id, UnsignedInt level) override;
 
         MAGNUM_TINYGLTFIMPORTER_LOCAL const void* doImporterState() const override;

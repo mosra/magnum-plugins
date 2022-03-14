@@ -38,7 +38,6 @@
 #include <Corrade/Containers/Pair.h>
 #include <Corrade/Containers/StaticArray.h>
 #include <Corrade/Containers/String.h>
-#include <Corrade/Containers/StringStl.h>
 #include <Corrade/Containers/StringView.h>
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
@@ -531,11 +530,10 @@ bool CgltfImporter::doIsOpened() const { return !!_d && _d->open; }
 
 void CgltfImporter::doClose() { _d = nullptr; }
 
-void CgltfImporter::doOpenFile(const std::string& filename) {
+void CgltfImporter::doOpenFile(const Containers::StringView filename) {
     _d.reset(new Document);
-    /** @todo once AbstractImporter is <string>-free, consider storing a
-        nullTerminatedGlobalView() here (but the split path is not
-        null-terminated, ugh) */
+    /* Since the slice won't be null terminated, nullTerminatedGlobalView()
+       won't help anything here */
     _d->filePath.emplace(Utility::Path::split(filename).first());
     AbstractImporter::doOpenFile(filename);
 }
@@ -818,7 +816,7 @@ UnsignedInt CgltfImporter::doAnimationCount() const {
     return _d->data->animations_count;
 }
 
-Int CgltfImporter::doAnimationForName(const std::string& name) {
+Int CgltfImporter::doAnimationForName(const Containers::StringView name) {
     /* If the animations are merged, don't report any names */
     if(configuration().value<bool>("mergeAnimationClips")) return -1;
 
@@ -833,7 +831,7 @@ Int CgltfImporter::doAnimationForName(const std::string& name) {
     return found == _d->animationsForName->end() ? -1 : found->second;
 }
 
-std::string CgltfImporter::doAnimationName(UnsignedInt id) {
+Containers::String CgltfImporter::doAnimationName(UnsignedInt id) {
     /* If the animations are merged, don't report any names */
     if(configuration().value<bool>("mergeAnimationClips")) return {};
     return _d->decodeCachedString(_d->data->animations[id].name);
@@ -1182,7 +1180,7 @@ UnsignedInt CgltfImporter::doCameraCount() const {
     return _d->data->cameras_count;
 }
 
-Int CgltfImporter::doCameraForName(const std::string& name) {
+Int CgltfImporter::doCameraForName(const Containers::StringView name) {
     if(!_d->camerasForName) {
         _d->camerasForName.emplace();
         _d->camerasForName->reserve(_d->data->cameras_count);
@@ -1194,7 +1192,7 @@ Int CgltfImporter::doCameraForName(const std::string& name) {
     return found == _d->camerasForName->end() ? -1 : found->second;
 }
 
-std::string CgltfImporter::doCameraName(const UnsignedInt id) {
+Containers::String CgltfImporter::doCameraName(const UnsignedInt id) {
     return _d->decodeCachedString(_d->data->cameras[id].name);
 }
 
@@ -1233,7 +1231,7 @@ UnsignedInt CgltfImporter::doLightCount() const {
     return _d->data->lights_count;
 }
 
-Int CgltfImporter::doLightForName(const std::string& name) {
+Int CgltfImporter::doLightForName(const Containers::StringView name) {
     if(!_d->lightsForName) {
         _d->lightsForName.emplace();
         _d->lightsForName->reserve(_d->data->lights_count);
@@ -1245,7 +1243,7 @@ Int CgltfImporter::doLightForName(const std::string& name) {
     return found == _d->lightsForName->end() ? -1 : found->second;
 }
 
-std::string CgltfImporter::doLightName(const UnsignedInt id) {
+Containers::String CgltfImporter::doLightName(const UnsignedInt id) {
     return _d->decodeCachedString(_d->data->lights[id].name);
 }
 
@@ -1321,7 +1319,7 @@ UnsignedInt CgltfImporter::doSceneCount() const {
     return _d->data->scenes_count;
 }
 
-Int CgltfImporter::doSceneForName(const std::string& name) {
+Int CgltfImporter::doSceneForName(const Containers::StringView name) {
     if(!_d->scenesForName) {
         _d->scenesForName.emplace();
         _d->scenesForName->reserve(_d->data->scenes_count);
@@ -1333,7 +1331,7 @@ Int CgltfImporter::doSceneForName(const std::string& name) {
     return found == _d->scenesForName->end() ? -1 : found->second;
 }
 
-std::string CgltfImporter::doSceneName(const UnsignedInt id) {
+Containers::String CgltfImporter::doSceneName(const UnsignedInt id) {
     return _d->decodeCachedString(_d->data->scenes[id].name);
 }
 
@@ -1627,7 +1625,7 @@ UnsignedLong CgltfImporter::doObjectCount() const {
     return _d->data->nodes_count;
 }
 
-Long CgltfImporter::doObjectForName(const std::string& name) {
+Long CgltfImporter::doObjectForName(const Containers::StringView name) {
     if(!_d->nodesForName) {
         _d->nodesForName.emplace();
         _d->nodesForName->reserve(_d->data->nodes_count);
@@ -1640,7 +1638,7 @@ Long CgltfImporter::doObjectForName(const std::string& name) {
     return found == _d->nodesForName->end() ? -1 : found->second;
 }
 
-std::string CgltfImporter::doObjectName(UnsignedLong id) {
+Containers::String CgltfImporter::doObjectName(UnsignedLong id) {
     return _d->decodeCachedString(_d->data->nodes[id].name);
 }
 
@@ -1648,7 +1646,7 @@ UnsignedInt CgltfImporter::doSkin3DCount() const {
     return _d->data->skins_count;
 }
 
-Int CgltfImporter::doSkin3DForName(const std::string& name) {
+Int CgltfImporter::doSkin3DForName(const Containers::StringView name) {
     if(!_d->skinsForName) {
         _d->skinsForName.emplace();
         _d->skinsForName->reserve(_d->data->skins_count);
@@ -1660,7 +1658,7 @@ Int CgltfImporter::doSkin3DForName(const std::string& name) {
     return found == _d->skinsForName->end() ? -1 : found->second;
 }
 
-std::string CgltfImporter::doSkin3DName(const UnsignedInt id) {
+Containers::String CgltfImporter::doSkin3DName(const UnsignedInt id) {
     return _d->decodeCachedString(_d->data->skins[id].name);
 }
 
@@ -1713,7 +1711,7 @@ UnsignedInt CgltfImporter::doMeshCount() const {
     return _d->meshMap.size();
 }
 
-Int CgltfImporter::doMeshForName(const std::string& name) {
+Int CgltfImporter::doMeshForName(const Containers::StringView name) {
     if(!_d->meshesForName) {
         _d->meshesForName.emplace();
         _d->meshesForName->reserve(_d->data->meshes_count);
@@ -1728,7 +1726,7 @@ Int CgltfImporter::doMeshForName(const std::string& name) {
     return found == _d->meshesForName->end() ? -1 : found->second;
 }
 
-std::string CgltfImporter::doMeshName(const UnsignedInt id) {
+Containers::String CgltfImporter::doMeshName(const UnsignedInt id) {
     /* This returns the same name for all multi-primitive mesh duplicates */
     return _d->decodeCachedString(_d->data->meshes[_d->meshMap[id].first()].name);
 }
@@ -2184,20 +2182,20 @@ Containers::Optional<MeshData> CgltfImporter::doMesh(const UnsignedInt id, Unsig
         vertexCount};
 }
 
-std::string CgltfImporter::doMeshAttributeName(UnsignedShort name) {
-    return _d && name < _d->meshAttributeNames.size() ?
-        _d->meshAttributeNames[name] : "";
+MeshAttribute CgltfImporter::doMeshAttributeForName(const Containers::StringView name) {
+    return _d ? _d->meshAttributesForName[name] : MeshAttribute{};
 }
 
-MeshAttribute CgltfImporter::doMeshAttributeForName(const std::string& name) {
-    return _d ? _d->meshAttributesForName[name] : MeshAttribute{};
+Containers::String CgltfImporter::doMeshAttributeName(UnsignedShort name) {
+    return _d && name < _d->meshAttributeNames.size() ?
+        _d->meshAttributeNames[name] : "";
 }
 
 UnsignedInt CgltfImporter::doMaterialCount() const {
     return _d->data->materials_count;
 }
 
-Int CgltfImporter::doMaterialForName(const std::string& name) {
+Int CgltfImporter::doMaterialForName(const Containers::StringView name) {
     if(!_d->materialsForName) {
         _d->materialsForName.emplace();
         _d->materialsForName->reserve(_d->data->materials_count);
@@ -2209,7 +2207,7 @@ Int CgltfImporter::doMaterialForName(const std::string& name) {
     return found == _d->materialsForName->end() ? -1 : found->second;
 }
 
-std::string CgltfImporter::doMaterialName(const UnsignedInt id) {
+Containers::String CgltfImporter::doMaterialName(const UnsignedInt id) {
     return _d->decodeCachedString(_d->data->materials[id].name);
 }
 
@@ -3079,7 +3077,7 @@ UnsignedInt CgltfImporter::doTextureCount() const {
     return _d->data->textures_count;
 }
 
-Int CgltfImporter::doTextureForName(const std::string& name) {
+Int CgltfImporter::doTextureForName(const Containers::StringView name) {
     if(!_d->texturesForName) {
         _d->texturesForName.emplace();
         _d->texturesForName->reserve(_d->data->textures_count);
@@ -3091,7 +3089,7 @@ Int CgltfImporter::doTextureForName(const std::string& name) {
     return found == _d->texturesForName->end() ? -1 : found->second;
 }
 
-std::string CgltfImporter::doTextureName(const UnsignedInt id) {
+Containers::String CgltfImporter::doTextureName(const UnsignedInt id) {
     return _d->decodeCachedString(_d->data->textures[id].name);
 }
 
@@ -3280,7 +3278,7 @@ UnsignedInt CgltfImporter::doImage2DCount() const {
     return _d->data->images_count;
 }
 
-Int CgltfImporter::doImage2DForName(const std::string& name) {
+Int CgltfImporter::doImage2DForName(const Containers::StringView name) {
     if(!_d->imagesForName) {
         _d->imagesForName.emplace();
         _d->imagesForName->reserve(_d->data->images_count);
@@ -3292,7 +3290,7 @@ Int CgltfImporter::doImage2DForName(const std::string& name) {
     return found == _d->imagesForName->end() ? -1 : found->second;
 }
 
-std::string CgltfImporter::doImage2DName(const UnsignedInt id) {
+Containers::String CgltfImporter::doImage2DName(const UnsignedInt id) {
     return _d->decodeCachedString(_d->data->images[id].name);
 }
 
@@ -3382,4 +3380,4 @@ Containers::Optional<ImageData2D> CgltfImporter::doImage2D(const UnsignedInt id,
 }}
 
 CORRADE_PLUGIN_REGISTER(CgltfImporter, Magnum::Trade::CgltfImporter,
-    "cz.mosra.magnum.Trade.AbstractImporter/0.4")
+    "cz.mosra.magnum.Trade.AbstractImporter/0.5")

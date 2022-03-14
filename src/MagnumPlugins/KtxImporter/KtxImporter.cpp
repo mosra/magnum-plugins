@@ -36,7 +36,7 @@
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/Debug.h>
-#include <Corrade/Utility/DebugStl.h>
+#include <Corrade/Utility/DebugStl.h> /** @todo remove once PluginMetadata is <string>-free */
 #include <Corrade/Utility/Endianness.h>
 #include <Corrade/Utility/EndiannessBatch.h>
 #include <Magnum/PixelFormat.h>
@@ -943,4 +943,4 @@ Containers::Optional<TextureData> KtxImporter::doTexture(UnsignedInt id) {
 }}
 
 CORRADE_PLUGIN_REGISTER(KtxImporter, Magnum::Trade::KtxImporter,
-    "cz.mosra.magnum.Trade.AbstractImporter/0.4")
+    "cz.mosra.magnum.Trade.AbstractImporter/0.5")

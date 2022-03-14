@@ -252,7 +252,7 @@ UnsignedLong PrimitiveImporter::doObjectCount() const {
     return Containers::arraySize(Names);
 }
 
-Long PrimitiveImporter::doObjectForName(const std::string& name) {
+Long PrimitiveImporter::doObjectForName(const Containers::StringView name) {
     /** @todo it's sorted, a reusable binary search utility would be handy
         (not that hard-to-use-correctly STL lower_bound crap) */
     for(std::size_t i = 0; i != Containers::arraySize(Names); ++i)
@@ -260,7 +260,7 @@ Long PrimitiveImporter::doObjectForName(const std::string& name) {
     return -1;
 }
 
-std::string PrimitiveImporter::doObjectName(const UnsignedLong id) {
+Containers::String PrimitiveImporter::doObjectName(const UnsignedLong id) {
     return Names[id];
 }
 
@@ -268,7 +268,7 @@ UnsignedInt PrimitiveImporter::doMeshCount() const {
     return Containers::arraySize(Names);
 }
 
-Int PrimitiveImporter::doMeshForName(const std::string& name) {
+Int PrimitiveImporter::doMeshForName(const Containers::StringView name) {
     /** @todo it's sorted, a reusable binary search utility would be handy
         (not that hard-to-use-correctly STL lower_bound crap) */
     for(std::size_t i = 0; i != Containers::arraySize(Names); ++i)
@@ -276,7 +276,7 @@ Int PrimitiveImporter::doMeshForName(const std::string& name) {
     return -1;
 }
 
-std::string PrimitiveImporter::doMeshName(const UnsignedInt id) {
+Containers::String PrimitiveImporter::doMeshName(const UnsignedInt id) {
     return Names[id];
 }
 
@@ -619,4 +619,4 @@ Containers::Optional<MeshData> PrimitiveImporter::doMesh(UnsignedInt id, Unsigne
 }}
 
 CORRADE_PLUGIN_REGISTER(PrimitiveImporter, Magnum::Trade::PrimitiveImporter,
-    "cz.mosra.magnum.Trade.AbstractImporter/0.4")
+    "cz.mosra.magnum.Trade.AbstractImporter/0.5")

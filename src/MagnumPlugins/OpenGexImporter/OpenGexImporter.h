@@ -271,7 +271,7 @@ class MAGNUM_OPENGEXIMPORTER_EXPORT OpenGexImporter: public AbstractImporter {
 
         MAGNUM_OPENGEXIMPORTER_LOCAL bool doIsOpened() const override;
         MAGNUM_OPENGEXIMPORTER_LOCAL void doOpenData(Containers::Array<char>&& data, DataFlags dataFlags) override;
-        MAGNUM_OPENGEXIMPORTER_LOCAL void doOpenFile(const std::string& filename) override;
+        MAGNUM_OPENGEXIMPORTER_LOCAL void doOpenFile(Containers::StringView filename) override;
         MAGNUM_OPENGEXIMPORTER_LOCAL void doClose() override;
 
         MAGNUM_OPENGEXIMPORTER_LOCAL Int doDefaultScene() const override;
@@ -279,8 +279,8 @@ class MAGNUM_OPENGEXIMPORTER_EXPORT OpenGexImporter: public AbstractImporter {
         MAGNUM_OPENGEXIMPORTER_LOCAL Containers::Optional<SceneData> doScene(UnsignedInt id) override;
 
         MAGNUM_OPENGEXIMPORTER_LOCAL UnsignedLong doObjectCount() const override;
-        MAGNUM_OPENGEXIMPORTER_LOCAL Long doObjectForName(const std::string& name) override;
-        MAGNUM_OPENGEXIMPORTER_LOCAL std::string doObjectName(UnsignedLong id) override;
+        MAGNUM_OPENGEXIMPORTER_LOCAL Long doObjectForName(Containers::StringView name) override;
+        MAGNUM_OPENGEXIMPORTER_LOCAL Containers::String doObjectName(UnsignedLong id) override;
 
         MAGNUM_OPENGEXIMPORTER_LOCAL UnsignedInt doCameraCount() const override;
         MAGNUM_OPENGEXIMPORTER_LOCAL Containers::Optional<CameraData> doCamera(UnsignedInt id) override;
@@ -292,8 +292,8 @@ class MAGNUM_OPENGEXIMPORTER_EXPORT OpenGexImporter: public AbstractImporter {
         MAGNUM_OPENGEXIMPORTER_LOCAL Containers::Optional<MeshData> doMesh(UnsignedInt id, UnsignedInt level) override;
 
         MAGNUM_OPENGEXIMPORTER_LOCAL UnsignedInt doMaterialCount() const override;
-        MAGNUM_OPENGEXIMPORTER_LOCAL Int doMaterialForName(const std::string& name) override;
-        MAGNUM_OPENGEXIMPORTER_LOCAL std::string doMaterialName(UnsignedInt id) override;
+        MAGNUM_OPENGEXIMPORTER_LOCAL Int doMaterialForName(Containers::StringView name) override;
+        MAGNUM_OPENGEXIMPORTER_LOCAL Containers::String doMaterialName(UnsignedInt id) override;
         MAGNUM_OPENGEXIMPORTER_LOCAL Containers::Optional<MaterialData> doMaterial(UnsignedInt id) override;
 
         MAGNUM_OPENGEXIMPORTER_LOCAL UnsignedInt doTextureCount() const override;

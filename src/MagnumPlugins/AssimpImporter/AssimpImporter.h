@@ -498,40 +498,40 @@ class MAGNUM_ASSIMPIMPORTER_EXPORT AssimpImporter: public AbstractImporter {
         MAGNUM_ASSIMPIMPORTER_LOCAL void doSetFileCallback(Containers::Optional<Containers::ArrayView<const char>>(*callback)(const std::string&, InputFileCallbackPolicy, void*), void* userData) override;
 
         MAGNUM_ASSIMPIMPORTER_LOCAL void doOpenData(Containers::Array<char>&& data, DataFlags dataFlags) override;
-        MAGNUM_ASSIMPIMPORTER_LOCAL void doOpenState(const void* state, const std::string& filePath) override;
-        MAGNUM_ASSIMPIMPORTER_LOCAL void doOpenFile(const std::string& filename) override;
+        MAGNUM_ASSIMPIMPORTER_LOCAL void doOpenState(const void* state, Containers::StringView filePath) override;
+        MAGNUM_ASSIMPIMPORTER_LOCAL void doOpenFile(Containers::StringView filename) override;
         MAGNUM_ASSIMPIMPORTER_LOCAL void doClose() override;
 
         MAGNUM_ASSIMPIMPORTER_LOCAL Int doDefaultScene() const override;
         MAGNUM_ASSIMPIMPORTER_LOCAL UnsignedInt doSceneCount() const override;
-        MAGNUM_ASSIMPIMPORTER_LOCAL Int doSceneForName(const std::string& name) override;
-        MAGNUM_ASSIMPIMPORTER_LOCAL std::string doSceneName(UnsignedInt id) override;
+        MAGNUM_ASSIMPIMPORTER_LOCAL Int doSceneForName(Containers::StringView name) override;
+        MAGNUM_ASSIMPIMPORTER_LOCAL Containers::String doSceneName(UnsignedInt id) override;
         MAGNUM_ASSIMPIMPORTER_LOCAL Containers::Optional<SceneData> doScene(UnsignedInt id) override;
 
         MAGNUM_ASSIMPIMPORTER_LOCAL UnsignedLong doObjectCount() const override;
-        MAGNUM_ASSIMPIMPORTER_LOCAL Long doObjectForName(const std::string& name) override;
-        MAGNUM_ASSIMPIMPORTER_LOCAL std::string doObjectName(UnsignedLong id) override;
+        MAGNUM_ASSIMPIMPORTER_LOCAL Long doObjectForName(Containers::StringView name) override;
+        MAGNUM_ASSIMPIMPORTER_LOCAL Containers::String doObjectName(UnsignedLong id) override;
 
         MAGNUM_ASSIMPIMPORTER_LOCAL UnsignedInt doCameraCount() const override;
-        MAGNUM_ASSIMPIMPORTER_LOCAL Int doCameraForName(const std::string& name) override;
-        MAGNUM_ASSIMPIMPORTER_LOCAL std::string doCameraName(UnsignedInt id) override;
+        MAGNUM_ASSIMPIMPORTER_LOCAL Int doCameraForName(Containers::StringView name) override;
+        MAGNUM_ASSIMPIMPORTER_LOCAL Containers::String doCameraName(UnsignedInt id) override;
         MAGNUM_ASSIMPIMPORTER_LOCAL Containers::Optional<CameraData> doCamera(UnsignedInt id) override;
 
         MAGNUM_ASSIMPIMPORTER_LOCAL UnsignedInt doLightCount() const override;
-        MAGNUM_ASSIMPIMPORTER_LOCAL Int doLightForName(const std::string& name) override;
-        MAGNUM_ASSIMPIMPORTER_LOCAL std::string doLightName(UnsignedInt id) override;
+        MAGNUM_ASSIMPIMPORTER_LOCAL Int doLightForName(Containers::StringView name) override;
+        MAGNUM_ASSIMPIMPORTER_LOCAL Containers::String doLightName(UnsignedInt id) override;
         MAGNUM_ASSIMPIMPORTER_LOCAL Containers::Optional<LightData> doLight(UnsignedInt id) override;
 
         MAGNUM_ASSIMPIMPORTER_LOCAL UnsignedInt doMeshCount() const override;
-        MAGNUM_ASSIMPIMPORTER_LOCAL Int doMeshForName(const std::string& name) override;
-        MAGNUM_ASSIMPIMPORTER_LOCAL std::string doMeshName(UnsignedInt id) override;
+        MAGNUM_ASSIMPIMPORTER_LOCAL Int doMeshForName(Containers::StringView name) override;
+        MAGNUM_ASSIMPIMPORTER_LOCAL Containers::String doMeshName(UnsignedInt id) override;
         MAGNUM_ASSIMPIMPORTER_LOCAL Containers::Optional<MeshData> doMesh(UnsignedInt id, UnsignedInt level) override;
-        MAGNUM_ASSIMPIMPORTER_LOCAL MeshAttribute doMeshAttributeForName(const std::string& name) override;
-        MAGNUM_ASSIMPIMPORTER_LOCAL std::string doMeshAttributeName(UnsignedShort name) override;
+        MAGNUM_ASSIMPIMPORTER_LOCAL MeshAttribute doMeshAttributeForName(Containers::StringView name) override;
+        MAGNUM_ASSIMPIMPORTER_LOCAL Containers::String doMeshAttributeName(UnsignedShort name) override;
 
         MAGNUM_ASSIMPIMPORTER_LOCAL UnsignedInt doMaterialCount() const override;
-        MAGNUM_ASSIMPIMPORTER_LOCAL Int doMaterialForName(const std::string& name) override;
-        MAGNUM_ASSIMPIMPORTER_LOCAL std::string doMaterialName(UnsignedInt id) override;
+        MAGNUM_ASSIMPIMPORTER_LOCAL Int doMaterialForName(Containers::StringView name) override;
+        MAGNUM_ASSIMPIMPORTER_LOCAL Containers::String doMaterialName(UnsignedInt id) override;
         MAGNUM_ASSIMPIMPORTER_LOCAL Containers::Optional<MaterialData> doMaterial(UnsignedInt id) override;
 
         MAGNUM_ASSIMPIMPORTER_LOCAL UnsignedInt doTextureCount() const override;
@@ -544,13 +544,13 @@ class MAGNUM_ASSIMPIMPORTER_EXPORT AssimpImporter: public AbstractImporter {
         MAGNUM_ASSIMPIMPORTER_LOCAL Containers::Optional<ImageData2D> doImage2D(UnsignedInt id, UnsignedInt level) override;
 
         MAGNUM_ASSIMPIMPORTER_LOCAL UnsignedInt doAnimationCount() const override;
-        MAGNUM_ASSIMPIMPORTER_LOCAL std::string doAnimationName(UnsignedInt id) override;
-        MAGNUM_ASSIMPIMPORTER_LOCAL Int doAnimationForName(const std::string& name) override;
+        MAGNUM_ASSIMPIMPORTER_LOCAL Containers::String doAnimationName(UnsignedInt id) override;
+        MAGNUM_ASSIMPIMPORTER_LOCAL Int doAnimationForName(Containers::StringView name) override;
         MAGNUM_ASSIMPIMPORTER_LOCAL Containers::Optional<AnimationData> doAnimation(UnsignedInt id) override;
 
         MAGNUM_ASSIMPIMPORTER_LOCAL UnsignedInt doSkin3DCount() const override;
-        MAGNUM_ASSIMPIMPORTER_LOCAL Int doSkin3DForName(const std::string& name) override;
-        MAGNUM_ASSIMPIMPORTER_LOCAL std::string doSkin3DName(UnsignedInt id) override;
+        MAGNUM_ASSIMPIMPORTER_LOCAL Int doSkin3DForName(Containers::StringView name) override;
+        MAGNUM_ASSIMPIMPORTER_LOCAL Containers::String doSkin3DName(UnsignedInt id) override;
         MAGNUM_ASSIMPIMPORTER_LOCAL Containers::Optional<SkinData3D> doSkin3D(UnsignedInt id) override;
 
         MAGNUM_ASSIMPIMPORTER_LOCAL const void* doImporterState() const override;

@@ -156,12 +156,12 @@ class MAGNUM_PRIMITIVEIMPORTER_EXPORT PrimitiveImporter: public AbstractImporter
         MAGNUM_PRIMITIVEIMPORTER_LOCAL Containers::Optional<SceneData> doScene(UnsignedInt id) override;
 
         MAGNUM_PRIMITIVEIMPORTER_LOCAL UnsignedLong doObjectCount() const override;
-        MAGNUM_PRIMITIVEIMPORTER_LOCAL Long doObjectForName(const std::string& name) override;
-        MAGNUM_PRIMITIVEIMPORTER_LOCAL std::string doObjectName(UnsignedLong id) override;
+        MAGNUM_PRIMITIVEIMPORTER_LOCAL Long doObjectForName(Containers::StringView name) override;
+        MAGNUM_PRIMITIVEIMPORTER_LOCAL Containers::String doObjectName(UnsignedLong id) override;
 
         MAGNUM_PRIMITIVEIMPORTER_LOCAL UnsignedInt doMeshCount() const override;
-        MAGNUM_PRIMITIVEIMPORTER_LOCAL Int doMeshForName(const std::string& name) override;
-        MAGNUM_PRIMITIVEIMPORTER_LOCAL std::string doMeshName(UnsignedInt id) override;
+        MAGNUM_PRIMITIVEIMPORTER_LOCAL Int doMeshForName(Containers::StringView name) override;
+        MAGNUM_PRIMITIVEIMPORTER_LOCAL Containers::String doMeshName(UnsignedInt id) override;
         MAGNUM_PRIMITIVEIMPORTER_LOCAL Containers::Optional<MeshData> doMesh(UnsignedInt id, UnsignedInt level) override;
 
         bool _opened = false;

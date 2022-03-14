@@ -32,7 +32,7 @@
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
-#include <Corrade/Utility/DebugStl.h>
+#include <Corrade/Utility/DebugStl.h> /** @todo remove once <string> is gone here */
 #include <Corrade/Utility/EndiannessBatch.h>
 #include <Corrade/Utility/String.h>
 #include <Magnum/Mesh.h>
@@ -878,16 +878,16 @@ Containers::Optional<MeshData> StanfordImporter::doMesh(UnsignedInt, const Unsig
     }
 }
 
-std::string StanfordImporter::doMeshAttributeName(UnsignedShort name) {
-    return _state && name < _state->attributeNames.size() ?
-        _state->attributeNames[name] : "";
+MeshAttribute StanfordImporter::doMeshAttributeForName(const Containers::StringView name) {
+    return _state ? _state->attributeNameMap[name] : MeshAttribute{};
 }
 
-MeshAttribute StanfordImporter::doMeshAttributeForName(const std::string& name) {
-    return _state ? _state->attributeNameMap[name] : MeshAttribute{};
+Containers::String StanfordImporter::doMeshAttributeName(UnsignedShort name) {
+    return _state && name < _state->attributeNames.size() ?
+        _state->attributeNames[name] : "";
 }
 
 }}
 
 CORRADE_PLUGIN_REGISTER(StanfordImporter, Magnum::Trade::StanfordImporter,
-    "cz.mosra.magnum.Trade.AbstractImporter/0.4")
+    "cz.mosra.magnum.Trade.AbstractImporter/0.5")

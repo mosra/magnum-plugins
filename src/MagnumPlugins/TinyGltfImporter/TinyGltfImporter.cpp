@@ -39,7 +39,7 @@
 #include <Corrade/Containers/StaticArray.h>
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
-#include <Corrade/Utility/DebugStl.h>
+#include <Corrade/Utility/DebugStl.h> /* for tinygltf errors, attribute names... */
 #include <Corrade/Utility/Path.h>
 #include <Corrade/Utility/String.h>
 #include <Magnum/FileCallback.h>
@@ -273,11 +273,10 @@ bool TinyGltfImporter::doIsOpened() const { return !!_d && _d->open; }
 
 void TinyGltfImporter::doClose() { _d = nullptr; }
 
-void TinyGltfImporter::doOpenFile(const std::string& filename) {
+void TinyGltfImporter::doOpenFile(const Containers::StringView filename) {
     _d.reset(new Document);
-    /** @todo once AbstractImporter is <string>-free, consider storing a
-        nullTerminatedGlobalView() here (but the split path is not
-        null-terminated, ugh) */
+    /* Since the slice won't be null terminated, nullTerminatedGlobalView()
+       won't help anything here */
     _d->filePath.emplace(Utility::Path::split(filename).first());
     AbstractImporter::doOpenFile(filename);
 }
@@ -489,7 +488,7 @@ UnsignedInt TinyGltfImporter::doCameraCount() const {
     return _d->model.cameras.size();
 }
 
-Int TinyGltfImporter::doCameraForName(const std::string& name) {
+Int TinyGltfImporter::doCameraForName(const Containers::StringView name) {
     if(!_d->camerasForName) {
         _d->camerasForName.emplace();
         _d->camerasForName->reserve(_d->model.cameras.size());
@@ -501,7 +500,7 @@ Int TinyGltfImporter::doCameraForName(const std::string& name) {
     return found == _d->camerasForName->end() ? -1 : found->second;
 }
 
-std::string TinyGltfImporter::doCameraName(const UnsignedInt id) {
+Containers::String TinyGltfImporter::doCameraName(const UnsignedInt id) {
     return _d->model.cameras[id].name;
 }
 
@@ -513,7 +512,7 @@ UnsignedInt TinyGltfImporter::doAnimationCount() const {
     return _d->model.animations.size();
 }
 
-Int TinyGltfImporter::doAnimationForName(const std::string& name) {
+Int TinyGltfImporter::doAnimationForName(const Containers::StringView name) {
     /* If the animations are merged, don't report any names */
     if(configuration().value<bool>("mergeAnimationClips")) return -1;
 
@@ -528,7 +527,7 @@ Int TinyGltfImporter::doAnimationForName(const std::string& name) {
     return found == _d->animationsForName->end() ? -1 : found->second;
 }
 
-std::string TinyGltfImporter::doAnimationName(UnsignedInt id) {
+Containers::String TinyGltfImporter::doAnimationName(UnsignedInt id) {
     /* If the animations are merged, don't report any names */
     if(configuration().value<bool>("mergeAnimationClips")) return {};
     return _d->model.animations[id].name;
@@ -874,7 +873,7 @@ UnsignedInt TinyGltfImporter::doLightCount() const {
     return _d->model.lights.size();
 }
 
-Int TinyGltfImporter::doLightForName(const std::string& name) {
+Int TinyGltfImporter::doLightForName(const Containers::StringView name) {
     if(!_d->lightsForName) {
         _d->lightsForName.emplace();
         _d->lightsForName->reserve(_d->model.lights.size());
@@ -886,7 +885,7 @@ Int TinyGltfImporter::doLightForName(const std::string& name) {
     return found == _d->lightsForName->end() ? -1 : found->second;
 }
 
-std::string TinyGltfImporter::doLightName(const UnsignedInt id) {
+Containers::String TinyGltfImporter::doLightName(const UnsignedInt id) {
     return _d->model.lights[id].name;
 }
 
@@ -970,7 +969,7 @@ Int TinyGltfImporter::doDefaultScene() const {
 
 UnsignedInt TinyGltfImporter::doSceneCount() const { return _d->model.scenes.size(); }
 
-Int TinyGltfImporter::doSceneForName(const std::string& name) {
+Int TinyGltfImporter::doSceneForName(const Containers::StringView name) {
     if(!_d->scenesForName) {
         _d->scenesForName.emplace();
         _d->scenesForName->reserve(_d->model.scenes.size());
@@ -982,7 +981,7 @@ Int TinyGltfImporter::doSceneForName(const std::string& name) {
     return found == _d->scenesForName->end() ? -1 : found->second;
 }
 
-std::string TinyGltfImporter::doSceneName(const UnsignedInt id) {
+Containers::String TinyGltfImporter::doSceneName(const UnsignedInt id) {
     return _d->model.scenes[id].name;
 }
 
@@ -1331,7 +1330,7 @@ UnsignedLong TinyGltfImporter::doObjectCount() const {
     return _d->model.nodes.size();
 }
 
-Long TinyGltfImporter::doObjectForName(const std::string& name) {
+Long TinyGltfImporter::doObjectForName(const Containers::StringView name) {
     if(!_d->nodesForName) {
         _d->nodesForName.emplace();
         _d->nodesForName->reserve(_d->model.nodes.size());
@@ -1344,7 +1343,7 @@ Long TinyGltfImporter::doObjectForName(const std::string& name) {
     return found == _d->nodesForName->end() ? -1 : found->second;
 }
 
-std::string TinyGltfImporter::doObjectName(UnsignedLong id) {
+Containers::String TinyGltfImporter::doObjectName(UnsignedLong id) {
     return _d->model.nodes[id].name;
 }
 
@@ -1352,7 +1351,7 @@ UnsignedInt TinyGltfImporter::doSkin3DCount() const {
     return _d->model.skins.size();
 }
 
-Int TinyGltfImporter::doSkin3DForName(const std::string& name) {
+Int TinyGltfImporter::doSkin3DForName(const Containers::StringView name) {
     if(!_d->skinsForName) {
         _d->skinsForName.emplace();
         _d->skinsForName->reserve(_d->model.skins.size());
@@ -1364,7 +1363,7 @@ Int TinyGltfImporter::doSkin3DForName(const std::string& name) {
     return found == _d->skinsForName->end() ? -1 : found->second;
 }
 
-std::string TinyGltfImporter::doSkin3DName(const UnsignedInt id) {
+Containers::String TinyGltfImporter::doSkin3DName(const UnsignedInt id) {
     return _d->model.skins[id].name;
 }
 
@@ -1414,7 +1413,7 @@ UnsignedInt TinyGltfImporter::doMeshCount() const {
     return _d->meshMap.size();
 }
 
-Int TinyGltfImporter::doMeshForName(const std::string& name) {
+Int TinyGltfImporter::doMeshForName(const Containers::StringView name) {
     if(!_d->meshesForName) {
         _d->meshesForName.emplace();
         _d->meshesForName->reserve(_d->model.meshes.size());
@@ -1429,7 +1428,7 @@ Int TinyGltfImporter::doMeshForName(const std::string& name) {
     return found == _d->meshesForName->end() ? -1 : found->second;
 }
 
-std::string TinyGltfImporter::doMeshName(const UnsignedInt id) {
+Containers::String TinyGltfImporter::doMeshName(const UnsignedInt id) {
     /* This returns the same name for all multi-primitive mesh duplicates */
     return _d->model.meshes[_d->meshMap[id].first].name;
 }
@@ -1843,20 +1842,20 @@ Containers::Optional<MeshData> TinyGltfImporter::doMesh(const UnsignedInt id, Un
         vertexCount, &mesh};
 }
 
-std::string TinyGltfImporter::doMeshAttributeName(UnsignedShort name) {
-    return _d && name < _d->meshAttributeNames.size() ?
-        _d->meshAttributeNames[name] : "";
+MeshAttribute TinyGltfImporter::doMeshAttributeForName(const Containers::StringView name) {
+    return _d ? _d->meshAttributesForName[name] : MeshAttribute{};
 }
 
-MeshAttribute TinyGltfImporter::doMeshAttributeForName(const std::string& name) {
-    return _d ? _d->meshAttributesForName[name] : MeshAttribute{};
+Containers::String TinyGltfImporter::doMeshAttributeName(UnsignedShort name) {
+    return _d && name < _d->meshAttributeNames.size() ?
+        _d->meshAttributeNames[name] : "";
 }
 
 UnsignedInt TinyGltfImporter::doMaterialCount() const {
     return _d->model.materials.size();
 }
 
-Int TinyGltfImporter::doMaterialForName(const std::string& name) {
+Int TinyGltfImporter::doMaterialForName(const Containers::StringView name) {
     if(!_d->materialsForName) {
         _d->materialsForName.emplace();
         _d->materialsForName->reserve(_d->model.materials.size());
@@ -1868,7 +1867,7 @@ Int TinyGltfImporter::doMaterialForName(const std::string& name) {
     return found == _d->materialsForName->end() ? -1 : found->second;
 }
 
-std::string TinyGltfImporter::doMaterialName(const UnsignedInt id) {
+Containers::String TinyGltfImporter::doMaterialName(const UnsignedInt id) {
     return _d->model.materials[id].name;
 }
 
@@ -2349,7 +2348,7 @@ UnsignedInt TinyGltfImporter::doTextureCount() const {
     return _d->model.textures.size();
 }
 
-Int TinyGltfImporter::doTextureForName(const std::string& name) {
+Int TinyGltfImporter::doTextureForName(const Containers::StringView name) {
     if(!_d->texturesForName) {
         _d->texturesForName.emplace();
         _d->texturesForName->reserve(_d->model.textures.size());
@@ -2361,7 +2360,7 @@ Int TinyGltfImporter::doTextureForName(const std::string& name) {
     return found == _d->texturesForName->end() ? -1 : found->second;
 }
 
-std::string TinyGltfImporter::doTextureName(const UnsignedInt id) {
+Containers::String TinyGltfImporter::doTextureName(const UnsignedInt id) {
     return _d->model.textures[id].name;
 }
 
@@ -2521,7 +2520,7 @@ UnsignedInt TinyGltfImporter::doImage2DCount() const {
     return _d->model.images.size();
 }
 
-Int TinyGltfImporter::doImage2DForName(const std::string& name) {
+Int TinyGltfImporter::doImage2DForName(const Containers::StringView name) {
     if(!_d->imagesForName) {
         _d->imagesForName.emplace();
         _d->imagesForName->reserve(_d->model.images.size());
@@ -2533,7 +2532,7 @@ Int TinyGltfImporter::doImage2DForName(const std::string& name) {
     return found == _d->imagesForName->end() ? -1 : found->second;
 }
 
-std::string TinyGltfImporter::doImage2DName(const UnsignedInt id) {
+Containers::String TinyGltfImporter::doImage2DName(const UnsignedInt id) {
     return _d->model.images[id].name;
 }
 
@@ -2626,4 +2625,4 @@ const void* TinyGltfImporter::doImporterState() const {
 }}
 
 CORRADE_PLUGIN_REGISTER(TinyGltfImporter, Magnum::Trade::TinyGltfImporter,
-    "cz.mosra.magnum.Trade.AbstractImporter/0.4")
+    "cz.mosra.magnum.Trade.AbstractImporter/0.5")

@@ -34,9 +34,9 @@
 #include <Corrade/Containers/GrowableArray.h>
 #include <Corrade/Containers/Pair.h>
 #include <Corrade/Containers/String.h>
-#include <Corrade/Containers/StringStl.h> /** @todo remove once AbstractImporter is <string>-free */
+#include <Corrade/Containers/StringStl.h> /** @todo remove once OpenDdl is <string>-free */
 #include <Corrade/Utility/Algorithms.h>
-#include <Corrade/Utility/DebugStl.h>
+#include <Corrade/Utility/DebugStl.h> /** @todo remove once OpenDdl is <string>-free */
 #include <Corrade/Utility/Path.h>
 #include <Magnum/Mesh.h>
 #include <Magnum/Math/Matrix4.h>
@@ -230,7 +230,7 @@ void OpenGexImporter::doOpenData(Containers::Array<char>&& data, DataFlags) {
     _d = std::move(d);
 }
 
-void OpenGexImporter::doOpenFile(const std::string& filename) {
+void OpenGexImporter::doOpenFile(const Containers::StringView filename) {
     /* Make doOpenData() do the thing */
     AbstractImporter::doOpenFile(filename);
 
@@ -555,12 +555,12 @@ UnsignedLong OpenGexImporter::doObjectCount() const {
     return _d->nodes.size();
 }
 
-Long OpenGexImporter::doObjectForName(const std::string& name) {
+Long OpenGexImporter::doObjectForName(const Containers::StringView name) {
     const auto found = _d->nodesForName.find(name);
     return found == _d->nodesForName.end() ? -1 : found->second;
 }
 
-std::string OpenGexImporter::doObjectName(const UnsignedLong id) {
+Containers::String OpenGexImporter::doObjectName(const UnsignedLong id) {
     const auto name = _d->nodes[id].findFirstChildOf(OpenGex::Name);
     return name ? name->firstChild().as<std::string>() : "";
 }
@@ -864,12 +864,12 @@ Containers::Optional<MeshData> OpenGexImporter::doMesh(const UnsignedInt id, Uns
 
 UnsignedInt OpenGexImporter::doMaterialCount() const { return _d->materials.size(); }
 
-Int OpenGexImporter::doMaterialForName(const std::string& name) {
+Int OpenGexImporter::doMaterialForName(const Containers::StringView name) {
     const auto found = _d->materialsForName.find(name);
     return found == _d->materialsForName.end() ? -1 : found->second;
 }
 
-std::string OpenGexImporter::doMaterialName(const UnsignedInt id) {
+Containers::String OpenGexImporter::doMaterialName(const UnsignedInt id) {
     const auto name = _d->materials[id].findFirstChildOf(OpenGex::Name);
     return name ? name->firstChild().as<std::string>() : "";
 }
@@ -988,4 +988,4 @@ const void* OpenGexImporter::doImporterState() const {
 }}
 
 CORRADE_PLUGIN_REGISTER(OpenGexImporter, Magnum::Trade::OpenGexImporter,
-    "cz.mosra.magnum.Trade.AbstractImporter/0.4")
+    "cz.mosra.magnum.Trade.AbstractImporter/0.5")
