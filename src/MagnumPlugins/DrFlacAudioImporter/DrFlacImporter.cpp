@@ -28,6 +28,7 @@
 
 #include <Corrade/Containers/ScopeGuard.h>
 #include <Corrade/Utility/Assert.h>
+#include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/Debug.h>
 #include <Corrade/Utility/Endianness.h>
 
@@ -155,7 +156,7 @@ UnsignedInt DrFlacImporter::doFrequency() const { return _frequency; }
 
 Containers::Array<char> DrFlacImporter::doData() {
     Containers::Array<char> copy{NoInit, _data->size()};
-    std::copy(_data->begin(), _data->end(), copy.begin());
+    Utility::copy(*_data, copy);
     return copy;
 }
 
