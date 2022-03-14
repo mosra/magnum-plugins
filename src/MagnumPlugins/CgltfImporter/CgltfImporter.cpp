@@ -516,7 +516,7 @@ CgltfImporter::CgltfImporter() {
     fillDefaultConfiguration(configuration());
 }
 
-CgltfImporter::CgltfImporter(PluginManager::AbstractManager& manager, const std::string& plugin): AbstractImporter{manager, plugin} {}
+CgltfImporter::CgltfImporter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin): AbstractImporter{manager, plugin} {}
 
 CgltfImporter::CgltfImporter(PluginManager::Manager<AbstractImporter>& manager): AbstractImporter{manager} {
     /** @todo horrible workaround, fix this properly */

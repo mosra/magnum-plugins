@@ -139,7 +139,7 @@ class MAGNUM_PRIMITIVEIMPORTER_EXPORT PrimitiveImporter: public AbstractImporter
            whole configuration in it (ugh) */
 
         /** @brief Plugin manager constructor */
-        explicit PrimitiveImporter(PluginManager::AbstractManager& manager, const std::string& plugin);
+        explicit PrimitiveImporter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin);
 
         ~PrimitiveImporter();
 

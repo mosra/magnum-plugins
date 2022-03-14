@@ -265,7 +265,7 @@ to edit the configuration values.
 class MAGNUM_SPIRVTOOLSSHADERCONVERTER_EXPORT SpirvToolsConverter: public AbstractConverter {
     public:
         /** @brief Plugin manager constructor */
-        explicit SpirvToolsConverter(PluginManager::AbstractManager& manager, const std::string& plugin);
+        explicit SpirvToolsConverter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin);
 
     private:
         MAGNUM_SPIRVTOOLSSHADERCONVERTER_LOCAL ConverterFeatures doFeatures() const override;

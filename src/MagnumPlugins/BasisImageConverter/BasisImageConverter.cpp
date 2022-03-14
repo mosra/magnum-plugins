@@ -396,8 +396,8 @@ BasisImageConverter::BasisImageConverter(Format format): _format{format} {
        the convertToData() function */
 }
 
-BasisImageConverter::BasisImageConverter(PluginManager::AbstractManager& manager, const std::string& plugin): AbstractImageConverter{manager, plugin} {
-    if(plugin == "BasisKtxImageConverter")
+BasisImageConverter::BasisImageConverter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin): AbstractImageConverter{manager, plugin} {
+    if(plugin == "BasisKtxImageConverter"_s)
         _format = Format::Ktx;
     else
         _format = {}; /* Overridable by openFile() */

@@ -222,7 +222,7 @@ target_link_libraries(your-application PRIVATE Threads::Threads)
 class MAGNUM_OPENEXRIMAGECONVERTER_EXPORT OpenExrImageConverter: public AbstractImageConverter {
     public:
         /** @brief Plugin manager constructor */
-        explicit OpenExrImageConverter(PluginManager::AbstractManager& manager, const std::string& plugin);
+        explicit OpenExrImageConverter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin);
 
     private:
         MAGNUM_OPENEXRIMAGECONVERTER_LOCAL ImageConverterFeatures doFeatures() const override;

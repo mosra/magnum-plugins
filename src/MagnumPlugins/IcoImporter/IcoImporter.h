@@ -109,7 +109,7 @@ class MAGNUM_ICOIMPORTER_EXPORT IcoImporter: public AbstractImporter {
         explicit IcoImporter();
 
         /** @brief Plugin manager constructor */
-        explicit IcoImporter(PluginManager::AbstractManager& manager, const std::string& plugin);
+        explicit IcoImporter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin);
 
         ~IcoImporter();
 

@@ -36,7 +36,7 @@
 
 namespace Magnum { namespace Trade {
 
-StanfordSceneConverter::StanfordSceneConverter(PluginManager::AbstractManager& manager, const std::string& plugin): AbstractSceneConverter{manager, plugin} {}
+StanfordSceneConverter::StanfordSceneConverter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin): AbstractSceneConverter{manager, plugin} {}
 
 StanfordSceneConverter::~StanfordSceneConverter() = default;
 

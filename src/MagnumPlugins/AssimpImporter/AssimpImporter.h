@@ -483,7 +483,7 @@ class MAGNUM_ASSIMPIMPORTER_EXPORT AssimpImporter: public AbstractImporter {
         explicit AssimpImporter(PluginManager::Manager<AbstractImporter>& manager);
 
         /** @brief Plugin manager constructor */
-        explicit AssimpImporter(PluginManager::AbstractManager& manager, const std::string& plugin);
+        explicit AssimpImporter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin);
 
         ~AssimpImporter();
 

@@ -49,7 +49,7 @@ void DevIlImageImporter::initialize() {
     ilInit();
 }
 
-DevIlImageImporter::DevIlImageImporter(PluginManager::AbstractManager& manager, const std::string& plugin): AbstractImporter{manager, plugin} {}
+DevIlImageImporter::DevIlImageImporter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin): AbstractImporter{manager, plugin} {}
 
 DevIlImageImporter::~DevIlImageImporter() { close(); }
 

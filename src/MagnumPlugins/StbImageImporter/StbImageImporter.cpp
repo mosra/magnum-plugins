@@ -64,7 +64,7 @@ StbImageImporter::StbImageImporter() {
     configuration().setValue("forceChannelCount", 0);
 }
 
-StbImageImporter::StbImageImporter(PluginManager::AbstractManager& manager, const std::string& plugin): AbstractImporter{manager, plugin} {}
+StbImageImporter::StbImageImporter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin): AbstractImporter{manager, plugin} {}
 
 StbImageImporter::~StbImageImporter() = default;
 

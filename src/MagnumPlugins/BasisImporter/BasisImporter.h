@@ -356,7 +356,7 @@ class MAGNUM_BASISIMPORTER_EXPORT BasisImporter: public AbstractImporter {
         explicit BasisImporter();
 
         /** @brief Plugin manager constructor */
-        explicit BasisImporter(PluginManager::AbstractManager& manager, const std::string& plugin);
+        explicit BasisImporter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin);
 
         ~BasisImporter();
 

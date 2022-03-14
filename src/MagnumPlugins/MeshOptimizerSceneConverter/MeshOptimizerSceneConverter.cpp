@@ -41,7 +41,7 @@
 
 namespace Magnum { namespace Trade {
 
-MeshOptimizerSceneConverter::MeshOptimizerSceneConverter(PluginManager::AbstractManager& manager, const std::string& plugin): AbstractSceneConverter{manager, plugin} {}
+MeshOptimizerSceneConverter::MeshOptimizerSceneConverter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin): AbstractSceneConverter{manager, plugin} {}
 
 MeshOptimizerSceneConverter::~MeshOptimizerSceneConverter() = default;
 

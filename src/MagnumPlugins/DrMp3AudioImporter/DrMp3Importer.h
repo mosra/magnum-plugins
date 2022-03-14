@@ -123,7 +123,7 @@ class MAGNUM_DRMP3AUDIOIMPORTER_EXPORT DrMp3Importer: public AbstractImporter {
         explicit DrMp3Importer();
 
         /** @brief Plugin manager constructor */
-        explicit DrMp3Importer(PluginManager::AbstractManager& manager, const std::string& plugin);
+        explicit DrMp3Importer(PluginManager::AbstractManager& manager, const Containers::StringView& plugin);
 
     private:
         MAGNUM_DRMP3AUDIOIMPORTER_LOCAL ImporterFeatures doFeatures() const override;

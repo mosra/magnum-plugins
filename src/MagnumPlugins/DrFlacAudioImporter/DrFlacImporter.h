@@ -132,7 +132,7 @@ class MAGNUM_DRFLACAUDIOIMPORTER_EXPORT DrFlacImporter: public AbstractImporter 
         explicit DrFlacImporter();
 
         /** @brief Plugin manager constructor */
-        explicit DrFlacImporter(PluginManager::AbstractManager& manager, const std::string& plugin);
+        explicit DrFlacImporter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin);
 
     private:
         MAGNUM_DRFLACAUDIOIMPORTER_LOCAL ImporterFeatures doFeatures() const override;

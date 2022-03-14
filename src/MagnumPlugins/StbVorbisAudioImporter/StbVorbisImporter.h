@@ -122,7 +122,7 @@ class MAGNUM_STBVORBISAUDIOIMPORTER_EXPORT StbVorbisImporter: public AbstractImp
         explicit StbVorbisImporter();
 
         /** @brief Plugin manager constructor */
-        explicit StbVorbisImporter(PluginManager::AbstractManager& manager, const std::string& plugin);
+        explicit StbVorbisImporter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin);
 
     private:
         MAGNUM_STBVORBISAUDIOIMPORTER_LOCAL ImporterFeatures doFeatures() const override;

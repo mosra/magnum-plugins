@@ -38,7 +38,7 @@ namespace Magnum { namespace Audio {
 
 Faad2Importer::Faad2Importer() = default;
 
-Faad2Importer::Faad2Importer(PluginManager::AbstractManager& manager, const std::string& plugin): AbstractImporter{manager, plugin} {}
+Faad2Importer::Faad2Importer(PluginManager::AbstractManager& manager, const Containers::StringView& plugin): AbstractImporter{manager, plugin} {}
 
 ImporterFeatures Faad2Importer::doFeatures() const { return ImporterFeature::OpenData; }
 

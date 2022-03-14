@@ -279,7 +279,7 @@ struct KtxImporter::File {
     Containers::Array<Containers::Array<LevelData>> imageData;
 };
 
-KtxImporter::KtxImporter(PluginManager::AbstractManager& manager, const std::string& plugin): AbstractImporter{manager, plugin} {}
+KtxImporter::KtxImporter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin): AbstractImporter{manager, plugin} {}
 
 KtxImporter::~KtxImporter() = default;
 

@@ -78,7 +78,7 @@ Containers::Array<char> convert32PCM(const Containers::Array<char>& container, c
 
 DrFlacImporter::DrFlacImporter() = default;
 
-DrFlacImporter::DrFlacImporter(PluginManager::AbstractManager& manager, const std::string& plugin): AbstractImporter{manager, plugin} {}
+DrFlacImporter::DrFlacImporter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin): AbstractImporter{manager, plugin} {}
 
 ImporterFeatures DrFlacImporter::doFeatures() const { return ImporterFeature::OpenData; }
 

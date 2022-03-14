@@ -449,7 +449,7 @@ class MAGNUM_CGLTFIMPORTER_EXPORT CgltfImporter: public AbstractImporter {
         explicit CgltfImporter(PluginManager::Manager<AbstractImporter>& manager);
 
         /** @brief Plugin manager constructor */
-        explicit CgltfImporter(PluginManager::AbstractManager& manager, const std::string& plugin);
+        explicit CgltfImporter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin);
 
         ~CgltfImporter();
 

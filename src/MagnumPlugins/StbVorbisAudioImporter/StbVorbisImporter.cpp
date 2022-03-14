@@ -27,6 +27,7 @@
 
 #include "StbVorbisImporter.h"
 
+#include <cstdlib> /* std::free() */
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/Assert.h>
 #include <Corrade/Utility/Debug.h>
@@ -39,7 +40,7 @@ namespace Magnum { namespace Audio {
 
 StbVorbisImporter::StbVorbisImporter() = default;
 
-StbVorbisImporter::StbVorbisImporter(PluginManager::AbstractManager& manager, const std::string& plugin): AbstractImporter{manager, plugin} {}
+StbVorbisImporter::StbVorbisImporter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin): AbstractImporter{manager, plugin} {}
 
 ImporterFeatures StbVorbisImporter::doFeatures() const { return ImporterFeature::OpenData; }
 

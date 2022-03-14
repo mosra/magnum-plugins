@@ -53,7 +53,7 @@ class HarfBuzzLayouter: public AbstractLayouter {
 
 HarfBuzzFont::HarfBuzzFont(): hbFont(nullptr) {}
 
-HarfBuzzFont::HarfBuzzFont(PluginManager::AbstractManager& manager, const std::string& plugin): FreeTypeFont{manager, plugin}, hbFont(nullptr) {}
+HarfBuzzFont::HarfBuzzFont(PluginManager::AbstractManager& manager, const Containers::StringView& plugin): FreeTypeFont{manager, plugin}, hbFont(nullptr) {}
 
 HarfBuzzFont::~HarfBuzzFont() { close(); }
 

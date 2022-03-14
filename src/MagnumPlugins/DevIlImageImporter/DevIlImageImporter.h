@@ -232,7 +232,7 @@ class MAGNUM_DEVILIMAGEIMPORTER_EXPORT DevIlImageImporter: public AbstractImport
         static void initialize();
 
         /** @brief Plugin manager constructor */
-        explicit DevIlImageImporter(PluginManager::AbstractManager& manager, const std::string& plugin);
+        explicit DevIlImageImporter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin);
 
         ~DevIlImageImporter();
 

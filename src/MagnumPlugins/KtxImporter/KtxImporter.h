@@ -189,7 +189,7 @@ to edit the configuration values.
 class MAGNUM_KTXIMPORTER_EXPORT KtxImporter: public AbstractImporter {
     public:
         /** @brief Plugin manager constructor */
-        explicit KtxImporter(PluginManager::AbstractManager& manager, const std::string& plugin);
+        explicit KtxImporter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin);
 
         ~KtxImporter();
 

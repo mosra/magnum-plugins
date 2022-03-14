@@ -58,7 +58,7 @@ const BufferFormat mp3FormatTable[8][4] = {
 
 DrMp3Importer::DrMp3Importer() = default;
 
-DrMp3Importer::DrMp3Importer(PluginManager::AbstractManager& manager, const std::string& plugin): AbstractImporter{manager, plugin} {}
+DrMp3Importer::DrMp3Importer(PluginManager::AbstractManager& manager, const Containers::StringView& plugin): AbstractImporter{manager, plugin} {}
 
 ImporterFeatures DrMp3Importer::doFeatures() const { return ImporterFeature::OpenData; }
 

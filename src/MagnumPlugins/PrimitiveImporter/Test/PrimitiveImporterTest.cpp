@@ -25,6 +25,7 @@
 
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/Pair.h>
+#include <Corrade/Containers/StringView.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Numeric.h>
 #include <Corrade/Utility/DebugStl.h>

@@ -123,7 +123,7 @@ class MAGNUM_STBTRUETYPEFONT_EXPORT StbTrueTypeFont: public AbstractFont {
         explicit StbTrueTypeFont();
 
         /** @brief Plugin manager constructor */
-        explicit StbTrueTypeFont(PluginManager::AbstractManager& manager, const std::string& plugin);
+        explicit StbTrueTypeFont(PluginManager::AbstractManager& manager, const Containers::StringView& plugin);
 
         ~StbTrueTypeFont();
 

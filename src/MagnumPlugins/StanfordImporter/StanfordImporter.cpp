@@ -63,7 +63,7 @@ StanfordImporter::StanfordImporter() {
     configuration().setValue("objectIdAttribute", "object_id");
 }
 
-StanfordImporter::StanfordImporter(PluginManager::AbstractManager& manager, const std::string& plugin): AbstractImporter{manager, plugin} {}
+StanfordImporter::StanfordImporter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin): AbstractImporter{manager, plugin} {}
 
 StanfordImporter::~StanfordImporter() = default;
 

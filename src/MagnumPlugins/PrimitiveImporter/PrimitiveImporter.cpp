@@ -50,7 +50,7 @@ namespace Magnum { namespace Trade {
 
 using namespace Containers::Literals;
 
-PrimitiveImporter::PrimitiveImporter(PluginManager::AbstractManager& manager, const std::string& plugin): AbstractImporter{manager, plugin} {}
+PrimitiveImporter::PrimitiveImporter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin): AbstractImporter{manager, plugin} {}
 
 PrimitiveImporter::~PrimitiveImporter() = default;
 

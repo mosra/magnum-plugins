@@ -235,7 +235,7 @@ target_link_libraries(your-application PRIVATE Threads::Threads)
 class MAGNUM_OPENEXRIMPORTER_EXPORT OpenExrImporter: public AbstractImporter {
     public:
         /** @brief Plugin manager constructor */
-        explicit OpenExrImporter(PluginManager::AbstractManager& manager, const std::string& plugin);
+        explicit OpenExrImporter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin);
 
         ~OpenExrImporter();
 

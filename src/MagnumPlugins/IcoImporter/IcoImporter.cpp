@@ -27,6 +27,7 @@
 #include "IcoImporter.h"
 
 #include <Corrade/Containers/Optional.h>
+#include <Corrade/Containers/StringView.h>
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/Debug.h>
 #include <Corrade/Utility/Endianness.h>
@@ -70,7 +71,7 @@ struct IcoImporter::State {
 
 IcoImporter::IcoImporter() = default;
 
-IcoImporter::IcoImporter(PluginManager::AbstractManager& manager, const std::string& plugin) : AbstractImporter{manager, plugin} {}
+IcoImporter::IcoImporter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin) : AbstractImporter{manager, plugin} {}
 
 IcoImporter::~IcoImporter() = default;
 

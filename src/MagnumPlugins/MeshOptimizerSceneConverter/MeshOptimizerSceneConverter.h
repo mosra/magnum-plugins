@@ -168,7 +168,7 @@ to edit the configuration values.
 class MAGNUM_MESHOPTIMIZERSCENECONVERTER_EXPORT MeshOptimizerSceneConverter: public AbstractSceneConverter {
     public:
         /** @brief Plugin manager constructor */
-        explicit MeshOptimizerSceneConverter(PluginManager::AbstractManager& manager, const std::string& plugin);
+        explicit MeshOptimizerSceneConverter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin);
 
         ~MeshOptimizerSceneConverter();
 

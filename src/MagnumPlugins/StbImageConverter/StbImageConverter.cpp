@@ -53,7 +53,7 @@ StbImageConverter::StbImageConverter(Format format): _format{format} {
     configuration().setValue("jpegQuality", 0.8f);
 }
 
-StbImageConverter::StbImageConverter(PluginManager::AbstractManager& manager, const std::string& plugin): AbstractImageConverter{manager, plugin} {
+StbImageConverter::StbImageConverter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin): AbstractImageConverter{manager, plugin} {
     if(plugin == "StbBmpImageConverter" || plugin == "BmpImageConverter")
         _format = Format::Bmp;
     else if(plugin == "StbHdrImageConverter" || plugin == "HdrImageConverter")

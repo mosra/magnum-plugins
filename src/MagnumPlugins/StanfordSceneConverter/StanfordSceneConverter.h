@@ -150,7 +150,7 @@ to edit the configuration values.
 class MAGNUM_STANFORDSCENECONVERTER_EXPORT StanfordSceneConverter: public AbstractSceneConverter {
     public:
         /** @brief Plugin manager constructor */
-        explicit StanfordSceneConverter(PluginManager::AbstractManager& manager, const std::string& plugin);
+        explicit StanfordSceneConverter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin);
 
         ~StanfordSceneConverter();
 

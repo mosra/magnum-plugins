@@ -27,6 +27,7 @@
 
 #include <cstring>
 #include <algorithm> /* std::copy() */ /** @todo remove */
+#include <string> /** @todo replace with a growable array */
 #include <png.h>
 /*
     The <csetjmp> header has to be included *after* png.h, otherwise older
@@ -46,7 +47,7 @@ namespace Magnum { namespace Trade {
 
 PngImageConverter::PngImageConverter() = default;
 
-PngImageConverter::PngImageConverter(PluginManager::AbstractManager& manager, const std::string& plugin): AbstractImageConverter{manager, plugin} {}
+PngImageConverter::PngImageConverter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin): AbstractImageConverter{manager, plugin} {}
 
 ImageConverterFeatures PngImageConverter::doFeatures() const { return ImageConverterFeature::Convert2DToData; }
 

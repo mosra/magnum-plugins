@@ -24,6 +24,7 @@
 */
 
 #include <sstream>
+#include <Corrade/Containers/StringView.h>
 #include <Corrade/PluginManager/Manager.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/Utility/DebugStl.h>

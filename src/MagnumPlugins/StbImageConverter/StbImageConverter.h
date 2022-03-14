@@ -211,7 +211,7 @@ class MAGNUM_STBIMAGECONVERTER_EXPORT StbImageConverter: public AbstractImageCon
          * Outputs files in format based on which alias was used to load the
          * plugin.
          */
-        explicit StbImageConverter(PluginManager::AbstractManager& manager, const std::string& plugin);
+        explicit StbImageConverter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin);
 
     private:
         MAGNUM_STBIMAGECONVERTER_LOCAL ImageConverterFeatures doFeatures() const override;

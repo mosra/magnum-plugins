@@ -117,7 +117,7 @@ Containers::Array<char> readRaw(drwav* const handle, const UnsignedInt samples, 
 
 DrWavImporter::DrWavImporter() = default;
 
-DrWavImporter::DrWavImporter(PluginManager::AbstractManager& manager, const std::string& plugin): AbstractImporter{manager, plugin} {}
+DrWavImporter::DrWavImporter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin): AbstractImporter{manager, plugin} {}
 
 ImporterFeatures DrWavImporter::doFeatures() const { return ImporterFeature::OpenData; }
 

@@ -126,7 +126,7 @@ class MAGNUM_STLIMPORTER_EXPORT StlImporter: public AbstractImporter {
         explicit StlImporter();
 
         /** @brief Plugin manager constructor */
-        explicit StlImporter(PluginManager::AbstractManager& manager, const std::string& plugin);
+        explicit StlImporter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin);
 
         ~StlImporter();
 

@@ -250,7 +250,7 @@ class MAGNUM_OPENGEXIMPORTER_EXPORT OpenGexImporter: public AbstractImporter {
         explicit OpenGexImporter(PluginManager::Manager<AbstractImporter>& manager);
 
         /** @brief Plugin manager constructor */
-        explicit OpenGexImporter(PluginManager::AbstractManager& manager, const std::string& plugin);
+        explicit OpenGexImporter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin);
 
         ~OpenGexImporter();
 

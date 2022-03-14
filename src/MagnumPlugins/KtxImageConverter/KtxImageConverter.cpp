@@ -914,7 +914,7 @@ template<UnsignedInt dimensions, template<UnsignedInt, typename> class View> Con
 
 }
 
-KtxImageConverter::KtxImageConverter(PluginManager::AbstractManager& manager, const std::string& plugin): AbstractImageConverter{manager, plugin} {}
+KtxImageConverter::KtxImageConverter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin): AbstractImageConverter{manager, plugin} {}
 
 ImageConverterFeatures KtxImageConverter::doFeatures() const {
     return ImageConverterFeature::ConvertLevels1DToData |

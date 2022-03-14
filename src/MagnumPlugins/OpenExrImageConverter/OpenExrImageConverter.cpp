@@ -83,7 +83,7 @@ class MemoryOStream: public Imf::OStream {
 
 }
 
-OpenExrImageConverter::OpenExrImageConverter(PluginManager::AbstractManager& manager, const std::string& plugin): AbstractImageConverter{manager, plugin} {}
+OpenExrImageConverter::OpenExrImageConverter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin): AbstractImageConverter{manager, plugin} {}
 
 ImageConverterFeatures OpenExrImageConverter::doFeatures() const { return ImageConverterFeature::ConvertLevels2DToData|ImageConverterFeature::ConvertLevels3DToData; }
 

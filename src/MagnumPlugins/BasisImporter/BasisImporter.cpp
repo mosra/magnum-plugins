@@ -34,14 +34,17 @@
 #include <Corrade/Utility/ConfigurationValue.h>
 #include <Corrade/Utility/Debug.h>
 #include <Corrade/Utility/DebugStl.h>
-#include <Corrade/Utility/String.h>
 #include <Magnum/PixelFormat.h>
 #include <Magnum/Trade/ImageData.h>
 #include <Magnum/Trade/TextureData.h>
 
 #include <basisu_transcoder.h>
 
-namespace Magnum { namespace Trade { namespace {
+namespace Magnum { namespace Trade {
+
+using namespace Containers::Literals;
+
+namespace {
 
 /* Map BasisImporter::TargetFormat to (Compressed)PixelFormat. See the
    TargetFormat enum for details. */
@@ -101,7 +104,9 @@ constexpr const char* FormatNames[]{
 /* Last element has to be on the same index as last enum value */
 static_assert(Containers::arraySize(FormatNames) - 1 == Int(BasisImporter::TargetFormat::EacRG), "bad string format mapping");
 
-}}}
+}
+
+}}
 
 namespace Corrade { namespace Utility {
 
@@ -175,15 +180,15 @@ BasisImporter::BasisImporter(): _state{InPlaceInit} {
     configuration().setValue("format", "");
 }
 
-BasisImporter::BasisImporter(PluginManager::AbstractManager& manager, const std::string& plugin): AbstractImporter{manager, plugin} {
+BasisImporter::BasisImporter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin): AbstractImporter{manager, plugin} {
     /* Initializes codebook */
     _state.reset(new State);
 
     /* Set format configuration from plugin alias */
-    if(Corrade::Utility::String::beginsWith(plugin, "BasisImporter")) {
+    if(plugin.hasPrefix("BasisImporter"_s)) {
         /* Has type prefix. We can assume the substring results in a valid
            value as the plugin conf limits it to known suffixes */
-        if(plugin.size() > 13) configuration().setValue("format", plugin.substr(13));
+        if(plugin.size() > 13) configuration().setValue("format", plugin.exceptPrefix("BasisImporter"));
     }
 }
 

@@ -58,7 +58,7 @@ JpegImageConverter::JpegImageConverter() {
     configuration().setValue("jpegQuality", 0.8f);
 }
 
-JpegImageConverter::JpegImageConverter(PluginManager::AbstractManager& manager, std::string plugin): AbstractImageConverter(manager, std::move(plugin)) {}
+JpegImageConverter::JpegImageConverter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin): AbstractImageConverter(manager, std::move(plugin)) {}
 
 ImageConverterFeatures JpegImageConverter::doFeatures() const { return ImageConverterFeature::Convert2DToData; }
 

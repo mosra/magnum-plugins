@@ -476,7 +476,7 @@ class MAGNUM_TINYGLTFIMPORTER_EXPORT TinyGltfImporter: public AbstractImporter {
         explicit TinyGltfImporter(PluginManager::Manager<AbstractImporter>& manager);
 
         /** @brief Plugin manager constructor */
-        explicit TinyGltfImporter(PluginManager::AbstractManager& manager, const std::string& plugin);
+        explicit TinyGltfImporter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin);
 
         ~TinyGltfImporter();
 

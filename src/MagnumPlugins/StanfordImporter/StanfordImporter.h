@@ -199,7 +199,7 @@ class MAGNUM_STANFORDIMPORTER_EXPORT StanfordImporter: public AbstractImporter {
         explicit StanfordImporter();
 
         /** @brief Plugin manager constructor */
-        explicit StanfordImporter(PluginManager::AbstractManager& manager, const std::string& plugin);
+        explicit StanfordImporter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin);
 
         ~StanfordImporter();
 

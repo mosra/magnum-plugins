@@ -201,7 +201,7 @@ AssimpImporter::AssimpImporter(PluginManager::Manager<AbstractImporter>& manager
     fillDefaultConfiguration(configuration());
 }
 
-AssimpImporter::AssimpImporter(PluginManager::AbstractManager& manager, const std::string& plugin): AbstractImporter(manager, plugin) {}
+AssimpImporter::AssimpImporter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin): AbstractImporter(manager, plugin) {}
 
 AssimpImporter::~AssimpImporter() {
     /* Because we are dealing with a crappy singleton here, we need to make

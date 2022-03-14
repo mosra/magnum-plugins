@@ -41,7 +41,7 @@
 
 namespace Magnum { namespace Trade {
 
-StbDxtImageConverter::StbDxtImageConverter(PluginManager::AbstractManager& manager, const std::string& plugin): AbstractImageConverter{manager, plugin} {}
+StbDxtImageConverter::StbDxtImageConverter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin): AbstractImageConverter{manager, plugin} {}
 
 ImageConverterFeatures StbDxtImageConverter::doFeatures() const { return ImageConverterFeature::Convert2D; }
 

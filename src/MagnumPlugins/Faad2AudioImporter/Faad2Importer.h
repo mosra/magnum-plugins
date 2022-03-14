@@ -116,7 +116,7 @@ class MAGNUM_FAAD2AUDIOIMPORTER_EXPORT Faad2Importer: public AbstractImporter {
         explicit Faad2Importer();
 
         /** @brief Plugin manager constructor */
-        explicit Faad2Importer(PluginManager::AbstractManager& manager, const std::string& plugin);
+        explicit Faad2Importer(PluginManager::AbstractManager& manager, const Containers::StringView& plugin);
 
     private:
         MAGNUM_FAAD2AUDIOIMPORTER_LOCAL ImporterFeatures doFeatures() const override;

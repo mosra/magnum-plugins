@@ -140,7 +140,7 @@ to edit the configuration values.
 class MAGNUM_STBDXTIMAGECONVERTER_EXPORT StbDxtImageConverter: public AbstractImageConverter {
     public:
         /** @brief Plugin manager constructor */
-        explicit StbDxtImageConverter(PluginManager::AbstractManager& manager, const std::string& plugin);
+        explicit StbDxtImageConverter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin);
 
     private:
         MAGNUM_STBDXTIMAGECONVERTER_LOCAL ImageConverterFeatures doFeatures() const override;

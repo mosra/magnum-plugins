@@ -122,7 +122,7 @@ struct OpenExrImporter::State {
     Int completeLevelCount;
 };
 
-OpenExrImporter::OpenExrImporter(PluginManager::AbstractManager& manager, const std::string& plugin) : AbstractImporter{manager, plugin} {}
+OpenExrImporter::OpenExrImporter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin) : AbstractImporter{manager, plugin} {}
 
 OpenExrImporter::~OpenExrImporter() = default;
 

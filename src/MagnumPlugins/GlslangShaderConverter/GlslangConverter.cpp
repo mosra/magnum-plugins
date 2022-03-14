@@ -93,7 +93,7 @@ void GlslangConverter::finalize() {
     glslang::FinalizeProcess();
 }
 
-GlslangConverter::GlslangConverter(PluginManager::AbstractManager& manager, const std::string& plugin): AbstractConverter{manager, plugin}, _state{InPlaceInit} {}
+GlslangConverter::GlslangConverter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin): AbstractConverter{manager, plugin}, _state{InPlaceInit} {}
 
 ConverterFeatures GlslangConverter::doFeatures() const {
     return ConverterFeature::ConvertData|ConverterFeature::ValidateData|ConverterFeature::Preprocess|ConverterFeature::DebugInfo|

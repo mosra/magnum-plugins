@@ -51,7 +51,7 @@ struct SpirvToolsConverter::State {
     Containers::String optimizationLevel;
 };
 
-SpirvToolsConverter::SpirvToolsConverter(PluginManager::AbstractManager& manager, const std::string& plugin): AbstractConverter{manager, plugin}, _state{InPlaceInit} {
+SpirvToolsConverter::SpirvToolsConverter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin): AbstractConverter{manager, plugin}, _state{InPlaceInit} {
     /* If the plugin was loaded through some of the aliases, set implicit
        input/output formats */
     if(plugin == "SpirvAssemblyToSpirvShaderConverter") {

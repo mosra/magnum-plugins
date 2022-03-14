@@ -479,7 +479,7 @@ std::size_t DdsImporter::File::addImageDataOffset(const Vector3i& dims, const st
 
 DdsImporter::DdsImporter() = default;
 
-DdsImporter::DdsImporter(PluginManager::AbstractManager& manager, const std::string& plugin): AbstractImporter{manager, plugin} {}
+DdsImporter::DdsImporter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin): AbstractImporter{manager, plugin} {}
 
 DdsImporter::~DdsImporter() = default;
 

@@ -329,7 +329,7 @@ class MAGNUM_GLSLANGSHADERCONVERTER_EXPORT GlslangConverter: public AbstractConv
         static void finalize();
 
         /** @brief Plugin manager constructor */
-        explicit GlslangConverter(PluginManager::AbstractManager& manager, const std::string& plugin);
+        explicit GlslangConverter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin);
 
     private:
         MAGNUM_GLSLANGSHADERCONVERTER_LOCAL ConverterFeatures doFeatures() const override;
