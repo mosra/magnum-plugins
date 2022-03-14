@@ -1003,8 +1003,10 @@ Containers::Optional<MeshData> AssimpImporter::doMesh(const UnsignedInt id, Unsi
             }
         }
 
+        #ifndef CORRADE_NO_ASSERT
         const UnsignedInt jointCountLimit = configuration().value<UnsignedInt>("maxJointWeights");
         CORRADE_INTERNAL_ASSERT(jointCountLimit == 0 || maxJointCount <= jointCountLimit);
+        #endif
 
         jointLayerCount = (maxJointCount + 3)/4;
         attributeCount += jointLayerCount*2;
