@@ -29,17 +29,16 @@
 #include <string>
 #include <Corrade/Containers/Array.h>
 #include <Corrade/Containers/Pair.h>
-#include <Corrade/Containers/StringStl.h>
 #include <Corrade/Containers/StringView.h>
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
-#include <Corrade/Utility/DebugStl.h>
 #include <Corrade/Utility/Endianness.h>
 #include <Corrade/Utility/EndiannessBatch.h>
 #include <Magnum/ImageView.h>
 #include <Magnum/PixelFormat.h>
 #include <Magnum/Math/Functions.h>
 #include <Magnum/Math/Vector3.h>
+
 #include "MagnumPlugins/KtxImporter/KtxHeader.h"
 
 namespace Magnum { namespace Trade {
@@ -732,11 +731,11 @@ template<UnsignedInt dimensions, template<UnsignedInt, typename> class View> Con
        constant text strings. Keys must be sorted alphabetically.
        Entries with an empty value won't be written. */
 
-    const std::string orientation = configuration.value("orientation");
-    const std::string swizzle = configuration.value("swizzle");
-    const std::string writerName = configuration.value("writerName");
+    const auto orientation = configuration.value<Containers::StringView>("orientation");
+    const auto swizzle = configuration.value<Containers::StringView>("swizzle");
+    const auto writerName = configuration.value<Containers::StringView>("writerName");
 
-    if(!orientation.empty()) {
+    if(orientation) {
         if(orientation.size() < dimensions) {
             Error{} << "Trade::KtxImageConverter::convertToData(): invalid orientation string, expected at least" <<
                 dimensions << "characters but got" << orientation;
@@ -755,12 +754,13 @@ template<UnsignedInt dimensions, template<UnsignedInt, typename> class View> Con
         }
     }
 
-    if(!swizzle.empty() && swizzle.size() != 4) {
+    if(swizzle && swizzle.size() != 4) {
         Error{} << "Trade::KtxImageConverter::convertToData(): invalid swizzle length, expected 4 but got" << swizzle.size();
         return {};
     }
 
-    if(swizzle.find_first_not_of("rgba01") != std::string::npos) {
+    /** @todo clean up once StringView has findAnyNotOf() or some such */
+    if(std::string{swizzle}.find_first_not_of("rgba01") != std::string::npos) {
         Error{} << "Trade::KtxImageConverter::convertToData(): invalid characters in swizzle" << swizzle;
         return {};
     }

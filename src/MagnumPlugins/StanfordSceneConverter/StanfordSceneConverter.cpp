@@ -27,14 +27,15 @@
 
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
-#include <Corrade/Utility/DebugStl.h>
 #include <Corrade/Utility/EndiannessBatch.h>
-#include <Corrade/Utility/FormatStl.h>
+#include <Corrade/Utility/FormatStl.h> /** @todo remove once <string> is gone here */
 #include <Magnum/MeshTools/Duplicate.h>
 #include <Magnum/MeshTools/GenerateIndices.h>
 #include <Magnum/Trade/MeshData.h>
 
 namespace Magnum { namespace Trade {
+
+using namespace Containers::Literals;
 
 StanfordSceneConverter::StanfordSceneConverter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin): AbstractSceneConverter{manager, plugin} {}
 
@@ -74,18 +75,19 @@ Containers::Array<char> StanfordSceneConverter::doConvertToData(const MeshData& 
     bool endianSwapNeeded;
     std::string header = "ply\n";
     {
+        const auto endianness = configuration().value<Containers::StringView>("endianness");
         bool isBigEndian;
-        if(configuration().value("endianness") == "native") {
+        if(endianness == "native"_s) {
             isBigEndian = Utility::Endianness::isBigEndian();
             endianSwapNeeded = false;
-        } else if(configuration().value("endianness") == "little") {
+        } else if(endianness == "little"_s) {
             isBigEndian = false;
             endianSwapNeeded = Utility::Endianness::isBigEndian();
-        } else if(configuration().value("endianness") == "big") {
+        } else if(endianness == "big"_s) {
             isBigEndian = true;
             endianSwapNeeded = !Utility::Endianness::isBigEndian();
         } else {
-            Error{} << "Trade::StanfordSceneConverter::convertToData(): invalid option endianness=" << Debug::nospace << configuration().value("endianness");
+            Error{} << "Trade::StanfordSceneConverter::convertToData(): invalid option endianness=" << Debug::nospace << endianness;
             return nullptr;
         }
         header += isBigEndian ?
