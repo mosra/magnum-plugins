@@ -27,14 +27,14 @@
 
 #include "BasisImageConverter.h"
 
-#include <cstring>
 #include <thread>
 #include <Corrade/Containers/Array.h>
 #include <Corrade/Containers/ArrayView.h>
+#include <Corrade/Containers/Pair.h>
 #include <Corrade/Containers/StridedArrayView.h>
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
-#include <Corrade/Utility/DebugStl.h>
+#include <Corrade/Utility/Path.h>
 #include <Corrade/Utility/String.h>
 #include <Magnum/ImageView.h>
 #include <Magnum/Math/Color.h>
@@ -133,14 +133,15 @@ template<UnsignedInt dimensions> Containers::Array<char> convertLevelsToData(Con
     PARAM_CONFIG(check_for_alpha, bool);
     PARAM_CONFIG(force_alpha, bool);
 
-    const std::string swizzle = configuration.value("swizzle");
-    if(!swizzle.empty()) {
+    const auto swizzle = configuration.value<Containers::StringView>("swizzle");
+    if(swizzle) {
         if(swizzle.size() != 4) {
             Error{} << "Trade::BasisImageConverter::convertToData(): invalid swizzle length, expected 4 but got" << swizzle.size();
             return {};
         }
 
-        if(swizzle.find_first_not_of("rgba") != std::string::npos) {
+        /** @todo clean up once StringView has findAnyNotOf() or some such */
+        if(std::string{swizzle}.find_first_not_of("rgba") != std::string::npos) {
             Error{} << "Trade::BasisImageConverter::convertToData(): invalid characters in swizzle" << swizzle;
             return {};
         }
@@ -294,7 +295,7 @@ template<UnsignedInt dimensions> Containers::Array<char> convertLevelsToData(Con
                 /* If the user didn't specify a custom swizzle, assume they want
                    the two channels compressed in separate slices, R in RGB and G
                    in Alpha. This significantly improves quality. */
-                if(swizzle.empty())
+                if(!swizzle)
                     for(std::size_t y = 0; y != src.size()[0]; ++y)
                         for(std::size_t x = 0; x != src.size()[1]; ++x)
                             dst[y][x] = Math::gather<'r', 'r', 'r', 'g'>(src[y][x]);
@@ -307,7 +308,7 @@ template<UnsignedInt dimensions> Containers::Array<char> convertLevelsToData(Con
                 const auto src = image3D.pixels<Math::Vector<1, UnsignedByte>>()[slice];
                 /* If the user didn't specify a custom swizzle, assume they want
                    a gray-scale image. Alpha is always implicitly 255. */
-                if(swizzle.empty())
+                if(!swizzle)
                     for(std::size_t y = 0; y != src.size()[0]; ++y)
                         for(std::size_t x = 0; x != src.size()[1]; ++x)
                             dst[y][x] = Math::gather<'r', 'r', 'r'>(src[y][x]);
@@ -416,14 +417,13 @@ Containers::Array<char> BasisImageConverter::doConvertToData(Containers::ArrayVi
 }
 
 template<UnsignedInt dimensions> bool BasisImageConverter::convertLevelsToFile(const Containers::ArrayView<const BasicImageView<dimensions>> imageLevels, const Containers::StringView filename) {
-    /** @todo once Directory is std::string-free, use splitExtension() */
-    const Containers::String normalized = Utility::String::lowercase(filename);
+    const Containers::String normalizedExtension = Utility::String::lowercase(Utility::Path::splitExtension(filename).second());
 
     /* Save the previous format to restore it back after, detect the format
        from extension if it's not supplied explicitly */
     const Format previousFormat = _format;
     if(_format == Format{}) {
-        if(normalized.hasSuffix(".ktx2"_s))
+        if(normalizedExtension == ".ktx2"_s)
             _format = Format::Ktx;
         else
             _format = Format::Basis;
