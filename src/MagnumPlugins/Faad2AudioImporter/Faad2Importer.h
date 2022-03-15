@@ -29,7 +29,7 @@
  * @brief Class @ref Magnum::Audio::Faad2Importer
  */
 
-#include <vector>
+#include <Corrade/Containers/Array.h>
 #include <Magnum/Audio/AbstractImporter.h>
 
 #include "MagnumPlugins/Faad2AudioImporter/configure.h"
@@ -128,7 +128,7 @@ class MAGNUM_FAAD2AUDIOIMPORTER_EXPORT Faad2Importer: public AbstractImporter {
         MAGNUM_FAAD2AUDIOIMPORTER_LOCAL UnsignedInt doFrequency() const override;
         MAGNUM_FAAD2AUDIOIMPORTER_LOCAL Containers::Array<char> doData() override;
 
-        std::vector<UnsignedShort> _samples;
+        Containers::Array<UnsignedShort> _samples;
         BufferFormat _format;
         UnsignedInt _frequency;
 };

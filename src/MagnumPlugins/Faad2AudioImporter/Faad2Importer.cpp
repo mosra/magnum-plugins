@@ -25,10 +25,10 @@
 
 #include "Faad2Importer.h"
 
-#include <cstring>
-#include <algorithm> /* std::copy_n() */ /** @todo remove */
 #include <Corrade/Containers/Array.h>
+#include <Corrade/Containers/GrowableArray.h>
 #include <Corrade/Containers/ScopeGuard.h>
+#include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/Assert.h>
 #include <Corrade/Utility/Debug.h>
 
@@ -42,7 +42,7 @@ Faad2Importer::Faad2Importer(PluginManager::AbstractManager& manager, const Cont
 
 ImporterFeatures Faad2Importer::doFeatures() const { return ImporterFeature::OpenData; }
 
-bool Faad2Importer::doIsOpened() const { return !_samples.empty(); }
+bool Faad2Importer::doIsOpened() const { return !_samples.isEmpty(); }
 
 void Faad2Importer::doOpenData(Containers::ArrayView<const char> data) {
     /* Init the library */
@@ -78,12 +78,11 @@ void Faad2Importer::doOpenData(Containers::ArrayView<const char> data) {
         return;
     }
 
-    /** @todo do it not via a vector -- is there any way to get the sample
-        count beforehand? the faad fronted does it by manually parsing the
-        headers and NO WAY IN HELL i am doing that here. So be it.
-        https://github.com/knik0/faad2/blob/7da4a83b230d069a9d731b1e64f6e6b52802576a/frontend/main.c#L613-L630 */
+    /** @todo s there any way to get the sample count beforehand? the faad
+        fronted does it by manually parsing the headers and NO WAY IN HELL i
+        am doing that here: https://github.com/knik0/faad2/blob/7da4a83b230d069a9d731b1e64f6e6b52802576a/frontend/main.c#L613-L630 */
     std::size_t pos = result;
-    std::vector<UnsignedShort> samples;
+    Containers::Array<UnsignedShort> samples;
     while(pos < data.size()) {
         NeAACDecFrameInfo info;
         void* sampleBuffer = NeAACDecDecode(decoder, &info, const_cast<unsigned char*>(reinterpret_cast<const unsigned char*>(data.data())) + pos, data.size() - pos);
@@ -92,16 +91,16 @@ void Faad2Importer::doOpenData(Containers::ArrayView<const char> data) {
             return;
         }
 
-        std::size_t end = samples.size();
-        samples.resize(samples.size() + info.samples);
-        std::copy_n(reinterpret_cast<UnsignedShort*>(sampleBuffer), info.samples, &samples[0] + end);
+        Utility::copy(
+            {reinterpret_cast<UnsignedShort*>(sampleBuffer), info.samples},
+            arrayAppend(samples, NoInit, info.samples));
         pos += info.bytesconsumed;
     }
 
     _samples = std::move(samples);
 }
 
-void Faad2Importer::doClose() { _samples.clear(); }
+void Faad2Importer::doClose() { _samples = nullptr; }
 
 BufferFormat Faad2Importer::doFormat() const { return _format; }
 
@@ -109,7 +108,7 @@ UnsignedInt Faad2Importer::doFrequency() const { return _frequency; }
 
 Containers::Array<char> Faad2Importer::doData() {
     Containers::Array<char> copy{NoInit, _samples.size()*2};
-    std::memcpy(copy.begin(), _samples.data(), copy.size());
+    Utility::copy(Containers::arrayCast<char>(_samples), copy);
     return copy;
 }
 
