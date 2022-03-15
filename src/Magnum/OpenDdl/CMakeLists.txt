@@ -23,6 +23,10 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
+# IDE folder in VS, Xcode etc. CMake 3.12+, older versions have only the FOLDER
+# property that would have to be set on each target separately.
+set(CMAKE_FOLDER "Magnum/OpenDdl")
+
 if(BUILD_STATIC)
     set(MAGNUM_OPENDDL_BUILD_STATIC 1)
 endif()
@@ -44,7 +48,6 @@ endif()
 if(NOT BUILD_STATIC OR BUILD_STATIC_PIC)
     set_target_properties(MagnumOpenDdlObjects PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
-set_target_properties(MagnumOpenDdlObjects PROPERTIES FOLDER "Magnum/OpenDdl")
 
 set(MagnumOpenDdl_SRCS
     OpenDdl.cpp)
@@ -72,9 +75,7 @@ if(NOT BUILD_STATIC)
 elseif(BUILD_STATIC AND BUILD_STATIC_PIC)
     set_target_properties(MagnumOpenDdl PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
-set_target_properties(MagnumOpenDdl PROPERTIES
-    DEBUG_POSTFIX "-d"
-    FOLDER "Magnum/OpenDdl")
+set_target_properties(MagnumOpenDdl PROPERTIES DEBUG_POSTFIX "-d")
 
 install(TARGETS MagnumOpenDdl
     RUNTIME DESTINATION ${MAGNUM_BINARY_INSTALL_DIR}

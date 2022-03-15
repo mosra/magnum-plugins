@@ -23,6 +23,10 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
+# IDE folder in VS, Xcode etc. CMake 3.12+, older versions have only the FOLDER
+# property that would have to be set on each target separately.
+set(CMAKE_FOLDER "MagnumPlugins/FreeTypeFont/Test")
+
 if(CORRADE_TARGET_EMSCRIPTEN OR CORRADE_TARGET_ANDROID)
     set(TTF_FILE Oxygen.ttf)
 else()
@@ -53,7 +57,6 @@ else()
     # So the plugins get properly built when building the test
     add_dependencies(FreeTypeFontTest FreeTypeFont)
 endif()
-set_target_properties(FreeTypeFontTest PROPERTIES FOLDER "MagnumPlugins/FreeTypeFont/Test")
 if(CORRADE_BUILD_STATIC AND NOT MAGNUM_FREETYPEFONT_BUILD_STATIC)
     # CMake < 3.4 does this implicitly, but 3.4+ not anymore (see CMP0065).
     # That's generally okay, *except if* the build is static, the executable
@@ -68,5 +71,4 @@ if(MAGNUM_FREETYPEFONT_BUILD_STATIC)
     # destroying a manager for static plugins multiple times (a rare case).
     corrade_add_test(FreeTypeFontReinitializeTest FreeTypeFontReinitializeTest.cpp
         LIBRARIES Magnum::Text FreeTypeFont)
-    set_target_properties(FreeTypeFontReinitializeTest PROPERTIES FOLDER "MagnumPlugins/FreeTypeFont/Test")
 endif()

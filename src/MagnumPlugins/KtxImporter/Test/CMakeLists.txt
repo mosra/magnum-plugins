@@ -24,6 +24,10 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
+# IDE folder in VS, Xcode etc. CMake 3.12+, older versions have only the FOLDER
+# property that would have to be set on each target separately.
+set(CMAKE_FOLDER "MagnumPlugins/KtxImporter/Test")
+
 if(CORRADE_TARGET_EMSCRIPTEN OR CORRADE_TARGET_ANDROID)
     set(BASISIMPORTER_TEST_DIR ".")
     set(KTXIMPORTER_TEST_DIR ".")
@@ -134,7 +138,6 @@ else()
         add_dependencies(KtxImporterTest BasisImporter)
     endif()
 endif()
-set_target_properties(KtxImporterTest PROPERTIES FOLDER "MagnumPlugins/KtxImporter/Test")
 if(CORRADE_BUILD_STATIC AND NOT MAGNUM_KTXIMPORTER_BUILD_STATIC)
     # CMake < 3.4 does this implicitly, but 3.4+ not anymore (see CMP0065).
     # That's generally okay, *except if* the build is static, the executable

@@ -23,6 +23,10 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
+# IDE folder in VS, Xcode etc. CMake 3.12+, older versions have only the FOLDER
+# property that would have to be set on each target separately.
+set(CMAKE_FOLDER "MagnumPlugins/HarfBuzzFont/Test")
+
 if(CORRADE_TARGET_EMSCRIPTEN OR CORRADE_TARGET_ANDROID)
     set(TTF_FILE Oxygen.ttf)
 else()
@@ -54,7 +58,6 @@ else()
     # So the plugins get properly built when building the test
     add_dependencies(HarfBuzzFontTest FreeTypeFont HarfBuzzFont)
 endif()
-set_target_properties(HarfBuzzFontTest PROPERTIES FOLDER "MagnumPlugins/HarfBuzzFont/Test")
 # Older HB versions give slightly different results, so we need to check the
 # version in the test. Also use SYSTEM to avoid warning spam with old-style
 # casts.

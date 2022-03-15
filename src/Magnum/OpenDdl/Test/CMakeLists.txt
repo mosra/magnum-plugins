@@ -23,6 +23,10 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
+# IDE folder in VS, Xcode etc. CMake 3.12+, older versions have only the FOLDER
+# property that would have to be set on each target separately.
+set(CMAKE_FOLDER "Magnum/OpenDdl/Test")
+
 corrade_add_test(OpenDdlParsersTest
     ParsersTest.cpp
     $<TARGET_OBJECTS:MagnumOpenDdlObjects>
@@ -36,9 +40,3 @@ corrade_add_test(OpenDdlTest
 corrade_add_test(OpenDdlTypeTest
     TypeTest.cpp
     LIBRARIES Magnum::Magnum MagnumOpenDdl)
-
-set_target_properties(
-    OpenDdlParsersTest
-    OpenDdlTest
-    OpenDdlTypeTest
-    PROPERTIES FOLDER "Magnum/OpenDdl/Test")

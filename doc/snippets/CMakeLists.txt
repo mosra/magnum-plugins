@@ -24,6 +24,10 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
+# IDE folder in VS, Xcode etc. CMake 3.12+, older versions have only the FOLDER
+# property that would have to be set on each target separately.
+set(CMAKE_FOLDER "Magnum/doc/snippets")
+
 find_package(Magnum REQUIRED Trade)
 
 # On MSVC remove /W3, as we are replacing it with /W4
@@ -45,12 +49,10 @@ if(WITH_BASISIMPORTER)
     add_library(snippets-BasisImporter STATIC
         BasisImporter.cpp)
     target_link_libraries(snippets-BasisImporter PRIVATE Magnum::Trade)
-    set_target_properties(snippets-BasisImporter PROPERTIES FOLDER "Magnum/doc/snippets")
 endif()
 
 if(WITH_STBIMAGEIMPORTER)
     add_library(snippets-StbImageImporter STATIC
         StbImageImporter.cpp)
     target_link_libraries(snippets-StbImageImporter PRIVATE Magnum::Trade)
-    set_target_properties(snippets-StbImageImporter PROPERTIES FOLDER "Magnum/doc/snippets")
 endif()
