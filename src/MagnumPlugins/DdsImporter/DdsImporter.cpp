@@ -26,14 +26,12 @@
 
 #include "DdsImporter.h"
 
-#include <cstring>
 #include <algorithm> /* std::transform() */
-#include <vector>
-#include <Corrade/Containers/ArrayView.h>
+#include <Corrade/Containers/GrowableArray.h>
 #include <Corrade/Containers/Optional.h>
+#include <Corrade/Containers/StringView.h>
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/Debug.h>
-#include <Corrade/Utility/DebugStl.h>
 #include <Magnum/PixelFormat.h>
 #include <Magnum/Math/Functions.h>
 #include <Magnum/Math/Vector3.h>
@@ -290,13 +288,8 @@ enum class DxgiFormat: UnsignedInt {
 };
 
 /* String from given fourcc integer */
-inline std::string fourcc(UnsignedInt enc) {
-    char c[5] = { '\0' };
-    c[0] = enc >> 0 & 0xFF;
-    c[1] = enc >> 8 & 0xFF;
-    c[2] = enc >> 16 & 0xFF;
-    c[3] = enc >> 24 & 0xFF;
-    return c;
+inline Containers::StringView fourcc(const UnsignedInt& enc) {
+    return {reinterpret_cast<const char*>(&enc), 4};
 }
 
 void swizzlePixels(const PixelFormat format, Containers::Array<char>& data, const char* verbosePrefix) {
@@ -459,7 +452,7 @@ struct DdsImporter::File {
         CompressedPixelFormat compressed;
     } pixelFormat;
 
-    std::vector<ImageDataOffset> imageData;
+    Containers::Array<ImageDataOffset> imageData;
 };
 
 std::size_t DdsImporter::File::addImageDataOffset(const Vector3i& dims, const std::size_t offset) {
@@ -472,7 +465,7 @@ std::size_t DdsImporter::File::addImageDataOffset(const Vector3i& dims, const st
         return 0;
     }
 
-    imageData.push_back({dims, in.slice(offset, end)});
+    arrayAppend(imageData, InPlaceInit, dims, in.slice(offset, end));
 
     return end;
 }
