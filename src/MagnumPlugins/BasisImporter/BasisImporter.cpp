@@ -27,13 +27,11 @@
 
 #include "BasisImporter.h"
 
-#include <cstring>
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/ConfigurationValue.h>
 #include <Corrade/Utility/Debug.h>
-#include <Corrade/Utility/DebugStl.h>
 #include <Magnum/PixelFormat.h>
 #include <Magnum/Trade/ImageData.h>
 #include <Magnum/Trade/TextureData.h>
@@ -231,9 +229,7 @@ void BasisImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFla
     /* Check if this is a KTX2 file. There's basist::g_ktx2_file_identifier but
        that's hidden behind BASISD_SUPPORT_KTX2 so define it ourselves, taken
        from KtxImporter/KtxHeader.h */
-    constexpr char KtxFileIdentifier[12]{'\xab', 'K', 'T', 'X', ' ', '2', '0', '\xbb', '\r', '\n', '\x1a', '\n'};
-    const bool isKTX2 = data.size() >= sizeof(KtxFileIdentifier) &&
-        std::memcmp(data.begin(), KtxFileIdentifier, sizeof(KtxFileIdentifier)) == 0;
+    const bool isKTX2 = Containers::StringView{Containers::ArrayView<const char>{data}}.hasPrefix("\xabKTX 20\xbb\r\n\x1a\n"_s);
     #if !BASISD_SUPPORT_KTX2
     /** @todo Can we test this? Maybe disable this on some CI, BC7 is already
         disabled on Emscripten. */
@@ -474,9 +470,9 @@ template<UnsignedInt dimensions> Containers::Optional<ImageData<dimensions>> Bas
     constexpr const char* prefixes[2]{"Trade::BasisImporter::image2D():", "Trade::BasisImporter::image3D():"};
     constexpr const char* prefix = prefixes[dimensions - 2];
 
-    const std::string targetFormatStr = configuration().value<std::string>("format");
+    const auto targetFormatStr = configuration().value<Containers::StringView>("format");
     TargetFormat targetFormat;
-    if(targetFormatStr.empty()) {
+    if(!targetFormatStr) {
         if(!_state->noTranscodeFormatWarningPrinted)
             Warning{} << prefix << "no format to transcode to was specified, falling back to uncompressed RGBA8. To get rid of this warning either load the plugin via one of its BasisImporterEtc1RGB, ... aliases, or explicitly set the format option in plugin configuration.";
         targetFormat = TargetFormat::RGBA8;
