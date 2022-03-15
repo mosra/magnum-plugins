@@ -25,14 +25,12 @@
 
 #include "OpenExrImageConverter.h"
 
-#include <cstring>
 #include <thread> /* std::thread::hardware_concurrency(), sigh */
 #include <Corrade/Containers/StridedArrayView.h>
-#include <Corrade/Containers/StringStl.h>
 #include <Corrade/Containers/GrowableArray.h>
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
-#include <Corrade/Utility/DebugStl.h>
+#include <Corrade/Utility/DebugStl.h> /** @todo remove once Configuration is <string>-free */
 #include <Magnum/ImageView.h>
 #include <Magnum/PixelFormat.h>
 #include <Magnum/Math/ConfigurationValue.h>

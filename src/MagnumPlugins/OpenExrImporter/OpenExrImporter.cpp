@@ -25,7 +25,6 @@
 
 #include "OpenExrImporter.h"
 
-#include <cstring>
 #include <thread> /* std::thread::hardware_concurrency(), sigh */
 #include <Corrade/Containers/GrowableArray.h>
 #include <Corrade/Containers/Optional.h>
