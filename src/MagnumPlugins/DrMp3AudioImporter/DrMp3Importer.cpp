@@ -40,19 +40,19 @@ namespace Magnum { namespace Audio {
 
 namespace {
 
-#define _v(value) BufferFormat::value
-/* number of channels = 1-8, number of bytes = 1-4 */
-const BufferFormat mp3FormatTable[8][4] = {
-    {BufferFormat{}, _v(Mono16),   BufferFormat{}, BufferFormat{}}, /* Mono */
-    {BufferFormat{}, _v(Stereo16), BufferFormat{}, BufferFormat{}}, /* Stereo */
-    {BufferFormat{}, BufferFormat{}, BufferFormat{}, BufferFormat{}}, /* Not a thing */
-    {BufferFormat{}, _v(Quad16), BufferFormat{}, BufferFormat{}},    /* Quad */
-    {BufferFormat{}, BufferFormat{}, BufferFormat{}, BufferFormat{}}, /* Also not a thing */
-    {BufferFormat{}, _v(Surround51Channel16), BufferFormat{}, BufferFormat{}}, /* 5.1 */
-    {BufferFormat{}, _v(Surround61Channel16), BufferFormat{}, BufferFormat{}}, /* 6.1 */
-    {BufferFormat{}, _v(Surround71Channel16), BufferFormat{}, BufferFormat{}}  /* 7.1 */
+/* number of channels = 1-8 */
+constexpr BufferFormat Mp3FormatTable[8]{
+    #define _v(value) BufferFormat::value
+    _v(Mono16),
+    _v(Stereo16),
+    BufferFormat{}, /* Not a thing */
+    _v(Quad16),
+    BufferFormat{}, /* Also not a thing */
+    _v(Surround51Channel16),
+    _v(Surround61Channel16),
+    _v(Surround71Channel16)
+    #undef _v
 };
-#undef _v
 
 }
 
@@ -87,7 +87,7 @@ void DrMp3Importer::doOpenData(Containers::ArrayView<const char> data) {
     }
 
     _frequency = config.outputSampleRate;
-    _format = mp3FormatTable[numChannels - 1][1];
+    _format = Mp3FormatTable[numChannels - 1];
     CORRADE_INTERNAL_ASSERT(_format != BufferFormat{});
 
     /* All good, save the data */
