@@ -75,11 +75,10 @@ void DrMp3Importer::doOpenData(Containers::ArrayView<const char> data) {
         return;
     }
 
-    Containers::Array<char> decodedData{reinterpret_cast<char*>(decodedPointer), std::size_t(frameCount*sizeof(Short)), [](char* data, std::size_t) {
+    const std::uint32_t numChannels = config.outputChannels;
+    Containers::Array<char> decodedData{reinterpret_cast<char*>(decodedPointer), std::size_t(frameCount*sizeof(Short)*numChannels), [](char* data, std::size_t) {
         drmp3_free(data);
     }};
-
-    const std::uint32_t numChannels = config.outputChannels;
 
     if(numChannels == 0 || numChannels == 3 || numChannels == 5 || numChannels > 8) {
         Error() << "Audio::DrMp3Importer::openData(): unsupported channel count"

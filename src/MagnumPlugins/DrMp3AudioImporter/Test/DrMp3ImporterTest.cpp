@@ -99,8 +99,7 @@ void DrMp3ImporterTest::mono16() {
 
     CORRADE_COMPARE(importer->format(), BufferFormat::Mono16);
     CORRADE_COMPARE(importer->frequency(), 44100);
-    CORRADE_COMPARE_AS(importer->data().size(), 6724,
-        TestSuite::Compare::Greater);
+    CORRADE_COMPARE(importer->data().size(), 13824);
     CORRADE_COMPARE_AS(Containers::arrayCast<UnsignedShort>(importer->data().slice(6720, 6724)),
         Containers::arrayView<UnsignedShort>({
             0x0332, 0x099c
@@ -113,8 +112,7 @@ void DrMp3ImporterTest::stereo16() {
 
     CORRADE_COMPARE(importer->format(), BufferFormat::Stereo16);
     CORRADE_COMPARE(importer->frequency(), 44100);
-    CORRADE_COMPARE_AS(importer->data().size(), 9734,
-        TestSuite::Compare::Greater);
+    CORRADE_COMPARE(importer->data().size(), 13824*2);
     CORRADE_COMPARE_AS(Containers::arrayCast<UnsignedShort>(importer->data().slice(9730, 9734)),
         Containers::arrayView<UnsignedShort>({
             0x99a6, 0x99b1

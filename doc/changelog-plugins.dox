@@ -167,6 +167,9 @@ namespace Magnum {
 
 @subsection changelog-plugins-latest-bugfixes Bug fixes
 
+-   Fixed @ref Audio::DrMp3Importer "DrMp3AudioImporter" to calculate proper
+    buffer length for multi-channel files -- it was always taking just a single
+    channel into account
 -   @ref Trade::AssimpImporter "AssimpImporter" used to add a strange "skeleton
     visualizer" meshes to files such as COLLADA even though the file had no
     skeletons in the first place. Turns out this was due to insane defaults and
