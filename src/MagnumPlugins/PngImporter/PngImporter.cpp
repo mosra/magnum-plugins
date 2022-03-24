@@ -25,8 +25,7 @@
 
 #include "PngImporter.h"
 
-#include <cstring>
-#include <algorithm> /* std::copy_n() */ /** @todo remove */
+#include <cstring> /* std::strcmp(), std::memcpy() */
 #include <png.h>
 /*
     The <csetjmp> header has to be included *after* png.h, otherwise older
@@ -37,7 +36,7 @@
 
     New versions don't have that anymore: https://github.com/glennrp/libpng/commit/6c2e919c7eb736d230581a4c925fa67bd901fcf8
 */
-#include <csetjmp>
+#include <csetjmp> /* setjmp(), libpng why are you still insane */
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/ScopeGuard.h>
 #include <Corrade/Utility/Algorithms.h>
@@ -133,7 +132,7 @@ Containers::Optional<ImageData2D> PngImporter::doImage2D(UnsignedInt, UnsignedIn
     png_set_read_fn(file, &input, [](const png_structp file, const png_bytep data, const png_size_t length) {
         auto&& input = *reinterpret_cast<Containers::ArrayView<char>*>(png_get_io_ptr(file));
         if(input.size() < length) png_error(file, "file too short");
-        std::copy_n(input.begin(), length, data);
+        std::memcpy(data, input.begin(), length);
         input = input.exceptPrefix(length);
     });
 
