@@ -42,6 +42,7 @@
    Verified in StbImageImporterTest::multithreaded(). */
 #define STBI_NO_THREAD_LOCALS
 #ifdef CORRADE_BUILD_MULTITHREADED
+#include <Corrade/Utility/Macros.h> /* CORRADE_THREAD_LOCAL */
 #define STBI_THREAD_LOCAL CORRADE_THREAD_LOCAL
 #endif
 

@@ -30,6 +30,7 @@
  */
 
 #include <Corrade/Containers/Array.h>
+#include <Corrade/Utility/Macros.h> /* CORRADE_THREAD_LOCAL */
 #include <Corrade/Utility/VisibilityMacros.h>
 #include <Magnum/Text/AbstractFont.h>
 

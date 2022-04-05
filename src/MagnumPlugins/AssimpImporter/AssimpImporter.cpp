@@ -41,6 +41,7 @@
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/Format.h>
+#include <Corrade/Utility/Macros.h> /* _CORRADE_HELPER_DEFER */
 #include <Corrade/Utility/Path.h>
 #include <Magnum/FileCallback.h>
 #include <Magnum/Mesh.h>
