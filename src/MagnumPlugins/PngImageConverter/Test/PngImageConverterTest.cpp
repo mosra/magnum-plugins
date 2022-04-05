@@ -124,7 +124,7 @@ constexpr const char ConvertedRgbData[] = {
 };
 
 void PngImageConverterTest::rgb() {
-    const auto data = _converterManager.instantiate("PngImageConverter")->convertToData(OriginalRgb);
+    Containers::Array<char> data = _converterManager.instantiate("PngImageConverter")->convertToData(OriginalRgb);
     CORRADE_VERIFY(data);
 
     if(_importerManager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
@@ -168,7 +168,7 @@ constexpr const UnsignedShort ConvertedRgbData16[] = {
 };
 
 void PngImageConverterTest::rgb16() {
-    const auto data = _converterManager.instantiate("PngImageConverter")->convertToData(OriginalRgb16);
+    Containers::Array<char> data = _converterManager.instantiate("PngImageConverter")->convertToData(OriginalRgb16);
     CORRADE_VERIFY(data);
 
     if(_importerManager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
@@ -205,7 +205,7 @@ constexpr const char ConvertedGrayscaleData[] = {
 };
 
 void PngImageConverterTest::grayscale() {
-    const auto data = _converterManager.instantiate("PngImageConverter")->convertToData(OriginalGrayscale);
+    Containers::Array<char> data = _converterManager.instantiate("PngImageConverter")->convertToData(OriginalGrayscale);
     CORRADE_VERIFY(data);
 
     if(_importerManager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
@@ -249,7 +249,7 @@ constexpr const UnsignedShort ConvertedGrayscaleData16[] = {
 };
 
 void PngImageConverterTest::grayscale16() {
-    const auto data = _converterManager.instantiate("PngImageConverter")->convertToData(OriginalGrayscale16);
+    Containers::Array<char> data = _converterManager.instantiate("PngImageConverter")->convertToData(OriginalGrayscale16);
     CORRADE_VERIFY(data);
 
     if(_importerManager.loadState("PngImporter") == PluginManager::LoadState::NotFound)

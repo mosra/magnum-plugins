@@ -246,7 +246,7 @@ constexpr const Float ConvertedGrayscale32FData[] = {
 
 void StbImageConverterTest::hdrGrayscale() {
     Containers::Pointer<Trade::AbstractImageConverter> converter = _converterManager.instantiate("StbHdrImageConverter");
-    const auto data = converter->convertToData(OriginalGrayscale32F);
+    Containers::Array<char> data = converter->convertToData(OriginalGrayscale32F);
     CORRADE_VERIFY(data);
 
     if(_importerManager.loadState("StbImageImporter") == PluginManager::LoadState::NotFound)
@@ -311,7 +311,7 @@ const ImageView2D OriginalRgba32F{PixelFormat::RGBA32F, {2, 3}, OriginalRgba32FD
 
 void StbImageConverterTest::hdrRgb() {
     Containers::Pointer<Trade::AbstractImageConverter> converter = _converterManager.instantiate("StbHdrImageConverter");
-    const auto data = converter->convertToData(OriginalRgb32F);
+    Containers::Array<char> data = converter->convertToData(OriginalRgb32F);
     CORRADE_VERIFY(data);
 
     if(_importerManager.loadState("StbImageImporter") == PluginManager::LoadState::NotFound)
@@ -434,7 +434,7 @@ void StbImageConverterTest::jpegRgb80Percent() {
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("StbJpegImageConverter");
     CORRADE_COMPARE(converter->configuration().value<Float>("jpegQuality"), 0.8f);
 
-    const auto data = converter->convertToData(OriginalJpegRgb);
+    Containers::Array<char> data = converter->convertToData(OriginalJpegRgb);
     CORRADE_VERIFY(data);
 
     if(_importerManager.loadState("StbImageImporter") == PluginManager::LoadState::NotFound)
@@ -454,7 +454,7 @@ void StbImageConverterTest::jpegRgb100Percent() {
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("StbJpegImageConverter");
     converter->configuration().setValue("jpegQuality", 1.0f);
 
-    const auto data = converter->convertToData(OriginalJpegRgb);
+    Containers::Array<char> data = converter->convertToData(OriginalJpegRgb);
     CORRADE_VERIFY(data);
 
     if(_importerManager.loadState("StbImageImporter") == PluginManager::LoadState::NotFound)
@@ -500,7 +500,7 @@ void StbImageConverterTest::jpegRgba80Percent() {
     /* Finally, the output should be exactly the same as when exporting RGB,
        bit to bit, to ensure we don't produce anything that would cause
        problems for traditional non-turbo libjpeg */
-    const auto dataRgb = converter->convertToData(OriginalJpegRgb);
+    Containers::Array<char> dataRgb = converter->convertToData(OriginalJpegRgb);
     CORRADE_COMPARE_AS(data, dataRgb, TestSuite::Compare::Container);
 }
 
@@ -542,7 +542,7 @@ void StbImageConverterTest::jpegGrayscale80Percent() {
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("StbJpegImageConverter");
     CORRADE_COMPARE(converter->configuration().value<Float>("jpegQuality"), 0.8f);
 
-    const auto data = converter->convertToData(OriginalJpegGrayscale);
+    Containers::Array<char> data = converter->convertToData(OriginalJpegGrayscale);
     CORRADE_VERIFY(data);
 
     if(_importerManager.loadState("StbImageImporter") == PluginManager::LoadState::NotFound)
@@ -576,7 +576,7 @@ constexpr const char ConvertedRgbData[] = {
 };
 
 void StbImageConverterTest::pngRgb() {
-    const auto data = _converterManager.instantiate("StbPngImageConverter")->convertToData(OriginalRgb);
+    Containers::Array<char> data = _converterManager.instantiate("StbPngImageConverter")->convertToData(OriginalRgb);
     CORRADE_VERIFY(data);
 
     if(_importerManager.loadState("StbImageImporter") == PluginManager::LoadState::NotFound)
@@ -612,7 +612,7 @@ constexpr const char ConvertedGrayscaleData[] = {
 };
 
 void StbImageConverterTest::pngGrayscale() {
-    const auto data = _converterManager.instantiate("StbPngImageConverter")->convertToData(OriginalGrayscale);
+    Containers::Array<char> data = _converterManager.instantiate("StbPngImageConverter")->convertToData(OriginalGrayscale);
     CORRADE_VERIFY(data);
 
     if(_importerManager.loadState("StbImageImporter") == PluginManager::LoadState::NotFound)
@@ -646,7 +646,7 @@ constexpr const char ConvertedRgbaData[] = {
 };
 
 void StbImageConverterTest::tgaRgba() {
-    const auto data = _converterManager.instantiate("StbTgaImageConverter")->convertToData(OriginalRgba);
+    Containers::Array<char> data = _converterManager.instantiate("StbTgaImageConverter")->convertToData(OriginalRgba);
     CORRADE_VERIFY(data);
 
     if(_importerManager.loadState("StbImageImporter") == PluginManager::LoadState::NotFound)

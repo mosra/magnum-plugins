@@ -498,12 +498,12 @@ void AssimpImporterTest::animation() {
     Containers::Array<Containers::Array<char>> animationData{importer->animationCount()};
 
     for(UnsignedInt i = 0; i < importer->animationCount(); i++) {
-        auto animation = importer->animation(i);
+        Containers::Optional<Trade::AnimationData> animation = importer->animation(i);
         CORRADE_VERIFY(animation);
         CORRADE_VERIFY(animation->importerState());
 
         for(UnsignedInt j = 0; j < animation->trackCount(); j++) {
-            const auto track = animation->track(j);
+            const Animation::TrackViewStorage<const Float>& track = animation->track(j);
             /* All imported animations are linear */
             CORRADE_COMPARE(track.interpolation(), Animation::Interpolation::Linear);
 
@@ -629,7 +629,7 @@ void AssimpImporterTest::animationGltf() {
 
     /* Empty animation */
     {
-        auto animation = importer->animation("empty");
+        Containers::Optional<Trade::AnimationData> animation = importer->animation("empty");
         CORRADE_VERIFY(animation);
         CORRADE_VERIFY(animation->data().isEmpty());
         CORRADE_COMPARE(animation->trackCount(), 0);
@@ -639,7 +639,7 @@ void AssimpImporterTest::animationGltf() {
         std::ostringstream out;
         Debug redirectDebug{&out};
 
-        auto animation = importer->animation("TRS animation");
+        Containers::Optional<Trade::AnimationData> animation = importer->animation("TRS animation");
         CORRADE_VERIFY(animation);
         CORRADE_VERIFY(animation->importerState());
         /* Two rotation keys, four translation and scaling keys. */
@@ -778,7 +778,7 @@ void AssimpImporterTest::animationGltfSpline() {
 
     constexpr Float keys[]{ 0.5f, 3.5f, 4.0f, 5.0f };
 
-    auto animation = importer->animation(2);
+    Containers::Optional<Trade::AnimationData> animation = importer->animation(2);
     CORRADE_VERIFY(animation);
     CORRADE_VERIFY(animation->importerState());
     /* Four T/R/S keys */
@@ -1028,7 +1028,7 @@ void AssimpImporterTest::animationShortestPathOptimizationEnabled() {
     CORRADE_VERIFY(importer->configuration().value<bool>("optimizeQuaternionShortestPath"));
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "animation-patching.gltf")));
 
-    auto animation = importer->animation("Quaternion shortest-path patching");
+    Containers::Optional<Trade::AnimationData> animation = importer->animation("Quaternion shortest-path patching");
     CORRADE_VERIFY(animation);
     CORRADE_COMPARE(animation->trackCount(), 1);
     CORRADE_COMPARE(animation->trackType(0), AnimationTrackType::Quaternion);
@@ -1076,7 +1076,7 @@ void AssimpImporterTest::animationShortestPathOptimizationDisabled() {
     importer->configuration().setValue("optimizeQuaternionShortestPath", false);
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "animation-patching.gltf")));
 
-    auto animation = importer->animation("Quaternion shortest-path patching");
+    Containers::Optional<Trade::AnimationData> animation = importer->animation("Quaternion shortest-path patching");
     CORRADE_VERIFY(animation);
     CORRADE_COMPARE(animation->trackCount(), 1);
     CORRADE_COMPARE(animation->trackType(0), AnimationTrackType::Quaternion);
@@ -1180,7 +1180,7 @@ void AssimpImporterTest::animationQuaternionNormalizationDisabled() {
     CORRADE_VERIFY(importer->configuration().setValue("normalizeQuaternions", false));
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "animation-patching.gltf")));
 
-    auto animation = importer->animation("Quaternion normalization patching");
+    Containers::Optional<Trade::AnimationData> animation = importer->animation("Quaternion normalization patching");
     CORRADE_VERIFY(animation);
     CORRADE_COMPARE(animation->trackCount(), 1);
     CORRADE_COMPARE(animation->trackType(0), AnimationTrackType::Quaternion);
@@ -1222,7 +1222,7 @@ void AssimpImporterTest::animationMerge() {
     CORRADE_COMPARE(importer->animationName(0), "");
     CORRADE_COMPARE(importer->animationForName(""), -1);
 
-    auto animation = importer->animation(0);
+    Containers::Optional<Trade::AnimationData> animation = importer->animation(0);
     CORRADE_VERIFY(animation);
     CORRADE_VERIFY(!animation->importerState()); /* No particular clip */
     /*
@@ -1382,12 +1382,12 @@ void AssimpImporterTest::skin() {
         CORRADE_COMPARE(importer->skin3DName(skinIndex), meshName);
         CORRADE_VERIFY(importer->meshForName(meshName) != -1);
 
-        auto skin = importer->skin3D(skinIndex);
+        Containers::Optional<Trade::SkinData3D> skin = importer->skin3D(skinIndex);
         CORRADE_VERIFY(skin);
         CORRADE_VERIFY(skin->importerState());
 
         /* Don't check joint order, only presence */
-        auto joints = skin->joints();
+        Containers::ArrayView<const UnsignedInt> joints = skin->joints();
         CORRADE_COMPARE(joints.size(), Containers::arraySize(jointNames[i]));
         for(const std::string& name: jointNames[i]) {
             auto found = std::find_if(joints.begin(), joints.end(), [&](UnsignedInt joint) {
@@ -1402,9 +1402,9 @@ void AssimpImporterTest::skin() {
            making them hard to compare. Instead, check that their defining
            property holds: they're the inverse of the joint's original global
            transform. */
-        auto bindMatrices = skin->inverseBindMatrices();
+        Containers::ArrayView<const Matrix4> bindMatrices = skin->inverseBindMatrices();
         CORRADE_COMPARE(bindMatrices.size(), joints.size());
-        auto meshObject = importer->objectForName(objectNames[i]);
+        Long meshObject = importer->objectForName(objectNames[i]);
         CORRADE_VERIFY(meshObject != -1);
         CORRADE_VERIFY(scene->meshesMaterialsFor(meshObject));
         CORRADE_COMPARE_AS(scene->skinsFor(meshObject),
@@ -1423,7 +1423,7 @@ void AssimpImporterTest::skin() {
         const std::string meshName = fixMeshName(objectNames[2], data.suffix, _assimpVersion);
         CORRADE_VERIFY(importer->meshForName(meshName) != -1);
         CORRADE_COMPARE(importer->skin3DForName(meshName), -1);
-        auto meshObject = importer->objectForName(objectNames[2]);
+        Long meshObject = importer->objectForName(objectNames[2]);
         CORRADE_VERIFY(meshObject != -1);
         CORRADE_VERIFY(scene->meshesMaterialsFor(meshObject));
         CORRADE_COMPARE_AS(scene->skinsFor(meshObject),
@@ -1482,7 +1482,7 @@ void AssimpImporterTest::skinMerge() {
     for(const char* meshName: {"Mesh_1", "Mesh_2"}) {
         CORRADE_ITERATION(meshName);
 
-        auto meshObject = importer->objectForName(meshName);
+        Long meshObject = importer->objectForName(meshName);
         CORRADE_VERIFY(meshObject != -1);
         CORRADE_VERIFY(scene->meshesMaterialsFor(meshObject));
         CORRADE_COMPARE_AS(scene->skinsFor(meshObject),
@@ -1490,7 +1490,7 @@ void AssimpImporterTest::skinMerge() {
             TestSuite::Compare::Container);
     }
 
-    auto skin = importer->skin3D(0);
+    Containers::Optional<Trade::SkinData3D> skin = importer->skin3D(0);
     CORRADE_VERIFY(skin);
     CORRADE_VERIFY(!skin->importerState()); /* No particular skin */
 
@@ -1510,8 +1510,8 @@ void AssimpImporterTest::skinMerge() {
     /* Relying on the skin order here, this *might* break in the future */
     constexpr UnsignedInt mergeOrder[]{1, 2, 3, 4, 5};
 
-    auto joints = skin->joints();
-    auto inverseBindMatrices = skin->inverseBindMatrices();
+    Containers::ArrayView<const UnsignedInt> joints = skin->joints();
+    Containers::ArrayView<const Matrix4> inverseBindMatrices = skin->inverseBindMatrices();
     CORRADE_COMPARE(joints.size(), inverseBindMatrices.size());
     CORRADE_COMPARE(joints.size(), Containers::arraySize(mergeOrder));
 
@@ -1627,7 +1627,7 @@ void AssimpImporterTest::light() {
 
     /* Spot light */
     {
-        auto light = importer->light("Spot");
+        Containers::Optional<Trade::LightData> light = importer->light("Spot");
         CORRADE_VERIFY(light);
         CORRADE_COMPARE(light->type(), LightData::Type::Spot);
         CORRADE_COMPARE(light->color(), (Color3{0.12f, 0.24f, 0.36f}));
@@ -1641,7 +1641,7 @@ void AssimpImporterTest::light() {
 
     /* Point light */
     } {
-        auto light = importer->light("Point");
+        Containers::Optional<Trade::LightData> light = importer->light("Point");
         CORRADE_VERIFY(light);
         CORRADE_COMPARE(light->type(), LightData::Type::Point);
         CORRADE_COMPARE(light->color(), (Color3{0.5f, 0.25f, 0.05f}));
@@ -1651,7 +1651,7 @@ void AssimpImporterTest::light() {
 
     /* Directional light */
     } {
-        auto light = importer->light("Sun");
+        Containers::Optional<Trade::LightData> light = importer->light("Sun");
         CORRADE_VERIFY(light);
         CORRADE_COMPARE(light->type(), LightData::Type::Directional);
         /* This one has intensity of 10, which gets premultiplied to the
@@ -1662,7 +1662,7 @@ void AssimpImporterTest::light() {
 
     /* Ambient light */
     } {
-        auto light = importer->light("Ambient");
+        Containers::Optional<Trade::LightData> light = importer->light("Ambient");
         CORRADE_VERIFY(light);
         CORRADE_COMPARE(light->type(), LightData::Type::Ambient);
         CORRADE_COMPARE(light->color(), (Color3{0.01f, 0.02f, 0.05f}));
@@ -2148,7 +2148,7 @@ void AssimpImporterTest::materialTextureLayers() {
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "material-layers.fbx")));
     CORRADE_COMPARE(importer->materialCount(), 1);
 
-    const auto material = importer->material(0);
+    Containers::Optional<Trade::MaterialData> material = importer->material(0);
     CORRADE_VERIFY(material);
     CORRADE_COMPARE(material->layerCount(), 3);
 
@@ -2354,7 +2354,7 @@ void AssimpImporterTest::materialRaw() {
         const Containers::StringView name = extractMaterialKey(AI_MATKEY_TWOSIDED);
         CORRADE_VERIFY(material->hasAttribute(name));
         CORRADE_COMPARE(material->attributeType(name), MaterialAttributeType::String);
-        const auto value = material->attribute<Containers::StringView>(name);
+        Containers::StringView value = material->attribute<Containers::StringView>(name);
         CORRADE_COMPARE(value.size(), 1);
         CORRADE_VERIFY(value.front() != 0);
     } {
@@ -2395,7 +2395,7 @@ void AssimpImporterTest::materialRaw() {
         if(hasAttribute) {
             /* Opaque buffer converted to String */
             CORRADE_COMPARE(material->attributeType(name), MaterialAttributeType::String);
-            const auto value = material->attribute<Containers::StringView>(name);
+            Containers::StringView value = material->attribute<Containers::StringView>(name);
             /* +1 is null byte */
             CORRADE_COMPARE(value.size(), sizeof(aiUVTransform));
             const aiUVTransform& transform = *reinterpret_cast<const aiUVTransform*>(value.data());
@@ -2415,7 +2415,7 @@ void AssimpImporterTest::materialRawTextureLayers() {
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "material-layers.fbx")));
     CORRADE_COMPARE(importer->materialCount(), 1);
 
-    const auto material = importer->material(0);
+    Containers::Optional<Trade::MaterialData> material = importer->material(0);
     CORRADE_VERIFY(material);
     CORRADE_COMPARE(material->layerCount(), 3);
 
@@ -2757,7 +2757,7 @@ void AssimpImporterTest::meshSkinningAttributes() {
     }
 
     /* No skin joint node using this mesh */
-    auto mesh = importer->mesh(fixMeshName("Plane"_s, data.suffix, _assimpVersion));
+    Containers::Optional<Trade::MeshData> mesh = importer->mesh(fixMeshName("Plane"_s, data.suffix, _assimpVersion));
     CORRADE_VERIFY(mesh);
     CORRADE_VERIFY(!mesh->hasAttribute(jointsAttribute));
 }
@@ -2774,7 +2774,7 @@ void AssimpImporterTest::meshSkinningAttributesMultiple() {
 
     constexpr UnsignedInt AttributeCount = 3;
 
-    auto mesh = importer->mesh(fixMeshName("Mesh_1"_s, ".dae"_s, _assimpVersion));
+    Containers::Optional<Trade::MeshData> mesh = importer->mesh(fixMeshName("Mesh_1"_s, ".dae"_s, _assimpVersion));
     CORRADE_VERIFY(mesh);
     CORRADE_VERIFY(mesh->hasAttribute(jointsAttribute));
     CORRADE_COMPARE(mesh->attributeCount(jointsAttribute), AttributeCount);
@@ -2784,8 +2784,8 @@ void AssimpImporterTest::meshSkinningAttributesMultiple() {
     CORRADE_COMPARE(mesh->attributeFormat(weightsAttribute), VertexFormat::Vector4);
 
     for(UnsignedInt i = 0; i != AttributeCount; ++i) {
-        auto joints = mesh->attribute<Vector4ui>(jointsAttribute, i);
-        auto weights = mesh->attribute<Vector4>(weightsAttribute, i);
+        Containers::StridedArrayView1D<const Vector4ui> joints = mesh->attribute<Vector4ui>(jointsAttribute, i);
+        Containers::StridedArrayView1D<const Vector4> weights = mesh->attribute<Vector4>(weightsAttribute, i);
         const Vector4ui jointValues = Vector4ui{0, 1, 2, 3} + Vector4ui{i*4};
         constexpr Vector4 weightValues = Vector4{0.083333f};
         for(UnsignedInt v = 0; v != joints.size(); ++v) {
@@ -2835,9 +2835,9 @@ void AssimpImporterTest::meshSkinningAttributesMultipleGltf() {
         CORRADE_COMPARE(mesh->attributeCount(weightsAttribute), 2);
     }
 
-    auto joints = mesh->attribute<Vector4ui>(jointsAttribute);
+    Containers::StridedArrayView1D<const Vector4ui> joints = mesh->attribute<Vector4ui>(jointsAttribute);
     CORRADE_VERIFY(joints);
-    auto weights = mesh->attribute<Vector4>(weightsAttribute);
+    Containers::StridedArrayView1D<const Vector4> weights = mesh->attribute<Vector4>(weightsAttribute);
     CORRADE_VERIFY(weights);
 
     CORRADE_COMPARE(out.str(),
@@ -2857,8 +2857,8 @@ void AssimpImporterTest::meshSkinningAttributesMultipleGltf() {
     CORRADE_VERIFY(mesh->hasAttribute(MeshAttribute::Color));
     CORRADE_COMPARE(mesh->attributeCount(MeshAttribute::Color), 2);
 
-    auto colors1 = mesh->attribute<Vector4>(MeshAttribute::Color, 0);
-    auto colors2 = mesh->attribute<Vector4>(MeshAttribute::Color, 1);
+    Containers::StridedArrayView1D<const Vector4> colors1 = mesh->attribute<Vector4>(MeshAttribute::Color, 0);
+    Containers::StridedArrayView1D<const Vector4> colors2 = mesh->attribute<Vector4>(MeshAttribute::Color, 1);
     CORRADE_VERIFY(colors1);
     CORRADE_VERIFY(colors2);
     CORRADE_COMPARE(colors1.front(), Color4{1.0f});
@@ -2876,7 +2876,7 @@ void AssimpImporterTest::meshSkinningAttributesMaxJointWeights() {
     /* 6 weights = 2 sets of 4, last two weights zero */
     constexpr UnsignedInt AttributeCount = 2;
 
-    auto mesh = importer->mesh(fixMeshName("Mesh_1"_s, ".dae"_s, _assimpVersion));
+    Containers::Optional<Trade::MeshData> mesh = importer->mesh(fixMeshName("Mesh_1"_s, ".dae"_s, _assimpVersion));
     CORRADE_VERIFY(mesh);
     CORRADE_VERIFY(mesh->hasAttribute(jointsAttribute));
     CORRADE_COMPARE(mesh->attributeCount(jointsAttribute), AttributeCount);
@@ -2891,8 +2891,8 @@ void AssimpImporterTest::meshSkinningAttributesMaxJointWeights() {
     constexpr Vector4 weightValues[]{Vector4{Weight}, Vector4::pad(Vector2{Weight})};
 
     for(UnsignedInt i = 0; i != AttributeCount; ++i) {
-        auto joints = mesh->attribute<Vector4ui>(jointsAttribute, i);
-        auto weights = mesh->attribute<Vector4>(weightsAttribute, i);
+        Containers::StridedArrayView1D<const Vector4ui> joints = mesh->attribute<Vector4ui>(jointsAttribute, i);
+        Containers::StridedArrayView1D<const Vector4> weights = mesh->attribute<Vector4>(weightsAttribute, i);
         for(UnsignedInt v = 0; v != joints.size(); ++v) {
             CORRADE_COMPARE(joints[v], jointValues[i]);
             CORRADE_COMPARE(weights[v], weightValues[i]);
@@ -2911,7 +2911,7 @@ void AssimpImporterTest::meshSkinningAttributesDummyWeightRemoval() {
     const MeshAttribute jointsAttribute = importer->meshAttributeForName("JOINTS");
     const MeshAttribute weightsAttribute = importer->meshAttributeForName("WEIGHTS");
 
-    auto mesh = importer->mesh("Mesh");
+    Containers::Optional<Trade::MeshData> mesh = importer->mesh("Mesh");
     CORRADE_VERIFY(mesh);
 
     /* Without ignoring dummy weights, the max joint count per vertex
@@ -2919,9 +2919,9 @@ void AssimpImporterTest::meshSkinningAttributesDummyWeightRemoval() {
     CORRADE_COMPARE(mesh->attributeCount(jointsAttribute), 1);
     CORRADE_COMPARE(mesh->attributeCount(weightsAttribute), 1);
 
-    auto joints = mesh->attribute<Vector4ui>(jointsAttribute);
+    Containers::StridedArrayView1D<const Vector4ui> joints = mesh->attribute<Vector4ui>(jointsAttribute);
     CORRADE_VERIFY(joints);
-    auto weights = mesh->attribute<Vector4>(weightsAttribute);
+    Containers::StridedArrayView1D<const Vector4> weights = mesh->attribute<Vector4>(weightsAttribute);
     CORRADE_VERIFY(weights);
 
     constexpr Vector4ui joint{0, 1, 2, 5};
@@ -2952,11 +2952,11 @@ void AssimpImporterTest::meshSkinningAttributesMerge() {
     {
         const Int id = importer->meshForName(fixMeshName("Mesh_1"_s, ".dae"_s, _assimpVersion));
         CORRADE_VERIFY(id != -1);
-        auto mesh = importer->mesh(id);
+        Containers::Optional<Trade::MeshData> mesh = importer->mesh(id);
         CORRADE_VERIFY(mesh);
         CORRADE_VERIFY(mesh->hasAttribute(jointsAttribute));
         CORRADE_COMPARE(mesh->attributeFormat(jointsAttribute), VertexFormat::Vector4ui);
-        auto jointData = id == 0
+        Containers::ArrayView<const Vector4ui> jointData = id == 0
             ? Containers::arrayView(MeshSkinningAttributesJointData)
             : Containers::arrayView(shiftedJointData);
         CORRADE_COMPARE_AS(mesh->attribute<Vector4ui>(jointsAttribute),
@@ -2969,11 +2969,11 @@ void AssimpImporterTest::meshSkinningAttributesMerge() {
     } {
         const Int id = importer->meshForName(fixMeshName("Mesh_2"_s, ".dae"_s, _assimpVersion));
         CORRADE_VERIFY(id != -1);
-        auto mesh = importer->mesh(id);
+        Containers::Optional<Trade::MeshData> mesh = importer->mesh(id);
         CORRADE_VERIFY(mesh);
         CORRADE_VERIFY(mesh->hasAttribute(jointsAttribute));
         CORRADE_COMPARE(mesh->attributeFormat(jointsAttribute), VertexFormat::Vector4ui);
-        auto jointData = id == 0
+        Containers::ArrayView<const Vector4ui> jointData = id == 0
             ? Containers::arrayView(MeshSkinningAttributesJointData)
             : Containers::arrayView(shiftedJointData);
         CORRADE_COMPARE_AS(mesh->attribute<Vector4ui>(jointsAttribute),
@@ -3004,10 +3004,10 @@ void AssimpImporterTest::meshMultiplePrimitives() {
         CORRADE_COMPARE(importer->meshName(1), name);
         CORRADE_COMPARE(importer->meshForName(name), 0);
 
-        auto mesh0 = importer->mesh(0);
+        Containers::Optional<Trade::MeshData> mesh0 = importer->mesh(0);
         CORRADE_VERIFY(mesh0);
         CORRADE_COMPARE(mesh0->primitive(), MeshPrimitive::Triangles);
-        auto mesh1 = importer->mesh(1);
+        Containers::Optional<Trade::MeshData> mesh1 = importer->mesh(1);
         CORRADE_VERIFY(mesh1);
         CORRADE_COMPARE(mesh1->primitive(), MeshPrimitive::Lines);
     } {
@@ -3017,13 +3017,13 @@ void AssimpImporterTest::meshMultiplePrimitives() {
         CORRADE_COMPARE(importer->meshName(4), name);
         CORRADE_COMPARE(importer->meshForName(name), 2);
 
-        auto mesh2 = importer->mesh(2);
+        Containers::Optional<Trade::MeshData> mesh2 = importer->mesh(2);
         CORRADE_VERIFY(mesh2);
         CORRADE_COMPARE(mesh2->primitive(), MeshPrimitive::Lines);
-        auto mesh3 = importer->mesh(3);
+        Containers::Optional<Trade::MeshData> mesh3 = importer->mesh(3);
         CORRADE_VERIFY(mesh3);
         CORRADE_COMPARE(mesh3->primitive(), MeshPrimitive::Triangles);
-        auto mesh4 = importer->mesh(4);
+        Containers::Optional<Trade::MeshData> mesh4 = importer->mesh(4);
         CORRADE_VERIFY(mesh4);
         CORRADE_COMPARE(mesh4->primitive(), MeshPrimitive::Triangles);
     }

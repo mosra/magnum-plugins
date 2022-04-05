@@ -486,7 +486,7 @@ void BasisImporterTest::texture() {
         for(UnsignedInt i = 0; i != total; ++i) {
             CORRADE_ITERATION(i);
 
-            const auto texture = importer->texture(i);
+            Containers::Optional<Trade::TextureData> texture = importer->texture(i);
             CORRADE_VERIFY(texture);
             CORRADE_COMPARE(texture->minificationFilter(), SamplerFilter::Linear);
             CORRADE_COMPARE(texture->magnificationFilter(), SamplerFilter::Linear);

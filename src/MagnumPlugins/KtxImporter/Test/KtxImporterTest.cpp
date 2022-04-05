@@ -739,7 +739,7 @@ void KtxImporterTest::texture() {
 
     for(UnsignedInt i = 0; i != total; ++i) {
         CORRADE_ITERATION(i);
-        const auto texture = importer->texture(i);
+        Containers::Optional<Trade::TextureData> texture = importer->texture(i);
         CORRADE_VERIFY(texture);
         CORRADE_COMPARE(texture->minificationFilter(), SamplerFilter::Linear);
         CORRADE_COMPARE(texture->magnificationFilter(), SamplerFilter::Linear);
@@ -777,7 +777,7 @@ void KtxImporterTest::imageRgba() {
     CORRADE_COMPARE(importer->image2DCount(), 1);
     CORRADE_COMPARE(importer->image2DLevelCount(0), 1);
 
-    auto image = importer->image2D(0);
+    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
 
     CORRADE_VERIFY(!image->isCompressed());
@@ -800,7 +800,7 @@ void KtxImporterTest::imageRgb32U() {
     CORRADE_COMPARE(importer->image2DCount(), 1);
     CORRADE_COMPARE(importer->image2DLevelCount(0), 1);
 
-    auto image = importer->image2D(0);
+    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
 
     CORRADE_VERIFY(!image->isCompressed());
@@ -833,7 +833,7 @@ void KtxImporterTest::imageRgb32F() {
     CORRADE_COMPARE(importer->image2DCount(), 1);
     CORRADE_COMPARE(importer->image2DLevelCount(0), 1);
 
-    auto image = importer->image2D(0);
+    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
 
     CORRADE_VERIFY(!image->isCompressed());
@@ -869,7 +869,7 @@ void KtxImporterTest::imageDepthStencil() {
     CORRADE_COMPARE(importer->image2DCount(), 1);
     CORRADE_COMPARE(importer->image2DLevelCount(0), 1);
 
-    auto image = importer->image2D(0);
+    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
 
     CORRADE_VERIFY(!image->isCompressed());
@@ -892,7 +892,7 @@ void KtxImporterTest::image1D() {
     CORRADE_COMPARE(importer->image1DCount(), 1);
     CORRADE_COMPARE(importer->image1DLevelCount(0), 1);
 
-    auto image = importer->image1D(0);
+    Containers::Optional<Trade::ImageData1D> image = importer->image1D(0);
     CORRADE_VERIFY(image);
 
     CORRADE_VERIFY(!image->isCompressed());
@@ -912,7 +912,7 @@ void KtxImporterTest::image1DMipmaps() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(KTXIMPORTER_TEST_DIR, "1d-mipmaps.ktx2")));
 
-    const auto mip0 = Containers::arrayView(PatternRgb1DData[0]);
+    Containers::ArrayView<const Color3ub> mip0 = Containers::arrayView(PatternRgb1DData[0]);
     const Color3ub mip1[2]{0xffffff_rgb, 0x007f7f_rgb};
     const Color3ub mip2[1]{0x000000_rgb};
     const Containers::ArrayView<const Color3ub> mipViews[3]{mip0, mip1, mip2};
@@ -924,7 +924,7 @@ void KtxImporterTest::image1DMipmaps() {
     for(UnsignedInt i = 0; i != importer->image1DLevelCount(0); ++i) {
         CORRADE_ITERATION(i);
 
-        auto image = importer->image1D(0, i);
+        Containers::Optional<Trade::ImageData1D> image = importer->image1D(0, i);
         CORRADE_VERIFY(image);
 
         CORRADE_VERIFY(!image->isCompressed());
@@ -952,7 +952,7 @@ void KtxImporterTest::image1DLayers() {
     CORRADE_COMPARE(importer->image2DCount(), 1);
     CORRADE_COMPARE(importer->image2DLevelCount(0), 1);
 
-    auto image = importer->image2D(0);
+    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
 
     CORRADE_VERIFY(!image->isCompressed());
@@ -978,7 +978,7 @@ void KtxImporterTest::image1DCompressed() {
     CORRADE_COMPARE(importer->image1DCount(), 1);
     CORRADE_COMPARE(importer->image1DLevelCount(0), 1);
 
-    auto image = importer->image1D(0);
+    Containers::Optional<Trade::ImageData1D> image = importer->image1D(0);
     CORRADE_VERIFY(image);
 
     CORRADE_VERIFY(image->isCompressed());
@@ -1012,7 +1012,7 @@ void KtxImporterTest::image1DCompressedMipmaps() {
     for(UnsignedInt i = 0; i != importer->image1DLevelCount(0); ++i) {
         CORRADE_ITERATION(i);
 
-        auto image = importer->image1D(0, i);
+        Containers::Optional<Trade::ImageData1D> image = importer->image1D(0, i);
         CORRADE_VERIFY(image);
 
         CORRADE_VERIFY(image->isCompressed());
@@ -1040,7 +1040,7 @@ void KtxImporterTest::image2D() {
     CORRADE_COMPARE(importer->image2DCount(), 1);
     CORRADE_COMPARE(importer->image2DLevelCount(0), 1);
 
-    auto image = importer->image2D(0);
+    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
 
     CORRADE_VERIFY(!image->isCompressed());
@@ -1073,7 +1073,7 @@ void KtxImporterTest::image2DMipmaps() {
     for(UnsignedInt i = 0; i != importer->image2DLevelCount(0); ++i) {
         CORRADE_ITERATION(i);
 
-        auto image = importer->image2D(0, i);
+        Containers::Optional<Trade::ImageData2D> image = importer->image2D(0, i);
         CORRADE_VERIFY(image);
 
         CORRADE_VERIFY(!image->isCompressed());
@@ -1109,7 +1109,7 @@ void KtxImporterTest::image2DMipmapsIncomplete() {
     for(UnsignedInt i = 0; i != importer->image2DLevelCount(0); ++i) {
         CORRADE_ITERATION(i);
 
-        auto image = importer->image2D(0, i);
+        Containers::Optional<Trade::ImageData2D> image = importer->image2D(0, i);
         CORRADE_VERIFY(image);
         CORRADE_VERIFY(!image->isCompressed());
         CORRADE_COMPARE(image->format(), PixelFormat::RGB8Srgb);
@@ -1127,7 +1127,7 @@ void KtxImporterTest::image2DLayers() {
     CORRADE_COMPARE(importer->image3DCount(), 1);
     CORRADE_COMPARE(importer->image3DLevelCount(0), 1);
 
-    auto image = importer->image3D(0);
+    Containers::Optional<Trade::ImageData3D> image = importer->image3D(0);
     CORRADE_VERIFY(image);
 
     CORRADE_VERIFY(!image->isCompressed());
@@ -1170,7 +1170,7 @@ void KtxImporterTest::image2DMipmapsAndLayers() {
     for(UnsignedInt i = 0; i != importer->image3DLevelCount(0); ++i) {
         CORRADE_ITERATION(i);
 
-        auto image = importer->image3D(0, i);
+        Containers::Optional<Trade::ImageData3D> image = importer->image3D(0, i);
         CORRADE_VERIFY(image);
 
         CORRADE_VERIFY(!image->isCompressed());
@@ -1201,7 +1201,7 @@ void KtxImporterTest::image2DCompressed() {
     CORRADE_COMPARE(importer->image2DCount(), 1);
     CORRADE_COMPARE(importer->image2DLevelCount(0), 1);
 
-    auto image = importer->image2D(0);
+    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
 
     CORRADE_VERIFY(image->isCompressed());
@@ -1232,7 +1232,7 @@ void KtxImporterTest::image2DCompressedMipmaps() {
     for(UnsignedInt i = 0; i != importer->image2DLevelCount(0); ++i) {
         CORRADE_ITERATION(i);
 
-        auto image = importer->image2D(0, i);
+        Containers::Optional<Trade::ImageData2D> image = importer->image2D(0, i);
         CORRADE_VERIFY(image);
 
         CORRADE_VERIFY(image->isCompressed());
@@ -1257,7 +1257,7 @@ void KtxImporterTest::image2DCompressedLayers() {
     CORRADE_COMPARE(importer->image3DCount(), 1);
     CORRADE_COMPARE(importer->image3DLevelCount(0), 1);
 
-    auto image = importer->image3D(0);
+    Containers::Optional<Trade::ImageData3D> image = importer->image3D(0);
     CORRADE_VERIFY(image);
 
     CORRADE_VERIFY(image->isCompressed());
@@ -1327,7 +1327,7 @@ void KtxImporterTest::imageCubeMapIncomplete() {
        when face count is not 6 */
     const char data[1]{0x3f};
     /* Not a string, so no terminating 0 */
-    const auto keyValueData = createKeyValueData("KTXcubemapIncomplete"_s, Containers::arrayView(data));
+    Containers::Array<char> keyValueData = createKeyValueData("KTXcubemapIncomplete"_s, Containers::arrayView(data));
     patchKeyValueData(keyValueData, *fileData);
 
     Implementation::KtxHeader& header = *reinterpret_cast<Implementation::KtxHeader*>(fileData->data());
@@ -1345,11 +1345,11 @@ void KtxImporterTest::imageCubeMapIncomplete() {
     CORRADE_COMPARE(importer->image3DCount(), 1);
     CORRADE_COMPARE(importer->image3DLevelCount(0), 1);
 
-    const auto texture = importer->texture(0);
+    Containers::Optional<Trade::TextureData> texture = importer->texture(0);
     CORRADE_VERIFY(texture);
     CORRADE_COMPARE(texture->type(), TextureType::Texture2DArray);
 
-    auto image = importer->image3D(0);
+    Containers::Optional<Trade::ImageData3D> image = importer->image3D(0);
     CORRADE_VERIFY(image);
 
     CORRADE_VERIFY(!image->isCompressed());
@@ -1372,7 +1372,7 @@ void KtxImporterTest::imageCubeMap() {
     CORRADE_COMPARE(importer->image3DCount(), 1);
     CORRADE_COMPARE(importer->image3DLevelCount(0), 1);
 
-    auto image = importer->image3D(0);
+    Containers::Optional<Trade::ImageData3D> image = importer->image3D(0);
     CORRADE_VERIFY(image);
 
     CORRADE_VERIFY(!image->isCompressed());
@@ -1410,7 +1410,7 @@ void KtxImporterTest::imageCubeMapMipmaps() {
     for(UnsignedInt i = 0; i != importer->image3DLevelCount(0); ++i) {
         CORRADE_ITERATION(i);
 
-        auto image = importer->image3D(0, i);
+        Containers::Optional<Trade::ImageData3D> image = importer->image3D(0, i);
         CORRADE_VERIFY(image);
         CORRADE_VERIFY(!image->isCompressed());
         CORRADE_COMPARE(image->format(), PixelFormat::RGB8Srgb);
@@ -1428,7 +1428,7 @@ void KtxImporterTest::imageCubeMapLayers() {
     CORRADE_COMPARE(importer->image3DCount(), 1);
     CORRADE_COMPARE(importer->image3DLevelCount(0), 1);
 
-    auto image = importer->image3D(0);
+    Containers::Optional<Trade::ImageData3D> image = importer->image3D(0);
     CORRADE_VERIFY(image);
 
     constexpr UnsignedInt NumLayers = 2;
@@ -1458,7 +1458,7 @@ void KtxImporterTest::image3D() {
     CORRADE_COMPARE(importer->image3DCount(), 1);
     CORRADE_COMPARE(importer->image3DLevelCount(0), 1);
 
-    auto image = importer->image3D(0);
+    Containers::Optional<Trade::ImageData3D> image = importer->image3D(0);
     CORRADE_VERIFY(image);
 
     CORRADE_VERIFY(!image->isCompressed());
@@ -1493,7 +1493,7 @@ void KtxImporterTest::image3DMipmaps() {
     for(UnsignedInt i = 0; i != importer->image3DLevelCount(0); ++i) {
         CORRADE_ITERATION(i);
 
-        auto image = importer->image3D(0, i);
+        Containers::Optional<Trade::ImageData3D> image = importer->image3D(0, i);
         CORRADE_VERIFY(image);
 
         CORRADE_VERIFY(!image->isCompressed());
@@ -1532,7 +1532,7 @@ void KtxImporterTest::image3DLayers() {
         CORRADE_ITERATION(i);
 
         CORRADE_COMPARE(importer->image3DLevelCount(i), 1);
-        auto image = importer->image3D(i);
+        Containers::Optional<Trade::ImageData3D> image = importer->image3D(i);
         CORRADE_VERIFY(image);
 
         CORRADE_VERIFY(!image->isCompressed());
@@ -1556,7 +1556,7 @@ void KtxImporterTest::image3DCompressed() {
     CORRADE_COMPARE(importer->image3DCount(), 1);
     CORRADE_COMPARE(importer->image3DLevelCount(0), 1);
 
-    auto image = importer->image3D(0);
+    Containers::Optional<Trade::ImageData3D> image = importer->image3D(0);
     CORRADE_VERIFY(image);
 
     constexpr CompressedPixelFormat format = CompressedPixelFormat::Etc2RGB8Srgb;
@@ -1590,7 +1590,7 @@ void KtxImporterTest::image3DCompressedMipmaps() {
     for(UnsignedInt i = 0; i != importer->image3DLevelCount(0); ++i) {
         CORRADE_ITERATION(i);
 
-        auto image = importer->image3D(0, i);
+        Containers::Optional<Trade::ImageData3D> image = importer->image3D(0, i);
         CORRADE_VERIFY(image);
 
         CORRADE_VERIFY(image->isCompressed());
@@ -1640,27 +1640,27 @@ void KtxImporterTest::forwardBasis() {
     CORRADE_COMPARE(importer->textureCount(), data.images);
 
     for(UnsignedInt i = 0; i != data.images; ++i) {
-        const auto texture = importer->texture(i);
+        Containers::Optional<Trade::TextureData> texture = importer->texture(i);
         CORRADE_VERIFY(texture);
         CORRADE_COMPARE(texture->type(), data.type);
 
         if(dimensions == 1) {
             CORRADE_COMPARE(importer->image1DLevelCount(i), 1);
-            const auto image = importer->image1D(i);
+            Containers::Optional<Trade::ImageData1D> image = importer->image1D(i);
             CORRADE_VERIFY(image);
             CORRADE_VERIFY(image->isCompressed());
             CORRADE_COMPARE(image->compressedFormat(), CompressedPixelFormat::Etc2RGBA8Srgb);
             CORRADE_COMPARE(Vector3i::pad(image->size()), data.size);
         } else if(dimensions == 2) {
             CORRADE_COMPARE(importer->image2DLevelCount(i), 1);
-            const auto image = importer->image2D(i);
+            Containers::Optional<Trade::ImageData2D> image = importer->image2D(i);
             CORRADE_VERIFY(image);
             CORRADE_VERIFY(image->isCompressed());
             CORRADE_COMPARE(image->compressedFormat(), CompressedPixelFormat::Etc2RGBA8Srgb);
             CORRADE_COMPARE(Vector3i::pad(image->size()), data.size);
         } else if(dimensions == 3) {
             CORRADE_COMPARE(importer->image3DLevelCount(i), 1);
-            const auto image = importer->image3D(i);
+            Containers::Optional<Trade::ImageData3D> image = importer->image3D(i);
             CORRADE_VERIFY(image);
             CORRADE_VERIFY(image->isCompressed());
             CORRADE_COMPARE(image->compressedFormat(), CompressedPixelFormat::Etc2RGBA8Srgb);
@@ -1696,7 +1696,7 @@ void KtxImporterTest::forwardBasisFormat() {
     CORRADE_COMPARE(importer->image2DCount(), 1);
     CORRADE_COMPARE(out.str(), data.expectedWarning);
 
-    const auto image = importer->image2D(0);
+    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image->isCompressed());
     CORRADE_COMPARE(image->compressedFormat(), data.expectedFormat);
     CORRADE_COMPARE(image->size(), (Vector2i{63, 27}));
@@ -1845,19 +1845,19 @@ void KtxImporterTest::orientationFlip() {
     Containers::Array<char> imageData;
     switch(dimensions) {
         case 1: {
-            const auto image = importer->image1D(0);
+            Containers::Optional<Trade::ImageData1D> image = importer->image1D(0);
             imageData = Containers::Array<char>{image->data().size()};
             Utility::copy(image->data(), imageData);
             break;
         }
         case 2: {
-            const auto image = importer->image2D(0);
+            Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
             imageData = Containers::Array<char>{image->data().size()};
             Utility::copy(image->data(), imageData);
             break;
         }
         case 3: {
-            const auto image = importer->image3D(0);
+            Containers::Optional<Trade::ImageData3D> image = importer->image3D(0);
             imageData = Containers::Array<char>{image->data().size()};
             Utility::copy(image->data(), imageData);
             break;
@@ -1930,7 +1930,7 @@ void KtxImporterTest::swizzle() {
     CORRADE_COMPARE(outDebug.str(), expectedMessage);
 
     CORRADE_COMPARE(importer->image2DCount(), 1);
-    auto image = importer->image2D(0);
+    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(image->format(), data.format);
     CORRADE_COMPARE(image->size(), (Vector2i{4, 3}));
@@ -1964,7 +1964,7 @@ void KtxImporterTest::swizzleMultipleBytes() {
     };
 
     CORRADE_COMPARE(importer->image2DCount(), 1);
-    auto image = importer->image2D(0);
+    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(image->format(), PixelFormat::RGB16Unorm);
     CORRADE_COMPARE(image->size(), (Vector2i{4, 3}));
@@ -2028,7 +2028,7 @@ void KtxImporterTest::openMemory() {
     CORRADE_COMPARE(importer->image2DCount(), 1);
     CORRADE_COMPARE(importer->image2DLevelCount(0), 1);
 
-    auto image = importer->image2D(0);
+    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
 
     CORRADE_VERIFY(!image->isCompressed());
@@ -2069,7 +2069,7 @@ void KtxImporterTest::openNormalAfterBasis() {
 
     CORRADE_COMPARE(importer->image2DCount(), 1);
     {
-        const auto image = importer->image2D(0);
+        Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
         CORRADE_VERIFY(image->isCompressed());
         CORRADE_COMPARE(image->compressedFormat(), CompressedPixelFormat::Etc2RGBA8Srgb);
         CORRADE_COMPARE(image->size(), (Vector2i{63, 27}));
@@ -2081,7 +2081,7 @@ void KtxImporterTest::openNormalAfterBasis() {
 
     CORRADE_COMPARE(importer->image2DCount(), 1);
     {
-        const auto image = importer->image2D(0);
+        Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
         CORRADE_VERIFY(image);
         CORRADE_VERIFY(!image->isCompressed());
         CORRADE_COMPARE(image->format(), PixelFormat::RGB8Srgb);

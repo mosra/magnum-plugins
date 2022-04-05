@@ -94,7 +94,7 @@ void MiniExrImageConverterTest::wrongFormat() {
 }
 
 void MiniExrImageConverterTest::rgb() {
-    const auto data = _manager.instantiate("MiniExrImageConverter")->convertToData(Rgb);
+    Containers::Array<char> data = _manager.instantiate("MiniExrImageConverter")->convertToData(Rgb);
 
     CORRADE_COMPARE_AS((Containers::StringView{data, data.size()}),
         Utility::Path::join(MINIEXRIMAGECONVERTER_TEST_DIR, "image.exr"),
@@ -102,7 +102,7 @@ void MiniExrImageConverterTest::rgb() {
 }
 
 void MiniExrImageConverterTest::rgba() {
-    const auto data = _manager.instantiate("MiniExrImageConverter")->convertToData(Rgba);
+    Containers::Array<char> data = _manager.instantiate("MiniExrImageConverter")->convertToData(Rgba);
 
     /* Alpha is ignored, so it is the same file */
     CORRADE_COMPARE_AS((Containers::StringView{data, data.size()}),

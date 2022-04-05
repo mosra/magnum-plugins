@@ -210,7 +210,7 @@ void JpegImageConverterTest::rgb80Percent() {
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("JpegImageConverter");
     CORRADE_COMPARE(converter->configuration().value<Float>("jpegQuality"), 0.8f);
 
-    const auto data = converter->convertToData(OriginalRgb);
+    Containers::Array<char> data = converter->convertToData(OriginalRgb);
     CORRADE_VERIFY(data);
 
     if(_importerManager.loadState("JpegImporter") == PluginManager::LoadState::NotFound)
@@ -239,7 +239,7 @@ void JpegImageConverterTest::rgb100Percent() {
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("JpegImageConverter");
     converter->configuration().setValue("jpegQuality", 1.0f);
 
-    const auto data = converter->convertToData(OriginalRgb);
+    Containers::Array<char> data = converter->convertToData(OriginalRgb);
     CORRADE_VERIFY(data);
 
     if(_importerManager.loadState("JpegImporter") == PluginManager::LoadState::NotFound)
@@ -306,7 +306,7 @@ void JpegImageConverterTest::rgba80Percent() {
     /* Finally, the output should be exactly the same as when exporting RGB,
        bit to bit, to ensure we don't produce anything that would cause
        problems for traditional non-turbo libjpeg */
-    const auto dataRgb = converter->convertToData(OriginalRgb);
+    Containers::Array<char> dataRgb = converter->convertToData(OriginalRgb);
     CORRADE_COMPARE_AS(data, dataRgb, TestSuite::Compare::Container);
 }
 
@@ -336,7 +336,7 @@ void JpegImageConverterTest::grayscale80Percent() {
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("JpegImageConverter");
     CORRADE_COMPARE(converter->configuration().value<Float>("jpegQuality"), 0.8f);
 
-    const auto data = converter->convertToData(OriginalGrayscale);
+    Containers::Array<char> data = converter->convertToData(OriginalGrayscale);
     CORRADE_VERIFY(data);
 
     if(_importerManager.loadState("JpegImporter") == PluginManager::LoadState::NotFound)
@@ -365,7 +365,7 @@ void JpegImageConverterTest::grayscale100Percent() {
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("JpegImageConverter");
     converter->configuration().setValue("jpegQuality", 1.0f);
 
-    const auto data = converter->convertToData(OriginalGrayscale);
+    Containers::Array<char> data = converter->convertToData(OriginalGrayscale);
     CORRADE_VERIFY(data);
 
     if(_importerManager.loadState("JpegImporter") == PluginManager::LoadState::NotFound)

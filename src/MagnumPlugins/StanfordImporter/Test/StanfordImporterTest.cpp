@@ -439,7 +439,7 @@ void StanfordImporterTest::parse() {
     CORRADE_COMPARE(importer->meshCount(), 1);
     CORRADE_COMPARE(importer->meshLevelCount(0), 2);
 
-    auto mesh = importer->mesh(0);
+    Containers::Optional<Trade::MeshData> mesh = importer->mesh(0);
     CORRADE_VERIFY(mesh);
     CORRADE_COMPARE(mesh->attributeCount(), data.attributeCount);
 
@@ -479,7 +479,7 @@ void StanfordImporterTest::parse() {
 
         /* Because the signed packed formats are extremely imprecise, we
            increase the fuzziness a bit */
-        auto normals = mesh->normalsAsArray();
+        Containers::Array<Vector3> normals = mesh->normalsAsArray();
         const Float precision = Math::pow(10.0f, -1.5f*vertexFormatSize(vertexFormatComponentFormat(data.normalFormat)));
         CORRADE_COMPARE_AS(precision, 5.0e-2f, TestSuite::Compare::Less);
         CORRADE_COMPARE_AS(precision, 1.0e-6f, TestSuite::Compare::GreaterOrEqual);
@@ -526,7 +526,7 @@ void StanfordImporterTest::parsePerFace() {
     CORRADE_COMPARE(importer->meshCount(), 1);
     CORRADE_COMPARE(importer->meshLevelCount(0), 2);
 
-    auto mesh = importer->mesh(0);
+    Containers::Optional<Trade::MeshData> mesh = importer->mesh(0);
     CORRADE_VERIFY(mesh);
 
     CORRADE_VERIFY(mesh->isIndexed());
@@ -541,7 +541,7 @@ void StanfordImporterTest::parsePerFace() {
         Containers::arrayView(Positions),
         TestSuite::Compare::Container);
 
-    auto faceMesh = importer->mesh(0, 1);
+    Containers::Optional<Trade::MeshData> faceMesh = importer->mesh(0, 1);
     CORRADE_VERIFY(faceMesh);
     CORRADE_COMPARE(faceMesh->primitive(), MeshPrimitive::Faces);
     CORRADE_VERIFY(!faceMesh->isIndexed());
@@ -689,7 +689,7 @@ void StanfordImporterTest::empty() {
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(STANFORDIMPORTER_TEST_DIR, "empty.ply")));
     CORRADE_COMPARE(importer->meshCount(), 1);
 
-    auto mesh = importer->mesh(0);
+    Containers::Optional<Trade::MeshData> mesh = importer->mesh(0);
     CORRADE_VERIFY(mesh);
     CORRADE_COMPARE(mesh->primitive(), MeshPrimitive::Triangles);
 
@@ -707,7 +707,7 @@ void StanfordImporterTest::empty() {
     if(!data.perFaceToPerVertex) {
         CORRADE_COMPARE(importer->meshLevelCount(0), 2);
 
-        auto faceMesh = importer->mesh(0, 1);
+        Containers::Optional<Trade::MeshData> faceMesh = importer->mesh(0, 1);
         CORRADE_VERIFY(faceMesh);
         CORRADE_COMPARE(faceMesh->primitive(), MeshPrimitive::Faces);
         CORRADE_VERIFY(!faceMesh->isIndexed());
@@ -747,7 +747,7 @@ void StanfordImporterTest::customAttributes() {
        gracefully */
     CORRADE_COMPARE(importer->meshAttributeName(meshAttributeCustom(1000)), "");
 
-    auto mesh = importer->mesh(0);
+    Containers::Optional<Trade::MeshData> mesh = importer->mesh(0);
     CORRADE_VERIFY(mesh);
     CORRADE_COMPARE(mesh->attributeCount(), 3);
     CORRADE_VERIFY(mesh->isIndexed());
@@ -777,7 +777,7 @@ void StanfordImporterTest::customAttributes() {
         }), TestSuite::Compare::Container);
 
     /* Custom face attributes */
-    auto faceMesh = importer->mesh(0, 1);
+    Containers::Optional<Trade::MeshData> faceMesh = importer->mesh(0, 1);
     CORRADE_VERIFY(faceMesh);
     CORRADE_COMPARE(faceMesh->primitive(), MeshPrimitive::Faces);
     CORRADE_VERIFY(!faceMesh->isIndexed());
@@ -811,7 +811,7 @@ void StanfordImporterTest::customAttributesPerFaceToPerVertex() {
     const MeshAttribute maskAttribute = importer->meshAttributeForName("mask");
     const MeshAttribute idAttribute = importer->meshAttributeForName("id");
 
-    auto mesh = importer->mesh(0);
+    Containers::Optional<Trade::MeshData> mesh = importer->mesh(0);
     CORRADE_VERIFY(mesh);
     CORRADE_COMPARE(mesh->attributeCount(), 5);
     CORRADE_VERIFY(mesh->isIndexed());
@@ -872,7 +872,7 @@ void StanfordImporterTest::customAttributesDuplicate() {
     CORRADE_COMPARE(weightAttribute, meshAttributeCustom(0));
     CORRADE_COMPARE(importer->meshAttributeName(weightAttribute), "weight");
 
-    auto mesh = importer->mesh(0);
+    Containers::Optional<Trade::MeshData> mesh = importer->mesh(0);
     CORRADE_VERIFY(mesh);
     CORRADE_COMPARE(mesh->attributeCount(), 4);
     CORRADE_VERIFY(mesh->isIndexed());
@@ -907,7 +907,7 @@ void StanfordImporterTest::customAttributesDuplicate() {
         }), TestSuite::Compare::Container);
 
     /* And in the faces as well */
-    auto faceMesh = importer->mesh(0, 1);
+    Containers::Optional<Trade::MeshData> faceMesh = importer->mesh(0, 1);
     CORRADE_VERIFY(faceMesh);
     CORRADE_COMPARE(faceMesh->primitive(), MeshPrimitive::Faces);
     CORRADE_VERIFY(!faceMesh->isIndexed());
@@ -937,7 +937,7 @@ void StanfordImporterTest::triangleFastPath() {
 
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(STANFORDIMPORTER_TEST_DIR, "triangle-fast-path-be.ply")));
 
-    auto mesh = importer->mesh(0);
+    Containers::Optional<Trade::MeshData> mesh = importer->mesh(0);
     CORRADE_VERIFY(mesh);
     CORRADE_COMPARE(mesh->primitive(), MeshPrimitive::Triangles);
 
@@ -957,7 +957,7 @@ void StanfordImporterTest::triangleFastPath() {
     const MeshAttribute somethingBefore = importer->meshAttributeForName("something_before");
     const MeshAttribute somethingAfter = importer->meshAttributeForName("something_after");
 
-    auto faceMesh = importer->mesh(0, 1);
+    Containers::Optional<Trade::MeshData> faceMesh = importer->mesh(0, 1);
     CORRADE_VERIFY(faceMesh);
     CORRADE_COMPARE(faceMesh->primitive(), MeshPrimitive::Faces);
     CORRADE_VERIFY(!faceMesh->isIndexed());
@@ -987,7 +987,7 @@ void StanfordImporterTest::triangleFastPathPerFaceToPerVertex() {
 
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(STANFORDIMPORTER_TEST_DIR, "triangle-fast-path-be.ply")));
 
-    auto mesh = importer->mesh(0);
+    Containers::Optional<Trade::MeshData> mesh = importer->mesh(0);
     CORRADE_VERIFY(mesh);
     CORRADE_COMPARE(mesh->primitive(), MeshPrimitive::Triangles);
 
@@ -1034,7 +1034,7 @@ void StanfordImporterTest::openMemory() {
     CORRADE_VERIFY(data.open(*importer, *memory));
     CORRADE_COMPARE(importer->meshCount(), 1);
 
-    auto mesh = importer->mesh(0);
+    Containers::Optional<Trade::MeshData> mesh = importer->mesh(0);
     CORRADE_VERIFY(mesh);
     CORRADE_COMPARE_AS(mesh->attribute<Vector3>(MeshAttribute::Position),
         Containers::arrayView(Positions),

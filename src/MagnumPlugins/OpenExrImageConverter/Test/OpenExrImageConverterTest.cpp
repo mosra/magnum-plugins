@@ -345,7 +345,7 @@ void OpenExrImageConverterTest::rgb16f() {
     if(data.tiled)
         converter->configuration().setValue("forceTiledOutput", true);
 
-    const auto out = converter->convertToData(Rgb16f);
+    const Containers::Array<char> out = converter->convertToData(Rgb16f);
 
     /** @todo Compare::DataToFile */
     CORRADE_COMPARE_AS((Containers::StringView{out, out.size()}),
@@ -383,7 +383,7 @@ void OpenExrImageConverterTest::rgba32f() {
        3.1.3 (on those it's the hardcoded default) */
     converter->configuration().setValue("zipCompressionLevel", 6);
 
-    const auto data = converter->convertToData(Rgba32f);
+    Containers::Array<char> data = converter->convertToData(Rgba32f);
 
     /** @todo Compare::DataToFile */
     CORRADE_COMPARE_AS((Containers::StringView{data, data.size()}),
@@ -410,7 +410,7 @@ void OpenExrImageConverterTest::rg32ui() {
        3.1.3 (on those it's the hardcoded default) */
     converter->configuration().setValue("zipCompressionLevel", 6);
 
-    const auto data = converter->convertToData(Rg32ui);
+    Containers::Array<char> data = converter->convertToData(Rg32ui);
 
     /** @todo Compare::DataToFile */
     CORRADE_COMPARE_AS((Containers::StringView{data, data.size()}),
@@ -431,7 +431,7 @@ void OpenExrImageConverterTest::rg32ui() {
 }
 
 void OpenExrImageConverterTest::depth32f() {
-    const auto data = _manager.instantiate("OpenExrImageConverter")->convertToData(Depth32f);
+    Containers::Array<char> data = _manager.instantiate("OpenExrImageConverter")->convertToData(Depth32f);
 
     CORRADE_COMPARE_AS((Containers::StringView{data, data.size()}),
         Utility::Path::join(OPENEXRIMPORTER_TEST_DIR, "depth32f.exr"),
@@ -459,8 +459,8 @@ void OpenExrImageConverterTest::envmap2DLatLong() {
     converter->configuration().setValue("zipCompressionLevel", 6);
 
     /* The width needs to be 2*height, abuse existing data for that */
-    const ImageView2D R32ui{PixelFormat::R32UI, {4, 2}, Rg32uiData};
-    const auto data = converter->convertToData(R32ui);
+    ImageView2D R32ui{PixelFormat::R32UI, {4, 2}, Rg32uiData};
+    const Containers::Array<char> data = converter->convertToData(R32ui);
 
     /** @todo Compare::DataToFile */
     CORRADE_COMPARE_AS((Containers::StringView{data, data.size()}),
@@ -502,7 +502,7 @@ void OpenExrImageConverterTest::envmap3DCubeMap() {
        3.1.3 (on those it's the hardcoded default) */
     converter->configuration().setValue("zipCompressionLevel", 6);
 
-    const auto data = converter->convertToData(CubeRg16f);
+    const Containers::Array<char> data = converter->convertToData(CubeRg16f);
 
     /** @todo Compare::DataToFile */
     CORRADE_COMPARE_AS((Containers::StringView{data, data.size()}),
@@ -589,7 +589,7 @@ void OpenExrImageConverterTest::customChannels() {
        3.1.3 (on those it's the hardcoded default) */
     converter->configuration().setValue("zipCompressionLevel", 6);
 
-    const auto data = converter->convertToData(Rgba32f);
+    Containers::Array<char> data = converter->convertToData(Rgba32f);
 
     /** @todo Compare::DataToFile */
     CORRADE_COMPARE_AS((Containers::StringView{data, data.size()}),
@@ -634,7 +634,7 @@ void OpenExrImageConverterTest::customChannelsSomeUnassigned() {
     converter->configuration().setValue("g", "");
     converter->configuration().setValue("b", "Z");
     converter->configuration().setValue("a", "");
-    const auto data = converter->convertToData(Rgba32f);
+    Containers::Array<char> data = converter->convertToData(Rgba32f);
 
     CORRADE_COMPARE_AS((Containers::StringView{data, data.size()}),
         Utility::Path::join(OPENEXRIMAGECONVERTER_TEST_DIR, "rb32f-custom-channels.exr"),
@@ -677,7 +677,7 @@ void OpenExrImageConverterTest::customChannelsDepth() {
     Containers::Pointer<AbstractImageConverter> converter = _manager.instantiate("OpenExrImageConverter");
     converter->configuration().setValue("layer", "left");
     converter->configuration().setValue("depth", "height");
-    const auto data = converter->convertToData(Depth32f);
+    Containers::Array<char> data = converter->convertToData(Depth32f);
 
     /** @todo Compare::DataToFile */
     CORRADE_COMPARE_AS((Containers::StringView{data, data.size()}),
@@ -720,7 +720,7 @@ void OpenExrImageConverterTest::customWindows() {
        3.1.3 (on those it's the hardcoded default) */
     converter->configuration().setValue("zipCompressionLevel", 6);
 
-    const auto data = converter->convertToData(Rgb16f);
+    Containers::Array<char> data = converter->convertToData(Rgb16f);
 
     /** @todo Compare::DataToFile */
     CORRADE_COMPARE_AS((Containers::StringView{data, data.size()}),
@@ -751,7 +751,7 @@ void OpenExrImageConverterTest::customWindowsCubeMap() {
        3.1.3 (on those it's the hardcoded default) */
     converter->configuration().setValue("zipCompressionLevel", 6);
 
-    const auto data = converter->convertToData(CubeRg16f);
+    Containers::Array<char> data = converter->convertToData(CubeRg16f);
 
     /** @todo Compare::DataToFile */
     CORRADE_COMPARE_AS((Containers::StringView{data, data.size()}),
@@ -803,7 +803,7 @@ void OpenExrImageConverterTest::compression() {
     if(data.dwaCompressionLevel)
         converter->configuration().setValue("dwaCompressionLevel", *data.dwaCompressionLevel);
 
-    const auto out = converter->convertToData(Rgba32f);
+    Containers::Array<char> out = converter->convertToData(Rgba32f);
     CORRADE_VERIFY(out);
 
     /* The sizes should slightly differ at the very least -- this checks that
@@ -835,7 +835,7 @@ void OpenExrImageConverterTest::compressionCubeMap() {
     if(data.dwaCompressionLevel)
         converter->configuration().setValue("dwaCompressionLevel", *data.dwaCompressionLevel);
 
-    const auto out = converter->convertToData(CubeRg16f);
+    Containers::Array<char> out = converter->convertToData(CubeRg16f);
     CORRADE_VERIFY(out);
 
     /* The sizes should slightly differ at the very least -- this checks that
