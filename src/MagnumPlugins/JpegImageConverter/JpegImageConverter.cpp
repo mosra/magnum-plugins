@@ -27,6 +27,7 @@
 
 #include <csetjmp>
 #include <Corrade/Containers/Array.h>
+#include <Corrade/Containers/Optional.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Magnum/ImageView.h>
 #include <Magnum/PixelFormat.h>
@@ -62,7 +63,7 @@ JpegImageConverter::JpegImageConverter(PluginManager::AbstractManager& manager, 
 
 ImageConverterFeatures JpegImageConverter::doFeatures() const { return ImageConverterFeature::Convert2DToData; }
 
-Containers::Array<char> JpegImageConverter::doConvertToData(const ImageView2D& image) {
+Containers::Optional<Containers::Array<char>> JpegImageConverter::doConvertToData(const ImageView2D& image) {
     static_assert(BITS_IN_JSAMPLE == 8, "Only 8-bit JPEG is supported");
 
     Int components;
@@ -84,11 +85,11 @@ Containers::Array<char> JpegImageConverter::doConvertToData(const ImageView2D& i
             break;
             #else
             Error{} << "Trade::JpegImageConverter::convertToData(): RGBA input (with alpha ignored) requires libjpeg-turbo";
-            return nullptr;
+            return {};
             #endif
         default:
             Error() << "Trade::JpegImageConverter::convertToData(): unsupported pixel format" << image.format();
-            return nullptr;
+            return {};
     }
 
     /* Initialize structures. Needs to be before the setjmp crap in order to
@@ -118,7 +119,7 @@ Containers::Array<char> JpegImageConverter::doConvertToData(const ImageView2D& i
     if(setjmp(errorManager.setjmpBuffer)) {
         Error{} << "Trade::JpegImageConverter::convertToData(): error:" << errorManager.message;
         jpeg_destroy_compress(&info);
-        return nullptr;
+        return {};
     }
 
     /* Create the compression structure */
@@ -171,10 +172,12 @@ Containers::Array<char> JpegImageConverter::doConvertToData(const ImageView2D& i
     /* Copy the string into the output array (I would kill for having std::string::release()) */
     Containers::Array<char> fileData{NoInit, destinationManager.output.size()};
     std::copy(destinationManager.output.begin(), destinationManager.output.end(), fileData.data());
-    return fileData;
+
+    /* GCC 4.8 and Clang 3.8 need extra help here */
+    return Containers::optional(std::move(fileData));
 }
 
 }}
 
 CORRADE_PLUGIN_REGISTER(JpegImageConverter, Magnum::Trade::JpegImageConverter,
-    "cz.mosra.magnum.Trade.AbstractImageConverter/0.3.1")
+    "cz.mosra.magnum.Trade.AbstractImageConverter/0.3.2")

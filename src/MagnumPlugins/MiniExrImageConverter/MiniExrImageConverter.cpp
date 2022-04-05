@@ -27,6 +27,7 @@
 
 #include <algorithm> /* std::copy_n() */ /** @todo remove */
 #include <Corrade/Containers/Array.h>
+#include <Corrade/Containers/Optional.h>
 #include <Magnum/ImageView.h>
 #include <Magnum/PixelFormat.h>
 
@@ -47,14 +48,14 @@ MiniExrImageConverter::MiniExrImageConverter(PluginManager::AbstractManager& man
 
 ImageConverterFeatures MiniExrImageConverter::doFeatures() const { return ImageConverterFeature::Convert2DToData; }
 
-Containers::Array<char> MiniExrImageConverter::doConvertToData(const ImageView2D& image) {
+Containers::Optional<Containers::Array<char>> MiniExrImageConverter::doConvertToData(const ImageView2D& image) {
     Int components;
     switch(image.format()) {
         case PixelFormat::RGB16F: components = 3; break;
         case PixelFormat::RGBA16F: components = 4; break;
         default:
             Error() << "Trade::MiniExrImageConverter::convertToData(): unsupported pixel format" << image.format();
-            return nullptr;
+            return {};
     }
 
     /* Get data properties and calculate the initial slice based on subimage
@@ -80,10 +81,11 @@ Containers::Array<char> MiniExrImageConverter::doConvertToData(const ImageView2D
     std::copy_n(data, size, fileData.begin());
     std::free(data);
 
-    return fileData;
+    /* GCC 4.8 and Clang 3.8 need extra help here */
+    return Containers::optional(std::move(fileData));
 }
 
 }}
 
 CORRADE_PLUGIN_REGISTER(MiniExrImageConverter, Magnum::Trade::MiniExrImageConverter,
-    "cz.mosra.magnum.Trade.AbstractImageConverter/0.3.1")
+    "cz.mosra.magnum.Trade.AbstractImageConverter/0.3.2")

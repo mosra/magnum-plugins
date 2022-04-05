@@ -27,6 +27,7 @@
 
 #include <algorithm> /* std::copy() */ /** @todo remove */
 #include <Corrade/Containers/Array.h>
+#include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/Pair.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/Path.h>
@@ -69,10 +70,10 @@ StbImageConverter::StbImageConverter(PluginManager::AbstractManager& manager, co
 
 ImageConverterFeatures StbImageConverter::doFeatures() const { return ImageConverterFeature::Convert2DToData; }
 
-Containers::Array<char> StbImageConverter::doConvertToData(const ImageView2D& image) {
+Containers::Optional<Containers::Array<char>> StbImageConverter::doConvertToData(const ImageView2D& image) {
     if(_format == Format{}) {
         Error{} << "Trade::StbImageConverter::convertToData(): cannot determine output format (plugin loaded as" << plugin() << Error::nospace << ", use one of the Stb{Bmp,Hdr,Jpeg,Png,Tga}ImageConverter aliases)";
-        return nullptr;
+        return {};
     }
 
     Int components;
@@ -92,7 +93,7 @@ Containers::Array<char> StbImageConverter::doConvertToData(const ImageView2D& im
                 break;
             default:
                 Error() << "Trade::StbImageConverter::convertToData():" << image.format() << "is not supported for BMP/JPEG/PNG/TGA output";
-                return nullptr;
+                return {};
         }
     } else if(_format == Format::Hdr) {
         switch(image.format()) {
@@ -108,7 +109,7 @@ Containers::Array<char> StbImageConverter::doConvertToData(const ImageView2D& im
                 break;
             default:
                 Error() << "Trade::StbImageConverter::convertToData():" << image.format() << "is not supported for HDR output";
-                return nullptr;
+                return {};
         }
     } else CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
 
@@ -154,7 +155,9 @@ Containers::Array<char> StbImageConverter::doConvertToData(const ImageView2D& im
        std::string) */
     Containers::Array<char> fileData{NoInit, data.size()};
     std::copy(data.begin(), data.end(), fileData.begin());
-    return fileData;
+
+    /* GCC 4.8 and Clang 3.8 need extra help here */
+    return Containers::optional(std::move(fileData));
 }
 
 bool StbImageConverter::doConvertToFile(const ImageView2D& image, const Containers::StringView filename) {
@@ -197,4 +200,4 @@ bool StbImageConverter::doConvertToFile(const ImageView2D& image, const Containe
 }}
 
 CORRADE_PLUGIN_REGISTER(StbImageConverter, Magnum::Trade::StbImageConverter,
-    "cz.mosra.magnum.Trade.AbstractImageConverter/0.3.1")
+    "cz.mosra.magnum.Trade.AbstractImageConverter/0.3.2")

@@ -147,7 +147,7 @@ class MAGNUM_JPEGIMAGECONVERTER_EXPORT JpegImageConverter: public AbstractImageC
 
     private:
         MAGNUM_JPEGIMAGECONVERTER_LOCAL ImageConverterFeatures doFeatures() const override;
-        MAGNUM_JPEGIMAGECONVERTER_LOCAL Containers::Array<char> doConvertToData(const ImageView2D& image) override;
+        MAGNUM_JPEGIMAGECONVERTER_LOCAL Containers::Optional<Containers::Array<char>> doConvertToData(const ImageView2D& image) override;
 };
 
 }}

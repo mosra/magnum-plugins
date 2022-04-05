@@ -25,6 +25,7 @@
 
 #include "StanfordSceneConverter.h"
 
+#include <Corrade/Containers/Optional.h>
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/EndiannessBatch.h>
@@ -43,7 +44,7 @@ StanfordSceneConverter::~StanfordSceneConverter() = default;
 
 SceneConverterFeatures StanfordSceneConverter::doFeatures() const { return SceneConverterFeature::ConvertMeshToData; }
 
-Containers::Array<char> StanfordSceneConverter::doConvertToData(const MeshData& mesh) {
+Containers::Optional<Containers::Array<char>> StanfordSceneConverter::doConvertToData(const MeshData& mesh) {
     /* Convert to an indexed triangle mesh if it's a strip/fan */
     MeshData triangles{MeshPrimitive::Triangles, 0};
     if(mesh.primitive() == MeshPrimitive::TriangleStrip || mesh.primitive() == MeshPrimitive::TriangleFan) {
@@ -68,7 +69,7 @@ Containers::Array<char> StanfordSceneConverter::doConvertToData(const MeshData& 
     /* Otherwise we're sorry */
     } else {
         Error{} << "Trade::StanfordSceneConverter::convertToData(): expected a triangle mesh, got" << mesh.primitive();
-        return nullptr;
+        return {};
     }
 
     /* Decide on endian swapping, write file signature */
@@ -88,7 +89,7 @@ Containers::Array<char> StanfordSceneConverter::doConvertToData(const MeshData& 
             endianSwapNeeded = !Utility::Endianness::isBigEndian();
         } else {
             Error{} << "Trade::StanfordSceneConverter::convertToData(): invalid option endianness=" << Debug::nospace << endianness;
-            return nullptr;
+            return {};
         }
         header += isBigEndian ?
             "format binary_big_endian 1.0\n" :
@@ -101,7 +102,7 @@ Containers::Array<char> StanfordSceneConverter::doConvertToData(const MeshData& 
        case, so better be strict. */
     if(!triangles.hasAttribute(MeshAttribute::Position)) {
         Error{} << "Trade::StanfordSceneConverter::convertToData(): the mesh has no positions";
-        return nullptr;
+        return {};
     }
 
     /* Write attribute header and calculate offsets for copying later.
@@ -159,7 +160,7 @@ Containers::Array<char> StanfordSceneConverter::doConvertToData(const MeshData& 
         if(name == MeshAttribute::Position) {
             if(vertexFormatComponentCount(format) != 3) {
                 Error{} << "Trade::StanfordSceneConverter::convertToData(): two-component positions are not supported";
-                return nullptr;
+                return {};
             }
 
             header += Utility::formatString(
@@ -350,10 +351,11 @@ Containers::Array<char> StanfordSceneConverter::doConvertToData(const MeshData& 
         Utility::copy(src, dst);
     }
 
-    return out;
+    /* GCC 4.8 and Clang 3.8 need extra help here */
+    return Containers::optional(std::move(out));
 }
 
 }}
 
 CORRADE_PLUGIN_REGISTER(StanfordSceneConverter, Magnum::Trade::StanfordSceneConverter,
-    "cz.mosra.magnum.Trade.AbstractSceneConverter/0.1.1")
+    "cz.mosra.magnum.Trade.AbstractSceneConverter/0.1.2")

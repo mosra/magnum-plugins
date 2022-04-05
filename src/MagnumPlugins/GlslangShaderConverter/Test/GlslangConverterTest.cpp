@@ -160,7 +160,7 @@ const struct {
 const struct {
     const char* name;
     ConverterFlags flags;
-    Containers::Array<std::pair<Containers::StringView, Containers::StringView>> defines;
+    Containers::Array<Containers::Pair<Containers::StringView, Containers::StringView>> defines;
     bool valid;
     const char* message;
 } ValidateFailData[] {
@@ -252,7 +252,7 @@ const struct {
 const struct {
     const char* name;
     ConverterFlags flags;
-    Containers::Array<std::pair<Containers::StringView, Containers::StringView>> defines;
+    Containers::Array<Containers::Pair<Containers::StringView, Containers::StringView>> defines;
     bool success;
     const char* message;
 } ConvertFailData[] {
@@ -387,7 +387,7 @@ void GlslangConverterTest::validate() {
 
     Containers::Pointer<AbstractConverter> converter = _converterManager.instantiate("GlslangShaderConverter");
 
-    Containers::Array<std::pair<Containers::StringView, Containers::StringView>> defines{InPlaceInit, {
+    Containers::Array<Containers::Pair<Containers::StringView, Containers::StringView>> defines{InPlaceInit, {
         {"A_DEFINE", ""},
         {"AN_UNDEFINE", "something awful!!"},
         {"AN_UNDEFINE", nullptr},
@@ -407,14 +407,14 @@ void GlslangConverterTest::validate() {
     }, *file);
 
     CORRADE_COMPARE(converter->validateFile(data.stage, data.alias ? data.alias : data.filename),
-        std::make_pair(true, ""));
+        Containers::pair(true, Containers::String{}));
 }
 
 void GlslangConverterTest::validateIncludes() {
     Containers::Pointer<AbstractConverter> converter = _converterManager.instantiate("GlslangShaderConverter");
 
     CORRADE_COMPARE(converter->validateFile({}, Utility::Path::join(GLSLANGSHADERCONVERTER_TEST_DIR, "includes.vert")),
-        std::make_pair(true, ""));
+        Containers::pair(true, Containers::String{}));
 }
 
 void GlslangConverterTest::validateIncludesCallback() {
@@ -449,7 +449,7 @@ void GlslangConverterTest::validateIncludesCallback() {
     std::ostringstream out;
     Debug redirectOutput{&out};
     CORRADE_COMPARE(converter->validateFile({}, "includes.vert"),
-        std::make_pair(true, ""));
+        Containers::pair(true, Containers::String{}));
     CORRADE_COMPARE(out.str(),
         "Loading includes.vert\n"
         "Loading sub/directory/basics.glsl\n"
@@ -482,7 +482,7 @@ void GlslangConverterTest::validateWrongInputFormat() {
     std::ostringstream out;
     Error redirectError{&out};
     CORRADE_COMPARE(converter->validateData({}, {}),
-        std::make_pair(false, ""));
+        Containers::pair(false, Containers::String{}));
     CORRADE_COMPARE(out.str(),
         "ShaderTools::GlslangConverter::validateData(): input format should be Glsl or Unspecified but got ShaderTools::Format::Hlsl\n");
 }
@@ -495,7 +495,7 @@ void GlslangConverterTest::validateWrongInputVersion() {
     std::ostringstream out;
     Error redirectError{&out};
     CORRADE_COMPARE(converter->validateData({}, {}),
-        std::make_pair(false, ""));
+        Containers::pair(false, Containers::String{}));
     CORRADE_COMPARE(out.str(),
         /* Yep, it's silly as 100 is a valid GLSL version. But this way we know
            it's silly. */
@@ -510,7 +510,7 @@ void GlslangConverterTest::validateWrongOutputFormat() {
     std::ostringstream out;
     Error redirectError{&out};
     CORRADE_COMPARE(converter->validateData({}, {}),
-        std::make_pair(false, ""));
+        Containers::pair(false, Containers::String{}));
     CORRADE_COMPARE(out.str(),
         "ShaderTools::GlslangConverter::validateData(): output format should be Spirv or Unspecified but got ShaderTools::Format::Glsl\n");
 }
@@ -523,7 +523,7 @@ void GlslangConverterTest::validateWrongOutputVersionTarget() {
     std::ostringstream out;
     Error redirectError{&out};
     CORRADE_COMPARE(converter->validateData({}, {}),
-        std::make_pair(false, ""));
+        Containers::pair(false, Containers::String{}));
     CORRADE_COMPARE(out.str(),
         /* Yep, it's silly. But this way we know it's silly. */
         "ShaderTools::GlslangConverter::validateData(): output format version target should be opengl4.5 or vulkanX.Y but got vulkan2.0\n");
@@ -537,7 +537,7 @@ void GlslangConverterTest::validateWrongOutputVersionLanguage() {
     std::ostringstream out;
     Error redirectError{&out};
     CORRADE_COMPARE(converter->validateData({}, {}),
-        std::make_pair(false, ""));
+        Containers::pair(false, Containers::String{}));
     CORRADE_COMPARE(out.str(),
         /* Yep, it's silly. But this way we know it's silly. */
         "ShaderTools::GlslangConverter::validateData(): output format version language should be spvX.Y but got spv2.1\n");
@@ -551,7 +551,7 @@ void GlslangConverterTest::validateWrongOutputFormatForGenericOpenGL() {
     std::ostringstream out;
     Error redirectError{&out};
     CORRADE_COMPARE(converter->validateData({}, {}),
-        std::make_pair(false, ""));
+        Containers::pair(false, Containers::String{}));
     CORRADE_COMPARE(out.str(),
         "ShaderTools::GlslangConverter::validateData(): generic OpenGL can't be validated with SPIR-V rules\n");
 }
@@ -579,7 +579,7 @@ void main() {
 )";
 
     CORRADE_COMPARE(converter->validateData({}, file),
-        std::make_pair(data.valid, data.message));
+        Containers::pair(data.valid, Containers::String{data.message}));
 }
 
 void GlslangConverterTest::validateFailWrongStage() {
@@ -599,10 +599,11 @@ void GlslangConverterTest::validateFailWrongStage() {
     Containers::Optional<Containers::Array<char>> data = Utility::Path::read(Utility::Path::join(GLSLANGSHADERCONVERTER_TEST_DIR, "shader.vk.frag"));
     CORRADE_VERIFY(data);
     CORRADE_COMPARE(converter->validateData(Stage::Unspecified, *data),
-        std::make_pair(false, /* Yes, trailing whitespace. Fuck me. */
+        Containers::pair(false, Containers::String{
+            /* Yes, trailing whitespace. Fuck me. */
             "ERROR: 0:35: 'gl_FragCoord' : undeclared identifier \n"
             "ERROR: 0:35: '' : compilation terminated \n"
-            "ERROR: 2 compilation errors.  No code generated."));
+            "ERROR: 2 compilation errors.  No code generated."}));
 }
 
 void GlslangConverterTest::validateFailFileWrongStage() {
@@ -627,10 +628,11 @@ void GlslangConverterTest::validateFailFileWrongStage() {
     /* And supply a generic filename to cause the stage to be not detected. The
        filename should be also shown in the output. */
     CORRADE_COMPARE(converter->validateFile(Stage::Unspecified, "shader.glsl"),
-        std::make_pair(false, /* Yes, trailing whitespace. Fuck me. */
+        Containers::pair(false, Containers::String{
+            /* Yes, trailing whitespace. Fuck me. */
             "ERROR: shader.glsl:35: 'gl_FragCoord' : undeclared identifier \n"
             "ERROR: shader.glsl:35: '' : compilation terminated \n"
-            "ERROR: 2 compilation errors.  No code generated."));
+            "ERROR: 2 compilation errors.  No code generated."}));
 }
 
 void GlslangConverterTest::validateFailOverridenInputVersion() {
@@ -650,10 +652,11 @@ void main() {
 }
 )";
     CORRADE_COMPARE(converter->validateData({}, data),
-        std::make_pair(false, /* Yes, trailing whitespace. Fuck me. */
+        Containers::pair(false, Containers::String{
+            /* Yes, trailing whitespace. Fuck me. */
             "ERROR: 0:2: 'in for stage inputs' : not supported for this version or the enabled extensions \n"
             "ERROR: 0:2: '' : compilation terminated \n"
-            "ERROR: 2 compilation errors.  No code generated."));
+            "ERROR: 2 compilation errors.  No code generated."}));
 }
 
 void GlslangConverterTest::validateFailOverridenOutputVersion() {
@@ -668,9 +671,10 @@ layout(push_constant) uniform Thing {
 };
 )";
     CORRADE_COMPARE(converter->validateData({}, data),
-        std::make_pair(false, /* Yes, trailing whitespace. Fuck me. */
+        Containers::pair(false, Containers::String{
+            /* Yes, trailing whitespace. Fuck me. */
             "ERROR: 0:2: 'push_constant' : only allowed when using GLSL for Vulkan \n"
-            "ERROR: 1 compilation errors.  No code generated."));
+            "ERROR: 1 compilation errors.  No code generated."}));
 }
 
 void GlslangConverterTest::validateFailOverridenLimit() {
@@ -686,9 +690,10 @@ void GlslangConverterTest::validateFailOverridenLimit() {
 layout(binding=8) uniform sampler2D textureData;
 )";
     CORRADE_COMPARE(converter->validateData(Stage::Fragment, data),
-        std::make_pair(false, /* Yes, trailing whitespace. Fuck me. */
+        Containers::pair(false, Containers::String{
+            /* Yes, trailing whitespace. Fuck me. */
             "ERROR: 0:2: 'binding' : sampler binding not less than gl_MaxCombinedTextureImageUnits \n"
-            "ERROR: 1 compilation errors.  No code generated."));
+            "ERROR: 1 compilation errors.  No code generated."}));
 }
 
 void GlslangConverterTest::validateFailIncludeNotFound() {
@@ -704,7 +709,7 @@ void GlslangConverterTest::validateFailIncludeNotFound() {
     std::ostringstream out;
     Error redirectError{&out};
     CORRADE_COMPARE(converter->validateFile({}, Utility::Path::join(GLSLANGSHADERCONVERTER_TEST_DIR, "includes.vert")),
-        std::make_pair(false, Utility::format(
+        Containers::pair(false, Utility::format(
             "ERROR: {0}:10: '#include' : Could not process include directive for header name: ../notfound.glsl\n"
             "ERROR: 1 compilation errors.  No code generated.", Utility::Path::join(GLSLANGSHADERCONVERTER_TEST_DIR, "includes.vert"))));
     /* Verify just the prefix, the actual message is OS-specific */
@@ -964,8 +969,8 @@ void GlslangConverterTest::vulkanNoExplicitLayout() {
     /* Glslang SPIR-V validation rules can be enforced via multiple different
        settings and each setting affect only a subset of these, so verify that
        we're consistent in all cases */
-    std::pair<bool, Containers::String> result = converter->validateData(Stage::Fragment, *file);
-    CORRADE_COMPARE(result, std::make_pair(false, data.error));
+    Containers::Pair<bool, Containers::String> result = converter->validateData(Stage::Fragment, *file);
+    CORRADE_COMPARE(result, Containers::pair(false, Containers::String{data.error}));
 
     /* Conversion should result in exactly the same */
     std::ostringstream out;

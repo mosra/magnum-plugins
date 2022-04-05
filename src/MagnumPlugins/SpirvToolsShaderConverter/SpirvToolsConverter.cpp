@@ -26,6 +26,8 @@
 #include "SpirvToolsConverter.h"
 
 #include <Corrade/Containers/Array.h>
+#include <Corrade/Containers/Optional.h>
+#include <Corrade/Containers/Pair.h>
 #include <Corrade/Containers/ScopeGuard.h>
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
@@ -208,12 +210,12 @@ void setValidationOptions(spv_validator_options& options, const Utility::Configu
 
 }
 
-std::pair<bool, Containers::String> SpirvToolsConverter::doValidateFile(const Stage stage, const Containers::StringView filename) {
+Containers::Pair<bool, Containers::String> SpirvToolsConverter::doValidateFile(const Stage stage, const Containers::StringView filename) {
     _state->inputFilename = Containers::String::nullTerminatedGlobalView(filename);
     return AbstractConverter::doValidateFile(stage, filename);
 }
 
-std::pair<bool, Containers::String> SpirvToolsConverter::doValidateData(Stage, const Containers::ArrayView<const char> data) {
+Containers::Pair<bool, Containers::String> SpirvToolsConverter::doValidateData(Stage, const Containers::ArrayView<const char> data) {
     /* If we're validating a file, save the input filename for use in a
        potential error message. Clear it so next time plain data is validated
        the error messages aren't based on stale information. This is done as
@@ -295,12 +297,12 @@ bool SpirvToolsConverter::doConvertFileToFile(const Stage stage, const Container
     return AbstractConverter::doConvertFileToFile(stage, from, to);
 }
 
-Containers::Array<char> SpirvToolsConverter::doConvertFileToData(const Stage stage, const Containers::StringView filename) {
+Containers::Optional<Containers::Array<char>> SpirvToolsConverter::doConvertFileToData(const Stage stage, const Containers::StringView filename) {
     _state->inputFilename = Containers::String::nullTerminatedGlobalView(filename);
     return AbstractConverter::doConvertFileToData(stage, filename);
 }
 
-Containers::Array<char> SpirvToolsConverter::doConvertDataToData(Stage, const Containers::ArrayView<const char> data) {
+Containers::Optional<Containers::Array<char>> SpirvToolsConverter::doConvertDataToData(Stage, const Containers::ArrayView<const char> data) {
     /* If we're converting from a file, save the input filename for use in a
        potential error message. If we're converting to a file, save the output
        filename for detecting if the output should be an assembly. Clear both
@@ -501,10 +503,11 @@ Containers::Array<char> SpirvToolsConverter::doConvertDataToData(Stage, const Co
         Utility::copy(in, out);
     }
 
-    return out;
+    /* GCC 4.8 and Clang 3.8 need extra help here */
+    return Containers::optional(std::move(out));
 }
 
 }}
 
 CORRADE_PLUGIN_REGISTER(SpirvToolsShaderConverter, Magnum::ShaderTools::SpirvToolsConverter,
-    "cz.mosra.magnum.ShaderTools.AbstractConverter/0.1")
+    "cz.mosra.magnum.ShaderTools.AbstractConverter/0.1.1")

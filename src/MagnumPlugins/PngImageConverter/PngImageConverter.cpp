@@ -40,6 +40,7 @@
 */
 #include <csetjmp>
 #include <Corrade/Containers/Array.h>
+#include <Corrade/Containers/Optional.h>
 #include <Magnum/ImageView.h>
 #include <Magnum/PixelFormat.h>
 
@@ -51,9 +52,9 @@ PngImageConverter::PngImageConverter(PluginManager::AbstractManager& manager, co
 
 ImageConverterFeatures PngImageConverter::doFeatures() const { return ImageConverterFeature::Convert2DToData; }
 
-Containers::Array<char> PngImageConverter::doConvertToData(const ImageView2D& image) {
+Containers::Optional<Containers::Array<char>> PngImageConverter::doConvertToData(const ImageView2D& image) {
     CORRADE_ASSERT(std::strcmp(PNG_LIBPNG_VER_STRING, png_libpng_ver) == 0,
-        "Trade::PngImageConverter::convertToData(): libpng version mismatch, got" << png_libpng_ver << "but expected" << PNG_LIBPNG_VER_STRING, nullptr);
+        "Trade::PngImageConverter::convertToData(): libpng version mismatch, got" << png_libpng_ver << "but expected" << PNG_LIBPNG_VER_STRING, {});
 
     Int bitDepth;
     Int colorType;
@@ -92,7 +93,7 @@ Containers::Array<char> PngImageConverter::doConvertToData(const ImageView2D& im
             break;
         default:
             Error() << "Trade::PngImageConverter::convertToData(): unsupported pixel format" << image.format();
-            return nullptr;
+            return {};
     }
 
     png_structp file = png_create_write_struct(PNG_LIBPNG_VER_STRING, nullptr, nullptr, nullptr);
@@ -106,7 +107,7 @@ Containers::Array<char> PngImageConverter::doConvertToData(const ImageView2D& im
        default error handling with stderr printing kicks in. */
     if(setjmp(png_jmpbuf(file))) {
         png_destroy_write_struct(&file, &info);
-        return nullptr;
+        return {};
     }
     png_set_error_fn(file, nullptr, [](const png_structp file, const png_const_charp message) {
         Error{} << "Trade::PngImageConverter::convertToData(): error:" << message;
@@ -155,10 +156,12 @@ Containers::Array<char> PngImageConverter::doConvertToData(const ImageView2D& im
     /* Copy the string into the output array (I would kill for having std::string::release()) */
     Containers::Array<char> fileData{NoInit, output.size()};
     std::copy(output.begin(), output.end(), fileData.data());
-    return fileData;
+
+    /* GCC 4.8 and Clang 3.8 need extra help here */
+    return Containers::optional(std::move(fileData));
 }
 
 }}
 
 CORRADE_PLUGIN_REGISTER(PngImageConverter, Magnum::Trade::PngImageConverter,
-    "cz.mosra.magnum.Trade.AbstractImageConverter/0.3.1")
+    "cz.mosra.magnum.Trade.AbstractImageConverter/0.3.2")

@@ -226,8 +226,8 @@ class MAGNUM_OPENEXRIMAGECONVERTER_EXPORT OpenExrImageConverter: public Abstract
 
     private:
         MAGNUM_OPENEXRIMAGECONVERTER_LOCAL ImageConverterFeatures doFeatures() const override;
-        MAGNUM_OPENEXRIMAGECONVERTER_LOCAL Containers::Array<char> doConvertToData(Containers::ArrayView<const ImageView2D> imageLevels) override;
-        MAGNUM_OPENEXRIMAGECONVERTER_LOCAL Containers::Array<char> doConvertToData(Containers::ArrayView<const ImageView3D> imageLevels) override;
+        MAGNUM_OPENEXRIMAGECONVERTER_LOCAL Containers::Optional<Containers::Array<char>> doConvertToData(Containers::ArrayView<const ImageView2D> imageLevels) override;
+        MAGNUM_OPENEXRIMAGECONVERTER_LOCAL Containers::Optional<Containers::Array<char>> doConvertToData(Containers::ArrayView<const ImageView3D> imageLevels) override;
 };
 
 }}

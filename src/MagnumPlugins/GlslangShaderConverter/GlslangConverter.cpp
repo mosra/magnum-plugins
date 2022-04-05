@@ -114,17 +114,17 @@ void GlslangConverter::doSetOutputFormat(const Format format, const Containers::
     _state->outputVersion = Containers::String::nullTerminatedGlobalView(version);
 }
 
-void GlslangConverter::doSetDefinitions(const Containers::ArrayView<const std::pair<Containers::StringView, Containers::StringView>> definitions) {
+void GlslangConverter::doSetDefinitions(const Containers::ArrayView<const Containers::Pair<Containers::StringView, Containers::StringView>> definitions) {
     /* Concatenate (un)definitions to a preamble */
     /** @todo rework w/o std::string once we have formatInto() w/ a String */
     _state->definitions.clear();
-    for(const std::pair<Containers::StringView, Containers::StringView>& definition: definitions) {
-        if(!definition.second.data())
-            Utility::formatInto(_state->definitions, _state->definitions.size(), "#undef {}\n", definition.first);
-        else if(definition.second.isEmpty())
-            Utility::formatInto(_state->definitions, _state->definitions.size(), "#define {}\n", definition.first);
+    for(const Containers::Pair<Containers::StringView, Containers::StringView>& definition: definitions) {
+        if(!definition.second().data())
+            Utility::formatInto(_state->definitions, _state->definitions.size(), "#undef {}\n", definition.first());
+        else if(definition.second().isEmpty())
+            Utility::formatInto(_state->definitions, _state->definitions.size(), "#define {}\n", definition.first());
         else
-            Utility::formatInto(_state->definitions, _state->definitions.size(), "#define {} {}\n", definition.first, definition.second);
+            Utility::formatInto(_state->definitions, _state->definitions.size(), "#define {} {}\n", definition.first(), definition.second());
     }
 }
 
@@ -692,7 +692,7 @@ std::pair<bool, bool> compileAndLinkShader(glslang::TShader& shader, glslang::TP
 
 }
 
-std::pair<bool, Containers::String> GlslangConverter::doValidateFile(const Stage stage, const Containers::StringView filename) {
+Containers::Pair<bool, Containers::String> GlslangConverter::doValidateFile(const Stage stage, const Containers::StringView filename) {
     /* Save input filename for nicer error messages */
     _state->inputFilename = Containers::String::nullTerminatedGlobalView(filename);
 
@@ -703,7 +703,7 @@ std::pair<bool, Containers::String> GlslangConverter::doValidateFile(const Stage
         filename);
 }
 
-std::pair<bool, Containers::String> GlslangConverter::doValidateData(const Stage stage, const Containers::ArrayView<const char> data) {
+Containers::Pair<bool, Containers::String> GlslangConverter::doValidateData(const Stage stage, const Containers::ArrayView<const char> data) {
     /* If we're validating a file, save the input filename for use in a
        potential error message. Clear it so next time plain data is validated
        the error messages aren't based on stale information. This is done as
@@ -797,7 +797,7 @@ std::pair<bool, Containers::String> GlslangConverter::doValidateData(const Stage
     return {success.second, "\n"_s.joinWithoutEmptyParts({shaderLog, programLog})};
 }
 
-Containers::Array<char> GlslangConverter::doConvertFileToData(const Stage stage, const Containers::StringView filename) {
+Containers::Optional<Containers::Array<char>> GlslangConverter::doConvertFileToData(const Stage stage, const Containers::StringView filename) {
     /* Save input filename for nicer error messages */
     _state->inputFilename = Containers::String::nullTerminatedGlobalView(filename);
 
@@ -819,7 +819,7 @@ bool GlslangConverter::doConvertFileToFile(const Stage stage, const Containers::
         from, to);
 }
 
-Containers::Array<char> GlslangConverter::doConvertDataToData(const Stage stage, const Containers::ArrayView<const char> data) {
+Containers::Optional<Containers::Array<char>> GlslangConverter::doConvertDataToData(const Stage stage, const Containers::ArrayView<const char> data) {
     /* If we're validating a file, save the input filename for use in a
        potential error message. Clear it so next time plain data is validated
        the error messages aren't based on stale information. This is done as
@@ -994,10 +994,12 @@ Containers::Array<char> GlslangConverter::doConvertDataToData(const Stage stage,
     Containers::ArrayView<const char> spirvBytes = Containers::arrayCast<const char>(Containers::arrayView(spirv));
     Containers::Array<char> out{NoInit, spirvBytes.size()};
     Utility::copy(spirvBytes, out);
-    return out;
+
+    /* GCC 4.8 and Clang 3.8 need extra help here */
+    return Containers::optional(std::move(out));
 }
 
 }}
 
 CORRADE_PLUGIN_REGISTER(GlslangShaderConverter, Magnum::ShaderTools::GlslangConverter,
-    "cz.mosra.magnum.ShaderTools.AbstractConverter/0.1")
+    "cz.mosra.magnum.ShaderTools.AbstractConverter/0.1.1")

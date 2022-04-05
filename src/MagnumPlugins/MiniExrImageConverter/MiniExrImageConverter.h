@@ -120,7 +120,7 @@ class MAGNUM_MINIEXRIMAGECONVERTER_EXPORT MiniExrImageConverter: public Abstract
 
     private:
         MAGNUM_MINIEXRIMAGECONVERTER_LOCAL ImageConverterFeatures doFeatures() const override;
-        MAGNUM_MINIEXRIMAGECONVERTER_LOCAL Containers::Array<char> doConvertToData(const ImageView2D& image) override;
+        MAGNUM_MINIEXRIMAGECONVERTER_LOCAL Containers::Optional<Containers::Array<char>> doConvertToData(const ImageView2D& image) override;
 };
 
 }}

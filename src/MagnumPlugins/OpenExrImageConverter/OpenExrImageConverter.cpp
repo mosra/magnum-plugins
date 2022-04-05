@@ -26,8 +26,9 @@
 #include "OpenExrImageConverter.h"
 
 #include <thread> /* std::thread::hardware_concurrency(), sigh */
-#include <Corrade/Containers/StridedArrayView.h>
+#include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/GrowableArray.h>
+#include <Corrade/Containers/StridedArrayView.h>
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/DebugStl.h> /** @todo remove once Configuration is <string>-free */
@@ -87,7 +88,7 @@ ImageConverterFeatures OpenExrImageConverter::doFeatures() const { return ImageC
 
 namespace {
 
-Containers::Array<char> convertToDataInternal(const Utility::ConfigurationGroup& configuration, const ImageConverterFlags flags, const PixelFormat format, const Int levelCount, void(*const preparePixelsForLevel)(Int, const Containers::StridedArrayView3D<char>&, void*), const Containers::StridedArrayView3D<char>& pixels, void* const state) try {
+Containers::Optional<Containers::Array<char>> convertToDataInternal(const Utility::ConfigurationGroup& configuration, const ImageConverterFlags flags, const PixelFormat format, const Int levelCount, void(*const preparePixelsForLevel)(Int, const Containers::StridedArrayView3D<char>&, void*), const Containers::StridedArrayView3D<char>& pixels, void* const state) try {
     /* Figure out type and channel count */
     Imf::PixelType type;
     std::size_t channelCount;
@@ -344,7 +345,9 @@ Containers::Array<char> convertToDataInternal(const Utility::ConfigurationGroup&
     /* Convert the growable array back to a non-growable with the default
        deleter so we can return it */
     arrayShrink(data);
-    return data;
+
+    /* GCC 4.8 and Clang 3.8 need extra help here */
+    return Containers::optional(std::move(data));
 
 /* Good thing there are function try blocks, otherwise I would have to indent
    the whole thing. That would be awful. */
@@ -356,7 +359,7 @@ Containers::Array<char> convertToDataInternal(const Utility::ConfigurationGroup&
 
 }
 
-Containers::Array<char> OpenExrImageConverter::doConvertToData(const Containers::ArrayView<const ImageView2D> imageLevels) {
+Containers::Optional<Containers::Array<char>> OpenExrImageConverter::doConvertToData(const Containers::ArrayView<const ImageView2D> imageLevels) {
     if(configuration().value("envmap") == "latlong") {
         if(imageLevels[0].size().x() != 2*imageLevels[0].size().y()) {
             Error{} << "Trade::OpenExrImageConverter::convertToData(): a lat/long environment map has to have a 2:1 aspect ratio, got" << imageLevels[0].size();
@@ -411,7 +414,7 @@ Containers::Array<char> OpenExrImageConverter::doConvertToData(const Containers:
     }, flippedPixels, &state);
 }
 
-Containers::Array<char> OpenExrImageConverter::doConvertToData(const Containers::ArrayView<const ImageView3D> imageLevels) {
+Containers::Optional<Containers::Array<char>> OpenExrImageConverter::doConvertToData(const Containers::ArrayView<const ImageView3D> imageLevels) {
     /* Only cube map saving is supported right now, no deep data */
     if(configuration().value("envmap").empty()) {
         Error{} << "Trade::OpenExrImageConverter::convertToData(): arbitrary 3D image saving not implemented yet, the envmap option has to be set to cube in the configuration in order to save a cube map";
@@ -510,4 +513,4 @@ Containers::Array<char> OpenExrImageConverter::doConvertToData(const Containers:
 }}
 
 CORRADE_PLUGIN_REGISTER(OpenExrImageConverter, Magnum::Trade::OpenExrImageConverter,
-    "cz.mosra.magnum.Trade.AbstractImageConverter/0.3.1")
+    "cz.mosra.magnum.Trade.AbstractImageConverter/0.3.2")

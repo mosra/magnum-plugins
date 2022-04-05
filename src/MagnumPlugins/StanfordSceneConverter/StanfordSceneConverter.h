@@ -139,7 +139,7 @@ not supported.
 
 @section Trade-StanfordSceneConverter-configuration Plugin-specific config
 
-It's possible to tune various import options through @ref configuration(). See
+It's possible to tune various output options through @ref configuration(). See
 below for all options and their default values:
 
 @snippet MagnumPlugins/StanfordSceneConverter/StanfordSceneConverter.conf config
@@ -156,7 +156,7 @@ class MAGNUM_STANFORDSCENECONVERTER_EXPORT StanfordSceneConverter: public Abstra
 
     private:
         MAGNUM_STANFORDSCENECONVERTER_LOCAL SceneConverterFeatures doFeatures() const override;
-        MAGNUM_STANFORDSCENECONVERTER_LOCAL Containers::Array<char> doConvertToData(const MeshData& mesh) override;
+        MAGNUM_STANFORDSCENECONVERTER_LOCAL Containers::Optional<Containers::Array<char>> doConvertToData(const MeshData& mesh) override;
 };
 
 }}

@@ -30,6 +30,7 @@
 #include <thread>
 #include <Corrade/Containers/Array.h>
 #include <Corrade/Containers/ArrayView.h>
+#include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/Pair.h>
 #include <Corrade/Containers/StridedArrayView.h>
 #include <Corrade/Utility/Algorithms.h>
@@ -51,7 +52,7 @@ using namespace Containers::Literals;
 
 namespace {
 
-template<UnsignedInt dimensions> Containers::Array<char> convertLevelsToData(Containers::ArrayView<const BasicImageView<dimensions>> imageLevels, const Utility::ConfigurationGroup& configuration, ImageConverterFlags flags, BasisImageConverter::Format fileFormat) {
+template<UnsignedInt dimensions> Containers::Optional<Containers::Array<char>> convertLevelsToData(Containers::ArrayView<const BasicImageView<dimensions>> imageLevels, const Utility::ConfigurationGroup& configuration, ImageConverterFlags flags, BasisImageConverter::Format fileFormat) {
     /* Check input */
     const PixelFormat pixelFormat = imageLevels.front().format();
     bool isSrgb;
@@ -383,7 +384,8 @@ template<UnsignedInt dimensions> Containers::Array<char> convertLevelsToData(Con
         }
     }
 
-    return fileData;
+    /* GCC 4.8 and Clang 3.8 need extra help here */
+    return Containers::optional(std::move(fileData));
 }
 
 }
@@ -408,11 +410,11 @@ ImageConverterFeatures BasisImageConverter::doFeatures() const {
     return ImageConverterFeature::ConvertLevels2DToData|ImageConverterFeature::ConvertLevels3DToData;
 }
 
-Containers::Array<char> BasisImageConverter::doConvertToData(Containers::ArrayView<const ImageView2D> imageLevels) {
+Containers::Optional<Containers::Array<char>> BasisImageConverter::doConvertToData(Containers::ArrayView<const ImageView2D> imageLevels) {
     return convertLevelsToData(imageLevels, configuration(), flags(), _format);
 }
 
-Containers::Array<char> BasisImageConverter::doConvertToData(Containers::ArrayView<const ImageView3D> imageLevels) {
+Containers::Optional<Containers::Array<char>> BasisImageConverter::doConvertToData(Containers::ArrayView<const ImageView3D> imageLevels) {
     return convertLevelsToData(imageLevels, configuration(), flags(), _format);
 }
 
@@ -448,4 +450,4 @@ bool BasisImageConverter::doConvertToFile(Containers::ArrayView<const ImageView3
 }}
 
 CORRADE_PLUGIN_REGISTER(BasisImageConverter, Magnum::Trade::BasisImageConverter,
-    "cz.mosra.magnum.Trade.AbstractImageConverter/0.3.1")
+    "cz.mosra.magnum.Trade.AbstractImageConverter/0.3.2")

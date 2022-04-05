@@ -28,6 +28,7 @@
 
 #include <string>
 #include <Corrade/Containers/Array.h>
+#include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/Pair.h>
 #include <Corrade/Containers/StringView.h>
 #include <Corrade/Utility/Algorithms.h>
@@ -712,7 +713,7 @@ constexpr Containers::StringView ValidOrientations[3]{"rl"_s, "du"_s, "io"_s};
 /* Using a template template parameter to deduce the image dimensions while
    matching both ImageView and CompressedImageView. Matching on the ImageView
    typedefs doesn't work, so we need the extra parameter of BasicImageView. */
-template<UnsignedInt dimensions, template<UnsignedInt, typename> class View> Containers::Array<char> convertLevels(Containers::ArrayView<const View<dimensions, const char>> imageLevels, const Utility::ConfigurationGroup& configuration) {
+template<UnsignedInt dimensions, template<UnsignedInt, typename> class View> Containers::Optional<Containers::Array<char>> convertLevels(Containers::ArrayView<const View<dimensions, const char>> imageLevels, const Utility::ConfigurationGroup& configuration) {
     const auto format = imageLevels.front().format();
     if(isFormatImplementationSpecific(format)) {
         Error{} << "Trade::KtxImageConverter::convertToData(): implementation-specific formats are not supported";
@@ -909,7 +910,8 @@ template<UnsignedInt dimensions, template<UnsignedInt, typename> class View> Con
         header.dfdByteOffset, header.dfdByteLength,
         header.kvdByteOffset, header.kvdByteLength);
 
-    return data;
+    /* GCC 4.8 and Clang 3.8 need extra help here */
+    return Containers::optional(std::move(data));
 }
 
 }
@@ -925,31 +927,31 @@ ImageConverterFeatures KtxImageConverter::doFeatures() const {
         ImageConverterFeature::ConvertCompressedLevels3DToData;
 }
 
-Containers::Array<char> KtxImageConverter::doConvertToData(Containers::ArrayView<const ImageView1D> imageLevels) {
+Containers::Optional<Containers::Array<char>> KtxImageConverter::doConvertToData(Containers::ArrayView<const ImageView1D> imageLevels) {
     return convertLevels(imageLevels, configuration());
 }
 
-Containers::Array<char> KtxImageConverter::doConvertToData(Containers::ArrayView<const ImageView2D> imageLevels) {
+Containers::Optional<Containers::Array<char>> KtxImageConverter::doConvertToData(Containers::ArrayView<const ImageView2D> imageLevels) {
     return convertLevels(imageLevels, configuration());
 }
 
-Containers::Array<char> KtxImageConverter::doConvertToData(Containers::ArrayView<const ImageView3D> imageLevels) {
+Containers::Optional<Containers::Array<char>> KtxImageConverter::doConvertToData(Containers::ArrayView<const ImageView3D> imageLevels) {
     return convertLevels(imageLevels, configuration());
 }
 
-Containers::Array<char> KtxImageConverter::doConvertToData(Containers::ArrayView<const CompressedImageView1D> imageLevels) {
+Containers::Optional<Containers::Array<char>> KtxImageConverter::doConvertToData(Containers::ArrayView<const CompressedImageView1D> imageLevels) {
     return convertLevels(imageLevels, configuration());
 }
 
-Containers::Array<char> KtxImageConverter::doConvertToData(Containers::ArrayView<const CompressedImageView2D> imageLevels) {
+Containers::Optional<Containers::Array<char>> KtxImageConverter::doConvertToData(Containers::ArrayView<const CompressedImageView2D> imageLevels) {
     return convertLevels(imageLevels, configuration());
 }
 
-Containers::Array<char> KtxImageConverter::doConvertToData(Containers::ArrayView<const CompressedImageView3D> imageLevels) {
+Containers::Optional<Containers::Array<char>> KtxImageConverter::doConvertToData(Containers::ArrayView<const CompressedImageView3D> imageLevels) {
     return convertLevels(imageLevels, configuration());
 }
 
 }}
 
 CORRADE_PLUGIN_REGISTER(KtxImageConverter, Magnum::Trade::KtxImageConverter,
-    "cz.mosra.magnum.Trade.AbstractImageConverter/0.3.1")
+    "cz.mosra.magnum.Trade.AbstractImageConverter/0.3.2")
