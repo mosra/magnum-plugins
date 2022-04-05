@@ -25,6 +25,7 @@
 
 #include <sstream>
 #include <Corrade/Containers/Array.h>
+#include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/String.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/StringToFile.h>
@@ -94,18 +95,18 @@ void MiniExrImageConverterTest::wrongFormat() {
 }
 
 void MiniExrImageConverterTest::rgb() {
-    Containers::Array<char> data = _manager.instantiate("MiniExrImageConverter")->convertToData(Rgb);
-
-    CORRADE_COMPARE_AS((Containers::StringView{data, data.size()}),
+    Containers::Optional<Containers::Array<char>> data = _manager.instantiate("MiniExrImageConverter")->convertToData(Rgb);
+    CORRADE_VERIFY(data);
+    CORRADE_COMPARE_AS((Containers::StringView{*data, data->size()}),
         Utility::Path::join(MINIEXRIMAGECONVERTER_TEST_DIR, "image.exr"),
         TestSuite::Compare::StringToFile);
 }
 
 void MiniExrImageConverterTest::rgba() {
-    Containers::Array<char> data = _manager.instantiate("MiniExrImageConverter")->convertToData(Rgba);
-
+    Containers::Optional<Containers::Array<char>> data = _manager.instantiate("MiniExrImageConverter")->convertToData(Rgba);
+    CORRADE_VERIFY(data);
     /* Alpha is ignored, so it is the same file */
-    CORRADE_COMPARE_AS((Containers::StringView{data, data.size()}),
+    CORRADE_COMPARE_AS((Containers::StringView{*data, data->size()}),
         Utility::Path::join(MINIEXRIMAGECONVERTER_TEST_DIR, "image.exr"),
         TestSuite::Compare::StringToFile);
 }

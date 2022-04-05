@@ -199,7 +199,7 @@ void StbImageConverterTest::bmpRg() {
     /* RGBA should be exported as RGB, with the alpha channel ignored (and a
        warning about that printed) */
     std::ostringstream out;
-    Containers::Array<char> data;
+    Containers::Optional<Containers::Array<char>> data;
     {
         Warning redirectWarning{&out};
         data = converter->convertToData(OriginalRg);
@@ -211,7 +211,7 @@ void StbImageConverterTest::bmpRg() {
         CORRADE_SKIP("StbImageImporter plugin not found, cannot test");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("StbImageImporter");
-    CORRADE_VERIFY(importer->openData(data));
+    CORRADE_VERIFY(importer->openData(*data));
     Containers::Optional<Trade::ImageData2D> converted = importer->image2D(0);
     CORRADE_VERIFY(converted);
 
@@ -246,14 +246,14 @@ constexpr const Float ConvertedGrayscale32FData[] = {
 
 void StbImageConverterTest::hdrGrayscale() {
     Containers::Pointer<Trade::AbstractImageConverter> converter = _converterManager.instantiate("StbHdrImageConverter");
-    Containers::Array<char> data = converter->convertToData(OriginalGrayscale32F);
+    Containers::Optional<Containers::Array<char>> data = converter->convertToData(OriginalGrayscale32F);
     CORRADE_VERIFY(data);
 
     if(_importerManager.loadState("StbImageImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("StbImageImporter plugin not found, cannot test");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("StbImageImporter");
-    CORRADE_VERIFY(importer->openData(data));
+    CORRADE_VERIFY(importer->openData(*data));
     Containers::Optional<Trade::ImageData2D> converted = importer->image2D(0);
     CORRADE_VERIFY(converted);
 
@@ -270,7 +270,7 @@ void StbImageConverterTest::hdrRg() {
 
     /* RG should be exported as RRR, with the green channel ignored */
     std::ostringstream out;
-    Containers::Array<char> data;
+    Containers::Optional<Containers::Array<char>> data;
     {
         Warning redirectWarning{&out};
         data = converter->convertToData(OriginalRg32F);
@@ -282,7 +282,7 @@ void StbImageConverterTest::hdrRg() {
         CORRADE_SKIP("StbImageImporter plugin not found, cannot test");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("StbImageImporter");
-    CORRADE_VERIFY(importer->openData(data));
+    CORRADE_VERIFY(importer->openData(*data));
     Containers::Optional<Trade::ImageData2D> converted = importer->image2D(0);
     CORRADE_VERIFY(converted);
 
@@ -311,14 +311,14 @@ const ImageView2D OriginalRgba32F{PixelFormat::RGBA32F, {2, 3}, OriginalRgba32FD
 
 void StbImageConverterTest::hdrRgb() {
     Containers::Pointer<Trade::AbstractImageConverter> converter = _converterManager.instantiate("StbHdrImageConverter");
-    Containers::Array<char> data = converter->convertToData(OriginalRgb32F);
+    Containers::Optional<Containers::Array<char>> data = converter->convertToData(OriginalRgb32F);
     CORRADE_VERIFY(data);
 
     if(_importerManager.loadState("StbImageImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("StbImageImporter plugin not found, cannot test");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("StbImageImporter");
-    CORRADE_VERIFY(importer->openData(data));
+    CORRADE_VERIFY(importer->openData(*data));
     Containers::Optional<Trade::ImageData2D> converted = importer->image2D(0);
     CORRADE_VERIFY(converted);
 
@@ -334,7 +334,7 @@ void StbImageConverterTest::hdrRgba() {
 
     /* RGBA should be exported as RGB, with the alpha channel ignored */
     std::ostringstream out;
-    Containers::Array<char> data;
+    Containers::Optional<Containers::Array<char>> data;
     {
         Warning redirectWarning{&out};
         data = converter->convertToData(OriginalRgba32F);
@@ -346,7 +346,7 @@ void StbImageConverterTest::hdrRgba() {
         CORRADE_SKIP("StbImageImporter plugin not found, cannot test");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("StbImageImporter");
-    CORRADE_VERIFY(importer->openData(data));
+    CORRADE_VERIFY(importer->openData(*data));
     Containers::Optional<Trade::ImageData2D> converted = importer->image2D(0);
     CORRADE_VERIFY(converted);
 
@@ -434,14 +434,14 @@ void StbImageConverterTest::jpegRgb80Percent() {
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("StbJpegImageConverter");
     CORRADE_COMPARE(converter->configuration().value<Float>("jpegQuality"), 0.8f);
 
-    Containers::Array<char> data = converter->convertToData(OriginalJpegRgb);
+    Containers::Optional<Containers::Array<char>> data = converter->convertToData(OriginalJpegRgb);
     CORRADE_VERIFY(data);
 
     if(_importerManager.loadState("StbImageImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("StbImageImporter plugin not found, cannot test");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("StbImageImporter");
-    CORRADE_VERIFY(importer->openData(data));
+    CORRADE_VERIFY(importer->openData(*data));
     Containers::Optional<Trade::ImageData2D> converted = importer->image2D(0);
     CORRADE_VERIFY(converted);
     CORRADE_COMPARE(converted->size(), Vector2i(6, 4));
@@ -454,14 +454,14 @@ void StbImageConverterTest::jpegRgb100Percent() {
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("StbJpegImageConverter");
     converter->configuration().setValue("jpegQuality", 1.0f);
 
-    Containers::Array<char> data = converter->convertToData(OriginalJpegRgb);
+    Containers::Optional<Containers::Array<char>> data = converter->convertToData(OriginalJpegRgb);
     CORRADE_VERIFY(data);
 
     if(_importerManager.loadState("StbImageImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("StbImageImporter plugin not found, cannot test");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("StbImageImporter");
-    CORRADE_VERIFY(importer->openData(data));
+    CORRADE_VERIFY(importer->openData(*data));
     Containers::Optional<Trade::ImageData2D> converted = importer->image2D(0);
     CORRADE_VERIFY(converted);
 
@@ -477,7 +477,7 @@ void StbImageConverterTest::jpegRgba80Percent() {
     /* RGBA should be exported as RGB, with the alpha channel ignored (and a
        warning about that printed) */
     std::ostringstream out;
-    Containers::Array<char> data;
+    Containers::Optional<Containers::Array<char>> data;
     {
         Warning redirectWarning{&out};
         data = converter->convertToData(OriginalJpegRgba);
@@ -489,7 +489,7 @@ void StbImageConverterTest::jpegRgba80Percent() {
         CORRADE_SKIP("StbImageImporter plugin not found, cannot test");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("StbImageImporter");
-    CORRADE_VERIFY(importer->openData(data));
+    CORRADE_VERIFY(importer->openData(*data));
     Containers::Optional<Trade::ImageData2D> converted = importer->image2D(0);
     CORRADE_VERIFY(converted);
     CORRADE_COMPARE(converted->size(), Vector2i(6, 4));
@@ -500,8 +500,9 @@ void StbImageConverterTest::jpegRgba80Percent() {
     /* Finally, the output should be exactly the same as when exporting RGB,
        bit to bit, to ensure we don't produce anything that would cause
        problems for traditional non-turbo libjpeg */
-    Containers::Array<char> dataRgb = converter->convertToData(OriginalJpegRgb);
-    CORRADE_COMPARE_AS(data, dataRgb, TestSuite::Compare::Container);
+    Containers::Optional<Containers::Array<char>> dataRgb = converter->convertToData(OriginalJpegRgb);
+    CORRADE_VERIFY(dataRgb);
+    CORRADE_COMPARE_AS(*data, *dataRgb, TestSuite::Compare::Container);
 }
 
 constexpr const char OriginalJpegGrayscaleData[] = {
@@ -542,14 +543,14 @@ void StbImageConverterTest::jpegGrayscale80Percent() {
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("StbJpegImageConverter");
     CORRADE_COMPARE(converter->configuration().value<Float>("jpegQuality"), 0.8f);
 
-    Containers::Array<char> data = converter->convertToData(OriginalJpegGrayscale);
+    Containers::Optional<Containers::Array<char>> data = converter->convertToData(OriginalJpegGrayscale);
     CORRADE_VERIFY(data);
 
     if(_importerManager.loadState("StbImageImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("StbImageImporter plugin not found, cannot test");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("StbImageImporter");
-    CORRADE_VERIFY(importer->openData(data));
+    CORRADE_VERIFY(importer->openData(*data));
     Containers::Optional<Trade::ImageData2D> converted = importer->image2D(0);
     CORRADE_VERIFY(converted);
     CORRADE_COMPARE(converted->size(), Vector2i(6, 4));
@@ -576,14 +577,14 @@ constexpr const char ConvertedRgbData[] = {
 };
 
 void StbImageConverterTest::pngRgb() {
-    Containers::Array<char> data = _converterManager.instantiate("StbPngImageConverter")->convertToData(OriginalRgb);
+    Containers::Optional<Containers::Array<char>> data = _converterManager.instantiate("StbPngImageConverter")->convertToData(OriginalRgb);
     CORRADE_VERIFY(data);
 
     if(_importerManager.loadState("StbImageImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("StbImageImporter plugin not found, cannot test");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("StbImageImporter");
-    CORRADE_VERIFY(importer->openData(data));
+    CORRADE_VERIFY(importer->openData(*data));
     Containers::Optional<Trade::ImageData2D> converted = importer->image2D(0);
     CORRADE_VERIFY(converted);
     CORRADE_COMPARE(converted->size(), Vector2i(2, 3));
@@ -612,14 +613,14 @@ constexpr const char ConvertedGrayscaleData[] = {
 };
 
 void StbImageConverterTest::pngGrayscale() {
-    Containers::Array<char> data = _converterManager.instantiate("StbPngImageConverter")->convertToData(OriginalGrayscale);
+    Containers::Optional<Containers::Array<char>> data = _converterManager.instantiate("StbPngImageConverter")->convertToData(OriginalGrayscale);
     CORRADE_VERIFY(data);
 
     if(_importerManager.loadState("StbImageImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("StbImageImporter plugin not found, cannot test");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("PngImporter");
-    CORRADE_VERIFY(importer->openData(data));
+    CORRADE_VERIFY(importer->openData(*data));
     Containers::Optional<Trade::ImageData2D> converted = importer->image2D(0);
     CORRADE_VERIFY(converted);
     CORRADE_COMPARE(converted->size(), Vector2i(2, 3));
@@ -646,14 +647,14 @@ constexpr const char ConvertedRgbaData[] = {
 };
 
 void StbImageConverterTest::tgaRgba() {
-    Containers::Array<char> data = _converterManager.instantiate("StbTgaImageConverter")->convertToData(OriginalRgba);
+    Containers::Optional<Containers::Array<char>> data = _converterManager.instantiate("StbTgaImageConverter")->convertToData(OriginalRgba);
     CORRADE_VERIFY(data);
 
     if(_importerManager.loadState("StbImageImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("StbImageImporter plugin not found, cannot test");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("StbImageImporter");
-    CORRADE_VERIFY(importer->openData(data));
+    CORRADE_VERIFY(importer->openData(*data));
     Containers::Optional<Trade::ImageData2D> converted = importer->image2D(0);
     CORRADE_VERIFY(converted);
     CORRADE_COMPARE(converted->size(), Vector2i(2, 3));

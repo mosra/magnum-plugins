@@ -210,14 +210,14 @@ void JpegImageConverterTest::rgb80Percent() {
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("JpegImageConverter");
     CORRADE_COMPARE(converter->configuration().value<Float>("jpegQuality"), 0.8f);
 
-    Containers::Array<char> data = converter->convertToData(OriginalRgb);
+    Containers::Optional<Containers::Array<char>> data = converter->convertToData(OriginalRgb);
     CORRADE_VERIFY(data);
 
     if(_importerManager.loadState("JpegImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("JpegImporter plugin not found, cannot test");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("JpegImporter");
-    CORRADE_VERIFY(importer->openData(data));
+    CORRADE_VERIFY(importer->openData(*data));
     Containers::Optional<Trade::ImageData2D> converted = importer->image2D(0);
     CORRADE_VERIFY(converted);
     CORRADE_COMPARE(converted->size(), Vector2i(6, 4));
@@ -239,14 +239,14 @@ void JpegImageConverterTest::rgb100Percent() {
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("JpegImageConverter");
     converter->configuration().setValue("jpegQuality", 1.0f);
 
-    Containers::Array<char> data = converter->convertToData(OriginalRgb);
+    Containers::Optional<Containers::Array<char>> data = converter->convertToData(OriginalRgb);
     CORRADE_VERIFY(data);
 
     if(_importerManager.loadState("JpegImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("JpegImporter plugin not found, cannot test");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("JpegImporter");
-    CORRADE_VERIFY(importer->openData(data));
+    CORRADE_VERIFY(importer->openData(*data));
     Containers::Optional<Trade::ImageData2D> converted = importer->image2D(0);
     CORRADE_VERIFY(converted);
 
@@ -274,7 +274,7 @@ void JpegImageConverterTest::rgba80Percent() {
     /* RGBA should be exported as RGB, with the alpha channel ignored (and a
        warning about that printed) */
     std::ostringstream out;
-    Containers::Array<char> data;
+    Containers::Optional<Containers::Array<char>> data;
     {
         Warning redirectWarning{&out};
         data = converter->convertToData(OriginalRgba);
@@ -286,7 +286,7 @@ void JpegImageConverterTest::rgba80Percent() {
         CORRADE_SKIP("JpegImporter plugin not found, cannot test");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("JpegImporter");
-    CORRADE_VERIFY(importer->openData(data));
+    CORRADE_VERIFY(importer->openData(*data));
     Containers::Optional<Trade::ImageData2D> converted = importer->image2D(0);
     CORRADE_VERIFY(converted);
     CORRADE_COMPARE(converted->size(), Vector2i(6, 4));
@@ -306,8 +306,9 @@ void JpegImageConverterTest::rgba80Percent() {
     /* Finally, the output should be exactly the same as when exporting RGB,
        bit to bit, to ensure we don't produce anything that would cause
        problems for traditional non-turbo libjpeg */
-    Containers::Array<char> dataRgb = converter->convertToData(OriginalRgb);
-    CORRADE_COMPARE_AS(data, dataRgb, TestSuite::Compare::Container);
+    Containers::Optional<Containers::Array<char>> dataRgb = converter->convertToData(OriginalRgb);
+    CORRADE_VERIFY(dataRgb);
+    CORRADE_COMPARE_AS(*data, *dataRgb, TestSuite::Compare::Container);
 }
 
 constexpr const char OriginalGrayscaleData[] = {
@@ -336,14 +337,14 @@ void JpegImageConverterTest::grayscale80Percent() {
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("JpegImageConverter");
     CORRADE_COMPARE(converter->configuration().value<Float>("jpegQuality"), 0.8f);
 
-    Containers::Array<char> data = converter->convertToData(OriginalGrayscale);
+    Containers::Optional<Containers::Array<char>> data = converter->convertToData(OriginalGrayscale);
     CORRADE_VERIFY(data);
 
     if(_importerManager.loadState("JpegImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("JpegImporter plugin not found, cannot test");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("JpegImporter");
-    CORRADE_VERIFY(importer->openData(data));
+    CORRADE_VERIFY(importer->openData(*data));
     Containers::Optional<Trade::ImageData2D> converted = importer->image2D(0);
     CORRADE_VERIFY(converted);
     CORRADE_COMPARE(converted->size(), Vector2i(6, 4));
@@ -365,14 +366,14 @@ void JpegImageConverterTest::grayscale100Percent() {
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("JpegImageConverter");
     converter->configuration().setValue("jpegQuality", 1.0f);
 
-    Containers::Array<char> data = converter->convertToData(OriginalGrayscale);
+    Containers::Optional<Containers::Array<char>> data = converter->convertToData(OriginalGrayscale);
     CORRADE_VERIFY(data);
 
     if(_importerManager.loadState("JpegImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("JpegImporter plugin not found, cannot test");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("JpegImporter");
-    CORRADE_VERIFY(importer->openData(data));
+    CORRADE_VERIFY(importer->openData(*data));
     Containers::Optional<Trade::ImageData2D> converted = importer->image2D(0);
     CORRADE_VERIFY(converted);
 

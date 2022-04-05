@@ -26,6 +26,7 @@
 #include <sstream>
 #include <Corrade/Containers/Array.h>
 #include <Corrade/Containers/Optional.h>
+#include <Corrade/Containers/Pair.h>
 #include <Corrade/Containers/StringView.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/StringToFile.h>
@@ -529,17 +530,18 @@ void SpirvToolsConverterTest::convertAssemble() {
     /* Otherwise the output will not be roundtrippable */
     converter->configuration().setValue("preserveNumericIds", true);
 
-    Containers::Array<char> out = converter->convertFileToData({}, Utility::Path::join(SPIRVTOOLSSHADERCONVERTER_TEST_DIR, "triangle-shaders.spvasm"));
-    CORRADE_COMPARE_AS(out.size(), 5*4, TestSuite::Compare::Greater);
+    Containers::Optional<Containers::Array<char>> out = converter->convertFileToData({}, Utility::Path::join(SPIRVTOOLSSHADERCONVERTER_TEST_DIR, "triangle-shaders.spvasm"));
+    CORRADE_VERIFY(out);
+    CORRADE_COMPARE_AS(out->size(), 5*4, TestSuite::Compare::Greater);
 
     /* The output generator ID is something from Khronos, patch it back to ours
        so the file compares equal. */
-    CORRADE_COMPARE(Containers::arrayCast<UnsignedInt>(out.prefix(5*4))[2],
+    CORRADE_COMPARE(Containers::arrayCast<UnsignedInt>(out->prefix(5*4))[2],
         0x70000);
-    Containers::arrayCast<UnsignedInt>(out.prefix(5*4))[2] = 0xdeadc0de;
+    Containers::arrayCast<UnsignedInt>(out->prefix(5*4))[2] = 0xdeadc0de;
 
     /** @todo Compare::DataToFile */
-    CORRADE_COMPARE_AS(Containers::ArrayView<const char>{out},
+    CORRADE_COMPARE_AS(Containers::ArrayView<const char>{*out},
         Utility::Path::join(SPIRVTOOLSSHADERCONVERTER_TEST_DIR, "triangle-shaders.spv"),
         TestSuite::Compare::StringToFile);
 }
@@ -830,18 +832,19 @@ void SpirvToolsConverterTest::convertOptimize() {
        use the same target version. */
     converter->setOutputFormat(data.outputFormat, "spv1.2");
 
-    Containers::Array<char> out = converter->convertFileToData({},
+    Containers::Optional<Containers::Array<char>> out = converter->convertFileToData({},
         Utility::Path::join(SPIRVTOOLSSHADERCONVERTER_TEST_DIR, data.input));
-    CORRADE_COMPARE_AS(out.size(), 5*4, TestSuite::Compare::Greater);
+    CORRADE_VERIFY(out);
+    CORRADE_COMPARE_AS(out->size(), 5*4, TestSuite::Compare::Greater);
 
     /* If we end up with a binary and the input was an assembly, the output
        generator ID is something from Khronos, patch it back to ours so the
        files compare equal. */
-    if(data.outputFormat == Format::Spirv && Containers::arrayCast<UnsignedInt>(out.prefix(5*4))[2] == 0x70000)
-        Containers::arrayCast<UnsignedInt>(out.prefix(5*4))[2] = 0xdeadc0de;
+    if(data.outputFormat == Format::Spirv && Containers::arrayCast<UnsignedInt>(out->prefix(5*4))[2] == 0x70000)
+        Containers::arrayCast<UnsignedInt>(out->prefix(5*4))[2] = 0xdeadc0de;
 
     /** @todo Compare::DataToFile */
-    CORRADE_COMPARE_AS(Containers::ArrayView<const char>{out},
+    CORRADE_COMPARE_AS(Containers::ArrayView<const char>{*out},
         Utility::Path::join(SPIRVTOOLSSHADERCONVERTER_TEST_DIR, data.expected),
         TestSuite::Compare::StringToFile);
 }

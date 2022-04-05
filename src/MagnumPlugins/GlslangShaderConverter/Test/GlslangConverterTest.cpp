@@ -28,6 +28,7 @@
 #include <Corrade/Containers/Array.h>
 #include <Corrade/Containers/GrowableArray.h>
 #include <Corrade/Containers/Optional.h>
+#include <Corrade/Containers/Pair.h>
 #include <Corrade/Containers/String.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/StringToFile.h>
@@ -754,15 +755,16 @@ void GlslangConverterTest::convert() {
         return arrayView(file);
     }, *file);
 
-    Containers::Array<char> output = converter->convertFileToData(data.stage, data.alias ? data.alias : data.filename);
+    Containers::Optional<Containers::Array<char>> output = converter->convertFileToData(data.stage, data.alias ? data.alias : data.filename);
+    CORRADE_VERIFY(output);
 
     /* glslang 7.13 / 8.13 differs from 10 only in the generator version, patch
        that to have the same output */
-    auto words = Containers::arrayCast<UnsignedInt>(output);
+    auto words = Containers::arrayCast<UnsignedInt>(*output);
     if(words.size() >= 3 && (words[2] == 524295 || words[2] == 524296))
         words[2] = 524298;
 
-    CORRADE_COMPARE_AS((std::string{output.begin(), output.end()}),
+    CORRADE_COMPARE_AS((Containers::StringView{*output, output->size()}),
         Utility::Path::join(GLSLANGSHADERCONVERTER_TEST_DIR, data.output),
         TestSuite::Compare::StringToFile);
 }

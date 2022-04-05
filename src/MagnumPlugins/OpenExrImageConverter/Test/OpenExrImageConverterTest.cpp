@@ -345,29 +345,29 @@ void OpenExrImageConverterTest::rgb16f() {
     if(data.tiled)
         converter->configuration().setValue("forceTiledOutput", true);
 
-    const Containers::Array<char> out = converter->convertToData(Rgb16f);
-
+    const Containers::Optional<Containers::Array<char>> out = converter->convertToData(Rgb16f);
+    CORRADE_VERIFY(out);
     /** @todo Compare::DataToFile */
-    CORRADE_COMPARE_AS((Containers::StringView{out, out.size()}),
+    CORRADE_COMPARE_AS((Containers::StringView{*out, out->size()}),
         Utility::Path::join(OPENEXRIMPORTER_TEST_DIR, data.filename),
         TestSuite::Compare::StringToFile);
 
     /* By default we're exporting scanline files, so the metadata should
        contain no tile-related information. */
     if(!data.tiled) {
-        CORRADE_VERIFY(!Containers::StringView{arrayView(out)}.contains("tiles"_s));
-        CORRADE_VERIFY(!Containers::StringView{arrayView(out)}.contains("tiledesc"_s));
+        CORRADE_VERIFY(!Containers::StringView{arrayView(*out)}.contains("tiles"_s));
+        CORRADE_VERIFY(!Containers::StringView{arrayView(*out)}.contains("tiledesc"_s));
     /* In case of a tiled file the imported data should show no difference, but
        the metadata should contain tile-related information. */
     } else {
-        CORRADE_VERIFY(Containers::StringView{arrayView(out)}.contains("tiles\0tiledesc"_s));
+        CORRADE_VERIFY(Containers::StringView{arrayView(*out)}.contains("tiles\0tiledesc"_s));
     }
 
     if(_importerManager.loadState("OpenExrImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("OpenExrImporter plugin not found, cannot test");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("OpenExrImporter");
-    CORRADE_VERIFY(importer->openData(out));
+    CORRADE_VERIFY(importer->openData(*out));
 
     /* This is thoroughly tested in OpenExrImporter, do just a basic check of
        the contents and not the actual data layout */
@@ -383,10 +383,10 @@ void OpenExrImageConverterTest::rgba32f() {
        3.1.3 (on those it's the hardcoded default) */
     converter->configuration().setValue("zipCompressionLevel", 6);
 
-    Containers::Array<char> data = converter->convertToData(Rgba32f);
-
+    Containers::Optional<Containers::Array<char>> data = converter->convertToData(Rgba32f);
+    CORRADE_VERIFY(data);
     /** @todo Compare::DataToFile */
-    CORRADE_COMPARE_AS((Containers::StringView{data, data.size()}),
+    CORRADE_COMPARE_AS((Containers::StringView{*data, data->size()}),
         Utility::Path::join(OPENEXRIMPORTER_TEST_DIR, "rgba32f.exr"),
         TestSuite::Compare::StringToFile);
 
@@ -394,7 +394,7 @@ void OpenExrImageConverterTest::rgba32f() {
         CORRADE_SKIP("OpenExrImporter plugin not found, cannot test");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("OpenExrImporter");
-    CORRADE_VERIFY(importer->openData(data));
+    CORRADE_VERIFY(importer->openData(*data));
 
     /* This is thoroughly tested in OpenExrImporter, do just a basic check of
        the contents and not the actual data layout */
@@ -410,10 +410,10 @@ void OpenExrImageConverterTest::rg32ui() {
        3.1.3 (on those it's the hardcoded default) */
     converter->configuration().setValue("zipCompressionLevel", 6);
 
-    Containers::Array<char> data = converter->convertToData(Rg32ui);
-
+    Containers::Optional<Containers::Array<char>> data = converter->convertToData(Rg32ui);
+    CORRADE_VERIFY(data);
     /** @todo Compare::DataToFile */
-    CORRADE_COMPARE_AS((Containers::StringView{data, data.size()}),
+    CORRADE_COMPARE_AS((Containers::StringView{*data, data->size()}),
         Utility::Path::join(OPENEXRIMPORTER_TEST_DIR, "rg32ui.exr"),
         TestSuite::Compare::StringToFile);
 
@@ -421,7 +421,7 @@ void OpenExrImageConverterTest::rg32ui() {
         CORRADE_SKIP("OpenExrImporter plugin not found, cannot test");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("OpenExrImporter");
-    CORRADE_VERIFY(importer->openData(data));
+    CORRADE_VERIFY(importer->openData(*data));
 
     /* This is thoroughly tested in OpenExrImporter, do just a basic check of
        the contents and not the actual data layout */
@@ -431,9 +431,9 @@ void OpenExrImageConverterTest::rg32ui() {
 }
 
 void OpenExrImageConverterTest::depth32f() {
-    Containers::Array<char> data = _manager.instantiate("OpenExrImageConverter")->convertToData(Depth32f);
-
-    CORRADE_COMPARE_AS((Containers::StringView{data, data.size()}),
+    Containers::Optional<Containers::Array<char>> data = _manager.instantiate("OpenExrImageConverter")->convertToData(Depth32f);
+    CORRADE_VERIFY(data);
+    CORRADE_COMPARE_AS((Containers::StringView{*data, data->size()}),
         Utility::Path::join(OPENEXRIMPORTER_TEST_DIR, "depth32f.exr"),
         TestSuite::Compare::StringToFile);
 
@@ -441,7 +441,7 @@ void OpenExrImageConverterTest::depth32f() {
         CORRADE_SKIP("OpenExrImporter plugin not found, cannot test");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("OpenExrImporter");
-    CORRADE_VERIFY(importer->openData(data));
+    CORRADE_VERIFY(importer->openData(*data));
 
     /* This is thoroughly tested in OpenExrImporter, do just a basic check of
        the contents and not the actual data layout */
@@ -460,10 +460,10 @@ void OpenExrImageConverterTest::envmap2DLatLong() {
 
     /* The width needs to be 2*height, abuse existing data for that */
     ImageView2D R32ui{PixelFormat::R32UI, {4, 2}, Rg32uiData};
-    const Containers::Array<char> data = converter->convertToData(R32ui);
-
+    const Containers::Optional<Containers::Array<char>> data = converter->convertToData(R32ui);
+    CORRADE_VERIFY(data);
     /** @todo Compare::DataToFile */
-    CORRADE_COMPARE_AS((Containers::StringView{data, data.size()}),
+    CORRADE_COMPARE_AS((Containers::StringView{*data, data->size()}),
         Utility::Path::join(OPENEXRIMAGECONVERTER_TEST_DIR, "envmap-latlong.exr"),
         TestSuite::Compare::StringToFile);
 
@@ -471,7 +471,7 @@ void OpenExrImageConverterTest::envmap2DLatLong() {
        importing. Verifying the metadata has to be done using the `exrheader`
        tool, the importer has no API for that. This is only a basic check that
        the metadata got added. */
-    CORRADE_VERIFY(Containers::StringView{arrayView(data)}.contains("envmap\0"_s));
+    CORRADE_VERIFY(Containers::StringView{arrayView(*data)}.contains("envmap\0"_s));
 }
 
 void OpenExrImageConverterTest::envmap2DLatLongWrongSize() {
@@ -502,10 +502,10 @@ void OpenExrImageConverterTest::envmap3DCubeMap() {
        3.1.3 (on those it's the hardcoded default) */
     converter->configuration().setValue("zipCompressionLevel", 6);
 
-    const Containers::Array<char> data = converter->convertToData(CubeRg16f);
-
+    const Containers::Optional<Containers::Array<char>> data = converter->convertToData(CubeRg16f);
+    CORRADE_VERIFY(data);
     /** @todo Compare::DataToFile */
-    CORRADE_COMPARE_AS((Containers::StringView{data, data.size()}),
+    CORRADE_COMPARE_AS((Containers::StringView{*data, data->size()}),
         Utility::Path::join(OPENEXRIMPORTER_TEST_DIR, "envmap-cube.exr"),
         TestSuite::Compare::StringToFile);
 
@@ -513,13 +513,13 @@ void OpenExrImageConverterTest::envmap3DCubeMap() {
        importing. Verifying the metadata has to be done using the `exrheader`
        tool, the importer has no API for that. This is only a basic check that
        the metadata got added. */
-    CORRADE_VERIFY(Containers::StringView{arrayView(data)}.contains("envmap\0"_s));
+    CORRADE_VERIFY(Containers::StringView{arrayView(*data)}.contains("envmap\0"_s));
 
     if(_importerManager.loadState("OpenExrImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("OpenExrImporter plugin not found, cannot test");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("OpenExrImporter");
-    CORRADE_VERIFY(importer->openData(data));
+    CORRADE_VERIFY(importer->openData(*data));
     CORRADE_COMPARE(importer->image3DCount(), 1);
 
     /** @todo use CompareImage once it can handle 3D images */
@@ -589,10 +589,10 @@ void OpenExrImageConverterTest::customChannels() {
        3.1.3 (on those it's the hardcoded default) */
     converter->configuration().setValue("zipCompressionLevel", 6);
 
-    Containers::Array<char> data = converter->convertToData(Rgba32f);
-
+    Containers::Optional<Containers::Array<char>> data = converter->convertToData(Rgba32f);
+    CORRADE_VERIFY(data);
     /** @todo Compare::DataToFile */
-    CORRADE_COMPARE_AS((Containers::StringView{data, data.size()}),
+    CORRADE_COMPARE_AS((Containers::StringView{*data, data->size()}),
         Utility::Path::join(OPENEXRIMPORTER_TEST_DIR, "rgba32f-custom-channels.exr"),
         TestSuite::Compare::StringToFile);
 
@@ -608,7 +608,7 @@ void OpenExrImageConverterTest::customChannels() {
     importer->configuration().setValue("g", "Y");
     importer->configuration().setValue("b", "Z");
     importer->configuration().setValue("a", "handedness");
-    CORRADE_VERIFY(importer->openData(data));
+    CORRADE_VERIFY(importer->openData(*data));
 
     /* This is thoroughly tested in OpenExrImporter, do just a basic check of
        the contents and not the actual data layout */
@@ -634,9 +634,10 @@ void OpenExrImageConverterTest::customChannelsSomeUnassigned() {
     converter->configuration().setValue("g", "");
     converter->configuration().setValue("b", "Z");
     converter->configuration().setValue("a", "");
-    Containers::Array<char> data = converter->convertToData(Rgba32f);
-
-    CORRADE_COMPARE_AS((Containers::StringView{data, data.size()}),
+    Containers::Optional<Containers::Array<char>> data = converter->convertToData(Rgba32f);
+    CORRADE_VERIFY(data);
+    /** @todo Compare::DataToFile */
+    CORRADE_COMPARE_AS((Containers::StringView{*data, data->size()}),
         Utility::Path::join(OPENEXRIMAGECONVERTER_TEST_DIR, "rb32f-custom-channels.exr"),
         TestSuite::Compare::StringToFile);
 
@@ -648,7 +649,7 @@ void OpenExrImageConverterTest::customChannelsSomeUnassigned() {
     importer->configuration().setValue("r", "X");
     importer->configuration().setValue("g", "Z");
     /* B, A stays at default, but shouldn't get filled */
-    CORRADE_VERIFY(importer->openData(data));
+    CORRADE_VERIFY(importer->openData(*data));
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
@@ -677,10 +678,10 @@ void OpenExrImageConverterTest::customChannelsDepth() {
     Containers::Pointer<AbstractImageConverter> converter = _manager.instantiate("OpenExrImageConverter");
     converter->configuration().setValue("layer", "left");
     converter->configuration().setValue("depth", "height");
-    Containers::Array<char> data = converter->convertToData(Depth32f);
-
+    Containers::Optional<Containers::Array<char>> data = converter->convertToData(Depth32f);
+    CORRADE_VERIFY(data);
     /** @todo Compare::DataToFile */
-    CORRADE_COMPARE_AS((Containers::StringView{data, data.size()}),
+    CORRADE_COMPARE_AS((Containers::StringView{*data, data->size()}),
         Utility::Path::join(OPENEXRIMPORTER_TEST_DIR, "depth32f-custom-channels.exr"),
         TestSuite::Compare::StringToFile);
 
@@ -693,7 +694,7 @@ void OpenExrImageConverterTest::customChannelsDepth() {
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("OpenExrImporter");
     importer->configuration().setValue("layer", "left");
     importer->configuration().setValue("depth", "height");
-    CORRADE_VERIFY(importer->openData(data));
+    CORRADE_VERIFY(importer->openData(*data));
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
@@ -720,10 +721,10 @@ void OpenExrImageConverterTest::customWindows() {
        3.1.3 (on those it's the hardcoded default) */
     converter->configuration().setValue("zipCompressionLevel", 6);
 
-    Containers::Array<char> data = converter->convertToData(Rgb16f);
-
+    Containers::Optional<Containers::Array<char>> data = converter->convertToData(Rgb16f);
+    CORRADE_VERIFY(data);
     /** @todo Compare::DataToFile */
-    CORRADE_COMPARE_AS((Containers::StringView{data, data.size()}),
+    CORRADE_COMPARE_AS((Containers::StringView{*data, data->size()}),
         Utility::Path::join(OPENEXRIMPORTER_TEST_DIR, "rgb16f-custom-windows.exr"),
         TestSuite::Compare::StringToFile);
 
@@ -731,7 +732,7 @@ void OpenExrImageConverterTest::customWindows() {
         CORRADE_SKIP("OpenExrImporter plugin not found, cannot test");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("OpenExrImporter");
-    CORRADE_VERIFY(importer->openData(data));
+    CORRADE_VERIFY(importer->openData(*data));
 
     /* No matter how crazy the windows are, the imported data should be the
        same. Verifying the metadata has to be done using the `exrheader` tool,
@@ -751,10 +752,10 @@ void OpenExrImageConverterTest::customWindowsCubeMap() {
        3.1.3 (on those it's the hardcoded default) */
     converter->configuration().setValue("zipCompressionLevel", 6);
 
-    Containers::Array<char> data = converter->convertToData(CubeRg16f);
-
+    Containers::Optional<Containers::Array<char>> data = converter->convertToData(CubeRg16f);
+    CORRADE_VERIFY(data);
     /** @todo Compare::DataToFile */
-    CORRADE_COMPARE_AS((Containers::StringView{data, data.size()}),
+    CORRADE_COMPARE_AS((Containers::StringView{*data, data->size()}),
         Utility::Path::join(OPENEXRIMPORTER_TEST_DIR, "envmap-cube-custom-windows.exr"),
         TestSuite::Compare::StringToFile);
 
@@ -762,7 +763,7 @@ void OpenExrImageConverterTest::customWindowsCubeMap() {
         CORRADE_SKIP("OpenExrImporter plugin not found, cannot test");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("OpenExrImporter");
-    CORRADE_VERIFY(importer->openData(data));
+    CORRADE_VERIFY(importer->openData(*data));
     CORRADE_COMPARE(importer->image3DCount(), 1);
 
     /** @todo use CompareImage once it can handle 3D images */
@@ -803,18 +804,18 @@ void OpenExrImageConverterTest::compression() {
     if(data.dwaCompressionLevel)
         converter->configuration().setValue("dwaCompressionLevel", *data.dwaCompressionLevel);
 
-    Containers::Array<char> out = converter->convertToData(Rgba32f);
+    Containers::Optional<Containers::Array<char>> out = converter->convertToData(Rgba32f);
     CORRADE_VERIFY(out);
 
     /* The sizes should slightly differ at the very least -- this checks that
        the setting isn't just plainly ignored */
-    CORRADE_COMPARE(out.size(), data.size);
+    CORRADE_COMPARE(out->size(), data.size);
 
     if(_importerManager.loadState("OpenExrImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("OpenExrImporter plugin not found, cannot test");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("OpenExrImporter");
-    CORRADE_VERIFY(importer->openData(out));
+    CORRADE_VERIFY(importer->openData(*out));
 
     /* Using only lossless compression here, so the data should match */
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
@@ -835,18 +836,18 @@ void OpenExrImageConverterTest::compressionCubeMap() {
     if(data.dwaCompressionLevel)
         converter->configuration().setValue("dwaCompressionLevel", *data.dwaCompressionLevel);
 
-    Containers::Array<char> out = converter->convertToData(CubeRg16f);
+    Containers::Optional<Containers::Array<char>> out = converter->convertToData(CubeRg16f);
     CORRADE_VERIFY(out);
 
     /* The sizes should slightly differ at the very least -- this checks that
        the setting isn't just plainly ignored */
-    CORRADE_COMPARE(out.size(), data.cubeSize);
+    CORRADE_COMPARE(out->size(), data.cubeSize);
 
     if(_importerManager.loadState("OpenExrImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("OpenExrImporter plugin not found, cannot test");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("OpenExrImporter");
-    CORRADE_VERIFY(importer->openData(out));
+    CORRADE_VERIFY(importer->openData(*out));
 
     /** @todo use CompareImage once it can handle 3D images */
     Containers::Optional<Trade::ImageData3D> image = importer->image3D(0);
@@ -914,10 +915,10 @@ void OpenExrImageConverterTest::levels2D() {
     ImageView2D image0{PixelStorage{}.setAlignment(1), PixelFormat::R16F, {5, 3}, data0};
     ImageView2D image1{PixelStorage{}.setAlignment(1), PixelFormat::R16F, {2, 1}, data1};
     ImageView2D image2{PixelStorage{}.setAlignment(1), PixelFormat::R16F, {1, 1}, data2};
-    Containers::Array<char> out = converter->convertToData({image0, image1, image2});
-
+    Containers::Optional<Containers::Array<char>> out = converter->convertToData({image0, image1, image2});
+    CORRADE_VERIFY(out);
     /** @todo Compare::DataToFile */
-    CORRADE_COMPARE_AS((Containers::StringView{out, out.size()}),
+    CORRADE_COMPARE_AS((Containers::StringView{*out, out->size()}),
         Utility::Path::join(OPENEXRIMPORTER_TEST_DIR, data.filename),
         TestSuite::Compare::StringToFile);
 
@@ -925,7 +926,7 @@ void OpenExrImageConverterTest::levels2D() {
         CORRADE_SKIP("OpenExrImporter plugin not found, cannot test");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("OpenExrImporter");
-    CORRADE_VERIFY(importer->openData(out));
+    CORRADE_VERIFY(importer->openData(*out));
     CORRADE_COMPARE(importer->image2DCount(), 1);
     CORRADE_COMPARE(importer->image2DLevelCount(0), 3);
 
@@ -960,10 +961,10 @@ void OpenExrImageConverterTest::levels2DIncomplete() {
     };
     ImageView2D image0{PixelStorage{}.setAlignment(1), PixelFormat::R16F, {5, 3}, data0};
     ImageView2D image1{PixelStorage{}.setAlignment(1), PixelFormat::R16F, {2, 1}, data1};
-    Containers::Array<char> data = converter->convertToData({image0, image1});
-
+    Containers::Optional<Containers::Array<char>> data = converter->convertToData({image0, image1});
+    CORRADE_VERIFY(data);
     /** @todo Compare::DataToFile */
-    CORRADE_COMPARE_AS((Containers::StringView{data, data.size()}),
+    CORRADE_COMPARE_AS((Containers::StringView{*data, data->size()}),
         Utility::Path::join(OPENEXRIMPORTER_TEST_DIR, "levels2D-incomplete.exr"),
         TestSuite::Compare::StringToFile);
 
@@ -971,7 +972,7 @@ void OpenExrImageConverterTest::levels2DIncomplete() {
         CORRADE_SKIP("OpenExrImporter plugin not found, cannot test");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("OpenExrImporter");
-    CORRADE_VERIFY(importer->openData(data));
+    CORRADE_VERIFY(importer->openData(*data));
     CORRADE_COMPARE(importer->image2DCount(), 1);
     CORRADE_COMPARE(importer->image2DLevelCount(0), 2);
 
@@ -1087,10 +1088,10 @@ void OpenExrImageConverterTest::levelsCubeMap() {
     ImageView3D image0{PixelStorage{}.setAlignment(1), PixelFormat::R16F, {4, 4, 6}, data0};
     ImageView3D image1{PixelStorage{}.setAlignment(1), PixelFormat::R16F, {2, 2, 6}, data1};
     ImageView3D image2{PixelStorage{}.setAlignment(1), PixelFormat::R16F, {1, 1, 6}, data2};
-    Containers::Array<char> data = converter->convertToData({image0, image1, image2});
-
+    Containers::Optional<Containers::Array<char>> data = converter->convertToData({image0, image1, image2});
+    CORRADE_VERIFY(data);
     /** @todo Compare::DataToFile */
-    CORRADE_COMPARE_AS((Containers::StringView{data, data.size()}),
+    CORRADE_COMPARE_AS((Containers::StringView{*data, data->size()}),
         Utility::Path::join(OPENEXRIMPORTER_TEST_DIR, "levels-cube.exr"),
         TestSuite::Compare::StringToFile);
 
@@ -1098,7 +1099,7 @@ void OpenExrImageConverterTest::levelsCubeMap() {
         CORRADE_SKIP("OpenExrImporter plugin not found, cannot test");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("OpenExrImporter");
-    CORRADE_VERIFY(importer->openData(data));
+    CORRADE_VERIFY(importer->openData(*data));
     CORRADE_COMPARE(importer->image3DCount(), 1);
     CORRADE_COMPARE(importer->image3DLevelCount(0), 3);
 
@@ -1192,10 +1193,10 @@ void OpenExrImageConverterTest::levelsCubeMapIncomplete() {
     };
     ImageView3D image0{PixelStorage{}.setAlignment(1), PixelFormat::R16F, {4, 4, 6}, data0};
     ImageView3D image1{PixelStorage{}.setAlignment(1), PixelFormat::R16F, {2, 2, 6}, data1};
-    Containers::Array<char> out = converter->convertToData({image0, image1});
-
+    Containers::Optional<Containers::Array<char>> out = converter->convertToData({image0, image1});
+    CORRADE_VERIFY(out);
     /** @todo Compare::DataToFile */
-    CORRADE_COMPARE_AS((Containers::StringView{out, out.size()}),
+    CORRADE_COMPARE_AS((Containers::StringView{*out, out->size()}),
         Utility::Path::join(OPENEXRIMPORTER_TEST_DIR, "levels-cube-incomplete.exr"),
         TestSuite::Compare::StringToFile);
 
@@ -1203,7 +1204,7 @@ void OpenExrImageConverterTest::levelsCubeMapIncomplete() {
         CORRADE_SKIP("OpenExrImporter plugin not found, cannot test");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("OpenExrImporter");
-    CORRADE_VERIFY(importer->openData(out));
+    CORRADE_VERIFY(importer->openData(*out));
     CORRADE_COMPARE(importer->image3DCount(), 1);
     CORRADE_COMPARE(importer->image3DLevelCount(0), 2);
 
@@ -1299,11 +1300,11 @@ void OpenExrImageConverterTest::threads() {
 
     std::ostringstream out;
     Debug redirectOutput{&out};
-    Containers::Array<char> outData = converter->convertToData(Rgb16f);
-
+    Containers::Optional<Containers::Array<char>> outData = converter->convertToData(Rgb16f);
+    CORRADE_VERIFY(outData);
     /* The file should be always the same, no need to test the contents */
     /** @todo Compare::DataToFile */
-    CORRADE_COMPARE_AS((Containers::StringView{outData, outData.size()}),
+    CORRADE_COMPARE_AS((Containers::StringView{*outData, outData->size()}),
         Utility::Path::join(OPENEXRIMPORTER_TEST_DIR, "rgb16f.exr"),
         TestSuite::Compare::StringToFile);
     CORRADE_COMPARE(out.str(), Utility::formatString(data.message,

@@ -124,14 +124,14 @@ constexpr const char ConvertedRgbData[] = {
 };
 
 void PngImageConverterTest::rgb() {
-    Containers::Array<char> data = _converterManager.instantiate("PngImageConverter")->convertToData(OriginalRgb);
+    Containers::Optional<Containers::Array<char>> data = _converterManager.instantiate("PngImageConverter")->convertToData(OriginalRgb);
     CORRADE_VERIFY(data);
 
     if(_importerManager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("PngImporter plugin not found, cannot test");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("PngImporter");
-    CORRADE_VERIFY(importer->openData(data));
+    CORRADE_VERIFY(importer->openData(*data));
     Containers::Optional<Trade::ImageData2D> converted = importer->image2D(0);
     CORRADE_VERIFY(converted);
 
@@ -168,14 +168,14 @@ constexpr const UnsignedShort ConvertedRgbData16[] = {
 };
 
 void PngImageConverterTest::rgb16() {
-    Containers::Array<char> data = _converterManager.instantiate("PngImageConverter")->convertToData(OriginalRgb16);
+    Containers::Optional<Containers::Array<char>> data = _converterManager.instantiate("PngImageConverter")->convertToData(OriginalRgb16);
     CORRADE_VERIFY(data);
 
     if(_importerManager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("PngImporter plugin not found, cannot test");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("PngImporter");
-    CORRADE_VERIFY(importer->openData(data));
+    CORRADE_VERIFY(importer->openData(*data));
     Containers::Optional<Trade::ImageData2D> converted = importer->image2D(0);
     CORRADE_VERIFY(converted);
 
@@ -205,14 +205,14 @@ constexpr const char ConvertedGrayscaleData[] = {
 };
 
 void PngImageConverterTest::grayscale() {
-    Containers::Array<char> data = _converterManager.instantiate("PngImageConverter")->convertToData(OriginalGrayscale);
+    Containers::Optional<Containers::Array<char>> data = _converterManager.instantiate("PngImageConverter")->convertToData(OriginalGrayscale);
     CORRADE_VERIFY(data);
 
     if(_importerManager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("PngImporter plugin not found, cannot test");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("PngImporter");
-    CORRADE_VERIFY(importer->openData(data));
+    CORRADE_VERIFY(importer->openData(*data));
     Containers::Optional<Trade::ImageData2D> converted = importer->image2D(0);
     CORRADE_VERIFY(converted);
 
@@ -249,14 +249,14 @@ constexpr const UnsignedShort ConvertedGrayscaleData16[] = {
 };
 
 void PngImageConverterTest::grayscale16() {
-    Containers::Array<char> data = _converterManager.instantiate("PngImageConverter")->convertToData(OriginalGrayscale16);
+    Containers::Optional<Containers::Array<char>> data = _converterManager.instantiate("PngImageConverter")->convertToData(OriginalGrayscale16);
     CORRADE_VERIFY(data);
 
     if(_importerManager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("PngImporter plugin not found, cannot test");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("PngImporter");
-    CORRADE_VERIFY(importer->openData(data));
+    CORRADE_VERIFY(importer->openData(*data));
     Containers::Optional<Trade::ImageData2D> converted = importer->image2D(0);
     CORRADE_VERIFY(converted);
 

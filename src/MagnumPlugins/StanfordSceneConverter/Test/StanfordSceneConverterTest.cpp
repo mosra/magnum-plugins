@@ -197,10 +197,10 @@ void StanfordSceneConverterTest::nonIndexedAllAttributes() {
     if(data.objectIdAttribute)
         converter->configuration().setValue("objectIdAttribute", data.objectIdAttribute);
 
-    Containers::Array<char> out = converter->convertToData(mesh);
+    Containers::Optional<Containers::Array<char>> out = converter->convertToData(mesh);
     CORRADE_VERIFY(out);
     /** @todo Compare::DataToFile */
-    CORRADE_COMPARE_AS((Containers::StringView{out.data(), out.size()}),
+    CORRADE_COMPARE_AS((Containers::StringView{*out, out->size()}),
         Utility::Path::join(STANFORDSCENECONVERTER_TEST_DIR, data.file),
         TestSuite::Compare::StringToFile);
 
@@ -210,7 +210,7 @@ void StanfordSceneConverterTest::nonIndexedAllAttributes() {
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("StanfordImporter");
     if(data.objectIdAttribute)
         importer->configuration().setValue("objectIdAttribute", data.objectIdAttribute);
-    CORRADE_VERIFY(importer->openData(out));
+    CORRADE_VERIFY(importer->openData(*out));
 
     Containers::Optional<MeshData> importedMesh = importer->mesh(0);
     CORRADE_VERIFY(importedMesh);
@@ -299,10 +299,10 @@ template<class T> void StanfordSceneConverterTest::indexed() {
     Containers::Pointer<AbstractSceneConverter> converter =  _converterMnager.instantiate("StanfordSceneConverter");
     converter->configuration().setValue("endianness", data.endianness);
 
-    Containers::Array<char> out = converter->convertToData(mesh);
+    Containers::Optional<Containers::Array<char>> out = converter->convertToData(mesh);
     CORRADE_VERIFY(out);
     /** @todo Compare::DataToFile */
-    CORRADE_COMPARE_AS((Containers::StringView{out.data(), out.size()}),
+    CORRADE_COMPARE_AS((Containers::StringView{*out, out->size()}),
         Utility::Path::join(STANFORDSCENECONVERTER_TEST_DIR,
             Utility::formatString(IndexTypeData<T>::file(), data.fileSuffix)),
         TestSuite::Compare::StringToFile);
@@ -311,7 +311,7 @@ template<class T> void StanfordSceneConverterTest::indexed() {
         CORRADE_SKIP("StanfordImporter plugin not found, cannot test a rountrip");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("StanfordImporter");
-    CORRADE_VERIFY(importer->openData(out));
+    CORRADE_VERIFY(importer->openData(*out));
 
     Containers::Optional<MeshData> importedMesh = importer->mesh(0);
     CORRADE_VERIFY(importedMesh);
@@ -352,10 +352,10 @@ void StanfordSceneConverterTest::threeComponentColors() {
     Containers::Pointer<AbstractSceneConverter> converter = _converterMnager.instantiate("StanfordSceneConverter");
     converter->configuration().setValue("endianness", "little");
 
-    Containers::Array<char> out = converter->convertToData(mesh);
+    Containers::Optional<Containers::Array<char>> out = converter->convertToData(mesh);
     CORRADE_VERIFY(out);
     /** @todo Compare::DataToFile */
-    CORRADE_COMPARE_AS((Containers::StringView{out.data(), out.size()}),
+    CORRADE_COMPARE_AS((Containers::StringView{*out, out->size()}),
         Utility::Path::join(STANFORDSCENECONVERTER_TEST_DIR, "three-component-color-le.ply"),
         TestSuite::Compare::StringToFile);
 
@@ -363,7 +363,7 @@ void StanfordSceneConverterTest::threeComponentColors() {
         CORRADE_SKIP("StanfordImporter plugin not found, cannot test a rountrip");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("StanfordImporter");
-    CORRADE_VERIFY(importer->openData(out));
+    CORRADE_VERIFY(importer->openData(*out));
 
     Containers::Optional<MeshData> importedMesh = importer->mesh(0);
     CORRADE_VERIFY(importedMesh);
@@ -409,10 +409,10 @@ void StanfordSceneConverterTest::triangleFan() {
     Containers::Pointer<AbstractSceneConverter> converter =  _converterMnager.instantiate("StanfordSceneConverter");
     converter->configuration().setValue("endianness", "little");
 
-    Containers::Array<char> out = converter->convertToData(mesh);
+    Containers::Optional<Containers::Array<char>> out = converter->convertToData(mesh);
     CORRADE_VERIFY(out);
     /** @todo Compare::DataToFile */
-    CORRADE_COMPARE_AS((Containers::StringView{out.data(), out.size()}),
+    CORRADE_COMPARE_AS((Containers::StringView{*out, out->size()}),
         Utility::Path::join(STANFORDSCENECONVERTER_TEST_DIR, "triangle-fan-le.ply"),
         TestSuite::Compare::StringToFile);
 
@@ -420,7 +420,7 @@ void StanfordSceneConverterTest::triangleFan() {
         CORRADE_SKIP("StanfordImporter plugin not found, cannot test a rountrip");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("StanfordImporter");
-    CORRADE_VERIFY(importer->openData(out));
+    CORRADE_VERIFY(importer->openData(*out));
 
     Containers::Optional<MeshData> importedMesh = importer->mesh(0);
     CORRADE_VERIFY(importedMesh);
@@ -459,10 +459,10 @@ void StanfordSceneConverterTest::indexedTriangleStrip() {
     Containers::Pointer<AbstractSceneConverter> converter =  _converterMnager.instantiate("StanfordSceneConverter");
     converter->configuration().setValue("endianness", "little");
 
-    Containers::Array<char> out = converter->convertToData(mesh);
+    Containers::Optional<Containers::Array<char>> out = converter->convertToData(mesh);
     CORRADE_VERIFY(out);
     /** @todo Compare::DataToFile */
-    CORRADE_COMPARE_AS((Containers::StringView{out.data(), out.size()}),
+    CORRADE_COMPARE_AS((Containers::StringView{*out, out->size()}),
         Utility::Path::join(STANFORDSCENECONVERTER_TEST_DIR, "indexed-triangle-strip-le.ply"),
         TestSuite::Compare::StringToFile);
 
@@ -470,7 +470,7 @@ void StanfordSceneConverterTest::indexedTriangleStrip() {
         CORRADE_SKIP("StanfordImporter plugin not found, cannot test a rountrip");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("StanfordImporter");
-    CORRADE_VERIFY(importer->openData(out));
+    CORRADE_VERIFY(importer->openData(*out));
 
     Containers::Optional<MeshData> importedMesh = importer->mesh(0);
     CORRADE_VERIFY(importedMesh);
@@ -499,12 +499,12 @@ void StanfordSceneConverterTest::empty() {
     Containers::Pointer<AbstractSceneConverter> converter =  _converterMnager.instantiate("StanfordSceneConverter");
     converter->configuration().setValue("endianness", "little");
 
-    Containers::Array<char> out = converter->convertToData(MeshData{MeshPrimitive::Triangles, nullptr, {
+    Containers::Optional<Containers::Array<char>> out = converter->convertToData(MeshData{MeshPrimitive::Triangles, nullptr, {
         MeshAttributeData{MeshAttribute::Position, VertexFormat::Vector3, nullptr}
     }, 0});
     CORRADE_VERIFY(out);
     /** @todo Compare::DataToFile */
-    CORRADE_COMPARE_AS((Containers::StringView{out.data(), out.size()}),
+    CORRADE_COMPARE_AS((Containers::StringView{*out, out->size()}),
         Utility::Path::join(STANFORDSCENECONVERTER_TEST_DIR, "empty-le.ply"),
         TestSuite::Compare::StringToFile);
 }
@@ -587,7 +587,7 @@ void StanfordSceneConverterTest::ignoredAttributes() {
     Containers::Pointer<AbstractSceneConverter> converter =  _converterMnager.instantiate("StanfordSceneConverter");
     converter->configuration().setValue("endianness", "little");
 
-    Containers::Array<char> out;
+    Containers::Optional<Containers::Array<char>> out;
     std::ostringstream wout;
     {
         Warning redirectWarning{&wout};
@@ -597,7 +597,7 @@ void StanfordSceneConverterTest::ignoredAttributes() {
         Utility::formatString("Trade::StanfordSceneConverter::convertToData(): {}\n", data.message));
     CORRADE_VERIFY(out);
     /** @todo Compare::DataToFile */
-    CORRADE_COMPARE_AS((Containers::StringView{out.data(), out.size()}),
+    CORRADE_COMPARE_AS((Containers::StringView{*out, out->size()}),
         Utility::Path::join(STANFORDSCENECONVERTER_TEST_DIR, "indexed-ushort-le.ply"),
         TestSuite::Compare::StringToFile);
 
@@ -605,7 +605,7 @@ void StanfordSceneConverterTest::ignoredAttributes() {
         CORRADE_SKIP("StanfordImporter plugin not found, cannot test a rountrip");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("StanfordImporter");
-    CORRADE_VERIFY(importer->openData(out));
+    CORRADE_VERIFY(importer->openData(*out));
 
     Containers::Optional<MeshData> importedMesh = importer->mesh(0);
     CORRADE_VERIFY(importedMesh);
