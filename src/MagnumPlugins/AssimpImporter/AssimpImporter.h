@@ -63,8 +63,8 @@ namespace Magnum { namespace Trade {
 /**
 @brief Assimp importer
 
-@m_keywords{3dsImporter Ac3dImporter BlenderImporter BvhImporter CsmImporter}
-@m_keywords{ColladaImporter DirectXImporter DxfImporter FbxImporter}
+@m_keywords{3dsImporter 3mfImporter Ac3dImporter BlenderImporter BvhImporter}
+@m_keywords{CsmImporter ColladaImporter DirectXImporter DxfImporter FbxImporter}
 @m_keywords{GltfImporter IfcImporter IrrlichtImporter LightWaveImporter}
 @m_keywords{ModoImporter MilkshapeImporter ObjImporter OgreImporter}
 @m_keywords{OpenGexImporter StanfordImporter StlImporter TrueSpaceImporter}
@@ -77,6 +77,7 @@ Imports various formats using [Assimp](http://assimp.org), in particular:
 -   glTF (`*.gltf`, `*.glb`)
 -   Blender 3D (`*.blend`)
 -   3ds Max 3DS and ASE (`*.3ds`, `*.ase`)
+-   3D Manufacturing Format (`*.3mf`)
 -   Wavefront OBJ (`*.obj`)
 -   Industry Foundation Classes (IFC/Step) (`*.ifc`)
 -   XGL (`*.xgl`, `*.zgl`)
@@ -115,9 +116,9 @@ Imports various formats using [Assimp](http://assimp.org), in particular:
 Supports importing of scene, object, camera, mesh, texture, image, animation
 and skin data.
 
-This plugin provides `3dsImporter`, `Ac3dImporter`, `BlenderImporter`,
-`BvhImporter`, `CsmImporter`, `ColladaImporter`, `DirectXImporter`,
-`DxfImporter`, `FbxImporter`, `GltfImporter`, `IfcImporter`,
+This plugin provides `3dsImporter`, `3mfImporter`, `Ac3dImporter`,
+`BlenderImporter`, `BvhImporter`, `CsmImporter`, `ColladaImporter`,
+`DirectXImporter`, `DxfImporter`, `FbxImporter`, `GltfImporter`, `IfcImporter`,
 `IrrlichtImporter`, `LightWaveImporter`, `ModoImporter`, `MilkshapeImporter`,
 `ObjImporter`, `OgreImporter`, `OpenGexImporter`, `StanfordImporter`,
 `StlImporter`, `TrueSpaceImporter`, `UnrealImporter`, `ValveImporter` and
