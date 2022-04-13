@@ -371,6 +371,8 @@ By default no plugins are built and you need to select them manually:
     on [Glslang](https://github.com/KhronosGroup/glslang).
 -   `MAGNUM_WITH_GLTFIMPORTER` --- Build the @relativeref{Trade,GltfImporter}
     plugin.
+-   `MAGNUM_WITH_GLTFSCENECONVERTER` --- Build the
+    @relativeref{Trade,GltfSceneConverter} plugin.
 -   `MAGNUM_WITH_HARFBUZZFONT` --- Build the
     @ref Text::HarfBuzzFont "HarfBuzzFont" plugin. Enables also building of the
     @ref Text::FreeTypeFont "FreeTypeFont" plugin. Depends on

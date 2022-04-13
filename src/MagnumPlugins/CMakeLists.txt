@@ -105,6 +105,10 @@ if(MAGNUM_WITH_GLTFIMPORTER)
     add_subdirectory(GltfImporter)
 endif()
 
+if(MAGNUM_WITH_GLTFSCENECONVERTER)
+    add_subdirectory(GltfSceneConverter)
+endif()
+
 if(MAGNUM_WITH_HARFBUZZFONT)
     add_subdirectory(HarfBuzzFont)
 endif()

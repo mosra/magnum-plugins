@@ -76,6 +76,10 @@
  * @brief Plugin @ref Magnum::Trade::GltfImporter
  * @m_since_latest_{plugins}
  */
+/** @dir MagnumPlugins/GltfSceneConverter
+ * @brief Plugin @ref Magnum::Trade::GltfSceneConverter
+ * @m_since_latest_{plugins}
+ */
 /** @dir MagnumPlugins/HarfBuzzFont
  * @brief Plugin @ref Magnum::Text::HarfBuzzFont
  */

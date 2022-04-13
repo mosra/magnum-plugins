@@ -1,0 +1,15 @@
+{
+  "asset": {
+    "version": "2.0",
+    "copyright": "© always, Me Mememe ME",
+    "generator": "I have bugs, do I?"
+  },
+  "extensionsUsed": [
+    "MAGNUM_exported_this_file",
+    "MAGNUM_can_write_json"
+  ],
+  "extensionsRequired": [
+    "MAGNUM_is_amazing",
+    "MAGNUM_exported_this_file"
+  ]
+}

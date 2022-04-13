@@ -136,6 +136,7 @@ cmake_dependent_option(MAGNUM_WITH_FREETYPEFONT "Build FreeTypeFont plugin" OFF 
 option(MAGNUM_WITH_GLSLANGSHADERCONVERTER "Build GlslangShaderConverter plugin" OFF)
 # TODO: make an option() again when CgltfImporter is gone
 cmake_dependent_option(MAGNUM_WITH_GLTFIMPORTER "Build GltfImporter plugin" OFF "NOT MAGNUM_WITH_CGLTFIMPORTER" ON)
+option(MAGNUM_WITH_GLTFSCENECONVERTER "Build GltfSceneConverter plugin" OFF)
 option(MAGNUM_WITH_HARFBUZZFONT "Build HarfBuzzFont plugin" OFF)
 option(MAGNUM_WITH_ICOIMPORTER "Build IcoImporter plugin" OFF)
 option(MAGNUM_WITH_JPEGIMAGECONVERTER "Build JpegImageConverter plugin" OFF)
