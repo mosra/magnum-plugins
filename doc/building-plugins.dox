@@ -123,7 +123,7 @@ PKGBUILD files in the `package/archlinux` directory. They allow you to build
 and install the package directly from source tree. Example usage:
 
 @code{.sh}
-git clone git://github.com/mosra/magnum-plugins && cd magnum-plugins
+git clone https://github.com/mosra/magnum-plugins && cd magnum-plugins
 cd package/archlinux
 makepkg -fp PKGBUILD # or any other PKGBUILD file
 @endcode
@@ -169,7 +169,7 @@ on corresponding @ref building-corrade-packages-msys "Corrade" and
 @ref building-packages-msys "Magnum" MSYS2 packages. Example usage:
 
 @code{.sh}
-git clone git://github.com/mosra/magnum-plugins && cd magnum-plugins
+git clone https://github.com/mosra/magnum-plugins && cd magnum-plugins
 cd package/msys
 makepkg -fp PKGBUILD
 @endcode
@@ -200,7 +200,7 @@ directory to package root, link or copy the `package/debian` directory there
 and run `dpkg-buildpackage`:
 
 @code{.sh}
-git clone git://github.com/mosra/magnum-plugins && cd magnum-plugins
+git clone https://github.com/mosra/magnum-plugins && cd magnum-plugins
 ln -s package/debian .
 dpkg-buildpackage --no-sign
 @endcode
@@ -275,7 +275,7 @@ Gentoo Git ebuild is available in the `package/gentoo` directory. Get the
 install Magnum Plugins like this:
 
 @code{.sh}
-git clone git://github.com/mosra/magnum-plugins && cd magnum-plugins
+git clone https://github.com/mosra/magnum-plugins && cd magnum-plugins
 cd package/gentoo
 sudo ebuild dev-libs/magnum-plugins/magnum-plugins-9999.ebuild manifest clean merge
 @endcode

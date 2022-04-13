@@ -4,7 +4,7 @@ class MagnumPlugins < Formula
   url "https://github.com/mosra/magnum-plugins/archive/v2020.06.tar.gz"
   # wget https://github.com/mosra/magnum-plugins/archive/v2020.06.tar.gz -O - | sha256sum
   sha256 "8650cab43570c826d2557d5b42459150d253316f7f734af8b3e7d0883510b40a"
-  head "git://github.com/mosra/magnum-plugins.git"
+  head "https://github.com/mosra/magnum-plugins.git"
 
   depends_on "assimp" => :recommended
   depends_on "cmake" => :build

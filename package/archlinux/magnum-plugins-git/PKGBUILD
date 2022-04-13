@@ -11,7 +11,7 @@ depends=('magnum-git' 'devil' 'faad2' 'libpng' 'libjpeg' 'freetype2' 'assimp' 'm
 makedepends=('cmake' 'git' 'ninja')
 provides=('magnum-plugins')
 conflicts=('magnum-plugins')
-source=("git+git://github.com/mosra/magnum-plugins.git"
+source=("git+https://github.com/mosra/magnum-plugins.git"
         "https://github.com/BinomialLLC/basis_universal/archive/v${_basis_pkgver}.tar.gz")
 sha1sums=('SKIP'
           'b9615d48ebfc62a53f333ebf8a582558a058b0e9')
