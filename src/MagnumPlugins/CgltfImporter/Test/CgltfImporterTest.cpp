@@ -211,7 +211,6 @@ struct CgltfImporterTest: TestSuite::Tester {
 using namespace Containers::Literals;
 using namespace Magnum::Math::Literals;
 
-
 constexpr struct {
     const char* name;
     const Containers::StringView data;
