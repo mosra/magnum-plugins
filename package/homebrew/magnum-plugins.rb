@@ -84,6 +84,7 @@ class MagnumPlugins < Formula
         "-D#{option_prefix}WITH_FREETYPEFONT=#{(build.with? 'freetype') ? 'ON' : 'OFF'}",
         "-DMAGNUM_WITH_GLSLANGSHADERCONVERTER=#{(build.with? 'glslang') ? 'ON' : 'OFF'}",
         "-DMAGNUM_WITH_GLTFIMPORTER=ON",
+        "-DMAGNUM_WITH_GLTFSCENECONVERTER=ON",
         "-D#{option_prefix}WITH_HARFBUZZFONT=#{(build.with? 'harfbuzz') ? 'ON' : 'OFF'}",
         "-D#{option_prefix}WITH_JPEGIMAGECONVERTER=#{(build.with? 'jpeg') ? 'ON' : 'OFF'}",
         "-D#{option_prefix}WITH_JPEGIMPORTER=#{(build.with? 'jpeg') ? 'ON' : 'OFF'}",
