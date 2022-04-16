@@ -175,7 +175,7 @@ struct TinyGltfImporterTest: TestSuite::Tester {
     void openTwice();
     void importTwice();
 
-    /* Needs to load AnyImageImporter from system-wide location */
+    /* Needs to load AnyImageImporter from a system-wide location */
     PluginManager::Manager<AbstractImporter> _manager;
 };
 
