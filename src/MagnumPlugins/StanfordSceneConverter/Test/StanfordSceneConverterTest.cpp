@@ -60,7 +60,7 @@ struct StanfordSceneConverterTest: TestSuite::Tester {
     void ignoredAttributes();
 
     /* Explicitly forbid system-wide plugin dependencies */
-    PluginManager::Manager<AbstractSceneConverter> _converterMnager{"nonexistent"};
+    PluginManager::Manager<AbstractSceneConverter> _converterManager{"nonexistent"};
     PluginManager::Manager<AbstractImporter> _importerManager{"nonexistent"};
 };
 
@@ -132,7 +132,7 @@ StanfordSceneConverterTest::StanfordSceneConverterTest() {
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. */
     #ifdef STANFORDSCENECONVERTER_PLUGIN_FILENAME
-    CORRADE_INTERNAL_ASSERT_OUTPUT(_converterMnager.load(STANFORDSCENECONVERTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
+    CORRADE_INTERNAL_ASSERT_OUTPUT(_converterManager.load(STANFORDSCENECONVERTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
     #endif
     #ifdef STANFORDIMPORTER_PLUGIN_FILENAME
     CORRADE_INTERNAL_ASSERT_OUTPUT(_importerManager.load(STANFORDIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
@@ -191,7 +191,7 @@ void StanfordSceneConverterTest::nonIndexedAllAttributes() {
             offsetof(Vertex, normal), 12, sizeof(Vertex)}
     }};
 
-    Containers::Pointer<AbstractSceneConverter> converter = _converterMnager.instantiate("StanfordSceneConverter");
+    Containers::Pointer<AbstractSceneConverter> converter = _converterManager.instantiate("StanfordSceneConverter");
     if(data.endianness)
         converter->configuration().setValue("endianness", data.endianness);
     if(data.objectIdAttribute)
@@ -296,7 +296,7 @@ template<class T> void StanfordSceneConverterTest::indexed() {
             Containers::arrayView(positions)}
     }};
 
-    Containers::Pointer<AbstractSceneConverter> converter =  _converterMnager.instantiate("StanfordSceneConverter");
+    Containers::Pointer<AbstractSceneConverter> converter =  _converterManager.instantiate("StanfordSceneConverter");
     converter->configuration().setValue("endianness", data.endianness);
 
     Containers::Optional<Containers::Array<char>> out = converter->convertToData(mesh);
@@ -349,7 +349,7 @@ void StanfordSceneConverterTest::threeComponentColors() {
             offsetof(Vertex, color), 3, sizeof(Vertex)}
     }};
 
-    Containers::Pointer<AbstractSceneConverter> converter = _converterMnager.instantiate("StanfordSceneConverter");
+    Containers::Pointer<AbstractSceneConverter> converter = _converterManager.instantiate("StanfordSceneConverter");
     converter->configuration().setValue("endianness", "little");
 
     Containers::Optional<Containers::Array<char>> out = converter->convertToData(mesh);
@@ -406,7 +406,7 @@ void StanfordSceneConverterTest::triangleFan() {
             Containers::arrayView(positions)}
     }};
 
-    Containers::Pointer<AbstractSceneConverter> converter =  _converterMnager.instantiate("StanfordSceneConverter");
+    Containers::Pointer<AbstractSceneConverter> converter =  _converterManager.instantiate("StanfordSceneConverter");
     converter->configuration().setValue("endianness", "little");
 
     Containers::Optional<Containers::Array<char>> out = converter->convertToData(mesh);
@@ -456,7 +456,7 @@ void StanfordSceneConverterTest::indexedTriangleStrip() {
             Containers::arrayView(positions)}
     }};
 
-    Containers::Pointer<AbstractSceneConverter> converter =  _converterMnager.instantiate("StanfordSceneConverter");
+    Containers::Pointer<AbstractSceneConverter> converter =  _converterManager.instantiate("StanfordSceneConverter");
     converter->configuration().setValue("endianness", "little");
 
     Containers::Optional<Containers::Array<char>> out = converter->convertToData(mesh);
@@ -496,7 +496,7 @@ void StanfordSceneConverterTest::indexedTriangleStrip() {
 }
 
 void StanfordSceneConverterTest::empty() {
-    Containers::Pointer<AbstractSceneConverter> converter =  _converterMnager.instantiate("StanfordSceneConverter");
+    Containers::Pointer<AbstractSceneConverter> converter =  _converterManager.instantiate("StanfordSceneConverter");
     converter->configuration().setValue("endianness", "little");
 
     Containers::Optional<Containers::Array<char>> out = converter->convertToData(MeshData{MeshPrimitive::Triangles, nullptr, {
@@ -510,7 +510,7 @@ void StanfordSceneConverterTest::empty() {
 }
 
 void StanfordSceneConverterTest::lines() {
-    Containers::Pointer<AbstractSceneConverter> converter =  _converterMnager.instantiate("StanfordSceneConverter");
+    Containers::Pointer<AbstractSceneConverter> converter =  _converterManager.instantiate("StanfordSceneConverter");
 
     std::ostringstream out;
     Error redirectError{&out};
@@ -520,7 +520,7 @@ void StanfordSceneConverterTest::lines() {
 }
 
 void StanfordSceneConverterTest::positionsMissing() {
-    Containers::Pointer<AbstractSceneConverter> converter =  _converterMnager.instantiate("StanfordSceneConverter");
+    Containers::Pointer<AbstractSceneConverter> converter =  _converterManager.instantiate("StanfordSceneConverter");
 
     std::ostringstream out;
     Error redirectError{&out};
@@ -537,7 +537,7 @@ void StanfordSceneConverterTest::twoComponentPositions() {
             Containers::arrayView(positions)}
     }};
 
-    Containers::Pointer<AbstractSceneConverter> converter =  _converterMnager.instantiate("StanfordSceneConverter");
+    Containers::Pointer<AbstractSceneConverter> converter =  _converterManager.instantiate("StanfordSceneConverter");
 
     std::ostringstream out;
     Error redirectError{&out};
@@ -547,7 +547,7 @@ void StanfordSceneConverterTest::twoComponentPositions() {
 }
 
 void StanfordSceneConverterTest::invalidEndianness() {
-    Containers::Pointer<AbstractSceneConverter> converter =  _converterMnager.instantiate("StanfordSceneConverter");
+    Containers::Pointer<AbstractSceneConverter> converter =  _converterManager.instantiate("StanfordSceneConverter");
     converter->configuration().setValue("endianness", "wrong");
 
     std::ostringstream out;
@@ -584,7 +584,7 @@ void StanfordSceneConverterTest::ignoredAttributes() {
                 sizeof(Vertex)}
     }};
 
-    Containers::Pointer<AbstractSceneConverter> converter =  _converterMnager.instantiate("StanfordSceneConverter");
+    Containers::Pointer<AbstractSceneConverter> converter =  _converterManager.instantiate("StanfordSceneConverter");
     converter->configuration().setValue("endianness", "little");
 
     Containers::Optional<Containers::Array<char>> out;
