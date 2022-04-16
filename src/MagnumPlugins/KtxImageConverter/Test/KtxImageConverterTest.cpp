@@ -934,7 +934,7 @@ void KtxImageConverterTest::convert3DMipmaps() {
     Containers::Optional<Containers::Array<char>> output = converter->convertToData(inputImages);
     CORRADE_VERIFY(output);
 
-    CORRADE_COMPARE_AS((Containers::StringView{*output, output->size()}),
+    CORRADE_COMPARE_AS(Containers::StringView{*output},
         Utility::Path::join(KTXIMPORTER_TEST_DIR, "3d-mipmaps.ktx2"),
         TestSuite::Compare::StringToFile);
 }
@@ -989,7 +989,7 @@ void KtxImageConverterTest::convert3DCompressedMipmaps() {
 
     /** @todo Compare::DataToFile */
     Containers::Optional<Containers::Array<char>> expected = Utility::Path::read(Utility::Path::join(KTXIMPORTER_TEST_DIR, "3d-compressed-mipmaps.ktx2"));
-    CORRADE_COMPARE_AS((Containers::StringView{*output, output->size()}),
+    CORRADE_COMPARE_AS(Containers::StringView{*output},
         Utility::Path::join(KTXIMPORTER_TEST_DIR, "3d-compressed-mipmaps.ktx2"),
         TestSuite::Compare::StringToFile);
 }
@@ -1011,7 +1011,7 @@ void KtxImageConverterTest::convertFormats() {
     CORRADE_VERIFY(output);
 
     if(data.save) {
-        CORRADE_COMPARE_AS((Containers::StringView{*output, output->size()}),
+        CORRADE_COMPARE_AS(Containers::StringView{*output},
             Utility::Path::join(KTXIMPORTER_TEST_DIR, data.file),
             TestSuite::Compare::StringToFile);
     } else {

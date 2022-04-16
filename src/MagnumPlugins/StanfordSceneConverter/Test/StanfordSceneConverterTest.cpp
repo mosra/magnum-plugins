@@ -200,7 +200,7 @@ void StanfordSceneConverterTest::nonIndexedAllAttributes() {
     Containers::Optional<Containers::Array<char>> out = converter->convertToData(mesh);
     CORRADE_VERIFY(out);
     /** @todo Compare::DataToFile */
-    CORRADE_COMPARE_AS((Containers::StringView{*out, out->size()}),
+    CORRADE_COMPARE_AS(Containers::StringView{*out},
         Utility::Path::join(STANFORDSCENECONVERTER_TEST_DIR, data.file),
         TestSuite::Compare::StringToFile);
 
@@ -302,7 +302,7 @@ template<class T> void StanfordSceneConverterTest::indexed() {
     Containers::Optional<Containers::Array<char>> out = converter->convertToData(mesh);
     CORRADE_VERIFY(out);
     /** @todo Compare::DataToFile */
-    CORRADE_COMPARE_AS((Containers::StringView{*out, out->size()}),
+    CORRADE_COMPARE_AS(Containers::StringView{*out},
         Utility::Path::join(STANFORDSCENECONVERTER_TEST_DIR,
             Utility::formatString(IndexTypeData<T>::file(), data.fileSuffix)),
         TestSuite::Compare::StringToFile);
@@ -355,7 +355,7 @@ void StanfordSceneConverterTest::threeComponentColors() {
     Containers::Optional<Containers::Array<char>> out = converter->convertToData(mesh);
     CORRADE_VERIFY(out);
     /** @todo Compare::DataToFile */
-    CORRADE_COMPARE_AS((Containers::StringView{*out, out->size()}),
+    CORRADE_COMPARE_AS(Containers::StringView{*out},
         Utility::Path::join(STANFORDSCENECONVERTER_TEST_DIR, "three-component-color-le.ply"),
         TestSuite::Compare::StringToFile);
 
@@ -412,7 +412,7 @@ void StanfordSceneConverterTest::triangleFan() {
     Containers::Optional<Containers::Array<char>> out = converter->convertToData(mesh);
     CORRADE_VERIFY(out);
     /** @todo Compare::DataToFile */
-    CORRADE_COMPARE_AS((Containers::StringView{*out, out->size()}),
+    CORRADE_COMPARE_AS(Containers::StringView{*out},
         Utility::Path::join(STANFORDSCENECONVERTER_TEST_DIR, "triangle-fan-le.ply"),
         TestSuite::Compare::StringToFile);
 
@@ -462,7 +462,7 @@ void StanfordSceneConverterTest::indexedTriangleStrip() {
     Containers::Optional<Containers::Array<char>> out = converter->convertToData(mesh);
     CORRADE_VERIFY(out);
     /** @todo Compare::DataToFile */
-    CORRADE_COMPARE_AS((Containers::StringView{*out, out->size()}),
+    CORRADE_COMPARE_AS(Containers::StringView{*out},
         Utility::Path::join(STANFORDSCENECONVERTER_TEST_DIR, "indexed-triangle-strip-le.ply"),
         TestSuite::Compare::StringToFile);
 
@@ -504,7 +504,7 @@ void StanfordSceneConverterTest::empty() {
     }, 0});
     CORRADE_VERIFY(out);
     /** @todo Compare::DataToFile */
-    CORRADE_COMPARE_AS((Containers::StringView{*out, out->size()}),
+    CORRADE_COMPARE_AS(Containers::StringView{*out},
         Utility::Path::join(STANFORDSCENECONVERTER_TEST_DIR, "empty-le.ply"),
         TestSuite::Compare::StringToFile);
 }
@@ -597,7 +597,7 @@ void StanfordSceneConverterTest::ignoredAttributes() {
         Utility::formatString("Trade::StanfordSceneConverter::convertToData(): {}\n", data.message));
     CORRADE_VERIFY(out);
     /** @todo Compare::DataToFile */
-    CORRADE_COMPARE_AS((Containers::StringView{*out, out->size()}),
+    CORRADE_COMPARE_AS(Containers::StringView{*out},
         Utility::Path::join(STANFORDSCENECONVERTER_TEST_DIR, "indexed-ushort-le.ply"),
         TestSuite::Compare::StringToFile);
 

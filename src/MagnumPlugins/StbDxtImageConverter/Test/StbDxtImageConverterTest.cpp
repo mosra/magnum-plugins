@@ -146,7 +146,7 @@ void StbDxtImageConverterTest::rgba() {
         compressed->size().product()*(!data.alpha || *data.alpha ? 16 : 8)/16);
 
     /** @todo Compare::DataToFile */
-    CORRADE_COMPARE_AS((Containers::StringView{compressed->data(), compressed->data().size()}),
+    CORRADE_COMPARE_AS(Containers::StringView{compressed->data()},
         Utility::Path::join(STBDXTIMAGECONVERTER_TEST_DIR, data.expectedFile),
         TestSuite::Compare::StringToFile);
 }

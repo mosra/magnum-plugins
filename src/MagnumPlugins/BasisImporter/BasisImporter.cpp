@@ -229,7 +229,7 @@ void BasisImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFla
     /* Check if this is a KTX2 file. There's basist::g_ktx2_file_identifier but
        that's hidden behind BASISD_SUPPORT_KTX2 so define it ourselves, taken
        from KtxImporter/KtxHeader.h */
-    const bool isKTX2 = Containers::StringView{Containers::ArrayView<const char>{data}}.hasPrefix("\xabKTX 20\xbb\r\n\x1a\n"_s);
+    const bool isKTX2 = Containers::StringView{data}.hasPrefix("\xabKTX 20\xbb\r\n\x1a\n"_s);
     #if !BASISD_SUPPORT_KTX2
     /** @todo Can we test this? Maybe disable this on some CI, BC7 is already
         disabled on Emscripten. */

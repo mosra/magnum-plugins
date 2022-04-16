@@ -896,8 +896,9 @@ void AssimpImporterTest::animationGltfTicksPerSecondPatching() {
     }
 
     if(data.flags >= ImporterFlag::Verbose) {
-        CORRADE_VERIFY(Containers::StringView{out.str()}.contains(
-            " ticks per second is incorrect for glTF, patching to 1000\n"));
+        CORRADE_COMPARE_AS(out.str(),
+            " ticks per second is incorrect for glTF, patching to 1000\n",
+            TestSuite::Compare::StringHasSuffix);
     } else
         CORRADE_COMPARE(out.str(), "");
 }
@@ -941,22 +942,21 @@ void AssimpImporterTest::animationDummyTracksRemovalEnabled() {
     }
 
     if(data.flags >= ImporterFlag::Verbose) {
-        const std::string str = out.str();
-        CORRADE_VERIFY(Containers::StringView{str}.contains(
-            Utility::format(
-                "Trade::AssimpImporter::animation(): ignoring dummy translation track in animation 1, channel {}\n"
-                "Trade::AssimpImporter::animation(): ignoring dummy scaling track in animation 1, channel {}\n",
-                targets[0].channel, targets[0].channel)));
-        CORRADE_VERIFY(Containers::StringView{str}.contains(
-            Utility::format(
-                "Trade::AssimpImporter::animation(): ignoring dummy rotation track in animation 1, channel {}\n"
-                "Trade::AssimpImporter::animation(): ignoring dummy scaling track in animation 1, channel {}\n",
-                targets[1].channel, targets[1].channel)));
-        CORRADE_VERIFY(Containers::StringView{str}.contains(
-            Utility::format(
-                "Trade::AssimpImporter::animation(): ignoring dummy translation track in animation 1, channel {}\n"
-                "Trade::AssimpImporter::animation(): ignoring dummy rotation track in animation 1, channel {}\n",
-                targets[2].channel, targets[2].channel)));
+        CORRADE_COMPARE_AS(out.str(), Utility::format(
+            "Trade::AssimpImporter::animation(): ignoring dummy translation track in animation 1, channel {}\n"
+            "Trade::AssimpImporter::animation(): ignoring dummy scaling track in animation 1, channel {}\n",
+            targets[0].channel, targets[0].channel),
+            TestSuite::Compare::StringContains);
+        CORRADE_COMPARE_AS(out.str(), Utility::format(
+            "Trade::AssimpImporter::animation(): ignoring dummy rotation track in animation 1, channel {}\n"
+            "Trade::AssimpImporter::animation(): ignoring dummy scaling track in animation 1, channel {}\n",
+            targets[1].channel, targets[1].channel),
+            TestSuite::Compare::StringContains);
+        CORRADE_COMPARE_AS(out.str(), Utility::format(
+            "Trade::AssimpImporter::animation(): ignoring dummy translation track in animation 1, channel {}\n"
+            "Trade::AssimpImporter::animation(): ignoring dummy rotation track in animation 1, channel {}\n",
+            targets[2].channel, targets[2].channel),
+            TestSuite::Compare::StringContains);
     } else
         CORRADE_COMPARE(out.str(), "");
 }
@@ -1010,13 +1010,15 @@ void AssimpImporterTest::animationDummyTracksRemovalDisabled() {
         CORRADE_COMPARE(animation->track(i).size(), keyCount);
     }
 
-    const std::string str = out.str();
-    CORRADE_VERIFY(!Containers::StringView{str}.contains(
-        "Trade::AssimpImporter::animation(): ignoring dummy translation track in animation"));
-    CORRADE_VERIFY(!Containers::StringView{str}.contains(
-        "Trade::AssimpImporter::animation(): ignoring dummy rotation track in animation"));
-    CORRADE_VERIFY(!Containers::StringView{str}.contains(
-        "Trade::AssimpImporter::animation(): ignoring dummy scaling track in animation"));
+    CORRADE_COMPARE_AS(out.str(),
+        "Trade::AssimpImporter::animation(): ignoring dummy translation track in animation",
+        TestSuite::Compare::StringNotContains);
+    CORRADE_COMPARE_AS(out.str(),
+        "Trade::AssimpImporter::animation(): ignoring dummy rotation track in animation",
+        TestSuite::Compare::StringNotContains);
+    CORRADE_COMPARE_AS(out.str(),
+        "Trade::AssimpImporter::animation(): ignoring dummy scaling track in animation",
+        TestSuite::Compare::StringNotContains);
 }
 
 void AssimpImporterTest::animationShortestPathOptimizationEnabled() {
@@ -1152,8 +1154,9 @@ void AssimpImporterTest::animationQuaternionNormalizationEnabled() {
         animation = importer->animation("Quaternion normalization patching");
     }
     CORRADE_VERIFY(animation);
-    CORRADE_VERIFY(Containers::StringView{out.str()}.contains(
-        "Trade::AssimpImporter::animation(): quaternions in some rotation tracks were renormalized\n"));
+    CORRADE_COMPARE_AS(out.str(),
+        "Trade::AssimpImporter::animation(): quaternions in some rotation tracks were renormalized\n",
+        TestSuite::Compare::StringContains);
     CORRADE_COMPARE(animation->trackCount(), 1);
     CORRADE_COMPARE(animation->trackType(0), AnimationTrackType::Quaternion);
 

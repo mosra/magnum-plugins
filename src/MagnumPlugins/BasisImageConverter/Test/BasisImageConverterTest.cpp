@@ -1058,9 +1058,11 @@ void BasisImageConverterTest::convertToFile2D() {
     /* The format should get reset again after so convertToData() isn't left
        with some random format after */
     if(data.pluginName == "BasisImageConverter"_s) {
-        const Containers::Optional<Containers::Array<char>> compressedData = converter->convertToData(originalLevels);
+        Containers::Optional<Containers::Array<char>> compressedData = converter->convertToData(originalLevels);
         CORRADE_VERIFY(compressedData);
-        CORRADE_VERIFY(Containers::StringView{Containers::arrayView(*compressedData)}.hasPrefix(BasisFileMagic));
+        /* Not testing with Compare::StringHasPrefix because it would print the
+           whole binary on error. Not wanted.. */
+        CORRADE_VERIFY(Containers::StringView{*compressedData}.hasPrefix(BasisFileMagic));
     }
 }
 
@@ -1114,9 +1116,9 @@ void BasisImageConverterTest::convertToFile3D() {
     /* The format should get reset again after so convertToData() isn't left
        with some random format after */
     if(data.pluginName == "BasisImageConverter"_s) {
-        const Containers::Optional<Containers::Array<char>> compressedData = converter->convertToData({originalImage3D});
+        Containers::Optional<Containers::Array<char>> compressedData = converter->convertToData({originalImage3D});
         CORRADE_VERIFY(compressedData);
-        CORRADE_VERIFY(Containers::StringView{Containers::arrayView(*compressedData)}.hasPrefix(BasisFileMagic));
+        CORRADE_VERIFY(Containers::StringView{*compressedData}.hasPrefix(BasisFileMagic));
     }
 }
 

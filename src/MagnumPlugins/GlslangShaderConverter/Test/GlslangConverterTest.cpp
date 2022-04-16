@@ -764,7 +764,7 @@ void GlslangConverterTest::convert() {
     if(words.size() >= 3 && (words[2] == 524295 || words[2] == 524296))
         words[2] = 524298;
 
-    CORRADE_COMPARE_AS((Containers::StringView{*output, output->size()}),
+    CORRADE_COMPARE_AS(Containers::StringView{*output},
         Utility::Path::join(GLSLANGSHADERCONVERTER_TEST_DIR, data.output),
         TestSuite::Compare::StringToFile);
 }

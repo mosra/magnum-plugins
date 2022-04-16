@@ -996,7 +996,7 @@ void KtxImporterTest::image1DCompressed() {
     const Vector3i blockSize = compressedBlockSize(data.format);
     const Vector3i blockCount = (Vector3i::pad(data.size, 1) + (blockSize - Vector3i{1}))/blockSize;
     CORRADE_COMPARE(image->data().size(), blockCount.product()*compressedBlockDataSize(data.format));
-    CORRADE_COMPARE_AS((Containers::StringView{image->data().data(), image->data().size()}),
+    CORRADE_COMPARE_AS(Containers::StringView{image->data()},
         Utility::Path::join(KTXIMPORTER_TEST_DIR, Utility::Path::splitExtension(data.file).first() + ".bin"),
         TestSuite::Compare::StringToFile);
 }
@@ -1025,7 +1025,7 @@ void KtxImporterTest::image1DCompressedMipmaps() {
         /* This is suboptimal because when generating ground-truth data with
            --save-diagnostic the test needs to be run 4 times to save all mips.
            But hopefully this won't really be necessary. */
-        CORRADE_COMPARE_AS((Containers::StringView{image->data().data(), image->data().size()}),
+        CORRADE_COMPARE_AS(Containers::StringView{image->data()},
             Utility::Path::join(KTXIMPORTER_TEST_DIR, Utility::formatString("1d-compressed-mipmaps-mip{}.bin", i)),
             TestSuite::Compare::StringToFile);
 
@@ -1216,7 +1216,7 @@ void KtxImporterTest::image2DCompressed() {
     const Vector3i blockSize = compressedBlockSize(data.format);
     const Vector3i blockCount = (Vector3i::pad(data.size, 1) + (blockSize - Vector3i{1}))/blockSize;
     CORRADE_COMPARE(image->data().size(), blockCount.product()*compressedBlockDataSize(data.format));
-    CORRADE_COMPARE_AS((Containers::StringView{image->data().data(), image->data().size()}),
+    CORRADE_COMPARE_AS(Containers::StringView{image->data()},
         Utility::Path::join(KTXIMPORTER_TEST_DIR, Utility::Path::splitExtension(data.file).first() + ".bin"),
         TestSuite::Compare::StringToFile);
 }
@@ -1242,7 +1242,7 @@ void KtxImporterTest::image2DCompressedMipmaps() {
         const Vector3i blockSize = compressedBlockSize(image->compressedFormat());
         const Vector3i blockCount = (Vector3i::pad(mipSize, 1) + (blockSize - Vector3i{1}))/blockSize;
         CORRADE_COMPARE(image->data().size(), blockCount.product()*compressedBlockDataSize(image->compressedFormat()));
-        CORRADE_COMPARE_AS((Containers::StringView{image->data().data(), image->data().size()}),
+        CORRADE_COMPARE_AS(Containers::StringView{image->data()},
             Utility::Path::join(KTXIMPORTER_TEST_DIR, Utility::formatString("2d-compressed-mipmaps-mip{}.bin", i)),
             TestSuite::Compare::StringToFile);
 
@@ -1267,7 +1267,7 @@ void KtxImporterTest::image2DCompressedLayers() {
     const Vector3i blockSize = compressedBlockSize(image->compressedFormat());
     const Vector3i blockCount = (Vector3i::pad(image->size(), 1) + (blockSize - Vector3i{1}))/blockSize;
     CORRADE_COMPARE(image->data().size(), blockCount.product()*compressedBlockDataSize(image->compressedFormat()));
-    CORRADE_COMPARE_AS((Containers::StringView{image->data().data(), image->data().size()}),
+    CORRADE_COMPARE_AS(Containers::StringView{image->data()},
         Utility::Path::join(KTXIMPORTER_TEST_DIR, "2d-compressed-layers.bin"),
         TestSuite::Compare::StringToFile);
 }
@@ -1574,7 +1574,7 @@ void KtxImporterTest::image3DCompressed() {
     const Vector3i blockSize = compressedBlockSize(format);
     const Vector3i blockCount = (size + (blockSize - Vector3i{1}))/blockSize;
     CORRADE_COMPARE(image->data().size(), blockCount.product()*compressedBlockDataSize(format));
-    CORRADE_COMPARE_AS((Containers::StringView{image->data().data(), image->data().size()}),
+    CORRADE_COMPARE_AS(Containers::StringView{image->data()},
         Utility::Path::join(KTXIMPORTER_TEST_DIR, "3d-compressed.bin"),
         TestSuite::Compare::StringToFile);
 }
