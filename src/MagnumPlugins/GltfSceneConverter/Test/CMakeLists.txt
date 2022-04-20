@@ -132,6 +132,11 @@ corrade_add_test(GltfSceneConverterTest GltfSceneConverterTest.cpp
         mesh-noninterleaved.gltf
         metadata.gltf
         metadata-explicit-implicit-extensions.gltf
+        scene.gltf
+        scene-empty.gltf
+        scene-invalid.gltf
+        scene-meshes-materials.gltf
+        scene-name.gltf
         texture-basis.gltf
         texture.gltf
         texture-jpeg.gltf

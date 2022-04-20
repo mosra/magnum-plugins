@@ -28,6 +28,7 @@
 #include <Corrade/Containers/Iterable.h>
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/Pair.h>
+#include <Corrade/Containers/Triple.h>
 #include <Corrade/PluginManager/PluginMetadata.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
@@ -43,12 +44,15 @@
 #include <Magnum/ImageView.h>
 #include <Magnum/Math/Color.h>
 #include <Magnum/Math/Matrix3.h>
+#include <Magnum/Math/Matrix4.h>
+#include <Magnum/Math/Quaternion.h>
 #include <Magnum/Trade/AbstractImageConverter.h>
 #include <Magnum/Trade/AbstractImporter.h>
 #include <Magnum/Trade/AbstractSceneConverter.h>
 #include <Magnum/Trade/MaterialData.h>
 #include <Magnum/Trade/MeshData.h>
 #include <Magnum/Trade/ImageData.h>
+#include <Magnum/Trade/SceneData.h>
 #include <Magnum/Trade/TextureData.h>
 
 #include "configure.h"
@@ -99,6 +103,13 @@ struct GltfSceneConverterTest: TestSuite::Tester {
     void addMaterialUnusedAttributes();
     void addMaterialMultiple();
     void addMaterialInvalid();
+
+    void addSceneEmpty();
+    void addScene();
+    void addSceneMeshesMaterials();
+    void addSceneNoParentField();
+    void addSceneMultiple();
+    void addSceneInvalid();
 
     void requiredExtensionsAddedAlready();
 
@@ -754,6 +765,127 @@ const struct {
         }}, "unsupported B packing of an occlusion texture"}
 };
 
+const struct {
+    const char* name;
+    Containers::StringView dataName;
+    UnsignedShort offset;
+    const char* expected;
+} AddSceneData[]{
+    {"", {}, 0, "scene.gltf"},
+    {"name", "A simple sceen!", 0, "scene-name.gltf"},
+    {"object ID with an offset", {}, 350, "scene.gltf"}
+};
+
+const Containers::Pair<UnsignedInt, Int> SceneInvalidParentMappingOutOfBounds[]{
+    {0, -1}, {15, 14}, {37, 36}, {1, -1}
+};
+const Containers::Pair<UnsignedInt, Int> SceneInvalidParentIndexOutOfBounds[]{
+    {0, -1}, {36, 37}, {1, -1}
+};
+const Containers::Pair<UnsignedInt, UnsignedInt> SceneInvalidMappingOutOfBounds[]{
+    {0, 0}, {36, 1}, {37, 1}, {1, 1}
+};
+const Containers::Pair<UnsignedInt, Int> SceneInvalidTwoParents[]{
+    {0, -1}, {15, 14}, {36, 35}, {15, 17}, {1, -1}
+};
+const Containers::Pair<UnsignedInt, Int> SceneInvalidParentIsSelf[]{
+    {0, -1}, {17, 17}, {1, -1}
+};
+const Containers::Pair<UnsignedInt, Int> SceneInvalidParentIsChild[]{
+    {0, 3}, {3, 2}, {2, 0}
+};
+const Containers::Pair<UnsignedInt, UnsignedInt> SceneInvalidMeshOutOfBounds[]{
+    {0, 0}, {17, 1}, {2, 2}, {1, 1}
+};
+const Containers::Triple<UnsignedInt, UnsignedInt, Int> SceneInvalidMaterialOutOfBounds[]{
+    {0, 0, -1}, {17, 1, 2}, {2, 1, 1}
+};
+
+const struct {
+    const char* name;
+    SceneData scene;
+    const char* message;
+} AddSceneInvalidData[]{
+    {"not 3D", SceneData{SceneMappingType::UnsignedInt, 1, nullptr, {}},
+        "expected a 3D scene"},
+    {"parent mapping out of bounds", SceneData{SceneMappingType::UnsignedInt, 37, {}, SceneInvalidParentMappingOutOfBounds, {
+        /* To mark the scene as 3D */
+        SceneFieldData{SceneField::Transformation,
+            SceneMappingType::UnsignedInt, nullptr,
+            SceneFieldType::Matrix4x4, nullptr},
+        SceneFieldData{SceneField::Parent,
+            Containers::stridedArrayView(SceneInvalidParentMappingOutOfBounds).slice(&Containers::Pair<UnsignedInt, Int>::first),
+            Containers::stridedArrayView(SceneInvalidParentMappingOutOfBounds).slice(&Containers::Pair<UnsignedInt, Int>::second)},
+    }}, "scene parent mapping 37 out of bounds for 37 objects"},
+    {"parent index out of bounds", SceneData{SceneMappingType::UnsignedInt, 37,{}, SceneInvalidParentIndexOutOfBounds, {
+        /* To mark the scene as 3D */
+        SceneFieldData{SceneField::Transformation,
+            SceneMappingType::UnsignedInt, nullptr,
+            SceneFieldType::Matrix4x4, nullptr},
+        SceneFieldData{SceneField::Parent,
+            Containers::stridedArrayView(SceneInvalidParentIndexOutOfBounds).slice(&Containers::Pair<UnsignedInt, Int>::first),
+            Containers::stridedArrayView(SceneInvalidParentIndexOutOfBounds).slice(&Containers::Pair<UnsignedInt, Int>::second)},
+    }}, "scene parent reference 37 out of bounds for 37 objects"},
+    {"two parents", SceneData{SceneMappingType::UnsignedInt, 37,{}, SceneInvalidTwoParents, {
+        /* To mark the scene as 3D */
+        SceneFieldData{SceneField::Transformation,
+            SceneMappingType::UnsignedInt, nullptr,
+            SceneFieldType::Matrix4x4, nullptr},
+        SceneFieldData{SceneField::Parent,
+            Containers::stridedArrayView(SceneInvalidTwoParents).slice(&Containers::Pair<UnsignedInt, Int>::first),
+            Containers::stridedArrayView(SceneInvalidTwoParents).slice(&Containers::Pair<UnsignedInt, Int>::second)},
+    }}, "object 15 has more than one parent"},
+    {"parent is self", SceneData{SceneMappingType::UnsignedInt, 37,{}, SceneInvalidParentIsSelf, {
+        /* To mark the scene as 3D */
+        SceneFieldData{SceneField::Transformation,
+            SceneMappingType::UnsignedInt, nullptr,
+            SceneFieldType::Matrix4x4, nullptr},
+        SceneFieldData{SceneField::Parent,
+            Containers::stridedArrayView(SceneInvalidParentIsSelf).slice(&Containers::Pair<UnsignedInt, Int>::first),
+            Containers::stridedArrayView(SceneInvalidParentIsSelf).slice(&Containers::Pair<UnsignedInt, Int>::second)},
+    }}, "scene hierarchy contains a cycle starting at object 17"},
+    {"parent is a child", SceneData{SceneMappingType::UnsignedInt, 37,{}, SceneInvalidParentIsChild, {
+        /* To mark the scene as 3D */
+        SceneFieldData{SceneField::Transformation,
+            SceneMappingType::UnsignedInt, nullptr,
+            SceneFieldType::Matrix4x4, nullptr},
+        SceneFieldData{SceneField::Parent,
+            Containers::stridedArrayView(SceneInvalidParentIsChild).slice(&Containers::Pair<UnsignedInt, Int>::first),
+            Containers::stridedArrayView(SceneInvalidParentIsChild).slice(&Containers::Pair<UnsignedInt, Int>::second)},
+    }}, "scene hierarchy contains a cycle starting at object 0"},
+    /* Different code path from "parent mapping out of bounds" */
+    {"mapping out of bounds", SceneData{SceneMappingType::UnsignedInt, 37,{}, SceneInvalidMappingOutOfBounds, {
+        /* To mark the scene as 3D */
+        SceneFieldData{SceneField::Transformation,
+            SceneMappingType::UnsignedInt, nullptr,
+            SceneFieldType::Matrix4x4, nullptr},
+        SceneFieldData{SceneField::Light,
+            Containers::stridedArrayView(SceneInvalidMappingOutOfBounds).slice(&Containers::Pair<UnsignedInt, UnsignedInt>::first),
+            Containers::stridedArrayView(SceneInvalidMappingOutOfBounds).slice(&Containers::Pair<UnsignedInt, UnsignedInt>::second)},
+    }}, "Trade::SceneField::Light mapping 37 out of bounds for 37 objects"},
+    {"mesh out of bounds", SceneData{SceneMappingType::UnsignedInt, 37,{}, SceneInvalidMeshOutOfBounds, {
+        /* To mark the scene as 3D */
+        SceneFieldData{SceneField::Transformation,
+            SceneMappingType::UnsignedInt, nullptr,
+            SceneFieldType::Matrix4x4, nullptr},
+        SceneFieldData{SceneField::Mesh,
+            Containers::stridedArrayView(SceneInvalidMeshOutOfBounds).slice(&Containers::Pair<UnsignedInt, UnsignedInt>::first),
+            Containers::stridedArrayView(SceneInvalidMeshOutOfBounds).slice(&Containers::Pair<UnsignedInt, UnsignedInt>::second)},
+    }}, "scene references mesh 2 but only 2 were added so far"},
+    {"material out of bounds", SceneData{SceneMappingType::UnsignedInt, 37,{}, SceneInvalidMaterialOutOfBounds, {
+        /* To mark the scene as 3D */
+        SceneFieldData{SceneField::Transformation,
+            SceneMappingType::UnsignedInt, nullptr,
+            SceneFieldType::Matrix4x4, nullptr},
+        SceneFieldData{SceneField::Mesh,
+            Containers::stridedArrayView(SceneInvalidMaterialOutOfBounds).slice(&Containers::Triple<UnsignedInt, UnsignedInt, Int>::first),
+            Containers::stridedArrayView(SceneInvalidMaterialOutOfBounds).slice(&Containers::Triple<UnsignedInt, UnsignedInt, Int>::second)},
+        SceneFieldData{SceneField::MeshMaterial,
+            Containers::stridedArrayView(SceneInvalidMaterialOutOfBounds).slice(&Containers::Triple<UnsignedInt, UnsignedInt, Int>::first),
+            Containers::stridedArrayView(SceneInvalidMaterialOutOfBounds).slice(&Containers::Triple<UnsignedInt, UnsignedInt, Int>::third)},
+    }}, "scene references material 2 but only 2 were added so far"},
+};
+
 GltfSceneConverterTest::GltfSceneConverterTest() {
     addInstancedTests({&GltfSceneConverterTest::empty},
         Containers::arraySize(FileVariantData));
@@ -824,6 +956,18 @@ GltfSceneConverterTest::GltfSceneConverterTest() {
 
     addInstancedTests({&GltfSceneConverterTest::addMaterialInvalid},
         Containers::arraySize(AddMaterialInvalidData));
+
+    addTests({&GltfSceneConverterTest::addSceneEmpty});
+
+    addInstancedTests({&GltfSceneConverterTest::addScene},
+        Containers::arraySize(AddSceneData));
+
+    addTests({&GltfSceneConverterTest::addSceneMeshesMaterials,
+              &GltfSceneConverterTest::addSceneNoParentField,
+              &GltfSceneConverterTest::addSceneMultiple});
+
+    addInstancedTests({&GltfSceneConverterTest::addSceneInvalid},
+        Containers::arraySize(AddSceneInvalidData));
 
     addTests({&GltfSceneConverterTest::requiredExtensionsAddedAlready,
 
@@ -2575,6 +2719,463 @@ void GltfSceneConverterTest::addMaterialInvalid() {
     CORRADE_VERIFY(converter->endFile());
     CORRADE_COMPARE_AS(filename,
         Utility::Path::join(GLTFSCENECONVERTER_TEST_DIR, "texture.gltf"),
+        TestSuite::Compare::File);
+}
+
+void GltfSceneConverterTest::addSceneEmpty() {
+    Containers::Pointer<AbstractSceneConverter> converter =  _converterManager.instantiate("GltfSceneConverter");
+
+    Containers::String filename = Utility::Path::join(GLTFSCENECONVERTER_TEST_OUTPUT_DIR, "scene-empty.gltf");
+    CORRADE_VERIFY(converter->beginFile(filename));
+
+    CORRADE_VERIFY(converter->add(SceneData{SceneMappingType::UnsignedByte, 0, nullptr, {
+        /* To mark the scene as 3D */
+        SceneFieldData{SceneField::Transformation,
+            SceneMappingType::UnsignedByte, nullptr,
+            SceneFieldType::Matrix4x4, nullptr},
+    }}));
+
+    CORRADE_VERIFY(converter->endFile());
+    CORRADE_COMPARE_AS(filename,
+        Utility::Path::join(GLTFSCENECONVERTER_TEST_DIR, "scene-empty.gltf"),
+        TestSuite::Compare::File);
+
+    if(_importerManager.loadState("GltfImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("GltfImporter plugin not found, cannot test a rountrip");
+
+    Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("GltfImporter");
+    CORRADE_VERIFY(importer->openFile(filename));
+
+    /* There should be exactly one scene, referencing all nodes */
+    CORRADE_COMPARE(importer->sceneCount(), 1);
+    CORRADE_COMPARE(importer->objectCount(), 0);
+    Containers::Optional<SceneData> imported = importer->scene(0);
+    CORRADE_VERIFY(imported);
+    CORRADE_COMPARE(imported->mappingBound(), 0);
+    /* There is ImporterState & Parent always, plus Transformation to indicate
+       a 3D scene */
+    CORRADE_COMPARE(imported->fieldCount(), 3);
+}
+
+void GltfSceneConverterTest::addScene() {
+    auto&& data = AddSceneData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    Containers::Pointer<AbstractSceneConverter> converter =  _converterManager.instantiate("GltfSceneConverter");
+
+    Containers::String filename = Utility::Path::join(GLTFSCENECONVERTER_TEST_OUTPUT_DIR, data.expected);
+    CORRADE_VERIFY(converter->beginFile(filename));
+
+    /* Deliberately using a 16-bit mapping to trigger accidentally hardcoded
+       UnsignedInt inside add(SceneData). The optionally added offset *should
+       not* change the output in any way. */
+    struct Scene {
+        Containers::Pair<UnsignedShort, Int> parents[5];
+        Containers::Pair<UnsignedShort, Matrix4> transformations[5];
+        struct Trs {
+            UnsignedShort mapping;
+            Vector3 translation;
+            Quaternion rotation;
+            Vector3 scaling;
+        } trs[4];
+    } sceneData[]{{
+        /* Parents, unordered, including forward references, multiple children
+           and deeper hierarchies. Object 4 is without a parent reference. */
+        {{UnsignedShort(data.offset + 0), -1},
+         {UnsignedShort(data.offset + 3), data.offset + 5},
+         {UnsignedShort(data.offset + 2), -1},
+         {UnsignedShort(data.offset + 1), data.offset + 5},
+         {UnsignedShort(data.offset + 5), data.offset + 2}},
+
+        /* One object should be without any transformation */
+        {{UnsignedShort(data.offset + 2),
+            Matrix4::translation({0.5f, 0.25f, 0.125f})*
+            Matrix4::rotationZ(15.0_degf)*
+            Matrix4::scaling({1.0f, 2.0f, 3.0f})},
+         {UnsignedShort(data.offset + 4),
+            Matrix4::rotationX(55.0_degf)},
+         {UnsignedShort(data.offset + 0),
+            Matrix4::translation({4.0f, 5.0f, 6.0f})},
+         {UnsignedShort(data.offset + 1),
+            Matrix4::rotationY(60.0_degf)},
+         {UnsignedShort(data.offset + 5),
+            Matrix4::rotationZ(15.0_degf)*
+            Matrix4::translation({7.0f, 8.0f, 9.0f})}},
+
+        /* One object should be only with a matrix */
+        {{UnsignedShort(data.offset + 1),
+            {},
+            Quaternion::rotation(60.0_degf, Vector3::yAxis()),
+            Vector3{1.0f}},
+         {UnsignedShort(data.offset + 4),
+            {},
+            Quaternion::rotation(15.0_degf, Vector3::xAxis()),
+            Vector3{1.0f}},
+         {UnsignedShort(data.offset + 2),
+            {0.5f, 0.25f, 0.125f},
+            Quaternion::rotation(15.0_degf, Vector3::zAxis()),
+            {1.0f, 2.0f, 3.0f}},
+         {UnsignedShort(data.offset + 0),
+            {4.0f, 5.0f, 6.0f},
+            {},
+            Vector3{1.0f}}}
+    }};
+
+    if(data.dataName) {
+        converter->setObjectName(data.offset + 3, "No transformation");
+        converter->setObjectName(data.offset + 5, "This object has no parent and thus isn't exported");
+        converter->setObjectName(data.offset + 5, "No TRS");
+        converter->setObjectName(data.offset + 6, "This object doesn't exist");
+    }
+
+    SceneData scene{SceneMappingType::UnsignedShort, data.offset + 6u, {}, sceneData, {
+        SceneFieldData{SceneField::Parent,
+            Containers::stridedArrayView(sceneData->parents).slice(&Containers::Pair<UnsignedShort, Int>::first),
+            Containers::stridedArrayView(sceneData->parents).slice(&Containers::Pair<UnsignedShort, Int>::second)},
+        SceneFieldData{SceneField::Transformation,
+            Containers::stridedArrayView(sceneData->transformations).slice(&Containers::Pair<UnsignedShort, Matrix4>::first),
+            Containers::stridedArrayView(sceneData->transformations).slice(&Containers::Pair<UnsignedShort, Matrix4>::second)},
+        SceneFieldData{SceneField::Translation,
+            Containers::stridedArrayView(sceneData->trs).slice(&Scene::Trs::mapping),
+            Containers::stridedArrayView(sceneData->trs).slice(&Scene::Trs::translation)},
+        /* Ignored field, produces a warning */
+        SceneFieldData{SceneField::Light,
+            Containers::stridedArrayView(sceneData->parents).slice(&Containers::Pair<UnsignedShort, Int>::first),
+            Containers::stridedArrayView(sceneData->parents).slice(&Containers::Pair<UnsignedShort, Int>::first)},
+        SceneFieldData{SceneField::Rotation,
+            Containers::stridedArrayView(sceneData->trs).slice(&Scene::Trs::mapping),
+            Containers::stridedArrayView(sceneData->trs).slice(&Scene::Trs::rotation)},
+        /* Ignored custom field, produces another warning */
+        SceneFieldData{sceneFieldCustom(5318008),
+            Containers::stridedArrayView(sceneData->trs).slice(&Scene::Trs::mapping),
+            Containers::stridedArrayView(sceneData->trs).slice(&Scene::Trs::translation)},
+        SceneFieldData{SceneField::Scaling,
+            Containers::stridedArrayView(sceneData->trs).slice(&Scene::Trs::mapping),
+            Containers::stridedArrayView(sceneData->trs).slice(&Scene::Trs::scaling)},
+    }};
+
+    {
+        std::ostringstream out;
+        Warning redirectWarning{&out};
+        CORRADE_VERIFY(converter->add(scene, data.dataName));
+        CORRADE_COMPARE(out.str(), Utility::formatString(
+            "Trade::GltfSceneConverter::add(): Trade::SceneField::Light was not used\n"
+            "Trade::GltfSceneConverter::add(): Trade::SceneField::Custom(5318008) was not used\n"
+            "Trade::GltfSceneConverter::add(): parentless object {} was not used\n", data.offset + 4));
+    }
+
+    CORRADE_VERIFY(converter->endFile());
+    CORRADE_COMPARE_AS(filename,
+        Utility::Path::join(GLTFSCENECONVERTER_TEST_DIR, data.expected),
+        TestSuite::Compare::File);
+
+    if(_importerManager.loadState("GltfImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("GltfImporter plugin not found, cannot test a rountrip");
+
+    Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("GltfImporter");
+    CORRADE_VERIFY(importer->openFile(filename));
+
+    /* There should be exactly one scene */
+    CORRADE_COMPARE(importer->sceneCount(), 1);
+    CORRADE_COMPARE(importer->objectCount(), 5);
+    Containers::Optional<SceneData> imported = importer->scene(0);
+    CORRADE_VERIFY(imported);
+    CORRADE_COMPARE(imported->mappingBound(), 5);
+    CORRADE_COMPARE(imported->fieldCount(), 5 + 1 /*ImporterState*/);
+
+    /* The fields are reordered in a breadth-first order */
+
+    CORRADE_VERIFY(imported->hasField(SceneField::Parent));
+    CORRADE_COMPARE_AS(imported->mapping<UnsignedInt>(SceneField::Parent),
+        Containers::arrayView({0u, 2u, 4u, 3u, 1u}),
+        TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(imported->field<Int>(SceneField::Parent),
+        Containers::arrayView({-1, -1, 2, 4, 4}),
+        TestSuite::Compare::Container);
+
+    CORRADE_VERIFY(imported->hasField(SceneField::Transformation));
+    CORRADE_COMPARE_AS(imported->mapping<UnsignedInt>(SceneField::Transformation),
+        Containers::arrayView({0u, 2u, 4u, 1u}),
+        TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(imported->field<Matrix4>(SceneField::Transformation), Containers::arrayView({
+        Matrix4::translation({4.0f, 5.0f, 6.0f}),
+        Matrix4::translation({0.5f, 0.25f, 0.125f})*
+            Matrix4::rotationZ(15.0_degf)*
+            Matrix4::scaling({1.0f, 2.0f, 3.0f}),
+        Matrix4::rotationZ(15.0_degf)*
+            Matrix4::translation({7.0f, 8.0f, 9.0f}),
+        Matrix4::rotationY(60.0_degf),
+    }), TestSuite::Compare::Container);
+
+    CORRADE_VERIFY(imported->hasField(SceneField::Translation));
+    CORRADE_COMPARE_AS(imported->mapping<UnsignedInt>(SceneField::Translation),
+        Containers::arrayView({0u, 2u, 1u}),
+        TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(imported->field<Vector3>(SceneField::Translation), Containers::arrayView({
+        Vector3{4.0f, 5.0f, 6.0f},
+        Vector3{0.5f, 0.25f, 0.125f},
+        {},
+    }), TestSuite::Compare::Container);
+
+    CORRADE_VERIFY(imported->hasField(SceneField::Rotation));
+    /* Mapping is the same for all three TRS fields */
+    CORRADE_COMPARE_AS(imported->field<Quaternion>(SceneField::Rotation), Containers::arrayView({
+        {},
+        Quaternion::rotation(15.0_degf, Vector3::zAxis()),
+        Quaternion::rotation(60.0_degf, Vector3::yAxis()),
+    }), TestSuite::Compare::Container);
+
+    CORRADE_VERIFY(imported->hasField(SceneField::Scaling));
+    /* Mapping is the same for all three TRS fields */
+    CORRADE_COMPARE_AS(imported->field<Vector3>(SceneField::Scaling), Containers::arrayView({
+        Vector3{1.0f},
+        Vector3{1.0f, 2.0f, 3.0f},
+        Vector3{1.0f},
+    }), TestSuite::Compare::Container);
+}
+
+void GltfSceneConverterTest::addSceneMeshesMaterials() {
+    Containers::Pointer<AbstractSceneConverter> converter =  _converterManager.instantiate("GltfSceneConverter");
+
+    Containers::String filename = Utility::Path::join(GLTFSCENECONVERTER_TEST_OUTPUT_DIR, "scene-meshes-materials.gltf");
+    CORRADE_VERIFY(converter->beginFile(filename));
+
+    /* Add four empty meshes to not have to bother with buffers. Not valid
+       glTF but accepted with strict=false (which gets reset back after) */
+    {
+        Warning silenceWarning{nullptr};
+        converter->configuration().setValue("strict", false);
+        /* Naming them to see how they were reordered */
+        CORRADE_VERIFY(converter->add(MeshData{MeshPrimitive::Triangles, 0}, "Mesh 0"));
+        CORRADE_VERIFY(converter->add(MeshData{MeshPrimitive::Triangles, 0}, "Mesh 1"));
+        CORRADE_VERIFY(converter->add(MeshData{MeshPrimitive::Triangles, 0}, "Mesh 2"));
+        CORRADE_VERIFY(converter->add(MeshData{MeshPrimitive::Triangles, 0}, "Mesh 3"));
+        converter->configuration().setValue("strict", true);
+    }
+
+    /* Add two empty materials */
+    {
+        CORRADE_VERIFY(converter->add(MaterialData{{}, {}}, "Material 0"));
+        CORRADE_VERIFY(converter->add(MaterialData{{}, {}}, "Material 1"));
+    }
+
+    /* Deliberately using large & sparse object IDs to verify the warnings
+       reference them and not the remapped ones */
+    struct Scene {
+        Containers::Pair<UnsignedInt, Int> parents[8];
+        Containers::Triple<UnsignedInt, UnsignedInt, Int> meshesMaterials[9];
+    } sceneData[]{{
+        /* Object 30 is without a parent, thus ignored */
+        {{0, -1},
+         {40, -1},
+         {20, -1},
+         {10, -1},
+         {50, -1},
+         {60, -1},
+         {70, -1},
+         {80, -1}},
+
+        /* Object 10 is without any mesh, mesh 2 is referenced by two objects;
+           object 50 referencing two meshes (ignored with a warning).
+
+           Then, mesh 1 is used again with a material; mesh 3 is used twice
+           and both times with the same material. */
+        {{40, 2, -1},
+         {50, 1, -1},
+         {30, 1, -1},
+         {20, 0, -1},
+         {50, 0, -1},
+         {0, 2, -1},
+
+         {60, 3, 0},
+         {70, 1, 1},
+         {80, 3, 0}},
+    }};
+
+    SceneData scene{SceneMappingType::UnsignedInt, 90, {}, sceneData, {
+        /* To mark the scene as 3D */
+        SceneFieldData{SceneField::Transformation,
+            SceneMappingType::UnsignedInt, nullptr,
+            SceneFieldType::Matrix4x4, nullptr},
+        SceneFieldData{SceneField::Parent,
+            Containers::stridedArrayView(sceneData->parents).slice(&Containers::Pair<UnsignedInt, Int>::first),
+            Containers::stridedArrayView(sceneData->parents).slice(&Containers::Pair<UnsignedInt, Int>::second)},
+        SceneFieldData{SceneField::Mesh,
+            Containers::stridedArrayView(sceneData->meshesMaterials).slice(&Containers::Triple<UnsignedInt, UnsignedInt, Int>::first),
+            Containers::stridedArrayView(sceneData->meshesMaterials).slice(&Containers::Triple<UnsignedInt, UnsignedInt, Int>::second)},
+        SceneFieldData{SceneField::MeshMaterial,
+            Containers::stridedArrayView(sceneData->meshesMaterials).slice(&Containers::Triple<UnsignedInt, UnsignedInt, Int>::first),
+            Containers::stridedArrayView(sceneData->meshesMaterials).slice(&Containers::Triple<UnsignedInt, UnsignedInt, Int>::third)},
+    }};
+
+    {
+        std::ostringstream out;
+        Warning redirectWarning{&out};
+        CORRADE_VERIFY(converter->add(scene));
+        CORRADE_COMPARE(out.str(),
+            "Trade::GltfSceneConverter::add(): parentless object 30 was not used\n"
+            "Trade::GltfSceneConverter::add(): ignoring duplicate field Trade::SceneField::Mesh for object 50\n");
+    }
+
+    CORRADE_VERIFY(converter->endFile());
+    CORRADE_COMPARE_AS(filename,
+        Utility::Path::join(GLTFSCENECONVERTER_TEST_DIR, "scene-meshes-materials.gltf"),
+        TestSuite::Compare::File);
+
+    if(_importerManager.loadState("GltfImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("GltfImporter plugin not found, cannot test a rountrip");
+
+    Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("GltfImporter");
+    CORRADE_VERIFY(importer->openFile(filename));
+
+    /* There should be exactly one scene */
+    CORRADE_COMPARE(importer->sceneCount(), 1);
+    CORRADE_COMPARE(importer->objectCount(), 8);
+    Containers::Optional<SceneData> imported = importer->scene(0);
+    CORRADE_VERIFY(imported);
+    CORRADE_COMPARE(imported->mappingBound(), 8);
+    /* Not testing Parent, Transformation and ImporterState */
+    CORRADE_COMPARE(imported->fieldCount(), 2 + 3);
+
+    /* The mesh IDs are increasing even though they weren't in the original
+       because we're picking unique mesh/material combinations as they
+       appear */
+    CORRADE_VERIFY(imported->hasField(SceneField::Mesh));
+    CORRADE_COMPARE_AS(imported->mapping<UnsignedInt>(SceneField::Mesh),
+        Containers::arrayView({0u, 3u, 2u, 4u, 5u, 6u, 7u}),
+        TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(imported->field<UnsignedInt>(SceneField::Mesh),
+        Containers::arrayView({0u, 0u, 1u, 2u, 3u, 4u, 3u}),
+        TestSuite::Compare::Container);
+
+    CORRADE_VERIFY(imported->hasField(SceneField::MeshMaterial));
+    /* Mapping same as Mesh */
+    CORRADE_COMPARE_AS(imported->field<Int>(SceneField::MeshMaterial),
+        Containers::arrayView({-1, -1, -1, -1, 0, 1, 0}),
+        TestSuite::Compare::Container);
+
+    /* The meshes, however, will be reordered and duplicated if assigned to
+       different materials */
+    CORRADE_COMPARE(importer->meshCount(), 5);
+    CORRADE_COMPARE(importer->meshName(0), "Mesh 2");
+    CORRADE_COMPARE(importer->meshName(1), "Mesh 0");
+    CORRADE_COMPARE(importer->meshName(2), "Mesh 1");
+    CORRADE_COMPARE(importer->meshName(3), "Mesh 3");
+    CORRADE_COMPARE(importer->meshName(4), "Mesh 1");
+}
+
+void GltfSceneConverterTest::addSceneNoParentField() {
+    Containers::Pointer<AbstractSceneConverter> converter =  _converterManager.instantiate("GltfSceneConverter");
+
+    Containers::String filename = Utility::Path::join(GLTFSCENECONVERTER_TEST_OUTPUT_DIR, "scene-empty.gltf");
+    CORRADE_VERIFY(converter->beginFile(filename));
+
+    Containers::Pair<UnsignedInt, Vector3> translations[3]{
+        {0, {1.0f, 2.0f, 3.0f}},
+        {1, {4.0f, 5.0f, 6.0f}}
+    };
+
+    SceneData scene{SceneMappingType::UnsignedInt, 2, {}, translations, {
+        SceneFieldData{SceneField::Translation,
+            Containers::stridedArrayView(translations).slice(&Containers::Pair<UnsignedInt, Vector3>::first),
+            Containers::stridedArrayView(translations).slice(&Containers::Pair<UnsignedInt, Vector3>::second)}
+    }};
+
+    {
+        std::ostringstream out;
+        Warning redirectWarning{&out};
+        CORRADE_VERIFY(converter->add(scene));
+        CORRADE_COMPARE(out.str(),
+            "Trade::GltfSceneConverter::add(): parentless object 0 was not used\n"
+            "Trade::GltfSceneConverter::add(): parentless object 1 was not used\n");
+    }
+
+    CORRADE_VERIFY(converter->endFile());
+    CORRADE_COMPARE_AS(filename,
+        Utility::Path::join(GLTFSCENECONVERTER_TEST_DIR, "scene-empty.gltf"),
+        TestSuite::Compare::File);
+}
+
+void GltfSceneConverterTest::addSceneMultiple() {
+    Containers::Pointer<AbstractSceneConverter> converter =  _converterManager.instantiate("GltfSceneConverter");
+
+    Containers::String filename = Utility::Path::join(GLTFSCENECONVERTER_TEST_OUTPUT_DIR, "scene-empty.gltf");
+    CORRADE_VERIFY(converter->beginFile(filename));
+
+    SceneData scene{SceneMappingType::UnsignedByte, 0, nullptr, {
+        /* To mark the scene as 3D */
+        SceneFieldData{SceneField::Transformation,
+            SceneMappingType::UnsignedByte, nullptr,
+            SceneFieldType::Matrix4x4, nullptr},
+    }};
+    CORRADE_VERIFY(converter->add(scene));
+
+    {
+        std::ostringstream out;
+        Error redirectError{&out};
+        CORRADE_VERIFY(!converter->add(scene));
+        CORRADE_COMPARE(out.str(), "Trade::GltfSceneConverter::add(): only one scene is supported at the moment\n");
+    }
+
+    /* The file should not get corrupted by this error, thus the same as if
+       just one scene was added */
+    CORRADE_VERIFY(converter->endFile());
+    CORRADE_COMPARE_AS(filename,
+        Utility::Path::join(GLTFSCENECONVERTER_TEST_DIR, "scene-empty.gltf"),
+        TestSuite::Compare::File);
+}
+
+void GltfSceneConverterTest::addSceneInvalid() {
+    auto&& data = AddSceneInvalidData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    Containers::Pointer<AbstractSceneConverter> converter =  _converterManager.instantiate("GltfSceneConverter");
+
+    Containers::String filename = Utility::Path::join(GLTFSCENECONVERTER_TEST_OUTPUT_DIR, "scene-invalid.gltf");
+    CORRADE_VERIFY(converter->beginFile(filename));
+
+    /* Add two meshes to be referenced by a scene. Empty to not have to bother
+       with buffers. Not valid glTF but accepted with strict=false (which gets
+       reset back after) */
+    if(data.scene.hasField(SceneField::Mesh)) {
+        Warning silenceWarning{nullptr};
+        converter->configuration().setValue("strict", false);
+        CORRADE_VERIFY(converter->add(MeshData{MeshPrimitive::Triangles, 0}));
+        CORRADE_VERIFY(converter->add(MeshData{MeshPrimitive::Triangles, 0}));
+        converter->configuration().setValue("strict", true);
+    }
+
+    /* Add two materials to be referenced by a scene */
+    if(data.scene.hasField(SceneField::MeshMaterial)) {
+        CORRADE_VERIFY(converter->add(MaterialData{{}, {}}));
+        CORRADE_VERIFY(converter->add(MaterialData{{}, {}}));
+    }
+
+    {
+        std::ostringstream out;
+        Error redirectError{&out};
+        CORRADE_VERIFY(!converter->add(data.scene));
+        CORRADE_COMPARE(out.str(), Utility::format("Trade::GltfSceneConverter::add(): {}\n", data.message));
+    }
+
+    /* Add the data if not referenced to have a consistent output file */
+    if(!data.scene.hasField(SceneField::Mesh)) {
+        Warning silenceWarning{nullptr};
+        converter->configuration().setValue("strict", false);
+        CORRADE_VERIFY(converter->add(MeshData{MeshPrimitive::Triangles, 0}));
+        CORRADE_VERIFY(converter->add(MeshData{MeshPrimitive::Triangles, 0}));
+        converter->configuration().setValue("strict", true);
+    }
+    if(!data.scene.hasField(SceneField::MeshMaterial)) {
+        CORRADE_VERIFY(converter->add(MaterialData{{}, {}}));
+        CORRADE_VERIFY(converter->add(MaterialData{{}, {}}));
+    }
+
+    /* The file should not get corrupted by this error, thus the same as if
+       just the data were added */
+    CORRADE_VERIFY(converter->endFile());
+    CORRADE_COMPARE_AS(filename,
+        Utility::Path::join(GLTFSCENECONVERTER_TEST_DIR, "scene-invalid.gltf"),
         TestSuite::Compare::File);
 }
 

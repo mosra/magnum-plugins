@@ -217,6 +217,10 @@ See @ref building-plugins, @ref cmake-plugins, @ref plugins and
     and attribute index and name if the @cb{.ini} accessorNames @ce
     @ref Trade-GltfSceneConverter-configuration "configuration option" is
     enabled.
+-   Due to a material and a mesh being tied together in a glTF file, meshes
+    that are referenced by a scene are written in the order they are referenced
+    from @ref SceneData, and get duplicated (including the name) if the same
+    mesh gets used with different materials.
 -   At the moment, alignment rules for vertex stride are not respected.
 -   At the moment, each attribute has its own dedicated buffer view instead of
     a single view being shared by multiple interleaved attributes. This also
@@ -293,6 +297,34 @@ See @ref building-plugins, @ref cmake-plugins, @ref plugins and
     extensions
 -   At the moment, custom material properties and layers are not exported
 
+@subsection Trade-GltfSceneConverter-behavior-scenes Scene export
+
+-   Only 3D scenes are supported
+-   Only objects with a @ref SceneField::Parent entry are exported, all other
+    objects are ignored with a warning. This also implies that object IDs are
+    not preserved, as otherwise the glTF would contain a lot of empty
+    unreferenced node objects.
+-   The @ref SceneField::Parent hierarchy is required to be acyclical
+-   To satisfy glTF requirements, if both @ref SceneField::Transformation and
+    at least one of @relativeref{SceneField,Translation},
+    @relativeref{SceneField,Rotation} and
+    @relativeref{SceneField,Scaling} is present, only the TRS component(s) are
+    saved into the file and not the matrix, assuming the transformation matrix
+    is equivalent to them
+-   Object and scene names, if passed, are saved into the file
+-   The scene is required to only be added after all meshes and materials it
+    references
+-   At the moment, only @ref SceneField::Parent,
+    @relativeref{SceneField,Transformation},
+    @relativeref{SceneField,Translation}, @relativeref{SceneField,Rotation},
+    @relativeref{SceneField,Scaling}, @relativeref{SceneField,Mesh}
+    and @relativeref{SceneField,MeshMaterial} is exported, other fields are
+    ignored with a warning
+-   At the moment, duplicate fields including multiple mesh assignments are
+    ignored with a warning
+-   At the moment, only a single scene can be exported. As a consequence,
+    information about the default scene is redundant and thus not written.
+
 @section Trade-GltfSceneConverter-configuration Plugin-specific config
 
 It's possible to tune various output options through @ref configuration(). See
@@ -316,6 +348,9 @@ class MAGNUM_GLTFSCENECONVERTER_EXPORT GltfSceneConverter: public AbstractSceneC
         MAGNUM_GLTFSCENECONVERTER_LOCAL bool doBeginData() override;
         MAGNUM_GLTFSCENECONVERTER_LOCAL Containers::Optional<Containers::Array<char>> doEndData() override;
         MAGNUM_GLTFSCENECONVERTER_LOCAL void doAbort() override;
+
+        MAGNUM_GLTFSCENECONVERTER_LOCAL void doSetObjectName(UnsignedLong object, Containers::StringView name) override;
+        MAGNUM_GLTFSCENECONVERTER_LOCAL bool doAdd(const UnsignedInt id, const SceneData& scene, Containers::StringView name) override;
 
         MAGNUM_GLTFSCENECONVERTER_LOCAL void doSetMeshAttributeName(UnsignedShort attribute, Containers::StringView name) override;
         MAGNUM_GLTFSCENECONVERTER_LOCAL bool doAdd(const UnsignedInt id, const MeshData& mesh, Containers::StringView name) override;
