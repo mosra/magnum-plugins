@@ -273,10 +273,6 @@ struct CgltfImporter::Document {
     cgltf_options options;
     cgltf_data* data = nullptr;
 
-    Containers::Optional<Containers::ArrayView<const char>> loadUri(const AbstractImporter& importer, Containers::StringView uri, Containers::Array<char>& storage, const char* const function);
-    bool loadBuffer(const AbstractImporter& importer, UnsignedInt id, const char* const function);
-    Containers::Optional<Containers::StridedArrayView2D<const char>> accessorView(const AbstractImporter& importer, const cgltf_accessor* accessor, const char* const function);
-
     /* Storage for buffer content if the user set no file callback or a buffer
        is embedded as base64. These are filled on demand. We don't check for
        duplicate URIs since that's incredibly unlikely and hard to get right,
@@ -358,7 +354,7 @@ CgltfImporter::Document::~Document() {
     if(data) cgltf_free(data);
 }
 
-Containers::Optional<Containers::ArrayView<const char>> CgltfImporter::Document::loadUri(const AbstractImporter& importer, Containers::StringView uri, Containers::Array<char>& storage, const char* const function) {
+Containers::Optional<Containers::ArrayView<const char>> CgltfImporter::loadUri(const Containers::StringView uri, Containers::Array<char>& storage, const char* const function) {
     if(isDataUri(uri)) {
         /* Data URI with base64 payload according to RFC 2397:
            data:[<mediatype>][;base64],<data> */
@@ -387,7 +383,7 @@ Containers::Optional<Containers::ArrayView<const char>> CgltfImporter::Document:
            set in doOpenData() which use new char[] and delete[]. We can wrap
            that memory in an Array with the default deleter. */
         void* decoded = nullptr;
-        const cgltf_result result = cgltf_load_buffer_base64(&options, size, base64.data(), &decoded);
+        const cgltf_result result = cgltf_load_buffer_base64(&_d->options, size, base64.data(), &decoded);
         if(result == cgltf_result_success) {
             CORRADE_INTERNAL_ASSERT(decoded);
             storage = Containers::Array<char>{static_cast<char*>(decoded), size};
@@ -397,21 +393,21 @@ Containers::Optional<Containers::ArrayView<const char>> CgltfImporter::Document:
         Error{} << "Trade::CgltfImporter::" << Debug::nospace << function << Debug::nospace << "(): invalid base64 string in data URI";
         return {};
 
-    } else if(importer.fileCallback()) {
-        const Containers::String fullPath = Utility::Path::join(filePath ? *filePath : "", decodeUri(decodeCachedString(uri)));
-        if(const Containers::Optional<Containers::ArrayView<const char>> view = importer.fileCallback()(fullPath, InputFileCallbackPolicy::LoadPermanent, importer.fileCallbackUserData()))
+    } else if(fileCallback()) {
+        const Containers::String fullPath = Utility::Path::join(_d->filePath ? *_d->filePath : "", decodeUri(_d->decodeCachedString(uri)));
+        if(const Containers::Optional<Containers::ArrayView<const char>> view = fileCallback()(fullPath, InputFileCallbackPolicy::LoadPermanent, fileCallbackUserData()))
             return *view;
 
         Error{} << "Trade::CgltfImporter::" << Debug::nospace << function << Debug::nospace << "(): error opening" << fullPath << "through a file callback";
         return {};
 
     } else {
-        if(!filePath) {
+        if(!_d->filePath) {
             Error{} << "Trade::CgltfImporter::" << Debug::nospace << function << Debug::nospace << "(): external buffers can be imported only when opening files from the filesystem or if a file callback is present";
             return {};
         }
 
-        const Containers::String fullPath = Utility::Path::join(*filePath, decodeUri(decodeCachedString(uri)));
+        const Containers::String fullPath = Utility::Path::join(*_d->filePath, decodeUri(_d->decodeCachedString(uri)));
         if(Containers::Optional<Containers::Array<char>> data = Utility::Path::read(fullPath)) {
             storage = *std::move(data);
             return Containers::arrayCast<const char>(storage);
@@ -422,23 +418,23 @@ Containers::Optional<Containers::ArrayView<const char>> CgltfImporter::Document:
     }
 }
 
-bool CgltfImporter::Document::loadBuffer(const AbstractImporter& importer, UnsignedInt id, const char* const function) {
-    CORRADE_INTERNAL_ASSERT(id < data->buffers_count);
-    cgltf_buffer& buffer = data->buffers[id];
+bool CgltfImporter::loadBuffer(const UnsignedInt id, const char* const function) {
+    CORRADE_INTERNAL_ASSERT(id < _d->data->buffers_count);
+    cgltf_buffer& buffer = _d->data->buffers[id];
     if(buffer.data)
         return true;
 
     Containers::ArrayView<const char> view;
     if(!buffer.uri) {
         /* URI may only be empty for buffers referencing the glb binary blob */
-        if(id != 0 || !data->bin) {
+        if(id != 0 || !_d->data->bin) {
             Error{} << "Trade::CgltfImporter::" << Debug::nospace << function << Debug::nospace << "():" <<
                 "buffer" << id << "has no URI";
             return false;
         }
-        view = Containers::arrayView(static_cast<const char*>(data->bin), data->bin_size);
+        view = Containers::arrayView(static_cast<const char*>(_d->data->bin), _d->data->bin_size);
     } else {
-        const auto loaded = loadUri(importer, buffer.uri, bufferData[id], function);
+        const auto loaded = loadUri(buffer.uri, _d->bufferData[id], function);
         if(!loaded)
             return false;
         view = *loaded;
@@ -461,12 +457,12 @@ bool CgltfImporter::Document::loadBuffer(const AbstractImporter& importer, Unsig
     return true;
 }
 
-Containers::Optional<Containers::StridedArrayView2D<const char>> CgltfImporter::Document::accessorView(const AbstractImporter& importer, const cgltf_accessor* accessor, const char* const function) {
+Containers::Optional<Containers::StridedArrayView2D<const char>> CgltfImporter::accessorView(const cgltf_accessor* accessor, const char* const function) {
     /* All this assumes the accessor was checked using checkAccessor() */
     const cgltf_buffer_view* bufferView = accessor->buffer_view;
     const cgltf_buffer* buffer = bufferView->buffer;
-    const UnsignedInt bufferId = buffer - data->buffers;
-    if(!loadBuffer(importer, bufferId, function))
+    const UnsignedInt bufferId = buffer - _d->data->buffers;
+    if(!loadBuffer(bufferId, function))
         return Containers::NullOpt;
 
     return Containers::StridedArrayView2D<const char>{Containers::arrayView(buffer->data, buffer->size),
@@ -900,7 +896,7 @@ Containers::Optional<AnimationData> CgltfImporter::doAnimation(UnsignedInt id) {
             if(samplerData.find(sampler.input) == samplerData.end()) {
                 if(!checkAccessor(_d->data, "animation", sampler.input))
                     return Containers::NullOpt;
-                Containers::Optional<Containers::StridedArrayView2D<const char>> view = _d->accessorView(*this, sampler.input, "animation");
+                Containers::Optional<Containers::StridedArrayView2D<const char>> view = accessorView(sampler.input, "animation");
                 if(!view)
                     return Containers::NullOpt;
 
@@ -913,7 +909,7 @@ Containers::Optional<AnimationData> CgltfImporter::doAnimation(UnsignedInt id) {
             if(samplerData.find(sampler.output) == samplerData.end()) {
                 if(!checkAccessor(_d->data, "animation", sampler.output))
                     return Containers::NullOpt;
-                Containers::Optional<Containers::StridedArrayView2D<const char>> view = _d->accessorView(*this, sampler.output, "animation");
+                Containers::Optional<Containers::StridedArrayView2D<const char>> view = accessorView(sampler.output, "animation");
                 if(!view)
                     return Containers::NullOpt;
 
@@ -1692,7 +1688,7 @@ Containers::Optional<SkinData3D> CgltfImporter::doSkin3D(const UnsignedInt id) {
             return Containers::NullOpt;
         }
 
-        Containers::Optional<Containers::StridedArrayView2D<const char>> view = _d->accessorView(*this, accessor, "skin3D");
+        Containers::Optional<Containers::StridedArrayView2D<const char>> view = accessorView(accessor, "skin3D");
         if(!view)
             return Containers::NullOpt;
 
@@ -2079,7 +2075,7 @@ Containers::Optional<MeshData> CgltfImporter::doMesh(const UnsignedInt id, Unsig
     Containers::Array<char> vertexData{NoInit, bufferRange.size()};
     if(vertexData.size()) {
         const UnsignedInt bufferId = buffer - _d->data->buffers;
-        if(!_d->loadBuffer(*this, bufferId, "mesh"))
+        if(!loadBuffer(bufferId, "mesh"))
             return {};
 
         Utility::copy(Containers::arrayView(static_cast<char*>(buffer->data), buffer->size)
@@ -2157,7 +2153,7 @@ Containers::Optional<MeshData> CgltfImporter::doMesh(const UnsignedInt id, Unsig
             return Containers::NullOpt;
         }
 
-        Containers::Optional<Containers::StridedArrayView2D<const char>> src = _d->accessorView(*this, accessor, "mesh");
+        Containers::Optional<Containers::StridedArrayView2D<const char>> src = accessorView(accessor, "mesh");
         if(!src)
             return Containers::NullOpt;
 
@@ -3323,7 +3319,7 @@ AbstractImporter* CgltfImporter::setupOrReuseImporterForImage(const UnsignedInt 
         Containers::ArrayView<const char> imageView;
 
         if(image.uri) {
-            const auto view = _d->loadUri(*this, image.uri, imageData, function);
+            const auto view = loadUri(image.uri, imageData, function);
             if(!view)
                 return nullptr;
             imageView = *view;
@@ -3335,7 +3331,7 @@ AbstractImporter* CgltfImporter::setupOrReuseImporterForImage(const UnsignedInt 
 
             const cgltf_buffer* buffer = image.buffer_view->buffer;
             const UnsignedInt bufferId = buffer - _d->data->buffers;
-            if(!_d->loadBuffer(*this, bufferId, function))
+            if(!loadBuffer(bufferId, function))
                 return nullptr;
             imageView = Containers::arrayView(static_cast<const char*>(buffer->data) + image.buffer_view->offset, image.buffer_view->size);
         }

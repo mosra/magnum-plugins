@@ -35,6 +35,10 @@
 
 #include "MagnumPlugins/CgltfImporter/configure.h"
 
+#ifndef DOXYGEN_GENERATING_OUTPUT
+struct cgltf_accessor;
+#endif
+
 namespace Magnum { namespace Trade {
 
 #ifndef DOXYGEN_GENERATING_OUTPUT
@@ -519,6 +523,10 @@ class MAGNUM_CGLTFIMPORTER_EXPORT CgltfImporter: public AbstractImporter {
         MAGNUM_CGLTFIMPORTER_LOCAL Int doImage2DForName(Containers::StringView name) override;
         MAGNUM_CGLTFIMPORTER_LOCAL Containers::String doImage2DName(UnsignedInt id) override;
         MAGNUM_CGLTFIMPORTER_LOCAL Containers::Optional<ImageData2D> doImage2D(UnsignedInt id, UnsignedInt level) override;
+
+        MAGNUM_CGLTFIMPORTER_LOCAL Containers::Optional<Containers::ArrayView<const char>> loadUri(Containers::StringView uri, Containers::Array<char>& storage, const char* function);
+        MAGNUM_CGLTFIMPORTER_LOCAL bool loadBuffer(UnsignedInt id, const char* function);
+        MAGNUM_CGLTFIMPORTER_LOCAL Containers::Optional<Containers::StridedArrayView2D<const char>> accessorView(const cgltf_accessor* accessor, const char* function);
 
         Containers::Pointer<Document> _d;
 };
