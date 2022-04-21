@@ -1358,8 +1358,8 @@ Containers::Optional<SceneData> CgltfImporter::doScene(UnsignedInt id) {
     for(std::size_t i = 0; i != children.size(); ++i) {
         const Range1Dui& nodeRangeToProcess = children[i];
         for(std::size_t j = nodeRangeToProcess.min(); j != nodeRangeToProcess.max(); ++j) {
-            arrayAppend(children, InPlaceInit, UnsignedInt(objects.size()), UnsignedInt(objects.size() + _d->data->nodes[objects[j]].children_count));
             const cgltf_node& node = _d->data->nodes[objects[j]];
+            arrayAppend(children, InPlaceInit, UnsignedInt(objects.size()), UnsignedInt(objects.size() + node.children_count));
             for(std::size_t k = 0; k != node.children_count; ++k)
                 arrayAppend(objects, UnsignedInt(node.children[k] - _d->data->nodes));
         }
