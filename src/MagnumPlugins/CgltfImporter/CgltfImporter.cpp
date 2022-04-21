@@ -425,7 +425,11 @@ bool CgltfImporter::loadBuffer(const UnsignedInt id, const char* const function)
         return true;
 
     Containers::ArrayView<const char> view;
-    if(!buffer.uri) {
+    if(buffer.uri) {
+        const Containers::Optional<Containers::ArrayView<const char>> loaded = loadUri(buffer.uri, _d->bufferData[id], function);
+        if(!loaded) return false;
+        view = *loaded;
+    } else {
         /* URI may only be empty for buffers referencing the glb binary blob */
         if(id != 0 || !_d->data->bin) {
             Error{} << "Trade::CgltfImporter::" << Debug::nospace << function << Debug::nospace << "():" <<
@@ -433,11 +437,6 @@ bool CgltfImporter::loadBuffer(const UnsignedInt id, const char* const function)
             return false;
         }
         view = Containers::arrayView(static_cast<const char*>(_d->data->bin), _d->data->bin_size);
-    } else {
-        const auto loaded = loadUri(buffer.uri, _d->bufferData[id], function);
-        if(!loaded)
-            return false;
-        view = *loaded;
     }
 
     /* The spec mentions that non-GLB buffer length can be greater than
