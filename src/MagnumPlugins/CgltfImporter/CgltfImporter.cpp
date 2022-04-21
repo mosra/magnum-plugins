@@ -390,34 +390,37 @@ Containers::Optional<Containers::ArrayView<const char>> CgltfImporter::Document:
            that memory in an Array with the default deleter. */
         void* decoded = nullptr;
         const cgltf_result result = cgltf_load_buffer_base64(&options, size, base64.data(), &decoded);
-        if(result != cgltf_result_success) {
-            Error{} << "Trade::CgltfImporter::" << Debug::nospace << function << Debug::nospace << "(): invalid base64 string in data URI";
-            return Containers::NullOpt;
+        if(result == cgltf_result_success) {
+            CORRADE_INTERNAL_ASSERT(decoded);
+            storage = Containers::Array<char>{static_cast<char*>(decoded), size};
+            return Containers::ArrayView<const char>{storage};
         }
-        CORRADE_INTERNAL_ASSERT(decoded);
-        storage = Containers::Array<char>{static_cast<char*>(decoded), size};
-        return Containers::arrayCast<const char>(storage);
+
+        Error{} << "Trade::CgltfImporter::" << Debug::nospace << function << Debug::nospace << "(): invalid base64 string in data URI";
+        return {};
+
     } else if(importer.fileCallback()) {
         const Containers::String fullPath = Utility::Path::join(filePath ? *filePath : "", decodeUri(decodeCachedString(uri)));
-        Containers::Optional<Containers::ArrayView<const char>> view = importer.fileCallback()(fullPath, InputFileCallbackPolicy::LoadPermanent, importer.fileCallbackUserData());
-        if(!view) {
-            Error{} << "Trade::CgltfImporter::" << Debug::nospace << function << Debug::nospace << "(): error opening" << fullPath << "through a file callback";
-            return Containers::NullOpt;
-        }
-        return *view;
+        if(const Containers::Optional<Containers::ArrayView<const char>> view = importer.fileCallback()(fullPath, InputFileCallbackPolicy::LoadPermanent, importer.fileCallbackUserData()))
+            return *view;
+
+        Error{} << "Trade::CgltfImporter::" << Debug::nospace << function << Debug::nospace << "(): error opening" << fullPath << "through a file callback";
+        return {};
+
     } else {
         if(!filePath) {
             Error{} << "Trade::CgltfImporter::" << Debug::nospace << function << Debug::nospace << "(): external buffers can be imported only when opening files from the filesystem or if a file callback is present";
-            return Containers::NullOpt;
+            return {};
         }
+
         const Containers::String fullPath = Utility::Path::join(*filePath, decodeUri(decodeCachedString(uri)));
-        Containers::Optional<Containers::Array<char>> data = Utility::Path::read(fullPath);
-        if(!data) {
-            Error{} << "Trade::CgltfImporter::" << Debug::nospace << function << Debug::nospace << "(): error opening" << fullPath;
-            return Containers::NullOpt;
+        if(Containers::Optional<Containers::Array<char>> data = Utility::Path::read(fullPath)) {
+            storage = *std::move(data);
+            return Containers::arrayCast<const char>(storage);
         }
-        storage = *std::move(data);
-        return Containers::arrayCast<const char>(storage);
+
+        Error{} << "Trade::CgltfImporter::" << Debug::nospace << function << Debug::nospace << "(): error opening" << fullPath;
+        return {};
     }
 }
 
