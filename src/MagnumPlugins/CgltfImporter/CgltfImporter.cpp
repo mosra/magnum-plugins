@@ -151,7 +151,7 @@ std::size_t elementSize(const cgltf_accessor* accessor) {
     return cgltf_calc_size(accessor->type, accessor->component_type);
 }
 
-bool checkAccessor(const cgltf_data* data, const char* const function, const cgltf_accessor* accessor) {
+bool checkAccessor(const cgltf_data* const data, const char* const errorPrefix, const cgltf_accessor* const accessor) {
     CORRADE_INTERNAL_ASSERT(accessor);
     const UnsignedInt accessorId = accessor - data->accessors;
 
@@ -159,14 +159,14 @@ bool checkAccessor(const cgltf_data* data, const char* const function, const cgl
         https://www.khronos.org/registry/glTF/specs/2.0/glTF-2.0.html#data-alignment */
 
     if(accessor->is_sparse) {
-        Error{} << "Trade::CgltfImporter::" << Debug::nospace << function << Debug::nospace << "(): accessor" << accessorId << "is using sparse storage, which is unsupported";
+        Error{} << errorPrefix << "accessor" << accessorId << "is using sparse storage, which is unsupported";
         return false;
     }
     /* Buffer views are optional in accessors, we're supposed to fill the view
        with zeros. Only makes sense with sparse data and we don't support
        that. */
     if(!accessor->buffer_view) {
-        Error{} << "Trade::CgltfImporter::" << Debug::nospace << function << Debug::nospace << "(): accessor" << accessorId << "has no buffer view";
+        Error{} << errorPrefix << "accessor" << accessorId << "has no buffer view";
         return false;
     }
 
@@ -177,21 +177,21 @@ bool checkAccessor(const cgltf_data* data, const char* const function, const cgl
     const std::size_t typeSize = elementSize(accessor);
     const std::size_t requiredBufferViewSize = accessor->offset + accessor->stride*(accessor->count - 1) + typeSize;
     if(bufferView->size < requiredBufferViewSize) {
-        Error{} << "Trade::CgltfImporter::" << Debug::nospace << function << Debug::nospace << "(): accessor" << accessorId << "needs" << requiredBufferViewSize << "bytes but buffer view" << bufferViewId << "has only" << bufferView->size;
+        Error{} << errorPrefix << "accessor" << accessorId << "needs" << requiredBufferViewSize << "bytes but buffer view" << bufferViewId << "has only" << bufferView->size;
         return false;
     }
 
     const std::size_t requiredBufferSize = bufferView->offset + bufferView->size;
     if(buffer->size < requiredBufferSize) {
         const UnsignedInt bufferId = buffer - data->buffers;
-        Error{} << "Trade::CgltfImporter::" << Debug::nospace << function << Debug::nospace << "(): buffer view" << bufferViewId << "needs" << requiredBufferSize << "bytes but buffer" << bufferId << "has only" << buffer->size;
+        Error{} << errorPrefix << "buffer view" << bufferViewId << "needs" << requiredBufferSize << "bytes but buffer" << bufferId << "has only" << buffer->size;
         return false;
     }
 
     /* Cgltf copies the bufferview stride into the accessor. If that's zero, it
        copies the element size into the stride. */
     if(accessor->stride < typeSize) {
-        Error{} << "Trade::CgltfImporter::" << Debug::nospace << function << Debug::nospace << "():" << typeSize << Debug::nospace << "-byte type defined by accessor" << accessorId << "can't fit into buffer view" << bufferViewId << "stride of" << accessor->stride;
+        Error{} << errorPrefix << typeSize << Debug::nospace << "-byte type defined by accessor" << accessorId << "can't fit into buffer view" << bufferViewId << "stride of" << accessor->stride;
         return false;
     }
 
@@ -354,7 +354,7 @@ CgltfImporter::Document::~Document() {
     if(data) cgltf_free(data);
 }
 
-Containers::Optional<Containers::ArrayView<const char>> CgltfImporter::loadUri(const Containers::StringView uri, Containers::Array<char>& storage, const char* const function) {
+Containers::Optional<Containers::ArrayView<const char>> CgltfImporter::loadUri(const Containers::StringView uri, Containers::Array<char>& storage, const char* const errorPrefix) {
     if(isDataUri(uri)) {
         /* Data URI with base64 payload according to RFC 2397:
            data:[<mediatype>][;base64],<data> */
@@ -369,7 +369,7 @@ Containers::Optional<Containers::ArrayView<const char>> CgltfImporter::loadUri(c
         }
 
         if(base64.isEmpty()) {
-            Error{} << "Trade::CgltfImporter::" << Debug::nospace << function << Debug::nospace << "(): data URI has no base64 payload";
+            Error{} << errorPrefix << "data URI has no base64 payload";
             return Containers::NullOpt;
         }
 
@@ -390,7 +390,7 @@ Containers::Optional<Containers::ArrayView<const char>> CgltfImporter::loadUri(c
             return Containers::ArrayView<const char>{storage};
         }
 
-        Error{} << "Trade::CgltfImporter::" << Debug::nospace << function << Debug::nospace << "(): invalid base64 string in data URI";
+        Error{} << errorPrefix << "invalid base64 string in data URI";
         return {};
 
     } else if(fileCallback()) {
@@ -398,12 +398,12 @@ Containers::Optional<Containers::ArrayView<const char>> CgltfImporter::loadUri(c
         if(const Containers::Optional<Containers::ArrayView<const char>> view = fileCallback()(fullPath, InputFileCallbackPolicy::LoadPermanent, fileCallbackUserData()))
             return *view;
 
-        Error{} << "Trade::CgltfImporter::" << Debug::nospace << function << Debug::nospace << "(): error opening" << fullPath << "through a file callback";
+        Error{} << errorPrefix << "error opening" << fullPath << "through a file callback";
         return {};
 
     } else {
         if(!_d->filePath) {
-            Error{} << "Trade::CgltfImporter::" << Debug::nospace << function << Debug::nospace << "(): external buffers can be imported only when opening files from the filesystem or if a file callback is present";
+            Error{} << errorPrefix << "external buffers can be imported only when opening files from the filesystem or if a file callback is present";
             return {};
         }
 
@@ -413,12 +413,12 @@ Containers::Optional<Containers::ArrayView<const char>> CgltfImporter::loadUri(c
             return Containers::arrayCast<const char>(storage);
         }
 
-        Error{} << "Trade::CgltfImporter::" << Debug::nospace << function << Debug::nospace << "(): error opening" << fullPath;
+        Error{} << errorPrefix << "error opening" << fullPath;
         return {};
     }
 }
 
-bool CgltfImporter::loadBuffer(const UnsignedInt id, const char* const function) {
+bool CgltfImporter::loadBuffer(const UnsignedInt id, const char* const errorPrefix) {
     CORRADE_INTERNAL_ASSERT(id < _d->data->buffers_count);
     cgltf_buffer& buffer = _d->data->buffers[id];
     if(buffer.data)
@@ -426,14 +426,13 @@ bool CgltfImporter::loadBuffer(const UnsignedInt id, const char* const function)
 
     Containers::ArrayView<const char> view;
     if(buffer.uri) {
-        const Containers::Optional<Containers::ArrayView<const char>> loaded = loadUri(buffer.uri, _d->bufferData[id], function);
+        const Containers::Optional<Containers::ArrayView<const char>> loaded = loadUri(buffer.uri, _d->bufferData[id], errorPrefix);
         if(!loaded) return false;
         view = *loaded;
     } else {
         /* URI may only be empty for buffers referencing the glb binary blob */
         if(id != 0 || !_d->data->bin) {
-            Error{} << "Trade::CgltfImporter::" << Debug::nospace << function << Debug::nospace << "():" <<
-                "buffer" << id << "has no URI";
+            Error{} << errorPrefix << "buffer" << id << "has no URI";
             return false;
         }
         view = Containers::arrayView(static_cast<const char*>(_d->data->bin), _d->data->bin_size);
@@ -443,9 +442,8 @@ bool CgltfImporter::loadBuffer(const UnsignedInt id, const char* const function)
        byteLength. GLB buffer chunks may also be up to 3 bytes larger than
        byteLength because of padding. So we can't check for equality. */
     if(view.size() < buffer.size) {
-        Error{} << "Trade::CgltfImporter::" << Debug::nospace << function << Debug::nospace << "():" <<
-            "buffer" << id << "is too short, expected" << buffer.size <<
-            "bytes but got" << view.size();
+        Error{} << errorPrefix << "buffer" << id << "is too short, expected"
+            << buffer.size << "bytes but got" << view.size();
         return false;
     }
 
@@ -456,12 +454,12 @@ bool CgltfImporter::loadBuffer(const UnsignedInt id, const char* const function)
     return true;
 }
 
-Containers::Optional<Containers::StridedArrayView2D<const char>> CgltfImporter::accessorView(const cgltf_accessor* accessor, const char* const function) {
+Containers::Optional<Containers::StridedArrayView2D<const char>> CgltfImporter::accessorView(const cgltf_accessor* const accessor, const char* const errorPrefix) {
     /* All this assumes the accessor was checked using checkAccessor() */
     const cgltf_buffer_view* bufferView = accessor->buffer_view;
     const cgltf_buffer* buffer = bufferView->buffer;
     const UnsignedInt bufferId = buffer - _d->data->buffers;
-    if(!loadBuffer(bufferId, function))
+    if(!loadBuffer(bufferId, errorPrefix))
         return Containers::NullOpt;
 
     return Containers::StridedArrayView2D<const char>{Containers::arrayView(buffer->data, buffer->size),
@@ -893,9 +891,9 @@ Containers::Optional<AnimationData> CgltfImporter::doAnimation(UnsignedInt id) {
             /* If the input view is not yet present in the output data buffer,
                add it */
             if(samplerData.find(sampler.input) == samplerData.end()) {
-                if(!checkAccessor(_d->data, "animation", sampler.input))
+                if(!checkAccessor(_d->data, "Trade::CgltfImporter::animation():", sampler.input))
                     return Containers::NullOpt;
-                Containers::Optional<Containers::StridedArrayView2D<const char>> view = accessorView(sampler.input, "animation");
+                Containers::Optional<Containers::StridedArrayView2D<const char>> view = accessorView(sampler.input, "Trade::CgltfImporter::animation():");
                 if(!view)
                     return Containers::NullOpt;
 
@@ -906,9 +904,9 @@ Containers::Optional<AnimationData> CgltfImporter::doAnimation(UnsignedInt id) {
             /* If the output view is not yet present in the output data buffer,
                add it */
             if(samplerData.find(sampler.output) == samplerData.end()) {
-                if(!checkAccessor(_d->data, "animation", sampler.output))
+                if(!checkAccessor(_d->data, "Trade::CgltfImporter::animation():", sampler.output))
                     return Containers::NullOpt;
-                Containers::Optional<Containers::StridedArrayView2D<const char>> view = accessorView(sampler.output, "animation");
+                Containers::Optional<Containers::StridedArrayView2D<const char>> view = accessorView(sampler.output, "Trade::CgltfImporter::animation():");
                 if(!view)
                     return Containers::NullOpt;
 
@@ -1677,7 +1675,7 @@ Containers::Optional<SkinData3D> CgltfImporter::doSkin3D(const UnsignedInt id) {
     Containers::Array<Matrix4> inverseBindMatrices{skin.joints_count};
     if(skin.inverse_bind_matrices) {
         const cgltf_accessor* accessor = skin.inverse_bind_matrices;
-        if(!checkAccessor(_d->data, "skin3D", accessor))
+        if(!checkAccessor(_d->data, "Trade::CgltfImporter::skin3D():", accessor))
             return Containers::NullOpt;
 
         if(accessor->type != cgltf_type_mat4 || accessor->component_type != cgltf_component_type_r_32f || accessor->normalized) {
@@ -1687,7 +1685,7 @@ Containers::Optional<SkinData3D> CgltfImporter::doSkin3D(const UnsignedInt id) {
             return Containers::NullOpt;
         }
 
-        Containers::Optional<Containers::StridedArrayView2D<const char>> view = accessorView(accessor, "skin3D");
+        Containers::Optional<Containers::StridedArrayView2D<const char>> view = accessorView(accessor, "Trade::CgltfImporter::skin3D():");
         if(!view)
             return Containers::NullOpt;
 
@@ -1810,7 +1808,7 @@ Containers::Optional<MeshData> CgltfImporter::doMesh(const UnsignedInt id, Unsig
         lastAttribute = attribute;
 
         const cgltf_accessor* accessor = attribute.data;
-        if(!checkAccessor(_d->data, "mesh", accessor))
+        if(!checkAccessor(_d->data, "Trade::CgltfImporter::mesh():", accessor))
             return Containers::NullOpt;
 
         /* Convert to our vertex format */
@@ -2074,7 +2072,7 @@ Containers::Optional<MeshData> CgltfImporter::doMesh(const UnsignedInt id, Unsig
     Containers::Array<char> vertexData{NoInit, bufferRange.size()};
     if(vertexData.size()) {
         const UnsignedInt bufferId = buffer - _d->data->buffers;
-        if(!loadBuffer(bufferId, "mesh"))
+        if(!loadBuffer(bufferId, "Trade::CgltfImporter::mesh():"))
             return {};
 
         Utility::copy(Containers::arrayView(static_cast<char*>(buffer->data), buffer->size)
@@ -2127,7 +2125,7 @@ Containers::Optional<MeshData> CgltfImporter::doMesh(const UnsignedInt id, Unsig
     Containers::Array<char> indexData;
     if(primitive.indices) {
         const cgltf_accessor* accessor = primitive.indices;
-        if(!checkAccessor(_d->data, "mesh", accessor))
+        if(!checkAccessor(_d->data, "Trade::CgltfImporter::mesh():", accessor))
             return Containers::NullOpt;
 
         if(accessor->type != cgltf_type_scalar) {
@@ -2152,7 +2150,7 @@ Containers::Optional<MeshData> CgltfImporter::doMesh(const UnsignedInt id, Unsig
             return Containers::NullOpt;
         }
 
-        Containers::Optional<Containers::StridedArrayView2D<const char>> src = accessorView(accessor, "mesh");
+        Containers::Optional<Containers::StridedArrayView2D<const char>> src = accessorView(accessor, "Trade::CgltfImporter::mesh():");
         if(!src)
             return Containers::NullOpt;
 
@@ -3290,7 +3288,7 @@ Containers::String CgltfImporter::doImage2DName(const UnsignedInt id) {
     return _d->decodeCachedString(_d->data->images[id].name);
 }
 
-AbstractImporter* CgltfImporter::setupOrReuseImporterForImage(const UnsignedInt id, const char* const function) {
+AbstractImporter* CgltfImporter::setupOrReuseImporterForImage(const UnsignedInt id, const char* const errorPrefix) {
     /* Looking for the same ID, so reuse an importer populated before. If the
        previous attempt failed, the importer is not set, so return nullptr in
        that case. Going through everything below again would not change the
@@ -3318,19 +3316,19 @@ AbstractImporter* CgltfImporter::setupOrReuseImporterForImage(const UnsignedInt 
         Containers::ArrayView<const char> imageView;
 
         if(image.uri) {
-            const auto view = loadUri(image.uri, imageData, function);
+            const auto view = loadUri(image.uri, imageData, errorPrefix);
             if(!view)
                 return nullptr;
             imageView = *view;
         } else {
             if(!image.buffer_view) {
-                Error{} << "Trade::CgltfImporter::" << Debug::nospace << function << Debug::nospace << "(): image has neither a URI nor a buffer view";
+                Error{} << errorPrefix << "image has neither a URI nor a buffer view";
                 return nullptr;
             }
 
             const cgltf_buffer* buffer = image.buffer_view->buffer;
             const UnsignedInt bufferId = buffer - _d->data->buffers;
-            if(!loadBuffer(bufferId, function))
+            if(!loadBuffer(bufferId, errorPrefix))
                 return nullptr;
             imageView = Containers::arrayView(static_cast<const char*>(buffer->data) + image.buffer_view->offset, image.buffer_view->size);
         }
@@ -3342,7 +3340,7 @@ AbstractImporter* CgltfImporter::setupOrReuseImporterForImage(const UnsignedInt 
 
     /* Load external image */
     if(!_d->filePath && !fileCallback()) {
-        Error{} << "Trade::CgltfImporter::" << Debug::nospace << function << Debug::nospace << "(): external images can be imported only when opening files from the filesystem or if a file callback is present";
+        Error{} << errorPrefix << "external images can be imported only when opening files from the filesystem or if a file callback is present";
         return nullptr;
     }
 
@@ -3354,7 +3352,7 @@ AbstractImporter* CgltfImporter::setupOrReuseImporterForImage(const UnsignedInt 
 UnsignedInt CgltfImporter::doImage2DLevelCount(const UnsignedInt id) {
     CORRADE_ASSERT(manager(), "Trade::CgltfImporter::image2DLevelCount(): the plugin must be instantiated with access to plugin manager in order to open image files", {});
 
-    AbstractImporter* importer = setupOrReuseImporterForImage(id, "image2DLevelCount");
+    AbstractImporter* importer = setupOrReuseImporterForImage(id, "Trade::CgltfImporter::image2DLevelCount():");
     /* image2DLevelCount() isn't supposed to fail (image2D() is, instead), so
        report 1 on failure and expect image2D() to fail later */
     if(!importer) return 1;
@@ -3365,7 +3363,7 @@ UnsignedInt CgltfImporter::doImage2DLevelCount(const UnsignedInt id) {
 Containers::Optional<ImageData2D> CgltfImporter::doImage2D(const UnsignedInt id, const UnsignedInt level) {
     CORRADE_ASSERT(manager(), "Trade::CgltfImporter::image2D(): the plugin must be instantiated with access to plugin manager in order to load images", {});
 
-    AbstractImporter* importer = setupOrReuseImporterForImage(id, "image2D");
+    AbstractImporter* importer = setupOrReuseImporterForImage(id, "Trade::CgltfImporter::image2D():");
     if(!importer) return Containers::NullOpt;
 
     Containers::Optional<ImageData2D> imageData = importer->image2D(0, level);
