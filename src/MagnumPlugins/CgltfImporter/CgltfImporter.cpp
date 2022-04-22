@@ -407,6 +407,20 @@ bool CgltfImporter::loadBuffer(const char* const errorPrefix, const UnsignedInt 
     return true;
 }
 
+bool CgltfImporter::checkBufferView(const char* const errorPrefix, const cgltf_buffer_view* const bufferView) {
+    CORRADE_INTERNAL_ASSERT(bufferView);
+    const cgltf_buffer* buffer = bufferView->buffer;
+    const std::size_t requiredBufferSize = bufferView->offset + bufferView->size;
+    if(buffer->size < requiredBufferSize) {
+        const UnsignedInt bufferViewId = bufferView - _d->data->buffer_views;
+        const UnsignedInt bufferId = buffer - _d->data->buffers;
+        Error{} << errorPrefix << "buffer view" << bufferViewId << "needs" << requiredBufferSize << "bytes but buffer" << bufferId << "has only" << buffer->size;
+        return false;
+    }
+
+    return true;
+}
+
 bool CgltfImporter::checkAccessor(const char* const errorPrefix, const cgltf_accessor* const accessor) {
     CORRADE_INTERNAL_ASSERT(accessor);
     const UnsignedInt accessorId = accessor - _d->data->accessors;
@@ -428,7 +442,6 @@ bool CgltfImporter::checkAccessor(const char* const errorPrefix, const cgltf_acc
 
     const cgltf_buffer_view* bufferView = accessor->buffer_view;
     const UnsignedInt bufferViewId = bufferView - _d->data->buffer_views;
-    const cgltf_buffer* buffer = bufferView->buffer;
 
     const std::size_t typeSize = elementSize(accessor);
     const std::size_t requiredBufferViewSize = accessor->offset + accessor->stride*(accessor->count - 1) + typeSize;
@@ -437,12 +450,8 @@ bool CgltfImporter::checkAccessor(const char* const errorPrefix, const cgltf_acc
         return false;
     }
 
-    const std::size_t requiredBufferSize = bufferView->offset + bufferView->size;
-    if(buffer->size < requiredBufferSize) {
-        const UnsignedInt bufferId = buffer - _d->data->buffers;
-        Error{} << errorPrefix << "buffer view" << bufferViewId << "needs" << requiredBufferSize << "bytes but buffer" << bufferId << "has only" << buffer->size;
+    if(!checkBufferView(errorPrefix, bufferView))
         return false;
-    }
 
     /* Cgltf copies the bufferview stride into the accessor. If that's zero, it
        copies the element size into the stride. */
@@ -3317,6 +3326,9 @@ AbstractImporter* CgltfImporter::setupOrReuseImporterForImage(const UnsignedInt 
                 Error{} << errorPrefix << "image has neither a URI nor a buffer view";
                 return nullptr;
             }
+
+            if(!checkBufferView(errorPrefix, image.buffer_view))
+                return nullptr;
 
             const cgltf_buffer* buffer = image.buffer_view->buffer;
             const UnsignedInt bufferId = buffer - _d->data->buffers;

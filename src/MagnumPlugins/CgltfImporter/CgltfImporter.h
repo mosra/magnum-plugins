@@ -37,6 +37,7 @@
 
 #ifndef DOXYGEN_GENERATING_OUTPUT
 struct cgltf_accessor;
+struct cgltf_buffer_view;
 #endif
 
 namespace Magnum { namespace Trade {
@@ -526,6 +527,7 @@ class MAGNUM_CGLTFIMPORTER_EXPORT CgltfImporter: public AbstractImporter {
 
         MAGNUM_CGLTFIMPORTER_LOCAL Containers::Optional<Containers::ArrayView<const char>> loadUri(const char* errorPrefix, Containers::StringView uri, Containers::Array<char>& storage);
         MAGNUM_CGLTFIMPORTER_LOCAL bool loadBuffer(const char* errorPrefix, UnsignedInt id);
+        MAGNUM_CGLTFIMPORTER_LOCAL bool checkBufferView(const char* errorPrefix, const cgltf_buffer_view* bufferView);
         MAGNUM_CGLTFIMPORTER_LOCAL bool checkAccessor(const char* errorPrefix, const cgltf_accessor* accessor);
         MAGNUM_CGLTFIMPORTER_LOCAL Containers::Optional<Containers::StridedArrayView2D<const char>> accessorView(const char* errorPrefix, const cgltf_accessor* accessor);
 
