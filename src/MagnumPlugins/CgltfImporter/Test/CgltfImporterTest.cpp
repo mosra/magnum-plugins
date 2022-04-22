@@ -180,7 +180,7 @@ struct CgltfImporterTest: TestSuite::Tester {
     void imageExternalNotFound();
     void imageExternalBufferNotFound();
     void imageExternalNoPathNoCallback();
-    void imageNoData();
+    void imageInvalid();
 
     void imageBasis();
     void imageMipLevels();
@@ -600,6 +600,15 @@ constexpr struct {
     {"binary buffer", "-buffer.glb"},
 };
 
+const struct {
+    const char* name;
+    const char* file;
+    const char* message;
+} ImageInvalidData[]{
+    {"no data", "image-invalid-no-data.gltf", "image has neither a URI nor a buffer view"},
+    {"invalid buffer views", "image-invalid-bufferview.gltf", "buffer view 2 needs 151 bytes but buffer 1 has only 150"}
+};
+
 constexpr struct {
     const char* name;
     const char* suffix;
@@ -827,8 +836,10 @@ CgltfImporterTest::CgltfImporterTest() {
 
     addTests({&CgltfImporterTest::imageExternalNotFound,
               &CgltfImporterTest::imageExternalBufferNotFound,
-              &CgltfImporterTest::imageExternalNoPathNoCallback,
-              &CgltfImporterTest::imageNoData});
+              &CgltfImporterTest::imageExternalNoPathNoCallback});
+
+    addInstancedTests({&CgltfImporterTest::imageInvalid},
+                      Containers::arraySize(ImageInvalidData));
 
     addInstancedTests({&CgltfImporterTest::imageBasis},
                       Containers::arraySize(ImageBasisData));
@@ -4786,15 +4797,18 @@ void CgltfImporterTest::imageExternalNoPathNoCallback() {
     CORRADE_COMPARE(out.str(), "Trade::CgltfImporter::image2D(): external images can be imported only when opening files from the filesystem or if a file callback is present\n");
 }
 
-void CgltfImporterTest::imageNoData() {
+void CgltfImporterTest::imageInvalid() {
+    auto&& data = ImageInvalidData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "image-invalid-no-data.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, data.file)));
     CORRADE_COMPARE(importer->image2DCount(), 1);
 
     std::ostringstream out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->image2D(0));
-    CORRADE_COMPARE(out.str(), "Trade::CgltfImporter::image2D(): image has neither a URI nor a buffer view\n");
+    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::CgltfImporter::image2D(): {}\n", data.message));
 }
 
 void CgltfImporterTest::imageBasis() {

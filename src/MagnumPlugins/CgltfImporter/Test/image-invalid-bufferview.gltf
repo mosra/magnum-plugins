@@ -1,0 +1,36 @@
+{
+    "asset": {
+        "version": "2.0"
+    },
+    "bufferViews": [
+        {
+            "buffer": 0,
+            "byteLength": 0
+        },
+        {
+            "buffer": 0,
+            "byteLength": 0
+        },
+        {
+            "buffer": 1,
+            "byteLength": 75,
+            "byteOffset": 76
+        }
+    ],
+    "buffers": [
+        {
+            "byteLength": 1,
+            "uri": "image.png"
+        },
+        {
+            "byteLength": 150,
+            "uri": "image.png"
+        }
+    ],
+    "images": [
+        {
+            "mimeType": "image/png",
+            "bufferView": 2
+        }
+    ]
+}
