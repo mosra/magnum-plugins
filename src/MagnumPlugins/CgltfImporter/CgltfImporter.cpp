@@ -455,7 +455,9 @@ bool CgltfImporter::loadBuffer(const UnsignedInt id, const char* const errorPref
 }
 
 Containers::Optional<Containers::StridedArrayView2D<const char>> CgltfImporter::accessorView(const cgltf_accessor* const accessor, const char* const errorPrefix) {
-    /* All this assumes the accessor was checked using checkAccessor() */
+    if(!checkAccessor(_d->data, errorPrefix, accessor))
+        return {};
+
     const cgltf_buffer_view* bufferView = accessor->buffer_view;
     const cgltf_buffer* buffer = bufferView->buffer;
     const UnsignedInt bufferId = buffer - _d->data->buffers;
@@ -891,8 +893,6 @@ Containers::Optional<AnimationData> CgltfImporter::doAnimation(UnsignedInt id) {
             /* If the input view is not yet present in the output data buffer,
                add it */
             if(samplerData.find(sampler.input) == samplerData.end()) {
-                if(!checkAccessor(_d->data, "Trade::CgltfImporter::animation():", sampler.input))
-                    return Containers::NullOpt;
                 Containers::Optional<Containers::StridedArrayView2D<const char>> view = accessorView(sampler.input, "Trade::CgltfImporter::animation():");
                 if(!view)
                     return Containers::NullOpt;
@@ -904,8 +904,6 @@ Containers::Optional<AnimationData> CgltfImporter::doAnimation(UnsignedInt id) {
             /* If the output view is not yet present in the output data buffer,
                add it */
             if(samplerData.find(sampler.output) == samplerData.end()) {
-                if(!checkAccessor(_d->data, "Trade::CgltfImporter::animation():", sampler.output))
-                    return Containers::NullOpt;
                 Containers::Optional<Containers::StridedArrayView2D<const char>> view = accessorView(sampler.output, "Trade::CgltfImporter::animation():");
                 if(!view)
                     return Containers::NullOpt;
@@ -1675,7 +1673,8 @@ Containers::Optional<SkinData3D> CgltfImporter::doSkin3D(const UnsignedInt id) {
     Containers::Array<Matrix4> inverseBindMatrices{skin.joints_count};
     if(skin.inverse_bind_matrices) {
         const cgltf_accessor* accessor = skin.inverse_bind_matrices;
-        if(!checkAccessor(_d->data, "Trade::CgltfImporter::skin3D():", accessor))
+        Containers::Optional<Containers::StridedArrayView2D<const char>> view = accessorView(accessor, "Trade::CgltfImporter::skin3D():");
+        if(!view)
             return Containers::NullOpt;
 
         if(accessor->type != cgltf_type_mat4 || accessor->component_type != cgltf_component_type_r_32f || accessor->normalized) {
@@ -1684,10 +1683,6 @@ Containers::Optional<SkinData3D> CgltfImporter::doSkin3D(const UnsignedInt id) {
                 << gltfTypeName(accessor->type) << "/" << gltfComponentTypeName(accessor->component_type);
             return Containers::NullOpt;
         }
-
-        Containers::Optional<Containers::StridedArrayView2D<const char>> view = accessorView(accessor, "Trade::CgltfImporter::skin3D():");
-        if(!view)
-            return Containers::NullOpt;
 
         Containers::StridedArrayView1D<const Matrix4> matrices = Containers::arrayCast<1, const Matrix4>(*view);
         if(matrices.size() != inverseBindMatrices.size()) {
@@ -2125,7 +2120,8 @@ Containers::Optional<MeshData> CgltfImporter::doMesh(const UnsignedInt id, Unsig
     Containers::Array<char> indexData;
     if(primitive.indices) {
         const cgltf_accessor* accessor = primitive.indices;
-        if(!checkAccessor(_d->data, "Trade::CgltfImporter::mesh():", accessor))
+        Containers::Optional<Containers::StridedArrayView2D<const char>> src = accessorView(accessor, "Trade::CgltfImporter::mesh():");
+        if(!src)
             return Containers::NullOpt;
 
         if(accessor->type != cgltf_type_scalar) {
@@ -2149,10 +2145,6 @@ Containers::Optional<MeshData> CgltfImporter::doMesh(const UnsignedInt id, Unsig
             Error{} << "Trade::CgltfImporter::mesh(): unexpected index component type" << gltfComponentTypeName(accessor->component_type);
             return Containers::NullOpt;
         }
-
-        Containers::Optional<Containers::StridedArrayView2D<const char>> src = accessorView(accessor, "Trade::CgltfImporter::mesh():");
-        if(!src)
-            return Containers::NullOpt;
 
         if(!src->isContiguous()) {
             Error{} << "Trade::CgltfImporter::mesh(): index buffer view is not contiguous";

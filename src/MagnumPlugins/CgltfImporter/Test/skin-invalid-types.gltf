@@ -54,13 +54,14 @@
         {
             "buffer": 0,
             "byteOffset": 0,
-            "byteLength": 192
+            "byteLength": 128
         }
     ],
     "buffers": [
         {
-            "byteLength": 192,
-            "uri": "external-data.bin"
+            "byteLength": 128,
+            "comment": "base64.b64encode(bytes(128))",
+            "uri": "data:application/octet-stream;base64,AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
         }
     ]
 }
