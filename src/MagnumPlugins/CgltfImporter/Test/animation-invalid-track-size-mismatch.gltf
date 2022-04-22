@@ -2,6 +2,7 @@
     "asset": {
         "version": "2.0"
     },
+    "note": "separate from animation-invalid.gltf because TinyGltf doesn't fail for this one",
     "animations": [
         {
             "channels": [

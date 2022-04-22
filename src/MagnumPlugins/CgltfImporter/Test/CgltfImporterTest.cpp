@@ -471,14 +471,14 @@ constexpr struct {
     const char* name;
     const char* file;
 } SceneOutOfBoundsData[]{
-    {"camera out of bounds", "scene-oob-camera.gltf"},
-    {"child out of bounds", "scene-oob-child.gltf"},
-    {"light out of bounds", "scene-oob-light.gltf"},
-    {"material out of bounds", "scene-oob-material.gltf"},
-    {"material in a multi-primitive mesh out of bounds", "scene-oob-material-multi-primitive.gltf"},
-    {"node out of bounds", "scene-oob-node.gltf"},
-    {"skin out of bounds", "scene-oob-skin.gltf"},
-    {"skin for a multi-primitive mesh out of bounds", "scene-oob-skin-multi-primitive.gltf"}
+    {"camera out of bounds", "scene-invalid-oob-camera.gltf"},
+    {"child out of bounds", "scene-invalid-oob-child.gltf"},
+    {"light out of bounds", "scene-invalid-oob-light.gltf"},
+    {"material out of bounds", "scene-invalid-oob-material.gltf"},
+    {"material in a multi-primitive mesh out of bounds", "scene-invalid-oob-material-multi-primitive.gltf"},
+    {"node out of bounds", "scene-invalid-oob-node.gltf"},
+    {"skin out of bounds", "scene-invalid-oob-skin.gltf"},
+    {"skin for a multi-primitive mesh out of bounds", "scene-invalid-oob-skin-multi-primitive.gltf"}
 };
 
 constexpr struct {
@@ -1009,7 +1009,7 @@ void CgltfImporterTest::openExternalDataNotFound() {
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
 
-    Containers::String filename = Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "buffer-notfound"_s + data.suffix);
+    Containers::String filename = Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "buffer-invalid-notfound"_s + data.suffix);
 
     /* Importing should succeed, buffers are loaded on demand */
     CORRADE_VERIFY(importer->openFile(filename));
@@ -1031,7 +1031,7 @@ void CgltfImporterTest::openExternalDataNoPathNoCallback() {
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
 
-    Containers::Optional<Containers::Array<char>> file = Utility::Path::read(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "buffer-notfound"_s + data.suffix));
+    Containers::Optional<Containers::Array<char>> file = Utility::Path::read(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "buffer-invalid-notfound"_s + data.suffix));
     CORRADE_VERIFY(file);
     CORRADE_VERIFY(importer->openData(*file));
     CORRADE_COMPARE(importer->meshCount(), 1);
@@ -1049,7 +1049,7 @@ void CgltfImporterTest::openExternalDataTooLong() {
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
 
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "buffer-wrong-size"_s + data.suffix)));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "buffer-long-size"_s + data.suffix)));
 
     CORRADE_COMPARE(importer->meshCount(), 1);
     CORRADE_VERIFY(importer->mesh(0));
@@ -1061,7 +1061,7 @@ void CgltfImporterTest::openExternalDataTooShort() {
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
 
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "buffer-short-size"_s + data.suffix)));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "buffer-invalid-short-size"_s + data.suffix)));
     CORRADE_COMPARE(importer->meshCount(), 1);
 
     std::ostringstream out;
@@ -1076,7 +1076,7 @@ void CgltfImporterTest::openExternalDataNoUri() {
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
 
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "buffer-no-uri"_s + data.suffix)));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "buffer-invalid-no-uri"_s + data.suffix)));
     CORRADE_COMPARE(importer->meshCount(), 1);
 
     std::ostringstream out;
@@ -1297,7 +1297,7 @@ void CgltfImporterTest::animationInvalidBufferNotFound() {
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
 
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "animation-buffer-notfound.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "animation-invalid-buffer-notfound.gltf")));
 
     /* Check we didn't forget to test anything */
     CORRADE_COMPARE(importer->animationCount(), Containers::arraySize(AnimationInvalidBufferNotFoundData));
@@ -1346,7 +1346,7 @@ void CgltfImporterTest::animationInvalidTypes() {
 void CgltfImporterTest::animationTrackSizeMismatch() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
 
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "animation-track-size-mismatch.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "animation-invalid-track-size-mismatch.gltf")));
 
     std::ostringstream out;
     Error redirectError{&out};
@@ -1943,7 +1943,7 @@ void CgltfImporterTest::lightInvalidColorSize() {
 void CgltfImporterTest::lightMissingType() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
 
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "light-missing-type.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "light-invalid-missing-type.gltf")));
     CORRADE_COMPARE(importer->lightCount(), 1);
 
     std::ostringstream out;
@@ -1955,7 +1955,7 @@ void CgltfImporterTest::lightMissingType() {
 void CgltfImporterTest::lightMissingSpot() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
 
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "light-missing-spot.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "light-invalid-missing-spot.gltf")));
     CORRADE_COMPARE(importer->lightCount(), 1);
 
     Containers::Optional<Trade::LightData> light = importer->light(0);
@@ -2488,7 +2488,7 @@ void CgltfImporterTest::skinInvalidBufferNotFound() {
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
 
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "skin-buffer-notfound.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "skin-invalid-buffer-notfound.gltf")));
 
     CORRADE_COMPARE(importer->skin3DCount(), 1);
 
@@ -2521,7 +2521,7 @@ void CgltfImporterTest::skinInvalidTypes() {
 void CgltfImporterTest::skinNoJointsProperty() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
 
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "skin-no-joints.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "skin-invalid-no-joints.gltf")));
     CORRADE_COMPARE(importer->skin3DCount(), 1);
 
     std::ostringstream out;
@@ -3242,7 +3242,7 @@ void CgltfImporterTest::meshInvalidIndicesBufferNotFound() {
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
 
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "mesh-indices-buffer-notfound.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "mesh-invalid-indices-buffer-notfound.gltf")));
 
     CORRADE_COMPARE(importer->meshCount(), 1);
 
@@ -4637,7 +4637,7 @@ void CgltfImporterTest::textureEmptySampler() {
 void CgltfImporterTest::textureMissingSource() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
 
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "texture-missing-source.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "texture-invalid-missing-source.gltf")));
     CORRADE_COMPARE(importer->textureCount(), 1);
 
     std::ostringstream out;
@@ -4747,7 +4747,7 @@ void CgltfImporterTest::imageExternal() {
 
 void CgltfImporterTest::imageExternalNotFound() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "image-notfound.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "image-invalid-notfound.gltf")));
     CORRADE_COMPARE(importer->image2DCount(), 1);
 
     std::ostringstream out;
@@ -4761,7 +4761,7 @@ void CgltfImporterTest::imageExternalNotFound() {
 
 void CgltfImporterTest::imageExternalBufferNotFound() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "image-buffer-notfound.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "image-invalid-buffer-notfound.gltf")));
     CORRADE_COMPARE(importer->image2DCount(), 1);
 
     std::ostringstream out;
@@ -4788,7 +4788,7 @@ void CgltfImporterTest::imageExternalNoPathNoCallback() {
 
 void CgltfImporterTest::imageNoData() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "image-no-data.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "image-invalid-no-data.gltf")));
     CORRADE_COMPARE(importer->image2DCount(), 1);
 
     std::ostringstream out;

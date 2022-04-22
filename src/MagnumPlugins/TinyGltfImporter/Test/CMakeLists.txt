@@ -74,17 +74,17 @@ corrade_add_test(TinyGltfImporterTest
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/animation-invalid-input-accessor-oob.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/animation-invalid-sampler-oob.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/animation-invalid-output-accessor-oob.gltf
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/animation-invalid-track-size-mismatch.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/animation-missing-target-node.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/animation-patching.bin
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/animation-patching.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/animation-splines-sharing.gltf
-        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/animation-track-size-mismatch.gltf
-        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/buffer-notfound.gltf
-        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/buffer-notfound.glb
-        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/buffer-no-uri.gltf
-        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/buffer-no-uri.glb
-        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/buffer-wrong-size.gltf
-        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/buffer-wrong-size.glb
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/buffer-invalid-notfound.gltf
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/buffer-invalid-notfound.glb
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/buffer-invalid-no-uri.gltf
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/buffer-invalid-no-uri.glb
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/buffer-long-size.gltf
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/buffer-long-size.glb
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/camera.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/camera.glb
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/camera-invalid-type.gltf
@@ -105,17 +105,17 @@ corrade_add_test(TinyGltfImporterTest
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/image-buffer.glb
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/image-buffer-embedded.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/image-buffer-embedded.glb
-        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/image-notfound.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/image-basis.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/image-basis.glb
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/image-basis-embedded.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/image-basis-embedded.glb
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/image-invalid-notfound.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/light.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/light.glb
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/light-invalid.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/light-invalid-color-size.gltf
-        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/light-missing-type.gltf
-        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/light-missing-spot.gltf
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/light-invalid-missing-spot.gltf
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/light-invalid-missing-type.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/material-common.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/material-clearcoat.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/material-invalid-alpha-mode.gltf
@@ -171,15 +171,15 @@ corrade_add_test(TinyGltfImporterTest
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/scene-invalid-hierarchy-cycle.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/scene-invalid-hierarchy-cycle-deep.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/scene-invalid-hierarchy-multiple-parents.gltf
-        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/scene-oob-camera.gltf
-        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/scene-oob-child.gltf
-        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/scene-oob-light.gltf
-        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/scene-oob-material.gltf
-        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/scene-oob-material-multi-primitive.gltf
-        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/scene-oob-mesh.gltf
-        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/scene-oob-node.gltf
-        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/scene-oob-skin.gltf
-        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/scene-oob-skin-multi-primitive.gltf
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/scene-invalid-oob-camera.gltf
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/scene-invalid-oob-child.gltf
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/scene-invalid-oob-light.gltf
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/scene-invalid-oob-material.gltf
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/scene-invalid-oob-material-multi-primitive.gltf
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/scene-invalid-oob-mesh.gltf
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/scene-invalid-oob-node.gltf
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/scene-invalid-oob-skin.gltf
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/scene-invalid-oob-skin-multi-primitive.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/scene-transformation.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/scene-transformation.glb
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/scene-transformation-patching.gltf
@@ -188,7 +188,7 @@ corrade_add_test(TinyGltfImporterTest
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/skin-invalid.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/skin-invalid-accessor-oob.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/skin-invalid-joint-oob.gltf
-        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/skin-no-joints.gltf
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/skin-invalid-no-joints.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/skin.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/skin.bin
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/skin.glb
@@ -204,7 +204,7 @@ corrade_add_test(TinyGltfImporterTest
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/texture-invalid.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/texture-invalid-image-oob.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/texture-invalid-sampler-oob.gltf
-        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/texture-missing-source.gltf
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/texture-invalid-missing-source.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/version-legacy.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/version-supported.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/version-unsupported.gltf

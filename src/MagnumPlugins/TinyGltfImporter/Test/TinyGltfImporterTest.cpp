@@ -386,20 +386,20 @@ constexpr struct {
 } SceneOutOfBoundsData[]{
     /* The files have extra dummy nodes to test correct numbering in the
        "in node X" message */
-    {"camera out of bounds", "scene-oob-camera.gltf", "camera index 1 in node 3 out of bounds for 1 cameras"},
-    {"child out of bounds", "scene-oob-child.gltf", "child index 7 in node 4 out of bounds for 7 nodes"},
-    {"light out of bounds", "scene-oob-light.gltf", "light index 2 in node 3 out of bounds for 2 lights"},
-    {"material out of bounds", "scene-oob-material.gltf", "material index 4 in node 3 out of bounds for 4 materials"},
+    {"camera out of bounds", "scene-invalid-oob-camera.gltf", "camera index 1 in node 3 out of bounds for 1 cameras"},
+    {"child out of bounds", "scene-invalid-oob-child.gltf", "child index 7 in node 4 out of bounds for 7 nodes"},
+    {"light out of bounds", "scene-invalid-oob-light.gltf", "light index 2 in node 3 out of bounds for 2 lights"},
+    {"material out of bounds", "scene-invalid-oob-material.gltf", "material index 4 in node 3 out of bounds for 4 materials"},
     /* The ID should be 3 because the object gets duplicated in order to be
        single-function but then the scene import fails so this would assert on
        the object not being in range. Thus using 2 instead. */
-    {"material in a multi-primitive mesh out of bounds", "scene-oob-material-multi-primitive.gltf", "material index 5 in node 2 out of bounds for 4 materials"},
-    {"mesh out of bounds", "scene-oob-mesh.gltf", "mesh index 1 in node 2 out of bounds for 1 meshes"},
-    {"node out of bounds", "scene-oob-node.gltf", "node index 7 out of bounds for 7 nodes"},
-    {"skin out of bounds", "scene-oob-skin.gltf", "skin index 3 in node 1 out of bounds for 3 skins"},
+    {"material in a multi-primitive mesh out of bounds", "scene-invalid-oob-material-multi-primitive.gltf", "material index 5 in node 2 out of bounds for 4 materials"},
+    {"mesh out of bounds", "scene-invalid-oob-mesh.gltf", "mesh index 1 in node 2 out of bounds for 1 meshes"},
+    {"node out of bounds", "scene-invalid-oob-node.gltf", "node index 7 out of bounds for 7 nodes"},
+    {"skin out of bounds", "scene-invalid-oob-skin.gltf", "skin index 3 in node 1 out of bounds for 3 skins"},
     /* The skin should be checked for both duplicates of the primitive */
-    {"skin for a multi-primitive mesh out of bounds", "scene-oob-skin-multi-primitive.gltf", "skin index 3 in node 2 out of bounds for 3 skins"},
-    {"skin for a multi-primitive mesh out of bounds", "scene-oob-skin-multi-primitive.gltf", "skin index 3 in node 2 out of bounds for 3 skins"}
+    {"skin for a multi-primitive mesh out of bounds", "scene-invalid-oob-skin-multi-primitive.gltf", "skin index 3 in node 2 out of bounds for 3 skins"},
+    {"skin for a multi-primitive mesh out of bounds", "scene-invalid-oob-skin-multi-primitive.gltf", "skin index 3 in node 2 out of bounds for 3 skins"}
 };
 
 constexpr struct {
@@ -759,7 +759,7 @@ void TinyGltfImporterTest::openExternalDataNotFound() {
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(!importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "buffer-notfound"_s + data.suffix)));
+    CORRADE_VERIFY(!importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "buffer-invalid-notfound"_s + data.suffix)));
     /* There's an error from Path::read() before */
     CORRADE_COMPARE_AS(out.str(),
         "\nTrade::TinyGltfImporter::openData(): error opening file: File read error : /nonexistent.bin : file reading failed\n",
@@ -772,7 +772,7 @@ void TinyGltfImporterTest::openExternalDataNoPathNoCallback() {
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
 
-    Containers::Optional<Containers::Array<char>> file = Utility::Path::read(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "buffer-notfound"_s + data.suffix));
+    Containers::Optional<Containers::Array<char>> file = Utility::Path::read(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "buffer-invalid-notfound"_s + data.suffix));
     CORRADE_VERIFY(file);
 
     std::ostringstream out;
@@ -790,9 +790,11 @@ void TinyGltfImporterTest::openExternalDataWrongSize() {
     std::ostringstream out;
     Error redirectError{&out};
     {
+        /* These files are actually valid, but it's tinygltf we're using here,
+           so bugs are expected */
         CORRADE_EXPECT_FAIL_IF(data.suffix == std::string{".glb"},
             "tinygltf doesn't check for correct buffer size in GLBs.");
-        CORRADE_VERIFY(!importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "buffer-wrong-size"_s + data.suffix)));
+        CORRADE_VERIFY(!importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "buffer-long-size"_s + data.suffix)));
         CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::openData(): error opening file: File size mismatch : external-data.bin, requestedBytes 6, but got 12\n");
     }
 }
@@ -806,7 +808,7 @@ void TinyGltfImporterTest::openExternalDataNoUri() {
     std::ostringstream out;
     Error redirectError{&out};
 
-    CORRADE_VERIFY(!importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "buffer-no-uri"_s + data.suffix)));
+    CORRADE_VERIFY(!importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "buffer-invalid-no-uri"_s + data.suffix)));
     {
         CORRADE_EXPECT_FAIL_IF(data.suffix == ".glb"_s,
             "tinygltf incorrectly detects all buffers without URI as GLB BIN buffer.");
@@ -976,7 +978,7 @@ void TinyGltfImporterTest::animationInvalid() {
 void TinyGltfImporterTest::animationTrackSizeMismatch() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
 
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "animation-track-size-mismatch.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "animation-invalid-track-size-mismatch.gltf")));
 
     std::ostringstream out;
     Error redirectError{&out};
@@ -1579,7 +1581,7 @@ void TinyGltfImporterTest::lightMissingType() {
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(!importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "light-missing-type.gltf")));
+    CORRADE_VERIFY(!importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "light-invalid-missing-type.gltf")));
     /* This error is extremely shitty, but well that's tinygltf, so. */
     CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::openData(): error opening file: 'type' property is missing.\n");
 }
@@ -1589,7 +1591,7 @@ void TinyGltfImporterTest::lightMissingSpot() {
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(!importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "light-missing-spot.gltf")));
+    CORRADE_VERIFY(!importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "light-invalid-missing-spot.gltf")));
     /* This error is extremely shitty, but well that's tinygltf, so. */
     CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::openData(): error opening file: Spot light description not found.\n");
 }
@@ -2121,7 +2123,7 @@ void TinyGltfImporterTest::skinNoJointsProperty() {
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(!importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "skin-no-joints.gltf")));
+    CORRADE_VERIFY(!importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "skin-invalid-no-joints.gltf")));
     {
         CORRADE_EXPECT_FAIL("TinyGLTF doesn't give any usable error message when there's no skin.joints property, sigh.");
         CORRADE_VERIFY(false);
@@ -3692,7 +3694,7 @@ void TinyGltfImporterTest::textureEmptySampler() {
 void TinyGltfImporterTest::textureMissingSource() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
 
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "texture-missing-source.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "texture-invalid-missing-source.gltf")));
     CORRADE_COMPARE(importer->textureCount(), 1);
 
     std::ostringstream out;
@@ -3791,7 +3793,7 @@ void TinyGltfImporterTest::imageExternal() {
 
 void TinyGltfImporterTest::imageExternalNotFound() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "image-notfound.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "image-invalid-notfound.gltf")));
     CORRADE_COMPARE(importer->image2DCount(), 1);
 
     std::ostringstream out;

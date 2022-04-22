@@ -64,30 +64,30 @@ corrade_add_test(CgltfImporterTest
         animation.gltf
         animation.glb
         animation.bin
-        animation-buffer-notfound.gltf
         animation-embedded.gltf
         animation-embedded.glb
         animation-invalid.gltf
+        animation-invalid-buffer-notfound.gltf
         animation-invalid-node-oob.gltf
         animation-invalid-input-accessor-oob.gltf
         animation-invalid-sampler-oob.gltf
         animation-invalid-types.gltf
         animation-invalid-output-accessor-oob.gltf
+        animation-invalid-track-size-mismatch.gltf
         animation-missing-target-node.gltf
         animation-patching.bin
         animation-patching.gltf
         animation-splines-sharing.gltf
-        animation-track-size-mismatch.gltf
-        buffer-notfound.gltf
-        buffer-notfound.glb
-        buffer-no-uri.gltf
-        buffer-no-uri.glb
-        buffer-short-size.glb
-        buffer-short-size.gltf
-        buffer-short-size-embedded.glb
-        buffer-short-size-embedded.gltf
-        buffer-wrong-size.gltf
-        buffer-wrong-size.glb
+        buffer-invalid-notfound.gltf
+        buffer-invalid-notfound.glb
+        buffer-invalid-no-uri.gltf
+        buffer-invalid-no-uri.glb
+        buffer-invalid-short-size.glb
+        buffer-invalid-short-size.gltf
+        buffer-invalid-short-size-embedded.glb
+        buffer-invalid-short-size-embedded.gltf
+        buffer-long-size.gltf
+        buffer-long-size.glb
         camera.gltf
         camera.glb
         camera-invalid-type.gltf
@@ -112,17 +112,17 @@ corrade_add_test(CgltfImporterTest
         image-buffer.glb
         image-buffer-embedded.gltf
         image-buffer-embedded.glb
-        image-buffer-notfound.gltf
         image-embedded.gltf
         image-embedded.glb
-        image-no-data.gltf
-        image-notfound.gltf
+        image-invalid-buffer-notfound.gltf
+        image-invalid-no-data.gltf
+        image-invalid-notfound.gltf
         light.gltf
         light.glb
         light-invalid.gltf
         light-invalid-color-size.gltf
-        light-missing-type.gltf
-        light-missing-spot.gltf
+        light-invalid-missing-spot.gltf
+        light-invalid-missing-type.gltf
         material-common.gltf
         material-clearcoat.gltf
         material-extras.gltf
@@ -160,13 +160,13 @@ corrade_add_test(CgltfImporterTest
         mesh-duplicate-attributes.gltf
         mesh-embedded.gltf
         mesh-embedded.glb
-        mesh-indices-buffer-notfound.gltf
         mesh-invalid.bin
         mesh-invalid.gltf
         mesh-invalid-accessor-oob.gltf
         mesh-invalid-buffer-oob.gltf
         mesh-invalid-bufferview-oob.gltf
         mesh-invalid-index-accessor-oob.gltf
+        mesh-invalid-indices-buffer-notfound.gltf
         mesh-invalid-types.gltf
         mesh-multiple-primitives.gltf
         mesh-primitives-types.gltf
@@ -187,26 +187,26 @@ corrade_add_test(CgltfImporterTest
         scene-invalid-hierarchy-cycle.gltf
         scene-invalid-hierarchy-cycle-deep.gltf
         scene-invalid-hierarchy-multiple-parents.gltf
-        scene-oob-camera.gltf
-        scene-oob-child.gltf
-        scene-oob-light.gltf
-        scene-oob-material-multi-primitive.gltf
-        scene-oob-material.gltf
-        scene-oob-mesh.gltf
-        scene-oob-node.gltf
-        scene-oob-skin.gltf
-        scene-oob-skin-multi-primitive.gltf
+        scene-invalid-oob-camera.gltf
+        scene-invalid-oob-child.gltf
+        scene-invalid-oob-light.gltf
+        scene-invalid-oob-material-multi-primitive.gltf
+        scene-invalid-oob-material.gltf
+        scene-invalid-oob-mesh.gltf
+        scene-invalid-oob-node.gltf
+        scene-invalid-oob-skin.gltf
+        scene-invalid-oob-skin-multi-primitive.gltf
         scene-transformation.gltf
         scene-transformation.glb
         scene-transformation-patching.gltf
-        skin-buffer-notfound.gltf
         skin-embedded.glb
         skin-embedded.gltf
         skin-invalid.gltf
+        skin-invalid-buffer-notfound.gltf
         skin-invalid-accessor-oob.gltf
         skin-invalid-joint-oob.gltf
+        skin-invalid-no-joints.gltf
         skin-invalid-types.gltf
-        skin-no-joints.gltf
         skin.gltf
         skin.bin
         skin.glb
@@ -222,7 +222,7 @@ corrade_add_test(CgltfImporterTest
         texture-invalid.gltf
         texture-invalid-image-oob.gltf
         texture-invalid-sampler-oob.gltf
-        texture-missing-source.gltf
+        texture-invalid-missing-source.gltf
         uri-invalid.gltf
         version-legacy.gltf
         version-supported.gltf
