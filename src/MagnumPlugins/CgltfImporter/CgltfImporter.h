@@ -526,6 +526,7 @@ class MAGNUM_CGLTFIMPORTER_EXPORT CgltfImporter: public AbstractImporter {
 
         MAGNUM_CGLTFIMPORTER_LOCAL Containers::Optional<Containers::ArrayView<const char>> loadUri(Containers::StringView uri, Containers::Array<char>& storage, const char* errorPrefix);
         MAGNUM_CGLTFIMPORTER_LOCAL bool loadBuffer(UnsignedInt id, const char* errorPrefix);
+        MAGNUM_CGLTFIMPORTER_LOCAL bool checkAccessor(const char* errorPrefix, const cgltf_accessor* accessor);
         MAGNUM_CGLTFIMPORTER_LOCAL Containers::Optional<Containers::StridedArrayView2D<const char>> accessorView(const cgltf_accessor* accessor, const char* errorPrefix);
 
         Containers::Pointer<Document> _d;

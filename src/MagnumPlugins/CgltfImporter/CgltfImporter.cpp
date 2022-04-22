@@ -151,53 +151,6 @@ std::size_t elementSize(const cgltf_accessor* accessor) {
     return cgltf_calc_size(accessor->type, accessor->component_type);
 }
 
-bool checkAccessor(const cgltf_data* const data, const char* const errorPrefix, const cgltf_accessor* const accessor) {
-    CORRADE_INTERNAL_ASSERT(accessor);
-    const UnsignedInt accessorId = accessor - data->accessors;
-
-    /** @todo Validate alignment rules, calculate correct stride in accessorView():
-        https://www.khronos.org/registry/glTF/specs/2.0/glTF-2.0.html#data-alignment */
-
-    if(accessor->is_sparse) {
-        Error{} << errorPrefix << "accessor" << accessorId << "is using sparse storage, which is unsupported";
-        return false;
-    }
-    /* Buffer views are optional in accessors, we're supposed to fill the view
-       with zeros. Only makes sense with sparse data and we don't support
-       that. */
-    if(!accessor->buffer_view) {
-        Error{} << errorPrefix << "accessor" << accessorId << "has no buffer view";
-        return false;
-    }
-
-    const cgltf_buffer_view* bufferView = accessor->buffer_view;
-    const UnsignedInt bufferViewId = bufferView - data->buffer_views;
-    const cgltf_buffer* buffer = bufferView->buffer;
-
-    const std::size_t typeSize = elementSize(accessor);
-    const std::size_t requiredBufferViewSize = accessor->offset + accessor->stride*(accessor->count - 1) + typeSize;
-    if(bufferView->size < requiredBufferViewSize) {
-        Error{} << errorPrefix << "accessor" << accessorId << "needs" << requiredBufferViewSize << "bytes but buffer view" << bufferViewId << "has only" << bufferView->size;
-        return false;
-    }
-
-    const std::size_t requiredBufferSize = bufferView->offset + bufferView->size;
-    if(buffer->size < requiredBufferSize) {
-        const UnsignedInt bufferId = buffer - data->buffers;
-        Error{} << errorPrefix << "buffer view" << bufferViewId << "needs" << requiredBufferSize << "bytes but buffer" << bufferId << "has only" << buffer->size;
-        return false;
-    }
-
-    /* Cgltf copies the bufferview stride into the accessor. If that's zero, it
-       copies the element size into the stride. */
-    if(accessor->stride < typeSize) {
-        Error{} << errorPrefix << typeSize << Debug::nospace << "-byte type defined by accessor" << accessorId << "can't fit into buffer view" << bufferViewId << "stride of" << accessor->stride;
-        return false;
-    }
-
-    return true;
-}
-
 /* Data URI according to RFC 2397 */
 bool isDataUri(Containers::StringView uri) {
     return uri.hasPrefix("data:"_s);
@@ -454,8 +407,55 @@ bool CgltfImporter::loadBuffer(const UnsignedInt id, const char* const errorPref
     return true;
 }
 
+bool CgltfImporter::checkAccessor(const char* const errorPrefix, const cgltf_accessor* const accessor) {
+    CORRADE_INTERNAL_ASSERT(accessor);
+    const UnsignedInt accessorId = accessor - _d->data->accessors;
+
+    /** @todo Validate alignment rules, calculate correct stride in accessorView():
+        https://www.khronos.org/registry/glTF/specs/2.0/glTF-2.0.html#data-alignment */
+
+    if(accessor->is_sparse) {
+        Error{} << errorPrefix << "accessor" << accessorId << "is using sparse storage, which is unsupported";
+        return false;
+    }
+    /* Buffer views are optional in accessors, we're supposed to fill the view
+       with zeros. Only makes sense with sparse data and we don't support
+       that. */
+    if(!accessor->buffer_view) {
+        Error{} << errorPrefix << "accessor" << accessorId << "has no buffer view";
+        return false;
+    }
+
+    const cgltf_buffer_view* bufferView = accessor->buffer_view;
+    const UnsignedInt bufferViewId = bufferView - _d->data->buffer_views;
+    const cgltf_buffer* buffer = bufferView->buffer;
+
+    const std::size_t typeSize = elementSize(accessor);
+    const std::size_t requiredBufferViewSize = accessor->offset + accessor->stride*(accessor->count - 1) + typeSize;
+    if(bufferView->size < requiredBufferViewSize) {
+        Error{} << errorPrefix << "accessor" << accessorId << "needs" << requiredBufferViewSize << "bytes but buffer view" << bufferViewId << "has only" << bufferView->size;
+        return false;
+    }
+
+    const std::size_t requiredBufferSize = bufferView->offset + bufferView->size;
+    if(buffer->size < requiredBufferSize) {
+        const UnsignedInt bufferId = buffer - _d->data->buffers;
+        Error{} << errorPrefix << "buffer view" << bufferViewId << "needs" << requiredBufferSize << "bytes but buffer" << bufferId << "has only" << buffer->size;
+        return false;
+    }
+
+    /* Cgltf copies the bufferview stride into the accessor. If that's zero, it
+       copies the element size into the stride. */
+    if(accessor->stride < typeSize) {
+        Error{} << errorPrefix << typeSize << Debug::nospace << "-byte type defined by accessor" << accessorId << "can't fit into buffer view" << bufferViewId << "stride of" << accessor->stride;
+        return false;
+    }
+
+    return true;
+}
+
 Containers::Optional<Containers::StridedArrayView2D<const char>> CgltfImporter::accessorView(const cgltf_accessor* const accessor, const char* const errorPrefix) {
-    if(!checkAccessor(_d->data, errorPrefix, accessor))
+    if(!checkAccessor(errorPrefix, accessor))
         return {};
 
     const cgltf_buffer_view* bufferView = accessor->buffer_view;
@@ -1803,7 +1803,7 @@ Containers::Optional<MeshData> CgltfImporter::doMesh(const UnsignedInt id, Unsig
         lastAttribute = attribute;
 
         const cgltf_accessor* accessor = attribute.data;
-        if(!checkAccessor(_d->data, "Trade::CgltfImporter::mesh():", accessor))
+        if(!checkAccessor("Trade::CgltfImporter::mesh():", accessor))
             return {};
 
         /* Convert to our vertex format */
