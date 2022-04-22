@@ -223,7 +223,7 @@ Containers::Optional<Containers::String> decodeString(Containers::StringView str
        doesn't, so this will only match single-byte ASCII characters. */
     const Containers::StringView escape = str.find('\\');
     if(escape.isEmpty())
-        return Containers::NullOpt;
+        return {};
 
     /* Skip any processing until the first escape character */
     const std::size_t start = escape.data() - str.data();
@@ -370,7 +370,7 @@ Containers::Optional<Containers::ArrayView<const char>> CgltfImporter::loadUri(c
 
         if(base64.isEmpty()) {
             Error{} << errorPrefix << "data URI has no base64 payload";
-            return Containers::NullOpt;
+            return {};
         }
 
         /* Decoded size. For some reason cgltf_load_buffer_base64 doesn't take
@@ -462,7 +462,7 @@ Containers::Optional<Containers::StridedArrayView2D<const char>> CgltfImporter::
     const cgltf_buffer* buffer = bufferView->buffer;
     const UnsignedInt bufferId = buffer - _d->data->buffers;
     if(!loadBuffer(bufferId, errorPrefix))
-        return Containers::NullOpt;
+        return {};
 
     return Containers::StridedArrayView2D<const char>{Containers::arrayView(buffer->data, buffer->size),
         reinterpret_cast<const char*>(buffer->data) + bufferView->offset + accessor->offset,
@@ -895,7 +895,7 @@ Containers::Optional<AnimationData> CgltfImporter::doAnimation(UnsignedInt id) {
             if(samplerData.find(sampler.input) == samplerData.end()) {
                 Containers::Optional<Containers::StridedArrayView2D<const char>> view = accessorView(sampler.input, "Trade::CgltfImporter::animation():");
                 if(!view)
-                    return Containers::NullOpt;
+                    return {};
 
                 samplerData.emplace(sampler.input, SamplerData{*view, dataSize, nullptr});
                 dataSize += view->size()[0]*view->size()[1];
@@ -906,7 +906,7 @@ Containers::Optional<AnimationData> CgltfImporter::doAnimation(UnsignedInt id) {
             if(samplerData.find(sampler.output) == samplerData.end()) {
                 Containers::Optional<Containers::StridedArrayView2D<const char>> view = accessorView(sampler.output, "Trade::CgltfImporter::animation():");
                 if(!view)
-                    return Containers::NullOpt;
+                    return {};
 
                 samplerData.emplace(sampler.output, SamplerData{*view, dataSize, nullptr});
                 dataSize += view->size()[0]*view->size()[1];
@@ -964,7 +964,7 @@ Containers::Optional<AnimationData> CgltfImporter::doAnimation(UnsignedInt id) {
                 Error{} << "Trade::CgltfImporter::animation(): time track has unexpected type"
                     << (input->normalized ? "normalized " : "") << Debug::nospace
                     << gltfTypeName(input->type) << "/" << gltfComponentTypeName(input->component_type);
-                return Containers::NullOpt;
+                return {};
             }
 
             /* View on the key data */
@@ -1005,7 +1005,7 @@ Containers::Optional<AnimationData> CgltfImporter::doAnimation(UnsignedInt id) {
             const std::size_t valuesPerKey = interpolation == Animation::Interpolation::Spline ? 3 : 1;
             if(input->count*valuesPerKey != output->count) {
                 Error{} << "Trade::CgltfImporter::animation(): target track size doesn't match time track size, expected" << output->count << "but got" << input->count*valuesPerKey;
-                return Containers::NullOpt;
+                return {};
             }
 
             /* Translation */
@@ -1014,7 +1014,7 @@ Containers::Optional<AnimationData> CgltfImporter::doAnimation(UnsignedInt id) {
                     Error{} << "Trade::CgltfImporter::animation(): translation track has unexpected type"
                         << (output->normalized ? "normalized " : "") << Debug::nospace
                         << gltfTypeName(output->type) << "/" << gltfComponentTypeName(output->component_type);
-                    return Containers::NullOpt;
+                    return {};
                 }
 
                 /* View on the value data */
@@ -1050,7 +1050,7 @@ Containers::Optional<AnimationData> CgltfImporter::doAnimation(UnsignedInt id) {
                     Error{} << "Trade::CgltfImporter::animation(): rotation track has unexpected type"
                         << (output->normalized ? "normalized " : "") << Debug::nospace
                         << gltfTypeName(output->type) << "/" << gltfComponentTypeName(output->component_type);
-                    return Containers::NullOpt;
+                    return {};
                 }
 
                 /* View on the value data */
@@ -1106,7 +1106,7 @@ Containers::Optional<AnimationData> CgltfImporter::doAnimation(UnsignedInt id) {
                     Error{} << "Trade::CgltfImporter::animation(): scaling track has unexpected type"
                         << (output->normalized ? "normalized " : "") << Debug::nospace
                         << gltfTypeName(output->type) << "/" << gltfComponentTypeName(output->component_type);
-                    return Containers::NullOpt;
+                    return {};
                 }
 
                 /* View on the value data */
@@ -1135,7 +1135,7 @@ Containers::Optional<AnimationData> CgltfImporter::doAnimation(UnsignedInt id) {
 
             } else {
                 Error{} << "Trade::CgltfImporter::animation(): unsupported track target" << channel.target_path;
-                return Containers::NullOpt;
+                return {};
             }
 
             /* Splines were postprocessed using the corresponding time track.
@@ -1147,7 +1147,7 @@ Containers::Optional<AnimationData> CgltfImporter::doAnimation(UnsignedInt id) {
                     timeTrackUsed = sampler.input;
                 else if(timeTrackUsed != sampler.input) {
                     Error{} << "Trade::CgltfImporter::animation(): spline track is shared with different time tracks, we don't support that, sorry";
-                    return Containers::NullOpt;
+                    return {};
                 }
             }
 
@@ -1216,7 +1216,7 @@ Containers::Optional<CameraData> CgltfImporter::doCamera(UnsignedInt id) {
 
     CORRADE_INTERNAL_ASSERT(camera.type == cgltf_camera_type_invalid);
     Error{} << "Trade::CgltfImporter::camera(): invalid camera type";
-    return Containers::NullOpt;
+    return {};
 }
 
 UnsignedInt CgltfImporter::doLightCount() const {
@@ -1255,7 +1255,7 @@ Containers::Optional<LightData> CgltfImporter::doLight(UnsignedInt id) {
     } else {
         CORRADE_INTERNAL_ASSERT(light.type == cgltf_light_type_invalid);
         Error{} << "Trade::CgltfImporter::light(): invalid light type";
-        return Containers::NullOpt;
+        return {};
     }
 
     /* Cgltf sets range to 0 instead of infinity when it's not present.
@@ -1274,7 +1274,7 @@ Containers::Optional<LightData> CgltfImporter::doLight(UnsignedInt id) {
 
         if(innerConeAngle < Rad(0.0_degf) || innerConeAngle >= outerConeAngle || outerConeAngle >= Rad(90.0_degf)) {
             Error{} << "Trade::CgltfImporter::light(): inner and outer cone angle" << Deg(innerConeAngle) << "and" << Deg(outerConeAngle) << "out of allowed bounds";
-            return Containers::NullOpt;
+            return {};
         }
     } else innerConeAngle = outerConeAngle = 180.0_degf;
 
@@ -1283,7 +1283,7 @@ Containers::Optional<LightData> CgltfImporter::doLight(UnsignedInt id) {
        property, don't even bother printing the value. */
     if(type == LightData::Type::Directional && range != Constants::inf()) {
         Error{} << "Trade::CgltfImporter::light(): range can't be defined for a directional light";
-        return Containers::NullOpt;
+        return {};
     }
 
     /* As said above, glTF uses half-angles, while we have full angles (for
@@ -1659,7 +1659,7 @@ Containers::Optional<SkinData3D> CgltfImporter::doSkin3D(const UnsignedInt id) {
 
     if(!skin.joints_count) {
         Error{} << "Trade::CgltfImporter::skin3D(): skin has no joints";
-        return Containers::NullOpt;
+        return {};
     }
 
     /* Joint IDs */
@@ -1675,19 +1675,19 @@ Containers::Optional<SkinData3D> CgltfImporter::doSkin3D(const UnsignedInt id) {
         const cgltf_accessor* accessor = skin.inverse_bind_matrices;
         Containers::Optional<Containers::StridedArrayView2D<const char>> view = accessorView(accessor, "Trade::CgltfImporter::skin3D():");
         if(!view)
-            return Containers::NullOpt;
+            return {};
 
         if(accessor->type != cgltf_type_mat4 || accessor->component_type != cgltf_component_type_r_32f || accessor->normalized) {
             Error{} << "Trade::CgltfImporter::skin3D(): inverse bind matrices have unexpected type"
                 << (accessor->normalized ? "normalized " : "") << Debug::nospace
                 << gltfTypeName(accessor->type) << "/" << gltfComponentTypeName(accessor->component_type);
-            return Containers::NullOpt;
+            return {};
         }
 
         Containers::StridedArrayView1D<const Matrix4> matrices = Containers::arrayCast<1, const Matrix4>(*view);
         if(matrices.size() != inverseBindMatrices.size()) {
             Error{} << "Trade::CgltfImporter::skin3D(): invalid inverse bind matrix count, expected" << inverseBindMatrices.size() << "but got" << matrices.size();
-            return Containers::NullOpt;
+            return {};
         }
 
         Utility::copy(matrices, inverseBindMatrices);
@@ -1743,7 +1743,7 @@ Containers::Optional<MeshData> CgltfImporter::doMesh(const UnsignedInt id, Unsig
         /* Cgltf parses an int and directly casts it to cgltf_primitive_type
            without checking for valid values */
         Error{} << "Trade::CgltfImporter::mesh(): unrecognized primitive" << primitive.type;
-        return Containers::NullOpt;
+        return {};
     }
 
     /* Sort attributes by name so that we add attribute sets in the correct
@@ -1804,7 +1804,7 @@ Containers::Optional<MeshData> CgltfImporter::doMesh(const UnsignedInt id, Unsig
 
         const cgltf_accessor* accessor = attribute.data;
         if(!checkAccessor(_d->data, "Trade::CgltfImporter::mesh():", accessor))
-            return Containers::NullOpt;
+            return {};
 
         /* Convert to our vertex format */
         VertexFormat componentFormat;
@@ -1855,7 +1855,7 @@ Containers::Optional<MeshData> CgltfImporter::doMesh(const UnsignedInt id, Unsig
         if(accessor->normalized &&
             (componentFormat == VertexFormat::Float || componentFormat == VertexFormat::UnsignedInt)) {
             Error{} << "Trade::CgltfImporter::mesh(): attribute" << nameString << "component type" << gltfComponentTypeName(accessor->component_type) << "can't be normalized";
-            return Containers::NullOpt;
+            return {};
         }
 
         /* Check that matrix type is legal */
@@ -1866,7 +1866,7 @@ Containers::Optional<MeshData> CgltfImporter::doMesh(const UnsignedInt id, Unsig
             Error{} << "Trade::CgltfImporter::mesh(): attribute" << nameString << "has an unsupported matrix component type"
                 << (accessor->normalized ? "normalized" : "unnormalized")
                 << gltfComponentTypeName(accessor->component_type);
-            return Containers::NullOpt;
+            return {};
         }
 
         const VertexFormat format = vectorCount ?
@@ -1880,7 +1880,7 @@ Containers::Optional<MeshData> CgltfImporter::doMesh(const UnsignedInt id, Unsig
 
             if(accessor->type != cgltf_type_vec3) {
                 Error{} << "Trade::CgltfImporter::mesh(): unexpected" << semantic << "type" << gltfTypeName(accessor->type);
-                return Containers::NullOpt;
+                return {};
             }
 
             if(!(componentFormat == VertexFormat::Float && !accessor->normalized) &&
@@ -1893,7 +1893,7 @@ Containers::Optional<MeshData> CgltfImporter::doMesh(const UnsignedInt id, Unsig
                 Error{} << "Trade::CgltfImporter::mesh(): unsupported" << semantic << "component type"
                     << (accessor->normalized ? "normalized" : "unnormalized")
                     << gltfComponentTypeName(accessor->component_type);
-                return Containers::NullOpt;
+                return {};
             }
 
         } else if(attribute.type == cgltf_attribute_type_normal) {
@@ -1901,7 +1901,7 @@ Containers::Optional<MeshData> CgltfImporter::doMesh(const UnsignedInt id, Unsig
 
             if(accessor->type != cgltf_type_vec3) {
                 Error{} << "Trade::CgltfImporter::mesh(): unexpected" << semantic << "type" << gltfTypeName(accessor->type);
-                return Containers::NullOpt;
+                return {};
             }
 
             if(!(componentFormat == VertexFormat::Float && !accessor->normalized) &&
@@ -1911,7 +1911,7 @@ Containers::Optional<MeshData> CgltfImporter::doMesh(const UnsignedInt id, Unsig
                 Error{} << "Trade::CgltfImporter::mesh(): unsupported" << semantic << "component type"
                     << (accessor->normalized ? "normalized" : "unnormalized")
                     << gltfComponentTypeName(accessor->component_type);
-                return Containers::NullOpt;
+                return {};
             }
 
         } else if(attribute.type == cgltf_attribute_type_tangent) {
@@ -1919,7 +1919,7 @@ Containers::Optional<MeshData> CgltfImporter::doMesh(const UnsignedInt id, Unsig
 
             if(accessor->type != cgltf_type_vec4) {
                 Error{} << "Trade::CgltfImporter::mesh(): unexpected" << semantic << "type" << gltfTypeName(accessor->type);
-                return Containers::NullOpt;
+                return {};
             }
 
             if(!(componentFormat == VertexFormat::Float && !accessor->normalized) &&
@@ -1929,7 +1929,7 @@ Containers::Optional<MeshData> CgltfImporter::doMesh(const UnsignedInt id, Unsig
                 Error{} << "Trade::CgltfImporter::mesh(): unsupported" << semantic << "component type"
                     << (accessor->normalized ? "normalized" : "unnormalized")
                     << gltfComponentTypeName(accessor->component_type);
-                return Containers::NullOpt;
+                return {};
             }
 
         } else if(attribute.type == cgltf_attribute_type_texcoord) {
@@ -1937,7 +1937,7 @@ Containers::Optional<MeshData> CgltfImporter::doMesh(const UnsignedInt id, Unsig
 
             if(accessor->type != cgltf_type_vec2) {
                 Error{} << "Trade::CgltfImporter::mesh(): unexpected" << semantic << "type" << gltfTypeName(accessor->type);
-                return Containers::NullOpt;
+                return {};
             }
 
             /* Core spec only allows float and normalized unsigned bytes/shorts, the
@@ -1950,7 +1950,7 @@ Containers::Optional<MeshData> CgltfImporter::doMesh(const UnsignedInt id, Unsig
                 Error{} << "Trade::CgltfImporter::mesh(): unsupported" << semantic << "component type"
                     << (accessor->normalized ? "normalized" : "unnormalized")
                     << gltfComponentTypeName(accessor->component_type);
-                return Containers::NullOpt;
+                return {};
             }
 
         } else if(attribute.type == cgltf_attribute_type_color) {
@@ -1958,7 +1958,7 @@ Containers::Optional<MeshData> CgltfImporter::doMesh(const UnsignedInt id, Unsig
 
             if(accessor->type != cgltf_type_vec4 && accessor->type != cgltf_type_vec3) {
                 Error{} << "Trade::CgltfImporter::mesh(): unexpected" << semantic << "type" << gltfTypeName(accessor->type);
-                return Containers::NullOpt;
+                return {};
             }
 
             if(!(componentFormat == VertexFormat::Float && !accessor->normalized) &&
@@ -1967,14 +1967,14 @@ Containers::Optional<MeshData> CgltfImporter::doMesh(const UnsignedInt id, Unsig
                 Error{} << "Trade::CgltfImporter::mesh(): unsupported" << semantic << "component type"
                     << (accessor->normalized ? "normalized" : "unnormalized")
                     << gltfComponentTypeName(accessor->component_type);
-                return Containers::NullOpt;
+                return {};
             }
         } else if(attribute.type == cgltf_attribute_type_joints) {
             name = _d->meshAttributesForName.at(semantic);
 
             if(accessor->type != cgltf_type_vec4) {
                 Error{} << "Trade::CgltfImporter::mesh(): unexpected" << semantic << "type" << gltfTypeName(accessor->type);
-                return Containers::NullOpt;
+                return {};
             }
 
             if(!(componentFormat == VertexFormat::UnsignedByte && !accessor->normalized) &&
@@ -1982,14 +1982,14 @@ Containers::Optional<MeshData> CgltfImporter::doMesh(const UnsignedInt id, Unsig
                 Error{} << "Trade::CgltfImporter::mesh(): unsupported" << semantic << "component type"
                     << (accessor->normalized ? "normalized" : "unnormalized")
                     << gltfComponentTypeName(accessor->component_type);
-                return Containers::NullOpt;
+                return {};
             }
         } else if(attribute.type == cgltf_attribute_type_weights) {
             name = _d->meshAttributesForName.at(semantic);
 
             if(accessor->type != cgltf_type_vec4) {
                 Error{} << "Trade::CgltfImporter::mesh(): unexpected" << semantic << "type" << gltfTypeName(accessor->type);
-                return Containers::NullOpt;
+                return {};
             }
 
             if(!(componentFormat == VertexFormat::Float && !accessor->normalized) &&
@@ -1998,7 +1998,7 @@ Containers::Optional<MeshData> CgltfImporter::doMesh(const UnsignedInt id, Unsig
                 Error{} << "Trade::CgltfImporter::mesh(): unsupported" << semantic << "component type"
                     << (accessor->normalized ? "normalized" : "unnormalized")
                     << gltfComponentTypeName(accessor->component_type);
-                return Containers::NullOpt;
+                return {};
             }
         /* Object ID, name user-configurable */
         } else if(nameString == configuration().value("objectIdAttribute")) {
@@ -2006,7 +2006,7 @@ Containers::Optional<MeshData> CgltfImporter::doMesh(const UnsignedInt id, Unsig
 
             if(accessor->type != cgltf_type_scalar) {
                 Error{} << "Trade::CgltfImporter::mesh(): unexpected object ID type" << gltfTypeName(accessor->type);
-                return Containers::NullOpt;
+                return {};
             }
 
             /* The glTF spec says that "Application-specific attribute semantics
@@ -2019,7 +2019,7 @@ Containers::Optional<MeshData> CgltfImporter::doMesh(const UnsignedInt id, Unsig
                 Error{} << "Trade::CgltfImporter::mesh(): unsupported object ID component type"
                     << (accessor->normalized ? "normalized" : "unnormalized")
                     << gltfComponentTypeName(accessor->component_type);
-                return Containers::NullOpt;
+                return {};
             }
 
         /* Custom or unrecognized attributes, map to an ID */
@@ -2039,14 +2039,14 @@ Containers::Optional<MeshData> CgltfImporter::doMesh(const UnsignedInt id, Unsig
             /* ... and probably never will be */
             if(bufferView->buffer != buffer) {
                 Error{} << "Trade::CgltfImporter::mesh(): meshes spanning multiple buffers are not supported";
-                return Containers::NullOpt;
+                return {};
             }
 
             bufferRange = Math::join(bufferRange, Math::Range1D<std::size_t>::fromSize(bufferView->offset, bufferView->size));
 
             if(accessor->count != vertexCount) {
                 Error{} << "Trade::CgltfImporter::mesh(): mismatched vertex count for attribute" << semantic << Debug::nospace << ", expected" << vertexCount << "but got" << accessor->count;
-                return Containers::NullOpt;
+                return {};
             }
         }
 
@@ -2122,16 +2122,16 @@ Containers::Optional<MeshData> CgltfImporter::doMesh(const UnsignedInt id, Unsig
         const cgltf_accessor* accessor = primitive.indices;
         Containers::Optional<Containers::StridedArrayView2D<const char>> src = accessorView(accessor, "Trade::CgltfImporter::mesh():");
         if(!src)
-            return Containers::NullOpt;
+            return {};
 
         if(accessor->type != cgltf_type_scalar) {
             Error() << "Trade::CgltfImporter::mesh(): unexpected index type" << gltfTypeName(accessor->type);
-            return Containers::NullOpt;
+            return {};
         }
 
         if(accessor->normalized) {
             Error() << "Trade::CgltfImporter::mesh(): index type can't be normalized";
-            return Containers::NullOpt;
+            return {};
         }
 
         MeshIndexType type;
@@ -2143,12 +2143,12 @@ Containers::Optional<MeshData> CgltfImporter::doMesh(const UnsignedInt id, Unsig
             type = MeshIndexType::UnsignedInt;
         else {
             Error{} << "Trade::CgltfImporter::mesh(): unexpected index component type" << gltfComponentTypeName(accessor->component_type);
-            return Containers::NullOpt;
+            return {};
         }
 
         if(!src->isContiguous()) {
             Error{} << "Trade::CgltfImporter::mesh(): index buffer view is not contiguous";
-            return Containers::NullOpt;
+            return {};
         }
 
         Containers::ArrayView<const char> srcContiguous = src->asContiguous();
@@ -2228,7 +2228,7 @@ Containers::Optional<MaterialAttributeData> parseMaterialAttribute(const Contain
     Containers::StringView name = tokenString(json, tokens[tokenIndex]);
     if(name.isEmpty()) {
         Warning{} << "Trade::CgltfImporter::material(): property with an empty name, skipping";
-        return Containers::NullOpt;
+        return {};
     }
 
     ++tokenIndex;
@@ -2249,7 +2249,7 @@ Containers::Optional<MaterialAttributeData> parseMaterialAttribute(const Contain
            attribute, so this is handled directly in the extension parsing
            loop. */
         Warning{} << "Trade::CgltfImporter::material(): property" << name << "is an object, skipping";
-        return Containers::NullOpt;
+        return {};
 
     /* A primitive is anything that's not a string, object or array. We ignore
        non-primitive arrays, so we can handle both in one place. */
@@ -2300,7 +2300,7 @@ Containers::Optional<MaterialAttributeData> parseMaterialAttribute(const Contain
 
         if(type == MaterialAttributeType{}) {
             Warning{} << "Trade::CgltfImporter::material(): property" << name << "has unsupported type, skipping";
-            return Containers::NullOpt;
+            return {};
         }
 
         if(type == MaterialAttributeType::Float) {
@@ -2339,7 +2339,7 @@ Containers::Optional<MaterialAttributeData> parseMaterialAttribute(const Contain
     const void* const valuePointer = type == MaterialAttributeType::String ?
         static_cast<const void*>(&attributeStringView) : static_cast<const void*>(attributeData);
     if(!checkMaterialAttributeSize(name, type, valuePointer))
-        return Containers::NullOpt;
+        return {};
 
     /* Uppercase attribute names are reserved. Standard glTF (extension)
        attributes should all be lowercase but we don't have this guarantee for
@@ -2999,7 +2999,7 @@ Containers::Optional<MaterialData> CgltfImporter::doMaterial(const UnsignedInt i
                 const std::size_t index = std::size_t(textureView.texture) - 1;
                 if(index >= _d->data->images_count) {
                     Error{} << "Trade::CgltfImporter::material():" << name << "index" << index << "out of bounds for" << _d->data->textures_count << "textures";
-                    return Containers::NullOpt;
+                    return {};
                 }
 
                 /* materialTexture() expects a fixed up texture pointer in
@@ -3136,7 +3136,7 @@ Containers::Optional<TextureData> CgltfImporter::doTexture(const UnsignedInt id)
                         if(*source < 0 || std::size_t(*source) >= _d->data->images_count) {
                             Error{} << "Trade::CgltfImporter::texture():" << extensions[j] << "image" <<
                                 *source << "out of bounds for" << _d->data->images_count << "images";
-                            return Containers::NullOpt;
+                            return {};
                         }
                         imageId = *source;
                     }
@@ -3152,7 +3152,7 @@ Containers::Optional<TextureData> CgltfImporter::doTexture(const UnsignedInt id)
             imageId = tex.image - _d->data->images;
         else {
             Error{} << "Trade::CgltfImporter::texture(): no image source found";
-            return Containers::NullOpt;
+            return {};
         }
     }
 
@@ -3208,7 +3208,7 @@ Containers::Optional<TextureData> CgltfImporter::doTexture(const UnsignedInt id)
             break;
         default:
             Error{} << "Trade::CgltfImporter::texture(): invalid minFilter" << tex.sampler->min_filter;
-            return Containers::NullOpt;
+            return {};
     }
 
     SamplerFilter magFilter;
@@ -3224,7 +3224,7 @@ Containers::Optional<TextureData> CgltfImporter::doTexture(const UnsignedInt id)
             break;
         default:
             Error{} << "Trade::CgltfImporter::texture(): invalid magFilter" << tex.sampler->mag_filter;
-            return Containers::NullOpt;
+            return {};
     }
 
     /* GL wrap enums */
@@ -3251,7 +3251,7 @@ Containers::Optional<TextureData> CgltfImporter::doTexture(const UnsignedInt id)
                 break;
             default:
                 Error{} << "Trade::CgltfImporter::texture(): invalid wrap mode" << wrap.first();
-                return Containers::NullOpt;
+                return {};
         }
     }
 
@@ -3356,10 +3356,10 @@ Containers::Optional<ImageData2D> CgltfImporter::doImage2D(const UnsignedInt id,
     CORRADE_ASSERT(manager(), "Trade::CgltfImporter::image2D(): the plugin must be instantiated with access to plugin manager in order to load images", {});
 
     AbstractImporter* importer = setupOrReuseImporterForImage(id, "Trade::CgltfImporter::image2D():");
-    if(!importer) return Containers::NullOpt;
+    if(!importer) return {};
 
     Containers::Optional<ImageData2D> imageData = importer->image2D(0, level);
-    if(!imageData) return Containers::NullOpt;
+    if(!imageData) return {};
     return ImageData2D{std::move(*imageData)};
 }
 
