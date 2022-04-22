@@ -307,7 +307,7 @@ CgltfImporter::Document::~Document() {
     if(data) cgltf_free(data);
 }
 
-Containers::Optional<Containers::ArrayView<const char>> CgltfImporter::loadUri(const Containers::StringView uri, Containers::Array<char>& storage, const char* const errorPrefix) {
+Containers::Optional<Containers::ArrayView<const char>> CgltfImporter::loadUri(const char* const errorPrefix, const Containers::StringView uri, Containers::Array<char>& storage) {
     if(isDataUri(uri)) {
         /* Data URI with base64 payload according to RFC 2397:
            data:[<mediatype>][;base64],<data> */
@@ -371,7 +371,7 @@ Containers::Optional<Containers::ArrayView<const char>> CgltfImporter::loadUri(c
     }
 }
 
-bool CgltfImporter::loadBuffer(const UnsignedInt id, const char* const errorPrefix) {
+bool CgltfImporter::loadBuffer(const char* const errorPrefix, const UnsignedInt id) {
     CORRADE_INTERNAL_ASSERT(id < _d->data->buffers_count);
     cgltf_buffer& buffer = _d->data->buffers[id];
     if(buffer.data)
@@ -379,7 +379,7 @@ bool CgltfImporter::loadBuffer(const UnsignedInt id, const char* const errorPref
 
     Containers::ArrayView<const char> view;
     if(buffer.uri) {
-        const Containers::Optional<Containers::ArrayView<const char>> loaded = loadUri(buffer.uri, _d->bufferData[id], errorPrefix);
+        const Containers::Optional<Containers::ArrayView<const char>> loaded = loadUri(errorPrefix, buffer.uri, _d->bufferData[id]);
         if(!loaded) return false;
         view = *loaded;
     } else {
@@ -454,14 +454,14 @@ bool CgltfImporter::checkAccessor(const char* const errorPrefix, const cgltf_acc
     return true;
 }
 
-Containers::Optional<Containers::StridedArrayView2D<const char>> CgltfImporter::accessorView(const cgltf_accessor* const accessor, const char* const errorPrefix) {
+Containers::Optional<Containers::StridedArrayView2D<const char>> CgltfImporter::accessorView(const char* const errorPrefix, const cgltf_accessor* const accessor) {
     if(!checkAccessor(errorPrefix, accessor))
         return {};
 
     const cgltf_buffer_view* bufferView = accessor->buffer_view;
     const cgltf_buffer* buffer = bufferView->buffer;
     const UnsignedInt bufferId = buffer - _d->data->buffers;
-    if(!loadBuffer(bufferId, errorPrefix))
+    if(!loadBuffer(errorPrefix, bufferId))
         return {};
 
     return Containers::StridedArrayView2D<const char>{Containers::arrayView(buffer->data, buffer->size),
@@ -893,7 +893,7 @@ Containers::Optional<AnimationData> CgltfImporter::doAnimation(UnsignedInt id) {
             /* If the input view is not yet present in the output data buffer,
                add it */
             if(samplerData.find(sampler.input) == samplerData.end()) {
-                Containers::Optional<Containers::StridedArrayView2D<const char>> view = accessorView(sampler.input, "Trade::CgltfImporter::animation():");
+                Containers::Optional<Containers::StridedArrayView2D<const char>> view = accessorView("Trade::CgltfImporter::animation():", sampler.input);
                 if(!view)
                     return {};
 
@@ -904,7 +904,7 @@ Containers::Optional<AnimationData> CgltfImporter::doAnimation(UnsignedInt id) {
             /* If the output view is not yet present in the output data buffer,
                add it */
             if(samplerData.find(sampler.output) == samplerData.end()) {
-                Containers::Optional<Containers::StridedArrayView2D<const char>> view = accessorView(sampler.output, "Trade::CgltfImporter::animation():");
+                Containers::Optional<Containers::StridedArrayView2D<const char>> view = accessorView("Trade::CgltfImporter::animation():", sampler.output);
                 if(!view)
                     return {};
 
@@ -1673,7 +1673,7 @@ Containers::Optional<SkinData3D> CgltfImporter::doSkin3D(const UnsignedInt id) {
     Containers::Array<Matrix4> inverseBindMatrices{skin.joints_count};
     if(skin.inverse_bind_matrices) {
         const cgltf_accessor* accessor = skin.inverse_bind_matrices;
-        Containers::Optional<Containers::StridedArrayView2D<const char>> view = accessorView(accessor, "Trade::CgltfImporter::skin3D():");
+        Containers::Optional<Containers::StridedArrayView2D<const char>> view = accessorView("Trade::CgltfImporter::skin3D():", accessor);
         if(!view)
             return {};
 
@@ -2067,7 +2067,7 @@ Containers::Optional<MeshData> CgltfImporter::doMesh(const UnsignedInt id, Unsig
     Containers::Array<char> vertexData{NoInit, bufferRange.size()};
     if(vertexData.size()) {
         const UnsignedInt bufferId = buffer - _d->data->buffers;
-        if(!loadBuffer(bufferId, "Trade::CgltfImporter::mesh():"))
+        if(!loadBuffer("Trade::CgltfImporter::mesh():", bufferId))
             return {};
 
         Utility::copy(Containers::arrayView(static_cast<char*>(buffer->data), buffer->size)
@@ -2120,7 +2120,7 @@ Containers::Optional<MeshData> CgltfImporter::doMesh(const UnsignedInt id, Unsig
     Containers::Array<char> indexData;
     if(primitive.indices) {
         const cgltf_accessor* accessor = primitive.indices;
-        Containers::Optional<Containers::StridedArrayView2D<const char>> src = accessorView(accessor, "Trade::CgltfImporter::mesh():");
+        Containers::Optional<Containers::StridedArrayView2D<const char>> src = accessorView("Trade::CgltfImporter::mesh():", accessor);
         if(!src)
             return {};
 
@@ -3308,7 +3308,7 @@ AbstractImporter* CgltfImporter::setupOrReuseImporterForImage(const UnsignedInt 
         Containers::ArrayView<const char> imageView;
 
         if(image.uri) {
-            const auto view = loadUri(image.uri, imageData, errorPrefix);
+            const auto view = loadUri(errorPrefix, image.uri, imageData);
             if(!view)
                 return nullptr;
             imageView = *view;
@@ -3320,7 +3320,7 @@ AbstractImporter* CgltfImporter::setupOrReuseImporterForImage(const UnsignedInt 
 
             const cgltf_buffer* buffer = image.buffer_view->buffer;
             const UnsignedInt bufferId = buffer - _d->data->buffers;
-            if(!loadBuffer(bufferId, errorPrefix))
+            if(!loadBuffer(errorPrefix, bufferId))
                 return nullptr;
             imageView = Containers::arrayView(static_cast<const char*>(buffer->data) + image.buffer_view->offset, image.buffer_view->size);
         }
