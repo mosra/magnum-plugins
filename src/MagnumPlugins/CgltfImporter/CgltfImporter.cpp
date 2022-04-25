@@ -283,13 +283,6 @@ struct CgltfImporter::Document {
     Containers::Array<Containers::Pair<std::size_t, std::size_t>> meshMap;
     Containers::Array<std::size_t> meshSizeOffsets;
 
-    /* Mapping for nodes having multi-primitive nodes. The same as above, but
-       for nodes. Hierarchy-wise, the subsequent nodes are direct children of
-       the first, have no transformation or other children and point to the
-       subsequent meshes. */
-    Containers::Array<Containers::Pair<std::size_t, std::size_t>> nodeMap;
-    Containers::Array<std::size_t> nodeSizeOffsets;
-
     /* If a file contains texture coordinates that are not floats or normalized
        in the 0-1, the textureCoordinateYFlipInMaterial option is enabled
        implicitly as we can't perform Y-flip directly on the data. */
@@ -733,23 +726,6 @@ void CgltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags d
         _d->meshSizeOffsets[i + 1] = _d->meshMap.size();
     }
 
-    /* In order to support multi-primitive meshes, we need to duplicate the
-       nodes as well */
-    arrayReserve(_d->nodeMap, _d->data->nodes_count);
-    _d->nodeSizeOffsets = Containers::Array<std::size_t>{_d->data->nodes_count + 1};
-
-    _d->nodeSizeOffsets[0] = 0;
-    for(std::size_t i = 0; i != _d->data->nodes_count; ++i) {
-        const cgltf_mesh* mesh = _d->data->nodes[i].mesh;
-        /* If a node has a mesh with multiple primitives, add nested nodes
-           containing the other primitives after it */
-        const std::size_t count = mesh ? mesh->primitives_count : 1;
-        for(std::size_t j = 0; j != count; ++j)
-            arrayAppend(_d->nodeMap, InPlaceInit, i, j);
-
-        _d->nodeSizeOffsets[i + 1] = _d->nodeMap.size();
-    }
-
     /* Go through all meshes, collect custom attributes and decide about
        implicitly enabling textureCoordinateYFlipInMaterial if it isn't already
        requested from the configuration and there are any texture coordinates
@@ -1160,14 +1136,8 @@ Containers::Optional<AnimationData> CgltfImporter::doAnimation(UnsignedInt id) {
                 }
             }
 
-            const UnsignedInt targetId = channel.target_node - _d->data->nodes;
             tracks[trackId++] = AnimationTrackData{type, resultType, target,
-                /* In cases where multi-primitive mesh nodes are split into
-                   multiple objects, the animation should affect the first node
-                   -- the other nodes are direct children of it and so they get
-                   affected too */
-                UnsignedInt(_d->nodeSizeOffsets[targetId]),
-                track};
+                UnsignedInt(channel.target_node - _d->data->nodes), track};
         }
     }
 
