@@ -1326,16 +1326,19 @@ Containers::Optional<SceneData> CgltfImporter::doScene(UnsignedInt id) {
         arrayAppend(objects, scene.nodes[i] - _d->data->nodes);
     }
 
-    Containers::Array<Range1Dui> children;
-    arrayReserve(children, _d->data->nodes_count + 1);
-    arrayAppend(children, InPlaceInit, 0u, UnsignedInt(objects.size()));
-    for(std::size_t i = 0; i != children.size(); ++i) {
-        const Range1Dui& nodeRangeToProcess = children[i];
-        for(std::size_t j = nodeRangeToProcess.min(); j != nodeRangeToProcess.max(); ++j) {
+    /* Offset array, `children[i + 1]` to `children[i + 2]` defines a range in
+       `objects` containing children of object `i`, `children[0]` to
+       `children[1]` is the range of root objects with `children[0]` being
+       always `0` */
+    Containers::Array<UnsignedInt> children;
+    arrayReserve(children, _d->data->nodes_count + 2);
+    arrayAppend(children, {0u, UnsignedInt(objects.size())});
+    for(std::size_t i = 0; i != children.size() - 1; ++i) {
+        for(std::size_t j = children[i], jMax = children[i + 1]; j != jMax; ++j) {
             const cgltf_node& node = _d->data->nodes[objects[j]];
-            arrayAppend(children, InPlaceInit, UnsignedInt(objects.size()), UnsignedInt(objects.size() + node.children_count));
             for(std::size_t k = 0; k != node.children_count; ++k)
                 arrayAppend(objects, UnsignedInt(node.children[k] - _d->data->nodes));
+            arrayAppend(children, UnsignedInt(objects.size()));
         }
     }
 
@@ -1432,9 +1435,9 @@ Containers::Optional<SceneData> CgltfImporter::doScene(UnsignedInt id) {
     /* Populate object mapping for parents and importer state, synthesize
        parent info from the child ranges */
     Utility::copy(objects, parentObjects);
-    for(std::size_t i = 0; i != children.size(); ++i) {
+    for(std::size_t i = 0; i != children.size() - 1; ++i) {
         Int parent = Int(i) - 1;
-        for(std::size_t j = children[i].min(); j != children[i].max(); ++j)
+        for(std::size_t j = children[i], jMax = children[i + 1]; j != jMax; ++j)
             parents[j] = parent == -1 ? -1 : objects[parent];
     }
 
