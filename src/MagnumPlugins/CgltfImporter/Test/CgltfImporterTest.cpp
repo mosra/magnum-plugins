@@ -1358,6 +1358,7 @@ void CgltfImporterTest::animationTrackSizeMismatch() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
 
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "animation-invalid-track-size-mismatch.gltf")));
+    CORRADE_COMPARE(importer->animationCount(), 1);
 
     std::ostringstream out;
     Error redirectError{&out};
@@ -2396,6 +2397,7 @@ void CgltfImporterTest::sceneTransformationQuaternionNormalizationEnabled() {
     /* Enabled by default */
     CORRADE_VERIFY(importer->configuration().value<bool>("normalizeQuaternions"));
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "scene-transformation-patching.gltf")));
+    CORRADE_COMPARE(importer->sceneCount(), 1);
 
     Containers::Optional<SceneData> scene;
     std::ostringstream out;
@@ -2416,6 +2418,7 @@ void CgltfImporterTest::sceneTransformationQuaternionNormalizationDisabled() {
     /* Explicity disable */
     importer->configuration().setValue("normalizeQuaternions", false);
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "scene-transformation-patching.gltf")));
+    CORRADE_COMPARE(importer->sceneCount(), 1);
 
     Containers::Optional<SceneData> scene;
     std::ostringstream out;
@@ -2962,6 +2965,7 @@ void CgltfImporterTest::meshMultiplePrimitives() {
     /* Five objects. Two refer a three-primitive mesh and one refers a
        two-primitive one, which is done by having multiple mesh entries for
        them. */
+    CORRADE_COMPARE(importer->sceneCount(), 1);
     Containers::Optional<SceneData> scene = importer->scene(0);
     CORRADE_COMPARE(scene->mappingBound(), 5);
     CORRADE_COMPARE(scene->fieldCount(), 4);
@@ -4613,6 +4617,7 @@ void CgltfImporterTest::textureDefaultSampler() {
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "texture-default-sampler"_s + data.suffix)));
+    CORRADE_COMPARE(importer->textureCount(), 1);
 
     Containers::Optional<Trade::TextureData> texture = importer->texture(0);
     CORRADE_VERIFY(texture);
@@ -4632,6 +4637,7 @@ void CgltfImporterTest::textureEmptySampler() {
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "texture-empty-sampler"_s + data.suffix)));
+    CORRADE_COMPARE(importer->textureCount(), 1);
 
     Containers::Optional<Trade::TextureData> texture = importer->texture(0);
     CORRADE_VERIFY(texture);
