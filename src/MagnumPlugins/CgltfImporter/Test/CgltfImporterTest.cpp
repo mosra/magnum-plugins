@@ -2013,6 +2013,7 @@ void CgltfImporterTest::scene() {
         Containers::Optional<SceneData> scene = importer->scene(0);
         CORRADE_VERIFY(scene);
         CORRADE_VERIFY(scene->is3D());
+        CORRADE_COMPARE(scene->mappingBound(), 0);
         CORRADE_COMPARE(scene->fieldCount(), 2);
         CORRADE_VERIFY(scene->hasField(SceneField::Parent));
         CORRADE_COMPARE(scene->fieldType(SceneField::Parent), SceneFieldType::Int);

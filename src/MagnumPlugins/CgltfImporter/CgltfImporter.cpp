@@ -1340,7 +1340,7 @@ Containers::Optional<SceneData> CgltfImporter::doScene(UnsignedInt id) {
     }
 
     /** @todo once there's SceneData::mappingRange(), calculate also min here */
-    const UnsignedInt maxObjectIndex = Math::max(objects);
+    const UnsignedInt maxObjectIndexPlusOne = objects.isEmpty() ? 0 : Math::max(objects) + 1;
 
     /* Count how many objects have matrices, how many have separate TRS
        properties and which of the set are present. Then also gather mesh,
@@ -1589,7 +1589,7 @@ Containers::Optional<SceneData> CgltfImporter::doScene(UnsignedInt id) {
     /* Convert back to the default deleter to avoid dangling deleter function
        pointer issues when unloading the plugin */
     arrayShrink(fields, DefaultInit);
-    return SceneData{SceneMappingType::UnsignedInt, maxObjectIndex + 1, std::move(data), std::move(fields)};
+    return SceneData{SceneMappingType::UnsignedInt, maxObjectIndexPlusOne, std::move(data), std::move(fields)};
 }
 
 UnsignedLong CgltfImporter::doObjectCount() const {
