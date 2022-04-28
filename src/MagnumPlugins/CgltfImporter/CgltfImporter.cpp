@@ -1445,8 +1445,8 @@ Containers::Optional<SceneData> CgltfImporter::doScene(UnsignedInt id) {
     std::size_t lightOffset = 0;
     std::size_t cameraOffset = 0;
     std::size_t skinOffset = 0;
-    for(std::size_t i = 0; i != objects.size(); ++i) {
-        const cgltf_node& node = _d->data->nodes[objects[i]];
+    for(const UnsignedInt i: objects) {
+        const cgltf_node& node = _d->data->nodes[i];
 
         /* Parse TRS */
         Vector3 translation;
@@ -1457,7 +1457,7 @@ Containers::Optional<SceneData> CgltfImporter::doScene(UnsignedInt id) {
             rotation = Quaternion{Vector3::from(node.rotation), node.rotation[3]};
             if(!rotation.isNormalized() && configuration().value<bool>("normalizeQuaternions")) {
                 rotation = rotation.normalized();
-                Warning{} << "Trade::CgltfImporter::scene(): rotation quaternion of node" << objects[i] << "was renormalized";
+                Warning{} << "Trade::CgltfImporter::scene(): rotation quaternion of node" << i << "was renormalized";
             }
         }
 
@@ -1481,7 +1481,7 @@ Containers::Optional<SceneData> CgltfImporter::doScene(UnsignedInt id) {
             node.has_scale) && transformationCount)
         {
             transformations[transformationOffset] = transformation;
-            transformationObjects[transformationOffset] = objects[i];
+            transformationObjects[transformationOffset] = i;
             ++transformationOffset;
         }
 
@@ -1494,14 +1494,14 @@ Containers::Optional<SceneData> CgltfImporter::doScene(UnsignedInt id) {
             if(hasTranslations) translations[trsOffset] = translation;
             if(hasRotations) rotations[trsOffset] = rotation;
             if(hasScalings) scalings[trsOffset] = scaling;
-            trsObjects[trsOffset] = objects[i];
+            trsObjects[trsOffset] = i;
             ++trsOffset;
         }
 
         /* Populate mesh references */
         if(node.mesh) {
             for(std::size_t j = 0; j != node.mesh->primitives_count; ++j) {
-                meshMaterialObjects[meshMaterialOffset] = objects[i];
+                meshMaterialObjects[meshMaterialOffset] = i;
                 meshes[meshMaterialOffset] = _d->meshSizeOffsets[node.mesh - _d->data->meshes] + j;
                 if(hasMeshMaterials) {
                     const cgltf_material* material = node.mesh->primitives[j].material;
@@ -1513,21 +1513,21 @@ Containers::Optional<SceneData> CgltfImporter::doScene(UnsignedInt id) {
 
         /* Populate light references */
         if(node.light) {
-            lightObjects[lightOffset] = objects[i];
+            lightObjects[lightOffset] = i;
             lights[lightOffset] = node.light - _d->data->lights;
             ++lightOffset;
         }
 
         /* Populate camera references */
         if(node.camera) {
-            cameraObjects[cameraOffset] = objects[i];
+            cameraObjects[cameraOffset] = i;
             cameras[cameraOffset] = node.camera - _d->data->cameras;
             ++cameraOffset;
         }
 
         /* Populate skin references */
         if(node.skin) {
-            skinObjects[skinOffset] = objects[i];
+            skinObjects[skinOffset] = i;
             skins[skinOffset] = node.skin - _d->data->skins;
             ++skinOffset;
         }
