@@ -812,7 +812,7 @@ Int CgltfImporter::doAnimationForName(const Containers::StringView name) {
     return found == _d->animationsForName->end() ? -1 : found->second;
 }
 
-Containers::String CgltfImporter::doAnimationName(UnsignedInt id) {
+Containers::String CgltfImporter::doAnimationName(const UnsignedInt id) {
     /* If the animations are merged, don't report any names */
     if(configuration().value<bool>("mergeAnimationClips")) return {};
     return _d->decodeCachedString(_d->data->animations[id].name);
@@ -858,10 +858,10 @@ Containers::Optional<AnimationData> CgltfImporter::doAnimation(UnsignedInt id) {
     /* First gather the input and output data ranges. Key is unique accessor
        pointer so we don't duplicate shared data, value is range in the input
        buffer, offset in the output data and pointer of the corresponding key
-       track in case given track is a spline interpolation. The key pointer is
-       initialized to nullptr and will be used later to check that a spline
-       track was not used with more than one time track, as it needs to be
-       postprocessed for given time track. */
+       track in case given track is a spline interpolation. The time track
+       pointer is initialized to nullptr and will be used later to check that a
+       spline track was not used with more than one time track, as it needs to
+       be postprocessed for given time track. */
     struct SamplerData {
         Containers::StridedArrayView2D<const char> src;
         std::size_t outputOffset;
@@ -1167,7 +1167,7 @@ Containers::String CgltfImporter::doCameraName(const UnsignedInt id) {
     return _d->decodeCachedString(_d->data->cameras[id].name);
 }
 
-Containers::Optional<CameraData> CgltfImporter::doCamera(UnsignedInt id) {
+Containers::Optional<CameraData> CgltfImporter::doCamera(const UnsignedInt id) {
     const cgltf_camera& camera = _d->data->cameras[id];
 
     /* https://www.khronos.org/registry/glTF/specs/2.0/glTF-2.0.html#projection-matrices */
@@ -1218,7 +1218,7 @@ Containers::String CgltfImporter::doLightName(const UnsignedInt id) {
     return _d->decodeCachedString(_d->data->lights[id].name);
 }
 
-Containers::Optional<LightData> CgltfImporter::doLight(UnsignedInt id) {
+Containers::Optional<LightData> CgltfImporter::doLight(const UnsignedInt id) {
     const cgltf_light& light = _d->data->lights[id];
 
     /* https://github.com/KhronosGroup/glTF/tree/5d3dfa44e750f57995ac6821117d9c7061bba1c9/extensions/2.0/Khronos/KHR_lights_punctual */
@@ -1306,7 +1306,7 @@ Containers::String CgltfImporter::doSceneName(const UnsignedInt id) {
     return _d->decodeCachedString(_d->data->scenes[id].name);
 }
 
-Containers::Optional<SceneData> CgltfImporter::doScene(UnsignedInt id) {
+Containers::Optional<SceneData> CgltfImporter::doScene(const UnsignedInt id) {
     const cgltf_scene& scene = _d->data->scenes[id];
 
     /* Cgltf checks all node / mesh / light ... references during initial file
@@ -1612,7 +1612,7 @@ Long CgltfImporter::doObjectForName(const Containers::StringView name) {
     return found == _d->nodesForName->end() ? -1 : found->second;
 }
 
-Containers::String CgltfImporter::doObjectName(UnsignedLong id) {
+Containers::String CgltfImporter::doObjectName(const UnsignedLong id) {
     return _d->decodeCachedString(_d->data->nodes[id].name);
 }
 
@@ -2154,7 +2154,7 @@ MeshAttribute CgltfImporter::doMeshAttributeForName(const Containers::StringView
     return _d ? _d->meshAttributesForName[name] : MeshAttribute{};
 }
 
-Containers::String CgltfImporter::doMeshAttributeName(UnsignedShort name) {
+Containers::String CgltfImporter::doMeshAttributeName(const UnsignedShort name) {
     return _d && name < _d->meshAttributeNames.size() ?
         _d->meshAttributeNames[name] : "";
 }
@@ -2286,9 +2286,11 @@ Containers::Optional<MaterialAttributeData> parseMaterialAttribute(const Contain
         }
 
         if(type == MaterialAttributeType::Float) {
-            constexpr MaterialAttributeType vectorType[4] {
-                MaterialAttributeType::Float, MaterialAttributeType::Vector2,
-                MaterialAttributeType::Vector3, MaterialAttributeType::Vector4
+            constexpr MaterialAttributeType vectorType[]{
+                MaterialAttributeType::Float,
+                MaterialAttributeType::Vector2,
+                MaterialAttributeType::Vector3,
+                MaterialAttributeType::Vector4
             };
             type = vectorType[count - 1];
 
@@ -2330,7 +2332,7 @@ Containers::Optional<MaterialAttributeData> parseMaterialAttribute(const Contain
     Containers::String nameLowercase;
     if(!name.isEmpty() && std::isupper(static_cast<unsigned char>(name.front()))) {
         nameLowercase = name;
-        nameLowercase[0] = std::tolower(static_cast<unsigned char>(name.front()));
+        nameLowercase.front() = std::tolower(static_cast<unsigned char>(name.front()));
         name = nameLowercase;
     }
 
@@ -2339,7 +2341,7 @@ Containers::Optional<MaterialAttributeData> parseMaterialAttribute(const Contain
 
 }
 
-void CgltfImporter::Document::materialTexture(const cgltf_texture_view& texture, Containers::Array<MaterialAttributeData>& attributes, Containers::StringView attribute, Containers::StringView matrixAttribute, Containers::StringView coordinateAttribute) const {
+void CgltfImporter::Document::materialTexture(const cgltf_texture_view& texture, Containers::Array<MaterialAttributeData>& attributes, const Containers::StringView attribute, const Containers::StringView matrixAttribute, const Containers::StringView coordinateAttribute) const {
     CORRADE_INTERNAL_ASSERT(texture.texture);
 
     UnsignedInt texCoord = texture.texcoord;
@@ -2988,8 +2990,7 @@ Containers::Optional<MaterialData> CgltfImporter::doMaterial(const UnsignedInt i
                    cgltf_texture_view, normally done by cgltf */
                 textureView.texture = &_d->data->textures[index];
 
-                Containers::String nameBuffer{NoInit, name.size()*2 + 6 + 11};
-                Utility::formatInto(nameBuffer, "{}Matrix{}Coordinates", name, name);
+                Containers::String nameBuffer = Utility::format("{0}Matrix{0}Coordinates", name);
                 _d->materialTexture(
                     textureView,
                     extensionAttributes,
@@ -3004,8 +3005,7 @@ Containers::Optional<MaterialData> CgltfImporter::doMaterial(const UnsignedInt i
                     cgltf parses both "strength" and "scale" into the same
                     variable. */
                 if(textureView.scale != 1.0f) {
-                    Utility::formatInto(nameBuffer, "{}Scale", name);
-                    const Containers::StringView scaleName = nameBuffer.prefix(name.size() + 5);
+                    const Containers::StringView scaleName = nameBuffer.prefix(Utility::formatInto(nameBuffer, "{}Scale", name));
                     if(checkMaterialAttributeSize(scaleName, MaterialAttributeType::Float))
                         arrayAppend(extensionAttributes, InPlaceInit,
                             scaleName, textureView.scale);

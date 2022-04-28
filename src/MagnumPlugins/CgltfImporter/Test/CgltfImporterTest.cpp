@@ -1028,7 +1028,6 @@ void CgltfImporterTest::openExternalDataNotFound() {
 
     std::ostringstream out;
     Error redirectError{&out};
-
     CORRADE_VERIFY(!importer->mesh(0));
     /* There's an error from Path::read() before */
     CORRADE_COMPARE_AS(out.str(),
@@ -1049,7 +1048,6 @@ void CgltfImporterTest::openExternalDataNoPathNoCallback() {
 
     std::ostringstream out;
     Error redirectError{&out};
-
     CORRADE_VERIFY(!importer->mesh(0));
     CORRADE_COMPARE(out.str(), "Trade::CgltfImporter::mesh(): external buffers can be imported only when opening files from the filesystem or if a file callback is present\n");
 }
@@ -1092,7 +1090,6 @@ void CgltfImporterTest::openExternalDataNoUri() {
 
     std::ostringstream out;
     Error redirectError{&out};
-
     CORRADE_VERIFY(!importer->mesh(0));
     CORRADE_COMPARE(out.str(), "Trade::CgltfImporter::mesh(): buffer 1 has no URI\n");
 }
@@ -1110,7 +1107,6 @@ void CgltfImporterTest::openExternalDataInvalidUri() {
 
     std::ostringstream out;
     Error redirectError{&out};
-
     CORRADE_VERIFY(!importer->image2D(data.name));
     CORRADE_COMPARE(out.str(), Utility::formatString("Trade::CgltfImporter::image2D(): {}\n", data.message));
 }
@@ -1127,7 +1123,6 @@ void CgltfImporterTest::requiredExtensionsUnsupported() {
 
     std::ostringstream out;
     Error redirectError{&out};
-
     CORRADE_VERIFY(!importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "required-extensions-unsupported.gltf")));
     CORRADE_COMPARE(out.str(), "Trade::CgltfImporter::openData(): required extension EXT_lights_image_based not supported\n");
 }
@@ -1138,7 +1133,6 @@ void CgltfImporterTest::requiredExtensionsUnsupportedDisabled() {
 
     std::ostringstream out;
     Warning redirectError{&out};
-
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "required-extensions-unsupported.gltf")));
     CORRADE_COMPARE(out.str(), "Trade::CgltfImporter::openData(): required extension EXT_lights_image_based not supported\n");
 }
@@ -1874,7 +1868,6 @@ void CgltfImporterTest::cameraInvalidType() {
 
     std::ostringstream out;
     Error redirectError{&out};
-
     CORRADE_VERIFY(!importer->camera(0));
     CORRADE_COMPARE(out.str(), "Trade::CgltfImporter::camera(): invalid camera type\n");
 }
