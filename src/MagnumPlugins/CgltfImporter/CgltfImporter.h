@@ -517,7 +517,7 @@ class MAGNUM_CGLTFIMPORTER_EXPORT CgltfImporter: public AbstractImporter {
         MAGNUM_CGLTFIMPORTER_LOCAL Containers::String doTextureName(UnsignedInt id) override;
         MAGNUM_CGLTFIMPORTER_LOCAL Containers::Optional<TextureData> doTexture(UnsignedInt id) override;
 
-        MAGNUM_CGLTFIMPORTER_LOCAL AbstractImporter* setupOrReuseImporterForImage(UnsignedInt id, const char* errorPrefix);
+        MAGNUM_CGLTFIMPORTER_LOCAL AbstractImporter* setupOrReuseImporterForImage(const char* errorPrefix, UnsignedInt id);
 
         MAGNUM_CGLTFIMPORTER_LOCAL UnsignedInt doImage2DCount() const override;
         MAGNUM_CGLTFIMPORTER_LOCAL UnsignedInt doImage2DLevelCount(UnsignedInt id) override;

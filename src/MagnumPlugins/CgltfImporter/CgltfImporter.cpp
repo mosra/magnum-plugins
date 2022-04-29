@@ -3256,7 +3256,7 @@ Containers::String CgltfImporter::doImage2DName(const UnsignedInt id) {
     return _d->decodeCachedString(_d->data->images[id].name);
 }
 
-AbstractImporter* CgltfImporter::setupOrReuseImporterForImage(const UnsignedInt id, const char* const errorPrefix) {
+AbstractImporter* CgltfImporter::setupOrReuseImporterForImage(const char* const errorPrefix, const UnsignedInt id) {
     /* Looking for the same ID, so reuse an importer populated before. If the
        previous attempt failed, the importer is not set, so return nullptr in
        that case. Going through everything below again would not change the
@@ -3323,7 +3323,7 @@ AbstractImporter* CgltfImporter::setupOrReuseImporterForImage(const UnsignedInt 
 UnsignedInt CgltfImporter::doImage2DLevelCount(const UnsignedInt id) {
     CORRADE_ASSERT(manager(), "Trade::CgltfImporter::image2DLevelCount(): the plugin must be instantiated with access to plugin manager in order to open image files", {});
 
-    AbstractImporter* importer = setupOrReuseImporterForImage(id, "Trade::CgltfImporter::image2DLevelCount():");
+    AbstractImporter* importer = setupOrReuseImporterForImage("Trade::CgltfImporter::image2DLevelCount():", id);
     /* image2DLevelCount() isn't supposed to fail (image2D() is, instead), so
        report 1 on failure and expect image2D() to fail later */
     if(!importer) return 1;
@@ -3334,7 +3334,7 @@ UnsignedInt CgltfImporter::doImage2DLevelCount(const UnsignedInt id) {
 Containers::Optional<ImageData2D> CgltfImporter::doImage2D(const UnsignedInt id, const UnsignedInt level) {
     CORRADE_ASSERT(manager(), "Trade::CgltfImporter::image2D(): the plugin must be instantiated with access to plugin manager in order to load images", {});
 
-    AbstractImporter* importer = setupOrReuseImporterForImage(id, "Trade::CgltfImporter::image2D():");
+    AbstractImporter* importer = setupOrReuseImporterForImage("Trade::CgltfImporter::image2D():", id);
     if(!importer) return {};
 
     Containers::Optional<ImageData2D> imageData = importer->image2D(0, level);
