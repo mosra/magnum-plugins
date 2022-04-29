@@ -45,7 +45,7 @@
                     "snakeTexture": {
                         "index": 1,
                         "texCoord": 3,
-                        "snakeCoord": "ignored, not parsed by cgltf",
+                        "snakeCoord": "ignored, not parsed",
                         "scale": 0.2,
                         "extensions": {
                             "KHR_texture_transform": {

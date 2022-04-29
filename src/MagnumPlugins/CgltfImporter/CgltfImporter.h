@@ -35,11 +35,6 @@
 
 #include "MagnumPlugins/CgltfImporter/configure.h"
 
-#ifndef DOXYGEN_GENERATING_OUTPUT
-struct cgltf_accessor;
-struct cgltf_buffer_view;
-#endif
-
 namespace Magnum { namespace Trade {
 
 #ifndef DOXYGEN_GENERATING_OUTPUT
@@ -64,21 +59,9 @@ namespace Magnum { namespace Trade {
 
 @m_keywords{GltfImporter}
 
-Imports glTF and binary glTF using the [cgltf](https://github.com/jkuhlmann/cgltf)
-library.
+Imports glTF and binary glTF.
 
 This plugin provides the `GltfImporter` plugin.
-
-@m_class{m-block m-success}
-
-@thirdparty This plugin makes use of the [cgltf](https://github.com/jkuhlmann/cgltf)
-    library, licensed under @m_class{m-label m-success} **MIT**
-    ([license text](https://github.com/jkuhlmann/cgltf/blob/master/LICENSE),
-    [choosealicense.com](https://choosealicense.com/licenses/mit/)).
-    It requires attribution for public use. Cgltf itself uses
-    [jsmn](https://github.com/nlohmann/json), licensed under
-    @m_class{m-label m-success} **MIT** as well
-    ([license text](https://github.com/zserge/jsmn/blob/master/LICENSE)).
 
 @section Trade-CgltfImporter-usage Usage
 
@@ -129,11 +112,6 @@ the importer instance. In case of images, the files are loaded on-demand inside
 @ref image2D() calls with @ref InputFileCallbackPolicy::LoadTemporary and
 @ref InputFileCallbackPolicy::Close is emitted right after the file is fully
 read.
-
-Error reporting by cgltf is rather rudimentary, resulting in vague error
-messages and no line numbers for several classes of errors, including
-out-of-bounds indices and missing required attributes. If you need more
-detailed errors, consider using the [glTF Validator](https://github.khronos.org/glTF-Validator/).
 
 The content of the global [extensionsRequired](https://www.khronos.org/registry/glTF/specs/2.0/glTF-2.0.html#specifying-extensions)
 array is checked against all extensions supported by the plugin. If a glTF file
@@ -525,11 +503,11 @@ class MAGNUM_CGLTFIMPORTER_EXPORT CgltfImporter: public AbstractImporter {
         MAGNUM_CGLTFIMPORTER_LOCAL Containers::String doImage2DName(UnsignedInt id) override;
         MAGNUM_CGLTFIMPORTER_LOCAL Containers::Optional<ImageData2D> doImage2D(UnsignedInt id, UnsignedInt level) override;
 
-        MAGNUM_CGLTFIMPORTER_LOCAL Containers::Optional<Containers::ArrayView<const char>> loadUri(const char* errorPrefix, Containers::StringView uri, Containers::Array<char>& storage);
-        MAGNUM_CGLTFIMPORTER_LOCAL bool loadBuffer(const char* errorPrefix, UnsignedInt id);
-        MAGNUM_CGLTFIMPORTER_LOCAL bool checkBufferView(const char* errorPrefix, const cgltf_buffer_view* bufferView);
-        MAGNUM_CGLTFIMPORTER_LOCAL bool checkAccessor(const char* errorPrefix, const cgltf_accessor* accessor);
-        MAGNUM_CGLTFIMPORTER_LOCAL Containers::Optional<Containers::StridedArrayView2D<const char>> accessorView(const char* errorPrefix, const cgltf_accessor* accessor);
+        MAGNUM_CGLTFIMPORTER_LOCAL Containers::Optional<Containers::Array<char>> loadUri(const char* errorPrefix, Containers::StringView uri);
+        MAGNUM_CGLTFIMPORTER_LOCAL Containers::Optional<Containers::ArrayView<const char>> parseBuffer(const char* const errorPrefix, UnsignedInt id);
+        MAGNUM_CGLTFIMPORTER_LOCAL Containers::Optional<Containers::Triple<Containers::ArrayView<const char>, UnsignedInt, UnsignedInt>> parseBufferView(const char* errorPrefix, UnsignedInt bufferViewId);
+        MAGNUM_CGLTFIMPORTER_LOCAL Containers::Optional<Containers::Triple<Containers::StridedArrayView2D<const char>, VertexFormat, UnsignedInt>> parseAccessor(const char* const errorPrefix, UnsignedInt accessorId);
+        MAGNUM_CGLTFIMPORTER_LOCAL bool materialTexture(const Utility::JsonToken& gltfTexture, Containers::Array<MaterialAttributeData>& attributes, Containers::StringView attribute, Containers::StringView matrixAttribute, Containers::StringView coordinateAttribute);
 
         Containers::Pointer<Document> _d;
 };

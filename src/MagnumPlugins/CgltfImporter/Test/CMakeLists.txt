@@ -54,6 +54,9 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
 file(GENERATE OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/configure.h
     INPUT ${CMAKE_CURRENT_BINARY_DIR}/configure.h.in)
 
+corrade_add_test(CgltfImporterDecodeTest CgltfImporterDecodeTest.cpp)
+target_include_directories(CgltfImporterDecodeTest PRIVATE ${PROJECT_SOURCE_DIR}/src)
+
 corrade_add_resource(CgltfImporterTest_RESOURCES resources.conf)
 
 corrade_add_test(CgltfImporterTest

@@ -39,15 +39,14 @@ add_plugin(CgltfImporter
     "${MAGNUM_PLUGINS_IMPORTER_RELEASE_BINARY_INSTALL_DIR};${MAGNUM_PLUGINS_IMPORTER_RELEASE_LIBRARY_INSTALL_DIR}"
     CgltfImporter.conf
     CgltfImporter.cpp
-    CgltfImporter.h)
+    CgltfImporter.h
+    Gltf.h)
 if(MAGNUM_CGLTFIMPORTER_BUILD_STATIC AND BUILD_STATIC_PIC)
     set_target_properties(CgltfImporter PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
 target_include_directories(CgltfImporter PUBLIC
     ${PROJECT_SOURCE_DIR}/src
     ${PROJECT_BINARY_DIR}/src)
-# Include the files as a system directory to supress warnings
-target_include_directories(CgltfImporter SYSTEM PRIVATE ${PROJECT_SOURCE_DIR}/src/external/cgltf)
 target_link_libraries(CgltfImporter PUBLIC Magnum::Trade)
 if(CORRADE_TARGET_WINDOWS)
     target_link_libraries(CgltfImporter PUBLIC Magnum::AnyImageImporter)
