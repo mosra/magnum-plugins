@@ -2945,8 +2945,12 @@ Containers::Optional<MaterialData> CgltfImporter::doMaterial(const UnsignedInt i
             }
         }
 
-        Containers::Array<MaterialAttributeData> extensionAttributes;
-        arrayReserve(extensionAttributes, numAttributes);
+        arrayAppend(layers, attributes.size());
+        arrayReserve(attributes, attributes.size() + numAttributes + 1);
+        /* Uppercase layer names are reserved. Since all extension names start
+           with an uppercase vendor identifier, making the first character
+           lowercase seems silly, so we use a unique prefix. */
+        arrayAppend(attributes, InPlaceInit, MaterialAttribute::LayerName, Utility::format("#{}", extensionName));
         for(UnsignedInt tokenIndex: attributeTokens) {
             if(tokenIndex == 0u) continue;
 
@@ -2993,7 +2997,7 @@ Containers::Optional<MaterialData> CgltfImporter::doMaterial(const UnsignedInt i
                 Containers::String nameBuffer = Utility::format("{0}Matrix{0}Coordinates", name);
                 _d->materialTexture(
                     textureView,
-                    extensionAttributes,
+                    attributes,
                     name,
                     nameBuffer.prefix(name.size() + 6),
                     nameBuffer.exceptPrefix(name.size() + 6));
@@ -3007,7 +3011,7 @@ Containers::Optional<MaterialData> CgltfImporter::doMaterial(const UnsignedInt i
                 if(textureView.scale != 1.0f) {
                     const Containers::StringView scaleName = nameBuffer.prefix(Utility::formatInto(nameBuffer, "{}Scale", name));
                     if(checkMaterialAttributeSize(scaleName, MaterialAttributeType::Float))
-                        arrayAppend(extensionAttributes, InPlaceInit,
+                        arrayAppend(attributes, InPlaceInit,
                             scaleName, textureView.scale);
                 }
 
@@ -3016,19 +3020,9 @@ Containers::Optional<MaterialData> CgltfImporter::doMaterial(const UnsignedInt i
                 const Containers::Optional<MaterialAttributeData> parsed = parseMaterialAttribute(
                     json, tokens.exceptPrefix(tokenIndex));
                 if(parsed)
-                    arrayAppend(extensionAttributes, *parsed);
+                    arrayAppend(attributes, *parsed);
             }
         }
-
-        /* Uppercase layer names are reserved. Since all extension names start
-           with an uppercase vendor identifier, making the first character
-           lowercase seems silly, so we use a unique prefix. */
-        Containers::String layerName{NoInit, extensionName.size() + 1};
-        Utility::formatInto(layerName, "#{}", extensionName);
-
-        arrayAppend(layers, UnsignedInt(attributes.size()));
-        arrayAppend(attributes, InPlaceInit, MaterialAttribute::LayerName, layerName);
-        arrayAppend(attributes, Containers::arrayView<const MaterialAttributeData>(extensionAttributes));
     }
 
     /* If there's any layer, add the final attribute count */
