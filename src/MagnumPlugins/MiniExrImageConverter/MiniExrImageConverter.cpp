@@ -31,12 +31,12 @@
 #include <Magnum/ImageView.h>
 #include <Magnum/PixelFormat.h>
 
-#ifdef __clang__
+#ifdef CORRADE_TARGET_CLANG
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wc++11-narrowing"
 #endif
 #include "miniexr.h"
-#ifdef __clang__
+#ifdef CORRADE_TARGET_CLANG
 #pragma GCC diagnostic pop
 #endif
 

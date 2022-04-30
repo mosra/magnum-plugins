@@ -36,7 +36,7 @@
 
 #define STB_TRUETYPE_IMPLEMENTATION
 #define STBTT_STATIC
-#ifdef _MSC_VER
+#ifdef CORRADE_TARGET_MSVC
 #include <cmath>
 /* Using fabsf instead of fabs (double version) for 30% performance
    improvement on MSVC Debug builds. The others are not so significant. */
