@@ -5045,7 +5045,10 @@ void CgltfImporterTest::escapedStrings() {
        https://github.com/KhronosGroup/glTF/tree/fd3ab461a1114fb0250bd76099153d2af50a7a1d/specification/2.0#json-encoding
        Newer spec versions changed this to "ASCII characters [...] SHOULD be
        written without JSON escaping" */
-    CORRADE_COMPARE(importer->objectName(5), "");
+    {
+        CORRADE_EXPECT_FAIL("JSON keys are not unescaped by cgltf.");
+        CORRADE_COMPARE(importer->objectName(5), "Key UTF-8 escaped");
+    }
 
     /* Test inverse mapping as well -- it should decode the name before
        comparison. */
