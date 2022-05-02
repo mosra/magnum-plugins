@@ -71,6 +71,7 @@ struct CgltfImporterTest: TestSuite::Tester {
 
     void open();
     void openError();
+    void openIgnoreUnknownChunk();
     void openExternalDataOrder();
     void openExternalDataNotFound();
     void openExternalDataNoPathNoCallback();
@@ -213,17 +214,37 @@ using namespace Magnum::Math::Literals;
 
 constexpr struct {
     const char* name;
-    const Containers::StringView data;
+    Containers::StringView data;
     const char* message;
 } OpenErrorData[]{
-    {"short ascii", "?"_s, "data too short"},
-    {"short binary", "glTF?"_s, "data too short"},
-    {"short binary chunk", "glTF\x02\x00\x00\x00\x66\x00\x00\x00"_s, "data too short"},
-    {"unknown binary version", "glTF\x10\x00\x00\x00\x0c\x00\x00\x00"_s, "unknown binary glTF format"},
-    {"unknown binary JSON version", "glTF\x02\x00\x00\x00\x16\x00\x00\x00\x02\x00\x00\x00JSUN{}"_s, "unknown binary glTF format"},
-    {"unknown binary GLB version", "glTF\x02\x00\x00\x00\x22\x00\x00\x00\x02\x00\x00\x00JSON{}\x04\x00\x00\0BIB\x00\xff\xff\xff\xff"_s, "unknown binary glTF format"},
-    {"invalid JSON ascii", "{\"asset\":{\"version\":\"2.0\"}"_s, "invalid JSON"},
-    {"invalid JSON binary", "glTF\x02\x00\x00\x00\x16\x00\x00\x00\x02\x00\x00\x00JSON{{"_s, "invalid JSON"}
+    {"binary header too short",
+        "glTF\x02\x00\x00\x00\x13\x00\x00\x00\x00\x00\x00\x00JSO"_s,
+        "data too short"},
+    {"binary contents too short",
+        "glTF\x02\x00\x00\x00\x16\x00\x00\x00\x01\x00\x00\x00JSON{"_s,
+        "data too short"},
+    {"binary contents too long",
+        "glTF\x02\x00\x00\x00\x16\x00\x00\x00\x01\x00\x00\x00JSON{} "_s,
+        "invalid JSON"}, /* ?! */
+    {"binary JSON chunk contents too short",
+        "glTF\x02\x00\x00\x00\x16\x00\x00\x00\x03\x00\x00\x00JSON{}"_s,
+        "data too short"},
+    {"binary BIN chunk contents too short",
+        "glTF\x02\x00\x00\x00\x1f\x00\x00\x00\x02\x00\x00\x00JSON{}\x02\x00\x00\0BIN\0\xff"_s,
+        "data too short"},
+    {"unknown binary glTF version",
+        "glTF\x10\x00\x00\x00\x16\x00\x00\x00\x01\x00\x00\x00JSON{}"_s,
+        "unknown binary glTF format"},
+    {"unknown binary JSON chunk",
+        "glTF\x02\x00\x00\x00\x16\x00\x00\x00\x02\x00\x00\x00JSUN{}"_s,
+        "unknown binary glTF format"},
+    {"invalid JSON ascii",
+        /* Anything shorter causes "data too short", heh */
+        "{\"asset\":{\"version\":\"2.0\"}"_s,
+        "invalid JSON"},
+    {"invalid JSON binary",
+        "glTF\x02\x00\x00\x00\x15\x00\x00\x00\x01\x00\x00\x00JSON{"_s,
+        "invalid JSON"}
 };
 
 constexpr struct {
@@ -652,6 +673,8 @@ CgltfImporterTest::CgltfImporterTest() {
     addInstancedTests({&CgltfImporterTest::openError},
                       Containers::arraySize(OpenErrorData));
 
+    addTests({&CgltfImporterTest::openIgnoreUnknownChunk});
+
     addInstancedTests({&CgltfImporterTest::openExternalDataOrder,
                        &CgltfImporterTest::openExternalDataNotFound,
                        &CgltfImporterTest::openExternalDataNoPathNoCallback,
@@ -909,12 +932,22 @@ void CgltfImporterTest::openError() {
     auto&& data = OpenErrorData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
+
     std::ostringstream out;
     Error redirectError{&out};
-
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
     CORRADE_VERIFY(!importer->openData(data.data));
     CORRADE_COMPARE(out.str(), Utility::formatString("Trade::CgltfImporter::openData(): error opening file: {}\n", data.message));
+}
+
+void CgltfImporterTest::openIgnoreUnknownChunk() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
+
+    CORRADE_EXPECT_FAIL("cgltf doesn't properly ignore unknown binary chunks");
+    CORRADE_VERIFY(importer->openData(
+        "glTF\x02\x00\x00\x00\x3b\x00\x00\x00"
+        "\x1b\x00\x00\x00JSON{\"asset\":{\"version\":\"2.0\"}}"
+        "\x04\x00\x00\0BIB\0\xff\xff\xff\xff"_s));
 }
 
 void CgltfImporterTest::openExternalDataOrder() {
