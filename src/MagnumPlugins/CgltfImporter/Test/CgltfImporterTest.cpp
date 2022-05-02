@@ -2767,23 +2767,24 @@ void CgltfImporterTest::meshCustomAttributes() {
     }
 
     /* The mapping should be available even before the mesh is imported.
-       Attributes are sorted in declaration order. */
+       Attributes are sorted in declaration order; the first two attributes are
+       hardcoded JOINTS and WEIGHTS. */
     const MeshAttribute tbnAttribute = importer->meshAttributeForName("_TBN");
-    CORRADE_COMPARE(tbnAttribute, meshAttributeCustom(0));
+    CORRADE_COMPARE(tbnAttribute, meshAttributeCustom(2));
     CORRADE_COMPARE(importer->meshAttributeName(tbnAttribute), "_TBN");
     CORRADE_COMPARE(importer->meshAttributeForName("Nonexistent"), MeshAttribute{});
 
     const MeshAttribute uvRotation = importer->meshAttributeForName("_UV_ROTATION");
-    CORRADE_COMPARE(uvRotation, meshAttributeCustom(1));
+    CORRADE_COMPARE(uvRotation, meshAttributeCustom(3));
     CORRADE_COMPARE(importer->meshAttributeName(uvRotation), "_UV_ROTATION");
 
     const MeshAttribute tbnPreciserAttribute = importer->meshAttributeForName("_TBN_PRECISER");
     const MeshAttribute objectIdAttribute = importer->meshAttributeForName("OBJECT_ID3");
 
     const MeshAttribute doubleShotAttribute = importer->meshAttributeForName("_DOUBLE_SHOT");
-    CORRADE_COMPARE(doubleShotAttribute, meshAttributeCustom(6));
+    CORRADE_COMPARE(doubleShotAttribute, meshAttributeCustom(8));
     const MeshAttribute negativePaddingAttribute = importer->meshAttributeForName("_NEGATIVE_PADDING");
-    CORRADE_COMPARE(negativePaddingAttribute, meshAttributeCustom(4));
+    CORRADE_COMPARE(negativePaddingAttribute, meshAttributeCustom(6));
     const MeshAttribute notAnIdentityAttribute = importer->meshAttributeForName("NOT_AN_IDENTITY");
     CORRADE_VERIFY(notAnIdentityAttribute != MeshAttribute{});
 

@@ -263,11 +263,20 @@ struct CgltfImporter::Document {
 
     /* Unlike the ones above, these are filled already during construction as
        we need them in three different places and on-demand construction would
-       be too annoying to test. Also, assuming the importer knows all builtin
-       names, in most cases these would be empty anyway. */
+       be too annoying to test. */
     std::unordered_map<Containers::StringView, MeshAttribute>
-        meshAttributesForName;
-    Containers::Array<Containers::StringView> meshAttributeNames;
+        meshAttributesForName{
+         /* Not a builtin MeshAttribute yet, but expected to be used by
+            people until builtin support is added. Wouldn't strictly need to be
+            present if the file has no skinning meshes but having them present
+            in the map always makes the implementation simpler. */
+        {"JOINTS"_s, meshAttributeCustom(0)},
+        {"WEIGHTS"_s, meshAttributeCustom(1)}
+    };
+    Containers::Array<Containers::StringView> meshAttributeNames{InPlaceInit, {
+        "JOINTS"_s,
+        "WEIGHTS"_s
+    }};
 
     /* Mapping for multi-primitive meshes:
 
@@ -748,24 +757,17 @@ void CgltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags d
                         }
                     }
 
-                /* If the name isn't recognized or not in MeshAttribute, add
-                   the attribute to custom if not there already */
+                /* If the name isn't recognized, add the attribute to custom if
+                   not there already */
                 } else if(attribute.type != cgltf_attribute_type_position &&
                     attribute.type != cgltf_attribute_type_normal &&
                     attribute.type != cgltf_attribute_type_tangent &&
-                    attribute.type != cgltf_attribute_type_color)
+                    attribute.type != cgltf_attribute_type_color &&
+                    /* Names for these are already in meshAttributeNames */
+                    attribute.type != cgltf_attribute_type_joints &&
+                    attribute.type != cgltf_attribute_type_weights)
                 {
-                    /* Get the semantic base name ([semantic]_[set_index]) for
-                       known attributes that are not supported in MeshAttribute
-                       (JOINTS_n and WEIGHTS_n). This lets us group multiple
-                       sets to the same attribute.
-                       For unknown/user-defined attributes all name formats are
-                       allowed and we don't attempt to group them. */
-                    /** @todo Remove all this once Magnum adds these to MeshAttribute
-                       (pending https://github.com/mosra/magnum/pull/441) */
                     const Containers::StringView name{attribute.name};
-                    const Containers::StringView semantic = attribute.type != cgltf_attribute_type_invalid ?
-                        name.partition('_')[0] : name;
 
                     /* The spec says that all user-defined attributes must
                        start with an underscore. We don't really care and just
@@ -773,9 +775,9 @@ void CgltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags d
                     if(attribute.type == cgltf_attribute_type_invalid && !name.hasPrefix("_"_s))
                         Warning{} << "Trade::CgltfImporter::openData(): unknown attribute" << name << Debug::nospace << ", importing as custom attribute";
 
-                    if(_d->meshAttributesForName.emplace(semantic,
+                    if(_d->meshAttributesForName.emplace(name,
                         meshAttributeCustom(_d->meshAttributeNames.size())).second)
-                        arrayAppend(_d->meshAttributeNames, semantic);
+                        arrayAppend(_d->meshAttributeNames, name);
                 }
             }
         }
