@@ -578,19 +578,22 @@ constexpr struct {
     {"invalid sampler wrapT", "invalid wrap mode 4"}
 };
 
-constexpr struct {
+const struct {
     const char* name;
-    const UnsignedInt id;
+    UnsignedInt id;
+    const char* xfail;
+    UnsignedInt xfailId;
 } TextureExtensionsData[]{
-    {"GOOGLE_texture_basis", 1},
-    {"KHR_texture_basisu", 2},
-    {"MSFT_texture_dds", 3},
+    {"GOOGLE_texture_basis", 1, nullptr, 0},
+    {"KHR_texture_basisu", 2, nullptr, 0},
+    {"MSFT_texture_dds", 3, nullptr, 0},
     /* declaration order decides preference */
-    {"MSFT_texture_dds and GOOGLE_texture_basis", 3},
-    /* KHR_texture_basisu has preference before all other extensions */
-    {"GOOGLE_texture_basis and KHR_texture_basisu", 2},
-    {"unknown extension", 0},
-    {"GOOGLE_texture_basis and unknown", 1}
+    {"MSFT_texture_dds and GOOGLE_texture_basis", 3, nullptr, 0},
+    {"GOOGLE_texture_basis and KHR_texture_basisu", 1,
+        "Due to cgltf internals, KHR_texture_basisu has precedence before all other extensions.",
+        2},
+    {"unknown extension", 0, nullptr, 0},
+    {"GOOGLE_texture_basis and unknown", 1, nullptr, 0}
 };
 
 constexpr struct {
@@ -4704,7 +4707,13 @@ void CgltfImporterTest::textureExtensions() {
 
     Containers::Optional<Trade::TextureData> texture = importer->texture(data.name);
     CORRADE_VERIFY(texture);
-    CORRADE_COMPARE(texture->image(), data.id);
+    {
+        CORRADE_EXPECT_FAIL_IF(data.xfail, Containers::StringView{data.xfail});
+        CORRADE_COMPARE(texture->image(), data.id);
+    }
+    /* If the original ID check is expected to fail, verify that the ID is
+       correctly incorrect */
+    if(data.xfail) CORRADE_COMPARE(texture->image(), data.xfailId);
 }
 
 void CgltfImporterTest::textureExtensionsOutOfBounds() {
