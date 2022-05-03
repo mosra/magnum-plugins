@@ -345,13 +345,18 @@ constexpr struct {
     const char* name;
     const char* message;
 } LightInvalidData[]{
-    {"unknown type", "invalid light type"},
-    {"directional with range", "range can't be defined for a directional light"},
-    {"spot with too small inner angle", "inner and outer cone angle Deg(-0.572958) and Deg(45) out of allowed bounds"},
+    {"unknown type",
+        "unrecognized type what"},
+    {"directional with range",
+        "range can't be defined for a directional light"},
+    {"spot with too small inner angle",
+        "spot inner and outer cone angle Deg(-0.572958) and Deg(45) out of allowed bounds"},
     /* These are kinda silly (not sure why inner can't be the same as outer),
        but let's follow the spec */
-    {"spot with too large outer angle", "inner and outer cone angle Deg(0) and Deg(90.5273) out of allowed bounds"},
-    {"spot with inner angle same as outer", "inner and outer cone angle Deg(14.3239) and Deg(14.3239) out of allowed bounds"}
+    {"spot with too large outer angle",
+        "spot inner and outer cone angle Deg(0) and Deg(90.5273) out of allowed bounds"},
+    {"spot with inner angle same as outer",
+        "spot inner and outer cone angle Deg(14.3239) and Deg(14.3239) out of allowed bounds"}
 };
 
 constexpr struct {
@@ -1997,45 +2002,42 @@ void CgltfImporterTest::lightInvalid() {
 
 void CgltfImporterTest::lightInvalidColorSize() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
+    /** @todo merge with light-invalid.gltf, it no longer fails on opening */
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "light-invalid-color-size.gltf")));
+    CORRADE_COMPARE(importer->lightCount(), 1);
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(!importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "light-invalid-color-size.gltf")));
-    CORRADE_COMPARE(out.str(), "Trade::CgltfImporter::openData(): error opening file: invalid glTF, usually caused by invalid indices or missing required attributes\n");
+    CORRADE_VERIFY(!importer->light(0));
+    CORRADE_COMPARE(out.str(),
+        "Utility::Json::parseFloatArray(): expected a 3-element array, got 4 at <in>:10:30\n"
+        "Trade::CgltfImporter::light(): invalid color property\n");
 }
 
 void CgltfImporterTest::lightMissingType() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
 
+    /** @todo merge with light-invalid.gltf */
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "light-invalid-missing-type.gltf")));
     CORRADE_COMPARE(importer->lightCount(), 1);
 
     std::ostringstream out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->light(0));
-    CORRADE_COMPARE(out.str(), "Trade::CgltfImporter::light(): invalid light type\n");
+    CORRADE_COMPARE(out.str(), "Trade::CgltfImporter::light(): missing or invalid type property\n");
 }
 
 void CgltfImporterTest::lightMissingSpot() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
 
+    /** @todo merge with light-invalid.gltf */
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "light-invalid-missing-spot.gltf")));
     CORRADE_COMPARE(importer->lightCount(), 1);
 
-    Containers::Optional<Trade::LightData> light = importer->light(0);
-    {
-        CORRADE_EXPECT_FAIL("The spot object is required for lights of type spot but cgltf doesn't care if it's missing. It just sets everything to default values.");
-        CORRADE_VERIFY(!light);
-    }
-
-    CORRADE_COMPARE(light->type(), LightData::Type::Spot);
-    CORRADE_COMPARE(light->color(), (Color3{1.0f, 1.0f, 1.0f}));
-    CORRADE_COMPARE(light->intensity(), 1.0f);
-    CORRADE_COMPARE(light->attenuation(), (Vector3{1.0f, 0.0f, 1.0f}));
-    CORRADE_COMPARE(light->range(), Constants::inf());
-    CORRADE_COMPARE(light->innerConeAngle(), 0.0_radf);
-    /* Magnum uses full angles, glTF uses half angles */
-    CORRADE_COMPARE(light->outerConeAngle(), Rad{45.0_degf*2.0f});
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!importer->light(0));
+    CORRADE_COMPARE(out.str(), "Trade::CgltfImporter::light(): missing or invalid spot property\n");
 }
 
 void CgltfImporterTest::scene() {
