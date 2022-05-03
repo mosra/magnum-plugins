@@ -220,32 +220,33 @@ constexpr struct {
 } OpenErrorData[]{
     {"binary header too short",
         "glTF\x02\x00\x00\x00\x13\x00\x00\x00\x00\x00\x00\x00JSO"_s,
-        "data too short"},
+        "Trade::CgltfImporter::openData(): binary glTF too small, expected at least 20 bytes but got only 19\n"},
     {"binary contents too short",
         "glTF\x02\x00\x00\x00\x16\x00\x00\x00\x01\x00\x00\x00JSON{"_s,
-        "data too short"},
+        "Trade::CgltfImporter::openData(): binary glTF size mismatch, expected 22 bytes but got 21\n"},
     {"binary contents too long",
         "glTF\x02\x00\x00\x00\x16\x00\x00\x00\x01\x00\x00\x00JSON{} "_s,
-        "invalid JSON"}, /* ?! */
+        "Trade::CgltfImporter::openData(): binary glTF size mismatch, expected 22 bytes but got 23\n"},
     {"binary JSON chunk contents too short",
         "glTF\x02\x00\x00\x00\x16\x00\x00\x00\x03\x00\x00\x00JSON{}"_s,
-        "data too short"},
+        "Trade::CgltfImporter::openData(): binary glTF size mismatch, expected 3 bytes for a JSON chunk but got only 2\n"},
     {"binary BIN chunk contents too short",
         "glTF\x02\x00\x00\x00\x1f\x00\x00\x00\x02\x00\x00\x00JSON{}\x02\x00\x00\0BIN\0\xff"_s,
-        "data too short"},
+        "Trade::CgltfImporter::openData(): binary glTF size mismatch, expected 2 bytes for a chunk starting at 22 but got only 1\n"},
     {"unknown binary glTF version",
         "glTF\x10\x00\x00\x00\x16\x00\x00\x00\x01\x00\x00\x00JSON{}"_s,
-        "unknown binary glTF format"},
+        "Trade::CgltfImporter::openData(): unsupported binary glTF version 16\n"},
     {"unknown binary JSON chunk",
         "glTF\x02\x00\x00\x00\x16\x00\x00\x00\x02\x00\x00\x00JSUN{}"_s,
-        "unknown binary glTF format"},
+        "Trade::CgltfImporter::openData(): expected a JSON chunk, got 0x4e55534a\n"},
     {"invalid JSON ascii",
-        /* Anything shorter causes "data too short", heh */
-        "{\"asset\":{\"version\":\"2.0\"}"_s,
-        "invalid JSON"},
+        "{"_s,
+        "Utility::Json: file too short, expected \" or } at <in>:1:2\n"
+        "Trade::CgltfImporter::openData(): invalid JSON\n"},
     {"invalid JSON binary",
         "glTF\x02\x00\x00\x00\x15\x00\x00\x00\x01\x00\x00\x00JSON{"_s,
-        "invalid JSON"}
+        "Utility::Json: file too short, expected \" or } at <in>:1:2\n"
+        "Trade::CgltfImporter::openData(): invalid JSON\n"}
 };
 
 constexpr struct {
@@ -273,7 +274,7 @@ constexpr struct {
     {"no payload", "data URI has no base64 payload"},
     {"no base64", "data URI has no base64 payload"},
     {"empty base64", "data URI has no base64 payload"},
-    {"invalid base64", "invalid base64 string in data URI"}
+    {"invalid base64", "invalid Base64 padding bytes b?"}
 };
 
 constexpr struct {
@@ -652,9 +653,9 @@ constexpr struct {
     const char* file;
     const char* message;
 } UnsupportedVersionData[]{
-    {"legacy major version", "version-legacy.gltf", "error opening file: legacy glTF version"},
-    {"unknown major version", "version-unsupported.gltf", "unsupported version 3.0, expected 2.x"},
-    {"unknown minor version", "version-unsupported-min.gltf", "unsupported minVersion 2.1, expected 2.0"}
+    {"version 1.0", "version-legacy.gltf", "unsupported version 1.0, expected 2.x"},
+    {"version 3.0", "version-unsupported.gltf", "unsupported version 3.0, expected 2.x"},
+    {"minVersion 2.1", "version-unsupported-min.gltf", "unsupported minVersion 2.1, expected 2.0"}
 };
 
 /* Shared among all plugins that implement data copying optimizations */
@@ -946,17 +947,25 @@ void CgltfImporterTest::openError() {
     std::ostringstream out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->openData(data.data));
-    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::CgltfImporter::openData(): error opening file: {}\n", data.message));
+    CORRADE_COMPARE(out.str(), data.message);
 }
 
 void CgltfImporterTest::openIgnoreUnknownChunk() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
 
-    CORRADE_EXPECT_FAIL("cgltf doesn't properly ignore unknown binary chunks");
+    std::ostringstream out;
+    Warning redirectWarning{&out};
     CORRADE_VERIFY(importer->openData(
-        "glTF\x02\x00\x00\x00\x3b\x00\x00\x00"
+        "glTF\x02\x00\x00\x00\x5d\x00\x00\x00"
         "\x1b\x00\x00\x00JSON{\"asset\":{\"version\":\"2.0\"}}"
-        "\x04\x00\x00\0BIB\0\xff\xff\xff\xff"_s));
+        "\x04\x00\x00\0BIB\0\xff\xff\xff\xff"
+        "\x02\x00\x00\0BIN\0\xab\xcd" /* this one gets picked, other ignored */
+        "\x03\x00\x00\0BIG\0\xef\xff\xff"
+        "\x05\x00\x00\0BIN\0\x01\x23\x45\x67\x89"_s)); /* duplicate BIN ignored */
+    CORRADE_COMPARE(out.str(),
+        "Trade::CgltfImporter::openData(): ignoring chunk 0x424942 at 47\n"
+        "Trade::CgltfImporter::openData(): ignoring chunk 0x474942 at 69\n"
+        "Trade::CgltfImporter::openData(): ignoring chunk 0x4e4942 at 80\n");
 }
 
 void CgltfImporterTest::openExternalDataOrder() {
@@ -1133,7 +1142,7 @@ void CgltfImporterTest::openExternalDataNoUri() {
     std::ostringstream out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->mesh(0));
-    CORRADE_COMPARE(out.str(), "Trade::CgltfImporter::mesh(): buffer 1 has no URI\n");
+    CORRADE_COMPARE(out.str(), "Trade::CgltfImporter::mesh(): buffer 1 has missing uri property\n");
 }
 
 void CgltfImporterTest::openExternalDataInvalidUri() {
@@ -5109,15 +5118,12 @@ void CgltfImporterTest::escapedStrings() {
     CORRADE_COMPARE(importer->objectName(2), "UTF-8 escaped: Лорем ипсум долор сит амет");
     CORRADE_COMPARE(importer->objectName(3), "Special: \"/\\\b\f\r\n\t");
     CORRADE_COMPARE(importer->objectName(4), "Everything: říční člun \t\t\n حليب اللوز");
-    /* Keys (in this case, "name") are not decoded by cgltf. Old versions of
-       the spec used to forbid non-ASCII keys or enums:
+    /* Old versions of the spec used to forbid non-ASCII keys or enums:
        https://github.com/KhronosGroup/glTF/tree/fd3ab461a1114fb0250bd76099153d2af50a7a1d/specification/2.0#json-encoding
        Newer spec versions changed this to "ASCII characters [...] SHOULD be
-       written without JSON escaping" */
-    {
-        CORRADE_EXPECT_FAIL("JSON keys are not unescaped by cgltf.");
-        CORRADE_COMPARE(importer->objectName(5), "Key UTF-8 escaped");
-    }
+       written without JSON escaping". Nevertheless, our JSON parser handles
+       that properly. */
+    CORRADE_COMPARE(importer->objectName(5), "Key UTF-8 escaped");
 
     /* Test inverse mapping as well -- it should decode the name before
        comparison. */
