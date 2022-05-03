@@ -88,7 +88,6 @@ struct CgltfImporterTest: TestSuite::Tester {
     void animationOutOfBounds();
     void animationInvalid();
     void animationInvalidBufferNotFound();
-    void animationInvalidInterpolation();
     void animationInvalidTypes();
     void animationTrackSizeMismatch();
     void animationMissingTargetNode();
@@ -280,33 +279,58 @@ constexpr struct {
 constexpr struct {
     const char* name;
     const char* file;
+    const char* message;
 } AnimationOutOfBoundsData[]{
-    {"sampler index out of bounds", "animation-invalid-sampler-oob.gltf"},
-    {"node index out of bounds", "animation-invalid-node-oob.gltf"},
-    {"sampler input accessor index out of bounds", "animation-invalid-input-accessor-oob.gltf"},
-    {"sampler output accessor index out of bounds", "animation-invalid-output-accessor-oob.gltf"}
+    {"sampler index out of bounds",
+        "animation-invalid-sampler-oob.gltf",
+        "sampler index 1 in channel 0 out of range for 1 samplers"},
+    {"node index out of bounds",
+        "animation-invalid-node-oob.gltf",
+        "target node index 2 in channel 0 out of range for 2 nodes"},
+    {"sampler input accessor index out of bounds",
+        "animation-invalid-input-accessor-oob.gltf",
+        "accessor index 2 out of range for 2 accessors"},
+    {"sampler output accessor index out of bounds",
+        "animation-invalid-output-accessor-oob.gltf",
+        "accessor index 4 out of range for 2 accessors"}
 };
 
 constexpr struct {
     const char* name;
     const char* message;
 } AnimationInvalidData[]{
-    {"unexpected time type", "time track has unexpected type VEC4 / FLOAT (5126)"},
-    {"unexpected translation type", "translation track has unexpected type VEC4 / FLOAT (5126)"},
-    {"unexpected rotation type", "rotation track has unexpected type SCALAR / FLOAT (5126)"},
-    {"unexpected scaling type", "scaling track has unexpected type VEC4 / FLOAT (5126)"},
-    {"unsupported path", "unsupported track target 0"},
-    {"invalid input accessor", "accessor 3 needs 40 bytes but buffer view 0 has only 0"},
-    {"invalid output accessor", "accessor 4 needs 120 bytes but buffer view 0 has only 0"}
+    {"unexpected time type",
+        /** @todo might be good to eventually say the path instead of channel
+            id, but only once KHR_animation_pointer is implemented */
+        "channel 0 time track has unexpected type Vector4"},
+    {"unexpected translation type",
+        "translation track has unexpected type Vector4"},
+    {"unexpected rotation type",
+        "rotation track has unexpected type Float"},
+    {"unexpected scaling type",
+        "scaling track has unexpected type Vector4"},
+    {"unsupported path",
+        "unsupported track target color"},
+    {"invalid input accessor",
+        "accessor 3 needs 40 bytes but buffer view 0 has only 0"},
+    {"invalid output accessor",
+        "accessor 4 needs 120 bytes but buffer view 0 has only 0"},
+    {"unsupported interpolation type",
+        "unrecognized sampler 0 interpolation QUADRATIC"}
 };
 
 constexpr struct {
     const char* name;
     const char* message;
 } AnimationInvalidTypesData[]{
-    {"unknown type", "rotation track has unexpected type UNKNOWN / UNSIGNED_BYTE (5121)"},
-    {"unknown component type", "time track has unexpected type MAT2 / UNKNOWN"},
-    {"normalized float", "scaling track has unexpected type normalized VEC3 / FLOAT (5126)"}
+    /** @todo might be good to expand on where the accessors originate from
+        (rotation track, time track etc.) */
+    {"unknown type",
+        "accessor 2 has invalid type WAT"},
+    {"unknown component type",
+        "accessor 3 has invalid componentType 1234"},
+    {"normalized float",
+        "accessor 4 with component format Float can't be normalized"}
 };
 
 constexpr struct {
@@ -713,8 +737,6 @@ CgltfImporterTest::CgltfImporterTest() {
 
     addInstancedTests({&CgltfImporterTest::animationInvalidBufferNotFound},
         Containers::arraySize(AnimationInvalidBufferNotFoundData));
-
-    addTests({&CgltfImporterTest::animationInvalidInterpolation});
 
     addInstancedTests({&CgltfImporterTest::animationInvalidTypes},
         Containers::arraySize(AnimationInvalidTypesData));
@@ -1318,11 +1340,14 @@ void CgltfImporterTest::animationOutOfBounds() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
+    /** @todo merge all into one file as it no longer fails on opening */
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, data.file)));
+    CORRADE_COMPARE(importer->animationCount(), 1);
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(!importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, data.file)));
-    CORRADE_COMPARE(out.str(), "Trade::CgltfImporter::openData(): error opening file: invalid glTF, usually caused by invalid indices or missing required attributes\n");
+    CORRADE_VERIFY(!importer->animation(0));
+    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::CgltfImporter::animation(): {}\n", data.message));
 }
 
 void CgltfImporterTest::animationInvalid() {
@@ -1333,10 +1358,8 @@ void CgltfImporterTest::animationInvalid() {
 
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "animation-invalid.gltf")));
 
-    /* Check we didn't forget to test anything. We skip the invalid
-       interpolation mode because that imports without errors and defaults to
-       linear interpolation, tested in animationInvalidInterpolation(). */
-    CORRADE_COMPARE(importer->animationCount(), Containers::arraySize(AnimationInvalidData) + 1);
+    /* Check we didn't forget to test anything */
+    CORRADE_COMPARE(importer->animationCount(), Containers::arraySize(AnimationInvalidData));
 
     std::ostringstream out;
     Error redirectError{&out};
@@ -1367,21 +1390,6 @@ void CgltfImporterTest::animationInvalidBufferNotFound() {
         TestSuite::Compare::StringHasSuffix);
 }
 
-void CgltfImporterTest::animationInvalidInterpolation() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "animation-invalid.gltf")));
-
-    Containers::Optional<Trade::AnimationData> animation = importer->animation("unsupported interpolation type");
-    {
-        CORRADE_EXPECT_FAIL("Cgltf parses an invalid interpolation mode as linear, without any error.");
-        CORRADE_VERIFY(!animation);
-    }
-    CORRADE_COMPARE(animation->trackCount(), 1);
-    const Animation::TrackViewStorage<const Float>& track = animation->track(0);
-    CORRADE_COMPARE(track.interpolation(), Animation::Interpolation::Linear);
-}
-
 void CgltfImporterTest::animationInvalidTypes() {
     auto&& data = AnimationInvalidTypesData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
@@ -1408,7 +1416,7 @@ void CgltfImporterTest::animationTrackSizeMismatch() {
     std::ostringstream out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->animation(0));
-    CORRADE_COMPARE(out.str(), "Trade::CgltfImporter::animation(): target track size doesn't match time track size, expected 3 but got 2\n");
+    CORRADE_COMPARE(out.str(), "Trade::CgltfImporter::animation(): channel 0 target track size doesn't match time track size, expected 3 but got 2\n");
 }
 
 void CgltfImporterTest::animationMissingTargetNode() {
