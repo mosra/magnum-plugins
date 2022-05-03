@@ -1928,7 +1928,7 @@ void CgltfImporterTest::cameraInvalidType() {
     std::ostringstream out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->camera(0));
-    CORRADE_COMPARE(out.str(), "Trade::CgltfImporter::camera(): invalid camera type\n");
+    CORRADE_COMPARE(out.str(), "Trade::CgltfImporter::camera(): unrecognized type oblique\n");
 }
 
 void CgltfImporterTest::light() {
