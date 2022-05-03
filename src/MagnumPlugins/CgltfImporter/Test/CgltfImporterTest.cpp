@@ -322,8 +322,8 @@ constexpr struct {
     {"unknown type", "invalid light type"},
     {"directional with range", "range can't be defined for a directional light"},
     {"spot with too small inner angle", "inner and outer cone angle Deg(-0.572958) and Deg(45) out of allowed bounds"},
-    /* These are kinda silly (not sure why we should limit to 90° and why inner
-       can't be the same as outer), but let's follow the spec */
+    /* These are kinda silly (not sure why inner can't be the same as outer),
+       but let's follow the spec */
     {"spot with too large outer angle", "inner and outer cone angle Deg(0) and Deg(90.5273) out of allowed bounds"},
     {"spot with inner angle same as outer", "inner and outer cone angle Deg(14.3239) and Deg(14.3239) out of allowed bounds"}
 };
