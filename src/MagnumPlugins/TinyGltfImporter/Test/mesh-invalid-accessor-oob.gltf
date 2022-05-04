@@ -7,8 +7,9 @@
             "name": "accessor index out of bounds",
             "primitives": [
                 {
+                    "note": "for indices tinygltf handles this, for attributes not. HEH. Using TEXCOORD so the initial check for texture coordinate types is verified for bounds checks also.",
                     "attributes": {
-                        "NORMAL": 2
+                        "TEXCOORD_0": 2
                     }
                 }
             ]
@@ -19,14 +20,14 @@
             "name": "0",
             "bufferView": 0,
             "componentType": 5126,
-            "count": 3,
-            "type": "VEC3"
+            "count": 1,
+            "type": "VEC2"
         },
         {
             "name": "1",
-            "bufferView": 1,
+            "bufferView": 0,
             "componentType": 5126,
-            "count": 4,
+            "count": 1,
             "type": "VEC2"
         }
     ],
@@ -34,14 +35,15 @@
         {
             "buffer": 0,
             "byteOffset": 0,
-            "byteLength": 36,
-            "byteStride": 12
+            "byteLength": 8,
+            "byteStride": 8
         }
     ],
     "buffers": [
         {
-            "byteLength": 68,
-            "uri": "mesh-invalid.bin"
+            "byteLength": 8,
+            "comment": "base64.b64encode(bytes(8))",
+            "uri": "data:application/octet-stream;base64,AAAAAAAAAAA="
         }
     ]
 }

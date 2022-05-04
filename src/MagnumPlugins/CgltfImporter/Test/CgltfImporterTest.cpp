@@ -465,57 +465,103 @@ constexpr struct {
 constexpr struct {
     const char* name;
     const char* file;
+    const char* message;
 } MeshOutOfBoundsData[]{
-    {"buffer index out of bounds", "mesh-invalid-buffer-oob.gltf"},
-    {"buffer view index out of bounds", "mesh-invalid-bufferview-oob.gltf"},
-    {"accessor index out of bounds", "mesh-invalid-accessor-oob.gltf"},
-    {"mesh index accessor out of bounds", "mesh-invalid-index-accessor-oob.gltf"}
+    {"buffer index out of bounds",
+        "mesh-invalid-buffer-oob.gltf",
+        "buffer index 1 out of range for 1 buffers"},
+    {"buffer view index out of bounds",
+        "mesh-invalid-bufferview-oob.gltf",
+        "buffer view index 4 out of range for 1 buffer views"},
+    {"accessor index out of bounds",
+        "mesh-invalid-accessor-oob.gltf",
+        "accessor index 2 out of range for 2 accessors"},
+    {"mesh index accessor out of bounds",
+        "mesh-invalid-index-accessor-oob.gltf",
+        "accessor index 0 out of range for 0 accessors"}
 };
 
 constexpr struct {
     const char* name;
     const char* message;
 } MeshInvalidData[]{
-    {"invalid primitive", "unrecognized primitive 666"},
-    {"different vertex count for each accessor", "mismatched vertex count for attribute TEXCOORD, expected 3 but got 4"},
-    {"unexpected position type", "unexpected POSITION type VEC2"},
-    {"unsupported position component type", "unsupported POSITION component type unnormalized UNSIGNED_INT (5125)"},
-    {"unexpected normal type", "unexpected NORMAL type VEC2"},
-    {"unsupported normal component type", "unsupported NORMAL component type unnormalized UNSIGNED_INT (5125)"},
-    {"unexpected tangent type", "unexpected TANGENT type VEC3"},
-    {"unsupported tangent component type", "unsupported TANGENT component type unnormalized BYTE (5120)"},
-    {"unexpected texcoord type", "unexpected TEXCOORD type VEC3"},
-    {"unsupported texcoord component type", "unsupported TEXCOORD component type unnormalized UNSIGNED_INT (5125)"},
-    {"unexpected color type", "unexpected COLOR type VEC2"},
-    {"unsupported color component type", "unsupported COLOR component type unnormalized BYTE (5120)"},
-    {"unexpected joints type", "unexpected JOINTS type VEC3"},
-    {"unsupported joints component type", "unsupported JOINTS component type unnormalized BYTE (5120)"},
-    {"unexpected weights type", "unexpected WEIGHTS type SCALAR"},
-    {"unsupported weights component type", "unsupported WEIGHTS component type unnormalized BYTE (5120)"},
-    {"unexpected object id type", "unexpected object ID type VEC2"},
-    {"unsupported object id component type", "unsupported object ID component type unnormalized SHORT (5122)"},
-    {"unexpected index type", "unexpected index type VEC2"},
-    {"unsupported index component type", "unexpected index component type SHORT (5122)"},
-    {"normalized index type", "index type can't be normalized"},
-    {"strided index view", "index buffer view is not contiguous"},
-    {"accessor type size larger than buffer stride", "16-byte type defined by accessor 10 can't fit into buffer view 0 stride of 12"},
-    {"normalized float", "attribute _THING component type FLOAT (5126) can't be normalized"},
-    {"normalized int", "attribute _THING component type UNSIGNED_INT (5125) can't be normalized"},
-    {"non-normalized byte matrix", "attribute _THING has an unsupported matrix component type unnormalized BYTE (5120)"},
-    {"sparse accessor", "accessor 14 is using sparse storage, which is unsupported"},
-    {"no bufferview", "accessor 15 has no buffer view"},
-    {"accessor range out of bounds", "accessor 18 needs 48 bytes but buffer view 0 has only 36"},
-    {"buffer view range out of bounds", "buffer view 3 needs 164 bytes but buffer 1 has only 160"},
-    {"multiple buffers", "meshes spanning multiple buffers are not supported"},
-    {"invalid index accessor", "accessor 17 needs 40 bytes but buffer view 0 has only 36"}
+    {"invalid primitive",
+        "unrecognized primitive 666"},
+    {"different vertex count for each accessor",
+        "mismatched vertex count for attribute TEXCOORD_0, expected 3 but got 4"},
+    /** @todo probably don't need to verify both type and componentType, no?
+        the errors are the same for both */
+    {"unexpected position type",
+        "unsupported POSITION format Vector2"},
+    {"unsupported position component type",
+        "unsupported POSITION format Vector3ui"},
+    {"unexpected normal type",
+        "unsupported NORMAL format Vector2"},
+    {"unsupported normal component type",
+        "unsupported NORMAL format Vector3ui"},
+    {"unexpected tangent type",
+        "unsupported TANGENT format Vector3"},
+    {"unsupported tangent component type",
+        "unsupported TANGENT format Vector4b"},
+    {"unexpected texcoord type",
+        "unsupported TEXCOORD_0 format Vector3ui"},
+    {"unsupported texcoord component type",
+        "unsupported TEXCOORD_0 format Vector2ui"},
+    {"unexpected color type",
+        "unsupported COLOR_0 format Vector2"},
+    {"unsupported color component type",
+        "unsupported COLOR_0 format Vector4b"},
+    {"unexpected joints type",
+        "unsupported JOINTS_0 format Vector3"},
+    {"unsupported joints component type",
+        "unsupported JOINTS_0 format Vector4b"},
+    {"unexpected weights type",
+        "unsupported WEIGHTS_0 format Short"},
+    {"unsupported weights component type",
+        "unsupported WEIGHTS_0 format Vector4b"},
+    {"unexpected object id type",
+        "unsupported object ID attribute _OBJECT_ID type Vector2ui"},
+    {"unsupported object id component type",
+        "unsupported object ID attribute _OBJECT_ID type Short"},
+    {"unexpected index type",
+        "unsupported index type Vector2ui"},
+    {"unsupported index component type",
+        "unsupported index type Short"},
+    {"normalized index type",
+        "accessor 8 with component format UnsignedInt can't be normalized"},
+    {"strided index view",
+        "index buffer view is not contiguous"},
+    {"accessor type size larger than buffer stride",
+        "16-byte type defined by accessor 10 can't fit into buffer view 0 stride of 12"},
+    {"normalized float",
+        "accessor 11 with component format Float can't be normalized"},
+    {"normalized int",
+        "accessor 20 with component format UnsignedInt can't be normalized"},
+    {"non-normalized byte matrix",
+        "accessor 13 has an unsupported matrix component format Byte"},
+    {"sparse accessor",
+        "accessor 14 is using sparse storage, which is unsupported"},
+    {"no bufferview",
+        "accessor 15 has missing or invalid bufferView property"},
+    {"accessor range out of bounds",
+        "accessor 18 needs 48 bytes but buffer view 0 has only 36"},
+    {"buffer view range out of bounds",
+        "buffer view 3 needs 164 bytes but buffer 1 has only 160"},
+    {"multiple buffers",
+        "meshes spanning multiple buffers are not supported"},
+    {"invalid index accessor",
+        "accessor 17 needs 40 bytes but buffer view 0 has only 36"}
 };
 
 constexpr struct {
     const char* name;
     const char* message;
 } MeshInvalidTypesData[]{
-    {"unknown type", "attribute _THING has an invalid type"},
-    {"unknown component type", "attribute _THING has an invalid component type"}
+    /** @todo merge with MeshInvalid? */
+    {"unknown type",
+        "accessor 0 has invalid type EEE"},
+    {"unknown component type",
+        "accessor 1 has invalid componentType 9999"}
 };
 
 constexpr struct {
@@ -3342,11 +3388,14 @@ void CgltfImporterTest::meshOutOfBounds() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
+    /** @todo merge all into one file as it no longer fails on opening */
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, data.file)));
+    CORRADE_COMPARE(importer->meshCount(), 1);
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(!importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, data.file)));
-    CORRADE_COMPARE(out.str(), "Trade::CgltfImporter::openData(): error opening file: invalid glTF, usually caused by invalid indices or missing required attributes\n");
+    CORRADE_VERIFY(!importer->mesh(0));
+    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::CgltfImporter::mesh(): {}\n", data.message));
 }
 
 void CgltfImporterTest::meshInvalid() {

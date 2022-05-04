@@ -148,7 +148,7 @@ corrade_add_test(TinyGltfImporterTest
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/mesh-embedded.glb
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/mesh-invalid.bin
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/mesh-invalid.gltf
-        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/mesh-invalid-accessor-oob.gltf
+        mesh-invalid-accessor-oob.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/mesh-invalid-buffer-oob.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/mesh-invalid-bufferview-oob.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/mesh-invalid-index-accessor-oob.gltf

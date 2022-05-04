@@ -318,9 +318,9 @@ constexpr struct {
         VertexFormat::Vector2us, VertexFormat::UnsignedByte, "_SEMANTIC"}
 };
 
-constexpr struct {
+const struct {
     const char* name;
-    const char* file;
+    Containers::String file;
     const char* message;
 } MeshInvalidData[]{
     {"invalid primitive", "mesh-invalid.gltf", "unrecognized primitive 666"},
@@ -356,7 +356,8 @@ constexpr struct {
     {"buffer view range out of bounds", "mesh-invalid.gltf", "bufferView 3 needs 164 bytes but buffer 1 has only 160"},
     {"buffer index out of bounds", "mesh-invalid-buffer-oob.gltf", "buffer 1 out of bounds for 1 buffers"},
     {"buffer view index out of bounds", "mesh-invalid-bufferview-oob.gltf", "bufferView 4 out of bounds for 1 views"},
-    {"accessor index out of bounds", "mesh-invalid-accessor-oob.gltf", "accessor 2 out of bounds for 2 accessors"},
+    /* The others are in Cgltf's test dir */
+    {"accessor index out of bounds", Utility::Path::join(TINYGLTFIMPORTER_TEST_DIR, "mesh-invalid-accessor-oob.gltf"), "accessor 2 out of bounds for 2 accessors"},
     {"multiple buffers", "mesh-invalid.gltf", "meshes spanning multiple buffers are not supported"},
     {"invalid index accessor", "mesh-invalid.gltf", "accessor 17 needs 40 bytes but bufferView 0 has only 36"},
 };
