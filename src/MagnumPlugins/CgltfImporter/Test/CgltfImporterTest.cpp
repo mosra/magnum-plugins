@@ -698,19 +698,28 @@ constexpr struct {
 constexpr struct {
     const char* name;
     const char* file;
+    const char* message;
 } TextureOutOfBoundsData[]{
-    {"image out of bounds", "texture-invalid-image-oob.gltf"},
-    {"sampler out of bounds", "texture-invalid-sampler-oob.gltf"}
+    {"image out of bounds",
+        "texture-invalid-image-oob.gltf",
+        "index 2 out of range for 2 images"},
+    {"sampler out of bounds",
+        "texture-invalid-sampler-oob.gltf",
+        "index 1 out of range for 1 samplers"}
 };
 
 constexpr struct {
     const char* name;
     const char* message;
 } TextureInvalidData[]{
-    {"invalid sampler minFilter", "invalid minFilter 1"},
-    {"invalid sampler magFilter", "invalid magFilter 2"},
-    {"invalid sampler wrapS", "invalid wrap mode 3"},
-    {"invalid sampler wrapT", "invalid wrap mode 4"}
+    {"invalid sampler minFilter",
+        "unrecognized minFilter 1"},
+    {"invalid sampler magFilter",
+        "unrecognized magFilter 2"},
+    {"invalid sampler wrapS",
+        "unrecognized wrapS 3"},
+    {"invalid sampler wrapT",
+        "unrecognized wrapT 4"}
 };
 
 const struct {
@@ -719,14 +728,14 @@ const struct {
     const char* xfail;
     UnsignedInt xfailId;
 } TextureExtensionsData[]{
-    {"GOOGLE_texture_basis", 1, nullptr, 0},
+    {"GOOGLE_texture_basis", 1,
+        "Magnum's JSON parser currently takes the first duplicate key instead of last.",
+        3},
     {"KHR_texture_basisu", 2, nullptr, 0},
     {"MSFT_texture_dds", 3, nullptr, 0},
     /* declaration order decides preference */
     {"MSFT_texture_dds and GOOGLE_texture_basis", 3, nullptr, 0},
-    {"GOOGLE_texture_basis and KHR_texture_basisu", 1,
-        "Due to cgltf internals, KHR_texture_basisu has precedence before all other extensions.",
-        2},
+    {"GOOGLE_texture_basis and KHR_texture_basisu", 1, nullptr, 0},
     {"unknown extension", 0, nullptr, 0},
     {"GOOGLE_texture_basis and unknown", 1, nullptr, 0}
 };
@@ -735,8 +744,10 @@ constexpr struct {
     const char* name;
     const char* message;
 } TextureExtensionsInvalidData[]{
-    {"out of bounds GOOGLE_texture_basis", "GOOGLE_texture_basis image 3 out of bounds for 3 images"},
-    {"unknown extension, no fallback", "no image source found"}
+    {"out of bounds GOOGLE_texture_basis",
+        "index 3 out of range for 3 images"},
+    {"unknown extension, no fallback",
+        "missing or invalid source property"}
 };
 
 constexpr struct {
@@ -4761,11 +4772,14 @@ void CgltfImporterTest::textureOutOfBounds() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
+    /** @todo merge all into one file as it no longer fails on opening */
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, data.file)));
+    CORRADE_COMPARE(importer->textureCount(), 1);
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(!importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, data.file)));
-    CORRADE_COMPARE(out.str(), "Trade::CgltfImporter::openData(): error opening file: invalid glTF, usually caused by invalid indices or missing required attributes\n");
+    CORRADE_VERIFY(!importer->texture(0));
+    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::CgltfImporter::texture(): {}\n", data.message));
 }
 
 void CgltfImporterTest::textureInvalid() {
@@ -4833,7 +4847,7 @@ void CgltfImporterTest::textureMissingSource() {
     std::ostringstream out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->texture(0));
-    CORRADE_COMPARE(out.str(), "Trade::CgltfImporter::texture(): no image source found\n");
+    CORRADE_COMPARE(out.str(), "Trade::CgltfImporter::texture(): missing or invalid source property\n");
 }
 
 void CgltfImporterTest::textureExtensions() {
@@ -4860,15 +4874,13 @@ void CgltfImporterTest::textureExtensions() {
 
 void CgltfImporterTest::textureExtensionsOutOfBounds() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-
-    /* Cgltf only supports (and therefore checks) KHR_texture_basisu, so this
-       is the only texture extension leading to an error when opening. The rest
-       are checked in doTexture(), tested below in textureExtensionsInvalid(). */
+    /** @todo merge with texture-extensions-invalid.gltf */
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "texture-extensions-invalid-basisu-oob.gltf")));
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(!importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "texture-extensions-invalid-basisu-oob.gltf")));
-    CORRADE_COMPARE(out.str(), "Trade::CgltfImporter::openData(): error opening file: invalid glTF, usually caused by invalid indices or missing required attributes\n");
+    CORRADE_VERIFY(!importer->texture(0));
+    CORRADE_COMPARE(out.str(), "Trade::CgltfImporter::texture(): index 0 out of range for 0 images\n");
 }
 
 void CgltfImporterTest::textureExtensionsInvalid() {
