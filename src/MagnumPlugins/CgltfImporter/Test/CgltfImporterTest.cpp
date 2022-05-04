@@ -362,29 +362,44 @@ constexpr struct {
 constexpr struct {
     const char* name;
     const char* file;
+    const char* message;
 } SkinOutOfBoundsData[]{
-    {"joint out of bounds", "skin-invalid-joint-oob.gltf"},
-    {"accessor out of bounds", "skin-invalid-accessor-oob.gltf"}
+    {"joint out of bounds",
+        "skin-invalid-joint-oob.gltf",
+        "joint index 2 out of range for 2 nodes"},
+    {"accessor out of bounds",
+        "skin-invalid-accessor-oob.gltf",
+        "accessor index 1 out of range for 1 accessors"}
 };
 
 constexpr struct {
     const char* name;
     const char* message;
 } SkinInvalidData[]{
-    {"no joints", "skin has no joints"},
-    {"wrong accessor type", "inverse bind matrices have unexpected type MAT3 / FLOAT (5126)"},
-    {"wrong accessor component type", "inverse bind matrices have unexpected type MAT4 / UNSIGNED_SHORT (5123)"},
-    {"wrong accessor count", "invalid inverse bind matrix count, expected 2 but got 3"},
-    {"invalid accessor", "accessor 3 needs 196 bytes but buffer view 0 has only 192"}
+    {"no joints",
+        "skin has no joints"},
+    {"wrong accessor type",
+        "inverse bind matrices have unexpected type Matrix3x3"},
+    {"wrong accessor component type",
+        "accessor 1 has an unsupported matrix component format UnsignedShort"},
+    {"wrong accessor count",
+        "invalid inverse bind matrix count, expected 2 but got 3"},
+    {"invalid accessor",
+        "accessor 3 needs 196 bytes but buffer view 0 has only 192"}
 };
 
 constexpr struct {
     const char* name;
     const char* message;
 } SkinInvalidTypesData[]{
-    {"unknown type", "inverse bind matrices have unexpected type UNKNOWN / FLOAT (5126)"},
-    {"unknown component type", "inverse bind matrices have unexpected type MAT4 / UNKNOWN"},
-    {"normalized float", "inverse bind matrices have unexpected type normalized MAT4 / FLOAT (5126)"}
+    /** @todo might be good to expand on where the accessors originate from
+        (rotation track, time track etc.) */
+    {"unknown type",
+        "accessor 0 has invalid type NANI?"},
+    {"unknown component type",
+        "accessor 1 has invalid componentType 999"},
+    {"normalized float",
+        "accessor 2 with component format Float can't be normalized"}
 };
 
 constexpr struct {
@@ -2550,11 +2565,14 @@ void CgltfImporterTest::skinOutOfBounds() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
+    /** @todo merge all into one file as it no longer fails on opening */
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, data.file)));
+    CORRADE_COMPARE(importer->skin3DCount(), 1);
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(!importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, data.file)));
-    CORRADE_COMPARE(out.str(), "Trade::CgltfImporter::openData(): error opening file: invalid glTF, usually caused by invalid indices or missing required attributes\n");
+    CORRADE_VERIFY(!importer->skin3D(0));
+    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::CgltfImporter::skin3D(): {}\n", data.message));
 }
 
 void CgltfImporterTest::skinInvalid() {
@@ -2616,7 +2634,7 @@ void CgltfImporterTest::skinNoJointsProperty() {
     std::ostringstream out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->skin3D(0));
-    CORRADE_COMPARE(out.str(), "Trade::CgltfImporter::skin3D(): skin has no joints\n");
+    CORRADE_COMPARE(out.str(), "Trade::CgltfImporter::skin3D(): missing or invalid joints property\n");
 }
 
 void CgltfImporterTest::mesh() {
