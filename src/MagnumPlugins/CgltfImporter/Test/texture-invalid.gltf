@@ -4,7 +4,7 @@
     },
     "images" : [
         {
-            "uri" : "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP4z/D/PwAG/gL+0yubzgAAAABJRU5ErkJggg=="
+            "uri" : "image.png"
         }
     ],
     "samplers" : [

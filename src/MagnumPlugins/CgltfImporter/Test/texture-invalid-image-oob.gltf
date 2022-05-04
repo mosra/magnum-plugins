@@ -4,7 +4,10 @@
     },
     "images" : [
         {
-            "uri" : "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP4z/D/PwAG/gL+0yubzgAAAABJRU5ErkJggg=="
+            "uri" : "image.png"
+        },
+        {
+            "uri" : "image.png"
         }
     ],
     "samplers" : [
@@ -14,7 +17,7 @@
         {
             "name": "image out of bounds",
             "sampler" : 0,
-            "source" : 3
+            "source" : 2
         }
     ]
 }
