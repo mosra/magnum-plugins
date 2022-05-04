@@ -493,11 +493,9 @@ constexpr struct {
     const char* file;
 } SceneOutOfBoundsData[]{
     {"camera out of bounds", "scene-invalid-oob-camera.gltf"},
-    {"child out of bounds", "scene-invalid-oob-child.gltf"},
     {"light out of bounds", "scene-invalid-oob-light.gltf"},
     {"material out of bounds", "scene-invalid-oob-material.gltf"},
     {"material in a multi-primitive mesh out of bounds", "scene-invalid-oob-material-multi-primitive.gltf"},
-    {"node out of bounds", "scene-invalid-oob-node.gltf"},
     {"skin out of bounds", "scene-invalid-oob-skin.gltf"},
     {"skin for a multi-primitive mesh out of bounds", "scene-invalid-oob-skin-multi-primitive.gltf"}
 };
@@ -516,7 +514,11 @@ constexpr struct {
     {"child is self", "scene-invalid-hierarchy-cycle.gltf",
         "node tree contains cycle starting at node 0"},
     {"great-grandchild is self", "scene-invalid-hierarchy-cycle-deep.gltf",
-        "node tree contains cycle starting at node 0"}
+        "node tree contains cycle starting at node 0"},
+    {"child out of bounds", "scene-invalid-hierarchy-child-oob.gltf",
+        "error opening file: invalid glTF, usually caused by invalid indices or missing required attributes"},
+    {"node out of bounds", "scene-invalid-hierarchy-node-oob.gltf",
+        "error opening file: invalid glTF, usually caused by invalid indices or missing required attributes"},
 };
 
 constexpr struct {

@@ -387,7 +387,7 @@ constexpr struct {
     /* The files have extra dummy nodes to test correct numbering in the
        "in node X" message */
     {"camera out of bounds", "scene-invalid-oob-camera.gltf", "camera index 1 in node 3 out of bounds for 1 cameras"},
-    {"child out of bounds", "scene-invalid-oob-child.gltf", "child index 7 in node 4 out of bounds for 7 nodes"},
+    {"child out of bounds", "scene-invalid-hierarchy-child-oob.gltf", "child index 7 in node 4 out of bounds for 7 nodes"},
     {"light out of bounds", "scene-invalid-oob-light.gltf", "light index 2 in node 3 out of bounds for 2 lights"},
     {"material out of bounds", "scene-invalid-oob-material.gltf", "material index 4 in node 3 out of bounds for 4 materials"},
     /* The ID should be 3 because the object gets duplicated in order to be
@@ -395,7 +395,7 @@ constexpr struct {
        the object not being in range. Thus using 2 instead. */
     {"material in a multi-primitive mesh out of bounds", "scene-invalid-oob-material-multi-primitive.gltf", "material index 5 in node 2 out of bounds for 4 materials"},
     {"mesh out of bounds", "scene-invalid-oob-mesh.gltf", "mesh index 1 in node 2 out of bounds for 1 meshes"},
-    {"node out of bounds", "scene-invalid-oob-node.gltf", "node index 7 out of bounds for 7 nodes"},
+    {"node out of bounds", "scene-invalid-hierarchy-node-oob.gltf", "node index 7 out of bounds for 7 nodes"},
     {"skin out of bounds", "scene-invalid-oob-skin.gltf", "skin index 3 in node 1 out of bounds for 3 skins"},
     /* The skin should be checked for both duplicates of the primitive */
     {"skin for a multi-primitive mesh out of bounds", "scene-invalid-oob-skin-multi-primitive.gltf", "skin index 3 in node 2 out of bounds for 3 skins"},
@@ -410,7 +410,7 @@ constexpr struct {
     {"scene node has parent", "scene-invalid-hierarchy-child-not-root.gltf", "node 1 in scene 0 is not a root node"},
     {"node has multiple parents", "scene-invalid-hierarchy-multiple-parents.gltf", "node 2 has multiple parents"},
     {"child is self", "scene-invalid-hierarchy-cycle.gltf", "node tree contains cycle starting at node 0"},
-    {"great-grandchild is self", "scene-invalid-hierarchy-cycle-deep.gltf", "node tree contains cycle starting at node 0"}
+    {"great-grandchild is self", "scene-invalid-hierarchy-cycle-deep.gltf", "node tree contains cycle starting at node 0"},
 };
 
 constexpr struct {

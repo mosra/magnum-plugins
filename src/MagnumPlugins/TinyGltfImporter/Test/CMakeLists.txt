@@ -171,13 +171,13 @@ corrade_add_test(TinyGltfImporterTest
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/scene-invalid-hierarchy-cycle.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/scene-invalid-hierarchy-cycle-deep.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/scene-invalid-hierarchy-multiple-parents.gltf
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/scene-invalid-hierarchy-child-oob.gltf
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/scene-invalid-hierarchy-node-oob.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/scene-invalid-oob-camera.gltf
-        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/scene-invalid-oob-child.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/scene-invalid-oob-light.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/scene-invalid-oob-material.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/scene-invalid-oob-material-multi-primitive.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/scene-invalid-oob-mesh.gltf
-        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/scene-invalid-oob-node.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/scene-invalid-oob-skin.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/scene-invalid-oob-skin-multi-primitive.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/scene-transformation.gltf
