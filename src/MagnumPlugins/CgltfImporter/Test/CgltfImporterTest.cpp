@@ -522,14 +522,29 @@ constexpr struct {
 constexpr struct {
     const char* name;
     const char* file;
+    const char* message;
 } SceneOutOfBoundsData[]{
-    {"camera out of bounds", "scene-invalid-oob-camera.gltf"},
-    {"light out of bounds", "scene-invalid-oob-light.gltf"},
-    {"material out of bounds", "scene-invalid-oob-material.gltf"},
-    {"material in a multi-primitive mesh out of bounds", "scene-invalid-oob-material-multi-primitive.gltf"},
-    {"mesh out of bounds", "scene-invalid-oob-mesh.gltf"},
-    {"skin out of bounds", "scene-invalid-oob-skin.gltf"},
-    {"skin for a multi-primitive mesh out of bounds", "scene-invalid-oob-skin-multi-primitive.gltf"}
+    {"camera out of bounds",
+        "scene-invalid-oob-camera.gltf",
+        "camera index 1 in node 3 out of range for 1 cameras"},
+    {"light out of bounds",
+        "scene-invalid-oob-light.gltf",
+        "light index 2 in node 3 out of range for 2 lights"},
+    {"material out of bounds",
+        "scene-invalid-oob-material.gltf",
+        "material index 4 in mesh 0 primitive 0 out of range for 4 materials"},
+    {"material in a multi-primitive mesh out of bounds",
+        "scene-invalid-oob-material-multi-primitive.gltf",
+        "material index 5 in mesh 0 primitive 1 out of range for 4 materials"},
+    {"mesh out of bounds",
+        "scene-invalid-oob-mesh.gltf",
+        "mesh index 1 in node 2 out of range for 1 meshes"},
+    {"skin out of bounds",
+        "scene-invalid-oob-skin.gltf",
+        "skin index 3 in node 1 out of range for 3 skins"},
+    {"skin for a multi-primitive mesh out of bounds",
+        "scene-invalid-oob-skin-multi-primitive.gltf",
+        "skin index 3 in node 2 out of range for 3 skins"}
 };
 
 constexpr struct {
@@ -537,20 +552,24 @@ constexpr struct {
     const char* file;
     const char* message;
 } SceneInvalidHierarchyData[]{
-    {"scene node has parent", "scene-invalid-hierarchy-child-not-root.gltf",
-        "error opening file: invalid glTF, usually caused by invalid indices or missing required attributes"},
-    {"node has multiple parents", "scene-invalid-hierarchy-multiple-parents.gltf",
-        "error opening file: invalid glTF, usually caused by invalid indices or missing required attributes"},
-    /* For some reason node relationships are checked in cgltf_parse(), but
-       cycles not, so the message is different. */
-    {"child is self", "scene-invalid-hierarchy-cycle.gltf",
+    {"scene node has parent",
+        "scene-invalid-hierarchy-child-not-root.gltf",
+        "node 1 is both a root node and a child of node 0"},
+    {"node has multiple parents",
+        "scene-invalid-hierarchy-multiple-parents.gltf",
+        "node 2 is a child of both node 0 and node 1"},
+    {"child is self",
+        "scene-invalid-hierarchy-cycle.gltf",
         "node tree contains cycle starting at node 0"},
-    {"great-grandchild is self", "scene-invalid-hierarchy-cycle-deep.gltf",
+    {"great-grandchild is self",
+        "scene-invalid-hierarchy-cycle-deep.gltf",
         "node tree contains cycle starting at node 0"},
-    {"child out of bounds", "scene-invalid-hierarchy-child-oob.gltf",
-        "error opening file: invalid glTF, usually caused by invalid indices or missing required attributes"},
-    {"node out of bounds", "scene-invalid-hierarchy-node-oob.gltf",
-        "error opening file: invalid glTF, usually caused by invalid indices or missing required attributes"},
+    {"child out of bounds",
+        "scene-invalid-hierarchy-child-oob.gltf",
+        "child index 7 in node 4 out of range for 7 nodes"},
+    {"node out of bounds",
+        "scene-invalid-hierarchy-node-oob.gltf",
+        "node index 7 in scene 0 out of range for 7 nodes"},
 };
 
 constexpr struct {
@@ -2181,11 +2200,14 @@ void CgltfImporterTest::sceneOutOfBounds() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
+    /** @todo merge all into one file as it no longer fails on opening */
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, data.file)));
+    CORRADE_COMPARE(importer->sceneCount(), 1);
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(!importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, data.file)));
-    CORRADE_COMPARE(out.str(), "Trade::CgltfImporter::openData(): error opening file: invalid glTF, usually caused by invalid indices or missing required attributes\n");
+    CORRADE_VERIFY(!importer->scene(0));
+    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::CgltfImporter::scene(): {}\n", data.message));
 }
 
 void CgltfImporterTest::sceneInvalidHierarchy() {
@@ -2224,9 +2246,7 @@ void CgltfImporterTest::sceneDefaultOutOfBounds() {
     std::ostringstream out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "scene-default-oob.gltf")));
-    /* Unfortunately the error is the same here as well as for all cases in
-       sceneOutOfBounds() */
-    CORRADE_COMPARE(out.str(), "Trade::CgltfImporter::openData(): error opening file: invalid glTF, usually caused by invalid indices or missing required attributes\n");
+    CORRADE_COMPARE(out.str(), "Trade::CgltfImporter::openData(): scene index 0 out of range for 0 scenes\n");
 }
 
 void CgltfImporterTest::sceneTransformation() {
