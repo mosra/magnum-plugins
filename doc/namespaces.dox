@@ -39,7 +39,8 @@
  */
 /** @dir MagnumPlugins/CgltfImporter
  * @brief Plugin @ref Magnum::Trade::CgltfImporter
- * @m_since_latest_{plugins}
+ * @m_deprecated_since_latest Use the @relativeref{Magnum,Trade::GltfImporter}
+ *      plugin instead.
  */
 /** @dir MagnumPlugins/DdsImporter
  * @brief Plugin @ref Magnum::Trade::DdsImporter

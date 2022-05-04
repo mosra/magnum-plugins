@@ -15,7 +15,6 @@
 #  AssimpImporter               - Assimp importer
 #  BasisImageConverter          - Basis image converter
 #  BasisImporter                - Basis importer
-#  CgltfImporter                - GLTF importer using cgltf
 #  DdsImporter                  - DDS importer
 #  DevIlImageImporter           - Image importer using DevIL
 #  DrFlacAudioImporter          - FLAC audio importer using dr_flac
@@ -47,6 +46,11 @@
 #  StbVorbisAudioImporter       - OGG audio importer using stb_vorbis
 #  StlImporter                  - STL importer
 #  TinyGltfImporter             - GLTF importer using tiny_gltf
+#
+# If Magnum is built with MAGNUM_BUILD_DEPRECATED enabled, these additional
+# plugins are available for backwards compatibility purposes:
+#
+#  CgltfImporter                - glTF importer using cgltf
 #
 # Some plugins expose their internal state through separate libraries. The
 # libraries are:
@@ -146,7 +150,7 @@ mark_as_advanced(MAGNUMPLUGINS_INCLUDE_DIR)
 # components from other repositories)
 set(_MAGNUMPLUGINS_LIBRARY_COMPONENTS OpenDdl)
 set(_MAGNUMPLUGINS_PLUGIN_COMPONENTS
-    AssimpImporter BasisImageConverter BasisImporter CgltfImporter DdsImporter
+    AssimpImporter BasisImageConverter BasisImporter DdsImporter
     DevIlImageImporter DrFlacAudioImporter DrMp3AudioImporter
     DrWavAudioImporter Faad2AudioImporter FreeTypeFont GlslangShaderConverter
     GltfImporter HarfBuzzFont IcoImporter JpegImageConverter JpegImporter
@@ -163,6 +167,12 @@ set(_MAGNUMPLUGINS_IMPLICITLY_ENABLED_COMPONENTS )
 # Inter-component dependencies
 set(_MAGNUMPLUGINS_HarfBuzzFont_DEPENDENCIES FreeTypeFont)
 set(_MAGNUMPLUGINS_OpenGexImporter_DEPENDENCIES OpenDdl)
+
+# CgltfImporter, available only on a deprecated build
+if(MAGNUM_BUILD_DEPRECATED)
+    list(APPEND _MAGNUMPLUGINS_PLUGIN_COMPONENTS CgltfImporter)
+    set(_MAGNUMPLUGINS_CgltfImporter_DEPENDENCIES GltfImporter)
+endif()
 
 # Ensure that all inter-component dependencies are specified as well
 set(_MAGNUMPLUGINS_ADDITIONAL_COMPONENTS )
