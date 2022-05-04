@@ -567,17 +567,38 @@ constexpr struct {
 constexpr struct {
     const char* name;
     const char* file;
+    const char* message;
 } MaterialOutOfBoundsData[]{
-    {"invalid texture index pbrMetallicRoughness base color", "material-invalid-pbr-base-color-oob.gltf"},
-    {"invalid texture index pbrMetallicRoughness metallic/roughness", "material-invalid-pbr-metallic-roughness-oob.gltf"},
-    {"invalid texture index pbrSpecularGlossiness diffuse", "material-invalid-pbr-diffuse-oob.gltf"},
-    {"invalid texture index pbrSpecularGlossiness specular", "material-invalid-pbr-specular-oob.gltf"},
-    {"invalid texture index normal", "material-invalid-normal-oob.gltf"},
-    {"invalid texture index occlusion", "material-invalid-occlusion-oob.gltf"},
-    {"invalid texture index emissive", "material-invalid-emissive-oob.gltf"},
-    {"invalid texture index clearcoat factor", "material-invalid-clearcoat-factor-oob.gltf"},
-    {"invalid texture index clearcoat roughness", "material-invalid-clearcoat-roughness-oob.gltf"},
-    {"invalid texture index clearcoat normal", "material-invalid-clearcoat-normal-oob.gltf"}
+    {"invalid texture index pbrMetallicRoughness base color",
+        "material-invalid-pbr-base-color-oob.gltf",
+        "baseColorTexture index 2 out of range for 2 textures"},
+    {"invalid texture index pbrMetallicRoughness metallic/roughness",
+        "material-invalid-pbr-metallic-roughness-oob.gltf",
+        "metallicRoughnessTexture index 2 out of range for 2 textures"},
+    {"invalid texture index pbrSpecularGlossiness diffuse",
+        "material-invalid-pbr-diffuse-oob.gltf",
+        "diffuseTexture index 2 out of range for 2 textures"},
+    {"invalid texture index pbrSpecularGlossiness specular",
+        "material-invalid-pbr-specular-oob.gltf",
+        "specularGlossinessTexture index 2 out of range for 2 textures"},
+    {"invalid texture index normal",
+        "material-invalid-normal-oob.gltf",
+        "normalTexture index 2 out of range for 2 textures"},
+    {"invalid texture index occlusion",
+        "material-invalid-occlusion-oob.gltf",
+        "occlusionTexture index 2 out of range for 2 textures"},
+    {"invalid texture index emissive",
+        "material-invalid-emissive-oob.gltf",
+        "emissiveTexture index 2 out of range for 2 textures"},
+    {"invalid texture index clearcoat factor",
+        "material-invalid-clearcoat-factor-oob.gltf",
+        "clearcoatTexture index 2 out of range for 2 textures"},
+    {"invalid texture index clearcoat roughness",
+        "material-invalid-clearcoat-roughness-oob.gltf",
+        "clearcoatRoughnessTexture index 2 out of range for 2 textures"},
+    {"invalid texture index clearcoat normal",
+        "material-invalid-clearcoat-normal-oob.gltf",
+        "clearcoatNormalTexture index 2 out of range for 2 textures"}
 };
 
 constexpr struct {
@@ -3740,7 +3761,8 @@ void CgltfImporterTest::materialCommon() {
         Containers::Optional<Trade::MaterialData> material = importer->material("opaque");
         CORRADE_VERIFY(material);
         CORRADE_COMPARE(material->layerCount(), 1);
-        CORRADE_COMPARE(material->attributeCount(), 0);
+        CORRADE_COMPARE(material->attributeCount(), 2);
+        CORRADE_VERIFY(!material->isDoubleSided());
         CORRADE_COMPARE(material->alphaMode(), MaterialAlphaMode::Opaque);
         CORRADE_COMPARE(material->alphaMask(), 0.5f);
     } {
@@ -3913,20 +3935,22 @@ void CgltfImporterTest::materialExtras() {
         CORRADE_COMPARE(material->layerCount(), 1);
         CORRADE_COMPARE(material->attributeCount(), 0);
 
+        /** @todo maybe reduce the variants since there's a catch-all error for
+            most of them now? */
         CORRADE_COMPARE(out.str(),
             "Trade::CgltfImporter::material(): property with an empty name, skipping\n"
             "Trade::CgltfImporter::material(): property aValueThatWontFit is too large with 84 bytes, skipping\n"
             "Trade::CgltfImporter::material(): property anIncrediblyLongNameThatSadlyWontFitPaddingPaddingPadding!! is too large with 63 bytes, skipping\n"
-            "Trade::CgltfImporter::material(): property boolArray has unsupported type, skipping\n"
-            "Trade::CgltfImporter::material(): property emptyArray has unsupported type, skipping\n"
-            "Trade::CgltfImporter::material(): property mixedBoolArray has unsupported type, skipping\n"
-            "Trade::CgltfImporter::material(): property mixedObjectArray has unsupported type, skipping\n"
-            "Trade::CgltfImporter::material(): property mixedStringArray has unsupported type, skipping\n"
+            "Trade::CgltfImporter::material(): property boolArray is not a numeric array, skipping\n"
+            "Trade::CgltfImporter::material(): property emptyArray is an invalid or unrepresentable numeric vector, skipping\n"
+            "Trade::CgltfImporter::material(): property mixedBoolArray is not a numeric array, skipping\n"
+            "Trade::CgltfImporter::material(): property mixedObjectArray is not a numeric array, skipping\n"
+            "Trade::CgltfImporter::material(): property mixedStringArray is not a numeric array, skipping\n"
             "Trade::CgltfImporter::material(): property nestedObject is an object, skipping\n"
             "Trade::CgltfImporter::material(): property nestedObjectTexture is an object, skipping\n"
-            "Trade::CgltfImporter::material(): property null has unsupported type, skipping\n"
-            "Trade::CgltfImporter::material(): property oversizedArray has unsupported type, skipping\n"
-            "Trade::CgltfImporter::material(): property stringArray has unsupported type, skipping\n");
+            "Trade::CgltfImporter::material(): property null is a null, skipping\n"
+            "Trade::CgltfImporter::material(): property oversizedArray is an invalid or unrepresentable numeric vector, skipping\n"
+            "Trade::CgltfImporter::material(): property stringArray is not a numeric array, skipping\n");
     } {
         const char* name = "extras";
         CORRADE_ITERATION(name);
@@ -3966,7 +3990,7 @@ void CgltfImporterTest::materialExtras() {
 
         compareMaterials(*material, expected);
 
-        CORRADE_COMPARE(out.str(), "Trade::CgltfImporter::material(): property invalid has unsupported type, skipping\n");
+        CORRADE_COMPARE(out.str(), "Trade::CgltfImporter::material(): property invalid is not a numeric array, skipping\n");
     }
 }
 
@@ -4256,7 +4280,9 @@ void CgltfImporterTest::materialRaw() {
         {"snakeTextureCoordinates"_s, 3u},
         {"snakeTextureScale"_s, 0.2f},
         {"defaultScaleTexture"_s, 1u},
-        /* No defaultScaleTextureScale because scale is 1.0 */
+        /* Consistently with builtin materials, attributes get unconditionally
+           addded if present, even if they have seemingly default values */
+        {"defaultScaleTextureScale"_s, 1.0f},
 
         /* Unknown extension with all other supported types */
         {Trade::MaterialAttribute::LayerName, "#MAGNUM_material_type_zoo"_s},
@@ -4279,15 +4305,17 @@ void CgltfImporterTest::materialRaw() {
            KHR_materials_unlit, where just the presence of the extension alone
            affects material properties */
         {Trade::MaterialAttribute::LayerName, "#VENDOR_empty_extension_object"_s},
-    }, {3, 6, 7, 14, 29, 30}};
+    }, {3, 6, 7, 15, 30, 31}};
 
     compareMaterials(*material, expected);
 
+    /** @todo maybe reduce the variants since there's a catch-all error for
+        most of them now? */
     CORRADE_COMPARE(out.str(),
         /* MAGNUM_material_forbidden_types. Attributes are sorted by name. */
         "Trade::CgltfImporter::material(): extension with an empty name, skipping\n"
         "Trade::CgltfImporter::material(): property with an empty name, skipping\n"
-        "Trade::CgltfImporter::material(): property Texture has non-texture object type, skipping\n"
+        "Trade::CgltfImporter::material(): property Texture has a non-texture object type, skipping\n"
         "Trade::CgltfImporter::material(): property aValueThatWontFit is too large with 84 bytes, skipping\n"
         /* These are not sorted because they're not JSON attributes, and added
            in this order by materialTexture() */
@@ -4296,18 +4324,18 @@ void CgltfImporterTest::materialRaw() {
         "Trade::CgltfImporter::material(): property alsoTestingThisWithAnOverlyElongatedNameButThisTimeForATexture is too large with 66 bytes, skipping\n"
         "Trade::CgltfImporter::material(): property alsoTestingThisWithAnOverlyElongatedNameButThisTimeForATextureScale is too large with 71 bytes, skipping\n"
         "Trade::CgltfImporter::material(): property anIncrediblyLongNameThatSadlyWontFitPaddingPaddingPadding!! is too large with 63 bytes, skipping\n"
-        "Trade::CgltfImporter::material(): property boolArray has unsupported type, skipping\n"
-        "Trade::CgltfImporter::material(): property emptyArray has unsupported type, skipping\n"
-        "Trade::CgltfImporter::material(): property invalidTexture has invalid texture object type, skipping\n"
-        "Trade::CgltfImporter::material(): property mixedBoolArray has unsupported type, skipping\n"
-        "Trade::CgltfImporter::material(): property mixedObjectArray has unsupported type, skipping\n"
-        "Trade::CgltfImporter::material(): property mixedStringArray has unsupported type, skipping\n"
-        "Trade::CgltfImporter::material(): property nonTextureObject has non-texture object type, skipping\n"
-        "Trade::CgltfImporter::material(): property null has unsupported type, skipping\n"
-        "Trade::CgltfImporter::material(): property oversizedArray has unsupported type, skipping\n"
-        "Trade::CgltfImporter::material(): property stringArray has unsupported type, skipping\n"
+        "Trade::CgltfImporter::material(): property boolArray is not a numeric array, skipping\n"
+        "Trade::CgltfImporter::material(): property emptyArray is an invalid or unrepresentable numeric vector, skipping\n"
+        "Trade::CgltfImporter::material(): property invalidTexture has an invalid texture object, skipping\n"
+        "Trade::CgltfImporter::material(): property mixedBoolArray is not a numeric array, skipping\n"
+        "Trade::CgltfImporter::material(): property mixedObjectArray is not a numeric array, skipping\n"
+        "Trade::CgltfImporter::material(): property mixedStringArray is not a numeric array, skipping\n"
+        "Trade::CgltfImporter::material(): property nonTextureObject has a non-texture object type, skipping\n"
+        "Trade::CgltfImporter::material(): property null is a null, skipping\n"
+        "Trade::CgltfImporter::material(): property oversizedArray is an invalid or unrepresentable numeric vector, skipping\n"
+        "Trade::CgltfImporter::material(): property stringArray is not a numeric array, skipping\n"
         /* MAGNUM_material_type_zoo */
-        "Trade::CgltfImporter::material(): property invalid has unsupported type, skipping\n"
+        "Trade::CgltfImporter::material(): property invalid is not a numeric array, skipping\n"
         "Trade::CgltfImporter::material(): extension name VENDOR_material_thisnameiswaytoolongforalayername! is too long with 50 characters, skipping\n");
 }
 
@@ -4322,12 +4350,11 @@ void CgltfImporterTest::materialRawIor() {
 
     constexpr Containers::StringView layer = "#KHR_materials_ior"_s;
 
+    /** @todo remove the defaults since we have no special-casing anymore */
     const Containers::Pair<Containers::StringView, MaterialData> materials[]{
         {"defaults"_s, MaterialData{MaterialType{}, {
                 {Trade::MaterialAttribute::LayerName, layer},
-                /* IOR is always imported, set to glTF default if missing */
-                {"ior"_s, 1.5f}
-            }, {0, 2}}},
+            }, {0, 1}}},
         {"factors"_s, MaterialData{MaterialType{}, {
                 {Trade::MaterialAttribute::LayerName, layer},
                 {"ior"_s, 1.25f}
@@ -4355,13 +4382,11 @@ void CgltfImporterTest::materialRawSpecular() {
 
     constexpr Containers::StringView layer = "#KHR_materials_specular"_s;
 
+    /** @todo remove the defaults since we have no special-casing anymore */
     const Containers::Pair<Containers::StringView, MaterialData> materials[]{
         {"defaults"_s, MaterialData{MaterialType{}, {
-                {Trade::MaterialAttribute::LayerName, layer},
-                /* Factors are always imported, set to glTF defaults if missing */
-                {"specularFactor"_s, 1.0f},
-                {"specularColorFactor"_s, Vector3{1.0f, 1.0f, 1.0f}},
-            }, {0, 3}}},
+                {Trade::MaterialAttribute::LayerName, layer}
+            }, {0, 1}}},
         {"factors"_s, MaterialData{MaterialType{}, {
                 {Trade::MaterialAttribute::LayerName, layer},
                 {"specularFactor"_s, 0.67f},
@@ -4372,23 +4397,17 @@ void CgltfImporterTest::materialRawSpecular() {
                 {"specularFactor"_s, 0.7f},
                 {"specularColorFactor"_s, Vector3{0.3f, 0.4f, 0.5f}},
                 {"specularTexture"_s, 2u},
-                {"specularTextureSwizzle"_s, MaterialTextureSwizzle::A},
                 {"specularColorTexture"_s, 1u}
-            }, {0, 6}}},
+            }, {0, 5}}},
         {"texture identity transform"_s, MaterialData{MaterialType{}, {
                 {Trade::MaterialAttribute::LayerName, layer},
-                {"specularFactor"_s, 1.0f},
-                {"specularColorFactor"_s, Vector3{1.0f, 1.0f, 1.0f}},
                 {"specularTexture"_s, 1u},
                 {"specularTextureMatrix"_s, Matrix3{}},
-                {"specularTextureSwizzle"_s, MaterialTextureSwizzle::A},
                 {"specularColorTexture"_s, 0u},
                 {"specularColorTextureMatrix"_s, Matrix3{}}
-            }, {0, 8}}},
+            }, {0, 5}}},
         {"texture transform + coordinate set"_s, MaterialData{MaterialType{}, {
                 {Trade::MaterialAttribute::LayerName, layer},
-                {"specularFactor"_s, 1.0f},
-                {"specularColorFactor"_s, Vector3{1.0f, 1.0f, 1.0f}},
                 {"specularTexture"_s, 2u},
                 {"specularTextureCoordinates"_s, 4u},
                 {"specularTextureMatrix"_s, Matrix3{
@@ -4396,7 +4415,6 @@ void CgltfImporterTest::materialRawSpecular() {
                     {0.0f,  1.0f, 0.0f},
                     {0.0f, -1.0f, 1.0f}
                 }},
-                {"specularTextureSwizzle"_s, MaterialTextureSwizzle::A},
                 {"specularColorTexture"_s, 1u},
                 {"specularColorTextureCoordinates"_s, 1u},
                 {"specularColorTextureMatrix"_s, Matrix3{
@@ -4404,7 +4422,7 @@ void CgltfImporterTest::materialRawSpecular() {
                     {0.0f, 0.5f, 0.0f},
                     {0.0f, 0.5f, 1.0f}
                 }}
-            }, {0, 10}}}
+            }, {0, 7}}}
     };
 
     CORRADE_COMPARE(importer->materialCount(), Containers::arraySize(materials));
@@ -4428,13 +4446,11 @@ void CgltfImporterTest::materialRawTransmission() {
 
     constexpr Containers::StringView layer = "#KHR_materials_transmission"_s;
 
+    /** @todo remove the defaults since we have no special-casing anymore */
     const Containers::Pair<Containers::StringView, MaterialData> materials[]{
         {"defaults"_s, MaterialData{MaterialType{}, {
-                {Trade::MaterialAttribute::LayerName, layer},
-                /* transmissionFactor is always imported, set to glTF default
-                   if missing */
-                {"transmissionFactor"_s, 0.0f}
-            }, {0, 2}}},
+                {Trade::MaterialAttribute::LayerName, layer}
+            }, {0, 1}}},
         {"factors"_s, MaterialData{MaterialType{}, {
                 {Trade::MaterialAttribute::LayerName, layer},
                 {"transmissionFactor"_s, 0.67f}
@@ -4446,13 +4462,11 @@ void CgltfImporterTest::materialRawTransmission() {
             }, {0, 3}}},
         {"texture identity transform"_s, MaterialData{MaterialType{}, {
                 {Trade::MaterialAttribute::LayerName, layer},
-                {"transmissionFactor"_s, 0.0f},
                 {"transmissionTexture"_s, 0u},
                 {"transmissionTextureMatrix"_s, Matrix3{}}
-            }, {0, 4}}},
+            }, {0, 3}}},
         {"texture transform + coordinate set"_s, MaterialData{MaterialType{}, {
                 {Trade::MaterialAttribute::LayerName, layer},
-                {"transmissionFactor"_s, 0.0f},
                 {"transmissionTexture"_s, 1u},
                 {"transmissionTextureCoordinates"_s, 3u},
                 {"transmissionTextureMatrix"_s, Matrix3{
@@ -4460,7 +4474,7 @@ void CgltfImporterTest::materialRawTransmission() {
                     {0.0f,  1.0f, 0.0f},
                     {0.0f, -1.0f, 1.0f}
                 }}
-            }, {0, 5}}}
+            }, {0, 4}}}
     };
 
     CORRADE_COMPARE(importer->materialCount(), Containers::arraySize(materials));
@@ -4484,14 +4498,11 @@ void CgltfImporterTest::materialRawVolume() {
 
     constexpr Containers::StringView layer = "#KHR_materials_volume"_s;
 
+    /** @todo remove the defaults since we have no special-casing anymore */
     const Containers::Pair<Containers::StringView, MaterialData> materials[]{
         {"defaults"_s, MaterialData{MaterialType{}, {
-                {Trade::MaterialAttribute::LayerName, layer},
-                /* Factors are always imported, set to glTF defaults if missing */
-                {"thicknessFactor"_s, 0.0f},
-                {"attenuationDistance"_s, Constants::inf()},
-                {"attenuationColor"_s, Vector3{1.0f, 1.0f, 1.0f}}
-            }, {0, 4}}},
+                {Trade::MaterialAttribute::LayerName, layer}
+            }, {0, 1}}},
         {"factors"_s, MaterialData{MaterialType{}, {
                 {Trade::MaterialAttribute::LayerName, layer},
                 {"thicknessFactor"_s, 0.67f},
@@ -4504,22 +4515,14 @@ void CgltfImporterTest::materialRawVolume() {
                 {"attenuationDistance"_s, 1.12f},
                 {"attenuationColor"_s, Vector3{0.1f, 0.05f, 0.0f}},
                 {"thicknessTexture"_s, 1u},
-                {"thicknessTextureSwizzle"_s, MaterialTextureSwizzle::G}
-            }, {0, 6}}},
+            }, {0, 5}}},
         {"texture identity transform"_s, MaterialData{MaterialType{}, {
                 {Trade::MaterialAttribute::LayerName, layer},
-                {"thicknessFactor"_s, 0.0f},
-                {"attenuationDistance"_s, Constants::inf()},
-                {"attenuationColor"_s, Vector3{1.0f, 1.0f, 1.0f}},
                 {"thicknessTexture"_s, 0u},
                 {"thicknessTextureMatrix"_s, Matrix3{}},
-                {"thicknessTextureSwizzle"_s, MaterialTextureSwizzle::G}
-            }, {0, 7}}},
+            }, {0, 3}}},
         {"texture transform + coordinate set"_s, MaterialData{MaterialType{}, {
                 {Trade::MaterialAttribute::LayerName, layer},
-                {"thicknessFactor"_s, 0.0f},
-                {"attenuationDistance"_s, Constants::inf()},
-                {"attenuationColor"_s, Vector3{1.0f, 1.0f, 1.0f}},
                 {"thicknessTexture"_s, 1u},
                 {"thicknessTextureCoordinates"_s, 3u},
                 {"thicknessTextureMatrix"_s, Matrix3{
@@ -4527,8 +4530,7 @@ void CgltfImporterTest::materialRawVolume() {
                     {0.0f,  1.0f, 0.0f},
                     {0.0f, -1.0f, 1.0f}
                 }},
-                {"thicknessTextureSwizzle"_s, MaterialTextureSwizzle::G}
-            }, {0, 8}}}
+            }, {0, 4}}}
     };
 
     CORRADE_COMPARE(importer->materialCount(), Containers::arraySize(materials));
@@ -4552,13 +4554,11 @@ void CgltfImporterTest::materialRawSheen() {
 
     constexpr Containers::StringView layer = "#KHR_materials_sheen"_s;
 
+    /** @todo remove the defaults since we have no special-casing anymore */
     const Containers::Pair<Containers::StringView, MaterialData> materials[]{
         {"defaults"_s, MaterialData{MaterialType{}, {
-                {Trade::MaterialAttribute::LayerName, layer},
-                /* Factors are always imported, set to glTF defaults if missing */
-                {"sheenColorFactor"_s, Vector3{0.0f, 0.0f, 0.0f}},
-                {"sheenRoughnessFactor"_s, 0.0f}
-            }, {0, 3}}},
+                {Trade::MaterialAttribute::LayerName, layer}
+            }, {0, 1}}},
         {"factors"_s, MaterialData{MaterialType{}, {
                 {Trade::MaterialAttribute::LayerName, layer},
                 {"sheenColorFactor"_s, Vector3{0.2f, 0.4f, 0.6f}},
@@ -4570,22 +4570,16 @@ void CgltfImporterTest::materialRawSheen() {
                 {"sheenRoughnessFactor"_s, 0.7f},
                 {"sheenColorTexture"_s, 1u},
                 {"sheenRoughnessTexture"_s, 2u},
-                {"sheenRoughnessTextureSwizzle"_s, MaterialTextureSwizzle::A}
-            }, {0, 6}}},
+            }, {0, 5}}},
         {"texture identity transform"_s, MaterialData{MaterialType{}, {
                 {Trade::MaterialAttribute::LayerName, layer},
-                {"sheenColorFactor"_s, Vector3{0.0f, 0.0f, 0.0f}},
-                {"sheenRoughnessFactor"_s, 0.0f},
                 {"sheenColorTexture"_s, 1u},
                 {"sheenColorTextureMatrix"_s, Matrix3x3{}},
                 {"sheenRoughnessTexture"_s, 0u},
                 /* sheenRoughnessTextureMatrix is too large and skipped */
-                {"sheenRoughnessTextureSwizzle"_s, MaterialTextureSwizzle::A}
-            }, {0, 7}}},
+            }, {0, 4}}},
         {"texture transform + coordinate set"_s, MaterialData{MaterialType{}, {
             {Trade::MaterialAttribute::LayerName, layer},
-            {"sheenColorFactor"_s, Vector3{0.0f, 0.0f, 0.0f}},
-            {"sheenRoughnessFactor"_s, 0.0f},
             {"sheenColorTexture"_s, 2u},
             {"sheenColorTextureCoordinates"_s, 4u},
             {"sheenColorTextureMatrix"_s, Matrix3{
@@ -4596,8 +4590,7 @@ void CgltfImporterTest::materialRawSheen() {
             {"sheenRoughnessTexture"_s, 1u},
             {"sheenRoughnessTextureCoordinates"_s, 1u},
             /* sheenRoughnessTextureMatrix is too large and skipped */
-            {"sheenRoughnessTextureSwizzle"_s, MaterialTextureSwizzle::A}
-        }, {0, 9}}}
+        }, {0, 6}}}
     };
 
     CORRADE_COMPARE(importer->materialCount(), Containers::arraySize(materials));
@@ -4620,12 +4613,30 @@ void CgltfImporterTest::materialRawSheen() {
 void CgltfImporterTest::materialRawOutOfBounds() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
 
+    /* Disable Phong material fallback (enabled by default for compatibility),
+       testing that separately in materialPhongFallback() */
+    importer->configuration().setValue("phongMaterialFallback", false);
+
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "material-raw.gltf")));
+
+    /** @todo merge with materialRaw()? since the same error is if the texture
+        has no index property */
+    const MaterialData expected{{}, {
+        /* Texture object is ignored because it has an invalid index, the rest
+           is kept */
+        {Trade::MaterialAttribute::LayerName, "#MAGNUM_material_snake"_s},
+        {"snakeFactor"_s, 6.6f}
+    }, {0, 2}};
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(!importer->material("raw out-of-bounds"));
-    CORRADE_COMPARE(out.str(), "Trade::CgltfImporter::material(): snakeTexture index 2 out of bounds for 2 textures\n");
+    Warning redirectWarning{&out};
+    Containers::Optional<Trade::MaterialData> material = importer->material("raw out-of-bounds");
+    CORRADE_VERIFY(material);
+    compareMaterials(*material, expected);
+    CORRADE_COMPARE(out.str(),
+        "Trade::CgltfImporter::material(): snakeTexture index 2 out of range for 2 textures\n"
+        "Trade::CgltfImporter::material(): property snakeTexture has an invalid texture object, skipping\n");
 }
 
 void CgltfImporterTest::materialOutOfBounds() {
@@ -4633,11 +4644,14 @@ void CgltfImporterTest::materialOutOfBounds() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
+    /** @todo merge all into one file as it no longer fails on opening */
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, data.file)));
+    CORRADE_COMPARE(importer->materialCount(), 1);
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(!importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, data.file)));
-    CORRADE_COMPARE(out.str(), "Trade::CgltfImporter::openData(): error opening file: invalid glTF, usually caused by invalid indices or missing required attributes\n");
+    CORRADE_VERIFY(!importer->material(0));
+    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::CgltfImporter::material(): {}\n", data.message));
 }
 
 void CgltfImporterTest::materialInvalidAlphaMode() {
@@ -4646,15 +4660,10 @@ void CgltfImporterTest::materialInvalidAlphaMode() {
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "material-invalid-alpha-mode.gltf")));
     CORRADE_COMPARE(importer->materialCount(), 1);
 
-    Containers::Optional<MaterialData> material;
-    {
-        CORRADE_EXPECT_FAIL("Cgltf parses an invalid alpha mode as opaque, without any error.");
-        std::ostringstream out;
-        Error redirectError{&out};
-        CORRADE_VERIFY(!(material = importer->material(0)));
-        CORRADE_COMPARE(out.str(), "Trade::CgltfImporter::material(): unknown alpha mode WAT\n");
-    }
-    CORRADE_COMPARE(material->alphaMode(), MaterialAlphaMode::Opaque);
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!importer->material(0));
+    CORRADE_COMPARE(out.str(), "Trade::CgltfImporter::material(): unrecognized alphaMode WAT\n");
 }
 
 void CgltfImporterTest::materialTexCoordFlip() {
