@@ -775,7 +775,8 @@ const struct {
     const char* file;
     const char* message;
 } ImageInvalidData[]{
-    {"no data", "image-invalid-no-data.gltf", "image has neither a URI nor a buffer view"},
+    /** @todo test also both data and uri; merge all into one file */
+    {"no data", "image-invalid-no-data.gltf", "expected exactly one of uri or bufferView properties defined"},
     {"invalid buffer views", "image-invalid-bufferview.gltf", "buffer view 2 needs 151 bytes but buffer 1 has only 150"}
 };
 
