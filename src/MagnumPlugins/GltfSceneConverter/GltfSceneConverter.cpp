@@ -387,9 +387,9 @@ Containers::Optional<Containers::Array<char>> GltfSceneConverter::doEndData() {
     /* Nodes and scenes, those got written all at once in
        doAdd(const SceneData&) so no need to close anything */
     if(!_state->gltfNodes.isEmpty())
-        json.writeKey("nodes").writeJson(_state->gltfNodes.toString());
+        json.writeKey("nodes"_s).writeJson(_state->gltfNodes.toString());
     if(!_state->gltfScenes.isEmpty()) {
-        json.writeKey("scenes").writeJson(_state->gltfScenes.toString());
+        json.writeKey("scenes"_s).writeJson(_state->gltfScenes.toString());
         /* Currently there's at most one scene, so no need to write the default
            scene */
     }
@@ -805,7 +805,7 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const SceneData& scene, con
 
         /* Write the children array, if there's any */
         if(childOffsets[object + 1] - childOffsets[object]) {
-            _state->gltfNodes.writeKey("children").writeArray(children.slice(childOffsets[object], childOffsets[object + 1]));
+            _state->gltfNodes.writeKey("children"_s).writeArray(children.slice(childOffsets[object], childOffsets[object + 1]));
         }
 
         SceneField previous{};
@@ -827,17 +827,17 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const SceneData& scene, con
                    be present." so I guess it's an exclusive or, thus a matrix
                    gets written only if there's no TRS. */
                 if(transformations[offset] != Matrix4{} && !hasTrs[object])
-                    _state->gltfNodes.writeKey("matrix").writeArray(transformations[offset].data(), 4);
+                    _state->gltfNodes.writeKey("matrix"_s).writeArray(transformations[offset].data(), 4);
             } else if(fieldName == SceneField::Translation) {
                 if(translations[offset] != Vector3{})
-                    _state->gltfNodes.writeKey("translation").writeArray(translations[offset].data());
+                    _state->gltfNodes.writeKey("translation"_s).writeArray(translations[offset].data());
             } else if(fieldName == SceneField::Rotation) {
                 if(rotations[offset] != Quaternion{})
                     /* glTF also uses the XYZW order */
-                    _state->gltfNodes.writeKey("rotation").writeArray(rotations[offset].data());
+                    _state->gltfNodes.writeKey("rotation"_s).writeArray(rotations[offset].data());
             } else if(fieldName == SceneField::Scaling) {
                 if(scalings[offset] != Vector3{1.0f})
-                    _state->gltfNodes.writeKey("scale").writeArray(scalings[offset].data());
+                    _state->gltfNodes.writeKey("scale"_s).writeArray(scalings[offset].data());
             } else if(fieldName == SceneField::Mesh) {
                 Containers::Optional<UnsignedInt> meshId;
                 for(UnsignedInt j = 0; j != _state->meshMaterialAssignments.size(); ++j) {
@@ -851,7 +851,7 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const SceneData& scene, con
                     meshId = _state->meshMaterialAssignments.size();
                     arrayAppend(_state->meshMaterialAssignments, meshesMaterials[offset]);
                 }
-                _state->gltfNodes.writeKey("mesh").write(*meshId);
+                _state->gltfNodes.writeKey("mesh"_s).write(*meshId);
 
             } else if(fieldName == SceneField::Parent ||
                       fieldName == SceneField::MeshMaterial) {
@@ -867,7 +867,7 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const SceneData& scene, con
         }
 
         if(_state->objectNames.size() > object && _state->objectNames[object])
-            _state->gltfNodes.writeKey("name").write(_state->objectNames[object]);
+            _state->gltfNodes.writeKey("name"_s).write(_state->objectNames[object]);
     }
 
     /* Scene object referencing the root children */
@@ -876,11 +876,11 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const SceneData& scene, con
     CORRADE_INTERNAL_ASSERT(_state->gltfScenes.currentArraySize() == id);
     Containers::ScopeGuard gltfScene = _state->gltfScenes.beginObjectScope();
     if(childOffsets[0]) {
-        _state->gltfScenes.writeKey("nodes").writeArray(children.prefix(childOffsets[0]));
+        _state->gltfScenes.writeKey("nodes"_s).writeArray(children.prefix(childOffsets[0]));
     }
 
     if(name)
-        _state->gltfScenes.writeKey("name").write(name);
+        _state->gltfScenes.writeKey("name"_s).write(name);
 
     return true;
 }
@@ -1736,7 +1736,7 @@ bool GltfSceneConverter::doAdd(UnsignedInt, const MaterialData& material, const 
     }
 
     if(name)
-        _state->gltfMaterials.writeKey("name").write(name);
+        _state->gltfMaterials.writeKey("name"_s).write(name);
 
     /* Report unused attributes and layers */
     /** @todo some "iterate unset bits" API for this? */
