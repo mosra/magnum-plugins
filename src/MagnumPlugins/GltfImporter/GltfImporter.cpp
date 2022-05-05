@@ -3959,27 +3959,6 @@ Containers::Optional<TextureData> GltfImporter::doTexture(const UnsignedInt id) 
         mipmap, wrapping, gltfSource->asUnsignedInt()};
 }
 
-UnsignedInt GltfImporter::doImage2DCount() const {
-    return _d->gltfImages.size();
-}
-
-Int GltfImporter::doImage2DForName(const Containers::StringView name) {
-    if(!_d->imagesForName) {
-        _d->imagesForName.emplace();
-        _d->imagesForName->reserve(_d->gltfImages.size());
-        for(std::size_t i = 0; i != _d->gltfImages.size(); ++i)
-            if(const Containers::StringView name = _d->gltfImages[i].second())
-                _d->imagesForName->emplace(name, i);
-    }
-
-    const auto found = _d->imagesForName->find(name);
-    return found == _d->imagesForName->end() ? -1 : found->second;
-}
-
-Containers::String GltfImporter::doImage2DName(const UnsignedInt id) {
-    return _d->gltfImages[id].second();
-}
-
 AbstractImporter* GltfImporter::setupOrReuseImporterForImage(const char* const errorPrefix, const UnsignedInt id) {
     /* Looking for the same ID, so reuse an importer populated before. If the
        previous attempt failed, the importer is not set, so return nullptr in
@@ -4063,6 +4042,27 @@ AbstractImporter* GltfImporter::setupOrReuseImporterForImage(const char* const e
     if(!importer.openFile(Utility::Path::join(_d->filename ? Utility::Path::split(*_d->filename).first() : "", *decodedUri)))
         return nullptr;
     return &_d->imageImporter.emplace(std::move(importer));
+}
+
+UnsignedInt GltfImporter::doImage2DCount() const {
+    return _d->gltfImages.size();
+}
+
+Int GltfImporter::doImage2DForName(const Containers::StringView name) {
+    if(!_d->imagesForName) {
+        _d->imagesForName.emplace();
+        _d->imagesForName->reserve(_d->gltfImages.size());
+        for(std::size_t i = 0; i != _d->gltfImages.size(); ++i)
+            if(const Containers::StringView name = _d->gltfImages[i].second())
+                _d->imagesForName->emplace(name, i);
+    }
+
+    const auto found = _d->imagesForName->find(name);
+    return found == _d->imagesForName->end() ? -1 : found->second;
+}
+
+Containers::String GltfImporter::doImage2DName(const UnsignedInt id) {
+    return _d->gltfImages[id].second();
 }
 
 UnsignedInt GltfImporter::doImage2DLevelCount(const UnsignedInt id) {
