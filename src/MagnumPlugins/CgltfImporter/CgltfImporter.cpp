@@ -3351,9 +3351,7 @@ Containers::Optional<ImageData2D> CgltfImporter::doImage2D(const UnsignedInt id,
     AbstractImporter* importer = setupOrReuseImporterForImage("Trade::CgltfImporter::image2D():", id);
     if(!importer) return {};
 
-    Containers::Optional<ImageData2D> imageData = importer->image2D(0, level);
-    if(!imageData) return {};
-    return ImageData2D{std::move(*imageData)};
+    return importer->image2D(0, level);
 }
 
 }}
