@@ -117,9 +117,9 @@ struct TinyGltfImporterTest: TestSuite::Tester {
     void skinNoJointsProperty();
 
     void mesh();
-    void meshAttributeless();
-    void meshIndexed();
-    void meshIndexedAttributeless();
+    void meshNoAttributes();
+    void meshNoIndices();
+    void meshNoIndicesNoAttributes();
     void meshColors();
     void meshSkinAttributes();
     void meshCustomAttributes();
@@ -617,9 +617,9 @@ TinyGltfImporterTest::TinyGltfImporterTest() {
     addInstancedTests({&TinyGltfImporterTest::mesh},
                       Containers::arraySize(MultiFileData));
 
-    addTests({&TinyGltfImporterTest::meshAttributeless,
-              &TinyGltfImporterTest::meshIndexed,
-              &TinyGltfImporterTest::meshIndexedAttributeless,
+    addTests({&TinyGltfImporterTest::meshNoAttributes,
+              &TinyGltfImporterTest::meshNoIndices,
+              &TinyGltfImporterTest::meshNoIndicesNoAttributes,
               &TinyGltfImporterTest::meshColors,
               &TinyGltfImporterTest::meshSkinAttributes,
               &TinyGltfImporterTest::meshCustomAttributes,
@@ -2139,61 +2139,11 @@ void TinyGltfImporterTest::mesh() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "mesh"_s + data.suffix)));
 
-    CORRADE_COMPARE(importer->meshCount(), 4);
-    CORRADE_COMPARE(importer->meshName(0), "Non-indexed mesh");
-    CORRADE_COMPARE(importer->meshForName("Non-indexed mesh"), 0);
+    CORRADE_COMPARE(importer->meshName(0), "Indexed mesh");
+    CORRADE_COMPARE(importer->meshForName("Indexed mesh"), 0);
     CORRADE_COMPARE(importer->meshForName("Nonexistent"), -1);
 
-    /* _OBJECT_ID is the only custom attribute */
-    CORRADE_COMPARE(importer->meshAttributeName(meshAttributeCustom(0)), "_OBJECT_ID");
-    CORRADE_COMPARE(importer->meshAttributeName(meshAttributeCustom(1)), "");
-
     Containers::Optional<Trade::MeshData> mesh = importer->mesh(0);
-    CORRADE_VERIFY(mesh);
-    CORRADE_VERIFY(mesh->importerState());
-    CORRADE_COMPARE(mesh->primitive(), MeshPrimitive::Triangles);
-
-    CORRADE_VERIFY(!mesh->isIndexed());
-
-    CORRADE_COMPARE(mesh->attributeCount(), 2);
-    CORRADE_VERIFY(mesh->hasAttribute(MeshAttribute::Position));
-    CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::Position), VertexFormat::Vector3);
-    CORRADE_COMPARE_AS(mesh->attribute<Vector3>(MeshAttribute::Position),
-        Containers::arrayView<Vector3>({
-            /* Interleaved with normals (which are in a different mesh) */
-            {1.5f, -1.0f, -0.5f},
-            {-0.5f, 2.5f, 0.75f},
-            {-2.0f, 1.0f, 0.3f}
-        }), TestSuite::Compare::Container);
-    CORRADE_VERIFY(mesh->hasAttribute(MeshAttribute::TextureCoordinates));
-    CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::TextureCoordinates), VertexFormat::Vector2);
-    CORRADE_COMPARE_AS(mesh->attribute<Vector2>(MeshAttribute::TextureCoordinates),
-        Containers::arrayView<Vector2>({
-            /* Y-flipped compared to the input */
-            {0.3f, 1.0f},
-            {0.0f, 0.5f},
-            {0.3f, 0.7f}
-        }), TestSuite::Compare::Container);
-}
-
-void TinyGltfImporterTest::meshAttributeless() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "mesh.gltf")));
-
-    Containers::Optional<Trade::MeshData> mesh = importer->mesh("Attribute-less mesh");
-    CORRADE_VERIFY(mesh);
-    CORRADE_VERIFY(mesh->importerState());
-    CORRADE_COMPARE(mesh->primitive(), MeshPrimitive::Triangles);
-    CORRADE_VERIFY(!mesh->isIndexed());
-    CORRADE_COMPARE(mesh->vertexCount(), 0);
-    CORRADE_COMPARE(mesh->attributeCount(), 0);
-}
-
-void TinyGltfImporterTest::meshIndexed() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "mesh.gltf")));
-
-    Containers::Optional<Trade::MeshData> mesh = importer->mesh("Indexed mesh");
     CORRADE_VERIFY(mesh);
     CORRADE_VERIFY(mesh->importerState());
     CORRADE_COMPARE(mesh->primitive(), MeshPrimitive::Triangles);
@@ -2204,7 +2154,7 @@ void TinyGltfImporterTest::meshIndexed() {
         Containers::arrayView<UnsignedByte>({0, 1, 2}),
         TestSuite::Compare::Container);
 
-    CORRADE_COMPARE(mesh->attributeCount(), 4);
+    CORRADE_COMPARE(mesh->attributeCount(), 5);
     CORRADE_VERIFY(mesh->hasAttribute(MeshAttribute::Position));
     CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::Position), VertexFormat::Vector3);
     CORRADE_COMPARE_AS(mesh->attribute<Vector3>(MeshAttribute::Position),
@@ -2232,6 +2182,16 @@ void TinyGltfImporterTest::meshIndexed() {
             {-0.7f, -0.8f, -0.9f, 1.0f}
         }), TestSuite::Compare::Container);
 
+    CORRADE_VERIFY(mesh->hasAttribute(MeshAttribute::TextureCoordinates));
+    CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::TextureCoordinates), VertexFormat::Vector2);
+    CORRADE_COMPARE_AS(mesh->attribute<Vector2>(MeshAttribute::TextureCoordinates),
+        Containers::arrayView<Vector2>({
+            /* Y-flipped compared to the input */
+            {0.3f, 1.0f},
+            {0.0f, 0.5f},
+            {0.3f, 0.7f}
+        }), TestSuite::Compare::Container);
+
     CORRADE_VERIFY(mesh->hasAttribute(MeshAttribute::ObjectId));
     CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::ObjectId), VertexFormat::UnsignedInt);
     CORRADE_COMPARE_AS(mesh->attribute<UnsignedInt>(MeshAttribute::ObjectId),
@@ -2240,7 +2200,7 @@ void TinyGltfImporterTest::meshIndexed() {
         }), TestSuite::Compare::Container);
 }
 
-void TinyGltfImporterTest::meshIndexedAttributeless() {
+void TinyGltfImporterTest::meshNoAttributes() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "mesh.gltf")));
 
@@ -2252,6 +2212,46 @@ void TinyGltfImporterTest::meshIndexedAttributeless() {
     CORRADE_COMPARE_AS(mesh->indicesAsArray(),
         Containers::arrayView<UnsignedInt>({0, 1, 2}),
         TestSuite::Compare::Container);
+    CORRADE_COMPARE(mesh->vertexCount(), 0);
+    CORRADE_COMPARE(mesh->attributeCount(), 0);
+}
+
+void TinyGltfImporterTest::meshNoIndices() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "mesh.gltf")));
+
+    /* _OBJECT_ID is the only custom attribute */
+    CORRADE_COMPARE(importer->meshAttributeName(meshAttributeCustom(0)), "_OBJECT_ID");
+    CORRADE_COMPARE(importer->meshAttributeName(meshAttributeCustom(1)), "");
+
+    Containers::Optional<Trade::MeshData> mesh = importer->mesh("Non-indexed mesh");
+    CORRADE_VERIFY(mesh);
+    CORRADE_VERIFY(mesh->importerState());
+    CORRADE_COMPARE(mesh->primitive(), MeshPrimitive::Triangles);
+
+    CORRADE_VERIFY(!mesh->isIndexed());
+
+    CORRADE_COMPARE(mesh->attributeCount(), 1);
+    CORRADE_VERIFY(mesh->hasAttribute(MeshAttribute::Position));
+    CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::Position), VertexFormat::Vector3);
+    CORRADE_COMPARE_AS(mesh->attribute<Vector3>(MeshAttribute::Position),
+        Containers::arrayView<Vector3>({
+            /* Interleaved with normals (which are in a different mesh) */
+            {1.5f, -1.0f, -0.5f},
+            {-0.5f, 2.5f, 0.75f},
+            {-2.0f, 1.0f, 0.3f}
+        }), TestSuite::Compare::Container);
+}
+
+void TinyGltfImporterTest::meshNoIndicesNoAttributes() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "mesh.gltf")));
+
+    Containers::Optional<Trade::MeshData> mesh = importer->mesh("Attribute-less mesh");
+    CORRADE_VERIFY(mesh);
+    CORRADE_VERIFY(mesh->importerState());
+    CORRADE_COMPARE(mesh->primitive(), MeshPrimitive::Triangles);
+    CORRADE_VERIFY(!mesh->isIndexed());
     CORRADE_COMPARE(mesh->vertexCount(), 0);
     CORRADE_COMPARE(mesh->attributeCount(), 0);
 }

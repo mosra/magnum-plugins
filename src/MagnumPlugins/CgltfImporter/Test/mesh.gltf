@@ -4,17 +4,6 @@
     },
     "meshes": [
         {
-            "name": "Non-indexed mesh",
-            "primitives": [
-                {
-                    "attributes": {
-                        "POSITION": 1,
-                        "TEXCOORD_0": 3
-                    }
-                }
-            ]
-        },
-        {
             "name": "Indexed mesh",
             "primitives": [
                 {
@@ -22,9 +11,20 @@
                         "NORMAL": 2,
                         "POSITION": 1,
                         "TANGENT": 4,
-                        "_OBJECT_ID": 5
+                        "_OBJECT_ID": 5,
+                        "TEXCOORD_0": 3
                     },
                     "indices": 0
+                }
+            ]
+        },
+        {
+            "name": "Non-indexed mesh",
+            "primitives": [
+                {
+                    "attributes": {
+                        "POSITION": 1
+                    }
                 }
             ]
         },
