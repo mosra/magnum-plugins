@@ -413,7 +413,7 @@ constexpr struct {
         VertexFormat::Vector3bNormalized,
         VertexFormat{}, VertexFormat{},
         VertexFormat{},
-        VertexFormat::Vector2us, VertexFormat::UnsignedByte, "OBJECTID"}
+        VertexFormat::Vector2us, VertexFormat::UnsignedByte, "_SEMANTIC"}
 };
 
 constexpr struct {

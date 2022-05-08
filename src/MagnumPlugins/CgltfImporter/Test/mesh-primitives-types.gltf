@@ -103,7 +103,7 @@
                     "attributes": {
                         "POSITION": 24,
                         "TEXCOORD_0": 25,
-                        "OBJECTID": 26
+                        "_SEMANTIC": 26
                     }
                 }
             ]
