@@ -24,13 +24,7 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-#include "MagnumPlugins/CgltfImporter/configure.h"
-
-#ifdef MAGNUM_CGLTFIMPORTER_BUILD_STATIC
-#include <Corrade/PluginManager/AbstractManager.h>
-
-static int magnumCgltfImporterStaticImporter() {
-    CORRADE_PLUGIN_IMPORT(CgltfImporter)
-    return 1;
-} CORRADE_AUTOMATIC_INITIALIZER(magnumCgltfImporterStaticImporter)
-#endif
+#cmakedefine GLTFIMPORTER_PLUGIN_FILENAME "${GLTFIMPORTER_PLUGIN_FILENAME}"
+#cmakedefine BASISIMPORTER_PLUGIN_FILENAME "${BASISIMPORTER_PLUGIN_FILENAME}"
+#cmakedefine STBIMAGEIMPORTER_PLUGIN_FILENAME "${STBIMAGEIMPORTER_PLUGIN_FILENAME}"
+#define GLTFIMPORTER_TEST_DIR "${GLTFIMPORTER_TEST_DIR}"

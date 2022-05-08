@@ -1,5 +1,5 @@
-#ifndef Magnum_Trade_CgltfImporter_h
-#define Magnum_Trade_CgltfImporter_h
+#ifndef Magnum_Trade_GltfImporter_h
+#define Magnum_Trade_GltfImporter_h
 /*
     This file is part of Magnum.
 
@@ -27,47 +27,43 @@
 */
 
 /** @file
- * @brief Class @ref Magnum::Trade::CgltfImporter
+ * @brief Class @ref Magnum::Trade::GltfImporter
  * @m_since_latest_{plugins}
  */
 
 #include <Magnum/Trade/AbstractImporter.h>
 
-#include "MagnumPlugins/CgltfImporter/configure.h"
+#include "MagnumPlugins/GltfImporter/configure.h"
 
 namespace Magnum { namespace Trade {
 
 #ifndef DOXYGEN_GENERATING_OUTPUT
-#ifndef MAGNUM_CGLTFIMPORTER_BUILD_STATIC
-    #ifdef CgltfImporter_EXPORTS
-        #define MAGNUM_CGLTFIMPORTER_EXPORT CORRADE_VISIBILITY_EXPORT
+#ifndef MAGNUM_GLTFIMPORTER_BUILD_STATIC
+    #ifdef GltfImporter_EXPORTS
+        #define MAGNUM_GLTFIMPORTER_EXPORT CORRADE_VISIBILITY_EXPORT
     #else
-        #define MAGNUM_CGLTFIMPORTER_EXPORT CORRADE_VISIBILITY_IMPORT
+        #define MAGNUM_GLTFIMPORTER_EXPORT CORRADE_VISIBILITY_IMPORT
     #endif
 #else
-    #define MAGNUM_CGLTFIMPORTER_EXPORT CORRADE_VISIBILITY_STATIC
+    #define MAGNUM_GLTFIMPORTER_EXPORT CORRADE_VISIBILITY_STATIC
 #endif
-#define MAGNUM_CGLTFIMPORTER_LOCAL CORRADE_VISIBILITY_LOCAL
+#define MAGNUM_GLTFIMPORTER_LOCAL CORRADE_VISIBILITY_LOCAL
 #else
-#define MAGNUM_CGLTFIMPORTER_EXPORT
-#define MAGNUM_CGLTFIMPORTER_LOCAL
+#define MAGNUM_GLTFIMPORTER_EXPORT
+#define MAGNUM_GLTFIMPORTER_LOCAL
 #endif
 
 /**
-@brief Cgltf importer plugin
+@brief glTF importer plugin
 @m_since_latest_{plugins}
-
-@m_keywords{GltfImporter}
 
 Imports glTF and binary glTF.
 
-This plugin provides the `GltfImporter` plugin.
-
-@section Trade-CgltfImporter-usage Usage
+@section Trade-GltfImporter-usage Usage
 
 This plugin depends on the @ref Trade library and the @ref AnyImageImporter
-plugin and is built if `WITH_CGLTFIMPORTER` is enabled when building Magnum
-Plugins. To use as a dynamic plugin, load @cpp "CgltfImporter" @ce via
+plugin and is built if `WITH_GLTFIMPORTER` is enabled when building Magnum
+Plugins. To use as a dynamic plugin, load @cpp "GltfImporter" @ce via
 @ref Corrade::PluginManager::Manager.
 
 Additionally, if you're using Magnum as a CMake subproject, bundle the
@@ -78,30 +74,30 @@ following:
 set(WITH_ANYIMAGEIMPORTER ON CACHE BOOL "" FORCE)
 add_subdirectory(magnum EXCLUDE_FROM_ALL)
 
-set(WITH_CGLTFIMPORTER ON CACHE BOOL "" FORCE)
+set(WITH_GLTFIMPORTER ON CACHE BOOL "" FORCE)
 add_subdirectory(magnum-plugins EXCLUDE_FROM_ALL)
 
 # So the dynamically loaded plugin gets built implicitly
-add_dependencies(your-app MagnumPlugins::CgltfImporter)
+add_dependencies(your-app MagnumPlugins::GltfImporter)
 @endcode
 
 To use as a static plugin or as a dependency of another plugin with CMake, put
 [FindMagnumPlugins.cmake](https://github.com/mosra/magnum-plugins/blob/master/modules/FindMagnumPlugins.cmake)
-into your `modules/` directory, request the `CgltfImporter` component of the
-`MagnumPlugins` package and link to the `MagnumPlugins::CgltfImporter`
+into your `modules/` directory, request the `GltfImporter` component of the
+`MagnumPlugins` package and link to the `MagnumPlugins::GltfImporter`
 target:
 
 @code{.cmake}
-find_package(MagnumPlugins REQUIRED CgltfImporter)
+find_package(MagnumPlugins REQUIRED GltfImporter)
 
 # ...
-target_link_libraries(your-app PRIVATE MagnumPlugins::CgltfImporter)
+target_link_libraries(your-app PRIVATE MagnumPlugins::GltfImporter)
 @endcode
 
 See @ref building-plugins, @ref cmake-plugins, @ref plugins and
 @ref file-formats for more information.
 
-@section Trade-CgltfImporter-behavior Behavior and limitations
+@section Trade-GltfImporter-behavior Behavior and limitations
 
 The plugin supports @ref ImporterFeature::OpenData and
 @ref ImporterFeature::FileCallback features. All buffers are loaded on-demand
@@ -117,11 +113,11 @@ The content of the global [extensionsRequired](https://www.khronos.org/registry/
 array is checked against all extensions supported by the plugin. If a glTF file
 requires an unknown extension, the import will fail. This behaviour can be
 disabled with the @cb{.ini} ignoreRequiredExtensions @ce
-@ref Trade-CgltfImporter-configuration "configuration option".
+@ref Trade-GltfImporter-configuration "configuration option".
 
 Import of morph data is not supported at the moment.
 
-@subsection Trade-CgltfImporter-behavior-objects Scene import
+@subsection Trade-GltfImporter-behavior-objects Scene import
 
 -   If no @cb{.json} "scene" @ce property is present and the file contains at
     least one scene, @ref defaultScene() returns @cpp 0 @ce instead of
@@ -154,26 +150,26 @@ Import of morph data is not supported at the moment.
     reference a single mesh at most, in case it references a multi-primitive
     mesh, it's represented as several @ref SceneField::Mesh (and
     @ref SceneField::MeshMaterial) assignments. See
-    @ref Trade-CgltfImporter-behavior-meshes and
-    @ref Trade-CgltfImporter-behavior-materials for further details.
+    @ref Trade-GltfImporter-behavior-meshes and
+    @ref Trade-GltfImporter-behavior-materials for further details.
 -   If the scene references skins, a @ref SceneField::Skin (of type
     @ref SceneFieldType::UnsignedInt) is present. A single node can only
     reference one skin at most. See
-    @ref Trade-CgltfImporter-behavior-animations for further details.
+    @ref Trade-GltfImporter-behavior-animations for further details.
 -   If the scene references cameras, a @ref SceneField::Camera (of type
     @ref SceneFieldType::UnsignedInt) is present. A single node can only
     reference one camera at most. See
-    @ref Trade-CgltfImporter-behavior-cameras for further details.
+    @ref Trade-GltfImporter-behavior-cameras for further details.
 -   If the scene references lights, a @ref SceneField::Light (of type
     @ref SceneFieldType::UnsignedInt) is present. A single node can only
     reference one light at most. See
-    @ref Trade-CgltfImporter-behavior-lights for further details.
+    @ref Trade-GltfImporter-behavior-lights for further details.
 -   If node rotation quaternion is not normalized, the importer prints a
     warning and normalizes it. Can be disabled per-object with the
     @cb{.ini} normalizeQuaternions @ce
-    @ref Trade-CgltfImporter-configuration "configuration option".
+    @ref Trade-GltfImporter-configuration "configuration option".
 
-@subsection Trade-CgltfImporter-behavior-animations Animation and skin import
+@subsection Trade-GltfImporter-behavior-animations Animation and skin import
 
 -   Linear quaternion rotation tracks are postprocessed in order to make it
     possible to use the faster
@@ -183,12 +179,12 @@ Import of morph data is not supported at the moment.
     @ref Math::lerpShortestPath(const Quaternion<T>&, const Quaternion<T>&, T) "Math::lerpShortestPath()" /
     @ref Math::slerpShortestPath(const Quaternion<T>&, const Quaternion<T>&, T) "Math::slerpShortestPath()". Can be disabled per-animation with the
     @cb{.ini} optimizeQuaternionShortestPath @ce
-    @ref Trade-CgltfImporter-configuration "configuration option". This doesn't
+    @ref Trade-GltfImporter-configuration "configuration option". This doesn't
     affect spline-interpolated rotation tracks.
 -   If linear quaternion rotation tracks are not normalized, the importer
     prints a warning and normalizes them. Can be disabled per-animation with
     the @cb{.ini} normalizeQuaternions @ce
-    @ref Trade-CgltfImporter-configuration "configuration option". This doesn't
+    @ref Trade-GltfImporter-configuration "configuration option". This doesn't
     affect spline-interpolated rotation tracks.
 -   Skin `skeleton` property is not imported
 -   Morph targets are not supported
@@ -204,18 +200,18 @@ Import of morph data is not supported at the moment.
     however, it can happen that multiple conflicting tracks affecting the same
     node are merged in the same clip, causing the animation to misbehave.
 
-@subsection Trade-CgltfImporter-behavior-cameras Camera import
+@subsection Trade-GltfImporter-behavior-cameras Camera import
 
 -   Cameras in glTF are specified with vertical FoV and vertical:horizontal
     aspect ratio, these values are recalculated for horizontal FoV and
     horizontal:vertical aspect ratio as is common in Magnum
 
-@subsection Trade-CgltfImporter-behavior-lights Light import
+@subsection Trade-GltfImporter-behavior-lights Light import
 
 -   The importer supports the [KHR_lights_punctual](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_lights_punctual/README.md)
     extension
 
-@subsection Trade-CgltfImporter-behavior-meshes Mesh import
+@subsection Trade-GltfImporter-behavior-meshes Mesh import
 
 -   Indices are imported as either @ref MeshIndexType::UnsignedByte,
     @ref MeshIndexType::UnsignedShort or @ref MeshIndexType::UnsignedInt
@@ -264,7 +260,7 @@ Import of morph data is not supported at the moment.
     @ref VertexFormat::UnsignedInt, @ref VertexFormat::UnsignedShort or
     @ref VertexFormat::UnsignedByte. By default `_OBJECT_ID` is the recognized
     name, use the @cb{.ini} objectIdAttribute @ce
-    @ref Trade-CgltfImporter-configuration "configuration option" to change
+    @ref Trade-GltfImporter-configuration "configuration option" to change
     the identifier that's being looked for.
 -   Multi-primitive meshes are split into individual meshes, nodes that
     reference a multi-primitive mesh have multiple @ref SceneField::Mesh
@@ -279,7 +275,7 @@ imported meshes as well. Their mapping to/from a string can be queried using
 unsupported types (such as non-normalized integer matrices) cause the import to
 fail.
 
-@subsection Trade-CgltfImporter-behavior-materials Material import
+@subsection Trade-GltfImporter-behavior-materials Material import
 
 -   If present, builtin [metallic/roughness](https://www.khronos.org/registry/glTF/specs/2.0/glTF-2.0.html#metallic-roughness-material) material is imported,
     setting @ref MaterialType::PbrMetallicRoughness on the @ref MaterialData.
@@ -323,7 +319,7 @@ fail.
         object types are ignored.
     If you handle any of these custom material extensions, it may make sense
     to enable the @cb{.ini} ignoreRequiredExtensions @ce
-    @ref Trade-CgltfImporter-configuration "configuration option".
+    @ref Trade-GltfImporter-configuration "configuration option".
 -   [Extras](https://www.khronos.org/registry/glTF/specs/2.0/glTF-2.0.html#reference-extras)
     metadata is imported into the base material layer. The `extras` attribute
     must be an object, otherwise it's ignored with a warning. Type support is
@@ -331,7 +327,7 @@ fail.
     objects --- contrary to glTF material extensions, where sub-objects can be
     assumed to contain texture info, the `extras` can contain just anything.
 -   If the on-by-default @cb{.ini} phongMaterialFallback @ce
-    @ref Trade-CgltfImporter-configuration "configuration option" is
+    @ref Trade-GltfImporter-configuration "configuration option" is
     enabled, the importer provides a Phong fallback for backwards
     compatibility:
     -   @ref MaterialType::Phong is added to material types
@@ -341,7 +337,7 @@ fail.
         from the specular/glossiness material
     -   All other @ref PhongMaterialData values are is kept at their defaults
 
-@subsection Trade-CgltfImporter-behavior-textures Texture and image import
+@subsection Trade-GltfImporter-behavior-textures Texture and image import
 
 <ul>
 <li>Texture type is always @ref Trade::TextureType::Texture2D, as glTF doesn't
@@ -403,111 +399,111 @@ following defaults have been chosen for this importer:
 </li>
 </ul>
 
-@section Trade-CgltfImporter-configuration Plugin-specific config
+@section Trade-GltfImporter-configuration Plugin-specific config
 
 It's possible to tune various output options through @ref configuration(). See
 below for all options and their default values.
 
-@snippet MagnumPlugins/CgltfImporter/CgltfImporter.conf config
+@snippet MagnumPlugins/GltfImporter/GltfImporter.conf config
 
 See @ref plugins-configuration for more information and an example showing how
 to edit the configuration values.
 */
-class MAGNUM_CGLTFIMPORTER_EXPORT CgltfImporter: public AbstractImporter {
+class MAGNUM_GLTFIMPORTER_EXPORT GltfImporter: public AbstractImporter {
     public:
         /**
          * @brief Default constructor
          *
          * In case you want to open images, use
-         * @ref CgltfImporter(PluginManager::Manager<AbstractImporter>&)
+         * @ref GltfImporter(PluginManager::Manager<AbstractImporter>&)
          * instead.
          */
-        explicit CgltfImporter();
+        explicit GltfImporter();
 
         /**
          * @brief Constructor
          *
          * The plugin needs access to plugin manager for importing images.
          */
-        explicit CgltfImporter(PluginManager::Manager<AbstractImporter>& manager);
+        explicit GltfImporter(PluginManager::Manager<AbstractImporter>& manager);
 
         /** @brief Plugin manager constructor */
-        explicit CgltfImporter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin);
+        explicit GltfImporter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin);
 
-        ~CgltfImporter();
+        ~GltfImporter();
 
     private:
         struct Document;
 
-        MAGNUM_CGLTFIMPORTER_LOCAL ImporterFeatures doFeatures() const override;
+        MAGNUM_GLTFIMPORTER_LOCAL ImporterFeatures doFeatures() const override;
 
-        MAGNUM_CGLTFIMPORTER_LOCAL bool doIsOpened() const override;
+        MAGNUM_GLTFIMPORTER_LOCAL bool doIsOpened() const override;
 
-        MAGNUM_CGLTFIMPORTER_LOCAL void doOpenData(Containers::Array<char>&& data, DataFlags dataFlags) override;
-        MAGNUM_CGLTFIMPORTER_LOCAL void doOpenFile(Containers::StringView filename) override;
-        MAGNUM_CGLTFIMPORTER_LOCAL void doClose() override;
+        MAGNUM_GLTFIMPORTER_LOCAL void doOpenData(Containers::Array<char>&& data, DataFlags dataFlags) override;
+        MAGNUM_GLTFIMPORTER_LOCAL void doOpenFile(Containers::StringView filename) override;
+        MAGNUM_GLTFIMPORTER_LOCAL void doClose() override;
 
-        MAGNUM_CGLTFIMPORTER_LOCAL UnsignedInt doAnimationCount() const override;
-        MAGNUM_CGLTFIMPORTER_LOCAL Int doAnimationForName(Containers::StringView name) override;
-        MAGNUM_CGLTFIMPORTER_LOCAL Containers::String doAnimationName(UnsignedInt id) override;
-        MAGNUM_CGLTFIMPORTER_LOCAL Containers::Optional<AnimationData> doAnimation(UnsignedInt id) override;
+        MAGNUM_GLTFIMPORTER_LOCAL UnsignedInt doAnimationCount() const override;
+        MAGNUM_GLTFIMPORTER_LOCAL Int doAnimationForName(Containers::StringView name) override;
+        MAGNUM_GLTFIMPORTER_LOCAL Containers::String doAnimationName(UnsignedInt id) override;
+        MAGNUM_GLTFIMPORTER_LOCAL Containers::Optional<AnimationData> doAnimation(UnsignedInt id) override;
 
-        MAGNUM_CGLTFIMPORTER_LOCAL UnsignedInt doCameraCount() const override;
-        MAGNUM_CGLTFIMPORTER_LOCAL Int doCameraForName(Containers::StringView name) override;
-        MAGNUM_CGLTFIMPORTER_LOCAL Containers::String doCameraName(UnsignedInt id) override;
-        MAGNUM_CGLTFIMPORTER_LOCAL Containers::Optional<CameraData> doCamera(UnsignedInt id) override;
+        MAGNUM_GLTFIMPORTER_LOCAL UnsignedInt doCameraCount() const override;
+        MAGNUM_GLTFIMPORTER_LOCAL Int doCameraForName(Containers::StringView name) override;
+        MAGNUM_GLTFIMPORTER_LOCAL Containers::String doCameraName(UnsignedInt id) override;
+        MAGNUM_GLTFIMPORTER_LOCAL Containers::Optional<CameraData> doCamera(UnsignedInt id) override;
 
-        MAGNUM_CGLTFIMPORTER_LOCAL UnsignedInt doLightCount() const override;
-        MAGNUM_CGLTFIMPORTER_LOCAL Int doLightForName(Containers::StringView name) override;
-        MAGNUM_CGLTFIMPORTER_LOCAL Containers::String doLightName(UnsignedInt id) override;
-        MAGNUM_CGLTFIMPORTER_LOCAL Containers::Optional<LightData> doLight(UnsignedInt id) override;
+        MAGNUM_GLTFIMPORTER_LOCAL UnsignedInt doLightCount() const override;
+        MAGNUM_GLTFIMPORTER_LOCAL Int doLightForName(Containers::StringView name) override;
+        MAGNUM_GLTFIMPORTER_LOCAL Containers::String doLightName(UnsignedInt id) override;
+        MAGNUM_GLTFIMPORTER_LOCAL Containers::Optional<LightData> doLight(UnsignedInt id) override;
 
-        MAGNUM_CGLTFIMPORTER_LOCAL Int doDefaultScene() const override;
+        MAGNUM_GLTFIMPORTER_LOCAL Int doDefaultScene() const override;
 
-        MAGNUM_CGLTFIMPORTER_LOCAL UnsignedInt doSceneCount() const override;
-        MAGNUM_CGLTFIMPORTER_LOCAL Int doSceneForName(Containers::StringView name) override;
-        MAGNUM_CGLTFIMPORTER_LOCAL Containers::String doSceneName(UnsignedInt id) override;
-        MAGNUM_CGLTFIMPORTER_LOCAL Containers::Optional<SceneData> doScene(UnsignedInt id) override;
+        MAGNUM_GLTFIMPORTER_LOCAL UnsignedInt doSceneCount() const override;
+        MAGNUM_GLTFIMPORTER_LOCAL Int doSceneForName(Containers::StringView name) override;
+        MAGNUM_GLTFIMPORTER_LOCAL Containers::String doSceneName(UnsignedInt id) override;
+        MAGNUM_GLTFIMPORTER_LOCAL Containers::Optional<SceneData> doScene(UnsignedInt id) override;
 
-        MAGNUM_CGLTFIMPORTER_LOCAL UnsignedLong doObjectCount() const override;
-        MAGNUM_CGLTFIMPORTER_LOCAL Long doObjectForName(Containers::StringView name) override;
-        MAGNUM_CGLTFIMPORTER_LOCAL Containers::String doObjectName(UnsignedLong id) override;
+        MAGNUM_GLTFIMPORTER_LOCAL UnsignedLong doObjectCount() const override;
+        MAGNUM_GLTFIMPORTER_LOCAL Long doObjectForName(Containers::StringView name) override;
+        MAGNUM_GLTFIMPORTER_LOCAL Containers::String doObjectName(UnsignedLong id) override;
 
-        MAGNUM_CGLTFIMPORTER_LOCAL UnsignedInt doSkin3DCount() const override;
-        MAGNUM_CGLTFIMPORTER_LOCAL Int doSkin3DForName(Containers::StringView name) override;
-        MAGNUM_CGLTFIMPORTER_LOCAL Containers::String doSkin3DName(UnsignedInt id) override;
-        MAGNUM_CGLTFIMPORTER_LOCAL Containers::Optional<SkinData3D> doSkin3D(UnsignedInt id) override;
+        MAGNUM_GLTFIMPORTER_LOCAL UnsignedInt doSkin3DCount() const override;
+        MAGNUM_GLTFIMPORTER_LOCAL Int doSkin3DForName(Containers::StringView name) override;
+        MAGNUM_GLTFIMPORTER_LOCAL Containers::String doSkin3DName(UnsignedInt id) override;
+        MAGNUM_GLTFIMPORTER_LOCAL Containers::Optional<SkinData3D> doSkin3D(UnsignedInt id) override;
 
-        MAGNUM_CGLTFIMPORTER_LOCAL UnsignedInt doMeshCount() const override;
-        MAGNUM_CGLTFIMPORTER_LOCAL Int doMeshForName(Containers::StringView name) override;
-        MAGNUM_CGLTFIMPORTER_LOCAL Containers::String doMeshName(UnsignedInt id) override;
-        MAGNUM_CGLTFIMPORTER_LOCAL Containers::Optional<MeshData> doMesh(UnsignedInt id, UnsignedInt level) override;
-        MAGNUM_CGLTFIMPORTER_LOCAL MeshAttribute doMeshAttributeForName(Containers::StringView name) override;
-        MAGNUM_CGLTFIMPORTER_LOCAL Containers::String doMeshAttributeName(UnsignedShort name) override;
+        MAGNUM_GLTFIMPORTER_LOCAL UnsignedInt doMeshCount() const override;
+        MAGNUM_GLTFIMPORTER_LOCAL Int doMeshForName(Containers::StringView name) override;
+        MAGNUM_GLTFIMPORTER_LOCAL Containers::String doMeshName(UnsignedInt id) override;
+        MAGNUM_GLTFIMPORTER_LOCAL Containers::Optional<MeshData> doMesh(UnsignedInt id, UnsignedInt level) override;
+        MAGNUM_GLTFIMPORTER_LOCAL MeshAttribute doMeshAttributeForName(Containers::StringView name) override;
+        MAGNUM_GLTFIMPORTER_LOCAL Containers::String doMeshAttributeName(UnsignedShort name) override;
 
-        MAGNUM_CGLTFIMPORTER_LOCAL UnsignedInt doMaterialCount() const override;
-        MAGNUM_CGLTFIMPORTER_LOCAL Int doMaterialForName(Containers::StringView name) override;
-        MAGNUM_CGLTFIMPORTER_LOCAL Containers::String doMaterialName(UnsignedInt id) override;
-        MAGNUM_CGLTFIMPORTER_LOCAL Containers::Optional<MaterialData> doMaterial(UnsignedInt id) override;
+        MAGNUM_GLTFIMPORTER_LOCAL UnsignedInt doMaterialCount() const override;
+        MAGNUM_GLTFIMPORTER_LOCAL Int doMaterialForName(Containers::StringView name) override;
+        MAGNUM_GLTFIMPORTER_LOCAL Containers::String doMaterialName(UnsignedInt id) override;
+        MAGNUM_GLTFIMPORTER_LOCAL Containers::Optional<MaterialData> doMaterial(UnsignedInt id) override;
 
-        MAGNUM_CGLTFIMPORTER_LOCAL UnsignedInt doTextureCount() const override;
-        MAGNUM_CGLTFIMPORTER_LOCAL Int doTextureForName(Containers::StringView name) override;
-        MAGNUM_CGLTFIMPORTER_LOCAL Containers::String doTextureName(UnsignedInt id) override;
-        MAGNUM_CGLTFIMPORTER_LOCAL Containers::Optional<TextureData> doTexture(UnsignedInt id) override;
+        MAGNUM_GLTFIMPORTER_LOCAL UnsignedInt doTextureCount() const override;
+        MAGNUM_GLTFIMPORTER_LOCAL Int doTextureForName(Containers::StringView name) override;
+        MAGNUM_GLTFIMPORTER_LOCAL Containers::String doTextureName(UnsignedInt id) override;
+        MAGNUM_GLTFIMPORTER_LOCAL Containers::Optional<TextureData> doTexture(UnsignedInt id) override;
 
-        MAGNUM_CGLTFIMPORTER_LOCAL AbstractImporter* setupOrReuseImporterForImage(const char* errorPrefix, UnsignedInt id);
+        MAGNUM_GLTFIMPORTER_LOCAL AbstractImporter* setupOrReuseImporterForImage(const char* errorPrefix, UnsignedInt id);
 
-        MAGNUM_CGLTFIMPORTER_LOCAL UnsignedInt doImage2DCount() const override;
-        MAGNUM_CGLTFIMPORTER_LOCAL UnsignedInt doImage2DLevelCount(UnsignedInt id) override;
-        MAGNUM_CGLTFIMPORTER_LOCAL Int doImage2DForName(Containers::StringView name) override;
-        MAGNUM_CGLTFIMPORTER_LOCAL Containers::String doImage2DName(UnsignedInt id) override;
-        MAGNUM_CGLTFIMPORTER_LOCAL Containers::Optional<ImageData2D> doImage2D(UnsignedInt id, UnsignedInt level) override;
+        MAGNUM_GLTFIMPORTER_LOCAL UnsignedInt doImage2DCount() const override;
+        MAGNUM_GLTFIMPORTER_LOCAL UnsignedInt doImage2DLevelCount(UnsignedInt id) override;
+        MAGNUM_GLTFIMPORTER_LOCAL Int doImage2DForName(Containers::StringView name) override;
+        MAGNUM_GLTFIMPORTER_LOCAL Containers::String doImage2DName(UnsignedInt id) override;
+        MAGNUM_GLTFIMPORTER_LOCAL Containers::Optional<ImageData2D> doImage2D(UnsignedInt id, UnsignedInt level) override;
 
-        MAGNUM_CGLTFIMPORTER_LOCAL Containers::Optional<Containers::Array<char>> loadUri(const char* errorPrefix, Containers::StringView uri);
-        MAGNUM_CGLTFIMPORTER_LOCAL Containers::Optional<Containers::ArrayView<const char>> parseBuffer(const char* const errorPrefix, UnsignedInt id);
-        MAGNUM_CGLTFIMPORTER_LOCAL Containers::Optional<Containers::Triple<Containers::ArrayView<const char>, UnsignedInt, UnsignedInt>> parseBufferView(const char* errorPrefix, UnsignedInt bufferViewId);
-        MAGNUM_CGLTFIMPORTER_LOCAL Containers::Optional<Containers::Triple<Containers::StridedArrayView2D<const char>, VertexFormat, UnsignedInt>> parseAccessor(const char* const errorPrefix, UnsignedInt accessorId);
-        MAGNUM_CGLTFIMPORTER_LOCAL bool materialTexture(const Utility::JsonToken& gltfTexture, Containers::Array<MaterialAttributeData>& attributes, Containers::StringView attribute, Containers::StringView matrixAttribute, Containers::StringView coordinateAttribute);
+        MAGNUM_GLTFIMPORTER_LOCAL Containers::Optional<Containers::Array<char>> loadUri(const char* errorPrefix, Containers::StringView uri);
+        MAGNUM_GLTFIMPORTER_LOCAL Containers::Optional<Containers::ArrayView<const char>> parseBuffer(const char* const errorPrefix, UnsignedInt id);
+        MAGNUM_GLTFIMPORTER_LOCAL Containers::Optional<Containers::Triple<Containers::ArrayView<const char>, UnsignedInt, UnsignedInt>> parseBufferView(const char* errorPrefix, UnsignedInt bufferViewId);
+        MAGNUM_GLTFIMPORTER_LOCAL Containers::Optional<Containers::Triple<Containers::StridedArrayView2D<const char>, VertexFormat, UnsignedInt>> parseAccessor(const char* const errorPrefix, UnsignedInt accessorId);
+        MAGNUM_GLTFIMPORTER_LOCAL bool materialTexture(const Utility::JsonToken& gltfTexture, Containers::Array<MaterialAttributeData>& attributes, Containers::StringView attribute, Containers::StringView matrixAttribute, Containers::StringView coordinateAttribute);
 
         Containers::Pointer<Document> _d;
 };

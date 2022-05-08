@@ -29,12 +29,12 @@
 #include <Corrade/Utility/Format.h>
 #include <Corrade/Utility/FormatStl.h> /** @todo drop when Debug is stream-free */
 
-#include "MagnumPlugins/CgltfImporter/decode.h"
+#include "MagnumPlugins/GltfImporter/decode.h"
 
 namespace Magnum { namespace Trade { namespace Test { namespace {
 
-struct CgltfImporterDecodeTest: TestSuite::Tester {
-    explicit CgltfImporterDecodeTest();
+struct GltfImporterDecodeTest: TestSuite::Tester {
+    explicit GltfImporterDecodeTest();
 
     void uri();
     void uriInvalid();
@@ -127,22 +127,22 @@ const struct {
         "invalid Base64 padding bytes ay\xff"}
 };
 
-CgltfImporterDecodeTest::CgltfImporterDecodeTest() {
-    addTests({&CgltfImporterDecodeTest::uri});
+GltfImporterDecodeTest::GltfImporterDecodeTest() {
+    addTests({&GltfImporterDecodeTest::uri});
 
-    addInstancedTests({&CgltfImporterDecodeTest::uriInvalid},
+    addInstancedTests({&GltfImporterDecodeTest::uriInvalid},
         Containers::arraySize(UriInvalidData));
 
-    addTests({&CgltfImporterDecodeTest::base64});
+    addTests({&GltfImporterDecodeTest::base64});
 
-    addInstancedTests({&CgltfImporterDecodeTest::base64Padding},
+    addInstancedTests({&GltfImporterDecodeTest::base64Padding},
         Containers::arraySize(Base64PaddingData));
 
-    addInstancedTests({&CgltfImporterDecodeTest::base64Invalid},
+    addInstancedTests({&GltfImporterDecodeTest::base64Invalid},
         Containers::arraySize(Base64InvalidData));
 }
 
-void CgltfImporterDecodeTest::uri() {
+void GltfImporterDecodeTest::uri() {
     /* Empty */
     {
         Containers::Optional<Containers::String> out = decodeUri("foo():", "");
@@ -176,7 +176,7 @@ void CgltfImporterDecodeTest::uri() {
     }
 }
 
-void CgltfImporterDecodeTest::uriInvalid() {
+void GltfImporterDecodeTest::uriInvalid() {
     auto&& data = UriInvalidData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
@@ -186,7 +186,7 @@ void CgltfImporterDecodeTest::uriInvalid() {
     CORRADE_COMPARE(out.str(), Utility::formatString("foo(): {}\n", data.message));
 }
 
-void CgltfImporterDecodeTest::base64() {
+void GltfImporterDecodeTest::base64() {
     /* Empty */
     {
         Containers::Optional<Containers::Array<char>> out = decodeBase64("foo():", "");
@@ -216,7 +216,7 @@ void CgltfImporterDecodeTest::base64() {
     }
 }
 
-void CgltfImporterDecodeTest::base64Padding() {
+void GltfImporterDecodeTest::base64Padding() {
     auto&& data = Base64PaddingData[testCaseInstanceId()];
     setTestCaseDescription(Utility::format("{}-byte output{}", data.outputSize, data.input.hasSuffix('=') ? ", padded" : ""));
 
@@ -226,7 +226,7 @@ void CgltfImporterDecodeTest::base64Padding() {
     CORRADE_COMPARE(Containers::StringView{*out}, "light work."_s.prefix(data.outputSize));
 }
 
-void CgltfImporterDecodeTest::base64Invalid() {
+void GltfImporterDecodeTest::base64Invalid() {
     auto&& data = Base64InvalidData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
@@ -238,4 +238,4 @@ void CgltfImporterDecodeTest::base64Invalid() {
 
 }}}}
 
-CORRADE_TEST_MAIN(Magnum::Trade::Test::CgltfImporterDecodeTest)
+CORRADE_TEST_MAIN(Magnum::Trade::Test::GltfImporterDecodeTest)

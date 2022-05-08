@@ -66,8 +66,8 @@
 
 namespace Magnum { namespace Trade { namespace Test { namespace {
 
-struct CgltfImporterTest: TestSuite::Tester {
-    explicit CgltfImporterTest();
+struct GltfImporterTest: TestSuite::Tester {
+    explicit GltfImporterTest();
 
     void open();
     void openError();
@@ -224,205 +224,205 @@ const struct {
     {"invalid JSON ascii",
         "{"_s,
         "Utility::Json: file too short, expected \" or } at <in>:1:2\n"
-        "Trade::CgltfImporter::openData(): invalid JSON\n"},
+        "Trade::GltfImporter::openData(): invalid JSON\n"},
     {"invalid JSON binary",
         "glTF\x02\x00\x00\x00\x15\x00\x00\x00\x01\x00\x00\x00JSON{"_s,
         "Utility::Json: file too short, expected \" or } at <in>:1:22\n"
-        "Trade::CgltfImporter::openData(): invalid JSON\n"},
+        "Trade::GltfImporter::openData(): invalid JSON\n"},
     {"no top-level JSON object",
         "[]",
         "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Array at <in>:1:1\n"
-        "Trade::CgltfImporter::openData(): invalid JSON\n"},
+        "Trade::GltfImporter::openData(): invalid JSON\n"},
     {"missing asset property",
         "{}",
         "missing or invalid asset property"},
     {"invalid asset property",
         R"({"asset": true})",
         "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Bool at <in>:1:11\n"
-        "Trade::CgltfImporter::openData(): missing or invalid asset property\n"},
+        "Trade::GltfImporter::openData(): missing or invalid asset property\n"},
     {"missing asset version property",
         R"({"asset": {}})",
         "missing or invalid asset version property"},
     {"invalid asset version property",
         R"({"asset": {"version": 2, "minVersion": 2}})",
         "Utility::Json::parseString(): expected a string, got Utility::JsonToken::Type::Number at <in>:1:23\n"
-        "Trade::CgltfImporter::openData(): missing or invalid asset version property\n"},
+        "Trade::GltfImporter::openData(): missing or invalid asset version property\n"},
     {"invalid asset minVersion property",
         R"({"asset": {"version": "2.0", "minVersion": 2}})",
         "Utility::Json::parseString(): expected a string, got Utility::JsonToken::Type::Number at <in>:1:44\n"
-        "Trade::CgltfImporter::openData(): invalid asset minVersion property\n"},
+        "Trade::GltfImporter::openData(): invalid asset minVersion property\n"},
     {"invalid extensionsRequired property",
         R"({"asset": {"version": "2.0"}, "extensionsRequired": {}})",
         "Utility::Json::parseArray(): expected an array, got Utility::JsonToken::Type::Object at <in>:1:53\n"
-        "Trade::CgltfImporter::openData(): invalid extensionsRequired property\n"},
+        "Trade::GltfImporter::openData(): invalid extensionsRequired property\n"},
     {"invalid extensionsRequired value",
         R"({"asset": {"version": "2.0"}, "extensionsRequired": ["KHR_mesh_quantization", false]})",
         "Utility::Json::parseString(): expected a string, got Utility::JsonToken::Type::Bool at <in>:1:79\n"
-        "Trade::CgltfImporter::openData(): invalid required extension 1\n"},
+        "Trade::GltfImporter::openData(): invalid required extension 1\n"},
     {"invalid buffers property",
         R"({"asset": {"version": "2.0"}, "buffers": {}})",
         "Utility::Json::parseArray(): expected an array, got Utility::JsonToken::Type::Object at <in>:1:42\n"
-        "Trade::CgltfImporter::openData(): invalid buffers property\n"},
+        "Trade::GltfImporter::openData(): invalid buffers property\n"},
     {"invalid buffers value",
         R"({"asset": {"version": "2.0"}, "buffers": [{}, []]})",
         "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Array at <in>:1:47\n"
-        "Trade::CgltfImporter::openData(): invalid buffer 1\n"},
+        "Trade::GltfImporter::openData(): invalid buffer 1\n"},
     {"invalid bufferViews property",
         R"({"asset": {"version": "2.0"}, "bufferViews": {}})",
         "Utility::Json::parseArray(): expected an array, got Utility::JsonToken::Type::Object at <in>:1:46\n"
-        "Trade::CgltfImporter::openData(): invalid bufferViews property\n"},
+        "Trade::GltfImporter::openData(): invalid bufferViews property\n"},
     {"invalid bufferViews value",
         R"({"asset": {"version": "2.0"}, "bufferViews": [{}, []]})",
         "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Array at <in>:1:51\n"
-        "Trade::CgltfImporter::openData(): invalid buffer view 1\n"},
+        "Trade::GltfImporter::openData(): invalid buffer view 1\n"},
     {"invalid accessors property",
         R"({"asset": {"version": "2.0"}, "accessors": {}})",
         "Utility::Json::parseArray(): expected an array, got Utility::JsonToken::Type::Object at <in>:1:44\n"
-        "Trade::CgltfImporter::openData(): invalid accessors property\n"},
+        "Trade::GltfImporter::openData(): invalid accessors property\n"},
     {"invalid accessors value",
         R"({"asset": {"version": "2.0"}, "accessors": [{}, []]})",
         "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Array at <in>:1:49\n"
-        "Trade::CgltfImporter::openData(): invalid accessor 1\n"},
+        "Trade::GltfImporter::openData(): invalid accessor 1\n"},
     {"invalid samplers property",
         R"({"asset": {"version": "2.0"}, "samplers": {}})",
         "Utility::Json::parseArray(): expected an array, got Utility::JsonToken::Type::Object at <in>:1:43\n"
-        "Trade::CgltfImporter::openData(): invalid samplers property\n"},
+        "Trade::GltfImporter::openData(): invalid samplers property\n"},
     {"invalid samplers value",
         R"({"asset": {"version": "2.0"}, "samplers": [{}, []]})",
         "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Array at <in>:1:48\n"
-        "Trade::CgltfImporter::openData(): invalid sampler 1\n"},
+        "Trade::GltfImporter::openData(): invalid sampler 1\n"},
     {"invalid nodes property",
         R"({"asset": {"version": "2.0"}, "nodes": {}})",
         "Utility::Json::parseArray(): expected an array, got Utility::JsonToken::Type::Object at <in>:1:40\n"
-        "Trade::CgltfImporter::openData(): invalid nodes property\n"},
+        "Trade::GltfImporter::openData(): invalid nodes property\n"},
     {"invalid nodes value",
         R"({"asset": {"version": "2.0"}, "nodes": [{}, []]})",
         "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Array at <in>:1:45\n"
-        "Trade::CgltfImporter::openData(): invalid node 1\n"},
+        "Trade::GltfImporter::openData(): invalid node 1\n"},
     {"invalid node name property",
         R"({"asset": {"version": "2.0"}, "nodes": [{}, {"name": 3}]})",
         "Utility::Json::parseString(): expected a string, got Utility::JsonToken::Type::Number at <in>:1:54\n"
-        "Trade::CgltfImporter::openData(): invalid node 1 name property\n"},
+        "Trade::GltfImporter::openData(): invalid node 1 name property\n"},
     {"invalid meshes property",
         R"({"asset": {"version": "2.0"}, "meshes": {}})",
         "Utility::Json::parseArray(): expected an array, got Utility::JsonToken::Type::Object at <in>:1:41\n"
-        "Trade::CgltfImporter::openData(): invalid meshes property\n"},
+        "Trade::GltfImporter::openData(): invalid meshes property\n"},
     {"invalid meshes value",
         R"({"asset": {"version": "2.0"}, "meshes": [{}, []]})",
         "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Array at <in>:1:46\n"
-        "Trade::CgltfImporter::openData(): invalid mesh 1\n"},
+        "Trade::GltfImporter::openData(): invalid mesh 1\n"},
     {"invalid mesh name property",
         R"({"asset": {"version": "2.0"}, "meshes": [{}, {"name": 3}]})",
         "Utility::Json::parseString(): expected a string, got Utility::JsonToken::Type::Number at <in>:1:55\n"
-        "Trade::CgltfImporter::openData(): invalid mesh 1 name property\n"},
+        "Trade::GltfImporter::openData(): invalid mesh 1 name property\n"},
     {"invalid cameras property",
         R"({"asset": {"version": "2.0"}, "cameras": {}})",
         "Utility::Json::parseArray(): expected an array, got Utility::JsonToken::Type::Object at <in>:1:42\n"
-        "Trade::CgltfImporter::openData(): invalid cameras property\n"},
+        "Trade::GltfImporter::openData(): invalid cameras property\n"},
     {"invalid cameras value",
         R"({"asset": {"version": "2.0"}, "cameras": [{}, []]})",
         "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Array at <in>:1:47\n"
-        "Trade::CgltfImporter::openData(): invalid camera 1\n"},
+        "Trade::GltfImporter::openData(): invalid camera 1\n"},
     {"invalid camera name property",
         R"({"asset": {"version": "2.0"}, "cameras": [{}, {"name": 3}]})",
         "Utility::Json::parseString(): expected a string, got Utility::JsonToken::Type::Number at <in>:1:56\n"
-        "Trade::CgltfImporter::openData(): invalid camera 1 name property\n"},
+        "Trade::GltfImporter::openData(): invalid camera 1 name property\n"},
     {"invalid animations property",
         R"({"asset": {"version": "2.0"}, "animations": {}})",
         "Utility::Json::parseArray(): expected an array, got Utility::JsonToken::Type::Object at <in>:1:45\n"
-        "Trade::CgltfImporter::openData(): invalid animations property\n"},
+        "Trade::GltfImporter::openData(): invalid animations property\n"},
     {"invalid animations value",
         R"({"asset": {"version": "2.0"}, "animations": [{}, []]})",
         "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Array at <in>:1:50\n"
-        "Trade::CgltfImporter::openData(): invalid animation 1\n"},
+        "Trade::GltfImporter::openData(): invalid animation 1\n"},
     {"invalid animations name property",
         R"({"asset": {"version": "2.0"}, "animations": [{}, {"name": 3}]})",
         "Utility::Json::parseString(): expected a string, got Utility::JsonToken::Type::Number at <in>:1:59\n"
-        "Trade::CgltfImporter::openData(): invalid animation 1 name property\n"},
+        "Trade::GltfImporter::openData(): invalid animation 1 name property\n"},
     {"invalid skins property",
         R"({"asset": {"version": "2.0"}, "skins": {}})",
         "Utility::Json::parseArray(): expected an array, got Utility::JsonToken::Type::Object at <in>:1:40\n"
-        "Trade::CgltfImporter::openData(): invalid skins property\n"},
+        "Trade::GltfImporter::openData(): invalid skins property\n"},
     {"invalid skin value",
         R"({"asset": {"version": "2.0"}, "skins": [{}, []]})",
         "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Array at <in>:1:45\n"
-        "Trade::CgltfImporter::openData(): invalid skin 1\n"},
+        "Trade::GltfImporter::openData(): invalid skin 1\n"},
     {"invalid skin name property",
         R"({"asset": {"version": "2.0"}, "skins": [{}, {"name": 3}]})",
         "Utility::Json::parseString(): expected a string, got Utility::JsonToken::Type::Number at <in>:1:54\n"
-        "Trade::CgltfImporter::openData(): invalid skin 1 name property\n"},
+        "Trade::GltfImporter::openData(): invalid skin 1 name property\n"},
     {"invalid images property",
         R"({"asset": {"version": "2.0"}, "images": {}})",
         "Utility::Json::parseArray(): expected an array, got Utility::JsonToken::Type::Object at <in>:1:41\n"
-        "Trade::CgltfImporter::openData(): invalid images property\n"},
+        "Trade::GltfImporter::openData(): invalid images property\n"},
     {"invalid image value",
         R"({"asset": {"version": "2.0"}, "images": [{}, []]})",
         "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Array at <in>:1:46\n"
-        "Trade::CgltfImporter::openData(): invalid image 1\n"},
+        "Trade::GltfImporter::openData(): invalid image 1\n"},
     {"invalid image name property",
         R"({"asset": {"version": "2.0"}, "images": [{}, {"name": 3}]})",
         "Utility::Json::parseString(): expected a string, got Utility::JsonToken::Type::Number at <in>:1:55\n"
-        "Trade::CgltfImporter::openData(): invalid image 1 name property\n"},
+        "Trade::GltfImporter::openData(): invalid image 1 name property\n"},
     {"invalid textures property",
         R"({"asset": {"version": "2.0"}, "textures": {}})",
         "Utility::Json::parseArray(): expected an array, got Utility::JsonToken::Type::Object at <in>:1:43\n"
-        "Trade::CgltfImporter::openData(): invalid textures property\n"},
+        "Trade::GltfImporter::openData(): invalid textures property\n"},
     {"invalid textures value",
         R"({"asset": {"version": "2.0"}, "textures": [{}, []]})",
         "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Array at <in>:1:48\n"
-        "Trade::CgltfImporter::openData(): invalid texture 1\n"},
+        "Trade::GltfImporter::openData(): invalid texture 1\n"},
     {"invalid textures name property",
         R"({"asset": {"version": "2.0"}, "textures": [{}, {"name": 3}]})",
         "Utility::Json::parseString(): expected a string, got Utility::JsonToken::Type::Number at <in>:1:57\n"
-        "Trade::CgltfImporter::openData(): invalid texture 1 name property\n"},
+        "Trade::GltfImporter::openData(): invalid texture 1 name property\n"},
     {"invalid materials property",
         R"({"asset": {"version": "2.0"}, "materials": {}})",
         "Utility::Json::parseArray(): expected an array, got Utility::JsonToken::Type::Object at <in>:1:44\n"
-        "Trade::CgltfImporter::openData(): invalid materials property\n"},
+        "Trade::GltfImporter::openData(): invalid materials property\n"},
     {"invalid materials value",
         R"({"asset": {"version": "2.0"}, "materials": [{}, []]})",
         "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Array at <in>:1:49\n"
-        "Trade::CgltfImporter::openData(): invalid material 1\n"},
+        "Trade::GltfImporter::openData(): invalid material 1\n"},
     {"invalid materials name property",
         R"({"asset": {"version": "2.0"}, "materials": [{}, {"name": 3}]})",
         "Utility::Json::parseString(): expected a string, got Utility::JsonToken::Type::Number at <in>:1:58\n"
-        "Trade::CgltfImporter::openData(): invalid material 1 name property\n"},
+        "Trade::GltfImporter::openData(): invalid material 1 name property\n"},
     {"invalid scenes property",
         R"({"asset": {"version": "2.0"}, "scenes": {}})",
         "Utility::Json::parseArray(): expected an array, got Utility::JsonToken::Type::Object at <in>:1:41\n"
-        "Trade::CgltfImporter::openData(): invalid scenes property\n"},
+        "Trade::GltfImporter::openData(): invalid scenes property\n"},
     {"invalid scene value",
         R"({"asset": {"version": "2.0"}, "scenes": [{}, []]})",
         "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Array at <in>:1:46\n"
-        "Trade::CgltfImporter::openData(): invalid scene 1\n"},
+        "Trade::GltfImporter::openData(): invalid scene 1\n"},
     {"invalid scene name property",
         R"({"asset": {"version": "2.0"}, "scenes": [{}, {"name": 3}]})",
         "Utility::Json::parseString(): expected a string, got Utility::JsonToken::Type::Number at <in>:1:55\n"
-        "Trade::CgltfImporter::openData(): invalid scene 1 name property\n"},
+        "Trade::GltfImporter::openData(): invalid scene 1 name property\n"},
     {"invalid extensions property",
         R"({"asset": {"version": "2.0"}, "extensions": []})",
         "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Array at <in>:1:45\n"
-        "Trade::CgltfImporter::openData(): invalid extensions property\n"},
+        "Trade::GltfImporter::openData(): invalid extensions property\n"},
     {"invalid KHR_lights_punctual extension",
         R"({"asset": {"version": "2.0"}, "extensions": {"KHR_lights_punctual": []}})",
         "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Array at <in>:1:69\n"
-        "Trade::CgltfImporter::openData(): invalid KHR_lights_punctual extension\n"},
+        "Trade::GltfImporter::openData(): invalid KHR_lights_punctual extension\n"},
     {"invalid KHR_lights_punctual lights property",
         R"({"asset": {"version": "2.0"}, "extensions": {"KHR_lights_punctual": {"lights": {}}}})",
         "Utility::Json::parseArray(): expected an array, got Utility::JsonToken::Type::Object at <in>:1:80\n"
-        "Trade::CgltfImporter::openData(): invalid KHR_lights_punctual lights property\n"},
+        "Trade::GltfImporter::openData(): invalid KHR_lights_punctual lights property\n"},
     {"invalid KHR_lights_punctual light value",
         R"({"asset": {"version": "2.0"}, "extensions": {"KHR_lights_punctual": {"lights": [{}, []]}}})",
         "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Array at <in>:1:85\n"
-        "Trade::CgltfImporter::openData(): invalid KHR_lights_punctual light 1\n"},
+        "Trade::GltfImporter::openData(): invalid KHR_lights_punctual light 1\n"},
     {"invalid KHR_lights_punctual light name property",
         R"({"asset": {"version": "2.0"}, "extensions": {"KHR_lights_punctual": {"lights": [{}, {"name": 3}]}}})",
         "Utility::Json::parseString(): expected a string, got Utility::JsonToken::Type::Number at <in>:1:94\n"
-        "Trade::CgltfImporter::openData(): invalid KHR_lights_punctual light 1 name property\n"},
+        "Trade::GltfImporter::openData(): invalid KHR_lights_punctual light 1 name property\n"},
     {"invalid scene property",
         R"({"asset": {"version": "2.0"}, "scene": {}})",
         "Utility::Json::parseUnsignedInt(): expected a number, got Utility::JsonToken::Type::Object at <in>:1:40\n"
-        "Trade::CgltfImporter::openData(): invalid scene property\n"}
+        "Trade::GltfImporter::openData(): invalid scene property\n"}
 };
 
 constexpr struct {
@@ -492,49 +492,49 @@ constexpr struct {
         "missing or invalid samplers property"},
     {"invalid samplers",
         "Utility::Json::parseArray(): expected an array, got Utility::JsonToken::Type::Object at {}:263:25\n"
-        "Trade::CgltfImporter::animation(): missing or invalid samplers property\n"},
+        "Trade::GltfImporter::animation(): missing or invalid samplers property\n"},
     {"invalid sampler",
         "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Number at {}:269:17\n"
-        "Trade::CgltfImporter::animation(): invalid sampler 0\n"},
+        "Trade::GltfImporter::animation(): invalid sampler 0\n"},
     {"missing sampler input",
         "missing or invalid sampler 0 input property"},
     {"invalid sampler input",
         "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:286:30\n"
-        "Trade::CgltfImporter::animation(): missing or invalid sampler 0 input property\n"},
+        "Trade::GltfImporter::animation(): missing or invalid sampler 0 input property\n"},
     {"missing sampler output",
         "missing or invalid sampler 0 output property"},
     {"invalid sampler output",
         "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:306:31\n"
-        "Trade::CgltfImporter::animation(): missing or invalid sampler 0 output property\n"},
+        "Trade::GltfImporter::animation(): missing or invalid sampler 0 output property\n"},
     {"invalid sampler interpolation",
         "Utility::Json::parseString(): expected a string, got Utility::JsonToken::Type::Bool at {}:316:38\n"
-        "Trade::CgltfImporter::animation(): invalid sampler 0 interpolation property\n"},
+        "Trade::GltfImporter::animation(): invalid sampler 0 interpolation property\n"},
     {"missing channels",
         "missing or invalid channels property"},
     {"invalid channels",
         "Utility::Json::parseArray(): expected an array, got Utility::JsonToken::Type::Object at {}:332:25\n"
-        "Trade::CgltfImporter::animation(): missing or invalid channels property\n"},
+        "Trade::GltfImporter::animation(): missing or invalid channels property\n"},
     {"invalid channel",
         "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Number at {}:343:17\n"
-        "Trade::CgltfImporter::animation(): invalid channel 0\n"},
+        "Trade::GltfImporter::animation(): invalid channel 0\n"},
     {"missing channel target",
         "missing or invalid channel 1 target property"},
     {"invalid channel target",
         "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::String at {}:378:31\n"
-        "Trade::CgltfImporter::animation(): missing or invalid channel 0 target property\n"},
+        "Trade::GltfImporter::animation(): missing or invalid channel 0 target property\n"},
     {"invalid channel target node",
         "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:401:33\n"
-        "Trade::CgltfImporter::animation(): invalid channel 1 target node property\n"},
+        "Trade::GltfImporter::animation(): invalid channel 1 target node property\n"},
     {"missing channel target path",
         "missing or invalid channel 1 target path property"},
     {"invalid channel target path",
         "Utility::Json::parseString(): expected a string, got Utility::JsonToken::Type::Null at {}:444:33\n"
-        "Trade::CgltfImporter::animation(): missing or invalid channel 0 target path property\n"},
+        "Trade::GltfImporter::animation(): missing or invalid channel 0 target path property\n"},
     {"missing channel sampler",
         "missing or invalid channel 1 sampler property"},
     {"invalid channel sampler",
         "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:483:32\n"
-        "Trade::CgltfImporter::animation(): missing or invalid channel 0 sampler property\n"}
+        "Trade::GltfImporter::animation(): missing or invalid channel 0 sampler property\n"}
 };
 
 constexpr struct {
@@ -555,67 +555,67 @@ const struct {
         "missing or invalid type property"},
     {"invalid type",
         "Utility::Json::parseString(): expected a string, got Utility::JsonToken::Type::Number at {}:15:21\n"
-        "Trade::CgltfImporter::camera(): missing or invalid type property\n"},
+        "Trade::GltfImporter::camera(): missing or invalid type property\n"},
     {"missing perspective property",
         "missing or invalid perspective property"},
     {"invalid perspective property",
         "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Bool at {}:24:28\n"
-        "Trade::CgltfImporter::camera(): missing or invalid perspective property\n"},
+        "Trade::GltfImporter::camera(): missing or invalid perspective property\n"},
     {"invalid perspective aspectRatio property",
         "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::Null at {}:30:32\n"
-        "Trade::CgltfImporter::camera(): invalid perspective aspectRatio property\n"},
+        "Trade::GltfImporter::camera(): invalid perspective aspectRatio property\n"},
     {"negative perspective aspectRatio",
         "expected positive perspective aspectRatio, got -3.5"},
     {"missing perspective yfov property",
         "missing or invalid perspective yfov property"},
     {"invalid perspective yfov property",
         "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::String at {}:55:25\n"
-        "Trade::CgltfImporter::camera(): missing or invalid perspective yfov property\n"},
+        "Trade::GltfImporter::camera(): missing or invalid perspective yfov property\n"},
     {"negative perspective yfov",
         "expected positive perspective yfov, got -1"},
     {"missing perspective znear property",
         "missing or invalid perspective znear property"},
     {"invalid perspective znear property",
         "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::String at {}:79:26\n"
-        "Trade::CgltfImporter::camera(): missing or invalid perspective znear property\n"},
+        "Trade::GltfImporter::camera(): missing or invalid perspective znear property\n"},
     {"negative perspective znear",
         "expected positive perspective znear, got -0.01"},
     {"invalid perspective zfar property",
         "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::Null at {}:96:25\n"
-        "Trade::CgltfImporter::camera(): invalid perspective zfar property\n"},
+        "Trade::GltfImporter::camera(): invalid perspective zfar property\n"},
     {"perspective zfar not larger than znear",
         "expected perspective zfar larger than znear of 0.125, got 0.125"},
     {"missing orthographic property",
         "missing or invalid orthographic property"},
     {"invalid orthographic property",
         "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Bool at {}:115:29\n"
-        "Trade::CgltfImporter::camera(): missing or invalid orthographic property\n"},
+        "Trade::GltfImporter::camera(): missing or invalid orthographic property\n"},
     {"missing orthographic xmag property",
         "missing or invalid orthographic xmag property"},
     {"invalid orthographic xmag property",
         "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::String at {}:130:25\n"
-        "Trade::CgltfImporter::camera(): missing or invalid orthographic xmag property\n"},
+        "Trade::GltfImporter::camera(): missing or invalid orthographic xmag property\n"},
     {"zero orthographic xmag",
         "expected non-zero orthographic xmag"},
     {"missing orthographic ymag property",
         "missing or invalid orthographic ymag property"},
     {"invalid orthographic ymag property",
         "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::String at {}:160:25\n"
-        "Trade::CgltfImporter::camera(): missing or invalid orthographic ymag property\n"},
+        "Trade::GltfImporter::camera(): missing or invalid orthographic ymag property\n"},
     {"zero orthographic ymag",
         "expected non-zero orthographic ymag"},
     {"missing orthographic znear property",
         "missing or invalid orthographic znear property"},
     {"invalid orthographic znear property",
         "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::String at {}:190:26\n"
-        "Trade::CgltfImporter::camera(): missing or invalid orthographic znear property\n"},
+        "Trade::GltfImporter::camera(): missing or invalid orthographic znear property\n"},
     {"negative orthographic znear",
         "expected non-negative orthographic znear, got -1"},
     {"missing orthographic zfar property",
         "missing or invalid orthographic zfar property"},
     {"invalid orthographic zfar property",
         "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::String at {}:220:25\n"
-        "Trade::CgltfImporter::camera(): missing or invalid orthographic zfar property\n"},
+        "Trade::GltfImporter::camera(): missing or invalid orthographic zfar property\n"},
     {"orthographic zfar not larger than znear",
         "expected orthographic zfar larger than znear of 0.5, got 0.5"},
 };
@@ -638,34 +638,34 @@ constexpr struct {
         "spot inner and outer cone angle Deg(14.3239) and Deg(14.3239) out of allowed bounds"},
     {"invalid color property",
         "Utility::Json::parseFloatArray(): expected an array, got Utility::JsonToken::Type::String at {}:42:30\n"
-        "Trade::CgltfImporter::light(): invalid color property\n"},
+        "Trade::GltfImporter::light(): invalid color property\n"},
     {"invalid color array size",
         "Utility::Json::parseFloatArray(): expected a 3-element array, got 4 at {}:47:30\n"
-        "Trade::CgltfImporter::light(): invalid color property\n"},
+        "Trade::GltfImporter::light(): invalid color property\n"},
     {"invalid intensity property",
         "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::String at {}:52:34\n"
-        "Trade::CgltfImporter::light(): invalid intensity property\n"},
+        "Trade::GltfImporter::light(): invalid intensity property\n"},
     {"invalid range property",
         "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::String at {}:57:30\n"
-        "Trade::CgltfImporter::light(): invalid range property\n"},
+        "Trade::GltfImporter::light(): invalid range property\n"},
     {"zero range",
         "expected positive range, got 0"},
     {"missing type property",
         "missing or invalid type property"},
     {"invalid type property",
         "Utility::Json::parseString(): expected a string, got Utility::JsonToken::Type::Number at {}:69:29\n"
-        "Trade::CgltfImporter::light(): missing or invalid type property\n"},
+        "Trade::GltfImporter::light(): missing or invalid type property\n"},
     {"missing spot property",
         "missing or invalid spot property"},
     {"invalid spot property",
         "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Number at {}:78:29\n"
-        "Trade::CgltfImporter::light(): missing or invalid spot property\n"},
+        "Trade::GltfImporter::light(): missing or invalid spot property\n"},
     {"invalid spot innerConeAngle property",
         "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::Bool at {}:84:43\n"
-        "Trade::CgltfImporter::light(): invalid spot innerConeAngle property\n"},
+        "Trade::GltfImporter::light(): invalid spot innerConeAngle property\n"},
     {"invalid spot outerConeAngle property",
         "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::Bool at {}:91:43\n"
-        "Trade::CgltfImporter::light(): invalid spot outerConeAngle property\n"}
+        "Trade::GltfImporter::light(): invalid spot outerConeAngle property\n"}
 };
 
 constexpr struct {
@@ -692,10 +692,10 @@ constexpr struct {
         "missing or invalid joints property"},
     {"invalid joints property",
         "Utility::Json::parseUnsignedIntArray(): expected an array, got Utility::JsonToken::Type::Object at {}:48:23\n"
-        "Trade::CgltfImporter::skin3D(): missing or invalid joints property\n"},
+        "Trade::GltfImporter::skin3D(): missing or invalid joints property\n"},
     {"invalid inverseBindMatrices property",
         "Utility::Json::parseUnsignedInt(): expected a number, got Utility::JsonToken::Type::Array at {}:52:36\n"
-        "Trade::CgltfImporter::skin3D(): invalid inverseBindMatrices property\n"},
+        "Trade::GltfImporter::skin3D(): invalid inverseBindMatrices property\n"},
 };
 
 constexpr struct {
@@ -769,22 +769,22 @@ const struct {
     {"invalid primitives property",
         "mesh-invalid-primitives-property.gltf",
         "Utility::Json::parseArray(): expected an array, got Utility::JsonToken::Type::Object at {}:12:27\n"
-        "Trade::CgltfImporter::openData(): missing or invalid primitives property in mesh 1\n"},
+        "Trade::GltfImporter::openData(): missing or invalid primitives property in mesh 1\n"},
     {"empty primitives",
         "mesh-invalid-empty-primitives.gltf",
         "mesh 1 has no primitives"},
     {"invalid primitive",
         "mesh-invalid-primitive.gltf",
         "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Array at {}:13:17\n"
-        "Trade::CgltfImporter::openData(): invalid mesh 1 primitive 0\n"},
+        "Trade::GltfImporter::openData(): invalid mesh 1 primitive 0\n"},
     {"invalid primitive attributes property",
         "mesh-invalid-primitive-attributes-property.gltf",
         "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Array at {}:14:35\n"
-        "Trade::CgltfImporter::openData(): invalid primitive attributes property in mesh 1\n"},
+        "Trade::GltfImporter::openData(): invalid primitive attributes property in mesh 1\n"},
     {"texcoord flip invalid attribute",
         "mesh-invalid-texcoord-flip-attribute.gltf",
         "Utility::Json::parseUnsignedInt(): expected a number, got Utility::JsonToken::Type::String at {}:15:39\n"
-        "Trade::CgltfImporter::openData(): invalid attribute TEXCOORD_3 in mesh 1\n"},
+        "Trade::GltfImporter::openData(): invalid attribute TEXCOORD_3 in mesh 1\n"},
     {"texcoord flip attribute out of bounds",
         "mesh-invalid-texcoord-flip-attribute-oob.gltf",
         "accessor index 2 out of range for 2 accessors"},
@@ -794,11 +794,11 @@ const struct {
     {"texcoord flip attribute accessor invalid componentType",
         "mesh-invalid-texcoord-flip-attribute-accessor-invalid-component-type.gltf",
         "Utility::Json::parseUnsignedInt(): expected a number, got Utility::JsonToken::Type::String at {}:8:30\n"
-        "Trade::CgltfImporter::openData(): accessor 1 has missing or invalid componentType property\n"},
+        "Trade::GltfImporter::openData(): accessor 1 has missing or invalid componentType property\n"},
     {"texcoord flip attribute accessor invalid normalized",
         "mesh-invalid-texcoord-flip-attribute-accessor-invalid-normalized.gltf",
         "Utility::Json::parseBool(): expected a bool, got Utility::JsonToken::Type::Null at {}:9:27\n"
-        "Trade::CgltfImporter::openData(): accessor 1 has invalid normalized property\n"},
+        "Trade::GltfImporter::openData(): accessor 1 has invalid normalized property\n"},
 };
 
 constexpr struct {
@@ -885,65 +885,65 @@ constexpr struct {
         "buffer 2 has missing uri property"},
     {"buffer with invalid uri property",
         "Utility::Json::parseString(): expected a string, got Utility::JsonToken::Type::Array at {}:1037:20\n"
-        "Trade::CgltfImporter::mesh(): buffer 3 has invalid uri property\n"},
+        "Trade::GltfImporter::mesh(): buffer 3 has invalid uri property\n"},
     {"buffer with invalid uri",
         "invalid URI escape sequence %%"},
     {"buffer with missing byteLength property",
         "buffer 5 has missing or invalid byteLength property"},
     {"buffer with invalid byteLength property",
         "Utility::Json::parseSize(): too large integer literal -3 at {}:1050:27\n"
-        "Trade::CgltfImporter::mesh(): buffer 6 has missing or invalid byteLength property\n"},
+        "Trade::GltfImporter::mesh(): buffer 6 has missing or invalid byteLength property\n"},
     {"buffer view with missing buffer property",
         "buffer view 9 has missing or invalid buffer property"},
     {"buffer view with invalid buffer property",
         "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:987:23\n"
-        "Trade::CgltfImporter::mesh(): buffer view 10 has missing or invalid buffer property\n"},
+        "Trade::GltfImporter::mesh(): buffer view 10 has missing or invalid buffer property\n"},
     {"buffer view with invalid byteOffset property",
         "Utility::Json::parseSize(): too large integer literal -1 at {}:993:27\n"
-        "Trade::CgltfImporter::mesh(): buffer view 11 has invalid byteOffset property\n"},
+        "Trade::GltfImporter::mesh(): buffer view 11 has invalid byteOffset property\n"},
     {"buffer view with missing byteLength property",
         "buffer view 12 has missing or invalid byteLength property"},
     {"buffer view with invalid byteLength property",
         "Utility::Json::parseSize(): too large integer literal -12 at {}:1003:27\n"
-        "Trade::CgltfImporter::mesh(): buffer view 13 has missing or invalid byteLength property\n"},
+        "Trade::GltfImporter::mesh(): buffer view 13 has missing or invalid byteLength property\n"},
     {"buffer view with invalid byteStride property",
         "Utility::Json::parseUnsignedInt(): too large integer literal -4 at {}:1009:27\n"
-        "Trade::CgltfImporter::mesh(): buffer view 14 has invalid byteStride property\n"},
+        "Trade::GltfImporter::mesh(): buffer view 14 has invalid byteStride property\n"},
     {"accessor with missing bufferView property",
         "accessor 15 has missing or invalid bufferView property"},
     {"accessor with invalid bufferView property",
         "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:863:27\n"
-        "Trade::CgltfImporter::mesh(): accessor 34 has missing or invalid bufferView property\n"},
+        "Trade::GltfImporter::mesh(): accessor 34 has missing or invalid bufferView property\n"},
     {"accessor with invalid byteOffset property",
         "Utility::Json::parseSize(): too large integer literal -1 at {}:871:27\n"
-        "Trade::CgltfImporter::mesh(): accessor 35 has invalid byteOffset property\n"},
+        "Trade::GltfImporter::mesh(): accessor 35 has invalid byteOffset property\n"},
     {"accessor with missing componentType property",
         "accessor 36 has missing or invalid componentType property"},
     {"accessor with invalid componentType property",
         "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:885:30\n"
-        "Trade::CgltfImporter::mesh(): accessor 37 has missing or invalid componentType property\n"},
+        "Trade::GltfImporter::mesh(): accessor 37 has missing or invalid componentType property\n"},
     {"accessor with missing count property",
         "accessor 38 has missing or invalid count property"},
     {"accessor with invalid count property",
         "Utility::Json::parseSize(): too large integer literal -1 at {}:899:22\n"
-        "Trade::CgltfImporter::mesh(): accessor 39 has missing or invalid count property\n"},
+        "Trade::GltfImporter::mesh(): accessor 39 has missing or invalid count property\n"},
     {"accessor with missing type property",
         "accessor 40 has missing or invalid type property"},
     {"accessor with invalid type property",
         "Utility::Json::parseString(): expected a string, got Utility::JsonToken::Type::Number at {}:913:21\n"
-        "Trade::CgltfImporter::mesh(): accessor 41 has missing or invalid type property\n"},
+        "Trade::GltfImporter::mesh(): accessor 41 has missing or invalid type property\n"},
     {"accessor with invalid normalized property",
         "Utility::Json::parseBool(): expected a bool, got Utility::JsonToken::Type::Null at {}:921:27\n"
-        "Trade::CgltfImporter::mesh(): accessor 42 has invalid normalized property\n"},
+        "Trade::GltfImporter::mesh(): accessor 42 has invalid normalized property\n"},
     {"invalid primitive property",
         "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:584:29\n"
-        "Trade::CgltfImporter::mesh(): invalid primitive mode property\n"},
+        "Trade::GltfImporter::mesh(): invalid primitive mode property\n"},
     {"invalid attribute property",
         "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:594:38\n"
-        "Trade::CgltfImporter::mesh(): invalid attribute _WEIRD_EH\n"},
+        "Trade::GltfImporter::mesh(): invalid attribute _WEIRD_EH\n"},
     {"invalid indices property",
         "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:604:32\n"
-        "Trade::CgltfImporter::mesh(): invalid indices property\n"}
+        "Trade::GltfImporter::mesh(): invalid indices property\n"}
 };
 
 constexpr struct {
@@ -960,130 +960,130 @@ constexpr struct {
 } MaterialInvalidData[]{
     {"invalid alphaMode property",
         "Utility::Json::parseString(): expected a string, got Utility::JsonToken::Type::Number at {}:8:26\n"
-        "Trade::CgltfImporter::material(): invalid alphaMode property\n"},
+        "Trade::GltfImporter::material(): invalid alphaMode property\n"},
     {"unrecognized alpha mode",
         "unrecognized alphaMode WAT"},
     {"invalid alphaCutoff property",
         "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::String at {}:17:28\n"
-        "Trade::CgltfImporter::material(): invalid alphaCutoff property\n"},
+        "Trade::GltfImporter::material(): invalid alphaCutoff property\n"},
     {"invalid doubleSided property",
         "Utility::Json::parseBool(): expected a bool, got Utility::JsonToken::Type::Null at {}:21:28\n"
-        "Trade::CgltfImporter::material(): invalid doubleSided property\n"},
+        "Trade::GltfImporter::material(): invalid doubleSided property\n"},
     {"invalid pbrMetallicRoughness property",
         "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Array at {}:25:37\n"
-        "Trade::CgltfImporter::material(): invalid pbrMetallicRoughness property\n"},
+        "Trade::GltfImporter::material(): invalid pbrMetallicRoughness property\n"},
     {"invalid pbrMetallicRoughness baseColorFactor property",
         "Utility::Json::parseFloatArray(): expected an array, got Utility::JsonToken::Type::String at {}:30:36\n"
-        "Trade::CgltfImporter::material(): invalid pbrMetallicRoughness baseColorFactor property\n"},
+        "Trade::GltfImporter::material(): invalid pbrMetallicRoughness baseColorFactor property\n"},
     {"invalid pbrMetallicRoughness baseColorFactor array size",
         "Utility::Json::parseFloatArray(): expected a 4-element array, got 3 at {}:36:36\n"
-        "Trade::CgltfImporter::material(): invalid pbrMetallicRoughness baseColorFactor property\n"},
+        "Trade::GltfImporter::material(): invalid pbrMetallicRoughness baseColorFactor property\n"},
     {"invalid pbrMetallicRoughness baseColorTexture",
         "baseColorTexture index 2 out of range for 2 textures"},
     {"invalid pbrMetallicRoughness metallicFactor property",
         "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::Bool at {}:50:35\n"
-        "Trade::CgltfImporter::material(): invalid pbrMetallicRoughness metallicFactor property\n"},
+        "Trade::GltfImporter::material(): invalid pbrMetallicRoughness metallicFactor property\n"},
     {"invalid pbrMetallicRoughness roughnessFactor property",
         "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::Bool at {}:56:36\n"
-        "Trade::CgltfImporter::material(): invalid pbrMetallicRoughness roughnessFactor property\n"},
+        "Trade::GltfImporter::material(): invalid pbrMetallicRoughness roughnessFactor property\n"},
     {"invalid pbrMetallicRoughness metallicRoughnessTexture",
         "metallicRoughnessTexture index 2 out of range for 2 textures"},
     {"invalid extensions property",
         "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Array at {}:69:27\n"
-        "Trade::CgltfImporter::material(): invalid extensions property\n"},
+        "Trade::GltfImporter::material(): invalid extensions property\n"},
     {"invalid extension",
         "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Null at {}:74:40\n"
-        "Trade::CgltfImporter::material(): invalid KHR_materials_unlit extension property\n"},
+        "Trade::GltfImporter::material(): invalid KHR_materials_unlit extension property\n"},
     {"invalid KHR_materials_pbrSpecularGlossiness diffuseFactor property",
         "Utility::Json::parseFloatArray(): expected an array, got Utility::JsonToken::Type::String at {}:81:38\n"
-        "Trade::CgltfImporter::material(): invalid KHR_materials_pbrSpecularGlossiness diffuseFactor property\n"},
+        "Trade::GltfImporter::material(): invalid KHR_materials_pbrSpecularGlossiness diffuseFactor property\n"},
     {"invalid KHR_materials_pbrSpecularGlossiness diffuseFactor array size",
         "Utility::Json::parseFloatArray(): expected a 4-element array, got 3 at {}:89:38\n"
-        "Trade::CgltfImporter::material(): invalid KHR_materials_pbrSpecularGlossiness diffuseFactor property\n"},
+        "Trade::GltfImporter::material(): invalid KHR_materials_pbrSpecularGlossiness diffuseFactor property\n"},
     {"invalid KHR_materials_pbrSpecularGlossiness diffuseTexture",
         "diffuseTexture index 2 out of range for 2 textures"},
     {"invalid KHR_materials_pbrSpecularGlossiness specularFactor property",
         "Utility::Json::parseFloatArray(): expected an array, got Utility::JsonToken::Type::String at {}:107:39\n"
-        "Trade::CgltfImporter::material(): invalid KHR_materials_pbrSpecularGlossiness specularFactor property\n"},
+        "Trade::GltfImporter::material(): invalid KHR_materials_pbrSpecularGlossiness specularFactor property\n"},
     {"invalid KHR_materials_pbrSpecularGlossiness specularFactor array size",
         "Utility::Json::parseFloatArray(): expected a 3-element array, got 4 at {}:115:39\n"
-        "Trade::CgltfImporter::material(): invalid KHR_materials_pbrSpecularGlossiness specularFactor property\n"},
+        "Trade::GltfImporter::material(): invalid KHR_materials_pbrSpecularGlossiness specularFactor property\n"},
     {"invalid KHR_materials_pbrSpecularGlossiness glossinessFactor property",
         "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::Bool at {}:123:41\n"
-        "Trade::CgltfImporter::material(): invalid KHR_materials_pbrSpecularGlossiness glossinessFactor property\n"},
+        "Trade::GltfImporter::material(): invalid KHR_materials_pbrSpecularGlossiness glossinessFactor property\n"},
     {"invalid KHR_materials_pbrSpecularGlossiness specularGlossinessTexture",
         "specularGlossinessTexture index 2 out of range for 2 textures"},
     {"invalid normalTexture",
         "normalTexture index 2 out of range for 2 textures"},
     {"invalid normalTexture scale property",
         "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::Bool at {}:147:26\n"
-        "Trade::CgltfImporter::material(): invalid normalTexture scale property\n"},
+        "Trade::GltfImporter::material(): invalid normalTexture scale property\n"},
     {"invalid occlusionTexture",
         "occlusionTexture index 2 out of range for 2 textures"},
     {"invalid occlusionTexture strength property",
         "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::String at {}:160:29\n"
-        "Trade::CgltfImporter::material(): invalid occlusionTexture strength property\n"},
+        "Trade::GltfImporter::material(): invalid occlusionTexture strength property\n"},
     {"invalid emissiveFactor property",
         "Utility::Json::parseFloatArray(): expected an array, got Utility::JsonToken::Type::Number at {}:165:31\n"
-        "Trade::CgltfImporter::material(): invalid emissiveFactor property\n"},
+        "Trade::GltfImporter::material(): invalid emissiveFactor property\n"},
     {"invalid emissiveFactor array size",
         "Utility::Json::parseFloatArray(): expected a 3-element array, got 4 at {}:169:31\n"
-        "Trade::CgltfImporter::material(): invalid emissiveFactor property\n"},
+        "Trade::GltfImporter::material(): invalid emissiveFactor property\n"},
     {"invalid emissiveTexture",
         "emissiveTexture index 2 out of range for 2 textures"},
     {"invalid KHR_materials_clearcoat clearcoatFactor property",
         "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::Array at {}:181:40\n"
-        "Trade::CgltfImporter::material(): invalid KHR_materials_clearcoat clearcoatFactor property\n"},
+        "Trade::GltfImporter::material(): invalid KHR_materials_clearcoat clearcoatFactor property\n"},
     {"invalid KHR_materials_clearcoat clearcoatTexture",
         "clearcoatTexture index 2 out of range for 2 textures"},
     {"invalid KHR_materials_clearcoat clearcoatRoughnessFactor property",
         "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::Bool at {}:199:49\n"
-        "Trade::CgltfImporter::material(): invalid KHR_materials_clearcoat roughnessFactor property\n"},
+        "Trade::GltfImporter::material(): invalid KHR_materials_clearcoat roughnessFactor property\n"},
     {"invalid KHR_materials_clearcoat clearcoatRoughnessTexture",
         "clearcoatRoughnessTexture index 2 out of range for 2 textures"},
     {"invalid KHR_materials_clearcoat clearcoatNormalTexture",
         "clearcoatNormalTexture index 2 out of range for 2 textures"},
     {"invalid KHR_materials_clearcoat clearcoatNormalTexture scale property",
         "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::Bool at {}:229:34\n"
-        "Trade::CgltfImporter::material(): invalid KHR_materials_clearcoat normalTexture scale property\n"},
+        "Trade::GltfImporter::material(): invalid KHR_materials_clearcoat normalTexture scale property\n"},
     /* Invalid texture object cases are tested thoroughly only once on the
        baseColorTexture object, as the helper code path is shared. General
        error propagation was tested above alaready. */
     {"invalid texture object",
         "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Number at {}:237:37\n"
-        "Trade::CgltfImporter::material(): invalid baseColorTexture property\n"},
+        "Trade::GltfImporter::material(): invalid baseColorTexture property\n"},
     {"missing texture object index property",
         "missing or invalid baseColorTexture index property"},
     {"invalid texture object index property",
         "Utility::Json::parseUnsignedInt(): too large integer literal -2 at {}:250:30\n"
-        "Trade::CgltfImporter::material(): missing or invalid baseColorTexture index property\n"},
+        "Trade::GltfImporter::material(): missing or invalid baseColorTexture index property\n"},
     {"invalid texture object texCoord property",
         "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:259:33\n"
-        "Trade::CgltfImporter::material(): invalid baseColorTexture texcoord property\n"},
+        "Trade::GltfImporter::material(): invalid baseColorTexture texcoord property\n"},
     {"invalid texture object extensions property",
         "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Array at {}:268:35\n"
-        "Trade::CgltfImporter::material(): invalid baseColorTexture extensions property\n"},
+        "Trade::GltfImporter::material(): invalid baseColorTexture extensions property\n"},
     {"invalid texture object KHR_texture_transform extension",
         "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Null at {}:278:50\n"
-        "Trade::CgltfImporter::material(): invalid baseColorTexture KHR_texture_transform extension\n"},
+        "Trade::GltfImporter::material(): invalid baseColorTexture KHR_texture_transform extension\n"},
     {"invalid texture object KHR_texture_transform texCoord property",
         "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:290:41\n"
-        "Trade::CgltfImporter::material(): invalid baseColorTexture KHR_texture_transform texcoord property\n"},
+        "Trade::GltfImporter::material(): invalid baseColorTexture KHR_texture_transform texcoord property\n"},
     {"invalid texture object KHR_texture_transform scale property",
         "Utility::Json::parseFloatArray(): expected an array, got Utility::JsonToken::Type::Number at {}:303:38\n"
-        "Trade::CgltfImporter::material(): invalid baseColorTexture KHR_texture_transform scale property\n"},
+        "Trade::GltfImporter::material(): invalid baseColorTexture KHR_texture_transform scale property\n"},
     {"invalid texture object KHR_texture_transform scale array size",
         "Utility::Json::parseFloatArray(): expected a 2-element array, got 1 at {}:316:38\n"
-        "Trade::CgltfImporter::material(): invalid baseColorTexture KHR_texture_transform scale property\n"},
+        "Trade::GltfImporter::material(): invalid baseColorTexture KHR_texture_transform scale property\n"},
     {"invalid texture object KHR_texture_transform rotation property",
         "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::Array at {}:329:41\n"
-        "Trade::CgltfImporter::material(): invalid baseColorTexture KHR_texture_transform rotation property\n"},
+        "Trade::GltfImporter::material(): invalid baseColorTexture KHR_texture_transform rotation property\n"},
     {"invalid texture object KHR_texture_transform offset property",
         "Utility::Json::parseFloatArray(): expected an array, got Utility::JsonToken::Type::Number at {}:342:39\n"
-        "Trade::CgltfImporter::material(): invalid baseColorTexture KHR_texture_transform offset property\n"},
+        "Trade::GltfImporter::material(): invalid baseColorTexture KHR_texture_transform offset property\n"},
     {"invalid texture object KHR_texture_transform offset array size",
         "Utility::Json::parseFloatArray(): expected a 2-element array, got 1 at {}:355:39\n"
-        "Trade::CgltfImporter::material(): invalid baseColorTexture KHR_texture_transform offset property\n"},
+        "Trade::GltfImporter::material(): invalid baseColorTexture KHR_texture_transform offset property\n"},
 };
 
 constexpr struct {
@@ -1112,11 +1112,11 @@ constexpr struct {
     {"invalid nodes property",
         "scene-invalid-nodes-property.gltf",
         "Utility::Json::parseUnsignedIntArray(): expected an array, got Utility::JsonToken::Type::Object at {}:8:22\n"
-        "Trade::CgltfImporter::openData(): invalid nodes property of scene 1\n"},
+        "Trade::GltfImporter::openData(): invalid nodes property of scene 1\n"},
     {"invalid children property",
         "scene-invalid-children-property.gltf",
         "Utility::Json::parseUnsignedIntArray(): expected an array, got Utility::JsonToken::Type::Object at {}:8:25\n"
-        "Trade::CgltfImporter::openData(): invalid children property of node 1\n"}
+        "Trade::GltfImporter::openData(): invalid children property of node 1\n"}
 };
 
 constexpr struct {
@@ -1139,49 +1139,49 @@ constexpr struct {
         "skin index 3 in node 9 out of range for 3 skins"},
     {"invalid mesh property",
         "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:127:21\n"
-        "Trade::CgltfImporter::scene(): invalid mesh property of node 10\n"},
+        "Trade::GltfImporter::scene(): invalid mesh property of node 10\n"},
     {"invalid mesh material property",
         "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:70:33\n"
-        "Trade::CgltfImporter::scene(): invalid material property of mesh 4 primitive 1\n"},
+        "Trade::GltfImporter::scene(): invalid material property of mesh 4 primitive 1\n"},
     {"invalid camera property",
         "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:135:23\n"
-        "Trade::CgltfImporter::scene(): invalid camera property of node 12\n"},
+        "Trade::GltfImporter::scene(): invalid camera property of node 12\n"},
     {"invalid skin property",
         "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:139:21\n"
-        "Trade::CgltfImporter::scene(): invalid skin property of node 13\n"},
+        "Trade::GltfImporter::scene(): invalid skin property of node 13\n"},
     {"invalid extensions property",
         "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Array at {}:143:27\n"
-        "Trade::CgltfImporter::scene(): invalid node 14 extensions property\n"},
+        "Trade::GltfImporter::scene(): invalid node 14 extensions property\n"},
     {"invalid KHR_lights_punctual extension",
         "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Number at {}:148:40\n"
-        "Trade::CgltfImporter::scene(): invalid node 15 KHR_lights_punctual extension\n"},
+        "Trade::GltfImporter::scene(): invalid node 15 KHR_lights_punctual extension\n"},
     {"invalid KHR_lights_punctual light property",
         "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:155:30\n"
-        "Trade::CgltfImporter::scene(): missing or invalid KHR_lights_punctual light property of node 16\n"},
+        "Trade::GltfImporter::scene(): missing or invalid KHR_lights_punctual light property of node 16\n"},
     {"invalid translation property",
         "Utility::Json::parseFloatArray(): expected an array, got Utility::JsonToken::Type::Number at {}:161:28\n"
-        "Trade::CgltfImporter::scene(): invalid translation property of node 17\n"},
+        "Trade::GltfImporter::scene(): invalid translation property of node 17\n"},
     {"invalid translation array size",
         "Utility::Json::parseFloatArray(): expected a 3-element array, got 2 at {}:165:28\n"
-        "Trade::CgltfImporter::scene(): invalid translation property of node 18\n"},
+        "Trade::GltfImporter::scene(): invalid translation property of node 18\n"},
     {"invalid rotation property",
         "Utility::Json::parseFloatArray(): expected an array, got Utility::JsonToken::Type::Number at {}:169:25\n"
-        "Trade::CgltfImporter::scene(): invalid rotation property of node 19\n"},
+        "Trade::GltfImporter::scene(): invalid rotation property of node 19\n"},
     {"invalid rotation array size",
         "Utility::Json::parseFloatArray(): expected a 4-element array, got 3 at {}:173:25\n"
-        "Trade::CgltfImporter::scene(): invalid rotation property of node 20\n"},
+        "Trade::GltfImporter::scene(): invalid rotation property of node 20\n"},
     {"invalid scale property",
         "Utility::Json::parseFloatArray(): expected an array, got Utility::JsonToken::Type::Number at {}:177:22\n"
-        "Trade::CgltfImporter::scene(): invalid scale property of node 21\n"},
+        "Trade::GltfImporter::scene(): invalid scale property of node 21\n"},
     {"invalid scale array size",
         "Utility::Json::parseFloatArray(): expected a 3-element array, got 2 at {}:181:22\n"
-        "Trade::CgltfImporter::scene(): invalid scale property of node 22\n"},
+        "Trade::GltfImporter::scene(): invalid scale property of node 22\n"},
     {"invalid matrix property",
         "Utility::Json::parseFloatArray(): expected an array, got Utility::JsonToken::Type::Number at {}:185:23\n"
-        "Trade::CgltfImporter::scene(): invalid matrix property of node 23\n"},
+        "Trade::GltfImporter::scene(): invalid matrix property of node 23\n"},
     {"invalid matrix array size",
         "Utility::Json::parseFloatArray(): expected a 16-element array, got 4 at {}:189:23\n"
-        "Trade::CgltfImporter::scene(): invalid matrix property of node 24\n"}
+        "Trade::GltfImporter::scene(): invalid matrix property of node 24\n"}
 };
 
 constexpr struct {
@@ -1269,33 +1269,33 @@ constexpr struct {
         "missing or invalid source property"},
     {"invalid source property",
         "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:106:23\n"
-        "Trade::CgltfImporter::texture(): missing or invalid source property\n"},
+        "Trade::GltfImporter::texture(): missing or invalid source property\n"},
     {"invalid extensions property",
         "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Array at {}:110:27\n"
-        "Trade::CgltfImporter::texture(): invalid extensions property\n"},
+        "Trade::GltfImporter::texture(): invalid extensions property\n"},
     {"invalid extension",
         "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Null at {}:115:39\n"
-        "Trade::CgltfImporter::texture(): invalid KHR_texture_basisu extension\n"},
+        "Trade::GltfImporter::texture(): invalid KHR_texture_basisu extension\n"},
     {"missing extension source property",
         "missing or invalid KHR_texture_basisu source property"},
     {"invalid extension source property",
         "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:128:31\n"
-        "Trade::CgltfImporter::texture(): missing or invalid KHR_texture_basisu source property\n"},
+        "Trade::GltfImporter::texture(): missing or invalid KHR_texture_basisu source property\n"},
     {"invalid sampler property",
         "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:135:24\n"
-        "Trade::CgltfImporter::texture(): invalid sampler property\n"},
+        "Trade::GltfImporter::texture(): invalid sampler property\n"},
     {"invalid sampler magFilter property",
         "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:32:26\n"
-        "Trade::CgltfImporter::texture(): invalid magFilter property\n"},
+        "Trade::GltfImporter::texture(): invalid magFilter property\n"},
     {"invalid sampler minFilter property",
         "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:36:26\n"
-        "Trade::CgltfImporter::texture(): invalid minFilter property\n"},
+        "Trade::GltfImporter::texture(): invalid minFilter property\n"},
     {"invalid sampler wrapS property",
         "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:40:22\n"
-        "Trade::CgltfImporter::texture(): invalid wrapS property\n"},
+        "Trade::GltfImporter::texture(): invalid wrapS property\n"},
     {"invalid sampler wrapT property",
         "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:44:22\n"
-        "Trade::CgltfImporter::texture(): invalid wrapT property\n"},
+        "Trade::GltfImporter::texture(): invalid wrapT property\n"},
 };
 
 constexpr struct {
@@ -1340,10 +1340,10 @@ const struct {
         "expected exactly one of uri or bufferView properties defined"},
     {"invalid uri property",
         "Utility::Json::parseString(): expected a string, got Utility::JsonToken::Type::Bool at {}:21:20\n"
-        "Trade::CgltfImporter::image2D(): invalid uri property\n"},
+        "Trade::GltfImporter::image2D(): invalid uri property\n"},
     {"invalid bufferView property",
         "Utility::Json::parseUnsignedInt(): too large integer literal -2 at {}:25:27\n"
-        "Trade::CgltfImporter::image2D(): invalid bufferView property\n"},
+        "Trade::GltfImporter::image2D(): invalid bufferView property\n"},
     {"strided buffer view",
         "buffer view 3 is strided"},
     {"data uri magic not recognizable", "Trade::AnyImageImporter::openData(): cannot determine the format from signature 0x53454b52\n"}
@@ -1354,7 +1354,7 @@ const struct {
     const char* message;
 } ImageInvalidNotFoundData[]{
     {"uri not found", "Trade::AbstractImporter::openFile(): cannot open file /nonexistent.png"},
-    {"buffer not found", "Trade::CgltfImporter::image2D(): error opening /nonexistent.bin"}
+    {"buffer not found", "Trade::GltfImporter::image2D(): error opening /nonexistent.bin"}
 };
 
 constexpr struct {
@@ -1383,192 +1383,192 @@ const struct {
     }},
 };
 
-CgltfImporterTest::CgltfImporterTest() {
-    addInstancedTests({&CgltfImporterTest::open},
+GltfImporterTest::GltfImporterTest() {
+    addInstancedTests({&GltfImporterTest::open},
                       Containers::arraySize(SingleFileData));
 
-    addInstancedTests({&CgltfImporterTest::openError},
+    addInstancedTests({&GltfImporterTest::openError},
                       Containers::arraySize(OpenErrorData));
 
-    addTests({&CgltfImporterTest::openFileError,
-              &CgltfImporterTest::openIgnoreUnknownChunk});
+    addTests({&GltfImporterTest::openFileError,
+              &GltfImporterTest::openIgnoreUnknownChunk});
 
-    addInstancedTests({&CgltfImporterTest::openExternalDataOrder},
+    addInstancedTests({&GltfImporterTest::openExternalDataOrder},
         Containers::arraySize(SingleFileData));
 
-    addTests({&CgltfImporterTest::openExternalDataNoPathNoCallback});
+    addTests({&GltfImporterTest::openExternalDataNoPathNoCallback});
 
-    addInstancedTests({&CgltfImporterTest::openExternalDataTooLong},
+    addInstancedTests({&GltfImporterTest::openExternalDataTooLong},
         Containers::arraySize(SingleFileData));
 
-    addInstancedTests({&CgltfImporterTest::openExternalDataTooShort},
+    addInstancedTests({&GltfImporterTest::openExternalDataTooShort},
         Containers::arraySize(MultiFileData));
 
-    addInstancedTests({&CgltfImporterTest::openExternalDataInvalidUri},
+    addInstancedTests({&GltfImporterTest::openExternalDataInvalidUri},
                       Containers::arraySize(InvalidUriData));
 
-    addTests({&CgltfImporterTest::requiredExtensions,
-              &CgltfImporterTest::requiredExtensionsUnsupported,
-              &CgltfImporterTest::requiredExtensionsUnsupportedDisabled});
+    addTests({&GltfImporterTest::requiredExtensions,
+              &GltfImporterTest::requiredExtensionsUnsupported,
+              &GltfImporterTest::requiredExtensionsUnsupportedDisabled});
 
-    addInstancedTests({&CgltfImporterTest::animation},
+    addInstancedTests({&GltfImporterTest::animation},
                       Containers::arraySize(MultiFileData));
 
-    addInstancedTests({&CgltfImporterTest::animationInvalid},
+    addInstancedTests({&GltfImporterTest::animationInvalid},
         Containers::arraySize(AnimationInvalidData));
 
-    addInstancedTests({&CgltfImporterTest::animationInvalidBufferNotFound},
+    addInstancedTests({&GltfImporterTest::animationInvalidBufferNotFound},
         Containers::arraySize(AnimationInvalidBufferNotFoundData));
 
-    addTests({&CgltfImporterTest::animationMissingTargetNode});
+    addTests({&GltfImporterTest::animationMissingTargetNode});
 
-    addInstancedTests({&CgltfImporterTest::animationSpline},
+    addInstancedTests({&GltfImporterTest::animationSpline},
                       Containers::arraySize(MultiFileData));
 
-    addTests({&CgltfImporterTest::animationSplineSharedWithSameTimeTrack,
-              &CgltfImporterTest::animationSplineSharedWithDifferentTimeTrack,
+    addTests({&GltfImporterTest::animationSplineSharedWithSameTimeTrack,
+              &GltfImporterTest::animationSplineSharedWithDifferentTimeTrack,
 
-              &CgltfImporterTest::animationShortestPathOptimizationEnabled,
-              &CgltfImporterTest::animationShortestPathOptimizationDisabled,
-              &CgltfImporterTest::animationQuaternionNormalizationEnabled,
-              &CgltfImporterTest::animationQuaternionNormalizationDisabled,
-              &CgltfImporterTest::animationMergeEmpty,
-              &CgltfImporterTest::animationMerge});
+              &GltfImporterTest::animationShortestPathOptimizationEnabled,
+              &GltfImporterTest::animationShortestPathOptimizationDisabled,
+              &GltfImporterTest::animationQuaternionNormalizationEnabled,
+              &GltfImporterTest::animationQuaternionNormalizationDisabled,
+              &GltfImporterTest::animationMergeEmpty,
+              &GltfImporterTest::animationMerge});
 
-    addTests({&CgltfImporterTest::camera});
+    addTests({&GltfImporterTest::camera});
 
-    addInstancedTests({&CgltfImporterTest::cameraInvalid},
+    addInstancedTests({&GltfImporterTest::cameraInvalid},
         Containers::arraySize(CameraInvalidData));
 
-    addTests({&CgltfImporterTest::light});
+    addTests({&GltfImporterTest::light});
 
-    addInstancedTests({&CgltfImporterTest::lightInvalid},
+    addInstancedTests({&GltfImporterTest::lightInvalid},
         Containers::arraySize(LightInvalidData));
 
-    addTests({&CgltfImporterTest::scene});
+    addTests({&GltfImporterTest::scene});
 
-    addInstancedTests({&CgltfImporterTest::sceneInvalidWholeFile},
+    addInstancedTests({&GltfImporterTest::sceneInvalidWholeFile},
         Containers::arraySize(SceneInvalidWholeFileData));
 
-    addInstancedTests({&CgltfImporterTest::sceneInvalid},
+    addInstancedTests({&GltfImporterTest::sceneInvalid},
         Containers::arraySize(SceneInvalidData));
 
-    addTests({&CgltfImporterTest::sceneDefaultNoScenes,
-              &CgltfImporterTest::sceneDefaultNoDefault,
-              &CgltfImporterTest::sceneDefaultOutOfBounds,
-              &CgltfImporterTest::sceneTransformation,
-              &CgltfImporterTest::sceneTransformationQuaternionNormalizationEnabled,
-              &CgltfImporterTest::sceneTransformationQuaternionNormalizationDisabled});
+    addTests({&GltfImporterTest::sceneDefaultNoScenes,
+              &GltfImporterTest::sceneDefaultNoDefault,
+              &GltfImporterTest::sceneDefaultOutOfBounds,
+              &GltfImporterTest::sceneTransformation,
+              &GltfImporterTest::sceneTransformationQuaternionNormalizationEnabled,
+              &GltfImporterTest::sceneTransformationQuaternionNormalizationDisabled});
 
-    addInstancedTests({&CgltfImporterTest::skin},
+    addInstancedTests({&GltfImporterTest::skin},
         Containers::arraySize(MultiFileData));
 
-    addInstancedTests({&CgltfImporterTest::skinInvalid},
+    addInstancedTests({&GltfImporterTest::skinInvalid},
         Containers::arraySize(SkinInvalidData));
 
-    addTests({&CgltfImporterTest::skinInvalidBufferNotFound});
+    addTests({&GltfImporterTest::skinInvalidBufferNotFound});
 
-    addInstancedTests({&CgltfImporterTest::mesh},
+    addInstancedTests({&GltfImporterTest::mesh},
                       Containers::arraySize(MultiFileData));
 
-    addTests({&CgltfImporterTest::meshNoAttributes,
-              &CgltfImporterTest::meshNoIndices,
-              &CgltfImporterTest::meshNoIndicesNoAttributes,
-              &CgltfImporterTest::meshColors,
-              &CgltfImporterTest::meshSkinAttributes,
-              &CgltfImporterTest::meshCustomAttributes,
-              &CgltfImporterTest::meshCustomAttributesNoFileOpened,
-              &CgltfImporterTest::meshDuplicateAttributes,
-              &CgltfImporterTest::meshUnorderedAttributes,
-              &CgltfImporterTest::meshMultiplePrimitives});
+    addTests({&GltfImporterTest::meshNoAttributes,
+              &GltfImporterTest::meshNoIndices,
+              &GltfImporterTest::meshNoIndicesNoAttributes,
+              &GltfImporterTest::meshColors,
+              &GltfImporterTest::meshSkinAttributes,
+              &GltfImporterTest::meshCustomAttributes,
+              &GltfImporterTest::meshCustomAttributesNoFileOpened,
+              &GltfImporterTest::meshDuplicateAttributes,
+              &GltfImporterTest::meshUnorderedAttributes,
+              &GltfImporterTest::meshMultiplePrimitives});
 
-    addInstancedTests({&CgltfImporterTest::meshPrimitivesTypes},
+    addInstancedTests({&GltfImporterTest::meshPrimitivesTypes},
         Containers::arraySize(MeshPrimitivesTypesData));
 
-    addTests({&CgltfImporterTest::meshSizeNotMultipleOfStride});
+    addTests({&GltfImporterTest::meshSizeNotMultipleOfStride});
 
-    addInstancedTests({&CgltfImporterTest::meshInvalidWholeFile},
+    addInstancedTests({&GltfImporterTest::meshInvalidWholeFile},
         Containers::arraySize(MeshInvalidWholeFileData));
 
-    addInstancedTests({&CgltfImporterTest::meshInvalid},
+    addInstancedTests({&GltfImporterTest::meshInvalid},
         Containers::arraySize(MeshInvalidData));
 
-    addInstancedTests({&CgltfImporterTest::meshInvalidBufferNotFound},
+    addInstancedTests({&GltfImporterTest::meshInvalidBufferNotFound},
         Containers::arraySize(MeshInvalidBufferNotFoundData));
 
-    addTests({&CgltfImporterTest::materialPbrMetallicRoughness,
-              &CgltfImporterTest::materialPbrSpecularGlossiness,
-              &CgltfImporterTest::materialCommon,
-              &CgltfImporterTest::materialUnlit,
-              &CgltfImporterTest::materialExtras,
-              &CgltfImporterTest::materialClearCoat,
-              &CgltfImporterTest::materialPhongFallback,
-              &CgltfImporterTest::materialRaw,
-              &CgltfImporterTest::materialRawIor,
-              &CgltfImporterTest::materialRawSpecular,
-              &CgltfImporterTest::materialRawTransmission,
-              &CgltfImporterTest::materialRawVolume,
-              &CgltfImporterTest::materialRawSheen,
-              &CgltfImporterTest::materialRawOutOfBounds});
+    addTests({&GltfImporterTest::materialPbrMetallicRoughness,
+              &GltfImporterTest::materialPbrSpecularGlossiness,
+              &GltfImporterTest::materialCommon,
+              &GltfImporterTest::materialUnlit,
+              &GltfImporterTest::materialExtras,
+              &GltfImporterTest::materialClearCoat,
+              &GltfImporterTest::materialPhongFallback,
+              &GltfImporterTest::materialRaw,
+              &GltfImporterTest::materialRawIor,
+              &GltfImporterTest::materialRawSpecular,
+              &GltfImporterTest::materialRawTransmission,
+              &GltfImporterTest::materialRawVolume,
+              &GltfImporterTest::materialRawSheen,
+              &GltfImporterTest::materialRawOutOfBounds});
 
-    addInstancedTests({&CgltfImporterTest::materialInvalid},
+    addInstancedTests({&GltfImporterTest::materialInvalid},
         Containers::arraySize(MaterialInvalidData));
 
-    addInstancedTests({&CgltfImporterTest::materialTexCoordFlip},
+    addInstancedTests({&GltfImporterTest::materialTexCoordFlip},
         Containers::arraySize(MaterialTexCoordFlipData));
 
-    addTests({&CgltfImporterTest::texture});
+    addTests({&GltfImporterTest::texture});
 
-    addInstancedTests({&CgltfImporterTest::textureExtensions},
+    addInstancedTests({&GltfImporterTest::textureExtensions},
                       Containers::arraySize(TextureExtensionsData));
 
-    addInstancedTests({&CgltfImporterTest::textureInvalid},
+    addInstancedTests({&GltfImporterTest::textureInvalid},
                       Containers::arraySize(TextureInvalidData));
 
-    addInstancedTests({&CgltfImporterTest::imageEmbedded},
+    addInstancedTests({&GltfImporterTest::imageEmbedded},
                       Containers::arraySize(ImageEmbeddedData));
 
-    addInstancedTests({&CgltfImporterTest::imageExternal},
+    addInstancedTests({&GltfImporterTest::imageExternal},
                       Containers::arraySize(ImageExternalData));
 
-    addTests({&CgltfImporterTest::imageExternalNoPathNoCallback});
+    addTests({&GltfImporterTest::imageExternalNoPathNoCallback});
 
-    addInstancedTests({&CgltfImporterTest::imageBasis},
+    addInstancedTests({&GltfImporterTest::imageBasis},
                       Containers::arraySize(ImageBasisData));
 
-    addTests({&CgltfImporterTest::imageMipLevels});
+    addTests({&GltfImporterTest::imageMipLevels});
 
-    addInstancedTests({&CgltfImporterTest::imageInvalid},
+    addInstancedTests({&GltfImporterTest::imageInvalid},
                       Containers::arraySize(ImageInvalidData));
 
-    addInstancedTests({&CgltfImporterTest::imageInvalidNotFound},
+    addInstancedTests({&GltfImporterTest::imageInvalidNotFound},
         Containers::arraySize(ImageInvalidNotFoundData));
 
-    addInstancedTests({&CgltfImporterTest::fileCallbackBuffer,
-                       &CgltfImporterTest::fileCallbackBufferNotFound,
-                       &CgltfImporterTest::fileCallbackImage,
-                       &CgltfImporterTest::fileCallbackImageNotFound},
+    addInstancedTests({&GltfImporterTest::fileCallbackBuffer,
+                       &GltfImporterTest::fileCallbackBufferNotFound,
+                       &GltfImporterTest::fileCallbackImage,
+                       &GltfImporterTest::fileCallbackImageNotFound},
                       Containers::arraySize(SingleFileData));
 
-    addTests({&CgltfImporterTest::utf8filenames,
-              &CgltfImporterTest::escapedStrings,
-              &CgltfImporterTest::encodedUris,
+    addTests({&GltfImporterTest::utf8filenames,
+              &GltfImporterTest::escapedStrings,
+              &GltfImporterTest::encodedUris,
 
-              &CgltfImporterTest::versionSupported});
+              &GltfImporterTest::versionSupported});
 
-    addInstancedTests({&CgltfImporterTest::versionUnsupported},
+    addInstancedTests({&GltfImporterTest::versionUnsupported},
                       Containers::arraySize(UnsupportedVersionData));
 
-    addInstancedTests({&CgltfImporterTest::openMemory},
+    addInstancedTests({&GltfImporterTest::openMemory},
         Containers::arraySize(OpenMemoryData));
 
-    addTests({&CgltfImporterTest::openTwice,
-              &CgltfImporterTest::importTwice});
+    addTests({&GltfImporterTest::openTwice,
+              &GltfImporterTest::importTwice});
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. It also pulls in the AnyImageImporter dependency. */
-    #ifdef CGLTFIMPORTER_PLUGIN_FILENAME
-    CORRADE_INTERNAL_ASSERT_OUTPUT(_manager.load(CGLTFIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
+    #ifdef GLTFIMPORTER_PLUGIN_FILENAME
+    CORRADE_INTERNAL_ASSERT_OUTPUT(_manager.load(GLTFIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
     #endif
     /* Reset the plugin dir after so it doesn't load anything else from the
        filesystem. Do this also in case of static plugins (no _FILENAME
@@ -1584,13 +1584,13 @@ CgltfImporterTest::CgltfImporterTest() {
     #endif
 }
 
-void CgltfImporterTest::open() {
+void GltfImporterTest::open() {
     auto&& data = SingleFileData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
 
-    Containers::String filename = Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "empty"_s + data.suffix);
+    Containers::String filename = Utility::Path::join(GLTFIMPORTER_TEST_DIR, "empty"_s + data.suffix);
     CORRADE_VERIFY(importer->openFile(filename));
     CORRADE_VERIFY(importer->isOpened());
 
@@ -1603,11 +1603,11 @@ void CgltfImporterTest::open() {
     CORRADE_VERIFY(!importer->isOpened());
 }
 
-void CgltfImporterTest::openError() {
+void GltfImporterTest::openError() {
     auto&& data = OpenErrorData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
 
     std::ostringstream out;
     Error redirectError{&out};
@@ -1617,26 +1617,26 @@ void CgltfImporterTest::openError() {
     if(Containers::StringView{data.message}.hasSuffix('\n'))
         CORRADE_COMPARE(out.str(), data.message);
     else
-        CORRADE_COMPARE(out.str(), Utility::formatString("Trade::CgltfImporter::openData(): {}\n", data.message));
+        CORRADE_COMPARE(out.str(), Utility::formatString("Trade::GltfImporter::openData(): {}\n", data.message));
 }
 
-void CgltfImporterTest::openFileError() {
+void GltfImporterTest::openFileError() {
     /* To verify the filename gets correctly propagated into the error message */
 
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
 
-    Containers::String filename = Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "error.gltf");
+    Containers::String filename = Utility::Path::join(GLTFIMPORTER_TEST_DIR, "error.gltf");
 
     std::ostringstream out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->openFile(filename));
     CORRADE_COMPARE(out.str(), Utility::formatString(
         "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Array at {}:2:14\n"
-        "Trade::CgltfImporter::openData(): missing or invalid asset property\n", filename));
+        "Trade::GltfImporter::openData(): missing or invalid asset property\n", filename));
 }
 
-void CgltfImporterTest::openIgnoreUnknownChunk() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
+void GltfImporterTest::openIgnoreUnknownChunk() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
 
     std::ostringstream out;
     Warning redirectWarning{&out};
@@ -1648,19 +1648,19 @@ void CgltfImporterTest::openIgnoreUnknownChunk() {
         "\x03\x00\x00\0BIG\0\xef\xff\xff"
         "\x05\x00\x00\0BIN\0\x01\x23\x45\x67\x89"_s)); /* duplicate BIN ignored */
     CORRADE_COMPARE(out.str(),
-        "Trade::CgltfImporter::openData(): ignoring chunk 0x424942 at 47\n"
-        "Trade::CgltfImporter::openData(): ignoring chunk 0x474942 at 69\n"
-        "Trade::CgltfImporter::openData(): ignoring chunk 0x4e4942 at 80\n");
+        "Trade::GltfImporter::openData(): ignoring chunk 0x424942 at 47\n"
+        "Trade::GltfImporter::openData(): ignoring chunk 0x474942 at 69\n"
+        "Trade::GltfImporter::openData(): ignoring chunk 0x4e4942 at 80\n");
 }
 
-void CgltfImporterTest::openExternalDataOrder() {
+void GltfImporterTest::openExternalDataOrder() {
     auto&& data = SingleFileData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
     if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("PngImporter plugin not found, cannot test");
 
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
     CORRADE_VERIFY(importer->features() & ImporterFeature::FileCallback);
 
     struct CallbackData {
@@ -1693,7 +1693,7 @@ void CgltfImporterTest::openExternalDataOrder() {
         }, callbackData);
 
     /* Prevent the file callback being used for the main glTF content */
-    Containers::Optional<Containers::Array<char>> content = Utility::Path::read(Utility::Path::join(CGLTFIMPORTER_TEST_DIR,
+    Containers::Optional<Containers::Array<char>> content = Utility::Path::read(Utility::Path::join(GLTFIMPORTER_TEST_DIR,
         "external-data-order"_s + data.suffix));
     CORRADE_VERIFY(content);
     CORRADE_VERIFY(importer->openData(*content));
@@ -1750,10 +1750,10 @@ void CgltfImporterTest::openExternalDataOrder() {
     CORRADE_COMPARE_AS(callbackData.closed, Containers::arrayView<bool>({false, false, true}), TestSuite::Compare::Container);
 }
 
-void CgltfImporterTest::openExternalDataNoPathNoCallback() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
+void GltfImporterTest::openExternalDataNoPathNoCallback() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
 
-    Containers::Optional<Containers::Array<char>> file = Utility::Path::read(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "buffer-long-size.gltf"));
+    Containers::Optional<Containers::Array<char>> file = Utility::Path::read(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "buffer-long-size.gltf"));
     CORRADE_VERIFY(file);
     CORRADE_VERIFY(importer->openData(*file));
     CORRADE_COMPARE(importer->meshCount(), 1);
@@ -1761,43 +1761,43 @@ void CgltfImporterTest::openExternalDataNoPathNoCallback() {
     std::ostringstream out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->mesh(0));
-    CORRADE_COMPARE(out.str(), "Trade::CgltfImporter::mesh(): external buffers can be imported only when opening files from the filesystem or if a file callback is present\n");
+    CORRADE_COMPARE(out.str(), "Trade::GltfImporter::mesh(): external buffers can be imported only when opening files from the filesystem or if a file callback is present\n");
 }
 
-void CgltfImporterTest::openExternalDataTooLong() {
+void GltfImporterTest::openExternalDataTooLong() {
     auto&& data = SingleFileData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
 
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "buffer-long-size"_s + data.suffix)));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "buffer-long-size"_s + data.suffix)));
 
     CORRADE_COMPARE(importer->meshCount(), 1);
     CORRADE_VERIFY(importer->mesh(0));
 }
 
-void CgltfImporterTest::openExternalDataTooShort() {
+void GltfImporterTest::openExternalDataTooShort() {
     auto&& data = MultiFileData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
 
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "buffer-invalid-short-size"_s + data.suffix)));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "buffer-invalid-short-size"_s + data.suffix)));
     CORRADE_COMPARE(importer->meshCount(), 1);
 
     std::ostringstream out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->mesh(0));
-    CORRADE_COMPARE(out.str(), "Trade::CgltfImporter::mesh(): buffer 0 is too short, expected 24 bytes but got 12\n");
+    CORRADE_COMPARE(out.str(), "Trade::GltfImporter::mesh(): buffer 0 is too short, expected 24 bytes but got 12\n");
 }
 
-void CgltfImporterTest::openExternalDataInvalidUri() {
+void GltfImporterTest::openExternalDataInvalidUri() {
     auto&& data = InvalidUriData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
 
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "invalid-uri.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "invalid-uri.gltf")));
 
     /* Check we didn't forget to test anything */
     CORRADE_COMPARE(importer->image2DCount(), Containers::arraySize(InvalidUriData));
@@ -1805,41 +1805,41 @@ void CgltfImporterTest::openExternalDataInvalidUri() {
     std::ostringstream out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->image2D(data.name));
-    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::CgltfImporter::image2D(): {}\n", data.message));
+    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::GltfImporter::image2D(): {}\n", data.message));
 }
 
-void CgltfImporterTest::requiredExtensions() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "required-extensions.gltf")));
+void GltfImporterTest::requiredExtensions() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "required-extensions.gltf")));
 }
 
-void CgltfImporterTest::requiredExtensionsUnsupported() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
+void GltfImporterTest::requiredExtensionsUnsupported() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
     /* Disabled by default */
     CORRADE_VERIFY(!importer->configuration().value<bool>("ignoreRequiredExtensions"));
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(!importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "required-extensions-unsupported.gltf")));
-    CORRADE_COMPARE(out.str(), "Trade::CgltfImporter::openData(): required extension EXT_lights_image_based not supported\n");
+    CORRADE_VERIFY(!importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "required-extensions-unsupported.gltf")));
+    CORRADE_COMPARE(out.str(), "Trade::GltfImporter::openData(): required extension EXT_lights_image_based not supported\n");
 }
 
-void CgltfImporterTest::requiredExtensionsUnsupportedDisabled() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
+void GltfImporterTest::requiredExtensionsUnsupportedDisabled() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
     CORRADE_VERIFY(importer->configuration().setValue("ignoreRequiredExtensions", true));
 
     std::ostringstream out;
     Warning redirectError{&out};
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "required-extensions-unsupported.gltf")));
-    CORRADE_COMPARE(out.str(), "Trade::CgltfImporter::openData(): required extension EXT_lights_image_based not supported\n");
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "required-extensions-unsupported.gltf")));
+    CORRADE_COMPARE(out.str(), "Trade::GltfImporter::openData(): required extension EXT_lights_image_based not supported\n");
 }
 
-void CgltfImporterTest::animation() {
+void GltfImporterTest::animation() {
     auto&& data = MultiFileData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "animation"_s + data.suffix)));
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "animation"_s + data.suffix)));
 
     CORRADE_COMPARE(importer->animationCount(), 4);
     CORRADE_COMPARE(importer->animationName(2), "TRS animation");
@@ -1959,13 +1959,13 @@ void CgltfImporterTest::animation() {
     /* Fourth animation tested in animationSpline() */
 }
 
-void CgltfImporterTest::animationInvalid() {
+void GltfImporterTest::animationInvalid() {
     auto&& data = AnimationInvalidData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
-    Containers::String filename = Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "animation-invalid.gltf");
+    Containers::String filename = Utility::Path::join(GLTFIMPORTER_TEST_DIR, "animation-invalid.gltf");
 
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
     CORRADE_VERIFY(importer->openFile(filename));
 
     /* Check we didn't forget to test anything */
@@ -1980,19 +1980,19 @@ void CgltfImporterTest::animationInvalid() {
     if(Containers::StringView{data.message}.hasSuffix('\n'))
         CORRADE_COMPARE(out.str(), Utility::formatString(data.message, filename));
     else
-        CORRADE_COMPARE(out.str(), Utility::formatString("Trade::CgltfImporter::animation(): {}\n", data.message));
+        CORRADE_COMPARE(out.str(), Utility::formatString("Trade::GltfImporter::animation(): {}\n", data.message));
 }
 
-void CgltfImporterTest::animationInvalidBufferNotFound() {
+void GltfImporterTest::animationInvalidBufferNotFound() {
     auto&& data = AnimationInvalidBufferNotFoundData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
     /* These tests have to be separate from TinyGltfImporter because it errors
        out during import trying to load the buffer */
 
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
 
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "animation-invalid-buffer-notfound.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "animation-invalid-buffer-notfound.gltf")));
 
     /* Check we didn't forget to test anything */
     CORRADE_COMPARE(importer->animationCount(), Containers::arraySize(AnimationInvalidBufferNotFoundData));
@@ -2002,13 +2002,13 @@ void CgltfImporterTest::animationInvalidBufferNotFound() {
     CORRADE_VERIFY(!importer->animation(data.name));
     /* There's an error from Path::read() before */
     CORRADE_COMPARE_AS(out.str(),
-        Utility::format("\nTrade::CgltfImporter::animation(): {}\n", data.message),
+        Utility::format("\nTrade::GltfImporter::animation(): {}\n", data.message),
         TestSuite::Compare::StringHasSuffix);
 }
 
-void CgltfImporterTest::animationMissingTargetNode() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "animation-missing-target-node.gltf")));
+void GltfImporterTest::animationMissingTargetNode() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "animation-missing-target-node.gltf")));
     CORRADE_COMPARE(importer->animationCount(), 1);
 
     /* The importer skips channels that don't have a target node */
@@ -2040,12 +2040,12 @@ constexpr CubicHermite3D AnimationSplineTime1TranslationData[]{
      {0.0f, 0.0f, 0.0f}}
 };
 
-void CgltfImporterTest::animationSpline() {
+void GltfImporterTest::animationSpline() {
     auto&& data = MultiFileData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "animation"_s + data.suffix)));
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "animation"_s + data.suffix)));
 
     Containers::Optional<Trade::AnimationData> animation = importer->animation("TRS animation, splines");
     CORRADE_VERIFY(animation);
@@ -2127,9 +2127,9 @@ void CgltfImporterTest::animationSpline() {
         (Vector3{0.118725f, 0.8228f, -2.711f}));
 }
 
-void CgltfImporterTest::animationSplineSharedWithSameTimeTrack() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "animation-splines-sharing.gltf")));
+void GltfImporterTest::animationSplineSharedWithSameTimeTrack() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "animation-splines-sharing.gltf")));
 
     Containers::Optional<Trade::AnimationData> animation = importer->animation("TRS animation, splines, sharing data with the same time track");
     CORRADE_VERIFY(animation);
@@ -2172,21 +2172,21 @@ void CgltfImporterTest::animationSplineSharedWithSameTimeTrack() {
         (Vector3{1.04525f, 0.357862f, 0.540875f}));
 }
 
-void CgltfImporterTest::animationSplineSharedWithDifferentTimeTrack() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "animation-splines-sharing.gltf")));
+void GltfImporterTest::animationSplineSharedWithDifferentTimeTrack() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "animation-splines-sharing.gltf")));
 
     std::ostringstream out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->animation("TRS animation, splines, sharing data with different time track"));
-    CORRADE_COMPARE(out.str(), "Trade::CgltfImporter::animation(): spline track is shared with different time tracks, we don't support that, sorry\n");
+    CORRADE_COMPARE(out.str(), "Trade::GltfImporter::animation(): spline track is shared with different time tracks, we don't support that, sorry\n");
 }
 
-void CgltfImporterTest::animationShortestPathOptimizationEnabled() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
+void GltfImporterTest::animationShortestPathOptimizationEnabled() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
     /* Enabled by default */
     CORRADE_VERIFY(importer->configuration().value<bool>("optimizeQuaternionShortestPath"));
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "animation-patching.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "animation-patching.gltf")));
 
     Containers::Optional<Trade::AnimationData> animation = importer->animation("Quaternion shortest-path patching");
     CORRADE_VERIFY(animation);
@@ -2227,11 +2227,11 @@ void CgltfImporterTest::animationShortestPathOptimizationEnabled() {
     CORRADE_COMPARE(track.at(Math::slerp, 7.5f).angle(), 360.0_degf - 202.5_degf);
 }
 
-void CgltfImporterTest::animationShortestPathOptimizationDisabled() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
+void GltfImporterTest::animationShortestPathOptimizationDisabled() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
     /* Explicitly disable */
     importer->configuration().setValue("optimizeQuaternionShortestPath", false);
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "animation-patching.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "animation-patching.gltf")));
 
     Containers::Optional<Trade::AnimationData> animation = importer->animation("Quaternion shortest-path patching");
     CORRADE_VERIFY(animation);
@@ -2293,11 +2293,11 @@ void CgltfImporterTest::animationShortestPathOptimizationDisabled() {
     CORRADE_COMPARE(track.at(Math::slerp, 7.5f).angle(), 337.5_degf);
 }
 
-void CgltfImporterTest::animationQuaternionNormalizationEnabled() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
+void GltfImporterTest::animationQuaternionNormalizationEnabled() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
     /* Enabled by default */
     CORRADE_VERIFY(importer->configuration().value<bool>("normalizeQuaternions"));
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "animation-patching.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "animation-patching.gltf")));
 
     Containers::Optional<AnimationData> animation;
     std::ostringstream out;
@@ -2306,7 +2306,7 @@ void CgltfImporterTest::animationQuaternionNormalizationEnabled() {
         animation = importer->animation("Quaternion normalization patching");
     }
     CORRADE_VERIFY(animation);
-    CORRADE_COMPARE(out.str(), "Trade::CgltfImporter::animation(): quaternions in some rotation tracks were renormalized\n");
+    CORRADE_COMPARE(out.str(), "Trade::GltfImporter::animation(): quaternions in some rotation tracks were renormalized\n");
     CORRADE_COMPARE(animation->trackCount(), 1);
     CORRADE_COMPARE(animation->trackType(0), AnimationTrackType::Quaternion);
 
@@ -2319,11 +2319,11 @@ void CgltfImporterTest::animationQuaternionNormalizationEnabled() {
     CORRADE_COMPARE_AS(track.values(), Containers::stridedArrayView(rotationValues), TestSuite::Compare::Container);
 }
 
-void CgltfImporterTest::animationQuaternionNormalizationDisabled() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
+void GltfImporterTest::animationQuaternionNormalizationDisabled() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
     /* Explicitly disable */
     CORRADE_VERIFY(importer->configuration().setValue("normalizeQuaternions", false));
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "animation-patching.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "animation-patching.gltf")));
 
     Containers::Optional<Trade::AnimationData> animation = importer->animation("Quaternion normalization patching");
     CORRADE_VERIFY(animation);
@@ -2339,21 +2339,21 @@ void CgltfImporterTest::animationQuaternionNormalizationDisabled() {
     CORRADE_COMPARE_AS(track.values(), Containers::stridedArrayView(rotationValues), TestSuite::Compare::Container);
 }
 
-void CgltfImporterTest::animationMergeEmpty() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
+void GltfImporterTest::animationMergeEmpty() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
     /* Enable animation merging */
     importer->configuration().setValue("mergeAnimationClips", true);
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "empty.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "empty.gltf")));
 
     CORRADE_COMPARE(importer->animationCount(), 0);
     CORRADE_COMPARE(importer->animationForName(""), -1);
 }
 
-void CgltfImporterTest::animationMerge() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
+void GltfImporterTest::animationMerge() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
     /* Enable animation merging */
     importer->configuration().setValue("mergeAnimationClips", true);
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "animation.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "animation.gltf")));
 
     CORRADE_COMPARE(importer->animationCount(), 1);
     CORRADE_COMPARE(importer->animationName(0), "");
@@ -2459,9 +2459,9 @@ void CgltfImporterTest::animationMerge() {
         (Vector3{0.118725f, 0.8228f, -2.711f}));
 }
 
-void CgltfImporterTest::camera() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "camera.gltf")));
+void GltfImporterTest::camera() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "camera.gltf")));
 
     CORRADE_COMPARE(importer->cameraCount(), 4);
     CORRADE_COMPARE(importer->cameraName(2), "Perspective 4:3 75° hFoV");
@@ -2503,13 +2503,13 @@ void CgltfImporterTest::camera() {
     }
 }
 
-void CgltfImporterTest::cameraInvalid() {
+void GltfImporterTest::cameraInvalid() {
     auto&& data = CameraInvalidData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
-    Containers::String filename = Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "camera-invalid.gltf");
+    Containers::String filename = Utility::Path::join(GLTFIMPORTER_TEST_DIR, "camera-invalid.gltf");
 
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
     CORRADE_VERIFY(importer->openFile(filename));
 
     /* Check we didn't forget to test anything */
@@ -2524,12 +2524,12 @@ void CgltfImporterTest::cameraInvalid() {
     if(Containers::StringView{data.message}.hasSuffix('\n'))
         CORRADE_COMPARE(out.str(), Utility::formatString(data.message, filename));
     else
-        CORRADE_COMPARE(out.str(), Utility::formatString("Trade::CgltfImporter::camera(): {}\n", data.message));
+        CORRADE_COMPARE(out.str(), Utility::formatString("Trade::GltfImporter::camera(): {}\n", data.message));
 }
 
-void CgltfImporterTest::light() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "light.gltf")));
+void GltfImporterTest::light() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "light.gltf")));
 
     CORRADE_COMPARE(importer->lightCount(), 4);
     CORRADE_COMPARE(importer->lightName(1), "Spot");
@@ -2571,13 +2571,13 @@ void CgltfImporterTest::light() {
     }
 }
 
-void CgltfImporterTest::lightInvalid() {
+void GltfImporterTest::lightInvalid() {
     auto&& data = LightInvalidData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
-    Containers::String filename = Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "light-invalid.gltf");
+    Containers::String filename = Utility::Path::join(GLTFIMPORTER_TEST_DIR, "light-invalid.gltf");
 
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
     CORRADE_VERIFY(importer->openFile(filename));
 
     /* Check we didn't forget to test anything */
@@ -2592,12 +2592,12 @@ void CgltfImporterTest::lightInvalid() {
     if(Containers::StringView{data.message}.hasSuffix('\n'))
         CORRADE_COMPARE(out.str(), Utility::formatString(data.message, filename));
     else
-        CORRADE_COMPARE(out.str(), Utility::formatString("Trade::CgltfImporter::light(): {}\n", data.message));
+        CORRADE_COMPARE(out.str(), Utility::formatString("Trade::GltfImporter::light(): {}\n", data.message));
 }
 
-void CgltfImporterTest::scene() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "scene.gltf")));
+void GltfImporterTest::scene() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "scene.gltf")));
 
     /* Explicit default scene */
     CORRADE_COMPARE(importer->defaultScene(), 1);
@@ -2728,13 +2728,13 @@ void CgltfImporterTest::scene() {
     }
 }
 
-void CgltfImporterTest::sceneInvalidWholeFile() {
+void GltfImporterTest::sceneInvalidWholeFile() {
     auto&& data = SceneInvalidWholeFileData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
-    Containers::String filename = Utility::Path::join(CGLTFIMPORTER_TEST_DIR, data.file);
+    Containers::String filename = Utility::Path::join(GLTFIMPORTER_TEST_DIR, data.file);
 
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
 
     std::ostringstream out;
     Error redirectError{&out};
@@ -2745,16 +2745,16 @@ void CgltfImporterTest::sceneInvalidWholeFile() {
     if(Containers::StringView{data.message}.hasSuffix('\n'))
         CORRADE_COMPARE(out.str(), Utility::formatString(data.message, filename));
     else
-        CORRADE_COMPARE(out.str(), Utility::formatString("Trade::CgltfImporter::openData(): {}\n", data.message));
+        CORRADE_COMPARE(out.str(), Utility::formatString("Trade::GltfImporter::openData(): {}\n", data.message));
 }
 
-void CgltfImporterTest::sceneInvalid() {
+void GltfImporterTest::sceneInvalid() {
     auto&& data = SceneInvalidData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
-    Containers::String filename = Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "scene-invalid.gltf");
+    Containers::String filename = Utility::Path::join(GLTFIMPORTER_TEST_DIR, "scene-invalid.gltf");
 
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
     CORRADE_VERIFY(importer->openFile(filename));
 
     /* Check we didn't forget to test anything */
@@ -2769,39 +2769,39 @@ void CgltfImporterTest::sceneInvalid() {
     if(Containers::StringView{data.message}.hasSuffix('\n'))
         CORRADE_COMPARE(out.str(), Utility::formatString(data.message, filename));
     else
-        CORRADE_COMPARE(out.str(), Utility::formatString("Trade::CgltfImporter::scene(): {}\n", data.message));
+        CORRADE_COMPARE(out.str(), Utility::formatString("Trade::GltfImporter::scene(): {}\n", data.message));
 }
 
-void CgltfImporterTest::sceneDefaultNoScenes() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "empty.gltf")));
+void GltfImporterTest::sceneDefaultNoScenes() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "empty.gltf")));
 
     /* There is no scene, can't have any default */
     CORRADE_COMPARE(importer->defaultScene(), -1);
     CORRADE_COMPARE(importer->sceneCount(), 0);
 }
 
-void CgltfImporterTest::sceneDefaultNoDefault() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "scene-default-none.gltf")));
+void GltfImporterTest::sceneDefaultNoDefault() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "scene-default-none.gltf")));
 
     /* There is at least one scene, it's made default */
     CORRADE_COMPARE(importer->defaultScene(), 0);
     CORRADE_COMPARE(importer->sceneCount(), 1);
 }
 
-void CgltfImporterTest::sceneDefaultOutOfBounds() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
+void GltfImporterTest::sceneDefaultOutOfBounds() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(!importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "scene-default-oob.gltf")));
-    CORRADE_COMPARE(out.str(), "Trade::CgltfImporter::openData(): scene index 0 out of range for 0 scenes\n");
+    CORRADE_VERIFY(!importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "scene-default-oob.gltf")));
+    CORRADE_COMPARE(out.str(), "Trade::GltfImporter::openData(): scene index 0 out of range for 0 scenes\n");
 }
 
-void CgltfImporterTest::sceneTransformation() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "scene-transformation.gltf")));
+void GltfImporterTest::sceneTransformation() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "scene-transformation.gltf")));
 
     CORRADE_COMPARE(importer->sceneCount(), 7);
 
@@ -3014,11 +3014,11 @@ void CgltfImporterTest::sceneTransformation() {
     }
 }
 
-void CgltfImporterTest::sceneTransformationQuaternionNormalizationEnabled() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
+void GltfImporterTest::sceneTransformationQuaternionNormalizationEnabled() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
     /* Enabled by default */
     CORRADE_VERIFY(importer->configuration().value<bool>("normalizeQuaternions"));
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "scene-transformation-patching.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "scene-transformation-patching.gltf")));
     CORRADE_COMPARE(importer->sceneCount(), 1);
 
     Containers::Optional<SceneData> scene;
@@ -3028,18 +3028,18 @@ void CgltfImporterTest::sceneTransformationQuaternionNormalizationEnabled() {
         scene = importer->scene(0);
     }
     CORRADE_VERIFY(scene);
-    CORRADE_COMPARE(out.str(), "Trade::CgltfImporter::scene(): rotation quaternion of node 3 was renormalized\n");
+    CORRADE_COMPARE(out.str(), "Trade::GltfImporter::scene(): rotation quaternion of node 3 was renormalized\n");
 
     Containers::Optional<Containers::Triple<Vector3, Quaternion, Vector3>> trs = scene->translationRotationScaling3DFor(3);
     CORRADE_VERIFY(trs);
     CORRADE_COMPARE(trs->second(), Quaternion::rotation(45.0_degf, Vector3::yAxis()));
 }
 
-void CgltfImporterTest::sceneTransformationQuaternionNormalizationDisabled() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
+void GltfImporterTest::sceneTransformationQuaternionNormalizationDisabled() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
     /* Explicity disable */
     importer->configuration().setValue("normalizeQuaternions", false);
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "scene-transformation-patching.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "scene-transformation-patching.gltf")));
     CORRADE_COMPARE(importer->sceneCount(), 1);
 
     Containers::Optional<SceneData> scene;
@@ -3056,12 +3056,12 @@ void CgltfImporterTest::sceneTransformationQuaternionNormalizationDisabled() {
     CORRADE_COMPARE(trs->second(), Quaternion::rotation(45.0_degf, Vector3::yAxis())*2.0f);
 }
 
-void CgltfImporterTest::skin() {
+void GltfImporterTest::skin() {
     auto&& data = MultiFileData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "skin"_s + data.suffix)));
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "skin"_s + data.suffix)));
 
     CORRADE_COMPARE(importer->skin3DCount(), 2);
     CORRADE_COMPARE(importer->skin3DName(1), "explicit inverse bind matrices");
@@ -3092,13 +3092,13 @@ void CgltfImporterTest::skin() {
     }
 }
 
-void CgltfImporterTest::skinInvalid() {
+void GltfImporterTest::skinInvalid() {
     auto&& data = SkinInvalidData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
-    Containers::String filename = Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "skin-invalid.gltf");
+    Containers::String filename = Utility::Path::join(GLTFIMPORTER_TEST_DIR, "skin-invalid.gltf");
 
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
     CORRADE_VERIFY(importer->openFile(filename));
 
     /* Check we didn't forget to test anything */
@@ -3113,16 +3113,16 @@ void CgltfImporterTest::skinInvalid() {
     if(Containers::StringView{data.message}.hasSuffix('\n'))
         CORRADE_COMPARE(out.str(), Utility::formatString(data.message, filename));
     else
-        CORRADE_COMPARE(out.str(), Utility::formatString("Trade::CgltfImporter::skin3D(): {}\n", data.message));
+        CORRADE_COMPARE(out.str(), Utility::formatString("Trade::GltfImporter::skin3D(): {}\n", data.message));
 }
 
-void CgltfImporterTest::skinInvalidBufferNotFound() {
+void GltfImporterTest::skinInvalidBufferNotFound() {
     /* This test has to be separate from TinyGltfImporter because it errors
        out during import trying to load the buffer */
 
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
 
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "skin-invalid-buffer-notfound.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "skin-invalid-buffer-notfound.gltf")));
 
     CORRADE_COMPARE(importer->skin3DCount(), 1);
 
@@ -3131,16 +3131,16 @@ void CgltfImporterTest::skinInvalidBufferNotFound() {
     CORRADE_VERIFY(!importer->skin3D("buffer not found"));
     /* There's an error from Path::read() before */
     CORRADE_COMPARE_AS(out.str(),
-        "\nTrade::CgltfImporter::skin3D(): error opening /nonexistent.bin\n",
+        "\nTrade::GltfImporter::skin3D(): error opening /nonexistent.bin\n",
         TestSuite::Compare::StringHasSuffix);
 }
 
-void CgltfImporterTest::mesh() {
+void GltfImporterTest::mesh() {
     auto&& data = MultiFileData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "mesh"_s + data.suffix)));
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "mesh"_s + data.suffix)));
 
     CORRADE_COMPARE(importer->meshName(0), "Indexed mesh");
     CORRADE_COMPARE(importer->meshForName("Indexed mesh"), 0);
@@ -3206,9 +3206,9 @@ void CgltfImporterTest::mesh() {
         }), TestSuite::Compare::Container);
 }
 
-void CgltfImporterTest::meshNoAttributes() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "mesh.gltf")));
+void GltfImporterTest::meshNoAttributes() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "mesh.gltf")));
 
     Containers::Optional<Trade::MeshData> mesh = importer->mesh("Attribute-less indexed mesh");
     CORRADE_VERIFY(mesh);
@@ -3221,9 +3221,9 @@ void CgltfImporterTest::meshNoAttributes() {
     CORRADE_COMPARE(mesh->attributeCount(), 0);
 }
 
-void CgltfImporterTest::meshNoIndices() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "mesh.gltf")));
+void GltfImporterTest::meshNoIndices() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "mesh.gltf")));
 
     Containers::Optional<Trade::MeshData> mesh = importer->mesh("Non-indexed mesh");
     CORRADE_VERIFY(mesh);
@@ -3243,9 +3243,9 @@ void CgltfImporterTest::meshNoIndices() {
         }), TestSuite::Compare::Container);
 }
 
-void CgltfImporterTest::meshNoIndicesNoAttributes() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "mesh.gltf")));
+void GltfImporterTest::meshNoIndicesNoAttributes() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "mesh.gltf")));
 
     Containers::Optional<Trade::MeshData> mesh = importer->mesh("Attribute-less mesh");
     CORRADE_VERIFY(mesh);
@@ -3255,9 +3255,9 @@ void CgltfImporterTest::meshNoIndicesNoAttributes() {
     CORRADE_COMPARE(mesh->attributeCount(), 0);
 }
 
-void CgltfImporterTest::meshColors() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "mesh-colors.gltf")));
+void GltfImporterTest::meshColors() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "mesh-colors.gltf")));
 
     CORRADE_COMPARE(importer->meshCount(), 1);
 
@@ -3290,9 +3290,9 @@ void CgltfImporterTest::meshColors() {
         }), TestSuite::Compare::Container);
 }
 
-void CgltfImporterTest::meshSkinAttributes() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "mesh-skin-attributes.gltf")));
+void GltfImporterTest::meshSkinAttributes() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "mesh-skin-attributes.gltf")));
 
     /* The mapping should be available even before the mesh is imported */
     const MeshAttribute jointsAttribute = importer->meshAttributeForName("JOINTS");
@@ -3353,18 +3353,18 @@ void CgltfImporterTest::meshSkinAttributes() {
         }), TestSuite::Compare::Container);
 }
 
-void CgltfImporterTest::meshCustomAttributes() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
+void GltfImporterTest::meshCustomAttributes() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
 
     {
         std::ostringstream out;
         Warning redirectWarning{&out};
-        CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "mesh-custom-attributes.gltf")));
+        CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "mesh-custom-attributes.gltf")));
         CORRADE_COMPARE(importer->meshCount(), 2);
 
         CORRADE_COMPARE(out.str(),
-            "Trade::CgltfImporter::openData(): unknown attribute OBJECT_ID3, importing as custom attribute\n"
-            "Trade::CgltfImporter::openData(): unknown attribute NOT_AN_IDENTITY, importing as custom attribute\n");
+            "Trade::GltfImporter::openData(): unknown attribute OBJECT_ID3, importing as custom attribute\n"
+            "Trade::GltfImporter::openData(): unknown attribute NOT_AN_IDENTITY, importing as custom attribute\n");
     }
 
     /* The mapping should be available even before the mesh is imported.
@@ -3429,18 +3429,18 @@ void CgltfImporterTest::meshCustomAttributes() {
        already tested in meshInvalid() */
 }
 
-void CgltfImporterTest::meshCustomAttributesNoFileOpened() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
+void GltfImporterTest::meshCustomAttributesNoFileOpened() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
 
     /* These should return nothing (and not crash) */
     CORRADE_COMPARE(importer->meshAttributeName(meshAttributeCustom(564)), "");
     CORRADE_COMPARE(importer->meshAttributeForName("thing"), MeshAttribute{});
 }
 
-void CgltfImporterTest::meshDuplicateAttributes() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
+void GltfImporterTest::meshDuplicateAttributes() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
 
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "mesh-duplicate-attributes.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "mesh-duplicate-attributes.gltf")));
     CORRADE_COMPARE(importer->meshCount(), 1);
 
     const MeshAttribute thingAttribute = importer->meshAttributeForName("_THING");
@@ -3463,10 +3463,10 @@ void CgltfImporterTest::meshDuplicateAttributes() {
     CORRADE_COMPARE(mesh->attributeFormat(thingAttribute), VertexFormat::Vector2);
 }
 
-void CgltfImporterTest::meshUnorderedAttributes() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
+void GltfImporterTest::meshUnorderedAttributes() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
 
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "mesh-unordered-attributes.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "mesh-unordered-attributes.gltf")));
     CORRADE_COMPARE(importer->meshCount(), 1);
 
     const MeshAttribute customAttribute4 = importer->meshAttributeForName("_CUSTOM_4");
@@ -3486,8 +3486,8 @@ void CgltfImporterTest::meshUnorderedAttributes() {
 
     /* No warning about _CUSTOM_4 and _CUSTOM_1 */
     CORRADE_COMPARE(out.str(),
-        "Trade::CgltfImporter::mesh(): found attribute COLOR_3 but expected COLOR_0\n"
-        "Trade::CgltfImporter::mesh(): found attribute COLOR_9 but expected COLOR_4\n"
+        "Trade::GltfImporter::mesh(): found attribute COLOR_3 but expected COLOR_0\n"
+        "Trade::GltfImporter::mesh(): found attribute COLOR_9 but expected COLOR_4\n"
     );
 
     /* Sets of the same attribute are imported in ascending set order. Checking
@@ -3513,9 +3513,9 @@ void CgltfImporterTest::meshUnorderedAttributes() {
     CORRADE_COMPARE(mesh->attributeFormat(customAttribute1), VertexFormat::Vector3);
 }
 
-void CgltfImporterTest::meshMultiplePrimitives() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "mesh-multiple-primitives.gltf")));
+void GltfImporterTest::meshMultiplePrimitives() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "mesh-multiple-primitives.gltf")));
 
     /* Four meshes, but one has three primitives and one two. Distinguishing
        using the primitive type, hopefully that's enough. */
@@ -3580,19 +3580,19 @@ void CgltfImporterTest::meshMultiplePrimitives() {
     }), TestSuite::Compare::Container);
 }
 
-void CgltfImporterTest::meshPrimitivesTypes() {
+void GltfImporterTest::meshPrimitivesTypes() {
     auto&& data = MeshPrimitivesTypesData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
     /* Disable Y-flipping to have consistent results. Tested separately for all
        types in materialTexCoordFlip(). */
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
     importer->configuration().setValue("textureCoordinateYFlipInMaterial", true);
 
     if(data.objectIdAttribute)
         importer->configuration().setValue("objectIdAttribute", data.objectIdAttribute);
 
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "mesh-primitives-types.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "mesh-primitives-types.gltf")));
 
     /* Ensure we didn't forget to test any case */
     CORRADE_COMPARE(importer->meshCount(), Containers::arraySize(MeshPrimitivesTypesData));
@@ -3818,9 +3818,9 @@ void CgltfImporterTest::meshPrimitivesTypes() {
     } else CORRADE_VERIFY(!mesh->hasAttribute(MeshAttribute::ObjectId));
 }
 
-void CgltfImporterTest::meshSizeNotMultipleOfStride() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "mesh-size-not-multiple-of-stride.gltf")));
+void GltfImporterTest::meshSizeNotMultipleOfStride() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "mesh-size-not-multiple-of-stride.gltf")));
     CORRADE_COMPARE(importer->meshCount(), 1);
 
     Containers::Optional<Trade::MeshData> mesh = importer->mesh(0);
@@ -3835,13 +3835,13 @@ void CgltfImporterTest::meshSizeNotMultipleOfStride() {
         }), TestSuite::Compare::Container);
 }
 
-void CgltfImporterTest::meshInvalidWholeFile() {
+void GltfImporterTest::meshInvalidWholeFile() {
     auto&& data = MeshInvalidWholeFileData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
-    Containers::String filename = Utility::Path::join(CGLTFIMPORTER_TEST_DIR, data.file);
+    Containers::String filename = Utility::Path::join(GLTFIMPORTER_TEST_DIR, data.file);
 
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
 
     std::ostringstream out;
     Error redirectError{&out};
@@ -3852,16 +3852,16 @@ void CgltfImporterTest::meshInvalidWholeFile() {
     if(Containers::StringView{data.message}.hasSuffix('\n'))
         CORRADE_COMPARE(out.str(), Utility::formatString(data.message, filename));
     else
-        CORRADE_COMPARE(out.str(), Utility::formatString("Trade::CgltfImporter::openData(): {}\n", data.message));
+        CORRADE_COMPARE(out.str(), Utility::formatString("Trade::GltfImporter::openData(): {}\n", data.message));
 }
 
-void CgltfImporterTest::meshInvalid() {
+void GltfImporterTest::meshInvalid() {
     auto&& data = MeshInvalidData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
-    Containers::String filename = Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "mesh-invalid.gltf");
+    Containers::String filename = Utility::Path::join(GLTFIMPORTER_TEST_DIR, "mesh-invalid.gltf");
 
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
     CORRADE_VERIFY(importer->openFile(filename));
 
     /* Check we didn't forget to test anything */
@@ -3876,18 +3876,18 @@ void CgltfImporterTest::meshInvalid() {
     if(Containers::StringView{data.message}.hasSuffix('\n'))
         CORRADE_COMPARE(out.str(), Utility::formatString(data.message, filename));
     else
-        CORRADE_COMPARE(out.str(), Utility::formatString("Trade::CgltfImporter::mesh(): {}\n", data.message));
+        CORRADE_COMPARE(out.str(), Utility::formatString("Trade::GltfImporter::mesh(): {}\n", data.message));
 }
 
-void CgltfImporterTest::meshInvalidBufferNotFound() {
+void GltfImporterTest::meshInvalidBufferNotFound() {
     auto&& data = MeshInvalidBufferNotFoundData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
     /* These tests have to be separate from TinyGltfImporter because it errors
        out during import trying to load the buffer */
 
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "mesh-invalid-buffer-notfound.gltf")));
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "mesh-invalid-buffer-notfound.gltf")));
 
     /* Check we didn't forget to test anything */
     CORRADE_COMPARE(importer->meshCount(), Containers::arraySize(MeshInvalidBufferNotFoundData));
@@ -3897,18 +3897,18 @@ void CgltfImporterTest::meshInvalidBufferNotFound() {
     CORRADE_VERIFY(!importer->mesh(data.name));
     /* There's an error from Path::read() before */
     CORRADE_COMPARE_AS(out.str(),
-        Utility::format("\nTrade::CgltfImporter::mesh(): {}\n", data.message),
+        Utility::format("\nTrade::GltfImporter::mesh(): {}\n", data.message),
         TestSuite::Compare::StringHasSuffix);
 }
 
-void CgltfImporterTest::materialPbrMetallicRoughness() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
+void GltfImporterTest::materialPbrMetallicRoughness() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
 
     /* Disable Phong material fallback (enabled by default for compatibility),
        testing that separately in materialPhongFallback() */
     importer->configuration().setValue("phongMaterialFallback", false);
 
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "material-metallicroughness.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "material-metallicroughness.gltf")));
     CORRADE_COMPARE(importer->materialCount(), 7);
     CORRADE_COMPARE(importer->materialName(2), "textures");
     CORRADE_COMPARE(importer->materialForName("textures"), 2);
@@ -4026,14 +4026,14 @@ void CgltfImporterTest::materialPbrMetallicRoughness() {
     }
 }
 
-void CgltfImporterTest::materialPbrSpecularGlossiness() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
+void GltfImporterTest::materialPbrSpecularGlossiness() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
 
     /* Disable Phong material fallback (enabled by default for compatibility),
        testing that separately in materialPhongFallback() */
     importer->configuration().setValue("phongMaterialFallback", false);
 
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "material-specularglossiness.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "material-specularglossiness.gltf")));
     CORRADE_COMPARE(importer->materialCount(), 7);
 
     {
@@ -4150,14 +4150,14 @@ void CgltfImporterTest::materialPbrSpecularGlossiness() {
     }
 }
 
-void CgltfImporterTest::materialCommon() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
+void GltfImporterTest::materialCommon() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
 
     /* Disable Phong material fallback (enabled by default for compatibility),
        testing that separately in materialPhongFallback() */
     importer->configuration().setValue("phongMaterialFallback", false);
 
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "material-common.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "material-common.gltf")));
     CORRADE_COMPARE(importer->materialCount(), 7);
 
     {
@@ -4262,14 +4262,14 @@ void CgltfImporterTest::materialCommon() {
     }
 }
 
-void CgltfImporterTest::materialUnlit() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
+void GltfImporterTest::materialUnlit() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
 
     /* Disable Phong material fallback (enabled by default for compatibility),
        testing that separately in materialPhongFallback() */
     importer->configuration().setValue("phongMaterialFallback", false);
 
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "material-unlit.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "material-unlit.gltf")));
     CORRADE_COMPARE(importer->materialCount(), 1);
 
     Containers::Optional<Trade::MaterialData> material = importer->material(0);
@@ -4322,11 +4322,11 @@ void compareMaterials(const MaterialData& actual, const MaterialData& expected) 
     }
 }
 
-void CgltfImporterTest::materialExtras() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
+void GltfImporterTest::materialExtras() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
     importer->configuration().setValue("phongMaterialFallback", false);
 
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "material-extras.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "material-extras.gltf")));
 
     {
         for(const char* name: {"primitive", "string", "array"}) {
@@ -4341,7 +4341,7 @@ void CgltfImporterTest::materialExtras() {
             CORRADE_COMPARE(material->layerCount(), 1);
             CORRADE_COMPARE(material->attributeCount(), 0);
 
-            CORRADE_COMPARE(out.str(), "Trade::CgltfImporter::material(): extras property is not an object, skipping\n");
+            CORRADE_COMPARE(out.str(), "Trade::GltfImporter::material(): extras property is not an object, skipping\n");
         }
     } {
         const char* name = "empty";
@@ -4367,19 +4367,19 @@ void CgltfImporterTest::materialExtras() {
         /** @todo maybe reduce the variants since there's a catch-all error for
             most of them now? */
         CORRADE_COMPARE(out.str(),
-            "Trade::CgltfImporter::material(): property with an empty name, skipping\n"
-            "Trade::CgltfImporter::material(): property aValueThatWontFit is too large with 84 bytes, skipping\n"
-            "Trade::CgltfImporter::material(): property anIncrediblyLongNameThatSadlyWontFitPaddingPaddingPadding!! is too large with 63 bytes, skipping\n"
-            "Trade::CgltfImporter::material(): property boolArray is not a numeric array, skipping\n"
-            "Trade::CgltfImporter::material(): property emptyArray is an invalid or unrepresentable numeric vector, skipping\n"
-            "Trade::CgltfImporter::material(): property mixedBoolArray is not a numeric array, skipping\n"
-            "Trade::CgltfImporter::material(): property mixedObjectArray is not a numeric array, skipping\n"
-            "Trade::CgltfImporter::material(): property mixedStringArray is not a numeric array, skipping\n"
-            "Trade::CgltfImporter::material(): property nestedObject is an object, skipping\n"
-            "Trade::CgltfImporter::material(): property nestedObjectTexture is an object, skipping\n"
-            "Trade::CgltfImporter::material(): property null is a null, skipping\n"
-            "Trade::CgltfImporter::material(): property oversizedArray is an invalid or unrepresentable numeric vector, skipping\n"
-            "Trade::CgltfImporter::material(): property stringArray is not a numeric array, skipping\n");
+            "Trade::GltfImporter::material(): property with an empty name, skipping\n"
+            "Trade::GltfImporter::material(): property aValueThatWontFit is too large with 84 bytes, skipping\n"
+            "Trade::GltfImporter::material(): property anIncrediblyLongNameThatSadlyWontFitPaddingPaddingPadding!! is too large with 63 bytes, skipping\n"
+            "Trade::GltfImporter::material(): property boolArray is not a numeric array, skipping\n"
+            "Trade::GltfImporter::material(): property emptyArray is an invalid or unrepresentable numeric vector, skipping\n"
+            "Trade::GltfImporter::material(): property mixedBoolArray is not a numeric array, skipping\n"
+            "Trade::GltfImporter::material(): property mixedObjectArray is not a numeric array, skipping\n"
+            "Trade::GltfImporter::material(): property mixedStringArray is not a numeric array, skipping\n"
+            "Trade::GltfImporter::material(): property nestedObject is an object, skipping\n"
+            "Trade::GltfImporter::material(): property nestedObjectTexture is an object, skipping\n"
+            "Trade::GltfImporter::material(): property null is a null, skipping\n"
+            "Trade::GltfImporter::material(): property oversizedArray is an invalid or unrepresentable numeric vector, skipping\n"
+            "Trade::GltfImporter::material(): property stringArray is not a numeric array, skipping\n");
     } {
         const char* name = "extras";
         CORRADE_ITERATION(name);
@@ -4419,18 +4419,18 @@ void CgltfImporterTest::materialExtras() {
 
         compareMaterials(*material, expected);
 
-        CORRADE_COMPARE(out.str(), "Trade::CgltfImporter::material(): property invalid is not a numeric array, skipping\n");
+        CORRADE_COMPARE(out.str(), "Trade::GltfImporter::material(): property invalid is not a numeric array, skipping\n");
     }
 }
 
-void CgltfImporterTest::materialClearCoat() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
+void GltfImporterTest::materialClearCoat() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
 
     /* Disable Phong material fallback (enabled by default for compatibility),
        testing that separately in materialPhongFallback() */
     importer->configuration().setValue("phongMaterialFallback", false);
 
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "material-clearcoat.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "material-clearcoat.gltf")));
     CORRADE_COMPARE(importer->materialCount(), 6);
 
     {
@@ -4548,13 +4548,13 @@ void CgltfImporterTest::materialClearCoat() {
     }
 }
 
-void CgltfImporterTest::materialPhongFallback() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
+void GltfImporterTest::materialPhongFallback() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
 
     /* phongMaterialFallback should be on by default */
     CORRADE_VERIFY(importer->configuration().value<bool>("phongMaterialFallback"));
 
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "material-phong-fallback.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "material-phong-fallback.gltf")));
     CORRADE_COMPARE(importer->materialCount(), 4);
 
     {
@@ -4668,11 +4668,11 @@ void CgltfImporterTest::materialPhongFallback() {
     }
 }
 
-void CgltfImporterTest::materialRaw() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
+void GltfImporterTest::materialRaw() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
     importer->configuration().setValue("phongMaterialFallback", false);
 
-    Containers::String filename = Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "material-raw.gltf");
+    Containers::String filename = Utility::Path::join(GLTFIMPORTER_TEST_DIR, "material-raw.gltf");
 
     CORRADE_VERIFY(importer->openFile(filename));
 
@@ -4742,55 +4742,55 @@ void CgltfImporterTest::materialRaw() {
         most of them now? */
     CORRADE_COMPARE(outWarning.str(),
         /* MAGNUM_material_forbidden_types. Attributes are sorted by name. */
-        "Trade::CgltfImporter::material(): extension with an empty name, skipping\n"
-        "Trade::CgltfImporter::material(): property with an empty name, skipping\n"
-        "Trade::CgltfImporter::material(): property Texture has a non-texture object type, skipping\n"
-        "Trade::CgltfImporter::material(): property aValueThatWontFit is too large with 84 bytes, skipping\n"
+        "Trade::GltfImporter::material(): extension with an empty name, skipping\n"
+        "Trade::GltfImporter::material(): property with an empty name, skipping\n"
+        "Trade::GltfImporter::material(): property Texture has a non-texture object type, skipping\n"
+        "Trade::GltfImporter::material(): property aValueThatWontFit is too large with 84 bytes, skipping\n"
         /* These are not sorted because they're not JSON attributes, and added
            in this order by materialTexture() */
-        "Trade::CgltfImporter::material(): property alsoTestingThisWithAnOverlyElongatedNameButThisTimeForATextureMatrix is too large with 104 bytes, skipping\n"
-        "Trade::CgltfImporter::material(): property alsoTestingThisWithAnOverlyElongatedNameButThisTimeForATextureCoordinates is too large with 77 bytes, skipping\n"
-        "Trade::CgltfImporter::material(): property alsoTestingThisWithAnOverlyElongatedNameButThisTimeForATexture is too large with 66 bytes, skipping\n"
-        "Trade::CgltfImporter::material(): property alsoTestingThisWithAnOverlyElongatedNameButThisTimeForATextureScale is too large with 71 bytes, skipping\n"
-        "Trade::CgltfImporter::material(): property anIncrediblyLongNameThatSadlyWontFitPaddingPaddingPadding!! is too large with 63 bytes, skipping\n"
-        "Trade::CgltfImporter::material(): property boolArray is not a numeric array, skipping\n"
-        "Trade::CgltfImporter::material(): property emptyArray is an invalid or unrepresentable numeric vector, skipping\n"
+        "Trade::GltfImporter::material(): property alsoTestingThisWithAnOverlyElongatedNameButThisTimeForATextureMatrix is too large with 104 bytes, skipping\n"
+        "Trade::GltfImporter::material(): property alsoTestingThisWithAnOverlyElongatedNameButThisTimeForATextureCoordinates is too large with 77 bytes, skipping\n"
+        "Trade::GltfImporter::material(): property alsoTestingThisWithAnOverlyElongatedNameButThisTimeForATexture is too large with 66 bytes, skipping\n"
+        "Trade::GltfImporter::material(): property alsoTestingThisWithAnOverlyElongatedNameButThisTimeForATextureScale is too large with 71 bytes, skipping\n"
+        "Trade::GltfImporter::material(): property anIncrediblyLongNameThatSadlyWontFitPaddingPaddingPadding!! is too large with 63 bytes, skipping\n"
+        "Trade::GltfImporter::material(): property boolArray is not a numeric array, skipping\n"
+        "Trade::GltfImporter::material(): property emptyArray is an invalid or unrepresentable numeric vector, skipping\n"
         /* Error from Utility::Json precedes this */
-        "Trade::CgltfImporter::material(): property invalidBool is invalid, skipping\n"
+        "Trade::GltfImporter::material(): property invalidBool is invalid, skipping\n"
         /* Error from Utility::Json precedes this */
-        "Trade::CgltfImporter::material(): property invalidFloat is invalid, skipping\n"
+        "Trade::GltfImporter::material(): property invalidFloat is invalid, skipping\n"
         /* Error from Utility::Json precedes this */
-        "Trade::CgltfImporter::material(): property invalidString is invalid, skipping\n"
+        "Trade::GltfImporter::material(): property invalidString is invalid, skipping\n"
         /* Error about missing or invalid index precedes this */
-        "Trade::CgltfImporter::material(): property invalidTexture has an invalid texture object, skipping\n"
-        "Trade::CgltfImporter::material(): property mixedBoolArray is not a numeric array, skipping\n"
-        "Trade::CgltfImporter::material(): property mixedObjectArray is not a numeric array, skipping\n"
-        "Trade::CgltfImporter::material(): property mixedStringArray is not a numeric array, skipping\n"
-        "Trade::CgltfImporter::material(): property nonTextureObject has a non-texture object type, skipping\n"
-        "Trade::CgltfImporter::material(): property null is a null, skipping\n"
-        "Trade::CgltfImporter::material(): property oversizedArray is an invalid or unrepresentable numeric vector, skipping\n"
-        "Trade::CgltfImporter::material(): property stringArray is not a numeric array, skipping\n"
+        "Trade::GltfImporter::material(): property invalidTexture has an invalid texture object, skipping\n"
+        "Trade::GltfImporter::material(): property mixedBoolArray is not a numeric array, skipping\n"
+        "Trade::GltfImporter::material(): property mixedObjectArray is not a numeric array, skipping\n"
+        "Trade::GltfImporter::material(): property mixedStringArray is not a numeric array, skipping\n"
+        "Trade::GltfImporter::material(): property nonTextureObject has a non-texture object type, skipping\n"
+        "Trade::GltfImporter::material(): property null is a null, skipping\n"
+        "Trade::GltfImporter::material(): property oversizedArray is an invalid or unrepresentable numeric vector, skipping\n"
+        "Trade::GltfImporter::material(): property stringArray is not a numeric array, skipping\n"
         /* Error about expecting a number but getting a string precedes this */
-        "Trade::CgltfImporter::material(): invalid MAGNUM_material_snake scaleIsAStringTexture scale property, skipping\n"
+        "Trade::GltfImporter::material(): invalid MAGNUM_material_snake scaleIsAStringTexture scale property, skipping\n"
         /* MAGNUM_material_type_zoo */
-        "Trade::CgltfImporter::material(): property invalid is not a numeric array, skipping\n"
-        "Trade::CgltfImporter::material(): extension name VENDOR_material_thisnameiswaytoolongforalayername! is too long with 50 characters, skipping\n");
+        "Trade::GltfImporter::material(): property invalid is not a numeric array, skipping\n"
+        "Trade::GltfImporter::material(): extension name VENDOR_material_thisnameiswaytoolongforalayername! is too long with 50 characters, skipping\n");
     CORRADE_COMPARE(outError.str(), Utility::formatString(
         "Utility::Json::parseBool(): invalid bool literal fail at {0}:119:36\n"
         "Utility::Json::parseFloat(): invalid floating-point literal 0f at {0}:120:37\n"
         "Utility::Json::parseString(): invalid unicode escape sequence \\uhhhh at {0}:121:39\n"
-        "Trade::CgltfImporter::material(): missing or invalid invalidTexture index property\n"
+        "Trade::GltfImporter::material(): missing or invalid invalidTexture index property\n"
         "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::String at {0}:60:34\n", filename));
 }
 
-void CgltfImporterTest::materialRawIor() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
+void GltfImporterTest::materialRawIor() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
 
     /* Disable Phong material fallback (enabled by default for compatibility),
        testing that separately in materialPhongFallback() */
     importer->configuration().setValue("phongMaterialFallback", false);
 
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "material-ior.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "material-ior.gltf")));
 
     constexpr Containers::StringView layer = "#KHR_materials_ior"_s;
 
@@ -4815,14 +4815,14 @@ void CgltfImporterTest::materialRawIor() {
     }
 }
 
-void CgltfImporterTest::materialRawSpecular() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
+void GltfImporterTest::materialRawSpecular() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
 
     /* Disable Phong material fallback (enabled by default for compatibility),
        testing that separately in materialPhongFallback() */
     importer->configuration().setValue("phongMaterialFallback", false);
 
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "material-specular.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "material-specular.gltf")));
 
     constexpr Containers::StringView layer = "#KHR_materials_specular"_s;
 
@@ -4879,14 +4879,14 @@ void CgltfImporterTest::materialRawSpecular() {
     }
 }
 
-void CgltfImporterTest::materialRawTransmission() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
+void GltfImporterTest::materialRawTransmission() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
 
     /* Disable Phong material fallback (enabled by default for compatibility),
        testing that separately in materialPhongFallback() */
     importer->configuration().setValue("phongMaterialFallback", false);
 
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "material-transmission.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "material-transmission.gltf")));
 
     constexpr Containers::StringView layer = "#KHR_materials_transmission"_s;
 
@@ -4931,14 +4931,14 @@ void CgltfImporterTest::materialRawTransmission() {
     }
 }
 
-void CgltfImporterTest::materialRawVolume() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
+void GltfImporterTest::materialRawVolume() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
 
     /* Disable Phong material fallback (enabled by default for compatibility),
        testing that separately in materialPhongFallback() */
     importer->configuration().setValue("phongMaterialFallback", false);
 
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "material-volume.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "material-volume.gltf")));
 
     constexpr Containers::StringView layer = "#KHR_materials_volume"_s;
 
@@ -4987,14 +4987,14 @@ void CgltfImporterTest::materialRawVolume() {
     }
 }
 
-void CgltfImporterTest::materialRawSheen() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
+void GltfImporterTest::materialRawSheen() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
 
     /* Disable Phong material fallback (enabled by default for compatibility),
        testing that separately in materialPhongFallback() */
     importer->configuration().setValue("phongMaterialFallback", false);
 
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "material-sheen.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "material-sheen.gltf")));
 
     constexpr Containers::StringView layer = "#KHR_materials_sheen"_s;
 
@@ -5050,18 +5050,18 @@ void CgltfImporterTest::materialRawSheen() {
     }
 
     CORRADE_COMPARE(out.str(),
-        "Trade::CgltfImporter::material(): property sheenRoughnessTextureMatrix is too large with 63 bytes, skipping\n"
-        "Trade::CgltfImporter::material(): property sheenRoughnessTextureMatrix is too large with 63 bytes, skipping\n");
+        "Trade::GltfImporter::material(): property sheenRoughnessTextureMatrix is too large with 63 bytes, skipping\n"
+        "Trade::GltfImporter::material(): property sheenRoughnessTextureMatrix is too large with 63 bytes, skipping\n");
 }
 
-void CgltfImporterTest::materialRawOutOfBounds() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
+void GltfImporterTest::materialRawOutOfBounds() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
 
     /* Disable Phong material fallback (enabled by default for compatibility),
        testing that separately in materialPhongFallback() */
     importer->configuration().setValue("phongMaterialFallback", false);
 
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "material-raw.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "material-raw.gltf")));
 
     /** @todo merge with materialRaw()? since the same error is if the texture
         has no index property */
@@ -5079,17 +5079,17 @@ void CgltfImporterTest::materialRawOutOfBounds() {
     CORRADE_VERIFY(material);
     compareMaterials(*material, expected);
     CORRADE_COMPARE(out.str(),
-        "Trade::CgltfImporter::material(): snakeTexture index 2 out of range for 2 textures\n"
-        "Trade::CgltfImporter::material(): property snakeTexture has an invalid texture object, skipping\n");
+        "Trade::GltfImporter::material(): snakeTexture index 2 out of range for 2 textures\n"
+        "Trade::GltfImporter::material(): property snakeTexture has an invalid texture object, skipping\n");
 }
 
-void CgltfImporterTest::materialInvalid() {
+void GltfImporterTest::materialInvalid() {
     auto&& data = MaterialInvalidData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
-    Containers::String filename = Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "material-invalid.gltf");
+    Containers::String filename = Utility::Path::join(GLTFIMPORTER_TEST_DIR, "material-invalid.gltf");
 
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
     CORRADE_VERIFY(importer->openFile(filename));
 
     /* Check we didn't forget to test anything */
@@ -5104,21 +5104,21 @@ void CgltfImporterTest::materialInvalid() {
     if(Containers::StringView{data.message}.hasSuffix('\n'))
         CORRADE_COMPARE(out.str(), Utility::formatString(data.message, filename));
     else
-        CORRADE_COMPARE(out.str(), Utility::formatString("Trade::CgltfImporter::material(): {}\n", data.message));
+        CORRADE_COMPARE(out.str(), Utility::formatString("Trade::GltfImporter::material(): {}\n", data.message));
 }
 
-void CgltfImporterTest::materialTexCoordFlip() {
+void GltfImporterTest::materialTexCoordFlip() {
     auto&& data = MaterialTexCoordFlipData[testCaseInstanceId()];
     setTestCaseDescription(Utility::formatString("{}{}", data.name, data.flipInMaterial ? ", textureCoordinateYFlipInMaterial" : ""));
 
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
 
     /* This should be implicitly enabled on files that contain non-normalized
        integer texture coordinates */
     if(data.flipInMaterial)
         importer->configuration().setValue("textureCoordinateYFlipInMaterial", true);
 
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, data.fileName)));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, data.fileName)));
 
     Containers::Optional<Trade::MeshData> mesh = importer->mesh(data.meshName);
     CORRADE_VERIFY(mesh);
@@ -5143,10 +5143,10 @@ void CgltfImporterTest::materialTexCoordFlip() {
     }), TestSuite::Compare::Container);
 }
 
-void CgltfImporterTest::texture() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
+void GltfImporterTest::texture() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
 
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "texture.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "texture.gltf")));
 
     CORRADE_COMPARE(importer->textureCount(), 5);
     CORRADE_COMPARE(importer->textureName(1), "another variant");
@@ -5203,13 +5203,13 @@ void CgltfImporterTest::texture() {
     }
 }
 
-void CgltfImporterTest::textureExtensions() {
+void GltfImporterTest::textureExtensions() {
     auto&& data = TextureExtensionsData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
 
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "texture-extensions.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "texture-extensions.gltf")));
 
     /* Check we didn't forget to test anything */
     CORRADE_COMPARE(importer->textureCount(), Containers::arraySize(TextureExtensionsData));
@@ -5225,13 +5225,13 @@ void CgltfImporterTest::textureExtensions() {
     if(data.xfail) CORRADE_COMPARE(texture->image(), data.xfailId);
 }
 
-void CgltfImporterTest::textureInvalid() {
+void GltfImporterTest::textureInvalid() {
     auto&& data = TextureInvalidData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
-    Containers::String filename = Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "texture-invalid.gltf");
+    Containers::String filename = Utility::Path::join(GLTFIMPORTER_TEST_DIR, "texture-invalid.gltf");
 
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
     CORRADE_VERIFY(importer->openFile(filename));
 
     /* Check we didn't forget to test anything */
@@ -5246,7 +5246,7 @@ void CgltfImporterTest::textureInvalid() {
     if(Containers::StringView{data.message}.hasSuffix('\n'))
         CORRADE_COMPARE(out.str(), Utility::formatString(data.message, filename));
     else
-        CORRADE_COMPARE(out.str(), Utility::formatString("Trade::CgltfImporter::texture(): {}\n", data.message));
+        CORRADE_COMPARE(out.str(), Utility::formatString("Trade::GltfImporter::texture(): {}\n", data.message));
 }
 
 constexpr char ExpectedImageData[] =
@@ -5254,17 +5254,17 @@ constexpr char ExpectedImageData[] =
     "\xb0\xb1\xb6\xff\xa0\xa0\xa1\xff\x9f\x9f\xa0\xff\xbc\xbc\xba\xff\xcc\xcc\xcc\xff"
     "\xb2\xb4\xb9\xff\xb8\xb9\xbb\xff\xc1\xc3\xc2\xff\xbc\xbd\xbf\xff\xb8\xb8\xbc\xff";
 
-void CgltfImporterTest::imageEmbedded() {
+void GltfImporterTest::imageEmbedded() {
     auto&& data = ImageEmbeddedData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
     if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("PngImporter plugin not found, cannot test");
 
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
     /* Open as data, so we verify opening embedded images from data does not
        cause any problems even when no file callbacks are set */
-    Containers::Optional<Containers::Array<char>> file = Utility::Path::read(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "image"_s + data.suffix));
+    Containers::Optional<Containers::Array<char>> file = Utility::Path::read(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "image"_s + data.suffix));
     CORRADE_VERIFY(file);
     CORRADE_VERIFY(importer->openData(*file));
 
@@ -5280,15 +5280,15 @@ void CgltfImporterTest::imageEmbedded() {
     CORRADE_COMPARE_AS(image->data(), Containers::arrayView(ExpectedImageData).prefix(60), TestSuite::Compare::Container);
 }
 
-void CgltfImporterTest::imageExternal() {
+void GltfImporterTest::imageExternal() {
     auto&& data = ImageExternalData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
     if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("PngImporter plugin not found, cannot test");
 
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "image"_s + data.suffix)));
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "image"_s + data.suffix)));
 
     CORRADE_COMPARE(importer->image2DCount(), 2);
     CORRADE_COMPARE(importer->image2DName(1), "Image");
@@ -5302,9 +5302,9 @@ void CgltfImporterTest::imageExternal() {
     CORRADE_COMPARE_AS(image->data(), Containers::arrayView(ExpectedImageData).prefix(60), TestSuite::Compare::Container);
 }
 
-void CgltfImporterTest::imageExternalNoPathNoCallback() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-    Containers::Optional<Containers::Array<char>> file = Utility::Path::read(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "image.gltf"));
+void GltfImporterTest::imageExternalNoPathNoCallback() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
+    Containers::Optional<Containers::Array<char>> file = Utility::Path::read(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "image.gltf"));
     CORRADE_VERIFY(file);
     CORRADE_VERIFY(importer->openData(*file));
     CORRADE_COMPARE(importer->image2DCount(), 2);
@@ -5312,10 +5312,10 @@ void CgltfImporterTest::imageExternalNoPathNoCallback() {
     std::ostringstream out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->image2D(0));
-    CORRADE_COMPARE(out.str(), "Trade::CgltfImporter::image2D(): external images can be imported only when opening files from the filesystem or if a file callback is present\n");
+    CORRADE_COMPARE(out.str(), "Trade::GltfImporter::image2D(): external images can be imported only when opening files from the filesystem or if a file callback is present\n");
 }
 
-void CgltfImporterTest::imageBasis() {
+void GltfImporterTest::imageBasis() {
     auto&& data = ImageBasisData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
@@ -5325,8 +5325,8 @@ void CgltfImporterTest::imageBasis() {
     /* Import as ASTC */
     _manager.metadata("BasisImporter")->configuration().setValue("format", "Astc4x4RGBA");
 
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "image-basis"_s + data.suffix)));
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "image-basis"_s + data.suffix)));
 
     CORRADE_COMPARE(importer->textureCount(), 1);
     CORRADE_COMPARE(importer->image2DCount(), 2);
@@ -5344,15 +5344,15 @@ void CgltfImporterTest::imageBasis() {
     CORRADE_COMPARE(texture->image(), 1);
 }
 
-void CgltfImporterTest::imageMipLevels() {
+void GltfImporterTest::imageMipLevels() {
     if(_manager.loadState("BasisImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("BasisImporter plugin not found, cannot test");
 
     /* Import as RGBA so we can verify the pixels */
     _manager.metadata("BasisImporter")->configuration().setValue("format", "RGBA8");
 
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "image-basis.gltf")));
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "image-basis.gltf")));
     CORRADE_COMPARE(importer->image2DCount(), 2);
     CORRADE_COMPARE(importer->image2DLevelCount(0), 1);
     CORRADE_COMPARE(importer->image2DLevelCount(1), 2);
@@ -5401,13 +5401,13 @@ void CgltfImporterTest::imageMipLevels() {
         }), TestSuite::Compare::Container);
 }
 
-void CgltfImporterTest::imageInvalid() {
+void GltfImporterTest::imageInvalid() {
     auto&& data = ImageInvalidData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
-    Containers::String filename = Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "image-invalid.gltf");
+    Containers::String filename = Utility::Path::join(GLTFIMPORTER_TEST_DIR, "image-invalid.gltf");
 
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
     CORRADE_VERIFY(importer->openFile(filename));
 
     /* Check we didn't forget to test anything */
@@ -5422,15 +5422,15 @@ void CgltfImporterTest::imageInvalid() {
     if(Containers::StringView{data.message}.hasSuffix('\n'))
         CORRADE_COMPARE(out.str(), Utility::formatString(data.message, filename));
     else
-        CORRADE_COMPARE(out.str(), Utility::formatString("Trade::CgltfImporter::image2D(): {}\n", data.message));
+        CORRADE_COMPARE(out.str(), Utility::formatString("Trade::GltfImporter::image2D(): {}\n", data.message));
 }
 
-void CgltfImporterTest::imageInvalidNotFound() {
+void GltfImporterTest::imageInvalidNotFound() {
     auto&& data = ImageInvalidNotFoundData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "image-invalid-notfound.gltf")));
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "image-invalid-notfound.gltf")));
 
     /* Check we didn't forget to test anything */
     CORRADE_COMPARE(importer->image2DCount(), Containers::arraySize(ImageInvalidNotFoundData));
@@ -5444,11 +5444,11 @@ void CgltfImporterTest::imageInvalidNotFound() {
         TestSuite::Compare::StringHasSuffix);
 }
 
-void CgltfImporterTest::fileCallbackBuffer() {
+void GltfImporterTest::fileCallbackBuffer() {
     auto&& data = SingleFileData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
     CORRADE_VERIFY(importer->features() & ImporterFeature::FileCallback);
 
     Utility::Resource rs{"data"};
@@ -5473,11 +5473,11 @@ void CgltfImporterTest::fileCallbackBuffer() {
     }), TestSuite::Compare::Container);
 }
 
-void CgltfImporterTest::fileCallbackBufferNotFound() {
+void GltfImporterTest::fileCallbackBufferNotFound() {
     auto&& data = SingleFileData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
     CORRADE_VERIFY(importer->features() & ImporterFeature::FileCallback);
 
     importer->setFileCallback([](const std::string&, InputFileCallbackPolicy, void*)
@@ -5491,17 +5491,17 @@ void CgltfImporterTest::fileCallbackBufferNotFound() {
     Error redirectError{&out};
 
     CORRADE_VERIFY(!importer->mesh(0));
-    CORRADE_COMPARE(out.str(), "Trade::CgltfImporter::mesh(): error opening data.bin through a file callback\n");
+    CORRADE_COMPARE(out.str(), "Trade::GltfImporter::mesh(): error opening data.bin through a file callback\n");
 }
 
-void CgltfImporterTest::fileCallbackImage() {
+void GltfImporterTest::fileCallbackImage() {
     auto&& data = SingleFileData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
     if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("PngImporter plugin not found, cannot test");
 
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
     CORRADE_VERIFY(importer->features() & ImporterFeature::FileCallback);
 
     Utility::Resource rs{"data"};
@@ -5522,14 +5522,14 @@ void CgltfImporterTest::fileCallbackImage() {
     CORRADE_COMPARE_AS(image->data(), Containers::arrayView(ExpectedImageData).prefix(60), TestSuite::Compare::Container);
 }
 
-void CgltfImporterTest::fileCallbackImageNotFound() {
+void GltfImporterTest::fileCallbackImageNotFound() {
     auto&& data = SingleFileData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
     if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("PngImporter plugin not found, cannot test");
 
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
     CORRADE_VERIFY(importer->features() & ImporterFeature::FileCallback);
 
     Utility::Resource rs{"data"};
@@ -5551,12 +5551,12 @@ void CgltfImporterTest::fileCallbackImageNotFound() {
     CORRADE_COMPARE(out.str(), "Trade::AbstractImporter::openFile(): cannot open file data.png\n");
 }
 
-void CgltfImporterTest::utf8filenames() {
+void GltfImporterTest::utf8filenames() {
     if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("PngImporter plugin not found, cannot test");
 
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "přívodní-šňůra.gltf")));
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "přívodní-šňůra.gltf")));
 
     CORRADE_COMPARE(importer->meshCount(), 1);
     Containers::Optional<Trade::MeshData> mesh = importer->mesh(0);
@@ -5576,9 +5576,9 @@ void CgltfImporterTest::utf8filenames() {
     CORRADE_COMPARE_AS(image->data(), Containers::arrayView(ExpectedImageData).prefix(60), TestSuite::Compare::Container);
 }
 
-void CgltfImporterTest::escapedStrings() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "escaped-strings.gltf")));
+void GltfImporterTest::escapedStrings() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "escaped-strings.gltf")));
 
     CORRADE_COMPARE(importer->objectCount(), 6);
     CORRADE_COMPARE(importer->objectName(0), "");
@@ -5635,8 +5635,8 @@ void CgltfImporterTest::escapedStrings() {
     CORRADE_COMPARE(importer->textureForName("Everything: říční člun \t\t\n حليب اللوز"), 0);
 }
 
-void CgltfImporterTest::encodedUris() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
+void GltfImporterTest::encodedUris() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
     CORRADE_VERIFY(importer->features() & ImporterFeature::FileCallback);
 
     std::string strings[6];
@@ -5661,7 +5661,7 @@ void CgltfImporterTest::encodedUris() {
         }, strings);
 
     /* Prevent the file callback being used for the main glTF content */
-    Containers::Optional<Containers::Array<char>> data = Utility::Path::read(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "encoded-uris.gltf"));
+    Containers::Optional<Containers::Array<char>> data = Utility::Path::read(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "encoded-uris.gltf"));
     CORRADE_VERIFY(data);
     CORRADE_VERIFY(importer->openData(*data));
 
@@ -5684,33 +5684,33 @@ void CgltfImporterTest::encodedUris() {
     CORRADE_COMPARE(strings[5], "image-escaped/říční člun.png");
 }
 
-void CgltfImporterTest::versionSupported() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
+void GltfImporterTest::versionSupported() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
 
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "version-supported.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "version-supported.gltf")));
 }
 
-void CgltfImporterTest::versionUnsupported() {
+void GltfImporterTest::versionUnsupported() {
     auto&& data = UnsupportedVersionData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(!importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, data.file)));
-    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::CgltfImporter::openData(): {}\n", data.message));
+    CORRADE_VERIFY(!importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, data.file)));
+    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::GltfImporter::openData(): {}\n", data.message));
 }
 
-void CgltfImporterTest::openMemory() {
+void GltfImporterTest::openMemory() {
     /* Same as (a subset of) camera() except that it uses openData() &
        openMemory() instead of openFile() to test data copying on import */
 
     auto&& data = OpenMemoryData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-    Containers::Optional<Containers::Array<char>> memory = Utility::Path::read(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "camera.gltf"));
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
+    Containers::Optional<Containers::Array<char>> memory = Utility::Path::read(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "camera.gltf"));
     CORRADE_VERIFY(memory);
     CORRADE_VERIFY(data.open(*importer, *memory));
     CORRADE_COMPARE(importer->cameraCount(), 4);
@@ -5724,18 +5724,18 @@ void CgltfImporterTest::openMemory() {
     CORRADE_COMPARE(cam->far(), 100.0f);
 }
 
-void CgltfImporterTest::openTwice() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
+void GltfImporterTest::openTwice() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
 
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "camera.gltf")));
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "camera.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "camera.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "camera.gltf")));
 
     /* Shouldn't crash, leak or anything */
 }
 
-void CgltfImporterTest::importTwice() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "camera.gltf")));
+void GltfImporterTest::importTwice() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "camera.gltf")));
     CORRADE_COMPARE(importer->cameraCount(), 4);
 
     /* Verify that everything is working the same way on second use. It's only
@@ -5761,4 +5761,4 @@ void CgltfImporterTest::importTwice() {
 
 }}}}
 
-CORRADE_TEST_MAIN(Magnum::Trade::Test::CgltfImporterTest)
+CORRADE_TEST_MAIN(Magnum::Trade::Test::GltfImporterTest)

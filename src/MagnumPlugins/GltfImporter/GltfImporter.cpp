@@ -24,7 +24,7 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-#include "CgltfImporter.h"
+#include "GltfImporter.h"
 
 #include <algorithm> /* std::stable_sort() */
 #include <cctype>
@@ -65,8 +65,8 @@
 #include <Magnum/Trade/TextureData.h>
 #include <MagnumPlugins/AnyImageImporter/AnyImageImporter.h>
 
-#include "MagnumPlugins/CgltfImporter/decode.h"
-#include "MagnumPlugins/CgltfImporter/Gltf.h"
+#include "MagnumPlugins/GltfImporter/decode.h"
+#include "MagnumPlugins/GltfImporter/Gltf.h"
 
 /* We'd have to endian-flip everything that comes from buffers, plus the binary
    glTF headers, etc. Too much work, hard to automatically test because the
@@ -133,7 +133,7 @@ bool isBuiltinMeshAttribute(Utility::ConfigurationGroup& configuration, const Co
 
 }
 
-struct CgltfImporter::Document {
+struct GltfImporter::Document {
     /* Set only if fromFile() was used, passed to Utility::Json for nicer error
        messages and used as a base path for buffer and image opening */
     Containers::Optional<Containers::String> filename;
@@ -260,7 +260,7 @@ struct CgltfImporter::Document {
     Containers::Optional<AnyImageImporter> imageImporter;
 };
 
-Containers::Optional<Containers::Array<char>> CgltfImporter::loadUri(const char* const errorPrefix, const Containers::StringView uri) {
+Containers::Optional<Containers::Array<char>> GltfImporter::loadUri(const char* const errorPrefix, const Containers::StringView uri) {
     if(isDataUri(uri)) {
         /* Data URI with base64 payload according to RFC 2397:
            data:[<mediatype>][;base64],<data> */
@@ -311,7 +311,7 @@ Containers::Optional<Containers::Array<char>> CgltfImporter::loadUri(const char*
     }
 }
 
-Containers::Optional<Containers::ArrayView<const char>> CgltfImporter::parseBuffer(const char* const errorPrefix, const UnsignedInt bufferId) {
+Containers::Optional<Containers::ArrayView<const char>> GltfImporter::parseBuffer(const char* const errorPrefix, const UnsignedInt bufferId) {
     if(bufferId >= _d->gltfBuffers.size()) {
         Error{} << errorPrefix << "buffer index" << bufferId << "out of range for" << _d->gltfBuffers.size() << "buffers";
         return {};
@@ -361,7 +361,7 @@ Containers::Optional<Containers::ArrayView<const char>> CgltfImporter::parseBuff
     return view;
 }
 
-Containers::Optional<Containers::Triple<Containers::ArrayView<const char>, UnsignedInt, UnsignedInt>> CgltfImporter::parseBufferView(const char* const errorPrefix, const UnsignedInt bufferViewId) {
+Containers::Optional<Containers::Triple<Containers::ArrayView<const char>, UnsignedInt, UnsignedInt>> GltfImporter::parseBufferView(const char* const errorPrefix, const UnsignedInt bufferViewId) {
     if(bufferViewId >= _d->gltfBufferViews.size()) {
         Error{} << errorPrefix << "buffer view index" << bufferViewId << "out of range for" << _d->gltfBufferViews.size() << "buffer views";
         return {};
@@ -423,7 +423,7 @@ Containers::Optional<Containers::Triple<Containers::ArrayView<const char>, Unsig
     return storage;
 }
 
-Containers::Optional<Containers::Triple<Containers::StridedArrayView2D<const char>, VertexFormat, UnsignedInt>> CgltfImporter::parseAccessor(const char* const errorPrefix, const UnsignedInt accessorId) {
+Containers::Optional<Containers::Triple<Containers::StridedArrayView2D<const char>, VertexFormat, UnsignedInt>> GltfImporter::parseAccessor(const char* const errorPrefix, const UnsignedInt accessorId) {
     if(accessorId >= _d->gltfAccessors.size()) {
         Error{} << errorPrefix << "accessor index" << accessorId << "out of range for" << _d->gltfAccessors.size() << "accessors";
         return {};
@@ -618,33 +618,33 @@ void fillDefaultConfiguration(Utility::ConfigurationGroup& conf) {
 
 }
 
-CgltfImporter::CgltfImporter() {
+GltfImporter::GltfImporter() {
     /** @todo horrible workaround, fix this properly */
     fillDefaultConfiguration(configuration());
 }
 
-CgltfImporter::CgltfImporter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin): AbstractImporter{manager, plugin} {}
+GltfImporter::GltfImporter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin): AbstractImporter{manager, plugin} {}
 
-CgltfImporter::CgltfImporter(PluginManager::Manager<AbstractImporter>& manager): AbstractImporter{manager} {
+GltfImporter::GltfImporter(PluginManager::Manager<AbstractImporter>& manager): AbstractImporter{manager} {
     /** @todo horrible workaround, fix this properly */
     fillDefaultConfiguration(configuration());
 }
 
-CgltfImporter::~CgltfImporter() = default;
+GltfImporter::~GltfImporter() = default;
 
-ImporterFeatures CgltfImporter::doFeatures() const { return ImporterFeature::OpenData|ImporterFeature::FileCallback; }
+ImporterFeatures GltfImporter::doFeatures() const { return ImporterFeature::OpenData|ImporterFeature::FileCallback; }
 
-bool CgltfImporter::doIsOpened() const { return !!_d && _d->gltf; }
+bool GltfImporter::doIsOpened() const { return !!_d && _d->gltf; }
 
-void CgltfImporter::doClose() { _d = nullptr; }
+void GltfImporter::doClose() { _d = nullptr; }
 
-void CgltfImporter::doOpenFile(const Containers::StringView filename) {
+void GltfImporter::doOpenFile(const Containers::StringView filename) {
     _d.reset(new Document);
     _d->filename.emplace(Containers::String::nullTerminatedGlobalView(filename));
     AbstractImporter::doOpenFile(filename);
 }
 
-void CgltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dataFlags) {
+void GltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dataFlags) {
     if(!_d) _d.reset(new Document);
 
     /* Copy file content. Take over the existing array or copy the data if we
@@ -666,29 +666,29 @@ void CgltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags d
     /* If the file looks like a GLB, extract the JSON and BIN chunk out of it */
     if(json.hasPrefix("glTF"_s)) {
         if(_d->fileData.size() < sizeof(Implementation::GltfGlbHeader)) {
-            Error{} << "Trade::CgltfImporter::openData(): binary glTF too small, expected at least" << sizeof(Implementation::GltfGlbHeader) << "bytes but got only" << _d->fileData.size();
+            Error{} << "Trade::GltfImporter::openData(): binary glTF too small, expected at least" << sizeof(Implementation::GltfGlbHeader) << "bytes but got only" << _d->fileData.size();
             return;
         }
         const auto& header = *reinterpret_cast<const Implementation::GltfGlbHeader*>(_d->fileData.data());
         if(header.version != 2) {
-            Error{} << "Trade::CgltfImporter::openData(): unsupported binary glTF version" << header.version;
+            Error{} << "Trade::GltfImporter::openData(): unsupported binary glTF version" << header.version;
             return;
         }
         if(_d->fileData.size() != header.length) {
-            Error{} << "Trade::CgltfImporter::openData(): binary glTF size mismatch, expected" << header.length << "bytes but got" << _d->fileData.size();
+            Error{} << "Trade::GltfImporter::openData(): binary glTF size mismatch, expected" << header.length << "bytes but got" << _d->fileData.size();
             return;
         }
         if(Containers::StringView{header.json.magic, 4} != "JSON"_s) {
             /** @todo use Debug::str (escaping non-printable characters)
                 instead of the hex once it exists */
-            Error{} << "Trade::CgltfImporter::openData(): expected a JSON chunk, got" << reinterpret_cast<void*>(header.json.id);
+            Error{} << "Trade::GltfImporter::openData(): expected a JSON chunk, got" << reinterpret_cast<void*>(header.json.id);
             return;
         }
 
         const char* const jsonDataBegin = _d->fileData + sizeof(Implementation::GltfGlbHeader);
         const char* const jsonDataEnd = jsonDataBegin + header.json.length;
         if(jsonDataEnd > _d->fileData.end()) {
-            Error{} << "Trade::CgltfImporter::openData(): binary glTF size mismatch, expected" << header.json.length << "bytes for a JSON chunk but got only" << _d->fileData.end() - jsonDataBegin;
+            Error{} << "Trade::GltfImporter::openData(): binary glTF size mismatch, expected" << header.json.length << "bytes for a JSON chunk but got only" << _d->fileData.end() - jsonDataBegin;
             return;
         }
 
@@ -703,7 +703,7 @@ void CgltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags d
         const char* chunk = jsonDataEnd;
         while(chunk != _d->fileData.end()) {
             if(chunk + sizeof(Implementation::GltfGlbChunkHeader) > _d->fileData.end()) {
-                Error{} << "Trade::CgltfImporter::openData(): binary glTF chunk starting at" << chunk - _d->fileData.begin() << "too small, expected at least" << sizeof(Implementation::GltfGlbChunkHeader) << "bytes but got only" << _d->fileData.end() - chunk;
+                Error{} << "Trade::GltfImporter::openData(): binary glTF chunk starting at" << chunk - _d->fileData.begin() << "too small, expected at least" << sizeof(Implementation::GltfGlbChunkHeader) << "bytes but got only" << _d->fileData.end() - chunk;
                 return;
             }
 
@@ -711,7 +711,7 @@ void CgltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags d
             const char* const chunkDataBegin = chunk + sizeof(Implementation::GltfGlbChunkHeader);
             const char* const chunkDataEnd = chunkDataBegin + chunkHeader.length;
             if(chunkDataEnd > _d->fileData.end()) {
-                Error{} << "Trade::CgltfImporter::openData(): binary glTF size mismatch, expected" << chunkHeader.length << "bytes for a chunk starting at" << chunk - _d->fileData.begin() << "but got only" << _d->fileData.end() - chunkDataBegin;
+                Error{} << "Trade::GltfImporter::openData(): binary glTF size mismatch, expected" << chunkHeader.length << "bytes for a chunk starting at" << chunk - _d->fileData.begin() << "but got only" << _d->fileData.end() - chunkDataBegin;
                 return;
             }
 
@@ -722,7 +722,7 @@ void CgltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags d
             else
                 /** @todo use Debug::str (escaping non-printable characters)
                     instead of the hex once it exists */
-                Warning{} << "Trade::CgltfImporter::openData(): ignoring chunk" << reinterpret_cast<void*>(chunkHeader.id) << "at" << chunk - _d->fileData.begin();
+                Warning{} << "Trade::GltfImporter::openData(): ignoring chunk" << reinterpret_cast<void*>(chunkHeader.id) << "at" << chunk - _d->fileData.begin();
             chunk = chunkDataEnd;
         }
     }
@@ -732,25 +732,25 @@ void CgltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags d
         inside non-owned String */
     Containers::Optional<Utility::Json> gltf = Utility::Json::fromString(json, _d->filename ? Containers::StringView{*_d->filename} : Containers::StringView{}, 0, jsonByteOffset);
     if(!gltf || !gltf->parseObject(gltf->root())) {
-        Error{} << "Trade::CgltfImporter::openData(): invalid JSON";
+        Error{} << "Trade::GltfImporter::openData(): invalid JSON";
         return;
     }
 
     /* Check version */
     const Utility::JsonToken* const gltfAsset = gltf->root().find("asset"_s);
     if(!gltfAsset || !gltf->parseObject(*gltfAsset)) {
-        Error{} << "Trade::CgltfImporter::openData(): missing or invalid asset property";
+        Error{} << "Trade::GltfImporter::openData(): missing or invalid asset property";
         return;
     }
     const Utility::JsonToken* const gltfAssetVersion = gltfAsset->find("version"_s);
     if(!gltfAssetVersion || !gltf->parseString(*gltfAssetVersion)) {
-        Error{} << "Trade::CgltfImporter::openData(): missing or invalid asset version property";
+        Error{} << "Trade::GltfImporter::openData(): missing or invalid asset version property";
         return;
     }
     /* Min version is optional */
     const Utility::JsonToken* const gltfAssetMinVersion = gltfAsset->find("minVersion"_s);
     if(gltfAssetMinVersion && !gltf->parseString(*gltfAssetMinVersion)) {
-        Error{} << "Trade::CgltfImporter::openData(): invalid asset minVersion property";
+        Error{} << "Trade::GltfImporter::openData(): invalid asset minVersion property";
         return;
     }
 
@@ -758,11 +758,11 @@ void CgltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags d
        be used to require support for features added in new minor versions.
        So far there's only 2.0 so we can use an exact comparison. */
     if(gltfAssetMinVersion && gltfAssetMinVersion->asString() != "2.0"_s) {
-        Error{} << "Trade::CgltfImporter::openData(): unsupported minVersion" << gltfAssetMinVersion->asString() << Debug::nospace << ", expected 2.0";
+        Error{} << "Trade::GltfImporter::openData(): unsupported minVersion" << gltfAssetMinVersion->asString() << Debug::nospace << ", expected 2.0";
         return;
     }
     if(!gltfAssetVersion->asString().hasPrefix("2."_s)) {
-        Error{} << "Trade::CgltfImporter::openData(): unsupported version" << gltfAssetVersion->asString() << Debug::nospace << ", expected 2.x";
+        Error{} << "Trade::GltfImporter::openData(): unsupported version" << gltfAssetVersion->asString() << Debug::nospace << ", expected 2.x";
         return;
     }
 
@@ -770,7 +770,7 @@ void CgltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags d
        required to "load and/or render an asset". */
     if(const Utility::JsonToken* gltfExtensionsRequired = gltf->root().find("extensionsRequired"_s)) {
         if(!gltf->parseArray(*gltfExtensionsRequired)) {
-            Error{} << "Trade::CgltfImporter::openData(): invalid extensionsRequired property";
+            Error{} << "Trade::GltfImporter::openData(): invalid extensionsRequired property";
             return;
         }
 
@@ -795,7 +795,7 @@ void CgltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags d
            supported extensions reaches a few dozen. */
         for(Utility::JsonArrayItem gltfExtension: gltfExtensionsRequired->asArray()) {
             if(!gltf->parseString(gltfExtension)) {
-                Error{} << "Trade::CgltfImporter::openData(): invalid required extension" << gltfExtension.index();
+                Error{} << "Trade::GltfImporter::openData(): invalid required extension" << gltfExtension.index();
                 return;
             }
 
@@ -810,9 +810,9 @@ void CgltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags d
 
             if(!found) {
                 if(ignoreRequiredExtensions) {
-                    Warning{} << "Trade::CgltfImporter::openData(): required extension" << extension << "not supported";
+                    Warning{} << "Trade::GltfImporter::openData(): required extension" << extension << "not supported";
                 } else {
-                    Error{} << "Trade::CgltfImporter::openData(): required extension" << extension << "not supported";
+                    Error{} << "Trade::GltfImporter::openData(): required extension" << extension << "not supported";
                     return;
                 }
             }
@@ -823,12 +823,12 @@ void CgltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags d
     const auto populate = [](Utility::Json& gltf, Containers::Array<Containers::Reference<const Utility::JsonToken>>& out, Containers::StringView key, const char* item) {
         if(const Utility::JsonToken* const gltfObjects = gltf.root().find(key)) {
             if(!gltf.parseArray(*gltfObjects)) {
-                Error{} << "Trade::CgltfImporter::openData(): invalid" << key << "property";
+                Error{} << "Trade::GltfImporter::openData(): invalid" << key << "property";
                 return false;
             }
             for(Utility::JsonArrayItem const gltfObject: gltfObjects->asArray()) {
                 if(!gltf.parseObject(gltfObject)) {
-                    Error{} << "Trade::CgltfImporter::openData(): invalid" << item << gltfObject.index();
+                    Error{} << "Trade::GltfImporter::openData(): invalid" << item << gltfObject.index();
                     return false;
                 }
 
@@ -841,18 +841,18 @@ void CgltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags d
     const auto populateWithName = [](Utility::Json& gltf, const Utility::JsonToken& root, Containers::Array<Containers::Pair<Containers::Reference<const Utility::JsonToken>, Containers::StringView>>& out, Containers::StringView key, const char* item) {
         if(const Utility::JsonToken* const gltfObjects = root.find(key)) {
             if(!gltf.parseArray(*gltfObjects)) {
-                Error{} << "Trade::CgltfImporter::openData(): invalid" << key << "property";
+                Error{} << "Trade::GltfImporter::openData(): invalid" << key << "property";
                 return false;
             }
             for(Utility::JsonArrayItem gltfObject: gltfObjects->asArray()) {
                 if(!gltf.parseObject(gltfObject)) {
-                    Error{} << "Trade::CgltfImporter::openData(): invalid" << item << gltfObject.index();
+                    Error{} << "Trade::GltfImporter::openData(): invalid" << item << gltfObject.index();
                     return false;
                 }
 
                 const Utility::JsonToken* const gltfName = gltfObject.value().find("name"_s);
                 if(gltfName && !gltf.parseString(*gltfName)) {
-                    Error{} << "Trade::CgltfImporter::openData(): invalid" << item << gltfObject.index() << "name property";
+                    Error{} << "Trade::GltfImporter::openData(): invalid" << item << gltfObject.index() << "name property";
                     return false;
                 }
 
@@ -864,24 +864,24 @@ void CgltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags d
     };
     const auto populateExtensionWithName = [](Utility::Json& gltf, const Utility::JsonToken& extension, Containers::Array<Containers::Pair<Containers::Reference<const Utility::JsonToken>, Containers::StringView>>& out, Containers::StringView key, const char* item) {
         if(!gltf.parseObject(extension)) {
-            Error{} << "Trade::CgltfImporter::openData(): invalid" << extension.parent()->asString() << "extension";
+            Error{} << "Trade::GltfImporter::openData(): invalid" << extension.parent()->asString() << "extension";
             return false;
         }
 
         if(const Utility::JsonToken* const gltfObjects = extension.find(key)) {
             if(!gltf.parseArray(*gltfObjects)) {
-                Error{} << "Trade::CgltfImporter::openData(): invalid" << extension.parent()->asString() << key << "property";
+                Error{} << "Trade::GltfImporter::openData(): invalid" << extension.parent()->asString() << key << "property";
                 return false;
             }
             for(Utility::JsonArrayItem gltfObject: gltfObjects->asArray()) {
                 if(!gltf.parseObject(gltfObject)) {
-                    Error{} << "Trade::CgltfImporter::openData(): invalid" << extension.parent()->asString() << item << gltfObject.index();
+                    Error{} << "Trade::GltfImporter::openData(): invalid" << extension.parent()->asString() << item << gltfObject.index();
                     return false;
                 }
 
                 const Utility::JsonToken* const gltfName = gltfObject.value().find("name"_s);
                 if(gltfName && !gltf.parseString(*gltfName)) {
-                    Error{} << "Trade::CgltfImporter::openData(): invalid" << extension.parent()->asString() << item << gltfObject.index() << "name property";
+                    Error{} << "Trade::GltfImporter::openData(): invalid" << extension.parent()->asString() << item << gltfObject.index() << "name property";
                     return false;
                 }
 
@@ -911,7 +911,7 @@ void CgltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags d
     /* Extensions */
     if(const Utility::JsonToken* const gltfExtensions = gltf->root().find("extensions"_s)) {
         if(!gltf->parseObject(*gltfExtensions)) {
-            Error{} << "Trade::CgltfImporter::openData(): invalid extensions property";
+            Error{} << "Trade::GltfImporter::openData(): invalid extensions property";
             return;
         }
 
@@ -944,13 +944,13 @@ void CgltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags d
 
             const Containers::Optional<Containers::StridedArrayView1D<const UnsignedInt>> sceneNodes = gltf->parseUnsignedIntArray(*gltfSceneNodes);
             if(!sceneNodes) {
-                Error{} << "Trade::CgltfImporter::openData(): invalid nodes property of scene" << i;
+                Error{} << "Trade::GltfImporter::openData(): invalid nodes property of scene" << i;
                 return;
             }
 
             for(const UnsignedInt node: *sceneNodes) {
                 if(node >= _d->gltfNodes.size()) {
-                    Error{} << "Trade::CgltfImporter::openData(): node index" << node << "in scene" << i << "out of range for" << _d->gltfNodes.size() << "nodes";
+                    Error{} << "Trade::GltfImporter::openData(): node index" << node << "in scene" << i << "out of range for" << _d->gltfNodes.size() << "nodes";
                     return;
                 }
 
@@ -968,23 +968,23 @@ void CgltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags d
 
             const Containers::Optional<Containers::StridedArrayView1D<const UnsignedInt>> nodeChildren = gltf->parseUnsignedIntArray(*gltfNodeChildren);
             if(!nodeChildren) {
-                Error{} << "Trade::CgltfImporter::openData(): invalid children property of node" << i;
+                Error{} << "Trade::GltfImporter::openData(): invalid children property of node" << i;
                 return;
             }
 
             for(const UnsignedInt child: *nodeChildren) {
                 if(child >= _d->gltfNodes.size()) {
-                    Error{} << "Trade::CgltfImporter::openData(): child index" << child << "in node" << i << "out of range for" << _d->gltfNodes.size() << "nodes";
+                    Error{} << "Trade::GltfImporter::openData(): child index" << child << "in node" << i << "out of range for" << _d->gltfNodes.size() << "nodes";
                     return;
                 }
 
                 /* If a referenced child already has a parent assigned, it's a
                    cycle */
                 if(nodeParents[child] == -1) {
-                    Error{} << "Trade::CgltfImporter::openData(): node" << child << "is both a root node and a child of node" << i;
+                    Error{} << "Trade::GltfImporter::openData(): node" << child << "is both a root node and a child of node" << i;
                     return;
                 } else if(nodeParents[child] != -2) {
-                    Error{} << "Trade::CgltfImporter::openData(): node" << child << "is a child of both node" << nodeParents[child] << "and node" << i;
+                    Error{} << "Trade::GltfImporter::openData(): node" << child << "is a child of both node" << nodeParents[child] << "and node" << i;
                     return;
                 }
 
@@ -999,7 +999,7 @@ void CgltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags d
 
             while(p1 >= 0 && p2 >= 0) {
                 if(p1 == p2) {
-                    Error{} << "Trade::CgltfImporter::openData(): node tree contains cycle starting at node" << i;
+                    Error{} << "Trade::GltfImporter::openData(): node tree contains cycle starting at node" << i;
                     return;
                 }
 
@@ -1019,20 +1019,20 @@ void CgltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags d
     for(std::size_t i = 0; i != _d->gltfMeshes.size(); ++i) {
         const Utility::JsonToken* gltfMeshPrimitives = _d->gltfMeshes[i].first()->find("primitives"_s);
         if(!gltfMeshPrimitives || !gltf->parseArray(*gltfMeshPrimitives)) {
-            Error{} << "Trade::CgltfImporter::openData(): missing or invalid primitives property in mesh" << i;
+            Error{} << "Trade::GltfImporter::openData(): missing or invalid primitives property in mesh" << i;
             return;
         }
 
         /* Yes, this isn't array item count but rather a size of the whole
            subtree, but that's fine as we only check it's non-empty */
         if(gltfMeshPrimitives->childCount() == 0) {
-            Error{} << "Trade::CgltfImporter::openData(): mesh" << i << "has no primitives";
+            Error{} << "Trade::GltfImporter::openData(): mesh" << i << "has no primitives";
             return;
         }
 
         for(Utility::JsonArrayItem gltfPrimitive: gltfMeshPrimitives->asArray()) {
             if(!gltf->parseObject(gltfPrimitive.value())) {
-                Error{} << "Trade::CgltfImporter::openData(): invalid mesh" << i << "primitive" << gltfPrimitive.index();
+                Error{} << "Trade::GltfImporter::openData(): invalid mesh" << i << "primitive" << gltfPrimitive.index();
                 return;
             }
 
@@ -1058,7 +1058,7 @@ void CgltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags d
         if(!gltfAttributes) continue;
 
         if(!gltf->parseObject(*gltfAttributes)) {
-            Error{} << "Trade::CgltfImporter::openData(): invalid primitive attributes property in mesh" << _d->gltfMeshPrimitiveMap[i].first();
+            Error{} << "Trade::GltfImporter::openData(): invalid primitive attributes property in mesh" << _d->gltfMeshPrimitiveMap[i].first();
             return;
         }
 
@@ -1079,11 +1079,11 @@ void CgltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags d
                    loop, which is guaranteed to be done for all meshes. */
 
                 if(!gltf->parseUnsignedInt(gltfAttribute.value())) {
-                    Error{} << "Trade::CgltfImporter::openData(): invalid attribute" << gltfAttribute.key() << "in mesh" << _d->gltfMeshPrimitiveMap[i].first();
+                    Error{} << "Trade::GltfImporter::openData(): invalid attribute" << gltfAttribute.key() << "in mesh" << _d->gltfMeshPrimitiveMap[i].first();
                     return;
                 }
                 if(gltfAttribute.value().asUnsignedInt() >= _d->gltfAccessors.size()) {
-                    Error{} << "Trade::CgltfImporter::openData(): accessor index" << gltfAttribute.value().asUnsignedInt() << "out of range for" << _d->gltfAccessors.size() << "accessors";
+                    Error{} << "Trade::GltfImporter::openData(): accessor index" << gltfAttribute.value().asUnsignedInt() << "out of range for" << _d->gltfAccessors.size() << "accessors";
                     return;
                 }
 
@@ -1091,14 +1091,14 @@ void CgltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags d
 
                 const Utility::JsonToken* const gltfAccessorComponentType = gltfAccessor.find("componentType"_s);
                 if(!gltfAccessorComponentType || !gltf->parseUnsignedInt(*gltfAccessorComponentType)) {
-                    Error{} << "Trade::CgltfImporter::openData(): accessor" << gltfAttribute.value().asUnsignedInt() << "has missing or invalid componentType property";
+                    Error{} << "Trade::GltfImporter::openData(): accessor" << gltfAttribute.value().asUnsignedInt() << "has missing or invalid componentType property";
                     return;
                 }
 
                 /* Normalized is optional, defaulting to false */
                 const Utility::JsonToken* const gltfAccessorNormalized = gltfAccessor.find("normalized"_s);
                 if(gltfAccessorNormalized && !gltf->parseBool(*gltfAccessorNormalized)) {
-                    Error{} << "Trade::CgltfImporter::openData(): accessor" << gltfAttribute.value().asUnsignedInt() << "has invalid normalized property";
+                    Error{} << "Trade::GltfImporter::openData(): accessor" << gltfAttribute.value().asUnsignedInt() << "has invalid normalized property";
                     return;
                 }
 
@@ -1109,7 +1109,7 @@ void CgltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags d
                   (accessorComponentType == Implementation::GltfTypeUnsignedByte && !normalized) ||
                   (accessorComponentType == Implementation::GltfTypeUnsignedShort && !normalized))
                 {
-                    Debug{} << "Trade::CgltfImporter::openData(): file contains non-normalized texture coordinates, implicitly enabling textureCoordinateYFlipInMaterial";
+                    Debug{} << "Trade::GltfImporter::openData(): file contains non-normalized texture coordinates, implicitly enabling textureCoordinateYFlipInMaterial";
                     _d->textureCoordinateYFlipInMaterial = true;
                 }
 
@@ -1120,7 +1120,7 @@ void CgltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags d
                    start with an underscore. We don't really care and just
                    print a warning. */
                 if(!gltfAttribute.key().hasPrefix("_"_s))
-                    Warning{} << "Trade::CgltfImporter::openData(): unknown attribute" << gltfAttribute.key() << Debug::nospace << ", importing as custom attribute";
+                    Warning{} << "Trade::GltfImporter::openData(): unknown attribute" << gltfAttribute.key() << Debug::nospace << ", importing as custom attribute";
 
                 if(_d->meshAttributesForName.emplace(gltfAttribute.key(),
                     meshAttributeCustom(_d->meshAttributeNames.size())).second
@@ -1133,11 +1133,11 @@ void CgltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags d
     /* Parse default scene, as we can't fail in doDefaultScene() */
     if(const Utility::JsonToken* gltfScene = gltf->root().find("scene"_s)) {
         if(!gltf->parseUnsignedInt(*gltfScene)) {
-            Error{} << "Trade::CgltfImporter::openData(): invalid scene property";
+            Error{} << "Trade::GltfImporter::openData(): invalid scene property";
             return;
         }
         if(gltfScene->asUnsignedInt() >= _d->gltfScenes.size()) {
-            Error{} << "Trade::CgltfImporter::openData(): scene index" << gltfScene->asUnsignedInt() << "out of range for" << _d->gltfScenes.size() << "scenes";
+            Error{} << "Trade::GltfImporter::openData(): scene index" << gltfScene->asUnsignedInt() << "out of range for" << _d->gltfScenes.size() << "scenes";
             return;
         }
     }
@@ -1154,7 +1154,7 @@ void CgltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags d
     /* Name maps are lazy-loaded because these might not be needed every time */
 }
 
-UnsignedInt CgltfImporter::doAnimationCount() const {
+UnsignedInt GltfImporter::doAnimationCount() const {
     /* If the animations are merged, there's at most one */
     if(configuration().value<bool>("mergeAnimationClips"))
         return _d->gltfAnimations.isEmpty() ? 0 : 1;
@@ -1162,7 +1162,7 @@ UnsignedInt CgltfImporter::doAnimationCount() const {
     return _d->gltfAnimations.size();
 }
 
-Int CgltfImporter::doAnimationForName(const Containers::StringView name) {
+Int GltfImporter::doAnimationForName(const Containers::StringView name) {
     /* If the animations are merged, don't report any names */
     if(configuration().value<bool>("mergeAnimationClips")) return -1;
 
@@ -1178,7 +1178,7 @@ Int CgltfImporter::doAnimationForName(const Containers::StringView name) {
     return found == _d->animationsForName->end() ? -1 : found->second;
 }
 
-Containers::String CgltfImporter::doAnimationName(const UnsignedInt id) {
+Containers::String GltfImporter::doAnimationName(const UnsignedInt id) {
     /* If the animations are merged, don't report any names */
     if(configuration().value<bool>("mergeAnimationClips")) return {};
     return _d->gltfAnimations[id].second();
@@ -1206,7 +1206,7 @@ template<class V> void postprocessSplineTrack(const UnsignedInt timeTrackUsed, c
 
 }
 
-Containers::Optional<AnimationData> CgltfImporter::doAnimation(UnsignedInt id) {
+Containers::Optional<AnimationData> GltfImporter::doAnimation(UnsignedInt id) {
     /* Import either a single animation or all of them together. At the moment,
        Blender doesn't really support cinematic animations (affecting multiple
        objects): https://blender.stackexchange.com/q/5689. And since
@@ -1247,7 +1247,7 @@ Containers::Optional<AnimationData> CgltfImporter::doAnimation(UnsignedInt id) {
         const Utility::JsonToken& gltfAnimation = gltfAnimations[i];
         const Utility::JsonToken* const gltfAnimationSamplers = gltfAnimation.find("samplers"_s);
         if(!gltfAnimationSamplers || !_d->gltf->parseArray(*gltfAnimationSamplers)) {
-            Error{} << "Trade::CgltfImporter::animation(): missing or invalid samplers property";
+            Error{} << "Trade::GltfImporter::animation(): missing or invalid samplers property";
             return {};
         }
 
@@ -1256,26 +1256,26 @@ Containers::Optional<AnimationData> CgltfImporter::doAnimation(UnsignedInt id) {
 
         for(const Utility::JsonArrayItem gltfAnimationSampler: gltfAnimationSamplers->asArray()) {
             if(!_d->gltf->parseObject(gltfAnimationSampler)) {
-                Error{} << "Trade::CgltfImporter::animation(): invalid sampler" << gltfAnimationSampler.index();
+                Error{} << "Trade::GltfImporter::animation(): invalid sampler" << gltfAnimationSampler.index();
                 return {};
             }
 
             const Utility::JsonToken* const gltfAnimationSamplerInput = gltfAnimationSampler.value().find("input"_s);
             if(!gltfAnimationSamplerInput || !_d->gltf->parseUnsignedInt(*gltfAnimationSamplerInput)) {
-                Error{} << "Trade::CgltfImporter::animation(): missing or invalid sampler" << gltfAnimationSampler.index() << "input property";
+                Error{} << "Trade::GltfImporter::animation(): missing or invalid sampler" << gltfAnimationSampler.index() << "input property";
                 return {};
             }
 
             const Utility::JsonToken* const gltfAnimationSamplerOutput = gltfAnimationSampler.value().find("output"_s);
             if(!gltfAnimationSamplerOutput || !_d->gltf->parseUnsignedInt(*gltfAnimationSamplerOutput)) {
-                Error{} << "Trade::CgltfImporter::animation(): missing or invalid sampler" << gltfAnimationSampler.index() << "output property";
+                Error{} << "Trade::GltfImporter::animation(): missing or invalid sampler" << gltfAnimationSampler.index() << "output property";
                 return {};
             }
 
             /* Interpolation is optional, LINEAR if not present */
             const Utility::JsonToken* const gltfAnimationSamplerInterpolation = gltfAnimationSampler.value().find("interpolation"_s);
             if(gltfAnimationSamplerInterpolation &&  !_d->gltf->parseString(*gltfAnimationSamplerInterpolation)) {
-                Error{} << "Trade::CgltfImporter::animation(): invalid sampler" << gltfAnimationSampler.index() << "interpolation property";
+                Error{} << "Trade::GltfImporter::animation(): invalid sampler" << gltfAnimationSampler.index() << "interpolation property";
                 return {};
             }
             const Containers::StringView interpolationString = gltfAnimationSamplerInterpolation ? gltfAnimationSamplerInterpolation->asString() : "LINEAR"_s;
@@ -1287,7 +1287,7 @@ Containers::Optional<AnimationData> CgltfImporter::doAnimation(UnsignedInt id) {
             else if(interpolationString == "CUBICSPLINE"_s)
                 interpolation = Animation::Interpolation::Spline;
             else {
-                Error{} << "Trade::CgltfImporter::animation(): unrecognized sampler" << gltfAnimationSampler.index() << "interpolation" << interpolationString;
+                Error{} << "Trade::GltfImporter::animation(): unrecognized sampler" << gltfAnimationSampler.index() << "interpolation" << interpolationString;
                 return {};
             }
 
@@ -1296,7 +1296,7 @@ Containers::Optional<AnimationData> CgltfImporter::doAnimation(UnsignedInt id) {
             /* If the input view is not yet present in the output data buffer,
                add it */
             if(samplerData.find(gltfAnimationSamplerInput->asUnsignedInt()) == samplerData.end()) {
-                const Containers::Optional<Containers::Triple<Containers::StridedArrayView2D<const char>, VertexFormat, UnsignedInt>> accessor = parseAccessor("Trade::CgltfImporter::animation():", gltfAnimationSamplerInput->asUnsignedInt());
+                const Containers::Optional<Containers::Triple<Containers::StridedArrayView2D<const char>, VertexFormat, UnsignedInt>> accessor = parseAccessor("Trade::GltfImporter::animation():", gltfAnimationSamplerInput->asUnsignedInt());
                 if(!accessor)
                     return {};
 
@@ -1307,7 +1307,7 @@ Containers::Optional<AnimationData> CgltfImporter::doAnimation(UnsignedInt id) {
             /* If the output view is not yet present in the output data buffer,
                add it */
             if(samplerData.find(gltfAnimationSamplerOutput->asUnsignedInt()) == samplerData.end()) {
-                const Containers::Optional<Containers::Triple<Containers::StridedArrayView2D<const char>, VertexFormat, UnsignedInt>> accessor = parseAccessor("Trade::CgltfImporter::animation():", gltfAnimationSamplerOutput->asUnsignedInt());
+                const Containers::Optional<Containers::Triple<Containers::StridedArrayView2D<const char>, VertexFormat, UnsignedInt>> accessor = parseAccessor("Trade::GltfImporter::animation():", gltfAnimationSamplerOutput->asUnsignedInt());
                 if(!accessor)
                     return {};
 
@@ -1350,19 +1350,19 @@ Containers::Optional<AnimationData> CgltfImporter::doAnimation(UnsignedInt id) {
     for(const Utility::JsonToken& gltfAnimation: gltfAnimations) {
         const Utility::JsonToken* const gltfAnimationChannels = gltfAnimation.find("channels"_s);
         if(!gltfAnimationChannels || !_d->gltf->parseArray(*gltfAnimationChannels)) {
-            Error{} << "Trade::CgltfImporter::animation(): missing or invalid channels property";
+            Error{} << "Trade::GltfImporter::animation(): missing or invalid channels property";
             return {};
         }
 
         for(const Utility::JsonArrayItem gltfAnimationChannel: gltfAnimationChannels->asArray()) {
             if(!_d->gltf->parseObject(gltfAnimationChannel)) {
-                Error{} << "Trade::CgltfImporter::animation(): invalid channel" << gltfAnimationChannel.index();
+                Error{} << "Trade::GltfImporter::animation(): invalid channel" << gltfAnimationChannel.index();
                 return {};
             }
 
             const Utility::JsonToken* const gltfAnimationChannelTarget = gltfAnimationChannel.value().find("target"_s);
             if(!gltfAnimationChannelTarget || !_d->gltf->parseObject(*gltfAnimationChannelTarget)) {
-                Error{} << "Trade::CgltfImporter::animation(): missing or invalid channel" << gltfAnimationChannel.index() << "target property";
+                Error{} << "Trade::GltfImporter::animation(): missing or invalid channel" << gltfAnimationChannel.index() << "target property";
                 return {};
             }
 
@@ -1384,12 +1384,12 @@ Containers::Optional<AnimationData> CgltfImporter::doAnimation(UnsignedInt id) {
         for(const Utility::JsonArrayItem gltfAnimationChannel: gltfAnimation["channels"_s].asArray()) {
             const Utility::JsonToken* const gltfSampler = gltfAnimationChannel.value().find("sampler"_s);
             if(!gltfSampler || !_d->gltf->parseUnsignedInt(*gltfSampler)) {
-                Error{} << "Trade::CgltfImporter::animation(): missing or invalid channel" << gltfAnimationChannel.index() << "sampler property";
+                Error{} << "Trade::GltfImporter::animation(): missing or invalid channel" << gltfAnimationChannel.index() << "sampler property";
                 return {};
             }
             const std::size_t animationSamplerDataOffset = animationSamplerDataOffsets[i];
             if(gltfSampler->asUnsignedInt() >= animationSamplerDataOffsets[i + 1] - animationSamplerDataOffset) {
-                Error{} << "Trade::CgltfImporter::animation(): sampler index" << gltfSampler->asUnsignedInt() << "in channel" << gltfAnimationChannel.index() << "out of range for" << animationSamplerDataOffsets[i + 1] - animationSamplerDataOffset << "samplers";
+                Error{} << "Trade::GltfImporter::animation(): sampler index" << gltfSampler->asUnsignedInt() << "in channel" << gltfAnimationChannel.index() << "out of range for" << animationSamplerDataOffsets[i + 1] - animationSamplerDataOffset << "samplers";
                 return {};
             }
             const AnimationSamplerData& sampler = animationSamplerData[animationSamplerDataOffset + gltfSampler->asUnsignedInt()];
@@ -1406,11 +1406,11 @@ Containers::Optional<AnimationData> CgltfImporter::doAnimation(UnsignedInt id) {
                 continue;
 
             if(!_d->gltf->parseUnsignedInt(*gltfTargetNode)) {
-                Error{} << "Trade::CgltfImporter::animation(): invalid channel" << gltfAnimationChannel.index() << "target node property";
+                Error{} << "Trade::GltfImporter::animation(): invalid channel" << gltfAnimationChannel.index() << "target node property";
                 return {};
             }
             if(gltfTargetNode->asUnsignedInt() >= _d->gltfNodes.size()) {
-                Error{} << "Trade::CgltfImporter::animation(): target node index" << gltfTargetNode->asUnsignedInt() << "in channel" << gltfAnimationChannel.index() << "out of range for" << _d->gltfNodes.size() << "nodes";
+                Error{} << "Trade::GltfImporter::animation(): target node index" << gltfTargetNode->asUnsignedInt() << "in channel" << gltfAnimationChannel.index() << "out of range for" << _d->gltfNodes.size() << "nodes";
                 return {};
             }
 
@@ -1421,7 +1421,7 @@ Containers::Optional<AnimationData> CgltfImporter::doAnimation(UnsignedInt id) {
             if(input.second() != VertexFormat::Float) {
                 /* Since we're abusing VertexFormat for all formats, print just
                    the enum value without the prefix to avoid cofusion */
-                Error{} << "Trade::CgltfImporter::animation(): channel" << gltfAnimationChannel.index() << "time track has unexpected type" << Debug::packed << input.second();
+                Error{} << "Trade::GltfImporter::animation(): channel" << gltfAnimationChannel.index() << "time track has unexpected type" << Debug::packed << input.second();
                 return {};
             }
 
@@ -1449,13 +1449,13 @@ Containers::Optional<AnimationData> CgltfImporter::doAnimation(UnsignedInt id) {
 
             const std::size_t valuesPerKey = sampler.interpolation == Animation::Interpolation::Spline ? 3 : 1;
             if(input.first().size()[0]*valuesPerKey != output.first().size()[0]) {
-                Error{} << "Trade::CgltfImporter::animation(): channel" << gltfAnimationChannel.index() << "target track size doesn't match time track size, expected" << output.first().size()[0] << "but got" << input.first().size()[0]*valuesPerKey;
+                Error{} << "Trade::GltfImporter::animation(): channel" << gltfAnimationChannel.index() << "target track size doesn't match time track size, expected" << output.first().size()[0] << "but got" << input.first().size()[0]*valuesPerKey;
                 return {};
             }
 
             const Utility::JsonToken* const gltfTargetPath = gltfTarget.find("path"_s);
             if(!gltfTargetPath || !_d->gltf->parseString(*gltfTargetPath)) {
-                Error{} << "Trade::CgltfImporter::animation(): missing or invalid channel" << gltfAnimationChannel.index() << "target path property";
+                Error{} << "Trade::GltfImporter::animation(): missing or invalid channel" << gltfAnimationChannel.index() << "target path property";
                 return {};
             }
 
@@ -1465,7 +1465,7 @@ Containers::Optional<AnimationData> CgltfImporter::doAnimation(UnsignedInt id) {
                     /* Since we're abusing VertexFormat for all formats, print
                        just the enum value without the prefix to avoid
                        cofusion */
-                    Error{} << "Trade::CgltfImporter::animation(): translation track has unexpected type" << Debug::packed << output.second();
+                    Error{} << "Trade::GltfImporter::animation(): translation track has unexpected type" << Debug::packed << output.second();
                     return {};
                 }
 
@@ -1501,7 +1501,7 @@ Containers::Optional<AnimationData> CgltfImporter::doAnimation(UnsignedInt id) {
                     /* Since we're abusing VertexFormat for all formats, print
                        just the enum value without the prefix to avoid
                        cofusion */
-                    Error{} << "Trade::CgltfImporter::animation(): rotation track has unexpected type" << Debug::packed << output.second();
+                    Error{} << "Trade::GltfImporter::animation(): rotation track has unexpected type" << Debug::packed << output.second();
                     return {};
                 }
 
@@ -1558,7 +1558,7 @@ Containers::Optional<AnimationData> CgltfImporter::doAnimation(UnsignedInt id) {
                     /* Since we're abusing VertexFormat for all formats, print
                        just the enum value without the prefix to avoid
                        cofusion */
-                    Error{} << "Trade::CgltfImporter::animation(): scaling track has unexpected type" << Debug::packed << output.second();
+                    Error{} << "Trade::GltfImporter::animation(): scaling track has unexpected type" << Debug::packed << output.second();
                     return {};
                 }
 
@@ -1587,7 +1587,7 @@ Containers::Optional<AnimationData> CgltfImporter::doAnimation(UnsignedInt id) {
                 }
 
             } else {
-                Error{} << "Trade::CgltfImporter::animation(): unsupported track target" << gltfTargetPath->asString();
+                Error{} << "Trade::GltfImporter::animation(): unsupported track target" << gltfTargetPath->asString();
                 return {};
             }
 
@@ -1599,7 +1599,7 @@ Containers::Optional<AnimationData> CgltfImporter::doAnimation(UnsignedInt id) {
                 if(timeTrackUsed == ~UnsignedInt{})
                     timeTrackUsed = sampler.input;
                 else if(timeTrackUsed != sampler.input) {
-                    Error{} << "Trade::CgltfImporter::animation(): spline track is shared with different time tracks, we don't support that, sorry";
+                    Error{} << "Trade::GltfImporter::animation(): spline track is shared with different time tracks, we don't support that, sorry";
                     return {};
                 }
             }
@@ -1610,16 +1610,16 @@ Containers::Optional<AnimationData> CgltfImporter::doAnimation(UnsignedInt id) {
     }
 
     if(hadToRenormalize)
-        Warning{} << "Trade::CgltfImporter::animation(): quaternions in some rotation tracks were renormalized";
+        Warning{} << "Trade::GltfImporter::animation(): quaternions in some rotation tracks were renormalized";
 
     return AnimationData{std::move(data), std::move(tracks)};
 }
 
-UnsignedInt CgltfImporter::doCameraCount() const {
+UnsignedInt GltfImporter::doCameraCount() const {
     return _d->gltfCameras.size();
 }
 
-Int CgltfImporter::doCameraForName(const Containers::StringView name) {
+Int GltfImporter::doCameraForName(const Containers::StringView name) {
     if(!_d->camerasForName) {
         _d->camerasForName.emplace();
         _d->camerasForName->reserve(_d->gltfCameras.size());
@@ -1632,16 +1632,16 @@ Int CgltfImporter::doCameraForName(const Containers::StringView name) {
     return found == _d->camerasForName->end() ? -1 : found->second;
 }
 
-Containers::String CgltfImporter::doCameraName(const UnsignedInt id) {
+Containers::String GltfImporter::doCameraName(const UnsignedInt id) {
     return _d->gltfCameras[id].second();
 }
 
-Containers::Optional<CameraData> CgltfImporter::doCamera(const UnsignedInt id) {
+Containers::Optional<CameraData> GltfImporter::doCamera(const UnsignedInt id) {
     const Utility::JsonToken& gltfCamera = _d->gltfCameras[id].first();
 
     const Utility::JsonToken* const gltfType = gltfCamera.find("type"_s);
     if(!gltfType || !_d->gltf->parseString(*gltfType)) {
-        Error{} << "Trade::CgltfImporter::camera(): missing or invalid type property";
+        Error{} << "Trade::GltfImporter::camera(): missing or invalid type property";
         return {};
     }
 
@@ -1651,7 +1651,7 @@ Containers::Optional<CameraData> CgltfImporter::doCamera(const UnsignedInt id) {
     if(gltfType->asString() == "perspective"_s) {
         const Utility::JsonToken* const gltfPerspectiveCamera = gltfCamera.find("perspective"_s);
         if(!gltfPerspectiveCamera || !_d->gltf->parseObject(*gltfPerspectiveCamera)) {
-            Error{} << "Trade::CgltfImporter::camera(): missing or invalid perspective property";
+            Error{} << "Trade::GltfImporter::camera(): missing or invalid perspective property";
             return {};
         }
 
@@ -1661,32 +1661,32 @@ Containers::Optional<CameraData> CgltfImporter::doCamera(const UnsignedInt id) {
         const Utility::JsonToken* const gltfAspectRatio = gltfPerspectiveCamera->find("aspectRatio"_s);
         if(gltfAspectRatio) {
             if(!_d->gltf->parseFloat(*gltfAspectRatio)) {
-                Error{} << "Trade::CgltfImporter::camera(): invalid perspective aspectRatio property";
+                Error{} << "Trade::GltfImporter::camera(): invalid perspective aspectRatio property";
                 return {};
             }
             if(gltfAspectRatio->asFloat() <= 0.0f) {
-                Error{} << "Trade::CgltfImporter::camera(): expected positive perspective aspectRatio, got" << gltfAspectRatio->asFloat();
+                Error{} << "Trade::GltfImporter::camera(): expected positive perspective aspectRatio, got" << gltfAspectRatio->asFloat();
                 return {};
             }
         }
 
         const Utility::JsonToken* const gltfYfov = gltfPerspectiveCamera->find("yfov"_s);
         if(!gltfYfov || !_d->gltf->parseFloat(*gltfYfov)) {
-            Error{} << "Trade::CgltfImporter::camera(): missing or invalid perspective yfov property";
+            Error{} << "Trade::GltfImporter::camera(): missing or invalid perspective yfov property";
             return {};
         }
         if(gltfYfov->asFloat() <= 0.0f) {
-            Error{} << "Trade::CgltfImporter::camera(): expected positive perspective yfov, got" << gltfYfov->asFloat();
+            Error{} << "Trade::GltfImporter::camera(): expected positive perspective yfov, got" << gltfYfov->asFloat();
             return {};
         }
 
         const Utility::JsonToken* const gltfZnear = gltfPerspectiveCamera->find("znear"_s);
         if(!gltfZnear || !_d->gltf->parseFloat(*gltfZnear)) {
-            Error{} << "Trade::CgltfImporter::camera(): missing or invalid perspective znear property";
+            Error{} << "Trade::GltfImporter::camera(): missing or invalid perspective znear property";
             return {};
         }
         if(gltfZnear->asFloat() <= 0.0f) {
-            Error{} << "Trade::CgltfImporter::camera(): expected positive perspective znear, got" << gltfZnear->asFloat();
+            Error{} << "Trade::GltfImporter::camera(): expected positive perspective znear, got" << gltfZnear->asFloat();
             return {};
         }
 
@@ -1695,11 +1695,11 @@ Containers::Optional<CameraData> CgltfImporter::doCamera(const UnsignedInt id) {
         const Utility::JsonToken* const gltfZfar = gltfPerspectiveCamera->find("zfar"_s);
         if(gltfZfar) {
             if(!_d->gltf->parseFloat(*gltfZfar)) {
-                Error{} << "Trade::CgltfImporter::camera(): invalid perspective zfar property";
+                Error{} << "Trade::GltfImporter::camera(): invalid perspective zfar property";
                 return {};
             }
             if(gltfZfar->asFloat() <= gltfZnear->asFloat()) {
-                Error{} << "Trade::CgltfImporter::camera(): expected perspective zfar larger than znear of" << gltfZnear->asFloat() << Debug::nospace << ", got" << gltfZfar->asFloat();
+                Error{} << "Trade::GltfImporter::camera(): expected perspective zfar larger than znear of" << gltfZnear->asFloat() << Debug::nospace << ", got" << gltfZfar->asFloat();
                 return {};
             }
         }
@@ -1717,47 +1717,47 @@ Containers::Optional<CameraData> CgltfImporter::doCamera(const UnsignedInt id) {
     if(gltfType->asString() == "orthographic"_s) {
         const Utility::JsonToken* const gltfOrthographicCamera = gltfCamera.find("orthographic"_s);
         if(!gltfOrthographicCamera || !_d->gltf->parseObject(*gltfOrthographicCamera)) {
-            Error{} << "Trade::CgltfImporter::camera(): missing or invalid orthographic property";
+            Error{} << "Trade::GltfImporter::camera(): missing or invalid orthographic property";
             return {};
         }
 
         const Utility::JsonToken* const gltfXmag = gltfOrthographicCamera->find("xmag"_s);
         if(!gltfXmag || !_d->gltf->parseFloat(*gltfXmag)) {
-            Error{} << "Trade::CgltfImporter::camera(): missing or invalid orthographic xmag property";
+            Error{} << "Trade::GltfImporter::camera(): missing or invalid orthographic xmag property";
             return {};
         }
         if(gltfXmag->asFloat() == 0.0f) {
-            Error{} << "Trade::CgltfImporter::camera(): expected non-zero orthographic xmag";
+            Error{} << "Trade::GltfImporter::camera(): expected non-zero orthographic xmag";
             return {};
         }
 
         const Utility::JsonToken* const gltfYmag = gltfOrthographicCamera->find("ymag"_s);
         if(!gltfYmag || !_d->gltf->parseFloat(*gltfYmag)) {
-            Error{} << "Trade::CgltfImporter::camera(): missing or invalid orthographic ymag property";
+            Error{} << "Trade::GltfImporter::camera(): missing or invalid orthographic ymag property";
             return {};
         }
         if(gltfYmag->asFloat() == 0.0f) {
-            Error{} << "Trade::CgltfImporter::camera(): expected non-zero orthographic ymag";
+            Error{} << "Trade::GltfImporter::camera(): expected non-zero orthographic ymag";
             return {};
         }
 
         const Utility::JsonToken* const gltfZnear = gltfOrthographicCamera->find("znear"_s);
         if(!gltfZnear || !_d->gltf->parseFloat(*gltfZnear)) {
-            Error{} << "Trade::CgltfImporter::camera(): missing or invalid orthographic znear property";
+            Error{} << "Trade::GltfImporter::camera(): missing or invalid orthographic znear property";
             return {};
         }
         if(gltfZnear->asFloat() < 0.0f) {
-            Error{} << "Trade::CgltfImporter::camera(): expected non-negative orthographic znear, got" << gltfZnear->asFloat();
+            Error{} << "Trade::GltfImporter::camera(): expected non-negative orthographic znear, got" << gltfZnear->asFloat();
             return {};
         }
 
         const Utility::JsonToken* const gltfZfar = gltfOrthographicCamera->find("zfar"_s);
         if(!gltfZfar || !_d->gltf->parseFloat(*gltfZfar)) {
-            Error{} << "Trade::CgltfImporter::camera(): missing or invalid orthographic zfar property";
+            Error{} << "Trade::GltfImporter::camera(): missing or invalid orthographic zfar property";
             return {};
         }
         if(gltfZfar->asFloat() <= gltfZnear->asFloat()) {
-            Error{} << "Trade::CgltfImporter::camera(): expected orthographic zfar larger than znear of" << gltfZnear->asFloat() << Debug::nospace << ", got" << gltfZfar->asFloat();
+            Error{} << "Trade::GltfImporter::camera(): expected orthographic zfar larger than znear of" << gltfZnear->asFloat() << Debug::nospace << ", got" << gltfZfar->asFloat();
             return {};
         }
 
@@ -1768,15 +1768,15 @@ Containers::Optional<CameraData> CgltfImporter::doCamera(const UnsignedInt id) {
             gltfZnear->asFloat(), gltfZfar->asFloat()};
     }
 
-    Error{} << "Trade::CgltfImporter::camera(): unrecognized type" << gltfType->asString();
+    Error{} << "Trade::GltfImporter::camera(): unrecognized type" << gltfType->asString();
     return {};
 }
 
-UnsignedInt CgltfImporter::doLightCount() const {
+UnsignedInt GltfImporter::doLightCount() const {
     return _d->gltfLights.size();
 }
 
-Int CgltfImporter::doLightForName(const Containers::StringView name) {
+Int GltfImporter::doLightForName(const Containers::StringView name) {
     if(!_d->lightsForName) {
         _d->lightsForName.emplace();
         _d->lightsForName->reserve(_d->gltfLights.size());
@@ -1789,11 +1789,11 @@ Int CgltfImporter::doLightForName(const Containers::StringView name) {
     return found == _d->lightsForName->end() ? -1 : found->second;
 }
 
-Containers::String CgltfImporter::doLightName(const UnsignedInt id) {
+Containers::String GltfImporter::doLightName(const UnsignedInt id) {
     return _d->gltfLights[id].second();
 }
 
-Containers::Optional<LightData> CgltfImporter::doLight(const UnsignedInt id) {
+Containers::Optional<LightData> GltfImporter::doLight(const UnsignedInt id) {
     const Utility::JsonToken& gltfLight = _d->gltfLights[id].first();
 
     /* Color is optional, vector of 1.0 is a default if not set */
@@ -1801,7 +1801,7 @@ Containers::Optional<LightData> CgltfImporter::doLight(const UnsignedInt id) {
     if(const Utility::JsonToken* const gltfColor = gltfLight.find("color"_s)) {
         const Containers::Optional<Containers::StridedArrayView1D<const float>> colorArray = _d->gltf->parseFloatArray(*gltfColor, 3);
         if(!colorArray) {
-            Error{} << "Trade::CgltfImporter::light(): invalid color property";
+            Error{} << "Trade::GltfImporter::light(): invalid color property";
             return {};
         }
 
@@ -1811,7 +1811,7 @@ Containers::Optional<LightData> CgltfImporter::doLight(const UnsignedInt id) {
     /* Intensity is optional, 1.0 is a default if not set */
     const Utility::JsonToken* const gltfIntensity = gltfLight.find("intensity"_s);
     if(gltfIntensity && !_d->gltf->parseFloat(*gltfIntensity)) {
-        Error{} << "Trade::CgltfImporter::light(): invalid intensity property";
+        Error{} << "Trade::GltfImporter::light(): invalid intensity property";
         return {};
     }
 
@@ -1820,18 +1820,18 @@ Containers::Optional<LightData> CgltfImporter::doLight(const UnsignedInt id) {
     const Utility::JsonToken* const gltfRange = gltfLight.find("range"_s);
     if(gltfRange) {
         if(!_d->gltf->parseFloat(*gltfRange)) {
-            Error{} << "Trade::CgltfImporter::light(): invalid range property";
+            Error{} << "Trade::GltfImporter::light(): invalid range property";
             return {};
         }
         if(gltfRange->asFloat() <= 0.0f) {
-            Error{} << "Trade::CgltfImporter::light(): expected positive range, got" << gltfRange->asFloat();
+            Error{} << "Trade::GltfImporter::light(): expected positive range, got" << gltfRange->asFloat();
             return {};
         }
     }
 
     const Utility::JsonToken* const gltfType = gltfLight.find("type"_s);
     if(!gltfType || !_d->gltf->parseString(*gltfType)) {
-        Error{} << "Trade::CgltfImporter::light(): missing or invalid type property";
+        Error{} << "Trade::GltfImporter::light(): missing or invalid type property";
         return {};
     }
 
@@ -1844,7 +1844,7 @@ Containers::Optional<LightData> CgltfImporter::doLight(const UnsignedInt id) {
     } else if(gltfType->asString() == "directional"_s) {
         type = LightData::Type::Directional;
     } else {
-        Error{} << "Trade::CgltfImporter::light(): unrecognized type" << gltfType->asString();
+        Error{} << "Trade::GltfImporter::light(): unrecognized type" << gltfType->asString();
         return {};
     }
 
@@ -1859,14 +1859,14 @@ Containers::Optional<LightData> CgltfImporter::doLight(const UnsignedInt id) {
 
         const Utility::JsonToken* const gltfSpot = gltfLight.find("spot"_s);
         if(!gltfSpot || !_d->gltf->parseObject(*gltfSpot)) {
-            Error{} << "Trade::CgltfImporter::light(): missing or invalid spot property";
+            Error{} << "Trade::GltfImporter::light(): missing or invalid spot property";
             return {};
         }
 
         if(const Utility::JsonToken* const gltfInnerConeAngle = gltfSpot->find("innerConeAngle"_s)) {
             const Containers::Optional<Float> angle = _d->gltf->parseFloat(*gltfInnerConeAngle);
             if(!angle) {
-                Error{} << "Trade::CgltfImporter::light(): invalid spot innerConeAngle property";
+                Error{} << "Trade::GltfImporter::light(): invalid spot innerConeAngle property";
                 return {};
             }
 
@@ -1876,7 +1876,7 @@ Containers::Optional<LightData> CgltfImporter::doLight(const UnsignedInt id) {
         if(const Utility::JsonToken* const gltfOuterConeAngle = gltfSpot->find("outerConeAngle"_s)) {
             const Containers::Optional<Float> angle = _d->gltf->parseFloat(*gltfOuterConeAngle);
             if(!angle) {
-                Error{} << "Trade::CgltfImporter::light(): invalid spot outerConeAngle property";
+                Error{} << "Trade::GltfImporter::light(): invalid spot outerConeAngle property";
                 return {};
             }
 
@@ -1884,7 +1884,7 @@ Containers::Optional<LightData> CgltfImporter::doLight(const UnsignedInt id) {
         }
 
         if(innerConeAngle < Rad(0.0_degf) || innerConeAngle >= outerConeAngle || outerConeAngle >= Rad(90.0_degf)) {
-            Error{} << "Trade::CgltfImporter::light(): spot inner and outer cone angle" << Deg(innerConeAngle) << "and" << Deg(outerConeAngle) << "out of allowed bounds";
+            Error{} << "Trade::GltfImporter::light(): spot inner and outer cone angle" << Deg(innerConeAngle) << "and" << Deg(outerConeAngle) << "out of allowed bounds";
             return {};
         }
     } else innerConeAngle = outerConeAngle = 180.0_degf;
@@ -1893,7 +1893,7 @@ Containers::Optional<LightData> CgltfImporter::doLight(const UnsignedInt id) {
        to represent infinity in JSON, directly suggest to remove the range
        property, don't even bother printing the value. */
     if(type == LightData::Type::Directional && gltfRange) {
-        Error{} << "Trade::CgltfImporter::light(): range can't be defined for a directional light";
+        Error{} << "Trade::GltfImporter::light(): range can't be defined for a directional light";
         return {};
     }
 
@@ -1905,7 +1905,7 @@ Containers::Optional<LightData> CgltfImporter::doLight(const UnsignedInt id) {
         innerConeAngle*2.0f, outerConeAngle*2.0f};
 }
 
-Int CgltfImporter::doDefaultScene() const {
+Int GltfImporter::doDefaultScene() const {
     if(const Utility::JsonToken* gltfScene = _d->gltf->root().find("scene"_s)) {
         /* All checking and parsing was done in doOpenData() already, as this
            function is not allowed to fail */
@@ -1923,11 +1923,11 @@ Int CgltfImporter::doDefaultScene() const {
     return _d->gltfScenes.isEmpty() ? -1 : 0;
 }
 
-UnsignedInt CgltfImporter::doSceneCount() const {
+UnsignedInt GltfImporter::doSceneCount() const {
     return _d->gltfScenes.size();
 }
 
-Int CgltfImporter::doSceneForName(const Containers::StringView name) {
+Int GltfImporter::doSceneForName(const Containers::StringView name) {
     if(!_d->scenesForName) {
         _d->scenesForName.emplace();
         _d->scenesForName->reserve(_d->gltfScenes.size());
@@ -1941,11 +1941,11 @@ Int CgltfImporter::doSceneForName(const Containers::StringView name) {
     return found == _d->scenesForName->end() ? -1 : found->second;
 }
 
-Containers::String CgltfImporter::doSceneName(const UnsignedInt id) {
+Containers::String GltfImporter::doSceneName(const UnsignedInt id) {
     return _d->gltfScenes[id].second();
 }
 
-Containers::Optional<SceneData> CgltfImporter::doScene(UnsignedInt id) {
+Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
     const Utility::JsonToken& gltfScene = _d->gltfScenes[id].first();
 
     /* Gather all top-level nodes belonging to a scene and recursively populate
@@ -2029,12 +2029,12 @@ Containers::Optional<SceneData> CgltfImporter::doScene(UnsignedInt id) {
         /* Mesh reference */
         if(const Utility::JsonToken* const gltfMesh = gltfNode.find("mesh"_s)) {
             if(!_d->gltf->parseUnsignedInt(*gltfMesh)) {
-                Error{} << "Trade::CgltfImporter::scene(): invalid mesh property of node" << i;
+                Error{} << "Trade::GltfImporter::scene(): invalid mesh property of node" << i;
                 return {};
             }
             const UnsignedInt mesh = gltfMesh->asUnsignedInt();
             if(mesh >= _d->gltfMeshes.size()) {
-                Error{} << "Trade::CgltfImporter::scene(): mesh index" << mesh << "in node" << i << "out of range for" << _d->gltfMeshes.size() << "meshes";
+                Error{} << "Trade::GltfImporter::scene(): mesh index" << mesh << "in node" << i << "out of range for" << _d->gltfMeshes.size() << "meshes";
                 return {};
             }
 
@@ -2042,11 +2042,11 @@ Containers::Optional<SceneData> CgltfImporter::doScene(UnsignedInt id) {
             for(std::size_t j = _d->meshSizeOffsets[mesh], jMax = _d->meshSizeOffsets[mesh + 1]; j != jMax; ++j) {
                 if(const Utility::JsonToken* gltfPrimitiveMaterial = _d->gltfMeshPrimitiveMap[j].second()->find("material"_s)) {
                     if(!_d->gltf->parseUnsignedInt(*gltfPrimitiveMaterial)) {
-                        Error{} << "Trade::CgltfImporter::scene(): invalid material property of mesh" << mesh << "primitive" << j - _d->meshSizeOffsets[mesh];
+                        Error{} << "Trade::GltfImporter::scene(): invalid material property of mesh" << mesh << "primitive" << j - _d->meshSizeOffsets[mesh];
                         return {};
                     }
                     if(gltfPrimitiveMaterial->asUnsignedInt() >= _d->gltfMaterials.size()) {
-                        Error{} << "Trade::CgltfImporter::scene(): material index" << gltfPrimitiveMaterial->asUnsignedInt() << "in mesh" << mesh << "primitive" << j - _d->meshSizeOffsets[mesh] << "out of range for" << _d->gltfMaterials.size() << "materials";
+                        Error{} << "Trade::GltfImporter::scene(): material index" << gltfPrimitiveMaterial->asUnsignedInt() << "in mesh" << mesh << "primitive" << j - _d->meshSizeOffsets[mesh] << "out of range for" << _d->gltfMaterials.size() << "materials";
                         return {};
                     }
 
@@ -2060,11 +2060,11 @@ Containers::Optional<SceneData> CgltfImporter::doScene(UnsignedInt id) {
         /* Camera reference */
         if(const Utility::JsonToken* const gltfCamera = gltfNode.find("camera"_s)) {
             if(!_d->gltf->parseUnsignedInt(*gltfCamera)) {
-                Error{} << "Trade::CgltfImporter::scene(): invalid camera property of node" << i;
+                Error{} << "Trade::GltfImporter::scene(): invalid camera property of node" << i;
                 return {};
             }
             if(gltfCamera->asUnsignedInt() >= _d->gltfCameras.size()) {
-                Error{} << "Trade::CgltfImporter::scene(): camera index" << gltfCamera->asUnsignedInt() << "in node" << i << "out of range for" << _d->gltfCameras.size() << "cameras";
+                Error{} << "Trade::GltfImporter::scene(): camera index" << gltfCamera->asUnsignedInt() << "in node" << i << "out of range for" << _d->gltfCameras.size() << "cameras";
                 return {};
             }
 
@@ -2074,11 +2074,11 @@ Containers::Optional<SceneData> CgltfImporter::doScene(UnsignedInt id) {
         /* Skin reference */
         if(const Utility::JsonToken* const gltfSkin = gltfNode.find("skin"_s)) {
             if(!_d->gltf->parseUnsignedInt(*gltfSkin)) {
-                Error{} << "Trade::CgltfImporter::scene(): invalid skin property of node" << i;
+                Error{} << "Trade::GltfImporter::scene(): invalid skin property of node" << i;
                 return {};
             }
             if(gltfSkin->asUnsignedInt() >= _d->gltfSkins.size()) {
-                Error{} << "Trade::CgltfImporter::scene(): skin index" << gltfSkin->asUnsignedInt() << "in node" << i << "out of range for" << _d->gltfSkins.size() << "skins";
+                Error{} << "Trade::GltfImporter::scene(): skin index" << gltfSkin->asUnsignedInt() << "in node" << i << "out of range for" << _d->gltfSkins.size() << "skins";
                 return {};
             }
 
@@ -2088,24 +2088,24 @@ Containers::Optional<SceneData> CgltfImporter::doScene(UnsignedInt id) {
         /* Extensions */
         if(const Utility::JsonToken* const gltfExtensions = gltfNode.find("extensions"_s)) {
             if(!_d->gltf->parseObject(*gltfExtensions)) {
-                Error{} << "Trade::CgltfImporter::scene(): invalid node" << i << "extensions property";
+                Error{} << "Trade::GltfImporter::scene(): invalid node" << i << "extensions property";
                 return {};
             }
 
             /* Light reference */
             if(const Utility::JsonToken* const gltfKhrLightsPunctual = gltfExtensions->find("KHR_lights_punctual"_s)) {
                 if(!_d->gltf->parseObject(*gltfKhrLightsPunctual)) {
-                    Error{} << "Trade::CgltfImporter::scene(): invalid node" << i << "KHR_lights_punctual extension";
+                    Error{} << "Trade::GltfImporter::scene(): invalid node" << i << "KHR_lights_punctual extension";
                     return {};
                 }
 
                 const Utility::JsonToken* gltfLight = gltfKhrLightsPunctual->find("light"_s);
                 if(!gltfLight || !_d->gltf->parseUnsignedInt(*gltfLight)) {
-                    Error{} << "Trade::CgltfImporter::scene(): missing or invalid KHR_lights_punctual light property of node" << i;
+                    Error{} << "Trade::GltfImporter::scene(): missing or invalid KHR_lights_punctual light property of node" << i;
                     return {};
                 }
                 if(gltfLight->asUnsignedInt() >= _d->gltfLights.size()) {
-                    Error{} << "Trade::CgltfImporter::scene(): light index" << gltfLight->asUnsignedInt() << "in node" << i << "out of range for" << _d->gltfLights.size() << "lights";
+                    Error{} << "Trade::GltfImporter::scene(): light index" << gltfLight->asUnsignedInt() << "in node" << i << "out of range for" << _d->gltfLights.size() << "lights";
                     return {};
                 }
 
@@ -2181,7 +2181,7 @@ Containers::Optional<SceneData> CgltfImporter::doScene(UnsignedInt id) {
         if(gltfTranslation) {
             const Containers::Optional<Containers::StridedArrayView1D<const float>> translationArray = _d->gltf->parseFloatArray(*gltfTranslation, 3);
             if(!translationArray) {
-                Error{} << "Trade::CgltfImporter::scene(): invalid translation property of node" << i;
+                Error{} << "Trade::GltfImporter::scene(): invalid translation property of node" << i;
                 return {};
             }
 
@@ -2193,7 +2193,7 @@ Containers::Optional<SceneData> CgltfImporter::doScene(UnsignedInt id) {
         if(gltfRotation) {
             const Containers::Optional<Containers::StridedArrayView1D<const float>> rotationArray = _d->gltf->parseFloatArray(*gltfRotation, 4);
             if(!rotationArray) {
-                Error{} << "Trade::CgltfImporter::scene(): invalid rotation property of node" << i;
+                Error{} << "Trade::GltfImporter::scene(): invalid rotation property of node" << i;
                 return {};
             }
 
@@ -2201,7 +2201,7 @@ Containers::Optional<SceneData> CgltfImporter::doScene(UnsignedInt id) {
             Utility::copy(*rotationArray, rotation.data());
             if(!rotation.isNormalized() && configuration().value<bool>("normalizeQuaternions")) {
                 rotation = rotation.normalized();
-                Warning{} << "Trade::CgltfImporter::scene(): rotation quaternion of node" << i << "was renormalized";
+                Warning{} << "Trade::GltfImporter::scene(): rotation quaternion of node" << i << "was renormalized";
             }
         }
 
@@ -2210,7 +2210,7 @@ Containers::Optional<SceneData> CgltfImporter::doScene(UnsignedInt id) {
         if(gltfScale) {
             const Containers::Optional<Containers::StridedArrayView1D<const float>> scalingArray = _d->gltf->parseFloatArray(*gltfScale, 3);
             if(!scalingArray) {
-                Error{} << "Trade::CgltfImporter::scene(): invalid scale property of node" << i;
+                Error{} << "Trade::GltfImporter::scene(): invalid scale property of node" << i;
                 return {};
             }
 
@@ -2223,7 +2223,7 @@ Containers::Optional<SceneData> CgltfImporter::doScene(UnsignedInt id) {
         if(gltfMatrix) {
             const Containers::Optional<Containers::StridedArrayView1D<const float>> transformationArray = _d->gltf->parseFloatArray(*gltfMatrix, 16);
             if(!transformationArray) {
-                Error{} << "Trade::CgltfImporter::scene(): invalid matrix property of node" << i;
+                Error{} << "Trade::GltfImporter::scene(): invalid matrix property of node" << i;
                 return {};
             }
 
@@ -2365,11 +2365,11 @@ Containers::Optional<SceneData> CgltfImporter::doScene(UnsignedInt id) {
     return SceneData{SceneMappingType::UnsignedInt, maxObjectIndexPlusOne, std::move(data), std::move(fields)};
 }
 
-UnsignedLong CgltfImporter::doObjectCount() const {
+UnsignedLong GltfImporter::doObjectCount() const {
     return _d->gltfNodes.size();
 }
 
-Long CgltfImporter::doObjectForName(const Containers::StringView name) {
+Long GltfImporter::doObjectForName(const Containers::StringView name) {
     if(!_d->nodesForName) {
         _d->nodesForName.emplace();
         _d->nodesForName->reserve(_d->gltfNodes.size());
@@ -2383,15 +2383,15 @@ Long CgltfImporter::doObjectForName(const Containers::StringView name) {
     return found == _d->nodesForName->end() ? -1 : found->second;
 }
 
-Containers::String CgltfImporter::doObjectName(const UnsignedLong id) {
+Containers::String GltfImporter::doObjectName(const UnsignedLong id) {
     return _d->gltfNodes[id].second();
 }
 
-UnsignedInt CgltfImporter::doSkin3DCount() const {
+UnsignedInt GltfImporter::doSkin3DCount() const {
     return _d->gltfSkins.size();
 }
 
-Int CgltfImporter::doSkin3DForName(const Containers::StringView name) {
+Int GltfImporter::doSkin3DForName(const Containers::StringView name) {
     if(!_d->skinsForName) {
         _d->skinsForName.emplace();
         _d->skinsForName->reserve(_d->gltfSkins.size());
@@ -2404,29 +2404,29 @@ Int CgltfImporter::doSkin3DForName(const Containers::StringView name) {
     return found == _d->skinsForName->end() ? -1 : found->second;
 }
 
-Containers::String CgltfImporter::doSkin3DName(const UnsignedInt id) {
+Containers::String GltfImporter::doSkin3DName(const UnsignedInt id) {
     return _d->gltfSkins[id].second();
 }
 
-Containers::Optional<SkinData3D> CgltfImporter::doSkin3D(const UnsignedInt id) {
+Containers::Optional<SkinData3D> GltfImporter::doSkin3D(const UnsignedInt id) {
     const Utility::JsonToken& gltfSkin = _d->gltfSkins[id].first();
 
     /* Joint IDs */
     const Utility::JsonToken* const gltfJoints = gltfSkin.find("joints"_s);
     Containers::Optional<Containers::StridedArrayView1D<const UnsignedInt>> jointsArray;
     if(!gltfJoints || !(jointsArray = _d->gltf->parseUnsignedIntArray(*gltfJoints))) {
-        Error{} << "Trade::CgltfImporter::skin3D(): missing or invalid joints property";
+        Error{} << "Trade::GltfImporter::skin3D(): missing or invalid joints property";
         return {};
     }
     if(jointsArray->isEmpty()) {
-        Error{} << "Trade::CgltfImporter::skin3D(): skin has no joints";
+        Error{} << "Trade::GltfImporter::skin3D(): skin has no joints";
         return {};
     }
     Containers::Array<UnsignedInt> joints{NoInit, jointsArray->size()};
     for(std::size_t i = 0; i != jointsArray->size(); ++i) {
         const UnsignedInt joint = (*jointsArray)[i];
         if(joint >= _d->gltfNodes.size()) {
-            Error{} << "Trade::CgltfImporter::skin3D(): joint index" << joint << "out of range for" << _d->gltfNodes.size() << "nodes";
+            Error{} << "Trade::GltfImporter::skin3D(): joint index" << joint << "out of range for" << _d->gltfNodes.size() << "nodes";
             return {};
         }
 
@@ -2437,23 +2437,23 @@ Containers::Optional<SkinData3D> CgltfImporter::doSkin3D(const UnsignedInt id) {
     Containers::Array<Matrix4> inverseBindMatrices{ValueInit, joints.size()};
     if(const Utility::JsonToken* const gltfInverseBindMatrices = gltfSkin.find("inverseBindMatrices"_s)) {
         if(!_d->gltf->parseUnsignedInt(*gltfInverseBindMatrices)) {
-            Error{} << "Trade::CgltfImporter::skin3D(): invalid inverseBindMatrices property";
+            Error{} << "Trade::GltfImporter::skin3D(): invalid inverseBindMatrices property";
             return {};
         }
 
-        const Containers::Optional<Containers::Triple<Containers::StridedArrayView2D<const char>, VertexFormat, UnsignedInt>> accessor = parseAccessor("Trade::CgltfImporter::skin3D():", gltfInverseBindMatrices->asUnsignedInt());
+        const Containers::Optional<Containers::Triple<Containers::StridedArrayView2D<const char>, VertexFormat, UnsignedInt>> accessor = parseAccessor("Trade::GltfImporter::skin3D():", gltfInverseBindMatrices->asUnsignedInt());
         if(!accessor)
             return {};
         if(accessor->second() != VertexFormat::Matrix4x4) {
             /* Since we're abusing VertexFormat for all formats, print just the
                enum value without the prefix to avoid cofusion */
-            Error{} << "Trade::CgltfImporter::skin3D(): inverse bind matrices have unexpected type" << Debug::packed << accessor->second();
+            Error{} << "Trade::GltfImporter::skin3D(): inverse bind matrices have unexpected type" << Debug::packed << accessor->second();
             return {};
         }
 
         Containers::StridedArrayView1D<const Matrix4> matrices = Containers::arrayCast<1, const Matrix4>(accessor->first());
         if(matrices.size() != inverseBindMatrices.size()) {
-            Error{} << "Trade::CgltfImporter::skin3D(): invalid inverse bind matrix count, expected" << inverseBindMatrices.size() << "but got" << matrices.size();
+            Error{} << "Trade::GltfImporter::skin3D(): invalid inverse bind matrix count, expected" << inverseBindMatrices.size() << "but got" << matrices.size();
             return {};
         }
 
@@ -2463,11 +2463,11 @@ Containers::Optional<SkinData3D> CgltfImporter::doSkin3D(const UnsignedInt id) {
     return SkinData3D{std::move(joints), std::move(inverseBindMatrices)};
 }
 
-UnsignedInt CgltfImporter::doMeshCount() const {
+UnsignedInt GltfImporter::doMeshCount() const {
     return _d->gltfMeshPrimitiveMap.size();
 }
 
-Int CgltfImporter::doMeshForName(const Containers::StringView name) {
+Int GltfImporter::doMeshForName(const Containers::StringView name) {
     /* As we can't fail here, name strings were parsed during import already
        (with the assumption they're mostly not escaped and thus overhead-less),
        but the map is populated lazily as that *is* some work */
@@ -2486,7 +2486,7 @@ Int CgltfImporter::doMeshForName(const Containers::StringView name) {
     return found == _d->meshesForName->end() ? -1 : found->second;
 }
 
-Containers::String CgltfImporter::doMeshName(const UnsignedInt id) {
+Containers::String GltfImporter::doMeshName(const UnsignedInt id) {
     /* This returns the same name for all multi-primitive mesh duplicates */
     return _d->gltfMeshes[_d->gltfMeshPrimitiveMap[id].first()].second();
 }
@@ -2508,14 +2508,14 @@ template<class T, class F, class G> std::size_t stableSortRemoveDuplicatesToPref
 
 }
 
-Containers::Optional<MeshData> CgltfImporter::doMesh(const UnsignedInt id, UnsignedInt) {
+Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, UnsignedInt) {
     const Utility::JsonToken& gltfPrimitive = _d->gltfMeshPrimitiveMap[id].second();
 
     /* Primitive is optional, defaulting to triangles */
     MeshPrimitive primitive = MeshPrimitive::Triangles;
     if(const Utility::JsonToken* gltfMode = gltfPrimitive.find("mode"_s)) {
         if(!_d->gltf->parseUnsignedInt(*gltfMode)) {
-            Error{} << "Trade::CgltfImporter::mesh(): invalid primitive mode property";
+            Error{} << "Trade::GltfImporter::mesh(): invalid primitive mode property";
             return {};
         }
         switch(gltfMode->asUnsignedInt()) {
@@ -2541,7 +2541,7 @@ Containers::Optional<MeshData> CgltfImporter::doMesh(const UnsignedInt id, Unsig
                 primitive = MeshPrimitive::TriangleFan;
                 break;
             default:
-                Error{} << "Trade::CgltfImporter::mesh(): unrecognized primitive" << gltfMode->asUnsignedInt();
+                Error{} << "Trade::GltfImporter::mesh(): unrecognized primitive" << gltfMode->asUnsignedInt();
                 return {};
         }
     }
@@ -2554,7 +2554,7 @@ Containers::Optional<MeshData> CgltfImporter::doMesh(const UnsignedInt id, Unsig
            custom attribute discovery, so we just use it directly. */
         for(Utility::JsonObjectItem gltfAttribute: gltfAttributes->asObject()) {
             if(!_d->gltf->parseUnsignedInt(gltfAttribute.value())) {
-                Error{} << "Trade::CgltfImporter::mesh(): invalid attribute" << gltfAttribute.key();
+                Error{} << "Trade::GltfImporter::mesh(): invalid attribute" << gltfAttribute.key();
                 return {};
             }
             /* Bounds check is done in parseAccessor() later, no need to do it
@@ -2600,7 +2600,7 @@ Containers::Optional<MeshData> CgltfImporter::doMesh(const UnsignedInt id, Unsig
                 lastNumberedAttribute.second() = -1;
             const Int index = attributeNameNumber[2][0] - '0';
             if(index != lastNumberedAttribute.second() + 1) {
-                Warning{} << "Trade::CgltfImporter::mesh(): found attribute" << attribute.first() << "but expected" << attributeNameNumber[0] << Debug::nospace << "_" << Debug::nospace << lastNumberedAttribute.second() + 1;
+                Warning{} << "Trade::GltfImporter::mesh(): found attribute" << attribute.first() << "but expected" << attributeNameNumber[0] << Debug::nospace << "_" << Debug::nospace << lastNumberedAttribute.second() + 1;
             }
 
             baseAttributeName = attributeNameNumber[0];
@@ -2615,7 +2615,7 @@ Containers::Optional<MeshData> CgltfImporter::doMesh(const UnsignedInt id, Unsig
         }
 
         /* Get the accessor view */
-        Containers::Optional<Containers::Triple<Containers::StridedArrayView2D<const char>, VertexFormat, UnsignedInt>> accessor = parseAccessor("Trade::CgltfImporter::mesh():", attribute.second());
+        Containers::Optional<Containers::Triple<Containers::StridedArrayView2D<const char>, VertexFormat, UnsignedInt>> accessor = parseAccessor("Trade::GltfImporter::mesh():", attribute.second());
         if(!accessor) return {};
 
         /* Whitelist supported attribute and format combinations. If not
@@ -2688,7 +2688,7 @@ Containers::Optional<MeshData> CgltfImporter::doMesh(const UnsignedInt id, Unsig
                accessor->second() != VertexFormat::UnsignedByte) {
                 /* Here the VertexFormat prefix would not be confusing but
                    print it without to be consistent with other messages */
-                Error{} << "Trade::CgltfImporter::mesh(): unsupported object ID attribute" << attribute.first() << "type" << Debug::packed << accessor->second();
+                Error{} << "Trade::GltfImporter::mesh(): unsupported object ID attribute" << attribute.first() << "type" << Debug::packed << accessor->second();
                 return {};
             }
 
@@ -2701,7 +2701,7 @@ Containers::Optional<MeshData> CgltfImporter::doMesh(const UnsignedInt id, Unsig
         if(name == MeshAttribute{}) {
             /* Here the VertexFormat prefix would not be confusing but print it
                without to be consistent with other messages */
-            Error{} << "Trade::CgltfImporter::mesh(): unsupported" << attribute.first() << "format" << Debug::packed << accessor->second();
+            Error{} << "Trade::GltfImporter::mesh(): unsupported" << attribute.first() << "format" << Debug::packed << accessor->second();
             return {};
         }
 
@@ -2715,14 +2715,14 @@ Containers::Optional<MeshData> CgltfImporter::doMesh(const UnsignedInt id, Unsig
         } else {
             /* ... and probably never will be */
             if(bufferView.third() != bufferId) {
-                Error{} << "Trade::CgltfImporter::mesh(): meshes spanning multiple buffers are not supported";
+                Error{} << "Trade::GltfImporter::mesh(): meshes spanning multiple buffers are not supported";
                 return {};
             }
 
             bufferRange = Math::join(bufferRange, Math::Range1D<std::size_t>::fromSize(reinterpret_cast<std::size_t>(bufferView.first().data()), bufferView.first().size()));
 
             if(accessor->first().size()[0] != vertexCount) {
-                Error{} << "Trade::CgltfImporter::mesh(): mismatched vertex count for attribute" << attribute.first() << Debug::nospace << ", expected" << vertexCount << "but got" << accessor->first().size()[0];
+                Error{} << "Trade::GltfImporter::mesh(): mismatched vertex count for attribute" << attribute.first() << Debug::nospace << ", expected" << vertexCount << "but got" << accessor->first().size()[0];
                 return {};
             }
         }
@@ -2796,13 +2796,13 @@ Containers::Optional<MeshData> CgltfImporter::doMesh(const UnsignedInt id, Unsig
     Containers::Array<char> indexData;
     if(const Utility::JsonToken* gltfIndices = gltfPrimitive.find("indices"_s)) {
         if(!_d->gltf->parseUnsignedInt(*gltfIndices)) {
-            Error{} << "Trade::CgltfImporter::mesh(): invalid indices property";
+            Error{} << "Trade::GltfImporter::mesh(): invalid indices property";
             return {};
         }
         /* Bounds check is done in parseAccessor() below, no need to do it
            here again */
 
-        Containers::Optional<Containers::Triple<Containers::StridedArrayView2D<const char>, VertexFormat, UnsignedInt>> accessor = parseAccessor("Trade::CgltfImporter::mesh():", gltfIndices->asUnsignedInt());
+        Containers::Optional<Containers::Triple<Containers::StridedArrayView2D<const char>, VertexFormat, UnsignedInt>> accessor = parseAccessor("Trade::GltfImporter::mesh():", gltfIndices->asUnsignedInt());
         if(!accessor) return {};
 
         MeshIndexType type;
@@ -2815,12 +2815,12 @@ Containers::Optional<MeshData> CgltfImporter::doMesh(const UnsignedInt id, Unsig
         else {
             /* Since we're abusing VertexFormat for all formats, print just the
                enum value without the prefix to avoid cofusion */
-            Error{} << "Trade::CgltfImporter::mesh(): unsupported index type" << Debug::packed << accessor->second();
+            Error{} << "Trade::GltfImporter::mesh(): unsupported index type" << Debug::packed << accessor->second();
             return {};
         }
 
         if(!accessor->first().isContiguous()) {
-            Error{} << "Trade::CgltfImporter::mesh(): index buffer view is not contiguous";
+            Error{} << "Trade::GltfImporter::mesh(): index buffer view is not contiguous";
             return {};
         }
 
@@ -2841,20 +2841,20 @@ Containers::Optional<MeshData> CgltfImporter::doMesh(const UnsignedInt id, Unsig
         vertexCount};
 }
 
-MeshAttribute CgltfImporter::doMeshAttributeForName(const Containers::StringView name) {
+MeshAttribute GltfImporter::doMeshAttributeForName(const Containers::StringView name) {
     return _d ? _d->meshAttributesForName[name] : MeshAttribute{};
 }
 
-Containers::String CgltfImporter::doMeshAttributeName(const UnsignedShort name) {
+Containers::String GltfImporter::doMeshAttributeName(const UnsignedShort name) {
     return _d && name < _d->meshAttributeNames.size() ?
         _d->meshAttributeNames[name] : "";
 }
 
-UnsignedInt CgltfImporter::doMaterialCount() const {
+UnsignedInt GltfImporter::doMaterialCount() const {
     return _d->gltfMaterials.size();
 }
 
-Int CgltfImporter::doMaterialForName(const Containers::StringView name) {
+Int GltfImporter::doMaterialForName(const Containers::StringView name) {
     if(!_d->materialsForName) {
         _d->materialsForName.emplace();
         _d->materialsForName->reserve(_d->gltfMaterials.size());
@@ -2867,7 +2867,7 @@ Int CgltfImporter::doMaterialForName(const Containers::StringView name) {
     return found == _d->materialsForName->end() ? -1 : found->second;
 }
 
-Containers::String CgltfImporter::doMaterialName(const UnsignedInt id) {
+Containers::String GltfImporter::doMaterialName(const UnsignedInt id) {
     return _d->gltfMaterials[id].second();
 }
 
@@ -2886,7 +2886,7 @@ bool checkMaterialAttributeSize(const Containers::StringView name, const Materia
 
     /* +1 is the key null byte */
     if(valueSize + name.size() + 1 + sizeof(MaterialAttributeType) > sizeof(MaterialAttributeData)) {
-        Warning{} << "Trade::CgltfImporter::material(): property" << name <<
+        Warning{} << "Trade::GltfImporter::material(): property" << name <<
             "is too large with" << valueSize + name.size() << "bytes, skipping";
         return false;
     }
@@ -2898,7 +2898,7 @@ Containers::Optional<MaterialAttributeData> parseMaterialAttribute(Utility::Json
     /* Not const, gets modified if the first letter isn't lowercase */
     Containers::StringView name = gltfKey.asString();
     if(!name) {
-        Warning{} << "Trade::CgltfImporter::material(): property with an empty name, skipping";
+        Warning{} << "Trade::GltfImporter::material(): property with an empty name, skipping";
         return {};
     }
 
@@ -2919,14 +2919,14 @@ Containers::Optional<MaterialAttributeData> parseMaterialAttribute(Utility::Json
        append more than one attribute, so this is handled directly in the
        extension parsing loop. */
     if(gltfValue.type() == Utility::JsonToken::Type::Object) {
-        Warning{} << "Trade::CgltfImporter::material(): property" << name << "is an object, skipping";
+        Warning{} << "Trade::GltfImporter::material(): property" << name << "is an object, skipping";
         return {};
 
     /* Array, hopefully numeric */
     } else if(gltfValue.type() == Utility::JsonToken::Type::Array) {
         for(const Utility::JsonToken& i: *gltf.parseArray(gltfValue)) {
             if(i.type() != Utility::JsonToken::Type::Number) {
-                Warning{} << "Trade::CgltfImporter::material(): property" << name << "is not a numeric array, skipping";
+                Warning{} << "Trade::GltfImporter::material(): property" << name << "is not a numeric array, skipping";
                 return {};
             }
         }
@@ -2939,7 +2939,7 @@ Containers::Optional<MaterialAttributeData> parseMaterialAttribute(Utility::Json
         /* No use importing arbitrarily-sized arrays of primitives, those are
            currently not used in any glTF extension */
         if(!valueArray || valueArray->size() < 1 || valueArray->size() > 4) {
-            Warning{} << "Trade::CgltfImporter::material(): property" << name << "is an invalid or unrepresentable numeric vector, skipping";
+            Warning{} << "Trade::GltfImporter::material(): property" << name << "is an invalid or unrepresentable numeric vector, skipping";
             return {};
         }
 
@@ -2955,7 +2955,7 @@ Containers::Optional<MaterialAttributeData> parseMaterialAttribute(Utility::Json
     /* Null. Not sure what for, skipping. If the token is not actually a valid
        null value, the error gets silently ignored. */
     } else if(gltfValue.type() == Utility::JsonToken::Type::Null) {
-        Warning{} << "Trade::CgltfImporter::material(): property" << name << "is a null, skipping";
+        Warning{} << "Trade::GltfImporter::material(): property" << name << "is a null, skipping";
         return {};
 
     /* Bool */
@@ -2964,7 +2964,7 @@ Containers::Optional<MaterialAttributeData> parseMaterialAttribute(Utility::Json
             type = MaterialAttributeType::Bool;
             *reinterpret_cast<bool*>(attributeData) = *b;
         } else {
-            Warning{} << "Trade::CgltfImporter::material(): property" << name << "is invalid, skipping";
+            Warning{} << "Trade::GltfImporter::material(): property" << name << "is invalid, skipping";
             return {};
         }
 
@@ -2978,7 +2978,7 @@ Containers::Optional<MaterialAttributeData> parseMaterialAttribute(Utility::Json
             type = MaterialAttributeType::Float;
             *reinterpret_cast<Float*>(attributeData) = *f;
         } else {
-            Warning{} << "Trade::CgltfImporter::material(): property" << name << "is invalid, skipping";
+            Warning{} << "Trade::GltfImporter::material(): property" << name << "is invalid, skipping";
             return {};
         }
 
@@ -2988,7 +2988,7 @@ Containers::Optional<MaterialAttributeData> parseMaterialAttribute(Utility::Json
             type = MaterialAttributeType::String;
             attributeStringView = *s;
         } else {
-            Warning{} << "Trade::CgltfImporter::material(): property" << name << "is invalid, skipping";
+            Warning{} << "Trade::GltfImporter::material(): property" << name << "is invalid, skipping";
             return {};
         }
 
@@ -3018,19 +3018,19 @@ Containers::Optional<MaterialAttributeData> parseMaterialAttribute(Utility::Json
 
 }
 
-bool CgltfImporter::materialTexture(const Utility::JsonToken& gltfTexture, Containers::Array<MaterialAttributeData>& attributes, const Containers::StringView attribute, const Containers::StringView matrixAttribute, const Containers::StringView coordinateAttribute) {
+bool GltfImporter::materialTexture(const Utility::JsonToken& gltfTexture, Containers::Array<MaterialAttributeData>& attributes, const Containers::StringView attribute, const Containers::StringView matrixAttribute, const Containers::StringView coordinateAttribute) {
     if(!_d->gltf->parseObject(gltfTexture)) {
-        Error{} << "Trade::CgltfImporter::material(): invalid" << gltfTexture.parent()->asString() << "property";
+        Error{} << "Trade::GltfImporter::material(): invalid" << gltfTexture.parent()->asString() << "property";
         return false;
     }
 
     const Utility::JsonToken* const gltfIndex = gltfTexture.find("index"_s);
     if(!gltfIndex || !_d->gltf->parseUnsignedInt(*gltfIndex)) {
-        Error{} << "Trade::CgltfImporter::material(): missing or invalid" << gltfTexture.parent()->asString() << "index property";
+        Error{} << "Trade::GltfImporter::material(): missing or invalid" << gltfTexture.parent()->asString() << "index property";
         return false;
     }
     if(gltfIndex->asUnsignedInt() >= _d->gltfTextures.size()) {
-        Error{} << "Trade::CgltfImporter::material():" << gltfTexture.parent()->asString() << "index" << gltfIndex->asUnsignedInt() << "out of range for" << _d->gltfTextures.size() << "textures";
+        Error{} << "Trade::GltfImporter::material():" << gltfTexture.parent()->asString() << "index" << gltfIndex->asUnsignedInt() << "out of range for" << _d->gltfTextures.size() << "textures";
         return false;
     }
 
@@ -3038,7 +3038,7 @@ bool CgltfImporter::materialTexture(const Utility::JsonToken& gltfTexture, Conta
     UnsignedInt texCoord = 0;
     if(const Utility::JsonToken* const gltfTexCoord = gltfTexture.find("texCoord"_s)) {
         if(!_d->gltf->parseUnsignedInt(*gltfTexCoord)) {
-            Error{} << "Trade::CgltfImporter::material(): invalid" << gltfTexture.parent()->asString() << "texcoord property";
+            Error{} << "Trade::GltfImporter::material(): invalid" << gltfTexture.parent()->asString() << "texcoord property";
             return false;
         }
 
@@ -3049,7 +3049,7 @@ bool CgltfImporter::materialTexture(const Utility::JsonToken& gltfTexture, Conta
     const Utility::JsonToken* gltfKhrTextureTransform = nullptr;
     if(const Utility::JsonToken* const gltfExtensions = gltfTexture.find("extensions"_s)) {
         if(!_d->gltf->parseObject(*gltfExtensions)) {
-            Error{} << "Trade::CgltfImporter::material(): invalid" << gltfTexture.parent()->asString() << "extensions property";
+            Error{} << "Trade::GltfImporter::material(): invalid" << gltfTexture.parent()->asString() << "extensions property";
             return false;
         }
 
@@ -3059,7 +3059,7 @@ bool CgltfImporter::materialTexture(const Utility::JsonToken& gltfTexture, Conta
            the following verified with https://github.com/KhronosGroup/glTF-Sample-Models/tree/master/2.0/TextureTransformTest */
         gltfKhrTextureTransform = gltfExtensions->find("KHR_texture_transform"_s);
         if(gltfKhrTextureTransform && !_d->gltf->parseObject(*gltfKhrTextureTransform)) {
-            Error{} << "Trade::CgltfImporter::material(): invalid" << gltfTexture.parent()->asString() << "KHR_texture_transform extension";
+            Error{} << "Trade::GltfImporter::material(): invalid" << gltfTexture.parent()->asString() << "KHR_texture_transform extension";
             return false;
         }
         if(gltfKhrTextureTransform && checkMaterialAttributeSize(matrixAttribute, MaterialAttributeType::Matrix3x3)) {
@@ -3077,7 +3077,7 @@ bool CgltfImporter::materialTexture(const Utility::JsonToken& gltfTexture, Conta
                applying transformation to a different set) */
             if(const Utility::JsonToken* const gltfTexCoord = gltfKhrTextureTransform->find("texCoord"_s)) {
                 if(!_d->gltf->parseUnsignedInt(*gltfTexCoord)) {
-                    Error{} << "Trade::CgltfImporter::material(): invalid" << gltfTexture.parent()->asString() << "KHR_texture_transform texcoord property";
+                    Error{} << "Trade::GltfImporter::material(): invalid" << gltfTexture.parent()->asString() << "KHR_texture_transform texcoord property";
                     return false;
                 }
 
@@ -3088,7 +3088,7 @@ bool CgltfImporter::materialTexture(const Utility::JsonToken& gltfTexture, Conta
             if(const Utility::JsonToken* const gltfScale = gltfKhrTextureTransform->find("scale"_s)) {
                 const Containers::Optional<Containers::StridedArrayView1D<const float>> scalingArray = _d->gltf->parseFloatArray(*gltfScale, 2);
                 if(!scalingArray) {
-                    Error{} << "Trade::CgltfImporter::material(): invalid" << gltfTexture.parent()->asString() << "KHR_texture_transform scale property";
+                    Error{} << "Trade::GltfImporter::material(): invalid" << gltfTexture.parent()->asString() << "KHR_texture_transform scale property";
                     return false;
                 }
 
@@ -3099,7 +3099,7 @@ bool CgltfImporter::materialTexture(const Utility::JsonToken& gltfTexture, Conta
             Rad rotation;
             if(const Utility::JsonToken* const gltfRotation = gltfKhrTextureTransform->find("rotation"_s)) {
                 if(!_d->gltf->parseFloat(*gltfRotation)) {
-                    Error{} << "Trade::CgltfImporter::material(): invalid" << gltfTexture.parent()->asString() << "KHR_texture_transform rotation property";
+                    Error{} << "Trade::GltfImporter::material(): invalid" << gltfTexture.parent()->asString() << "KHR_texture_transform rotation property";
                     return false;
                 }
 
@@ -3114,7 +3114,7 @@ bool CgltfImporter::materialTexture(const Utility::JsonToken& gltfTexture, Conta
             if(const Utility::JsonToken* const gltfOffset = gltfKhrTextureTransform->find("offset"_s)) {
                 const Containers::Optional<Containers::StridedArrayView1D<const float>> offsetArray = _d->gltf->parseFloatArray(*gltfOffset, 2);
                 if(!offsetArray) {
-                    Error{} << "Trade::CgltfImporter::material(): invalid" << gltfTexture.parent()->asString() << "KHR_texture_transform offset property";
+                    Error{} << "Trade::GltfImporter::material(): invalid" << gltfTexture.parent()->asString() << "KHR_texture_transform offset property";
                     return false;
                 }
 
@@ -3154,7 +3154,7 @@ bool CgltfImporter::materialTexture(const Utility::JsonToken& gltfTexture, Conta
     return true;
 }
 
-Containers::Optional<MaterialData> CgltfImporter::doMaterial(const UnsignedInt id) {
+Containers::Optional<MaterialData> GltfImporter::doMaterial(const UnsignedInt id) {
     const Utility::JsonToken& gltfMaterial = _d->gltfMaterials[id].first();
 
     Containers::Array<UnsignedInt> layers;
@@ -3165,7 +3165,7 @@ Containers::Optional<MaterialData> CgltfImporter::doMaterial(const UnsignedInt i
        glTF, no need to add anything if not present. */
     if(const Utility::JsonToken* const gltfAlphaMode = gltfMaterial.find("alphaMode"_s)) {
         if(!_d->gltf->parseString(*gltfAlphaMode)) {
-            Error{} << "Trade::CgltfImporter::material(): invalid alphaMode property";
+            Error{} << "Trade::GltfImporter::material(): invalid alphaMode property";
             return {};
         }
 
@@ -3178,7 +3178,7 @@ Containers::Optional<MaterialData> CgltfImporter::doMaterial(const UnsignedInt i
             Float mask = 0.5f;
             if(const Utility::JsonToken* const gltfAlphaCutoff = gltfMaterial.find("alphaCutoff"_s)) {
                 if(!_d->gltf->parseFloat(*gltfAlphaCutoff)) {
-                    Error{} << "Trade::CgltfImporter::material(): invalid alphaCutoff property";
+                    Error{} << "Trade::GltfImporter::material(): invalid alphaCutoff property";
                     return {};
                 }
 
@@ -3192,7 +3192,7 @@ Containers::Optional<MaterialData> CgltfImporter::doMaterial(const UnsignedInt i
             arrayAppend(attributes, InPlaceInit, MaterialAttribute::AlphaBlend, false);
 
         } else {
-            Error{} << "Trade::CgltfImporter::material(): unrecognized alphaMode" << mode;
+            Error{} << "Trade::GltfImporter::material(): unrecognized alphaMode" << mode;
             return {};
         }
     }
@@ -3201,7 +3201,7 @@ Containers::Optional<MaterialData> CgltfImporter::doMaterial(const UnsignedInt i
        no need to add anything if not present. */
     if(const Utility::JsonToken* const gltfDoubleSided = gltfMaterial.find("doubleSided"_s)) {
         if(!_d->gltf->parseBool(*gltfDoubleSided)) {
-            Error{} << "Trade::CgltfImporter::material(): invalid doubleSided property";
+            Error{} << "Trade::GltfImporter::material(): invalid doubleSided property";
             return {};
         }
 
@@ -3211,7 +3211,7 @@ Containers::Optional<MaterialData> CgltfImporter::doMaterial(const UnsignedInt i
     /* Core metallic/roughness material */
     if(const Utility::JsonToken* const gltfPbrMetallicRoughness = gltfMaterial.find("pbrMetallicRoughness"_s)) {
         if(!_d->gltf->parseObject(*gltfPbrMetallicRoughness)) {
-            Error{} << "Trade::CgltfImporter::material(): invalid pbrMetallicRoughness property";
+            Error{} << "Trade::GltfImporter::material(): invalid pbrMetallicRoughness property";
             return {};
         }
 
@@ -3222,7 +3222,7 @@ Containers::Optional<MaterialData> CgltfImporter::doMaterial(const UnsignedInt i
         if(const Utility::JsonToken* const gltfBaseColorFactor = gltfPbrMetallicRoughness->find("baseColorFactor"_s)) {
             const Containers::Optional<Containers::StridedArrayView1D<const float>> baseColorArray = _d->gltf->parseFloatArray(*gltfBaseColorFactor, 4);
             if(!baseColorArray) {
-                Error{} << "Trade::CgltfImporter::material(): invalid pbrMetallicRoughness baseColorFactor property";
+                Error{} << "Trade::GltfImporter::material(): invalid pbrMetallicRoughness baseColorFactor property";
                 return {};
             }
 
@@ -3236,7 +3236,7 @@ Containers::Optional<MaterialData> CgltfImporter::doMaterial(const UnsignedInt i
            glTF, no need to add anything if not present. */
         if(const Utility::JsonToken* const gltfMetallicFactor = gltfPbrMetallicRoughness->find("metallicFactor"_s)) {
             if(!_d->gltf->parseFloat(*gltfMetallicFactor)) {
-                Error{} << "Trade::CgltfImporter::material(): invalid pbrMetallicRoughness metallicFactor property";
+                Error{} << "Trade::GltfImporter::material(): invalid pbrMetallicRoughness metallicFactor property";
                 return {};
             }
 
@@ -3248,7 +3248,7 @@ Containers::Optional<MaterialData> CgltfImporter::doMaterial(const UnsignedInt i
            glTF, no need to add anything if not present. */
         if(const Utility::JsonToken* const gltfRoughnessFactor = gltfPbrMetallicRoughness->find("roughnessFactor"_s)) {
             if(!_d->gltf->parseFloat(*gltfRoughnessFactor)) {
-                Error{} << "Trade::CgltfImporter::material(): invalid pbrMetallicRoughness roughnessFactor property";
+                Error{} << "Trade::GltfImporter::material(): invalid pbrMetallicRoughness roughnessFactor property";
                 return {};
             }
 
@@ -3293,14 +3293,14 @@ Containers::Optional<MaterialData> CgltfImporter::doMaterial(const UnsignedInt i
     Containers::Array<Containers::Reference<const Utility::JsonToken>> gltfExtensionsKeys;
     if(const Utility::JsonToken* const gltfExtensions = gltfMaterial.find("extensions"_s)) {
         if(!_d->gltf->parseObject(*gltfExtensions)) {
-            Error{} << "Trade::CgltfImporter::material(): invalid extensions property";
+            Error{} << "Trade::GltfImporter::material(): invalid extensions property";
             return {};
         }
 
         for(Utility::JsonObjectItem gltfExtension: gltfExtensions->asObject()) {
             const Containers::StringView extensionName = gltfExtension.key();
             if(!_d->gltf->parseObject(gltfExtension.value())) {
-                Error{} << "Trade::CgltfImporter::material(): invalid" << extensionName << "extension property";
+                Error{} << "Trade::GltfImporter::material(): invalid" << extensionName << "extension property";
                 return {};
             }
 
@@ -3326,7 +3326,7 @@ Containers::Optional<MaterialData> CgltfImporter::doMaterial(const UnsignedInt i
         if(const Utility::JsonToken* const gltfDiffuseFactor = gltfPbrSpecularGlossiness->find("diffuseFactor"_s)) {
             const Containers::Optional<Containers::StridedArrayView1D<const float>> diffuseFactorArray = _d->gltf->parseFloatArray(*gltfDiffuseFactor, 4);
             if(!diffuseFactorArray) {
-                Error{} << "Trade::CgltfImporter::material(): invalid KHR_materials_pbrSpecularGlossiness diffuseFactor property";
+                Error{} << "Trade::GltfImporter::material(): invalid KHR_materials_pbrSpecularGlossiness diffuseFactor property";
                 return {};
             }
 
@@ -3341,7 +3341,7 @@ Containers::Optional<MaterialData> CgltfImporter::doMaterial(const UnsignedInt i
         if(const Utility::JsonToken* const gltfSpecularFactor = gltfPbrSpecularGlossiness->find("specularFactor"_s)) {
             const Containers::Optional<Containers::StridedArrayView1D<const float>> specularFactorArray = _d->gltf->parseFloatArray(*gltfSpecularFactor, 3);
             if(!specularFactorArray) {
-                Error{} << "Trade::CgltfImporter::material(): invalid KHR_materials_pbrSpecularGlossiness specularFactor property";
+                Error{} << "Trade::GltfImporter::material(): invalid KHR_materials_pbrSpecularGlossiness specularFactor property";
                 return {};
             }
 
@@ -3358,7 +3358,7 @@ Containers::Optional<MaterialData> CgltfImporter::doMaterial(const UnsignedInt i
            glTF, no need to add anything if not present. */
         if(const Utility::JsonToken* const gltfGlossinessFactor = gltfPbrSpecularGlossiness->find("glossinessFactor"_s)) {
             if(!_d->gltf->parseFloat(*gltfGlossinessFactor)) {
-                Error{} << "Trade::CgltfImporter::material(): invalid KHR_materials_pbrSpecularGlossiness glossinessFactor property";
+                Error{} << "Trade::GltfImporter::material(): invalid KHR_materials_pbrSpecularGlossiness glossinessFactor property";
                 return {};
             }
 
@@ -3408,7 +3408,7 @@ Containers::Optional<MaterialData> CgltfImporter::doMaterial(const UnsignedInt i
            need to add anything if not present. */
         if(const Utility::JsonToken* const gltfNormalTextureScale = gltfNormalTexture->find("scale"_s)) {
             if(!_d->gltf->parseFloat(*gltfNormalTextureScale)) {
-                Error{} << "Trade::CgltfImporter::material(): invalid normalTexture scale property";
+                Error{} << "Trade::GltfImporter::material(): invalid normalTexture scale property";
                 return {};
             }
 
@@ -3429,7 +3429,7 @@ Containers::Optional<MaterialData> CgltfImporter::doMaterial(const UnsignedInt i
            need to add anything if not present. */
         if(const Utility::JsonToken* const gltfOcclusionTextureStrength = gltfOcclusionTexture->find("strength"_s)) {
             if(!_d->gltf->parseFloat(*gltfOcclusionTextureStrength)) {
-                Error{} << "Trade::CgltfImporter::material(): invalid occlusionTexture strength property";
+                Error{} << "Trade::GltfImporter::material(): invalid occlusionTexture strength property";
                 return {};
             }
 
@@ -3444,7 +3444,7 @@ Containers::Optional<MaterialData> CgltfImporter::doMaterial(const UnsignedInt i
     if(const Utility::JsonToken* const gltfEmissiveFactor = gltfMaterial.find("emissiveFactor"_s)) {
         const Containers::Optional<Containers::StridedArrayView1D<const float>> emissiveFactorArray = _d->gltf->parseFloatArray(*gltfEmissiveFactor, 3);
         if(!emissiveFactorArray) {
-            Error{} << "Trade::CgltfImporter::material(): invalid emissiveFactor property";
+            Error{} << "Trade::GltfImporter::material(): invalid emissiveFactor property";
             return {};
         }
 
@@ -3538,9 +3538,9 @@ Containers::Optional<MaterialData> CgltfImporter::doMaterial(const UnsignedInt i
                         arrayAppend(attributes, *parsed);
                 }
 
-            } else Warning{} << "Trade::CgltfImporter::material(): extras object has invalid keys, skipping";
+            } else Warning{} << "Trade::GltfImporter::material(): extras object has invalid keys, skipping";
 
-        } else Warning{} << "Trade::CgltfImporter::material(): extras property is not an object, skipping";
+        } else Warning{} << "Trade::GltfImporter::material(): extras property is not an object, skipping";
     }
 
     /* Clear coat layer -- needs to be after all base material attributes */
@@ -3561,7 +3561,7 @@ Containers::Optional<MaterialData> CgltfImporter::doMaterial(const UnsignedInt i
            present. */
         if(const Utility::JsonToken* const gltfClearcoatFactor = gltfClearcoat->find("clearcoatFactor"_s)) {
             if(!_d->gltf->parseFloat(*gltfClearcoatFactor)) {
-                Error{} << "Trade::CgltfImporter::material(): invalid KHR_materials_clearcoat clearcoatFactor property";
+                Error{} << "Trade::GltfImporter::material(): invalid KHR_materials_clearcoat clearcoatFactor property";
                 return {};
             }
 
@@ -3583,7 +3583,7 @@ Containers::Optional<MaterialData> CgltfImporter::doMaterial(const UnsignedInt i
            if the factor is not present. */
         if(const Utility::JsonToken* const gltfRoughnessFactor = gltfClearcoat->find("clearcoatRoughnessFactor"_s)) {
             if(!_d->gltf->parseFloat(*gltfRoughnessFactor)) {
-                Error{} << "Trade::CgltfImporter::material(): invalid KHR_materials_clearcoat roughnessFactor property";
+                Error{} << "Trade::GltfImporter::material(): invalid KHR_materials_clearcoat roughnessFactor property";
                 return {};
             }
 
@@ -3616,7 +3616,7 @@ Containers::Optional<MaterialData> CgltfImporter::doMaterial(const UnsignedInt i
                need to add anything if not present. */
             if(const Utility::JsonToken* const gltfNormalTextureScale = gltfNormalTexture->find("scale"_s)) {
                 if(!_d->gltf->parseFloat(*gltfNormalTextureScale)) {
-                    Error{} << "Trade::CgltfImporter::material(): invalid KHR_materials_clearcoat normalTexture scale property";
+                    Error{} << "Trade::GltfImporter::material(): invalid KHR_materials_clearcoat normalTexture scale property";
                     return {};
                 }
 
@@ -3642,7 +3642,7 @@ Containers::Optional<MaterialData> CgltfImporter::doMaterial(const UnsignedInt i
     for(const Utility::JsonToken& gltfExtensionKey: gltfExtensionsKeys.exceptPrefix(gltfExtensionsKeys.size() - uniqueExtensionCount)) {
         const Containers::StringView extensionName = gltfExtensionKey.asString();
         if(!extensionName) {
-            Warning{} << "Trade::CgltfImporter::material(): extension with an empty name, skipping";
+            Warning{} << "Trade::GltfImporter::material(): extension with an empty name, skipping";
             continue;
         }
 
@@ -3653,7 +3653,7 @@ Containers::Optional<MaterialData> CgltfImporter::doMaterial(const UnsignedInt i
         /* +1 is the key null byte. +3 are the '#' layer prefix, the layer null
            byte and the length. */
         if(" LayerName"_s.size() + 1 + extensionName.size() + 3 + sizeof(MaterialAttributeType) > sizeof(MaterialAttributeData)) {
-            Warning{} << "Trade::CgltfImporter::material(): extension name" << extensionName <<
+            Warning{} << "Trade::GltfImporter::material(): extension name" << extensionName <<
                 "is too long with" << extensionName.size() << "characters, skipping";
             continue;
         }
@@ -3681,7 +3681,7 @@ Containers::Optional<MaterialData> CgltfImporter::doMaterial(const UnsignedInt i
         for(const Utility::JsonToken& gltfKey: gltfExtensionKeys.exceptPrefix(gltfExtensionKeys.size() - uniqueCount)) {
             const Containers::StringView name = gltfKey.asString();
             if(!name) {
-                Warning{} << "Trade::CgltfImporter::material(): property with an empty name, skipping";
+                Warning{} << "Trade::GltfImporter::material(): property with an empty name, skipping";
                 continue;
             }
 
@@ -3692,7 +3692,7 @@ Containers::Optional<MaterialData> CgltfImporter::doMaterial(const UnsignedInt i
                suffix and type are ignored. */
             if(gltfValue.type() == Utility::JsonToken::Type::Object) {
                 if(name.size() < 8 || !name.hasSuffix("Texture"_s)) {
-                    Warning{} << "Trade::CgltfImporter::material(): property" << name << "has a non-texture object type, skipping";
+                    Warning{} << "Trade::GltfImporter::material(): property" << name << "has a non-texture object type, skipping";
                     continue;
                 }
 
@@ -3702,7 +3702,7 @@ Containers::Optional<MaterialData> CgltfImporter::doMaterial(const UnsignedInt i
                     nameBuffer.prefix(name.size() + 6),
                     nameBuffer.exceptPrefix(name.size() + 6)))
                 {
-                    Warning{} << "Trade::CgltfImporter::material(): property" << name << "has an invalid texture object, skipping";
+                    Warning{} << "Trade::GltfImporter::material(): property" << name << "has an invalid texture object, skipping";
                     continue;
                 }
 
@@ -3713,7 +3713,7 @@ Containers::Optional<MaterialData> CgltfImporter::doMaterial(const UnsignedInt i
                     basically same as done for extras */
                 if(const Utility::JsonToken* const gltfTextureScale = gltfValue.find("scale"_s)) {
                     if(!_d->gltf->parseFloat(*gltfTextureScale)) {
-                        Warning{} << "Trade::CgltfImporter::material(): invalid" << extensionName << name << "scale property, skipping";
+                        Warning{} << "Trade::GltfImporter::material(): invalid" << extensionName << name << "scale property, skipping";
                         continue;
                     }
 
@@ -3741,11 +3741,11 @@ Containers::Optional<MaterialData> CgltfImporter::doMaterial(const UnsignedInt i
     return MaterialData{types, std::move(attributes), std::move(layers)};
 }
 
-UnsignedInt CgltfImporter::doTextureCount() const {
+UnsignedInt GltfImporter::doTextureCount() const {
     return _d->gltfTextures.size();
 }
 
-Int CgltfImporter::doTextureForName(const Containers::StringView name) {
+Int GltfImporter::doTextureForName(const Containers::StringView name) {
     if(!_d->texturesForName) {
         _d->texturesForName.emplace();
         _d->texturesForName->reserve(_d->gltfTextures.size());
@@ -3758,11 +3758,11 @@ Int CgltfImporter::doTextureForName(const Containers::StringView name) {
     return found == _d->texturesForName->end() ? -1 : found->second;
 }
 
-Containers::String CgltfImporter::doTextureName(const UnsignedInt id) {
+Containers::String GltfImporter::doTextureName(const UnsignedInt id) {
     return _d->gltfTextures[id].second();
 }
 
-Containers::Optional<TextureData> CgltfImporter::doTexture(const UnsignedInt id) {
+Containers::Optional<TextureData> GltfImporter::doTexture(const UnsignedInt id) {
     const Utility::JsonToken& gltfTexture = _d->gltfTextures[id].first();
 
     const Utility::JsonToken* gltfSource = nullptr;
@@ -3779,7 +3779,7 @@ Containers::Optional<TextureData> CgltfImporter::doTexture(const UnsignedInt id)
         - are there even files out there with more than one extension? */
     if(const Utility::JsonToken* const gltfExtensions = gltfTexture.find("extensions"_s)) {
         if(!_d->gltf->parseObject(*gltfExtensions)) {
-            Error{} << "Trade::CgltfImporter::texture(): invalid extensions property";
+            Error{} << "Trade::GltfImporter::texture(): invalid extensions property";
             return {};
         }
 
@@ -3802,7 +3802,7 @@ Containers::Optional<TextureData> CgltfImporter::doTexture(const UnsignedInt id)
             ) continue;
 
             if(!_d->gltf->parseObject(i.value())) {
-                Error{} << "Trade::CgltfImporter::texture(): invalid" << extensionName << "extension";
+                Error{} << "Trade::GltfImporter::texture(): invalid" << extensionName << "extension";
                 return {};
             }
 
@@ -3812,7 +3812,7 @@ Containers::Optional<TextureData> CgltfImporter::doTexture(const UnsignedInt id)
                extension can be located from the reported image ID. */
             gltfSource = i.value().find("source"_s);
             if(!gltfSource || !_d->gltf->parseUnsignedInt(*gltfSource)) {
-                Error{} << "Trade::CgltfImporter::texture(): missing or invalid" << extensionName << "source property";
+                Error{} << "Trade::GltfImporter::texture(): missing or invalid" << extensionName << "source property";
                 return {};
             }
 
@@ -3823,13 +3823,13 @@ Containers::Optional<TextureData> CgltfImporter::doTexture(const UnsignedInt id)
     if(!gltfSource) {
         gltfSource = gltfTexture.find("source"_s);
         if(!gltfSource || !_d->gltf->parseUnsignedInt(*gltfSource)) {
-            Error{} << "Trade::CgltfImporter::texture(): missing or invalid source property";
+            Error{} << "Trade::GltfImporter::texture(): missing or invalid source property";
             return {};
         }
     }
 
     if(gltfSource->asUnsignedInt() >= _d->gltfImages.size()) {
-        Error{} << "Trade::CgltfImporter::texture(): index" << gltfSource->asUnsignedInt() << "out of range for" << _d->gltfImages.size() << "images";
+        Error{} << "Trade::GltfImporter::texture(): index" << gltfSource->asUnsignedInt() << "out of range for" << _d->gltfImages.size() << "images";
         return {};
     }
 
@@ -3842,11 +3842,11 @@ Containers::Optional<TextureData> CgltfImporter::doTexture(const UnsignedInt id)
     Math::Vector3<SamplerWrapping> wrapping{SamplerWrapping::Repeat};
     if(const Utility::JsonToken* const gltfSamplerIndex = gltfTexture.find("sampler"_s)) {
         if(!_d->gltf->parseUnsignedInt(*gltfSamplerIndex)) {
-            Error{} << "Trade::CgltfImporter::texture(): invalid sampler property";
+            Error{} << "Trade::GltfImporter::texture(): invalid sampler property";
             return {};
         }
         if(gltfSamplerIndex->asUnsignedInt() >= _d->gltfSamplers.size()) {
-            Error{} << "Trade::CgltfImporter::texture(): index" << gltfSamplerIndex->asUnsignedInt() << "out of range for" << _d->gltfSamplers.size() << "samplers";
+            Error{} << "Trade::GltfImporter::texture(): index" << gltfSamplerIndex->asUnsignedInt() << "out of range for" << _d->gltfSamplers.size() << "samplers";
             return {};
         }
 
@@ -3862,7 +3862,7 @@ Containers::Optional<TextureData> CgltfImporter::doTexture(const UnsignedInt id)
             /* Magnification filter */
             if(const Utility::JsonToken* const gltfMagFilter = gltfSampler.find("magFilter"_s)) {
                 if(!_d->gltf->parseUnsignedInt(*gltfMagFilter)) {
-                    Error{} << "Trade::CgltfImporter::texture(): invalid magFilter property";
+                    Error{} << "Trade::GltfImporter::texture(): invalid magFilter property";
                     return {};
                 }
                 switch(gltfMagFilter->asUnsignedInt()) {
@@ -3873,7 +3873,7 @@ Containers::Optional<TextureData> CgltfImporter::doTexture(const UnsignedInt id)
                         magnificationFilter = SamplerFilter::Linear;
                         break;
                     default:
-                        Error{} << "Trade::CgltfImporter::texture(): unrecognized magFilter" << gltfMagFilter->asUnsignedInt();
+                        Error{} << "Trade::GltfImporter::texture(): unrecognized magFilter" << gltfMagFilter->asUnsignedInt();
                         return {};
                 }
             }
@@ -3881,7 +3881,7 @@ Containers::Optional<TextureData> CgltfImporter::doTexture(const UnsignedInt id)
             /* Minification filter */
             if(const Utility::JsonToken* const gltfMinFilter = gltfSampler.find("minFilter"_s)) {
                 if(!_d->gltf->parseUnsignedInt(*gltfMinFilter)) {
-                    Error{} << "Trade::CgltfImporter::texture(): invalid minFilter property";
+                    Error{} << "Trade::GltfImporter::texture(): invalid minFilter property";
                     return {};
                 }
                 switch(gltfMinFilter->asUnsignedInt()) {
@@ -3912,7 +3912,7 @@ Containers::Optional<TextureData> CgltfImporter::doTexture(const UnsignedInt id)
                         break;
                     /* LCOV_EXCL_STOP */
                     default:
-                        Error{} << "Trade::CgltfImporter::texture(): unrecognized minFilter" << gltfMinFilter->asUnsignedInt();
+                        Error{} << "Trade::GltfImporter::texture(): unrecognized minFilter" << gltfMinFilter->asUnsignedInt();
                         return {};
                 }
             }
@@ -3923,7 +3923,7 @@ Containers::Optional<TextureData> CgltfImporter::doTexture(const UnsignedInt id)
                 const char name[]{'w', 'r', 'a', 'p', char('S' + coordinate)};
                 if(const Utility::JsonToken* const gltfWrapping = gltfSampler.find({name, sizeof(name)})) {
                     if(!_d->gltf->parseUnsignedInt(*gltfWrapping)) {
-                        Error{} << "Trade::CgltfImporter::texture(): invalid" << Containers::StringView{name, sizeof(name)} << "property";
+                        Error{} << "Trade::GltfImporter::texture(): invalid" << Containers::StringView{name, sizeof(name)} << "property";
                         return {};
                     }
                     switch(gltfWrapping->asUnsignedInt()) {
@@ -3939,7 +3939,7 @@ Containers::Optional<TextureData> CgltfImporter::doTexture(const UnsignedInt id)
                             break;
                         /* LCOV_EXCL_STOP */
                         default:
-                            Error{} << "Trade::CgltfImporter::texture(): unrecognized" << Containers::StringView{name, sizeof(name)} << gltfWrapping->asUnsignedInt();
+                            Error{} << "Trade::GltfImporter::texture(): unrecognized" << Containers::StringView{name, sizeof(name)} << gltfWrapping->asUnsignedInt();
                             return {};
                     }
                 }
@@ -3959,11 +3959,11 @@ Containers::Optional<TextureData> CgltfImporter::doTexture(const UnsignedInt id)
         mipmap, wrapping, gltfSource->asUnsignedInt()};
 }
 
-UnsignedInt CgltfImporter::doImage2DCount() const {
+UnsignedInt GltfImporter::doImage2DCount() const {
     return _d->gltfImages.size();
 }
 
-Int CgltfImporter::doImage2DForName(const Containers::StringView name) {
+Int GltfImporter::doImage2DForName(const Containers::StringView name) {
     if(!_d->imagesForName) {
         _d->imagesForName.emplace();
         _d->imagesForName->reserve(_d->gltfImages.size());
@@ -3976,11 +3976,11 @@ Int CgltfImporter::doImage2DForName(const Containers::StringView name) {
     return found == _d->imagesForName->end() ? -1 : found->second;
 }
 
-Containers::String CgltfImporter::doImage2DName(const UnsignedInt id) {
+Containers::String GltfImporter::doImage2DName(const UnsignedInt id) {
     return _d->gltfImages[id].second();
 }
 
-AbstractImporter* CgltfImporter::setupOrReuseImporterForImage(const char* const errorPrefix, const UnsignedInt id) {
+AbstractImporter* GltfImporter::setupOrReuseImporterForImage(const char* const errorPrefix, const UnsignedInt id) {
     /* Looking for the same ID, so reuse an importer populated before. If the
        previous attempt failed, the importer is not set, so return nullptr in
        that case. Going through everything below again would not change the
@@ -4065,10 +4065,10 @@ AbstractImporter* CgltfImporter::setupOrReuseImporterForImage(const char* const 
     return &_d->imageImporter.emplace(std::move(importer));
 }
 
-UnsignedInt CgltfImporter::doImage2DLevelCount(const UnsignedInt id) {
-    CORRADE_ASSERT(manager(), "Trade::CgltfImporter::image2DLevelCount(): the plugin must be instantiated with access to plugin manager in order to open image files", {});
+UnsignedInt GltfImporter::doImage2DLevelCount(const UnsignedInt id) {
+    CORRADE_ASSERT(manager(), "Trade::GltfImporter::image2DLevelCount(): the plugin must be instantiated with access to plugin manager in order to open image files", {});
 
-    AbstractImporter* importer = setupOrReuseImporterForImage("Trade::CgltfImporter::image2DLevelCount():", id);
+    AbstractImporter* importer = setupOrReuseImporterForImage("Trade::GltfImporter::image2DLevelCount():", id);
     /* image2DLevelCount() isn't supposed to fail (image2D() is, instead), so
        report 1 on failure and expect image2D() to fail later */
     if(!importer) return 1;
@@ -4076,10 +4076,10 @@ UnsignedInt CgltfImporter::doImage2DLevelCount(const UnsignedInt id) {
     return importer->image2DLevelCount(0);
 }
 
-Containers::Optional<ImageData2D> CgltfImporter::doImage2D(const UnsignedInt id, const UnsignedInt level) {
-    CORRADE_ASSERT(manager(), "Trade::CgltfImporter::image2D(): the plugin must be instantiated with access to plugin manager in order to load images", {});
+Containers::Optional<ImageData2D> GltfImporter::doImage2D(const UnsignedInt id, const UnsignedInt level) {
+    CORRADE_ASSERT(manager(), "Trade::GltfImporter::image2D(): the plugin must be instantiated with access to plugin manager in order to load images", {});
 
-    AbstractImporter* importer = setupOrReuseImporterForImage("Trade::CgltfImporter::image2D():", id);
+    AbstractImporter* importer = setupOrReuseImporterForImage("Trade::GltfImporter::image2D():", id);
     if(!importer) return {};
 
     return importer->image2D(0, level);
@@ -4087,5 +4087,5 @@ Containers::Optional<ImageData2D> CgltfImporter::doImage2D(const UnsignedInt id,
 
 }}
 
-CORRADE_PLUGIN_REGISTER(CgltfImporter, Magnum::Trade::CgltfImporter,
+CORRADE_PLUGIN_REGISTER(GltfImporter, Magnum::Trade::GltfImporter,
     "cz.mosra.magnum.Trade.AbstractImporter/0.5")

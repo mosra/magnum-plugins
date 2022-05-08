@@ -33,7 +33,7 @@
 
 namespace Magnum { namespace Trade { namespace {
 
-/* Used only by CgltfImporter, but put into a dedicated header for easier
+/* Used only by GltfImporter, but put into a dedicated header for easier
    testing */
 
 /* Decode percent-encoded characters in URIs:

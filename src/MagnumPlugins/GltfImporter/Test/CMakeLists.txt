@@ -26,20 +26,20 @@
 
 # IDE folder in VS, Xcode etc. CMake 3.12+, older versions have only the FOLDER
 # property that would have to be set on each target separately.
-set(CMAKE_FOLDER "MagnumPlugins/CgltfImporter/Test")
+set(CMAKE_FOLDER "MagnumPlugins/GltfImporter/Test")
 
 if(CORRADE_TARGET_EMSCRIPTEN OR CORRADE_TARGET_ANDROID)
-    set(CGLTFIMPORTER_TEST_DIR ".")
+    set(GLTFIMPORTER_TEST_DIR ".")
 else()
-    set(CGLTFIMPORTER_TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+    set(GLTFIMPORTER_TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 endif()
 
 # CMake before 3.8 has broken $<TARGET_FILE*> expressions for iOS (see
 # https://gitlab.kitware.com/cmake/cmake/merge_requests/404) and since Corrade
 # doesn't support dynamic plugins on iOS, this sorta works around that. Should
 # be revisited when updating Travis to newer Xcode (xcode7.3 has CMake 3.6).
-if(NOT MAGNUM_CGLTFIMPORTER_BUILD_STATIC)
-    set(CGLTFIMPORTER_PLUGIN_FILENAME $<TARGET_FILE:CgltfImporter>)
+if(NOT MAGNUM_GLTFIMPORTER_BUILD_STATIC)
+    set(GLTFIMPORTER_PLUGIN_FILENAME $<TARGET_FILE:GltfImporter>)
     if(WITH_BASISIMPORTER)
         set(BASISIMPORTER_PLUGIN_FILENAME $<TARGET_FILE:BasisImporter>)
     endif()
@@ -54,14 +54,14 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
 file(GENERATE OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/configure.h
     INPUT ${CMAKE_CURRENT_BINARY_DIR}/configure.h.in)
 
-corrade_add_test(CgltfImporterDecodeTest CgltfImporterDecodeTest.cpp)
-target_include_directories(CgltfImporterDecodeTest PRIVATE ${PROJECT_SOURCE_DIR}/src)
+corrade_add_test(GltfImporterDecodeTest GltfImporterDecodeTest.cpp)
+target_include_directories(GltfImporterDecodeTest PRIVATE ${PROJECT_SOURCE_DIR}/src)
 
-corrade_add_resource(CgltfImporterTest_RESOURCES resources.conf)
+corrade_add_resource(GltfImporterTest_RESOURCES resources.conf)
 
-corrade_add_test(CgltfImporterTest
-    CgltfImporterTest.cpp
-    ${CgltfImporterTest_RESOURCES}
+corrade_add_test(GltfImporterTest
+    GltfImporterTest.cpp
+    ${GltfImporterTest_RESOURCES}
     LIBRARIES Magnum::Trade
     FILES
         animation.gltf
@@ -192,29 +192,29 @@ corrade_add_test(CgltfImporterTest
         version-supported.gltf
         version-unsupported.gltf
         version-unsupported-min.gltf)
-target_include_directories(CgltfImporterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>)
-if(MAGNUM_CGLTFIMPORTER_BUILD_STATIC)
-    target_link_libraries(CgltfImporterTest PRIVATE CgltfImporter)
+target_include_directories(GltfImporterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>)
+if(MAGNUM_GLTFIMPORTER_BUILD_STATIC)
+    target_link_libraries(GltfImporterTest PRIVATE GltfImporter)
     if(WITH_BASISIMPORTER)
-        target_link_libraries(CgltfImporterTest PRIVATE BasisImporter)
+        target_link_libraries(GltfImporterTest PRIVATE BasisImporter)
     endif()
     if(WITH_STBIMAGEIMPORTER)
-        target_link_libraries(CgltfImporterTest PRIVATE StbImageImporter)
+        target_link_libraries(GltfImporterTest PRIVATE StbImageImporter)
     endif()
 else()
     # So the plugins get properly built when building the test
-    add_dependencies(CgltfImporterTest CgltfImporter)
+    add_dependencies(GltfImporterTest GltfImporter)
     if(WITH_BASISIMPORTER)
-        add_dependencies(CgltfImporterTest BasisImporter)
+        add_dependencies(GltfImporterTest BasisImporter)
     endif()
     if(WITH_STBIMAGEIMPORTER)
-        add_dependencies(CgltfImporterTest StbImageImporter)
+        add_dependencies(GltfImporterTest StbImageImporter)
     endif()
 endif()
-if(CORRADE_BUILD_STATIC AND NOT MAGNUM_CGLTFIMPORTER_BUILD_STATIC)
+if(CORRADE_BUILD_STATIC AND NOT MAGNUM_GLTFIMPORTER_BUILD_STATIC)
     # CMake < 3.4 does this implicitly, but 3.4+ not anymore (see CMP0065).
     # That's generally okay, *except if* the build is static, the executable
     # uses a plugin manager and needs to share globals with the plugins (such
     # as output redirection and so on).
-    set_target_properties(CgltfImporterTest PROPERTIES ENABLE_EXPORTS ON)
+    set_target_properties(GltfImporterTest PROPERTIES ENABLE_EXPORTS ON)
 endif()

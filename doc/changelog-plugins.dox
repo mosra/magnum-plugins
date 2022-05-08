@@ -51,15 +51,17 @@ namespace Magnum {
     support
 -   New @relativeref{Trade,StbDxtImageConverter} for compressing RGBA images
     into block-compressed BC1/BC3.
--   New @relativeref{Trade,CgltfImporter} plugin for importing glTF files,
-    which is a smaller, faster-compiling, faster-importing and more
-    memory-friendly drop-in replacement for @relativeref{Trade,TinyGltfImporter}
-    (see [mosra/magnum-plugins#107](https://github.com/mosra/magnum-plugins/pull/107)).
-    The only significant behavioral difference is that
-    @relativeref{Trade,CgltfImporter} by default fails the import if the file
-    requires an extension the importer is not aware of, but that can be
-    overriden from the plugin-specific configuration. The @relativeref{Trade,TinyGltfImporter} will only receive security, robustness
-    and bug fixes from now on. Only the @relativeref{Trade,CgltfImporter} will
+-   New @relativeref{Trade,GltfImporter} plugin for importing glTF files, which
+    is a smaller, faster-compiling, faster-importing and more memory-friendly
+    drop-in replacement for @relativeref{Trade,TinyGltfImporter}. Originally
+    built on top of cgltf as a `CgltfImporter` (see [mosra/magnum-plugins#107](https://github.com/mosra/magnum-plugins/pull/107)),
+    eventually the cgltf dependency got dropped in favor of
+    @relativeref{Corrade,Utility::Json}. The only significant behavioral
+    difference is that @relativeref{Trade,GltfImporter} by default fails the
+    import if the file requires an extension the importer is not aware of, but
+    that can be overriden from the plugin-specific configuration. The
+    @relativeref{Trade,TinyGltfImporter} will only receive security, robustness
+    and bug fixes from now on. Only the @relativeref{Trade,GltfImporter} will
     receive new features, among which is so far:
     -   [MSFT_texture_dds](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Vendor/MSFT_texture_dds/README.md)
     -   [KHR_texture_basisu](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_texture_basisu/README.md)

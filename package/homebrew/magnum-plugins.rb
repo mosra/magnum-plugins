@@ -75,6 +75,7 @@ class MagnumPlugins < Formula
         "-DWITH_FAAD2AUDIOIMPORTER=#{(build.with? 'faad2') ? 'ON' : 'OFF'}",
         "-DWITH_FREETYPEFONT=#{(build.with? 'freetype') ? 'ON' : 'OFF'}",
         "-DWITH_GLSLANGSHADERCONVERTER=#{(build.with? 'glslang') ? 'ON' : 'OFF'}",
+        "-DWITH_GLTFIMPORTER=ON",
         "-DWITH_HARFBUZZFONT=#{(build.with? 'harfbuzz') ? 'ON' : 'OFF'}",
         "-DWITH_JPEGIMAGECONVERTER=#{(build.with? 'jpeg') ? 'ON' : 'OFF'}",
         "-DWITH_JPEGIMPORTER=#{(build.with? 'jpeg') ? 'ON' : 'OFF'}",

@@ -67,6 +67,10 @@
  * @brief Plugin @ref Magnum::ShaderTools::GlslangConverter
  * @m_since_latest_{plugins}
  */
+/** @dir MagnumPlugins/GltfImporter
+ * @brief Plugin @ref Magnum::Trade::GltfImporter
+ * @m_since_latest_{plugins}
+ */
 /** @dir MagnumPlugins/HarfBuzzFont
  * @brief Plugin @ref Magnum::Text::HarfBuzzFont
  */
