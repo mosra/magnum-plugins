@@ -172,6 +172,8 @@ corrade_add_test(CgltfImporterTest
         mesh-multiple-primitives.gltf
         mesh-primitives-types.gltf
         mesh-primitives-types.bin
+        mesh-size-not-multiple-of-stride.gltf
+        mesh-size-not-multiple-of-stride.bin
         mesh-skin-attributes.gltf
         mesh-skin-attributes.bin
         mesh-unordered-attributes.gltf

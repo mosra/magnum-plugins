@@ -142,6 +142,7 @@ struct CgltfImporterTest: TestSuite::Tester {
     void meshUnorderedAttributes();
     void meshMultiplePrimitives();
     void meshPrimitivesTypes();
+    void meshSizeNotMultipleOfStride();
     void meshOutOfBounds();
     void meshInvalid();
     void meshInvalidIndicesBufferNotFound();
@@ -798,6 +799,8 @@ CgltfImporterTest::CgltfImporterTest() {
 
     addInstancedTests({&CgltfImporterTest::meshPrimitivesTypes},
         Containers::arraySize(MeshPrimitivesTypesData));
+
+    addTests({&CgltfImporterTest::meshSizeNotMultipleOfStride});
 
     addInstancedTests({&CgltfImporterTest::meshOutOfBounds},
         Containers::arraySize(MeshOutOfBoundsData));
@@ -3257,6 +3260,23 @@ void CgltfImporterTest::meshPrimitivesTypes() {
                 215, 71, 133, 5, 196
             }), TestSuite::Compare::Container);
     } else CORRADE_VERIFY(!mesh->hasAttribute(MeshAttribute::ObjectId));
+}
+
+void CgltfImporterTest::meshSizeNotMultipleOfStride() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "mesh-size-not-multiple-of-stride.gltf")));
+    CORRADE_COMPARE(importer->meshCount(), 1);
+
+    Containers::Optional<Trade::MeshData> mesh = importer->mesh(0);
+    CORRADE_VERIFY(mesh);
+    CORRADE_COMPARE(mesh->attributeCount(), 1);
+    CORRADE_VERIFY(mesh->hasAttribute(MeshAttribute::Position));
+    CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::Position), VertexFormat::Vector3);
+    CORRADE_COMPARE_AS(mesh->attribute<Vector3>(MeshAttribute::Position),
+        Containers::arrayView<Vector3>({
+            {1.0f, 2.0f, 3.0f},
+            {4.0f, 5.0f, 6.0f}
+        }), TestSuite::Compare::Container);
 }
 
 void CgltfImporterTest::meshOutOfBounds() {

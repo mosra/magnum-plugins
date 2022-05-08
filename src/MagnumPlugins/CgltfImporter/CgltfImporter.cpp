@@ -2064,7 +2064,17 @@ Containers::Optional<MeshData> CgltfImporter::doMesh(const UnsignedInt id, Unsig
     /* Convert the attributes from relative to absolute, copy them to a
        non-growable array and do additional patching */
     for(std::size_t i = 0; i != attributeData.size(); ++i) {
-        Containers::StridedArrayView1D<char> data{vertexData,
+        /* glTF only requires buffer views to be large enough to fit the actual
+           data, not to have the size large enough to fit `count*stride`
+           elements. The StridedArrayView expect the latter, so we fake the
+           vertexData size to satisfy the assert. For simplicity we overextend
+           by the whole stride instead of `offset + typeSize`, relying on
+           checkAccessor() having checked the bounds already. */
+        /** @todo instead of faking the size, split the offset into offset in
+            whole strides and the remainder (Math::div), then form the view
+            with offset in whole strides and then "shift" the view by the
+            remainder (once there's StridedArrayView::shift() or some such) */
+        Containers::StridedArrayView1D<char> data{{vertexData, vertexData.size() + attributeData[i].stride()},
             /* Offset is what with the range min subtracted, as we copied
                without the prefix */
             vertexData + attributeData[i].offset(vertexData) - bufferRange.min(),

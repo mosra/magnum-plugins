@@ -1,0 +1,39 @@
+{
+    "asset": {
+        "version": "2.0"
+    },
+    "accessors": [
+        {
+            "bufferView": 0,
+            "byteOffset": 12,
+            "componentType": 5126,
+            "count": 2,
+            "type": "VEC3"
+        }
+    ],
+    "bufferViews": [
+        {
+            "buffer": 0,
+            "byteLength": 60,
+            "byteStride": 36
+        }
+    ],
+    "buffers": [
+        {
+            "byteLength": 60,
+            "uri": "mesh-size-not-multiple-of-stride.bin"
+        }
+    ],
+    "meshes": [
+        {
+            "primitives": [
+                {
+                    "attributes": {
+                        "POSITION": 0
+                    },
+                    "mode": 0
+                }
+            ]
+        }
+    ]
+}
