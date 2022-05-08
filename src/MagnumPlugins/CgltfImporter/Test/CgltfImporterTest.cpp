@@ -2587,6 +2587,10 @@ void CgltfImporterTest::mesh() {
     CORRADE_COMPARE(importer->meshForName("Indexed mesh"), 0);
     CORRADE_COMPARE(importer->meshForName("Nonexistent"), -1);
 
+    /* _OBJECT_ID should not be registered as a custom attribute, it gets
+       reported as MeshAttribute::ObjectId instead */
+    CORRADE_COMPARE(importer->meshAttributeForName("_OBJECT_ID"), MeshAttribute{});
+
     Containers::Optional<Trade::MeshData> mesh = importer->mesh(0);
     CORRADE_VERIFY(mesh);
     CORRADE_COMPARE(mesh->primitive(), MeshPrimitive::Triangles);

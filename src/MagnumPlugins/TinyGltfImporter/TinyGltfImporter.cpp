@@ -471,7 +471,9 @@ void TinyGltfImporter::doOpenData(Containers::Array<char>&& data, DataFlags) {
                 } else if(attribute.first != "POSITION" &&
                     attribute.first != "NORMAL" &&
                     attribute.first != "TANGENT" &&
-                    semantic != "COLOR")
+                    semantic != "COLOR" &&
+                    /* Reported as MeshAttribute::ObjectId */
+                    attribute.first != configuration().value("objectIdAttribute"))
                 {
                     if(_d->meshAttributesForName.emplace(attribute.first,
                         meshAttributeCustom(_d->meshAttributeNames.size())).second)

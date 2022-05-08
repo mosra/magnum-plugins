@@ -765,7 +765,9 @@ void CgltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags d
                     attribute.type != cgltf_attribute_type_color &&
                     /* Names for these are already in meshAttributeNames */
                     attribute.type != cgltf_attribute_type_joints &&
-                    attribute.type != cgltf_attribute_type_weights)
+                    attribute.type != cgltf_attribute_type_weights &&
+                    /* Reported as MeshAttribute::ObjectId */
+                    attribute.name != configuration().value<Containers::StringView>("objectIdAttribute"))
                 {
                     const Containers::StringView name{attribute.name};
 
