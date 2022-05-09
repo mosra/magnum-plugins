@@ -211,12 +211,7 @@ corrade_add_test(CgltfImporterTest
         texture-empty-sampler.gltf
         texture-empty-sampler.glb
         texture-extensions.gltf
-        texture-extensions-invalid.gltf
-        texture-extensions-invalid-basisu-oob.gltf
         texture-invalid.gltf
-        texture-invalid-image-oob.gltf
-        texture-invalid-sampler-oob.gltf
-        texture-invalid-missing-source.gltf
         uri-invalid.gltf
         version-legacy.gltf
         version-supported.gltf

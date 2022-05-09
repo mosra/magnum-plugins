@@ -165,14 +165,10 @@ struct CgltfImporterTest: TestSuite::Tester {
     void materialTexCoordFlip();
 
     void texture();
-    void textureOutOfBounds();
-    void textureInvalid();
     void textureDefaultSampler();
     void textureEmptySampler();
-    void textureMissingSource();
     void textureExtensions();
-    void textureExtensionsOutOfBounds();
-    void textureExtensionsInvalid();
+    void textureInvalid();
 
     void imageEmbedded();
     void imageExternal();
@@ -665,33 +661,6 @@ constexpr struct {
         "signed integer", true, true},
 };
 
-constexpr struct {
-    const char* name;
-    const char* file;
-    const char* message;
-} TextureOutOfBoundsData[]{
-    {"image out of bounds",
-        "texture-invalid-image-oob.gltf",
-        "index 2 out of range for 2 images"},
-    {"sampler out of bounds",
-        "texture-invalid-sampler-oob.gltf",
-        "index 1 out of range for 1 samplers"}
-};
-
-constexpr struct {
-    const char* name;
-    const char* message;
-} TextureInvalidData[]{
-    {"invalid sampler minFilter",
-        "unrecognized minFilter 1"},
-    {"invalid sampler magFilter",
-        "unrecognized magFilter 2"},
-    {"invalid sampler wrapS",
-        "unrecognized wrapS 3"},
-    {"invalid sampler wrapT",
-        "unrecognized wrapT 4"}
-};
-
 const struct {
     const char* name;
     UnsignedInt id;
@@ -713,9 +682,25 @@ const struct {
 constexpr struct {
     const char* name;
     const char* message;
-} TextureExtensionsInvalidData[]{
+} TextureInvalidData[]{
+    {"invalid sampler minFilter",
+        "unrecognized minFilter 1"},
+    {"invalid sampler magFilter",
+        "unrecognized magFilter 2"},
+    {"invalid sampler wrapS",
+        "unrecognized wrapS 3"},
+    {"invalid sampler wrapT",
+        "unrecognized wrapT 4"},
+    {"sampler out of bounds",
+        "index 5 out of range for 5 samplers"},
+    {"image out of bounds",
+        "index 1 out of range for 1 images"},
+    {"missing source",
+        "missing or invalid source property"},
     {"out of bounds GOOGLE_texture_basis",
-        "index 3 out of range for 3 images"},
+        "index 3 out of range for 1 images"},
+    {"out of bounds KHR_texture_basisu",
+        "index 4 out of range for 1 images"},
     {"unknown extension, no fallback",
         "missing or invalid source property"}
 };
@@ -945,25 +930,15 @@ CgltfImporterTest::CgltfImporterTest() {
     addInstancedTests({&CgltfImporterTest::texture},
                       Containers::arraySize(SingleFileData));
 
-    addInstancedTests({&CgltfImporterTest::textureOutOfBounds},
-                      Containers::arraySize(TextureOutOfBoundsData));
-
-    addInstancedTests({&CgltfImporterTest::textureInvalid},
-                      Containers::arraySize(TextureInvalidData));
-
     addInstancedTests({&CgltfImporterTest::textureDefaultSampler,
                        &CgltfImporterTest::textureEmptySampler},
                       Containers::arraySize(SingleFileData));
 
-    addTests({&CgltfImporterTest::textureMissingSource});
-
     addInstancedTests({&CgltfImporterTest::textureExtensions},
                       Containers::arraySize(TextureExtensionsData));
 
-    addTests({&CgltfImporterTest::textureExtensionsOutOfBounds});
-
-    addInstancedTests({&CgltfImporterTest::textureExtensionsInvalid},
-                      Containers::arraySize(TextureExtensionsInvalidData));
+    addInstancedTests({&CgltfImporterTest::textureInvalid},
+                      Containers::arraySize(TextureInvalidData));
 
     addInstancedTests({&CgltfImporterTest::imageEmbedded},
                       Containers::arraySize(ImageEmbeddedData));
@@ -4706,37 +4681,6 @@ void CgltfImporterTest::texture() {
         }), TestSuite::Compare::Container);
 }
 
-void CgltfImporterTest::textureOutOfBounds() {
-    auto&& data = TextureOutOfBoundsData[testCaseInstanceId()];
-    setTestCaseDescription(data.name);
-
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-    /** @todo merge all into one file as it no longer fails on opening */
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, data.file)));
-    CORRADE_COMPARE(importer->textureCount(), 1);
-
-    std::ostringstream out;
-    Error redirectError{&out};
-    CORRADE_VERIFY(!importer->texture(0));
-    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::CgltfImporter::texture(): {}\n", data.message));
-}
-
-void CgltfImporterTest::textureInvalid() {
-    auto&& data = TextureInvalidData[testCaseInstanceId()];
-    setTestCaseDescription(data.name);
-
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "texture-invalid.gltf")));
-
-    /* Check we didn't forget to test anything */
-    CORRADE_COMPARE(importer->textureCount(), Containers::arraySize(TextureInvalidData));
-
-    std::ostringstream out;
-    Error redirectError{&out};
-    CORRADE_VERIFY(!importer->texture(data.name));
-    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::CgltfImporter::texture(): {}\n", data.message));
-}
-
 void CgltfImporterTest::textureDefaultSampler() {
     auto&& data = SingleFileData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
@@ -4777,18 +4721,6 @@ void CgltfImporterTest::textureEmptySampler() {
     CORRADE_COMPARE(texture->wrapping(), Math::Vector3<SamplerWrapping>(SamplerWrapping::Repeat, SamplerWrapping::Repeat, SamplerWrapping::Repeat));
 }
 
-void CgltfImporterTest::textureMissingSource() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "texture-invalid-missing-source.gltf")));
-    CORRADE_COMPARE(importer->textureCount(), 1);
-
-    std::ostringstream out;
-    Error redirectError{&out};
-    CORRADE_VERIFY(!importer->texture(0));
-    CORRADE_COMPARE(out.str(), "Trade::CgltfImporter::texture(): missing or invalid source property\n");
-}
-
 void CgltfImporterTest::textureExtensions() {
     auto&& data = TextureExtensionsData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
@@ -4811,27 +4743,15 @@ void CgltfImporterTest::textureExtensions() {
     if(data.xfail) CORRADE_COMPARE(texture->image(), data.xfailId);
 }
 
-void CgltfImporterTest::textureExtensionsOutOfBounds() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-    /** @todo merge with texture-extensions-invalid.gltf */
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "texture-extensions-invalid-basisu-oob.gltf")));
-
-    std::ostringstream out;
-    Error redirectError{&out};
-    CORRADE_VERIFY(!importer->texture(0));
-    CORRADE_COMPARE(out.str(), "Trade::CgltfImporter::texture(): index 0 out of range for 0 images\n");
-}
-
-void CgltfImporterTest::textureExtensionsInvalid() {
-    auto&& data = TextureExtensionsInvalidData[testCaseInstanceId()];
+void CgltfImporterTest::textureInvalid() {
+    auto&& data = TextureInvalidData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "texture-extensions-invalid.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "texture-invalid.gltf")));
 
     /* Check we didn't forget to test anything */
-    CORRADE_COMPARE(importer->textureCount(), Containers::arraySize(TextureExtensionsInvalidData));
+    CORRADE_COMPARE(importer->textureCount(), Containers::arraySize(TextureInvalidData));
 
     std::ostringstream out;
     Error redirectError{&out};

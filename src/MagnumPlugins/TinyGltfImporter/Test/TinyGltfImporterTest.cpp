@@ -145,12 +145,10 @@ struct TinyGltfImporterTest: TestSuite::Tester {
     void materialTexCoordFlip();
 
     void texture();
-    void textureInvalid();
     void textureDefaultSampler();
     void textureEmptySampler();
-    void textureMissingSource();
     void textureExtensions();
-    void textureExtensionsInvalid();
+    void textureInvalid();
 
     void imageEmbedded();
     void imageExternal();
@@ -447,19 +445,6 @@ constexpr struct {
 
 constexpr struct {
     const char* name;
-    const char* file;
-    const char* message;
-} TextureInvalidData[]{
-    {"invalid sampler minFilter", "texture-invalid.gltf", "invalid minFilter 1"},
-    {"invalid sampler magFilter", "texture-invalid.gltf", "invalid magFilter 2"},
-    {"invalid sampler wrapS", "texture-invalid.gltf", "invalid wrap mode 3"},
-    {"invalid sampler wrapT", "texture-invalid.gltf", "invalid wrap mode 4"},
-    {"sampler out of bounds", "texture-invalid-sampler-oob.gltf", "sampler 1 out of bounds for 1 samplers"},
-    {"image out of bounds", "texture-invalid-image-oob.gltf", "image 2 out of bounds for 2 images"},
-};
-
-constexpr struct {
-    const char* name;
     const UnsignedInt id;
 } TextureExtensionsData[]{
     {"GOOGLE_texture_basis", 1},
@@ -475,12 +460,18 @@ constexpr struct {
 
 constexpr struct {
     const char* name;
-    const char* file;
     const char* message;
-} TextureExtensionsInvalidData[]{
-    {"out of bounds GOOGLE_texture_basis", "texture-extensions-invalid.gltf", "GOOGLE_texture_basis image 3 out of bounds for 3 images"},
-    {"out of bounds KHR_texture_basisu", "texture-extensions-invalid-basisu-oob.gltf", "KHR_texture_basisu image 0 out of bounds for 0 images"},
-    {"unknown extension, no fallback", "texture-extensions-invalid.gltf", "no image source found"}
+} TextureInvalidData[]{
+    {"invalid sampler minFilter", "invalid minFilter 1"},
+    {"invalid sampler magFilter", "invalid magFilter 2"},
+    {"invalid sampler wrapS", "invalid wrap mode 3"},
+    {"invalid sampler wrapT", "invalid wrap mode 4"},
+    {"sampler out of bounds", "sampler 5 out of bounds for 5 samplers"},
+    {"image out of bounds", "image 1 out of bounds for 1 images"},
+    {"missing source", "no image source found"},
+    {"out of bounds GOOGLE_texture_basis", "GOOGLE_texture_basis image 3 out of bounds for 1 images"},
+    {"out of bounds KHR_texture_basisu", "KHR_texture_basisu image 4 out of bounds for 1 images"},
+    {"unknown extension, no fallback", "no image source found"}
 };
 
 constexpr struct {
@@ -643,20 +634,15 @@ TinyGltfImporterTest::TinyGltfImporterTest() {
     addInstancedTests({&TinyGltfImporterTest::texture},
                       Containers::arraySize(SingleFileData));
 
-    addInstancedTests({&TinyGltfImporterTest::textureInvalid},
-                      Containers::arraySize(TextureInvalidData));
-
     addInstancedTests({&TinyGltfImporterTest::textureDefaultSampler,
                        &TinyGltfImporterTest::textureEmptySampler},
                       Containers::arraySize(SingleFileData));
 
-    addTests({&TinyGltfImporterTest::textureMissingSource});
-
     addInstancedTests({&TinyGltfImporterTest::textureExtensions},
                       Containers::arraySize(TextureExtensionsData));
 
-    addInstancedTests({&TinyGltfImporterTest::textureExtensionsInvalid},
-                      Containers::arraySize(TextureExtensionsInvalidData));
+    addInstancedTests({&TinyGltfImporterTest::textureInvalid},
+                      Containers::arraySize(TextureInvalidData));
 
     addInstancedTests({&TinyGltfImporterTest::imageEmbedded},
                       Containers::arraySize(ImageEmbeddedData));
@@ -3629,22 +3615,6 @@ void TinyGltfImporterTest::texture() {
         }), TestSuite::Compare::Container);
 }
 
-void TinyGltfImporterTest::textureInvalid() {
-    auto&& data = TextureInvalidData[testCaseInstanceId()];
-    setTestCaseDescription(data.name);
-
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, data.file)));
-
-    /* Check we didn't forget to test anything */
-    CORRADE_VERIFY(Containers::arraySize(TextureInvalidData) >= importer->textureCount());
-
-    std::ostringstream out;
-    Error redirectError{&out};
-    CORRADE_VERIFY(!importer->texture(data.name));
-    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::TinyGltfImporter::texture(): {}\n", data.message));
-}
-
 void TinyGltfImporterTest::textureDefaultSampler() {
     auto&& data = SingleFileData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
@@ -3683,18 +3653,6 @@ void TinyGltfImporterTest::textureEmptySampler() {
     CORRADE_COMPARE(texture->wrapping(), Math::Vector3<SamplerWrapping>(SamplerWrapping::Repeat, SamplerWrapping::Repeat, SamplerWrapping::Repeat));
 }
 
-void TinyGltfImporterTest::textureMissingSource() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
-
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "texture-invalid-missing-source.gltf")));
-    CORRADE_COMPARE(importer->textureCount(), 1);
-
-    std::ostringstream out;
-    Error redirectError{&out};
-    CORRADE_VERIFY(!importer->texture(0));
-    CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::texture(): no image source found\n");
-}
-
 void TinyGltfImporterTest::textureExtensions() {
     auto&& data = TextureExtensionsData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
@@ -3711,16 +3669,15 @@ void TinyGltfImporterTest::textureExtensions() {
     CORRADE_COMPARE(texture->image(), data.id);
 }
 
-void TinyGltfImporterTest::textureExtensionsInvalid() {
-    auto&& data = TextureExtensionsInvalidData[testCaseInstanceId()];
+void TinyGltfImporterTest::textureInvalid() {
+    auto&& data = TextureInvalidData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
-
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, data.file)));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "texture-invalid.gltf")));
 
     /* Check we didn't forget to test anything */
-    CORRADE_VERIFY(Containers::arraySize(TextureExtensionsInvalidData) >= importer->textureCount());
+    CORRADE_COMPARE(Containers::arraySize(TextureInvalidData), importer->textureCount());
 
     std::ostringstream out;
     Error redirectError{&out};
