@@ -182,11 +182,6 @@ corrade_add_test(CgltfImporterTest
         skin.bin
         skin.glb
         texture.gltf
-        texture.glb
-        texture-default-sampler.gltf
-        texture-default-sampler.glb
-        texture-empty-sampler.gltf
-        texture-empty-sampler.glb
         texture-extensions.gltf
         texture-invalid.gltf
         uri-invalid.gltf

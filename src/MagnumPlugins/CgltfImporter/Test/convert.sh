@@ -13,7 +13,7 @@ for i in animation buffer-invalid-short-size image image-buffer image-basis mesh
 done
 
 # gltf -> glb
-for i in animation animation-embedded buffer-invalid-short-size buffer-invalid-short-size-embedded buffer-long-size camera empty image image-embedded image-buffer image-buffer-embedded image-basis image-basis-embedded light mesh mesh-embedded scene scene-transformation skin skin-embedded texture-default-sampler texture-empty-sampler texture; do
+for i in animation animation-embedded buffer-invalid-short-size buffer-invalid-short-size-embedded buffer-long-size camera empty image image-embedded image-buffer image-buffer-embedded image-basis image-basis-embedded light mesh mesh-embedded scene scene-transformation skin skin-embedded; do
     ./gltf2glb.py ${i}.gltf
 done
 

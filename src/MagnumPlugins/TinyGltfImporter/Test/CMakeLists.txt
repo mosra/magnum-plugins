@@ -167,11 +167,6 @@ corrade_add_test(TinyGltfImporterTest
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/skin.bin
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/skin.glb
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/texture.gltf
-        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/texture.glb
-        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/texture-default-sampler.gltf
-        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/texture-default-sampler.glb
-        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/texture-empty-sampler.gltf
-        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/texture-empty-sampler.glb
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/texture-extensions.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/texture-invalid.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/version-legacy.gltf

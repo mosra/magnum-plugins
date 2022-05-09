@@ -1,188 +1,48 @@
 {
-    "accessors" : [
-        {
-            "bufferView" : 0,
-            "componentType" : 5121,
-            "count" : 3,
-            "max" : [
-                2
-            ],
-            "min" : [
-                0
-            ],
-            "type" : "SCALAR"
-        },
-        {
-            "bufferView" : 1,
-            "componentType" : 5126,
-            "count" : 3,
-            "max" : [
-                1.0,
-                0.0,
-                1.0
-            ],
-            "min" : [
-                -1.0,
-                0.0,
-                -1.0
-            ],
-            "type" : "VEC3"
-        },
-        {
-            "bufferView" : 2,
-            "componentType" : 5126,
-            "count" : 3,
-            "max" : [
-                0.949910044670105,
-                0.9499099999666214
-            ],
-            "min" : [
-                0.10000000149011612,
-                0.05008995532989502
-            ],
-            "type" : "VEC2"
-        },
-        {
-            "bufferView" : 3,
-            "componentType" : 5126,
-            "count" : 3,
-            "max" : [
-                0.5,
-                0.5800000131130219
-            ],
-            "min" : [
-                0.20000000298023224,
-                0.30000001192092896
-            ],
-            "type" : "VEC2"
-        }
-    ],
-    "asset" : {
-        "generator" : "Khronos Blender glTF 2.0 exporter",
-        "version" : "2.0"
+    "asset": {
+        "version": "2.0"
     },
-    "bufferViews" : [
+    "images": [
         {
-            "buffer" : 0,
-            "byteLength" : 3,
-            "byteOffset" : 0,
-            "target" : 34963
+            "uri": "texture.png"
         },
         {
-            "buffer" : 0,
-            "byteLength" : 36,
-            "byteOffset" : 4,
-            "target" : 34962
-        },
-        {
-            "buffer" : 0,
-            "byteLength" : 24,
-            "byteOffset" : 40,
-            "target" : 34962
-        },
-        {
-            "buffer" : 0,
-            "byteLength" : 24,
-            "byteOffset" : 64,
-            "target" : 34962
+            "uri": "texture.png"
         }
     ],
-    "buffers" : [
-        {
-            "byteLength" : 88,
-            "uri" : "data:application/octet-stream;base64,AAECAAAAgD8AAAAAAACAPwAAgL8AAAAAAACAvwAAgL8AAAAAAACAP04tcz9NLXM/mpmZPiArTT3NzMw9zcxMPwAAAD8AAAA/mpmZPpqZmT7NzEw+4noUPw=="
-        }
-    ],
-    "images" : [
-        {
-            "uri" : "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP4z/D/PwAG/gL+0yubzgAAAABJRU5ErkJggg=="
-        }
-    ],
-    "materials" : [
-        {
-            "name" : "Material",
-            "pbrMetallicRoughness" : {
-                "baseColorFactor" : [
-                    0.6400000190734865,
-                    0.6400000190734865,
-                    0.6400000190734865,
-                    1.0
-                ],
-                "baseColorTexture" : {
-                    "index" : 0
-                },
-                "metallicFactor" : 0.0
-            }
-        }
-    ],
-    "meshes" : [
-        {
-            "name" : "Plane",
-            "primitives" : [
-                {
-                    "attributes" : {
-                        "POSITION" : 1,
-                        "TEXCOORD_0" : 2,
-                        "TEXCOORD_1" : 3
-                    },
-                    "indices" : 0,
-                    "material" : 0
-                }
-            ]
-        }
-    ],
-    "nodes" : [
-        {
-            "name" : "Lamp",
-            "rotation" : [
-                0.16907575726509094,
-                0.7558802962303162,
-                -0.27217137813568115,
-                0.570947527885437
-            ],
-            "scale" : [
-                1.0,
-                1.0,
-                0.9999999403953552
-            ],
-            "translation" : [
-                4.076245307922363,
-                5.903861999511719,
-                -1.0054539442062378
-            ]
-        },
-        {
-            "mesh" : 0,
-            "name" : "Plane"
-        }
-    ],
-    "samplers" : [
+    "samplers": [
         {
             "wrapS": 33648,
             "wrapT": 33071,
             "minFilter": 9984,
-            "magFilter": 9728
-        }
-    ],
-    "scene" : 0,
-    "scenes" : [
+            "magFilter": 9729
+        },
         {
-            "name" : "Scene",
-            "nodes" : [
-                1,
-                0
-            ]
-        }
+            "wrapS": 10497,
+            "wrapT": 33071,
+            "minFilter": 9987,
+            "magFilter": 9728
+        },
+        {}
     ],
-    "textures" : [
+    "textures": [
         {
             "sampler": 0,
+            "source": 1
+        },
+        {
+            "name": "another variant",
+            "sampler": 1,
             "source": 0
         },
         {
-            "name": "Texture",
-            "sampler" : 0,
-            "source" : 0
+            "name": "empty sampler",
+            "sampler": 2,
+            "source": 0
+        },
+        {
+            "name": "default sampler",
+            "source": 0
         }
     ]
 }

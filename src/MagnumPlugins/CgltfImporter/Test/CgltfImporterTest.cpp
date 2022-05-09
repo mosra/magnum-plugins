@@ -155,8 +155,6 @@ struct CgltfImporterTest: TestSuite::Tester {
     void materialTexCoordFlip();
 
     void texture();
-    void textureDefaultSampler();
-    void textureEmptySampler();
     void textureExtensions();
     void textureInvalid();
 
@@ -865,12 +863,7 @@ CgltfImporterTest::CgltfImporterTest() {
     addInstancedTests({&CgltfImporterTest::materialTexCoordFlip},
         Containers::arraySize(MaterialTexCoordFlipData));
 
-    addInstancedTests({&CgltfImporterTest::texture},
-                      Containers::arraySize(SingleFileData));
-
-    addInstancedTests({&CgltfImporterTest::textureDefaultSampler,
-                       &CgltfImporterTest::textureEmptySampler},
-                      Containers::arraySize(SingleFileData));
+    addTests({&CgltfImporterTest::texture});
 
     addInstancedTests({&CgltfImporterTest::textureExtensions},
                       Containers::arraySize(TextureExtensionsData));
@@ -4438,97 +4431,52 @@ void CgltfImporterTest::materialTexCoordFlip() {
 }
 
 void CgltfImporterTest::texture() {
-    auto&& data = SingleFileData[testCaseInstanceId()];
-    setTestCaseDescription(data.name);
-
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
 
-    /* Disable Phong material fallback (enabled by default for compatibility),
-       testing that separately in materialPhongFallback() */
-    importer->configuration().setValue("phongMaterialFallback", false);
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "texture.gltf")));
 
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "texture"_s + data.suffix)));
-    CORRADE_COMPARE(importer->materialCount(), 1);
+    CORRADE_COMPARE(importer->textureCount(), 4);
+    CORRADE_COMPARE(importer->textureName(1), "another variant");
+    CORRADE_COMPARE(importer->textureForName("another variant"), 1);
+    CORRADE_COMPARE(importer->textureForName("nonexistent"), -1);
 
-    Containers::Optional<Trade::MaterialData> material = importer->material(0);
+    {
+        Containers::Optional<Trade::TextureData> texture = importer->texture(0);
+        CORRADE_VERIFY(texture);
+        CORRADE_COMPARE(texture->image(), 1);
+        CORRADE_COMPARE(texture->type(), TextureType::Texture2D);
 
-    CORRADE_VERIFY(material);
-    CORRADE_COMPARE(material->types(), MaterialType::PbrMetallicRoughness);
+        CORRADE_COMPARE(texture->magnificationFilter(), SamplerFilter::Linear);
+        CORRADE_COMPARE(texture->minificationFilter(), SamplerFilter::Nearest);
+        CORRADE_COMPARE(texture->mipmapFilter(), SamplerMipmap::Nearest);
 
-    const auto& pbr = material->as<PbrMetallicRoughnessMaterialData>();
-    CORRADE_VERIFY(pbr.hasAttribute(MaterialAttribute::BaseColorTexture));
-    CORRADE_COMPARE(pbr.baseColorTexture(), 0);
+        CORRADE_COMPARE(texture->wrapping(), Math::Vector3<SamplerWrapping>(SamplerWrapping::MirroredRepeat, SamplerWrapping::ClampToEdge, SamplerWrapping::Repeat));
+    } {
+        Containers::Optional<Trade::TextureData> texture = importer->texture("another variant");
+        CORRADE_VERIFY(texture);
+        CORRADE_COMPARE(texture->image(), 0);
+        CORRADE_COMPARE(texture->type(), TextureType::Texture2D);
 
-    CORRADE_COMPARE(importer->textureCount(), 2);
-    CORRADE_COMPARE(importer->textureName(1), "Texture");
-    CORRADE_COMPARE(importer->textureForName("Texture"), 1);
-    CORRADE_COMPARE(importer->textureForName("Nonexistent"), -1);
+        CORRADE_COMPARE(texture->magnificationFilter(), SamplerFilter::Nearest);
+        CORRADE_COMPARE(texture->minificationFilter(), SamplerFilter::Linear);
+        CORRADE_COMPARE(texture->mipmapFilter(), SamplerMipmap::Linear);
 
-    Containers::Optional<Trade::TextureData> texture = importer->texture(1);
-    CORRADE_VERIFY(texture);
-    CORRADE_COMPARE(texture->image(), 0);
-    CORRADE_COMPARE(texture->type(), TextureType::Texture2D);
+        CORRADE_COMPARE(texture->wrapping(), Math::Vector3<SamplerWrapping>(SamplerWrapping::Repeat, SamplerWrapping::ClampToEdge, SamplerWrapping::Repeat));
+    }
 
-    CORRADE_COMPARE(texture->magnificationFilter(), SamplerFilter::Nearest);
-    CORRADE_COMPARE(texture->minificationFilter(), SamplerFilter::Nearest);
-    CORRADE_COMPARE(texture->mipmapFilter(), SamplerMipmap::Nearest);
+    /* Both should give the same result */
+    for(const char* name: {"empty sampler", "default sampler"}) {
+        CORRADE_ITERATION(name);
 
-    CORRADE_COMPARE(texture->wrapping(), Math::Vector3<SamplerWrapping>(SamplerWrapping::MirroredRepeat, SamplerWrapping::ClampToEdge, SamplerWrapping::Repeat));
+        Containers::Optional<Trade::TextureData> texture = importer->texture(name);
+        CORRADE_VERIFY(texture);
 
-    /* Texture coordinates */
-    Containers::Optional<Trade::MeshData> mesh = importer->mesh(0);
-    CORRADE_VERIFY(mesh);
+        CORRADE_COMPARE(texture->magnificationFilter(), SamplerFilter::Linear);
+        CORRADE_COMPARE(texture->minificationFilter(), SamplerFilter::Linear);
+        CORRADE_COMPARE(texture->mipmapFilter(), SamplerMipmap::Linear);
 
-    CORRADE_COMPARE(mesh->attributeCount(MeshAttribute::TextureCoordinates), 2);
-    CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::TextureCoordinates), VertexFormat::Vector2);
-    CORRADE_COMPARE_AS(mesh->attribute<Vector2>(MeshAttribute::TextureCoordinates, 0),
-        Containers::arrayView<Vector2>({
-            {0.94991f, 0.05009f}, {0.3f, 0.94991f}, {0.1f, 0.2f}
-        }), TestSuite::Compare::Container);
-    CORRADE_COMPARE_AS(mesh->attribute<Vector2>(MeshAttribute::TextureCoordinates, 1),
-        Containers::arrayView<Vector2>({
-            {0.5f, 0.5f}, {0.3f, 0.7f}, {0.2f, 0.42f}
-        }), TestSuite::Compare::Container);
-}
-
-void CgltfImporterTest::textureDefaultSampler() {
-    auto&& data = SingleFileData[testCaseInstanceId()];
-    setTestCaseDescription(data.name);
-
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "texture-default-sampler"_s + data.suffix)));
-    CORRADE_COMPARE(importer->textureCount(), 1);
-
-    Containers::Optional<Trade::TextureData> texture = importer->texture(0);
-    CORRADE_VERIFY(texture);
-    CORRADE_COMPARE(texture->image(), 0);
-    CORRADE_COMPARE(texture->type(), TextureType::Texture2D);
-
-    CORRADE_COMPARE(texture->magnificationFilter(), SamplerFilter::Linear);
-    CORRADE_COMPARE(texture->minificationFilter(), SamplerFilter::Linear);
-    CORRADE_COMPARE(texture->mipmapFilter(), SamplerMipmap::Linear);
-
-    CORRADE_COMPARE(texture->wrapping(), Math::Vector3<SamplerWrapping>(SamplerWrapping::Repeat, SamplerWrapping::Repeat, SamplerWrapping::Repeat));
-}
-
-void CgltfImporterTest::textureEmptySampler() {
-    auto&& data = SingleFileData[testCaseInstanceId()];
-    setTestCaseDescription(data.name);
-
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "texture-empty-sampler"_s + data.suffix)));
-    CORRADE_COMPARE(importer->textureCount(), 1);
-
-    Containers::Optional<Trade::TextureData> texture = importer->texture(0);
-    CORRADE_VERIFY(texture);
-    CORRADE_COMPARE(texture->image(), 0);
-    CORRADE_COMPARE(texture->type(), TextureType::Texture2D);
-
-    CORRADE_COMPARE(texture->magnificationFilter(), SamplerFilter::Linear);
-    CORRADE_COMPARE(texture->minificationFilter(), SamplerFilter::Linear);
-    CORRADE_COMPARE(texture->mipmapFilter(), SamplerMipmap::Linear);
-
-    CORRADE_COMPARE(texture->wrapping(), Math::Vector3<SamplerWrapping>(SamplerWrapping::Repeat, SamplerWrapping::Repeat, SamplerWrapping::Repeat));
+        CORRADE_COMPARE(texture->wrapping(), Math::Vector3<SamplerWrapping>{SamplerWrapping::Repeat});
+    }
 }
 
 void CgltfImporterTest::textureExtensions() {
