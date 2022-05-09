@@ -83,7 +83,7 @@ corrade_add_test(TinyGltfImporterTest
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/buffer-long-size.glb
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/camera.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/camera.glb
-        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/camera-invalid-type.gltf
+        camera-invalid-type.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/empty.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/empty.glb
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/encoded-uris.gltf

@@ -101,7 +101,7 @@ struct CgltfImporterTest: TestSuite::Tester {
     void animationMerge();
 
     void camera();
-    void cameraInvalidType();
+    void cameraInvalid();
 
     void light();
     void lightInvalid();
@@ -305,6 +305,14 @@ constexpr struct {
 } AnimationInvalidBufferNotFoundData[]{
     {"input buffer not found", "error opening /nonexistent1.bin"},
     {"output buffer not found", "error opening /nonexistent2.bin"}
+};
+
+const struct {
+    const char* name;
+    const char* message;
+} CameraInvalidData[]{
+    {"invalid type",
+        "unrecognized type oblique"}
 };
 
 constexpr struct {
@@ -772,7 +780,8 @@ CgltfImporterTest::CgltfImporterTest() {
     addInstancedTests({&CgltfImporterTest::camera},
                       Containers::arraySize(SingleFileData));
 
-    addTests({&CgltfImporterTest::cameraInvalidType});
+    addInstancedTests({&CgltfImporterTest::cameraInvalid},
+        Containers::arraySize(CameraInvalidData));
 
     addInstancedTests({&CgltfImporterTest::light},
                       Containers::arraySize(SingleFileData));
@@ -1861,16 +1870,21 @@ void CgltfImporterTest::camera() {
     }
 }
 
-void CgltfImporterTest::cameraInvalidType() {
+void CgltfImporterTest::cameraInvalid() {
+    auto&& data = CameraInvalidData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
 
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "camera-invalid-type.gltf")));
-    CORRADE_COMPARE(importer->cameraCount(), 1);
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "camera-invalid.gltf")));
+
+    /* Check we didn't forget to test anything */
+    CORRADE_COMPARE(Containers::arraySize(CameraInvalidData), importer->cameraCount());
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(!importer->camera(0));
-    CORRADE_COMPARE(out.str(), "Trade::CgltfImporter::camera(): unrecognized type oblique\n");
+    CORRADE_VERIFY(!importer->camera(data.name));
+    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::CgltfImporter::camera(): {}\n", data.message));
 }
 
 void CgltfImporterTest::light() {

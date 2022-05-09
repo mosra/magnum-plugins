@@ -87,7 +87,7 @@ corrade_add_test(CgltfImporterTest
         buffer-long-size.glb
         camera.gltf
         camera.glb
-        camera-invalid-type.gltf
+        camera-invalid.gltf
         empty.gltf
         empty.glb
         encoded-uris.gltf

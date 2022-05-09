@@ -1472,7 +1472,7 @@ void TinyGltfImporterTest::cameraInvalidType() {
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(!importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "camera-invalid-type.gltf")));
+    CORRADE_VERIFY(!importer->openFile(Utility::Path::join(TINYGLTFIMPORTER_TEST_DIR, "camera-invalid-type.gltf")));
     CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::openData(): error opening file: Invalid camera type: \"oblique\". Must be \"perspective\" or \"orthographic\"\n");
 }
 
