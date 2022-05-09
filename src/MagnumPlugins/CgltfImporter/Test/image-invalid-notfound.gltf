@@ -4,7 +4,25 @@
     },
     "images": [
         {
+            "name": "uri not found",
             "uri": "/nonexistent.png"
+        },
+        {
+            "name": "buffer not found",
+            "bufferView": 0,
+            "mimeType": "image/png"
+        }
+    ],
+    "bufferViews": [
+        {
+            "buffer": 0,
+            "byteLength": 68
+        }
+    ],
+    "buffers": [
+        {
+            "byteLength": 68,
+            "uri": "/nonexistent.bin"
         }
     ]
 }

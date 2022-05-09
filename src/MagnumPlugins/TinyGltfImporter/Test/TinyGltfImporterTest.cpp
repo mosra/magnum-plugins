@@ -3656,7 +3656,7 @@ void TinyGltfImporterTest::imageExternal() {
 
 void TinyGltfImporterTest::imageExternalNotFound() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "image-invalid-notfound.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(TINYGLTFIMPORTER_TEST_DIR, "image-invalid-notfound.gltf")));
     CORRADE_COMPARE(importer->image2DCount(), 1);
 
     std::ostringstream out;

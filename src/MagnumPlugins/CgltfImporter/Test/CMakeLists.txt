@@ -106,9 +106,7 @@ corrade_add_test(CgltfImporterTest
         image-buffer-embedded.glb
         image-embedded.gltf
         image-embedded.glb
-        image-invalid-buffer-notfound.gltf
-        image-invalid-bufferview.gltf
-        image-invalid-no-data.gltf
+        image-invalid.gltf
         image-invalid-notfound.gltf
         light.gltf
         light-invalid.gltf

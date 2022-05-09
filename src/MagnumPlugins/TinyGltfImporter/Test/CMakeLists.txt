@@ -107,7 +107,7 @@ corrade_add_test(TinyGltfImporterTest
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/image-basis.glb
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/image-basis-embedded.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/image-basis-embedded.glb
-        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/image-invalid-notfound.gltf
+        image-invalid-notfound.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/light.gltf
         light-invalid.gltf
         light-invalid-missing-spot.gltf

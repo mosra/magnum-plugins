@@ -2,6 +2,21 @@
     "asset": {
         "version": "2.0"
     },
+    "images": [
+        {
+            "name": "no uri"
+        },
+        {
+            "name": "both uri and buffer view",
+            "uri": "image.png",
+            "bufferView": 0
+        },
+        {
+            "name": "invalid buffer view",
+            "bufferView": 2,
+            "mimeType": "image/png"
+        }
+    ],
     "bufferViews": [
         {
             "buffer": 0,
@@ -25,12 +40,6 @@
         {
             "byteLength": 150,
             "uri": "image.png"
-        }
-    ],
-    "images": [
-        {
-            "mimeType": "image/png",
-            "bufferView": 2
         }
     ]
 }

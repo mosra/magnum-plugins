@@ -4,6 +4,7 @@
     },
     "images": [
         {
+            "uri": "/nonexistent.png"
         }
     ]
 }
