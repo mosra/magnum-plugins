@@ -1,0 +1,149 @@
+{
+    "asset": {
+        "version": "2.0"
+    },
+    "extensions": {
+        "KHR_lights_punctual": {
+            "lights": [
+                {
+                    "type": "point"
+                },
+                {
+                    "type": "ambient"
+                }
+            ]
+        }
+    },
+    "cameras": [
+        {
+            "type": "perspective",
+            "perspective" : {
+                "yfov" : 1.0,
+                "znear" : 0.1
+            }
+        }
+    ],
+    "meshes": [
+        {
+            "primitives": [
+                {
+                    "attributes": {},
+                    "material": 4
+                }
+            ]
+        },
+        {
+            "primitives": [
+                {
+                    "attributes": {}
+                },
+                {
+                    "attributes": {},
+                    "material": 5
+                }
+            ]
+        },
+        {
+            "primitives": [
+                {
+                    "attributes": {}
+                }
+            ]
+        },
+        {
+            "primitives": [
+                {
+                    "attributes": {}
+                },
+                {
+                    "attributes": {}
+                }
+            ]
+        }
+    ],
+    "materials": [
+        {}, {}, {}, {}
+    ],
+    "skins": [
+        {
+            "joints": [1, 2, 3]
+        },
+        {
+            "joints": [1]
+        },
+        {
+            "joints": [3, 1]
+        }
+    ],
+    "nodes": [
+        {}, {}, {},
+        {
+            "camera": 1
+        },
+        {
+            "extensions": {
+                "KHR_lights_punctual": {
+                    "light": 2
+                }
+            }
+        },
+        {
+            "mesh": 0
+        },
+        {
+            "mesh": 1
+        },
+        {
+            "mesh": 4
+        },
+        {
+            "mesh": 2,
+            "skin": 3
+        },
+        {
+            "mesh": 3,
+            "skin": 3
+        },
+        {
+            "children": [11]
+        }
+    ],
+    "scenes": [
+        {
+            "name": "camera out of bounds",
+            "nodes": [3]
+        },
+        {
+            "name": "light out of bounds",
+            "nodes": [4]
+        },
+        {
+            "name": "material out of bounds",
+            "nodes": [5]
+        },
+        {
+            "name": "material in a multi-primitive mesh out of bounds",
+            "nodes": [6]
+        },
+        {
+            "name": "mesh out of bounds",
+            "nodes": [7]
+        },
+        {
+            "name": "skin out of bounds",
+            "nodes": [8]
+        },
+        {
+            "name": "skin for a multi-primitive mesh out of bounds",
+            "nodes": [9]
+        },
+        {
+            "name": "child out of bounds",
+            "nodes": [10]
+        },
+        {
+            "name": "node out of bounds",
+            "nodes": [11]
+        }
+    ]
+}

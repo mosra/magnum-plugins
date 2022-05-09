@@ -112,7 +112,7 @@ struct CgltfImporterTest: TestSuite::Tester {
     void lightMissingSpot();
 
     void scene();
-    void sceneOutOfBounds();
+    void sceneInvalid();
     void sceneInvalidHierarchy();
     void sceneDefaultNoScenes();
     void sceneDefaultNoDefault();
@@ -581,30 +581,22 @@ constexpr struct {
 
 constexpr struct {
     const char* name;
-    const char* file;
     const char* message;
-} SceneOutOfBoundsData[]{
+} SceneInvalidData[]{
     {"camera out of bounds",
-        "scene-invalid-oob-camera.gltf",
         "camera index 1 in node 3 out of range for 1 cameras"},
     {"light out of bounds",
-        "scene-invalid-oob-light.gltf",
-        "light index 2 in node 3 out of range for 2 lights"},
+        "light index 2 in node 4 out of range for 2 lights"},
     {"material out of bounds",
-        "scene-invalid-oob-material.gltf",
         "material index 4 in mesh 0 primitive 0 out of range for 4 materials"},
     {"material in a multi-primitive mesh out of bounds",
-        "scene-invalid-oob-material-multi-primitive.gltf",
-        "material index 5 in mesh 0 primitive 1 out of range for 4 materials"},
+        "material index 5 in mesh 1 primitive 1 out of range for 4 materials"},
     {"mesh out of bounds",
-        "scene-invalid-oob-mesh.gltf",
-        "mesh index 1 in node 2 out of range for 1 meshes"},
+        "mesh index 4 in node 7 out of range for 4 meshes"},
     {"skin out of bounds",
-        "scene-invalid-oob-skin.gltf",
-        "skin index 3 in node 1 out of range for 3 skins"},
+        "skin index 3 in node 8 out of range for 3 skins"},
     {"skin for a multi-primitive mesh out of bounds",
-        "scene-invalid-oob-skin-multi-primitive.gltf",
-        "skin index 3 in node 2 out of range for 3 skins"}
+        "skin index 3 in node 9 out of range for 3 skins"}
 };
 
 constexpr struct {
@@ -868,8 +860,8 @@ CgltfImporterTest::CgltfImporterTest() {
     addInstancedTests({&CgltfImporterTest::scene},
         Containers::arraySize(SingleFileData));
 
-    addInstancedTests({&CgltfImporterTest::sceneOutOfBounds},
-        Containers::arraySize(SceneOutOfBoundsData));
+    addInstancedTests({&CgltfImporterTest::sceneInvalid},
+        Containers::arraySize(SceneInvalidData));
 
     addInstancedTests({&CgltfImporterTest::sceneInvalidHierarchy},
         Containers::arraySize(SceneInvalidHierarchyData));
@@ -2246,18 +2238,19 @@ void CgltfImporterTest::scene() {
     }
 }
 
-void CgltfImporterTest::sceneOutOfBounds() {
-    auto&& data = SceneOutOfBoundsData[testCaseInstanceId()];
+void CgltfImporterTest::sceneInvalid() {
+    auto&& data = SceneInvalidData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-    /** @todo merge all into one file as it no longer fails on opening */
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, data.file)));
-    CORRADE_COMPARE(importer->sceneCount(), 1);
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "scene-invalid.gltf")));
+
+    /* Check we didn't forget to test anything */
+    CORRADE_COMPARE(Containers::arraySize(SceneInvalidData), importer->sceneCount());
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(!importer->scene(0));
+    CORRADE_VERIFY(!importer->scene(data.name));
     CORRADE_COMPARE(out.str(), Utility::formatString("Trade::CgltfImporter::scene(): {}\n", data.message));
 }
 

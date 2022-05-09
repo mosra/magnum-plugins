@@ -191,13 +191,7 @@ corrade_add_test(CgltfImporterTest
         scene-invalid-hierarchy-multiple-parents.gltf
         scene-invalid-hierarchy-child-oob.gltf
         scene-invalid-hierarchy-node-oob.gltf
-        scene-invalid-oob-camera.gltf
-        scene-invalid-oob-light.gltf
-        scene-invalid-oob-material-multi-primitive.gltf
-        scene-invalid-oob-material.gltf
-        scene-invalid-oob-mesh.gltf
-        scene-invalid-oob-skin.gltf
-        scene-invalid-oob-skin-multi-primitive.gltf
+        scene-invalid.gltf
         scene-transformation.gltf
         scene-transformation.glb
         scene-transformation-patching.gltf
