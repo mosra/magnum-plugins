@@ -98,7 +98,6 @@ struct TinyGltfImporterTest: TestSuite::Tester {
 
     void light();
     void lightInvalid();
-    void lightInvalidColorSize();
     void lightMissingType();
     void lightMissingSpot();
 
@@ -229,16 +228,16 @@ constexpr struct {
 
 constexpr struct {
     const char* name;
-    const char* file;
     const char* message;
 } LightInvalidData[]{
-    {"unknown type", "light-invalid.gltf", "invalid light type what"},
-    {"directional with range", "light-invalid.gltf", "range can't be defined for a directional light"},
-    {"spot with too small inner angle", "light-invalid.gltf", "inner and outer cone angle Deg(-0.572958) and Deg(45) out of allowed bounds"},
+    {"unknown type", "invalid light type what"},
+    {"directional with range", "range can't be defined for a directional light"},
+    {"spot with too small inner angle", "inner and outer cone angle Deg(-0.572958) and Deg(45) out of allowed bounds"},
     /* These are kinda silly (not sure why inner can't be the same as outer),
        but let's follow the spec */
-    {"spot with too large outer angle", "light-invalid.gltf", "inner and outer cone angle Deg(0) and Deg(90.5273) out of allowed bounds"},
-    {"spot with inner angle same as outer", "light-invalid.gltf", "inner and outer cone angle Deg(14.3239) and Deg(14.3239) out of allowed bounds"}
+    {"spot with too large outer angle", "inner and outer cone angle Deg(0) and Deg(90.5273) out of allowed bounds"},
+    {"spot with inner angle same as outer", "inner and outer cone angle Deg(14.3239) and Deg(14.3239) out of allowed bounds"},
+    {"invalid color size", "expected three values for a color, got 4"}
 };
 
 constexpr struct {
@@ -563,8 +562,7 @@ TinyGltfImporterTest::TinyGltfImporterTest() {
     addInstancedTests({&TinyGltfImporterTest::lightInvalid},
         Containers::arraySize(LightInvalidData));
 
-    addTests({&TinyGltfImporterTest::lightInvalidColorSize,
-              &TinyGltfImporterTest::lightMissingType,
+    addTests({&TinyGltfImporterTest::lightMissingType,
               &TinyGltfImporterTest::lightMissingSpot});
 
     addInstancedTests({&TinyGltfImporterTest::scene},
@@ -1528,7 +1526,7 @@ void TinyGltfImporterTest::lightInvalid() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, data.file)));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "light-invalid.gltf")));
 
     /* Check we didn't forget to test anything */
     CORRADE_COMPARE(importer->lightCount(), Containers::arraySize(LightInvalidData));
@@ -1537,18 +1535,6 @@ void TinyGltfImporterTest::lightInvalid() {
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->light(data.name));
     CORRADE_COMPARE(out.str(), Utility::formatString("Trade::TinyGltfImporter::light(): {}\n", data.message));
-}
-
-void TinyGltfImporterTest::lightInvalidColorSize() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
-
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "light-invalid-color-size.gltf")));
-    CORRADE_COMPARE(importer->lightCount(), 1);
-
-    std::ostringstream out;
-    Error redirectError{&out};
-    CORRADE_VERIFY(!importer->light(0));
-    CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::light(): expected three values for a color, got 4\n");
 }
 
 void TinyGltfImporterTest::lightMissingType() {

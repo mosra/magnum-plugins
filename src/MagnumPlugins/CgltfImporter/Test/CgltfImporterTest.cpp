@@ -105,7 +105,6 @@ struct CgltfImporterTest: TestSuite::Tester {
 
     void light();
     void lightInvalid();
-    void lightInvalidColorSize();
     void lightMissingType();
     void lightMissingSpot();
 
@@ -330,7 +329,10 @@ constexpr struct {
     {"spot with too large outer angle",
         "spot inner and outer cone angle Deg(0) and Deg(90.5273) out of allowed bounds"},
     {"spot with inner angle same as outer",
-        "spot inner and outer cone angle Deg(14.3239) and Deg(14.3239) out of allowed bounds"}
+        "spot inner and outer cone angle Deg(14.3239) and Deg(14.3239) out of allowed bounds"},
+    {"invalid color size",
+        "Utility::Json::parseFloatArray(): expected a 3-element array, got 4 at <in>:42:30\n"
+        "Trade::CgltfImporter::light(): invalid color property\n"}
 };
 
 constexpr struct {
@@ -789,8 +791,7 @@ CgltfImporterTest::CgltfImporterTest() {
     addInstancedTests({&CgltfImporterTest::lightInvalid},
         Containers::arraySize(LightInvalidData));
 
-    addTests({&CgltfImporterTest::lightInvalidColorSize,
-              &CgltfImporterTest::lightMissingType,
+    addTests({&CgltfImporterTest::lightMissingType,
               &CgltfImporterTest::lightMissingSpot});
 
     addInstancedTests({&CgltfImporterTest::scene},
@@ -1938,9 +1939,10 @@ void CgltfImporterTest::lightInvalid() {
     auto&& data = LightInvalidData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
+    Containers::String filename = Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "light-invalid.gltf");
 
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "light-invalid.gltf")));
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
+    CORRADE_VERIFY(importer->openFile(filename));
 
     /* Check we didn't forget to test anything */
     CORRADE_COMPARE(importer->lightCount(), Containers::arraySize(LightInvalidData));
@@ -1948,21 +1950,12 @@ void CgltfImporterTest::lightInvalid() {
     std::ostringstream out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->light(data.name));
-    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::CgltfImporter::light(): {}\n", data.message));
-}
-
-void CgltfImporterTest::lightInvalidColorSize() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-    /** @todo merge with light-invalid.gltf, it no longer fails on opening */
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "light-invalid-color-size.gltf")));
-    CORRADE_COMPARE(importer->lightCount(), 1);
-
-    std::ostringstream out;
-    Error redirectError{&out};
-    CORRADE_VERIFY(!importer->light(0));
-    CORRADE_COMPARE(out.str(),
-        "Utility::Json::parseFloatArray(): expected a 3-element array, got 4 at <in>:10:30\n"
-        "Trade::CgltfImporter::light(): invalid color property\n");
+    /* If the message ends with a newline, it's the whole output, otherwise
+       just the sentence */
+    if(Containers::StringView{data.message}.hasSuffix('\n'))
+        CORRADE_COMPARE(out.str(), data.message);
+    else
+        CORRADE_COMPARE(out.str(), Utility::formatString("Trade::CgltfImporter::light(): {}\n", data.message));
 }
 
 void CgltfImporterTest::lightMissingType() {
