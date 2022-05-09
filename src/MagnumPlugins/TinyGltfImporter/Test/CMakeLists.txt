@@ -70,10 +70,6 @@ corrade_add_test(TinyGltfImporterTest
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/animation-embedded.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/animation-embedded.glb
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/animation-invalid.gltf
-        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/animation-invalid-node-oob.gltf
-        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/animation-invalid-input-accessor-oob.gltf
-        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/animation-invalid-sampler-oob.gltf
-        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/animation-invalid-output-accessor-oob.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/animation-invalid-track-size-mismatch.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/animation-missing-target-node.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/animation-patching.bin

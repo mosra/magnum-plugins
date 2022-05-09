@@ -85,7 +85,6 @@ struct CgltfImporterTest: TestSuite::Tester {
     void requiredExtensionsUnsupportedDisabled();
 
     void animation();
-    void animationOutOfBounds();
     void animationInvalid();
     void animationInvalidBufferNotFound();
     void animationInvalidTypes();
@@ -278,25 +277,6 @@ constexpr struct {
 
 constexpr struct {
     const char* name;
-    const char* file;
-    const char* message;
-} AnimationOutOfBoundsData[]{
-    {"sampler index out of bounds",
-        "animation-invalid-sampler-oob.gltf",
-        "sampler index 1 in channel 0 out of range for 1 samplers"},
-    {"node index out of bounds",
-        "animation-invalid-node-oob.gltf",
-        "target node index 2 in channel 0 out of range for 2 nodes"},
-    {"sampler input accessor index out of bounds",
-        "animation-invalid-input-accessor-oob.gltf",
-        "accessor index 2 out of range for 2 accessors"},
-    {"sampler output accessor index out of bounds",
-        "animation-invalid-output-accessor-oob.gltf",
-        "accessor index 4 out of range for 2 accessors"}
-};
-
-constexpr struct {
-    const char* name;
     const char* message;
 } AnimationInvalidData[]{
     {"unexpected time type",
@@ -316,7 +296,15 @@ constexpr struct {
     {"invalid output accessor",
         "accessor 4 needs 120 bytes but buffer view 0 has only 0"},
     {"unsupported interpolation type",
-        "unrecognized sampler 0 interpolation QUADRATIC"}
+        "unrecognized sampler 0 interpolation QUADRATIC"},
+    {"sampler index out of bounds",
+        "sampler index 1 in channel 0 out of range for 1 samplers"},
+    {"node index out of bounds",
+        "target node index 2 in channel 0 out of range for 2 nodes"},
+    {"sampler input accessor index out of bounds",
+        "accessor index 5 out of range for 5 accessors"},
+    {"sampler output accessor index out of bounds",
+        "accessor index 6 out of range for 5 accessors"}
 };
 
 constexpr struct {
@@ -846,9 +834,6 @@ CgltfImporterTest::CgltfImporterTest() {
 
     addInstancedTests({&CgltfImporterTest::animation},
                       Containers::arraySize(MultiFileData));
-
-    addInstancedTests({&CgltfImporterTest::animationOutOfBounds},
-        Containers::arraySize(AnimationOutOfBoundsData));
 
     addInstancedTests({&CgltfImporterTest::animationInvalid},
         Containers::arraySize(AnimationInvalidData));
@@ -1451,21 +1436,6 @@ void CgltfImporterTest::animation() {
     }
 
     /* Fourth animation tested in animationSpline() */
-}
-
-void CgltfImporterTest::animationOutOfBounds() {
-    auto&& data = AnimationOutOfBoundsData[testCaseInstanceId()];
-    setTestCaseDescription(data.name);
-
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-    /** @todo merge all into one file as it no longer fails on opening */
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, data.file)));
-    CORRADE_COMPARE(importer->animationCount(), 1);
-
-    std::ostringstream out;
-    Error redirectError{&out};
-    CORRADE_VERIFY(!importer->animation(0));
-    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::CgltfImporter::animation(): {}\n", data.message));
 }
 
 void CgltfImporterTest::animationInvalid() {

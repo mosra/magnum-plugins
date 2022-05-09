@@ -157,6 +157,82 @@
                     "output": 4
                 }
             ]
+        },
+        {
+            "name": "sampler index out of bounds",
+            "channels": [
+                {
+                    "sampler": 1,
+                    "target": {
+                        "node": 0,
+                        "path": "translation"
+                    }
+                }
+            ],
+            "samplers": [
+                {
+                    "input": 0,
+                    "interpolation": "LINEAR",
+                    "output": 1
+                }
+            ]
+        },
+        {
+            "name": "node index out of bounds",
+            "channels": [
+                {
+                    "sampler": 0,
+                    "target": {
+                        "node": 2,
+                        "path": "translation"
+                    }
+                }
+            ],
+            "samplers": [
+                {
+                    "input": 1,
+                    "interpolation": "LINEAR",
+                    "output": 2
+                }
+            ]
+        },
+        {
+            "name": "sampler input accessor index out of bounds",
+            "channels": [
+                {
+                    "sampler": 0,
+                    "target": {
+                        "node": 0,
+                        "path": "translation"
+                    }
+                }
+            ],
+            "samplers": [
+                {
+                    "input": 5,
+                    "interpolation": "LINEAR",
+                    "output": 1
+                }
+            ]
+        },
+        {
+            "name": "sampler output accessor index out of bounds",
+            "channels": [
+                {
+                    "sampler": 0,
+                    "target": {
+                        "node": 0,
+                        "path": "translation"
+                    }
+                }
+            ],
+            "samplers": [
+                {
+                    "input": 0,
+                    "interpolation": "LINEAR",
+                    "output": 6
+                }
+            ]
         }
     ],
     "note": "additional accessor bounds checks are tested inside mesh-invalid.gltf",

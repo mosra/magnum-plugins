@@ -213,21 +213,20 @@ constexpr struct {
 
 constexpr struct {
     const char* name;
-    const char* file;
     const char* message;
 } AnimationInvalidData[]{
-    {"unexpected time type", "animation-invalid.gltf", "time track has unexpected type 4/5126"},
-    {"unsupported interpolation type", "animation-invalid.gltf", "unsupported interpolation QUADRATIC"},
-    {"unexpected translation type", "animation-invalid.gltf", "translation track has unexpected type 4/5126"},
-    {"unexpected rotation type", "animation-invalid.gltf", "rotation track has unexpected type 65/5126"},
-    {"unexpected scaling type", "animation-invalid.gltf", "scaling track has unexpected type 4/5126"},
-    {"unsupported path", "animation-invalid.gltf", "unsupported track target color"},
-    {"invalid input accessor", "animation-invalid.gltf", "accessor 3 needs 40 bytes but bufferView 0 has only 0"},
-    {"invalid output accessor", "animation-invalid.gltf", "accessor 4 needs 120 bytes but bufferView 0 has only 0"},
-    {"sampler index out of bounds", "animation-invalid-sampler-oob.gltf", "sampler 1 out of bounds for 1 samplers"},
-    {"node index out of bounds", "animation-invalid-node-oob.gltf", "target node 2 out of bounds for 2 nodes"},
-    {"sampler input accessor index out of bounds", "animation-invalid-input-accessor-oob.gltf", "accessor 2 out of bounds for 2 accessors"},
-    {"sampler output accessor index out of bounds", "animation-invalid-output-accessor-oob.gltf", "accessor 4 out of bounds for 2 accessors"}
+    {"unexpected time type", "time track has unexpected type 4/5126"},
+    {"unsupported interpolation type", "unsupported interpolation QUADRATIC"},
+    {"unexpected translation type", "translation track has unexpected type 4/5126"},
+    {"unexpected rotation type", "rotation track has unexpected type 65/5126"},
+    {"unexpected scaling type", "scaling track has unexpected type 4/5126"},
+    {"unsupported path", "unsupported track target color"},
+    {"invalid input accessor", "accessor 3 needs 40 bytes but bufferView 0 has only 0"},
+    {"invalid output accessor", "accessor 4 needs 120 bytes but bufferView 0 has only 0"},
+    {"sampler index out of bounds", "sampler 1 out of bounds for 1 samplers"},
+    {"node index out of bounds", "target node 2 out of bounds for 2 nodes"},
+    {"sampler input accessor index out of bounds", "accessor 5 out of bounds for 5 accessors"},
+    {"sampler output accessor index out of bounds", "accessor 6 out of bounds for 5 accessors"}
 };
 
 constexpr struct {
@@ -960,10 +959,10 @@ void TinyGltfImporterTest::animationInvalid() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, data.file)));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "animation-invalid.gltf")));
 
     /* Check we didn't forget to test anything */
-    CORRADE_VERIFY(Containers::arraySize(AnimationInvalidData) >= importer->animationCount());
+    CORRADE_COMPARE(Containers::arraySize(AnimationInvalidData), importer->animationCount());
 
     std::ostringstream out;
     Error redirectError{&out};
