@@ -363,7 +363,7 @@
             "primitives": [
                 {
                     "attributes": {
-                        "NORMAL": 24
+                        "NORMAL": 25
                     }
                 }
             ]
@@ -373,7 +373,17 @@
             "primitives": [
                 {
                     "attributes": {},
-                    "indices": 24
+                    "indices": 25
+                }
+            ]
+        },
+        {
+            "name": "buffer with no uri",
+            "primitives": [
+                {
+                    "attributes": {
+                        "POSITION": 24
+                    }
                 }
             ]
         }
@@ -541,7 +551,7 @@
         },
         {
             "name": "21",
-            "bufferView": 5,
+            "bufferView": 6,
             "componentType": 5126,
             "count": 9,
             "type": "VEC3"
@@ -559,6 +569,13 @@
             "componentType": 9999,
             "count": 0,
             "type": "SCALAR"
+        },
+        {
+            "name": "24",
+            "bufferView": 5,
+            "componentType": 5126,
+            "count": 0,
+            "type": "VEC3"
         }
     ],
     "bufferViews": [
@@ -584,9 +601,14 @@
             "byteLength": 40
         },
         {
-            "buffer": 2,
+            "buffer": 3,
             "byteLength": 36,
             "byteStride": 12
+        },
+        {
+            "buffer": 2,
+            "byteOffset": 0,
+            "byteLength": 12
         }
     ],
     "buffers": [
@@ -599,6 +621,9 @@
             "byteLength": 59,
             "comment": "base64.b64encode(bytes(59))",
             "uri": "data:application/octet-stream;base64,AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+        },
+        {
+            "byteLength": 12
         }
     ]
 }

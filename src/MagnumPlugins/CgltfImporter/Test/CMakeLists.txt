@@ -75,10 +75,6 @@ corrade_add_test(CgltfImporterTest
         animation-patching.bin
         animation-patching.gltf
         animation-splines-sharing.gltf
-        buffer-invalid-notfound.gltf
-        buffer-invalid-notfound.glb
-        buffer-invalid-no-uri.gltf
-        buffer-invalid-no-uri.glb
         buffer-invalid-short-size.glb
         buffer-invalid-short-size.gltf
         buffer-invalid-short-size-embedded.glb
@@ -144,7 +140,7 @@ corrade_add_test(CgltfImporterTest
         mesh-embedded.gltf
         mesh-embedded.glb
         mesh-invalid.gltf
-        mesh-invalid-indices-buffer-notfound.gltf
+        mesh-invalid-buffer-notfound.gltf
         mesh-multiple-primitives.gltf
         mesh-primitives-types.gltf
         mesh-primitives-types.bin

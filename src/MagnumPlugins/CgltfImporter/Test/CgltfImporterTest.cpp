@@ -73,11 +73,9 @@ struct CgltfImporterTest: TestSuite::Tester {
     void openError();
     void openIgnoreUnknownChunk();
     void openExternalDataOrder();
-    void openExternalDataNotFound();
     void openExternalDataNoPathNoCallback();
     void openExternalDataTooLong();
     void openExternalDataTooShort();
-    void openExternalDataNoUri();
     void openExternalDataInvalidUri();
 
     void requiredExtensions();
@@ -134,7 +132,7 @@ struct CgltfImporterTest: TestSuite::Tester {
     void meshPrimitivesTypes();
     void meshSizeNotMultipleOfStride();
     void meshInvalid();
-    void meshInvalidIndicesBufferNotFound();
+    void meshInvalidBufferNotFound();
 
     void materialPbrMetallicRoughness();
     void materialPbrSpecularGlossiness();
@@ -494,13 +492,23 @@ constexpr struct {
     {"buffer view range out of bounds",
         "buffer view 3 needs 60 bytes but buffer 1 has only 59"},
     {"buffer index out of bounds",
-        "buffer index 2 out of range for 2 buffers"},
+        "buffer index 3 out of range for 3 buffers"},
     {"buffer view index out of bounds",
-        "buffer view index 5 out of range for 5 buffer views"},
+        "buffer view index 6 out of range for 6 buffer views"},
     {"accessor index out of bounds",
-        "accessor index 24 out of range for 24 accessors"},
+        "accessor index 25 out of range for 25 accessors"},
     {"mesh index accessor out of bounds",
-        "accessor index 24 out of range for 24 accessors"}
+        "accessor index 25 out of range for 25 accessors"},
+    {"buffer with no uri",
+        "buffer 2 has missing uri property"}
+};
+
+constexpr struct {
+    const char* name;
+    const char* message;
+} MeshInvalidBufferNotFoundData[]{
+    {"buffer not found", "error opening /nonexistent1.bin"},
+    {"indices buffer not found", "error opening /nonexistent2.bin"}
 };
 
 constexpr struct {
@@ -736,17 +744,16 @@ CgltfImporterTest::CgltfImporterTest() {
 
     addTests({&CgltfImporterTest::openIgnoreUnknownChunk});
 
-    addInstancedTests({&CgltfImporterTest::openExternalDataOrder,
-                       &CgltfImporterTest::openExternalDataNotFound,
-                       &CgltfImporterTest::openExternalDataNoPathNoCallback,
-                       &CgltfImporterTest::openExternalDataTooLong},
-                      Containers::arraySize(SingleFileData));
+    addInstancedTests({&CgltfImporterTest::openExternalDataOrder},
+        Containers::arraySize(SingleFileData));
+
+    addTests({&CgltfImporterTest::openExternalDataNoPathNoCallback});
+
+    addInstancedTests({&CgltfImporterTest::openExternalDataTooLong},
+        Containers::arraySize(SingleFileData));
 
     addInstancedTests({&CgltfImporterTest::openExternalDataTooShort},
-                      Containers::arraySize(MultiFileData));
-
-    addInstancedTests({&CgltfImporterTest::openExternalDataNoUri},
-                      Containers::arraySize(SingleFileData));
+        Containers::arraySize(MultiFileData));
 
     addInstancedTests({&CgltfImporterTest::openExternalDataInvalidUri},
                       Containers::arraySize(InvalidUriData));
@@ -834,7 +841,8 @@ CgltfImporterTest::CgltfImporterTest() {
     addInstancedTests({&CgltfImporterTest::meshInvalid},
         Containers::arraySize(MeshInvalidData));
 
-    addTests({&CgltfImporterTest::meshInvalidIndicesBufferNotFound});
+    addInstancedTests({&CgltfImporterTest::meshInvalidBufferNotFound},
+        Containers::arraySize(MeshInvalidBufferNotFoundData));
 
     addTests({&CgltfImporterTest::materialPbrMetallicRoughness,
               &CgltfImporterTest::materialPbrSpecularGlossiness,
@@ -1069,34 +1077,10 @@ void CgltfImporterTest::openExternalDataOrder() {
     CORRADE_COMPARE_AS(callbackData.closed, Containers::arrayView<bool>({false, false, true}), TestSuite::Compare::Container);
 }
 
-void CgltfImporterTest::openExternalDataNotFound() {
-    auto&& data = SingleFileData[testCaseInstanceId()];
-    setTestCaseDescription(data.name);
-
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-
-    Containers::String filename = Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "buffer-invalid-notfound"_s + data.suffix);
-
-    /* Importing should succeed, buffers are loaded on demand */
-    CORRADE_VERIFY(importer->openFile(filename));
-    CORRADE_COMPARE(importer->meshCount(), 1);
-
-    std::ostringstream out;
-    Error redirectError{&out};
-    CORRADE_VERIFY(!importer->mesh(0));
-    /* There's an error from Path::read() before */
-    CORRADE_COMPARE_AS(out.str(),
-        "\nTrade::CgltfImporter::mesh(): error opening /nonexistent.bin\n",
-        TestSuite::Compare::StringHasSuffix);
-}
-
 void CgltfImporterTest::openExternalDataNoPathNoCallback() {
-    auto&& data = SingleFileData[testCaseInstanceId()];
-    setTestCaseDescription(data.name);
-
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
 
-    Containers::Optional<Containers::Array<char>> file = Utility::Path::read(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "buffer-invalid-notfound"_s + data.suffix));
+    Containers::Optional<Containers::Array<char>> file = Utility::Path::read(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "buffer-long-size.gltf"));
     CORRADE_VERIFY(file);
     CORRADE_VERIFY(importer->openData(*file));
     CORRADE_COMPARE(importer->meshCount(), 1);
@@ -1132,21 +1116,6 @@ void CgltfImporterTest::openExternalDataTooShort() {
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->mesh(0));
     CORRADE_COMPARE(out.str(), "Trade::CgltfImporter::mesh(): buffer 0 is too short, expected 24 bytes but got 12\n");
-}
-
-void CgltfImporterTest::openExternalDataNoUri() {
-    auto&& data = SingleFileData[testCaseInstanceId()];
-    setTestCaseDescription(data.name);
-
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "buffer-invalid-no-uri"_s + data.suffix)));
-    CORRADE_COMPARE(importer->meshCount(), 1);
-
-    std::ostringstream out;
-    Error redirectError{&out};
-    CORRADE_VERIFY(!importer->mesh(0));
-    CORRADE_COMPARE(out.str(), "Trade::CgltfImporter::mesh(): buffer 1 has missing uri property\n");
 }
 
 void CgltfImporterTest::openExternalDataInvalidUri() {
@@ -3171,25 +3140,25 @@ void CgltfImporterTest::meshInvalid() {
     CORRADE_COMPARE(out.str(), Utility::formatString("Trade::CgltfImporter::mesh(): {}\n", data.message));
 }
 
-void CgltfImporterTest::meshInvalidIndicesBufferNotFound() {
-    /* This test has to be separate from TinyGltfImporter because it errors
-       out during import trying to load the buffer.
+void CgltfImporterTest::meshInvalidBufferNotFound() {
+    auto&& data = MeshInvalidBufferNotFoundData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
 
-       Not testing this for the attribute buffer since that's already done by
-       openExternalDataNotFound(). */
+    /* These tests have to be separate from TinyGltfImporter because it errors
+       out during import trying to load the buffer */
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "mesh-invalid-buffer-notfound.gltf")));
 
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "mesh-invalid-indices-buffer-notfound.gltf")));
-
-    CORRADE_COMPARE(importer->meshCount(), 1);
+    /* Check we didn't forget to test anything */
+    CORRADE_COMPARE(importer->meshCount(), Containers::arraySize(MeshInvalidBufferNotFoundData));
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(!importer->mesh("indices buffer not found"));
+    CORRADE_VERIFY(!importer->mesh(data.name));
     /* There's an error from Path::read() before */
     CORRADE_COMPARE_AS(out.str(),
-        "\nTrade::CgltfImporter::mesh(): error opening /nonexistent.bin\n",
+        Utility::format("\nTrade::CgltfImporter::mesh(): {}\n", data.message),
         TestSuite::Compare::StringHasSuffix);
 }
 

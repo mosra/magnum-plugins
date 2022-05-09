@@ -75,10 +75,10 @@ corrade_add_test(TinyGltfImporterTest
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/animation-patching.bin
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/animation-patching.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/animation-splines-sharing.gltf
-        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/buffer-invalid-notfound.gltf
-        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/buffer-invalid-notfound.glb
-        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/buffer-invalid-no-uri.gltf
-        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/buffer-invalid-no-uri.glb
+        buffer-invalid-notfound.gltf
+        buffer-invalid-notfound.glb
+        buffer-invalid-no-uri.gltf
+        buffer-invalid-no-uri.glb
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/buffer-long-size.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/buffer-long-size.glb
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/camera.gltf
@@ -88,8 +88,11 @@ corrade_add_test(TinyGltfImporterTest
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/encoded-uris.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/escaped-strings.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/external-data.bin
+        external-data.bin
         # external-data.gl* packed via a resource (but *.bin needed also by
-        # buffer-wrong-size.gltf, so added separately as well)
+        # buffer-wrong-size.gltf from CgltfImporter and
+        # buffer-invalid-no-uri.gltf from here, so added *twice* separately as
+        # well)
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/image.basis
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/image.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/image.glb

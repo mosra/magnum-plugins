@@ -717,7 +717,7 @@ void TinyGltfImporterTest::openExternalDataNotFound() {
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(!importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "buffer-invalid-notfound"_s + data.suffix)));
+    CORRADE_VERIFY(!importer->openFile(Utility::Path::join(TINYGLTFIMPORTER_TEST_DIR, "buffer-invalid-notfound"_s + data.suffix)));
     /* There's an error from Path::read() before */
     CORRADE_COMPARE_AS(out.str(),
         "\nTrade::TinyGltfImporter::openData(): error opening file: File read error : /nonexistent.bin : file reading failed\n",
@@ -730,7 +730,7 @@ void TinyGltfImporterTest::openExternalDataNoPathNoCallback() {
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
 
-    Containers::Optional<Containers::Array<char>> file = Utility::Path::read(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "buffer-invalid-notfound"_s + data.suffix));
+    Containers::Optional<Containers::Array<char>> file = Utility::Path::read(Utility::Path::join(TINYGLTFIMPORTER_TEST_DIR, "buffer-invalid-notfound"_s + data.suffix));
     CORRADE_VERIFY(file);
 
     std::ostringstream out;
@@ -766,7 +766,7 @@ void TinyGltfImporterTest::openExternalDataNoUri() {
     std::ostringstream out;
     Error redirectError{&out};
 
-    CORRADE_VERIFY(!importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "buffer-invalid-no-uri"_s + data.suffix)));
+    CORRADE_VERIFY(!importer->openFile(Utility::Path::join(TINYGLTFIMPORTER_TEST_DIR, "buffer-invalid-no-uri"_s + data.suffix)));
     {
         CORRADE_EXPECT_FAIL_IF(data.suffix == ".glb"_s,
             "tinygltf incorrectly detects all buffers without URI as GLB BIN buffer.");
