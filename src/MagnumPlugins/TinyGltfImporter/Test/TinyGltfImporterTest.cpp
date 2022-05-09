@@ -359,20 +359,19 @@ const struct {
 
 constexpr struct {
     const char* name;
-    const char* file;
     const char* message;
 } MaterialInvalidData[]{
-    {"unknown alpha mode", "material-invalid-alpha-mode.gltf", "unknown alpha mode WAT"},
-    {"invalid texture index pbrMetallicRoughness base color", "material-invalid-pbr-base-color-oob.gltf", "baseColorTexture index 2 out of bounds for 2 textures"},
-    {"invalid texture index pbrMetallicRoughness metallic/roughness", "material-invalid-pbr-metallic-roughness-oob.gltf", "metallicRoughnessTexture index 2 out of bounds for 2 textures"},
-    {"invalid texture index pbrSpecularGlossiness diffuse", "material-invalid-pbr-diffuse-oob.gltf", "diffuseTexture index 2 out of bounds for 2 textures"},
-    {"invalid texture index pbrSpecularGlossiness specular", "material-invalid-pbr-specular-oob.gltf", "specularGlossinessTexture index 2 out of bounds for 2 textures"},
-    {"invalid texture index normal", "material-invalid-normal-oob.gltf", "normalTexture index 2 out of bounds for 2 textures"},
-    {"invalid texture index occlusion", "material-invalid-occlusion-oob.gltf", "occlusionTexture index 2 out of bounds for 2 textures"},
-    {"invalid texture index emissive", "material-invalid-emissive-oob.gltf", "emissiveTexture index 2 out of bounds for 2 textures"},
-    {"invalid texture index clearcoat factor", "material-invalid-clearcoat-factor-oob.gltf", "clearcoatTexture index 2 out of bounds for 2 textures"},
-    {"invalid texture index clearcoat roughness", "material-invalid-clearcoat-roughness-oob.gltf", "clearcoatRoughnessTexture index 2 out of bounds for 2 textures"},
-    {"invalid texture index clearcoat normal", "material-invalid-clearcoat-normal-oob.gltf", "clearcoatNormalTexture index 2 out of bounds for 2 textures"}
+    {"unknown alpha mode", "unknown alpha mode WAT"},
+    {"invalid texture index pbrMetallicRoughness base color", "baseColorTexture index 2 out of bounds for 2 textures"},
+    {"invalid texture index pbrMetallicRoughness metallic/roughness", "metallicRoughnessTexture index 2 out of bounds for 2 textures"},
+    {"invalid texture index pbrSpecularGlossiness diffuse", "diffuseTexture index 2 out of bounds for 2 textures"},
+    {"invalid texture index pbrSpecularGlossiness specular", "specularGlossinessTexture index 2 out of bounds for 2 textures"},
+    {"invalid texture index normal", "normalTexture index 2 out of bounds for 2 textures"},
+    {"invalid texture index occlusion", "occlusionTexture index 2 out of bounds for 2 textures"},
+    {"invalid texture index emissive", "emissiveTexture index 2 out of bounds for 2 textures"},
+    {"invalid texture index clearcoat factor", "clearcoatTexture index 2 out of bounds for 2 textures"},
+    {"invalid texture index clearcoat roughness", "clearcoatRoughnessTexture index 2 out of bounds for 2 textures"},
+    {"invalid texture index clearcoat normal", "clearcoatNormalTexture index 2 out of bounds for 2 textures"}
 };
 
 constexpr struct {
@@ -3513,9 +3512,10 @@ void TinyGltfImporterTest::materialInvalid() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, data.file)));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "material-invalid.gltf")));
 
-    CORRADE_VERIFY(Containers::arraySize(MaterialInvalidData) >= importer->materialCount());
+    /* Check we didn't forget to test anything */
+    CORRADE_COMPARE(Containers::arraySize(MaterialInvalidData), importer->materialCount());
 
     std::ostringstream out;
     Error redirectError{&out};

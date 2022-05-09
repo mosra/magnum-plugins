@@ -158,8 +158,7 @@ struct CgltfImporterTest: TestSuite::Tester {
     void materialRawSheen();
     void materialRawOutOfBounds();
 
-    void materialOutOfBounds();
-    void materialInvalidAlphaMode();
+    void materialInvalid();
     void materialTexCoordFlip();
 
     void texture();
@@ -520,38 +519,29 @@ constexpr struct {
 
 constexpr struct {
     const char* name;
-    const char* file;
     const char* message;
-} MaterialOutOfBoundsData[]{
+} MaterialInvalidData[]{
+    {"unknown alpha mode",
+        "unrecognized alphaMode WAT"},
     {"invalid texture index pbrMetallicRoughness base color",
-        "material-invalid-pbr-base-color-oob.gltf",
         "baseColorTexture index 2 out of range for 2 textures"},
     {"invalid texture index pbrMetallicRoughness metallic/roughness",
-        "material-invalid-pbr-metallic-roughness-oob.gltf",
         "metallicRoughnessTexture index 2 out of range for 2 textures"},
     {"invalid texture index pbrSpecularGlossiness diffuse",
-        "material-invalid-pbr-diffuse-oob.gltf",
         "diffuseTexture index 2 out of range for 2 textures"},
     {"invalid texture index pbrSpecularGlossiness specular",
-        "material-invalid-pbr-specular-oob.gltf",
         "specularGlossinessTexture index 2 out of range for 2 textures"},
     {"invalid texture index normal",
-        "material-invalid-normal-oob.gltf",
         "normalTexture index 2 out of range for 2 textures"},
     {"invalid texture index occlusion",
-        "material-invalid-occlusion-oob.gltf",
         "occlusionTexture index 2 out of range for 2 textures"},
     {"invalid texture index emissive",
-        "material-invalid-emissive-oob.gltf",
         "emissiveTexture index 2 out of range for 2 textures"},
     {"invalid texture index clearcoat factor",
-        "material-invalid-clearcoat-factor-oob.gltf",
         "clearcoatTexture index 2 out of range for 2 textures"},
     {"invalid texture index clearcoat roughness",
-        "material-invalid-clearcoat-roughness-oob.gltf",
         "clearcoatRoughnessTexture index 2 out of range for 2 textures"},
     {"invalid texture index clearcoat normal",
-        "material-invalid-clearcoat-normal-oob.gltf",
         "clearcoatNormalTexture index 2 out of range for 2 textures"}
 };
 
@@ -893,10 +883,8 @@ CgltfImporterTest::CgltfImporterTest() {
               &CgltfImporterTest::materialRawSheen,
               &CgltfImporterTest::materialRawOutOfBounds});
 
-    addInstancedTests({&CgltfImporterTest::materialOutOfBounds},
-        Containers::arraySize(MaterialOutOfBoundsData));
-
-    addTests({&CgltfImporterTest::materialInvalidAlphaMode});
+    addInstancedTests({&CgltfImporterTest::materialInvalid},
+        Containers::arraySize(MaterialInvalidData));
 
     addInstancedTests({&CgltfImporterTest::materialTexCoordFlip},
         Containers::arraySize(MaterialTexCoordFlipData));
@@ -3310,6 +3298,7 @@ void CgltfImporterTest::meshInvalid() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "mesh-invalid.gltf")));
 
+    /* Check we didn't forget to test anything */
     CORRADE_COMPARE(Containers::arraySize(MeshInvalidData), importer->meshCount());
 
     std::ostringstream out;
@@ -4507,31 +4496,20 @@ void CgltfImporterTest::materialRawOutOfBounds() {
         "Trade::CgltfImporter::material(): property snakeTexture has an invalid texture object, skipping\n");
 }
 
-void CgltfImporterTest::materialOutOfBounds() {
-    auto&& data = MaterialOutOfBoundsData[testCaseInstanceId()];
+void CgltfImporterTest::materialInvalid() {
+    auto&& data = MaterialInvalidData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-    /** @todo merge all into one file as it no longer fails on opening */
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, data.file)));
-    CORRADE_COMPARE(importer->materialCount(), 1);
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "material-invalid.gltf")));
+
+    /* Check we didn't forget to test anything */
+    CORRADE_COMPARE(Containers::arraySize(MaterialInvalidData), importer->materialCount());
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(!importer->material(0));
+    CORRADE_VERIFY(!importer->material(data.name));
     CORRADE_COMPARE(out.str(), Utility::formatString("Trade::CgltfImporter::material(): {}\n", data.message));
-}
-
-void CgltfImporterTest::materialInvalidAlphaMode() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "material-invalid-alpha-mode.gltf")));
-    CORRADE_COMPARE(importer->materialCount(), 1);
-
-    std::ostringstream out;
-    Error redirectError{&out};
-    CORRADE_VERIFY(!importer->material(0));
-    CORRADE_COMPARE(out.str(), "Trade::CgltfImporter::material(): unrecognized alphaMode WAT\n");
 }
 
 void CgltfImporterTest::materialTexCoordFlip() {

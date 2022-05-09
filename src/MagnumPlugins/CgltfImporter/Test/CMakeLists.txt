@@ -126,17 +126,7 @@ corrade_add_test(CgltfImporterTest
         material-common.gltf
         material-clearcoat.gltf
         material-extras.gltf
-        material-invalid-alpha-mode.gltf
-        material-invalid-clearcoat-factor-oob.gltf
-        material-invalid-clearcoat-normal-oob.gltf
-        material-invalid-clearcoat-roughness-oob.gltf
-        material-invalid-emissive-oob.gltf
-        material-invalid-normal-oob.gltf
-        material-invalid-occlusion-oob.gltf
-        material-invalid-pbr-base-color-oob.gltf
-        material-invalid-pbr-diffuse-oob.gltf
-        material-invalid-pbr-metallic-roughness-oob.gltf
-        material-invalid-pbr-specular-oob.gltf
+        material-invalid.gltf
         material-ior.gltf
         material-metallicroughness.gltf
         material-phong-fallback.gltf
