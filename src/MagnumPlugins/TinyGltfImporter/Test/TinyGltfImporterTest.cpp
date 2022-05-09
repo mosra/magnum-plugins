@@ -1526,7 +1526,7 @@ void TinyGltfImporterTest::lightInvalid() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "light-invalid.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(TINYGLTFIMPORTER_TEST_DIR, "light-invalid.gltf")));
 
     /* Check we didn't forget to test anything */
     CORRADE_COMPARE(importer->lightCount(), Containers::arraySize(LightInvalidData));
@@ -1542,7 +1542,7 @@ void TinyGltfImporterTest::lightMissingType() {
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(!importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "light-invalid-missing-type.gltf")));
+    CORRADE_VERIFY(!importer->openFile(Utility::Path::join(TINYGLTFIMPORTER_TEST_DIR, "light-invalid-missing-type.gltf")));
     /* This error is extremely shitty, but well that's tinygltf, so. */
     CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::openData(): error opening file: 'type' property is missing.\n");
 }
@@ -1552,7 +1552,7 @@ void TinyGltfImporterTest::lightMissingSpot() {
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(!importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "light-invalid-missing-spot.gltf")));
+    CORRADE_VERIFY(!importer->openFile(Utility::Path::join(TINYGLTFIMPORTER_TEST_DIR, "light-invalid-missing-spot.gltf")));
     /* This error is extremely shitty, but well that's tinygltf, so. */
     CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::openData(): error opening file: Spot light description not found.\n");
 }

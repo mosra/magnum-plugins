@@ -45,13 +45,6 @@
                         0.14,
                         0.5
                     ]
-                },
-                {
-                    "name": "missing type"
-                },
-                {
-                    "name": "missing spot",
-                    "type": "spot"
                 }
             ]
         }

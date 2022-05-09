@@ -105,8 +105,6 @@ struct CgltfImporterTest: TestSuite::Tester {
 
     void light();
     void lightInvalid();
-    void lightMissingType();
-    void lightMissingSpot();
 
     void scene();
     void sceneInvalid();
@@ -332,7 +330,11 @@ constexpr struct {
         "spot inner and outer cone angle Deg(14.3239) and Deg(14.3239) out of allowed bounds"},
     {"invalid color size",
         "Utility::Json::parseFloatArray(): expected a 3-element array, got 4 at <in>:42:30\n"
-        "Trade::CgltfImporter::light(): invalid color property\n"}
+        "Trade::CgltfImporter::light(): invalid color property\n"},
+    {"missing type",
+        "Trade::CgltfImporter::light(): missing or invalid type property\n"},
+    {"missing spot",
+        "Trade::CgltfImporter::light(): missing or invalid spot property\n"}
 };
 
 constexpr struct {
@@ -790,9 +792,6 @@ CgltfImporterTest::CgltfImporterTest() {
 
     addInstancedTests({&CgltfImporterTest::lightInvalid},
         Containers::arraySize(LightInvalidData));
-
-    addTests({&CgltfImporterTest::lightMissingType,
-              &CgltfImporterTest::lightMissingSpot});
 
     addInstancedTests({&CgltfImporterTest::scene},
         Containers::arraySize(SingleFileData));
@@ -1956,32 +1955,6 @@ void CgltfImporterTest::lightInvalid() {
         CORRADE_COMPARE(out.str(), data.message);
     else
         CORRADE_COMPARE(out.str(), Utility::formatString("Trade::CgltfImporter::light(): {}\n", data.message));
-}
-
-void CgltfImporterTest::lightMissingType() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-
-    /** @todo merge with light-invalid.gltf */
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "light-invalid-missing-type.gltf")));
-    CORRADE_COMPARE(importer->lightCount(), 1);
-
-    std::ostringstream out;
-    Error redirectError{&out};
-    CORRADE_VERIFY(!importer->light(0));
-    CORRADE_COMPARE(out.str(), "Trade::CgltfImporter::light(): missing or invalid type property\n");
-}
-
-void CgltfImporterTest::lightMissingSpot() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-
-    /** @todo merge with light-invalid.gltf */
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "light-invalid-missing-spot.gltf")));
-    CORRADE_COMPARE(importer->lightCount(), 1);
-
-    std::ostringstream out;
-    Error redirectError{&out};
-    CORRADE_VERIFY(!importer->light(0));
-    CORRADE_COMPARE(out.str(), "Trade::CgltfImporter::light(): missing or invalid spot property\n");
 }
 
 void CgltfImporterTest::scene() {

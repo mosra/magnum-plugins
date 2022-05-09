@@ -118,8 +118,6 @@ corrade_add_test(CgltfImporterTest
         light.gltf
         light.glb
         light-invalid.gltf
-        light-invalid-missing-spot.gltf
-        light-invalid-missing-type.gltf
         material-common.gltf
         material-clearcoat.gltf
         material-extras.gltf
