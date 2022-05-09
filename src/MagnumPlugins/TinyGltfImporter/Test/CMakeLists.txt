@@ -69,8 +69,8 @@ corrade_add_test(TinyGltfImporterTest
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/animation.bin
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/animation-embedded.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/animation-embedded.glb
-        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/animation-invalid.gltf
-        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/animation-invalid-track-size-mismatch.gltf
+        animation-invalid.gltf
+        animation-invalid-track-size-mismatch.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/animation-missing-target-node.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/animation-patching.bin
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/animation-patching.gltf

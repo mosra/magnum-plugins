@@ -71,7 +71,6 @@ corrade_add_test(CgltfImporterTest
         animation-embedded.glb
         animation-invalid.gltf
         animation-invalid-buffer-notfound.gltf
-        animation-invalid-track-size-mismatch.gltf
         animation-missing-target-node.gltf
         animation-patching.bin
         animation-patching.gltf

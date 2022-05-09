@@ -939,7 +939,7 @@ void TinyGltfImporterTest::animationInvalid() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "animation-invalid.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(TINYGLTFIMPORTER_TEST_DIR, "animation-invalid.gltf")));
 
     /* Check we didn't forget to test anything */
     CORRADE_COMPARE(Containers::arraySize(AnimationInvalidData), importer->animationCount());
@@ -953,7 +953,7 @@ void TinyGltfImporterTest::animationInvalid() {
 void TinyGltfImporterTest::animationTrackSizeMismatch() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
 
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "animation-invalid-track-size-mismatch.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(TINYGLTFIMPORTER_TEST_DIR, "animation-invalid-track-size-mismatch.gltf")));
 
     std::ostringstream out;
     Error redirectError{&out};

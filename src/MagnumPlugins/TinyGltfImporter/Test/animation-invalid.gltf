@@ -209,7 +209,7 @@
             ],
             "samplers": [
                 {
-                    "input": 7,
+                    "input": 5,
                     "interpolation": "LINEAR",
                     "output": 1
                 }
@@ -229,25 +229,6 @@
             "samplers": [
                 {
                     "input": 0,
-                    "interpolation": "LINEAR",
-                    "output": 8
-                }
-            ]
-        },
-        {
-            "name": "track size mismatch",
-            "channels": [
-                {
-                    "sampler": 0,
-                    "target": {
-                        "node": 0,
-                        "path": "translation"
-                    }
-                }
-            ],
-            "samplers": [
-                {
-                    "input": 5,
                     "interpolation": "LINEAR",
                     "output": 6
                 }
@@ -290,20 +271,6 @@
             "componentType": 5126,
             "count": 10,
             "type": "VEC3"
-        },
-        {
-            "bufferView": 1,
-            "byteOffset": 0,
-            "componentType": 5126,
-            "count": 2,
-            "type": "SCALAR"
-        },
-        {
-            "bufferView": 1,
-            "byteOffset": 0,
-            "componentType": 5126,
-            "count": 3,
-            "type": "VEC3"
         }
     ],
     "bufferViews": [
@@ -311,18 +278,12 @@
             "buffer": 0,
             "byteOffset": 0,
             "byteLength": 0
-        },
-        {
-            "buffer": 0,
-            "byteOffset": 0,
-            "byteLength": 36
         }
     ],
     "buffers": [
         {
-            "byteLength": 36,
-            "comment": "base64.b64encode(bytes(36))",
-            "uri": "data:application/octet-stream;base64,AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+            "byteLength": 1,
+            "uri": "data:application/octet-stream;base64,AA=="
         }
     ]
 }

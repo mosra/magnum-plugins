@@ -87,7 +87,6 @@ struct CgltfImporterTest: TestSuite::Tester {
     void animation();
     void animationInvalid();
     void animationInvalidBufferNotFound();
-    void animationTrackSizeMismatch();
     void animationMissingTargetNode();
 
     void animationSpline();
@@ -294,9 +293,11 @@ constexpr struct {
     {"node index out of bounds",
         "target node index 2 in channel 0 out of range for 2 nodes"},
     {"sampler input accessor index out of bounds",
-        "accessor index 5 out of range for 5 accessors"},
+        "accessor index 7 out of range for 7 accessors"},
     {"sampler output accessor index out of bounds",
-        "accessor index 6 out of range for 5 accessors"}
+        "accessor index 8 out of range for 7 accessors"},
+    {"track size mismatch",
+        "channel 0 target track size doesn't match time track size, expected 3 but got 2"}
 };
 
 constexpr struct {
@@ -752,8 +753,7 @@ CgltfImporterTest::CgltfImporterTest() {
     addInstancedTests({&CgltfImporterTest::animationInvalidBufferNotFound},
         Containers::arraySize(AnimationInvalidBufferNotFoundData));
 
-    addTests({&CgltfImporterTest::animationTrackSizeMismatch,
-              &CgltfImporterTest::animationMissingTargetNode});
+    addTests({&CgltfImporterTest::animationMissingTargetNode});
 
     addInstancedTests({&CgltfImporterTest::animationSpline},
                       Containers::arraySize(MultiFileData));
@@ -1360,18 +1360,6 @@ void CgltfImporterTest::animationInvalidBufferNotFound() {
     CORRADE_COMPARE_AS(out.str(),
         Utility::format("\nTrade::CgltfImporter::animation(): {}\n", data.message),
         TestSuite::Compare::StringHasSuffix);
-}
-
-void CgltfImporterTest::animationTrackSizeMismatch() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "animation-invalid-track-size-mismatch.gltf")));
-    CORRADE_COMPARE(importer->animationCount(), 1);
-
-    std::ostringstream out;
-    Error redirectError{&out};
-    CORRADE_VERIFY(!importer->animation(0));
-    CORRADE_COMPARE(out.str(), "Trade::CgltfImporter::animation(): channel 0 target track size doesn't match time track size, expected 3 but got 2\n");
 }
 
 void CgltfImporterTest::animationMissingTargetNode() {
