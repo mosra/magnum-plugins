@@ -349,13 +349,12 @@ const struct {
     {"sparse accessor", "mesh-invalid.gltf", "accessor 14 is using sparse storage, which is unsupported"},
     {"no bufferview", "mesh-invalid.gltf", "accessor 15 has no bufferView"},
     {"accessor range out of bounds", "mesh-invalid.gltf", "accessor 18 needs 48 bytes but bufferView 0 has only 36"},
-    {"buffer view range out of bounds", "mesh-invalid.gltf", "bufferView 3 needs 164 bytes but buffer 1 has only 160"},
-    {"buffer index out of bounds", "mesh-invalid-buffer-oob.gltf", "buffer 1 out of bounds for 1 buffers"},
-    {"buffer view index out of bounds", "mesh-invalid-bufferview-oob.gltf", "bufferView 4 out of bounds for 1 views"},
-    /* The others are in Cgltf's test dir */
-    {"accessor index out of bounds", Utility::Path::join(TINYGLTFIMPORTER_TEST_DIR, "mesh-invalid-accessor-oob.gltf"), "accessor 2 out of bounds for 2 accessors"},
+    {"buffer view range out of bounds", "mesh-invalid.gltf", "bufferView 3 needs 60 bytes but buffer 1 has only 59"},
+    {"buffer index out of bounds", "mesh-invalid.gltf", "buffer 2 out of bounds for 2 buffers"},
+    {"buffer view index out of bounds", "mesh-invalid.gltf", "bufferView 5 out of bounds for 5 views"},
+    {"accessor index out of bounds", "mesh-invalid-accessor-oob.gltf", "accessor 2 out of bounds for 2 accessors"},
     {"multiple buffers", "mesh-invalid.gltf", "meshes spanning multiple buffers are not supported"},
-    {"invalid index accessor", "mesh-invalid.gltf", "accessor 17 needs 40 bytes but bufferView 0 has only 36"},
+    {"invalid index accessor", "mesh-invalid.gltf", "accessor 17 needs 40 bytes but bufferView 0 has only 36"}
 };
 
 constexpr struct {
@@ -2828,7 +2827,7 @@ void TinyGltfImporterTest::meshIndexAccessorOutOfBounds() {
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(!importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "mesh-invalid-index-accessor-oob.gltf")));
+    CORRADE_VERIFY(!importer->openFile(Utility::Path::join(TINYGLTFIMPORTER_TEST_DIR, "mesh-invalid-index-accessor-oob.gltf")));
     CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::openData(): error opening file: primitive indices accessor out of bounds\n");
 }
 
@@ -2837,7 +2836,7 @@ void TinyGltfImporterTest::meshInvalid() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, data.file)));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(TINYGLTFIMPORTER_TEST_DIR, data.file)));
 
     /* Check we didn't forget to test anything */
     CORRADE_VERIFY(Containers::arraySize(MeshInvalidData) >= importer->meshCount());

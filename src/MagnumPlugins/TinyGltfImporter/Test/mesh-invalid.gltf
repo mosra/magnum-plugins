@@ -240,7 +240,7 @@
             ]
         },
         {
-            "name": "normalized int",
+            "name": "normalized double",
             "primitives": [
                 {
                     "attributes": {
@@ -255,26 +255,6 @@
                 {
                     "attributes": {
                         "_THING": 13
-                    }
-                }
-            ]
-        },
-        {
-            "name": "unknown type",
-            "primitives": [
-                {
-                    "attributes": {
-                        "_THING": 22
-                    }
-                }
-            ]
-        },
-        {
-            "name": "unknown component type",
-            "primitives": [
-                {
-                    "attributes": {
-                        "_THING": 23
                     }
                 }
             ]
@@ -339,17 +319,17 @@
             ]
         },
         {
-            "name": "buffer index out of bounds",
+            "name": "normalized int",
             "primitives": [
                 {
                     "attributes": {
-                        "POSITION": 20
+                        "_THING": 20
                     }
                 }
             ]
         },
         {
-            "name": "buffer view index out of bounds",
+            "name": "buffer index out of bounds",
             "primitives": [
                 {
                     "attributes": {
@@ -359,21 +339,22 @@
             ]
         },
         {
-            "name": "accessor index out of bounds",
+            "name": "buffer view index out of bounds",
             "primitives": [
                 {
                     "attributes": {
-                        "NORMAL": 24
+                        "POSITION": 22
                     }
                 }
             ]
         },
         {
-            "name": "mesh index accessor out of bounds",
+            "name": "accessor index out of bounds",
             "primitives": [
                 {
-                    "attributes": {},
-                    "indices": 24
+                    "attributes": {
+                        "NORMAL": 23
+                    }
                 }
             ]
         }
@@ -468,7 +449,7 @@
         {
             "name": "12",
             "bufferView": 0,
-            "componentType": 5125,
+            "componentType": 5130,
             "normalized": true,
             "count": 1,
             "type": "SCALAR"
@@ -534,31 +515,25 @@
         },
         {
             "name": "20",
+            "bufferView": 0,
+            "componentType": 5125,
+            "normalized": true,
+            "count": 1,
+            "type": "SCALAR"
+        },
+        {
+            "name": "21",
             "bufferView": 4,
             "componentType": 5126,
             "count": 3,
             "type": "VEC3"
         },
         {
-            "name": "21",
+            "name": "22",
             "bufferView": 5,
             "componentType": 5126,
             "count": 9,
             "type": "VEC3"
-        },
-        {
-            "name": "22",
-            "bufferView": 0,
-            "componentType": 5126,
-            "count": 0,
-            "type": "EEE"
-        },
-        {
-            "name": "23",
-            "bufferView": 0,
-            "componentType": 9999,
-            "count": 0,
-            "type": "SCALAR"
         }
     ],
     "bufferViews": [

@@ -160,14 +160,8 @@ corrade_add_test(CgltfImporterTest
         mesh-duplicate-attributes.gltf
         mesh-embedded.gltf
         mesh-embedded.glb
-        mesh-invalid.bin
         mesh-invalid.gltf
-        mesh-invalid-accessor-oob.gltf
-        mesh-invalid-buffer-oob.gltf
-        mesh-invalid-bufferview-oob.gltf
-        mesh-invalid-index-accessor-oob.gltf
         mesh-invalid-indices-buffer-notfound.gltf
-        mesh-invalid-types.gltf
         mesh-multiple-primitives.gltf
         mesh-primitives-types.gltf
         mesh-primitives-types.bin

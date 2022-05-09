@@ -140,10 +140,8 @@ struct CgltfImporterTest: TestSuite::Tester {
     void meshMultiplePrimitives();
     void meshPrimitivesTypes();
     void meshSizeNotMultipleOfStride();
-    void meshOutOfBounds();
     void meshInvalid();
     void meshInvalidIndicesBufferNotFound();
-    void meshInvalidTypes();
 
     void materialPbrMetallicRoughness();
     void materialPbrSpecularGlossiness();
@@ -438,25 +436,6 @@ constexpr struct {
 
 constexpr struct {
     const char* name;
-    const char* file;
-    const char* message;
-} MeshOutOfBoundsData[]{
-    {"buffer index out of bounds",
-        "mesh-invalid-buffer-oob.gltf",
-        "buffer index 1 out of range for 1 buffers"},
-    {"buffer view index out of bounds",
-        "mesh-invalid-bufferview-oob.gltf",
-        "buffer view index 4 out of range for 1 buffer views"},
-    {"accessor index out of bounds",
-        "mesh-invalid-accessor-oob.gltf",
-        "accessor index 2 out of range for 2 accessors"},
-    {"mesh index accessor out of bounds",
-        "mesh-invalid-index-accessor-oob.gltf",
-        "accessor index 0 out of range for 0 accessors"}
-};
-
-constexpr struct {
-    const char* name;
     const char* message;
 } MeshInvalidData[]{
     {"invalid primitive",
@@ -510,32 +489,33 @@ constexpr struct {
     {"normalized float",
         "accessor 11 with component format Float can't be normalized"},
     {"normalized int",
-        "accessor 20 with component format UnsignedInt can't be normalized"},
+        "accessor 12 with component format UnsignedInt can't be normalized"},
     {"non-normalized byte matrix",
         "accessor 13 has an unsupported matrix component format Byte"},
+    {"unknown type",
+        "accessor 22 has invalid type EEE"},
+    {"unknown component type",
+        "accessor 23 has invalid componentType 9999"},
     {"sparse accessor",
         "accessor 14 is using sparse storage, which is unsupported"},
     {"no bufferview",
         "accessor 15 has missing or invalid bufferView property"},
-    {"accessor range out of bounds",
-        "accessor 18 needs 48 bytes but buffer view 0 has only 36"},
-    {"buffer view range out of bounds",
-        "buffer view 3 needs 164 bytes but buffer 1 has only 160"},
     {"multiple buffers",
         "meshes spanning multiple buffers are not supported"},
     {"invalid index accessor",
-        "accessor 17 needs 40 bytes but buffer view 0 has only 36"}
-};
-
-constexpr struct {
-    const char* name;
-    const char* message;
-} MeshInvalidTypesData[]{
-    /** @todo merge with MeshInvalid? */
-    {"unknown type",
-        "accessor 0 has invalid type EEE"},
-    {"unknown component type",
-        "accessor 1 has invalid componentType 9999"}
+        "accessor 17 needs 40 bytes but buffer view 0 has only 36"},
+    {"accessor range out of bounds",
+        "accessor 18 needs 48 bytes but buffer view 0 has only 36"},
+    {"buffer view range out of bounds",
+        "buffer view 3 needs 60 bytes but buffer 1 has only 59"},
+    {"buffer index out of bounds",
+        "buffer index 2 out of range for 2 buffers"},
+    {"buffer view index out of bounds",
+        "buffer view index 5 out of range for 5 buffer views"},
+    {"accessor index out of bounds",
+        "accessor index 24 out of range for 24 accessors"},
+    {"mesh index accessor out of bounds",
+        "accessor index 24 out of range for 24 accessors"}
 };
 
 constexpr struct {
@@ -893,16 +873,10 @@ CgltfImporterTest::CgltfImporterTest() {
 
     addTests({&CgltfImporterTest::meshSizeNotMultipleOfStride});
 
-    addInstancedTests({&CgltfImporterTest::meshOutOfBounds},
-        Containers::arraySize(MeshOutOfBoundsData));
-
     addInstancedTests({&CgltfImporterTest::meshInvalid},
         Containers::arraySize(MeshInvalidData));
 
     addTests({&CgltfImporterTest::meshInvalidIndicesBufferNotFound});
-
-    addInstancedTests({&CgltfImporterTest::meshInvalidTypes},
-        Containers::arraySize(MeshInvalidTypesData));
 
     addTests({&CgltfImporterTest::materialPbrMetallicRoughness,
               &CgltfImporterTest::materialPbrSpecularGlossiness,
@@ -3329,28 +3303,14 @@ void CgltfImporterTest::meshSizeNotMultipleOfStride() {
         }), TestSuite::Compare::Container);
 }
 
-void CgltfImporterTest::meshOutOfBounds() {
-    auto&& data = MeshOutOfBoundsData[testCaseInstanceId()];
-    setTestCaseDescription(data.name);
-
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-    /** @todo merge all into one file as it no longer fails on opening */
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, data.file)));
-    CORRADE_COMPARE(importer->meshCount(), 1);
-
-    std::ostringstream out;
-    Error redirectError{&out};
-    CORRADE_VERIFY(!importer->mesh(0));
-    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::CgltfImporter::mesh(): {}\n", data.message));
-}
-
 void CgltfImporterTest::meshInvalid() {
     auto&& data = MeshInvalidData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "mesh-invalid.gltf")));
+
+    CORRADE_COMPARE(Containers::arraySize(MeshInvalidData), importer->meshCount());
 
     std::ostringstream out;
     Error redirectError{&out};
@@ -3378,23 +3338,6 @@ void CgltfImporterTest::meshInvalidIndicesBufferNotFound() {
     CORRADE_COMPARE_AS(out.str(),
         "\nTrade::CgltfImporter::mesh(): error opening /nonexistent.bin\n",
         TestSuite::Compare::StringHasSuffix);
-}
-
-void CgltfImporterTest::meshInvalidTypes() {
-    auto&& data = MeshInvalidTypesData[testCaseInstanceId()];
-    setTestCaseDescription(data.name);
-
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "mesh-invalid-types.gltf")));
-
-    /* Check we didn't forget to test anything */
-    CORRADE_COMPARE(importer->meshCount(), Containers::arraySize(MeshInvalidTypesData));
-
-    std::ostringstream out;
-    Error redirectError{&out};
-    CORRADE_VERIFY(!importer->mesh(data.name));
-    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::CgltfImporter::mesh(): {}\n", data.message));
 }
 
 void CgltfImporterTest::materialPbrMetallicRoughness() {

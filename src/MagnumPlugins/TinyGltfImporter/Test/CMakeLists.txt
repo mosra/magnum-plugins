@@ -142,12 +142,9 @@ corrade_add_test(TinyGltfImporterTest
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/mesh-duplicate-attributes.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/mesh-embedded.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/mesh-embedded.glb
-        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/mesh-invalid.bin
-        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/mesh-invalid.gltf
+        mesh-invalid.gltf
         mesh-invalid-accessor-oob.gltf
-        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/mesh-invalid-buffer-oob.gltf
-        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/mesh-invalid-bufferview-oob.gltf
-        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/mesh-invalid-index-accessor-oob.gltf
+        mesh-invalid-index-accessor-oob.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/mesh-multiple-primitives.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/mesh-primitives-types.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/mesh-primitives-types.bin
