@@ -71,7 +71,6 @@ corrade_add_test(CgltfImporterTest
         animation-embedded.glb
         animation-invalid.gltf
         animation-invalid-buffer-notfound.gltf
-        animation-invalid-types.gltf
         animation-invalid-track-size-mismatch.gltf
         animation-missing-target-node.gltf
         animation-patching.bin
@@ -184,7 +183,6 @@ corrade_add_test(CgltfImporterTest
         skin-invalid.gltf
         skin-invalid-buffer-notfound.gltf
         skin-invalid-no-joints.gltf
-        skin-invalid-types.gltf
         skin.gltf
         skin.bin
         skin.glb

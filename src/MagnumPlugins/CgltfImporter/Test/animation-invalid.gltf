@@ -235,7 +235,7 @@
             ]
         }
     ],
-    "note": "additional accessor bounds checks are tested inside mesh-invalid.gltf",
+    "note": "full accessor checks are tested inside mesh-invalid.gltf, this only verifies the errors are propagated correctly",
     "accessors": [
         {
             "bufferView": 0,

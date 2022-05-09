@@ -42,6 +42,7 @@
             "joints": [0, 1]
         }
     ],
+    "note": "full accessor checks are tested inside mesh-invalid.gltf, this only verifies the errors are propagated correctly",
     "accessors": [
         {
             "bufferView": 0,

@@ -87,7 +87,6 @@ struct CgltfImporterTest: TestSuite::Tester {
     void animation();
     void animationInvalid();
     void animationInvalidBufferNotFound();
-    void animationInvalidTypes();
     void animationTrackSizeMismatch();
     void animationMissingTargetNode();
 
@@ -124,7 +123,6 @@ struct CgltfImporterTest: TestSuite::Tester {
     void skin();
     void skinInvalid();
     void skinInvalidBufferNotFound();
-    void skinInvalidTypes();
     void skinNoJointsProperty();
 
     void mesh();
@@ -283,6 +281,8 @@ constexpr struct {
         "scaling track has unexpected type Vector4"},
     {"unsupported path",
         "unsupported track target color"},
+    /* Full accessor checks are tested inside mesh-invalid.gltf, this only
+       verifies the errors are propagated correctly */
     {"invalid input accessor",
         "accessor 3 needs 40 bytes but buffer view 0 has only 0"},
     {"invalid output accessor",
@@ -297,20 +297,6 @@ constexpr struct {
         "accessor index 5 out of range for 5 accessors"},
     {"sampler output accessor index out of bounds",
         "accessor index 6 out of range for 5 accessors"}
-};
-
-constexpr struct {
-    const char* name;
-    const char* message;
-} AnimationInvalidTypesData[]{
-    /** @todo might be good to expand on where the accessors originate from
-        (rotation track, time track etc.) */
-    {"unknown type",
-        "accessor 2 has invalid type WAT"},
-    {"unknown component type",
-        "accessor 3 has invalid componentType 1234"},
-    {"normalized float",
-        "accessor 4 with component format Float can't be normalized"}
 };
 
 constexpr struct {
@@ -355,22 +341,10 @@ constexpr struct {
         "accessor 1 has an unsupported matrix component format UnsignedShort"},
     {"wrong accessor count",
         "invalid inverse bind matrix count, expected 2 but got 3"},
+    /* Full accessor checks are tested inside mesh-invalid.gltf, this only
+       verifies the errors are propagated correctly */
     {"invalid accessor",
         "accessor 3 needs 196 bytes but buffer view 0 has only 192"}
-};
-
-constexpr struct {
-    const char* name;
-    const char* message;
-} SkinInvalidTypesData[]{
-    /** @todo might be good to expand on where the accessors originate from
-        (rotation track, time track etc.) */
-    {"unknown type",
-        "accessor 0 has invalid type NANI?"},
-    {"unknown component type",
-        "accessor 1 has invalid componentType 999"},
-    {"normalized float",
-        "accessor 2 with component format Float can't be normalized"}
 };
 
 constexpr struct {
@@ -778,9 +752,6 @@ CgltfImporterTest::CgltfImporterTest() {
     addInstancedTests({&CgltfImporterTest::animationInvalidBufferNotFound},
         Containers::arraySize(AnimationInvalidBufferNotFoundData));
 
-    addInstancedTests({&CgltfImporterTest::animationInvalidTypes},
-        Containers::arraySize(AnimationInvalidTypesData));
-
     addTests({&CgltfImporterTest::animationTrackSizeMismatch,
               &CgltfImporterTest::animationMissingTargetNode});
 
@@ -838,9 +809,6 @@ CgltfImporterTest::CgltfImporterTest() {
         Containers::arraySize(SkinInvalidData));
 
     addTests({&CgltfImporterTest::skinInvalidBufferNotFound});
-
-    addInstancedTests({&CgltfImporterTest::skinInvalidTypes},
-        Containers::arraySize(SkinInvalidTypesData));
 
     addTests({&CgltfImporterTest::skinNoJointsProperty});
 
@@ -1392,23 +1360,6 @@ void CgltfImporterTest::animationInvalidBufferNotFound() {
     CORRADE_COMPARE_AS(out.str(),
         Utility::format("\nTrade::CgltfImporter::animation(): {}\n", data.message),
         TestSuite::Compare::StringHasSuffix);
-}
-
-void CgltfImporterTest::animationInvalidTypes() {
-    auto&& data = AnimationInvalidTypesData[testCaseInstanceId()];
-    setTestCaseDescription(data.name);
-
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "animation-invalid-types.gltf")));
-
-    /* Check we didn't forget to test anything */
-    CORRADE_COMPARE(importer->animationCount(), Containers::arraySize(AnimationInvalidTypesData));
-
-    std::ostringstream out;
-    Error redirectError{&out};
-    CORRADE_VERIFY(!importer->animation(data.name));
-    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::CgltfImporter::animation(): {}\n", data.message));
 }
 
 void CgltfImporterTest::animationTrackSizeMismatch() {
@@ -2560,23 +2511,6 @@ void CgltfImporterTest::skinInvalidBufferNotFound() {
     CORRADE_COMPARE_AS(out.str(),
         "\nTrade::CgltfImporter::skin3D(): error opening /nonexistent.bin\n",
         TestSuite::Compare::StringHasSuffix);
-}
-
-void CgltfImporterTest::skinInvalidTypes() {
-    auto&& data = SkinInvalidTypesData[testCaseInstanceId()];
-    setTestCaseDescription(data.name);
-
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "skin-invalid-types.gltf")));
-
-    /* Check we didn't forget to test anything */
-    CORRADE_COMPARE(importer->skin3DCount(), Containers::arraySize(AnimationInvalidTypesData));
-
-    std::ostringstream out;
-    Error redirectError{&out};
-    CORRADE_VERIFY(!importer->skin3D(data.name));
-    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::CgltfImporter::skin3D(): {}\n", data.message));
 }
 
 void CgltfImporterTest::skinNoJointsProperty() {
