@@ -245,16 +245,15 @@ constexpr struct {
 
 constexpr struct {
     const char* name;
-    const char* file;
     const char* message;
 } SkinInvalidData[]{
-    {"no joints", "skin-invalid.gltf", "skin has no joints"},
-    {"joint out of bounds", "skin-invalid-joint-oob.gltf", "target node 2 out of bounds for 2 nodes"},
-    {"accessor out of bounds", "skin-invalid-accessor-oob.gltf", "accessor 1 out of bounds for 1 accessors"},
-    {"wrong accessor type", "skin-invalid.gltf", "inverse bind matrices have unexpected type 35/5126"},
-    {"wrong accessor component type", "skin-invalid.gltf", "inverse bind matrices have unexpected type 36/5123"},
-    {"wrong accessor count", "skin-invalid.gltf", "invalid inverse bind matrix count, expected 2 but got 3"},
-    {"invalid accessor", "skin-invalid.gltf", "accessor 3 needs 196 bytes but bufferView 0 has only 192"}
+    {"no joints", "skin has no joints"},
+    {"joint out of bounds", "target node 2 out of bounds for 2 nodes"},
+    {"accessor out of bounds", "accessor 4 out of bounds for 4 accessors"},
+    {"wrong accessor type", "inverse bind matrices have unexpected type 35/5126"},
+    {"wrong accessor component type", "inverse bind matrices have unexpected type 36/5123"},
+    {"wrong accessor count", "invalid inverse bind matrix count, expected 2 but got 3"},
+    {"invalid accessor", "accessor 3 needs 196 bytes but bufferView 0 has only 192"}
 };
 
 constexpr struct {
@@ -2102,10 +2101,10 @@ void TinyGltfImporterTest::skinInvalid() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, data.file)));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "skin-invalid.gltf")));
 
     /* Check we didn't forget to test anything */
-    CORRADE_VERIFY(Containers::arraySize(SkinInvalidData) >= importer->skin3DCount());
+    CORRADE_COMPARE(Containers::arraySize(SkinInvalidData), importer->skin3DCount());
 
     std::ostringstream out;
     Error redirectError{&out};

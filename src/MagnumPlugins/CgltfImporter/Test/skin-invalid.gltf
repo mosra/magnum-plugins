@@ -13,6 +13,15 @@
             "comment": "see also skin-no-joints.gltf"
         },
         {
+            "name": "joint out of bounds",
+            "joints": [1, 0, 2]
+        },
+        {
+            "name": "accessor out of bounds",
+            "inverseBindMatrices": 4,
+            "joints": [0, 1]
+        },
+        {
             "name": "wrong accessor type",
             "inverseBindMatrices": 0,
             "joints": [0, 1]

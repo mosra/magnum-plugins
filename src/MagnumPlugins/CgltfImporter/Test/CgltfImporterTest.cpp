@@ -122,7 +122,6 @@ struct CgltfImporterTest: TestSuite::Tester {
     void sceneTransformationQuaternionNormalizationDisabled();
 
     void skin();
-    void skinOutOfBounds();
     void skinInvalid();
     void skinInvalidBufferNotFound();
     void skinInvalidTypes();
@@ -349,23 +348,14 @@ constexpr struct {
 
 constexpr struct {
     const char* name;
-    const char* file;
-    const char* message;
-} SkinOutOfBoundsData[]{
-    {"joint out of bounds",
-        "skin-invalid-joint-oob.gltf",
-        "joint index 2 out of range for 2 nodes"},
-    {"accessor out of bounds",
-        "skin-invalid-accessor-oob.gltf",
-        "accessor index 1 out of range for 1 accessors"}
-};
-
-constexpr struct {
-    const char* name;
     const char* message;
 } SkinInvalidData[]{
     {"no joints",
         "skin has no joints"},
+    {"joint out of bounds",
+        "joint index 2 out of range for 2 nodes"},
+    {"accessor out of bounds",
+        "accessor index 4 out of range for 4 accessors"},
     {"wrong accessor type",
         "inverse bind matrices have unexpected type Matrix3x3"},
     {"wrong accessor component type",
@@ -904,9 +894,6 @@ CgltfImporterTest::CgltfImporterTest() {
 
     addInstancedTests({&CgltfImporterTest::skinInvalidTypes},
         Containers::arraySize(SkinInvalidTypesData));
-
-    addInstancedTests({&CgltfImporterTest::skinOutOfBounds},
-        Containers::arraySize(SkinOutOfBoundsData));
 
     addTests({&CgltfImporterTest::skinNoJointsProperty});
 
@@ -2609,21 +2596,6 @@ void CgltfImporterTest::skin() {
     }
 }
 
-void CgltfImporterTest::skinOutOfBounds() {
-    auto&& data = SkinOutOfBoundsData[testCaseInstanceId()];
-    setTestCaseDescription(data.name);
-
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-    /** @todo merge all into one file as it no longer fails on opening */
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, data.file)));
-    CORRADE_COMPARE(importer->skin3DCount(), 1);
-
-    std::ostringstream out;
-    Error redirectError{&out};
-    CORRADE_VERIFY(!importer->skin3D(0));
-    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::CgltfImporter::skin3D(): {}\n", data.message));
-}
-
 void CgltfImporterTest::skinInvalid() {
     auto&& data = SkinInvalidData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
@@ -2631,6 +2603,9 @@ void CgltfImporterTest::skinInvalid() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
 
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "skin-invalid.gltf")));
+
+    /* Check we didn't forget to test anything */
+    CORRADE_COMPARE(Containers::arraySize(SkinInvalidData), importer->skin3DCount());
 
     std::ostringstream out;
     Error redirectError{&out};

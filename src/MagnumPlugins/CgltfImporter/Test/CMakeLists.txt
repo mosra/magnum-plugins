@@ -205,8 +205,6 @@ corrade_add_test(CgltfImporterTest
         skin-embedded.gltf
         skin-invalid.gltf
         skin-invalid-buffer-notfound.gltf
-        skin-invalid-accessor-oob.gltf
-        skin-invalid-joint-oob.gltf
         skin-invalid-no-joints.gltf
         skin-invalid-types.gltf
         skin.gltf
