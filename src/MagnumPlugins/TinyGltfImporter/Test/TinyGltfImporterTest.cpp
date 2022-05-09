@@ -549,22 +549,17 @@ TinyGltfImporterTest::TinyGltfImporterTest() {
               &TinyGltfImporterTest::animationMergeEmpty,
               &TinyGltfImporterTest::animationMerge});
 
-    addInstancedTests({&TinyGltfImporterTest::camera},
-                      Containers::arraySize(SingleFileData));
-
-    addTests({&TinyGltfImporterTest::cameraInvalidType});
-
-    addInstancedTests({&TinyGltfImporterTest::light},
-                      Containers::arraySize(SingleFileData));
+    addTests({&TinyGltfImporterTest::camera,
+              &TinyGltfImporterTest::cameraInvalidType,
+              &TinyGltfImporterTest::light});
 
     addInstancedTests({&TinyGltfImporterTest::lightInvalid},
         Containers::arraySize(LightInvalidData));
 
     addTests({&TinyGltfImporterTest::lightMissingType,
-              &TinyGltfImporterTest::lightMissingSpot});
+              &TinyGltfImporterTest::lightMissingSpot,
 
-    addInstancedTests({&TinyGltfImporterTest::scene},
-                      Containers::arraySize(SingleFileData));
+              &TinyGltfImporterTest::scene});
 
     addInstancedTests({&TinyGltfImporterTest::sceneInvalid},
         Containers::arraySize(SceneInvalidData));
@@ -574,12 +569,9 @@ TinyGltfImporterTest::TinyGltfImporterTest() {
 
     addTests({&TinyGltfImporterTest::sceneDefaultNoScenes,
               &TinyGltfImporterTest::sceneDefaultNoDefault,
-              &TinyGltfImporterTest::sceneDefaultOutOfBounds});
-
-    addInstancedTests({&TinyGltfImporterTest::sceneTransformation},
-                      Containers::arraySize(SingleFileData));
-
-    addTests({&TinyGltfImporterTest::sceneTransformationQuaternionNormalizationEnabled,
+              &TinyGltfImporterTest::sceneDefaultOutOfBounds,
+              &TinyGltfImporterTest::sceneTransformation,
+              &TinyGltfImporterTest::sceneTransformationQuaternionNormalizationEnabled,
               &TinyGltfImporterTest::sceneTransformationQuaternionNormalizationDisabled});
 
     addInstancedTests({&TinyGltfImporterTest::skin},
@@ -1412,11 +1404,8 @@ void TinyGltfImporterTest::animationMerge() {
 }
 
 void TinyGltfImporterTest::camera() {
-    auto&& data = SingleFileData[testCaseInstanceId()];
-    setTestCaseDescription(data.name);
-
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "camera"_s + data.suffix)));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "camera.gltf")));
 
     CORRADE_COMPARE(importer->cameraCount(), 4);
     CORRADE_COMPARE(importer->cameraName(2), "Perspective 4:3 75° hFoV");
@@ -1468,11 +1457,8 @@ void TinyGltfImporterTest::cameraInvalidType() {
 }
 
 void TinyGltfImporterTest::light() {
-    auto&& data = SingleFileData[testCaseInstanceId()];
-    setTestCaseDescription(data.name);
-
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "light"_s + data.suffix)));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "light.gltf")));
 
     CORRADE_COMPARE(importer->lightCount(), 4);
     CORRADE_COMPARE(importer->lightName(1), "Spot");
@@ -1551,11 +1537,8 @@ void TinyGltfImporterTest::lightMissingSpot() {
 }
 
 void TinyGltfImporterTest::scene() {
-    auto&& data = SingleFileData[testCaseInstanceId()];
-    setTestCaseDescription(data.name);
-
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "scene"_s + data.suffix)));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "scene.gltf")));
 
     /* Explicit default scene */
     CORRADE_COMPARE(importer->defaultScene(), 1);
@@ -1756,11 +1739,8 @@ void TinyGltfImporterTest::sceneDefaultOutOfBounds() {
 }
 
 void TinyGltfImporterTest::sceneTransformation() {
-    auto&& data = SingleFileData[testCaseInstanceId()];
-    setTestCaseDescription(data.name);
-
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "scene-transformation"_s + data.suffix)));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "scene-transformation.gltf")));
 
     CORRADE_COMPARE(importer->sceneCount(), 7);
 

@@ -86,7 +86,6 @@ corrade_add_test(CgltfImporterTest
         buffer-long-size.gltf
         buffer-long-size.glb
         camera.gltf
-        camera.glb
         camera-invalid.gltf
         empty.gltf
         empty.glb
@@ -116,7 +115,6 @@ corrade_add_test(CgltfImporterTest
         image-invalid-no-data.gltf
         image-invalid-notfound.gltf
         light.gltf
-        light.glb
         light-invalid.gltf
         material-common.gltf
         material-clearcoat.gltf
@@ -161,7 +159,6 @@ corrade_add_test(CgltfImporterTest
         required-extensions.gltf
         required-extensions-unsupported.gltf
         scene.gltf
-        scene.glb
         scene-default-none.gltf
         scene-default-oob.gltf
         scene-invalid-hierarchy-child-not-root.gltf
@@ -172,7 +169,6 @@ corrade_add_test(CgltfImporterTest
         scene-invalid-hierarchy-node-oob.gltf
         scene-invalid.gltf
         scene-transformation.gltf
-        scene-transformation.glb
         scene-transformation-patching.gltf
         skin-embedded.glb
         skin-embedded.gltf

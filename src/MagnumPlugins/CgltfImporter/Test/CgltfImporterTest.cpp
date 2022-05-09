@@ -779,20 +779,17 @@ CgltfImporterTest::CgltfImporterTest() {
               &CgltfImporterTest::animationMergeEmpty,
               &CgltfImporterTest::animationMerge});
 
-    addInstancedTests({&CgltfImporterTest::camera},
-                      Containers::arraySize(SingleFileData));
+    addTests({&CgltfImporterTest::camera});
 
     addInstancedTests({&CgltfImporterTest::cameraInvalid},
         Containers::arraySize(CameraInvalidData));
 
-    addInstancedTests({&CgltfImporterTest::light},
-                      Containers::arraySize(SingleFileData));
+    addTests({&CgltfImporterTest::light});
 
     addInstancedTests({&CgltfImporterTest::lightInvalid},
         Containers::arraySize(LightInvalidData));
 
-    addInstancedTests({&CgltfImporterTest::scene},
-        Containers::arraySize(SingleFileData));
+    addTests({&CgltfImporterTest::scene});
 
     addInstancedTests({&CgltfImporterTest::sceneInvalid},
         Containers::arraySize(SceneInvalidData));
@@ -802,12 +799,9 @@ CgltfImporterTest::CgltfImporterTest() {
 
     addTests({&CgltfImporterTest::sceneDefaultNoScenes,
               &CgltfImporterTest::sceneDefaultNoDefault,
-              &CgltfImporterTest::sceneDefaultOutOfBounds});
-
-    addInstancedTests({&CgltfImporterTest::sceneTransformation},
-                      Containers::arraySize(SingleFileData));
-
-    addTests({&CgltfImporterTest::sceneTransformationQuaternionNormalizationEnabled,
+              &CgltfImporterTest::sceneDefaultOutOfBounds,
+              &CgltfImporterTest::sceneTransformation,
+              &CgltfImporterTest::sceneTransformationQuaternionNormalizationEnabled,
               &CgltfImporterTest::sceneTransformationQuaternionNormalizationDisabled});
 
     addInstancedTests({&CgltfImporterTest::skin},
@@ -1817,11 +1811,8 @@ void CgltfImporterTest::animationMerge() {
 }
 
 void CgltfImporterTest::camera() {
-    auto&& data = SingleFileData[testCaseInstanceId()];
-    setTestCaseDescription(data.name);
-
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "camera"_s + data.suffix)));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "camera.gltf")));
 
     CORRADE_COMPARE(importer->cameraCount(), 4);
     CORRADE_COMPARE(importer->cameraName(2), "Perspective 4:3 75° hFoV");
@@ -1881,11 +1872,8 @@ void CgltfImporterTest::cameraInvalid() {
 }
 
 void CgltfImporterTest::light() {
-    auto&& data = SingleFileData[testCaseInstanceId()];
-    setTestCaseDescription(data.name);
-
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "light"_s + data.suffix)));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "light.gltf")));
 
     CORRADE_COMPARE(importer->lightCount(), 4);
     CORRADE_COMPARE(importer->lightName(1), "Spot");
@@ -1951,11 +1939,8 @@ void CgltfImporterTest::lightInvalid() {
 }
 
 void CgltfImporterTest::scene() {
-    auto&& data = SingleFileData[testCaseInstanceId()];
-    setTestCaseDescription(data.name);
-
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "scene"_s + data.suffix)));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "scene.gltf")));
 
     /* Explicit default scene */
     CORRADE_COMPARE(importer->defaultScene(), 1);
@@ -2142,11 +2127,8 @@ void CgltfImporterTest::sceneDefaultOutOfBounds() {
 }
 
 void CgltfImporterTest::sceneTransformation() {
-    auto&& data = SingleFileData[testCaseInstanceId()];
-    setTestCaseDescription(data.name);
-
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "scene-transformation"_s + data.suffix)));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "scene-transformation.gltf")));
 
     CORRADE_COMPARE(importer->sceneCount(), 7);
 
