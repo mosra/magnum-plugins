@@ -390,15 +390,10 @@ constexpr struct {
     {"child out of bounds", "scene-invalid-hierarchy-child-oob.gltf", "child index 7 in node 4 out of bounds for 7 nodes"},
     {"light out of bounds", "scene-invalid-oob-light.gltf", "light index 2 in node 3 out of bounds for 2 lights"},
     {"material out of bounds", "scene-invalid-oob-material.gltf", "material index 4 in node 3 out of bounds for 4 materials"},
-    /* The ID should be 3 because the object gets duplicated in order to be
-       single-function but then the scene import fails so this would assert on
-       the object not being in range. Thus using 2 instead. */
     {"material in a multi-primitive mesh out of bounds", "scene-invalid-oob-material-multi-primitive.gltf", "material index 5 in node 2 out of bounds for 4 materials"},
     {"mesh out of bounds", "scene-invalid-oob-mesh.gltf", "mesh index 1 in node 2 out of bounds for 1 meshes"},
     {"node out of bounds", "scene-invalid-hierarchy-node-oob.gltf", "node index 7 out of bounds for 7 nodes"},
     {"skin out of bounds", "scene-invalid-oob-skin.gltf", "skin index 3 in node 1 out of bounds for 3 skins"},
-    /* The skin should be checked for both duplicates of the primitive */
-    {"skin for a multi-primitive mesh out of bounds", "scene-invalid-oob-skin-multi-primitive.gltf", "skin index 3 in node 2 out of bounds for 3 skins"},
     {"skin for a multi-primitive mesh out of bounds", "scene-invalid-oob-skin-multi-primitive.gltf", "skin index 3 in node 2 out of bounds for 3 skins"}
 };
 
