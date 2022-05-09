@@ -122,7 +122,6 @@ struct CgltfImporterTest: TestSuite::Tester {
     void skin();
     void skinInvalid();
     void skinInvalidBufferNotFound();
-    void skinNoJointsProperty();
 
     void mesh();
     void meshNoAttributes();
@@ -332,6 +331,8 @@ constexpr struct {
 } SkinInvalidData[]{
     {"no joints",
         "skin has no joints"},
+    {"no joints property",
+        "missing or invalid joints property"},
     {"joint out of bounds",
         "joint index 2 out of range for 2 nodes"},
     {"accessor out of bounds",
@@ -809,8 +810,6 @@ CgltfImporterTest::CgltfImporterTest() {
         Containers::arraySize(SkinInvalidData));
 
     addTests({&CgltfImporterTest::skinInvalidBufferNotFound});
-
-    addTests({&CgltfImporterTest::skinNoJointsProperty});
 
     addInstancedTests({&CgltfImporterTest::mesh},
                       Containers::arraySize(MultiFileData));
@@ -2499,18 +2498,6 @@ void CgltfImporterTest::skinInvalidBufferNotFound() {
     CORRADE_COMPARE_AS(out.str(),
         "\nTrade::CgltfImporter::skin3D(): error opening /nonexistent.bin\n",
         TestSuite::Compare::StringHasSuffix);
-}
-
-void CgltfImporterTest::skinNoJointsProperty() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "skin-invalid-no-joints.gltf")));
-    CORRADE_COMPARE(importer->skin3DCount(), 1);
-
-    std::ostringstream out;
-    Error redirectError{&out};
-    CORRADE_VERIFY(!importer->skin3D(0));
-    CORRADE_COMPARE(out.str(), "Trade::CgltfImporter::skin3D(): missing or invalid joints property\n");
 }
 
 void CgltfImporterTest::mesh() {

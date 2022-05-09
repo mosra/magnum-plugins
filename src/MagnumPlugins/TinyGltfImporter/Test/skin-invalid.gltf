@@ -9,10 +9,8 @@
     "skins": [
         {
             "name": "no joints",
-            "joints": []
-        },
-        {
-            "name": "no joints property"
+            "joints": [],
+            "comment": "see also skin-no-joints.gltf"
         },
         {
             "name": "joint out of bounds",

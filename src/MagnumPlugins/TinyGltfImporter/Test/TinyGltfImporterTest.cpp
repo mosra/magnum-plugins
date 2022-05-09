@@ -2083,7 +2083,7 @@ void TinyGltfImporterTest::skinInvalid() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "skin-invalid.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(TINYGLTFIMPORTER_TEST_DIR, "skin-invalid.gltf")));
 
     /* Check we didn't forget to test anything */
     CORRADE_COMPARE(Containers::arraySize(SkinInvalidData), importer->skin3DCount());
@@ -2099,7 +2099,7 @@ void TinyGltfImporterTest::skinNoJointsProperty() {
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(!importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "skin-invalid-no-joints.gltf")));
+    CORRADE_VERIFY(!importer->openFile(Utility::Path::join(TINYGLTFIMPORTER_TEST_DIR, "skin-invalid-no-joints.gltf")));
     {
         CORRADE_EXPECT_FAIL("TinyGLTF doesn't give any usable error message when there's no skin.joints property, sigh.");
         CORRADE_VERIFY(false);
