@@ -497,6 +497,7 @@ constexpr struct {
     {"light out of bounds", "scene-invalid-oob-light.gltf"},
     {"material out of bounds", "scene-invalid-oob-material.gltf"},
     {"material in a multi-primitive mesh out of bounds", "scene-invalid-oob-material-multi-primitive.gltf"},
+    {"mesh out of bounds", "scene-invalid-oob-mesh.gltf"},
     {"skin out of bounds", "scene-invalid-oob-skin.gltf"},
     {"skin for a multi-primitive mesh out of bounds", "scene-invalid-oob-skin-multi-primitive.gltf"}
 };
