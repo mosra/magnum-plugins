@@ -438,13 +438,36 @@ constexpr struct {
         "spot inner and outer cone angle Deg(0) and Deg(90.5273) out of allowed bounds"},
     {"spot with inner angle same as outer",
         "spot inner and outer cone angle Deg(14.3239) and Deg(14.3239) out of allowed bounds"},
-    {"invalid color size",
-        "Utility::Json::parseFloatArray(): expected a 3-element array, got 4 at {}:42:30\n"
+    {"invalid color property",
+        "Utility::Json::parseFloatArray(): expected an array, got Utility::JsonToken::Type::String at {}:42:30\n"
         "Trade::CgltfImporter::light(): invalid color property\n"},
-    {"missing type",
+    {"invalid color array size",
+        "Utility::Json::parseFloatArray(): expected a 3-element array, got 4 at {}:47:30\n"
+        "Trade::CgltfImporter::light(): invalid color property\n"},
+    {"invalid intensity property",
+        "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::String at {}:52:34\n"
+        "Trade::CgltfImporter::light(): invalid intensity property\n"},
+    {"invalid range property",
+        "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::String at {}:57:30\n"
+        "Trade::CgltfImporter::light(): invalid range property\n"},
+    {"zero range",
+        "expected positive range, got 0"},
+    {"missing type property",
+        "missing or invalid type property"},
+    {"invalid type property",
+        "Utility::Json::parseString(): expected a string, got Utility::JsonToken::Type::Number at {}:69:29\n"
         "Trade::CgltfImporter::light(): missing or invalid type property\n"},
-    {"missing spot",
-        "Trade::CgltfImporter::light(): missing or invalid spot property\n"}
+    {"missing spot property",
+        "missing or invalid spot property"},
+    {"invalid spot property",
+        "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Number at {}:78:29\n"
+        "Trade::CgltfImporter::light(): missing or invalid spot property\n"},
+    {"invalid spot innerConeAngle property",
+        "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::Bool at {}:84:43\n"
+        "Trade::CgltfImporter::light(): invalid spot innerConeAngle property\n"},
+    {"invalid spot outerConeAngle property",
+        "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::Bool at {}:91:43\n"
+        "Trade::CgltfImporter::light(): invalid spot outerConeAngle property\n"}
 };
 
 constexpr struct {

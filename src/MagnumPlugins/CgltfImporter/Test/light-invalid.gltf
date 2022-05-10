@@ -37,21 +37,59 @@
                     }
                 },
                 {
-                    "name": "invalid color size",
+                    "name": "invalid color property",
                     "type": "directional",
-                    "color": [
-                        1.0,
-                        0.08,
-                        0.14,
-                        0.5
-                    ]
+                    "color": "#ff3366"
                 },
                 {
-                    "name": "missing type"
+                    "name": "invalid color array size",
+                    "type": "directional",
+                    "color": [1.0, 0.8, 0.4, 0.5]
                 },
                 {
-                    "name": "missing spot",
+                    "name": "invalid intensity property",
+                    "type": "directional",
+                    "intensity": "BRIGHT"
+                },
+                {
+                    "name": "invalid range property",
+                    "type": "directional",
+                    "range": "inf"
+                },
+                {
+                    "name": "zero range",
+                    "type": "directional",
+                    "range": 0.0
+                },
+                {
+                    "name": "missing type property"
+                },
+                {
+                    "name": "invalid type property",
+                    "type": 3
+                },
+                {
+                    "name": "missing spot property",
                     "type": "spot"
+                },
+                {
+                    "name": "invalid spot property",
+                    "type": "spot",
+                    "spot": 45.0
+                },
+                {
+                    "name": "invalid spot innerConeAngle property",
+                    "type": "spot",
+                    "spot": {
+                        "innerConeAngle": false
+                    }
+                },
+                {
+                    "name": "invalid spot outerConeAngle property",
+                    "type": "spot",
+                    "spot": {
+                        "outerConeAngle": true
+                    }
                 }
             ]
         }
