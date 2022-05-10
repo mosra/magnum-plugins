@@ -351,8 +351,75 @@ const struct {
     const char* name;
     const char* message;
 } CameraInvalidData[]{
+    {"unrecognized type",
+        "unrecognized type oblique"},
+    {"missing type",
+        "missing or invalid type property"},
     {"invalid type",
-        "unrecognized type oblique"}
+        "Utility::Json::parseString(): expected a string, got Utility::JsonToken::Type::Number at {}:15:21\n"
+        "Trade::CgltfImporter::camera(): missing or invalid type property\n"},
+    {"missing perspective property",
+        "missing or invalid perspective property"},
+    {"invalid perspective property",
+        "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Bool at {}:24:28\n"
+        "Trade::CgltfImporter::camera(): missing or invalid perspective property\n"},
+    {"invalid perspective aspectRatio property",
+        "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::Null at {}:30:32\n"
+        "Trade::CgltfImporter::camera(): invalid perspective aspectRatio property\n"},
+    {"negative perspective aspectRatio",
+        "expected positive perspective aspectRatio, got -3.5"},
+    {"missing perspective yfov property",
+        "missing or invalid perspective yfov property"},
+    {"invalid perspective yfov property",
+        "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::String at {}:55:25\n"
+        "Trade::CgltfImporter::camera(): missing or invalid perspective yfov property\n"},
+    {"negative perspective yfov",
+        "expected positive perspective yfov, got -1"},
+    {"missing perspective znear property",
+        "missing or invalid perspective znear property"},
+    {"invalid perspective znear property",
+        "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::String at {}:79:26\n"
+        "Trade::CgltfImporter::camera(): missing or invalid perspective znear property\n"},
+    {"negative perspective znear",
+        "expected positive perspective znear, got -0.01"},
+    {"invalid perspective zfar property",
+        "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::Null at {}:96:25\n"
+        "Trade::CgltfImporter::camera(): invalid perspective zfar property\n"},
+    {"perspective zfar not larger than znear",
+        "expected perspective zfar larger than znear of 0.125, got 0.125"},
+    {"missing orthographic property",
+        "missing or invalid orthographic property"},
+    {"invalid orthographic property",
+        "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Bool at {}:115:29\n"
+        "Trade::CgltfImporter::camera(): missing or invalid orthographic property\n"},
+    {"missing orthographic xmag property",
+        "missing or invalid orthographic xmag property"},
+    {"invalid orthographic xmag property",
+        "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::String at {}:130:25\n"
+        "Trade::CgltfImporter::camera(): missing or invalid orthographic xmag property\n"},
+    {"zero orthographic xmag",
+        "expected non-zero orthographic xmag"},
+    {"missing orthographic ymag property",
+        "missing or invalid orthographic ymag property"},
+    {"invalid orthographic ymag property",
+        "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::String at {}:160:25\n"
+        "Trade::CgltfImporter::camera(): missing or invalid orthographic ymag property\n"},
+    {"zero orthographic ymag",
+        "expected non-zero orthographic ymag"},
+    {"missing orthographic znear property",
+        "missing or invalid orthographic znear property"},
+    {"invalid orthographic znear property",
+        "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::String at {}:190:26\n"
+        "Trade::CgltfImporter::camera(): missing or invalid orthographic znear property\n"},
+    {"negative orthographic znear",
+        "expected non-negative orthographic znear, got -1"},
+    {"missing orthographic zfar property",
+        "missing or invalid orthographic zfar property"},
+    {"invalid orthographic zfar property",
+        "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::String at {}:220:25\n"
+        "Trade::CgltfImporter::camera(): missing or invalid orthographic zfar property\n"},
+    {"orthographic zfar not larger than znear",
+        "expected orthographic zfar larger than znear of 0.5, got 0.5"},
 };
 
 constexpr struct {
@@ -1967,9 +2034,10 @@ void CgltfImporterTest::cameraInvalid() {
     auto&& data = CameraInvalidData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
+    Containers::String filename = Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "camera-invalid.gltf");
 
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "camera-invalid.gltf")));
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
+    CORRADE_VERIFY(importer->openFile(filename));
 
     /* Check we didn't forget to test anything */
     CORRADE_COMPARE(Containers::arraySize(CameraInvalidData), importer->cameraCount());
@@ -1977,7 +2045,13 @@ void CgltfImporterTest::cameraInvalid() {
     std::ostringstream out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->camera(data.name));
-    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::CgltfImporter::camera(): {}\n", data.message));
+    /* If the message ends with a newline, it's the whole output including a
+       potential placeholder for the filename, otherwise just the sentence
+       without any placeholder */
+    if(Containers::StringView{data.message}.hasSuffix('\n'))
+        CORRADE_COMPARE(out.str(), Utility::formatString(data.message, filename));
+    else
+        CORRADE_COMPARE(out.str(), Utility::formatString("Trade::CgltfImporter::camera(): {}\n", data.message));
 }
 
 void CgltfImporterTest::light() {

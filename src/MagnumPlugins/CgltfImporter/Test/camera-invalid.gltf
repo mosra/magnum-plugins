@@ -4,8 +4,231 @@
     },
     "cameras": [
         {
-            "name": "invalid type",
+            "name": "unrecognized type",
             "type": "oblique"
+        },
+        {
+            "name": "missing type"
+        },
+        {
+            "name": "invalid type",
+            "type": 5
+        },
+        {
+            "name": "missing perspective property",
+            "type": "perspective"
+        },
+        {
+            "name": "invalid perspective property",
+            "type": "perspective",
+            "perspective": true
+        },
+        {
+            "name": "invalid perspective aspectRatio property",
+            "type": "perspective",
+            "perspective": {
+                "aspectRatio": null,
+                "yfov": 1.0,
+                "znear": 0.01
+            }
+        },
+        {
+            "name": "negative perspective aspectRatio",
+            "type": "perspective",
+            "perspective": {
+                "aspectRatio": -3.5,
+                "yfov": 1.0,
+                "znear": 0.01
+            }
+        },
+        {
+            "name": "missing perspective yfov property",
+            "type": "perspective",
+            "perspective": {
+                "znear": 0.01
+            }
+        },
+        {
+            "name": "invalid perspective yfov property",
+            "type": "perspective",
+            "perspective": {
+                "yfov": "1.0",
+                "znear": 0.01
+            }
+        },
+        {
+            "name": "negative perspective yfov",
+            "type": "perspective",
+            "perspective": {
+                "yfov": -1.0,
+                "znear": 0.01
+            }
+        },
+        {
+            "name": "missing perspective znear property",
+            "type": "perspective",
+            "perspective": {
+                "yfov": 1.0
+            }
+        },
+        {
+            "name": "invalid perspective znear property",
+            "type": "perspective",
+            "perspective": {
+                "yfov": 1.0,
+                "znear": "0.01"
+            }
+        },
+        {
+            "name": "negative perspective znear",
+            "type": "perspective",
+            "perspective": {
+                "yfov": 1.0,
+                "znear": -0.01
+            }
+        },
+        {
+            "name": "invalid perspective zfar property",
+            "type": "perspective",
+            "perspective": {
+                "yfov": 1.0,
+                "znear": 0.01,
+                "zfar": null
+            }
+        },
+        {
+            "name": "perspective zfar not larger than znear",
+            "type": "perspective",
+            "perspective": {
+                "yfov": 1.0,
+                "znear": 0.125,
+                "zfar": 0.125
+            }
+        },
+        {
+            "name": "missing orthographic property",
+            "type": "orthographic"
+        },
+        {
+            "name": "invalid orthographic property",
+            "type": "orthographic",
+            "orthographic": true
+        },
+        {
+            "name": "missing orthographic xmag property",
+            "type": "orthographic",
+            "orthographic": {
+                "ymag": 1.0,
+                "znear": 0.0,
+                "zfar": 1.0
+            }
+        },
+        {
+            "name": "invalid orthographic xmag property",
+            "type": "orthographic",
+            "orthographic": {
+                "xmag": "1.0",
+                "ymag": 1.0,
+                "znear": 0.0,
+                "zfar": 1.0
+            }
+        },
+        {
+            "name": "zero orthographic xmag",
+            "type": "orthographic",
+            "orthographic": {
+                "xmag": 0.0,
+                "ymag": 1.0,
+                "znear": 0.0,
+                "zfar": 1.0
+            }
+        },
+        {
+            "name": "missing orthographic ymag property",
+            "type": "orthographic",
+            "orthographic": {
+                "xmag": 1.0,
+                "znear": 0.0,
+                "zfar": 1.0
+            }
+        },
+        {
+            "name": "invalid orthographic ymag property",
+            "type": "orthographic",
+            "orthographic": {
+                "xmag": 1.0,
+                "ymag": "1.0",
+                "znear": 0.0,
+                "zfar": 1.0
+            }
+        },
+        {
+            "name": "zero orthographic ymag",
+            "type": "orthographic",
+            "orthographic": {
+                "xmag": 1.0,
+                "ymag": 0.0,
+                "znear": 0.0,
+                "zfar": 1.0
+            }
+        },
+        {
+            "name": "missing orthographic znear property",
+            "type": "orthographic",
+            "orthographic": {
+                "xmag": 1.0,
+                "ymag": 1.0,
+                "zfar": 1.0
+            }
+        },
+        {
+            "name": "invalid orthographic znear property",
+            "type": "orthographic",
+            "orthographic": {
+                "xmag": 1.0,
+                "ymag": 1.0,
+                "znear": "0.0",
+                "zfar": 1.0
+            }
+        },
+        {
+            "name": "negative orthographic znear",
+            "type": "orthographic",
+            "orthographic": {
+                "xmag": 1.0,
+                "ymag": 1.0,
+                "znear": -1.0,
+                "zfar": 1.0
+            }
+        },
+        {
+            "name": "missing orthographic zfar property",
+            "type": "orthographic",
+            "orthographic": {
+                "xmag": 1.0,
+                "ymag": 1.0,
+                "znear": 0.0
+            }
+        },
+        {
+            "name": "invalid orthographic zfar property",
+            "type": "orthographic",
+            "orthographic": {
+                "xmag": 1.0,
+                "ymag": 1.0,
+                "znear": 0.0,
+                "zfar": "1.0"
+            }
+        },
+        {
+            "name": "orthographic zfar not larger than znear",
+            "type": "orthographic",
+            "orthographic": {
+                "xmag": 1.0,
+                "ymag": 1.0,
+                "znear": 0.5,
+                "zfar": 0.5
+            }
         }
     ]
 }
