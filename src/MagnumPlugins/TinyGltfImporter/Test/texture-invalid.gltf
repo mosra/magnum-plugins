@@ -1,0 +1,88 @@
+{
+    "asset": {
+        "version": "2.0"
+    },
+    "images": [
+        {
+            "uri": "image.png"
+        }
+    ],
+    "samplers": [
+        {
+            "minFilter": 1
+        },
+        {
+            "magFilter": 2
+        },
+        {
+            "wrapS": 3
+        },
+        {
+            "wrapT": 4
+        },
+        {}
+    ],
+    "textures": [
+        {
+            "name": "invalid sampler minFilter",
+            "sampler": 0,
+            "source": 0
+        },
+        {
+            "name": "invalid sampler magFilter",
+            "sampler": 1,
+            "source": 0
+        },
+        {
+            "name": "invalid sampler wrapS",
+            "sampler": 2,
+            "source": 0
+        },
+        {
+            "name": "invalid sampler wrapT",
+            "sampler": 3,
+            "source": 0
+        },
+        {
+            "name": "sampler out of bounds",
+            "sampler": 5,
+            "source": 0
+        },
+        {
+            "name": "image out of bounds",
+            "source": 1
+        },
+        {
+            "name": "missing source"
+        },
+        {
+            "name": "out of bounds GOOGLE_texture_basis",
+            "extensions": {
+                "GOOGLE_texture_basis": {
+                    "source": 3
+                }
+            }
+        },
+        {
+            "name": "out of bounds KHR_texture_basisu",
+            "extensions": {
+                "KHR_texture_basisu": {
+                    "source": 4
+                }
+            }
+        },
+        {
+            "name": "unknown extension, no fallback",
+            "extensions": {
+                "MAGNUM_fake_extension": {
+                    "source": 2
+                }
+            }
+        }
+    ],
+    "extensionsUsed": [
+        "MAGNUM_fake_extension",
+        "GOOGLE_texture_basis",
+        "KHR_texture_basisu"
+    ]
+}

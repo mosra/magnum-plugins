@@ -1007,17 +1007,46 @@ constexpr struct {
     {"invalid sampler wrapT",
         "unrecognized wrapT 4"},
     {"sampler out of bounds",
-        "index 5 out of range for 5 samplers"},
+        "index 9 out of range for 9 samplers"},
     {"image out of bounds",
         "index 1 out of range for 1 images"},
-    {"missing source",
-        "missing or invalid source property"},
     {"out of bounds GOOGLE_texture_basis",
         "index 3 out of range for 1 images"},
     {"out of bounds KHR_texture_basisu",
         "index 4 out of range for 1 images"},
     {"unknown extension, no fallback",
-        "missing or invalid source property"}
+        "missing or invalid source property"},
+    {"missing source property",
+        "missing or invalid source property"},
+    {"invalid source property",
+        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:106:23\n"
+        "Trade::CgltfImporter::texture(): missing or invalid source property\n"},
+    {"invalid extensions property",
+        "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Array at {}:110:27\n"
+        "Trade::CgltfImporter::texture(): invalid extensions property\n"},
+    {"invalid extension",
+        "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Null at {}:115:39\n"
+        "Trade::CgltfImporter::texture(): invalid KHR_texture_basisu extension\n"},
+    {"missing extension source property",
+        "missing or invalid KHR_texture_basisu source property"},
+    {"invalid extension source property",
+        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:128:31\n"
+        "Trade::CgltfImporter::texture(): missing or invalid KHR_texture_basisu source property\n"},
+    {"invalid sampler property",
+        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:135:24\n"
+        "Trade::CgltfImporter::texture(): invalid sampler property\n"},
+    {"invalid sampler magFilter property",
+        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:32:26\n"
+        "Trade::CgltfImporter::texture(): invalid magFilter property\n"},
+    {"invalid sampler minFilter property",
+        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:36:26\n"
+        "Trade::CgltfImporter::texture(): invalid minFilter property\n"},
+    {"invalid sampler wrapS property",
+        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:40:22\n"
+        "Trade::CgltfImporter::texture(): invalid wrapS property\n"},
+    {"invalid sampler wrapT property",
+        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:44:22\n"
+        "Trade::CgltfImporter::texture(): invalid wrapT property\n"},
 };
 
 constexpr struct {
@@ -4880,8 +4909,10 @@ void CgltfImporterTest::textureInvalid() {
     auto&& data = TextureInvalidData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
+    Containers::String filename = Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "texture-invalid.gltf");
+
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "texture-invalid.gltf")));
+    CORRADE_VERIFY(importer->openFile(filename));
 
     /* Check we didn't forget to test anything */
     CORRADE_COMPARE(importer->textureCount(), Containers::arraySize(TextureInvalidData));
@@ -4889,7 +4920,13 @@ void CgltfImporterTest::textureInvalid() {
     std::ostringstream out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->texture(data.name));
-    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::CgltfImporter::texture(): {}\n", data.message));
+    /* If the message ends with a newline, it's the whole output including a
+       potential placeholder for the filename, otherwise just the sentence
+       without any placeholder */
+    if(Containers::StringView{data.message}.hasSuffix('\n'))
+        CORRADE_COMPARE(out.str(), Utility::formatString(data.message, filename));
+    else
+        CORRADE_COMPARE(out.str(), Utility::formatString("Trade::CgltfImporter::texture(): {}\n", data.message));
 }
 
 constexpr char ExpectedImageData[] =
