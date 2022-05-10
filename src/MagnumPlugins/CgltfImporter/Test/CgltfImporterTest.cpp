@@ -858,11 +858,56 @@ constexpr struct {
     {"material in a multi-primitive mesh out of bounds",
         "material index 5 in mesh 1 primitive 1 out of range for 4 materials"},
     {"mesh out of bounds",
-        "mesh index 4 in node 7 out of range for 4 meshes"},
+        "mesh index 5 in node 7 out of range for 5 meshes"},
     {"skin out of bounds",
         "skin index 3 in node 8 out of range for 3 skins"},
     {"skin for a multi-primitive mesh out of bounds",
-        "skin index 3 in node 9 out of range for 3 skins"}
+        "skin index 3 in node 9 out of range for 3 skins"},
+    {"invalid mesh property",
+        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:127:21\n"
+        "Trade::CgltfImporter::scene(): invalid mesh property of node 10\n"},
+    {"invalid mesh material property",
+        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:70:33\n"
+        "Trade::CgltfImporter::scene(): invalid material property of mesh 4 primitive 1\n"},
+    {"invalid camera property",
+        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:135:23\n"
+        "Trade::CgltfImporter::scene(): invalid camera property of node 12\n"},
+    {"invalid skin property",
+        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:139:21\n"
+        "Trade::CgltfImporter::scene(): invalid skin property of node 13\n"},
+    {"invalid extensions property",
+        "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Array at {}:143:27\n"
+        "Trade::CgltfImporter::scene(): invalid node 14 extensions property\n"},
+    {"invalid KHR_lights_punctual extension",
+        "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Number at {}:148:40\n"
+        "Trade::CgltfImporter::scene(): invalid node 15 KHR_lights_punctual extension\n"},
+    {"invalid KHR_lights_punctual light property",
+        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:155:30\n"
+        "Trade::CgltfImporter::scene(): missing or invalid KHR_lights_punctual light property of node 16\n"},
+    {"invalid translation property",
+        "Utility::Json::parseFloatArray(): expected an array, got Utility::JsonToken::Type::Number at {}:161:28\n"
+        "Trade::CgltfImporter::scene(): invalid translation property of node 17\n"},
+    {"invalid translation array size",
+        "Utility::Json::parseFloatArray(): expected a 3-element array, got 2 at {}:165:28\n"
+        "Trade::CgltfImporter::scene(): invalid translation property of node 18\n"},
+    {"invalid rotation property",
+        "Utility::Json::parseFloatArray(): expected an array, got Utility::JsonToken::Type::Number at {}:169:25\n"
+        "Trade::CgltfImporter::scene(): invalid rotation property of node 19\n"},
+    {"invalid rotation array size",
+        "Utility::Json::parseFloatArray(): expected a 4-element array, got 3 at {}:173:25\n"
+        "Trade::CgltfImporter::scene(): invalid rotation property of node 20\n"},
+    {"invalid scale property",
+        "Utility::Json::parseFloatArray(): expected an array, got Utility::JsonToken::Type::Number at {}:177:22\n"
+        "Trade::CgltfImporter::scene(): invalid scale property of node 21\n"},
+    {"invalid scale array size",
+        "Utility::Json::parseFloatArray(): expected a 3-element array, got 2 at {}:181:22\n"
+        "Trade::CgltfImporter::scene(): invalid scale property of node 22\n"},
+    {"invalid matrix property",
+        "Utility::Json::parseFloatArray(): expected an array, got Utility::JsonToken::Type::Number at {}:185:23\n"
+        "Trade::CgltfImporter::scene(): invalid matrix property of node 23\n"},
+    {"invalid matrix array size",
+        "Utility::Json::parseFloatArray(): expected a 16-element array, got 4 at {}:189:23\n"
+        "Trade::CgltfImporter::scene(): invalid matrix property of node 24\n"}
 };
 
 constexpr struct {
@@ -2392,8 +2437,10 @@ void CgltfImporterTest::sceneInvalid() {
     auto&& data = SceneInvalidData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
+    Containers::String filename = Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "scene-invalid.gltf");
+
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "scene-invalid.gltf")));
+    CORRADE_VERIFY(importer->openFile(filename));
 
     /* Check we didn't forget to test anything */
     CORRADE_COMPARE(Containers::arraySize(SceneInvalidData), importer->sceneCount());
@@ -2401,7 +2448,13 @@ void CgltfImporterTest::sceneInvalid() {
     std::ostringstream out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->scene(data.name));
-    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::CgltfImporter::scene(): {}\n", data.message));
+    /* If the message ends with a newline, it's the whole output including a
+       potential placeholder for the filename, otherwise just the sentence
+       without any placeholder */
+    if(Containers::StringView{data.message}.hasSuffix('\n'))
+        CORRADE_COMPARE(out.str(), Utility::formatString(data.message, filename));
+    else
+        CORRADE_COMPARE(out.str(), Utility::formatString("Trade::CgltfImporter::scene(): {}\n", data.message));
 }
 
 void CgltfImporterTest::sceneInvalidHierarchy() {
