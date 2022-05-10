@@ -191,32 +191,35 @@ struct CgltfImporterTest: TestSuite::Tester {
 using namespace Containers::Literals;
 using namespace Magnum::Math::Literals;
 
-constexpr struct {
+const struct {
     const char* name;
     Containers::StringView data;
     const char* message;
 } OpenErrorData[]{
     {"binary header too short",
         "glTF\x02\x00\x00\x00\x13\x00\x00\x00\x00\x00\x00\x00JSO"_s,
-        "Trade::CgltfImporter::openData(): binary glTF too small, expected at least 20 bytes but got only 19\n"},
+        "binary glTF too small, expected at least 20 bytes but got only 19"},
     {"binary contents too short",
         "glTF\x02\x00\x00\x00\x16\x00\x00\x00\x01\x00\x00\x00JSON{"_s,
-        "Trade::CgltfImporter::openData(): binary glTF size mismatch, expected 22 bytes but got 21\n"},
+        "binary glTF size mismatch, expected 22 bytes but got 21"},
     {"binary contents too long",
         "glTF\x02\x00\x00\x00\x16\x00\x00\x00\x01\x00\x00\x00JSON{} "_s,
-        "Trade::CgltfImporter::openData(): binary glTF size mismatch, expected 22 bytes but got 23\n"},
+        "binary glTF size mismatch, expected 22 bytes but got 23"},
     {"binary JSON chunk contents too short",
         "glTF\x02\x00\x00\x00\x16\x00\x00\x00\x03\x00\x00\x00JSON{}"_s,
-        "Trade::CgltfImporter::openData(): binary glTF size mismatch, expected 3 bytes for a JSON chunk but got only 2\n"},
+        "binary glTF size mismatch, expected 3 bytes for a JSON chunk but got only 2"},
+    {"binary chunk header too short",
+        "glTF\x02\x00\x00\x00\x1d\x00\x00\x00\x02\x00\x00\x00JSON{}\x02\x00\x00\0BIN"_s,
+        "binary glTF chunk starting at 22 too small, expected at least 8 bytes but got only 7"},
     {"binary BIN chunk contents too short",
         "glTF\x02\x00\x00\x00\x1f\x00\x00\x00\x02\x00\x00\x00JSON{}\x02\x00\x00\0BIN\0\xff"_s,
-        "Trade::CgltfImporter::openData(): binary glTF size mismatch, expected 2 bytes for a chunk starting at 22 but got only 1\n"},
+        "binary glTF size mismatch, expected 2 bytes for a chunk starting at 22 but got only 1"},
     {"unknown binary glTF version",
         "glTF\x10\x00\x00\x00\x16\x00\x00\x00\x01\x00\x00\x00JSON{}"_s,
-        "Trade::CgltfImporter::openData(): unsupported binary glTF version 16\n"},
+        "unsupported binary glTF version 16"},
     {"unknown binary JSON chunk",
         "glTF\x02\x00\x00\x00\x16\x00\x00\x00\x02\x00\x00\x00JSUN{}"_s,
-        "Trade::CgltfImporter::openData(): expected a JSON chunk, got 0x4e55534a\n"},
+        "expected a JSON chunk, got 0x4e55534a"},
     {"invalid JSON ascii",
         "{"_s,
         "Utility::Json: file too short, expected \" or } at <in>:1:2\n"
@@ -1351,7 +1354,12 @@ void CgltfImporterTest::openError() {
     std::ostringstream out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->openData(data.data));
-    CORRADE_COMPARE(out.str(), data.message);
+    /* If the message ends with a newline, it's the whole output, otherwise
+       just the sentence */
+    if(Containers::StringView{data.message}.hasSuffix('\n'))
+        CORRADE_COMPARE(out.str(), data.message);
+    else
+        CORRADE_COMPARE(out.str(), Utility::formatString("Trade::CgltfImporter::openData(): {}\n", data.message));
 }
 
 void CgltfImporterTest::openFileError() {
