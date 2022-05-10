@@ -453,8 +453,6 @@ constexpr struct {
 } SkinInvalidData[]{
     {"no joints",
         "skin has no joints"},
-    {"no joints property",
-        "missing or invalid joints property"},
     {"joint out of bounds",
         "joint index 2 out of range for 2 nodes"},
     {"accessor out of bounds",
@@ -468,7 +466,15 @@ constexpr struct {
     /* Full accessor checks are tested inside mesh-invalid.gltf, this only
        verifies the errors are propagated correctly */
     {"invalid accessor",
-        "accessor 3 needs 196 bytes but buffer view 0 has only 192"}
+        "accessor 3 needs 196 bytes but buffer view 0 has only 192"},
+    {"missing joints property",
+        "missing or invalid joints property"},
+    {"invalid joints property",
+        "Utility::Json::parseUnsignedIntArray(): expected an array, got Utility::JsonToken::Type::Object at {}:48:23\n"
+        "Trade::CgltfImporter::skin3D(): missing or invalid joints property\n"},
+    {"invalid inverseBindMatrices property",
+        "Utility::Json::parseUnsignedInt(): expected a number, got Utility::JsonToken::Type::Array at {}:52:36\n"
+        "Trade::CgltfImporter::skin3D(): invalid inverseBindMatrices property\n"},
 };
 
 constexpr struct {
@@ -2711,9 +2717,10 @@ void CgltfImporterTest::skinInvalid() {
     auto&& data = SkinInvalidData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
+    Containers::String filename = Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "skin-invalid.gltf");
 
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "skin-invalid.gltf")));
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
+    CORRADE_VERIFY(importer->openFile(filename));
 
     /* Check we didn't forget to test anything */
     CORRADE_COMPARE(Containers::arraySize(SkinInvalidData), importer->skin3DCount());
@@ -2721,7 +2728,13 @@ void CgltfImporterTest::skinInvalid() {
     std::ostringstream out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->skin3D(data.name));
-    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::CgltfImporter::skin3D(): {}\n", data.message));
+    /* If the message ends with a newline, it's the whole output including a
+       potential placeholder for the filename, otherwise just the sentence
+       without any placeholder */
+    if(Containers::StringView{data.message}.hasSuffix('\n'))
+        CORRADE_COMPARE(out.str(), Utility::formatString(data.message, filename));
+    else
+        CORRADE_COMPARE(out.str(), Utility::formatString("Trade::CgltfImporter::skin3D(): {}\n", data.message));
 }
 
 void CgltfImporterTest::skinInvalidBufferNotFound() {

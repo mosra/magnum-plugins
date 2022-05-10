@@ -12,9 +12,6 @@
             "joints": []
         },
         {
-            "name": "no joints property"
-        },
-        {
             "name": "joint out of bounds",
             "joints": [1, 0, 2]
         },
@@ -41,6 +38,18 @@
         {
             "name": "invalid accessor",
             "inverseBindMatrices": 3,
+            "joints": [0, 1]
+        },
+        {
+            "name": "missing joints property"
+        },
+        {
+            "name": "invalid joints property",
+            "joints": {}
+        },
+        {
+            "name": "invalid inverseBindMatrices property",
+            "inverseBindMatrices": [],
             "joints": [0, 1]
         }
     ],
