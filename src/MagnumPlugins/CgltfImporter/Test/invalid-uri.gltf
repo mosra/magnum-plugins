@@ -16,6 +16,10 @@
             "uri": "data:image/png;base64,"
         },
         {
+            "name": "invalid uri",
+            "uri": "%%"
+        },
+        {
             "name": "invalid base64",
             "uri": "data:image/png;base64,aGVsbG9oZWxsb?=="
         }

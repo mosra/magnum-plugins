@@ -108,6 +108,7 @@ corrade_add_test(CgltfImporterTest
         image-embedded.glb
         image-invalid.gltf
         image-invalid-notfound.gltf
+        invalid-uri.gltf
         light.gltf
         light-invalid.gltf
         material-common.gltf
@@ -174,7 +175,6 @@ corrade_add_test(CgltfImporterTest
         texture.gltf
         texture-extensions.gltf
         texture-invalid.gltf
-        uri-invalid.gltf
         version-legacy.gltf
         version-supported.gltf
         version-unsupported.gltf

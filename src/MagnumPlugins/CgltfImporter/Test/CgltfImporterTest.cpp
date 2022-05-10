@@ -251,6 +251,7 @@ constexpr struct {
     {"no payload", "data URI has no base64 payload"},
     {"no base64", "data URI has no base64 payload"},
     {"empty base64", "data URI has no base64 payload"},
+    {"invalid uri", "invalid URI escape sequence %%"},
     {"invalid base64", "invalid Base64 padding bytes b?"}
 };
 
@@ -1133,7 +1134,7 @@ void CgltfImporterTest::openExternalDataInvalidUri() {
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
 
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "uri-invalid.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "invalid-uri.gltf")));
 
     /* Check we didn't forget to test anything */
     CORRADE_COMPARE(importer->image2DCount(), Containers::arraySize(InvalidUriData));
