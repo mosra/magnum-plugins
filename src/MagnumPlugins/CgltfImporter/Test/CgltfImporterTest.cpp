@@ -285,11 +285,58 @@ constexpr struct {
     {"node index out of bounds",
         "target node index 2 in channel 0 out of range for 2 nodes"},
     {"sampler input accessor index out of bounds",
-        "accessor index 7 out of range for 7 accessors"},
+        "accessor index 8 out of range for 8 accessors"},
     {"sampler output accessor index out of bounds",
-        "accessor index 8 out of range for 7 accessors"},
+        "accessor index 9 out of range for 8 accessors"},
     {"track size mismatch",
-        "channel 0 target track size doesn't match time track size, expected 3 but got 2"}
+        "channel 0 target track size doesn't match time track size, expected 3 but got 2"},
+    {"missing samplers",
+        "missing or invalid samplers property"},
+    {"invalid samplers",
+        "Utility::Json::parseArray(): expected an array, got Utility::JsonToken::Type::Object at {}:263:25\n"
+        "Trade::CgltfImporter::animation(): missing or invalid samplers property\n"},
+    {"invalid sampler",
+        "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Number at {}:269:17\n"
+        "Trade::CgltfImporter::animation(): invalid sampler 0\n"},
+    {"missing sampler input",
+        "missing or invalid sampler 0 input property"},
+    {"invalid sampler input",
+        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:286:30\n"
+        "Trade::CgltfImporter::animation(): missing or invalid sampler 0 input property\n"},
+    {"missing sampler output",
+        "missing or invalid sampler 0 output property"},
+    {"invalid sampler output",
+        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:306:31\n"
+        "Trade::CgltfImporter::animation(): missing or invalid sampler 0 output property\n"},
+    {"invalid sampler interpolation",
+        "Utility::Json::parseString(): expected a string, got Utility::JsonToken::Type::Bool at {}:316:38\n"
+        "Trade::CgltfImporter::animation(): invalid sampler 0 interpolation property\n"},
+    {"missing channels",
+        "missing or invalid channels property"},
+    {"invalid channels",
+        "Utility::Json::parseArray(): expected an array, got Utility::JsonToken::Type::Object at {}:332:25\n"
+        "Trade::CgltfImporter::animation(): missing or invalid channels property\n"},
+    {"invalid channel",
+        "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Number at {}:343:17\n"
+        "Trade::CgltfImporter::animation(): invalid channel 0\n"},
+    {"missing channel target",
+        "missing or invalid channel 1 target property"},
+    {"invalid channel target",
+        "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::String at {}:378:31\n"
+        "Trade::CgltfImporter::animation(): missing or invalid channel 0 target property\n"},
+    {"invalid channel target node",
+        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:401:33\n"
+        "Trade::CgltfImporter::animation(): invalid channel 1 target node property\n"},
+    {"missing channel target path",
+        "missing or invalid channel 1 target path property"},
+    {"invalid channel target path",
+        "Utility::Json::parseString(): expected a string, got Utility::JsonToken::Type::Null at {}:444:33\n"
+        "Trade::CgltfImporter::animation(): missing or invalid channel 0 target path property\n"},
+    {"missing channel sampler",
+        "missing or invalid channel 1 sampler property"},
+    {"invalid channel sampler",
+        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:483:32\n"
+        "Trade::CgltfImporter::animation(): missing or invalid channel 0 sampler property\n"}
 };
 
 constexpr struct {
@@ -1376,9 +1423,10 @@ void CgltfImporterTest::animationInvalid() {
     auto&& data = AnimationInvalidData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
+    Containers::String filename = Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "animation-invalid.gltf");
 
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "animation-invalid.gltf")));
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
+    CORRADE_VERIFY(importer->openFile(filename));
 
     /* Check we didn't forget to test anything */
     CORRADE_COMPARE(importer->animationCount(), Containers::arraySize(AnimationInvalidData));
@@ -1386,7 +1434,13 @@ void CgltfImporterTest::animationInvalid() {
     std::ostringstream out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->animation(data.name));
-    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::CgltfImporter::animation(): {}\n", data.message));
+    /* If the message ends with a newline, it's the whole output including a
+       potential placeholder for the filename, otherwise just the sentence
+       without any placeholder */
+    if(Containers::StringView{data.message}.hasSuffix('\n'))
+        CORRADE_COMPARE(out.str(), Utility::formatString(data.message, filename));
+    else
+        CORRADE_COMPARE(out.str(), Utility::formatString("Trade::CgltfImporter::animation(): {}\n", data.message));
 }
 
 void CgltfImporterTest::animationInvalidBufferNotFound() {
