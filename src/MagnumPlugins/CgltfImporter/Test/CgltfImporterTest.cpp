@@ -421,7 +421,7 @@ constexpr struct {
     const char* name;
     const char* message;
 } MeshInvalidData[]{
-    {"invalid primitive",
+    {"unrecognized primitive",
         "unrecognized primitive 666"},
     {"different vertex count for each accessor",
         "mismatched vertex count for attribute TEXCOORD_0, expected 3 but got 4"},
@@ -481,8 +481,6 @@ constexpr struct {
         "accessor 23 has invalid componentType 9999"},
     {"sparse accessor",
         "accessor 14 is using sparse storage, which is unsupported"},
-    {"no bufferview",
-        "accessor 15 has missing or invalid bufferView property"},
     {"multiple buffers",
         "meshes spanning multiple buffers are not supported"},
     {"invalid index accessor",
@@ -492,15 +490,76 @@ constexpr struct {
     {"buffer view range out of bounds",
         "buffer view 3 needs 60 bytes but buffer 1 has only 59"},
     {"buffer index out of bounds",
-        "buffer index 3 out of range for 3 buffers"},
+        "buffer index 7 out of range for 7 buffers"},
     {"buffer view index out of bounds",
-        "buffer view index 6 out of range for 6 buffer views"},
+        "buffer view index 16 out of range for 16 buffer views"},
     {"accessor index out of bounds",
-        "accessor index 25 out of range for 25 accessors"},
+        "accessor index 44 out of range for 44 accessors"},
     {"mesh index accessor out of bounds",
-        "accessor index 25 out of range for 25 accessors"},
-    {"buffer with no uri",
-        "buffer 2 has missing uri property"}
+        "accessor index 44 out of range for 44 accessors"},
+    {"buffer with missing uri property",
+        "buffer 2 has missing uri property"},
+    {"buffer with invalid uri property",
+        "Utility::Json::parseString(): expected a string, got Utility::JsonToken::Type::Array at {}:1037:20\n"
+        "Trade::CgltfImporter::mesh(): buffer 3 has invalid uri property\n"},
+    {"buffer with invalid uri",
+        "invalid URI escape sequence %%"},
+    {"buffer with missing byteLength property",
+        "buffer 5 has missing or invalid byteLength property"},
+    {"buffer with invalid byteLength property",
+        "Utility::Json::parseSize(): too large integer literal -3 at {}:1050:27\n"
+        "Trade::CgltfImporter::mesh(): buffer 6 has missing or invalid byteLength property\n"},
+    {"buffer view with missing buffer property",
+        "buffer view 9 has missing or invalid buffer property"},
+    {"buffer view with invalid buffer property",
+        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:987:23\n"
+        "Trade::CgltfImporter::mesh(): buffer view 10 has missing or invalid buffer property\n"},
+    {"buffer view with invalid byteOffset property",
+        "Utility::Json::parseSize(): too large integer literal -1 at {}:993:27\n"
+        "Trade::CgltfImporter::mesh(): buffer view 11 has invalid byteOffset property\n"},
+    {"buffer view with missing byteLength property",
+        "buffer view 12 has missing or invalid byteLength property"},
+    {"buffer view with invalid byteLength property",
+        "Utility::Json::parseSize(): too large integer literal -12 at {}:1003:27\n"
+        "Trade::CgltfImporter::mesh(): buffer view 13 has missing or invalid byteLength property\n"},
+    {"buffer view with invalid byteStride property",
+        "Utility::Json::parseUnsignedInt(): too large integer literal -4 at {}:1009:27\n"
+        "Trade::CgltfImporter::mesh(): buffer view 14 has invalid byteStride property\n"},
+    {"accessor with missing bufferView property",
+        "accessor 15 has missing or invalid bufferView property"},
+    {"accessor with invalid bufferView property",
+        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:863:27\n"
+        "Trade::CgltfImporter::mesh(): accessor 34 has missing or invalid bufferView property\n"},
+    {"accessor with invalid byteOffset property",
+        "Utility::Json::parseSize(): too large integer literal -1 at {}:871:27\n"
+        "Trade::CgltfImporter::mesh(): accessor 35 has invalid byteOffset property\n"},
+    {"accessor with missing componentType property",
+        "accessor 36 has missing or invalid componentType property"},
+    {"accessor with invalid componentType property",
+        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:885:30\n"
+        "Trade::CgltfImporter::mesh(): accessor 37 has missing or invalid componentType property\n"},
+    {"accessor with missing count property",
+        "accessor 38 has missing or invalid count property"},
+    {"accessor with invalid count property",
+        "Utility::Json::parseSize(): too large integer literal -1 at {}:899:22\n"
+        "Trade::CgltfImporter::mesh(): accessor 39 has missing or invalid count property\n"},
+    {"accessor with missing type property",
+        "accessor 40 has missing or invalid type property"},
+    {"accessor with invalid type property",
+        "Utility::Json::parseString(): expected a string, got Utility::JsonToken::Type::Number at {}:913:21\n"
+        "Trade::CgltfImporter::mesh(): accessor 41 has missing or invalid type property\n"},
+    {"accessor with invalid normalized property",
+        "Utility::Json::parseBool(): expected a bool, got Utility::JsonToken::Type::Null at {}:921:27\n"
+        "Trade::CgltfImporter::mesh(): accessor 42 has invalid normalized property\n"},
+    {"invalid primitive property",
+        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:584:29\n"
+        "Trade::CgltfImporter::mesh(): invalid primitive mode property\n"},
+    {"invalid attribute property",
+        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:594:38\n"
+        "Trade::CgltfImporter::mesh(): invalid attribute _WEIRD_EH\n"},
+    {"invalid indices property",
+        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:604:32\n"
+        "Trade::CgltfImporter::mesh(): invalid indices property\n"}
 };
 
 constexpr struct {
@@ -3156,8 +3215,10 @@ void CgltfImporterTest::meshInvalid() {
     auto&& data = MeshInvalidData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
+    Containers::String filename = Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "mesh-invalid.gltf");
+
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "mesh-invalid.gltf")));
+    CORRADE_VERIFY(importer->openFile(filename));
 
     /* Check we didn't forget to test anything */
     CORRADE_COMPARE(Containers::arraySize(MeshInvalidData), importer->meshCount());
@@ -3165,7 +3226,13 @@ void CgltfImporterTest::meshInvalid() {
     std::ostringstream out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->mesh(data.name));
-    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::CgltfImporter::mesh(): {}\n", data.message));
+    /* If the message ends with a newline, it's the whole output including a
+       potential placeholder for the filename, otherwise just the sentence
+       without any placeholder */
+    if(Containers::StringView{data.message}.hasSuffix('\n'))
+        CORRADE_COMPARE(out.str(), Utility::formatString(data.message, filename));
+    else
+        CORRADE_COMPARE(out.str(), Utility::formatString("Trade::CgltfImporter::mesh(): {}\n", data.message));
 }
 
 void CgltfImporterTest::meshInvalidBufferNotFound() {
