@@ -688,28 +688,132 @@ constexpr struct {
     const char* name;
     const char* message;
 } MaterialInvalidData[]{
-    {"unknown alpha mode",
+    {"invalid alphaMode property",
+        "Utility::Json::parseString(): expected a string, got Utility::JsonToken::Type::Number at {}:8:26\n"
+        "Trade::CgltfImporter::material(): invalid alphaMode property\n"},
+    {"unrecognized alpha mode",
         "unrecognized alphaMode WAT"},
-    {"invalid texture index pbrMetallicRoughness base color",
+    {"invalid alphaCutoff property",
+        "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::String at {}:17:28\n"
+        "Trade::CgltfImporter::material(): invalid alphaCutoff property\n"},
+    {"invalid doubleSided property",
+        "Utility::Json::parseBool(): expected a bool, got Utility::JsonToken::Type::Null at {}:21:28\n"
+        "Trade::CgltfImporter::material(): invalid doubleSided property\n"},
+    {"invalid pbrMetallicRoughness property",
+        "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Array at {}:25:37\n"
+        "Trade::CgltfImporter::material(): invalid pbrMetallicRoughness property\n"},
+    {"invalid pbrMetallicRoughness baseColorFactor property",
+        "Utility::Json::parseFloatArray(): expected an array, got Utility::JsonToken::Type::String at {}:30:36\n"
+        "Trade::CgltfImporter::material(): invalid pbrMetallicRoughness baseColorFactor property\n"},
+    {"invalid pbrMetallicRoughness baseColorFactor array size",
+        "Utility::Json::parseFloatArray(): expected a 4-element array, got 3 at {}:36:36\n"
+        "Trade::CgltfImporter::material(): invalid pbrMetallicRoughness baseColorFactor property\n"},
+    {"invalid pbrMetallicRoughness baseColorTexture",
         "baseColorTexture index 2 out of range for 2 textures"},
-    {"invalid texture index pbrMetallicRoughness metallic/roughness",
+    {"invalid pbrMetallicRoughness metallicFactor property",
+        "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::Bool at {}:50:35\n"
+        "Trade::CgltfImporter::material(): invalid pbrMetallicRoughness metallicFactor property\n"},
+    {"invalid pbrMetallicRoughness roughnessFactor property",
+        "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::Bool at {}:56:36\n"
+        "Trade::CgltfImporter::material(): invalid pbrMetallicRoughness roughnessFactor property\n"},
+    {"invalid pbrMetallicRoughness metallicRoughnessTexture",
         "metallicRoughnessTexture index 2 out of range for 2 textures"},
-    {"invalid texture index pbrSpecularGlossiness diffuse",
+    {"invalid extensions property",
+        "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Array at {}:69:27\n"
+        "Trade::CgltfImporter::material(): invalid extensions property\n"},
+    {"invalid extension",
+        "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Null at {}:74:40\n"
+        "Trade::CgltfImporter::material(): invalid KHR_materials_unlit extension property\n"},
+    {"invalid KHR_materials_pbrSpecularGlossiness diffuseFactor property",
+        "Utility::Json::parseFloatArray(): expected an array, got Utility::JsonToken::Type::String at {}:81:38\n"
+        "Trade::CgltfImporter::material(): invalid KHR_materials_pbrSpecularGlossiness diffuseFactor property\n"},
+    {"invalid KHR_materials_pbrSpecularGlossiness diffuseFactor array size",
+        "Utility::Json::parseFloatArray(): expected a 4-element array, got 3 at {}:89:38\n"
+        "Trade::CgltfImporter::material(): invalid KHR_materials_pbrSpecularGlossiness diffuseFactor property\n"},
+    {"invalid KHR_materials_pbrSpecularGlossiness diffuseTexture",
         "diffuseTexture index 2 out of range for 2 textures"},
-    {"invalid texture index pbrSpecularGlossiness specular",
+    {"invalid KHR_materials_pbrSpecularGlossiness specularFactor property",
+        "Utility::Json::parseFloatArray(): expected an array, got Utility::JsonToken::Type::String at {}:107:39\n"
+        "Trade::CgltfImporter::material(): invalid KHR_materials_pbrSpecularGlossiness specularFactor property\n"},
+    {"invalid KHR_materials_pbrSpecularGlossiness specularFactor array size",
+        "Utility::Json::parseFloatArray(): expected a 3-element array, got 4 at {}:115:39\n"
+        "Trade::CgltfImporter::material(): invalid KHR_materials_pbrSpecularGlossiness specularFactor property\n"},
+    {"invalid KHR_materials_pbrSpecularGlossiness glossinessFactor property",
+        "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::Bool at {}:123:41\n"
+        "Trade::CgltfImporter::material(): invalid KHR_materials_pbrSpecularGlossiness glossinessFactor property\n"},
+    {"invalid KHR_materials_pbrSpecularGlossiness specularGlossinessTexture",
         "specularGlossinessTexture index 2 out of range for 2 textures"},
-    {"invalid texture index normal",
+    {"invalid normalTexture",
         "normalTexture index 2 out of range for 2 textures"},
-    {"invalid texture index occlusion",
+    {"invalid normalTexture scale property",
+        "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::Bool at {}:147:26\n"
+        "Trade::CgltfImporter::material(): invalid normalTexture scale property\n"},
+    {"invalid occlusionTexture",
         "occlusionTexture index 2 out of range for 2 textures"},
-    {"invalid texture index emissive",
+    {"invalid occlusionTexture strength property",
+        "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::String at {}:160:29\n"
+        "Trade::CgltfImporter::material(): invalid occlusionTexture strength property\n"},
+    {"invalid emissiveFactor property",
+        "Utility::Json::parseFloatArray(): expected an array, got Utility::JsonToken::Type::Number at {}:165:31\n"
+        "Trade::CgltfImporter::material(): invalid emissiveFactor property\n"},
+    {"invalid emissiveFactor array size",
+        "Utility::Json::parseFloatArray(): expected a 3-element array, got 4 at {}:169:31\n"
+        "Trade::CgltfImporter::material(): invalid emissiveFactor property\n"},
+    {"invalid emissiveTexture",
         "emissiveTexture index 2 out of range for 2 textures"},
-    {"invalid texture index clearcoat factor",
+    {"invalid KHR_materials_clearcoat clearcoatFactor property",
+        "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::Array at {}:181:40\n"
+        "Trade::CgltfImporter::material(): invalid KHR_materials_clearcoat clearcoatFactor property\n"},
+    {"invalid KHR_materials_clearcoat clearcoatTexture",
         "clearcoatTexture index 2 out of range for 2 textures"},
-    {"invalid texture index clearcoat roughness",
+    {"invalid KHR_materials_clearcoat clearcoatRoughnessFactor property",
+        "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::Bool at {}:199:49\n"
+        "Trade::CgltfImporter::material(): invalid KHR_materials_clearcoat roughnessFactor property\n"},
+    {"invalid KHR_materials_clearcoat clearcoatRoughnessTexture",
         "clearcoatRoughnessTexture index 2 out of range for 2 textures"},
-    {"invalid texture index clearcoat normal",
-        "clearcoatNormalTexture index 2 out of range for 2 textures"}
+    {"invalid KHR_materials_clearcoat clearcoatNormalTexture",
+        "clearcoatNormalTexture index 2 out of range for 2 textures"},
+    {"invalid KHR_materials_clearcoat clearcoatNormalTexture scale property",
+        "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::Bool at {}:229:34\n"
+        "Trade::CgltfImporter::material(): invalid KHR_materials_clearcoat normalTexture scale property\n"},
+    /* Invalid texture object cases are tested thoroughly only once on the
+       baseColorTexture object, as the helper code path is shared. General
+       error propagation was tested above alaready. */
+    {"invalid texture object",
+        "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Number at {}:237:37\n"
+        "Trade::CgltfImporter::material(): invalid baseColorTexture property\n"},
+    {"missing texture object index property",
+        "missing or invalid baseColorTexture index property"},
+    {"invalid texture object index property",
+        "Utility::Json::parseUnsignedInt(): too large integer literal -2 at {}:250:30\n"
+        "Trade::CgltfImporter::material(): missing or invalid baseColorTexture index property\n"},
+    {"invalid texture object texCoord property",
+        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:259:33\n"
+        "Trade::CgltfImporter::material(): invalid baseColorTexture texcoord property\n"},
+    {"invalid texture object extensions property",
+        "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Array at {}:268:35\n"
+        "Trade::CgltfImporter::material(): invalid baseColorTexture extensions property\n"},
+    {"invalid texture object KHR_texture_transform extension",
+        "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Null at {}:278:50\n"
+        "Trade::CgltfImporter::material(): invalid baseColorTexture KHR_texture_transform extension\n"},
+    {"invalid texture object KHR_texture_transform texCoord property",
+        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:290:41\n"
+        "Trade::CgltfImporter::material(): invalid baseColorTexture KHR_texture_transform texcoord property\n"},
+    {"invalid texture object KHR_texture_transform scale property",
+        "Utility::Json::parseFloatArray(): expected an array, got Utility::JsonToken::Type::Number at {}:303:38\n"
+        "Trade::CgltfImporter::material(): invalid baseColorTexture KHR_texture_transform scale property\n"},
+    {"invalid texture object KHR_texture_transform scale array size",
+        "Utility::Json::parseFloatArray(): expected a 2-element array, got 1 at {}:316:38\n"
+        "Trade::CgltfImporter::material(): invalid baseColorTexture KHR_texture_transform scale property\n"},
+    {"invalid texture object KHR_texture_transform rotation property",
+        "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::Array at {}:329:41\n"
+        "Trade::CgltfImporter::material(): invalid baseColorTexture KHR_texture_transform rotation property\n"},
+    {"invalid texture object KHR_texture_transform offset property",
+        "Utility::Json::parseFloatArray(): expected an array, got Utility::JsonToken::Type::Number at {}:342:39\n"
+        "Trade::CgltfImporter::material(): invalid baseColorTexture KHR_texture_transform offset property\n"},
+    {"invalid texture object KHR_texture_transform offset array size",
+        "Utility::Json::parseFloatArray(): expected a 2-element array, got 1 at {}:355:39\n"
+        "Trade::CgltfImporter::material(): invalid baseColorTexture KHR_texture_transform offset property\n"},
 };
 
 constexpr struct {
@@ -4556,8 +4660,10 @@ void CgltfImporterTest::materialInvalid() {
     auto&& data = MaterialInvalidData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
+    Containers::String filename = Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "material-invalid.gltf");
+
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "material-invalid.gltf")));
+    CORRADE_VERIFY(importer->openFile(filename));
 
     /* Check we didn't forget to test anything */
     CORRADE_COMPARE(Containers::arraySize(MaterialInvalidData), importer->materialCount());
@@ -4565,7 +4671,13 @@ void CgltfImporterTest::materialInvalid() {
     std::ostringstream out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->material(data.name));
-    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::CgltfImporter::material(): {}\n", data.message));
+    /* If the message ends with a newline, it's the whole output including a
+       potential placeholder for the filename, otherwise just the sentence
+       without any placeholder */
+    if(Containers::StringView{data.message}.hasSuffix('\n'))
+        CORRADE_COMPARE(out.str(), Utility::formatString(data.message, filename));
+    else
+        CORRADE_COMPARE(out.str(), Utility::formatString("Trade::CgltfImporter::material(): {}\n", data.message));
 }
 
 void CgltfImporterTest::materialTexCoordFlip() {

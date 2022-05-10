@@ -3471,7 +3471,7 @@ void TinyGltfImporterTest::materialInvalid() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "material-invalid.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(TINYGLTFIMPORTER_TEST_DIR, "material-invalid.gltf")));
 
     /* Check we didn't forget to test anything */
     CORRADE_COMPARE(Containers::arraySize(MaterialInvalidData), importer->materialCount());
