@@ -71,6 +71,7 @@ struct CgltfImporterTest: TestSuite::Tester {
 
     void open();
     void openError();
+    void openFileError();
     void openIgnoreUnknownChunk();
     void openExternalDataOrder();
     void openExternalDataNoPathNoCallback();
@@ -222,7 +223,7 @@ constexpr struct {
         "Trade::CgltfImporter::openData(): invalid JSON\n"},
     {"invalid JSON binary",
         "glTF\x02\x00\x00\x00\x15\x00\x00\x00\x01\x00\x00\x00JSON{"_s,
-        "Utility::Json: file too short, expected \" or } at <in>:1:2\n"
+        "Utility::Json: file too short, expected \" or } at <in>:1:22\n"
         "Trade::CgltfImporter::openData(): invalid JSON\n"}
 };
 
@@ -324,7 +325,7 @@ constexpr struct {
     {"spot with inner angle same as outer",
         "spot inner and outer cone angle Deg(14.3239) and Deg(14.3239) out of allowed bounds"},
     {"invalid color size",
-        "Utility::Json::parseFloatArray(): expected a 3-element array, got 4 at <in>:42:30\n"
+        "Utility::Json::parseFloatArray(): expected a 3-element array, got 4 at {}:42:30\n"
         "Trade::CgltfImporter::light(): invalid color property\n"},
     {"missing type",
         "Trade::CgltfImporter::light(): missing or invalid type property\n"},
@@ -751,7 +752,8 @@ CgltfImporterTest::CgltfImporterTest() {
     addInstancedTests({&CgltfImporterTest::openError},
                       Containers::arraySize(OpenErrorData));
 
-    addTests({&CgltfImporterTest::openIgnoreUnknownChunk});
+    addTests({&CgltfImporterTest::openFileError,
+              &CgltfImporterTest::openIgnoreUnknownChunk});
 
     addInstancedTests({&CgltfImporterTest::openExternalDataOrder},
         Containers::arraySize(SingleFileData));
@@ -970,6 +972,21 @@ void CgltfImporterTest::openError() {
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->openData(data.data));
     CORRADE_COMPARE(out.str(), data.message);
+}
+
+void CgltfImporterTest::openFileError() {
+    /* To verify the filename gets correctly propagated into the error message */
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
+
+    Containers::String filename = Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "error.gltf");
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!importer->openFile(filename));
+    CORRADE_COMPARE(out.str(), Utility::formatString(
+        "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Array at {}:2:14\n"
+        "Trade::CgltfImporter::openData(): missing or invalid asset property\n", filename));
 }
 
 void CgltfImporterTest::openIgnoreUnknownChunk() {
@@ -1909,10 +1926,11 @@ void CgltfImporterTest::lightInvalid() {
     std::ostringstream out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->light(data.name));
-    /* If the message ends with a newline, it's the whole output, otherwise
-       just the sentence */
+    /* If the message ends with a newline, it's the whole output including a
+       potential placeholder for the filename, otherwise just the sentence
+       without any placeholder */
     if(Containers::StringView{data.message}.hasSuffix('\n'))
-        CORRADE_COMPARE(out.str(), data.message);
+        CORRADE_COMPARE(out.str(), Utility::formatString(data.message, filename));
     else
         CORRADE_COMPARE(out.str(), Utility::formatString("Trade::CgltfImporter::light(): {}\n", data.message));
 }

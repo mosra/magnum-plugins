@@ -86,6 +86,7 @@ corrade_add_test(CgltfImporterTest
         empty.gltf
         empty.glb
         encoded-uris.gltf
+        error.gltf
         escaped-strings.gltf
         external-data.bin
         # external-data.gl* packed via a resource (but *.bin needed also by

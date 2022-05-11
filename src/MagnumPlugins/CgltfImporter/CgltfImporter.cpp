@@ -134,8 +134,9 @@ bool isBuiltinMeshAttribute(Utility::ConfigurationGroup& configuration, const Co
 }
 
 struct CgltfImporter::Document {
-    /* Set only if openFile() was used */
-    Containers::Optional<Containers::String> filePath;
+    /* Set only if fromFile() was used, passed to Utility::Json for nicer error
+       messages and used as a base path for buffer and image opening */
+    Containers::Optional<Containers::String> filename;
 
     /* File data, to which point parsed glTF tokens and the BIN chunk, if
        present */
@@ -286,7 +287,7 @@ Containers::Optional<Containers::Array<char>> CgltfImporter::loadUri(const char*
         return {};
 
     if(fileCallback()) {
-        const Containers::String fullPath = Utility::Path::join(_d->filePath ? Containers::StringView{*_d->filePath} : Containers::StringView{}, *decodedUri);
+        const Containers::String fullPath = Utility::Path::join(_d->filename ? Utility::Path::split(*_d->filename).first() : Containers::StringView{}, *decodedUri);
         if(Containers::Optional<Containers::ArrayView<const char>> view = fileCallback()(fullPath, InputFileCallbackPolicy::LoadPermanent, fileCallbackUserData()))
             /* Return a non-owning view */
             return Containers::Array<char>{const_cast<char*>(view->data()), view->size(), [](char*, std::size_t){}};
@@ -295,12 +296,12 @@ Containers::Optional<Containers::Array<char>> CgltfImporter::loadUri(const char*
         return {};
 
     } else {
-        if(!_d->filePath) {
+        if(!_d->filename) {
             Error{} << errorPrefix << "external buffers can be imported only when opening files from the filesystem or if a file callback is present";
             return Containers::NullOpt;
         }
 
-        const Containers::String fullPath = Utility::Path::join(*_d->filePath, *decodedUri);
+        const Containers::String fullPath = Utility::Path::join(Utility::Path::split(*_d->filename).first(), *decodedUri);
 
         if(Containers::Optional<Containers::Array<char>> data = Utility::Path::read(fullPath))
             return data;
@@ -639,9 +640,7 @@ void CgltfImporter::doClose() { _d = nullptr; }
 
 void CgltfImporter::doOpenFile(const Containers::StringView filename) {
     _d.reset(new Document);
-    /* Since the slice won't be null terminated, nullTerminatedGlobalView()
-       won't help anything here */
-    _d->filePath.emplace(Utility::Path::split(filename).first());
+    _d->filename.emplace(Containers::String::nullTerminatedGlobalView(filename));
     AbstractImporter::doOpenFile(filename);
 }
 
@@ -662,6 +661,7 @@ void CgltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags d
        string view as global to avoid Utility::Json making its own owned copy
        again */
     Containers::StringView json{_d->fileData, _d->fileData.size(), Containers::StringViewFlag::Global};
+    std::size_t jsonByteOffset = 0;
 
     /* If the file looks like a GLB, extract the JSON and BIN chunk out of it */
     if(json.hasPrefix("glTF"_s)) {
@@ -695,6 +695,7 @@ void CgltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags d
         /* Update the JSON view to contain just the JSON data. Slicing so the
            global flag set above gets preserved. */
         json = json.slice(jsonDataBegin, jsonDataBegin + header.json.length);
+        jsonByteOffset = jsonDataBegin - _d->fileData;
 
         /* Other chunks. The spec defines just the BIN chunk, but there can be
            additional chunks defined by extensions that we're expected to
@@ -726,8 +727,10 @@ void CgltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags d
         }
     }
 
-    /** @todo supply a filename somehow?! */
-    Containers::Optional<Utility::Json> gltf = Utility::Json::fromString(json);
+    /** @todo this means that if openFile() got passed a global string, Json
+        will still make a copy of it -- need a way to preserve the globalness
+        inside non-owned String */
+    Containers::Optional<Utility::Json> gltf = Utility::Json::fromString(json, _d->filename ? Containers::StringView{*_d->filename} : Containers::StringView{}, 0, jsonByteOffset);
     if(!gltf || !gltf->parseObject(gltf->root())) {
         Error{} << "Trade::CgltfImporter::openData(): invalid JSON";
         return;
@@ -4049,7 +4052,7 @@ AbstractImporter* CgltfImporter::setupOrReuseImporterForImage(const char* const 
     }
 
     /* Load external image */
-    if(!_d->filePath && !fileCallback()) {
+    if(!_d->filename && !fileCallback()) {
         Error{} << errorPrefix << "external images can be imported only when opening files from the filesystem or if a file callback is present";
         return nullptr;
     }
@@ -4057,7 +4060,7 @@ AbstractImporter* CgltfImporter::setupOrReuseImporterForImage(const char* const 
     const Containers::Optional<Containers::String> decodedUri = decodeUri(errorPrefix, gltfUri->asString());
     if(!decodedUri)
         return nullptr;
-    if(!importer.openFile(Utility::Path::join(_d->filePath ? *_d->filePath : "", *decodedUri)))
+    if(!importer.openFile(Utility::Path::join(_d->filename ? Utility::Path::split(*_d->filename).first() : "", *decodedUri)))
         return nullptr;
     return &_d->imageImporter.emplace(std::move(importer));
 }
