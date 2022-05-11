@@ -1987,9 +1987,6 @@ void GltfImporterTest::animationInvalidBufferNotFound() {
     auto&& data = AnimationInvalidBufferNotFoundData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
-    /* These tests have to be separate from TinyGltfImporter because it errors
-       out during import trying to load the buffer */
-
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
 
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "animation-invalid-buffer-notfound.gltf")));
@@ -3117,9 +3114,6 @@ void GltfImporterTest::skinInvalid() {
 }
 
 void GltfImporterTest::skinInvalidBufferNotFound() {
-    /* This test has to be separate from TinyGltfImporter because it errors
-       out during import trying to load the buffer */
-
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
 
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "skin-invalid-buffer-notfound.gltf")));
@@ -3882,9 +3876,6 @@ void GltfImporterTest::meshInvalid() {
 void GltfImporterTest::meshInvalidBufferNotFound() {
     auto&& data = MeshInvalidBufferNotFoundData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
-
-    /* These tests have to be separate from TinyGltfImporter because it errors
-       out during import trying to load the buffer */
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "mesh-invalid-buffer-notfound.gltf")));
