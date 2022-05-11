@@ -5,8 +5,7 @@
     "bufferViews": [
         {
             "buffer": 0,
-            "byteLength": 150,
-            "byteOffset": 0
+            "byteLength": 150
         }
     ],
     "buffers": [

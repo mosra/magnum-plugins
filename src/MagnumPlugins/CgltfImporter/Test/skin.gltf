@@ -27,26 +27,22 @@
     "bufferViews": [
         {
             "buffer": 0,
-            "byteOffset": 0,
             "byteLength": 72
         },
         {
             "buffer": 0,
-            "byteOffset": 0,
             "byteLength": 192
         }
     ],
     "accessors": [
         {
             "bufferView": 0,
-            "byteOffset": 0,
             "componentType": 5123,
             "count": 2,
             "type": "MAT3"
         },
         {
             "bufferView": 1,
-            "byteOffset": 0,
             "componentType": 5126,
             "count": 3,
             "type": "MAT4"

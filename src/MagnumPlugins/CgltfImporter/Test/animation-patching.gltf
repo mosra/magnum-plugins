@@ -45,7 +45,6 @@
     "accessors": [
         {
             "bufferView": 0,
-            "byteOffset": 0,
             "componentType": 5126,
             "count": 9,
             "type": "SCALAR"
@@ -75,7 +74,6 @@
     "bufferViews": [
         {
             "buffer": 0,
-            "byteOffset": 0,
             "byteLength": 240
         }
     ],

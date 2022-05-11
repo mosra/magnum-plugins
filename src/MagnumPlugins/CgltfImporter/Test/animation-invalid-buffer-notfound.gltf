@@ -45,28 +45,24 @@
     "accessors": [
         {
             "bufferView": 0,
-            "byteOffset": 0,
             "componentType": 5126,
             "count": 1,
             "type": "SCALAR"
         },
         {
             "bufferView": 0,
-            "byteOffset": 0,
             "componentType": 5126,
             "count": 1,
             "type": "VEC4"
         },
         {
             "bufferView": 1,
-            "byteOffset": 0,
             "componentType": 5126,
             "count": 1,
             "type": "SCALAR"
         },
         {
             "bufferView": 2,
-            "byteOffset": 0,
             "componentType": 5126,
             "count": 1,
             "type": "VEC4"
@@ -75,17 +71,14 @@
     "bufferViews": [
         {
             "buffer": 0,
-            "byteOffset": 0,
             "byteLength": 16
         },
         {
             "buffer": 1,
-            "byteOffset": 0,
             "byteLength": 16
         },
         {
             "buffer": 2,
-            "byteOffset": 0,
             "byteLength": 16
         }
     ],

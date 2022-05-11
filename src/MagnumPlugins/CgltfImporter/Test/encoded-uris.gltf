@@ -57,17 +57,14 @@
     "bufferViews": [
         {
             "buffer": 0,
-            "byteOffset": 0,
             "byteLength": 4
         },
         {
             "buffer": 1,
-            "byteOffset": 0,
             "byteLength": 4
         },
         {
             "buffer": 2,
-            "byteOffset": 0,
             "byteLength": 4
         }
     ],

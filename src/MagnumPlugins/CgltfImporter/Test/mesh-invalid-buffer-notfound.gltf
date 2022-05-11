@@ -50,12 +50,10 @@
     "bufferViews": [
         {
             "buffer": 0,
-            "byteOffset": 0,
             "byteLength": 12
         },
         {
             "buffer": 1,
-            "byteOffset": 0,
             "byteLength": 3
         }
     ]

@@ -109,8 +109,7 @@
     "bufferViews": [
         {
             "buffer": 0,
-            "byteLength": 0,
-            "byteOffset": 0
+            "byteLength": 0
         }
     ],
     "buffers": [

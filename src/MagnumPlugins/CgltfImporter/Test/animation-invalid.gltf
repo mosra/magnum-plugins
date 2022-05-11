@@ -499,56 +499,48 @@
     "accessors": [
         {
             "bufferView": 0,
-            "byteOffset": 0,
             "componentType": 5126,
             "count": 0,
             "type": "VEC4"
         },
         {
             "bufferView": 0,
-            "byteOffset": 0,
             "componentType": 5126,
             "count": 0,
             "type": "SCALAR"
         },
         {
             "bufferView": 0,
-            "byteOffset": 0,
             "componentType": 5126,
             "count": 0,
             "type": "VEC3"
         },
         {
             "bufferView": 0,
-            "byteOffset": 0,
             "componentType": 5126,
             "count": 10,
             "type": "SCALAR"
         },
         {
             "bufferView": 0,
-            "byteOffset": 0,
             "componentType": 5126,
             "count": 10,
             "type": "VEC3"
         },
         {
             "bufferView": 1,
-            "byteOffset": 0,
             "componentType": 5126,
             "count": 2,
             "type": "SCALAR"
         },
         {
             "bufferView": 1,
-            "byteOffset": 0,
             "componentType": 5126,
             "count": 3,
             "type": "VEC3"
         },
         {
             "bufferView": 1,
-            "byteOffset": 0,
             "componentType": 5126,
             "count": 2,
             "type": "VEC3"
@@ -557,12 +549,10 @@
     "bufferViews": [
         {
             "buffer": 0,
-            "byteOffset": 0,
             "byteLength": 0
         },
         {
             "buffer": 0,
-            "byteOffset": 0,
             "byteLength": 36
         }
     ],
