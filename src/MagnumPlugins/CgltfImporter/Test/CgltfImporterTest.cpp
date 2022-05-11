@@ -227,7 +227,201 @@ const struct {
     {"invalid JSON binary",
         "glTF\x02\x00\x00\x00\x15\x00\x00\x00\x01\x00\x00\x00JSON{"_s,
         "Utility::Json: file too short, expected \" or } at <in>:1:22\n"
-        "Trade::CgltfImporter::openData(): invalid JSON\n"}
+        "Trade::CgltfImporter::openData(): invalid JSON\n"},
+    {"no top-level JSON object",
+        "[]",
+        "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Array at <in>:1:1\n"
+        "Trade::CgltfImporter::openData(): invalid JSON\n"},
+    {"missing asset property",
+        "{}",
+        "missing or invalid asset property"},
+    {"invalid asset property",
+        R"({"asset": true})",
+        "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Bool at <in>:1:11\n"
+        "Trade::CgltfImporter::openData(): missing or invalid asset property\n"},
+    {"missing asset version property",
+        R"({"asset": {}})",
+        "missing or invalid asset version property"},
+    {"invalid asset version property",
+        R"({"asset": {"version": 2, "minVersion": 2}})",
+        "Utility::Json::parseString(): expected a string, got Utility::JsonToken::Type::Number at <in>:1:23\n"
+        "Trade::CgltfImporter::openData(): missing or invalid asset version property\n"},
+    {"invalid asset minVersion property",
+        R"({"asset": {"version": "2.0", "minVersion": 2}})",
+        "Utility::Json::parseString(): expected a string, got Utility::JsonToken::Type::Number at <in>:1:44\n"
+        "Trade::CgltfImporter::openData(): invalid asset minVersion property\n"},
+    {"invalid extensionsRequired property",
+        R"({"asset": {"version": "2.0"}, "extensionsRequired": {}})",
+        "Utility::Json::parseArray(): expected an array, got Utility::JsonToken::Type::Object at <in>:1:53\n"
+        "Trade::CgltfImporter::openData(): invalid extensionsRequired property\n"},
+    {"invalid extensionsRequired value",
+        R"({"asset": {"version": "2.0"}, "extensionsRequired": ["KHR_mesh_quantization", false]})",
+        "Utility::Json::parseString(): expected a string, got Utility::JsonToken::Type::Bool at <in>:1:79\n"
+        "Trade::CgltfImporter::openData(): invalid required extension 1\n"},
+    {"invalid buffers property",
+        R"({"asset": {"version": "2.0"}, "buffers": {}})",
+        "Utility::Json::parseArray(): expected an array, got Utility::JsonToken::Type::Object at <in>:1:42\n"
+        "Trade::CgltfImporter::openData(): invalid buffers property\n"},
+    {"invalid buffers value",
+        R"({"asset": {"version": "2.0"}, "buffers": [{}, []]})",
+        "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Array at <in>:1:47\n"
+        "Trade::CgltfImporter::openData(): invalid buffer 1\n"},
+    {"invalid bufferViews property",
+        R"({"asset": {"version": "2.0"}, "bufferViews": {}})",
+        "Utility::Json::parseArray(): expected an array, got Utility::JsonToken::Type::Object at <in>:1:46\n"
+        "Trade::CgltfImporter::openData(): invalid bufferViews property\n"},
+    {"invalid bufferViews value",
+        R"({"asset": {"version": "2.0"}, "bufferViews": [{}, []]})",
+        "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Array at <in>:1:51\n"
+        "Trade::CgltfImporter::openData(): invalid buffer view 1\n"},
+    {"invalid accessors property",
+        R"({"asset": {"version": "2.0"}, "accessors": {}})",
+        "Utility::Json::parseArray(): expected an array, got Utility::JsonToken::Type::Object at <in>:1:44\n"
+        "Trade::CgltfImporter::openData(): invalid accessors property\n"},
+    {"invalid accessors value",
+        R"({"asset": {"version": "2.0"}, "accessors": [{}, []]})",
+        "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Array at <in>:1:49\n"
+        "Trade::CgltfImporter::openData(): invalid accessor 1\n"},
+    {"invalid samplers property",
+        R"({"asset": {"version": "2.0"}, "samplers": {}})",
+        "Utility::Json::parseArray(): expected an array, got Utility::JsonToken::Type::Object at <in>:1:43\n"
+        "Trade::CgltfImporter::openData(): invalid samplers property\n"},
+    {"invalid samplers value",
+        R"({"asset": {"version": "2.0"}, "samplers": [{}, []]})",
+        "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Array at <in>:1:48\n"
+        "Trade::CgltfImporter::openData(): invalid sampler 1\n"},
+    {"invalid nodes property",
+        R"({"asset": {"version": "2.0"}, "nodes": {}})",
+        "Utility::Json::parseArray(): expected an array, got Utility::JsonToken::Type::Object at <in>:1:40\n"
+        "Trade::CgltfImporter::openData(): invalid nodes property\n"},
+    {"invalid nodes value",
+        R"({"asset": {"version": "2.0"}, "nodes": [{}, []]})",
+        "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Array at <in>:1:45\n"
+        "Trade::CgltfImporter::openData(): invalid node 1\n"},
+    {"invalid node name property",
+        R"({"asset": {"version": "2.0"}, "nodes": [{}, {"name": 3}]})",
+        "Utility::Json::parseString(): expected a string, got Utility::JsonToken::Type::Number at <in>:1:54\n"
+        "Trade::CgltfImporter::openData(): invalid node 1 name property\n"},
+    {"invalid meshes property",
+        R"({"asset": {"version": "2.0"}, "meshes": {}})",
+        "Utility::Json::parseArray(): expected an array, got Utility::JsonToken::Type::Object at <in>:1:41\n"
+        "Trade::CgltfImporter::openData(): invalid meshes property\n"},
+    {"invalid meshes value",
+        R"({"asset": {"version": "2.0"}, "meshes": [{}, []]})",
+        "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Array at <in>:1:46\n"
+        "Trade::CgltfImporter::openData(): invalid mesh 1\n"},
+    {"invalid mesh name property",
+        R"({"asset": {"version": "2.0"}, "meshes": [{}, {"name": 3}]})",
+        "Utility::Json::parseString(): expected a string, got Utility::JsonToken::Type::Number at <in>:1:55\n"
+        "Trade::CgltfImporter::openData(): invalid mesh 1 name property\n"},
+    {"invalid cameras property",
+        R"({"asset": {"version": "2.0"}, "cameras": {}})",
+        "Utility::Json::parseArray(): expected an array, got Utility::JsonToken::Type::Object at <in>:1:42\n"
+        "Trade::CgltfImporter::openData(): invalid cameras property\n"},
+    {"invalid cameras value",
+        R"({"asset": {"version": "2.0"}, "cameras": [{}, []]})",
+        "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Array at <in>:1:47\n"
+        "Trade::CgltfImporter::openData(): invalid camera 1\n"},
+    {"invalid camera name property",
+        R"({"asset": {"version": "2.0"}, "cameras": [{}, {"name": 3}]})",
+        "Utility::Json::parseString(): expected a string, got Utility::JsonToken::Type::Number at <in>:1:56\n"
+        "Trade::CgltfImporter::openData(): invalid camera 1 name property\n"},
+    {"invalid animations property",
+        R"({"asset": {"version": "2.0"}, "animations": {}})",
+        "Utility::Json::parseArray(): expected an array, got Utility::JsonToken::Type::Object at <in>:1:45\n"
+        "Trade::CgltfImporter::openData(): invalid animations property\n"},
+    {"invalid animations value",
+        R"({"asset": {"version": "2.0"}, "animations": [{}, []]})",
+        "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Array at <in>:1:50\n"
+        "Trade::CgltfImporter::openData(): invalid animation 1\n"},
+    {"invalid animations name property",
+        R"({"asset": {"version": "2.0"}, "animations": [{}, {"name": 3}]})",
+        "Utility::Json::parseString(): expected a string, got Utility::JsonToken::Type::Number at <in>:1:59\n"
+        "Trade::CgltfImporter::openData(): invalid animation 1 name property\n"},
+    {"invalid skins property",
+        R"({"asset": {"version": "2.0"}, "skins": {}})",
+        "Utility::Json::parseArray(): expected an array, got Utility::JsonToken::Type::Object at <in>:1:40\n"
+        "Trade::CgltfImporter::openData(): invalid skins property\n"},
+    {"invalid skin value",
+        R"({"asset": {"version": "2.0"}, "skins": [{}, []]})",
+        "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Array at <in>:1:45\n"
+        "Trade::CgltfImporter::openData(): invalid skin 1\n"},
+    {"invalid skin name property",
+        R"({"asset": {"version": "2.0"}, "skins": [{}, {"name": 3}]})",
+        "Utility::Json::parseString(): expected a string, got Utility::JsonToken::Type::Number at <in>:1:54\n"
+        "Trade::CgltfImporter::openData(): invalid skin 1 name property\n"},
+    {"invalid images property",
+        R"({"asset": {"version": "2.0"}, "images": {}})",
+        "Utility::Json::parseArray(): expected an array, got Utility::JsonToken::Type::Object at <in>:1:41\n"
+        "Trade::CgltfImporter::openData(): invalid images property\n"},
+    {"invalid image value",
+        R"({"asset": {"version": "2.0"}, "images": [{}, []]})",
+        "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Array at <in>:1:46\n"
+        "Trade::CgltfImporter::openData(): invalid image 1\n"},
+    {"invalid image name property",
+        R"({"asset": {"version": "2.0"}, "images": [{}, {"name": 3}]})",
+        "Utility::Json::parseString(): expected a string, got Utility::JsonToken::Type::Number at <in>:1:55\n"
+        "Trade::CgltfImporter::openData(): invalid image 1 name property\n"},
+    {"invalid textures property",
+        R"({"asset": {"version": "2.0"}, "textures": {}})",
+        "Utility::Json::parseArray(): expected an array, got Utility::JsonToken::Type::Object at <in>:1:43\n"
+        "Trade::CgltfImporter::openData(): invalid textures property\n"},
+    {"invalid textures value",
+        R"({"asset": {"version": "2.0"}, "textures": [{}, []]})",
+        "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Array at <in>:1:48\n"
+        "Trade::CgltfImporter::openData(): invalid texture 1\n"},
+    {"invalid textures name property",
+        R"({"asset": {"version": "2.0"}, "textures": [{}, {"name": 3}]})",
+        "Utility::Json::parseString(): expected a string, got Utility::JsonToken::Type::Number at <in>:1:57\n"
+        "Trade::CgltfImporter::openData(): invalid texture 1 name property\n"},
+    {"invalid materials property",
+        R"({"asset": {"version": "2.0"}, "materials": {}})",
+        "Utility::Json::parseArray(): expected an array, got Utility::JsonToken::Type::Object at <in>:1:44\n"
+        "Trade::CgltfImporter::openData(): invalid materials property\n"},
+    {"invalid materials value",
+        R"({"asset": {"version": "2.0"}, "materials": [{}, []]})",
+        "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Array at <in>:1:49\n"
+        "Trade::CgltfImporter::openData(): invalid material 1\n"},
+    {"invalid materials name property",
+        R"({"asset": {"version": "2.0"}, "materials": [{}, {"name": 3}]})",
+        "Utility::Json::parseString(): expected a string, got Utility::JsonToken::Type::Number at <in>:1:58\n"
+        "Trade::CgltfImporter::openData(): invalid material 1 name property\n"},
+    {"invalid scenes property",
+        R"({"asset": {"version": "2.0"}, "scenes": {}})",
+        "Utility::Json::parseArray(): expected an array, got Utility::JsonToken::Type::Object at <in>:1:41\n"
+        "Trade::CgltfImporter::openData(): invalid scenes property\n"},
+    {"invalid scene value",
+        R"({"asset": {"version": "2.0"}, "scenes": [{}, []]})",
+        "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Array at <in>:1:46\n"
+        "Trade::CgltfImporter::openData(): invalid scene 1\n"},
+    {"invalid scene name property",
+        R"({"asset": {"version": "2.0"}, "scenes": [{}, {"name": 3}]})",
+        "Utility::Json::parseString(): expected a string, got Utility::JsonToken::Type::Number at <in>:1:55\n"
+        "Trade::CgltfImporter::openData(): invalid scene 1 name property\n"},
+    {"invalid extensions property",
+        R"({"asset": {"version": "2.0"}, "extensions": []})",
+        "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Array at <in>:1:45\n"
+        "Trade::CgltfImporter::openData(): invalid extensions property\n"},
+    {"invalid KHR_lights_punctual extension",
+        R"({"asset": {"version": "2.0"}, "extensions": {"KHR_lights_punctual": []}})",
+        "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Array at <in>:1:69\n"
+        "Trade::CgltfImporter::openData(): invalid KHR_lights_punctual extension\n"},
+    {"invalid KHR_lights_punctual lights property",
+        R"({"asset": {"version": "2.0"}, "extensions": {"KHR_lights_punctual": {"lights": {}}}})",
+        "Utility::Json::parseArray(): expected an array, got Utility::JsonToken::Type::Object at <in>:1:80\n"
+        "Trade::CgltfImporter::openData(): invalid KHR_lights_punctual lights property\n"},
+    {"invalid KHR_lights_punctual light value",
+        R"({"asset": {"version": "2.0"}, "extensions": {"KHR_lights_punctual": {"lights": [{}, []]}}})",
+        "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Array at <in>:1:85\n"
+        "Trade::CgltfImporter::openData(): invalid KHR_lights_punctual light 1\n"},
+    {"invalid KHR_lights_punctual light name property",
+        R"({"asset": {"version": "2.0"}, "extensions": {"KHR_lights_punctual": {"lights": [{}, {"name": 3}]}}})",
+        "Utility::Json::parseString(): expected a string, got Utility::JsonToken::Type::Number at <in>:1:94\n"
+        "Trade::CgltfImporter::openData(): invalid KHR_lights_punctual light 1 name property\n"},
+    {"invalid scene property",
+        R"({"asset": {"version": "2.0"}, "scene": {}})",
+        "Utility::Json::parseUnsignedInt(): expected a number, got Utility::JsonToken::Type::Object at <in>:1:40\n"
+        "Trade::CgltfImporter::openData(): invalid scene property\n"}
 };
 
 constexpr struct {
