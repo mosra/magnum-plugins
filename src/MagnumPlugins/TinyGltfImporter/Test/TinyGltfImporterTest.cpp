@@ -391,10 +391,10 @@ constexpr struct {
     const char* file;
     const char* message;
 } SceneInvalidHierarchyData[]{
-    {"scene node has parent", "scene-invalid-hierarchy-child-not-root.gltf", "node 1 in scene 0 is not a root node"},
-    {"node has multiple parents", "scene-invalid-hierarchy-multiple-parents.gltf", "node 2 has multiple parents"},
-    {"child is self", "scene-invalid-hierarchy-cycle.gltf", "node tree contains cycle starting at node 0"},
-    {"great-grandchild is self", "scene-invalid-hierarchy-cycle-deep.gltf", "node tree contains cycle starting at node 0"},
+    {"scene node has parent", "scene-invalid-child-not-root.gltf", "node 1 in scene 0 is not a root node"},
+    {"node has multiple parents", "scene-invalid-multiple-parents.gltf", "node 2 has multiple parents"},
+    {"child is self", "scene-invalid-cycle.gltf", "node tree contains cycle starting at node 0"},
+    {"great-grandchild is self", "scene-invalid-cycle-deep.gltf", "node tree contains cycle starting at node 0"},
 };
 
 constexpr struct {

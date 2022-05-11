@@ -167,12 +167,14 @@ corrade_add_test(CgltfImporterTest
         scene.gltf
         scene-default-none.gltf
         scene-default-oob.gltf
-        scene-invalid-hierarchy-child-not-root.gltf
-        scene-invalid-hierarchy-cycle.gltf
-        scene-invalid-hierarchy-cycle-deep.gltf
-        scene-invalid-hierarchy-multiple-parents.gltf
-        scene-invalid-hierarchy-child-oob.gltf
-        scene-invalid-hierarchy-node-oob.gltf
+        scene-invalid-child-not-root.gltf
+        scene-invalid-children-property.gltf
+        scene-invalid-cycle.gltf
+        scene-invalid-cycle-deep.gltf
+        scene-invalid-multiple-parents.gltf
+        scene-invalid-child-oob.gltf
+        scene-invalid-node-oob.gltf
+        scene-invalid-nodes-property.gltf
         scene-invalid.gltf
         scene-transformation.gltf
         scene-transformation-patching.gltf

@@ -149,12 +149,12 @@ corrade_add_test(TinyGltfImporterTest
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/scene.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/scene-default-none.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/scene-default-oob.gltf
-        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/scene-invalid-hierarchy-child-not-root.gltf
-        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/scene-invalid-hierarchy-cycle.gltf
-        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/scene-invalid-hierarchy-cycle-deep.gltf
-        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/scene-invalid-hierarchy-multiple-parents.gltf
-        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/scene-invalid-hierarchy-child-oob.gltf
-        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/scene-invalid-hierarchy-node-oob.gltf
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/scene-invalid-child-not-root.gltf
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/scene-invalid-cycle.gltf
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/scene-invalid-cycle-deep.gltf
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/scene-invalid-multiple-parents.gltf
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/scene-invalid-child-oob.gltf
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/scene-invalid-node-oob.gltf
         scene-invalid.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/scene-transformation.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/CgltfImporter/Test/scene-transformation-patching.gltf

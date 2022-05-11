@@ -106,8 +106,8 @@ struct CgltfImporterTest: TestSuite::Tester {
     void lightInvalid();
 
     void scene();
+    void sceneInvalidWholeFile();
     void sceneInvalid();
-    void sceneInvalidHierarchy();
     void sceneDefaultNoScenes();
     void sceneDefaultNoDefault();
     void sceneDefaultOutOfBounds();
@@ -1088,6 +1088,39 @@ constexpr struct {
 
 constexpr struct {
     const char* name;
+    const char* file;
+    const char* message;
+} SceneInvalidWholeFileData[]{
+    {"scene node has parent",
+        "scene-invalid-child-not-root.gltf",
+        "node 1 is both a root node and a child of node 0"},
+    {"node has multiple parents",
+        "scene-invalid-multiple-parents.gltf",
+        "node 2 is a child of both node 0 and node 1"},
+    {"child is self",
+        "scene-invalid-cycle.gltf",
+        "node tree contains cycle starting at node 0"},
+    {"great-grandchild is self",
+        "scene-invalid-cycle-deep.gltf",
+        "node tree contains cycle starting at node 0"},
+    {"child out of bounds",
+        "scene-invalid-child-oob.gltf",
+        "child index 7 in node 4 out of range for 7 nodes"},
+    {"node out of bounds",
+        "scene-invalid-node-oob.gltf",
+        "node index 7 in scene 0 out of range for 7 nodes"},
+    {"invalid nodes property",
+        "scene-invalid-nodes-property.gltf",
+        "Utility::Json::parseUnsignedIntArray(): expected an array, got Utility::JsonToken::Type::Object at {}:8:22\n"
+        "Trade::CgltfImporter::openData(): invalid nodes property of scene 1\n"},
+    {"invalid children property",
+        "scene-invalid-children-property.gltf",
+        "Utility::Json::parseUnsignedIntArray(): expected an array, got Utility::JsonToken::Type::Object at {}:8:25\n"
+        "Trade::CgltfImporter::openData(): invalid children property of node 1\n"}
+};
+
+constexpr struct {
+    const char* name;
     const char* message;
 } SceneInvalidData[]{
     {"camera out of bounds",
@@ -1149,31 +1182,6 @@ constexpr struct {
     {"invalid matrix array size",
         "Utility::Json::parseFloatArray(): expected a 16-element array, got 4 at {}:189:23\n"
         "Trade::CgltfImporter::scene(): invalid matrix property of node 24\n"}
-};
-
-constexpr struct {
-    const char* name;
-    const char* file;
-    const char* message;
-} SceneInvalidHierarchyData[]{
-    {"scene node has parent",
-        "scene-invalid-hierarchy-child-not-root.gltf",
-        "node 1 is both a root node and a child of node 0"},
-    {"node has multiple parents",
-        "scene-invalid-hierarchy-multiple-parents.gltf",
-        "node 2 is a child of both node 0 and node 1"},
-    {"child is self",
-        "scene-invalid-hierarchy-cycle.gltf",
-        "node tree contains cycle starting at node 0"},
-    {"great-grandchild is self",
-        "scene-invalid-hierarchy-cycle-deep.gltf",
-        "node tree contains cycle starting at node 0"},
-    {"child out of bounds",
-        "scene-invalid-hierarchy-child-oob.gltf",
-        "child index 7 in node 4 out of range for 7 nodes"},
-    {"node out of bounds",
-        "scene-invalid-hierarchy-node-oob.gltf",
-        "node index 7 in scene 0 out of range for 7 nodes"},
 };
 
 constexpr struct {
@@ -1430,11 +1438,11 @@ CgltfImporterTest::CgltfImporterTest() {
 
     addTests({&CgltfImporterTest::scene});
 
+    addInstancedTests({&CgltfImporterTest::sceneInvalidWholeFile},
+        Containers::arraySize(SceneInvalidWholeFileData));
+
     addInstancedTests({&CgltfImporterTest::sceneInvalid},
         Containers::arraySize(SceneInvalidData));
-
-    addInstancedTests({&CgltfImporterTest::sceneInvalidHierarchy},
-        Containers::arraySize(SceneInvalidHierarchyData));
 
     addTests({&CgltfImporterTest::sceneDefaultNoScenes,
               &CgltfImporterTest::sceneDefaultNoDefault,
@@ -2711,6 +2719,26 @@ void CgltfImporterTest::scene() {
     }
 }
 
+void CgltfImporterTest::sceneInvalidWholeFile() {
+    auto&& data = SceneInvalidWholeFileData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    Containers::String filename = Utility::Path::join(CGLTFIMPORTER_TEST_DIR, data.file);
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!importer->openFile(filename));
+    /* If the message ends with a newline, it's the whole output including a
+       potential placeholder for the filename, otherwise just the sentence
+       without any placeholder */
+    if(Containers::StringView{data.message}.hasSuffix('\n'))
+        CORRADE_COMPARE(out.str(), Utility::formatString(data.message, filename));
+    else
+        CORRADE_COMPARE(out.str(), Utility::formatString("Trade::CgltfImporter::openData(): {}\n", data.message));
+}
+
 void CgltfImporterTest::sceneInvalid() {
     auto&& data = SceneInvalidData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
@@ -2733,18 +2761,6 @@ void CgltfImporterTest::sceneInvalid() {
         CORRADE_COMPARE(out.str(), Utility::formatString(data.message, filename));
     else
         CORRADE_COMPARE(out.str(), Utility::formatString("Trade::CgltfImporter::scene(): {}\n", data.message));
-}
-
-void CgltfImporterTest::sceneInvalidHierarchy() {
-    auto&& data = SceneInvalidHierarchyData[testCaseInstanceId()];
-    setTestCaseDescription(data.name);
-
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-
-    std::ostringstream out;
-    Error redirectError{&out};
-    CORRADE_VERIFY(!importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, data.file)));
-    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::CgltfImporter::openData(): {}\n", data.message));
 }
 
 void CgltfImporterTest::sceneDefaultNoScenes() {
