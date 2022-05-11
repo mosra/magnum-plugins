@@ -5133,7 +5133,7 @@ void CgltfImporterTest::texture() {
 
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "texture.gltf")));
 
-    CORRADE_COMPARE(importer->textureCount(), 4);
+    CORRADE_COMPARE(importer->textureCount(), 5);
     CORRADE_COMPARE(importer->textureName(1), "another variant");
     CORRADE_COMPARE(importer->textureForName("another variant"), 1);
     CORRADE_COMPARE(importer->textureForName("nonexistent"), -1);
@@ -5160,6 +5160,17 @@ void CgltfImporterTest::texture() {
         CORRADE_COMPARE(texture->mipmapFilter(), SamplerMipmap::Linear);
 
         CORRADE_COMPARE(texture->wrapping(), Math::Vector3<SamplerWrapping>(SamplerWrapping::Repeat, SamplerWrapping::ClampToEdge, SamplerWrapping::Repeat));
+    } {
+        Containers::Optional<Trade::TextureData> texture = importer->texture("shared sampler");
+        CORRADE_VERIFY(texture);
+        CORRADE_COMPARE(texture->image(), 2);
+        CORRADE_COMPARE(texture->type(), TextureType::Texture2D);
+
+        /* Same sampler as texture 0, should reuse the cached parsed data */
+        CORRADE_COMPARE(texture->magnificationFilter(), SamplerFilter::Linear);
+        CORRADE_COMPARE(texture->minificationFilter(), SamplerFilter::Nearest);
+        CORRADE_COMPARE(texture->mipmapFilter(), SamplerMipmap::Nearest);
+        CORRADE_COMPARE(texture->wrapping(), Math::Vector3<SamplerWrapping>(SamplerWrapping::MirroredRepeat, SamplerWrapping::ClampToEdge, SamplerWrapping::Repeat));
     }
 
     /* Both should give the same result */

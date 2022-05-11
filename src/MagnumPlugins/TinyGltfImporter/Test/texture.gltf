@@ -8,9 +8,6 @@
         },
         {
             "uri": "texture.png"
-        },
-        {
-            "uri": "texture.png"
         }
     ],
     "samplers": [
@@ -37,11 +34,6 @@
             "name": "another variant",
             "sampler": 1,
             "source": 0
-        },
-        {
-            "name": "shared sampler",
-            "sampler": 0,
-            "source": 2
         },
         {
             "name": "empty sampler",

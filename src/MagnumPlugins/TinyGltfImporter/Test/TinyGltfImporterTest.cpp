@@ -3521,7 +3521,7 @@ void TinyGltfImporterTest::materialTexCoordFlip() {
 void TinyGltfImporterTest::texture() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
 
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "texture.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(TINYGLTFIMPORTER_TEST_DIR, "texture.gltf")));
 
     CORRADE_COMPARE(importer->textureCount(), 4);
     CORRADE_COMPARE(importer->textureName(1), "another variant");
