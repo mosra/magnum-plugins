@@ -4672,12 +4672,15 @@ void CgltfImporterTest::materialRaw() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
     importer->configuration().setValue("phongMaterialFallback", false);
 
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "material-raw.gltf")));
+    Containers::String filename = Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "material-raw.gltf");
+
+    CORRADE_VERIFY(importer->openFile(filename));
 
     Containers::Optional<MaterialData> material;
-    std::ostringstream out;
+    std::ostringstream outWarning, outError;
     {
-        Warning redirectWarning{&out};
+        Warning redirectWarning{&outWarning};
+        Error redirectError{&outError};
         material = importer->material("raw");
         CORRADE_VERIFY(material);
     }
@@ -4708,10 +4711,7 @@ void CgltfImporterTest::materialRaw() {
         }},
         {"snakeTextureCoordinates"_s, 3u},
         {"snakeTextureScale"_s, 0.2f},
-        {"defaultScaleTexture"_s, 1u},
-        /* Consistently with builtin materials, attributes get unconditionally
-           addded if present, even if they have seemingly default values */
-        {"defaultScaleTextureScale"_s, 1.0f},
+        {"scaleIsAStringTexture"_s, 1u},
 
         /* Unknown extension with all other supported types */
         {Trade::MaterialAttribute::LayerName, "#MAGNUM_material_type_zoo"_s},
@@ -4734,13 +4734,13 @@ void CgltfImporterTest::materialRaw() {
            KHR_materials_unlit, where just the presence of the extension alone
            affects material properties */
         {Trade::MaterialAttribute::LayerName, "#VENDOR_empty_extension_object"_s},
-    }, {3, 6, 7, 15, 30, 31}};
+    }, {3, 6, 7, 14, 29, 30}};
 
     compareMaterials(*material, expected);
 
     /** @todo maybe reduce the variants since there's a catch-all error for
         most of them now? */
-    CORRADE_COMPARE(out.str(),
+    CORRADE_COMPARE(outWarning.str(),
         /* MAGNUM_material_forbidden_types. Attributes are sorted by name. */
         "Trade::CgltfImporter::material(): extension with an empty name, skipping\n"
         "Trade::CgltfImporter::material(): property with an empty name, skipping\n"
@@ -4755,6 +4755,13 @@ void CgltfImporterTest::materialRaw() {
         "Trade::CgltfImporter::material(): property anIncrediblyLongNameThatSadlyWontFitPaddingPaddingPadding!! is too large with 63 bytes, skipping\n"
         "Trade::CgltfImporter::material(): property boolArray is not a numeric array, skipping\n"
         "Trade::CgltfImporter::material(): property emptyArray is an invalid or unrepresentable numeric vector, skipping\n"
+        /* Error from Utility::Json precedes this */
+        "Trade::CgltfImporter::material(): property invalidBool is invalid, skipping\n"
+        /* Error from Utility::Json precedes this */
+        "Trade::CgltfImporter::material(): property invalidFloat is invalid, skipping\n"
+        /* Error from Utility::Json precedes this */
+        "Trade::CgltfImporter::material(): property invalidString is invalid, skipping\n"
+        /* Error about missing or invalid index precedes this */
         "Trade::CgltfImporter::material(): property invalidTexture has an invalid texture object, skipping\n"
         "Trade::CgltfImporter::material(): property mixedBoolArray is not a numeric array, skipping\n"
         "Trade::CgltfImporter::material(): property mixedObjectArray is not a numeric array, skipping\n"
@@ -4763,9 +4770,17 @@ void CgltfImporterTest::materialRaw() {
         "Trade::CgltfImporter::material(): property null is a null, skipping\n"
         "Trade::CgltfImporter::material(): property oversizedArray is an invalid or unrepresentable numeric vector, skipping\n"
         "Trade::CgltfImporter::material(): property stringArray is not a numeric array, skipping\n"
+        /* Error about expecting a number but getting a string precedes this */
+        "Trade::CgltfImporter::material(): invalid MAGNUM_material_snake scaleIsAStringTexture scale property, skipping\n"
         /* MAGNUM_material_type_zoo */
         "Trade::CgltfImporter::material(): property invalid is not a numeric array, skipping\n"
         "Trade::CgltfImporter::material(): extension name VENDOR_material_thisnameiswaytoolongforalayername! is too long with 50 characters, skipping\n");
+    CORRADE_COMPARE(outError.str(), Utility::formatString(
+        "Utility::Json::parseBool(): invalid bool literal fail at {0}:119:36\n"
+        "Utility::Json::parseFloat(): invalid floating-point literal 0f at {0}:120:37\n"
+        "Utility::Json::parseString(): invalid unicode escape sequence \\uhhhh at {0}:121:39\n"
+        "Trade::CgltfImporter::material(): missing or invalid invalidTexture index property\n"
+        "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::String at {0}:60:34\n", filename));
 }
 
 void CgltfImporterTest::materialRawIor() {

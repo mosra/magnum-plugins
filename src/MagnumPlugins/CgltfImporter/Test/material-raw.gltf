@@ -55,9 +55,9 @@
                             }
                         }
                     },
-                    "defaultScaleTexture": {
+                    "scaleIsAStringTexture": {
                         "index": 1,
-                        "scale": 1.0
+                        "scale": "a bit"
                     }
                 },
                 "MAGNUM_material_type_zoo": {
@@ -115,7 +115,10 @@
                             }
                         }
                     },
-                    "": "Empty attributes are ignored"
+                    "": "Empty attributes are ignored",
+                    "invalidBool": fail,
+                    "invalidFloat": 0f,
+                    "invalidString": "\uhhhh"
                 },
                 "VENDOR_empty_extension_object": {},
                 "VENDOR_material_thisnameiswaytoolongforalayername!": {
