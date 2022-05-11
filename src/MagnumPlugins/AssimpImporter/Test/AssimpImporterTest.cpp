@@ -740,7 +740,7 @@ void AssimpImporterTest::animationGltfNoScene() {
 
     /* This reuses the CgltfImporter test files, not the corrected ones used by other tests. */
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "animation.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "animation-no-scene.gltf")));
 
     CORRADE_EXPECT_FAIL("Assimp refuses to import glTF animations if the file has no scenes.");
     CORRADE_COMPARE(importer->animationCount(), 3);
