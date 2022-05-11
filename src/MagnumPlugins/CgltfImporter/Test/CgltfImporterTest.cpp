@@ -1332,12 +1332,20 @@ const struct {
     const char* name;
     const char* message;
 } ImageInvalidData[]{
-    {"no uri",
-        "expected exactly one of uri or bufferView properties defined"},
     {"both uri and buffer view",
         "expected exactly one of uri or bufferView properties defined"},
     {"invalid buffer view",
-        "buffer view 2 needs 151 bytes but buffer 1 has only 150"}
+        "buffer view 2 needs 151 bytes but buffer 1 has only 150"},
+    {"missing uri property",
+        "expected exactly one of uri or bufferView properties defined"},
+    {"invalid uri property",
+        "Utility::Json::parseString(): expected a string, got Utility::JsonToken::Type::Bool at {}:21:20\n"
+        "Trade::CgltfImporter::image2D(): invalid uri property\n"},
+    {"invalid bufferView property",
+        "Utility::Json::parseUnsignedInt(): too large integer literal -2 at {}:25:27\n"
+        "Trade::CgltfImporter::image2D(): invalid bufferView property\n"},
+    {"strided buffer view",
+        "buffer view 3 is strided"}
 };
 
 const struct {
@@ -5370,8 +5378,10 @@ void CgltfImporterTest::imageInvalid() {
     auto&& data = ImageInvalidData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
+    Containers::String filename = Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "image-invalid.gltf");
+
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "image-invalid.gltf")));
+    CORRADE_VERIFY(importer->openFile(filename));
 
     /* Check we didn't forget to test anything */
     CORRADE_COMPARE(importer->image2DCount(), Containers::arraySize(ImageInvalidData));
@@ -5379,7 +5389,13 @@ void CgltfImporterTest::imageInvalid() {
     std::ostringstream out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->image2D(data.name));
-    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::CgltfImporter::image2D(): {}\n", data.message));
+    /* If the message ends with a newline, it's the whole output including a
+       potential placeholder for the filename, otherwise just the sentence
+       without any placeholder */
+    if(Containers::StringView{data.message}.hasSuffix('\n'))
+        CORRADE_COMPARE(out.str(), Utility::formatString(data.message, filename));
+    else
+        CORRADE_COMPARE(out.str(), Utility::formatString("Trade::CgltfImporter::image2D(): {}\n", data.message));
 }
 
 void CgltfImporterTest::imageInvalidNotFound() {
