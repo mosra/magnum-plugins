@@ -132,6 +132,7 @@ struct CgltfImporterTest: TestSuite::Tester {
     void meshMultiplePrimitives();
     void meshPrimitivesTypes();
     void meshSizeNotMultipleOfStride();
+    void meshInvalidWholeFile();
     void meshInvalid();
     void meshInvalidBufferNotFound();
 
@@ -755,6 +756,49 @@ constexpr struct {
         VertexFormat{}, VertexFormat{},
         VertexFormat{},
         VertexFormat::Vector2us, VertexFormat::UnsignedByte, "_SEMANTIC"}
+};
+
+const struct {
+    const char* name;
+    const char* file;
+    const char* message;
+} MeshInvalidWholeFileData[]{
+    {"missing primitives property",
+        "mesh-invalid-missing-primitives-property.gltf",
+        "missing or invalid primitives property in mesh 1"},
+    {"invalid primitives property",
+        "mesh-invalid-primitives-property.gltf",
+        "Utility::Json::parseArray(): expected an array, got Utility::JsonToken::Type::Object at {}:12:27\n"
+        "Trade::CgltfImporter::openData(): missing or invalid primitives property in mesh 1\n"},
+    {"empty primitives",
+        "mesh-invalid-empty-primitives.gltf",
+        "mesh 1 has no primitives"},
+    {"invalid primitive",
+        "mesh-invalid-primitive.gltf",
+        "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Array at {}:13:17\n"
+        "Trade::CgltfImporter::openData(): invalid mesh 1 primitive 0\n"},
+    {"invalid primitive attributes property",
+        "mesh-invalid-primitive-attributes-property.gltf",
+        "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Array at {}:14:35\n"
+        "Trade::CgltfImporter::openData(): invalid primitive attributes property in mesh 1\n"},
+    {"texcoord flip invalid attribute",
+        "mesh-invalid-texcoord-flip-attribute.gltf",
+        "Utility::Json::parseUnsignedInt(): expected a number, got Utility::JsonToken::Type::String at {}:15:39\n"
+        "Trade::CgltfImporter::openData(): invalid attribute TEXCOORD_3 in mesh 1\n"},
+    {"texcoord flip attribute out of bounds",
+        "mesh-invalid-texcoord-flip-attribute-oob.gltf",
+        "accessor index 2 out of range for 2 accessors"},
+    {"texcoord flip attribute accessor missing componentType",
+        "mesh-invalid-texcoord-flip-attribute-accessor-missing-component-type.gltf",
+        "accessor 1 has missing or invalid componentType property"},
+    {"texcoord flip attribute accessor invalid componentType",
+        "mesh-invalid-texcoord-flip-attribute-accessor-invalid-component-type.gltf",
+        "Utility::Json::parseUnsignedInt(): expected a number, got Utility::JsonToken::Type::String at {}:8:30\n"
+        "Trade::CgltfImporter::openData(): accessor 1 has missing or invalid componentType property\n"},
+    {"texcoord flip attribute accessor invalid normalized",
+        "mesh-invalid-texcoord-flip-attribute-accessor-invalid-normalized.gltf",
+        "Utility::Json::parseBool(): expected a bool, got Utility::JsonToken::Type::Null at {}:9:27\n"
+        "Trade::CgltfImporter::openData(): accessor 1 has invalid normalized property\n"},
 };
 
 constexpr struct {
@@ -1425,6 +1469,9 @@ CgltfImporterTest::CgltfImporterTest() {
         Containers::arraySize(MeshPrimitivesTypesData));
 
     addTests({&CgltfImporterTest::meshSizeNotMultipleOfStride});
+
+    addInstancedTests({&CgltfImporterTest::meshInvalidWholeFile},
+        Containers::arraySize(MeshInvalidWholeFileData));
 
     addInstancedTests({&CgltfImporterTest::meshInvalid},
         Containers::arraySize(MeshInvalidData));
@@ -3761,6 +3808,26 @@ void CgltfImporterTest::meshSizeNotMultipleOfStride() {
             {1.0f, 2.0f, 3.0f},
             {4.0f, 5.0f, 6.0f}
         }), TestSuite::Compare::Container);
+}
+
+void CgltfImporterTest::meshInvalidWholeFile() {
+    auto&& data = MeshInvalidWholeFileData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    Containers::String filename = Utility::Path::join(CGLTFIMPORTER_TEST_DIR, data.file);
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!importer->openFile(filename));
+    /* If the message ends with a newline, it's the whole output including a
+       potential placeholder for the filename, otherwise just the sentence
+       without any placeholder */
+    if(Containers::StringView{data.message}.hasSuffix('\n'))
+        CORRADE_COMPARE(out.str(), Utility::formatString(data.message, filename));
+    else
+        CORRADE_COMPARE(out.str(), Utility::formatString("Trade::CgltfImporter::openData(): {}\n", data.message));
 }
 
 void CgltfImporterTest::meshInvalid() {

@@ -1,0 +1,27 @@
+{
+    "asset": {
+        "version": "2.0"
+    },
+    "accessors": [
+        {},
+        {
+            "componentType": "FLOAT"
+        }
+    ],
+    "meshes": [
+        {
+            "primitives": [
+                {}
+            ]
+        },
+        {
+            "primitives": [
+                {
+                    "attributes": {
+                        "TEXCOORD_3": 1
+                    }
+                }
+            ]
+        }
+    ]
+}

@@ -1,0 +1,28 @@
+{
+    "asset": {
+        "version": "2.0"
+    },
+    "accessors": [
+        {},
+        {
+            "componentType": 5126,
+            "normalized": null
+        }
+    ],
+    "meshes": [
+        {
+            "primitives": [
+                {}
+            ]
+        },
+        {
+            "primitives": [
+                {
+                    "attributes": {
+                        "TEXCOORD_3": 1
+                    }
+                }
+            ]
+        }
+    ]
+}

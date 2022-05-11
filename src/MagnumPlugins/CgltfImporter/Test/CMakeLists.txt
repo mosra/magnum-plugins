@@ -141,6 +141,16 @@ corrade_add_test(CgltfImporterTest
         mesh-embedded.glb
         mesh-invalid.gltf
         mesh-invalid-buffer-notfound.gltf
+        mesh-invalid-empty-primitives.gltf
+        mesh-invalid-missing-primitives-property.gltf
+        mesh-invalid-primitive-attributes-property.gltf
+        mesh-invalid-primitive.gltf
+        mesh-invalid-primitives-property.gltf
+        mesh-invalid-texcoord-flip-attribute-accessor-invalid-component-type.gltf
+        mesh-invalid-texcoord-flip-attribute-accessor-invalid-normalized.gltf
+        mesh-invalid-texcoord-flip-attribute-accessor-missing-component-type.gltf
+        mesh-invalid-texcoord-flip-attribute-oob.gltf
+        mesh-invalid-texcoord-flip-attribute.gltf
         mesh-multiple-primitives.gltf
         mesh-primitives-types.gltf
         mesh-primitives-types.bin
