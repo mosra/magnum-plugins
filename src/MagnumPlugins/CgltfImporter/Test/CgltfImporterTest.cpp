@@ -1345,7 +1345,8 @@ const struct {
         "Utility::Json::parseUnsignedInt(): too large integer literal -2 at {}:25:27\n"
         "Trade::CgltfImporter::image2D(): invalid bufferView property\n"},
     {"strided buffer view",
-        "buffer view 3 is strided"}
+        "buffer view 3 is strided"},
+    {"data uri magic not recognizable", "Trade::AnyImageImporter::openData(): cannot determine the format from signature 0x53454b52\n"}
 };
 
 const struct {

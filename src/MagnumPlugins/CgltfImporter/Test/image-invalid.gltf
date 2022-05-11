@@ -27,6 +27,10 @@
         {
             "name": "strided buffer view",
             "bufferView": 3
+        },
+        {
+            "name": "data uri magic not recognizable",
+            "uri": "data:image/png;base64,U0VLUklU"
         }
     ],
     "bufferViews": [
