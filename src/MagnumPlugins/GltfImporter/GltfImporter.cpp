@@ -2862,7 +2862,7 @@ MeshAttribute GltfImporter::doMeshAttributeForName(const Containers::StringView 
 
 Containers::String GltfImporter::doMeshAttributeName(const UnsignedShort name) {
     return _d && name < _d->meshAttributeNames.size() ?
-        _d->meshAttributeNames[name] : "";
+        _d->meshAttributeNames[name] : ""_s;
 }
 
 UnsignedInt GltfImporter::doMaterialCount() const {
@@ -4054,7 +4054,7 @@ AbstractImporter* GltfImporter::setupOrReuseImporterForImage(const char* const e
     const Containers::Optional<Containers::String> decodedUri = decodeUri(errorPrefix, gltfUri->asString());
     if(!decodedUri)
         return nullptr;
-    if(!importer.openFile(Utility::Path::join(_d->filename ? Utility::Path::split(*_d->filename).first() : "", *decodedUri)))
+    if(!importer.openFile(Utility::Path::join(_d->filename ? Utility::Path::split(*_d->filename).first() : ""_s, *decodedUri)))
         return nullptr;
     return &_d->imageImporter.emplace(std::move(importer));
 }
