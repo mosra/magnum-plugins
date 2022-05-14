@@ -466,7 +466,7 @@ this:
 #include <MagnumExternal/TinyGLTF/tiny_gltf.h>
 @endcode
 */
-class MAGNUM_TINYGLTFIMPORTER_EXPORT CORRADE_DEPRECATED("use GltfImporter instead") TinyGltfImporter: public AbstractImporter {
+class CORRADE_DEPRECATED("use GltfImporter instead") MAGNUM_TINYGLTFIMPORTER_EXPORT TinyGltfImporter: public AbstractImporter {
     public:
         /**
          * @brief Default constructor
