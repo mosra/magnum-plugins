@@ -24,6 +24,7 @@
 */
 
 #include <sstream>
+#include <Corrade/PluginManager/PluginMetadata.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/DebugStl.h>
@@ -42,6 +43,10 @@ struct CgltfImporterTest: TestSuite::Tester {
        in GltfImporter. */
     void requiredExtensionsUnsupported();
     void requiredExtensionsUnsupportedDisabled();
+    /* Ensure this is still supported -- for Cgltf/TinyGltf, the API was used
+       to make them preferred over Assimp that's picked because it's lexically
+       first */
+    void setPreferredPlugins();
 
     /* Needs to load AnyImageImporter from a system-wide location */
     PluginManager::Manager<AbstractImporter> _manager;
@@ -49,7 +54,9 @@ struct CgltfImporterTest: TestSuite::Tester {
 
 CgltfImporterTest::CgltfImporterTest() {
     addTests({&CgltfImporterTest::requiredExtensionsUnsupported,
-              &CgltfImporterTest::requiredExtensionsUnsupportedDisabled});
+              &CgltfImporterTest::requiredExtensionsUnsupportedDisabled,
+
+              &CgltfImporterTest::setPreferredPlugins});
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. It also pulls in the AnyImageImporter dependency. */
@@ -84,6 +91,13 @@ void CgltfImporterTest::requiredExtensionsUnsupportedDisabled() {
     Warning redirectError{&out};
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "required-extensions-unsupported.gltf")));
     CORRADE_COMPARE(out.str(), "Trade::GltfImporter::openData(): required extension EXT_lights_image_based not supported\n");
+}
+
+void CgltfImporterTest::setPreferredPlugins() {
+    _manager.setPreferredPlugins("GltfImporter", {"CgltfImporter"});
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
+    CORRADE_COMPARE(importer->metadata()->name(), "CgltfImporter");
 }
 
 }}}}

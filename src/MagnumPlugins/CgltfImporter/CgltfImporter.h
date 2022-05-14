@@ -46,11 +46,18 @@ namespace Magnum { namespace Trade {
 
 /**
 @brief glTF importer plugin
-
 @m_deprecated_since_latest Use the @ref GltfImporter plugin instead --- this
     plugin is now just a differently named wrapper over it.
+
+@m_keywords{GltfImporter}
+
+This plugins provides the `GltfImporter` plugin.
 */
+#ifdef DOXYGEN_GENERATING_OUTPUT
+class CgltfImporter: public GltfImporter {};
+#else
 typedef CORRADE_DEPRECATED("use GltfImporter instead") GltfImporter CgltfImporter;
+#endif
 
 }}
 #else
