@@ -305,8 +305,10 @@ void TinyGltfImporter::doOpenData(Containers::Array<char>&& data, DataFlags) {
         return path;
     };
     if(fileCallback()) callbacks.ReadWholeFile = [](std::vector<unsigned char>* out, std::string* err, const std::string& filename, void* userData) {
+            CORRADE_IGNORE_DEPRECATED_PUSH /* MSVC, FUCK OFF, why you warn here */
             auto& self = *static_cast<TinyGltfImporter*>(userData);
             const Containers::String fullPath = Utility::Path::join(self._d->filePath ? *self._d->filePath : "", filename);
+            CORRADE_IGNORE_DEPRECATED_POP
             Containers::Optional<Containers::ArrayView<const char>> data = self.fileCallback()(fullPath, InputFileCallbackPolicy::LoadTemporary, self.fileCallbackUserData());
             if(!data) {
                 *err = "file callback failed";
@@ -316,12 +318,14 @@ void TinyGltfImporter::doOpenData(Containers::Array<char>&& data, DataFlags) {
             return true;
         };
     else callbacks.ReadWholeFile = [](std::vector<unsigned char>* out, std::string* err, const std::string& filename, void* userData) {
+            CORRADE_IGNORE_DEPRECATED_PUSH /* MSVC, FUCK OFF, why you warn here */
             auto& self = *static_cast<TinyGltfImporter*>(userData);
             if(!self._d->filePath) {
                 *err = "external buffers can be imported only when opening files from the filesystem or if a file callback is present";
                 return false;
             }
             const Containers::String fullPath = Utility::Path::join(*self._d->filePath, filename);
+            CORRADE_IGNORE_DEPRECATED_POP
             Containers::Optional<Containers::Array<char>> data = Utility::Path::read(fullPath);
             if(!data) {
                 *err = "file reading failed";
