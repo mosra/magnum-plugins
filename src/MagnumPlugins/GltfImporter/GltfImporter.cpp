@@ -2178,8 +2178,9 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
     std::size_t lightOffset = 0;
     std::size_t cameraOffset = 0;
     std::size_t skinOffset = 0;
-    for(const UnsignedInt i: objects) {
-        const Utility::JsonToken& gltfNode = _d->gltfNodes[i].first();
+    for(std::size_t i = 0; i != objects.size(); ++i) {
+        const UnsignedInt nodeI = objects[i];
+        const Utility::JsonToken& gltfNode = _d->gltfNodes[nodeI].first();
 
         /* Parse TRS */
         Vector3 translation;
@@ -2187,7 +2188,7 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
         if(gltfTranslation) {
             const Containers::Optional<Containers::StridedArrayView1D<const float>> translationArray = _d->gltf->parseFloatArray(*gltfTranslation, 3);
             if(!translationArray) {
-                Error{} << "Trade::GltfImporter::scene(): invalid translation property of node" << i;
+                Error{} << "Trade::GltfImporter::scene(): invalid translation property of node" << nodeI;
                 return {};
             }
 
@@ -2199,7 +2200,7 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
         if(gltfRotation) {
             const Containers::Optional<Containers::StridedArrayView1D<const float>> rotationArray = _d->gltf->parseFloatArray(*gltfRotation, 4);
             if(!rotationArray) {
-                Error{} << "Trade::GltfImporter::scene(): invalid rotation property of node" << i;
+                Error{} << "Trade::GltfImporter::scene(): invalid rotation property of node" << nodeI;
                 return {};
             }
 
@@ -2207,7 +2208,7 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
             Utility::copy(*rotationArray, rotation.data());
             if(!rotation.isNormalized() && configuration().value<bool>("normalizeQuaternions")) {
                 rotation = rotation.normalized();
-                Warning{} << "Trade::GltfImporter::scene(): rotation quaternion of node" << i << "was renormalized";
+                Warning{} << "Trade::GltfImporter::scene(): rotation quaternion of node" << nodeI << "was renormalized";
             }
         }
 
@@ -2216,7 +2217,7 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
         if(gltfScale) {
             const Containers::Optional<Containers::StridedArrayView1D<const float>> scalingArray = _d->gltf->parseFloatArray(*gltfScale, 3);
             if(!scalingArray) {
-                Error{} << "Trade::GltfImporter::scene(): invalid scale property of node" << i;
+                Error{} << "Trade::GltfImporter::scene(): invalid scale property of node" << nodeI;
                 return {};
             }
 
@@ -2229,7 +2230,7 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
         if(gltfMatrix) {
             const Containers::Optional<Containers::StridedArrayView1D<const float>> transformationArray = _d->gltf->parseFloatArray(*gltfMatrix, 16);
             if(!transformationArray) {
-                Error{} << "Trade::GltfImporter::scene(): invalid matrix property of node" << i;
+                Error{} << "Trade::GltfImporter::scene(): invalid matrix property of node" << nodeI;
                 return {};
             }
 
@@ -2248,7 +2249,7 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
             gltfScale) && transformationCount)
         {
             transformations[transformationOffset] = transformation;
-            transformationObjects[transformationOffset] = i;
+            transformationObjects[transformationOffset] = nodeI;
             ++transformationOffset;
         }
 
@@ -2261,7 +2262,7 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
             if(hasTranslations) translations[trsOffset] = translation;
             if(hasRotations) rotations[trsOffset] = rotation;
             if(hasScalings) scalings[trsOffset] = scaling;
-            trsObjects[trsOffset] = i;
+            trsObjects[trsOffset] = nodeI;
             ++trsOffset;
         }
 
@@ -2270,7 +2271,7 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
         if(const Utility::JsonToken* const gltfMesh = gltfNode.find("mesh"_s)) {
             const UnsignedInt mesh = gltfMesh->asUnsignedInt();
             for(std::size_t j = _d->meshSizeOffsets[mesh], jMax = _d->meshSizeOffsets[mesh + 1]; j != jMax; ++j) {
-                meshMaterialObjects[meshMaterialOffset] = i;
+                meshMaterialObjects[meshMaterialOffset] = nodeI;
                 meshes[meshMaterialOffset] = j;
                 if(const Utility::JsonToken* gltfPrimitiveMaterial = _d->gltfMeshPrimitiveMap[j].second()->find("material"_s)) {
                     meshMaterials[meshMaterialOffset] = gltfPrimitiveMaterial->asUnsignedInt();
@@ -2283,7 +2284,7 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
         /* Populate camera references. Parsing and bounds check done in the
            previous pass already. */
         if(const Utility::JsonToken* const gltfCamera = gltfNode.find("camera"_s)) {
-            cameraObjects[cameraOffset] = i;
+            cameraObjects[cameraOffset] = nodeI;
             cameras[cameraOffset] = gltfCamera->asUnsignedInt();
             ++cameraOffset;
         }
@@ -2291,7 +2292,7 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
         /* Populate skin references. Parsing and bounds check done in the
            previous pass already. */
         if(const Utility::JsonToken* const gltfSkin = gltfNode.find("skin"_s)) {
-            skinObjects[skinOffset] = i;
+            skinObjects[skinOffset] = nodeI;
             skins[skinOffset] = gltfSkin->asUnsignedInt();
             ++skinOffset;
         }
@@ -2302,7 +2303,7 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
             /* Populate light references. Property type, parsing and bounds
                check done in the previous pass already. */
             if(const Utility::JsonToken* const gltfKhrLightsPunctual = gltfExtensions->find("KHR_lights_punctual"_s)) {
-                lightObjects[lightOffset] = i;
+                lightObjects[lightOffset] = nodeI;
                 lights[lightOffset] = (*gltfKhrLightsPunctual)["light"_s].asUnsignedInt();
                 ++lightOffset;
             }
