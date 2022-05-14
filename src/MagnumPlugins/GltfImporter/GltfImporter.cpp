@@ -1176,8 +1176,8 @@ Int GltfImporter::doAnimationForName(const Containers::StringView name) {
         _d->animationsForName.emplace();
         _d->animationsForName->reserve(_d->gltfAnimations.size());
         for(std::size_t i = 0; i != _d->gltfAnimations.size(); ++i)
-            if(const Containers::StringView name = _d->gltfAnimations[i].second())
-                _d->animationsForName->emplace(name, i);
+            if(const Containers::StringView n = _d->gltfAnimations[i].second())
+                _d->animationsForName->emplace(n, i);
     }
 
     const auto found = _d->animationsForName->find(name);
@@ -1632,8 +1632,8 @@ Int GltfImporter::doCameraForName(const Containers::StringView name) {
         _d->camerasForName.emplace();
         _d->camerasForName->reserve(_d->gltfCameras.size());
         for(std::size_t i = 0; i != _d->gltfCameras.size(); ++i)
-            if(const Containers::StringView name = _d->gltfCameras[i].second())
-                _d->camerasForName->emplace(name, i);
+            if(const Containers::StringView n = _d->gltfCameras[i].second())
+                _d->camerasForName->emplace(n , i);
     }
 
     const auto found = _d->camerasForName->find(name);
@@ -1789,8 +1789,8 @@ Int GltfImporter::doLightForName(const Containers::StringView name) {
         _d->lightsForName.emplace();
         _d->lightsForName->reserve(_d->gltfLights.size());
         for(std::size_t i = 0; i != _d->gltfLights.size(); ++i)
-            if(const Containers::StringView name = _d->gltfLights[i].second())
-                _d->lightsForName->emplace(name, i);
+            if(const Containers::StringView n = _d->gltfLights[i].second())
+                _d->lightsForName->emplace(n, i);
     }
 
     const auto found = _d->lightsForName->find(name);
@@ -1940,8 +1940,8 @@ Int GltfImporter::doSceneForName(const Containers::StringView name) {
         _d->scenesForName.emplace();
         _d->scenesForName->reserve(_d->gltfScenes.size());
         for(std::size_t i = 0; i != _d->gltfScenes.size(); ++i) {
-            if(const Containers::StringView name = _d->gltfScenes[i].second())
-                _d->scenesForName->emplace(name, i);
+            if(const Containers::StringView n = _d->gltfScenes[i].second())
+                _d->scenesForName->emplace(n, i);
         }
     }
 
@@ -2389,8 +2389,8 @@ Long GltfImporter::doObjectForName(const Containers::StringView name) {
         _d->nodesForName.emplace();
         _d->nodesForName->reserve(_d->gltfNodes.size());
         for(std::size_t i = 0; i != _d->gltfNodes.size(); ++i) {
-            if(const Containers::StringView name = _d->gltfNodes[i].second())
-                _d->nodesForName->emplace(name, i);
+            if(const Containers::StringView n = _d->gltfNodes[i].second())
+                _d->nodesForName->emplace(n, i);
         }
     }
 
@@ -2411,8 +2411,8 @@ Int GltfImporter::doSkin3DForName(const Containers::StringView name) {
         _d->skinsForName.emplace();
         _d->skinsForName->reserve(_d->gltfSkins.size());
         for(std::size_t i = 0; i != _d->gltfSkins.size(); ++i)
-            if(const Containers::StringView name = _d->gltfSkins[i].second())
-                _d->skinsForName->emplace(name, i);
+            if(const Containers::StringView n = _d->gltfSkins[i].second())
+                _d->skinsForName->emplace(n, i);
     }
 
     const auto found = _d->skinsForName->find(name);
@@ -2490,10 +2490,10 @@ Int GltfImporter::doMeshForName(const Containers::StringView name) {
         _d->meshesForName.emplace();
         _d->meshesForName->reserve(_d->gltfMeshes.size());
         for(std::size_t i = 0; i != _d->gltfMeshes.size(); ++i) {
-            if(const Containers::StringView name = _d->gltfMeshes[i].second())
+            if(const Containers::StringView n = _d->gltfMeshes[i].second())
                 /* The mesh can be duplicated for as many primitives as it has,
                    point to the first mesh in the duplicate sequence */
-                _d->meshesForName->emplace(name, _d->meshSizeOffsets[i]);
+                _d->meshesForName->emplace(n, _d->meshSizeOffsets[i]);
         }
     }
 
@@ -2874,8 +2874,8 @@ Int GltfImporter::doMaterialForName(const Containers::StringView name) {
         _d->materialsForName.emplace();
         _d->materialsForName->reserve(_d->gltfMaterials.size());
         for(std::size_t i = 0; i != _d->gltfMaterials.size(); ++i)
-            if(const Containers::StringView name = _d->gltfMaterials[i].second())
-                _d->materialsForName->emplace(name, i);
+            if(const Containers::StringView n = _d->gltfMaterials[i].second())
+                _d->materialsForName->emplace(n, i);
     }
 
     const auto found = _d->materialsForName->find(name);
@@ -3765,8 +3765,8 @@ Int GltfImporter::doTextureForName(const Containers::StringView name) {
         _d->texturesForName.emplace();
         _d->texturesForName->reserve(_d->gltfTextures.size());
         for(std::size_t i = 0; i != _d->gltfTextures.size(); ++i)
-            if(const Containers::StringView name = _d->gltfTextures[i].second())
-                _d->texturesForName->emplace(name, i);
+            if(const Containers::StringView n = _d->gltfTextures[i].second())
+                _d->texturesForName->emplace(n, i);
     }
 
     const auto found = _d->texturesForName->find(name);
@@ -4068,8 +4068,8 @@ Int GltfImporter::doImage2DForName(const Containers::StringView name) {
         _d->imagesForName.emplace();
         _d->imagesForName->reserve(_d->gltfImages.size());
         for(std::size_t i = 0; i != _d->gltfImages.size(); ++i)
-            if(const Containers::StringView name = _d->gltfImages[i].second())
-                _d->imagesForName->emplace(name, i);
+            if(const Containers::StringView n = _d->gltfImages[i].second())
+                _d->imagesForName->emplace(n, i);
     }
 
     const auto found = _d->imagesForName->find(name);
