@@ -426,31 +426,26 @@ to edit the configuration values.
 Access to the underlying TinyGLTF structures it is provided through
 importer-specific data accessors:
 
--   @ref importerState() returns pointer to the `tinygltf::Model` structure.
-    If you use this class statically, you get the concrete type instead of
-    a @cpp const void* @ce pointer as returned by
+-   Calling @ref importerState() returns a pointer to the `tinygltf::Model`
+    structure. If you use this class statically, you get the concrete type
+    instead of a @cpp const void* @ce pointer as returned by
     @ref AbstractImporter::importerState().
--   @ref AbstractMaterialData::importerState() returns pointer to the
-    `tinygltf::Material` structure
--   @ref CameraData::importerState() returns pointer to the `tinygltf::Camera`
-    structure
--   @ref ImageData::importerState() returns pointer to the `tinygltf::Image`
-    structure
--   @ref MeshData::importerState() returns pointer to the `tinygltf::Mesh`
-    structure
--   @ref ObjectData3D::importerState() returns pointer to the `tinygltf::Node`
-    structure
--   @ref SceneData::importerState() returns pointer to the `tinygltf::Scene`
-    structure
--   @ref SkinData::importerState() returns pointer to the `tinygltf::Skin`
-    structure
--   @ref TextureData::importerState() returns pointer to the
-    `tinygltf::Texture` structure
--   @ref AnimationData::importerState() returns pointer to the
-    `tinygltf::Animation` structure, or `nullptr` if the
-    @cb{.ini} mergeAnimationClips @ce option is enabled
+-   Importer state on data class instances returned from this importer return
+    pointers to matching TinyGLTF structures:
+    -   @ref AnimationData::importerState() returns `tinygltf::Animation`, or
+        `nullptr` if the @cb{.ini} mergeAnimationClips @ce option is enabled
+    -   @ref MaterialData::importerState() returns `tinygltf::Material`
+    -   @ref CameraData::importerState() returns `tinygltf::Camera`
+    -   @ref ImageData::importerState() returns `tinygltf::Image`
+    -   @ref LightData::importerState() returns `tinygltf::Light`
+    -   @ref MeshData::importerState() returns `tinygltf::Mesh`
+    -   @ref SceneData::importerState() returns `tinygltf::Scene` and all
+        objects have a @ref SceneField::ImporterState with their own
+        `tinygltf::Node`
+    -   @ref SkinData::importerState() returns `tinygltf::Skin`
+    -   @ref TextureData::importerState() returns `tinygltf::Texture`
 
-The TinyGLTF header is installed alsongside the plugin and accessible like
+The TinyGLTF header is installed alsongside the plugin and is accessible like
 this:
 
 @code{.cpp}
