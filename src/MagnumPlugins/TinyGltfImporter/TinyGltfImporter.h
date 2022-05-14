@@ -26,14 +26,26 @@
     DEALINGS IN THE SOFTWARE.
 */
 
+#ifdef MAGNUM_BUILD_DEPRECATED
 /** @file
  * @brief Class @ref Magnum::Trade::TinyGltfImporter
+ * @m_deprecated_since_latest Use @ref MagnumPlugins/GltfImporter/GltfImporter.h
+ *      and the @relativeref{Magnum,Trade::GltfImporter} class instead.
  */
+#endif
 
+#include <Magnum/configure.h>
+
+#ifdef MAGNUM_BUILD_DEPRECATED
+#include <Corrade/Utility/Macros.h>
 #include <Magnum/Trade/AbstractImporter.h>
 #include <Magnum/Trade/PhongMaterialData.h>
 
 #include "MagnumPlugins/TinyGltfImporter/configure.h"
+
+#ifndef _MAGNUM_NO_DEPRECATED_TINYGLTFIMPORTER
+CORRADE_DEPRECATED_FILE("use MagnumPlugins/GltfImporter/GltfImporter.h and the GltfImporter class instead")
+#endif
 
 #ifndef DOXYGEN_GENERATING_OUTPUT
 namespace tinygltf {
@@ -62,6 +74,8 @@ namespace Magnum { namespace Trade {
 
 /**
 @brief TinyGltf importer plugin
+@m_deprecated_since_latest Use the *actually lightweight* and more robust
+    @ref GltfImporter plugin instead.
 
 @m_keywords{GltfImporter}
 
@@ -452,7 +466,7 @@ this:
 #include <MagnumExternal/TinyGLTF/tiny_gltf.h>
 @endcode
 */
-class MAGNUM_TINYGLTFIMPORTER_EXPORT TinyGltfImporter: public AbstractImporter {
+class MAGNUM_TINYGLTFIMPORTER_EXPORT CORRADE_DEPRECATED("use GltfImporter instead") TinyGltfImporter: public AbstractImporter {
     public:
         /**
          * @brief Default constructor
@@ -560,5 +574,8 @@ class MAGNUM_TINYGLTFIMPORTER_EXPORT TinyGltfImporter: public AbstractImporter {
 };
 
 }}
+#else
+#error use MagnumPlugins/GltfImporter/GltfImporter.h and the GltfImporter class instead
+#endif
 
 #endif

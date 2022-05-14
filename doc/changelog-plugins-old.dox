@@ -45,8 +45,8 @@ Released 2018-05-01, tagged as
 
 @subsection changelog-plugins-2018-04-new New features
 
--   New @ref Trade::TinyGltfImporter "TinyGltfImporter" plugin for importing
-    glTF and binary glTF files (see [mosra/magnum-plugins#40](https://github.com/mosra/magnum-plugins/pull/40))
+-   New `TinyGltfImporter` plugin for importing glTF and binary glTF files (see
+    [mosra/magnum-plugins#40](https://github.com/mosra/magnum-plugins/pull/40))
 -   The @ref Trade-AssimpImporter-configuration "AssimpImporter" plugin now
     supports external configuration for postprocessing
 
@@ -93,7 +93,7 @@ Released 2018-05-01, tagged as
 -   Unloading the @ref Text::HarfBuzzFont "HarfBuzzFont" plugin also implictly
     unloaded the FreeType library, making the @ref Text::FreeTypeFont "FreeTypeFont"
     plugin unusable after.
--   @ref Trade::TinyGltfImporter "TinyGltfImporter" was improperly loading
+-   `TinyGltfImporter` was improperly loading
     @ref Trade::TextureData::minificationFilter(),
     @ref Trade::TextureData::mipmapFilter() and
     @ref Trade::TextureData::wrapping() properties

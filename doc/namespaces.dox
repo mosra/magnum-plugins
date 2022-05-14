@@ -154,6 +154,8 @@
  */
  /** @dir MagnumPlugins/TinyGltfImporter
  * @brief Plugin @ref Magnum::Trade::TinyGltfImporter
+ * @m_deprecated_since_latest Use the @relativeref{Magnum,Trade::GltfImporter}
+ *      plugin instead.
  */
 
 /** @dir magnum-plugins/src/Magnum

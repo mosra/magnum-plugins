@@ -25,6 +25,8 @@
     DEALINGS IN THE SOFTWARE.
 */
 
+#define _MAGNUM_NO_DEPRECATED_TINYGLTFIMPORTER /* So it doesn't yell here */
+
 #include "TinyGltfImporter.h"
 
 #include <cctype>
@@ -2626,5 +2628,7 @@ const void* TinyGltfImporter::doImporterState() const {
 
 }}
 
+CORRADE_IGNORE_DEPRECATED_PUSH
 CORRADE_PLUGIN_REGISTER(TinyGltfImporter, Magnum::Trade::TinyGltfImporter,
     "cz.mosra.magnum.Trade.AbstractImporter/0.5")
+CORRADE_IGNORE_DEPRECATED_POP

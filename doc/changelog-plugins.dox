@@ -53,30 +53,32 @@ namespace Magnum {
     into block-compressed BC1/BC3.
 -   New @relativeref{Trade,GltfImporter} plugin for importing glTF files, which
     is a smaller, faster-compiling, faster-importing and more memory-friendly
-    drop-in replacement for @relativeref{Trade,TinyGltfImporter}. Originally
-    built on top of cgltf as a `CgltfImporter` (see [mosra/magnum-plugins#107](https://github.com/mosra/magnum-plugins/pull/107)),
+    drop-in replacement for now-deprecated `TinyGltfImporter`. Originally built
+    on top of cgltf as a `CgltfImporter` (see [mosra/magnum-plugins#107](https://github.com/mosra/magnum-plugins/pull/107)),
     eventually the cgltf dependency got dropped in favor of
     @relativeref{Corrade,Utility::Json}. The only significant behavioral
     difference is that @relativeref{Trade,GltfImporter} by default fails the
     import if the file requires an extension the importer is not aware of, but
-    that can be overriden from the plugin-specific configuration. The
-    @relativeref{Trade,TinyGltfImporter} will only receive security, robustness
-    and bug fixes from now on. Only the @relativeref{Trade,GltfImporter} will
-    receive new features, among which is so far:
+    that can be overriden from the plugin-specific configuration. Additionally,
+    these new features are added compared to `TinyGltfImporter`:
     -   [MSFT_texture_dds](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Vendor/MSFT_texture_dds/README.md)
     -   [KHR_texture_basisu](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_texture_basisu/README.md)
     -   Import for arbitrary material extensions and `extra`s (see [mosra/magnum-plugins#117](https://github.com/mosra/magnum-plugins/pull/117))
--   @ref Trade::TinyGltfImporter "TinyGltfImporter" material import was
-    reworked for the new @ref Trade::MaterialData API, supporting all core
-    properties as well as everything from the
-    [KHR_materials_pbrSpecularGlossiness](https://github.com/KhronosGroup/glTF/tree/master/extensions/2.0/Khronos/KHR_materials_pbrSpecularGlossiness),
-    [KHR_materials_unlit](https://github.com/KhronosGroup/glTF/blob/master/extensions/2.0/Khronos/KHR_materials_unlit/README.md)
-    and [KHR_materials_clearcoat](https://github.com/KhronosGroup/glTF/tree/master/extensions/2.0/Khronos/KHR_materials_clearcoat)
-    extensions. All the previous limitations on texture transformation or
-    coordinate set variability are now gone.
--   @ref Trade::TinyGltfImporter "TinyGltfImporter" now imports skins through
-    @ref Trade::AbstractImporter::skin3D(), @ref Trade::MeshObjectData3D::skin()
-    and related APIs
+    These new features are present in the deprecated `TinyGltfImporter` as
+    well:
+    -   Material import reworked for the new @ref Trade::MaterialData API,
+        supporting all core properties as well as everything from the
+        [KHR_materials_pbrSpecularGlossiness](https://github.com/KhronosGroup/glTF/tree/master/extensions/2.0/Khronos/KHR_materials_pbrSpecularGlossiness),
+        [KHR_materials_unlit](https://github.com/KhronosGroup/glTF/blob/master/extensions/2.0/Khronos/KHR_materials_unlit/README.md)
+        and [KHR_materials_clearcoat](https://github.com/KhronosGroup/glTF/tree/master/extensions/2.0/Khronos/KHR_materials_clearcoat)
+        extensions. All the previous limitations on texture transformation or
+        coordinate set variability are now gone.
+    -   Skin import through @ref Trade::AbstractImporter::skin3D(),
+        @ref Trade::SceneField::Skin and related APIs
+    -   Importing light range and spotlight cone angle properties
+    -   Range checks on scene, node, camera, mesh, material, child and light
+        references in the scene hierarchy for more robust handling of broken
+        files
 -   @ref Trade::AssimpImporter "AssimpImporter" now imports ambient lights,
     light attenuation and spotlight cone angle properties. See also
     [mosra/magnum-plugins#120](https://github.com/mosra/magnum-plugins/issues/120).
@@ -87,8 +89,6 @@ namespace Magnum {
     skins (see [mosra/magnum-plugins#97](https://github.com/mosra/magnum-plugins/pull/97),
     [mosra/magnum-plugins#99](https://github.com/mosra/magnum-plugins/pull/99)
     and [mosra/magnum-plugins#100](https://github.com/mosra/magnum-plugins/pull/100))
--   @ref Trade::TinyGltfImporter "TinyGltfImporter" now imports light range and
-    spotlight cone angle properties
 -   @relativeref{Trade,BasisImporter} and @relativeref{Trade,BasisImageConverter}
     plugins were updated to Basis 1.15 with UASTC and KTX2 support, in addition
     it's now also possible to supply custom mip levels, sRGB formats get
@@ -118,9 +118,6 @@ namespace Magnum {
     always have a position attribute. This was not enforced before, leading to
     files that couldn't be opened with @relativeref{Trade,StanfordImporter} nor
     with most other libraries.
--   @ref Trade::TinyGltfImporter "TinyGltfImporter" now performs range checks
-    on scene, node, camera, mesh, material, child and light references in the
-    scene hierarchy for more robust handling of broken files
 -   @ref Trade::StbImageImporter "StbImageImporter" now imports 16-bit PNG and
     PSD files as 16-bit instead of converting to 8 bit
 -   @ref Trade::StbImageImporter "StbImageImporter" now makes it possible to
@@ -158,8 +155,7 @@ namespace Magnum {
     type and install prefix, which resolves certain build issues (see
     [mosra/homebrew-magnum#6](https://github.com/mosra/homebrew-magnum/pull/6))
 -   Suppressed a GCC 10 warning about a (harmless) uninitialized variable in
-    @relativeref{Trade,TinyGltfImporter} (see
-    [mosra/magnum-plugins#104](https://github.com/mosra/magnum-plugins/issues/104))
+    `TinyGltfImporter` (see [mosra/magnum-plugins#104](https://github.com/mosra/magnum-plugins/issues/104))
 -   Updated Debian build instructions to pass `--no-sign` to
     `dpkg-buildpackage`, avoiding a confusing error message that might lead
     people to think the packaging failed (see [mosra/magnum-plugins#105](https://github.com/mosra/magnum-plugins/issues/105))
@@ -187,8 +183,8 @@ namespace Magnum {
     the `BUILD_STATIC` CMake option instead of `BUILD_PLUGINS_STATIC`
 -   Fixed @ref Trade::BasisImporter "BasisImporter" to work with direct
     instantiation without a plugin manager (see [mosra/magnum-plugins#96](https://github.com/mosra/magnum-plugins/pull/96))
--   Assorted @relativeref{Trade,TinyGltfImporter} robustness improvements
-    (see [mosra/magnum-plugins#106](https://github.com/mosra/magnum-plugins/pull/106),
+-   Assorted `Trade,TinyGltfImporter` robustness improvements (see
+    [mosra/magnum-plugins#106](https://github.com/mosra/magnum-plugins/pull/106),
     [mosra/magnum-plugins#109](https://github.com/mosra/magnum-plugins/pull/109)):
     -   Fixed an out-of-bounds read happening with empty animations when
         @cb{.ini} optimizeQuaternionShortestPath @ce is enabled
@@ -207,6 +203,10 @@ namespace Magnum {
 
 @subsection changelog-plugins-latest-deprecated Deprecated APIs
 
+-   The `TinyGltfImporter` plugin is now deprecated in favor of an actually
+    lightweight @relativeref{Trade,GltfImporter}. The `CgltfImporter` plugin,
+    which is where the @relativeref{Trade,GltfImporter} originally comes from,
+    is now just a deprecated alias to it as well.
 -   Variables `ASSIMP_LIBRARY_{DEBUG,RELEASE}` and `ASSIMP_INCLUDE_DIR` that
     could be used to force Assimp location in `FindAssimp.cmake` are deprecated
     in favor of `Assimp_LIBRARY_{DEBUG,RELEASE}` and `Assimp_INCLUDE_DIR`
@@ -238,8 +238,8 @@ Released 2020-06-27, tagged as
 @subsection changelog-plugins-2020-06-new New features
 
 -   Multi-primitive mesh support in @ref Trade::AssimpImporter "AssimpImporter",
-    consistent with @ref Trade::TinyGltfImporter "TinyGltfImporter" behavior
-    (see [mosra/magnum-plugins#68](https://github.com/mosra/magnum-plugins/pull/68)
+    consistent with `TinyGltfImporter` behavior (see
+    [mosra/magnum-plugins#68](https://github.com/mosra/magnum-plugins/pull/68)
     and [mosra/magnum-plugins#81](https://github.com/mosra/magnum-plugins/pull/81))
 -   Tangent and bitangent import in @ref Trade::AssimpImporter "AssimpImporter",
     normal texture support
@@ -248,19 +248,19 @@ Released 2020-06-27, tagged as
     IDs are supported per-face as well
 -   Custom vertex and face attribute import in
     @ref Trade::StanfordImporter "StanfordImporter"
--   Support for the `KHR_lights_punctual` extension in
-    @ref Trade::TinyGltfImporter "TinyGltfImporter", replacing the obsolete
-    unuspported `KHR_lights_cmn` (see [mosra/magnum-plugins#77](https://github.com/mosra/magnum-plugins/pull/77))
+-   Support for the `KHR_lights_punctual` extension in `TinyGltfImporter`,
+    replacing the obsolete unuspported `KHR_lights_cmn` (see
+    [mosra/magnum-plugins#77](https://github.com/mosra/magnum-plugins/pull/77))
 -   Support for the `KHR_texture_transform` and `KHR_mesh_quantization`
-    extensions in @ref Trade::TinyGltfImporter "TinyGltfImporter"
+    extensions in `TinyGltfImporter`
 -   Tangent, object ID and custom vertex attribute support in
-    @ref Trade::TinyGltfImporter "TinyGltfImporter", normal texture import
+    `TinyGltfImporter`, normal texture import
 -   @ref Trade::DdsImporter "DdsImporter" and
     @ref Trade::BasisImporter "BasisImporter", now support loading image mip
     levels; @ref Trade::AssimpImporter "AssimpImporter",
-    @ref Trade::OpenGexImporter "OpenGexImporter" and
-    @ref Trade::TinyGltfImporter "TinyGltfImporter" were updated to proxy mip
-    level loading to image importer plugins (see [mosra/magnum#369](https://github.com/mosra/magnum/pull/369))
+    @ref Trade::OpenGexImporter "OpenGexImporter" and `TinyGltfImporter` were
+    updated to proxy mip level loading to image importer plugins (see
+    [mosra/magnum#369](https://github.com/mosra/magnum/pull/369))
 -   New @ref Trade::IcoImporter "IcoImporter" plugin for importing ICO files
     with embedded PNGs (see [mosra/magnum-plugins#79](https://github.com/mosra/magnum-plugins/pull/79))
 -   New @ref Trade::PrimitiveImporter "PrimitiveImporter" plugin for accessing
@@ -273,8 +273,7 @@ Released 2020-06-27, tagged as
     plugin, integrating [meshoptimizer](https://github.com/zeux/meshoptimizer)
 -   Animated GIF support in @ref Trade::StbImageImporter "StbImageImporter"
 -   Texture coordinate set import in @ref Trade::AssimpImporter "AssimpImporter"
-    and @ref Trade::TinyGltfImporter "TinyGltfImporter" (see
-    [mosra/magnum-plugins#83](https://github.com/mosra/magnum-plugins/pull/83))
+    and `TinyGltfImporter` (see [mosra/magnum-plugins#83](https://github.com/mosra/magnum-plugins/pull/83))
 
 @subsection changelog-plugins-2020-06-changes Changes and improvements
 
@@ -290,11 +289,9 @@ Released 2020-06-27, tagged as
 -   Minor speedup in the @ref Text::StbTrueTypeFont "StbTrueTypeFont" plugin by
     avoiding use of 64-bit floating-point operations (see
     [mosra/magnum-plugins#73](https://github.com/mosra/magnum-plugins/pull/73))
--   @ref Trade::TinyGltfImporter "TinyGltfImporter" now supports interleaved
-    animation and mesh attributes
--   @ref Trade::TinyGltfImporter "TinyGltfImporter" and
-    @ref Trade::OpenGexImporter "OpenGexImporter" now import both color and
-    texture information instead of only one of them
+-   `TinyGltfImporter` now supports interleaved animation and mesh attributes
+-   `TinyGltfImporter` and @ref Trade::OpenGexImporter "OpenGexImporter" now
+    import both color and texture information instead of only one of them
 -   @ref Trade::AssimpImporter "AssimpImporter" inadvertently ignored base
     orientation for files that are defined with Z up instead of Y, this
     behavior is now also configurable (see [mosra/magnum-plugins#82](https://github.com/mosra/magnum-plugins/pull/82))
@@ -350,14 +347,12 @@ Released 2020-06-27, tagged as
 -   Removed @ref OpenDdl headers in `MagnumPlugins/OpenGexImporter/OpenDdl`
     that were deprecated in 2018.04, include them from the `Magnum/OpenDdl`
     directory instead.
--   @ref Trade::TinyGltfImporter "TinyGltfImporter" translation of PBR
-    materials into a Phong shading model left
-    @ref Trade::PhongMaterialData::shininess() set at @cpp 1.0f @ce, which
+-   `TinyGltfImporter` translation of PBR materials into a Phong shading model
+    left @ref Trade::PhongMaterialData::shininess() set at @cpp 1.0f @ce, which
     wasn't a good default. Now it's set to @cpp 80.0f @ce to match defaults
     of @ref Shaders::Phong
 -   Support for the [KHR_materials_cmnBlinnPhong](https://github.com/KhronosGroup/glTF/tree/gltf2-common-materials/extensions/Khronos/KHR_materials_cmnBlinnPhong)
-    glTF extension has been removed from
-    @ref Trade::TinyGltfImporter "TinyGltfImporter", as it seems to be
+    glTF extension has been removed from `TinyGltfImporter, as it seems to be
     effectively abandoned. The branch didn't see any update since 2017 and
     there are no exporters supporting it.
 -   The bundled `tiny_gltf` code was updated from `v2.0.0` to `v2.4.1` in order
@@ -398,7 +393,7 @@ Released 2019-10-24, tagged as
 -   New @ref Trade::BasisImporter "BasisImporter" and
     @ref Trade::BasisImageConverter "BasisImageConverter" plugin for importing
     and converting Basis files, support for Basis-encoded textures in
-    @ref Trade::TinyGltfImporter "TinyGltfImporter" (see [mosra/magnum-plugins#62](https://github.com/mosra/magnum-plugins/pull/62),
+    `TinyGltfImporter` (see [mosra/magnum-plugins#62](https://github.com/mosra/magnum-plugins/pull/62),
     [mosra/magnum-plugins#65](https://github.com/mosra/magnum-plugins/pull/65)
     and [mosra/magnum-plugins#69](https://github.com/mosra/magnum-plugins/issues/69))
 
@@ -407,13 +402,13 @@ Released 2019-10-24, tagged as
 -   Calling @ref Trade::AbstractImporter::image2D() "image2D()" in
     @ref Trade::AssimpImporter "AssimpImporter",
     @ref Trade::OpenGexImporter "OpenGexImporter" and
-    @ref Trade::TinyGltfImporter "TinyGltfImporter" now behaves consistently
-    in regards to file loading callbacks --- failing with an error if and only
-    if image is not embedded, the file is not opened from a filesystem and file
-    loading callbacks are not set. Previously it could errorneously assert even
-    when loading embedded images, try to look for images on the filesystem when
-    loading in-memory data or fail to open images when a file inside current
-    working directory was opened.
+    `TinyGltfImporter` now behaves consistently in regards to file loading
+    callbacks --- failing with an error if and only if image is not embedded,
+    the file is not opened from a filesystem and file loading callbacks are not
+    set. Previously it could errorneously assert even when loading embedded
+    images, try to look for images on the filesystem when loading in-memory
+    data or fail to open images when a file inside current working directory
+    was opened.
 -   The @ref Trade::AssimpImporter "AssimpImporter" plugin now detects ambient
     color set to @cpp 0xffffff_srgbf @ce and forces it back to
     @cpp 0x000000_srgbf @ce. This is a bug in Assimp 4.1, causing all other
@@ -442,13 +437,12 @@ Released 2019-10-24, tagged as
     @ref Trade::PngImporter "PngImporter" and
     @ref Trade::StbImageConverter "StbImageImporter" now properly report an
     error message when opening an empty file
--   Switched @ref Trade::TinyGltfImporter "TinyGltfImporter" to use
-    @cpp Corrade::Utility::Directory::read() @ce instead of tiny_gltf's
-    internal APIs for loading external files, making it work correctly for
-    UTF-8 paths on Windows
--   Better diagnostics in @ref Trade::TinyGltfImporter "TinyGltfImporter" when
-    an external buffer file is not found or when a file loaded from memory
-    attempts to reference an external buffer without file callbacks being set
+-   Switched `TinyGltfImporter` to use @cpp Corrade::Utility::Directory::read() @ce
+    instead of tiny_gltf's internal APIs for loading external files, making it
+    work correctly for UTF-8 paths on Windows
+-   Better diagnostics in `TinyGltfImporter` when an external buffer file is
+    not found or when a file loaded from memory attempts to reference an
+    external buffer without file callbacks being set
 -   @ref Audio::DrFlacImporter "DrFlacAudioImporter",
     @ref Audio::DrWavImporter "DrWavAudioImporter" and
     @ref Audio::StbVorbisImporter "StbVorbisAudioImporter" plugins no longer
@@ -469,9 +463,8 @@ Released 2019-10-24, tagged as
     present on versions before 3.12. The @ref Trade::JpegImporter "JpegImporter"
     plugin is not affected by this. See also
     [mosra/magnum-plugins#51](https://github.com/mosra/magnum-plugins/issues/51).
--   Upgraded @ref Trade::TinyGltfImporter "TinyGltfImporter" to use json.hpp
-    3.3.0, fixing a compile error on some Clang versions (see
-    [mosra/magnum-plugins#54](https://github.com/mosra/magnum-plugins/issues/54))
+-   Upgraded `TinyGltfImporter` to use json.hpp 3.3.0, fixing a compile error
+    on some Clang versions (see [mosra/magnum-plugins#54](https://github.com/mosra/magnum-plugins/issues/54))
 -   Fixed `FindMagnumPlugins.cmake` to behave correctly when both a debug and
     a release version of libjpeg is found
 -   Fixed `FindMagnumPlugins.cmake` to correctly handle the `AssimpImporter`,
@@ -566,25 +559,24 @@ Released 2018-10-23, tagged as
 
 @subsection changelog-plugins-2018-10-new New features
 
--   Support for object transformation animation import in
-    @ref Trade::TinyGltfImporter "TinyGltfImporter" (see
-    [mosra/magnum-plugins#46](https://github.com/mosra/magnum-plugins/pull/46))
+-   Support for object transformation animation import in `TinyGltfImporter`
+    (see [mosra/magnum-plugins#46](https://github.com/mosra/magnum-plugins/pull/46))
 -   New @ref Trade::JpegImageConverter plugin for writing JPEG files (see
     [mosra/magnum-plugins#26](https://github.com/mosra/magnum-plugins/pull/26))
 -   Minimal support for the [KHR_materials_pbrSpecularGlossiness](https://github.com/KhronosGroup/glTF/tree/master/extensions/2.0/Khronos/KHR_materials_pbrSpecularGlossiness)
-    extension in @ref Trade::TinyGltfImporter "TinyGltfImporter"
+    extension `TinyGltfImporter`
 -   The top-level `tinygltf::Model` structure is now exposed through
-    @ref Trade::TinyGltfImporter::importerState() for easier access to extra
+    `Trade::TinyGltfImporter::importerState()` for easier access to extra
     data, exposing also @ref Trade::SceneData::importerState() and
     @ref Trade::TextureData::importerState()
--   @ref Trade::TinyGltfImporter "TinyGltfImporter" now implements mapping
-    between names and IDs for all currently imported data
--   @ref Trade::TinyGltfImporter "TinyGltfImporter" now imports alpha mode,
-    alpha mask and double sided material properties
--   @ref Trade::TinyGltfImporter "TinyGltfImporter" now imports all camera
-    properties together with type and aspect ratio / projection size
+-   `TinyGltfImporter` now implements mapping between names and IDs for all
+    currently imported data
+-   `TinyGltfImporter` now imports alpha mode, alpha mask and double sided
+    material properties
+-   `TinyGltfImporter` now imports all camera properties together with type and
+    aspect ratio / projection size
 -   @ref Trade::AssimpImporter "AssimpImporter", @ref Trade::OpenGexImporter "OpenGexImporter"
-    and @ref Trade::TinyGltfImporter "TinyGltfImporter" now support
+    and `TinyGltfImporter` now support
     @cpp Trade::AbstractImporter::Feature::FileCallback @ce for specifying
     custom callbacks to load extra files (see
     [mosra/magnum-plugins#47](https://github.com/mosra/magnum-plugins/pull/47))
@@ -600,18 +592,17 @@ Released 2018-10-23, tagged as
 @subsection changelog-plugins-2018-10-changes Changes and improvements
 
 -   Texture coordinate, color vertex attribute and base object color import in
-    @ref Trade::TinyGltfImporter "TinyGltfImporter"
+    `TinyGltfImporter`
     (see [mosra/magnum-plugins#41](https://github.com/mosra/magnum-plugins/pull/41),
     [mosra/magnum-plugins#43](https://github.com/mosra/magnum-plugins/pull/43))
 -   Mesh name and complete multi-primitive mesh loading in
-    @ref Trade::TinyGltfImporter "TinyGltfImporter" (see
-    [mosra/magnum-plugins#48](https://github.com/mosra/magnum-plugins/issues/48))
+    `TinyGltfImporter` (see [mosra/magnum-plugins#48](https://github.com/mosra/magnum-plugins/issues/48))
 -   @ref Trade::OpenGexImporter "OpenGexImporter" and
-    @ref Trade::TinyGltfImporter "TinyGltfImporter" now properly import alpha
-    for @ref Trade::PhongMaterialData
--   @ref Trade::TinyGltfImporter "TinyGltfImporter" now exposes the
-    translation/rotation/scaling properties of @ref Trade::ObjectData3D
-    separately if they are separate in the source file
+    `TinyGltfImporter` now properly import alpha for
+    @ref Trade::PhongMaterialData
+-   `TinyGltfImporter` now exposes the translation/rotation/scaling properties
+    of @cpp Trade::ObjectData3D @ce separately if they are separate in the
+    source file
 -   @ref Text::HarfBuzzFont "HarfBuzzFont" is now providing `TrueTypeFont`,
     similarly to other plugins supporting TTF fonts
 -   @ref Trade::StbImageImporter "StbImageImporter" now properly supports Apple
@@ -624,12 +615,12 @@ Released 2018-10-23, tagged as
 -   @ref Trade::StbImageConverter "StbImageConverter" now prints warnings when
     channels are lost on output due to limitations of the output format (such
     as alpha channel for JPEGs)
--   @ref Trade::TinyGltfImporter::defaultScene() now returns the first scene
-    if no default scene is present in the file
--   New @ref Trade::TinyGltfImporter::TinyGltfImporter(PluginManager::Manager<Trade::AbstractImporter>&)
+-   @cpp Trade::TinyGltfImporter::defaultScene() @ce now returns the first
+    scene if no default scene is present in the file
+-   New @cpp Trade::TinyGltfImporter::TinyGltfImporter(PluginManager::Manager<Trade::AbstractImporter>&) @ce
     constructor for easier usage of statically-built plugins
 -   Cleaned up some unnecessary memory copies and reallocations in the
-    @ref Trade::TinyGltfImporter "TinyGltfImporter" implementation
+    `TinyGltfImporter` implementation
 -   Upstreamed local patches to `tiny_gltf` (see
     [mosra/magnum-plugins#45](https://github.com/mosra/magnum-plugins/pull/45))
 
@@ -639,9 +630,8 @@ Released 2018-10-23, tagged as
     for more information. See also
     [mosra/magnum-plugins#44](https://github.com/mosra/magnum-plugins/pull/44).
 -   TinyGLTF headers are now installed alongside the plugin for easier access
-    to importer state. See @ref Trade-TinyGltfImporter-state for more
-    information.
--   @ref Trade::TinyGltfImporter "TinyGltfImporter" no longer depends on
+    to importer state.
+-   `TinyGltfImporter` no longer depends on
     @ref Trade::StbImageImporter "StbImageImporter" to import images embedded
     in buffers or data URIs. Instead it proxies the loading to
     @ref Trade::AnyImageImporter "AnyImageImporter", the same way as was
@@ -649,16 +639,16 @@ Released 2018-10-23, tagged as
 
 @subsection changelog-plugins-2018-10-bugfixes Bug fixes
 
--   Fixed a @ref Trade::TinyGltfImporter "TinyGltfImporter" crash on materials
-    without a PBR extension (see [mosra/magnum-plugins#41](https://github.com/mosra/magnum-plugins/pull/41))
+-   Fixed a `TinyGltfImporter` crash on materials without a PBR extension (see
+    [mosra/magnum-plugins#41](https://github.com/mosra/magnum-plugins/pull/41))
 -   Fixed improper order of applying translation/rotation/scaling node
-    transformations in @ref Trade::TinyGltfImporter "TinyGltfImporter"
--   @ref Trade::TinyGltfImporter "TinyGltfImporter" now loads external images
-    from `*.glb` files and images embedded as URI data properly
--   @ref Trade::TinyGltfImporter "TinyGltfImporter" now properly imports
-    non-indexed meshes and meshes without the normal attribute
--   Fixed quite a few critical issues with @ref Trade::TinyGltfImporter "TinyGltfImporter"
-    mesh data import (see [mosra/magnum-plugins#42](https://github.com/mosra/magnum-plugins/issues/42))
+    transformations in `TinyGltfImporter`
+-   `TinyGltfImporter` now loads external images from `*.glb` files and images
+    embedded as URI data properly
+-   `TinyGltfImporter` now properly imports non-indexed meshes and meshes
+    without the normal attribute
+-   Fixed quite a few critical issues with `TinyGltfImporter` mesh data import
+    (see [mosra/magnum-plugins#42](https://github.com/mosra/magnum-plugins/issues/42))
 -   Updated `stb_image` to fix `undefined symbol: __cpu_model` error when
     compiling @ref Trade::StbImageImporter "StbImageImporter" on GCC 5
 -   @ref Trade::AssimpImporter "AssimpImporter" now properly prints out an
@@ -682,8 +672,8 @@ Released 2018-10-23, tagged as
     anymore and thus this plugin is scheduled for removal in a future release.
     Please consider either using @ref Trade::AssimpImporter "AssimpImporter"
     for COLLADA import or switching to simpler and better supported formats
-    such as glTF or OpenGEX using @ref Trade::TinyGltfImporter "TinyGltfImporter"
-    or @ref Trade::OpenGexImporter "OpenGexImporter". There's also the official
+    such as glTF or OpenGEX using `TinyGltfImporter` or
+    @ref Trade::OpenGexImporter "OpenGexImporter". There's also the official
     [COLLADA2GLTF](https://github.com/KhronosGroup/COLLADA2GLTF) converter.
 
 Changelogs for previous versions are available in

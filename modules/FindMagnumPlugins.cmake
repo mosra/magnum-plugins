@@ -45,12 +45,12 @@
 #  StbTrueTypeFont              - TrueType font using stb_truetype
 #  StbVorbisAudioImporter       - OGG audio importer using stb_vorbis
 #  StlImporter                  - STL importer
-#  TinyGltfImporter             - GLTF importer using tiny_gltf
 #
 # If Magnum is built with MAGNUM_BUILD_DEPRECATED enabled, these additional
 # plugins are available for backwards compatibility purposes:
 #
 #  CgltfImporter                - glTF importer using cgltf
+#  TinyGltfImporter             - GLTF importer using tiny_gltf
 #
 # Some plugins expose their internal state through separate libraries. The
 # libraries are:
@@ -137,6 +137,7 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
     elseif(_component STREQUAL StanfordSceneConverter)
         list(APPEND _MAGNUMPLUGINS_${_component}_MAGNUM_DEPENDENCIES MeshTools)
     elseif(_component STREQUAL TinyGltfImporter)
+        # TODO remove when the deprecated plugin is gone
         list(APPEND _MAGNUMPLUGINS_${_component}_MAGNUM_DEPENDENCIES AnyImageImporter)
     endif()
 
@@ -162,8 +163,7 @@ set(_MAGNUMPLUGINS_PLUGIN_COMPONENTS
     OpenGexImporter PngImageConverter PngImporter PrimitiveImporter
     SpirvToolsShaderConverter StanfordImporter StanfordSceneConverter
     StbDxtImageConverter StbImageConverter StbImageImporter
-    StbTrueTypeFont StbVorbisAudioImporter StlImporter
-    TinyGltfImporter)
+    StbTrueTypeFont StbVorbisAudioImporter StlImporter)
 # Nothing is enabled by default right now
 set(_MAGNUMPLUGINS_IMPLICITLY_ENABLED_COMPONENTS )
 
@@ -171,9 +171,9 @@ set(_MAGNUMPLUGINS_IMPLICITLY_ENABLED_COMPONENTS )
 set(_MAGNUMPLUGINS_HarfBuzzFont_DEPENDENCIES FreeTypeFont)
 set(_MAGNUMPLUGINS_OpenGexImporter_DEPENDENCIES OpenDdl)
 
-# CgltfImporter, available only on a deprecated build
+# CgltfImporter and TinyGltfImporter, available only on a deprecated build
 if(MAGNUM_BUILD_DEPRECATED)
-    list(APPEND _MAGNUMPLUGINS_PLUGIN_COMPONENTS CgltfImporter)
+    list(APPEND _MAGNUMPLUGINS_PLUGIN_COMPONENTS CgltfImporter TinyGltfImporter)
     set(_MAGNUMPLUGINS_CgltfImporter_DEPENDENCIES GltfImporter)
 endif()
 

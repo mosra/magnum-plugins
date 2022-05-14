@@ -179,6 +179,6 @@ if(WITH_STLIMPORTER)
     add_subdirectory(StlImporter)
 endif()
 
-if(WITH_TINYGLTFIMPORTER)
+if(MAGNUM_BUILD_DEPRECATED AND WITH_TINYGLTFIMPORTER)
     add_subdirectory(TinyGltfImporter)
 endif()
