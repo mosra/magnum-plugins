@@ -408,6 +408,48 @@ below for all options and their default values.
 
 See @ref plugins-configuration for more information and an example showing how
 to edit the configuration values.
+
+@section Trade-GltfImporter-state Access to internal importer state
+
+The glTF JSON is internally parsed using @relativeref{Corrade,Utility::Json}
+and you can access the parsed content through importer-specific data accessors.
+
+-   Calling @ref importerState() returns a pointer to the
+    @relativeref{Corrade,Utility::Json} instance. If you use this class
+    statically, you get the concrete type instead of a @cpp const void* @ce
+    pointer as returned by @ref AbstractImporter::importerState(). If not, it's
+    allowed to cast away the @cpp const @ce on a mutable importer instance to
+    access the parsing APIs.
+-   Importer state on data class instances returned from this importer return
+    pointers to @relativeref{Corrade,Utility::JsonToken} of particular glTF
+    objects:
+    -   @ref AnimationData::importerState() returns a glTF animation object, or
+        `nullptr` if the @cb{.ini} mergeAnimationClips @ce option is enabled
+    -   @ref CameraData::importerState() returns a glTF camera object
+    -   @ref ImageData::importerState() returns a glTF image object
+    -   @ref LightData::importerState() returns a glTF light object
+    -   @ref MaterialData::importerState() returns a glTF material object
+    -   @ref MeshData::importerState() returns a glTF mesh primitive object.
+        You can access the enclosing mesh object in a third-level
+        @relativeref{Corrade,Utility::JsonToken::parent()}.
+    -   @ref SceneData::importerState() returns a glTF scene object and all
+        objects have a @ref SceneField::ImporterState with their own glTF node
+        object
+    -   @ref SkinData::importerState() returns a glTF skin object
+    -   @ref TextureData::importerState() returns a glTF texture object. You
+        can access the glTF sampler object by going through the top-level glTF
+        object accessible via @relativeref{Corrade,Utility::Json::root()}.
+
+Be aware that not all of the JSON may be parsed when accessed --- where
+possible, the importerimplementation defers parsing only to when a particular
+data is accessed, and tokens unrecognized by the importers may be left
+unparsed. In order to parse what you need, do it through the
+@relativeref{Corrade,Utility::Json} instance that gets made mutable first. For
+example, in order to access the contents of the
+[CESIUM_primitive_outline](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Vendor/CESIUM_primitive_outline/README.md)
+extension on a glTF mesh primitive object:
+
+@snippet GltfImporter.cpp importerState
 */
 class MAGNUM_GLTFIMPORTER_EXPORT GltfImporter: public AbstractImporter {
     public:
@@ -431,6 +473,20 @@ class MAGNUM_GLTFIMPORTER_EXPORT GltfImporter: public AbstractImporter {
         explicit GltfImporter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin);
 
         ~GltfImporter();
+
+        /**
+         * @brief Importer state
+         *
+         * See @ref Trade-GltfImporter-state "class documentation" for more
+         * information.
+         */
+        Utility::Json* importerState() {
+            return static_cast<Utility::Json*>(const_cast<void*>(AbstractImporter::importerState()));
+        }
+        /** @overload */
+        const Utility::Json* importerState() const {
+            return static_cast<const Utility::Json*>(AbstractImporter::importerState());
+        }
 
     private:
         struct Document;
@@ -504,6 +560,8 @@ class MAGNUM_GLTFIMPORTER_EXPORT GltfImporter: public AbstractImporter {
         MAGNUM_GLTFIMPORTER_LOCAL Containers::Optional<Containers::Triple<Containers::ArrayView<const char>, UnsignedInt, UnsignedInt>> parseBufferView(const char* errorPrefix, UnsignedInt bufferViewId);
         MAGNUM_GLTFIMPORTER_LOCAL Containers::Optional<Containers::Triple<Containers::StridedArrayView2D<const char>, VertexFormat, UnsignedInt>> parseAccessor(const char* const errorPrefix, UnsignedInt accessorId);
         MAGNUM_GLTFIMPORTER_LOCAL bool materialTexture(const Utility::JsonToken& gltfTexture, Containers::Array<MaterialAttributeData>& attributes, Containers::StringView attribute, Containers::StringView matrixAttribute, Containers::StringView coordinateAttribute);
+
+        MAGNUM_GLTFIMPORTER_LOCAL const void* doImporterState() const override;
 
         Containers::Pointer<Document> _d;
 };

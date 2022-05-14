@@ -1618,7 +1618,9 @@ Containers::Optional<AnimationData> GltfImporter::doAnimation(UnsignedInt id) {
     if(hadToRenormalize)
         Warning{} << "Trade::GltfImporter::animation(): quaternions in some rotation tracks were renormalized";
 
-    return AnimationData{std::move(data), std::move(tracks)};
+    return AnimationData{std::move(data), std::move(tracks),
+        configuration().value<bool>("mergeAnimationClips") ? nullptr :
+        &*_d->gltfAnimations[id].first()};
 }
 
 UnsignedInt GltfImporter::doCameraCount() const {
@@ -1716,7 +1718,7 @@ Containers::Optional<CameraData> GltfImporter::doCamera(const UnsignedInt id) {
            create the camera data (instead of passing it the horizontal FoV) */
         const Vector2 size = 2.0f*gltfZnear->asFloat()*Math::tan(gltfYfov->asFloat()*0.5_radf)*Vector2::xScale(aspectRatio);
         const Float far = gltfZfar ? gltfZfar->asFloat() : Constants::inf();
-        return CameraData{CameraType::Perspective3D, size, gltfZnear->asFloat(), far};
+        return CameraData{CameraType::Perspective3D, size, gltfZnear->asFloat(), far, &gltfCamera};
     }
 
     /* Orthographic camera */
@@ -1771,7 +1773,7 @@ Containers::Optional<CameraData> GltfImporter::doCamera(const UnsignedInt id) {
             /* glTF uses a "scale" instead of "size", which means we have to
                double */
             Vector2{gltfXmag->asFloat(), gltfYmag->asFloat()}*2.0f,
-            gltfZnear->asFloat(), gltfZfar->asFloat()};
+            gltfZnear->asFloat(), gltfZfar->asFloat(), &gltfCamera};
     }
 
     Error{} << "Trade::GltfImporter::camera(): unrecognized type" << gltfType->asString();
@@ -1908,7 +1910,7 @@ Containers::Optional<LightData> GltfImporter::doLight(const UnsignedInt id) {
     return LightData{type, color,
         gltfIntensity ? gltfIntensity->asFloat() : 1.0f,
         gltfRange ? gltfRange->asFloat() : Constants::inf(),
-        innerConeAngle*2.0f, outerConeAngle*2.0f};
+        innerConeAngle*2.0f, outerConeAngle*2.0f, &gltfLight};
 }
 
 Int GltfImporter::doDefaultScene() const {
@@ -2125,8 +2127,9 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
     if(trsCount == transformationCount) transformationCount = 0;
 
     /* Allocate the output array */
-    Containers::ArrayView<UnsignedInt> parentObjects;
+    Containers::ArrayView<UnsignedInt> parentImporterStateObjects;
     Containers::ArrayView<Int> parents;
+    Containers::ArrayView<const Utility::JsonToken*> importerState;
     Containers::ArrayView<UnsignedInt> transformationObjects;
     Containers::ArrayView<Matrix4> transformations;
     Containers::ArrayView<UnsignedInt> trsObjects;
@@ -2143,8 +2146,9 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
     Containers::ArrayView<UnsignedInt> skinObjects;
     Containers::ArrayView<UnsignedInt> skins;
     Containers::Array<char> data = Containers::ArrayTuple{
-        {NoInit, objects.size(), parentObjects},
+        {NoInit, objects.size(), parentImporterStateObjects},
         {NoInit, objects.size(), parents},
+        {NoInit, objects.size(), importerState},
         {NoInit, transformationCount, transformationObjects},
         {NoInit, transformationCount, transformations},
         {NoInit, trsCount, trsObjects},
@@ -2164,7 +2168,7 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
 
     /* Populate object mapping for parents and importer state, synthesize
        parent info from the child ranges */
-    Utility::copy(objects, parentObjects);
+    Utility::copy(objects, parentImporterStateObjects);
     for(std::size_t i = 0; i != children.size() - 1; ++i) {
         Int parent = Int(i) - 1;
         for(std::size_t j = children[i], jMax = children[i + 1]; j != jMax; ++j)
@@ -2181,6 +2185,9 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
     for(std::size_t i = 0; i != objects.size(); ++i) {
         const UnsignedInt nodeI = objects[i];
         const Utility::JsonToken& gltfNode = _d->gltfNodes[nodeI].first();
+
+        /* Populate importer state */
+        importerState[i] = &gltfNode;
 
         /* Parse TRS */
         Vector3 translation;
@@ -2326,7 +2333,8 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
         /** @todo once there's a flag to annotate implicit fields, omit the
             parent field if it's all -1s; or alternatively we could also have a
             stride of 0 for this case */
-        SceneFieldData{SceneField::Parent, parentObjects, parents}
+        SceneFieldData{SceneField::Parent, parentImporterStateObjects, parents},
+        SceneFieldData{SceneField::ImporterState, parentImporterStateObjects, importerState}
     });
 
     /* Transformations. If there's no such field, add an empty transformation
@@ -2369,7 +2377,7 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
     /* Even though SceneData is capable of holding more than 4 billion objects,
        we realistically don't expect glTF to have that many -- the text file
        would be *terabytes* then */
-    return SceneData{SceneMappingType::UnsignedInt, maxObjectIndexPlusOne, std::move(data), std::move(fields)};
+    return SceneData{SceneMappingType::UnsignedInt, maxObjectIndexPlusOne, std::move(data), std::move(fields), &gltfScene};
 }
 
 UnsignedLong GltfImporter::doObjectCount() const {
@@ -2467,7 +2475,7 @@ Containers::Optional<SkinData3D> GltfImporter::doSkin3D(const UnsignedInt id) {
         Utility::copy(matrices, inverseBindMatrices);
     }
 
-    return SkinData3D{std::move(joints), std::move(inverseBindMatrices)};
+    return SkinData3D{std::move(joints), std::move(inverseBindMatrices), &gltfSkin};
 }
 
 UnsignedInt GltfImporter::doMeshCount() const {
@@ -2845,7 +2853,7 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
     return MeshData{primitive,
         std::move(indexData), indices,
         std::move(vertexData), std::move(attributeData),
-        vertexCount};
+        vertexCount, &gltfPrimitive};
 }
 
 MeshAttribute GltfImporter::doMeshAttributeForName(const Containers::StringView name) {
@@ -3745,7 +3753,7 @@ Containers::Optional<MaterialData> GltfImporter::doMaterial(const UnsignedInt id
        deleter */
     arrayShrink(layers);
     arrayShrink(attributes, DefaultInit);
-    return MaterialData{types, std::move(attributes), std::move(layers)};
+    return MaterialData{types, std::move(attributes), std::move(layers), &gltfMaterial};
 }
 
 UnsignedInt GltfImporter::doTextureCount() const {
@@ -3963,7 +3971,7 @@ Containers::Optional<TextureData> GltfImporter::doTexture(const UnsignedInt id) 
     /* glTF supports only 2D textures */
     return TextureData{TextureType::Texture2D,
         minificationFilter, magnificationFilter,
-        mipmap, wrapping, gltfSource->asUnsignedInt()};
+        mipmap, wrapping, gltfSource->asUnsignedInt(), &gltfTexture};
 }
 
 AbstractImporter* GltfImporter::setupOrReuseImporterForImage(const char* const errorPrefix, const UnsignedInt id) {
@@ -4089,7 +4097,14 @@ Containers::Optional<ImageData2D> GltfImporter::doImage2D(const UnsignedInt id, 
     AbstractImporter* importer = setupOrReuseImporterForImage("Trade::GltfImporter::image2D():", id);
     if(!importer) return {};
 
-    return importer->image2D(0, level);
+    /* Include a pointer to the glTF image in the result */
+    Containers::Optional<ImageData2D> imageData = importer->image2D(0, level);
+    if(!imageData) return Containers::NullOpt;
+    return ImageData2D{std::move(*imageData), &*_d->gltfImages[id].first()};
+}
+
+const void* GltfImporter::doImporterState() const {
+    return &*_d->gltf;
 }
 
 }}

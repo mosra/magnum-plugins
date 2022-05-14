@@ -39,6 +39,7 @@
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/DebugStl.h> /** @todo remove once Debug is stream-free */
 #include <Corrade/Utility/FormatStl.h>
+#include <Corrade/Utility/Json.h>
 #include <Corrade/Utility/Path.h>
 #include <Corrade/Utility/Resource.h>
 #include <Magnum/FileCallback.h>
@@ -1594,6 +1595,11 @@ void GltfImporterTest::open() {
     CORRADE_VERIFY(importer->openFile(filename));
     CORRADE_VERIFY(importer->isOpened());
 
+    /* Importer state should give the JSON instance */
+    const auto* state = static_cast<const Utility::Json*>(importer->importerState());
+    CORRADE_VERIFY(state);
+    CORRADE_COMPARE(state->root()["asset"]["version"].asString(), "2.0");
+
     Containers::Optional<Containers::Array<char>> file = Utility::Path::read(filename);
     CORRADE_VERIFY(file);
     CORRADE_VERIFY(importer->openData(*file));
@@ -1852,6 +1858,11 @@ void GltfImporterTest::animation() {
         CORRADE_VERIFY(animation);
         CORRADE_VERIFY(animation->data().isEmpty());
         CORRADE_COMPARE(animation->trackCount(), 0);
+
+        /* Importer state should give the glTF animation object */
+        const auto* state = static_cast<const Utility::JsonToken*>(animation->importerState());
+        CORRADE_VERIFY(state);
+        CORRADE_COMPARE((*state)["name"].asString(), "empty");
 
     /* Empty translation/rotation/scaling animation */
     } {
@@ -2454,6 +2465,9 @@ void GltfImporterTest::animationMerge() {
     CORRADE_COMPARE(scaling3.interpolation(), Animation::Interpolation::Spline);
     CORRADE_COMPARE(scaling3.at(0.5f + 0.35f*3),
         (Vector3{0.118725f, 0.8228f, -2.711f}));
+
+    /* No importer state should be present in this case */
+    CORRADE_VERIFY(!animation->importerState());
 }
 
 void GltfImporterTest::camera() {
@@ -2473,6 +2487,11 @@ void GltfImporterTest::camera() {
         CORRADE_COMPARE(cam->aspectRatio(), 1.333333f);
         CORRADE_COMPARE(cam->near(), 0.01f);
         CORRADE_COMPARE(cam->far(), 100.0f);
+
+        /* Importer state should give the glTF camera object */
+        const auto* state = static_cast<const Utility::JsonToken*>(cam->importerState());
+        CORRADE_VERIFY(state);
+        CORRADE_COMPARE((*state)["name"].asString(), "Orthographic 4:3");
     } {
         Containers::Optional<Trade::CameraData> cam = importer->camera("Perspective 1:1 75° hFoV");
         CORRADE_VERIFY(cam);
@@ -2481,6 +2500,12 @@ void GltfImporterTest::camera() {
         CORRADE_COMPARE(cam->aspectRatio(), 1.0f);
         CORRADE_COMPARE(cam->near(), 0.1f);
         CORRADE_COMPARE(cam->far(), 150.0f);
+
+        /* Importer state should give the glTF camera object (orthographic and
+           perspective cameras are handled separately) */
+        const auto* state = static_cast<const Utility::JsonToken*>(cam->importerState());
+        CORRADE_VERIFY(state);
+        CORRADE_COMPARE((*state)["name"].asString(), "Perspective 1:1 75° hFoV");
     } {
         Containers::Optional<Trade::CameraData> cam = importer->camera("Perspective 4:3 75° hFoV");
         CORRADE_VERIFY(cam);
@@ -2541,6 +2566,12 @@ void GltfImporterTest::light() {
         CORRADE_COMPARE(light->intensity(), 1.0f);
         CORRADE_COMPARE(light->attenuation(), (Vector3{1.0f, 0.0f, 1.0f}));
         CORRADE_COMPARE(light->range(), Constants::inf());
+
+        /* Importer state should give the glTF light object */
+        const auto* state = static_cast<const Utility::JsonToken*>(light->importerState());
+        CORRADE_VERIFY(state);
+        CORRADE_COMPARE((*state)["name"].asString(), "Point with everything implicit");
+
     } {
         Containers::Optional<Trade::LightData> light = importer->light("Spot");
         CORRADE_VERIFY(light);
@@ -2610,20 +2641,23 @@ void GltfImporterTest::scene() {
     CORRADE_COMPARE(importer->objectForName("Nonexistent"), -1);
 
     /* Empty scene should have no fields except empty transformation (which
-       distinguishes between 2D and 3D) and empty parent (which is there always
-       to tell which objects belong to the scene) */
+       distinguishes between 2D and 3D), empty parent (which is there always to
+       tell which objects belong to the scene) and empty importer state */
     {
         Containers::Optional<SceneData> scene = importer->scene(0);
         CORRADE_VERIFY(scene);
         CORRADE_VERIFY(scene->is3D());
         CORRADE_COMPARE(scene->mappingBound(), 0);
-        CORRADE_COMPARE(scene->fieldCount(), 2);
+        CORRADE_COMPARE(scene->fieldCount(), 3);
         CORRADE_VERIFY(scene->hasField(SceneField::Parent));
         CORRADE_COMPARE(scene->fieldType(SceneField::Parent), SceneFieldType::Int);
         CORRADE_COMPARE(scene->fieldSize(SceneField::Parent), 0);
         CORRADE_VERIFY(scene->hasField(SceneField::Transformation));
         CORRADE_COMPARE(scene->fieldType(SceneField::Transformation), SceneFieldType::Matrix4x4);
         CORRADE_COMPARE(scene->fieldSize(SceneField::Transformation), 0);
+        CORRADE_VERIFY(scene->hasField(SceneField::ImporterState));
+        CORRADE_COMPARE(scene->fieldType(SceneField::ImporterState), SceneFieldType::Pointer);
+        CORRADE_COMPARE(scene->fieldSize(SceneField::ImporterState), 0);
 
     /* Testing mainly the hierarchy and light / camera / ... references here.
        Transformations tested in sceneTransformation() and others. */
@@ -2634,7 +2668,12 @@ void GltfImporterTest::scene() {
         /* There's object 7 but only in scene 2, so this scene should have
            object count only as a max of all referenced objects  */
         CORRADE_COMPARE(scene->mappingBound(), 7);
-        CORRADE_COMPARE(scene->fieldCount(), 7);
+        CORRADE_COMPARE(scene->fieldCount(), 7 + 1 /* ImporterState */);
+
+        /* Importer state should give the glTF scene object */
+        const auto* state = static_cast<const Utility::JsonToken*>(scene->importerState());
+        CORRADE_VERIFY(state);
+        CORRADE_COMPARE((*state)["name"].asString(), "Scene");
 
         /* Parents */
         CORRADE_VERIFY(scene->hasField(SceneField::Parent));
@@ -2697,6 +2736,16 @@ void GltfImporterTest::scene() {
             1
         }), TestSuite::Compare::Container);
 
+        /* Importer states should give the glTF node objects, mapping shared
+           with the parent field */
+        CORRADE_VERIFY(scene->hasField(SceneField::ImporterState));
+        CORRADE_COMPARE_AS(scene->mapping<UnsignedInt>(SceneField::ImporterState),
+            scene->mapping<UnsignedInt>(SceneField::Parent),
+            TestSuite::Compare::Container);
+        Containers::Optional<const void*> objectState = scene->importerStateFor(4);
+        CORRADE_VERIFY(objectState && *objectState);
+        CORRADE_COMPARE((*static_cast<const Utility::JsonToken*>(*objectState))["name"].asString(), "Light");
+
     /* Another scene, with no material assignments, so there should be no
        material field. It also references an object that's not in scene 1,
        so the objectCount should account for it. */
@@ -2705,7 +2754,7 @@ void GltfImporterTest::scene() {
         CORRADE_VERIFY(scene);
         CORRADE_COMPARE(scene->mappingType(), SceneMappingType::UnsignedInt);
         CORRADE_COMPARE(scene->mappingBound(), 8);
-        CORRADE_COMPARE(scene->fieldCount(), 3);
+        CORRADE_COMPARE(scene->fieldCount(), 3 + 1 /* ImporterState */);
 
         /* Parents, importer state, transformation. Assume it behaves like
            above, no need to test again. */
@@ -2807,7 +2856,7 @@ void GltfImporterTest::sceneTransformation() {
         Containers::Optional<SceneData> scene = importer->scene("Everything");
         CORRADE_VERIFY(scene);
         CORRADE_COMPARE(scene->mappingBound(), 7);
-        CORRADE_COMPARE(scene->fieldCount(), 5);
+        CORRADE_COMPARE(scene->fieldCount(), 5 + 1 /* ImporterState */);
 
         /* Fields we're not interested in */
         CORRADE_VERIFY(scene->hasField(SceneField::Parent));
@@ -2872,7 +2921,7 @@ void GltfImporterTest::sceneTransformation() {
     } {
         Containers::Optional<SceneData> scene = importer->scene("Matrix + TRS");
         CORRADE_VERIFY(scene);
-        CORRADE_COMPARE(scene->fieldCount(), 4);
+        CORRADE_COMPARE(scene->fieldCount(), 4 + 1 /* ImporterState */);
 
         /* Fields we're not interested in */
         CORRADE_VERIFY(scene->hasField(SceneField::Parent));
@@ -2902,7 +2951,7 @@ void GltfImporterTest::sceneTransformation() {
     } {
         Containers::Optional<SceneData> scene = importer->scene("Just matrices");
         CORRADE_VERIFY(scene);
-        CORRADE_COMPARE(scene->fieldCount(), 2);
+        CORRADE_COMPARE(scene->fieldCount(), 2 + 1 /* ImporterState */);
 
         /* Fields we're not interested in */
         CORRADE_VERIFY(scene->hasField(SceneField::Parent));
@@ -2924,7 +2973,7 @@ void GltfImporterTest::sceneTransformation() {
     } {
         Containers::Optional<SceneData> scene = importer->scene("Just TRS");
         CORRADE_VERIFY(scene);
-        CORRADE_COMPARE(scene->fieldCount(), 4);
+        CORRADE_COMPARE(scene->fieldCount(), 4 + 1 /* ImporterState */);
 
         /* Fields we're not interested in */
         CORRADE_VERIFY(scene->hasField(SceneField::Parent));
@@ -2959,7 +3008,7 @@ void GltfImporterTest::sceneTransformation() {
     } {
         Containers::Optional<SceneData> scene = importer->scene("Just translation");
         CORRADE_VERIFY(scene);
-        CORRADE_COMPARE(scene->fieldCount(), 2);
+        CORRADE_COMPARE(scene->fieldCount(), 2 + 1 /* ImporterState */);
 
         /* Fields we're not interested in */
         CORRADE_VERIFY(scene->hasField(SceneField::Parent));
@@ -2977,7 +3026,7 @@ void GltfImporterTest::sceneTransformation() {
     } {
         Containers::Optional<SceneData> scene = importer->scene("Just rotation");
         CORRADE_VERIFY(scene);
-        CORRADE_COMPARE(scene->fieldCount(), 2);
+        CORRADE_COMPARE(scene->fieldCount(), 2 + 1 /* ImporterState */);
 
         /* Fields we're not interested in */
         CORRADE_VERIFY(scene->hasField(SceneField::Parent));
@@ -2995,7 +3044,7 @@ void GltfImporterTest::sceneTransformation() {
     } {
         Containers::Optional<SceneData> scene = importer->scene("Just scaling");
         CORRADE_VERIFY(scene);
-        CORRADE_COMPARE(scene->fieldCount(), 2);
+        CORRADE_COMPARE(scene->fieldCount(), 2 + 1 /* ImporterState */);
 
         /* Fields we're not interested in */
         CORRADE_VERIFY(scene->hasField(SceneField::Parent));
@@ -3074,6 +3123,12 @@ void GltfImporterTest::skin() {
         CORRADE_COMPARE_AS(skin->inverseBindMatrices(),
             Containers::arrayView({Matrix4{}, Matrix4{}}),
             TestSuite::Compare::Container);
+
+        /* Importer state should give the glTF skin object */
+        const auto* state = static_cast<const Utility::JsonToken*>(skin->importerState());
+        CORRADE_VERIFY(state);
+        CORRADE_COMPARE((*state)["name"].asString(), "implicit inverse bind matrices");
+
     } {
         Containers::Optional<Trade::SkinData3D> skin = importer->skin3D("explicit inverse bind matrices");
         CORRADE_VERIFY(skin);
@@ -3198,6 +3253,13 @@ void GltfImporterTest::mesh() {
         Containers::arrayView<UnsignedInt>({
             215, 71, 133
         }), TestSuite::Compare::Container);
+
+    /* Importer state should give the glTF mesh primitive object (i.e., not
+       the enclosing mesh). Parent is the primitive array, its parent is the
+       "primitives" key, and its parent is the mesh object. */
+    const auto* state = static_cast<const Utility::JsonToken*>(mesh->importerState());
+    CORRADE_VERIFY(state);
+    CORRADE_COMPARE((*state->parent()->parent()->parent())["name"].asString(), "Indexed mesh");
 }
 
 void GltfImporterTest::meshNoAttributes() {
@@ -3558,7 +3620,7 @@ void GltfImporterTest::meshMultiplePrimitives() {
     CORRADE_COMPARE(importer->sceneCount(), 1);
     Containers::Optional<SceneData> scene = importer->scene(0);
     CORRADE_COMPARE(scene->mappingBound(), 5);
-    CORRADE_COMPARE(scene->fieldCount(), 4);
+    CORRADE_COMPARE(scene->fieldCount(), 4 + 1 /* ImporterState */);
     CORRADE_VERIFY(scene->hasField(SceneField::Parent));
     CORRADE_VERIFY(scene->hasField(SceneField::Transformation));
     CORRADE_VERIFY(scene->hasField(SceneField::Mesh));
@@ -3921,6 +3983,11 @@ void GltfImporterTest::materialPbrMetallicRoughness() {
         CORRADE_COMPARE(pbr.baseColor(), (Color4{1.0f}));
         CORRADE_COMPARE(pbr.metalness(), 1.0f);
         CORRADE_COMPARE(pbr.roughness(), 1.0f);
+
+        /* Importer state should give the glTF material object */
+        const auto* state = static_cast<const Utility::JsonToken*>(material->importerState());
+        CORRADE_VERIFY(state);
+        CORRADE_COMPARE((*state)["name"].asString(), "defaults");
     } {
         const char* name = "color";
         Containers::Optional<Trade::MaterialData> material = importer->material(name);
@@ -5166,6 +5233,11 @@ void GltfImporterTest::texture() {
         CORRADE_COMPARE(texture->mipmapFilter(), SamplerMipmap::Linear);
 
         CORRADE_COMPARE(texture->wrapping(), Math::Vector3<SamplerWrapping>(SamplerWrapping::Repeat, SamplerWrapping::ClampToEdge, SamplerWrapping::Repeat));
+
+        /* Importer state should give the glTF texture object */
+        const auto* state = static_cast<const Utility::JsonToken*>(texture->importerState());
+        CORRADE_VERIFY(state);
+        CORRADE_COMPARE((*state)["name"].asString(), "another variant");
     } {
         Containers::Optional<Trade::TextureData> texture = importer->texture("shared sampler");
         CORRADE_VERIFY(texture);
@@ -5269,6 +5341,11 @@ void GltfImporterTest::imageEmbedded() {
     CORRADE_COMPARE(image->size(), Vector2i(5, 3));
     CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Unorm);
     CORRADE_COMPARE_AS(image->data(), Containers::arrayView(ExpectedImageData).prefix(60), TestSuite::Compare::Container);
+
+    /* Importer state should give the glTF image object */
+    const auto* state = static_cast<const Utility::JsonToken*>(image->importerState());
+    CORRADE_VERIFY(state);
+    CORRADE_COMPARE((*state)["name"].asString(), "Image");
 }
 
 void GltfImporterTest::imageExternal() {

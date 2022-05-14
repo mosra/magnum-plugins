@@ -51,6 +51,12 @@ if(WITH_BASISIMPORTER)
     target_link_libraries(snippets-BasisImporter PRIVATE Magnum::Trade)
 endif()
 
+if(WITH_GLTFIMPORTER)
+    add_library(snippets-GltfImporter STATIC
+        GltfImporter.cpp)
+    target_link_libraries(snippets-GltfImporter PRIVATE Magnum::Trade)
+endif()
+
 if(WITH_STBIMAGEIMPORTER)
     add_library(snippets-StbImageImporter STATIC
         StbImageImporter.cpp)
