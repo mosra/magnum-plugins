@@ -33,7 +33,7 @@
  */
 #endif
 
-#include "Magnum/configure.h"
+#include <Magnum/configure.h>
 
 #ifdef MAGNUM_BUILD_DEPRECATED
 #include "MagnumPlugins/GltfImporter/GltfImporter.h"
