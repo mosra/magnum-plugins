@@ -953,6 +953,7 @@ AbstractImporter* OpenGexImporter::setupOrReuseImporterForImage(const UnsignedIn
     }
 
     AnyImageImporter importer{*manager()};
+    importer.setFlags(flags());
     if(fileCallback()) importer.setFileCallback(fileCallback(), fileCallbackUserData());
 
     const Containers::String imageFile = Utility::Path::join(_d->filePath ? *_d->filePath : "", _d->images[id]);

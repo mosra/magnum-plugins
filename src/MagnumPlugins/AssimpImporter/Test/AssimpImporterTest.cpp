@@ -154,6 +154,7 @@ struct AssimpImporterTest: TestSuite::Tester {
     void imagePathMtlSpaceAtTheEnd();
     void imagePathBackslash();
     void imageMipLevels();
+    void imagePropagateImporterFlags();
 
     void texture();
 
@@ -298,6 +299,7 @@ AssimpImporterTest::AssimpImporterTest() {
               &AssimpImporterTest::imagePathMtlSpaceAtTheEnd,
               &AssimpImporterTest::imagePathBackslash,
               &AssimpImporterTest::imageMipLevels,
+              &AssimpImporterTest::imagePropagateImporterFlags,
 
               &AssimpImporterTest::texture,
 
@@ -3530,6 +3532,28 @@ void AssimpImporterTest::imageMipLevels() {
     CORRADE_COMPARE_AS(image1->data(), Containers::arrayView<char>({
         '\xb3', '\x69', '\x00', '\xff'
     }), TestSuite::Compare::Container);
+}
+
+void AssimpImporterTest::imagePropagateImporterFlags() {
+    /** @todo Possibly works with earlier versions (definitely not 3.0) */
+    if(_assimpVersion < 320)
+        CORRADE_SKIP("Current version of assimp would SEGFAULT on this test.");
+
+    if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("PngImporter plugin not found, cannot test");
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+    importer->setFlags(ImporterFlag::Verbose);
+
+    std::ostringstream out;
+    Debug redirectOutput{&out};
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "material-texture.dae")));
+    CORRADE_COMPARE(importer->image2DCount(), 2);
+    CORRADE_VERIFY(importer->image2D(0));
+    CORRADE_COMPARE_AS(out.str(),
+        /* There's LOUD output from Assimp before */
+        "\nTrade::AnyImageImporter::openFile(): using PngImporter (provided by StbImageImporter)\n",
+        TestSuite::Compare::StringHasSuffix);
 }
 
 void AssimpImporterTest::texture() {

@@ -3990,6 +3990,7 @@ AbstractImporter* GltfImporter::setupOrReuseImporterForImage(const char* const e
     _d->imageImporterId = id;
 
     AnyImageImporter importer{*manager()};
+    importer.setFlags(flags());
     if(fileCallback()) importer.setFileCallback(fileCallback(), fileCallbackUserData());
 
     const Utility::JsonToken& gltfImage = _d->gltfImages[id].first();

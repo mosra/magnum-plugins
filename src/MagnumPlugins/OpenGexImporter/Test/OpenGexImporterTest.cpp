@@ -115,6 +115,7 @@ struct OpenGexImporterTest: public TestSuite::Tester {
     void imageUnique();
     void imageMipLevels();
     void imageNoPathNoCallback();
+    void imagePropagateImporterFlags();
 
     void extension();
 
@@ -197,6 +198,7 @@ OpenGexImporterTest::OpenGexImporterTest() {
               &OpenGexImporterTest::imageUnique,
               &OpenGexImporterTest::imageMipLevels,
               &OpenGexImporterTest::imageNoPathNoCallback,
+              &OpenGexImporterTest::imagePropagateImporterFlags,
 
               &OpenGexImporterTest::extension,
 
@@ -1139,6 +1141,24 @@ void OpenGexImporterTest::imageNoPathNoCallback() {
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->image2D(0));
     CORRADE_COMPARE(out.str(), "Trade::OpenGexImporter::image2D(): images can be imported only when opening files from the filesystem or if a file callback is present\n");
+}
+
+void OpenGexImporterTest::imagePropagateImporterFlags() {
+    if(_manager.loadState("TgaImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("TgaImporter plugin not found, cannot test");
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
+    importer->setFlags(ImporterFlag::Verbose);
+
+    std::ostringstream out;
+    Debug redirectOutput{&out};
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(OPENGEXIMPORTER_TEST_DIR, "texture.ogex")));
+    CORRADE_COMPARE(importer->image2DCount(), 2);
+    CORRADE_VERIFY(importer->image2D(1));
+    /* If this starts to fail (possibly due to verbose output from openFile()),
+       add \n at the front and change to Compare::StringHasSuffix */
+    CORRADE_COMPARE(out.str(),
+        "Trade::AnyImageImporter::openFile(): using TgaImporter (provided by StbImageImporter)\n");
 }
 
 void OpenGexImporterTest::extension() {

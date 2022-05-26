@@ -1723,6 +1723,10 @@ AbstractImporter* AssimpImporter::setupOrReuseImporterForImage(const UnsignedInt
         return {};
     }
 
+    AnyImageImporter importer{*manager()};
+    importer.setFlags(flags());
+    if(fileCallback()) importer.setFileCallback(fileCallback(), fileCallbackUserData());
+
     std::string path = texturePath.C_Str();
     /* If path is prefixed with '*', load embedded texture */
     if(path[0] == '*') {
@@ -1741,7 +1745,6 @@ AbstractImporter* AssimpImporter::setupOrReuseImporterForImage(const UnsignedInt
             /* Compressed image data */
             auto textureData = Containers::ArrayView<const char>(reinterpret_cast<const char*>(texture->pcData), texture->mWidth);
 
-            AnyImageImporter importer{*manager()};
             if(!importer.openData(textureData))
                 return nullptr;
             return &_f->imageImporter.emplace(std::move(importer));
@@ -1759,8 +1762,6 @@ AbstractImporter* AssimpImporter::setupOrReuseImporterForImage(const UnsignedInt
             return nullptr;
         }
 
-        AnyImageImporter importer{*manager()};
-        if(fileCallback()) importer.setFileCallback(fileCallback(), fileCallbackUserData());
         /* Assimp loads image path references as-is. It might contain windows path separators if the exporter didn't normalize */
         std::replace(path.begin(), path.end(), '\\', '/');
         /* Assimp doesn't trim spaces from the end of image paths in OBJ

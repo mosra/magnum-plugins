@@ -166,6 +166,7 @@ struct GltfImporterTest: TestSuite::Tester {
     void imageMipLevels();
     void imageInvalid();
     void imageInvalidNotFound();
+    void imagePropagateImporterFlags();
 
     void fileCallbackBuffer();
     void fileCallbackBufferNotFound();
@@ -1544,6 +1545,8 @@ GltfImporterTest::GltfImporterTest() {
 
     addInstancedTests({&GltfImporterTest::imageInvalidNotFound},
         Containers::arraySize(ImageInvalidNotFoundData));
+
+    addTests({&GltfImporterTest::imagePropagateImporterFlags});
 
     addInstancedTests({&GltfImporterTest::fileCallbackBuffer,
                        &GltfImporterTest::fileCallbackBufferNotFound,
@@ -5510,6 +5513,24 @@ void GltfImporterTest::imageInvalidNotFound() {
     CORRADE_COMPARE_AS(out.str(),
         Utility::formatString("\n{}\n", data.message),
         TestSuite::Compare::StringHasSuffix);
+}
+
+void GltfImporterTest::imagePropagateImporterFlags() {
+    if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("PngImporter plugin not found, cannot test");
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
+    importer->setFlags(ImporterFlag::Verbose);
+
+    std::ostringstream out;
+    Debug redirectOutput{&out};
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "image.gltf")));
+    CORRADE_COMPARE(importer->image2DCount(), 2);
+    CORRADE_VERIFY(importer->image2D(0));
+    /* If this starts to fail (possibly due to verbose output from openFile()),
+       add \n at the front and change to Compare::StringHasSuffix */
+    CORRADE_COMPARE(out.str(),
+        "Trade::AnyImageImporter::openFile(): using PngImporter (provided by StbImageImporter)\n");
 }
 
 void GltfImporterTest::fileCallbackBuffer() {

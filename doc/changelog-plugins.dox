@@ -179,6 +179,11 @@ namespace Magnum {
     with backslashes in image paths also on non-Windows platforms (see
     [mosra/magnum-plugins#101](https://github.com/mosra/magnum-plugins/issues/101)
     and [mosra/magnum-plugins#102](https://github.com/mosra/magnum-plugins/pull/102))
+-   @relativeref{Trade,AssimpImporter},
+    @relativeref{Trade,OpenGexImporter} and
+    @relativeref{Trade,GltfImporter} now correctly propagate
+    @ref Trade::ImporterFlags to delegated image importer plugins, instead of
+    the setting (such as verbose output) affecting only the top-level plugin
 -   @ref Trade::JpegImageConverter "JpegImageConverter" was mistakenly using
     the `BUILD_STATIC` CMake option instead of `BUILD_PLUGINS_STATIC`
 -   Fixed @ref Trade::BasisImporter "BasisImporter" to work with direct
