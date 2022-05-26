@@ -459,7 +459,7 @@ void KtxImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFlags
 
         /* Try to load the BasisImporter plugin. The manager will print a
            message on its own when not found, so just explain why we need it. */
-        const std::string plugin = "BasisImporter";
+        constexpr Containers::StringView plugin = "BasisImporter"_s;
         if(!(manager()->load(plugin) & PluginManager::LoadState::Loaded)) {
             Error{} << "Trade::KtxImporter::openData(): can't forward a Basis Universal image to BasisImporter";
             return;
