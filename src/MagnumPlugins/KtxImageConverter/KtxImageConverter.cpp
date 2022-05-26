@@ -706,9 +706,13 @@ void endianSwap(Containers::ArrayView<char> data, UnsignedInt typeSize) {
 
 using namespace Containers::Literals;
 
-/* Having this inside convertLevels() leads to errors with GCC 4.8:
-   "cannot initialize aggregate [...] with a compound literal" */
+/* Having this inside convertLevels() leads to errors with GCC 4.8 ("cannot
+   initialize aggregate [...] with a compound literal"). It's better to have it
+   here anyway, since that's a template. */
 constexpr Containers::StringView ValidOrientations[3]{"rl"_s, "du"_s, "io"_s};
+constexpr Containers::StringView DefaultDirections[3]{
+    "right"_s, "down"_s, "forward"_s
+};
 
 /* Using a template template parameter to deduce the image dimensions while
    matching both ImageView and CompressedImageView. Matching on the ImageView
@@ -753,6 +757,8 @@ template<UnsignedInt dimensions, template<UnsignedInt, typename> class View> Con
                 return {};
             }
         }
+    } else {
+        Warning{} << "Trade::KtxImageConverter::convertToData(): empty orientation string, assuming" << ", "_s.join(Containers::arrayView(DefaultDirections).prefix(dimensions));
     }
 
     if(swizzle && swizzle.size() != 4) {

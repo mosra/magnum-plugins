@@ -58,8 +58,13 @@ PVRTexToolCLI -i cube+x.png,cube-x.png,cube+y.png,cube-y.png,cube+z.png,cube-z.p
 PVRTexToolCLI -i cube+x.png,cube-x.png,cube+y.png,cube-y.png,cube+z.png,cube-z.png,cube+z.png,cube-z.png,cube+x.png,cube-x.png,cube+y.png,cube-y.png -o cubemap-layers.ktx2 -cube -array -f r8g8b8,UBN,sRGB
 
 # 1D
-toktx --t2 1d.ktx2 pattern-1d.png
-toktx --t2 --mipmap 1d-mipmaps.ktx2 pattern-1d.png pattern-mip1.png pattern-mip2.png
+# toktx 4.0 has a bug and doesn't write KTXorientation for 1D images, 4.1 RC
+# does. To avoid unnecessary warning when testing opening 1D files in
+# KtxImporter, the file is faked and produced by KtxImageConverterTest instead
+# of toktx
+# TODO re-enable and regenerate all test files when toktx 4.1 is stable
+# toktx --t2 1d.ktx2 pattern-1d.png
+# toktx --t2 --mipmap 1d-mipmaps.ktx2 pattern-1d.png pattern-mip1.png pattern-mip2.png
 PVRTexToolCLI -i pattern-1d.png,pattern-1d.png,black-1d.png -o 1d-layers.ktx2 -array -f r8g8b8,UBN,sRGB
 
 # 3D
