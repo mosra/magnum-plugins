@@ -767,9 +767,9 @@ template<UnsignedInt dimensions, template<UnsignedInt, typename> class View> Con
     }
 
     const Containers::Pair<Containers::StringView, Containers::StringView> keyValueMap[]{
-        Containers::pair("KTXorientation"_s, Containers::StringView{orientation}.prefix(Math::min(size_t(dimensions), orientation.size()))),
-        Containers::pair("KTXswizzle"_s, Containers::StringView{swizzle}),
-        Containers::pair("KTXwriter"_s, Containers::StringView{writerName})
+        {"KTXorientation"_s, orientation.prefix(Math::min(std::size_t(dimensions), orientation.size()))},
+        {"KTXswizzle"_s, swizzle},
+        {"KTXwriter"_s, writerName}
     };
 
     /* Calculate size */
