@@ -816,9 +816,9 @@ void GltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags da
 
             if(!found) {
                 if(ignoreRequiredExtensions) {
-                    Warning{} << "Trade::GltfImporter::openData(): required extension" << extension << "not supported";
+                    Warning{} << "Trade::GltfImporter::openData(): required extension" << extension << "not supported, ignoring";
                 } else {
-                    Error{} << "Trade::GltfImporter::openData(): required extension" << extension << "not supported";
+                    Error{} << "Trade::GltfImporter::openData(): required extension" << extension << "not supported, enable ignoreRequiredExtensions to ignore";
                     return;
                 }
             }

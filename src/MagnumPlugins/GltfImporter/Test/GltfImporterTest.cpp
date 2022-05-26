@@ -1827,7 +1827,7 @@ void GltfImporterTest::requiredExtensionsUnsupported() {
     std::ostringstream out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "required-extensions-unsupported.gltf")));
-    CORRADE_COMPARE(out.str(), "Trade::GltfImporter::openData(): required extension EXT_lights_image_based not supported\n");
+    CORRADE_COMPARE(out.str(), "Trade::GltfImporter::openData(): required extension EXT_lights_image_based not supported, enable ignoreRequiredExtensions to ignore\n");
 }
 
 void GltfImporterTest::requiredExtensionsUnsupportedDisabled() {
@@ -1837,7 +1837,7 @@ void GltfImporterTest::requiredExtensionsUnsupportedDisabled() {
     std::ostringstream out;
     Warning redirectError{&out};
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "required-extensions-unsupported.gltf")));
-    CORRADE_COMPARE(out.str(), "Trade::GltfImporter::openData(): required extension EXT_lights_image_based not supported\n");
+    CORRADE_COMPARE(out.str(), "Trade::GltfImporter::openData(): required extension EXT_lights_image_based not supported, ignoring\n");
 }
 
 void GltfImporterTest::animation() {
