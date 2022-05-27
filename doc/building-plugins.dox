@@ -334,6 +334,7 @@ By default no plugins are built and you need to select them manually:
 
 -   `WITH_ASSIMPIMPORTER` --- Build the @ref Trade::AssimpImporter "AssimpImporter"
     plugin. Depends on [Assimp](http://assimp.org/).
+-   `WITH_ASTCIMPORTER` --- Build the @relativeref{Trade,AstcImporter} plugin.
 -   `WITH_BASISIMAGECONVERTER` --- Build the
     @ref Trade::BasisImageConverter "BasisImageConverter" plugin. Depends on
     [Basis Universal](https://github.com/binomialLLC/basis_universal).

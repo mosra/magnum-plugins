@@ -40,6 +40,8 @@ namespace Magnum {
     plugin for SPIR-V shader (dis)assembly and validation
 -   New @ref ShaderTools::GlslangConverter "GlslangShaderConverter" plugin for
     GLSL shader validation and GLSL->SPIR-V compilation
+-   New @relativeref{Trade,AstcImporter} plugin for reading `*.astc` files
+    produced by ARM ASTC encoder and other GPU texture compression tools.
 -   New @relativeref{Trade,KtxImporter} and @relativeref{Trade,KtxImageConverter}
     plugins for reading and writing 1D/2D/3D KTX2 files in arbitrary pixel
     formats (see [mosra/magnum-plugins#103](https://github.com/mosra/magnum-plugins/pull/103); Basis-encoded KTX2 files are passed through to

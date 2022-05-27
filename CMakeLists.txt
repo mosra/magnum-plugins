@@ -51,6 +51,7 @@ include(CMakeDependentOption)
 
 # Plugins to build
 option(WITH_ASSIMPIMPORTER "Build AssimpImporter plugin" OFF)
+option(WITH_ASTCIMPORTER "Build AstcImporter plugin" OFF)
 option(WITH_BASISIMAGECONVERTER "Build BasisImageConverter plugin" OFF)
 option(WITH_BASISIMPORTER "Build BasisImporter plugin" OFF)
 if(MAGNUM_BUILD_DEPRECATED)

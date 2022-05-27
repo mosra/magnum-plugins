@@ -64,6 +64,7 @@ class MagnumPlugins < Formula
         # complain to Homebrew about this insane non-obvious filesystem layout.
         "-DCMAKE_INSTALL_NAME_DIR:STRING=#{lib}",
         "-DWITH_ASSIMPIMPORTER=#{(build.with? 'assimp') ? 'ON' : 'OFF'}",
+        "-DWITH_ASTCIMPORTER=ON",
         "-DWITH_BASISIMAGECONVERTER=ON",
         "-DWITH_BASISIMPORTER=ON",
         "-DWITH_CGLTFIMPORTER=ON",

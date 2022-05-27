@@ -35,6 +35,7 @@ build() {
         -DCMAKE_BUILD_TYPE=Release \
         -DBASIS_UNIVERSAL_DIR=/opt/basis-universal \
         -DWITH_ASSIMPIMPORTER=OFF \
+        -DWITH_ASTCIMPORTER=ON \
         -DWITH_BASISIMPORTER=ON \
         -DWITH_BASISIMAGECONVERTER=ON \
         -DWITH_CGLTFIMPORTER=ON \

@@ -39,6 +39,10 @@ if(WITH_ASSIMPIMPORTER)
     add_subdirectory(AssimpImporter)
 endif()
 
+if(WITH_ASTCIMPORTER)
+    add_subdirectory(AstcImporter)
+endif()
+
 if(WITH_BASISIMAGECONVERTER)
     add_subdirectory(BasisImageConverter)
 endif()

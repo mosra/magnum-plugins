@@ -22,6 +22,7 @@ build() {
         -DCMAKE_INSTALL_PREFIX=/usr/i686-w64-mingw32 \
         -DBASIS_UNIVERSAL_DIR=/opt/basis-universal \
         -DWITH_ASSIMPIMPORTER=ON \
+        -DWITH_ASTCIMPORTER=ON \
         -DWITH_BASISIMPORTER=ON \
         -DWITH_BASISIMAGECONVERTER=OFF \
         -DWITH_CGLTFIMPORTER=ON \
@@ -73,6 +74,7 @@ build() {
         -DCMAKE_INSTALL_PREFIX=/usr/x86_64-w64-mingw32 \
         -DBASIS_UNIVERSAL_DIR=/opt/basis-universal \
         -DWITH_ASSIMPIMPORTER=ON \
+        -DWITH_ASTCIMPORTER=ON \
         -DWITH_BASISIMAGECONVERTER=OFF \
         -DWITH_BASISIMPORTER=ON \
         -DWITH_CGLTFIMPORTER=ON \
