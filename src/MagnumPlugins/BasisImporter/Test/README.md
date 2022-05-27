@@ -27,7 +27,8 @@ They are converted using the official basis universal
 [conversion tool](https://github.com/BinomialLLC/basis_universal/#command-line-compression-tool).
 For `*.ktx2` files at least version 1.15 is required.
 
-To convert to all the required `*.basis`/`*.ktx2` files, run the `convert.sh` script.
+To convert to all the required `*.basis`/`*.ktx2` files, run the `convert.sh`
+script.
 
 Creating mipmaps
 ================
