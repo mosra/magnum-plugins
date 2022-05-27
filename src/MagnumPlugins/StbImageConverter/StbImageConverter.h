@@ -176,7 +176,7 @@ if you need to deal with 16-bit pixel formats.
 For some formats, it's possible to tune various output options through
 @ref configuration(). See below for all options and their default values:
 
-@snippet MagnumPlugins/StbImageConverter/StbImageConverter.conf config
+@snippet MagnumPlugins/StbImageConverter/StbImageConverter.conf configuration_
 
 See @ref plugins-configuration for more information and an example showing how
 to edit the configuration values.

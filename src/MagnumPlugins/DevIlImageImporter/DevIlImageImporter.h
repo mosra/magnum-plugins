@@ -216,12 +216,12 @@ doesn't support these, use @ref StbImageImporter for loading these instead.
 Based on the source it seems that DevIL parses only the composited view,
 importing individual layers is not possible.
 
-@section Trade-DevIlImageImporter-configuration Plugin-specific config
+@section Trade-DevIlImageImporter-configuration Plugin-specific configuration
 
 It's possible to tune various output options through @ref configuration(). See
 below for all options and their default values:
 
-@snippet MagnumPlugins/DevIlImageImporter/DevIlImageImporter.conf config
+@snippet MagnumPlugins/DevIlImageImporter/DevIlImageImporter.conf configuration_
 
 See @ref plugins-configuration for more information and an example showing how
 to edit the configuration values.

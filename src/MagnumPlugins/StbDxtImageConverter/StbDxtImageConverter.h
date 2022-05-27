@@ -132,7 +132,7 @@ compressed formats on import either.
 Various compressor options can be set through @ref configuration(). See below
 for all options and their default values:
 
-@snippet MagnumPlugins/StbDxtImageConverter/StbDxtImageConverter.conf config
+@snippet MagnumPlugins/StbDxtImageConverter/StbDxtImageConverter.conf configuration_
 
 See @ref plugins-configuration for more information and an example showing how
 to edit the configuration values.

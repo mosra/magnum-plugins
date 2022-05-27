@@ -127,12 +127,12 @@ implementations:
 Libjpeg has a switch to enable [arithmetic coding](https://en.wikipedia.org/wiki/Arithmetic_coding)
 instead of Huffman, however it's currently not exposed in the plugin.
 
-@section Trade-JpegImageConverter-configuration Plugin-specific config
+@section Trade-JpegImageConverter-configuration Plugin-specific configuration
 
 It's possible to tune various output options through @ref configuration(). See
 below for all options and their default values:
 
-@snippet MagnumPlugins/JpegImageConverter/JpegImageConverter.conf config
+@snippet MagnumPlugins/JpegImageConverter/JpegImageConverter.conf configuration_
 
 See @ref plugins-configuration for more information and an example showing how
 to edit the configuration values.

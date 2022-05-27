@@ -308,14 +308,14 @@ can control this using @ref setDebugInfoLevel():
     providing line info for the instructions and `OpModuleProcessed` describing
     what all processing steps were taken by Glslang
 
-@section ShaderTools-GlslangConverter-configuration Plugin-specific config
+@section ShaderTools-GlslangConverter-configuration Plugin-specific configuration
 
 It's possible to tune various compiler and validator options through
 @ref configuration(). There's also a configurable set of builtins and limits,
 affecting validation and compilation results. See below for all options and
 their default values.
 
-@snippet MagnumPlugins/GlslangShaderConverter/GlslangShaderConverter.conf config
+@snippet MagnumPlugins/GlslangShaderConverter/GlslangShaderConverter.conf configuration_
 
 See @ref plugins-configuration for more information and an example showing how
 to edit the configuration values.

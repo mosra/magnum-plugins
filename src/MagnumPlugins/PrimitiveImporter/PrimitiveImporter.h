@@ -121,14 +121,14 @@ Both objects and meshes can be accessed through name of the respective function
 in the @ref Primitives namespace (so e.g. loading a `uvSphereSolid` mesh will
 give you @ref Primitives::uvSphereSolid()).
 
-@section Trade-PrimitiveImporter-configuration Plugin-specific config
+@section Trade-PrimitiveImporter-configuration Plugin-specific configuration
 
 By default the primitives are created with the same options that were used to
 create screenshots in the @ref Primitives names. Those options can be then
 customized through various import options through @ref configuration(). See
 below for all options and their default values:
 
-@snippet MagnumPlugins/PrimitiveImporter/PrimitiveImporter.conf config
+@snippet MagnumPlugins/PrimitiveImporter/PrimitiveImporter.conf configuration_
 
 See @ref plugins-configuration for more information and an example showing how
 to edit the configuration values.

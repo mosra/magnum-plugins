@@ -199,7 +199,7 @@ that with the @cpp forceTiledOutput @ce option.
 It's possible to tune various options mainly for channel mapping through
 @ref configuration(). See below for all options and their default values:
 
-@snippet MagnumPlugins/OpenExrImageConverter/OpenExrImageConverter.conf config
+@snippet MagnumPlugins/OpenExrImageConverter/OpenExrImageConverter.conf configuration_
 
 See @ref plugins-configuration for more information and an example showing how
 to edit the configuration values.

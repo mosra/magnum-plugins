@@ -425,12 +425,12 @@ following defaults have been chosen for this importer:
 </li>
 </ul>
 
-@section Trade-TinyGltfImporter-configuration Plugin-specific config
+@section Trade-TinyGltfImporter-configuration Plugin-specific configuration
 
 It's possible to tune various output options through @ref configuration(). See
 below for all options and their default values.
 
-@snippet MagnumPlugins/TinyGltfImporter/TinyGltfImporter.conf config
+@snippet MagnumPlugins/TinyGltfImporter/TinyGltfImporter.conf configuration_
 
 See @ref plugins-configuration for more information and an example showing how
 to edit the configuration values.

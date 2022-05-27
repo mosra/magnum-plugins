@@ -137,12 +137,12 @@ and @ref MeshPrimitive::TriangleFan meshes are converted to indexed
 @ref MeshPrimitive::Triangles first; points, lines and other primitives are
 not supported.
 
-@section Trade-StanfordSceneConverter-configuration Plugin-specific config
+@section Trade-StanfordSceneConverter-configuration Plugin-specific configuration
 
 It's possible to tune various output options through @ref configuration(). See
 below for all options and their default values:
 
-@snippet MagnumPlugins/StanfordSceneConverter/StanfordSceneConverter.conf config
+@snippet MagnumPlugins/StanfordSceneConverter/StanfordSceneConverter.conf configuration_
 
 See @ref plugins-configuration for more information and an example showing how
 to edit the configuration values.

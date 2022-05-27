@@ -183,12 +183,12 @@ using @ref meshAttributeName() and @ref meshAttributeForName(). Attributes with
 unknown types cause the import to fail, as the format relies on knowing the
 type size.
 
-@section Trade-StanfordImporter-configuration Plugin-specific config
+@section Trade-StanfordImporter-configuration Plugin-specific configuration
 
 It's possible to tune various import options through @ref configuration(). See
 below for all options and their default values:
 
-@snippet MagnumPlugins/StanfordImporter/StanfordImporter.conf config
+@snippet MagnumPlugins/StanfordImporter/StanfordImporter.conf configuration_
 
 See @ref plugins-configuration for more information and an example showing how
 to edit the configuration values.

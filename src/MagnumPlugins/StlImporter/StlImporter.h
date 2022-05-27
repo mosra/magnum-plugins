@@ -110,12 +110,12 @@ Similarly to @ref StanfordImporter, ASCII files are not supported, only binary.
 The [non-standard extensions for vertex colors](https://en.wikipedia.org/wiki/STL_(file_format)#Color_in_binary_STL)
 are also not supported due to a lack of generally available files for testing.
 
-@section Trade-StlImporter-configuration Plugin-specific config
+@section Trade-StlImporter-configuration Plugin-specific configuration
 
 It's possible to tune various import options through @ref configuration(). See
 below for all options and their default values:
 
-@snippet MagnumPlugins/StlImporter/StlImporter.conf config
+@snippet MagnumPlugins/StlImporter/StlImporter.conf configuration_
 
 See @ref plugins-configuration for more information and an example showing how
 to edit the configuration values.

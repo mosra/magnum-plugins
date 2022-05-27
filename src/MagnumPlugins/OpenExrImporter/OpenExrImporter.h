@@ -212,7 +212,7 @@ with zero height, the smallest levels are ignored, with a message printed if
 It's possible to tune various options mainly for channel mapping through
 @ref configuration(). See below for all options and their default values:
 
-@snippet MagnumPlugins/OpenExrImporter/OpenExrImporter.conf config
+@snippet MagnumPlugins/OpenExrImporter/OpenExrImporter.conf configuration_
 
 See @ref plugins-configuration for more information and an example showing how
 to edit the configuration values.

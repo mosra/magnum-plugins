@@ -399,12 +399,12 @@ following defaults have been chosen for this importer:
 </li>
 </ul>
 
-@section Trade-GltfImporter-configuration Plugin-specific config
+@section Trade-GltfImporter-configuration Plugin-specific configuration
 
 It's possible to tune various output options through @ref configuration(). See
 below for all options and their default values.
 
-@snippet MagnumPlugins/GltfImporter/GltfImporter.conf config
+@snippet MagnumPlugins/GltfImporter/GltfImporter.conf configuration_
 
 See @ref plugins-configuration for more information and an example showing how
 to edit the configuration values.

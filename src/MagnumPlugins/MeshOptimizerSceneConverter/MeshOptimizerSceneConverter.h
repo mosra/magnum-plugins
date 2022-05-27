@@ -155,12 +155,12 @@ to new locations. It only requires the mesh to have a position attribute, mesh
 connectivity and face seams are figured out from the index buffer. As with all
 other operations, all original attributes are preserved.
 
-@section Trade-MeshOptimizerSceneConverter-configuration Plugin-specific config
+@section Trade-MeshOptimizerSceneConverter-configuration Plugin-specific configuration
 
 It's possible to tune various output options through @ref configuration(). See
 below for all options and their default values:
 
-@snippet MagnumPlugins/MeshOptimizerSceneConverter/MeshOptimizerSceneConverter.conf config
+@snippet MagnumPlugins/MeshOptimizerSceneConverter/MeshOptimizerSceneConverter.conf configuration_
 
 See @ref plugins-configuration for more information and an example showing how
 to edit the configuration values.

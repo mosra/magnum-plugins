@@ -250,14 +250,14 @@ ones:
 Default if no version string is specified is `vulkan1.0`. There's no variant
 for OpenGL 4.4.
 
-@section ShaderTools-SpirvToolsConverter-configuration Plugin-specific config
+@section ShaderTools-SpirvToolsConverter-configuration Plugin-specific configuration
 
 It's possible to tune various assembler, disassembler and validator options
 through @ref configuration(). The assembler options are used also during
 validation in case the input is a SPIR-V assembly. See below for all options
 and their default values.
 
-@snippet MagnumPlugins/SpirvToolsShaderConverter/SpirvToolsShaderConverter.conf config
+@snippet MagnumPlugins/SpirvToolsShaderConverter/SpirvToolsShaderConverter.conf configuration_
 
 See @ref plugins-configuration for more information and an example showing how
 to edit the configuration values.
