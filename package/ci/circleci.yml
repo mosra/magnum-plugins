@@ -327,7 +327,6 @@ jobs:
     - install-base-linux:
         extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng12-dev libdevil-dev libharfbuzz-dev libassimp-dev wget
     # Crashes or gets stuck with the default setting, only on GCC
-    # TODO drop when TinyGltfImporter and the json.hpp insanity is gone
     - cap-ninja-jobs
     - install-gcc-4_8
     - install-cmake:
@@ -376,7 +375,6 @@ jobs:
     - install-base-linux:
         extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng12-dev libdevil-dev libharfbuzz-dev libassimp-dev wget
     # Crashes or gets stuck with the default setting, only on GCC
-    # TODO drop when TinyGltfImporter and the json.hpp insanity is gone
     - cap-ninja-jobs
     - install-gcc-4_8
     - install-cmake:
@@ -408,7 +406,6 @@ jobs:
     - install-base-linux:
         extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng12-dev libdevil-dev libharfbuzz-dev libassimp-dev wget
     # Crashes or gets stuck with the default setting, only on GCC
-    # TODO drop when TinyGltfImporter and the json.hpp insanity is gone
     - cap-ninja-jobs
     - install-gcc-4_8
     - install-cmake:
