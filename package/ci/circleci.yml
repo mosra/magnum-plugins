@@ -537,6 +537,11 @@ jobs:
     executor: android-29
     steps:
     - install-base-android
+    # We need ctest --timeout for flaky adb push, which is since 3.17. The
+    # image had 3.16.3 by default, so it's just a small jump.
+    - install-cmake:
+        version: "3.17.5"
+        sudo: sudo
     # Zstd built inside android-x86.sh instead of using install-zstd as it
     # needs the toolchain etc
     - install-basis
