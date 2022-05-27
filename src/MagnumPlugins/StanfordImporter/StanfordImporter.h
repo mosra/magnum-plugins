@@ -210,7 +210,6 @@ class MAGNUM_STANFORDIMPORTER_EXPORT StanfordImporter: public AbstractImporter {
         MAGNUM_STANFORDIMPORTER_LOCAL void doOpenData(Containers::Array<char>&& data, DataFlags dataFlags) override;
         MAGNUM_STANFORDIMPORTER_LOCAL void doClose() override;
 
-
         MAGNUM_STANFORDIMPORTER_LOCAL UnsignedInt doMeshCount() const override;
         MAGNUM_STANFORDIMPORTER_LOCAL UnsignedInt doMeshLevelCount(UnsignedInt id) override;
         MAGNUM_STANFORDIMPORTER_LOCAL Containers::Optional<MeshData> doMesh(UnsignedInt id, UnsignedInt level) override;
