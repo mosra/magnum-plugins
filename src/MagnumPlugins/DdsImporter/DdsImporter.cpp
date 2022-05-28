@@ -41,6 +41,8 @@
 
 namespace Magnum { namespace Trade {
 
+using namespace Containers::Literals;
+
 namespace {
 
 /* Flags to indicate which members of a DdsHeader contain valid data */
@@ -104,8 +106,11 @@ CORRADE_ENUMSET_OPERATORS(DdsCaps2)
 #pragma clang diagnostic pop
 #endif
 
-/* DDS file header struct */
+/* DDS file header struct. Microsoft says that the header has 124 bytes and one
+   should apparently check the signature separately? Why so complicated?
+   https://docs.microsoft.com/en-us/windows/win32/direct3ddds/dds-header */
 struct DdsHeader {
+    char signature[4]; /* DDS<space> */
     UnsignedInt size;
     DdsDescriptionFlags flags;
     UnsignedInt height;
@@ -134,7 +139,7 @@ struct DdsHeader {
     UnsignedInt reserved2;
 };
 
-static_assert(sizeof(DdsHeader) + 4 == 128, "Improper size of DdsHeader struct");
+static_assert(sizeof(DdsHeader) == 128, "Improper size of DdsHeader struct");
 
 /* DDS file header extension for DXGI pixel formats */
 enum class DdsDimension: UnsignedInt {
@@ -190,11 +195,6 @@ struct DdsImporter::File {
         Containers::ArrayView<char> data;
     };
 
-    /* Returns the new offset of an image in an array for current pixel type
-       or 0 if the file is not large enough. Offset is always at least
-       sizeof(DdsHeader) in healthy cases. */
-    std::size_t addImageDataOffset(const Vector3i& dims, std::size_t offset);
-
     Containers::Array<char> in;
 
     bool compressed;
@@ -208,21 +208,6 @@ struct DdsImporter::File {
 
     Containers::Array<ImageDataOffset> imageData;
 };
-
-std::size_t DdsImporter::File::addImageDataOffset(const Vector3i& dims, const std::size_t offset) {
-    const std::size_t size = compressed ?
-        (dims.z()*((dims.x() + 3)/4)*(((dims.y() + 3)/4))*((pixelFormat.compressed == CompressedPixelFormat::Bc1RGBAUnorm) ? 8 : 16)) :
-        dims.product()*pixelSize(pixelFormat.uncompressed);
-
-    const size_t end = offset + size;
-    if(in.size() < end) {
-        return 0;
-    }
-
-    arrayAppend(imageData, InPlaceInit, dims, in.slice(offset, end));
-
-    return end;
-}
 
 DdsImporter::DdsImporter() = default;
 
@@ -247,17 +232,19 @@ void DdsImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dat
         Utility::copy(data, f->in);
     }
 
-    constexpr size_t MagicNumberSize = 4;
-    /* Read magic number to verify this is a dds file. */
-    if(strncmp(f->in.prefix(MagicNumberSize).data(), "DDS ", MagicNumberSize) != 0) {
-        Error() << "Trade::DdsImporter::openData(): wrong file signature";
+    /* Read in DDS header */
+    if(f->in.size() < sizeof(DdsHeader)) {
+        Error{} << "Trade::DdsImporter::openData(): file too short, expected at least" << sizeof(DdsHeader) << "bytes but got" << f->in.size();
         return;
     }
-    std::size_t offset = MagicNumberSize;
+    const DdsHeader& ddsh = *reinterpret_cast<const DdsHeader*>(f->in.data());
+    std::size_t offset = sizeof(DdsHeader);
 
-    /* Read in DDS header */
-    const DdsHeader& ddsh = *reinterpret_cast<const DdsHeader*>(f->in.exceptPrefix(offset).data());
-    offset += sizeof(DdsHeader);
+    /* Verify file signature */
+    if(Containers::StringView{ddsh.signature, 4} != "DDS "_s) {
+        Error() << "Trade::DdsImporter::openData(): invalid file signature" << Containers::StringView{ddsh.signature, 4};
+        return;
+    }
 
     /* Check if image is a 2D or 3D texture */
     f->volume = ((ddsh.caps2 & DdsCap2::Volume) && (ddsh.depth > 0));
@@ -281,11 +268,11 @@ void DdsImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dat
                 f->pixelFormat.compressed = CompressedPixelFormat::Bc3RGBAUnorm;
                 break;
             case Utility::Endianness::fourCC('D', 'X', '1', '0'): {
-                if(f->in.exceptPrefix(offset).size() < sizeof(DdsHeaderDxt10)) {
-                    Error() << "Trade::DdsImporter::openData(): fourcc was DX10 but file is too short to contain DXT10 header";
+                if(f->in.size() < sizeof(DdsHeader) + sizeof(DdsHeaderDxt10)) {
+                    Error{} << "Trade::DdsImporter::openData(): DXT10 file too short, expected at least" << sizeof(DdsHeader) + sizeof(DdsHeaderDxt10) << "bytes but got" << f->in.size();
                     return;
                 }
-                const DdsHeaderDxt10& dxt10 = *reinterpret_cast<const DdsHeaderDxt10*>(f->in.exceptPrefix(offset).data());
+                const DdsHeaderDxt10& dxt10 = *reinterpret_cast<const DdsHeaderDxt10*>(f->in.data() + sizeof(DdsHeader));
                 offset += sizeof(DdsHeaderDxt10);
 
                 if(dxt10.dxgiFormat >= Containers::arraySize(DxgiFormatMapping)) {
@@ -371,11 +358,19 @@ void DdsImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dat
 
         /* Load all mipmaps for current surface */
         for(UnsignedInt i = 0; i < numMipmaps; ++i) {
-            offset = f->addImageDataOffset(mipSize, offset);
-            if(offset == 0) {
-                Error() << "Trade::DdsImporter::openData(): not enough image data";
+            const std::size_t size = f->compressed ?
+                (mipSize.z()*((mipSize.x() + 3)/4)*(((mipSize.y() + 3)/4))*((f->pixelFormat.compressed == CompressedPixelFormat::Bc1RGBAUnorm) ? 8 : 16)) :
+                mipSize.product()*pixelSize(f->pixelFormat.uncompressed);
+
+            const std::size_t end = offset + size;
+            if(f->in.size() < end) {
+                Error() << "Trade::DdsImporter::openData(): file too short, expected" << end << "bytes for image" << n << "level" << i << "but got" << f->in.size();
                 return;
             }
+
+            arrayAppend(f->imageData, InPlaceInit, mipSize, f->in.slice(offset, end));
+
+            offset = end;
 
             /* Shrink to next power of 2 */
             mipSize = Math::max(mipSize >> 1, Vector3i{1});

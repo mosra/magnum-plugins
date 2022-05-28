@@ -50,8 +50,6 @@ struct DdsImporterTest: TestSuite::Tester {
     void enumValueMatching();
 
     void invalid();
-    void insufficientData();
-    void dxt10TooShort();
 
     void rgb();
     void rgDxt10();
@@ -212,18 +210,30 @@ const struct {
 const struct {
     const char* name;
     const char* filename;
+    Containers::Optional<std::size_t> size;
     const char* message;
 } InvalidData[]{
-    {"wrong file signature", "wrong-signature.dds",
-        "wrong file signature"},
-    {"unknown compression", "dxt4.dds",
+    {"wrong file signature", "wrong-signature.dds", {},
+        "invalid file signature SSD "},
+    {"unknown compression", "dxt4.dds", {},
         "unknown compression DXT4"},
-    {"unknown format", "unknown-format.dds",
+    {"unknown format", "unknown-format.dds", {},
         "unknown format"},
-    {"DXT10 format unsupported", "dxt10-ayuv.dds",
+    {"DXT10 format unsupported", "dxt10-ayuv.dds", {},
         "unsupported format DXGI_FORMAT_AYUV"},
-    {"DXT10 format out of bounds", "dxt10-v408.dds",
-        "unknown DXGI format ID 132"}
+    {"DXT10 format out of bounds", "dxt10-v408.dds", {},
+        "unknown DXGI format ID 132"},
+    {"empty file", "bgr8unorm.dds", 0,
+        "file too short, expected at least 128 bytes but got 0"},
+    {"header too short", "bgr8unorm.dds", 127,
+        "file too short, expected at least 128 bytes but got 127"},
+    {"DX10 header too short", "dxt10-rgba8unorm.dds", 128 + 19,
+        "DXT10 file too short, expected at least 148 bytes but got 147"},
+    {"file too short", "bgr8unorm.dds", 145, /* original is 146 */
+        "file too short, expected 146 bytes for image 0 level 0 but got 145"},
+    {"file with mips too short", "bgr8unorm-mips.dds", 148, /* original is 149 */
+        "file too short, expected 149 bytes for image 0 level 1 but got 148"},
+    /** @todo cubemap file too short */
 };
 
 constexpr struct {
@@ -276,9 +286,6 @@ DdsImporterTest::DdsImporterTest() {
     addInstancedTests({&DdsImporterTest::invalid},
         Containers::arraySize(InvalidData));
 
-    addTests({&DdsImporterTest::insufficientData,
-              &DdsImporterTest::dxt10TooShort});
-
     addInstancedTests({&DdsImporterTest::rgb},
         Containers::arraySize(VerboseData));
 
@@ -329,32 +336,13 @@ void DdsImporterTest::invalid() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
+    Containers::Optional<Containers::Array<char>> in = Utility::Path::read(Utility::Path::join(DDSIMPORTER_TEST_DIR, data.filename));
+    CORRADE_VERIFY(in);
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(!importer->openFile(Utility::Path::join(DDSIMPORTER_TEST_DIR, data.filename)));
+    CORRADE_VERIFY(!importer->openData(data.size ? in->prefix(*data.size) : *in));
     CORRADE_COMPARE(out.str(), Utility::formatString("Trade::DdsImporter::openData(): {}\n", data.message));
-}
-
-void DdsImporterTest::insufficientData() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
-
-    Containers::Optional<Containers::Array<char>> data = Utility::Path::read(Utility::Path::join(DDSIMPORTER_TEST_DIR, "bgr8unorm.dds"));
-    CORRADE_VERIFY(data);
-
-    std::ostringstream out;
-    Error redirectError{&out};
-    CORRADE_VERIFY(!importer->openData(data->exceptSuffix(1)));
-    CORRADE_COMPARE(out.str(), "Trade::DdsImporter::openData(): not enough image data\n");
-}
-
-void DdsImporterTest::dxt10TooShort() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
-
-    std::ostringstream out;
-    Error redirectError{&out};
-    CORRADE_VERIFY(!importer->openFile(Utility::Path::join(DDSIMPORTER_TEST_DIR, "dxt10-too-short.dds")));
-    CORRADE_COMPARE(out.str(), "Trade::DdsImporter::openData(): fourcc was DX10 but file is too short to contain DXT10 header\n");
 }
 
 void DdsImporterTest::rgb() {

@@ -186,6 +186,8 @@ namespace Magnum {
     @relativeref{Trade,GltfImporter} now correctly propagate
     @ref Trade::ImporterFlags to delegated image importer plugins, instead of
     the setting (such as verbose output) affecting only the top-level plugin
+-   Fixed a few cases where @relativeref{Trade,DdsImporter} could assert or
+    crash when encountering a premature end of file
 -   @ref Trade::JpegImageConverter "JpegImageConverter" was mistakenly using
     the `BUILD_STATIC` CMake option instead of `BUILD_PLUGINS_STATIC`
 -   Fixed @ref Trade::BasisImporter "BasisImporter" to work with direct

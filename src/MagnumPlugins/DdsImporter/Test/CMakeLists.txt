@@ -64,7 +64,6 @@ corrade_add_test(DdsImporterTest
         dxt10-rg32f.dds
         dxt10-rg8unorm.dds
         dxt10-r32i-mips.dds
-        dxt10-too-short.dds
         dxt10-v408.dds
         dxt3.dds
         dxt4.dds
