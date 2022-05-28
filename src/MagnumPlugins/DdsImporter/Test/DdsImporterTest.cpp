@@ -218,7 +218,7 @@ const struct {
     {"unknown compression", "dxt4.dds", {},
         "unknown compression DXT4"},
     {"unknown format", "unknown-format.dds", {},
-        "unknown format"},
+        "unknown 64 bits per pixel format with a RGBA mask {0xff0000, 0xff00, 0xff, 0x0}"},
     {"DXT10 format unsupported", "dxt10-ayuv.dds", {},
         "unsupported format DXGI_FORMAT_AYUV"},
     {"DXT10 format out of bounds", "dxt10-v408.dds", {},

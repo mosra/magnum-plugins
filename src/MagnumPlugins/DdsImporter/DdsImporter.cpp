@@ -342,7 +342,7 @@ void DdsImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dat
         f->needsSwizzle = false;
 
     } else {
-        Error() << "Trade::DdsImporter::openData(): unknown format";
+        Error() << "Trade::DdsImporter::openData(): unknown" << ddsh.ddspf.rgbBitCount << "bits per pixel format with a RGBA mask" << Debug::packed << Math::Vector4<void*>{reinterpret_cast<void*>(ddsh.ddspf.rBitMask), reinterpret_cast<void*>(ddsh.ddspf.gBitMask), reinterpret_cast<void*>(ddsh.ddspf.bBitMask), reinterpret_cast<void*>(ddsh.ddspf.aBitMask)};
         return;
     }
 
