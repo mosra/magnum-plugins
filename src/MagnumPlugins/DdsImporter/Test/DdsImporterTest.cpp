@@ -55,7 +55,7 @@ struct DdsImporterTest: TestSuite::Tester {
     void rgDxt10();
     void rgbMips();
     void rgbMipsDxt10();
-    void rgb3D();
+    void rgba3D();
     void rgba3DDxt10();
 
     void dxt3();
@@ -238,14 +238,30 @@ const struct {
 
 constexpr struct {
     const char* name;
+    const char* filename;
     ImporterFlags flags;
-    const char* message2D;
-    const char* message3D;
-} VerboseData[] {
-    {"", {}, "", ""},
-    {"verbose", ImporterFlag::Verbose,
-        "Trade::DdsImporter::image2D(): converting from BGR to RGB\n",
-        "Trade::DdsImporter::image3D(): converting from BGR to RGB\n"}
+    const char* message;
+} SwizzleData[] {
+    {"BGR", "bgr8unorm.dds", {},
+        ""},
+    {"BGR, verbose", "bgr8unorm.dds", ImporterFlag::Verbose,
+        "Trade::DdsImporter::image2D(): converting from BGR to RGB\n"},
+    {"RGB, verbose", "rgb8unorm.dds", ImporterFlag::Verbose,
+        ""},
+};
+
+constexpr struct {
+    const char* name;
+    const char* filename;
+    ImporterFlags flags;
+    const char* message;
+} Swizzle3DData[] {
+    {"BGRA", "bgra8unorm-3d.dds", {},
+        ""},
+    {"BGRA, verbose", "bgra8unorm-3d.dds", ImporterFlag::Verbose,
+        "Trade::DdsImporter::image3D(): converting from BGRA to RGBA\n"},
+    {"RGBA, verbose", "rgba8unorm-3d.dds", ImporterFlag::Verbose,
+        ""},
 };
 
 constexpr struct {
@@ -287,17 +303,15 @@ DdsImporterTest::DdsImporterTest() {
         Containers::arraySize(InvalidData));
 
     addInstancedTests({&DdsImporterTest::rgb},
-        Containers::arraySize(VerboseData));
+        Containers::arraySize(SwizzleData));
 
-    addTests({&DdsImporterTest::rgDxt10});
+    addTests({&DdsImporterTest::rgDxt10,
 
-    addInstancedTests({&DdsImporterTest::rgbMips},
-        Containers::arraySize(VerboseData));
+              &DdsImporterTest::rgbMips,
+              &DdsImporterTest::rgbMipsDxt10});
 
-    addTests({&DdsImporterTest::rgbMipsDxt10});
-
-    addInstancedTests({&DdsImporterTest::rgb3D},
-        Containers::arraySize(VerboseData));
+    addInstancedTests({&DdsImporterTest::rgba3D},
+        Containers::arraySize(Swizzle3DData));
 
     addTests({&DdsImporterTest::rgba3DDxt10,
 
@@ -346,12 +360,12 @@ void DdsImporterTest::invalid() {
 }
 
 void DdsImporterTest::rgb() {
-    auto&& data = VerboseData[testCaseInstanceId()];
+    auto&& data = SwizzleData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
     importer->setFlags(data.flags);
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(DDSIMPORTER_TEST_DIR, "bgr8unorm.dds")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(DDSIMPORTER_TEST_DIR, data.filename)));
     CORRADE_COMPARE(importer->image2DCount(), 1);
     CORRADE_COMPARE(importer->image2DLevelCount(0), 1);
     CORRADE_COMPARE(importer->image3DCount(), 0);
@@ -375,7 +389,7 @@ void DdsImporterTest::rgb() {
         '\xde', '\xad', '\xb5',
         '\xca', '\xfe', '\x77'
     }), TestSuite::Compare::Container);
-    CORRADE_COMPARE(out.str(), data.message2D);
+    CORRADE_COMPARE(out.str(), data.message);
 }
 
 void DdsImporterTest::rgDxt10() {
@@ -398,23 +412,14 @@ void DdsImporterTest::rgDxt10() {
 }
 
 void DdsImporterTest::rgbMips() {
-    auto&& data = VerboseData[testCaseInstanceId()];
-    setTestCaseDescription(data.name);
-
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
-    importer->setFlags(data.flags);
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(DDSIMPORTER_TEST_DIR, "bgr8unorm-mips.dds")));
     CORRADE_COMPARE(importer->image2DCount(), 1);
     CORRADE_COMPARE(importer->image2DLevelCount(0), 2);
     CORRADE_COMPARE(importer->image3DCount(), 0);
 
     {
-        std::ostringstream out;
-        Containers::Optional<ImageData2D> image;
-        {
-            Debug redirectOutput{&out};
-            image = importer->image2D(0);
-        }
+        Containers::Optional<ImageData2D> image = importer->image2D(0);
         CORRADE_VERIFY(image);
         CORRADE_VERIFY(!image->isCompressed());
         CORRADE_COMPARE(image->storage().alignment(), 1);
@@ -428,14 +433,8 @@ void DdsImporterTest::rgbMips() {
             '\xde', '\xad', '\xb5',
             '\xca', '\xfe', '\x77'
         }), TestSuite::Compare::Container);
-        CORRADE_COMPARE(out.str(), data.message2D);
     } {
-        std::ostringstream out;
-        Containers::Optional<ImageData2D> image;
-        {
-            Debug redirectOutput{&out};
-            image = importer->image2D(0, 1);
-        }
+        Containers::Optional<ImageData2D> image = importer->image2D(0, 1);
         CORRADE_VERIFY(image);
         CORRADE_VERIFY(!image->isCompressed());
         CORRADE_COMPARE(image->storage().alignment(), 1);
@@ -444,7 +443,6 @@ void DdsImporterTest::rgbMips() {
         CORRADE_COMPARE_AS(image->data(), Containers::arrayView({
             '\xd4', '\xd5', '\x96'
         }), TestSuite::Compare::Container);
-        CORRADE_COMPARE(out.str(), data.message2D);
     }
 }
 
@@ -485,13 +483,13 @@ void DdsImporterTest::rgbMipsDxt10() {
     }
 }
 
-void DdsImporterTest::rgb3D() {
-    auto&& data = VerboseData[testCaseInstanceId()];
+void DdsImporterTest::rgba3D() {
+    auto&& data = Swizzle3DData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
     importer->setFlags(data.flags);
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(DDSIMPORTER_TEST_DIR, "bgr8unorm-3d.dds")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(DDSIMPORTER_TEST_DIR, data.filename)));
     CORRADE_COMPARE(importer->image2DCount(), 0);
     CORRADE_COMPARE(importer->image3DCount(), 1);
     CORRADE_COMPARE(importer->image3DLevelCount(0), 1);
@@ -504,35 +502,35 @@ void DdsImporterTest::rgb3D() {
     }
     CORRADE_VERIFY(image);
     CORRADE_VERIFY(!image->isCompressed());
-    CORRADE_COMPARE(image->storage().alignment(), 1);
+    CORRADE_COMPARE(image->storage().alignment(), 4);
     CORRADE_COMPARE(image->size(), Vector3i(3, 2, 3));
-    CORRADE_COMPARE(image->format(), PixelFormat::RGB8Unorm);
+    CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Unorm);
     CORRADE_COMPARE_AS(image->data(), Containers::arrayView<char>({
         /* Slice 0 */
-        '\xde', '\xad', '\xb5',
-        '\xca', '\xfe', '\x77',
-        '\xde', '\xad', '\xb5',
-        '\xca', '\xfe', '\x77',
-        '\xde', '\xad', '\xb5',
-        '\xca', '\xfe', '\x77',
+        '\xde', '\xad', '\xb5', '\x00',
+        '\xca', '\xfe', '\x77', '\x11',
+        '\xde', '\xad', '\xb5', '\x22',
+        '\xca', '\xfe', '\x77', '\x33',
+        '\xde', '\xad', '\xb5', '\x44',
+        '\xca', '\xfe', '\x77', '\x55',
 
         /* Slice 1 */
-        '\xca', '\xfe', '\x77',
-        '\xde', '\xad', '\xb5',
-        '\xca', '\xfe', '\x77',
-        '\xde', '\xad', '\xb5',
-        '\xca', '\xfe', '\x77',
-        '\xde', '\xad', '\xb5',
+        '\xca', '\xfe', '\x77', '\x66',
+        '\xde', '\xad', '\xb5', '\x77',
+        '\xca', '\xfe', '\x77', '\x88',
+        '\xde', '\xad', '\xb5', '\x99',
+        '\xca', '\xfe', '\x77', '\xaa',
+        '\xde', '\xad', '\xb5', '\xbb',
 
         /* Slice 2 */
-        '\xde', '\xad', '\xb5',
-        '\xca', '\xfe', '\x77',
-        '\xde', '\xad', '\xb5',
-        '\xca', '\xfe', '\x77',
-        '\xde', '\xad', '\xb5',
-        '\xca', '\xfe', '\x77'
+        '\xde', '\xad', '\xb5', '\xcc',
+        '\xca', '\xfe', '\x77', '\xdd',
+        '\xde', '\xad', '\xb5', '\xee',
+        '\xca', '\xfe', '\x77', '\xff',
+        '\xde', '\xad', '\xb5', '\x00',
+        '\xca', '\xfe', '\x77', '\x11'
     }), TestSuite::Compare::Container);
-    CORRADE_COMPARE(out.str(), data.message3D);
+    CORRADE_COMPARE(out.str(), data.message);
 }
 
 void DdsImporterTest::rgba3DDxt10() {

@@ -69,8 +69,10 @@ corrade_add_test(DdsImporterTest
         dxt4.dds
         dxt5.dds
         bgr8unorm.dds
+        rgb8unorm.dds
         bgr8unorm-mips.dds
-        bgr8unorm-3d.dds
+        bgra8unorm-3d.dds
+        rgba8unorm-3d.dds
         unknown-format.dds
         wrong-signature.dds)
 target_include_directories(DdsImporterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>)
