@@ -55,16 +55,6 @@ enum class DdsDescriptionFlag: UnsignedInt {
     Depth = 0x00800000
 };
 
-typedef Corrade::Containers::EnumSet<DdsDescriptionFlag> DdsDescriptionFlags;
-#ifdef CORRADE_TARGET_CLANG
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunused-function"
-#endif
-CORRADE_ENUMSET_OPERATORS(DdsDescriptionFlags)
-#ifdef CORRADE_TARGET_CLANG
-#pragma clang diagnostic pop
-#endif
-
 /* Direct Draw Surface pixel format */
 enum class DdsPixelFormatFlag: UnsignedInt {
     AlphaPixels = 0x00000001,
@@ -73,38 +63,19 @@ enum class DdsPixelFormatFlag: UnsignedInt {
     RGBA = 0x00000041
 };
 
-typedef Corrade::Containers::EnumSet<DdsPixelFormatFlag> DdsPixelFormatFlags;
-#ifdef CORRADE_TARGET_CLANG
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunused-function"
-#endif
-CORRADE_ENUMSET_OPERATORS(DdsPixelFormatFlags)
-#ifdef CORRADE_TARGET_CLANG
-#pragma clang diagnostic pop
-#endif
-
-/* Specifies the complexity of the surfaces stored */
+/* Specifies the complexity of the surfaces stored. Just for completeness,
+   not used in the code. */
 enum class DdsCap1: UnsignedInt {
     /* Set for files that contain more than one surface (a mipmap, a cubic
        environment map, or mipmapped volume texture) */
     Complex = 0x00000008,
-    /* Texture (required). */
+    /* Texture (required) */
     Texture = 0x00001000,
-    /* Is set for mipmaps. */
+    /* Is set for mipmaps */
     MipMap = 0x00400000
 };
 
-typedef Corrade::Containers::EnumSet<DdsCap1> DdsCaps1;
-#ifdef CORRADE_TARGET_CLANG
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunused-function"
-#endif
-CORRADE_ENUMSET_OPERATORS(DdsCaps1)
-#ifdef CORRADE_TARGET_CLANG
-#pragma clang diagnostic pop
-#endif
-
-/** Additional detail about the surfaces stored */
+/* Additional detail about the surfaces stored */
 enum class DdsCap2: UnsignedInt {
     Cubemap = 0x00000200,
     CubemapPositiveX = 0x00000400,
@@ -113,23 +84,27 @@ enum class DdsCap2: UnsignedInt {
     CubemapNegativeY = 0x00002000,
     CubemapPositiveZ = 0x00004000,
     CubemapNegativeZ = 0x00008000,
-    CubemapAllFaces = 0x0000FC00,
+    CubemapAllFaces = 0x0000fc00,
     Volume = 0x00200000
 };
 
-typedef Corrade::Containers::EnumSet<DdsCap2> DdsCaps2;
+typedef Containers::EnumSet<DdsDescriptionFlag> DdsDescriptionFlags;
+typedef Containers::EnumSet<DdsPixelFormatFlag> DdsPixelFormatFlags;
+typedef Containers::EnumSet<DdsCap1> DdsCaps1;
+typedef Containers::EnumSet<DdsCap2> DdsCaps2;
 #ifdef CORRADE_TARGET_CLANG
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-function"
 #endif
+CORRADE_ENUMSET_OPERATORS(DdsDescriptionFlags)
+CORRADE_ENUMSET_OPERATORS(DdsPixelFormatFlags)
+CORRADE_ENUMSET_OPERATORS(DdsCaps1)
 CORRADE_ENUMSET_OPERATORS(DdsCaps2)
 #ifdef CORRADE_TARGET_CLANG
 #pragma clang diagnostic pop
 #endif
 
-/*
- * Compressed texture type.
- */
+/* Compressed texture type. */
 enum class DdsCompressionType: UnsignedInt {
     /* MAKEFOURCC('D','X','T','1'). */
     DXT1 = 0x31545844,
@@ -145,6 +120,36 @@ enum class DdsCompressionType: UnsignedInt {
     DXT10 = 0x30315844
 };
 
+/* DDS file header struct */
+struct DdsHeader {
+    UnsignedInt size;
+    DdsDescriptionFlags flags;
+    UnsignedInt height;
+    UnsignedInt width;
+    UnsignedInt pitchOrLinearSize;
+    UnsignedInt depth;
+    UnsignedInt mipMapCount;
+    UnsignedInt reserved1[11];
+    struct {
+        UnsignedInt size;
+        DdsPixelFormatFlags flags;
+        UnsignedInt fourCC;
+        UnsignedInt rgbBitCount;
+        UnsignedInt rBitMask;
+        UnsignedInt gBitMask;
+        UnsignedInt bBitMask;
+        UnsignedInt aBitMask;
+    } ddspf; /* Pixel format */
+    DdsCaps1 caps;
+    DdsCaps2 caps2;
+    UnsignedInt caps3;
+    UnsignedInt caps4;
+    UnsignedInt reserved2;
+};
+
+static_assert(sizeof(DdsHeader) + 4 == 128, "Improper size of DdsHeader struct");
+
+/* DDS file header extension for DXGI pixel formats */
 enum class DdsDimension: UnsignedInt {
     Unknown = 0,
     /* 1 is unused (= D3D10 Resource Dimension Buffer) */
@@ -153,16 +158,16 @@ enum class DdsDimension: UnsignedInt {
     Texture3D = 4,
 };
 
+enum class DdsMiscFlag: UnsignedInt {
+    TextureCube = 4,
+};
+
 enum class DdsAlphaMode: UnsignedInt {
     Unknown = 0,
     Straight = 1,
     Premultiplied = 2,
     Opaque = 3,
     Custom = 4,
-};
-
-enum class DdsMiscFlag: UnsignedInt {
-    TextureCube = 4,
 };
 
 enum class DxgiFormat: UnsignedInt {
@@ -287,6 +292,14 @@ enum class DxgiFormat: UnsignedInt {
     V408 = 132,
 };
 
+struct DdsHeaderDxt10 {
+    DxgiFormat dxgiFormat;
+    DdsDimension resourceDimension;
+    DdsMiscFlag miscFlag;
+    UnsignedInt arraySize;
+    DdsAlphaMode miscFlags2;
+};
+
 /* String from given fourcc integer */
 inline Containers::StringView fourcc(const UnsignedInt& enc) {
     return {reinterpret_cast<const char*>(&enc), 4};
@@ -389,45 +402,6 @@ PixelFormat dxgiToGl(DxgiFormat format) {
     };
 }
 
-/* DDS file header struct */
-struct DdsHeader {
-    UnsignedInt size;
-    DdsDescriptionFlags flags;
-    UnsignedInt height;
-    UnsignedInt width;
-    UnsignedInt pitchOrLinearSize;
-    UnsignedInt depth;
-    UnsignedInt mipMapCount;
-    UnsignedInt reserved1[11];
-    struct {
-        /* pixel format */
-        UnsignedInt size;
-        DdsPixelFormatFlags flags;
-        UnsignedInt fourCC;
-        UnsignedInt rgbBitCount;
-        UnsignedInt rBitMask;
-        UnsignedInt gBitMask;
-        UnsignedInt bBitMask;
-        UnsignedInt aBitMask;
-    } ddspf;
-    DdsCaps1 caps;
-    DdsCaps2 caps2;
-    UnsignedInt caps3;
-    UnsignedInt caps4;
-    UnsignedInt reserved2;
-};
-
-static_assert(sizeof(DdsHeader) + 4 == 128, "Improper size of DdsHeader struct");
-
-/* DDS file header extension for DXGI pixel formats */
-struct DdsHeaderDxt10 {
-    DxgiFormat dxgiFormat;
-    DdsDimension resourceDimension;
-    DdsMiscFlag miscFlag;
-    UnsignedInt arraySize;
-    DdsAlphaMode miscFlags2;
-};
-
 }
 
 struct DdsImporter::File {
@@ -437,8 +411,8 @@ struct DdsImporter::File {
     };
 
     /* Returns the new offset of an image in an array for current pixel type
-       or 0 if the file is not large enough.
-       (Offset is always at least sizeof(DdsHeader) in healthy cases.) */
+       or 0 if the file is not large enough. Offset is always at least
+       sizeof(DdsHeader) in healthy cases. */
     std::size_t addImageDataOffset(const Vector3i& dims, std::size_t offset);
 
     Containers::Array<char> in;
@@ -494,23 +468,23 @@ void DdsImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dat
     }
 
     constexpr size_t MagicNumberSize = 4;
-    /* read magic number to verify this is a dds file. */
+    /* Read magic number to verify this is a dds file. */
     if(strncmp(f->in.prefix(MagicNumberSize).data(), "DDS ", MagicNumberSize) != 0) {
         Error() << "Trade::DdsImporter::openData(): wrong file signature";
         return;
     }
     std::size_t offset = MagicNumberSize;
 
-    /* read in DDS header */
+    /* Read in DDS header */
     const DdsHeader& ddsh = *reinterpret_cast<const DdsHeader*>(f->in.exceptPrefix(offset).data());
     offset += sizeof(DdsHeader);
 
     bool hasDxt10Extension = false;
 
-    /* check if image is a 2D or 3D texture */
+    /* Check if image is a 2D or 3D texture */
     f->volume = ((ddsh.caps2 & DdsCap2::Volume) && (ddsh.depth > 0));
 
-    /* check if image is a cubemap */
+    /* Check if image is a cubemap */
     const bool isCubemap = !!(ddsh.caps2 & DdsCap2::Cubemap);
 
     /* Compressed */
@@ -526,24 +500,24 @@ void DdsImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dat
                 f->pixelFormat.compressed = CompressedPixelFormat::Bc3RGBAUnorm;
                 break;
             case DdsCompressionType::DXT10: {
-                    hasDxt10Extension = true;
+                hasDxt10Extension = true;
 
-                    if(f->in.exceptPrefix(offset).size() < sizeof(DdsHeaderDxt10)) {
-                        Error() << "Trade::DdsImporter::openData(): fourcc was DX10 but file is too short to contain DXT10 header";
-                        return;
-                    }
-                    const DdsHeaderDxt10& dxt10 = *reinterpret_cast<const DdsHeaderDxt10*>(f->in.exceptPrefix(offset).data());
-                    offset += sizeof(DdsHeaderDxt10);
-
-                    f->pixelFormat.uncompressed = dxgiToGl(dxt10.dxgiFormat);
-                    if(f->pixelFormat.uncompressed == PixelFormat(-1)) {
-                        Error() << "Trade::DdsImporter::openData(): unsupported DXGI format" << UnsignedInt(dxt10.dxgiFormat);
-                        return;
-                    }
-                    f->compressed = false;
-                    f->needsSwizzle = false;
+                if(f->in.exceptPrefix(offset).size() < sizeof(DdsHeaderDxt10)) {
+                    Error() << "Trade::DdsImporter::openData(): fourcc was DX10 but file is too short to contain DXT10 header";
+                    return;
                 }
-                break;
+                const DdsHeaderDxt10& dxt10 = *reinterpret_cast<const DdsHeaderDxt10*>(f->in.exceptPrefix(offset).data());
+                offset += sizeof(DdsHeaderDxt10);
+
+                f->pixelFormat.uncompressed = dxgiToGl(dxt10.dxgiFormat);
+                if(f->pixelFormat.uncompressed == PixelFormat(-1)) {
+                    Error() << "Trade::DdsImporter::openData(): unsupported DXGI format" << UnsignedInt(dxt10.dxgiFormat);
+                    return;
+                }
+                f->compressed = false;
+                f->needsSwizzle = false;
+            } break;
+
             default:
                 Error() << "Trade::DdsImporter::openData(): unknown compression" << fourcc(ddsh.ddspf.fourCC);
                 return;
@@ -556,38 +530,38 @@ void DdsImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dat
 
     /* RGBA */
     } else if(ddsh.ddspf.rgbBitCount == 32 &&
-              ddsh.ddspf.rBitMask == 0x000000FF &&
-              ddsh.ddspf.gBitMask == 0x0000FF00 &&
-              ddsh.ddspf.bBitMask == 0x00FF0000 &&
-              ddsh.ddspf.aBitMask == 0xFF000000) {
+              ddsh.ddspf.rBitMask == 0x000000ff &&
+              ddsh.ddspf.gBitMask == 0x0000ff00 &&
+              ddsh.ddspf.bBitMask == 0x00ff0000 &&
+              ddsh.ddspf.aBitMask == 0xff000000) {
         f->pixelFormat.uncompressed = PixelFormat::RGBA8Unorm;
         f->compressed = false;
         f->needsSwizzle = false;
 
     /* BGRA */
     } else if(ddsh.ddspf.rgbBitCount == 32 &&
-              ddsh.ddspf.rBitMask == 0x00FF0000 &&
-              ddsh.ddspf.gBitMask == 0x0000FF00 &&
-              ddsh.ddspf.bBitMask == 0x000000FF &&
-              ddsh.ddspf.aBitMask == 0xFF000000) {
+              ddsh.ddspf.rBitMask == 0x00ff0000 &&
+              ddsh.ddspf.gBitMask == 0x0000ff00 &&
+              ddsh.ddspf.bBitMask == 0x000000ff &&
+              ddsh.ddspf.aBitMask == 0xff000000) {
         f->pixelFormat.uncompressed = PixelFormat::RGBA8Unorm;
         f->compressed = false;
         f->needsSwizzle = true;
 
     /* RGB */
     } else if(ddsh.ddspf.rgbBitCount == 24 &&
-              ddsh.ddspf.rBitMask == 0x000000FF &&
-              ddsh.ddspf.gBitMask == 0x0000FF00 &&
-              ddsh.ddspf.bBitMask == 0x00FF0000) {
+              ddsh.ddspf.rBitMask == 0x000000ff &&
+              ddsh.ddspf.gBitMask == 0x0000ff00 &&
+              ddsh.ddspf.bBitMask == 0x00ff0000) {
         f->pixelFormat.uncompressed = PixelFormat::RGB8Unorm;
         f->compressed = false;
         f->needsSwizzle = false;
 
     /* BGR */
     } else if(ddsh.ddspf.rgbBitCount == 24 &&
-              ddsh.ddspf.rBitMask == 0x00FF0000 &&
-              ddsh.ddspf.gBitMask == 0x0000FF00 &&
-              ddsh.ddspf.bBitMask == 0x000000FF) {
+              ddsh.ddspf.rBitMask == 0x00ff0000 &&
+              ddsh.ddspf.gBitMask == 0x0000ff00 &&
+              ddsh.ddspf.bBitMask == 0x000000ff) {
         f->pixelFormat.uncompressed = PixelFormat::RGB8Unorm;
         f->compressed = false;
         f->needsSwizzle = true;
@@ -605,15 +579,15 @@ void DdsImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dat
 
     const Vector3i size{Int(ddsh.width), Int(ddsh.height), Int(Math::max(ddsh.depth, 1u))};
 
-    /* check how many mipmaps to load */
+    /* Check how many mipmaps to load */
     const UnsignedInt numMipmaps = ddsh.flags & DdsDescriptionFlag::MipMapCount ? ddsh.mipMapCount : 1;
 
-    /* load all surfaces for the image (6 surfaces for cubemaps) */
+    /* Load all surfaces for the image (6 surfaces for cubemaps) */
     const UnsignedInt numImages = isCubemap ? 6 : 1;
     for(UnsignedInt n = 0; n < numImages; ++n) {
         Vector3i mipSize{size};
 
-        /* load all mipmaps for current surface */
+        /* Load all mipmaps for current surface */
         for(UnsignedInt i = 0; i < numMipmaps; ++i) {
             offset = f->addImageDataOffset(mipSize, offset);
             if(offset == 0) {
@@ -621,7 +595,7 @@ void DdsImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dat
                 return;
             }
 
-            /* shrink to next power of 2 */
+            /* Shrink to next power of 2 */
             mipSize = Math::max(mipSize >> 1, Vector3i{1});
         }
     }
@@ -637,7 +611,7 @@ UnsignedInt DdsImporter::doImage2DLevelCount(UnsignedInt) {  return _f->imageDat
 Containers::Optional<ImageData2D> DdsImporter::doImage2D(UnsignedInt, const UnsignedInt level) {
     const File::ImageDataOffset& dataOffset = _f->imageData[level];
 
-    /* copy image data */
+    /* Copy image data */
     Containers::Array<char> data{NoInit, dataOffset.data.size()};
     Utility::copy(dataOffset.data, data);
 
@@ -664,7 +638,7 @@ UnsignedInt DdsImporter::doImage3DLevelCount(UnsignedInt) {  return _f->imageDat
 Containers::Optional<ImageData3D> DdsImporter::doImage3D(UnsignedInt, const UnsignedInt level) {
     const File::ImageDataOffset& dataOffset = _f->imageData[level];
 
-    /* copy image data */
+    /* Copy image data */
     Containers::Array<char> data{NoInit, dataOffset.data.size()};
     Utility::copy(dataOffset.data, data);
 
