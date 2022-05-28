@@ -31,6 +31,7 @@
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/StringView.h>
 #include <Corrade/Utility/Algorithms.h>
+#include <Corrade/Utility/Endianness.h>
 #include <Corrade/Utility/Debug.h>
 #include <Magnum/PixelFormat.h>
 #include <Magnum/Math/Functions.h>
@@ -104,22 +105,6 @@ CORRADE_ENUMSET_OPERATORS(DdsCaps2)
 #pragma clang diagnostic pop
 #endif
 
-/* Compressed texture type. */
-enum class DdsCompressionType: UnsignedInt {
-    /* MAKEFOURCC('D','X','T','1'). */
-    DXT1 = 0x31545844,
-    /* MAKEFOURCC('D','X','T','2'), not supported. */
-    DXT2 = 0x32545844,
-    /* MAKEFOURCC('D','X','T','3'). */
-    DXT3 = 0x33545844,
-    /* MAKEFOURCC('D','X','T','4'), not supported. */
-    DXT4 = 0x34545844,
-    /* MAKEFOURCC('D','X','T','5'). */
-    DXT5 = 0x35545844,
-    /* MAKEFOURCC('D','X','1','0'). */
-    DXT10 = 0x30315844
-};
-
 /* DDS file header struct */
 struct DdsHeader {
     UnsignedInt size;
@@ -133,7 +118,10 @@ struct DdsHeader {
     struct {
         UnsignedInt size;
         DdsPixelFormatFlags flags;
-        UnsignedInt fourCC;
+        union {
+            UnsignedInt fourCC;
+            char fourCCChars[4];
+        };
         UnsignedInt rgbBitCount;
         UnsignedInt rBitMask;
         UnsignedInt gBitMask;
@@ -299,11 +287,6 @@ struct DdsHeaderDxt10 {
     UnsignedInt arraySize;
     DdsAlphaMode miscFlags2;
 };
-
-/* String from given fourcc integer */
-inline Containers::StringView fourcc(const UnsignedInt& enc) {
-    return {reinterpret_cast<const char*>(&enc), 4};
-}
 
 void swizzlePixels(const PixelFormat format, Containers::Array<char>& data, const char* verbosePrefix) {
     if(format == PixelFormat::RGB8Unorm) {
@@ -489,17 +472,17 @@ void DdsImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dat
 
     /* Compressed */
     if(ddsh.ddspf.flags & DdsPixelFormatFlag::FourCC) {
-        switch(DdsCompressionType(ddsh.ddspf.fourCC)) {
-            case DdsCompressionType::DXT1:
+        switch(ddsh.ddspf.fourCC) {
+            case Utility::Endianness::fourCC('D', 'X', 'T', '1'):
                 f->pixelFormat.compressed = CompressedPixelFormat::Bc1RGBAUnorm;
                 break;
-            case DdsCompressionType::DXT3:
+            case Utility::Endianness::fourCC('D', 'X', 'T', '3'):
                 f->pixelFormat.compressed = CompressedPixelFormat::Bc2RGBAUnorm;
                 break;
-            case DdsCompressionType::DXT5:
+            case Utility::Endianness::fourCC('D', 'X', 'T', '5'):
                 f->pixelFormat.compressed = CompressedPixelFormat::Bc3RGBAUnorm;
                 break;
-            case DdsCompressionType::DXT10: {
+            case Utility::Endianness::fourCC('D', 'X', '1', '0'): {
                 hasDxt10Extension = true;
 
                 if(f->in.exceptPrefix(offset).size() < sizeof(DdsHeaderDxt10)) {
@@ -518,8 +501,10 @@ void DdsImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dat
                 f->needsSwizzle = false;
             } break;
 
+            case Utility::Endianness::fourCC('D', 'X', 'T', '2'):
+            case Utility::Endianness::fourCC('D', 'X', 'T', '4'):
             default:
-                Error() << "Trade::DdsImporter::openData(): unknown compression" << fourcc(ddsh.ddspf.fourCC);
+                Error() << "Trade::DdsImporter::openData(): unknown compression" << Containers::StringView{ddsh.ddspf.fourCCChars, 4};
                 return;
         }
 
