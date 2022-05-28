@@ -445,8 +445,6 @@ void DdsImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dat
     const DdsHeader& ddsh = *reinterpret_cast<const DdsHeader*>(f->in.exceptPrefix(offset).data());
     offset += sizeof(DdsHeader);
 
-    bool hasDxt10Extension = false;
-
     /* Check if image is a 2D or 3D texture */
     f->volume = ((ddsh.caps2 & DdsCap2::Volume) && (ddsh.depth > 0));
 
@@ -457,17 +455,23 @@ void DdsImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dat
     if(ddsh.ddspf.flags & DdsPixelFormatFlag::FourCC) {
         switch(ddsh.ddspf.fourCC) {
             case Utility::Endianness::fourCC('D', 'X', 'T', '1'):
+                f->compressed = true;
+                f->needsSwizzle = false;
                 f->pixelFormat.compressed = CompressedPixelFormat::Bc1RGBAUnorm;
                 break;
             case Utility::Endianness::fourCC('D', 'X', 'T', '3'):
+                f->compressed = true;
+                f->needsSwizzle = false;
                 f->pixelFormat.compressed = CompressedPixelFormat::Bc2RGBAUnorm;
                 break;
             case Utility::Endianness::fourCC('D', 'X', 'T', '5'):
+                f->compressed = true;
+                f->needsSwizzle = false;
                 f->pixelFormat.compressed = CompressedPixelFormat::Bc3RGBAUnorm;
                 break;
             case Utility::Endianness::fourCC('D', 'X', '1', '0'): {
-                hasDxt10Extension = true;
-
+                f->compressed = false;
+                f->needsSwizzle = false;
                 if(f->in.exceptPrefix(offset).size() < sizeof(DdsHeaderDxt10)) {
                     Error() << "Trade::DdsImporter::openData(): fourcc was DX10 but file is too short to contain DXT10 header";
                     return;
@@ -480,8 +484,6 @@ void DdsImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dat
                     Error() << "Trade::DdsImporter::openData(): unsupported DXGI format" << UnsignedInt(dxt10.dxgiFormat);
                     return;
                 }
-                f->compressed = false;
-                f->needsSwizzle = false;
             } break;
 
             case Utility::Endianness::fourCC('D', 'X', 'T', '2'):
@@ -489,11 +491,6 @@ void DdsImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dat
             default:
                 Error() << "Trade::DdsImporter::openData(): unknown compression" << Containers::StringView{ddsh.ddspf.fourCCChars, 4};
                 return;
-        }
-
-        if(!hasDxt10Extension) {
-            f->compressed = true;
-            f->needsSwizzle = false;
         }
 
     /* RGBA */
