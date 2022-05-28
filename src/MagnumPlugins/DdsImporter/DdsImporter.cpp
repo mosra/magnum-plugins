@@ -172,21 +172,24 @@ struct DdsHeaderDxt10 {
 
 constexpr struct {
     /* It still could be packed better (e.g. an union where it's either a name
-       or a format and a distinction between an uncompressed format or an
-       uncompressed format that needs swizzle, but let's say this is good
-       enough for now. We're explicitly not storing names of formats we won't
-       ever print. */
+       or a format and a distinction between an uncompressed format,
+       uncompressed format that needs swizzle or a compressed format, but let's
+       say this is good enough for now. We're explicitly not storing names of
+       formats we won't ever print. */
     const char* name;
     /* Currently there's only about 110 values for compressed formats, so 8
        bits for each should be enough. Verified in
        DdsImporterTest::enumValueMatching(). */
     UnsignedByte format;
+    UnsignedByte compressedFormat;
     bool needsSwizzle;
 } DxgiFormatMapping[] {
-#define _x(name) {#name, 0, false},
-#define _u(name, format) {nullptr, UnsignedInt(PixelFormat::format), false},
-#define _s(name, format, swizzle) {nullptr, UnsignedInt(PixelFormat::format), swizzle},
+#define _x(name) {#name, 0, 0, false},
+#define _u(name, format) {nullptr, UnsignedInt(PixelFormat::format), 0, false},
+#define _s(name, format, swizzle) {nullptr, UnsignedInt(PixelFormat::format), 0, swizzle},
+#define _c(name, format) {nullptr, 0, UnsignedInt(CompressedPixelFormat::format), false},
 #include "DxgiFormat.h"
+#undef _c
 #undef _s
 #undef _u
 #undef _x
@@ -272,6 +275,26 @@ void DdsImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dat
                 f->needsSwizzle = false;
                 f->pixelFormat.compressed = CompressedPixelFormat::Bc3RGBAUnorm;
                 break;
+            case Utility::Endianness::fourCC('A', 'T', 'I', '1'):
+                f->compressed = true;
+                f->needsSwizzle = false;
+                f->pixelFormat.compressed = CompressedPixelFormat::Bc4RUnorm;
+                break;
+            case Utility::Endianness::fourCC('B', 'C', '4', 'S'):
+                f->compressed = true;
+                f->needsSwizzle = false;
+                f->pixelFormat.compressed = CompressedPixelFormat::Bc4RSnorm;
+                break;
+            case Utility::Endianness::fourCC('A', 'T', 'I', '2'):
+                f->compressed = true;
+                f->needsSwizzle = false;
+                f->pixelFormat.compressed = CompressedPixelFormat::Bc5RGUnorm;
+                break;
+            case Utility::Endianness::fourCC('B', 'C', '5', 'S'):
+                f->compressed = true;
+                f->needsSwizzle = false;
+                f->pixelFormat.compressed = CompressedPixelFormat::Bc5RGSnorm;
+                break;
             case Utility::Endianness::fourCC('D', 'X', '1', '0'): {
                 if(f->in.size() < sizeof(DdsHeader) + sizeof(DdsHeaderDxt10)) {
                     Error{} << "Trade::DdsImporter::openData(): DXT10 file too short, expected at least" << sizeof(DdsHeader) + sizeof(DdsHeaderDxt10) << "bytes but got" << f->in.size();
@@ -290,6 +313,10 @@ void DdsImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dat
                     f->compressed = false;
                     f->needsSwizzle = mapped.needsSwizzle;
                     f->pixelFormat.uncompressed = PixelFormat(mapped.format);
+                } else if(mapped.compressedFormat) {
+                    f->compressed = true;
+                    f->needsSwizzle = false;
+                    f->pixelFormat.compressed = CompressedPixelFormat(mapped.compressedFormat);
                 } else {
                     Error{} << "Trade::DdsImporter::openData(): unsupported format DXGI_FORMAT_" << Debug::nospace << mapped.name;
                     return;
@@ -363,9 +390,14 @@ void DdsImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dat
 
         /* Load all mipmaps for current surface */
         for(UnsignedInt i = 0; i < numMipmaps; ++i) {
-            const std::size_t size = f->compressed ?
-                (mipSize.z()*((mipSize.x() + 3)/4)*(((mipSize.y() + 3)/4))*((f->pixelFormat.compressed == CompressedPixelFormat::Bc1RGBAUnorm) ? 8 : 16)) :
-                mipSize.product()*pixelSize(f->pixelFormat.uncompressed);
+            std::size_t size;
+            if(f->compressed) {
+                const Vector3i blockSize = compressedBlockSize(f->pixelFormat.compressed);
+                const std::size_t blockDataSize = compressedBlockDataSize(f->pixelFormat.compressed);
+                size = blockDataSize*((mipSize + Vector3i{blockSize} - Vector3i{1})/Vector3i{blockSize}).product();
+            } else {
+                size = mipSize.product()*pixelSize(f->pixelFormat.uncompressed);
+            }
 
             const std::size_t end = offset + size;
             if(f->in.size() < end) {

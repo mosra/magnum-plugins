@@ -15,4 +15,12 @@ compressonatorcli-bin -nomipmap -fd BC2 rgba-63x27.tga dxt3-incomplete-blocks.dd
 
 compressonatorcli-bin -nomipmap -fd DXT5 rgb.tga dxt5.dds
 
+# This produces the legacy format somehow, not DX10
+compressonatorcli-bin -nomipmap -fd BC4 rgb.tga bc4unorm.dds
+compressonatorcli-bin -nomipmap -fd BC4_S rgb.tga bc4snorm.dds
+compressonatorcli-bin -nomipmap -fd BC5 rgb.tga bc5unorm.dds
+compressonatorcli-bin -nomipmap -fd BC5_S rgb.tga bc5snorm.dds
+
+compressonatorcli-bin -nomipmap -fd BC7 rgba-64x32.tga dxt10-bc7.dds
+
 rm rgba-{63x27,64x32}.tga rgb.tga

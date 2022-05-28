@@ -2,6 +2,7 @@
     _x() -- skipped (not supported)
     _u() -- uncompressed format
     _s() -- uncompressed format needing a swizzle
+    _c() -- compressed format
 */
 #ifdef _u
 _x(UNKNOWN)
@@ -74,21 +75,21 @@ _x(R1_UNORM)                /* no single-bit formats in Magnum */
 _x(R9G9B9E5_SHAREDEXP)      /* no generic packed formats in Magnum yet */
 _x(R8G8_B8G8_UNORM)         /* no YUV formats in Magnum yet */
 _x(G8R8_G8B8_UNORM)
-_x(BC1_TYPELESS)
-_x(BC1_UNORM)
-_x(BC1_UNORM_SRGB)
-_x(BC2_TYPELESS)
-_x(BC2_UNORM)
-_x(BC2_UNORM_SRGB)
-_x(BC3_TYPELESS)
-_x(BC3_UNORM)
-_x(BC3_UNORM_SRGB)
-_x(BC4_TYPELESS)
-_x(BC4_UNORM)
-_x(BC4_SNORM)
-_x(BC5_TYPELESS)
-_x(BC5_UNORM)
-_x(BC5_SNORM)
+_c(BC1_TYPELESS,            Bc1RGBAUnorm) /* typeless treated as Unorm here */
+_c(BC1_UNORM,               Bc1RGBAUnorm)
+_c(BC1_UNORM_SRGB,          Bc1RGBASrgb)
+_c(BC2_TYPELESS,            Bc2RGBAUnorm) /* typeless treated as Unorm here */
+_c(BC2_UNORM,               Bc2RGBAUnorm)
+_c(BC2_UNORM_SRGB,          Bc2RGBASrgb)
+_c(BC3_TYPELESS,            Bc3RGBAUnorm) /* typeless treated as Unorm here */
+_c(BC3_UNORM,               Bc3RGBAUnorm)
+_c(BC3_UNORM_SRGB,          Bc3RGBASrgb)
+_c(BC4_TYPELESS,            Bc4RUnorm)    /* typeless treated as Unorm here */
+_c(BC4_UNORM,               Bc4RUnorm)
+_c(BC4_SNORM,               Bc4RSnorm)
+_c(BC5_TYPELESS,            Bc5RGUnorm)   /* typeless treated as Unorm here */
+_c(BC5_UNORM,               Bc5RGUnorm)
+_c(BC5_SNORM,               Bc5RGSnorm)
 _x(B5G6R5_UNORM)            /* no generic packed formats in Magnum yet */
 _x(B5G5R5A1_UNORM)
 _s(B8G8R8A8_UNORM,          RGBA8Unorm, true)
@@ -98,12 +99,12 @@ _s(B8G8R8A8_TYPELESS,       RGBA8Unorm, true) /* typeless treated as Unorm */
 _s(B8G8R8A8_UNORM_SRGB,     RGBA8Srgb, true)
 _s(B8G8R8X8_TYPELESS,       RGBA8Unorm, true) /* typeless treated as Unorm, alpha unspecified */
 _s(B8G8R8X8_UNORM_SRGB,     RGBA8Srgb, true)  /* alpha unspecified */
-_x(BC6H_TYPELESS)
-_x(BC6H_UF16)
-_x(BC6H_SF16)
-_x(BC7_TYPELESS)
-_x(BC7_UNORM)
-_x(BC7_UNORM_SRGB)
+_c(BC6H_TYPELESS,           Bc6hRGBUfloat) /* typeless treated as Ufloat here */
+_c(BC6H_UF16,               Bc6hRGBUfloat)
+_c(BC6H_SF16,               Bc6hRGBSfloat)
+_c(BC7_TYPELESS,            Bc7RGBAUnorm) /* typeless treated as Unorm here */
+_c(BC7_UNORM,               Bc7RGBAUnorm)
+_c(BC7_UNORM_SRGB,          Bc7RGBASrgb)
 _x(AYUV)                    /* no YUV formats in Magnum yet */
 _x(Y410)
 _x(Y416)

@@ -53,8 +53,13 @@ corrade_add_test(DdsImporterTest
     ${DXT10_TEST_FILES_RESOURCE}
     LIBRARIES Magnum::Trade
     FILES
+        bc4snorm.dds
+        bc4unorm.dds
+        bc5snorm.dds
+        bc5unorm.dds
         dxt1.dds
         dxt10-ayuv.dds
+        dxt10-bc7.dds
         dxt10-rgba16snorm.dds
         dxt10-rgba32ui.dds
         dxt10-rgba8srgb.dds

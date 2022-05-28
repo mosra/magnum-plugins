@@ -110,10 +110,10 @@ namespace Magnum {
     @cb{.ini} Debone @ce
 -   @relativeref{Trade,AssimpImporter} now provides the `3mfImporter` alias
     for convenient loading of `*.3mf` files
--   @relativeref{Trade,DdsImporter} now supports BGRX and BGRA formats also for
-    files with the DXT10 header, uncompressed sRGB formats are now properly
-    imported as @ref PixelFormat::RGBA8Srgb instead of
-    @ref PixelFormat::RGBA8Unorm
+-   @relativeref{Trade,DdsImporter} now supports all DXGI compressed formats,
+    legacy non-DXGI BC4 and BC5 formats, BGRX and BGRA formats also for files
+    with the DXT10 header; uncompressed sRGB formats are now properly imported
+    as @ref PixelFormat::RGBA8Srgb instead of @ref PixelFormat::RGBA8Unorm
 -   @ref Text::FreeTypeFont "FreeTypeFont" now treats its internal global
     library handle as thread-local on all platforms except Windows, making it
     possible to be used in multi-threaded environments
