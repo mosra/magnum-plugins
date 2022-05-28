@@ -48,24 +48,32 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
 file(GENERATE OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/configure.h
     INPUT ${CMAKE_CURRENT_BINARY_DIR}/configure.h.in)
 
-corrade_add_resource(DXT10_TEST_FILES_RESOURCE
-    ${CMAKE_CURRENT_SOURCE_DIR}/Dxt10TestFiles/resources.conf)
-
 corrade_add_test(DdsImporterTest
     DdsImporterTest.cpp
     ${DXT10_TEST_FILES_RESOURCE}
     LIBRARIES Magnum::Trade
     FILES
-        rgb_uncompressed.dds
-        rgb_uncompressed_mips.dds
-        rgb_uncompressed_volume.dds
-        rgba_dxt1.dds
-        rgba_dxt3.dds
-        rgba_dxt5.dds
-        too_short_dxt10.dds
-        unknown_compression.dds
-        unknown_format.dds
-        wrong_signature.dds)
+        dxt1.dds
+        dxt10-ayuv.dds
+        dxt10-rgba16f-3d.dds
+        dxt10-rgba16snorm.dds
+        dxt10-rgba32ui.dds
+        dxt10-rgba8srgb.dds
+        dxt10-rgba8unorm.dds
+        dxt10-rgb32i.dds
+        dxt10-rg32f.dds
+        dxt10-rg8unorm.dds
+        dxt10-r32i-mips.dds
+        dxt10-too-short.dds
+        dxt10-v408.dds
+        dxt3.dds
+        dxt4.dds
+        dxt5.dds
+        bgr8unorm.dds
+        bgr8unorm-mips.dds
+        bgr8unorm-3d.dds
+        unknown-format.dds
+        wrong-signature.dds)
 target_include_directories(DdsImporterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>)
 if(MAGNUM_DDSIMPORTER_BUILD_STATIC)
     target_link_libraries(DdsImporterTest PRIVATE DdsImporter)

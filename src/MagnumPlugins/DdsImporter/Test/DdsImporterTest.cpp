@@ -26,12 +26,14 @@
 
 #include <sstream>
 #include <Corrade/Containers/Optional.h>
+#include <Corrade/Containers/Pair.h>
 #include <Corrade/Containers/String.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
 #include <Corrade/TestSuite/Compare/Numeric.h>
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/DebugStl.h> /** @todo remove once Debug is stream-free */
+#include <Corrade/Utility/FormatStl.h> /** @todo remove once Debug is stream-free */
 #include <Corrade/Utility/Path.h>
 #include <Corrade/Utility/Resource.h>
 #include <Magnum/PixelFormat.h>
@@ -47,26 +49,20 @@ struct DdsImporterTest: TestSuite::Tester {
 
     void enumValueMatching();
 
-    void wrongSignature();
-    void unknownFormat();
-    void unknownCompression();
+    void invalid();
     void insufficientData();
+    void dxt10TooShort();
 
     void rgb();
-    void rgbWithMips();
-    void rgbVolume();
+    void rgDxt10();
+    void rgbMips();
+    void rgbMipsDxt10();
+    void rgb3D();
+    void rgba3DDxt10();
 
-    void dxt1();
     void dxt3();
-    void dxt5();
 
-    void dxt10Formats2D();
-    void dxt10Formats3D();
-
-    void dxt10Data();
-    void dxt10TooShort();
-    void dxt10UnsupportedFormat();
-    void dxt10UnknownFormatId();
+    void formats();
 
     void openMemory();
     void openTwice();
@@ -74,18 +70,6 @@ struct DdsImporterTest: TestSuite::Tester {
 
     /* Explicitly forbid system-wide plugin dependencies */
     PluginManager::Manager<AbstractImporter> _manager{"nonexistent"};
-};
-
-constexpr struct {
-    const char* name;
-    ImporterFlags flags;
-    const char* message2D;
-    const char* message3D;
-} VerboseData[] {
-    {"", {}, "", ""},
-    {"verbose", ImporterFlag::Verbose,
-        "Trade::DdsImporter::image2D(): converting from BGR to RGB\n",
-        "Trade::DdsImporter::image3D(): converting from BGR to RGB\n"}
 };
 
 /* Enum taken verbatim from dxgiformat.h */
@@ -217,7 +201,7 @@ enum DXGI_FORMAT {
 const struct {
     DXGI_FORMAT dxgi;
     PixelFormat format;
-} DxgiFormats[] {
+} DxgiFormatData[] {
 #define _x(name) {DXGI_FORMAT_ ## name, PixelFormat{}},
 #define _u(name, format) {DXGI_FORMAT_ ## name, PixelFormat::format},
 #include "../DxgiFormat.h"
@@ -225,74 +209,48 @@ const struct {
 #undef _x
 };
 
-constexpr struct {
+const struct {
+    const char* name;
     const char* filename;
-    PixelFormat format;
-} Files2D[]{
-    {"2D_R16G16B16A16_FLOAT.dds", PixelFormat::RGBA16F},
-    {"2D_R16G16B16A16_UNORM.dds", PixelFormat::RGBA16Unorm},
-    {"2D_R32G32B32A32_FLOAT.dds", PixelFormat::RGBA32F},
-    {"2D_R32G32B32_FLOAT.dds", PixelFormat::RGB32F},
-    {"2D_R32G32_FLOAT.dds", PixelFormat::RG32F},
-    {"2D_R8G8B8A8_UNORM.dds", PixelFormat::RGBA8Unorm},
-    {"2D_R8G8B8A8_UNORM_SRGB.dds", PixelFormat::RGBA8Unorm},
-    {"2D_R8G8_UNORM.dds", PixelFormat::RG8Unorm},
-    {"2DMips_R16G16B16A16_FLOAT.dds", PixelFormat::RGBA16F},
-    {"2DMips_R16G16B16A16_UNORM.dds", PixelFormat::RGBA16Unorm},
-    {"2DMips_R16G16_FLOAT.dds", PixelFormat::RG16F},
-    {"2DMips_R16G16_UNORM.dds", PixelFormat::RG16Unorm},
-    {"2DMips_R32_FLOAT.dds", PixelFormat::R32F},
-    {"2DMips_R32G32B32A32_FLOAT.dds", PixelFormat::RGBA32F},
-    {"2DMips_R32G32B32_FLOAT.dds", PixelFormat::RGB32F},
-    {"2DMips_R32G32_FLOAT.dds", PixelFormat::RG32F},
-    {"2DMips_R8G8B8A8_UNORM.dds", PixelFormat::RGBA8Unorm},
-    {"2DMips_R8G8B8A8_UNORM_SRGB.dds", PixelFormat::RGBA8Unorm},
-    {"2DMips_R8G8_UNORM.dds", PixelFormat::RG8Unorm},
-    {"2D_R16G16B16A16_SNORM.dds", PixelFormat::RGBA16Snorm},
-    {"2D_R8G8B8A8_SNORM.dds", PixelFormat::RGBA8Snorm},
-    {"2D_R16G16B16A16_SINT.dds", PixelFormat::RGBA16I},
-    {"2D_R16G16B16A16_UINT.dds", PixelFormat::RGBA16UI},
-    {"2D_R32G32B32A32_SINT.dds", PixelFormat::RGBA32I},
-    {"2D_R32G32B32A32_UINT.dds", PixelFormat::RGBA32UI},
-    {"2D_R32G32B32_SINT.dds", PixelFormat::RGB32I},
-    {"2D_R32G32B32_UINT.dds", PixelFormat::RGB32UI},
-    {"2D_R8G8B8A8_SINT.dds", PixelFormat::RGBA8I},
-    {"2D_R8G8B8A8_UINT.dds", PixelFormat::RGBA8UI},
-    {"2DMips_R16G16_SNORM.dds", PixelFormat::RG16Snorm},
-    {"2DMips_R16G16B16A16_SNORM.dds", PixelFormat::RGBA16Snorm},
-    {"2DMips_R8G8B8A8_SNORM.dds", PixelFormat::RGBA8Snorm},
-    {"2DMips_R16G16B16A16_SINT.dds", PixelFormat::RGBA16I},
-    {"2DMips_R16G16B16A16_UINT.dds", PixelFormat::RGBA16UI},
-    {"2DMips_R16G16_SINT.dds", PixelFormat::RG16I},
-    {"2DMips_R16G16_UINT.dds", PixelFormat::RG16UI},
-    {"2DMips_R32G32B32A32_SINT.dds", PixelFormat::RGBA32I},
-    {"2DMips_R32G32B32A32_UINT.dds", PixelFormat::RGBA32UI},
-    {"2DMips_R32G32B32_SINT.dds", PixelFormat::RGB32I},
-    {"2DMips_R32G32B32_UINT.dds", PixelFormat::RGB32UI},
-    {"2DMips_R32G32_SINT.dds", PixelFormat::RG32I},
-    {"2DMips_R32G32_UINT.dds", PixelFormat::RG32UI},
-    {"2DMips_R32_SINT.dds", PixelFormat::R32I},
-    {"2DMips_R32_UINT.dds", PixelFormat::R32UI},
-    {"2DMips_R8G8B8A8_SINT.dds", PixelFormat::RGBA8I},
-    {"2DMips_R8G8B8A8_UINT.dds", PixelFormat::RGBA8UI}
+    const char* message;
+} InvalidData[]{
+    {"wrong file signature", "wrong-signature.dds",
+        "wrong file signature"},
+    {"unknown compression", "dxt4.dds",
+        "unknown compression DXT4"},
+    {"unknown format", "unknown-format.dds",
+        "unknown format"},
+    {"DXT10 format unsupported", "dxt10-ayuv.dds",
+        "unsupported format DXGI_FORMAT_AYUV"},
+    {"DXT10 format out of bounds", "dxt10-v408.dds",
+        "unknown DXGI format ID 132"}
+};
+
+constexpr struct {
+    const char* name;
+    ImporterFlags flags;
+    const char* message2D;
+    const char* message3D;
+} VerboseData[] {
+    {"", {}, "", ""},
+    {"verbose", ImporterFlag::Verbose,
+        "Trade::DdsImporter::image2D(): converting from BGR to RGB\n",
+        "Trade::DdsImporter::image3D(): converting from BGR to RGB\n"}
 };
 
 constexpr struct {
     const char* filename;
     PixelFormat format;
-} Files3D[]{
-    {"3D_R16G16B16A16_FLOAT.dds", PixelFormat::RGBA16F},
-    {"3D_R16G16B16A16_UNORM.dds", PixelFormat::RGBA16Unorm},
-    {"3D_R32G32B32A32_FLOAT.dds", PixelFormat::RGBA32F},
-    {"3D_R32G32B32_FLOAT.dds", PixelFormat::RGB32F},
-    {"3D_R32G32_FLOAT.dds", PixelFormat::RG32F},
-    {"3D_R16G16B16A16_SNORM.dds", PixelFormat::RGBA16Snorm},
-    {"3D_R16G16B16A16_SINT.dds", PixelFormat::RGBA16I},
-    {"3D_R16G16B16A16_UINT.dds", PixelFormat::RGBA16UI},
-    {"3D_R32G32B32A32_SINT.dds", PixelFormat::RGBA32I},
-    {"3D_R32G32B32A32_UINT.dds", PixelFormat::RGBA32UI},
-    {"3D_R32G32B32_SINT.dds", PixelFormat::RGB32I},
-    {"3D_R32G32B32_UINT.dds", PixelFormat::RGB32UI}
+    CompressedPixelFormat compressedFormat;
+} FormatsData[]{
+    {"dxt1.dds", PixelFormat{}, CompressedPixelFormat::Bc1RGBAUnorm},
+    {"dxt5.dds", PixelFormat{}, CompressedPixelFormat::Bc3RGBAUnorm},
+    {"dxt10-rg32f.dds", PixelFormat::RG32F, CompressedPixelFormat{}},
+    {"dxt10-rgb32i.dds", PixelFormat::RGB32I, CompressedPixelFormat{}},
+    {"dxt10-rgba16snorm.dds", PixelFormat::RGBA16Snorm, CompressedPixelFormat{}},
+    {"dxt10-rgba32ui.dds", PixelFormat::RGBA32UI, CompressedPixelFormat{}},
+    {"dxt10-rgba8unorm.dds", PixelFormat::RGBA8Unorm, CompressedPixelFormat{}},
+    {"dxt10-rgba8srgb.dds", PixelFormat::RGBA8Unorm, CompressedPixelFormat{}},
 };
 
 /* Shared among all plugins that implement data copying optimizations */
@@ -313,32 +271,33 @@ const struct {
 
 DdsImporterTest::DdsImporterTest() {
     addRepeatedTests({&DdsImporterTest::enumValueMatching},
-        Containers::arraySize(DxgiFormats));
+        Containers::arraySize(DxgiFormatData));
 
-    addTests({&DdsImporterTest::wrongSignature,
-              &DdsImporterTest::unknownFormat,
-              &DdsImporterTest::unknownCompression,
-              &DdsImporterTest::insufficientData});
+    addInstancedTests({&DdsImporterTest::invalid},
+        Containers::arraySize(InvalidData));
 
-    addInstancedTests({
-        &DdsImporterTest::rgb,
-        &DdsImporterTest::rgbWithMips,
-        &DdsImporterTest::rgbVolume},
+    addTests({&DdsImporterTest::insufficientData,
+              &DdsImporterTest::dxt10TooShort});
+
+    addInstancedTests({&DdsImporterTest::rgb},
         Containers::arraySize(VerboseData));
 
-    addTests({&DdsImporterTest::dxt1,
-              &DdsImporterTest::dxt3,
-              &DdsImporterTest::dxt5});
+    addTests({&DdsImporterTest::rgDxt10});
 
-    addInstancedTests({&DdsImporterTest::dxt10Formats2D},
-        Containers::arraySize(Files2D));
-    addInstancedTests({&DdsImporterTest::dxt10Formats3D},
-        Containers::arraySize(Files3D));
+    addInstancedTests({&DdsImporterTest::rgbMips},
+        Containers::arraySize(VerboseData));
 
-    addTests({&DdsImporterTest::dxt10Data,
-              &DdsImporterTest::dxt10TooShort,
-              &DdsImporterTest::dxt10UnsupportedFormat,
-              &DdsImporterTest::dxt10UnknownFormatId});
+    addTests({&DdsImporterTest::rgbMipsDxt10});
+
+    addInstancedTests({&DdsImporterTest::rgb3D},
+        Containers::arraySize(VerboseData));
+
+    addTests({&DdsImporterTest::rgba3DDxt10,
+
+              &DdsImporterTest::dxt3});
+
+    addInstancedTests({&DdsImporterTest::formats},
+        Containers::arraySize(FormatsData));
 
     addInstancedTests({&DdsImporterTest::openMemory},
         Containers::arraySize(OpenMemoryData));
@@ -354,53 +313,48 @@ DdsImporterTest::DdsImporterTest() {
 }
 
 void DdsImporterTest::enumValueMatching() {
-    CORRADE_COMPARE(DxgiFormats[testCaseRepeatId()].dxgi, DXGI_FORMAT(testCaseRepeatId()));
+    CORRADE_COMPARE(DxgiFormatData[testCaseRepeatId()].dxgi, DXGI_FORMAT(testCaseRepeatId()));
 
     /* Check the format value fits into 8 bits, as that's how it's packed in
        the plugin */
-    if(UnsignedInt(DxgiFormats[testCaseRepeatId()].format)) {
-        CORRADE_ITERATION(DxgiFormats[testCaseRepeatId()].format);
-        CORRADE_COMPARE_AS(UnsignedInt(DxgiFormats[testCaseRepeatId()].format), 256,
+    if(UnsignedInt(DxgiFormatData[testCaseRepeatId()].format)) {
+        CORRADE_ITERATION(DxgiFormatData[testCaseRepeatId()].format);
+        CORRADE_COMPARE_AS(UnsignedInt(DxgiFormatData[testCaseRepeatId()].format), 256,
             TestSuite::Compare::Less);
     }
 }
 
-void DdsImporterTest::unknownCompression() {
-    std::ostringstream out;
-    Error redirectError{&out};
+void DdsImporterTest::invalid() {
+    auto&& data = InvalidData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
-    CORRADE_VERIFY(!importer->openFile(Utility::Path::join(DDSIMPORTER_TEST_DIR, "unknown_compression.dds")));
-    CORRADE_COMPARE(out.str(), "Trade::DdsImporter::openData(): unknown compression DXT4\n");
-}
 
-void DdsImporterTest::wrongSignature() {
     std::ostringstream out;
     Error redirectError{&out};
-
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
-    CORRADE_VERIFY(!importer->openFile(Utility::Path::join(DDSIMPORTER_TEST_DIR, "wrong_signature.dds")));
-    CORRADE_COMPARE(out.str(), "Trade::DdsImporter::openData(): wrong file signature\n");
-}
-
-void DdsImporterTest::unknownFormat() {
-    std::ostringstream out;
-    Error redirectError{&out};
-
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
-    CORRADE_VERIFY(!importer->openFile(Utility::Path::join(DDSIMPORTER_TEST_DIR, "unknown_format.dds")));
-    CORRADE_COMPARE(out.str(), "Trade::DdsImporter::openData(): unknown format\n");
+    CORRADE_VERIFY(!importer->openFile(Utility::Path::join(DDSIMPORTER_TEST_DIR, data.filename)));
+    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::DdsImporter::openData(): {}\n", data.message));
 }
 
 void DdsImporterTest::insufficientData() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
+
+    Containers::Optional<Containers::Array<char>> data = Utility::Path::read(Utility::Path::join(DDSIMPORTER_TEST_DIR, "bgr8unorm.dds"));
+    CORRADE_VERIFY(data);
+
     std::ostringstream out;
     Error redirectError{&out};
-
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
-    Containers::Optional<Containers::Array<char>> data = Utility::Path::read(Utility::Path::join(DDSIMPORTER_TEST_DIR, "rgb_uncompressed.dds"));
-    CORRADE_VERIFY(data);
     CORRADE_VERIFY(!importer->openData(data->exceptSuffix(1)));
     CORRADE_COMPARE(out.str(), "Trade::DdsImporter::openData(): not enough image data\n");
+}
+
+void DdsImporterTest::dxt10TooShort() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!importer->openFile(Utility::Path::join(DDSIMPORTER_TEST_DIR, "dxt10-too-short.dds")));
+    CORRADE_COMPARE(out.str(), "Trade::DdsImporter::openData(): fourcc was DX10 but file is too short to contain DXT10 header\n");
 }
 
 void DdsImporterTest::rgb() {
@@ -409,7 +363,7 @@ void DdsImporterTest::rgb() {
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
     importer->setFlags(data.flags);
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(DDSIMPORTER_TEST_DIR, "rgb_uncompressed.dds")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(DDSIMPORTER_TEST_DIR, "bgr8unorm.dds")));
     CORRADE_COMPARE(importer->image2DCount(), 1);
     CORRADE_COMPARE(importer->image2DLevelCount(0), 1);
     CORRADE_COMPARE(importer->image3DCount(), 0);
@@ -436,65 +390,120 @@ void DdsImporterTest::rgb() {
     CORRADE_COMPARE(out.str(), data.message2D);
 }
 
-void DdsImporterTest::rgbWithMips() {
+void DdsImporterTest::rgDxt10() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(DDSIMPORTER_TEST_DIR, "dxt10-rg8unorm.dds")));
+    CORRADE_COMPARE(importer->image2DCount(), 1);
+    CORRADE_COMPARE(importer->image2DLevelCount(0), 1);
+    CORRADE_COMPARE(importer->image3DCount(), 0);
+
+    Containers::Optional<ImageData2D> image = importer->image2D(0);
+    CORRADE_VERIFY(image);
+    CORRADE_VERIFY(!image->isCompressed());
+    CORRADE_COMPARE(image->size(), Vector2i(3, 2));
+    CORRADE_COMPARE(image->format(), PixelFormat::RG8Unorm);
+    CORRADE_COMPARE_AS(image->data(), Containers::arrayView<char>({
+        '\xde', '\xad', '\xca', '\xfe',
+        '\xde', '\xad', '\xca', '\xfe',
+        '\xde', '\xad', '\xca', '\xfe'
+    }), TestSuite::Compare::Container);
+}
+
+void DdsImporterTest::rgbMips() {
     auto&& data = VerboseData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
     importer->setFlags(data.flags);
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(DDSIMPORTER_TEST_DIR, "rgb_uncompressed_mips.dds")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(DDSIMPORTER_TEST_DIR, "bgr8unorm-mips.dds")));
     CORRADE_COMPARE(importer->image2DCount(), 1);
     CORRADE_COMPARE(importer->image2DLevelCount(0), 2);
     CORRADE_COMPARE(importer->image3DCount(), 0);
 
-    std::ostringstream out;
-
-    /* check image */
-    Containers::Optional<ImageData2D> image;
     {
-        Debug redirectOutput{&out};
-        image = importer->image2D(0);
+        std::ostringstream out;
+        Containers::Optional<ImageData2D> image;
+        {
+            Debug redirectOutput{&out};
+            image = importer->image2D(0);
+        }
+        CORRADE_VERIFY(image);
+        CORRADE_VERIFY(!image->isCompressed());
+        CORRADE_COMPARE(image->storage().alignment(), 1);
+        CORRADE_COMPARE(image->size(), Vector2i(3, 2));
+        CORRADE_COMPARE(image->format(), PixelFormat::RGB8Unorm);
+        CORRADE_COMPARE_AS(image->data(), Containers::arrayView({
+            '\xde', '\xad', '\xb5',
+            '\xca', '\xfe', '\x77',
+            '\xde', '\xad', '\xb5',
+            '\xca', '\xfe', '\x77',
+            '\xde', '\xad', '\xb5',
+            '\xca', '\xfe', '\x77'
+        }), TestSuite::Compare::Container);
+        CORRADE_COMPARE(out.str(), data.message2D);
+    } {
+        std::ostringstream out;
+        Containers::Optional<ImageData2D> image;
+        {
+            Debug redirectOutput{&out};
+            image = importer->image2D(0, 1);
+        }
+        CORRADE_VERIFY(image);
+        CORRADE_VERIFY(!image->isCompressed());
+        CORRADE_COMPARE(image->storage().alignment(), 1);
+        CORRADE_COMPARE(image->size(), Vector2i(1, 1));
+        CORRADE_COMPARE(image->format(), PixelFormat::RGB8Unorm);
+        CORRADE_COMPARE_AS(image->data(), Containers::arrayView({
+            '\xd4', '\xd5', '\x96'
+        }), TestSuite::Compare::Container);
+        CORRADE_COMPARE(out.str(), data.message2D);
     }
-    CORRADE_VERIFY(image);
-    CORRADE_VERIFY(!image->isCompressed());
-    CORRADE_COMPARE(image->storage().alignment(), 1);
-    CORRADE_COMPARE(image->size(), Vector2i(3, 2));
-    CORRADE_COMPARE(image->format(), PixelFormat::RGB8Unorm);
-    CORRADE_COMPARE_AS(image->data(), Containers::arrayView<char>({
-        '\xde', '\xad', '\xb5',
-        '\xca', '\xfe', '\x77',
-        '\xde', '\xad', '\xb5',
-        '\xca', '\xfe', '\x77',
-        '\xde', '\xad', '\xb5',
-        '\xca', '\xfe', '\x77'
-    }), TestSuite::Compare::Container);
-    CORRADE_COMPARE(out.str(), data.message2D);
-
-    /* check mip 0 */
-    Containers::Optional<ImageData2D> mip;
-    {
-        out.str({});
-        Debug redirectOutput{&out};
-        mip = importer->image2D(0, 1);
-    }
-    CORRADE_VERIFY(mip);
-    CORRADE_VERIFY(!mip->isCompressed());
-    CORRADE_COMPARE(image->storage().alignment(), 1);
-    CORRADE_COMPARE(mip->size(), Vector2i{1});
-    CORRADE_COMPARE(mip->format(), PixelFormat::RGB8Unorm);
-    CORRADE_COMPARE_AS(mip->data(), Containers::arrayView<char>({
-        '\xd4', '\xd5', '\x96'
-    }), TestSuite::Compare::Container);
-    CORRADE_COMPARE(out.str(), data.message2D);
 }
 
-void DdsImporterTest::rgbVolume() {
+void DdsImporterTest::rgbMipsDxt10() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
+
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(DDSIMPORTER_TEST_DIR, "dxt10-r32i-mips.dds")));
+    CORRADE_COMPARE(importer->image2DCount(), 1);
+    CORRADE_COMPARE(importer->image2DLevelCount(0), 2);
+    CORRADE_COMPARE(importer->image3DCount(), 0);
+
+    {
+        Containers::Optional<ImageData2D> image = importer->image2D(0);
+        CORRADE_VERIFY(image);
+        CORRADE_VERIFY(!image->isCompressed());
+        CORRADE_COMPARE(image->storage().alignment(), 4);
+        CORRADE_COMPARE(image->size(), Vector2i(3, 2));
+        CORRADE_COMPARE(image->format(), PixelFormat::R32I);
+        CORRADE_COMPARE_AS(image->data(), Containers::arrayView({
+            '\x00', '\x00', '\x11', '\x11',
+            '\x22', '\x22', '\x33', '\x33',
+            '\x44', '\x44', '\x55', '\x55',
+
+            '\x66', '\x66', '\x77', '\x77',
+            '\x88', '\x88', '\x99', '\x99',
+            '\xaa', '\xaa', '\xbb', '\xbb'
+        }), TestSuite::Compare::Container);
+    } {
+        Containers::Optional<ImageData2D> image = importer->image2D(0, 1);
+        CORRADE_VERIFY(image);
+        CORRADE_VERIFY(!image->isCompressed());
+        CORRADE_COMPARE(image->storage().alignment(), 4);
+        CORRADE_COMPARE(image->size(), Vector2i(1, 1));
+        CORRADE_COMPARE(image->format(), PixelFormat::R32I);
+        CORRADE_COMPARE_AS(image->data(), Containers::arrayView({
+            '\xcc', '\xcc', '\xdd', '\xdd'
+        }), TestSuite::Compare::Container);
+    }
+}
+
+void DdsImporterTest::rgb3D() {
     auto&& data = VerboseData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
     importer->setFlags(data.flags);
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(DDSIMPORTER_TEST_DIR, "rgb_uncompressed_volume.dds")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(DDSIMPORTER_TEST_DIR, "bgr8unorm-3d.dds")));
     CORRADE_COMPARE(importer->image2DCount(), 0);
     CORRADE_COMPARE(importer->image3DCount(), 1);
     CORRADE_COMPARE(importer->image3DLevelCount(0), 1);
@@ -511,7 +520,7 @@ void DdsImporterTest::rgbVolume() {
     CORRADE_COMPARE(image->size(), Vector3i(3, 2, 3));
     CORRADE_COMPARE(image->format(), PixelFormat::RGB8Unorm);
     CORRADE_COMPARE_AS(image->data(), Containers::arrayView<char>({
-        /* slice 0 */
+        /* Slice 0 */
         '\xde', '\xad', '\xb5',
         '\xca', '\xfe', '\x77',
         '\xde', '\xad', '\xb5',
@@ -519,7 +528,7 @@ void DdsImporterTest::rgbVolume() {
         '\xde', '\xad', '\xb5',
         '\xca', '\xfe', '\x77',
 
-        /* slice 1 */
+        /* Slice 1 */
         '\xca', '\xfe', '\x77',
         '\xde', '\xad', '\xb5',
         '\xca', '\xfe', '\x77',
@@ -527,7 +536,7 @@ void DdsImporterTest::rgbVolume() {
         '\xca', '\xfe', '\x77',
         '\xde', '\xad', '\xb5',
 
-        /* slice 2 */
+        /* Slice 2 */
         '\xde', '\xad', '\xb5',
         '\xca', '\xfe', '\x77',
         '\xde', '\xad', '\xb5',
@@ -538,23 +547,52 @@ void DdsImporterTest::rgbVolume() {
     CORRADE_COMPARE(out.str(), data.message3D);
 }
 
-void DdsImporterTest::dxt1() {
+void DdsImporterTest::rgba3DDxt10() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(DDSIMPORTER_TEST_DIR, "rgba_dxt1.dds")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(DDSIMPORTER_TEST_DIR, "dxt10-rgba16f-3d.dds")));
+    CORRADE_COMPARE(importer->image2DCount(), 0);
+    CORRADE_COMPARE(importer->image3DCount(), 1);
+    CORRADE_COMPARE(importer->image3DLevelCount(0), 1);
 
-    Containers::Optional<ImageData2D> image = importer->image2D(0);
+    Containers::Optional<ImageData3D> image = importer->image3D(0);
     CORRADE_VERIFY(image);
-    CORRADE_VERIFY(image->isCompressed());
-    CORRADE_COMPARE(image->size(), Vector2i(3, 2));
-    CORRADE_COMPARE(image->compressedFormat(), CompressedPixelFormat::Bc1RGBAUnorm);
+    CORRADE_VERIFY(!image->isCompressed());
+    CORRADE_COMPARE(image->storage().alignment(), 4);
+    CORRADE_COMPARE(image->size(), Vector3i(3, 2, 3));
+    CORRADE_COMPARE(image->format(), PixelFormat::RGBA16F);
     CORRADE_COMPARE_AS(image->data(), Containers::arrayView<char>({
-        '\x76', '\xdd', '\xee', '\xcf', '\x04', '\x51', '\x04', '\x51'
+        /* Slice 0 */
+        '\xf7', '\x3a', '\x6d', '\x39', '\xae', '\x39', '\x00', '\x3c',
+        '\x56', '\x3a', '\xf8', '\x3b', '\x77', '\x37', '\x00', '\x3c',
+        '\xf7', '\x3a', '\x6d', '\x39', '\xae', '\x39', '\x00', '\x3c',
+        '\x56', '\x3a', '\xf8', '\x3b', '\x77', '\x37', '\x00', '\x3c',
+        '\xf7', '\x3a', '\x6d', '\x39', '\xae', '\x39', '\x00', '\x3c',
+        '\x56', '\x3a', '\xf8', '\x3b', '\x77', '\x37', '\x00', '\x3c',
+
+        /* Slice 1 */
+        '\x56', '\x3a', '\xf8', '\x3b', '\x77', '\x37', '\x00', '\x3c',
+        '\xf7', '\x3a', '\x6d', '\x39', '\xae', '\x39', '\x00', '\x3c',
+        '\x56', '\x3a', '\xf8', '\x3b', '\x77', '\x37', '\x00', '\x3c',
+        '\xf7', '\x3a', '\x6d', '\x39', '\xae', '\x39', '\x00', '\x3c',
+        '\x56', '\x3a', '\xf8', '\x3b', '\x77', '\x37', '\x00', '\x3c',
+        '\xf7', '\x3a', '\x6d', '\x39', '\xae', '\x39', '\x00', '\x3c',
+
+        /* Slice 2 */
+        '\xf7', '\x3a', '\x6d', '\x39', '\xae', '\x39', '\x00', '\x3c',
+        '\x56', '\x3a', '\xf8', '\x3b', '\x77', '\x37', '\x00', '\x3c',
+        '\xf7', '\x3a', '\x6d', '\x39', '\xae', '\x39', '\x00', '\x3c',
+        '\x56', '\x3a', '\xf8', '\x3b', '\x77', '\x37', '\x00', '\x3c',
+        '\xf7', '\x3a', '\x6d', '\x39', '\xae', '\x39', '\x00', '\x3c',
+        '\x56', '\x3a', '\xf8', '\x3b', '\x77', '\x37', '\x00', '\x3c'
     }), TestSuite::Compare::Container);
 }
 
 void DdsImporterTest::dxt3() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(DDSIMPORTER_TEST_DIR, "rgba_dxt3.dds")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(DDSIMPORTER_TEST_DIR, "dxt3.dds")));
+    CORRADE_COMPARE(importer->image2DCount(), 1);
+    CORRADE_COMPARE(importer->image2DLevelCount(0), 1);
+    CORRADE_COMPARE(importer->image3DCount(), 0);
 
     Containers::Optional<ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
@@ -567,111 +605,37 @@ void DdsImporterTest::dxt3() {
     }), TestSuite::Compare::Container);
 }
 
-void DdsImporterTest::dxt5() {
+void DdsImporterTest::formats() {
+    auto&& data = FormatsData[testCaseInstanceId()];
+    setTestCaseDescription(Utility::Path::splitExtension(data.filename).first());
+
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(DDSIMPORTER_TEST_DIR, "rgba_dxt5.dds")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(DDSIMPORTER_TEST_DIR, data.filename)));
+    CORRADE_COMPARE(importer->image2DCount(), 1);
+    CORRADE_COMPARE(importer->image2DLevelCount(0), 1);
+    CORRADE_COMPARE(importer->image3DCount(), 0);
 
     Containers::Optional<ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
-    CORRADE_VERIFY(image->isCompressed());
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
-    CORRADE_COMPARE(image->compressedFormat(), CompressedPixelFormat::Bc3RGBAUnorm);
-    CORRADE_COMPARE_AS(image->data(), Containers::arrayView<char>({
-        '\xff', '\xff', '\x49', '\x92', '\x24', '\x49', '\x92', '\x24',
-        '\x76', '\xdd', '\xee', '\xcf', '\x04', '\x51', '\x04', '\x51'
-    }), TestSuite::Compare::Container);
-}
-
-void DdsImporterTest::dxt10Formats2D() {
-    const auto& file = Files2D[testCaseInstanceId()];
-
-    setTestCaseDescription(file.filename);
-
-    Utility::Resource resource{"Dxt10TestFiles"};
-
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
-    CORRADE_VERIFY(importer->openData(resource.getRaw(file.filename)));
-    Containers::Optional<ImageData2D> image = importer->image2D(0);
-    CORRADE_VERIFY(image);
-    CORRADE_VERIFY(!image->isCompressed());
-    CORRADE_COMPARE(image->size(), Vector2i(3, 2));
-    CORRADE_COMPARE(image->format(), file.format);
-}
-
-void DdsImporterTest::dxt10Formats3D() {
-    const auto& file = Files3D[testCaseInstanceId()];
-
-    setTestCaseDescription(file.filename);
-
-    Utility::Resource resource{"Dxt10TestFiles"};
-
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
-    CORRADE_VERIFY(importer->openData(resource.getRaw(file.filename)));
-    Containers::Optional<ImageData3D> image = importer->image3D(0);
-    CORRADE_VERIFY(image);
-    CORRADE_VERIFY(!image->isCompressed());
-    CORRADE_COMPARE(image->size(), Vector3i(3, 2, 3));
-    CORRADE_COMPARE(image->format(), file.format);
-}
-
-void DdsImporterTest::dxt10Data() {
-    Utility::Resource resource{"Dxt10TestFiles"};
-
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
-
-    CORRADE_VERIFY(importer->openData(resource.getRaw("2D_R8G8_UNORM.dds")));
-    Containers::Optional<ImageData2D> image = importer->image2D(0);
-    CORRADE_VERIFY(image);
-    CORRADE_VERIFY(!image->isCompressed());
-    CORRADE_COMPARE(image->size(), Vector2i(3, 2));
-    CORRADE_COMPARE(image->format(), PixelFormat::RG8Unorm);
-    CORRADE_COMPARE_AS(image->data(), Containers::arrayView<char>({
-        '\xde', '\xad', '\xca', '\xfe',
-        '\xde', '\xad', '\xca', '\xfe',
-        '\xde', '\xad', '\xca', '\xfe'
-    }), TestSuite::Compare::Container);
-}
-
-void DdsImporterTest::dxt10TooShort() {
-    std::ostringstream out;
-    Error redirectError{&out};
-
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
-    CORRADE_VERIFY(!importer->openFile(Utility::Path::join(DDSIMPORTER_TEST_DIR, "too_short_dxt10.dds")));
-    CORRADE_COMPARE(out.str(), "Trade::DdsImporter::openData(): fourcc was DX10 but file is too short to contain DXT10 header\n");
-}
-
-void DdsImporterTest::dxt10UnsupportedFormat() {
-    std::ostringstream out;
-    Error redirectError{&out};
-
-    Utility::Resource resource{"Dxt10TestFiles"};
-
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
-    CORRADE_VERIFY(!importer->openData(resource.getRaw("2D_AYUV.dds")));
-    CORRADE_COMPARE(out.str(), "Trade::DdsImporter::openData(): unsupported format DXGI_FORMAT_AYUV\n");
-}
-
-void DdsImporterTest::dxt10UnknownFormatId() {
-    std::ostringstream out;
-    Error redirectError{&out};
-
-    Utility::Resource resource{"Dxt10TestFiles"};
-
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
-    CORRADE_VERIFY(!importer->openData(resource.getRaw("2D_V408.dds")));
-    CORRADE_COMPARE(out.str(), "Trade::DdsImporter::openData(): unknown DXGI format ID 132\n");
+    if(data.format != PixelFormat{}) {
+        CORRADE_VERIFY(!image->isCompressed());
+        CORRADE_COMPARE(image->format(), data.format);
+    } else {
+        CORRADE_VERIFY(image->isCompressed());
+        CORRADE_COMPARE(image->compressedFormat(), data.compressedFormat);
+    }
 }
 
 void DdsImporterTest::openMemory() {
-    /* same as dxt1() except that it uses openData() & openMemory() instead of
-       openFile() to test data copying on import */
+    /* compared to dxt3() uses openData() & openMemory() instead of openFile()
+       to test data copying on import, and a deliberately small file */
 
     auto&& data = OpenMemoryData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
-    Containers::Optional<Containers::Array<char>> memory = Utility::Path::read(Utility::Path::join(DDSIMPORTER_TEST_DIR, "rgba_dxt1.dds"));
+    Containers::Optional<Containers::Array<char>> memory = Utility::Path::read(Utility::Path::join(DDSIMPORTER_TEST_DIR, "dxt1.dds"));
     CORRADE_VERIFY(memory);
     CORRADE_VERIFY(data.open(*importer, *memory));
 
@@ -688,15 +652,15 @@ void DdsImporterTest::openMemory() {
 void DdsImporterTest::openTwice() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
 
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(DDSIMPORTER_TEST_DIR, "rgba_dxt5.dds")));
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(DDSIMPORTER_TEST_DIR, "rgba_dxt5.dds")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(DDSIMPORTER_TEST_DIR, "dxt5.dds")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(DDSIMPORTER_TEST_DIR, "dxt5.dds")));
 
     /* Shouldn't crash, leak or anything */
 }
 
 void DdsImporterTest::importTwice() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(DDSIMPORTER_TEST_DIR, "rgba_dxt5.dds")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(DDSIMPORTER_TEST_DIR, "dxt5.dds")));
 
     /* Verify that the file is rewinded for second use */
     {
