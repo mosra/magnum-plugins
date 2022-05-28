@@ -26,7 +26,6 @@
 
 #include "DdsImporter.h"
 
-#include <algorithm> /* std::transform() */
 #include <Corrade/Containers/GrowableArray.h>
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/StringView.h>
@@ -291,16 +290,12 @@ struct DdsHeaderDxt10 {
 void swizzlePixels(const PixelFormat format, Containers::Array<char>& data, const char* verbosePrefix) {
     if(format == PixelFormat::RGB8Unorm) {
         if(verbosePrefix) Debug{} << verbosePrefix << "converting from BGR to RGB";
-        auto pixels = reinterpret_cast<Math::Vector3<UnsignedByte>*>(data.data());
-        std::transform(pixels, pixels + data.size()/sizeof(Math::Vector3<UnsignedByte>), pixels,
-            [](Math::Vector3<UnsignedByte> pixel) { return Math::gather<'b', 'g', 'r'>(pixel); });
-
+        for(Vector3ub& pixel: Containers::arrayCast<Vector3ub>(data))
+            pixel = Math::gather<'b', 'g', 'r'>(pixel);
     } else if(format == PixelFormat::RGBA8Unorm) {
         if(verbosePrefix) Debug{} << verbosePrefix << "converting from BGRA to RGBA";
-        auto pixels = reinterpret_cast<Math::Vector4<UnsignedByte>*>(data.data());
-        std::transform(pixels, pixels + data.size()/sizeof(Math::Vector4<UnsignedByte>), pixels,
-            [](Math::Vector4<UnsignedByte> pixel) { return Math::gather<'b', 'g', 'r', 'a'>(pixel); });
-
+        for(Vector4ub& pixel: Containers::arrayCast<Vector4ub>(data))
+            pixel = Math::gather<'b', 'g', 'r', 'a'>(pixel);
     } else CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
 }
 
