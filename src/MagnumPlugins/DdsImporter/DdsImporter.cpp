@@ -588,11 +588,7 @@ void swizzlePixels(const PixelFormat format, Containers::Array<char>& data, cons
 
 }
 
-UnsignedInt DdsImporter::doImage2DCount() const {  return _f->volume ? 0 : 1; }
-
-UnsignedInt DdsImporter::doImage2DLevelCount(UnsignedInt) {  return _f->imageData.size(); }
-
-Containers::Optional<ImageData2D> DdsImporter::doImage2D(UnsignedInt, const UnsignedInt level) {
+template<UnsignedInt dimensions> ImageData<dimensions> DdsImporter::doImage(const char* prefix, UnsignedInt, UnsignedInt level) {
     const File::ImageDataOffset& dataOffset = _f->imageData[level];
 
     /* Copy image data */
@@ -601,45 +597,34 @@ Containers::Optional<ImageData2D> DdsImporter::doImage2D(UnsignedInt, const Unsi
 
     /* Compressed image */
     if(_f->compressed)
-        return ImageData2D(_f->pixelFormat.compressed, dataOffset.dimensions.xy(), std::move(data));
+        return ImageData<dimensions>(_f->pixelFormat.compressed, Math::Vector<dimensions, Int>::pad(dataOffset.dimensions), std::move(data));
 
     /* Uncompressed */
     if(_f->needsSwizzle) swizzlePixels(_f->pixelFormat.uncompressed, data,
-        flags() & ImporterFlag::Verbose ? "Trade::DdsImporter::image2D():" : nullptr);
+        flags() & ImporterFlag::Verbose ? prefix : nullptr);
 
     /* Adjust pixel storage if row size is not four byte aligned */
     PixelStorage storage;
     if((dataOffset.dimensions.x()*pixelSize(_f->pixelFormat.uncompressed))%4 != 0)
         storage.setAlignment(1);
 
-    return ImageData2D{storage, _f->pixelFormat.uncompressed, dataOffset.dimensions.xy(), std::move(data)};
+    return ImageData<dimensions>{storage, _f->pixelFormat.uncompressed, Math::Vector<dimensions, Int>::pad(dataOffset.dimensions), std::move(data)};
+}
+
+UnsignedInt DdsImporter::doImage2DCount() const {  return _f->volume ? 0 : 1; }
+
+UnsignedInt DdsImporter::doImage2DLevelCount(UnsignedInt) {  return _f->imageData.size(); }
+
+Containers::Optional<ImageData2D> DdsImporter::doImage2D(const UnsignedInt id, const UnsignedInt level) {
+    return doImage<2>("Trade::DdsImporter::image2D():", id, level);
 }
 
 UnsignedInt DdsImporter::doImage3DCount() const { return _f->volume ? 1 : 0; }
 
 UnsignedInt DdsImporter::doImage3DLevelCount(UnsignedInt) {  return _f->imageData.size(); }
 
-Containers::Optional<ImageData3D> DdsImporter::doImage3D(UnsignedInt, const UnsignedInt level) {
-    const File::ImageDataOffset& dataOffset = _f->imageData[level];
-
-    /* Copy image data */
-    Containers::Array<char> data{NoInit, dataOffset.data.size()};
-    Utility::copy(dataOffset.data, data);
-
-    /* Compressed image */
-    if(_f->compressed)
-        return ImageData3D(_f->pixelFormat.compressed, dataOffset.dimensions, std::move(data));
-
-    /* Uncompressed */
-    if(_f->needsSwizzle) swizzlePixels(_f->pixelFormat.uncompressed, data,
-        flags() & ImporterFlag::Verbose ? "Trade::DdsImporter::image3D():" : nullptr);
-
-    /* Adjust pixel storage if row size is not four byte aligned */
-    PixelStorage storage;
-    if((dataOffset.dimensions.x()*pixelSize(_f->pixelFormat.uncompressed))%4 != 0)
-        storage.setAlignment(1);
-
-    return ImageData3D{storage, _f->pixelFormat.uncompressed, dataOffset.dimensions, std::move(data)};
+Containers::Optional<ImageData3D> DdsImporter::doImage3D(const UnsignedInt id, const UnsignedInt level) {
+    return doImage<3>("Trade::DdsImporter::image3D():", id, level);
 }
 
 }}
