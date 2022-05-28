@@ -286,7 +286,7 @@ constexpr struct {
     {"dxt10-rgba16snorm.dds", PixelFormat::RGBA16Snorm, CompressedPixelFormat{}},
     {"dxt10-rgba32ui.dds", PixelFormat::RGBA32UI, CompressedPixelFormat{}},
     {"dxt10-rgba8unorm.dds", PixelFormat::RGBA8Unorm, CompressedPixelFormat{}},
-    {"dxt10-rgba8srgb.dds", PixelFormat::RGBA8Unorm, CompressedPixelFormat{}},
+    {"dxt10-rgba8srgb.dds", PixelFormat::RGBA8Srgb, CompressedPixelFormat{}},
 };
 
 /* Shared among all plugins that implement data copying optimizations */

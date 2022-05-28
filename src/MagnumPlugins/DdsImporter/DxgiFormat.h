@@ -33,7 +33,7 @@ _x(R10G10B10A2_UINT)
 _x(R11G11B10_FLOAT)
 _u(R8G8B8A8_TYPELESS,       RGBA8UI)    /* in Magnum, UI == typeless */
 _u(R8G8B8A8_UNORM,          RGBA8Unorm)
-_u(R8G8B8A8_UNORM_SRGB,     RGBA8Unorm) /** @todo propagate sRGB property */
+_u(R8G8B8A8_UNORM_SRGB,     RGBA8Srgb)
 _u(R8G8B8A8_UINT,           RGBA8UI)
 _u(R8G8B8A8_SNORM,          RGBA8Snorm)
 _u(R8G8B8A8_SINT,           RGBA8I)
@@ -95,10 +95,9 @@ _s(B8G8R8A8_UNORM,          RGBA8Unorm, true)
 _s(B8G8R8X8_UNORM,          RGBA8Unorm, true) /* alpha unspecified */
 _x(R10G10B10_XR_BIAS_A2_UNORM) /* no XR formats in Magnum yet */
 _s(B8G8R8A8_TYPELESS,       RGBA8Unorm, true) /* typeless treated as Unorm */
-_s(B8G8R8A8_UNORM_SRGB,     RGBA8Unorm, true) /** @todo propagate sRGB property */
+_s(B8G8R8A8_UNORM_SRGB,     RGBA8Srgb, true)
 _s(B8G8R8X8_TYPELESS,       RGBA8Unorm, true) /* typeless treated as Unorm, alpha unspecified */
-_s(B8G8R8X8_UNORM_SRGB,     RGBA8Unorm, true) /* alpha unspecified */
-                                              /** @todo propagate sRGB property */
+_s(B8G8R8X8_UNORM_SRGB,     RGBA8Srgb, true)  /* alpha unspecified */
 _x(BC6H_TYPELESS)
 _x(BC6H_UF16)
 _x(BC6H_SF16)
