@@ -177,7 +177,7 @@ void AstcImporter::doOpenData(Containers::Array<char>&& data, const DataFlags da
     _state.emplace();
     _state->format = format;
     _state->size = size;
-    /* An image is 3D if ... */ // TODO document
+    /* An image is 3D if ... */
     _state->is3D =
         /* it has a 3D block, */
         header.blockSize.z() != 1 ||
