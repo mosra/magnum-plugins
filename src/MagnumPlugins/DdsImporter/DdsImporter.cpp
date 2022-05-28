@@ -287,18 +287,6 @@ struct DdsHeaderDxt10 {
     DdsAlphaMode miscFlags2;
 };
 
-void swizzlePixels(const PixelFormat format, Containers::Array<char>& data, const char* verbosePrefix) {
-    if(format == PixelFormat::RGB8Unorm) {
-        if(verbosePrefix) Debug{} << verbosePrefix << "converting from BGR to RGB";
-        for(Vector3ub& pixel: Containers::arrayCast<Vector3ub>(data))
-            pixel = Math::gather<'b', 'g', 'r'>(pixel);
-    } else if(format == PixelFormat::RGBA8Unorm) {
-        if(verbosePrefix) Debug{} << verbosePrefix << "converting from BGRA to RGBA";
-        for(Vector4ub& pixel: Containers::arrayCast<Vector4ub>(data))
-            pixel = Math::gather<'b', 'g', 'r', 'a'>(pixel);
-    } else CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
-}
-
 PixelFormat dxgiToGl(DxgiFormat format) {
     switch(format) {
         /* R8 and A8 formats */
@@ -582,6 +570,22 @@ void DdsImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dat
 
     /* Everything okay, save the file for later use */
     _f = std::move(f);
+}
+
+namespace {
+
+void swizzlePixels(const PixelFormat format, Containers::Array<char>& data, const char* verbosePrefix) {
+    if(format == PixelFormat::RGB8Unorm) {
+        if(verbosePrefix) Debug{} << verbosePrefix << "converting from BGR to RGB";
+        for(Vector3ub& pixel: Containers::arrayCast<Vector3ub>(data))
+            pixel = Math::gather<'b', 'g', 'r'>(pixel);
+    } else if(format == PixelFormat::RGBA8Unorm) {
+        if(verbosePrefix) Debug{} << verbosePrefix << "converting from BGRA to RGBA";
+        for(Vector4ub& pixel: Containers::arrayCast<Vector4ub>(data))
+            pixel = Math::gather<'b', 'g', 'r', 'a'>(pixel);
+    } else CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+}
+
 }
 
 UnsignedInt DdsImporter::doImage2DCount() const {  return _f->volume ? 0 : 1; }
