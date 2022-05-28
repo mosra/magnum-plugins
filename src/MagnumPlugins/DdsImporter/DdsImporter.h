@@ -95,54 +95,59 @@ See @ref building-plugins, @ref cmake-plugins, @ref plugins and
 
 Imports images in the following formats:
 
--   DDS uncompressed RGB, RGBA, BGR, BGRA, grayscale as
+-   Uncompressed RGB, RGBA, BGR, BGRA, grayscale as
     @ref PixelFormat::RGB8Unorm, @ref PixelFormat::RGBA8Unorm or
     @ref PixelFormat::R8Unorm, with component swizzling as necessary
--   DDS compressed DXT1, DXT3, DXT5 as @ref CompressedPixelFormat::Bc1RGBAUnorm,
-    @ref CompressedPixelFormat::Bc2RGBAUnorm and
-    @ref CompressedPixelFormat::Bc3RGBAUnorm, respectively
--   DDS DXT10 with the following DXGI formats:
-    -   `R8_TYPELESS`, `R8G8_TYPELESS`, `R8G8B8A8_TYPELESS` as
-        @ref PixelFormat::R8UI and its two-/four-component equivalents (no
-        special handling)
-    -   `R8_UINT`, `R8G8_UINT`, `R8G8B8A8_UINT` as @ref PixelFormat::R8UI and
-        its two-/four-component equivalents
-    -   `R8_INT`, `R8G8_INT`, `R8G8B8A8_INT` as @ref PixelFormat::R8I and its
-        two-/four-component equivalents
-    -   `R8_UNORM`, `R8G8_UNORM`, `R8G8B8A8_UNORM` as @ref PixelFormat::R8Unorm
-        and its two-/four-component equivalents
-    -   `A8_UNORM` as @ref PixelFormat::R8Unorm (no special handling)
-    -   `R8G8B8A8_UNORM_SRGB` as @ref PixelFormat::RGBA8Unorm (no special
-        handling)
-    -   `R8_SNORM`, `R8G8_SNORM`, `R8G8B8A8_SNORM` as
-        @ref PixelFormat::R8Snorm and its two-/four-component equivalents
-    -   `R16_TYPELESS`, `R16G16_TYPELESS`, `R16G16B16A16_TYPELESS` as
-        @ref PixelFormat::R16UI and its two-/four-component equivalents (no
-        special handling)
-    -   `R16_UINT`, `R16G16_UINT`, `R16G16B16A16_UINT` as
-        @ref PixelFormat::R16UI and its two-/four-component equivalents
-    -   `R16_INT`, `R16G16_INT`, `R16G16B16A16_INT` as @ref PixelFormat::R16I
-        and its two-/four-component equivalents
-    -   `R16_FLOAT`, `R16G16_FLOAT`, `R16G16B16A16_FLOAT` as
-        @ref PixelFormat::R16F and its two-/four-component equivalents
-    -   `R16_UNORM`, `R16G16_UNORM`, `R16G16B16A16_UNORM` as
-        @ref PixelFormat::R16Unorm and its two-/four-component equivalents
-    -   `R16_SNORM`, `R16G16_SNORM`, `R16G16B16A16_SNORM` as
-        @ref PixelFormat::R16Snorm and its two-/four-component equivalents
-    -   `R32_TYPELESS`, `R32G32_TYPELESS`, `R32G32B32_TYPELESS`,
-        `R32G32B32A32_TYPELESS` as  @ref PixelFormat::R32UI and its
-        two-/three-/four-component equivalents (no special handling)
-    -   `R32_UINT`, `R32G32_UINT`, `R32G32B32_UINT`, `R32G32B32A32_UINT` as
-        @ref PixelFormat::R32UI and its two-/three-/four-component equivalents
-    -   `R32_INT`, `R32G32_INT`, `R32G32B32_INT`, `R32G32B32A32_INT` as
-        @ref PixelFormat::R32I  and its two-/three-/four-component equivalents
-    -   `R32_FLOAT`, `R32G32_FLOAT`, `R32G32B32_FLOAT`, `R32G32B32A32_FLOAT` as
-        @ref PixelFormat::R32F and its two-/three-/four-component equivalents
+-   Compressed DXT1, DXT3, DXT5, ATI1 (BC4), ATI2 (BC5), BC4S and BC5S as
+    @ref CompressedPixelFormat::Bc1RGBAUnorm,
+    @relativeref{CompressedPixelFormat,Bc2RGBAUnorm},
+    @relativeref{CompressedPixelFormat,Bc3RGBAUnorm},
+    @relativeref{CompressedPixelFormat,Bc4RUnorm},
+    @relativeref{CompressedPixelFormat,Bc5RGUnorm},
+    @relativeref{CompressedPixelFormat,Bc4RSnorm} and
+    @relativeref{CompressedPixelFormat,Bc5RGSnorm} respectively
+-   DDS DXT10 in formats that correspond to the
+    @m_class{m-doc-external} [DXGI_FORMAT](https://docs.microsoft.com/en-us/windows/win32/api/dxgiformat/ne-dxgiformat-dxgi_format)
+    mapping documented in @ref Magnum::PixelFormat "PixelFormat" and
+    @ref CompressedPixelFormat
+    (searching for the DXGI format names works as well), with the following
+    special cases:
+
+    -   @m_class{m-doc-external} [DXGI_FORMAT_A8_UNORM](https://docs.microsoft.com/en-us/windows/win32/api/dxgiformat/ne-dxgiformat-dxgi_format)
+        is imported as @ref PixelFormat::R8Unorm
+    -   @m_class{m-doc-external} [DXGI_FORMAT_B8G8R8A8_UNORM](https://docs.microsoft.com/en-us/windows/win32/api/dxgiformat/ne-dxgiformat-dxgi_format) /
+        @m_class{m-doc-external} [DXGI_FORMAT_B8G8R8X8_UNORM](https://docs.microsoft.com/en-us/windows/win32/api/dxgiformat/ne-dxgiformat-dxgi_format)
+        and @m_class{m-doc-external} [DXGI_FORMAT_B8G8R8A8_UNORM_SRGB](https://docs.microsoft.com/en-us/windows/win32/api/dxgiformat/ne-dxgiformat-dxgi_format) /
+        @m_class{m-doc-external} [DXGI_FORMAT_B8G8R8X8_UNORM_SRGB](https://docs.microsoft.com/en-us/windows/win32/api/dxgiformat/ne-dxgiformat-dxgi_format)
+        is imported as @ref PixelFormat::RGBA8Unorm and
+        @ref PixelFormat::RGBA8Srgb with component swizlling, the `X` variant
+        not being treated in any special way --- alpha channel gets whatever
+        data is there
+    -   @m_class{m-doc-external} [DXGI_FORMAT_R32G8X24_TYPELESS](https://docs.microsoft.com/en-us/windows/win32/api/dxgiformat/ne-dxgiformat-dxgi_format),
+        @m_class{m-doc-external} [DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS](https://docs.microsoft.com/en-us/windows/win32/api/dxgiformat/ne-dxgiformat-dxgi_format) and
+        @m_class{m-doc-external} [DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS](https://docs.microsoft.com/en-us/windows/win32/api/dxgiformat/ne-dxgiformat-dxgi_format)
+        are all treated the same way as @m_class{m-doc-external} [DXGI_FORMAT_D32_FLOAT_S8X24_UINT](https://docs.microsoft.com/en-us/windows/win32/api/dxgiformat/ne-dxgiformat-dxgi_format),
+        thus @ref PixelFormat::Depth32FStencil8UI
+    -   @m_class{m-doc-external} [DXGI_FORMAT_R24G8_TYPELESS](https://docs.microsoft.com/en-us/windows/win32/api/dxgiformat/ne-dxgiformat-dxgi_format),
+        @m_class{m-doc-external} [DXGI_FORMAT_R24_UNORM_X8_TYPELESS](https://docs.microsoft.com/en-us/windows/win32/api/dxgiformat/ne-dxgiformat-dxgi_format) and
+        @m_class{m-doc-external} [DXGI_FORMAT_X24_TYPELESS_G8_UINT](https://docs.microsoft.com/en-us/windows/win32/api/dxgiformat/ne-dxgiformat-dxgi_format)
+        are all treated the same way as @m_class{m-doc-external} [DXGI_FORMAT_D24_UNORM_S8_UINT](https://docs.microsoft.com/en-us/windows/win32/api/dxgiformat/ne-dxgiformat-dxgi_format),
+        thus @ref PixelFormat::Depth24UnormStencil8UI
+    -   BC1 -- BC5 and BC7 `*_TYPELESS` formats are treated the same way as
+        their `*_UNORM` alternatives
+    -   @m_class{m-doc-external} [DXGI_FORMAT_BC6H_TYPELESS](https://docs.microsoft.com/en-us/windows/win32/api/dxgiformat/ne-dxgiformat-dxgi_format)
+        is treated the same way as @m_class{m-doc-external} [DXGI_FORMAT_BC6H_UF16](https://docs.microsoft.com/en-us/windows/win32/api/dxgiformat/ne-dxgiformat-dxgi_format),
+        thus @ref CompressedPixelFormat::Bc6hRGBUfloat
+    -   All other uncompressed `*_TYPELESS` formats are treated the same way as
+        the `*_UI` alternatives
+
+    Packed formats, (planar) YUV / YCbCr video formats,
+    @m_class{m-doc-external} [DXGI_FORMAT_R1_UNORM](https://docs.microsoft.com/en-us/windows/win32/api/dxgiformat/ne-dxgiformat-dxgi_format)
+    and @m_class{m-doc-external} [R10G10B10_XR_BIAS_A2_UNORM](https://docs.microsoft.com/en-us/windows/win32/api/dxgiformat/ne-dxgiformat-dxgi_format)
+    are not supported.
 
 The importer recognizes @ref ImporterFlag::Verbose, printing additional info
 when the flag is enabled.
-
-BC6h, BC7 and other compressed formats are currently not imported correctly.
 */
 class MAGNUM_DDSIMPORTER_EXPORT DdsImporter: public AbstractImporter {
     public:
