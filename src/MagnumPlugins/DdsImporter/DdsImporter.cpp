@@ -111,7 +111,7 @@ CORRADE_ENUMSET_OPERATORS(DdsCaps2)
    https://docs.microsoft.com/en-us/windows/win32/direct3ddds/dds-header */
 struct DdsHeader {
     char signature[4]; /* DDS<space> */
-    UnsignedInt size;
+    UnsignedInt size; /* Should be 124. Should I check this? */
     DdsDescriptionFlags flags;
     UnsignedInt height;
     UnsignedInt width;
@@ -120,7 +120,7 @@ struct DdsHeader {
     UnsignedInt mipMapCount;
     UnsignedInt reserved1[11];
     struct {
-        UnsignedInt size;
+        UnsignedInt size;  /* Should be 32. Should I check this? */
         DdsPixelFormatFlags flags;
         union {
             UnsignedInt fourCC;
