@@ -448,9 +448,6 @@ void DdsImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dat
     /* Check if image is a 2D or 3D texture */
     f->volume = ((ddsh.caps2 & DdsCap2::Volume) && (ddsh.depth > 0));
 
-    /* Check if image is a cubemap */
-    const bool isCubemap = !!(ddsh.caps2 & DdsCap2::Cubemap);
-
     /* Compressed */
     if(ddsh.ddspf.flags & DdsPixelFormatFlag::FourCC) {
         switch(ddsh.ddspf.fourCC) {
@@ -548,7 +545,7 @@ void DdsImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dat
     const UnsignedInt numMipmaps = ddsh.flags & DdsDescriptionFlag::MipMapCount ? ddsh.mipMapCount : 1;
 
     /* Load all surfaces for the image (6 surfaces for cubemaps) */
-    const UnsignedInt numImages = isCubemap ? 6 : 1;
+    const UnsignedInt numImages = ddsh.caps2 & DdsCap2::Cubemap ? 6 : 1;
     for(UnsignedInt n = 0; n < numImages; ++n) {
         Vector3i mipSize{size};
 
