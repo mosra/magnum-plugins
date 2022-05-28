@@ -237,21 +237,21 @@ void DdsImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dat
         Error{} << "Trade::DdsImporter::openData(): file too short, expected at least" << sizeof(DdsHeader) << "bytes but got" << f->in.size();
         return;
     }
-    const DdsHeader& ddsh = *reinterpret_cast<const DdsHeader*>(f->in.data());
+    const DdsHeader& header = *reinterpret_cast<const DdsHeader*>(f->in.data());
     std::size_t offset = sizeof(DdsHeader);
 
     /* Verify file signature */
-    if(Containers::StringView{ddsh.signature, 4} != "DDS "_s) {
-        Error() << "Trade::DdsImporter::openData(): invalid file signature" << Containers::StringView{ddsh.signature, 4};
+    if(Containers::StringView{header.signature, 4} != "DDS "_s) {
+        Error() << "Trade::DdsImporter::openData(): invalid file signature" << Containers::StringView{header.signature, 4};
         return;
     }
 
     /* Check if image is a 2D or 3D texture */
-    f->volume = ((ddsh.caps2 & DdsCap2::Volume) && (ddsh.depth > 0));
+    f->volume = ((header.caps2 & DdsCap2::Volume) && (header.depth > 0));
 
     /* Compressed */
-    if(ddsh.ddspf.flags & DdsPixelFormatFlag::FourCC) {
-        switch(ddsh.ddspf.fourCC) {
+    if(header.ddspf.flags & DdsPixelFormatFlag::FourCC) {
+        switch(header.ddspf.fourCC) {
             case Utility::Endianness::fourCC('D', 'X', 'T', '1'):
                 f->compressed = true;
                 f->needsSwizzle = false;
@@ -272,15 +272,15 @@ void DdsImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dat
                     Error{} << "Trade::DdsImporter::openData(): DXT10 file too short, expected at least" << sizeof(DdsHeader) + sizeof(DdsHeaderDxt10) << "bytes but got" << f->in.size();
                     return;
                 }
-                const DdsHeaderDxt10& dxt10 = *reinterpret_cast<const DdsHeaderDxt10*>(f->in.data() + sizeof(DdsHeader));
+                const DdsHeaderDxt10& headerDxt10 = *reinterpret_cast<const DdsHeaderDxt10*>(f->in.data() + sizeof(DdsHeader));
                 offset += sizeof(DdsHeaderDxt10);
 
-                if(dxt10.dxgiFormat >= Containers::arraySize(DxgiFormatMapping)) {
-                    Error{} << "Trade::DdsImporter::openData(): unknown DXGI format ID" << dxt10.dxgiFormat;
+                if(headerDxt10.dxgiFormat >= Containers::arraySize(DxgiFormatMapping)) {
+                    Error{} << "Trade::DdsImporter::openData(): unknown DXGI format ID" << headerDxt10.dxgiFormat;
                     return;
                 }
 
-                const auto& mapped = DxgiFormatMapping[dxt10.dxgiFormat];
+                const auto& mapped = DxgiFormatMapping[headerDxt10.dxgiFormat];
                 if(mapped.format) {
                     f->compressed = false;
                     f->needsSwizzle = false;
@@ -293,66 +293,66 @@ void DdsImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dat
             case Utility::Endianness::fourCC('D', 'X', 'T', '2'):
             case Utility::Endianness::fourCC('D', 'X', 'T', '4'):
             default:
-                Error() << "Trade::DdsImporter::openData(): unknown compression" << Containers::StringView{ddsh.ddspf.fourCCChars, 4};
+                Error() << "Trade::DdsImporter::openData(): unknown compression" << Containers::StringView{header.ddspf.fourCCChars, 4};
                 return;
         }
 
     /* RGBA */
-    } else if(ddsh.ddspf.rgbBitCount == 32 &&
-              ddsh.ddspf.rBitMask == 0x000000ff &&
-              ddsh.ddspf.gBitMask == 0x0000ff00 &&
-              ddsh.ddspf.bBitMask == 0x00ff0000 &&
-              ddsh.ddspf.aBitMask == 0xff000000) {
+    } else if(header.ddspf.rgbBitCount == 32 &&
+              header.ddspf.rBitMask == 0x000000ff &&
+              header.ddspf.gBitMask == 0x0000ff00 &&
+              header.ddspf.bBitMask == 0x00ff0000 &&
+              header.ddspf.aBitMask == 0xff000000) {
         f->pixelFormat.uncompressed = PixelFormat::RGBA8Unorm;
         f->compressed = false;
         f->needsSwizzle = false;
 
     /* BGRA */
-    } else if(ddsh.ddspf.rgbBitCount == 32 &&
-              ddsh.ddspf.rBitMask == 0x00ff0000 &&
-              ddsh.ddspf.gBitMask == 0x0000ff00 &&
-              ddsh.ddspf.bBitMask == 0x000000ff &&
-              ddsh.ddspf.aBitMask == 0xff000000) {
+    } else if(header.ddspf.rgbBitCount == 32 &&
+              header.ddspf.rBitMask == 0x00ff0000 &&
+              header.ddspf.gBitMask == 0x0000ff00 &&
+              header.ddspf.bBitMask == 0x000000ff &&
+              header.ddspf.aBitMask == 0xff000000) {
         f->pixelFormat.uncompressed = PixelFormat::RGBA8Unorm;
         f->compressed = false;
         f->needsSwizzle = true;
 
     /* RGB */
-    } else if(ddsh.ddspf.rgbBitCount == 24 &&
-              ddsh.ddspf.rBitMask == 0x000000ff &&
-              ddsh.ddspf.gBitMask == 0x0000ff00 &&
-              ddsh.ddspf.bBitMask == 0x00ff0000) {
+    } else if(header.ddspf.rgbBitCount == 24 &&
+              header.ddspf.rBitMask == 0x000000ff &&
+              header.ddspf.gBitMask == 0x0000ff00 &&
+              header.ddspf.bBitMask == 0x00ff0000) {
         f->pixelFormat.uncompressed = PixelFormat::RGB8Unorm;
         f->compressed = false;
         f->needsSwizzle = false;
 
     /* BGR */
-    } else if(ddsh.ddspf.rgbBitCount == 24 &&
-              ddsh.ddspf.rBitMask == 0x00ff0000 &&
-              ddsh.ddspf.gBitMask == 0x0000ff00 &&
-              ddsh.ddspf.bBitMask == 0x000000ff) {
+    } else if(header.ddspf.rgbBitCount == 24 &&
+              header.ddspf.rBitMask == 0x00ff0000 &&
+              header.ddspf.gBitMask == 0x0000ff00 &&
+              header.ddspf.bBitMask == 0x000000ff) {
         f->pixelFormat.uncompressed = PixelFormat::RGB8Unorm;
         f->compressed = false;
         f->needsSwizzle = true;
 
     /* Grayscale */
-    } else if(ddsh.ddspf.rgbBitCount == 8) {
+    } else if(header.ddspf.rgbBitCount == 8) {
         f->pixelFormat.uncompressed = PixelFormat::R8Unorm;
         f->compressed = false;
         f->needsSwizzle = false;
 
     } else {
-        Error() << "Trade::DdsImporter::openData(): unknown" << ddsh.ddspf.rgbBitCount << "bits per pixel format with a RGBA mask" << Debug::packed << Math::Vector4<void*>{reinterpret_cast<void*>(ddsh.ddspf.rBitMask), reinterpret_cast<void*>(ddsh.ddspf.gBitMask), reinterpret_cast<void*>(ddsh.ddspf.bBitMask), reinterpret_cast<void*>(ddsh.ddspf.aBitMask)};
+        Error() << "Trade::DdsImporter::openData(): unknown" << header.ddspf.rgbBitCount << "bits per pixel format with a RGBA mask" << Debug::packed << Math::Vector4<void*>{reinterpret_cast<void*>(header.ddspf.rBitMask), reinterpret_cast<void*>(header.ddspf.gBitMask), reinterpret_cast<void*>(header.ddspf.bBitMask), reinterpret_cast<void*>(header.ddspf.aBitMask)};
         return;
     }
 
-    const Vector3i size{Int(ddsh.width), Int(ddsh.height), Int(Math::max(ddsh.depth, 1u))};
+    const Vector3i size{Int(header.width), Int(header.height), Int(Math::max(header.depth, 1u))};
 
     /* Check how many mipmaps to load */
-    const UnsignedInt numMipmaps = ddsh.flags & DdsDescriptionFlag::MipMapCount ? ddsh.mipMapCount : 1;
+    const UnsignedInt numMipmaps = header.flags & DdsDescriptionFlag::MipMapCount ? header.mipMapCount : 1;
 
     /* Load all surfaces for the image (6 surfaces for cubemaps) */
-    const UnsignedInt numImages = ddsh.caps2 & DdsCap2::Cubemap ? 6 : 1;
+    const UnsignedInt numImages = header.caps2 & DdsCap2::Cubemap ? 6 : 1;
     for(UnsignedInt n = 0; n < numImages; ++n) {
         Vector3i mipSize{size};
 
