@@ -30,7 +30,6 @@
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/Debug.h>
-#include <Corrade/Utility/Endianness.h>
 #include <Corrade/Utility/Format.h>
 #include <Magnum/PixelFormat.h>
 #include <Magnum/Trade/ImageData.h>
@@ -46,7 +45,10 @@ namespace {
    the exact same link in its magic detection:
    https://github.com/file/file/blob/b489768b7065b6dae4bda05c737fa73ae50c50fc/magic/Magdir/images#L3263-L3276 */
 struct AstcHeader {
-    UnsignedInt magic;
+    union {
+        char magic[4];
+        UnsignedInt magicNumber;
+    };
     Vector3ub blockSize;
     /* 24-bit LE */
     UnsignedByte sizeX[3];
@@ -96,12 +98,10 @@ void AstcImporter::doOpenData(Containers::Array<char>&& data, const DataFlags da
         return;
     }
 
-    /* Check magic */
+    /* Check magic, SCALABLE, unfortunately in LE so it's not as visible */
     AstcHeader header = *reinterpret_cast<const AstcHeader*>(data.begin());
-    /* Magic is SCALABLE, in LE */
-    /** @todo might cause alignment issues, would alignas(1) work? */
-    if(Utility::Endianness::littleEndian(header.magic) != 0x5CA1AB13) {
-        Error{} << "Trade::AstcImporter::openData(): invalid file magic 0x" << Debug::nospace << Utility::format("{:.8X}", header.magic);
+    if(Containers::StringView{header.magic, 4} != "\x13\xAB\xA1\x5C"_s) {
+        Error{} << "Trade::AstcImporter::openData(): invalid file magic 0x" << Debug::nospace << Utility::format("{:.8X}", header.magicNumber);
         return;
     }
 
