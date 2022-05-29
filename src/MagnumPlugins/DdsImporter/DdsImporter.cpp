@@ -295,6 +295,9 @@ void DdsImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dat
                 f->needsSwizzle = false;
                 f->pixelFormat.compressed = CompressedPixelFormat::Bc5RGSnorm;
                 break;
+            /** @todo there's also a bunch of other numeric values mentioned at
+                https://docs.microsoft.com/en-us/windows/win32/direct3ddds/dx-graphics-dds-pguide
+                -- what do they represent? */
             case Utility::Endianness::fourCC('D', 'X', '1', '0'): {
                 if(f->in.size() < sizeof(DdsHeader) + sizeof(DdsHeaderDxt10)) {
                     Error{} << "Trade::DdsImporter::openData(): DXT10 file too short, expected at least" << sizeof(DdsHeader) + sizeof(DdsHeaderDxt10) << "bytes but got" << f->in.size();
