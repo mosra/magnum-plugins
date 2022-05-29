@@ -79,6 +79,8 @@ corrade_add_test(DdsImporterTest
         dxt5.dds
         bgr8unorm.dds
         rgb8unorm.dds
+        bgrx8unorm.dds
+        rgbx8unorm.dds
         bgr8unorm-mips.dds
         bgra8unorm-3d.dds
         r8unorm.dds

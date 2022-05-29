@@ -287,6 +287,8 @@ constexpr struct {
     PixelFormat format;
     CompressedPixelFormat compressedFormat;
 } FormatsData[]{
+    {"bgrx8unorm.dds", PixelFormat::RGBA8Unorm, CompressedPixelFormat{}},
+    {"rgbx8unorm.dds", PixelFormat::RGBA8Unorm, CompressedPixelFormat{}},
     {"dxt1.dds", PixelFormat{}, CompressedPixelFormat::Bc1RGBAUnorm},
     {"dxt5.dds", PixelFormat{}, CompressedPixelFormat::Bc3RGBAUnorm},
     /* Those have legacy non-recommended FourCCs, so testing each and

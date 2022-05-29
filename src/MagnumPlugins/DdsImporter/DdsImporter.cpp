@@ -332,22 +332,26 @@ void DdsImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dat
                 return;
         }
 
-    /* RGBA */
+    /* RGBA or RGBX with the alpha unspecified. The X variant is produced by
+       NVidia Texture Tools from a RGB input. */
     } else if(header.ddspf.rgbBitCount == 32 &&
               header.ddspf.rBitMask == 0x000000ff &&
               header.ddspf.gBitMask == 0x0000ff00 &&
               header.ddspf.bBitMask == 0x00ff0000 &&
-              header.ddspf.aBitMask == 0xff000000) {
+             (header.ddspf.aBitMask == 0xff000000 ||
+              header.ddspf.aBitMask == 0x00000000)) {
         f->pixelFormat.uncompressed = PixelFormat::RGBA8Unorm;
         f->compressed = false;
         f->needsSwizzle = false;
 
-    /* BGRA */
+    /* BGRA or BGRX with the alpha unspecified. The X variant is produced by
+       NVidia Texture Tools from a RGB input. */
     } else if(header.ddspf.rgbBitCount == 32 &&
               header.ddspf.rBitMask == 0x00ff0000 &&
               header.ddspf.gBitMask == 0x0000ff00 &&
               header.ddspf.bBitMask == 0x000000ff &&
-              header.ddspf.aBitMask == 0xff000000) {
+             (header.ddspf.aBitMask == 0xff000000 ||
+              header.ddspf.aBitMask == 0x00000000)) {
         f->pixelFormat.uncompressed = PixelFormat::RGBA8Unorm;
         f->compressed = false;
         f->needsSwizzle = true;

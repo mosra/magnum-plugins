@@ -95,9 +95,11 @@ See @ref building-plugins, @ref cmake-plugins, @ref plugins and
 
 Imports images in the following formats:
 
--   Uncompressed RGB, RGBA, BGR, BGRA, grayscale as
+-   Uncompressed RGB, RGBA / RGBX, BGR, BGRA / BGRX, grayscale as
     @ref PixelFormat::RGB8Unorm, @ref PixelFormat::RGBA8Unorm or
-    @ref PixelFormat::R8Unorm, with component swizzling as necessary
+    @ref PixelFormat::R8Unorm, with component swizzling as necessary. The `X`
+    variant not being treated in any special way --- alpha channel gets
+    whatever data is there.
 -   Compressed DXT1, DXT3, DXT5, ATI1 (BC4), ATI2 (BC5), BC4S and BC5S as
     @ref CompressedPixelFormat::Bc1RGBAUnorm,
     @relativeref{CompressedPixelFormat,Bc2RGBAUnorm},

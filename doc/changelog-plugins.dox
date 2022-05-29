@@ -111,7 +111,7 @@ namespace Magnum {
 -   @relativeref{Trade,AssimpImporter} now provides the `3mfImporter` alias
     for convenient loading of `*.3mf` files
 -   @relativeref{Trade,DdsImporter} now supports all DXGI depth, stencil and
-    compressed formats, legacy non-DXGI BC4 and BC5 formats, BGRX and BGRA
+    compressed formats, legacy non-DXGI RGBX, BGRX, BC4 and BC5 formats, BGR(A)
     formats also for files with the DXT10 header; uncompressed sRGB formats are
     now properly imported as @ref PixelFormat::RGBA8Srgb instead of
     @ref PixelFormat::RGBA8Unorm
