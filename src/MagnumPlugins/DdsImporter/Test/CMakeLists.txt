@@ -59,9 +59,12 @@ corrade_add_test(DdsImporterTest
         bc5unorm.dds
         dxt1.dds
         dxt10-ayuv.dds
+        dxt10-astc8x5unorm.dds
         dxt10-bc7.dds
         dxt10-depth24unorm-stencil8ui.dds
         dxt10-depth32f-stencil8ui.dds
+        dxt10-format136.dds
+        dxt10-format189.dds
         dxt10-rgba16snorm.dds
         dxt10-rgba32ui.dds
         dxt10-rgba8srgb.dds
@@ -72,7 +75,6 @@ corrade_add_test(DdsImporterTest
         dxt10-rg32f.dds
         dxt10-rg8unorm.dds
         dxt10-r32i-mips.dds
-        dxt10-v408.dds
         dxt3.dds
         dxt3-incomplete-blocks.dds
         dxt4.dds

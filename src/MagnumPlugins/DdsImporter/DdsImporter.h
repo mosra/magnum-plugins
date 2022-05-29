@@ -142,11 +142,20 @@ Imports images in the following formats:
         thus @ref CompressedPixelFormat::Bc6hRGBUfloat
     -   All other uncompressed `*_TYPELESS` formats are treated the same way as
         the `*_UI` alternatives
+-   Additionally, nonstandard 2D ASTC `DXGI_FORMAT_ASTC_4x4_TYPELESS`, ...,
+    `*_UNORM` and `*_UNORM_SRGB` formats are supported, mapping to
+    @ref CompressedPixelFormat::Astc4x4RGBAUnorm,
+    @relativeref{CompressedPixelFormat,Astc4x4RGBASrgb} and following variants.
+    A subset of those is used by [NVidia Texture Tools Exporter](https://developer.nvidia.com/nvidia-texture-tools-exporter),
+    historically the ASTC formats were meant to be included in Direct3D 11.3
+    but were later pulled. While there are reserved enum values for float
+    variants of these formats as well, no tool is known to produce them. 3D
+    ASTC formats have no known mapping.
 
-    Packed formats, (planar) YUV / YCbCr video formats,
-    @m_class{m-doc-external} [DXGI_FORMAT_R1_UNORM](https://docs.microsoft.com/en-us/windows/win32/api/dxgiformat/ne-dxgiformat-dxgi_format)
-    and @m_class{m-doc-external} [R10G10B10_XR_BIAS_A2_UNORM](https://docs.microsoft.com/en-us/windows/win32/api/dxgiformat/ne-dxgiformat-dxgi_format)
-    are not supported.
+Packed formats, (planar) YUV / YCbCr video formats,
+@m_class{m-doc-external} [DXGI_FORMAT_R1_UNORM](https://docs.microsoft.com/en-us/windows/win32/api/dxgiformat/ne-dxgiformat-dxgi_format)
+and @m_class{m-doc-external} [R10G10B10_XR_BIAS_A2_UNORM](https://docs.microsoft.com/en-us/windows/win32/api/dxgiformat/ne-dxgiformat-dxgi_format)
+are not supported.
 
 The importer recognizes @ref ImporterFlag::Verbose, printing additional info
 when the flag is enabled.

@@ -185,6 +185,7 @@ constexpr struct {
     bool needsSwizzle;
 } DxgiFormatMapping[] {
 #define _x(name) {#name, 0, 0, false},
+#define _i() {},
 #define _u(name, format) {nullptr, UnsignedInt(PixelFormat::format), 0, false},
 #define _s(name, format, swizzle) {nullptr, UnsignedInt(PixelFormat::format), 0, swizzle},
 #define _c(name, format) {nullptr, 0, UnsignedInt(CompressedPixelFormat::format), false},
@@ -192,6 +193,7 @@ constexpr struct {
 #undef _c
 #undef _s
 #undef _u
+#undef _i
 #undef _x
 };
 
@@ -318,8 +320,11 @@ void DdsImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dat
                     f->compressed = true;
                     f->needsSwizzle = false;
                     f->pixelFormat.compressed = CompressedPixelFormat(mapped.compressedFormat);
-                } else {
+                } else if(mapped.name) {
                     Error{} << "Trade::DdsImporter::openData(): unsupported format DXGI_FORMAT_" << Debug::nospace << mapped.name;
+                    return;
+                } else {
+                    Error{} << "Trade::DdsImporter::openData(): unknown DXGI format ID" << headerDxt10.dxgiFormat;
                     return;
                 }
             } break;

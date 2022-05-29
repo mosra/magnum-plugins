@@ -1,5 +1,6 @@
 /*
     _x() -- skipped (not supported)
+    _i() -- invalid (missing enum value)
     _u() -- uncompressed format
     _s() -- uncompressed format needing a swizzle
     _c() -- compressed format
@@ -121,8 +122,85 @@ _x(IA44)
 _x(P8)                      /* no (planar) YUV formats in Magnum yet */
 _x(A8P8)
 _x(B4G4R4A4_UNORM)          /* no generic packed formats in Magnum yet */
-/* DXGI_FORMAT_P208 is not linearly numbered, skipping */
-/* DXGI_FORMAT_V208 is not linearly numbered, skipping */
-/* DXGI_FORMAT_V408 is not linearly numbered, skipping */
+_i()
+_i()
+_i()
+_i()
+_i()
+_i()
+_i()
+_i()
+_i()
+_i()
+_i()
+_i()
+_i()
+_i()
+_x(P208)
+_x(V208)
+_x(V408)
+
+/* From https://github.com/g-truc/gli/commit/e5ad4ae6233abfb29eecebfd247142f1b3ef7844
+   No floating-point variants listed there, those would probably be the missing
+   values (136, 140, ...). Ignoring those until I know about a tool that
+   exports them. The only tool known to be using these is NVidia Texture Tools
+   Exporter, but it apparently uses only the _UNORM variant:
+   https://forums.developer.nvidia.com/t/nv-tt-exporter-astc-compression/122477 */
+_c(ASTC_4X4_TYPELESS,       Astc4x4RGBAUnorm) /* typeless treated as Unorm here */
+_c(ASTC_4X4_UNORM,          Astc4x4RGBAUnorm)
+_c(ASTC_4X4_UNORM_SRGB,     Astc4x4RGBASrgb)
+_i()
+_c(ASTC_5X4_TYPELESS,       Astc5x4RGBAUnorm) /* typeless treated as Unorm here */
+_c(ASTC_5X4_UNORM,          Astc5x4RGBAUnorm)
+_c(ASTC_5X4_UNORM_SRGB,     Astc5x4RGBASrgb)
+_i()
+_c(ASTC_5X5_TYPELESS,       Astc5x5RGBAUnorm) /* typeless treated as Unorm here */
+_c(ASTC_5X5_UNORM,          Astc5x5RGBAUnorm)
+_c(ASTC_5X5_UNORM_SRGB,     Astc5x5RGBASrgb)
+_i()
+_c(ASTC_6X5_TYPELESS,       Astc6x5RGBAUnorm) /* typeless treated as Unorm here */
+_c(ASTC_6X5_UNORM,          Astc6x5RGBAUnorm)
+_c(ASTC_6X5_UNORM_SRGB,     Astc6x5RGBASrgb)
+_i()
+_c(ASTC_6X6_TYPELESS,       Astc6x6RGBAUnorm) /* typeless treated as Unorm here */
+_c(ASTC_6X6_UNORM,          Astc6x6RGBAUnorm)
+_c(ASTC_6X6_UNORM_SRGB,     Astc6x6RGBASrgb)
+_i()
+_c(ASTC_8X5_TYPELESS,       Astc8x5RGBAUnorm) /* typeless treated as Unorm here */
+_c(ASTC_8X5_UNORM,          Astc8x5RGBAUnorm)
+_c(ASTC_8X5_UNORM_SRGB,     Astc8x5RGBASrgb)
+_i()
+_c(ASTC_8X6_TYPELESS,       Astc8x6RGBAUnorm) /* typeless treated as Unorm here */
+_c(ASTC_8X6_UNORM,          Astc8x6RGBAUnorm)
+_c(ASTC_8X6_UNORM_SRGB,     Astc8x6RGBASrgb)
+_i()
+_c(ASTC_8X8_TYPELESS,       Astc8x8RGBAUnorm) /* typeless treated as Unorm here */
+_c(ASTC_8X8_UNORM,          Astc8x8RGBAUnorm)
+_c(ASTC_8X8_UNORM_SRGB,     Astc8x8RGBASrgb)
+_i()
+_c(ASTC_10X5_TYPELESS,      Astc10x5RGBAUnorm) /* typeless treated as Unorm here */
+_c(ASTC_10X5_UNORM,         Astc10x5RGBAUnorm)
+_c(ASTC_10X5_UNORM_SRGB,    Astc10x5RGBASrgb)
+_i()
+_c(ASTC_10X6_TYPELESS,      Astc10x6RGBAUnorm) /* typeless treated as Unorm here */
+_c(ASTC_10X6_UNORM,         Astc10x6RGBAUnorm)
+_c(ASTC_10X6_UNORM_SRGB,    Astc10x6RGBASrgb)
+_i()
+_c(ASTC_10X8_TYPELESS,      Astc10x8RGBAUnorm) /* typeless treated as Unorm here */
+_c(ASTC_10X8_UNORM,         Astc10x8RGBAUnorm)
+_c(ASTC_10X8_UNORM_SRGB,    Astc10x8RGBASrgb)
+_i()
+_c(ASTC_10X10_TYPELESS,     Astc10x10RGBAUnorm) /* typeless treated as Unorm here */
+_c(ASTC_10X10_UNORM,        Astc10x10RGBAUnorm)
+_c(ASTC_10X10_UNORM_SRGB,   Astc10x10RGBASrgb)
+_i()
+_c(ASTC_12X10_TYPELESS,     Astc12x10RGBAUnorm) /* typeless treated as Unorm here */
+_c(ASTC_12X10_UNORM,        Astc12x10RGBAUnorm)
+_c(ASTC_12X10_UNORM_SRGB,   Astc12x10RGBASrgb)
+_i()
+_c(ASTC_12X12_TYPELESS,     Astc12x12RGBAUnorm) /* typeless treated as Unorm here */
+_c(ASTC_12X12_UNORM,        Astc12x12RGBAUnorm)
+_c(ASTC_12X12_UNORM_SRGB,   Astc12x12RGBASrgb)
+_i()
 /* DXGI_FORMAT_FORCE_UINT is just an "expander", skipping */
 #endif

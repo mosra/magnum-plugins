@@ -23,4 +23,8 @@ compressonatorcli-bin -nomipmap -fd BC5_S rgb.tga bc5snorm.dds
 
 compressonatorcli-bin -nomipmap -fd BC7 rgba-64x32.tga dxt10-bc7.dds
 
+# Non-standard ASTC-compressed DDS using the proprietary NVidia Texture Tools
+# Exporter (download link needs a NVidia Developer Program membership)
+# path/to/NVIDIA_Texture_Tools_Linux_3_1_6/nvcompress -nocuda -astc_ldr_8x5 ../../PngImporter/Test/rgb.png dxt10-astc8x5.dds
+
 rm rgba-{63x27,64x32}.tga rgb.tga

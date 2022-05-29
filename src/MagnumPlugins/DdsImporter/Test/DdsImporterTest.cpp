@@ -75,7 +75,7 @@ struct DdsImporterTest: TestSuite::Tester {
     PluginManager::Manager<AbstractImporter> _manager{"nonexistent"};
 };
 
-/* Enum taken verbatim from dxgiformat.h */
+/* Enum taken verbatim from dxgiformat.h, the ASTC part then from GLI */
 enum DXGI_FORMAT {
     DXGI_FORMAT_UNKNOWN                     = 0,
     DXGI_FORMAT_R32G32B32A32_TYPELESS       = 1,
@@ -198,6 +198,50 @@ enum DXGI_FORMAT {
     DXGI_FORMAT_V208                        = 131,
     DXGI_FORMAT_V408                        = 132,
 
+    /* https://github.com/g-truc/gli/commit/e5ad4ae6233abfb29eecebfd247142f1b3ef7844 */
+    DXGI_FORMAT_ASTC_4X4_TYPELESS           = 133,
+    DXGI_FORMAT_ASTC_4X4_UNORM              = 134,
+    DXGI_FORMAT_ASTC_4X4_UNORM_SRGB         = 135,
+    DXGI_FORMAT_ASTC_5X4_TYPELESS           = 137,
+    DXGI_FORMAT_ASTC_5X4_UNORM              = 138,
+    DXGI_FORMAT_ASTC_5X4_UNORM_SRGB         = 139,
+    DXGI_FORMAT_ASTC_5X5_TYPELESS           = 141,
+    DXGI_FORMAT_ASTC_5X5_UNORM              = 142,
+    DXGI_FORMAT_ASTC_5X5_UNORM_SRGB         = 143,
+    DXGI_FORMAT_ASTC_6X5_TYPELESS           = 145,
+    DXGI_FORMAT_ASTC_6X5_UNORM              = 146,
+    DXGI_FORMAT_ASTC_6X5_UNORM_SRGB         = 147,
+    DXGI_FORMAT_ASTC_6X6_TYPELESS           = 149,
+    DXGI_FORMAT_ASTC_6X6_UNORM              = 150,
+    DXGI_FORMAT_ASTC_6X6_UNORM_SRGB         = 151,
+    DXGI_FORMAT_ASTC_8X5_TYPELESS           = 153,
+    DXGI_FORMAT_ASTC_8X5_UNORM              = 154,
+    DXGI_FORMAT_ASTC_8X5_UNORM_SRGB         = 155,
+    DXGI_FORMAT_ASTC_8X6_TYPELESS           = 157,
+    DXGI_FORMAT_ASTC_8X6_UNORM              = 158,
+    DXGI_FORMAT_ASTC_8X6_UNORM_SRGB         = 159,
+    DXGI_FORMAT_ASTC_8X8_TYPELESS           = 161,
+    DXGI_FORMAT_ASTC_8X8_UNORM              = 162,
+    DXGI_FORMAT_ASTC_8X8_UNORM_SRGB         = 163,
+    DXGI_FORMAT_ASTC_10X5_TYPELESS          = 165,
+    DXGI_FORMAT_ASTC_10X5_UNORM             = 166,
+    DXGI_FORMAT_ASTC_10X5_UNORM_SRGB        = 167,
+    DXGI_FORMAT_ASTC_10X6_TYPELESS          = 169,
+    DXGI_FORMAT_ASTC_10X6_UNORM             = 170,
+    DXGI_FORMAT_ASTC_10X6_UNORM_SRGB        = 171,
+    DXGI_FORMAT_ASTC_10X8_TYPELESS          = 173,
+    DXGI_FORMAT_ASTC_10X8_UNORM             = 174,
+    DXGI_FORMAT_ASTC_10X8_UNORM_SRGB        = 175,
+    DXGI_FORMAT_ASTC_10X10_TYPELESS         = 177,
+    DXGI_FORMAT_ASTC_10X10_UNORM            = 178,
+    DXGI_FORMAT_ASTC_10X10_UNORM_SRGB       = 179,
+    DXGI_FORMAT_ASTC_12X10_TYPELESS         = 181,
+    DXGI_FORMAT_ASTC_12X10_UNORM            = 182,
+    DXGI_FORMAT_ASTC_12X10_UNORM_SRGB       = 183,
+    DXGI_FORMAT_ASTC_12X12_TYPELESS         = 185,
+    DXGI_FORMAT_ASTC_12X12_UNORM            = 186,
+    DXGI_FORMAT_ASTC_12X12_UNORM_SRGB       = 187,
+
     DXGI_FORMAT_FORCE_UINT                  = 0xffffffff
 };
 
@@ -207,6 +251,7 @@ const struct {
     CompressedPixelFormat compressedFormat;
 } DxgiFormatData[] {
 #define _x(name) {DXGI_FORMAT_ ## name, PixelFormat{}, CompressedPixelFormat{}},
+#define _i() {DXGI_FORMAT{}, PixelFormat{}, CompressedPixelFormat{}},
 #define _u(name, format) {DXGI_FORMAT_ ## name, PixelFormat::format, CompressedPixelFormat{}},
 #define _s(name, format, swizzle) {DXGI_FORMAT_ ## name, PixelFormat::format, CompressedPixelFormat{}},
 #define _c(name, format) {DXGI_FORMAT_ ## name, PixelFormat{}, CompressedPixelFormat::format},
@@ -214,6 +259,7 @@ const struct {
 #undef _c
 #undef _s
 #undef _u
+#undef _i
 #undef _x
 };
 
@@ -231,8 +277,10 @@ const struct {
         "unknown 64 bits per pixel format with a RGBA mask {0xff0000, 0xff00, 0xff, 0x0}"},
     {"DXT10 format unsupported", "dxt10-ayuv.dds", {},
         "unsupported format DXGI_FORMAT_AYUV"},
-    {"DXT10 format out of bounds", "dxt10-v408.dds", {},
-        "unknown DXGI format ID 132"},
+    {"DXT10 format unknown", "dxt10-format136.dds", {},
+        "unknown DXGI format ID 136"},
+    {"DXT10 format out of bounds", "dxt10-format189.dds", {},
+        "unknown DXGI format ID 189"},
     {"empty file", "bgr8unorm.dds", 0,
         "file too short, expected at least 128 bytes but got 0"},
     {"header too short", "bgr8unorm.dds", 127,
@@ -304,6 +352,7 @@ constexpr struct {
     {"dxt10-rgba8srgb.dds", PixelFormat::RGBA8Srgb, CompressedPixelFormat{}},
     {"dxt10-depth24unorm-stencil8ui.dds", PixelFormat::Depth24UnormStencil8UI, CompressedPixelFormat{}},
     {"dxt10-depth32f-stencil8ui.dds", PixelFormat::Depth32FStencil8UI, CompressedPixelFormat{}},
+    {"dxt10-astc8x5unorm.dds", PixelFormat{}, CompressedPixelFormat::Astc8x5RGBAUnorm}
 };
 
 /* Shared among all plugins that implement data copying optimizations */
@@ -364,7 +413,13 @@ DdsImporterTest::DdsImporterTest() {
 }
 
 void DdsImporterTest::enumValueMatching() {
-    CORRADE_COMPARE(DxgiFormatData[testCaseRepeatId()].dxgi, DXGI_FORMAT(testCaseRepeatId()));
+    /* The enum is sparse, so check just entries that have a value */
+    if(DxgiFormatData[testCaseRepeatId()].dxgi)
+        CORRADE_COMPARE(DxgiFormatData[testCaseRepeatId()].dxgi, DXGI_FORMAT(testCaseRepeatId()));
+    else  {
+        CORRADE_COMPARE(DxgiFormatData[testCaseRepeatId()].format, PixelFormat{});
+        CORRADE_COMPARE(DxgiFormatData[testCaseRepeatId()].compressedFormat, CompressedPixelFormat{});
+    }
 
     /* Check the format value fits into 8 bits, as that's how it's packed in
        the plugin */
