@@ -217,8 +217,6 @@ struct DdsImporter::File {
     Containers::Array<ImageDataOffset> imageData;
 };
 
-DdsImporter::DdsImporter() = default;
-
 DdsImporter::DdsImporter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin): AbstractImporter{manager, plugin} {}
 
 DdsImporter::~DdsImporter() = default;

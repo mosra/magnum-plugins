@@ -153,9 +153,6 @@ when the flag is enabled.
 */
 class MAGNUM_DDSIMPORTER_EXPORT DdsImporter: public AbstractImporter {
     public:
-        /** @brief Default constructor */
-        explicit DdsImporter();
-
         /** @brief Plugin manager constructor */
         explicit DdsImporter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin);
 
