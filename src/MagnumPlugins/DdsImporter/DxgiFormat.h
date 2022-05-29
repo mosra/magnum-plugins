@@ -24,10 +24,10 @@ _u(R32G32_TYPELESS,         RG32UI)     /* in Magnum, UI == typeless */
 _u(R32G32_FLOAT,            RG32F)
 _u(R32G32_UINT,             RG32UI)
 _u(R32G32_SINT,             RG32I)
-_x(R32G8X24_TYPELESS)
-_x(D32_FLOAT_S8X24_UINT)
-_x(R32_FLOAT_X8X24_TYPELESS)
-_x(X32_TYPELESS_G8X24_UINT)
+_u(R32G8X24_TYPELESS,       Depth32FStencil8UI) /* typeless treated as float/UI here */
+_u(D32_FLOAT_S8X24_UINT,    Depth32FStencil8UI)
+_u(R32_FLOAT_X8X24_TYPELESS,Depth32FStencil8UI) /* stencil unspecified, typeless treated as float here */
+_u(X32_TYPELESS_G8X24_UINT, Depth32FStencil8UI) /* typeless treated as UI here */
 _x(R10G10B10A2_TYPELESS)    /* no generic packed formats in Magnum yet */
 _x(R10G10B10A2_UNORM)
 _x(R10G10B10A2_UINT)
@@ -45,14 +45,14 @@ _u(R16G16_UINT,             RG16UI)
 _u(R16G16_SNORM,            RG16Snorm)
 _u(R16G16_SINT,             RG16I)
 _u(R32_TYPELESS,            R32UI)      /* in Magnum, UI == typeless */
-_x(D32_FLOAT)
+_u(D32_FLOAT,               Depth32F)
 _u(R32_FLOAT,               R32F)
 _u(R32_UINT,                R32UI)
 _u(R32_SINT,                R32I)
-_x(R24G8_TYPELESS)
-_x(D24_UNORM_S8_UINT)
-_x(R24_UNORM_X8_TYPELESS)
-_x(X24_TYPELESS_G8_UINT)
+_u(R24G8_TYPELESS,          Depth24UnormStencil8UI) /* typeless treated as Unorm/UI here */
+_u(D24_UNORM_S8_UINT,       Depth24UnormStencil8UI)
+_u(R24_UNORM_X8_TYPELESS,   Depth24UnormStencil8UI) /* stencil unspecified */
+_u(X24_TYPELESS_G8_UINT,    Depth24UnormStencil8UI) /* depth unspecified */
 _u(R8G8_TYPELESS,           RG8UI)      /* in Magnum, UI == typeless */
 _u(R8G8_UNORM,              RG8Unorm)
 _u(R8G8_UINT,               RG8UI)
@@ -60,7 +60,7 @@ _u(R8G8_SNORM,              RG8Snorm)
 _u(R8G8_SINT,               RG8I)
 _u(R16_TYPELESS,            R16UI)      /* in Magnum, UI == typeless */
 _u(R16_FLOAT,               R16F)
-_x(D16_UNORM)
+_u(D16_UNORM,               Depth16Unorm)
 _u(R16_UNORM,               R16Unorm)
 _u(R16_UINT,                R16UI)
 _u(R16_SNORM,               R16Snorm)

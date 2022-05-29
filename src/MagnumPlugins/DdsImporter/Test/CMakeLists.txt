@@ -60,6 +60,8 @@ corrade_add_test(DdsImporterTest
         dxt1.dds
         dxt10-ayuv.dds
         dxt10-bc7.dds
+        dxt10-depth24unorm-stencil8ui.dds
+        dxt10-depth32f-stencil8ui.dds
         dxt10-rgba16snorm.dds
         dxt10-rgba32ui.dds
         dxt10-rgba8srgb.dds
