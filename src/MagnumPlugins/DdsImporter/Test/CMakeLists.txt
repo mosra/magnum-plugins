@@ -79,6 +79,7 @@ corrade_add_test(DdsImporterTest
         rgb8unorm.dds
         bgr8unorm-mips.dds
         bgra8unorm-3d.dds
+        r8unorm.dds
         rgba8unorm-3d.dds
         unknown-format.dds
         wrong-signature.dds)

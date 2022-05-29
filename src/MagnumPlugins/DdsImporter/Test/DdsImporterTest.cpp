@@ -51,6 +51,7 @@ struct DdsImporterTest: TestSuite::Tester {
 
     void invalid();
 
+    void r();
     void rgb();
     void rgDxt10();
     void rgbMips();
@@ -324,6 +325,8 @@ DdsImporterTest::DdsImporterTest() {
     addInstancedTests({&DdsImporterTest::invalid},
         Containers::arraySize(InvalidData));
 
+    addTests({&DdsImporterTest::r});
+
     addInstancedTests({&DdsImporterTest::rgb},
         Containers::arraySize(SwizzleData));
 
@@ -385,6 +388,25 @@ void DdsImporterTest::invalid() {
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->openData(data.size ? in->prefix(*data.size) : *in));
     CORRADE_COMPARE(out.str(), Utility::formatString("Trade::DdsImporter::openData(): {}\n", data.message));
+}
+
+void DdsImporterTest::r() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(DDSIMPORTER_TEST_DIR, "r8unorm.dds")));
+    CORRADE_COMPARE(importer->image2DCount(), 1);
+    CORRADE_COMPARE(importer->image2DLevelCount(0), 1);
+    CORRADE_COMPARE(importer->image3DCount(), 0);
+
+    Containers::Optional<ImageData2D> image = importer->image2D(0);
+    CORRADE_VERIFY(image);
+    CORRADE_VERIFY(!image->isCompressed());
+    CORRADE_COMPARE(image->storage().alignment(), 1);
+    CORRADE_COMPARE(image->size(), Vector2i(3, 2));
+    CORRADE_COMPARE(image->format(), PixelFormat::R8Unorm);
+    CORRADE_COMPARE_AS(image->data(), Containers::arrayView<char>({
+        '\xde', '\xca', '\xde',
+        '\xca', '\xde', '\xca',
+    }), TestSuite::Compare::Container);
 }
 
 void DdsImporterTest::rgb() {
