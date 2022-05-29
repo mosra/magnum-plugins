@@ -59,6 +59,7 @@ struct DdsImporterTest: TestSuite::Tester {
     /* 3D DXT10 tested in rgba3D() */
 
     void dxt3();
+    void dxt3IncompleteBlocks();
 
     void formats();
 
@@ -323,7 +324,8 @@ DdsImporterTest::DdsImporterTest() {
     addInstancedTests({&DdsImporterTest::rgba3D},
         Containers::arraySize(Swizzle3DData));
 
-    addTests({&DdsImporterTest::dxt3});
+    addTests({&DdsImporterTest::dxt3,
+              &DdsImporterTest::dxt3IncompleteBlocks});
 
     addInstancedTests({&DdsImporterTest::formats},
         Containers::arraySize(FormatsData));
@@ -551,11 +553,41 @@ void DdsImporterTest::dxt3() {
     Containers::Optional<ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
     CORRADE_VERIFY(image->isCompressed());
-    CORRADE_COMPARE(image->size(), Vector2i(3, 2));
+    CORRADE_COMPARE(image->size(), (Vector2i{64, 32}));
     CORRADE_COMPARE(image->compressedFormat(), CompressedPixelFormat::Bc2RGBAUnorm);
-    CORRADE_COMPARE_AS(image->data(), Containers::arrayView<char>({
-        '\xff', '\xff', '\xff', '\xff', '\xff', '\xff', '\xff', '\xff',
-        '\x76', '\xdd', '\xee', '\xcf', '\x04', '\x51', '\x04', '\x51'
+    /* Verify just a small prefix and suffix to be sure the data got copied */
+    CORRADE_COMPARE_AS(image->data().prefix(16), Containers::array({
+        '\x22', '\x22', '\x22', '\x22', '\x22', '\x22', '\x22', '\x22',
+        '\xc6', '\xd1', '\x86', '\xc1', '\xaa', '\xff', '\xaa', '\xff'
+    }), TestSuite::Compare::Container);
+    /** @todo suffix() once it takes N last bytes */
+    CORRADE_COMPARE_AS(image->data().exceptPrefix(image->data().size() - 16), Containers::array({
+        '\xaa', '\xaa', '\xaa', '\xaa', '\x99', '\x99', '\x99', '\x99',
+        '\xa6', '\xc9', '\xa6', '\xc1', '\xaa', '\x00', '\x00', '\x00'
+    }), TestSuite::Compare::Container);
+}
+
+void DdsImporterTest::dxt3IncompleteBlocks() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(DDSIMPORTER_TEST_DIR, "dxt3-incomplete-blocks.dds")));
+    CORRADE_COMPARE(importer->image2DCount(), 1);
+    CORRADE_COMPARE(importer->image2DLevelCount(0), 1);
+    CORRADE_COMPARE(importer->image3DCount(), 0);
+
+    Containers::Optional<ImageData2D> image = importer->image2D(0);
+    CORRADE_VERIFY(image);
+    CORRADE_VERIFY(image->isCompressed());
+    CORRADE_COMPARE(image->size(), (Vector2i{63, 27}));
+    CORRADE_COMPARE(image->compressedFormat(), CompressedPixelFormat::Bc2RGBAUnorm);
+    /* Verify just a small prefix and suffix to be sure the data got copied */
+    CORRADE_COMPARE_AS(image->data().prefix(16), Containers::array({
+        '\x22', '\x22', '\x22', '\x22', '\x22', '\x22', '\x33', '\x33',
+        '\xa6', '\xc9', '\xa5', '\xc1', '\x00', '\xaa', '\x00', '\x00'
+    }), TestSuite::Compare::Container);
+    /** @todo suffix() once it takes N last bytes */
+    CORRADE_COMPARE_AS(image->data().exceptPrefix(image->data().size() - 16), Containers::array({
+        '\xaa', '\xaa', '\xaa', '\xaa', '\xaa', '\xaa', '\xaa', '\xaa',
+        '\xa6', '\xc9', '\xa6', '\xc1', '\x00', '\x00', '\xaa', '\x00'
     }), TestSuite::Compare::Container);
 }
 
@@ -599,7 +631,7 @@ void DdsImporterTest::openMemory() {
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
     CORRADE_COMPARE(image->compressedFormat(), CompressedPixelFormat::Bc1RGBAUnorm);
     CORRADE_COMPARE_AS(image->data(), Containers::arrayView<char>({
-        '\x76', '\xdd', '\xee', '\xcf', '\x04', '\x51', '\x04', '\x51'
+        '\xee', '\xcf', '\x76', '\xdd', '\x51', '\x04', '\x51', '\x04'
     }), TestSuite::Compare::Container);
 }
 

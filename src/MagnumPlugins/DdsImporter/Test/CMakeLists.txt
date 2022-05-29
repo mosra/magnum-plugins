@@ -67,6 +67,7 @@ corrade_add_test(DdsImporterTest
         dxt10-r32i-mips.dds
         dxt10-v408.dds
         dxt3.dds
+        dxt3-incomplete-blocks.dds
         dxt4.dds
         dxt5.dds
         bgr8unorm.dds
