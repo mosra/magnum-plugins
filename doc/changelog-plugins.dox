@@ -114,7 +114,7 @@ namespace Magnum {
     compressed formats, legacy non-DXGI RGBX, BGRX, BC4 and BC5 formats, BGR(A)
     formats also for files with the DXT10 header; uncompressed sRGB formats are
     now properly imported as @ref PixelFormat::RGBA8Srgb instead of
-    @ref PixelFormat::RGBA8Unorm
+    @ref PixelFormat::RGBA8Unorm. See [mosra/magnum-plugins#67](https://github.com/mosra/magnum-plugins/pull/67).
 -   @ref Text::FreeTypeFont "FreeTypeFont" now treats its internal global
     library handle as thread-local on all platforms except Windows, making it
     possible to be used in multi-threaded environments
