@@ -55,11 +55,12 @@ corrade_add_test(DdsImporterTest
     FILES
         dxt1.dds
         dxt10-ayuv.dds
-        dxt10-rgba16f-3d.dds
         dxt10-rgba16snorm.dds
         dxt10-rgba32ui.dds
         dxt10-rgba8srgb.dds
         dxt10-rgba8unorm.dds
+        dxt10-bgra8unorm-3d.dds
+        dxt10-rgba8unorm-3d.dds
         dxt10-rgb32i.dds
         dxt10-rg32f.dds
         dxt10-rg8unorm.dds

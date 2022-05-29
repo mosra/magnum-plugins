@@ -1,6 +1,7 @@
 /*
     _x() -- skipped (not supported)
     _u() -- uncompressed format
+    _s() -- uncompressed format needing a swizzle
 */
 #ifdef _u
 _x(UNKNOWN)
@@ -90,13 +91,14 @@ _x(BC5_UNORM)
 _x(BC5_SNORM)
 _x(B5G6R5_UNORM)            /* no generic packed formats in Magnum yet */
 _x(B5G5R5A1_UNORM)
-_x(B8G8R8A8_UNORM)
-_x(B8G8R8X8_UNORM)
+_s(B8G8R8A8_UNORM,          RGBA8Unorm, true)
+_s(B8G8R8X8_UNORM,          RGBA8Unorm, true) /* alpha unspecified */
 _x(R10G10B10_XR_BIAS_A2_UNORM) /* no XR formats in Magnum yet */
-_x(B8G8R8A8_TYPELESS)
-_x(B8G8R8A8_UNORM_SRGB)
-_x(B8G8R8X8_TYPELESS)
-_x(B8G8R8X8_UNORM_SRGB)
+_s(B8G8R8A8_TYPELESS,       RGBA8Unorm, true) /* typeless treated as Unorm */
+_s(B8G8R8A8_UNORM_SRGB,     RGBA8Unorm, true) /** @todo propagate sRGB property */
+_s(B8G8R8X8_TYPELESS,       RGBA8Unorm, true) /* typeless treated as Unorm, alpha unspecified */
+_s(B8G8R8X8_UNORM_SRGB,     RGBA8Unorm, true) /* alpha unspecified */
+                                              /** @todo propagate sRGB property */
 _x(BC6H_TYPELESS)
 _x(BC6H_UF16)
 _x(BC6H_SF16)

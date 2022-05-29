@@ -172,17 +172,22 @@ struct DdsHeaderDxt10 {
 
 constexpr struct {
     /* It still could be packed better (e.g. an union where it's either a name
-       or a format, but let's say this is good enough for now. We're explicitly
-       not storing names of formats we won't ever print. */
+       or a format and a distinction between an uncompressed format or an
+       uncompressed format that needs swizzle, but let's say this is good
+       enough for now. We're explicitly not storing names of formats we won't
+       ever print. */
     const char* name;
     /* Currently there's only about 110 values for compressed formats, so 8
        bits for each should be enough. Verified in
        DdsImporterTest::enumValueMatching(). */
     UnsignedByte format;
+    bool needsSwizzle;
 } DxgiFormatMapping[] {
-#define _x(name) {#name, 0},
-#define _u(name, format) {nullptr, UnsignedInt(PixelFormat::format)},
+#define _x(name) {#name, 0, false},
+#define _u(name, format) {nullptr, UnsignedInt(PixelFormat::format), false},
+#define _s(name, format, swizzle) {nullptr, UnsignedInt(PixelFormat::format), swizzle},
 #include "DxgiFormat.h"
+#undef _s
 #undef _u
 #undef _x
 };
@@ -283,7 +288,7 @@ void DdsImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dat
                 const auto& mapped = DxgiFormatMapping[headerDxt10.dxgiFormat];
                 if(mapped.format) {
                     f->compressed = false;
-                    f->needsSwizzle = false;
+                    f->needsSwizzle = mapped.needsSwizzle;
                     f->pixelFormat.uncompressed = PixelFormat(mapped.format);
                 } else {
                     Error{} << "Trade::DdsImporter::openData(): unsupported format DXGI_FORMAT_" << Debug::nospace << mapped.name;

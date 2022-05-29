@@ -56,7 +56,7 @@ struct DdsImporterTest: TestSuite::Tester {
     void rgbMips();
     void rgbMipsDxt10();
     void rgba3D();
-    void rgba3DDxt10();
+    /* 3D DXT10 tested in rgba3D() */
 
     void dxt3();
 
@@ -202,7 +202,9 @@ const struct {
 } DxgiFormatData[] {
 #define _x(name) {DXGI_FORMAT_ ## name, PixelFormat{}},
 #define _u(name, format) {DXGI_FORMAT_ ## name, PixelFormat::format},
+#define _s(name, format, swizzle) {DXGI_FORMAT_ ## name, PixelFormat::format},
 #include "../DxgiFormat.h"
+#undef _s
 #undef _u
 #undef _x
 };
@@ -248,6 +250,8 @@ constexpr struct {
         "Trade::DdsImporter::image2D(): converting from BGR to RGB\n"},
     {"RGB, verbose", "rgb8unorm.dds", ImporterFlag::Verbose,
         ""},
+    /* No three-component 8-bit format in DXT10, so that's a separate test
+       case (and thus no swizzle needs to be tested) */
 };
 
 constexpr struct {
@@ -261,6 +265,12 @@ constexpr struct {
     {"BGRA, verbose", "bgra8unorm-3d.dds", ImporterFlag::Verbose,
         "Trade::DdsImporter::image3D(): converting from BGRA to RGBA\n"},
     {"RGBA, verbose", "rgba8unorm-3d.dds", ImporterFlag::Verbose,
+        ""},
+    {"DXT10 BGRA", "dxt10-bgra8unorm-3d.dds", {},
+        ""},
+    {"DXT10 BGRA, verbose", "dxt10-bgra8unorm-3d.dds", ImporterFlag::Verbose,
+        "Trade::DdsImporter::image3D(): converting from BGRA to RGBA\n"},
+    {"DXT10 RGBA, verbose", "dxt10-rgba8unorm-3d.dds", ImporterFlag::Verbose,
         ""},
 };
 
@@ -313,9 +323,7 @@ DdsImporterTest::DdsImporterTest() {
     addInstancedTests({&DdsImporterTest::rgba3D},
         Containers::arraySize(Swizzle3DData));
 
-    addTests({&DdsImporterTest::rgba3DDxt10,
-
-              &DdsImporterTest::dxt3});
+    addTests({&DdsImporterTest::dxt3});
 
     addInstancedTests({&DdsImporterTest::formats},
         Containers::arraySize(FormatsData));
@@ -531,46 +539,6 @@ void DdsImporterTest::rgba3D() {
         '\xca', '\xfe', '\x77', '\x11'
     }), TestSuite::Compare::Container);
     CORRADE_COMPARE(out.str(), data.message);
-}
-
-void DdsImporterTest::rgba3DDxt10() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(DDSIMPORTER_TEST_DIR, "dxt10-rgba16f-3d.dds")));
-    CORRADE_COMPARE(importer->image2DCount(), 0);
-    CORRADE_COMPARE(importer->image3DCount(), 1);
-    CORRADE_COMPARE(importer->image3DLevelCount(0), 1);
-
-    Containers::Optional<ImageData3D> image = importer->image3D(0);
-    CORRADE_VERIFY(image);
-    CORRADE_VERIFY(!image->isCompressed());
-    CORRADE_COMPARE(image->storage().alignment(), 4);
-    CORRADE_COMPARE(image->size(), Vector3i(3, 2, 3));
-    CORRADE_COMPARE(image->format(), PixelFormat::RGBA16F);
-    CORRADE_COMPARE_AS(image->data(), Containers::arrayView<char>({
-        /* Slice 0 */
-        '\xf7', '\x3a', '\x6d', '\x39', '\xae', '\x39', '\x00', '\x3c',
-        '\x56', '\x3a', '\xf8', '\x3b', '\x77', '\x37', '\x00', '\x3c',
-        '\xf7', '\x3a', '\x6d', '\x39', '\xae', '\x39', '\x00', '\x3c',
-        '\x56', '\x3a', '\xf8', '\x3b', '\x77', '\x37', '\x00', '\x3c',
-        '\xf7', '\x3a', '\x6d', '\x39', '\xae', '\x39', '\x00', '\x3c',
-        '\x56', '\x3a', '\xf8', '\x3b', '\x77', '\x37', '\x00', '\x3c',
-
-        /* Slice 1 */
-        '\x56', '\x3a', '\xf8', '\x3b', '\x77', '\x37', '\x00', '\x3c',
-        '\xf7', '\x3a', '\x6d', '\x39', '\xae', '\x39', '\x00', '\x3c',
-        '\x56', '\x3a', '\xf8', '\x3b', '\x77', '\x37', '\x00', '\x3c',
-        '\xf7', '\x3a', '\x6d', '\x39', '\xae', '\x39', '\x00', '\x3c',
-        '\x56', '\x3a', '\xf8', '\x3b', '\x77', '\x37', '\x00', '\x3c',
-        '\xf7', '\x3a', '\x6d', '\x39', '\xae', '\x39', '\x00', '\x3c',
-
-        /* Slice 2 */
-        '\xf7', '\x3a', '\x6d', '\x39', '\xae', '\x39', '\x00', '\x3c',
-        '\x56', '\x3a', '\xf8', '\x3b', '\x77', '\x37', '\x00', '\x3c',
-        '\xf7', '\x3a', '\x6d', '\x39', '\xae', '\x39', '\x00', '\x3c',
-        '\x56', '\x3a', '\xf8', '\x3b', '\x77', '\x37', '\x00', '\x3c',
-        '\xf7', '\x3a', '\x6d', '\x39', '\xae', '\x39', '\x00', '\x3c',
-        '\x56', '\x3a', '\xf8', '\x3b', '\x77', '\x37', '\x00', '\x3c'
-    }), TestSuite::Compare::Container);
 }
 
 void DdsImporterTest::dxt3() {
