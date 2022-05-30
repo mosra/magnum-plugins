@@ -530,9 +530,8 @@ void DdsImporterTest::rgDxt10() {
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
     CORRADE_COMPARE(image->format(), PixelFormat::RG8Unorm);
     CORRADE_COMPARE_AS(image->data(), Containers::arrayView<char>({
-        '\xde', '\xad', '\xca', '\xfe',
-        '\xde', '\xad', '\xca', '\xfe',
-        '\xde', '\xad', '\xca', '\xfe'
+        '\xde', '\xad', '\xca', '\xfe', '\xde', '\xad',
+        '\xca', '\xfe', '\xde', '\xad', '\xca', '\xfe'
     }), TestSuite::Compare::Container);
 }
 
