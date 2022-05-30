@@ -35,10 +35,9 @@
 #include <Corrade/Utility/DebugStl.h> /** @todo remove once Debug is stream-free */
 #include <Corrade/Utility/FormatStl.h> /** @todo remove once Debug is stream-free */
 #include <Corrade/Utility/Path.h>
-#include <Corrade/Utility/Resource.h>
 #include <Magnum/PixelFormat.h>
-#include <Magnum/Trade/ImageData.h>
 #include <Magnum/Trade/AbstractImporter.h>
+#include <Magnum/Trade/ImageData.h>
 
 #include "configure.h"
 
