@@ -305,7 +305,7 @@ constexpr struct {
     const char* filename;
     ImporterFlags flags;
     const char* message;
-} SwizzleData[] {
+} SwizzleRgbData[] {
     {"BGR", "bgr8unorm.dds", {},
         ""},
     {"BGR, verbose", "bgr8unorm.dds", ImporterFlag::Verbose,
@@ -321,7 +321,7 @@ constexpr struct {
     const char* filename;
     ImporterFlags flags;
     const char* message;
-} Swizzle3DData[] {
+} SwizzleRgbaData[] {
     {"BGRA", "bgra8unorm-3d.dds", {},
         ""},
     {"BGRA, verbose", "bgra8unorm-3d.dds", ImporterFlag::Verbose,
@@ -395,7 +395,7 @@ DdsImporterTest::DdsImporterTest() {
     addTests({&DdsImporterTest::r});
 
     addInstancedTests({&DdsImporterTest::rgb},
-        Containers::arraySize(SwizzleData));
+        Containers::arraySize(SwizzleRgbData));
 
     addTests({&DdsImporterTest::rgDxt10,
 
@@ -403,7 +403,7 @@ DdsImporterTest::DdsImporterTest() {
               &DdsImporterTest::rgbMipsDxt10});
 
     addInstancedTests({&DdsImporterTest::rgba3D},
-        Containers::arraySize(Swizzle3DData));
+        Containers::arraySize(SwizzleRgbaData));
 
     addTests({&DdsImporterTest::dxt3,
               &DdsImporterTest::dxt3IncompleteBlocks,
@@ -486,7 +486,7 @@ void DdsImporterTest::r() {
 }
 
 void DdsImporterTest::rgb() {
-    auto&& data = SwizzleData[testCaseInstanceId()];
+    auto&& data = SwizzleRgbData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
@@ -610,7 +610,7 @@ void DdsImporterTest::rgbMipsDxt10() {
 }
 
 void DdsImporterTest::rgba3D() {
-    auto&& data = Swizzle3DData[testCaseInstanceId()];
+    auto&& data = SwizzleRgbaData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
