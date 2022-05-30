@@ -45,7 +45,10 @@ using namespace Containers::Literals;
 
 namespace {
 
-/* Flags to indicate which members of a DdsHeader contain valid data */
+/* Flags to indicate which members of a DdsHeader contain valid data. Spec says
+   that "[...] when you read a .dds file, you should not rely on the DDSD_CAPS,
+   DDSD_PIXELFORMAT, and DDSD_MIPMAPCOUNT flags being set because some writers
+   of such a file might not set these flags." */
 enum class DdsDescriptionFlag: UnsignedInt {
     Caps = 0x00000001,
     Height = 0x00000002,
@@ -65,15 +68,12 @@ enum class DdsPixelFormatFlag: UnsignedInt {
     RGBA = 0x00000041
 };
 
-/* Specifies the complexity of the surfaces stored. Just for completeness,
-   not used in the code. */
+/* Specifies the complexity of the surfaces stored. "Required" to be set when
+   interfacing with D3D itself, but the same information is available elsewhere
+   so it's not relied on. */
 enum class DdsCap1: UnsignedInt {
-    /* Set for files that contain more than one surface (a mipmap, a cubic
-       environment map, or mipmapped volume texture) */
     Complex = 0x00000008,
-    /* Texture (required) */
     Texture = 0x00001000,
-    /* Is set for mipmaps */
     MipMap = 0x00400000
 };
 
@@ -111,32 +111,41 @@ CORRADE_ENUMSET_OPERATORS(DdsCaps2)
    https://docs.microsoft.com/en-us/windows/win32/direct3ddds/dds-header */
 struct DdsHeader {
     char signature[4]; /* DDS<space> */
-    UnsignedInt size; /* Should be 124. Should I check this? */
-    DdsDescriptionFlags flags;
+    UnsignedInt size; /* Should be 124, ignored by us */
+    DdsDescriptionFlags flags; /* Unreliable, ignored by us */
     UnsignedInt height;
     UnsignedInt width;
+    /* Spec says "The D3DX library (for example, D3DX11.lib) and other similar
+       libraries unreliably or inconsistently provide the pitch value in the
+       dwPitchOrLinearSize member of the DDS_HEADER structure.", so that means
+       we should probably always assume tightly-packed and ignore this field.
+       https://docs.microsoft.com/en-us/windows/win32/direct3ddds/dx-graphics-dds-pguide */
     UnsignedInt pitchOrLinearSize;
-    UnsignedInt depth;
-    UnsignedInt mipMapCount;
-    UnsignedInt reserved1[11];
+    UnsignedInt depth; /* Can be 0 in some files, which means 1 */
+    UnsignedInt mipMapCount; /* Can be 0 in some files, which means 1 */
+    UnsignedInt reserved1[11]; /* GIMP, NVTT, NVTT Exporter write a name here */
     struct {
-        UnsignedInt size;  /* Should be 32. Should I check this? */
+        UnsignedInt size; /* Should be 32, ignored by us */
         DdsPixelFormatFlags flags;
         union {
             UnsignedInt fourCC;
-            char fourCCChars[4];
+            char fourCCChars[4]; /* For printing */
         };
+        /* Used by us only if the DXT10 header isn't also present (in which
+           case these are often all zeros), and used also only if the FourCC
+           flag isn't set. Theoretically for uncompressed fourCCs the fields
+           could be used for something. */
         UnsignedInt rgbBitCount;
         UnsignedInt rBitMask;
         UnsignedInt gBitMask;
         UnsignedInt bBitMask;
         UnsignedInt aBitMask;
-    } ddspf; /* Pixel format */
-    DdsCaps1 caps;
-    DdsCaps2 caps2;
-    UnsignedInt caps3;
-    UnsignedInt caps4;
-    UnsignedInt reserved2;
+    } ddspf;
+    DdsCaps1 caps; /* Redundant or useless information, ignored by us */
+    DdsCaps2 caps2; /* Used by us only if the DXT10 header isn't also present */
+    UnsignedInt caps3; /* Unused */
+    UnsignedInt caps4; /* Unused */
+    UnsignedInt reserved2; /* Unused */
 };
 
 static_assert(sizeof(DdsHeader) == 128, "Improper size of DdsHeader struct");
@@ -150,10 +159,12 @@ enum class DdsDimension: UnsignedInt {
     Texture3D = 4,
 };
 
+/* If this is set, array size describes cube count, not 2D slice count */
 enum class DdsMiscFlag: UnsignedInt {
     TextureCube = 4,
 };
 
+/* Not used by us right now, but might be potentially useful */
 enum class DdsAlphaMode: UnsignedInt {
     Unknown = 0,
     Straight = 1,
@@ -254,10 +265,11 @@ void DdsImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dat
         return;
     }
 
-    /* Check if image is a 2D or 3D texture */
-    f->volume = ((header.caps2 & DdsCap2::Volume) && (header.depth > 0));
+    /* If the image has a volume bit, it's 3D. This gets overwritten if the
+       DXT10 header is present. */
+    f->volume = header.caps2 >= DdsCap2::Volume;
 
-    /* Compressed */
+    /* Format defined by FourCC, possibly a DXT10 header */
     if(header.ddspf.flags & DdsPixelFormatFlag::FourCC) {
         switch(header.ddspf.fourCC) {
             case Utility::Endianness::fourCC('D', 'X', 'T', '1'):
@@ -311,6 +323,10 @@ void DdsImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dat
                     return;
                 }
 
+                /* Texture type in this header has a precedence over flags in
+                   the main header */
+                f->volume = headerDxt10.resourceDimension == DdsDimension::Texture3D;
+
                 const auto& mapped = DxgiFormatMapping[headerDxt10.dxgiFormat];
                 if(mapped.format) {
                     f->compressed = false;
@@ -341,9 +357,10 @@ void DdsImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dat
               header.ddspf.rBitMask == 0x000000ff &&
               header.ddspf.gBitMask == 0x0000ff00 &&
               header.ddspf.bBitMask == 0x00ff0000 &&
-             (header.ddspf.aBitMask == 0xff000000 ||
-              header.ddspf.aBitMask == 0x00000000)) {
-        f->pixelFormat.uncompressed = PixelFormat::RGBA8Unorm;
+            ((header.ddspf.flags == DdsPixelFormatFlag::RGBA &&
+              header.ddspf.aBitMask == 0xff000000) ||
+             (header.ddspf.flags == DdsPixelFormatFlag::RGB &&
+              header.ddspf.aBitMask == 0x00000000))) {
         f->compressed = false;
         f->needsSwizzle = false;
 
@@ -353,14 +370,16 @@ void DdsImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dat
               header.ddspf.rBitMask == 0x00ff0000 &&
               header.ddspf.gBitMask == 0x0000ff00 &&
               header.ddspf.bBitMask == 0x000000ff &&
-             (header.ddspf.aBitMask == 0xff000000 ||
-              header.ddspf.aBitMask == 0x00000000)) {
-        f->pixelFormat.uncompressed = PixelFormat::RGBA8Unorm;
+            ((header.ddspf.flags == DdsPixelFormatFlag::RGBA &&
+              header.ddspf.aBitMask == 0xff000000) ||
+             (header.ddspf.flags == DdsPixelFormatFlag::RGB &&
+              header.ddspf.aBitMask == 0x00000000))) {
         f->compressed = false;
         f->needsSwizzle = true;
 
     /* RGB */
-    } else if(header.ddspf.rgbBitCount == 24 &&
+    } else if(header.ddspf.flags == DdsPixelFormatFlag::RGB &&
+              header.ddspf.rgbBitCount == 24 &&
               header.ddspf.rBitMask == 0x000000ff &&
               header.ddspf.gBitMask == 0x0000ff00 &&
               header.ddspf.bBitMask == 0x00ff0000) {
@@ -369,7 +388,8 @@ void DdsImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dat
         f->needsSwizzle = false;
 
     /* BGR */
-    } else if(header.ddspf.rgbBitCount == 24 &&
+    } else if(header.ddspf.flags == DdsPixelFormatFlag::RGB &&
+              header.ddspf.rgbBitCount == 24 &&
               header.ddspf.rBitMask == 0x00ff0000 &&
               header.ddspf.gBitMask == 0x0000ff00 &&
               header.ddspf.bBitMask == 0x000000ff) {
@@ -378,20 +398,40 @@ void DdsImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dat
         f->needsSwizzle = true;
 
     /* Grayscale */
-    } else if(header.ddspf.rgbBitCount == 8) {
+    } else if(header.ddspf.flags == DdsPixelFormatFlag::RGB &&
+              header.ddspf.rgbBitCount == 8 &&
+              header.ddspf.rBitMask == 0x000000ff &&
+              header.ddspf.gBitMask == 0x00000000 &&
+              header.ddspf.bBitMask == 0x00000000) {
         f->pixelFormat.uncompressed = PixelFormat::R8Unorm;
         f->compressed = false;
         f->needsSwizzle = false;
 
+    /* Something else. We're far from handling all cases, so be verbose in what
+       was encountered. */
     } else {
-        Error() << "Trade::DdsImporter::openData(): unknown" << header.ddspf.rgbBitCount << "bits per pixel format with a RGBA mask" << Debug::packed << Math::Vector4<void*>{reinterpret_cast<void*>(header.ddspf.rBitMask), reinterpret_cast<void*>(header.ddspf.gBitMask), reinterpret_cast<void*>(header.ddspf.bBitMask), reinterpret_cast<void*>(header.ddspf.aBitMask)};
+        Error err;
+        err << "Trade::DdsImporter::openData(): unknown" << header.ddspf.rgbBitCount << "bits per pixel format with";
+        if(header.ddspf.flags == DdsPixelFormatFlag::RGBA)
+            err << "a RGBA";
+        else if(header.ddspf.flags == DdsPixelFormatFlag::RGB)
+            err << "a RGB";
+        else
+            err << "flags" << reinterpret_cast<void*>(reinterpret_cast<const UnsignedInt&>(header.ddspf.flags)) << "and a";
+        err << "mask" << Debug::packed << Math::Vector4<void*>{reinterpret_cast<void*>(header.ddspf.rBitMask), reinterpret_cast<void*>(header.ddspf.gBitMask), reinterpret_cast<void*>(header.ddspf.bBitMask), reinterpret_cast<void*>(header.ddspf.aBitMask)};
         return;
     }
 
-    const Vector3i size{Int(header.width), Int(header.height), Int(Math::max(header.depth, 1u))};
+    /* Depth can be set to 0 by some exporters, it should be 1 at least. Not
+       relying on DdsDescriptionFlag::Depth, because that may not be set
+       either. */
+    const Vector3i size{Int(header.width),
+                        Int(header.height),
+                        Math::max(Int(header.depth), 1)};
 
-    /* Check how many mipmaps to load */
-    const UnsignedInt numMipmaps = header.flags & DdsDescriptionFlag::MipMapCount ? header.mipMapCount : 1;
+    /* Check how many mipmaps to load, but at least one. Not relying on
+       DdsDescriptionFlag::MipMapCount, because that may not be set either. */
+    const UnsignedInt mipCount = Math::max(header.mipMapCount, 1u);
 
     /* Load all surfaces for the image (6 surfaces for cubemaps) */
     const UnsignedInt numImages = header.caps2 & DdsCap2::Cubemap ? 6 : 1;
@@ -399,7 +439,7 @@ void DdsImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dat
         Vector3i mipSize{size};
 
         /* Load all mipmaps for current surface */
-        for(UnsignedInt i = 0; i < numMipmaps; ++i) {
+        for(UnsignedInt i = 0; i != mipCount; ++i) {
             std::size_t size;
             if(f->compressed) {
                 const Vector3i blockSize = compressedBlockSize(f->pixelFormat.compressed);

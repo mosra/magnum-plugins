@@ -65,6 +65,8 @@ struct DdsImporterTest: TestSuite::Tester {
     void bc4();
     void bc7();
 
+    void r3DZeroFieldsZeroDepthZeroMips();
+
     void formats();
 
     void openMemory();
@@ -274,7 +276,11 @@ const struct {
     {"unknown compression", "dxt4.dds", {},
         "unknown compression DXT4"},
     {"unknown format", "unknown-format.dds", {},
-        "unknown 64 bits per pixel format with a RGBA mask {0xff0000, 0xff00, 0xff, 0x0}"},
+        "unknown 64 bits per pixel format with flags 0x1 and a mask {0x0, 0x0, 0x0, 0xff}"},
+    {"unknown RGB format", "unknown-format-rgb.dds", {},
+        "unknown 64 bits per pixel format with a RGB mask {0xff0000, 0xff00, 0xff, 0x0}"},
+    {"unknown RGBA format", "unknown-format-rgba.dds", {},
+        "unknown 64 bits per pixel format with a RGBA mask {0xff0000, 0xff00, 0xff, 0xff000000}"},
     {"DXT10 format unsupported", "dxt10-ayuv.dds", {},
         "unsupported format DXGI_FORMAT_AYUV"},
     {"DXT10 format unknown", "dxt10-format136.dds", {},
@@ -328,6 +334,14 @@ constexpr struct {
         "Trade::DdsImporter::image3D(): converting from BGRA to RGBA\n"},
     {"DXT10 RGBA, verbose", "dxt10-rgba8unorm-3d.dds", ImporterFlag::Verbose,
         ""},
+};
+
+const struct {
+    const char* name;
+    const char* filename;
+} ZeroFieldsData[]{
+    {"", "r8unorm-3d-zero-fields-zero-depth-zero-mips.dds"},
+    {"DXT10", "dxt10-r8unorm-3d-zero-fields-zero-depth-zero-mips.dds"}
 };
 
 constexpr struct {
@@ -395,6 +409,9 @@ DdsImporterTest::DdsImporterTest() {
               &DdsImporterTest::dxt3IncompleteBlocks,
               &DdsImporterTest::bc4,
               &DdsImporterTest::bc7});
+
+    addInstancedTests({&DdsImporterTest::r3DZeroFieldsZeroDepthZeroMips},
+        Containers::arraySize(ZeroFieldsData));
 
     addInstancedTests({&DdsImporterTest::formats},
         Containers::arraySize(FormatsData));
@@ -728,6 +745,32 @@ void DdsImporterTest::bc7() {
     CORRADE_COMPARE_AS(image->data().exceptPrefix(image->data().size() - 16), Containers::array({
         '\x40', '\xf3', '\x59', '\xa3', '\xc9', '\x60', '\xa6', '\x50',
         '\x12', '\x11', '\x66', '\x66', '\xbb', '\xbb', '\xff', '\xff'
+    }), TestSuite::Compare::Container);
+}
+
+void DdsImporterTest::r3DZeroFieldsZeroDepthZeroMips() {
+    /* The file has none of the supposed-to-be-ignored fields set, to verify
+       we're not relying on any flags like "the texture has mips" or
+       "the texture is volume" and then happily producing an image with 0 mips
+       and 0 slices because the exporter forgot to set that */
+
+    auto&& data = ZeroFieldsData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(DDSIMPORTER_TEST_DIR, data.filename)));
+    CORRADE_COMPARE(importer->image2DCount(), 0);
+    CORRADE_COMPARE(importer->image3DCount(), 1);
+    CORRADE_COMPARE(importer->image3DLevelCount(0), 1);
+
+    Containers::Optional<ImageData3D> image = importer->image3D(0);
+    CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->size(), (Vector3i{3, 2, 1}));
+    CORRADE_COMPARE(image->storage().alignment(), 1);
+    CORRADE_VERIFY(!image->isCompressed());
+    CORRADE_COMPARE(image->format(), PixelFormat::R8Unorm);
+    CORRADE_COMPARE_AS(image->data(), Containers::array({
+        '\xde', '\xad', '\xca', '\xfe', '\xbe', '\xef'
     }), TestSuite::Compare::Container);
 }
 

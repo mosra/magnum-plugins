@@ -65,6 +65,7 @@ corrade_add_test(DdsImporterTest
         dxt10-depth32f-stencil8ui.dds
         dxt10-format136.dds
         dxt10-format189.dds
+        dxt10-r8unorm-3d-zero-fields-zero-depth-zero-mips.dds
         dxt10-rgba16snorm.dds
         dxt10-rgba32ui.dds
         dxt10-rgba8srgb.dds
@@ -86,8 +87,11 @@ corrade_add_test(DdsImporterTest
         bgr8unorm-mips.dds
         bgra8unorm-3d.dds
         r8unorm.dds
+        r8unorm-3d-zero-fields-zero-depth-zero-mips.dds
         rgba8unorm-3d.dds
         unknown-format.dds
+        unknown-format-rgb.dds
+        unknown-format-rgba.dds
         wrong-signature.dds)
 target_include_directories(DdsImporterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>)
 if(MAGNUM_DDSIMPORTER_BUILD_STATIC)
