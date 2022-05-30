@@ -58,11 +58,11 @@ struct DdsImporterTest: TestSuite::Tester {
     void rgba3D();
     /* 3D DXT10 tested in rgba3D() */
 
-    /* Testing both classic and DXGI version and both 64bit and 128bit blocks */
+    /* Testing both 64bit and 128bit blocks */
     void dxt3();
     void dxt3IncompleteBlocks();
     void bc4();
-    void bc7();
+    void bc7Dxt10();
 
     void r3DZeroFieldsZeroDepthZeroMips();
 
@@ -407,7 +407,7 @@ DdsImporterTest::DdsImporterTest() {
     addTests({&DdsImporterTest::dxt3,
               &DdsImporterTest::dxt3IncompleteBlocks,
               &DdsImporterTest::bc4,
-              &DdsImporterTest::bc7});
+              &DdsImporterTest::bc7Dxt10});
 
     addInstancedTests({&DdsImporterTest::r3DZeroFieldsZeroDepthZeroMips},
         Containers::arraySize(ZeroFieldsData));
@@ -723,7 +723,7 @@ void DdsImporterTest::bc4() {
     }), TestSuite::Compare::Container);
 }
 
-void DdsImporterTest::bc7() {
+void DdsImporterTest::bc7Dxt10() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(DDSIMPORTER_TEST_DIR, "dxt10-bc7.dds")));
     CORRADE_COMPARE(importer->image2DCount(), 1);
