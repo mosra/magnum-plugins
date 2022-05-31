@@ -79,14 +79,14 @@ enum class DdsCap1: UnsignedInt {
 
 /* Additional detail about the surfaces stored */
 enum class DdsCap2: UnsignedInt {
-    Cubemap = 0x00000200,
-    CubemapPositiveX = 0x00000400,
-    CubemapNegativeX = 0x00000800,
-    CubemapPositiveY = 0x00001000,
-    CubemapNegativeY = 0x00002000,
-    CubemapPositiveZ = 0x00004000,
-    CubemapNegativeZ = 0x00008000,
-    CubemapAllFaces = 0x0000fc00,
+    CubeMap = 0x00000200,
+    CubeMapPositiveX = 0x00000400,
+    CubeMapNegativeX = 0x00000800,
+    CubeMapPositiveY = 0x00001000,
+    CubeMapNegativeY = 0x00002000,
+    CubeMapPositiveZ = 0x00004000,
+    CubeMapNegativeZ = 0x00008000,
+    CubeMapAllFaces = 0x0000fc00,
     Volume = 0x00200000
 };
 
@@ -434,7 +434,7 @@ void DdsImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dat
     const UnsignedInt mipCount = Math::max(header.mipMapCount, 1u);
 
     /* Load all surfaces for the image (6 surfaces for cubemaps) */
-    const UnsignedInt numImages = header.caps2 & DdsCap2::Cubemap ? 6 : 1;
+    const UnsignedInt numImages = header.caps2 & DdsCap2::CubeMap ? 6 : 1;
     for(UnsignedInt n = 0; n < numImages; ++n) {
         Vector3i mipSize{size};
 
