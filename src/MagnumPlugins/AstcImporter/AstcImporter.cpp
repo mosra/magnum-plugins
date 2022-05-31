@@ -173,6 +173,12 @@ void AstcImporter::doOpenData(Containers::Array<char>&& data, const DataFlags da
         return;
     }
 
+    /* Unlike KTX or Basis, the file format doesn't contain any orientation
+       metadata, so we have to rely on an externally-provided hint */
+    if(!configuration().value<bool>("assumeYUpZBackward")) {
+        Warning{} << "Trade::AstcImporter::openData(): image is assumed to be encoded with Y down and Z forward, imported data will have wrong orientation. Enable assumeYUpZBackward to suppress this warning.";
+    }
+
     /* All good now, let's save everything */
     _state.emplace();
     _state->format = format;

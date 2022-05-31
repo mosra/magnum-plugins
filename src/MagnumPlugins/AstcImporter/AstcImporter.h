@@ -112,10 +112,18 @@ texture), the image is also exposed as 3D. The ARM ASTC encoder doesn't seem to
 support such scenario (the `-array` option enforces use of a 3D ASTC format),
 but other tools might.
 
-Unlike @ref KtxImporter "KTX" or @ref KtxImporter "Basis Universal", the file
-format has no way to store information about coordinate system. It's thus not
-possible to know whether the files were encoded with Y up, Y down, Z forward or
-Z backward, and thus the data is always passed through unchanged.
+@m_class{m-block m-warning}
+
+@par Imported image orientation
+    Unlike @ref Trade-KtxImporter-behavior "KTX" or
+    @ref Trade-BasisImporter-behavior "Basis", the file format doesn't contain
+    any orientation metadata, and so it's assumed to follow the Vulkan/D3D
+    coordinate system with Y down and (for 3D textures) Z forward. Because
+    flipping block-compressed data is nontrivial, the image will not be flipped
+    on import, instead a message will be printed to @relativeref{Magnum,Warning}
+    and the data will be passed through unchanged. Set the
+    @cb{.ini} assumeYUpZBackward @ce @ref Trade-AstcImporter-configuration "configuration option"
+    to assume the OpenGL coordinate system and silence the warning.
 
 @section Trade-AstcImporter-configuration Plugin-specific configuration
 

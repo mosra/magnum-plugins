@@ -115,18 +115,28 @@ const struct {
 };
 
 const struct {
+    const char* name;
     const char* format;
+    Containers::Optional<bool> assumeYUpZBackward;
     CompressedPixelFormat expectedFormat2D, expectedFormat3D;
+    const char* message;
 } FormatData[]{
-    {nullptr,
+    {"", nullptr, {},
         CompressedPixelFormat::Astc8x8RGBAUnorm,
-        CompressedPixelFormat::Astc3x3x3RGBAUnorm},
-    {"srgb",
+        CompressedPixelFormat::Astc3x3x3RGBAUnorm,
+        "Trade::AstcImporter::openData(): image is assumed to be encoded with Y down and Z forward, imported data will have wrong orientation. Enable assumeYUpZBackward to suppress this warning.\n"},
+    {"assume Y up and Z backward", nullptr, true,
+        CompressedPixelFormat::Astc8x8RGBAUnorm,
+        CompressedPixelFormat::Astc3x3x3RGBAUnorm,
+        ""},
+    {"sRGB", "srgb", {},
         CompressedPixelFormat::Astc8x8RGBASrgb,
-        CompressedPixelFormat::Astc3x3x3RGBASrgb},
-    {"float",
+        CompressedPixelFormat::Astc3x3x3RGBASrgb,
+        "Trade::AstcImporter::openData(): image is assumed to be encoded with Y down and Z forward, imported data will have wrong orientation. Enable assumeYUpZBackward to suppress this warning.\n"},
+    {"float", "float", {},
         CompressedPixelFormat::Astc8x8RGBAF,
-        CompressedPixelFormat::Astc3x3x3RGBAF},
+        CompressedPixelFormat::Astc3x3x3RGBAF,
+        "Trade::AstcImporter::openData(): image is assumed to be encoded with Y down and Z forward, imported data will have wrong orientation. Enable assumeYUpZBackward to suppress this warning.\n"},
 };
 
 /* Shared among all plugins that implement data copying optimizations */
@@ -317,15 +327,24 @@ void AstcImporterTest::invalidFormatConfiguration() {
 
 void AstcImporterTest::twoDimensions() {
     auto&& data = FormatData[testCaseInstanceId()];
-    setTestCaseDescription(data.format);
+    setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AstcImporter");
     if(data.format)
         importer->configuration().setValue("format", data.format);
     else
         CORRADE_COMPARE(importer->configuration().value("format"), "linear");
+    if(data.assumeYUpZBackward)
+        importer->configuration().setValue("assumeYUpZBackward", *data.assumeYUpZBackward);
+    else
+        CORRADE_COMPARE(importer->configuration().value("assumeYUpZBackward"), "false");
 
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASTCIMPORTER_TEST_DIR, "8x8.astc")));
+    std::ostringstream out;
+    {
+        Warning redirectWarning{&out};
+        CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASTCIMPORTER_TEST_DIR, "8x8.astc")));
+    }
+    CORRADE_COMPARE(out.str(), data.message);
     CORRADE_COMPARE(importer->image2DCount(), 1);
 
     Containers::Optional<ImageData2D> image = importer->image2D(0);
@@ -390,15 +409,24 @@ void AstcImporterTest::twoDimensionsArrayIncompleteBlocks() {
 
 void AstcImporterTest::threeDimensions() {
     auto&& data = FormatData[testCaseInstanceId()];
-    setTestCaseDescription(data.format);
+    setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AstcImporter");
     if(data.format)
         importer->configuration().setValue("format", data.format);
     else
         CORRADE_COMPARE(importer->configuration().value("format"), "linear");
+    if(data.assumeYUpZBackward)
+        importer->configuration().setValue("assumeYUpZBackward", *data.assumeYUpZBackward);
+    else
+        CORRADE_COMPARE(importer->configuration().value("assumeYUpZBackward"), "false");
 
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASTCIMPORTER_TEST_DIR, "3x3x3.astc")));
+    std::ostringstream out;
+    {
+        Warning redirectWarning{&out};
+        CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASTCIMPORTER_TEST_DIR, "3x3x3.astc")));
+    }
+    CORRADE_COMPARE(out.str(), data.message);
     CORRADE_COMPARE(importer->image3DCount(), 1);
 
     Containers::Optional<ImageData3D> image = importer->image3D(0);
