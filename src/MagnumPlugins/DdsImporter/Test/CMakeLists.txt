@@ -57,21 +57,36 @@ corrade_add_test(DdsImporterTest
         bc4unorm.dds
         bc5snorm.dds
         bc5unorm.dds
+        cube-flag-set-for-3d.dds
+        depth-set-for-non-3d.dds
         dxt1.dds
+        dxt1-cube-mips.dds
         dxt10-ayuv.dds
+        dxt10-array-size-set-for-3d.dds
         dxt10-astc8x5unorm.dds
         dxt10-bc7.dds
+        dxt10-bc7-cube-mips.dds
+        dxt10-cube-flag-set-for-1d.dds
+        dxt10-cube-flag-set-for-3d.dds
+        dxt10-depth-set-for-non-3d.dds
         dxt10-depth24unorm-stencil8ui.dds
         dxt10-depth32f-stencil8ui.dds
         dxt10-format136.dds
         dxt10-format189.dds
+        dxt10-height-set-for-1d.dds
+        dxt10-invalid-resource-dimension.dds
         dxt10-r8unorm-3d-zero-fields-zero-depth-zero-mips.dds
+        dxt10-r16f-cube.dds
+        dxt10-r8snorm-cube-array.dds
+        dxt10-rg16f-1d-array-mips.dds
+        dxt10-rg16f-1d.dds
         dxt10-rgba16snorm.dds
         dxt10-rgba32ui.dds
         dxt10-rgba8srgb.dds
         dxt10-rgba8unorm.dds
         dxt10-bgra8unorm-3d.dds
         dxt10-rgba8unorm-3d.dds
+        dxt10-rgba8unorm-array.dds
         dxt10-rgb32i.dds
         dxt10-rg32f.dds
         dxt10-rg8unorm.dds
@@ -89,6 +104,9 @@ corrade_add_test(DdsImporterTest
         r8unorm.dds
         r8unorm-3d-zero-fields-zero-depth-zero-mips.dds
         rgba8unorm-3d.dds
+        rgba8unorm-cube.dds
+        rgba8unorm-cube-mips.dds
+        rgba8unorm-cube-incomplete.dds
         unknown-format.dds
         unknown-format-rgb.dds
         unknown-format-rgba.dds

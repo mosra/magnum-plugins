@@ -26,8 +26,8 @@
 
 #include "DdsImporter.h"
 
-#include <Corrade/Containers/GrowableArray.h>
 #include <Corrade/Containers/Optional.h>
+#include <Corrade/Containers/Triple.h>
 #include <Corrade/Containers/StringView.h>
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/Endianness.h>
@@ -38,6 +38,7 @@
 #include <Magnum/Math/Vector4.h>
 #include <Magnum/Math/Swizzle.h>
 #include <Magnum/Trade/ImageData.h>
+#include <Magnum/Trade/TextureData.h>
 
 namespace Magnum { namespace Trade {
 
@@ -173,12 +174,22 @@ enum class DdsAlphaMode: UnsignedInt {
     Custom = 4,
 };
 
+typedef Containers::EnumSet<DdsMiscFlag> DdsMiscFlags;
+#ifdef CORRADE_TARGET_CLANG
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-function"
+#endif
+CORRADE_ENUMSET_OPERATORS(DdsMiscFlags)
+#ifdef CORRADE_TARGET_CLANG
+#pragma clang diagnostic pop
+#endif
+
 struct DdsHeaderDxt10 {
     UnsignedInt dxgiFormat;
     DdsDimension resourceDimension;
-    DdsMiscFlag miscFlag;
-    UnsignedInt arraySize;
-    DdsAlphaMode miscFlags2;
+    DdsMiscFlags miscFlag; /* TextureCube or nothing */
+    UnsignedInt arraySize; /* Should be at least 1, and exactly 1 for 3D */
+    DdsAlphaMode miscFlags2; /* Not used right now */
 };
 
 constexpr struct {
@@ -211,23 +222,37 @@ constexpr struct {
 }
 
 struct DdsImporter::File {
-    struct ImageDataOffset {
-        Vector3i dimensions;
-        Containers::ArrayView<char> data;
-    };
-
     Containers::Array<char> in;
 
+    /* Size of one top-level slice. As it's used as an input for level size
+       calculation, it doesn't take sliceCount into account. */
+    Vector3i topLevelSliceSize{NoInit};
+    UnsignedInt levelCount;
+
+    TextureType type;
+    UnsignedInt dimensions; /* 1, 2, 3 */
+    UnsignedInt sliceCount; /* 1 for non-array non-cube 1D/2D/3D images */
+    std::size_t dataOffset; /* 128 or 148 for a DXT10 file */
+    std::size_t sliceSize; /* Size of one slice including all mip levels */
+
     bool compressed;
-    bool volume;
-    bool needsSwizzle;
+    union Properties {
+        /* Yeah fuck off C++, this is unhelpful, this is not the point where I
+           want to initialize anything, THIS IS NOT, the parent struct is */
+        Properties() {}
 
-    union {
-        PixelFormat uncompressed;
-        CompressedPixelFormat compressed;
-    } pixelFormat;
+        struct {
+            PixelFormat format;
+            bool needsSwizzle;
+            UnsignedInt pixelSize;
+        } uncompressed;
 
-    Containers::Array<ImageDataOffset> imageData;
+        struct {
+            CompressedPixelFormat format;
+            Vector3i blockSize{NoInit};
+            UnsignedInt blockDataSize;
+        } compressed;
+    } properties;
 };
 
 DdsImporter::DdsImporter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin): AbstractImporter{manager, plugin} {}
@@ -239,6 +264,34 @@ ImporterFeatures DdsImporter::doFeatures() const { return ImporterFeature::OpenD
 bool DdsImporter::doIsOpened() const { return !!_f; }
 
 void DdsImporter::doClose() { _f = nullptr; }
+
+namespace {
+
+Containers::Triple<std::size_t, std::size_t, Vector3i> levelOffsetSize(Vector3i size, const Vector3i& blockSize, const UnsignedInt blockDataSize, const UnsignedInt level) {
+    std::size_t offset = 0;
+    std::size_t dataSize = blockDataSize*((size + blockSize - Vector3i{1})/blockSize).product();
+    for(UnsignedInt i = 0; i != level; ++i) {
+        offset += dataSize;
+        size = Math::max(size >> 1, Vector3i{1});
+        dataSize = blockDataSize*((size + blockSize - Vector3i{1})/blockSize).product();
+    }
+
+    return {offset, dataSize, size};
+}
+
+Containers::Triple<std::size_t, std::size_t, Vector3i> levelOffsetSize(Vector3i size, const UnsignedInt pixelSize, const UnsignedInt level) {
+    std::size_t offset = 0;
+    std::size_t dataSize = size.product()*pixelSize;
+    for(UnsignedInt i = 0; i != level; ++i) {
+        offset += dataSize;
+        size = Math::max(size >> 1, Vector3i{1});
+        dataSize = size.product()*pixelSize;
+    }
+
+    return {offset, dataSize, size};
+}
+
+}
 
 void DdsImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dataFlags) {
     Containers::Pointer<File> f{new File};
@@ -257,7 +310,6 @@ void DdsImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dat
         return;
     }
     const DdsHeader& header = *reinterpret_cast<const DdsHeader*>(f->in.data());
-    std::size_t offset = sizeof(DdsHeader);
 
     /* Verify file signature */
     if(Containers::StringView{header.signature, 4} != "DDS "_s) {
@@ -265,47 +317,38 @@ void DdsImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dat
         return;
     }
 
-    /* If the image has a volume bit, it's 3D. This gets overwritten if the
-       DXT10 header is present. */
-    f->volume = header.caps2 >= DdsCap2::Volume;
-
     /* Format defined by FourCC, possibly a DXT10 header */
+    bool hasDxt10Header = false;
+    f->dataOffset = sizeof(DdsHeader);
     if(header.ddspf.flags & DdsPixelFormatFlag::FourCC) {
         switch(header.ddspf.fourCC) {
             case Utility::Endianness::fourCC('D', 'X', 'T', '1'):
                 f->compressed = true;
-                f->needsSwizzle = false;
-                f->pixelFormat.compressed = CompressedPixelFormat::Bc1RGBAUnorm;
+                f->properties.compressed.format = CompressedPixelFormat::Bc1RGBAUnorm;
                 break;
             case Utility::Endianness::fourCC('D', 'X', 'T', '3'):
                 f->compressed = true;
-                f->needsSwizzle = false;
-                f->pixelFormat.compressed = CompressedPixelFormat::Bc2RGBAUnorm;
+                f->properties.compressed.format = CompressedPixelFormat::Bc2RGBAUnorm;
                 break;
             case Utility::Endianness::fourCC('D', 'X', 'T', '5'):
                 f->compressed = true;
-                f->needsSwizzle = false;
-                f->pixelFormat.compressed = CompressedPixelFormat::Bc3RGBAUnorm;
+                f->properties.compressed.format = CompressedPixelFormat::Bc3RGBAUnorm;
                 break;
             case Utility::Endianness::fourCC('A', 'T', 'I', '1'):
                 f->compressed = true;
-                f->needsSwizzle = false;
-                f->pixelFormat.compressed = CompressedPixelFormat::Bc4RUnorm;
+                f->properties.compressed.format = CompressedPixelFormat::Bc4RUnorm;
                 break;
             case Utility::Endianness::fourCC('B', 'C', '4', 'S'):
                 f->compressed = true;
-                f->needsSwizzle = false;
-                f->pixelFormat.compressed = CompressedPixelFormat::Bc4RSnorm;
+                f->properties.compressed.format = CompressedPixelFormat::Bc4RSnorm;
                 break;
             case Utility::Endianness::fourCC('A', 'T', 'I', '2'):
                 f->compressed = true;
-                f->needsSwizzle = false;
-                f->pixelFormat.compressed = CompressedPixelFormat::Bc5RGUnorm;
+                f->properties.compressed.format = CompressedPixelFormat::Bc5RGUnorm;
                 break;
             case Utility::Endianness::fourCC('B', 'C', '5', 'S'):
                 f->compressed = true;
-                f->needsSwizzle = false;
-                f->pixelFormat.compressed = CompressedPixelFormat::Bc5RGSnorm;
+                f->properties.compressed.format = CompressedPixelFormat::Bc5RGSnorm;
                 break;
             /** @todo there's also a bunch of other numeric values mentioned at
                 https://docs.microsoft.com/en-us/windows/win32/direct3ddds/dx-graphics-dds-pguide
@@ -315,27 +358,71 @@ void DdsImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dat
                     Error{} << "Trade::DdsImporter::openData(): DXT10 file too short, expected at least" << sizeof(DdsHeader) + sizeof(DdsHeaderDxt10) << "bytes but got" << f->in.size();
                     return;
                 }
+
+                hasDxt10Header = true;
+                f->dataOffset += sizeof(DdsHeaderDxt10);
                 const DdsHeaderDxt10& headerDxt10 = *reinterpret_cast<const DdsHeaderDxt10*>(f->in.data() + sizeof(DdsHeader));
-                offset += sizeof(DdsHeaderDxt10);
 
                 if(headerDxt10.dxgiFormat >= Containers::arraySize(DxgiFormatMapping)) {
                     Error{} << "Trade::DdsImporter::openData(): unknown DXGI format ID" << headerDxt10.dxgiFormat;
                     return;
                 }
 
-                /* Texture type in this header has a precedence over flags in
-                   the main header */
-                f->volume = headerDxt10.resourceDimension == DdsDimension::Texture3D;
+                /* Decide about dimensionality and slice count */
+                if(headerDxt10.resourceDimension == DdsDimension::Texture3D) {
+                    f->dimensions = 3;
+                    f->sliceCount = 1;
+                    f->type = TextureType::Texture3D;
+                    if(headerDxt10.miscFlag & DdsMiscFlag::TextureCube) {
+                        Error{} << "Trade::DdsImporter::openData(): cube map flag set for a DXT10 3D texture";
+                        return;
+                    } else if(headerDxt10.arraySize != 1) {
+                        Error{} << "Trade::DdsImporter::openData(): invalid array size" << headerDxt10.arraySize << "for a DXT10 3D texture";
+                        return;
+                    }
+                } else if(headerDxt10.resourceDimension == DdsDimension::Texture2D) {
+                    if(headerDxt10.miscFlag & DdsMiscFlag::TextureCube) {
+                        f->dimensions = 3;
+                        /* If it's a cube map, the slice count is actually
+                           count of cubes */
+                        f->sliceCount = headerDxt10.arraySize*6;
+                        f->type = headerDxt10.arraySize != 1 ?
+                            TextureType::CubeMapArray : TextureType::CubeMap;
+                    } else if(headerDxt10.arraySize != 1) {
+                        f->dimensions = 3;
+                        f->sliceCount = headerDxt10.arraySize;
+                        f->type = TextureType::Texture2DArray;
+                    } else {
+                        f->dimensions = 2;
+                        f->sliceCount = 1;
+                        f->type = TextureType::Texture2D;
+                    }
+                } else if(headerDxt10.resourceDimension == DdsDimension::Texture1D) {
+                    if(headerDxt10.miscFlag & DdsMiscFlag::TextureCube) {
+                        Error{} << "Trade::DdsImporter::openData(): cube map flag set for a DXT10 1D texture";
+                        return;
+                    } else if(headerDxt10.arraySize != 1) {
+                        f->dimensions = 2;
+                        f->sliceCount = headerDxt10.arraySize;
+                        f->type = TextureType::Texture1DArray;
+                    } else {
+                        f->dimensions = 1;
+                        f->sliceCount = 1;
+                        f->type = TextureType::Texture1D;
+                    }
+                } else {
+                    Error{} << "Trade::DdsImporter::openData(): invalid DXT10 resource dimension" << UnsignedInt(headerDxt10.resourceDimension);
+                    return;
+                }
 
                 const auto& mapped = DxgiFormatMapping[headerDxt10.dxgiFormat];
                 if(mapped.format) {
                     f->compressed = false;
-                    f->needsSwizzle = mapped.needsSwizzle;
-                    f->pixelFormat.uncompressed = PixelFormat(mapped.format);
+                    f->properties.uncompressed.format = PixelFormat(mapped.format);
+                    f->properties.uncompressed.needsSwizzle = mapped.needsSwizzle;
                 } else if(mapped.compressedFormat) {
                     f->compressed = true;
-                    f->needsSwizzle = false;
-                    f->pixelFormat.compressed = CompressedPixelFormat(mapped.compressedFormat);
+                    f->properties.compressed.format = CompressedPixelFormat(mapped.compressedFormat);
                 } else if(mapped.name) {
                     Error{} << "Trade::DdsImporter::openData(): unsupported format DXGI_FORMAT_" << Debug::nospace << mapped.name;
                     return;
@@ -362,7 +449,8 @@ void DdsImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dat
              (header.ddspf.flags == DdsPixelFormatFlag::RGB &&
               header.ddspf.aBitMask == 0x00000000))) {
         f->compressed = false;
-        f->needsSwizzle = false;
+        f->properties.uncompressed.format = PixelFormat::RGBA8Unorm;
+        f->properties.uncompressed.needsSwizzle = false;
 
     /* BGRA or BGRX with the alpha unspecified. The X variant is produced by
        NVidia Texture Tools from a RGB input. */
@@ -375,7 +463,8 @@ void DdsImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dat
              (header.ddspf.flags == DdsPixelFormatFlag::RGB &&
               header.ddspf.aBitMask == 0x00000000))) {
         f->compressed = false;
-        f->needsSwizzle = true;
+        f->properties.uncompressed.format = PixelFormat::RGBA8Unorm;
+        f->properties.uncompressed.needsSwizzle = true;
 
     /* RGB */
     } else if(header.ddspf.flags == DdsPixelFormatFlag::RGB &&
@@ -383,9 +472,9 @@ void DdsImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dat
               header.ddspf.rBitMask == 0x000000ff &&
               header.ddspf.gBitMask == 0x0000ff00 &&
               header.ddspf.bBitMask == 0x00ff0000) {
-        f->pixelFormat.uncompressed = PixelFormat::RGB8Unorm;
         f->compressed = false;
-        f->needsSwizzle = false;
+        f->properties.uncompressed.format = PixelFormat::RGB8Unorm;
+        f->properties.uncompressed.needsSwizzle = false;
 
     /* BGR */
     } else if(header.ddspf.flags == DdsPixelFormatFlag::RGB &&
@@ -393,9 +482,9 @@ void DdsImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dat
               header.ddspf.rBitMask == 0x00ff0000 &&
               header.ddspf.gBitMask == 0x0000ff00 &&
               header.ddspf.bBitMask == 0x000000ff) {
-        f->pixelFormat.uncompressed = PixelFormat::RGB8Unorm;
         f->compressed = false;
-        f->needsSwizzle = true;
+        f->properties.uncompressed.format = PixelFormat::RGB8Unorm;
+        f->properties.uncompressed.needsSwizzle = true;
 
     /* Grayscale */
     } else if(header.ddspf.flags == DdsPixelFormatFlag::RGB &&
@@ -403,9 +492,9 @@ void DdsImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dat
               header.ddspf.rBitMask == 0x000000ff &&
               header.ddspf.gBitMask == 0x00000000 &&
               header.ddspf.bBitMask == 0x00000000) {
-        f->pixelFormat.uncompressed = PixelFormat::R8Unorm;
         f->compressed = false;
-        f->needsSwizzle = false;
+        f->properties.uncompressed.format = PixelFormat::R8Unorm;
+        f->properties.uncompressed.needsSwizzle = false;
 
     /* Something else. We're far from handling all cases, so be verbose in what
        was encountered. */
@@ -425,43 +514,80 @@ void DdsImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dat
     /* Depth can be set to 0 by some exporters, it should be 1 at least. Not
        relying on DdsDescriptionFlag::Depth, because that may not be set
        either. */
-    const Vector3i size{Int(header.width),
-                        Int(header.height),
-                        Math::max(Int(header.depth), 1)};
+    f->topLevelSliceSize = {Int(header.width),
+                       Int(header.height),
+                       Math::max(Int(header.depth), 1)};
 
     /* Check how many mipmaps to load, but at least one. Not relying on
        DdsDescriptionFlag::MipMapCount, because that may not be set either. */
-    const UnsignedInt mipCount = Math::max(header.mipMapCount, 1u);
+    f->levelCount = Math::max(header.mipMapCount, 1u);
 
-    /* Load all surfaces for the image (6 surfaces for cubemaps) */
-    const UnsignedInt numImages = header.caps2 & DdsCap2::CubeMap ? 6 : 1;
-    for(UnsignedInt n = 0; n < numImages; ++n) {
-        Vector3i mipSize{size};
-
-        /* Load all mipmaps for current surface */
-        for(UnsignedInt i = 0; i != mipCount; ++i) {
-            std::size_t size;
-            if(f->compressed) {
-                const Vector3i blockSize = compressedBlockSize(f->pixelFormat.compressed);
-                const std::size_t blockDataSize = compressedBlockDataSize(f->pixelFormat.compressed);
-                size = blockDataSize*((mipSize + Vector3i{blockSize} - Vector3i{1})/Vector3i{blockSize}).product();
-            } else {
-                size = mipSize.product()*pixelSize(f->pixelFormat.uncompressed);
-            }
-
-            const std::size_t end = offset + size;
-            if(f->in.size() < end) {
-                Error() << "Trade::DdsImporter::openData(): file too short, expected" << end << "bytes for image" << n << "level" << i << "but got" << f->in.size();
+    /* If the DXT10 header was not present, fall back to parsing the legacy
+       fields to decide about dimensionality and slice count. In this case
+       there's no way to have an array or 1D texture. We prefer the DXT10
+       information, so if it's present we don't even check correctness of the
+       legacy fields. */
+    if(!hasDxt10Header) {
+        if(header.caps2 & DdsCap2::Volume) {
+            f->dimensions = 3;
+            f->sliceCount = 1;
+            f->type = TextureType::Texture3D;
+            if(header.caps2 & DdsCap2::CubeMap) {
+                Error{} << "Trade::DdsImporter::openData(): cube map flag set for a 3D texture";
                 return;
             }
-
-            arrayAppend(f->imageData, InPlaceInit, mipSize, f->in.slice(offset, end));
-
-            offset = end;
-
-            /* Shrink to next power of 2 */
-            mipSize = Math::max(mipSize >> 1, Vector3i{1});
+        } else if(header.caps2 & DdsCap2::CubeMap) {
+            /* Checked above, assert just to be sure */
+            CORRADE_INTERNAL_ASSERT(!(header.caps2 & DdsCap2::Volume));
+            f->dimensions = 3;
+            /* The cubemap can be incomplete, in that case import it as a
+               regular array */
+            f->sliceCount = Math::popcount(UnsignedInt(header.caps2 & DdsCap2::CubeMapAllFaces));
+            if(f->sliceCount == 6) {
+                f->type = TextureType::CubeMap;
+            } else {
+                f->type = TextureType::Texture2DArray;
+                Warning{} << "Trade::DdsImporter::openData(): the image is an incomplete cubemap, importing faces as" << f->sliceCount << "array layers";
+            }
+        } else {
+            f->dimensions = 2;
+            f->sliceCount = 1;
+            f->type = TextureType::Texture2D;
         }
+    }
+
+    /* Height should be > 1 only for 2D textures */
+    if(f->topLevelSliceSize.y() != 1 && (f->type == TextureType::Texture1D || f->type == TextureType::Texture1DArray)) {
+        Error{} << "Trade::DdsImporter::openData(): height is" << header.height << "but the texture is 1D";
+        return;
+    }
+
+    /* Depth should be > 1 only for 3D textures */
+    if(f->topLevelSliceSize.z() != 1 && f->type != TextureType::Texture3D) {
+        Error{} << "Trade::DdsImporter::openData(): depth is" << header.depth << "but the texture isn't 3D";
+        return;
+    }
+
+    /* Cache pixel / block size so we don't need to query it again on each
+       image access; calculate slice size so we can quickly access all slices
+       of a particular level. Abusing the levelOffsetSize(), calling it with
+       level count instead of ID gives total size of all levels. */
+    if(f->compressed) {
+        f->properties.compressed.blockSize = compressedBlockSize(f->properties.compressed.format);
+        f->properties.compressed.blockDataSize = compressedBlockDataSize(f->properties.compressed.format);
+        f->sliceSize = levelOffsetSize(f->topLevelSliceSize, f->properties.compressed.blockSize, f->properties.compressed.blockDataSize, f->levelCount).first();
+    } else {
+        f->properties.uncompressed.pixelSize = pixelSize(f->properties.uncompressed.format);
+        f->sliceSize = levelOffsetSize(f->topLevelSliceSize, f->properties.uncompressed.pixelSize, f->levelCount).first();
+    }
+
+    /* Check bounds */
+    const std::size_t expectedSize = f->dataOffset + f->sliceSize*f->sliceCount;
+    if(expectedSize > f->in.size()) {
+        Error() << "Trade::DdsImporter::openData(): file too short, expected" << expectedSize << "bytes for" << f->sliceCount << "slices with" << f->levelCount << "levels and" << f->sliceSize << "bytes each but got" << f->in.size();
+        return;
+    } else if(expectedSize < f->in.size()) {
+        Warning{} << "Trade::DdsImporter::openData(): ignoring" << f->in.size() - expectedSize << "extra bytes at the end of file";
     }
 
     /* Everything okay, save the file for later use */
@@ -484,43 +610,91 @@ void swizzlePixels(const PixelFormat format, Containers::Array<char>& data, cons
 
 }
 
-template<UnsignedInt dimensions> ImageData<dimensions> DdsImporter::doImage(const char* prefix, UnsignedInt, UnsignedInt level) {
-    const File::ImageDataOffset& dataOffset = _f->imageData[level];
+template<UnsignedInt dimensions> ImageData<dimensions> DdsImporter::doImage(const char* prefix, UnsignedInt, const UnsignedInt level) {
+    /* Calculate input offset, data size and image slice size */
+    const Containers::Triple<std::size_t, std::size_t, Vector3i> offsetSize = _f->compressed ?
+        levelOffsetSize(_f->topLevelSliceSize, _f->properties.compressed.blockSize, _f->properties.compressed.blockDataSize, level) :
+        levelOffsetSize(_f->topLevelSliceSize, _f->properties.uncompressed.pixelSize, level);
 
-    /* Copy image data */
-    Containers::Array<char> data{NoInit, dataOffset.data.size()};
-    Utility::copy(dataOffset.data, data);
+    /* Image size is slice size combined with slice count */
+    Vector3i imageSize = offsetSize.third();
+    if(_f->sliceCount != 1) {
+        CORRADE_INTERNAL_ASSERT(imageSize[dimensions - 1] == 1);
+        imageSize[dimensions - 1] = _f->sliceCount;
+    }
+
+    /* Allocate image data */
+    Containers::Array<char> data{NoInit, offsetSize.second()*_f->sliceCount};
+
+    /* Copy all slices */
+    for(std::size_t i = 0; i != _f->sliceCount; ++i) {
+        const std::size_t inputOffset = _f->dataOffset + i*_f->sliceSize + offsetSize.first();
+        const std::size_t outputOffset = i*offsetSize.second();
+        Utility::copy(_f->in.slice(inputOffset, inputOffset + offsetSize.second()),
+            data.slice(outputOffset, outputOffset + offsetSize.second()));
+    }
 
     /* Compressed image */
     if(_f->compressed)
-        return ImageData<dimensions>(_f->pixelFormat.compressed, Math::Vector<dimensions, Int>::pad(dataOffset.dimensions), std::move(data));
+        return ImageData<dimensions>(_f->properties.compressed.format, Math::Vector<dimensions, Int>::pad(imageSize), std::move(data));
 
     /* Uncompressed */
-    if(_f->needsSwizzle) swizzlePixels(_f->pixelFormat.uncompressed, data,
+    if(_f->properties.uncompressed.needsSwizzle) swizzlePixels(
+        _f->properties.uncompressed.format, data,
         flags() & ImporterFlag::Verbose ? prefix : nullptr);
 
     /* Adjust pixel storage if row size is not four byte aligned */
     PixelStorage storage;
-    if((dataOffset.dimensions.x()*pixelSize(_f->pixelFormat.uncompressed))%4 != 0)
+    if((imageSize.x()*_f->properties.uncompressed.pixelSize % 4 != 0))
         storage.setAlignment(1);
 
-    return ImageData<dimensions>{storage, _f->pixelFormat.uncompressed, Math::Vector<dimensions, Int>::pad(dataOffset.dimensions), std::move(data)};
+    return ImageData<dimensions>{storage, _f->properties.uncompressed.format, Math::Vector<dimensions, Int>::pad(imageSize), std::move(data)};
 }
 
-UnsignedInt DdsImporter::doImage2DCount() const {  return _f->volume ? 0 : 1; }
+UnsignedInt DdsImporter::doImage1DCount() const {
+    return _f->dimensions == 1 ? 1 : 0;
+}
 
-UnsignedInt DdsImporter::doImage2DLevelCount(UnsignedInt) {  return _f->imageData.size(); }
+UnsignedInt DdsImporter::doImage1DLevelCount(UnsignedInt) {
+    return _f->levelCount;
+}
+
+Containers::Optional<ImageData1D> DdsImporter::doImage1D(const UnsignedInt id, const UnsignedInt level) {
+    return doImage<1>("Trade::DdsImporter::image1D():", id, level);
+}
+
+UnsignedInt DdsImporter::doImage2DCount() const {
+    return _f->dimensions == 2 ? 1 : 0;
+}
+
+UnsignedInt DdsImporter::doImage2DLevelCount(UnsignedInt) {
+    return _f->levelCount;
+}
 
 Containers::Optional<ImageData2D> DdsImporter::doImage2D(const UnsignedInt id, const UnsignedInt level) {
     return doImage<2>("Trade::DdsImporter::image2D():", id, level);
 }
 
-UnsignedInt DdsImporter::doImage3DCount() const { return _f->volume ? 1 : 0; }
+UnsignedInt DdsImporter::doImage3DCount() const {
+    return _f->dimensions == 3 ? 1 : 0;
+}
 
-UnsignedInt DdsImporter::doImage3DLevelCount(UnsignedInt) {  return _f->imageData.size(); }
+UnsignedInt DdsImporter::doImage3DLevelCount(UnsignedInt) {
+    return _f->levelCount;
+}
 
 Containers::Optional<ImageData3D> DdsImporter::doImage3D(const UnsignedInt id, const UnsignedInt level) {
     return doImage<3>("Trade::DdsImporter::image3D():", id, level);
+}
+
+UnsignedInt DdsImporter::doTextureCount() const { return 1; }
+
+Containers::Optional<TextureData> DdsImporter::doTexture(UnsignedInt) {
+    return TextureData{_f->type,
+        SamplerFilter::Linear,
+        SamplerFilter::Linear,
+        SamplerMipmap::Linear,
+        SamplerWrapping::Repeat, 0};
 }
 
 }}
