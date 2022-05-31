@@ -214,7 +214,7 @@ class MAGNUM_DDSIMPORTER_EXPORT DdsImporter: public AbstractImporter {
         MAGNUM_DDSIMPORTER_LOCAL void doClose() override;
         MAGNUM_DDSIMPORTER_LOCAL void doOpenData(Containers::Array<char>&& data, DataFlags dataFlags) override;
 
-        template<UnsignedInt dimensions> MAGNUM_DDSIMPORTER_LOCAL ImageData<dimensions> doImage(const char* prefix, UnsignedInt id, UnsignedInt level);
+        template<UnsignedInt dimensions> MAGNUM_DDSIMPORTER_LOCAL ImageData<dimensions> doImage(UnsignedInt id, UnsignedInt level);
 
         MAGNUM_DDSIMPORTER_LOCAL UnsignedInt doImage1DCount() const override;
         MAGNUM_DDSIMPORTER_LOCAL UnsignedInt doImage1DLevelCount(UnsignedInt id) override;

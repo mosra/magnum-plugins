@@ -343,7 +343,7 @@ constexpr struct {
     {"BGR", "bgr8unorm.dds", {},
         ""},
     {"BGR, verbose", "bgr8unorm.dds", ImporterFlag::Verbose,
-        "Trade::DdsImporter::image2D(): converting from BGR to RGB\n"},
+        "Trade::DdsImporter::openData(): format requires conversion from BGR to RGB\n"},
     {"RGB, verbose", "rgb8unorm.dds", ImporterFlag::Verbose,
         ""},
     /* No three-component 8-bit format in DXT10, so that's a separate test
@@ -359,13 +359,13 @@ constexpr struct {
     {"BGRA", "bgra8unorm-3d.dds", {},
         ""},
     {"BGRA, verbose", "bgra8unorm-3d.dds", ImporterFlag::Verbose,
-        "Trade::DdsImporter::image3D(): converting from BGRA to RGBA\n"},
+        "Trade::DdsImporter::openData(): format requires conversion from BGRA to RGBA\n"},
     {"RGBA, verbose", "rgba8unorm-3d.dds", ImporterFlag::Verbose,
         ""},
     {"DXT10 BGRA", "dxt10-bgra8unorm-3d.dds", {},
         ""},
     {"DXT10 BGRA, verbose", "dxt10-bgra8unorm-3d.dds", ImporterFlag::Verbose,
-        "Trade::DdsImporter::image3D(): converting from BGRA to RGBA\n"},
+        "Trade::DdsImporter::openData(): format requires conversion from BGRA to RGBA\n"},
     {"DXT10 RGBA, verbose", "dxt10-rgba8unorm-3d.dds", ImporterFlag::Verbose,
         ""},
 };
@@ -543,18 +543,18 @@ void DdsImporterTest::rgb() {
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
     importer->setFlags(data.flags);
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(DDSIMPORTER_TEST_DIR, data.filename)));
+    std::ostringstream out;
+    {
+        Debug redirectOutput{&out};
+        CORRADE_VERIFY(importer->openFile(Utility::Path::join(DDSIMPORTER_TEST_DIR, data.filename)));
+    }
+    CORRADE_COMPARE(out.str(), data.message);
     CORRADE_COMPARE(importer->image1DCount(), 0);
     CORRADE_COMPARE(importer->image2DCount(), 1);
     CORRADE_COMPARE(importer->image2DLevelCount(0), 1);
     CORRADE_COMPARE(importer->image3DCount(), 0);
 
-    std::ostringstream out;
-    Containers::Optional<ImageData2D> image;
-    {
-        Debug redirectOutput{&out};
-        image = importer->image2D(0);
-    }
+    Containers::Optional<ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
     CORRADE_VERIFY(!image->isCompressed());
     CORRADE_COMPARE(image->storage().alignment(), 1);
@@ -568,7 +568,6 @@ void DdsImporterTest::rgb() {
         '\xde', '\xad', '\xb5',
         '\xca', '\xfe', '\x77'
     }), TestSuite::Compare::Container);
-    CORRADE_COMPARE(out.str(), data.message);
 }
 
 void DdsImporterTest::rgDxt10() {
@@ -970,18 +969,18 @@ void DdsImporterTest::rgba3D() {
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
     importer->setFlags(data.flags);
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(DDSIMPORTER_TEST_DIR, data.filename)));
+    std::ostringstream out;
+    {
+        Debug redirectOutput{&out};
+        CORRADE_VERIFY(importer->openFile(Utility::Path::join(DDSIMPORTER_TEST_DIR, data.filename)));
+    }
+    CORRADE_COMPARE(out.str(), data.message);
     CORRADE_COMPARE(importer->image1DCount(), 0);
     CORRADE_COMPARE(importer->image2DCount(), 0);
     CORRADE_COMPARE(importer->image3DCount(), 1);
     CORRADE_COMPARE(importer->image3DLevelCount(0), 1);
 
-    std::ostringstream out;
-    Containers::Optional<ImageData3D> image;
-    {
-        Debug redirectOutput{&out};
-        image = importer->image3D(0);
-    }
+    Containers::Optional<ImageData3D> image = importer->image3D(0);
     CORRADE_VERIFY(image);
     CORRADE_VERIFY(!image->isCompressed());
     CORRADE_COMPARE(image->storage().alignment(), 4);
@@ -1012,7 +1011,6 @@ void DdsImporterTest::rgba3D() {
         '\xde', '\xad', '\xb5', '\x00',
         '\xca', '\xfe', '\x77', '\x11'
     }), TestSuite::Compare::Container);
-    CORRADE_COMPARE(out.str(), data.message);
 
     Containers::Optional<TextureData> texture = importer->texture(0);
     CORRADE_VERIFY(texture);

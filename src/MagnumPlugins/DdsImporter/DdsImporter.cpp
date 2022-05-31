@@ -590,19 +590,28 @@ void DdsImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dat
         Warning{} << "Trade::DdsImporter::openData(): ignoring" << f->in.size() - expectedSize << "extra bytes at the end of file";
     }
 
+
+    if(flags() & ImporterFlag::Verbose) {
+        if(!f->compressed && f->properties.uncompressed.needsSwizzle) {
+            if(f->properties.uncompressed.format == PixelFormat::RGB8Unorm)
+                Debug{} << "Trade::DdsImporter::openData(): format requires conversion from BGR to RGB";
+            else if(f->properties.uncompressed.format == PixelFormat::RGBA8Unorm)
+                Debug{} << "Trade::DdsImporter::openData(): format requires conversion from BGRA to RGBA";
+            else CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+        }
+    }
+
     /* Everything okay, save the file for later use */
     _f = std::move(f);
 }
 
 namespace {
 
-void swizzlePixels(const PixelFormat format, Containers::Array<char>& data, const char* verbosePrefix) {
+void swizzlePixels(const PixelFormat format, Containers::Array<char>& data) {
     if(format == PixelFormat::RGB8Unorm) {
-        if(verbosePrefix) Debug{} << verbosePrefix << "converting from BGR to RGB";
         for(Vector3ub& pixel: Containers::arrayCast<Vector3ub>(data))
             pixel = Math::gather<'b', 'g', 'r'>(pixel);
     } else if(format == PixelFormat::RGBA8Unorm) {
-        if(verbosePrefix) Debug{} << verbosePrefix << "converting from BGRA to RGBA";
         for(Vector4ub& pixel: Containers::arrayCast<Vector4ub>(data))
             pixel = Math::gather<'b', 'g', 'r', 'a'>(pixel);
     } else CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
@@ -610,7 +619,7 @@ void swizzlePixels(const PixelFormat format, Containers::Array<char>& data, cons
 
 }
 
-template<UnsignedInt dimensions> ImageData<dimensions> DdsImporter::doImage(const char* prefix, UnsignedInt, const UnsignedInt level) {
+template<UnsignedInt dimensions> ImageData<dimensions> DdsImporter::doImage(UnsignedInt, const UnsignedInt level) {
     /* Calculate input offset, data size and image slice size */
     const Containers::Triple<std::size_t, std::size_t, Vector3i> offsetSize = _f->compressed ?
         levelOffsetSize(_f->topLevelSliceSize, _f->properties.compressed.blockSize, _f->properties.compressed.blockDataSize, level) :
@@ -639,9 +648,8 @@ template<UnsignedInt dimensions> ImageData<dimensions> DdsImporter::doImage(cons
         return ImageData<dimensions>(_f->properties.compressed.format, Math::Vector<dimensions, Int>::pad(imageSize), std::move(data));
 
     /* Uncompressed */
-    if(_f->properties.uncompressed.needsSwizzle) swizzlePixels(
-        _f->properties.uncompressed.format, data,
-        flags() & ImporterFlag::Verbose ? prefix : nullptr);
+    if(_f->properties.uncompressed.needsSwizzle)
+        swizzlePixels(_f->properties.uncompressed.format, data);
 
     /* Adjust pixel storage if row size is not four byte aligned */
     PixelStorage storage;
@@ -660,7 +668,7 @@ UnsignedInt DdsImporter::doImage1DLevelCount(UnsignedInt) {
 }
 
 Containers::Optional<ImageData1D> DdsImporter::doImage1D(const UnsignedInt id, const UnsignedInt level) {
-    return doImage<1>("Trade::DdsImporter::image1D():", id, level);
+    return doImage<1>(id, level);
 }
 
 UnsignedInt DdsImporter::doImage2DCount() const {
@@ -672,7 +680,7 @@ UnsignedInt DdsImporter::doImage2DLevelCount(UnsignedInt) {
 }
 
 Containers::Optional<ImageData2D> DdsImporter::doImage2D(const UnsignedInt id, const UnsignedInt level) {
-    return doImage<2>("Trade::DdsImporter::image2D():", id, level);
+    return doImage<2>(id, level);
 }
 
 UnsignedInt DdsImporter::doImage3DCount() const {
@@ -684,7 +692,7 @@ UnsignedInt DdsImporter::doImage3DLevelCount(UnsignedInt) {
 }
 
 Containers::Optional<ImageData3D> DdsImporter::doImage3D(const UnsignedInt id, const UnsignedInt level) {
-    return doImage<3>("Trade::DdsImporter::image3D():", id, level);
+    return doImage<3>(id, level);
 }
 
 UnsignedInt DdsImporter::doTextureCount() const { return 1; }
