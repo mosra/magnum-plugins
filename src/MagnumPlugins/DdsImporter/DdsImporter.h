@@ -186,8 +186,9 @@ with the following special cases:
 -   All other uncompressed `*_TYPELESS` formats are treated the same way as
     the `*_UI` alternatives
 
-Additionally, nonstandard 2D ASTC `DXGI_FORMAT_ASTC_4x4_TYPELESS`, ...,
-`*_UNORM` and `*_UNORM_SRGB` formats are supported, mapping to
+Additionally, nonstandard 2D ASTC `DXGI_FORMAT_ASTC_4x4_TYPELESS`,
+`DXGI_FORMAT_ASTC_4x4_UNORM`, `DXGI_FORMAT_ASTC_4x4_UNORM_SRGB` formats
+including other sizes up to 12x12 are supported, mapping to
 @ref CompressedPixelFormat::Astc4x4RGBAUnorm,
 @relativeref{CompressedPixelFormat,Astc4x4RGBASrgb} and following variants.
 A subset of those is used by [NVidia Texture Tools Exporter](https://developer.nvidia.com/nvidia-texture-tools-exporter),
