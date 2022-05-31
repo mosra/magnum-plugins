@@ -125,6 +125,22 @@ See @ref building-plugins, @ref cmake-plugins, @ref plugins and
 
 @section Trade-BasisImporter-behavior Behavior and limitations
 
+@m_class{m-block m-warning}
+
+@par Imported image orientation
+    Both the Basis and the KTX2 file format contains orientation metadata, but
+    because flipping block-compressed data is nontrivial, the images will not
+    be flipped on import. Instead, if the orientation doesn't match Y up, a
+    message will be printed to @relativeref{Magnum,Warning} and the data will
+    be passed through unchanged. In case of the `basisu` tool you can pass
+    `-y_flip` to encode the image with Y up but note the orientation
+    [isn't correctly written to the file with a KTX2 output](https://github.com/BinomialLLC/basis_universal/issues/258).
+    The @ref BasisImageConverter encodes Y up files by default and does it
+    correctly for both Basis and KTX2 files.
+
+The importer recognizes @ref ImporterFlag::Verbose, printing additional info
+when the flag is enabled.
+
 @subsection Trade-BasisImporter-behavior-types Image types
 
 You can import all image types supported by `basisu`: (layered) 2D images,
@@ -165,21 +181,6 @@ Cube map faces are imported in the order +X, -X, +Y, -Y, +Z, -Z as seen from a
 left-handed coordinate system (+X is right, +Y is up, +Z is forward). Layered
 cube maps are stored as multiple sets of faces, ie. all faces +X through -Z for
 the first layer, then all faces of the second layer, etc.
-
-@m_class{m-block m-warning}
-
-@par Y-flipping
-    While all importers for uncompressed image data are performing a Y-flip on
-    import to have the origin at the bottom (as expected by OpenGL), it's a
-    non-trivial operation with compressed images. In case of Basis, you can
-    pass a `-y_flip` flag to the `basisu` tool to Y-flip the image
-    * *during encoding*, however right now there's no way do so on import. To
-    inform the user, the importer checks for the Y-flip flag in the file and if
-    it's not there, prints a warning about the data having wrong orientation.
-@par
-    To account for this on the application side for files that you don't have
-    control over, flip texture coordinates of the mesh or patch texture data
-    loading in the shader.
 
 @section Trade-BasisImporter-configuration Plugin-specific configuration
 

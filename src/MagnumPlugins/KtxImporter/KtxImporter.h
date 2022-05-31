@@ -103,10 +103,16 @@ Imports images in the following formats:
 -   KTX2 with most compressed Vulkan formats that have an equivalent in
     @ref CompressedPixelFormat. None of the 3D ASTC formats are supported.
 
-With compressed pixel formats, the image will not be flipped if the Y- or
-Z-axis orientation doesn't match the output orientation. The nontrivial amount
-of work involved with flipping block-compressed data makes this unfeasible. The
-import will succeed but a warning will be emitted.
+@m_class{m-block m-warning}
+
+@par Imported image orientation
+    The file format contains orientation metadata and uncompressed images will
+    be flipped on import if the orientation doesn't match X right, (for 2D and
+    3D textures) Y up and (for 3D textures) Z backward. Because flipping
+    block-compressed data is nontrivial, compressed images will not be flipped
+    on import. Instead a message will be printed to @relativeref{Magnum,Warning}
+    and the data will be passed through unchanged. The @ref KtxImageConverter
+    encodes X right, Y up, Z backward files by default.
 
 The importer recognizes @ref ImporterFlag::Verbose, printing additional info
 when the flag is enabled.
