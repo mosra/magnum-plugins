@@ -32,6 +32,7 @@
 #include <Corrade/TestSuite/Compare/Container.h>
 #include <Corrade/TestSuite/Compare/Numeric.h>
 #include <Corrade/Utility/Algorithms.h>
+#include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/DebugStl.h> /** @todo remove once Debug is stream-free */
 #include <Corrade/Utility/FormatStl.h> /** @todo remove once Debug is stream-free */
 #include <Corrade/Utility/Path.h>
@@ -334,40 +335,71 @@ const struct {
         "file too short, expected 416 bytes for 6 slices with 3 levels and 48 bytes each but got 415"}
 };
 
-constexpr struct {
+const struct {
     const char* name;
     const char* filename;
     ImporterFlags flags;
+    Containers::Optional<bool> assumeYUp;
     const char* message;
-} SwizzleRgbData[] {
-    {"BGR", "bgr8unorm.dds", {},
+} SwizzleFlipRgb2DData[]{
+    {"BGR", "bgr8unorm.dds",
+        {}, {},
         ""},
-    {"BGR, verbose", "bgr8unorm.dds", ImporterFlag::Verbose,
+    {"BGR, verbose", "bgr8unorm.dds",
+        ImporterFlag::Verbose, {},
+        "Trade::DdsImporter::openData(): image will be flipped along y\n"
         "Trade::DdsImporter::openData(): format requires conversion from BGR to RGB\n"},
-    {"RGB, verbose", "rgb8unorm.dds", ImporterFlag::Verbose,
-        ""},
+    {"RGB, verbose", "rgb8unorm.dds",
+        ImporterFlag::Verbose, {},
+        "Trade::DdsImporter::openData(): image will be flipped along y\n"},
+    {"RGB, verbose, assume Y up", "rgb8unorm-yup.dds",
+        ImporterFlag::Verbose, true,
+        ""}
     /* No three-component 8-bit format in DXT10, so that's a separate test
        case (and thus no swizzle needs to be tested) */
 };
 
-constexpr struct {
+const struct {
     const char* name;
     const char* filename;
     ImporterFlags flags;
+    Containers::Optional<bool> assumeYUpZBackward;
     const char* message;
-} SwizzleRgbaData[] {
-    {"BGRA", "bgra8unorm-3d.dds", {},
+} SwizzleFlipRgba3DData[]{
+    {"BGRA", "bgra8unorm-3d.dds",
+        {}, {},
         ""},
-    {"BGRA, verbose", "bgra8unorm-3d.dds", ImporterFlag::Verbose,
+    {"BGRA, verbose", "bgra8unorm-3d.dds",
+        ImporterFlag::Verbose, {},
+        "Trade::DdsImporter::openData(): image will be flipped along y and z\n"
         "Trade::DdsImporter::openData(): format requires conversion from BGRA to RGBA\n"},
-    {"RGBA, verbose", "rgba8unorm-3d.dds", ImporterFlag::Verbose,
+    {"RGBA, verbose", "rgba8unorm-3d.dds",
+        ImporterFlag::Verbose, {},
+        "Trade::DdsImporter::openData(): image will be flipped along y and z\n"},
+    {"RGBA, verbose, assume Y up and Z backward", "rgba8unorm-3d-yup-zbackward.dds",
+        ImporterFlag::Verbose, true,
         ""},
-    {"DXT10 BGRA", "dxt10-bgra8unorm-3d.dds", {},
+    {"DXT10 BGRA", "dxt10-bgra8unorm-3d.dds",
+        {}, {},
         ""},
-    {"DXT10 BGRA, verbose", "dxt10-bgra8unorm-3d.dds", ImporterFlag::Verbose,
+    {"DXT10 BGRA, verbose", "dxt10-bgra8unorm-3d.dds",
+        ImporterFlag::Verbose, {},
+        "Trade::DdsImporter::openData(): image will be flipped along y and z\n"
         "Trade::DdsImporter::openData(): format requires conversion from BGRA to RGBA\n"},
-    {"DXT10 RGBA, verbose", "dxt10-rgba8unorm-3d.dds", ImporterFlag::Verbose,
-        ""},
+    {"DXT10 RGBA, verbose", "dxt10-rgba8unorm-3d.dds",
+        ImporterFlag::Verbose, {},
+        "Trade::DdsImporter::openData(): image will be flipped along y and z\n"},
+    /* There isn't any difference between legacy and DXT10 for Y/Z flipping, so
+       not testing any "DXT10 assume Y up" variant */
+};
+
+const struct {
+    const char* name;
+    Containers::Optional<bool> assumeYUp;
+    const char* message;
+} CompressedFlipWarningData[]{
+    {"", {}, "Trade::DdsImporter::openData(): block-compressed image is assumed to be encoded with Y down and Z forward, imported data will have wrong orientation. Enable assumeYUpZBackward to suppress this warning.\n"},
+    {"assume Y up", true, ""}
 };
 
 const struct {
@@ -429,15 +461,17 @@ DdsImporterTest::DdsImporterTest() {
     addTests({&DdsImporterTest::r});
 
     addInstancedTests({&DdsImporterTest::rgb},
-        Containers::arraySize(SwizzleRgbData));
+        Containers::arraySize(SwizzleFlipRgb2DData));
 
     addTests({&DdsImporterTest::rgDxt10,
 
               &DdsImporterTest::rgbMips,
-              &DdsImporterTest::rgbMipsDxt10,
+              &DdsImporterTest::rgbMipsDxt10});
 
-              &DdsImporterTest::dxt3,
-              &DdsImporterTest::dxt3IncompleteBlocks,
+    addInstancedTests({&DdsImporterTest::dxt3},
+        Containers::arraySize(CompressedFlipWarningData));
+
+    addTests({&DdsImporterTest::dxt3IncompleteBlocks,
               &DdsImporterTest::bc4,
               &DdsImporterTest::bc7Dxt10,
 
@@ -451,7 +485,7 @@ DdsImporterTest::DdsImporterTest() {
               &DdsImporterTest::bc7CubeMipsDxt10});
 
     addInstancedTests({&DdsImporterTest::rgba3D},
-        Containers::arraySize(SwizzleRgbaData));
+        Containers::arraySize(SwizzleFlipRgba3DData));
 
     addTests({&DdsImporterTest::extraDataAtTheEnd,
               &DdsImporterTest::incompleteCubeMap});
@@ -528,8 +562,8 @@ void DdsImporterTest::r() {
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
     CORRADE_COMPARE(image->format(), PixelFormat::R8Unorm);
     CORRADE_COMPARE_AS(image->data(), Containers::arrayView<char>({
-        '\xde', '\xca', '\xde',
-        '\xca', '\xde', '\xca',
+        '\xca', '\xde', '\xca', /* Bottom row */
+        '\xde', '\xca', '\xde', /* Top row */
     }), TestSuite::Compare::Container);
 
     Containers::Optional<TextureData> texture = importer->texture(0);
@@ -538,11 +572,15 @@ void DdsImporterTest::r() {
 }
 
 void DdsImporterTest::rgb() {
-    auto&& data = SwizzleRgbData[testCaseInstanceId()];
+    auto&& data = SwizzleFlipRgb2DData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
     importer->setFlags(data.flags);
+    if(data.assumeYUp)
+        importer->configuration().setValue("assumeYUpZBackward", *data.assumeYUp);
+    else
+        CORRADE_COMPARE(importer->configuration().value("assumeYUpZBackward"), "false");
     std::ostringstream out;
     {
         Debug redirectOutput{&out};
@@ -561,12 +599,13 @@ void DdsImporterTest::rgb() {
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
     CORRADE_COMPARE(image->format(), PixelFormat::RGB8Unorm);
     CORRADE_COMPARE_AS(image->data(), Containers::arrayView<char>({
+        '\xca', '\xfe', '\x77', /* Bottom row */
         '\xde', '\xad', '\xb5',
         '\xca', '\xfe', '\x77',
-        '\xde', '\xad', '\xb5',
+
+        '\xde', '\xad', '\xb5', /* Top row */
         '\xca', '\xfe', '\x77',
         '\xde', '\xad', '\xb5',
-        '\xca', '\xfe', '\x77'
     }), TestSuite::Compare::Container);
 }
 
@@ -585,8 +624,8 @@ void DdsImporterTest::rgDxt10() {
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
     CORRADE_COMPARE(image->format(), PixelFormat::RG8Unorm);
     CORRADE_COMPARE_AS(image->data(), Containers::arrayView<char>({
-        '\xde', '\xad', '\xca', '\xfe', '\xde', '\xad',
-        '\xca', '\xfe', '\xde', '\xad', '\xca', '\xfe'
+        '\xca', '\xfe', '\xde', '\xad', '\xca', '\xfe', /* Bottom row */
+        '\xde', '\xad', '\xca', '\xfe', '\xde', '\xad', /* Top row */
     }), TestSuite::Compare::Container);
 
     Containers::Optional<TextureData> texture = importer->texture(0);
@@ -610,12 +649,13 @@ void DdsImporterTest::rgbMips() {
         CORRADE_COMPARE(image->size(), Vector2i(3, 2));
         CORRADE_COMPARE(image->format(), PixelFormat::RGB8Unorm);
         CORRADE_COMPARE_AS(image->data(), Containers::arrayView({
+            '\xca', '\xfe', '\x77', /* Bottom row */
             '\xde', '\xad', '\xb5',
             '\xca', '\xfe', '\x77',
-            '\xde', '\xad', '\xb5',
+
+            '\xde', '\xad', '\xb5', /* Top row */
             '\xca', '\xfe', '\x77',
             '\xde', '\xad', '\xb5',
-            '\xca', '\xfe', '\x77'
         }), TestSuite::Compare::Container);
     } {
         Containers::Optional<ImageData2D> image = importer->image2D(0, 1);
@@ -648,13 +688,13 @@ void DdsImporterTest::rgbMipsDxt10() {
         CORRADE_COMPARE(image->size(), Vector2i(3, 2));
         CORRADE_COMPARE(image->format(), PixelFormat::R32I);
         CORRADE_COMPARE_AS(image->data(), Containers::arrayView({
-            '\x00', '\x00', '\x11', '\x11',
+            '\x66', '\x66', '\x77', '\x77', /* Bottom row */
+            '\x88', '\x88', '\x99', '\x99',
+            '\xaa', '\xaa', '\xbb', '\xbb',
+
+            '\x00', '\x00', '\x11', '\x11', /* Top row */
             '\x22', '\x22', '\x33', '\x33',
             '\x44', '\x44', '\x55', '\x55',
-
-            '\x66', '\x66', '\x77', '\x77',
-            '\x88', '\x88', '\x99', '\x99',
-            '\xaa', '\xaa', '\xbb', '\xbb'
         }), TestSuite::Compare::Container);
     } {
         Containers::Optional<ImageData2D> image = importer->image2D(0, 1);
@@ -670,8 +710,20 @@ void DdsImporterTest::rgbMipsDxt10() {
 }
 
 void DdsImporterTest::dxt3() {
+    auto&& data = CompressedFlipWarningData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(DDSIMPORTER_TEST_DIR, "dxt3.dds")));
+    if(data.assumeYUp)
+        importer->configuration().setValue("assumeYUpZBackward", *data.assumeYUp);
+    else
+        CORRADE_COMPARE(importer->configuration().value("assumeYUpZBackward"), "false");
+    std::ostringstream out;
+    {
+        Warning redirectWarning{&out};
+        CORRADE_VERIFY(importer->openFile(Utility::Path::join(DDSIMPORTER_TEST_DIR, "dxt3.dds")));
+    }
+    CORRADE_COMPARE(out.str(), data.message);
     CORRADE_COMPARE(importer->image1DCount(), 0);
     CORRADE_COMPARE(importer->image2DCount(), 1);
     CORRADE_COMPARE(importer->image2DLevelCount(0), 1);
@@ -861,11 +913,13 @@ void DdsImporterTest::rgbaArrayDxt10() {
     CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Unorm);
     /* Verify just a small prefix and suffix to be sure the data got copied */
     CORRADE_COMPARE_AS(image->data().prefix(8), Containers::array({
-        '\xc4', '\x39', '\x39', '\x2c', '\x3d', '\x7c', '\xbe', '\x9d'
+        /* First two pixels of the bottom row of the first slice */
+        '\xc7', '\xcc', '\x2f', '\x7f', '\xcb', '\x5d', '\x31', '\x9d'
     }), TestSuite::Compare::Container);
     /** @todo suffix() once it takes N last bytes */
     CORRADE_COMPARE_AS(image->data().exceptPrefix(image->data().size() - 8), Containers::array({
-        '\xcb', '\x5d', '\x31', '\x9d', '\xc7', '\xcc', '\x2f', '\x7f'
+        /* Last two pixels of the top row of the last slice */
+        '\x3d', '\x7c', '\xbe', '\x9d', '\xc4', '\x39', '\x39', '\x2c'
     }), TestSuite::Compare::Container);
 
     Containers::Optional<TextureData> texture = importer->texture(0);
@@ -890,11 +944,13 @@ void DdsImporterTest::rgbaCube() {
        -- the data is like in rgbaArrayDxt10(), just duplicated twice, so the
        prefix and suffix is the same */
     CORRADE_COMPARE_AS(image->data().prefix(8), Containers::array({
-        '\xc4', '\x39', '\x39', '\x2c', '\x3d', '\x7c', '\xbe', '\x9d'
+        /* First two pixels of the bottom row of the first slice */
+        '\xc7', '\xcc', '\x2f', '\x7f', '\xcb', '\x5d', '\x31', '\x9d'
     }), TestSuite::Compare::Container);
     /** @todo suffix() once it takes N last bytes */
     CORRADE_COMPARE_AS(image->data().exceptPrefix(image->data().size() - 8), Containers::array({
-        '\xcb', '\x5d', '\x31', '\x9d', '\xc7', '\xcc', '\x2f', '\x7f'
+        /* Last two pixels of the top row of the last slice */
+        '\x3d', '\x7c', '\xbe', '\x9d', '\xc4', '\x39', '\x39', '\x2c'
     }), TestSuite::Compare::Container);
 
     Containers::Optional<TextureData> texture = importer->texture(0);
@@ -916,6 +972,7 @@ void DdsImporterTest::rCubeDxt10() {
     CORRADE_COMPARE(image->size(), (Vector3i{2, 2, 6}));
     CORRADE_COMPARE(image->format(), PixelFormat::R16F);
     CORRADE_COMPARE_AS(image->data(), Containers::arrayView<char>({
+        /* Funnily enough this is Y-flip invariant */
         '\xde', '\xad', '\xca', '\xfe', '\xde', '\xad', '\xca', '\xfe',
         '\xbe', '\xef', '\xbe', '\x57', '\xbe', '\xef', '\xbe', '\x57',
         '\x80', '\x08', '\x80', '\x08', '\x80', '\x08', '\x80', '\x08',
@@ -943,19 +1000,20 @@ void DdsImporterTest::rCubeArrayDxt10() {
     CORRADE_COMPARE(image->size(), (Vector3i{2, 2, 12}));
     CORRADE_COMPARE(image->format(), PixelFormat::R8Snorm);
     CORRADE_COMPARE_AS(image->data(), Containers::arrayView<char>({
-        '\xde', '\xad', '\xca', '\xfe',
-        '\xde', '\xad', '\xca', '\xfe',
-        '\xbe', '\xef', '\xbe', '\x57',
-        '\xbe', '\xef', '\xbe', '\x57',
+        /* Each first two bytes is bottom row, second two bytes is top row */
+        '\xca', '\xfe', '\xde', '\xad',
+        '\xca', '\xfe', '\xde', '\xad',
+        '\xbe', '\x57', '\xbe', '\xef',
+        '\xbe', '\x57', '\xbe', '\xef',
         '\x80', '\x08', '\x80', '\x08',
         '\x80', '\x08', '\x80', '\x08',
 
-        '\xfe', '\xca', '\xad', '\xde',
-        '\xfe', '\xca', '\xad', '\xde',
-        '\x57', '\xbe', '\xef', '\xbe',
-        '\x57', '\xbe', '\xef', '\xbe',
+        '\xad', '\xde', '\xfe', '\xca',
+        '\xad', '\xde', '\xfe', '\xca',
+        '\xef', '\xbe', '\x57', '\xbe',
+        '\xef', '\xbe', '\x57', '\xbe',
         '\x08', '\x80', '\x08', '\x80',
-        '\x08', '\x80', '\x08', '\x80'
+        '\x08', '\x80', '\x08', '\x80',
     }), TestSuite::Compare::Container);
 
     Containers::Optional<TextureData> texture = importer->texture(0);
@@ -964,11 +1022,15 @@ void DdsImporterTest::rCubeArrayDxt10() {
 }
 
 void DdsImporterTest::rgba3D() {
-    auto&& data = SwizzleRgbaData[testCaseInstanceId()];
+    auto&& data = SwizzleFlipRgba3DData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
     importer->setFlags(data.flags);
+    if(data.assumeYUpZBackward)
+        importer->configuration().setValue("assumeYUpZBackward", *data.assumeYUpZBackward);
+    else
+        CORRADE_COMPARE(importer->configuration().value("assumeYUpZBackward"), "false");
     std::ostringstream out;
     {
         Debug redirectOutput{&out};
@@ -987,29 +1049,29 @@ void DdsImporterTest::rgba3D() {
     CORRADE_COMPARE(image->size(), Vector3i(3, 2, 3));
     CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Unorm);
     CORRADE_COMPARE_AS(image->data(), Containers::arrayView<char>({
-        /* Slice 0 */
+        /* Slice 2 (Z-flipped) */
+        '\xca', '\xfe', '\x77', '\xff', /* Bottom row */
         '\xde', '\xad', '\xb5', '\x00',
         '\xca', '\xfe', '\x77', '\x11',
-        '\xde', '\xad', '\xb5', '\x22',
-        '\xca', '\xfe', '\x77', '\x33',
-        '\xde', '\xad', '\xb5', '\x44',
-        '\xca', '\xfe', '\x77', '\x55',
-
-        /* Slice 1 */
-        '\xca', '\xfe', '\x77', '\x66',
-        '\xde', '\xad', '\xb5', '\x77',
-        '\xca', '\xfe', '\x77', '\x88',
-        '\xde', '\xad', '\xb5', '\x99',
-        '\xca', '\xfe', '\x77', '\xaa',
-        '\xde', '\xad', '\xb5', '\xbb',
-
-        /* Slice 2 */
-        '\xde', '\xad', '\xb5', '\xcc',
+        '\xde', '\xad', '\xb5', '\xcc', /* Top row */
         '\xca', '\xfe', '\x77', '\xdd',
         '\xde', '\xad', '\xb5', '\xee',
-        '\xca', '\xfe', '\x77', '\xff',
-        '\xde', '\xad', '\xb5', '\x00',
-        '\xca', '\xfe', '\x77', '\x11'
+
+        /* Slice 1 */
+        '\xde', '\xad', '\xb5', '\x99', /* Bottom row */
+        '\xca', '\xfe', '\x77', '\xaa',
+        '\xde', '\xad', '\xb5', '\xbb',
+        '\xca', '\xfe', '\x77', '\x66', /* Top row */
+        '\xde', '\xad', '\xb5', '\x77',
+        '\xca', '\xfe', '\x77', '\x88',
+
+        /* Slice 0 (Z-flipped) */
+        '\xca', '\xfe', '\x77', '\x33', /* Bottom row */
+        '\xde', '\xad', '\xb5', '\x44',
+        '\xca', '\xfe', '\x77', '\x55',
+        '\xde', '\xad', '\xb5', '\x00', /* Top row */
+        '\xca', '\xfe', '\x77', '\x11',
+        '\xde', '\xad', '\xb5', '\x22',
     }), TestSuite::Compare::Container);
 
     Containers::Optional<TextureData> texture = importer->texture(0);
@@ -1045,8 +1107,8 @@ void DdsImporterTest::extraDataAtTheEnd() {
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
     CORRADE_COMPARE(image->format(), PixelFormat::R8Unorm);
     CORRADE_COMPARE_AS(image->data(), Containers::arrayView<char>({
-        '\xde', '\xca', '\xde',
-        '\xca', '\xde', '\xca',
+        '\xca', '\xde', '\xca', /* Bottom row */
+        '\xde', '\xca', '\xde', /* Top row */
     }), TestSuite::Compare::Container);
 
     Containers::Optional<TextureData> texture = importer->texture(0);
@@ -1073,14 +1135,15 @@ void DdsImporterTest::incompleteCubeMap() {
     CORRADE_COMPARE(image->size(), (Vector3i{5, 5, 5}));
     CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Unorm);
     /* Verify just a small prefix and suffix to be sure the data got copied
-       -- the data is like in rgbaArrayDxt10(), just duplicated twice, so the
-       prefix and suffix is the same */
+       -- the data should be vaguely similar to rgbaCube() */
     CORRADE_COMPARE_AS(image->data().prefix(8), Containers::array({
-        '\xc4', '\x39', '\x39', '\x2c', '\x3d', '\x7c', '\xbe', '\x9d'
+        /* First two pixels of the bottom row of the first slice */
+        '\xc7', '\xcc', '\x2f', '\x7f', '\xcb', '\x5d', '\x31', '\x9d'
     }), TestSuite::Compare::Container);
     /** @todo suffix() once it takes N last bytes */
     CORRADE_COMPARE_AS(image->data().exceptPrefix(image->data().size() - 8), Containers::array({
-        '\xcb', '\x5d', '\x31', '\x9d', '\xc7', '\xcc', '\x2f', '\x7f'
+        /* Last two pixels of the top row of the last slice */
+        '\x3d', '\x7c', '\xbe', '\x9d', '\xc4', '\x39', '\x39', '\x2c'
     }), TestSuite::Compare::Container);
 
     Containers::Optional<TextureData> texture = importer->texture(0);
@@ -1235,7 +1298,8 @@ void DdsImporterTest::r3DZeroFieldsZeroDepthZeroMips() {
     CORRADE_VERIFY(!image->isCompressed());
     CORRADE_COMPARE(image->format(), PixelFormat::R8Unorm);
     CORRADE_COMPARE_AS(image->data(), Containers::array({
-        '\xde', '\xad', '\xca', '\xfe', '\xbe', '\xef'
+        '\xfe', '\xbe', '\xef', /* Bottom row */
+        '\xde', '\xad', '\xca', /* Top row */
     }), TestSuite::Compare::Container);
 }
 

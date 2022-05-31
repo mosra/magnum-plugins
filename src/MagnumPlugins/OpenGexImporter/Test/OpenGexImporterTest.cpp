@@ -1105,12 +1105,12 @@ void OpenGexImporterTest::imageMipLevels() {
     CORRADE_COMPARE(image00->size(), (Vector2i{3, 2}));
     CORRADE_COMPARE(image00->format(), PixelFormat::RGB8Unorm);
     CORRADE_COMPARE_AS(image00->data(), Containers::arrayView<char>({
+        '\xca', '\xfe', '\x77', /* Bottom row */
         '\xde', '\xad', '\xb5',
         '\xca', '\xfe', '\x77',
-        '\xde', '\xad', '\xb5',
+        '\xde', '\xad', '\xb5', /* Top row */
         '\xca', '\xfe', '\x77',
         '\xde', '\xad', '\xb5',
-        '\xca', '\xfe', '\x77'
     }), TestSuite::Compare::Container);
 
     CORRADE_VERIFY(image01);

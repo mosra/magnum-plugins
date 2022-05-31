@@ -196,6 +196,8 @@ namespace Magnum {
     the setting (such as verbose output) affecting only the top-level plugin
 -   Fixed a few cases where @relativeref{Trade,DdsImporter} could assert or
     crash when encountering a premature end of file
+-   @relativeref{Trade,DdsImporter} now implicitly performs Y- and Z-flip on
+    uncompressed images consistently with other importers
 -   @ref Trade::JpegImageConverter "JpegImageConverter" was mistakenly using
     the `BUILD_STATIC` CMake option instead of `BUILD_PLUGINS_STATIC`
 -   Fixed @ref Trade::BasisImporter "BasisImporter" to work with direct
@@ -241,6 +243,10 @@ namespace Magnum {
 -   The `Bc7RGB` target format for @relativeref{Trade,BasisImporter}
     is removed, use `Bc7RGBA` instead (see
     [mosra/magnum-plugins#112](https://github.com/mosra/magnum-plugins/pull/112))
+-   Because @relativeref{Trade,DdsImporter} was fixed to perform Y- and
+    Z-flip on uncompressed images to ensure consistency with other importers,
+    code that relied on the previous broken behavior will break. Either Y-flip
+    the files or set the @cb{.ini} assumeYUpZBackward @ce option to fix this.
 
 @subsection changelog-plugins-latest-documentation Documentation
 

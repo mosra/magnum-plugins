@@ -97,6 +97,7 @@ corrade_add_test(DdsImporterTest
         dxt5.dds
         bgr8unorm.dds
         rgb8unorm.dds
+        rgb8unorm-yup.dds
         bgrx8unorm.dds
         rgbx8unorm.dds
         bgr8unorm-mips.dds
@@ -104,6 +105,7 @@ corrade_add_test(DdsImporterTest
         r8unorm.dds
         r8unorm-3d-zero-fields-zero-depth-zero-mips.dds
         rgba8unorm-3d.dds
+        rgba8unorm-3d-yup-zbackward.dds
         rgba8unorm-cube.dds
         rgba8unorm-cube-mips.dds
         rgba8unorm-cube-incomplete.dds

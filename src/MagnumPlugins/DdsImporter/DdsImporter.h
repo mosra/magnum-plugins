@@ -93,6 +93,22 @@ See @ref building-plugins, @ref cmake-plugins, @ref plugins and
 
 @section Trade-DdsImporter-behavior Behavior and limitations
 
+@m_class{m-block m-warning}
+
+@par Imported image orientation
+    Unlike @ref Trade-KtxImporter-behavior "KTX" or
+    @ref Trade-BasisImporter-behavior "Basis", the file format doesn't contain
+    any orientation metadata, and so it's assumed to follow the Vulkan/D3D
+    coordinate system with Y down and (for 3D textures) Z forward. Uncompressed
+    images will be flipped on import to Y up and (for 3D textures) Z backward.
+    Because flipping block-compressed data is nontrivial, compressed images
+    will not be flipped on import, instead a message will be printed to
+    @relativeref{Magnum,Warning} and the data will be passed through unchanged.
+    Set the @cb{.ini} assumeYUpZBackward @ce
+    @ref Trade-DdsImporter-configuration "configuration option" to assume the
+    OpenGL coordinate system, perform no flipping of uncompressed data and
+    silence the warning for compressed data.
+
 The importer recognizes @ref ImporterFlag::Verbose, printing additional info
 when the flag is enabled.
 
@@ -201,6 +217,16 @@ Packed formats, (planar) YUV / YCbCr video formats,
 @m_class{m-doc-external} [DXGI_FORMAT_R1_UNORM](https://docs.microsoft.com/en-us/windows/win32/api/dxgiformat/ne-dxgiformat-dxgi_format)
 and @m_class{m-doc-external} [R10G10B10_XR_BIAS_A2_UNORM](https://docs.microsoft.com/en-us/windows/win32/api/dxgiformat/ne-dxgiformat-dxgi_format)
 are not supported.
+
+@section Trade-DdsImporter-configuration Plugin-specific configuration
+
+It's possible to tune various import options through @ref configuration(). See
+below for all options and their default values:
+
+@snippet MagnumPlugins/DdsImporter/DdsImporter.conf configuration_
+
+See @ref plugins-configuration for more information and an example showing how
+to edit the configuration values.
 */
 class MAGNUM_DDSIMPORTER_EXPORT DdsImporter: public AbstractImporter {
     public:

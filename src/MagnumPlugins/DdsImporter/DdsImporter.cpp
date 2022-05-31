@@ -30,6 +30,7 @@
 #include <Corrade/Containers/Triple.h>
 #include <Corrade/Containers/StringView.h>
 #include <Corrade/Utility/Algorithms.h>
+#include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/Endianness.h>
 #include <Corrade/Utility/Debug.h>
 #include <Magnum/PixelFormat.h>
@@ -244,6 +245,7 @@ struct DdsImporter::File {
         struct {
             PixelFormat format;
             bool needsSwizzle;
+            BoolVector2 yzFlip{NoInit};
             UnsignedInt pixelSize;
         } uncompressed;
 
@@ -590,8 +592,40 @@ void DdsImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dat
         Warning{} << "Trade::DdsImporter::openData(): ignoring" << f->in.size() - expectedSize << "extra bytes at the end of file";
     }
 
+    /* Decide about data flipping. Unlike KTX or Basis, the file format doesn't
+       contain any orientation metadata, so we have to rely on an
+       externally-provided hint. */
+    if(configuration().value<bool>("assumeYUpZBackward")) {
+        /* No flipping if Y up / Z backward is assumed */
+        f->properties.uncompressed.yzFlip = BoolVector2{0x0};
+    } else {
+        /* Can't flip compressed blocks at the moment, so print a warning at
+           least */
+        if(f->compressed) {
+            Warning{} << "Trade::DdsImporter::openData(): block-compressed image is assumed to be encoded with Y down and Z forward, imported data will have wrong orientation. Enable assumeYUpZBackward to suppress this warning.";
+
+        /* For uncompressed data decide about the flip orientations */
+        } else {
+            /* Z gets flipped only for a 3D texture, together with Y */
+            if(f->type == TextureType::Texture3D)
+                f->properties.uncompressed.yzFlip = BoolVector2{0x3};
+            /* Y gets flipped only if it's not a 1D (array) texture */
+            else if(f->type != TextureType::Texture1D && f->type != TextureType::Texture1DArray)
+                f->properties.uncompressed.yzFlip = BoolVector2{0x1};
+            else
+                f->properties.uncompressed.yzFlip = BoolVector2{0x0};
+        }
+    }
 
     if(flags() & ImporterFlag::Verbose) {
+        if(f->properties.uncompressed.yzFlip.any()) {
+            const Containers::StringView axes[3]{
+                f->properties.uncompressed.yzFlip[0] ? "y"_s : ""_s,
+                f->properties.uncompressed.yzFlip[1] ? "z"_s : ""_s
+            };
+            Debug{} << "Trade::DdsImporter::openData(): image will be flipped along" << " and "_s.joinWithoutEmptyParts(axes);
+        }
+
         if(!f->compressed && f->properties.uncompressed.needsSwizzle) {
             if(f->properties.uncompressed.format == PixelFormat::RGB8Unorm)
                 Debug{} << "Trade::DdsImporter::openData(): format requires conversion from BGR to RGB";
@@ -615,6 +649,17 @@ void swizzlePixels(const PixelFormat format, const Containers::ArrayView<char> d
         for(Vector4ub& pixel: Containers::arrayCast<Vector4ub>(data))
             pixel = Math::gather<'b', 'g', 'r', 'a'>(pixel);
     } else CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+}
+
+void flipPixels(const BoolVector2 yzFlip, const UnsignedInt pixelSize, const Vector3i& size, const Containers::ArrayView<char> data) {
+    const Containers::StridedArrayView4D<char> view{data, {
+        std::size_t(size.z()),
+        std::size_t(size.y()),
+        std::size_t(size.x()),
+        pixelSize
+    }};
+    if(yzFlip[0]) Utility::flipInPlace<1>(view);
+    if(yzFlip[1]) Utility::flipInPlace<0>(view);
 }
 
 }
@@ -647,9 +692,10 @@ template<UnsignedInt dimensions> ImageData<dimensions> DdsImporter::doImage(Unsi
     if(_f->compressed)
         return ImageData<dimensions>(_f->properties.compressed.format, Math::Vector<dimensions, Int>::pad(imageSize), std::move(data));
 
-    /* Uncompressed */
+    /* Uncompressed. Swizzle and flip if needed. */
     if(_f->properties.uncompressed.needsSwizzle)
         swizzlePixels(_f->properties.uncompressed.format, data);
+    flipPixels(_f->properties.uncompressed.yzFlip, _f->properties.uncompressed.pixelSize, imageSize, data);
 
     /* Adjust pixel storage if row size is not four byte aligned */
     PixelStorage storage;
