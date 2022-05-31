@@ -128,9 +128,11 @@ For layered images and (layered) cube maps, the array layers and faces are
 exposed as an additional image dimension. 1D array textures import
 @ref ImageData2D with n y-slices, 2D array textures import @ref ImageData3D
 with n z-slices and (layered) cube maps import @ref ImageData3D with 6*n
-z-slices. 3D array textures behave differently: because there is no
-`ImageData4D`, each layer is imported as a separate @ref ImageData3D, with
-@ref image3DCount() determining the number of layers.
+z-slices. While for 1D, 1D array, 2D, 2D array, cube map and cube map array
+images the importer exposes always exactly one image, 3D array textures behave
+differently --- because there is no `ImageData4D`, each layer is imported as a
+separate @ref ImageData3D, with @ref image3DCount() determining the number of
+layers.
 
 @subsection Trade-KtxImporter-behavior-multilevel Multilevel images
 
@@ -148,7 +150,7 @@ the first layer, then all faces of the second layer, etc.
 
 Incomplete cube maps (determined by the `KTXcubemapIncomplete` metadata entry)
 are imported as a 2D array image, but information about which faces it contains
-can't be imported.
+isn't preserved.
 
 @subsection Trade-KtxImporter-behavior-swizzle Swizzle support
 
