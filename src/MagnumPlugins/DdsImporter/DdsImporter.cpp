@@ -607,7 +607,7 @@ void DdsImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dat
 
 namespace {
 
-void swizzlePixels(const PixelFormat format, Containers::Array<char>& data) {
+void swizzlePixels(const PixelFormat format, const Containers::ArrayView<char> data) {
     if(format == PixelFormat::RGB8Unorm) {
         for(Vector3ub& pixel: Containers::arrayCast<Vector3ub>(data))
             pixel = Math::gather<'b', 'g', 'r'>(pixel);
