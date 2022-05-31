@@ -154,15 +154,47 @@ constexpr struct {
 const struct {
     const char* name;
     const char* fileBase;
-    const TextureType type;
+    TextureType type;
+    Containers::Optional<TextureType> xfailType;
+    const char* warning[2]; /* Basis, then KTX */
 } TextureData[]{
-    {"2D", "rgb", TextureType::Texture2D},
-    {"2D array", "rgba-array", TextureType::Texture2DArray},
-    {"Cube map", "rgba-cubemap", TextureType::CubeMap},
-    {"Cube map array", "rgba-cubemap-array", TextureType::CubeMapArray},
-    {"3D", "rgba-3d", TextureType::Texture3D},
-    {"3D mipmaps", "rgba-3d-mips", TextureType::Texture3D},
-    {"Video", "rgba-video", TextureType::Texture2D}
+    /* THE DAMN THING still doesn't write proper KTXorientation, so opening
+       any KTX file produced by it (and not by our BasisImageConverter, which
+       patches that in after) will warn no matter whether it was flipped or
+       not: https://github.com/BinomialLLC/basis_universal/issues/258 */
+    {"2D", "rgb", TextureType::Texture2D, {}, {
+        "",
+        /* Here we patch it in, however, see convert.sh */
+        ""
+    }},
+    {"2D array", "rgba-array", TextureType::Texture2DArray, {}, {
+        "",
+        "Trade::BasisImporter::openData(): the image was not encoded Y-flipped, imported data will have wrong orientation\n"
+    }},
+    {"Cube map", "rgba-cubemap", TextureType::CubeMap, {}, {
+        "",
+        "Trade::BasisImporter::openData(): the image was not encoded Y-flipped, imported data will have wrong orientation\n"
+    }},
+    {"Cube map array", "rgba-cubemap-array", TextureType::CubeMapArray, {}, {
+        "",
+        "Trade::BasisImporter::openData(): the image was not encoded Y-flipped, imported data will have wrong orientation\n"
+    }},
+    /* The KTX metadata say it's a 3D texture, but it's actually a 2D array
+       because the mip levels don't shrink along Z. The texture type is thus
+       patched on import with a warning. */
+    {"3D", "rgba-3d", TextureType::Texture3D, TextureType::Texture2DArray, {
+        "Trade::BasisImporter::openData(): importing 3D texture as a 2D array texture\n",
+        "Trade::BasisImporter::openData(): the image was not encoded Y-flipped, imported data will have wrong orientation\n"
+    }},
+    /* Same as above */
+    {"3D mipmaps", "rgba-3d-mips", TextureType::Texture3D, TextureType::Texture2DArray, {
+        "Trade::BasisImporter::openData(): importing 3D texture as a 2D array texture\n",
+        "Trade::BasisImporter::openData(): the image was not encoded Y-flipped, imported data will have wrong orientation\n"
+    }},
+    {"Video", "rgba-video", TextureType::Texture2D, {}, {
+        "",
+        "Trade::BasisImporter::openData(): the image was not encoded Y-flipped, imported data will have wrong orientation\n"
+    }}
 };
 
 constexpr struct {
@@ -454,23 +486,16 @@ void BasisImporterTest::texture() {
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporter");
 
-    for(const auto& fileType: FileTypeData) {
+    for(std::size_t i = 0; i != Containers::arraySize(FileTypeData); ++i) {
+        const auto fileType = FileTypeData[i];
         CORRADE_ITERATION(fileType.name);
 
-        const bool isKtx2 = std::string{fileType.name} == "KTX2";
-        const bool is3D = data.type == TextureType::Texture3D;
-        /* basisu saves volume textures as KTX2 2D arrays, and we import 3D
-           basis files as 2D arrays, too */
-        const TextureType realType = is3D ? TextureType::Texture2DArray : data.type;
-
         std::ostringstream out;
-        Warning redirectWarning{&out};
-
-        CORRADE_VERIFY(importer->openFile(Utility::Path::join(BASISIMPORTER_TEST_DIR, Containers::StringView{data.fileBase} + fileType.extension)));
-        if(!isKtx2 && is3D)
-            CORRADE_COMPARE(out.str(), "Trade::BasisImporter::openData(): importing 3D texture as a 2D array texture\n");
-        else
-            CORRADE_COMPARE(out.str(), "");
+        {
+            Warning redirectWarning{&out};
+            CORRADE_VERIFY(importer->openFile(Utility::Path::join(BASISIMPORTER_TEST_DIR, Containers::StringView{data.fileBase} + fileType.extension)));
+        }
+        CORRADE_COMPARE(out.str(), data.warning[i]);
 
         const Vector3ui counts{
             importer->image1DCount(),
@@ -494,20 +519,26 @@ void BasisImporterTest::texture() {
             CORRADE_COMPARE(texture->wrapping(), Math::Vector3<SamplerWrapping>{SamplerWrapping::Repeat});
             CORRADE_COMPARE(texture->image(), i);
             CORRADE_COMPARE(texture->importerState(), nullptr);
-            CORRADE_COMPARE(texture->type(), realType);
+            {
+                CORRADE_EXPECT_FAIL_IF(data.xfailType,
+                    "Basis-exported data don't match texture type, so it's patched by us on import.");
+                CORRADE_COMPARE(texture->type(), data.type);
+            }
+            if(data.xfailType) CORRADE_COMPARE(texture->type(), data.xfailType);
         }
 
         UnsignedInt dimensions;
-        switch(realType) {
+        switch(data.type) {
             case TextureType::Texture2D:
                 dimensions = 2;
                 break;
+            case TextureType::Texture3D:
             case TextureType::Texture2DArray:
             case TextureType::CubeMap:
             case TextureType::CubeMapArray:
                 dimensions = 3;
                 break;
-            /* No 1D/3D (array) allowed */
+            /* No 1D array / 3D array allowed */
             default: CORRADE_INTERNAL_ASSERT_UNREACHABLE();
         }
         CORRADE_COMPARE(counts[dimensions - 1], total);
@@ -521,19 +552,18 @@ void BasisImporterTest::rgbUncompressed() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporterRGBA8");
     CORRADE_COMPARE(importer->configuration().value<std::string>("format"),
         "RGBA8");
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(BASISIMPORTER_TEST_DIR,
-        "rgb"_s + data.extension)));
-    CORRADE_COMPARE(importer->image2DCount(), 1);
-
-    Containers::Optional<Trade::ImageData2D> image;
-    std::ostringstream out;
+        std::ostringstream out;
     {
         Warning redirectWarning{&out};
-        image = importer->image2D(0);
+        CORRADE_VERIFY(importer->openFile(Utility::Path::join(BASISIMPORTER_TEST_DIR,
+        "rgb"_s + data.extension)));
     }
-    CORRADE_VERIFY(image);
     /* There should be no Y-flip warning as the image is pre-flipped */
     CORRADE_COMPARE(out.str(), "");
+    CORRADE_COMPARE(importer->image2DCount(), 1);
+
+    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
+    CORRADE_VERIFY(image);
     CORRADE_VERIFY(!image->isCompressed());
     CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Srgb);
     CORRADE_COMPARE(image->size(), (Vector2i{63, 27}));
@@ -554,18 +584,16 @@ void BasisImporterTest::rgbUncompressedNoFlip() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporterRGBA8");
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(BASISIMPORTER_TEST_DIR,
-        "rgb-noflip"_s + data.extension)));
-    CORRADE_COMPARE(importer->image2DCount(), 1);
-
-    Containers::Optional<Trade::ImageData2D> image;
     std::ostringstream out;
     {
         Warning redirectWarning{&out};
-        image = importer->image2D(0);
+        CORRADE_VERIFY(importer->openFile(Utility::Path::join(BASISIMPORTER_TEST_DIR, "rgb-noflip"_s + data.extension)));
     }
+    CORRADE_COMPARE(out.str(), "Trade::BasisImporter::openData(): the image was not encoded Y-flipped, imported data will have wrong orientation\n");
+    CORRADE_COMPARE(importer->image2DCount(), 1);
+
+    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
-    CORRADE_COMPARE(out.str(), "Trade::BasisImporter::image2D(): the image was not encoded Y-flipped, imported data will have wrong orientation\n");
     CORRADE_VERIFY(!image->isCompressed());
     CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Srgb);
     CORRADE_COMPARE(image->size(), (Vector2i{63, 27}));

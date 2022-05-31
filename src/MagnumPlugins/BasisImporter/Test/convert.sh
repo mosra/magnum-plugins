@@ -7,6 +7,7 @@ basisu rgb-63x27.png -output_file rgb.basis -y_flip
 basisu rgb-63x27.png -output_file rgb.ktx2  -y_flip -ktx2
 # basisu doesn't write KTXorientation metadata in KTX2 but that's the only way
 # for the plugin to detect y-flip on import. Patch it in manually for testing.
+# https://github.com/BinomialLLC/basis_universal/issues/258
 sed -b 's/\x1f\x00\x00\x00KTXwriter\x00Basis Universal /\x12\x00\x00\x00KTXorientation\x00ru\x00\x00\x00\x07\x00\x00\x00_\x00/' rgb.ktx2 > rgb.ktx2.tmp
 mv rgb.ktx2.tmp rgb.ktx2
 # Without y-flip

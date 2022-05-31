@@ -359,15 +359,23 @@ const struct {
     CompressedPixelFormat expectedFormat;
     const char* expectedWarning;
 } ForwardBasisFormatData[]{
+    /* THE DAMN THING still doesn't write proper KTXorientation, so opening
+       any KTX file produced by it (and not by our BasisImageConverter, which
+       patches that in after) will warn no matter whether it was flipped or
+       not: https://github.com/BinomialLLC/basis_universal/issues/258 */
     {"set in KtxImporter", "Etc2RGBA", nullptr,
-        CompressedPixelFormat::Etc2RGBA8Srgb, ""},
+        CompressedPixelFormat::Etc2RGBA8Srgb,
+        "Trade::BasisImporter::openData(): the image was not encoded Y-flipped, imported data will have wrong orientation\n"},
     {"set in BasisImporter", nullptr, "Bc3RGBA",
-        CompressedPixelFormat::Bc3RGBASrgb, ""},
+        CompressedPixelFormat::Bc3RGBASrgb,
+        "Trade::BasisImporter::openData(): the image was not encoded Y-flipped, imported data will have wrong orientation\n"},
     {"set in both to different", "Etc2RGBA", "Bc3RGBA",
         CompressedPixelFormat::Etc2RGBA8Srgb,
-        "Trade::KtxImporter::openData(): overwriting BasisImporter format from Bc3RGBA to Etc2RGBA\n"},
+        "Trade::KtxImporter::openData(): overwriting BasisImporter format from Bc3RGBA to Etc2RGBA\n"
+        "Trade::BasisImporter::openData(): the image was not encoded Y-flipped, imported data will have wrong orientation\n"},
     {"set in both to the same", "Bc3RGBA", "Bc3RGBA",
-        CompressedPixelFormat::Bc3RGBASrgb, ""}
+        CompressedPixelFormat::Bc3RGBASrgb,
+        "Trade::BasisImporter::openData(): the image was not encoded Y-flipped, imported data will have wrong orientation\n"}
 };
 
 using namespace Containers::Literals;

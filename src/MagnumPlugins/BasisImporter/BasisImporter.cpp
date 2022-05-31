@@ -457,6 +457,13 @@ void BasisImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFla
     /* There's one image with faces/layers, or multiple images without any */
     CORRADE_INTERNAL_ASSERT(state->numImages == 1 || state->numSlices == 1);
 
+    if(!state->isYFlipped) {
+        /** @todo replace with the flag once the PR is submitted */
+        /** @todo or could we at least flip if output is set to (uncompressed)
+            RGBA? it would be inconsistent tho */
+        Warning{} << "Trade::BasisImporter::openData(): the image was not encoded Y-flipped, imported data will have wrong orientation";
+        //flags |= basist::basisu_transcoder::cDecodeFlagsFlipY;
+    }
     if(flags() & ImporterFlag::Verbose) {
         if(state->isVideo)
             Debug{} << "Trade::BasisImporter::openData(): file contains video frames, images must be transcoded sequentially";
@@ -557,9 +564,6 @@ template<UnsignedInt dimensions> Containers::Optional<ImageData<dimensions>> Bas
     /* No flags used by transcode_image_level() by default */
     const std::uint32_t flags = 0;
     if(!_state->isYFlipped) {
-        /** @todo replace with the flag once the PR is submitted */
-        Warning{} << prefix << "the image was not encoded Y-flipped, imported data will have wrong orientation";
-        //flags |= basist::basisu_transcoder::cDecodeFlagsFlipY;
     }
 
     const Vector3ui size{origWidth, origHeight, _state->numSlices};
