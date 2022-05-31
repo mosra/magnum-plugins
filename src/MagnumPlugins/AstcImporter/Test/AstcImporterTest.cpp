@@ -63,6 +63,7 @@ struct AstcImporterTest: TestSuite::Tester {
 
     void fileTooLong2D();
     void fileTooLong3D();
+    void extraDataAtTheEnd();
 
     void openMemory();
     void openTwice();
@@ -447,11 +448,18 @@ void AstcImporterTest::threeDimensions() {
 
 void AstcImporterTest::fileTooLong2D() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AstcImporter");
+    /* Suppress the other warning so we have just the one we're looking for */
+    importer->configuration().setValue("assumeYUpZBackward", true);
 
     /* Add some extra stuff at the end of the file */
     Containers::Optional<Containers::String> data = Utility::Path::readString(Utility::Path::join(ASTCIMPORTER_TEST_DIR, "8x8.astc"));
     CORRADE_VERIFY(data);
-    CORRADE_VERIFY(importer->openData(*data + "HAHA"));
+    std::ostringstream out;
+    {
+        Warning redirectWarning{&out};
+        CORRADE_VERIFY(importer->openData(*data + "HAHA"));
+    }
+    CORRADE_COMPARE(out.str(), "Trade::AstcImporter::openData(): ignoring 4 extra bytes at the end of file\n");
     CORRADE_COMPARE(importer->image2DCount(), 1);
 
     Containers::Optional<ImageData2D> image = importer->image2D(0);
@@ -467,11 +475,18 @@ void AstcImporterTest::fileTooLong2D() {
 
 void AstcImporterTest::fileTooLong3D() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AstcImporter");
+    /* Suppress the other warning so we have just the one we're looking for */
+    importer->configuration().setValue("assumeYUpZBackward", true);
 
     /* Add some extra stuff at the end of the file */
     Containers::Optional<Containers::String> data = Utility::Path::readString(Utility::Path::join(ASTCIMPORTER_TEST_DIR, "3x3x3.astc"));
     CORRADE_VERIFY(data);
-    CORRADE_VERIFY(importer->openData(*data + "HAHA"));
+    std::ostringstream out;
+    {
+        Warning redirectWarning{&out};
+        CORRADE_VERIFY(importer->openData(*data + "HAHA"));
+    }
+    CORRADE_COMPARE(out.str(), "Trade::AstcImporter::openData(): ignoring 4 extra bytes at the end of file\n");
     CORRADE_COMPARE(importer->image3DCount(), 1);
 
     Containers::Optional<ImageData3D> image = importer->image3D(0);

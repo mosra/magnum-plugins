@@ -171,6 +171,8 @@ void AstcImporter::doOpenData(Containers::Array<char>&& data, const DataFlags da
     if(sizeof(AstcHeader) + dataSize > data.size()) {
         Error{} << "Trade::AstcImporter::openData(): file too short, expected" << sizeof(AstcHeader) + dataSize << "bytes but got" << data.size();
         return;
+    } else if(sizeof(AstcHeader) + dataSize < data.size()) {
+        Warning{} << "Trade::AstcImporter::openData(): ignoring" << data.size() - sizeof(AstcHeader) - dataSize << "extra bytes at the end of file";
     }
 
     /* Unlike KTX or Basis, the file format doesn't contain any orientation
