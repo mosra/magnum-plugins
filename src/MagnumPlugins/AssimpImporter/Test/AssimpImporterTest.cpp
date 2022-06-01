@@ -62,7 +62,6 @@
 #include <Magnum/Trade/SkinData.h>
 #include <Magnum/Trade/TextureData.h>
 
-#include <assimp/defs.h> /* in assimp 3.0, version.h is missing this include for ASSIMP_API */
 #include <assimp/Importer.hpp>
 #include <assimp/importerdesc.h>
 #include <assimp/postprocess.h>
@@ -1923,12 +1922,11 @@ void AssimpImporterTest::materialColorTexture() {
     CORRADE_COMPARE(material->types(), MaterialType::Phong);
     CORRADE_COMPARE(material->layerCount(), 1);
 
-    /* Newer versions import also useless zero texcoords. Not sure if it's
-       since 4.0 or 5.0, but definitely 3.2 returns 7. */
-    if(_assimpVersion < 400)
-        CORRADE_COMPARE(material->attributeCount(), 7);
-    else
-        CORRADE_COMPARE(material->attributeCount(), 10);
+    /* Versions since 4.0 import also useless zero texcoords, 3.2 returned just
+       7. */
+    /** @todo use DebugTools::CompareMaterial to catch extra attributes once it
+        exists */
+    CORRADE_COMPARE(material->attributeCount(), 7 + 3);
 
     const auto& phong = material->as<PhongMaterialData>();
     CORRADE_VERIFY(phong.hasAttribute(MaterialAttribute::AmbientTexture));
@@ -1973,14 +1971,8 @@ void AssimpImporterTest::materialStlWhiteAmbientPatch() {
     else
         CORRADE_COMPARE(phong.ambientColor(), 0x000000_srgbf);
 
-    /* ASS IMP WHAT?! WHY 3.2 is different from 3.0 and 4.0?! */
-    if(_assimpVersion == 320) {
-        CORRADE_COMPARE(phong.specularColor(), Color3{0.6f});
-        CORRADE_COMPARE(phong.diffuseColor(), Color3{0.6f});
-    } else {
-        CORRADE_COMPARE(phong.specularColor(), 0xffffff_srgbf);
-        CORRADE_COMPARE(phong.diffuseColor(), 0xffffff_srgbf);
-    }
+    CORRADE_COMPARE(phong.specularColor(), 0xffffff_srgbf);
+    CORRADE_COMPARE(phong.diffuseColor(), 0xffffff_srgbf);
     /* This value is not supplied by Assimp for STL models, so we keep it at
        default */
     CORRADE_COMPARE(phong.shininess(), 80.0f);
@@ -2563,15 +2555,10 @@ void AssimpImporterTest::mesh() {
         Containers::arrayView<Vector2>({
             {0.5f, 1.0f}, {0.75f, 0.5f}, {0.5f, 0.9f}
         }), TestSuite::Compare::Container);
-
-    {
-        CORRADE_EXPECT_FAIL_IF(_assimpVersion < 320,
-            "Assimp < 3.2 loads incorrect alpha value for the last color.");
-        CORRADE_COMPARE_AS(mesh->attribute<Vector4>(MeshAttribute::Color),
-        Containers::arrayView<Vector4>({
-            {1.0f, 0.25f, 0.24f, 1.0f}, {1.0f, 1.0f, 1.0f, 1.0f}, {0.1f, 0.2f, 0.3f, 1.0f}
-        }), TestSuite::Compare::Container);
-    }
+    CORRADE_COMPARE_AS(mesh->attribute<Vector4>(MeshAttribute::Color),
+    Containers::arrayView<Vector4>({
+        {1.0f, 0.25f, 0.24f, 1.0f}, {1.0f, 1.0f, 1.0f, 1.0f}, {0.1f, 0.2f, 0.3f, 1.0f}
+    }), TestSuite::Compare::Container);
 
     /* Check mesh assignment in the scene. The first two objects are dummy
        nodes to test non-trivial assignment; however unfortunately the meshes
@@ -2995,10 +2982,6 @@ void AssimpImporterTest::meshSkinningAttributesMerge() {
 }
 
 void AssimpImporterTest::meshMultiplePrimitives() {
-    /* Possibly broken in other versions too (4.1 and 5 works, 3.2 doesn't) */
-    if(_assimpVersion <= 320)
-        CORRADE_SKIP("Assimp 3.2 doesn't recognize primitives used in the test COLLADA file.");
-
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
 
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "mesh-multiple-primitives.dae")));
@@ -3205,13 +3188,8 @@ void AssimpImporterTest::sceneCollapsedNode() {
     CORRADE_COMPARE(importer->objectCount(), 1);
 
     /* Name of the scene is used for the root object */
-    {
-        /** @todo Possibly works with other versions (definitely not 3.0) */
-        CORRADE_EXPECT_FAIL_IF(_assimpVersion <= 320,
-            "Assimp 3.2 and below doesn't use name of the root node for collapsed nodes.");
-        CORRADE_COMPARE(importer->objectName(0), "Scene");
-        CORRADE_COMPARE(importer->objectForName("Scene"), 0);
-    }
+    CORRADE_COMPARE(importer->objectName(0), "Scene");
+    CORRADE_COMPARE(importer->objectForName("Scene"), 0);
 
     Containers::Optional<SceneData> scene = importer->scene(0);
     CORRADE_VERIFY(scene);
@@ -3375,9 +3353,6 @@ void AssimpImporterTest::imageEmbedded() {
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
 
-    if(_assimpVersion <= 320)
-        CORRADE_SKIP("Assimp < 3.2 can't load embedded textures in blend files, Assimp 3.2 can't detect blend file format when opening a memory location.");
-
     /* Open as data, so we verify opening embedded images from data does not
        cause any problems even when no file callbacks are set */
     Containers::Optional<Containers::Array<char>> data = Utility::Path::read(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "embedded-texture.blend"));
@@ -3393,10 +3368,6 @@ void AssimpImporterTest::imageEmbedded() {
 }
 
 void AssimpImporterTest::imageExternal() {
-    /** @todo Possibly works with earlier versions (definitely not 3.0) */
-    if(_assimpVersion < 320)
-        CORRADE_SKIP("Current version of assimp would SEGFAULT on this test.");
-
     if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("PngImporter plugin not found, cannot test");
 
@@ -3412,10 +3383,6 @@ void AssimpImporterTest::imageExternal() {
 }
 
 void AssimpImporterTest::imageExternalNotFound() {
-    /** @todo Possibly fails on more versions (definitely w/ 3.0 and 3.2) */
-    if(_assimpVersion <= 320)
-        CORRADE_SKIP("Assimp <= 3.2 would SEGFAULT on this test.");
-
     if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("PngImporter plugin not found, cannot test");
 
@@ -3445,10 +3412,6 @@ void AssimpImporterTest::imageExternalNotFound() {
 }
 
 void AssimpImporterTest::imageExternalNoPathNoCallback() {
-    /** @todo Possibly works with earlier versions (definitely not 3.0) */
-    if(_assimpVersion < 320)
-        CORRADE_SKIP("Current version of assimp would SEGFAULT on this test.");
-
     Containers::Optional<Containers::Array<char>> data = Utility::Path::read(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "material-texture.dae"));
     CORRADE_VERIFY(data);
 
@@ -3538,10 +3501,6 @@ void AssimpImporterTest::imageMipLevels() {
 }
 
 void AssimpImporterTest::imagePropagateImporterFlags() {
-    /** @todo Possibly works with earlier versions (definitely not 3.0) */
-    if(_assimpVersion < 320)
-        CORRADE_SKIP("Current version of assimp would SEGFAULT on this test.");
-
     if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("PngImporter plugin not found, cannot test");
 
@@ -3560,10 +3519,6 @@ void AssimpImporterTest::imagePropagateImporterFlags() {
 }
 
 void AssimpImporterTest::texture() {
-    /** @todo Possibly works with earlier versions (definitely not 3.0) */
-    if(_assimpVersion < 320)
-        CORRADE_SKIP("Current version of assimp would SEGFAULT on this test.");
-
     if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("PngImporter plugin not found, cannot test");
 
@@ -3688,10 +3643,6 @@ void AssimpImporterTest::openState() {
 }
 
 void AssimpImporterTest::openStateTexture() {
-    /** @todo Possibly works with earlier versions (definitely not 3.0) */
-    if(_assimpVersion < 320)
-        CORRADE_SKIP("Current version of assimp would SEGFAULT on this test.");
-
     if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("PngImporter plugin not found, cannot test");
 
@@ -3856,10 +3807,6 @@ void AssimpImporterTest::fileCallbackReset() {
 }
 
 void AssimpImporterTest::fileCallbackImage() {
-    /** @todo Possibly works with earlier versions (definitely not 3.0) */
-    if(_assimpVersion < 320)
-        CORRADE_SKIP("Current version of assimp would SEGFAULT on this test.");
-
     if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("PngImporter plugin not found, cannot test");
 
@@ -3890,10 +3837,6 @@ void AssimpImporterTest::fileCallbackImage() {
 }
 
 void AssimpImporterTest::fileCallbackImageNotFound() {
-    /** @todo Possibly works with earlier versions (definitely not 3.0) */
-    if(_assimpVersion < 320)
-        CORRADE_SKIP("Current version of assimp would SEGFAULT on this test.");
-
     if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("PngImporter plugin not found, cannot test");
 
