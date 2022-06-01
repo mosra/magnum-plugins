@@ -1582,8 +1582,8 @@ void AssimpImporterTest::camera() {
 }
 
 void AssimpImporterTest::cameraOrthographic() {
-    if(_assimpVersion < 410)
-        CORRADE_SKIP("glTF 2 is supported since Assimp 4.1.");
+    if(_assimpVersion < 500)
+        CORRADE_SKIP("glTF orthographic cameras are supported since Assimp 5.0.");
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
     /* Assimp 5.1.0 refuses to load glTF files without a default scene so we
@@ -2323,8 +2323,10 @@ void AssimpImporterTest::materialRaw() {
     /* glTF covers a few types/sizes not covered by FBX */
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "material-raw.gltf")));
     {
-        /* There's an extra material with only default values */
-        CORRADE_EXPECT_FAIL("glTF files are imported with a dummy material.");
+        /* In 5.0 there's an extra material with only default values, wasn't
+           the case in 4.1. */
+        CORRADE_EXPECT_FAIL_IF(_assimpVersion >= 500,
+            "glTF files are imported with a dummy material in Assimp 5.0+.");
         CORRADE_COMPARE(importer->materialCount(), 1);
     }
 
@@ -3082,7 +3084,8 @@ void AssimpImporterTest::emptyGltf() {
        about a missing scene property (which is not required by the glTF spec) */
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "empty.gltf")));
     {
-        CORRADE_EXPECT_FAIL_IF(_assimpVersion < 510, "Assimp versions before 5.1.0 ignore empty glTF scenes.");
+        CORRADE_EXPECT_FAIL_IF(_assimpVersion >= 500 && _assimpVersion < 510,
+            "Assimp 5.0.0 to 5.1.0 ignores empty glTF scenes.");
         CORRADE_COMPARE(importer->defaultScene(), 0);
         CORRADE_COMPARE(importer->sceneCount(), 1);
         CORRADE_COMPARE(importer->objectCount(), 1);
