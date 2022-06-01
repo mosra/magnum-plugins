@@ -206,28 +206,6 @@ commands:
             -G Ninja
           ninja install
 
-  install-zstd:
-    steps:
-    - run:
-        name: Install zstd
-        command: |
-          export ZSTD_VERSION=v1.5.0
-          mkdir -p $HOME/zstd && cd $HOME/zstd
-          wget -nc --no-check-certificate https://github.com/facebook/zstd/archive/refs/tags/$ZSTD_VERSION.tar.gz
-          tar --strip-components=1 -xzf $ZSTD_VERSION.tar.gz
-          # There's already a directory named `build`
-          mkdir build_ && cd build_
-          cmake ../build/cmake \
-            -DCMAKE_BUILD_TYPE=Debug \
-            -DZSTD_BUILD_PROGRAMS=OFF \
-            -DZSTD_BUILD_SHARED=OFF \
-            -DZSTD_BUILD_STATIC=ON \
-            -DZSTD_MULTITHREAD_SUPPORT=OFF \
-            -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
-            -DCMAKE_INSTALL_PREFIX=$HOME/deps \
-            -G Ninja
-          ninja install
-
   install-basis:
     steps:
     - run:
@@ -322,15 +300,12 @@ jobs:
       CONFIGURATION: Debug
     steps:
     - install-base-linux:
-        extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng-dev libdevil-dev libharfbuzz-dev libassimp-dev wget
+        extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng-dev libdevil-dev libharfbuzz-dev libassimp-dev libzstd-dev wget
     # Crashes or gets stuck with the default setting, only on GCC
     - cap-ninja-jobs
     - install-gcc-4_8
     - install-cmake:
         version: "3.4.3"
-    # TODO fetch zstd for Basis Universal instead of compiling when we drop
-    # 16.04 support
-    - install-zstd
     - install-basis
     - install-meshoptimizer
     - install-glslang:
@@ -370,15 +345,12 @@ jobs:
       CONFIGURATION: Debug
     steps:
     - install-base-linux:
-        extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng-dev libdevil-dev libharfbuzz-dev libassimp-dev wget
+        extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng-dev libdevil-dev libharfbuzz-dev libassimp-dev libzstd-dev wget
     # Crashes or gets stuck with the default setting, only on GCC
     - cap-ninja-jobs
     - install-gcc-4_8
     - install-cmake:
         version: "3.4.3"
-    # TODO fetch zstd for Basis Universal instead of compiling when we drop
-    # 16.04 support
-    - install-zstd
     - install-basis
     - install-meshoptimizer
     - install-glslang:
@@ -401,15 +373,12 @@ jobs:
       CONFIGURATION: Release
     steps:
     - install-base-linux:
-        extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng-dev libdevil-dev libharfbuzz-dev libassimp-dev wget
+        extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng-dev libdevil-dev libharfbuzz-dev libassimp-dev libzstd-dev wget
     # Crashes or gets stuck with the default setting, only on GCC
     - cap-ninja-jobs
     - install-gcc-4_8
     - install-cmake:
         version: "3.4.3"
-    # TODO fetch zstd for Basis Universal instead of compiling when we drop
-    # 16.04 support
-    - install-zstd
     - install-basis
     - install-meshoptimizer
     - install-glslang:
@@ -433,13 +402,10 @@ jobs:
       CONFIGURATION: Debug
     steps:
     - install-base-linux:
-        extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng-dev libdevil-dev libharfbuzz-dev libassimp-dev wget
+        extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng-dev libdevil-dev libharfbuzz-dev libassimp-dev libzstd-dev wget
     - install-clang
     - install-cmake:
         version: "3.4.3"
-    # TODO fetch zstd for Basis Universal instead of compiling when we drop
-    # 16.04 support
-    - install-zstd
     - install-basis
     - install-meshoptimizer
     - install-glslang:
@@ -467,13 +433,10 @@ jobs:
       CONFIGURATION: Debug
     steps:
     - install-base-linux:
-        extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng-dev libdevil-dev libharfbuzz-dev libassimp-dev libopenexr-dev wget
+        extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng-dev libdevil-dev libharfbuzz-dev libassimp-dev libopenexr-dev libzstd-dev wget
     - install-clang
     - install-cmake:
         version: "3.4.3"
-    # TODO fetch zstd for Basis Universal instead of compiling when we drop
-    # 16.04 support
-    - install-zstd
     - install-basis
     - install-meshoptimizer
     - install-glslang:
@@ -523,8 +486,7 @@ jobs:
     executor: emscripten
     steps:
     - install-base-linux
-    # Zstd built inside emscripten.sh instead of using install-zstd as it needs
-    # the toolchain etc
+    # Zstd built inside emscripten.sh
     - install-basis
     - build:
         script: emscripten.sh
@@ -538,8 +500,7 @@ jobs:
     - install-cmake:
         version: "3.17.5"
         sudo: sudo
-    # Zstd built inside android-x86.sh instead of using install-zstd as it
-    # needs the toolchain etc
+    # Zstd built inside android-x86.sh
     - install-basis
     - build:
         script: android-x86.sh
@@ -549,8 +510,7 @@ jobs:
     steps:
     - install-base-macos:
         extra: xcbeautify wget
-    # Zstd built inside ios-simulator.sh instead of using install-zstd as it
-    # needs the toolchain etc
+    # Zstd built inside ios-simulator.sh
     - install-basis
     - build:
         script: ios-simulator.sh
