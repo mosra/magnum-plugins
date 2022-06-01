@@ -384,7 +384,7 @@ template<UnsignedInt dimensions> Containers::Optional<Containers::Array<char>> c
         }
     }
 
-    /* GCC 4.8 and Clang 3.8 need extra help here */
+    /* GCC 4.8 needs extra help here */
     return Containers::optional(std::move(fileData));
 }
 

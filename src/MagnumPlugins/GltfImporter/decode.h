@@ -182,7 +182,7 @@ Containers::Optional<Containers::Array<char>> decodeBase64(const char* const err
     if(pad2)
         out[iOut + 1] = (n >>  8) & 0xff;
 
-    /* GCC 4.8 and Clang 3.8 need extra help here */
+    /* GCC 4.8 needs extra help here */
     return Containers::optional(std::move(data));
 }
 

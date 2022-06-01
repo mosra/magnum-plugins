@@ -173,7 +173,7 @@ Containers::Optional<Containers::Array<char>> JpegImageConverter::doConvertToDat
     Containers::Array<char> fileData{NoInit, destinationManager.output.size()};
     std::copy(destinationManager.output.begin(), destinationManager.output.end(), fileData.data());
 
-    /* GCC 4.8 and Clang 3.8 need extra help here */
+    /* GCC 4.8 needs extra help here */
     return Containers::optional(std::move(fileData));
 }
 

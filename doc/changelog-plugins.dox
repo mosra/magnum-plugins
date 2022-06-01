@@ -145,6 +145,9 @@ namespace Magnum {
 
 @subsection changelog-plugins-latest-buildsystem Build system
 
+-   The oldest supported Clang version is now 6.0 (available on Ubuntu 18.04),
+    or equivalently Apple Clang 10.0 (Xcode 10). Oldest supported GCC version
+    is still 4.8.
 -   The `versionPlugins.h` header now gets populated from Git correctly also
     when inside a CMake subproject
 -   Travis banned everyone from using their CI and so all Linux, macOS,

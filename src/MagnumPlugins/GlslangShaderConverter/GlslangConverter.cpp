@@ -995,7 +995,7 @@ Containers::Optional<Containers::Array<char>> GlslangConverter::doConvertDataToD
     Containers::Array<char> out{NoInit, spirvBytes.size()};
     Utility::copy(spirvBytes, out);
 
-    /* GCC 4.8 and Clang 3.8 need extra help here */
+    /* GCC 4.8 needs extra help here */
     return Containers::optional(std::move(out));
 }
 
