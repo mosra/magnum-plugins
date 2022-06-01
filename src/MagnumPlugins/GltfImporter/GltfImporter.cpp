@@ -772,6 +772,21 @@ void GltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags da
         return;
     }
 
+    /* Check used extensions for validity */
+    if(const Utility::JsonToken* gltfExtensionsUsed = gltf->root().find("extensionsUsed"_s)) {
+        if(!gltf->parseArray(*gltfExtensionsUsed)) {
+            Error{} << "Trade::GltfImporter::openData(): invalid extensionsUsed property";
+            return;
+        }
+
+        for(Utility::JsonArrayItem gltfExtension: gltfExtensionsUsed->asArray()) {
+            if(!gltf->parseString(gltfExtension)) {
+                Error{} << "Trade::GltfImporter::openData(): invalid used extension" << gltfExtension.index();
+                return;
+            }
+        }
+    }
+
     /* Check required extensions. Every extension in extensionsRequired is
        required to "load and/or render an asset". */
     if(const Utility::JsonToken* gltfExtensionsRequired = gltf->root().find("extensionsRequired"_s)) {

@@ -253,6 +253,14 @@ const struct {
         R"({"asset": {"version": "2.0", "minVersion": 2}})",
         "Utility::Json::parseString(): expected a string, got Utility::JsonToken::Type::Number at <in>:1:44\n"
         "Trade::GltfImporter::openData(): invalid asset minVersion property\n"},
+    {"invalid extensionsUsed property",
+        R"({"asset": {"version": "2.0"}, "extensionsUsed": {}})",
+        "Utility::Json::parseArray(): expected an array, got Utility::JsonToken::Type::Object at <in>:1:49\n"
+        "Trade::GltfImporter::openData(): invalid extensionsUsed property\n"},
+    {"invalid extensionsUsed value",
+        R"({"asset": {"version": "2.0"}, "extensionsUsed": ["KHR_lights_punctual", false]})",
+        "Utility::Json::parseString(): expected a string, got Utility::JsonToken::Type::Bool at <in>:1:73\n"
+        "Trade::GltfImporter::openData(): invalid used extension 1\n"},
     {"invalid extensionsRequired property",
         R"({"asset": {"version": "2.0"}, "extensionsRequired": {}})",
         "Utility::Json::parseArray(): expected an array, got Utility::JsonToken::Type::Object at <in>:1:53\n"
