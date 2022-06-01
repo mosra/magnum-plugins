@@ -94,6 +94,7 @@ option(WITH_STLIMPORTER "Build StlImporter plugin" OFF)
 if(MAGNUM_BUILD_DEPRECATED)
     option(WITH_TINYGLTFIMPORTER "Build TinyGltfImporter plugin" OFF)
 endif()
+option(WITH_WEBPIMPORTER "Build WebPImporter plugin" OFF)
 
 include(CMakeDependentOption)
 option(BUILD_TESTS "Build unit tests" OFF)

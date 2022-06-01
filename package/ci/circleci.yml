@@ -300,7 +300,7 @@ jobs:
       CONFIGURATION: Debug
     steps:
     - install-base-linux:
-        extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng-dev libdevil-dev libharfbuzz-dev libassimp-dev libzstd-dev wget
+        extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng-dev libdevil-dev libharfbuzz-dev libassimp-dev libwebp-dev libzstd-dev wget
     # Crashes or gets stuck with the default setting, only on GCC
     - cap-ninja-jobs
     - install-gcc-4_8
@@ -331,7 +331,7 @@ jobs:
     # speed up. These are tested more than enough on other jobs, plus here we
     # have a fresher Ubuntu so we can take them directly from the repos.
     - install-base-linux-arm64:
-        extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng-dev libdevil-dev libharfbuzz-dev libassimp-dev libzstd-dev glslang-dev libopenexr-dev spirv-tools
+        extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng-dev libdevil-dev libharfbuzz-dev libassimp-dev libzstd-dev glslang-dev libopenexr-dev libwebp-dev spirv-tools
     - install-basis
     - install-meshoptimizer
     - build:
@@ -348,7 +348,7 @@ jobs:
       CONFIGURATION: Debug
     steps:
     - install-base-linux:
-        extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng-dev libdevil-dev libharfbuzz-dev libassimp-dev libzstd-dev wget
+        extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng-dev libdevil-dev libharfbuzz-dev libassimp-dev libwebp-dev libzstd-dev wget
     # Crashes or gets stuck with the default setting, only on GCC
     - cap-ninja-jobs
     - install-gcc-4_8
@@ -378,7 +378,7 @@ jobs:
       CONFIGURATION: Release
     steps:
     - install-base-linux:
-        extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng-dev libdevil-dev libharfbuzz-dev libassimp-dev libzstd-dev wget
+        extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng-dev libdevil-dev libharfbuzz-dev libassimp-dev libwebp-dev libzstd-dev wget
     # Crashes or gets stuck with the default setting, only on GCC
     - cap-ninja-jobs
     - install-gcc-4_8
@@ -409,7 +409,7 @@ jobs:
       CONFIGURATION: Debug
     steps:
     - install-base-linux:
-        extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng-dev libdevil-dev libharfbuzz-dev libassimp-dev libzstd-dev wget
+        extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng-dev libdevil-dev libharfbuzz-dev libassimp-dev libwebp-dev libzstd-dev wget
     - install-clang
     - install-cmake:
         version: "3.4.3"
@@ -441,7 +441,7 @@ jobs:
       CONFIGURATION: Debug
     steps:
     - install-base-linux:
-        extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng-dev libdevil-dev libharfbuzz-dev libassimp-dev libopenexr-dev libzstd-dev wget
+        extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng-dev libdevil-dev libharfbuzz-dev libassimp-dev libopenexr-dev libwebp-dev libzstd-dev wget
     - install-clang
     - install-cmake:
         version: "3.4.3"
@@ -465,7 +465,7 @@ jobs:
     steps:
     - macos-remove-python-curse
     - install-base-macos:
-        extra: faad2 harfbuzz assimp devil spirv-tools glslang openexr wget zstd
+        extra: faad2 harfbuzz assimp devil spirv-tools glslang openexr webp wget zstd
     - install-basis
     - install-meshoptimizer
     - build:
@@ -484,7 +484,7 @@ jobs:
     steps:
     - macos-remove-python-curse
     - install-base-macos:
-        extra: faad2 harfbuzz assimp devil spirv-tools glslang openexr wget zstd
+        extra: faad2 harfbuzz assimp devil spirv-tools glslang openexr webp wget zstd
     - install-basis
     - install-meshoptimizer
     - build:
