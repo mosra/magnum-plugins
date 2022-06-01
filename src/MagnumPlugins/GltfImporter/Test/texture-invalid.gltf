@@ -71,7 +71,7 @@
             "source": 0
         },
         {
-            "name": "image out of bounds",
+            "name": "source out of bounds",
             "source": 1
         },
         {
