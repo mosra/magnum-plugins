@@ -10,10 +10,11 @@ executors:
   xcode-10_3:
     macos:
       xcode: 10.3.0
-  xcode-11_4:
+  xcode-11_5:
     macos:
-      # xcbeautify (for the iOS build) requires Xcode 11.4
-      xcode: 11.4.1
+      # xcbeautify (for the iOS build) requires Xcode 11.4. Since 2922-05-23,
+      # 11.4.1 images wait endlessly for "VM assignment", using 11.5 instead.
+      xcode: 11.5
   emscripten:
     docker:
     # 1.39.0 is the oldest on Docker. Anything before 1.39.2 is useless as emar
@@ -76,21 +77,27 @@ commands:
           free
           echo "export NINJA_JOBS=-j<< parameters.count >>" >> $BASH_ENV
 
+  # ninja needs python@3.9 as a dependency FOR SOME FUCKING REASON and when THE
+  # DAMN THING installs it, it proceeds with reinstalling python@2. FROM
+  # SOURCES! FUCK! and then it fails to link it because NO SHIT, python@3.9 is
+  # already installed! HOW THE FUCK ARE PEOPLE ABLE TO DEAL WITH SUCH CURSED
+  # SHIT ALL THE TIME?! FUCK OFF
+  #
+  # TODO: Needed only on 10.3 and 11.4, not on 11.5 anymore, remove once those
+  #   images are not used anymore.
+  macos-remove-python-curse:
+    steps:
+    - run:
+        name: Remove Python 2 curse
+        command: |
+          HOMEBREW_NO_AUTO_UPDATE=1 brew uninstall python@2
+
   install-base-macos:
     parameters:
       extra:
         type: string
         default: ""
     steps:
-    - run:
-        # ninja needs python@3.9 as a dependency FOR SOME FUCKING REASON and
-        # when THE DAMN THING installs it, it proceeds with reinstalling
-        # python@2. FROM SOURCES! FUCK! and then it fails to link it because
-        # NO SHIT, python@3.9 is already installed! HOW THE FUCK ARE PEOPLE
-        # ABLE TO DEAL WITH SUCH CURSED SHIT ALL THE TIME?! FUCK OFF
-        name: Remove Python 2 curse
-        command: |
-          HOMEBREW_NO_AUTO_UPDATE=1 brew uninstall python@2
     - run:
         name: Install base packages
         # As usual, homebrew takes five minutes to update and then explodes in
@@ -494,6 +501,7 @@ jobs:
       CMAKE_CXX_FLAGS: --coverage
       CONFIGURATION: Debug
     steps:
+    - macos-remove-python-curse
     - install-base-macos:
         extra: faad2 harfbuzz assimp devil spirv-tools glslang openexr wget zstd
     - install-basis
@@ -512,6 +520,7 @@ jobs:
       CMAKE_CXX_FLAGS: --coverage
       CONFIGURATION: Debug
     steps:
+    - macos-remove-python-curse
     - install-base-macos:
         extra: faad2 harfbuzz assimp devil spirv-tools glslang openexr wget zstd
     - install-basis
@@ -546,7 +555,7 @@ jobs:
         script: android-x86.sh
 
   ios:
-    executor: xcode-11_4
+    executor: xcode-11_5
     steps:
     - install-base-macos:
         extra: xcbeautify wget
