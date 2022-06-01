@@ -186,3 +186,7 @@ endif()
 if(MAGNUM_BUILD_DEPRECATED AND WITH_TINYGLTFIMPORTER)
     add_subdirectory(TinyGltfImporter)
 endif()
+
+if(WITH_WEBPIMPORTER)
+    add_subdirectory(WebPImporter)
+endif()

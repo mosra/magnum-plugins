@@ -1259,7 +1259,7 @@ constexpr struct {
         "unrecognized wrapT 4"},
     {"sampler out of bounds",
         "index 9 out of range for 9 samplers"},
-    {"image out of bounds",
+    {"source out of bounds",
         "index 1 out of range for 1 images"},
     {"out of bounds GOOGLE_texture_basis",
         "index 3 out of range for 1 images"},
