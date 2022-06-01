@@ -308,11 +308,14 @@ jobs:
         version: "3.4.3"
     - install-basis
     - install-meshoptimizer
+    # In repos only since 20.04, but even then would probably hit the GCC 4.8 /
+    # 5 ABI break in std::string, so keeping our own build
     - install-glslang:
         build: ubuntu-16.04-gcc4.8
-    - install-openexr:
-        build: ubuntu-16.04-gcc4.8
     - install-spirv-tools:
+        build: ubuntu-16.04-gcc4.8
+    # Can't use libopenexr-dev because of GCC 4.8 / 5 ABI break in std::string
+    - install-openexr:
         build: ubuntu-16.04-gcc4.8
     - build:
         script: unix-desktop.sh
@@ -353,12 +356,14 @@ jobs:
         version: "3.4.3"
     - install-basis
     - install-meshoptimizer
+    # These two are in repos only since 20.04, but even then would probably hit
+    # the GCC 4.8 / 5 ABI break in std::string, so keeping our own builds
     - install-glslang:
+        build: ubuntu-16.04-gcc4.8
+    - install-spirv-tools:
         build: ubuntu-16.04-gcc4.8
     # Can't use libopenexr-dev because of GCC 4.8 / 5 ABI break in std::string
     - install-openexr:
-        build: ubuntu-16.04-gcc4.8
-    - install-spirv-tools:
         build: ubuntu-16.04-gcc4.8
     - build:
         script: unix-desktop.sh
@@ -381,12 +386,14 @@ jobs:
         version: "3.4.3"
     - install-basis
     - install-meshoptimizer
+    # These two are in repos only since 20.04, but even then would probably hit
+    # the GCC 4.8 / 5 ABI break in std::string, so keeping our own builds
     - install-glslang:
+        build: ubuntu-16.04-gcc4.8
+    - install-spirv-tools:
         build: ubuntu-16.04-gcc4.8
     # Can't use libopenexr-dev because of GCC 4.8 / 5 ABI break in std::string
     - install-openexr:
-        build: ubuntu-16.04-gcc4.8
-    - install-spirv-tools:
         build: ubuntu-16.04-gcc4.8
     - build:
         script: unix-desktop.sh
@@ -408,16 +415,17 @@ jobs:
         version: "3.4.3"
     - install-basis
     - install-meshoptimizer
+    # These two are in repos only since 20.04
     - install-glslang:
         build: ubuntu-16.04-gcc5
+    - install-spirv-tools:
+        build: ubuntu-16.04-gcc5
     # Even though Clang 3.8 is able to work with libopenexr-dev, the version
-    # 2.2 present in the 16.04 repos leaks like crazy, which is in direct
+    # 2.2 present in the 18.04 repos leaks like crazy, which is in direct
     # conflict to what this job is trying to test for. The only job that
     # actually runs against libopenexr-dev (and thus verifies compatibility
     # with 2.2) is the ThreadSanitizer build below.
     - install-openexr:
-        build: ubuntu-16.04-gcc5
-    - install-spirv-tools:
         build: ubuntu-16.04-gcc5
     - build:
         script: unix-desktop.sh
@@ -439,6 +447,7 @@ jobs:
         version: "3.4.3"
     - install-basis
     - install-meshoptimizer
+    # These two are in repos only since 20.04
     - install-glslang:
         build: ubuntu-16.04-gcc5
     - install-spirv-tools:
