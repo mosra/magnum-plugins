@@ -474,6 +474,12 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
         # StlImporter has no dependencies
         # TinyGltfImporter has no dependencies
 
+        # WebPImporter plugin dependencies
+        elseif(_component STREQUAL WebPImporter)
+            find_package(WebP REQUIRED)
+            set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
+                INTERFACE_LINK_LIBRARIES WebP::WebP)
+
         endif()
 
         # Find plugin/library includes
