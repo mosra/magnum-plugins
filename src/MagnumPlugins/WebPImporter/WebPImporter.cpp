@@ -74,6 +74,7 @@ namespace {
 
 const char* vp8StatusCodeString(const VP8StatusCode status) {
     switch(status) {
+        /* LCOV_EXCL_START */
         case VP8_STATUS_OUT_OF_MEMORY: return "out of memory";
         case VP8_STATUS_INVALID_PARAM: return "invalid parameter";
         case VP8_STATUS_BITSTREAM_ERROR: return "bitstream error";
@@ -82,9 +83,10 @@ const char* vp8StatusCodeString(const VP8StatusCode status) {
         case VP8_STATUS_USER_ABORT: return "process aborted";
         case VP8_STATUS_NOT_ENOUGH_DATA: return "not enough data";
         case VP8_STATUS_OK: ;
+        /* LCOV_EXCL_STOP */
     }
 
-    CORRADE_INTERNAL_ASSERT_UNREACHABLE();
+    CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
 }
 
 }
