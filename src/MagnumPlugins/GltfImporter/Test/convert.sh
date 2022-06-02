@@ -18,7 +18,5 @@ for i in animation animation-embedded buffer-invalid-short-size buffer-invalid-s
 done
 
 # special cases
-./gltf2glb.py buffer-invalid-notfound.gltf --no-embed
-./gltf2glb.py buffer-invalid-no-uri.gltf --no-embed
 ./gltf2glb.py external-data.gltf --no-embed
 ./gltf2glb.py external-data-order.gltf --no-embed
