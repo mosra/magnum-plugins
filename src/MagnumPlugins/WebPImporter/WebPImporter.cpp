@@ -101,7 +101,7 @@ Containers::Optional<ImageData2D> WebPImporter::doImage2D(UnsignedInt, UnsignedI
 
     /* Verify the file is a WebP image file */
     if(!WebPGetInfo(image.bytes, image.size, nullptr, nullptr)) {
-        Error() << "Trade::WebPImporter::image2D(): not a webp image";
+        Error() << "Trade::WebPImporter::image2D(): not a WebP image";
         return {};
     }
 
@@ -114,14 +114,14 @@ Containers::Optional<ImageData2D> WebPImporter::doImage2D(UnsignedInt, UnsignedI
     const VP8StatusCode status = WebPGetFeatures(image.bytes, image.size, &bitstream);
     if(status != VP8_STATUS_OK) {
         Error err;
-        err << "Trade::WebPImporter::image2D(): webp image features not found:" << vp8StatusCodeString(status);
+        err << "Trade::WebPImporter::image2D(): WebP image features not found:" << vp8StatusCodeString(status);
         return {};
     }
 
-    /* Filtering animated webp files, they are subject to a different decoding
+    /* Filtering animated WebP files, they are subject to a different decoding
        process defined in demux library */
     if(bitstream.format == 0) {
-        Error{} << "Trade::WebPImporter::image2D(): animated webp images aren't supported";
+        Error{} << "Trade::WebPImporter::image2D(): animated WebP images aren't supported";
         return {};
     }
 
