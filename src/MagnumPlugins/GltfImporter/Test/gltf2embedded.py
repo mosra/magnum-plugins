@@ -66,4 +66,4 @@ with open(fileIn) as f:
                     image['uri'] = 'data:{};base64,{}'.format(mime, base64.b64encode(bf.read()).decode('utf-8'))
 
 with open(fileOut, 'wb') as output:
-    output.write(json.dumps(data, separators=(',', ':')).encode())
+    output.write(json.dumps(data, indent=2).encode('utf-8'))
