@@ -34,9 +34,9 @@
 #include <Corrade/Utility/DebugStl.h> /** @todo remove once Debug is stream-free */
 #include <Corrade/Utility/FormatStl.h> /** @todo remove once Debug is stream-free */
 #include <Corrade/Utility/Path.h>
-#include <Magnum/DebugTools/CompareImage.h>
 #include <Magnum/ImageView.h>
 #include <Magnum/PixelFormat.h>
+#include <Magnum/DebugTools/CompareImage.h>
 #include <Magnum/Trade/AbstractImporter.h>
 #include <Magnum/Trade/ImageData.h>
 
@@ -71,9 +71,10 @@ const struct {
 } InvalidData[] {
     {"wrong file signature", "nature.png", {}, "not a webp image\n"},
     {"animated file", "animated.webp", {}, "animated webp images aren't supported\n"},
-    /* The header information of a lossless bitstream takes 25 bytes according to its specification:
-       https://developers.google.com/speed/webp/docs/webp_lossless_bitstream_specification#2_riff_header. Hence,
-       24 bytes would cause an error while trying to extract the header information with WebPGetInfo() */
+    /* The header information of a lossless bitstream takes 25 bytes according
+       to its specification: https://developers.google.com/speed/webp/docs/webp_lossless_bitstream_specification#2_riff_header.
+       Hence, 24 bytes would cause an error while trying to extract the header
+       information with WebPGetInfo(). */
     {"too short signature", "rgb-lossless.webp", 24, "not a webp image\n"},
     /* The file is 54 bytes originally */
     {"too short data", "rgb-lossless.webp", 53, "decoding error: not enough data\n"},

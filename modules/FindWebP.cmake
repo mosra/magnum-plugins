@@ -43,20 +43,20 @@ find_library(WebP_LIBRARY NAMES webp)
 
 # Include dir
 find_path(WebP_INCLUDE_DIR
-        NAMES webp/decode.h)
+    NAMES webp/decode.h)
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(WebP DEFAULT_MSG
-        WebP_LIBRARY
-        WebP_INCLUDE_DIR)
+    WebP_LIBRARY
+    WebP_INCLUDE_DIR)
 
 mark_as_advanced(FORCE
-        WebP_INCLUDE_DIR
-        WebP_LIBRARY)
+    WebP_INCLUDE_DIR
+    WebP_LIBRARY)
 
 if(NOT TARGET WebP::WebP)
     add_library(WebP::WebP UNKNOWN IMPORTED)
     set_target_properties(WebP::WebP PROPERTIES
-            IMPORTED_LOCATION ${WebP_LIBRARY}
-            INTERFACE_INCLUDE_DIRECTORIES ${WebP_INCLUDE_DIR})
+        IMPORTED_LOCATION ${WebP_LIBRARY}
+        INTERFACE_INCLUDE_DIRECTORIES ${WebP_INCLUDE_DIR})
 endif()

@@ -26,16 +26,15 @@
 
 #include "WebPImporter.h"
 
-#include <webp/types.h>
-#include <webp/decode.h>
-#include <webp/mux_types.h>
-
 #include <Corrade/Containers/Optional.h>
-#include <Corrade/Containers/ScopeGuard.h>
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/Debug.h>
 #include <Magnum/PixelFormat.h>
 #include <Magnum/Trade/ImageData.h>
+
+#include <webp/types.h>
+#include <webp/decode.h>
+#include <webp/mux_types.h>
 
 namespace Magnum { namespace Trade {
 
@@ -51,7 +50,7 @@ bool WebPImporter::doIsOpened() const { return _in; }
 
 void WebPImporter::doClose() { _in = nullptr; }
 
-void WebPImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFlags) {
+void WebPImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dataFlags) {
     /* Because here we're copying the data and using the _in to check if file
        is opened, having them nullptr would mean openData() would fail without
        any error message. It's not possible to do this check on the importer
@@ -73,7 +72,9 @@ void WebPImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFlag
     }
 }
 
-const char* vp8StatusCodeString(VP8StatusCode status) {
+namespace {
+
+const char* vp8StatusCodeString(const VP8StatusCode status) {
     switch(status) {
         case VP8_STATUS_OUT_OF_MEMORY: return "out of memory";
         case VP8_STATUS_INVALID_PARAM: return "invalid parameter";
@@ -84,21 +85,22 @@ const char* vp8StatusCodeString(VP8StatusCode status) {
         case VP8_STATUS_NOT_ENOUGH_DATA: return "not enough data";
         case VP8_STATUS_OK: ;
     }
+
     CORRADE_INTERNAL_ASSERT_UNREACHABLE();
+}
+
 }
 
 UnsignedInt WebPImporter::doImage2DCount() const { return 1; }
 
 Containers::Optional<ImageData2D> WebPImporter::doImage2D(UnsignedInt, UnsignedInt) {
-
-    /* Create the structure that contains the WebP image data. */
+    /* Create the structure that contains the WebP image data */
     WebPData image;
-    image.bytes = reinterpret_cast<uint8_t*>(_in.data());
+    image.bytes = reinterpret_cast<std::uint8_t*>(_in.data());
     image.size = _in.size();
 
     /* Verify the file is a WebP image file */
-    const bool isWebPImage = WebPGetInfo(image.bytes, image.size, nullptr, nullptr);
-    if(!isWebPImage) {
+    if(!WebPGetInfo(image.bytes, image.size, nullptr, nullptr)) {
         Error() << "Trade::WebPImporter::image2D(): not a webp image";
         return {};
     }
@@ -116,21 +118,18 @@ Containers::Optional<ImageData2D> WebPImporter::doImage2D(UnsignedInt, UnsignedI
         return {};
     }
 
-    /* Filtering animated webp files, they are subject to a different decoding process defined in demux library */
+    /* Filtering animated webp files, they are subject to a different decoding
+       process defined in demux library */
     if(bitstream.format == 0) {
         Error{} << "Trade::WebPImporter::image2D(): animated webp images aren't supported";
         return {};
     }
 
-    /* Image size */
-    const Vector2i size(bitstream.width, bitstream.height);
-
-    /* Channel number and pixel format (always 8-bit per channel) determined by alpha transparency,
-       independent of the image quality (lossy or lossless) */
-    int channels = 3;
+    /* Channel number and pixel format (always 8-bit per channel) determined by
+       alpha transparency. No special handling for lossy vs lossless files. */
+    Int channels = 3;
     PixelFormat pixelFormat = PixelFormat::RGB8Unorm;
     WEBP_CSP_MODE colourDepth = MODE_RGB;
-
     if(bitstream.has_alpha) {
         channels = 4;
         pixelFormat = PixelFormat::RGBA8Unorm;
@@ -139,15 +138,14 @@ Containers::Optional<ImageData2D> WebPImporter::doImage2D(UnsignedInt, UnsignedI
 
     /* Structure and configuration for decoding */
     WebPDecBuffer& outputBuffer = config.output;
-    const std::size_t stride = 4*((size.x()*channels + 3)/4);
-    outputBuffer.u.RGBA.size = stride*size.y();
+    const std::size_t stride = 4*((bitstream.width*channels + 3)/4);
+    outputBuffer.u.RGBA.size = stride*bitstream.height;
     outputBuffer.u.RGBA.stride = stride;
     outputBuffer.colorspace = colourDepth;
 
     /* Create external memory pointed by outputBuffer buffer */
     Containers::Array<char> outData{NoInit, outputBuffer.u.RGBA.size};
-    auto rgbaBuffer = reinterpret_cast<uint8_t*>(outData.data());
-    outputBuffer.u.RGBA.rgba = rgbaBuffer;
+    outputBuffer.u.RGBA.rgba = reinterpret_cast<std::uint8_t*>(outData.data());
     outputBuffer.is_external_memory = 1;
 
     /* Decompression of the image */
@@ -155,11 +153,12 @@ Containers::Optional<ImageData2D> WebPImporter::doImage2D(UnsignedInt, UnsignedI
     if(decodeStatus != VP8_STATUS_OK) {
         Error err;
         err << "Trade::WebPImporter::image2D(): decoding error:" << vp8StatusCodeString(decodeStatus);
-        return {}; ;
+        return {};
     }
 
-    return Trade::ImageData2D{pixelFormat, size, std::move(outData)};
+    return Trade::ImageData2D{pixelFormat, {bitstream.width, bitstream.height}, std::move(outData)};
 }
+
 }}
 
 CORRADE_PLUGIN_REGISTER(WebPImporter, Magnum::Trade::WebPImporter,
