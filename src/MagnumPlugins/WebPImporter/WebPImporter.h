@@ -60,10 +60,11 @@ namespace Magnum { namespace Trade {
 @m_class{m-block m-success}
 
 @thirdparty This plugin makes use of the
-    [libwebp](https://chromium.googlesource.com/webm/libwebp/) library, released under the same license as the
-    @m_class{m-label m-success} **WebM** project
-    ([license text](https://www.webmproject.org/license/software/ )). It
-    requires attribution for public use.
+    [libwebp](https://chromium.googlesource.com/webm/libwebp/) library,
+    released under the @m_class{m-label m-success} **BSD 3-clause** license as
+    part of the WebM project ([license text](https://www.webmproject.org/license/software/),
+    [choosealicense.com](https://choosealicense.com/licenses/bsd-3-clause/)).
+    It requires attribution for public use.
 
 @section Trade-WebPImporter-usage Usage
 
