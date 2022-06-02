@@ -69,13 +69,13 @@ const struct {
     Containers::Optional<std::size_t> size;
     const char* error;
 } InvalidData[] {
-    {"wrong file signature", "nature.png", {}, "not a WebP image\n"},
+    {"wrong file signature", "nature.png", {}, "WebP image features not found: bitstream error\n"},
     {"animated file", "animated.webp", {}, "animated WebP images aren't supported\n"},
     /* The header information of a lossless bitstream takes 25 bytes according
        to its specification: https://developers.google.com/speed/webp/docs/webp_lossless_bitstream_specification#2_riff_header.
        Hence, 24 bytes would cause an error while trying to extract the header
        information with WebPGetInfo(). */
-    {"too short signature", "rgb-lossless.webp", 24, "not a WebP image\n"},
+    {"too short signature", "rgb-lossless.webp", 24, "WebP image features not found: not enough data\n"},
     /* The file is 54 bytes originally */
     {"too short data", "rgb-lossless.webp", 53, "decoding error: not enough data\n"},
 };

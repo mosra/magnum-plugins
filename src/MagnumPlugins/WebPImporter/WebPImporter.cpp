@@ -92,18 +92,13 @@ const char* vp8StatusCodeString(const VP8StatusCode status) {
 UnsignedInt WebPImporter::doImage2DCount() const { return 1; }
 
 Containers::Optional<ImageData2D> WebPImporter::doImage2D(UnsignedInt, UnsignedInt) {
-    /* Verify the file is a WebP image file */
-    if(!WebPGetInfo(reinterpret_cast<std::uint8_t*>(_in.data()), _in.size(), nullptr, nullptr)) {
-        Error() << "Trade::WebPImporter::image2D(): not a WebP image";
-        return {};
-    }
-
     /* Structures for bitstream features and decoder configuration */
     WebPDecoderConfig config;
     WebPBitstreamFeatures bitstream = config.input;
     CORRADE_INTERNAL_ASSERT_OUTPUT(WebPInitDecoderConfig(&config));
 
-    /* Reading the file information into config.input */
+    /* Reading the file information into config.input. This also verifies the
+       file is actually a WebP file. */
     const VP8StatusCode status = WebPGetFeatures(reinterpret_cast<std::uint8_t*>(_in.data()), _in.size(), &bitstream);
     if(status != VP8_STATUS_OK) {
         Error err;
