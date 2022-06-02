@@ -6,7 +6,7 @@ pkgdesc="Plugins for the Magnum C++11/C++14 graphics engine (mingw-w64)"
 arch=('any')
 url="https://magnum.graphics"
 license=('MIT')
-depends=('mingw-w64-crt' 'mingw-w64-magnum' 'mingw-w64-freetype' 'mingw-w64-libjpeg' 'mingw-w64-libpng' 'mingw-w64-assimp' 'mingw-w64-zstd')
+depends=('mingw-w64-crt' 'mingw-w64-magnum' 'mingw-w64-freetype' 'mingw-w64-libjpeg' 'mingw-w64-libpng' 'mingw-w64-assimp' 'mingw-w64-zstd' 'mingw-w64-libwebp')
 makedepends=('mingw-w64-gcc' 'cmake' 'corrade' 'ninja' 'basis-universal-src')
 options=('!buildflags' '!strip' 'staticlibs')
 
@@ -58,6 +58,7 @@ build() {
         -DWITH_STBVORBISAUDIOIMPORTER=ON \
         -DWITH_STLIMPORTER=ON \
         -DWITH_TINYGLTFIMPORTER=ON \
+        -DWITH_WEBPIMPORTER=ON \
         -DBUILD_TESTS=ON \
         -DBUILD_GL_TESTS=ON \
         -G Ninja
@@ -109,6 +110,7 @@ build() {
         -DWITH_STBTRUETYPEFONT=ON \
         -DWITH_STBVORBISAUDIOIMPORTER=ON \
         -DWITH_TINYGLTFIMPORTER=ON \
+        -DWITH_WEBPIMPORTER=ON \
         -DBUILD_TESTS=ON \
         -DBUILD_GL_TESTS=ON \
         -G Ninja

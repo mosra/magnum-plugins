@@ -6,7 +6,7 @@ pkgdesc="Plugins for the Magnum C++11/C++14 graphics engine (built with clang)"
 arch=('i686' 'x86_64')
 url="https://magnum.graphics"
 license=('MIT')
-depends=('magnum' 'devil' 'faad2' 'freetype2' 'harfbuzz' 'libjpeg' 'libpng' 'assimp' 'meshoptimizer' 'openexr' 'spirv-tools' 'glslang' 'zstd')
+depends=('magnum' 'devil' 'faad2' 'freetype2' 'harfbuzz' 'libjpeg' 'libpng' 'assimp' 'meshoptimizer' 'openexr' 'spirv-tools' 'glslang' 'zstd' 'libwebp')
 makedepends=('cmake' 'clang' 'ninja' 'basis-universal-src')
 options=(!strip)
 provides=('magnum-plugins-git')
@@ -72,7 +72,8 @@ build() {
         -DWITH_STBTRUETYPEFONT=ON \
         -DWITH_STBVORBISAUDIOIMPORTER=ON \
         -DWITH_STLIMPORTER=ON \
-        -DWITH_TINYGLTFIMPORTER=ON
+        -DWITH_TINYGLTFIMPORTER=ON \
+        -DWITH_WEBPIMPORTER=ON
     ninja
 }
 

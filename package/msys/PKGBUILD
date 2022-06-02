@@ -21,7 +21,8 @@ depends=("${MINGW_PACKAGE_PREFIX}-magnum>=$pkgver"
          "${MINGW_PACKAGE_PREFIX}-libjpeg-turbo"
          "${MINGW_PACKAGE_PREFIX}-libpng"
          "${MINGW_PACKAGE_PREFIX}-openexr"
-         "${MINGW_PACKAGE_PREFIX}-spirv-tools")
+         "${MINGW_PACKAGE_PREFIX}-spirv-tools"
+         "${MINGW_PACKAGE_PREFIX}-webp")
 makedepends=("${MINGW_PACKAGE_PREFIX}-cmake" "${MINGW_PACKAGE_PREFIX}-ninja")
 options=('!strip')
 
@@ -73,7 +74,8 @@ build() {
             -DWITH_STBTRUETYPEFONT=ON \
             -DWITH_STBVORBISAUDIOIMPORTER=ON \
             -DWITH_STLIMPORTER=ON \
-            -DWITH_TINYGLTFIMPORTER=ON
+            -DWITH_TINYGLTFIMPORTER=ON \
+            -DWITH_WEBPIMPORTER=ON
     ninja
 }
 

@@ -20,7 +20,8 @@ depends=("${MINGW_PACKAGE_PREFIX}-magnum>=$pkgver"
          "${MINGW_PACKAGE_PREFIX}-harfbuzz"
          "${MINGW_PACKAGE_PREFIX}-libjpeg-turbo"
          "${MINGW_PACKAGE_PREFIX}-libpng"
-         "${MINGW_PACKAGE_PREFIX}-spirv-tools")
+         "${MINGW_PACKAGE_PREFIX}-spirv-tools"
+         "${MINGW_PACKAGE_PREFIX}-libwebp")
 makedepends=("${MINGW_PACKAGE_PREFIX}-cmake" "${MINGW_PACKAGE_PREFIX}-ninja" 'git')
 # The .tar.gz / .zip download contains symlinks, making tar and unzip on
 # Windows grumpy because dangling symlinks are created. Could be fixed by
@@ -81,6 +82,7 @@ build() {
             -DWITH_STBVORBISAUDIOIMPORTER=ON \
             -DWITH_STLIMPORTER=ON \
             -DWITH_TINYGLTFIMPORTER=ON \
+            -DWITH_WEBPIMPORTER=ON \
             "${extra_config[@]}" \
             ../${_realname}-${pkgver}
     ninja

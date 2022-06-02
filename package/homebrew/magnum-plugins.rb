@@ -24,6 +24,9 @@ class MagnumPlugins < Formula
   # For Basis Universal. If found, Basis will use it, if not, it'll use a
   # bundled copy.
   depends_on "zstd" => :recommended
+  # No idea why WebP has to depend on libpng, libjpeg, libtiff and giflib BY
+  # DEFAULT but whatever. BLOAT BLOAT
+  depends_on "webp" => :recommended
 
   def install
     # Bundle Basis Universal, v1_15_update2 for HEAD builds, a commit that's
@@ -100,6 +103,7 @@ class MagnumPlugins < Formula
         "-DWITH_STBVORBISAUDIOIMPORTER=ON",
         "-DWITH_STLIMPORTER=ON",
         "-DWITH_TINYGLTFIMPORTER=ON",
+        "-DWITH_WEBPIMPORTER=#{(build.with? 'webp') ? 'ON' : 'OFF'}",
         ".."
       system "cmake", "--build", "."
       system "cmake", "--build", ".", "--target", "install"

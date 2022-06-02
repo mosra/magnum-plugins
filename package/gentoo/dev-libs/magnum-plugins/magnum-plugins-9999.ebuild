@@ -21,6 +21,7 @@ RDEPEND="
 	media-libs/openexr
 	virtual/jpeg
 	media-libs/libpng
+	media-libs/libwebp
 	media-libs/assimp
 	dev-util/glslang
 	dev-util/spirv-tools
@@ -70,6 +71,7 @@ src_configure() {
 		-DWITH_STBVORBISAUDIOIMPORTER=ON
 		-DWITH_STLIMPORTER=ON
 		-DWITH_TINYGLTFIMPORTER=ON
+		-DWITH_WEBPIMPORTER=ON
 	)
 	cmake_src_configure
 }
