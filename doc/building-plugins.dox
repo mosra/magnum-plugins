@@ -414,6 +414,7 @@ By default no plugins are built and you need to select them manually:
     @ref Audio::StbVorbisImporter "StbVorbisAudioImporter" plugin.
 -   `WITH_TINYGLTFIMPORTER` @m_class{m-label m-danger} **deprecated**  ---
     Build the @ref Trade::TinyGltfImporter "TinyGltfImporter" plugin.
+-   `WITH_WEBPIMPORTER` --- Build the @relativeref{Trade,WebPImporter} plugin.
 
 Some plugins expose their internal state through separate libraries and you can
 control their build separately:

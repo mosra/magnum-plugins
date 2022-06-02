@@ -161,6 +161,10 @@
  * @m_deprecated_since_latest Use the @relativeref{Magnum,Trade::GltfImporter}
  *      plugin instead.
  */
+ /** @dir MagnumPlugins/WebPImporter
+ * @brief Plugin @ref Magnum::Trade::WebPImporter
+ * @m_since_latest_{plugins}
+ */
 
 /** @dir magnum-plugins/src/Magnum
  * @brief Namespace @ref Magnum (part of @ref building-plugins "Magnum Plugins library")

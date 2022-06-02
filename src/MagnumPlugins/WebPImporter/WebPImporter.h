@@ -28,6 +28,7 @@
 
 /** @file
  * @brief Class @ref Magnum::Trade::WebPImporter
+ * @m_since_latest_{plugins}
  */
 
 #include <Corrade/Containers/Array.h>
@@ -55,7 +56,10 @@ namespace Magnum { namespace Trade {
 
 /**
 @brief WebP importer plugin
+@m_since_latest_{plugins}
 
+Supports [WebP](https://en.wikipedia.org/wiki/WebP) (`*.webp`) RGB and RGBA
+images.
 
 @m_class{m-block m-success}
 
@@ -89,6 +93,7 @@ add_dependencies(your-app MagnumPlugins::WebPImporter)
 
 To use as a static plugin or as a dependency of another plugin with CMake, put
 [FindMagnumPlugins.cmake](https://github.com/mosra/magnum-plugins/blob/master/modules/FindMagnumPlugins.cmake)
+and [FindWebP.cmake](https://github.com/mosra/magnum-plugins/blob/master/modules/FindWebP.cmake)
 into your `modules/` directory, request the `WebPImporter` component of the
 `MagnumPlugins` package and link to the `MagnumPlugins::WebPImporter` target:
 
@@ -104,15 +109,12 @@ See @ref building-plugins, @ref cmake-plugins, @ref plugins and
 
 @section Trade-WebPImporter-behavior Behavior and limitations
 
-WebP supports 24-bit RGB color (8-bit color-depth for each channel) with an 8-bit alpha channel in case of transparency.
-It doesn't have a special colorspace for grayscale or black-and-white. A grayscale/bw image buffer is simply supposed
-to be converted to a RGB buffer to encode it in WebP format.
+WebP only supports 24-bit RGB color with an optional 8-bit alpha channel, which
+is imported as either @ref PixelFormat::RGB8Unorm or
+@ref PixelFormat::RGBA8Unorm. It doesn't have a special colorspace for
+grayscale, those are encoded the same way as RGB.
 
-WebPImporter has been created using the decoder included in the WebP library.
-Hence, it doesn't support decoding of animated WebP files, for which 'Demux' library of the WebP is needed.
-
-@ref PixelFormat::RGB8Unorm for (lossy or lossless) bitstream with no transparency (alpha channel) /
-@ref PixelFormat::RGBA8Unorm for any bitstream with transparency.
+The importer doesn't support decoding of animated WebP files.
 */
 class MAGNUM_WEBPIMPORTER_EXPORT WebPImporter: public AbstractImporter {
     public:
