@@ -3573,7 +3573,7 @@ void TinyGltfImporterTest::textureExtensions() {
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
 
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "texture-extensions.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(TINYGLTFIMPORTER_TEST_DIR, "texture-extensions.gltf")));
 
     /* Check we didn't forget to test anything */
     CORRADE_COMPARE(importer->textureCount(), Containers::arraySize(TextureExtensionsData));

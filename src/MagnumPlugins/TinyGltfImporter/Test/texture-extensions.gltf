@@ -22,10 +22,6 @@
     {
       "uri": "data:application/octet-stream;base64,AAA=",
       "mimeType": "image/mgn"
-    },
-    {
-      "uri": "data:application/octet-stream;base64,AAA=",
-      "mimeType": "image/webp"
     }
   ],
   "textures": [
@@ -58,15 +54,6 @@
       "extensions": {
         "MSFT_texture_dds": {
           "source": 3
-        }
-      }
-    },
-    {
-      "name": "EXT_texture_webp",
-      "source": 0,
-      "extensions": {
-        "EXT_texture_webp": {
-          "source": 5
         }
       }
     },
@@ -120,7 +107,6 @@
     "GOOGLE_texture_basis",
     "KHR_texture_basisu",
     "MSFT_texture_dds",
-    "MAGNUM_fake_extension",
-    "EXT_texture_webp"
+    "MAGNUM_fake_extension"
   ]
 }

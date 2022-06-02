@@ -808,7 +808,8 @@ void GltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags da
             "KHR_texture_basisu"_s,
             "KHR_texture_transform"_s,
             "GOOGLE_texture_basis"_s,
-            "MSFT_texture_dds"_s
+            "MSFT_texture_dds"_s,
+            "EXT_texture_webp"_s
         };
 
         /* M*N loop should be okay here, extensionsRequired should usually have
@@ -3827,8 +3828,8 @@ Containers::Optional<TextureData> GltfImporter::doTexture(const UnsignedInt id) 
                    Basis files don't have a registered mimetype either, but as
                    explained above we don't care about mimetype at all. */
                 extensionName != "GOOGLE_texture_basis"_s &&
-                extensionName != "MSFT_texture_dds"_s
-                /** @todo EXT_texture_webp once a plugin provides WebpImporter */
+                extensionName != "MSFT_texture_dds"_s &&
+                extensionName != "EXT_texture_webp"_s
             ) continue;
 
             if(!_d->gltf->parseObject(i.value())) {

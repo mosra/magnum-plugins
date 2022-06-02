@@ -166,7 +166,7 @@ corrade_add_test(TinyGltfImporterTest
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/GltfImporter/Test/skin.bin
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/GltfImporter/Test/skin.glb
         texture.gltf
-        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/GltfImporter/Test/texture-extensions.gltf
+        texture-extensions.gltf
         texture-invalid.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/GltfImporter/Test/version-legacy.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/GltfImporter/Test/version-supported.gltf
