@@ -116,9 +116,6 @@ Hence, it doesn't support decoding of animated WebP files, for which 'Demux' lib
 */
 class MAGNUM_WEBPIMPORTER_EXPORT WebPImporter: public AbstractImporter {
     public:
-        /** @brief Default constructor */
-        explicit WebPImporter();
-
         /** @brief Plugin manager constructor */
         explicit WebPImporter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin);
 

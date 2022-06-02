@@ -38,8 +38,6 @@
 
 namespace Magnum { namespace Trade {
 
-WebPImporter::WebPImporter() = default;
-
 WebPImporter::WebPImporter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin): AbstractImporter{manager, plugin} {}
 
 WebPImporter::~WebPImporter() = default;
