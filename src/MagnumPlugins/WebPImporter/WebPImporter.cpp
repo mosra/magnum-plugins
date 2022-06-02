@@ -92,13 +92,8 @@ const char* vp8StatusCodeString(const VP8StatusCode status) {
 UnsignedInt WebPImporter::doImage2DCount() const { return 1; }
 
 Containers::Optional<ImageData2D> WebPImporter::doImage2D(UnsignedInt, UnsignedInt) {
-    /* Create the structure that contains the WebP image data */
-    WebPData image;
-    image.bytes = reinterpret_cast<std::uint8_t*>(_in.data());
-    image.size = _in.size();
-
     /* Verify the file is a WebP image file */
-    if(!WebPGetInfo(image.bytes, image.size, nullptr, nullptr)) {
+    if(!WebPGetInfo(reinterpret_cast<std::uint8_t*>(_in.data()), _in.size(), nullptr, nullptr)) {
         Error() << "Trade::WebPImporter::image2D(): not a WebP image";
         return {};
     }
@@ -109,7 +104,7 @@ Containers::Optional<ImageData2D> WebPImporter::doImage2D(UnsignedInt, UnsignedI
     CORRADE_INTERNAL_ASSERT_OUTPUT(WebPInitDecoderConfig(&config));
 
     /* Reading the file information into config.input */
-    const VP8StatusCode status = WebPGetFeatures(image.bytes, image.size, &bitstream);
+    const VP8StatusCode status = WebPGetFeatures(reinterpret_cast<std::uint8_t*>(_in.data()), _in.size(), &bitstream);
     if(status != VP8_STATUS_OK) {
         Error err;
         err << "Trade::WebPImporter::image2D(): WebP image features not found:" << vp8StatusCodeString(status);
@@ -147,7 +142,7 @@ Containers::Optional<ImageData2D> WebPImporter::doImage2D(UnsignedInt, UnsignedI
     outputBuffer.is_external_memory = 1;
 
     /* Decompression of the image */
-    const VP8StatusCode decodeStatus = WebPDecode(image.bytes, image.size, &config);
+    const VP8StatusCode decodeStatus = WebPDecode(reinterpret_cast<std::uint8_t*>(_in.data()), _in.size(), &config);
     if(decodeStatus != VP8_STATUS_OK) {
         Error err;
         err << "Trade::WebPImporter::image2D(): decoding error:" << vp8StatusCodeString(decodeStatus);
