@@ -1,27 +1,27 @@
 {
-    "asset": {
-        "version": "2.0"
+  "asset": {
+    "version": "2.0"
+  },
+  "images": [
+    {
+      "name": "no payload",
+      "uri": "data:image/png"
     },
-    "images": [
-        {
-            "name": "no payload",
-            "uri": "data:image/png"
-        },
-        {
-            "name": "no base64",
-            "uri": "data:image/png,hello"
-        },
-        {
-            "name": "empty base64",
-            "uri": "data:image/png;base64,"
-        },
-        {
-            "name": "invalid uri",
-            "uri": "%%"
-        },
-        {
-            "name": "invalid base64",
-            "uri": "data:image/png;base64,aGVsbG9oZWxsb?=="
-        }
-    ]
+    {
+      "name": "no base64",
+      "uri": "data:image/png,hello"
+    },
+    {
+      "name": "empty base64",
+      "uri": "data:image/png;base64,"
+    },
+    {
+      "name": "invalid uri",
+      "uri": "%%"
+    },
+    {
+      "name": "invalid base64",
+      "uri": "data:image/png;base64,aGVsbG9oZWxsb?=="
+    }
+  ]
 }

@@ -1,54 +1,54 @@
 {
-    "asset": {
-        "version": "2.0"
+  "asset": {
+    "version": "2.0"
+  },
+  "accessors": [
+    {
+      "bufferView": 0,
+      "componentType": 5126,
+      "count": 3,
+      "type": "VEC3"
     },
-    "accessors": [
+    {
+      "bufferView": 0,
+      "byteOffset": 12,
+      "componentType": 5126,
+      "count": 3,
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 0,
+      "byteOffset": 24,
+      "componentType": 5126,
+      "count": 3,
+      "type": "VEC4"
+    }
+  ],
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteLength": 120,
+      "byteStride": 40,
+      "target": 34962
+    }
+  ],
+  "buffers": [
+    {
+      "byteLength": 120,
+      "uri": "mesh-colors.bin"
+    }
+  ],
+  "meshes": [
+    {
+      "primitives": [
         {
-            "bufferView": 0,
-            "componentType": 5126,
-            "count": 3,
-            "type": "VEC3"
-        },
-        {
-            "bufferView": 0,
-            "byteOffset": 12,
-            "componentType": 5126,
-            "count": 3,
-            "type": "VEC3"
-        },
-        {
-            "bufferView": 0,
-            "byteOffset": 24,
-            "componentType": 5126,
-            "count": 3,
-            "type": "VEC4"
+          "attributes": {
+            "COLOR_0": 1,
+            "COLOR_1": 2,
+            "POSITION": 0
+          }
         }
-    ],
-    "bufferViews": [
-        {
-            "buffer": 0,
-            "byteLength": 120,
-            "byteStride": 40,
-            "target": 34962
-        }
-    ],
-    "buffers": [
-        {
-            "byteLength": 120,
-            "uri": "mesh-colors.bin"
-        }
-    ],
-    "meshes": [
-        {
-            "primitives": [
-                {
-                    "attributes": {
-                        "COLOR_0": 1,
-                        "COLOR_1": 2,
-                        "POSITION": 0
-                    }
-                }
-            ]
-        }
-    ]
+      ]
+    }
+  ]
 }

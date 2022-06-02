@@ -1,140 +1,140 @@
 {
-    "asset": {
-        "version": "2.0"
+  "asset": {
+    "version": "2.0"
+  },
+  "meshes": [
+    {
+      "name": "float",
+      "primitives": [
+        {
+          "attributes": {
+            "TEXCOORD_0": 0
+          }
+        }
+      ]
     },
-    "meshes": [
+    {
+      "name": "normalized unsigned byte",
+      "primitives": [
         {
-            "name": "float",
-            "primitives": [
-                {
-                    "attributes": {
-                        "TEXCOORD_0": 0
-                    }
-                }
-            ]
-        },
-        {
-            "name": "normalized unsigned byte",
-            "primitives": [
-                {
-                    "attributes": {
-                        "TEXCOORD_0": 1
-                    }
-                }
-            ]
-        },
-        {
-            "name": "normalized unsigned short",
-            "primitives": [
-                {
-                    "attributes": {
-                        "TEXCOORD_0": 2
-                    }
-                }
-            ]
+          "attributes": {
+            "TEXCOORD_0": 1
+          }
         }
-    ],
-    "accessors": [
+      ]
+    },
+    {
+      "name": "normalized unsigned short",
+      "primitives": [
         {
-            "bufferView": 0,
-            "componentType": 5126,
-            "count": 3,
-            "type": "VEC2"
-        },
-        {
-            "bufferView": 1,
-            "componentType": 5121,
-            "normalized": true,
-            "count": 3,
-            "type": "VEC2"
-        },
-        {
-            "bufferView": 2,
-            "componentType": 5123,
-            "normalized": true,
-            "count": 3,
-            "type": "VEC2"
+          "attributes": {
+            "TEXCOORD_0": 2
+          }
         }
-    ],
-    "bufferViews": [
-        {
-            "buffer": 0,
-            "byteOffset": 0,
-            "byteLength": 24
-        },
-        {
-            "buffer": 0,
-            "byteOffset": 24,
-            "byteLength": 8
-        },
-        {
-            "buffer": 0,
-            "byteOffset": 32,
-            "byteLength": 12
+      ]
+    }
+  ],
+  "accessors": [
+    {
+      "bufferView": 0,
+      "componentType": 5126,
+      "count": 3,
+      "type": "VEC2"
+    },
+    {
+      "bufferView": 1,
+      "componentType": 5121,
+      "normalized": true,
+      "count": 3,
+      "type": "VEC2"
+    },
+    {
+      "bufferView": 2,
+      "componentType": 5123,
+      "normalized": true,
+      "count": 3,
+      "type": "VEC2"
+    }
+  ],
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteOffset": 0,
+      "byteLength": 24
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 24,
+      "byteLength": 8
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 32,
+      "byteLength": 12
+    }
+  ],
+  "buffers": [
+    {
+      "byteLength": 64,
+      "uri": "material-texcoord-flip.bin"
+    }
+  ],
+  "materials": [
+    {
+      "name": "no transform",
+      "pbrMetallicRoughness": {
+        "baseColorTexture": {
+          "index": 0
         }
-    ],
-    "buffers": [
-        {
-            "byteLength": 64,
-            "uri": "material-texcoord-flip.bin"
-        }
-    ],
-    "materials": [
-        {
-            "name": "no transform",
-            "pbrMetallicRoughness": {
-                "baseColorTexture": {
-                    "index": 0
-                }
+      }
+    },
+    {
+      "name": "identity transform",
+      "pbrMetallicRoughness": {
+        "baseColorTexture": {
+          "index": 0,
+          "note": "tinygltf treats empty {} as if there was no entry, so can't use that. See the XFAIL in the materialPbrSpecularGlossiness() test",
+          "extensions": {
+            "KHR_texture_transform": {
+              "rotation": 0.0
             }
-        },
-        {
-            "name": "identity transform",
-            "pbrMetallicRoughness": {
-                "baseColorTexture": {
-                    "index": 0,
-                    "note": "tinygltf treats empty {} as if there was no entry, so can't use that. See the XFAIL in the materialPbrSpecularGlossiness() test",
-                    "extensions": {
-                        "KHR_texture_transform": {
-                            "rotation": 0.0
-                        }
-                    }
-                }
-            }
-        },
-        {
-            "name": "transform from normalized unsigned byte",
-            "pbrMetallicRoughness": {
-                "baseColorTexture": {
-                    "index": 0,
-                    "extensions": {
-                        "KHR_texture_transform": {
-                            "offset": [0.0, 1.0],
-                            "scale": [1.003921568627451, -1.003921568627451]
-                        }
-                    }
-                }
-            }
-        },
-        {
-            "name": "transform from normalized unsigned short",
-            "pbrMetallicRoughness": {
-                "baseColorTexture": {
-                    "index": 0,
-                    "extensions": {
-                        "KHR_texture_transform": {
-                            "offset": [0.0, 1.0],
-                            "scale": [1.000015259254738, -1.000015259254738]
-                        }
-                    }
-                }
-            }
+          }
         }
-    ],
-    "textures": [
-        {}
-    ],
-    "extensionsUsed": [
-        "KHR_texture_transform"
-    ]
+      }
+    },
+    {
+      "name": "transform from normalized unsigned byte",
+      "pbrMetallicRoughness": {
+        "baseColorTexture": {
+          "index": 0,
+          "extensions": {
+            "KHR_texture_transform": {
+              "offset": [0.0, 1.0],
+              "scale": [1.003921568627451, -1.003921568627451]
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "transform from normalized unsigned short",
+      "pbrMetallicRoughness": {
+        "baseColorTexture": {
+          "index": 0,
+          "extensions": {
+            "KHR_texture_transform": {
+              "offset": [0.0, 1.0],
+              "scale": [1.000015259254738, -1.000015259254738]
+            }
+          }
+        }
+      }
+    }
+  ],
+  "textures": [
+    {}
+  ],
+  "extensionsUsed": [
+    "KHR_texture_transform"
+  ]
 }

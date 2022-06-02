@@ -1,89 +1,89 @@
 {
-    "asset": {
-        "version": "2.0"
+  "asset": {
+    "version": "2.0"
+  },
+  "animations": [
+    {
+      "name": "Quaternion shortest-path patching",
+      "channels": [
+        {
+          "sampler": 0,
+          "target": {
+            "node": 0,
+            "path": "rotation"
+          }
+        }
+      ],
+      "samplers": [
+        {
+          "input": 0,
+          "interpolation": "LINEAR",
+          "output": 1
+        }
+      ]
     },
-    "animations": [
+    {
+      "name": "Quaternion normalization patching",
+      "channels": [
         {
-            "name": "Quaternion shortest-path patching",
-            "channels": [
-                {
-                    "sampler": 0,
-                    "target": {
-                        "node": 0,
-                        "path": "rotation"
-                    }
-                }
-            ],
-            "samplers": [
-                {
-                    "input": 0,
-                    "interpolation": "LINEAR",
-                    "output": 1
-                }
-            ]
-        },
-        {
-            "name": "Quaternion normalization patching",
-            "channels": [
-                {
-                    "sampler": 0,
-                    "target": {
-                        "node": 0,
-                        "path": "rotation"
-                    }
-                }
-            ],
-            "samplers": [
-                {
-                    "input": 2,
-                    "interpolation": "LINEAR",
-                    "output": 3
-                }
-            ]
+          "sampler": 0,
+          "target": {
+            "node": 0,
+            "path": "rotation"
+          }
         }
-    ],
-    "accessors": [
+      ],
+      "samplers": [
         {
-            "bufferView": 0,
-            "componentType": 5126,
-            "count": 9,
-            "type": "SCALAR"
-        },
-        {
-            "bufferView": 0,
-            "byteOffset": 36,
-            "componentType": 5126,
-            "count": 9,
-            "type": "VEC4"
-        },
-        {
-            "bufferView": 0,
-            "byteOffset": 180,
-            "componentType": 5126,
-            "count": 3,
-            "type": "SCALAR"
-        },
-        {
-            "bufferView": 0,
-            "byteOffset": 192,
-            "componentType": 5126,
-            "count": 3,
-            "type": "VEC4"
+          "input": 2,
+          "interpolation": "LINEAR",
+          "output": 3
         }
-    ],
-    "bufferViews": [
-        {
-            "buffer": 0,
-            "byteLength": 240
-        }
-    ],
-    "buffers": [
-        {
-            "byteLength": 240,
-            "uri": "animation-patching.bin"
-        }
-    ],
-    "nodes": [
-        {}
-    ]
+      ]
+    }
+  ],
+  "accessors": [
+    {
+      "bufferView": 0,
+      "componentType": 5126,
+      "count": 9,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 0,
+      "byteOffset": 36,
+      "componentType": 5126,
+      "count": 9,
+      "type": "VEC4"
+    },
+    {
+      "bufferView": 0,
+      "byteOffset": 180,
+      "componentType": 5126,
+      "count": 3,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 0,
+      "byteOffset": 192,
+      "componentType": 5126,
+      "count": 3,
+      "type": "VEC4"
+    }
+  ],
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteLength": 240
+    }
+  ],
+  "buffers": [
+    {
+      "byteLength": 240,
+      "uri": "animation-patching.bin"
+    }
+  ],
+  "nodes": [
+    {}
+  ]
 }

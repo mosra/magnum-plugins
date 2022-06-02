@@ -1,22 +1,24 @@
 {
-    "asset": {
-        "version": "2.0"
-    },
-    "nodes": [
-        {}, {}, {},
-        {
-            "name": "Non-normalized rotation",
-            "rotation": [
-                0.0,
-                0.765366,
-                0.0,
-                1.84776
-            ]
-        }
-    ],
-    "scenes": [
-        {
-            "nodes": [3]
-        }
-    ]
+  "asset": {
+    "version": "2.0"
+  },
+  "nodes": [
+    {},
+    {},
+    {},
+    {
+      "name": "Non-normalized rotation",
+      "rotation": [
+        0.0,
+        0.765366,
+        0.0,
+        1.84776
+      ]
+    }
+  ],
+  "scenes": [
+    {
+      "nodes": [3]
+    }
+  ]
 }

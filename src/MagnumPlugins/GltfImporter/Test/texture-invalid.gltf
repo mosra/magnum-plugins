@@ -1,163 +1,163 @@
 {
-    "asset": {
-        "version": "2.0"
+  "asset": {
+    "version": "2.0"
+  },
+  "images": [
+    {
+      "uri": "image.png"
+    }
+  ],
+  "samplers": [
+    {
+      "name": "0",
+      "minFilter": 1
     },
-    "images": [
-        {
-            "uri": "image.png"
+    {
+      "name": "1",
+      "magFilter": 2
+    },
+    {
+      "name": "2",
+      "wrapS": 3
+    },
+    {
+      "name": "3",
+      "wrapT": 4
+    },
+    {
+      "name": "4"
+    },
+    {
+      "name": "5",
+      "magFilter": -1
+    },
+    {
+      "name": "6",
+      "minFilter": -1
+    },
+    {
+      "name": "7",
+      "wrapS": -1
+    },
+    {
+      "name": "8",
+      "wrapT": -1
+    }
+  ],
+  "textures": [
+    {
+      "name": "invalid sampler minFilter",
+      "sampler": 0,
+      "source": 0
+    },
+    {
+      "name": "invalid sampler magFilter",
+      "sampler": 1,
+      "source": 0
+    },
+    {
+      "name": "invalid sampler wrapS",
+      "sampler": 2,
+      "source": 0
+    },
+    {
+      "name": "invalid sampler wrapT",
+      "sampler": 3,
+      "source": 0
+    },
+    {
+      "name": "sampler out of bounds",
+      "sampler": 9,
+      "source": 0
+    },
+    {
+      "name": "source out of bounds",
+      "source": 1
+    },
+    {
+      "name": "out of bounds GOOGLE_texture_basis",
+      "extensions": {
+        "GOOGLE_texture_basis": {
+          "source": 3
         }
-    ],
-    "samplers": [
-        {
-            "name": "0",
-            "minFilter": 1
-        },
-        {
-            "name": "1",
-            "magFilter": 2
-        },
-        {
-            "name": "2",
-            "wrapS": 3
-        },
-        {
-            "name": "3",
-            "wrapT": 4
-        },
-        {
-            "name": "4"
-        },
-        {
-            "name": "5",
-            "magFilter": -1
-        },
-        {
-            "name": "6",
-            "minFilter": -1
-        },
-        {
-            "name": "7",
-            "wrapS": -1
-        },
-        {
-            "name": "8",
-            "wrapT": -1
+      }
+    },
+    {
+      "name": "out of bounds KHR_texture_basisu",
+      "extensions": {
+        "KHR_texture_basisu": {
+          "source": 4
         }
-    ],
-    "textures": [
-        {
-            "name": "invalid sampler minFilter",
-            "sampler": 0,
-            "source": 0
-        },
-        {
-            "name": "invalid sampler magFilter",
-            "sampler": 1,
-            "source": 0
-        },
-        {
-            "name": "invalid sampler wrapS",
-            "sampler": 2,
-            "source": 0
-        },
-        {
-            "name": "invalid sampler wrapT",
-            "sampler": 3,
-            "source": 0
-        },
-        {
-            "name": "sampler out of bounds",
-            "sampler": 9,
-            "source": 0
-        },
-        {
-            "name": "source out of bounds",
-            "source": 1
-        },
-        {
-            "name": "out of bounds GOOGLE_texture_basis",
-            "extensions": {
-                "GOOGLE_texture_basis": {
-                    "source": 3
-                }
-            }
-        },
-        {
-            "name": "out of bounds KHR_texture_basisu",
-            "extensions": {
-                "KHR_texture_basisu": {
-                    "source": 4
-                }
-            }
-        },
-        {
-            "name": "unknown extension, no fallback",
-            "extensions": {
-                "MAGNUM_fake_extension": {
-                    "source": 2
-                }
-            }
-        },
-        {
-            "name": "missing source property"
-        },
-        {
-            "name": "invalid source property",
-            "source": -1
-        },
-        {
-            "name": "invalid extensions property",
-            "extensions": []
-        },
-        {
-            "name": "invalid extension",
-            "extensions": {
-                "KHR_texture_basisu": null
-            }
-        },
-        {
-            "name": "missing extension source property",
-            "extensions": {
-                "KHR_texture_basisu": {}
-            }
-        },
-        {
-            "name": "invalid extension source property",
-            "extensions": {
-                "KHR_texture_basisu": {
-                    "source": -1
-                }
-            }
-        },
-        {
-            "name": "invalid sampler property",
-            "source": 0,
-            "sampler": -1
-        },
-        {
-            "name": "invalid sampler magFilter property",
-            "source": 0,
-            "sampler": 5
-        },
-        {
-            "name": "invalid sampler minFilter property",
-            "source": 0,
-            "sampler": 6
-        },
-        {
-            "name": "invalid sampler wrapS property",
-            "source": 0,
-            "sampler": 7
-        },
-        {
-            "name": "invalid sampler wrapT property",
-            "source": 0,
-            "sampler": 8
+      }
+    },
+    {
+      "name": "unknown extension, no fallback",
+      "extensions": {
+        "MAGNUM_fake_extension": {
+          "source": 2
         }
-    ],
-    "extensionsUsed": [
-        "MAGNUM_fake_extension",
-        "GOOGLE_texture_basis",
-        "KHR_texture_basisu"
-    ]
+      }
+    },
+    {
+      "name": "missing source property"
+    },
+    {
+      "name": "invalid source property",
+      "source": -1
+    },
+    {
+      "name": "invalid extensions property",
+      "extensions": []
+    },
+    {
+      "name": "invalid extension",
+      "extensions": {
+        "KHR_texture_basisu": null
+      }
+    },
+    {
+      "name": "missing extension source property",
+      "extensions": {
+        "KHR_texture_basisu": {}
+      }
+    },
+    {
+      "name": "invalid extension source property",
+      "extensions": {
+        "KHR_texture_basisu": {
+          "source": -1
+        }
+      }
+    },
+    {
+      "name": "invalid sampler property",
+      "source": 0,
+      "sampler": -1
+    },
+    {
+      "name": "invalid sampler magFilter property",
+      "source": 0,
+      "sampler": 5
+    },
+    {
+      "name": "invalid sampler minFilter property",
+      "source": 0,
+      "sampler": 6
+    },
+    {
+      "name": "invalid sampler wrapS property",
+      "source": 0,
+      "sampler": 7
+    },
+    {
+      "name": "invalid sampler wrapT property",
+      "source": 0,
+      "sampler": 8
+    }
+  ],
+  "extensionsUsed": [
+    "MAGNUM_fake_extension",
+    "GOOGLE_texture_basis",
+    "KHR_texture_basisu"
+  ]
 }

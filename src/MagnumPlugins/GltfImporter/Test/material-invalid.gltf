@@ -1,369 +1,370 @@
 {
-    "asset": {
-        "version": "2.0"
+  "asset": {
+    "version": "2.0"
+  },
+  "materials": [
+    {
+      "name": "invalid alphaMode property",
+      "alphaMode": 0.5
     },
-    "materials": [
-        {
-            "name": "invalid alphaMode property",
-            "alphaMode": 0.5
-        },
-        {
-            "name": "unrecognized alpha mode",
-            "alphaMode": "WAT"
-        },
-        {
-            "name": "invalid alphaCutoff property",
-            "alphaMode": "MASK",
-            "alphaCutoff": "YES"
-        },
-        {
-            "name": "invalid doubleSided property",
-            "doubleSided": null
-        },
-        {
-            "name": "invalid pbrMetallicRoughness property",
-            "pbrMetallicRoughness": [0.5, 0.6, 0.7, 1.0]
-        },
-        {
-            "name": "invalid pbrMetallicRoughness baseColorFactor property",
-            "pbrMetallicRoughness": {
-                "baseColorFactor": "#ff3366"
-            }
-        },
-        {
-            "name": "invalid pbrMetallicRoughness baseColorFactor array size",
-            "pbrMetallicRoughness": {
-                "baseColorFactor": [0.5, 0.6, 0.7]
-            }
-        },
-        {
-            "name": "invalid pbrMetallicRoughness baseColorTexture",
-            "pbrMetallicRoughness": {
-                "baseColorTexture": {
-                    "index": 2
-                }
-            }
-        },
-        {
-            "name": "invalid pbrMetallicRoughness metallicFactor property",
-            "pbrMetallicRoughness": {
-                "metallicFactor": false
-            }
-        },
-        {
-            "name": "invalid pbrMetallicRoughness roughnessFactor property",
-            "pbrMetallicRoughness": {
-                "roughnessFactor": true
-            }
-        },
-        {
-            "name": "invalid pbrMetallicRoughness metallicRoughnessTexture",
-            "pbrMetallicRoughness": {
-                "metallicRoughnessTexture": {
-                    "index": 2
-                }
-            }
-        },
-        {
-            "name": "invalid extensions property",
-            "extensions": []
-        },
-        {
-            "name": "invalid extension",
-            "extensions": {
-                "KHR_materials_unlit": null
-            }
-        },
-        {
-            "name": "invalid KHR_materials_pbrSpecularGlossiness diffuseFactor property",
-            "extensions": {
-                "KHR_materials_pbrSpecularGlossiness": {
-                    "diffuseFactor": "#ff3366"
-                }
-            }
-        },
-        {
-            "name": "invalid KHR_materials_pbrSpecularGlossiness diffuseFactor array size",
-            "extensions": {
-                "KHR_materials_pbrSpecularGlossiness": {
-                    "diffuseFactor": [0.5, 0.6, 0.7]
-                }
-            }
-        },
-        {
-            "name": "invalid KHR_materials_pbrSpecularGlossiness diffuseTexture",
-            "extensions": {
-                "KHR_materials_pbrSpecularGlossiness": {
-                    "diffuseTexture": {
-                        "index": 2
-                    }
-                }
-            }
-        },
-        {
-            "name": "invalid KHR_materials_pbrSpecularGlossiness specularFactor property",
-            "extensions": {
-                "KHR_materials_pbrSpecularGlossiness": {
-                    "specularFactor": "#ff3366"
-                }
-            }
-        },
-        {
-            "name": "invalid KHR_materials_pbrSpecularGlossiness specularFactor array size",
-            "extensions": {
-                "KHR_materials_pbrSpecularGlossiness": {
-                    "specularFactor": [0.5, 0.6, 0.7, 1.0]
-                }
-            }
-        },
-        {
-            "name": "invalid KHR_materials_pbrSpecularGlossiness glossinessFactor property",
-            "extensions": {
-                "KHR_materials_pbrSpecularGlossiness": {
-                    "glossinessFactor": true
-                }
-            }
-        },
-        {
-            "name": "invalid KHR_materials_pbrSpecularGlossiness specularGlossinessTexture",
-            "extensions": {
-                "KHR_materials_pbrSpecularGlossiness": {
-                    "specularGlossinessTexture": {
-                        "index": 2
-                    }
-                }
-            }
-        },
-        {
-            "name": "invalid normalTexture",
-            "normalTexture": {
-                "index": 2
-            }
-        },
-        {
-            "name": "invalid normalTexture scale property",
-            "normalTexture": {
-                "index": 0,
-                "scale": false
-            }
-        },
-        {
-            "name": "invalid occlusionTexture",
-            "occlusionTexture": {
-                "index": 2
-            }
-        },
-        {
-            "name": "invalid occlusionTexture strength property",
-            "occlusionTexture": {
-                "index": 0,
-                "strength": "hard"
-            }
-        },
-        {
-            "name": "invalid emissiveFactor property",
-            "emissiveFactor": 2.0
-        },
-        {
-            "name": "invalid emissiveFactor array size",
-            "emissiveFactor": [2.0, 3.0, 4.0, 1.0]
-        },
-        {
-            "name": "invalid emissiveTexture",
-            "emissiveTexture": {
-                "index": 2
-            }
-        },
-        {
-            "name": "invalid KHR_materials_clearcoat clearcoatFactor property",
-            "extensions": {
-                "KHR_materials_clearcoat": {
-                    "clearcoatFactor": [0.1, 0.2, 0.3]
-                }
-            }
-        },
-        {
-            "name": "invalid KHR_materials_clearcoat clearcoatTexture",
-            "extensions": {
-                "KHR_materials_clearcoat": {
-                    "clearcoatTexture": {
-                        "index": 2
-                    }
-                }
-            }
-        },
-        {
-            "name": "invalid KHR_materials_clearcoat clearcoatRoughnessFactor property",
-            "extensions": {
-                "KHR_materials_clearcoat": {
-                    "clearcoatRoughnessFactor": true
-                }
-            }
-        },
-        {
-            "name": "invalid KHR_materials_clearcoat clearcoatRoughnessTexture",
-            "extensions": {
-                "KHR_materials_clearcoat": {
-                    "clearcoatRoughnessTexture": {
-                        "index": 2
-                    }
-                }
-            }
-        },
-        {
-            "name": "invalid KHR_materials_clearcoat clearcoatNormalTexture",
-            "extensions": {
-                "KHR_materials_clearcoat": {
-                    "clearcoatNormalTexture": {
-                        "index": 2
-                    }
-                }
-            }
-        },
-        {
-            "name": "invalid KHR_materials_clearcoat clearcoatNormalTexture scale property",
-            "extensions": {
-                "KHR_materials_clearcoat": {
-                    "clearcoatNormalTexture": {
-                        "index": 0,
-                        "scale": false
-                    }
-                }
-            }
-        },
-        {
-            "name": "invalid texture object",
-            "pbrMetallicRoughness": {
-                "baseColorTexture": 2
-            }
-        },
-        {
-            "name": "missing texture object index property",
-            "pbrMetallicRoughness": {
-                "baseColorTexture": {}
-            }
-        },
-        {
-            "name": "invalid texture object index property",
-            "pbrMetallicRoughness": {
-                "baseColorTexture": {
-                    "index": -2
-                }
-            }
-        },
-        {
-            "name": "invalid texture object texCoord property",
-            "pbrMetallicRoughness": {
-                "baseColorTexture": {
-                    "index": 1,
-                    "texCoord": -1
-                }
-            }
-        },
-        {
-            "name": "invalid texture object extensions property",
-            "pbrMetallicRoughness": {
-                "baseColorTexture": {
-                    "index": 1,
-                    "extensions": []
-                }
-            }
-        },
-        {
-            "name": "invalid texture object KHR_texture_transform extension",
-            "pbrMetallicRoughness": {
-                "baseColorTexture": {
-                    "index": 1,
-                    "extensions": {
-                        "KHR_texture_transform": null
-                    }
-                }
-            }
-        },
-        {
-            "name": "invalid texture object KHR_texture_transform texCoord property",
-            "pbrMetallicRoughness": {
-                "baseColorTexture": {
-                    "index": 1,
-                    "extensions": {
-                        "KHR_texture_transform": {
-                            "texCoord": -1
-                        }
-                    }
-                }
-            }
-        },
-        {
-            "name": "invalid texture object KHR_texture_transform scale property",
-            "pbrMetallicRoughness": {
-                "baseColorTexture": {
-                    "index": 1,
-                    "extensions": {
-                        "KHR_texture_transform": {
-                            "scale": 2.0
-                        }
-                    }
-                }
-            }
-        },
-        {
-            "name": "invalid texture object KHR_texture_transform scale array size",
-            "pbrMetallicRoughness": {
-                "baseColorTexture": {
-                    "index": 1,
-                    "extensions": {
-                        "KHR_texture_transform": {
-                            "scale": [2.0]
-                        }
-                    }
-                }
-            }
-        },
-        {
-            "name": "invalid texture object KHR_texture_transform rotation property",
-            "pbrMetallicRoughness": {
-                "baseColorTexture": {
-                    "index": 1,
-                    "extensions": {
-                        "KHR_texture_transform": {
-                            "rotation": [1.0, 0.0]
-                        }
-                    }
-                }
-            }
-        },
-        {
-            "name": "invalid texture object KHR_texture_transform offset property",
-            "pbrMetallicRoughness": {
-                "baseColorTexture": {
-                    "index": 1,
-                    "extensions": {
-                        "KHR_texture_transform": {
-                            "offset": 2.0
-                        }
-                    }
-                }
-            }
-        },
-        {
-            "name": "invalid texture object KHR_texture_transform offset array size",
-            "pbrMetallicRoughness": {
-                "baseColorTexture": {
-                    "index": 1,
-                    "extensions": {
-                        "KHR_texture_transform": {
-                            "offset": [2.0]
-                        }
-                    }
-                }
-            }
+    {
+      "name": "unrecognized alpha mode",
+      "alphaMode": "WAT"
+    },
+    {
+      "name": "invalid alphaCutoff property",
+      "alphaMode": "MASK",
+      "alphaCutoff": "YES"
+    },
+    {
+      "name": "invalid doubleSided property",
+      "doubleSided": null
+    },
+    {
+      "name": "invalid pbrMetallicRoughness property",
+      "pbrMetallicRoughness": [0.5, 0.6, 0.7, 1.0]
+    },
+    {
+      "name": "invalid pbrMetallicRoughness baseColorFactor property",
+      "pbrMetallicRoughness": {
+        "baseColorFactor": "#ff3366"
+      }
+    },
+    {
+      "name": "invalid pbrMetallicRoughness baseColorFactor array size",
+      "pbrMetallicRoughness": {
+        "baseColorFactor": [0.5, 0.6, 0.7]
+      }
+    },
+    {
+      "name": "invalid pbrMetallicRoughness baseColorTexture",
+      "pbrMetallicRoughness": {
+        "baseColorTexture": {
+          "index": 2
         }
-    ],
-    "textures": [
-        {}, {}
-    ],
-    "extensionsUsed": [
-        "KHR_materials_clearcoat",
-        "KHR_materials_pbrSpecularGlossiness"
-    ]
+      }
+    },
+    {
+      "name": "invalid pbrMetallicRoughness metallicFactor property",
+      "pbrMetallicRoughness": {
+        "metallicFactor": false
+      }
+    },
+    {
+      "name": "invalid pbrMetallicRoughness roughnessFactor property",
+      "pbrMetallicRoughness": {
+        "roughnessFactor": true
+      }
+    },
+    {
+      "name": "invalid pbrMetallicRoughness metallicRoughnessTexture",
+      "pbrMetallicRoughness": {
+        "metallicRoughnessTexture": {
+          "index": 2
+        }
+      }
+    },
+    {
+      "name": "invalid extensions property",
+      "extensions": []
+    },
+    {
+      "name": "invalid extension",
+      "extensions": {
+        "KHR_materials_unlit": null
+      }
+    },
+    {
+      "name": "invalid KHR_materials_pbrSpecularGlossiness diffuseFactor property",
+      "extensions": {
+        "KHR_materials_pbrSpecularGlossiness": {
+          "diffuseFactor": "#ff3366"
+        }
+      }
+    },
+    {
+      "name": "invalid KHR_materials_pbrSpecularGlossiness diffuseFactor array size",
+      "extensions": {
+        "KHR_materials_pbrSpecularGlossiness": {
+          "diffuseFactor": [0.5, 0.6, 0.7]
+        }
+      }
+    },
+    {
+      "name": "invalid KHR_materials_pbrSpecularGlossiness diffuseTexture",
+      "extensions": {
+        "KHR_materials_pbrSpecularGlossiness": {
+          "diffuseTexture": {
+            "index": 2
+          }
+        }
+      }
+    },
+    {
+      "name": "invalid KHR_materials_pbrSpecularGlossiness specularFactor property",
+      "extensions": {
+        "KHR_materials_pbrSpecularGlossiness": {
+          "specularFactor": "#ff3366"
+        }
+      }
+    },
+    {
+      "name": "invalid KHR_materials_pbrSpecularGlossiness specularFactor array size",
+      "extensions": {
+        "KHR_materials_pbrSpecularGlossiness": {
+          "specularFactor": [0.5, 0.6, 0.7, 1.0]
+        }
+      }
+    },
+    {
+      "name": "invalid KHR_materials_pbrSpecularGlossiness glossinessFactor property",
+      "extensions": {
+        "KHR_materials_pbrSpecularGlossiness": {
+          "glossinessFactor": true
+        }
+      }
+    },
+    {
+      "name": "invalid KHR_materials_pbrSpecularGlossiness specularGlossinessTexture",
+      "extensions": {
+        "KHR_materials_pbrSpecularGlossiness": {
+          "specularGlossinessTexture": {
+            "index": 2
+          }
+        }
+      }
+    },
+    {
+      "name": "invalid normalTexture",
+      "normalTexture": {
+        "index": 2
+      }
+    },
+    {
+      "name": "invalid normalTexture scale property",
+      "normalTexture": {
+        "index": 0,
+        "scale": false
+      }
+    },
+    {
+      "name": "invalid occlusionTexture",
+      "occlusionTexture": {
+        "index": 2
+      }
+    },
+    {
+      "name": "invalid occlusionTexture strength property",
+      "occlusionTexture": {
+        "index": 0,
+        "strength": "hard"
+      }
+    },
+    {
+      "name": "invalid emissiveFactor property",
+      "emissiveFactor": 2.0
+    },
+    {
+      "name": "invalid emissiveFactor array size",
+      "emissiveFactor": [2.0, 3.0, 4.0, 1.0]
+    },
+    {
+      "name": "invalid emissiveTexture",
+      "emissiveTexture": {
+        "index": 2
+      }
+    },
+    {
+      "name": "invalid KHR_materials_clearcoat clearcoatFactor property",
+      "extensions": {
+        "KHR_materials_clearcoat": {
+          "clearcoatFactor": [0.1, 0.2, 0.3]
+        }
+      }
+    },
+    {
+      "name": "invalid KHR_materials_clearcoat clearcoatTexture",
+      "extensions": {
+        "KHR_materials_clearcoat": {
+          "clearcoatTexture": {
+            "index": 2
+          }
+        }
+      }
+    },
+    {
+      "name": "invalid KHR_materials_clearcoat clearcoatRoughnessFactor property",
+      "extensions": {
+        "KHR_materials_clearcoat": {
+          "clearcoatRoughnessFactor": true
+        }
+      }
+    },
+    {
+      "name": "invalid KHR_materials_clearcoat clearcoatRoughnessTexture",
+      "extensions": {
+        "KHR_materials_clearcoat": {
+          "clearcoatRoughnessTexture": {
+            "index": 2
+          }
+        }
+      }
+    },
+    {
+      "name": "invalid KHR_materials_clearcoat clearcoatNormalTexture",
+      "extensions": {
+        "KHR_materials_clearcoat": {
+          "clearcoatNormalTexture": {
+            "index": 2
+          }
+        }
+      }
+    },
+    {
+      "name": "invalid KHR_materials_clearcoat clearcoatNormalTexture scale property",
+      "extensions": {
+        "KHR_materials_clearcoat": {
+          "clearcoatNormalTexture": {
+            "index": 0,
+            "scale": false
+          }
+        }
+      }
+    },
+    {
+      "name": "invalid texture object",
+      "pbrMetallicRoughness": {
+        "baseColorTexture": 2
+      }
+    },
+    {
+      "name": "missing texture object index property",
+      "pbrMetallicRoughness": {
+        "baseColorTexture": {}
+      }
+    },
+    {
+      "name": "invalid texture object index property",
+      "pbrMetallicRoughness": {
+        "baseColorTexture": {
+          "index": -2
+        }
+      }
+    },
+    {
+      "name": "invalid texture object texCoord property",
+      "pbrMetallicRoughness": {
+        "baseColorTexture": {
+          "index": 1,
+          "texCoord": -1
+        }
+      }
+    },
+    {
+      "name": "invalid texture object extensions property",
+      "pbrMetallicRoughness": {
+        "baseColorTexture": {
+          "index": 1,
+          "extensions": []
+        }
+      }
+    },
+    {
+      "name": "invalid texture object KHR_texture_transform extension",
+      "pbrMetallicRoughness": {
+        "baseColorTexture": {
+          "index": 1,
+          "extensions": {
+            "KHR_texture_transform": null
+          }
+        }
+      }
+    },
+    {
+      "name": "invalid texture object KHR_texture_transform texCoord property",
+      "pbrMetallicRoughness": {
+        "baseColorTexture": {
+          "index": 1,
+          "extensions": {
+            "KHR_texture_transform": {
+              "texCoord": -1
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "invalid texture object KHR_texture_transform scale property",
+      "pbrMetallicRoughness": {
+        "baseColorTexture": {
+          "index": 1,
+          "extensions": {
+            "KHR_texture_transform": {
+              "scale": 2.0
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "invalid texture object KHR_texture_transform scale array size",
+      "pbrMetallicRoughness": {
+        "baseColorTexture": {
+          "index": 1,
+          "extensions": {
+            "KHR_texture_transform": {
+              "scale": [2.0]
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "invalid texture object KHR_texture_transform rotation property",
+      "pbrMetallicRoughness": {
+        "baseColorTexture": {
+          "index": 1,
+          "extensions": {
+            "KHR_texture_transform": {
+              "rotation": [1.0, 0.0]
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "invalid texture object KHR_texture_transform offset property",
+      "pbrMetallicRoughness": {
+        "baseColorTexture": {
+          "index": 1,
+          "extensions": {
+            "KHR_texture_transform": {
+              "offset": 2.0
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "invalid texture object KHR_texture_transform offset array size",
+      "pbrMetallicRoughness": {
+        "baseColorTexture": {
+          "index": 1,
+          "extensions": {
+            "KHR_texture_transform": {
+              "offset": [2.0]
+            }
+          }
+        }
+      }
+    }
+  ],
+  "textures": [
+    {},
+    {}
+  ],
+  "extensionsUsed": [
+    "KHR_materials_clearcoat",
+    "KHR_materials_pbrSpecularGlossiness"
+  ]
 }

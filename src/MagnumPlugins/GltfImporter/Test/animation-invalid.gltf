@@ -1,566 +1,567 @@
 {
-    "asset": {
-        "version": "2.0"
+  "asset": {
+    "version": "2.0"
+  },
+  "nodes": [
+    {},
+    {}
+  ],
+  "animations": [
+    {
+      "name": "unexpected time type",
+      "channels": [
+        {
+          "sampler": 0,
+          "target": {
+            "node": 0,
+            "path": "rotation"
+          }
+        }
+      ],
+      "samplers": [
+        {
+          "input": 0,
+          "interpolation": "LINEAR",
+          "output": 0
+        }
+      ]
     },
-    "nodes": [
-        {}, {}
-    ],
-    "animations": [
+    {
+      "name": "unsupported interpolation type",
+      "channels": [
         {
-            "name": "unexpected time type",
-            "channels": [
-                {
-                    "sampler": 0,
-                    "target": {
-                        "node": 0,
-                        "path": "rotation"
-                    }
-                }
-            ],
-            "samplers": [
-                {
-                    "input": 0,
-                    "interpolation": "LINEAR",
-                    "output": 0
-                }
-            ]
-        },
-        {
-            "name": "unsupported interpolation type",
-            "channels": [
-                {
-                    "sampler": 0,
-                    "target": {
-                        "node": 0,
-                        "path": "rotation"
-                    }
-                }
-            ],
-            "samplers": [
-                {
-                    "input": 1,
-                    "interpolation": "QUADRATIC",
-                    "output": 0
-                }
-            ]
-        },
-        {
-            "name": "unexpected translation type",
-            "channels": [
-                {
-                    "sampler": 0,
-                    "target": {
-                        "node": 0,
-                        "path": "translation"
-                    }
-                }
-            ],
-            "samplers": [
-                {
-                    "input": 1,
-                    "interpolation": "LINEAR",
-                    "output": 0
-                }
-            ]
-        },
-        {
-            "name": "unexpected rotation type",
-            "channels": [
-                {
-                    "sampler": 0,
-                    "target": {
-                        "node": 0,
-                        "path": "rotation"
-                    }
-                }
-            ],
-            "samplers": [
-                {
-                    "input": 1,
-                    "interpolation": "LINEAR",
-                    "output": 1
-                }
-            ]
-        },
-        {
-            "name": "unexpected scaling type",
-            "channels": [
-                {
-                    "sampler": 0,
-                    "target": {
-                        "node": 0,
-                        "path": "scale"
-                    }
-                }
-            ],
-            "samplers": [
-                {
-                    "input": 1,
-                    "interpolation": "LINEAR",
-                    "output": 0
-                }
-            ]
-        },
-        {
-            "name": "unsupported path",
-            "channels": [
-                {
-                    "sampler": 0,
-                    "target": {
-                        "node": 0,
-                        "path": "color"
-                    }
-                }
-            ],
-            "samplers": [
-                {
-                    "input": 1,
-                    "interpolation": "STEP",
-                    "output": 0
-                }
-            ]
-        },
-        {
-            "name": "invalid input accessor",
-            "channels": [
-                {
-                    "sampler": 0,
-                    "target": {
-                        "node": 0,
-                        "path": "translation"
-                    }
-                }
-            ],
-            "samplers": [
-                {
-                    "input": 3,
-                    "interpolation": "STEP",
-                    "output": 2
-                }
-            ]
-        },
-        {
-            "name": "invalid output accessor",
-            "channels": [
-                {
-                    "sampler": 0,
-                    "target": {
-                        "node": 0,
-                        "path": "translation"
-                    }
-                }
-            ],
-            "samplers": [
-                {
-                    "input": 1,
-                    "interpolation": "STEP",
-                    "output": 4
-                }
-            ]
-        },
-        {
-            "name": "sampler index out of bounds",
-            "channels": [
-                {
-                    "sampler": 1,
-                    "target": {
-                        "node": 0,
-                        "path": "translation"
-                    }
-                }
-            ],
-            "samplers": [
-                {
-                    "input": 0,
-                    "interpolation": "LINEAR",
-                    "output": 1
-                }
-            ]
-        },
-        {
-            "name": "node index out of bounds",
-            "channels": [
-                {
-                    "sampler": 0,
-                    "target": {
-                        "node": 2,
-                        "path": "translation"
-                    }
-                }
-            ],
-            "samplers": [
-                {
-                    "input": 1,
-                    "interpolation": "LINEAR",
-                    "output": 2
-                }
-            ]
-        },
-        {
-            "name": "sampler input accessor index out of bounds",
-            "channels": [
-                {
-                    "sampler": 0,
-                    "target": {
-                        "node": 0,
-                        "path": "translation"
-                    }
-                }
-            ],
-            "samplers": [
-                {
-                    "input": 8,
-                    "interpolation": "LINEAR",
-                    "output": 1
-                }
-            ]
-        },
-        {
-            "name": "sampler output accessor index out of bounds",
-            "channels": [
-                {
-                    "sampler": 0,
-                    "target": {
-                        "node": 0,
-                        "path": "translation"
-                    }
-                }
-            ],
-            "samplers": [
-                {
-                    "input": 0,
-                    "interpolation": "LINEAR",
-                    "output": 9
-                }
-            ]
-        },
-        {
-            "name": "track size mismatch",
-            "channels": [
-                {
-                    "sampler": 0,
-                    "target": {
-                        "node": 0,
-                        "path": "translation"
-                    }
-                }
-            ],
-            "samplers": [
-                {
-                    "input": 5,
-                    "interpolation": "LINEAR",
-                    "output": 6
-                }
-            ]
-        },
-        {
-            "name": "missing samplers",
-            "channels": []
-        },
-        {
-            "name": "invalid samplers",
-            "channels": [],
-            "samplers": {}
-        },
-        {
-            "name": "invalid sampler",
-            "channels": [],
-            "samplers": [
-                5
-            ]
-        },
-        {
-            "name": "missing sampler input",
-            "channels": [],
-            "samplers": [
-                {
-                    "output": 6
-                }
-            ]
-        },
-        {
-            "name": "invalid sampler input",
-            "channels": [],
-            "samplers": [
-                {
-                    "input": -1,
-                    "output": 7
-                }
-            ]
-        },
-        {
-            "name": "missing sampler output",
-            "channels": [],
-            "samplers": [
-                {
-                    "input": 5
-                }
-            ]
-        },
-        {
-            "name": "invalid sampler output",
-            "channels": [],
-            "samplers": [
-                {
-                    "input": 5,
-                    "output": -1
-                }
-            ]
-        },
-        {
-            "name": "invalid sampler interpolation",
-            "channels": [],
-            "samplers": [
-                {
-                    "input": 5,
-                    "interpolation": true,
-                    "output": 7
-                }
-            ]
-        },
-        {
-            "name": "missing channels",
-            "samplers": [
-                {
-                    "input": 5,
-                    "output": 7
-                }
-            ]
-        },
-        {
-            "name": "invalid channels",
-            "channels": {},
-            "samplers": [
-                {
-                    "input": 5,
-                    "output": 7
-                }
-            ]
-        },
-        {
-            "name": "invalid channel",
-            "channels": [
-                0
-            ],
-            "samplers": [
-                {
-                    "input": 5,
-                    "output": 7
-                }
-            ]
-        },
-        {
-            "name": "missing channel target",
-            "channels": [
-                {
-                    "sampler": 0,
-                    "target": {
-                        "node": 0,
-                        "path": "translation"
-                    }
-                },
-                {
-                    "sampler": 0
-                }
-            ],
-            "samplers": [
-                {
-                    "input": 5,
-                    "output": 7
-                }
-            ]
-        },
-        {
-            "name": "invalid channel target",
-            "channels": [
-                {
-                    "sampler": 0,
-                    "target": "translation"
-                }
-            ],
-            "samplers": [
-                {
-                    "input": 5,
-                    "output": 7
-                }
-            ]
-        },
-        {
-            "name": "invalid channel target node",
-            "channels": [
-                {
-                    "sampler": 0,
-                    "target": {
-                        "node": 0,
-                        "path": "translation"
-                    }
-                },
-                {
-                    "sampler": 0,
-                    "target": {
-                        "node": -1,
-                        "path": "translation"
-                    }
-                }
-            ],
-            "samplers": [
-                {
-                    "input": 5,
-                    "output": 7
-                }
-            ]
-        },
-        {
-            "name": "missing channel target path",
-            "channels": [
-                {
-                    "sampler": 0,
-                    "target": {
-                        "node": 0,
-                        "path": "translation"
-                    }
-                },
-                {
-                    "sampler": 0,
-                    "target": {
-                        "node": 0
-                    }
-                }
-            ],
-            "samplers": [
-                {
-                    "input": 5,
-                    "output": 7
-                }
-            ]
-        },
-        {
-            "name": "invalid channel target path",
-            "channels": [
-                {
-                    "sampler": 0,
-                    "target": {
-                        "node": 0,
-                        "path": null
-                    }
-                }
-            ],
-            "samplers": [
-                {
-                    "input": 5,
-                    "output": 7
-                }
-            ]
-        },
-        {
-            "name": "missing channel sampler",
-            "channels": [
-                {
-                    "sampler": 0,
-                    "target": {
-                        "node": 0,
-                        "path": "translation"
-                    }
-                },
-                {
-                    "target": {
-                        "node": 0,
-                        "path": "translation"
-                    }
-                }
-            ],
-            "samplers": [
-                {
-                    "input": 5,
-                    "output": 7
-                }
-            ]
-        },
-        {
-            "name": "invalid channel sampler",
-            "channels": [
-                {
-                    "sampler": -1,
-                    "target": {
-                        "node": 0,
-                        "path": "translation"
-                    }
-                }
-            ],
-            "samplers": [
-                {
-                    "input": 5,
-                    "output": 7
-                }
-            ]
+          "sampler": 0,
+          "target": {
+            "node": 0,
+            "path": "rotation"
+          }
         }
-    ],
-    "note": "full accessor checks are tested inside mesh-invalid.gltf, this only verifies the errors are propagated correctly",
-    "accessors": [
+      ],
+      "samplers": [
         {
-            "bufferView": 0,
-            "componentType": 5126,
-            "count": 0,
-            "type": "VEC4"
-        },
-        {
-            "bufferView": 0,
-            "componentType": 5126,
-            "count": 0,
-            "type": "SCALAR"
-        },
-        {
-            "bufferView": 0,
-            "componentType": 5126,
-            "count": 0,
-            "type": "VEC3"
-        },
-        {
-            "bufferView": 0,
-            "componentType": 5126,
-            "count": 10,
-            "type": "SCALAR"
-        },
-        {
-            "bufferView": 0,
-            "componentType": 5126,
-            "count": 10,
-            "type": "VEC3"
-        },
-        {
-            "bufferView": 1,
-            "componentType": 5126,
-            "count": 2,
-            "type": "SCALAR"
-        },
-        {
-            "bufferView": 1,
-            "componentType": 5126,
-            "count": 3,
-            "type": "VEC3"
-        },
-        {
-            "bufferView": 1,
-            "componentType": 5126,
-            "count": 2,
-            "type": "VEC3"
+          "input": 1,
+          "interpolation": "QUADRATIC",
+          "output": 0
         }
-    ],
-    "bufferViews": [
+      ]
+    },
+    {
+      "name": "unexpected translation type",
+      "channels": [
         {
-            "buffer": 0,
-            "byteLength": 0
+          "sampler": 0,
+          "target": {
+            "node": 0,
+            "path": "translation"
+          }
+        }
+      ],
+      "samplers": [
+        {
+          "input": 1,
+          "interpolation": "LINEAR",
+          "output": 0
+        }
+      ]
+    },
+    {
+      "name": "unexpected rotation type",
+      "channels": [
+        {
+          "sampler": 0,
+          "target": {
+            "node": 0,
+            "path": "rotation"
+          }
+        }
+      ],
+      "samplers": [
+        {
+          "input": 1,
+          "interpolation": "LINEAR",
+          "output": 1
+        }
+      ]
+    },
+    {
+      "name": "unexpected scaling type",
+      "channels": [
+        {
+          "sampler": 0,
+          "target": {
+            "node": 0,
+            "path": "scale"
+          }
+        }
+      ],
+      "samplers": [
+        {
+          "input": 1,
+          "interpolation": "LINEAR",
+          "output": 0
+        }
+      ]
+    },
+    {
+      "name": "unsupported path",
+      "channels": [
+        {
+          "sampler": 0,
+          "target": {
+            "node": 0,
+            "path": "color"
+          }
+        }
+      ],
+      "samplers": [
+        {
+          "input": 1,
+          "interpolation": "STEP",
+          "output": 0
+        }
+      ]
+    },
+    {
+      "name": "invalid input accessor",
+      "channels": [
+        {
+          "sampler": 0,
+          "target": {
+            "node": 0,
+            "path": "translation"
+          }
+        }
+      ],
+      "samplers": [
+        {
+          "input": 3,
+          "interpolation": "STEP",
+          "output": 2
+        }
+      ]
+    },
+    {
+      "name": "invalid output accessor",
+      "channels": [
+        {
+          "sampler": 0,
+          "target": {
+            "node": 0,
+            "path": "translation"
+          }
+        }
+      ],
+      "samplers": [
+        {
+          "input": 1,
+          "interpolation": "STEP",
+          "output": 4
+        }
+      ]
+    },
+    {
+      "name": "sampler index out of bounds",
+      "channels": [
+        {
+          "sampler": 1,
+          "target": {
+            "node": 0,
+            "path": "translation"
+          }
+        }
+      ],
+      "samplers": [
+        {
+          "input": 0,
+          "interpolation": "LINEAR",
+          "output": 1
+        }
+      ]
+    },
+    {
+      "name": "node index out of bounds",
+      "channels": [
+        {
+          "sampler": 0,
+          "target": {
+            "node": 2,
+            "path": "translation"
+          }
+        }
+      ],
+      "samplers": [
+        {
+          "input": 1,
+          "interpolation": "LINEAR",
+          "output": 2
+        }
+      ]
+    },
+    {
+      "name": "sampler input accessor index out of bounds",
+      "channels": [
+        {
+          "sampler": 0,
+          "target": {
+            "node": 0,
+            "path": "translation"
+          }
+        }
+      ],
+      "samplers": [
+        {
+          "input": 8,
+          "interpolation": "LINEAR",
+          "output": 1
+        }
+      ]
+    },
+    {
+      "name": "sampler output accessor index out of bounds",
+      "channels": [
+        {
+          "sampler": 0,
+          "target": {
+            "node": 0,
+            "path": "translation"
+          }
+        }
+      ],
+      "samplers": [
+        {
+          "input": 0,
+          "interpolation": "LINEAR",
+          "output": 9
+        }
+      ]
+    },
+    {
+      "name": "track size mismatch",
+      "channels": [
+        {
+          "sampler": 0,
+          "target": {
+            "node": 0,
+            "path": "translation"
+          }
+        }
+      ],
+      "samplers": [
+        {
+          "input": 5,
+          "interpolation": "LINEAR",
+          "output": 6
+        }
+      ]
+    },
+    {
+      "name": "missing samplers",
+      "channels": []
+    },
+    {
+      "name": "invalid samplers",
+      "channels": [],
+      "samplers": {}
+    },
+    {
+      "name": "invalid sampler",
+      "channels": [],
+      "samplers": [
+        5
+      ]
+    },
+    {
+      "name": "missing sampler input",
+      "channels": [],
+      "samplers": [
+        {
+          "output": 6
+        }
+      ]
+    },
+    {
+      "name": "invalid sampler input",
+      "channels": [],
+      "samplers": [
+        {
+          "input": -1,
+          "output": 7
+        }
+      ]
+    },
+    {
+      "name": "missing sampler output",
+      "channels": [],
+      "samplers": [
+        {
+          "input": 5
+        }
+      ]
+    },
+    {
+      "name": "invalid sampler output",
+      "channels": [],
+      "samplers": [
+        {
+          "input": 5,
+          "output": -1
+        }
+      ]
+    },
+    {
+      "name": "invalid sampler interpolation",
+      "channels": [],
+      "samplers": [
+        {
+          "input": 5,
+          "interpolation": true,
+          "output": 7
+        }
+      ]
+    },
+    {
+      "name": "missing channels",
+      "samplers": [
+        {
+          "input": 5,
+          "output": 7
+        }
+      ]
+    },
+    {
+      "name": "invalid channels",
+      "channels": {},
+      "samplers": [
+        {
+          "input": 5,
+          "output": 7
+        }
+      ]
+    },
+    {
+      "name": "invalid channel",
+      "channels": [
+        0
+      ],
+      "samplers": [
+        {
+          "input": 5,
+          "output": 7
+        }
+      ]
+    },
+    {
+      "name": "missing channel target",
+      "channels": [
+        {
+          "sampler": 0,
+          "target": {
+            "node": 0,
+            "path": "translation"
+          }
         },
         {
-            "buffer": 0,
-            "byteLength": 36
+          "sampler": 0
         }
-    ],
-    "buffers": [
+      ],
+      "samplers": [
         {
-            "byteLength": 36,
-            "comment": "base64.b64encode(bytes(36))",
-            "uri": "data:application/octet-stream;base64,AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+          "input": 5,
+          "output": 7
         }
-    ]
+      ]
+    },
+    {
+      "name": "invalid channel target",
+      "channels": [
+        {
+          "sampler": 0,
+          "target": "translation"
+        }
+      ],
+      "samplers": [
+        {
+          "input": 5,
+          "output": 7
+        }
+      ]
+    },
+    {
+      "name": "invalid channel target node",
+      "channels": [
+        {
+          "sampler": 0,
+          "target": {
+            "node": 0,
+            "path": "translation"
+          }
+        },
+        {
+          "sampler": 0,
+          "target": {
+            "node": -1,
+            "path": "translation"
+          }
+        }
+      ],
+      "samplers": [
+        {
+          "input": 5,
+          "output": 7
+        }
+      ]
+    },
+    {
+      "name": "missing channel target path",
+      "channels": [
+        {
+          "sampler": 0,
+          "target": {
+            "node": 0,
+            "path": "translation"
+          }
+        },
+        {
+          "sampler": 0,
+          "target": {
+            "node": 0
+          }
+        }
+      ],
+      "samplers": [
+        {
+          "input": 5,
+          "output": 7
+        }
+      ]
+    },
+    {
+      "name": "invalid channel target path",
+      "channels": [
+        {
+          "sampler": 0,
+          "target": {
+            "node": 0,
+            "path": null
+          }
+        }
+      ],
+      "samplers": [
+        {
+          "input": 5,
+          "output": 7
+        }
+      ]
+    },
+    {
+      "name": "missing channel sampler",
+      "channels": [
+        {
+          "sampler": 0,
+          "target": {
+            "node": 0,
+            "path": "translation"
+          }
+        },
+        {
+          "target": {
+            "node": 0,
+            "path": "translation"
+          }
+        }
+      ],
+      "samplers": [
+        {
+          "input": 5,
+          "output": 7
+        }
+      ]
+    },
+    {
+      "name": "invalid channel sampler",
+      "channels": [
+        {
+          "sampler": -1,
+          "target": {
+            "node": 0,
+            "path": "translation"
+          }
+        }
+      ],
+      "samplers": [
+        {
+          "input": 5,
+          "output": 7
+        }
+      ]
+    }
+  ],
+  "note": "full accessor checks are tested inside mesh-invalid.gltf, this only verifies the errors are propagated correctly",
+  "accessors": [
+    {
+      "bufferView": 0,
+      "componentType": 5126,
+      "count": 0,
+      "type": "VEC4"
+    },
+    {
+      "bufferView": 0,
+      "componentType": 5126,
+      "count": 0,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 0,
+      "componentType": 5126,
+      "count": 0,
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 0,
+      "componentType": 5126,
+      "count": 10,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 0,
+      "componentType": 5126,
+      "count": 10,
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 1,
+      "componentType": 5126,
+      "count": 2,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 1,
+      "componentType": 5126,
+      "count": 3,
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 1,
+      "componentType": 5126,
+      "count": 2,
+      "type": "VEC3"
+    }
+  ],
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteLength": 0
+    },
+    {
+      "buffer": 0,
+      "byteLength": 36
+    }
+  ],
+  "buffers": [
+    {
+      "byteLength": 36,
+      "comment": "base64.b64encode(bytes(36))",
+      "uri": "data:application/octet-stream;base64,AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+    }
+  ]
 }

@@ -1,1055 +1,1055 @@
 {
-    "asset": {
-        "version": "2.0"
+  "asset": {
+    "version": "2.0"
+  },
+  "meshes": [
+    {
+      "name": "unrecognized primitive",
+      "primitives": [
+        {
+          "mode": 666,
+          "attributes": {}
+        }
+      ]
     },
-    "meshes": [
+    {
+      "name": "different vertex count for each accessor",
+      "primitives": [
         {
-            "name": "unrecognized primitive",
-            "primitives": [
-                {
-                    "mode": 666,
-                    "attributes": {}
-                }
-            ]
-        },
-        {
-            "name": "different vertex count for each accessor",
-            "primitives": [
-                {
-                    "attributes": {
-                        "POSITION": 0,
-                        "TEXCOORD_0": 1
-                    }
-                }
-            ]
-        },
-        {
-            "name": "unexpected position type",
-            "primitives": [
-                {
-                    "attributes": {
-                        "POSITION": 2
-                    }
-                }
-            ]
-        },
-        {
-            "name": "unsupported position component type",
-            "primitives": [
-                {
-                    "attributes": {
-                        "POSITION": 3
-                    }
-                }
-            ]
-        },
-        {
-            "name": "unexpected normal type",
-            "primitives": [
-                {
-                    "attributes": {
-                        "NORMAL": 2
-                    }
-                }
-            ]
-        },
-        {
-            "name": "unsupported normal component type",
-            "primitives": [
-                {
-                    "attributes": {
-                        "NORMAL": 3
-                    }
-                }
-            ]
-        },
-        {
-            "name": "unexpected tangent type",
-            "primitives": [
-                {
-                    "attributes": {
-                        "TANGENT": 0
-                    }
-                }
-            ]
-        },
-        {
-            "name": "unsupported tangent component type",
-            "primitives": [
-                {
-                    "attributes": {
-                        "TANGENT": 5
-                    }
-                }
-            ]
-        },
-        {
-            "name": "unexpected texcoord type",
-            "primitives": [
-                {
-                    "attributes": {
-                        "TEXCOORD_0": 3
-                    }
-                }
-            ]
-        },
-        {
-            "name": "unsupported texcoord component type",
-            "primitives": [
-                {
-                    "attributes": {
-                        "TEXCOORD_0": 4
-                    }
-                }
-            ]
-        },
-        {
-            "name": "unexpected color type",
-            "primitives": [
-                {
-                    "attributes": {
-                        "COLOR_0": 1
-                    }
-                }
-            ]
-        },
-        {
-            "name": "unsupported color component type",
-            "primitives": [
-                {
-                    "attributes": {
-                        "COLOR_0": 5
-                    }
-                }
-            ]
-        },
-        {
-            "name": "unexpected joints type",
-            "primitives": [
-                {
-                    "attributes": {
-                        "JOINTS_0": 0
-                    }
-                }
-            ]
-        },
-        {
-            "name": "unsupported joints component type",
-            "primitives": [
-                {
-                    "attributes": {
-                        "JOINTS_0": 5
-                    }
-                }
-            ]
-        },
-        {
-            "name": "unexpected weights type",
-            "primitives": [
-                {
-                    "attributes": {
-                        "WEIGHTS_0": 7
-                    }
-                }
-            ]
-        },
-        {
-            "name": "unsupported weights component type",
-            "primitives": [
-                {
-                    "attributes": {
-                        "WEIGHTS_0": 5
-                    }
-                }
-            ]
-        },
-        {
-            "name": "unexpected object id type",
-            "primitives": [
-                {
-                    "attributes": {
-                        "_OBJECT_ID": 6
-                    }
-                }
-            ]
-        },
-        {
-            "name": "unsupported object id component type",
-            "primitives": [
-                {
-                    "attributes": {
-                        "_OBJECT_ID": 7
-                    }
-                }
-            ]
-        },
-        {
-            "name": "unexpected index type",
-            "primitives": [
-                {
-                    "attributes": {},
-                    "indices": 6
-                }
-            ]
-        },
-        {
-            "name": "unsupported index component type",
-            "primitives": [
-                {
-                    "attributes": {},
-                    "indices": 7
-                }
-            ]
-        },
-        {
-            "name": "normalized index type",
-            "primitives": [
-                {
-                    "attributes": {},
-                    "indices": 8
-                }
-            ]
-        },
-        {
-            "name": "strided index view",
-            "primitives": [
-                {
-                    "attributes": {},
-                    "indices": 9
-                }
-            ]
-        },
-        {
-            "name": "accessor type size larger than buffer stride",
-            "primitives": [
-                {
-                    "attributes": {
-                        "COLOR_0": 10
-                    }
-                }
-            ]
-        },
-        {
-            "name": "normalized float",
-            "primitives": [
-                {
-                    "attributes": {
-                        "_THING": 11
-                    }
-                }
-            ]
-        },
-        {
-            "name": "normalized int",
-            "primitives": [
-                {
-                    "attributes": {
-                        "_THING": 12
-                    }
-                }
-            ]
-        },
-        {
-            "name": "non-normalized byte matrix",
-            "primitives": [
-                {
-                    "attributes": {
-                        "_THING": 13
-                    }
-                }
-            ]
-        },
-        {
-            "name": "unknown type",
-            "primitives": [
-                {
-                    "attributes": {
-                        "_THING": 22
-                    }
-                }
-            ]
-        },
-        {
-            "name": "unknown component type",
-            "primitives": [
-                {
-                    "attributes": {
-                        "_THING": 23
-                    }
-                }
-            ]
-        },
-        {
-            "name": "sparse accessor",
-            "primitives": [
-                {
-                    "attributes": {
-                        "POSITION": 14
-                    }
-                }
-            ]
-        },
-        {
-            "name": "multiple buffers",
-            "primitives": [
-                {
-                    "attributes": {
-                        "POSITION": 0,
-                        "TEXCOORD_0": 16
-                    }
-                }
-            ]
-        },
-        {
-            "name": "invalid index accessor",
-            "primitives": [
-                {
-                    "attributes": {},
-                    "indices": 17
-                }
-            ]
-        },
-        {
-            "name": "accessor range out of bounds",
-            "primitives": [
-                {
-                    "attributes": {
-                        "POSITION": 18
-                    }
-                }
-            ]
-        },
-        {
-            "name": "buffer view range out of bounds",
-            "primitives": [
-                {
-                    "attributes": {},
-                    "indices": 19
-                }
-            ]
-        },
-        {
-            "name": "buffer index out of bounds",
-            "primitives": [
-                {
-                    "attributes": {
-                        "POSITION": 20
-                    }
-                }
-            ]
-        },
-        {
-            "name": "buffer view index out of bounds",
-            "primitives": [
-                {
-                    "attributes": {
-                        "POSITION": 21
-                    }
-                }
-            ]
-        },
-        {
-            "name": "accessor index out of bounds",
-            "primitives": [
-                {
-                    "attributes": {
-                        "NORMAL": 44
-                    }
-                }
-            ]
-        },
-        {
-            "name": "mesh index accessor out of bounds",
-            "primitives": [
-                {
-                    "attributes": {},
-                    "indices": 44
-                }
-            ]
-        },
-        {
-            "name": "buffer with missing uri property",
-            "primitives": [
-                {
-                    "attributes": {
-                        "POSITION": 24
-                    }
-                }
-            ]
-        },
-        {
-            "name": "buffer with invalid uri property",
-            "primitives": [
-                {
-                    "attributes": {
-                        "POSITION": 25
-                    }
-                }
-            ]
-        },
-        {
-            "name": "buffer with invalid uri",
-            "primitives": [
-                {
-                    "attributes": {
-                        "POSITION": 43
-                    }
-                }
-            ]
-        },
-        {
-            "name": "buffer with missing byteLength property",
-            "primitives": [
-                {
-                    "attributes": {
-                        "POSITION": 26
-                    }
-                }
-            ]
-        },
-        {
-            "name": "buffer with invalid byteLength property",
-            "primitives": [
-                {
-                    "attributes": {
-                        "POSITION": 27
-                    }
-                }
-            ]
-        },
-        {
-            "name": "buffer view with missing buffer property",
-            "primitives": [
-                {
-                    "attributes": {
-                        "POSITION": 28
-                    }
-                }
-            ]
-        },
-        {
-            "name": "buffer view with invalid buffer property",
-            "primitives": [
-                {
-                    "attributes": {
-                        "POSITION": 29
-                    }
-                }
-            ]
-        },
-        {
-            "name": "buffer view with invalid byteOffset property",
-            "primitives": [
-                {
-                    "attributes": {
-                        "POSITION": 30
-                    }
-                }
-            ]
-        },
-        {
-            "name": "buffer view with missing byteLength property",
-            "primitives": [
-                {
-                    "attributes": {
-                        "POSITION": 31
-                    }
-                }
-            ]
-        },
-        {
-            "name": "buffer view with invalid byteLength property",
-            "primitives": [
-                {
-                    "attributes": {
-                        "POSITION": 32
-                    }
-                }
-            ]
-        },
-        {
-            "name": "buffer view with invalid byteStride property",
-            "primitives": [
-                {
-                    "attributes": {
-                        "POSITION": 33
-                    }
-                }
-            ]
-        },
-        {
-            "name": "accessor with missing bufferView property",
-            "primitives": [
-                {
-                    "attributes": {
-                        "POSITION": 15
-                    }
-                }
-            ]
-        },
-        {
-            "name": "accessor with invalid bufferView property",
-            "primitives": [
-                {
-                    "attributes": {
-                        "POSITION": 34
-                    }
-                }
-            ]
-        },
-        {
-            "name": "accessor with invalid byteOffset property",
-            "primitives": [
-                {
-                    "attributes": {
-                        "POSITION": 35
-                    }
-                }
-            ]
-        },
-        {
-            "name": "accessor with missing componentType property",
-            "primitives": [
-                {
-                    "attributes": {
-                        "POSITION": 36
-                    }
-                }
-            ]
-        },
-        {
-            "name": "accessor with invalid componentType property",
-            "primitives": [
-                {
-                    "attributes": {
-                        "POSITION": 37
-                    }
-                }
-            ]
-        },
-        {
-            "name": "accessor with missing count property",
-            "primitives": [
-                {
-                    "attributes": {
-                        "POSITION": 38
-                    }
-                }
-            ]
-        },
-        {
-            "name": "accessor with invalid count property",
-            "primitives": [
-                {
-                    "attributes": {
-                        "POSITION": 39
-                    }
-                }
-            ]
-        },
-        {
-            "name": "accessor with missing type property",
-            "primitives": [
-                {
-                    "attributes": {
-                        "POSITION": 40
-                    }
-                }
-            ]
-        },
-        {
-            "name": "accessor with invalid type property",
-            "primitives": [
-                {
-                    "attributes": {
-                        "POSITION": 41
-                    }
-                }
-            ]
-        },
-        {
-            "name": "accessor with invalid normalized property",
-            "primitives": [
-                {
-                    "attributes": {
-                        "POSITION": 42
-                    }
-                }
-            ]
-        },
-        {
-            "name": "invalid primitive property",
-            "primitives": [
-                {
-                    "mode": -1,
-                    "attributes": {}
-                }
-            ]
-        },
-        {
-            "name": "invalid attribute property",
-            "primitives": [
-                {
-                    "attributes": {
-                        "_WEIRD_EH": -1
-                    }
-                }
-            ]
-        },
-        {
-            "name": "invalid indices property",
-            "primitives": [
-                {
-                    "attributes": {},
-                    "indices": -1
-                }
-            ]
+          "attributes": {
+            "POSITION": 0,
+            "TEXCOORD_0": 1
+          }
         }
-    ],
-    "accessors": [
+      ]
+    },
+    {
+      "name": "unexpected position type",
+      "primitives": [
         {
-            "name": "0",
-            "bufferView": 0,
-            "componentType": 5126,
-            "count": 3,
-            "type": "VEC3"
-        },
-        {
-            "name": "1",
-            "bufferView": 1,
-            "componentType": 5126,
-            "count": 4,
-            "type": "VEC2"
-        },
-        {
-            "name": "2",
-            "bufferView": 0,
-            "componentType": 5126,
-            "count": 3,
-            "type": "VEC2"
-        },
-        {
-            "name": "3",
-            "bufferView": 1,
-            "componentType": 5125,
-            "count": 1,
-            "type": "VEC3"
-        },
-        {
-            "name": "4",
-            "bufferView": 0,
-            "componentType": 5125,
-            "count": 3,
-            "type": "VEC2"
-        },
-        {
-            "name": "5",
-            "bufferView": 0,
-            "componentType": 5120,
-            "count": 3,
-            "type": "VEC4"
-        },
-        {
-            "name": "6",
-            "bufferView": 1,
-            "componentType": 5125,
-            "count": 3,
-            "type": "VEC2"
-        },
-        {
-            "name": "7",
-            "bufferView": 1,
-            "componentType": 5122,
-            "count": 3,
-            "type": "SCALAR"
-        },
-        {
-            "name": "8",
-            "bufferView": 1,
-            "componentType": 5125,
-            "normalized": true,
-            "count": 3,
-            "type": "SCALAR"
-        },
-        {
-            "name": "9",
-            "bufferView": 0,
-            "componentType": 5125,
-            "count": 3,
-            "type": "SCALAR"
-        },
-        {
-            "name": "10",
-            "bufferView": 0,
-            "componentType": 5126,
-            "count": 2,
-            "type": "VEC4"
-        },
-        {
-            "name": "11",
-            "bufferView": 0,
-            "componentType": 5126,
-            "normalized": true,
-            "count": 1,
-            "type": "SCALAR"
-        },
-        {
-            "name": "12",
-            "bufferView": 0,
-            "componentType": 5125,
-            "normalized": true,
-            "count": 1,
-            "type": "SCALAR"
-        },
-        {
-            "name": "13",
-            "bufferView": 1,
-            "componentType": 5120,
-            "normalized": false,
-            "count": 1,
-            "type": "MAT2"
-        },
-        {
-            "name": "14",
-            "bufferView": 0,
-            "componentType": 5126,
-            "count": 1,
-            "type": "VEC3",
-            "sparse": {
-                "count": 1,
-                "indices": {
-                    "bufferView": 1,
-                    "componentType": 5123
-                },
-                "values": {
-                    "bufferView": 0
-                }
-            }
-        },
-        {
-            "name": "15",
-            "componentType": 5126,
-            "count": 1,
-            "type": "VEC3"
-        },
-        {
-            "name": "16",
-            "bufferView": 2,
-            "componentType": 5126,
-            "count": 3,
-            "type": "VEC2"
-        },
-        {
-            "name": "17",
-            "bufferView": 0,
-            "componentType": 5125,
-            "count": 4,
-            "type": "SCALAR"
-        },
-        {
-            "name": "18",
-            "bufferView": 0,
-            "componentType": 5126,
-            "count": 4,
-            "type": "VEC3"
-        },
-        {
-            "name": "19",
-            "bufferView": 3,
-            "componentType": 5126,
-            "count": 3,
-            "type": "VEC3"
-        },
-        {
-            "name": "20",
-            "bufferView": 4,
-            "componentType": 5126,
-            "count": 3,
-            "type": "VEC3"
-        },
-        {
-            "name": "21",
-            "bufferView": 16,
-            "componentType": 5126,
-            "count": 9,
-            "type": "VEC3"
-        },
-        {
-            "name": "22",
-            "bufferView": 0,
-            "componentType": 5126,
-            "count": 0,
-            "type": "EEE"
-        },
-        {
-            "name": "23",
-            "bufferView": 0,
-            "componentType": 9999,
-            "count": 0,
-            "type": "SCALAR"
-        },
-        {
-            "name": "24",
-            "bufferView": 5,
-            "componentType": 5126,
-            "count": 0,
-            "type": "VEC3"
-        },
-        {
-            "name": "25",
-            "bufferView": 6,
-            "componentType": 5126,
-            "count": 0,
-            "type": "VEC3"
-        },
-        {
-            "name": "26",
-            "bufferView": 7,
-            "componentType": 5126,
-            "count": 0,
-            "type": "VEC3"
-        },
-        {
-            "name": "27",
-            "bufferView": 8,
-            "componentType": 5126,
-            "count": 0,
-            "type": "VEC3"
-        },
-        {
-            "name": "28",
-            "bufferView": 9,
-            "componentType": 5126,
-            "count": 0,
-            "type": "VEC3"
-        },
-        {
-            "name": "29",
-            "bufferView": 10,
-            "componentType": 5126,
-            "count": 0,
-            "type": "VEC3"
-        },
-        {
-            "name": "30",
-            "bufferView": 11,
-            "componentType": 5126,
-            "count": 0,
-            "type": "VEC3"
-        },
-        {
-            "name": "31",
-            "bufferView": 12,
-            "componentType": 5126,
-            "count": 0,
-            "type": "VEC3"
-        },
-        {
-            "name": "32",
-            "bufferView": 13,
-            "componentType": 5126,
-            "count": 0,
-            "type": "VEC3"
-        },
-        {
-            "name": "33",
-            "bufferView": 14,
-            "componentType": 5126,
-            "count": 0,
-            "type": "VEC3"
-        },
-        {
-            "name": "34",
-            "bufferView": -1,
-            "componentType": 5126,
-            "count": 0,
-            "type": "VEC3"
-        },
-        {
-            "name": "35",
-            "bufferView": 0,
-            "byteOffset": -1,
-            "componentType": 5126,
-            "count": 0,
-            "type": "VEC3"
-        },
-        {
-            "name": "36",
-            "bufferView": 0,
-            "count": 0,
-            "type": "VEC3"
-        },
-        {
-            "name": "37",
-            "bufferView": 0,
-            "componentType": -1,
-            "count": 0,
-            "type": "VEC3"
-        },
-        {
-            "name": "38",
-            "bufferView": 0,
-            "componentType": 5126,
-            "type": "VEC3"
-        },
-        {
-            "name": "39",
-            "bufferView": 0,
-            "componentType": 5126,
-            "count": -1,
-            "type": "VEC3"
-        },
-        {
-            "name": "40",
-            "bufferView": 0,
-            "componentType": 5126,
-            "count": 0
-        },
-        {
-            "name": "41",
-            "bufferView": 0,
-            "componentType": 5126,
-            "count": 0,
-            "type": 3034
-        },
-        {
-            "name": "42",
-            "bufferView": 0,
-            "componentType": 5126,
-            "count": 0,
-            "type": "VEC3",
-            "normalized": null
-        },
-        {
-            "name": "43",
-            "bufferView": 15,
-            "componentType": 5126,
-            "count": 0,
-            "type": "VEC3"
+          "attributes": {
+            "POSITION": 2
+          }
         }
-    ],
-    "bufferViews": [
+      ]
+    },
+    {
+      "name": "unsupported position component type",
+      "primitives": [
         {
-            "name": "0",
-            "buffer": 0,
-            "byteLength": 36,
-            "byteStride": 12
-        },
-        {
-            "name": "1",
-            "buffer": 0,
-            "byteOffset": 36,
-            "byteLength": 32
-        },
-        {
-            "name": "2",
-            "buffer": 1,
-            "byteLength": 24
-        },
-        {
-            "name": "3",
-            "buffer": 1,
-            "byteOffset": 20,
-            "byteLength": 40
-        },
-        {
-            "name": "4",
-            "buffer": 7,
-            "byteLength": 36,
-            "byteStride": 12
-        },
-        {
-            "name": "5",
-            "buffer": 2,
-            "byteLength": 12
-        },
-        {
-            "name": "6",
-            "buffer": 3,
-            "byteLength": 12
-        },
-        {
-            "name": "7",
-            "buffer": 5,
-            "byteLength": 12
-        },
-        {
-            "name": "8",
-            "buffer": 6,
-            "byteLength": 12
-        },
-        {
-            "name": "9",
-            "byteLength": 12
-        },
-        {
-            "name": "10",
-            "buffer": -1,
-            "byteLength": 12
-        },
-        {
-            "name": "11",
-            "buffer": 0,
-            "byteOffset": -1,
-            "byteLength": 12
-        },
-        {
-            "name": "12",
-            "buffer": 0
-        },
-        {
-            "name": "13",
-            "buffer": 0,
-            "byteLength": -12
-        },
-        {
-            "name": "14",
-            "buffer": 0,
-            "byteLength": 12,
-            "byteStride": -4
-        },
-        {
-            "name": "15",
-            "buffer": 4,
-            "byteLength": 12
+          "attributes": {
+            "POSITION": 3
+          }
         }
-    ],
-    "buffers": [
+      ]
+    },
+    {
+      "name": "unexpected normal type",
+      "primitives": [
         {
-            "name": "0",
-            "byteLength": 68,
-            "comment": "base64.b64encode(bytes(68))",
-            "uri": "data:application/octet-stream;base64,AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
-        },
-        {
-            "name": "1",
-            "byteLength": 59,
-            "comment": "base64.b64encode(bytes(59))",
-            "uri": "data:application/octet-stream;base64,AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
-        },
-        {
-            "name": "2",
-            "byteLength": 12
-        },
-        {
-            "name": "3",
-            "byteLength": 12,
-            "uri": [""]
-        },
-        {
-            "name": "4",
-            "uri": "%%"
-        },
-        {
-            "name": "5",
-            "comment": "base64.b64encode(bytes(3))",
-            "uri": "data:application/octet-stream;base64,AAAA"
-        },
-        {
-            "name": "6",
-            "byteLength": -3,
-            "comment": "base64.b64encode(bytes(3))",
-            "uri": "data:application/octet-stream;base64,AAAA"
+          "attributes": {
+            "NORMAL": 2
+          }
         }
-    ]
+      ]
+    },
+    {
+      "name": "unsupported normal component type",
+      "primitives": [
+        {
+          "attributes": {
+            "NORMAL": 3
+          }
+        }
+      ]
+    },
+    {
+      "name": "unexpected tangent type",
+      "primitives": [
+        {
+          "attributes": {
+            "TANGENT": 0
+          }
+        }
+      ]
+    },
+    {
+      "name": "unsupported tangent component type",
+      "primitives": [
+        {
+          "attributes": {
+            "TANGENT": 5
+          }
+        }
+      ]
+    },
+    {
+      "name": "unexpected texcoord type",
+      "primitives": [
+        {
+          "attributes": {
+            "TEXCOORD_0": 3
+          }
+        }
+      ]
+    },
+    {
+      "name": "unsupported texcoord component type",
+      "primitives": [
+        {
+          "attributes": {
+            "TEXCOORD_0": 4
+          }
+        }
+      ]
+    },
+    {
+      "name": "unexpected color type",
+      "primitives": [
+        {
+          "attributes": {
+            "COLOR_0": 1
+          }
+        }
+      ]
+    },
+    {
+      "name": "unsupported color component type",
+      "primitives": [
+        {
+          "attributes": {
+            "COLOR_0": 5
+          }
+        }
+      ]
+    },
+    {
+      "name": "unexpected joints type",
+      "primitives": [
+        {
+          "attributes": {
+            "JOINTS_0": 0
+          }
+        }
+      ]
+    },
+    {
+      "name": "unsupported joints component type",
+      "primitives": [
+        {
+          "attributes": {
+            "JOINTS_0": 5
+          }
+        }
+      ]
+    },
+    {
+      "name": "unexpected weights type",
+      "primitives": [
+        {
+          "attributes": {
+            "WEIGHTS_0": 7
+          }
+        }
+      ]
+    },
+    {
+      "name": "unsupported weights component type",
+      "primitives": [
+        {
+          "attributes": {
+            "WEIGHTS_0": 5
+          }
+        }
+      ]
+    },
+    {
+      "name": "unexpected object id type",
+      "primitives": [
+        {
+          "attributes": {
+            "_OBJECT_ID": 6
+          }
+        }
+      ]
+    },
+    {
+      "name": "unsupported object id component type",
+      "primitives": [
+        {
+          "attributes": {
+            "_OBJECT_ID": 7
+          }
+        }
+      ]
+    },
+    {
+      "name": "unexpected index type",
+      "primitives": [
+        {
+          "attributes": {},
+          "indices": 6
+        }
+      ]
+    },
+    {
+      "name": "unsupported index component type",
+      "primitives": [
+        {
+          "attributes": {},
+          "indices": 7
+        }
+      ]
+    },
+    {
+      "name": "normalized index type",
+      "primitives": [
+        {
+          "attributes": {},
+          "indices": 8
+        }
+      ]
+    },
+    {
+      "name": "strided index view",
+      "primitives": [
+        {
+          "attributes": {},
+          "indices": 9
+        }
+      ]
+    },
+    {
+      "name": "accessor type size larger than buffer stride",
+      "primitives": [
+        {
+          "attributes": {
+            "COLOR_0": 10
+          }
+        }
+      ]
+    },
+    {
+      "name": "normalized float",
+      "primitives": [
+        {
+          "attributes": {
+            "_THING": 11
+          }
+        }
+      ]
+    },
+    {
+      "name": "normalized int",
+      "primitives": [
+        {
+          "attributes": {
+            "_THING": 12
+          }
+        }
+      ]
+    },
+    {
+      "name": "non-normalized byte matrix",
+      "primitives": [
+        {
+          "attributes": {
+            "_THING": 13
+          }
+        }
+      ]
+    },
+    {
+      "name": "unknown type",
+      "primitives": [
+        {
+          "attributes": {
+            "_THING": 22
+          }
+        }
+      ]
+    },
+    {
+      "name": "unknown component type",
+      "primitives": [
+        {
+          "attributes": {
+            "_THING": 23
+          }
+        }
+      ]
+    },
+    {
+      "name": "sparse accessor",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 14
+          }
+        }
+      ]
+    },
+    {
+      "name": "multiple buffers",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 0,
+            "TEXCOORD_0": 16
+          }
+        }
+      ]
+    },
+    {
+      "name": "invalid index accessor",
+      "primitives": [
+        {
+          "attributes": {},
+          "indices": 17
+        }
+      ]
+    },
+    {
+      "name": "accessor range out of bounds",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 18
+          }
+        }
+      ]
+    },
+    {
+      "name": "buffer view range out of bounds",
+      "primitives": [
+        {
+          "attributes": {},
+          "indices": 19
+        }
+      ]
+    },
+    {
+      "name": "buffer index out of bounds",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 20
+          }
+        }
+      ]
+    },
+    {
+      "name": "buffer view index out of bounds",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 21
+          }
+        }
+      ]
+    },
+    {
+      "name": "accessor index out of bounds",
+      "primitives": [
+        {
+          "attributes": {
+            "NORMAL": 44
+          }
+        }
+      ]
+    },
+    {
+      "name": "mesh index accessor out of bounds",
+      "primitives": [
+        {
+          "attributes": {},
+          "indices": 44
+        }
+      ]
+    },
+    {
+      "name": "buffer with missing uri property",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 24
+          }
+        }
+      ]
+    },
+    {
+      "name": "buffer with invalid uri property",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 25
+          }
+        }
+      ]
+    },
+    {
+      "name": "buffer with invalid uri",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 43
+          }
+        }
+      ]
+    },
+    {
+      "name": "buffer with missing byteLength property",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 26
+          }
+        }
+      ]
+    },
+    {
+      "name": "buffer with invalid byteLength property",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 27
+          }
+        }
+      ]
+    },
+    {
+      "name": "buffer view with missing buffer property",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 28
+          }
+        }
+      ]
+    },
+    {
+      "name": "buffer view with invalid buffer property",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 29
+          }
+        }
+      ]
+    },
+    {
+      "name": "buffer view with invalid byteOffset property",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 30
+          }
+        }
+      ]
+    },
+    {
+      "name": "buffer view with missing byteLength property",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 31
+          }
+        }
+      ]
+    },
+    {
+      "name": "buffer view with invalid byteLength property",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 32
+          }
+        }
+      ]
+    },
+    {
+      "name": "buffer view with invalid byteStride property",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 33
+          }
+        }
+      ]
+    },
+    {
+      "name": "accessor with missing bufferView property",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 15
+          }
+        }
+      ]
+    },
+    {
+      "name": "accessor with invalid bufferView property",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 34
+          }
+        }
+      ]
+    },
+    {
+      "name": "accessor with invalid byteOffset property",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 35
+          }
+        }
+      ]
+    },
+    {
+      "name": "accessor with missing componentType property",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 36
+          }
+        }
+      ]
+    },
+    {
+      "name": "accessor with invalid componentType property",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 37
+          }
+        }
+      ]
+    },
+    {
+      "name": "accessor with missing count property",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 38
+          }
+        }
+      ]
+    },
+    {
+      "name": "accessor with invalid count property",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 39
+          }
+        }
+      ]
+    },
+    {
+      "name": "accessor with missing type property",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 40
+          }
+        }
+      ]
+    },
+    {
+      "name": "accessor with invalid type property",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 41
+          }
+        }
+      ]
+    },
+    {
+      "name": "accessor with invalid normalized property",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 42
+          }
+        }
+      ]
+    },
+    {
+      "name": "invalid primitive property",
+      "primitives": [
+        {
+          "mode": -1,
+          "attributes": {}
+        }
+      ]
+    },
+    {
+      "name": "invalid attribute property",
+      "primitives": [
+        {
+          "attributes": {
+            "_WEIRD_EH": -1
+          }
+        }
+      ]
+    },
+    {
+      "name": "invalid indices property",
+      "primitives": [
+        {
+          "attributes": {},
+          "indices": -1
+        }
+      ]
+    }
+  ],
+  "accessors": [
+    {
+      "name": "0",
+      "bufferView": 0,
+      "componentType": 5126,
+      "count": 3,
+      "type": "VEC3"
+    },
+    {
+      "name": "1",
+      "bufferView": 1,
+      "componentType": 5126,
+      "count": 4,
+      "type": "VEC2"
+    },
+    {
+      "name": "2",
+      "bufferView": 0,
+      "componentType": 5126,
+      "count": 3,
+      "type": "VEC2"
+    },
+    {
+      "name": "3",
+      "bufferView": 1,
+      "componentType": 5125,
+      "count": 1,
+      "type": "VEC3"
+    },
+    {
+      "name": "4",
+      "bufferView": 0,
+      "componentType": 5125,
+      "count": 3,
+      "type": "VEC2"
+    },
+    {
+      "name": "5",
+      "bufferView": 0,
+      "componentType": 5120,
+      "count": 3,
+      "type": "VEC4"
+    },
+    {
+      "name": "6",
+      "bufferView": 1,
+      "componentType": 5125,
+      "count": 3,
+      "type": "VEC2"
+    },
+    {
+      "name": "7",
+      "bufferView": 1,
+      "componentType": 5122,
+      "count": 3,
+      "type": "SCALAR"
+    },
+    {
+      "name": "8",
+      "bufferView": 1,
+      "componentType": 5125,
+      "normalized": true,
+      "count": 3,
+      "type": "SCALAR"
+    },
+    {
+      "name": "9",
+      "bufferView": 0,
+      "componentType": 5125,
+      "count": 3,
+      "type": "SCALAR"
+    },
+    {
+      "name": "10",
+      "bufferView": 0,
+      "componentType": 5126,
+      "count": 2,
+      "type": "VEC4"
+    },
+    {
+      "name": "11",
+      "bufferView": 0,
+      "componentType": 5126,
+      "normalized": true,
+      "count": 1,
+      "type": "SCALAR"
+    },
+    {
+      "name": "12",
+      "bufferView": 0,
+      "componentType": 5125,
+      "normalized": true,
+      "count": 1,
+      "type": "SCALAR"
+    },
+    {
+      "name": "13",
+      "bufferView": 1,
+      "componentType": 5120,
+      "normalized": false,
+      "count": 1,
+      "type": "MAT2"
+    },
+    {
+      "name": "14",
+      "bufferView": 0,
+      "componentType": 5126,
+      "count": 1,
+      "type": "VEC3",
+      "sparse": {
+        "count": 1,
+        "indices": {
+          "bufferView": 1,
+          "componentType": 5123
+        },
+        "values": {
+          "bufferView": 0
+        }
+      }
+    },
+    {
+      "name": "15",
+      "componentType": 5126,
+      "count": 1,
+      "type": "VEC3"
+    },
+    {
+      "name": "16",
+      "bufferView": 2,
+      "componentType": 5126,
+      "count": 3,
+      "type": "VEC2"
+    },
+    {
+      "name": "17",
+      "bufferView": 0,
+      "componentType": 5125,
+      "count": 4,
+      "type": "SCALAR"
+    },
+    {
+      "name": "18",
+      "bufferView": 0,
+      "componentType": 5126,
+      "count": 4,
+      "type": "VEC3"
+    },
+    {
+      "name": "19",
+      "bufferView": 3,
+      "componentType": 5126,
+      "count": 3,
+      "type": "VEC3"
+    },
+    {
+      "name": "20",
+      "bufferView": 4,
+      "componentType": 5126,
+      "count": 3,
+      "type": "VEC3"
+    },
+    {
+      "name": "21",
+      "bufferView": 16,
+      "componentType": 5126,
+      "count": 9,
+      "type": "VEC3"
+    },
+    {
+      "name": "22",
+      "bufferView": 0,
+      "componentType": 5126,
+      "count": 0,
+      "type": "EEE"
+    },
+    {
+      "name": "23",
+      "bufferView": 0,
+      "componentType": 9999,
+      "count": 0,
+      "type": "SCALAR"
+    },
+    {
+      "name": "24",
+      "bufferView": 5,
+      "componentType": 5126,
+      "count": 0,
+      "type": "VEC3"
+    },
+    {
+      "name": "25",
+      "bufferView": 6,
+      "componentType": 5126,
+      "count": 0,
+      "type": "VEC3"
+    },
+    {
+      "name": "26",
+      "bufferView": 7,
+      "componentType": 5126,
+      "count": 0,
+      "type": "VEC3"
+    },
+    {
+      "name": "27",
+      "bufferView": 8,
+      "componentType": 5126,
+      "count": 0,
+      "type": "VEC3"
+    },
+    {
+      "name": "28",
+      "bufferView": 9,
+      "componentType": 5126,
+      "count": 0,
+      "type": "VEC3"
+    },
+    {
+      "name": "29",
+      "bufferView": 10,
+      "componentType": 5126,
+      "count": 0,
+      "type": "VEC3"
+    },
+    {
+      "name": "30",
+      "bufferView": 11,
+      "componentType": 5126,
+      "count": 0,
+      "type": "VEC3"
+    },
+    {
+      "name": "31",
+      "bufferView": 12,
+      "componentType": 5126,
+      "count": 0,
+      "type": "VEC3"
+    },
+    {
+      "name": "32",
+      "bufferView": 13,
+      "componentType": 5126,
+      "count": 0,
+      "type": "VEC3"
+    },
+    {
+      "name": "33",
+      "bufferView": 14,
+      "componentType": 5126,
+      "count": 0,
+      "type": "VEC3"
+    },
+    {
+      "name": "34",
+      "bufferView": -1,
+      "componentType": 5126,
+      "count": 0,
+      "type": "VEC3"
+    },
+    {
+      "name": "35",
+      "bufferView": 0,
+      "byteOffset": -1,
+      "componentType": 5126,
+      "count": 0,
+      "type": "VEC3"
+    },
+    {
+      "name": "36",
+      "bufferView": 0,
+      "count": 0,
+      "type": "VEC3"
+    },
+    {
+      "name": "37",
+      "bufferView": 0,
+      "componentType": -1,
+      "count": 0,
+      "type": "VEC3"
+    },
+    {
+      "name": "38",
+      "bufferView": 0,
+      "componentType": 5126,
+      "type": "VEC3"
+    },
+    {
+      "name": "39",
+      "bufferView": 0,
+      "componentType": 5126,
+      "count": -1,
+      "type": "VEC3"
+    },
+    {
+      "name": "40",
+      "bufferView": 0,
+      "componentType": 5126,
+      "count": 0
+    },
+    {
+      "name": "41",
+      "bufferView": 0,
+      "componentType": 5126,
+      "count": 0,
+      "type": 3034
+    },
+    {
+      "name": "42",
+      "bufferView": 0,
+      "componentType": 5126,
+      "count": 0,
+      "type": "VEC3",
+      "normalized": null
+    },
+    {
+      "name": "43",
+      "bufferView": 15,
+      "componentType": 5126,
+      "count": 0,
+      "type": "VEC3"
+    }
+  ],
+  "bufferViews": [
+    {
+      "name": "0",
+      "buffer": 0,
+      "byteLength": 36,
+      "byteStride": 12
+    },
+    {
+      "name": "1",
+      "buffer": 0,
+      "byteOffset": 36,
+      "byteLength": 32
+    },
+    {
+      "name": "2",
+      "buffer": 1,
+      "byteLength": 24
+    },
+    {
+      "name": "3",
+      "buffer": 1,
+      "byteOffset": 20,
+      "byteLength": 40
+    },
+    {
+      "name": "4",
+      "buffer": 7,
+      "byteLength": 36,
+      "byteStride": 12
+    },
+    {
+      "name": "5",
+      "buffer": 2,
+      "byteLength": 12
+    },
+    {
+      "name": "6",
+      "buffer": 3,
+      "byteLength": 12
+    },
+    {
+      "name": "7",
+      "buffer": 5,
+      "byteLength": 12
+    },
+    {
+      "name": "8",
+      "buffer": 6,
+      "byteLength": 12
+    },
+    {
+      "name": "9",
+      "byteLength": 12
+    },
+    {
+      "name": "10",
+      "buffer": -1,
+      "byteLength": 12
+    },
+    {
+      "name": "11",
+      "buffer": 0,
+      "byteOffset": -1,
+      "byteLength": 12
+    },
+    {
+      "name": "12",
+      "buffer": 0
+    },
+    {
+      "name": "13",
+      "buffer": 0,
+      "byteLength": -12
+    },
+    {
+      "name": "14",
+      "buffer": 0,
+      "byteLength": 12,
+      "byteStride": -4
+    },
+    {
+      "name": "15",
+      "buffer": 4,
+      "byteLength": 12
+    }
+  ],
+  "buffers": [
+    {
+      "name": "0",
+      "byteLength": 68,
+      "comment": "base64.b64encode(bytes(68))",
+      "uri": "data:application/octet-stream;base64,AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+    },
+    {
+      "name": "1",
+      "byteLength": 59,
+      "comment": "base64.b64encode(bytes(59))",
+      "uri": "data:application/octet-stream;base64,AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+    },
+    {
+      "name": "2",
+      "byteLength": 12
+    },
+    {
+      "name": "3",
+      "byteLength": 12,
+      "uri": [""]
+    },
+    {
+      "name": "4",
+      "uri": "%%"
+    },
+    {
+      "name": "5",
+      "comment": "base64.b64encode(bytes(3))",
+      "uri": "data:application/octet-stream;base64,AAAA"
+    },
+    {
+      "name": "6",
+      "byteLength": -3,
+      "comment": "base64.b64encode(bytes(3))",
+      "uri": "data:application/octet-stream;base64,AAAA"
+    }
+  ]
 }

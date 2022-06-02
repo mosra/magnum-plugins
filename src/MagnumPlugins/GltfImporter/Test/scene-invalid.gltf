@@ -1,282 +1,287 @@
 {
-    "asset": {
-        "version": "2.0"
+  "asset": {
+    "version": "2.0"
+  },
+  "extensions": {
+    "KHR_lights_punctual": {
+      "lights": [
+        {
+          "type": "point"
+        },
+        {
+          "type": "ambient"
+        }
+      ]
+    }
+  },
+  "cameras": [
+    {
+      "type": "perspective",
+      "perspective": {
+        "yfov": 1.0,
+        "znear": 0.1
+      }
+    }
+  ],
+  "meshes": [
+    {
+      "primitives": [
+        {
+          "attributes": {},
+          "material": 4
+        }
+      ]
     },
-    "extensions": {
+    {
+      "primitives": [
+        {
+          "attributes": {}
+        },
+        {
+          "attributes": {},
+          "material": 5
+        }
+      ]
+    },
+    {
+      "primitives": [
+        {
+          "attributes": {}
+        }
+      ]
+    },
+    {
+      "primitives": [
+        {
+          "attributes": {}
+        },
+        {
+          "attributes": {}
+        }
+      ]
+    },
+    {
+      "primitives": [
+        {
+          "attributes": {}
+        },
+        {
+          "attributes": {},
+          "material": -1
+        }
+      ]
+    }
+  ],
+  "materials": [
+    {},
+    {},
+    {},
+    {}
+  ],
+  "skins": [
+    {
+      "joints": [1, 2, 3]
+    },
+    {
+      "joints": [1]
+    },
+    {
+      "joints": [3, 1]
+    }
+  ],
+  "nodes": [
+    {},
+    {},
+    {},
+    {
+      "name": "3",
+      "camera": 1
+    },
+    {
+      "name": "4",
+      "extensions": {
         "KHR_lights_punctual": {
-            "lights": [
-                {
-                    "type": "point"
-                },
-                {
-                    "type": "ambient"
-                }
-            ]
+          "light": 2
         }
+      }
     },
-    "cameras": [
-        {
-            "type": "perspective",
-            "perspective" : {
-                "yfov" : 1.0,
-                "znear" : 0.1
-            }
+    {
+      "name": "5",
+      "mesh": 0
+    },
+    {
+      "name": "6",
+      "mesh": 1
+    },
+    {
+      "name": "7",
+      "mesh": 5
+    },
+    {
+      "name": "8",
+      "mesh": 2,
+      "skin": 3
+    },
+    {
+      "name": "9",
+      "mesh": 3,
+      "skin": 3
+    },
+    {
+      "name": "10",
+      "mesh": -1
+    },
+    {
+      "name": "11",
+      "mesh": 4
+    },
+    {
+      "name": "12",
+      "camera": -1
+    },
+    {
+      "name": "13",
+      "skin": -1
+    },
+    {
+      "name": "14",
+      "extensions": []
+    },
+    {
+      "name": "15",
+      "extensions": {
+        "KHR_lights_punctual": 1
+      }
+    },
+    {
+      "name": "16",
+      "extensions": {
+        "KHR_lights_punctual": {
+          "light": -1
         }
-    ],
-    "meshes": [
-        {
-            "primitives": [
-                {
-                    "attributes": {},
-                    "material": 4
-                }
-            ]
-        },
-        {
-            "primitives": [
-                {
-                    "attributes": {}
-                },
-                {
-                    "attributes": {},
-                    "material": 5
-                }
-            ]
-        },
-        {
-            "primitives": [
-                {
-                    "attributes": {}
-                }
-            ]
-        },
-        {
-            "primitives": [
-                {
-                    "attributes": {}
-                },
-                {
-                    "attributes": {}
-                }
-            ]
-        },
-        {
-            "primitives": [
-                {
-                    "attributes": {}
-                },
-                {
-                    "attributes": {},
-                    "material": -1
-                }
-            ]
-        }
-    ],
-    "materials": [
-        {}, {}, {}, {}
-    ],
-    "skins": [
-        {
-            "joints": [1, 2, 3]
-        },
-        {
-            "joints": [1]
-        },
-        {
-            "joints": [3, 1]
-        }
-    ],
-    "nodes": [
-        {}, {}, {},
-        {
-            "name": "3",
-            "camera": 1
-        },
-        {
-            "name": "4",
-            "extensions": {
-                "KHR_lights_punctual": {
-                    "light": 2
-                }
-            }
-        },
-        {
-            "name": "5",
-            "mesh": 0
-        },
-        {
-            "name": "6",
-            "mesh": 1
-        },
-        {
-            "name": "7",
-            "mesh": 5
-        },
-        {
-            "name": "8",
-            "mesh": 2,
-            "skin": 3
-        },
-        {
-            "name": "9",
-            "mesh": 3,
-            "skin": 3
-        },
-        {
-            "name": "10",
-            "mesh": -1
-        },
-        {
-            "name": "11",
-            "mesh": 4
-        },
-        {
-            "name": "12",
-            "camera": -1
-        },
-        {
-            "name": "13",
-            "skin": -1
-        },
-        {
-            "name": "14",
-            "extensions": []
-        },
-        {
-            "name": "15",
-            "extensions": {
-                "KHR_lights_punctual": 1
-            }
-        },
-        {
-            "name": "16",
-            "extensions": {
-                "KHR_lights_punctual": {
-                    "light": -1
-                }
-            }
-        },
-        {
-            "name": "17",
-            "translation": 2.0
-        },
-        {
-            "name": "18",
-            "translation": [2.0, 1.0]
-        },
-        {
-            "name": "19",
-            "rotation": 45.0
-        },
-        {
-            "name": "20",
-            "rotation": [1.0, 0.0, 0.0]
-        },
-        {
-            "name": "21",
-            "scale": 2.0
-        },
-        {
-            "name": "22",
-            "scale": [2.0, 1.0]
-        },
-        {
-            "name": "23",
-            "matrix": 1.0
-        },
-        {
-            "name": "24",
-            "matrix": [2.0, 1.0, 3.0, 1.0]
-        }
-    ],
-    "scenes": [
-        {
-            "name": "camera out of bounds",
-            "nodes": [3]
-        },
-        {
-            "name": "light out of bounds",
-            "nodes": [4]
-        },
-        {
-            "name": "material out of bounds",
-            "nodes": [5]
-        },
-        {
-            "name": "material in a multi-primitive mesh out of bounds",
-            "nodes": [6]
-        },
-        {
-            "name": "mesh out of bounds",
-            "nodes": [7]
-        },
-        {
-            "name": "skin out of bounds",
-            "nodes": [8]
-        },
-        {
-            "name": "skin for a multi-primitive mesh out of bounds",
-            "nodes": [9]
-        },
-        {
-            "name": "invalid mesh property",
-            "nodes": [10]
-        },
-        {
-            "name": "invalid mesh material property",
-            "nodes": [11]
-        },
-        {
-            "name": "invalid camera property",
-            "nodes": [12]
-        },
-        {
-            "name": "invalid skin property",
-            "nodes": [13]
-        },
-        {
-            "name": "invalid extensions property",
-            "nodes": [14]
-        },
-        {
-            "name": "invalid KHR_lights_punctual extension",
-            "nodes": [15]
-        },
-        {
-            "name": "invalid KHR_lights_punctual light property",
-            "nodes": [16]
-        },
-        {
-            "name": "invalid translation property",
-            "nodes": [17]
-        },
-        {
-            "name": "invalid translation array size",
-            "nodes": [18]
-        },
-        {
-            "name": "invalid rotation property",
-            "nodes": [19]
-        },
-        {
-            "name": "invalid rotation array size",
-            "nodes": [20]
-        },
-        {
-            "name": "invalid scale property",
-            "nodes": [21]
-        },
-        {
-            "name": "invalid scale array size",
-            "nodes": [22]
-        },
-        {
-            "name": "invalid matrix property",
-            "nodes": [23]
-        },
-        {
-            "name": "invalid matrix array size",
-            "nodes": [24]
-        }
-    ]
+      }
+    },
+    {
+      "name": "17",
+      "translation": 2.0
+    },
+    {
+      "name": "18",
+      "translation": [2.0, 1.0]
+    },
+    {
+      "name": "19",
+      "rotation": 45.0
+    },
+    {
+      "name": "20",
+      "rotation": [1.0, 0.0, 0.0]
+    },
+    {
+      "name": "21",
+      "scale": 2.0
+    },
+    {
+      "name": "22",
+      "scale": [2.0, 1.0]
+    },
+    {
+      "name": "23",
+      "matrix": 1.0
+    },
+    {
+      "name": "24",
+      "matrix": [2.0, 1.0, 3.0, 1.0]
+    }
+  ],
+  "scenes": [
+    {
+      "name": "camera out of bounds",
+      "nodes": [3]
+    },
+    {
+      "name": "light out of bounds",
+      "nodes": [4]
+    },
+    {
+      "name": "material out of bounds",
+      "nodes": [5]
+    },
+    {
+      "name": "material in a multi-primitive mesh out of bounds",
+      "nodes": [6]
+    },
+    {
+      "name": "mesh out of bounds",
+      "nodes": [7]
+    },
+    {
+      "name": "skin out of bounds",
+      "nodes": [8]
+    },
+    {
+      "name": "skin for a multi-primitive mesh out of bounds",
+      "nodes": [9]
+    },
+    {
+      "name": "invalid mesh property",
+      "nodes": [10]
+    },
+    {
+      "name": "invalid mesh material property",
+      "nodes": [11]
+    },
+    {
+      "name": "invalid camera property",
+      "nodes": [12]
+    },
+    {
+      "name": "invalid skin property",
+      "nodes": [13]
+    },
+    {
+      "name": "invalid extensions property",
+      "nodes": [14]
+    },
+    {
+      "name": "invalid KHR_lights_punctual extension",
+      "nodes": [15]
+    },
+    {
+      "name": "invalid KHR_lights_punctual light property",
+      "nodes": [16]
+    },
+    {
+      "name": "invalid translation property",
+      "nodes": [17]
+    },
+    {
+      "name": "invalid translation array size",
+      "nodes": [18]
+    },
+    {
+      "name": "invalid rotation property",
+      "nodes": [19]
+    },
+    {
+      "name": "invalid rotation array size",
+      "nodes": [20]
+    },
+    {
+      "name": "invalid scale property",
+      "nodes": [21]
+    },
+    {
+      "name": "invalid scale array size",
+      "nodes": [22]
+    },
+    {
+      "name": "invalid matrix property",
+      "nodes": [23]
+    },
+    {
+      "name": "invalid matrix array size",
+      "nodes": [24]
+    }
+  ]
 }

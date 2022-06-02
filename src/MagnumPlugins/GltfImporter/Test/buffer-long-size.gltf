@@ -1,39 +1,39 @@
 {
-    "asset": {
-        "version": "2.0"
-    },
-    "buffers": [
+  "asset": {
+    "version": "2.0"
+  },
+  "buffers": [
+    {
+      "note": "the real length is 12",
+      "byteLength": 6,
+      "uri": "external-data.bin"
+    }
+  ],
+  "meshes": [
+    {
+      "primitives": [
         {
-            "note": "the real length is 12",
-            "byteLength": 6,
-            "uri": "external-data.bin"
+          "mode": 0,
+          "attributes": {
+            "COLOR_0": 0
+          }
         }
-    ],
-    "meshes": [
-        {
-            "primitives": [
-                {
-                    "mode": 0,
-                    "attributes": {
-                        "COLOR_0": 0
-                    }
-                }
-            ]
-        }
-    ],
-    "accessors": [
-        {
-            "bufferView": 0,
-            "componentType": 5123,
-            "normalized": true,
-            "count": 1,
-            "type": "VEC3"
-        }
-    ],
-    "bufferViews": [
-        {
-            "buffer": 0,
-            "byteLength": 6
-        }
-    ]
+      ]
+    }
+  ],
+  "accessors": [
+    {
+      "bufferView": 0,
+      "componentType": 5123,
+      "normalized": true,
+      "count": 1,
+      "type": "VEC3"
+    }
+  ],
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteLength": 6
+    }
+  ]
 }

@@ -1,425 +1,425 @@
 {
-    "asset": {
-        "version": "2.0"
+  "asset": {
+    "version": "2.0"
+  },
+  "meshes": [
+    {
+      "name": "positions byte, color4 unsigned short, texcoords normalized unsigned byte; triangle strip",
+      "primitives": [
+        {
+          "mode": 5,
+          "attributes": {
+            "COLOR_0": 0,
+            "POSITION": 1,
+            "TEXCOORD_0": 2
+          }
+        }
+      ]
     },
-    "meshes": [
+    {
+      "name": "positions short, colors unsigned byte, texcoords normalized unsigned short; lines",
+      "primitives": [
         {
-            "name": "positions byte, color4 unsigned short, texcoords normalized unsigned byte; triangle strip",
-            "primitives": [
-                {
-                    "mode": 5,
-                    "attributes": {
-                        "COLOR_0": 0,
-                        "POSITION": 1,
-                        "TEXCOORD_0": 2
-                    }
-                }
-            ]
-        },
-        {
-            "name": "positions short, colors unsigned byte, texcoords normalized unsigned short; lines",
-            "primitives": [
-                {
-                    "mode": 1,
-                    "attributes": {
-                        "POSITION": 3,
-                        "COLOR_0": 4,
-                        "TEXCOORD_0": 5
-                    }
-                }
-            ]
-        },
-        {
-            "name": "positions unsigned byte, normals byte, texcoords short; indices unsigned int; line loop",
-            "primitives": [
-                {
-                    "mode": 2,
-                    "attributes": {
-                        "NORMAL": 6,
-                        "POSITION": 7,
-                        "TEXCOORD_0": 8
-                    },
-                    "indices": 9
-                }
-            ]
-        },
-        {
-            "name": "positions unsigned short, normals short, texcoords byte; indices unsigned byte; triangle fan",
-            "primitives": [
-                {
-                    "mode": 6,
-                    "attributes": {
-                        "POSITION": 10,
-                        "TEXCOORD_0": 11,
-                        "NORMAL": 12
-                    },
-                    "indices": 13
-                }
-            ]
-        },
-        {
-            "name": "positions normalized unsigned byte, tangents short, texcoords normalized short; indices unsigned short; line strip",
-            "primitives": [
-                {
-                    "mode": 3,
-                    "attributes": {
-                        "TEXCOORD_0": 14,
-                        "TANGENT": 15,
-                        "POSITION": 16
-                    },
-                    "indices": 17
-                }
-            ]
-        },
-        {
-            "name": "positions normalized short, texcoords unsigned byte, tangents byte; triangles",
-            "primitives": [
-                {
-                    "mode": 4,
-                    "attributes": {
-                        "TEXCOORD_0": 18,
-                        "POSITION": 19,
-                        "TANGENT": 20
-                    }
-                }
-            ]
-        },
-        {
-            "name": "positions normalized unsigned short, texcoords normalized byte, objectid unsigned short",
-            "primitives": [
-                {
-                    "attributes": {
-                        "POSITION": 21,
-                        "TEXCOORD_0": 22,
-                        "_OBJECT_ID": 23
-                    }
-                }
-            ]
-        },
-        {
-            "name": "positions normalized byte, texcoords unsigned short, objectid unsigned byte",
-            "primitives": [
-                {
-                    "attributes": {
-                        "POSITION": 24,
-                        "TEXCOORD_0": 25,
-                        "_SEMANTIC": 26
-                    }
-                }
-            ]
+          "mode": 1,
+          "attributes": {
+            "POSITION": 3,
+            "COLOR_0": 4,
+            "TEXCOORD_0": 5
+          }
         }
-    ],
-    "accessors": [
+      ]
+    },
+    {
+      "name": "positions unsigned byte, normals byte, texcoords short; indices unsigned int; line loop",
+      "primitives": [
         {
-            "name": "0",
-            "bufferView": 0,
-            "byteOffset": 0,
-            "componentType": 5123,
-            "normalized": true,
-            "count": 5,
-            "type": "VEC4"
-        },
-        {
-            "name": "1",
-            "bufferView": 0,
-            "byteOffset": 8,
-            "componentType": 5120,
-            "count": 5,
-            "type": "VEC3"
-        },
-        {
-            "name": "2",
-            "bufferView": 0,
-            "byteOffset": 11,
-            "componentType": 5121,
-            "normalized": true,
-            "count": 5,
-            "type": "VEC2"
-        },
-        {
-            "name": "3",
-            "bufferView": 1,
-            "byteOffset": 0,
-            "componentType": 5122,
-            "count": 5,
-            "type": "VEC3"
-        },
-        {
-            "name": "4",
-            "bufferView": 1,
-            "byteOffset": 6,
-            "componentType": 5121,
-            "normalized": true,
-            "count": 5,
-            "type": "VEC3"
-        },
-        {
-            "name": "5",
-            "bufferView": 1,
-            "byteOffset": 10,
-            "componentType": 5123,
-            "normalized": true,
-            "count": 5,
-            "type": "VEC2"
-        },
-        {
-            "name": "6",
-            "bufferView": 2,
-            "byteOffset": 0,
-            "componentType": 5120,
-            "normalized": true,
-            "count": 5,
-            "type": "VEC3"
-        },
-        {
-            "name": "7",
-            "bufferView": 2,
-            "byteOffset": 3,
-            "componentType": 5121,
-            "count": 5,
-            "type": "VEC3"
-        },
-        {
-            "name": "8",
-            "bufferView": 2,
-            "byteOffset": 6,
-            "componentType": 5122,
-            "count": 5,
-            "type": "VEC2"
-        },
-        {
-            "name": "9",
-            "bufferView": 3,
-            "componentType": 5125,
-            "count": 6,
-            "type": "SCALAR"
-        },
-        {
-            "name": "10",
-            "bufferView": 4,
-            "byteOffset": 0,
-            "componentType": 5123,
-            "count": 5,
-            "type": "VEC3"
-        },
-        {
-            "name": "11",
-            "bufferView": 4,
-            "byteOffset": 6,
-            "componentType": 5120,
-            "count": 5,
-            "type": "VEC2"
-        },
-        {
-            "name": "12",
-            "bufferView": 4,
-            "byteOffset": 8,
-            "componentType": 5122,
-            "normalized": true,
-            "count": 5,
-            "type": "VEC3"
-        },
-        {
-            "name": "13",
-            "bufferView": 5,
-            "byteOffset": 0,
-            "componentType": 5121,
-            "count": 6,
-            "type": "SCALAR"
-        },
-        {
-            "name": "14",
-            "bufferView": 6,
-            "byteOffset": 0,
-            "componentType": 5122,
-            "normalized": true,
-            "count": 5,
-            "type": "VEC2"
-        },
-        {
-            "name": "15",
-            "bufferView": 6,
-            "byteOffset": 4,
-            "componentType": 5122,
-            "normalized": true,
-            "count": 5,
-            "type": "VEC4"
-        },
-        {
-            "name": "16",
-            "bufferView": 6,
-            "byteOffset": 12,
-            "componentType": 5121,
-            "normalized": true,
-            "count": 5,
-            "type": "VEC3"
-        },
-        {
-            "name": "17",
-            "bufferView": 7,
-            "byteOffset": 0,
-            "componentType": 5123,
-            "count": 6,
-            "type": "SCALAR"
-        },
-        {
-            "name": "18",
-            "bufferView": 8,
-            "byteOffset": 0,
-            "componentType": 5121,
-            "count": 5,
-            "type": "VEC2"
-        },
-        {
-            "name": "19",
-            "bufferView": 8,
-            "byteOffset": 2,
-            "componentType": 5122,
-            "normalized": true,
-            "count": 5,
-            "type": "VEC3"
-        },
-        {
-            "name": "20",
-            "bufferView": 8,
-            "byteOffset": 8,
-            "componentType": 5120,
-            "normalized": true,
-            "count": 5,
-            "type": "VEC4"
-        },
-        {
-            "name": "21",
-            "bufferView": 9,
-            "byteOffset": 0,
-            "componentType": 5123,
-            "normalized": true,
-            "count": 5,
-            "type": "VEC3"
-        },
-        {
-            "name": "22",
-            "bufferView": 9,
-            "byteOffset": 6,
-            "componentType": 5120,
-            "normalized": true,
-            "count": 5,
-            "type": "VEC2"
-        },
-        {
-            "name": "23",
-            "bufferView": 9,
-            "byteOffset": 8,
-            "componentType": 5123,
-            "count": 5,
-            "type": "SCALAR"
-        },
-        {
-            "name": "24",
-            "bufferView": 10,
-            "byteOffset": 0,
-            "componentType": 5120,
-            "normalized": true,
-            "count": 5,
-            "type": "VEC3"
-        },
-        {
-            "name": "25",
-            "bufferView": 10,
-            "byteOffset": 4,
-            "componentType": 5123,
-            "count": 5,
-            "type": "VEC2"
-        },
-        {
-            "name": "26",
-            "bufferView": 10,
-            "byteOffset": 8,
-            "componentType": 5121,
-            "count": 5,
-            "type": "SCALAR"
+          "mode": 2,
+          "attributes": {
+            "NORMAL": 6,
+            "POSITION": 7,
+            "TEXCOORD_0": 8
+          },
+          "indices": 9
         }
-    ],
-    "bufferViews": [
+      ]
+    },
+    {
+      "name": "positions unsigned short, normals short, texcoords byte; indices unsigned byte; triangle fan",
+      "primitives": [
         {
-            "name": "0",
-            "buffer": 0,
-            "byteOffset": 0,
-            "byteLength": 80,
-            "byteStride": 16
-        },
-        {
-            "name": "1",
-            "buffer": 0,
-            "byteOffset": 80,
-            "byteLength": 80,
-            "byteStride": 16
-        },
-        {
-            "name": "2",
-            "buffer": 0,
-            "byteOffset": 160,
-            "byteLength": 60,
-            "byteStride": 12
-        },
-        {
-            "name": "3",
-            "buffer": 0,
-            "byteOffset": 220,
-            "byteLength": 24
-        },
-        {
-            "name": "4",
-            "buffer": 0,
-            "byteOffset": 244,
-            "byteLength": 80,
-            "byteStride": 16
-        },
-        {
-            "name": "5",
-            "buffer": 0,
-            "byteOffset": 324,
-            "byteLength": 8
-        },
-        {
-            "name": "6",
-            "buffer": 0,
-            "byteOffset": 332,
-            "byteLength": 80,
-            "byteStride": 16
-        },
-        {
-            "name": "7",
-            "buffer": 0,
-            "byteOffset": 412,
-            "byteLength": 12
-        },
-        {
-            "name": "8",
-            "buffer": 0,
-            "byteOffset": 424,
-            "byteLength": 60,
-            "byteStride": 12
-        },
-        {
-            "name": "9",
-            "buffer": 0,
-            "byteOffset": 484,
-            "byteLength": 60,
-            "byteStride": 12
-        },
-        {
-            "name": "10",
-            "buffer": 0,
-            "byteOffset": 544,
-            "byteLength": 60,
-            "byteStride": 12
+          "mode": 6,
+          "attributes": {
+            "POSITION": 10,
+            "TEXCOORD_0": 11,
+            "NORMAL": 12
+          },
+          "indices": 13
         }
-    ],
-    "buffers": [
+      ]
+    },
+    {
+      "name": "positions normalized unsigned byte, tangents short, texcoords normalized short; indices unsigned short; line strip",
+      "primitives": [
         {
-            "byteLength": 604,
-            "uri": "mesh-primitives-types.bin"
+          "mode": 3,
+          "attributes": {
+            "TEXCOORD_0": 14,
+            "TANGENT": 15,
+            "POSITION": 16
+          },
+          "indices": 17
         }
-    ]
+      ]
+    },
+    {
+      "name": "positions normalized short, texcoords unsigned byte, tangents byte; triangles",
+      "primitives": [
+        {
+          "mode": 4,
+          "attributes": {
+            "TEXCOORD_0": 18,
+            "POSITION": 19,
+            "TANGENT": 20
+          }
+        }
+      ]
+    },
+    {
+      "name": "positions normalized unsigned short, texcoords normalized byte, objectid unsigned short",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 21,
+            "TEXCOORD_0": 22,
+            "_OBJECT_ID": 23
+          }
+        }
+      ]
+    },
+    {
+      "name": "positions normalized byte, texcoords unsigned short, objectid unsigned byte",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 24,
+            "TEXCOORD_0": 25,
+            "_SEMANTIC": 26
+          }
+        }
+      ]
+    }
+  ],
+  "accessors": [
+    {
+      "name": "0",
+      "bufferView": 0,
+      "byteOffset": 0,
+      "componentType": 5123,
+      "normalized": true,
+      "count": 5,
+      "type": "VEC4"
+    },
+    {
+      "name": "1",
+      "bufferView": 0,
+      "byteOffset": 8,
+      "componentType": 5120,
+      "count": 5,
+      "type": "VEC3"
+    },
+    {
+      "name": "2",
+      "bufferView": 0,
+      "byteOffset": 11,
+      "componentType": 5121,
+      "normalized": true,
+      "count": 5,
+      "type": "VEC2"
+    },
+    {
+      "name": "3",
+      "bufferView": 1,
+      "byteOffset": 0,
+      "componentType": 5122,
+      "count": 5,
+      "type": "VEC3"
+    },
+    {
+      "name": "4",
+      "bufferView": 1,
+      "byteOffset": 6,
+      "componentType": 5121,
+      "normalized": true,
+      "count": 5,
+      "type": "VEC3"
+    },
+    {
+      "name": "5",
+      "bufferView": 1,
+      "byteOffset": 10,
+      "componentType": 5123,
+      "normalized": true,
+      "count": 5,
+      "type": "VEC2"
+    },
+    {
+      "name": "6",
+      "bufferView": 2,
+      "byteOffset": 0,
+      "componentType": 5120,
+      "normalized": true,
+      "count": 5,
+      "type": "VEC3"
+    },
+    {
+      "name": "7",
+      "bufferView": 2,
+      "byteOffset": 3,
+      "componentType": 5121,
+      "count": 5,
+      "type": "VEC3"
+    },
+    {
+      "name": "8",
+      "bufferView": 2,
+      "byteOffset": 6,
+      "componentType": 5122,
+      "count": 5,
+      "type": "VEC2"
+    },
+    {
+      "name": "9",
+      "bufferView": 3,
+      "componentType": 5125,
+      "count": 6,
+      "type": "SCALAR"
+    },
+    {
+      "name": "10",
+      "bufferView": 4,
+      "byteOffset": 0,
+      "componentType": 5123,
+      "count": 5,
+      "type": "VEC3"
+    },
+    {
+      "name": "11",
+      "bufferView": 4,
+      "byteOffset": 6,
+      "componentType": 5120,
+      "count": 5,
+      "type": "VEC2"
+    },
+    {
+      "name": "12",
+      "bufferView": 4,
+      "byteOffset": 8,
+      "componentType": 5122,
+      "normalized": true,
+      "count": 5,
+      "type": "VEC3"
+    },
+    {
+      "name": "13",
+      "bufferView": 5,
+      "byteOffset": 0,
+      "componentType": 5121,
+      "count": 6,
+      "type": "SCALAR"
+    },
+    {
+      "name": "14",
+      "bufferView": 6,
+      "byteOffset": 0,
+      "componentType": 5122,
+      "normalized": true,
+      "count": 5,
+      "type": "VEC2"
+    },
+    {
+      "name": "15",
+      "bufferView": 6,
+      "byteOffset": 4,
+      "componentType": 5122,
+      "normalized": true,
+      "count": 5,
+      "type": "VEC4"
+    },
+    {
+      "name": "16",
+      "bufferView": 6,
+      "byteOffset": 12,
+      "componentType": 5121,
+      "normalized": true,
+      "count": 5,
+      "type": "VEC3"
+    },
+    {
+      "name": "17",
+      "bufferView": 7,
+      "byteOffset": 0,
+      "componentType": 5123,
+      "count": 6,
+      "type": "SCALAR"
+    },
+    {
+      "name": "18",
+      "bufferView": 8,
+      "byteOffset": 0,
+      "componentType": 5121,
+      "count": 5,
+      "type": "VEC2"
+    },
+    {
+      "name": "19",
+      "bufferView": 8,
+      "byteOffset": 2,
+      "componentType": 5122,
+      "normalized": true,
+      "count": 5,
+      "type": "VEC3"
+    },
+    {
+      "name": "20",
+      "bufferView": 8,
+      "byteOffset": 8,
+      "componentType": 5120,
+      "normalized": true,
+      "count": 5,
+      "type": "VEC4"
+    },
+    {
+      "name": "21",
+      "bufferView": 9,
+      "byteOffset": 0,
+      "componentType": 5123,
+      "normalized": true,
+      "count": 5,
+      "type": "VEC3"
+    },
+    {
+      "name": "22",
+      "bufferView": 9,
+      "byteOffset": 6,
+      "componentType": 5120,
+      "normalized": true,
+      "count": 5,
+      "type": "VEC2"
+    },
+    {
+      "name": "23",
+      "bufferView": 9,
+      "byteOffset": 8,
+      "componentType": 5123,
+      "count": 5,
+      "type": "SCALAR"
+    },
+    {
+      "name": "24",
+      "bufferView": 10,
+      "byteOffset": 0,
+      "componentType": 5120,
+      "normalized": true,
+      "count": 5,
+      "type": "VEC3"
+    },
+    {
+      "name": "25",
+      "bufferView": 10,
+      "byteOffset": 4,
+      "componentType": 5123,
+      "count": 5,
+      "type": "VEC2"
+    },
+    {
+      "name": "26",
+      "bufferView": 10,
+      "byteOffset": 8,
+      "componentType": 5121,
+      "count": 5,
+      "type": "SCALAR"
+    }
+  ],
+  "bufferViews": [
+    {
+      "name": "0",
+      "buffer": 0,
+      "byteOffset": 0,
+      "byteLength": 80,
+      "byteStride": 16
+    },
+    {
+      "name": "1",
+      "buffer": 0,
+      "byteOffset": 80,
+      "byteLength": 80,
+      "byteStride": 16
+    },
+    {
+      "name": "2",
+      "buffer": 0,
+      "byteOffset": 160,
+      "byteLength": 60,
+      "byteStride": 12
+    },
+    {
+      "name": "3",
+      "buffer": 0,
+      "byteOffset": 220,
+      "byteLength": 24
+    },
+    {
+      "name": "4",
+      "buffer": 0,
+      "byteOffset": 244,
+      "byteLength": 80,
+      "byteStride": 16
+    },
+    {
+      "name": "5",
+      "buffer": 0,
+      "byteOffset": 324,
+      "byteLength": 8
+    },
+    {
+      "name": "6",
+      "buffer": 0,
+      "byteOffset": 332,
+      "byteLength": 80,
+      "byteStride": 16
+    },
+    {
+      "name": "7",
+      "buffer": 0,
+      "byteOffset": 412,
+      "byteLength": 12
+    },
+    {
+      "name": "8",
+      "buffer": 0,
+      "byteOffset": 424,
+      "byteLength": 60,
+      "byteStride": 12
+    },
+    {
+      "name": "9",
+      "buffer": 0,
+      "byteOffset": 484,
+      "byteLength": 60,
+      "byteStride": 12
+    },
+    {
+      "name": "10",
+      "buffer": 0,
+      "byteOffset": 544,
+      "byteLength": 60,
+      "byteStride": 12
+    }
+  ],
+  "buffers": [
+    {
+      "byteLength": 604,
+      "uri": "mesh-primitives-types.bin"
+    }
+  ]
 }

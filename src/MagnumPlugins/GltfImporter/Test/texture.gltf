@@ -1,56 +1,56 @@
 {
-    "asset": {
-        "version": "2.0"
+  "asset": {
+    "version": "2.0"
+  },
+  "images": [
+    {
+      "uri": "texture.png"
     },
-    "images": [
-        {
-            "uri": "texture.png"
-        },
-        {
-            "uri": "texture.png"
-        },
-        {
-            "uri": "texture.png"
-        }
-    ],
-    "samplers": [
-        {
-            "wrapS": 33648,
-            "wrapT": 33071,
-            "minFilter": 9984,
-            "magFilter": 9729
-        },
-        {
-            "wrapS": 10497,
-            "wrapT": 33071,
-            "minFilter": 9987,
-            "magFilter": 9728
-        },
-        {}
-    ],
-    "textures": [
-        {
-            "sampler": 0,
-            "source": 1
-        },
-        {
-            "name": "another variant",
-            "sampler": 1,
-            "source": 0
-        },
-        {
-            "name": "shared sampler",
-            "sampler": 0,
-            "source": 2
-        },
-        {
-            "name": "empty sampler",
-            "sampler": 2,
-            "source": 0
-        },
-        {
-            "name": "default sampler",
-            "source": 0
-        }
-    ]
+    {
+      "uri": "texture.png"
+    },
+    {
+      "uri": "texture.png"
+    }
+  ],
+  "samplers": [
+    {
+      "wrapS": 33648,
+      "wrapT": 33071,
+      "minFilter": 9984,
+      "magFilter": 9729
+    },
+    {
+      "wrapS": 10497,
+      "wrapT": 33071,
+      "minFilter": 9987,
+      "magFilter": 9728
+    },
+    {}
+  ],
+  "textures": [
+    {
+      "sampler": 0,
+      "source": 1
+    },
+    {
+      "name": "another variant",
+      "sampler": 1,
+      "source": 0
+    },
+    {
+      "name": "shared sampler",
+      "sampler": 0,
+      "source": 2
+    },
+    {
+      "name": "empty sampler",
+      "sampler": 2,
+      "source": 0
+    },
+    {
+      "name": "default sampler",
+      "source": 0
+    }
+  ]
 }

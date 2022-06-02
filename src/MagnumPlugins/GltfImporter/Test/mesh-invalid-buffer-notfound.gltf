@@ -1,60 +1,60 @@
 {
-    "asset": {
-        "version": "2.0"
+  "asset": {
+    "version": "2.0"
+  },
+  "buffers": [
+    {
+      "byteLength": 12,
+      "uri": "/nonexistent1.bin"
     },
-    "buffers": [
+    {
+      "byteLength": 12,
+      "uri": "/nonexistent2.bin"
+    }
+  ],
+  "meshes": [
+    {
+      "name": "buffer not found",
+      "primitives": [
         {
-            "byteLength": 12,
-            "uri": "/nonexistent1.bin"
-        },
-        {
-            "byteLength": 12,
-            "uri": "/nonexistent2.bin"
+          "attributes": {
+            "POSITION": 0
+          }
         }
-    ],
-    "meshes": [
+      ]
+    },
+    {
+      "name": "indices buffer not found",
+      "primitives": [
         {
-            "name": "buffer not found",
-            "primitives": [
-                {
-                    "attributes": {
-                        "POSITION": 0
-                    }
-                }
-            ]
-        },
-        {
-            "name": "indices buffer not found",
-            "primitives": [
-                {
-                    "attributes": {},
-                    "indices": 1
-                }
-            ]
+          "attributes": {},
+          "indices": 1
         }
-    ],
-    "accessors": [
-        {
-            "bufferView": 0,
-            "componentType": 5126,
-            "count": 1,
-            "type": "VEC3"
-        },
-        {
-            "bufferView": 1,
-            "componentType": 5121,
-            "count": 3,
-            "type": "SCALAR"
-        }
-    ],
-    "bufferViews": [
-        {
-            "buffer": 0,
-            "byteLength": 12
-        },
-        {
-            "buffer": 1,
-            "byteLength": 3
-        }
-    ]
+      ]
+    }
+  ],
+  "accessors": [
+    {
+      "bufferView": 0,
+      "componentType": 5126,
+      "count": 1,
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 1,
+      "componentType": 5121,
+      "count": 3,
+      "type": "SCALAR"
+    }
+  ],
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteLength": 12
+    },
+    {
+      "buffer": 1,
+      "byteLength": 3
+    }
+  ]
 }

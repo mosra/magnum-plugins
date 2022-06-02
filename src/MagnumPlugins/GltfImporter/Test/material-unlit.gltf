@@ -1,43 +1,43 @@
 {
-    "asset": {
-        "version": "2.0"
-    },
-    "images": [
-        {
-            "uri": "texture.png"
+  "asset": {
+    "version": "2.0"
+  },
+  "images": [
+    {
+      "uri": "texture.png"
+    }
+  ],
+  "materials": [
+    {
+      "pbrMetallicRoughness": {
+        "baseColorFactor": [0.7, 0.8, 0.9, 1.1],
+        "baseColorTexture": {
+          "index": 1
         }
-    ],
-    "materials": [
-        {
-            "pbrMetallicRoughness": {
-                "baseColorFactor": [0.7, 0.8, 0.9, 1.1],
-                "baseColorTexture": {
-                    "index": 1
-                }
-            },
-            "extensions": {
-                "KHR_materials_pbrSpecularGlossiness": {
-                    "note": "to verify Type::PbrSpecularGlossiness gets removed too"
-                },
-                "KHR_materials_unlit": {}
-            }
-        }
-    ],
-    "samplers": [
-        {}
-    ],
-    "textures": [
-        {
-            "sampler": 0,
-            "source": 0
+      },
+      "extensions": {
+        "KHR_materials_pbrSpecularGlossiness": {
+          "note": "to verify Type::PbrSpecularGlossiness gets removed too"
         },
-        {
-            "sampler": 0,
-            "source": 0
-        }
-    ],
-    "extensionsUsed": [
-        "KHR_materials_pbrSpecularGlossiness",
-        "KHR_materials_unlit"
-    ]
+        "KHR_materials_unlit": {}
+      }
+    }
+  ],
+  "samplers": [
+    {}
+  ],
+  "textures": [
+    {
+      "sampler": 0,
+      "source": 0
+    },
+    {
+      "sampler": 0,
+      "source": 0
+    }
+  ],
+  "extensionsUsed": [
+    "KHR_materials_pbrSpecularGlossiness",
+    "KHR_materials_unlit"
+  ]
 }

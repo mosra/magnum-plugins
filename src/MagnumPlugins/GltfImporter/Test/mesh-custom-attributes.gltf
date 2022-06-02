@@ -1,100 +1,100 @@
 {
-    "asset": {
-        "version": "2.0"
+  "asset": {
+    "version": "2.0"
+  },
+  "meshes": [
+    {
+      "name": "standard types",
+      "primitives": [
+        {
+          "attributes": {
+            "_TBN": 0,
+            "_UV_ROTATION": 1,
+            "_TBN_PRECISER": 2,
+            "OBJECT_ID3": 3
+          }
+        }
+      ]
     },
-    "meshes": [
+    {
+      "name": "non-standard types",
+      "note": "attribute types not allowed by the spec but accepted by tinygltf",
+      "primitives": [
         {
-            "name": "standard types",
-            "primitives": [
-                {
-                    "attributes": {
-                        "_TBN": 0,
-                        "_UV_ROTATION": 1,
-                        "_TBN_PRECISER": 2,
-                        "OBJECT_ID3": 3
-                    }
-                }
-            ]
-        },
-        {
-            "name": "non-standard types",
-            "note": "attribute types not allowed by the spec but accepted by tinygltf",
-            "primitives": [
-                {
-                    "attributes": {
-                        "_NEGATIVE_PADDING": 4,
-                        "NOT_AN_IDENTITY": 5,
-                        "_DOUBLE_SHOT": 6
-                    }
-                }
-            ]
+          "attributes": {
+            "_NEGATIVE_PADDING": 4,
+            "NOT_AN_IDENTITY": 5,
+            "_DOUBLE_SHOT": 6
+          }
         }
-    ],
-    "accessors": [
-        {
-            "bufferView": 0,
-            "byteOffset": 0,
-            "componentType": 5120,
-            "normalized": true,
-            "count": 1,
-            "type": "MAT3"
-        },
-        {
-            "bufferView": 0,
-            "byteOffset": 12,
-            "componentType": 5120,
-            "normalized": true,
-            "count": 1,
-            "type": "MAT2"
-        },
-        {
-            "bufferView": 0,
-            "byteOffset": 20,
-            "componentType": 5122,
-            "normalized": true,
-            "count": 1,
-            "type": "MAT3"
-        },
-        {
-            "bufferView": 0,
-            "byteOffset": 44,
-            "componentType": 5125,
-            "count": 1,
-            "type": "SCALAR"
-        },
-        {
-            "bufferView": 0,
-            "byteOffset": 64,
-            "componentType": 5124,
-            "count": 1,
-            "type": "SCALAR"
-        },
-        {
-            "bufferView": 0,
-            "byteOffset": 72,
-            "componentType": 5130,
-            "count": 1,
-            "type": "MAT4"
-        },
-        {
-            "bufferView": 0,
-            "byteOffset": 48,
-            "componentType": 5130,
-            "count": 1,
-            "type": "VEC2"
-        }
-    ],
-    "bufferViews": [
-        {
-            "buffer": 0,
-            "byteLength": 200,
-            "byteStride": 200
-        }
-    ],
-    "buffers": [
-        {
-            "byteLength": 200,
-            "uri": "mesh-custom-attributes.bin"
-        }
-    ]
+      ]
+    }
+  ],
+  "accessors": [
+    {
+      "bufferView": 0,
+      "byteOffset": 0,
+      "componentType": 5120,
+      "normalized": true,
+      "count": 1,
+      "type": "MAT3"
+    },
+    {
+      "bufferView": 0,
+      "byteOffset": 12,
+      "componentType": 5120,
+      "normalized": true,
+      "count": 1,
+      "type": "MAT2"
+    },
+    {
+      "bufferView": 0,
+      "byteOffset": 20,
+      "componentType": 5122,
+      "normalized": true,
+      "count": 1,
+      "type": "MAT3"
+    },
+    {
+      "bufferView": 0,
+      "byteOffset": 44,
+      "componentType": 5125,
+      "count": 1,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 0,
+      "byteOffset": 64,
+      "componentType": 5124,
+      "count": 1,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 0,
+      "byteOffset": 72,
+      "componentType": 5130,
+      "count": 1,
+      "type": "MAT4"
+    },
+    {
+      "bufferView": 0,
+      "byteOffset": 48,
+      "componentType": 5130,
+      "count": 1,
+      "type": "VEC2"
+    }
+  ],
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteLength": 200,
+      "byteStride": 200
+    }
+  ],
+  "buffers": [
+    {
+      "byteLength": 200,
+      "uri": "mesh-custom-attributes.bin"
+    }
+  ]
 }

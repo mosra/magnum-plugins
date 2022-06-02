@@ -1,140 +1,140 @@
 {
-    "asset": {
-        "version": "2.0"
+  "asset": {
+    "version": "2.0"
+  },
+  "meshes": [
+    {
+      "primitives": [
+        {
+          "attributes": {},
+          "material": 1
+        }
+      ]
     },
-    "meshes": [
+    {
+      "primitives": [
         {
-            "primitives": [
-                {
-                    "attributes": {},
-                    "material": 1
-                }
-            ]
-        },
-        {
-            "primitives": [
-                {
-                    "attributes": {}
-                }
-            ]
+          "attributes": {}
         }
-    ],
-    "cameras": [
+      ]
+    }
+  ],
+  "cameras": [
+    {
+      "type": "perspective",
+      "perspective": {
+        "yfov": 1.0,
+        "znear": 0.1
+      }
+    },
+    {
+      "type": "orthographic",
+      "orthographic": {
+        "xmag": 2.0,
+        "ymag": 1.5,
+        "zfar": 100.0,
+        "znear": 0.01
+      }
+    },
+    {
+      "type": "perspective",
+      "perspective": {
+        "yfov": 1.0,
+        "znear": 0.1
+      }
+    }
+  ],
+  "extensions": {
+    "KHR_lights_punctual": {
+      "lights": [
         {
-            "type": "perspective",
-            "perspective" : {
-                "yfov" : 1.0,
-                "znear" : 0.1
-            }
+          "type": "point"
         },
         {
-            "type": "orthographic",
-            "orthographic" : {
-                "xmag" : 2.0,
-                "ymag" : 1.5,
-                "zfar" : 100.0,
-                "znear" : 0.01
-            }
-        },
-        {
-            "type": "perspective",
-            "perspective" : {
-                "yfov" : 1.0,
-                "znear" : 0.1
-            }
+          "type": "ambient"
         }
-    ],
-    "extensions": {
+      ]
+    }
+  },
+  "extensionsRequired": [
+    "KHR_lights_punctual"
+  ],
+  "extensionsUsed": [
+    "KHR_lights_punctual"
+  ],
+  "materials": [
+    {},
+    {}
+  ],
+  "nodes": [
+    {
+      "camera": 2,
+      "name": "Camera"
+    },
+    {
+      "children": [
+        0
+      ],
+      "name": "Empty with one child"
+    },
+    {
+      "name": "Mesh w/o material",
+      "mesh": 1
+    },
+    {
+      "name": "Mesh and a material",
+      "mesh": 0
+    },
+    {
+      "extensions": {
         "KHR_lights_punctual": {
-            "lights": [
-                {
-                    "type": "point"
-                },
-                {
-                    "type": "ambient"
-                }
-            ]
+          "light": 1
         }
+      },
+      "name": "Light"
     },
-    "extensionsRequired": [
-        "KHR_lights_punctual"
-    ],
-    "extensionsUsed": [
-        "KHR_lights_punctual"
-    ],
-    "materials": [
-        {},
-        {}
-    ],
-    "nodes": [
-        {
-            "camera": 2,
-            "name": "Camera"
-        },
-        {
-            "children": [
-                0
-            ],
-            "name": "Empty with one child"
-        },
-        {
-            "name": "Mesh w/o material",
-            "mesh": 1
-        },
-        {
-            "name": "Mesh and a material",
-            "mesh": 0
-        },
-        {
-            "extensions": {
-                "KHR_lights_punctual": {
-                    "light": 1
-                }
-            },
-            "name": "Light"
-        },
-        {
-            "children": [
-                3, 1
-            ],
-            "name": "Empty with two children"
-        },
-        {
-            "name": "Mesh and a skin",
-            "mesh": 1,
-            "skin": 1
-        },
-        {
-            "name": "Object that's only in the second scene"
-        }
-    ],
-    "skins": [
-        {
-            "joints": [0]
-        },
-        {
-            "joints": [1, 2]
-        }
-    ],
-    "scene": 1,
-    "scenes": [
-        {
-            "nodes": []
-        },
-        {
-            "name": "Scene",
-            "nodes": [
-                2,
-                4,
-                5,
-                6
-            ]
-        },
-        {
-            "name": "Scene without materials and with one extra object",
-            "nodes": [
-                2, 7
-            ]
-        }
-    ]
+    {
+      "children": [
+        3, 1
+      ],
+      "name": "Empty with two children"
+    },
+    {
+      "name": "Mesh and a skin",
+      "mesh": 1,
+      "skin": 1
+    },
+    {
+      "name": "Object that's only in the second scene"
+    }
+  ],
+  "skins": [
+    {
+      "joints": [0]
+    },
+    {
+      "joints": [1, 2]
+    }
+  ],
+  "scene": 1,
+  "scenes": [
+    {
+      "nodes": []
+    },
+    {
+      "name": "Scene",
+      "nodes": [
+        2,
+        4,
+        5,
+        6
+      ]
+    },
+    {
+      "name": "Scene without materials and with one extra object",
+      "nodes": [
+        2, 7
+      ]
+    }
+  ]
 }

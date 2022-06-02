@@ -1,66 +1,66 @@
 {
-    "asset": {
-        "version": "2.0"
+  "asset": {
+    "version": "2.0"
+  },
+  "images": [
+    {
+      "name": "both uri and buffer view",
+      "uri": "image.png",
+      "bufferView": 0
     },
-    "images": [
-        {
-            "name": "both uri and buffer view",
-            "uri": "image.png",
-            "bufferView": 0
-        },
-        {
-            "name": "invalid buffer view",
-            "bufferView": 2,
-            "mimeType": "image/png"
-        },
-        {
-            "name": "missing uri property"
-        },
-        {
-            "name": "invalid uri property",
-            "uri": false
-        },
-        {
-            "name": "invalid bufferView property",
-            "bufferView": -2
-        },
-        {
-            "name": "strided buffer view",
-            "bufferView": 3
-        },
-        {
-            "name": "data uri magic not recognizable",
-            "uri": "data:image/png;base64,U0VLUklU"
-        }
-    ],
-    "bufferViews": [
-        {
-            "buffer": 0,
-            "byteLength": 0
-        },
-        {
-            "buffer": 0,
-            "byteLength": 0
-        },
-        {
-            "buffer": 1,
-            "byteLength": 75,
-            "byteOffset": 76
-        },
-        {
-            "buffer": 1,
-            "byteLength": 60,
-            "byteStride": 12
-        }
-    ],
-    "buffers": [
-        {
-            "byteLength": 1,
-            "uri": "image.png"
-        },
-        {
-            "byteLength": 150,
-            "uri": "image.png"
-        }
-    ]
+    {
+      "name": "invalid buffer view",
+      "bufferView": 2,
+      "mimeType": "image/png"
+    },
+    {
+      "name": "missing uri property"
+    },
+    {
+      "name": "invalid uri property",
+      "uri": false
+    },
+    {
+      "name": "invalid bufferView property",
+      "bufferView": -2
+    },
+    {
+      "name": "strided buffer view",
+      "bufferView": 3
+    },
+    {
+      "name": "data uri magic not recognizable",
+      "uri": "data:image/png;base64,U0VLUklU"
+    }
+  ],
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteLength": 0
+    },
+    {
+      "buffer": 0,
+      "byteLength": 0
+    },
+    {
+      "buffer": 1,
+      "byteLength": 75,
+      "byteOffset": 76
+    },
+    {
+      "buffer": 1,
+      "byteLength": 60,
+      "byteStride": 12
+    }
+  ],
+  "buffers": [
+    {
+      "byteLength": 1,
+      "uri": "image.png"
+    },
+    {
+      "byteLength": 150,
+      "uri": "image.png"
+    }
+  ]
 }

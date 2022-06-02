@@ -1,126 +1,126 @@
 {
-    "asset": {
-        "version": "2.0"
+  "asset": {
+    "version": "2.0"
+  },
+  "materials": [
+    {},
+    {},
+    {},
+    {}
+  ],
+  "meshes": [
+    {
+      "name": "Single-primitive points",
+      "primitives": [
+        {
+          "mode": 0,
+          "attributes": {
+            "POSITION": 0
+          },
+          "material": 3
+        }
+      ]
     },
-    "materials": [
-        {},
-        {},
-        {},
-        {}
-    ],
-    "meshes": [
+    {
+      "name": "Multi-primitive lines, triangles, triangle strip",
+      "primitives": [
         {
-            "name": "Single-primitive points",
-            "primitives": [
-                {
-                    "mode": 0,
-                    "attributes": {
-                        "POSITION": 0
-                    },
-                    "material": 3
-                }
-            ]
+          "mode": 1,
+          "attributes": {
+            "POSITION": 0
+          },
+          "material": 1
         },
         {
-            "name": "Multi-primitive lines, triangles, triangle strip",
-            "primitives": [
-                {
-                    "mode": 1,
-                    "attributes": {
-                        "POSITION": 0
-                    },
-                    "material": 1
-                },
-                {
-                    "mode": 4,
-                    "attributes": {
-                        "POSITION": 0
-                    },
-                    "material": 2
-                },
-                {
-                    "mode": 5,
-                    "attributes": {
-                        "POSITION": 0
-                    },
-                    "material": 0
-                }
-            ]
+          "mode": 4,
+          "attributes": {
+            "POSITION": 0
+          },
+          "material": 2
         },
         {
-            "name": "Single-primitive line loop",
-            "primitives": [
-                {
-                    "mode": 2,
-                    "attributes": {
-                        "POSITION": 0
-                    }
-                }
-            ]
-        },
-        {
-            "name": "Multi-primitive triangle fan, line strip",
-            "primitives": [
-                {
-                    "mode": 6,
-                    "attributes": {
-                        "POSITION": 0
-                    }
-                },
-                {
-                    "mode": 3,
-                    "attributes": {
-                        "POSITION": 0
-                    },
-                    "material": 1
-                }
-            ]
+          "mode": 5,
+          "attributes": {
+            "POSITION": 0
+          },
+          "material": 0
         }
-    ],
-    "nodes": [
+      ]
+    },
+    {
+      "name": "Single-primitive line loop",
+      "primitives": [
         {
-            "name": "Using the second mesh",
-            "mesh": 1
+          "mode": 2,
+          "attributes": {
+            "POSITION": 0
+          }
+        }
+      ]
+    },
+    {
+      "name": "Multi-primitive triangle fan, line strip",
+      "primitives": [
+        {
+          "mode": 6,
+          "attributes": {
+            "POSITION": 0
+          }
         },
         {
-            "name": "Using the first mesh",
-            "mesh": 0
-        },
-        {
-            "name": "Just a non-mesh node"
-        },
-        {
-            "name": "Using the second mesh again",
-            "mesh": 1
-        },
-        {
-            "name": "Using the fourth mesh",
-            "mesh": 3
+          "mode": 3,
+          "attributes": {
+            "POSITION": 0
+          },
+          "material": 1
         }
-    ],
-    "accessors": [
-        {
-            "bufferView": 0,
-            "componentType": 5126,
-            "count": 0,
-            "type": "VEC3"
-        }
-    ],
-    "bufferViews": [
-        {
-            "buffer": 0,
-            "byteLength": 0
-        }
-    ],
-    "buffers": [
-        {
-            "byteLength": 1,
-            "uri": "data:application/octet-stream;base64,Ra=="
-        }
-    ],
-    "scenes": [
-        {
-            "nodes": [0, 1, 2, 3, 4]
-        }
-    ]
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "name": "Using the second mesh",
+      "mesh": 1
+    },
+    {
+      "name": "Using the first mesh",
+      "mesh": 0
+    },
+    {
+      "name": "Just a non-mesh node"
+    },
+    {
+      "name": "Using the second mesh again",
+      "mesh": 1
+    },
+    {
+      "name": "Using the fourth mesh",
+      "mesh": 3
+    }
+  ],
+  "accessors": [
+    {
+      "bufferView": 0,
+      "componentType": 5126,
+      "count": 0,
+      "type": "VEC3"
+    }
+  ],
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteLength": 0
+    }
+  ],
+  "buffers": [
+    {
+      "byteLength": 1,
+      "uri": "data:application/octet-stream;base64,Ra=="
+    }
+  ],
+  "scenes": [
+    {
+      "nodes": [0, 1, 2, 3, 4]
+    }
+  ]
 }

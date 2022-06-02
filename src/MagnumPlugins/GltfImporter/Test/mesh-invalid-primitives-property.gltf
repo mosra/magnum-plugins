@@ -1,15 +1,15 @@
 {
-    "asset": {
-        "version": "2.0"
+  "asset": {
+    "version": "2.0"
+  },
+  "meshes": [
+    {
+      "primitives": [
+        {}
+      ]
     },
-    "meshes": [
-        {
-            "primitives": [
-                {}
-            ]
-        },
-        {
-            "primitives": {}
-        }
-    ]
+    {
+      "primitives": {}
+    }
+  ]
 }

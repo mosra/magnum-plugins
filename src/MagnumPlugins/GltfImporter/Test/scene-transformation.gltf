@@ -1,118 +1,118 @@
 {
-    "asset": {
-        "version": "2.0"
+  "asset": {
+    "version": "2.0"
+  },
+  "nodes": [
+    {
+      "name": "Matrix + TRS",
+      "matrix": [
+        0.636397, 0.0, -0.636395, 0.0,
+        0.0, 0.5, -0.0, 0.0,
+        1.62634, 0.0, 1.62635, 0.0,
+        1.5, -2.5, 0.3, 1.0
+      ],
+      "rotation": [
+        0.0,
+        0.382683,
+        0.0,
+        0.92388
+      ],
+      "scale": [
+        0.9,
+        0.5,
+        2.3
+      ],
+      "translation": [
+        1.5,
+        -2.5,
+        0.3
+      ]
     },
-    "nodes": [
-        {
-            "name": "Matrix + TRS",
-            "matrix": [
-                0.636397,  0.0, -0.636395, 0.0,
-                0.0, 0.5, -0.0, 0.0,
-                1.62634, 0.0, 1.62635, 0.0,
-                1.5, -2.5, 0.3, 1.0
-            ],
-            "rotation": [
-                0.0,
-                0.382683,
-                0.0,
-                0.92388
-            ],
-            "scale": [
-                0.9,
-                0.5,
-                2.3
-            ],
-            "translation": [
-                1.5,
-                -2.5,
-                0.3
-            ]
-        },
-        {
-            "name": "Matrix",
-            "matrix": [
-                0.636397,  0.0, -0.636395, 0.0,
-                0.0, 0.5, -0.0, 0.0,
-                1.62634, 0.0, 1.62635, 0.0,
-                1.5, -2.5, 0.3, 1.0
-            ]
-        },
-        {
-            "name": "TRS",
-            "rotation": [
-                0.0,
-                0.382683,
-                0.0,
-                0.92388
-            ],
-            "scale": [
-                0.9,
-                0.5,
-                2.3
-            ],
-            "translation": [
-                1.5,
-                -2.5,
-                0.3
-            ]
-        },
-        {
-            "name": "Translation",
-            "translation": [
-                1.5,
-                -2.5,
-                0.3
-            ]
-        },
-        {
-            "name": "Rotation",
-            "rotation": [
-                0.0,
-                0.382683,
-                0.0,
-                0.92388
-            ]
-        },
-        {
-            "name": "Scaling",
-            "scale": [
-                0.9,
-                0.5,
-                2.3
-            ]
-        },
-        {
-            "name": "Implicit transformation"
-        }
-    ],
-    "scenes": [
-        {
-            "name": "Everything",
-            "nodes": [0, 1, 2, 3, 4, 5, 6]
-        },
-        {
-            "name": "Matrix + TRS",
-            "nodes": [0, 6]
-        },
-        {
-            "name": "Just matrices",
-            "nodes": [1, 6]
-        },
-        {
-            "name": "Just TRS",
-            "nodes": [2, 3, 4, 5, 6]
-        },
-        {
-            "name": "Just translation",
-            "nodes": [3, 6]
-        },
-        {
-            "name": "Just rotation",
-            "nodes": [4, 6]
-        },
-        {
-            "name": "Just scaling",
-            "nodes": [5, 6]
-        }
-    ]
+    {
+      "name": "Matrix",
+      "matrix": [
+        0.636397, 0.0, -0.636395, 0.0,
+        0.0, 0.5, -0.0, 0.0,
+        1.62634, 0.0, 1.62635, 0.0,
+        1.5, -2.5, 0.3, 1.0
+      ]
+    },
+    {
+      "name": "TRS",
+      "rotation": [
+        0.0,
+        0.382683,
+        0.0,
+        0.92388
+      ],
+      "scale": [
+        0.9,
+        0.5,
+        2.3
+      ],
+      "translation": [
+        1.5,
+        -2.5,
+        0.3
+      ]
+    },
+    {
+      "name": "Translation",
+      "translation": [
+        1.5,
+        -2.5,
+        0.3
+      ]
+    },
+    {
+      "name": "Rotation",
+      "rotation": [
+        0.0,
+        0.382683,
+        0.0,
+        0.92388
+      ]
+    },
+    {
+      "name": "Scaling",
+      "scale": [
+        0.9,
+        0.5,
+        2.3
+      ]
+    },
+    {
+      "name": "Implicit transformation"
+    }
+  ],
+  "scenes": [
+    {
+      "name": "Everything",
+      "nodes": [0, 1, 2, 3, 4, 5, 6]
+    },
+    {
+      "name": "Matrix + TRS",
+      "nodes": [0, 6]
+    },
+    {
+      "name": "Just matrices",
+      "nodes": [1, 6]
+    },
+    {
+      "name": "Just TRS",
+      "nodes": [2, 3, 4, 5, 6]
+    },
+    {
+      "name": "Just translation",
+      "nodes": [3, 6]
+    },
+    {
+      "name": "Just rotation",
+      "nodes": [4, 6]
+    },
+    {
+      "name": "Just scaling",
+      "nodes": [5, 6]
+    }
+  ]
 }
