@@ -501,49 +501,49 @@ constexpr struct {
     {"missing samplers",
         "missing or invalid samplers property"},
     {"invalid samplers",
-        "Utility::Json::parseArray(): expected an array, got Utility::JsonToken::Type::Object at {}:263:25\n"
+        "Utility::Json::parseArray(): expected an array, got Utility::JsonToken::Type::Object at {}:264:19\n"
         "Trade::GltfImporter::animation(): missing or invalid samplers property\n"},
     {"invalid sampler",
-        "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Number at {}:269:17\n"
+        "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Number at {}:270:9\n"
         "Trade::GltfImporter::animation(): invalid sampler 0\n"},
     {"missing sampler input",
         "missing or invalid sampler 0 input property"},
     {"invalid sampler input",
-        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:286:30\n"
+        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:287:20\n"
         "Trade::GltfImporter::animation(): missing or invalid sampler 0 input property\n"},
     {"missing sampler output",
         "missing or invalid sampler 0 output property"},
     {"invalid sampler output",
-        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:306:31\n"
+        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:307:21\n"
         "Trade::GltfImporter::animation(): missing or invalid sampler 0 output property\n"},
     {"invalid sampler interpolation",
-        "Utility::Json::parseString(): expected a string, got Utility::JsonToken::Type::Bool at {}:316:38\n"
+        "Utility::Json::parseString(): expected a string, got Utility::JsonToken::Type::Bool at {}:317:28\n"
         "Trade::GltfImporter::animation(): invalid sampler 0 interpolation property\n"},
     {"missing channels",
         "missing or invalid channels property"},
     {"invalid channels",
-        "Utility::Json::parseArray(): expected an array, got Utility::JsonToken::Type::Object at {}:332:25\n"
+        "Utility::Json::parseArray(): expected an array, got Utility::JsonToken::Type::Object at {}:333:19\n"
         "Trade::GltfImporter::animation(): missing or invalid channels property\n"},
     {"invalid channel",
-        "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Number at {}:343:17\n"
+        "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Number at {}:344:9\n"
         "Trade::GltfImporter::animation(): invalid channel 0\n"},
     {"missing channel target",
         "missing or invalid channel 1 target property"},
     {"invalid channel target",
-        "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::String at {}:378:31\n"
+        "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::String at {}:379:21\n"
         "Trade::GltfImporter::animation(): missing or invalid channel 0 target property\n"},
     {"invalid channel target node",
-        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:401:33\n"
+        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:402:21\n"
         "Trade::GltfImporter::animation(): invalid channel 1 target node property\n"},
     {"missing channel target path",
         "missing or invalid channel 1 target path property"},
     {"invalid channel target path",
-        "Utility::Json::parseString(): expected a string, got Utility::JsonToken::Type::Null at {}:444:33\n"
+        "Utility::Json::parseString(): expected a string, got Utility::JsonToken::Type::Null at {}:445:21\n"
         "Trade::GltfImporter::animation(): missing or invalid channel 0 target path property\n"},
     {"missing channel sampler",
         "missing or invalid channel 1 sampler property"},
     {"invalid channel sampler",
-        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:483:32\n"
+        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:484:22\n"
         "Trade::GltfImporter::animation(): missing or invalid channel 0 sampler property\n"}
 };
 
@@ -564,67 +564,67 @@ const struct {
     {"missing type",
         "missing or invalid type property"},
     {"invalid type",
-        "Utility::Json::parseString(): expected a string, got Utility::JsonToken::Type::Number at {}:15:21\n"
+        "Utility::Json::parseString(): expected a string, got Utility::JsonToken::Type::Number at {}:15:15\n"
         "Trade::GltfImporter::camera(): missing or invalid type property\n"},
     {"missing perspective property",
         "missing or invalid perspective property"},
     {"invalid perspective property",
-        "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Bool at {}:24:28\n"
+        "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Bool at {}:24:22\n"
         "Trade::GltfImporter::camera(): missing or invalid perspective property\n"},
     {"invalid perspective aspectRatio property",
-        "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::Null at {}:30:32\n"
+        "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::Null at {}:30:24\n"
         "Trade::GltfImporter::camera(): invalid perspective aspectRatio property\n"},
     {"negative perspective aspectRatio",
         "expected positive perspective aspectRatio, got -3.5"},
     {"missing perspective yfov property",
         "missing or invalid perspective yfov property"},
     {"invalid perspective yfov property",
-        "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::String at {}:55:25\n"
+        "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::String at {}:55:17\n"
         "Trade::GltfImporter::camera(): missing or invalid perspective yfov property\n"},
     {"negative perspective yfov",
         "expected positive perspective yfov, got -1"},
     {"missing perspective znear property",
         "missing or invalid perspective znear property"},
     {"invalid perspective znear property",
-        "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::String at {}:79:26\n"
+        "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::String at {}:79:18\n"
         "Trade::GltfImporter::camera(): missing or invalid perspective znear property\n"},
     {"negative perspective znear",
         "expected positive perspective znear, got -0.01"},
     {"invalid perspective zfar property",
-        "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::Null at {}:96:25\n"
+        "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::Null at {}:96:17\n"
         "Trade::GltfImporter::camera(): invalid perspective zfar property\n"},
     {"perspective zfar not larger than znear",
         "expected perspective zfar larger than znear of 0.125, got 0.125"},
     {"missing orthographic property",
         "missing or invalid orthographic property"},
     {"invalid orthographic property",
-        "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Bool at {}:115:29\n"
+        "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Bool at {}:115:23\n"
         "Trade::GltfImporter::camera(): missing or invalid orthographic property\n"},
     {"missing orthographic xmag property",
         "missing or invalid orthographic xmag property"},
     {"invalid orthographic xmag property",
-        "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::String at {}:130:25\n"
+        "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::String at {}:130:17\n"
         "Trade::GltfImporter::camera(): missing or invalid orthographic xmag property\n"},
     {"zero orthographic xmag",
         "expected non-zero orthographic xmag"},
     {"missing orthographic ymag property",
         "missing or invalid orthographic ymag property"},
     {"invalid orthographic ymag property",
-        "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::String at {}:160:25\n"
+        "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::String at {}:160:17\n"
         "Trade::GltfImporter::camera(): missing or invalid orthographic ymag property\n"},
     {"zero orthographic ymag",
         "expected non-zero orthographic ymag"},
     {"missing orthographic znear property",
         "missing or invalid orthographic znear property"},
     {"invalid orthographic znear property",
-        "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::String at {}:190:26\n"
+        "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::String at {}:190:18\n"
         "Trade::GltfImporter::camera(): missing or invalid orthographic znear property\n"},
     {"negative orthographic znear",
         "expected non-negative orthographic znear, got -1"},
     {"missing orthographic zfar property",
         "missing or invalid orthographic zfar property"},
     {"invalid orthographic zfar property",
-        "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::String at {}:220:25\n"
+        "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::String at {}:220:17\n"
         "Trade::GltfImporter::camera(): missing or invalid orthographic zfar property\n"},
     {"orthographic zfar not larger than znear",
         "expected orthographic zfar larger than znear of 0.5, got 0.5"},
@@ -647,34 +647,34 @@ constexpr struct {
     {"spot with inner angle same as outer",
         "spot inner and outer cone angle Deg(14.3239) and Deg(14.3239) out of allowed bounds"},
     {"invalid color property",
-        "Utility::Json::parseFloatArray(): expected an array, got Utility::JsonToken::Type::String at {}:42:30\n"
+        "Utility::Json::parseFloatArray(): expected an array, got Utility::JsonToken::Type::String at {}:42:20\n"
         "Trade::GltfImporter::light(): invalid color property\n"},
     {"invalid color array size",
-        "Utility::Json::parseFloatArray(): expected a 3-element array, got 4 at {}:47:30\n"
+        "Utility::Json::parseFloatArray(): expected a 3-element array, got 4 at {}:47:20\n"
         "Trade::GltfImporter::light(): invalid color property\n"},
     {"invalid intensity property",
-        "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::String at {}:52:34\n"
+        "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::String at {}:52:24\n"
         "Trade::GltfImporter::light(): invalid intensity property\n"},
     {"invalid range property",
-        "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::String at {}:57:30\n"
+        "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::String at {}:57:20\n"
         "Trade::GltfImporter::light(): invalid range property\n"},
     {"zero range",
         "expected positive range, got 0"},
     {"missing type property",
         "missing or invalid type property"},
     {"invalid type property",
-        "Utility::Json::parseString(): expected a string, got Utility::JsonToken::Type::Number at {}:69:29\n"
+        "Utility::Json::parseString(): expected a string, got Utility::JsonToken::Type::Number at {}:69:19\n"
         "Trade::GltfImporter::light(): missing or invalid type property\n"},
     {"missing spot property",
         "missing or invalid spot property"},
     {"invalid spot property",
-        "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Number at {}:78:29\n"
+        "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Number at {}:78:19\n"
         "Trade::GltfImporter::light(): missing or invalid spot property\n"},
     {"invalid spot innerConeAngle property",
-        "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::Bool at {}:84:43\n"
+        "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::Bool at {}:84:31\n"
         "Trade::GltfImporter::light(): invalid spot innerConeAngle property\n"},
     {"invalid spot outerConeAngle property",
-        "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::Bool at {}:91:43\n"
+        "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::Bool at {}:91:31\n"
         "Trade::GltfImporter::light(): invalid spot outerConeAngle property\n"}
 };
 
@@ -701,10 +701,10 @@ constexpr struct {
     {"missing joints property",
         "missing or invalid joints property"},
     {"invalid joints property",
-        "Utility::Json::parseUnsignedIntArray(): expected an array, got Utility::JsonToken::Type::Object at {}:48:23\n"
+        "Utility::Json::parseUnsignedIntArray(): expected an array, got Utility::JsonToken::Type::Object at {}:48:17\n"
         "Trade::GltfImporter::skin3D(): missing or invalid joints property\n"},
     {"invalid inverseBindMatrices property",
-        "Utility::Json::parseUnsignedInt(): expected a number, got Utility::JsonToken::Type::Array at {}:52:36\n"
+        "Utility::Json::parseUnsignedInt(): expected a number, got Utility::JsonToken::Type::Array at {}:52:30\n"
         "Trade::GltfImporter::skin3D(): invalid inverseBindMatrices property\n"},
 };
 
@@ -778,22 +778,22 @@ const struct {
         "missing or invalid primitives property in mesh 1"},
     {"invalid primitives property",
         "mesh-invalid-primitives-property.gltf",
-        "Utility::Json::parseArray(): expected an array, got Utility::JsonToken::Type::Object at {}:12:27\n"
+        "Utility::Json::parseArray(): expected an array, got Utility::JsonToken::Type::Object at {}:12:21\n"
         "Trade::GltfImporter::openData(): missing or invalid primitives property in mesh 1\n"},
     {"empty primitives",
         "mesh-invalid-empty-primitives.gltf",
         "mesh 1 has no primitives"},
     {"invalid primitive",
         "mesh-invalid-primitive.gltf",
-        "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Array at {}:13:17\n"
+        "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Array at {}:13:9\n"
         "Trade::GltfImporter::openData(): invalid mesh 1 primitive 0\n"},
     {"invalid primitive attributes property",
         "mesh-invalid-primitive-attributes-property.gltf",
-        "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Array at {}:14:35\n"
+        "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Array at {}:14:25\n"
         "Trade::GltfImporter::openData(): invalid primitive attributes property in mesh 1\n"},
     {"texcoord flip invalid attribute",
         "mesh-invalid-texcoord-flip-attribute.gltf",
-        "Utility::Json::parseUnsignedInt(): expected a number, got Utility::JsonToken::Type::String at {}:15:39\n"
+        "Utility::Json::parseUnsignedInt(): expected a number, got Utility::JsonToken::Type::String at {}:15:27\n"
         "Trade::GltfImporter::openData(): invalid attribute TEXCOORD_3 in mesh 1\n"},
     {"texcoord flip attribute out of bounds",
         "mesh-invalid-texcoord-flip-attribute-oob.gltf",
@@ -803,11 +803,11 @@ const struct {
         "accessor 1 has missing or invalid componentType property"},
     {"texcoord flip attribute accessor invalid componentType",
         "mesh-invalid-texcoord-flip-attribute-accessor-invalid-component-type.gltf",
-        "Utility::Json::parseUnsignedInt(): expected a number, got Utility::JsonToken::Type::String at {}:8:30\n"
+        "Utility::Json::parseUnsignedInt(): expected a number, got Utility::JsonToken::Type::String at {}:8:24\n"
         "Trade::GltfImporter::openData(): accessor 1 has missing or invalid componentType property\n"},
     {"texcoord flip attribute accessor invalid normalized",
         "mesh-invalid-texcoord-flip-attribute-accessor-invalid-normalized.gltf",
-        "Utility::Json::parseBool(): expected a bool, got Utility::JsonToken::Type::Null at {}:9:27\n"
+        "Utility::Json::parseBool(): expected a bool, got Utility::JsonToken::Type::Null at {}:9:21\n"
         "Trade::GltfImporter::openData(): accessor 1 has invalid normalized property\n"},
 };
 
@@ -894,65 +894,65 @@ constexpr struct {
     {"buffer with missing uri property",
         "buffer 2 has missing uri property"},
     {"buffer with invalid uri property",
-        "Utility::Json::parseString(): expected a string, got Utility::JsonToken::Type::Array at {}:1037:20\n"
+        "Utility::Json::parseString(): expected a string, got Utility::JsonToken::Type::Array at {}:1037:14\n"
         "Trade::GltfImporter::mesh(): buffer 3 has invalid uri property\n"},
     {"buffer with invalid uri",
         "invalid URI escape sequence %%"},
     {"buffer with missing byteLength property",
         "buffer 5 has missing or invalid byteLength property"},
     {"buffer with invalid byteLength property",
-        "Utility::Json::parseSize(): too large integer literal -3 at {}:1050:27\n"
+        "Utility::Json::parseSize(): too large integer literal -3 at {}:1050:21\n"
         "Trade::GltfImporter::mesh(): buffer 6 has missing or invalid byteLength property\n"},
     {"buffer view with missing buffer property",
         "buffer view 9 has missing or invalid buffer property"},
     {"buffer view with invalid buffer property",
-        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:987:23\n"
+        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:987:17\n"
         "Trade::GltfImporter::mesh(): buffer view 10 has missing or invalid buffer property\n"},
     {"buffer view with invalid byteOffset property",
-        "Utility::Json::parseSize(): too large integer literal -1 at {}:993:27\n"
+        "Utility::Json::parseSize(): too large integer literal -1 at {}:993:21\n"
         "Trade::GltfImporter::mesh(): buffer view 11 has invalid byteOffset property\n"},
     {"buffer view with missing byteLength property",
         "buffer view 12 has missing or invalid byteLength property"},
     {"buffer view with invalid byteLength property",
-        "Utility::Json::parseSize(): too large integer literal -12 at {}:1003:27\n"
+        "Utility::Json::parseSize(): too large integer literal -12 at {}:1003:21\n"
         "Trade::GltfImporter::mesh(): buffer view 13 has missing or invalid byteLength property\n"},
     {"buffer view with invalid byteStride property",
-        "Utility::Json::parseUnsignedInt(): too large integer literal -4 at {}:1009:27\n"
+        "Utility::Json::parseUnsignedInt(): too large integer literal -4 at {}:1009:21\n"
         "Trade::GltfImporter::mesh(): buffer view 14 has invalid byteStride property\n"},
     {"accessor with missing bufferView property",
         "accessor 15 has missing or invalid bufferView property"},
     {"accessor with invalid bufferView property",
-        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:863:27\n"
+        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:863:21\n"
         "Trade::GltfImporter::mesh(): accessor 34 has missing or invalid bufferView property\n"},
     {"accessor with invalid byteOffset property",
-        "Utility::Json::parseSize(): too large integer literal -1 at {}:871:27\n"
+        "Utility::Json::parseSize(): too large integer literal -1 at {}:871:21\n"
         "Trade::GltfImporter::mesh(): accessor 35 has invalid byteOffset property\n"},
     {"accessor with missing componentType property",
         "accessor 36 has missing or invalid componentType property"},
     {"accessor with invalid componentType property",
-        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:885:30\n"
+        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:885:24\n"
         "Trade::GltfImporter::mesh(): accessor 37 has missing or invalid componentType property\n"},
     {"accessor with missing count property",
         "accessor 38 has missing or invalid count property"},
     {"accessor with invalid count property",
-        "Utility::Json::parseSize(): too large integer literal -1 at {}:899:22\n"
+        "Utility::Json::parseSize(): too large integer literal -1 at {}:899:16\n"
         "Trade::GltfImporter::mesh(): accessor 39 has missing or invalid count property\n"},
     {"accessor with missing type property",
         "accessor 40 has missing or invalid type property"},
     {"accessor with invalid type property",
-        "Utility::Json::parseString(): expected a string, got Utility::JsonToken::Type::Number at {}:913:21\n"
+        "Utility::Json::parseString(): expected a string, got Utility::JsonToken::Type::Number at {}:913:15\n"
         "Trade::GltfImporter::mesh(): accessor 41 has missing or invalid type property\n"},
     {"accessor with invalid normalized property",
-        "Utility::Json::parseBool(): expected a bool, got Utility::JsonToken::Type::Null at {}:921:27\n"
+        "Utility::Json::parseBool(): expected a bool, got Utility::JsonToken::Type::Null at {}:921:21\n"
         "Trade::GltfImporter::mesh(): accessor 42 has invalid normalized property\n"},
     {"invalid primitive property",
-        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:584:29\n"
+        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:584:19\n"
         "Trade::GltfImporter::mesh(): invalid primitive mode property\n"},
     {"invalid attribute property",
-        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:594:38\n"
+        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:594:26\n"
         "Trade::GltfImporter::mesh(): invalid attribute _WEIRD_EH\n"},
     {"invalid indices property",
-        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:604:32\n"
+        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:604:22\n"
         "Trade::GltfImporter::mesh(): invalid indices property\n"}
 };
 
@@ -969,130 +969,130 @@ constexpr struct {
     const char* message;
 } MaterialInvalidData[]{
     {"invalid alphaMode property",
-        "Utility::Json::parseString(): expected a string, got Utility::JsonToken::Type::Number at {}:8:26\n"
+        "Utility::Json::parseString(): expected a string, got Utility::JsonToken::Type::Number at {}:8:20\n"
         "Trade::GltfImporter::material(): invalid alphaMode property\n"},
     {"unrecognized alpha mode",
         "unrecognized alphaMode WAT"},
     {"invalid alphaCutoff property",
-        "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::String at {}:17:28\n"
+        "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::String at {}:17:22\n"
         "Trade::GltfImporter::material(): invalid alphaCutoff property\n"},
     {"invalid doubleSided property",
-        "Utility::Json::parseBool(): expected a bool, got Utility::JsonToken::Type::Null at {}:21:28\n"
+        "Utility::Json::parseBool(): expected a bool, got Utility::JsonToken::Type::Null at {}:21:22\n"
         "Trade::GltfImporter::material(): invalid doubleSided property\n"},
     {"invalid pbrMetallicRoughness property",
-        "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Array at {}:25:37\n"
+        "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Array at {}:25:31\n"
         "Trade::GltfImporter::material(): invalid pbrMetallicRoughness property\n"},
     {"invalid pbrMetallicRoughness baseColorFactor property",
-        "Utility::Json::parseFloatArray(): expected an array, got Utility::JsonToken::Type::String at {}:30:36\n"
+        "Utility::Json::parseFloatArray(): expected an array, got Utility::JsonToken::Type::String at {}:30:28\n"
         "Trade::GltfImporter::material(): invalid pbrMetallicRoughness baseColorFactor property\n"},
     {"invalid pbrMetallicRoughness baseColorFactor array size",
-        "Utility::Json::parseFloatArray(): expected a 4-element array, got 3 at {}:36:36\n"
+        "Utility::Json::parseFloatArray(): expected a 4-element array, got 3 at {}:36:28\n"
         "Trade::GltfImporter::material(): invalid pbrMetallicRoughness baseColorFactor property\n"},
     {"invalid pbrMetallicRoughness baseColorTexture",
         "baseColorTexture index 2 out of range for 2 textures"},
     {"invalid pbrMetallicRoughness metallicFactor property",
-        "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::Bool at {}:50:35\n"
+        "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::Bool at {}:50:27\n"
         "Trade::GltfImporter::material(): invalid pbrMetallicRoughness metallicFactor property\n"},
     {"invalid pbrMetallicRoughness roughnessFactor property",
-        "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::Bool at {}:56:36\n"
+        "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::Bool at {}:56:28\n"
         "Trade::GltfImporter::material(): invalid pbrMetallicRoughness roughnessFactor property\n"},
     {"invalid pbrMetallicRoughness metallicRoughnessTexture",
         "metallicRoughnessTexture index 2 out of range for 2 textures"},
     {"invalid extensions property",
-        "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Array at {}:69:27\n"
+        "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Array at {}:69:21\n"
         "Trade::GltfImporter::material(): invalid extensions property\n"},
     {"invalid extension",
-        "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Null at {}:74:40\n"
+        "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Null at {}:74:32\n"
         "Trade::GltfImporter::material(): invalid KHR_materials_unlit extension property\n"},
     {"invalid KHR_materials_pbrSpecularGlossiness diffuseFactor property",
-        "Utility::Json::parseFloatArray(): expected an array, got Utility::JsonToken::Type::String at {}:81:38\n"
+        "Utility::Json::parseFloatArray(): expected an array, got Utility::JsonToken::Type::String at {}:81:28\n"
         "Trade::GltfImporter::material(): invalid KHR_materials_pbrSpecularGlossiness diffuseFactor property\n"},
     {"invalid KHR_materials_pbrSpecularGlossiness diffuseFactor array size",
-        "Utility::Json::parseFloatArray(): expected a 4-element array, got 3 at {}:89:38\n"
+        "Utility::Json::parseFloatArray(): expected a 4-element array, got 3 at {}:89:28\n"
         "Trade::GltfImporter::material(): invalid KHR_materials_pbrSpecularGlossiness diffuseFactor property\n"},
     {"invalid KHR_materials_pbrSpecularGlossiness diffuseTexture",
         "diffuseTexture index 2 out of range for 2 textures"},
     {"invalid KHR_materials_pbrSpecularGlossiness specularFactor property",
-        "Utility::Json::parseFloatArray(): expected an array, got Utility::JsonToken::Type::String at {}:107:39\n"
+        "Utility::Json::parseFloatArray(): expected an array, got Utility::JsonToken::Type::String at {}:107:29\n"
         "Trade::GltfImporter::material(): invalid KHR_materials_pbrSpecularGlossiness specularFactor property\n"},
     {"invalid KHR_materials_pbrSpecularGlossiness specularFactor array size",
-        "Utility::Json::parseFloatArray(): expected a 3-element array, got 4 at {}:115:39\n"
+        "Utility::Json::parseFloatArray(): expected a 3-element array, got 4 at {}:115:29\n"
         "Trade::GltfImporter::material(): invalid KHR_materials_pbrSpecularGlossiness specularFactor property\n"},
     {"invalid KHR_materials_pbrSpecularGlossiness glossinessFactor property",
-        "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::Bool at {}:123:41\n"
+        "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::Bool at {}:123:31\n"
         "Trade::GltfImporter::material(): invalid KHR_materials_pbrSpecularGlossiness glossinessFactor property\n"},
     {"invalid KHR_materials_pbrSpecularGlossiness specularGlossinessTexture",
         "specularGlossinessTexture index 2 out of range for 2 textures"},
     {"invalid normalTexture",
         "normalTexture index 2 out of range for 2 textures"},
     {"invalid normalTexture scale property",
-        "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::Bool at {}:147:26\n"
+        "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::Bool at {}:147:18\n"
         "Trade::GltfImporter::material(): invalid normalTexture scale property\n"},
     {"invalid occlusionTexture",
         "occlusionTexture index 2 out of range for 2 textures"},
     {"invalid occlusionTexture strength property",
-        "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::String at {}:160:29\n"
+        "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::String at {}:160:21\n"
         "Trade::GltfImporter::material(): invalid occlusionTexture strength property\n"},
     {"invalid emissiveFactor property",
-        "Utility::Json::parseFloatArray(): expected an array, got Utility::JsonToken::Type::Number at {}:165:31\n"
+        "Utility::Json::parseFloatArray(): expected an array, got Utility::JsonToken::Type::Number at {}:165:25\n"
         "Trade::GltfImporter::material(): invalid emissiveFactor property\n"},
     {"invalid emissiveFactor array size",
-        "Utility::Json::parseFloatArray(): expected a 3-element array, got 4 at {}:169:31\n"
+        "Utility::Json::parseFloatArray(): expected a 3-element array, got 4 at {}:169:25\n"
         "Trade::GltfImporter::material(): invalid emissiveFactor property\n"},
     {"invalid emissiveTexture",
         "emissiveTexture index 2 out of range for 2 textures"},
     {"invalid KHR_materials_clearcoat clearcoatFactor property",
-        "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::Array at {}:181:40\n"
+        "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::Array at {}:181:30\n"
         "Trade::GltfImporter::material(): invalid KHR_materials_clearcoat clearcoatFactor property\n"},
     {"invalid KHR_materials_clearcoat clearcoatTexture",
         "clearcoatTexture index 2 out of range for 2 textures"},
     {"invalid KHR_materials_clearcoat clearcoatRoughnessFactor property",
-        "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::Bool at {}:199:49\n"
+        "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::Bool at {}:199:39\n"
         "Trade::GltfImporter::material(): invalid KHR_materials_clearcoat roughnessFactor property\n"},
     {"invalid KHR_materials_clearcoat clearcoatRoughnessTexture",
         "clearcoatRoughnessTexture index 2 out of range for 2 textures"},
     {"invalid KHR_materials_clearcoat clearcoatNormalTexture",
         "clearcoatNormalTexture index 2 out of range for 2 textures"},
     {"invalid KHR_materials_clearcoat clearcoatNormalTexture scale property",
-        "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::Bool at {}:229:34\n"
+        "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::Bool at {}:229:22\n"
         "Trade::GltfImporter::material(): invalid KHR_materials_clearcoat normalTexture scale property\n"},
     /* Invalid texture object cases are tested thoroughly only once on the
        baseColorTexture object, as the helper code path is shared. General
        error propagation was tested above alaready. */
     {"invalid texture object",
-        "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Number at {}:237:37\n"
+        "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Number at {}:237:29\n"
         "Trade::GltfImporter::material(): invalid baseColorTexture property\n"},
     {"missing texture object index property",
         "missing or invalid baseColorTexture index property"},
     {"invalid texture object index property",
-        "Utility::Json::parseUnsignedInt(): too large integer literal -2 at {}:250:30\n"
+        "Utility::Json::parseUnsignedInt(): too large integer literal -2 at {}:250:20\n"
         "Trade::GltfImporter::material(): missing or invalid baseColorTexture index property\n"},
     {"invalid texture object texCoord property",
-        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:259:33\n"
+        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:259:23\n"
         "Trade::GltfImporter::material(): invalid baseColorTexture texcoord property\n"},
     {"invalid texture object extensions property",
-        "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Array at {}:268:35\n"
+        "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Array at {}:268:25\n"
         "Trade::GltfImporter::material(): invalid baseColorTexture extensions property\n"},
     {"invalid texture object KHR_texture_transform extension",
-        "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Null at {}:278:50\n"
+        "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Null at {}:278:38\n"
         "Trade::GltfImporter::material(): invalid baseColorTexture KHR_texture_transform extension\n"},
     {"invalid texture object KHR_texture_transform texCoord property",
-        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:290:41\n"
+        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:290:27\n"
         "Trade::GltfImporter::material(): invalid baseColorTexture KHR_texture_transform texcoord property\n"},
     {"invalid texture object KHR_texture_transform scale property",
-        "Utility::Json::parseFloatArray(): expected an array, got Utility::JsonToken::Type::Number at {}:303:38\n"
+        "Utility::Json::parseFloatArray(): expected an array, got Utility::JsonToken::Type::Number at {}:303:24\n"
         "Trade::GltfImporter::material(): invalid baseColorTexture KHR_texture_transform scale property\n"},
     {"invalid texture object KHR_texture_transform scale array size",
-        "Utility::Json::parseFloatArray(): expected a 2-element array, got 1 at {}:316:38\n"
+        "Utility::Json::parseFloatArray(): expected a 2-element array, got 1 at {}:316:24\n"
         "Trade::GltfImporter::material(): invalid baseColorTexture KHR_texture_transform scale property\n"},
     {"invalid texture object KHR_texture_transform rotation property",
-        "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::Array at {}:329:41\n"
+        "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::Array at {}:329:27\n"
         "Trade::GltfImporter::material(): invalid baseColorTexture KHR_texture_transform rotation property\n"},
     {"invalid texture object KHR_texture_transform offset property",
-        "Utility::Json::parseFloatArray(): expected an array, got Utility::JsonToken::Type::Number at {}:342:39\n"
+        "Utility::Json::parseFloatArray(): expected an array, got Utility::JsonToken::Type::Number at {}:342:25\n"
         "Trade::GltfImporter::material(): invalid baseColorTexture KHR_texture_transform offset property\n"},
     {"invalid texture object KHR_texture_transform offset array size",
-        "Utility::Json::parseFloatArray(): expected a 2-element array, got 1 at {}:355:39\n"
+        "Utility::Json::parseFloatArray(): expected a 2-element array, got 1 at {}:355:25\n"
         "Trade::GltfImporter::material(): invalid baseColorTexture KHR_texture_transform offset property\n"},
 };
 
@@ -1121,11 +1121,11 @@ constexpr struct {
         "node index 7 in scene 0 out of range for 7 nodes"},
     {"invalid nodes property",
         "scene-invalid-nodes-property.gltf",
-        "Utility::Json::parseUnsignedIntArray(): expected an array, got Utility::JsonToken::Type::Object at {}:8:22\n"
+        "Utility::Json::parseUnsignedIntArray(): expected an array, got Utility::JsonToken::Type::Object at {}:8:16\n"
         "Trade::GltfImporter::openData(): invalid nodes property of scene 1\n"},
     {"invalid children property",
         "scene-invalid-children-property.gltf",
-        "Utility::Json::parseUnsignedIntArray(): expected an array, got Utility::JsonToken::Type::Object at {}:8:25\n"
+        "Utility::Json::parseUnsignedIntArray(): expected an array, got Utility::JsonToken::Type::Object at {}:8:19\n"
         "Trade::GltfImporter::openData(): invalid children property of node 1\n"}
 };
 
@@ -1148,49 +1148,49 @@ constexpr struct {
     {"skin for a multi-primitive mesh out of bounds",
         "skin index 3 in node 9 out of range for 3 skins"},
     {"invalid mesh property",
-        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:127:21\n"
+        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:132:15\n"
         "Trade::GltfImporter::scene(): invalid mesh property of node 10\n"},
     {"invalid mesh material property",
-        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:70:33\n"
+        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:70:23\n"
         "Trade::GltfImporter::scene(): invalid material property of mesh 4 primitive 1\n"},
     {"invalid camera property",
-        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:135:23\n"
+        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:140:17\n"
         "Trade::GltfImporter::scene(): invalid camera property of node 12\n"},
     {"invalid skin property",
-        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:139:21\n"
+        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:144:15\n"
         "Trade::GltfImporter::scene(): invalid skin property of node 13\n"},
     {"invalid extensions property",
-        "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Array at {}:143:27\n"
+        "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Array at {}:148:21\n"
         "Trade::GltfImporter::scene(): invalid node 14 extensions property\n"},
     {"invalid KHR_lights_punctual extension",
-        "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Number at {}:148:40\n"
+        "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Number at {}:153:32\n"
         "Trade::GltfImporter::scene(): invalid node 15 KHR_lights_punctual extension\n"},
     {"invalid KHR_lights_punctual light property",
-        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:155:30\n"
+        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:160:20\n"
         "Trade::GltfImporter::scene(): missing or invalid KHR_lights_punctual light property of node 16\n"},
     {"invalid translation property",
-        "Utility::Json::parseFloatArray(): expected an array, got Utility::JsonToken::Type::Number at {}:161:28\n"
+        "Utility::Json::parseFloatArray(): expected an array, got Utility::JsonToken::Type::Number at {}:166:22\n"
         "Trade::GltfImporter::scene(): invalid translation property of node 17\n"},
     {"invalid translation array size",
-        "Utility::Json::parseFloatArray(): expected a 3-element array, got 2 at {}:165:28\n"
+        "Utility::Json::parseFloatArray(): expected a 3-element array, got 2 at {}:170:22\n"
         "Trade::GltfImporter::scene(): invalid translation property of node 18\n"},
     {"invalid rotation property",
-        "Utility::Json::parseFloatArray(): expected an array, got Utility::JsonToken::Type::Number at {}:169:25\n"
+        "Utility::Json::parseFloatArray(): expected an array, got Utility::JsonToken::Type::Number at {}:174:19\n"
         "Trade::GltfImporter::scene(): invalid rotation property of node 19\n"},
     {"invalid rotation array size",
-        "Utility::Json::parseFloatArray(): expected a 4-element array, got 3 at {}:173:25\n"
+        "Utility::Json::parseFloatArray(): expected a 4-element array, got 3 at {}:178:19\n"
         "Trade::GltfImporter::scene(): invalid rotation property of node 20\n"},
     {"invalid scale property",
-        "Utility::Json::parseFloatArray(): expected an array, got Utility::JsonToken::Type::Number at {}:177:22\n"
+        "Utility::Json::parseFloatArray(): expected an array, got Utility::JsonToken::Type::Number at {}:182:16\n"
         "Trade::GltfImporter::scene(): invalid scale property of node 21\n"},
     {"invalid scale array size",
-        "Utility::Json::parseFloatArray(): expected a 3-element array, got 2 at {}:181:22\n"
+        "Utility::Json::parseFloatArray(): expected a 3-element array, got 2 at {}:186:16\n"
         "Trade::GltfImporter::scene(): invalid scale property of node 22\n"},
     {"invalid matrix property",
-        "Utility::Json::parseFloatArray(): expected an array, got Utility::JsonToken::Type::Number at {}:185:23\n"
+        "Utility::Json::parseFloatArray(): expected an array, got Utility::JsonToken::Type::Number at {}:190:17\n"
         "Trade::GltfImporter::scene(): invalid matrix property of node 23\n"},
     {"invalid matrix array size",
-        "Utility::Json::parseFloatArray(): expected a 16-element array, got 4 at {}:189:23\n"
+        "Utility::Json::parseFloatArray(): expected a 16-element array, got 4 at {}:194:17\n"
         "Trade::GltfImporter::scene(): invalid matrix property of node 24\n"}
 };
 
@@ -1278,33 +1278,33 @@ constexpr struct {
     {"missing source property",
         "missing or invalid source property"},
     {"invalid source property",
-        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:106:23\n"
+        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:106:17\n"
         "Trade::GltfImporter::texture(): missing or invalid source property\n"},
     {"invalid extensions property",
-        "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Array at {}:110:27\n"
+        "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Array at {}:110:21\n"
         "Trade::GltfImporter::texture(): invalid extensions property\n"},
     {"invalid extension",
-        "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Null at {}:115:39\n"
+        "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Null at {}:115:31\n"
         "Trade::GltfImporter::texture(): invalid KHR_texture_basisu extension\n"},
     {"missing extension source property",
         "missing or invalid KHR_texture_basisu source property"},
     {"invalid extension source property",
-        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:128:31\n"
+        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:128:21\n"
         "Trade::GltfImporter::texture(): missing or invalid KHR_texture_basisu source property\n"},
     {"invalid sampler property",
-        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:135:24\n"
+        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:135:18\n"
         "Trade::GltfImporter::texture(): invalid sampler property\n"},
     {"invalid sampler magFilter property",
-        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:32:26\n"
+        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:32:20\n"
         "Trade::GltfImporter::texture(): invalid magFilter property\n"},
     {"invalid sampler minFilter property",
-        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:36:26\n"
+        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:36:20\n"
         "Trade::GltfImporter::texture(): invalid minFilter property\n"},
     {"invalid sampler wrapS property",
-        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:40:22\n"
+        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:40:16\n"
         "Trade::GltfImporter::texture(): invalid wrapS property\n"},
     {"invalid sampler wrapT property",
-        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:44:22\n"
+        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:44:16\n"
         "Trade::GltfImporter::texture(): invalid wrapT property\n"},
 };
 
@@ -1349,10 +1349,10 @@ const struct {
     {"missing uri property",
         "expected exactly one of uri or bufferView properties defined"},
     {"invalid uri property",
-        "Utility::Json::parseString(): expected a string, got Utility::JsonToken::Type::Bool at {}:21:20\n"
+        "Utility::Json::parseString(): expected a string, got Utility::JsonToken::Type::Bool at {}:21:14\n"
         "Trade::GltfImporter::image2D(): invalid uri property\n"},
     {"invalid bufferView property",
-        "Utility::Json::parseUnsignedInt(): too large integer literal -2 at {}:25:27\n"
+        "Utility::Json::parseUnsignedInt(): too large integer literal -2 at {}:25:21\n"
         "Trade::GltfImporter::image2D(): invalid bufferView property\n"},
     {"strided buffer view",
         "buffer view 3 is strided"},
@@ -1648,7 +1648,7 @@ void GltfImporterTest::openFileError() {
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->openFile(filename));
     CORRADE_COMPARE(out.str(), Utility::formatString(
-        "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Array at {}:2:14\n"
+        "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Array at {}:2:12\n"
         "Trade::GltfImporter::openData(): missing or invalid asset property\n", filename));
 }
 
