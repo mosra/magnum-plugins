@@ -102,6 +102,7 @@ cmake .. ^
     -DWITH_STBVORBISAUDIOIMPORTER=OFF ^
     -DWITH_STLIMPORTER=ON ^
     -DWITH_TINYGLTFIMPORTER=ON ^
+    -DWITH_WEBPIMPORTER=OFF ^
     -DBUILD_STATIC=ON ^
     -G "%GENERATOR%" -A x64 || exit /b
 cmake --build . --config Release -- /m /v:m || exit /b
