@@ -65,11 +65,11 @@ using namespace Math::Literals;
 
 const struct {
     const char* name;
-    const char* filename;
+    Containers::String filename;
     Containers::Optional<std::size_t> size;
     const char* error;
 } InvalidData[] {
-    {"wrong file signature", "nature.png", {}, "WebP image features not found: bitstream error\n"},
+    {"wrong file signature", Utility::Path::join(PNGIMPORTER_TEST_DIR, "rgb.png"), {}, "WebP image features not found: bitstream error\n"},
     {"animated file", "animated.webp", {}, "animated WebP images aren't supported\n"},
     /* The header information of a lossless bitstream takes 25 bytes according
        to its specification: https://developers.google.com/speed/webp/docs/webp_lossless_bitstream_specification#2_riff_header.

@@ -27,6 +27,14 @@
 # property that would have to be set on each target separately.
 set(CMAKE_FOLDER "MagnumPlugins/WebPImporter/Test")
 
+if(CORRADE_TARGET_EMSCRIPTEN OR CORRADE_TARGET_ANDROID)
+    set(WEBPIMPORTER_TEST_DIR ".")
+    set(PNGIMPORTER_TEST_DIR ".")
+else()
+    set(WEBPIMPORTER_TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+    set(PNGIMPORTER_TEST_DIR ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/PngImporter/Test)
+endif()
+
 find_package(Magnum REQUIRED DebugTools)
 
 # CMake before 3.8 has broken $<TARGET_FILE*> expressions for iOS (see
@@ -46,7 +54,7 @@ file(GENERATE OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/configure.h
 corrade_add_test(WebPImporterTest WebPImporterTest.cpp
     LIBRARIES Magnum::Trade Magnum::DebugTools ${WEBP_LIBRARIES}
     FILES
-        nature.png
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/PngImporter/Test/rgb.png
         animated.webp
         rgb-lossless.webp
         rgb-lossy-0.webp
