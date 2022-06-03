@@ -162,6 +162,7 @@ Containers::Optional<Format> decodeFormat(Implementation::VkFormat vkFormat) {
        doImage(). */
     if(format == PixelFormat{}) {
         switch(vkFormat) {
+            /* LCOV_EXCL_START */
             case Implementation::VK_FORMAT_B8G8R8_UNORM:
                 format = PixelFormat::RGB8Unorm;  break;
             case Implementation::VK_FORMAT_B8G8R8_SNORM:
@@ -182,6 +183,7 @@ Containers::Optional<Format> decodeFormat(Implementation::VkFormat vkFormat) {
                 format = PixelFormat::RGBA8I;     break;
             case Implementation::VK_FORMAT_B8G8R8A8_SRGB:
                 format = PixelFormat::RGBA8Srgb;  break;
+            /* LCOV_EXCL_STOP */
             default:
                 break;
         }
