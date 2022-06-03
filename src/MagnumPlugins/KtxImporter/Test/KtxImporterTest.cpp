@@ -322,6 +322,7 @@ const struct {
     const Vector3i size;
     const char* verboseMessage;
 } ForwardBasisData[]{
+    /* Basis has no 1D image support */
     {"2D", ImporterFlags{}, "rgba.ktx2", TextureType::Texture2D, 1, {63, 27, 0},
         ""},
     {"2D verbose", ImporterFlag::Verbose, "rgba.ktx2", TextureType::Texture2D, 1, {63, 27, 0},
@@ -1640,9 +1641,12 @@ void KtxImporterTest::forwardBasis() {
     }
     CORRADE_COMPARE(out.str(), data.verboseMessage);
 
-    const UnsignedInt dimensions = data.size[2] == 0 ? (data.size[1] == 0 ? 1 : 2) : 3;
+    /* Basis has no 1D image support, only 2D or 2D array */
+    const UnsignedInt dimensions = data.size[2] == 0 ? 2 : 3;
+    CORRADE_VERIFY(data.size[1]);
+
     /* All of these should forward to the correct instance and not crash */
-    CORRADE_COMPARE(importer->image1DCount(), dimensions == 1 ? data.images : 0);
+    CORRADE_COMPARE(importer->image1DCount(), 0);
     CORRADE_COMPARE(importer->image2DCount(), dimensions == 2 ? data.images : 0);
     CORRADE_COMPARE(importer->image3DCount(), dimensions == 3 ? data.images : 0);
     CORRADE_COMPARE(importer->textureCount(), data.images);
@@ -1652,14 +1656,7 @@ void KtxImporterTest::forwardBasis() {
         CORRADE_VERIFY(texture);
         CORRADE_COMPARE(texture->type(), data.type);
 
-        if(dimensions == 1) {
-            CORRADE_COMPARE(importer->image1DLevelCount(i), 1);
-            Containers::Optional<Trade::ImageData1D> image = importer->image1D(i);
-            CORRADE_VERIFY(image);
-            CORRADE_VERIFY(image->isCompressed());
-            CORRADE_COMPARE(image->compressedFormat(), CompressedPixelFormat::Etc2RGBA8Srgb);
-            CORRADE_COMPARE(Vector3i::pad(image->size()), data.size);
-        } else if(dimensions == 2) {
+        if(dimensions == 2) {
             CORRADE_COMPARE(importer->image2DLevelCount(i), 1);
             Containers::Optional<Trade::ImageData2D> image = importer->image2D(i);
             CORRADE_VERIFY(image);

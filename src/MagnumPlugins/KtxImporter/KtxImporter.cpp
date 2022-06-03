@@ -867,14 +867,18 @@ UnsignedInt KtxImporter::doImage1DCount() const {
 
 UnsignedInt KtxImporter::doImage1DLevelCount(UnsignedInt id)  {
     if(_basisImporter)
-        return _basisImporter->image1DLevelCount(id);
+        /* Basis has no 1D image support (and BasisImporter doesn't expose any
+           1D image interface), so this will never be called */
+        CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
     else
         return _f->imageData[id].size();
 }
 
 Containers::Optional<ImageData1D> KtxImporter::doImage1D(UnsignedInt id, UnsignedInt level) {
     if(_basisImporter)
-        return _basisImporter->image1D(id, level);
+        /* Basis has no 1D image support (and BasisImporter doesn't expose any
+           1D image interface), so this will never be called */
+        CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
     else
         return doImage<1>(id, level);
 }
