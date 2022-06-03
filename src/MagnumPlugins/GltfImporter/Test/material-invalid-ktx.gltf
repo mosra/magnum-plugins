@@ -1,0 +1,34 @@
+{
+  "asset": {
+    "version": "2.0"
+  },
+  "extensionsUsed": [
+    "KHR_texture_ktx"
+  ],
+  "extensionsRequired": [
+    "KHR_texture_ktx"
+  ],
+  "images": [
+    {}
+  ],
+  "textures": [
+    {
+      "extensions": {
+        "KHR_texture_ktx": {
+          "source": 0,
+          "layer": -3
+        }
+      }
+    }
+  ],
+  "materials": [
+    {
+      "name": "invalid layer",
+      "pbrMetallicRoughness": {
+        "baseColorTexture": {
+          "index": 0
+        }
+      }
+    }
+  ]
+}

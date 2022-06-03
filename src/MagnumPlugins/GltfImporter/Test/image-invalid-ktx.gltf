@@ -1,0 +1,32 @@
+{
+  "asset": {
+    "version": "2.0"
+  },
+  "images": [
+    {
+      "name": "not a 3D image",
+      "uri": "image-2d-mips.ktx2"
+    },
+    {
+      "name": "not a 2D image",
+      "uri": "image-2d-array.ktx2"
+    }
+  ],
+  "textures": [
+    {
+      "extensions": {
+        "KHR_texture_ktx": {
+          "source": 0,
+          "layer": 0
+        }
+      }
+    },
+    {
+      "extensions": {
+        "KHR_texture_ktx": {
+          "source": 1
+        }
+      }
+    }
+  ]
+}

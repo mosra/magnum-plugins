@@ -46,6 +46,9 @@ if(NOT MAGNUM_GLTFIMPORTER_BUILD_STATIC)
     if(WITH_DDSIMPORTER)
         set(DDSIMPORTER_PLUGIN_FILENAME $<TARGET_FILE:DdsImporter>)
     endif()
+    if(WITH_KTXIMPORTER)
+        set(KTXIMPORTER_PLUGIN_FILENAME $<TARGET_FILE:KtxImporter>)
+    endif()
     if(WITH_STBIMAGEIMPORTER)
         set(STBIMAGEIMPORTER_PLUGIN_FILENAME $<TARGET_FILE:StbImageImporter>)
     endif()
@@ -100,6 +103,9 @@ corrade_add_test(GltfImporterTest
         image.gltf
         image.glb
         image.png
+        image-2d-mips.ktx2 # Copied from KtxImporter/Test/2d-mipmaps.ktx2
+        image-2d-array.ktx2 # Copied from KtxImporter/Test/2d-layers.ktx2
+        image-2d-array-mips.ktx2 # Copied from KtxImporter/Test/2d-mipmaps-and-layers.ktx2
         image-3d.dds # Copied from DdsImporter/Test/dxt10-rgba8unorm-3d.dds
         image-basis.gltf
         image-basis.glb
@@ -112,6 +118,7 @@ corrade_add_test(GltfImporterTest
         image-embedded.gltf
         image-embedded.glb
         image-invalid.gltf
+        image-invalid-ktx.gltf
         image-invalid-notfound.gltf
         invalid-uri.gltf
         light.gltf
@@ -120,9 +127,11 @@ corrade_add_test(GltfImporterTest
         material-clearcoat.gltf
         material-extras.gltf
         material-invalid.gltf
+        material-invalid-ktx.gltf
         material-ior.gltf
         material-metallicroughness.gltf
         material-phong-fallback.gltf
+        material-phong-fallback-ktx.gltf
         material-raw.gltf
         material-sheen.gltf
         material-specular.gltf
@@ -192,6 +201,19 @@ corrade_add_test(GltfImporterTest
         texture.gltf
         texture-extensions.gltf
         texture-invalid.gltf
+        texture-invalid-ktx-extension.gltf
+        texture-invalid-ktx-extension-source-oob.gltf
+        texture-invalid-ktx-extension-source-property.gltf
+        texture-invalid-ktx-extensions-property.gltf
+        texture-invalid-ktx-layer-then-no-extension.gltf
+        texture-invalid-ktx-layer-then-no-layer.gltf
+        texture-invalid-ktx-missing-source-property.gltf
+        texture-invalid-ktx-missing-extension-source-property.gltf
+        texture-invalid-ktx-no-extension-then-layer.gltf
+        texture-invalid-ktx-no-layer-then-layer.gltf
+        texture-invalid-ktx-source-oob.gltf
+        texture-invalid-ktx-source-property.gltf
+        texture-ktx.gltf
         version-legacy.gltf
         version-supported.gltf
         version-unsupported.gltf
@@ -205,6 +227,9 @@ if(MAGNUM_GLTFIMPORTER_BUILD_STATIC)
     if(WITH_DDSIMPORTER)
         target_link_libraries(GltfImporterTest PRIVATE DdsImporter)
     endif()
+    if(KTXIMPORTER)
+        target_link_libraries(GltfImporterTest PRIVATE KtxImporter)
+    endif()
     if(WITH_STBIMAGEIMPORTER)
         target_link_libraries(GltfImporterTest PRIVATE StbImageImporter)
     endif()
@@ -216,6 +241,9 @@ else()
     endif()
     if(WITH_DDSIMPORTER)
         add_dependencies(GltfImporterTest DdsImporter)
+    endif()
+    if(WITH_KTXIMPORTER)
+        add_dependencies(GltfImporterTest KtxImporter)
     endif()
     if(WITH_STBIMAGEIMPORTER)
         add_dependencies(GltfImporterTest StbImageImporter)

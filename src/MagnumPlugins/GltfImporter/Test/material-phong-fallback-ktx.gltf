@@ -1,0 +1,72 @@
+{
+  "asset": {
+    "version": "2.0"
+  },
+  "extensionsUsed": [
+    "KHR_texture_ktx"
+  ],
+  "extensionsRequired": [
+    "KHR_texture_ktx"
+  ],
+  "images": [
+    {
+      "uri": "image-2d-mips.ktx2"
+    },
+    {
+      "uri": "image-2d-array.ktx2"
+    }
+  ],
+  "textures": [
+    {
+      "extensions": {
+        "KHR_texture_ktx": {
+          "source": 0
+        }
+      }
+    },
+    {
+      "extensions": {
+        "KHR_texture_ktx": {
+          "source": 1,
+          "layer": 55
+        }
+      }
+    }
+  ],
+  "materials": [
+    {
+      "name": "metallic/roughness base color array",
+      "pbrMetallicRoughness": {
+        "baseColorTexture": {
+          "index": 1
+        }
+      }
+    },
+    {
+      "name": "specular/glossiness diffuse array",
+      "extensions": {
+        "KHR_materials_pbrSpecularGlossiness": {
+          "diffuseTexture": {
+            "index": 1
+          },
+          "specularGlossinessTexture": {
+            "index": 0
+          }
+        }
+      }
+    },
+    {
+      "name": "specular/glossiness specular array",
+      "extensions": {
+        "KHR_materials_pbrSpecularGlossiness": {
+          "diffuseTexture": {
+            "index": 0
+          },
+          "specularGlossinessTexture": {
+            "index": 1
+          }
+        }
+      }
+    }
+  ]
+}

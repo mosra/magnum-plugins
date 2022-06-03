@@ -1,0 +1,43 @@
+{
+  "asset": {
+    "version": "2.0"
+  },
+  "extensionsUsed": [
+    "KHR_texture_ktx"
+  ],
+  "extensionsRequired": [
+    "KHR_texture_ktx"
+  ],
+  "images": [
+    {},
+    {},
+    {}
+  ],
+  "textures": [
+    {
+      "name": "Not layered",
+      "extensions": {
+        "KHR_texture_ktx": {
+          "source": 2
+        }
+      }
+    },
+    {
+      "name": "Some other",
+      "source": 0
+    },
+    {
+      "name": "The same again but without an extension (which is fine for us)",
+      "source": 2
+    },
+    {
+      "name": "Layered",
+      "extensions": {
+        "KHR_texture_ktx": {
+          "source": 2,
+          "layer": 1
+        }
+      }
+    }
+  ]
+}

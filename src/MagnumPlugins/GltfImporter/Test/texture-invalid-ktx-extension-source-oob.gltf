@@ -1,0 +1,25 @@
+{
+  "asset": {
+    "version": "2.0"
+  },
+  "extensionsUsed": [
+    "KHR_texture_ktx"
+  ],
+  "extensionsRequired": [
+    "KHR_texture_ktx"
+  ],
+  "images": [
+    {},
+    {}
+  ],
+  "textures": [
+    {
+      "note": "since it goes through all extensions, it doesn't have to be KHR_texture_ktx",
+      "extensions": {
+        "MSFT_texture_dds": {
+          "source": 2
+        }
+      }
+    }
+  ]
+}

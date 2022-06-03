@@ -340,8 +340,10 @@ fail.
 @subsection Trade-GltfImporter-behavior-textures Texture and image import
 
 <ul>
-<li>Texture type is always @ref Trade::TextureType::Texture2D, as glTF doesn't
-support anything else</li>
+<li>Texture type is @ref Trade::TextureType::Texture2D. If the
+@cb{.ini} experimentalKhrTextureKtx @ce @ref Trade-GltfImporter-configuration "configuration option"
+is enabled, it can be also @ref Trade::TextureType::Texture2DArray, as
+@ref Trade-GltfImporter-behavior-textures-array "described below".</li>
 <li>Z coordinate of @ref Trade::TextureData::wrapping() is always
 @ref SamplerWrapping::Repeat, as glTF doesn't support 3D textures</li>
 <li>
@@ -399,7 +401,44 @@ following defaults have been chosen for this importer:
     correct importer alias happens via @ref AnyImageImporter which uses the
     file extension or buffer content to determine the image type.
 </li>
+<li>If a texture contains and extension together with a fallback source, or
+multiple extensions, the image referenced by the first recognized extension
+appearing in the file will be picked, others ignored.</li>
 </ul>
+
+@subsubsection Trade-GltfImporter-behavior-textures-array 2D array texture support
+
+If the @cb{.ini} experimentalKhrTextureKtx @ce
+@ref Trade-GltfImporter-configuration "configuration option" is enabled,
+textures can contain also the proposed [KHR_texture_ktx](https://github.com/KhronosGroup/glTF/pull/1964) extension. Besides having an ability to use 2D
+`*.ktx2` files the same way as other texture extensions listed above, it can
+also reference 2D array textures. The importer behavior is as follows and may
+get adapted to eventual changes in the extension proposal:
+
+-   If a `texture` object contains the `KHR_texture_ktx` extension with a
+    `layer` property, the image it references is assumed to be a 2D array.
+    Otherwise, it's assumed to be 2D. The `*.ktx2` file itself is not checked
+    upfront as that goes against the goal of accessing the data only once
+    actually needed.
+-   If the same image is referenced as both 2D and 2D array, it's an import
+    error. In other words, a texture referencing a 2D array image has to have
+    the `layer` property even if it would be zero.
+-   Images that are assumed to be 2D arrays are available through
+    @ref image3D() and related APIs, other images through @ref image2D(). The
+    sum of @ref image2DCount() and @ref image3DCount() is the count of glTF
+    image objects in the file.
+-   Textures referencing the same 2D array image are collapsed together and
+    are exposed as a @ref TextureData with @ref TextureType::Texture2DArray,
+    with @ref TextureData::image() giving an index of a 3D image instead of a
+    2D one. Differing samplers are not taken into account, the resulting
+    @ref TextureData will always use the sampler properties referenced from the
+    first texture. This means that, in this case, @ref textureCount() may
+    be less the actual count of glTF texture objects in the file.
+-   Materials referencing `KHR_texture_ktx` textures with the `layer` property
+    then get a `*Layer` attribute. I.e., if
+    @ref MaterialAttribute::BaseColorTexture is a 2D array texture, the
+    material will get a @ref MaterialAttribute::BaseColorTextureLayer as well,
+    containing the value of the `layer` property.
 
 @section Trade-GltfImporter-configuration Plugin-specific configuration
 
@@ -549,13 +588,19 @@ class MAGNUM_GLTFIMPORTER_EXPORT GltfImporter: public AbstractImporter {
         MAGNUM_GLTFIMPORTER_LOCAL Containers::String doTextureName(UnsignedInt id) override;
         MAGNUM_GLTFIMPORTER_LOCAL Containers::Optional<TextureData> doTexture(UnsignedInt id) override;
 
-        MAGNUM_GLTFIMPORTER_LOCAL AbstractImporter* setupOrReuseImporterForImage(const char* errorPrefix, UnsignedInt id);
+        MAGNUM_GLTFIMPORTER_LOCAL AbstractImporter* setupOrReuseImporterForImage(const char* errorPrefix, UnsignedInt id, UnsignedInt expectedDimensions);
 
         MAGNUM_GLTFIMPORTER_LOCAL UnsignedInt doImage2DCount() const override;
         MAGNUM_GLTFIMPORTER_LOCAL UnsignedInt doImage2DLevelCount(UnsignedInt id) override;
         MAGNUM_GLTFIMPORTER_LOCAL Int doImage2DForName(Containers::StringView name) override;
         MAGNUM_GLTFIMPORTER_LOCAL Containers::String doImage2DName(UnsignedInt id) override;
         MAGNUM_GLTFIMPORTER_LOCAL Containers::Optional<ImageData2D> doImage2D(UnsignedInt id, UnsignedInt level) override;
+
+        MAGNUM_GLTFIMPORTER_LOCAL UnsignedInt doImage3DCount() const override;
+        MAGNUM_GLTFIMPORTER_LOCAL UnsignedInt doImage3DLevelCount(UnsignedInt id) override;
+        MAGNUM_GLTFIMPORTER_LOCAL Int doImage3DForName(Containers::StringView name) override;
+        MAGNUM_GLTFIMPORTER_LOCAL Containers::String doImage3DName(UnsignedInt id) override;
+        MAGNUM_GLTFIMPORTER_LOCAL Containers::Optional<ImageData3D> doImage3D(UnsignedInt id, UnsignedInt level) override;
 
         MAGNUM_GLTFIMPORTER_LOCAL Containers::Optional<Containers::Array<char>> loadUri(const char* errorPrefix, Containers::StringView uri);
         MAGNUM_GLTFIMPORTER_LOCAL Containers::Optional<Containers::ArrayView<const char>> parseBuffer(const char* const errorPrefix, UnsignedInt id);

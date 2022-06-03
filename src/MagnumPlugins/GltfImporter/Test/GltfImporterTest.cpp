@@ -168,6 +168,14 @@ struct GltfImporterTest: TestSuite::Tester {
     void imageInvalidNotFound();
     void imagePropagateImporterFlags();
 
+    void experimentalKhrTextureKtx2D();
+    void experimentalKhrTextureKtx2DArray();
+    void experimentalKhrTextureKtxPhongFallback();
+    void experimentalKhrTextureKtxNotEnabled();
+    void experimentalKhrTextureKtxInvalidWholeFile();
+    void experimentalKhrTextureKtxInvalidMaterial();
+    void experimentalKhrTextureKtxInvalidImage();
+
     void fileCallbackBuffer();
     void fileCallbackBufferNotFound();
     void fileCallbackImage();
@@ -1372,6 +1380,73 @@ const struct {
     {"buffer not found", "Trade::GltfImporter::image2D(): error opening /nonexistent.bin"}
 };
 
+const struct {
+    const char* name;
+    const char* file;
+    const char* message;
+} ExperimentalTextureKtxInvalidWholeFileData[]{
+    {"invalid extensions property",
+        "texture-invalid-ktx-extensions-property.gltf",
+        "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Array at {}:13:21\n"
+        "Trade::GltfImporter::openData(): invalid extensions property in texture 1\n"},
+    {"invalid extension",
+        "texture-invalid-ktx-extension.gltf",
+        "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Array at {}:23:28\n"
+        "Trade::GltfImporter::openData(): invalid KHR_texture_ktx extension in texture 2\n"},
+    {"missing extension source property",
+        "texture-invalid-ktx-missing-extension-source-property.gltf",
+        "missing or invalid MSFT_texture_dds source property in texture 1"},
+    {"invalid extension source property",
+        "texture-invalid-ktx-extension-source-property.gltf",
+        "Utility::Json::parseUnsignedInt(): too large integer literal -2 at {}:25:21\n"
+        "Trade::GltfImporter::openData(): missing or invalid MSFT_texture_dds source property in texture 2\n"},
+    {"extension source out of bounds",
+        "texture-invalid-ktx-extension-source-oob.gltf",
+        "index 2 in texture 0 out of range for 2 images"},
+    {"missing source property",
+        "texture-invalid-ktx-missing-source-property.gltf",
+        "missing or invalid source property in texture 1"},
+    {"invalid source property",
+        "texture-invalid-ktx-source-property.gltf",
+        "Utility::Json::parseUnsignedInt(): too large integer literal -2 at {}:22:17\n"
+        "Trade::GltfImporter::openData(): missing or invalid source property in texture 2\n"},
+    {"source out of bounds",
+        "texture-invalid-ktx-source-oob.gltf",
+        "index 2 in texture 0 out of range for 2 images"},
+    {"referenced with a layer, then with no extension",
+        "texture-invalid-ktx-layer-then-no-extension.gltf",
+        "texture 3 references image 1 as 2D but an earlier texture referenced it as a 2D array layer"},
+    {"referenced with a layer, then with no layer",
+        "texture-invalid-ktx-layer-then-no-layer.gltf",
+        "texture 3 references image 2 as 2D but an earlier texture referenced it as a 2D array layer"},
+    {"referenced with no extension, then with a layer",
+        "texture-invalid-ktx-no-extension-then-layer.gltf",
+        "texture 3 references image 1 as a 2D array layer but an earlier texture referenced it as 2D"},
+    {"referenced with no layer, then with a layer",
+        "texture-invalid-ktx-no-layer-then-layer.gltf",
+        "texture 3 references image 2 as a 2D array layer but an earlier texture referenced it as 2D"},
+};
+
+const struct {
+    const char* name;
+    const char* message;
+} ExperimentalTextureKtxInvalidMaterialData[]{
+    {"invalid layer",
+        "Utility::Json::parseUnsignedInt(): too large integer literal -3 at {}:19:20\n"
+        "Trade::GltfImporter::material(): invalid KHR_texture_ktx layer property\n"}
+};
+
+const struct {
+    const char* name;
+    Int dimensions;
+    const char* message;
+} ExperimentalTextureKtxInvalidImageData[]{
+    {"not a 3D image", 3,
+        "expected exactly one 3D image in an image file but got 0"},
+    {"not a 2D image", 2,
+        "expected exactly one 2D image in an image file but got 0"}
+};
+
 constexpr struct {
     const char* name;
     const char* file;
@@ -1561,6 +1636,20 @@ GltfImporterTest::GltfImporterTest() {
 
     addTests({&GltfImporterTest::imagePropagateImporterFlags});
 
+    addTests({&GltfImporterTest::experimentalKhrTextureKtx2D,
+              &GltfImporterTest::experimentalKhrTextureKtx2DArray,
+              &GltfImporterTest::experimentalKhrTextureKtxPhongFallback,
+              &GltfImporterTest::experimentalKhrTextureKtxNotEnabled});
+
+    addInstancedTests({&GltfImporterTest::experimentalKhrTextureKtxInvalidWholeFile},
+        Containers::arraySize(ExperimentalTextureKtxInvalidWholeFileData));
+
+    addInstancedTests({&GltfImporterTest::experimentalKhrTextureKtxInvalidMaterial},
+        Containers::arraySize(ExperimentalTextureKtxInvalidMaterialData));
+
+    addInstancedTests({&GltfImporterTest::experimentalKhrTextureKtxInvalidImage},
+        Containers::arraySize(ExperimentalTextureKtxInvalidImageData));
+
     addInstancedTests({&GltfImporterTest::fileCallbackBuffer,
                        &GltfImporterTest::fileCallbackBufferNotFound,
                        &GltfImporterTest::fileCallbackImage,
@@ -1598,6 +1687,9 @@ GltfImporterTest::GltfImporterTest() {
     #endif
     #ifdef DDSIMPORTER_PLUGIN_FILENAME
     CORRADE_INTERNAL_ASSERT_OUTPUT(_manager.load(DDSIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
+    #endif
+    #ifdef KTXIMPORTER_PLUGIN_FILENAME
+    CORRADE_INTERNAL_ASSERT_OUTPUT(_manager.load(KTXIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
     #endif
     #ifdef STBIMAGEIMPORTER_PLUGIN_FILENAME
     CORRADE_INTERNAL_ASSERT_OUTPUT(_manager.load(STBIMAGEIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
@@ -5565,6 +5657,366 @@ void GltfImporterTest::imagePropagateImporterFlags() {
        add \n at the front and change to Compare::StringHasSuffix */
     CORRADE_COMPARE(out.str(),
         "Trade::AnyImageImporter::openFile(): using PngImporter (provided by StbImageImporter)\n");
+}
+
+void GltfImporterTest::experimentalKhrTextureKtx2D() {
+    if(_manager.loadState("KtxImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("KtxImporter plugin not found, cannot test");
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
+
+    /* Disable Phong material fallback (enabled by default for compatibility),
+       testing that separately in experimentalKhrTextureKtx2DArrayPhongFallback() */
+    importer->configuration().setValue("phongMaterialFallback", false);
+
+    importer->configuration().setValue("experimentalKhrTextureKtx", true);
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "texture-ktx.gltf")));
+
+    /* There are two 3D images as well */
+    CORRADE_COMPARE(importer->image2DCount(), 2);
+    CORRADE_COMPARE(importer->image2DName(1), "PNG");
+    CORRADE_COMPARE(importer->image2DForName("PNG"), 1);
+    /* 3D images shouldn't leak into 2D mapping */
+    CORRADE_COMPARE(importer->image2DForName("2D array KTX"), -1);
+
+    /* The PNG has no mips, the other has 2. In case of the 3D images, there's
+       3 mip levels, to avoid mixing them up by accident. */
+    Int imageMipsId = importer->image2DForName("2D KTX with mips");
+    CORRADE_VERIFY(imageMipsId != -1);
+    CORRADE_COMPARE(importer->image2DLevelCount(1), 1);
+    CORRADE_COMPARE(importer->image2DLevelCount(imageMipsId), 2);
+
+    {
+        Containers::Optional<Trade::ImageData2D> image = importer->image2D(imageMipsId, 0);
+        CORRADE_VERIFY(image);
+        CORRADE_COMPARE(image->format(), PixelFormat::RGB8Srgb);
+        CORRADE_COMPARE(image->size(), (Vector2i{4, 3}));
+    } {
+        Containers::Optional<Trade::ImageData2D> image = importer->image2D(imageMipsId, 1);
+        CORRADE_VERIFY(image);
+        CORRADE_COMPARE(image->format(), PixelFormat::RGB8Srgb);
+        CORRADE_COMPARE(image->size(), (Vector2i{2, 1}));
+    } {
+        Containers::Optional<Trade::ImageData2D> image = importer->image2D("PNG");
+        CORRADE_VERIFY(image);
+        CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Unorm);
+        CORRADE_COMPARE(image->size(), (Vector2i{5, 3}));
+    }
+
+    /* Three more layer textures got deduplicated */
+    CORRADE_COMPARE(importer->textureCount(), 5);
+    CORRADE_COMPARE(importer->textureName(4), "PNG"); /* originally texture 5 */
+    CORRADE_COMPARE(importer->textureForName("PNG"), 4);
+
+    /* Three textures out of 5 reference the 2D images */
+    {
+        Containers::Optional<Trade::TextureData> texture = importer->texture("2D");
+        CORRADE_VERIFY(texture);
+        CORRADE_COMPARE(texture->image(), importer->image2DForName("2D KTX with mips"));
+        CORRADE_COMPARE(texture->type(), TextureType::Texture2D);
+    } {
+        Containers::Optional<Trade::TextureData> texture = importer->texture("2D without extension");
+        CORRADE_VERIFY(texture);
+        CORRADE_COMPARE(texture->image(), importer->image2DForName("2D KTX with mips"));
+        CORRADE_COMPARE(texture->type(), TextureType::Texture2D);
+    } {
+        Containers::Optional<Trade::TextureData> texture = importer->texture("PNG");
+        CORRADE_VERIFY(texture);
+        CORRADE_COMPARE(texture->image(), importer->image2DForName("PNG"));
+        CORRADE_COMPARE(texture->type(), TextureType::Texture2D);
+    }
+
+    /* No changes to materials take place, so no need to test name mapping
+       either */
+    CORRADE_COMPARE(importer->materialCount(), 7);
+
+    /* Three materials out of 7 reference textures that, in turn, reference the
+       2D images. They should not have the layer properties. */
+    {
+        Containers::Optional<Trade::MaterialData> material = importer->material("2D");
+        CORRADE_VERIFY(material);
+        CORRADE_VERIFY(material->hasAttribute(MaterialAttribute::EmissiveTexture));
+        CORRADE_COMPARE(material->attribute<UnsignedInt>(MaterialAttribute::EmissiveTexture), importer->textureForName("2D"));
+        CORRADE_VERIFY(!material->hasAttribute(MaterialAttribute::EmissiveTextureLayer));
+    } {
+        Containers::Optional<Trade::MaterialData> material = importer->material("2D without extension");
+        CORRADE_VERIFY(material);
+        CORRADE_VERIFY(material->hasAttribute(MaterialAttribute::NormalTexture));
+        CORRADE_COMPARE(material->attribute<UnsignedInt>(MaterialAttribute::NormalTexture), importer->textureForName("2D without extension"));
+        CORRADE_VERIFY(!material->hasAttribute(MaterialAttribute::NormalTextureLayer));
+    } {
+        Containers::Optional<Trade::MaterialData> material = importer->material("PNG");
+        CORRADE_VERIFY(material);
+        CORRADE_VERIFY(material->hasAttribute(MaterialAttribute::BaseColorTexture));
+        CORRADE_COMPARE(material->attribute<UnsignedInt>(MaterialAttribute::BaseColorTexture), importer->textureForName("PNG"));
+        CORRADE_VERIFY(!material->hasAttribute(MaterialAttribute::BaseColorTextureLayer));
+    }
+}
+
+void GltfImporterTest::experimentalKhrTextureKtx2DArray() {
+    if(_manager.loadState("KtxImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("KtxImporter plugin not found, cannot test");
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
+
+    /* Disable Phong material fallback (enabled by default for compatibility),
+       testing that separately in experimentalKhrTextureKtx2DArrayPhongFallback() */
+    importer->configuration().setValue("phongMaterialFallback", false);
+
+    importer->configuration().setValue("experimentalKhrTextureKtx", true);
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "texture-ktx.gltf")));
+
+    /* There are two 2D images as well */
+    CORRADE_COMPARE(importer->image3DCount(), 2);
+    CORRADE_COMPARE(importer->image3DName(1), "2D array KTX");
+    CORRADE_COMPARE(importer->image3DForName("2D array KTX"), 1);
+    /* 2D images shouldn't leak into 3D mapping */
+    CORRADE_COMPARE(importer->image3DForName("2D KTX"), -1);
+
+    /* One image has no mips, the other has 3. In case of the 2D images,
+       there's 2 mip levels, to avoid mixing them up by accident. */
+    Int imageMipsId = importer->image3DForName("2D array KTX with mips");
+    CORRADE_VERIFY(imageMipsId != -1);
+    CORRADE_COMPARE(importer->image3DLevelCount(1), 1);
+    CORRADE_COMPARE(importer->image3DLevelCount(imageMipsId), 3);
+
+    {
+        Containers::Optional<Trade::ImageData3D> image = importer->image3D("2D array KTX");
+        CORRADE_VERIFY(image);
+        CORRADE_COMPARE(image->format(), PixelFormat::RGB8Srgb);
+        CORRADE_COMPARE(image->size(), (Vector3i{4, 3, 3}));
+    } {
+        Containers::Optional<Trade::ImageData3D> image = importer->image3D(imageMipsId, 0);
+        CORRADE_VERIFY(image);
+        CORRADE_COMPARE(image->format(), PixelFormat::RGB8Srgb);
+        CORRADE_COMPARE(image->size(), (Vector3i{4, 3, 3}));
+    } {
+        Containers::Optional<Trade::ImageData3D> image = importer->image3D(imageMipsId, 1);
+        CORRADE_VERIFY(image);
+        CORRADE_COMPARE(image->format(), PixelFormat::RGB8Srgb);
+        CORRADE_COMPARE(image->size(), (Vector3i{2, 1, 3}));
+    } {
+        Containers::Optional<Trade::ImageData3D> image = importer->image3D(imageMipsId, 2);
+        CORRADE_VERIFY(image);
+        CORRADE_COMPARE(image->format(), PixelFormat::RGB8Srgb);
+        CORRADE_COMPARE(image->size(), (Vector3i{1, 1, 3}));
+    }
+
+    /* Two ... well, three more layer textures got deduplicated */
+    {
+        CORRADE_EXPECT_FAIL("KHR_texture_ktx deduplication doesn't take differing samplers into account at the moment.");
+        CORRADE_COMPARE(importer->textureCount(), 6);
+    }
+    CORRADE_COMPARE(importer->textureCount(), 5);
+    CORRADE_COMPARE(importer->textureName(3), "Second 2D array"); /* originally texture 4 */
+    CORRADE_COMPARE(importer->textureForName("Second 2D array"), 3);
+    /* Deduplicated textures shouldn't leak into the mapping */
+    CORRADE_COMPARE(importer->textureForName("First 2D array again"), -1);
+    CORRADE_COMPARE(importer->textureForName("First 2D array again, different sampler"), -1);
+    CORRADE_COMPARE(importer->textureForName("Second 2D array again"), -1);
+
+    /* Two textures out of 5 reference the 3D images, the three more textures
+       got ignored */
+    {
+        Containers::Optional<Trade::TextureData> texture = importer->texture("First 2D array");
+        CORRADE_VERIFY(texture);
+        CORRADE_COMPARE(texture->image(), importer->image3DForName("2D array KTX"));
+        CORRADE_COMPARE(texture->type(), TextureType::Texture2DArray);
+        CORRADE_COMPARE(texture->magnificationFilter(), SamplerFilter::Linear);
+        CORRADE_COMPARE(texture->minificationFilter(), SamplerFilter::Nearest);
+        CORRADE_COMPARE(texture->mipmapFilter(), SamplerMipmap::Nearest);
+    } {
+        Containers::Optional<Trade::TextureData> texture = importer->texture("Second 2D array");
+        CORRADE_VERIFY(texture);
+        CORRADE_COMPARE(texture->image(), importer->image3DForName("2D array KTX with mips"));
+        CORRADE_COMPARE(texture->type(), TextureType::Texture2DArray);
+        CORRADE_COMPARE(texture->magnificationFilter(), SamplerFilter::Nearest);
+        CORRADE_COMPARE(texture->minificationFilter(), SamplerFilter::Linear);
+        CORRADE_COMPARE(texture->mipmapFilter(), SamplerMipmap::Linear);
+    }
+
+    /* No changes to materials take place, so no need to test name mapping
+       either */
+    CORRADE_COMPARE(importer->materialCount(), 7);
+
+    /* Four materials out of 7 reference textures that, in turn, reference the
+       2D array image layers. */
+    {
+        Containers::Optional<Trade::MaterialData> material = importer->material("First 2D array layer 0");
+        CORRADE_VERIFY(material);
+        CORRADE_VERIFY(material->hasAttribute(MaterialAttribute::OcclusionTexture));
+        CORRADE_COMPARE(material->attribute<UnsignedInt>(MaterialAttribute::OcclusionTexture), importer->textureForName("First 2D array"));
+        CORRADE_VERIFY(material->hasAttribute(MaterialAttribute::OcclusionTextureLayer));
+        CORRADE_COMPARE(material->attribute<UnsignedInt>(MaterialAttribute::OcclusionTextureLayer), 0);
+    } {
+        Containers::Optional<Trade::MaterialData> material = importer->material("First 2D array layer 1");
+        CORRADE_VERIFY(material);
+        CORRADE_VERIFY(material->hasAttribute(MaterialAttribute::NoneRoughnessMetallicTexture));
+        CORRADE_COMPARE(material->attribute<UnsignedInt>(MaterialAttribute::NoneRoughnessMetallicTexture), importer->textureForName("First 2D array"));
+        /* For packed textures the layer is duplicated for each */
+        CORRADE_VERIFY(material->hasAttribute(MaterialAttribute::RoughnessTextureLayer));
+        CORRADE_VERIFY(material->hasAttribute(MaterialAttribute::MetalnessTextureLayer));
+        CORRADE_COMPARE(material->attribute<UnsignedInt>(MaterialAttribute::RoughnessTextureLayer), 1);
+        CORRADE_COMPARE(material->attribute<UnsignedInt>(MaterialAttribute::MetalnessTextureLayer), 1);
+    } {
+        Containers::Optional<Trade::MaterialData> material = importer->material("Second 2D array layer 3");
+        CORRADE_VERIFY(material);
+        CORRADE_VERIFY(material->hasAttribute(MaterialAttribute::BaseColorTexture));
+        CORRADE_COMPARE(material->attribute<UnsignedInt>(MaterialAttribute::BaseColorTexture), importer->textureForName("Second 2D array"));
+        CORRADE_VERIFY(material->hasAttribute(MaterialAttribute::BaseColorTextureLayer));
+        CORRADE_COMPARE(material->attribute<UnsignedInt>(MaterialAttribute::BaseColorTextureLayer), 3);
+    } {
+        Containers::Optional<Trade::MaterialData> material = importer->material("Second 2D array layer 5");
+        CORRADE_VERIFY(material);
+        CORRADE_VERIFY(material->hasAttribute(MaterialAttribute::BaseColorTexture));
+        CORRADE_COMPARE(material->attribute<UnsignedInt>(MaterialAttribute::BaseColorTexture), importer->textureForName("Second 2D array"));
+        CORRADE_VERIFY(material->hasAttribute(MaterialAttribute::BaseColorTextureLayer));
+        CORRADE_COMPARE(material->attribute<UnsignedInt>(MaterialAttribute::BaseColorTextureLayer), 5);
+    }
+}
+
+void GltfImporterTest::experimentalKhrTextureKtxPhongFallback() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
+
+    /* Tests only the interaction of experimentalKhrTextureKtx with
+       phongMaterialFallback, everything else is tested in
+       materialPhongFallback() */
+
+    importer->configuration().setValue("experimentalKhrTextureKtx", true);
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "material-phong-fallback-ktx.gltf")));
+    CORRADE_COMPARE(importer->materialCount(), 3);
+
+    /* Both DiffuseTexture and DiffuseTextureLayer get added */
+    {
+        const char* name = "metallic/roughness base color array";
+        Containers::Optional<Trade::MaterialData> material = importer->material(name);
+        CORRADE_ITERATION(name);
+        CORRADE_VERIFY(material);
+
+        MaterialData expected{MaterialType::PbrMetallicRoughness|MaterialType::Phong, {
+            {MaterialAttribute::BaseColorTexture, 1u},
+            {MaterialAttribute::BaseColorTextureLayer, 55u},
+            {MaterialAttribute::DiffuseTexture, 1u},
+            {MaterialAttribute::DiffuseTextureLayer, 55u},
+        }};
+        compareMaterials(*material, expected);
+
+    /* Nothing gets added */
+    } {
+        const char* name = "specular/glossiness diffuse array";
+        Containers::Optional<Trade::MaterialData> material = importer->material(name);
+        CORRADE_ITERATION(name);
+        CORRADE_VERIFY(material);
+
+        MaterialData expected{MaterialType::PbrSpecularGlossiness|MaterialType::Phong, {
+            {MaterialAttribute::DiffuseTexture, 1u},
+            {MaterialAttribute::DiffuseTextureLayer, 55u},
+            {MaterialAttribute::SpecularGlossinessTexture, 0u},
+        }};
+        compareMaterials(*material, expected);
+
+    /* Nothing gets added here either */
+    } {
+        const char* name = "specular/glossiness specular array";
+        Containers::Optional<Trade::MaterialData> material = importer->material(name);
+        CORRADE_ITERATION(name);
+        CORRADE_VERIFY(material);
+
+        MaterialData expected{MaterialType::PbrSpecularGlossiness|MaterialType::Phong, {
+            {MaterialAttribute::DiffuseTexture, 0u},
+            {MaterialAttribute::SpecularGlossinessTexture, 1u},
+            {MaterialAttribute::SpecularTextureLayer, 55u},
+            {MaterialAttribute::GlossinessTextureLayer, 55u},
+        }};
+        compareMaterials(*material, expected);
+    }
+}
+
+void GltfImporterTest::experimentalKhrTextureKtxNotEnabled() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
+    CORRADE_COMPARE(importer->configuration().value("experimentalKhrTextureKtx"), "false");
+
+    std::ostringstream out;
+    Warning redirectWarning{&out};
+    Error redirectError{&out};
+    CORRADE_VERIFY(!importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "texture-ktx.gltf")));
+    CORRADE_COMPARE(out.str(), Utility::formatString(
+        /* First is a warning, second is an error */
+        "Trade::GltfImporter::openData(): used extension KHR_texture_ktx is experimental, enable experimentalKhrTextureKtx to use it\n"
+        "Trade::GltfImporter::openData(): required extension KHR_texture_ktx not supported, enable ignoreRequiredExtensions to ignore\n"));
+}
+
+void GltfImporterTest::experimentalKhrTextureKtxInvalidWholeFile() {
+    auto&& data = ExperimentalTextureKtxInvalidWholeFileData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    Containers::String filename = Utility::Path::join(GLTFIMPORTER_TEST_DIR, data.file);
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
+    importer->configuration().setValue("experimentalKhrTextureKtx", true);
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!importer->openFile(filename));
+    /* If the message ends with a newline, it's the whole output including a
+       potential placeholder for the filename, otherwise just the sentence
+       without any placeholder */
+    if(Containers::StringView{data.message}.hasSuffix('\n'))
+        CORRADE_COMPARE(out.str(), Utility::formatString(data.message, filename));
+    else
+        CORRADE_COMPARE(out.str(), Utility::formatString("Trade::GltfImporter::openData(): {}\n", data.message));
+}
+
+void GltfImporterTest::experimentalKhrTextureKtxInvalidMaterial() {
+    auto&& data = ExperimentalTextureKtxInvalidMaterialData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    Containers::String filename = Utility::Path::join(GLTFIMPORTER_TEST_DIR, "material-invalid-ktx.gltf");
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
+    importer->configuration().setValue("experimentalKhrTextureKtx", true);
+
+    CORRADE_VERIFY(importer->openFile(filename));
+
+    /* Check we didn't forget to test anything */
+    CORRADE_COMPARE(importer->materialCount(), Containers::arraySize(ExperimentalTextureKtxInvalidMaterialData));
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!importer->material(data.name));
+    /* If the message ends with a newline, it's the whole output including a
+       potential placeholder for the filename, otherwise just the sentence
+       without any placeholder */
+    if(Containers::StringView{data.message}.hasSuffix('\n'))
+        CORRADE_COMPARE(out.str(), Utility::formatString(data.message, filename));
+    else
+        CORRADE_COMPARE(out.str(), Utility::formatString("Trade::GltfImporter::material(): {}\n", data.message));
+}
+
+void GltfImporterTest::experimentalKhrTextureKtxInvalidImage() {
+    auto&& data = ExperimentalTextureKtxInvalidImageData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    if(_manager.loadState("KtxImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("KtxImporter plugin not found, cannot test");
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
+    importer->configuration().setValue("experimentalKhrTextureKtx", true);
+
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "image-invalid-ktx.gltf")));
+
+    /* Check we didn't forget to test anything */
+    CORRADE_COMPARE(importer->image1DCount() + importer->image2DCount() + importer->image3DCount(), Containers::arraySize(ExperimentalTextureKtxInvalidImageData));
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    if(data.dimensions == 2)
+        CORRADE_VERIFY(!importer->image2D(data.name));
+    else if(data.dimensions == 3)
+        CORRADE_VERIFY(!importer->image3D(data.name));
+    else CORRADE_INTERNAL_ASSERT_UNREACHABLE();
+    CORRADE_COMPARE(out.str(), Utility::formatString(
+        "Trade::GltfImporter::image{}D(): {}\n", data.dimensions, data.message));
 }
 
 void GltfImporterTest::fileCallbackBuffer() {
