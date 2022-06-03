@@ -3803,7 +3803,7 @@ Containers::Optional<TextureData> GltfImporter::doTexture(const UnsignedInt id) 
        types. We don't really care as we delegate to AnyImageImporter and let
        it figure out the file type based on magic, so we just pick the first
        available image, assuming that extension order indicates a preference
-       and the core image is a fallback if everything else fails. */
+       ... */
     /** @todo Figure out a better priority
         - extensionsRequired?
         - image importers available via manager()->aliasList()?
@@ -3851,6 +3851,7 @@ Containers::Optional<TextureData> GltfImporter::doTexture(const UnsignedInt id) 
         }
     }
 
+    /* ... and the core image is a fallback if everything else fails */
     if(!gltfSource) {
         gltfSource = gltfTexture.find("source"_s);
         if(!gltfSource || !_d->gltf->parseUnsignedInt(*gltfSource)) {
