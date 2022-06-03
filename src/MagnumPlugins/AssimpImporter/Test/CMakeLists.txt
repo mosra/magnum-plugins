@@ -76,6 +76,9 @@ corrade_add_test(AssimpImporterTest AssimpImporterTest.cpp
         image-filename-trailing-space.obj
         image-filename-backslash.mtl
         image-filename-backslash.obj
+        image-3d.mtl
+        image-3d.obj
+        image-3d.dds # Copied from DdsImporter/Test/dxt10-rgba8unorm-3d.dds
         image-mips.mtl
         image-mips.obj
         image-mips.dds # Copied from DdsImporter/Test/bgr8unorm-mips.dds

@@ -61,6 +61,7 @@ corrade_add_test(OpenGexImporterTest OpenGexImporterTest.cpp
         camera.ogex
         extension.ogex
         image.tga
+        image-3d.dds # Copied from DdsImporter/Test/dxt10-rgba8unorm-3d.dds
         image-mips.dds # Copied from DdsImporter/Test/bgr8unorm-mips.dds
         light-invalid.ogex
         light.ogex
@@ -94,8 +95,9 @@ corrade_add_test(OpenGexImporterTest OpenGexImporterTest.cpp
         scene-transformation-metrics.ogex
         scene-transformation.ogex
         scene-translation.ogex
-        texture-invalid.ogex
         texture.ogex
+        texture-3d.ogex
+        texture-invalid.ogex
         texture-mips.ogex
         texture-unique.ogex)
 target_include_directories(OpenGexImporterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>)

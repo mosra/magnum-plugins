@@ -1,0 +1,5 @@
+Material {
+    Texture (attrib = "diffuse", texcoord = 0) {
+        string { "image-3d.dds" }
+    }
+}

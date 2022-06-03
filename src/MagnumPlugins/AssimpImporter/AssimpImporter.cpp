@@ -1747,7 +1747,6 @@ AbstractImporter* AssimpImporter::setupOrReuseImporterForImage(const UnsignedInt
 
             if(!importer.openData(textureData))
                 return nullptr;
-            return &_f->imageImporter.emplace(std::move(importer));
 
         /* Uncompressed image data */
         } else {
@@ -1768,8 +1767,14 @@ AbstractImporter* AssimpImporter::setupOrReuseImporterForImage(const UnsignedInt
            materials so we have to. See the image-filename-space.mtl test. */
         if(!importer.openFile(Utility::Path::join(_f->filePath ? *_f->filePath : "", path).trimmed()))
             return nullptr;
-        return &_f->imageImporter.emplace(std::move(importer));
     }
+
+    if(importer.image2DCount() != 1) {
+        Error{} << errorPrefix << "expected exactly one 2D image in an image file but got" << importer.image2DCount();
+        return nullptr;
+    }
+
+    return &_f->imageImporter.emplace(std::move(importer));
 }
 
 UnsignedInt AssimpImporter::doImage2DLevelCount(const UnsignedInt id) {

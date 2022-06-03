@@ -31,6 +31,10 @@
     {
       "name": "data uri magic not recognizable",
       "uri": "data:image/png;base64,U0VLUklU"
+    },
+    {
+      "name": "not a 2D image",
+      "uri": "image-3d.dds"
     }
   ],
   "bufferViews": [

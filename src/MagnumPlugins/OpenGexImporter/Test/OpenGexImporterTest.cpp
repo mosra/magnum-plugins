@@ -112,6 +112,7 @@ struct OpenGexImporterTest: public TestSuite::Tester {
 
     void image();
     void imageNotFound();
+    void imageNot2D();
     void imageUnique();
     void imageMipLevels();
     void imageNoPathNoCallback();
@@ -195,6 +196,7 @@ OpenGexImporterTest::OpenGexImporterTest() {
 
               &OpenGexImporterTest::image,
               &OpenGexImporterTest::imageNotFound,
+              &OpenGexImporterTest::imageNot2D,
               &OpenGexImporterTest::imageUnique,
               &OpenGexImporterTest::imageMipLevels,
               &OpenGexImporterTest::imageNoPathNoCallback,
@@ -1033,6 +1035,20 @@ void OpenGexImporterTest::imageNotFound() {
         CORRADE_VERIFY(!importer->image2D(1));
         CORRADE_COMPARE(out.str(), "");
     }
+}
+
+void OpenGexImporterTest::imageNot2D() {
+    if(_manager.loadState("DdsImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("DdsImporter plugin not found, cannot test");
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(OPENGEXIMPORTER_TEST_DIR, "texture-3d.ogex")));
+    CORRADE_COMPARE(importer->image2DCount(), 1);
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!importer->image2D(0));
+    CORRADE_COMPARE(out.str(), "Trade::OpenGexImporter::image2D(): expected exactly one 2D image in an image file but got 0\n");
 }
 
 void OpenGexImporterTest::imageUnique() {

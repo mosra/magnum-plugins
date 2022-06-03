@@ -4074,6 +4074,12 @@ AbstractImporter* GltfImporter::setupOrReuseImporterForImage(const char* const e
         return nullptr;
     if(!importer.openFile(Utility::Path::join(_d->filename ? Utility::Path::split(*_d->filename).first() : ""_s, *decodedUri)))
         return nullptr;
+
+    if(importer.image2DCount() != 1) {
+        Error{} << errorPrefix << "expected exactly one 2D image in an image file but got" << importer.image2DCount();
+        return nullptr;
+    }
+
     return &_d->imageImporter.emplace(std::move(importer));
 }
 

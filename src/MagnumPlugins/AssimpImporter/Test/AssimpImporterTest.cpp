@@ -150,6 +150,7 @@ struct AssimpImporterTest: TestSuite::Tester {
     void imageExternal();
     void imageExternalNotFound();
     void imageExternalNoPathNoCallback();
+    void imageNot2D();
     void imagePathMtlSpaceAtTheEnd();
     void imagePathBackslash();
     void imageMipLevels();
@@ -295,6 +296,7 @@ AssimpImporterTest::AssimpImporterTest() {
               &AssimpImporterTest::imageExternal,
               &AssimpImporterTest::imageExternalNotFound,
               &AssimpImporterTest::imageExternalNoPathNoCallback,
+              &AssimpImporterTest::imageNot2D,
               &AssimpImporterTest::imagePathMtlSpaceAtTheEnd,
               &AssimpImporterTest::imagePathBackslash,
               &AssimpImporterTest::imageMipLevels,
@@ -3424,6 +3426,21 @@ void AssimpImporterTest::imageExternalNoPathNoCallback() {
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->image2D(0));
     CORRADE_COMPARE(out.str(), "Trade::AssimpImporter::image2D(): external images can be imported only when opening files from the filesystem or if a file callback is present\n");
+}
+
+void AssimpImporterTest::imageNot2D() {
+    if(_manager.loadState("DdsImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("DdsImporter plugin not found, cannot test");
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "image-3d.obj")));
+
+    CORRADE_COMPARE(importer->image2DCount(), 1);
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!importer->image2D(0));
+    CORRADE_COMPARE(out.str(), "Trade::AssimpImporter::image2D(): expected exactly one 2D image in an image file but got 0\n");
 }
 
 void AssimpImporterTest::imagePathMtlSpaceAtTheEnd() {

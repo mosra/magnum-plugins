@@ -1341,23 +1341,27 @@ constexpr struct {
 
 const struct {
     const char* name;
+    const char* requiresPlugin;
     const char* message;
 } ImageInvalidData[]{
-    {"both uri and buffer view",
+    {"both uri and buffer view", nullptr,
         "expected exactly one of uri or bufferView properties defined"},
-    {"invalid buffer view",
+    {"invalid buffer view", nullptr,
         "buffer view 2 needs 151 bytes but buffer 1 has only 150"},
-    {"missing uri property",
+    {"missing uri property", nullptr,
         "expected exactly one of uri or bufferView properties defined"},
-    {"invalid uri property",
+    {"invalid uri property", nullptr,
         "Utility::Json::parseString(): expected a string, got Utility::JsonToken::Type::Bool at {}:21:14\n"
         "Trade::GltfImporter::image2D(): invalid uri property\n"},
-    {"invalid bufferView property",
+    {"invalid bufferView property", nullptr,
         "Utility::Json::parseUnsignedInt(): too large integer literal -2 at {}:25:21\n"
         "Trade::GltfImporter::image2D(): invalid bufferView property\n"},
-    {"strided buffer view",
+    {"strided buffer view", nullptr,
         "buffer view 3 is strided"},
-    {"data uri magic not recognizable", "Trade::AnyImageImporter::openData(): cannot determine the format from signature 0x53454b52\n"}
+    {"data uri magic not recognizable", nullptr,
+        "Trade::AnyImageImporter::openData(): cannot determine the format from signature 0x53454b52\n"},
+    {"not a 2D image", "DdsImporter",
+        "expected exactly one 2D image in an image file but got 0"},
 };
 
 const struct {
@@ -1591,6 +1595,9 @@ GltfImporterTest::GltfImporterTest() {
     #endif
     #ifdef BASISIMPORTER_PLUGIN_FILENAME
     CORRADE_INTERNAL_ASSERT_OUTPUT(_manager.load(BASISIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
+    #endif
+    #ifdef DDSIMPORTER_PLUGIN_FILENAME
+    CORRADE_INTERNAL_ASSERT_OUTPUT(_manager.load(DDSIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
     #endif
     #ifdef STBIMAGEIMPORTER_PLUGIN_FILENAME
     CORRADE_INTERNAL_ASSERT_OUTPUT(_manager.load(STBIMAGEIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
@@ -5484,6 +5491,9 @@ void GltfImporterTest::imageMipLevels() {
 void GltfImporterTest::imageInvalid() {
     auto&& data = ImageInvalidData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
+
+    if(data.requiresPlugin && _manager.loadState(data.requiresPlugin) == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP(data.requiresPlugin << "plugin not found, cannot test");
 
     Containers::String filename = Utility::Path::join(GLTFIMPORTER_TEST_DIR, "image-invalid.gltf");
 

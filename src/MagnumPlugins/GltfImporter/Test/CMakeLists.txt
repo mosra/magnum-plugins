@@ -43,6 +43,9 @@ if(NOT MAGNUM_GLTFIMPORTER_BUILD_STATIC)
     if(WITH_BASISIMPORTER)
         set(BASISIMPORTER_PLUGIN_FILENAME $<TARGET_FILE:BasisImporter>)
     endif()
+    if(WITH_DDSIMPORTER)
+        set(DDSIMPORTER_PLUGIN_FILENAME $<TARGET_FILE:DdsImporter>)
+    endif()
     if(WITH_STBIMAGEIMPORTER)
         set(STBIMAGEIMPORTER_PLUGIN_FILENAME $<TARGET_FILE:StbImageImporter>)
     endif()
@@ -97,6 +100,7 @@ corrade_add_test(GltfImporterTest
         image.gltf
         image.glb
         image.png
+        image-3d.dds # Copied from DdsImporter/Test/dxt10-rgba8unorm-3d.dds
         image-basis.gltf
         image-basis.glb
         image-basis-embedded.gltf
@@ -198,6 +202,9 @@ if(MAGNUM_GLTFIMPORTER_BUILD_STATIC)
     if(WITH_BASISIMPORTER)
         target_link_libraries(GltfImporterTest PRIVATE BasisImporter)
     endif()
+    if(WITH_DDSIMPORTER)
+        target_link_libraries(GltfImporterTest PRIVATE DdsImporter)
+    endif()
     if(WITH_STBIMAGEIMPORTER)
         target_link_libraries(GltfImporterTest PRIVATE StbImageImporter)
     endif()
@@ -206,6 +213,9 @@ else()
     add_dependencies(GltfImporterTest GltfImporter)
     if(WITH_BASISIMPORTER)
         add_dependencies(GltfImporterTest BasisImporter)
+    endif()
+    if(WITH_DDSIMPORTER)
+        add_dependencies(GltfImporterTest DdsImporter)
     endif()
     if(WITH_STBIMAGEIMPORTER)
         add_dependencies(GltfImporterTest StbImageImporter)
