@@ -70,9 +70,7 @@ void endianSwap(Containers::ArrayView<char> data, UnsignedInt typeSize) {
         case 4:
             Utility::Endianness::littleEndianInPlace(Containers::arrayCast<TypeForSize<4>::Type>(data));
             return;
-        case 8:
-            Utility::Endianness::littleEndianInPlace(Containers::arrayCast<TypeForSize<8>::Type>(data));
-            return;
+        /* No 64-bit pixel formats at the moment */
     }
 
     CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
@@ -114,9 +112,7 @@ void swizzlePixels(SwizzleType type, UnsignedInt typeSize, Containers::ArrayView
         case 4:
             swizzlePixels<TypeForSize<4>::Type>(type, data);
             return;
-        case 8:
-            swizzlePixels<TypeForSize<8>::Type>(type, data);
-            return;
+        /* No 64-bit pixel formats at the moment */
     }
 
     CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
@@ -522,6 +518,12 @@ void KtxImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFlags
         return;
     }
     f->pixelFormat = *pixelFormat;
+
+    /* We have no 64-bit PixelFormat at the moment, so if the above format
+       check didn't fail, the type size should never be 8. Once it does,
+       endianSwap() and swizzlePixels() need to handle 64-bit sizes as well.
+       Now they don't to save a bit on binary size. */
+    CORRADE_INTERNAL_ASSERT(header.typeSize < 8);
 
     if(f->pixelFormat.isDepth && f->numDimensions == 3) {
         Error{} << "Trade::KtxImporter::openData(): 3D images can't have depth/stencil format";
