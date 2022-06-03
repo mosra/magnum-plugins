@@ -5515,10 +5515,15 @@ void GltfImporterTest::imageInvalidNotFound() {
     /* Check we didn't forget to test anything */
     CORRADE_COMPARE(importer->image2DCount(), Containers::arraySize(ImageInvalidNotFoundData));
 
+    Int id = importer->image2DForName(data.name);
+    CORRADE_VERIFY(id != -1);
+
     {
         std::ostringstream out;
         Error redirectError{&out};
-        CORRADE_VERIFY(!importer->image2D(data.name));
+        CORRADE_VERIFY(!importer->image2D(id));
+        /* image2DLevelCount() can't fail, but should not crash either */
+        CORRADE_COMPARE(importer->image2DLevelCount(id), 1);
         /* There's an error from Path::read() before */
         CORRADE_COMPARE_AS(out.str(),
             Utility::formatString("\n{}\n", data.message),

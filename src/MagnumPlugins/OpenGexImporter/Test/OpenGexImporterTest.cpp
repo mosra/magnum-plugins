@@ -1018,6 +1018,8 @@ void OpenGexImporterTest::imageNotFound() {
         std::ostringstream out;
         Error redirectError{&out};
         CORRADE_VERIFY(!importer->image2D(1));
+        /* image2DLevelCount() can't fail, but should not crash either */
+        CORRADE_COMPARE(importer->image2DLevelCount(1), 1);
         /* There's an error from Path::read() before */
         CORRADE_COMPARE_AS(out.str(),
             "\nTrade::AbstractImporter::openFile(): cannot open file /nonexistent.tga\n",

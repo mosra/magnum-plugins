@@ -3395,6 +3395,8 @@ void AssimpImporterTest::imageExternalNotFound() {
         std::ostringstream out;
         Error redirectError{&out};
         CORRADE_VERIFY(!importer->image2D(0));
+        /* image2DLevelCount() can't fail, but should not crash either */
+        CORRADE_COMPARE(importer->image2DLevelCount(0), 1);
         /* There's an error from Path::read() before */
         CORRADE_COMPARE_AS(out.str(),
             "\nTrade::AbstractImporter::openFile(): cannot open file /not-found.png\n",
