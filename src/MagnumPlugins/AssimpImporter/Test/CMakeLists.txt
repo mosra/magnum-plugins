@@ -78,6 +78,7 @@ corrade_add_test(AssimpImporterTest AssimpImporterTest.cpp
         image-filename-backslash.obj
         image-mips.mtl
         image-mips.obj
+        image-mips.dds # Copied from DdsImporter/Test/bgr8unorm-mips.dds
         light.dae
         light-area.fbx # Converted from light-area.blend
         material-color.dae
@@ -90,7 +91,6 @@ corrade_add_test(AssimpImporterTest AssimpImporterTest.cpp
         material-raw.gltf
         mesh.dae
         mesh-multiple-primitives.dae
-        mips.dds
         multiple-textures.mtl r.png g.png b.png y.png
         points.obj
         polygon.obj

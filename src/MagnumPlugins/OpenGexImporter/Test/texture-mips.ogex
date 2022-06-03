@@ -1,6 +1,6 @@
 LightObject (type = "spot") {
     Texture (attrib = "projection") {
-        string { "mips.dds" }
+        string { "image-mips.dds" }
     }
 }
 

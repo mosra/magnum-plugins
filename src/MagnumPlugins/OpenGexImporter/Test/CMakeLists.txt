@@ -61,6 +61,7 @@ corrade_add_test(OpenGexImporterTest OpenGexImporterTest.cpp
         camera.ogex
         extension.ogex
         image.tga
+        image-mips.dds # Copied from DdsImporter/Test/bgr8unorm-mips.dds
         light-invalid.ogex
         light.ogex
         material-invalid.ogex
@@ -69,7 +70,6 @@ corrade_add_test(OpenGexImporterTest OpenGexImporterTest.cpp
         mesh-invalid.ogex
         mesh-metrics.ogex
         mesh.ogex
-        mips.dds
         scene-camera.ogex
         scene-geometry.ogex
         scene-invalid-camera.ogex
