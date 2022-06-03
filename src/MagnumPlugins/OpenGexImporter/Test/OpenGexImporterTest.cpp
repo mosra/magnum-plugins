@@ -1014,16 +1014,23 @@ void OpenGexImporterTest::imageNotFound() {
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(OPENGEXIMPORTER_TEST_DIR, "texture-invalid.ogex")));
     CORRADE_COMPARE(importer->image2DCount(), 2);
 
-    std::ostringstream out;
-    Error redirectError{&out};
+    {
+        std::ostringstream out;
+        Error redirectError{&out};
+        CORRADE_VERIFY(!importer->image2D(1));
+        /* There's an error from Path::read() before */
+        CORRADE_COMPARE_AS(out.str(),
+            "\nTrade::AbstractImporter::openFile(): cannot open file /nonexistent.tga\n",
+            TestSuite::Compare::StringHasSuffix);
+
     /* The (failed) importer should get cached even in case of failure, so
        the message should get printed just once */
-    CORRADE_VERIFY(!importer->image2D(1));
-    CORRADE_VERIFY(!importer->image2D(1));
-    /* There's an error from Path::read() before */
-    CORRADE_COMPARE_AS(out.str(),
-        "\nTrade::AbstractImporter::openFile(): cannot open file /nonexistent.tga\n",
-        TestSuite::Compare::StringHasSuffix);
+    } {
+        std::ostringstream out;
+        Error redirectError{&out};
+        CORRADE_VERIFY(!importer->image2D(1));
+        CORRADE_COMPARE(out.str(), "");
+    }
 }
 
 void OpenGexImporterTest::imageUnique() {

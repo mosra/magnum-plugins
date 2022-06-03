@@ -3399,11 +3399,10 @@ void AssimpImporterTest::imageExternalNotFound() {
         CORRADE_COMPARE_AS(out.str(),
             "\nTrade::AbstractImporter::openFile(): cannot open file /not-found.png\n",
             TestSuite::Compare::StringHasSuffix);
-    }
 
-    /* The (failed) importer should get cached even in case of failure, so
-       the message should get printed just once */
-    {
+    /* The importer should get cached even in case of failure, so the message
+       should get printed just once */
+    } {
         std::ostringstream out;
         Error redirectError{&out};
         CORRADE_VERIFY(!importer->image2D(0));

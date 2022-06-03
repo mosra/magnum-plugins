@@ -5515,13 +5515,23 @@ void GltfImporterTest::imageInvalidNotFound() {
     /* Check we didn't forget to test anything */
     CORRADE_COMPARE(importer->image2DCount(), Containers::arraySize(ImageInvalidNotFoundData));
 
-    std::ostringstream out;
-    Error redirectError{&out};
-    CORRADE_VERIFY(!importer->image2D(data.name));
-    /* There's an error from Path::read() before */
-    CORRADE_COMPARE_AS(out.str(),
-        Utility::formatString("\n{}\n", data.message),
-        TestSuite::Compare::StringHasSuffix);
+    {
+        std::ostringstream out;
+        Error redirectError{&out};
+        CORRADE_VERIFY(!importer->image2D(data.name));
+        /* There's an error from Path::read() before */
+        CORRADE_COMPARE_AS(out.str(),
+            Utility::formatString("\n{}\n", data.message),
+            TestSuite::Compare::StringHasSuffix);
+
+    /* The importer should get cached even in case of failure, so the message
+       should get printed just once */
+    } {
+        std::ostringstream out;
+        Error redirectError{&out};
+        CORRADE_VERIFY(!importer->image2D(data.name));
+        CORRADE_COMPARE(out.str(), "");
+    }
 }
 
 void GltfImporterTest::imagePropagateImporterFlags() {
