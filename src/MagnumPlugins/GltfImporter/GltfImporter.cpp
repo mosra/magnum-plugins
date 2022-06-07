@@ -3049,7 +3049,20 @@ Containers::Optional<MaterialAttributeData> parseMaterialAttribute(Utility::Json
 
 }
 
-bool GltfImporter::materialTexture(const Utility::JsonToken& gltfTexture, Containers::Array<MaterialAttributeData>& attributes, const Containers::StringView attribute, const Containers::StringView matrixAttribute, const Containers::StringView coordinateAttribute) {
+/* In this case, extra attributes such as Matrix or Coordinates are prefixed
+   with the attribute */
+bool GltfImporter::materialTexture(const Utility::JsonToken& gltfTexture, Containers::Array<MaterialAttributeData>& attributes, const Containers::StringView attribute) {
+    CORRADE_INTERNAL_ASSERT(attribute);
+    return materialTexture(gltfTexture, attributes, attribute, attribute);
+}
+
+/* The attribute can be empty in case of adding e.g. a combined
+   SpecularGlossinessTexture but with separate SpecularTextureMatrix and
+   GlossinessTextureMatrix. Then the first call gets
+   `attribute=SpecularGlossinessTexture` and
+   `extraAttributePrefix=SpecularTexture` and s second call is `attribute=` and
+   `extraAttributePrefix=GlossinessTexture`. */
+bool GltfImporter::materialTexture(const Utility::JsonToken& gltfTexture, Containers::Array<MaterialAttributeData>& attributes, const Containers::StringView attribute, const Containers::StringView extraAttributePrefix) {
     if(!_d->gltf->parseObject(gltfTexture)) {
         Error{} << "Trade::GltfImporter::material(): invalid" << gltfTexture.parent()->asString() << "property";
         return false;
@@ -3075,6 +3088,13 @@ bool GltfImporter::materialTexture(const Utility::JsonToken& gltfTexture, Contai
 
         texCoord = gltfTexCoord->asUnsignedInt();
     }
+
+    /** @todo avoid allocations when it's doable in a less error-prone way than
+        formatInto() + slice() (ArrayTuple string support?), best with a
+        statically-sized buffer */
+    CORRADE_INTERNAL_ASSERT(extraAttributePrefix);
+    const Containers::String matrixAttribute = extraAttributePrefix + "Matrix"_s;
+    const Containers::String coordinateAttribute = extraAttributePrefix + "Coordinates"_s;
 
     /* Extensions */
     const Utility::JsonToken* gltfKhrTextureTransform = nullptr;
@@ -3288,17 +3308,14 @@ Containers::Optional<MaterialData> GltfImporter::doMaterial(const UnsignedInt id
         }
 
         if(const Utility::JsonToken* const gltfBaseColorTexture = gltfPbrMetallicRoughness->find("baseColorTexture"_s)) {
-            if(!materialTexture(*gltfBaseColorTexture, attributes,
-                "BaseColorTexture"_s,
-                "BaseColorTextureMatrix"_s,
-                "BaseColorTextureCoordinates"_s)) return {};
+            if(!materialTexture(*gltfBaseColorTexture, attributes, "BaseColorTexture"_s))
+                return {};
         }
 
         if(const Utility::JsonToken* const gltfMetallicRoughnessTexture = gltfPbrMetallicRoughness->find("metallicRoughnessTexture"_s)) {
             if(!materialTexture(*gltfMetallicRoughnessTexture, attributes,
                 "NoneRoughnessMetallicTexture"_s,
-                "MetalnessTextureMatrix"_s,
-                "MetalnessTextureCoordinates"_s)) return {};
+                "MetalnessTexture"_s)) return {};
 
             /* Add the matrix/coordinates attributes also for the roughness
                texture, but skip adding the texture ID again. If the above
@@ -3306,8 +3323,7 @@ Containers::Optional<MaterialData> GltfImporter::doMaterial(const UnsignedInt id
             CORRADE_INTERNAL_ASSERT_OUTPUT(materialTexture(
                 *gltfMetallicRoughnessTexture, attributes,
                 {},
-                "RoughnessTextureMatrix"_s,
-                "RoughnessTextureCoordinates"_s));
+                "RoughnessTexture"_s));
         }
 
         /** @todo Support for KHR_materials_specular? This adds an explicit
@@ -3398,17 +3414,14 @@ Containers::Optional<MaterialData> GltfImporter::doMaterial(const UnsignedInt id
         }
 
         if(const Utility::JsonToken* const gltfBaseColorTexture = gltfPbrSpecularGlossiness->find("diffuseTexture"_s)) {
-            if(!materialTexture(*gltfBaseColorTexture, attributes,
-                "DiffuseTexture"_s,
-                "DiffuseTextureMatrix"_s,
-                "DiffuseTextureCoordinates"_s)) return {};
+            if(!materialTexture(*gltfBaseColorTexture, attributes, "DiffuseTexture"_s))
+                return {};
         }
 
         if(const Utility::JsonToken* const gltfSpecularGlossinessTexture = gltfPbrSpecularGlossiness->find("specularGlossinessTexture"_s)) {
            if(!materialTexture(*gltfSpecularGlossinessTexture, attributes,
                 "SpecularGlossinessTexture"_s,
-                "SpecularTextureMatrix"_s,
-                "SpecularTextureCoordinates"_s)) return {};
+                "SpecularTexture"_s)) return {};
 
             /* Add the matrix/coordinates attributes also for the glossiness
                texture, but skip adding the texture ID again. If the above
@@ -3416,8 +3429,7 @@ Containers::Optional<MaterialData> GltfImporter::doMaterial(const UnsignedInt id
             CORRADE_INTERNAL_ASSERT_OUTPUT(materialTexture(
                 *gltfSpecularGlossinessTexture, attributes,
                 {},
-                "GlossinessTextureMatrix"_s,
-                "GlossinessTextureCoordinates"_s));
+                "GlossinessTexture"_s));
         }
     }
 
@@ -3430,10 +3442,8 @@ Containers::Optional<MaterialData> GltfImporter::doMaterial(const UnsignedInt id
 
     /* Normal texture */
     if(const Utility::JsonToken* const gltfNormalTexture = gltfMaterial.find("normalTexture"_s)) {
-        if(!materialTexture(*gltfNormalTexture, attributes,
-            "NormalTexture"_s,
-            "NormalTextureMatrix"_s,
-            "NormalTextureCoordinates"_s)) return {};
+        if(!materialTexture(*gltfNormalTexture, attributes, "NormalTexture"_s))
+            return {};
 
         /* Scale. 1.0 is default in both Magnum's MaterialData and glTF, no
            need to add anything if not present. */
@@ -3451,10 +3461,8 @@ Containers::Optional<MaterialData> GltfImporter::doMaterial(const UnsignedInt id
 
     /* Occlusion texture */
     if(const Utility::JsonToken* const gltfOcclusionTexture = gltfMaterial.find("occlusionTexture"_s)) {
-        if(!materialTexture(*gltfOcclusionTexture, attributes,
-            "OcclusionTexture"_s,
-            "OcclusionTextureMatrix"_s,
-            "OcclusionTextureCoordinates"_s)) return {};
+        if(!materialTexture(*gltfOcclusionTexture, attributes, "OcclusionTexture"_s))
+            return {};
 
         /* Strength. 1.0 is default in both Magnum's MaterialData and glTF, no
            need to add anything if not present. */
@@ -3487,10 +3495,8 @@ Containers::Optional<MaterialData> GltfImporter::doMaterial(const UnsignedInt id
 
     /* Emissive texture */
     if(const Utility::JsonToken* const gltfEmissiveTexture = gltfMaterial.find("emissiveTexture"_s)) {
-        if(!materialTexture(*gltfEmissiveTexture, attributes,
-            "EmissiveTexture"_s,
-            "EmissiveTextureMatrix"_s,
-            "EmissiveTextureCoordinates"_s)) return {};
+        if(!materialTexture(*gltfEmissiveTexture, attributes, "EmissiveTexture"_s))
+            return {};
     }
 
     /* Phong material fallback for backwards compatibility */
@@ -3602,11 +3608,8 @@ Containers::Optional<MaterialData> GltfImporter::doMaterial(const UnsignedInt id
             MaterialAttribute::LayerFactor, 0.0f);
 
         if(const Utility::JsonToken* const gltfClearcoatTexture = gltfClearcoat->find("clearcoatTexture"_s)) {
-            if(!materialTexture(*gltfClearcoatTexture,
-                attributes,
-                "LayerFactorTexture"_s,
-                "LayerFactorTextureMatrix"_s,
-                "LayerFactorTextureCoordinates"_s)) return {};
+            if(!materialTexture(*gltfClearcoatTexture, attributes, "LayerFactorTexture"_s))
+                return {};
         }
 
         /* Same as with gltfClearcoatFactor -- Magnum's default is 1.0 to not
@@ -3624,10 +3627,8 @@ Containers::Optional<MaterialData> GltfImporter::doMaterial(const UnsignedInt id
             MaterialAttribute::Roughness, 0.0f);
 
         if(const Utility::JsonToken* const gltfRoughnessTexture = gltfClearcoat->find("clearcoatRoughnessTexture"_s)) {
-            if(!materialTexture(*gltfRoughnessTexture, attributes,
-                "RoughnessTexture"_s,
-                "RoughnessTextureMatrix"_s,
-                "RoughnessTextureCoordinates"_s)) return {};
+            if(!materialTexture(*gltfRoughnessTexture, attributes, "RoughnessTexture"_s))
+                return {};
 
             /* The extension description doesn't mention it, but the schema
                says the clearcoat roughness is actually in the G channel:
@@ -3638,10 +3639,8 @@ Containers::Optional<MaterialData> GltfImporter::doMaterial(const UnsignedInt id
         }
 
         if(const Utility::JsonToken* const gltfNormalTexture = gltfClearcoat->find("clearcoatNormalTexture"_s)) {
-            if(!materialTexture(*gltfNormalTexture, attributes,
-                "NormalTexture"_s,
-                "NormalTextureMatrix"_s,
-                "NormalTextureCoordinates"_s)) return {};
+            if(!materialTexture(*gltfNormalTexture, attributes, "NormalTexture"_s))
+                return {};
 
             /* Scale. 1.0 is default in both Magnum's MaterialData and glTF, no
                need to add anything if not present. */
@@ -3727,12 +3726,7 @@ Containers::Optional<MaterialData> GltfImporter::doMaterial(const UnsignedInt id
                     continue;
                 }
 
-                Containers::String nameBuffer = Utility::format("{0}Matrix{0}Coordinates", name);
-                if(!materialTexture(gltfValue, attributes,
-                    name,
-                    nameBuffer.prefix(name.size() + 6),
-                    nameBuffer.exceptPrefix(name.size() + 6)))
-                {
+                if(!materialTexture(gltfValue, attributes, name)) {
                     Warning{} << "Trade::GltfImporter::material(): property" << name << "has an invalid texture object, skipping";
                     continue;
                 }
@@ -3748,7 +3742,10 @@ Containers::Optional<MaterialData> GltfImporter::doMaterial(const UnsignedInt id
                         continue;
                     }
 
-                    const Containers::StringView scaleName = nameBuffer.prefix(Utility::formatInto(nameBuffer, "{}Scale", name));
+                    /** @todo avoid allocations when it's doable in a less
+                        error-prone way than formatInto() + slice() (ArrayTuple
+                        string support?), best with a statically-sized buffer */
+                    const Containers::String scaleName = name + "Scale"_s;
                     if(checkMaterialAttributeSize(scaleName, MaterialAttributeType::Float))
                         arrayAppend(attributes, InPlaceInit,
                             scaleName, gltfTextureScale->asFloat());
