@@ -28,8 +28,11 @@
     },
     {
       "name": "invalid values",
+      "note": "the offset and flags fail only because they're set to be parsed as Int and UnsignedInt, respectively",
       "extras": {
-        "radius": 56.0f
+        "radius": 56.0f,
+        "offset": 23.5,
+        "flags": -1
       }
     },
     {
@@ -47,8 +50,9 @@
       }
     },
     {
+      "note": "to verify the 32-bit precision doesn't get lost along the way",
       "extras": {
-        "offset": 26
+        "offset": -2147483648
       }
     },
     {
@@ -57,9 +61,10 @@
       }
     },
     {
+      "note": "to verify the 32-bit precision doesn't get lost along the way",
       "extras": {
         "radius": 5.5,
-        "flags": 76
+        "flags": 4294967295
       }
     }
   ],

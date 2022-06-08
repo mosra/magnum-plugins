@@ -252,7 +252,7 @@ struct GltfImporter::Document {
         {"JOINTS"_s, meshAttributeCustom(0)},
         {"WEIGHTS"_s, meshAttributeCustom(1)}
     };
-    Containers::Array<Containers::StringView> sceneFieldNames;
+    Containers::Array<Containers::Pair<Containers::StringView, SceneFieldType>> sceneFieldNamesTypes;
     Containers::Array<Containers::StringView> meshAttributeNames{InPlaceInit, {
         "JOINTS"_s,
         "WEIGHTS"_s
@@ -1095,11 +1095,32 @@ void GltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags da
             return;
         }
 
+        const Utility::ConfigurationGroup* customSceneFieldTypeConfiguration = configuration().group("customSceneFieldTypes");
         for(const Utility::JsonObjectItem gltfExtra: gltfExtras->asObject()) {
-            if(_d->sceneFieldsForName.emplace(gltfExtra.key(),
-                sceneFieldCustom(_d->sceneFieldNames.size())).second
-            )
-                arrayAppend(_d->sceneFieldNames, gltfExtra.key());
+            if(_d->sceneFieldsForName.emplace(gltfExtra.key(), sceneFieldCustom(_d->sceneFieldNamesTypes.size())).second) {
+                /* If the field has the type specified in configuration,
+                   override the default */
+                /** @todo use findValue() once the Configuration API is
+                    reworked, instead of treating empty option the same as no
+                    option at all */
+                const Containers::StringView typeString = customSceneFieldTypeConfiguration ? customSceneFieldTypeConfiguration->value<Containers::StringView>(gltfExtra.key()) : ""_s;
+                SceneFieldType type;
+                if(!typeString) type = SceneFieldType::Float;
+                #define _c(type_) if(typeString == #type_ ## _s) type = SceneFieldType::type_;
+                else _c(Float)
+                else _c(UnsignedInt)
+                else _c(Int)
+                #undef _c
+                else {
+                    /* I expect the type set to grow significantly over time,
+                       thus listing them all in the error message doesn't
+                       scale */
+                    Error{} << "Trade::GltfImporter::openData(): invalid type" << typeString << "specified for custom scene field" << gltfExtra.key();
+                    return;
+                }
+
+                arrayAppend(_d->sceneFieldNamesTypes, InPlaceInit, gltfExtra.key(), type);
+            }
         }
     }
 
@@ -2243,7 +2264,7 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
     UnsignedInt skinCount = 0;
     /* Separate counter for every recognized extra field plus two extra items
        to turn this into an offset array later */
-    Containers::Array<UnsignedInt> extraOffsets{ValueInit, _d->sceneFieldNames.size() + 2};
+    Containers::Array<UnsignedInt> extraOffsets{ValueInit, _d->sceneFieldNamesTypes.size() + 2};
     for(const UnsignedInt i: objects) {
         const Utility::JsonToken& gltfNode = _d->gltfNodes[i].first();
 
@@ -2358,14 +2379,26 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
         if(const Utility::JsonToken* const gltfExtras = gltfNode.find("extras"_s)) {
             if(gltfExtras->type() == Utility::JsonToken::Type::Object) for(const Utility::JsonObjectItem gltfExtra: gltfExtras->asObject()) {
                 if(gltfExtra.value().type() == Utility::JsonToken::Type::Number) {
-                    if(!_d->gltf->parseFloat(gltfExtra.value())) {
+                    const UnsignedInt customFieldId = sceneFieldCustom(_d->sceneFieldsForName.at(gltfExtra.key()));
+                    bool success;
+                    switch(_d->sceneFieldNamesTypes[customFieldId].second()) {
+                        #define _c(type) case SceneFieldType::type:         \
+                            success = !!_d->gltf->parse ## type(gltfExtra.value()); \
+                            break;
+                        _c(Float)
+                        _c(UnsignedInt)
+                        _c(Int)
+                        #undef _c
+                        default: CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+                    }
+                    if(!success) {
                         Warning{} << "Trade::GltfImporter::scene(): invalid node" << i << "extras" << gltfExtra.key() << "property, skipping";
                         continue;
                     }
 
                     /* Leave extraOffsets[0] and [1] at 0 to turn this into
                        an offset array later. */
-                    ++extraOffsets[sceneFieldCustom(_d->sceneFieldsForName.at(gltfExtra.key())) + 2];
+                    ++extraOffsets[customFieldId + 2];
                 } else Warning{} << "Trade::GltfImporter::scene(): node" << i << "extras" << gltfExtra.key() << "property is" << gltfExtra.value().type() << Debug::nospace << ", skipping";
             } else Warning{} << "Trade::GltfImporter::scene(): node" << i << "extras property is" << gltfExtras->type() << Debug::nospace << ", skipping";
         }
@@ -2405,7 +2438,12 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
     Containers::ArrayView<UnsignedInt> skinObjects;
     Containers::ArrayView<UnsignedInt> skins;
     Containers::ArrayView<UnsignedInt> extraObjects;
-    Containers::ArrayView<Float> extras;
+    /* This gets later cast to extrasFloat and extrasInt */
+    /** @todo Abusing the fact that all allowed extras types are 32-bit now,
+        when 64-bit types are introduced there has to be a second 64-bit array
+        to satisfy alignment. For composite types (vectors, matrices) however
+        it's enough to just take more items at once. */
+    Containers::ArrayView<UnsignedInt> extrasUnsignedInt;
     Containers::Array<char> data = Containers::ArrayTuple{
         {NoInit, objects.size(), parentImporterStateObjects},
         {NoInit, objects.size(), parents},
@@ -2426,8 +2464,10 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
         {NoInit, skinCount, skinObjects},
         {NoInit, skinCount, skins},
         {NoInit, extraCount, extraObjects},
-        {NoInit, extraCount, extras}
+        {NoInit, extraCount, extrasUnsignedInt}
     };
+    const auto extrasFloat = Containers::arrayCast<Float>(extrasUnsignedInt);
+    const auto extrasInt = Containers::arrayCast<Int>(extrasUnsignedInt);
 
     /* Populate object mapping for parents and importer state, synthesize
        parent info from the child ranges */
@@ -2585,12 +2625,29 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
         if(const Utility::JsonToken* const gltfExtras = gltfNode.find("extras"_s)) {
             if(gltfExtras->type() == Utility::JsonToken::Type::Object) for(const Utility::JsonObjectItem gltfExtra: gltfExtras->asObject()) {
                 if(gltfExtra.value().type() == Utility::JsonToken::Type::Number && gltfExtra.value().isParsed()) {
+                    const UnsignedInt customFieldId = sceneFieldCustom(_d->sceneFieldsForName.at(gltfExtra.key()));
                     /* Now the offsets are shifted by 1, after this loop
                        they'll be shifted by 0 for the final SceneFieldData
                        population */
-                    UnsignedInt& extraOffset = extraOffsets[sceneFieldCustom(_d->sceneFieldsForName.at(gltfExtra.key())) + 1];
+                    UnsignedInt& extraOffset = extraOffsets[customFieldId + 1];
                     extraObjects[extraOffset] = nodeI;
-                    extras[extraOffset] = gltfExtra.value().asFloat();
+                    /* All views are the same memory, so the offset is common
+                       for all */
+                    /** @todo when 64-bit types are introduced, they have to
+                        have a separate offset */
+                    switch(_d->sceneFieldNamesTypes[customFieldId].second()) {
+                        #define _c(type) case SceneFieldType::type:         \
+                            extras ## type[extraOffset] = gltfExtra.value().as ## type(); \
+                            break;
+                        _c(Float)
+                        _c(UnsignedInt)
+                        _c(Int)
+                        #undef _c
+                        default: CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+                    }
+                    /** @todo when composite types are introduced, this has to
+                        be `+= sceneFieldComponentCount*sceneFieldVectorCount`
+                        or some such instead */
                     ++extraOffset;
                 }
             }
@@ -2654,11 +2711,12 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
     /* Extras. At this point, `extraOffsets[i]` to `extraOffsets[i + 1]` is the
        range of data for extra field sceneFieldCustom(i). Add it if it's
        non-empty. */
-    for(std::size_t i = 0; i != _d->sceneFieldNames.size(); ++i) {
+    for(std::size_t i = 0; i != _d->sceneFieldNamesTypes.size(); ++i) {
         const std::size_t begin = extraOffsets[i];
         const std::size_t end = extraOffsets[i + 1];
-        if(begin != end) arrayAppend(fields, SceneFieldData{
-            sceneFieldCustom(i), extraObjects.slice(begin, end), extras.slice(begin, end)
+        if(begin != end) arrayAppend(fields, SceneFieldData{sceneFieldCustom(i),
+            SceneMappingType::UnsignedInt, extraObjects.slice(begin, end),
+            _d->sceneFieldNamesTypes[i].second(), extrasUnsignedInt.slice(begin, end)
         });
     }
 
@@ -2676,8 +2734,8 @@ SceneField GltfImporter::doSceneFieldForName(const Containers::StringView name) 
 }
 
 Containers::String GltfImporter::doSceneFieldName(const UnsignedInt name) {
-    return _d && name < _d->sceneFieldNames.size() ?
-        _d->sceneFieldNames[name] : ""_s;
+    return _d && name < _d->sceneFieldNamesTypes.size() ?
+        _d->sceneFieldNamesTypes[name].first() : ""_s;
 }
 
 UnsignedLong GltfImporter::doObjectCount() const {

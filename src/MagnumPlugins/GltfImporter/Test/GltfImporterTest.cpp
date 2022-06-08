@@ -116,6 +116,7 @@ struct GltfImporterTest: TestSuite::Tester {
     void sceneTransformationQuaternionNormalizationEnabled();
     void sceneTransformationQuaternionNormalizationDisabled();
     void sceneCustomFields();
+    void sceneCustomFieldsInvalidConfiguration();
 
     void skin();
     void skinInvalid();
@@ -1554,7 +1555,8 @@ GltfImporterTest::GltfImporterTest() {
               &GltfImporterTest::sceneTransformation,
               &GltfImporterTest::sceneTransformationQuaternionNormalizationEnabled,
               &GltfImporterTest::sceneTransformationQuaternionNormalizationDisabled,
-              &GltfImporterTest::sceneCustomFields});
+              &GltfImporterTest::sceneCustomFields,
+              &GltfImporterTest::sceneCustomFieldsInvalidConfiguration});
 
     addInstancedTests({&GltfImporterTest::skin},
         Containers::arraySize(MultiFileData));
@@ -3222,6 +3224,14 @@ void GltfImporterTest::sceneTransformationQuaternionNormalizationDisabled() {
 void GltfImporterTest::sceneCustomFields() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
 
+    /* Types can be overriden only before opening a file */
+    importer->configuration().group("customSceneFieldTypes")->addValue("offset", "Int");
+    importer->configuration().group("customSceneFieldTypes")->addValue("flags", "UnsignedInt");
+    /* Configuration for a field that's not in the file should do nothing
+       even if invalid */
+    importer->configuration().group("customSceneFieldTypes")->addValue("bounds", "Range3D[6]");
+    /* The radius field stays at the default, which is Float */
+
     Containers::String filename = Utility::Path::join(GLTFIMPORTER_TEST_DIR, "scene-custom-fields.gltf");
     CORRADE_VERIFY(importer->openFile(filename));
 
@@ -3231,14 +3241,14 @@ void GltfImporterTest::sceneCustomFields() {
     SceneField sceneFieldFlags = importer->sceneFieldForName("flags");
     CORRADE_COMPARE(sceneFieldRadius, sceneFieldCustom(5));
     CORRADE_COMPARE(sceneFieldOffset, sceneFieldCustom(6));
-    CORRADE_COMPARE(sceneFieldFlags, sceneFieldCustom(8));
+    CORRADE_COMPARE(sceneFieldFlags, sceneFieldCustom(7));
     CORRADE_COMPARE(importer->sceneFieldName(sceneFieldCustom(5)), "radius");
     CORRADE_COMPARE(importer->sceneFieldName(sceneFieldCustom(6)), "offset");
-    CORRADE_COMPARE(importer->sceneFieldName(sceneFieldCustom(8)), "flags");
+    CORRADE_COMPARE(importer->sceneFieldName(sceneFieldCustom(7)), "flags");
 
     /* Unlike in materials, case of custom names is not normalized */
-    CORRADE_COMPARE(importer->sceneFieldForName("UppercaseName"), sceneFieldCustom(7));
-    CORRADE_COMPARE(importer->sceneFieldName(sceneFieldCustom(7)), "UppercaseName");
+    CORRADE_COMPARE(importer->sceneFieldForName("UppercaseName"), sceneFieldCustom(8));
+    CORRADE_COMPARE(importer->sceneFieldName(sceneFieldCustom(8)), "UppercaseName");
 
     /* Names of custom fields should get gathered right after import,
        independently of whether they have a useful type or are in any scene */
@@ -3267,8 +3277,13 @@ void GltfImporterTest::sceneCustomFields() {
             "Trade::GltfImporter::scene(): node 3 extras invalidNullField property is Utility::JsonToken::Type::Null, skipping\n"
             "Trade::GltfImporter::scene(): node 3 extras invalidArrayField property is Utility::JsonToken::Type::Array, skipping\n"
             "Trade::GltfImporter::scene(): node 3 extras invalidObjectField property is Utility::JsonToken::Type::Object, skipping\n"
-            "Utility::Json::parseFloat(): invalid floating-point literal 56.0f at {}:32:19\n"
-            "Trade::GltfImporter::scene(): invalid node 4 extras radius property, skipping\n", filename));
+            "Utility::Json::parseFloat(): invalid floating-point literal 56.0f at {0}:33:19\n"
+            "Trade::GltfImporter::scene(): invalid node 4 extras radius property, skipping\n"
+            /* These fail only because the fields have the type overriden */
+            "Utility::Json::parseInt(): invalid integer literal 23.5 at {0}:34:19\n"
+            "Trade::GltfImporter::scene(): invalid node 4 extras offset property, skipping\n"
+            "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {0}:35:18\n"
+            "Trade::GltfImporter::scene(): invalid node 4 extras flags property, skipping\n", filename));
 
         /* Parent, ImporterState and Transformation (for marking the scene as
            3D) is there always, plus `radius`, `index` and `UppercaseName`
@@ -3288,12 +3303,13 @@ void GltfImporterTest::sceneCustomFields() {
             TestSuite::Compare::Container);
 
         CORRADE_VERIFY(scene->hasField(sceneFieldOffset));
-        CORRADE_COMPARE(scene->fieldType(sceneFieldOffset), SceneFieldType::Float);
+        CORRADE_COMPARE(scene->fieldType(sceneFieldOffset), SceneFieldType::Int);
         CORRADE_COMPARE_AS(scene->mapping<UnsignedInt>(sceneFieldOffset),
             Containers::arrayView({6u, 6u, 7u}),
             TestSuite::Compare::Container);
-        CORRADE_COMPARE_AS(scene->field<Float>(sceneFieldOffset),
-            Containers::arrayView({17.0f, -22.0f, 26.0f}),
+        CORRADE_COMPARE_AS(scene->field<Int>(sceneFieldOffset),
+            /* W.T.F., C, why do I need a cast for this?! */
+            Containers::arrayView({17, -22, Int(-2147483648)}),
             TestSuite::Compare::Container);
     } {
         Containers::Optional<Trade::SceneData> scene;
@@ -3322,14 +3338,25 @@ void GltfImporterTest::sceneCustomFields() {
             TestSuite::Compare::Container);
 
         CORRADE_VERIFY(scene->hasField(sceneFieldFlags));
-        CORRADE_COMPARE(scene->fieldType(sceneFieldFlags), SceneFieldType::Float);
+        CORRADE_COMPARE(scene->fieldType(sceneFieldFlags), SceneFieldType::UnsignedInt);
         CORRADE_COMPARE_AS(scene->mapping<UnsignedInt>(sceneFieldFlags),
             Containers::arrayView({9u}),
             TestSuite::Compare::Container);
-        CORRADE_COMPARE_AS(scene->field<Float>(sceneFieldFlags),
-            Containers::arrayView({76.0f}),
+        CORRADE_COMPARE_AS(scene->field<UnsignedInt>(sceneFieldFlags),
+            Containers::arrayView({4294967295u}),
             TestSuite::Compare::Container);
     }
+}
+
+void GltfImporterTest::sceneCustomFieldsInvalidConfiguration() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
+
+    importer->configuration().group("customSceneFieldTypes")->addValue("offset", "Vector2ui");
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "scene-custom-fields.gltf")));
+    CORRADE_COMPARE(out.str(), "Trade::GltfImporter::openData(): invalid type Vector2ui specified for custom scene field offset\n");
 }
 
 void GltfImporterTest::skin() {
