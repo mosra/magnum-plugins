@@ -168,6 +168,12 @@ Import of morph data is not supported at the moment.
     warning and normalizes it. Can be disabled per-object with the
     @cb{.ini} normalizeQuaternions @ce
     @ref Trade-GltfImporter-configuration "configuration option".
+-   Node [extras](https://www.khronos.org/registry/glTF/specs/2.0/glTF-2.0.html#reference-extras)
+    are imported as custom scene fields, with names exposed through
+    @ref sceneFieldName() / @ref sceneFieldForName() right upon opening the
+    file. The `extras` property has to be an object, otherwise it's ignored
+    with a warning. Numeric values are imported as @ref SceneFieldType::Float,
+    other value types are ignored with a warning.
 
 @subsection Trade-GltfImporter-behavior-animations Animation and skin import
 
@@ -561,6 +567,8 @@ class MAGNUM_GLTFIMPORTER_EXPORT GltfImporter: public AbstractImporter {
         MAGNUM_GLTFIMPORTER_LOCAL Int doSceneForName(Containers::StringView name) override;
         MAGNUM_GLTFIMPORTER_LOCAL Containers::String doSceneName(UnsignedInt id) override;
         MAGNUM_GLTFIMPORTER_LOCAL Containers::Optional<SceneData> doScene(UnsignedInt id) override;
+        MAGNUM_GLTFIMPORTER_LOCAL SceneField doSceneFieldForName(Containers::StringView name) override;
+        MAGNUM_GLTFIMPORTER_LOCAL Containers::String doSceneFieldName(UnsignedInt name) override;
 
         MAGNUM_GLTFIMPORTER_LOCAL UnsignedLong doObjectCount() const override;
         MAGNUM_GLTFIMPORTER_LOCAL Long doObjectForName(Containers::StringView name) override;

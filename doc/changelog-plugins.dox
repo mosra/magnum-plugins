@@ -71,6 +71,7 @@ namespace Magnum {
     -   *Experimental* [KHR_texture_ktx](https://github.com/KhronosGroup/glTF/pull/1964)
     -   Importing arbitrary material extensions and `extras` as custom material
         attributes (see [mosra/magnum-plugins#117](https://github.com/mosra/magnum-plugins/pull/117))
+    -   Importing scene node `extras` as custom scene fields
     These new features are present in the deprecated `TinyGltfImporter` as
     well:
     -   Material import reworked for the new @ref Trade::MaterialData API,

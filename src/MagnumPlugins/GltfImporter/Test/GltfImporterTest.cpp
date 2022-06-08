@@ -115,6 +115,7 @@ struct GltfImporterTest: TestSuite::Tester {
     void sceneTransformation();
     void sceneTransformationQuaternionNormalizationEnabled();
     void sceneTransformationQuaternionNormalizationDisabled();
+    void sceneCustomFields();
 
     void skin();
     void skinInvalid();
@@ -1134,7 +1135,11 @@ constexpr struct {
     {"invalid children property",
         "scene-invalid-children-property.gltf",
         "Utility::Json::parseUnsignedIntArray(): expected an array, got Utility::JsonToken::Type::Object at {}:8:19\n"
-        "Trade::GltfImporter::openData(): invalid children property of node 1\n"}
+        "Trade::GltfImporter::openData(): invalid children property of node 1\n"},
+    {"invalid extras property",
+        "scene-invalid-extras-property.gltf",
+        "Utility::Json::parseObject(): invalid unicode escape sequence \\uhh at {}:9:10\n"
+        "Trade::GltfImporter::openData(): invalid node 1 extras property\n"}
 };
 
 constexpr struct {
@@ -1548,7 +1553,8 @@ GltfImporterTest::GltfImporterTest() {
               &GltfImporterTest::sceneDefaultOutOfBounds,
               &GltfImporterTest::sceneTransformation,
               &GltfImporterTest::sceneTransformationQuaternionNormalizationEnabled,
-              &GltfImporterTest::sceneTransformationQuaternionNormalizationDisabled});
+              &GltfImporterTest::sceneTransformationQuaternionNormalizationDisabled,
+              &GltfImporterTest::sceneCustomFields});
 
     addInstancedTests({&GltfImporterTest::skin},
         Containers::arraySize(MultiFileData));
@@ -3211,6 +3217,119 @@ void GltfImporterTest::sceneTransformationQuaternionNormalizationDisabled() {
     Containers::Optional<Containers::Triple<Vector3, Quaternion, Vector3>> trs = scene->translationRotationScaling3DFor(3);
     CORRADE_VERIFY(trs);
     CORRADE_COMPARE(trs->second(), Quaternion::rotation(45.0_degf, Vector3::yAxis())*2.0f);
+}
+
+void GltfImporterTest::sceneCustomFields() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
+
+    Containers::String filename = Utility::Path::join(GLTFIMPORTER_TEST_DIR, "scene-custom-fields.gltf");
+    CORRADE_VERIFY(importer->openFile(filename));
+
+    /* Test mapping in both directions */
+    SceneField sceneFieldRadius = importer->sceneFieldForName("radius");
+    SceneField sceneFieldOffset = importer->sceneFieldForName("offset");
+    SceneField sceneFieldFlags = importer->sceneFieldForName("flags");
+    CORRADE_COMPARE(sceneFieldRadius, sceneFieldCustom(5));
+    CORRADE_COMPARE(sceneFieldOffset, sceneFieldCustom(6));
+    CORRADE_COMPARE(sceneFieldFlags, sceneFieldCustom(8));
+    CORRADE_COMPARE(importer->sceneFieldName(sceneFieldCustom(5)), "radius");
+    CORRADE_COMPARE(importer->sceneFieldName(sceneFieldCustom(6)), "offset");
+    CORRADE_COMPARE(importer->sceneFieldName(sceneFieldCustom(8)), "flags");
+
+    /* Unlike in materials, case of custom names is not normalized */
+    CORRADE_COMPARE(importer->sceneFieldForName("UppercaseName"), sceneFieldCustom(7));
+    CORRADE_COMPARE(importer->sceneFieldName(sceneFieldCustom(7)), "UppercaseName");
+
+    /* Names of custom fields should get gathered right after import,
+       independently of whether they have a useful type or are in any scene */
+    CORRADE_COMPARE(importer->sceneFieldForName("invalidBoolField"), sceneFieldCustom(1));
+    CORRADE_COMPARE(importer->sceneFieldForName("registeredButNotInAnyScene"), sceneFieldCustom(0));
+
+    /* Unknown fields */
+    CORRADE_COMPARE(importer->sceneFieldName(sceneFieldCustom(9)), "");
+    CORRADE_COMPARE(importer->sceneFieldForName("nonexistent"), SceneField{});
+
+    /* Two scenes, each having a different subset of custom fields */
+    CORRADE_COMPARE(importer->sceneCount(), 2);
+
+    {
+        Containers::Optional<Trade::SceneData> scene;
+        std::ostringstream out;
+        {
+            Warning redirectWarning{&out};
+            Error redirectError{&out};
+            scene = importer->scene(0);
+        }
+        CORRADE_VERIFY(scene);
+        CORRADE_COMPARE(out.str(), Utility::formatString(
+            "Trade::GltfImporter::scene(): node 2 extras property is Utility::JsonToken::Type::Array, skipping\n"
+            "Trade::GltfImporter::scene(): node 3 extras invalidBoolField property is Utility::JsonToken::Type::Bool, skipping\n"
+            "Trade::GltfImporter::scene(): node 3 extras invalidNullField property is Utility::JsonToken::Type::Null, skipping\n"
+            "Trade::GltfImporter::scene(): node 3 extras invalidArrayField property is Utility::JsonToken::Type::Array, skipping\n"
+            "Trade::GltfImporter::scene(): node 3 extras invalidObjectField property is Utility::JsonToken::Type::Object, skipping\n"
+            "Utility::Json::parseFloat(): invalid floating-point literal 56.0f at {}:32:19\n"
+            "Trade::GltfImporter::scene(): invalid node 4 extras radius property, skipping\n", filename));
+
+        /* Parent, ImporterState and Transformation (for marking the scene as
+           3D) is there always, plus `radius`, `index` and `UppercaseName`
+           fields used in nodes of the first scene */
+        CORRADE_COMPARE(scene->fieldCount(), 3 + 3);
+
+        CORRADE_VERIFY(scene->hasField(SceneField::Parent));
+        CORRADE_VERIFY(scene->hasField(SceneField::ImporterState));
+
+        CORRADE_VERIFY(scene->hasField(sceneFieldRadius));
+        CORRADE_COMPARE(scene->fieldType(sceneFieldRadius), SceneFieldType::Float);
+        CORRADE_COMPARE_AS(scene->mapping<UnsignedInt>(sceneFieldRadius),
+            Containers::arrayView({6u, 6u, 8u}),
+            TestSuite::Compare::Container);
+        CORRADE_COMPARE_AS(scene->field<Float>(sceneFieldRadius),
+            Containers::arrayView({5.25f, 3.5f, 0.5f}),
+            TestSuite::Compare::Container);
+
+        CORRADE_VERIFY(scene->hasField(sceneFieldOffset));
+        CORRADE_COMPARE(scene->fieldType(sceneFieldOffset), SceneFieldType::Float);
+        CORRADE_COMPARE_AS(scene->mapping<UnsignedInt>(sceneFieldOffset),
+            Containers::arrayView({6u, 6u, 7u}),
+            TestSuite::Compare::Container);
+        CORRADE_COMPARE_AS(scene->field<Float>(sceneFieldOffset),
+            Containers::arrayView({17.0f, -22.0f, 26.0f}),
+            TestSuite::Compare::Container);
+    } {
+        Containers::Optional<Trade::SceneData> scene;
+        std::ostringstream out;
+        {
+            Warning redirectWarning{&out};
+            scene = importer->scene(1);
+        }
+        CORRADE_VERIFY(scene);
+        /* No warnings should be for the second scene, as the warning nodes are
+           not part of it */
+        CORRADE_COMPARE(out.str(), "");
+
+        /* Parent, ImporterState and Transformation (for marking the scene as
+           3D) is there always, plus `radius` and `flags` fields used in nodes
+           of the second scene */
+        CORRADE_COMPARE(scene->fieldCount(), 3 + 2);
+
+        CORRADE_VERIFY(scene->hasField(sceneFieldRadius));
+        CORRADE_COMPARE(scene->fieldType(sceneFieldRadius), SceneFieldType::Float);
+        CORRADE_COMPARE_AS(scene->mapping<UnsignedInt>(sceneFieldRadius),
+            Containers::arrayView({9u, 8u}),
+            TestSuite::Compare::Container);
+        CORRADE_COMPARE_AS(scene->field<Float>(sceneFieldRadius),
+            Containers::arrayView({5.5f, 0.5f}),
+            TestSuite::Compare::Container);
+
+        CORRADE_VERIFY(scene->hasField(sceneFieldFlags));
+        CORRADE_COMPARE(scene->fieldType(sceneFieldFlags), SceneFieldType::Float);
+        CORRADE_COMPARE_AS(scene->mapping<UnsignedInt>(sceneFieldFlags),
+            Containers::arrayView({9u}),
+            TestSuite::Compare::Container);
+        CORRADE_COMPARE_AS(scene->field<Float>(sceneFieldFlags),
+            Containers::arrayView({76.0f}),
+            TestSuite::Compare::Container);
+    }
 }
 
 void GltfImporterTest::skin() {

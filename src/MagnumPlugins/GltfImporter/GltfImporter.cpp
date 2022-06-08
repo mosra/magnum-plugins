@@ -242,6 +242,7 @@ struct GltfImporter::Document {
     /* Unlike the ones above, these are filled already during construction as
        we need them in three different places and on-demand construction would
        be too annoying to test. */
+    std::unordered_map<Containers::StringView, SceneField> sceneFieldsForName;
     std::unordered_map<Containers::StringView, MeshAttribute>
         meshAttributesForName{
          /* Not a builtin MeshAttribute yet, but expected to be used by
@@ -251,6 +252,7 @@ struct GltfImporter::Document {
         {"JOINTS"_s, meshAttributeCustom(0)},
         {"WEIGHTS"_s, meshAttributeCustom(1)}
     };
+    Containers::Array<Containers::StringView> sceneFieldNames;
     Containers::Array<Containers::StringView> meshAttributeNames{InPlaceInit, {
         "JOINTS"_s,
         "WEIGHTS"_s
@@ -1072,6 +1074,32 @@ void GltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags da
                 p1 = nodeParents[p1];
                 p2 = nodeParents[p2] < 0 ? -1 : nodeParents[nodeParents[p2]];
             }
+        }
+    }
+
+    /* Go through all nodes and collect names of extra properties for custom
+       scene fields */
+    for(std::size_t i = 0; i != _d->gltfNodes.size(); ++i) {
+        const Utility::JsonToken& gltfNode = _d->gltfNodes[i].first();
+        const Utility::JsonToken* const gltfExtras = gltfNode.find("extras"_s);
+        /* Silently skip also if extras isn't an object -- the error will be
+           printed when importing the actual scene containing this node */
+        if(!gltfExtras || gltfExtras->type() != Utility::JsonToken::Type::Object)
+            continue;
+        /* However if the object fails to parse because it has invalid keys
+           (i.e., invalid Unicode escapes), fail the whole import. If we
+           wouldn't, it'd still print a message to the output which would imply
+           an error was silently ignored, which is not any better. */
+        if(!gltf->parseObject(*gltfExtras)) {
+            Error{} << "Trade::GltfImporter::openData(): invalid node" << i << "extras property";
+            return;
+        }
+
+        for(const Utility::JsonObjectItem gltfExtra: gltfExtras->asObject()) {
+            if(_d->sceneFieldsForName.emplace(gltfExtra.key(),
+                sceneFieldCustom(_d->sceneFieldNames.size())).second
+            )
+                arrayAppend(_d->sceneFieldNames, gltfExtra.key());
         }
     }
 
@@ -2213,6 +2241,9 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
     UnsignedInt lightCount = 0;
     UnsignedInt cameraCount = 0;
     UnsignedInt skinCount = 0;
+    /* Separate counter for every recognized extra field plus two extra items
+       to turn this into an offset array later */
+    Containers::Array<UnsignedInt> extraOffsets{ValueInit, _d->sceneFieldNames.size() + 2};
     for(const UnsignedInt i: objects) {
         const Utility::JsonToken& gltfNode = _d->gltfNodes[i].first();
 
@@ -2321,6 +2352,33 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
                 ++lightCount;
             }
         }
+
+        /* Extras. If it's an object, it was already parsed during initial
+           import */
+        if(const Utility::JsonToken* const gltfExtras = gltfNode.find("extras"_s)) {
+            if(gltfExtras->type() == Utility::JsonToken::Type::Object) for(const Utility::JsonObjectItem gltfExtra: gltfExtras->asObject()) {
+                if(gltfExtra.value().type() == Utility::JsonToken::Type::Number) {
+                    if(!_d->gltf->parseFloat(gltfExtra.value())) {
+                        Warning{} << "Trade::GltfImporter::scene(): invalid node" << i << "extras" << gltfExtra.key() << "property, skipping";
+                        continue;
+                    }
+
+                    /* Leave extraOffsets[0] and [1] at 0 to turn this into
+                       an offset array later. */
+                    ++extraOffsets[sceneFieldCustom(_d->sceneFieldsForName.at(gltfExtra.key())) + 2];
+                } else Warning{} << "Trade::GltfImporter::scene(): node" << i << "extras" << gltfExtra.key() << "property is" << gltfExtra.value().type() << Debug::nospace << ", skipping";
+            } else Warning{} << "Trade::GltfImporter::scene(): node" << i << "extras property is" << gltfExtras->type() << Debug::nospace << ", skipping";
+        }
+    }
+
+    /* Turn the extraCount into an offset array. After this step,
+       `extraOffsets[i + 1]` to `extraOffsets[i + 2]` is the range of data for
+       extra field `sceneFieldCustom(i)`; extraOffsets[0] and [1] is 0. */
+    std::size_t extraCount = 0;
+    for(UnsignedInt& i: extraOffsets) {
+        const UnsignedInt count = i;
+        i += extraCount;
+        extraCount += count;
     }
 
     /* If all objects that have transformations have TRS as well, no need to
@@ -2346,6 +2404,8 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
     Containers::ArrayView<UnsignedInt> cameras;
     Containers::ArrayView<UnsignedInt> skinObjects;
     Containers::ArrayView<UnsignedInt> skins;
+    Containers::ArrayView<UnsignedInt> extraObjects;
+    Containers::ArrayView<Float> extras;
     Containers::Array<char> data = Containers::ArrayTuple{
         {NoInit, objects.size(), parentImporterStateObjects},
         {NoInit, objects.size(), parents},
@@ -2364,7 +2424,9 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
         {NoInit, cameraCount, cameraObjects},
         {NoInit, cameraCount, cameras},
         {NoInit, skinCount, skinObjects},
-        {NoInit, skinCount, skins}
+        {NoInit, skinCount, skins},
+        {NoInit, extraCount, extraObjects},
+        {NoInit, extraCount, extras}
     };
 
     /* Populate object mapping for parents and importer state, synthesize
@@ -2516,6 +2578,23 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
                 ++lightOffset;
             }
         }
+
+        /* Extras. Types were checked in the previous pass already, so just
+           skip if it's not an object or if the number is not parsed (i.e.,
+           an invalid literal). */
+        if(const Utility::JsonToken* const gltfExtras = gltfNode.find("extras"_s)) {
+            if(gltfExtras->type() == Utility::JsonToken::Type::Object) for(const Utility::JsonObjectItem gltfExtra: gltfExtras->asObject()) {
+                if(gltfExtra.value().type() == Utility::JsonToken::Type::Number && gltfExtra.value().isParsed()) {
+                    /* Now the offsets are shifted by 1, after this loop
+                       they'll be shifted by 0 for the final SceneFieldData
+                       population */
+                    UnsignedInt& extraOffset = extraOffsets[sceneFieldCustom(_d->sceneFieldsForName.at(gltfExtra.key())) + 1];
+                    extraObjects[extraOffset] = nodeI;
+                    extras[extraOffset] = gltfExtra.value().asFloat();
+                    ++extraOffset;
+                }
+            }
+        }
     }
 
     CORRADE_INTERNAL_ASSERT(
@@ -2572,6 +2651,17 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
         SceneField::Skin, skinObjects, skins
     });
 
+    /* Extras. At this point, `extraOffsets[i]` to `extraOffsets[i + 1]` is the
+       range of data for extra field sceneFieldCustom(i). Add it if it's
+       non-empty. */
+    for(std::size_t i = 0; i != _d->sceneFieldNames.size(); ++i) {
+        const std::size_t begin = extraOffsets[i];
+        const std::size_t end = extraOffsets[i + 1];
+        if(begin != end) arrayAppend(fields, SceneFieldData{
+            sceneFieldCustom(i), extraObjects.slice(begin, end), extras.slice(begin, end)
+        });
+    }
+
     /* Convert back to the default deleter to avoid dangling deleter function
        pointer issues when unloading the plugin */
     arrayShrink(fields, DefaultInit);
@@ -2579,6 +2669,15 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
        we realistically don't expect glTF to have that many -- the text file
        would be *terabytes* then */
     return SceneData{SceneMappingType::UnsignedInt, maxObjectIndexPlusOne, std::move(data), std::move(fields), &gltfScene};
+}
+
+SceneField GltfImporter::doSceneFieldForName(const Containers::StringView name) {
+    return _d ? _d->sceneFieldsForName[name] : SceneField{};
+}
+
+Containers::String GltfImporter::doSceneFieldName(const UnsignedInt name) {
+    return _d && name < _d->sceneFieldNames.size() ?
+        _d->sceneFieldNames[name] : ""_s;
 }
 
 UnsignedLong GltfImporter::doObjectCount() const {

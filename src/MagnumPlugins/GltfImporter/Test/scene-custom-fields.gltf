@@ -1,0 +1,75 @@
+{
+  "asset": {
+    "version": "2.0"
+  },
+  "nodes": [
+    {
+      "note": "not part of any scene, but still has the names registered",
+      "extras": {
+        "registeredButNotInAnyScene": 3
+      }
+    },
+    {
+      "name": "no extras property"
+    },
+    {
+      "name": "extras not an object",
+      "extras": []
+    },
+    {
+      "name": "ignored types",
+      "note": "these will still have their names registered",
+      "extras": {
+        "invalidBoolField": true,
+        "invalidNullField": null,
+        "invalidArrayField": [],
+        "invalidObjectField": {}
+      }
+    },
+    {
+      "name": "invalid values",
+      "extras": {
+        "radius": 56.0f
+      }
+    },
+    {
+      "name": "empty extras",
+      "extras": {}
+    },
+    {
+      "note": "duplicate keys are turned into multiple occurences of the same field because that's the zero-effort way to handle those",
+      "extras": {
+        "radius": 5.25,
+        "offset": 17,
+        "UppercaseName": -56,
+        "offset": -22,
+        "radius": 3.5
+      }
+    },
+    {
+      "extras": {
+        "offset": 26
+      }
+    },
+    {
+      "extras": {
+        "radius": 0.5
+      }
+    },
+    {
+      "extras": {
+        "radius": 5.5,
+        "flags": 76
+      }
+    }
+  ],
+  "scenes": [
+    {
+      "nodes": [1, 2, 3, 4, 5, 6, 7, 8]
+    },
+    {
+      "note": "fields get specified in order of node discovery",
+      "nodes": [9, 8]
+    }
+  ]
+}
