@@ -1328,9 +1328,24 @@ Containers::String customMaterialKey(Containers::StringView key, const aiTexture
     return keyString;
 }
 
+/* MSVC without /Zc:preprocessor (or /experimental:preprocessor) is not able
+   to perform deferred macro expansion (which is needed to extract strings out
+   of Assimp material macros below), so _CORRADE_HELPER_DEFER isn't even
+   defined in that case. Instead, we use an inline function. */
 #ifndef _CORRADE_HELPER_DEFER
 template<std::size_t size> constexpr Containers::StringView extractMaterialKey(const char(&data)[size], int, int) {
+    /* But the suffering doesn't stop there! MSVC 19.32.31329.0 with the
+       /permissive- flag says "C3678: string literal after 'operator' must be
+       the empty string '""'", and no amount of spaces around the "" helps.
+       Without /permissive- or on 19.31.31107.0 and all other versions before
+       this worked well; and this works fine in isolation (is the template an
+       issue? is the anonymous namespace an issue? questions, so many
+       questions). */
+    #if defined(CORRADE_TARGET_MSVC) && _MSC_VER < 1932
     return Containers::Literals::operator""_s(data, size - 1);
+    #else
+    return Containers::StringView{data, size - 1, Containers::StringViewFlag::Global|Containers::StringViewFlag::NullTerminated};
+    #endif
 }
 #endif
 
