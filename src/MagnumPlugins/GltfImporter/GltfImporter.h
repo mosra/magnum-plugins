@@ -321,8 +321,8 @@ fail.
     to enable the @cb{.ini} ignoreRequiredExtensions @ce
     @ref Trade-GltfImporter-configuration "configuration option".
 -   [Extras](https://www.khronos.org/registry/glTF/specs/2.0/glTF-2.0.html#reference-extras)
-    metadata is imported into the base material layer. The `extras` attribute
-    must be an object, otherwise it's ignored with a warning. Type support is
+    metadata is imported into the base material layer. The `extras` property
+    has to be an object, otherwise it's ignored with a warning. Type support is
     the same as for unrecognized material extensions, except for [textureInfo](https://www.khronos.org/registry/glTF/specs/2.0/glTF-2.0.html#reference-textureinfo)
     objects --- contrary to glTF material extensions, where sub-objects can be
     assumed to contain texture info, the `extras` can contain just anything.
