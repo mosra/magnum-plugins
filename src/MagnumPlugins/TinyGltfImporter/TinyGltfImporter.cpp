@@ -360,12 +360,12 @@ void TinyGltfImporter::doOpenData(Containers::Array<char>&& data, DataFlags) {
        So far there's only 2.0 so we can use an exact comparison. */
     const tinygltf::Asset& asset = _d->model.asset;
     if(!asset.minVersion.empty() && asset.minVersion != "2.0") {
-        Error{} << "Trade::CgltfImporter::openData(): unsupported minVersion" << asset.minVersion << Debug::nospace << ", expected 2.0";
+        Error{} << "Trade::TinyGltfImporter::openData(): unsupported minVersion" << asset.minVersion << Debug::nospace << ", expected 2.0";
         doClose();
         return;
     }
     if(!asset.version.empty() && asset.version.find("2.") != 0) {
-        Error{} << "Trade::CgltfImporter::openData(): unsupported version" << asset.version << Debug::nospace << ", expected 2.x";
+        Error{} << "Trade::TinyGltfImporter::openData(): unsupported version" << asset.version << Debug::nospace << ", expected 2.x";
         doClose();
         return;
     }

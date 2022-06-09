@@ -52,8 +52,9 @@ digraph "Magnum Plugins dependency order" {
     FreeTypeFont [class="m-success"]
     HarfBuzzFont [class="m-success"]
     OpenGexImporter [class="m-success"]
-    CgltfImporter [class="m-success"]
-    TinyGltfImporter [class="m-success"]
+    GltfImporter [class="m-success"]
+    CgltfImporter [class="m-dim"]
+    TinyGltfImporter [class="m-dim"]
     MeshOptimizerSceneConverter [class="m-success"]
     StanfordImporter [class="m-success"]
     StanfordSceneConverter [class="m-success"]
@@ -82,10 +83,12 @@ digraph "Magnum Plugins dependency order" {
     OpenGexImporter -> MagnumTrade
     OpenGexImporter -> AnyImageImporter
     OpenGexImporter -> MagnumOpenDdl
-    CgltfImporter -> MagnumTrade
-    CgltfImporter -> AnyImageImporter
-    TinyGltfImporter -> MagnumTrade
-    TinyGltfImporter -> AnyImageImporter
+    GltfImporter -> MagnumTrade
+    GltfImporter -> AnyImageImporter
+    CgltfImporter -> MagnumTrade [class="m-dim"]
+    CgltfImporter -> AnyImageImporter [class="m-dim"]
+    TinyGltfImporter -> MagnumTrade [class="m-dim"]
+    TinyGltfImporter -> AnyImageImporter [class="m-dim"]
 
     StanfordImporter -> MagnumTrade
     StanfordImporter -> MagnumMeshTools
@@ -96,7 +99,7 @@ digraph "Magnum Plugins dependency order" {
 
     /* To make the graph less wide */
     SceneConverter -> ImageConverter -> Importer [style="invis"]
-    AssimpImporter -> TinyGltfImporter -> CgltfImporter [style="invis"]
+    TinyGltfImporter -> CgltfImporter -> GltfImporter -> AssimpImporter [style="invis"]
     FreeTypeFont -> Font [style="invis"]
     MeshOptimizerSceneConverter -> StanfordSceneConverter -> StanfordImporter [style="invis"]
 }

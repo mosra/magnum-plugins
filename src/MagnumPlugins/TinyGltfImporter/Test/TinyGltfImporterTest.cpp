@@ -4028,7 +4028,7 @@ void TinyGltfImporterTest::versionUnsupported() {
     std::ostringstream out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, data.file)));
-    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::CgltfImporter::openData(): {}\n", data.message));
+    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::TinyGltfImporter::openData(): {}\n", data.message));
 }
 
 void TinyGltfImporterTest::openTwice() {

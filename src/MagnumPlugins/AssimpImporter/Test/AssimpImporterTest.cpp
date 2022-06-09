@@ -619,7 +619,7 @@ void AssimpImporterTest::animationGltf() {
     if(!supportsAnimation(".gltf"_s, _assimpVersion))
         CORRADE_SKIP("glTF 2 animation is not supported with the current version of Assimp");
 
-    /* Using the same files as CgltfImporterTest, but modified to include a
+    /* Using the same files as GltfImporterTest, but modified to include a
        scene, because Assimp refuses to import animations if there is no scene. */
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
@@ -741,7 +741,6 @@ void AssimpImporterTest::animationGltfNoScene() {
     if(_assimpVersion >= 510)
         CORRADE_SKIP("Current version of assimp wouldn't load this file.");
 
-    /* This reuses the CgltfImporter test files, not the corrected ones used by other tests. */
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "animation-no-scene.gltf")));
 
@@ -1588,7 +1587,7 @@ void AssimpImporterTest::cameraOrthographic() {
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
     /* Assimp 5.1.0 refuses to load glTF files without a default scene so we
-       can't reuse CgltfImporter's test file */
+       can't reuse GltfImporter's test file */
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "camera-orthographic.gltf")));
     CORRADE_COMPARE(importer->cameraCount(), 1);
 
@@ -3065,7 +3064,7 @@ void AssimpImporterTest::emptyGltf() {
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
 
-    /* We can't reuse CgltfImporter's empty.gltf since Assimp 5.1 complains
+    /* We can't reuse GltfImporter's empty.gltf since Assimp 5.1 complains
        about a missing scene property (which is not required by the glTF spec) */
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "empty.gltf")));
     {
