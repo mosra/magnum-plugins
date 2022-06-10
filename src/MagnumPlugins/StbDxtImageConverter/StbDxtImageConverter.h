@@ -126,8 +126,8 @@ first.
 Unlike image converters dealing with uncompressed pixel formats, the image
 * *isn't* Y-flipped on export due to the nontrivial amount of work involved
 with Y-flipping block-compressed data. This is in line with importers of
-compressed pixel formats such as @ref DdsImporter, which don't Y-flip
-compressed formats on import either.
+compressed pixel formats such as @ref AstcImporter, @ref DdsImporter or
+@ref KtxImporter, which don't Y-flip compressed formats on import either.
 
 @section Trade-StbDxtImageConverter-configuration Plugin-specific configuration
 
