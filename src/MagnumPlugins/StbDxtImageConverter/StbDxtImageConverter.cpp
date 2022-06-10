@@ -112,10 +112,11 @@ Containers::Optional<ImageData2D> StbDxtImageConverter::doConvert(const ImageVie
 
     /** @todo use blocks() once the compressed image APIs are done */
     Containers::Array<char> outputData{NoInit, std::size_t(image.size().product()*outputBlockSize/16)};
-    const Containers::StridedArrayView2D<UnsignedByte> output{
+    const Containers::StridedArrayView3D<UnsignedByte> output{
         Containers::arrayCast<UnsignedByte>(outputData),
-        {std::size_t(image.size().y()/4), std::size_t(image.size().x()/4)},
-        {std::ptrdiff_t(image.size().x()*outputBlockSize/4), outputBlockSize}
+        {std::size_t(image.size().y()/4),
+         std::size_t(image.size().x()/4),
+         outputBlockSize}
     };
 
     /* Prepare destination where to copy linearized input data. If the alpha is
@@ -130,13 +131,14 @@ Containers::Optional<ImageData2D> StbDxtImageConverter::doConvert(const ImageVie
 
     /* Go through all blocks in the input file, linearize and compress them */
     for(std::size_t y = 0, yMax = image.size().y()/4; y < yMax; ++y) {
+        const Containers::StridedArrayView2D<UnsignedByte> outputRow = output[y];
         for(std::size_t x = 0, xMax = image.size().x()/4; x < xMax; ++x) {
             /* If the alpha is missing, it'll copy only the RGB values into the
                destination */
             Utility::copy(input.slice({4*y, 4*x, 0}, {4*y + 4, 4*x + 4, inputChannelCount}), inputBlock);
 
             /* Compress the block */
-            stb_compress_dxt_block(&output[y][x], inputBlockData, alpha, flags);
+            stb_compress_dxt_block(&outputRow[x][0], inputBlockData, alpha, flags);
         }
     }
 
