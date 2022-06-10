@@ -43,10 +43,14 @@ namespace Magnum { namespace Trade {
 
 StbDxtImageConverter::StbDxtImageConverter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin): AbstractImageConverter{manager, plugin} {}
 
-ImageConverterFeatures StbDxtImageConverter::doFeatures() const { return ImageConverterFeature::Convert2D; }
+ImageConverterFeatures StbDxtImageConverter::doFeatures() const {
+    return ImageConverterFeature::Convert2D|ImageConverterFeature::Convert3D;
+}
 
-Containers::Optional<ImageData2D> StbDxtImageConverter::doConvert(const ImageView2D& image) {
-    const Int flags = configuration().value<bool>("highQuality") ? STB_DXT_HIGHQUAL : STB_DXT_NORMAL;
+namespace {
+
+Containers::Optional<ImageData3D> convertInternal(const ImageView3D& image, Utility::ConfigurationGroup& configuration) {
+    const Int flags = configuration.value<bool>("highQuality") ? STB_DXT_HIGHQUAL : STB_DXT_NORMAL;
 
     /* Decide on the output format */
     /** @todo isPixelFormatSrgb(), pixelFormatChannelCount() helpers, and same
@@ -87,8 +91,8 @@ Containers::Optional<ImageData2D> StbDxtImageConverter::doConvert(const ImageVie
 
     /* If the alpha option is set, override the default. Input channel count
        stays the same, of course. */
-    if(configuration().value<Containers::StringView>("alpha")) {
-        if(configuration().value<bool>("alpha")) {
+    if(configuration.value<Containers::StringView>("alpha")) {
+        if(configuration.value<bool>("alpha")) {
             alpha = true;
             outputFormat = srgb ?
                 CompressedPixelFormat::Bc3RGBASrgb :
@@ -101,20 +105,21 @@ Containers::Optional<ImageData2D> StbDxtImageConverter::doConvert(const ImageVie
         }
     }
 
-    if(!(image.size() % 4).isZero()) {
-        Error{} << "Trade::StbDxtImageConverter::convert(): expected size to be divisible by 4, got" << image.size();
+    if(!(image.size().xy() % 4).isZero()) {
+        Error{} << "Trade::StbDxtImageConverter::convert(): expected size to be divisible by 4, got" << image.size().xy();
         return {};
     }
 
-    const Containers::StridedArrayView3D<const UnsignedByte> input = Containers::arrayCast<const UnsignedByte>(image.pixels());
+    const Containers::StridedArrayView4D<const UnsignedByte> input = Containers::arrayCast<const UnsignedByte>(image.pixels());
 
     const std::size_t outputBlockSize = alpha ? 16 : 8;
 
     /** @todo use blocks() once the compressed image APIs are done */
     Containers::Array<char> outputData{NoInit, std::size_t(image.size().product()*outputBlockSize/16)};
-    const Containers::StridedArrayView3D<UnsignedByte> output{
+    const Containers::StridedArrayView4D<UnsignedByte> output{
         Containers::arrayCast<UnsignedByte>(outputData),
-        {std::size_t(image.size().y()/4),
+        {std::size_t(image.size().z()),
+         std::size_t(image.size().y()/4),
          std::size_t(image.size().x()/4),
          outputBlockSize}
     };
@@ -130,19 +135,38 @@ Containers::Optional<ImageData2D> StbDxtImageConverter::doConvert(const ImageVie
     const Containers::StridedArrayView3D<UnsignedByte> inputBlock{inputBlockData, {4, 4, inputChannelCount}, {4*4, 4, 1}};
 
     /* Go through all blocks in the input file, linearize and compress them */
-    for(std::size_t y = 0, yMax = image.size().y()/4; y < yMax; ++y) {
-        const Containers::StridedArrayView2D<UnsignedByte> outputRow = output[y];
-        for(std::size_t x = 0, xMax = image.size().x()/4; x < xMax; ++x) {
-            /* If the alpha is missing, it'll copy only the RGB values into the
-               destination */
-            Utility::copy(input.slice({4*y, 4*x, 0}, {4*y + 4, 4*x + 4, inputChannelCount}), inputBlock);
+    for(std::size_t z = 0, zMax = image.size().z(); z != zMax; ++z) {
+        const Containers::StridedArrayView3D<const UnsignedByte> inputLayer = input[z];
+        const Containers::StridedArrayView3D<UnsignedByte> outputLayer = output[z];
+        for(std::size_t y = 0, yMax = image.size().y()/4; y < yMax; ++y) {
+            const Containers::StridedArrayView2D<UnsignedByte> outputRow = outputLayer[y];
+            for(std::size_t x = 0, xMax = image.size().x()/4; x < xMax; ++x) {
+                /* If the alpha is missing, it'll copy only the RGB values into
+                   the destination */
+                Utility::copy(inputLayer.slice({4*y, 4*x, 0}, {4*y + 4, 4*x + 4, inputChannelCount}), inputBlock);
 
-            /* Compress the block */
-            stb_compress_dxt_block(&outputRow[x][0], inputBlockData, alpha, flags);
+                /* Compress the block */
+                stb_compress_dxt_block(&outputRow[x][0], inputBlockData, alpha, flags);
+            }
         }
     }
 
-    return ImageData2D{outputFormat, image.size(), std::move(outputData)};
+    return ImageData3D{outputFormat, image.size(), std::move(outputData)};
+}
+
+}
+
+Containers::Optional<ImageData2D> StbDxtImageConverter::doConvert(const ImageView2D& image) {
+    Containers::Optional<ImageData3D> out = convertInternal(image, configuration());
+    if(!out) return {};
+
+    CORRADE_INTERNAL_ASSERT(out->size().z() == 1);
+    const Vector2i size = out->size().xy();
+    return ImageData2D{out->compressedFormat(), size, out->release()};
+}
+
+Containers::Optional<ImageData3D> StbDxtImageConverter::doConvert(const ImageView3D& image) {
+    return convertInternal(image, configuration());
 }
 
 }}

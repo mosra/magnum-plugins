@@ -58,8 +58,8 @@ namespace Magnum { namespace Trade {
 
 @m_keywords{OpenExrImageConverter}
 
-Converts uncompressed RGB and RGBA images to block-compressed BC1/BC3 images
-using the [stb_dxt](https://github.com/nothings/stb) library.
+Converts uncompressed 2D and 3D RGB and RGBA images to block-compressed BC1/BC3
+images using the [stb_dxt](https://github.com/nothings/stb) library.
 
 @m_class{m-block m-primary}
 
@@ -118,10 +118,12 @@ with @ref CompressedPixelFormat::Bc1RGBUnorm /
 @relativeref{CompressedPixelFormat,Bc1RGBSrgb} is returned instead. You can
 override alpha channel presence in the output by explicitly enabling or
 disabling the @cb{.ini} alpha @ce @ref Trade-StbDxtImageConverter-configuration "configuration option".
+3D images are compressed slice-by-slice.
 
-The input image size is expected to be divisible by four in both dimensions. If
-your image doesn't fit this requirement, you have to pad/crop or resample it
-first.
+The input image size is expected to be divisible by four in the X and Y
+dimension. If your image doesn't fit this requirement, you have to pad/crop or
+resample it first. Since 3D images are compressed slice-by-slice, there's no
+restriction on the Z dimension.
 
 Unlike image converters dealing with uncompressed pixel formats, the image
 * *isn't* Y-flipped on export due to the nontrivial amount of work involved
@@ -147,6 +149,7 @@ class MAGNUM_STBDXTIMAGECONVERTER_EXPORT StbDxtImageConverter: public AbstractIm
     private:
         MAGNUM_STBDXTIMAGECONVERTER_LOCAL ImageConverterFeatures doFeatures() const override;
         MAGNUM_STBDXTIMAGECONVERTER_LOCAL Containers::Optional<ImageData2D> doConvert(const ImageView2D& image) override;
+        MAGNUM_STBDXTIMAGECONVERTER_LOCAL Containers::Optional<ImageData3D> doConvert(const ImageView3D& image) override;
 };
 
 }}

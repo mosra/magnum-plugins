@@ -47,6 +47,7 @@ struct StbDxtImageConverterTest: TestSuite::Tester {
     void unsupportedSize();
 
     void rgba();
+    void threeDimensions();
 
     /* Explicitly forbid system-wide plugin dependencies */
     PluginManager::Manager<AbstractImageConverter> _converterManager{"nonexistent"};
@@ -88,6 +89,8 @@ StbDxtImageConverterTest::StbDxtImageConverterTest() {
 
     addInstancedTests({&StbDxtImageConverterTest::rgba},
         Containers::arraySize(RgbaData));
+
+    addTests({&StbDxtImageConverterTest::threeDimensions});
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. */
@@ -156,6 +159,36 @@ void StbDxtImageConverterTest::rgba() {
     /** @todo Compare::DataToFile */
     CORRADE_COMPARE_AS(Containers::StringView{compressed->data()},
         Utility::Path::join(STBDXTIMAGECONVERTER_TEST_DIR, data.expectedFile),
+        TestSuite::Compare::StringToFile);
+}
+
+void StbDxtImageConverterTest::threeDimensions() {
+    if(_importerManager.loadState("StbImageImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("StbImageImporter plugin not found, cannot test");
+
+    Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("StbImageImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(STBDXTIMAGECONVERTER_TEST_DIR, "ship.jpg")));
+    Containers::Optional<Trade::ImageData2D> uncompressed = importer->image2D(0);
+    CORRADE_VERIFY(uncompressed);
+    CORRADE_COMPARE(uncompressed->format(), PixelFormat::RGB8Unorm);
+    CORRADE_COMPARE(uncompressed->size(), (Vector2i{160, 96}));
+
+    /* Be lazy and just cut up the input 2D image to three horizontal slices,
+       forming a 3D input */
+    ImageView3D uncompressed3D{uncompressed->format(), {160, 32, 3}, uncompressed->data()};
+
+    Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("StbDxtImageConverter");
+    Containers::Optional<Trade::ImageData3D> compressed = converter->convert(uncompressed3D);
+    CORRADE_VERIFY(compressed);
+    CORRADE_VERIFY(compressed->isCompressed());
+    CORRADE_COMPARE(compressed->compressedFormat(), CompressedPixelFormat::Bc1RGBUnorm);
+    CORRADE_COMPARE(compressed->size(), (Vector3i{160, 32, 3}));
+
+    /* The output data should be exactly the same as for a 2D case, as it's
+       just the same input but in a different shape */
+    /** @todo Compare::DataToFile */
+    CORRADE_COMPARE_AS(Containers::StringView{compressed->data()},
+        Utility::Path::join(STBDXTIMAGECONVERTER_TEST_DIR, "ship.bc1"),
         TestSuite::Compare::StringToFile);
 }
 
