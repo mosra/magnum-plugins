@@ -26,7 +26,6 @@
 #include "StbDxtImageConverter.h"
 
 #include <Corrade/Containers/Optional.h>
-#include <Corrade/Containers/StaticArray.h>
 #include <Corrade/Containers/StridedArrayView.h>
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
@@ -74,7 +73,7 @@ Containers::Optional<ImageData2D> StbDxtImageConverter::doConvert(const ImageVie
         return {};
     }
 
-    const Containers::StridedArrayView2D<const Color4ub> input = image.pixels<Color4ub>();
+    const Containers::StridedArrayView3D<const UnsignedByte> input = Containers::arrayCast<const UnsignedByte>(image.pixels());
 
     const std::size_t outputBlockSize = alpha ? 16 : 8;
 
@@ -88,14 +87,14 @@ Containers::Optional<ImageData2D> StbDxtImageConverter::doConvert(const ImageVie
 
     /* Go through all blocks in the input file, copy them to a linear array and
        compress them */
-    Containers::StaticArray<16, Color4ub> inputBlockData{NoInit};
-    const Containers::StridedArrayView2D<Color4ub> inputBlock{inputBlockData, {4, 4}};
+    UnsignedByte inputBlockData[16*4];
+    const Containers::StridedArrayView3D<UnsignedByte> inputBlock{inputBlockData, {4, 4, 4}};
     for(std::size_t y = 0, yMax = image.size().y()/4; y < yMax; ++y) {
         for(std::size_t x = 0, xMax = image.size().x()/4; x < xMax; ++x) {
-            Utility::copy(input.slice({4*y, 4*x}, {4*y + 4, 4*x + 4}), inputBlock);
+            Utility::copy(input.slice({4*y, 4*x, 0}, {4*y + 4, 4*x + 4, 4}), inputBlock);
 
             /* Compress the block */
-            stb_compress_dxt_block(&output[y][x], reinterpret_cast<const UnsignedByte*>(inputBlockData.data()), alpha, flags);
+            stb_compress_dxt_block(&output[y][x], inputBlockData, alpha, flags);
         }
     }
 
