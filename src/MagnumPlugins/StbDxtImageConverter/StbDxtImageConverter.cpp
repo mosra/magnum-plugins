@@ -28,6 +28,7 @@
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/StaticArray.h>
 #include <Corrade/Containers/StridedArrayView.h>
+#include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Magnum/Math/Color.h>
 #include <Magnum/ImageView.h>
@@ -85,17 +86,13 @@ Containers::Optional<ImageData2D> StbDxtImageConverter::doConvert(const ImageVie
         {std::ptrdiff_t(image.size().x()*outputBlockSize/4), outputBlockSize}
     };
 
-    /* Go through all blocks in the input file and compress them */
+    /* Go through all blocks in the input file, copy them to a linear array and
+       compress them */
+    Containers::StaticArray<16, Color4ub> inputBlockData{NoInit};
+    const Containers::StridedArrayView2D<Color4ub> inputBlock{inputBlockData, {4, 4}};
     for(std::size_t y = 0, yMax = image.size().y()/4; y < yMax; ++y) {
         for(std::size_t x = 0, xMax = image.size().x()/4; x < xMax; ++x) {
-            /* Gather pixels in a block together to a linear array */
-            Containers::StaticArray<16, Color4ub> inputBlockData{NoInit};
-            std::size_t i = 0;
-            for(const Containers::StridedArrayView1D<const Color4ub> inputBlockRow: input.slice({4*y, 4*x}, {4*y + 4, 4*x + 4})) {
-                for(const Color4ub inputBlockPixel: inputBlockRow)
-                    inputBlockData[i++] = inputBlockPixel;
-            }
-            CORRADE_INTERNAL_ASSERT(i == 16);
+            Utility::copy(input.slice({4*y, 4*x}, {4*y + 4, 4*x + 4}), inputBlock);
 
             /* Compress the block */
             stb_compress_dxt_block(&output[y][x], reinterpret_cast<const UnsignedByte*>(inputBlockData.data()), alpha, flags);
