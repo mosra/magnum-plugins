@@ -58,8 +58,8 @@ namespace Magnum { namespace Trade {
 
 @m_keywords{OpenExrImageConverter}
 
-Converts uncompressed RGBA images to block-compressed BC1/BC3 images using the
-[stb_dxt](https://github.com/nothings/stb) library.
+Converts uncompressed RGB and RGBA images to block-compressed BC1/BC3 images
+using the [stb_dxt](https://github.com/nothings/stb) library.
 
 @m_class{m-block m-primary}
 
@@ -109,13 +109,15 @@ See @ref building-plugins, @ref cmake-plugins, @ref plugins and
 
 @section Trade-StbDxtImageConverter-behavior Behavior and limitations
 
-Currently, only @ref PixelFormat::RGBA8Unorm /
-@relativeref{PixelFormat,RGBA8Srgb} is accepted, producing a compressed
-@ref ImageData2D with @ref CompressedPixelFormat::Bc3RGBAUnorm /
-@relativeref{CompressedPixelFormat,Bc3RGBASrgb}. If the @cb{.ini} alpha @ce
-@ref Trade-StbDxtImageConverter-configuration "configuration option" is
-disabled, an image with @ref CompressedPixelFormat::Bc1RGBUnorm /
-@relativeref{CompressedPixelFormat,Bc1RGBSrgb} is returned instead.
+An @ref PixelFormat::RGBA8Unorm / @relativeref{PixelFormat,RGBA8Srgb} input
+will produce a compressed @ref ImageData2D with
+@ref CompressedPixelFormat::Bc3RGBAUnorm /
+@relativeref{CompressedPixelFormat,Bc3RGBASrgb}. If the input is
+@ref PixelFormat::RGB8Unorm / @relativeref{PixelFormat,RGBA8Srgb}, an image
+with @ref CompressedPixelFormat::Bc1RGBUnorm /
+@relativeref{CompressedPixelFormat,Bc1RGBSrgb} is returned instead. You can
+override alpha channel presence in the output by explicitly enabling or
+disabling the @cb{.ini} alpha @ce @ref Trade-StbDxtImageConverter-configuration "configuration option".
 
 The input image size is expected to be divisible by four in both dimensions. If
 your image doesn't fit this requirement, you have to pad/crop or resample it

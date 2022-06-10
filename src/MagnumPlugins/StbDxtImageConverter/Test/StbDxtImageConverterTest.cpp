@@ -55,22 +55,31 @@ struct StbDxtImageConverterTest: TestSuite::Tester {
 
 const struct {
     const char* name;
+    Int channelCount;
     Containers::Optional<bool> alpha;
     Containers::Optional<bool> highQuality;
     Containers::Optional<PixelFormat> overrideInputFormat;
     CompressedPixelFormat expectedFormat;
     const char* expectedFile;
 } RgbaData[] {
-    {"", {}, {}, {},
+    {"RGBA", 4, {}, {}, {},
         CompressedPixelFormat::Bc3RGBAUnorm, "ship.bc3"},
-    {"high quality", {}, true, {},
+    {"RGBA, high quality", 4, {}, true, {},
         CompressedPixelFormat::Bc3RGBAUnorm, "ship-hq.bc3"},
-    {"sRGB", {}, {}, PixelFormat::RGBA8Srgb,
+    {"RGBA, sRGB", 4, {}, {}, PixelFormat::RGBA8Srgb,
         CompressedPixelFormat::Bc3RGBASrgb, "ship.bc3"},
-    {"no alpha", false, {}, {},
+    {"RGBA, alpha disabled", 4, false, {}, {},
         CompressedPixelFormat::Bc1RGBUnorm, "ship.bc1"},
-    {"no alpha + sRGB", false, {}, PixelFormat::RGBA8Srgb,
+    {"RGBA, alpha disabled, sRGB", 4, false, {}, PixelFormat::RGBA8Srgb,
         CompressedPixelFormat::Bc1RGBSrgb, "ship.bc1"},
+    {"RGB", 3, {}, {}, {},
+        CompressedPixelFormat::Bc1RGBUnorm, "ship.bc1"},
+    {"RGB, sRGB", 3, {}, {}, PixelFormat::RGB8Srgb,
+        CompressedPixelFormat::Bc1RGBSrgb, "ship.bc1"},
+    {"RGB, alpha enabled", 3, true, {}, {},
+        CompressedPixelFormat::Bc3RGBAUnorm, "ship.bc3"},
+    {"RGB, alpha enabled, sRGB", 3, true, {}, PixelFormat::RGB8Srgb,
+        CompressedPixelFormat::Bc3RGBASrgb, "ship.bc3"},
 };
 
 StbDxtImageConverterTest::StbDxtImageConverterTest() {
@@ -92,12 +101,12 @@ StbDxtImageConverterTest::StbDxtImageConverterTest() {
 }
 
 void StbDxtImageConverterTest::unsupportedFormat() {
-    ImageView2D image{PixelFormat::RGB8Unorm, {}, nullptr};
+    ImageView2D image{PixelFormat::RG8Unorm, {}, nullptr};
 
     std::ostringstream out;
     Error redirectError{&out};
     CORRADE_VERIFY(!_converterManager.instantiate("StbDxtImageConverter")->convert(image));
-    CORRADE_COMPARE(out.str(), "Trade::StbDxtImageConverter::convert(): unsupported format PixelFormat::RGB8Unorm\n");
+    CORRADE_COMPARE(out.str(), "Trade::StbDxtImageConverter::convert(): unsupported format PixelFormat::RG8Unorm\n");
 }
 
 void StbDxtImageConverterTest::unsupportedSize() {
@@ -117,12 +126,11 @@ void StbDxtImageConverterTest::rgba() {
         CORRADE_SKIP("StbImageImporter plugin not found, cannot test");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("StbImageImporter");
-    /* Force four channels */
-    importer->configuration().setValue("forceChannelCount", 4);
+    importer->configuration().setValue("forceChannelCount", data.channelCount);
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(STBDXTIMAGECONVERTER_TEST_DIR, "ship.jpg")));
     Containers::Optional<Trade::ImageData2D> uncompressed = importer->image2D(0);
     CORRADE_VERIFY(uncompressed);
-    CORRADE_COMPARE(uncompressed->format(), PixelFormat::RGBA8Unorm);
+    CORRADE_COMPARE(pixelSize(uncompressed->format()), data.channelCount);
     CORRADE_COMPARE(uncompressed->size(), (Vector2i{160, 96}));
 
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("StbDxtImageConverter");
@@ -143,7 +151,7 @@ void StbDxtImageConverterTest::rgba() {
        64-bit blocks for BC1 (without alpha) */
     /** @todo drop this and let the ImageData constructor take care of this? */
     CORRADE_COMPARE(compressed->data().size(),
-        compressed->size().product()*(!data.alpha || *data.alpha ? 16 : 8)/16);
+        compressed->size().product()*compressedBlockDataSize(data.expectedFormat)/16);
 
     /** @todo Compare::DataToFile */
     CORRADE_COMPARE_AS(Containers::StringView{compressed->data()},

@@ -46,26 +46,59 @@ StbDxtImageConverter::StbDxtImageConverter(PluginManager::AbstractManager& manag
 ImageConverterFeatures StbDxtImageConverter::doFeatures() const { return ImageConverterFeature::Convert2D; }
 
 Containers::Optional<ImageData2D> StbDxtImageConverter::doConvert(const ImageView2D& image) {
-    const bool alpha = configuration().value<bool>("alpha");
     const Int flags = configuration().value<bool>("highQuality") ? STB_DXT_HIGHQUAL : STB_DXT_NORMAL;
 
     /* Decide on the output format */
+    /** @todo isPixelFormatSrgb(), pixelFormatChannelCount() helpers, and same
+        for compressed pixel formats */
+    std::size_t inputChannelCount;
+    bool alpha, srgb;
     CompressedPixelFormat outputFormat;
     switch(image.format()) {
+        case PixelFormat::RGB8Unorm:
+            inputChannelCount = 3;
+            alpha = false;
+            srgb = false;
+            outputFormat = CompressedPixelFormat::Bc1RGBUnorm;
+            break;
+        case PixelFormat::RGB8Srgb:
+            inputChannelCount = 3;
+            alpha = false;
+            srgb = true;
+            outputFormat = CompressedPixelFormat::Bc1RGBSrgb;
+            break;
         case PixelFormat::RGBA8Unorm:
-            outputFormat = alpha ?
-                CompressedPixelFormat::Bc3RGBAUnorm :
-                CompressedPixelFormat::Bc1RGBUnorm;
+            inputChannelCount = 4;
+            alpha = true;
+            srgb = false;
+            outputFormat = CompressedPixelFormat::Bc3RGBAUnorm;
             break;
         case PixelFormat::RGBA8Srgb:
-            outputFormat = alpha ?
-                CompressedPixelFormat::Bc3RGBASrgb :
-                CompressedPixelFormat::Bc1RGBSrgb;
+            inputChannelCount = 4;
+            alpha = true;
+            srgb = true;
+            outputFormat = CompressedPixelFormat::Bc3RGBASrgb;
             break;
         /** @todo BC4/5 (single/two channel) -- template the loop? */
         default:
             Error{} << "Trade::StbDxtImageConverter::convert(): unsupported format" << image.format();
             return {};
+    }
+
+    /* If the alpha option is set, override the default. Input channel count
+       stays the same, of course. */
+    if(configuration().value<Containers::StringView>("alpha")) {
+        if(configuration().value<bool>("alpha")) {
+            alpha = true;
+            outputFormat = srgb ?
+                CompressedPixelFormat::Bc3RGBASrgb :
+                CompressedPixelFormat::Bc3RGBAUnorm;
+        } else {
+            alpha = false;
+            outputFormat = srgb ?
+                CompressedPixelFormat::Bc1RGBSrgb :
+                CompressedPixelFormat::Bc1RGBUnorm;
+        }
     }
 
     if(!(image.size() % 4).isZero()) {
@@ -85,13 +118,22 @@ Containers::Optional<ImageData2D> StbDxtImageConverter::doConvert(const ImageVie
         {std::ptrdiff_t(image.size().x()*outputBlockSize/4), outputBlockSize}
     };
 
-    /* Go through all blocks in the input file, copy them to a linear array and
-       compress them */
+    /* Prepare destination where to copy linearized input data. If the alpha is
+       missing in the input, fill it to 255. */
     UnsignedByte inputBlockData[16*4];
-    const Containers::StridedArrayView3D<UnsignedByte> inputBlock{inputBlockData, {4, 4, 4}};
+    if(inputChannelCount == 3) {
+        /* Utility::copy() would work but be a lot more painful in this case */
+        for(std::size_t i = 0; i != sizeof(inputBlockData); i += 4)
+            inputBlockData[i + 3] = 255;
+    }
+    const Containers::StridedArrayView3D<UnsignedByte> inputBlock{inputBlockData, {4, 4, inputChannelCount}, {4*4, 4, 1}};
+
+    /* Go through all blocks in the input file, linearize and compress them */
     for(std::size_t y = 0, yMax = image.size().y()/4; y < yMax; ++y) {
         for(std::size_t x = 0, xMax = image.size().x()/4; x < xMax; ++x) {
-            Utility::copy(input.slice({4*y, 4*x, 0}, {4*y + 4, 4*x + 4, 4}), inputBlock);
+            /* If the alpha is missing, it'll copy only the RGB values into the
+               destination */
+            Utility::copy(input.slice({4*y, 4*x, 0}, {4*y + 4, 4*x + 4, inputChannelCount}), inputBlock);
 
             /* Compress the block */
             stb_compress_dxt_block(&output[y][x], inputBlockData, alpha, flags);
