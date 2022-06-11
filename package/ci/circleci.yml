@@ -7,13 +7,12 @@ executors:
   ubuntu-18_04:
     docker:
     - image: ubuntu:bionic-20220427
-  xcode-10_3:
-    macos:
-      xcode: 10.3.0
   xcode-11_5:
     macos:
       # xcbeautify (for the iOS build) requires Xcode 11.4. Since 2922-05-23,
       # 11.4.1 images wait endlessly for "VM assignment", using 11.5 instead.
+      # I would test on 10.3 also, but those also started waiting endlessly
+      # since 2022-06-09, so it's just 11.5 now.
       xcode: 11.5
   emscripten:
     docker:
@@ -77,21 +76,6 @@ commands:
           ninja --help 2>&1 | grep "N jobs in parallel" || true
           free
           echo "export NINJA_JOBS=-j<< parameters.count >>" >> $BASH_ENV
-
-  # ninja needs python@3.9 as a dependency FOR SOME FUCKING REASON and when THE
-  # DAMN THING installs it, it proceeds with reinstalling python@2. FROM
-  # SOURCES! FUCK! and then it fails to link it because NO SHIT, python@3.9 is
-  # already installed! HOW THE FUCK ARE PEOPLE ABLE TO DEAL WITH SUCH CURSED
-  # SHIT ALL THE TIME?! FUCK OFF
-  #
-  # TODO: Needed only on 10.3 and 11.4, not on 11.5 anymore, remove once those
-  #   images are not used anymore.
-  macos-remove-python-curse:
-    steps:
-    - run:
-        name: Remove Python 2 curse
-        command: |
-          HOMEBREW_NO_AUTO_UPDATE=1 brew uninstall python@2
 
   install-base-macos:
     parameters:
@@ -456,14 +440,11 @@ jobs:
         script: unix-desktop.sh
 
   macos:
-    # Using 9.4 would be great to ensure compatibility, however spirv-tools
-    # isn't on the stale Homebrew on any earlier image than 10.3.
-    executor: xcode-10_3
+    executor: xcode-11_5
     environment:
       CMAKE_CXX_FLAGS: --coverage
       CONFIGURATION: Debug
     steps:
-    - macos-remove-python-curse
     - install-base-macos:
         extra: faad2 harfbuzz assimp devil spirv-tools glslang openexr webp wget zstd
     - install-basis
@@ -473,16 +454,13 @@ jobs:
     - lcov
 
   macos-static:
-    # Using 9.4 would be great to ensure compatibility, however spirv-tools
-    # isn't on the stale Homebrew on any earlier image than 10.3.
-    executor: xcode-10_3
+    executor: xcode-11_5
     environment:
       # STUPID yml interprets unquoted ON as a boolean
       BUILD_STATIC: "ON"
       CMAKE_CXX_FLAGS: --coverage
       CONFIGURATION: Debug
     steps:
-    - macos-remove-python-curse
     - install-base-macos:
         extra: faad2 harfbuzz assimp devil spirv-tools glslang openexr webp wget zstd
     - install-basis
