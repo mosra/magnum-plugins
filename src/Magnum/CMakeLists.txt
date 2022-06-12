@@ -65,10 +65,10 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/versionPlugins.h.cmake
 
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/versionPlugins.h DESTINATION ${MAGNUM_INCLUDE_INSTALL_DIR})
 
-if(WITH_OPENDDL)
+if(MAGNUM_WITH_OPENDDL)
     add_subdirectory(OpenDdl)
 endif()
 
-if(BUILD_TESTS)
+if(MAGNUM_BUILD_TESTS)
     add_subdirectory(Test)
 endif()

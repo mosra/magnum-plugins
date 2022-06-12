@@ -28,7 +28,7 @@
 find_package(Magnum REQUIRED Trade AnyImageImporter)
 find_package(Assimp REQUIRED)
 
-if(BUILD_PLUGINS_STATIC AND NOT DEFINED MAGNUM_ASSIMPIMPORTER_BUILD_STATIC)
+if(MAGNUM_BUILD_PLUGINS_STATIC AND NOT DEFINED MAGNUM_ASSIMPIMPORTER_BUILD_STATIC)
     set(MAGNUM_ASSIMPIMPORTER_BUILD_STATIC 1)
 endif()
 
@@ -110,7 +110,7 @@ add_plugin(AssimpImporter
     AssimpImporter.cpp
     AssimpImporter.h)
 target_include_directories(AssimpImporter PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
-if(MAGNUM_ASSIMPIMPORTER_BUILD_STATIC AND BUILD_STATIC_PIC)
+if(MAGNUM_ASSIMPIMPORTER_BUILD_STATIC AND MAGNUM_BUILD_STATIC_PIC)
     set_target_properties(AssimpImporter PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
 target_include_directories(AssimpImporter PUBLIC
@@ -139,7 +139,7 @@ if(MAGNUM_ASSIMPIMPORTER_BUILD_STATIC)
     target_sources(AssimpImporter INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/importStaticPlugin.cpp)
 endif()
 
-if(BUILD_TESTS)
+if(MAGNUM_BUILD_TESTS)
     add_subdirectory(Test)
 endif()
 

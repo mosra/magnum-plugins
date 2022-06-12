@@ -87,8 +87,8 @@ This plugin provides `BasisImporterEacR`, `BasisImporterEacRG`,
 @section Trade-BasisImporter-usage Usage
 
 This plugin depends on the @ref Trade and [Basis Universal](https://github.com/binomialLLC/basis_universal)
-libraries and is built if `WITH_BASISIMPORTER` is enabled when building Magnum
-Plugins. To use as a dynamic plugin, load @cpp "BasisImporter" @ce via
+libraries and is built if `MAGNUM_WITH_BASISIMPORTER` is enabled when building
+Magnum Plugins. To use as a dynamic plugin, load @cpp "BasisImporter" @ce via
 @ref Corrade::PluginManager::Manager. Current version of the plugin is tested
 against the [`v1_15_update2` tag](https://github.com/BinomialLLC/basis_universal/tree/v1_15_update2),
 but could possibly compile against newer versions as well.
@@ -100,7 +100,7 @@ and do the following:
 
 @code{.cmake}
 set(BASIS_UNIVERSAL_DIR ${CMAKE_CURRENT_SOURCE_DIR}/basis-universal)
-set(WITH_BASISIMPORTER ON CACHE BOOL "" FORCE)
+set(MAGNUM_WITH_BASISIMPORTER ON CACHE BOOL "" FORCE)
 add_subdirectory(magnum-plugins EXCLUDE_FROM_ALL)
 
 # So the dynamically loaded plugin gets built implicitly

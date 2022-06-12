@@ -41,7 +41,7 @@ endif()
 find_package(Magnum REQUIRED Trade)
 find_package(BasisUniversal REQUIRED Transcoder)
 
-if(BUILD_PLUGINS_STATIC AND NOT DEFINED MAGNUM_BASISIMPORTER_BUILD_STATIC)
+if(MAGNUM_BUILD_PLUGINS_STATIC AND NOT DEFINED MAGNUM_BASISIMPORTER_BUILD_STATIC)
     set(MAGNUM_BASISIMPORTER_BUILD_STATIC 1)
 endif()
 
@@ -55,7 +55,7 @@ add_plugin(BasisImporter
     BasisImporter.conf
     BasisImporter.cpp
     BasisImporter.h)
-if(MAGNUM_BASISIMPORTER_BUILD_STATIC AND BUILD_STATIC_PIC)
+if(MAGNUM_BASISIMPORTER_BUILD_STATIC AND MAGNUM_BUILD_STATIC_PIC)
     set_target_properties(BasisImporter PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
 target_include_directories(BasisImporter
@@ -91,7 +91,7 @@ if(MAGNUM_BASISIMPORTER_BUILD_STATIC)
     target_sources(BasisImporter INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/importStaticPlugin.cpp)
 endif()
 
-if(BUILD_TESTS)
+if(MAGNUM_BUILD_TESTS)
     add_subdirectory(Test)
 endif()
 

@@ -62,8 +62,8 @@ Imports glTF and binary glTF.
 @section Trade-GltfImporter-usage Usage
 
 This plugin depends on the @ref Trade library and the @ref AnyImageImporter
-plugin and is built if `WITH_GLTFIMPORTER` is enabled when building Magnum
-Plugins. To use as a dynamic plugin, load @cpp "GltfImporter" @ce via
+plugin and is built if `MAGNUM_WITH_GLTFIMPORTER` is enabled when building
+Magnum Plugins. To use as a dynamic plugin, load @cpp "GltfImporter" @ce via
 @ref Corrade::PluginManager::Manager.
 
 Additionally, if you're using Magnum as a CMake subproject, bundle the
@@ -71,10 +71,10 @@ Additionally, if you're using Magnum as a CMake subproject, bundle the
 following:
 
 @code{.cmake}
-set(WITH_ANYIMAGEIMPORTER ON CACHE BOOL "" FORCE)
+set(MAGNUM_WITH_ANYIMAGEIMPORTER ON CACHE BOOL "" FORCE)
 add_subdirectory(magnum EXCLUDE_FROM_ALL)
 
-set(WITH_GLTFIMPORTER ON CACHE BOOL "" FORCE)
+set(MAGNUM_WITH_GLTFIMPORTER ON CACHE BOOL "" FORCE)
 add_subdirectory(magnum-plugins EXCLUDE_FROM_ALL)
 
 # So the dynamically loaded plugin gets built implicitly

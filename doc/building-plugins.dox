@@ -85,8 +85,8 @@ vcpkg install magnum-plugins
 
 Note that just a subset of plugins is installed by default. To opt-in or
 opt-out of additional features, you can use the following syntax; feature names
-are simply names of CMake `WITH_*` options from the @ref building-plugins-features
-section but lowercase, e.g.:
+are simply names of CMake `MAGNUM_WITH_*` options from the
+@ref building-plugins-features section but lowercase, e.g.:
 
 @code{.bat}
 vcpkg install magnum-plugins[assimpimporter,ddsimporter]
@@ -229,12 +229,12 @@ enable them, do the following:
     @ref Trade::BasisImageConverter "BasisImageConverter", [download the
     `v1_15_update2` tag of the Basis Universal repo](https://github.com/BinomialLLC/basis_universal/archive/v1_15_update2.tar.gz),
     extract it into `src/external/basis-universal` (note the dash instead of an
-    underscore) and set `WITH_BASISIMPORTER` / `WITH_BASISIMAGECONVERTER` to
-    `ON` in `package/debian/rules`
+    underscore) and set `MAGNUM_WITH_BASISIMPORTER` /
+    `MAGNUM_WITH_BASISIMAGECONVERTER` to `ON` in `package/debian/rules`
 -   For @ref Trade::MeshOptimizerSceneConverter "MeshOptimizerSceneConverter",
     [clone the MeshOptimizer repo](https://github.com/zeux/meshoptimizer) to
-    `src/external/meshoptimizer` and set `WITH_MESHOPTIMIZERSCENECONVERTER` to
-    `ON` in `package/debian/rules`.
+    `src/external/meshoptimizer` and set `MAGNUM_WITH_MESHOPTIMIZERSCENECONVERTER`
+    to `ON` in `package/debian/rules`.
 
 With the above, when you run `dpkg-buildpackage`, CMake will automatically
 discover the sources and link them as static libraries to corresponding
@@ -251,10 +251,11 @@ them, do the following:
 
 -   For @ref ShaderTools::GlslangConverter "GlslangShaderConverter", add
     `glslang-dev` to the `Build-Depends:` line in `package/debian/control` and
-    set `WITH_GLSLANGSHADERCONVERTER` to `ON` in `package/debian/rules`.
+    set `MAGNUM_WITH_GLSLANGSHADERCONVERTER` to `ON` in `package/debian/rules`.
 -   For @ref ShaderTools::SpirvToolsConverter "SpirvToolsShaderConverter",
     add `spirv-tools` to the `Build-Depends:` line in `package/debian/control`
-    and set `WITH_SPIRVTOOLSSHADERCONVERTER` to `ON` in `package/debian/rules`.
+    and set `MAGNUM_WITH_SPIRVTOOLSSHADERCONVERTER` to `ON` in
+    `package/debian/rules`.
 
 With the above, when you run `dpkg-buildpackage`, it should correctly find the
 dependencies (or ask for them to be installed) and build the corresponding
@@ -332,113 +333,125 @@ cross-compiling and platform-specific issues.
 
 By default no plugins are built and you need to select them manually:
 
--   `WITH_ASSIMPIMPORTER` --- Build the @ref Trade::AssimpImporter "AssimpImporter"
-    plugin. Depends on [Assimp](http://assimp.org/).
--   `WITH_ASTCIMPORTER` --- Build the @relativeref{Trade,AstcImporter} plugin.
--   `WITH_BASISIMAGECONVERTER` --- Build the
+-   `MAGNUM_WITH_ASSIMPIMPORTER` --- Build the
+    @ref Trade::AssimpImporter "AssimpImporter" plugin. Depends on
+    [Assimp](http://assimp.org/).
+-   `MAGNUM_WITH_ASTCIMPORTER` --- Build the @relativeref{Trade,AstcImporter}
+    plugin.
+-   `MAGNUM_WITH_BASISIMAGECONVERTER` --- Build the
     @ref Trade::BasisImageConverter "BasisImageConverter" plugin. Depends on
     [Basis Universal](https://github.com/binomialLLC/basis_universal).
--   `WITH_BASISIMPORTER` --- Build the @ref Trade::BasisImporter "BasisImporter"
-    plugin. Depends on [Basis Universal](https://github.com/binomialLLC/basis_universal)
-    --- if you are on Vcpkg, it will "just work", otherwise you need to
-    download the sources and point `BASIS_UNIVERSAL_DIR` to their directory so
-    CMake can find them.
--   `WITH_CGLTFIMPORTER` @m_class{m-label m-danger} **deprecated** --- Build
-    the @ref Trade::CgltfImporter "CgltfImporter" plugin.
--   `WITH_DDSIMPORTER` --- Build the @ref Trade::DdsImporter "DdsImporter"
+-   `MAGNUM_WITH_BASISIMPORTER` --- Build the
+    @ref Trade::BasisImporter "BasisImporter" plugin. Depends on
+    [Basis Universal](https://github.com/binomialLLC/basis_universal) --- if
+    you are on Vcpkg, it will "just work", otherwise you need to download the
+    sources and point `BASIS_UNIVERSAL_DIR` to their directory so CMake can
+    find them.
+-   `MAGNUM_WITH_CGLTFIMPORTER` @m_class{m-label m-danger} **deprecated** ---
+    Build the @ref Trade::CgltfImporter "CgltfImporter" plugin.
+-   `MAGNUM_WITH_DDSIMPORTER` --- Build the @ref Trade::DdsImporter "DdsImporter"
     plugin.
--   `WITH_DEVILIMAGEIMPORTER` --- Build the
+-   `MAGNUM_WITH_DEVILIMAGEIMPORTER` --- Build the
     @ref Trade::DevIlImageImporter "DevIlImageImporter" plugin. Depends on
     [DevIL](http://openil.sourceforge.net/).
--   `WITH_DRFLACAUDIOIMPORTER` --- Build the
+-   `MAGNUM_WITH_DRFLACAUDIOIMPORTER` --- Build the
     @ref Audio::DrFlacImporter "DrFlacAudioImporter" plugin.
--   `WITH_DRMP3AUDIOIMPORTER` --- Build the
+-   `MAGNUM_WITH_DRMP3AUDIOIMPORTER` --- Build the
     @ref Audio::DrMp3Importer "DrMp3AudioImporter" plugin.
--   `WITH_DRWAVAUDIOIMPORTER` --- Build the
+-   `MAGNUM_WITH_DRWAVAUDIOIMPORTER` --- Build the
     @ref Audio::DrWavImporter "DrWavAudioImporter" plugin.
--   `WITH_FAAD2AUDIOIMPORTER` --- Build the
+-   `MAGNUM_WITH_FAAD2AUDIOIMPORTER` --- Build the
     @ref Audio::Faad2Importer "Faad2AudioImporter" plugin. Depends on
     [FAAD2](https://www.audiocoding.com/faad2.html).
--   `WITH_FREETYPEFONT` --- Build the @ref Text::FreeTypeFont "FreeTypeFont"
-    plugin. Depends on [FreeType](http://www.freetype.org/).
--   `WITH_GLSLANGSHADERCONVERTER` --- Build the @ref ShaderTools::GlslangConverter "GlslangShaderConverter"
-    plugin. Depends on [Glslang](https://github.com/KhronosGroup/glslang).
--   `WITH_GLTFIMPORTER` --- Build the @relativeref{Trade,GltfImporter} plugin.
--   `WITH_HARFBUZZFONT` --- Build the @ref Text::HarfBuzzFont "HarfBuzzFont"
-    plugin. Enables also building of the @ref Text::FreeTypeFont "FreeTypeFont"
-    plugin. Depends on [HarfBuzz](http://www.freedesktop.org/wiki/Software/HarfBuzz).
--   `WITH_ICOIMPORTER` --- Build the @ref Trade::IcoImporter "IcoImporter"
+-   `MAGNUM_WITH_FREETYPEFONT` --- Build the
+    @ref Text::FreeTypeFont "FreeTypeFont" plugin. Depends on
+    [FreeType](http://www.freetype.org/).
+-   `MAGNUM_WITH_GLSLANGSHADERCONVERTER` --- Build the
+    @ref ShaderTools::GlslangConverter "GlslangShaderConverter" plugin. Depends
+    on [Glslang](https://github.com/KhronosGroup/glslang).
+-   `MAGNUM_WITH_GLTFIMPORTER` --- Build the @relativeref{Trade,GltfImporter}
     plugin.
--   `WITH_JPEGIMAGECONVERTER` --- Build the
+-   `MAGNUM_WITH_HARFBUZZFONT` --- Build the
+    @ref Text::HarfBuzzFont "HarfBuzzFont" plugin. Enables also building of the
+    @ref Text::FreeTypeFont "FreeTypeFont" plugin. Depends on
+    [HarfBuzz](http://www.freedesktop.org/wiki/Software/HarfBuzz).
+-   `MAGNUM_WITH_ICOIMPORTER` --- Build the @ref Trade::IcoImporter "IcoImporter"
+    plugin.
+-   `MAGNUM_WITH_JPEGIMAGECONVERTER` --- Build the
     @ref Trade::JpegImageConverter "JpegImageConverter" plugin.
--   `WITH_JPEGIMPORTER` --- Build the @ref Trade::JpegImporter "JpegImporter"
+-   `MAGNUM_WITH_JPEGIMPORTER` --- Build the @ref Trade::JpegImporter "JpegImporter"
     plugin. Depends on [libJPEG](http://libjpeg.sourceforge.net/).
--   `WITH_KTXIMAGECONVERTER` --- Build the
+-   `MAGNUM_WITH_KTXIMAGECONVERTER` --- Build the
     @relativeref{Trade,KtxImageConverter} plugin.
--   `WITH_KTXIMPORTER` --- Build the
+-   `MAGNUM_WITH_KTXIMPORTER` --- Build the
     @relativeref{Trade,KtxImporter} plugin.
--   `WITH_MESHOPTIMIZERSCENECONVERTER` --- Build the
+-   `MAGNUM_WITH_MESHOPTIMIZERSCENECONVERTER` --- Build the
     @ref Trade::MeshOptimizerSceneConverter "MeshOptimizerSceneConverter"
     plugin.
--   `WITH_MINIEXRIMAGECONVERTER` --- Build the
+-   `MAGNUM_WITH_MINIEXRIMAGECONVERTER` --- Build the
     @ref Trade::MiniExrImageConverter "MiniExrImageConverter" plugin.
--   `WITH_OPENEXRIMAGECONVERTER` --- Build the @ref Trade::OpenExrImageConverter "OpenExrImageConverter"
-    plugin. Depends on [OpenEXR](https://www.openexr.com/).
--   `WITH_OPENEXRIMPORTER` --- Build the @ref Trade::OpenExrImporter "OpenExrImporter"
-    plugin. Depends on [OpenEXR](https://www.openexr.com/).
--   `WITH_OPENGEXIMPORTER` --- Build the @ref Trade::OpenGexImporter "OpenGexImporter"
-    plugin. Enables also building of the @ref OpenDdl library.
--   `WITH_PNGIMAGECONVERTER` --- Build the
+-   `MAGNUM_WITH_OPENEXRIMAGECONVERTER` --- Build the
+    @ref Trade::OpenExrImageConverter "OpenExrImageConverter" plugin. Depends
+    on [OpenEXR](https://www.openexr.com/).
+-   `MAGNUM_WITH_OPENEXRIMPORTER` --- Build the
+    @ref Trade::OpenExrImporter "OpenExrImporter" plugin. Depends on
+    [OpenEXR](https://www.openexr.com/).
+-   `MAGNUM_WITH_OPENGEXIMPORTER` --- Build the
+    @ref Trade::OpenGexImporter "OpenGexImporter" plugin. Enables also building
+    of the @ref OpenDdl library.
+-   `MAGNUM_WITH_PNGIMAGECONVERTER` --- Build the
     @ref Trade::PngImageConverter "PngImageConverter" plugin. Depends on
     [libPNG](http://www.libpng.org/pub/png/libpng.html).
--   `WITH_PNGIMPORTER` --- Build the @ref Trade::PngImporter "PngImporter"
+-   `MAGNUM_WITH_PNGIMPORTER` --- Build the @ref Trade::PngImporter "PngImporter"
     plugin. Depends on [libPNG](http://www.libpng.org/pub/png/libpng.html).
--   `WITH_PRIMITIVEIMPORTER` --- Build the @ref Trade::PrimitiveImporter
-    "PrimitiveImporter" plugin.
--   `WITH_SPIRVTOOLSSHADERCONVERTER` --- Build the @ref ShaderTools::SpirvToolsConverter "SpirvToolsShaderConverter"
-    plugin. Depends on [SPIRV-Tools](https://github.com/KhronosGroup/SPIRV-Tools).
--   `WITH_STANFORDIMPORTER` --- Build the
+-   `MAGNUM_WITH_PRIMITIVEIMPORTER` --- Build the
+    @ref Trade::PrimitiveImporter "PrimitiveImporter" plugin.
+-   `MAGNUM_WITH_SPIRVTOOLSSHADERCONVERTER` --- Build the
+    @ref ShaderTools::SpirvToolsConverter "SpirvToolsShaderConverter" plugin.
+    Depends on [SPIRV-Tools](https://github.com/KhronosGroup/SPIRV-Tools).
+-   `MAGNUM_WITH_STANFORDIMPORTER` --- Build the
     @ref Trade::StanfordImporter "StanfordImporter" plugin.
--   `WITH_STANFORDSCENECONVERTER` --- Build the
+-   `MAGNUM_WITH_STANFORDSCENECONVERTER` --- Build the
     @ref Trade::StanfordSceneConverter "StanfordSceneConverter" plugin.
--   `WITH_STBDXTIMAGECONVERTER` --- Build the
+-   `MAGNUM_WITH_STBDXTIMAGECONVERTER` --- Build the
     @relativeref{Trade,StbDxtImageConverter} plugin.
--   `WITH_STBIMAGECONVERTER` --- Build the
+-   `MAGNUM_WITH_STBIMAGECONVERTER` --- Build the
     @ref Trade::StbImageConverter "StbImageConverter" plugin.
--   `WITH_STBIMAGEIMPORTER` --- Build the
+-   `MAGNUM_WITH_STBIMAGEIMPORTER` --- Build the
     @ref Trade::StbImageImporter "StbImageImporter" plugin. Enabled
-    automatically if `WITH_TINYGLTFIMPORTER` is enabled.
--   `WITH_STBTRUETYPEFONT` --- Build the
+    automatically if `MAGNUM_WITH_TINYGLTFIMPORTER` is enabled.
+-   `MAGNUM_WITH_STBTRUETYPEFONT` --- Build the
     @ref Text::StbTrueTypeFont "StbTrueTypeFont" plugin.
--   `WITH_STBVORBISAUDIOIMPORTER` --- Build the
+-   `MAGNUM_WITH_STBVORBISAUDIOIMPORTER` --- Build the
     @ref Audio::StbVorbisImporter "StbVorbisAudioImporter" plugin.
--   `WITH_TINYGLTFIMPORTER` @m_class{m-label m-danger} **deprecated**  ---
-    Build the @ref Trade::TinyGltfImporter "TinyGltfImporter" plugin.
--   `WITH_WEBPIMPORTER` --- Build the @relativeref{Trade,WebPImporter} plugin.
+-   `MAGNUM_WITH_TINYGLTFIMPORTER` @m_class{m-label m-danger} **deprecated**
+    --- Build the @ref Trade::TinyGltfImporter "TinyGltfImporter" plugin.
+-   `MAGNUM_WITH_WEBPIMPORTER` --- Build the @relativeref{Trade,WebPImporter}
+    plugin.
 
 Some plugins expose their internal state through separate libraries and you can
 control their build separately:
 
--   `WITH_OPENDDL` --- Build the @ref OpenDdl library. Enabled automatically if
-    `WITH_OPENGEXIMPORTER` is enabled.
+-   `MAGNUM_WITH_OPENDDL` --- Build the @ref OpenDdl library. Enabled
+    automatically if `MAGNUM_WITH_OPENGEXIMPORTER` is enabled.
 
 Options controlling the build are a subset of
 @ref building-features "the options used by Magnum":
 
--   `BUILD_STATIC` --- Build all libraries as static. Default is shared, except
-    on platforms such as @ref CORRADE_TARGET_ANDROID "Android" or
+-   `MAGNUM_BUILD_STATIC` --- Build all libraries as static. Default is shared,
+    except on platforms such as @ref CORRADE_TARGET_ANDROID "Android" or
     @ref CORRADE_TARGET_EMSCRIPTEN "Emscripten" that don't support dynamic
     linking.
--   `BUILD_STATIC_PIC` --- Build static libraries with position-independent
-    code. Enabled by default when building static libraries, disable if you
-    don't need this feature. On @ref CORRADE_TARGET_EMSCRIPTEN "Emscripten"
-    this option is always off.
--   `BUILD_PLUGINS_STATIC` --- Build plugins as static. By default, plugins are
-    built as dynamic. Independent of the `BUILD_STATIC` option to allow having
-    static libraries with dynamic plugins and vice versa. To some extent it's
-    also possible to have only a subset of plugins built as static --- set
-    `MAGNUM_<PLUGIN>_BUILD_STATIC` for particular plugins to `ON` or `OFF` to
-    override this option.
+-   `MAGNUM_BUILD_STATIC_PIC` --- Build static libraries with
+    position-independent code. Enabled by default when building static
+    libraries, disable if you don't need this feature. On
+    @ref CORRADE_TARGET_EMSCRIPTEN "Emscripten" this option is always off.
+-   `MAGNUM_BUILD_PLUGINS_STATIC` --- Build plugins as static. By default,
+    plugins are built as dynamic. Independent of the `MAGNUM_BUILD_STATIC`
+    option to allow having static libraries with dynamic plugins and vice
+    versa. To some extent it's also possible to have only a subset of plugins
+    built as static --- set `MAGNUM_<PLUGIN>_BUILD_STATIC` for particular
+    plugins to `ON` or `OFF` to override this option.
 -   Additional options are inherited from the
     @ref CORRADE_BUILD_MULTITHREADED and
     @ref MAGNUM_BUILD_STATIC_UNIQUE_GLOBALS options specified when building

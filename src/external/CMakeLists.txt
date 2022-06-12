@@ -29,16 +29,16 @@ set_directory_properties(PROPERTIES CORRADE_USE_PEDANTIC_FLAGS OFF)
 
 # To help Homebrew and Vcpkg packages, meshoptimizer sources can be cloned to
 # src/external and we will use those without any extra effort from the outside.
-if(WITH_MESHOPTIMIZERSCENECONVERTER)
+if(MAGNUM_WITH_MESHOPTIMIZERSCENECONVERTER)
     if(NOT TARGET meshoptimizer AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/meshoptimizer)
         # Build (static) meshoptimizer with PIC enabled if we are building
         # dynamic plugins
-        if(NOT BUILD_PLUGINS_STATIC)
+        if(NOT MAGNUM_BUILD_PLUGINS_STATIC)
             set(_PREV_CMAKE_POSITION_INDEPENDENT_CODE ${CMAKE_POSITION_INDEPENDENT_CODE})
             set(CMAKE_POSITION_INDEPENDENT_CODE ON)
         endif()
         add_subdirectory(meshoptimizer EXCLUDE_FROM_ALL)
-        if(NOT BUILD_PLUGINS_STATIC)
+        if(NOT MAGNUM_BUILD_PLUGINS_STATIC)
             set(CMAKE_POSITION_INDEPENDENT_CODE ${_PREV_CMAKE_POSITION_INDEPENDENT_CODE})
         endif()
     endif()

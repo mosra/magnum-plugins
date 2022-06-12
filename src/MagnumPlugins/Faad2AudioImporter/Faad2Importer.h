@@ -75,8 +75,8 @@ This plugins provides `AacAudioImporter`.
 @section Audio-Faad2Importer-usage Usage
 
 This plugin depends on the @ref Audio library and is built if
-`WITH_FAAD2AUDIOIMPORTER` is enabled when building Magnum Plugins. To use
-as a dynamic plugin, load @cpp "Faad2AudioImporter" @ce via
+`MAGNUM_WITH_FAAD2AUDIOIMPORTER` is enabled when building Magnum Plugins. To
+use as a dynamic plugin, load @cpp "Faad2AudioImporter" @ce via
 @ref Corrade::PluginManager::Manager.
 
 Additionally, if you're using Magnum as a CMake subproject, bundle the
@@ -86,7 +86,7 @@ so you need to provide it as a system dependency and point `CMAKE_PREFIX_PATH`
 to its installation dir if necessary.
 
 @code{.cmake}
-set(WITH_FAAD2AUDIOIMPORTER ON CACHE BOOL "" FORCE)
+set(MAGNUM_WITH_FAAD2AUDIOIMPORTER ON CACHE BOOL "" FORCE)
 add_subdirectory(magnum-plugins EXCLUDE_FROM_ALL)
 
 # So the dynamically loaded plugin gets built implicitly

@@ -75,8 +75,8 @@ images using the [stb_dxt](https://github.com/nothings/stb) library.
 @section Trade-StbDxtImageConverter-usage Usage
 
 This plugin depends on the @ref Trade library and is built if
-`WITH_STBDXTIMAGECONVERTER` is enabled when building Magnum Plugins. To use as
-a dynamic plugin, load @cpp "StbDxtImageConverter" @ce via
+`MAGNUM_WITH_STBDXTIMAGECONVERTER` is enabled when building Magnum Plugins. To
+use as a dynamic plugin, load @cpp "StbDxtImageConverter" @ce via
 @ref Corrade::PluginManager::Manager.
 
 Additionally, if you're using Magnum as a CMake subproject, bundle the
@@ -84,7 +84,7 @@ Additionally, if you're using Magnum as a CMake subproject, bundle the
 following:
 
 @code{.cmake}
-set(WITH_STBDXTIMAGECONVERTER ON CACHE BOOL "" FORCE)
+set(MAGNUM_WITH_STBDXTIMAGECONVERTER ON CACHE BOOL "" FORCE)
 add_subdirectory(magnum-plugins EXCLUDE_FROM_ALL)
 
 # So the dynamically loaded plugin gets built implicitly

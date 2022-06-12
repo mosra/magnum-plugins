@@ -26,7 +26,7 @@
 
 find_package(Magnum REQUIRED Audio)
 
-if(BUILD_PLUGINS_STATIC AND NOT DEFINED MAGNUM_DRMP3AUDIOIMPORTER_BUILD_STATIC)
+if(MAGNUM_BUILD_PLUGINS_STATIC AND NOT DEFINED MAGNUM_DRMP3AUDIOIMPORTER_BUILD_STATIC)
     set(MAGNUM_DRMP3AUDIOIMPORTER_BUILD_STATIC 1)
 endif()
 
@@ -40,7 +40,7 @@ add_plugin(DrMp3AudioImporter
     DrMp3AudioImporter.conf
     DrMp3Importer.cpp
     DrMp3Importer.h)
-if(MAGNUM_DRMP3AUDIOIMPORTER_BUILD_STATIC AND BUILD_STATIC_PIC)
+if(MAGNUM_DRMP3AUDIOIMPORTER_BUILD_STATIC AND MAGNUM_BUILD_STATIC_PIC)
     set_target_properties(DrMp3AudioImporter PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
 # Include the dr_*.h files as a system directory to supress warnings
@@ -66,7 +66,7 @@ if(MAGNUM_DRMP3AUDIOIMPORTER_BUILD_STATIC)
     target_sources(DrMp3AudioImporter INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/importStaticPlugin.cpp)
 endif()
 
-if(BUILD_TESTS)
+if(MAGNUM_BUILD_TESTS)
     add_subdirectory(Test)
 endif()
 

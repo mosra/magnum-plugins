@@ -64,15 +64,16 @@ texture compression tools.
 @section Trade-AstcImporter-usage Usage
 
 This plugin depends on the @ref Trade library and is built if
-`WITH_ASTCIMPORTER` is enabled when building Magnum Plugins. To use as a dynamic
-plugin, load @cpp "AstcImporter" @ce via @ref Corrade::PluginManager::Manager.
+`MAGNUM_WITH_ASTCIMPORTER` is enabled when building Magnum Plugins. To use as a
+dynamic plugin, load @cpp "AstcImporter" @ce via
+@ref Corrade::PluginManager::Manager.
 
 Additionally, if you're using Magnum as a CMake subproject, bundle the
 [magnum-plugins repository](https://github.com/mosra/magnum-plugins) and do the
 following:
 
 @code{.cmake}
-set(WITH_ASTCIMPORTER ON CACHE BOOL "" FORCE)
+set(MAGNUM_WITH_ASTCIMPORTER ON CACHE BOOL "" FORCE)
 add_subdirectory(magnum-plugins EXCLUDE_FROM_ALL)
 
 # So the dynamically loaded plugin gets built implicitly

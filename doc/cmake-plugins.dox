@@ -78,7 +78,7 @@ be specified before the subdirectory gets added:
 @code{.cmake}
 ...
 
-set(WITH_STBIMAGEIMPORTER ON CACHE BOOL "" FORCE) # enable what you need
+set(MAGNUM_WITH_STBIMAGEIMPORTER ON CACHE BOOL "" FORCE) # enable what you need
 add_subdirectory(magnum-plugins EXCLUDE_FROM_ALL)
 
 find_package(MagnumPlugins REQUIRED ...) # see below
@@ -91,8 +91,8 @@ is to list them explicitly like shown below, another (but uglier) is to not use
 implicitly.
 
 @code{.cmake}
-set(WITH_STBIMAGEIMPORTER ON CACHE BOOL "" FORCE)
-set(WITH_TINYGLTFIMPORTER ON CACHE BOOL "" FORCE)
+set(MAGNUM_WITH_STBIMAGEIMPORTER ON CACHE BOOL "" FORCE)
+set(MAGNUM_WITH_TINYGLTFIMPORTER ON CACHE BOOL "" FORCE)
 add_subdirectory(magnum-plugins EXCLUDE_FROM_ALL)
 
 # So the StbImageImporter / TinyGltfImporter gets built implicitly

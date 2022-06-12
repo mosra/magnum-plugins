@@ -135,8 +135,8 @@ This plugin provides `3dsImporter`, `3mfImporter`, `Ac3dImporter`,
 @section Trade-AssimpImporter-usage Usage
 
 This plugin depends on the @ref Trade and [Assimp](http://assimp.org) libraries
-and the @ref AnyImageImporter plugin and is built if `WITH_ASSIMPIMPORTER` is
-enabled when building Magnum Plugins. To use as a dynamic plugin, load
+and the @ref AnyImageImporter plugin and is built if `MAGNUM_WITH_ASSIMPIMPORTER`
+is enabled when building Magnum Plugins. To use as a dynamic plugin, load
 @cpp "AssimpImporter" @ce via @ref Corrade::PluginManager::Manager.
 
 Additionally, if you're using Magnum as a CMake subproject, bundle the
@@ -160,10 +160,10 @@ set(INJECT_DEBUG_POSTFIX OFF CACHE BOOL "" FORCE)
 set(ASSIMP_INJECT_DEBUG_POSTFIX OFF CACHE BOOL "" FORCE)
 add_subdirectory(assimp EXCLUDE_FROM_ALL)
 
-set(WITH_ANYIMAGEIMPORTER ON CACHE BOOL "" FORCE)
+set(MAGNUM_WITH_ANYIMAGEIMPORTER ON CACHE BOOL "" FORCE)
 add_subdirectory(magnum EXCLUDE_FROM_ALL)
 
-set(WITH_ASSIMPIMPORTER ON CACHE BOOL "" FORCE)
+set(MAGNUM_WITH_ASSIMPIMPORTER ON CACHE BOOL "" FORCE)
 add_subdirectory(magnum-plugins EXCLUDE_FROM_ALL)
 
 # So the dynamically loaded plugin gets built implicitly

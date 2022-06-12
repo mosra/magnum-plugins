@@ -34,7 +34,8 @@ endif()
 if(POLICY CMP0071)
     cmake_policy(SET CMP0071 NEW)
 endif()
-# Superprojects can use just set(WITH_BLAH ON) without FORCE CACHE on 3.13+
+# Superprojects can use just set(MAGNUM_WITH_BLAH ON) without FORCE CACHE on
+# 3.13+
 if(POLICY CMP0077)
     cmake_policy(SET CMP0077 NEW)
 endif()
@@ -49,58 +50,126 @@ find_package(Magnum REQUIRED)
 
 include(CMakeDependentOption)
 
+# Options that used to be unprefixed. 45 values for 45 option() and
+# cmake_dependent_option() calls. New options shouldn't be added to this list.
+set(_MAGNUMPLUGINS_DEPRECATED_UNPREFIXED_OPTIONS
+    WITH_ASSIMPIMPORTER
+    WITH_ASTCIMPORTER
+    WITH_BASISIMAGECONVERTER
+    WITH_BASISIMPORTER
+    WITH_DDSIMPORTER
+    WITH_DEVILIMAGEIMPORTER
+    WITH_DRFLACAUDIOIMPORTER
+    WITH_DRMP3AUDIOIMPORTER
+    WITH_DRWAVAUDIOIMPORTER
+    WITH_FAAD2AUDIOIMPORTER
+    WITH_FREETYPEFONT
+    WITH_GLSLANGSHADERCONVERTER
+    WITH_GLTFIMPORTER
+    WITH_HARFBUZZFONT
+    WITH_ICOIMPORTER
+    WITH_JPEGIMAGECONVERTER
+    WITH_JPEGIMPORTER
+    WITH_KTXIMAGECONVERTER
+    WITH_KTXIMPORTER
+    WITH_MESHOPTIMIZERSCENECONVERTER
+    WITH_MINIEXRIMAGECONVERTER
+    WITH_OPENDDL
+    WITH_OPENEXRIMAGECONVERTER
+    WITH_OPENEXRIMPORTER
+    WITH_OPENGEXIMPORTER
+    WITH_PNGIMAGECONVERTER
+    WITH_PNGIMPORTER
+    WITH_PRIMITIVEIMPORTER
+    WITH_SPIRVTOOLSSHADERCONVERTER
+    WITH_STANFORDSCENECONVERTER
+    WITH_STANFORDIMPORTER
+    WITH_STBDXTIMAGECONVERTER
+    WITH_STBIMAGECONVERTER
+    WITH_STBIMAGEIMPORTER
+    WITH_STBTRUETYPEFONT
+    WITH_STBVORBISAUDIOIMPORTER
+    WITH_STLIMPORTER
+    WITH_WEBPIMPORTER
+    BUILD_STATIC
+    BUILD_STATIC_PIC
+    BUILD_PLUGINS_STATIC
+    BUILD_TESTS
+    BUILD_GL_TESTS)
+if(MAGNUM_BUILD_DEPRECATED)
+    list(APPEND _MAGNUMPLUGINS_DEPRECATED_UNPREFIXED_OPTIONS
+        WITH_CGLTFIMPORTER
+        WITH_TINYGLTFIMPORTER)
+endif()
+# If during the first run (i.e., when the variable isn't in cache yet), check
+# if any of the prefixed options are already set, except for BUILD_STATIC which
+# may already be coming from Magnum's configure.h. If so, we assume the user is
+# already switched to the prefixed options and won't accept the deprecated
+# unprefixed options for backwards compatibility. This way it's possible for
+# projects to reuse these variables for other purposes without affecting
+# Corrade in any way.
+if(NOT DEFINED _MAGNUMPLUGINS_ACCEPT_DEPRECATED_UNPREFIXED_OPTIONS)
+    set(_MAGNUMPLUGINS_ACCEPT_DEPRECATED_UNPREFIXED_OPTIONS ON CACHE INTERNAL "")
+    foreach(option ${_MAGNUMPLUGINS_DEPRECATED_UNPREFIXED_OPTIONS})
+        if(NOT "${option}" STREQUAL "BUILD_STATIC" AND DEFINED MAGNUM_${option})
+            set(_MAGNUMPLUGINS_ACCEPT_DEPRECATED_UNPREFIXED_OPTIONS OFF CACHE INTERNAL "")
+            break()
+        endif()
+    endforeach()
+endif()
+
 # Plugins to build
-option(WITH_ASSIMPIMPORTER "Build AssimpImporter plugin" OFF)
-option(WITH_ASTCIMPORTER "Build AstcImporter plugin" OFF)
-option(WITH_BASISIMAGECONVERTER "Build BasisImageConverter plugin" OFF)
-option(WITH_BASISIMPORTER "Build BasisImporter plugin" OFF)
+option(MAGNUM_WITH_ASSIMPIMPORTER "Build AssimpImporter plugin" OFF)
+option(MAGNUM_WITH_ASTCIMPORTER "Build AstcImporter plugin" OFF)
+option(MAGNUM_WITH_BASISIMAGECONVERTER "Build BasisImageConverter plugin" OFF)
+option(MAGNUM_WITH_BASISIMPORTER "Build BasisImporter plugin" OFF)
 if(MAGNUM_BUILD_DEPRECATED)
-    option(WITH_CGLTFIMPORTER "Build CgltfImporter plugin" OFF)
+    option(MAGNUM_WITH_CGLTFIMPORTER "Build CgltfImporter plugin" OFF)
 endif()
-option(WITH_DDSIMPORTER "Build DdsImporter plugin" OFF)
-option(WITH_DEVILIMAGEIMPORTER "Build DevIlImageImporter plugin" OFF)
-option(WITH_DRFLACAUDIOIMPORTER "Build DrFlacAudioImporter plugin" OFF)
-option(WITH_DRMP3AUDIOIMPORTER "Build DrMp3AudioImporter plugin" OFF)
-option(WITH_DRWAVAUDIOIMPORTER "Build DrWavAudioImporter plugin" OFF)
-option(WITH_FAAD2AUDIOIMPORTER "Build Faad2AudioImporter plugin" OFF)
-cmake_dependent_option(WITH_FREETYPEFONT "Build FreeTypeFont plugin" OFF "NOT WITH_HARFBUZZFONT" ON)
-option(WITH_GLSLANGSHADERCONVERTER "Build GlslangShaderConverter plugin" OFF)
+option(MAGNUM_WITH_DDSIMPORTER "Build DdsImporter plugin" OFF)
+option(MAGNUM_WITH_DEVILIMAGEIMPORTER "Build DevIlImageImporter plugin" OFF)
+option(MAGNUM_WITH_DRFLACAUDIOIMPORTER "Build DrFlacAudioImporter plugin" OFF)
+option(MAGNUM_WITH_DRMP3AUDIOIMPORTER "Build DrMp3AudioImporter plugin" OFF)
+option(MAGNUM_WITH_DRWAVAUDIOIMPORTER "Build DrWavAudioImporter plugin" OFF)
+option(MAGNUM_WITH_FAAD2AUDIOIMPORTER "Build Faad2AudioImporter plugin" OFF)
+cmake_dependent_option(MAGNUM_WITH_FREETYPEFONT "Build FreeTypeFont plugin" OFF "NOT MAGNUM_WITH_HARFBUZZFONT" ON)
+option(MAGNUM_WITH_GLSLANGSHADERCONVERTER "Build GlslangShaderConverter plugin" OFF)
 # TODO: make an option() again when CgltfImporter is gone
-cmake_dependent_option(WITH_GLTFIMPORTER "Build GltfImporter plugin" OFF "NOT WITH_CGLTFIMPORTER" ON)
-option(WITH_HARFBUZZFONT "Build HarfBuzzFont plugin" OFF)
-option(WITH_ICOIMPORTER "Build IcoImporter plugin" OFF)
-option(WITH_JPEGIMAGECONVERTER "Build JpegImageConverter plugin" OFF)
-option(WITH_JPEGIMPORTER "Build JpegImporter plugin" OFF)
-option(WITH_KTXIMAGECONVERTER "Build KtxImageConverter plugin" OFF)
-option(WITH_KTXIMPORTER "Build KtxImporter plugin" OFF)
-option(WITH_MESHOPTIMIZERSCENECONVERTER "Build MeshOptimizerSceneConverter plugin" OFF)
-option(WITH_MINIEXRIMAGECONVERTER "Build MiniExrImageConverter plugin" OFF)
-cmake_dependent_option(WITH_OPENDDL "Build OpenDdl library" OFF "NOT WITH_OPENGEXIMPORTER" ON)
-option(WITH_OPENEXRIMAGECONVERTER "Build OpenExrImageConverter plugin" OFF)
-option(WITH_OPENEXRIMPORTER "Build OpenExrImporter plugin" OFF)
-option(WITH_OPENGEXIMPORTER "Build OpenGexImporter plugin" OFF)
-option(WITH_PNGIMAGECONVERTER "Build PngImageConverter plugin" OFF)
-option(WITH_PNGIMPORTER "Build PngImporter plugin" OFF)
-option(WITH_PRIMITIVEIMPORTER "Build PrimitiveImporter plugin" OFF)
-option(WITH_SPIRVTOOLSSHADERCONVERTER "Build SpirvToolsShaderConverter plugin" OFF)
-option(WITH_STANFORDIMPORTER "Build StanfordImporter plugin" OFF)
-option(WITH_STANFORDSCENECONVERTER "Build StanfordSceneConverter plugin" OFF)
-option(WITH_STBDXTIMAGECONVERTER "Build StbDxtImageConverter plugin" OFF)
-option(WITH_STBIMAGECONVERTER "Build StbImageConverter plugin" OFF)
-option(WITH_STBIMAGEIMPORTER "Build StbImageImporter plugin" OFF)
-option(WITH_STBTRUETYPEFONT "Build StbTrueTypeFont plugin" OFF)
-option(WITH_STBVORBISAUDIOIMPORTER "Build StbVorbisAudioImporter plugin" OFF)
-option(WITH_STLIMPORTER "Build StlImporter plugin" OFF)
+cmake_dependent_option(MAGNUM_WITH_GLTFIMPORTER "Build GltfImporter plugin" OFF "NOT MAGNUM_WITH_CGLTFIMPORTER" ON)
+option(MAGNUM_WITH_HARFBUZZFONT "Build HarfBuzzFont plugin" OFF)
+option(MAGNUM_WITH_ICOIMPORTER "Build IcoImporter plugin" OFF)
+option(MAGNUM_WITH_JPEGIMAGECONVERTER "Build JpegImageConverter plugin" OFF)
+option(MAGNUM_WITH_JPEGIMPORTER "Build JpegImporter plugin" OFF)
+option(MAGNUM_WITH_KTXIMAGECONVERTER "Build KtxImageConverter plugin" OFF)
+option(MAGNUM_WITH_KTXIMPORTER "Build KtxImporter plugin" OFF)
+option(MAGNUM_WITH_MESHOPTIMIZERSCENECONVERTER "Build MeshOptimizerSceneConverter plugin" OFF)
+option(MAGNUM_WITH_MINIEXRIMAGECONVERTER "Build MiniExrImageConverter plugin" OFF)
+cmake_dependent_option(MAGNUM_WITH_OPENDDL "Build OpenDdl library" OFF "NOT MAGNUM_WITH_OPENGEXIMPORTER" ON)
+option(MAGNUM_WITH_OPENEXRIMAGECONVERTER "Build OpenExrImageConverter plugin" OFF)
+option(MAGNUM_WITH_OPENEXRIMPORTER "Build OpenExrImporter plugin" OFF)
+option(MAGNUM_WITH_OPENGEXIMPORTER "Build OpenGexImporter plugin" OFF)
+option(MAGNUM_WITH_PNGIMAGECONVERTER "Build PngImageConverter plugin" OFF)
+option(MAGNUM_WITH_PNGIMPORTER "Build PngImporter plugin" OFF)
+option(MAGNUM_WITH_PRIMITIVEIMPORTER "Build PrimitiveImporter plugin" OFF)
+option(MAGNUM_WITH_SPIRVTOOLSSHADERCONVERTER "Build SpirvToolsShaderConverter plugin" OFF)
+option(MAGNUM_WITH_STANFORDIMPORTER "Build StanfordImporter plugin" OFF)
+option(MAGNUM_WITH_STANFORDSCENECONVERTER "Build StanfordSceneConverter plugin" OFF)
+option(MAGNUM_WITH_STBDXTIMAGECONVERTER "Build StbDxtImageConverter plugin" OFF)
+option(MAGNUM_WITH_STBIMAGECONVERTER "Build StbImageConverter plugin" OFF)
+option(MAGNUM_WITH_STBIMAGEIMPORTER "Build StbImageImporter plugin" OFF)
+option(MAGNUM_WITH_STBTRUETYPEFONT "Build StbTrueTypeFont plugin" OFF)
+option(MAGNUM_WITH_STBVORBISAUDIOIMPORTER "Build StbVorbisAudioImporter plugin" OFF)
+option(MAGNUM_WITH_STLIMPORTER "Build StlImporter plugin" OFF)
 if(MAGNUM_BUILD_DEPRECATED)
-    option(WITH_TINYGLTFIMPORTER "Build TinyGltfImporter plugin" OFF)
+    option(MAGNUM_WITH_TINYGLTFIMPORTER "Build TinyGltfImporter plugin" OFF)
 endif()
-option(WITH_WEBPIMPORTER "Build WebPImporter plugin" OFF)
+option(MAGNUM_WITH_WEBPIMPORTER "Build WebPImporter plugin" OFF)
 
-option(BUILD_TESTS "Build unit tests" OFF)
-cmake_dependent_option(BUILD_GL_TESTS "Build unit tests for OpenGL code" OFF "BUILD_TESTS" OFF)
+option(MAGNUM_BUILD_TESTS "Build unit tests" OFF)
+cmake_dependent_option(MAGNUM_BUILD_GL_TESTS "Build unit tests for OpenGL code" OFF "MAGNUM_BUILD_TESTS" OFF)
 
-option(BUILD_STATIC "Build static libraries (default are dynamic)" OFF)
-option(BUILD_PLUGINS_STATIC "Build static plugins (default are dynamic)" OFF)
+option(MAGNUM_BUILD_STATIC "Build static libraries (default are dynamic)" OFF)
+option(MAGNUM_BUILD_PLUGINS_STATIC "Build static plugins (default are dynamic)" OFF)
 # Disable PIC on Emscripten by default (but still allow it to be enabled
 # explicitly if one so desires). Currently causes linker errors related to
 # __memory_base etc.: https://github.com/emscripten-core/emscripten/issues/8761
@@ -109,18 +178,96 @@ if(CORRADE_TARGET_EMSCRIPTEN)
 else()
     set(ON_EXCEPT_EMSCRIPTEN ON)
 endif()
-option(BUILD_STATIC_PIC "Build static plugins with position-independent code" ${ON_EXCEPT_EMSCRIPTEN})
+option(MAGNUM_BUILD_STATIC_PIC "Build static plugins with position-independent code" ${ON_EXCEPT_EMSCRIPTEN})
+
+# Backwards compatibility for unprefixed CMake options. If the user isn't
+# explicitly using prefixed options in the first run already, accept the
+# unprefixed options, and remember this decision for subsequent runs
+if(NOT DEFINED _MAGNUMPLUGINS_ACCEPT_DEPRECATED_UNPREFIXED_OPTIONS)
+    set(_MAGNUMPLUGINS_ACCEPT_DEPRECATED_UNPREFIXED_OPTIONS ON CACHE INTERNAL "")
+endif()
+# If the user wasn't explicitly using prefixed options in the first run and the
+# MAGNUM_BUILD_DEPRECATED option is not currently disabled (which can get
+# changed subsequently), accept the unprefixed options and print a warning if
+# they're different from the prefixed ones.
+if(_MAGNUMPLUGINS_ACCEPT_DEPRECATED_UNPREFIXED_OPTIONS AND MAGNUM_BUILD_DEPRECATED)
+    # The following variables need extra care -- mirroring what's done in
+    # cmake_dependent_option(), but only the cases that enable a dependency
+    # that is off by default, not cases that hide an option from the GUI when
+    # it's needed by something else. In other words, if the original user flag
+    # setup didn't make sense before but the option dependency fixed it, it'll
+    # be broken now, but if it made sense, it should keep working.
+    #
+    # Doing this before propagating the unprefixed options to avoid a
+    # false-positive warning when e.g. MAGNUM_BUILD_STATIC_PIC is implicitly ON
+    # but BUILD_STATIC_PIC not yet.
+    if(BUILD_STATIC)
+        if(NOT CORRADE_TARGET_EMSCRIPTEN AND NOT DEFINED BUILD_STATIC_PIC)
+            set(BUILD_STATIC_PIC ON)
+        endif()
+    endif()
+    if(WITH_HARFBUZZFONT)
+        if(NOT DEFINED WITH_FREETYPEFONT)
+            set(WITH_FREETYPEFONT ON)
+        endif()
+    endif()
+    if(WITH_CGLTFIMPORTER)
+        if(NOT DEFINED WITH_GLTFIMPORTER)
+            set(WITH_GLTFIMPORTER ON)
+        endif()
+    endif()
+    if(WITH_OPENGEXIMPORTER)
+        if(NOT DEFINED WITH_OPENDDL)
+            set(WITH_OPENDDL ON)
+        endif()
+    endif()
+
+    set(_MAGNUMPLUGINS_WARN_DEPRECATED_UNPREFIXED_OPTION )
+    foreach(option ${_MAGNUMPLUGINS_DEPRECATED_UNPREFIXED_OPTIONS})
+        if(DEFINED ${option})
+            # CMake has no comparison of boolean values (EQUAL returns false if
+            # comparing ON and 1 or OFF and FALSE, STREQUAL also), so we have
+            # to do it this way. Also warn only on the first encountered
+            # variable so people can fix it, reconfigure and go to the next one
+            # that warns.
+            if((${option} AND NOT MAGNUM_${option}) OR
+               (NOT ${option} AND MAGNUM_${option}) AND NOT _MAGNUMPLUGINS_WARN_DEPRECATED_UNPREFIXED_OPTION)
+                set(_MAGNUMPLUGINS_WARN_DEPRECATED_UNPREFIXED_OPTION ${option})
+            endif()
+            set(MAGNUM_${option} ${${option}})
+            # If variables specified on the command line don't match any
+            # options, they're kept in cache but set as UNINITIALIZED, meaning
+            # they don't appear in cmake-gui or ccmake, so there's no way to
+            # fix the warning apart from hand-enditing the CMakeCache.txt or
+            # recreating the build dir. Update their cached type to be BOOL to
+            # make them appear.
+            set(${option} ${${option}} CACHE BOOL "Deprecated, use MAGNUM_${option} instead" FORCE)
+        endif()
+    endforeach()
+
+    if(_MAGNUMPLUGINS_WARN_DEPRECATED_UNPREFIXED_OPTION)
+        # CMake 3.5+ has deprecation warnings enabled by default (which makes
+        # sense), 3.4 not. Use a warning there instead.
+        # TODO: drop when 3.4 is not supported anymore
+        if(CMAKE_VERSION VERSION_LESS 3.5)
+            set(DEPRECATION_OR_WARNING WARNING)
+        else()
+            set(DEPRECATION_OR_WARNING DEPRECATION)
+        endif()
+        message(${DEPRECATION_OR_WARNING} "Unprefixed options such as ${_MAGNUMPLUGINS_WARN_DEPRECATED_UNPREFIXED_OPTION} are deprecated, use MAGNUM_${_MAGNUMPLUGINS_WARN_DEPRECATED_UNPREFIXED_OPTION} instead. Delete the unprefixed variable from CMake cache or set both to the same value to silence this warning.")
+    endif()
+endif()
 
 # Dynamic linking is meaningless on Emscripten and too inconvenient on Android
 if(CORRADE_TARGET_EMSCRIPTEN OR CORRADE_TARGET_ANDROID)
-    set(BUILD_STATIC ON)
-    set(BUILD_PLUGINS_STATIC ON)
+    set(MAGNUM_BUILD_STATIC ON)
+    set(MAGNUM_BUILD_PLUGINS_STATIC ON)
 # Dynamic plugins are not working on iOS or Windows RT at the moment
 elseif(CORRADE_TARGET_IOS OR CORRADE_TARGET_WINDOWS_RT)
-    set(BUILD_PLUGINS_STATIC ON)
+    set(MAGNUM_BUILD_PLUGINS_STATIC ON)
 endif()
 
-if(BUILD_TESTS)
+if(MAGNUM_BUILD_TESTS)
     find_package(Corrade REQUIRED TestSuite)
     if(CORRADE_TARGET_IOS)
         set(CORRADE_TESTSUITE_BUNDLE_IDENTIFIER_PREFIX "cz.mosra.magnum-plugins")
@@ -128,13 +275,14 @@ if(BUILD_TESTS)
     enable_testing()
 endif()
 
-if(BUILD_GL_TESTS)
-    # Not needed by anything at the moment, and we want to keep BUILD_GL_TESTS
-    # enabled on the CIs to catch cases of plugins needing GL again.
+if(MAGNUM_BUILD_GL_TESTS)
+    # Not needed by anything at the moment, and we want to keep
+    # MAGNUM_BUILD_GL_TESTS enabled on the CIs to catch cases of plugins
+    # needing GL again.
     #find_package(Magnum REQUIRED OpenGLTester)
 endif()
 
-if(NOT BUILD_STATIC)
+if(NOT MAGNUM_BUILD_STATIC)
     set(SHARED_OR_STATIC SHARED)
 else()
     set(SHARED_OR_STATIC STATIC)
@@ -184,6 +332,6 @@ add_subdirectory(modules)
 add_subdirectory(src)
 
 # Build snippets as part of testing
-if(BUILD_TESTS)
+if(MAGNUM_BUILD_TESTS)
     add_subdirectory(doc/snippets)
 endif()

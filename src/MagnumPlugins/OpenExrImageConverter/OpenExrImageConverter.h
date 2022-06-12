@@ -77,8 +77,8 @@ in this format.
 @section Trade-OpenExrImageConverter-usage Usage
 
 This plugin depends on the @ref Trade library and is built if
-`WITH_OPENEXRIMAGECONVERTER` is enabled when building Magnum Plugins. To use as
-a dynamic plugin, load @cpp "OpenExrImageConverter" @ce via
+`MAGNUM_WITH_OPENEXRIMAGECONVERTER` is enabled when building Magnum Plugins. To
+use as a dynamic plugin, load @cpp "OpenExrImageConverter" @ce via
 @ref Corrade::PluginManager::Manager.
 
 Additionally, if you're using Magnum as a CMake subproject, bundle the
@@ -120,7 +120,7 @@ set(BUILD_SHARED_LIBS ${_PREV_BUILD_SHARED_LIBS})
 set(BUILD_TESTING ${_PREV_BUILD_TESTING})
 unset(CMAKE_DEBUG_POSTFIX CACHE)
 
-set(WITH_OPENEXRIMAGECONVERTER ON CACHE BOOL "" FORCE)
+set(MAGNUM_WITH_OPENEXRIMAGECONVERTER ON CACHE BOOL "" FORCE)
 add_subdirectory(magnum-plugins EXCLUDE_FROM_ALL)
 
 # So the dynamically loaded plugin gets built implicitly

@@ -26,7 +26,7 @@
 find_package(Magnum REQUIRED Trade)
 find_package(PNG REQUIRED)
 
-if(BUILD_PLUGINS_STATIC AND NOT DEFINED MAGNUM_PNGIMPORTER_BUILD_STATIC)
+if(MAGNUM_BUILD_PLUGINS_STATIC AND NOT DEFINED MAGNUM_PNGIMPORTER_BUILD_STATIC)
     set(MAGNUM_PNGIMPORTER_BUILD_STATIC 1)
 endif()
 
@@ -40,7 +40,7 @@ add_plugin(PngImporter
     PngImporter.conf
     PngImporter.cpp
     PngImporter.h)
-if(MAGNUM_PNGIMPORTER_BUILD_STATIC AND BUILD_STATIC_PIC)
+if(MAGNUM_PNGIMPORTER_BUILD_STATIC AND MAGNUM_BUILD_STATIC_PIC)
     set_target_properties(PngImporter PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
 target_include_directories(PngImporter
@@ -69,7 +69,7 @@ if(MAGNUM_PNGIMPORTER_BUILD_STATIC)
     target_sources(PngImporter INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/importStaticPlugin.cpp)
 endif()
 
-if(BUILD_TESTS)
+if(MAGNUM_BUILD_TESTS)
     add_subdirectory(Test)
 endif()
 

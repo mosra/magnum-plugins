@@ -63,8 +63,8 @@ Exports to either Little- or Big-Endian binary files with triangle faces.
 @section Trade-StanfordSceneConverter-usage Usage
 
 This plugin depends on the @ref Trade library and is built if
-`WITH_STANFORDSCENECONVERTER` is enabled when building Magnum Plugins. To use as
-a dynamic plugin, load @cpp "StanfordSceneConverter" @ce via
+`MAGNUM_WITH_STANFORDSCENECONVERTER` is enabled when building Magnum Plugins.
+To use as a dynamic plugin, load @cpp "StanfordSceneConverter" @ce via
 @ref Corrade::PluginManager::Manager.
 
 Additionally, if you're using Magnum as a CMake subproject, bundle the
@@ -72,7 +72,7 @@ Additionally, if you're using Magnum as a CMake subproject, bundle the
 following:
 
 @code{.cmake}
-set(WITH_STANFORDSCENECONVERTER ON CACHE BOOL "" FORCE)
+set(MAGNUM_WITH_STANFORDSCENECONVERTER ON CACHE BOOL "" FORCE)
 add_subdirectory(magnum-plugins EXCLUDE_FROM_ALL)
 
 # So the dynamically loaded plugin gets built implicitly

@@ -64,7 +64,7 @@ Imports normal and vertex information from binary
 @section Trade-StlImporter-usage Usage
 
 This plugin depends on the @ref Trade library and is built if
-`WITH_STLIMPORTER` is enabled when building Magnum Plugins. To use as a
+`MAGNUM_WITH_STLIMPORTER` is enabled when building Magnum Plugins. To use as a
 dynamic plugin, load @cpp "StlImporter" @ce via
 @ref Corrade::PluginManager::Manager.
 
@@ -73,7 +73,7 @@ Additionally, if you're using Magnum as a CMake subproject, bundle the
 following:
 
 @code{.cmake}
-set(WITH_STLIMPORTER ON CACHE BOOL "" FORCE)
+set(MAGNUM_WITH_STLIMPORTER ON CACHE BOOL "" FORCE)
 add_subdirectory(magnum-plugins EXCLUDE_FROM_ALL)
 
 # So the dynamically loaded plugin gets built implicitly

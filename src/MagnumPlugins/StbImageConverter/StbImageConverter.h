@@ -124,8 +124,8 @@ using plugins dedicated for given format.
 @section Trade-StbImageConverter-usage Usage
 
 This plugin depends on the @ref Trade library and is built if
-`WITH_STBIMAGECONVERTER` is enabled when building Magnum Plugins. To use as a
-dynamic plugin, load one of the @cpp "StbBmpImageConverter" @ce,
+`MAGNUM_WITH_STBIMAGECONVERTER` is enabled when building Magnum Plugins. To use
+as a dynamic plugin, load one of the @cpp "StbBmpImageConverter" @ce,
 @cpp "StbHdrImageConverter" @ce, @cpp "StbPngImageConverter" @ce,
 @cpp "StbTgaImageConverter" @ce plugins via @ref Corrade::PluginManager::Manager.
 If you would load the plugin as just @cpp "StbImageConverter" @ce, it won't be
@@ -136,7 +136,7 @@ Additionally, if you're using Magnum as a CMake subproject, bundle the
 following:
 
 @code{.cmake}
-set(WITH_STBIMAGECONVERTER ON CACHE BOOL "" FORCE)
+set(MAGNUM_WITH_STBIMAGECONVERTER ON CACHE BOOL "" FORCE)
 add_subdirectory(magnum-plugins EXCLUDE_FROM_ALL)
 
 # So the dynamically loaded plugin gets built implicitly

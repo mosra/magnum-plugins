@@ -71,8 +71,8 @@ transparency mask are automatically converted to G(A) / RGB(A). You can use
 @section Trade-PngImporter-usage Usage
 
 This plugin depends on the @ref Trade and [libPNG](http://www.libpng.org/pub/png/libpng.html)
-libraries and is built if `WITH_PNGIMPORTER` is enabled when building Magnum
-Plugins. To use as a dynamic plugin, load @cpp "PngImporter" @ce via
+libraries and is built if `MAGNUM_WITH_PNGIMPORTER` is enabled when building
+Magnum Plugins. To use as a dynamic plugin, load @cpp "PngImporter" @ce via
 @ref Corrade::PluginManager::Manager.
 
 Additionally, if you're using Magnum as a CMake subproject, bundle the
@@ -82,7 +82,7 @@ moment, so you need to provide it as a system dependency and point
 `CMAKE_PREFIX_PATH` to its installation dir if necessary.
 
 @code{.cmake}
-set(WITH_PNGIMPORTER ON CACHE BOOL "" FORCE)
+set(MAGNUM_WITH_PNGIMPORTER ON CACHE BOOL "" FORCE)
 add_subdirectory(magnum-plugins EXCLUDE_FROM_ALL)
 
 # So the dynamically loaded plugin gets built implicitly

@@ -63,15 +63,15 @@ Loads Windows icon/cursor (`*.ico` / `*.cur`) files with embedded PNGs.
 @section Trade-IcoImporter-usage Usage
 
 This plugin depends on the @ref Trade library and is built if
-`WITH_ICOIMPORTER` is enabled when building Magnum Plugins. To use as a dynamic
-plugin, load @cpp "IcoImporter" @ce via @ref Corrade::PluginManager::Manager.
+`MAGNUM_WITH_ICOIMPORTER` is enabled when building Magnum Plugins. To use as a
+dynamic plugin, load @cpp "IcoImporter" @ce via @ref Corrade::PluginManager::Manager.
 
 Additionally, if you're using Magnum as a CMake subproject, bundle the
 [magnum-plugins repository](https://github.com/mosra/magnum-plugins) and do the
 following:
 
 @code{.cmake}
-set(WITH_ICOIMPORTER ON CACHE BOOL "" FORCE)
+set(MAGNUM_WITH_ICOIMPORTER ON CACHE BOOL "" FORCE)
 add_subdirectory(magnum-plugins EXCLUDE_FROM_ALL)
 
 # So the dynamically loaded plugin gets built implicitly

@@ -27,7 +27,7 @@
 # property that would have to be set on each target separately.
 set(CMAKE_FOLDER "Magnum/OpenDdl")
 
-if(BUILD_STATIC)
+if(MAGNUM_BUILD_STATIC)
     set(MAGNUM_OPENDDL_BUILD_STATIC 1)
 endif()
 
@@ -42,10 +42,10 @@ target_include_directories(MagnumOpenDdlObjects PUBLIC
     $<TARGET_PROPERTY:Magnum::Magnum,INTERFACE_INCLUDE_DIRECTORIES>
     ${PROJECT_SOURCE_DIR}/src
     ${PROJECT_BINARY_DIR}/src)
-if(NOT BUILD_STATIC)
+if(NOT MAGNUM_BUILD_STATIC)
     target_compile_definitions(MagnumOpenDdlObjects PRIVATE "MagnumOpenDdlsObjects_EXPORTS")
 endif()
-if(NOT BUILD_STATIC OR BUILD_STATIC_PIC)
+if(NOT MAGNUM_BUILD_STATIC OR MAGNUM_BUILD_STATIC_PIC)
     set_target_properties(MagnumOpenDdlObjects PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
 
@@ -70,9 +70,9 @@ target_include_directories(MagnumOpenDdl PUBLIC
     ${PROJECT_SOURCE_DIR}/src
     ${PROJECT_BINARY_DIR}/src)
 target_link_libraries(MagnumOpenDdl PUBLIC Magnum::Magnum)
-if(NOT BUILD_STATIC)
+if(NOT MAGNUM_BUILD_STATIC)
     set_target_properties(MagnumOpenDdl PROPERTIES VERSION ${MAGNUMPLUGINS_LIBRARY_VERSION} SOVERSION ${MAGNUMPLUGINS_LIBRARY_SOVERSION})
-elseif(BUILD_STATIC AND BUILD_STATIC_PIC)
+elseif(MAGNUM_BUILD_STATIC AND MAGNUM_BUILD_STATIC_PIC)
     set_target_properties(MagnumOpenDdl PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
 set_target_properties(MagnumOpenDdl PROPERTIES DEBUG_POSTFIX "-d")
@@ -84,7 +84,7 @@ install(TARGETS MagnumOpenDdl
 install(FILES ${MagnumOpenDdl_HEADERS} DESTINATION ${MAGNUM_INCLUDE_INSTALL_DIR}/OpenDdl)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/configure.h DESTINATION ${MAGNUM_INCLUDE_INSTALL_DIR}/OpenDdl)
 
-if(BUILD_TESTS)
+if(MAGNUM_BUILD_TESTS)
     add_subdirectory(Test)
 endif()
 

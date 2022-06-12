@@ -82,8 +82,8 @@ This plugin provides the `TrueTypeFont` and `OpenTypeFont` plugins.
 @section Text-FreeTypeFont-usage Usage
 
 This plugin depends on the @ref Text and [FreeType](http://www.freetype.org)
-libraries and is built if `WITH_FREETYPEFONT` is enabled when building Magnum
-Plugins. To use as a dynamic plugin, load @cpp "FreeTypeFont" @ce via
+libraries and is built if `MAGNUM_WITH_FREETYPEFONT` is enabled when building
+Magnum Plugins. To use as a dynamic plugin, load @cpp "FreeTypeFont" @ce via
 @ref Corrade::PluginManager::Manager.
 
 Additionally, if you're using Magnum as a CMake subproject, bundle the
@@ -93,7 +93,7 @@ moment, so you need to provide it as a system dependency and point
 `CMAKE_PREFIX_PATH` to its installation dir if necessary.
 
 @code{.cmake}
-set(WITH_FREETYPEFONT ON CACHE BOOL "" FORCE)
+set(MAGNUM_WITH_FREETYPEFONT ON CACHE BOOL "" FORCE)
 add_subdirectory(magnum-plugins EXCLUDE_FROM_ALL)
 
 # So the dynamically loaded plugin gets built implicitly

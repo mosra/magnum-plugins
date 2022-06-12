@@ -64,8 +64,8 @@ Supports importing of scene, object, camera, mesh, texture and image data.
 @section Trade-OpenGexImporter-usage Usage
 
 This plugin depends on the @ref Trade and @ref OpenDdl libraries and the
-@ref AnyImageImporter plugin. It is built if `WITH_OPENGEXIMPORTER` is enabled
-when building Magnum Plugins. To use as a dynamic plugin, load
+@ref AnyImageImporter plugin. It is built if `MAGNUM_WITH_OPENGEXIMPORTER` is
+enabled when building Magnum Plugins. To use as a dynamic plugin, load
 @cpp "OpenGexImporter" @ce via @ref Corrade::PluginManager::Manager.
 
 Additionally, if you're using Magnum as a CMake subproject, bundle the
@@ -73,10 +73,10 @@ Additionally, if you're using Magnum as a CMake subproject, bundle the
 following:
 
 @code{.cmake}
-set(WITH_ANYIMAGEIMPORTER ON CACHE BOOL "" FORCE)
+set(MAGNUM_WITH_ANYIMAGEIMPORTER ON CACHE BOOL "" FORCE)
 add_subdirectory(magnum EXCLUDE_FROM_ALL)
 
-set(WITH_OPENGEXIMPORTER ON CACHE BOOL "" FORCE)
+set(MAGNUM_WITH_OPENGEXIMPORTER ON CACHE BOOL "" FORCE)
 add_subdirectory(magnum-plugins EXCLUDE_FROM_ALL)
 
 # So the dynamically loaded plugin gets built implicitly

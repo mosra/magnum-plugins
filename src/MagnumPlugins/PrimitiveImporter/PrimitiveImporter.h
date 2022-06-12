@@ -65,8 +65,8 @@ pipeline, using the @ref Primitives library directly is more straightforward.
 @section Trade-PrimitiveImporter-usage Usage
 
 This plugin depends on the @ref Trade library and is built if
-`WITH_PRIMITIVEIMPORTER` is enabled when building Magnum Plugins. To use as a
-dynamic plugin, load @cpp "PrimitiveImporter" @ce via
+`MAGNUM_WITH_PRIMITIVEIMPORTER` is enabled when building Magnum Plugins. To use
+as a dynamic plugin, load @cpp "PrimitiveImporter" @ce via
 @ref Corrade::PluginManager::Manager.
 
 Additionally, if you're using Magnum as a CMake subproject, bundle the
@@ -74,7 +74,7 @@ Additionally, if you're using Magnum as a CMake subproject, bundle the
 following:
 
 @code{.cmake}
-set(WITH_PRIMITIVEIMPORTER ON CACHE BOOL "" FORCE)
+set(MAGNUM_WITH_PRIMITIVEIMPORTER ON CACHE BOOL "" FORCE)
 add_subdirectory(magnum-plugins EXCLUDE_FROM_ALL)
 
 # So the dynamically loaded plugin gets built implicitly

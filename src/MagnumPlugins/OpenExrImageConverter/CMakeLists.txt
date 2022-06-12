@@ -28,7 +28,7 @@ find_package(Magnum REQUIRED Trade)
 # appropriate
 find_package(OpenEXR REQUIRED MODULE)
 
-if(BUILD_PLUGINS_STATIC AND NOT DEFINED MAGNUM_OPENEXRIMAGECONVERTER_BUILD_STATIC)
+if(MAGNUM_BUILD_PLUGINS_STATIC AND NOT DEFINED MAGNUM_OPENEXRIMAGECONVERTER_BUILD_STATIC)
     set(MAGNUM_OPENEXRIMAGECONVERTER_BUILD_STATIC 1)
 endif()
 
@@ -42,7 +42,7 @@ add_plugin(OpenExrImageConverter
     OpenExrImageConverter.conf
     OpenExrImageConverter.cpp
     OpenExrImageConverter.h)
-if(MAGNUM_OPENEXRIMAGECONVERTER_BUILD_STATIC AND BUILD_STATIC_PIC)
+if(MAGNUM_OPENEXRIMAGECONVERTER_BUILD_STATIC AND MAGNUM_BUILD_STATIC_PIC)
     set_target_properties(OpenExrImageConverter PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
 # Include the files as a system directory to supress warnings
@@ -68,7 +68,7 @@ if(MAGNUM_OPENEXRIMAGECONVERTER_BUILD_STATIC)
     target_sources(OpenExrImageConverter INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/importStaticPlugin.cpp)
 endif()
 
-if(BUILD_TESTS)
+if(MAGNUM_BUILD_TESTS)
     add_subdirectory(Test)
 endif()
 

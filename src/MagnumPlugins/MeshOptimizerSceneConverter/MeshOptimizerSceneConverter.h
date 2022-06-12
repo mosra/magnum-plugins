@@ -69,9 +69,9 @@ Integrates various algorithms from [meshoptimizer](https://github.com/zeux/mesho
 @section Trade-MeshOptimizerSceneConverter-usage Usage
 
 This plugin depends on the @ref Trade library and is built if
-`WITH_MESHOPTIMIZERSCENECONVERTER` is enabled when building Magnum Plugins. To
-use as a dynamic plugin, load @cpp "MeshOptimizerSceneConverter" @ce via
-@ref Corrade::PluginManager::Manager.
+`MAGNUM_WITH_MESHOPTIMIZERSCENECONVERTER` is enabled when building Magnum
+Plugins. To use as a dynamic plugin, load @cpp "MeshOptimizerSceneConverter" @ce
+via @ref Corrade::PluginManager::Manager.
 
 Additionally, if you're using Magnum as a CMake subproject, bundle the
 [magnum-plugins repository](https://github.com/mosra/magnum-plugins) and
@@ -83,7 +83,7 @@ part and point `CMAKE_PREFIX_PATH` to its installation dir if necessary.
 set(CMAKE_POSITION_INDEPENDENT_CODE ON) # needed if building dynamic plugins
 add_subdirectory(meshoptimizer EXCLUDE_FROM_ALL)
 
-set(WITH_MESHOPTIMIZERSCENECONVERTER ON CACHE BOOL "" FORCE)
+set(MAGNUM_WITH_MESHOPTIMIZERSCENECONVERTER ON CACHE BOOL "" FORCE)
 add_subdirectory(magnum-plugins EXCLUDE_FROM_ALL)
 
 # So the dynamically loaded plugin gets built implicitly

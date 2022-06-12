@@ -208,7 +208,8 @@ namespace Magnum {
 -   @relativeref{Trade,DdsImporter} now implicitly performs Y- and Z-flip on
     uncompressed images consistently with other importers
 -   @ref Trade::JpegImageConverter "JpegImageConverter" was mistakenly using
-    the `BUILD_STATIC` CMake option instead of `BUILD_PLUGINS_STATIC`
+    the `MAGNUM_BUILD_STATIC` CMake option instead of
+    `MAGNUM_BUILD_PLUGINS_STATIC`
 -   Fixed @ref Trade::BasisImporter "BasisImporter" to work with direct
     instantiation without a plugin manager (see [mosra/magnum-plugins#96](https://github.com/mosra/magnum-plugins/pull/96))
 -   Assorted `Trade,TinyGltfImporter` robustness improvements (see
@@ -231,6 +232,13 @@ namespace Magnum {
 
 @subsection changelog-plugins-latest-deprecated Deprecated APIs
 
+-   All @ref building-plugins-features "CMake build options" are now prefixed
+    with `MAGNUM_`. For backwards compatibility, unless
+    @ref MAGNUM_BUILD_DEPRECATED is disabled and unless a prefixed option is
+    already set during the initial run, the unprefixed options are still
+    recognized with a warning. In particular, if `BUILD_DEPRECATED` is set but
+    `MAGNUM_BUILD_DEPRECATED` not, the unprefixed options are also recognized.
+    See also [mosra/corrade#139](https://github.com/mosra/corrade/issues/139).
 -   The `TinyGltfImporter` plugin is now deprecated in favor of an actually
     lightweight @relativeref{Trade,GltfImporter}. The `CgltfImporter` plugin,
     which is where the @relativeref{Trade,GltfImporter} originally comes from,

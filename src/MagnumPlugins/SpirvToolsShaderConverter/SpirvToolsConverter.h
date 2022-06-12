@@ -80,8 +80,8 @@ plugins.
 @section ShaderTools-SpirvToolsConverter-usage Usage
 
 This plugin depends on the @ref ShaderTools and [SPIRV-Tools](https://github.com/KhronosGroup/SPIRV-Tools)
-libraries and is built if `WITH_SPIRVTOOLSSHADERCONVERTER` is enabled when
-building Magnum Plugins. To use as a dynamic plugin, load
+libraries and is built if `MAGNUM_WITH_SPIRVTOOLSSHADERCONVERTER` is enabled
+when building Magnum Plugins. To use as a dynamic plugin, load
 @cpp "SpirvToolsShaderConverter" @ce via @ref Corrade::PluginManager::Manager.
 
 Additionally, if you're using Magnum as a CMake subproject, bundle the
@@ -100,7 +100,7 @@ set(SPIRV_HEADERS_SKIP_EXAMPLES ON CACHE BOOL "" FORCE)
 set(SPIRV-Headers_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/SPIRV-Headers)
 add_subdirectory(SPIRV-Tools EXCLUDE_FROM_ALL)
 
-set(WITH_SPIRVTOOLSSHADERCONVERTER ON CACHE BOOL "" FORCE)
+set(MAGNUM_WITH_SPIRVTOOLSSHADERCONVERTER ON CACHE BOOL "" FORCE)
 add_subdirectory(magnum-plugins EXCLUDE_FROM_ALL)
 
 # So the dynamically loaded plugin gets built implicitly

@@ -45,19 +45,19 @@ if(CORRADE_TARGET_EMSCRIPTEN AND NOT TARGET_GLES2)
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -s USE_WEBGL2=1")
 endif()
 
-if(WITH_BASISIMPORTER)
+if(MAGNUM_WITH_BASISIMPORTER)
     add_library(snippets-BasisImporter STATIC
         BasisImporter.cpp)
     target_link_libraries(snippets-BasisImporter PRIVATE Magnum::Trade)
 endif()
 
-if(WITH_GLTFIMPORTER)
+if(MAGNUM_WITH_GLTFIMPORTER)
     add_library(snippets-GltfImporter STATIC
         GltfImporter.cpp)
     target_link_libraries(snippets-GltfImporter PRIVATE Magnum::Trade)
 endif()
 
-if(WITH_STBIMAGEIMPORTER)
+if(MAGNUM_WITH_STBIMAGEIMPORTER)
     add_library(snippets-StbImageImporter STATIC
         StbImageImporter.cpp)
     target_link_libraries(snippets-StbImageImporter PRIVATE Magnum::Trade)

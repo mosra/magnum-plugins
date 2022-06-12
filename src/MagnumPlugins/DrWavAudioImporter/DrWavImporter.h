@@ -95,8 +95,8 @@ handle some errata such as JUNK blocks in strange places.
 @section Audio-DrWavImporter-usage Usage
 
 This plugin depends on the @ref Audio library and is built if
-`WITH_DRWAVAUDIOIMPORTER` is enabled when building Magnum Plugins. To use as a
-dynamic plugin, load @cpp "DrWavAudioImporter" @ce via
+`MAGNUM_WITH_DRWAVAUDIOIMPORTER` is enabled when building Magnum Plugins. To
+use as a dynamic plugin, load @cpp "DrWavAudioImporter" @ce via
 @ref Corrade::PluginManager::Manager.
 
 Additionally, if you're using Magnum as a CMake subproject, bundle the
@@ -104,7 +104,7 @@ Additionally, if you're using Magnum as a CMake subproject, bundle the
 following:
 
 @code{.cmake}
-set(WITH_DRWAVAUDIOIMPORTER ON CACHE BOOL "" FORCE)
+set(MAGNUM_WITH_DRWAVAUDIOIMPORTER ON CACHE BOOL "" FORCE)
 add_subdirectory(magnum-plugins EXCLUDE_FROM_ALL)
 
 # So the dynamically loaded plugin gets built implicitly

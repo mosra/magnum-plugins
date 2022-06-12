@@ -27,7 +27,7 @@
 find_package(Magnum REQUIRED Trade)
 find_package(DevIL REQUIRED)
 
-if(BUILD_PLUGINS_STATIC AND NOT DEFINED MAGNUM_DEVILIMAGEIMPORTER_BUILD_STATIC)
+if(MAGNUM_BUILD_PLUGINS_STATIC AND NOT DEFINED MAGNUM_DEVILIMAGEIMPORTER_BUILD_STATIC)
     set(MAGNUM_DEVILIMAGEIMPORTER_BUILD_STATIC 1)
 endif()
 
@@ -41,7 +41,7 @@ add_plugin(DevIlImageImporter
     DevIlImageImporter.conf
     DevIlImageImporter.cpp
     DevIlImageImporter.h)
-if(MAGNUM_DEVILIMAGEIMPORTER_BUILD_STATIC AND BUILD_STATIC_PIC)
+if(MAGNUM_DEVILIMAGEIMPORTER_BUILD_STATIC AND MAGNUM_BUILD_STATIC_PIC)
     set_target_properties(DevIlImageImporter PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
 # IL_INCLUDE_DIR in the upstream FindDevIL.cmake is "The path to the directory
@@ -76,7 +76,7 @@ if(MAGNUM_DEVILIMAGEIMPORTER_BUILD_STATIC)
     target_sources(DevIlImageImporter INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/importStaticPlugin.cpp)
 endif()
 
-if(BUILD_TESTS)
+if(MAGNUM_BUILD_TESTS)
     add_subdirectory(Test)
 endif()
 

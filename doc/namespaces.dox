@@ -178,7 +178,7 @@
 Parser for [OpenDDL](http://openddl.org) file format. See
 @ref OpenDdl::Document for more information.
 
-This library is built if `WITH_OPENDDL` is enabled when building Magnum
+This library is built if `MAGNUM_WITH_OPENDDL` is enabled when building Magnum
 Plugins. To use this library with CMake, request the `OpenDdl` component of the
 `MagnumPlugins` package and link to the `MagnumPlugins::OpenDdl` target:
 
@@ -194,7 +194,7 @@ Additionally, if you're using Magnum as a CMake subproject, bundle the
 following *before* calling @cmake find_package() @ce:
 
 @code{.cmake}
-set(WITH_OPENDDL ON CACHE BOOL "" FORCE)
+set(MAGNUM_WITH_OPENDDL ON CACHE BOOL "" FORCE)
 add_subdirectory(magnum-plugins EXCLUDE_FROM_ALL)
 @endcode
 */
@@ -204,7 +204,7 @@ add_subdirectory(magnum-plugins EXCLUDE_FROM_ALL)
 Validation of OpenDDL documents. See @ref OpenDdl::Document::validate() for
 more information.
 
-This library is built if `WITH_OPENDDL` is enabled when building Magnum
+This library is built if `MAGNUM_WITH_OPENDDL` is enabled when building Magnum
 Plugins. To use this library with CMake, request the `OpenDdl` component of the
 `MagnumPlugins` package and link to the `MagnumPlugins::OpenDdl` target:
 
@@ -220,7 +220,7 @@ Additionally, if you're using Magnum as a CMake subproject, bundle the
 following *before* calling @cmake find_package() @ce:
 
 @code{.cmake}
-set(WITH_OPENDDL ON CACHE BOOL "" FORCE)
+set(MAGNUM_WITH_OPENDDL ON CACHE BOOL "" FORCE)
 add_subdirectory(magnum-plugins EXCLUDE_FROM_ALL)
 @endcode
 */

@@ -25,7 +25,7 @@
 
 find_package(Magnum REQUIRED Trade)
 
-if(BUILD_PLUGINS_STATIC AND NOT DEFINED MAGNUM_STBIMAGECONVERTER_BUILD_STATIC)
+if(MAGNUM_BUILD_PLUGINS_STATIC AND NOT DEFINED MAGNUM_STBIMAGECONVERTER_BUILD_STATIC)
     set(MAGNUM_STBIMAGECONVERTER_BUILD_STATIC 1)
 endif()
 
@@ -39,7 +39,7 @@ add_plugin(StbImageConverter
     StbImageConverter.conf
     StbImageConverter.cpp
     StbImageConverter.h)
-if(MAGNUM_STBIMAGECONVERTER_BUILD_STATIC AND BUILD_STATIC_PIC)
+if(MAGNUM_STBIMAGECONVERTER_BUILD_STATIC AND MAGNUM_BUILD_STATIC_PIC)
     set_target_properties(StbImageConverter PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
 target_include_directories(StbImageConverter PUBLIC
@@ -65,7 +65,7 @@ if(MAGNUM_STBIMAGECONVERTER_BUILD_STATIC)
     target_sources(StbImageConverter INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/importStaticPlugin.cpp)
 endif()
 
-if(BUILD_TESTS)
+if(MAGNUM_BUILD_TESTS)
     add_subdirectory(Test)
 endif()
 

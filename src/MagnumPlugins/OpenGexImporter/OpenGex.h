@@ -37,8 +37,8 @@ namespace Magnum { namespace Trade {
 Use these identifiers to access the document tree using the @ref OpenDdl
 parser.
 
-This library is built if `WITH_OPENGEXIMPORTER` is enabled when building Magnum
-Plugins. To use this library with CMake, request the `OpenGexImporter`
+This library is built if `MAGNUM_WITH_OPENGEXIMPORTER` is enabled when building
+Magnum Plugins. To use this library with CMake, request the `OpenGexImporter`
 component of the `MagnumPlugins` package and link to the
 `MagnumPlugins::OpenGexImporter` target:
 
@@ -54,7 +54,7 @@ Additionally, if you're using Magnum as a CMake subproject, bundle the
 following *before* calling @cmake find_package() @ce:
 
 @code{.cmake}
-set(WITH_OPENGEXIMPORTER ON CACHE BOOL "" FORCE)
+set(MAGNUM_WITH_OPENGEXIMPORTER ON CACHE BOOL "" FORCE)
 add_subdirectory(magnum-plugins EXCLUDE_FROM_ALL)
 @endcode
 */

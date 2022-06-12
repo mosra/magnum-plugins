@@ -35,158 +35,158 @@ macro(add_plugin plugin_name debug_install_dirs release_install_dirs metadata_fi
     endif()
 endmacro()
 
-if(WITH_ASSIMPIMPORTER)
+if(MAGNUM_WITH_ASSIMPIMPORTER)
     add_subdirectory(AssimpImporter)
 endif()
 
-if(WITH_ASTCIMPORTER)
+if(MAGNUM_WITH_ASTCIMPORTER)
     add_subdirectory(AstcImporter)
 endif()
 
-if(WITH_BASISIMAGECONVERTER)
+if(MAGNUM_WITH_BASISIMAGECONVERTER)
     add_subdirectory(BasisImageConverter)
 endif()
 
-if(WITH_BASISIMPORTER)
+if(MAGNUM_WITH_BASISIMPORTER)
     add_subdirectory(BasisImporter)
 endif()
 
-if(MAGNUM_BUILD_DEPRECATED AND WITH_CGLTFIMPORTER)
+if(MAGNUM_BUILD_DEPRECATED AND MAGNUM_WITH_CGLTFIMPORTER)
     add_subdirectory(CgltfImporter)
 endif()
 
-if(WITH_DDSIMPORTER)
+if(MAGNUM_WITH_DDSIMPORTER)
     add_subdirectory(DdsImporter)
 endif()
 
-if(WITH_DEVILIMAGEIMPORTER)
+if(MAGNUM_WITH_DEVILIMAGEIMPORTER)
     add_subdirectory(DevIlImageImporter)
 endif()
 
-if(WITH_DRFLACAUDIOIMPORTER)
+if(MAGNUM_WITH_DRFLACAUDIOIMPORTER)
     add_subdirectory(DrFlacAudioImporter)
 endif()
 
-if(WITH_DRMP3AUDIOIMPORTER)
+if(MAGNUM_WITH_DRMP3AUDIOIMPORTER)
     add_subdirectory(DrMp3AudioImporter)
 endif()
 
-if(WITH_DRWAVAUDIOIMPORTER)
+if(MAGNUM_WITH_DRWAVAUDIOIMPORTER)
     add_subdirectory(DrWavAudioImporter)
 endif()
 
-if(WITH_FAAD2AUDIOIMPORTER)
+if(MAGNUM_WITH_FAAD2AUDIOIMPORTER)
     add_subdirectory(Faad2AudioImporter)
 endif()
 
-if(WITH_FREETYPEFONT)
+if(MAGNUM_WITH_FREETYPEFONT)
     add_subdirectory(FreeTypeFont)
 endif()
 
-if(WITH_GLSLANGSHADERCONVERTER)
+if(MAGNUM_WITH_GLSLANGSHADERCONVERTER)
     add_subdirectory(GlslangShaderConverter)
 endif()
 
-if(WITH_GLTFIMPORTER)
+if(MAGNUM_WITH_GLTFIMPORTER)
     add_subdirectory(GltfImporter)
 endif()
 
-if(WITH_HARFBUZZFONT)
+if(MAGNUM_WITH_HARFBUZZFONT)
     add_subdirectory(HarfBuzzFont)
 endif()
 
-if(WITH_ICOIMPORTER)
+if(MAGNUM_WITH_ICOIMPORTER)
     add_subdirectory(IcoImporter)
 endif()
 
-if(WITH_JPEGIMAGECONVERTER)
+if(MAGNUM_WITH_JPEGIMAGECONVERTER)
     add_subdirectory(JpegImageConverter)
 endif()
 
-if(WITH_JPEGIMPORTER)
+if(MAGNUM_WITH_JPEGIMPORTER)
     add_subdirectory(JpegImporter)
 endif()
 
-if(WITH_KTXIMAGECONVERTER)
+if(MAGNUM_WITH_KTXIMAGECONVERTER)
     add_subdirectory(KtxImageConverter)
 endif()
 
-if(WITH_KTXIMPORTER)
+if(MAGNUM_WITH_KTXIMPORTER)
     add_subdirectory(KtxImporter)
 endif()
 
-if(WITH_MESHOPTIMIZERSCENECONVERTER)
+if(MAGNUM_WITH_MESHOPTIMIZERSCENECONVERTER)
     add_subdirectory(MeshOptimizerSceneConverter)
 endif()
 
-if(WITH_MINIEXRIMAGECONVERTER)
+if(MAGNUM_WITH_MINIEXRIMAGECONVERTER)
     add_subdirectory(MiniExrImageConverter)
 endif()
 
-if(WITH_OPENGEXIMPORTER)
+if(MAGNUM_WITH_OPENGEXIMPORTER)
     add_subdirectory(OpenGexImporter)
 endif()
 
-if(WITH_OPENEXRIMAGECONVERTER)
+if(MAGNUM_WITH_OPENEXRIMAGECONVERTER)
     add_subdirectory(OpenExrImageConverter)
 endif()
 
-if(WITH_OPENEXRIMPORTER)
+if(MAGNUM_WITH_OPENEXRIMPORTER)
     add_subdirectory(OpenExrImporter)
 endif()
 
-if(WITH_PNGIMAGECONVERTER)
+if(MAGNUM_WITH_PNGIMAGECONVERTER)
     add_subdirectory(PngImageConverter)
 endif()
 
-if(WITH_PNGIMPORTER)
+if(MAGNUM_WITH_PNGIMPORTER)
     add_subdirectory(PngImporter)
 endif()
 
-if(WITH_PRIMITIVEIMPORTER)
+if(MAGNUM_WITH_PRIMITIVEIMPORTER)
     add_subdirectory(PrimitiveImporter)
 endif()
 
-if(WITH_SPIRVTOOLSSHADERCONVERTER)
+if(MAGNUM_WITH_SPIRVTOOLSSHADERCONVERTER)
     add_subdirectory(SpirvToolsShaderConverter)
 endif()
 
-if(WITH_STANFORDIMPORTER)
+if(MAGNUM_WITH_STANFORDIMPORTER)
     add_subdirectory(StanfordImporter)
 endif()
 
-if(WITH_STANFORDSCENECONVERTER)
+if(MAGNUM_WITH_STANFORDSCENECONVERTER)
     add_subdirectory(StanfordSceneConverter)
 endif()
 
-if(WITH_STBDXTIMAGECONVERTER)
+if(MAGNUM_WITH_STBDXTIMAGECONVERTER)
     add_subdirectory(StbDxtImageConverter)
 endif()
 
-if(WITH_STBIMAGECONVERTER)
+if(MAGNUM_WITH_STBIMAGECONVERTER)
     add_subdirectory(StbImageConverter)
 endif()
 
-if(WITH_STBIMAGEIMPORTER)
+if(MAGNUM_WITH_STBIMAGEIMPORTER)
     add_subdirectory(StbImageImporter)
 endif()
 
-if(WITH_STBTRUETYPEFONT)
+if(MAGNUM_WITH_STBTRUETYPEFONT)
     add_subdirectory(StbTrueTypeFont)
 endif()
 
-if(WITH_STBVORBISAUDIOIMPORTER)
+if(MAGNUM_WITH_STBVORBISAUDIOIMPORTER)
     add_subdirectory(StbVorbisAudioImporter)
 endif()
 
-if(WITH_STLIMPORTER)
+if(MAGNUM_WITH_STLIMPORTER)
     add_subdirectory(StlImporter)
 endif()
 
-if(MAGNUM_BUILD_DEPRECATED AND WITH_TINYGLTFIMPORTER)
+if(MAGNUM_BUILD_DEPRECATED AND MAGNUM_WITH_TINYGLTFIMPORTER)
     add_subdirectory(TinyGltfImporter)
 endif()
 
-if(WITH_WEBPIMPORTER)
+if(MAGNUM_WITH_WEBPIMPORTER)
     add_subdirectory(WebPImporter)
 endif()

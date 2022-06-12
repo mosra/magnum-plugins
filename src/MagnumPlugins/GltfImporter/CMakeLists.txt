@@ -26,7 +26,7 @@
 
 find_package(Magnum REQUIRED Trade AnyImageImporter)
 
-if(BUILD_PLUGINS_STATIC AND NOT DEFINED MAGNUM_GLTFIMPORTER_BUILD_STATIC)
+if(MAGNUM_BUILD_PLUGINS_STATIC AND NOT DEFINED MAGNUM_GLTFIMPORTER_BUILD_STATIC)
     set(MAGNUM_GLTFIMPORTER_BUILD_STATIC 1)
 endif()
 
@@ -41,7 +41,7 @@ add_plugin(GltfImporter
     GltfImporter.cpp
     GltfImporter.h
     Gltf.h)
-if(MAGNUM_GLTFIMPORTER_BUILD_STATIC AND BUILD_STATIC_PIC)
+if(MAGNUM_GLTFIMPORTER_BUILD_STATIC AND MAGNUM_BUILD_STATIC_PIC)
     set_target_properties(GltfImporter PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
 target_include_directories(GltfImporter PUBLIC
@@ -70,7 +70,7 @@ if(MAGNUM_GLTFIMPORTER_BUILD_STATIC)
     target_sources(GltfImporter INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/importStaticPlugin.cpp)
 endif()
 
-if(BUILD_TESTS)
+if(MAGNUM_BUILD_TESTS)
     add_subdirectory(Test)
 endif()
 

@@ -26,7 +26,7 @@
 
 find_package(Magnum REQUIRED Trade AnyImageImporter)
 
-if(BUILD_PLUGINS_STATIC AND NOT DEFINED MAGNUM_TINYGLTFIMPORTER_BUILD_STATIC)
+if(MAGNUM_BUILD_PLUGINS_STATIC AND NOT DEFINED MAGNUM_TINYGLTFIMPORTER_BUILD_STATIC)
     set(MAGNUM_TINYGLTFIMPORTER_BUILD_STATIC 1)
 endif()
 
@@ -40,7 +40,7 @@ add_plugin(TinyGltfImporter
     TinyGltfImporter.conf
     TinyGltfImporter.cpp
     TinyGltfImporter.h)
-if(MAGNUM_TINYGLTFIMPORTER_BUILD_STATIC AND BUILD_STATIC_PIC)
+if(MAGNUM_TINYGLTFIMPORTER_BUILD_STATIC AND MAGNUM_BUILD_STATIC_PIC)
     set_target_properties(TinyGltfImporter PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
 # I could include tinygltf directly, but I want to suppress the warnings from
@@ -92,7 +92,7 @@ if(MAGNUM_TINYGLTFIMPORTER_BUILD_STATIC)
     target_sources(TinyGltfImporter INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/importStaticPlugin.cpp)
 endif()
 
-if(BUILD_TESTS)
+if(MAGNUM_BUILD_TESTS)
     add_subdirectory(Test)
 endif()
 

@@ -31,7 +31,7 @@ else()
     add_library(meshoptimizer::meshoptimizer ALIAS meshoptimizer)
 endif()
 
-if(BUILD_PLUGINS_STATIC AND NOT DEFINED MAGNUM_MESHOPTIMIZERSCENECONVERTER_BUILD_STATIC)
+if(MAGNUM_BUILD_PLUGINS_STATIC AND NOT DEFINED MAGNUM_MESHOPTIMIZERSCENECONVERTER_BUILD_STATIC)
     set(MAGNUM_MESHOPTIMIZERSCENECONVERTER_BUILD_STATIC 1)
 endif()
 
@@ -45,7 +45,7 @@ add_plugin(MeshOptimizerSceneConverter
     MeshOptimizerSceneConverter.conf
     MeshOptimizerSceneConverter.cpp
     MeshOptimizerSceneConverter.h)
-if(MAGNUM_MESHOPTIMIZERSCENECONVERTER_BUILD_STATIC AND BUILD_STATIC_PIC)
+if(MAGNUM_MESHOPTIMIZERSCENECONVERTER_BUILD_STATIC AND MAGNUM_BUILD_STATIC_PIC)
     set_target_properties(MeshOptimizerSceneConverter PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
 target_include_directories(MeshOptimizerSceneConverter PUBLIC
@@ -72,7 +72,7 @@ if(MAGNUM_MESHOPTIMIZERSCENECONVERTER_BUILD_STATIC)
     target_sources(MeshOptimizerSceneConverter INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/importStaticPlugin.cpp)
 endif()
 
-if(BUILD_TESTS)
+if(MAGNUM_BUILD_TESTS)
     add_subdirectory(Test)
 endif()
 

@@ -26,7 +26,7 @@
 
 find_package(Magnum REQUIRED Trade)
 
-if(BUILD_PLUGINS_STATIC AND NOT DEFINED MAGNUM_DDSIMPORTER_BUILD_STATIC)
+if(MAGNUM_BUILD_PLUGINS_STATIC AND NOT DEFINED MAGNUM_DDSIMPORTER_BUILD_STATIC)
     set(MAGNUM_DDSIMPORTER_BUILD_STATIC 1)
 endif()
 
@@ -41,7 +41,7 @@ add_plugin(DdsImporter
     DdsImporter.cpp
     DdsImporter.h
     DxgiFormat.h)
-if(MAGNUM_DDSIMPORTER_BUILD_STATIC AND BUILD_STATIC_PIC)
+if(MAGNUM_DDSIMPORTER_BUILD_STATIC AND MAGNUM_BUILD_STATIC_PIC)
     set_target_properties(DdsImporter PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
 target_include_directories(DdsImporter PUBLIC
@@ -65,7 +65,7 @@ if(MAGNUM_DDSIMPORTER_BUILD_STATIC)
     target_sources(DdsImporter INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/importStaticPlugin.cpp)
 endif()
 
-if(BUILD_TESTS)
+if(MAGNUM_BUILD_TESTS)
     add_subdirectory(Test)
 endif()
 

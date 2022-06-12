@@ -26,7 +26,7 @@
 find_package(Magnum REQUIRED Trade)
 find_package(WebP REQUIRED)
 
-if(BUILD_PLUGINS_STATIC AND NOT DEFINED MAGNUM_WEBPIMPORTER_BUILD_STATIC)
+if(MAGNUM_BUILD_PLUGINS_STATIC AND NOT DEFINED MAGNUM_WEBPIMPORTER_BUILD_STATIC)
     set(MAGNUM_WEBPIMPORTER_BUILD_STATIC 1)
 endif()
 
@@ -40,7 +40,7 @@ add_plugin(WebPImporter
     WebPImporter.conf
     WebPImporter.cpp
     WebPImporter.h)
-if(MAGNUM_WEBPIMPORTER_BUILD_STATIC AND BUILD_STATIC_PIC)
+if(MAGNUM_WEBPIMPORTER_BUILD_STATIC AND MAGNUM_BUILD_STATIC_PIC)
     set_target_properties(WebPImporter PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
 target_include_directories(WebPImporter
@@ -68,7 +68,7 @@ if(MAGNUM_WEBPIMPORTER_BUILD_STATIC)
     target_sources(WebPImporter INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/importStaticPlugin.cpp)
 endif()
 
-if(BUILD_TESTS)
+if(MAGNUM_BUILD_TESTS)
     add_subdirectory(Test)
 endif()
 

@@ -26,7 +26,7 @@
 find_package(Magnum REQUIRED Trade)
 find_package(JPEG REQUIRED)
 
-if(BUILD_PLUGINS_STATIC AND NOT DEFINED MAGNUM_JPEGIMAGECONVERTER_BUILD_STATIC)
+if(MAGNUM_BUILD_PLUGINS_STATIC AND NOT DEFINED MAGNUM_JPEGIMAGECONVERTER_BUILD_STATIC)
     set(MAGNUM_JPEGIMAGECONVERTER_BUILD_STATIC 1)
 endif()
 
@@ -40,7 +40,7 @@ add_plugin(JpegImageConverter
     JpegImageConverter.conf
     JpegImageConverter.cpp
     JpegImageConverter.h)
-if(MAGNUM_JPEGIMAGECONVERTER_BUILD_STATIC AND BUILD_STATIC_PIC)
+if(MAGNUM_JPEGIMAGECONVERTER_BUILD_STATIC AND MAGNUM_BUILD_STATIC_PIC)
     set_target_properties(JpegImageConverter PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
 target_include_directories(JpegImageConverter
@@ -71,7 +71,7 @@ if(MAGNUM_JPEGIMAGECONVERTER_BUILD_STATIC)
     target_sources(JpegImageConverter INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/importStaticPlugin.cpp)
 endif()
 
-if(BUILD_TESTS)
+if(MAGNUM_BUILD_TESTS)
     add_subdirectory(Test)
 endif()
 

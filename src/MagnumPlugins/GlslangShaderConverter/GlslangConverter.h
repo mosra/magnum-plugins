@@ -79,7 +79,7 @@ plugins.
 @section ShaderTools-GlslangConverter-usage Usage
 
 This plugin depends on the @ref ShaderTools and [Glslang](https://github.com/KhronosGroup/glslang)
-libraries and is built if `WITH_GLSLANGSHADERCONVERTER` is enabled when
+libraries and is built if `MAGNUM_WITH_GLSLANGSHADERCONVERTER` is enabled when
 building Magnum Plugins. To use as a dynamic plugin, load
 @cpp "GlslangShaderConverter" @ce via @ref Corrade::PluginManager::Manager.
 
@@ -105,7 +105,7 @@ set(ENABLE_SPVREMAPPER OFF CACHE BOOL "" FORCE)
 file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/include")
 add_subdirectory(glslang EXCLUDE_FROM_ALL)
 
-set(WITH_GLSLANGSHADERCONVERTER ON CACHE BOOL "" FORCE)
+set(MAGNUM_WITH_GLSLANGSHADERCONVERTER ON CACHE BOOL "" FORCE)
 add_subdirectory(magnum-plugins EXCLUDE_FROM_ALL)
 
 # So the dynamically loaded plugin gets built implicitly
