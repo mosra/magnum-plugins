@@ -96,7 +96,6 @@ if(MAGNUM_BUILD_DEPRECATED)
 endif()
 option(WITH_WEBPIMPORTER "Build WebPImporter plugin" OFF)
 
-include(CMakeDependentOption)
 option(BUILD_TESTS "Build unit tests" OFF)
 cmake_dependent_option(BUILD_GL_TESTS "Build unit tests for OpenGL code" OFF "BUILD_TESTS" OFF)
 
