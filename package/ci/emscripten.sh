@@ -11,10 +11,10 @@ mkdir build && cd build || exit /b
 cmake .. \
     -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_INSTALL_PREFIX=$HOME/deps-native \
-    -DWITH_INTERCONNECT=OFF \
-    -DWITH_PLUGINMANAGER=OFF \
-    -DWITH_TESTSUITE=OFF \
-    -DWITH_UTILITY=OFF \
+    -DCORRADE_WITH_INTERCONNECT=OFF \
+    -DCORRADE_WITH_PLUGINMANAGER=OFF \
+    -DCORRADE_WITH_TESTSUITE=OFF \
+    -DCORRADE_WITH_UTILITY=OFF \
     -G Ninja
 ninja install
 cd ..
@@ -22,13 +22,13 @@ cd ..
 # Crosscompile Corrade
 mkdir build-emscripten && cd build-emscripten
 cmake .. \
-    -DCORRADE_RC_EXECUTABLE=$HOME/deps-native/bin/corrade-rc \
     -DCMAKE_TOOLCHAIN_FILE="../../toolchains/generic/Emscripten-wasm.cmake" \
     -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_CXX_FLAGS_RELEASE="-DNDEBUG -O1" \
     -DCMAKE_EXE_LINKER_FLAGS_RELEASE="-O1" \
     -DCMAKE_INSTALL_PREFIX=$HOME/deps \
-    -DWITH_INTERCONNECT=OFF \
+    -DCORRADE_RC_EXECUTABLE=$HOME/deps-native/bin/corrade-rc \
+    -DCORRADE_WITH_INTERCONNECT=OFF \
     -G Ninja
 ninja install
 cd ../..
@@ -38,24 +38,24 @@ git clone --depth 1 https://github.com/mosra/magnum.git
 cd magnum
 mkdir build-emscripten && cd build-emscripten
 cmake .. \
-    -DCORRADE_RC_EXECUTABLE=$HOME/deps-native/bin/corrade-rc \
     -DCMAKE_TOOLCHAIN_FILE="../../toolchains/generic/Emscripten-wasm.cmake" \
     -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_CXX_FLAGS_RELEASE="-DNDEBUG -O1" \
     -DCMAKE_EXE_LINKER_FLAGS_RELEASE="-O1" \
     -DCMAKE_INSTALL_PREFIX=$HOME/deps \
     -DCMAKE_FIND_ROOT_PATH=$HOME/deps \
-    -DWITH_AUDIO=ON \
-    -DWITH_DEBUGTOOLS=ON \
-    -DWITH_GL=OFF \
-    -DWITH_MESHTOOLS=ON \
-    -DWITH_PRIMITIVES=ON \
-    -DWITH_SCENEGRAPH=OFF \
-    -DWITH_SCENETOOLS=OFF \
-    -DWITH_SHADERS=OFF \
-    -DWITH_TEXT=ON \
-    -DWITH_TEXTURETOOLS=ON \
-    -DWITH_ANYIMAGEIMPORTER=ON \
+    -DCORRADE_RC_EXECUTABLE=$HOME/deps-native/bin/corrade-rc \
+    -DMAGNUM_WITH_AUDIO=ON \
+    -DMAGNUM_WITH_DEBUGTOOLS=ON \
+    -DMAGNUM_WITH_GL=OFF \
+    -DMAGNUM_WITH_MESHTOOLS=ON \
+    -DMAGNUM_WITH_PRIMITIVES=ON \
+    -DMAGNUM_WITH_SCENEGRAPH=OFF \
+    -DMAGNUM_WITH_SCENETOOLS=OFF \
+    -DMAGNUM_WITH_SHADERS=OFF \
+    -DMAGNUM_WITH_TEXT=ON \
+    -DMAGNUM_WITH_TEXTURETOOLS=ON \
+    -DMAGNUM_WITH_ANYIMAGEIMPORTER=ON \
     -G Ninja
 ninja install
 cd ../..
@@ -97,13 +97,13 @@ cd ../..
 # WITH_BASISIMAGECONVERTER is disabled as it requires pthreads.
 mkdir build-emscripten && cd build-emscripten
 cmake .. \
-    -DCORRADE_RC_EXECUTABLE=$HOME/deps-native/bin/corrade-rc \
     -DCMAKE_TOOLCHAIN_FILE="../toolchains/generic/Emscripten-wasm.cmake" \
     -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_CXX_FLAGS_RELEASE="-DNDEBUG -O1" \
     -DCMAKE_EXE_LINKER_FLAGS_RELEASE="-O1" \
     -DCMAKE_INSTALL_PREFIX=$HOME/deps \
     -DCMAKE_FIND_ROOT_PATH=$HOME/deps \
+    -DCORRADE_RC_EXECUTABLE=$HOME/deps-native/bin/corrade-rc \
     -DWITH_ASSIMPIMPORTER=OFF \
     -DWITH_ASTCIMPORTER=ON \
     -DWITH_BASISIMAGECONVERTER=OFF \

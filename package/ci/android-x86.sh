@@ -10,10 +10,10 @@ mkdir build && cd build
 cmake .. \
     -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_INSTALL_PREFIX=$HOME/deps-native \
-    -DWITH_INTERCONNECT=OFF \
-    -DWITH_PLUGINMANAGER=OFF \
-    -DWITH_TESTSUITE=OFF \
-    -DWITH_UTILITY=OFF \
+    -DCORRADE_WITH_INTERCONNECT=OFF \
+    -DCORRADE_WITH_PLUGINMANAGER=OFF \
+    -DCORRADE_WITH_TESTSUITE=OFF \
+    -DCORRADE_WITH_UTILITY=OFF \
     -G Ninja
 ninja install
 cd ..
@@ -27,9 +27,9 @@ cmake .. \
     -DCMAKE_ANDROID_NDK_TOOLCHAIN_VERSION=clang \
     -DCMAKE_ANDROID_STL_TYPE=c++_static \
     -DCMAKE_BUILD_TYPE=Release \
-    -DCORRADE_RC_EXECUTABLE=$HOME/deps-native/bin/corrade-rc \
     -DCMAKE_INSTALL_PREFIX=$HOME/deps \
-    -DWITH_INTERCONNECT=OFF \
+    -DCORRADE_RC_EXECUTABLE=$HOME/deps-native/bin/corrade-rc \
+    -DCORRADE_WITH_INTERCONNECT=OFF \
     -G Ninja
 ninja install
 cd ../..
@@ -48,19 +48,19 @@ cmake .. \
     `# playing with fire and not setting up FIND_ROOT_PATH as magnum should` \
     `# not need any dependencies from the NDK` \
     -DCMAKE_FIND_ROOT_PATH=$HOME/deps \
-    -DCORRADE_RC_EXECUTABLE=$HOME/deps-native/bin/corrade-rc \
     -DCMAKE_INSTALL_PREFIX=$HOME/deps \
-    -DWITH_AUDIO=OFF \
-    -DWITH_DEBUGTOOLS=ON \
-    -DWITH_GL=OFF \
-    -DWITH_MESHTOOLS=ON \
-    -DWITH_PRIMITIVES=ON \
-    -DWITH_SCENEGRAPH=OFF \
-    -DWITH_SCENETOOLS=OFF \
-    -DWITH_SHADERS=OFF \
-    -DWITH_TEXT=ON \
-    -DWITH_TEXTURETOOLS=ON \
-    -DWITH_ANYIMAGEIMPORTER=ON \
+    -DCORRADE_RC_EXECUTABLE=$HOME/deps-native/bin/corrade-rc \
+    -DMAGNUM_WITH_AUDIO=OFF \
+    -DMAGNUM_WITH_DEBUGTOOLS=ON \
+    -DMAGNUM_WITH_GL=OFF \
+    -DMAGNUM_WITH_MESHTOOLS=ON \
+    -DMAGNUM_WITH_PRIMITIVES=ON \
+    -DMAGNUM_WITH_SCENEGRAPH=OFF \
+    -DMAGNUM_WITH_SCENETOOLS=OFF \
+    -DMAGNUM_WITH_SHADERS=OFF \
+    -DMAGNUM_WITH_TEXT=ON \
+    -DMAGNUM_WITH_TEXTURETOOLS=ON \
+    -DMAGNUM_WITH_ANYIMAGEIMPORTER=ON \
     -G Ninja
 ninja install
 cd ../..
@@ -100,9 +100,9 @@ cmake .. \
     -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_FIND_ROOT_PATH="/opt/android/sdk/ndk/21.4.7075529/toolchains/llvm/prebuilt/linux-x86_64/sysroot;$HOME/deps" \
     -DCMAKE_FIND_LIBRARY_CUSTOM_LIB_SUFFIX=/i686-linux-android/29 \
-    -DCORRADE_RC_EXECUTABLE=$HOME/deps-native/bin/corrade-rc \
     -DCMAKE_PREFIX_PATH=$HOME/deps \
     -DCMAKE_INSTALL_PREFIX=$HOME/deps \
+    -DCORRADE_RC_EXECUTABLE=$HOME/deps-native/bin/corrade-rc \
     -DWITH_ASSIMPIMPORTER=OFF \
     -DWITH_ASTCIMPORTER=ON \
     -DWITH_BASISIMAGECONVERTER=OFF \

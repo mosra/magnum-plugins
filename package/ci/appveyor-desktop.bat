@@ -49,11 +49,11 @@ rem There's already a directory named `build`
 mkdir build_ && cd build_ || exit /b
 cmake ../build/cmake ^
     -DCMAKE_BUILD_TYPE=Debug ^
+    -DCMAKE_INSTALL_PREFIX=%APPVEYOR_BUILD_FOLDER%/deps ^
     -DZSTD_BUILD_PROGRAMS=OFF ^
     -DZSTD_BUILD_SHARED=OFF ^
     -DZSTD_BUILD_STATIC=ON ^
     -DZSTD_MULTITHREAD_SUPPORT=OFF ^
-    -DCMAKE_INSTALL_PREFIX=%APPVEYOR_BUILD_FOLDER%/deps ^
     %COMPILER_EXTRA% -G Ninja || exit /b
 cmake --build . --target install || exit /b
 cd .. && cd .. || exit /b
@@ -65,9 +65,9 @@ mkdir build && cd build || exit /b
 cmake .. ^
     -DCMAKE_BUILD_TYPE=Debug ^
     -DCMAKE_INSTALL_PREFIX=%APPVEYOR_BUILD_FOLDER%/deps ^
-    -DWITH_INTERCONNECT=OFF ^
-    -DUTILITY_USE_ANSI_COLORS=ON ^
-    -DBUILD_STATIC=%BUILD_STATIC% ^
+    -DCORRADE_WITH_INTERCONNECT=OFF ^
+    -DCORRADE_UTILITY_USE_ANSI_COLORS=ON ^
+    -DCORRADE_BUILD_STATIC=%BUILD_STATIC% ^
     %COMPILER_EXTRA% -G Ninja || exit /b
 cmake --build . || exit /b
 cmake --build . --target install || exit /b
@@ -81,19 +81,19 @@ cmake .. ^
     -DCMAKE_BUILD_TYPE=Debug ^
     -DCMAKE_INSTALL_PREFIX=%APPVEYOR_BUILD_FOLDER%/deps ^
     -DCMAKE_PREFIX_PATH=%APPVEYOR_BUILD_FOLDER%/openal ^
-    -DWITH_AUDIO=ON ^
-    -DWITH_DEBUGTOOLS=ON ^
-    -DWITH_GL=OFF ^
-    -DWITH_MESHTOOLS=ON ^
-    -DWITH_PRIMITIVES=ON ^
-    -DWITH_SCENEGRAPH=OFF ^
-    -DWITH_SCENETOOLS=OFF ^
-    -DWITH_SHADERS=OFF ^
-    -DWITH_TEXT=ON ^
-    -DWITH_TEXTURETOOLS=ON ^
-    -DWITH_ANYIMAGEIMPORTER=ON ^
-    -DBUILD_STATIC=%BUILD_STATIC% ^
-    -DBUILD_PLUGINS_STATIC=%BUILD_STATIC% ^
+    -DMAGNUM_WITH_AUDIO=ON ^
+    -DMAGNUM_WITH_DEBUGTOOLS=ON ^
+    -DMAGNUM_WITH_GL=OFF ^
+    -DMAGNUM_WITH_MESHTOOLS=ON ^
+    -DMAGNUM_WITH_PRIMITIVES=ON ^
+    -DMAGNUM_WITH_SCENEGRAPH=OFF ^
+    -DMAGNUM_WITH_SCENETOOLS=OFF ^
+    -DMAGNUM_WITH_SHADERS=OFF ^
+    -DMAGNUM_WITH_TEXT=ON ^
+    -DMAGNUM_WITH_TEXTURETOOLS=ON ^
+    -DMAGNUM_WITH_ANYIMAGEIMPORTER=ON ^
+    -DMAGNUM_BUILD_STATIC=%BUILD_STATIC% ^
+    -DMAGNUM_BUILD_PLUGINS_STATIC=%BUILD_STATIC% ^
     %COMPILER_EXTRA% -G Ninja || exit /b
 cmake --build . || exit /b
 cmake --build . --target install || exit /b

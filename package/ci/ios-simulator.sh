@@ -12,10 +12,10 @@ mkdir build && cd build
 cmake .. \
     -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_INSTALL_PREFIX=$HOME/deps-native \
-    -DWITH_INTERCONNECT=OFF \
-    -DWITH_PLUGINMANAGER=OFF \
-    -DWITH_TESTSUITE=OFF \
-    -DWITH_UTILITY=OFF \
+    -DCORRADE_WITH_INTERCONNECT=OFF \
+    -DCORRADE_WITH_PLUGINMANAGER=OFF \
+    -DCORRADE_WITH_TESTSUITE=OFF \
+    -DCORRADE_WITH_UTILITY=OFF \
     -G Ninja
 ninja install
 cd ..
@@ -26,11 +26,11 @@ cmake .. \
     -DCMAKE_TOOLCHAIN_FILE=../../toolchains/generic/iOS.cmake \
     -DCMAKE_OSX_SYSROOT=/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator.sdk \
     -DCMAKE_OSX_ARCHITECTURES="x86_64" \
-    -DCORRADE_RC_EXECUTABLE=$HOME/deps-native/bin/corrade-rc \
     -DCMAKE_INSTALL_PREFIX=$HOME/deps \
-    -DTESTSUITE_TARGET_XCTEST=ON \
-    -DWITH_INTERCONNECT=OFF \
-    -DBUILD_STATIC=ON \
+    -DCORRADE_RC_EXECUTABLE=$HOME/deps-native/bin/corrade-rc \
+    -DCORRADE_TESTSUITE_TARGET_XCTEST=ON \
+    -DCORRADE_WITH_INTERCONNECT=OFF \
+    -DCORRADE_BUILD_STATIC=ON \
     -G Xcode
 set -o pipefail && cmake --build . --config Release --target install | xcbeautify
 cd ../..
@@ -43,20 +43,20 @@ cmake .. \
     -DCMAKE_TOOLCHAIN_FILE=../../toolchains/generic/iOS.cmake \
     -DCMAKE_OSX_SYSROOT=/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator.sdk \
     -DCMAKE_OSX_ARCHITECTURES="x86_64" \
-    -DCORRADE_RC_EXECUTABLE=$HOME/deps-native/bin/corrade-rc \
     -DCMAKE_INSTALL_PREFIX=$HOME/deps \
-    -DWITH_AUDIO=ON \
-    -DWITH_DEBUGTOOLS=ON \
-    -DWITH_GL=OFF \
-    -DWITH_MESHTOOLS=ON \
-    -DWITH_PRIMITIVES=ON \
-    -DWITH_SCENEGRAPH=OFF \
-    -DWITH_SCENETOOLS=OFF \
-    -DWITH_SHADERS=OFF \
-    -DWITH_TEXT=ON \
-    -DWITH_TEXTURETOOLS=ON \
-    -DWITH_ANYIMAGEIMPORTER=ON \
-    -DBUILD_STATIC=ON \
+    -DCORRADE_RC_EXECUTABLE=$HOME/deps-native/bin/corrade-rc \
+    -DMAGNUM_WITH_AUDIO=ON \
+    -DMAGNUM_WITH_DEBUGTOOLS=ON \
+    -DMAGNUM_WITH_GL=OFF \
+    -DMAGNUM_WITH_MESHTOOLS=ON \
+    -DMAGNUM_WITH_PRIMITIVES=ON \
+    -DMAGNUM_WITH_SCENEGRAPH=OFF \
+    -DMAGNUM_WITH_SCENETOOLS=OFF \
+    -DMAGNUM_WITH_SHADERS=OFF \
+    -DMAGNUM_WITH_TEXT=ON \
+    -DMAGNUM_WITH_TEXTURETOOLS=ON \
+    -DMAGNUM_WITH_ANYIMAGEIMPORTER=ON \
+    -DMAGNUM_BUILD_STATIC=ON \
     -G Xcode
 set -o pipefail && cmake --build . --config Release --target install | xcbeautify
 cd ../..
@@ -72,11 +72,11 @@ cmake ../build/cmake \
     -DCMAKE_TOOLCHAIN_FILE=../../toolchains/generic/iOS.cmake \
     -DCMAKE_OSX_SYSROOT=/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator.sdk \
     -DCMAKE_OSX_ARCHITECTURES="x86_64" \
+    -DCMAKE_INSTALL_PREFIX=$HOME/deps \
     -DZSTD_BUILD_PROGRAMS=OFF \
     -DZSTD_BUILD_SHARED=OFF \
     -DZSTD_BUILD_STATIC=ON \
     -DZSTD_MULTITHREAD_SUPPORT=OFF \
-    -DCMAKE_INSTALL_PREFIX=$HOME/deps \
     -G Ninja
 ninja install
 cd ../..
@@ -88,8 +88,8 @@ cmake .. \
     -DCMAKE_TOOLCHAIN_FILE=../toolchains/generic/iOS.cmake \
     -DCMAKE_OSX_SYSROOT=/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator.sdk \
     -DCMAKE_OSX_ARCHITECTURES="x86_64" \
-    -DCORRADE_RC_EXECUTABLE=$HOME/deps-native/bin/corrade-rc \
     -DCMAKE_INSTALL_PREFIX=$HOME/deps \
+    -DCORRADE_RC_EXECUTABLE=$HOME/deps-native/bin/corrade-rc \
     -DWITH_ASSIMPIMPORTER=OFF \
     -DWITH_ASTCIMPORTER=ON \
     -DWITH_BASISIMAGECONVERTER=OFF \
