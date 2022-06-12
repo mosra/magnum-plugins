@@ -92,7 +92,7 @@ target_include_directories(OpenExrImageConverterTest PRIVATE
     $<TARGET_PROPERTY:OpenEXR::OpenEXR,INTERFACE_INCLUDE_DIRECTORIES>)
 if(MAGNUM_OPENEXRIMAGECONVERTER_BUILD_STATIC)
     target_link_libraries(OpenExrImageConverterTest PRIVATE OpenExrImageConverter)
-    if(WITH_JPEGIMPORTER)
+    if(WITH_OPENEXRIMPORTER)
         target_link_libraries(OpenExrImageConverterTest PRIVATE OpenExrImporter)
     endif()
 else()
