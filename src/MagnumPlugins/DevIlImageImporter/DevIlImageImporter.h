@@ -140,7 +140,7 @@ so you need to provide it as a system dependency and point `CMAKE_PREFIX_PATH`
 to its installation dir if necessary.
 
 @code{.cmake}
-set(WITH_TINYGLTFIMPORTER ON CACHE BOOL "" FORCE)
+set(WITH_DEVILIMAGEIMPORTER ON CACHE BOOL "" FORCE)
 add_subdirectory(magnum-plugins EXCLUDE_FROM_ALL)
 
 # So the dynamically loaded plugin gets built implicitly
