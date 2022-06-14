@@ -35,6 +35,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
 
 # Faad2AudioImporter plugin
 add_plugin(Faad2AudioImporter
+    audioimporters
     "${MAGNUM_PLUGINS_AUDIOIMPORTER_DEBUG_BINARY_INSTALL_DIR};${MAGNUM_PLUGINS_AUDIOIMPORTER_DEBUG_LIBRARY_INSTALL_DIR}"
     "${MAGNUM_PLUGINS_AUDIOIMPORTER_RELEASE_BINARY_INSTALL_DIR};${MAGNUM_PLUGINS_AUDIOIMPORTER_RELEASE_LIBRARY_INSTALL_DIR}"
     Faad2AudioImporter.conf
@@ -49,13 +50,6 @@ target_include_directories(Faad2AudioImporter PUBLIC
 # Include the stb_*.h files as a system directory to supress warnings
 target_include_directories(Faad2AudioImporter SYSTEM PRIVATE ${PROJECT_SOURCE_DIR}/src/external/stb)
 target_link_libraries(Faad2AudioImporter PUBLIC Magnum::Audio FAAD2::FAAD2)
-# Modify output location only if all are set, otherwise it makes no sense
-if(CMAKE_RUNTIME_OUTPUT_DIRECTORY AND CMAKE_LIBRARY_OUTPUT_DIRECTORY AND CMAKE_ARCHIVE_OUTPUT_DIRECTORY)
-    set_target_properties(Faad2AudioImporter PROPERTIES
-        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/magnum$<$<CONFIG:Debug>:-d>/audioimporters
-        LIBRARY_OUTPUT_DIRECTORY ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/magnum$<$<CONFIG:Debug>:-d>/audioimporters
-        ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}/magnum$<$<CONFIG:Debug>:-d>/audioimporters)
-endif()
 
 install(FILES Faad2Importer.h ${CMAKE_CURRENT_BINARY_DIR}/configure.h
     DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/Faad2AudioImporter)
