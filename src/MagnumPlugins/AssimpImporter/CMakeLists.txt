@@ -104,6 +104,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configureInternal.h.cmake
 
 # AssimpImporter plugin
 add_plugin(AssimpImporter
+    importers
     "${MAGNUM_PLUGINS_IMPORTER_DEBUG_BINARY_INSTALL_DIR};${MAGNUM_PLUGINS_IMPORTER_DEBUG_LIBRARY_INSTALL_DIR}"
     "${MAGNUM_PLUGINS_IMPORTER_RELEASE_BINARY_INSTALL_DIR};${MAGNUM_PLUGINS_IMPORTER_RELEASE_LIBRARY_INSTALL_DIR}"
     AssimpImporter.conf
@@ -121,13 +122,6 @@ if(CORRADE_TARGET_WINDOWS)
     target_link_libraries(AssimpImporter PUBLIC Magnum::AnyImageImporter)
 elseif(MAGNUM_ASSIMPIMPORTER_BUILD_STATIC)
     target_link_libraries(AssimpImporter INTERFACE Magnum::AnyImageImporter)
-endif()
-# Modify output location only if all are set, otherwise it makes no sense
-if(CMAKE_RUNTIME_OUTPUT_DIRECTORY AND CMAKE_LIBRARY_OUTPUT_DIRECTORY AND CMAKE_ARCHIVE_OUTPUT_DIRECTORY)
-    set_target_properties(AssimpImporter PROPERTIES
-        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/magnum$<$<CONFIG:Debug>:-d>/importers
-        LIBRARY_OUTPUT_DIRECTORY ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/magnum$<$<CONFIG:Debug>:-d>/importers
-        ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}/magnum$<$<CONFIG:Debug>:-d>/importers)
 endif()
 
 install(FILES AssimpImporter.h ${CMAKE_CURRENT_BINARY_DIR}/configure.h
