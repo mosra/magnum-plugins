@@ -2954,8 +2954,11 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
     UnsignedInt vertexCount = 0;
     std::size_t attributeId = 0;
     Containers::Pair<Containers::StringView, Int> lastNumberedAttribute;
-    Math::Range1D<std::size_t> bufferRange;
+    Containers::ArrayView<const char> inputVertexData;
     Containers::Array<MeshAttributeData> attributeData{uniqueAttributeCount};
+    Containers::Array<UnsignedInt> attributeRange{uniqueAttributeCount};
+    Containers::Array<Math::Range1D<std::size_t>> bufferRanges{uniqueAttributeCount};
+    UnsignedInt bufferRange = 0;
     /** @todo use suffix() once it takes suffix size and not prefix size */
     for(const Containers::Pair<Containers::StringView, UnsignedInt>& attribute: attributeOrder.exceptPrefix(attributeOrder.size() - uniqueAttributeCount)) {
         /* Duplicate attribute, skip */
@@ -3081,9 +3084,13 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
         /* Remember which buffer the attribute is in and the range, for
            consecutive attribs expand the range */
         const Containers::Triple<Containers::ArrayView<const char>, UnsignedInt, UnsignedInt> bufferView = *_d->bufferViews[accessor->third()];
+        auto attribRange = Math::Range1D<std::size_t>::fromSize(reinterpret_cast<std::size_t>(bufferView.first().data()), bufferView.first().size());
+
         if(attributeId == 0) {
             bufferId = bufferView.third();
-            bufferRange = Math::Range1D<std::size_t>::fromSize(reinterpret_cast<std::size_t>(bufferView.first().data()), bufferView.first().size());
+            bufferRanges[bufferRange] = attribRange;
+            attributeRange[attributeId] = bufferRange;
+            inputVertexData = {bufferView.first().data(), bufferView.first().size()};
             vertexCount = accessor->first().size()[0];
         } else {
             /* ... and probably never will be */
@@ -3092,7 +3099,16 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
                 return {};
             }
 
-            bufferRange = Math::join(bufferRange, Math::Range1D<std::size_t>::fromSize(reinterpret_cast<std::size_t>(bufferView.first().data()), bufferView.first().size()));
+            if(Math::intersects(bufferRanges[bufferRange], attribRange) ||
+                bufferRanges[bufferRange].max() == attribRange.min()) {
+                /* Interleaved attribute or contiguous to previous attribute, so we just merge it into the current range */
+                bufferRanges[bufferRange] = Math::join(bufferRanges[bufferRange], attribRange);
+                attributeRange[attributeId] = bufferRange;
+            } else {
+                /* Disjoint attribute, so we add a new buffer range to avoid allocating and copying useless data */
+                bufferRanges[++bufferRange] = attribRange;
+                attributeRange[attributeId] = bufferRange;
+            }
 
             if(accessor->first().size()[0] != vertexCount) {
                 Error{} << "Trade::GltfImporter::mesh(): mismatched vertex count for attribute" << attribute.first() << Debug::nospace << ", expected" << vertexCount << "but got" << accessor->first().size()[0];
@@ -3110,10 +3126,28 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
     /* Verify we really filled all attributes */
     CORRADE_INTERNAL_ASSERT(attributeId == attributeData.size());
 
-    /* Allocate & copy vertex data, if any */
-    Containers::ArrayView<const char> inputVertexData{reinterpret_cast<const char*>(bufferRange.min()), bufferRange.size()};
-    Containers::Array<char> vertexData{NoInit, bufferRange.size()};
-    Utility::copy(inputVertexData, vertexData);
+    /* Allocate & copy all vertex data ranges */
+    const UnsignedInt numBufferRanges = attributeData.size() == 0 ? 0 : bufferRange + 1;
+    size_t bufferSize = 0;
+    for(std::size_t i = 0; i != numBufferRanges; ++i)
+        bufferSize += bufferRanges[i].size();
+    Containers::Array<char> vertexData{NoInit, bufferSize};
+
+    struct BufferRemap {
+        std::ptrdiff_t sourceOffset;
+        std::ptrdiff_t destOffset;
+    };
+    Containers::Array<BufferRemap> rangeRemap{numBufferRanges};
+    std::ptrdiff_t bufferOffset = 0;
+    for(std::size_t i = 0; i != numBufferRanges; ++i) {
+        auto& bufferRange = bufferRanges[i];
+        const char* sourceData = reinterpret_cast<const char*>(bufferRange.min());
+        Containers::ArrayView<const char> sourceRange{sourceData, bufferRange.size()};
+        Containers::ArrayView<char> destRange{vertexData.data() + bufferOffset, bufferRange.size()};
+        Utility::copy(sourceRange, destRange);
+        rangeRemap[i] = {sourceData - inputVertexData.data(), bufferOffset};
+        bufferOffset += bufferRange.size();
+    }
 
     /* Convert the attributes from relative to absolute, copy them to a
        non-growable array and do additional patching */
@@ -3129,8 +3163,9 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
             whole strides and the remainder (Math::div), then form the view
             with offset in whole strides and then "shift" the view by the
             remainder (once there's StridedArrayView::shift() or some such) */
+        const BufferRemap& remap = rangeRemap[attributeRange[i]];
         Containers::StridedArrayView1D<char> data{{vertexData, vertexData.size() + attributeData[i].stride()},
-            vertexData + attributeData[i].offset(inputVertexData),
+            vertexData + remap.destOffset + attributeData[i].offset(inputVertexData) - remap.sourceOffset,
             vertexCount, attributeData[i].stride()};
 
         attributeData[i] = MeshAttributeData{attributeData[i].name(),
