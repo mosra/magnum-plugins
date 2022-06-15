@@ -183,6 +183,12 @@ namespace Magnum {
     [mosra/magnum-plugins#108](https://github.com/mosra/magnum-plugins/pull/108))
 -   Fixed @relativeref{Trade,StbImageImporter} to build again with
     @ref CORRADE_BUILD_MULTITHREADED disabled.
+-   Changed handling of `CMAKE_*_OUTPUT_DIRECTORY` to make plugins pick it up
+    also if only e.g. `CMAKE_RUNTIME_OUTPUT_DIRECTORY` is set, but not
+    `ARCHIVE` or `LIBRARY_OUTPUT_DIRECTORY`. Similarly it now also handles
+    config-specific `CMAKE_*_OUTPUT_DIRECTORY_<CONFIG>` variables. See also
+    [mosra/magnum#486](https://github.com/mosra/magnum/issues/486) and
+    [mosra/magnum-plugins#123](https://github.com/mosra/magnum-plugins/pull/123).
 
 @subsection changelog-plugins-latest-bugfixes Bug fixes
 

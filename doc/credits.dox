@@ -51,6 +51,8 @@ namespace Magnum {
     a new @ref Audio::DrMp3Importer "DrMp3AudioImporter" plugin
 -   **Hans Loeblich** ([\@thehans](https://github.com/thehans)) ---
     improvements to Debian package building experience
+-   **Hugo Amnov** ([\@hugoam](https://github.com/hugoam)) --- buildsystem
+    improvements
 -   **[\@hunt978](https://github.com/hunt978)** --- fixing
     @ref Trade::JpegImporter "JpegImporter" build on older CMake versions
 -   **Igor Kalevatykh** ([\@ikalevatykh](https://github.com/ikalevatykh)) ---
