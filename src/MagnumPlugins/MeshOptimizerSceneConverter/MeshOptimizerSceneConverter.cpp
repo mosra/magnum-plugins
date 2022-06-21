@@ -286,6 +286,38 @@ bool MeshOptimizerSceneConverter::doConvertInPlace(MeshData& mesh) {
     return true;
 }
 
+namespace {
+
+/* As of https://github.com/zeux/meshoptimizer/pull/432 (to be released as
+   0.18), the meshopt_simplify() has a new second-to-last options argument,
+   this pair of templates adapts to that -- by either passing the function
+   pointer through unchanged or by wrapping it in a lambda that ignores the
+   options argument (and the result_error on versions before 0.16) */
+/** @todo use an ifdef instead once we can rely on MESHOPTIMIZER_VERSION */
+template<std::size_t(*F)(UnsignedInt*, const UnsignedInt*, std::size_t, const Float*, std::size_t, std::size_t, std::size_t, Float
+    #if MESHOPTIMIZER_VERSION >= 160
+    , Float*
+    #endif
+)> auto adaptMeshOptSimplifySignature() -> std::size_t(*)(UnsignedInt*, const UnsignedInt*, std::size_t, const Float*, std::size_t, std::size_t, std::size_t, Float, UnsignedInt, Float*) {
+    return [](UnsignedInt* destination, const UnsignedInt* indices, size_t index_count, const float* vertex_positions, size_t vertex_count, size_t vertex_positions_stride, size_t target_index_count, float target_error, unsigned int, float*
+        #if MESHOPTIMIZER_VERSION >= 160
+        result_error
+        #endif
+    ) {
+        return F(destination, indices, index_count, vertex_positions, vertex_count, vertex_positions_stride, target_index_count, target_error
+            #if MESHOPTIMIZER_VERSION >= 160
+            , result_error
+            #endif
+        );
+    };
+}
+
+template<std::size_t(*F)(UnsignedInt*, const UnsignedInt*, std::size_t, const Float*, std::size_t, std::size_t, std::size_t, Float, UnsignedInt, Float*)> auto adaptMeshOptSimplifySignature() -> std::size_t(*)(UnsignedInt*, const UnsignedInt*, std::size_t, const Float*, std::size_t, std::size_t, std::size_t, Float, UnsignedInt, Float*) {
+    return F;
+}
+
+}
+
 Containers::Optional<MeshData> MeshOptimizerSceneConverter::doConvert(const MeshData& mesh) {
     /* If the mesh is indexed with an implementation-specific index type,
        interleave() won't be able to turn its index buffer into a contiguous
@@ -338,24 +370,34 @@ Containers::Optional<MeshData> MeshOptimizerSceneConverter::doConvert(const Mesh
         Containers::Array<UnsignedInt> outputIndices;
         Containers::arrayResize<Trade::ArrayAllocator>(outputIndices, NoInit, mesh.indexCount());
 
-        /* The nullptr at the end is not needed but without it GCC's
-           -Wzero-as-null-pointer-constant fires due to the default argument
-           being `= 0`. WHAT THE FUCK, how is this warning useful?! Why
-           everything today feels like hastily patched together by incompetent
-           idiots?! */
         UnsignedInt vertexCount;
         if(configuration().value<bool>("simplifySloppy")) {
+            /* The nullptr at the end is not needed but without it GCC's
+               -Wzero-as-null-pointer-constant fires due to the default
+               argument being `= 0`. WHAT THE FUCK, how is this warning
+               useful?! Why everything today feels like hastily patched
+               together by incompetent idiots?! */
             vertexCount = meshopt_simplifySloppy(outputIndices.data(), inputIndices.data(), out.indexCount(), static_cast<const float*>(positions.data()), out.vertexCount(), positions.stride(), targetIndexCount
                 #if MESHOPTIMIZER_VERSION >= 160
                 , targetError, nullptr
                 #endif
             );
         } else {
-            vertexCount = meshopt_simplify(outputIndices.data(), inputIndices.data(), out.indexCount(), static_cast<const float*>(positions.data()), out.vertexCount(), positions.stride(), targetIndexCount, targetError
-                #if MESHOPTIMIZER_VERSION >= 160
-                , nullptr
-                #endif
-            );
+            /* See adaptMeshOptSimplifySignature() above for details */
+            vertexCount = adaptMeshOptSimplifySignature<meshopt_simplify>()(
+                outputIndices.data(),
+                inputIndices.data(),
+                out.indexCount(),
+                static_cast<const Float*>(positions.data()),
+                out.vertexCount(),
+                positions.stride(),
+                targetIndexCount,
+                targetError,
+                configuration().value<bool>("simplifyLockBorder") ?
+                    /** @todo use a real value once we can rely on
+                        MESHOPTIMIZER_VERSION */
+                    1 /*meshopt_SimplifyLockBorder*/ : 0,
+                nullptr);
         }
 
         Containers::arrayResize<Trade::ArrayAllocator>(outputIndices, vertexCount);
