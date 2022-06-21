@@ -56,8 +56,6 @@ namespace Magnum { namespace Trade {
 @brief BC1/BC3 compressor using stb_dxt
 @m_since_latest_{plugins}
 
-@m_keywords{OpenExrImageConverter}
-
 Converts uncompressed 2D and 3D RGB and RGBA images to block-compressed BC1/BC3
 images using the [stb_dxt](https://github.com/nothings/stb) library.
 
@@ -104,8 +102,8 @@ find_package(MagnumPlugins REQUIRED StbDxtImageConverter)
 target_link_libraries(your-app PRIVATE MagnumPlugins::StbDxtImageConverter)
 @endcode
 
-See @ref building-plugins, @ref cmake-plugins, @ref plugins and
-@ref file-formats for more information.
+See @ref building-plugins, @ref cmake-plugins and @ref plugins for more
+information.
 
 @section Trade-StbDxtImageConverter-behavior Behavior and limitations
 
