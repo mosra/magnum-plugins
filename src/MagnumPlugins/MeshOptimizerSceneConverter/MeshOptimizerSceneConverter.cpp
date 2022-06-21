@@ -431,4 +431,4 @@ Containers::Optional<MeshData> MeshOptimizerSceneConverter::doConvert(const Mesh
 }}
 
 CORRADE_PLUGIN_REGISTER(MeshOptimizerSceneConverter, Magnum::Trade::MeshOptimizerSceneConverter,
-    "cz.mosra.magnum.Trade.AbstractSceneConverter/0.1.2")
+    "cz.mosra.magnum.Trade.AbstractSceneConverter/0.2")

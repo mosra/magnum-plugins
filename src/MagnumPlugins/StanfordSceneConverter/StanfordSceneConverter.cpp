@@ -358,4 +358,4 @@ Containers::Optional<Containers::Array<char>> StanfordSceneConverter::doConvertT
 }}
 
 CORRADE_PLUGIN_REGISTER(StanfordSceneConverter, Magnum::Trade::StanfordSceneConverter,
-    "cz.mosra.magnum.Trade.AbstractSceneConverter/0.1.2")
+    "cz.mosra.magnum.Trade.AbstractSceneConverter/0.2")
