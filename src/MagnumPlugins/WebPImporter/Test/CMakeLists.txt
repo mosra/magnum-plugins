@@ -52,7 +52,7 @@ file(GENERATE OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/configure.h
     INPUT ${CMAKE_CURRENT_BINARY_DIR}/configure.h.in)
 
 corrade_add_test(WebPImporterTest WebPImporterTest.cpp
-    LIBRARIES Magnum::Trade Magnum::DebugTools ${WEBP_LIBRARIES}
+    LIBRARIES Magnum::Trade Magnum::DebugTools
     FILES
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/PngImporter/Test/rgb.png
         animated.webp
