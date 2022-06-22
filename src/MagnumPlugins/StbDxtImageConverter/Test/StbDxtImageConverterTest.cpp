@@ -133,7 +133,7 @@ void StbDxtImageConverterTest::rgba() {
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(STBDXTIMAGECONVERTER_TEST_DIR, "ship.jpg")));
     Containers::Optional<Trade::ImageData2D> uncompressed = importer->image2D(0);
     CORRADE_VERIFY(uncompressed);
-    CORRADE_COMPARE(pixelSize(uncompressed->format()), data.channelCount);
+    CORRADE_COMPARE(pixelFormatChannelCount(uncompressed->format()), data.channelCount);
     CORRADE_COMPARE(uncompressed->size(), (Vector2i{160, 96}));
 
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("StbDxtImageConverter");
@@ -154,7 +154,7 @@ void StbDxtImageConverterTest::rgba() {
        64-bit blocks for BC1 (without alpha) */
     /** @todo drop this and let the ImageData constructor take care of this? */
     CORRADE_COMPARE(compressed->data().size(),
-        compressed->size().product()*compressedBlockDataSize(data.expectedFormat)/16);
+        compressed->size().product()*compressedPixelFormatBlockDataSize(data.expectedFormat)/16);
 
     /** @todo Compare::DataToFile */
     CORRADE_COMPARE_AS(Containers::StringView{compressed->data()},

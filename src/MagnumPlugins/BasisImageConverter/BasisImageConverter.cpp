@@ -251,7 +251,7 @@ template<UnsignedInt dimensions> Containers::Optional<Containers::Array<char>> c
             slice.resize(numMipmaps - 1);
     }
 
-    const UnsignedInt channelCount = pixelSize(pixelFormat);
+    const UnsignedInt channelCount = pixelFormatChannelCount(pixelFormat);
     for(UnsignedInt level = 0; level != numMipmaps; ++level) {
         const auto mipSize = Math::max(baseSize >> level, 1)*mipMask + baseSize*(Math::Vector<dimensions, Int>{1} - mipMask);
         const auto& image = imageLevels[level];

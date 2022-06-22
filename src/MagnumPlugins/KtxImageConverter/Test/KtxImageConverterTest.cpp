@@ -417,7 +417,7 @@ void KtxImageConverterTest::supportedFormat() {
 
     for(UnsignedInt format = UnsignedInt(start); format <= UnsignedInt(end); ++format) {
         CORRADE_ITERATION(format);
-        CORRADE_INTERNAL_ASSERT(Containers::arraySize(bytes) >= pixelSize(PixelFormat(format)));
+        CORRADE_INTERNAL_ASSERT(Containers::arraySize(bytes) >= pixelFormatSize(PixelFormat(format)));
         CORRADE_VERIFY(converter->convertToData(ImageView2D{PixelFormat(format), {1, 1}, bytes}));
     }
 }
@@ -474,7 +474,7 @@ void KtxImageConverterTest::supportedCompressedFormat() {
             CompressedPixelFormat(format)) == std::end(UnsupportedCompressedFormats))
         {
             CORRADE_ITERATION(format);
-            CORRADE_INTERNAL_ASSERT(Containers::arraySize(bytes) >= compressedBlockDataSize(CompressedPixelFormat(format)));
+            CORRADE_VERIFY(Containers::arraySize(bytes) >= compressedPixelFormatBlockDataSize(CompressedPixelFormat(format)));
             CORRADE_VERIFY(converter->convertToData(CompressedImageView2D{CompressedPixelFormat(format), {1, 1}, bytes}));
         }
     }
@@ -487,7 +487,7 @@ void KtxImageConverterTest::unsupportedCompressedFormat() {
 
     for(CompressedPixelFormat format: UnsupportedCompressedFormats) {
         CORRADE_ITERATION(format);
-        CORRADE_INTERNAL_ASSERT(Containers::arraySize(bytes) >= compressedBlockDataSize(CompressedPixelFormat(format)));
+        CORRADE_VERIFY(Containers::arraySize(bytes) >= compressedPixelFormatBlockDataSize(CompressedPixelFormat(format)));
 
         CORRADE_VERIFY(!converter->convertToData(CompressedImageView2D{format, {1, 1}, bytes}));
 
@@ -535,7 +535,7 @@ void KtxImageConverterTest::dataFormatDescriptor() {
 
     for(UnsignedInt format = UnsignedInt(start); format <= UnsignedInt(end); ++format) {
         CORRADE_ITERATION(format);
-        CORRADE_INTERNAL_ASSERT(Containers::arraySize(bytes) >= pixelSize(PixelFormat(format)));
+        CORRADE_VERIFY(Containers::arraySize(bytes) >= pixelFormatSize(PixelFormat(format)));
         Containers::Optional<Containers::Array<char>> output = converter->convertToData(ImageView2D{PixelFormat(format), {1, 1}, bytes});
         CORRADE_VERIFY(output);
 
@@ -561,7 +561,7 @@ void KtxImageConverterTest::dataFormatDescriptorCompressed() {
             CompressedPixelFormat(format)) == std::end(UnsupportedCompressedFormats))
         {
             CORRADE_ITERATION(format);
-            CORRADE_INTERNAL_ASSERT(Containers::arraySize(bytes) >= compressedBlockDataSize(CompressedPixelFormat(format)));
+            CORRADE_VERIFY(Containers::arraySize(bytes) >= compressedPixelFormatBlockDataSize(CompressedPixelFormat(format)));
             Containers::Optional<Containers::Array<char>> output = converter->convertToData(CompressedImageView2D{CompressedPixelFormat(format), {1, 1}, bytes});
             CORRADE_VERIFY(output);
 
@@ -1032,10 +1032,10 @@ void KtxImageConverterTest::pvrtcRgb() {
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("KtxImageConverter");
 
     const UnsignedByte bytes[16]{};
-    const UnsignedInt dataSize = compressedBlockDataSize(data.inputFormat);
+    const UnsignedInt dataSize = compressedPixelFormatBlockDataSize(data.inputFormat);
     const Vector2i imageSize = {2, 2};
     CORRADE_INTERNAL_ASSERT(Containers::arraySize(bytes) >= dataSize);
-    CORRADE_INTERNAL_ASSERT((Vector3i{imageSize, 1}) <= compressedBlockSize(data.inputFormat));
+    CORRADE_INTERNAL_ASSERT((Vector3i{imageSize, 1}) <= compressedPixelFormatBlockSize(data.inputFormat));
 
     const CompressedImageView2D inputImage{data.inputFormat, imageSize, Containers::arrayView(bytes).prefix(dataSize)};
     Containers::Optional<Containers::Array<char>> output = converter->convertToData(inputImage);

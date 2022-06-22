@@ -185,7 +185,7 @@ Containers::Optional<Format> decodeFormat(Implementation::VkFormat vkFormat) {
         }
 
         if(format != PixelFormat{}) {
-            f.size = pixelSize(format);
+            f.size = pixelFormatSize(format);
             CORRADE_INTERNAL_ASSERT(f.size == 3 || f.size == 4);
             f.swizzle = (f.size == 3) ? SwizzleType::BGR : SwizzleType::BGRA;
         }
@@ -209,7 +209,7 @@ Containers::Optional<Format> decodeFormat(Implementation::VkFormat vkFormat) {
                 break;
         }
 
-        f.size = pixelSize(format);
+        f.size = pixelFormatSize(format);
         f.blockSize = {1, 1, 1};
         f.uncompressed = format;
         return f;
@@ -231,8 +231,8 @@ Containers::Optional<Format> decodeFormat(Implementation::VkFormat vkFormat) {
     }
 
     if(compressedFormat != CompressedPixelFormat{}) {
-        f.size = compressedBlockDataSize(compressedFormat);
-        f.blockSize = compressedBlockSize(compressedFormat);
+        f.size = compressedPixelFormatBlockDataSize(compressedFormat);
+        f.blockSize = compressedPixelFormatBlockSize(compressedFormat);
         f.compressed = compressedFormat;
         f.isCompressed = true;
         return f;

@@ -1002,9 +1002,9 @@ void KtxImporterTest::image1DCompressed() {
     /* The compressed data is the output of PVRTexTool, nothing hand-crafted.
        Use --save-diagnostic to extract them if they're missing or wrong. The
        same files are re-used in the tests for KtxImageConverter as input data. */
-    const Vector3i blockSize = compressedBlockSize(data.format);
+    const Vector3i blockSize = compressedPixelFormatBlockSize(data.format);
     const Vector3i blockCount = (Vector3i::pad(data.size, 1) + (blockSize - Vector3i{1}))/blockSize;
-    CORRADE_COMPARE(image->data().size(), blockCount.product()*compressedBlockDataSize(data.format));
+    CORRADE_COMPARE(image->data().size(), blockCount.product()*compressedPixelFormatBlockDataSize(data.format));
     CORRADE_COMPARE_AS(Containers::StringView{image->data()},
         Utility::Path::join(KTXIMPORTER_TEST_DIR, Utility::Path::splitExtension(data.file).first() + ".bin"),
         TestSuite::Compare::StringToFile);
@@ -1028,9 +1028,9 @@ void KtxImporterTest::image1DCompressedMipmaps() {
         CORRADE_COMPARE(image->compressedFormat(), CompressedPixelFormat::Etc2RGB8Srgb);
         CORRADE_COMPARE(image->size(), mipSize);
 
-        const Vector3i blockSize = compressedBlockSize(image->compressedFormat());
+        const Vector3i blockSize = compressedPixelFormatBlockSize(image->compressedFormat());
         const Vector3i blockCount = (Vector3i::pad(mipSize, 1) + (blockSize - Vector3i{1}))/blockSize;
-        CORRADE_COMPARE(image->data().size(), blockCount.product()*compressedBlockDataSize(image->compressedFormat()));
+        CORRADE_COMPARE(image->data().size(), blockCount.product()*compressedPixelFormatBlockDataSize(image->compressedFormat()));
         /* This is suboptimal because when generating ground-truth data with
            --save-diagnostic the test needs to be run 4 times to save all mips.
            But hopefully this won't really be necessary. */
@@ -1222,9 +1222,9 @@ void KtxImporterTest::image2DCompressed() {
     CORRADE_COMPARE(storage.imageHeight(), 0);
     CORRADE_COMPARE(storage.skip(), Vector3i{});
 
-    const Vector3i blockSize = compressedBlockSize(data.format);
+    const Vector3i blockSize = compressedPixelFormatBlockSize(data.format);
     const Vector3i blockCount = (Vector3i::pad(data.size, 1) + (blockSize - Vector3i{1}))/blockSize;
-    CORRADE_COMPARE(image->data().size(), blockCount.product()*compressedBlockDataSize(data.format));
+    CORRADE_COMPARE(image->data().size(), blockCount.product()*compressedPixelFormatBlockDataSize(data.format));
     CORRADE_COMPARE_AS(Containers::StringView{image->data()},
         Utility::Path::join(KTXIMPORTER_TEST_DIR, Utility::Path::splitExtension(data.file).first() + ".bin"),
         TestSuite::Compare::StringToFile);
@@ -1248,9 +1248,9 @@ void KtxImporterTest::image2DCompressedMipmaps() {
         CORRADE_COMPARE(image->compressedFormat(), CompressedPixelFormat::Etc2RGB8Srgb);
         CORRADE_COMPARE(image->size(), mipSize);
 
-        const Vector3i blockSize = compressedBlockSize(image->compressedFormat());
+        const Vector3i blockSize = compressedPixelFormatBlockSize(image->compressedFormat());
         const Vector3i blockCount = (Vector3i::pad(mipSize, 1) + (blockSize - Vector3i{1}))/blockSize;
-        CORRADE_COMPARE(image->data().size(), blockCount.product()*compressedBlockDataSize(image->compressedFormat()));
+        CORRADE_COMPARE(image->data().size(), blockCount.product()*compressedPixelFormatBlockDataSize(image->compressedFormat()));
         CORRADE_COMPARE_AS(Containers::StringView{image->data()},
             Utility::Path::join(KTXIMPORTER_TEST_DIR, Utility::formatString("2d-compressed-mipmaps-mip{}.bin", i)),
             TestSuite::Compare::StringToFile);
@@ -1273,9 +1273,9 @@ void KtxImporterTest::image2DCompressedLayers() {
     CORRADE_COMPARE(image->compressedFormat(), CompressedPixelFormat::Etc2RGB8Srgb);
     CORRADE_COMPARE(image->size(), (Vector3i{9, 10, 2}));
 
-    const Vector3i blockSize = compressedBlockSize(image->compressedFormat());
+    const Vector3i blockSize = compressedPixelFormatBlockSize(image->compressedFormat());
     const Vector3i blockCount = (Vector3i::pad(image->size(), 1) + (blockSize - Vector3i{1}))/blockSize;
-    CORRADE_COMPARE(image->data().size(), blockCount.product()*compressedBlockDataSize(image->compressedFormat()));
+    CORRADE_COMPARE(image->data().size(), blockCount.product()*compressedPixelFormatBlockDataSize(image->compressedFormat()));
     CORRADE_COMPARE_AS(Containers::StringView{image->data()},
         Utility::Path::join(KTXIMPORTER_TEST_DIR, "2d-compressed-layers.bin"),
         TestSuite::Compare::StringToFile);
@@ -1580,9 +1580,9 @@ void KtxImporterTest::image3DCompressed() {
     CORRADE_COMPARE(storage.imageHeight(), 0);
     CORRADE_COMPARE(storage.skip(), Vector3i{});
 
-    const Vector3i blockSize = compressedBlockSize(format);
+    const Vector3i blockSize = compressedPixelFormatBlockSize(format);
     const Vector3i blockCount = (size + (blockSize - Vector3i{1}))/blockSize;
-    CORRADE_COMPARE(image->data().size(), blockCount.product()*compressedBlockDataSize(format));
+    CORRADE_COMPARE(image->data().size(), blockCount.product()*compressedPixelFormatBlockDataSize(format));
     CORRADE_COMPARE_AS(Containers::StringView{image->data()},
         Utility::Path::join(KTXIMPORTER_TEST_DIR, "3d-compressed.bin"),
         TestSuite::Compare::StringToFile);
@@ -1606,9 +1606,9 @@ void KtxImporterTest::image3DCompressedMipmaps() {
         CORRADE_COMPARE(image->compressedFormat(), CompressedPixelFormat::Etc2RGB8Srgb);
         CORRADE_COMPARE(image->size(), mipSize);
 
-        const Vector3i blockSize = compressedBlockSize(image->compressedFormat());
+        const Vector3i blockSize = compressedPixelFormatBlockSize(image->compressedFormat());
         const Vector3i blockCount = (mipSize + (blockSize - Vector3i{1}))/blockSize;
-        CORRADE_COMPARE(image->data().size(), blockCount.product()*compressedBlockDataSize(image->compressedFormat()));
+        CORRADE_COMPARE(image->data().size(), blockCount.product()*compressedPixelFormatBlockDataSize(image->compressedFormat()));
         /* Compressed .bin data is manually generated in generate.sh, don't
            need to save it like the 1D/2D files */
         /** @todo Compare::DataToFile */
@@ -1874,7 +1874,7 @@ void KtxImporterTest::orientationFlip() {
         std::size_t(size.z()),
         std::size_t(size.y()),
         std::size_t(size.x()),
-        pixelSize(data.format)
+        pixelFormatSize(data.format)
     }};
 
     Containers::Array<char> flippedData{imageData.size()};

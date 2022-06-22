@@ -575,11 +575,11 @@ void DdsImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dat
        of a particular level. Abusing the levelOffsetSize(), calling it with
        level count instead of ID gives total size of all levels. */
     if(f->compressed) {
-        f->properties.compressed.blockSize = compressedBlockSize(f->properties.compressed.format);
-        f->properties.compressed.blockDataSize = compressedBlockDataSize(f->properties.compressed.format);
+        f->properties.compressed.blockSize = compressedPixelFormatBlockSize(f->properties.compressed.format);
+        f->properties.compressed.blockDataSize = compressedPixelFormatBlockDataSize(f->properties.compressed.format);
         f->sliceSize = levelOffsetSize(f->topLevelSliceSize, f->properties.compressed.blockSize, f->properties.compressed.blockDataSize, f->levelCount).first();
     } else {
-        f->properties.uncompressed.pixelSize = pixelSize(f->properties.uncompressed.format);
+        f->properties.uncompressed.pixelSize = pixelFormatSize(f->properties.uncompressed.format);
         f->sliceSize = levelOffsetSize(f->topLevelSliceSize, f->properties.uncompressed.pixelSize, f->levelCount).first();
     }
 

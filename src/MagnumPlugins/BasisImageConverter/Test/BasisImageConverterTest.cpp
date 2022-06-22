@@ -527,7 +527,7 @@ Image<dimensions> copyImageWithSkip(const BasicImageView<dimensions>& image, Mat
     if(format == PixelFormat{})
         format = image.format();
     /* Width includes row alignment to 4 bytes */
-    const UnsignedInt formatSize = pixelSize(format);
+    const UnsignedInt formatSize = pixelFormatSize(format);
     const UnsignedInt widthWithSkip = ((size[0] + skip[0])*DestinationType::Size + 3)/formatSize*formatSize;
     const UnsignedInt dataSize = widthWithSkip*(size + skip).product()/(size[0] + skip[0]);
     Image<dimensions> imageWithSkip{PixelStorage{}.setSkip(Vector3i::pad(skip)), format,

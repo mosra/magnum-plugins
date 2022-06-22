@@ -133,15 +133,15 @@ Vector3i formatUnitSize(PixelFormat) {
 }
 
 Vector3i formatUnitSize(CompressedPixelFormat format) {
-    return compressedBlockSize(format);
+    return compressedPixelFormatBlockSize(format);
 }
 
 UnsignedInt formatUnitDataSize(PixelFormat format) {
-    return pixelSize(format);
+    return pixelFormatSize(format);
 }
 
 UnsignedInt formatUnitDataSize(CompressedPixelFormat format) {
-    return compressedBlockDataSize(format);
+    return compressedPixelFormatBlockDataSize(format);
 }
 
 UnsignedByte formatTypeSize(PixelFormat format) {
@@ -273,7 +273,7 @@ Containers::Pair<Implementation::KdfBasicBlockHeader::ColorModel, Containers::Ar
         case PixelFormat::Depth32FStencil8UI:
             return {ColorModel, SamplesDepth32FStencil};
         default: {
-            const UnsignedInt size = pixelSize(format);
+            const UnsignedInt size = pixelFormatSize(format);
             const UnsignedInt typeSize = formatTypeSize(format);
             CORRADE_INTERNAL_ASSERT(size%typeSize == 0);
             const UnsignedInt numChannels = size/typeSize;
