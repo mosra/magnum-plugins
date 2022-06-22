@@ -56,8 +56,8 @@ namespace Magnum { namespace Trade {
 @brief BC1/BC3 compressor using stb_dxt
 @m_since_latest_{plugins}
 
-Converts uncompressed 2D and 3D RGB and RGBA images to block-compressed BC1/BC3
-images using the [stb_dxt](https://github.com/nothings/stb) library.
+Converts uncompressed 2D and 2D array RGB and RGBA images to block-compressed
+BC1/BC3 images using the [stb_dxt](https://github.com/nothings/stb) library.
 
 @m_class{m-block m-primary}
 
@@ -116,7 +116,8 @@ with @ref CompressedPixelFormat::Bc1RGBUnorm /
 @relativeref{CompressedPixelFormat,Bc1RGBSrgb} is returned instead. You can
 override alpha channel presence in the output by explicitly enabling or
 disabling the @cb{.ini} alpha @ce @ref Trade-StbDxtImageConverter-configuration "configuration option".
-3D images are compressed slice-by-slice.
+
+3D images are compressed slice-by-slice --- i.e., as a 2D array texture.
 
 The input image size is expected to be divisible by four in the X and Y
 dimension. If your image doesn't fit this requirement, you have to pad/crop or
