@@ -44,24 +44,26 @@ using namespace Containers::Literals;
 StbResizeImageConverter::StbResizeImageConverter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin): AbstractImageConverter{manager, plugin} {}
 
 ImageConverterFeatures StbResizeImageConverter::doFeatures() const {
-    return ImageConverterFeature::Convert2D;
+    return ImageConverterFeature::Convert2D|ImageConverterFeature::Convert3D;
 }
 
-Containers::Optional<ImageData2D> StbResizeImageConverter::doConvert(const ImageView2D& image) {
+namespace {
+
+Containers::Optional<ImageData3D> convertInternal(const ImageView3D& image, Utility::ConfigurationGroup& configuration) {
     /* Image has to be non-empty, otherwise we hit an assertion deep in the
        algorithm. Overriding STBIR_ASSERT() would help neither making the
        failure graceful nor having a human-readable message. */
     if(!image.size().product()) {
-        Error{} << "Trade::StbResizeImageConverter::convert(): invalid input image size" << Debug::packed << image.size();
+        Error{} << "Trade::StbResizeImageConverter::convert(): invalid input image size" << Debug::packed << image.size().xy();
         return {};
     }
 
     /* Output size */
-    if(!configuration().value<Containers::StringView>("size")) {
+    if(!configuration.value<Containers::StringView>("size")) {
         Error{} << "Trade::StbResizeImageConverter::convert(): output size was not specified";
         return {};
     }
-    const Vector2i size = configuration().value<Vector2i>("size");
+    const Vector2i size = configuration.value<Vector2i>("size");
 
     /* Data type and component count. Branching on isPixelFormatDepthOrStencil()
        to avoid having a dedicated error path for depth/stencil formats. */
@@ -88,13 +90,13 @@ Containers::Optional<ImageData2D> StbResizeImageConverter::doConvert(const Image
 
     /* Flags */
     Int flags{};
-    if(configuration().value<bool>("alphaPremultiplied"))
+    if(configuration.value<bool>("alphaPremultiplied"))
         flags |= STBIR_FLAG_ALPHA_PREMULTIPLIED;
-    if(configuration().value<bool>("alphaUsesSrgb"))
+    if(configuration.value<bool>("alphaUsesSrgb"))
         flags |= STBIR_FLAG_ALPHA_USES_COLORSPACE;
 
     /* Edge mode */
-    const Containers::StringView edgeString = configuration().value<Containers::StringView>("edge");
+    const Containers::StringView edgeString = configuration.value<Containers::StringView>("edge");
     stbir_edge edge;
     /* LCOV_EXCL_START, it makes no sense to test each and every */
     if(edgeString == "clamp"_s)
@@ -112,7 +114,7 @@ Containers::Optional<ImageData2D> StbResizeImageConverter::doConvert(const Image
     }
 
     /* Filter */
-    const Containers::StringView filterString = configuration().value<Containers::StringView>("filter");
+    const Containers::StringView filterString = configuration.value<Containers::StringView>("filter");
     stbir_filter filter;
     /* LCOV_EXCL_START, it makes no sense to test each and every */
     if(!filterString)
@@ -135,22 +137,41 @@ Containers::Optional<ImageData2D> StbResizeImageConverter::doConvert(const Image
 
     /* Always align output rows at four bytes */
     const std::size_t stride = 4*((size.x()*image.pixelSize() + 3)/4);
-    Trade::ImageData2D out{image.format(), size, Containers::Array<char>{NoInit, stride*size.y()}};
+    Trade::ImageData3D out{image.format(), {size, image.size().z()}, Containers::Array<char>{NoInit, stride*size.y()*image.size().z()}};
 
-    const Containers::StridedArrayView3D<const char> srcPixels = image.pixels();
-    const Containers::StridedArrayView3D<char> dstPixels = out.mutablePixels();
+    const Containers::StridedArrayView4D<const char> srcPixels = image.pixels();
+    const Containers::StridedArrayView4D<char> dstPixels = out.mutablePixels();
     /* Apart from wrong input (which we check here), the only way this function
        could fail is due to a memory allocation failure. Which is likely only
        when doing some really crazy upsample, and then it'd fail already when
        allocating the output image above. */
-    CORRADE_INTERNAL_ASSERT_OUTPUT(stbir_resize(
-        srcPixels.data(), srcPixels.size()[1], srcPixels.size()[0], srcPixels.stride()[0],
-        dstPixels.data(), dstPixels.size()[1], dstPixels.size()[0], dstPixels.stride()[0],
-        /** @todo option for separate horizontal and vertical filters */
-        type, channelCount, alphaChannelIndex, flags, edge, edge, filter, filter, colorspace, nullptr));
+    for(std::size_t z = 0, zMax = image.size().z(); z != zMax; ++z) {
+        const Containers::StridedArrayView3D<const char> srcPixelLayer = srcPixels[z];
+        const Containers::StridedArrayView3D<char> dstPixelLayer = dstPixels[z];
+        CORRADE_INTERNAL_ASSERT_OUTPUT(stbir_resize(
+            srcPixelLayer.data(), srcPixelLayer.size()[1], srcPixelLayer.size()[0], srcPixelLayer.stride()[0],
+            dstPixelLayer.data(), dstPixelLayer.size()[1], dstPixelLayer.size()[0], dstPixelLayer.stride()[0],
+            /** @todo option for separate horizontal and vertical filters */
+            type, channelCount, alphaChannelIndex, flags, edge, edge, filter, filter, colorspace, nullptr));
+    }
 
     /* GCC 4.8 needs extra help here */
     return Containers::optional(std::move(out));
+}
+
+}
+
+Containers::Optional<ImageData2D> StbResizeImageConverter::doConvert(const ImageView2D& image) {
+    Containers::Optional<ImageData3D> out = convertInternal(image, configuration());
+    if(!out) return {};
+
+    CORRADE_INTERNAL_ASSERT(out->size().z() == 1);
+    const Vector2i size = out->size().xy();
+    return ImageData2D{out->format(), size, out->release()};
+}
+
+Containers::Optional<ImageData3D> StbResizeImageConverter::doConvert(const ImageView3D& image) {
+    return convertInternal(image, configuration());
 }
 
 }}

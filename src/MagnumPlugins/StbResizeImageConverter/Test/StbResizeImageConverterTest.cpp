@@ -25,6 +25,7 @@
 
 #include <sstream>
 #include <Corrade/Containers/Optional.h>
+#include <Corrade/Containers/StridedArrayView.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/DebugStl.h> /** @todo remove once Debug is stream-free */
@@ -56,6 +57,8 @@ struct StbResizeImageConverterTest: TestSuite::Tester {
     void rgba8();
     void rg16();
     void r32f();
+
+    void threeDimensions();
 
     /* Explicitly forbid system-wide plugin dependencies */
     PluginManager::Manager<AbstractImageConverter> _converterManager{"nonexistent"};
@@ -110,7 +113,9 @@ StbResizeImageConverterTest::StbResizeImageConverterTest() {
         Containers::arraySize(Rgba8Data));
 
     addTests({&StbResizeImageConverterTest::rg16,
-              &StbResizeImageConverterTest::r32f});
+              &StbResizeImageConverterTest::r32f,
+
+              &StbResizeImageConverterTest::threeDimensions});
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. */
@@ -303,6 +308,41 @@ void StbResizeImageConverterTest::r32f() {
     CORRADE_COMPARE_WITH(*out,
         (ImageView2D{PixelFormat::R32F, {2, 1}, expected}),
         (DebugTools::CompareImage{1.0e-6, 1.0e-6}));
+}
+
+void StbResizeImageConverterTest::threeDimensions() {
+    /* Same as rgb8Padded(), except that there's two layers with the second one
+       flipped so the second should have the output reversed. No cross-layer
+       filtering should happen. */
+    const Color3ub input[]{
+        0xff3366_rgb, 0xff6633_rgb, 0x66ffcc_rgb,
+        0x993366_rgb, 0x3399ff_rgb, 0xcccc99_rgb,
+        {}, {}, {},
+
+        0xcccc99_rgb, 0x3399ff_rgb, 0x993366_rgb,
+        0x66ffcc_rgb, 0xff6633_rgb, 0xff3366_rgb,
+        {}, {}, {},
+    };
+    const Color3ub expected[]{
+        0xba4d77_rgb, 0x99c3aa_rgb,
+        0x99c3aa_rgb, 0xba4d77_rgb,
+    };
+
+    Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("StbResizeImageConverter");
+    converter->configuration().setValue("size", (Vector2i{2, 1}));
+
+    Containers::Optional<ImageData3D> out = converter->convert(ImageView3D{
+        PixelStorage{}.setAlignment(1).setImageHeight(3),
+        PixelFormat::RGB8Unorm, {3, 2, 2}, input});
+    CORRADE_VERIFY(out);
+    CORRADE_COMPARE(out->format(), PixelFormat::RGB8Unorm);
+    for(std::size_t i: {0, 1}) {
+        CORRADE_ITERATION(i);
+        /** @todo 3D support in CompareImage, ugh */
+        CORRADE_COMPARE_AS(out->pixels<Color3ub>()[i],
+            (ImageView2D{PixelStorage{}.setAlignment(1), PixelFormat::RGB8Unorm, {2, 1}, Containers::arrayView(expected).exceptPrefix(i*2)}),
+            DebugTools::CompareImage);
+    }
 }
 
 }}}}

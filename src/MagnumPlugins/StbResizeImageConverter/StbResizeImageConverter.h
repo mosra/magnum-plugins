@@ -58,8 +58,8 @@ namespace Magnum { namespace Trade {
 
 @m_keywords{OpenExrImageConverter}
 
-Performs downsampling and upsampling of 8-bit, 16-bit and float images using
-the [stb_image_resize](https://github.com/nothings/stb) library.
+Performs downsampling and upsampling of 8-bit, 16-bit and float 2D and 2D array
+images using the [stb_image_resize](https://github.com/nothings/stb) library.
 
 @m_class{m-block m-primary}
 
@@ -115,6 +115,10 @@ Accepts @ref PixelFormat::RGBA8Unorm, @relativeref{PixelFormat,RGBA8Srgb},
 their 1-, 2- and 3-component variants. In order to perform a conversion, you
 have to set the @cb{.ini} size @ce @ref Trade-StbResizeImageConverter-configuration "configuration option".
 
+3D images are resized slice-by-slice --- i.e., as a 2D array texture. In that
+case the @cb{.ini} size @ce option still takes a 2D size, the layer count is
+implicit and doesn't change in the output.
+
 @section Trade-StbResizeImageConverter-configuration Plugin-specific configuration
 
 Apart from the mandatory @cb{.ini} size @ce, other options can be set through
@@ -133,6 +137,7 @@ class MAGNUM_STBRESIZEIMAGECONVERTER_EXPORT StbResizeImageConverter: public Abst
     private:
         MAGNUM_STBRESIZEIMAGECONVERTER_LOCAL ImageConverterFeatures doFeatures() const override;
         MAGNUM_STBRESIZEIMAGECONVERTER_LOCAL Containers::Optional<ImageData2D> doConvert(const ImageView2D& image) override;
+        MAGNUM_STBRESIZEIMAGECONVERTER_LOCAL Containers::Optional<ImageData3D> doConvert(const ImageView3D& image) override;
 };
 
 }}
