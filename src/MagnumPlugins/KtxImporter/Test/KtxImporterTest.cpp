@@ -1002,6 +1002,8 @@ void KtxImporterTest::image1DCompressed() {
     /* The compressed data is the output of PVRTexTool, nothing hand-crafted.
        Use --save-diagnostic to extract them if they're missing or wrong. The
        same files are re-used in the tests for KtxImageConverter as input data. */
+    /** @todo remove this once CompressedImage etc. tests for data size on its
+        own */
     const Vector3i blockSize = compressedPixelFormatBlockSize(data.format);
     const Vector3i blockCount = (Vector3i::pad(data.size, 1) + (blockSize - Vector3i{1}))/blockSize;
     CORRADE_COMPARE(image->data().size(), blockCount.product()*compressedPixelFormatBlockDataSize(data.format));
@@ -1028,6 +1030,8 @@ void KtxImporterTest::image1DCompressedMipmaps() {
         CORRADE_COMPARE(image->compressedFormat(), CompressedPixelFormat::Etc2RGB8Srgb);
         CORRADE_COMPARE(image->size(), mipSize);
 
+        /** @todo remove this once CompressedImage etc. tests for data size on
+            its own */
         const Vector3i blockSize = compressedPixelFormatBlockSize(image->compressedFormat());
         const Vector3i blockCount = (Vector3i::pad(mipSize, 1) + (blockSize - Vector3i{1}))/blockSize;
         CORRADE_COMPARE(image->data().size(), blockCount.product()*compressedPixelFormatBlockDataSize(image->compressedFormat()));
@@ -1222,6 +1226,8 @@ void KtxImporterTest::image2DCompressed() {
     CORRADE_COMPARE(storage.imageHeight(), 0);
     CORRADE_COMPARE(storage.skip(), Vector3i{});
 
+    /** @todo remove this once CompressedImage etc. tests for data size on its
+        own */
     const Vector3i blockSize = compressedPixelFormatBlockSize(data.format);
     const Vector3i blockCount = (Vector3i::pad(data.size, 1) + (blockSize - Vector3i{1}))/blockSize;
     CORRADE_COMPARE(image->data().size(), blockCount.product()*compressedPixelFormatBlockDataSize(data.format));
@@ -1248,6 +1254,8 @@ void KtxImporterTest::image2DCompressedMipmaps() {
         CORRADE_COMPARE(image->compressedFormat(), CompressedPixelFormat::Etc2RGB8Srgb);
         CORRADE_COMPARE(image->size(), mipSize);
 
+        /** @todo remove this once CompressedImage etc. tests for data size on
+            its own */
         const Vector3i blockSize = compressedPixelFormatBlockSize(image->compressedFormat());
         const Vector3i blockCount = (Vector3i::pad(mipSize, 1) + (blockSize - Vector3i{1}))/blockSize;
         CORRADE_COMPARE(image->data().size(), blockCount.product()*compressedPixelFormatBlockDataSize(image->compressedFormat()));
@@ -1273,6 +1281,8 @@ void KtxImporterTest::image2DCompressedLayers() {
     CORRADE_COMPARE(image->compressedFormat(), CompressedPixelFormat::Etc2RGB8Srgb);
     CORRADE_COMPARE(image->size(), (Vector3i{9, 10, 2}));
 
+    /** @todo remove this once CompressedImage etc. tests for data size on its
+        own */
     const Vector3i blockSize = compressedPixelFormatBlockSize(image->compressedFormat());
     const Vector3i blockCount = (Vector3i::pad(image->size(), 1) + (blockSize - Vector3i{1}))/blockSize;
     CORRADE_COMPARE(image->data().size(), blockCount.product()*compressedPixelFormatBlockDataSize(image->compressedFormat()));
@@ -1580,6 +1590,8 @@ void KtxImporterTest::image3DCompressed() {
     CORRADE_COMPARE(storage.imageHeight(), 0);
     CORRADE_COMPARE(storage.skip(), Vector3i{});
 
+    /** @todo remove this once CompressedImage etc. tests for data size on its
+        own */
     const Vector3i blockSize = compressedPixelFormatBlockSize(format);
     const Vector3i blockCount = (size + (blockSize - Vector3i{1}))/blockSize;
     CORRADE_COMPARE(image->data().size(), blockCount.product()*compressedPixelFormatBlockDataSize(format));
@@ -1606,6 +1618,8 @@ void KtxImporterTest::image3DCompressedMipmaps() {
         CORRADE_COMPARE(image->compressedFormat(), CompressedPixelFormat::Etc2RGB8Srgb);
         CORRADE_COMPARE(image->size(), mipSize);
 
+        /** @todo remove this once CompressedImage etc. tests for data size on
+            its own */
         const Vector3i blockSize = compressedPixelFormatBlockSize(image->compressedFormat());
         const Vector3i blockCount = (mipSize + (blockSize - Vector3i{1}))/blockSize;
         CORRADE_COMPARE(image->data().size(), blockCount.product()*compressedPixelFormatBlockDataSize(image->compressedFormat()));

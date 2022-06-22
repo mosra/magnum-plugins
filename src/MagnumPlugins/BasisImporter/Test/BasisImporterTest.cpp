@@ -773,8 +773,8 @@ void BasisImporterTest::rgb() {
         CORRADE_VERIFY(image->isCompressed());
         CORRADE_COMPARE(image->compressedFormat(), formatData.expectedFormat);
         CORRADE_COMPARE(image->size(), formatData.expectedSize);
-        /** @todo remove this once CompressedImage etc. tests for data size on its
-            own / we're able to decode the data ourselves */
+        /** @todo remove this once CompressedImage etc. tests for data size on
+            its own / we're able to decode the data ourselves */
         CORRADE_COMPARE(image->data().size(), compressedPixelFormatBlockDataSize(formatData.expectedFormat)*((image->size() + compressedPixelFormatBlockSize(formatData.expectedFormat).xy() - Vector2i{1})/compressedPixelFormatBlockSize(formatData.expectedFormat).xy()).product());
     }
 }
@@ -808,8 +808,8 @@ void BasisImporterTest::rgba() {
         CORRADE_VERIFY(image->isCompressed());
         CORRADE_COMPARE(image->compressedFormat(), formatData.expectedFormat);
         CORRADE_COMPARE(image->size(), formatData.expectedSize);
-        /** @todo remove this once CompressedImage etc. tests for data size on its
-            own / we're able to decode the data ourselves */
+        /** @todo remove this once CompressedImage etc. tests for data size on
+            its own / we're able to decode the data ourselves */
         CORRADE_COMPARE(image->data().size(), compressedPixelFormatBlockDataSize(formatData.expectedFormat)*((image->size() + compressedPixelFormatBlockSize(formatData.expectedFormat).xy() - Vector2i{1})/compressedPixelFormatBlockSize(formatData.expectedFormat).xy()).product());
     }
 }
@@ -845,8 +845,8 @@ void BasisImporterTest::linear() {
         CORRADE_VERIFY(image->isCompressed());
         CORRADE_COMPARE(image->compressedFormat(), formatData.expectedLinearFormat);
         CORRADE_COMPARE(image->size(), formatData.expectedSize);
-        /** @todo remove this once CompressedImage etc. tests for data size on its
-            own / we're able to decode the data ourselves */
+        /** @todo remove this once CompressedImage etc. tests for data size on
+            its own / we're able to decode the data ourselves */
         CORRADE_COMPARE(image->data().size(), compressedPixelFormatBlockDataSize(formatData.expectedLinearFormat)*((image->size() + compressedPixelFormatBlockSize(formatData.expectedLinearFormat).xy() - Vector2i{1})/compressedPixelFormatBlockSize(formatData.expectedLinearFormat).xy()).product());
     }
 }
