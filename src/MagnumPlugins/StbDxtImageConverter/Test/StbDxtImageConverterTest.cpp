@@ -45,6 +45,7 @@ struct StbDxtImageConverterTest: TestSuite::Tester {
 
     void unsupportedFormat();
     void unsupportedSize();
+    void emptyImage();
 
     void rgba();
     void threeDimensions();
@@ -85,7 +86,8 @@ const struct {
 
 StbDxtImageConverterTest::StbDxtImageConverterTest() {
     addTests({&StbDxtImageConverterTest::unsupportedFormat,
-              &StbDxtImageConverterTest::unsupportedSize});
+              &StbDxtImageConverterTest::unsupportedSize,
+              &StbDxtImageConverterTest::emptyImage});
 
     addInstancedTests({&StbDxtImageConverterTest::rgba},
         Containers::arraySize(RgbaData));
@@ -119,6 +121,17 @@ void StbDxtImageConverterTest::unsupportedSize() {
     Error redirectError{&out};
     CORRADE_VERIFY(!_converterManager.instantiate("StbDxtImageConverter")->convert(image));
     CORRADE_COMPARE(out.str(), "Trade::StbDxtImageConverter::convert(): expected size to be divisible by 4, got Vector(15, 17)\n");
+}
+
+void StbDxtImageConverterTest::emptyImage() {
+    ImageView2D image{PixelFormat::RGBA8Unorm, {}, nullptr};
+
+    Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("StbDxtImageConverter");
+    Containers::Optional<Trade::ImageData2D> out = converter->convert(image);
+    CORRADE_VERIFY(out);
+    CORRADE_VERIFY(out->isCompressed());
+    CORRADE_COMPARE(out->size(), Vector2i{});
+    CORRADE_COMPARE(out->compressedFormat(), CompressedPixelFormat::Bc3RGBAUnorm);
 }
 
 void StbDxtImageConverterTest::rgba() {

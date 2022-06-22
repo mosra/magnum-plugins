@@ -122,12 +122,12 @@ Containers::Optional<ImageData3D> convertInternal(const ImageView3D& image, Util
     const Containers::StridedArrayView3D<UnsignedByte> inputBlock{inputBlockData, {4, 4, inputChannelCount}, {4*4, 4, 1}};
 
     /* Go through all blocks in the input file, linearize and compress them */
-    for(std::size_t z = 0, zMax = image.size().z(); z != zMax; ++z) {
+    for(std::size_t z = 0, zMax = input.size()[0]; z != zMax; ++z) {
         const Containers::StridedArrayView3D<const UnsignedByte> inputLayer = input[z];
         const Containers::StridedArrayView3D<UnsignedByte> outputLayer = output[z];
-        for(std::size_t y = 0, yMax = image.size().y()/4; y < yMax; ++y) {
+        for(std::size_t y = 0, yMax = input.size()[1]/4; y < yMax; ++y) {
             const Containers::StridedArrayView2D<UnsignedByte> outputRow = outputLayer[y];
-            for(std::size_t x = 0, xMax = image.size().x()/4; x < xMax; ++x) {
+            for(std::size_t x = 0, xMax = input.size()[2]/4; x < xMax; ++x) {
                 /* If the alpha is missing, it'll copy only the RGB values into
                    the destination */
                 Utility::copy(inputLayer.slice({4*y, 4*x, 0}, {4*y + 4, 4*x + 4, inputChannelCount}), inputBlock);
