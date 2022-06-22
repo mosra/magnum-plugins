@@ -53,34 +53,18 @@ Containers::Optional<ImageData3D> convertInternal(const ImageView3D& image, Util
     const Int flags = configuration.value<bool>("highQuality") ? STB_DXT_HIGHQUAL : STB_DXT_NORMAL;
 
     /* Decide on the output format */
-    /** @todo isPixelFormatSrgb(), pixelFormatChannelCount() helpers, and same
-        for compressed pixel formats */
-    std::size_t inputChannelCount;
-    bool alpha, srgb;
     CompressedPixelFormat outputFormat;
     switch(image.format()) {
         case PixelFormat::RGB8Unorm:
-            inputChannelCount = 3;
-            alpha = false;
-            srgb = false;
             outputFormat = CompressedPixelFormat::Bc1RGBUnorm;
             break;
         case PixelFormat::RGB8Srgb:
-            inputChannelCount = 3;
-            alpha = false;
-            srgb = true;
             outputFormat = CompressedPixelFormat::Bc1RGBSrgb;
             break;
         case PixelFormat::RGBA8Unorm:
-            inputChannelCount = 4;
-            alpha = true;
-            srgb = false;
             outputFormat = CompressedPixelFormat::Bc3RGBAUnorm;
             break;
         case PixelFormat::RGBA8Srgb:
-            inputChannelCount = 4;
-            alpha = true;
-            srgb = true;
             outputFormat = CompressedPixelFormat::Bc3RGBASrgb;
             break;
         /** @todo BC4/5 (single/two channel) -- template the loop? */
@@ -88,6 +72,9 @@ Containers::Optional<ImageData3D> convertInternal(const ImageView3D& image, Util
             Error{} << "Trade::StbDxtImageConverter::convert(): unsupported format" << image.format();
             return {};
     }
+    const UnsignedInt inputChannelCount = pixelFormatChannelCount(image.format());
+    const bool srgb = isPixelFormatSrgb(image.format());
+    bool alpha = inputChannelCount == 4;
 
     /* If the alpha option is set, override the default. Input channel count
        stays the same, of course. */
