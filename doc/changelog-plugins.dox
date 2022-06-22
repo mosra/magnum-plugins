@@ -53,6 +53,8 @@ namespace Magnum {
     support
 -   New @relativeref{Trade,StbDxtImageConverter} for compressing images into
     block-compressed BC1/BC3.
+-   New @relativeref{Trade,StbResizeImageConverter} for image downsampling and
+    upsampling
 -   New @relativeref{Trade,WebPImporter} for importing WebP files (see
     [mosra/magnum-plugins#121](https://github.com/mosra/magnum-plugins/pull/121))
 -   New @relativeref{Trade,GltfImporter} plugin for importing glTF files, which

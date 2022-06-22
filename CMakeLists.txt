@@ -157,6 +157,7 @@ option(MAGNUM_WITH_STANFORDSCENECONVERTER "Build StanfordSceneConverter plugin" 
 option(MAGNUM_WITH_STBDXTIMAGECONVERTER "Build StbDxtImageConverter plugin" OFF)
 option(MAGNUM_WITH_STBIMAGECONVERTER "Build StbImageConverter plugin" OFF)
 option(MAGNUM_WITH_STBIMAGEIMPORTER "Build StbImageImporter plugin" OFF)
+option(MAGNUM_WITH_STBRESIZEIMAGECONVERTER "Build StbResizeImageConverter plugin" OFF)
 option(MAGNUM_WITH_STBTRUETYPEFONT "Build StbTrueTypeFont plugin" OFF)
 option(MAGNUM_WITH_STBVORBISAUDIOIMPORTER "Build StbVorbisAudioImporter plugin" OFF)
 option(MAGNUM_WITH_STLIMPORTER "Build StlImporter plugin" OFF)

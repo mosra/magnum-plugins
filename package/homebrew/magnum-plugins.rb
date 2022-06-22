@@ -103,6 +103,7 @@ class MagnumPlugins < Formula
         "-DMAGNUM_WITH_STBDXTIMAGECONVERTER=ON",
         "-D#{option_prefix}WITH_STBIMAGECONVERTER=ON",
         "-D#{option_prefix}WITH_STBIMAGEIMPORTER=ON",
+        "-DMAGNUM_WITH_STBRESIZEIMAGECONVERTER=ON",
         "-D#{option_prefix}WITH_STBTRUETYPEFONT=ON",
         "-D#{option_prefix}WITH_STBVORBISAUDIOIMPORTER=ON",
         "-D#{option_prefix}WITH_STLIMPORTER=ON",

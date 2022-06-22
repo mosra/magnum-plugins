@@ -185,6 +185,10 @@ if(MAGNUM_WITH_STBIMAGEIMPORTER)
     add_subdirectory(StbImageImporter)
 endif()
 
+if(MAGNUM_WITH_STBRESIZEIMAGECONVERTER)
+    add_subdirectory(StbResizeImageConverter)
+endif()
+
 if(MAGNUM_WITH_STBTRUETYPEFONT)
     add_subdirectory(StbTrueTypeFont)
 endif()

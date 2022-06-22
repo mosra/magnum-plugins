@@ -43,6 +43,7 @@
 #  StbDxtImageConverter         - BC1/BC3 image compressor using stb_dxt
 #  StbImageConverter            - Image converter using stb_image_write
 #  StbImageImporter             - Image importer using stb_image
+#  StbResizeImageConverter      - Image resizing using stb_image_resize
 #  StbTrueTypeFont              - TrueType font using stb_truetype
 #  StbVorbisAudioImporter       - OGG audio importer using stb_vorbis
 #  StlImporter                  - STL importer
@@ -165,7 +166,8 @@ set(_MAGNUMPLUGINS_PLUGIN_COMPONENTS
     OpenGexImporter PngImageConverter PngImporter PrimitiveImporter
     SpirvToolsShaderConverter StanfordImporter StanfordSceneConverter
     StbDxtImageConverter StbImageConverter StbImageImporter
-    StbTrueTypeFont StbVorbisAudioImporter StlImporter WebPImporter)
+    StbResizeImageConverter StbTrueTypeFont StbVorbisAudioImporter StlImporter
+    WebPImporter)
 # Nothing is enabled by default right now
 set(_MAGNUMPLUGINS_IMPLICITLY_ENABLED_COMPONENTS )
 
@@ -469,6 +471,7 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
         # StbDxtImageConverter has no dependencies
         # StbImageConverter has no dependencies
         # StbImageImporter has no dependencies
+        # StbResizeImageConverter has no dependencies
         # StbTrueTypeFont has no dependencies
         # StbVorbisAudioImporter has no dependencies
         # StlImporter has no dependencies
