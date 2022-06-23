@@ -807,7 +807,7 @@ void BasisImageConverterTest::convert2DMipmaps() {
     CORRADE_COMPARE_WITH(*levels[1].result,
         Utility::Path::join(BASISIMPORTER_TEST_DIR, "rgba-31x13.png"),
         /* There are moderately significant compression artifacts */
-        (DebugTools::CompareImageToFile{_manager, 81.0f, 14.33f}));
+        (DebugTools::CompareImageToFile{_manager, 81.0f, 14.651f}));
     CORRADE_COMPARE_WITH(*levels[2].result,
         Utility::Path::join(BASISIMPORTER_TEST_DIR, "rgba-15x6.png"),
         /* There are moderately significant compression artifacts */
@@ -870,10 +870,10 @@ void BasisImageConverterTest::convert2DArray() {
         (DebugTools::CompareImage{97.25f, 7.89f}));
     CORRADE_COMPARE_WITH(image->pixels<Color4ub>()[1], imageViewSlice(ImageView3D(originalImage), 1),
         /* There are moderately significant compression artifacts */
-        (DebugTools::CompareImage{97.25f, 7.735f}));
+        (DebugTools::CompareImage{97.25f, 7.778f}));
     CORRADE_COMPARE_WITH(image->pixels<Color4ub>()[2], imageViewSlice(ImageView3D(originalImage), 2),
         /* There are moderately significant compression artifacts */
-        (DebugTools::CompareImage{96.5f, 6.928f}));
+        (DebugTools::CompareImage{98.5f, 7.022f}));
 }
 
 void BasisImageConverterTest::convert2DArrayOneLayer() {
@@ -987,14 +987,14 @@ void BasisImageConverterTest::convert2DArrayMipmaps() {
         CORRADE_COMPARE_WITH(levels[0].result->pixels<Color4ub>()[i],
             imageViewSlice(ImageView3D(*levels[0].originalImage), i),
             /* There are moderately significant compression artifacts */
-            (DebugTools::CompareImage{97.25f, 7.914f}));
+            (DebugTools::CompareImage{98.5f, 7.914f}));
     }
     for(Int i = 0; i != levels[0].originalImage->size().z(); ++i) {
         CORRADE_ITERATION("level 1, layer" << i);
         CORRADE_COMPARE_WITH(levels[1].result->pixels<Color4ub>()[i],
             imageViewSlice(ImageView3D(*levels[1].originalImage), i),
             /* There are moderately significant compression artifacts */
-            (DebugTools::CompareImage{87.0f, 14.453f}));
+            (DebugTools::CompareImage{87.0f, 14.73f}));
     }
     for(Int i = 0; i != levels[0].originalImage->size().z(); ++i) {
         CORRADE_ITERATION("level 2, layer" << i);
@@ -1053,7 +1053,7 @@ void BasisImageConverterTest::convertToFile2D() {
     CORRADE_COMPARE_WITH(*level1,
         Utility::Path::join(BASISIMPORTER_TEST_DIR, "rgba-31x13.png"),
         /* There are moderately significant compression artifacts */
-        (DebugTools::CompareImageToFile{_manager, 81.0f, 14.31f}));
+        (DebugTools::CompareImageToFile{_manager, 81.0f, 14.709f}));
 
     /* The format should get reset again after so convertToData() isn't left
        with some random format after */
