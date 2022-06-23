@@ -149,7 +149,8 @@ Containers::Optional<ImageData2D> StbResizeImageConverter::doConvert(const Image
         /** @todo option for separate horizontal and vertical filters */
         type, channelCount, alphaChannelIndex, flags, edge, edge, filter, filter, colorspace, nullptr));
 
-    return out;
+    /* GCC 4.8 needs extra help here */
+    return Containers::optional(std::move(out));
 }
 
 }}
