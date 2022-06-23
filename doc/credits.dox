@@ -72,6 +72,7 @@ namespace Magnum {
     fixes
 -   **Konstantinos Chatzilygeroudis** ([\@costashatz](https://github.com/costashatz))
     --- Debian package
+-   **[\@lacyyy](https://github.com/lacyyy)** -- MSYS package fixes
 -   **Max Schwarz** ([\@xqms](https://github.com/xqms)) --- error reporting
     improvements in @ref Trade::JpegImporter "JpegImporter", expanding
     robustness and capabilities of @ref Trade::AssimpImporter "AssimpImporter"

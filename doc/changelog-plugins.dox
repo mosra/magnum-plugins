@@ -194,6 +194,8 @@ namespace Magnum {
     config-specific `CMAKE_*_OUTPUT_DIRECTORY_<CONFIG>` variables. See also
     [mosra/magnum#486](https://github.com/mosra/magnum/issues/486) and
     [mosra/magnum-plugins#123](https://github.com/mosra/magnum-plugins/pull/123).
+-   Fixed wrong `.gitattributes` option for LF line endings in MSYS PKGBUILDs
+    (see [mosra/magnum-plugins#125](https://github.com/mosra/magnum-plugins/issues/125))
 
 @subsection changelog-plugins-latest-bugfixes Bug fixes
 
