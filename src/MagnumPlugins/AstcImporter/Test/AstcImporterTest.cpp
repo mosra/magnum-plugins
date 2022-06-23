@@ -63,7 +63,6 @@ struct AstcImporterTest: TestSuite::Tester {
 
     void fileTooLong2D();
     void fileTooLong3D();
-    void extraDataAtTheEnd();
 
     void openMemory();
     void openTwice();
