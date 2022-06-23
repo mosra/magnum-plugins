@@ -1,2 +1,2 @@
-magnum-plugins/PKGBUILD text eof=lf
-PKGBUILD text eof=lf
+magnum-plugins/PKGBUILD text eol=lf
+PKGBUILD text eol=lf
