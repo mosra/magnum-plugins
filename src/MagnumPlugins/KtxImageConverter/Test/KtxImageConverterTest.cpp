@@ -79,6 +79,9 @@ struct KtxImageConverterTest: TestSuite::Tester {
     void convert1DCompressed();
     void convert1DCompressedMipmaps();
 
+    void convert1DArray();
+    /* Plenty of other combinations, no need to test 1D array with mips */
+
     void convert2D();
     void convert2DMipmaps();
     /* Should be enough to only test this for one type */
@@ -86,13 +89,18 @@ struct KtxImageConverterTest: TestSuite::Tester {
     void convert2DCompressed();
     void convert2DCompressedMipmaps();
 
+    void convert2DArray();
+    void convert2DArrayMipmaps();
+
+    void convertCubeMap();
+    void convertCubeMapMipmaps();
+    void convertCubeMapArray();
+    /* Plenty of other combinations, no need to test cube array with mips */
+
     void convert3D();
     void convert3DMipmaps();
     void convert3DCompressed();
     void convert3DCompressedMipmaps();
-
-    /** @todo Add tests for cube and layered (and combined) images once the
-        converter supports those */
 
     void convertFormats();
 
@@ -124,7 +132,16 @@ struct KtxImageConverterTest: TestSuite::Tester {
 using namespace Containers::Literals;
 using namespace Math::Literals;
 
-/* Origin top-left-back */
+const Color3ub PatternRgb1DData[3][4]{
+    /* pattern-1d.png */
+    {0xff0000_rgb, 0xffffff_rgb, 0x000000_rgb, 0x007f7f_rgb},
+    /* pattern-1d.png */
+    {0xff0000_rgb, 0xffffff_rgb, 0x000000_rgb, 0x007f7f_rgb},
+    /* black-1d.png */
+    {0x000000_rgb, 0x000000_rgb, 0x000000_rgb, 0x000000_rgb}
+};
+
+/* Origin top-left-back (for a 3D texture) */
 const Color3ub PatternRgbData[3][3][4]{
     /* black.png */
     {{0x000000_rgb, 0x000000_rgb, 0x000000_rgb, 0x000000_rgb},
@@ -138,6 +155,22 @@ const Color3ub PatternRgbData[3][3][4]{
     {{0x0000ff_rgb, 0x00ff00_rgb, 0x7f007f_rgb, 0x7f007f_rgb},
      {0xffffff_rgb, 0xff0000_rgb, 0x000000_rgb, 0x00ff00_rgb},
      {0xff0000_rgb, 0xffffff_rgb, 0x000000_rgb, 0x00ff00_rgb}}
+};
+
+/* Origin top-left-forward (for a 2D array texture) */
+const Color3ub PatternRgbData2DArray[3][3][4]{
+    /* pattern.png */
+    {{0x0000ff_rgb, 0x00ff00_rgb, 0x7f007f_rgb, 0x7f007f_rgb},
+     {0xffffff_rgb, 0xff0000_rgb, 0x000000_rgb, 0x00ff00_rgb},
+     {0xff0000_rgb, 0xffffff_rgb, 0x000000_rgb, 0x00ff00_rgb}},
+    /* pattern.png */
+    {{0x0000ff_rgb, 0x00ff00_rgb, 0x7f007f_rgb, 0x7f007f_rgb},
+     {0xffffff_rgb, 0xff0000_rgb, 0x000000_rgb, 0x00ff00_rgb},
+     {0xff0000_rgb, 0xffffff_rgb, 0x000000_rgb, 0x00ff00_rgb}},
+    /* black.png */
+    {{0x000000_rgb, 0x000000_rgb, 0x000000_rgb, 0x000000_rgb},
+     {0x000000_rgb, 0x000000_rgb, 0x000000_rgb, 0x000000_rgb},
+     {0x000000_rgb, 0x000000_rgb, 0x000000_rgb, 0x000000_rgb}}
 };
 
 /* Output of PVRTexTool with format conversion. This is PatternRgbData[2],
@@ -269,11 +302,17 @@ const struct {
 const struct {
     const char* name;
     const char* value;
+    ImageFlags3D imageFlags;
     const char* message;
 } InvalidOrientationData[]{
-    {"too short", "r", "invalid orientation string, expected at least 3 characters but got r"},
-    {"invalid character", "xxx", "invalid character in orientation, expected r or l but got x"},
-    {"invalid order", "rid", "invalid character in orientation, expected d or u but got i"},
+    {"too short", "rd", {},
+        "invalid orientation string, expected at least 3 characters but got rd"},
+    {"too short for an array", "r", ImageFlag3D::Array,
+        "invalid orientation string, expected at least 2 characters but got r"},
+    {"invalid character", "xxx", {},
+        "invalid character in orientation, expected r or l but got x"},
+    {"invalid order", "rid", {},
+        "invalid character in orientation, expected d or u but got i"},
 };
 
 const struct {
@@ -335,6 +374,9 @@ KtxImageConverterTest::KtxImageConverterTest() {
         Containers::arraySize(Convert1DCompressedData));
 
     addTests({&KtxImageConverterTest::convert1DCompressedMipmaps,
+
+              &KtxImageConverterTest::convert1DArray,
+
               &KtxImageConverterTest::convert2D,
               &KtxImageConverterTest::convert2DMipmaps,
               &KtxImageConverterTest::convert2DMipmapsIncomplete});
@@ -343,6 +385,14 @@ KtxImageConverterTest::KtxImageConverterTest() {
         Containers::arraySize(Convert2DCompressedData));
 
     addTests({&KtxImageConverterTest::convert2DCompressedMipmaps,
+
+              &KtxImageConverterTest::convert2DArray,
+              &KtxImageConverterTest::convert2DArrayMipmaps,
+
+              &KtxImageConverterTest::convertCubeMap,
+              &KtxImageConverterTest::convertCubeMapMipmaps,
+              &KtxImageConverterTest::convertCubeMapArray,
+
               &KtxImageConverterTest::convert3D,
               &KtxImageConverterTest::convert3DMipmaps,
               &KtxImageConverterTest::convert3DCompressed,
@@ -679,12 +729,9 @@ void KtxImageConverterTest::convert1D() {
     converter->configuration().setValue("orientation", "r");
     converter->configuration().setValue("writerName", WriterToktx);
 
-    const Color3ub data[4]{
-        0xff0000_rgb, 0xffffff_rgb, 0x000000_rgb, 0x007f7f_rgb
-    };
     PixelStorage storage;
     storage.setAlignment(1);
-    const ImageView1D inputImage{storage, PixelFormat::RGB8Srgb, {4}, data};
+    const ImageView1D inputImage{storage, PixelFormat::RGB8Srgb, {4}, PatternRgb1DData[0]};
     Containers::Optional<Containers::Array<char>> output = converter->convertToData(inputImage);
     CORRADE_VERIFY(output);
     CORRADE_COMPARE_AS(Containers::StringView{*output},
@@ -770,6 +817,22 @@ void KtxImageConverterTest::convert1DCompressedMipmaps() {
     Containers::Optional<Containers::Array<char>> expected = Utility::Path::read(Utility::Path::join(KTXIMPORTER_TEST_DIR, "1d-compressed-mipmaps.ktx2"));
     CORRADE_VERIFY(expected);
     CORRADE_COMPARE_AS(*output, *expected, TestSuite::Compare::Container);
+}
+
+void KtxImageConverterTest::convert1DArray() {
+    Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("KtxImageConverter");
+    converter->configuration().setValue("orientation", "rd");
+    converter->configuration().setValue("writerName", WriterPVRTexTool);
+
+    PixelStorage storage;
+    storage.setAlignment(1);
+    const ImageView2D inputImage{storage, PixelFormat::RGB8Srgb, {4, 3}, PatternRgb1DData, ImageFlag2D::Array};
+    Containers::Optional<Containers::Array<char>> output = converter->convertToData(inputImage);
+    CORRADE_VERIFY(output);
+
+    CORRADE_COMPARE_AS(Containers::StringView{*output},
+        Utility::Path::join(KTXIMPORTER_TEST_DIR, "1d-layers.ktx2"),
+        TestSuite::Compare::StringToFile);
 }
 
 void KtxImageConverterTest::convert2D() {
@@ -893,6 +956,148 @@ void KtxImageConverterTest::convert2DCompressedMipmaps() {
     Containers::Optional<Containers::Array<char>> expected = Utility::Path::read(Utility::Path::join(KTXIMPORTER_TEST_DIR, "2d-compressed-mipmaps.ktx2"));
     CORRADE_VERIFY(expected);
     CORRADE_COMPARE_AS(*output, *expected, TestSuite::Compare::Container);
+}
+
+void KtxImageConverterTest::convert2DArray() {
+    Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("KtxImageConverter");
+    converter->configuration().setValue("orientation", "rd");
+    converter->configuration().setValue("writerName", WriterPVRTexTool);
+
+    PixelStorage storage;
+    storage.setAlignment(1);
+    const ImageView3D inputImage{storage, PixelFormat::RGB8Srgb, {4, 3, 3}, PatternRgbData2DArray, ImageFlag3D::Array};
+    Containers::Optional<Containers::Array<char>> output = converter->convertToData(inputImage);
+    CORRADE_VERIFY(output);
+
+    CORRADE_COMPARE_AS(Containers::StringView{*output},
+        Utility::Path::join(KTXIMPORTER_TEST_DIR, "2d-layers.ktx2"),
+        TestSuite::Compare::StringToFile);
+}
+
+void KtxImageConverterTest::convert2DArrayMipmaps() {
+    Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("KtxImageConverter");
+    converter->configuration().setValue("orientation", "rd");
+    converter->configuration().setValue("writerName", WriterPVRTexTool);
+
+    const ImageView3D inputImage0{PixelStorage{}.setAlignment(1), PixelFormat::RGB8Srgb, {4, 3, 3}, PatternRgbData2DArray, ImageFlag3D::Array};
+
+    /* Height is 1, so this isn't Y-flipped compared to KtxImporterTest */
+    const Color3ub mip1[2*1*3]{
+        0x0000ff_rgb, 0x7f007f_rgb,
+        0x0000ff_rgb, 0x7f007f_rgb,
+        0x000000_rgb, 0x000000_rgb
+    };
+    const ImageView3D inputImage1{PixelStorage{}.setAlignment(1), PixelFormat::RGB8Srgb, {2, 1, 3}, mip1, ImageFlag3D::Array};
+
+    const Color3ub mip2[1*1*3]{
+        0x0000ff_rgb,
+        0x0000ff_rgb,
+        0x000000_rgb
+    };
+    const ImageView3D inputImage2{PixelStorage{}.setAlignment(1), PixelFormat::RGB8Srgb, {1, 1, 3}, mip2, ImageFlag3D::Array};
+
+    Containers::Optional<Containers::Array<char>> output = converter->convertToData({inputImage0, inputImage1, inputImage2});
+    CORRADE_VERIFY(output);
+
+    CORRADE_COMPARE_AS(Containers::StringView{*output},
+        Utility::Path::join(KTXIMPORTER_TEST_DIR, "2d-mipmaps-and-layers.ktx2"),
+        TestSuite::Compare::StringToFile);
+}
+
+/* Same as FacesRgbData in KtxImporterTest, but origin flipped from bottom-left
+   to top-left. */
+const Color3ub FacesRgbData[2][6][2][2]{
+    /* cube+x.png, Y-flipped */
+    {{{0x0d0d0d_rgb, 0x0d0d0d_rgb},
+      {0xffffff_rgb, 0x0d0d0d_rgb}},
+    /* cube-x.png, Y-flipped */
+     {{0x222222_rgb, 0x222222_rgb},
+      {0xffffff_rgb, 0x222222_rgb}},
+    /* cube+y.png, Y-flipped */
+     {{0x323232_rgb, 0x323232_rgb},
+      {0xffffff_rgb, 0x323232_rgb}},
+    /* cube-y.png, Y-flipped */
+     {{0x404040_rgb, 0x404040_rgb},
+      {0xffffff_rgb, 0x404040_rgb}},
+    /* cube+z.png, Y-flipped */
+     {{0x4f4f4f_rgb, 0x4f4f4f_rgb},
+      {0xffffff_rgb, 0x4f4f4f_rgb}},
+    /* cube-z.png, Y-flipped */
+     {{0x606060_rgb, 0x606060_rgb},
+      {0xffffff_rgb, 0x606060_rgb}}},
+
+    /* cube+z.png, Y-flipped */
+    {{{0x4f4f4f_rgb, 0x4f4f4f_rgb},
+      {0xffffff_rgb, 0x4f4f4f_rgb}},
+    /* cube-z.png */
+     {{0x606060_rgb, 0x606060_rgb},
+      {0xffffff_rgb, 0x606060_rgb}},
+    /* cube+x.png */
+     {{0x0d0d0d_rgb, 0x0d0d0d_rgb},
+      {0xffffff_rgb, 0x0d0d0d_rgb}},
+    /* cube-x.png */
+     {{0x222222_rgb, 0x222222_rgb},
+      {0xffffff_rgb, 0x222222_rgb}},
+    /* cube+y.png */
+     {{0x323232_rgb, 0x323232_rgb},
+      {0xffffff_rgb, 0x323232_rgb}},
+    /* cube-y.png */
+     {{0x404040_rgb, 0x404040_rgb},
+      {0xffffff_rgb, 0x404040_rgb}}}
+};
+
+void KtxImageConverterTest::convertCubeMap() {
+    Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("KtxImageConverter");
+    converter->configuration().setValue("orientation", "rd");
+    converter->configuration().setValue("writerName", WriterPVRTexTool);
+
+    const ImageView3D inputImage{PixelStorage{}.setAlignment(1), PixelFormat::RGB8Srgb, {2, 2, 6}, FacesRgbData, ImageFlag3D::CubeMap};
+    Containers::Optional<Containers::Array<char>> output = converter->convertToData(inputImage);
+    CORRADE_VERIFY(output);
+
+    CORRADE_COMPARE_AS(Containers::StringView{*output},
+        Utility::Path::join(KTXIMPORTER_TEST_DIR, "cubemap.ktx2"),
+        TestSuite::Compare::StringToFile);
+}
+
+void KtxImageConverterTest::convertCubeMapMipmaps() {
+    Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("KtxImageConverter");
+    converter->configuration().setValue("orientation", "rd");
+    converter->configuration().setValue("writerName", WriterPVRTexTool);
+
+    const ImageView3D inputImage0{PixelStorage{}.setAlignment(1), PixelFormat::RGB8Srgb, {2, 2, 6}, FacesRgbData, ImageFlag3D::CubeMap};
+
+    /* Because FacesRgbData is Y-flipped compared to KtxImporterTest, this
+       also takes the first row instead of the last row */
+    const Color3ub mip1[1*1*6]{
+        FacesRgbData[0][0][0][0],
+        FacesRgbData[0][1][0][0],
+        FacesRgbData[0][2][0][0],
+        FacesRgbData[0][3][0][0],
+        FacesRgbData[0][4][0][0],
+        FacesRgbData[0][5][0][0]
+    };
+    const ImageView3D inputImage1{PixelStorage{}.setAlignment(1), PixelFormat::RGB8Srgb, {1, 1, 6}, mip1, ImageFlag3D::CubeMap};
+    Containers::Optional<Containers::Array<char>> output = converter->convertToData({inputImage0, inputImage1});
+    CORRADE_VERIFY(output);
+
+    CORRADE_COMPARE_AS(Containers::StringView{*output},
+        Utility::Path::join(KTXIMPORTER_TEST_DIR, "cubemap-mipmaps.ktx2"),
+        TestSuite::Compare::StringToFile);
+}
+
+void KtxImageConverterTest::convertCubeMapArray() {
+    Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("KtxImageConverter");
+    converter->configuration().setValue("orientation", "rd");
+    converter->configuration().setValue("writerName", WriterPVRTexTool);
+
+    const ImageView3D inputImage{PixelStorage{}.setAlignment(1), PixelFormat::RGB8Srgb, {2, 2, 12}, FacesRgbData, ImageFlag3D::CubeMap|ImageFlag3D::Array};
+    Containers::Optional<Containers::Array<char>> output = converter->convertToData(inputImage);
+    CORRADE_VERIFY(output);
+
+    CORRADE_COMPARE_AS(Containers::StringView{*output},
+        Utility::Path::join(KTXIMPORTER_TEST_DIR, "cubemap-layers.ktx2"),
+        TestSuite::Compare::StringToFile);
 }
 
 void KtxImageConverterTest::convert3D() {
@@ -1109,7 +1314,7 @@ void KtxImageConverterTest::configurationOrientationInvalid() {
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(!converter->convertToData(ImageView3D{PixelFormat::RGBA8Unorm, {1, 1, 1}, bytes}));
+    CORRADE_VERIFY(!converter->convertToData(ImageView3D{PixelFormat::RGBA8Unorm, {1, 1, 1}, bytes, data.imageFlags}));
     CORRADE_COMPARE(out.str(), Utility::formatString("Trade::KtxImageConverter::convertToData(): {}\n", data.message));
 }
 

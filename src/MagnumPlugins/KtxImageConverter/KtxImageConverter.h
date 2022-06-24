@@ -106,25 +106,18 @@ The following formats can be written:
 
 @subsection Trade-KtxImageConverter-behavior-types Image types
 
-Cube map images can be written but there is currently no way to mark them
-properly in the metadata. Exported files will be 3D images with faces exposed
-as depth slices.
-
-Array images will be written as images with one extra dimension for the array
-layers. For example, a 2x3 2D array image with 4 layers will result in a 3D
-image with size 2x3x4.
+The exporter can save 1D, 1D array, 2D, 2D array, cube map and cube map array
+images, recognizing @ref ImageFlag2D::Array, @ref ImageFlag3D::Array and/or
+@ref ImageFlag3D::CubeMap in passed images.
 
 @subsection Trade-KtxImageConverter-behavior-multilevel Multilevel images
 
-All image types can be saved with multiple levels by using the list
-variants of @ref convertToFile() / @ref convertToData(). Largest level is
-expected to be first, with each following level having width, height and depth
-divided by two, rounded down. Incomplete mip chains are supported.
-
-Due to the way @ref Trade-KtxImageConverter-behavior-types "non-trivial image types"
-are handled, the level sizes are always expected to match the resulting image
-type. This means that array images with multiple levels can currently not be
-exported and produce a level size mismatch error.
+All image types can be saved with multiple levels by using the list variants of
+@ref convertToFile() / @ref convertToData(). Largest level is expected to be
+first, 1D, 2D and 3D images then have each following level having width, height
+and depth divided by two, rounded down. Array and cube map images differ in
+that they don't shrink along the last dimension. Incomplete mip chains are
+supported.
 
 @subsection Trade-KtxImageConverter-behavior-supercompression Supercompression
 

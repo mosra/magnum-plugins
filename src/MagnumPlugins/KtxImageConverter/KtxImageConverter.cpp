@@ -692,14 +692,20 @@ template<UnsignedInt dimensions, template<UnsignedInt, typename> class View> Con
     const auto swizzle = configuration.value<Containers::StringView>("swizzle");
     const auto writerName = configuration.value<Containers::StringView>("writerName");
 
+    /* Cube map and array images don't have the last demension included
+       in the orientation string */
+    const ImageFlags3D flags = ImageFlag3D(UnsignedShort(imageLevels[0].flags()));
+    const UnsignedInt orientationDimensions = dimensions - (flags & (ImageFlag3D::Array|ImageFlag3D::CubeMap) ? 1 : 0);
     if(orientation) {
-        if(orientation.size() < dimensions) {
+        /* It's "at least" instead of exactly because the default configuration
+           option is for all three dimensions */
+        if(orientation.size() < orientationDimensions) {
             Error{} << "Trade::KtxImageConverter::convertToData(): invalid orientation string, expected at least" <<
-                dimensions << "characters but got" << orientation;
+                orientationDimensions << "characters but got" << orientation;
             return {};
         }
 
-        for(UnsignedByte i = 0; i != dimensions; ++i) {
+        for(UnsignedByte i = 0; i != orientationDimensions; ++i) {
             if(!ValidOrientations[i].contains(orientation[i])) {
                 /* Error{} prints char as int value so use StringViews to get
                    text output */
@@ -710,7 +716,7 @@ template<UnsignedInt dimensions, template<UnsignedInt, typename> class View> Con
             }
         }
     } else {
-        Warning{} << "Trade::KtxImageConverter::convertToData(): empty orientation string, assuming" << ", "_s.join(Containers::arrayView(DefaultDirections).prefix(dimensions));
+        Warning{} << "Trade::KtxImageConverter::convertToData(): empty orientation string, assuming" << ", "_s.join(Containers::arrayView(DefaultDirections).prefix(orientationDimensions));
     }
 
     if(swizzle && swizzle.size() != 4) {
@@ -725,7 +731,7 @@ template<UnsignedInt dimensions, template<UnsignedInt, typename> class View> Con
     }
 
     const Containers::Pair<Containers::StringView, Containers::StringView> keyValueMap[]{
-        {"KTXorientation"_s, orientation.prefix(Math::min(std::size_t(dimensions), orientation.size()))},
+        {"KTXorientation"_s, orientation.prefix(Math::min(std::size_t(orientationDimensions), orientation.size()))},
         {"KTXswizzle"_s, swizzle},
         {"KTXwriter"_s, writerName}
     };
@@ -761,16 +767,20 @@ template<UnsignedInt dimensions, template<UnsignedInt, typename> class View> Con
     }
     CORRADE_INTERNAL_ASSERT(kvdOffset == kvdSize);
 
-    /* Fill level index */
+    /* Calculate mip level count. Array and cube images don't shorten along
+       the last dimension. */
     const Math::Vector<dimensions, Int> size = imageLevels.front().size();
-
-    const UnsignedInt numMipmaps = Math::min<UnsignedInt>(imageLevels.size(), Math::log2(size.max()) + 1);
+    Math::Vector<dimensions, Int> mipMask{1};
+    if(flags & (ImageFlag3D::CubeMap|ImageFlag3D::Array))
+        mipMask[dimensions - 1] = 0;
+    const UnsignedInt numMipmaps = Math::min<UnsignedInt>(imageLevels.size(), Math::log2((size*mipMask).max()) + 1);
     if(imageLevels.size() > numMipmaps) {
         Error{} << "Trade::KtxImageConverter::convertToData(): there can be only" << numMipmaps <<
             "levels with base image size" << imageLevels[0].size() << "but got" << imageLevels.size();
         return {};
     }
 
+    /* Fill level index */
     Containers::Array<Implementation::KtxLevel> levelIndex{numMipmaps};
 
     const std::size_t levelIndexSize = numMipmaps*sizeof(Implementation::KtxLevel);
@@ -785,7 +795,7 @@ template<UnsignedInt dimensions, template<UnsignedInt, typename> class View> Con
         /* Mip levels are required to be stored from smallest to largest for
            efficient streaming */
         const UnsignedInt mip = levelIndex.size() - 1 - i;
-        const Math::Vector<dimensions, Int> mipSize = Math::max(size >> mip, 1);
+        const Math::Vector<dimensions, Int> mipSize = Math::max(size >> mip, 1)*mipMask + size*(Math::Vector<dimensions, Int>{1} - mipMask);
 
         const auto& image = imageLevels[mip];
 
@@ -823,10 +833,22 @@ template<UnsignedInt dimensions, template<UnsignedInt, typename> class View> Con
     header.vkFormat = vkFormat.first();
     header.typeSize = formatTypeSize(format);
     header.imageSize = Vector3ui{Vector3i::pad(size, 0u)};
-    /** @todo Handle different image types (cube and/or array) once this can be
-              queried from images */
-    header.layerCount = 0;
-    header.faceCount = 1;
+    /* Array and cube images have the last dimension 0, instead layer and face
+       count is filled. Face count is 6 for cube maps, layer count != 0 only if
+       it's a cube map array. */
+    if(flags & (ImageFlag3D::Array|ImageFlag3D::CubeMap)) {
+        header.imageSize[dimensions - 1] = 0;
+        if(flags & ImageFlag3D::CubeMap) {
+            header.faceCount = 6;
+            header.layerCount = flags & ImageFlag3D::Array ? size[dimensions - 1]/6 : 0;
+        } else {
+            header.faceCount = 1;
+            header.layerCount = size[dimensions - 1];
+        }
+    } else {
+        header.layerCount = 0;
+        header.faceCount = 1;
+    }
     header.levelCount = levelIndex.size();
     header.supercompressionScheme = Implementation::SuperCompressionScheme::None;
 

@@ -58,6 +58,7 @@ corrade_add_test(KtxImageConverterTest KtxImageConverterTest.cpp
     FILES
         dfd-data.bin
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/KtxImporter/Test/1d.ktx2
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/KtxImporter/Test/1d-layers.ktx2
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/KtxImporter/Test/1d-mipmaps.ktx2
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/KtxImporter/Test/1d-compressed-bc1.ktx2
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/KtxImporter/Test/1d-compressed-bc1.bin
@@ -74,7 +75,9 @@ corrade_add_test(KtxImageConverterTest KtxImageConverterTest.cpp
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/KtxImporter/Test/2d-d16.ktx2
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/KtxImporter/Test/2d-d24s8.ktx2
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/KtxImporter/Test/2d-d32fs8.ktx2
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/KtxImporter/Test/2d-layers.ktx2
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/KtxImporter/Test/2d-mipmaps.ktx2
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/KtxImporter/Test/2d-mipmaps-and-layers.ktx2
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/KtxImporter/Test/2d-mipmaps-incomplete.ktx2
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/KtxImporter/Test/2d-compressed-pvrtc.ktx2
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/KtxImporter/Test/2d-compressed-pvrtc.bin
@@ -99,7 +102,10 @@ corrade_add_test(KtxImageConverterTest KtxImageConverterTest.cpp
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/KtxImporter/Test/3d-compressed-mipmaps-mip0.bin
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/KtxImporter/Test/3d-compressed-mipmaps-mip1.bin
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/KtxImporter/Test/3d-compressed-mipmaps-mip2.bin
-        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/KtxImporter/Test/3d-compressed-mipmaps-mip3.bin)
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/KtxImporter/Test/3d-compressed-mipmaps-mip3.bin
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/KtxImporter/Test/cubemap.ktx2
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/KtxImporter/Test/cubemap-layers.ktx2
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/KtxImporter/Test/cubemap-mipmaps.ktx2)
 
 target_include_directories(KtxImageConverterTest PRIVATE
     ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>
