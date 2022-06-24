@@ -141,7 +141,7 @@ const Color3ub PatternRgb1DData[3][4]{
     {0x000000_rgb, 0x000000_rgb, 0x000000_rgb, 0x000000_rgb}
 };
 
-/* Origin bottom-left */
+/* Origin bottom-left-forward */
 const Color3ub PatternRgbData[3][3][4]{
     /* pattern.png */
     {{0xff0000_rgb, 0xffffff_rgb, 0x000000_rgb, 0x00ff00_rgb},

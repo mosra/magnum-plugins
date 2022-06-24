@@ -51,7 +51,8 @@ PVRTexToolCLI -i pattern.png,pattern.png,black.png -o 2d-layers.ktx2 -array -f r
 # PVRTexTool doesn't let us specify mip images manually
 PVRTexToolCLI -i pattern.png,pattern.png,black.png -o 2d-mipmaps-and-layers.ktx2 -array -m -mfilter nearest -f r8g8b8,UBN,sRGB
 
-# cube map
+# Cube map. Source data for the cube-N.png files is in KtxImporterTest.cpp in
+# a FacesRgbData array.
 PVRTexToolCLI -i cube+x.png,cube-x.png,cube+y.png,cube-y.png,cube+z.png,cube-z.png -o cubemap.ktx2 -cube -f r8g8b8,UBN,sRGB
 PVRTexToolCLI -i cube+x.png,cube-x.png,cube+y.png,cube-y.png,cube+z.png,cube-z.png -o cubemap-mipmaps.ktx2 -cube -m -mfilter nearest -f r8g8b8,UBN,sRGB
 # layered cube map: faces for layer 0, then layer 1
