@@ -97,6 +97,7 @@ Containers::Optional<ImageData2D> WebPImporter::doImage2D(UnsignedInt, UnsignedI
     /* Decoder configuration */
     WebPDecoderConfig config;
     CORRADE_INTERNAL_ASSERT_OUTPUT(WebPInitDecoderConfig(&config));
+    config.options.flip = true;
 
     /* Reading the file information into config.input. This also verifies the
        file is actually a WebP file. */

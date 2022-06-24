@@ -185,17 +185,17 @@ void WebPImporterTest::rgb() {
     CORRADE_COMPARE(image->format(), PixelFormat::RGB8Unorm);
     CORRADE_COMPARE(image->storage().alignment(), 4);
     const char expected[] {
-        '\x1e', '\x6e', '\x1e',
-        '\x1e', '\x6e', '\x1e',
-        '\x1e', '\x6e', '\x1e', 0, 0, 0,
+        '\x52', '\x52', '\xbe',
+        '\x52', '\x52', '\xbe',
+        '\x52', '\x52', '\xbe', 0, 0, 0,
 
         '\xef', '\x91', '\x91',
         '\xef', '\x91', '\x91',
         '\xef', '\x91', '\x91', 0, 0, 0,
 
-        '\x52', '\x52', '\xbe',
-        '\x52', '\x52', '\xbe',
-        '\x52', '\x52', '\xbe', 0, 0, 0,
+        '\x1e', '\x6e', '\x1e',
+        '\x1e', '\x6e', '\x1e',
+        '\x1e', '\x6e', '\x1e', 0, 0, 0,
     };
     CORRADE_COMPARE_WITH(*image,
         (Magnum::ImageView2D{PixelFormat::RGB8Unorm, {3, 3}, expected}),
@@ -214,17 +214,17 @@ void WebPImporterTest::rgba() {
     CORRADE_COMPARE(image->size(), Vector2i(3, 3));
     CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Unorm);
     const char expected[] {
-        '\x1e', '\x6e', '\x1e', '\x80',
-        '\x1e', '\x6e', '\x1e', '\xff',
-        '\x1e', '\x6e', '\x1e', '\x80',
-
-        '\xef', '\x91', '\x91', '\xff',
-        '\xef', '\x91', '\x91', '\xff',
-        '\xef', '\x91', '\x91', '\xff',
-
         '\x52', '\x52', '\xbe', '\x80',
         '\x52', '\x52', '\xbe', '\xff',
         '\x52', '\x52', '\xbe', '\x80',
+
+        '\xef', '\x91', '\x91', '\xff',
+        '\xef', '\x91', '\x91', '\xff',
+        '\xef', '\x91', '\x91', '\xff',
+
+        '\x1e', '\x6e', '\x1e', '\x80',
+        '\x1e', '\x6e', '\x1e', '\xff',
+        '\x1e', '\x6e', '\x1e', '\x80',
     };
     CORRADE_COMPARE_WITH(*image,
         (Magnum::ImageView2D{PixelFormat::RGBA8Unorm, {3, 3}, expected}),
@@ -254,17 +254,17 @@ void WebPImporterTest::openMemory() {
                 image->mutableData()[33] = image->mutableData()[34] =
                     image->mutableData()[35] = 0;
     CORRADE_COMPARE_AS(image->data(), Containers::arrayView<char>({
-        '\x1e', '\x6e', '\x1e',
-        '\x1e', '\x6e', '\x1e',
-        '\x1e', '\x6e', '\x1e', 0, 0, 0,
+        '\x52', '\x52', '\xbe',
+        '\x52', '\x52', '\xbe',
+        '\x52', '\x52', '\xbe', 0, 0, 0,
 
         '\xef', '\x91', '\x91',
         '\xef', '\x91', '\x91',
         '\xef', '\x91', '\x91', 0, 0, 0,
 
-        '\x52', '\x52', '\xbe',
-        '\x52', '\x52', '\xbe',
-        '\x52', '\x52', '\xbe', 0, 0, 0,
+        '\x1e', '\x6e', '\x1e',
+        '\x1e', '\x6e', '\x1e',
+        '\x1e', '\x6e', '\x1e', 0, 0, 0,
     }), TestSuite::Compare::Container);
 }
 
