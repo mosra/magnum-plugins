@@ -835,6 +835,7 @@ void BasisImageConverterTest::convert2DArray() {
     Containers::Optional<Trade::ImageData2D> originalSlice = pngImporter->image2D(0);
     CORRADE_VERIFY(originalSlice);
 
+    /* Take the input image and create two more variants of it */
     Containers::Array<char> data{NoInit, originalSlice->data().size()*3};
     MutableImageView3D originalImage{originalSlice->format(), {originalSlice->size(), 3}, data};
     Utility::copy(originalSlice->pixels(), originalImage.pixels()[0]);

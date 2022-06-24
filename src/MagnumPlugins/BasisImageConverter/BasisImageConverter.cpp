@@ -89,8 +89,7 @@ template<UnsignedInt dimensions> Containers::Optional<Containers::Array<char>> c
         Warning{} << "Trade::BasisImageConverter::convertToData(): exporting 3D image as a 2D array image";
         params.m_tex_type = basist::basis_texture_type::cBASISTexType2DArray;
         mipMask[dimensions - 1] = 0;
-    } else
-        CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+    } else CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
 
     const auto baseSize = imageLevels.front().size();
     const UnsignedInt numMipmaps = Math::min<UnsignedInt>(imageLevels.size(), Math::log2((baseSize*mipMask).max()) + 1);
