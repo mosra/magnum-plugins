@@ -68,10 +68,10 @@ struct OpenExrImageConverterTest: TestSuite::Tester {
     void envmap2DLatLong();
     void envmap2DLatLongWrongSize();
     void envmap2DInvalid();
-
-    void envmap3DCubeMap();
-    void envmap3DCubeMapWrongSize();
     void envmap3DInvalid();
+
+    void cubeMap3D();
+    void cubeMap3DArray();
     void arbitrary3D();
 
     void customChannels();
@@ -95,7 +95,6 @@ struct OpenExrImageConverterTest: TestSuite::Tester {
     void levelsCubeMap();
     void levelsCubeMapIncomplete();
     void levelsCubeMapInvalidLevelSize();
-    void levelsCubeMapInvalidLevelSlices();
 
     void unsupportedMetadata();
 
@@ -184,7 +183,7 @@ const Half CubeRg16fData[] = {
 };
 
 const ImageView3D CubeRg16f{PixelStorage{}.setSkip({0, 0, 1}).setImageHeight(3),
-    PixelFormat::RG16F, {2, 2, 6}, CubeRg16fData};
+    PixelFormat::RG16F, {2, 2, 6}, CubeRg16fData, ImageFlag3D::CubeMap};
 
 const struct {
     const char* name;
@@ -270,10 +269,10 @@ OpenExrImageConverterTest::OpenExrImageConverterTest() {
               &OpenExrImageConverterTest::envmap2DLatLong,
               &OpenExrImageConverterTest::envmap2DLatLongWrongSize,
               &OpenExrImageConverterTest::envmap2DInvalid,
-
-              &OpenExrImageConverterTest::envmap3DCubeMap,
-              &OpenExrImageConverterTest::envmap3DCubeMapWrongSize,
               &OpenExrImageConverterTest::envmap3DInvalid,
+
+              &OpenExrImageConverterTest::cubeMap3D,
+              &OpenExrImageConverterTest::cubeMap3DArray,
               &OpenExrImageConverterTest::arbitrary3D,
 
               &OpenExrImageConverterTest::customChannels,
@@ -300,8 +299,7 @@ OpenExrImageConverterTest::OpenExrImageConverterTest() {
               &OpenExrImageConverterTest::levels2DInvalidTileSize,
               &OpenExrImageConverterTest::levelsCubeMap,
               &OpenExrImageConverterTest::levelsCubeMapIncomplete,
-              &OpenExrImageConverterTest::levelsCubeMapInvalidLevelSize,
-              &OpenExrImageConverterTest::levelsCubeMapInvalidLevelSlices});
+              &OpenExrImageConverterTest::levelsCubeMapInvalidLevelSize});
 
     addInstancedTests({&OpenExrImageConverterTest::unsupportedMetadata},
         Containers::arraySize(UnsupportedMetadataData));
@@ -500,17 +498,26 @@ void OpenExrImageConverterTest::envmap2DLatLongWrongSize() {
 
 void OpenExrImageConverterTest::envmap2DInvalid() {
     Containers::Pointer<AbstractImageConverter> converter = _manager.instantiate("OpenExrImageConverter");
-    converter->configuration().setValue("envmap", "cubemap");
+    converter->configuration().setValue("envmap", "cube");
 
     std::ostringstream out;
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->convertToData(Rg32ui));
-    CORRADE_COMPARE(out.str(), "Trade::OpenExrImageConverter::convertToData(): unknown envmap option cubemap for a 2D image, expected either empty or latlong for 2D images and cube for 3D images\n");
+    CORRADE_COMPARE(out.str(), "Trade::OpenExrImageConverter::convertToData(): unknown envmap option cube for a 2D image, expected either empty or latlong for 2D images and empty for 3D images\n");
 }
 
-void OpenExrImageConverterTest::envmap3DCubeMap() {
+void OpenExrImageConverterTest::envmap3DInvalid() {
     Containers::Pointer<AbstractImageConverter> converter = _manager.instantiate("OpenExrImageConverter");
     converter->configuration().setValue("envmap", "cube");
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!converter->convertToData(CubeRg16f));
+    CORRADE_COMPARE(out.str(), "Trade::OpenExrImageConverter::convertToData(): unknown envmap option cube for a 3D image, expected either empty or latlong for 2D images and empty for 3D images\n");
+}
+
+void OpenExrImageConverterTest::cubeMap3D() {
+    Containers::Pointer<AbstractImageConverter> converter = _manager.instantiate("OpenExrImageConverter");
 
     /* Reset ZIP compression level to 6 for consistency with versions before
        3.1.3 (on those it's the hardcoded default) */
@@ -562,33 +569,30 @@ void OpenExrImageConverterTest::envmap3DCubeMap() {
     }), TestSuite::Compare::Container);
 }
 
-void OpenExrImageConverterTest::envmap3DCubeMapWrongSize() {
+void OpenExrImageConverterTest::cubeMap3DArray() {
     Containers::Pointer<AbstractImageConverter> converter = _manager.instantiate("OpenExrImageConverter");
-    converter->configuration().setValue("envmap", "cube");
+
+    /* Like CubeRg16f, but additionaly with an Array flag */
+    ImageView3D image{PixelStorage{}.setSkip({0, 0, 1}).setImageHeight(3),
+    PixelFormat::RG16F, {2, 2, 6}, CubeRg16fData, ImageFlag3D::CubeMap|ImageFlag3D::Array};
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(!converter->convertToData(ImageView3D{PixelFormat::R32UI, {2, 2, 5}, CubeRg16fData}));
-    CORRADE_COMPARE(out.str(), "Trade::OpenExrImageConverter::convertToData(): a cubemap has to have six square slices, got Vector(2, 2, 5)\n");
-}
-
-void OpenExrImageConverterTest::envmap3DInvalid() {
-    Containers::Pointer<AbstractImageConverter> converter = _manager.instantiate("OpenExrImageConverter");
-    converter->configuration().setValue("envmap", "latlong");
-
-    std::ostringstream out;
-    Error redirectError{&out};
-    CORRADE_VERIFY(!converter->convertToData(CubeRg16f));
-    CORRADE_COMPARE(out.str(), "Trade::OpenExrImageConverter::convertToData(): unknown envmap option latlong for a 3D image, expected either empty or latlong for 2D images and cube for 3D images\n");
+    CORRADE_VERIFY(!converter->convertToData(image));
+    CORRADE_COMPARE(out.str(), "Trade::OpenExrImageConverter::convertToData(): cube map arrays are not supported by OpenEXR, save each cube map separately\n");
 }
 
 void OpenExrImageConverterTest::arbitrary3D() {
     Containers::Pointer<AbstractImageConverter> converter = _manager.instantiate("OpenExrImageConverter");
 
+    /* Like CubeRg16f, but without the CubeMap flag */
+    ImageView3D image{PixelStorage{}.setSkip({0, 0, 1}).setImageHeight(3),
+    PixelFormat::RG16F, {2, 2, 6}, CubeRg16fData};
+
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(!converter->convertToData(CubeRg16f));
-    CORRADE_COMPARE(out.str(), "Trade::OpenExrImageConverter::convertToData(): arbitrary 3D image saving not implemented yet, the envmap option has to be set to cube in the configuration in order to save a cube map\n");
+    CORRADE_VERIFY(!converter->convertToData(image));
+    CORRADE_COMPARE(out.str(), "Trade::OpenExrImageConverter::convertToData(): arbitrary 3D image saving not implemented yet, only ImageFlag3D::CubeMap images can be saved\n");
 }
 
 void OpenExrImageConverterTest::customChannels() {
@@ -758,7 +762,6 @@ void OpenExrImageConverterTest::customWindows() {
 
 void OpenExrImageConverterTest::customWindowsCubeMap() {
     Containers::Pointer<AbstractImageConverter> converter = _manager.instantiate("OpenExrImageConverter");
-    converter->configuration().setValue("envmap", "cube");
     converter->configuration().setValue("displayWindow", Vector4i{38, 56, 47, 72});
     converter->configuration().setValue("dataOffset", Vector2i{375, 226});
 
@@ -842,7 +845,6 @@ void OpenExrImageConverterTest::compressionCubeMap() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImageConverter> converter = _manager.instantiate("OpenExrImageConverter");
-    converter->configuration().setValue("envmap", "cube");
     converter->configuration().setValue("compression", data.compression);
 
     if(data.zipCompressionLevel)
@@ -1046,7 +1048,6 @@ void OpenExrImageConverterTest::levels2DInvalidTileSize() {
 
 void OpenExrImageConverterTest::levelsCubeMap() {
     Containers::Pointer<AbstractImageConverter> converter = _manager.instantiate("OpenExrImageConverter");
-    converter->configuration().setValue("envmap", "cube");
 
     /* Reset ZIP compression level to 6 for consistency with versions before
        3.1.3 (on those it's the hardcoded default) */
@@ -1099,9 +1100,9 @@ void OpenExrImageConverterTest::levelsCubeMap() {
         16.5_h,
         20.5_h
     };
-    ImageView3D image0{PixelStorage{}.setAlignment(1), PixelFormat::R16F, {4, 4, 6}, data0};
-    ImageView3D image1{PixelStorage{}.setAlignment(1), PixelFormat::R16F, {2, 2, 6}, data1};
-    ImageView3D image2{PixelStorage{}.setAlignment(1), PixelFormat::R16F, {1, 1, 6}, data2};
+    ImageView3D image0{PixelStorage{}.setAlignment(1), PixelFormat::R16F, {4, 4, 6}, data0, ImageFlag3D::CubeMap};
+    ImageView3D image1{PixelStorage{}.setAlignment(1), PixelFormat::R16F, {2, 2, 6}, data1, ImageFlag3D::CubeMap};
+    ImageView3D image2{PixelStorage{}.setAlignment(1), PixelFormat::R16F, {1, 1, 6}, data2, ImageFlag3D::CubeMap};
     Containers::Optional<Containers::Array<char>> data = converter->convertToData({image0, image1, image2});
     CORRADE_VERIFY(data);
     /** @todo Compare::DataToFile */
@@ -1160,7 +1161,6 @@ void OpenExrImageConverterTest::levelsCubeMap() {
 
 void OpenExrImageConverterTest::levelsCubeMapIncomplete() {
     Containers::Pointer<AbstractImageConverter> converter = _manager.instantiate("OpenExrImageConverter");
-    converter->configuration().setValue("envmap", "cube");
 
     /* Reset ZIP compression level to 6 for consistency with versions before
        3.1.3 (on those it's the hardcoded default) */
@@ -1205,8 +1205,8 @@ void OpenExrImageConverterTest::levelsCubeMapIncomplete() {
         64.5_h, 66.5_h, 72.5_h, 74.5_h,
         80.5_h, 82.5_h, 88.5_h, 90.5_h
     };
-    ImageView3D image0{PixelStorage{}.setAlignment(1), PixelFormat::R16F, {4, 4, 6}, data0};
-    ImageView3D image1{PixelStorage{}.setAlignment(1), PixelFormat::R16F, {2, 2, 6}, data1};
+    ImageView3D image0{PixelStorage{}.setAlignment(1), PixelFormat::R16F, {4, 4, 6}, data0, ImageFlag3D::CubeMap};
+    ImageView3D image1{PixelStorage{}.setAlignment(1), PixelFormat::R16F, {2, 2, 6}, data1, ImageFlag3D::CubeMap};
     Containers::Optional<Containers::Array<char>> out = converter->convertToData({image0, image1});
     CORRADE_VERIFY(out);
     /** @todo Compare::DataToFile */
@@ -1253,43 +1253,26 @@ void OpenExrImageConverterTest::levelsCubeMapIncomplete() {
 
 void OpenExrImageConverterTest::levelsCubeMapInvalidLevelSize() {
     Containers::Pointer<AbstractImageConverter> converter = _manager.instantiate("OpenExrImageConverter");
-    converter->configuration().setValue("envmap", "cube");
 
     const Half data[150];
 
     std::ostringstream out;
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->convertToData({
-        ImageView3D{PixelStorage{}.setAlignment(1), PixelFormat::R16F, {5, 5, 6}, data},
-        ImageView3D{PixelStorage{}.setAlignment(1), PixelFormat::R16F, {3, 3, 6}, data}
+        ImageView3D{PixelStorage{}.setAlignment(1), PixelFormat::R16F, {5, 5, 6}, data, ImageFlag3D::CubeMap},
+        ImageView3D{PixelStorage{}.setAlignment(1), PixelFormat::R16F, {3, 3, 6}, data, ImageFlag3D::CubeMap}
     }));
     /* Unlike with the 2D case, the slices have to be square so there's no
        way this could say e.g. "expected Vector(2, 0, 6)" so that test is
        omitted. */
     CORRADE_VERIFY(!converter->convertToData({
-        ImageView3D{PixelStorage{}.setAlignment(1), PixelFormat::R16F, {2, 2, 6}, data},
-        ImageView3D{PixelStorage{}.setAlignment(1), PixelFormat::R16F, {1, 1, 6}, data},
-        ImageView3D{PixelStorage{}.setAlignment(1), PixelFormat::R16F, {1, 1, 6}, data},
+        ImageView3D{PixelStorage{}.setAlignment(1), PixelFormat::R16F, {2, 2, 6}, data, ImageFlag3D::CubeMap},
+        ImageView3D{PixelStorage{}.setAlignment(1), PixelFormat::R16F, {1, 1, 6}, data, ImageFlag3D::CubeMap},
+        ImageView3D{PixelStorage{}.setAlignment(1), PixelFormat::R16F, {1, 1, 6}, data, ImageFlag3D::CubeMap},
     }));
     CORRADE_COMPARE(out.str(),
         "Trade::OpenExrImageConverter::convertToData(): size of cubemap image at level 1 expected to be Vector(2, 2, 6) but got Vector(3, 3, 6)\n"
         "Trade::OpenExrImageConverter::convertToData(): there can be only 2 levels with base cubemap image size Vector(2, 2, 6) but got 3\n");
-}
-
-void OpenExrImageConverterTest::levelsCubeMapInvalidLevelSlices() {
-    Containers::Pointer<AbstractImageConverter> converter = _manager.instantiate("OpenExrImageConverter");
-    converter->configuration().setValue("envmap", "cube");
-
-    const Half data[96];
-
-    std::ostringstream out;
-    Error redirectError{&out};
-    CORRADE_VERIFY(!converter->convertToData({
-        ImageView3D{PixelStorage{}.setAlignment(1), PixelFormat::R16F, {4, 4, 6}, data},
-        ImageView3D{PixelStorage{}.setAlignment(1), PixelFormat::R16F, {3, 3, 7}, data}
-    }));
-    CORRADE_COMPARE(out.str(),
-        "Trade::OpenExrImageConverter::convertToData(): size of cubemap image at level 1 expected to be Vector(2, 2, 6) but got Vector(3, 3, 7)\n");
 }
 
 void OpenExrImageConverterTest::unsupportedMetadata() {

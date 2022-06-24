@@ -88,7 +88,7 @@ ImageConverterFeatures OpenExrImageConverter::doFeatures() const { return ImageC
 
 namespace {
 
-Containers::Optional<Containers::Array<char>> convertToDataInternal(const Utility::ConfigurationGroup& configuration, const ImageConverterFlags flags, const PixelFormat format, const Int levelCount, void(*const preparePixelsForLevel)(Int, const Containers::StridedArrayView3D<char>&, void*), const Containers::StridedArrayView3D<char>& pixels, void* const state) try {
+Containers::Optional<Containers::Array<char>> convertToDataInternal(const Utility::ConfigurationGroup& configuration, const ImageConverterFlags flags, const PixelFormat format, const ImageFlags3D imageFlags, const Int levelCount, void(*const preparePixelsForLevel)(Int, const Containers::StridedArrayView3D<char>&, void*), const Containers::StridedArrayView3D<char>& pixels, void* const state) try {
     /* Figure out type and channel count */
     Imf::PixelType type;
     std::size_t channelCount;
@@ -219,7 +219,7 @@ Containers::Optional<Containers::Array<char>> convertToDataInternal(const Utilit
        the size restrictions, so we can just assert here. */
     if(configuration.value("envmap") == "latlong") {
         Imf::addEnvmap(header, Imf::Envmap::ENVMAP_LATLONG);
-    } else if(configuration.value("envmap") == "cube") {
+    } else if(imageFlags & ImageFlag3D::CubeMap) {
         Imf::addEnvmap(header, Imf::Envmap::ENVMAP_CUBE);
     } else CORRADE_INTERNAL_ASSERT(configuration.value("envmap").empty());
 
@@ -371,7 +371,7 @@ Containers::Optional<Containers::Array<char>> OpenExrImageConverter::doConvertTo
             return {};
         }
     } else if(!configuration().value("envmap").empty()) {
-        Error{} << "Trade::OpenExrImageConverter::convertToData(): unknown envmap option" << configuration().value("envmap") << "for a 2D image, expected either empty or latlong for 2D images and cube for 3D images";
+        Error{} << "Trade::OpenExrImageConverter::convertToData(): unknown envmap option" << configuration().value("envmap") << "for a 2D image, expected either empty or latlong for 2D images and empty for 3D images";
         return {};
     }
 
@@ -411,7 +411,10 @@ Containers::Optional<Containers::Array<char>> OpenExrImageConverter::doConvertTo
         /** @todo why?! figure out and fix */
         imageLevels[0].size().isZero() ? 0 : imageLevels[0].pixelSize()
     }};
-    return convertToDataInternal(configuration(), flags(), imageLevels[0].format(), imageLevels.size(), [](Int level, const Containers::StridedArrayView3D<char>& flippedPixels, void* const data) {
+    /* Future-proofing and passing image flags even in case of 2D where
+       currently nothing is taken into account. But e.g. Premultiplied might,
+       eventually. */
+    return convertToDataInternal(configuration(), flags(), imageLevels[0].format(), ImageFlag3D(UnsignedShort(imageLevels[0].flags())), imageLevels.size(), [](Int level, const Containers::StridedArrayView3D<char>& flippedPixels, void* const data) {
         State& state = *reinterpret_cast<State*>(data);
         const Containers::StridedArrayView3D<const char> pixels = state.imageLevels[level].pixels();
         const Containers::StridedArrayView3D<char> flippedPixelsForLevel = flippedPixels.prefix(pixels.size());
@@ -420,37 +423,40 @@ Containers::Optional<Containers::Array<char>> OpenExrImageConverter::doConvertTo
 }
 
 Containers::Optional<Containers::Array<char>> OpenExrImageConverter::doConvertToData(const Containers::ArrayView<const ImageView3D> imageLevels) {
-    /* Only cube map saving is supported right now, no deep data */
-    if(configuration().value("envmap").empty()) {
-        Error{} << "Trade::OpenExrImageConverter::convertToData(): arbitrary 3D image saving not implemented yet, the envmap option has to be set to cube in the configuration in order to save a cube map";
+    /* Only cube map saving is supported right now, no deep data. If the
+       CubeMap flag is present, it also means the images are square and have
+       six faces, so we don't need to test that here again. */
+    if(!(imageLevels[0].flags() & ImageFlag3D::CubeMap)) {
+        Error{} << "Trade::OpenExrImageConverter::convertToData(): arbitrary 3D image saving not implemented yet, only ImageFlag3D::CubeMap images can be saved";
         return {};
     }
 
-    if(configuration().value("envmap") == "cube") {
-        if(imageLevels[0].size().x() != imageLevels[0].size().y() || imageLevels[0].size().z() != 6) {
-            Error{} << "Trade::OpenExrImageConverter::convertToData(): a cubemap has to have six square slices, got" << imageLevels[0].size();
+    /* Yes, it could work for arrays of size 1, but let's stay on the ground */
+    if(imageLevels[0].flags() >= (ImageFlag3D::CubeMap|ImageFlag3D::Array)) {
+        Error{} << "Trade::OpenExrImageConverter::convertToData(): cube map arrays are not supported by OpenEXR, save each cube map separately";
+        return {};
+    }
+
+    if(!configuration().value("envmap").empty()) {
+        Error{} << "Trade::OpenExrImageConverter::convertToData(): unknown envmap option" << configuration().value("envmap") << "for a 3D image, expected either empty or latlong for 2D images and empty for 3D images";
+        return {};
+    }
+
+    /* What is still on us is to verify that the levels are in correct count
+       and order -- size divided by 2 in each level, rounded down, all the way
+       to a 1x1 pixel image, but still with 6 slices. As the image has to be
+       square, the additional complexity with rounding up to 1 from the 2D case
+       doesn't apply here. */
+    for(std::size_t i = 0; i != imageLevels.size(); ++i) {
+        const Vector3i expectedSize{imageLevels[0].size().xy() >> i, 6};
+        if(expectedSize.xy().isZero()) {
+            Error{} << "Trade::OpenExrImageConverter::convertToData(): there can be only" << i << "levels with base cubemap image size" << imageLevels[0].size() << "but got" << imageLevels.size();
             return {};
         }
-
-        /* Verify that the image size gets divided by 2 in each level, rounded
-           down, all the way to a 1x1 pixel image, but still with 6 slices. The
-           image has to be square so the additional complexity with rounding
-           up to 1 from the 2D case doesn't apply here. */
-        for(std::size_t i = 1; i != imageLevels.size(); ++i) {
-            const Vector3i expectedSize{imageLevels[0].size().xy() >> i, 6};
-            if(expectedSize.xy().isZero()) {
-                Error{} << "Trade::OpenExrImageConverter::convertToData(): there can be only" << i << "levels with base cubemap image size" << imageLevels[0].size() << "but got" << imageLevels.size();
-                return {};
-            }
-            if(imageLevels[i].size() != expectedSize) {
-                Error{} << "Trade::OpenExrImageConverter::convertToData(): size of cubemap image at level" << i << "expected to be" << expectedSize << "but got" << imageLevels[i].size();
-                return {};
-            }
+        if(imageLevels[i].size() != expectedSize) {
+            Error{} << "Trade::OpenExrImageConverter::convertToData(): size of cubemap image at level" << i << "expected to be" << expectedSize << "but got" << imageLevels[i].size();
+            return {};
         }
-
-    } else {
-        Error{} << "Trade::OpenExrImageConverter::convertToData(): unknown envmap option" << configuration().value("envmap") << "for a 3D image, expected either empty or latlong for 2D images and cube for 3D images";
-        return {};
     }
 
     /* Compared to the (simple) 2D case, the cube map case is a lot more
@@ -495,7 +501,7 @@ Containers::Optional<Containers::Array<char>> OpenExrImageConverter::doConvertTo
         std::size_t(imageLevels[0].size().x()),
         imageLevels[0].pixelSize()
     }};
-    return convertToDataInternal(configuration(), flags(), imageLevels[0].format(), imageLevels.size(), [](const Int level, const Containers::StridedArrayView3D<char>& flippedPixelsFlattened, void* const data) {
+    return convertToDataInternal(configuration(), flags(), imageLevels[0].format(), imageLevels[0].flags(), imageLevels.size(), [](const Int level, const Containers::StridedArrayView3D<char>& flippedPixelsFlattened, void* const data) {
         State& state = *reinterpret_cast<State*>(data);
         const Containers::StridedArrayView4D<const char> pixels = state.imageLevels[level].pixels();
         const Containers::StridedArrayView4D<char> flippedPixelsForLevel{
