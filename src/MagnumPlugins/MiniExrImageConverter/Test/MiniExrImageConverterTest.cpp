@@ -51,26 +51,6 @@ struct MiniExrImageConverterTest: TestSuite::Tester {
     PluginManager::Manager<AbstractImageConverter> _manager{"nonexistent"};
 };
 
-constexpr const char RgbData[] = {
-    /* Skip */
-    0, 0, 0, 0, 0, 0, 0, 0,
-
-    1, 2, 3, 2, 3, 4, 0, 0,
-    3, 4, 5, 4, 5, 6, 0, 0,
-    5, 6, 7, 6, 7, 8, 0, 0
-};
-
-const ImageView2D Rgb{PixelStorage{}.setSkip({0, 1, 0}),
-    PixelFormat::RGB16F, {1, 3}, RgbData};
-
-constexpr const char RgbaData[] = {
-    1, 2, 3, 2, 3, 4, 9, 9,
-    3, 4, 5, 4, 5, 6, 9, 9,
-    5, 6, 7, 6, 7, 8, 9, 9
-};
-
-const ImageView2D Rgba{PixelFormat::RGBA16F, {1, 3}, RgbaData};
-
 MiniExrImageConverterTest::MiniExrImageConverterTest() {
     addTests({&MiniExrImageConverterTest::wrongFormat,
 
@@ -93,6 +73,26 @@ void MiniExrImageConverterTest::wrongFormat() {
     CORRADE_VERIFY(!converter->convertToData(ImageView2D{PixelFormat::R16F, {1, 1}, data}));
     CORRADE_COMPARE(out.str(), "Trade::MiniExrImageConverter::convertToData(): unsupported pixel format PixelFormat::R16F\n");
 }
+
+constexpr const char RgbData[] = {
+    /* Skip */
+    0, 0, 0, 0, 0, 0, 0, 0,
+
+    1, 2, 3, 2, 3, 4, 0, 0,
+    3, 4, 5, 4, 5, 6, 0, 0,
+    5, 6, 7, 6, 7, 8, 0, 0
+};
+
+const ImageView2D Rgb{PixelStorage{}.setSkip({0, 1, 0}),
+    PixelFormat::RGB16F, {1, 3}, RgbData};
+
+constexpr const char RgbaData[] = {
+    1, 2, 3, 2, 3, 4, 9, 9,
+    3, 4, 5, 4, 5, 6, 9, 9,
+    5, 6, 7, 6, 7, 8, 9, 9
+};
+
+const ImageView2D Rgba{PixelFormat::RGBA16F, {1, 3}, RgbaData};
 
 void MiniExrImageConverterTest::rgb() {
     Containers::Optional<Containers::Array<char>> data = _manager.instantiate("MiniExrImageConverter")->convertToData(Rgb);
