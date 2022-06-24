@@ -39,15 +39,14 @@
 
 namespace Magnum { namespace Audio { namespace Test { namespace {
 
-class Faad2ImporterTest: public TestSuite::Tester {
-    public:
-        explicit Faad2ImporterTest();
+struct Faad2ImporterTest: TestSuite::Tester {
+    explicit Faad2ImporterTest();
 
-        void empty();
+    void empty();
 
-        void error();
-        void mono();
-        void stereo();
+    void error();
+    void mono();
+    void stereo();
 
     /* Explicitly forbid system-wide plugin dependencies */
     PluginManager::Manager<AbstractImporter> _manager{"nonexistent"};

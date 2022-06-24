@@ -38,18 +38,17 @@
 
 namespace Magnum { namespace Audio { namespace Test { namespace {
 
-class StbVorbisImporterTest: public TestSuite::Tester {
-    public:
-        explicit StbVorbisImporterTest();
+struct StbVorbisImporterTest: TestSuite::Tester {
+    explicit StbVorbisImporterTest();
 
-        void empty();
-        void wrongSignature();
-        void unsupportedChannelCount();
+    void empty();
+    void wrongSignature();
+    void unsupportedChannelCount();
 
-        void zeroSamples();
+    void zeroSamples();
 
-        void mono16();
-        void stereo8();
+    void mono16();
+    void stereo8();
 
     /* Explicitly forbid system-wide plugin dependencies */
     PluginManager::Manager<AbstractImporter> _manager{"nonexistent"};
