@@ -76,18 +76,35 @@ template<UnsignedInt dimensions> Containers::Optional<Containers::Array<char>> c
 
     basisu::basis_compressor_params params;
 
-    /** @todo Handle different image types (cube/array/volume) once this can be
-        queried from images */
     Math::Vector<dimensions, Int> mipMask{1};
     if(dimensions == 2) {
+        if(ImageFlag2D(UnsignedShort(imageLevels[0].flags())) & ImageFlag2D::Array) {
+            Error{} << "Trade::BasisImageConverter::convertToData(): 1D array images are not supported by Basis Universal";
+            return {};
+        }
+
         params.m_tex_type = basist::basis_texture_type::cBASISTexType2D;
     } else if(dimensions == 3) {
+        const ImageFlags3D flags = ImageFlag3D(UnsignedShort(imageLevels[0].flags()));
+
+        /* Cube map and cube map array is the same thing, distinguishable only
+           by number of layers */
+        if(flags & ImageFlag3D::CubeMap) {
+            params.m_tex_type = basist::basis_texture_type::cBASISTexTypeCubemapArray;
+
         /* Encoding 3D images as KTX2 always produces 2D array images and mip
            levels in .basis files are inherently 2D images, so we always export
            2D array images. This affects the expected mip sizes and prevents
-           a possible z-flip, so print a warning. */
-        Warning{} << "Trade::BasisImageConverter::convertToData(): exporting 3D image as a 2D array image";
-        params.m_tex_type = basist::basis_texture_type::cBASISTexType2DArray;
+           a possible z-flip, so print a warning in case the input image wasn't
+           marked as a 2D array. */
+        } else {
+            if(!(flags & ImageFlag3D::Array)) {
+                Warning{} << "Trade::BasisImageConverter::convertToData(): exporting 3D image as a 2D array image";
+            }
+
+            params.m_tex_type = basist::basis_texture_type::cBASISTexType2DArray;
+        }
+
         mipMask[dimensions - 1] = 0;
     } else CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
 

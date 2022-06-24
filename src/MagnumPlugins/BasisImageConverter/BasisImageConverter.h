@@ -129,12 +129,16 @@ formats are supported.
 
 @subsection Trade-BasisImageConverter-behavior-types Image types
 
-The exporter can save 2D and 2D array images. Even though the KTX container
-format supports 1D and 3D images, Basis Universal doesn't.
+The exporter can save 2D, 2D array, cube map and cube map array images,
+recognizing @ref ImageFlag3D::Array and/or @ref ImageFlag3D::CubeMap in passed
+images.
 
-Cube map images can be written but there is currently no way to mark them
-properly in the metadata. Exported files will be 2D array images with faces
-exposed as layers.
+Even though the KTX container format supports 1D, 1D array and 3D images, Basis
+Universal doesn't. In particular, if a 2D image with @ref ImageFlag2D::Array is
+passed, the conversion will fail as it's not possible to represent 1D array
+images without a significant loss in quality and layer cross-talk. On the other
+hand, if a 3D image without @ref ImageFlag3D::Array is passed, a warning is
+printed and the file is saved as a 2D array image.
 
 @subsection Trade-BasisImageConverter-behavior-multilevel Multilevel images
 
