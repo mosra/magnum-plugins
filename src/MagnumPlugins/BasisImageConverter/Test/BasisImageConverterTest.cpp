@@ -143,6 +143,9 @@ const struct {
     PixelFormat format;
     const char* perceptual;
     bool uastc;
+    /* Yes, the damn thing prints output to stdout without any possibility to
+       redirect anywhere. But we need the verbose output enabled in many cases
+       to verify a message about the sRGB flag being patched away. */
     bool verbose;
     PixelFormat expected;
     const char* message;
@@ -718,6 +721,9 @@ void BasisImageConverterTest::convertUastcPatchAwaySrgb() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate(data.pluginName);
+    /* Yes, the damn thing prints output to stdout without any possibility to
+       redirect anywhere. But we need the verbose output enabled in many cases
+       to verify a message about the sRGB flag being patched away. */
     if(data.verbose) converter->addFlags(ImageConverterFlag::Verbose);
     converter->configuration().setValue("uastc", data.uastc);
     converter->configuration().setValue("perceptual", data.perceptual);
