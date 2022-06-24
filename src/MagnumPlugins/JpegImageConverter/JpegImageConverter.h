@@ -111,6 +111,10 @@ See @ref building-plugins, @ref cmake-plugins, @ref plugins and
 
 @section Trade-JpegImageConverter-behavior Behavior and limitations
 
+The JPEG file format doesn't have a way to distinguish between 2D and 1D array
+images. If an image has @ref ImageFlag2D::Array set, a warning is printed and
+the file is saved as a regular 2D image.
+
 @subsection Trade-JpegImageConverter-behavior-implementations libJPEG implementations
 
 While some systems (such as macOS) still ship only with the vanilla libJPEG,

@@ -153,6 +153,9 @@ namespace Magnum {
 -   @relativeref{Trade,BasisImageConverter} no longer produces excessive log on
     output by default, only if @ref Trade::ImporterFlag::Verbose is set (see
     [mosra/magnum-plugins#112](https://github.com/mosra/magnum-plugins/pull/112))
+-   As no image converter plugins except @relativeref{Trade,KtxImageConverter}
+    support 1D images, they warn when an image with @ref ImageFlag2D::Array is
+    passed and treat is as a regular 2D image.
 
 @subsection changelog-plugins-latest-buildsystem Build system
 

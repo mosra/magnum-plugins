@@ -56,6 +56,11 @@ Containers::Optional<Containers::Array<char>> PngImageConverter::doConvertToData
     CORRADE_ASSERT(std::strcmp(PNG_LIBPNG_VER_STRING, png_libpng_ver) == 0,
         "Trade::PngImageConverter::convertToData(): libpng version mismatch, got" << png_libpng_ver << "but expected" << PNG_LIBPNG_VER_STRING, {});
 
+    /* Warn about lost metadata */
+    if(image.flags() & ImageFlag2D::Array) {
+        Warning{} << "Trade::PngImageConverter::convertToData(): 1D array images are unrepresentable in PNG, saving as a regular 2D image";
+    }
+
     Int bitDepth;
     Int colorType;
     switch(image.format()) {

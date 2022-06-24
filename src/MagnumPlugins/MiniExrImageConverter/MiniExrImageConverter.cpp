@@ -49,6 +49,11 @@ MiniExrImageConverter::MiniExrImageConverter(PluginManager::AbstractManager& man
 ImageConverterFeatures MiniExrImageConverter::doFeatures() const { return ImageConverterFeature::Convert2DToData; }
 
 Containers::Optional<Containers::Array<char>> MiniExrImageConverter::doConvertToData(const ImageView2D& image) {
+    /* Warn about lost metadata */
+    if(image.flags() & ImageFlag2D::Array) {
+        Warning{} << "Trade::MiniExrImageConverter::convertToData(): 1D array images are unrepresentable in OpenEXR, saving as a regular 2D image";
+    }
+
     Int components;
     switch(image.format()) {
         case PixelFormat::RGB16F: components = 3; break;

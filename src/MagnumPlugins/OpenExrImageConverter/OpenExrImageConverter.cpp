@@ -360,6 +360,11 @@ Containers::Optional<Containers::Array<char>> convertToDataInternal(const Utilit
 }
 
 Containers::Optional<Containers::Array<char>> OpenExrImageConverter::doConvertToData(const Containers::ArrayView<const ImageView2D> imageLevels) {
+    /* Warn about lost metadata */
+    if(imageLevels[0].flags() & ImageFlag2D::Array) {
+        Warning{} << "Trade::OpenExrImageConverter::convertToData(): 1D array images are unrepresentable in OpenEXR, saving as a regular 2D image";
+    }
+
     if(configuration().value("envmap") == "latlong") {
         if(imageLevels[0].size().x() != 2*imageLevels[0].size().y()) {
             Error{} << "Trade::OpenExrImageConverter::convertToData(): a lat/long environment map has to have a 2:1 aspect ratio, got" << imageLevels[0].size();

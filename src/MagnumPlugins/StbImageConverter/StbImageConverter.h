@@ -161,6 +161,10 @@ See @ref building-plugins, @ref cmake-plugins, @ref plugins and
 
 @section Trade-StbImageConverter-behavior Behavior and limitations
 
+None of the formats supported by this plugin have any way to distinguish
+between 2D and 1D array images. If an image has @ref ImageFlag2D::Array set, a
+warning is printed and the file is saved as a regular 2D image.
+
 @subsection Trade-StbImageConverter-behavior-arithmetic-jpeg Arithmetic JPEG encoding
 
 [Arithmetic coding](https://en.wikipedia.org/wiki/Arithmetic_coding) is

@@ -176,7 +176,14 @@ A cube map image can be saved from an @ref ImageView3D where each slice is one
 face in order +X, -X, +Y, -Y, +Z and -Z if you set @cb{.ini} envmap=cube @ce.
 In this case, the image is expected to have six rectangular faces.
 
-Creating deep images is not supported right now.
+@subsection Trade-OpenExrImageConverter-array-3d Array and 3D images
+
+Apart from cube maps, saving of arbitrary 3D and 2D array (or "deep") images
+isn't implemented right now.
+
+The OpenEXR file format doesn't have a way to distinguish between 2D and 1D
+array images. If an image has @ref ImageFlag2D::Array set, a warning is printed
+and the file is saved as a regular 2D image.
 
 @subsection Trade-OpenExrImageConverter-behavior-multilevel Multilevel images
 

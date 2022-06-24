@@ -30,6 +30,7 @@
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/StringToFile.h>
 #include <Corrade/Utility/DebugStl.h> /** @todo remove once Debug is stream-free */
+#include <Corrade/Utility/FormatStl.h>
 #include <Corrade/Utility/Path.h>
 #include <Magnum/ImageView.h>
 #include <Magnum/PixelFormat.h>
@@ -47,8 +48,19 @@ struct MiniExrImageConverterTest: TestSuite::Tester {
     void rgb();
     void rgba();
 
+    void unsupportedMetadata();
+
     /* Explicitly forbid system-wide plugin dependencies */
     PluginManager::Manager<AbstractImageConverter> _manager{"nonexistent"};
+};
+
+const struct {
+    const char* name;
+    ImageFlags2D flags;
+    const char* message;
+} UnsupportedMetadataData[]{
+    {"1D array", ImageFlag2D::Array,
+        "1D array images are unrepresentable in OpenEXR, saving as a regular 2D image"}
 };
 
 MiniExrImageConverterTest::MiniExrImageConverterTest() {
@@ -56,6 +68,9 @@ MiniExrImageConverterTest::MiniExrImageConverterTest() {
 
               &MiniExrImageConverterTest::rgb,
               &MiniExrImageConverterTest::rgba});
+
+    addInstancedTests({&MiniExrImageConverterTest::unsupportedMetadata},
+        Containers::arraySize(UnsupportedMetadataData));
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. */
@@ -109,6 +124,21 @@ void MiniExrImageConverterTest::rgba() {
     CORRADE_COMPARE_AS(Containers::StringView{*data},
         Utility::Path::join(MINIEXRIMAGECONVERTER_TEST_DIR, "image.exr"),
         TestSuite::Compare::StringToFile);
+}
+
+void MiniExrImageConverterTest::unsupportedMetadata() {
+    auto&& data = UnsupportedMetadataData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    Containers::Pointer<AbstractImageConverter> converter = _manager.instantiate("MiniExrImageConverter");
+
+    const char imageData[8]{};
+    ImageView2D image{PixelFormat::RGBA16F, {1, 1}, imageData, data.flags};
+
+    std::ostringstream out;
+    Warning redirectWarning{&out};
+    CORRADE_VERIFY(converter->convertToData(image));
+    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::MiniExrImageConverter::convertToData(): {}\n", data.message));
 }
 
 }}}}

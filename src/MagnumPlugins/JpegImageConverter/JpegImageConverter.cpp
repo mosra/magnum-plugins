@@ -64,6 +64,11 @@ JpegImageConverter::JpegImageConverter(PluginManager::AbstractManager& manager, 
 ImageConverterFeatures JpegImageConverter::doFeatures() const { return ImageConverterFeature::Convert2DToData; }
 
 Containers::Optional<Containers::Array<char>> JpegImageConverter::doConvertToData(const ImageView2D& image) {
+    /* Warn about lost metadata */
+    if(image.flags() & ImageFlag2D::Array) {
+        Warning{} << "Trade::JpegImageConverter::convertToData(): 1D array images are unrepresentable in JPEG, saving as a regular 2D image";
+    }
+
     static_assert(BITS_IN_JSAMPLE == 8, "Only 8-bit JPEG is supported");
 
     Int components;

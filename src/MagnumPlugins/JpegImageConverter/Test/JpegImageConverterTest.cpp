@@ -29,6 +29,7 @@
 #include <Corrade/TestSuite/Compare/Container.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/DebugStl.h> /** @todo remove once Debug is stream-free */
+#include <Corrade/Utility/FormatStl.h>
 #include <Magnum/ImageView.h>
 #include <Magnum/PixelFormat.h>
 #include <Magnum/DebugTools/CompareImage.h>
@@ -61,9 +62,20 @@ struct JpegImageConverterTest: TestSuite::Tester {
     void grayscale80Percent();
     void grayscale100Percent();
 
+    void unsupportedMetadata();
+
     /* Explicitly forbid system-wide plugin dependencies */
     PluginManager::Manager<AbstractImageConverter> _converterManager{"nonexistent"};
     PluginManager::Manager<AbstractImporter> _importerManager{"nonexistent"};
+};
+
+const struct {
+    const char* name;
+    ImageFlags2D flags;
+    const char* message;
+} UnsupportedMetadataData[]{
+    {"1D array", ImageFlag2D::Array,
+        "1D array images are unrepresentable in JPEG, saving as a regular 2D image"}
 };
 
 JpegImageConverterTest::JpegImageConverterTest() {
@@ -77,6 +89,9 @@ JpegImageConverterTest::JpegImageConverterTest() {
 
               &JpegImageConverterTest::grayscale80Percent,
               &JpegImageConverterTest::grayscale100Percent});
+
+    addInstancedTests({&JpegImageConverterTest::unsupportedMetadata},
+        Containers::arraySize(UnsupportedMetadataData));
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. */
@@ -380,6 +395,21 @@ void JpegImageConverterTest::grayscale100Percent() {
     /* Expect only minimal difference (single bits) */
     CORRADE_COMPARE_WITH(*converted, OriginalGrayscale,
         (DebugTools::CompareImage{1.0f, 0.085f}));
+}
+
+void JpegImageConverterTest::unsupportedMetadata() {
+    auto&& data = UnsupportedMetadataData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("JpegImageConverter");
+
+    const char imageData[4]{};
+    ImageView2D image{PixelFormat::RGB8Unorm, {1, 1}, imageData, data.flags};
+
+    std::ostringstream out;
+    Warning redirectWarning{&out};
+    CORRADE_VERIFY(converter->convertToData(image));
+    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::JpegImageConverter::convertToData(): {}\n", data.message));
 }
 
 }}}}

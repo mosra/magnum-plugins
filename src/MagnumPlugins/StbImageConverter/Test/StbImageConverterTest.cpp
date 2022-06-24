@@ -73,6 +73,8 @@ struct StbImageConverterTest: TestSuite::Tester {
 
     void convertToFile();
 
+    void unsupportedMetadata();
+
     /* Explicitly forbid system-wide plugin dependencies */
     PluginManager::Manager<AbstractImageConverter> _converterManager{"nonexistent"};
     PluginManager::Manager<AbstractImporter> _importerManager{"nonexistent"};
@@ -91,6 +93,15 @@ const struct {
     /* TGAs are too annoying to detect, skip */
     {"tga", "StbImageConverter", "image.tga", nullptr},
     {"bmp with explicit plugin name", "StbBmpImageConverter", "image.foo", "BM"_s}
+};
+
+const struct {
+    const char* name;
+    ImageFlags2D flags;
+    const char* message;
+} UnsupportedMetadataData[]{
+    {"1D array", ImageFlag2D::Array,
+        "1D array images are unrepresentable in any of the formats, saving as a regular 2D image"}
 };
 
 StbImageConverterTest::StbImageConverterTest() {
@@ -118,6 +129,9 @@ StbImageConverterTest::StbImageConverterTest() {
 
     addInstancedTests({&StbImageConverterTest::convertToFile},
         Containers::arraySize(ConvertToFileData));
+
+    addInstancedTests({&StbImageConverterTest::unsupportedMetadata},
+        Containers::arraySize(UnsupportedMetadataData));
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. */
@@ -702,6 +716,21 @@ void StbImageConverterTest::convertToFile() {
         CORRADE_VERIFY(!converter->convertToData(image));
         CORRADE_COMPARE(out.str(), "Trade::StbImageConverter::convertToData(): cannot determine output format (plugin loaded as StbImageConverter, use one of the Stb{Bmp,Hdr,Jpeg,Png,Tga}ImageConverter aliases)\n");
     }
+}
+
+void StbImageConverterTest::unsupportedMetadata() {
+    auto&& data = UnsupportedMetadataData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("TgaImageConverter");
+
+    const char imageData[4]{};
+    ImageView2D image{PixelFormat::RGBA8Unorm, {1, 1}, imageData, data.flags};
+
+    std::ostringstream out;
+    Warning redirectWarning{&out};
+    CORRADE_VERIFY(converter->convertToData(image));
+    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::StbImageConverter::convertToData(): {}\n", data.message));
 }
 
 }}}}

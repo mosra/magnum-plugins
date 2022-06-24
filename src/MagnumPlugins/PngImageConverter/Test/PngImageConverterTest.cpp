@@ -30,6 +30,7 @@
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
 #include <Corrade/Utility/DebugStl.h> /** @todo remove once Debug is stream-free */
+#include <Corrade/Utility/FormatStl.h>
 #include <Magnum/ImageView.h>
 #include <Magnum/PixelFormat.h>
 #include <Magnum/Trade/AbstractImageConverter.h>
@@ -52,9 +53,20 @@ struct PngImageConverterTest: TestSuite::Tester {
     void grayscale();
     void grayscale16();
 
+    void unsupportedMetadata();
+
     /* Explicitly forbid system-wide plugin dependencies */
     PluginManager::Manager<AbstractImageConverter> _converterManager{"nonexistent"};
     PluginManager::Manager<AbstractImporter> _importerManager{"nonexistent"};
+};
+
+const struct {
+    const char* name;
+    ImageFlags2D flags;
+    const char* message;
+} UnsupportedMetadataData[]{
+    {"1D array", ImageFlag2D::Array,
+        "1D array images are unrepresentable in PNG, saving as a regular 2D image"}
 };
 
 PngImageConverterTest::PngImageConverterTest() {
@@ -66,6 +78,9 @@ PngImageConverterTest::PngImageConverterTest() {
 
               &PngImageConverterTest::grayscale,
               &PngImageConverterTest::grayscale16});
+
+    addInstancedTests({&PngImageConverterTest::unsupportedMetadata},
+        Containers::arraySize(UnsupportedMetadataData));
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. */
@@ -265,6 +280,21 @@ void PngImageConverterTest::grayscale16() {
     CORRADE_COMPARE_AS(converted->pixels<UnsignedShort>().asContiguous(),
         Containers::arrayView(ConvertedGrayscaleData16),
         TestSuite::Compare::Container);
+}
+
+void PngImageConverterTest::unsupportedMetadata() {
+    auto&& data = UnsupportedMetadataData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("PngImageConverter");
+
+    const char imageData[4]{};
+    ImageView2D image{PixelFormat::RGBA8Unorm, {1, 1}, imageData, data.flags};
+
+    std::ostringstream out;
+    Warning redirectWarning{&out};
+    CORRADE_VERIFY(converter->convertToData(image));
+    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::PngImageConverter::convertToData(): {}\n", data.message));
 }
 
 }}}}

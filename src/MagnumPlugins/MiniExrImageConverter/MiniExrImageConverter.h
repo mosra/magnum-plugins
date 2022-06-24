@@ -109,6 +109,10 @@ See @ref building-plugins, @ref cmake-plugins, @ref plugins and
 @section Trade-MiniExrImageConverter-behavior Behavior and limitations
 
 The output is always uncompressed, only half-float RGB and RGBA is supported.
+
+The OpenEXR file format doesn't have a way to distinguish between 2D and 1D
+array images. If an image has @ref ImageFlag2D::Array set, a warning is printed
+and the file is saved as a regular 2D image.
 */
 class MAGNUM_MINIEXRIMAGECONVERTER_EXPORT MiniExrImageConverter: public AbstractImageConverter {
     public:

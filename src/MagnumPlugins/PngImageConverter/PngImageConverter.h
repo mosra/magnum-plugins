@@ -105,6 +105,12 @@ target_link_libraries(your-app PRIVATE MagnumPlugins::PngImageConverter)
 
 See @ref building-plugins, @ref cmake-plugins, @ref plugins and
 @ref file-formats for more information.
+
+@section Trade-PngImageConverter-behavior Behavior and limitations
+
+The PNG file format doesn't have a way to distinguish between 2D and 1D array
+images. If an image has @ref ImageFlag2D::Array set, a warning is printed and
+the file is saved as a regular 2D image.
 */
 class MAGNUM_PNGIMAGECONVERTER_EXPORT PngImageConverter: public AbstractImageConverter {
     public:

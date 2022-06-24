@@ -97,6 +97,8 @@ struct OpenExrImageConverterTest: TestSuite::Tester {
     void levelsCubeMapInvalidLevelSize();
     void levelsCubeMapInvalidLevelSlices();
 
+    void unsupportedMetadata();
+
     void threads();
 
     /* Explicitly forbid system-wide plugin dependencies */
@@ -226,6 +228,15 @@ const struct {
 
 const struct {
     const char* name;
+    ImageFlags2D flags;
+    const char* message;
+} UnsupportedMetadataData[]{
+    {"1D array", ImageFlag2D::Array,
+        "1D array images are unrepresentable in OpenEXR, saving as a regular 2D image"}
+};
+
+const struct {
+    const char* name;
     Int threads;
     bool verbose;
     const char* message;
@@ -291,6 +302,9 @@ OpenExrImageConverterTest::OpenExrImageConverterTest() {
               &OpenExrImageConverterTest::levelsCubeMapIncomplete,
               &OpenExrImageConverterTest::levelsCubeMapInvalidLevelSize,
               &OpenExrImageConverterTest::levelsCubeMapInvalidLevelSlices});
+
+    addInstancedTests({&OpenExrImageConverterTest::unsupportedMetadata},
+        Containers::arraySize(UnsupportedMetadataData));
 
     /* Could be addInstancedBenchmarks() to verify there's a difference but
        this would mean the test case gets skipped when CORRADE_NO_BENCHMARKS is
@@ -1276,6 +1290,21 @@ void OpenExrImageConverterTest::levelsCubeMapInvalidLevelSlices() {
     }));
     CORRADE_COMPARE(out.str(),
         "Trade::OpenExrImageConverter::convertToData(): size of cubemap image at level 1 expected to be Vector(2, 2, 6) but got Vector(3, 3, 7)\n");
+}
+
+void OpenExrImageConverterTest::unsupportedMetadata() {
+    auto&& data = UnsupportedMetadataData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    Containers::Pointer<AbstractImageConverter> converter = _manager.instantiate("OpenExrImageConverter");
+
+    const char imageData[4]{};
+    ImageView2D image{PixelFormat::RG16F, {1, 1}, imageData, data.flags};
+
+    std::ostringstream out;
+    Warning redirectWarning{&out};
+    CORRADE_VERIFY(converter->convertToData(image));
+    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::OpenExrImageConverter::convertToData(): {}\n", data.message));
 }
 
 void OpenExrImageConverterTest::threads() {

@@ -76,6 +76,11 @@ Containers::Optional<Containers::Array<char>> StbImageConverter::doConvertToData
         return {};
     }
 
+    /* Warn about lost metadata */
+    if(image.flags() & ImageFlag2D::Array) {
+        Warning{} << "Trade::StbImageConverter::convertToData(): 1D array images are unrepresentable in any of the formats, saving as a regular 2D image";
+    }
+
     Int components;
     if(_format == Format::Bmp || _format == Format::Jpeg || _format == Format::Png || _format == Format::Tga) {
         switch(image.format()) {
