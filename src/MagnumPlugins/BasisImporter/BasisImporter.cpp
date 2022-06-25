@@ -309,6 +309,10 @@ void BasisImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFla
 
         /* Get y-flip flag from KTXorientation key/value entry. If it's
            missing, the default is Y-down. Y-up = flipped. */
+        /** @todo if it's missing, the orientation can actually be *anything*:
+            https://github.com/BinomialLLC/basis_universal/issues/258 -- once
+            ImageFlag::YUp/YDown is a thing, label these as "neither" instead
+            of assuming Y down */
         const basisu::uint8_vec* orientation = state->ktx2Transcoder->find_key("KTXorientation");
         state->isYFlipped = orientation && orientation->size() >= 2 && (*orientation)[1] == 'u';
 
