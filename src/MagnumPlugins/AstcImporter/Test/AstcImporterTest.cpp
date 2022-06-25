@@ -211,6 +211,7 @@ void AstcImporterTest::empty2D() {
     Containers::Optional<ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
     CORRADE_VERIFY(image->isCompressed());
+    CORRADE_COMPARE(image->flags(), ImageFlags2D{});
     CORRADE_COMPARE(image->compressedFormat(), CompressedPixelFormat::Astc12x10RGBAUnorm);
     CORRADE_COMPARE(image->size(), Vector2i{});
 }
@@ -228,6 +229,7 @@ void AstcImporterTest::empty3D() {
     Containers::Optional<ImageData3D> image = importer->image3D(0);
     CORRADE_VERIFY(image);
     CORRADE_VERIFY(image->isCompressed());
+    CORRADE_COMPARE(image->flags(), ImageFlags3D{});
     CORRADE_COMPARE(image->compressedFormat(), CompressedPixelFormat::Astc5x4x4RGBAUnorm);
     CORRADE_COMPARE(image->size(), Vector3i{});
 }
@@ -245,6 +247,7 @@ void AstcImporterTest::emptyOneDimensionZero2D() {
     Containers::Optional<ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
     CORRADE_VERIFY(image->isCompressed());
+    CORRADE_COMPARE(image->flags(), ImageFlags2D{});
     CORRADE_COMPARE(image->compressedFormat(), CompressedPixelFormat::Astc6x6RGBAUnorm);
     CORRADE_COMPARE(image->size(), (Vector2i{0, 66309}));
 }
@@ -263,6 +266,7 @@ void AstcImporterTest::emptyOneDimensionZero2DArray() {
     Containers::Optional<ImageData3D> image = importer->image3D(0);
     CORRADE_VERIFY(image);
     CORRADE_VERIFY(image->isCompressed());
+    CORRADE_COMPARE(image->flags(), ImageFlag3D::Array);
     CORRADE_COMPARE(image->compressedFormat(), CompressedPixelFormat::Astc5x5RGBAUnorm);
     CORRADE_COMPARE(image->size(), (Vector3i{66309, 0, 133895}));
 }
@@ -281,6 +285,7 @@ void AstcImporterTest::emptyOneDimensionZero2DArrayNoLayers() {
     Containers::Optional<ImageData3D> image = importer->image3D(0);
     CORRADE_VERIFY(image);
     CORRADE_VERIFY(image->isCompressed());
+    CORRADE_COMPARE(image->flags(), ImageFlag3D::Array);
     CORRADE_COMPARE(image->compressedFormat(), CompressedPixelFormat::Astc5x5RGBAUnorm);
     CORRADE_COMPARE(image->size(), (Vector3i{133895, 66309, 0}));
 }
@@ -298,6 +303,7 @@ void AstcImporterTest::emptyOneDimensionZero3D() {
     Containers::Optional<ImageData3D> image = importer->image3D(0);
     CORRADE_VERIFY(image);
     CORRADE_VERIFY(image->isCompressed());
+    CORRADE_COMPARE(image->flags(), ImageFlags3D{});
     CORRADE_COMPARE(image->compressedFormat(), CompressedPixelFormat::Astc4x4x3RGBAUnorm);
     CORRADE_COMPARE(image->size(), (Vector3i{0, 133895, 66309}));
 }
@@ -350,6 +356,7 @@ void AstcImporterTest::twoDimensions() {
     Containers::Optional<ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
     CORRADE_VERIFY(image->isCompressed());
+    CORRADE_COMPARE(image->flags(), ImageFlags2D{});
     CORRADE_COMPARE(image->compressedFormat(), data.expectedFormat2D);
     CORRADE_COMPARE(image->size(), (Vector2i{64, 32}));
     CORRADE_COMPARE(image->data().size(), 8*4*128/8); /* 8x4 blocks */
@@ -372,6 +379,7 @@ void AstcImporterTest::twoDimensionsIncompleteBlocks() {
     Containers::Optional<ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
     CORRADE_VERIFY(image->isCompressed());
+    CORRADE_COMPARE(image->flags(), ImageFlags2D{});
     CORRADE_COMPARE(image->compressedFormat(), CompressedPixelFormat::Astc12x10RGBAUnorm);
     CORRADE_COMPARE(image->size(), (Vector2i{63, 27}));
     CORRADE_COMPARE(image->data().size(), 6*3*128/8); /* 6x3 blocks */
@@ -394,6 +402,7 @@ void AstcImporterTest::twoDimensionsArrayIncompleteBlocks() {
     Containers::Optional<ImageData3D> image = importer->image3D(0);
     CORRADE_VERIFY(image);
     CORRADE_VERIFY(image->isCompressed());
+    CORRADE_COMPARE(image->flags(), ImageFlag3D::Array);
     CORRADE_COMPARE(image->compressedFormat(), CompressedPixelFormat::Astc12x12RGBAUnorm);
     CORRADE_COMPARE(image->size(), (Vector3i{27, 27, 2}));
     CORRADE_COMPARE(image->data().size(), 3*3*2*128/8); /* 3x3x2 blocks */
@@ -432,6 +441,7 @@ void AstcImporterTest::threeDimensions() {
     Containers::Optional<ImageData3D> image = importer->image3D(0);
     CORRADE_VERIFY(image);
     CORRADE_VERIFY(image->isCompressed());
+    CORRADE_COMPARE(image->flags(), ImageFlags3D{});
     CORRADE_COMPARE(image->compressedFormat(), data.expectedFormat3D);
     CORRADE_COMPARE(image->size(), (Vector3i{27, 27, 3}));
     CORRADE_COMPARE(image->data().size(), 9*9*1*128/8); /* 9x9x1 blocks */

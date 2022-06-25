@@ -72,6 +72,7 @@ struct AstcImporter::State {
        Z=0 to mark 2D images, because the file can have zero size and still be
        a 3D format. */
     bool is3D;
+    ImageFlags3D flags;
     /* Needed because the data might be longer */
     std::size_t dataSize;
     Containers::Array<char> data;
@@ -195,6 +196,9 @@ void AstcImporter::doOpenData(Containers::Array<char>&& data, const DataFlags da
            would imply Z = 1. If XY is zero, then it can be exposed as an empty
            2D image. */
         (!size.z() && size.xy().product());
+    /* Mark the image as 2D array if it's 3D but has a 2D format */
+    if(_state->is3D && header.blockSize.z() == 1)
+        _state->flags |= ImageFlag3D::Array;
     _state->dataSize = dataSize;
 
     /* Take over the existing array or copy the data if we can't. For
@@ -216,7 +220,7 @@ UnsignedInt AstcImporter::doImage2DCount() const {
 Containers::Optional<ImageData2D> AstcImporter::doImage2D(UnsignedInt, UnsignedInt) {
     Containers::Array<char> data{NoInit, _state->dataSize};
     Utility::copy(_state->data.slice(sizeof(AstcHeader), sizeof(AstcHeader) + _state->dataSize), data);
-    return ImageData2D{_state->format, _state->size.xy(), std::move(data)};
+    return ImageData2D{_state->format, _state->size.xy(), std::move(data), ImageFlag2D(UnsignedShort(_state->flags))};
 }
 
 UnsignedInt AstcImporter::doImage3DCount() const {
@@ -226,7 +230,7 @@ UnsignedInt AstcImporter::doImage3DCount() const {
 Containers::Optional<ImageData3D> AstcImporter::doImage3D(UnsignedInt, UnsignedInt) {
     Containers::Array<char> data{NoInit, _state->dataSize};
     Utility::copy(_state->data.slice(sizeof(AstcHeader), sizeof(AstcHeader) + _state->dataSize), data);
-    return ImageData3D{_state->format, _state->size, std::move(data)};
+    return ImageData3D{_state->format, _state->size, std::move(data), _state->flags};
 }
 
 }}

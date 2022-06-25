@@ -109,9 +109,9 @@ actual type of data, thus to get `*RGBASrgb` and `*RGBAF` formats instead of
 
 Files with 3D ASTC blocks are always exposed as 3D images instead of 2D.
 Additionally, if a file has 2D ASTC blocks but the Z size is not 1 (a 2D array
-texture), the image is also exposed as 3D. The ARM ASTC encoder doesn't seem to
-support such scenario (the `-array` option enforces use of a 3D ASTC format),
-but other tools might.
+texture), the image is also exposed as 3D, with @ref ImageFlag3D::Array set.
+The ARM ASTC encoder doesn't seem to support such scenario (the `-array`
+option enforces use of a 3D ASTC format), but other tools might.
 
 @m_class{m-block m-warning}
 
