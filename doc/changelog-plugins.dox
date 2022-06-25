@@ -262,6 +262,11 @@ namespace Magnum {
 -   Variables `ASSIMP_LIBRARY_{DEBUG,RELEASE}` and `ASSIMP_INCLUDE_DIR` that
     could be used to force Assimp location in `FindAssimp.cmake` are deprecated
     in favor of `Assimp_LIBRARY_{DEBUG,RELEASE}` and `Assimp_INCLUDE_DIR`
+-   As @relativeref{Trade,BasisImporter} now annotates cube map and array
+    images using @ref ImageFlag3D::CubeMap and @ref ImageFlag3D::Array,
+    retrieving their type via @ref Trade::TextureData::type() is deprecated and
+    available only for backwards compatibility unless
+    @ref MAGNUM_BUILD_DEPRECATED is disabled.
 
 @subsection changelog-plugins-latest-compatibility Potential compatibility breakages, removed APIs
 

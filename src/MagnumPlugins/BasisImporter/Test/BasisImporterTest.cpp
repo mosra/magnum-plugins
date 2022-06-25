@@ -41,7 +41,10 @@
 #include <Magnum/Math/Color.h>
 #include <Magnum/Trade/AbstractImporter.h>
 #include <Magnum/Trade/ImageData.h>
+
+#ifdef MAGNUM_BUILD_DEPRECATED
 #include <Magnum/Trade/TextureData.h>
+#endif
 
 #include "configure.h"
 
@@ -62,7 +65,9 @@ struct BasisImporterTest: TestSuite::Tester {
     void transcodingFailure();
     void nonBasisKtx();
 
+    #ifdef MAGNUM_BUILD_DEPRECATED
     void texture();
+    #endif
 
     void rgbUncompressed();
     void rgbUncompressedNoFlip();
@@ -151,6 +156,7 @@ constexpr struct {
     {"KTX2", "rgb.ktx2", 64, "invalid KTX2 header, or not Basis compressed"}
 };
 
+#ifdef MAGNUM_BUILD_DEPRECATED
 const struct {
     const char* name;
     const char* fileBase;
@@ -196,6 +202,7 @@ const struct {
         "Trade::BasisImporter::openData(): the image was not encoded Y-flipped, imported data will have wrong orientation\n"
     }}
 };
+#endif
 
 constexpr struct {
     const char* fileBase;
@@ -230,6 +237,31 @@ constexpr struct {
      "EacR", CompressedPixelFormat::EacR11Unorm, CompressedPixelFormat::EacR11Unorm},
     {"rgb", "rgba", "rgb-linear", {63, 27},
      "EacRG", CompressedPixelFormat::EacRG11Unorm, CompressedPixelFormat::EacRG11Unorm}
+};
+
+const struct {
+    const char* name;
+    const char* extension;
+    const char* message;
+} Image3DData[]{
+    /* In case of Basis, the image is marked as 3D. Which doesn't make sense
+       as the mip levels don't shrink along Z, so we patch the type to say 2D
+       array and print a warning. */
+    {"Basis", ".basis",
+        "Trade::BasisImporter::openData(): importing 3D texture as a 2D array texture\n"},
+    /* On the other hand, for KTX2 files, the image is always marked as 2D
+       array and never as 3D, so no warning here.
+
+       But, there's a different warning, specific to KTX2 -- THE DAMN THING
+       still doesn't write proper KTXorientation, so opening any KTX file
+       produced by it (and not by our BasisImageConverter, which patches that
+       in after) will warn no matter whether it was flipped or not:
+       https://github.com/BinomialLLC/basis_universal/issues/258
+
+       In other words, the data *does have* correct orientation, it's just not
+       marked as such, leading to an annoying warning. */
+    {"KTX2", ".ktx2",
+        "Trade::BasisImporter::openData(): the image was not encoded Y-flipped, imported data will have wrong orientation\n"}
 };
 
 const struct {
@@ -276,8 +308,10 @@ BasisImporterTest::BasisImporterTest() {
               &BasisImporterTest::transcodingFailure,
               &BasisImporterTest::nonBasisKtx});
 
+    #ifdef MAGNUM_BUILD_DEPRECATED
     addInstancedTests({&BasisImporterTest::texture},
                       Containers::arraySize(TextureData));
+    #endif
 
     addInstancedTests({&BasisImporterTest::rgbUncompressed,
                        &BasisImporterTest::rgbUncompressedNoFlip,
@@ -295,10 +329,14 @@ BasisImporterTest::BasisImporterTest() {
 
     addInstancedTests({&BasisImporterTest::array2D,
                        &BasisImporterTest::array2DMipmaps,
-                       &BasisImporterTest::video,
-                       &BasisImporterTest::image3D,
-                       &BasisImporterTest::image3DMipmaps,
-                       &BasisImporterTest::cubeMap,
+                       &BasisImporterTest::video},
+                      Containers::arraySize(FileTypeData));
+
+    addInstancedTests({&BasisImporterTest::image3D,
+                       &BasisImporterTest::image3DMipmaps},
+        Containers::arraySize(Image3DData));
+
+    addInstancedTests({&BasisImporterTest::cubeMap,
                        &BasisImporterTest::cubeMapArray},
                       Containers::arraySize(FileTypeData));
 
@@ -480,6 +518,7 @@ void BasisImporterTest::nonBasisKtx() {
     CORRADE_COMPARE(out.str(), "Trade::BasisImporter::openData(): invalid KTX2 header, or not Basis compressed\n");
 }
 
+#ifdef MAGNUM_BUILD_DEPRECATED
 void BasisImporterTest::texture() {
     auto&& data = TextureData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
@@ -544,6 +583,7 @@ void BasisImporterTest::texture() {
         CORRADE_COMPARE(counts[dimensions - 1], total);
     }
 }
+#endif
 
 void BasisImporterTest::rgbUncompressed() {
     auto&& data = FileTypeData[testCaseInstanceId()];
@@ -564,6 +604,7 @@ void BasisImporterTest::rgbUncompressed() {
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->flags(), ImageFlags2D{});
     CORRADE_VERIFY(!image->isCompressed());
     CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Srgb);
     CORRADE_COMPARE(image->size(), (Vector2i{63, 27}));
@@ -594,6 +635,7 @@ void BasisImporterTest::rgbUncompressedNoFlip() {
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->flags(), ImageFlags2D{});
     CORRADE_VERIFY(!image->isCompressed());
     CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Srgb);
     CORRADE_COMPARE(image->size(), (Vector2i{63, 27}));
@@ -620,6 +662,7 @@ void BasisImporterTest::rgbUncompressedLinear() {
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->flags(), ImageFlags2D{});
     CORRADE_VERIFY(!image->isCompressed());
     CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Unorm);
     CORRADE_COMPARE(image->size(), (Vector2i{63, 27}));
@@ -646,6 +689,7 @@ void BasisImporterTest::rgbaUncompressed() {
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->flags(), ImageFlags2D{});
     CORRADE_VERIFY(!image->isCompressed());
     CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Srgb);
     CORRADE_COMPARE(image->size(), (Vector2i{63, 27}));
@@ -672,6 +716,7 @@ void BasisImporterTest::rgbaUncompressedUastc() {
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->flags(), ImageFlags2D{});
     CORRADE_VERIFY(!image->isCompressed());
     CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Srgb);
     CORRADE_COMPARE(image->size(), (Vector2i{63, 27}));
@@ -711,6 +756,7 @@ void BasisImporterTest::rgbaUncompressedMultipleImages() {
                       &*image1, &*image1l1}) {
         CORRADE_ITERATION(image->size());
         CORRADE_VERIFY(!image->isCompressed());
+        CORRADE_COMPARE(image->flags(), ImageFlags2D{});
         CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Srgb);
     }
 
@@ -771,6 +817,7 @@ void BasisImporterTest::rgb() {
         Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
         CORRADE_VERIFY(image);
         CORRADE_VERIFY(image->isCompressed());
+        CORRADE_COMPARE(image->flags(), ImageFlags2D{});
         CORRADE_COMPARE(image->compressedFormat(), formatData.expectedFormat);
         CORRADE_COMPARE(image->size(), formatData.expectedSize);
         /** @todo remove this once CompressedImage etc. tests for data size on
@@ -806,6 +853,7 @@ void BasisImporterTest::rgba() {
         Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
         CORRADE_VERIFY(image);
         CORRADE_VERIFY(image->isCompressed());
+        CORRADE_COMPARE(image->flags(), ImageFlags2D{});
         CORRADE_COMPARE(image->compressedFormat(), formatData.expectedFormat);
         CORRADE_COMPARE(image->size(), formatData.expectedSize);
         /** @todo remove this once CompressedImage etc. tests for data size on
@@ -843,6 +891,7 @@ void BasisImporterTest::linear() {
         Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
         CORRADE_VERIFY(image);
         CORRADE_VERIFY(image->isCompressed());
+        CORRADE_COMPARE(image->flags(), ImageFlags2D{});
         CORRADE_COMPARE(image->compressedFormat(), formatData.expectedLinearFormat);
         CORRADE_COMPARE(image->size(), formatData.expectedSize);
         /** @todo remove this once CompressedImage etc. tests for data size on
@@ -862,8 +911,8 @@ void BasisImporterTest::array2D() {
     Containers::Optional<Trade::ImageData3D> image = importer->image3D(0);
     CORRADE_VERIFY(image);
     CORRADE_VERIFY(!image->isCompressed());
+    CORRADE_COMPARE(image->flags(), ImageFlag3D::Array);
     CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Srgb);
-
     CORRADE_COMPARE(image->size(), (Vector3i{63, 27, 3}));
 
     if(_manager.loadState("AnyImageImporter") == PluginManager::LoadState::NotFound)
@@ -901,6 +950,7 @@ void BasisImporterTest::array2DMipmaps() {
         CORRADE_VERIFY(levels[i]);
 
         CORRADE_VERIFY(!levels[i]->isCompressed());
+        CORRADE_COMPARE(levels[i]->flags(), ImageFlag3D::Array);
         CORRADE_COMPARE(levels[i]->format(), PixelFormat::RGBA8Srgb);
         CORRADE_COMPARE(levels[i]->size(), (Vector3i{Vector2i{63, 27} >> i, 3}));
     }
@@ -946,6 +996,7 @@ void BasisImporterTest::video() {
         frames[i] = importer->image2D(i);
         CORRADE_VERIFY(frames[i]);
         CORRADE_VERIFY(!frames[i]->isCompressed());
+        CORRADE_COMPARE(frames[i]->flags(), ImageFlags2D{});
         CORRADE_COMPARE(frames[i]->format(), PixelFormat::RGBA8Srgb);
         CORRADE_COMPARE(frames[i]->size(), (Vector2i{63, 27}));
     }
@@ -968,18 +1019,24 @@ void BasisImporterTest::video() {
 }
 
 void BasisImporterTest::image3D() {
-    auto& data = FileTypeData[testCaseInstanceId()];
+    auto& data = Image3DData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporterRGBA8");
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(BASISIMPORTER_TEST_DIR, "rgba-3d"_s + data.extension)));
-
+    std::ostringstream out;
+    {
+        Warning redirectWarning{&out};
+        CORRADE_VERIFY(importer->openFile(Utility::Path::join(BASISIMPORTER_TEST_DIR, "rgba-3d"_s + data.extension)));
+    }
     CORRADE_COMPARE(importer->image3DCount(), 1);
+    CORRADE_COMPARE(out.str(), data.message);
+
     Containers::Optional<Trade::ImageData3D> image = importer->image3D(0);
     CORRADE_VERIFY(image);
     CORRADE_VERIFY(!image->isCompressed());
+    /* 3D images actually behave like 2D arrays, and are just mislabeled */
+    CORRADE_COMPARE(image->flags(), ImageFlag3D::Array);
     CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Srgb);
-
     CORRADE_COMPARE(image->size(), (Vector3i{63, 27, 3}));
 
     if(_manager.loadState("AnyImageImporter") == PluginManager::LoadState::NotFound)
@@ -1000,18 +1057,19 @@ void BasisImporterTest::image3D() {
 }
 
 void BasisImporterTest::image3DMipmaps() {
-    auto& data = FileTypeData[testCaseInstanceId()];
+    /* Data is identical to array2DMipmaps. See Image3DData for an explanation
+       of what is being tested here. */
+    auto& data = Image3DData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
-
-    /* Data is identical to array2DMipmaps. Mip levels in basis are per 2D
-       image, for 3D images they consequently don't halve in the z-dimension.
-       The importer prints a warning (unless it's a KTX2 file, those don't
-       indicate 3D images at all) and imports as Texture2DArray. The texture
-       type is tested in texture(). */
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporterRGBA8");
 
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(BASISIMPORTER_TEST_DIR, "rgba-3d-mips"_s + data.extension)));
+    std::ostringstream out;
+    {
+        Warning redirectWarning{&out};
+        CORRADE_VERIFY(importer->openFile(Utility::Path::join(BASISIMPORTER_TEST_DIR, "rgba-3d-mips"_s + data.extension)));
+    }
+    CORRADE_COMPARE(out.str(), data.message);
 
     Containers::Optional<Trade::ImageData3D> levels[3];
 
@@ -1020,10 +1078,12 @@ void BasisImporterTest::image3DMipmaps() {
 
     for(std::size_t i = 0; i != Containers::arraySize(levels); ++i) {
         CORRADE_ITERATION(i);
+
         levels[i] = importer->image3D(0, i);
         CORRADE_VERIFY(levels[i]);
-
         CORRADE_VERIFY(!levels[i]->isCompressed());
+        /* 3D images actually behave like 2D arrays, and are just mislabeled */
+        CORRADE_COMPARE(levels[i]->flags(), ImageFlag3D::Array);
         CORRADE_COMPARE(levels[i]->format(), PixelFormat::RGBA8Srgb);
         CORRADE_COMPARE(levels[i]->size(), (Vector3i{Vector2i{63, 27} >> i, 3}));
     }
@@ -1065,8 +1125,8 @@ void BasisImporterTest::cubeMap() {
     Containers::Optional<Trade::ImageData3D> image = importer->image3D(0);
     CORRADE_VERIFY(image);
     CORRADE_VERIFY(!image->isCompressed());
+    CORRADE_COMPARE(image->flags(), ImageFlag3D::CubeMap);
     CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Srgb);
-
     CORRADE_COMPARE(image->size(), (Vector3i{27, 27, 6}));
 
     if(_manager.loadState("AnyImageImporter") == PluginManager::LoadState::NotFound)
@@ -1106,8 +1166,8 @@ void BasisImporterTest::cubeMapArray() {
     Containers::Optional<Trade::ImageData3D> image = importer->image3D(0);
     CORRADE_VERIFY(image);
     CORRADE_VERIFY(!image->isCompressed());
+    CORRADE_COMPARE(image->flags(), ImageFlag3D::CubeMap|ImageFlag3D::Array);
     CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Srgb);
-
     CORRADE_COMPARE(image->size(), (Vector3i{27, 27, 12}));
 
     if(_manager.loadState("AnyImageImporter") == PluginManager::LoadState::NotFound)

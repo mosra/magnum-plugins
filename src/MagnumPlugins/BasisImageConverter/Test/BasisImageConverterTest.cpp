@@ -912,10 +912,10 @@ void BasisImageConverterTest::convert2DArray() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporterRGBA8");
     CORRADE_VERIFY(importer->openData(*compressedData));
     CORRADE_COMPARE(importer->image3DCount(), 1);
-    CORRADE_COMPARE(importer->textureCount(), 1);
-    Containers::Optional<Trade::TextureData> texture = importer->texture(0);
-    CORRADE_COMPARE(texture->type(), TextureType::Texture2DArray);
+
     Containers::Optional<Trade::ImageData3D> image = importer->image3D(0);
+    CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->flags(), ImageFlag3D::Array);
 
     /* CompareImage only supports 2D images, compare each layer individually */
     CORRADE_COMPARE_WITH(image->pixels<Color4ub>()[0], imageViewSlice(ImageView3D(originalImage), 0),
@@ -927,6 +927,12 @@ void BasisImageConverterTest::convert2DArray() {
     CORRADE_COMPARE_WITH(image->pixels<Color4ub>()[2], imageViewSlice(ImageView3D(originalImage), 2),
         /* There are moderately significant compression artifacts */
         (DebugTools::CompareImage{96.5f, 6.928f}));
+
+    #ifdef MAGNUM_BUILD_DEPRECATED
+    CORRADE_COMPARE(importer->textureCount(), 1);
+    Containers::Optional<Trade::TextureData> texture = importer->texture(0);
+    CORRADE_COMPARE(texture->type(), TextureType::Texture2DArray);
+    #endif
 }
 
 void BasisImageConverterTest::convert2DArrayOneLayer() {
@@ -954,13 +960,32 @@ void BasisImageConverterTest::convert2DArrayOneLayer() {
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporterRGBA8");
     CORRADE_VERIFY(importer->openData(*compressedData));
+    #ifdef MAGNUM_BUILD_DEPRECATED
     CORRADE_COMPARE(importer->textureCount(), 1);
+    #endif
     {
         CORRADE_EXPECT_FAIL_IF(data.pluginName == "BasisKtxImageConverter"_s,
             "basis_universal exports KTX2 2D array images with a single layer as 2D images.");
         CORRADE_COMPARE(importer->image3DCount(), 1);
+
+        #ifdef MAGNUM_BUILD_DEPRECATED
         Containers::Optional<Trade::TextureData> texture = importer->texture(0);
         CORRADE_COMPARE(texture->type(), TextureType::Texture2DArray);
+        #endif
+    }
+
+    if(data.pluginName != "BasisKtxImageConverter"_s) {
+        CORRADE_COMPARE(importer->image3DCount(), 1);
+
+        Containers::Optional<Trade::ImageData3D> image = importer->image3D(0);
+        CORRADE_VERIFY(image);
+        CORRADE_COMPARE(image->flags(), ImageFlag3D::Array);
+    } else {
+        CORRADE_COMPARE(importer->image2DCount(), 1);
+
+        Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
+        CORRADE_VERIFY(image);
+        CORRADE_COMPARE(image->flags(), ImageFlags2D{});
     }
 }
 
@@ -1014,15 +1039,12 @@ void BasisImageConverterTest::convert2DArrayMipmaps() {
     CORRADE_VERIFY(importer->openData(*compressedData));
     CORRADE_COMPARE(importer->image3DCount(), 1);
     CORRADE_COMPARE(importer->image3DLevelCount(0), Containers::arraySize(levels));
-    CORRADE_COMPARE(importer->textureCount(), 1);
-    Containers::Optional<Trade::TextureData> texture = importer->texture(0);
-    CORRADE_COMPARE(texture->type(), TextureType::Texture2DArray);
-    Containers::Optional<Trade::ImageData3D> image = importer->image3D(0);
 
     for(std::size_t i = 0; i != Containers::arraySize(levels); ++i) {
         CORRADE_ITERATION("level" << i);
         levels[i].result = importer->image3D(0, i);
         CORRADE_VERIFY(levels[i].result);
+        CORRADE_COMPARE(levels[i].result->flags(), ImageFlag3D::Array);
     }
 
     /* CompareImage only supports 2D images, compare each layer individually */
@@ -1047,6 +1069,12 @@ void BasisImageConverterTest::convert2DArrayMipmaps() {
             /* There are moderately significant compression artifacts */
             (DebugTools::CompareImage{80.5f, 23.878f}));
     }
+
+    #ifdef MAGNUM_BUILD_DEPRECATED
+    CORRADE_COMPARE(importer->textureCount(), 1);
+    Containers::Optional<Trade::TextureData> texture = importer->texture(0);
+    CORRADE_COMPARE(texture->type(), TextureType::Texture2DArray);
+    #endif
 }
 
 void BasisImageConverterTest::convertCubeMap() {
@@ -1093,14 +1121,14 @@ void BasisImageConverterTest::convertCubeMap() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporterRGBA8");
     CORRADE_VERIFY(importer->openData(*compressedData));
     CORRADE_COMPARE(importer->image3DCount(), 1);
-    CORRADE_COMPARE(importer->textureCount(), 1);
-    Containers::Optional<Trade::TextureData> texture = importer->texture(0);
+
+    Containers::Optional<Trade::ImageData3D> image = importer->image3D(0);
+    CORRADE_VERIFY(image);
     if(data.flags & ImageFlag3D::Array) {
         CORRADE_EXPECT_FAIL("basis_universal treats cube map array images the same way as cube map images, so a single-layer cube map array gets written as a plain cube map.");
-        CORRADE_COMPARE(texture->type(), TextureType::CubeMapArray);
+        CORRADE_COMPARE(image->flags(), ImageFlag3D::CubeMap|ImageFlag3D::Array);
     }
-    CORRADE_COMPARE(texture->type(), TextureType::CubeMap);
-    Containers::Optional<Trade::ImageData3D> image = importer->image3D(0);
+    CORRADE_COMPARE(image->flags(), ImageFlag3D::CubeMap);
 
     /* CompareImage only supports 2D images, compare each layer individually */
     for(std::size_t i: {0, 3}) {
@@ -1115,6 +1143,17 @@ void BasisImageConverterTest::convertCubeMap() {
             /* There are moderately significant compression artifacts */
             (DebugTools::CompareImage{90.0f, 9.26f}));
     }
+
+    #ifdef MAGNUM_BUILD_DEPRECATED
+    CORRADE_COMPARE(importer->textureCount(), 1);
+
+    Containers::Optional<Trade::TextureData> texture = importer->texture(0);
+    if(data.flags & ImageFlag3D::Array) {
+        CORRADE_EXPECT_FAIL("basis_universal treats cube map array images the same way as cube map images, so a single-layer cube map array gets written as a plain cube map.");
+        CORRADE_COMPARE(texture->type(), TextureType::CubeMapArray);
+    }
+    CORRADE_COMPARE(texture->type(), TextureType::CubeMap);
+    #endif
 }
 
 void BasisImageConverterTest::convertToFile2D() {

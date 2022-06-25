@@ -34,9 +34,12 @@
 #include <Corrade/Utility/Debug.h>
 #include <Magnum/PixelFormat.h>
 #include <Magnum/Trade/ImageData.h>
-#include <Magnum/Trade/TextureData.h>
 
 #include <basisu_transcoder.h>
+
+#ifdef MAGNUM_BUILD_DEPRECATED
+#include <Magnum/Trade/TextureData.h>
+#endif
 
 namespace Magnum { namespace Trade {
 
@@ -147,7 +150,7 @@ struct BasisImporter::State {
 
     Containers::Array<char> in;
 
-    TextureType textureType;
+    ImageFlags3D imageFlags;
     /* Only > 1 for plain 2D .basis files with multiple images. Anything else
        (cube/array/volume) contains a single logical image. KTX2 only supports
        one image to begin with. */
@@ -285,14 +288,14 @@ void BasisImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFla
         /* Remember the type for doTexture(). ktx2_transcoder::init() already
            checked we're dealing with a valid 2D texture. basisu -tex_type 3d
            results in 2D array textures, and there's no get_depth() at all. */
-        state->isVideo = false;
+        state->isVideo = state->ktx2Transcoder->is_video();
+        /* Importing videos with many frames as a single array images would be
+           impractical, so mark the texture as array only if it's not a
+           video. */
+        if(state->ktx2Transcoder->get_layers() > 0 && !state->isVideo)
+            state->imageFlags |= ImageFlag3D::Array;
         if(state->ktx2Transcoder->get_faces() != 1)
-            state->textureType = state->ktx2Transcoder->get_layers() > 0 ? TextureType::CubeMapArray : TextureType::CubeMap;
-        else if(state->ktx2Transcoder->is_video()) {
-            state->textureType = TextureType::Texture2D;
-            state->isVideo = true;
-        } else
-            state->textureType = state->ktx2Transcoder->get_layers() > 0 ? TextureType::Texture2DArray : TextureType::Texture2D;
+            state->imageFlags |= ImageFlag3D::CubeMap;
 
         /* KTX2 files only ever contain one image, but for videos we choose to
            expose layers as multiple images, one for each frame */
@@ -355,16 +358,17 @@ void BasisImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFla
                    this is a video to disallow seeking (not supported by
                    basisu). */
                 state->isVideo = true;
-                state->textureType = TextureType::Texture2D;
                 break;
             case basist::basis_texture_type::cBASISTexType2D:
-                state->textureType = TextureType::Texture2D;
+                /* That's the default (empty) ImageFlags */
                 break;
             case basist::basis_texture_type::cBASISTexType2DArray:
-                state->textureType = TextureType::Texture2DArray;
+                state->imageFlags |= ImageFlag3D::Array;
                 break;
             case basist::basis_texture_type::cBASISTexTypeCubemapArray:
-                state->textureType = fileInfo.m_total_images > 6 ? TextureType::CubeMapArray : TextureType::CubeMap;
+                state->imageFlags |= ImageFlag3D::CubeMap;
+                if(fileInfo.m_total_images > 6)
+                    state->imageFlags |= ImageFlag3D::Array;
                 break;
             case basist::basis_texture_type::cBASISTexTypeVolume:
                 /* Import 3D textures as 2D arrays because:
@@ -372,16 +376,19 @@ void BasisImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFla
                      formats
                    - mip levels are always 2D images for each slice, meaning
                      they wouldn't halve in the z-dimension as users would very
-                     likely expect */
+                     likely expect
+                   - so why is this type here at all, actually?? */
                 Warning{} << "Trade::BasisImporter::openData(): importing 3D texture as a 2D array texture";
-                state->textureType = TextureType::Texture2DArray;
+                state->imageFlags |= ImageFlag3D::Array;
                 break;
             default:
                 /* This is caught by basis_transcoder::get_file_info() */
                 CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
         }
 
-        if(state->textureType == TextureType::Texture2D) {
+        /* If the texture type is 2D, it can be multi-image. Otherwise, for
+           arrays and cube maps the images are actually slices of a 3D image. */
+        if(!(state->imageFlags & (ImageFlag3D::Array|ImageFlag3D::CubeMap))) {
             state->numImages = fileInfo.m_total_images;
             state->numSlices = 1;
         } else {
@@ -396,7 +403,7 @@ void BasisImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFla
            These checks, including the cube map checks below, are either not
            necessary for the KTX2 file format or are already handled by
            ktx2_transcoder. */
-        const bool imageSizeMustMatch = state->textureType != TextureType::Texture2D || state->isVideo;
+        const bool imageSizeMustMatch = (state->imageFlags & (ImageFlag3D::Array|ImageFlag3D::CubeMap)) || state->isVideo;
         UnsignedInt firstWidth = 0, firstHeight = 0;
         state->numLevels = Containers::Array<UnsignedInt>{NoInit, state->numImages};
         for(UnsignedInt i = 0; i != fileInfo.m_total_images; ++i) {
@@ -427,7 +434,7 @@ void BasisImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFla
                 state->numLevels[i] = imageInfo.m_total_levels;
         }
 
-        if(state->textureType == TextureType::CubeMap || state->textureType == TextureType::CubeMapArray) {
+        if(state->imageFlags & ImageFlag3D::CubeMap) {
             if(state->numSlices % 6 != 0) {
                 Error{} << "Trade::BasisImporter::openData(): cube map face count must be a multiple of 6 but got" << state->numSlices;
                 return;
@@ -453,11 +460,6 @@ void BasisImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFla
     /* There has to be exactly one transcoder */
     CORRADE_INTERNAL_ASSERT(!state->ktx2Transcoder != !state->basisTranscoder);
     #endif
-    /* These file formats don't support 1D images and we import 3D images as
-       2D array images */
-    CORRADE_INTERNAL_ASSERT(state->textureType != TextureType::Texture1D &&
-                            state->textureType != TextureType::Texture1DArray &&
-                            state->textureType != TextureType::Texture3D);
     /* There's one image with faces/layers, or multiple images without any */
     CORRADE_INTERNAL_ASSERT(state->numImages == 1 || state->numSlices == 1);
 
@@ -548,7 +550,7 @@ template<UnsignedInt dimensions> Containers::Optional<ImageData<dimensions>> Bas
         totalBlocks = levelInfo.m_total_blocks;
         isIFrame = levelInfo.m_iframe_flag;
 
-        numFaces = (_state->textureType == TextureType::CubeMap || _state->textureType == TextureType::CubeMapArray) ? 6 : 1;
+        numFaces = _state->imageFlags & ImageFlag3D::CubeMap ? 6 : 1;
     }
 
     const UnsignedInt numLayers = _state->numSlices/numFaces;
@@ -617,13 +619,13 @@ template<UnsignedInt dimensions> Containers::Optional<ImageData<dimensions>> Bas
     }
 
     if(isUncompressed)
-        return Trade::ImageData<dimensions>{pixelFormat(targetFormat, _state->isSrgb), Math::Vector<dimensions, Int>::pad(Vector3i{size}), std::move(dest)};
+        return Trade::ImageData<dimensions>{pixelFormat(targetFormat, _state->isSrgb), Math::Vector<dimensions, Int>::pad(Vector3i{size}), std::move(dest), ImageFlag<dimensions>(UnsignedShort(_state->imageFlags))};
     else
-        return Trade::ImageData<dimensions>{compressedPixelFormat(targetFormat, _state->isSrgb), Math::Vector<dimensions, Int>::pad(Vector3i{size}), std::move(dest)};
+        return Trade::ImageData<dimensions>{compressedPixelFormat(targetFormat, _state->isSrgb), Math::Vector<dimensions, Int>::pad(Vector3i{size}), std::move(dest), ImageFlag<dimensions>(UnsignedShort(_state->imageFlags))};
 }
 
 UnsignedInt BasisImporter::doImage2DCount() const {
-    return _state->textureType == TextureType::Texture2D ? _state->numImages : 0;
+    return _state->imageFlags & (ImageFlag3D::Array|ImageFlag3D::CubeMap) ? 0 : _state->numImages;
 }
 
 UnsignedInt BasisImporter::doImage2DLevelCount(const UnsignedInt id) {
@@ -635,7 +637,7 @@ Containers::Optional<ImageData2D> BasisImporter::doImage2D(const UnsignedInt id,
 }
 
 UnsignedInt BasisImporter::doImage3DCount() const {
-    return _state->textureType != TextureType::Texture2D ? _state->numImages : 0;
+    return _state->imageFlags & (ImageFlag3D::Array|ImageFlag3D::CubeMap) ? _state->numImages : 0;
 }
 
 UnsignedInt BasisImporter::doImage3DLevelCount(const UnsignedInt id) {
@@ -646,14 +648,26 @@ Containers::Optional<ImageData3D> BasisImporter::doImage3D(const UnsignedInt id,
     return doImage<3>(id, level);
 }
 
+#ifdef MAGNUM_BUILD_DEPRECATED
 UnsignedInt BasisImporter::doTextureCount() const {
     return _state->numImages;
 }
 
 Containers::Optional<TextureData> BasisImporter::doTexture(UnsignedInt id) {
-    return TextureData{_state->textureType, SamplerFilter::Linear, SamplerFilter::Linear,
+    TextureType type;
+    if(_state->imageFlags >= (ImageFlag3D::CubeMap|ImageFlag3D::Array))
+        type = TextureType::CubeMapArray;
+    else if(_state->imageFlags & ImageFlag3D::CubeMap)
+        type = TextureType::CubeMap;
+    else if(_state->imageFlags & ImageFlag3D::Array)
+        type = TextureType::Texture2DArray;
+    else
+        type = TextureType::Texture2D;
+
+    return TextureData{type, SamplerFilter::Linear, SamplerFilter::Linear,
         SamplerMipmap::Linear, SamplerWrapping::Repeat, id};
 }
+#endif
 
 void BasisImporter::setTargetFormat(TargetFormat format) {
     configuration().setValue("format", format);
