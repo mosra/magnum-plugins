@@ -122,7 +122,10 @@ when the flag is enabled.
 
 All image types supported by KTX2 are imported, including 1D, 2D, cube maps,
 and 3D images. They can, in turn, all have multiple array layers as well as
-multiple mip levels. The image type can be determined from @ref texture() and
+multiple mip levels. The images are annotated with @ref ImageFlag2D::Array,
+@ref ImageFlag3D::Array and @ref ImageFlag3D::CubeMap as appropriate.
+Furthermore, for backward compatibility, if @ref MAGNUM_BUILD_DEPRECATED is
+enabled, the image type can also be determined from @ref texture() and
 @ref TextureData::type().
 
 For layered images and (layered) cube maps, the array layers and faces are
@@ -222,8 +225,10 @@ class MAGNUM_KTXIMPORTER_EXPORT KtxImporter: public AbstractImporter {
         MAGNUM_KTXIMPORTER_LOCAL UnsignedInt doImage3DLevelCount(UnsignedInt id) override;
         MAGNUM_KTXIMPORTER_LOCAL Containers::Optional<ImageData3D> doImage3D(UnsignedInt id, UnsignedInt level) override;
 
+        #ifdef MAGNUM_BUILD_DEPRECATED
         MAGNUM_KTXIMPORTER_LOCAL UnsignedInt doTextureCount() const override;
         MAGNUM_KTXIMPORTER_LOCAL Containers::Optional<TextureData> doTexture(UnsignedInt id) override;
+        #endif
 
         struct File;
         Containers::Pointer<File> _f;

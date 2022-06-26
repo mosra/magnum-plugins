@@ -46,8 +46,11 @@
 #include <Magnum/Math/Vector3.h>
 #include <Magnum/Math/Vector4.h>
 #include <Magnum/Trade/ImageData.h>
-#include <Magnum/Trade/TextureData.h>
 #include "MagnumPlugins/KtxImporter/KtxHeader.h"
+
+#ifdef MAGNUM_BUILD_DEPRECATED
+#include <Magnum/Trade/TextureData.h>
+#endif
 
 namespace Magnum { namespace Trade {
 
@@ -267,7 +270,9 @@ struct KtxImporter::File {
     /* Dimensions of the imported image data, including extra dimensions for
        array layers or cube map faces */
     UnsignedByte numDataDimensions;
-    TextureType type;
+    /* ImageFlags3D is a superset of ImageFlags1D and ImageFlags2D, so using it
+       for any dimension count */
+    ImageFlags3D imageFlags;
     BoolVector3 flip;
 
     Format pixelFormat;
@@ -359,20 +364,17 @@ void KtxImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFlags
     if(header.imageSize.y() > 0) {
         if(header.imageSize.z() > 0) {
             f->numDimensions = 3;
-            f->type = TextureType::Texture3D;
         } else {
             f->numDimensions = 2;
-            if(isCubeMap)
-                f->type = isLayered ? TextureType::CubeMapArray : TextureType::CubeMap;
-            else
-                f->type = isLayered ? TextureType::Texture2DArray : TextureType::Texture2D;
+            if(isCubeMap) f->imageFlags |= ImageFlag3D::CubeMap;
+            if(isLayered) f->imageFlags |= ImageFlag3D::Array;
         }
     } else if(header.imageSize.z() > 0) {
         Error{} << "Trade::KtxImporter::openData(): invalid image size, depth is" << header.imageSize.z() << "but height is 0";
         return;
     } else {
         f->numDimensions = 1;
-        f->type = isLayered ? TextureType::Texture1DArray : TextureType::Texture1D;
+        if(isLayered) f->imageFlags |= ImageFlag3D::Array;
     }
 
     f->numDataDimensions = Math::min<UnsignedByte>(f->numDimensions + UnsignedByte(isLayered || isCubeMap), 3);
@@ -825,7 +827,7 @@ template<UnsignedInt dimensions> ImageData<dimensions> KtxImporter::doImage(Unsi
         CORRADE_INTERNAL_ASSERT(_f->pixelFormat.typeSize == 1);
 
         Utility::copy(levelData.data, data);
-        return ImageData<dimensions>(_f->pixelFormat.compressed, size, std::move(data));
+        return ImageData<dimensions>{_f->pixelFormat.compressed, size, std::move(data), ImageFlag<dimensions>(UnsignedShort(_f->imageFlags))};
     }
 
     /* Uncompressed image */
@@ -857,7 +859,7 @@ template<UnsignedInt dimensions> ImageData<dimensions> KtxImporter::doImage(Unsi
     if((levelData.size.x()*_f->pixelFormat.size)%4 != 0)
         storage.setAlignment(1);
 
-    return ImageData<dimensions>{storage, _f->pixelFormat.uncompressed, size, std::move(data)};
+    return ImageData<dimensions>{storage, _f->pixelFormat.uncompressed, size, std::move(data), ImageFlag<dimensions>(UnsignedShort(_f->imageFlags))};
 }
 
 UnsignedInt KtxImporter::doImage1DCount() const {
@@ -933,6 +935,7 @@ Containers::Optional<ImageData3D> KtxImporter::doImage3D(UnsignedInt id, const U
         return doImage<3>(id, level);
 }
 
+#ifdef MAGNUM_BUILD_DEPRECATED
 UnsignedInt KtxImporter::doTextureCount() const {
     if(_basisImporter)
         return _basisImporter->textureCount();
@@ -943,10 +946,31 @@ UnsignedInt KtxImporter::doTextureCount() const {
 Containers::Optional<TextureData> KtxImporter::doTexture(UnsignedInt id) {
     if(_basisImporter)
         return _basisImporter->texture(id);
-    else
-        return TextureData{_f->type, SamplerFilter::Linear, SamplerFilter::Linear,
+    else {
+        TextureType type;
+        if(_f->numDimensions == 3) {
+            type = TextureType::Texture3D;
+        } else if(_f->numDimensions == 2) {
+            if(_f->imageFlags >= (ImageFlag3D::CubeMap|ImageFlag3D::Array))
+                type = TextureType::CubeMapArray;
+            else if(_f->imageFlags & ImageFlag3D::CubeMap)
+                type = TextureType::CubeMap;
+            else if(_f->imageFlags & ImageFlag3D::Array)
+                type = TextureType::Texture2DArray;
+            else
+                type = TextureType::Texture2D;
+        } else {
+            if(_f->imageFlags & ImageFlag3D::Array)
+                type = TextureType::Texture1DArray;
+            else
+                type = TextureType::Texture1D;
+        }
+
+        return TextureData{type, SamplerFilter::Linear, SamplerFilter::Linear,
             SamplerMipmap::Linear, SamplerWrapping::Repeat, id};
+    }
 }
+#endif
 
 }}
 
