@@ -191,7 +191,7 @@ constexpr UnsignedLong PatternDepth32FStencil8UIData[4*3]{
 
 const struct {
     const char* name;
-    const std::size_t length;
+    std::size_t length;
     const char* message;
 } ShortData[]{
     {"identifier", sizeof(Implementation::KtxHeader::identifier) - 1,
@@ -211,7 +211,7 @@ constexpr UnsignedByte VK_FORMAT_D32_SFLOAT = 126;
 const struct {
     const char* name;
     const char* file;
-    const std::size_t offset;
+    std::size_t offset;
     const char value;
     const char* message;
 } InvalidData[]{
@@ -262,7 +262,7 @@ const struct {
 const struct {
     const char* name;
     const char* file;
-    const TextureType type;
+    TextureType type;
 } TextureData[]{
     {"1D", "1d.ktx2", TextureType::Texture1D},
     {"1D array", "1d-layers.ktx2", TextureType::Texture1DArray},
@@ -277,8 +277,8 @@ const struct {
 const struct {
     const char* name;
     const char* file;
-    const PixelFormat format;
-    const Containers::ArrayView<const char> data;
+    PixelFormat format;
+    Containers::ArrayView<const char> data;
 } DepthStencilImageData[]{
     {"Stencil8UI", "2d-s8.ktx2", PixelFormat::Stencil8UI,
         Containers::arrayCast<const char>(PatternStencil8UIData)},
@@ -293,8 +293,8 @@ const struct {
 const struct {
     const char* name;
     const char* file;
-    const CompressedPixelFormat format;
-    const Math::Vector<1, Int> size;
+    CompressedPixelFormat format;
+    Math::Vector<1, Int> size;
 } CompressedImage1DData[]{
     {"BC1", "1d-compressed-bc1.ktx2", CompressedPixelFormat::Bc1RGBASrgb, {4}},
     {"ETC2", "1d-compressed-etc2.ktx2", CompressedPixelFormat::Etc2RGB8Srgb, {7}}
@@ -303,8 +303,8 @@ const struct {
 const struct {
     const char* name;
     const char* file;
-    const CompressedPixelFormat format;
-    const Vector2i size;
+    CompressedPixelFormat format;
+    Vector2i size;
 } CompressedImage2DData[]{
     {"PVRTC", "2d-compressed-pvrtc.ktx2", CompressedPixelFormat::PvrtcRGBA4bppSrgb, {8, 8}},
     {"BC1", "2d-compressed-bc1.ktx2", CompressedPixelFormat::Bc1RGBASrgb, {8, 8}},
@@ -315,11 +315,11 @@ const struct {
 
 const struct {
     const char* name;
-    const ImporterFlags flags;
+    ImporterFlags flags;
     const char* file;
-    const TextureType type;
-    const UnsignedInt images;
-    const Vector3i size;
+    TextureType type;
+    UnsignedInt images;
+    Vector3i size;
     const char* verboseMessage;
 } ForwardBasisData[]{
     /* Basis has no 1D image support */
@@ -339,9 +339,9 @@ const struct {
 const struct {
     const char* name;
     const char* file;
-    const bool requiresBasisImporter;
-    const std::size_t offset;
-    const char value;
+    bool requiresBasisImporter;
+    std::size_t offset;
+    char value;
     const char* message;
 } ForwardBasisInvalidData[]{
     /* Change ktx2_etc1s_global_data_header::m_endpoint_count */
@@ -383,7 +383,7 @@ using namespace Containers::Literals;
 
 const struct {
     const char* name;
-    const Containers::StringView data;
+    Containers::StringView data;
     const char* message;
 } InvalidKeyValueData[]{
     /* Entry has length 0, followed by a valid entry (with an empty value,
@@ -397,7 +397,7 @@ const struct {
 
 const struct {
     const char* name;
-    const Containers::StringView data;
+    Containers::StringView data;
 } IgnoredInvalidKeyValueData[]{
     /* Length extends beyond key/value data */
     {"length out of bounds", "\xff\x00\x00\x00k\x00\x00\x00"_s},
@@ -408,8 +408,8 @@ const struct {
 const struct {
     const char* name;
     const char* file;
-    const UnsignedInt dimensions;
-    const Containers::StringView orientation;
+    UnsignedInt dimensions;
+    Containers::StringView orientation;
 } InvalidOrientationData[]{
     {"empty", "1d.ktx2", 1, ""_s},
     {"short", "2d-rgb.ktx2", 2, "r"_s},
@@ -421,10 +421,10 @@ const struct {
 const struct {
     const char* name;
     const char* file;
-    const Vector3i size;
-    const PixelFormat format;
-    const Containers::ArrayView<const char> data;
-    const Vector3ub flipped;
+    Vector3i size;
+    PixelFormat format;
+    Containers::ArrayView<const char> data;
+    Vector3ub flipped;
 } FlipData[]{
     /* Don't test everything, just a few common and interesting orientations */
     {"l", "1d.ktx2", {4, 0, 0}, PixelFormat::RGB8Srgb,
@@ -448,10 +448,10 @@ const struct {
 const struct {
     const char* name;
     const char* file;
-    const PixelFormat format;
-    const Implementation::VkFormat vkFormat;
+    PixelFormat format;
+    Implementation::VkFormat vkFormat;
     const char* message;
-    const Containers::ArrayView<const char> data;
+    Containers::ArrayView<const char> data;
 } SwizzleData[]{
     {"BGR8 header", "bgr-swizzle-bgr.ktx2",
         PixelFormat::RGB8Srgb, Implementation::VK_FORMAT_UNDEFINED,
