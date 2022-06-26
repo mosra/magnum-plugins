@@ -859,6 +859,9 @@ template<UnsignedInt dimensions> ImageData<dimensions> KtxImporter::doImage(Unsi
     if((levelData.size.x()*_f->pixelFormat.size)%4 != 0)
         storage.setAlignment(1);
 
+    /** @todo the DFD block has KHR_DF_FLAG_ALPHA_PREMULTIPLIED, pass it
+        through ImageFlags once such flag exists:
+        https://github.khronos.org/KTX-Specification/#_providing_additional_information */
     return ImageData<dimensions>{storage, _f->pixelFormat.uncompressed, size, std::move(data), ImageFlag<dimensions>(UnsignedShort(_f->imageFlags))};
 }
 

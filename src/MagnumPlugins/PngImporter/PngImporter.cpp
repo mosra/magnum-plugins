@@ -210,6 +210,13 @@ Containers::Optional<ImageData2D> PngImporter::doImage2D(UnsignedInt, UnsignedIn
         bits = 8;
     }
 
+    /** @todo there's an option to convert alpha to premultiplied on load:
+        https://github.com/glennrp/libpng/blob/a37d4836519517bdce6cb9d956092321eca3e73b/png.h#L1096-L1135
+        but there doesn't seem to be a way to check if the PNG file is already
+        premultiplied (which is disallowed by the PNG spec, but ... tools)
+        or do detection based on what tool exported the image? such as blender
+        producing premultiplied PNGs https://developer.blender.org/T24764 */
+
     /* Initialize data array, align rows to four bytes */
     CORRADE_INTERNAL_ASSERT(bits >= 8);
     const std::size_t stride = ((size.x()*channels*bits/8 + 3)/4)*4;

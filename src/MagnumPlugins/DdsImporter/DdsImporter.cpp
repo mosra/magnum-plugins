@@ -702,6 +702,8 @@ template<UnsignedInt dimensions> ImageData<dimensions> DdsImporter::doImage(Unsi
     if((imageSize.x()*_f->properties.uncompressed.pixelSize % 4 != 0))
         storage.setAlignment(1);
 
+    /** @todo expose DdsAlphaMode::Premultiplied through ImageFlags once it has
+        such flag */
     return ImageData<dimensions>{storage, _f->properties.uncompressed.format, Math::Vector<dimensions, Int>::pad(imageSize), std::move(data), ImageFlag<dimensions>(UnsignedShort(_f->imageFlags))};
 }
 
