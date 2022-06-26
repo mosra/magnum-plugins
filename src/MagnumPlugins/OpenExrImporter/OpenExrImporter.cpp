@@ -643,7 +643,10 @@ Containers::Optional<ImageData3D> OpenExrImporter::doImage3D(UnsignedInt, const 
     Utility::flipInPlace<1>(pixels[4]);
     Utility::flipInPlace<1>(pixels[5]);
 
-    return ImageData3D{image2D->format(), {Int(pixels.size()[2]), Int(pixels.size()[1]), Int(pixels.size()[0])}, image2D->release()};
+    /* For 3D we only import cube maps at the moment, so it's always
+       ImageFlag3D::CubeMap */
+    CORRADE_INTERNAL_ASSERT(_state->isCubeMap);
+    return ImageData3D{image2D->format(), {Int(pixels.size()[2]), Int(pixels.size()[1]), Int(pixels.size()[0])}, image2D->release(), ImageFlag3D::CubeMap};
 }
 
 }}

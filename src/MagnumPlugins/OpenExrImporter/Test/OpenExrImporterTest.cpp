@@ -307,6 +307,7 @@ void OpenExrImporterTest::rgb16f() {
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(out.str(), data.message);
+    CORRADE_COMPARE(image->flags(), ImageFlags2D{});
     CORRADE_COMPARE(image->size(), Vector2i(1, 3));
     CORRADE_COMPARE(image->format(), PixelFormat::RGB16F);
 
@@ -331,6 +332,7 @@ void OpenExrImporterTest::rgba32f() {
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->flags(), ImageFlags2D{});
     CORRADE_COMPARE(image->size(), Vector2i(1, 3));
     CORRADE_COMPARE(image->format(), PixelFormat::RGBA32F);
 
@@ -348,6 +350,7 @@ void OpenExrImporterTest::rg32ui() {
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->flags(), ImageFlags2D{});
     CORRADE_COMPARE(image->size(), Vector2i(2, 2));
     CORRADE_COMPARE(image->format(), PixelFormat::RG32UI);
 
@@ -364,6 +367,7 @@ void OpenExrImporterTest::depth32f() {
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->flags(), ImageFlags2D{});
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
     CORRADE_COMPARE(image->format(), PixelFormat::Depth32F);
 
@@ -387,6 +391,7 @@ void OpenExrImporterTest::cubeMap() {
 
     Containers::Optional<Trade::ImageData3D> image = importer->image3D(0);
     CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->flags(), ImageFlag3D::CubeMap);
     CORRADE_COMPARE(image->size(), (Vector3i{2, 2, 6}));
     CORRADE_COMPARE(image->format(), PixelFormat::RG16F);
     CORRADE_COMPARE_AS(Containers::arrayCast<const Half>(image->data()), Containers::arrayView({
@@ -418,6 +423,7 @@ void OpenExrImporterTest::forceChannelCountMore() {
     importer->configuration().setValue("forceChannelCount", 4);
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->flags(), ImageFlags2D{});
     CORRADE_COMPARE(image->size(), Vector2i(2, 2));
     CORRADE_COMPARE(image->format(), PixelFormat::RGBA32UI);
     CORRADE_COMPARE_AS(Containers::arrayCast<const UnsignedInt>(image->data()), Containers::arrayView<UnsignedInt>({
@@ -434,6 +440,7 @@ void OpenExrImporterTest::forceChannelCountLess() {
     importer->configuration().setValue("forceChannelCount", 2);
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->flags(), ImageFlags2D{});
     CORRADE_COMPARE(image->size(), Vector2i(1, 3));
     CORRADE_COMPARE(image->format(), PixelFormat::RG32F);
     CORRADE_COMPARE_AS(Containers::arrayCast<const Float>(image->data()), Containers::arrayView<Float>({
@@ -466,6 +473,7 @@ void OpenExrImporterTest::customChannels() {
     importer->configuration().setValue("a", "handedness");
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->flags(), ImageFlags2D{});
     CORRADE_COMPARE(image->size(), Vector2i(1, 3));
     CORRADE_COMPARE(image->format(), PixelFormat::RGBA32F);
 
@@ -504,6 +512,7 @@ void OpenExrImporterTest::customChannelsSomeUnassinged() {
     importer->configuration().setValue("forceChannelCount", 4);
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->flags(), ImageFlags2D{});
     CORRADE_COMPARE(image->size(), Vector2i(1, 3));
     CORRADE_COMPARE(image->format(), PixelFormat::RGBA32F);
     CORRADE_COMPARE_AS(Containers::arrayCast<const Float>(image->data()), Containers::arrayView<Float>({
@@ -548,6 +557,7 @@ void OpenExrImporterTest::customChannelsFilled() {
     importer->configuration().setValue("forceChannelCount", 4);
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->flags(), ImageFlags2D{});
     CORRADE_COMPARE(image->size(), Vector2i(1, 3));
     CORRADE_COMPARE(image->format(), PixelFormat::RGBA32F);
     CORRADE_COMPARE_AS(Containers::arrayCast<const Float>(image->data()), Containers::arrayView<Float>({
@@ -565,6 +575,7 @@ void OpenExrImporterTest::customChannelsDepth() {
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->flags(), ImageFlags2D{});
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
     CORRADE_COMPARE(image->format(), PixelFormat::Depth32F);
 
@@ -616,6 +627,7 @@ void OpenExrImporterTest::levels2D() {
     {
         Containers::Optional<Trade::ImageData2D> image = importer->image2D(0, 0);
         CORRADE_VERIFY(image);
+        CORRADE_COMPARE(image->flags(), ImageFlags2D{});
         CORRADE_COMPARE(image->size(), (Vector2i{5, 3}));
         CORRADE_COMPARE(image->format(), PixelFormat::R16F);
 
@@ -635,6 +647,7 @@ void OpenExrImporterTest::levels2D() {
     } {
         Containers::Optional<Trade::ImageData2D> image = importer->image2D(0, 1);
         CORRADE_VERIFY(image);
+        CORRADE_COMPARE(image->flags(), ImageFlags2D{});
         CORRADE_COMPARE(image->size(), (Vector2i{2, 1}));
         CORRADE_COMPARE(image->format(), PixelFormat::R16F);
 
@@ -644,6 +657,7 @@ void OpenExrImporterTest::levels2D() {
     } {
         Containers::Optional<Trade::ImageData2D> image = importer->image2D(0, 2);
         CORRADE_VERIFY(image);
+        CORRADE_COMPARE(image->flags(), ImageFlags2D{});
         CORRADE_COMPARE(image->size(), (Vector2i{1, 1}));
         CORRADE_COMPARE(image->format(), PixelFormat::R16F);
 
@@ -680,6 +694,7 @@ void OpenExrImporterTest::levels2DIncomplete() {
     {
         Containers::Optional<Trade::ImageData2D> image = importer->image2D(0, 0);
         CORRADE_VERIFY(image);
+        CORRADE_COMPARE(image->flags(), ImageFlags2D{});
         CORRADE_COMPARE(image->size(), (Vector2i{5, 3}));
         CORRADE_COMPARE(image->format(), PixelFormat::R16F);
 
@@ -699,6 +714,7 @@ void OpenExrImporterTest::levels2DIncomplete() {
     } {
         Containers::Optional<Trade::ImageData2D> image = importer->image2D(0, 1);
         CORRADE_VERIFY(image);
+        CORRADE_COMPARE(image->flags(), ImageFlags2D{});
         CORRADE_COMPARE(image->size(), (Vector2i{2, 1}));
         CORRADE_COMPARE(image->format(), PixelFormat::R16F);
 
@@ -717,6 +733,7 @@ void OpenExrImporterTest::levelsCubeMap() {
     {
         Containers::Optional<Trade::ImageData3D> image = importer->image3D(0, 0);
         CORRADE_VERIFY(image);
+        CORRADE_COMPARE(image->flags(), ImageFlag3D::CubeMap);
         CORRADE_COMPARE(image->size(), (Vector3i{4, 4, 6}));
         CORRADE_COMPARE(image->format(), PixelFormat::R16F);
 
@@ -754,6 +771,7 @@ void OpenExrImporterTest::levelsCubeMap() {
     } {
         Containers::Optional<Trade::ImageData3D> image = importer->image3D(0, 1);
         CORRADE_VERIFY(image);
+        CORRADE_COMPARE(image->flags(), ImageFlag3D::CubeMap);
         CORRADE_COMPARE(image->size(), (Vector3i{2, 2, 6}));
         CORRADE_COMPARE(image->format(), PixelFormat::R16F);
 
@@ -768,6 +786,7 @@ void OpenExrImporterTest::levelsCubeMap() {
     } {
         Containers::Optional<Trade::ImageData3D> image = importer->image3D(0, 2);
         CORRADE_VERIFY(image);
+        CORRADE_COMPARE(image->flags(), ImageFlag3D::CubeMap);
         CORRADE_COMPARE(image->size(), (Vector3i{1, 1, 6}));
         CORRADE_COMPARE(image->format(), PixelFormat::R16F);
 
@@ -814,6 +833,7 @@ void OpenExrImporterTest::levelsCubeMapIncomplete() {
     {
         Containers::Optional<Trade::ImageData3D> image = importer->image3D(0, 0);
         CORRADE_VERIFY(image);
+        CORRADE_COMPARE(image->flags(), ImageFlag3D::CubeMap);
         CORRADE_COMPARE(image->size(), (Vector3i{4, 4, 6}));
         CORRADE_COMPARE(image->format(), PixelFormat::R16F);
 
@@ -851,6 +871,7 @@ void OpenExrImporterTest::levelsCubeMapIncomplete() {
     } {
         Containers::Optional<Trade::ImageData3D> image = importer->image3D(0, 1);
         CORRADE_VERIFY(image);
+        CORRADE_COMPARE(image->flags(), ImageFlag3D::CubeMap);
         CORRADE_COMPARE(image->size(), (Vector3i{2, 2, 6}));
         CORRADE_COMPARE(image->format(), PixelFormat::R16F);
 
@@ -928,6 +949,7 @@ void OpenExrImporterTest::openMemory() {
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->flags(), ImageFlags2D{});
     CORRADE_COMPARE(image->size(), Vector2i(1, 3));
     CORRADE_COMPARE(image->format(), PixelFormat::RGBA32F);
 

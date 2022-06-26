@@ -201,11 +201,11 @@ its type.
 
 OpenEXR stores cubemaps as 2D images with the height being six times of its
 width. For convenience these are imported as a 3D image with each face being
-one slice, in order +X, -X, +Y, -Y, +Z and -Z. Cube maps can have mip levels as
-well, however because OpenEXR treats them internally as 2D images, it includes
-also levels with @cpp height < 6 @ce. Because those would result in a 3D image
-with zero height, the smallest levels are ignored, with a message printed if
-@ref ImporterFlag::Verbose is enabled.
+one slice, in order +X, -X, +Y, -Y, +Z and -Z, and @ref ImageFlag3D::CubeMap
+set. Cube maps can have mip levels as well, however because OpenEXR treats them
+internally as 2D images, it includes also levels with @cpp height < 6 @ce.
+Because those would result in a 3D image with zero height, the smallest levels
+are ignored, with a message printed if @ref ImporterFlag::Verbose is enabled.
 
 @section Trade-OpenExrImporter-configuration Plugin-specific configuration
 
