@@ -213,6 +213,7 @@ void PngImporterTest::gray() {
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->flags(), ImageFlags2D{});
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
     CORRADE_COMPARE(image->format(), PixelFormat::R8Unorm);
 
@@ -233,6 +234,7 @@ void PngImporterTest::gray16() {
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->flags(), ImageFlags2D{});
     CORRADE_COMPARE(image->size(), Vector2i(2, 3));
     CORRADE_COMPARE(image->format(), PixelFormat::R16Unorm);
 
@@ -252,6 +254,7 @@ void PngImporterTest::grayAlpha() {
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->flags(), ImageFlags2D{});
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
     CORRADE_COMPARE(image->format(), PixelFormat::RG8Unorm);
 
@@ -276,6 +279,7 @@ void PngImporterTest::rgb() {
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->flags(), ImageFlags2D{});
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
     CORRADE_COMPARE(image->format(), PixelFormat::RGB8Unorm);
 
@@ -303,6 +307,7 @@ void PngImporterTest::rgb16() {
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->flags(), ImageFlags2D{});
     CORRADE_COMPARE(image->size(), Vector2i(2, 3));
     CORRADE_COMPARE(image->format(), PixelFormat::RGB16Unorm);
 
@@ -323,6 +328,7 @@ void PngImporterTest::rgbPalette1bit() {
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->flags(), ImageFlags2D{});
     CORRADE_COMPARE(image->size(), Vector2i(256, 256));
     CORRADE_COMPARE(image->format(), PixelFormat::RGB8Unorm);
 
@@ -371,6 +377,7 @@ void PngImporterTest::openMemory() {
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->flags(), ImageFlags2D{});
     CORRADE_COMPARE(image->size(), Vector2i(2, 3));
     CORRADE_COMPARE(image->format(), PixelFormat::R16Unorm);
 

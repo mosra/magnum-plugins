@@ -126,6 +126,7 @@ void JpegImporterTest::gray() {
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->flags(), ImageFlags2D{});
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
     CORRADE_COMPARE(image->format(), PixelFormat::R8Unorm);
 
@@ -146,6 +147,7 @@ void JpegImporterTest::rgb() {
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->flags(), ImageFlags2D{});
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
     CORRADE_COMPARE(image->format(), PixelFormat::RGB8Unorm);
 
@@ -182,6 +184,7 @@ void JpegImporterTest::openMemory() {
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->flags(), ImageFlags2D{});
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
     CORRADE_COMPARE(image->format(), PixelFormat::R8Unorm);
 

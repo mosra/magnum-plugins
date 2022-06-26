@@ -178,6 +178,7 @@ void StbImageImporterTest::grayPng() {
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->flags(), ImageFlags2D{});
     CORRADE_COMPARE(image->storage().alignment(), 1);
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
     CORRADE_COMPARE(image->format(), PixelFormat::R8Unorm);
@@ -195,6 +196,7 @@ void StbImageImporterTest::grayPngFourChannel() {
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->flags(), ImageFlags2D{});
     CORRADE_COMPARE(image->storage().alignment(), 4);
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
     CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Unorm);
@@ -227,6 +229,7 @@ void StbImageImporterTest::grayPng16() {
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->flags(), ImageFlags2D{});
     CORRADE_COMPARE(image->storage().alignment(), 4);
     CORRADE_COMPARE(image->size(), Vector2i(2, 3));
     CORRADE_COMPARE(image->format(), PixelFormat::R16Unorm);
@@ -246,6 +249,7 @@ void StbImageImporterTest::grayPng16FourChannel() {
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->flags(), ImageFlags2D{});
     CORRADE_COMPARE(image->storage().alignment(), 4);
     CORRADE_COMPARE(image->size(), Vector2i(2, 3));
     CORRADE_COMPARE(image->format(), PixelFormat::RGBA16Unorm);
@@ -264,6 +268,7 @@ void StbImageImporterTest::grayJpeg() {
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->flags(), ImageFlags2D{});
     CORRADE_COMPARE(image->storage().alignment(), 1);
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
     CORRADE_COMPARE(image->format(), PixelFormat::R8Unorm);
@@ -279,6 +284,7 @@ void StbImageImporterTest::rgbPng() {
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->flags(), ImageFlags2D{});
     CORRADE_COMPARE(image->storage().alignment(), 1);
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
     CORRADE_COMPARE(image->format(), PixelFormat::RGB8Unorm);
@@ -300,6 +306,7 @@ void StbImageImporterTest::rgbPngOneChannel() {
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->flags(), ImageFlags2D{});
     CORRADE_COMPARE(image->storage().alignment(), 1);
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
     CORRADE_COMPARE(image->format(), PixelFormat::R8Unorm);
@@ -316,6 +323,7 @@ void StbImageImporterTest::rgbPng16() {
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->flags(), ImageFlags2D{});
     CORRADE_COMPARE(image->storage().alignment(), 4);
     CORRADE_COMPARE(image->size(), Vector2i(2, 3));
     CORRADE_COMPARE(image->format(), PixelFormat::RGB16Unorm);
@@ -335,6 +343,7 @@ void StbImageImporterTest::rgbPng16OneChannel() {
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->flags(), ImageFlags2D{});
     CORRADE_COMPARE(image->storage().alignment(), 4);
     CORRADE_COMPARE(image->size(), Vector2i(2, 3));
     CORRADE_COMPARE(image->format(), PixelFormat::R16Unorm);
@@ -355,6 +364,7 @@ void StbImageImporterTest::rgbJpeg() {
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->flags(), ImageFlags2D{});
     CORRADE_COMPARE(image->storage().alignment(), 1);
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
     CORRADE_COMPARE(image->format(), PixelFormat::RGB8Unorm);
@@ -375,6 +385,7 @@ void StbImageImporterTest::rgbHdr() {
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->flags(), ImageFlags2D{});
     CORRADE_COMPARE(image->storage().alignment(), 4);
     CORRADE_COMPARE(image->size(), Vector2i(2, 3));
     CORRADE_COMPARE(image->format(), PixelFormat::RGB32F);
@@ -395,6 +406,7 @@ void StbImageImporterTest::rgbHdrOneChannel() {
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->flags(), ImageFlags2D{});
     CORRADE_COMPARE(image->storage().alignment(), 4);
     CORRADE_COMPARE(image->size(), Vector2i(2, 3));
     CORRADE_COMPARE(image->format(), PixelFormat::R32F);
@@ -415,6 +427,7 @@ void StbImageImporterTest::rgbHdrFourChannels() {
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->flags(), ImageFlags2D{});
     CORRADE_COMPARE(image->storage().alignment(), 4);
     CORRADE_COMPARE(image->size(), Vector2i(2, 3));
     CORRADE_COMPARE(image->format(), PixelFormat::RGBA32F);
@@ -448,6 +461,7 @@ void StbImageImporterTest::rgbaPng() {
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->flags(), ImageFlags2D{});
     CORRADE_COMPARE(image->storage().alignment(), 4);
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
     CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Unorm);
@@ -478,6 +492,7 @@ void StbImageImporterTest::animatedGif() {
     for(UnsignedInt i = 0; i != importer->image2DCount(); ++i) {
         Containers::Optional<Trade::ImageData2D> image = importer->image2D(i);
         CORRADE_VERIFY(image);
+        CORRADE_COMPARE(image->flags(), ImageFlags2D{});
         CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Unorm);
         CORRADE_COMPARE(image->size(), Vector2i(100, 100));
     }
@@ -514,6 +529,7 @@ void StbImageImporterTest::openMemory() {
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->flags(), ImageFlags2D{});
     CORRADE_COMPARE(image->storage().alignment(), 1);
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
     CORRADE_COMPARE(image->format(), PixelFormat::R8Unorm);

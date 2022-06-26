@@ -181,6 +181,7 @@ void WebPImporterTest::rgb() {
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->flags(), ImageFlags2D{});
     CORRADE_COMPARE(image->size(), Vector2i(3, 3));
     CORRADE_COMPARE(image->format(), PixelFormat::RGB8Unorm);
     CORRADE_COMPARE(image->storage().alignment(), 4);
@@ -211,6 +212,7 @@ void WebPImporterTest::rgba() {
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->flags(), ImageFlags2D{});
     CORRADE_COMPARE(image->size(), Vector2i(3, 3));
     CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Unorm);
     const char expected[] {
@@ -242,6 +244,7 @@ void WebPImporterTest::openMemory() {
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->flags(), ImageFlags2D{});
     CORRADE_COMPARE(image->size(), Vector2i(3, 3));
     CORRADE_COMPARE(image->format(), PixelFormat::RGB8Unorm);
 

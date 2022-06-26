@@ -194,6 +194,7 @@ void IcoImporterTest::bmp() {
     } {
         Containers::Optional<Trade::ImageData2D> image = importer->image2D(0, 1);
         CORRADE_VERIFY(image);
+        CORRADE_COMPARE(image->flags(), ImageFlags2D{});
         CORRADE_COMPARE(image->format(), PixelFormat::RGB8Unorm);
         CORRADE_COMPARE(image->size(), Vector2i{256});
         CORRADE_COMPARE(image->pixels<Color3ub>()[0][0], 0x0000ff_rgb);
@@ -210,18 +211,21 @@ void IcoImporterTest::png() {
     {
         Containers::Optional<Trade::ImageData2D> image = importer->image2D(0, 0);
         CORRADE_VERIFY(image);
+        CORRADE_COMPARE(image->flags(), ImageFlags2D{});
         CORRADE_COMPARE(image->format(), PixelFormat::RGB8Unorm);
         CORRADE_COMPARE(image->size(), (Vector2i{16, 8}));
         CORRADE_COMPARE(image->pixels<Color3ub>()[0][0], 0x00ff00_rgb);
     } {
         Containers::Optional<Trade::ImageData2D> image = importer->image2D(0, 1);
         CORRADE_VERIFY(image);
+        CORRADE_COMPARE(image->flags(), ImageFlags2D{});
         CORRADE_COMPARE(image->format(), PixelFormat::RGB8Unorm);
         CORRADE_COMPARE(image->size(), Vector2i{256});
         CORRADE_COMPARE(image->pixels<Color3ub>()[0][0], 0x0000ff_rgb);
     } {
         Containers::Optional<Trade::ImageData2D> image = importer->image2D(0, 2);
         CORRADE_VERIFY(image);
+        CORRADE_COMPARE(image->flags(), ImageFlags2D{});
         CORRADE_COMPARE(image->format(), PixelFormat::RGB8Unorm);
         CORRADE_COMPARE(image->size(), (Vector2i{32, 64}));
         CORRADE_COMPARE(image->pixels<Color3ub>()[0][0], 0xff0000_rgb);
@@ -243,6 +247,7 @@ void IcoImporterTest::openMemory() {
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->flags(), ImageFlags2D{});
     CORRADE_COMPARE(image->format(), PixelFormat::RGB8Unorm);
     CORRADE_COMPARE(image->size(), (Vector2i{16, 8}));
     CORRADE_COMPARE(image->pixels<Color3ub>()[0][0], 0x00ff00_rgb);
