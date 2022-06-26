@@ -116,7 +116,10 @@ when the flag is enabled.
 
 All image types supported by DDS are imported, including 1D, 1D array, 2D, 2D
 array, cube maps, cube map arrays and 3D images. They can, in turn, all have
-multiple mip levels. The image type can be determined from @ref texture() and
+multiple mip levels. The images are annotated with @ref ImageFlag2D::Array,
+@ref ImageFlag3D::Array and @ref ImageFlag3D::CubeMap as appropriate.
+Furthermore, for backward compatibility, if @ref MAGNUM_BUILD_DEPRECATED is
+enabled, the image type can also be determined from @ref texture() and
 @ref TextureData::type().
 
 The importer exposes always exactly one image. For layered images and (layered)
@@ -255,8 +258,10 @@ class MAGNUM_DDSIMPORTER_EXPORT DdsImporter: public AbstractImporter {
         MAGNUM_DDSIMPORTER_LOCAL UnsignedInt doImage3DLevelCount(UnsignedInt id) override;
         MAGNUM_DDSIMPORTER_LOCAL Containers::Optional<ImageData3D> doImage3D(UnsignedInt id, UnsignedInt level) override;
 
+        #ifdef MAGNUM_BUILD_DEPRECATED
         MAGNUM_DDSIMPORTER_LOCAL UnsignedInt doTextureCount() const override;
         MAGNUM_DDSIMPORTER_LOCAL Containers::Optional<TextureData> doTexture(UnsignedInt id) override;
+        #endif
 
         struct File;
         Containers::Pointer<File> _f;

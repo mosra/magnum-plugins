@@ -39,7 +39,10 @@
 #include <Magnum/Math/Vector4.h>
 #include <Magnum/Math/Swizzle.h>
 #include <Magnum/Trade/ImageData.h>
+
+#ifdef MAGNUM_BUILD_DEPRECATED
 #include <Magnum/Trade/TextureData.h>
+#endif
 
 namespace Magnum { namespace Trade {
 
@@ -230,7 +233,9 @@ struct DdsImporter::File {
     Vector3i topLevelSliceSize{NoInit};
     UnsignedInt levelCount;
 
-    TextureType type;
+    /* ImageFlags3D is a superset of ImageFlags1D and ImageFlags2D, so using it
+       for any dimension count */
+    ImageFlags3D imageFlags;
     UnsignedInt dimensions; /* 1, 2, 3 */
     UnsignedInt sliceCount; /* 1 for non-array non-cube 1D/2D/3D images */
     std::size_t dataOffset; /* 128 or 148 for a DXT10 file */
@@ -374,7 +379,6 @@ void DdsImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dat
                 if(headerDxt10.resourceDimension == DdsDimension::Texture3D) {
                     f->dimensions = 3;
                     f->sliceCount = 1;
-                    f->type = TextureType::Texture3D;
                     if(headerDxt10.miscFlag & DdsMiscFlag::TextureCube) {
                         Error{} << "Trade::DdsImporter::openData(): cube map flag set for a DXT10 3D texture";
                         return;
@@ -388,16 +392,16 @@ void DdsImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dat
                         /* If it's a cube map, the slice count is actually
                            count of cubes */
                         f->sliceCount = headerDxt10.arraySize*6;
-                        f->type = headerDxt10.arraySize != 1 ?
-                            TextureType::CubeMapArray : TextureType::CubeMap;
+                        f->imageFlags |= ImageFlag3D::CubeMap;
+                        if(headerDxt10.arraySize != 1)
+                            f->imageFlags |= ImageFlag3D::Array;
                     } else if(headerDxt10.arraySize != 1) {
                         f->dimensions = 3;
                         f->sliceCount = headerDxt10.arraySize;
-                        f->type = TextureType::Texture2DArray;
+                        f->imageFlags |= ImageFlag3D::Array;
                     } else {
                         f->dimensions = 2;
                         f->sliceCount = 1;
-                        f->type = TextureType::Texture2D;
                     }
                 } else if(headerDxt10.resourceDimension == DdsDimension::Texture1D) {
                     if(headerDxt10.miscFlag & DdsMiscFlag::TextureCube) {
@@ -406,11 +410,10 @@ void DdsImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dat
                     } else if(headerDxt10.arraySize != 1) {
                         f->dimensions = 2;
                         f->sliceCount = headerDxt10.arraySize;
-                        f->type = TextureType::Texture1DArray;
+                        f->imageFlags |= ImageFlag3D::Array;
                     } else {
                         f->dimensions = 1;
                         f->sliceCount = 1;
-                        f->type = TextureType::Texture1D;
                     }
                 } else {
                     Error{} << "Trade::DdsImporter::openData(): invalid DXT10 resource dimension" << UnsignedInt(headerDxt10.resourceDimension);
@@ -533,7 +536,6 @@ void DdsImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dat
         if(header.caps2 & DdsCap2::Volume) {
             f->dimensions = 3;
             f->sliceCount = 1;
-            f->type = TextureType::Texture3D;
             if(header.caps2 & DdsCap2::CubeMap) {
                 Error{} << "Trade::DdsImporter::openData(): cube map flag set for a 3D texture";
                 return;
@@ -546,26 +548,25 @@ void DdsImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dat
                regular array */
             f->sliceCount = Math::popcount(UnsignedInt(header.caps2 & DdsCap2::CubeMapAllFaces));
             if(f->sliceCount == 6) {
-                f->type = TextureType::CubeMap;
+                f->imageFlags |= ImageFlag3D::CubeMap;
             } else {
-                f->type = TextureType::Texture2DArray;
+                f->imageFlags |= ImageFlag3D::Array;
                 Warning{} << "Trade::DdsImporter::openData(): the image is an incomplete cubemap, importing faces as" << f->sliceCount << "array layers";
             }
         } else {
             f->dimensions = 2;
             f->sliceCount = 1;
-            f->type = TextureType::Texture2D;
         }
     }
 
     /* Height should be > 1 only for 2D textures */
-    if(f->topLevelSliceSize.y() != 1 && (f->type == TextureType::Texture1D || f->type == TextureType::Texture1DArray)) {
+    if(f->topLevelSliceSize.y() != 1 && (f->dimensions == 1 || (f->dimensions == 2 && f->imageFlags & ImageFlag3D::Array))) {
         Error{} << "Trade::DdsImporter::openData(): height is" << header.height << "but the texture is 1D";
         return;
     }
 
     /* Depth should be > 1 only for 3D textures */
-    if(f->topLevelSliceSize.z() != 1 && f->type != TextureType::Texture3D) {
+    if(f->topLevelSliceSize.z() != 1 && (f->dimensions != 3 || (f->dimensions == 3 && (f->imageFlags & (ImageFlag3D::Array|ImageFlag3D::CubeMap))))) {
         Error{} << "Trade::DdsImporter::openData(): depth is" << header.depth << "but the texture isn't 3D";
         return;
     }
@@ -606,14 +607,13 @@ void DdsImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dat
 
         /* For uncompressed data decide about the flip orientations */
         } else {
-            /* Z gets flipped only for a 3D texture, together with Y */
-            if(f->type == TextureType::Texture3D)
-                f->properties.uncompressed.yzFlip = BoolVector2{0x3};
+            f->properties.uncompressed.yzFlip = BoolVector2{0x0};
+            /* Z gets flipped only for a 3D texture */
+            if(f->dimensions == 3 && !(f->imageFlags & (ImageFlag3D::Array|ImageFlag3D::CubeMap)))
+                f->properties.uncompressed.yzFlip.set(1, true);
             /* Y gets flipped only if it's not a 1D (array) texture */
-            else if(f->type != TextureType::Texture1D && f->type != TextureType::Texture1DArray)
-                f->properties.uncompressed.yzFlip = BoolVector2{0x1};
-            else
-                f->properties.uncompressed.yzFlip = BoolVector2{0x0};
+            if(f->dimensions == 3 || (f->dimensions == 2 && !(f->imageFlags & ImageFlag3D::Array)))
+                f->properties.uncompressed.yzFlip.set(0, true);
         }
     }
 
@@ -690,7 +690,7 @@ template<UnsignedInt dimensions> ImageData<dimensions> DdsImporter::doImage(Unsi
 
     /* Compressed image */
     if(_f->compressed)
-        return ImageData<dimensions>(_f->properties.compressed.format, Math::Vector<dimensions, Int>::pad(imageSize), std::move(data));
+        return ImageData<dimensions>{_f->properties.compressed.format, Math::Vector<dimensions, Int>::pad(imageSize), std::move(data), ImageFlag<dimensions>(UnsignedShort(_f->imageFlags))};
 
     /* Uncompressed. Swizzle and flip if needed. */
     if(_f->properties.uncompressed.needsSwizzle)
@@ -702,7 +702,7 @@ template<UnsignedInt dimensions> ImageData<dimensions> DdsImporter::doImage(Unsi
     if((imageSize.x()*_f->properties.uncompressed.pixelSize % 4 != 0))
         storage.setAlignment(1);
 
-    return ImageData<dimensions>{storage, _f->properties.uncompressed.format, Math::Vector<dimensions, Int>::pad(imageSize), std::move(data)};
+    return ImageData<dimensions>{storage, _f->properties.uncompressed.format, Math::Vector<dimensions, Int>::pad(imageSize), std::move(data), ImageFlag<dimensions>(UnsignedShort(_f->imageFlags))};
 }
 
 UnsignedInt DdsImporter::doImage1DCount() const {
@@ -741,15 +741,36 @@ Containers::Optional<ImageData3D> DdsImporter::doImage3D(const UnsignedInt id, c
     return doImage<3>(id, level);
 }
 
+#ifdef MAGNUM_BUILD_DEPRECATED
 UnsignedInt DdsImporter::doTextureCount() const { return 1; }
 
 Containers::Optional<TextureData> DdsImporter::doTexture(UnsignedInt) {
-    return TextureData{_f->type,
+    TextureType type;
+    if(_f->dimensions == 3) {
+        if(_f->imageFlags >= (ImageFlag3D::CubeMap|ImageFlag3D::Array))
+            type = TextureType::CubeMapArray;
+        else if(_f->imageFlags & ImageFlag3D::CubeMap)
+            type = TextureType::CubeMap;
+        else if(_f->imageFlags & ImageFlag3D::Array)
+            type = TextureType::Texture2DArray;
+        else
+            type = TextureType::Texture3D;
+    } else if(_f->dimensions == 2) {
+        if(_f->imageFlags & ImageFlag3D::Array)
+            type = TextureType::Texture1DArray;
+        else
+            type = TextureType::Texture2D;
+    } else {
+        type = TextureType::Texture1D;
+    }
+
+    return TextureData{type,
         SamplerFilter::Linear,
         SamplerFilter::Linear,
         SamplerMipmap::Linear,
         SamplerWrapping::Repeat, 0};
 }
+#endif
 
 }}
 
