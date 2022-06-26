@@ -439,6 +439,7 @@ const struct {
 } InvalidOrientationData[]{
     {"empty", "1d.ktx2", 1, ""_s},
     {"short", "2d-rgb.ktx2", 2, "r"_s},
+    /** @todo test too long (e.g., 2D-layers.ktx2 but with rdi) */
     {"invalid x", "2d-rgb.ktx2", 2, "xd"_s},
     {"invalid y", "2d-rgb.ktx2", 2, "rx"_s},
     {"invalid z", "3d.ktx2", 3, "rux"_s},
