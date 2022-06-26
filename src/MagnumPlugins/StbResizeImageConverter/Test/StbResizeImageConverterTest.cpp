@@ -50,6 +50,7 @@ struct StbResizeImageConverterTest: TestSuite::Tester {
     void unsupportedFormat();
     void invalidFilter();
     void invalidEdge();
+    void array1D();
 
     /* Just random variants to cover all component counts, formats and pixel
        storage properties. Options checked in the instanced rgba8Srgb() test. */
@@ -59,6 +60,7 @@ struct StbResizeImageConverterTest: TestSuite::Tester {
     void r32f();
 
     void threeDimensions();
+    void array2D();
 
     /* Explicitly forbid system-wide plugin dependencies */
     PluginManager::Manager<AbstractImageConverter> _converterManager{"nonexistent"};
@@ -106,6 +108,7 @@ StbResizeImageConverterTest::StbResizeImageConverterTest() {
               &StbResizeImageConverterTest::unsupportedFormat,
               &StbResizeImageConverterTest::invalidFilter,
               &StbResizeImageConverterTest::invalidEdge,
+              &StbResizeImageConverterTest::array1D,
 
               &StbResizeImageConverterTest::rgb8Padded});
 
@@ -115,7 +118,8 @@ StbResizeImageConverterTest::StbResizeImageConverterTest() {
     addTests({&StbResizeImageConverterTest::rg16,
               &StbResizeImageConverterTest::r32f,
 
-              &StbResizeImageConverterTest::threeDimensions});
+              &StbResizeImageConverterTest::threeDimensions,
+              &StbResizeImageConverterTest::array2D});
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. */
@@ -203,6 +207,19 @@ void StbResizeImageConverterTest::invalidEdge() {
     CORRADE_COMPARE(out.str(), "Trade::StbResizeImageConverter::convert(): expected edge mode to be one of clamp, reflect, wrap or zero, got cramp\n");
 }
 
+void StbResizeImageConverterTest::array1D() {
+    char data[4]{};
+    ImageView2D image{PixelFormat::RGBA8Unorm, {1, 1}, data, ImageFlag2D::Array};
+
+    Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("StbResizeImageConverter");
+    converter->configuration().setValue("size", Vector2i{1, 1});
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!converter->convert(image));
+    CORRADE_COMPARE(out.str(), "Trade::StbResizeImageConverter::convert(): 1D array images are not supported\n");
+}
+
 void StbResizeImageConverterTest::rgb8Padded() {
     const Color3ub input[]{
         {}, {}, {}, {}, {}, {},
@@ -250,8 +267,10 @@ void StbResizeImageConverterTest::rgba8() {
     if(data.filter)
         converter->configuration().setValue("filter", data.filter);
 
-    Containers::Optional<ImageData2D> out = converter->convert(ImageView2D{PixelStorage{}.setAlignment(1), data.format, {2, 3}, input});
+    Containers::Optional<ImageData2D> out = converter->convert(ImageView2D{PixelStorage{}.setAlignment(1), data.format, {2, 3}, input, ImageFlag2D(0xdea0)});
     CORRADE_VERIFY(out);
+    /* Flags should be passed through unchanged */
+    CORRADE_COMPARE(out->flags(), ImageFlag2D(0xdea0));
     CORRADE_COMPARE_WITH(*out,
         (ImageView2D{data.format, {1, 2}, data.expected}),
         /* There's a slight difference between debug and release build (haha),
@@ -311,6 +330,19 @@ void StbResizeImageConverterTest::r32f() {
 }
 
 void StbResizeImageConverterTest::threeDimensions() {
+    char data[4]{};
+    ImageView3D image{PixelFormat::RGBA8Unorm, {1, 1, 1}, data};
+
+    Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("StbResizeImageConverter");
+    converter->configuration().setValue("size", Vector2i{1, 1});
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!converter->convert(image));
+    CORRADE_COMPARE(out.str(), "Trade::StbResizeImageConverter::convert(): 3D images are not supported\n");
+}
+
+void StbResizeImageConverterTest::array2D() {
     /* Same as rgb8Padded(), except that there's two layers with the second one
        flipped so the second should have the output reversed. No cross-layer
        filtering should happen. */
@@ -333,8 +365,10 @@ void StbResizeImageConverterTest::threeDimensions() {
 
     Containers::Optional<ImageData3D> out = converter->convert(ImageView3D{
         PixelStorage{}.setAlignment(1).setImageHeight(3),
-        PixelFormat::RGB8Unorm, {3, 2, 2}, input});
+        PixelFormat::RGB8Unorm, {3, 2, 2}, input, ImageFlag3D(0xdea0)|ImageFlag3D::Array});
     CORRADE_VERIFY(out);
+    /* Flags should be passed through unchanged */
+    CORRADE_COMPARE(out->flags(), ImageFlag3D(0xdea0)|ImageFlag3D::Array);
     CORRADE_COMPARE(out->format(), PixelFormat::RGB8Unorm);
     for(std::size_t i: {0, 1}) {
         CORRADE_ITERATION(i);

@@ -59,7 +59,8 @@ namespace Magnum { namespace Trade {
 @m_keywords{OpenExrImageConverter}
 
 Performs downsampling and upsampling of 8-bit, 16-bit and float 2D and 2D array
-images using the [stb_image_resize](https://github.com/nothings/stb) library.
+or cube images using the [stb_image_resize](https://github.com/nothings/stb)
+library.
 
 @m_class{m-block m-primary}
 
@@ -115,9 +116,11 @@ Accepts @ref PixelFormat::RGBA8Unorm, @relativeref{PixelFormat,RGBA8Srgb},
 their 1-, 2- and 3-component variants. In order to perform a conversion, you
 have to set the @cb{.ini} size @ce @ref Trade-StbResizeImageConverter-configuration "configuration option".
 
-3D images are resized slice-by-slice --- i.e., as a 2D array texture. In that
-case the @cb{.ini} size @ce option still takes a 2D size, the layer count is
-implicit and doesn't change in the output.
+Image flags are passed through unchanged. As the resizing operation operates in
+two dimensions, the @cb{.ini} size @ce option always takes a 2D size. 1D images
+and 1D array images (with @ref ImageFlag2D::Array set) are not supported, 3D
+images are expected to have either @ref ImageFlag3D::Array nor
+@ref ImageFlag3D::CubeMap set.
 
 @section Trade-StbResizeImageConverter-configuration Plugin-specific configuration
 

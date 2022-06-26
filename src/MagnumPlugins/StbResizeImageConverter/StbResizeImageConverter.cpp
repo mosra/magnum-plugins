@@ -137,7 +137,7 @@ Containers::Optional<ImageData3D> convertInternal(const ImageView3D& image, Util
 
     /* Always align output rows at four bytes */
     const std::size_t stride = 4*((size.x()*image.pixelSize() + 3)/4);
-    Trade::ImageData3D out{image.format(), {size, image.size().z()}, Containers::Array<char>{NoInit, stride*size.y()*image.size().z()}};
+    Trade::ImageData3D out{image.format(), {size, image.size().z()}, Containers::Array<char>{NoInit, stride*size.y()*image.size().z()}, image.flags()};
 
     const Containers::StridedArrayView4D<const char> srcPixels = image.pixels();
     const Containers::StridedArrayView4D<char> dstPixels = out.mutablePixels();
@@ -162,15 +162,27 @@ Containers::Optional<ImageData3D> convertInternal(const ImageView3D& image, Util
 }
 
 Containers::Optional<ImageData2D> StbResizeImageConverter::doConvert(const ImageView2D& image) {
+    if(image.flags() & ImageFlag2D::Array) {
+        /** @todo or take only the X size instead? then it would make sense to
+            provide also a non-array 1D variant */
+        Error{} << "Trade::StbResizeImageConverter::convert(): 1D array images are not supported";
+        return {};
+    }
+
     Containers::Optional<ImageData3D> out = convertInternal(image, configuration());
     if(!out) return {};
 
     CORRADE_INTERNAL_ASSERT(out->size().z() == 1);
     const Vector2i size = out->size().xy();
-    return ImageData2D{out->format(), size, out->release()};
+    return ImageData2D{out->format(), size, out->release(), ImageFlag2D(UnsignedShort(out->flags()))};
 }
 
 Containers::Optional<ImageData3D> StbResizeImageConverter::doConvert(const ImageView3D& image) {
+    if(!(image.flags() & (ImageFlag3D::Array|ImageFlag3D::CubeMap))) {
+        Error{} << "Trade::StbResizeImageConverter::convert(): 3D images are not supported";
+        return {};
+    }
+
     return convertInternal(image, configuration());
 }
 
