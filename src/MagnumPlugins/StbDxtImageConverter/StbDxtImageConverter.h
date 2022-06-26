@@ -56,8 +56,9 @@ namespace Magnum { namespace Trade {
 @brief BC1/BC3 compressor using stb_dxt
 @m_since_latest_{plugins}
 
-Converts uncompressed 2D and 2D array RGB and RGBA images to block-compressed
-BC1/BC3 images using the [stb_dxt](https://github.com/nothings/stb) library.
+Converts uncompressed 2D, 2D array or cube and 3D RGB and RGBA images to
+block-compressed BC1/BC3 images using the [stb_dxt](https://github.com/nothings/stb)
+library.
 
 @m_class{m-block m-primary}
 
@@ -117,7 +118,12 @@ with @ref CompressedPixelFormat::Bc1RGBUnorm /
 override alpha channel presence in the output by explicitly enabling or
 disabling the @cb{.ini} alpha @ce @ref Trade-StbDxtImageConverter-configuration "configuration option".
 
-3D images are compressed slice-by-slice --- i.e., as a 2D array texture.
+Image flags are passed through unchanged. 3D images are compressed
+slice-by-slice, independently of whether @ref ImageFlag3D::Array and/or
+@ref ImageFlag3D::CubeMap or neither is set. On the other hand, if a 2D image
+with @ref ImageFlag2D::Array is passed, the conversion will fail as it's not
+possible to represent 1D array images without a significant loss in quality
+and layer cross-talk.
 
 The input image size is expected to be divisible by four in the X and Y
 dimension. If your image doesn't fit this requirement, you have to pad/crop or

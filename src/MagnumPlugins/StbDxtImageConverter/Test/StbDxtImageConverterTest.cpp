@@ -46,6 +46,7 @@ struct StbDxtImageConverterTest: TestSuite::Tester {
     void unsupportedFormat();
     void unsupportedSize();
     void emptyImage();
+    void array1D();
 
     void rgba();
     void threeDimensions();
@@ -61,33 +62,37 @@ const struct {
     Containers::Optional<bool> alpha;
     Containers::Optional<bool> highQuality;
     Containers::Optional<PixelFormat> overrideInputFormat;
+    ImageFlags2D flags;
     CompressedPixelFormat expectedFormat;
     const char* expectedFile;
 } RgbaData[] {
-    {"RGBA", 4, {}, {}, {},
+    {"RGBA", 4, {}, {}, {}, {},
         CompressedPixelFormat::Bc3RGBAUnorm, "ship.bc3"},
-    {"RGBA, high quality", 4, {}, true, {},
+    {"RGBA, high quality", 4, {}, true, {}, {},
         CompressedPixelFormat::Bc3RGBAUnorm, "ship-hq.bc3"},
-    {"RGBA, sRGB", 4, {}, {}, PixelFormat::RGBA8Srgb,
+    {"RGBA, sRGB", 4, {}, {}, PixelFormat::RGBA8Srgb, {},
         CompressedPixelFormat::Bc3RGBASrgb, "ship.bc3"},
-    {"RGBA, alpha disabled", 4, false, {}, {},
+    {"RGBA, alpha disabled", 4, false, {}, {}, {},
         CompressedPixelFormat::Bc1RGBUnorm, "ship.bc1"},
-    {"RGBA, alpha disabled, sRGB", 4, false, {}, PixelFormat::RGBA8Srgb,
+    {"RGBA, alpha disabled, sRGB", 4, false, {}, PixelFormat::RGBA8Srgb, {},
         CompressedPixelFormat::Bc1RGBSrgb, "ship.bc1"},
-    {"RGB", 3, {}, {}, {},
+    {"RGB", 3, {}, {}, {}, {},
         CompressedPixelFormat::Bc1RGBUnorm, "ship.bc1"},
-    {"RGB, sRGB", 3, {}, {}, PixelFormat::RGB8Srgb,
+    {"RGB, sRGB", 3, {}, {}, PixelFormat::RGB8Srgb, {},
         CompressedPixelFormat::Bc1RGBSrgb, "ship.bc1"},
-    {"RGB, alpha enabled", 3, true, {}, {},
+    {"RGB, alpha enabled", 3, true, {}, {}, {},
         CompressedPixelFormat::Bc3RGBAUnorm, "ship.bc3"},
-    {"RGB, alpha enabled, sRGB", 3, true, {}, PixelFormat::RGB8Srgb,
+    {"RGB, alpha enabled, sRGB", 3, true, {}, PixelFormat::RGB8Srgb, {},
         CompressedPixelFormat::Bc3RGBASrgb, "ship.bc3"},
+    {"flag passthrough", 4, {}, {}, PixelFormat::RGBA8Unorm, ImageFlag2D(0xdea0),
+        CompressedPixelFormat::Bc3RGBAUnorm, "ship.bc3"},
 };
 
 StbDxtImageConverterTest::StbDxtImageConverterTest() {
     addTests({&StbDxtImageConverterTest::unsupportedFormat,
               &StbDxtImageConverterTest::unsupportedSize,
-              &StbDxtImageConverterTest::emptyImage});
+              &StbDxtImageConverterTest::emptyImage,
+              &StbDxtImageConverterTest::array1D});
 
     addInstancedTests({&StbDxtImageConverterTest::rgba},
         Containers::arraySize(RgbaData));
@@ -134,6 +139,15 @@ void StbDxtImageConverterTest::emptyImage() {
     CORRADE_COMPARE(out->compressedFormat(), CompressedPixelFormat::Bc3RGBAUnorm);
 }
 
+void StbDxtImageConverterTest::array1D() {
+    ImageView2D image{PixelFormat::RGBA8Unorm, {4, 4}, ImageFlag2D::Array};
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!_converterManager.instantiate("StbDxtImageConverter")->convert(image));
+    CORRADE_COMPARE(out.str(), "Trade::StbDxtImageConverter::convert(): 1D array images are not supported\n");
+}
+
 void StbDxtImageConverterTest::rgba() {
     auto&& data = RgbaData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
@@ -157,10 +171,11 @@ void StbDxtImageConverterTest::rgba() {
 
     Containers::Optional<Trade::ImageData2D> compressed;
     if(data.overrideInputFormat) {
-        compressed = converter->convert(ImageView2D{*data.overrideInputFormat, uncompressed->size(), uncompressed->data()});
+        compressed = converter->convert(ImageView2D{*data.overrideInputFormat, uncompressed->size(), uncompressed->data(), data.flags});
     } else compressed = converter->convert(*uncompressed);
     CORRADE_VERIFY(compressed);
     CORRADE_VERIFY(compressed->isCompressed());
+    CORRADE_COMPARE(compressed->flags(), data.flags);
     CORRADE_COMPARE(compressed->compressedFormat(), data.expectedFormat);
     CORRADE_COMPARE(compressed->size(), (Vector2i{160, 96}));
     /* The data should be exactly the size of 4x4 128-bit blocks for BC3 and
@@ -187,13 +202,15 @@ void StbDxtImageConverterTest::threeDimensions() {
     CORRADE_COMPARE(uncompressed->size(), (Vector2i{160, 96}));
 
     /* Be lazy and just cut up the input 2D image to three horizontal slices,
-       forming a 3D input */
-    ImageView3D uncompressed3D{uncompressed->format(), {160, 32, 3}, uncompressed->data()};
+       forming a 3D input. Set also an array flag to verify it's passed
+       through unchanged. */
+    ImageView3D uncompressed3D{uncompressed->format(), {160, 32, 3}, uncompressed->data(), ImageFlag3D::Array|ImageFlag3D(0xdea0)};
 
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("StbDxtImageConverter");
     Containers::Optional<Trade::ImageData3D> compressed = converter->convert(uncompressed3D);
     CORRADE_VERIFY(compressed);
     CORRADE_VERIFY(compressed->isCompressed());
+    CORRADE_COMPARE(compressed->flags(), ImageFlag3D::Array|ImageFlag3D(0xdea0));
     CORRADE_COMPARE(compressed->compressedFormat(), CompressedPixelFormat::Bc1RGBUnorm);
     CORRADE_COMPARE(compressed->size(), (Vector3i{160, 32, 3}));
 

@@ -138,18 +138,23 @@ Containers::Optional<ImageData3D> convertInternal(const ImageView3D& image, Util
         }
     }
 
-    return ImageData3D{outputFormat, image.size(), std::move(outputData)};
+    return ImageData3D{outputFormat, image.size(), std::move(outputData), image.flags()};
 }
 
 }
 
 Containers::Optional<ImageData2D> StbDxtImageConverter::doConvert(const ImageView2D& image) {
+    if(image.flags() & ImageFlag2D::Array) {
+        Error{} << "Trade::StbDxtImageConverter::convert(): 1D array images are not supported";
+        return {};
+    }
+
     Containers::Optional<ImageData3D> out = convertInternal(image, configuration());
     if(!out) return {};
 
     CORRADE_INTERNAL_ASSERT(out->size().z() == 1);
     const Vector2i size = out->size().xy();
-    return ImageData2D{out->compressedFormat(), size, out->release()};
+    return ImageData2D{out->compressedFormat(), size, out->release(), image.flags()};
 }
 
 Containers::Optional<ImageData3D> StbDxtImageConverter::doConvert(const ImageView3D& image) {
