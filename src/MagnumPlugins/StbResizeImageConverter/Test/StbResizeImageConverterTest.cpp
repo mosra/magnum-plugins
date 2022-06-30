@@ -326,7 +326,7 @@ void StbResizeImageConverterTest::r32f() {
     CORRADE_COMPARE(out->storage().alignment(), 4);
     CORRADE_COMPARE_WITH(*out,
         (ImageView2D{PixelFormat::R32F, {2, 1}, expected}),
-        (DebugTools::CompareImage{1.0e-6, 1.0e-6}));
+        (DebugTools::CompareImage{1.0e-6f, 1.0e-6f}));
 }
 
 void StbResizeImageConverterTest::threeDimensions() {
