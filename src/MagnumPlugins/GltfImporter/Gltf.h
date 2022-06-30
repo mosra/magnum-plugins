@@ -77,8 +77,8 @@ enum: UnsignedInt {
     GltfFilterNearest = 9728,               /* GL_NEAREST */
     GltfFilterLinear = 9729,                /* GL_LINEAR */
     GltfFilterNearestMipmapNearest = 9984,  /* GL_NEAREST_MIPMAP_NEAREST */
-    GltfFilterNearestMipmapLinear = 9985,   /* GL_NEAREST_MIPMAP_LINEAR */
-    GltfFilterLinearMipmapNearest = 9986,   /* GL_LINEAR_MIPMAP_NEAREST */
+    GltfFilterNearestMipmapLinear = 9986,   /* GL_NEAREST_MIPMAP_LINEAR */
+    GltfFilterLinearMipmapNearest = 9985,   /* GL_LINEAR_MIPMAP_NEAREST */
     GltfFilterLinearMipmapLinear = 9987,    /* GL_LINEAR_MIPMAP_LINEAR */
 
     /* Wrapping */
