@@ -4322,12 +4322,12 @@ Containers::Optional<TextureData> GltfImporter::doTexture(const UnsignedInt id) 
             for(const char coordinate: {0, 1}) {
                 /* No, I'm definitely not overdoing anything here */
                 const char name[]{'w', 'r', 'a', 'p', char('S' + coordinate)};
-                if(const Utility::JsonToken* const gltfWrapping = gltfSampler.find({name, sizeof(name)})) {
-                    if(!_d->gltf->parseUnsignedInt(*gltfWrapping)) {
+                if(const Utility::JsonToken* const gltfWrap = gltfSampler.find({name, sizeof(name)})) {
+                    if(!_d->gltf->parseUnsignedInt(*gltfWrap)) {
                         Error{} << "Trade::GltfImporter::texture(): invalid" << Containers::StringView{name, sizeof(name)} << "property";
                         return {};
                     }
-                    switch(gltfWrapping->asUnsignedInt()) {
+                    switch(gltfWrap->asUnsignedInt()) {
                         /* LCOV_EXCL_START */
                         case Implementation::GltfWrappingClampToEdge:
                             wrapping[coordinate] = SamplerWrapping::ClampToEdge;
@@ -4340,7 +4340,7 @@ Containers::Optional<TextureData> GltfImporter::doTexture(const UnsignedInt id) 
                             break;
                         /* LCOV_EXCL_STOP */
                         default:
-                            Error{} << "Trade::GltfImporter::texture(): unrecognized" << Containers::StringView{name, sizeof(name)} << gltfWrapping->asUnsignedInt();
+                            Error{} << "Trade::GltfImporter::texture(): unrecognized" << Containers::StringView{name, sizeof(name)} << gltfWrap->asUnsignedInt();
                             return {};
                     }
                 }
