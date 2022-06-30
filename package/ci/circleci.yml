@@ -5,11 +5,9 @@ orbs:
 
 executors:
   ubuntu-18_04:
-    resource_class: small
     docker:
     - image: ubuntu:bionic-20220427
   xcode-11_5:
-    resource_class: medium # there isn't smaller
     macos:
       # xcbeautify (for the iOS build) requires Xcode 11.4. Since 2922-05-23,
       # 11.4.1 images wait endlessly for "VM assignment", using 11.5 instead.
@@ -17,7 +15,6 @@ executors:
       # since 2022-06-09, so it's just 11.5 now.
       xcode: 11.5
   emscripten:
-    resource_class: small
     docker:
     # 1.39.0 is the oldest on Docker. Anything before 1.39.2 is useless as emar
     # randomly asserts: https://github.com/emscripten-core/emscripten/pull/9742
@@ -27,13 +24,12 @@ executors:
     # https://github.com/emscripten-core/emscripten/pull/10161
     - image: emscripten/emsdk:1.39.6-upstream
   android-29:
-    resource_class: medium # there isn't smaller
     machine:
       image: android:202102-01
   arm64:
-    resource_class: arm.medium # there isn't smaller
     machine:
       image: ubuntu-2004:202101-01
+    resource_class: arm.medium
 
 commands:
   install-base-linux:
@@ -69,10 +65,9 @@ commands:
     parameters:
       count:
         type: integer
-        # It reports 36 cores and ninja goes with 38 currently, RAM on the
-        # small resource class is 2 GB. Even 20 jobs is too much.
-        # TODO: revert back to 24 if we go back to medium resource class
-        default: 10
+        # It reports 36 cores and ninja goes with 38 currently, RAM fluctuates
+        # from 3 to 70 GB.
+        default: 24
     steps:
     - run:
         name: Query CPU cores, default Ninja parallelism and available RAM, cap jobs
@@ -290,6 +285,7 @@ jobs:
     steps:
     - install-base-linux:
         extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng-dev libdevil-dev libharfbuzz-dev libassimp-dev libwebp-dev libzstd-dev wget
+    # Crashes or gets stuck with the default setting, only on GCC
     - cap-ninja-jobs
     - install-gcc-4_8
     - install-cmake:
@@ -337,6 +333,7 @@ jobs:
     steps:
     - install-base-linux:
         extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng-dev libdevil-dev libharfbuzz-dev libassimp-dev libwebp-dev libzstd-dev wget
+    # Crashes or gets stuck with the default setting, only on GCC
     - cap-ninja-jobs
     - install-gcc-4_8
     - install-cmake:
@@ -366,6 +363,7 @@ jobs:
     steps:
     - install-base-linux:
         extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng-dev libdevil-dev libharfbuzz-dev libassimp-dev libwebp-dev libzstd-dev wget
+    # Crashes or gets stuck with the default setting, only on GCC
     - cap-ninja-jobs
     - install-gcc-4_8
     - install-cmake:
@@ -396,9 +394,6 @@ jobs:
     steps:
     - install-base-linux:
         extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng-dev libdevil-dev libharfbuzz-dev libassimp-dev libwebp-dev libzstd-dev wget
-    # Clang used to not need that much RAM on the medium resource class so the
-    # default was fine, but on the small class it's too much.
-    - cap-ninja-jobs
     - install-clang
     - install-cmake:
         version: "3.4.3"
@@ -431,9 +426,6 @@ jobs:
     steps:
     - install-base-linux:
         extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng-dev libdevil-dev libharfbuzz-dev libassimp-dev libopenexr-dev libwebp-dev libzstd-dev wget
-    # Clang used to not need that much RAM on the medium resource class so the
-    # default was fine, but on the small class it's too much.
-    - cap-ninja-jobs
     - install-clang
     - install-cmake:
         version: "3.4.3"
@@ -481,7 +473,6 @@ jobs:
     executor: emscripten
     steps:
     - install-base-linux
-    - cap-ninja-jobs
     # Zstd built inside emscripten.sh
     - install-basis
     - build:
