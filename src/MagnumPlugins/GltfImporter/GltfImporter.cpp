@@ -3529,7 +3529,7 @@ bool GltfImporter::materialTexture(const Utility::JsonToken& gltfTexture, Contai
 
             Vector2 offset;
             if(const Utility::JsonToken* const gltfOffset = gltfKhrTextureTransform->find("offset"_s)) {
-                const Containers::Optional<Containers::StridedArrayView1D<const float>> offsetArray = _d->gltf->parseFloatArray(*gltfOffset, 2);
+                const Containers::Optional<Containers::StridedArrayView1D<const Float>> offsetArray = _d->gltf->parseFloatArray(*gltfOffset, 2);
                 if(!offsetArray) {
                     Error{} << "Trade::GltfImporter::material(): invalid" << gltfTexture.parent()->asString() << "KHR_texture_transform offset property";
                     return false;
