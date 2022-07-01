@@ -250,7 +250,7 @@ struct DdsImporter::File {
         struct {
             PixelFormat format;
             bool needsSwizzle;
-            BoolVector2 yzFlip{NoInit};
+            BitVector2 yzFlip{NoInit};
             UnsignedInt pixelSize;
         } uncompressed;
 
@@ -598,7 +598,7 @@ void DdsImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dat
        externally-provided hint. */
     if(configuration().value<bool>("assumeYUpZBackward")) {
         /* No flipping if Y up / Z backward is assumed */
-        f->properties.uncompressed.yzFlip = BoolVector2{0x0};
+        f->properties.uncompressed.yzFlip = BitVector2{0x0};
     } else {
         /* Can't flip compressed blocks at the moment, so print a warning at
            least */
@@ -607,7 +607,7 @@ void DdsImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dat
 
         /* For uncompressed data decide about the flip orientations */
         } else {
-            f->properties.uncompressed.yzFlip = BoolVector2{0x0};
+            f->properties.uncompressed.yzFlip = BitVector2{0x0};
             /* Z gets flipped only for a 3D texture */
             if(f->dimensions == 3 && !(f->imageFlags & (ImageFlag3D::Array|ImageFlag3D::CubeMap)))
                 f->properties.uncompressed.yzFlip.set(1, true);
@@ -651,7 +651,7 @@ void swizzlePixels(const PixelFormat format, const Containers::ArrayView<char> d
     } else CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
 }
 
-void flipPixels(const BoolVector2 yzFlip, const UnsignedInt pixelSize, const Vector3i& size, const Containers::ArrayView<char> data) {
+void flipPixels(const BitVector2 yzFlip, const UnsignedInt pixelSize, const Vector3i& size, const Containers::ArrayView<char> data) {
     const Containers::StridedArrayView4D<char> view{data, {
         std::size_t(size.z()),
         std::size_t(size.y()),

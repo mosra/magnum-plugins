@@ -40,7 +40,7 @@
 #include <Corrade/Utility/Endianness.h>
 #include <Corrade/Utility/EndiannessBatch.h>
 #include <Magnum/PixelFormat.h>
-#include <Magnum/Math/BoolVector.h>
+#include <Magnum/Math/BitVector.h>
 #include <Magnum/Math/Functions.h>
 #include <Magnum/Math/Swizzle.h>
 #include <Magnum/Math/Vector3.h>
@@ -273,7 +273,7 @@ struct KtxImporter::File {
     /* ImageFlags3D is a superset of ImageFlags1D and ImageFlags2D, so using it
        for any dimension count */
     ImageFlags3D imageFlags;
-    BoolVector3 flip;
+    BitVector3 flip;
 
     Format pixelFormat;
 
@@ -713,7 +713,7 @@ void KtxImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFlags
                 "right"_s, "down"_s, "forward"_s
             };
 
-            const BoolVector3 flip = Math::notEqual(
+            const BitVector3 flip = Math::notEqual(
                 Math::Vector3<char>::from(defaultOrientation.data()),
                 Math::Vector3<char>::from(targetOrientation.data()));
             /* Leave non-existing dimensions unset, otherwise they affect the
@@ -729,7 +729,7 @@ void KtxImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFlags
     /* We can't reasonably perform axis flips on block-compressed data.
        Emit a warning and pretend there is no flipping necessary. */
     if(f->pixelFormat.isCompressed && f->flip.any()) {
-        f->flip = BoolVector3{};
+        f->flip = BitVector3{};
         Warning{} << "Trade::KtxImporter::openData(): block-compressed image "
             "was encoded with non-default axis orientations, imported data "
             "will have wrong orientation";

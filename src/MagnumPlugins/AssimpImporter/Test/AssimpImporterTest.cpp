@@ -2939,7 +2939,7 @@ void AssimpImporterTest::meshSkinningAttributesMerge() {
     Containers::Array<Vector4ui> shiftedJointData{Containers::arraySize(MeshSkinningAttributesJointData)};
     for(UnsignedInt i = 0; i != shiftedJointData.size(); ++i) {
         /* Shift by 2 where weight is non-zero */
-        const BoolVector4 nonZero = Math::notEqual(MeshSkinningAttributesWeightData[i], Vector4{0.0f});
+        const BitVector4 nonZero = Math::notEqual(MeshSkinningAttributesWeightData[i], Vector4{0.0f});
         const Vector4ui mask{nonZero[0], nonZero[1], nonZero[2], nonZero[3]};
         shiftedJointData[i] = MeshSkinningAttributesJointData[i] + (mask * 2);
     }
