@@ -29,10 +29,6 @@ set(CMAKE_FOLDER "MagnumPlugins/JpegImageConverter/Test")
 
 find_package(Magnum REQUIRED DebugTools)
 
-# CMake before 3.8 has broken $<TARGET_FILE*> expressions for iOS (see
-# https://gitlab.kitware.com/cmake/cmake/merge_requests/404) and since Corrade
-# doesn't support dynamic plugins on iOS, this sorta works around that. Should
-# be revisited when updating Travis to newer Xcode (xcode7.3 has CMake 3.6).
 if(NOT MAGNUM_JPEGIMAGECONVERTER_BUILD_STATIC)
     set(JPEGIMAGECONVERTER_PLUGIN_FILENAME $<TARGET_FILE:JpegImageConverter>)
     if(MAGNUM_WITH_JPEGIMPORTER)

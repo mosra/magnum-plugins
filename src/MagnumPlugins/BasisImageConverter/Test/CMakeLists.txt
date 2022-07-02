@@ -61,10 +61,6 @@ if(MAGNUM_WITH_BASISIMPORTER)
     endif()
 endif()
 
-# CMake before 3.8 has broken $<TARGET_FILE*> expressions for iOS (see
-# https://gitlab.kitware.com/cmake/cmake/merge_requests/404) and since Corrade
-# doesn't support dynamic plugins on iOS, this sorta works around that. Should
-# be revisited when updating Travis to newer Xcode (xcode7.3 has CMake 3.6).
 if(NOT MAGNUM_BASISIMAGECONVERTER_BUILD_STATIC)
     set(BASISIMAGECONVERTER_PLUGIN_FILENAME $<TARGET_FILE:BasisImageConverter>)
     if(MAGNUM_WITH_BASISIMPORTER)
