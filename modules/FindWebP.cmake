@@ -39,7 +39,7 @@
 #
 
 # Library
-find_library(WebP_LIBRARY NAMES webp)
+find_library(WebP_LIBRARY NAMES webp libwebp)
 
 # Include dir
 find_path(WebP_INCLUDE_DIR
