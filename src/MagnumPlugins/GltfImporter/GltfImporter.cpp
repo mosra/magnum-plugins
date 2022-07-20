@@ -38,6 +38,7 @@
 #include <Corrade/Containers/Reference.h>
 #include <Corrade/Containers/StaticArray.h>
 #include <Corrade/Containers/String.h>
+#include <Corrade/Containers/StringStlHash.h>
 #include <Corrade/Containers/StringView.h>
 #include <Corrade/Containers/Triple.h>
 #include <Corrade/Utility/Algorithms.h>
@@ -80,19 +81,6 @@
 #ifdef CORRADE_TARGET_BIG_ENDIAN
 #error this code will not work on Big Endian, sorry
 #endif
-
-/* std::hash specialization to be able to use StringView in unordered_map.
-   Injecting this into namespace std seems to be the designated way but it
-   feels wrong. */
-namespace std {
-    template<> struct hash<Corrade::Containers::StringView> {
-        std::size_t operator()(const Corrade::Containers::StringView& key) const {
-            const Corrade::Utility::MurmurHash2 hash;
-            const Corrade::Utility::HashDigest<sizeof(std::size_t)> digest = hash(key.data(), key.size());
-            return *reinterpret_cast<const std::size_t*>(digest.byteArray());
-        }
-    };
-}
 
 namespace Magnum { namespace Trade {
 
