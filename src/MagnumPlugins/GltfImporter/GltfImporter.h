@@ -57,7 +57,7 @@ namespace Magnum { namespace Trade {
 @brief glTF importer plugin
 @m_since_latest_{plugins}
 
-Imports glTF and binary glTF.
+Imports glTF (`*.gltf`) and binary glTF (`*.glb`) files.
 
 @section Trade-GltfImporter-usage Usage
 

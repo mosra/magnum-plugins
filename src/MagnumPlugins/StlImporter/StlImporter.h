@@ -59,7 +59,8 @@ namespace Magnum { namespace Trade {
 @m_since_{plugins,2020,06}
 
 Imports normal and vertex information from binary
-[Stereolitography STL](https://en.wikipedia.org/wiki/STL_(file_format)) files.
+[Stereolitography STL](https://en.wikipedia.org/wiki/STL_(file_format))
+(`*.stl`) files.
 
 @section Trade-StlImporter-usage Usage
 
