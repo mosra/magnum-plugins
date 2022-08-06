@@ -68,6 +68,7 @@ corrade_add_test(AssimpImporterTest AssimpImporterTest.cpp
         exported-animation.dae # Converted from exported-animation.blend
         exported-animation.fbx
         exported-animation.gltf
+        image-embedded.fbx
         image-filename-trailing-space.mtl
         image-filename-trailing-space.obj
         image-filename-backslash.mtl

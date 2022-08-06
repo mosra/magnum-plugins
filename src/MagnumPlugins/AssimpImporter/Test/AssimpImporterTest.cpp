@@ -147,6 +147,7 @@ struct AssimpImporterTest: TestSuite::Tester {
     void upDirectionPatchingPreTransformVertices();
 
     void imageEmbedded();
+    void imageEmbeddedWithPath();
     void imageExternal();
     void imageExternalNotFound();
     void imageExternalNoPathNoCallback();
@@ -293,6 +294,7 @@ AssimpImporterTest::AssimpImporterTest() {
         Containers::arraySize(UpDirectionPatchingData));
 
     addTests({&AssimpImporterTest::imageEmbedded,
+              &AssimpImporterTest::imageEmbeddedWithPath,
               &AssimpImporterTest::imageExternal,
               &AssimpImporterTest::imageExternalNotFound,
               &AssimpImporterTest::imageExternalNoPathNoCallback,
@@ -3365,6 +3367,31 @@ void AssimpImporterTest::imageEmbedded() {
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(image->size(), Vector2i{1});
     constexpr char pixels[] = { '\xb3', '\x69', '\x00', '\xff' };
+    CORRADE_COMPARE_AS(image->data(), Containers::arrayView(pixels), TestSuite::Compare::Container);
+}
+
+void AssimpImporterTest::imageEmbeddedWithPath() {
+    if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("PngImporter plugin not found, cannot test");
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+
+    /* Open as data, so we verify opening embedded images from data does not
+       cause any problems even when no file callbacks are set */
+    Containers::Optional<Containers::Array<char>> data = Utility::Path::read(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "image-embedded.fbx"));
+    CORRADE_VERIFY(data);
+    CORRADE_VERIFY(importer->openData(*data));
+
+    CORRADE_COMPARE(importer->image2DCount(), 1);
+    Containers::Optional<ImageData2D> image = importer->image2D(0);
+    CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->size(), Vector2i{2});
+    constexpr char pixels[] = {
+        '\x00', '\x00', '\xff',
+        '\xff', '\xff', '\xff',
+        '\xff', '\x00', '\x00',
+        '\x00', '\xff', '\x00'
+    };
     CORRADE_COMPARE_AS(image->data(), Containers::arrayView(pixels), TestSuite::Compare::Container);
 }
 
