@@ -1742,13 +1742,20 @@ AbstractImporter* AssimpImporter::setupOrReuseImporterForImage(const UnsignedInt
     importer.setFlags(flags());
     if(fileCallback()) importer.setFileCallback(fileCallback(), fileCallbackUserData());
 
-    std::string path = texturePath.C_Str();
-    /* If path is prefixed with '*', load embedded texture */
-    if(path[0] == '*') {
-        char* err;
-        const std::string indexStr = path.substr(1);
-        const char* str = indexStr.c_str();
+    const Containers::StringView path = texturePath.C_Str();
 
+    /* Loading of embedded textures was changed to a lookup using the full path
+     * embedded with the scene file rather than an index prefixed with '*' in
+     * assimp commit 4623c2f14c121e4792e74169b6cef09631a4184a (released with 5.0.0). */
+    #if ASSIMP_IS_VERSION_5_OR_GREATER
+    /* If loading the texture as embedded fails, it must be external */
+    if(const aiTexture* texture = _f->scene->GetEmbeddedTexture(path.data())) {
+    #else
+    /* If path is prefixed with '*', load embedded texture */
+    if(path.hasPrefix('*')) {
+        char* err;
+        const Containers::StringView indexStr = path.exceptPrefix(1);
+        const char* str = indexStr.data();
         const Int index = Int(std::strtol(str, &err, 10));
         if(err == nullptr || err == str) {
             Error{} << errorPrefix << "embedded texture path did not contain a valid integer string";
@@ -1756,6 +1763,7 @@ AbstractImporter* AssimpImporter::setupOrReuseImporterForImage(const UnsignedInt
         }
 
         const aiTexture* texture = _f->scene->mTextures[index];
+    #endif
         if(texture->mHeight == 0) {
             /* Compressed image data */
             auto textureData = Containers::ArrayView<const char>(reinterpret_cast<const char*>(texture->pcData), texture->mWidth);
@@ -1777,10 +1785,11 @@ AbstractImporter* AssimpImporter::setupOrReuseImporterForImage(const UnsignedInt
         }
 
         /* Assimp loads image path references as-is. It might contain windows path separators if the exporter didn't normalize */
-        std::replace(path.begin(), path.end(), '\\', '/');
+        Containers::String normalized = path;
+        std::replace(normalized.begin(), normalized.end(), '\\', '/');
         /* Assimp doesn't trim spaces from the end of image paths in OBJ
            materials so we have to. See the image-filename-space.mtl test. */
-        if(!importer.openFile(Utility::Path::join(_f->filePath ? *_f->filePath : "", path).trimmed()))
+        if(!importer.openFile(Utility::Path::join(_f->filePath ? *_f->filePath : "", normalized).trimmed()))
             return nullptr;
     }
 
