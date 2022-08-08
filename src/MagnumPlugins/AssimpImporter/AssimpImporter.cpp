@@ -1749,9 +1749,10 @@ AbstractImporter* AssimpImporter::setupOrReuseImporterForImage(const UnsignedInt
      * assimp commit 4623c2f14c121e4792e74169b6cef09631a4184a (released with 5.0.0). */
     #if ASSIMP_IS_VERSION_5_OR_GREATER
     /* If loading the texture as embedded fails, it must be external */
-    if(const aiTexture* texture = _f->scene->GetEmbeddedTexture(path.data())) {
+    const aiTexture* texture = _f->scene->GetEmbeddedTexture(path.data());
     #else
     /* If path is prefixed with '*', load embedded texture */
+    const aiTexture* texture = nullptr;
     if(path.hasPrefix('*')) {
         char* err;
         const Containers::StringView indexStr = path.exceptPrefix(1);
@@ -1762,8 +1763,10 @@ AbstractImporter* AssimpImporter::setupOrReuseImporterForImage(const UnsignedInt
             return nullptr;
         }
 
-        const aiTexture* texture = _f->scene->mTextures[index];
+        texture = _f->scene->mTextures[index];
+    }
     #endif
+    if(texture) {
         if(texture->mHeight == 0) {
             /* Compressed image data */
             auto textureData = Containers::ArrayView<const char>(reinterpret_cast<const char*>(texture->pcData), texture->mWidth);
