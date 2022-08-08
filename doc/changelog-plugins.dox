@@ -247,6 +247,9 @@ namespace Magnum {
     the red channel repeated four times, losing the green channel. This is now
     fixed to not perform an implicit RRRG swizzle if the @cb{.ini} swizzle @ce
     option is set. See also [mosra/magnum-plugins#112](https://github.com/mosra/magnum-plugins/pull/112).
+-   Fixed loading of embedded FBX textures in @relativeref{Trade,AssimpImporter}
+    (see [mosra/magnum-plugins#127](https://github.com/mosra/magnum-plugins/issues/127),
+    [mosra/magnum-plugins#128](https://github.com/mosra/magnum-plugins/pull/128))
 
 @subsection changelog-plugins-latest-deprecated Deprecated APIs
 

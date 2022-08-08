@@ -3,7 +3,7 @@
 
     Copyright © 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019,
                 2020, 2021, 2022 Vladimír Vondruš <mosra@centrum.cz>
-    Copyright © 2017, 2020, 2021 Jonathan Hale <squareys@googlemail.com>
+    Copyright © 2017, 2020, 2021, 2022 Jonathan Hale <squareys@googlemail.com>
     Copyright © 2018 Konstantinos Chatzilygeroudis <costashatz@gmail.com>
     Copyright © 2019, 2020 Max Schwarz <max.schwarz@ais.uni-bonn.de>
     Copyright © 2021 Pablo Escobar <mail@rvrs.in>
@@ -1745,8 +1745,9 @@ AbstractImporter* AssimpImporter::setupOrReuseImporterForImage(const UnsignedInt
     const Containers::StringView path = texturePath.C_Str();
 
     /* Loading of embedded textures was changed to a lookup using the full path
-     * embedded with the scene file rather than an index prefixed with '*' in
-     * assimp commit 4623c2f14c121e4792e74169b6cef09631a4184a (released with 5.0.0). */
+       embedded with the scene file rather than an index prefixed with '*' in
+       Assimp commit 4623c2f14c121e4792e74169b6cef09631a4184a (released with
+       5.0.0). */
     #if ASSIMP_IS_VERSION_5_OR_GREATER
     /* If loading the texture as embedded fails, it must be external */
     const aiTexture* texture = _f->scene->GetEmbeddedTexture(path.data());

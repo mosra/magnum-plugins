@@ -68,6 +68,12 @@ corrade_add_test(AssimpImporterTest AssimpImporterTest.cpp
         exported-animation.dae # Converted from exported-animation.blend
         exported-animation.fbx
         exported-animation.gltf
+        # Created with Blender 3.1.0 as follows:
+        # - Delete default scene
+        # - Add plane
+        # - Set the diffuse color to image texture with this image: embedded
+        # - File > Export > FBX, chose path mode "copy" and press the button
+        #   next to the dropdown, which enables embedding images
         image-embedded.fbx
         image-filename-trailing-space.mtl
         image-filename-trailing-space.obj
