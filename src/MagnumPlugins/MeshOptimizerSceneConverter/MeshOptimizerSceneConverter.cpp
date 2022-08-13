@@ -288,12 +288,13 @@ bool MeshOptimizerSceneConverter::doConvertInPlace(MeshData& mesh) {
 
 namespace {
 
-/* As of https://github.com/zeux/meshoptimizer/pull/432 (to be released as
-   0.18), the meshopt_simplify() has a new second-to-last options argument,
-   this pair of templates adapts to that -- by either passing the function
-   pointer through unchanged or by wrapping it in a lambda that ignores the
-   options argument (and the result_error on versions before 0.16) */
-/** @todo use an ifdef instead once we can rely on MESHOPTIMIZER_VERSION */
+/* As of version 0.18 (https://github.com/zeux/meshoptimizer/pull/432), the
+   meshopt_simplify() has a new second-to-last options argument, this pair of
+   templates adapts to that -- by either passing the function pointer through
+   unchanged or by wrapping it in a lambda that ignores the options argument
+   (and the result_error on versions before 0.16) */
+/** @todo switch to #if MESHOPTIMIZER_VERSION >= 180 once enough time passes
+    (released on 2022-08-01) */
 template<std::size_t(*F)(UnsignedInt*, const UnsignedInt*, std::size_t, const Float*, std::size_t, std::size_t, std::size_t, Float
     #if MESHOPTIMIZER_VERSION >= 160
     , Float*
@@ -394,8 +395,8 @@ Containers::Optional<MeshData> MeshOptimizerSceneConverter::doConvert(const Mesh
                 targetIndexCount,
                 targetError,
                 configuration().value<bool>("simplifyLockBorder") ?
-                    /** @todo use a real value once we can rely on
-                        MESHOPTIMIZER_VERSION */
+                    /** @todo switch to #if MESHOPTIMIZER_VERSION >= 180 once
+                        enough time passes (released on 2022-08-01) */
                     1 /*meshopt_SimplifyLockBorder*/ : 0,
                 nullptr);
         }
