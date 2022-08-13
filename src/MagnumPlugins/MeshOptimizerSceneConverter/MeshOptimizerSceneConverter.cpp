@@ -319,6 +319,51 @@ template<std::size_t(*F)(UnsignedInt*, const UnsignedInt*, std::size_t, const Fl
 
 }
 
+std::vector<unsigned char> encodeVertex(const MeshData& mesh) {
+    meshopt_encodeVertexVersion(0);
+    std::vector<unsigned char> buffer;
+    if(MeshTools::isInterleaved(mesh)) {
+        buffer.resize(meshopt_encodeVertexBufferBound(mesh.vertexCount(), mesh.attributeStride(0)));
+        buffer.resize(meshopt_encodeVertexBuffer(&buffer[0], buffer.size(), mesh.vertexData(), mesh.vertexCount(),
+                                                 mesh.attributeStride(0)));
+    } else {
+        buffer.reserve(mesh.vertexData().size());
+
+        /* Non-interleaved vertex buffer is handled by encoding each attribute data separately due to the stride */
+        for(UnsignedInt i = 0; i < mesh.attributeCount(); i++) {
+            std::vector<unsigned char> encoded_attribute(meshopt_encodeVertexBufferBound(mesh.vertexCount(), mesh.attributeStride(i)));
+            auto data = mesh.attribute(i).asContiguous().data();
+            buffer.resize(meshopt_encodeVertexBuffer(&encoded_attribute[0], encoded_attribute.size(), data,
+                                                     mesh.vertexCount(), mesh.attributeStride(i)));
+            std::move(buffer.begin(), buffer.end(), std::back_inserter(buffer));
+        }
+        buffer.shrink_to_fit();
+    }
+    CORRADE_INTERNAL_ASSERT(!buffer.empty() && buffer.size() < mesh.vertexData().size());
+    return buffer;
+}
+
+Containers::Array<char> decodeVertex(const MeshData& mesh) {
+    if(MeshTools::isInterleaved(mesh)) {
+        Containers::Array<char> decoded{NoInit, mesh.vertexCount()*mesh.attributeStride(0)};
+        Containers::ArrayView<const unsigned char> encoded_data = Containers::arrayCast<const unsigned char>(mesh.vertexData());
+        int result = meshopt_decodeVertexBuffer(decoded.data(), mesh.vertexCount(), mesh.attributeStride(0),
+                                                encoded_data.data(), encoded_data.size());
+        return decoded;
+    } else {
+        auto last_attribute_size = mesh.vertexCount()*mesh.attributeStride(mesh.attributeCount()-1);
+        Containers::Array<char> decoded{NoInit, mesh.attributeOffset(mesh.attributeCount()-1)+last_attribute_size};
+        for(unsigned int i=0; i < mesh.attributeCount(); ++i) {
+            //auto data_end = i == my_mesh_encoded_1.attributeCount()-1 ? my_mesh_encoded_1.vertexData().size() : my_mesh_encoded_1.attributeOffset(i+1);
+            Containers::ArrayView<const unsigned char> data = Containers::arrayCast<const unsigned char>(mesh.attribute(i).asContiguous()); //my_mesh_encoded_1.vertexData().slice(my_mesh_encoded_1.attributeOffset(i), data_end);
+            const std::size_t vertexSize = mesh.attributeStride(i);
+            int result = meshopt_decodeVertexBuffer(decoded.data(), mesh.vertexCount(), vertexSize,
+                                                     data, data.size());
+        }
+        return decoded;
+    }
+}
+
 Containers::Optional<MeshData> MeshOptimizerSceneConverter::doConvert(const MeshData& mesh) {
     /* If the mesh is indexed with an implementation-specific index type,
        interleave() won't be able to turn its index buffer into a contiguous
@@ -417,6 +462,46 @@ Containers::Optional<MeshData> MeshOptimizerSceneConverter::doConvert(const Mesh
            using a now-gone array */
         if(flags() & SceneConverterFlag::Verbose)
             populatePositions(out, positionStorage, positions);
+    }
+
+   /* if(configuration().value<bool>("encodeIndex") && mesh.isIndexed()) {
+
+    }
+   */
+
+    if(configuration().value<bool>("encodeVertex")) {
+        out = MeshTools::owned(mesh);
+        meshopt_encodeVertexVersion(0);
+
+        auto attributes = out.releaseAttributeData();
+        for(UnsignedInt i = 0; i < mesh.attributeCount(); ++i) {
+
+            const VertexFormat encodedFormat = !isVertexFormatImplementationSpecific(mesh.attributeFormat(i)) ?
+                                               vertexFormatWrap(mesh.attributeFormat(i)) : mesh.attributeFormat(i);
+            attributes[i] = Trade::MeshAttributeData{mesh.attributeName(i), encodedFormat,
+                                                mesh.attributeOffset(i), mesh.vertexCount(),
+                                                mesh.attributeStride(i), mesh.attributeArraySize(i)};
+            printf("Stride: %u,  VertCount: %u,   AttrStride: %u,   Offset: %lu,   ArraySize: %u,  out.attrFormat: %u\n",
+                   mesh.attributeStride(0), mesh.vertexCount(), mesh.attributeStride(i), mesh.attributeOffset(i),
+                   mesh.attributeArraySize(i), mesh.attributeFormat(i));
+        }
+
+        std::vector<unsigned char> encoded_buffer = encodeVertex(mesh);
+        out = Trade::MeshData{out.primitive(), Trade::DataFlags {}, out.indexData(), Trade::MeshIndexData{out.indices()}, Trade::DataFlag::Mutable,
+                              std::move(encoded_buffer), std::move(attributes)};
+    }
+
+    if(configuration().value<bool>("decodeVertex")) {
+        Containers::Array<Trade::MeshAttributeData> attributes{NoInit, mesh.attributeCount()};
+        for(UnsignedInt i = 0; i != mesh.attributeCount(); ++i) {
+            const VertexFormat originalFormat = vertexFormatUnwrap<VertexFormat>(mesh.attributeFormat(i));
+            attributes[i] = Trade::MeshAttributeData{mesh.attributeName(i), originalFormat,
+                                                     mesh.attributeOffset(i), mesh.vertexCount(),
+                                                     mesh.attributeStride(i), mesh.attributeArraySize(i)};
+        }
+        Containers::Array<char> decoded_buffer = decodeVertex(mesh);
+        out = Trade::MeshData{mesh.primitive(), Trade::DataFlags{}, mesh.indexData(), Trade::MeshIndexData{mesh.indices()}, Trade::DataFlag::Mutable,
+                              std::move(decoded_buffer), std::move(attributes)};
     }
 
     /* Print before & after stats if verbose output is requested */

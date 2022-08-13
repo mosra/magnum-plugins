@@ -39,6 +39,7 @@
 #include <Magnum/Primitives/UVSphere.h>
 #include <Magnum/Trade/AbstractSceneConverter.h>
 #include <Magnum/Trade/MeshData.h>
+#include <Magnum/Math/Vector4.h>
 
 #include "configure.h"
 
@@ -84,6 +85,9 @@ struct MeshOptimizerSceneConverterTest: TestSuite::Tester {
     template<class T> void simplifySloppy();
 
     void simplifyVerbose();
+
+    void encodeVertexBuf();
+    void decodeVertexBuf();
 
     /* Explicitly forbid system-wide plugin dependencies */
     PluginManager::Manager<AbstractSceneConverter> _manager{"nonexistent"};
@@ -155,6 +159,10 @@ MeshOptimizerSceneConverterTest::MeshOptimizerSceneConverterTest() {
         &MeshOptimizerSceneConverterTest::simplifySloppy<UnsignedShort>,
         &MeshOptimizerSceneConverterTest::simplifySloppy<UnsignedInt>,
         &MeshOptimizerSceneConverterTest::simplifyVerbose});
+
+    addTests({
+        &MeshOptimizerSceneConverterTest::encodeVertexBuf,
+        &MeshOptimizerSceneConverterTest::decodeVertexBuf});
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. */
@@ -1130,6 +1138,56 @@ void MeshOptimizerSceneConverterTest::simplifyVerbose() {
     overdraw 1 -> 1
 )";
     CORRADE_COMPARE(out.str(), expected);
+}
+
+void MeshOptimizerSceneConverterTest::encodeVertexBuf() {
+    Containers::Pointer<AbstractSceneConverter> converter = _manager.instantiate("MeshOptimizerSceneConverter");
+    converter->configuration().setValue("encodeVertex", true);
+
+    struct QuadVertex {
+        Vector2 position;
+        Vector2 textureCoordinates;
+        Vector4 color;
+    };
+    const QuadVertex vertices[]{
+        {{ 0.5f, -0.5f}, {1.0f, 0.0f}, {255,0,0,0}},
+        {{ 0.5f,  0.5f}, {1.0f, 1.0f}, {0,255,0,0}},
+        {{-0.5f, -0.5f}, {0.0f, 0.0f}, {0,0,255,0}},
+        {{-0.5f,  0.5f}, {0.0f, 1.0f}, {150,70,30,0}},
+        {{-1.0f, -0.5f}, {0.8f, 0.0f}, {30,70,150,0}},
+        {{-1.0f,  0.5f}, {1.0f, 0.8f}, {30,150,70,0}},
+        // {{1.0f,  -0.5f}, {1.0f, 1.0f}, {255,0,0,0}},
+        //  {{1.0f,   0.5f}, {0.0f, 0.0f}, {0,0,0,255}},
+    };
+    const  UnsignedInt indices[]{
+            0, 1, 2,
+            2, 1, 3,
+    };
+
+    const Trade::MeshData mesh{MeshPrimitive::Triangles,
+                          Trade::DataFlags{}, indices, Trade::MeshIndexData{indices},
+                          Trade::DataFlag::Mutable, vertices, {
+                                  Trade::MeshAttributeData{Trade::MeshAttribute::Position,
+                                                           Containers::StridedArrayView1D<const Vector2>{
+                                                                   Containers::arrayView(vertices), &vertices[0].position,
+                                                                   Containers::arraySize(vertices), sizeof(QuadVertex)}},
+                                  Trade::MeshAttributeData{Trade::MeshAttribute::TextureCoordinates,
+                                                           Containers::StridedArrayView1D<const Vector2>{
+                                                                   Containers::arrayView(vertices), &vertices[0].textureCoordinates,
+                                                                   Containers::arraySize(vertices), sizeof(QuadVertex)}},
+                                  Trade::MeshAttributeData{Trade::MeshAttribute::Color,
+                                                           Containers::StridedArrayView1D<const Vector4>{
+                                                                   Containers::arrayView(vertices), &vertices[0].color,
+                                                                   Containers::arraySize(vertices), sizeof(QuadVertex)}}
+                          }};
+    Containers::Optional<MeshData> encoded = converter->convert(mesh);
+    CORRADE_VERIFY(encoded);
+
+}
+
+void MeshOptimizerSceneConverterTest::decodeVertexBuf() {
+    Containers::Pointer<AbstractSceneConverter> converter = _manager.instantiate("MeshOptimizerSceneConverter");
+    converter->configuration().setValue("decodeVertex", true);
 }
 
 }}}}
