@@ -78,7 +78,6 @@ json_data['buffers'][0]['uri'] = file_bin
 # a continuous suffix of buffer views.
 if args.extract_images:
     image_buffer_views = set()
-    earliest_image_buffer_offset = json_data['buffers'][0]['byteLength']
     for image_id, image in enumerate(json_data['images']):
         assert 'bufferView' in image
         assert 'uri' not in image
@@ -103,7 +102,6 @@ if args.extract_images:
         # earliest offset in that buffer
         buffer_view = json_data['bufferViews'][buffer_view_id]
         assert buffer_view['buffer'] == 0
-        earliest_image_buffer_offset = min(buffer_view.get('byteOffset', 0), earliest_image_buffer_offset)
 
         # Save the image data. If the image doesn't have a name, pick the glb
         # filename + image number
@@ -118,11 +116,6 @@ if args.extract_images:
         # Replace the buffer view reference with a file URI
         del image['bufferView']
         image['uri'] = image_out
-
-    # Check that all buffer views before the first image one are before the
-    # first offset as well. I doubt the views will overlap
-    for i in range(list(image_buffer_views)[0]):
-        assert json_data['bufferViews'][i].get('byteOffset', 0) + json_data['bufferViews'][i]['byteLength'] <= earliest_image_buffer_offset:
 
     # Remove image-related buffer views, move back everything after
     original_offset = 0
