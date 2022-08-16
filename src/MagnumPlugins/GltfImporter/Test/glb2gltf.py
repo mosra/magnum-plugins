@@ -79,7 +79,7 @@ json_data['buffers'][0]['uri'] = file_bin
 if args.extract_images:
     image_buffer_views = set()
     earliest_image_buffer_offset = json_data['buffers'][0]['byteLength']
-    for image in json_data['images']:
+    for image_id, image in enumerate(json_data['images']):
         assert 'bufferView' in image
         assert 'uri' not in image
 
@@ -106,10 +106,9 @@ if args.extract_images:
         earliest_image_buffer_offset = min(buffer_view.get('byteOffset', 0), earliest_image_buffer_offset)
 
         # Save the image data. If the image doesn't have a name, pick the glb
-        # filename (and assume there's just one image)
+        # filename + image number
         if 'name' not in image:
-            assert len(json_data['images']) == 1
-            image_out = os.path.splitext(os.path.basename(args.input))[0] + ext
+            image_out = '{}.{}{}'.format(os.path.splitext(os.path.basename(args.input))[0], image_id, ext)
         else:
             image_out = image['name'] + ext
         print("Extracting", image_out)
