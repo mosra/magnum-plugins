@@ -103,7 +103,7 @@ if args.extract_images:
         # earliest offset in that buffer
         buffer_view = json_data['bufferViews'][buffer_view_id]
         assert buffer_view['buffer'] == 0
-        earliest_image_buffer_offset = min(buffer_view['byteOffset'], earliest_image_buffer_offset)
+        earliest_image_buffer_offset = min(buffer_view.get('byteOffset', 0), earliest_image_buffer_offset)
 
         # Save the image data. If the image doesn't have a name, pick the glb
         # filename (and assume there's just one image)
@@ -114,7 +114,7 @@ if args.extract_images:
             image_out = image['name'] + ext
         print("Extracting", image_out)
         with open(image_out, 'wb') as imf:
-            imf.write(bin_data[buffer_view['byteOffset']:buffer_view['byteOffset'] + buffer_view['byteLength']])
+            imf.write(bin_data[buffer_view.get('byteOffset', 0):buffer_view.get('byteOffset', 0) + buffer_view['byteLength']])
 
         # Replace the buffer view reference with a file URI
         del image['bufferView']
@@ -123,7 +123,7 @@ if args.extract_images:
     # Check that all buffer views before the first image one are before the
     # first offset as well. I doubt the views will overlap
     for i in range(list(image_buffer_views)[0]):
-        assert json_data['bufferViews'][i]['byteOffset'] + json_data['bufferViews'][i]['byteLength'] <= earliest_image_buffer_offset
+        assert json_data['bufferViews'][i].get('byteOffset', 0) + json_data['bufferViews'][i]['byteLength'] <= earliest_image_buffer_offset:
 
     # Remove image-related buffer views, move back everything after
     original_offset = 0
@@ -135,7 +135,7 @@ if args.extract_images:
         if i not in image_buffer_views:
             # TODO: This will probably mess up with alignment when there are
             #   data that are not multiples of 4 bytes
-            original_offset = view['byteOffset']
+            original_offset = view.get('byteOffset', 0)
             view['byteOffset'] = len(bin_data)
             bin_data += original_bin_data[original_offset:original_offset + view['byteLength']]
 
