@@ -1,0 +1,47 @@
+{
+  "asset": {
+    "version": "2.0"
+  },
+  "extensionsUsed": [
+    "KHR_mesh_quantization",
+    "MAGNUM_is_amazing"
+  ],
+  "extensionsRequired": [
+    "MAGNUM_can_write_json",
+    "KHR_mesh_quantization"
+  ],
+  "buffers": [
+    {
+      "uri": "metadata-explicit-implicit-extensions.bin",
+      "byteLength": 4
+    }
+  ],
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteOffset": 0,
+      "byteLength": 2,
+      "byteStride": 4
+    }
+  ],
+  "accessors": [
+    {
+      "bufferView": 0,
+      "componentType": 5120,
+      "count": 1,
+      "type": "VEC2"
+    }
+  ],
+  "meshes": [
+    {
+      "primitives": [
+        {
+          "attributes": {
+            "TEXCOORD_0": 0
+          },
+          "mode": 2
+        }
+      ]
+    }
+  ]
+}

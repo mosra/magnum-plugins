@@ -1,0 +1,224 @@
+{
+  "asset": {
+    "version": "2.0"
+  },
+  "buffers": [
+    {
+      "uri": "mesh-duplicate-attribute.bin",
+      "byteLength": 48
+    }
+  ],
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteOffset": 0,
+      "byteLength": 44,
+      "byteStride": 16
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 0,
+      "byteLength": 34,
+      "byteStride": 16
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 0,
+      "byteLength": 40,
+      "byteStride": 16
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 0,
+      "byteLength": 48
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 0,
+      "byteLength": 36,
+      "byteStride": 16
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 0,
+      "byteLength": 36,
+      "byteStride": 16
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 0,
+      "byteLength": 36,
+      "byteStride": 16
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 0,
+      "byteLength": 36,
+      "byteStride": 16
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 0,
+      "byteLength": 35,
+      "byteStride": 16
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 0,
+      "byteLength": 34,
+      "byteStride": 16
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 0,
+      "byteLength": 44,
+      "byteStride": 16
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 0,
+      "byteLength": 40,
+      "byteStride": 16
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 0,
+      "byteLength": 48
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 0,
+      "byteLength": 33,
+      "byteStride": 16
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 0,
+      "byteLength": 33,
+      "byteStride": 16
+    }
+  ],
+  "accessors": [
+    {
+      "bufferView": 0,
+      "componentType": 5126,
+      "count": 3,
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 1,
+      "componentType": 5123,
+      "count": 3,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 2,
+      "componentType": 5126,
+      "count": 3,
+      "type": "VEC2"
+    },
+    {
+      "bufferView": 3,
+      "componentType": 5126,
+      "count": 3,
+      "type": "VEC4"
+    },
+    {
+      "bufferView": 4,
+      "componentType": 5121,
+      "count": 3,
+      "type": "VEC4"
+    },
+    {
+      "bufferView": 5,
+      "componentType": 5121,
+      "normalized": true,
+      "count": 3,
+      "type": "VEC4"
+    },
+    {
+      "bufferView": 6,
+      "componentType": 5126,
+      "count": 3,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 7,
+      "componentType": 5123,
+      "normalized": true,
+      "count": 3,
+      "type": "VEC2"
+    },
+    {
+      "bufferView": 8,
+      "componentType": 5121,
+      "normalized": true,
+      "count": 3,
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 9,
+      "componentType": 5121,
+      "normalized": true,
+      "count": 3,
+      "type": "VEC2"
+    },
+    {
+      "bufferView": 10,
+      "componentType": 5126,
+      "count": 3,
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 11,
+      "componentType": 5123,
+      "count": 3,
+      "type": "VEC4"
+    },
+    {
+      "bufferView": 12,
+      "componentType": 5126,
+      "count": 3,
+      "type": "VEC4"
+    },
+    {
+      "bufferView": 13,
+      "componentType": 5121,
+      "count": 3,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 14,
+      "componentType": 5120,
+      "normalized": true,
+      "count": 3,
+      "type": "SCALAR"
+    }
+  ],
+  "meshes": [
+    {
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 0,
+            "_OBJECT_ID": 1,
+            "TEXCOORD_0": 2,
+            "COLOR_0": 3,
+            "JOINTS_0": 4,
+            "WEIGHTS_0": 5,
+            "_YOLO": 6,
+            "TEXCOORD_1": 7,
+            "COLOR_1": 8,
+            "TEXCOORD_2": 9,
+            "_POSITION_1": 10,
+            "JOINTS_1": 11,
+            "WEIGHTS_1": 12,
+            "_OBJECT_ID_1": 13,
+            "_YOLO_1": 14
+          },
+          "mode": 6
+        }
+      ]
+    }
+  ]
+}

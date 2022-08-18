@@ -39,7 +39,8 @@ add_plugin(GltfSceneConverter
     "${MAGNUM_PLUGINS_SCENECONVERTER_RELEASE_BINARY_INSTALL_DIR};${MAGNUM_PLUGINS_SCENECONVERTER_RELEASE_LIBRARY_INSTALL_DIR}"
     GltfSceneConverter.conf
     GltfSceneConverter.cpp
-    GltfSceneConverter.h)
+    GltfSceneConverter.h
+    ../GltfImporter/Gltf.h)
 if(MAGNUM_GLTFSCENECONVERTER_BUILD_STATIC AND MAGNUM_BUILD_STATIC_PIC)
     set_target_properties(GltfSceneConverter PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()

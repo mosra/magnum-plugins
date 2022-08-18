@@ -1,0 +1,40 @@
+{
+  "asset": {
+    "version": "2.0"
+  },
+  "buffers": [
+    {
+      "uri": "mesh-attribute-color4us.bin",
+      "byteLength": 32
+    }
+  ],
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteOffset": 0,
+      "byteLength": 8,
+      "byteStride": 32
+    }
+  ],
+  "accessors": [
+    {
+      "bufferView": 0,
+      "componentType": 5123,
+      "normalized": true,
+      "count": 1,
+      "type": "VEC4"
+    }
+  ],
+  "meshes": [
+    {
+      "primitives": [
+        {
+          "attributes": {
+            "COLOR_0": 0
+          },
+          "mode": 2
+        }
+      ]
+    }
+  ]
+}

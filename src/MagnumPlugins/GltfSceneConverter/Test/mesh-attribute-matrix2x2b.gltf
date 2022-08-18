@@ -1,0 +1,40 @@
+{
+  "asset": {
+    "version": "2.0"
+  },
+  "buffers": [
+    {
+      "uri": "mesh-attribute-matrix2x2b.bin",
+      "byteLength": 32
+    }
+  ],
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteOffset": 0,
+      "byteLength": 8,
+      "byteStride": 32
+    }
+  ],
+  "accessors": [
+    {
+      "bufferView": 0,
+      "componentType": 5120,
+      "normalized": true,
+      "count": 1,
+      "type": "MAT2"
+    }
+  ],
+  "meshes": [
+    {
+      "primitives": [
+        {
+          "attributes": {
+            "_ROTATION2D": 0
+          },
+          "mode": 2
+        }
+      ]
+    }
+  ]
+}

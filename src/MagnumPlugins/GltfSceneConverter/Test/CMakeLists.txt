@@ -53,7 +53,40 @@ corrade_add_test(GltfSceneConverterTest GltfSceneConverterTest.cpp
     FILES
         empty.glb
         empty.gltf
-        metadata.gltf)
+        mesh-accessor-names.gltf
+        mesh-attribute-bitangent.gltf
+        mesh-attribute-color3.gltf
+        mesh-attribute-color4.gltf
+        mesh-attribute-color4us.gltf
+        mesh-attribute-matrix2x2b.gltf
+        mesh-attribute-matrix3x3s.gltf
+        mesh-attribute-matrix4x4b.gltf
+        mesh-attribute-normal-quantized.gltf
+        mesh-attribute-objectidub.gltf
+        mesh-attribute-objectidui.gltf
+        mesh-attribute-position-quantized.gltf
+        mesh-attribute-tangent.gltf
+        mesh-attribute-tangent-quantized.gltf
+        mesh-attribute-tangent3.gltf
+        mesh-attribute-texture-coordinates.gltf
+        mesh-attribute-texture-coordinates-quantized.gltf
+        mesh-custom-attribute-no-name.gltf
+        mesh-custom-objectid-name.gltf
+        mesh-duplicate-attribute.gltf
+        mesh.glb
+        mesh.gltf mesh.bin
+        mesh-multiple.gltf mesh-multiple.bin
+        mesh-name-accessor-names.gltf
+        mesh-name.gltf
+        mesh-no-attributes.gltf
+        mesh-no-indices.gltf
+        mesh-no-indices-no-attributes.glb
+        mesh-no-indices-no-attributes.gltf
+        mesh-no-indices-no-vertices.glb
+        mesh-no-indices-no-vertices.gltf
+        mesh-noninterleaved.gltf
+        metadata.gltf
+        metadata-explicit-implicit-extensions.gltf)
 target_include_directories(GltfSceneConverterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>)
 if(MAGNUM_GLTFSCENECONVERTER_BUILD_STATIC)
     target_link_libraries(GltfSceneConverterTest PRIVATE GltfSceneConverter)

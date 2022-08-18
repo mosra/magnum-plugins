@@ -1,0 +1,52 @@
+{
+  "asset": {
+    "version": "2.0"
+  },
+  "buffers": [
+    {
+      "uri": "mesh-custom-objectid-name.bin",
+      "byteLength": 4
+    }
+  ],
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteOffset": 0,
+      "byteLength": 2,
+      "byteStride": 4
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 0,
+      "byteLength": 1,
+      "byteStride": 4
+    }
+  ],
+  "accessors": [
+    {
+      "bufferView": 0,
+      "componentType": 5123,
+      "count": 1,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 1,
+      "componentType": 5121,
+      "count": 1,
+      "type": "SCALAR"
+    }
+  ],
+  "meshes": [
+    {
+      "primitives": [
+        {
+          "attributes": {
+            "_SEMANTIC_INDEX": 0,
+            "_SEMANTIC_INDEX_1": 1
+          },
+          "mode": 2
+        }
+      ]
+    }
+  ]
+}

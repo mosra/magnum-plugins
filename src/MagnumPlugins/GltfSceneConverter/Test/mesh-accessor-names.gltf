@@ -1,0 +1,70 @@
+{
+  "asset": {
+    "version": "2.0"
+  },
+  "buffers": [
+    {
+      "uri": "mesh-accessor-names.bin",
+      "byteLength": 96
+    }
+  ],
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteOffset": 0,
+      "byteLength": 24,
+      "name": "mesh 0 indices"
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 28,
+      "byteLength": 48,
+      "byteStride": 36,
+      "name": "mesh 0 POSITION"
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 48,
+      "byteLength": 48,
+      "byteStride": 36,
+      "name": "mesh 0 NORMAL"
+    }
+  ],
+  "accessors": [
+    {
+      "bufferView": 0,
+      "componentType": 5125,
+      "count": 6,
+      "type": "SCALAR",
+      "name": "mesh 0 indices"
+    },
+    {
+      "bufferView": 1,
+      "componentType": 5126,
+      "count": 2,
+      "type": "VEC3",
+      "name": "mesh 0 POSITION"
+    },
+    {
+      "bufferView": 2,
+      "componentType": 5126,
+      "count": 2,
+      "type": "VEC3",
+      "name": "mesh 0 NORMAL"
+    }
+  ],
+  "meshes": [
+    {
+      "primitives": [
+        {
+          "indices": 0,
+          "attributes": {
+            "POSITION": 1,
+            "NORMAL": 2
+          },
+          "mode": 0
+        }
+      ]
+    }
+  ]
+}
