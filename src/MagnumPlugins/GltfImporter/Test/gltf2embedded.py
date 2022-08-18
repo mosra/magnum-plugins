@@ -41,6 +41,7 @@ with open(fileIn) as f:
     data = json.load(f)
     if 'buffers' in data:
         for buffer in data['buffers']:
+            if 'uri' not in buffer: continue
             uri = buffer['uri']
             if uri[:5] != 'data:':
                 with open(uri, "rb") as bf:

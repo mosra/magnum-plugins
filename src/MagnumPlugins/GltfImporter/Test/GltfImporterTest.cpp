@@ -126,6 +126,7 @@ struct GltfImporterTest: TestSuite::Tester {
     void meshNoAttributes();
     void meshNoIndices();
     void meshNoIndicesNoAttributes();
+    void meshNoIndicesNoVerticesNoBufferUri();
     void meshColors();
     void meshSkinAttributes();
     void meshCustomAttributes();
@@ -911,7 +912,7 @@ constexpr struct {
     {"buffer with missing byteLength property",
         "buffer 5 has missing or invalid byteLength property"},
     {"buffer with invalid byteLength property",
-        "Utility::Json::parseSize(): too large integer literal -3 at {}:1050:21\n"
+        "Utility::Json::parseSize(): too large integer literal -3 at {}:1051:21\n"
         "Trade::GltfImporter::mesh(): buffer 6 has missing or invalid byteLength property\n"},
     {"buffer view with missing buffer property",
         "buffer view 9 has missing or invalid buffer property"},
@@ -1571,8 +1572,12 @@ GltfImporterTest::GltfImporterTest() {
 
     addTests({&GltfImporterTest::meshNoAttributes,
               &GltfImporterTest::meshNoIndices,
-              &GltfImporterTest::meshNoIndicesNoAttributes,
-              &GltfImporterTest::meshColors,
+              &GltfImporterTest::meshNoIndicesNoAttributes});
+
+    addInstancedTests({&GltfImporterTest::meshNoIndicesNoVerticesNoBufferUri},
+        Containers::arraySize(SingleFileData));
+
+    addTests({&GltfImporterTest::meshColors,
               &GltfImporterTest::meshSkinAttributes,
               &GltfImporterTest::meshCustomAttributes,
               &GltfImporterTest::meshCustomAttributesNoFileOpened,
@@ -3566,6 +3571,23 @@ void GltfImporterTest::meshNoIndicesNoAttributes() {
     CORRADE_VERIFY(!mesh->isIndexed());
     CORRADE_COMPARE(mesh->vertexCount(), 0);
     CORRADE_COMPARE(mesh->attributeCount(), 0);
+}
+
+void GltfImporterTest::meshNoIndicesNoVerticesNoBufferUri() {
+    auto&& data = SingleFileData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "mesh-no-indices-no-vertices-no-buffer-uri"_s + data.suffix)));
+
+    Containers::Optional<Trade::MeshData> mesh = importer->mesh(0);
+    CORRADE_VERIFY(mesh);
+    CORRADE_COMPARE(mesh->primitive(), MeshPrimitive::Triangles);
+    CORRADE_VERIFY(!mesh->isIndexed());
+    CORRADE_COMPARE(mesh->vertexCount(), 0);
+    CORRADE_COMPARE(mesh->attributeCount(), 1);
+    CORRADE_VERIFY(mesh->hasAttribute(MeshAttribute::Position));
+    CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::Position), VertexFormat::Vector3);
 }
 
 void GltfImporterTest::meshColors() {

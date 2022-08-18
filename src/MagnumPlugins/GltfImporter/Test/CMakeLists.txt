@@ -161,6 +161,8 @@ corrade_add_test(GltfImporterTest
         mesh-invalid-texcoord-flip-attribute-oob.gltf
         mesh-invalid-texcoord-flip-attribute.gltf
         mesh-multiple-primitives.gltf
+        mesh-no-indices-no-vertices-no-buffer-uri.gltf
+        mesh-no-indices-no-vertices-no-buffer-uri.glb
         mesh-primitives-types.gltf
         mesh-primitives-types.bin
         mesh-size-not-multiple-of-stride.gltf

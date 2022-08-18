@@ -60,7 +60,7 @@ bin_data = bytearray()
 
 if not args.no_embed and "buffers" in data:
     assert len(data['buffers']) <= 1
-    if data['buffers']:
+    if data['buffers'] and 'uri' in data['buffers'][0]:
         uri = data['buffers'][0]['uri']
         if uri[:5] == 'data:':
             d = base64.b64decode(uri.split('base64,')[1])
@@ -104,7 +104,7 @@ if args.bundle_images:
     bin_length = len(bin_data)
 
 # Pad the buffer, update its length
-if not args.no_embed and 'buffers' in data and data['buffers']:
+if not args.no_embed and 'buffers' in data and data['buffers'] and 'uri' in data['buffers'][0]:
     bin_data.extend(b' '*pad_size_32b(len(bin_data)))
 
     del data['buffers'][0]['uri']

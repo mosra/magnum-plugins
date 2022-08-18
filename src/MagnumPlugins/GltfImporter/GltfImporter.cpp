@@ -334,6 +334,15 @@ Containers::Optional<Containers::ArrayView<const char>> GltfImporter::parseBuffe
 
     const Utility::JsonToken& gltfBuffer = _d->gltfBuffers[bufferId];
 
+    /* Each buffer object is accessed only once so it doesn't make sense to
+       cache the parsed size */
+    const Utility::JsonToken* const gltfBufferByteLength = gltfBuffer.find("byteLength"_s);
+    if(!gltfBufferByteLength || !_d->gltf->parseSize(*gltfBufferByteLength)) {
+        Error{} << errorPrefix << "buffer" << bufferId
+            << "has missing or invalid byteLength property";
+        return {};
+    }
+
     Containers::ArrayView<const char> view;
     if(const Utility::JsonToken* gltfBufferUri = gltfBuffer.find("uri"_s)) {
         if(!_d->gltf->parseString(*gltfBufferUri)) {
@@ -344,21 +353,17 @@ Containers::Optional<Containers::ArrayView<const char>> GltfImporter::parseBuffe
             return {};
         view = *storage;
     } else {
-        /* URI may only be empty for buffers referencing the glb binary blob */
+        /* URI has to be undefined for the first buffer referencing the glb
+           binary blob. For others it should be present but we allow it to be
+           omitted if the buffer has zero size. 3.6.1.2. (Binary Data Storage §
+           Buffers and Buffer Views § GLB-stored Buffer) says that if it's
+           missing, behavior is undefined / reserved for future extensions. */
         if(bufferId != 0 || !_d->binChunk) {
-            Error{} << errorPrefix << "buffer" << bufferId << "has missing uri property";
-            return {};
-        }
-        view = *_d->binChunk;
-    }
-
-    /* Each buffer object is accessed only once so it doesn't make sense to
-       cache the parsed size */
-    const Utility::JsonToken* const gltfBufferByteLength = gltfBuffer.find("byteLength"_s);
-    if(!gltfBufferByteLength || !_d->gltf->parseSize(*gltfBufferByteLength)) {
-        Error{} << errorPrefix << "buffer" << bufferId
-            << "has missing or invalid byteLength property";
-        return {};
+            if(gltfBufferByteLength->asSize() != 0) {
+                Error{} << errorPrefix << "buffer" << bufferId << "has missing uri property";
+                return {};
+            }
+        } else view = *_d->binChunk;
     }
 
     /* The spec mentions that non-GLB buffer length can be greater than
