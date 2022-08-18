@@ -203,7 +203,7 @@ struct GltfImporterTest: TestSuite::Tester {
    done in resources.conf */
 
 using namespace Containers::Literals;
-using namespace Magnum::Math::Literals;
+using namespace Math::Literals;
 
 const struct {
     const char* name;
