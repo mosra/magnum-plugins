@@ -25,8 +25,8 @@
 
 #include "MeshOptimizerSceneConverter.h"
 
+#include <Corrade/Containers/Iterable.h>
 #include <Corrade/Containers/Optional.h>
-#include <Corrade/Containers/Reference.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Magnum/Math/PackingBatch.h>
 #include <Magnum/Math/Vector3.h>
