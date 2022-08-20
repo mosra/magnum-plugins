@@ -431,8 +431,8 @@ void KtxImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFlags
            supercompression scheme. Basis UASTC on the other hand is indicated
            by the DFD color model. */
         if(header.supercompressionScheme != Implementation::SuperCompressionScheme::BasisLZ) {
-            /* This is the only place we need to read the DFD so all checks
-                can reside here */
+            /* This is the only place we need to read the DFD so all checks can
+               reside here */
             const std::size_t dfdEnd = header.dfdByteOffset + header.dfdByteLength;
             if(data.size() < dfdEnd) {
                 Error{} << "Trade::KtxImporter::openData(): file too short, expected" <<
