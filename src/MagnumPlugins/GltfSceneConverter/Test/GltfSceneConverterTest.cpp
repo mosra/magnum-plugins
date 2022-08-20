@@ -386,7 +386,7 @@ void GltfSceneConverterTest::empty() {
     Containers::Pointer<AbstractSceneConverter> converter =  _converterManager.instantiate("GltfSceneConverter");
     converter->configuration().setValue("binary", data.binary);
 
-    converter->beginData();
+    CORRADE_VERIFY(converter->beginData());
     Containers::Optional<Containers::Array<char>> out = converter->endData();
     CORRADE_VERIFY(out);
     CORRADE_COMPARE_AS(Containers::StringView{*out},
@@ -409,7 +409,7 @@ void GltfSceneConverterTest::outputFormatDetectionToData() {
     if(data.binary)
         converter->configuration().setValue("binary", *data.binary);
 
-    converter->beginData();
+    CORRADE_VERIFY(converter->beginData());
     Containers::Optional<Containers::Array<char>> out = converter->endData();
     CORRADE_VERIFY(out);
     CORRADE_COMPARE_AS(Containers::StringView{*out},
@@ -451,7 +451,7 @@ void GltfSceneConverterTest::metadata() {
     converter->configuration().addValue("extensionRequired", "MAGNUM_is_amazing");
     converter->configuration().addValue("extensionRequired", "MAGNUM_exported_this_file");
 
-    converter->beginData();
+    CORRADE_VERIFY(converter->beginData());
     Containers::Optional<Containers::Array<char>> out = converter->endData();
     CORRADE_VERIFY(out);
 
@@ -486,7 +486,7 @@ void GltfSceneConverterTest::abort() {
     }}));
 
     /* Starting a new file should clean up the previous state */
-    converter->beginData();
+    CORRADE_VERIFY(converter->beginData());
     Containers::Optional<Containers::Array<char>> out = converter->endData();
     CORRADE_VERIFY(out);
     CORRADE_COMPARE_AS(Containers::StringView{*out},
@@ -1269,7 +1269,7 @@ void GltfSceneConverterTest::addMeshInvalid() {
     else
         CORRADE_VERIFY(converter->configuration().value<bool>("strict"));
 
-    converter->beginData();
+    CORRADE_VERIFY(converter->beginData());
     /* Some tested attributes are custom */
     converter->setMeshAttributeName(meshAttributeCustom(31434), "_YOLO");
 
@@ -1315,7 +1315,7 @@ void GltfSceneConverterTest::toDataButExternalBuffer() {
        trigger a failure */
     converter->configuration().setValue("binary", false);
 
-    converter->beginData();
+    CORRADE_VERIFY(converter->beginData());
     CORRADE_VERIFY(converter->add(mesh));
 
     std::ostringstream out;
