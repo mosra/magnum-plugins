@@ -171,6 +171,19 @@ None of the formats supported by this plugin have any way to distinguish
 between 2D and 1D array images. If an image has @ref ImageFlag2D::Array set, a
 warning is printed and the file is saved as a regular 2D image.
 
+Depending on the alias under which the plugin was loaded or the @ref Format
+passed to constructor, @ref extension() is one of @cpp "bmp" @ce, @cpp "hdr" @ce,
+@cpp "jpg" @ce, @cpp "png" @ce or @cpp "tga" @ce, picking always the most
+common for each format; the @ref mimeType() is one of @cpp "image/bmp" @ce,
+@cpp "image/vnd.radiance" @ce, @cpp "image/jpeg" @ce, @cpp "image/png" @ce or
+@cpp "image/x-tga" @ce. Returned values are consistent with what
+@ref JpegImageConverter, @ref PngImageConverter and @ref TgaImageConverter use,
+see their documentation for more information. If the plugin is loaded as
+`StbImageConverter` or no format is passed to the constructor, both
+@ref extension() and @ref mimeType() return an empty string. The returned
+values are also independent of what file extension is used in a call to
+@ref convertToFile().
+
 @subsection Trade-StbImageConverter-behavior-arithmetic-jpeg Arithmetic JPEG encoding
 
 [Arithmetic coding](https://en.wikipedia.org/wiki/Arithmetic_coding) is
@@ -225,6 +238,9 @@ class MAGNUM_STBIMAGECONVERTER_EXPORT StbImageConverter: public AbstractImageCon
 
     private:
         MAGNUM_STBIMAGECONVERTER_LOCAL ImageConverterFeatures doFeatures() const override;
+        MAGNUM_STBIMAGECONVERTER_LOCAL Containers::String doExtension() const override;
+        MAGNUM_STBIMAGECONVERTER_LOCAL Containers::String doMimeType() const override;
+
         MAGNUM_STBIMAGECONVERTER_LOCAL Containers::Optional<Containers::Array<char>> doConvertToData(const ImageView2D& image) override;
         MAGNUM_STBIMAGECONVERTER_LOCAL bool doConvertToFile(const ImageView2D& image, Containers::StringView filename) override;
 

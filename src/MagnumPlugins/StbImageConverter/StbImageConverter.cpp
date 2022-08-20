@@ -29,6 +29,7 @@
 #include <Corrade/Containers/Array.h>
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/Pair.h>
+#include <Corrade/Containers/String.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/Path.h>
 #include <Corrade/Utility/String.h>
@@ -69,6 +70,29 @@ StbImageConverter::StbImageConverter(PluginManager::AbstractManager& manager, co
 }
 
 ImageConverterFeatures StbImageConverter::doFeatures() const { return ImageConverterFeature::Convert2DToData; }
+
+Containers::String StbImageConverter::doExtension() const {
+    if(_format == Format::Bmp) return "bmp"_s;
+    if(_format == Format::Hdr) return "hdr"_s;
+    if(_format == Format::Jpeg) return "jpg"_s;
+    if(_format == Format::Png) return "png"_s;
+    if(_format == Format::Tga) return "tga"_s;
+
+    return {};
+}
+
+Containers::String StbImageConverter::doMimeType() const {
+    if(_format == Format::Bmp) return "image/bmp"_s;
+    if(_format == Format::Hdr) return "image/vnd.radiance"_s;
+    if(_format == Format::Jpeg) return "image/jpeg"_s;
+    if(_format == Format::Png) return "image/png"_s;
+    /* https://en.wikipedia.org/wiki/Truevision_TGA says there's no registered
+       MIME type. It probably never will be. Using `file --mime-type` on a TGA
+       file returns image/x-tga, so using that here as well. */
+    if(_format == Format::Tga) return "image/x-tga"_s;
+
+    return {};
+}
 
 Containers::Optional<Containers::Array<char>> StbImageConverter::doConvertToData(const ImageView2D& image) {
     if(_format == Format{}) {
@@ -205,4 +229,4 @@ bool StbImageConverter::doConvertToFile(const ImageView2D& image, const Containe
 }}
 
 CORRADE_PLUGIN_REGISTER(StbImageConverter, Magnum::Trade::StbImageConverter,
-    "cz.mosra.magnum.Trade.AbstractImageConverter/0.3.2")
+    "cz.mosra.magnum.Trade.AbstractImageConverter/0.3.3")

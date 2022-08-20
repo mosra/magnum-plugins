@@ -169,6 +169,8 @@ void StbImageConverterTest::wrongFormatHdr() {
 
 void StbImageConverterTest::unknownOutputFormatData() {
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("StbImageConverter");
+    CORRADE_COMPARE(converter->extension(), "");
+    CORRADE_COMPARE(converter->mimeType(), "");
 
     const char data[4]{};
     std::ostringstream out;
@@ -179,6 +181,8 @@ void StbImageConverterTest::unknownOutputFormatData() {
 
 void StbImageConverterTest::unknownOutputFormatFile() {
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("StbImageConverter");
+    CORRADE_COMPARE(converter->extension(), "");
+    CORRADE_COMPARE(converter->mimeType(), "");
 
     const char data[4]{};
     Containers::String filename = Utility::Path::join(STBIMAGECONVERTER_TEST_OUTPUT_DIR, "file.foo");
@@ -209,6 +213,8 @@ constexpr const char ConvertedRgData[] = {
 
 void StbImageConverterTest::bmpRg() {
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("StbBmpImageConverter");
+    CORRADE_COMPARE(converter->extension(), "bmp");
+    CORRADE_COMPARE(converter->mimeType(), "image/bmp");
 
     /* RGBA should be exported as RGB, with the alpha channel ignored (and a
        warning about that printed) */
@@ -260,6 +266,9 @@ constexpr const Float ConvertedGrayscale32FData[] = {
 
 void StbImageConverterTest::hdrGrayscale() {
     Containers::Pointer<Trade::AbstractImageConverter> converter = _converterManager.instantiate("StbHdrImageConverter");
+    CORRADE_COMPARE(converter->extension(), "hdr");
+    CORRADE_COMPARE(converter->mimeType(), "image/vnd.radiance");
+
     Containers::Optional<Containers::Array<char>> data = converter->convertToData(OriginalGrayscale32F);
     CORRADE_VERIFY(data);
 
@@ -281,6 +290,8 @@ void StbImageConverterTest::hdrGrayscale() {
 
 void StbImageConverterTest::hdrRg() {
     Containers::Pointer<Trade::AbstractImageConverter> converter = _converterManager.instantiate("StbHdrImageConverter");
+    CORRADE_COMPARE(converter->extension(), "hdr");
+    CORRADE_COMPARE(converter->mimeType(), "image/vnd.radiance");
 
     /* RG should be exported as RRR, with the green channel ignored */
     std::ostringstream out;
@@ -325,6 +336,9 @@ const ImageView2D OriginalRgba32F{PixelFormat::RGBA32F, {2, 3}, OriginalRgba32FD
 
 void StbImageConverterTest::hdrRgb() {
     Containers::Pointer<Trade::AbstractImageConverter> converter = _converterManager.instantiate("StbHdrImageConverter");
+    CORRADE_COMPARE(converter->extension(), "hdr");
+    CORRADE_COMPARE(converter->mimeType(), "image/vnd.radiance");
+
     Containers::Optional<Containers::Array<char>> data = converter->convertToData(OriginalRgb32F);
     CORRADE_VERIFY(data);
 
@@ -345,6 +359,8 @@ void StbImageConverterTest::hdrRgb() {
 
 void StbImageConverterTest::hdrRgba() {
    Containers::Pointer<Trade::AbstractImageConverter> converter = _converterManager.instantiate("StbHdrImageConverter");
+    CORRADE_COMPARE(converter->extension(), "hdr");
+    CORRADE_COMPARE(converter->mimeType(), "image/vnd.radiance");
 
     /* RGBA should be exported as RGB, with the alpha channel ignored */
     std::ostringstream out;
@@ -446,6 +462,8 @@ constexpr const char ConvertedJpegRgbData[] = {
 
 void StbImageConverterTest::jpegRgb80Percent() {
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("StbJpegImageConverter");
+    CORRADE_COMPARE(converter->extension(), "jpg");
+    CORRADE_COMPARE(converter->mimeType(), "image/jpeg");
     CORRADE_COMPARE(converter->configuration().value<Float>("jpegQuality"), 0.8f);
 
     Containers::Optional<Containers::Array<char>> data = converter->convertToData(OriginalJpegRgb);
@@ -466,6 +484,9 @@ void StbImageConverterTest::jpegRgb80Percent() {
 
 void StbImageConverterTest::jpegRgb100Percent() {
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("StbJpegImageConverter");
+    CORRADE_COMPARE(converter->extension(), "jpg");
+    CORRADE_COMPARE(converter->mimeType(), "image/jpeg");
+
     converter->configuration().setValue("jpegQuality", 1.0f);
 
     Containers::Optional<Containers::Array<char>> data = converter->convertToData(OriginalJpegRgb);
@@ -486,6 +507,8 @@ void StbImageConverterTest::jpegRgb100Percent() {
 
 void StbImageConverterTest::jpegRgba80Percent() {
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("StbJpegImageConverter");
+    CORRADE_COMPARE(converter->extension(), "jpg");
+    CORRADE_COMPARE(converter->mimeType(), "image/jpeg");
     CORRADE_COMPARE(converter->configuration().value<Float>("jpegQuality"), 0.8f);
 
     /* RGBA should be exported as RGB, with the alpha channel ignored (and a
@@ -555,6 +578,8 @@ const ImageView2D OriginalJpegGrayscale{PixelStorage{}.setSkip({0, 1, 0}),
 
 void StbImageConverterTest::jpegGrayscale80Percent() {
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("StbJpegImageConverter");
+    CORRADE_COMPARE(converter->extension(), "jpg");
+    CORRADE_COMPARE(converter->mimeType(), "image/jpeg");
     CORRADE_COMPARE(converter->configuration().value<Float>("jpegQuality"), 0.8f);
 
     Containers::Optional<Containers::Array<char>> data = converter->convertToData(OriginalJpegGrayscale);
@@ -591,7 +616,11 @@ constexpr const char ConvertedRgbData[] = {
 };
 
 void StbImageConverterTest::pngRgb() {
-    Containers::Optional<Containers::Array<char>> data = _converterManager.instantiate("StbPngImageConverter")->convertToData(OriginalRgb);
+    Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("StbPngImageConverter");
+    CORRADE_COMPARE(converter->extension(), "png");
+    CORRADE_COMPARE(converter->mimeType(), "image/png");
+
+    Containers::Optional<Containers::Array<char>> data = converter->convertToData(OriginalRgb);
     CORRADE_VERIFY(data);
 
     if(_importerManager.loadState("StbImageImporter") == PluginManager::LoadState::NotFound)
@@ -627,7 +656,11 @@ constexpr const char ConvertedGrayscaleData[] = {
 };
 
 void StbImageConverterTest::pngGrayscale() {
-    Containers::Optional<Containers::Array<char>> data = _converterManager.instantiate("StbPngImageConverter")->convertToData(OriginalGrayscale);
+    Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("StbPngImageConverter");
+    CORRADE_COMPARE(converter->extension(), "png");
+    CORRADE_COMPARE(converter->mimeType(), "image/png");
+
+    Containers::Optional<Containers::Array<char>> data = converter->convertToData(OriginalGrayscale);
     CORRADE_VERIFY(data);
 
     if(_importerManager.loadState("StbImageImporter") == PluginManager::LoadState::NotFound)
@@ -661,7 +694,11 @@ constexpr const char ConvertedRgbaData[] = {
 };
 
 void StbImageConverterTest::tgaRgba() {
-    Containers::Optional<Containers::Array<char>> data = _converterManager.instantiate("StbTgaImageConverter")->convertToData(OriginalRgba);
+    Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("StbTgaImageConverter");
+    CORRADE_COMPARE(converter->extension(), "tga");
+    CORRADE_COMPARE(converter->mimeType(), "image/x-tga");
+
+    Containers::Optional<Containers::Array<char>> data = converter->convertToData(OriginalRgba);
     CORRADE_VERIFY(data);
 
     if(_importerManager.loadState("StbImageImporter") == PluginManager::LoadState::NotFound)
