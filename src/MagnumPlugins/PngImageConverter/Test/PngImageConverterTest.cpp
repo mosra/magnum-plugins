@@ -25,7 +25,7 @@
 
 #include <sstream>
 #include <Corrade/Containers/Optional.h>
-#include <Corrade/Containers/StringView.h>
+#include <Corrade/Containers/String.h>
 #include <Corrade/Containers/StridedArrayView.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
@@ -139,7 +139,11 @@ constexpr const char ConvertedRgbData[] = {
 };
 
 void PngImageConverterTest::rgb() {
-    Containers::Optional<Containers::Array<char>> data = _converterManager.instantiate("PngImageConverter")->convertToData(OriginalRgb);
+    Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("PngImageConverter");
+    CORRADE_COMPARE(converter->extension(), "png");
+    CORRADE_COMPARE(converter->mimeType(), "image/png");
+
+    Containers::Optional<Containers::Array<char>> data = converter->convertToData(OriginalRgb);
     CORRADE_VERIFY(data);
 
     if(_importerManager.loadState("PngImporter") == PluginManager::LoadState::NotFound)

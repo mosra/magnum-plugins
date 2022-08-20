@@ -28,6 +28,7 @@
 #include <csetjmp>
 #include <Corrade/Containers/Array.h>
 #include <Corrade/Containers/Optional.h>
+#include <Corrade/Containers/String.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Magnum/ImageView.h>
 #include <Magnum/PixelFormat.h>
@@ -54,6 +55,8 @@
 
 namespace Magnum { namespace Trade {
 
+using namespace Containers::Literals;
+
 JpegImageConverter::JpegImageConverter() {
     /** @todo horrible workaround, fix this properly */
     configuration().setValue("jpegQuality", 0.8f);
@@ -62,6 +65,12 @@ JpegImageConverter::JpegImageConverter() {
 JpegImageConverter::JpegImageConverter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin): AbstractImageConverter(manager, std::move(plugin)) {}
 
 ImageConverterFeatures JpegImageConverter::doFeatures() const { return ImageConverterFeature::Convert2DToData; }
+
+Containers::String JpegImageConverter::doExtension() const { return "jpg"_s; }
+
+Containers::String JpegImageConverter::doMimeType() const {
+    return "image/jpeg"_s;
+}
 
 Containers::Optional<Containers::Array<char>> JpegImageConverter::doConvertToData(const ImageView2D& image) {
     /* Warn about lost metadata */
@@ -185,4 +194,4 @@ Containers::Optional<Containers::Array<char>> JpegImageConverter::doConvertToDat
 }}
 
 CORRADE_PLUGIN_REGISTER(JpegImageConverter, Magnum::Trade::JpegImageConverter,
-    "cz.mosra.magnum.Trade.AbstractImageConverter/0.3.2")
+    "cz.mosra.magnum.Trade.AbstractImageConverter/0.3.3")

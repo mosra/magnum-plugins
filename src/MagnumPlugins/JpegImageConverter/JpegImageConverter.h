@@ -115,6 +115,9 @@ The JPEG file format doesn't have a way to distinguish between 2D and 1D array
 images. If an image has @ref ImageFlag2D::Array set, a warning is printed and
 the file is saved as a regular 2D image.
 
+While JPEG files can have several extensions, @ref extension() always returns
+@cpp "jpg" @ce as that's the most common one.
+
 @subsection Trade-JpegImageConverter-behavior-implementations libJPEG implementations
 
 While some systems (such as macOS) still ship only with the vanilla libJPEG,
@@ -151,6 +154,9 @@ class MAGNUM_JPEGIMAGECONVERTER_EXPORT JpegImageConverter: public AbstractImageC
 
     private:
         MAGNUM_JPEGIMAGECONVERTER_LOCAL ImageConverterFeatures doFeatures() const override;
+        MAGNUM_JPEGIMAGECONVERTER_LOCAL Containers::String doExtension() const override;
+        MAGNUM_JPEGIMAGECONVERTER_LOCAL Containers::String doMimeType() const override;
+
         MAGNUM_JPEGIMAGECONVERTER_LOCAL Containers::Optional<Containers::Array<char>> doConvertToData(const ImageView2D& image) override;
 };
 

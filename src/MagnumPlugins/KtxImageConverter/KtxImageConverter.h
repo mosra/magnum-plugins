@@ -142,6 +142,8 @@ class MAGNUM_KTXIMAGECONVERTER_EXPORT KtxImageConverter: public AbstractImageCon
 
     private:
         MAGNUM_KTXIMAGECONVERTER_LOCAL ImageConverterFeatures doFeatures() const override;
+        MAGNUM_KTXIMAGECONVERTER_LOCAL Containers::String doExtension() const override;
+        MAGNUM_KTXIMAGECONVERTER_LOCAL Containers::String doMimeType() const override;
 
         MAGNUM_KTXIMAGECONVERTER_LOCAL Containers::Optional<Containers::Array<char>> doConvertToData(Containers::ArrayView<const ImageView1D> imageLevels) override;
         MAGNUM_KTXIMAGECONVERTER_LOCAL Containers::Optional<Containers::Array<char>> doConvertToData(Containers::ArrayView<const ImageView2D> imageLevels) override;

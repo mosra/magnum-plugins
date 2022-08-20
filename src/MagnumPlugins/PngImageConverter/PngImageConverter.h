@@ -122,6 +122,9 @@ class MAGNUM_PNGIMAGECONVERTER_EXPORT PngImageConverter: public AbstractImageCon
 
     private:
         MAGNUM_PNGIMAGECONVERTER_LOCAL ImageConverterFeatures doFeatures() const override;
+        MAGNUM_PNGIMAGECONVERTER_LOCAL Containers::String doExtension() const override;
+        MAGNUM_PNGIMAGECONVERTER_LOCAL Containers::String doMimeType() const override;
+
         MAGNUM_PNGIMAGECONVERTER_LOCAL Containers::Optional<Containers::Array<char>> doConvertToData(const ImageView2D& image) override;
 };
 

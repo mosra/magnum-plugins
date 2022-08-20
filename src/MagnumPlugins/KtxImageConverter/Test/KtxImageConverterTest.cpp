@@ -837,6 +837,9 @@ void KtxImageConverterTest::convert1DArray() {
 
 void KtxImageConverterTest::convert2D() {
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("KtxImageConverter");
+    CORRADE_COMPARE(converter->extension(), "ktx2");
+    CORRADE_COMPARE(converter->mimeType(), "image/ktx2");
+
     converter->configuration().setValue("orientation", "rd");
     converter->configuration().setValue("writerName", WriterToktx);
 

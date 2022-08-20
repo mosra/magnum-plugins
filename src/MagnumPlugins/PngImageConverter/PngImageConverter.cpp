@@ -41,16 +41,25 @@
 #include <csetjmp>
 #include <Corrade/Containers/Array.h>
 #include <Corrade/Containers/Optional.h>
+#include <Corrade/Containers/String.h>
 #include <Magnum/ImageView.h>
 #include <Magnum/PixelFormat.h>
 
 namespace Magnum { namespace Trade {
+
+using namespace Containers::Literals;
 
 PngImageConverter::PngImageConverter() = default;
 
 PngImageConverter::PngImageConverter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin): AbstractImageConverter{manager, plugin} {}
 
 ImageConverterFeatures PngImageConverter::doFeatures() const { return ImageConverterFeature::Convert2DToData; }
+
+Containers::String PngImageConverter::doExtension() const { return "png"_s; }
+
+Containers::String PngImageConverter::doMimeType() const {
+    return "image/png"_s;
+}
 
 Containers::Optional<Containers::Array<char>> PngImageConverter::doConvertToData(const ImageView2D& image) {
     CORRADE_ASSERT(std::strcmp(PNG_LIBPNG_VER_STRING, png_libpng_ver) == 0,
@@ -169,4 +178,4 @@ Containers::Optional<Containers::Array<char>> PngImageConverter::doConvertToData
 }}
 
 CORRADE_PLUGIN_REGISTER(PngImageConverter, Magnum::Trade::PngImageConverter,
-    "cz.mosra.magnum.Trade.AbstractImageConverter/0.3.2")
+    "cz.mosra.magnum.Trade.AbstractImageConverter/0.3.3")

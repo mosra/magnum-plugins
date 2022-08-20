@@ -223,6 +223,8 @@ constexpr const char ConvertedRgbData[] = {
 
 void JpegImageConverterTest::rgb80Percent() {
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("JpegImageConverter");
+    CORRADE_COMPARE(converter->extension(), "jpg");
+    CORRADE_COMPARE(converter->mimeType(), "image/jpeg");
     CORRADE_COMPARE(converter->configuration().value<Float>("jpegQuality"), 0.8f);
 
     Containers::Optional<Containers::Array<char>> data = converter->convertToData(OriginalRgb);

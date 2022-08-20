@@ -30,7 +30,7 @@
 #include <Corrade/Containers/Array.h>
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/Pair.h>
-#include <Corrade/Containers/StringView.h>
+#include <Corrade/Containers/String.h>
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/Endianness.h>
@@ -907,6 +907,12 @@ ImageConverterFeatures KtxImageConverter::doFeatures() const {
         ImageConverterFeature::ConvertCompressedLevels3DToData;
 }
 
+Containers::String KtxImageConverter::doExtension() const { return "ktx2"_s; }
+
+Containers::String KtxImageConverter::doMimeType() const {
+    return "image/ktx2"_s;
+}
+
 Containers::Optional<Containers::Array<char>> KtxImageConverter::doConvertToData(Containers::ArrayView<const ImageView1D> imageLevels) {
     return convertLevels(imageLevels, configuration());
 }
@@ -934,4 +940,4 @@ Containers::Optional<Containers::Array<char>> KtxImageConverter::doConvertToData
 }}
 
 CORRADE_PLUGIN_REGISTER(KtxImageConverter, Magnum::Trade::KtxImageConverter,
-    "cz.mosra.magnum.Trade.AbstractImageConverter/0.3.2")
+    "cz.mosra.magnum.Trade.AbstractImageConverter/0.3.3")
