@@ -354,6 +354,9 @@ void OpenExrImageConverterTest::rgb16f() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImageConverter> converter = _manager.instantiate("OpenExrImageConverter");
+    CORRADE_COMPARE(converter->extension(), "exr");
+    CORRADE_COMPARE(converter->mimeType(), "image/x-exr");
+
     if(data.tiled)
         converter->configuration().setValue("forceTiledOutput", true);
 

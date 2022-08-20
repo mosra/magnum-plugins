@@ -29,6 +29,7 @@
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/GrowableArray.h>
 #include <Corrade/Containers/StridedArrayView.h>
+#include <Corrade/Containers/String.h>
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/DebugStl.h> /** @todo remove once Configuration is <string>-free */
@@ -85,6 +86,15 @@ class MemoryOStream: public Imf::OStream {
 OpenExrImageConverter::OpenExrImageConverter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin): AbstractImageConverter{manager, plugin} {}
 
 ImageConverterFeatures OpenExrImageConverter::doFeatures() const { return ImageConverterFeature::ConvertLevels2DToData|ImageConverterFeature::ConvertLevels3DToData; }
+
+Containers::String OpenExrImageConverter::doExtension() const { return "exr"_s; }
+
+Containers::String OpenExrImageConverter::doMimeType() const {
+    /* According to https://lists.gnu.org/archive/html/openexr-devel/2014-05/msg00014.html
+       there's no registered MIME type, image/x-exr is what `file --mime-type`
+       returns as well. */
+    return "image/x-exr"_s;
+}
 
 namespace {
 
@@ -524,4 +534,4 @@ Containers::Optional<Containers::Array<char>> OpenExrImageConverter::doConvertTo
 }}
 
 CORRADE_PLUGIN_REGISTER(OpenExrImageConverter, Magnum::Trade::OpenExrImageConverter,
-    "cz.mosra.magnum.Trade.AbstractImageConverter/0.3.2")
+    "cz.mosra.magnum.Trade.AbstractImageConverter/0.3.3")

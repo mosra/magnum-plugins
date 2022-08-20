@@ -110,7 +110,11 @@ constexpr const char RgbaData[] = {
 const ImageView2D Rgba{PixelFormat::RGBA16F, {1, 3}, RgbaData};
 
 void MiniExrImageConverterTest::rgb() {
-    Containers::Optional<Containers::Array<char>> data = _manager.instantiate("MiniExrImageConverter")->convertToData(Rgb);
+    Containers::Pointer<AbstractImageConverter> converter = _manager.instantiate("MiniExrImageConverter");
+    CORRADE_COMPARE(converter->extension(), "exr");
+    CORRADE_COMPARE(converter->mimeType(), "image/x-exr");
+
+    Containers::Optional<Containers::Array<char>> data = converter->convertToData(Rgb);
     CORRADE_VERIFY(data);
     CORRADE_COMPARE_AS(Containers::StringView{*data},
         Utility::Path::join(MINIEXRIMAGECONVERTER_TEST_DIR, "image.exr"),

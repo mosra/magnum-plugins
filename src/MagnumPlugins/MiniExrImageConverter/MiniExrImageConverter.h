@@ -113,6 +113,9 @@ The output is always uncompressed, only half-float RGB and RGBA is supported.
 The OpenEXR file format doesn't have a way to distinguish between 2D and 1D
 array images. If an image has @ref ImageFlag2D::Array set, a warning is printed
 and the file is saved as a regular 2D image.
+
+As OpenEXR doesn't have a registered MIME type, @ref mimeType() returns
+@cpp "image/x-exr" @ce.
 */
 class MAGNUM_MINIEXRIMAGECONVERTER_EXPORT MiniExrImageConverter: public AbstractImageConverter {
     public:
@@ -124,6 +127,9 @@ class MAGNUM_MINIEXRIMAGECONVERTER_EXPORT MiniExrImageConverter: public Abstract
 
     private:
         MAGNUM_MINIEXRIMAGECONVERTER_LOCAL ImageConverterFeatures doFeatures() const override;
+        MAGNUM_MINIEXRIMAGECONVERTER_LOCAL Containers::String doExtension() const override;
+        MAGNUM_MINIEXRIMAGECONVERTER_LOCAL Containers::String doMimeType() const override;
+
         MAGNUM_MINIEXRIMAGECONVERTER_LOCAL Containers::Optional<Containers::Array<char>> doConvertToData(const ImageView2D& image) override;
 };
 

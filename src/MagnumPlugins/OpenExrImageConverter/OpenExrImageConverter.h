@@ -146,6 +146,9 @@ See @ref building-plugins, @ref cmake-plugins, @ref plugins and
 
 @section Trade-OpenExrImageConverter-behavior Behavior and limitations
 
+As OpenEXR doesn't have a registered MIME type, @ref mimeType() returns
+@cpp "image/x-exr" @ce.
+
 @subsection Trade-OpenExrImageConverter-behavior-channel-mapping Channel mapping
 
 Images with @ref PixelFormat::R16F / @relativeref{PixelFormat,RG16F} /
@@ -233,6 +236,9 @@ class MAGNUM_OPENEXRIMAGECONVERTER_EXPORT OpenExrImageConverter: public Abstract
 
     private:
         MAGNUM_OPENEXRIMAGECONVERTER_LOCAL ImageConverterFeatures doFeatures() const override;
+        MAGNUM_OPENEXRIMAGECONVERTER_LOCAL Containers::String doExtension() const override;
+        MAGNUM_OPENEXRIMAGECONVERTER_LOCAL Containers::String doMimeType() const override;
+
         MAGNUM_OPENEXRIMAGECONVERTER_LOCAL Containers::Optional<Containers::Array<char>> doConvertToData(Containers::ArrayView<const ImageView2D> imageLevels) override;
         MAGNUM_OPENEXRIMAGECONVERTER_LOCAL Containers::Optional<Containers::Array<char>> doConvertToData(Containers::ArrayView<const ImageView3D> imageLevels) override;
 };

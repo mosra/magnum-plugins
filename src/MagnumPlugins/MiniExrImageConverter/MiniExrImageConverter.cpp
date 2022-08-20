@@ -28,6 +28,7 @@
 #include <algorithm> /* std::copy_n() */ /** @todo remove */
 #include <Corrade/Containers/Array.h>
 #include <Corrade/Containers/Optional.h>
+#include <Corrade/Containers/String.h>
 #include <Magnum/ImageView.h>
 #include <Magnum/PixelFormat.h>
 
@@ -42,11 +43,22 @@
 
 namespace Magnum { namespace Trade {
 
+using namespace Containers::Literals;
+
 MiniExrImageConverter::MiniExrImageConverter() = default;
 
 MiniExrImageConverter::MiniExrImageConverter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin): AbstractImageConverter{manager, plugin} {}
 
 ImageConverterFeatures MiniExrImageConverter::doFeatures() const { return ImageConverterFeature::Convert2DToData; }
+
+Containers::String MiniExrImageConverter::doExtension() const { return "exr"_s; }
+
+Containers::String MiniExrImageConverter::doMimeType() const {
+    /* According to https://lists.gnu.org/archive/html/openexr-devel/2014-05/msg00014.html
+       there's no registered MIME type, image/x-exr is what `file --mime-type`
+       returns as well. */
+    return "image/x-exr"_s;
+}
 
 Containers::Optional<Containers::Array<char>> MiniExrImageConverter::doConvertToData(const ImageView2D& image) {
     /* Warn about lost metadata */
@@ -93,4 +105,4 @@ Containers::Optional<Containers::Array<char>> MiniExrImageConverter::doConvertTo
 }}
 
 CORRADE_PLUGIN_REGISTER(MiniExrImageConverter, Magnum::Trade::MiniExrImageConverter,
-    "cz.mosra.magnum.Trade.AbstractImageConverter/0.3.2")
+    "cz.mosra.magnum.Trade.AbstractImageConverter/0.3.3")
