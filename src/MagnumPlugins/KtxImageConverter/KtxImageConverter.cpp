@@ -648,9 +648,7 @@ void endianSwap(Containers::ArrayView<char> data, UnsignedInt typeSize) {
         case 4:
             Utility::Endianness::littleEndianInPlace(Containers::arrayCast<TypeForSize<4>::Type>(data));
             return;
-        case 8:
-            Utility::Endianness::littleEndianInPlace(Containers::arrayCast<TypeForSize<8>::Type>(data));
-            return;
+        /* No 64-bit pixel formats at the moment */
     }
 
     CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
