@@ -228,10 +228,18 @@ constexpr struct {
     const char* pluginName;
     const char* filename;
     const char* prefix;
+    const char* expectedExtension;
+    const char* expectedMimeType;
 } ConvertToFileData[]{
-    {"Basis", "BasisImageConverter", "image.basis", BasisFileMagic},
-    {"KTX2", "BasisImageConverter", "image.ktx2", KtxFileMagic},
-    {"KTX2 with explicit plugin name", "BasisKtxImageConverter", "image.foo", KtxFileMagic}
+    {"Basis", "BasisImageConverter",
+        "image.basis", BasisFileMagic, "basis", ""},
+    {"KTX2", "BasisImageConverter",
+        /* Yes, the extension is still *.basis here, because both before and
+           after calling convertToFile() the default output format is still
+           Basis */
+        "image.ktx2", KtxFileMagic, "basis", ""},
+    {"KTX2 with explicit plugin name", "BasisKtxImageConverter",
+        "image.foo", KtxFileMagic, "ktx2", "image/ktx2"}
 };
 
 constexpr struct {
@@ -1174,6 +1182,9 @@ void BasisImageConverterTest::convertToFile2D() {
     const ImageView2D originalLevels[2]{*originalLevel0, *originalLevel1};
 
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate(data.pluginName);
+    CORRADE_COMPARE(converter->extension(), data.expectedExtension);
+    CORRADE_COMPARE(converter->mimeType(), data.expectedMimeType);
+
     Containers::String filename = Utility::Path::join(BASISIMAGECONVERTER_TEST_OUTPUT_DIR, data.filename);
     CORRADE_VERIFY(converter->convertToFile(originalLevels, filename));
 
@@ -1232,6 +1243,9 @@ void BasisImageConverterTest::convertToFile3D() {
     const ImageView3D originalImage3D{ImageView2D(*originalImage), ImageFlag3D::Array};
 
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate(data.pluginName);
+    CORRADE_COMPARE(converter->extension(), data.expectedExtension);
+    CORRADE_COMPARE(converter->mimeType(), data.expectedMimeType);
+
     Containers::String filename = Utility::Path::join(BASISIMAGECONVERTER_TEST_OUTPUT_DIR, data.filename);
     CORRADE_VERIFY(converter->convertToFile({originalImage3D}, filename));
 

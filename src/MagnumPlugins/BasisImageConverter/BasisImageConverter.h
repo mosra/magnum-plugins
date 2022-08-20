@@ -171,9 +171,15 @@ To keep the original channel order, set @cb{.ini} swizzle=rgba @ce.
 
 To create Khronos Texture 2.0 (`*.ktx2`) files, either load the plugin as
 `BasisKtxImageConverter`, call @ref convertToFile() with the `.ktx2` extension
-or pass @ref Format::Ktx to the constructor.
+or pass @ref Format::Ktx to the constructor. In all other cases, a Basis
+Universal (`*.basis`) file is created.
 
-In all other cases, a Basis Universal (`*.basis`) file is created.
+The @ref extension() is @cpp "ktx2" @ce and @ref mimeType() @cpp "image/ktx2" @ce
+if the plugin is loaded as `BasisKtxImageConverter` or @ref Format::Ktx is
+passed to the constructor. In all other cases (and independently of what
+file extension is used in a call to @ref convertToFile()), @ref extension is
+@cpp "basis" @ce and @ref mimeType() is an empty string as the Basis Universal
+file format doesn't have a registered MIME type.
 
 @subsection Trade-BasisImageConverter-behavior-loading Loading the plugin fails with undefined symbol: pthread_create
 
@@ -255,6 +261,8 @@ class MAGNUM_BASISIMAGECONVERTER_EXPORT BasisImageConverter: public AbstractImag
 
     private:
         MAGNUM_BASISIMAGECONVERTER_LOCAL ImageConverterFeatures doFeatures() const override;
+        MAGNUM_BASISIMAGECONVERTER_LOCAL Containers::String doExtension() const override;
+        MAGNUM_BASISIMAGECONVERTER_LOCAL Containers::String doMimeType() const override;
 
         MAGNUM_BASISIMAGECONVERTER_LOCAL Containers::Optional<Containers::Array<char>> doConvertToData(Containers::ArrayView<const ImageView2D> imageLevels) override;
         MAGNUM_BASISIMAGECONVERTER_LOCAL Containers::Optional<Containers::Array<char>> doConvertToData(Containers::ArrayView<const ImageView3D> imageLevels) override;

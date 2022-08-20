@@ -33,6 +33,7 @@
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/Pair.h>
 #include <Corrade/Containers/StridedArrayView.h>
+#include <Corrade/Containers/String.h>
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/Path.h>
@@ -426,6 +427,18 @@ ImageConverterFeatures BasisImageConverter::doFeatures() const {
     return ImageConverterFeature::ConvertLevels2DToData|ImageConverterFeature::ConvertLevels3DToData;
 }
 
+Containers::String BasisImageConverter::doExtension() const {
+    if(_format == Format::Ktx)
+        return "ktx2"_s;
+    return "basis"_s;
+}
+
+Containers::String BasisImageConverter::doMimeType() const {
+    if(_format == Format::Ktx)
+        return "image/ktx2"_s;
+    return {};
+}
+
 Containers::Optional<Containers::Array<char>> BasisImageConverter::doConvertToData(Containers::ArrayView<const ImageView2D> imageLevels) {
     return convertLevelsToData(imageLevels, configuration(), flags(), _format);
 }
@@ -466,4 +479,4 @@ bool BasisImageConverter::doConvertToFile(Containers::ArrayView<const ImageView3
 }}
 
 CORRADE_PLUGIN_REGISTER(BasisImageConverter, Magnum::Trade::BasisImageConverter,
-    "cz.mosra.magnum.Trade.AbstractImageConverter/0.3.2")
+    "cz.mosra.magnum.Trade.AbstractImageConverter/0.3.3")
