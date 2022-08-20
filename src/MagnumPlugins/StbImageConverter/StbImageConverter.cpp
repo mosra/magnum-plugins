@@ -54,15 +54,15 @@ StbImageConverter::StbImageConverter(Format format): _format{format} {
 }
 
 StbImageConverter::StbImageConverter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin): AbstractImageConverter{manager, plugin} {
-    if(plugin == "StbBmpImageConverter" || plugin == "BmpImageConverter")
+    if(plugin == "StbBmpImageConverter"_s || plugin == "BmpImageConverter"_s)
         _format = Format::Bmp;
-    else if(plugin == "StbHdrImageConverter" || plugin == "HdrImageConverter")
+    else if(plugin == "StbHdrImageConverter"_s || plugin == "HdrImageConverter"_s)
         _format = Format::Hdr;
-    else if(plugin == "StbJpegImageConverter" || plugin == "JpegImageConverter")
+    else if(plugin == "StbJpegImageConverter"_s || plugin == "JpegImageConverter"_s)
         _format = Format::Jpeg;
-    else if(plugin == "StbPngImageConverter" || plugin == "PngImageConverter")
+    else if(plugin == "StbPngImageConverter"_s || plugin == "PngImageConverter"_s)
         _format = Format::Png;
-    else if(plugin == "StbTgaImageConverter" || plugin == "TgaImageConverter")
+    else if(plugin == "StbTgaImageConverter"_s || plugin == "TgaImageConverter"_s)
         _format = Format::Tga;
     else
         _format = {}; /* Runtime error in doExportToData() */
