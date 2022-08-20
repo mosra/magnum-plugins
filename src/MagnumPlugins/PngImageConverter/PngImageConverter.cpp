@@ -73,6 +73,7 @@ Containers::Optional<Containers::Array<char>> PngImageConverter::doConvertToData
     Int bitDepth;
     Int colorType;
     switch(image.format()) {
+        /* LCOV_EXCL_START */
         case PixelFormat::R8Unorm:
             bitDepth = 8;
             colorType = PNG_COLOR_TYPE_GRAY;
@@ -105,6 +106,7 @@ Containers::Optional<Containers::Array<char>> PngImageConverter::doConvertToData
             bitDepth = 16;
             colorType = PNG_COLOR_TYPE_RGBA;
             break;
+        /* LCOV_EXCL_STOP */
         default:
             Error() << "Trade::PngImageConverter::convertToData(): unsupported pixel format" << image.format();
             return {};
