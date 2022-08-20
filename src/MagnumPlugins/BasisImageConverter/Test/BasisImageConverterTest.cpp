@@ -1325,7 +1325,6 @@ void BasisImageConverterTest::ktx() {
     const Image2D imageWithSkip = copyImageWithSkip<Color4ub>(ImageView2D(*originalImage), {7, 8});
 
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("BasisKtxImageConverter");
-    converter->configuration().setValue("create_ktx2_file", true);
     converter->configuration().setValue("y_flip", data.yFlip);
     const Containers::Optional<Containers::Array<char>> compressedData = converter->convertToData(imageWithSkip);
     CORRADE_VERIFY(compressedData);
