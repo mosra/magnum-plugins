@@ -189,4 +189,4 @@ Containers::Optional<ImageData3D> StbResizeImageConverter::doConvert(const Image
 }}
 
 CORRADE_PLUGIN_REGISTER(StbResizeImageConverter, Magnum::Trade::StbResizeImageConverter,
-    "cz.mosra.magnum.Trade.AbstractImageConverter/0.3.2")
+    "cz.mosra.magnum.Trade.AbstractImageConverter/0.3.3")
