@@ -181,7 +181,7 @@ Containers::Optional<Containers::Array<char>> GltfSceneConverter::doEndData() {
     /* Wrap up the buffer if it's non-empty or if there are any (empty) buffer
        views referencing it */
     if(!_state->buffer.isEmpty() || !_state->gltfBufferViews.isEmpty()) {
-        json.writeKey("buffers");
+        json.writeKey("buffers"_s);
         Containers::ScopeGuard gltfBuffers = json.beginArrayScope();
         Containers::ScopeGuard gltfBuffer = json.beginObjectScope();
 
@@ -201,20 +201,20 @@ Containers::Optional<Containers::Array<char>> GltfSceneConverter::doEndData() {
 
             /* Writing just the filename as the two files are expected to be
                next to each other */
-            json.writeKey("uri").write(Utility::Path::split(bufferFilename).second());
+            json.writeKey("uri"_s).write(Utility::Path::split(bufferFilename).second());
         }
 
-        json.writeKey("byteLength").write(_state->buffer.size());
+        json.writeKey("byteLength"_s).write(_state->buffer.size());
     }
 
     /* Buffer views, accessors, ... If there are any, the array is left open --
        close it and put the whole JSON into the file */
     if(!_state->gltfBufferViews.isEmpty())
-        json.writeKey("bufferViews").writeJson(_state->gltfBufferViews.endArray().toString());
+        json.writeKey("bufferViews"_s).writeJson(_state->gltfBufferViews.endArray().toString());
     if(!_state->gltfAccessors.isEmpty())
-        json.writeKey("accessors").writeJson(_state->gltfAccessors.endArray().toString());
+        json.writeKey("accessors"_s).writeJson(_state->gltfAccessors.endArray().toString());
     if(!_state->gltfMeshes.isEmpty())
-        json.writeKey("meshes").writeJson(_state->gltfMeshes.endArray().toString());
+        json.writeKey("meshes"_s).writeJson(_state->gltfMeshes.endArray().toString());
 
     /* Done! */
     json.endObject();
@@ -631,7 +631,7 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const MeshData& mesh, const
 
     CORRADE_INTERNAL_ASSERT(_state->gltfMeshes.currentArraySize() == id);
     Containers::ScopeGuard gltfMesh = _state->gltfMeshes.beginObjectScope();
-    _state->gltfMeshes.writeKey("primitives");
+    _state->gltfMeshes.writeKey("primitives"_s);
     {
         Containers::ScopeGuard gltfPrimitives = _state->gltfMeshes.beginArrayScope();
         Containers::ScopeGuard gltfPrimitive = _state->gltfMeshes.beginObjectScope();
@@ -642,7 +642,7 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const MeshData& mesh, const
                padding before and after */
             /** @todo or put the whole thing there, consistently with
                 vertexData()? */
-            Containers::ArrayView<char> indexData = arrayAppend(_state->buffer, mesh.indices().asContiguous());
+            const Containers::ArrayView<char> indexData = arrayAppend(_state->buffer, mesh.indices().asContiguous());
 
             const std::size_t gltfBufferViewIndex = _state->gltfBufferViews.currentArraySize();
             Containers::ScopeGuard gltfBufferView = _state->gltfBufferViews.beginObjectScope();
@@ -670,7 +670,7 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const MeshData& mesh, const
                     name ? "mesh {0} ({1}) indices" : "mesh {0} indices",
                     id, name));
 
-            _state->gltfMeshes.writeKey("indices").write(gltfAccessorIndex);
+            _state->gltfMeshes.writeKey("indices"_s).write(gltfAccessorIndex);
         }
 
         /* Vertex data */
@@ -680,7 +680,7 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const MeshData& mesh, const
            not strictly valid anyway, so omiting the attributes key should be
            fine. */
         if(mesh.attributeCount()) {
-            _state->gltfMeshes.writeKey("attributes");
+            _state->gltfMeshes.writeKey("attributes"_s);
             Containers::ScopeGuard gltfAttributes = _state->gltfMeshes.beginObjectScope();
 
             for(UnsignedInt i = 0; i != mesh.attributeCount(); ++i) {
@@ -745,11 +745,11 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const MeshData& mesh, const
         }
 
         /* Triangles are a default */
-        if(gltfMode != 4) _state->gltfMeshes.writeKey("mode").write(gltfMode);
+        if(gltfMode != 4) _state->gltfMeshes.writeKey("mode"_s).write(gltfMode);
     }
 
     if(name)
-        _state->gltfMeshes.writeKey("name").write(name);
+        _state->gltfMeshes.writeKey("name"_s).write(name);
 
     return true;
 }
