@@ -59,56 +59,15 @@ namespace Magnum { namespace Trade {
 @m_keywords{HdrImageConverter JpegImageConverter PngImageConverter}
 @m_keywords{TgaImageConverter}
 
-Creates files in one of the following formats using the
-[stb_image_write](https://github.com/nothings/stb) library:
+Creates Windows Bitmap (`*.bmp`), Radiance HDR (`*.hdr`), JPEG (`*.jpg`,
+`*.jpe`, `*.jpeg`), Portable Network Graphics (`*.png`) or Truevision TGA
+(`*.tga`, `*.vda`, `*.icb`, `*.vst`) files using the
+[stb_image_write](https://github.com/nothings/stb) library.
 
--   Windows Bitmap (`*.bmp`) if the plugin was loaded as `StbBmpImageConverter`
-    / `BmpImageConverter`, if @ref convertToFile() was called with the
-    corresponding extension or if @ref Format::Bmp was passed to the
-    constructor. Accepts @ref PixelFormat::R8Unorm, @ref PixelFormat::RG8Unorm,
-    @ref PixelFormat::RGB8Unorm and @ref PixelFormat::RGBA8Unorm. Single- and
-    two-channel inputs are converted to three-channel with the the first
-    channel repeated three times (and second ignored), four-channel input
-    loses alpha.
--   Radiance HDR (`*.hdr`) if the plugin was loaded as `StbHdrImageConverter`
-    / `HdrImageConverter`, if @ref convertToFile() was called with the
-    corresponding extension or if @ref Format::Hdr was passed to the
-    constructor. Accepts @ref PixelFormat::R32F, @ref PixelFormat::RG32F,
-    @ref PixelFormat::RGB32F or @ref PixelFormat::RGBA32F. R and RG inputs are
-    converted to three-channel RRR with G ignored, four-channel input loses
-    alpha.
--   JPEG (`*.jpg`, `*.jpe`, `*.jpeg`) if the plugin was loaded as
-    `StbJpegImageConverter` / `JpegImageConverter`, if @ref convertToFile() was
-    called with one of the corresponding extensions or if @ref Format::Jpeg was
-    passed to the constructor. Accepts @ref PixelFormat::R8Unorm,
-    @ref PixelFormat::RG8Unorm, @ref PixelFormat::RGB8Unorm and
-    @ref PixelFormat::RGBA8Unorm. Single- and two-channel inputs are converted
-    to three-channel with the first channel repeated three times (and second
-    ignored), four-channel input loses alpha.
--   Portable Network Graphics (`*.png`) if the plugin was loaded as
-    `StbPngImageConverter` / `PngImageConverter`, if @ref convertToFile() was
-    called with the corresponding extension or if @ref Format::Png was passed
-    to the constructor. Accepts @ref PixelFormat::R8Unorm,
-    @ref PixelFormat::RG8Unorm, @ref PixelFormat::RGB8Unorm and
-    @ref PixelFormat::RGBA8Unorm, output has the same amount of channels as
-    input.
--   Truevision TGA (`*.tga`, `*.vda`, `*.icb`, `*.vst`) if the plugin was
-    loaded as `StbTgaImageConverter` / `TgaImageConverter`, if
-    @ref convertToFile() was called with one of the corresponding extensions or
-    if @ref Format::Tga was passed to the constructor. Accepts
-    @ref PixelFormat::R8Unorm, @ref PixelFormat::RG8Unorm,
-    @ref PixelFormat::RGB8Unorm and @ref PixelFormat::RGBA8Unorm, output has
-    the same amount of channels as input.
-
-If the conversion results in lost channels (such as saving RGBA to a JPEG,
-losing the alpha in process), a warning is printed to the output.
-
-Besides `StbBmpImageConverter`, `StbHdrImageConverter`, `StbJpegImageConverter`,
-`StbPngImageConverter` and `StbTgaImageConverter` aliases this plugin provides
-also `BmpImageConverter`, `HdrImageConverter`, `JpegImageConverter`,
-`PngImageConverter` and `TgaImageConverter` plugins, but note that this plugin
-may generate slightly larger files and the performance might be worse than when
-using plugins dedicated for given format.
+This plugin provides `StbBmpImageConverter`, `StbHdrImageConverter`,
+`StbJpegImageConverter`, `StbPngImageConverter` and `StbTgaImageConverter`
+aliases as well as also `BmpImageConverter`, `HdrImageConverter`,
+`JpegImageConverter`, `PngImageConverter` and `TgaImageConverter`
 
 @m_class{m-block m-primary}
 
@@ -160,6 +119,53 @@ See @ref building-plugins, @ref cmake-plugins, @ref plugins and
 @ref file-formats for more information.
 
 @section Trade-StbImageConverter-behavior Behavior and limitations
+
+Supports the following input and output format combinations:
+
+-   Windows Bitmap (`*.bmp`) if the plugin was loaded as `StbBmpImageConverter`
+    / `BmpImageConverter`, if @ref convertToFile() was called with the
+    corresponding extension or if @ref Format::Bmp was passed to the
+    constructor. Accepts @ref PixelFormat::R8Unorm, @ref PixelFormat::RG8Unorm,
+    @ref PixelFormat::RGB8Unorm and @ref PixelFormat::RGBA8Unorm. Single- and
+    two-channel inputs are converted to three-channel with the the first
+    channel repeated three times (and second ignored), four-channel input
+    loses alpha.
+-   Radiance HDR (`*.hdr`) if the plugin was loaded as `StbHdrImageConverter`
+    / `HdrImageConverter`, if @ref convertToFile() was called with the
+    corresponding extension or if @ref Format::Hdr was passed to the
+    constructor. Accepts @ref PixelFormat::R32F, @ref PixelFormat::RG32F,
+    @ref PixelFormat::RGB32F or @ref PixelFormat::RGBA32F. R and RG inputs are
+    converted to three-channel RRR with G ignored, four-channel input loses
+    alpha.
+-   JPEG (`*.jpg`, `*.jpe`, `*.jpeg`) if the plugin was loaded as
+    `StbJpegImageConverter` / `JpegImageConverter`, if @ref convertToFile() was
+    called with one of the corresponding extensions or if @ref Format::Jpeg was
+    passed to the constructor. Accepts @ref PixelFormat::R8Unorm,
+    @ref PixelFormat::RG8Unorm, @ref PixelFormat::RGB8Unorm and
+    @ref PixelFormat::RGBA8Unorm. Single- and two-channel inputs are converted
+    to three-channel with the first channel repeated three times (and second
+    ignored), four-channel input loses alpha.
+-   Portable Network Graphics (`*.png`) if the plugin was loaded as
+    `StbPngImageConverter` / `PngImageConverter`, if @ref convertToFile() was
+    called with the corresponding extension or if @ref Format::Png was passed
+    to the constructor. Accepts @ref PixelFormat::R8Unorm,
+    @ref PixelFormat::RG8Unorm, @ref PixelFormat::RGB8Unorm and
+    @ref PixelFormat::RGBA8Unorm, output has the same amount of channels as
+    input.
+-   Truevision TGA (`*.tga`, `*.vda`, `*.icb`, `*.vst`) if the plugin was
+    loaded as `StbTgaImageConverter` / `TgaImageConverter`, if
+    @ref convertToFile() was called with one of the corresponding extensions or
+    if @ref Format::Tga was passed to the constructor. Accepts
+    @ref PixelFormat::R8Unorm, @ref PixelFormat::RG8Unorm,
+    @ref PixelFormat::RGB8Unorm and @ref PixelFormat::RGBA8Unorm, output has
+    the same amount of channels as input.
+
+While the plugin provides generic aliases such as `PngImageConverter`, it may
+generate slightly larger files and the performance might be worse than when
+using plugins dedicated for given format such as @ref PngImageConverter.
+
+If the conversion results in lost channels (such as saving RGBA to a JPEG,
+losing the alpha in process), a warning is printed to the output.
 
 None of the formats supported by this plugin have any way to distinguish
 between 2D and 1D array images. If an image has @ref ImageFlag2D::Array set, a
