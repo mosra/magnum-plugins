@@ -222,6 +222,48 @@ See @ref building-plugins, @ref cmake-plugins, @ref plugins and
     implies that for single-vertex meshes the buffer view size might sometimes
     be larger than stride, which is not allowed by the spec.
 
+@subsection Trade-GltfSceneConverter-behavior-images Image and texture export
+
+-   Images are converted using a converter specified in the
+    @cb{.ini} imageConverter @ce
+    @ref Trade-GltfSceneConverter-configuration "configuration option",
+    propagating flags set via @ref setFlags() and all configuration options
+    from the @cb{.ini} [imageConverter] @ce group to it. An
+    @ref AbstractImageConverter plugin manager has to be registered
+    using @relativeref{Corrade,PluginManager::Manager::registerExternalManager()}
+    for image conversion to work.
+-   By default, images are saved as external files for a `*.gltf` output and
+    embedded into the buffer for a `*.glb` output. This behavior can be
+    overriden using the @cb{.ini} bundleImages @ce
+    @ref Trade-GltfSceneConverter-configuration "configuration option" on a
+    per-image basis.
+-   Core glTF supports only JPEG and PNG file formats. Basis-encoded KTX2 files
+    can be saved with the [KHR_texture_basisu](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_texture_basisu/README.md) extension by
+    setting @cb{.ini} imageConverter=BasisKtxImageConverter @ce. The
+    [MSFT_texture_dds](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Vendor/MSFT_texture_dds/README.md)
+    and [EXT_texture_webp](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Vendor/EXT_texture_webp/README.md)
+    extensions are not exported because there's currently no image converter
+    capable of saving DDS and WebP files. Other formats (such as TGA,
+    OpenEXR...) are not supported by the spec but @ref GltfImporter supports
+    them and they can be exported if the @cb{.ini} strict
+    @ce @ref Trade-GltfSceneConverter-configuration "configuration option"
+    is disabled. Such images are then referenced directly without any
+    extension.
+-   If the @cb{.ini} experimentalKhrTextureKtx @ce
+    @ref Trade-GltfSceneConverter-configuration "configuration option" is
+    enabled, generic KTX2 images can be saved with the proposed
+    [KHR_texture_ktx](https://github.com/KhronosGroup/glTF/pull/1964)
+    extension.
+-   Image and texture names, if passed, are saved into the file. Additionally
+    the buffer views referenced by embedded images will be annotated with image
+    ID and name if the @cb{.ini} accessorNames @ce
+    @ref Trade-GltfSceneConverter-configuration "configuration option" is
+    enabled.
+-   The texture is required to only be added after all images it references
+-   At the moment, there's no support for exporting multi-level images even
+    though the KTX2 container is capable of storing these.
+-   At the moment, texture sampler properties are not exported.
+
 @section Trade-GltfSceneConverter-configuration Plugin-specific config
 
 It's possible to tune various output options through @ref configuration(). See
@@ -248,6 +290,9 @@ class MAGNUM_GLTFSCENECONVERTER_EXPORT GltfSceneConverter: public AbstractSceneC
 
         MAGNUM_GLTFSCENECONVERTER_LOCAL void doSetMeshAttributeName(UnsignedShort attribute, Containers::StringView name) override;
         MAGNUM_GLTFSCENECONVERTER_LOCAL bool doAdd(const UnsignedInt id, const MeshData& mesh, Containers::StringView name) override;
+
+        MAGNUM_GLTFSCENECONVERTER_LOCAL bool doAdd(UnsignedInt id, const TextureData& texture, Containers::StringView name) override;
+        MAGNUM_GLTFSCENECONVERTER_LOCAL bool doAdd(UnsignedInt id, const ImageData2D& image, Containers::StringView name) override;
 
         struct State;
         Containers::Pointer<State> _state;

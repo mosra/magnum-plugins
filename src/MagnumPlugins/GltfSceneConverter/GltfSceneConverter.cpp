@@ -27,6 +27,7 @@
 
 #include <Corrade/Containers/ArrayViewStl.h> /** @todo drop once Configuration is STL-free */
 #include <Corrade/Containers/GrowableArray.h>
+#include <Corrade/Containers/Iterable.h>
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/Pair.h>
 #include <Corrade/Containers/Triple.h>
@@ -36,8 +37,11 @@
 #include <Corrade/Utility/JsonWriter.h>
 #include <Corrade/Utility/Path.h>
 #include <Corrade/Utility/String.h>
+#include <Magnum/Trade/AbstractImageConverter.h>
 #include <Magnum/Trade/ArrayAllocator.h>
+#include <Magnum/Trade/ImageData.h>
 #include <Magnum/Trade/MeshData.h>
+#include <Magnum/Trade/TextureData.h>
 
 #include "MagnumPlugins/GltfImporter/Gltf.h"
 
@@ -53,7 +57,9 @@ namespace Magnum { namespace Trade {
 namespace {
 
 enum class RequiredExtension {
-    KhrMeshQuantization = 1 << 0
+    KhrMeshQuantization = 1 << 0,
+    KhrTextureBasisu = 1 << 1,
+    KhrTextureKtx = 1 << 2
 };
 typedef Containers::EnumSet<RequiredExtension> RequiredExtensions;
 CORRADE_ENUMSET_OPERATORS(RequiredExtensions)
@@ -75,10 +81,18 @@ struct GltfSceneConverter::State {
     /* Extensions required based on data added */
     RequiredExtensions requiredExtensions;
 
+    /* Texture extensions used to reference images (or zero values if none).
+       For each image that gets referenced by a texture, a corresponding
+       extension is added to requiredExtensions. If an image isn't referenced
+       by a texture, no extension is added. */
+    Containers::Array<RequiredExtension> imageTextureExtensions;
+
     Utility::JsonWriter gltfBuffers;
     Utility::JsonWriter gltfBufferViews;
     Utility::JsonWriter gltfAccessors;
     Utility::JsonWriter gltfMeshes;
+    Utility::JsonWriter gltfTextures;
+    Utility::JsonWriter gltfImages;
 
     Containers::Array<char> buffer;
 };
@@ -91,7 +105,10 @@ GltfSceneConverter::~GltfSceneConverter() = default;
 
 SceneConverterFeatures GltfSceneConverter::doFeatures() const {
     return SceneConverterFeature::ConvertMultipleToData|
-           SceneConverterFeature::AddMeshes;
+           SceneConverterFeature::AddMeshes|
+           SceneConverterFeature::AddTextures|
+           SceneConverterFeature::AddImages2D|
+           SceneConverterFeature::AddCompressedImages2D;
 }
 
 bool GltfSceneConverter::doBeginFile(const Containers::StringView filename) {
@@ -133,7 +150,9 @@ bool GltfSceneConverter::doBeginData() {
             &_state->gltfBuffers,
             &_state->gltfBufferViews,
             &_state->gltfAccessors,
-            &_state->gltfMeshes
+            &_state->gltfMeshes,
+            &_state->gltfTextures,
+            &_state->gltfImages
         })
             *writer = Utility::JsonWriter{_state->jsonOptions, _state->jsonIndentation, _state->jsonIndentation*1};
     }
@@ -174,6 +193,18 @@ Containers::Optional<Containers::Array<char>> GltfSceneConverter::doEndData() {
                 extensionsUsed.push_back("KHR_mesh_quantization"_s);
             if(!contains(extensionsRequired, "KHR_mesh_quantization"_s))
                 extensionsRequired.push_back("KHR_mesh_quantization"_s);
+        }
+        if(_state->requiredExtensions & RequiredExtension::KhrTextureBasisu) {
+            if(!contains(extensionsUsed, "KHR_texture_basisu"_s))
+                extensionsUsed.push_back("KHR_texture_basisu"_s);
+            if(!contains(extensionsRequired, "KHR_texture_basisu"_s))
+                extensionsRequired.push_back("KHR_texture_basisu"_s);
+        }
+        if(_state->requiredExtensions & RequiredExtension::KhrTextureKtx) {
+            if(!contains(extensionsUsed, "KHR_texture_ktx"_s))
+                extensionsUsed.push_back("KHR_texture_ktx"_s);
+            if(!contains(extensionsRequired, "KHR_texture_ktx"_s))
+                extensionsRequired.push_back("KHR_texture_ktx"_s);
         }
 
         if(!extensionsUsed.empty()) {
@@ -225,6 +256,10 @@ Containers::Optional<Containers::Array<char>> GltfSceneConverter::doEndData() {
         json.writeKey("accessors"_s).writeJson(_state->gltfAccessors.endArray().toString());
     if(!_state->gltfMeshes.isEmpty())
         json.writeKey("meshes"_s).writeJson(_state->gltfMeshes.endArray().toString());
+    if(!_state->gltfTextures.isEmpty())
+        json.writeKey("textures"_s).writeJson(_state->gltfTextures.endArray().toString());
+    if(!_state->gltfImages.isEmpty())
+        json.writeKey("images"_s).writeJson(_state->gltfImages.endArray().toString());
 
     /* Done! */
     json.endObject();
@@ -760,6 +795,248 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const MeshData& mesh, const
 
     if(name)
         _state->gltfMeshes.writeKey("name"_s).write(name);
+
+    return true;
+}
+
+bool GltfSceneConverter::doAdd(UnsignedInt, const TextureData& texture, const Containers::StringView name) {
+    if(texture.type() != TextureType::Texture2D) {
+        Error{} << "Trade::GltfSceneConverter::add(): expected a 2D texture, got" << texture.type();
+        return {};
+    }
+
+    if(texture.image() >= _state->imageTextureExtensions.size()) {
+        Error{} << "Trade::GltfSceneConverter::add(): texture references image" << texture.image() << "but only" << _state->imageTextureExtensions.size() << "were added so far";
+        return {};
+    }
+
+    /* At this point we're sure nothing will fail so we can start writing the
+       JSON. Otherwise we'd end up with a partly-written JSON in case of an
+       unsupported mesh, corruputing the output. */
+
+    /* If this is a first texture, open the texture array */
+    if(_state->gltfTextures.isEmpty())
+        _state->gltfTextures.beginArray();
+
+    Containers::ScopeGuard gltfTexture = _state->gltfTextures.beginObjectScope();
+
+    /* Image that doesn't need any extension (PNG or JPEG or whatever else with
+       strict mode disabled), write directly */
+    const RequiredExtension textureExtension = _state->imageTextureExtensions[texture.image()];
+    if(textureExtension == RequiredExtension{}) {
+        _state->gltfTextures
+            .writeKey("source"_s).write(texture.image());
+
+    /* Image with an extension, also mark given extension as required */
+    } else {
+        _state->requiredExtensions |= textureExtension;
+
+        Containers::StringView textureExtensionString;
+        switch(textureExtension) {
+            case RequiredExtension::KhrTextureBasisu:
+                textureExtensionString = "KHR_texture_basisu"_s;
+                break;
+            /* Not checking for experimentalKhrTextureKtx here, this is only
+               reachable if it was enabled when the image got added */
+            case RequiredExtension::KhrTextureKtx:
+                textureExtensionString = "KHR_texture_ktx"_s;
+                break;
+            /* LCOV_EXCL_START */
+            case RequiredExtension::KhrMeshQuantization:
+                CORRADE_INTERNAL_ASSERT_UNREACHABLE();
+            /* LCOV_EXCL_STOP */
+        }
+        CORRADE_INTERNAL_ASSERT(textureExtensionString);
+
+        _state->gltfTextures
+            .writeKey("extensions"_s).beginObject()
+                .writeKey(textureExtensionString).beginObject()
+                    .writeKey("source"_s).write(texture.image())
+                .endObject()
+            .endObject();
+    }
+
+    if(name)
+        _state->gltfTextures.writeKey("name"_s).write(name);
+
+    return true;
+}
+
+bool GltfSceneConverter::doAdd(const UnsignedInt id, const ImageData2D& image, const Containers::StringView name) {
+    /** @todo does it make sense to check for ImageFlag2D::Array here? glTF
+        doesn't really care I think, and the image converters will warn on
+        their own if that metadata is about to get lost */
+
+    /* Get the image converter plugin through an external image converter
+       manager */
+    PluginManager::Manager<AbstractImageConverter>* imageConverterManager;
+    if(!manager() || !(imageConverterManager = manager()->externalManager<AbstractImageConverter>())) {
+        Error{} << "Trade::GltfSceneConverter::add(): the plugin must be instantiated with access to plugin manager that has a registered image converter manager in order to convert images";
+        return {};
+    }
+    const Containers::StringView imageConverterPluginName = configuration().value<Containers::StringView>("imageConverter");
+    Containers::Pointer<AbstractImageConverter> imageConverter = imageConverterManager->loadAndInstantiate(imageConverterPluginName);
+    if(!imageConverter) {
+        Error{} << "Trade::GltfSceneConverter::add(): can't load" << imageConverterPluginName << "for image conversion";
+        return {};
+    }
+
+    /** @todo imageConverterFallback option[s] to save multiple image formats;
+        bundleImageFallbacks to have them externally (yay!) */
+
+    /* Propagate flags that are common between scene and image converters */
+    if(flags() & SceneConverterFlag::Verbose)
+        imageConverter->addFlags(ImageConverterFlag::Verbose);
+
+    /* Propagate configuration values */
+    Utility::ConfigurationGroup& imageConverterConfiguration = imageConverter->configuration();
+    for(const Containers::Pair<Containers::StringView, Containers::StringView> value: configuration().group("imageConverter")->values()) {
+        if(!imageConverterConfiguration.hasValue(value.first()))
+            Warning{} << "Trade::GltfSceneConverter::add(): option" << value.first() << "not recognized by" << imageConverterPluginName;
+
+        imageConverterConfiguration.setValue(value.first(), value.second());
+    }
+    if(configuration().group("imageConverter")->hasGroups()) {
+        /** @todo once image converters have groups, propagate that as well;
+            then it might make sense to expose, test and reuse Magnum's own
+            MagnumPlugins/Implementation/propagateConfiguration.h */
+        Warning{} << "Trade::GltfSceneConverter::add(): image converter configuration group propagation not implemented yet, ignoring";
+    }
+
+    /* Decide whether to bundle images or save them externally. If not
+       explicitly specified, bundle them for binary files and save externally
+       for *.gltf. */
+    const bool bundleImages =
+        configuration().value<Containers::StringView>("bundleImages") ?
+        configuration().value<bool>("bundleImages") : _state->binary;
+
+    /* Check if the converter supports what we need */
+    ImageConverterFeatures expectedFeatures;
+    if(image.isCompressed())
+        expectedFeatures |= bundleImages ?
+            ImageConverterFeature::ConvertCompressed2DToData :
+            ImageConverterFeature::ConvertCompressed2DToFile;
+    else
+        expectedFeatures |= bundleImages ?
+            ImageConverterFeature::Convert2DToData :
+            ImageConverterFeature::Convert2DToFile;
+    if(!(imageConverter->features() >= expectedFeatures)) {
+        Error{} << "Trade::GltfSceneConverter::add():" << imageConverterPluginName << "doesn't support" << expectedFeatures;
+        return {};
+    }
+
+    /* Use a MIME type to decide what glTF extension (if any) to use to
+       reference the image from a texture. Could also use the file extension,
+       but a MIME type is more robust and all image converter plugins except
+       Basis Universal have it. */
+    const Containers::String mimeType = imageConverter->mimeType();
+    CORRADE_INTERNAL_ASSERT(_state->imageTextureExtensions.size() == id);
+    if(mimeType == "image/jpeg"_s ||
+       mimeType == "image/png"_s) {
+        arrayAppend(_state->imageTextureExtensions, RequiredExtension{});
+    /** @todo some more robust way to detect if Basis-encoded KTX image is
+        produced? waiting until the image is produced and then parsing the
+        header is insanely complicated :( */
+    } else if(mimeType == "image/ktx2"_s && imageConverterPluginName == "BasisKtxImageConverter"_s) {
+        arrayAppend(_state->imageTextureExtensions, RequiredExtension::KhrTextureBasisu);
+    } else if(mimeType == "image/ktx2"_s && configuration().value<bool>("experimentalKhrTextureKtx")) {
+        arrayAppend(_state->imageTextureExtensions, RequiredExtension::KhrTextureKtx);
+    /** @todo EXT_texture_webp and MSFT_texture_dds, once we have converters */
+    } else {
+        if(!mimeType) {
+            Error{} << "Trade::GltfSceneConverter::add():" << imageConverterPluginName << "doesn't specify any MIME type, can't save an image";
+            return {};
+        }
+
+        if(mimeType == "image/ktx2"_s && !configuration().value<bool>("experimentalKhrTextureKtx"))
+            Warning{} << "Trade::GltfSceneConverter::add(): KTX2 images can be saved using the KHR_texture_ktx extension, enable experimentalKhrTextureKtx to use it";
+
+        if(configuration().value<bool>("strict")) {
+            Error{} << "Trade::GltfSceneConverter::add():" << mimeType << "is not a valid MIME type for a glTF image, set strict=false to allow it";
+            return {};
+        } else Warning{} << "Trade::GltfSceneConverter::add(): strict mode disabled, allowing" << mimeType << "MIME type for an image";
+
+        arrayAppend(_state->imageTextureExtensions, RequiredExtension{});
+    }
+
+    /* Only one of these two is filled */
+    Containers::ArrayView<char> imageData;
+    Containers::String imageFilename;
+    if(bundleImages) {
+        const Containers::Optional<Containers::Array<char>> out = imageConverter->convertToData(image);
+        if(!out) {
+            Error{} << "Trade::GltfSceneConverter::add(): can't convert an image";
+            return {};
+        }
+
+        /** @todo ugh, fix the casts already */
+        imageData = arrayAppend(_state->buffer, arrayView(*out));
+    } else {
+        /* All existing image converters that return a MIME type return an
+           extension as well, so we can (currently) get away with an assert.
+           Might need to be revisited eventually. */
+        const Containers::String extension = imageConverter->extension();
+        CORRADE_INTERNAL_ASSERT(extension);
+
+        if(!_state->filename) {
+            Error{} << "Trade::GltfSceneConverter::add(): can only write a glTF with external images if converting to a file";
+            return {};
+        }
+
+        imageFilename = Utility::format("{}.{}.{}",
+            Utility::Path::splitExtension(*_state->filename).first(),
+            id,
+            extension);
+
+        if(!imageConverter->convertToFile(image, imageFilename)) {
+            Error{} << "Trade::GltfSceneConverter::add(): can't convert an image file";
+            return {};
+        }
+    }
+
+    /* At this point we're sure nothing will fail so we can start writing the
+       JSON. Otherwise we'd end up with a partly-written JSON in case of an
+       unsupported mesh, corruputing the output. */
+
+    /* If this is a first image, open the images array */
+    if(_state->gltfImages.isEmpty())
+        _state->gltfImages.beginArray();
+
+    Containers::ScopeGuard gltfImage = _state->gltfImages.beginObjectScope();
+
+    /* Bundled image, needs a buffer view and a MIME type */
+    if(bundleImages) {
+        /* If this is a first buffer view, open the buffer view array */
+        if(_state->gltfBufferViews.isEmpty())
+            _state->gltfBufferViews.beginArray();
+
+        /* Reference the image data from a buffer view */
+        const std::size_t gltfBufferViewIndex = _state->gltfBufferViews.currentArraySize();
+        Containers::ScopeGuard gltfBufferView = _state->gltfBufferViews.beginObjectScope();
+        _state->gltfBufferViews
+            .writeKey("buffer"_s).write(0)
+            /** @todo could be omitted if zero, is that useful for anything? */
+            .writeKey("byteOffset"_s).write(imageData - _state->buffer)
+            .writeKey("byteLength"_s).write(imageData.size());
+        if(configuration().value<bool>("accessorNames"))
+            _state->gltfBufferViews.writeKey("name"_s).write(Utility::format(
+                name ? "image {0} ({1})" : "image {0}", id, name));
+
+        /* Reference the buffer view from the image */
+        _state->gltfImages
+            .writeKey("mimeType"_s).write(mimeType)
+            .writeKey("bufferView"_s).write(gltfBufferViewIndex);
+
+    /* External image, needs a URI and a file extension */
+    } else {
+        /* Reference the file from the image. Writing just the filename as the
+           two files are expected to be next to each other. */
+        _state->gltfImages
+            .writeKey("uri"_s).write(Utility::Path::split(imageFilename).second());
+    }
+
+    if(name)
+        _state->gltfImages.writeKey("name"_s).write(name);
 
     return true;
 }
