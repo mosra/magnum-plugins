@@ -56,6 +56,7 @@ cmake .. \
     -DMAGNUM_WITH_TEXT=ON \
     -DMAGNUM_WITH_TEXTURETOOLS=ON \
     -DMAGNUM_WITH_ANYIMAGEIMPORTER=ON \
+    -DMAGNUM_WITH_TGAIMAGECONVERTER=ON \
     -DMAGNUM_BUILD_STATIC=ON \
     -G Xcode
 set -o pipefail && cmake --build . --config Release --target install -j$XCODE_JOBS | xcbeautify

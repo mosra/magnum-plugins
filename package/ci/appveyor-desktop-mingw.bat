@@ -114,6 +114,7 @@ cmake .. ^
     -DMAGNUM_WITH_TEXT=ON ^
     -DMAGNUM_WITH_TEXTURETOOLS=ON ^
     -DMAGNUM_WITH_ANYIMAGEIMPORTER=ON ^
+    -DMAGNUM_WITH_TGAIMAGECONVERTER=ON ^
     -G Ninja || exit /b
 cmake --build . || exit /b
 cmake --build . --target install || exit /b
