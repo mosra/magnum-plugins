@@ -50,6 +50,16 @@
 
 namespace Magnum { namespace Trade {
 
+namespace {
+
+enum class RequiredExtension {
+    KhrMeshQuantization = 1 << 0
+};
+typedef Containers::EnumSet<RequiredExtension> RequiredExtensions;
+CORRADE_ENUMSET_OPERATORS(RequiredExtensions)
+
+}
+
 struct GltfSceneConverter::State {
     /* Empty if saving to data. Storing the full filename and not just the path
        in order to know how to name the external buffer file. */
@@ -63,7 +73,7 @@ struct GltfSceneConverter::State {
     UnsignedInt jsonIndentation = 0;
 
     /* Extensions required based on data added */
-    bool requireKhrMeshQuantization = false;
+    RequiredExtensions requiredExtensions;
 
     Utility::JsonWriter gltfBuffers;
     Utility::JsonWriter gltfBufferViews;
@@ -159,7 +169,7 @@ Containers::Optional<Containers::Array<char>> GltfSceneConverter::doEndData() {
                 if(i == extension) return true;
             return false;
         };
-        if(_state->requireKhrMeshQuantization) {
+        if(_state->requiredExtensions & RequiredExtension::KhrMeshQuantization) {
             if(!contains(extensionsUsed, "KHR_mesh_quantization"_s))
                 extensionsUsed.push_back("KHR_mesh_quantization"_s);
             if(!contains(extensionsRequired, "KHR_mesh_quantization"_s))
@@ -402,7 +412,7 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const MeshData& mesh, const
                format == VertexFormat::Vector3sNormalized ||
                format == VertexFormat::Vector3us ||
                format == VertexFormat::Vector3usNormalized) {
-                _state->requireKhrMeshQuantization = true;
+                _state->requiredExtensions |= RequiredExtension::KhrMeshQuantization;
             } else if(format != VertexFormat::Vector3) {
                 Error{} << "Trade::GltfSceneConverter::add(): unsupported mesh position attribute format" << format;
                 return {};
@@ -417,7 +427,7 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const MeshData& mesh, const
                glTF */
             if(format == VertexFormat::Vector3bNormalized ||
                format == VertexFormat::Vector3sNormalized) {
-                _state->requireKhrMeshQuantization = true;
+                _state->requiredExtensions |= RequiredExtension::KhrMeshQuantization;
             } else if(format != VertexFormat::Vector3) {
                 Error{} << "Trade::GltfSceneConverter::add(): unsupported mesh normal attribute format" << format;
                 return {};
@@ -431,7 +441,7 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const MeshData& mesh, const
 
             if(format == VertexFormat::Vector4bNormalized ||
                format == VertexFormat::Vector4sNormalized) {
-                _state->requireKhrMeshQuantization = true;
+                _state->requiredExtensions |= RequiredExtension::KhrMeshQuantization;
             } else if(format != VertexFormat::Vector4) {
                 Error{} << "Trade::GltfSceneConverter::add(): unsupported mesh tangent attribute format" << format;
                 return {};
@@ -448,7 +458,7 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const MeshData& mesh, const
                format == VertexFormat::Vector2s ||
                format == VertexFormat::Vector2sNormalized ||
                format == VertexFormat::Vector2us) {
-                _state->requireKhrMeshQuantization = true;
+                _state->requiredExtensions |= RequiredExtension::KhrMeshQuantization;
             } else if(format != VertexFormat::Vector2 &&
                       format != VertexFormat::Vector2ubNormalized &&
                       format != VertexFormat::Vector2usNormalized) {
