@@ -119,8 +119,9 @@ See @ref building-plugins, @ref cmake-plugins, @ref plugins and
 -   While glTF has a requirement that vertex / index count corresponds to the
     actual primitive type, the exporter doesn't check that at the moment.
     Attribute-less meshes and meshes with zero vertices are not allowed by the
-    spec but can be exported with a warning if you disable the
-    @cb{.ini} strict @ce @ref Trade-GltfSceneConverter-configuration "configuration option".
+    spec but @ref GltfImporter supports them and they can be exported with a
+    warning if you disable the @cb{.ini} strict @ce
+    @ref Trade-GltfSceneConverter-configuration "configuration option".
     Attribute-less meshes with a non-zero vertex count are unrepresentable in
     glTF and thus can't be exported.
 -   @ref MeshAttribute::Position in @ref VertexFormat::Vector3 is supported by
@@ -212,8 +213,8 @@ See @ref building-plugins, @ref cmake-plugins, @ref plugins and
     prefixed with an underscore if not already and suffixed with `_1`, `_2`,
     ..., so e.g. a second position attribute becomes `_POSITION_1`.
 -   Mesh name, if passed, is saved into the file. Additionally the buffer views
-    and accessors referenced by it will be annotated with mesh ID name, and
-    index or attribute name if the @cb{.ini} accessorNames @ce
+    and accessors referenced by it will be annotated with mesh ID and name,
+    and attribute index and name if the @cb{.ini} accessorNames @ce
     @ref Trade-GltfSceneConverter-configuration "configuration option" is
     enabled.
 -   At the moment, alignment rules for vertex stride are not respected.
