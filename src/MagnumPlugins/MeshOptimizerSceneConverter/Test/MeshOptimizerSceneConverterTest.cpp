@@ -86,8 +86,11 @@ struct MeshOptimizerSceneConverterTest: TestSuite::Tester {
 
     void simplifyVerbose();
 
-    void encodeVertexBuf();
-    void decodeVertexBuf();
+    void encodeDecodeInterleavedMesh();
+    void encodeInterleavedLongMesh();
+    void encodeNonInterleavedMesh();
+    void encodeDecodeIndex();
+
 
     /* Explicitly forbid system-wide plugin dependencies */
     PluginManager::Manager<AbstractSceneConverter> _manager{"nonexistent"};
@@ -161,8 +164,10 @@ MeshOptimizerSceneConverterTest::MeshOptimizerSceneConverterTest() {
         &MeshOptimizerSceneConverterTest::simplifyVerbose});
 
     addTests({
-        &MeshOptimizerSceneConverterTest::encodeVertexBuf,
-        &MeshOptimizerSceneConverterTest::decodeVertexBuf});
+        &MeshOptimizerSceneConverterTest::encodeDecodeInterleavedMesh,
+        &MeshOptimizerSceneConverterTest::encodeInterleavedLongMesh,
+        &MeshOptimizerSceneConverterTest::encodeNonInterleavedMesh,
+        &MeshOptimizerSceneConverterTest::encodeDecodeIndex});
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. */
@@ -1139,9 +1144,11 @@ void MeshOptimizerSceneConverterTest::simplifyVerbose() {
 )";
     CORRADE_COMPARE(out.str(), expected);
 }
-
-void MeshOptimizerSceneConverterTest::encodeVertexBuf() {
+void MeshOptimizerSceneConverterTest::encodeDecodeInterleavedMesh() {
     Containers::Pointer<AbstractSceneConverter> converter = _manager.instantiate("MeshOptimizerSceneConverter");
+    converter->configuration().setValue("optimizeVertexCache", false);
+    converter->configuration().setValue("optimizeOverdraw", false);
+    converter->configuration().setValue("optimizeVertexFetch", false);
     converter->configuration().setValue("encodeVertex", true);
 
     struct QuadVertex {
@@ -1156,13 +1163,8 @@ void MeshOptimizerSceneConverterTest::encodeVertexBuf() {
         {{-0.5f,  0.5f}, {0.0f, 1.0f}, {150,70,30,0}},
         {{-1.0f, -0.5f}, {0.8f, 0.0f}, {30,70,150,0}},
         {{-1.0f,  0.5f}, {1.0f, 0.8f}, {30,150,70,0}},
-        // {{1.0f,  -0.5f}, {1.0f, 1.0f}, {255,0,0,0}},
-        //  {{1.0f,   0.5f}, {0.0f, 0.0f}, {0,0,0,255}},
     };
-    const  UnsignedInt indices[]{
-            0, 1, 2,
-            2, 1, 3,
-    };
+    const  UnsignedInt indices[]{0, 1, 2, 5, 3, 4};
 
     const Trade::MeshData mesh{MeshPrimitive::Triangles,
                           Trade::DataFlags{}, indices, Trade::MeshIndexData{indices},
@@ -1183,11 +1185,130 @@ void MeshOptimizerSceneConverterTest::encodeVertexBuf() {
     Containers::Optional<MeshData> encoded = converter->convert(mesh);
     CORRADE_VERIFY(encoded);
 
+    CORRADE_COMPARE(encoded->vertexCount(), mesh.vertexCount());
+    CORRADE_VERIFY(encoded->vertexData().size() < mesh.vertexData().size());
+    CORRADE_COMPARE(encoded->attributeCount(), mesh.attributeCount());
+    CORRADE_COMPARE(encoded->attributeStride(0), mesh.attributeStride(0));
+
+
+
+
+    //converter->configuration().setValue("decodeVertex", true);
+    //Containers::Optional<MeshData> decoded = converter->convert(*encoded);
+    //CORRADE_VERIFY(decoded);
+
 }
 
-void MeshOptimizerSceneConverterTest::decodeVertexBuf() {
+void MeshOptimizerSceneConverterTest::encodeInterleavedLongMesh() {
     Containers::Pointer<AbstractSceneConverter> converter = _manager.instantiate("MeshOptimizerSceneConverter");
-    converter->configuration().setValue("decodeVertex", true);
+    converter->configuration().setValue("encodeVertex", true);
+    struct QuadVertex {
+        Vector2 position;
+        Vector2 textureCoordinates;
+        Vector4 color;
+    };
+    const QuadVertex vertices[]{
+            {{ 0.5f, -0.5f}, {1.0f, 0.0f}, {255,0,0,0}},
+            {{ 0.5f,  0.5f}, {1.0f, 1.0f}, {0,255,0,0}},
+            {{-0.5f, -0.5f}, {0.0f, 0.0f}, {0,0,255,0}},
+            {{-0.5f,  0.5f}, {0.0f, 1.0f}, {150,70,30,0}},
+            {{-1.0f, -0.5f}, {0.8f, 0.0f}, {30,70,150,0}},
+            {{-1.0f,  0.5f}, {1.0f, 0.8f}, {30,150,70,0}},
+            {{1.0f,  -0.5f}, {1.0f, 1.0f}, {255,0,0,0}},
+            {{1.0f,   0.5f}, {0.0f, 0.0f}, {0,0,0,255}},
+    };
+    const  UnsignedInt indices[]{ 0, 1, 2, 2, 1, 3 };
+
+    const Trade::MeshData mesh{MeshPrimitive::Triangles,
+                               Trade::DataFlags{}, indices, Trade::MeshIndexData{indices},
+                               Trade::DataFlag::Mutable, vertices, {
+                                       Trade::MeshAttributeData{Trade::MeshAttribute::Position,
+                                                                Containers::StridedArrayView1D<const Vector2>{
+                                                                        Containers::arrayView(vertices), &vertices[0].position,
+                                                                        Containers::arraySize(vertices), sizeof(QuadVertex)}},
+                                       Trade::MeshAttributeData{Trade::MeshAttribute::TextureCoordinates,
+                                                                Containers::StridedArrayView1D<const Vector2>{
+                                                                        Containers::arrayView(vertices), &vertices[0].textureCoordinates,
+                                                                        Containers::arraySize(vertices), sizeof(QuadVertex)}},
+                                       Trade::MeshAttributeData{Trade::MeshAttribute::Color,
+                                                                Containers::StridedArrayView1D<const Vector4>{
+                                                                        Containers::arrayView(vertices), &vertices[0].color,
+                                                                        Containers::arraySize(vertices), sizeof(QuadVertex)}}
+                               }};
+    //Containers::Optional<MeshData> encoded = converter->convert(mesh);
+   // CORRADE_COMPARE(encoded->vertexData().size(), 100);
+   // CORRADE_VERIFY(encoded);
+}
+
+void MeshOptimizerSceneConverterTest::encodeNonInterleavedMesh() {
+    Containers::Pointer<AbstractSceneConverter> converter = _manager.instantiate("MeshOptimizerSceneConverter");
+    converter->configuration().setValue("encodeVertex", true);
+
+    struct NonInterleaved {
+        Vector2 position[8];
+        Vector2 textureCoordinate[8];
+        Vector4 color[8];
+    } vertices;
+
+    const Vector2 positions[]{{ 0.5f, -0.5f}, { 0.5f,  0.5f}, {-0.5f, -0.5f}, {-0.5f,  0.5f}, {-1.0f, -0.5f}, {-1.0f,  0.5f}, {-1.0f,  0.5f}, {-1.0f,  0.5f}};
+    const Vector2 textureCoordinates[]{{1.0f, 0.0f}, {1.0f, 1.0f}, {0.0f, 0.0f}, {0.0f, 1.0f}, {0.8f, 0.0f}, {1.0f, 0.8f}, {1.0f, 0.8f}, {1.0f, 0.8f}};
+    const Vector4 colors[]{{255,0,0,0}, {0,255,0,0}, {0,0,255,0}, {150,70,30,0}, {30,70,150,0}, {30,150,70,0}, {30,150,70,0}, {30,150,70,0}};
+
+    for(UnsignedInt i = 0; i < 8; i++) {
+        vertices.position[i] = positions[i];
+        vertices.textureCoordinate[i] = textureCoordinates[i];
+        vertices.color[i] = colors[i];
+    }
+
+    const  UnsignedInt indices[]{ 0, 1, 2, 2, 1, 3 };
+    auto vertexData = Containers::arrayView<NonInterleaved>(&vertices, 1);
+    auto indexData = Containers::arrayCast<const UnsignedShort>(indices);
+
+    const Trade::MeshData mesh{MeshPrimitive::Triangles,
+                                    Trade::DataFlags{}, indices, Trade::MeshIndexData{indices},
+                                    Trade::DataFlag::Mutable, vertexData, {
+                                            Trade::MeshAttributeData{Trade::MeshAttribute::Position,
+                                                                     Containers::StridedArrayView1D<const Vector2>{
+                                                                             Containers::arrayView(vertexData), vertices.position,
+                                                                             Containers::arraySize(positions), sizeof(Vector2)}},
+                                            Trade::MeshAttributeData{Trade::MeshAttribute::TextureCoordinates,
+                                                                     Containers::StridedArrayView1D<const Vector2>{
+                                                                             Containers::arrayView(vertexData), vertices.textureCoordinate,
+                                                                             Containers::arraySize(textureCoordinates), sizeof(Vector2)}},
+                                            Trade::MeshAttributeData{Trade::MeshAttribute::Color,
+                                                                     Containers::StridedArrayView1D<const Vector4>{
+                                                                             Containers::arrayView(vertexData), vertices.color,
+                                                                             Containers::arraySize(colors), sizeof(Vector4)}},
+                                    }};
+    Containers::Optional<MeshData> encoded = converter->convert(mesh);
+    CORRADE_COMPARE(encoded->vertexData().size(), 247);
+    CORRADE_VERIFY(encoded->vertexData().size() < mesh.vertexData().size());
+    CORRADE_VERIFY(encoded);
+}
+
+void MeshOptimizerSceneConverterTest::encodeDecodeIndex() {
+    Containers::Pointer<AbstractSceneConverter> converter = _manager.instantiate("MeshOptimizerSceneConverter");
+    converter->configuration().setValue("optimizeVertexCache", false);
+    converter->configuration().setValue("optimizeOverdraw", false);
+    converter->configuration().setValue("optimizeVertexFetch", false);
+    converter->configuration().setValue("encodeIndex", true);
+
+    //const UnsignedInt indexData[]{0,1,2,2,1,3,0,1,2,3,2,1,1,2,3,0,1,2,3,2,2,1,3,1};
+    const  UnsignedInt indexData[]{ 0, 1, 2, 2, 1, 3 };
+    //const UnsignedShort indexData[]{ 0, 1, 2, 2, 1, 3,0,1,2,3,2,2,1,3,1};
+    MeshData mesh{MeshPrimitive::Triangles, {}, indexData, MeshIndexData{indexData}, nullptr, {}, 1};
+
+    Containers::Optional<MeshData> encoded = converter->convert(mesh);
+    CORRADE_VERIFY(encoded);
+    CORRADE_VERIFY(encoded->indexData().size() < mesh.indexData().size());
+    CORRADE_COMPARE(encoded->indexType(), MeshIndexType::UnsignedByte);
+    //CORRADE_COMPARE(encoded->indexCount(), mesh.indexCount());
+
+    converter->configuration().setValue("encodeIndex", false);
+    converter->configuration().setValue("decodeIndex", true);
+    Containers::Optional<MeshData> decoded = converter->convert(*encoded);
+    CORRADE_VERIFY(decoded);
+    CORRADE_COMPARE(decoded->indexData().size(), mesh.indexData().size());
 }
 
 }}}}
