@@ -262,7 +262,7 @@ void BasisImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFla
         /* init() handles all the validation checks, there's no extra function
            for that */
         if(!state->ktx2Transcoder->init(state->in.data(), state->in.size())) {
-            Error{} << "Trade::BasisImporter::openData(): invalid KTX2 header, or not Basis compressed";
+            Error{} << "Trade::BasisImporter::openData(): invalid KTX2 header, or not Basis compressed; might want to use KtxImporter instead";
             return;
         }
 

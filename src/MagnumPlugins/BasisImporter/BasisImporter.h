@@ -184,6 +184,15 @@ left-handed coordinate system (+X is right, +Y is up, +Z is forward). Layered
 cube maps are stored as multiple sets of faces, ie. all faces +X through -Z for
 the first layer, then all faces of the second layer, etc.
 
+@subsection Trade-BasisImporter-behavior-ktx KTX2 files
+
+Basis Universal supports only the Basis-encoded subset of the KTX2 format. It
+treats non-Basis-encoded KTX2 files the same way as broken KTX2 files, and so
+the plugin cannot robustly proxy the loading to @ref KtxImporter in that case.
+Instead, if you're dealing with generic KTX2 files, you're encouraged to use
+@ref KtxImporter directly --- it will then delegate to @ref BasisImporter for
+Basis-encoded files.
+
 @section Trade-BasisImporter-configuration Plugin-specific configuration
 
 Basis allows configuration of the format of loaded compressed data.
