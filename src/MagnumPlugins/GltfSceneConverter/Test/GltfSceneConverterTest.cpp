@@ -217,15 +217,6 @@ const struct {
         "mesh-attribute-matrix4x4b.gltf", nullptr}
 };
 
-const struct {
-    const char* name;
-    MeshAttribute attribute;
-    VertexFormat format;
-    const char* expected;
-} AddMeshDuplicateAttributeData[]{
-    {}
-};
-
 const UnsignedInt AddMeshInvalidIndices[4]{};
 const Vector4d AddMeshInvalidVertices[4]{};
 const struct {
@@ -520,10 +511,8 @@ GltfSceneConverterTest::GltfSceneConverterTest() {
     addInstancedTests({&GltfSceneConverterTest::addMeshAttribute},
         Containers::arraySize(AddMeshAttributeData));
 
-    addInstancedTests({&GltfSceneConverterTest::addMeshDuplicateAttribute},
-        Containers::arraySize(AddMeshDuplicateAttributeData));
-
-    addTests({&GltfSceneConverterTest::addMeshCustomAttributeResetName,
+    addTests({&GltfSceneConverterTest::addMeshDuplicateAttribute,
+              &GltfSceneConverterTest::addMeshCustomAttributeResetName,
               &GltfSceneConverterTest::addMeshCustomAttributeNoName,
               &GltfSceneConverterTest::addMeshCustomObjectIdAttributeName,
 
