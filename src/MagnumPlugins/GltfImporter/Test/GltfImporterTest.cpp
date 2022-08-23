@@ -64,6 +64,7 @@
 #include <Magnum/Sampler.h>
 
 #include "configure.h"
+#include "compareMaterials.h"
 
 namespace Magnum { namespace Trade { namespace Test { namespace {
 
@@ -4620,43 +4621,6 @@ void GltfImporterTest::materialUnlit() {
     CORRADE_COMPARE(flat.color(), (Color4{0.7f, 0.8f, 0.9f, 1.1f}));
     CORRADE_VERIFY(flat.hasTexture());
     CORRADE_COMPARE(flat.texture(), 1);
-}
-
-void compareMaterials(const MaterialData& actual, const MaterialData& expected) {
-    CORRADE_COMPARE(actual.types(), expected.types());
-    CORRADE_COMPARE(actual.layerCount(), expected.layerCount());
-
-    for(UnsignedInt layer = 0; layer != expected.layerCount(); ++layer) {
-        CORRADE_ITERATION(expected.layerName(layer));
-        CORRADE_COMPARE(actual.layerName(layer), expected.layerName(layer));
-        CORRADE_COMPARE(actual.attributeCount(layer), expected.attributeCount(layer));
-        for(UnsignedInt i = 0; i != expected.attributeCount(layer); ++i) {
-            const Containers::StringView name = expected.attributeName(layer, i);
-            CORRADE_ITERATION(name);
-            CORRADE_VERIFY(actual.hasAttribute(layer, name));
-            const MaterialAttributeType type = expected.attributeType(layer, name);
-            CORRADE_COMPARE(actual.attributeType(layer, name), type);
-            switch(type) {
-                #define _v(type, valueType) case MaterialAttributeType::type: \
-                    CORRADE_COMPARE(actual.attribute<valueType>(layer, name), expected.attribute<valueType>(layer, name)); \
-                    break;
-                #define _c(type) _v(type, type)
-                _c(UnsignedInt)
-                _c(Float)
-                _c(Vector2)
-                _c(Vector3)
-                _c(Vector4)
-                _c(Matrix3x3)
-                _v(Bool, bool)
-                _v(String, Containers::StringView)
-                _v(TextureSwizzle, MaterialTextureSwizzle)
-                #undef _c
-                #undef _v
-                default:
-                    CORRADE_FAIL_IF(true, "Unexpected attribute type" << type);
-            }
-        }
-    }
 }
 
 void GltfImporterTest::materialExtras() {
