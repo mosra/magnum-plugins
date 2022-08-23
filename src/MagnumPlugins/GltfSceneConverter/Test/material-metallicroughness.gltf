@@ -1,0 +1,32 @@
+{
+  "asset": {
+    "version": "2.0"
+  },
+  "materials": [
+    {
+      "pbrMetallicRoughness": {
+        "baseColorFactor": [0.1, 0.2, 0.3, 0.4],
+        "baseColorTexture": {
+          "index": 0,
+          "texCoord": 10
+        },
+        "metallicFactor": 0.25,
+        "roughnessFactor": 0.75,
+        "metallicRoughnessTexture": {
+          "index": 0,
+          "texCoord": 11
+        }
+      }
+    }
+  ],
+  "textures": [
+    {
+      "source": 0
+    }
+  ],
+  "images": [
+    {
+      "uri": "material-metallicroughness.0.png"
+    }
+  ]
+}

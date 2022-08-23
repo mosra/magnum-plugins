@@ -1,0 +1,37 @@
+{
+  "asset": {
+    "version": "2.0"
+  },
+  "materials": [
+    {
+      "pbrMetallicRoughness": {
+        "baseColorFactor": [0.1, 0.2, 0.3, 0.4]
+      },
+      "doubleSided": true
+    },
+    {
+      "normalTexture": {
+        "index": 2
+      },
+      "occlusionTexture": {
+        "index": 0
+      }
+    }
+  ],
+  "textures": [
+    {
+      "source": 0
+    },
+    {
+      "source": 0
+    },
+    {
+      "source": 0
+    }
+  ],
+  "images": [
+    {
+      "uri": "material-multiple.0.png"
+    }
+  ]
+}

@@ -87,6 +87,17 @@ corrade_add_test(GltfSceneConverterTest GltfSceneConverterTest.cpp
         image-name.gltf
         image-not-bundled.glb image-not-bundled.0.png
         image-tga.glb
+        material-alpha-mask-defaults-kept.gltf
+        material-alpha-mask-defaults-omitted.gltf
+        material-alpha-mask.gltf
+        material-common.gltf
+        material-defaults-kept.gltf
+        material-defaults-omitted.gltf
+        material-default-texture-swizzle.gltf
+        material-empty.gltf
+        material-metallicroughness.gltf
+        material-multiple.gltf
+        material-name.gltf
         mesh-accessor-names.gltf
         mesh-attribute-bitangent.gltf
         mesh-attribute-color3.gltf

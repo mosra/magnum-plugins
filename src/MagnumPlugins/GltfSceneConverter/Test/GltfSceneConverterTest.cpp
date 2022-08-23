@@ -24,6 +24,7 @@
 */
 
 #include <sstream>
+#include <Corrade/Containers/GrowableArray.h>
 #include <Corrade/Containers/Iterable.h>
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/Pair.h>
@@ -41,14 +42,17 @@
 #include <Magnum/PixelFormat.h>
 #include <Magnum/ImageView.h>
 #include <Magnum/Math/Color.h>
+#include <Magnum/Math/Matrix3.h>
 #include <Magnum/Trade/AbstractImageConverter.h>
 #include <Magnum/Trade/AbstractImporter.h>
 #include <Magnum/Trade/AbstractSceneConverter.h>
+#include <Magnum/Trade/MaterialData.h>
 #include <Magnum/Trade/MeshData.h>
 #include <Magnum/Trade/ImageData.h>
 #include <Magnum/Trade/TextureData.h>
 
 #include "configure.h"
+#include "../../GltfImporter/Test/compareMaterials.h"
 
 namespace Magnum { namespace Trade { namespace Test { namespace {
 
@@ -90,6 +94,11 @@ struct GltfSceneConverterTest: TestSuite::Tester {
     void addTexture();
     void addTextureMultiple();
     void addTextureInvalid();
+
+    void addMaterial();
+    void addMaterialUnusedAttributes();
+    void addMaterialMultiple();
+    void addMaterialInvalid();
 
     void requiredExtensionsAddedAlready();
 
@@ -484,6 +493,267 @@ const struct {
         "expected a 2D texture, got Trade::TextureType::Texture1DArray"},
 };
 
+const struct {
+    const char* name;
+    bool needsTexture;
+    Containers::Optional<bool> keepDefaults;
+    const char* expected;
+    Containers::StringView dataName;
+    MaterialData material;
+    MaterialTypes expectedTypes;
+    Containers::Array<MaterialAttribute> expectedRemove;
+    Containers::Array<MaterialAttributeData> expectedAdd;
+} AddMaterialData[]{
+    {"empty", false, {}, "material-empty.gltf", {},
+        MaterialData{{}, {}}, {}, {}, {}},
+    {"name", false, {}, "material-name.gltf", "A nicely useless material",
+        MaterialData{{}, {}}, {}, {}, {}},
+    {"common", true, {}, "material-common.gltf", {},
+        MaterialData{{}, {
+            /* More than one texture tested in addMaterialMultiple() */
+            {MaterialAttribute::AlphaMask, 0.75f}, /* unused */
+            {MaterialAttribute::AlphaBlend, true},
+            {MaterialAttribute::DoubleSided, true},
+            {MaterialAttribute::NormalTexture, 0u},
+            {MaterialAttribute::NormalTextureScale, 0.375f},
+            {MaterialAttribute::NormalTextureCoordinates, 7u},
+            {MaterialAttribute::OcclusionTexture, 0u},
+            {MaterialAttribute::OcclusionTextureStrength, 1.5f},
+            {MaterialAttribute::OcclusionTextureCoordinates, 8u},
+            {MaterialAttribute::EmissiveColor, Color3{0.5f, 0.6f, 0.7f}},
+            {MaterialAttribute::EmissiveTexture, 0u},
+            {MaterialAttribute::EmissiveTextureCoordinates, 9u},
+        }}, {}, Containers::array({
+            MaterialAttribute::AlphaMask
+        }), {}},
+    {"alpha mask", false, {}, "material-alpha-mask.gltf", {},
+        MaterialData{{}, {
+            {MaterialAttribute::AlphaMask, 0.75f},
+        }}, {}, {}, {}},
+    {"metallic/roughness", true, {}, "material-metallicroughness.gltf", {},
+        MaterialData{{}, {
+            {MaterialAttribute::BaseColor, Color4{0.1f, 0.2f, 0.3f, 0.4f}},
+            {MaterialAttribute::BaseColorTexture, 0u},
+            {MaterialAttribute::BaseColorTextureCoordinates, 10u},
+            /* The Swizzle and Coordinates have to be set like this to make
+               this a packed texture like glTF wants */
+            {MaterialAttribute::Metalness, 0.25f},
+            {MaterialAttribute::Roughness, 0.75f},
+            {MaterialAttribute::MetalnessTexture, 0u},
+            {MaterialAttribute::MetalnessTextureSwizzle, MaterialTextureSwizzle::B},
+            {MaterialAttribute::MetalnessTextureCoordinates, 11u},
+            {MaterialAttribute::RoughnessTexture, 0u},
+            {MaterialAttribute::RoughnessTextureSwizzle, MaterialTextureSwizzle::G},
+            {MaterialAttribute::RoughnessTextureCoordinates, 11u},
+        }}, MaterialType::PbrMetallicRoughness, Containers::array({
+            MaterialAttribute::MetalnessTexture,
+            MaterialAttribute::MetalnessTextureSwizzle,
+            MaterialAttribute::RoughnessTextureSwizzle,
+            MaterialAttribute::RoughnessTexture
+        }), Containers::array({
+            MaterialAttributeData{MaterialAttribute::NoneRoughnessMetallicTexture, 0u}
+        })},
+    {"metallic/roughness, packed texture attribute", true, {}, "material-metallicroughness.gltf", {},
+        MaterialData{{}, {
+            {MaterialAttribute::BaseColor, Color4{0.1f, 0.2f, 0.3f, 0.4f}},
+            {MaterialAttribute::BaseColorTexture, 0u},
+            {MaterialAttribute::BaseColorTextureCoordinates, 10u},
+            {MaterialAttribute::Metalness, 0.25f},
+            {MaterialAttribute::Roughness, 0.75f},
+            {MaterialAttribute::NoneRoughnessMetallicTexture, 0u},
+            {MaterialAttribute::MetalnessTextureCoordinates, 11u},
+            {MaterialAttribute::RoughnessTextureCoordinates, 11u},
+        }}, MaterialType::PbrMetallicRoughness, {}, {}},
+    {"metallic/roughness, global texture attributes", true, {}, "material-metallicroughness.gltf", {},
+        MaterialData{{}, {
+            {MaterialAttribute::BaseColor, Color4{0.1f, 0.2f, 0.3f, 0.4f}},
+            {MaterialAttribute::BaseColorTexture, 0u},
+            /* This one is local, thus overriding the TextureCoordinates */
+            {MaterialAttribute::BaseColorTextureCoordinates, 10u},
+            /* The Swizzle has to be set like this to make this a packed
+               texture like glTF wants */
+            {MaterialAttribute::Metalness, 0.25f},
+            {MaterialAttribute::Roughness, 0.75f},
+            {MaterialAttribute::MetalnessTexture, 0u},
+            {MaterialAttribute::MetalnessTextureSwizzle, MaterialTextureSwizzle::B},
+            {MaterialAttribute::RoughnessTexture, 0u},
+            {MaterialAttribute::RoughnessTextureSwizzle, MaterialTextureSwizzle::G},
+            {MaterialAttribute::TextureCoordinates, 11u}
+        }}, MaterialType::PbrMetallicRoughness, Containers::array({
+            MaterialAttribute::MetalnessTexture,
+            MaterialAttribute::MetalnessTextureSwizzle,
+            MaterialAttribute::RoughnessTextureSwizzle,
+            MaterialAttribute::RoughnessTexture,
+            MaterialAttribute::TextureCoordinates
+        }), Containers::array({
+            MaterialAttributeData{MaterialAttribute::NoneRoughnessMetallicTexture, 0u},
+            MaterialAttributeData{MaterialAttribute::MetalnessTextureCoordinates, 11u},
+            MaterialAttributeData{MaterialAttribute::RoughnessTextureCoordinates, 11u},
+        })},
+    {"explicit default texture swizzle", true, {}, "material-default-texture-swizzle.gltf", {},
+        MaterialData{{}, {
+            /* The swizzles are just checked but not written anywhere, so this
+               is the same as specifying just the textures alone */
+            {MaterialAttribute::NormalTexture, 0u},
+            {MaterialAttribute::NormalTextureSwizzle, MaterialTextureSwizzle::RGB},
+            {MaterialAttribute::OcclusionTexture, 0u},
+            {MaterialAttribute::OcclusionTextureSwizzle, MaterialTextureSwizzle::R},
+            /* No EmissiveTextureSwizzle or BaseColorTextureSwizzle attributes,
+               Metallic and Roughness textures won't work with defaults */
+        }}, {}, Containers::array({
+            MaterialAttribute::NormalTextureSwizzle,
+            MaterialAttribute::OcclusionTextureSwizzle
+        }), {}},
+    {"default values kept", true, true, "material-defaults-kept.gltf", {},
+        MaterialData{{}, {
+            /* Textures have to be present, otherwise the texture-related
+               properties are not saved */
+            {MaterialAttribute::AlphaBlend, false},
+            {MaterialAttribute::DoubleSided, false},
+            {MaterialAttribute::NormalTexture, 0u},
+            {MaterialAttribute::NormalTextureScale, 1.0f},
+            {MaterialAttribute::NormalTextureCoordinates, 0u},
+            {MaterialAttribute::OcclusionTexture, 0u},
+            {MaterialAttribute::OcclusionTextureStrength, 1.0f},
+            {MaterialAttribute::OcclusionTextureCoordinates, 0u},
+            {MaterialAttribute::EmissiveColor, 0x000000_rgbf},
+            {MaterialAttribute::EmissiveTexture, 0u},
+            {MaterialAttribute::EmissiveTextureCoordinates, 0u},
+            {MaterialAttribute::BaseColor, 0xffffffff_rgbaf},
+            {MaterialAttribute::BaseColorTexture, 0u},
+            {MaterialAttribute::BaseColorTextureCoordinates, 0u},
+            {MaterialAttribute::Metalness, 1.0f},
+            {MaterialAttribute::Roughness, 1.0f},
+            {MaterialAttribute::NoneRoughnessMetallicTexture, 0u},
+            {MaterialAttribute::MetalnessTextureCoordinates, 0u},
+            {MaterialAttribute::RoughnessTextureCoordinates, 0u},
+        }}, MaterialType::PbrMetallicRoughness, {}, {}},
+    {"default values omitted", true, {}, "material-defaults-omitted.gltf", {},
+        MaterialData{{}, {
+            /* Same as above */
+            {MaterialAttribute::AlphaBlend, false},
+            {MaterialAttribute::DoubleSided, false},
+            {MaterialAttribute::NormalTexture, 0u},
+            {MaterialAttribute::NormalTextureScale, 1.0f},
+            {MaterialAttribute::NormalTextureCoordinates, 0u},
+            {MaterialAttribute::OcclusionTexture, 0u},
+            {MaterialAttribute::OcclusionTextureStrength, 1.0f},
+            {MaterialAttribute::OcclusionTextureCoordinates, 0u},
+            {MaterialAttribute::EmissiveColor, 0x000000_rgbf},
+            {MaterialAttribute::EmissiveTexture, 0u},
+            {MaterialAttribute::EmissiveTextureCoordinates, 0u},
+            {MaterialAttribute::BaseColor, 0xffffffff_rgbaf},
+            {MaterialAttribute::BaseColorTexture, 0u},
+            {MaterialAttribute::BaseColorTextureCoordinates, 0u},
+            {MaterialAttribute::Metalness, 1.0f},
+            {MaterialAttribute::Roughness, 1.0f},
+            {MaterialAttribute::NoneRoughnessMetallicTexture, 0u},
+            {MaterialAttribute::MetalnessTextureCoordinates, 0u},
+            {MaterialAttribute::RoughnessTextureCoordinates, 0u},
+        }}, MaterialType::PbrMetallicRoughness, Containers::array({
+            MaterialAttribute::AlphaBlend,
+            MaterialAttribute::DoubleSided,
+            MaterialAttribute::NormalTextureScale,
+            MaterialAttribute::NormalTextureCoordinates,
+            MaterialAttribute::OcclusionTextureStrength,
+            MaterialAttribute::OcclusionTextureCoordinates,
+            MaterialAttribute::EmissiveColor,
+            MaterialAttribute::EmissiveTextureCoordinates,
+            MaterialAttribute::BaseColor,
+            MaterialAttribute::BaseColorTextureCoordinates,
+            MaterialAttribute::Metalness,
+            MaterialAttribute::Roughness,
+            MaterialAttribute::MetalnessTextureCoordinates,
+            MaterialAttribute::RoughnessTextureCoordinates,
+        }), {}},
+    {"alpha mask default values kept", false, true, "material-alpha-mask-defaults-kept.gltf", {},
+        MaterialData{{}, {
+            {MaterialAttribute::AlphaMask, 0.5f},
+        }}, {}, {}, {}},
+    {"alpha mask default values omitted", false, {}, "material-alpha-mask-defaults-omitted.gltf", {},
+        MaterialData{{}, {
+            /* Same as above */
+            {MaterialAttribute::AlphaMask, 0.5f},
+        }}, {}, {}, {}},
+};
+
+const struct {
+    const char* name;
+    bool needsTexture;
+    const char* expected;
+    MaterialData material;
+    const char* expectedWarning;
+} AddMaterialUnusedAttributesData[]{
+    {"texture properties but no textures", false, "material-empty.gltf",
+        MaterialData{{}, {
+            {MaterialAttribute::BaseColorTextureCoordinates, 5u},
+            {MaterialAttribute::EmissiveTextureCoordinates, 10u},
+            {MaterialAttribute::MetalnessTextureCoordinates, 6u},
+            {MaterialAttribute::NormalTextureCoordinates, 8u},
+            {MaterialAttribute::NormalTextureScale, 1.5f},
+            {MaterialAttribute::OcclusionTextureCoordinates, 9u},
+            {MaterialAttribute::OcclusionTextureStrength, 0.3f},
+            {MaterialAttribute::RoughnessTextureCoordinates, 7u},
+        }},
+        "Trade::GltfSceneConverter::add(): material attribute BaseColorTextureCoordinates was not used\n"
+        "Trade::GltfSceneConverter::add(): material attribute EmissiveTextureCoordinates was not used\n"
+        "Trade::GltfSceneConverter::add(): material attribute MetalnessTextureCoordinates was not used\n"
+        "Trade::GltfSceneConverter::add(): material attribute NormalTextureCoordinates was not used\n"
+        "Trade::GltfSceneConverter::add(): material attribute NormalTextureScale was not used\n"
+        "Trade::GltfSceneConverter::add(): material attribute OcclusionTextureCoordinates was not used\n"
+        "Trade::GltfSceneConverter::add(): material attribute OcclusionTextureStrength was not used\n"
+        "Trade::GltfSceneConverter::add(): material attribute RoughnessTextureCoordinates was not used\n"},
+    {"unused attributes and layers", false, "material-empty.gltf",
+        MaterialData{{}, {
+            {MaterialAttribute::Shininess, 15.0f},
+            {MaterialAttribute::SpecularTexture, 0u},
+            {MaterialLayer::ClearCoat},
+            {MaterialAttribute::LayerFactor, 0.5f},
+        }, {2, 3, 4}},
+        "Trade::GltfSceneConverter::add(): material attribute Shininess was not used\n"
+        "Trade::GltfSceneConverter::add(): material attribute SpecularTexture was not used\n"
+        /* It especially shouldn't warn about unused attribute LayerName */
+        "Trade::GltfSceneConverter::add(): material layer 1 (ClearCoat) was not used\n"
+        "Trade::GltfSceneConverter::add(): material layer 2 was not used\n"},
+};
+
+const struct {
+    const char* name;
+    MaterialData material;
+    const char* message;
+} AddMaterialInvalidData[]{
+    {"texture out of bounds",
+        MaterialData{{}, {
+            {MaterialAttribute::MetalnessTexture, 1u},
+        }}, "material attribute MetalnessTexture value 1 out of range for 1 textures"},
+    {"metallic/roughness, unsupported packing",
+        MaterialData{{}, {
+            {MaterialAttribute::MetalnessTexture, 0u},
+            {MaterialAttribute::RoughnessTexture, 0u},
+            {MaterialAttribute::RoughnessTextureSwizzle, MaterialTextureSwizzle::B},
+        }}, "unsupported R/B packing of a metallic/roughness texture"},
+    {"metallic/roughness, no roughness texture",
+        MaterialData{{}, {
+            {MaterialAttribute::MetalnessTexture, 0u},
+            {MaterialAttribute::MetalnessTextureSwizzle, MaterialTextureSwizzle::B},
+        }}, "can only represent a combined metallic/roughness texture or neither of them"},
+    {"metallic/roughness, no metalness texture",
+        MaterialData{{}, {
+            {MaterialAttribute::RoughnessTexture, 0u},
+            {MaterialAttribute::RoughnessTextureSwizzle, MaterialTextureSwizzle::G},
+        }}, "can only represent a combined metallic/roughness texture or neither of them"},
+    {"unsupported normal texture packing",
+        MaterialData{{}, {
+            {MaterialAttribute::NormalTexture, 0u},
+            {MaterialAttribute::NormalTextureSwizzle, MaterialTextureSwizzle::RG},
+        }}, "unsupported RG packing of a normal texture"},
+    {"unsupported occlusion texture packing",
+        MaterialData{{}, {
+            {MaterialAttribute::OcclusionTexture, 0u},
+            {MaterialAttribute::OcclusionTextureSwizzle, MaterialTextureSwizzle::B},
+        }}, "unsupported B packing of an occlusion texture"}
+};
+
 GltfSceneConverterTest::GltfSceneConverterTest() {
     addInstancedTests({&GltfSceneConverterTest::empty},
         Containers::arraySize(FileVariantData));
@@ -543,6 +813,17 @@ GltfSceneConverterTest::GltfSceneConverterTest() {
 
     addInstancedTests({&GltfSceneConverterTest::addTextureInvalid},
         Containers::arraySize(AddTextureInvalidData));
+
+    addInstancedTests({&GltfSceneConverterTest::addMaterial},
+        Containers::arraySize(AddMaterialData));
+
+    addInstancedTests({&GltfSceneConverterTest::addMaterialUnusedAttributes},
+        Containers::arraySize(AddMaterialUnusedAttributesData));
+
+    addTests({&GltfSceneConverterTest::addMaterialMultiple});
+
+    addInstancedTests({&GltfSceneConverterTest::addMaterialInvalid},
+        Containers::arraySize(AddMaterialInvalidData));
 
     addTests({&GltfSceneConverterTest::requiredExtensionsAddedAlready,
 
@@ -2055,6 +2336,245 @@ void GltfSceneConverterTest::addTextureInvalid() {
     CORRADE_VERIFY(converter->endFile());
     CORRADE_COMPARE_AS(filename,
         Utility::Path::join(GLTFSCENECONVERTER_TEST_DIR, "image.gltf"),
+        TestSuite::Compare::File);
+}
+
+namespace {
+
+MaterialData filterMaterialAttributes(const MaterialData& material, MaterialTypes types, Containers::ArrayView<const MaterialAttribute> remove, Containers::ArrayView<const MaterialAttributeData> add) {
+    /* Currently only the base layer */
+    CORRADE_INTERNAL_ASSERT(material.layerCount() == 1);
+
+    Containers::Array<MaterialAttributeData> out;
+
+    /* O(n^2), yes, sorry. Need to be fixed if made into a public API. */
+    for(UnsignedInt i = 0; i != material.attributeCount(); ++i) {
+        bool excluded = false;
+        for(std::size_t j = 0; j != remove.size(); ++j) {
+            if(material.attributeName(i) == materialAttributeName(remove[j])) {
+                excluded = true;
+                break;
+            }
+        }
+
+        if(!excluded) arrayAppend(out, material.attributeData()[i]);
+    }
+
+    arrayAppend(out, add);
+
+    return MaterialData{types, std::move(out)};
+}
+
+}
+
+void GltfSceneConverterTest::addMaterial() {
+    auto&& data = AddMaterialData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    if(data.needsTexture && _imageConverterManager.loadState("PngImageConverter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("PngImageConverter plugin not found, cannot test");
+
+    Containers::Pointer<AbstractSceneConverter> converter =  _converterManager.instantiate("GltfSceneConverter");
+
+    if(data.keepDefaults)
+        converter->configuration().setValue("keepMaterialDefaults", *data.keepDefaults);
+
+    Containers::String filename = Utility::Path::join(GLTFSCENECONVERTER_TEST_OUTPUT_DIR, data.expected);
+    CORRADE_VERIFY(converter->beginFile(filename));
+
+    if(data.needsTexture) {
+        /* Add an image to be referenced by a texture */
+        CORRADE_VERIFY(converter->add(ImageView2D{PixelFormat::RGB8Unorm, {1, 1}, "yey"}));
+
+        /* Add a texture to be referenced by a material */
+        CORRADE_VERIFY(converter->add(TextureData{TextureType::Texture2D,
+            SamplerFilter::Nearest,
+            SamplerFilter::Nearest,
+            SamplerMipmap::Base,
+            SamplerWrapping::ClampToEdge,
+            0}));
+    }
+
+    /* There should be no warning about unused attributes */
+    {
+        std::ostringstream out;
+        Warning redirectWarning{&out};
+        CORRADE_VERIFY(converter->add(data.material, data.dataName));
+        CORRADE_COMPARE(out.str(), "");
+    }
+
+    CORRADE_VERIFY(converter->endFile());
+    CORRADE_COMPARE_AS(filename,
+        Utility::Path::join(GLTFSCENECONVERTER_TEST_DIR, data.expected),
+        TestSuite::Compare::File);
+
+    if(_importerManager.loadState("GltfImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("GltfImporter plugin not found, cannot test a rountrip");
+
+    Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("GltfImporter");
+    CORRADE_VERIFY(importer->openFile(filename));
+
+    /* Disable Phong material fallback (enabled by default for compatibility),
+       no use for that here */
+    importer->configuration().setValue("phongMaterialFallback", false);
+
+    /* There should be exactly one material, looking exactly the same as the
+       original */
+    CORRADE_COMPARE(importer->materialCount(), 1);
+    Containers::Optional<MaterialData> imported = importer->material(0);
+    CORRADE_VERIFY(imported);
+    compareMaterials(*imported, filterMaterialAttributes(data.material, data.expectedTypes, data.expectedRemove, data.expectedAdd));
+}
+
+void GltfSceneConverterTest::addMaterialUnusedAttributes() {
+    auto&& data = AddMaterialUnusedAttributesData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    if(data.needsTexture && _imageConverterManager.loadState("PngImageConverter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("PngImageConverter plugin not found, cannot test");
+
+    Containers::Pointer<AbstractSceneConverter> converter =  _converterManager.instantiate("GltfSceneConverter");
+
+    Containers::String filename = Utility::Path::join(GLTFSCENECONVERTER_TEST_OUTPUT_DIR, data.expected);
+    CORRADE_VERIFY(converter->beginFile(filename));
+
+    if(data.needsTexture) {
+        /* Add an image to be referenced by a texture */
+        CORRADE_VERIFY(converter->add(ImageView2D{PixelFormat::RGB8Unorm, {1, 1}, "yey"}));
+
+        /* Add a texture to be referenced by a material */
+        CORRADE_VERIFY(converter->add(TextureData{TextureType::Texture2D,
+            SamplerFilter::Nearest,
+            SamplerFilter::Nearest,
+            SamplerMipmap::Base,
+            SamplerWrapping::ClampToEdge,
+            0}));
+    }
+
+    {
+        std::ostringstream out;
+        Warning redirectWarning{&out};
+        CORRADE_VERIFY(converter->add(data.material));
+        CORRADE_COMPARE(out.str(), data.expectedWarning);
+    }
+
+    /* Testing the contents would be too time-consuming, the file itself has to
+       suffice */
+    CORRADE_VERIFY(converter->endFile());
+    CORRADE_COMPARE_AS(filename,
+        Utility::Path::join(GLTFSCENECONVERTER_TEST_DIR, data.expected),
+        TestSuite::Compare::File);
+}
+
+void GltfSceneConverterTest::addMaterialMultiple() {
+    if(_imageConverterManager.loadState("PngImageConverter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("PngImageConverter plugin not found, cannot test");
+
+    Containers::Pointer<AbstractSceneConverter> converter =  _converterManager.instantiate("GltfSceneConverter");
+
+    Containers::String filename = Utility::Path::join(GLTFSCENECONVERTER_TEST_OUTPUT_DIR, "material-multiple.gltf");
+    CORRADE_VERIFY(converter->beginFile(filename));
+
+    /* Add three textures referencing a single image  */
+    CORRADE_VERIFY(converter->add(ImageView2D{PixelFormat::RGB8Unorm, {1, 1}, "yey"}));
+    CORRADE_VERIFY(converter->add(TextureData{TextureType::Texture2D,
+        SamplerFilter::Nearest,
+        SamplerFilter::Nearest,
+        SamplerMipmap::Base,
+        SamplerWrapping::ClampToEdge,
+        0}));
+    CORRADE_VERIFY(converter->add(TextureData{TextureType::Texture2D,
+        SamplerFilter::Nearest,
+        SamplerFilter::Nearest,
+        SamplerMipmap::Base,
+        SamplerWrapping::ClampToEdge,
+        0}));
+    CORRADE_VERIFY(converter->add(TextureData{TextureType::Texture2D,
+        SamplerFilter::Nearest,
+        SamplerFilter::Nearest,
+        SamplerMipmap::Base,
+        SamplerWrapping::ClampToEdge,
+        0}));
+
+    /* A textureless material. Adding the type even though not use to make
+       comparison with imported data easier. */
+    MaterialData material0{MaterialType::PbrMetallicRoughness, {
+        {MaterialAttribute::BaseColor, Color4{0.1f, 0.2f, 0.3f, 0.4f}},
+        {MaterialAttribute::DoubleSided, true}
+    }};
+    CORRADE_VERIFY(converter->add(material0));
+
+    /* A material referencing texture 0 and 2; texture 1 is unused. Since this
+       one doesn't have any PBR properties, it's not marked as
+       PbrMetallicRoughness on import and thus not here either. */
+    MaterialData material1{{}, {
+        {MaterialAttribute::NormalTexture, 2u},
+        {MaterialAttribute::OcclusionTexture, 0u}
+    }};
+    CORRADE_VERIFY(converter->add(material1));
+
+    CORRADE_VERIFY(converter->endFile());
+    CORRADE_COMPARE_AS(filename,
+        Utility::Path::join(GLTFSCENECONVERTER_TEST_DIR, "material-multiple.gltf"),
+        TestSuite::Compare::File);
+
+    if(_importerManager.loadState("GltfImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("GltfImporter plugin not found, cannot test a rountrip");
+
+    Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("GltfImporter");
+
+    CORRADE_VERIFY(importer->openFile(filename));
+
+    /* Disable Phong material fallback (enabled by default for compatibility),
+       no use for that here */
+    importer->configuration().setValue("phongMaterialFallback", false);
+
+    /* There should be two materials referencing two textures */
+    CORRADE_COMPARE(importer->materialCount(), 2);
+    Containers::Optional<MaterialData> imported0 = importer->material(0);
+    CORRADE_VERIFY(imported0);
+    compareMaterials(*imported0, material0);
+
+    Containers::Optional<MaterialData> imported1 = importer->material(1);
+    CORRADE_VERIFY(imported1);
+    compareMaterials(*imported1, material1);
+}
+
+void GltfSceneConverterTest::addMaterialInvalid() {
+    auto&& data = AddMaterialInvalidData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    if(_imageConverterManager.loadState("PngImageConverter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("PngImageConverter plugin not found, cannot test");
+
+    Containers::Pointer<AbstractSceneConverter> converter =  _converterManager.instantiate("GltfSceneConverter");
+
+    Containers::String filename = Utility::Path::join(GLTFSCENECONVERTER_TEST_OUTPUT_DIR, "texture.gltf");
+    CORRADE_VERIFY(converter->beginFile(filename));
+
+    /* Add an image to be referenced by a texture */
+    CORRADE_VERIFY(converter->add(ImageView2D{PixelFormat::RGB8Unorm, {1, 1}, "yey"}));
+
+    /* Add a texture to be referenced by a material */
+    CORRADE_VERIFY(converter->add(TextureData{TextureType::Texture2D,
+        SamplerFilter::Nearest,
+        SamplerFilter::Nearest,
+        SamplerMipmap::Base,
+        SamplerWrapping::ClampToEdge,
+        0}));
+
+    {
+        std::ostringstream out;
+        Error redirectError{&out};
+        CORRADE_VERIFY(!converter->add(data.material));
+        CORRADE_COMPARE(out.str(), Utility::format("Trade::GltfSceneConverter::add(): {}\n", data.message));
+    }
+
+    /* The file should not get corrupted by this error, thus the same as if
+       just the image & texture was added */
+    CORRADE_VERIFY(converter->endFile());
+    CORRADE_COMPARE_AS(filename,
+        Utility::Path::join(GLTFSCENECONVERTER_TEST_DIR, "texture.gltf"),
         TestSuite::Compare::File);
 }
 

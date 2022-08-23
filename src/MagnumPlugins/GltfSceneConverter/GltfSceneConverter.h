@@ -265,6 +265,34 @@ See @ref building-plugins, @ref cmake-plugins, @ref plugins and
     though the KTX2 container is capable of storing these.
 -   At the moment, texture sampler properties are not exported.
 
+@subsection Trade-GltfSceneConverter-behavior-materials Material export
+
+-   Implicitly, only attributes that from glTF material defaults are written to
+    save file on size. Enable the @cb{.ini} keepMaterialDefaults @ce
+    @ref Trade-GltfSceneConverter-configuration "configuration option" to
+    write them as well.
+-   Both a separate @ref MaterialAttribute::MetalnessTexture and
+    @ref MaterialAttribute::RoughnessTexture as well as a combined
+    @ref MaterialAttribute::NoneRoughnessMetallicTexture is supported, but
+    either both or neither textures have to be present and have to satisfy glTF
+    packing rules as described in
+    @ref PbrMetallicRoughnessMaterialData::hasNoneRoughnessMetallicTexture().
+-   @ref MaterialAttribute::NormalTextureSwizzle has to be
+    @ref MaterialTextureSwizzle::RGB, if present;
+    @ref MaterialAttribute::OcclusionTextureSwizzle has to be
+    @ref MaterialTextureSwizzle::R, if present.
+-   @ref MaterialTypes are ignored, the material is only filled based on
+    the attributes present
+-   Material names, if passed, are saved into the file
+-   The material is required to only be added after all textures it references
+-   An informational warning is printed for all attributes that were unused
+    due to not having a glTF equivalent (such as Phong properties), due to
+    referring to a texture but the texture attribute isn't present or due to
+    the support not being implemented yet
+-   At the moment, only the core glTF material properties are exported, no
+    extensions
+-   At the moment, custom material properties and layers are not exported
+
 @section Trade-GltfSceneConverter-configuration Plugin-specific config
 
 It's possible to tune various output options through @ref configuration(). See
@@ -291,6 +319,8 @@ class MAGNUM_GLTFSCENECONVERTER_EXPORT GltfSceneConverter: public AbstractSceneC
 
         MAGNUM_GLTFSCENECONVERTER_LOCAL void doSetMeshAttributeName(UnsignedShort attribute, Containers::StringView name) override;
         MAGNUM_GLTFSCENECONVERTER_LOCAL bool doAdd(const UnsignedInt id, const MeshData& mesh, Containers::StringView name) override;
+
+        MAGNUM_GLTFSCENECONVERTER_LOCAL bool doAdd(UnsignedInt id, const MaterialData& material, Containers::StringView name) override;
 
         MAGNUM_GLTFSCENECONVERTER_LOCAL bool doAdd(UnsignedInt id, const TextureData& texture, Containers::StringView name) override;
         MAGNUM_GLTFSCENECONVERTER_LOCAL bool doAdd(UnsignedInt id, const ImageData2D& image, Containers::StringView name) override;
