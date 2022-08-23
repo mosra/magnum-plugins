@@ -25,8 +25,8 @@
 
 #include "MeshOptimizerSceneConverter.h"
 
-#include <Corrade/Containers/Iterable.h>
 #include <Corrade/Containers/Optional.h>
+#include <Corrade/Containers/Reference.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Magnum/Math/PackingBatch.h>
 #include <Magnum/Math/Vector3.h>
@@ -224,7 +224,7 @@ bool convertInPlaceInternal(const char* prefix, MeshData& mesh, const SceneConve
     }
 
     if((configuration.value<bool>("encodeVertex") || configuration.value<bool>("decodeVertex")) && (mesh.vertexData().size() > 256)) {
-        Error{} << prefix << "Compression and decompression don't work with vertex data bigger than 256 bytes in size";
+        Error{} << prefix << "Compression and decompression is not possible with vertex data bigger than 256 bytes";
         return false;
     }
 
@@ -248,8 +248,8 @@ bool convertInPlaceInternal(const char* prefix, MeshData& mesh, const SceneConve
         }
     }
 
-    if((configuration.value<bool>("encodeIndex") || configuration.value<bool>("encodeIndex")) && mesh.indexCount()%3 != 0) {
-        Error{} << prefix << "Only the index data specifying triangles may be encoded";
+    if((configuration.value<bool>("encodeIndex") || configuration.value<bool>("decodeIndex")) && mesh.indexCount()%3 != 0) {
+        Error{} << prefix << "Only the index data mapped to triangles -hence divisible by 3- may be de/compressed";
         return false;
     }
 
@@ -350,12 +350,9 @@ template<std::size_t(*F)(UnsignedInt*, const UnsignedInt*, std::size_t, const Fl
 }
 
 std::vector<unsigned char> encodeVertex(const MeshData& mesh) {
-    meshopt_encodeVertexVersion(0);
-
     auto owned_mesh = MeshTools::owned(mesh);
     std::vector<unsigned char> buffer;
     if(MeshTools::isInterleaved(mesh)) {
-        printf("interleaved!\n");
         buffer.resize(meshopt_encodeVertexBufferBound(owned_mesh.vertexCount(), owned_mesh.attributeStride(0)));
         buffer.resize(meshopt_encodeVertexBuffer(&buffer[0], buffer.size(), owned_mesh.vertexData(), owned_mesh.vertexCount(),
                                                  owned_mesh.attributeStride(0)));
@@ -385,7 +382,6 @@ std::vector<unsigned char> encodeVertex(const MeshData& mesh) {
         }
         buffer.shrink_to_fit();
     }
-    printf("buffer.empty(): %u buffer.size(): %zu  owned_mesh.vertexData().size(): %zu\n", buffer.empty(), buffer.size(), owned_mesh.vertexData().size());
     CORRADE_INTERNAL_ASSERT(!buffer.empty() && buffer.size() < owned_mesh.vertexData().size());
     return buffer;
 }
@@ -512,58 +508,33 @@ Containers::Optional<MeshData> MeshOptimizerSceneConverter::doConvert(const Mesh
     }
 
     if(configuration().value<bool>("encodeIndex")) {
-        meshopt_encodeIndexVersion(1); // decodable by 0.14+
-
         out = MeshTools::owned(mesh);
 
-      /*  const std::size_t maxEncodedSize = out.indexData().size(); // meshopt_encodeIndexBufferBound(out.indexCount(), out.vertexCount());
-
-        Containers::Array<char> encoded{NoInit, maxEncodedSize};
-        std::size_t encodedSize = meshopt_encodeIndexBuffer(reinterpret_cast<unsigned char*>(encoded.data()), encoded.size(),
-                                                            out.indexData().data(), out.indexCount());
-
-        CORRADE_INTERNAL_ASSERT(encodedSize > 0 && encodedSize <= encoded.size());
-
-        Containers::arrayResize(encoded, encodedSize);
-        Containers::arrayShrink(encoded);
-
-        MeshIndexType indexType = MeshIndexType::UnsignedInt;
-        const MeshIndexData indices{MeshIndexType::UnsignedByte, encoded};
-        out = MeshData{out.primitive(), std::move(encoded), Trade::MeshIndexData{out.indexType(), out.releaseIndexData()},
-                       {}, out.releaseVertexData(), out.releaseAttributeData(), out.vertexCount()};
-
-        printf("index size: %zu, indices().size: %zu,   vertexCount: %u\n", out.indexData().size(), out.indicesAsArray().size(), mesh.vertexCount()); */
         std::vector<unsigned char> index_buffer(meshopt_encodeIndexBufferBound(out.indexCount(), out.vertexCount()));
-        printf("index_buf_size: %zu\n",index_buffer.size());
         index_buffer.resize(meshopt_encodeIndexBuffer(&index_buffer[0], index_buffer.size(), out.indexData().data(), out.indexCount()));
 
-
-        printf("indexData size: %zu, index_buf_size: %zu,  indices().size: %zu,   vertexCount: %u\n", out.indexData().size(),
-               index_buffer.size(), out.indicesAsArray().size(), out.vertexCount());
-        //CORRADE_INTERNAL_ASSERT(!index_buffer.empty() && index_buffer.size() <= out.indexData().size());
+        if(index_buffer.empty() || index_buffer.size() > out.indexData().size()) {
+            Error{} << "Trade::MeshOptimizerSceneConverter::convert(): index buffer encoding failed: encoded buffer size:"
+                    << index_buffer.size() << "original index data size:" << out.indexData().size();
+            return Containers::NullOpt;
+        }
 
         out = Trade::MeshData{out.primitive(), {}, index_buffer, Trade::MeshIndexData{index_buffer}, {},
                               out.vertexData(), out.releaseAttributeData(), out.vertexCount()};
-        printf("indexData size: %zu, index_buf_size: %zu,  indices().size: %u,   vertexCount: %u\n", out.indexData().size(),
-               index_buffer.size(), out.indexCount(), out.vertexCount());
-
     }
 
     if(configuration().value<bool>("decodeIndex")) {
         out = MeshTools::owned(mesh);
-        printf("index size: %zu, indices().size: %zu,   vertexCount: %u\n", out.indexData().size(), out.indicesAsArray().size(), mesh.vertexCount());
         Containers::Array<unsigned int> decodedIndex{NoInit, out.indexCount()*meshIndexTypeSize(out.indexType())};
         int result = meshopt_decodeIndexBuffer(decodedIndex.data(), out.indexCount(),
                                               reinterpret_cast<const unsigned char *>(out.indexData().data()), out.indexData().size());
-
-
-        printf("indexData size: %zu, index_buf_size: %zu,  indices().size: %zu,   vertexCount: %u\n", out.indexData().size(),
-               decodedIndex.size(), out.indicesAsArray().size(), out.vertexCount());
+        if(result != 0) {
+            Error{} << "Trade::MeshOptimizerSceneConverter::convert(): index buffer decoding failed";
+            return Containers::NullOpt;
+        }
 
         out = Trade::MeshData{out.primitive(), {}, decodedIndex, Trade::MeshIndexData{decodedIndex}, {},
                               out.vertexData(), out.releaseAttributeData(), out.vertexCount()};
-        printf("indexData size: %zu, index_buf_size: %zu,  indices().size: %zu,   vertexCount: %u\n", out.indexData().size(),
-               decodedIndex.size(), out.indicesAsArray().size(), out.vertexCount());
     }
 
     if(configuration().value<bool>("encodeVertex")) {
@@ -574,18 +545,13 @@ Containers::Optional<MeshData> MeshOptimizerSceneConverter::doConvert(const Mesh
         for(UnsignedInt i = 0; i < out.attributeCount(); ++i) {
             const VertexFormat encodedFormat = !isVertexFormatImplementationSpecific(out.attributeFormat(i)) ?
                                                vertexFormatWrap(out.attributeFormat(i)) : out.attributeFormat(i);
-            printf("vertexCount: %u\n", out.vertexCount());
             attributes[i] = Trade::MeshAttributeData{out.attributeName(i), encodedFormat,
                                                 out.attributeOffset(i), out.vertexCount(),
                                                 out.attributeStride(i), out.attributeArraySize(i)};
-            printf("Stride: %u,  VertCount: %u,   AttrStride: %u,   Offset: %lu,   ArraySize: %u,  out.attrFormat: %u\n",
-                   out.attributeStride(0), out.vertexCount(), out.attributeStride(i), out.attributeOffset(i),
-                   out.attributeArraySize(i), out.attributeFormat(i));
         }
         std::vector<unsigned char> encoded_buffer = encodeVertex(out);
-        printf("encoded.size: %zu\n", encoded_buffer.size());
         out = Trade::MeshData{out.primitive(), Trade::DataFlags{}, out.indexData(), Trade::MeshIndexData{out.indices()}, Trade::DataFlag::Mutable,
-                              std::move(encoded_buffer), std::move(attributes)};
+                              encoded_buffer, std::move(attributes)};
     }
 
     if(configuration().value<bool>("decodeVertex")) {
@@ -596,17 +562,13 @@ Containers::Optional<MeshData> MeshOptimizerSceneConverter::doConvert(const Mesh
             attributes[i] = Trade::MeshAttributeData{out.attributeName(i), originalFormat,
                                                      out.attributeOffset(i), out.vertexCount(),
                                                      out.attributeStride(i), out.attributeArraySize(i)};
-            printf("Stride: %u,  VertCount: %u,   AttrStride: %u,   Offset: %lu,   ArraySize: %u,  out.attrFormat: %u\n",
-                   out.attributeStride(0), out.vertexCount(), out.attributeStride(i), out.attributeOffset(i),
-                   out.attributeArraySize(i), out.attributeFormat(i));
         }
         Containers::Array<char> decoded{NoInit, out.vertexCount()*out.attributeStride(0)};
         Containers::ArrayView<const unsigned char> encoded_data = Containers::arrayCast<const unsigned char>(out.vertexData());
         int result = meshopt_decodeVertexBuffer(decoded.data(), out.vertexCount(), out.attributeStride(0),
                                                 encoded_data.data(), encoded_data.size());
-        printf("result: %d\n", result);
         out = Trade::MeshData{out.primitive(), Trade::DataFlags{}, out.indexData(), Trade::MeshIndexData{out.indices()}, Trade::DataFlag::Mutable,
-                              std::move(decoded), std::move(attributes)};
+                              decoded, std::move(attributes)};
     }
 
     /* Print before & after stats if verbose output is requested */
@@ -621,4 +583,4 @@ Containers::Optional<MeshData> MeshOptimizerSceneConverter::doConvert(const Mesh
 }}
 
 CORRADE_PLUGIN_REGISTER(MeshOptimizerSceneConverter, Magnum::Trade::MeshOptimizerSceneConverter,
-    "cz.mosra.magnum.Trade.AbstractSceneConverter/0.2")
+    "cz.mosra.magnum.Trade.AbstractSceneConverter/0.1.2")
