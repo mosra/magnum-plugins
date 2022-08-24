@@ -4268,99 +4268,80 @@ void GltfImporterTest::materialPbrMetallicRoughness() {
         const auto* state = static_cast<const Utility::JsonToken*>(material->importerState());
         CORRADE_VERIFY(state);
         CORRADE_COMPARE((*state)["name"].asString(), "defaults");
-    } {
-        const char* name = "color";
-        Containers::Optional<Trade::MaterialData> material = importer->material(name);
-        CORRADE_ITERATION(name);
-        CORRADE_VERIFY(material);
-        CORRADE_COMPARE(material->layerCount(), 1);
-        CORRADE_COMPARE(material->attributeCount(), 3);
+    }
 
-        const auto& pbr = material->as<PbrMetallicRoughnessMaterialData>();
-        CORRADE_COMPARE(pbr.baseColor(), (Color4{0.3f, 0.4f, 0.5f, 0.8f}));
-        CORRADE_COMPARE(pbr.metalness(), 0.56f);
-        CORRADE_COMPARE(pbr.roughness(), 0.89f);
-    } {
-        const char* name = "textures";
-        Containers::Optional<Trade::MaterialData> material = importer->material(name);
-        CORRADE_ITERATION(name);
-        CORRADE_VERIFY(material);
-        CORRADE_COMPARE(material->layerCount(), 1);
-        CORRADE_COMPARE(material->attributeCount(), 5);
+    const Containers::Pair<Containers::StringView, MaterialData> materials[]{
+        {"color", MaterialData{MaterialType::PbrMetallicRoughness, {
+            {MaterialAttribute::BaseColor, Color4{0.3f, 0.4f, 0.5f, 0.8f}},
+            {MaterialAttribute::Metalness, 0.56f},
+            {MaterialAttribute::Roughness, 0.89f}
+        }}},
+        {"textures", MaterialData{MaterialType::PbrMetallicRoughness, {
+            {MaterialAttribute::BaseColor, Color4{0.7f, 0.8f, 0.9f, 1.1f}},
+            {MaterialAttribute::BaseColorTexture, 0u},
+            {MaterialAttribute::Metalness, 0.6f},
+            {MaterialAttribute::Roughness, 0.9f},
+            {MaterialAttribute::NoneRoughnessMetallicTexture, 1u},
+        }}},
+        {"identity texture transform", MaterialData{MaterialType::PbrMetallicRoughness, {
+            {MaterialAttribute::BaseColorTexture, 0u},
+            {MaterialAttribute::BaseColorTextureMatrix, Matrix3{}},
+            {MaterialAttribute::NoneRoughnessMetallicTexture, 1u},
+            {MaterialAttribute::MetalnessTextureMatrix, Matrix3{}},
+            {MaterialAttribute::RoughnessTextureMatrix, Matrix3{}},
+        }}},
+        {"texture transform", MaterialData{MaterialType::PbrMetallicRoughness, {
+            {MaterialAttribute::BaseColorTexture, 0u},
+            {MaterialAttribute::BaseColorTextureMatrix, Matrix3{
+                {0.164968f, 0.472002f, 0.0f}, /* All */
+                {-0.472002f, 0.164968f, 0.0f},
+                {0.472002f, -0.164968f, 1.0f}
+            }},
+            {MaterialAttribute::NoneRoughnessMetallicTexture, 1u},
+            {MaterialAttribute::MetalnessTextureMatrix, Matrix3{
+                {0.5f, 0.0f, 0.0f}, /* Offset + scale */
+                {0.0f, 0.5f, 0.0f},
+                {0.0f, -0.5f, 1.0f}
+            }},
+            {MaterialAttribute::RoughnessTextureMatrix, Matrix3{
+                {0.5f, 0.0f, 0.0f}, /* Offset + scale */
+                {0.0f, 0.5f, 0.0f},
+                {0.0f, -0.5f, 1.0f}
+            }},
+        }}},
+        {"texture coordinate sets", MaterialData{MaterialType::PbrMetallicRoughness, {
+            {MaterialAttribute::BaseColorTexture, 0u},
+            {MaterialAttribute::BaseColorTextureCoordinates, 7u},
+            {MaterialAttribute::NoneRoughnessMetallicTexture, 1u},
+            {MaterialAttribute::MetalnessTextureCoordinates, 5u},
+            {MaterialAttribute::RoughnessTextureCoordinates, 5u},
+        }}},
+        {"empty texture transform with overriden coordinate set", MaterialData{MaterialType::PbrMetallicRoughness, {
+            {MaterialAttribute::BaseColorTexture, 1u},
+            {MaterialAttribute::BaseColorTextureMatrix, Matrix3{}},
+            {MaterialAttribute::NoneRoughnessMetallicTexture, 0u},
+            {MaterialAttribute::MetalnessTextureMatrix, Matrix3{}},
+            {MaterialAttribute::RoughnessTextureMatrix, Matrix3{}},
+            {MaterialAttribute::MetalnessTextureCoordinates, 2u}, /* not 5 */
+            {MaterialAttribute::RoughnessTextureCoordinates, 2u},
+        }}},
+    };
 
-        const auto& pbr = material->as<PbrMetallicRoughnessMaterialData>();
-        CORRADE_VERIFY(pbr.hasAttribute(MaterialAttribute::BaseColorTexture));
-        CORRADE_COMPARE(pbr.baseColor(), (Color4{0.7f, 0.8f, 0.9f, 1.1f}));
-        CORRADE_COMPARE(pbr.baseColorTexture(), 0);
-        CORRADE_COMPARE(pbr.metalness(), 0.6f);
-        CORRADE_COMPARE(pbr.roughness(), 0.9f);
-        CORRADE_VERIFY(pbr.hasNoneRoughnessMetallicTexture());
-        CORRADE_COMPARE(pbr.metalnessTexture(), 1);
-    } {
-        const char* name = "identity texture transform";
-        Containers::Optional<Trade::MaterialData> material = importer->material(name);
-        CORRADE_ITERATION(name);
-        CORRADE_VERIFY(material);
-        CORRADE_COMPARE(material->layerCount(), 1);
-        CORRADE_COMPARE(material->attributeCount(), 5);
+    /* The "defaults" material handled explicitly above */
+    CORRADE_COMPARE(importer->materialCount(), Containers::arraySize(materials) + 1);
 
-        const auto& pbr = material->as<PbrMetallicRoughnessMaterialData>();
-        /* Identity transform, but is present */
-        CORRADE_VERIFY(pbr.hasTextureTransformation());
-        CORRADE_VERIFY(pbr.hasAttribute(MaterialAttribute::BaseColorTexture));
-        CORRADE_COMPARE(pbr.baseColorTextureMatrix(), (Matrix3{}));
-        CORRADE_VERIFY(pbr.hasNoneRoughnessMetallicTexture());
-        CORRADE_COMPARE(pbr.metalnessTextureMatrix(), (Matrix3{}));
-    } {
-        const char* name = "texture transform";
-        Containers::Optional<Trade::MaterialData> material = importer->material(name);
-        CORRADE_ITERATION(name);
+    for(const auto& expected: materials) {
+        Containers::Optional<Trade::MaterialData> material = importer->material(expected.first());
+        CORRADE_ITERATION(expected.first());
         CORRADE_VERIFY(material);
-        CORRADE_COMPARE(material->layerCount(), 1);
-        CORRADE_COMPARE(material->attributeCount(), 5);
+        compareMaterials(*material, expected.second());
 
+        /* Verify the attributes aren't accidentally mismatched and it always
+           classifies as packed metallic/roughness texture if one of them is
+           present */
         const auto& pbr = material->as<PbrMetallicRoughnessMaterialData>();
-        /* All */
-        CORRADE_VERIFY(pbr.hasAttribute(MaterialAttribute::BaseColorTexture));
-        CORRADE_COMPARE(pbr.baseColorTextureMatrix(), (Matrix3{
-            {0.164968f, 0.472002f, 0.0f},
-            {-0.472002f, 0.164968f, 0.0f},
-            {0.472002f, -0.164968f, 1.0f}
-        }));
-        /* Offset + scale */
-        CORRADE_VERIFY(pbr.hasNoneRoughnessMetallicTexture());
-        CORRADE_COMPARE(pbr.metalnessTextureMatrix(), (Matrix3{
-            {0.5f, 0.0f, 0.0f},
-            {0.0f, 0.5f, 0.0f},
-            {0.0f, -0.5f, 1.0f}
-        }));
-    } {
-        const char* name = "texture coordinate sets";
-        Containers::Optional<Trade::MaterialData> material = importer->material(name);
-        CORRADE_ITERATION(name);
-        CORRADE_VERIFY(material);
-        CORRADE_COMPARE(material->layerCount(), 1);
-        CORRADE_COMPARE(material->attributeCount(), 5);
-
-        const auto& pbr = material->as<PbrMetallicRoughnessMaterialData>();
-        CORRADE_VERIFY(pbr.hasAttribute(MaterialAttribute::BaseColorTexture));
-        CORRADE_COMPARE(pbr.baseColorTextureCoordinates(), 7);
-        CORRADE_VERIFY(pbr.hasNoneRoughnessMetallicTexture());
-        CORRADE_COMPARE(pbr.metalnessTextureCoordinates(), 5);
-    } {
-        const char* name = "empty texture transform with overriden coordinate set";
-        Containers::Optional<Trade::MaterialData> material = importer->material(name);
-        CORRADE_ITERATION(name);
-        CORRADE_VERIFY(material);
-        CORRADE_COMPARE(material->layerCount(), 1);
-        CORRADE_COMPARE(material->attributeCount(), 7);
-
-        const auto& pbr = material->as<PbrMetallicRoughnessMaterialData>();
-        CORRADE_VERIFY(pbr.hasAttribute(MaterialAttribute::BaseColorTexture));
-        CORRADE_COMPARE(pbr.baseColorTextureMatrix(), Matrix3{});
-        CORRADE_VERIFY(pbr.hasNoneRoughnessMetallicTexture());
-        CORRADE_COMPARE(pbr.metalnessTextureMatrix(), Matrix3{});
-        CORRADE_COMPARE(pbr.metalnessTextureCoordinates(), 2); /* not 5 */
+        if(pbr.hasMetalnessTexture() || pbr.hasRoughnessTexture())
+            CORRADE_VERIFY(pbr.hasNoneRoughnessMetallicTexture());
     }
 }
 
@@ -4390,101 +4371,79 @@ void GltfImporterTest::materialPbrSpecularGlossiness() {
         CORRADE_COMPARE(pbr.diffuseColor(), (Color4{1.0f}));
         CORRADE_COMPARE(pbr.specularColor(), (Color4{1.0f, 0.0f}));
         CORRADE_COMPARE(pbr.glossiness(), 1.0f);
-    } {
-        const char* name = "color";
-        Containers::Optional<Trade::MaterialData> material = importer->material(name);
-        CORRADE_ITERATION(name);
-        CORRADE_VERIFY(material);
-        CORRADE_COMPARE(material->layerCount(), 1);
-        CORRADE_COMPARE(material->attributeCount(), 3);
+    }
 
+    const Containers::Pair<Containers::StringView, MaterialData> materials[]{
+        {"color", MaterialData{MaterialType::PbrSpecularGlossiness, {
+            {MaterialAttribute::DiffuseColor, Color4{0.3f, 0.4f, 0.5f, 0.8f}},
+            {MaterialAttribute::SpecularColor, Color4{0.1f, 0.2f, 0.6f, 0.0f}},
+            {MaterialAttribute::Glossiness, 0.89f}
+        }}},
+        {"textures", MaterialData{MaterialType::PbrSpecularGlossiness, {
+            {MaterialAttribute::DiffuseColor, Color4{0.7f, 0.8f, 0.9f, 1.1f}},
+            {MaterialAttribute::DiffuseTexture, 0u},
+            {MaterialAttribute::SpecularColor, Color4{0.4f, 0.5f, 0.6f, 0.0f}},
+            {MaterialAttribute::SpecularGlossinessTexture, 1u},
+            {MaterialAttribute::Glossiness, 0.9f}
+        }}},
+        {"identity texture transform", MaterialData{MaterialType::PbrSpecularGlossiness, {
+            {MaterialAttribute::DiffuseTexture, 0u},
+            {MaterialAttribute::DiffuseTextureMatrix, Matrix3{}},
+            {MaterialAttribute::SpecularGlossinessTexture, 1u},
+            {MaterialAttribute::SpecularTextureMatrix, Matrix3{}},
+            {MaterialAttribute::GlossinessTextureMatrix, Matrix3{}},
+        }}},
+        {"texture transform", MaterialData{MaterialType::PbrSpecularGlossiness, {
+            {MaterialAttribute::DiffuseTexture, 0u},
+            {MaterialAttribute::DiffuseTextureMatrix, Matrix3{
+                {1.0f, 0.0f, 0.0f},
+                {0.0f, 1.0f, 0.0f},
+                {0.0f, -1.0f, 1.0f}
+            }},
+            {MaterialAttribute::SpecularGlossinessTexture, 1u},
+            {MaterialAttribute::SpecularTextureMatrix, Matrix3{
+                {0.5f, 0.0f, 0.0f},
+                {0.0f, 0.5f, 0.0f},
+                {0.0f, 0.5f, 1.0f}
+            }},
+            {MaterialAttribute::GlossinessTextureMatrix, Matrix3{
+                {0.5f, 0.0f, 0.0f},
+                {0.0f, 0.5f, 0.0f},
+                {0.0f, 0.5f, 1.0f}
+            }},
+        }}},
+        {"texture coordinate sets", MaterialData{MaterialType::PbrSpecularGlossiness, {
+            {MaterialAttribute::DiffuseTexture, 0u},
+            {MaterialAttribute::DiffuseTextureCoordinates, 7u},
+            {MaterialAttribute::SpecularGlossinessTexture, 1u},
+            {MaterialAttribute::SpecularTextureCoordinates, 5u},
+            {MaterialAttribute::GlossinessTextureCoordinates, 5u},
+        }}},
+        {"both metallic/roughness and specular/glossiness", MaterialData{MaterialType::PbrMetallicRoughness|MaterialType::PbrSpecularGlossiness, {
+            {MaterialAttribute::BaseColor, Color4{0.3f, 0.4f, 0.5f, 0.8f}},
+            {MaterialAttribute::Metalness, 0.56f},
+            {MaterialAttribute::Roughness, 0.89f},
+            {MaterialAttribute::DiffuseColor, Color4{0.3f, 0.4f, 0.5f, 0.8f}},
+            {MaterialAttribute::SpecularColor, Color4{0.1f, 0.2f, 0.6f, 0.0f}},
+            {MaterialAttribute::Glossiness, 0.89f}
+        }}}
+    };
+
+    /* The "defaults" material handled explicitly above */
+    CORRADE_COMPARE(importer->materialCount(), Containers::arraySize(materials) + 1);
+
+    for(const auto& expected: materials) {
+        Containers::Optional<Trade::MaterialData> material = importer->material(expected.first());
+        CORRADE_ITERATION(expected.first());
+        CORRADE_VERIFY(material);
+        compareMaterials(*material, expected.second());
+
+        /* Verify the attributes aren't accidentally mismatched and it always
+           classifies as packed specular/glossiness texture if one of them is
+           present */
         const auto& pbr = material->as<PbrSpecularGlossinessMaterialData>();
-        CORRADE_COMPARE(pbr.diffuseColor(), (Color4{0.3f, 0.4f, 0.5f, 0.8f}));
-        CORRADE_COMPARE(pbr.specularColor(), (Color4{0.1f, 0.2f, 0.6f, 0.0f}));
-        CORRADE_COMPARE(pbr.glossiness(), 0.89f);
-    } {
-        const char* name = "textures";
-        Containers::Optional<Trade::MaterialData> material = importer->material(name);
-        CORRADE_ITERATION(name);
-        CORRADE_VERIFY(material);
-        CORRADE_COMPARE(material->layerCount(), 1);
-        CORRADE_COMPARE(material->attributeCount(), 5);
-
-        const auto& pbr = material->as<PbrSpecularGlossinessMaterialData>();
-        CORRADE_VERIFY(pbr.hasAttribute(MaterialAttribute::DiffuseTexture));
-        CORRADE_COMPARE(pbr.diffuseColor(), (Color4{0.7f, 0.8f, 0.9f, 1.1f}));
-        CORRADE_COMPARE(pbr.diffuseTexture(), 0);
-        CORRADE_COMPARE(pbr.specularColor(), (Color4{0.4f, 0.5f, 0.6f, 0.0f}));
-        CORRADE_VERIFY(pbr.hasSpecularGlossinessTexture());
-        CORRADE_COMPARE(pbr.specularTexture(), 1);
-        CORRADE_COMPARE(pbr.glossiness(), 0.9f);
-    } {
-        const char* name = "identity texture transform";
-        Containers::Optional<Trade::MaterialData> material = importer->material(name);
-        CORRADE_ITERATION(name);
-        CORRADE_VERIFY(material);
-        CORRADE_COMPARE(material->layerCount(), 1);
-        CORRADE_COMPARE(material->attributeCount(), 5);
-        /* Identity transform, but is present */
-        const auto& pbr = material->as<PbrSpecularGlossinessMaterialData>();
-        CORRADE_VERIFY(pbr.hasTextureTransformation());
-        CORRADE_VERIFY(pbr.hasAttribute(MaterialAttribute::DiffuseTexture));
-        CORRADE_COMPARE(pbr.diffuseTextureMatrix(), (Matrix3{}));
-        CORRADE_VERIFY(pbr.hasSpecularGlossinessTexture());
-        CORRADE_COMPARE(pbr.specularTextureMatrix(), (Matrix3{}));
-    } {
-        const char* name = "texture transform";
-        Containers::Optional<Trade::MaterialData> material = importer->material(name);
-        CORRADE_ITERATION(name);
-        CORRADE_VERIFY(material);
-        CORRADE_COMPARE(material->layerCount(), 1);
-        CORRADE_COMPARE(material->attributeCount(), 5);
-
-        const auto& pbr = material->as<PbrSpecularGlossinessMaterialData>();
-        CORRADE_VERIFY(pbr.hasAttribute(MaterialAttribute::DiffuseTexture));
-        CORRADE_COMPARE(pbr.diffuseTextureMatrix(), (Matrix3{
-            {1.0f, 0.0f, 0.0f},
-            {0.0f, 1.0f, 0.0f},
-            {0.0f, -1.0f, 1.0f}
-        }));
-        CORRADE_VERIFY(pbr.hasSpecularGlossinessTexture());
-        CORRADE_COMPARE(pbr.specularTextureMatrix(), (Matrix3{
-            {0.5f, 0.0f, 0.0f},
-            {0.0f, 0.5f, 0.0f},
-            {0.0f, 0.5f, 1.0f}
-        }));
-    } {
-        const char* name = "texture coordinate sets";
-        Containers::Optional<Trade::MaterialData> material = importer->material(name);
-        CORRADE_ITERATION(name);
-        CORRADE_VERIFY(material);
-        CORRADE_COMPARE(material->layerCount(), 1);
-        CORRADE_COMPARE(material->attributeCount(), 5);
-
-        const auto& pbr = material->as<PbrSpecularGlossinessMaterialData>();
-        CORRADE_VERIFY(pbr.hasAttribute(MaterialAttribute::DiffuseTexture));
-        CORRADE_COMPARE(pbr.diffuseTextureCoordinates(), 7);
-        CORRADE_VERIFY(pbr.hasSpecularGlossinessTexture());
-        CORRADE_COMPARE(pbr.specularTextureCoordinates(), 5);
-    } {
-        const char* name = "both metallic/roughness and specular/glossiness";
-        Containers::Optional<Trade::MaterialData> material = importer->material(name);
-        CORRADE_ITERATION(name);
-        CORRADE_VERIFY(material);
-
-        CORRADE_COMPARE(material->types(), MaterialType::PbrSpecularGlossiness|MaterialType::PbrMetallicRoughness);
-        CORRADE_COMPARE(material->layerCount(), 1);
-        CORRADE_COMPARE(material->attributeCount(), 6);
-
-        const auto& a = material->as<PbrMetallicRoughnessMaterialData>();
-        CORRADE_COMPARE(a.baseColor(), (Color4{0.3f, 0.4f, 0.5f, 0.8f}));
-        CORRADE_COMPARE(a.metalness(), 0.56f);
-        CORRADE_COMPARE(a.roughness(), 0.89f);
-
-        const auto& b = material->as<PbrSpecularGlossinessMaterialData>();
-        CORRADE_COMPARE(b.diffuseColor(), (Color4{0.3f, 0.4f, 0.5f, 0.8f}));
-        CORRADE_COMPARE(b.specularColor(), (Color4{0.1f, 0.2f, 0.6f, 0.0f}));
-        CORRADE_COMPARE(b.glossiness(), 0.89f);
+        if(pbr.hasSpecularTexture() || pbr.hasGlossinessTexture())
+            CORRADE_VERIFY(pbr.hasSpecularGlossinessTexture());
     }
 }
 
@@ -4509,94 +4468,69 @@ void GltfImporterTest::materialCommon() {
            explicit attributes to override those) */
         CORRADE_COMPARE(material->alphaMode(), MaterialAlphaMode::Opaque);
         CORRADE_COMPARE(material->alphaMask(), 0.5f);
-    } {
-        Containers::Optional<Trade::MaterialData> material = importer->material("alpha mask");
-        CORRADE_VERIFY(material);
-        CORRADE_COMPARE(material->layerCount(), 1);
-        CORRADE_COMPARE(material->attributeCount(), 1);
-        CORRADE_COMPARE(material->alphaMode(), MaterialAlphaMode::Mask);
-        CORRADE_COMPARE(material->alphaMask(), 0.369f);
-    } {
-        Containers::Optional<Trade::MaterialData> material = importer->material("double-sided alpha blend");
-        CORRADE_VERIFY(material);
-        CORRADE_COMPARE(material->layerCount(), 1);
-        CORRADE_COMPARE(material->attributeCount(), 2);
-        CORRADE_VERIFY(material->isDoubleSided());
-        CORRADE_COMPARE(material->alphaMode(), MaterialAlphaMode::Blend);
-        CORRADE_COMPARE(material->alphaMask(), 0.5f);
-    } {
-        Containers::Optional<Trade::MaterialData> material = importer->material("opaque");
-        CORRADE_VERIFY(material);
-        CORRADE_COMPARE(material->layerCount(), 1);
-        CORRADE_COMPARE(material->attributeCount(), 2);
-        CORRADE_VERIFY(!material->isDoubleSided());
-        CORRADE_COMPARE(material->alphaMode(), MaterialAlphaMode::Opaque);
-        CORRADE_COMPARE(material->alphaMask(), 0.5f);
-    } {
-        const char* name = "normal, occlusion, emissive texture";
-        Containers::Optional<Trade::MaterialData> material = importer->material(name);
-        CORRADE_ITERATION(name);
-        CORRADE_VERIFY(material);
-        CORRADE_COMPARE(material->layerCount(), 1);
-        CORRADE_COMPARE(material->attributeCount(), 6);
+    }
 
-        const auto& pbr = material->as<PbrMetallicRoughnessMaterialData>();
-        CORRADE_VERIFY(pbr.hasAttribute(MaterialAttribute::NormalTexture));
-        CORRADE_COMPARE(pbr.normalTexture(), 1);
-        CORRADE_COMPARE(pbr.normalTextureScale(), 0.56f);
-        CORRADE_VERIFY(pbr.hasAttribute(MaterialAttribute::OcclusionTexture));
-        CORRADE_COMPARE(pbr.occlusionTexture(), 2);
-        CORRADE_COMPARE(pbr.occlusionTextureStrength(), 0.21f);
-        CORRADE_COMPARE(pbr.emissiveColor(), (Color3{0.1f, 0.2f, 0.3f}));
-        CORRADE_VERIFY(pbr.hasAttribute(MaterialAttribute::EmissiveTexture));
-        CORRADE_COMPARE(pbr.emissiveTexture(), 0);
-    } {
-        const char* name = "normal, occlusion, emissive texture identity transform";
-        Containers::Optional<Trade::MaterialData> material = importer->material(name);
-        CORRADE_ITERATION(name);
-        CORRADE_VERIFY(material);
-        CORRADE_COMPARE(material->layerCount(), 1);
-        CORRADE_COMPARE(material->attributeCount(), 6);
+    const Containers::Pair<Containers::StringView, MaterialData> materials[]{
+        {"alpha mask", MaterialData{{}, {
+            {MaterialAttribute::AlphaMask, 0.369f},
+        }}},
+        {"double-sided alpha blend", MaterialData{{}, {
+            {MaterialAttribute::AlphaBlend, true},
+            {MaterialAttribute::DoubleSided, true},
+        }}},
+        {"opaque", MaterialData{{}, {
+            {MaterialAttribute::DoubleSided, false}, /* explicit default, kept */
+            {MaterialAttribute::AlphaBlend, false},
+        }}},
+        {"normal, occlusion, emissive texture", MaterialData{{}, {
+            {MaterialAttribute::NormalTexture, 1u},
+            {MaterialAttribute::NormalTextureScale, 0.56f},
+            {MaterialAttribute::OcclusionTexture, 2u},
+            {MaterialAttribute::OcclusionTextureStrength, 0.21f},
+            {MaterialAttribute::EmissiveColor, Color3{0.1f, 0.2f, 0.3f}},
+            {MaterialAttribute::EmissiveTexture, 0u},
+        }}},
+        {"normal, occlusion, emissive texture identity transform", MaterialData{{}, {
+            {MaterialAttribute::NormalTexture, 1u},
+            {MaterialAttribute::NormalTextureMatrix, Matrix3{}},
+            {MaterialAttribute::OcclusionTexture, 2u},
+            {MaterialAttribute::OcclusionTextureMatrix, Matrix3{}},
+            {MaterialAttribute::EmissiveTexture, 0u},
+            {MaterialAttribute::EmissiveTextureMatrix, Matrix3{}},
+        }}},
+        {"normal, occlusion, emissive texture transform + sets", MaterialData{{}, {
+            {MaterialAttribute::NormalTexture, 1u},
+            {MaterialAttribute::NormalTextureMatrix, Matrix3{
+                {1.0f, 0.0f, 0.0f},
+                {0.0f, 1.0f, 0.0f},
+                {0.0f, -1.0f, 1.0f}
+            }},
+            {MaterialAttribute::NormalTextureCoordinates, 2u},
+            {MaterialAttribute::OcclusionTexture, 2u},
+            {MaterialAttribute::OcclusionTextureMatrix, Matrix3{
+                {1.0f, 0.0f, 0.0f},
+                {0.0f, 1.0f, 0.0f},
+                {0.5f, -1.0f, 1.0f}
+            }},
+            {MaterialAttribute::OcclusionTextureCoordinates, 3u},
+            {MaterialAttribute::EmissiveTexture, 0u},
+            {MaterialAttribute::EmissiveTextureMatrix, Matrix3{
+                {1.0f, 0.0f, 0.0f},
+                {0.0f, 1.0f, 0.0f},
+                {0.5f, 0.0f, 1.0f}
+            }},
+            {MaterialAttribute::EmissiveTextureCoordinates, 1u},
+        }}}
+    };
 
-        const auto& pbr = material->as<PbrMetallicRoughnessMaterialData>();
-        /* Identity transform, but is present */
-        CORRADE_VERIFY(pbr.hasTextureTransformation());
-        CORRADE_VERIFY(pbr.hasAttribute(MaterialAttribute::NormalTexture));
-        CORRADE_COMPARE(pbr.normalTextureMatrix(), Matrix3{});
-        CORRADE_VERIFY(pbr.hasAttribute(MaterialAttribute::OcclusionTexture));
-        CORRADE_COMPARE(pbr.occlusionTextureMatrix(), Matrix3{});
-        CORRADE_VERIFY(pbr.hasAttribute(MaterialAttribute::EmissiveTexture));
-        CORRADE_COMPARE(pbr.emissiveTextureMatrix(), Matrix3{});
-    } {
-        const char* name = "normal, occlusion, emissive texture transform + sets";
-        Containers::Optional<Trade::MaterialData> material = importer->material(name);
-        CORRADE_ITERATION(name);
-        CORRADE_VERIFY(material);
-        CORRADE_COMPARE(material->layerCount(), 1);
-        CORRADE_COMPARE(material->attributeCount(), 9);
+    /* The "defaults" material handled explicitly above */
+    CORRADE_COMPARE(importer->materialCount(), Containers::arraySize(materials) + 1);
 
-        const auto& pbr = material->as<PbrMetallicRoughnessMaterialData>();
-        CORRADE_VERIFY(pbr.hasAttribute(MaterialAttribute::NormalTexture));
-        CORRADE_COMPARE(pbr.normalTextureMatrix(), (Matrix3{
-            {1.0f, 0.0f, 0.0f},
-            {0.0f, 1.0f, 0.0f},
-            {0.0f, -1.0f, 1.0f}
-        }));
-        CORRADE_COMPARE(pbr.normalTextureCoordinates(), 2);
-        CORRADE_VERIFY(pbr.hasAttribute(MaterialAttribute::OcclusionTexture));
-        CORRADE_COMPARE(pbr.occlusionTextureMatrix(), (Matrix3{
-            {1.0f, 0.0f, 0.0f},
-            {0.0f, 1.0f, 0.0f},
-            {0.5f, -1.0f, 1.0f}
-        }));
-        CORRADE_COMPARE(pbr.occlusionTextureCoordinates(), 3);
-        CORRADE_VERIFY(pbr.hasAttribute(MaterialAttribute::EmissiveTexture));
-        CORRADE_COMPARE(pbr.emissiveTextureMatrix(), (Matrix3{
-            {1.0f, 0.0f, 0.0f},
-            {0.0f, 1.0f, 0.0f},
-            {0.5f, 0.0f, 1.0f}
-        }));
-        CORRADE_COMPARE(pbr.emissiveTextureCoordinates(), 1);
+    for(const auto& expected: materials) {
+        Containers::Optional<Trade::MaterialData> material = importer->material(expected.first());
+        CORRADE_ITERATION(expected.first());
+        CORRADE_VERIFY(material);
+        compareMaterials(*material, expected.second());
     }
 }
 
@@ -4613,14 +4547,10 @@ void GltfImporterTest::materialUnlit() {
     Containers::Optional<Trade::MaterialData> material = importer->material(0);
     CORRADE_VERIFY(material);
     /* Metallic/roughness is removed from types */
-    CORRADE_COMPARE(material->types(), MaterialType::Flat);
-    CORRADE_COMPARE(material->layerCount(), 1);
-    CORRADE_COMPARE(material->attributeCount(), 2);
-
-    const auto& flat = material->as<FlatMaterialData>();
-    CORRADE_COMPARE(flat.color(), (Color4{0.7f, 0.8f, 0.9f, 1.1f}));
-    CORRADE_VERIFY(flat.hasTexture());
-    CORRADE_COMPARE(flat.texture(), 1);
+    compareMaterials(*material, MaterialData{MaterialType::Flat, {
+        {MaterialAttribute::BaseColor, Color4{0.7f, 0.8f, 0.9f, 1.1f}},
+        {MaterialAttribute::BaseColorTexture, 1u}
+    }});
 }
 
 void GltfImporterTest::materialExtras() {
@@ -4745,107 +4675,93 @@ void GltfImporterTest::materialClearCoat() {
 
         /* These are glTF defaults, which are *not* consistent with ours */
         const auto& pbr = material->as<PbrClearCoatMaterialData>();
-        CORRADE_COMPARE(pbr.attributeCount(), 3);
+        CORRADE_COMPARE(pbr.attributeCount(), 3); /* + layer name */
         CORRADE_COMPARE(pbr.layerFactor(), 0.0f);
         CORRADE_COMPARE(pbr.roughness(), 0.0f);
-    } {
-        const char* name = "factors";
-        Containers::Optional<Trade::MaterialData> material = importer->material(name);
-        CORRADE_ITERATION(name);
-        CORRADE_VERIFY(material);
-        CORRADE_COMPARE(material->layerCount(), 2);
-        CORRADE_VERIFY(material->hasLayer(MaterialLayer::ClearCoat));
+    }
 
-        const auto& pbr = material->as<PbrClearCoatMaterialData>();
-        CORRADE_COMPARE(pbr.attributeCount(), 3);
-        CORRADE_COMPARE(pbr.layerFactor(), 0.67f);
-        CORRADE_COMPARE(pbr.roughness(), 0.34f);
-    } {
-        const char* name = "textures";
-        Containers::Optional<Trade::MaterialData> material = importer->material(name);
-        CORRADE_ITERATION(name);
-        CORRADE_VERIFY(material);
-        CORRADE_COMPARE(material->layerCount(), 2);
-        CORRADE_VERIFY(material->hasLayer(MaterialLayer::ClearCoat));
+    const Containers::Pair<Containers::StringView, MaterialData> materials[]{
+        {"factors", MaterialData{MaterialType::PbrClearCoat, {
+            {MaterialLayer::ClearCoat},
+            {MaterialAttribute::LayerFactor, 0.67f},
+            {MaterialAttribute::Roughness, 0.34f},
+        }, {0, 3}}},
+        {"textures", MaterialData{MaterialType::PbrClearCoat, {
+            {MaterialLayer::ClearCoat},
+            {MaterialAttribute::LayerFactor, 0.7f},
+            {MaterialAttribute::LayerFactorTexture, 2u},
+            {MaterialAttribute::Roughness, 0.4f},
+            {MaterialAttribute::RoughnessTexture, 1u},
+            {MaterialAttribute::RoughnessTextureSwizzle, MaterialTextureSwizzle::G},
+            {MaterialAttribute::NormalTexture, 0u},
+            {MaterialAttribute::NormalTextureScale, 0.35f},
+        }, {0, 8}}},
+        {"packed textures", MaterialData{MaterialType::PbrClearCoat, {
+            {MaterialLayer::ClearCoat},
+            {MaterialAttribute::LayerFactor, 0.0f}, /* silly defaults */
+            {MaterialAttribute::LayerFactorTexture, 1u},
+            {MaterialAttribute::Roughness, 0.0f}, /* silly defaults */
+            {MaterialAttribute::RoughnessTexture, 1u},
+            {MaterialAttribute::RoughnessTextureSwizzle, MaterialTextureSwizzle::G},
+        }, {0, 3 + 3}}},
+        {"texture identity transform", MaterialData{MaterialType::PbrClearCoat, {
+            {MaterialLayer::ClearCoat},
+            {MaterialAttribute::LayerFactor, 0.0f}, /* silly defaults */
+            {MaterialAttribute::LayerFactorTexture, 2u},
+            {MaterialAttribute::LayerFactorTextureMatrix, Matrix3{}},
+            {MaterialAttribute::Roughness, 0.0f}, /* silly defaults */
+            {MaterialAttribute::RoughnessTexture, 1u},
+            {MaterialAttribute::RoughnessTextureSwizzle, MaterialTextureSwizzle::G},
+            {MaterialAttribute::RoughnessTextureMatrix, Matrix3{}},
+            {MaterialAttribute::NormalTexture, 0u},
+            {MaterialAttribute::NormalTextureMatrix, Matrix3{}},
+        }, {0, 7 + 3}}},
+        {"texture transform + coordinate set", MaterialData{MaterialType::PbrClearCoat, {
+            {MaterialLayer::ClearCoat},
+            {MaterialAttribute::LayerFactor, 0.0f}, /* silly defaults */
+            {MaterialAttribute::LayerFactorTexture, 2u},
+            {MaterialAttribute::LayerFactorTextureMatrix, Matrix3{
+                {1.0f, 0.0f, 0.0f},
+                {0.0f, 1.0f, 0.0f},
+                {0.0f, -1.0f, 1.0f}
+            }},
+            {MaterialAttribute::LayerFactorTextureCoordinates, 5u},
+            {MaterialAttribute::Roughness, 0.0f}, /* silly defaults */
+            {MaterialAttribute::RoughnessTexture, 1u},
+            {MaterialAttribute::RoughnessTextureSwizzle, MaterialTextureSwizzle::G},
+            {MaterialAttribute::RoughnessTextureMatrix, Matrix3{
+                {0.5f, 0.0f, 0.0f},
+                {0.0f, 0.5f, 0.0f},
+                {0.0f, 0.5f, 1.0f}
+            }},
+            {MaterialAttribute::RoughnessTextureCoordinates, 1u},
+            {MaterialAttribute::NormalTexture, 0u},
+            {MaterialAttribute::NormalTextureMatrix, Matrix3{
+                {1.0f, 0.0f, 0.0f},
+                {0.0f, 1.0f, 0.0f},
+                {0.5f, 0.0f, 1.0f}
+            }},
+            {MaterialAttribute::NormalTextureCoordinates, 7u},
+        }, {0, 10 + 3}}}
+    };
 
-        const auto& pbr = material->as<PbrClearCoatMaterialData>();
-        CORRADE_COMPARE(pbr.attributeCount(), 8);
-        CORRADE_COMPARE(pbr.layerFactor(), 0.7f);
-        CORRADE_VERIFY(pbr.hasAttribute(MaterialAttribute::LayerFactorTexture));
-        CORRADE_COMPARE(pbr.layerFactorTexture(), 2);
-        CORRADE_COMPARE(pbr.layerFactorTextureSwizzle(), MaterialTextureSwizzle::R);
-        CORRADE_COMPARE(pbr.roughness(), 0.4f);
-        CORRADE_VERIFY(pbr.hasAttribute(MaterialAttribute::RoughnessTexture));
-        CORRADE_COMPARE(pbr.roughnessTexture(), 1);
-        CORRADE_COMPARE(pbr.roughnessTextureSwizzle(), MaterialTextureSwizzle::G);
-        CORRADE_VERIFY(pbr.hasAttribute(MaterialAttribute::NormalTexture));
-        CORRADE_COMPARE(pbr.normalTexture(), 0);
-        CORRADE_COMPARE(pbr.normalTextureScale(), 0.35f);
-    } {
-        const char* name = "packed textures";
-        Containers::Optional<Trade::MaterialData> material = importer->material(name);
-        CORRADE_ITERATION(name);
-        CORRADE_VERIFY(material);
-        CORRADE_COMPARE(material->layerCount(), 2);
-        CORRADE_VERIFY(material->hasLayer(MaterialLayer::ClearCoat));
+    /* The "defaults" material handled explicitly above */
+    CORRADE_COMPARE(importer->materialCount(), Containers::arraySize(materials) + 1);
 
-        const auto& pbr = material->as<PbrClearCoatMaterialData>();
-        CORRADE_COMPARE(pbr.attributeCount(), 6);
-        CORRADE_VERIFY(pbr.hasAttribute(MaterialAttribute::LayerFactorTexture));
-        CORRADE_COMPARE(pbr.layerFactorTexture(), 1);
-        CORRADE_VERIFY(pbr.hasAttribute(MaterialAttribute::RoughnessTexture));
-        CORRADE_COMPARE(pbr.roughnessTexture(), 1);
-        CORRADE_VERIFY(pbr.hasLayerFactorRoughnessTexture());
-    } {
-        const char* name = "texture identity transform";
-        Containers::Optional<Trade::MaterialData> material = importer->material(name);
-        CORRADE_ITERATION(name);
+    for(const auto& expected: materials) {
+        Containers::Optional<Trade::MaterialData> material = importer->material(expected.first());
+        CORRADE_ITERATION(expected.first());
         CORRADE_VERIFY(material);
-        CORRADE_COMPARE(material->layerCount(), 2);
-        CORRADE_VERIFY(material->hasLayer(MaterialLayer::ClearCoat));
+        compareMaterials(*material, expected.second());
 
+        /* Verify the attributes aren't accidentally mismatched and it always
+           classifies as packed factor/roughness texture if both point to
+           the same texture */
         const auto& pbr = material->as<PbrClearCoatMaterialData>();
-        CORRADE_COMPARE(pbr.attributeCount(), 7 + 3);
-        CORRADE_VERIFY(pbr.hasTextureTransformation());
-        CORRADE_VERIFY(pbr.hasAttribute(MaterialAttribute::LayerFactorTexture));
-        CORRADE_COMPARE(pbr.layerFactorTextureMatrix(), Matrix3{});
-        CORRADE_VERIFY(pbr.hasAttribute(MaterialAttribute::RoughnessTexture));
-        CORRADE_COMPARE(pbr.roughnessTextureMatrix(), Matrix3{});
-        CORRADE_VERIFY(pbr.hasAttribute(MaterialAttribute::NormalTexture));
-        CORRADE_COMPARE(pbr.normalTextureMatrix(), Matrix3{});
-    } {
-        const char* name = "texture transform + coordinate set";
-        Containers::Optional<Trade::MaterialData> material = importer->material(name);
-        CORRADE_ITERATION(name);
-        CORRADE_VERIFY(material);
-        CORRADE_COMPARE(material->layerCount(), 2);
-        CORRADE_VERIFY(material->hasLayer(MaterialLayer::ClearCoat));
-
-        const auto& pbr = material->as<PbrClearCoatMaterialData>();
-        CORRADE_COMPARE(pbr.attributeCount(), 13);
-        /* Identity transform, but is present */
-        CORRADE_VERIFY(pbr.hasTextureTransformation());
-        CORRADE_VERIFY(pbr.hasAttribute(MaterialAttribute::LayerFactorTexture));
-        CORRADE_COMPARE(pbr.layerFactorTextureMatrix(), (Matrix3{
-            {1.0f, 0.0f, 0.0f},
-            {0.0f, 1.0f, 0.0f},
-            {0.0f, -1.0f, 1.0f}
-        }));
-        CORRADE_COMPARE(pbr.layerFactorTextureCoordinates(), 5);
-        CORRADE_VERIFY(pbr.hasAttribute(MaterialAttribute::RoughnessTexture));
-        CORRADE_COMPARE(pbr.roughnessTextureMatrix(), (Matrix3{
-            {0.5f, 0.0f, 0.0f},
-            {0.0f, 0.5f, 0.0f},
-            {0.0f, 0.5f, 1.0f}
-        }));
-        CORRADE_COMPARE(pbr.roughnessTextureCoordinates(), 1);
-        CORRADE_VERIFY(pbr.hasAttribute(MaterialAttribute::NormalTexture));
-        CORRADE_COMPARE(pbr.normalTextureMatrix(), (Matrix3{
-            {1.0f, 0.0f, 0.0f},
-            {0.0f, 1.0f, 0.0f},
-            {0.5f, 0.0f, 1.0f}
-        }));
-        CORRADE_COMPARE(pbr.normalTextureCoordinates(), 7);
+        if(pbr.hasAttribute(MaterialAttribute::LayerFactorTexture) &&
+           pbr.hasAttribute(MaterialAttribute::RoughnessTexture) &&
+           pbr.attribute<UnsignedInt>(MaterialAttribute::LayerFactorTexture) == pbr.attribute<UnsignedInt>(MaterialAttribute::RoughnessTexture))
+            CORRADE_VERIFY(pbr.hasLayerFactorRoughnessTexture());
     }
 }
 
@@ -4873,99 +4789,69 @@ void GltfImporterTest::materialPhongFallback() {
         const auto& phong = material->as<PhongMaterialData>();
         CORRADE_COMPARE(phong.diffuseColor(), (Color4{1.0f}));
         CORRADE_COMPARE(phong.specularColor(), (Color4{1.0f, 0.0f}));
-    } {
-        const char* name = "metallic/roughness";
-        Containers::Optional<Trade::MaterialData> material = importer->material(name);
-        CORRADE_ITERATION(name);
-        CORRADE_VERIFY(material);
-        CORRADE_COMPARE(material->types(), MaterialType::Phong|MaterialType::PbrMetallicRoughness);
-        CORRADE_COMPARE(material->layerCount(), 1);
-        CORRADE_COMPARE(material->attributeCount(), 8);
+    }
 
-        /* Original properties should stay */
-        const auto& pbr = material->as<PbrMetallicRoughnessMaterialData>();
-        CORRADE_VERIFY(pbr.hasAttribute(MaterialAttribute::BaseColorTexture));
-        CORRADE_COMPARE(pbr.baseColor(), (Color4{0.7f, 0.8f, 0.9f, 1.1f}));
-        CORRADE_COMPARE(pbr.baseColorTexture(), 1);
-        CORRADE_COMPARE(pbr.baseColorTextureMatrix(), (Matrix3{
-            {1.0f, 0.0f, 0.0f},
-            {0.0f, 1.0f, 0.0f},
-            {0.5f, -1.0f, 1.0f}
-        }));
-        CORRADE_COMPARE(pbr.baseColorTextureCoordinates(), 3);
-
-        /* ... and should be copied into phong properties as well */
-        const auto& phong = material->as<PhongMaterialData>();
-        CORRADE_VERIFY(phong.hasAttribute(MaterialAttribute::DiffuseTexture));
-        CORRADE_COMPARE(phong.diffuseColor(), (Color4{0.7f, 0.8f, 0.9f, 1.1f}));
-        CORRADE_COMPARE(phong.diffuseTexture(), 1);
-        CORRADE_COMPARE(phong.diffuseTextureMatrix(), (Matrix3{
-            {1.0f, 0.0f, 0.0f},
-            {0.0f, 1.0f, 0.0f},
-            {0.5f, -1.0f, 1.0f}
-        }));
-        CORRADE_COMPARE(phong.diffuseTextureCoordinates(), 3);
-        /* Defaults for specular */
-        CORRADE_COMPARE(phong.specularColor(), (Color4{1.0f, 0.0f}));
-        CORRADE_VERIFY(!phong.hasSpecularTexture());
-    } {
-        const char* name = "specular/glossiness";
-        Containers::Optional<Trade::MaterialData> material = importer->material(name);
-        CORRADE_ITERATION(name);
-        CORRADE_VERIFY(material);
-        CORRADE_COMPARE(material->types(), MaterialType::Phong|MaterialType::PbrSpecularGlossiness);
-        CORRADE_COMPARE(material->layerCount(), 1);
-        CORRADE_COMPARE(material->attributeCount(), 10);
-
-        /* Original properties should stay */
-        const auto& pbr = material->as<PbrSpecularGlossinessMaterialData>();
-        CORRADE_VERIFY(pbr.hasAttribute(MaterialAttribute::DiffuseTexture));
-        CORRADE_COMPARE(pbr.diffuseColor(), (Color4{0.7f, 0.8f, 0.9f, 1.1f}));
-        CORRADE_COMPARE(pbr.diffuseTexture(), 1);
-        CORRADE_COMPARE(pbr.diffuseTextureMatrix(), (Matrix3{
-            {1.0f, 0.0f, 0.0f},
-            {0.0f, 1.0f, 0.0f},
-            {0.5f, -1.0f, 1.0f}
-        }));
-        CORRADE_COMPARE(pbr.diffuseTextureCoordinates(), 3);
-        CORRADE_COMPARE(pbr.specularColor(), (Color4{0.1f, 0.2f, 0.6f, 0.0f}));
-        CORRADE_COMPARE(pbr.specularTexture(), 0);
-        CORRADE_COMPARE(pbr.specularTextureMatrix(), (Matrix3{
-            {0.5f, 0.0f, 0.0f},
-            {0.0f, 0.5f, 0.0f},
-            {0.0f, 0.5f, 1.0f}
-        }));
-        CORRADE_COMPARE(pbr.specularTextureCoordinates(), 2);
-
-        /* Phong recognizes them directly */
-        const auto& phong = material->as<PhongMaterialData>();
-        CORRADE_VERIFY(phong.hasAttribute(MaterialAttribute::DiffuseTexture));
-        CORRADE_COMPARE(phong.diffuseColor(), (Color4{0.7f, 0.8f, 0.9f, 1.1f}));
-        CORRADE_COMPARE(phong.diffuseTexture(), 1);
-        CORRADE_COMPARE(phong.diffuseTextureMatrix(), (Matrix3{
-            {1.0f, 0.0f, 0.0f},
-            {0.0f, 1.0f, 0.0f},
-            {0.5f, -1.0f, 1.0f}
-        }));
-        CORRADE_COMPARE(phong.diffuseTextureCoordinates(), 3);
-        CORRADE_COMPARE(phong.specularColor(), (Color4{0.1f, 0.2f, 0.6f, 0.0f}));
-        CORRADE_COMPARE(phong.specularTexture(), 0);
-        CORRADE_COMPARE(phong.specularTextureMatrix(), (Matrix3{
-            {0.5f, 0.0f, 0.0f},
-            {0.0f, 0.5f, 0.0f},
-            {0.0f, 0.5f, 1.0f}
-        }));
-        CORRADE_COMPARE(phong.specularTextureCoordinates(), 2);
-    } {
-        const char* name = "unlit";
-        Containers::Optional<Trade::MaterialData> material = importer->material(name);
-        CORRADE_ITERATION(name);
-        CORRADE_VERIFY(material);
+    const Containers::Pair<Containers::StringView, MaterialData> materials[]{
+        {"metallic/roughness", MaterialData{MaterialType::PbrMetallicRoughness|MaterialType::Phong, {
+            /* Original properties should stay */
+            {MaterialAttribute::BaseColor, Color4{0.7f, 0.8f, 0.9f, 1.1f}},
+            {MaterialAttribute::BaseColorTexture, 1u},
+            {MaterialAttribute::BaseColorTextureMatrix, Matrix3{
+                {1.0f, 0.0f, 0.0f},
+                {0.0f, 1.0f, 0.0f},
+                {0.5f, -1.0f, 1.0f}
+            }},
+            {MaterialAttribute::BaseColorTextureCoordinates, 3u},
+            /* ... and should be copied into phong properties as well */
+            {MaterialAttribute::DiffuseColor, Color4{0.7f, 0.8f, 0.9f, 1.1f}},
+            {MaterialAttribute::DiffuseTexture, 1u},
+            {MaterialAttribute::DiffuseTextureMatrix, Matrix3{
+                {1.0f, 0.0f, 0.0f},
+                {0.0f, 1.0f, 0.0f},
+                {0.5f, -1.0f, 1.0f}
+            }},
+            {MaterialAttribute::DiffuseTextureCoordinates, 3u},
+        }}},
+        {"specular/glossiness", MaterialData{MaterialType::PbrSpecularGlossiness|MaterialType::Phong, {
+            /* Original properties should stay, Phong recognizes them directly */
+            {MaterialAttribute::DiffuseColor, Color4{0.7f, 0.8f, 0.9f, 1.1f}},
+            {MaterialAttribute::DiffuseTexture, 1u},
+            {MaterialAttribute::DiffuseTextureMatrix, Matrix3{
+                {1.0f, 0.0f, 0.0f},
+                {0.0f, 1.0f, 0.0f},
+                {0.5f, -1.0f, 1.0f}
+            }},
+            {MaterialAttribute::DiffuseTextureCoordinates, 3u},
+            {MaterialAttribute::SpecularColor, Color4{0.1f, 0.2f, 0.6f, 0.0f}},
+            {MaterialAttribute::SpecularGlossinessTexture, 0u},
+            {MaterialAttribute::SpecularTextureMatrix, Matrix3{
+                {0.5f, 0.0f, 0.0f},
+                {0.0f, 0.5f, 0.0f},
+                {0.0f, 0.5f, 1.0f}
+            }},
+            {MaterialAttribute::GlossinessTextureMatrix, Matrix3{
+                {0.5f, 0.0f, 0.0f},
+                {0.0f, 0.5f, 0.0f},
+                {0.0f, 0.5f, 1.0f}
+            }},
+            {MaterialAttribute::SpecularTextureCoordinates, 2u},
+            {MaterialAttribute::GlossinessTextureCoordinates, 2u},
+        }}},
         /* Phong type is added even for unlit materials, since that's how it
            behaved before */
-        CORRADE_COMPARE(material->types(), MaterialType::Phong|MaterialType::Flat);
-        CORRADE_COMPARE(material->layerCount(), 1);
-        CORRADE_COMPARE(material->attributeCount(), 0);
+        {"unlit", MaterialData{MaterialType::Flat|MaterialType::Phong, {
+            /* Nothing */
+        }}}
+    };
+
+    /* The "none" material handled explicitly above */
+    CORRADE_COMPARE(importer->materialCount(), Containers::arraySize(materials) + 1);
+
+    for(const auto& expected: materials) {
+        Containers::Optional<Trade::MaterialData> material = importer->material(expected.first());
+        CORRADE_ITERATION(expected.first());
+        CORRADE_VERIFY(material);
+        compareMaterials(*material, expected.second());
     }
 }
 
