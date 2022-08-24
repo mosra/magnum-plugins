@@ -2812,7 +2812,7 @@ void TinyGltfImporterTest::materialPbrMetallicRoughness() {
        testing that separately in materialPhongFallback() */
     importer->configuration().setValue("phongMaterialFallback", false);
 
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "material-metallicroughness.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(TINYGLTFIMPORTER_TEST_DIR, "material-metallicroughness.gltf")));
     CORRADE_COMPARE(importer->materialCount(), 7);
     CORRADE_COMPARE(importer->materialName(2), "textures");
     CORRADE_COMPARE(importer->materialForName("textures"), 2);
@@ -2938,7 +2938,7 @@ void TinyGltfImporterTest::materialPbrSpecularGlossiness() {
        testing that separately in materialPhongFallback() */
     importer->configuration().setValue("phongMaterialFallback", false);
 
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "material-specularglossiness.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(TINYGLTFIMPORTER_TEST_DIR, "material-specularglossiness.gltf")));
     CORRADE_COMPARE(importer->materialCount(), 7);
 
     {
@@ -3071,7 +3071,7 @@ void TinyGltfImporterTest::materialCommon() {
        testing that separately in materialPhongFallback() */
     importer->configuration().setValue("phongMaterialFallback", false);
 
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "material-common.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(TINYGLTFIMPORTER_TEST_DIR, "material-common.gltf")));
     CORRADE_COMPARE(importer->materialCount(), 7);
 
     {

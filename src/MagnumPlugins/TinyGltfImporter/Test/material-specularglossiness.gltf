@@ -41,24 +41,21 @@
       }
     },
     {
-      "name": "identity texture transform + sets",
+      "name": "identity texture transform",
       "extensions": {
         "KHR_materials_pbrSpecularGlossiness": {
           "note": "tinygltf treats empty {} as if there was no entry, see the XFAIL in the test",
           "diffuseTexture": {
             "index": 0,
             "extensions": {
-              "KHR_texture_transform": {
-                "texCoord": 0
-              }
+              "KHR_texture_transform": {}
             }
           },
           "specularGlossinessTexture": {
             "index": 1,
             "extensions": {
               "KHR_texture_transform": {}
-            },
-            "texCoord": 0
+            }
           }
         }
       }

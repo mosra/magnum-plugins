@@ -63,19 +63,22 @@
       }
     },
     {
-      "name": "texture identity transform",
+      "name": "texture identity transform + sets",
       "extensions": {
         "KHR_materials_clearcoat": {
           "clearcoatTexture": {
             "index": 2,
             "extensions": {
               "KHR_texture_transform": {}
-            }
+            },
+            "texCoord": 0
           },
           "clearcoatRoughnessTexture": {
             "index": 1,
             "extensions": {
-              "KHR_texture_transform": {}
+              "KHR_texture_transform": {
+                "texCoord": 0
+              }
             }
           },
           "clearcoatNormalTexture": {

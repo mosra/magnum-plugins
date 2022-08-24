@@ -108,12 +108,12 @@ corrade_add_test(TinyGltfImporterTest
         light-invalid.gltf
         light-invalid-missing-spot.gltf
         light-invalid-missing-type.gltf
-        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/GltfImporter/Test/material-common.gltf
+        material-common.gltf
         material-clearcoat.gltf
         material-invalid.gltf
-        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/GltfImporter/Test/material-metallicroughness.gltf
+        material-metallicroughness.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/GltfImporter/Test/material-phong-fallback.gltf
-        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/GltfImporter/Test/material-specularglossiness.gltf
+        material-specularglossiness.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/GltfImporter/Test/material-texcoord-flip.bin
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/GltfImporter/Test/material-texcoord-flip.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/GltfImporter/Test/material-texcoord-flip-unnormalized.gltf

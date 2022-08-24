@@ -4283,12 +4283,15 @@ void GltfImporterTest::materialPbrMetallicRoughness() {
             {MaterialAttribute::Roughness, 0.9f},
             {MaterialAttribute::NoneRoughnessMetallicTexture, 1u},
         }}},
-        {"identity texture transform", MaterialData{MaterialType::PbrMetallicRoughness, {
+        {"identity texture transform + sets", MaterialData{MaterialType::PbrMetallicRoughness, {
             {MaterialAttribute::BaseColorTexture, 0u},
             {MaterialAttribute::BaseColorTextureMatrix, Matrix3{}},
+            {MaterialAttribute::BaseColorTextureCoordinates, 0u},
             {MaterialAttribute::NoneRoughnessMetallicTexture, 1u},
             {MaterialAttribute::MetalnessTextureMatrix, Matrix3{}},
             {MaterialAttribute::RoughnessTextureMatrix, Matrix3{}},
+            {MaterialAttribute::MetalnessTextureCoordinates, 0u},
+            {MaterialAttribute::RoughnessTextureCoordinates, 0u},
         }}},
         {"texture transform", MaterialData{MaterialType::PbrMetallicRoughness, {
             {MaterialAttribute::BaseColorTexture, 0u},
@@ -4386,12 +4389,15 @@ void GltfImporterTest::materialPbrSpecularGlossiness() {
             {MaterialAttribute::SpecularGlossinessTexture, 1u},
             {MaterialAttribute::Glossiness, 0.9f}
         }}},
-        {"identity texture transform", MaterialData{MaterialType::PbrSpecularGlossiness, {
+        {"identity texture transform + sets", MaterialData{MaterialType::PbrSpecularGlossiness, {
             {MaterialAttribute::DiffuseTexture, 0u},
             {MaterialAttribute::DiffuseTextureMatrix, Matrix3{}},
+            {MaterialAttribute::DiffuseTextureCoordinates, 0u},
             {MaterialAttribute::SpecularGlossinessTexture, 1u},
             {MaterialAttribute::SpecularTextureMatrix, Matrix3{}},
             {MaterialAttribute::GlossinessTextureMatrix, Matrix3{}},
+            {MaterialAttribute::SpecularTextureCoordinates, 0u},
+            {MaterialAttribute::GlossinessTextureCoordinates, 0u},
         }}},
         {"texture transform", MaterialData{MaterialType::PbrSpecularGlossiness, {
             {MaterialAttribute::DiffuseTexture, 0u},
@@ -4490,11 +4496,13 @@ void GltfImporterTest::materialCommon() {
             {MaterialAttribute::EmissiveColor, Color3{0.1f, 0.2f, 0.3f}},
             {MaterialAttribute::EmissiveTexture, 0u},
         }}},
-        {"normal, occlusion, emissive texture identity transform", MaterialData{{}, {
+        {"normal, occlusion, emissive texture identity transform + sets", MaterialData{{}, {
             {MaterialAttribute::NormalTexture, 1u},
             {MaterialAttribute::NormalTextureMatrix, Matrix3{}},
+            {MaterialAttribute::NormalTextureCoordinates, 0u},
             {MaterialAttribute::OcclusionTexture, 2u},
             {MaterialAttribute::OcclusionTextureMatrix, Matrix3{}},
+            {MaterialAttribute::OcclusionTextureCoordinates, 0u},
             {MaterialAttribute::EmissiveTexture, 0u},
             {MaterialAttribute::EmissiveTextureMatrix, Matrix3{}},
         }}},
@@ -4710,18 +4718,20 @@ void GltfImporterTest::materialClearCoat() {
             {MaterialAttribute::RoughnessTexture, 1u},
             {MaterialAttribute::RoughnessTextureSwizzle, MaterialTextureSwizzle::G},
         }, {0, 3 + 3}}},
-        {"texture identity transform", MaterialData{MaterialType::PbrClearCoat, {
+        {"texture identity transform + sets", MaterialData{MaterialType::PbrClearCoat, {
             {MaterialLayer::ClearCoat},
             {MaterialAttribute::LayerFactor, 0.0f}, /* silly defaults */
             {MaterialAttribute::LayerFactorTexture, 2u},
             {MaterialAttribute::LayerFactorTextureMatrix, Matrix3{}},
+            {MaterialAttribute::LayerFactorTextureCoordinates, 0u},
             {MaterialAttribute::Roughness, 0.0f}, /* silly defaults */
             {MaterialAttribute::RoughnessTexture, 1u},
             {MaterialAttribute::RoughnessTextureSwizzle, MaterialTextureSwizzle::G},
             {MaterialAttribute::RoughnessTextureMatrix, Matrix3{}},
+            {MaterialAttribute::RoughnessTextureCoordinates, 0u},
             {MaterialAttribute::NormalTexture, 0u},
             {MaterialAttribute::NormalTextureMatrix, Matrix3{}},
-        }, {0, 7 + 3}}},
+        }, {0, 9 + 3}}},
         {"texture transform + coordinate set", MaterialData{MaterialType::PbrClearCoat, {
             {MaterialLayer::ClearCoat},
             {MaterialAttribute::LayerFactor, 0.0f}, /* silly defaults */

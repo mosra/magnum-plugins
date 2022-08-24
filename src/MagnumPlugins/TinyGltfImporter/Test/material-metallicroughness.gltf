@@ -35,22 +35,19 @@
       }
     },
     {
-      "name": "identity texture transform + sets",
+      "name": "identity texture transform",
       "pbrMetallicRoughness": {
         "baseColorTexture": {
           "index": 0,
           "extensions": {
-            "KHR_texture_transform": {
-              "texCoord": 0
-            }
+            "KHR_texture_transform": {}
           }
         },
         "metallicRoughnessTexture": {
           "index": 1,
           "extensions": {
             "KHR_texture_transform": {}
-          },
-          "texCoord": 0
+          }
         }
       }
     },

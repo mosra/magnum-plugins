@@ -3444,8 +3444,10 @@ bool GltfImporter::materialTexture(const Utility::JsonToken& gltfTexture, Contai
         }
     }
 
-    /* Texture coordinate is optional, defaulting to 0 */
-    UnsignedInt texCoord = 0;
+    /* Texture coordinate is optional, defaults to 0. Include it if present in
+       the file regardless of whether it's default nor not, consistently with
+       other material attributes. */
+    Containers::Optional<UnsignedInt> texCoord;
     if(const Utility::JsonToken* const gltfTexCoord = gltfTexture.find("texCoord"_s)) {
         if(!_d->gltf->parseUnsignedInt(*gltfTexCoord)) {
             Error{} << "Trade::GltfImporter::material(): invalid" << gltfTexture.parent()->asString() << "texcoord property";
@@ -3549,10 +3551,10 @@ bool GltfImporter::materialTexture(const Utility::JsonToken& gltfTexture, Contai
             Matrix3::scaling(Vector2::yScale(-1.0f)));
     }
 
-    /* Add texture coordinate set if non-zero. The KHR_texture_transform could
+    /* Add texture coordinate set, if present. The KHR_texture_transform could
        be modifying it, so do that after */
-    if(texCoord != 0 && checkMaterialAttributeSize(coordinateAttribute, MaterialAttributeType::UnsignedInt))
-        arrayAppend(attributes, InPlaceInit, coordinateAttribute, texCoord);
+    if(texCoord && checkMaterialAttributeSize(coordinateAttribute, MaterialAttributeType::UnsignedInt))
+        arrayAppend(attributes, InPlaceInit, coordinateAttribute, *texCoord);
 
     /* In some cases (when dealing with packed textures), we're parsing &
        adding texture layer, coordinates and matrix multiple times, but adding
