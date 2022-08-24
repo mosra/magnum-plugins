@@ -897,12 +897,13 @@ template<UnsignedInt dimensions, template<UnsignedInt, typename> class View> Con
 KtxImageConverter::KtxImageConverter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin): AbstractImageConverter{manager, plugin} {}
 
 ImageConverterFeatures KtxImageConverter::doFeatures() const {
-    return ImageConverterFeature::ConvertLevels1DToData |
-        ImageConverterFeature::ConvertLevels2DToData |
-        ImageConverterFeature::ConvertLevels3DToData |
-        ImageConverterFeature::ConvertCompressedLevels1DToData |
-        ImageConverterFeature::ConvertCompressedLevels2DToData |
-        ImageConverterFeature::ConvertCompressedLevels3DToData;
+    return ImageConverterFeature::Convert1DToData|
+           ImageConverterFeature::Convert2DToData|
+           ImageConverterFeature::Convert3DToData|
+           ImageConverterFeature::ConvertCompressed1DToData|
+           ImageConverterFeature::ConvertCompressed2DToData|
+           ImageConverterFeature::ConvertCompressed3DToData|
+           ImageConverterFeature::Levels;
 }
 
 Containers::String KtxImageConverter::doExtension() const { return "ktx2"_s; }
