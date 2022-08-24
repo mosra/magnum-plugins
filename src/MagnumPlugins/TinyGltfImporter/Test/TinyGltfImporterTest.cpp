@@ -3211,7 +3211,7 @@ void TinyGltfImporterTest::materialClearCoat() {
        testing that separately in materialPhongFallback() */
     importer->configuration().setValue("phongMaterialFallback", false);
 
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "material-clearcoat.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(TINYGLTFIMPORTER_TEST_DIR, "material-clearcoat.gltf")));
     CORRADE_COMPARE(importer->materialCount(), 6);
 
     {

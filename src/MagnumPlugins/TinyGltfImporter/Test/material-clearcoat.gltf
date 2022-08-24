@@ -11,14 +11,7 @@
     {
       "name": "defaults",
       "extensions": {
-        "KHR_materials_clearcoat": {
-          "clearcoatTexture": {
-            "index": 0
-          },
-          "clearcoatRoughnessTexture": {
-            "index": 0
-          }
-        }
+        "KHR_materials_clearcoat": {}
       }
     },
     {

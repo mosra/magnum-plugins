@@ -109,7 +109,7 @@ corrade_add_test(TinyGltfImporterTest
         light-invalid-missing-spot.gltf
         light-invalid-missing-type.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/GltfImporter/Test/material-common.gltf
-        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/GltfImporter/Test/material-clearcoat.gltf
+        material-clearcoat.gltf
         material-invalid.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/GltfImporter/Test/material-metallicroughness.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/GltfImporter/Test/material-phong-fallback.gltf

@@ -4673,11 +4673,17 @@ void GltfImporterTest::materialClearCoat() {
         CORRADE_COMPARE(material->layerCount(), 2);
         CORRADE_VERIFY(material->hasLayer(MaterialLayer::ClearCoat));
 
-        /* These are glTF defaults, which are *not* consistent with ours */
         const auto& pbr = material->as<PbrClearCoatMaterialData>();
-        CORRADE_COMPARE(pbr.attributeCount(), 3); /* + layer name */
+        CORRADE_COMPARE(pbr.attributeCount(), 6); /* + layer name */
+        /* These are glTF defaults, which are *not* consistent with ours */
         CORRADE_COMPARE(pbr.layerFactor(), 0.0f);
         CORRADE_COMPARE(pbr.roughness(), 0.0f);
+        /* Same here, while the layer factor swizzle is ours default, the
+           roughness swizzle not */
+        CORRADE_COMPARE(pbr.layerFactorTexture(), 0);
+        CORRADE_COMPARE(pbr.roughnessTexture(), 0);
+        CORRADE_COMPARE(pbr.layerFactorTextureSwizzle(), MaterialTextureSwizzle::R);
+        CORRADE_COMPARE(pbr.roughnessTextureSwizzle(), MaterialTextureSwizzle::G);
     }
 
     const Containers::Pair<Containers::StringView, MaterialData> materials[]{
