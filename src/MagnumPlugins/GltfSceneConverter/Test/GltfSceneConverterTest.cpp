@@ -438,12 +438,9 @@ const struct {
     {"plugin without file conversion", "StbDxtImageConverter", ".gltf",
         ImageData2D{PixelFormat::RGBA8Unorm, {1, 1}, DataFlags{}, "abc"},
         "StbDxtImageConverter doesn't support Trade::ImageConverterFeature::Convert2DToFile"},
-    {"plugin without compressed file conversion", "PngImageConverter", ".gltf",
+    {"plugin without compressed data conversion", "PngImageConverter", ".glb",
         ImageData2D{CompressedPixelFormat::Astc4x4RGBAUnorm, {1, 1}, DataFlags{}, "abc"},
-        "PngImageConverter doesn't support Trade::ImageConverterFeature::ConvertCompressed2DToFile"},
-    /** @todo plugin without data conversion once we have something that calls
-        into a 3rd party binary (pngcrush?) or something that produces more
-        than one file and thus can't save to data */
+        "PngImageConverter doesn't support Trade::ImageConverterFeature::ConvertCompressed2DToData"},
     {"plugin without a MIME type", "StbImageConverter", ".gltf",
         ImageData2D{PixelFormat::RGBA8Unorm, {1, 1}, DataFlags{}, "abc"},
         "StbImageConverter doesn't specify any MIME type, can't save an image"},
