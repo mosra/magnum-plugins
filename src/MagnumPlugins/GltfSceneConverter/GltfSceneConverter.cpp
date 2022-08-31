@@ -1771,22 +1771,19 @@ bool GltfSceneConverter::doAdd(UnsignedInt, const TextureData& texture, const Co
     return true;
 }
 
-bool GltfSceneConverter::doAdd(const UnsignedInt id, const ImageData2D& image, const Containers::StringView name) {
-    /** @todo does it make sense to check for ImageFlag2D::Array here? glTF
-        doesn't really care I think, and the image converters will warn on
-        their own if that metadata is about to get lost */
+namespace {
 
+Containers::Pointer<AbstractImageConverter> loadAndInstantiateImageConverter(PluginManager::Manager<AbstractSceneConverter>* manager, const Containers::StringView plugin, const SceneConverterFlags flags, Utility::ConfigurationGroup& configuration, const ImageConverterFeatures expectedFeatures) {
     /* Get the image converter plugin through an external image converter
        manager */
     PluginManager::Manager<AbstractImageConverter>* imageConverterManager;
-    if(!manager() || !(imageConverterManager = manager()->externalManager<AbstractImageConverter>())) {
+    if(!manager || !(imageConverterManager = manager->externalManager<AbstractImageConverter>())) {
         Error{} << "Trade::GltfSceneConverter::add(): the plugin must be instantiated with access to plugin manager that has a registered image converter manager in order to convert images";
         return {};
     }
-    const Containers::StringView imageConverterPluginName = configuration().value<Containers::StringView>("imageConverter");
-    Containers::Pointer<AbstractImageConverter> imageConverter = imageConverterManager->loadAndInstantiate(imageConverterPluginName);
+    Containers::Pointer<AbstractImageConverter> imageConverter = imageConverterManager->loadAndInstantiate(plugin);
     if(!imageConverter) {
-        Error{} << "Trade::GltfSceneConverter::add(): can't load" << imageConverterPluginName << "for image conversion";
+        Error{} << "Trade::GltfSceneConverter::add(): can't load" << plugin << "for image conversion";
         return {};
     }
 
@@ -1794,23 +1791,125 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const ImageData2D& image, c
         bundleImageFallbacks to have them externally (yay!) */
 
     /* Propagate flags that are common between scene and image converters */
-    if(flags() & SceneConverterFlag::Verbose)
+    if(flags & SceneConverterFlag::Verbose)
         imageConverter->addFlags(ImageConverterFlag::Verbose);
 
     /* Propagate configuration values */
     Utility::ConfigurationGroup& imageConverterConfiguration = imageConverter->configuration();
-    for(const Containers::Pair<Containers::StringView, Containers::StringView> value: configuration().group("imageConverter")->values()) {
+    for(const Containers::Pair<Containers::StringView, Containers::StringView> value: configuration.group("imageConverter")->values()) {
         if(!imageConverterConfiguration.hasValue(value.first()))
-            Warning{} << "Trade::GltfSceneConverter::add(): option" << value.first() << "not recognized by" << imageConverterPluginName;
+            Warning{} << "Trade::GltfSceneConverter::add(): option" << value.first() << "not recognized by" << plugin;
 
         imageConverterConfiguration.setValue(value.first(), value.second());
     }
-    if(configuration().group("imageConverter")->hasGroups()) {
+    if(configuration.group("imageConverter")->hasGroups()) {
         /** @todo once image converters have groups, propagate that as well;
             then it might make sense to expose, test and reuse Magnum's own
             MagnumPlugins/Implementation/propagateConfiguration.h */
         Warning{} << "Trade::GltfSceneConverter::add(): image converter configuration group propagation not implemented yet, ignoring";
     }
+
+    if(!(imageConverter->features() >= expectedFeatures)) {
+        Error{} << "Trade::GltfSceneConverter::add():" << plugin << "doesn't support" << expectedFeatures;
+        return {};
+    }
+
+    return imageConverter;
+}
+
+}
+
+template<UnsignedInt dimensions> bool GltfSceneConverter::convertAndWriteImage(const UnsignedInt id, const Containers::StringView name, AbstractImageConverter& imageConverter, const ImageData<dimensions>& image, bool bundleImages) {
+    /* Only one of these two is filled */
+    Containers::ArrayView<char> imageData;
+    Containers::String imageFilename;
+    if(bundleImages) {
+        const Containers::Optional<Containers::Array<char>> out = imageConverter.convertToData(image);
+        if(!out) {
+            Error{} << "Trade::GltfSceneConverter::add(): can't convert an image";
+            return {};
+        }
+
+        /** @todo ugh, fix the casts already */
+        imageData = arrayAppend(_state->buffer, arrayView(*out));
+    } else {
+        /* All existing image converters that return a MIME type return an
+           extension as well, so we can (currently) get away with an assert.
+           Might need to be revisited eventually. */
+        const Containers::String extension = imageConverter.extension();
+        CORRADE_INTERNAL_ASSERT(extension);
+
+        if(!_state->filename) {
+            Error{} << "Trade::GltfSceneConverter::add(): can only write a glTF with external images if converting to a file";
+            return {};
+        }
+
+        imageFilename = Utility::format("{}.{}.{}",
+            Utility::Path::splitExtension(*_state->filename).first(),
+            id,
+            extension);
+
+        if(!imageConverter.convertToFile(image, imageFilename)) {
+            Error{} << "Trade::GltfSceneConverter::add(): can't convert an image file";
+            return {};
+        }
+    }
+
+    /* At this point we're sure nothing will fail so we can start writing the
+       JSON. Otherwise we'd end up with a partly-written JSON in case of an
+       unsupported mesh, corruputing the output. */
+
+    /* If this is a first image, open the images array */
+    if(_state->gltfImages.isEmpty())
+        _state->gltfImages.beginArray();
+
+    Containers::ScopeGuard gltfImage = _state->gltfImages.beginObjectScope();
+
+    /* Bundled image, needs a buffer view and a MIME type */
+    if(bundleImages) {
+        /* The caller should have already checked the MIME type is not empty */
+        const Containers::String mimeType = imageConverter.mimeType();
+        CORRADE_INTERNAL_ASSERT(mimeType);
+
+        /* If this is a first buffer view, open the buffer view array */
+        if(_state->gltfBufferViews.isEmpty())
+            _state->gltfBufferViews.beginArray();
+
+        /* Reference the image data from a buffer view */
+        const std::size_t gltfBufferViewIndex = _state->gltfBufferViews.currentArraySize();
+        Containers::ScopeGuard gltfBufferView = _state->gltfBufferViews.beginObjectScope();
+        _state->gltfBufferViews
+            .writeKey("buffer"_s).write(0)
+            /** @todo could be omitted if zero, is that useful for anything? */
+            .writeKey("byteOffset"_s).write(imageData - _state->buffer)
+            .writeKey("byteLength"_s).write(imageData.size());
+        if(configuration().value<bool>("accessorNames"))
+            _state->gltfBufferViews.writeKey("name"_s).write(Utility::format(
+                name ? "image {0} ({1})" : "image {0}", id, name));
+
+        /* Reference the buffer view from the image */
+        _state->gltfImages
+            .writeKey("mimeType"_s).write(mimeType)
+            .writeKey("bufferView"_s).write(gltfBufferViewIndex);
+
+    /* External image, needs a URI and a file extension */
+    } else {
+        /* Reference the file from the image. Writing just the filename as the
+           two files are expected to be next to each other. */
+        _state->gltfImages
+            .writeKey("uri"_s).write(Utility::Path::split(imageFilename).second());
+    }
+
+    if(name)
+        _state->gltfImages.writeKey("name"_s).write(name);
+
+    return true;
+}
+
+bool GltfSceneConverter::doAdd(const UnsignedInt id, const ImageData2D& image, const Containers::StringView name) {
+    /** @todo does it make sense to check for ImageFlag2D::Array here? glTF
+        doesn't really care I think, and the image converters will warn on
+        their own if that metadata is about to get lost */
 
     /* Decide whether to bundle images or save them externally. If not
        explicitly specified, bundle them for binary files and save externally
@@ -1819,7 +1918,7 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const ImageData2D& image, c
         configuration().value<Containers::StringView>("bundleImages") ?
         configuration().value<bool>("bundleImages") : _state->binary;
 
-    /* Check if the converter supports what we need */
+    /* Decide on features we need */
     ImageConverterFeatures expectedFeatures;
     if(image.isCompressed())
         expectedFeatures |= bundleImages ?
@@ -1829,10 +1928,12 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const ImageData2D& image, c
         expectedFeatures |= bundleImages ?
             ImageConverterFeature::Convert2DToData :
             ImageConverterFeature::Convert2DToFile;
-    if(!(imageConverter->features() >= expectedFeatures)) {
-        Error{} << "Trade::GltfSceneConverter::add():" << imageConverterPluginName << "doesn't support" << expectedFeatures;
-        return {};
-    }
+
+    /* Load the plugin, propagate flags & configuration. If it fails, it
+       printed a message already, so just return. */
+    const Containers::StringView imageConverterPluginName = configuration().value<Containers::StringView>("imageConverter");
+    Containers::Pointer<AbstractImageConverter> imageConverter = loadAndInstantiateImageConverter(manager(), imageConverterPluginName, flags(), configuration(), expectedFeatures);
+    if(!imageConverter) return {};
 
     /* Use a MIME type to decide what glTF extension (if any) to use to
        reference the image from a texture. Could also use the file extension,
@@ -1868,86 +1969,7 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const ImageData2D& image, c
         arrayAppend(_state->imageTextureExtensions, GltfExtension{});
     }
 
-    /* Only one of these two is filled */
-    Containers::ArrayView<char> imageData;
-    Containers::String imageFilename;
-    if(bundleImages) {
-        const Containers::Optional<Containers::Array<char>> out = imageConverter->convertToData(image);
-        if(!out) {
-            Error{} << "Trade::GltfSceneConverter::add(): can't convert an image";
-            return {};
-        }
-
-        /** @todo ugh, fix the casts already */
-        imageData = arrayAppend(_state->buffer, arrayView(*out));
-    } else {
-        /* All existing image converters that return a MIME type return an
-           extension as well, so we can (currently) get away with an assert.
-           Might need to be revisited eventually. */
-        const Containers::String extension = imageConverter->extension();
-        CORRADE_INTERNAL_ASSERT(extension);
-
-        if(!_state->filename) {
-            Error{} << "Trade::GltfSceneConverter::add(): can only write a glTF with external images if converting to a file";
-            return {};
-        }
-
-        imageFilename = Utility::format("{}.{}.{}",
-            Utility::Path::splitExtension(*_state->filename).first(),
-            id,
-            extension);
-
-        if(!imageConverter->convertToFile(image, imageFilename)) {
-            Error{} << "Trade::GltfSceneConverter::add(): can't convert an image file";
-            return {};
-        }
-    }
-
-    /* At this point we're sure nothing will fail so we can start writing the
-       JSON. Otherwise we'd end up with a partly-written JSON in case of an
-       unsupported mesh, corruputing the output. */
-
-    /* If this is a first image, open the images array */
-    if(_state->gltfImages.isEmpty())
-        _state->gltfImages.beginArray();
-
-    Containers::ScopeGuard gltfImage = _state->gltfImages.beginObjectScope();
-
-    /* Bundled image, needs a buffer view and a MIME type */
-    if(bundleImages) {
-        /* If this is a first buffer view, open the buffer view array */
-        if(_state->gltfBufferViews.isEmpty())
-            _state->gltfBufferViews.beginArray();
-
-        /* Reference the image data from a buffer view */
-        const std::size_t gltfBufferViewIndex = _state->gltfBufferViews.currentArraySize();
-        Containers::ScopeGuard gltfBufferView = _state->gltfBufferViews.beginObjectScope();
-        _state->gltfBufferViews
-            .writeKey("buffer"_s).write(0)
-            /** @todo could be omitted if zero, is that useful for anything? */
-            .writeKey("byteOffset"_s).write(imageData - _state->buffer)
-            .writeKey("byteLength"_s).write(imageData.size());
-        if(configuration().value<bool>("accessorNames"))
-            _state->gltfBufferViews.writeKey("name"_s).write(Utility::format(
-                name ? "image {0} ({1})" : "image {0}", id, name));
-
-        /* Reference the buffer view from the image */
-        _state->gltfImages
-            .writeKey("mimeType"_s).write(mimeType)
-            .writeKey("bufferView"_s).write(gltfBufferViewIndex);
-
-    /* External image, needs a URI and a file extension */
-    } else {
-        /* Reference the file from the image. Writing just the filename as the
-           two files are expected to be next to each other. */
-        _state->gltfImages
-            .writeKey("uri"_s).write(Utility::Path::split(imageFilename).second());
-    }
-
-    if(name)
-        _state->gltfImages.writeKey("name"_s).write(name);
-
-    return true;
+    return convertAndWriteImage(id, name, *imageConverter, image, bundleImages);
 }
 
 }}

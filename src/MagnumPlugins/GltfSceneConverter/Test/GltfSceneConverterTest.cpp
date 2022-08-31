@@ -87,13 +87,13 @@ struct GltfSceneConverterTest: TestSuite::Tester {
 
     void addImage2D();
     void addImageCompressed2D();
-    void addImagePropagateFlags2D();
-    void addImagePropagateConfiguration2D();
-    void addImagePropagateConfigurationGroup2D();
-    void addImagePropagateConfigurationUnknown2D();
+    void addImagePropagateFlags();
+    void addImagePropagateConfiguration();
+    void addImagePropagateConfigurationGroup();
+    void addImagePropagateConfigurationUnknown();
     void addImageMultiple();
-    void addImageNoConverterManager2D();
-    void addImageExternalToData2D();
+    void addImageNoConverterManager();
+    void addImageExternalToData();
     void addImageInvalid2D();
 
     void addTexture();
@@ -1137,13 +1137,13 @@ GltfSceneConverterTest::GltfSceneConverterTest() {
         Containers::arraySize(AddImage2DData));
 
     addTests({&GltfSceneConverterTest::addImageCompressed2D,
-              &GltfSceneConverterTest::addImagePropagateFlags2D,
-              &GltfSceneConverterTest::addImagePropagateConfiguration2D,
-              &GltfSceneConverterTest::addImagePropagateConfigurationGroup2D,
-              &GltfSceneConverterTest::addImagePropagateConfigurationUnknown2D,
+              &GltfSceneConverterTest::addImagePropagateFlags,
+              &GltfSceneConverterTest::addImagePropagateConfiguration,
+              &GltfSceneConverterTest::addImagePropagateConfigurationGroup,
+              &GltfSceneConverterTest::addImagePropagateConfigurationUnknown,
               &GltfSceneConverterTest::addImageMultiple,
-              &GltfSceneConverterTest::addImageNoConverterManager2D,
-              &GltfSceneConverterTest::addImageExternalToData2D});
+              &GltfSceneConverterTest::addImageNoConverterManager,
+              &GltfSceneConverterTest::addImageExternalToData});
 
     addInstancedTests({&GltfSceneConverterTest::addImageInvalid2D},
         Containers::arraySize(AddImageInvalid2DData));
@@ -2284,7 +2284,7 @@ void GltfSceneConverterTest::addImageCompressed2D() {
     CORRADE_COMPARE(imported->size(), (Vector2i{4, 4}));
 }
 
-void GltfSceneConverterTest::addImagePropagateFlags2D() {
+void GltfSceneConverterTest::addImagePropagateFlags() {
     if(_imageConverterManager.loadState("TgaImageConverter") == PluginManager::LoadState::NotFound ||
        /* TgaImageConverter is also provided by StbImageConverter, which
           doesn't make use of Flags::Verbose, so that one can't be used to test
@@ -2312,7 +2312,7 @@ void GltfSceneConverterTest::addImagePropagateFlags2D() {
        doesn't affect anything in the output */
 }
 
-void GltfSceneConverterTest::addImagePropagateConfiguration2D() {
+void GltfSceneConverterTest::addImagePropagateConfiguration() {
     if(_imageConverterManager.loadState("KtxImageConverter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("KtxImageConverter plugin not found, cannot test");
 
@@ -2339,7 +2339,7 @@ void GltfSceneConverterTest::addImagePropagateConfiguration2D() {
         TestSuite::Compare::StringContains);
 }
 
-void GltfSceneConverterTest::addImagePropagateConfigurationUnknown2D() {
+void GltfSceneConverterTest::addImagePropagateConfigurationUnknown() {
     if(_imageConverterManager.loadState("PngImageConverter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("PngImageConverter plugin not found, cannot test");
 
@@ -2360,7 +2360,7 @@ void GltfSceneConverterTest::addImagePropagateConfigurationUnknown2D() {
     CORRADE_VERIFY(converter->endData());
 }
 
-void GltfSceneConverterTest::addImagePropagateConfigurationGroup2D() {
+void GltfSceneConverterTest::addImagePropagateConfigurationGroup() {
     if(_imageConverterManager.loadState("PngImageConverter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("PngImageConverter plugin not found, cannot test");
 
@@ -2456,7 +2456,7 @@ void GltfSceneConverterTest::addImageMultiple() {
     CORRADE_COMPARE(imported2->pixels<Color3ub>()[0][0], 0xff6632_rgb);
 }
 
-void GltfSceneConverterTest::addImageNoConverterManager2D() {
+void GltfSceneConverterTest::addImageNoConverterManager() {
     /* Create a new manager that doesn't have the image converter manager
        registered; load the plugin directly from the build tree. Otherwise it's
        static and already loaded. */
@@ -2489,7 +2489,7 @@ void GltfSceneConverterTest::addImageNoConverterManager2D() {
         TestSuite::Compare::StringToFile);
 }
 
-void GltfSceneConverterTest::addImageExternalToData2D() {
+void GltfSceneConverterTest::addImageExternalToData() {
     if(_imageConverterManager.loadState("PngImageConverter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("PngImageConverter plugin not found, cannot test");
 
