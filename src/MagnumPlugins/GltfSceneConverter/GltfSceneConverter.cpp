@@ -41,6 +41,7 @@
 #include <Corrade/Utility/Path.h>
 #include <Corrade/Utility/String.h>
 #include <Magnum/Math/Color.h>
+#include <Magnum/Math/Matrix3.h>
 #include <Magnum/Math/Matrix4.h>
 #include <Magnum/Math/Quaternion.h>
 #include <Magnum/Trade/AbstractImageConverter.h>
@@ -70,6 +71,7 @@ enum class GltfExtension {
     KhrMeshQuantization = 1 << 1,
     KhrTextureBasisu = 1 << 2,
     KhrTextureKtx = 1 << 3,
+    KhrTextureTransform = 1 << 4
 };
 typedef Containers::EnumSet<GltfExtension> GltfExtensions;
 CORRADE_ENUMSET_OPERATORS(GltfExtensions)
@@ -243,7 +245,8 @@ Containers::Optional<Containers::Array<char>> GltfSceneConverter::doEndData() {
             {GltfExtension::KhrMaterialsUnlit, "KHR_materials_unlit"_s},
             {GltfExtension::KhrMeshQuantization, "KHR_mesh_quantization"_s},
             {GltfExtension::KhrTextureBasisu, "KHR_texture_basisu"_s},
-            {GltfExtension::KhrTextureKtx, "KHR_texture_ktx"_s}
+            {GltfExtension::KhrTextureKtx, "KHR_texture_ktx"_s},
+            {GltfExtension::KhrTextureTransform, "KHR_texture_transform"_s},
         };
         for(const Containers::Pair<GltfExtension, Containers::StringView>& i: extensionStrings) {
             if((usedExtensions & i.first()) && !contains(extensionsUsed, i.second()))
@@ -1428,6 +1431,53 @@ bool GltfSceneConverter::doAdd(UnsignedInt, const MaterialData& material, const 
             textureCoordinates = maskedMaterial.find<UnsignedInt>(MaterialAttribute::TextureCoordinates);
         if(textureCoordinates && (keepDefaults || *textureCoordinates != 0))
             _state->gltfMaterials.writeKey("texCoord"_s).write(*textureCoordinates);
+
+        Containers::String textureMatrixAttribute = prefix + "Matrix"_s;
+        auto textureMatrix = maskedMaterial.find<Matrix3>(textureMatrixAttribute);
+        if(!textureMatrix) {
+            textureMatrixAttribute = materialAttributeName(MaterialAttribute::TextureMatrix);
+            textureMatrix = maskedMaterial.find<Matrix3>(textureMatrixAttribute);
+        }
+        if(textureMatrix) {
+            /* Arbitrary rotation not supported yet, as there's several
+               equivalent decompositions for an arbitrary matrix and I'm too
+               lazy to try to find the most minimal one each time. This way I
+               can also get away with just reusing the diagonal signs for
+               scaling. */
+            const Matrix3 exceptRotation = Matrix3::translation(textureMatrix->translation())*Matrix3::scaling(textureMatrix->scaling()*Math::sign(textureMatrix->diagonal().xy()));
+            if(exceptRotation != *textureMatrix) {
+                Warning{} << "Trade::GltfSceneConverter::add(): material attribute" << textureMatrixAttribute << "rotation was not used";
+            }
+
+            if(keepDefaults || exceptRotation != Matrix3{}) {
+                _state->requiredExtensions |= GltfExtension::KhrTextureTransform;
+
+                /* Flip the matrix to have origin upper left */
+                const Matrix3 matrix =
+                    Matrix3::translation(Vector2::yAxis(1.0f))*
+                    Matrix3::scaling(Vector2::yScale(-1.0f))*
+                    exceptRotation*
+                    Matrix3::translation(Vector2::yAxis(1.0f))*
+                    Matrix3::scaling(Vector2::yScale(-1.0f));
+                const Vector2 translation = matrix.translation();
+                const Vector2 scaling = matrix.scaling()*Math::sign(matrix.diagonal().xy());
+
+                _state->gltfMaterials.writeKey("extensions"_s)
+                    .beginObject()
+                        .writeKey("KHR_texture_transform"_s).beginObject();
+
+                if(keepDefaults || translation != Vector2{})
+                    _state->gltfMaterials
+                        .writeKey("offset"_s).writeArray(translation.data());
+                if(keepDefaults || scaling != Vector2{1.0f})
+                    _state->gltfMaterials
+                        .writeKey("scale"_s).writeArray(scaling.data());
+
+                _state->gltfMaterials
+                        .endObject()
+                    .endObject();
+            }
+        }
     };
     auto writeTexture = [&](MaskedMaterial& maskedMaterial, Containers::StringView name, UnsignedInt textureAttributeId, Containers::StringView prefix) {
         _state->gltfMaterials.writeKey(name);
@@ -1497,6 +1547,7 @@ bool GltfSceneConverter::doAdd(UnsignedInt, const MaterialData& material, const 
                 maskedMaterial.findId(MaterialAttribute::MetalnessTextureSwizzle);
                 maskedMaterial.findId(MaterialAttribute::RoughnessTexture);
                 maskedMaterial.findId(MaterialAttribute::RoughnessTextureSwizzle);
+                maskedMaterial.findId(MaterialAttribute::RoughnessTextureMatrix);
                 maskedMaterial.findId(MaterialAttribute::RoughnessTextureCoordinates);
 
             } else if(foundNoneRoughnessMetallicTexture) {
@@ -1505,6 +1556,7 @@ bool GltfSceneConverter::doAdd(UnsignedInt, const MaterialData& material, const 
                 /* Mark the roughness properties as used, if present, by simply
                    looking them up -- we checked they're consistent with
                    metalness above */
+                maskedMaterial.findId(MaterialAttribute::RoughnessTextureMatrix);
                 maskedMaterial.findId(MaterialAttribute::RoughnessTextureCoordinates);
             }
         }
@@ -1655,6 +1707,7 @@ bool GltfSceneConverter::doAdd(UnsignedInt, const TextureData& texture, const Co
             /* LCOV_EXCL_START */
             case GltfExtension::KhrMaterialsUnlit:
             case GltfExtension::KhrMeshQuantization:
+            case GltfExtension::KhrTextureTransform:
                 CORRADE_INTERNAL_ASSERT_UNREACHABLE();
             /* LCOV_EXCL_STOP */
         }

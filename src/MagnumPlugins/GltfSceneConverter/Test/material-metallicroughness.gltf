@@ -2,19 +2,36 @@
   "asset": {
     "version": "2.0"
   },
+  "extensionsUsed": [
+    "KHR_texture_transform"
+  ],
+  "extensionsRequired": [
+    "KHR_texture_transform"
+  ],
   "materials": [
     {
       "pbrMetallicRoughness": {
         "baseColorFactor": [0.1, 0.2, 0.3, 0.4],
         "baseColorTexture": {
           "index": 0,
-          "texCoord": 10
+          "texCoord": 10,
+          "extensions": {
+            "KHR_texture_transform": {
+              "offset": [0.25, -1]
+            }
+          }
         },
         "metallicFactor": 0.25,
         "roughnessFactor": 0.75,
         "metallicRoughnessTexture": {
           "index": 0,
-          "texCoord": 11
+          "texCoord": 11,
+          "extensions": {
+            "KHR_texture_transform": {
+              "offset": [0.25, 0.25],
+              "scale": [-0.25, 0.75]
+            }
+          }
         }
       }
     }

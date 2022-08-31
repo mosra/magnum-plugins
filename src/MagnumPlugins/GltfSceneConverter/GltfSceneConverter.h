@@ -289,14 +289,17 @@ See @ref building-plugins, @ref cmake-plugins, @ref plugins and
     [KHR_materials_unlit](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_materials_unlit/README.md)
     extension is included in the output. Other @ref MaterialTypes are ignored,
     the material is only filled based on the attributes present.
+-   If any
+    @ref MaterialAttribute::BaseColorTextureMatrix "MaterialAttribute::*TextureMatrix"
+    attributes are present, the [KHR_texture_transform](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_texture_transform/README.md)
+    extension is included in the output. At the moment, only offset and scaling
+    is written, rotation is ignored with a warning.
 -   Material names, if passed, are saved into the file
 -   The material is required to only be added after all textures it references
 -   An informational warning is printed for all attributes that were unused
     due to not having a glTF equivalent (such as Phong properties), due to
     referring to a texture but the texture attribute isn't present or due to
     the support not being implemented yet
--   At the moment, only the core glTF material properties are exported, no
-    extensions
 -   At the moment, custom material properties and layers are not exported
 
 @subsection Trade-GltfSceneConverter-behavior-scenes Scene export

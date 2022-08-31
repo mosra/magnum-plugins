@@ -2,35 +2,71 @@
   "asset": {
     "version": "2.0"
   },
+  "extensionsUsed": [
+    "KHR_texture_transform"
+  ],
+  "extensionsRequired": [
+    "KHR_texture_transform"
+  ],
   "materials": [
     {
       "pbrMetallicRoughness": {
         "baseColorFactor": [1, 1, 1, 1],
         "baseColorTexture": {
           "index": 0,
-          "texCoord": 0
+          "texCoord": 0,
+          "extensions": {
+            "KHR_texture_transform": {
+              "offset": [0, 0],
+              "scale": [1, 1]
+            }
+          }
         },
         "metallicFactor": 1,
         "roughnessFactor": 1,
         "metallicRoughnessTexture": {
           "index": 0,
-          "texCoord": 0
+          "texCoord": 0,
+          "extensions": {
+            "KHR_texture_transform": {
+              "offset": [0, 0],
+              "scale": [1, 1]
+            }
+          }
         }
       },
       "normalTexture": {
         "index": 0,
         "texCoord": 0,
+        "extensions": {
+          "KHR_texture_transform": {
+            "offset": [0, 0],
+            "scale": [1, 1]
+          }
+        },
         "scale": 1
       },
       "occlusionTexture": {
         "index": 0,
         "texCoord": 0,
+        "extensions": {
+          "KHR_texture_transform": {
+            "offset": [0, 0],
+            "scale": [1, 1]
+          }
+        },
         "strength": 1
       },
       "emissiveFactor": [0, 0, 0],
       "emissiveTexture": {
         "index": 0,
-        "texCoord": 0
+        "texCoord": 0,
+        "extensions": {
+          "KHR_texture_transform": {
+            "offset": [0, 0],
+            "scale": [1, 1]
+          }
+        }
       },
       "alphaMode": "OPAQUE",
       "doubleSided": false

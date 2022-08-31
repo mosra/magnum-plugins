@@ -2,22 +2,45 @@
   "asset": {
     "version": "2.0"
   },
+  "extensionsUsed": [
+    "KHR_texture_transform"
+  ],
+  "extensionsRequired": [
+    "KHR_texture_transform"
+  ],
   "materials": [
     {
       "normalTexture": {
         "index": 0,
         "texCoord": 7,
+        "extensions": {
+          "KHR_texture_transform": {
+            "offset": [0.5, -0.5]
+          }
+        },
         "scale": 0.375
       },
       "occlusionTexture": {
         "index": 0,
         "texCoord": 8,
+        "extensions": {
+          "KHR_texture_transform": {
+            "offset": [0, 2],
+            "scale": [1, -1]
+          }
+        },
         "strength": 1.5
       },
       "emissiveFactor": [0.5, 0.6, 0.7],
       "emissiveTexture": {
         "index": 0,
-        "texCoord": 9
+        "texCoord": 9,
+        "extensions": {
+          "KHR_texture_transform": {
+            "offset": [0.75, 0.125],
+            "scale": [0.25, -0.125]
+          }
+        }
       },
       "alphaMode": "BLEND",
       "doubleSided": true

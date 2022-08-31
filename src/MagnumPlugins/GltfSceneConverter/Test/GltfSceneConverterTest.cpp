@@ -527,12 +527,19 @@ const struct {
             {MaterialAttribute::DoubleSided, true},
             {MaterialAttribute::NormalTexture, 0u},
             {MaterialAttribute::NormalTextureScale, 0.375f},
+            {MaterialAttribute::NormalTextureMatrix,
+                Matrix3::translation({0.5f, 0.5f})},
             {MaterialAttribute::NormalTextureCoordinates, 7u},
             {MaterialAttribute::OcclusionTexture, 0u},
             {MaterialAttribute::OcclusionTextureStrength, 1.5f},
+            {MaterialAttribute::OcclusionTextureMatrix,
+                Matrix3::scaling({1.0f, -1.0f})},
             {MaterialAttribute::OcclusionTextureCoordinates, 8u},
             {MaterialAttribute::EmissiveColor, Color3{0.5f, 0.6f, 0.7f}},
             {MaterialAttribute::EmissiveTexture, 0u},
+            {MaterialAttribute::EmissiveTextureMatrix,
+                Matrix3::translation({0.75f, 1.0f})*
+                Matrix3::scaling({0.25f, -0.125f})},
             {MaterialAttribute::EmissiveTextureCoordinates, 9u},
         }}, {}, Containers::array({
             MaterialAttribute::AlphaMask
@@ -545,6 +552,8 @@ const struct {
         MaterialData{{}, {
             {MaterialAttribute::BaseColor, Color4{0.1f, 0.2f, 0.3f, 0.4f}},
             {MaterialAttribute::BaseColorTexture, 0u},
+            {MaterialAttribute::BaseColorTextureMatrix,
+                Matrix3::translation({0.25f, 1.0f})},
             {MaterialAttribute::BaseColorTextureCoordinates, 10u},
             /* The Swizzle and Coordinates have to be set like this to make
                this a packed texture like glTF wants */
@@ -552,8 +561,14 @@ const struct {
             {MaterialAttribute::Roughness, 0.75f},
             {MaterialAttribute::MetalnessTexture, 0u},
             {MaterialAttribute::MetalnessTextureSwizzle, MaterialTextureSwizzle::B},
+            {MaterialAttribute::MetalnessTextureMatrix,
+                Matrix3::translation({0.25f, 0.0f})*
+                Matrix3::scaling({-0.25f, 0.75f})},
             {MaterialAttribute::MetalnessTextureCoordinates, 11u},
             {MaterialAttribute::RoughnessTexture, 0u},
+            {MaterialAttribute::RoughnessTextureMatrix,
+                Matrix3::translation({0.25f, 0.0f})*
+                Matrix3::scaling({-0.25f, 0.75f})},
             {MaterialAttribute::RoughnessTextureSwizzle, MaterialTextureSwizzle::G},
             {MaterialAttribute::RoughnessTextureCoordinates, 11u},
         }}, MaterialType::PbrMetallicRoughness, Containers::array({
@@ -568,17 +583,28 @@ const struct {
         MaterialData{{}, {
             {MaterialAttribute::BaseColor, Color4{0.1f, 0.2f, 0.3f, 0.4f}},
             {MaterialAttribute::BaseColorTexture, 0u},
+            {MaterialAttribute::BaseColorTextureMatrix,
+                Matrix3::translation({0.25f, 1.0f})},
             {MaterialAttribute::BaseColorTextureCoordinates, 10u},
             {MaterialAttribute::Metalness, 0.25f},
             {MaterialAttribute::Roughness, 0.75f},
             {MaterialAttribute::NoneRoughnessMetallicTexture, 0u},
             {MaterialAttribute::MetalnessTextureCoordinates, 11u},
+            {MaterialAttribute::MetalnessTextureMatrix,
+                Matrix3::translation({0.25f, 0.0f})*
+                Matrix3::scaling({-0.25f, 0.75f})},
             {MaterialAttribute::RoughnessTextureCoordinates, 11u},
+            {MaterialAttribute::RoughnessTextureMatrix,
+                Matrix3::translation({0.25f, 0.0f})*
+                Matrix3::scaling({-0.25f, 0.75f})},
         }}, MaterialType::PbrMetallicRoughness, {}, {}},
     {"metallic/roughness, global texture attributes", true, {}, "material-metallicroughness.gltf", {},
         MaterialData{{}, {
             {MaterialAttribute::BaseColor, Color4{0.1f, 0.2f, 0.3f, 0.4f}},
             {MaterialAttribute::BaseColorTexture, 0u},
+            /* This one is local, thus overriding the TextureMatrix */
+            {MaterialAttribute::BaseColorTextureMatrix,
+                Matrix3::translation({0.25f, 1.0f})},
             /* This one is local, thus overriding the TextureCoordinates */
             {MaterialAttribute::BaseColorTextureCoordinates, 10u},
             /* The Swizzle has to be set like this to make this a packed
@@ -589,17 +615,27 @@ const struct {
             {MaterialAttribute::MetalnessTextureSwizzle, MaterialTextureSwizzle::B},
             {MaterialAttribute::RoughnessTexture, 0u},
             {MaterialAttribute::RoughnessTextureSwizzle, MaterialTextureSwizzle::G},
+            {MaterialAttribute::TextureMatrix,
+                Matrix3::translation({0.25f, 0.0f})*
+                Matrix3::scaling({-0.25f, 0.75f})},
             {MaterialAttribute::TextureCoordinates, 11u}
         }}, MaterialType::PbrMetallicRoughness, Containers::array({
             MaterialAttribute::MetalnessTexture,
             MaterialAttribute::MetalnessTextureSwizzle,
             MaterialAttribute::RoughnessTextureSwizzle,
             MaterialAttribute::RoughnessTexture,
+            MaterialAttribute::TextureMatrix,
             MaterialAttribute::TextureCoordinates
         }), Containers::array({
             MaterialAttributeData{MaterialAttribute::NoneRoughnessMetallicTexture, 0u},
+            MaterialAttributeData{MaterialAttribute::MetalnessTextureMatrix,
+                Matrix3::translation({0.25f, 0.0f})*
+                Matrix3::scaling({-0.25f, 0.75f})},
             MaterialAttributeData{MaterialAttribute::MetalnessTextureCoordinates, 11u},
             MaterialAttributeData{MaterialAttribute::RoughnessTextureCoordinates, 11u},
+            MaterialAttributeData{MaterialAttribute::RoughnessTextureMatrix,
+                Matrix3::translation({0.25f, 0.0f})*
+                Matrix3::scaling({-0.25f, 0.75f})},
         })},
     {"explicit default texture swizzle", true, {}, "material-default-texture-swizzle.gltf", {},
         MaterialData{{}, {
@@ -623,20 +659,26 @@ const struct {
             {MaterialAttribute::DoubleSided, false},
             {MaterialAttribute::NormalTexture, 0u},
             {MaterialAttribute::NormalTextureScale, 1.0f},
+            {MaterialAttribute::NormalTextureMatrix, Matrix3{}},
             {MaterialAttribute::NormalTextureCoordinates, 0u},
             {MaterialAttribute::OcclusionTexture, 0u},
             {MaterialAttribute::OcclusionTextureStrength, 1.0f},
+            {MaterialAttribute::OcclusionTextureMatrix, Matrix3{}},
             {MaterialAttribute::OcclusionTextureCoordinates, 0u},
             {MaterialAttribute::EmissiveColor, 0x000000_rgbf},
             {MaterialAttribute::EmissiveTexture, 0u},
+            {MaterialAttribute::EmissiveTextureMatrix, Matrix3{}},
             {MaterialAttribute::EmissiveTextureCoordinates, 0u},
             {MaterialAttribute::BaseColor, 0xffffffff_rgbaf},
             {MaterialAttribute::BaseColorTexture, 0u},
+            {MaterialAttribute::BaseColorTextureMatrix, Matrix3{}},
             {MaterialAttribute::BaseColorTextureCoordinates, 0u},
             {MaterialAttribute::Metalness, 1.0f},
             {MaterialAttribute::Roughness, 1.0f},
             {MaterialAttribute::NoneRoughnessMetallicTexture, 0u},
+            {MaterialAttribute::MetalnessTextureMatrix, Matrix3{}},
             {MaterialAttribute::MetalnessTextureCoordinates, 0u},
+            {MaterialAttribute::RoughnessTextureMatrix, Matrix3{}},
             {MaterialAttribute::RoughnessTextureCoordinates, 0u},
         }}, MaterialType::PbrMetallicRoughness, {}, {}},
     {"default values omitted", true, {}, "material-defaults-omitted.gltf", {},
@@ -646,35 +688,47 @@ const struct {
             {MaterialAttribute::DoubleSided, false},
             {MaterialAttribute::NormalTexture, 0u},
             {MaterialAttribute::NormalTextureScale, 1.0f},
+            {MaterialAttribute::NormalTextureMatrix, Matrix3{}},
             {MaterialAttribute::NormalTextureCoordinates, 0u},
             {MaterialAttribute::OcclusionTexture, 0u},
             {MaterialAttribute::OcclusionTextureStrength, 1.0f},
+            {MaterialAttribute::OcclusionTextureMatrix, Matrix3{}},
             {MaterialAttribute::OcclusionTextureCoordinates, 0u},
             {MaterialAttribute::EmissiveColor, 0x000000_rgbf},
             {MaterialAttribute::EmissiveTexture, 0u},
+            {MaterialAttribute::EmissiveTextureMatrix, Matrix3{}},
             {MaterialAttribute::EmissiveTextureCoordinates, 0u},
             {MaterialAttribute::BaseColor, 0xffffffff_rgbaf},
             {MaterialAttribute::BaseColorTexture, 0u},
+            {MaterialAttribute::BaseColorTextureMatrix, Matrix3{}},
             {MaterialAttribute::BaseColorTextureCoordinates, 0u},
             {MaterialAttribute::Metalness, 1.0f},
             {MaterialAttribute::Roughness, 1.0f},
             {MaterialAttribute::NoneRoughnessMetallicTexture, 0u},
+            {MaterialAttribute::MetalnessTextureMatrix, Matrix3{}},
             {MaterialAttribute::MetalnessTextureCoordinates, 0u},
+            {MaterialAttribute::RoughnessTextureMatrix, Matrix3{}},
             {MaterialAttribute::RoughnessTextureCoordinates, 0u},
         }}, MaterialType::PbrMetallicRoughness, Containers::array({
             MaterialAttribute::AlphaBlend,
             MaterialAttribute::DoubleSided,
             MaterialAttribute::NormalTextureScale,
+            MaterialAttribute::NormalTextureMatrix,
             MaterialAttribute::NormalTextureCoordinates,
             MaterialAttribute::OcclusionTextureStrength,
+            MaterialAttribute::OcclusionTextureMatrix,
             MaterialAttribute::OcclusionTextureCoordinates,
             MaterialAttribute::EmissiveColor,
+            MaterialAttribute::EmissiveTextureMatrix,
             MaterialAttribute::EmissiveTextureCoordinates,
             MaterialAttribute::BaseColor,
+            MaterialAttribute::BaseColorTextureMatrix,
             MaterialAttribute::BaseColorTextureCoordinates,
             MaterialAttribute::Metalness,
             MaterialAttribute::Roughness,
+            MaterialAttribute::MetalnessTextureMatrix,
             MaterialAttribute::MetalnessTextureCoordinates,
+            MaterialAttribute::RoughnessTextureMatrix,
             MaterialAttribute::RoughnessTextureCoordinates,
         }), {}},
     {"alpha mask default values kept", false, true, "material-alpha-mask-defaults-kept.gltf", {},
@@ -734,6 +788,16 @@ const struct {
         /* It especially shouldn't warn about unused attribute LayerName */
         "Trade::GltfSceneConverter::add(): material layer 1 (ClearCoat) was not used\n"
         "Trade::GltfSceneConverter::add(): material layer 2 was not used\n"},
+    {"unused texture rotation", true, "material-defaults-omitted.gltf",
+        MaterialData{{}, {
+            {MaterialAttribute::BaseColorTexture, 0u},
+            {MaterialAttribute::NoneRoughnessMetallicTexture, 0u},
+            {MaterialAttribute::NormalTexture, 0u},
+            {MaterialAttribute::OcclusionTexture, 0u},
+            {MaterialAttribute::EmissiveTexture, 0u},
+            {MaterialAttribute::EmissiveTextureMatrix,
+                Matrix3::rotation(-35.0_degf)}}},
+        "Trade::GltfSceneConverter::add(): material attribute EmissiveTextureMatrix rotation was not used\n"}
 };
 
 const struct {
