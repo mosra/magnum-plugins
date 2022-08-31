@@ -65,13 +65,13 @@ namespace Magnum { namespace Trade {
 
 namespace {
 
-enum class RequiredExtension {
+enum class GltfExtension {
     KhrMeshQuantization = 1 << 0,
     KhrTextureBasisu = 1 << 1,
     KhrTextureKtx = 1 << 2
 };
-typedef Containers::EnumSet<RequiredExtension> RequiredExtensions;
-CORRADE_ENUMSET_OPERATORS(RequiredExtensions)
+typedef Containers::EnumSet<GltfExtension> GltfExtensions;
+CORRADE_ENUMSET_OPERATORS(GltfExtensions)
 
 struct MeshProperties {
     Containers::Optional<UnsignedInt> gltfMode;
@@ -98,8 +98,10 @@ struct GltfSceneConverter::State {
     Utility::JsonWriter::Options jsonOptions;
     UnsignedInt jsonIndentation = 0;
 
-    /* Extensions required based on data added */
-    RequiredExtensions requiredExtensions;
+    /* Extensions used / required based on data added. These two are mutually
+       exclusive, what's in requiredExtensions shouldn't be in usedExtensions
+       as well. */
+    GltfExtensions usedExtensions, requiredExtensions;
 
     /* Because in glTF a material is tightly coupled with a mesh instead of
        being only assigned from a scene node, all meshes go to this array first
@@ -119,7 +121,7 @@ struct GltfSceneConverter::State {
        For each image that gets referenced by a texture, a corresponding
        extension is added to requiredExtensions. If an image isn't referenced
        by a texture, no extension is added. */
-    Containers::Array<RequiredExtension> imageTextureExtensions;
+    Containers::Array<GltfExtension> imageTextureExtensions;
 
     Utility::JsonWriter gltfBuffers;
     Utility::JsonWriter gltfBufferViews;
@@ -229,23 +231,23 @@ Containers::Optional<Containers::Array<char>> GltfSceneConverter::doEndData() {
                 if(i == extension) return true;
             return false;
         };
-        if(_state->requiredExtensions & RequiredExtension::KhrMeshQuantization) {
-            if(!contains(extensionsUsed, "KHR_mesh_quantization"_s))
-                extensionsUsed.push_back("KHR_mesh_quantization"_s);
-            if(!contains(extensionsRequired, "KHR_mesh_quantization"_s))
-                extensionsRequired.push_back("KHR_mesh_quantization"_s);
-        }
-        if(_state->requiredExtensions & RequiredExtension::KhrTextureBasisu) {
-            if(!contains(extensionsUsed, "KHR_texture_basisu"_s))
-                extensionsUsed.push_back("KHR_texture_basisu"_s);
-            if(!contains(extensionsRequired, "KHR_texture_basisu"_s))
-                extensionsRequired.push_back("KHR_texture_basisu"_s);
-        }
-        if(_state->requiredExtensions & RequiredExtension::KhrTextureKtx) {
-            if(!contains(extensionsUsed, "KHR_texture_ktx"_s))
-                extensionsUsed.push_back("KHR_texture_ktx"_s);
-            if(!contains(extensionsRequired, "KHR_texture_ktx"_s))
-                extensionsRequired.push_back("KHR_texture_ktx"_s);
+        /* To avoid issues where an extension would accidentally get added only
+           to the required extension list but not used, the used list
+           implicitly inherits all required extensions. For clean code, an
+           extension should be either in the used list or in the required list,
+           never in both. */
+        CORRADE_INTERNAL_ASSERT(!(_state->usedExtensions&_state->requiredExtensions));
+        const GltfExtensions usedExtensions = _state->usedExtensions|_state->requiredExtensions;
+        const Containers::Pair<GltfExtension, Containers::StringView> extensionStrings[]{
+            {GltfExtension::KhrMeshQuantization, "KHR_mesh_quantization"_s},
+            {GltfExtension::KhrTextureBasisu, "KHR_texture_basisu"_s},
+            {GltfExtension::KhrTextureKtx, "KHR_texture_ktx"_s}
+        };
+        for(const Containers::Pair<GltfExtension, Containers::StringView>& i: extensionStrings) {
+            if((usedExtensions & i.first()) && !contains(extensionsUsed, i.second()))
+                extensionsUsed.push_back(i.second());
+            if((_state->requiredExtensions & i.first()) && !contains(extensionsRequired, i.second()))
+                extensionsRequired.push_back(i.second());
         }
 
         if(!extensionsUsed.empty()) {
@@ -986,7 +988,7 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const MeshData& mesh, const
                format == VertexFormat::Vector3sNormalized ||
                format == VertexFormat::Vector3us ||
                format == VertexFormat::Vector3usNormalized) {
-                _state->requiredExtensions |= RequiredExtension::KhrMeshQuantization;
+                _state->requiredExtensions |= GltfExtension::KhrMeshQuantization;
             } else if(format != VertexFormat::Vector3) {
                 Error{} << "Trade::GltfSceneConverter::add(): unsupported mesh position attribute format" << format;
                 return {};
@@ -1001,7 +1003,7 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const MeshData& mesh, const
                glTF */
             if(format == VertexFormat::Vector3bNormalized ||
                format == VertexFormat::Vector3sNormalized) {
-                _state->requiredExtensions |= RequiredExtension::KhrMeshQuantization;
+                _state->requiredExtensions |= GltfExtension::KhrMeshQuantization;
             } else if(format != VertexFormat::Vector3) {
                 Error{} << "Trade::GltfSceneConverter::add(): unsupported mesh normal attribute format" << format;
                 return {};
@@ -1015,7 +1017,7 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const MeshData& mesh, const
 
             if(format == VertexFormat::Vector4bNormalized ||
                format == VertexFormat::Vector4sNormalized) {
-                _state->requiredExtensions |= RequiredExtension::KhrMeshQuantization;
+                _state->requiredExtensions |= GltfExtension::KhrMeshQuantization;
             } else if(format != VertexFormat::Vector4) {
                 Error{} << "Trade::GltfSceneConverter::add(): unsupported mesh tangent attribute format" << format;
                 return {};
@@ -1032,7 +1034,7 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const MeshData& mesh, const
                format == VertexFormat::Vector2s ||
                format == VertexFormat::Vector2sNormalized ||
                format == VertexFormat::Vector2us) {
-                _state->requiredExtensions |= RequiredExtension::KhrMeshQuantization;
+                _state->requiredExtensions |= GltfExtension::KhrMeshQuantization;
             } else if(format != VertexFormat::Vector2 &&
                       format != VertexFormat::Vector2ubNormalized &&
                       format != VertexFormat::Vector2usNormalized) {
@@ -1620,8 +1622,8 @@ bool GltfSceneConverter::doAdd(UnsignedInt, const TextureData& texture, const Co
 
     /* Image that doesn't need any extension (PNG or JPEG or whatever else with
        strict mode disabled), write directly */
-    const RequiredExtension textureExtension = _state->imageTextureExtensions[texture.image()];
-    if(textureExtension == RequiredExtension{}) {
+    const GltfExtension textureExtension = _state->imageTextureExtensions[texture.image()];
+    if(textureExtension == GltfExtension{}) {
         _state->gltfTextures
             .writeKey("source"_s).write(texture.image());
 
@@ -1631,16 +1633,16 @@ bool GltfSceneConverter::doAdd(UnsignedInt, const TextureData& texture, const Co
 
         Containers::StringView textureExtensionString;
         switch(textureExtension) {
-            case RequiredExtension::KhrTextureBasisu:
+            case GltfExtension::KhrTextureBasisu:
                 textureExtensionString = "KHR_texture_basisu"_s;
                 break;
             /* Not checking for experimentalKhrTextureKtx here, this is only
                reachable if it was enabled when the image got added */
-            case RequiredExtension::KhrTextureKtx:
+            case GltfExtension::KhrTextureKtx:
                 textureExtensionString = "KHR_texture_ktx"_s;
                 break;
             /* LCOV_EXCL_START */
-            case RequiredExtension::KhrMeshQuantization:
+            case GltfExtension::KhrMeshQuantization:
                 CORRADE_INTERNAL_ASSERT_UNREACHABLE();
             /* LCOV_EXCL_STOP */
         }
@@ -1731,14 +1733,14 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const ImageData2D& image, c
     CORRADE_INTERNAL_ASSERT(_state->imageTextureExtensions.size() == id);
     if(mimeType == "image/jpeg"_s ||
        mimeType == "image/png"_s) {
-        arrayAppend(_state->imageTextureExtensions, RequiredExtension{});
+        arrayAppend(_state->imageTextureExtensions, GltfExtension{});
     /** @todo some more robust way to detect if Basis-encoded KTX image is
         produced? waiting until the image is produced and then parsing the
         header is insanely complicated :( */
     } else if(mimeType == "image/ktx2"_s && imageConverterPluginName == "BasisKtxImageConverter"_s) {
-        arrayAppend(_state->imageTextureExtensions, RequiredExtension::KhrTextureBasisu);
+        arrayAppend(_state->imageTextureExtensions, GltfExtension::KhrTextureBasisu);
     } else if(mimeType == "image/ktx2"_s && configuration().value<bool>("experimentalKhrTextureKtx")) {
-        arrayAppend(_state->imageTextureExtensions, RequiredExtension::KhrTextureKtx);
+        arrayAppend(_state->imageTextureExtensions, GltfExtension::KhrTextureKtx);
     /** @todo EXT_texture_webp and MSFT_texture_dds, once we have converters */
     } else {
         if(!mimeType) {
@@ -1754,7 +1756,7 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const ImageData2D& image, c
             return {};
         } else Warning{} << "Trade::GltfSceneConverter::add(): strict mode disabled, allowing" << mimeType << "MIME type for an image";
 
-        arrayAppend(_state->imageTextureExtensions, RequiredExtension{});
+        arrayAppend(_state->imageTextureExtensions, GltfExtension{});
     }
 
     /* Only one of these two is filled */
