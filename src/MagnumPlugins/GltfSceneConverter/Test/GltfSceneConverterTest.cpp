@@ -111,7 +111,7 @@ struct GltfSceneConverterTest: TestSuite::Tester {
     void addSceneMultiple();
     void addSceneInvalid();
 
-    void requiredExtensionsAddedAlready();
+    void usedRequiredExtensionsAddedAlready();
 
     void toDataButExternalBuffer();
 
@@ -977,7 +977,7 @@ GltfSceneConverterTest::GltfSceneConverterTest() {
     addInstancedTests({&GltfSceneConverterTest::addSceneInvalid},
         Containers::arraySize(AddSceneInvalidData));
 
-    addTests({&GltfSceneConverterTest::requiredExtensionsAddedAlready,
+    addTests({&GltfSceneConverterTest::usedRequiredExtensionsAddedAlready,
 
               &GltfSceneConverterTest::toDataButExternalBuffer});
 
@@ -3187,17 +3187,19 @@ void GltfSceneConverterTest::addSceneInvalid() {
         TestSuite::Compare::File);
 }
 
-void GltfSceneConverterTest::requiredExtensionsAddedAlready() {
+void GltfSceneConverterTest::usedRequiredExtensionsAddedAlready() {
     const char vertices[4]{};
     MeshData mesh{MeshPrimitive::LineLoop, {}, vertices, {
         MeshAttributeData{MeshAttribute::TextureCoordinates, VertexFormat::Vector2b, 0, 1, 4}
     }};
+    MaterialData material{MaterialType::Flat, {}};
 
     Containers::Pointer<AbstractSceneConverter> converter =  _converterManager.instantiate("GltfSceneConverter");
 
     Containers::String filename = Utility::Path::join(GLTFSCENECONVERTER_TEST_OUTPUT_DIR, "metadata-explicit-implicit-extensions.gltf");
 
     converter->configuration().addValue("extensionUsed", "KHR_mesh_quantization");
+    converter->configuration().addValue("extensionUsed", "KHR_materials_unlit");
     converter->configuration().addValue("extensionUsed", "MAGNUM_is_amazing");
     converter->configuration().addValue("extensionRequired", "MAGNUM_can_write_json");
     converter->configuration().addValue("extensionRequired", "KHR_mesh_quantization");
@@ -3205,6 +3207,8 @@ void GltfSceneConverterTest::requiredExtensionsAddedAlready() {
     converter->beginFile(filename);
     /* This should not add KHR_mesh_quantization again to the file */
     CORRADE_VERIFY(converter->add(mesh));
+    /* This should not add KHR_materials_unlit again to the file */
+    CORRADE_VERIFY(converter->add(material));
     CORRADE_VERIFY(converter->endFile());
     CORRADE_COMPARE_AS(filename,
         Utility::Path::join(GLTFSCENECONVERTER_TEST_DIR, "metadata-explicit-implicit-extensions.gltf"),

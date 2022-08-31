@@ -4,6 +4,7 @@
   },
   "extensionsUsed": [
     "KHR_mesh_quantization",
+    "KHR_materials_unlit",
     "MAGNUM_is_amazing"
   ],
   "extensionsRequired": [
@@ -42,6 +43,13 @@
           "mode": 2
         }
       ]
+    }
+  ],
+  "materials": [
+    {
+      "extensions": {
+        "KHR_materials_unlit": {}
+      }
     }
   ]
 }
