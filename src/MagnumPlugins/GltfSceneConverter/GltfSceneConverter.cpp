@@ -968,12 +968,12 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const MeshData& mesh, const
 
         const UnsignedInt componentCount = vertexFormatComponentCount(format);
         const UnsignedInt vectorCount = vertexFormatVectorCount(format);
-        const MeshAttribute name = mesh.attributeName(i);
+        const MeshAttribute attributeName = mesh.attributeName(i);
 
         /* Positions are always three-component, two-component positions would
            fail */
         Containers::String gltfAttributeName;
-        if(name == MeshAttribute::Position) {
+        if(attributeName == MeshAttribute::Position) {
             gltfAttributeName = Containers::String::nullTerminatedGlobalView("POSITION"_s);
 
             /* Half-float types and cross-byte-packed types not supported by
@@ -994,7 +994,7 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const MeshData& mesh, const
 
         /* Normals are always three-component, Magnum doesn't have
            two-component normal packing at the moment */
-        } else if(name == MeshAttribute::Normal) {
+        } else if(attributeName == MeshAttribute::Normal) {
             gltfAttributeName = Containers::String::nullTerminatedGlobalView("NORMAL"_s);
 
             /* Half-float types and cross-byte-packed types not supported by
@@ -1010,7 +1010,7 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const MeshData& mesh, const
         /* Tangents are always four-component. Because three-component
            tangents are also common, these will be exported as a custom
            attribute with a warning. */
-        } else if(name == MeshAttribute::Tangent && componentCount == 4) {
+        } else if(attributeName == MeshAttribute::Tangent && componentCount == 4) {
             gltfAttributeName = Containers::String::nullTerminatedGlobalView("TANGENT"_s);
 
             if(format == VertexFormat::Vector4bNormalized ||
@@ -1023,7 +1023,7 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const MeshData& mesh, const
 
         /* Texture coordinates are always two-component, Magnum doesn't have
            three-compoent / layered texture coordinates at the moment */
-        } else if(name == MeshAttribute::TextureCoordinates) {
+        } else if(attributeName == MeshAttribute::TextureCoordinates) {
             gltfAttributeName = Containers::String::nullTerminatedGlobalView("TEXCOORD"_s);
 
             if(format == VertexFormat::Vector2b ||
@@ -1041,7 +1041,7 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const MeshData& mesh, const
             }
 
         /* Colors are either three- or four-component */
-        } else if(name == MeshAttribute::Color) {
+        } else if(attributeName == MeshAttribute::Color) {
             gltfAttributeName = Containers::String::nullTerminatedGlobalView("COLOR"_s);
 
             if(format != VertexFormat::Vector3 &&
@@ -1057,7 +1057,7 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const MeshData& mesh, const
         /* Otherwise it's a custom attribute where anything representable by
            glTF is allowed */
         } else {
-            switch(name) {
+            switch(attributeName) {
                 /* LCOV_EXCL_START */
                 case MeshAttribute::Position:
                 case MeshAttribute::Normal:
@@ -1088,18 +1088,18 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const MeshData& mesh, const
             /* For custom attributes pick an externally supplied name or
                generate one from the numeric value if not supplied */
             if(!gltfAttributeName) {
-                CORRADE_INTERNAL_ASSERT(isMeshAttributeCustom(name));
-                const UnsignedInt id = meshAttributeCustom(name);
-                for(const Containers::Pair<UnsignedShort, Containers::String>& i: _state->customMeshAttributes) {
-                    if(i.first() == id) {
+                CORRADE_INTERNAL_ASSERT(isMeshAttributeCustom(attributeName));
+                const UnsignedInt customAttributeId = meshAttributeCustom(attributeName);
+                for(const Containers::Pair<UnsignedShort, Containers::String>& j: _state->customMeshAttributes) {
+                    if(j.first() == customAttributeId) {
                         /* Make a non-owning reference to avoid a copy */
-                        gltfAttributeName = Containers::String::nullTerminatedView(i.second());
+                        gltfAttributeName = Containers::String::nullTerminatedView(j.second());
                         break;
                     }
                 }
                 if(!gltfAttributeName) {
-                    gltfAttributeName = Utility::format("_{}", meshAttributeCustom(name));
-                    Warning{} << "Trade::GltfSceneConverter::add(): no name set for" << name << Debug::nospace << ", exporting as" << gltfAttributeName;
+                    gltfAttributeName = Utility::format("_{}", meshAttributeCustom(attributeName));
+                    Warning{} << "Trade::GltfSceneConverter::add(): no name set for" << attributeName << Debug::nospace << ", exporting as" << gltfAttributeName;
                 }
             }
         }
