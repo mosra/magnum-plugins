@@ -21,7 +21,7 @@
     {
       "buffer": 0,
       "byteOffset": 0,
-      "byteLength": 2,
+      "byteLength": 3,
       "byteStride": 4
     }
   ],
@@ -30,7 +30,7 @@
       "bufferView": 0,
       "componentType": 5120,
       "count": 1,
-      "type": "VEC2"
+      "type": "VEC3"
     }
   ],
   "meshes": [
@@ -38,7 +38,7 @@
       "primitives": [
         {
           "attributes": {
-            "TEXCOORD_0": 0
+            "POSITION": 0
           },
           "mode": 2
         }

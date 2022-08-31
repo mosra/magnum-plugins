@@ -3254,7 +3254,7 @@ void GltfSceneConverterTest::addSceneInvalid() {
 void GltfSceneConverterTest::usedRequiredExtensionsAddedAlready() {
     const char vertices[4]{};
     MeshData mesh{MeshPrimitive::LineLoop, {}, vertices, {
-        MeshAttributeData{MeshAttribute::TextureCoordinates, VertexFormat::Vector2b, 0, 1, 4}
+        MeshAttributeData{MeshAttribute::Position, VertexFormat::Vector3b, 0, 1, 4}
     }};
     MaterialData material{MaterialType::Flat, {}};
 
