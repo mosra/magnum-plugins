@@ -1,0 +1,28 @@
+{
+  "asset": {
+    "version": "2.0"
+  },
+  "textures": [
+    {
+      "extensions": {
+        "KHR_texture_ktx": {
+          "source": 0,
+          "layer": 0
+        }
+      }
+    },
+    {
+      "extensions": {
+        "KHR_texture_ktx": {
+          "source": 0,
+          "layer": 1
+        }
+      }
+    }
+  ],
+  "images": [
+    {
+      "uri": "image-3d.0.ktx2"
+    }
+  ]
+}

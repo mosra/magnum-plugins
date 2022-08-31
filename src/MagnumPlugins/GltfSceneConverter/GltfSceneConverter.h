@@ -274,6 +274,31 @@ See @ref building-plugins, @ref cmake-plugins, @ref plugins and
     though the KTX2 container is capable of storing these.
 -   At the moment, texture sampler properties are not exported.
 
+@subsubsection Trade-GltfSceneConverter-behavior-images-array 2D array texture export
+
+If the @cb{.ini} experimentalKhrTextureKtx @ce
+@ref Trade-GltfSceneConverter-configuration "configuration option" is enabled,
+the plugin supports also 3D images and 2D array textures using a proposed
+[KHR_texture_ktx](https://github.com/KhronosGroup/glTF/pull/1964) extension.
+
+-   Only KTX2 images are supported for 3D, i.e. with either
+    @cb{.ini} imageConverter=KtxImageConverter @ce or
+    @cb{.ini} imageConverter=BasisKtxImageConverter @ce. They need to have
+    @ref ImageFlag3D::Array set.
+-   Use a @ref TextureType::Texture2DArray texture to reference the 3D images.
+    Due to how the extension is designed, the resulting glTF then has the
+    texture duplicated for each layer of the image; @ref GltfImporter then
+    @ref Trade-GltfImporter-behavior-textures-array "undoes the duplication again on import".
+-   Due to how the extension is designed, the presence of the texture
+    referencing the 3D image is *essential* for properly recognizing the image
+    as 3D on import. Without it, the image gets recognized as 2D and the import
+    will subsequently fail due to the image file not actually being 2D.
+-   A material referencing a 2D array texture implicitly uses the first
+    (@cpp 0 @ce) layer. Use the `*TextureLayer` attributes (such as
+    @ref MaterialAttribute::BaseColorTextureLayer for a
+    @ref MaterialAttribute::BaseColorTexture) to specify a layer. The layer
+    index has to be smaller than the Z dimension of the image.
+
 @subsection Trade-GltfSceneConverter-behavior-materials Material export
 
 -   Implicitly, only attributes that from glTF material defaults are written to
@@ -375,6 +400,7 @@ class MAGNUM_GLTFSCENECONVERTER_EXPORT GltfSceneConverter: public AbstractSceneC
 
         template<UnsignedInt dimensions> MAGNUM_GLTFSCENECONVERTER_LOCAL bool convertAndWriteImage(UnsignedInt id, Containers::StringView name, AbstractImageConverter& imageConverter, const ImageData<dimensions>& image, bool bundleImages);
         MAGNUM_GLTFSCENECONVERTER_LOCAL bool doAdd(UnsignedInt id, const ImageData2D& image, Containers::StringView name) override;
+        MAGNUM_GLTFSCENECONVERTER_LOCAL bool doAdd(UnsignedInt id, const ImageData3D& image, Containers::StringView name) override;
 
         struct State;
         Containers::Pointer<State> _state;

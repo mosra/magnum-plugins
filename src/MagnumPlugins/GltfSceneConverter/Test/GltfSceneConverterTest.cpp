@@ -87,23 +87,30 @@ struct GltfSceneConverterTest: TestSuite::Tester {
 
     void addImage2D();
     void addImageCompressed2D();
+    void addImage3D();
+    void addImageCompressed3D();
     void addImagePropagateFlags();
     void addImagePropagateConfiguration();
     void addImagePropagateConfigurationGroup();
     void addImagePropagateConfigurationUnknown();
     void addImageMultiple();
+    /* Multiple 2D + 3D images tested in addMaterial2DArrayTextures() */
     void addImageNoConverterManager();
     void addImageExternalToData();
     void addImageInvalid2D();
+    void addImageInvalid3D();
 
     void addTexture();
     void addTextureMultiple();
+    /* Multiple 2D + 3D textures tested in addMaterial2DArrayTextures() */
     void addTextureInvalid();
 
     void addMaterial();
+    void addMaterial2DArrayTextures();
     void addMaterialUnusedAttributes();
     void addMaterialMultiple();
     void addMaterialInvalid();
+    void addMaterial2DArrayTextureLayerOutOfBounds();
 
     void textureCoordinateYFlip();
 
@@ -422,6 +429,22 @@ const struct {
 
 const struct {
     const char* name;
+    Containers::Optional<bool> bundle;
+    const char* expected;
+    const char* expectedOtherFile;
+} AddImage3DData[]{
+    {"*.gltf", {},
+        "image-3d.gltf", "image-3d.0.ktx2"},
+    {"*.glb", {},
+        "image-3d.glb", nullptr},
+    {"*.gltf, bundled", true,
+        "image-3d-bundled.gltf", "image-3d-bundled.bin"},
+    {"*.glb, not bundled", false,
+        "image-3d-not-bundled.glb", "image-3d-not-bundled.0.ktx2"},
+};
+
+const struct {
+    const char* name;
     const char* plugin;
     Containers::StringView suffix;
     ImageData2D image;
@@ -459,6 +482,41 @@ const struct {
 
 const struct {
     const char* name;
+    const char* plugin;
+    Containers::StringView suffix;
+    ImageData3D image;
+    const char* message;
+} AddImageInvalid3DData[]{
+    /* Plugin load failure not tested as that's the same code path as in the
+       2D case and the same failure return as the feature checks below */
+    {"plugin without data conversion", "StbDxtImageConverter", ".glb",
+        ImageData3D{PixelFormat::RGBA8Unorm, {1, 1, 1}, DataFlags{}, "abc", ImageFlag3D::Array},
+        "StbDxtImageConverter doesn't support Trade::ImageConverterFeature::Convert3DToData"},
+    {"plugin without compressed file conversion", "BasisKtxImageConverter", ".gltf",
+        ImageData3D{CompressedPixelFormat::Astc4x4RGBAUnorm, {1, 1, 1}, DataFlags{}, "abc", ImageFlag3D::Array},
+        "BasisKtxImageConverter doesn't support Trade::ImageConverterFeature::ConvertCompressed3DToFile"},
+    {"plugin without a MIME type", "BasisImageConverter", ".gltf",
+        ImageData3D{PixelFormat::RGBA8Unorm, {1, 1, 1}, DataFlags{}, "abc", ImageFlag3D::Array},
+        "BasisImageConverter doesn't specify any MIME type, can't save an image"},
+    {"invalid MIME type", "OpenExrImageConverter", ".gltf",
+        ImageData3D{PixelFormat::RG16F, {1, 1, 1}, DataFlags{}, "abc", ImageFlag3D::Array},
+        "image/x-exr is not a valid MIME type for a 3D glTF image"},
+    {"conversion to file failed", "BasisKtxImageConverter", ".gltf",
+        ImageData3D{PixelFormat::R32F, {1, 1, 1}, DataFlags{}, "abc", ImageFlag3D::Array},
+        "Trade::BasisImageConverter::convertToData(): unsupported format PixelFormat::R32F\n"
+        "Trade::GltfSceneConverter::add(): can't convert an image file\n"},
+    /* Not testing failed conversion to data as that's the same code path as in
+       the 2D case and the same failure return as the file check above */
+    {"not an array", "KtxImageConverter", ".gltf",
+        ImageData3D{PixelFormat::R32F, {1, 1, 1}, DataFlags{}, "abc"},
+        "expected a 2D array image but got ImageFlags3D{}"},
+    {"cube map", "KtxImageConverter", ".gltf",
+        ImageData3D{PixelStorage{}.setAlignment(1), PixelFormat::R8Unorm, {1, 1, 6}, DataFlags{}, "abcde", ImageFlag3D::CubeMap},
+        "expected a 2D array image but got ImageFlag3D::CubeMap"},
+};
+
+const struct {
+    const char* name;
     const char* converterPlugin;
     Containers::StringView dataName;
     Containers::Optional<bool> experimentalKhrTextureKtx;
@@ -492,25 +550,43 @@ const struct {
 
 const struct {
     const char* name;
+    Containers::Optional<bool> experimentalKhrTextureKtx;
+    const char* expected;
     TextureData texture;
     const char* message;
 } AddTextureInvalidData[]{
-    {"image out of range",
+    {"2D image out of range", {}, "image.gltf",
         TextureData{TextureType::Texture2D,
             SamplerFilter::Nearest,
             SamplerFilter::Nearest,
             SamplerMipmap::Base,
             SamplerWrapping::ClampToEdge,
             1},
-        "texture references image 1 but only 1 were added so far"},
-    {"invalid type",
+        "texture references 2D image 1 but only 1 were added so far"},
+    {"3D image out of range", true, "image-3d-no-texture.gltf",
+        TextureData{TextureType::Texture2DArray,
+            SamplerFilter::Nearest,
+            SamplerFilter::Nearest,
+            SamplerMipmap::Base,
+            SamplerWrapping::ClampToEdge,
+            1},
+        "texture references 3D image 1 but only 1 were added so far"},
+    {"2D array but no experimentalKhrTextureKtx", false, "image-3d-no-texture.gltf",
+        TextureData{TextureType::Texture2DArray,
+            SamplerFilter::Nearest,
+            SamplerFilter::Nearest,
+            SamplerMipmap::Base,
+            SamplerWrapping::ClampToEdge,
+            0},
+        "2D array textures require experimentalKhrTextureKtx to be enabled"},
+    {"invalid type", {}, "empty.gltf",
         TextureData{TextureType::Texture1DArray,
             SamplerFilter::Nearest,
             SamplerFilter::Nearest,
             SamplerMipmap::Base,
             SamplerWrapping::ClampToEdge,
             0},
-        "expected a 2D texture, got Trade::TextureType::Texture1DArray"},
+        "expected a 2D or 2D array texture, got Trade::TextureType::Texture1DArray"},
 };
 
 const struct {
@@ -539,19 +615,25 @@ const struct {
             {MaterialAttribute::NormalTextureMatrix,
                 Matrix3::translation({0.5f, 0.5f})},
             {MaterialAttribute::NormalTextureCoordinates, 7u},
+            {MaterialAttribute::NormalTextureLayer, 0u}, /* unused */
             {MaterialAttribute::OcclusionTexture, 0u},
             {MaterialAttribute::OcclusionTextureStrength, 1.5f},
             {MaterialAttribute::OcclusionTextureMatrix,
                 Matrix3::scaling({1.0f, -1.0f})},
             {MaterialAttribute::OcclusionTextureCoordinates, 8u},
+            {MaterialAttribute::OcclusionTextureLayer, 0u}, /* unused */
             {MaterialAttribute::EmissiveColor, Color3{0.5f, 0.6f, 0.7f}},
             {MaterialAttribute::EmissiveTexture, 0u},
             {MaterialAttribute::EmissiveTextureMatrix,
                 Matrix3::translation({0.75f, 1.0f})*
                 Matrix3::scaling({0.25f, -0.125f})},
             {MaterialAttribute::EmissiveTextureCoordinates, 9u},
+            {MaterialAttribute::EmissiveTextureLayer, 0u}, /* unused */
         }}, {}, Containers::array({
-            MaterialAttribute::AlphaMask
+            MaterialAttribute::AlphaMask,
+            MaterialAttribute::NormalTextureLayer,
+            MaterialAttribute::OcclusionTextureLayer,
+            MaterialAttribute::EmissiveTextureLayer
         }), {}},
     {"alpha mask", false, {}, "material-alpha-mask.gltf", {},
         MaterialData{{}, {
@@ -564,6 +646,7 @@ const struct {
             {MaterialAttribute::BaseColorTextureMatrix,
                 Matrix3::translation({0.25f, 1.0f})},
             {MaterialAttribute::BaseColorTextureCoordinates, 10u},
+            {MaterialAttribute::BaseColorTextureLayer, 0u}, /* unused */
             /* The Swizzle and Coordinates have to be set like this to make
                this a packed texture like glTF wants */
             {MaterialAttribute::Metalness, 0.25f},
@@ -574,17 +657,22 @@ const struct {
                 Matrix3::translation({0.25f, 0.0f})*
                 Matrix3::scaling({-0.25f, 0.75f})},
             {MaterialAttribute::MetalnessTextureCoordinates, 11u},
+            {MaterialAttribute::MetalnessTextureLayer, 0u}, /* unused */
             {MaterialAttribute::RoughnessTexture, 0u},
             {MaterialAttribute::RoughnessTextureMatrix,
                 Matrix3::translation({0.25f, 0.0f})*
                 Matrix3::scaling({-0.25f, 0.75f})},
             {MaterialAttribute::RoughnessTextureSwizzle, MaterialTextureSwizzle::G},
             {MaterialAttribute::RoughnessTextureCoordinates, 11u},
+            {MaterialAttribute::RoughnessTextureLayer, 0u}, /* unused */
         }}, MaterialType::PbrMetallicRoughness, Containers::array({
+            MaterialAttribute::BaseColorTextureLayer,
             MaterialAttribute::MetalnessTexture,
             MaterialAttribute::MetalnessTextureSwizzle,
+            MaterialAttribute::MetalnessTextureLayer,
+            MaterialAttribute::RoughnessTexture,
             MaterialAttribute::RoughnessTextureSwizzle,
-            MaterialAttribute::RoughnessTexture
+            MaterialAttribute::RoughnessTextureLayer
         }), Containers::array({
             MaterialAttributeData{MaterialAttribute::NoneRoughnessMetallicTexture, 0u}
         })},
@@ -595,18 +683,25 @@ const struct {
             {MaterialAttribute::BaseColorTextureMatrix,
                 Matrix3::translation({0.25f, 1.0f})},
             {MaterialAttribute::BaseColorTextureCoordinates, 10u},
+            {MaterialAttribute::BaseColorTextureLayer, 0u}, /* unused */
             {MaterialAttribute::Metalness, 0.25f},
             {MaterialAttribute::Roughness, 0.75f},
             {MaterialAttribute::NoneRoughnessMetallicTexture, 0u},
-            {MaterialAttribute::MetalnessTextureCoordinates, 11u},
             {MaterialAttribute::MetalnessTextureMatrix,
                 Matrix3::translation({0.25f, 0.0f})*
                 Matrix3::scaling({-0.25f, 0.75f})},
-            {MaterialAttribute::RoughnessTextureCoordinates, 11u},
+            {MaterialAttribute::MetalnessTextureCoordinates, 11u},
+            {MaterialAttribute::MetalnessTextureLayer, 0u}, /* unused */
             {MaterialAttribute::RoughnessTextureMatrix,
                 Matrix3::translation({0.25f, 0.0f})*
                 Matrix3::scaling({-0.25f, 0.75f})},
-        }}, MaterialType::PbrMetallicRoughness, {}, {}},
+            {MaterialAttribute::RoughnessTextureCoordinates, 11u},
+            {MaterialAttribute::RoughnessTextureLayer, 0u}, /* unused */
+        }}, MaterialType::PbrMetallicRoughness, Containers::array({
+            MaterialAttribute::BaseColorTextureLayer,
+            MaterialAttribute::MetalnessTextureLayer,
+            MaterialAttribute::RoughnessTextureLayer
+        }), {}},
     {"metallic/roughness, global texture attributes", true, {}, "material-metallicroughness.gltf", {},
         MaterialData{{}, {
             {MaterialAttribute::BaseColor, Color4{0.1f, 0.2f, 0.3f, 0.4f}},
@@ -627,14 +722,16 @@ const struct {
             {MaterialAttribute::TextureMatrix,
                 Matrix3::translation({0.25f, 0.0f})*
                 Matrix3::scaling({-0.25f, 0.75f})},
-            {MaterialAttribute::TextureCoordinates, 11u}
+            {MaterialAttribute::TextureCoordinates, 11u},
+            {MaterialAttribute::TextureLayer, 0u}, /* unused */
         }}, MaterialType::PbrMetallicRoughness, Containers::array({
             MaterialAttribute::MetalnessTexture,
             MaterialAttribute::MetalnessTextureSwizzle,
             MaterialAttribute::RoughnessTextureSwizzle,
             MaterialAttribute::RoughnessTexture,
             MaterialAttribute::TextureMatrix,
-            MaterialAttribute::TextureCoordinates
+            MaterialAttribute::TextureCoordinates,
+            MaterialAttribute::TextureLayer,
         }), Containers::array({
             MaterialAttributeData{MaterialAttribute::NoneRoughnessMetallicTexture, 0u},
             MaterialAttributeData{MaterialAttribute::MetalnessTextureMatrix,
@@ -770,33 +867,45 @@ const struct {
         MaterialData{{}, {
             /* Sorted, because the warnings are also sorted */
             {MaterialAttribute::BaseColorTextureCoordinates, 5u},
+            {MaterialAttribute::BaseColorTextureLayer, 0u},
             {MaterialAttribute::BaseColorTextureMatrix, Matrix3{2.0f}},
             {MaterialAttribute::EmissiveTextureCoordinates, 10u},
+            {MaterialAttribute::EmissiveTextureLayer, 0u},
             {MaterialAttribute::EmissiveTextureMatrix, Matrix3{2.0f}},
             {MaterialAttribute::MetalnessTextureCoordinates, 6u},
+            {MaterialAttribute::MetalnessTextureLayer, 0u},
             {MaterialAttribute::MetalnessTextureMatrix, Matrix3{2.0f}},
             {MaterialAttribute::NormalTextureCoordinates, 8u},
+            {MaterialAttribute::NormalTextureLayer, 0u},
             {MaterialAttribute::NormalTextureMatrix, Matrix3{2.0f}},
             {MaterialAttribute::NormalTextureScale, 1.5f},
             {MaterialAttribute::OcclusionTextureCoordinates, 9u},
+            {MaterialAttribute::OcclusionTextureLayer, 0u},
             {MaterialAttribute::OcclusionTextureMatrix, Matrix3{2.0f}},
             {MaterialAttribute::OcclusionTextureStrength, 0.3f},
             {MaterialAttribute::RoughnessTextureCoordinates, 7u},
+            {MaterialAttribute::RoughnessTextureLayer, 0u},
             {MaterialAttribute::RoughnessTextureMatrix, Matrix3{2.0f}},
         }},
         "Trade::GltfSceneConverter::add(): material attribute BaseColorTextureCoordinates was not used\n"
+        "Trade::GltfSceneConverter::add(): material attribute BaseColorTextureLayer was not used\n"
         "Trade::GltfSceneConverter::add(): material attribute BaseColorTextureMatrix was not used\n"
         "Trade::GltfSceneConverter::add(): material attribute EmissiveTextureCoordinates was not used\n"
+        "Trade::GltfSceneConverter::add(): material attribute EmissiveTextureLayer was not used\n"
         "Trade::GltfSceneConverter::add(): material attribute EmissiveTextureMatrix was not used\n"
         "Trade::GltfSceneConverter::add(): material attribute MetalnessTextureCoordinates was not used\n"
+        "Trade::GltfSceneConverter::add(): material attribute MetalnessTextureLayer was not used\n"
         "Trade::GltfSceneConverter::add(): material attribute MetalnessTextureMatrix was not used\n"
         "Trade::GltfSceneConverter::add(): material attribute NormalTextureCoordinates was not used\n"
+        "Trade::GltfSceneConverter::add(): material attribute NormalTextureLayer was not used\n"
         "Trade::GltfSceneConverter::add(): material attribute NormalTextureMatrix was not used\n"
         "Trade::GltfSceneConverter::add(): material attribute NormalTextureScale was not used\n"
         "Trade::GltfSceneConverter::add(): material attribute OcclusionTextureCoordinates was not used\n"
+        "Trade::GltfSceneConverter::add(): material attribute OcclusionTextureLayer was not used\n"
         "Trade::GltfSceneConverter::add(): material attribute OcclusionTextureMatrix was not used\n"
         "Trade::GltfSceneConverter::add(): material attribute OcclusionTextureStrength was not used\n"
         "Trade::GltfSceneConverter::add(): material attribute RoughnessTextureCoordinates was not used\n"
+        "Trade::GltfSceneConverter::add(): material attribute RoughnessTextureLayer was not used\n"
         "Trade::GltfSceneConverter::add(): material attribute RoughnessTextureMatrix was not used\n"},
     {"unused attributes and layers", false, "material-empty.gltf",
         MaterialData{{}, {
@@ -831,6 +940,11 @@ const struct {
         MaterialData{{}, {
             {MaterialAttribute::MetalnessTexture, 1u},
         }}, "material attribute MetalnessTexture references texture 1 but only 1 were added so far"},
+    {"2D texture layer out of bounds",
+        MaterialData{{}, {
+            {MaterialAttribute::EmissiveTexture, 0u},
+            {MaterialAttribute::EmissiveTextureLayer, 1u},
+        }}, "material attribute EmissiveTextureLayer value 1 out of range for 1 layers in texture 0"},
     {"metallic/roughness, unsupported packing",
         MaterialData{{}, {
             {MaterialAttribute::MetalnessTexture, 0u},
@@ -1146,7 +1260,12 @@ GltfSceneConverterTest::GltfSceneConverterTest() {
     addInstancedTests({&GltfSceneConverterTest::addImage2D},
         Containers::arraySize(AddImage2DData));
 
-    addTests({&GltfSceneConverterTest::addImageCompressed2D,
+    addTests({&GltfSceneConverterTest::addImageCompressed2D});
+
+    addInstancedTests({&GltfSceneConverterTest::addImage3D},
+        Containers::arraySize(AddImage3DData));
+
+    addTests({&GltfSceneConverterTest::addImageCompressed3D,
               &GltfSceneConverterTest::addImagePropagateFlags,
               &GltfSceneConverterTest::addImagePropagateConfiguration,
               &GltfSceneConverterTest::addImagePropagateConfigurationGroup,
@@ -1157,6 +1276,9 @@ GltfSceneConverterTest::GltfSceneConverterTest() {
 
     addInstancedTests({&GltfSceneConverterTest::addImageInvalid2D},
         Containers::arraySize(AddImageInvalid2DData));
+
+    addInstancedTests({&GltfSceneConverterTest::addImageInvalid3D},
+        Containers::arraySize(AddImageInvalid3DData));
 
     addInstancedTests({&GltfSceneConverterTest::addTexture},
         Containers::arraySize(AddTextureData));
@@ -1169,6 +1291,8 @@ GltfSceneConverterTest::GltfSceneConverterTest() {
     addInstancedTests({&GltfSceneConverterTest::addMaterial},
         Containers::arraySize(AddMaterialData));
 
+    addTests({&GltfSceneConverterTest::addMaterial2DArrayTextures});
+
     addInstancedTests({&GltfSceneConverterTest::addMaterialUnusedAttributes},
         Containers::arraySize(AddMaterialUnusedAttributesData));
 
@@ -1176,6 +1300,8 @@ GltfSceneConverterTest::GltfSceneConverterTest() {
 
     addInstancedTests({&GltfSceneConverterTest::addMaterialInvalid},
         Containers::arraySize(AddMaterialInvalidData));
+
+    addTests({&GltfSceneConverterTest::addMaterial2DArrayTextureLayerOutOfBounds});
 
     addInstancedTests({&GltfSceneConverterTest::textureCoordinateYFlip},
         Containers::arraySize(TextureCoordinateYFlipData));
@@ -1227,6 +1353,9 @@ GltfSceneConverterTest::GltfSceneConverterTest() {
     #endif
     #ifdef KTXIMPORTER_PLUGIN_FILENAME
     CORRADE_INTERNAL_ASSERT_OUTPUT(_importerManager.load(KTXIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
+    #endif
+    #ifdef OPENEXRIMAGECONVERTER_PLUGIN_FILENAME
+    CORRADE_INTERNAL_ASSERT_OUTPUT(_imageConverterManager.load(OPENEXRIMAGECONVERTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
     #endif
     #ifdef STBDXTIMAGECONVERTER_PLUGIN_FILENAME
     CORRADE_INTERNAL_ASSERT_OUTPUT(_imageConverterManager.load(STBDXTIMAGECONVERTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
@@ -2294,6 +2423,132 @@ void GltfSceneConverterTest::addImageCompressed2D() {
     CORRADE_COMPARE(imported->size(), (Vector2i{4, 4}));
 }
 
+void GltfSceneConverterTest::addImage3D() {
+    auto&& data = AddImage3DData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    if(_imageConverterManager.loadState("KtxImageConverter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("KtxImageConverter plugin not found, cannot test");
+
+    Containers::Pointer<AbstractSceneConverter> converter =  _converterManager.instantiate("GltfSceneConverter");
+
+    /* 3D image support should get advertised only with the option enabled */
+    CORRADE_VERIFY(!(converter->features() & (SceneConverterFeature::AddImages3D|SceneConverterFeature::AddCompressedImages3D)));
+    converter->configuration().setValue("experimentalKhrTextureKtx", true);
+    CORRADE_VERIFY(converter->features() & (SceneConverterFeature::AddImages3D|SceneConverterFeature::AddCompressedImages3D));
+
+    converter->configuration().setValue("imageConverter", "KtxImageConverter");
+    if(data.bundle)
+        converter->configuration().setValue("bundleImages", *data.bundle);
+
+    Containers::String filename = Utility::Path::join(GLTFSCENECONVERTER_TEST_OUTPUT_DIR, data.expected);
+
+    /* Delete the other filename if it exists, to verify it's indeed written */
+    Containers::String otherFilename;
+    if(data.expectedOtherFile) {
+        otherFilename = Utility::Path::join(GLTFSCENECONVERTER_TEST_OUTPUT_DIR, data.expectedOtherFile);
+        if(Utility::Path::exists(otherFilename))
+            CORRADE_VERIFY(Utility::Path::remove(otherFilename));
+    }
+
+    CORRADE_VERIFY(converter->beginFile(filename));
+
+    /* Deliberately export a two-layer image to see that two textures are
+       created for it */
+    Color4ub imageData[]{0xff3366_rgb, 0xff3366_rgb};
+    CORRADE_VERIFY(converter->add(ImageView3D{PixelFormat::RGB8Unorm, {1, 1, 2}, imageData, ImageFlag3D::Array}));
+
+    /* There needs to be a 2D array texture referencing this image in order to
+       detect it as 3D by the importer */
+    CORRADE_VERIFY(converter->add(TextureData{TextureType::Texture2DArray,
+        SamplerFilter::Nearest,
+        SamplerFilter::Nearest,
+        SamplerMipmap::Base,
+        SamplerWrapping::ClampToEdge,
+        0}));
+
+    CORRADE_VERIFY(converter->endFile());
+    CORRADE_COMPARE_AS(filename,
+        Utility::Path::join(GLTFSCENECONVERTER_TEST_DIR, data.expected),
+        TestSuite::Compare::File);
+    if(otherFilename) CORRADE_COMPARE_AS(otherFilename,
+        Utility::Path::join(GLTFSCENECONVERTER_TEST_DIR, data.expectedOtherFile),
+        TestSuite::Compare::File);
+
+    /* There shouldn't be any *.bin written, unless the image is put into it */
+    CORRADE_COMPARE(Utility::Path::exists(Utility::Path::splitExtension(Utility::Path::join(GLTFSCENECONVERTER_TEST_DIR, data.expected)).first() + ".bin"), Containers::StringView{data.expectedOtherFile}.hasSuffix(".bin"));
+
+    if(_importerManager.loadState("GltfImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("GltfImporter plugin not found, cannot test a rountrip");
+    if(_importerManager.loadState("KtxImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("KtxImporter plugin not found, cannot test a rountrip");
+
+    Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("GltfImporter");
+
+    importer->configuration().setValue("experimentalKhrTextureKtx", true);
+
+    CORRADE_VERIFY(importer->openFile(filename));
+
+    /* There should be exactly one 3D image */
+    CORRADE_COMPARE(importer->image3DCount(), 1);
+    Containers::Optional<ImageData3D> imported = importer->image3D(0);
+    CORRADE_VERIFY(imported);
+    CORRADE_VERIFY(!imported->isCompressed());
+    CORRADE_COMPARE(imported->format(), PixelFormat::RGB8Unorm);
+    CORRADE_COMPARE(imported->size(), (Vector3i{1, 1, 2}));
+}
+
+void GltfSceneConverterTest::addImageCompressed3D() {
+    if(_imageConverterManager.loadState("KtxImageConverter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("KtxImageConverter plugin not found, cannot test");
+
+    Containers::Pointer<AbstractSceneConverter> converter =  _converterManager.instantiate("GltfSceneConverter");
+
+    converter->configuration().setValue("imageConverter", "KtxImageConverter");
+    converter->configuration().setValue("experimentalKhrTextureKtx", true);
+
+    Containers::String filename = Utility::Path::join(GLTFSCENECONVERTER_TEST_OUTPUT_DIR, "image-3d-compressed.glb");
+    CORRADE_VERIFY(converter->beginFile(filename));
+
+    /* Deliberately export a two-layer image to see that two textures are
+       created for it */
+    char imageData[32]{};
+    CORRADE_VERIFY(converter->add(CompressedImageView3D{CompressedPixelFormat::Bc1RGBAUnorm, {4, 4, 2}, imageData, ImageFlag3D::Array}));
+
+    /* There needs to be a 2D array texture referencing this image in order to
+       detect it as 3D by the importer */
+    CORRADE_VERIFY(converter->add(TextureData{TextureType::Texture2DArray,
+        SamplerFilter::Nearest,
+        SamplerFilter::Nearest,
+        SamplerMipmap::Base,
+        SamplerWrapping::ClampToEdge,
+        0}));
+
+    CORRADE_VERIFY(converter->endFile());
+    CORRADE_COMPARE_AS(filename,
+        Utility::Path::join(GLTFSCENECONVERTER_TEST_DIR, "image-3d-compressed.glb"),
+        TestSuite::Compare::File);
+
+    if(_importerManager.loadState("GltfImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("GltfImporter plugin not found, cannot test a rountrip");
+    if(_importerManager.loadState("KtxImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("KtxImporter plugin not found, cannot test a rountrip");
+
+    Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("GltfImporter");
+
+    importer->configuration().setValue("experimentalKhrTextureKtx", true);
+
+    CORRADE_VERIFY(importer->openFile(filename));
+
+    /* There should be exactly one 3D image */
+    CORRADE_COMPARE(importer->image3DCount(), 1);
+    Containers::Optional<ImageData3D> imported = importer->image3D(0);
+    CORRADE_VERIFY(imported);
+    CORRADE_VERIFY(imported->isCompressed());
+    CORRADE_COMPARE(imported->compressedFormat(), CompressedPixelFormat::Bc1RGBAUnorm);
+    CORRADE_COMPARE(imported->size(), (Vector3i{4, 4, 2}));
+}
+
 void GltfSceneConverterTest::addImagePropagateFlags() {
     if(_imageConverterManager.loadState("TgaImageConverter") == PluginManager::LoadState::NotFound ||
        /* TgaImageConverter is also provided by StbImageConverter, which
@@ -2558,6 +2813,39 @@ void GltfSceneConverterTest::addImageInvalid2D() {
         TestSuite::Compare::File);
 }
 
+void GltfSceneConverterTest::addImageInvalid3D() {
+    auto&& data = AddImageInvalid3DData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    if(data.plugin != "WhatImageConverter"_s &&  _imageConverterManager.loadState(data.plugin) == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP(data.plugin << "plugin not found, cannot test");
+
+    Containers::Pointer<AbstractSceneConverter> converter =  _converterManager.instantiate("GltfSceneConverter");
+    converter->configuration().setValue("experimentalKhrTextureKtx", true);
+    converter->configuration().setValue("imageConverter", data.plugin);
+
+    Containers::String filename = Utility::Path::join(GLTFSCENECONVERTER_TEST_OUTPUT_DIR, "empty" + data.suffix);
+    CORRADE_VERIFY(converter->beginFile(filename));
+
+    {
+        std::ostringstream out;
+        Error redirectError{&out};
+        CORRADE_VERIFY(!converter->add(data.image));
+        /* If the message ends with a newline, it's the whole output, otherwise
+           just the sentence without any placeholder */
+        if(Containers::StringView{data.message}.hasSuffix('\n'))
+            CORRADE_COMPARE(out.str(), Utility::formatString(data.message, filename));
+        else
+            CORRADE_COMPARE(out.str(), Utility::formatString("Trade::GltfSceneConverter::add(): {}\n", data.message));
+    }
+
+    /* The file should not get corrupted by this error */
+    CORRADE_VERIFY(converter->endFile());
+    CORRADE_COMPARE_AS(filename,
+        Utility::Path::join(GLTFSCENECONVERTER_TEST_DIR, "empty" + data.suffix),
+        TestSuite::Compare::File);
+}
+
 void GltfSceneConverterTest::addTexture() {
     auto&& data = AddTextureData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
@@ -2685,16 +2973,26 @@ void GltfSceneConverterTest::addTextureInvalid() {
     auto&& data = AddTextureInvalidData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
-    if(_imageConverterManager.loadState("PngImageConverter") == PluginManager::LoadState::NotFound)
-        CORRADE_SKIP("PngImageConverter plugin not found, cannot test");
-
     Containers::Pointer<AbstractSceneConverter> converter =  _converterManager.instantiate("GltfSceneConverter");
 
-    Containers::String filename = Utility::Path::join(GLTFSCENECONVERTER_TEST_OUTPUT_DIR, "image.gltf");
+    Containers::String filename = Utility::Path::join(GLTFSCENECONVERTER_TEST_OUTPUT_DIR, data.expected);
     CORRADE_VERIFY(converter->beginFile(filename));
 
     /* Add an image to be referenced by a texture */
-    CORRADE_VERIFY(converter->add(ImageView2D{PixelFormat::RGB8Unorm, {1, 1}, "yey"}));
+    if(data.texture.type() == TextureType::Texture2D) {
+        if(_imageConverterManager.loadState("PngImageConverter") == PluginManager::LoadState::NotFound)
+            CORRADE_SKIP("PngImageConverter plugin not found, cannot test");
+        CORRADE_VERIFY(converter->add(ImageView2D{PixelFormat::RGB8Unorm, {1, 1}, "yey"}));
+    } else if(data.texture.type() == TextureType::Texture2DArray) {
+        if(_imageConverterManager.loadState("KtxImageConverter") == PluginManager::LoadState::NotFound)
+            CORRADE_SKIP("KtxImageConverter plugin not found, cannot test");
+        converter->configuration().setValue("experimentalKhrTextureKtx", true);
+        converter->configuration().setValue("imageConverter", "KtxImageConverter");
+        CORRADE_VERIFY(converter->add(ImageView3D{PixelFormat::RGB8Unorm, {1, 1, 1}, "yey", ImageFlag3D::Array}));
+    }
+
+    if(data.experimentalKhrTextureKtx)
+        converter->configuration().setValue("experimentalKhrTextureKtx", *data.experimentalKhrTextureKtx);
 
     {
         std::ostringstream out;
@@ -2704,10 +3002,10 @@ void GltfSceneConverterTest::addTextureInvalid() {
     }
 
     /* The file should not get corrupted by this error, thus the same as if
-       just the image was added */
+       just the (2D/3D/none) image was added */
     CORRADE_VERIFY(converter->endFile());
     CORRADE_COMPARE_AS(filename,
-        Utility::Path::join(GLTFSCENECONVERTER_TEST_DIR, "image.gltf"),
+        Utility::Path::join(GLTFSCENECONVERTER_TEST_DIR, data.expected),
         TestSuite::Compare::File);
 }
 
@@ -2796,6 +3094,114 @@ void GltfSceneConverterTest::addMaterial() {
     Containers::Optional<MaterialData> imported = importer->material(0);
     CORRADE_VERIFY(imported);
     compareMaterials(*imported, filterMaterialAttributes(data.material, data.expectedTypes, data.expectedRemove, data.expectedAdd));
+}
+
+void GltfSceneConverterTest::addMaterial2DArrayTextures() {
+    if(_imageConverterManager.loadState("PngImageConverter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("PngImageConverter plugin not found, cannot test");
+    if(_imageConverterManager.loadState("KtxImageConverter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("KtxImageConverter plugin not found, cannot test");
+
+    Containers::Pointer<AbstractSceneConverter> converter =  _converterManager.instantiate("GltfSceneConverter");
+
+    converter->configuration().setValue("experimentalKhrTextureKtx", true);
+    converter->configuration().setValue("imageConverter", "KtxImageConverter");
+
+    Containers::String filename = Utility::Path::join(GLTFSCENECONVERTER_TEST_OUTPUT_DIR, "material-2d-array-textures.gltf");
+    CORRADE_VERIFY(converter->beginFile(filename));
+
+    /* Add a few 2D and 3D images to be referenced by a texture */
+    CORRADE_VERIFY(converter->add(ImageView3D{PixelStorage{}.setAlignment(1), PixelFormat::R8Unorm, {1, 1, 4}, "yey", ImageFlag3D::Array}));
+    CORRADE_VERIFY(converter->add(ImageView2D{PixelStorage{}.setAlignment(1), PixelFormat::R8Unorm, {1, 1}, "y"}, "2D KTX, not used"));
+    CORRADE_VERIFY(converter->add(ImageView3D{PixelStorage{}.setAlignment(1), PixelFormat::R8Unorm, {1, 1, 7}, "yeyyey", ImageFlag3D::Array}));
+    /* Also a plain PNG 2D image to test correct numbering in the non-extension
+       code path */
+    converter->configuration().setValue("imageConverter", "PngImageConverter");
+    CORRADE_VERIFY(converter->add(ImageView2D{PixelStorage{}.setAlignment(1), PixelFormat::R8Unorm, {1, 1}, "y"}));
+
+    /* Add corresponding textures, in a shuffled order to catch indexing bugs.
+       Name one array texture but not the other to test that the name gets
+       duplicated for each layer.  */
+    CORRADE_VERIFY(converter->add(TextureData{TextureType::Texture2DArray,
+        SamplerFilter::Nearest,
+        SamplerFilter::Nearest,
+        SamplerMipmap::Base,
+        SamplerWrapping::ClampToEdge,
+        1}));
+    CORRADE_VERIFY(converter->add(TextureData{TextureType::Texture2DArray,
+        SamplerFilter::Nearest,
+        SamplerFilter::Nearest,
+        SamplerMipmap::Base,
+        SamplerWrapping::ClampToEdge,
+        0}, "2D array texture"));
+    CORRADE_VERIFY(converter->add(TextureData{TextureType::Texture2D,
+        SamplerFilter::Nearest,
+        SamplerFilter::Nearest,
+        SamplerMipmap::Base,
+        SamplerWrapping::ClampToEdge,
+        1}));
+
+    MaterialData material{{}, {
+        {MaterialAttribute::BaseColorTexture, 0u},
+        {MaterialAttribute::BaseColorTextureLayer, 6u},
+        {MaterialAttribute::EmissiveTexture, 2u},
+        {MaterialAttribute::EmissiveTextureLayer, 0u}, /* Dropped on import */
+        {MaterialAttribute::OcclusionTexture, 1u},
+        {MaterialAttribute::OcclusionTextureLayer, 3u},
+    }};
+    CORRADE_VERIFY(converter->add(material));
+
+    CORRADE_VERIFY(converter->endFile());
+    CORRADE_COMPARE_AS(filename,
+        Utility::Path::join(GLTFSCENECONVERTER_TEST_DIR, "material-2d-array-textures.gltf"),
+        TestSuite::Compare::File);
+
+    if(_importerManager.loadState("GltfImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("GltfImporter plugin not found, cannot test a rountrip");
+
+    Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("GltfImporter");
+    importer->configuration().setValue("experimentalKhrTextureKtx", true);
+    /* Disable Phong material fallback (enabled by default for compatibility),
+       no use for that here */
+    importer->configuration().setValue("phongMaterialFallback", false);
+
+    CORRADE_VERIFY(importer->openFile(filename));
+
+    /* There should be two 3D images and two 2D. Not verifying their contents,
+       as that's sufficiently tested elsewhere. */
+    CORRADE_COMPARE(importer->image2DCount(), 2);
+    CORRADE_COMPARE(importer->image3DCount(), 2);
+
+    /* Three textures referencing two 3D images and one 2D. The 3D textures,
+       stored as separate layers, should be deduplicated. */
+    CORRADE_COMPARE(importer->textureCount(), 3);
+    CORRADE_COMPARE(importer->textureForName("2D array texture"), 1);
+
+    Containers::Optional<TextureData> importedTexture0 = importer->texture(0);
+    CORRADE_VERIFY(importedTexture0);
+    CORRADE_COMPARE(importedTexture0->type(), TextureType::Texture2DArray);
+    CORRADE_COMPARE(importedTexture0->image(), 1);
+
+    Containers::Optional<TextureData> importedTexture1 = importer->texture(1);
+    CORRADE_VERIFY(importedTexture1);
+    CORRADE_COMPARE(importedTexture1->type(), TextureType::Texture2DArray);
+    CORRADE_COMPARE(importedTexture1->image(), 0);
+
+    Containers::Optional<TextureData> importedTexture2 = importer->texture(2);
+    CORRADE_VERIFY(importedTexture2);
+    CORRADE_COMPARE(importedTexture2->type(), TextureType::Texture2D);
+    CORRADE_COMPARE(importedTexture2->image(), 1);
+
+    /* There should be exactly one material, looking exactly the same as the
+       original */
+    CORRADE_COMPARE(importer->materialCount(), 1);
+    Containers::Optional<MaterialData> importedMaterial = importer->material(0);
+    CORRADE_VERIFY(importedMaterial);
+    compareMaterials(*importedMaterial, filterMaterialAttributes(material,
+        MaterialType::PbrMetallicRoughness,
+        /* Emissive layer is 0 and for a 2D image, which is same as not present
+           at all */
+        Containers::arrayView({MaterialAttribute::EmissiveTextureLayer}), {}));
 }
 
 void GltfSceneConverterTest::addMaterialUnusedAttributes() {
@@ -2947,6 +3353,86 @@ void GltfSceneConverterTest::addMaterialInvalid() {
     CORRADE_VERIFY(converter->endFile());
     CORRADE_COMPARE_AS(filename,
         Utility::Path::join(GLTFSCENECONVERTER_TEST_DIR, "texture.gltf"),
+        TestSuite::Compare::File);
+}
+
+void GltfSceneConverterTest::addMaterial2DArrayTextureLayerOutOfBounds() {
+    /* Same as addMaterial2DArrayTextures() except for the error case at the
+       end */
+
+    if(_imageConverterManager.loadState("PngImageConverter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("PngImageConverter plugin not found, cannot test");
+    if(_imageConverterManager.loadState("KtxImageConverter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("KtxImageConverter plugin not found, cannot test");
+
+    Containers::Pointer<AbstractSceneConverter> converter =  _converterManager.instantiate("GltfSceneConverter");
+
+    converter->configuration().setValue("experimentalKhrTextureKtx", true);
+    converter->configuration().setValue("imageConverter", "KtxImageConverter");
+
+    Containers::String filename = Utility::Path::join(GLTFSCENECONVERTER_TEST_OUTPUT_DIR, "material-2d-array-textures.gltf");
+    CORRADE_VERIFY(converter->beginFile(filename));
+
+    /* Add a few 2D and 3D images to be referenced by a texture */
+    CORRADE_VERIFY(converter->add(ImageView3D{PixelStorage{}.setAlignment(1), PixelFormat::R8Unorm, {1, 1, 4}, "yey", ImageFlag3D::Array}));
+    CORRADE_VERIFY(converter->add(ImageView2D{PixelStorage{}.setAlignment(1), PixelFormat::R8Unorm, {1, 1}, "y"}, "2D KTX, not used"));
+    CORRADE_VERIFY(converter->add(ImageView3D{PixelStorage{}.setAlignment(1), PixelFormat::R8Unorm, {1, 1, 7}, "yeyyey", ImageFlag3D::Array}));
+    /* Also a plain PNG 2D image to test correct numbering in the non-extension
+       code path */
+    converter->configuration().setValue("imageConverter", "PngImageConverter");
+    CORRADE_VERIFY(converter->add(ImageView2D{PixelStorage{}.setAlignment(1), PixelFormat::R8Unorm, {1, 1}, "y"}));
+
+    /* Add corresponding textures, in a shuffled order to catch indexing bugs.
+       Name one array texture but not the other to test that the name gets
+       duplicated for each layer.  */
+    CORRADE_VERIFY(converter->add(TextureData{TextureType::Texture2DArray,
+        SamplerFilter::Nearest,
+        SamplerFilter::Nearest,
+        SamplerMipmap::Base,
+        SamplerWrapping::ClampToEdge,
+        1}));
+    CORRADE_VERIFY(converter->add(TextureData{TextureType::Texture2DArray,
+        SamplerFilter::Nearest,
+        SamplerFilter::Nearest,
+        SamplerMipmap::Base,
+        SamplerWrapping::ClampToEdge,
+        0}, "2D array texture"));
+    CORRADE_VERIFY(converter->add(TextureData{TextureType::Texture2D,
+        SamplerFilter::Nearest,
+        SamplerFilter::Nearest,
+        SamplerMipmap::Base,
+        SamplerWrapping::ClampToEdge,
+        1}));
+
+    /* First material is fine, referencing the last layer of each image */
+    CORRADE_VERIFY(converter->add(MaterialData{{}, {
+        {MaterialAttribute::BaseColorTexture, 0u},
+        {MaterialAttribute::BaseColorTextureLayer, 6u},
+        {MaterialAttribute::EmissiveTexture, 2u},
+        {MaterialAttribute::EmissiveTextureLayer, 0u},
+        {MaterialAttribute::OcclusionTexture, 1u},
+        {MaterialAttribute::OcclusionTextureLayer, 3u},
+    }}));
+
+    /* Second material has the second texture OOB */
+    {
+        std::ostringstream out;
+        Error redirectError{&out};
+        CORRADE_VERIFY(!converter->add(MaterialData{{}, {
+            {MaterialAttribute::NormalTexture, 0u},
+            {MaterialAttribute::NormalTextureLayer, 6u},
+            {MaterialAttribute::OcclusionTexture, 1u},
+            {MaterialAttribute::OcclusionTextureLayer, 4u},
+        }}));
+        CORRADE_COMPARE(out.str(), "Trade::GltfSceneConverter::add(): material attribute OcclusionTextureLayer value 4 out of range for 4 layers in texture 1\n");
+    }
+
+    /* The file should not get corrupted by this error, thus the same as if
+       just the first material was added, which corresponds to
+       addMaterial2DArrayTextures() */
+    CORRADE_VERIFY(converter->endFile());
+    CORRADE_COMPARE_AS(filename,
+        Utility::Path::join(GLTFSCENECONVERTER_TEST_DIR, "material-2d-array-textures.gltf"),
         TestSuite::Compare::File);
 }
 

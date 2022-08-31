@@ -38,6 +38,7 @@
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/Format.h>
 #include <Corrade/Utility/JsonWriter.h>
+#include <Corrade/Utility/Macros.h> /* CORRADE_UNUSED */
 #include <Corrade/Utility/Path.h>
 #include <Corrade/Utility/String.h>
 #include <Magnum/Math/Color.h>
@@ -120,11 +121,23 @@ struct GltfSceneConverter::State {
     Containers::Array<MeshProperties> meshes;
     Containers::Array<Containers::Pair<UnsignedInt, Int>> meshMaterialAssignments;
 
-    /* Texture extensions used to reference images (or zero values if none).
-       For each image that gets referenced by a texture, a corresponding
-       extension is added to requiredExtensions. If an image isn't referenced
-       by a texture, no extension is added. */
-    Containers::Array<GltfExtension> imageTextureExtensions;
+    /* For each 2D image contains its index in the gltfImages array (which is
+       used for referencing from a texture) and a texture extension if needed
+       (or GltfExtension{} if none). For each image that gets referenced by a
+       texture, the extension is added to requiredExtensions. If an image isn't
+       referenced by a texture, no extension is added. Size of the array is
+       equal to image2DCount(). */
+    Containers::Array<Containers::Pair<UnsignedInt, GltfExtension>> image2DIdsTextureExtensions;
+    /* For each 3D image contains its index in the gltfImages array, a texture
+       extension if needed, plus layer count (which is used to duplicate the
+       texture referencing it, once for each layer). Size of the array is equal
+       to image3DCount(). */
+    Containers::Array<Containers::Triple<UnsignedInt, GltfExtension, UnsignedInt>> image3DIdsTextureExtensionsLayerCount;
+    /* If a material references input texture i and layer j,
+       `textureIdOffsets[i] + j` is the actual glTF texture ID to be written
+       to the output. If only 2D images are present,
+       `textureIdOffsets[i] == i` for all `i`. */
+    Containers::Array<UnsignedInt> textureIdOffsets{InPlaceInit, {0}};
 
     Utility::JsonWriter gltfBuffers;
     Utility::JsonWriter gltfBufferViews;
@@ -146,13 +159,20 @@ GltfSceneConverter::GltfSceneConverter(PluginManager::AbstractManager& manager, 
 GltfSceneConverter::~GltfSceneConverter() = default;
 
 SceneConverterFeatures GltfSceneConverter::doFeatures() const {
-    return SceneConverterFeature::ConvertMultipleToData|
-           SceneConverterFeature::AddScenes|
-           SceneConverterFeature::AddMeshes|
-           SceneConverterFeature::AddMaterials|
-           SceneConverterFeature::AddTextures|
-           SceneConverterFeature::AddImages2D|
-           SceneConverterFeature::AddCompressedImages2D;
+    SceneConverterFeatures features =
+        SceneConverterFeature::ConvertMultipleToData|
+        SceneConverterFeature::AddScenes|
+        SceneConverterFeature::AddMeshes|
+        SceneConverterFeature::AddMaterials|
+        SceneConverterFeature::AddTextures|
+        SceneConverterFeature::AddImages2D|
+        SceneConverterFeature::AddCompressedImages2D;
+    /* Advertise 3D image support only if the experimental KHR_texture_ktx
+       is enabled, for simpler error checking in add(ImageData3D) */
+    if(configuration().value<bool>("experimentalKhrTextureKtx")) features |=
+        SceneConverterFeature::AddImages3D|
+        SceneConverterFeature::AddCompressedImages3D;
+    return features;
 }
 
 bool GltfSceneConverter::doBeginFile(const Containers::StringView filename) {
@@ -1410,10 +1430,24 @@ bool GltfSceneConverter::doAdd(UnsignedInt, const MaterialData& material, const 
         MaterialAttribute::OcclusionTexture,
         MaterialAttribute::EmissiveTexture
     }) {
-        if(Containers::Optional<UnsignedInt> id = material.findAttributeId(attribute)) {
-            const UnsignedInt index = material.attribute<UnsignedInt>(*id);
-            if(index >= textureCount()) {
-                Error{} << "Trade::GltfSceneConverter::add(): material attribute" << material.attributeName(*id) << "references texture" << index << "but only" << textureCount() << "were added so far";
+        const Containers::Optional<UnsignedInt> id = material.findAttributeId(attribute);
+        if(!id) continue;
+
+        const UnsignedInt index = material.attribute<UnsignedInt>(*id);
+        if(index >= textureCount()) {
+            Error{} << "Trade::GltfSceneConverter::add(): material attribute" << material.attributeName(*id) << "references texture" << index << "but only" << textureCount() << "were added so far";
+            return {};
+        }
+
+        /* If there's a layer, validate that it's in bounds as well. For 2D
+           textures the layer count is implicitly 1, so the layer can only be
+           0. */
+        CORRADE_INTERNAL_ASSERT(textureCount() + 1 == _state->textureIdOffsets.size());
+        const Containers::String layerAttributeName = materialAttributeName(attribute) + "Layer"_s;
+        if(const Containers::Optional<UnsignedInt> layer = material.tryAttribute<UnsignedInt>(layerAttributeName)) {
+            const UnsignedInt textureLayerCount = _state->textureIdOffsets[index + 1] - _state->textureIdOffsets[index];
+            if(*layer >= textureLayerCount) {
+                Error{} << "Trade::GltfSceneConverter::add(): material attribute" << layerAttributeName << "value" << *layer << "out of range for" << textureLayerCount << "layers in texture" << index;
                 return {};
             }
         }
@@ -1456,9 +1490,19 @@ bool GltfSceneConverter::doAdd(UnsignedInt, const MaterialData& material, const 
 
         /* Bounds of all textures should have been verified at the very top */
         const UnsignedInt texture = maskedMaterial.material.attribute<UnsignedInt>(textureAttributeId);
-        CORRADE_INTERNAL_ASSERT(texture < textureCount());
+        CORRADE_INTERNAL_ASSERT(texture < _state->textureIdOffsets.size());
 
-        _state->gltfMaterials.writeKey("index"_s).write(texture);
+        /* Texture layer. If there's no such attribute, it's implicitly 0.
+           Layer index bounds should have been verified at the very top as
+           well. */
+        Containers::Optional<UnsignedInt> layer = maskedMaterial.find<UnsignedInt>(prefix + "Layer"_s);
+        if(!layer)
+            layer = maskedMaterial.find<UnsignedInt>(MaterialAttribute::TextureLayer);
+        if(!layer)
+            layer = 0;
+        CORRADE_INTERNAL_ASSERT(*layer < _state->textureIdOffsets[texture + 1] - _state->textureIdOffsets[texture]);
+
+        _state->gltfMaterials.writeKey("index"_s).write(_state->textureIdOffsets[texture] + *layer);
 
         Containers::Optional<UnsignedInt> textureCoordinates = maskedMaterial.find<UnsignedInt>(prefix + "Coordinates"_s);
         if(!textureCoordinates)
@@ -1597,6 +1641,7 @@ bool GltfSceneConverter::doAdd(UnsignedInt, const MaterialData& material, const 
                 maskedMaterial.findId(MaterialAttribute::RoughnessTextureSwizzle);
                 maskedMaterial.findId(MaterialAttribute::RoughnessTextureMatrix);
                 maskedMaterial.findId(MaterialAttribute::RoughnessTextureCoordinates);
+                maskedMaterial.findId(MaterialAttribute::RoughnessTextureLayer);
 
             } else if(foundNoneRoughnessMetallicTexture) {
                 writeTexture(maskedMaterial, "metallicRoughnessTexture"_s, *foundNoneRoughnessMetallicTexture, "MetalnessTexture"_s);
@@ -1606,6 +1651,7 @@ bool GltfSceneConverter::doAdd(UnsignedInt, const MaterialData& material, const 
                    metalness above */
                 maskedMaterial.findId(MaterialAttribute::RoughnessTextureMatrix);
                 maskedMaterial.findId(MaterialAttribute::RoughnessTextureCoordinates);
+                maskedMaterial.findId(MaterialAttribute::RoughnessTextureLayer);
             }
         }
     }
@@ -1710,14 +1756,36 @@ bool GltfSceneConverter::doAdd(UnsignedInt, const MaterialData& material, const 
     return true;
 }
 
-bool GltfSceneConverter::doAdd(UnsignedInt, const TextureData& texture, const Containers::StringView name) {
-    if(texture.type() != TextureType::Texture2D) {
-        Error{} << "Trade::GltfSceneConverter::add(): expected a 2D texture, got" << texture.type();
-        return {};
-    }
+bool GltfSceneConverter::doAdd(CORRADE_UNUSED const UnsignedInt id, const TextureData& texture, const Containers::StringView name) {
+    GltfExtension textureExtension;
+    UnsignedInt gltfImageId;
+    if(texture.type() == TextureType::Texture2D) {
+        CORRADE_INTERNAL_ASSERT(image2DCount() == _state->image2DIdsTextureExtensions.size());
+        if(texture.image() >= _state->image2DIdsTextureExtensions.size()) {
+            Error{} << "Trade::GltfSceneConverter::add(): texture references 2D image" << texture.image() << "but only" << _state->image2DIdsTextureExtensions.size() << "were added so far";
+            return {};
+        }
 
-    if(texture.image() >= _state->imageTextureExtensions.size()) {
-        Error{} << "Trade::GltfSceneConverter::add(): texture references image" << texture.image() << "but only" << _state->imageTextureExtensions.size() << "were added so far";
+        gltfImageId = _state->image2DIdsTextureExtensions[texture.image()].first();
+        textureExtension = _state->image2DIdsTextureExtensions[texture.image()].second();
+
+    } else if(texture.type() == TextureType::Texture2DArray) {
+        if(!configuration().value<bool>("experimentalKhrTextureKtx")) {
+            Error{} << "Trade::GltfSceneConverter::add(): 2D array textures require experimentalKhrTextureKtx to be enabled";
+            return {};
+        }
+
+        CORRADE_INTERNAL_ASSERT(image3DCount() == _state->image3DIdsTextureExtensionsLayerCount.size());
+        if(texture.image() >= _state->image3DIdsTextureExtensionsLayerCount.size()) {
+            Error{} << "Trade::GltfSceneConverter::add(): texture references 3D image" << texture.image() << "but only" << _state->image3DIdsTextureExtensionsLayerCount.size() << "were added so far";
+            return {};
+        }
+
+        gltfImageId = _state->image3DIdsTextureExtensionsLayerCount[texture.image()].first();
+        textureExtension = _state->image3DIdsTextureExtensionsLayerCount[texture.image()].second();
+
+    } else {
+        Error{} << "Trade::GltfSceneConverter::add(): expected a 2D or 2D array texture, got" << texture.type();
         return {};
     }
 
@@ -1729,48 +1797,76 @@ bool GltfSceneConverter::doAdd(UnsignedInt, const TextureData& texture, const Co
     if(_state->gltfTextures.isEmpty())
         _state->gltfTextures.beginArray();
 
-    Containers::ScopeGuard gltfTexture = _state->gltfTextures.beginObjectScope();
+    CORRADE_INTERNAL_ASSERT(_state->textureIdOffsets.size() == id + 1);
 
-    /* Image that doesn't need any extension (PNG or JPEG or whatever else with
-       strict mode disabled), write directly */
-    const GltfExtension textureExtension = _state->imageTextureExtensions[texture.image()];
-    if(textureExtension == GltfExtension{}) {
-        _state->gltfTextures
-            .writeKey("source"_s).write(texture.image());
+    /* For 2D array textures there's one texture per layer */
+    if(texture.type() == TextureType::Texture2DArray) {
+        CORRADE_INTERNAL_ASSERT(textureExtension == GltfExtension::KhrTextureKtx);
+        const Containers::StringView textureExtensionString = "KHR_texture_ktx"_s;
 
-    /* Image with an extension, also mark given extension as required */
-    } else {
-        _state->requiredExtensions |= textureExtension;
+        const UnsignedInt layerCount = _state->image3DIdsTextureExtensionsLayerCount[texture.image()].third();
+        for(UnsignedInt layer = 0; layer != layerCount; ++layer) {
+            Containers::ScopeGuard gltfTexture = _state->gltfTextures.beginObjectScope();
 
-        Containers::StringView textureExtensionString;
-        switch(textureExtension) {
-            case GltfExtension::KhrTextureBasisu:
-                textureExtensionString = "KHR_texture_basisu"_s;
-                break;
-            /* Not checking for experimentalKhrTextureKtx here, this is only
-               reachable if it was enabled when the image got added */
-            case GltfExtension::KhrTextureKtx:
-                textureExtensionString = "KHR_texture_ktx"_s;
-                break;
-            /* LCOV_EXCL_START */
-            case GltfExtension::KhrMaterialsUnlit:
-            case GltfExtension::KhrMeshQuantization:
-            case GltfExtension::KhrTextureTransform:
-                CORRADE_INTERNAL_ASSERT_UNREACHABLE();
-            /* LCOV_EXCL_STOP */
+            _state->gltfTextures
+                .writeKey("extensions"_s).beginObject()
+                    .writeKey(textureExtensionString).beginObject()
+                        .writeKey("source"_s).write(gltfImageId)
+                        .writeKey("layer"_s).write(layer)
+                    .endObject()
+                .endObject();
+
+            if(name)
+                _state->gltfTextures.writeKey("name"_s).write(name);
         }
-        CORRADE_INTERNAL_ASSERT(textureExtensionString);
 
-        _state->gltfTextures
-            .writeKey("extensions"_s).beginObject()
-                .writeKey(textureExtensionString).beginObject()
-                    .writeKey("source"_s).write(texture.image())
-                .endObject()
-            .endObject();
-    }
+    /* 2D texture is just one */
+    } else if(texture.type() == TextureType::Texture2D) {
+        Containers::ScopeGuard gltfTexture = _state->gltfTextures.beginObjectScope();
 
-    if(name)
-        _state->gltfTextures.writeKey("name"_s).write(name);
+        /* Image that doesn't need any extension (PNG or JPEG or whatever else
+           with strict mode disabled), write directly */
+        if(textureExtension == GltfExtension{}) {
+            _state->gltfTextures
+                .writeKey("source"_s).write(gltfImageId);
+
+        /* Image with an extension, also mark given extension as required */
+        } else {
+            _state->requiredExtensions |= textureExtension;
+
+            Containers::StringView textureExtensionString;
+            switch(textureExtension) {
+                case GltfExtension::KhrTextureBasisu:
+                    textureExtensionString = "KHR_texture_basisu"_s;
+                    break;
+                /* Not checking for experimentalKhrTextureKtx here, this is only
+                reachable if it was enabled when the image got added */
+                case GltfExtension::KhrTextureKtx:
+                    textureExtensionString = "KHR_texture_ktx"_s;
+                    break;
+                /* LCOV_EXCL_START */
+                case GltfExtension::KhrMaterialsUnlit:
+                case GltfExtension::KhrMeshQuantization:
+                case GltfExtension::KhrTextureTransform:
+                    CORRADE_INTERNAL_ASSERT_UNREACHABLE();
+                /* LCOV_EXCL_STOP */
+            }
+            CORRADE_INTERNAL_ASSERT(textureExtensionString);
+
+            _state->gltfTextures
+                .writeKey("extensions"_s).beginObject()
+                    .writeKey(textureExtensionString).beginObject()
+                        .writeKey("source"_s).write(gltfImageId)
+                    .endObject()
+                .endObject();
+        }
+
+        if(name)
+            _state->gltfTextures.writeKey("name"_s).write(name);
+
+    } else CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+
+    arrayAppend(_state->textureIdOffsets, _state->gltfTextures.currentArraySize());
 
     return true;
 }
@@ -1944,17 +2040,17 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const ImageData2D& image, c
        but a MIME type is more robust and all image converter plugins except
        Basis Universal have it. */
     const Containers::String mimeType = imageConverter->mimeType();
-    CORRADE_INTERNAL_ASSERT(_state->imageTextureExtensions.size() == id);
+    GltfExtension extension;
     if(mimeType == "image/jpeg"_s ||
        mimeType == "image/png"_s) {
-        arrayAppend(_state->imageTextureExtensions, GltfExtension{});
+        extension = GltfExtension{};
     /** @todo some more robust way to detect if Basis-encoded KTX image is
         produced? waiting until the image is produced and then parsing the
         header is insanely complicated :( */
     } else if(mimeType == "image/ktx2"_s && imageConverterPluginName == "BasisKtxImageConverter"_s) {
-        arrayAppend(_state->imageTextureExtensions, GltfExtension::KhrTextureBasisu);
+        extension = GltfExtension::KhrTextureBasisu;
     } else if(mimeType == "image/ktx2"_s && configuration().value<bool>("experimentalKhrTextureKtx")) {
-        arrayAppend(_state->imageTextureExtensions, GltfExtension::KhrTextureKtx);
+        extension = GltfExtension::KhrTextureKtx;
     /** @todo EXT_texture_webp and MSFT_texture_dds, once we have converters */
     } else {
         if(!mimeType) {
@@ -1970,8 +2066,72 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const ImageData2D& image, c
             return {};
         } else Warning{} << "Trade::GltfSceneConverter::add(): strict mode disabled, allowing" << mimeType << "MIME type for an image";
 
-        arrayAppend(_state->imageTextureExtensions, GltfExtension{});
+        extension = GltfExtension{};
     }
+
+    const UnsignedInt gltfImageId = image2DCount() + image3DCount();
+    CORRADE_INTERNAL_ASSERT(gltfImageId == (_state->gltfImages.isEmpty() ? 0 : _state->gltfImages.currentArraySize()));
+    CORRADE_INTERNAL_ASSERT(_state->image2DIdsTextureExtensions.size() == id);
+    arrayAppend(_state->image2DIdsTextureExtensions, InPlaceInit, gltfImageId, extension);
+
+    return convertAndWriteImage(id, name, *imageConverter, image, bundleImages);
+}
+
+bool GltfSceneConverter::doAdd(const UnsignedInt id, const ImageData3D& image, const Containers::StringView name) {
+    /* If not set, 3D image conversion isn't even advertised */
+    CORRADE_INTERNAL_ASSERT(configuration().value<bool>("experimentalKhrTextureKtx"));
+
+    if((image.flags() & (ImageFlag3D::Array|ImageFlag3D::CubeMap)) != ImageFlag3D::Array) {
+        Error{} << "Trade::GltfSceneConverter::add(): expected a 2D array image but got" << (image.flags() & (ImageFlag3D::Array|ImageFlag3D::CubeMap));
+        return {};
+    }
+
+    /* Decide whether to bundle images or save them externally. If not
+       explicitly specified, bundle them for binary files and save externally
+       for *.gltf. */
+    const bool bundleImages =
+        configuration().value<Containers::StringView>("bundleImages") ?
+        configuration().value<bool>("bundleImages") : _state->binary;
+
+    /* Decide on features we need */
+    ImageConverterFeatures expectedFeatures;
+    if(image.isCompressed())
+        expectedFeatures |= bundleImages ?
+            ImageConverterFeature::ConvertCompressed3DToData :
+            ImageConverterFeature::ConvertCompressed3DToFile;
+    else
+        expectedFeatures |= bundleImages ?
+            ImageConverterFeature::Convert3DToData :
+            ImageConverterFeature::Convert3DToFile;
+
+    /* Load the plugin, propagate flags & configuration. If it fails, it
+       printed a message already, so just return. */
+    const Containers::StringView imageConverterPluginName = configuration().value<Containers::StringView>("imageConverter");
+    Containers::Pointer<AbstractImageConverter> imageConverter = loadAndInstantiateImageConverter(manager(), imageConverterPluginName, flags(), configuration(), expectedFeatures);
+    if(!imageConverter) return {};
+
+    /* Use a MIME type to decide what glTF extension (if any) to use to
+       reference the image from a texture. Could also use the file extension,
+       but a MIME type is more robust and all image converter plugins except
+       Basis Universal have it. */
+    const Containers::String mimeType = imageConverter->mimeType();
+    GltfExtension extension;
+    if(mimeType == "image/ktx2"_s) {
+        extension = GltfExtension::KhrTextureKtx;
+    } else {
+        if(!mimeType) {
+            Error{} << "Trade::GltfSceneConverter::add():" << imageConverterPluginName << "doesn't specify any MIME type, can't save an image";
+            return {};
+        }
+
+        Error{} << "Trade::GltfSceneConverter::add():" << mimeType << "is not a valid MIME type for a 3D glTF image";
+        return {};
+    }
+
+    const UnsignedInt gltfImageId = image2DCount() + image3DCount();
+    CORRADE_INTERNAL_ASSERT(gltfImageId == (_state->gltfImages.isEmpty() ? 0 : _state->gltfImages.currentArraySize()));
+    CORRADE_INTERNAL_ASSERT(_state->image3DIdsTextureExtensionsLayerCount.size() == id);
+    arrayAppend(_state->image3DIdsTextureExtensionsLayerCount, InPlaceInit, gltfImageId, extension, UnsignedInt(image.size().z()));
 
     return convertAndWriteImage(id, name, *imageConverter, image, bundleImages);
 }

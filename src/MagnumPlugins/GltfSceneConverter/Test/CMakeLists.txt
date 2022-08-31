@@ -54,6 +54,9 @@ if(NOT MAGNUM_GLTFSCENECONVERTER_BUILD_STATIC)
     if(MAGNUM_WITH_KTXIMPORTER)
         set(KTXIMPORTER_PLUGIN_FILENAME $<TARGET_FILE:KtxImporter>)
     endif()
+    if(MAGNUM_WITH_OPENEXRIMAGECONVERTER)
+        set(OPENEXRIMAGECONVERTER_PLUGIN_FILENAME $<TARGET_FILE:OpenExrImageConverter>)
+    endif()
     if(MAGNUM_WITH_STBDXTIMAGECONVERTER)
         set(STBDXTIMAGECONVERTER_PLUGIN_FILENAME $<TARGET_FILE:StbDxtImageConverter>)
     endif()
@@ -76,6 +79,15 @@ corrade_add_test(GltfSceneConverterTest GltfSceneConverterTest.cpp
     FILES
         empty.glb
         empty.gltf
+        image-3d-bundled.bin
+        image-3d-bundled.gltf
+        image-3d-compressed.glb
+        image-3d.glb
+        image-3d.gltf
+        image-3d-no-texture.gltf
+        image-3d-not-bundled.glb
+        image-3d-not-bundled.0.ktx2
+        image-3d.0.ktx2
         image-accessor-names.gltf
         image-basis.glb
         image-bundled.gltf image-bundled.bin
@@ -89,6 +101,7 @@ corrade_add_test(GltfSceneConverterTest GltfSceneConverterTest.cpp
         image-name.gltf
         image-not-bundled.glb image-not-bundled.0.png
         image-tga.glb
+        material-2d-array-textures.gltf
         material-alpha-mask-defaults-kept.gltf
         material-alpha-mask-defaults-omitted.gltf
         material-alpha-mask.gltf
@@ -175,6 +188,9 @@ if(MAGNUM_GLTFSCENECONVERTER_BUILD_STATIC)
     if(MAGNUM_WITH_KTXIMPORTER)
         target_link_libraries(GltfSceneConverterTest PRIVATE KtxImporter)
     endif()
+    if(MAGNUM_WITH_OPENEXRIMAGECONVERTER)
+        target_link_libraries(GltfSceneConverterTest PRIVATE OpenExrImageConverter)
+    endif()
     if(MAGNUM_WITH_STBDXTIMAGECONVERTER)
         target_link_libraries(GltfSceneConverterTest PRIVATE StbDxtImageConverter)
     endif()
@@ -201,6 +217,9 @@ else()
     endif()
     if(MAGNUM_WITH_KTXIMPORTER)
         add_dependencies(GltfSceneConverterTest KtxImporter)
+    endif()
+    if(MAGNUM_WITH_OPENEXRIMAGECONVERTER)
+        add_dependencies(GltfSceneConverterTest OpenExrImageConverter)
     endif()
     if(MAGNUM_WITH_STBDXTIMAGECONVERTER)
         add_dependencies(GltfSceneConverterTest StbDxtImageConverter)
