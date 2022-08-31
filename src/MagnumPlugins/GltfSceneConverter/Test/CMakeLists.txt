@@ -35,6 +35,8 @@ else()
     set(GLTFSCENECONVERTER_TEST_OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR})
 endif()
 
+find_package(Magnum REQUIRED MeshTools)
+
 if(NOT MAGNUM_GLTFSCENECONVERTER_BUILD_STATIC)
     set(GLTFSCENECONVERTER_PLUGIN_FILENAME $<TARGET_FILE:GltfSceneConverter>)
     if(MAGNUM_WITH_BASISIMAGECONVERTER)
@@ -70,7 +72,7 @@ file(GENERATE OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/configure.h
     INPUT ${CMAKE_CURRENT_BINARY_DIR}/configure.h.in)
 
 corrade_add_test(GltfSceneConverterTest GltfSceneConverterTest.cpp
-    LIBRARIES Magnum::Trade
+    LIBRARIES Magnum::Trade Magnum::MeshTools
     FILES
         empty.glb
         empty.gltf
@@ -138,6 +140,15 @@ corrade_add_test(GltfSceneConverterTest GltfSceneConverterTest.cpp
         scene-invalid.gltf
         scene-meshes-materials.gltf
         scene-name.gltf
+        # Not glTFs because there's many combinations
+        texcoord-flip-floats.glb
+        texcoord-flip-floats-material.glb
+        texcoord-flip-normalized-byte-material.glb
+        texcoord-flip-normalized-unsigned-byte.glb
+        texcoord-flip-normalized-unsigned-byte-material.glb
+        texcoord-flip-normalized-unsigned-short.glb
+        texcoord-flip-normalized-unsigned-short-material.glb
+        texcoord-flip-short-material.glb
         texture-basis.gltf
         texture.gltf
         texture-jpeg.gltf

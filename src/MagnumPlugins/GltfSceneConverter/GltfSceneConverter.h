@@ -152,15 +152,20 @@ See @ref building-plugins, @ref cmake-plugins, @ref plugins and
     custom attributes as described below.
 -   @ref MeshAttribute::TextureCoordinates in @ref VertexFormat::Vector2,
     @relativeref{VertexFormat,Vector2ubNormalized} and
-    @relativeref{VertexFormat,Vector2usNormalized} are supported by core glTF;
-    @relativeref{VertexFormat,Vector2b},
+    @relativeref{VertexFormat,Vector2usNormalized} are supported by core glTF.
+    The data are by default Y-flipped unless the
+    @cb{.ini} textureCoordinateYFlipInMaterial @ce
+    @ref Trade-GltfSceneConverter-configuration "configuration option" is
+    enabled. @relativeref{VertexFormat,Vector2b},
     @relativeref{VertexFormat,Vector2bNormalized},
     @relativeref{VertexFormat,Vector2ub},
     @relativeref{VertexFormat,Vector2s},
     @relativeref{VertexFormat,Vector2sNormalized} or
     @relativeref{VertexFormat,Vector2us} will be exported with
     [KHR_mesh_quantization](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_mesh_quantization/README.md)
-    being added to required extensions. Other formats are not supported.
+    being added to required extensions. Those can't be Y-flipped and thus
+    require the @cb{.ini} textureCoordinateYFlipInMaterial @ce option to be
+    explicitly enabled. Other formats are not supported.
 -   @ref MeshAttribute::Color in @ref VertexFormat::Vector3 /
     @relativeref{VertexFormat,Vector4},
     @relativeref{VertexFormat,Vector3ubNormalized} /
@@ -293,7 +298,11 @@ See @ref building-plugins, @ref cmake-plugins, @ref plugins and
     @ref MaterialAttribute::BaseColorTextureMatrix "MaterialAttribute::*TextureMatrix"
     attributes are present, the [KHR_texture_transform](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_texture_transform/README.md)
     extension is included in the output. At the moment, only offset and scaling
-    is written, rotation is ignored with a warning.
+    is written, rotation is ignored with a warning. If the
+    @cb{.ini} textureCoordinateYFlipInMaterial @ce
+    @ref Trade-GltfSceneConverter-configuration "configuration option" is
+    enabled, all material textures will contain an Y-flip transformation in
+    addition to any existing transformation.
 -   Material names, if passed, are saved into the file
 -   The material is required to only be added after all textures it references
 -   An informational warning is printed for all attributes that were unused

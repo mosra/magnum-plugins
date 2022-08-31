@@ -46,6 +46,7 @@
 #include <Magnum/Math/Matrix3.h>
 #include <Magnum/Math/Matrix4.h>
 #include <Magnum/Math/Quaternion.h>
+#include <Magnum/MeshTools/Transform.h>
 #include <Magnum/Trade/AbstractImageConverter.h>
 #include <Magnum/Trade/AbstractImporter.h>
 #include <Magnum/Trade/AbstractSceneConverter.h>
@@ -103,6 +104,8 @@ struct GltfSceneConverterTest: TestSuite::Tester {
     void addMaterialUnusedAttributes();
     void addMaterialMultiple();
     void addMaterialInvalid();
+
+    void textureCoordinateYFlip();
 
     void addSceneEmpty();
     void addScene();
@@ -179,61 +182,62 @@ const struct {
     VertexFormat format;
     const char* customName;
     Containers::Optional<bool> strict;
+    Containers::Optional<bool> textureCoordinateYFlipInMaterial;
     bool expectedKhrMeshQuantization;
     const char* expectCustomName;
     const char* expected;
     const char* expectedWarning;
 } AddMeshAttributeData[]{
     {"positions, quantized", MeshAttribute::Position, VertexFormat::Vector3s,
-        nullptr, {}, true, nullptr,
+        nullptr, {}, {}, true, nullptr,
         "mesh-attribute-position-quantized.gltf", nullptr},
     {"normals, quantized", MeshAttribute::Normal, VertexFormat::Vector3bNormalized,
-        nullptr, {}, true, nullptr,
+        nullptr, {}, {}, true, nullptr,
         "mesh-attribute-normal-quantized.gltf", nullptr},
     {"tangents", MeshAttribute::Tangent, VertexFormat::Vector4,
-        nullptr, {}, false, nullptr,
+        nullptr, {}, {}, false, nullptr,
         "mesh-attribute-tangent.gltf", nullptr},
     {"tangents, quantized", MeshAttribute::Tangent, VertexFormat::Vector4sNormalized,
-        nullptr, {}, true, nullptr,
+        nullptr, {}, {}, true, nullptr,
         "mesh-attribute-tangent-quantized.gltf", nullptr},
     {"three-component tangents", MeshAttribute::Tangent, VertexFormat::Vector3,
-        nullptr, {}, false, "_TANGENT3",
+        nullptr, {}, {}, false, "_TANGENT3",
         "mesh-attribute-tangent3.gltf",
         "exporting three-component mesh tangents as a custom _TANGENT3 attribute"},
     {"bitangents", MeshAttribute::Bitangent, VertexFormat::Vector3,
-        nullptr, {}, false, "_BITANGENT",
+        nullptr, {}, {}, false, "_BITANGENT",
         "mesh-attribute-bitangent.gltf",
         "exporting separate mesh bitangents as a custom _BITANGENT attribute"},
     {"texture coordinates", MeshAttribute::TextureCoordinates, VertexFormat::Vector2,
-        nullptr, {}, false, nullptr,
+        nullptr, {}, {}, false, nullptr,
         "mesh-attribute-texture-coordinates.gltf", nullptr},
     {"texture coordinates, quantized", MeshAttribute::TextureCoordinates, VertexFormat::Vector2ub,
-        nullptr, {}, true, nullptr,
+        nullptr, {}, true, true, nullptr,
         "mesh-attribute-texture-coordinates-quantized.gltf", nullptr},
     {"three-component colors", MeshAttribute::Color, VertexFormat::Vector3,
-        nullptr, {}, false, nullptr,
+        nullptr, {}, {}, false, nullptr,
         "mesh-attribute-color3.gltf", nullptr},
     {"four-component colors", MeshAttribute::Color, VertexFormat::Vector4,
-        nullptr, {}, false, nullptr,
+        nullptr, {}, {}, false, nullptr,
         "mesh-attribute-color4.gltf", nullptr},
     {"four-component colors, quantized", MeshAttribute::Color, VertexFormat::Vector4usNormalized,
-        nullptr, {}, false, nullptr,
+        nullptr, {}, {}, false, nullptr,
         "mesh-attribute-color4us.gltf", nullptr},
     {"8-bit object ID", MeshAttribute::ObjectId, VertexFormat::UnsignedByte,
-        nullptr, {}, false, nullptr,
+        nullptr, {}, {}, false, nullptr,
         "mesh-attribute-objectidub.gltf", nullptr},
     {"32-bit object ID", MeshAttribute::ObjectId, VertexFormat::UnsignedInt,
-        nullptr, false, false, nullptr,
+        nullptr, false, {}, false, nullptr,
         "mesh-attribute-objectidui.gltf",
         "strict mode disabled, allowing a 32-bit integer attribute _OBJECT_ID"},
     {"2x2 matrix, quantized, aligned", meshAttributeCustom(2123), VertexFormat::Matrix2x2bNormalizedAligned,
-        "_ROTATION2D", {}, false, "_ROTATION2D",
+        "_ROTATION2D", {}, {}, false, "_ROTATION2D",
         "mesh-attribute-matrix2x2b.gltf", nullptr},
     {"3x3 matrix, quantized, aligned", meshAttributeCustom(4564), VertexFormat::Matrix3x3sNormalizedAligned,
-        "_TBN", {}, false, "_TBN",
+        "_TBN", {}, {}, false, "_TBN",
         "mesh-attribute-matrix3x3s.gltf", nullptr},
     {"4x4 matrix, quantized", meshAttributeCustom(0), VertexFormat::Matrix4x4bNormalized,
-        "_TRANSFORMATION", {}, false, "_TRANSFORMATION",
+        "_TRANSFORMATION", {}, {}, false, "_TRANSFORMATION",
         "mesh-attribute-matrix4x4b.gltf", nullptr}
 };
 
@@ -346,6 +350,14 @@ const struct {
             MeshAttributeData{MeshAttribute::Position, VertexFormat::Vector3, Containers::stridedArrayView(AddMeshInvalidVertices).flipped<0>()}
         }},
         "unsupported mesh attribute with stride -32"},
+    {"non-normalized texture coordinates but textureCoordinateYFlipInMaterial not enabled", false,
+        MeshData{MeshPrimitive::Points, {}, AddMeshInvalidVertices, {
+            MeshAttributeData{MeshAttribute::TextureCoordinates, VertexFormat::Vector2, Containers::arrayView(AddMeshInvalidVertices)},
+            /* The first attribute is okay to ensure it's not just the first
+               that gets tested */
+            MeshAttributeData{MeshAttribute::TextureCoordinates, VertexFormat::Vector2s, Containers::arrayView(AddMeshInvalidVertices)}
+        }},
+        "non-normalized mesh texture coordinates can't be Y-flipped, enable textureCoordinateYFlipInMaterial for the whole file instead"},
 };
 
 const struct {
@@ -837,6 +849,132 @@ const struct {
         }}, "unsupported B packing of an occlusion texture"}
 };
 
+/* Reusing the already-invented GltfImporter/Test/texcoord-flip.bin.in. The
+   glb/bin file has the data Y-flipped, so the input has to be without. */
+const Vector2 TextureCoordinateYFlipFloat[]{
+    {1.0, 0.5},
+    {0.5, 1.0},
+    {0.0, 0.0}
+};
+const Vector2ub TextureCoordinateYFlipNormalizedUnsignedByte[]{
+    {254, 127}, /* On Y flipped */
+    {127, 0},
+    {0, 254}
+};
+const Vector2us TextureCoordinateYFlipNormalizedUnsignedShort[]{
+    {65534, 32767}, /* On Y flipped */
+    {32767, 0},
+    {0, 65534}
+};
+const Vector2b TextureCoordinateYFlipNormalizedByte[]{
+    {-127, 0}, /* On X flipped */
+    {0, 127},
+    {127, -127},
+};
+const Vector2s TextureCoordinateYFlipShort[]{
+    {200, 100}, /* On Y off-center */
+    {100, 300},
+    {0, -100}
+};
+
+/* Reusing the already-invented GltfImporter/Test/texcoord-flip.gltf. Again the
+   input matrices have to be Y-flipped compared to what's in the gltf. */
+const struct {
+    const char* name;
+    Containers::Optional<bool> textureCoordinateYFlipInMaterial;
+    Containers::Optional<bool> keepMaterialDefaults;
+    MeshData mesh;
+    MaterialData material;
+    const char* expected;
+} TextureCoordinateYFlipData[]{
+    {"floats", {}, {},
+        MeshData{MeshPrimitive::Triangles, {}, TextureCoordinateYFlipFloat, {
+            MeshAttributeData{MeshAttribute::TextureCoordinates, Containers::arrayView(TextureCoordinateYFlipFloat)}
+        }},
+        MaterialData{{}, {
+            MaterialAttributeData{MaterialAttribute::BaseColorTexture, 0u},
+        }},
+        "texcoord-flip-floats.glb"},
+    {"floats, flip in material", true, {},
+        MeshData{MeshPrimitive::Triangles, {}, TextureCoordinateYFlipFloat, {
+            MeshAttributeData{MeshAttribute::TextureCoordinates, Containers::arrayView(TextureCoordinateYFlipFloat)}
+        }},
+        MaterialData{{}, {
+            MaterialAttributeData{MaterialAttribute::BaseColorTexture, 0u},
+        }},
+        "texcoord-flip-floats-material.glb"},
+    {"normalized unsigned byte", {}, {},
+        MeshData{MeshPrimitive::Triangles, {}, TextureCoordinateYFlipNormalizedUnsignedByte, {
+            MeshAttributeData{MeshAttribute::TextureCoordinates, VertexFormat::Vector2ubNormalized, Containers::arrayView(TextureCoordinateYFlipNormalizedUnsignedByte)}
+        }},
+        MaterialData{{}, {
+            MaterialAttributeData{MaterialAttribute::BaseColorTexture, 0u},
+            MaterialAttributeData{MaterialAttribute::BaseColorTextureMatrix,
+                Matrix3::translation(Vector2::yAxis(1.0f))*
+                Matrix3::scaling({1.00393f, -1.00393f})}
+        }},
+        "texcoord-flip-normalized-unsigned-byte.glb"},
+    {"normalized unsigned byte, flip in material", true, {},
+        MeshData{MeshPrimitive::Triangles, {}, TextureCoordinateYFlipNormalizedUnsignedByte, {
+            MeshAttributeData{MeshAttribute::TextureCoordinates, VertexFormat::Vector2ubNormalized, Containers::arrayView(TextureCoordinateYFlipNormalizedUnsignedByte)}
+        }},
+        MaterialData{{}, {
+            MaterialAttributeData{MaterialAttribute::BaseColorTexture, 0u},
+            MaterialAttributeData{MaterialAttribute::BaseColorTextureMatrix,
+                Matrix3::translation(Vector2::yAxis(1.0f))*
+                Matrix3::scaling({1.00393f, -1.00393f})}
+        }},
+        "texcoord-flip-normalized-unsigned-byte-material.glb"},
+    {"normalized unsigned short", {}, {},
+        MeshData{MeshPrimitive::Triangles, {}, TextureCoordinateYFlipNormalizedUnsignedShort, {
+            MeshAttributeData{MeshAttribute::TextureCoordinates, VertexFormat::Vector2usNormalized, Containers::arrayView(TextureCoordinateYFlipNormalizedUnsignedShort)}
+        }},
+        MaterialData{{}, {
+            MaterialAttributeData{MaterialAttribute::BaseColorTexture, 0u},
+            MaterialAttributeData{MaterialAttribute::BaseColorTextureMatrix,
+                Matrix3::translation(Vector2::yAxis(1.0f))*
+                Matrix3::scaling({1.000015259254738f, -1.000015259254738f})}
+        }},
+        "texcoord-flip-normalized-unsigned-short.glb"},
+    /* The 1.0e-5 epsilon is too large to consider a scale by 1.000015259254738
+       a non-identity, so explicitly force keeping defaults */
+    /** @todo any better way to fix this or is this just a too rare corner
+        case? */
+    {"normalized unsigned short, flip in material", true, true,
+        MeshData{MeshPrimitive::Triangles, {}, TextureCoordinateYFlipNormalizedUnsignedShort, {
+            MeshAttributeData{MeshAttribute::TextureCoordinates, VertexFormat::Vector2usNormalized, Containers::arrayView(TextureCoordinateYFlipNormalizedUnsignedShort)}
+        }},
+        MaterialData{{}, {
+            MaterialAttributeData{MaterialAttribute::BaseColorTexture, 0u},
+            MaterialAttributeData{MaterialAttribute::BaseColorTextureMatrix,
+                Matrix3::translation(Vector2::yAxis(1.0f))*
+                Matrix3::scaling({1.000015259254738f, -1.000015259254738f})}
+        }},
+        "texcoord-flip-normalized-unsigned-short-material.glb"},
+    {"normalized byte, flip in material", true, {},
+        MeshData{MeshPrimitive::Triangles, {}, TextureCoordinateYFlipNormalizedByte, {
+            MeshAttributeData{MeshAttribute::TextureCoordinates, VertexFormat::Vector2bNormalized, Containers::arrayView(TextureCoordinateYFlipNormalizedByte)}
+        }},
+        MaterialData{{}, {
+            MaterialAttributeData{MaterialAttribute::BaseColorTexture, 0u},
+            MaterialAttributeData{MaterialAttribute::BaseColorTextureMatrix,
+                Matrix3::translation({0.5f, 0.5f})*
+                Matrix3::scaling({-0.5f, 0.5f})}
+        }},
+        "texcoord-flip-normalized-byte-material.glb"},
+    {"short, flip in material", true, {},
+        MeshData{MeshPrimitive::Triangles, {}, TextureCoordinateYFlipShort, {
+            MeshAttributeData{MeshAttribute::TextureCoordinates, Containers::arrayView(TextureCoordinateYFlipShort)}
+        }},
+        MaterialData{{}, {
+            MaterialAttributeData{MaterialAttribute::BaseColorTexture, 0u},
+            MaterialAttributeData{MaterialAttribute::BaseColorTextureMatrix,
+                Matrix3::translation({0.0f, 0.25f})*
+                Matrix3::scaling({0.005f, 0.0025f})}
+        }},
+        "texcoord-flip-short-material.glb"},
+};
+
 const struct {
     const char* name;
     Containers::StringView dataName;
@@ -1028,6 +1166,9 @@ GltfSceneConverterTest::GltfSceneConverterTest() {
 
     addInstancedTests({&GltfSceneConverterTest::addMaterialInvalid},
         Containers::arraySize(AddMaterialInvalidData));
+
+    addInstancedTests({&GltfSceneConverterTest::textureCoordinateYFlip},
+        Containers::arraySize(TextureCoordinateYFlipData));
 
     addTests({&GltfSceneConverterTest::addSceneEmpty});
 
@@ -1642,6 +1783,8 @@ void GltfSceneConverterTest::addMeshAttribute() {
         converter->setMeshAttributeName(data.attribute, data.customName);
     if(data.strict)
         converter->configuration().setValue("strict", *data.strict);
+    if(data.textureCoordinateYFlipInMaterial)
+        converter->configuration().setValue("textureCoordinateYFlipInMaterial", *data.textureCoordinateYFlipInMaterial);
 
     {
         std::ostringstream out;
@@ -2792,6 +2935,80 @@ void GltfSceneConverterTest::addMaterialInvalid() {
     CORRADE_COMPARE_AS(filename,
         Utility::Path::join(GLTFSCENECONVERTER_TEST_DIR, "texture.gltf"),
         TestSuite::Compare::File);
+}
+
+void GltfSceneConverterTest::textureCoordinateYFlip() {
+    auto&& data = TextureCoordinateYFlipData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    if(_imageConverterManager.loadState("PngImageConverter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("PngImageConverter plugin not found, cannot test");
+
+    Containers::Pointer<AbstractSceneConverter> converter =  _converterManager.instantiate("GltfSceneConverter");
+
+    if(data.textureCoordinateYFlipInMaterial)
+        converter->configuration().setValue("textureCoordinateYFlipInMaterial", *data.textureCoordinateYFlipInMaterial);
+    if(data.keepMaterialDefaults)
+        converter->configuration().setValue("keepMaterialDefaults", *data.keepMaterialDefaults);
+
+    Containers::String filename = Utility::Path::join(GLTFSCENECONVERTER_TEST_OUTPUT_DIR, data.expected);
+    CORRADE_VERIFY(converter->beginFile(filename));
+
+    /* Add an image to be referenced by a texture */
+    CORRADE_VERIFY(converter->add(ImageView2D{PixelFormat::RGB8Unorm, {1, 1}, "yey"}));
+
+    /* Add a texture to be referenced by a material */
+    CORRADE_VERIFY(converter->add(TextureData{TextureType::Texture2D,
+        SamplerFilter::Nearest,
+        SamplerFilter::Nearest,
+        SamplerMipmap::Base,
+        SamplerWrapping::ClampToEdge,
+        0}));
+
+    CORRADE_VERIFY(converter->add(data.mesh));
+    CORRADE_VERIFY(converter->add(data.material));
+    CORRADE_VERIFY(converter->endFile());
+    CORRADE_COMPARE_AS(filename,
+        Utility::Path::join(GLTFSCENECONVERTER_TEST_DIR, data.expected),
+        TestSuite::Compare::File);
+
+    if(_importerManager.loadState("GltfImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("GltfImporter plugin not found, cannot test a rountrip");
+
+    Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("GltfImporter");
+
+    CORRADE_VERIFY(importer->openFile(filename));
+
+    /* Disable Phong material fallback (enabled by default for compatibility),
+       no use for that here */
+    importer->configuration().setValue("phongMaterialFallback", false);
+
+    /* There should be one mesh and one material */
+    CORRADE_COMPARE(importer->meshCount(), 1);
+    CORRADE_COMPARE(importer->materialCount(), 1);
+
+    Containers::Optional<Trade::MeshData> mesh = importer->mesh(0);
+    CORRADE_VERIFY(mesh);
+    CORRADE_VERIFY(mesh->hasAttribute(MeshAttribute::TextureCoordinates));
+    Containers::Array<Vector2> texCoords = mesh->textureCoordinates2DAsArray();
+
+    /* Texture transform is added to materials that don't have it yet */
+    Containers::Optional<Trade::MaterialData> material = importer->material(0);
+    CORRADE_VERIFY(material);
+
+    CORRADE_COMPARE(material->hasAttribute(MaterialAttribute::BaseColorTextureMatrix),
+        (data.textureCoordinateYFlipInMaterial && *data.textureCoordinateYFlipInMaterial) ||
+        data.material.hasAttribute(MaterialAttribute::BaseColorTextureMatrix));
+
+    /* Transformed texture coordinates should be the same regardless of the
+       setting */
+    if(Containers::Optional<Matrix3> matrix = material->tryAttribute<Matrix3>(MaterialAttribute::BaseColorTextureMatrix))
+        MeshTools::transformPointsInPlace(*matrix, texCoords);
+    CORRADE_COMPARE_AS(texCoords, Containers::arrayView<Vector2>({
+        {1.0f, 0.5f},
+        {0.5f, 1.0f},
+        {0.0f, 0.0f}
+    }), TestSuite::Compare::Container);
 }
 
 void GltfSceneConverterTest::addSceneEmpty() {

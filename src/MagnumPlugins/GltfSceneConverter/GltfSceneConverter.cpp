@@ -1039,6 +1039,13 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const MeshData& mesh, const
                format == VertexFormat::Vector2s ||
                format == VertexFormat::Vector2sNormalized ||
                format == VertexFormat::Vector2us) {
+                /* Fail if we have non-flippable format and the Y-flip isn't
+                   done in the material */
+                if(!configuration().value<bool>("textureCoordinateYFlipInMaterial")) {
+                    Error{} << "Trade::GltfSceneConverter::add(): non-normalized mesh texture coordinates can't be Y-flipped, enable textureCoordinateYFlipInMaterial for the whole file instead";
+                    return {};
+                }
+
                 _state->requiredExtensions |= GltfExtension::KhrMeshQuantization;
             } else if(format != VertexFormat::Vector2 &&
                       format != VertexFormat::Vector2ubNormalized &&
@@ -1263,6 +1270,29 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const MeshData& mesh, const
         /* Attribute views and accessors */
         for(UnsignedInt i = 0; i != mesh.attributeCount(); ++i) {
             const VertexFormat format = mesh.attributeFormat(i);
+
+            /* Flip texture coordinates unless they're meant to be flipped in
+               the material */
+            if(mesh.attributeName(i) == MeshAttribute::TextureCoordinates && !configuration().value<bool>("textureCoordinateYFlipInMaterial")) {
+                Containers::StridedArrayView1D<char> data{vertexData,
+                    vertexData + mesh.attributeOffset(i),
+                    mesh.vertexCount(), mesh.attributeStride(i)};
+                if(format == VertexFormat::Vector2)
+                    for(auto& c: Containers::arrayCast<Vector2>(data))
+                        c.y() = 1.0f - c.y();
+                else if(format == VertexFormat::Vector2ubNormalized)
+                    for(auto& c: Containers::arrayCast<Vector2ub>(data))
+                        c.y() = 255 - c.y();
+                else if(format == VertexFormat::Vector2usNormalized)
+                    for(auto& c: Containers::arrayCast<Vector2us>(data))
+                        c.y() = 65535 - c.y();
+                /* Other formats are not possible to flip, and thus have to be
+                   flipped in the material instead. This was already checked
+                   at the top, failing if textureCoordinateYFlipInMaterial
+                   isn't set for those formats, so it should never get here. */
+                else CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+            }
+
             const std::size_t formatSize = vertexFormatSize(format);
             const std::size_t attributeStride = mesh.attributeStride(i);
             const std::size_t gltfBufferViewIndex = _state->gltfBufferViews.currentArraySize();
@@ -1438,6 +1468,13 @@ bool GltfSceneConverter::doAdd(UnsignedInt, const MaterialData& material, const 
             textureMatrixAttribute = materialAttributeName(MaterialAttribute::TextureMatrix);
             textureMatrix = maskedMaterial.find<Matrix3>(textureMatrixAttribute);
         }
+
+        /* If there's no matrix but we're told to Y-flip texture coordinates in
+           the material, add an identity -- down below it'll be converted to an
+           Y-flipping one */
+        if(!textureMatrix && configuration().value<bool>("textureCoordinateYFlipInMaterial"))
+            textureMatrix.emplace();
+
         if(textureMatrix) {
             /* Arbitrary rotation not supported yet, as there's several
                equivalent decompositions for an arbitrary matrix and I'm too
@@ -1449,16 +1486,23 @@ bool GltfSceneConverter::doAdd(UnsignedInt, const MaterialData& material, const 
                 Warning{} << "Trade::GltfSceneConverter::add(): material attribute" << textureMatrixAttribute << "rotation was not used";
             }
 
-            if(keepDefaults || exceptRotation != Matrix3{}) {
-                _state->requiredExtensions |= GltfExtension::KhrTextureTransform;
+            /* Flip the matrix to have origin upper left */
+            Matrix3 matrix =
+                Matrix3::translation(Vector2::yAxis(1.0f))*
+                Matrix3::scaling(Vector2::yScale(-1.0f))*
+                exceptRotation;
 
-                /* Flip the matrix to have origin upper left */
-                const Matrix3 matrix =
-                    Matrix3::translation(Vector2::yAxis(1.0f))*
-                    Matrix3::scaling(Vector2::yScale(-1.0f))*
-                    exceptRotation*
+            /* If material needs an Y-flip, the mesh doesn't have the texture
+               coordinates flipped and thus we don't need to unflip them
+               first */
+            if(!configuration().value<bool>("textureCoordinateYFlipInMaterial"))
+                matrix = matrix*
                     Matrix3::translation(Vector2::yAxis(1.0f))*
                     Matrix3::scaling(Vector2::yScale(-1.0f));
+
+            if(keepDefaults || matrix != Matrix3{}) {
+                _state->requiredExtensions |= GltfExtension::KhrTextureTransform;
+
                 const Vector2 translation = matrix.translation();
                 const Vector2 scaling = matrix.scaling()*Math::sign(matrix.diagonal().xy());
 
