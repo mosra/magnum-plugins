@@ -141,7 +141,8 @@ struct TinyGltfImporterTest: TestSuite::Tester {
     void materialPhongFallback();
 
     void materialInvalid();
-    void materialTexCoordFlip();
+
+    void textureCoordinateYFlip();
 
     void texture();
     void textureExtensions();
@@ -398,44 +399,47 @@ constexpr struct {
 };
 
 constexpr struct {
-    const char* name;
+    const char* materialName;
     const char* fileName;
     const char* meshName;
     bool flipInMaterial;
     bool hasTextureTransformation;
-} MaterialTexCoordFlipData[]{
+} TextureCoordinateYFlipData[]{
     {"no transform",
-        "material-texcoord-flip.gltf", "float", false, false},
+        "texcoord-flip.gltf", "float", false, false},
     {"no transform",
-        "material-texcoord-flip.gltf", "float", true, false},
+        "texcoord-flip.gltf", "float", true, false},
     {"identity transform",
-        "material-texcoord-flip.gltf", "float", false, true},
+        "texcoord-flip.gltf", "float", false, true},
     {"identity transform",
-        "material-texcoord-flip.gltf", "float", true, true},
+        "texcoord-flip.gltf", "float", true, true},
     {"transform from normalized unsigned byte",
-        "material-texcoord-flip.gltf",
+        "texcoord-flip.gltf",
         "normalized unsigned byte", false, true},
     {"transform from normalized unsigned byte",
-        "material-texcoord-flip.gltf",
+        "texcoord-flip.gltf",
         "normalized unsigned byte", true, true},
     {"transform from normalized unsigned short",
-        "material-texcoord-flip.gltf",
+        "texcoord-flip.gltf",
         "normalized unsigned short", false, true},
     {"transform from normalized unsigned short",
-        "material-texcoord-flip.gltf",
+        "texcoord-flip.gltf",
         "normalized unsigned short", true, true},
-    {"transform from normalized signed integer",
-        "material-texcoord-flip-unnormalized.gltf",
-        "normalized signed integer", false, true},
-    {"transform from normalized signed integer",
-        "material-texcoord-flip-unnormalized.gltf",
-        "normalized signed integer", true, true},
-    {"transform from signed integer",
-        "material-texcoord-flip-unnormalized.gltf",
-        "signed integer", false, true},
-    {"transform from signed integer",
-        "material-texcoord-flip-unnormalized.gltf",
-        "signed integer", true, true},
+    /* The following are in a separate file because otherwise
+       textureCoordinateYFlipInMaterial would get implicitly enabled for all,
+       making flips in meshes impossible to test */
+    {"transform from normalized signed byte",
+        "texcoord-flip-unnormalized.gltf",
+        "normalized signed byte", false, true},
+    {"transform from normalized signed byte",
+        "texcoord-flip-unnormalized.gltf",
+        "normalized signed byte", true, true},
+    {"transform from signed short",
+        "texcoord-flip-unnormalized.gltf",
+        "signed short", false, true},
+    {"transform from signed short",
+        "texcoord-flip-unnormalized.gltf",
+        "signed short", true, true},
 };
 
 constexpr struct {
@@ -614,8 +618,8 @@ TinyGltfImporterTest::TinyGltfImporterTest() {
     addInstancedTests({&TinyGltfImporterTest::materialInvalid},
         Containers::arraySize(MaterialInvalidData));
 
-    addInstancedTests({&TinyGltfImporterTest::materialTexCoordFlip},
-        Containers::arraySize(MaterialTexCoordFlipData));
+    addInstancedTests({&TinyGltfImporterTest::textureCoordinateYFlip},
+        Containers::arraySize(TextureCoordinateYFlipData));
 
     addTests({&TinyGltfImporterTest::texture});
 
@@ -3482,9 +3486,9 @@ void TinyGltfImporterTest::materialInvalid() {
     CORRADE_COMPARE(out.str(), Utility::formatString("Trade::TinyGltfImporter::material(): {}\n", data.message));
 }
 
-void TinyGltfImporterTest::materialTexCoordFlip() {
-    auto&& data = MaterialTexCoordFlipData[testCaseInstanceId()];
-    setTestCaseDescription(Utility::formatString("{}{}", data.name, data.flipInMaterial ? ", textureCoordinateYFlipInMaterial" : ""));
+void TinyGltfImporterTest::textureCoordinateYFlip() {
+    auto&& data = TextureCoordinateYFlipData[testCaseInstanceId()];
+    setTestCaseDescription(Utility::formatString("{}{}", data.materialName, data.flipInMaterial ? ", textureCoordinateYFlipInMaterial" : ""));
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
 
@@ -3501,7 +3505,7 @@ void TinyGltfImporterTest::materialTexCoordFlip() {
     Containers::Array<Vector2> texCoords = mesh->textureCoordinates2DAsArray();
 
     /* Texture transform is added to materials that don't have it yet */
-    Containers::Optional<Trade::MaterialData> material = importer->material(data.name);
+    Containers::Optional<Trade::MaterialData> material = importer->material(data.materialName);
     CORRADE_VERIFY(material);
 
     auto& pbr = static_cast<PbrMetallicRoughnessMaterialData&>(*material);

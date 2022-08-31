@@ -114,9 +114,6 @@ corrade_add_test(TinyGltfImporterTest
         material-metallicroughness.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/GltfImporter/Test/material-phong-fallback.gltf
         material-specularglossiness.gltf
-        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/GltfImporter/Test/material-texcoord-flip.bin
-        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/GltfImporter/Test/material-texcoord-flip.gltf
-        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/GltfImporter/Test/material-texcoord-flip-unnormalized.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/GltfImporter/Test/material-unlit.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/GltfImporter/Test/mesh.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/GltfImporter/Test/mesh.bin
@@ -161,6 +158,9 @@ corrade_add_test(TinyGltfImporterTest
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/GltfImporter/Test/skin.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/GltfImporter/Test/skin.bin
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/GltfImporter/Test/skin.glb
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/GltfImporter/Test/texcoord-flip.bin
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/GltfImporter/Test/texcoord-flip.gltf
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/GltfImporter/Test/texcoord-flip-unnormalized.gltf
         texture.gltf
         texture-extensions.gltf
         texture-invalid.gltf

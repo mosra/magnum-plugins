@@ -132,9 +132,6 @@ corrade_add_test(GltfImporterTest
         material-sheen.gltf
         material-specular.gltf
         material-specularglossiness.gltf
-        material-texcoord-flip.bin
-        material-texcoord-flip.gltf
-        material-texcoord-flip-unnormalized.gltf
         material-transmission.gltf
         material-unlit.gltf
         material-volume.gltf
@@ -198,6 +195,9 @@ corrade_add_test(GltfImporterTest
         skin.gltf
         skin.bin
         skin.glb
+        texcoord-flip.bin
+        texcoord-flip.gltf
+        texcoord-flip-unnormalized.gltf
         texture.gltf
         texture-extensions.gltf
         texture-invalid.gltf

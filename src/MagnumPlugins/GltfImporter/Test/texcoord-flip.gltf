@@ -76,7 +76,7 @@
   "buffers": [
     {
       "byteLength": 64,
-      "uri": "material-texcoord-flip.bin"
+      "uri": "texcoord-flip.bin"
     }
   ],
   "materials": [
