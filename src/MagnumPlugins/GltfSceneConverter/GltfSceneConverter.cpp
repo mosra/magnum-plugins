@@ -1253,69 +1253,65 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const MeshData& mesh, const
         /* Vertex data */
         Containers::ArrayView<char> vertexData = arrayAppend(_state->buffer, mesh.vertexData());
 
-        /* Attribute views and accessors. If we have no attributes, the glTF is
-           not strictly valid anyway, so omiting the attributes key should be
-           fine. */
-        if(mesh.attributeCount()) {
-            for(UnsignedInt i = 0; i != mesh.attributeCount(); ++i) {
-                const VertexFormat format = mesh.attributeFormat(i);
-                const std::size_t formatSize = vertexFormatSize(format);
-                const std::size_t attributeStride = mesh.attributeStride(i);
-                const std::size_t gltfBufferViewIndex = _state->gltfBufferViews.currentArraySize();
-                Containers::ScopeGuard gltfBufferView = _state->gltfBufferViews.beginObjectScope();
-                _state->gltfBufferViews
-                    .writeKey("buffer"_s).write(0)
-                    /* Byte offset could be omitted if zero but since that
-                       happens only for the very first view in a buffer and we
-                       have always at most one buffer, the minimal savings are
-                       not worth the inconsistency */
-                    .writeKey("byteOffset"_s).write(vertexData - _state->buffer + mesh.attributeOffset(i));
+        /* Attribute views and accessors */
+        for(UnsignedInt i = 0; i != mesh.attributeCount(); ++i) {
+            const VertexFormat format = mesh.attributeFormat(i);
+            const std::size_t formatSize = vertexFormatSize(format);
+            const std::size_t attributeStride = mesh.attributeStride(i);
+            const std::size_t gltfBufferViewIndex = _state->gltfBufferViews.currentArraySize();
+            Containers::ScopeGuard gltfBufferView = _state->gltfBufferViews.beginObjectScope();
+            _state->gltfBufferViews
+                .writeKey("buffer"_s).write(0)
+                /* Byte offset could be omitted if zero but since that
+                   happens only for the very first view in a buffer and we
+                   have always at most one buffer, the minimal savings are
+                   not worth the inconsistency */
+                .writeKey("byteOffset"_s).write(vertexData - _state->buffer + mesh.attributeOffset(i));
 
-                /* Byte length, make sure to not count padding into it as
-                   that'd fail bound checks. If there are no vertices, the
-                   length is zero. */
-                /** @todo spec says it can't be smaller than stride (for
-                    single-vertex meshes), fix alongside merging buffer views
-                    for interleaved attributes */
-                const std::size_t gltfByteLength = mesh.vertexCount() ?
-                    /** @todo this needs to include array size once we use that
-                        for builtin attributes (skinning?) */
-                    attributeStride*(mesh.vertexCount() - 1) + formatSize : 0;
-                _state->gltfBufferViews.writeKey("byteLength"_s).write(gltfByteLength);
+            /* Byte length, make sure to not count padding into it as that'd
+               fail bound checks. If there are no vertices, the length is
+               zero. */
+            /** @todo spec says it can't be smaller than stride (for
+                single-vertex meshes), fix alongside merging buffer views for
+                interleaved attributes */
+            const std::size_t gltfByteLength = mesh.vertexCount() ?
+                /** @todo this needs to include array size once we use that for
+                    builtin attributes (skinning?) */
+                attributeStride*(mesh.vertexCount() - 1) + formatSize : 0;
+            _state->gltfBufferViews.writeKey("byteLength"_s).write(gltfByteLength);
 
-                /* If byteStride is omitted, it's implicitly treated as tightly
-                   packed, same as in GL. If/once views get shared, this needs
-                   to also check that the view isn't shared among multiple
-                   accessors. */
-                if(attributeStride != formatSize)
-                    _state->gltfBufferViews.writeKey("byteStride"_s).write(attributeStride);
+            /* If byteStride is omitted, it's implicitly treated as tightly
+               packed, same as in GL. If/once views get shared, this needs to
+               also check that the view isn't shared among multiple
+               accessors. */
+            if(attributeStride != formatSize)
+                _state->gltfBufferViews.writeKey("byteStride"_s).write(attributeStride);
 
-                /** @todo target, once we don't have one view per accessor */
+            /** @todo target, once we don't have one view per accessor */
 
-                if(configuration().value<bool>("accessorNames"))
-                    _state->gltfBufferViews.writeKey("name"_s).write(Utility::format(
-                        name ? "mesh {0} ({1}) {2}" : "mesh {0} {2}",
-                        id, name, gltfAttributeNamesTypes[i].first()));
+            if(configuration().value<bool>("accessorNames"))
+                _state->gltfBufferViews.writeKey("name"_s).write(Utility::format(
+                    name ? "mesh {0} ({1}) {2}" : "mesh {0} {2}",
+                    id, name, gltfAttributeNamesTypes[i].first()));
 
-                const UnsignedInt gltfAccessorIndex = _state->gltfAccessors.currentArraySize();
-                Containers::ScopeGuard gltfAccessor = _state->gltfAccessors.beginObjectScope();
-                _state->gltfAccessors
-                    .writeKey("bufferView"_s).write(gltfBufferViewIndex)
-                    /* We don't share views among accessors yet, so
-                       bufferOffset is implicitly 0 */
-                    .writeKey("componentType"_s).write(gltfAttributeNamesTypes[i].third());
-                if(isVertexFormatNormalized(format))
-                    _state->gltfAccessors.writeKey("normalized"_s).write(true);
-                _state->gltfAccessors
-                    .writeKey("count"_s).write(mesh.vertexCount())
-                    .writeKey("type"_s).write(gltfAttributeNamesTypes[i].second());
-                if(configuration().value<bool>("accessorNames"))
-                    _state->gltfAccessors.writeKey("name"_s).write(Utility::format(
-                        name ? "mesh {0} ({1}) {2}" : "mesh {0} {2}",
-                        id, name, gltfAttributeNamesTypes[i].first()));
+            const UnsignedInt gltfAccessorIndex = _state->gltfAccessors.currentArraySize();
+            Containers::ScopeGuard gltfAccessor = _state->gltfAccessors.beginObjectScope();
+            _state->gltfAccessors
+                .writeKey("bufferView"_s).write(gltfBufferViewIndex)
+                /* We don't share views among accessors yet, so bufferOffset is
+                   implicitly 0 */
+                .writeKey("componentType"_s).write(gltfAttributeNamesTypes[i].third());
+            if(isVertexFormatNormalized(format))
+                _state->gltfAccessors.writeKey("normalized"_s).write(true);
+            _state->gltfAccessors
+                .writeKey("count"_s).write(mesh.vertexCount())
+                .writeKey("type"_s).write(gltfAttributeNamesTypes[i].second());
+            if(configuration().value<bool>("accessorNames"))
+                _state->gltfAccessors.writeKey("name"_s).write(Utility::format(
+                    name ? "mesh {0} ({1}) {2}" : "mesh {0} {2}",
+                    id, name, gltfAttributeNamesTypes[i].first()));
 
-                arrayAppend(meshProperties.gltfAttributes, InPlaceInit, gltfAttributeNamesTypes[i].first(), gltfAccessorIndex);
-            }
+            arrayAppend(meshProperties.gltfAttributes, InPlaceInit, gltfAttributeNamesTypes[i].first(), gltfAccessorIndex);
         }
 
         /* Triangles are a default */
