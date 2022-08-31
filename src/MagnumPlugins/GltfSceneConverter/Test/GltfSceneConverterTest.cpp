@@ -2914,13 +2914,13 @@ void GltfSceneConverterTest::addScene() {
     CORRADE_COMPARE_AS(imported->field<Vector3>(SceneField::Translation), Containers::arrayView({
         Vector3{4.0f, 5.0f, 6.0f},
         Vector3{0.5f, 0.25f, 0.125f},
-        {},
+        Vector3{}, /* MSVC (even 2022) needs an explicit type, lol */
     }), TestSuite::Compare::Container);
 
     CORRADE_VERIFY(imported->hasField(SceneField::Rotation));
     /* Mapping is the same for all three TRS fields */
     CORRADE_COMPARE_AS(imported->field<Quaternion>(SceneField::Rotation), Containers::arrayView({
-        {},
+        Quaternion{}, /* MSVC (even 2022) needs an explicit type, lol */
         Quaternion::rotation(15.0_degf, Vector3::zAxis()),
         Quaternion::rotation(60.0_degf, Vector3::yAxis()),
     }), TestSuite::Compare::Container);
