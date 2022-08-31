@@ -285,8 +285,10 @@ See @ref building-plugins, @ref cmake-plugins, @ref plugins and
     @ref MaterialTextureSwizzle::RGB, if present;
     @ref MaterialAttribute::OcclusionTextureSwizzle has to be
     @ref MaterialTextureSwizzle::R, if present.
--   @ref MaterialTypes are ignored, the material is only filled based on
-    the attributes present
+-   If @ref MaterialType::Flat is present, the
+    [KHR_materials_unlit](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_materials_unlit/README.md)
+    extension is included in the output. Other @ref MaterialTypes are ignored,
+    the material is only filled based on the attributes present.
 -   Material names, if passed, are saved into the file
 -   The material is required to only be added after all textures it references
 -   An informational warning is printed for all attributes that were unused

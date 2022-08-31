@@ -66,9 +66,10 @@ namespace Magnum { namespace Trade {
 namespace {
 
 enum class GltfExtension {
-    KhrMeshQuantization = 1 << 0,
-    KhrTextureBasisu = 1 << 1,
-    KhrTextureKtx = 1 << 2
+    KhrMaterialsUnlit = 1 << 0,
+    KhrMeshQuantization = 1 << 1,
+    KhrTextureBasisu = 1 << 2,
+    KhrTextureKtx = 1 << 3,
 };
 typedef Containers::EnumSet<GltfExtension> GltfExtensions;
 CORRADE_ENUMSET_OPERATORS(GltfExtensions)
@@ -239,6 +240,7 @@ Containers::Optional<Containers::Array<char>> GltfSceneConverter::doEndData() {
         CORRADE_INTERNAL_ASSERT(!(_state->usedExtensions&_state->requiredExtensions));
         const GltfExtensions usedExtensions = _state->usedExtensions|_state->requiredExtensions;
         const Containers::Pair<GltfExtension, Containers::StringView> extensionStrings[]{
+            {GltfExtension::KhrMaterialsUnlit, "KHR_materials_unlit"_s},
             {GltfExtension::KhrMeshQuantization, "KHR_mesh_quantization"_s},
             {GltfExtension::KhrTextureBasisu, "KHR_texture_basisu"_s},
             {GltfExtension::KhrTextureKtx, "KHR_texture_ktx"_s}
@@ -1578,6 +1580,15 @@ bool GltfSceneConverter::doAdd(UnsignedInt, const MaterialData& material, const 
             _state->gltfMaterials.writeKey("doubleSided"_s).write(*doubleSided);
     }
 
+    /* Flat material */
+    if(material.types() & MaterialType::Flat) {
+        _state->usedExtensions |= GltfExtension::KhrMaterialsUnlit;
+        _state->gltfMaterials.writeKey("extensions"_s)
+            .beginObject()
+                .writeKey("KHR_materials_unlit"_s).beginObject().endObject()
+            .endObject();
+    }
+
     if(name)
         _state->gltfMaterials.writeKey("name").write(name);
 
@@ -1642,6 +1653,7 @@ bool GltfSceneConverter::doAdd(UnsignedInt, const TextureData& texture, const Co
                 textureExtensionString = "KHR_texture_ktx"_s;
                 break;
             /* LCOV_EXCL_START */
+            case GltfExtension::KhrMaterialsUnlit:
             case GltfExtension::KhrMeshQuantization:
                 CORRADE_INTERNAL_ASSERT_UNREACHABLE();
             /* LCOV_EXCL_STOP */

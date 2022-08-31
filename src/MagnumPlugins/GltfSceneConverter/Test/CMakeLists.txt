@@ -98,6 +98,7 @@ corrade_add_test(GltfSceneConverterTest GltfSceneConverterTest.cpp
         material-metallicroughness.gltf
         material-multiple.gltf
         material-name.gltf
+        material-unlit.gltf
         mesh-accessor-names.gltf
         mesh-attribute-bitangent.gltf
         mesh-attribute-color3.gltf

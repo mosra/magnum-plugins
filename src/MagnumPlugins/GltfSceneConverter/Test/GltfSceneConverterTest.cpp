@@ -686,6 +686,14 @@ const struct {
             /* Same as above */
             {MaterialAttribute::AlphaMask, 0.5f},
         }}, {}, {}, {}},
+    {"unlit", false, {}, "material-unlit.gltf", {},
+        /* PbrMetallicRoughness should not get added on import, only Flat */
+        MaterialData{MaterialType::Flat, {
+            {MaterialAttribute::BaseColor, Color4{0.1f, 0.2f, 0.3f, 0.4f}},
+            /* To avoid data loss, non-flat properties are still written, even
+               though they make no sense for a flat-shaded material */
+            {MaterialAttribute::Roughness, 0.57f}
+        }}, MaterialType::Flat, {}, {}}
 };
 
 const struct {
