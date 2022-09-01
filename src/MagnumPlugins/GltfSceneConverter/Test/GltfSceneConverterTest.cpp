@@ -2672,6 +2672,9 @@ void GltfSceneConverterTest::addTextureInvalid() {
     auto&& data = AddTextureInvalidData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
+    if(_imageConverterManager.loadState("PngImageConverter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("PngImageConverter plugin not found, cannot test");
+
     Containers::Pointer<AbstractSceneConverter> converter =  _converterManager.instantiate("GltfSceneConverter");
 
     Containers::String filename = Utility::Path::join(GLTFSCENECONVERTER_TEST_OUTPUT_DIR, "image.gltf");
