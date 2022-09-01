@@ -1460,14 +1460,14 @@ bool GltfSceneConverter::doAdd(UnsignedInt, const MaterialData& material, const 
 
         _state->gltfMaterials.writeKey("index"_s).write(texture);
 
-        auto textureCoordinates = maskedMaterial.find<UnsignedInt>(prefix + "Coordinates"_s);
+        Containers::Optional<UnsignedInt> textureCoordinates = maskedMaterial.find<UnsignedInt>(prefix + "Coordinates"_s);
         if(!textureCoordinates)
             textureCoordinates = maskedMaterial.find<UnsignedInt>(MaterialAttribute::TextureCoordinates);
         if(textureCoordinates && (keepDefaults || *textureCoordinates != 0))
             _state->gltfMaterials.writeKey("texCoord"_s).write(*textureCoordinates);
 
         Containers::String textureMatrixAttribute = prefix + "Matrix"_s;
-        auto textureMatrix = maskedMaterial.find<Matrix3>(textureMatrixAttribute);
+        Containers::Optional<Matrix3> textureMatrix = maskedMaterial.find<Matrix3>(textureMatrixAttribute);
         if(!textureMatrix) {
             textureMatrixAttribute = materialAttributeName(MaterialAttribute::TextureMatrix);
             textureMatrix = maskedMaterial.find<Matrix3>(textureMatrixAttribute);
