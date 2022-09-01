@@ -1454,7 +1454,11 @@ bool GltfSceneConverter::doAdd(UnsignedInt, const MaterialData& material, const 
     auto writeTextureContents = [&](MaskedMaterial& maskedMaterial, UnsignedInt textureAttributeId, Containers::StringView prefix) {
         if(!prefix) prefix = maskedMaterial.material.attributeName(textureAttributeId);
 
-        _state->gltfMaterials.writeKey("index"_s).write(maskedMaterial.material.attribute<UnsignedInt>(textureAttributeId));
+        /* Bounds of all textures should have been verified at the very top */
+        const UnsignedInt texture = maskedMaterial.material.attribute<UnsignedInt>(textureAttributeId);
+        CORRADE_INTERNAL_ASSERT(texture < textureCount());
+
+        _state->gltfMaterials.writeKey("index"_s).write(texture);
 
         auto textureCoordinates = maskedMaterial.find<UnsignedInt>(prefix + "Coordinates"_s);
         if(!textureCoordinates)
