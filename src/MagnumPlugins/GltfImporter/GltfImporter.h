@@ -443,7 +443,7 @@ get adapted to eventual changes in the extension proposal:
     first texture. This means that, in this case, @ref textureCount() may
     be less the actual count of glTF texture objects in the file.
 -   Materials referencing `KHR_texture_ktx` textures with the `layer` property
-    then get a `*Layer` attribute. I.e., if
+    then get a `*TextureLayer` attribute. I.e., if
     @ref MaterialAttribute::BaseColorTexture is a 2D array texture, the
     material will get a @ref MaterialAttribute::BaseColorTextureLayer as well,
     containing the value of the `layer` property.
