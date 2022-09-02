@@ -817,7 +817,7 @@ const struct {
     {"texture out of bounds",
         MaterialData{{}, {
             {MaterialAttribute::MetalnessTexture, 1u},
-        }}, "material attribute MetalnessTexture value 1 out of range for 1 textures"},
+        }}, "material attribute MetalnessTexture references texture 1 but only 1 were added so far"},
     {"metallic/roughness, unsupported packing",
         MaterialData{{}, {
             {MaterialAttribute::MetalnessTexture, 0u},

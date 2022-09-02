@@ -1413,7 +1413,7 @@ bool GltfSceneConverter::doAdd(UnsignedInt, const MaterialData& material, const 
         if(Containers::Optional<UnsignedInt> id = material.findAttributeId(attribute)) {
             const UnsignedInt index = material.attribute<UnsignedInt>(*id);
             if(index >= textureCount()) {
-                Error{} << "Trade::GltfSceneConverter::add(): material attribute" << material.attributeName(*id) << "value" << index << "out of range for" << textureCount() << "textures";
+                Error{} << "Trade::GltfSceneConverter::add(): material attribute" << material.attributeName(*id) << "references texture" << index << "but only" << textureCount() << "were added so far";
                 return {};
             }
         }
