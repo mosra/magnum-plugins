@@ -1461,6 +1461,8 @@ bool GltfSceneConverter::doAdd(UnsignedInt, const MaterialData& material, const 
         return {};
     }
     if(pbrMetallicRoughnessMaterial.hasMetalnessTexture() && pbrMetallicRoughnessMaterial.hasRoughnessTexture() && !pbrMetallicRoughnessMaterial.hasNoneRoughnessMetallicTexture()) {
+        /** @todo this message is confusing if swizzle is alright but e.g.
+            Matrix or Coordinates are different */
         Error{} << "Trade::GltfSceneConverter::add(): unsupported" << Debug::packed << pbrMetallicRoughnessMaterial.metalnessTextureSwizzle() << Debug::nospace << "/" << Debug::nospace << Debug::packed << pbrMetallicRoughnessMaterial.roughnessTextureSwizzle() << "packing of a metallic/roughness texture";
         return {};
     }
