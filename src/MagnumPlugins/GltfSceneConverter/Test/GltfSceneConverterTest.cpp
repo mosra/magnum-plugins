@@ -768,23 +768,36 @@ const struct {
 } AddMaterialUnusedAttributesData[]{
     {"texture properties but no textures", false, "material-empty.gltf",
         MaterialData{{}, {
+            /* Sorted, because the warnings are also sorted */
             {MaterialAttribute::BaseColorTextureCoordinates, 5u},
+            {MaterialAttribute::BaseColorTextureMatrix, Matrix3{2.0f}},
             {MaterialAttribute::EmissiveTextureCoordinates, 10u},
+            {MaterialAttribute::EmissiveTextureMatrix, Matrix3{2.0f}},
             {MaterialAttribute::MetalnessTextureCoordinates, 6u},
+            {MaterialAttribute::MetalnessTextureMatrix, Matrix3{2.0f}},
             {MaterialAttribute::NormalTextureCoordinates, 8u},
+            {MaterialAttribute::NormalTextureMatrix, Matrix3{2.0f}},
             {MaterialAttribute::NormalTextureScale, 1.5f},
             {MaterialAttribute::OcclusionTextureCoordinates, 9u},
+            {MaterialAttribute::OcclusionTextureMatrix, Matrix3{2.0f}},
             {MaterialAttribute::OcclusionTextureStrength, 0.3f},
             {MaterialAttribute::RoughnessTextureCoordinates, 7u},
+            {MaterialAttribute::RoughnessTextureMatrix, Matrix3{2.0f}},
         }},
         "Trade::GltfSceneConverter::add(): material attribute BaseColorTextureCoordinates was not used\n"
+        "Trade::GltfSceneConverter::add(): material attribute BaseColorTextureMatrix was not used\n"
         "Trade::GltfSceneConverter::add(): material attribute EmissiveTextureCoordinates was not used\n"
+        "Trade::GltfSceneConverter::add(): material attribute EmissiveTextureMatrix was not used\n"
         "Trade::GltfSceneConverter::add(): material attribute MetalnessTextureCoordinates was not used\n"
+        "Trade::GltfSceneConverter::add(): material attribute MetalnessTextureMatrix was not used\n"
         "Trade::GltfSceneConverter::add(): material attribute NormalTextureCoordinates was not used\n"
+        "Trade::GltfSceneConverter::add(): material attribute NormalTextureMatrix was not used\n"
         "Trade::GltfSceneConverter::add(): material attribute NormalTextureScale was not used\n"
         "Trade::GltfSceneConverter::add(): material attribute OcclusionTextureCoordinates was not used\n"
+        "Trade::GltfSceneConverter::add(): material attribute OcclusionTextureMatrix was not used\n"
         "Trade::GltfSceneConverter::add(): material attribute OcclusionTextureStrength was not used\n"
-        "Trade::GltfSceneConverter::add(): material attribute RoughnessTextureCoordinates was not used\n"},
+        "Trade::GltfSceneConverter::add(): material attribute RoughnessTextureCoordinates was not used\n"
+        "Trade::GltfSceneConverter::add(): material attribute RoughnessTextureMatrix was not used\n"},
     {"unused attributes and layers", false, "material-empty.gltf",
         MaterialData{{}, {
             {MaterialAttribute::Shininess, 15.0f},
