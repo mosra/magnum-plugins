@@ -58,7 +58,8 @@ namespace Magnum { namespace Trade {
 @m_since_latest_{plugins}
 
 Exports full scenes to either `*.gltf` files with an external `*.bin` buffer or
-to a self-contained `*.glb`.
+to a self-contained `*.glb`. You can use @ref GltfImporter to import scenes in
+this format.
 
 @section Trade-GltfSceneConverter-usage Usage
 

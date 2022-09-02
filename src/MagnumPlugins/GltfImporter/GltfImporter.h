@@ -57,7 +57,8 @@ namespace Magnum { namespace Trade {
 @brief glTF importer plugin
 @m_since_latest_{plugins}
 
-Imports glTF (`*.gltf`) and binary glTF (`*.glb`) files.
+Imports glTF (`*.gltf`) and binary glTF (`*.glb`) files. You can use
+@ref GltfSceneConverter to encode scenes into this format.
 
 @section Trade-GltfImporter-usage Usage
 
