@@ -42,17 +42,20 @@
       }
     },
     {
-      "name": "normal, occlusion, emissive texture identity transform",
+      "name": "normal, occlusion, emissive texture identity transform + sets",
       "normalTexture": {
         "index": 1,
         "extensions": {
           "KHR_texture_transform": {}
-        }
+        },
+        "texCoord": 0
       },
       "occlusionTexture": {
         "index": 2,
         "extensions": {
-          "KHR_texture_transform": {}
+          "KHR_texture_transform": {
+            "texCoord": 0
+          }
         }
       },
       "emissiveTexture": {

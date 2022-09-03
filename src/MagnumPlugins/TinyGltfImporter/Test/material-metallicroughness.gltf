@@ -1,0 +1,128 @@
+{
+  "asset": {
+    "version": "2.0"
+  },
+  "images": [
+    {
+      "uri": "texture.png"
+    }
+  ],
+  "materials": [
+    {
+      "name": "defaults",
+      "pbrMetallicRoughness": {}
+    },
+    {
+      "name": "color",
+      "pbrMetallicRoughness": {
+        "baseColorFactor": [0.3, 0.4, 0.5, 0.8],
+        "metallicFactor": 0.56,
+        "roughnessFactor": 0.89
+      }
+    },
+    {
+      "name": "textures",
+      "pbrMetallicRoughness": {
+        "baseColorFactor": [0.7, 0.8, 0.9, 1.1],
+        "baseColorTexture": {
+          "index": 0
+        },
+        "metallicFactor": 0.6,
+        "roughnessFactor": 0.9,
+        "metallicRoughnessTexture": {
+          "index": 1
+        }
+      }
+    },
+    {
+      "name": "identity texture transform",
+      "pbrMetallicRoughness": {
+        "baseColorTexture": {
+          "index": 0,
+          "extensions": {
+            "KHR_texture_transform": {}
+          }
+        },
+        "metallicRoughnessTexture": {
+          "index": 1,
+          "extensions": {
+            "KHR_texture_transform": {}
+          }
+        }
+      }
+    },
+    {
+      "name": "texture transform",
+      "pbrMetallicRoughness": {
+        "baseColorTexture": {
+          "index": 0,
+          "extensions": {
+            "KHR_texture_transform": {
+              "offset": [0.0, 1.0],
+              "rotation": 1.23456,
+              "scale": [0.5, 0.5]
+            }
+          }
+        },
+        "metallicRoughnessTexture": {
+          "index": 1,
+          "extensions": {
+            "KHR_texture_transform": {
+              "offset": [0.0, 1.0],
+              "scale": [0.5, 0.5]
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "texture coordinate sets",
+      "pbrMetallicRoughness": {
+        "baseColorTexture": {
+          "index": 0,
+          "texCoord": 7
+        },
+        "metallicRoughnessTexture": {
+          "index": 1,
+          "texCoord": 5
+        }
+      }
+    },
+    {
+      "name": "empty texture transform with overriden coordinate set",
+      "pbrMetallicRoughness": {
+        "baseColorTexture": {
+          "index": 1,
+          "extensions": {
+            "KHR_texture_transform": {}
+          }
+        },
+        "metallicRoughnessTexture": {
+          "index": 0,
+          "texCoord": 5,
+          "extensions": {
+            "KHR_texture_transform": {
+              "texCoord": 2
+            }
+          }
+        }
+      }
+    }
+  ],
+  "samplers": [
+    {}
+  ],
+  "textures": [
+    {
+      "sampler": 0,
+      "source": 0
+    },
+    {
+      "sampler": 0,
+      "source": 0
+    }
+  ],
+  "extensionsUsed": [
+    "KHR_texture_transform"
+  ]
+}

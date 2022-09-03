@@ -58,7 +58,8 @@ namespace Magnum { namespace Trade {
 @m_since_latest_{plugins}
 
 Exports full scenes to either `*.gltf` files with an external `*.bin` buffer or
-to a self-contained `*.glb`.
+to a self-contained `*.glb`. You can use @ref GltfImporter to import scenes in
+this format.
 
 @section Trade-GltfSceneConverter-usage Usage
 
@@ -119,8 +120,9 @@ See @ref building-plugins, @ref cmake-plugins, @ref plugins and
 -   While glTF has a requirement that vertex / index count corresponds to the
     actual primitive type, the exporter doesn't check that at the moment.
     Attribute-less meshes and meshes with zero vertices are not allowed by the
-    spec but can be exported with a warning if you disable the
-    @cb{.ini} strict @ce @ref Trade-GltfSceneConverter-configuration "configuration option".
+    spec but @ref GltfImporter supports them and they can be exported with a
+    warning if you disable the @cb{.ini} strict @ce
+    @ref Trade-GltfSceneConverter-configuration "configuration option".
     Attribute-less meshes with a non-zero vertex count are unrepresentable in
     glTF and thus can't be exported.
 -   @ref MeshAttribute::Position in @ref VertexFormat::Vector3 is supported by
@@ -151,15 +153,20 @@ See @ref building-plugins, @ref cmake-plugins, @ref plugins and
     custom attributes as described below.
 -   @ref MeshAttribute::TextureCoordinates in @ref VertexFormat::Vector2,
     @relativeref{VertexFormat,Vector2ubNormalized} and
-    @relativeref{VertexFormat,Vector2usNormalized} are supported by core glTF;
-    @relativeref{VertexFormat,Vector2b},
+    @relativeref{VertexFormat,Vector2usNormalized} are supported by core glTF.
+    The data are by default Y-flipped unless the
+    @cb{.ini} textureCoordinateYFlipInMaterial @ce
+    @ref Trade-GltfSceneConverter-configuration "configuration option" is
+    enabled. @relativeref{VertexFormat,Vector2b},
     @relativeref{VertexFormat,Vector2bNormalized},
     @relativeref{VertexFormat,Vector2ub},
     @relativeref{VertexFormat,Vector2s},
     @relativeref{VertexFormat,Vector2sNormalized} or
     @relativeref{VertexFormat,Vector2us} will be exported with
     [KHR_mesh_quantization](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_mesh_quantization/README.md)
-    being added to required extensions. Other formats are not supported.
+    being added to required extensions. Those can't be Y-flipped and thus
+    require the @cb{.ini} textureCoordinateYFlipInMaterial @ce option to be
+    explicitly enabled. Other formats are not supported.
 -   @ref MeshAttribute::Color in @ref VertexFormat::Vector3 /
     @relativeref{VertexFormat,Vector4},
     @relativeref{VertexFormat,Vector3ubNormalized} /
@@ -212,15 +219,151 @@ See @ref building-plugins, @ref cmake-plugins, @ref plugins and
     prefixed with an underscore if not already and suffixed with `_1`, `_2`,
     ..., so e.g. a second position attribute becomes `_POSITION_1`.
 -   Mesh name, if passed, is saved into the file. Additionally the buffer views
-    and accessors referenced by it will be annotated with mesh ID name, and
-    index or attribute name if the @cb{.ini} accessorNames @ce
+    and accessors referenced by it will be annotated with mesh ID and name,
+    and attribute index and name if the @cb{.ini} accessorNames @ce
     @ref Trade-GltfSceneConverter-configuration "configuration option" is
     enabled.
+-   Due to a material and a mesh being tied together in a glTF file, meshes
+    that are referenced by a scene are written in the order they are referenced
+    from @ref SceneData, and get duplicated (including the name) if the same
+    mesh gets used with different materials.
 -   At the moment, alignment rules for vertex stride are not respected.
 -   At the moment, each attribute has its own dedicated buffer view instead of
     a single view being shared by multiple interleaved attributes. This also
     implies that for single-vertex meshes the buffer view size might sometimes
     be larger than stride, which is not allowed by the spec.
+
+@subsection Trade-GltfSceneConverter-behavior-images Image and texture export
+
+-   Images are converted using a converter specified in the
+    @cb{.ini} imageConverter @ce
+    @ref Trade-GltfSceneConverter-configuration "configuration option",
+    propagating flags set via @ref setFlags() and all configuration options
+    from the @cb{.ini} [imageConverter] @ce group to it. An
+    @ref AbstractImageConverter plugin manager has to be registered
+    using @relativeref{Corrade,PluginManager::Manager::registerExternalManager()}
+    for image conversion to work.
+-   By default, images are saved as external files for a `*.gltf` output and
+    embedded into the buffer for a `*.glb` output. This behavior can be
+    overriden using the @cb{.ini} bundleImages @ce
+    @ref Trade-GltfSceneConverter-configuration "configuration option" on a
+    per-image basis.
+-   Core glTF supports only JPEG and PNG file formats. Basis-encoded KTX2 files
+    can be saved with the [KHR_texture_basisu](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_texture_basisu/README.md) extension by
+    setting @cb{.ini} imageConverter=BasisKtxImageConverter @ce. The
+    [MSFT_texture_dds](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Vendor/MSFT_texture_dds/README.md)
+    and [EXT_texture_webp](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Vendor/EXT_texture_webp/README.md)
+    extensions are not exported because there's currently no image converter
+    capable of saving DDS and WebP files. Other formats (such as TGA,
+    OpenEXR...) are not supported by the spec but @ref GltfImporter supports
+    them and they can be exported if the @cb{.ini} strict
+    @ce @ref Trade-GltfSceneConverter-configuration "configuration option"
+    is disabled. Such images are then referenced directly without any
+    extension.
+-   If the @cb{.ini} experimentalKhrTextureKtx @ce
+    @ref Trade-GltfSceneConverter-configuration "configuration option" is
+    enabled, generic KTX2 images can be saved with the proposed
+    [KHR_texture_ktx](https://github.com/KhronosGroup/glTF/pull/1964)
+    extension.
+-   Image and texture names, if passed, are saved into the file. Additionally
+    the buffer views referenced by embedded images will be annotated with image
+    ID and name if the @cb{.ini} accessorNames @ce
+    @ref Trade-GltfSceneConverter-configuration "configuration option" is
+    enabled.
+-   The texture is required to only be added after all images it references
+-   At the moment, there's no support for exporting multi-level images even
+    though the KTX2 container is capable of storing these.
+-   At the moment, texture sampler properties are not exported.
+
+@subsubsection Trade-GltfSceneConverter-behavior-images-array 2D array texture export
+
+If the @cb{.ini} experimentalKhrTextureKtx @ce
+@ref Trade-GltfSceneConverter-configuration "configuration option" is enabled,
+the plugin supports also 3D images and 2D array textures using a proposed
+[KHR_texture_ktx](https://github.com/KhronosGroup/glTF/pull/1964) extension.
+
+-   Only KTX2 images are supported for 3D, i.e. with either
+    @cb{.ini} imageConverter=KtxImageConverter @ce or
+    @cb{.ini} imageConverter=BasisKtxImageConverter @ce. They need to have
+    @ref ImageFlag3D::Array set.
+-   Use a @ref TextureType::Texture2DArray texture to reference the 3D images.
+    Due to how the extension is designed, the resulting glTF then has the
+    texture duplicated for each layer of the image; @ref GltfImporter then
+    @ref Trade-GltfImporter-behavior-textures-array "undoes the duplication again on import".
+-   Due to how the extension is designed, the presence of the texture
+    referencing the 3D image is *essential* for properly recognizing the image
+    as 3D on import. Without it, the image gets recognized as 2D and the import
+    will subsequently fail due to the image file not actually being 2D.
+-   A material referencing a 2D array texture implicitly uses the first
+    (@cpp 0 @ce) layer. Use the `*TextureLayer` attributes (such as
+    @ref MaterialAttribute::BaseColorTextureLayer for a
+    @ref MaterialAttribute::BaseColorTexture) to specify a layer. The layer
+    index has to be smaller than the Z dimension of the image.
+
+@subsection Trade-GltfSceneConverter-behavior-materials Material export
+
+-   Implicitly, only attributes that from glTF material defaults are written to
+    save file on size. Enable the @cb{.ini} keepMaterialDefaults @ce
+    @ref Trade-GltfSceneConverter-configuration "configuration option" to
+    write them as well.
+-   Both a separate @ref MaterialAttribute::MetalnessTexture and
+    @ref MaterialAttribute::RoughnessTexture as well as a combined
+    @ref MaterialAttribute::NoneRoughnessMetallicTexture is supported, but
+    either both or neither textures have to be present and have to satisfy glTF
+    packing rules as described in
+    @ref PbrMetallicRoughnessMaterialData::hasNoneRoughnessMetallicTexture().
+-   @ref MaterialAttribute::NormalTextureSwizzle has to be
+    @ref MaterialTextureSwizzle::RGB, if present;
+    @ref MaterialAttribute::OcclusionTextureSwizzle has to be
+    @ref MaterialTextureSwizzle::R, if present.
+-   If @ref MaterialType::Flat is present, the
+    [KHR_materials_unlit](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_materials_unlit/README.md)
+    extension is included in the output. Other @ref MaterialTypes are ignored,
+    the material is only filled based on the attributes present.
+-   If any
+    @ref MaterialAttribute::BaseColorTextureMatrix "MaterialAttribute::*TextureMatrix"
+    attributes are present, the [KHR_texture_transform](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_texture_transform/README.md)
+    extension is included in the output. At the moment, only offset and scaling
+    is written, rotation is ignored with a warning. If the
+    @cb{.ini} textureCoordinateYFlipInMaterial @ce
+    @ref Trade-GltfSceneConverter-configuration "configuration option" is
+    enabled, all material textures will contain an Y-flip transformation in
+    addition to any existing transformation.
+-   Material names, if passed, are saved into the file
+-   The material is required to only be added after all textures it references
+-   An informational warning is printed for all attributes that were unused
+    due to not having a glTF equivalent (such as Phong properties), due to
+    referring to a texture but the texture attribute isn't present or due to
+    the support not being implemented yet
+-   At the moment, custom material properties and layers are not exported
+
+@subsection Trade-GltfSceneConverter-behavior-scenes Scene export
+
+-   Only 3D scenes are supported
+-   Only objects with a @ref SceneField::Parent entry are exported, all other
+    objects are ignored with a warning. This also implies that object IDs are
+    not preserved, as otherwise the glTF would contain a lot of empty
+    unreferenced node objects.
+-   The @ref SceneField::Parent hierarchy is required to be acyclical
+-   To satisfy glTF requirements, if both @ref SceneField::Transformation and
+    at least one of @relativeref{SceneField,Translation},
+    @relativeref{SceneField,Rotation} and
+    @relativeref{SceneField,Scaling} is present, only the TRS component(s) are
+    saved into the file and not the matrix, assuming the transformation matrix
+    is equivalent to them
+-   Object and scene names, if passed, are saved into the file
+-   The scene is required to only be added after all meshes and materials it
+    references
+-   At the moment, only @ref SceneField::Parent,
+    @relativeref{SceneField,Transformation},
+    @relativeref{SceneField,Translation}, @relativeref{SceneField,Rotation},
+    @relativeref{SceneField,Scaling}, @relativeref{SceneField,Mesh}
+    and @relativeref{SceneField,MeshMaterial} is exported, other fields are
+    ignored with a warning
+-   At the moment, duplicate fields including multiple mesh assignments are
+    ignored with a warning
+-   At the moment, only a single scene can be exported. As a consequence,
+    information about the default scene is redundant and thus not written.
 
 @section Trade-GltfSceneConverter-configuration Plugin-specific config
 
@@ -246,8 +389,19 @@ class MAGNUM_GLTFSCENECONVERTER_EXPORT GltfSceneConverter: public AbstractSceneC
         MAGNUM_GLTFSCENECONVERTER_LOCAL Containers::Optional<Containers::Array<char>> doEndData() override;
         MAGNUM_GLTFSCENECONVERTER_LOCAL void doAbort() override;
 
+        MAGNUM_GLTFSCENECONVERTER_LOCAL void doSetObjectName(UnsignedLong object, Containers::StringView name) override;
+        MAGNUM_GLTFSCENECONVERTER_LOCAL bool doAdd(const UnsignedInt id, const SceneData& scene, Containers::StringView name) override;
+
         MAGNUM_GLTFSCENECONVERTER_LOCAL void doSetMeshAttributeName(UnsignedShort attribute, Containers::StringView name) override;
         MAGNUM_GLTFSCENECONVERTER_LOCAL bool doAdd(const UnsignedInt id, const MeshData& mesh, Containers::StringView name) override;
+
+        MAGNUM_GLTFSCENECONVERTER_LOCAL bool doAdd(UnsignedInt id, const MaterialData& material, Containers::StringView name) override;
+
+        MAGNUM_GLTFSCENECONVERTER_LOCAL bool doAdd(UnsignedInt id, const TextureData& texture, Containers::StringView name) override;
+
+        template<UnsignedInt dimensions> MAGNUM_GLTFSCENECONVERTER_LOCAL bool convertAndWriteImage(UnsignedInt id, Containers::StringView name, AbstractImageConverter& imageConverter, const ImageData<dimensions>& image, bool bundleImages);
+        MAGNUM_GLTFSCENECONVERTER_LOCAL bool doAdd(UnsignedInt id, const ImageData2D& image, Containers::StringView name) override;
+        MAGNUM_GLTFSCENECONVERTER_LOCAL bool doAdd(UnsignedInt id, const ImageData3D& image, Containers::StringView name) override;
 
         struct State;
         Containers::Pointer<State> _state;

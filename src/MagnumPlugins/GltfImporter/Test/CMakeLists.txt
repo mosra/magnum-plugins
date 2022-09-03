@@ -34,6 +34,8 @@ else()
     set(GLTFIMPORTER_TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 endif()
 
+find_package(Magnum REQUIRED MeshTools)
+
 if(NOT MAGNUM_GLTFIMPORTER_BUILD_STATIC)
     set(GLTFIMPORTER_PLUGIN_FILENAME $<TARGET_FILE:GltfImporter>)
     if(MAGNUM_WITH_BASISIMPORTER)
@@ -64,7 +66,7 @@ corrade_add_resource(GltfImporterTest_RESOURCES resources.conf)
 corrade_add_test(GltfImporterTest
     GltfImporterTest.cpp
     ${GltfImporterTest_RESOURCES}
-    LIBRARIES Magnum::Trade
+    LIBRARIES Magnum::Trade Magnum::MeshTools
     FILES
         animation.gltf
         animation.glb
@@ -132,9 +134,6 @@ corrade_add_test(GltfImporterTest
         material-sheen.gltf
         material-specular.gltf
         material-specularglossiness.gltf
-        material-texcoord-flip.bin
-        material-texcoord-flip.gltf
-        material-texcoord-flip-unnormalized.gltf
         material-transmission.gltf
         material-unlit.gltf
         material-volume.gltf
@@ -198,6 +197,9 @@ corrade_add_test(GltfImporterTest
         skin.gltf
         skin.bin
         skin.glb
+        texcoord-flip.bin
+        texcoord-flip.gltf
+        texcoord-flip-unnormalized.gltf
         texture.gltf
         texture-extensions.gltf
         texture-invalid.gltf

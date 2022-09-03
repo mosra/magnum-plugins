@@ -57,7 +57,8 @@ namespace Magnum { namespace Trade {
 @brief glTF importer plugin
 @m_since_latest_{plugins}
 
-Imports glTF (`*.gltf`) and binary glTF (`*.glb`) files.
+Imports glTF (`*.gltf`) and binary glTF (`*.glb`) files. You can use
+@ref GltfSceneConverter to encode scenes into this format.
 
 @section Trade-GltfImporter-usage Usage
 
@@ -443,7 +444,7 @@ get adapted to eventual changes in the extension proposal:
     first texture. This means that, in this case, @ref textureCount() may
     be less the actual count of glTF texture objects in the file.
 -   Materials referencing `KHR_texture_ktx` textures with the `layer` property
-    then get a `*Layer` attribute. I.e., if
+    then get a `*TextureLayer` attribute. I.e., if
     @ref MaterialAttribute::BaseColorTexture is a 2D array texture, the
     material will get a @ref MaterialAttribute::BaseColorTextureLayer as well,
     containing the value of the `layer` property.

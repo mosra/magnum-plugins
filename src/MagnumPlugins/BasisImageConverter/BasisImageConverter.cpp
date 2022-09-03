@@ -424,7 +424,9 @@ BasisImageConverter::BasisImageConverter(PluginManager::AbstractManager& manager
 }
 
 ImageConverterFeatures BasisImageConverter::doFeatures() const {
-    return ImageConverterFeature::ConvertLevels2DToData|ImageConverterFeature::ConvertLevels3DToData;
+    return ImageConverterFeature::Convert2DToData|
+           ImageConverterFeature::Convert3DToData|
+           ImageConverterFeature::Levels;
 }
 
 Containers::String BasisImageConverter::doExtension() const {

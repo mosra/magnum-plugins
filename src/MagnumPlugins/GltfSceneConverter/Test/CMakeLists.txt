@@ -35,10 +35,36 @@ else()
     set(GLTFSCENECONVERTER_TEST_OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR})
 endif()
 
+find_package(Magnum REQUIRED MeshTools)
+
 if(NOT MAGNUM_GLTFSCENECONVERTER_BUILD_STATIC)
     set(GLTFSCENECONVERTER_PLUGIN_FILENAME $<TARGET_FILE:GltfSceneConverter>)
+    if(MAGNUM_WITH_BASISIMAGECONVERTER)
+        set(BASISIMAGECONVERTER_PLUGIN_FILENAME $<TARGET_FILE:BasisImageConverter>)
+    endif()
+    if(MAGNUM_WITH_BASISIMPORTER)
+        set(BASISIMPORTER_PLUGIN_FILENAME $<TARGET_FILE:BasisImporter>)
+    endif()
     if(MAGNUM_WITH_GLTFIMPORTER)
         set(GLTFIMPORTER_PLUGIN_FILENAME $<TARGET_FILE:GltfImporter>)
+    endif()
+    if(MAGNUM_WITH_KTXIMAGECONVERTER)
+        set(KTXIMAGECONVERTER_PLUGIN_FILENAME $<TARGET_FILE:KtxImageConverter>)
+    endif()
+    if(MAGNUM_WITH_KTXIMPORTER)
+        set(KTXIMPORTER_PLUGIN_FILENAME $<TARGET_FILE:KtxImporter>)
+    endif()
+    if(MAGNUM_WITH_OPENEXRIMAGECONVERTER)
+        set(OPENEXRIMAGECONVERTER_PLUGIN_FILENAME $<TARGET_FILE:OpenExrImageConverter>)
+    endif()
+    if(MAGNUM_WITH_STBDXTIMAGECONVERTER)
+        set(STBDXTIMAGECONVERTER_PLUGIN_FILENAME $<TARGET_FILE:StbDxtImageConverter>)
+    endif()
+    if(MAGNUM_WITH_STBIMAGECONVERTER)
+        set(STBIMAGECONVERTER_PLUGIN_FILENAME $<TARGET_FILE:StbImageConverter>)
+    endif()
+    if(MAGNUM_WITH_STBIMAGEIMPORTER)
+        set(STBIMAGEIMPORTER_PLUGIN_FILENAME $<TARGET_FILE:StbImageImporter>)
     endif()
 endif()
 
@@ -49,10 +75,45 @@ file(GENERATE OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/configure.h
     INPUT ${CMAKE_CURRENT_BINARY_DIR}/configure.h.in)
 
 corrade_add_test(GltfSceneConverterTest GltfSceneConverterTest.cpp
-    LIBRARIES Magnum::Trade
+    LIBRARIES Magnum::Trade Magnum::MeshTools
     FILES
         empty.glb
         empty.gltf
+        image-3d-bundled.bin
+        image-3d-bundled.gltf
+        image-3d-compressed.glb
+        image-3d.glb
+        image-3d.gltf
+        image-3d-no-texture.gltf
+        image-3d-not-bundled.glb
+        image-3d-not-bundled.0.ktx2
+        image-3d.0.ktx2
+        image-accessor-names.gltf
+        image-basis.glb
+        image-bundled.gltf image-bundled.bin
+        image.glb
+        image.gltf image.0.png
+        image-jpeg.glb
+        image-ktx.glb
+        image-ktx-compressed.glb
+        image-multiple.gltf image-multiple.bin image-multiple.1.png
+        image-name-accessor-names.gltf
+        image-name.gltf
+        image-not-bundled.glb image-not-bundled.0.png
+        image-tga.glb
+        material-2d-array-textures.gltf
+        material-alpha-mask-defaults-kept.gltf
+        material-alpha-mask-defaults-omitted.gltf
+        material-alpha-mask.gltf
+        material-common.gltf
+        material-defaults-kept.gltf
+        material-defaults-omitted.gltf
+        material-default-texture-swizzle.gltf
+        material-empty.gltf
+        material-metallicroughness.gltf
+        material-multiple.gltf
+        material-name.gltf
+        material-unlit.gltf
         mesh-accessor-names.gltf
         mesh-attribute-bitangent.gltf
         mesh-attribute-color3.gltf
@@ -86,20 +147,99 @@ corrade_add_test(GltfSceneConverterTest GltfSceneConverterTest.cpp
         mesh-no-indices-no-vertices.gltf
         mesh-noninterleaved.gltf
         metadata.gltf
-        metadata-explicit-implicit-extensions.gltf)
+        metadata-explicit-implicit-extensions.gltf
+        scene.gltf
+        scene-empty.gltf
+        scene-invalid.gltf
+        scene-meshes-materials.gltf
+        scene-name.gltf
+        # Not glTFs because there's many combinations
+        texcoord-flip-floats.glb
+        texcoord-flip-floats-material.glb
+        texcoord-flip-normalized-byte-material.glb
+        texcoord-flip-normalized-unsigned-byte.glb
+        texcoord-flip-normalized-unsigned-byte-material.glb
+        texcoord-flip-normalized-unsigned-short.glb
+        texcoord-flip-normalized-unsigned-short-material.glb
+        texcoord-flip-short-material.glb
+        texture-basis.gltf
+        texture.gltf
+        texture-jpeg.gltf
+        texture-ktx.gltf
+        texture-ktx-no-extension.gltf
+        texture-multiple.gltf
+        texture-name.gltf
+        texture-tga.gltf)
 target_include_directories(GltfSceneConverterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>)
 if(MAGNUM_GLTFSCENECONVERTER_BUILD_STATIC)
     target_link_libraries(GltfSceneConverterTest PRIVATE GltfSceneConverter)
+    if(MAGNUM_WITH_BASISIMAGECONVERTER)
+        target_link_libraries(GltfSceneConverterTest PRIVATE BasisImageConverter)
+    endif()
+    if(MAGNUM_WITH_BASISIMPORTER)
+        target_link_libraries(GltfSceneConverterTest PRIVATE BasisImporter)
+    endif()
     if(MAGNUM_WITH_GLTFIMPORTER)
         target_link_libraries(GltfSceneConverterTest PRIVATE GltfImporter)
+    endif()
+    if(MAGNUM_WITH_KTXIMAGECONVERTER)
+        target_link_libraries(GltfSceneConverterTest PRIVATE KtxImageConverter)
+    endif()
+    if(MAGNUM_WITH_KTXIMPORTER)
+        target_link_libraries(GltfSceneConverterTest PRIVATE KtxImporter)
+    endif()
+    if(MAGNUM_WITH_OPENEXRIMAGECONVERTER)
+        target_link_libraries(GltfSceneConverterTest PRIVATE OpenExrImageConverter)
+    endif()
+    if(MAGNUM_WITH_STBDXTIMAGECONVERTER)
+        target_link_libraries(GltfSceneConverterTest PRIVATE StbDxtImageConverter)
+    endif()
+    if(MAGNUM_WITH_STBIMAGECONVERTER)
+        target_link_libraries(GltfSceneConverterTest PRIVATE StbImageConverter)
+    endif()
+    if(MAGNUM_WITH_STBIMAGEIMPORTER)
+        target_link_libraries(GltfSceneConverterTest PRIVATE StbImageImporter)
     endif()
 else()
     # So the plugins get properly built when building the test
     add_dependencies(GltfSceneConverterTest GltfSceneConverter)
+    if(MAGNUM_WITH_BASISIMAGECONVERTER)
+        add_dependencies(GltfSceneConverterTest BasisImageConverter)
+    endif()
+    if(MAGNUM_WITH_BASISIMPORTER)
+        add_dependencies(GltfSceneConverterTest BasisImporter)
+    endif()
     if(MAGNUM_WITH_GLTFIMPORTER)
         add_dependencies(GltfSceneConverterTest GltfImporter)
     endif()
+    if(MAGNUM_WITH_KTXIMAGECONVERTER)
+        add_dependencies(GltfSceneConverterTest KtxImageConverter)
+    endif()
+    if(MAGNUM_WITH_KTXIMPORTER)
+        add_dependencies(GltfSceneConverterTest KtxImporter)
+    endif()
+    if(MAGNUM_WITH_OPENEXRIMAGECONVERTER)
+        add_dependencies(GltfSceneConverterTest OpenExrImageConverter)
+    endif()
+    if(MAGNUM_WITH_STBDXTIMAGECONVERTER)
+        add_dependencies(GltfSceneConverterTest StbDxtImageConverter)
+    endif()
+    if(MAGNUM_WITH_STBIMAGECONVERTER)
+        add_dependencies(GltfSceneConverterTest StbImageConverter)
+    endif()
+    if(MAGNUM_WITH_STBIMAGEIMPORTER)
+        add_dependencies(GltfSceneConverterTest StbImageImporter)
+    endif()
 endif()
+
+# BasisImageConverter needs threads to work, see BasisImageConverter.h for
+# details on why it's not linked transitively from the plugin already
+if(MAGNUM_WITH_BASISIMAGECONVERTER)
+    set(THREADS_PREFER_PTHREAD_FLAG TRUE)
+    find_package(Threads REQUIRED)
+    target_link_libraries(GltfSceneConverterTest PRIVATE Threads::Threads)
+endif()
+
 if(CORRADE_BUILD_STATIC AND NOT MAGNUM_GLTFSCENECONVERTER_BUILD_STATIC)
     # CMake < 3.4 does this implicitly, but 3.4+ not anymore (see CMP0065).
     # That's generally okay, *except if* the build is static, the executable

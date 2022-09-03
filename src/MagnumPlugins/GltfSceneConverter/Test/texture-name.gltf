@@ -1,0 +1,16 @@
+{
+  "asset": {
+    "version": "2.0"
+  },
+  "textures": [
+    {
+      "source": 0,
+      "name": "A texty name for a pingy image"
+    }
+  ],
+  "images": [
+    {
+      "uri": "texture-name.0.png"
+    }
+  ]
+}

@@ -120,7 +120,7 @@ constexpr struct {
     {"Invalid", Containers::arrayView("NotAValidFile"), "invalid basis header"},
     {"Invalid basis header", Containers::arrayView("sB\xff\xff"), "invalid basis header"},
     {"Invalid KTX2 identifier", Containers::arrayView("\xabKTX 30\xbb\r\n\x1a\n"), "invalid basis header"},
-    {"Invalid KTX2 header", Containers::arrayView("\xabKTX 20\xbb\r\n\x1a\n\xff\xff\xff\xff"), "invalid KTX2 header, or not Basis compressed"}
+    {"Invalid KTX2 header", Containers::arrayView("\xabKTX 20\xbb\r\n\x1a\n\xff\xff\xff\xff"), "invalid KTX2 header, or not Basis compressed; might want to use KtxImporter instead"}
 };
 
 constexpr struct {
@@ -153,7 +153,7 @@ constexpr struct {
     const char* message;
 } FileTooShortData[] {
     {"Basis", "rgb.basis", 64, "invalid basis header"},
-    {"KTX2", "rgb.ktx2", 64, "invalid KTX2 header, or not Basis compressed"}
+    {"KTX2", "rgb.ktx2", 64, "invalid KTX2 header, or not Basis compressed; might want to use KtxImporter instead"}
 };
 
 #ifdef MAGNUM_BUILD_DEPRECATED
@@ -515,7 +515,7 @@ void BasisImporterTest::nonBasisKtx() {
     std::ostringstream out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->openFile(Utility::Path::join(KTXIMPORTER_TEST_DIR, "2d-rgba.ktx2")));
-    CORRADE_COMPARE(out.str(), "Trade::BasisImporter::openData(): invalid KTX2 header, or not Basis compressed\n");
+    CORRADE_COMPARE(out.str(), "Trade::BasisImporter::openData(): invalid KTX2 header, or not Basis compressed; might want to use KtxImporter instead\n");
 }
 
 #ifdef MAGNUM_BUILD_DEPRECATED

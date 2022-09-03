@@ -1,0 +1,78 @@
+{
+  "asset": {
+    "version": "2.0"
+  },
+  "meshes": [
+    {
+      "primitives": [
+        {}
+      ],
+      "name": "Mesh 2"
+    },
+    {
+      "primitives": [
+        {}
+      ],
+      "name": "Mesh 0"
+    },
+    {
+      "primitives": [
+        {}
+      ],
+      "name": "Mesh 1"
+    },
+    {
+      "primitives": [
+        {
+          "material": 0
+        }
+      ],
+      "name": "Mesh 3"
+    },
+    {
+      "primitives": [
+        {
+          "material": 1
+        }
+      ],
+      "name": "Mesh 1"
+    }
+  ],
+  "materials": [
+    {
+      "name": "Material 0"
+    },
+    {
+      "name": "Material 1"
+    }
+  ],
+  "nodes": [
+    {
+      "mesh": 0
+    },
+    {},
+    {
+      "mesh": 1
+    },
+    {
+      "mesh": 0
+    },
+    {
+      "mesh": 2
+    },
+    {
+      "mesh": 3
+    },
+    {
+      "mesh": 4
+    },
+    {
+      "mesh": 3
+    }
+  ],
+  "scenes": [
+    {
+      "nodes": [0, 3, 2, 1, 4, 5, 6, 7]
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "asset": {
+    "version": "2.0"
+  },
+  "buffers": [
+    {
+      "uri": "image-multiple.bin",
+      "byteLength": 1229
+    }
+  ],
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteOffset": 0,
+      "byteLength": 614
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 614,
+      "byteLength": 615
+    }
+  ],
+  "images": [
+    {
+      "mimeType": "image/jpeg",
+      "bufferView": 0
+    },
+    {
+      "uri": "image-multiple.1.png"
+    },
+    {
+      "mimeType": "image/jpeg",
+      "bufferView": 1
+    }
+  ]
+}

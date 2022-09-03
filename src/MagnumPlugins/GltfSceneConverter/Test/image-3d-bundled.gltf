@@ -1,0 +1,42 @@
+{
+  "asset": {
+    "version": "2.0"
+  },
+  "buffers": [
+    {
+      "uri": "image-3d-bundled.bin",
+      "byteLength": 210
+    }
+  ],
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteOffset": 0,
+      "byteLength": 210
+    }
+  ],
+  "textures": [
+    {
+      "extensions": {
+        "KHR_texture_ktx": {
+          "source": 0,
+          "layer": 0
+        }
+      }
+    },
+    {
+      "extensions": {
+        "KHR_texture_ktx": {
+          "source": 0,
+          "layer": 1
+        }
+      }
+    }
+  ],
+  "images": [
+    {
+      "mimeType": "image/ktx2",
+      "bufferView": 0
+    }
+  ]
+}

@@ -1,0 +1,132 @@
+{
+  "asset": {
+    "version": "2.0"
+  },
+  "materials": [
+    {
+      "pbrMetallicRoughness": {
+        "baseColorTexture": {
+          "index": 6
+        }
+      },
+      "occlusionTexture": {
+        "index": 10
+      },
+      "emissiveTexture": {
+        "index": 11
+      }
+    }
+  ],
+  "textures": [
+    {
+      "extensions": {
+        "KHR_texture_ktx": {
+          "source": 2,
+          "layer": 0
+        }
+      }
+    },
+    {
+      "extensions": {
+        "KHR_texture_ktx": {
+          "source": 2,
+          "layer": 1
+        }
+      }
+    },
+    {
+      "extensions": {
+        "KHR_texture_ktx": {
+          "source": 2,
+          "layer": 2
+        }
+      }
+    },
+    {
+      "extensions": {
+        "KHR_texture_ktx": {
+          "source": 2,
+          "layer": 3
+        }
+      }
+    },
+    {
+      "extensions": {
+        "KHR_texture_ktx": {
+          "source": 2,
+          "layer": 4
+        }
+      }
+    },
+    {
+      "extensions": {
+        "KHR_texture_ktx": {
+          "source": 2,
+          "layer": 5
+        }
+      }
+    },
+    {
+      "extensions": {
+        "KHR_texture_ktx": {
+          "source": 2,
+          "layer": 6
+        }
+      }
+    },
+    {
+      "extensions": {
+        "KHR_texture_ktx": {
+          "source": 0,
+          "layer": 0
+        }
+      },
+      "name": "2D array texture"
+    },
+    {
+      "extensions": {
+        "KHR_texture_ktx": {
+          "source": 0,
+          "layer": 1
+        }
+      },
+      "name": "2D array texture"
+    },
+    {
+      "extensions": {
+        "KHR_texture_ktx": {
+          "source": 0,
+          "layer": 2
+        }
+      },
+      "name": "2D array texture"
+    },
+    {
+      "extensions": {
+        "KHR_texture_ktx": {
+          "source": 0,
+          "layer": 3
+        }
+      },
+      "name": "2D array texture"
+    },
+    {
+      "source": 3
+    }
+  ],
+  "images": [
+    {
+      "uri": "material-2d-array-textures.0.ktx2"
+    },
+    {
+      "uri": "material-2d-array-textures.0.ktx2",
+      "name": "2D KTX, not used"
+    },
+    {
+      "uri": "material-2d-array-textures.1.ktx2"
+    },
+    {
+      "uri": "material-2d-array-textures.1.png"
+    }
+  ]
+}

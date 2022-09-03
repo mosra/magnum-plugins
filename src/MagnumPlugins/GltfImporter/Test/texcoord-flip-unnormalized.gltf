@@ -2,9 +2,10 @@
   "asset": {
     "version": "2.0"
   },
+  "note": "Separate from texcoord-flip.gltf as this file has textureCoordinateYFlipInMaterial implicitly enabled on load and the other not",
   "meshes": [
     {
-      "name": "normalized signed integer",
+      "name": "normalized signed byte",
       "primitives": [
         {
           "attributes": {
@@ -14,7 +15,7 @@
       ]
     },
     {
-      "name": "signed integer",
+      "name": "signed short",
       "primitives": [
         {
           "attributes": {
@@ -53,14 +54,14 @@
   ],
   "buffers": [
     {
-      "note": "reusing the same as material-texcoord-flip.gltf",
+      "note": "reusing the same as texcoord-flip.gltf",
       "byteLength": 64,
-      "uri": "material-texcoord-flip.bin"
+      "uri": "texcoord-flip.bin"
     }
   ],
   "materials": [
     {
-      "name": "transform from normalized signed integer",
+      "name": "transform from normalized signed byte",
       "pbrMetallicRoughness": {
         "baseColorTexture": {
           "index": 0,
@@ -74,7 +75,7 @@
       }
     },
     {
-      "name": "transform from signed integer",
+      "name": "transform from signed short",
       "pbrMetallicRoughness": {
         "baseColorTexture": {
           "index": 0,
