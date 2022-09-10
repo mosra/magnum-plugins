@@ -2717,6 +2717,13 @@ void AssimpImporterTest::meshSkinningAttributes() {
     if(!supportsSkinning(data.suffix, _assimpVersion))
         CORRADE_SKIP("Skin data for this file type is not supported with the current version of Assimp");
 
+    /* Skinned attribute import is broken in 5.2.4 (and only there):
+       https://github.com/assimp/assimp/commit/c8dafe0d2887242285c0080c6cbbea8c1f1c8094
+       We need this weird check because v5.2.0 through v5.2.4 report as
+       520 and v5.2.5 reports as 524. */
+    if(ASSIMP_VERSION >= 20220502 && _assimpVersion < 524)
+        CORRADE_SKIP("Skinning attribute import is broken with the current version of Assimp");
+
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "skin"_s + data.suffix)));
 
@@ -2760,6 +2767,9 @@ void AssimpImporterTest::meshSkinningAttributes() {
 }
 
 void AssimpImporterTest::meshSkinningAttributesMultiple() {
+    if(ASSIMP_VERSION >= 20220502 && _assimpVersion < 524)
+        CORRADE_SKIP("Skinning attribute import is broken with the current version of Assimp");
+
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
     /* Disable default limit, 0 = no limit  */
     CORRADE_COMPARE(importer->configuration().value<UnsignedInt>("maxJointWeights"), 4);
@@ -2795,6 +2805,9 @@ void AssimpImporterTest::meshSkinningAttributesMultiple() {
 void AssimpImporterTest::meshSkinningAttributesMultipleGltf() {
     if(!supportsSkinning(".gltf"_s, _assimpVersion))
         CORRADE_SKIP("glTF 2 skinning is not supported with the current version of Assimp");
+
+    if(ASSIMP_VERSION >= 20220502 && _assimpVersion < 524)
+        CORRADE_SKIP("Skinning attribute import is broken with the current version of Assimp");
 
     /* Assimp glTF 2 importer only reads the last(!) set of joint weights. On
        5.1.0 it outright fails to import because of broken extra validation:
@@ -2863,6 +2876,9 @@ void AssimpImporterTest::meshSkinningAttributesMultipleGltf() {
 }
 
 void AssimpImporterTest::meshSkinningAttributesMaxJointWeights() {
+    if(ASSIMP_VERSION >= 20220502 && _assimpVersion < 524)
+        CORRADE_SKIP("Skinning attribute import is broken with the current version of Assimp");
+
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
     importer->configuration().setValue("maxJointWeights", 6);
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "skin-multiple-sets.dae")));
@@ -2901,6 +2917,9 @@ void AssimpImporterTest::meshSkinningAttributesDummyWeightRemoval() {
     if(!supportsSkinning(".gltf"_s, _assimpVersion))
         CORRADE_SKIP("glTF 2 skinning is not supported with the current version of Assimp");
 
+    if(ASSIMP_VERSION >= 20220502 && _assimpVersion < 524)
+        CORRADE_SKIP("Skinning attribute import is broken with the current version of Assimp");
+
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
     importer->configuration().setValue("maxJointWeights", 0);
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "skin-dummy-weights.gltf")));
@@ -2928,6 +2947,9 @@ void AssimpImporterTest::meshSkinningAttributesDummyWeightRemoval() {
 }
 
 void AssimpImporterTest::meshSkinningAttributesMerge() {
+    if(ASSIMP_VERSION >= 20220502 && _assimpVersion < 524)
+        CORRADE_SKIP("Skinning attribute import is broken with the current version of Assimp");
+
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
     importer->configuration().setValue("mergeSkins", true);
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "skin.dae")));
