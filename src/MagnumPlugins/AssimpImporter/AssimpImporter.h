@@ -396,9 +396,10 @@ verbosity levels in each instance.
     change this limit by setting the @cb{.ini} maxJointWeights @ce
     @ref Trade-AssimpImporter-configuration "configuration option".
 -   Assimp doesn't correctly import glTF meshes with multiple sets of joint
-    weights, only the last set will be imported. A warning is printed when this
-    is detected, but it may misfire for other meshes with non-normalized
-    weights.
+    weights prior to version 5.2.5. Depending on the version it either fails to
+    import the file at all or imports either the first or the last set of joint
+    weights. A warning is printed when this is detected, but it may misfire for
+    other meshes with non-normalized weights.
 -   Multi-primitive meshes are split by Assimp into individual meshes, nodes
     that reference a multi-primitive mesh have multiple @ref SceneField::Mesh
     (and @ref SceneField::MeshMaterial) entries in the imported @ref SceneData.

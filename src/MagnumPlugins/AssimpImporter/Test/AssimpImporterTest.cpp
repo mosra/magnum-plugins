@@ -2809,17 +2809,18 @@ void AssimpImporterTest::meshSkinningAttributesMultipleGltf() {
     if(ASSIMP_VERSION >= 20220502 && _assimpVersion < 524)
         CORRADE_SKIP("Skinning attribute import is broken with the current version of Assimp");
 
-    /* Assimp glTF 2 importer only reads the last(!) set of joint weights. On
-       5.1.0 it outright fails to import because of broken extra validation:
-       https://github.com/assimp/assimp/issues/4178 */
+    /* Versions from 5.1.0 to 5.2.2 fail to import the file because of broken
+       validation checks:
+       https://github.com/assimp/assimp/issues/4178
+       Because all tags from v5.2.0 to v5.2.4 report their version as 5.2.0,
+       we end up incorrectly skipping this test on v5.2.3 and v5.2.4 as well.
+       Oh well. Can't verify that openFile() fails either, because it doesn't
+       *actually* fail on the versions we incorrectly skip. */
+    if(_assimpVersion >= 510 && _assimpVersion <= 522)
+        CORRADE_SKIP("Current version of assimp fails to import files with multiple sets of skinning attributes");
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
     importer->configuration().setValue("maxJointWeights", 0);
-
-    if(_assimpVersion >= 510) {
-        CORRADE_VERIFY(!importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "skin-multiple-sets.gltf")));
-        CORRADE_SKIP("Current version of assimp fails to import files with multiple sets of skinning attributes");
-    }
 
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "skin-multiple-sets.gltf")));
 
@@ -2835,35 +2836,52 @@ void AssimpImporterTest::meshSkinningAttributesMultipleGltf() {
 
     CORRADE_VERIFY(mesh);
     CORRADE_VERIFY(mesh->hasAttribute(jointsAttribute));
-    CORRADE_COMPARE(mesh->attributeFormat(jointsAttribute), VertexFormat::Vector4ui);
     CORRADE_VERIFY(mesh->hasAttribute(weightsAttribute));
-    CORRADE_COMPARE(mesh->attributeFormat(weightsAttribute), VertexFormat::Vector4);
 
     {
-        CORRADE_EXPECT_FAIL("glTF 2 importer only reads one set of joint weights.");
+        /* Prior to version 5.2.5 only one set of weights is imported. Using <
+           instead of <= because tag v5.2.4 reports version 5.2.0, but v5.2.5
+           reports version 5.2.4. */
+        CORRADE_EXPECT_FAIL_IF(_assimpVersion < 524, "glTF 2 importer < 5.2.5 only reads one set of joint weights.");
         CORRADE_COMPARE(mesh->attributeCount(jointsAttribute), 2);
         CORRADE_COMPARE(mesh->attributeCount(weightsAttribute), 2);
     }
 
-    Containers::StridedArrayView1D<const Vector4ui> joints = mesh->attribute<Vector4ui>(jointsAttribute);
-    CORRADE_VERIFY(joints);
-    Containers::StridedArrayView1D<const Vector4> weights = mesh->attribute<Vector4>(weightsAttribute);
-    CORRADE_VERIFY(weights);
-
-    CORRADE_COMPARE(out.str(),
-        "Trade::AssimpImporter::mesh(): found non-normalized joint weights, possibly "
-        "a result of Assimp reading joint weights incorrectly. Consult the importer "
-        "documentation for more information\n");
-
-    {
-        CORRADE_EXPECT_FAIL("glTF 2 importer only reads the last set of joint weights.");
-        constexpr Vector4ui joint{0, 1, 2, 3};
-        constexpr Vector4 weight{0.125f};
-        CORRADE_COMPARE(joints.front(), joint);
-        CORRADE_COMPARE(weights.front(), weight);
+    if(_assimpVersion < 524) {
+        CORRADE_COMPARE(out.str(),
+            "Trade::AssimpImporter::mesh(): found non-normalized joint weights, possibly "
+            "a result of Assimp reading joint weights incorrectly. Consult the importer "
+            "documentation for more information\n");
+    } else {
+        CORRADE_COMPARE(out.str(), "");
     }
 
-    /* Colors, on the other hand, work */
+    constexpr Vector4ui JointValues[2]{{0, 1, 2, 3}, {4, 5, 6, 7}};
+    constexpr Vector4 WeightValues[2]{Vector4{0.125f}, {0.1f, 0.1f, 0.1f, 0.2f}};
+
+    const UnsignedInt attributeCount = Utility::min(2u, Utility::min(mesh->attributeCount(jointsAttribute),
+        mesh->attributeCount(weightsAttribute)));
+    for(size_t i = 0; i < attributeCount; ++i) {
+        CORRADE_ITERATION(i);
+
+        CORRADE_COMPARE(mesh->attributeFormat(jointsAttribute, i), VertexFormat::Vector4ui);
+        CORRADE_COMPARE(mesh->attributeFormat(weightsAttribute, i), VertexFormat::Vector4);
+
+        Containers::StridedArrayView1D<const Vector4ui> joints = mesh->attribute<Vector4ui>(jointsAttribute, i);
+        CORRADE_VERIFY(joints);
+        Containers::StridedArrayView1D<const Vector4> weights = mesh->attribute<Vector4>(weightsAttribute, i);
+        CORRADE_VERIFY(weights);
+
+        {
+            /* We skip the entire test for 5.1.0 - 5.2.4 but this still XFAILs
+               on versions below 5.1.0 */
+            CORRADE_EXPECT_FAIL_IF(_assimpVersion <= 522, "glTF 2 importer < 5.2.3 only reads the last set of joint weights.");
+            CORRADE_COMPARE(joints.front(), JointValues[i]);
+            CORRADE_COMPARE(weights.front(), WeightValues[i]);
+        }
+    }
+
+    /* Multiple sets of color works fine on all versions */
     CORRADE_VERIFY(mesh->hasAttribute(MeshAttribute::Color));
     CORRADE_COMPARE(mesh->attributeCount(MeshAttribute::Color), 2);
 
