@@ -38,6 +38,9 @@
 #include <Corrade/Containers/GrowableArray.h>
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/Pair.h>
+#include <Corrade/Containers/String.h>
+#include <Corrade/Containers/StringView.h>
+#include <Corrade/Containers/StringStlHash.h>
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/Format.h>
@@ -110,10 +113,12 @@ struct AssimpImporter::File {
        (unique) location of an image */
     std::vector<std::pair<const aiMaterial*, UnsignedInt>> images;
 
-    std::unordered_map<std::string, UnsignedInt> materialIndicesForName;
+    std::unordered_map<Containers::String, UnsignedInt> materialIndicesForName;
     std::unordered_map<const aiMaterial*, UnsignedInt> textureIndices;
 
-    Containers::Optional<std::unordered_map<std::string, Int>>
+    /* We can use StringView for the keys because they point to aiString mName
+       in the scene, which stay valid for as long as a file is opened */
+    Containers::Optional<std::unordered_map<Containers::StringView, Int>>
         animationsForName,
         camerasForName,
         lightsForName,
@@ -121,11 +126,11 @@ struct AssimpImporter::File {
         skinsForName;
 
     /* Joint ids and weights are the only custom attributes in this importer */
-    std::unordered_map<std::string, MeshAttribute> meshAttributesForName{
-        {"JOINTS", meshAttributeCustom(0)},
-        {"WEIGHTS", meshAttributeCustom(1)}
+    std::unordered_map<Containers::StringView, MeshAttribute> meshAttributesForName{
+        {"JOINTS"_s, meshAttributeCustom(0)},
+        {"WEIGHTS"_s, meshAttributeCustom(1)}
     };
-    std::vector<std::string> meshAttributeNames{"JOINTS", "WEIGHTS"};
+    std::vector<Containers::StringView> meshAttributeNames{"JOINTS"_s, "WEIGHTS"_s};
 
     std::vector<std::size_t> meshesWithBones;
     /* For each mesh: the index of its skin (before any merging), or -1 */
@@ -269,7 +274,7 @@ struct IoSystem: Assimp::IOSystem {
     char getOsSeparator() const override { return '/'; }
 
     Assimp::IOStream* Open(const char* file, const char* mode) override {
-        CORRADE_INTERNAL_ASSERT(mode == std::string{"rb"});
+        CORRADE_INTERNAL_ASSERT(mode == "rb"_s);
         #ifdef CORRADE_NO_ASSERT
         static_cast<void>(mode);
         #endif
@@ -411,12 +416,12 @@ void AssimpImporter::doOpenData(Containers::Array<char>&& data, DataFlags) {
     _f->materialIndicesForName.reserve(_f->scene->mNumMaterials);
     aiString matName;
     UnsignedInt textureIndex = 0;
-    std::unordered_map<std::string, UnsignedInt> uniqueImages;
+    std::unordered_map<Containers::StringView, UnsignedInt> uniqueImages;
     for(std::size_t i = 0; i < _f->scene->mNumMaterials; ++i) {
         const aiMaterial* mat = _f->scene->mMaterials[i];
 
         if(mat->Get(AI_MATKEY_NAME, matName) == AI_SUCCESS) {
-            std::string name = matName.C_Str();
+            const Containers::StringView name = matName.C_Str();
             _f->materialIndicesForName[name] = i;
         }
 
@@ -431,7 +436,7 @@ void AssimpImporter::doOpenData(Containers::Array<char>&& data, DataFlags) {
             /* For images ensure we have an unique path so each file isn't
                imported more than once. Each image then points to j-th property
                of the material, which is then used to retrieve its path again. */
-            Containers::StringView texturePath = materialPropertyString(property);
+            const Containers::StringView texturePath = materialPropertyString(property);
             auto uniqueImage = uniqueImages.emplace(texturePath, _f->images.size());
             if(uniqueImage.second) _f->images.emplace_back(mat, j);
 
@@ -819,7 +824,7 @@ Int AssimpImporter::doCameraForName(const Containers::StringView name) {
         _f->camerasForName.emplace();
         _f->camerasForName->reserve(_f->scene->mNumCameras);
         for(std::size_t i = 0; i != _f->scene->mNumCameras; ++i)
-            _f->camerasForName->emplace(std::string(_f->scene->mCameras[i]->mName.C_Str()), i);
+            _f->camerasForName->emplace(Containers::StringView{_f->scene->mCameras[i]->mName.C_Str()}, i);
     }
 
     const auto found = _f->camerasForName->find(name);
@@ -858,7 +863,7 @@ Int AssimpImporter::doLightForName(const Containers::StringView name) {
         _f->lightsForName.emplace();
         _f->lightsForName->reserve(_f->scene->mNumLights);
         for(std::size_t i = 0; i != _f->scene->mNumLights; ++i)
-            _f->lightsForName->emplace(std::string(_f->scene->mLights[i]->mName.C_Str()), i);
+            _f->lightsForName->emplace(Containers::StringView{_f->scene->mLights[i]->mName.C_Str()}, i);
     }
 
     const auto found = _f->lightsForName->find(name);
@@ -1841,7 +1846,7 @@ Int AssimpImporter::doAnimationForName(const Containers::StringView name) {
         _f->animationsForName.emplace();
         _f->animationsForName->reserve(_f->scene->mNumAnimations);
         for(std::size_t i = 0; i != _f->scene->mNumAnimations; ++i)
-            _f->animationsForName->emplace(std::string(_f->scene->mAnimations[i]->mName.C_Str()), i);
+            _f->animationsForName->emplace(Containers::StringView{_f->scene->mAnimations[i]->mName.C_Str()}, i);
     }
 
     const auto found = _f->animationsForName->find(name);
