@@ -77,6 +77,22 @@
 
 #include "configureInternal.h"
 
+namespace Corrade { namespace Containers { namespace Implementation {
+
+template<> struct StringConverter<aiString> {
+    static String from(const aiString& other) {
+        return String{other.C_Str(), other.length};
+    }
+};
+
+template<> struct StringViewConverter<const char, aiString> {
+    static StringView from(const aiString& other) {
+        return StringView{other.C_Str(), other.length, Containers::StringViewFlag::NullTerminated};
+    }
+};
+
+}}}
+
 namespace Magnum { namespace Math { namespace Implementation {
 
 template<> struct VectorConverter<3, Float, aiColor3D> {
@@ -420,10 +436,8 @@ void AssimpImporter::doOpenData(Containers::Array<char>&& data, DataFlags) {
     for(std::size_t i = 0; i < _f->scene->mNumMaterials; ++i) {
         const aiMaterial* mat = _f->scene->mMaterials[i];
 
-        if(mat->Get(AI_MATKEY_NAME, matName) == AI_SUCCESS) {
-            const Containers::StringView name = matName.C_Str();
-            _f->materialIndicesForName[name] = i;
-        }
+        if(mat->Get(AI_MATKEY_NAME, matName) == AI_SUCCESS)
+            _f->materialIndicesForName[matName] = i;
 
         /* Store first possible texture index for this material, next textures
            use successive indices. */
@@ -431,7 +445,7 @@ void AssimpImporter::doOpenData(Containers::Array<char>&& data, DataFlags) {
         for(std::size_t j = 0; j != mat->mNumProperties; ++j) {
             /* We're only interested in AI_MATKEY_TEXTURE_* properties */
             const aiMaterialProperty& property = *mat->mProperties[j];
-            if(Containers::StringView{property.mKey.C_Str(), property.mKey.length} != _AI_MATKEY_TEXTURE_BASE) continue;
+            if(Containers::StringView{property.mKey} != _AI_MATKEY_TEXTURE_BASE) continue;
 
             /* For images ensure we have an unique path so each file isn't
                imported more than once. Each image then points to j-th property
@@ -594,7 +608,7 @@ UnsignedInt AssimpImporter::doSceneCount() const { return _f->scene->mRootNode ?
 
 Int AssimpImporter::doSceneForName(const Containers::StringView name) {
     #if ASSIMP_HAS_SCENE_NAME
-    if(_f->scene->mRootNode && name == _f->scene->mName.C_Str())
+    if(_f->scene->mRootNode && name == _f->scene->mName)
         return 0;
     #else
     static_cast<void>(name);
@@ -604,7 +618,7 @@ Int AssimpImporter::doSceneForName(const Containers::StringView name) {
 
 Containers::String AssimpImporter::doSceneName(UnsignedInt) {
     #if ASSIMP_HAS_SCENE_NAME
-    return _f->scene->mName.C_Str();
+    return _f->scene->mName;
     #else
     return {};
     #endif
@@ -812,7 +826,7 @@ Long AssimpImporter::doObjectForName(const Containers::StringView name) {
 }
 
 Containers::String AssimpImporter::doObjectName(const UnsignedLong id) {
-    return _f->nodes[id]->mName.C_Str();
+    return _f->nodes[id]->mName;
 }
 
 UnsignedInt AssimpImporter::doCameraCount() const {
@@ -824,7 +838,7 @@ Int AssimpImporter::doCameraForName(const Containers::StringView name) {
         _f->camerasForName.emplace();
         _f->camerasForName->reserve(_f->scene->mNumCameras);
         for(std::size_t i = 0; i != _f->scene->mNumCameras; ++i)
-            _f->camerasForName->emplace(Containers::StringView{_f->scene->mCameras[i]->mName.C_Str()}, i);
+            _f->camerasForName->emplace(_f->scene->mCameras[i]->mName, i);
     }
 
     const auto found = _f->camerasForName->find(name);
@@ -832,7 +846,7 @@ Int AssimpImporter::doCameraForName(const Containers::StringView name) {
 }
 
 Containers::String AssimpImporter::doCameraName(const UnsignedInt id) {
-    return _f->scene->mCameras[id]->mName.C_Str();
+    return _f->scene->mCameras[id]->mName;
 }
 
 Containers::Optional<CameraData> AssimpImporter::doCamera(UnsignedInt id) {
@@ -863,7 +877,7 @@ Int AssimpImporter::doLightForName(const Containers::StringView name) {
         _f->lightsForName.emplace();
         _f->lightsForName->reserve(_f->scene->mNumLights);
         for(std::size_t i = 0; i != _f->scene->mNumLights; ++i)
-            _f->lightsForName->emplace(Containers::StringView{_f->scene->mLights[i]->mName.C_Str()}, i);
+            _f->lightsForName->emplace(_f->scene->mLights[i]->mName, i);
     }
 
     const auto found = _f->lightsForName->find(name);
@@ -871,7 +885,7 @@ Int AssimpImporter::doLightForName(const Containers::StringView name) {
 }
 
 Containers::String AssimpImporter::doLightName(const UnsignedInt id) {
-    return _f->scene->mLights[id]->mName.C_Str();
+    return _f->scene->mLights[id]->mName;
 }
 
 Containers::Optional<LightData> AssimpImporter::doLight(UnsignedInt id) {
@@ -923,7 +937,7 @@ Int AssimpImporter::doMeshForName(const Containers::StringView name) {
         _f->meshesForName.emplace();
         _f->meshesForName->reserve(_f->scene->mNumMeshes);
         for(std::size_t i = 0; i != _f->scene->mNumMeshes; ++i) {
-            _f->meshesForName->emplace(_f->scene->mMeshes[i]->mName.C_Str(), i);
+            _f->meshesForName->emplace(_f->scene->mMeshes[i]->mName, i);
         }
     }
 
@@ -932,7 +946,7 @@ Int AssimpImporter::doMeshForName(const Containers::StringView name) {
 }
 
 Containers::String AssimpImporter::doMeshName(const UnsignedInt id) {
-    return _f->scene->mMeshes[id]->mName.C_Str();
+    return _f->scene->mMeshes[id]->mName;
 }
 
 Containers::Optional<MeshData> AssimpImporter::doMesh(const UnsignedInt id, UnsignedInt) {
@@ -1223,7 +1237,7 @@ Containers::String AssimpImporter::doMaterialName(const UnsignedInt id) {
     aiString name;
     mat->Get(AI_MATKEY_NAME, name);
 
-    return name.C_Str();
+    return name;
 }
 
 namespace {
@@ -1393,14 +1407,14 @@ Containers::Optional<MaterialData> AssimpImporter::doMaterial(const UnsignedInt 
                texture index even for the skipped properties so we have the
                mapping correct */
             if(property.mIndex != layer) {
-                if(Containers::StringView{property.mKey.C_Str(), property.mKey.length} == _AI_MATKEY_TEXTURE_BASE)
+                if(Containers::StringView{property.mKey} == _AI_MATKEY_TEXTURE_BASE)
                     ++textureIndex;
                 continue;
             }
 
             using namespace Containers::Literals;
 
-            const Containers::StringView key{property.mKey.C_Str(), property.mKey.length, Containers::StringViewFlag::NullTerminated};
+            const Containers::StringView key{property.mKey};
 
             /* AI_MATKEY_* are in form "bla",0,0, so extract the first part
                and turn it into a StringView for string comparison. The
@@ -1747,7 +1761,7 @@ AbstractImporter* AssimpImporter::setupOrReuseImporterForImage(const UnsignedInt
     importer.setFlags(flags());
     if(fileCallback()) importer.setFileCallback(fileCallback(), fileCallbackUserData());
 
-    const Containers::StringView path = texturePath.C_Str();
+    const Containers::StringView path = texturePath;
 
     /* Loading of embedded textures was changed to a lookup using the full path
        embedded with the scene file rather than an index prefixed with '*' in
@@ -1846,7 +1860,7 @@ Int AssimpImporter::doAnimationForName(const Containers::StringView name) {
         _f->animationsForName.emplace();
         _f->animationsForName->reserve(_f->scene->mNumAnimations);
         for(std::size_t i = 0; i != _f->scene->mNumAnimations; ++i)
-            _f->animationsForName->emplace(Containers::StringView{_f->scene->mAnimations[i]->mName.C_Str()}, i);
+            _f->animationsForName->emplace(_f->scene->mAnimations[i]->mName, i);
     }
 
     const auto found = _f->animationsForName->find(name);
@@ -1856,7 +1870,7 @@ Int AssimpImporter::doAnimationForName(const Containers::StringView name) {
 Containers::String AssimpImporter::doAnimationName(UnsignedInt id) {
     /* If the animations are merged, don't report any names */
     if(configuration().value<bool>("mergeAnimationClips")) return {};
-    return _f->scene->mAnimations[id]->mName.C_Str();
+    return _f->scene->mAnimations[id]->mName;
 }
 
 namespace {
@@ -2172,7 +2186,7 @@ Int AssimpImporter::doSkin3DForName(const Containers::StringView name) {
         _f->skinsForName->reserve(_f->meshesWithBones.size());
         for(std::size_t i = 0; i != _f->meshesWithBones.size(); ++i)
             _f->skinsForName->emplace(
-                _f->scene->mMeshes[_f->meshesWithBones[i]]->mName.C_Str(), i);
+                _f->scene->mMeshes[_f->meshesWithBones[i]]->mName, i);
     }
 
     const auto found = _f->skinsForName->find(name);
@@ -2182,7 +2196,7 @@ Int AssimpImporter::doSkin3DForName(const Containers::StringView name) {
 Containers::String AssimpImporter::doSkin3DName(const UnsignedInt id) {
     /* If the skins are merged, don't report any names */
     if(_f->mergeSkins) return {};
-    return _f->scene->mMeshes[_f->meshesWithBones[id]]->mName.C_Str();
+    return _f->scene->mMeshes[_f->meshesWithBones[id]]->mName;
 }
 
 Containers::Optional<SkinData3D> AssimpImporter::doSkin3D(const UnsignedInt id) {
