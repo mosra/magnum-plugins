@@ -31,9 +31,9 @@
 
 #include <cctype>
 #include <unordered_map>
+#include <Corrade/Containers/Array.h>
 #include <Corrade/Containers/ArrayTuple.h>
 #include <Corrade/Containers/ArrayView.h>
-#include <Corrade/Containers/ArrayViewStl.h>
 #include <Corrade/Containers/BigEnumSet.h>
 #include <Corrade/Containers/GrowableArray.h>
 #include <Corrade/Containers/Optional.h>
@@ -120,14 +120,14 @@ struct AssimpImporter::File {
     /* Index -> pointer, pointer -> index conversion for nodes as they're
        represented in a tree. Needed by objectCount() (which is const) so can't
        be delayed to scenne() parsing. */
-    std::vector<aiNode*> nodes;
+    Containers::Array<aiNode*> nodes;
     std::unordered_map<const aiNode*, UnsignedInt> nodeIndices;
     /* (materialPointer, propertyIndexInsideMaterial, imageIndex) tuple,
        imageIndex points to the (deduplicated) images array */
-    std::vector<std::tuple<const aiMaterial*, UnsignedInt, UnsignedInt>> textures;
+    Containers::Array<std::tuple<const aiMaterial*, UnsignedInt, UnsignedInt>> textures;
     /* (materialPointer, propertyIndexInsideMaterial) tuple defining the first
        (unique) location of an image */
-    std::vector<std::pair<const aiMaterial*, UnsignedInt>> images;
+    Containers::Array<std::pair<const aiMaterial*, UnsignedInt>> images;
 
     std::unordered_map<Containers::String, UnsignedInt> materialIndicesForName;
     std::unordered_map<const aiMaterial*, UnsignedInt> textureIndices;
@@ -141,13 +141,13 @@ struct AssimpImporter::File {
         meshesForName,
         skinsForName;
 
-    std::vector<std::size_t> meshesWithBones;
+    Containers::Array<std::size_t> meshesWithBones;
     /* For each mesh: the index of its skin (before any merging), or -1 */
-    std::vector<Int> meshSkins;
+    Containers::Array<Int> meshSkins;
     bool mergeSkins = false;
     /* For each mesh, map from mesh-relative bones to merged bone list */
-    std::vector<std::vector<UnsignedInt>> boneMap;
-    std::vector<const aiBone*> mergedBones;
+    Containers::Array<Containers::Array<UnsignedInt>> boneMap;
+    Containers::Array<const aiBone*> mergedBones;
 
     UnsignedInt imageImporterId = ~UnsignedInt{};
     Containers::Optional<AnyImageImporter> imageImporter;
@@ -457,12 +457,12 @@ void AssimpImporter::doOpenData(Containers::Array<char>&& data, DataFlags) {
                of the material, which is then used to retrieve its path again. */
             const Containers::StringView texturePath = materialPropertyString(property);
             auto uniqueImage = uniqueImages.emplace(texturePath, _f->images.size());
-            if(uniqueImage.second) _f->images.emplace_back(mat, j);
+            if(uniqueImage.second) arrayAppend(_f->images, InPlaceInit, mat, j);
 
             /* Each texture points to j-th property of the material, which is
                then used to retrieve related info, plus an index into the
                unique images array */
-            _f->textures.emplace_back(mat, j, uniqueImage.first->second);
+            arrayAppend(_f->textures, InPlaceInit, mat, j, uniqueImage.first->second);
             ++textureIndex;
         }
     }
@@ -490,8 +490,8 @@ void AssimpImporter::doOpenData(Containers::Array<char>&& data, DataFlags) {
                we didn't miss anything in the root node. */
             CORRADE_INTERNAL_ASSERT(!_importer || !root->mNumMeshes);
 
-            _f->nodes.reserve(root->mNumChildren);
-            _f->nodes.insert(_f->nodes.end(), root->mChildren, root->mChildren + root->mNumChildren);
+            arrayReserve(_f->nodes, root->mNumChildren);
+            arrayAppend(_f->nodes, Containers::arrayView(const_cast<aiNode* const*>(root->mChildren), root->mNumChildren));
             _f->nodeIndices.reserve(root->mNumChildren);
             _f->rootTransformation = Matrix4::from(reinterpret_cast<const float*>(&root->mTransformation)).transposed();
 
@@ -502,7 +502,7 @@ void AssimpImporter::doOpenData(Containers::Array<char>&& data, DataFlags) {
            transformation is not desired, so set it to identity. This branch is
            explicitly verified in the sceneCollapsedNode() test case. */
         } else {
-            _f->nodes.push_back(root);
+            arrayAppend(_f->nodes, root);
             _f->nodeIndices.reserve(1);
             _f->rootTransformation = Matrix4{};
         }
@@ -512,7 +512,7 @@ void AssimpImporter::doOpenData(Containers::Array<char>&& data, DataFlags) {
         for(std::size_t i = 0; i < _f->nodes.size(); ++i) {
             aiNode* node = _f->nodes[i];
             _f->nodeIndices[node] = UnsignedInt(i);
-            _f->nodes.insert(_f->nodes.end(), node->mChildren, node->mChildren + node->mNumChildren);
+            arrayAppend(_f->nodes, Containers::arrayView(const_cast<aiNode* const*>(node->mChildren), node->mNumChildren));
         }
     }
 
@@ -532,14 +532,14 @@ void AssimpImporter::doOpenData(Containers::Array<char>&& data, DataFlags) {
     #endif
 
     /* Find meshes with bone data, those are our skins */
-    _f->meshSkins.reserve(_f->scene->mNumMeshes);
+    arrayResize(_f->meshSkins, _f->scene->mNumMeshes);
     for(std::size_t i = 0; i != _f->scene->mNumMeshes; ++i) {
         Int skin = -1;
         if(_f->scene->mMeshes[i]->HasBones()) {
             skin = _f->meshesWithBones.size();
-            _f->meshesWithBones.push_back(i);
+            arrayAppend(_f->meshesWithBones, i);
         }
-        _f->meshSkins.push_back(skin);
+        _f->meshSkins[i] = skin;
     }
 
     /* Can't be changed per skin-import because it affects joint id vertex
@@ -548,12 +548,12 @@ void AssimpImporter::doOpenData(Containers::Array<char>&& data, DataFlags) {
 
     /* De-duplicate bones across all skinned meshes */
     if(_f->mergeSkins) {
-        _f->boneMap.resize(_f->meshesWithBones.size());
+        arrayResize(_f->boneMap, _f->meshesWithBones.size());
         for(std::size_t s = 0; s < _f->meshesWithBones.size(); ++s) {
             const UnsignedInt id = _f->meshesWithBones[s];
             const aiMesh* mesh = _f->scene->mMeshes[id];
             auto& map = _f->boneMap[s];
-            map.reserve(mesh->mNumBones);
+            arrayReserve(map, mesh->mNumBones);
             for(const aiBone* bone: Containers::arrayView(mesh->mBones, mesh->mNumBones)) {
                 Int index = -1;
                 for(std::size_t i = 0; i != _f->mergedBones.size(); ++i) {
@@ -567,9 +567,9 @@ void AssimpImporter::doOpenData(Containers::Array<char>&& data, DataFlags) {
                 }
                 if(index == -1) {
                     index = _f->mergedBones.size();
-                    _f->mergedBones.push_back(bone);
+                    arrayAppend(_f->mergedBones, bone);
                 }
-                map.push_back(index);
+                arrayAppend(map, index);
             }
         }
     }
@@ -2164,7 +2164,7 @@ Containers::Optional<AnimationData> AssimpImporter::doAnimation(UnsignedInt id) 
 UnsignedInt AssimpImporter::doSkin3DCount() const {
     /* If the skins are merged, there's at most one */
     if(_f->mergeSkins)
-        return _f->meshesWithBones.empty() ? 0 : 1;
+        return _f->meshesWithBones.isEmpty() ? 0 : 1;
 
     return _f->meshesWithBones.size();
 }
