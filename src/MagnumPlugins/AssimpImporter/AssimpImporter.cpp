@@ -1186,7 +1186,8 @@ Containers::Optional<MeshData> AssimpImporter::doMesh(const UnsignedInt id, Unsi
                 constexpr Float Epsilon = 0.1f;
                 if(!Math::equal(sum, 0.0f) && Math::abs(1.0f - sum) > Epsilon) {
                     Warning{} <<
-                        "Trade::AssimpImporter::mesh(): found non-normalized " "joint weights, possibly a result of Assimp reading "
+                        "Trade::AssimpImporter::mesh(): found non-normalized "
+                        "joint weights, possibly a result of Assimp reading "
                         "joint weights incorrectly. Consult the importer "
                         "documentation for more information";
                     break;
