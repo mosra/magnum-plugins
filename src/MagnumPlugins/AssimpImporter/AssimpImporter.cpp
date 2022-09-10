@@ -199,6 +199,14 @@ Containers::Pointer<Assimp::Importer> createImporter(Utility::ConfigurationGroup
     return importer;
 }
 
+std::size_t countNodeDescendants(const aiNode* node) {
+    std::size_t count = node->mNumChildren;
+    for(aiNode* child: Containers::arrayView(node->mChildren, node->mNumChildren)) {
+        count += countNodeDescendants(child);
+    }
+    return count;
+}
+
 bool isDummyBone(const aiBone* bone) {
     /* Dummy bone weights inserted by Assimp:
        https://github.com/assimp/assimp/blob/1d33131e902ff3f6b571ee3964c666698a99eb0f/code/AssetLib/glTF2/glTF2Importer.cpp#L1099 */
@@ -426,10 +434,20 @@ void AssimpImporter::doOpenData(Containers::Array<char>&& data, DataFlags) {
     }
 
     /* Fill hashmaps for index lookup for materials & textures */
+    std::size_t numTextures = 0;
+    for(aiMaterial* mat: Containers::arrayView(_f->scene->mMaterials, _f->scene->mNumMaterials))
+        for(aiMaterialProperty* property: Containers::arrayView(mat->mProperties, mat->mNumProperties))
+            if(Containers::StringView{property->mKey} == _AI_MATKEY_TEXTURE_BASE)
+                ++numTextures;
+    arrayReserve(_f->textures, numTextures);
+    arrayReserve(_f->images, numTextures);
+    _f->textureIndices.reserve(numTextures);
     _f->materialIndicesForName.reserve(_f->scene->mNumMaterials);
+
     aiString matName;
     UnsignedInt textureIndex = 0;
     std::unordered_map<Containers::StringView, UnsignedInt> uniqueImages;
+    uniqueImages.reserve(numTextures);
     for(std::size_t i = 0; i < _f->scene->mNumMaterials; ++i) {
         const aiMaterial* mat = _f->scene->mMaterials[i];
 
@@ -482,9 +500,10 @@ void AssimpImporter::doOpenData(Containers::Array<char>&& data, DataFlags) {
                we didn't miss anything in the root node. */
             CORRADE_INTERNAL_ASSERT(!_importer || !root->mNumMeshes);
 
-            arrayReserve(_f->nodes, root->mNumChildren);
+            const std::size_t numDescendants = countNodeDescendants(root);
+            arrayReserve(_f->nodes, numDescendants);
             arrayAppend(_f->nodes, Containers::arrayView(root->mChildren, root->mNumChildren));
-            _f->nodeIndices.reserve(root->mNumChildren);
+            _f->nodeIndices.reserve(numDescendants);
             _f->rootTransformation = Matrix4::from(reinterpret_cast<const float*>(&root->mTransformation)).transposed();
 
         /* In various cases (PreTransformVertices enabled when the file has a
@@ -495,7 +514,6 @@ void AssimpImporter::doOpenData(Containers::Array<char>&& data, DataFlags) {
            explicitly verified in the sceneCollapsedNode() test case. */
         } else {
             arrayAppend(_f->nodes, root);
-            _f->nodeIndices.reserve(1);
             _f->rootTransformation = Matrix4{};
         }
 
@@ -525,6 +543,7 @@ void AssimpImporter::doOpenData(Containers::Array<char>&& data, DataFlags) {
 
     /* Find meshes with bone data, those are our skins */
     _f->meshSkins = Containers::Array<Int>{NoInit, _f->scene->mNumMeshes};
+    arrayReserve(_f->meshesWithBones, _f->scene->mNumMeshes);
     for(std::size_t i = 0; i != _f->scene->mNumMeshes; ++i) {
         Int skin = -1;
         if(_f->scene->mMeshes[i]->HasBones()) {
@@ -540,6 +559,11 @@ void AssimpImporter::doOpenData(Containers::Array<char>&& data, DataFlags) {
 
     /* De-duplicate bones across all skinned meshes */
     if(_f->mergeSkins) {
+        std::size_t numBones = 0;
+        for(UnsignedInt mesh: _f->meshesWithBones)
+            numBones += _f->scene->mMeshes[mesh]->mNumBones;
+        arrayReserve(_f->mergedBones, numBones);
+
         _f->boneMap = Containers::Array<Containers::Array<UnsignedInt>>{ValueInit, _f->meshesWithBones.size()};
         for(std::size_t s = 0; s < _f->meshesWithBones.size(); ++s) {
             const UnsignedInt id = _f->meshesWithBones[s];
