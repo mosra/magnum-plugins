@@ -75,6 +75,7 @@
 #include <assimp/Logger.hpp>
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
+#include <assimp/version.h>
 
 #include "configureInternal.h"
 
@@ -116,6 +117,7 @@ using namespace Containers::Literals;
 
 struct AssimpImporter::File {
     Containers::Optional<Containers::String> filePath;
+    UnsignedInt assimpVersion = 0;
     bool importerIsGltf = false;
     const aiScene* scene = nullptr;
     /* Index -> pointer, pointer -> index conversion for nodes as they're
@@ -420,6 +422,17 @@ void AssimpImporter::doOpenData(Containers::Array<char>&& data, DataFlags) {
     }
 
     CORRADE_INTERNAL_ASSERT(_f->scene);
+
+    _f->assimpVersion = aiGetVersionMajor()*100 + aiGetVersionMinor()*10
+        #if ASSIMP_HAS_VERSION_PATCH
+        + aiGetVersionPatch()
+        #endif
+        ;
+
+    /* Assimp 5.0.0 reports itself as 4.1.0 */
+    #if ASSIMP_IS_VERSION_5_OR_GREATER
+    _f->assimpVersion =  Math::max(_f->assimpVersion, 500u);
+    #endif
 
     /* Get name of importer. Useful for workarounds based on importer/file
        type. If the _importer isn't populated, we got called from doOpenState()
@@ -1186,15 +1199,13 @@ Containers::Optional<MeshData> AssimpImporter::doMesh(const UnsignedInt id, Unsi
             }
         }
 
-        /* Assimp glTF 2 importer only reads one set of joint weight
-           attributes:
-            https://github.com/assimp/assimp/blob/1d33131e902ff3f6b571ee3964c666698a99eb0f/code/AssetLib/glTF2/glTF2Importer.cpp#L940
-           Even worse, it's the last(!!) set because they're getting the
-           attribute name wrong (JOINT instead of JOINTS) which breaks their
-           index extraction:
-            https://github.com/assimp/assimp/blob/1d33131e902ff3f6b571ee3964c666698a99eb0f/code/AssetLib/glTF2/glTF2Asset.inl#L1499
-        */
-        if(_f->importerIsGltf && jointLayerCount == 1) {
+        /* Assimp glTF 2 importer before version 5.2.5 only read one set of
+           joint weight attributes:
+           https://github.com/assimp/assimp/commit/a0f375162d48d5a8e70dde2e01f98fa4c5f9b879
+           Try to detect such a case and print a warning. We need to check
+           < 524 because 5.2.0 to 5.2.4 report their version as 520 but 5.2.5
+           is the first to report 524. */
+        if(_f->importerIsGltf && jointLayerCount == 1 && _f->assimpVersion < 524) {
             for(const Vector4& weight: jointWeights[0]) {
                 const Float sum = weight.sum();
                 /* Be very lenient here for shitty exporters. This should still
