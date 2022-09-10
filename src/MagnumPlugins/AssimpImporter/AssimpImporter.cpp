@@ -38,6 +38,7 @@
 #include <Corrade/Containers/GrowableArray.h>
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/Pair.h>
+#include <Corrade/Containers/Triple.h>
 #include <Corrade/Containers/String.h>
 #include <Corrade/Containers/StringView.h>
 #include <Corrade/Containers/StringStlHash.h>
@@ -124,10 +125,10 @@ struct AssimpImporter::File {
     std::unordered_map<const aiNode*, UnsignedInt> nodeIndices;
     /* (materialPointer, propertyIndexInsideMaterial, imageIndex) tuple,
        imageIndex points to the (deduplicated) images array */
-    Containers::Array<std::tuple<const aiMaterial*, UnsignedInt, UnsignedInt>> textures;
+    Containers::Array<Containers::Triple<const aiMaterial*, UnsignedInt, UnsignedInt>> textures;
     /* (materialPointer, propertyIndexInsideMaterial) tuple defining the first
        (unique) location of an image */
-    Containers::Array<std::pair<const aiMaterial*, UnsignedInt>> images;
+    Containers::Array<Containers::Pair<const aiMaterial*, UnsignedInt>> images;
 
     std::unordered_map<Containers::String, UnsignedInt> materialIndicesForName;
     std::unordered_map<const aiMaterial*, UnsignedInt> textureIndices;
@@ -456,7 +457,7 @@ void AssimpImporter::doOpenData(Containers::Array<char>&& data, DataFlags) {
     UnsignedInt textureIndex = 0;
     std::unordered_map<Containers::StringView, UnsignedInt> uniqueImages;
     uniqueImages.reserve(numTextures);
-    for(std::size_t i = 0; i < _f->scene->mNumMaterials; ++i) {
+    for(UnsignedInt i = 0; i < _f->scene->mNumMaterials; ++i) {
         const aiMaterial* mat = _f->scene->mMaterials[i];
 
         if(mat->Get(AI_MATKEY_NAME, matName) == AI_SUCCESS)
@@ -465,7 +466,7 @@ void AssimpImporter::doOpenData(Containers::Array<char>&& data, DataFlags) {
         /* Store first possible texture index for this material, next textures
            use successive indices. */
         _f->textureIndices[mat] = textureIndex;
-        for(std::size_t j = 0; j != mat->mNumProperties; ++j) {
+        for(UnsignedInt j = 0; j != mat->mNumProperties; ++j) {
             /* We're only interested in AI_MATKEY_TEXTURE_* properties */
             const aiMaterialProperty& property = *mat->mProperties[j];
             if(Containers::StringView{property.mKey} != _AI_MATKEY_TEXTURE_BASE) continue;
@@ -1736,8 +1737,8 @@ Containers::Optional<TextureData> AssimpImporter::doTexture(const UnsignedInt id
     };
 
     aiTextureMapMode mapMode;
-    const aiMaterial* mat = std::get<0>(_f->textures[id]);
-    const aiTextureType type = aiTextureType(mat->mProperties[std::get<1>(_f->textures[id])]->mSemantic);
+    const aiMaterial* mat = _f->textures[id].first();
+    const aiTextureType type = aiTextureType(mat->mProperties[_f->textures[id].second()]->mSemantic);
     SamplerWrapping wrappingU = SamplerWrapping::ClampToEdge;
     SamplerWrapping wrappingV = SamplerWrapping::ClampToEdge;
     if(mat->Get(AI_MATKEY_MAPPINGMODE_U(type, 0), mapMode) == AI_SUCCESS)
@@ -1749,14 +1750,14 @@ Containers::Optional<TextureData> AssimpImporter::doTexture(const UnsignedInt id
 
     return TextureData{TextureType::Texture2D,
         SamplerFilter::Linear, SamplerFilter::Linear, SamplerMipmap::Linear,
-        {wrappingU, wrappingV, SamplerWrapping::ClampToEdge}, std::get<2>(_f->textures[id]), &_f->textures[id]};
+        {wrappingU, wrappingV, SamplerWrapping::ClampToEdge}, _f->textures[id].third(), &_f->textures[id]};
 }
 
 UnsignedInt AssimpImporter::doImage2DCount() const { return _f->images.size(); }
 
 AbstractImporter* AssimpImporter::setupOrReuseImporterForImage(const UnsignedInt id, const char* const errorPrefix) {
-    const aiMaterial* mat = _f->images[id].first;
-    const aiTextureType type = aiTextureType(mat->mProperties[_f->images[id].second]->mSemantic);
+    const aiMaterial* mat = _f->images[id].first();
+    const aiTextureType type = aiTextureType(mat->mProperties[_f->images[id].second()]->mSemantic);
 
     /* Looking for the same ID, so reuse an importer populated before. If the
        previous attempt failed, the importer is not set, so return nullptr in
