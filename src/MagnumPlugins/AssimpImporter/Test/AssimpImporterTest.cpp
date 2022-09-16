@@ -2665,23 +2665,28 @@ void AssimpImporterTest::polygonMesh() {
 
 void AssimpImporterTest::meshCustomAttributes() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "mesh.dae")));
 
-    /* Custom attributes should be available right after loading a file,
-       even for files without joint weights */
-    const MeshAttribute jointsAttribute = importer->meshAttributeForName("JOINTS");
-    CORRADE_COMPARE(jointsAttribute, meshAttributeCustom(0));
-    CORRADE_COMPARE(importer->meshAttributeName(jointsAttribute), "JOINTS");
-    CORRADE_COMPARE(importer->meshAttributeForName("Nonexistent"), MeshAttribute{});
+    for(std::size_t i = 0; i != 2; ++i) {
+        CORRADE_ITERATION((i == 0 ? "No file opened" : "File opened"));
 
-    const MeshAttribute weightsAttribute = importer->meshAttributeForName("WEIGHTS");
-    CORRADE_COMPARE(weightsAttribute, meshAttributeCustom(1));
-    CORRADE_COMPARE(importer->meshAttributeName(weightsAttribute), "WEIGHTS");
+        /* Custom attributes are always available */
+        const MeshAttribute jointsAttribute = importer->meshAttributeForName("JOINTS");
+        CORRADE_COMPARE(jointsAttribute, meshAttributeCustom(0));
+        CORRADE_COMPARE(importer->meshAttributeName(jointsAttribute), "JOINTS");
+        CORRADE_COMPARE(importer->meshAttributeForName("Nonexistent"), MeshAttribute{});
 
-    /* These two are the only possible custom attributes */
-    CORRADE_COMPARE(importer->meshAttributeName(meshAttributeCustom(2)), "");
-    CORRADE_COMPARE(importer->meshAttributeName(meshAttributeCustom(564)), "");
-    CORRADE_COMPARE(importer->meshAttributeForName("thing"), MeshAttribute{});
+        const MeshAttribute weightsAttribute = importer->meshAttributeForName("WEIGHTS");
+        CORRADE_COMPARE(weightsAttribute, meshAttributeCustom(1));
+        CORRADE_COMPARE(importer->meshAttributeName(weightsAttribute), "WEIGHTS");
+
+        /* These two are the only possible custom attributes */
+        CORRADE_COMPARE(importer->meshAttributeName(meshAttributeCustom(2)), "");
+        CORRADE_COMPARE(importer->meshAttributeName(meshAttributeCustom(564)), "");
+        CORRADE_COMPARE(importer->meshAttributeForName("thing"), MeshAttribute{});
+
+        /* Same checks again but this time with a file openend */
+        CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "mesh.dae")));
+    }
 }
 
 constexpr Vector4ui MeshSkinningAttributesJointData[]{

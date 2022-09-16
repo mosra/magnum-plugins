@@ -163,14 +163,6 @@ namespace {
 /* Joint ids and weights are the only custom attributes in this importer */
 constexpr MeshAttribute JointsAttribute = meshAttributeCustom(0);
 constexpr MeshAttribute WeightsAttribute = meshAttributeCustom(1);
-constexpr Containers::Pair<Containers::StringView, MeshAttribute> MeshAttributesForName[]{
-    {"JOINTS"_s, JointsAttribute},
-    {"WEIGHTS"_s, WeightsAttribute}
-};
-constexpr Containers::StringView MeshAttributeNames[]{
-    "JOINTS"_s,
-    "WEIGHTS"_s
-};
 
 void fillDefaultConfiguration(Utility::ConfigurationGroup& conf) {
     /** @todo horrible workaround, fix this properly */
@@ -1261,16 +1253,15 @@ Containers::Optional<MeshData> AssimpImporter::doMesh(const UnsignedInt id, Unsi
 }
 
 MeshAttribute AssimpImporter::doMeshAttributeForName(const Containers::StringView name) {
-    if(_f) {
-        for(const auto& attribute: MeshAttributesForName)
-            if(attribute.first() == name) return attribute.second();
-    }
-    return MeshAttribute{};
+    if(name == "JOINTS"_s) return JointsAttribute;
+    if(name == "WEIGHTS"_s) return WeightsAttribute;
+    return {};
 }
 
 Containers::String AssimpImporter::doMeshAttributeName(UnsignedShort name) {
-    return _f && name < Containers::arraySize(MeshAttributeNames) ?
-        MeshAttributeNames[name] : "";
+    if(meshAttributeCustom(name) == JointsAttribute) return "JOINTS"_s;
+    if(meshAttributeCustom(name) == WeightsAttribute) return "WEIGHTS"_s;
+    return {};
 }
 
 UnsignedInt AssimpImporter::doMaterialCount() const { return _f->scene->mNumMaterials; }
