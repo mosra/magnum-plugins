@@ -123,7 +123,7 @@ struct AssimpImporter::File {
     /* Index -> pointer, pointer -> index conversion for nodes as they're
        represented in a tree. Needed by objectCount() (which is const) so can't
        be delayed to scenne() parsing. */
-    Containers::Array<aiNode*> nodes;
+    Containers::Array<const aiNode*> nodes;
     std::unordered_map<const aiNode*, UnsignedInt> nodeIndices;
     /* (materialPointer, propertyIndexInsideMaterial, imageIndex) tuple,
        imageIndex points to the (deduplicated) images array */
@@ -525,7 +525,7 @@ void AssimpImporter::doOpenData(Containers::Array<char>&& data, DataFlags) {
 
             const size_t numDescendants = countNodeDescendants(root);
             arrayReserve(_f->nodes, numDescendants);
-            arrayAppend(_f->nodes, Containers::arrayView(const_cast<aiNode* const*>(root->mChildren), root->mNumChildren));
+            arrayAppend(_f->nodes, Containers::arrayView(const_cast<const aiNode* const*>(root->mChildren), root->mNumChildren));
             _f->nodeIndices.reserve(numDescendants);
             _f->rootTransformation = Matrix4::from(reinterpret_cast<const float*>(&root->mTransformation)).transposed();
 
@@ -543,9 +543,9 @@ void AssimpImporter::doOpenData(Containers::Array<char>&& data, DataFlags) {
         /* Unpack the node tree into a linear array we can index into. Insert
            into a vector may invalidate iterators, so we use indices here. */
         for(std::size_t i = 0; i < _f->nodes.size(); ++i) {
-            aiNode* node = _f->nodes[i];
+            const aiNode* node = _f->nodes[i];
             _f->nodeIndices[node] = UnsignedInt(i);
-            arrayAppend(_f->nodes, Containers::arrayView(const_cast<aiNode* const*>(node->mChildren), node->mNumChildren));
+            arrayAppend(_f->nodes, Containers::arrayView(const_cast<const aiNode* const*>(node->mChildren), node->mNumChildren));
         }
     }
 
