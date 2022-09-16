@@ -563,7 +563,7 @@ void AssimpImporter::doOpenData(Containers::Array<char>&& data, DataFlags) {
     #endif
 
     /* Find meshes with bone data, those are our skins */
-    arrayResize(_f->meshSkins, _f->scene->mNumMeshes);
+    _f->meshSkins = Containers::Array<Int>{NoInit, _f->scene->mNumMeshes};
     arrayReserve(_f->meshesWithBones, _f->scene->mNumMeshes);
     for(std::size_t i = 0; i != _f->scene->mNumMeshes; ++i) {
         Int skin = -1;
@@ -585,7 +585,7 @@ void AssimpImporter::doOpenData(Containers::Array<char>&& data, DataFlags) {
             numBones += _f->scene->mMeshes[mesh]->mNumBones;
         arrayReserve(_f->mergedBones, numBones);
 
-        arrayResize(_f->boneMap, _f->meshesWithBones.size());
+        _f->boneMap = Containers::Array<Containers::Array<UnsignedInt>>{ValueInit, _f->meshesWithBones.size()};
         for(std::size_t s = 0; s < _f->meshesWithBones.size(); ++s) {
             const UnsignedInt id = _f->meshesWithBones[s];
             const aiMesh* mesh = _f->scene->mMeshes[id];
