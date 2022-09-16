@@ -465,8 +465,15 @@ void AssimpImporter::doOpenData(Containers::Array<char>&& data, DataFlags) {
     for(UnsignedInt i = 0; i < _f->scene->mNumMaterials; ++i) {
         const aiMaterial* mat = _f->scene->mMaterials[i];
 
-        if(mat->Get(AI_MATKEY_NAME, matName) == AI_SUCCESS)
-            _f->materialIndicesForName[matName] = i;
+        if(mat->Get(AI_MATKEY_NAME, matName) == AI_SUCCESS) {
+            /* Avoid a copy if we can. Can't insert with the non-owned String
+               key because that'd be a dangling view. */
+            auto found = _f->materialIndicesForName.find(Containers::String::nullTerminatedView(matName));
+            if(found == _f->materialIndicesForName.end())
+                _f->materialIndicesForName[matName] = i;
+            else
+                found->second = i;
+        }
 
         /* Store first possible texture index for this material, next textures
            use successive indices. */
@@ -1262,7 +1269,7 @@ Containers::String AssimpImporter::doMeshAttributeName(UnsignedShort name) {
 UnsignedInt AssimpImporter::doMaterialCount() const { return _f->scene->mNumMaterials; }
 
 Int AssimpImporter::doMaterialForName(const Containers::StringView name) {
-    auto found = _f->materialIndicesForName.find(name);
+    auto found = _f->materialIndicesForName.find(Containers::String::nullTerminatedView(name));
     return found != _f->materialIndicesForName.end() ? found->second : -1;
 }
 
