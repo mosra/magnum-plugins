@@ -498,8 +498,6 @@ void AssimpImporter::doOpenData(Containers::Array<char>&& data, DataFlags) {
         }
     }
 
-    arrayShrink(_f->images);
-
     /* For some formats (such as COLLADA) Assimp fails to open the scene if
        there are no nodes, so there this is always non-null. For other formats
        (such as glTF) Assimp happily provides a null root node, even though
@@ -575,7 +573,6 @@ void AssimpImporter::doOpenData(Containers::Array<char>&& data, DataFlags) {
         }
         _f->meshSkins[i] = skin;
     }
-    arrayShrink(_f->meshesWithBones);
 
     /* Can't be changed per skin-import because it affects joint id vertex
        attributes during doMesh */
@@ -612,8 +609,6 @@ void AssimpImporter::doOpenData(Containers::Array<char>&& data, DataFlags) {
                 arrayAppend(map, index);
             }
         }
-
-        arrayShrink(_f->mergedBones);
     }
 }
 
