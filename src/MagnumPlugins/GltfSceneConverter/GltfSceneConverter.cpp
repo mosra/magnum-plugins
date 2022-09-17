@@ -413,16 +413,15 @@ Containers::Optional<Containers::Array<char>> GltfSceneConverter::doEndData() {
 
         /* glTF header */
         Containers::arrayAppend<ArrayAllocator>(out,
-            Containers::ArrayView<const char>{"glTF\x02\x00\x00\x00"_s});
-        /** @todo WTF the casts here */
+            "glTF\x02\x00\x00\x00"_s);
         Containers::arrayAppend<ArrayAllocator>(out,
-            Containers::arrayView(CharCaster{UnsignedInt(totalSize)}.data));
+            CharCaster{UnsignedInt(totalSize)}.data);
 
         /* JSON chunk header */
-        /** @todo WTF the cast here */
         Containers::arrayAppend<ArrayAllocator>(out,
-            Containers::arrayView(CharCaster{UnsignedInt(json.size())}.data));
-        Containers::arrayAppend<ArrayAllocator>(out, {'J', 'S', 'O', 'N'});
+            CharCaster{UnsignedInt(json.size())}.data);
+        Containers::arrayAppend<ArrayAllocator>(out,
+            "JSON"_s);
 
     /* Otherwise reserve just for the JSON */
     } else Containers::arrayReserve<ArrayAllocator>(out, json.size());
@@ -433,17 +432,16 @@ Containers::Optional<Containers::Array<char>> GltfSceneConverter::doEndData() {
        in plugins. */
     /** @todo make it possible to specify an external allocator in JsonWriter
         once allocators-as-arguments are a thing */
-    /** @todo WTF the casts here */
-    Containers::arrayAppend<ArrayAllocator>(out, Containers::ArrayView<const char>(json.toString()));
+    Containers::arrayAppend<ArrayAllocator>(out, json.toString());
 
     /* Add the buffer as a second BIN chunk for a binary glTF */
     if(_state->binary && !_state->buffer.isEmpty()) {
-        /** @todo WTF the cast here */
         Containers::arrayAppend<ArrayAllocator>(out,
-            Containers::arrayView(CharCaster{UnsignedInt(_state->buffer.size())}.data));
-        Containers::arrayAppend<ArrayAllocator>(out, {'B', 'I', 'N', '\0'});
-        /** @todo WTF the casts here */
-        Containers::arrayAppend<ArrayAllocator>(out, Containers::ArrayView<const char>(_state->buffer));
+            CharCaster{UnsignedInt(_state->buffer.size())}.data);
+        Containers::arrayAppend<ArrayAllocator>(out,
+            "BIN\0"_s);
+        Containers::arrayAppend<ArrayAllocator>(out,
+            _state->buffer);
     }
 
     /* GCC 4.8 and Clang 3.8 need extra help here */
@@ -1932,8 +1930,7 @@ template<UnsignedInt dimensions> bool GltfSceneConverter::convertAndWriteImage(c
             return {};
         }
 
-        /** @todo ugh, fix the casts already */
-        imageData = arrayAppend(_state->buffer, arrayView(*out));
+        imageData = arrayAppend(_state->buffer, *out);
     } else {
         /* All existing image converters that return a MIME type return an
            extension as well, so we can (currently) get away with an assert.
