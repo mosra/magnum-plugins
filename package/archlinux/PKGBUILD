@@ -8,7 +8,7 @@ url="https://magnum.graphics"
 license=('MIT')
 depends=('magnum' 'devil' 'faad2' 'freetype2' 'harfbuzz' 'libjpeg' 'libpng' 'assimp' 'meshoptimizer' 'openexr' 'spirv-tools' 'glslang' 'zstd' 'libwebp')
 makedepends=('cmake' 'ninja' 'basis-universal-src')
-options=(!strip)
+options=('!strip' '!buildflags')
 provides=('magnum-plugins-git')
 
 _rootdir=$startdir/../../
@@ -18,7 +18,8 @@ build() {
     cd "$_rootdir/build"
 
     cmake .. \
-        -DCMAKE_BUILD_TYPE=Debug \
+        -DCMAKE_CONFIGURATION_TYPES="Debug;Release" \
+        -DCMAKE_CROSS_CONFIGS=all \
         -DCMAKE_INSTALL_PREFIX=/usr \
         -DBASIS_UNIVERSAL_DIR=/opt/basis-universal \
         -DMAGNUM_BUILD_TESTS=ON \
@@ -64,16 +65,19 @@ build() {
         -DMAGNUM_WITH_STLIMPORTER=ON \
         -DMAGNUM_WITH_TINYGLTFIMPORTER=ON \
         -DMAGNUM_WITH_WEBPIMPORTER=ON \
-        -G Ninja
-    ninja
+        -G "Ninja Multi-Config"
+    ninja all:all
 }
 
 check() {
     cd "$_rootdir/build"
-    CORRADE_TEST_COLOR=ON ctest --output-on-failure -j5
+
+    for config in Debug Release; do
+        CORRADE_TEST_COLOR=ON ctest -C $config --output-on-failure -j
+    done
 }
 
 package() {
     cd "$_rootdir/build"
-    DESTDIR="$pkgdir/" ninja install
+    DESTDIR="$pkgdir/" ninja install:Debug install/strip:Release
 }
