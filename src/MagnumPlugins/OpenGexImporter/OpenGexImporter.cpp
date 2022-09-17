@@ -235,9 +235,6 @@ void OpenGexImporter::doOpenFile(const Containers::StringView filename) {
     AbstractImporter::doOpenFile(filename);
 
     /* If succeeded, save file path for later */
-    /** @todo once AbstractImporter is <string>-free, consider storing a
-        nullTerminatedGlobalView() here (but the split path is not
-        null-terminated, ugh) */
     if(_d) _d->filePath.emplace(Utility::Path::split(filename).first());
 }
 
