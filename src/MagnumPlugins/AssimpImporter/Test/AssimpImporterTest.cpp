@@ -459,7 +459,7 @@ void AssimpImporterTest::animation() {
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "exported-animation"_s + data.suffix)));
 
     struct Node {
-        const char* name;
+        const Containers::StringView name;
         Vector3 translation;
         Quaternion rotation;
         Vector3 scaling;
@@ -474,9 +474,9 @@ void AssimpImporterTest::animation() {
 
     /* Find animation target nodes by their name */
     Node nodes[3]{
-        {"Rotating", {}, {}, {}},
-        {"Scaling", {}, {}, {}},
-        {"Translating", {}, {}, {}}
+        {"Rotating"_s, {}, {}, {}},
+        {"Scaling"_s, {}, {}, {}},
+        {"Translating"_s, {}, {}, {}}
     };
     Node* nodeMap[3]{};
 
@@ -484,11 +484,11 @@ void AssimpImporterTest::animation() {
     CORRADE_COMPARE(objectCount, Containers::arraySize(nodes));
 
     for(UnsignedInt i = 0; i < objectCount; i++) {
-        const std::string name = importer->objectName(i);
+        const Containers::String name = importer->objectName(i);
         for(Node& n: nodes) {
             /* Exported Collada files have spaces replaced with underscores,
                so check for the first words only */
-            if(name.find(n.name) == 0) {
+            if(name.hasPrefix(n.name)) {
                 /* Node names in the test files are unique */
                 CORRADE_VERIFY(!nodeMap[i]);
                 nodeMap[i] = &n;
@@ -1324,15 +1324,15 @@ bool supportsSkinning(const Containers::StringView fileName, unsigned int assimp
 /* Since 5.1.0 the Collada importer uses the mesh ID as the name. Imitate the
    Blender(?) exporter that generated the IDs from the name. A bit hacky but
    still better than special-casing every test that loads meshes by name. */
-std::string fixMeshName(const Containers::StringView meshName, const Containers::StringView fileName, unsigned int assimpVersion) {
-    std::string fixed = meshName;
+Containers::String fixMeshName(const Containers::StringView meshName, const Containers::StringView fileName, unsigned int assimpVersion) {
     if(assimpVersion >= 510 && fileName.hasSuffix(".dae"_s)) {
-        for(char& c: fixed)
+        Containers::String fixed = meshName + "-mesh";
+        for(char& c: fixed.prefix(meshName.size()))
             if(c != '-' && !std::isalnum(static_cast<unsigned char>(c))) c = '_';
-        fixed += "-mesh";
+        return fixed;
+    } else {
+        return meshName;
     }
-
-    return fixed;
 }
 
 void AssimpImporterTest::skin() {
@@ -1376,14 +1376,14 @@ void AssimpImporterTest::skin() {
     constexpr Containers::StringView objectNames[]{
         "Mesh_1"_s, "Mesh_2"_s, "Plane"_s
     };
-    const std::string jointNames[][2]{
-        {"Node_1", "Node_2"},
-        {"Node_3", "Node_4"}
+    constexpr Containers::StringView jointNames[][2]{
+        {"Node_1"_s, "Node_2"_s},
+        {"Node_3"_s, "Node_4"_s}
     };
 
     for(UnsignedInt i = 0; i != Containers::arraySize(objectNames) - 1; ++i) {
         /* Skin names are taken from mesh names, skin order is arbitrary */
-        const std::string meshName = fixMeshName(objectNames[i], data.suffix, _assimpVersion);
+        const Containers::String meshName = fixMeshName(objectNames[i], data.suffix, _assimpVersion);
         const Int skinIndex = importer->skin3DForName(meshName);
         CORRADE_VERIFY(skinIndex != -1);
         CORRADE_COMPARE(importer->skin3DName(skinIndex), meshName);
@@ -1396,11 +1396,11 @@ void AssimpImporterTest::skin() {
         /* Don't check joint order, only presence */
         Containers::ArrayView<const UnsignedInt> joints = skin->joints();
         CORRADE_COMPARE(joints.size(), Containers::arraySize(jointNames[i]));
-        for(const std::string& name: jointNames[i]) {
+        for(Containers::StringView name: jointNames[i]) {
             auto found = std::find_if(joints.begin(), joints.end(), [&](UnsignedInt joint) {
                     /* Blender's Collada exporter adds an Armature_ prefix to
                        object names */
-                    return Utility::String::endsWith(importer->objectName(joint), name);
+                    return importer->objectName(joint).hasSuffix(name);
                 });
             CORRADE_VERIFY(found != joints.end());
         }
@@ -1427,7 +1427,7 @@ void AssimpImporterTest::skin() {
 
     {
         /* Unskinned meshes and mesh nodes shouldn't have a skin */
-        const std::string meshName = fixMeshName(objectNames[2], data.suffix, _assimpVersion);
+        const Containers::String meshName = fixMeshName(objectNames[2], data.suffix, _assimpVersion);
         CORRADE_VERIFY(importer->meshForName(meshName) != -1);
         CORRADE_COMPARE(importer->skin3DForName(meshName), -1);
         Long meshObject = importer->objectForName(objectNames[2]);
@@ -2518,7 +2518,7 @@ void AssimpImporterTest::mesh() {
        scene */
     CORRADE_COMPARE(importer->meshCount(), 2);
 
-    const std::string name = fixMeshName("Cube", ".dae", _assimpVersion);
+    const Containers::String name = fixMeshName("Cube", ".dae", _assimpVersion);
     CORRADE_COMPARE(importer->meshName(1), name);
     CORRADE_COMPARE(importer->meshForName(name), 1);
     CORRADE_COMPARE(importer->meshForName("nonexistent"), -1);
@@ -2735,12 +2735,12 @@ void AssimpImporterTest::meshSkinningAttributes() {
     const MeshAttribute jointsAttribute = importer->meshAttributeForName("JOINTS");
     const MeshAttribute weightsAttribute = importer->meshAttributeForName("WEIGHTS");
 
-    const std::string meshNames[]{
+    const Containers::String meshNames[]{
         fixMeshName("Mesh_1"_s, data.suffix, _assimpVersion),
         fixMeshName("Mesh_2"_s, data.suffix, _assimpVersion)
     };
 
-    for(const std::string& meshName: meshNames) {
+    for(Containers::StringView meshName: meshNames) {
         Containers::Optional<MeshData> mesh;
         std::ostringstream out;
         {
@@ -3037,7 +3037,7 @@ void AssimpImporterTest::meshMultiplePrimitives() {
     /* Two meshes, but one has two primitives and one three. */
     CORRADE_COMPARE(importer->meshCount(), 5);
     {
-        const std::string name = fixMeshName("Multi-primitive triangle fan, line strip", ".dae", _assimpVersion);
+        const Containers::String name = fixMeshName("Multi-primitive triangle fan, line strip", ".dae", _assimpVersion);
         CORRADE_COMPARE(importer->meshName(0), name);
         CORRADE_COMPARE(importer->meshName(1), name);
         CORRADE_COMPARE(importer->meshForName(name), 0);
@@ -3049,7 +3049,7 @@ void AssimpImporterTest::meshMultiplePrimitives() {
         CORRADE_VERIFY(mesh1);
         CORRADE_COMPARE(mesh1->primitive(), MeshPrimitive::Lines);
     } {
-        const std::string name = fixMeshName("Multi-primitive lines, triangles, triangle strip", ".dae", _assimpVersion);
+        const Containers::String name = fixMeshName("Multi-primitive lines, triangles, triangle strip", ".dae", _assimpVersion);
         CORRADE_COMPARE(importer->meshName(2), name);
         CORRADE_COMPARE(importer->meshName(3), name);
         CORRADE_COMPARE(importer->meshName(4), name);
