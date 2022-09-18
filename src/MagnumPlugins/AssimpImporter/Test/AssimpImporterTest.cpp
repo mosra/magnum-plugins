@@ -1501,21 +1501,34 @@ void AssimpImporterTest::skinMerge() {
     CORRADE_VERIFY(skin);
     CORRADE_VERIFY(!skin->importerState()); /* No particular skin */
 
-    constexpr UnsignedInt expectedObjects[]{0, 0, 3, 4, 5, 6};
-    constexpr Matrix4 expectedBones[] {
-        /* 0 and 1: same name and matrix */
+    const Long originalJoints[]{
+        /* Skin1 */
+        importer->objectForName("A"),
+        importer->objectForName("B"),
+        importer->objectForName("C"),
+        /* Skin2 */
+        importer->objectForName("A"),
+        importer->objectForName("D"),
+        importer->objectForName("E"),
+    };
+    const Matrix4 originalMatrices[] {
+        /* Skin1 */
         Matrix4::translation(Vector3::xAxis()),
-        Matrix4::translation(Vector3::xAxis()),
-        /* 2: common name with 0 and 1, but different matrix */
         Matrix4::translation(Vector3::zAxis()),
-        /* 3 and 4: same matrix, but different name */
         Matrix4::translation(Vector3::yAxis()),
+        /* Skin2 */
+        Matrix4::translation(Vector3::xAxis()),
         Matrix4::translation(Vector3::yAxis()),
-        /* unique */
         Matrix4::translation(Vector3::zAxis())
     };
-    /* Relying on the skin order here, this *might* break in the future */
-    constexpr UnsignedInt mergeOrder[]{1, 2, 3, 4, 5};
+    /* Relying on the skin order here (Skin2 merged after Skin1), this *might*
+       break in the future */
+    constexpr UnsignedInt mergeOrder[]{
+        /* Skin1, all joints */
+        0, 1, 2,
+        /* Skin 2, joint 3 is a duplicate of joint 0 */
+        4, 5
+    };
 
     Containers::ArrayView<const UnsignedInt> joints = skin->joints();
     Containers::ArrayView<const Matrix4> inverseBindMatrices = skin->inverseBindMatrices();
@@ -1524,9 +1537,9 @@ void AssimpImporterTest::skinMerge() {
 
     for(UnsignedInt i = 0; i != joints.size(); ++i) {
         CORRADE_ITERATION(i);
-        CORRADE_COMPARE(joints[i], expectedObjects[mergeOrder[i]]);
+        CORRADE_COMPARE(joints[i], originalJoints[mergeOrder[i]]);
         CORRADE_VERIFY(!scene->meshesMaterialsFor(joints[i]));
-        CORRADE_COMPARE(inverseBindMatrices[i], expectedBones[mergeOrder[i]]);
+        CORRADE_COMPARE(inverseBindMatrices[i], originalMatrices[mergeOrder[i]]);
     }
 }
 
