@@ -2991,25 +2991,8 @@ void AssimpImporterTest::meshSkinningAttributesMerge() {
         shiftedJointData[i] = MeshSkinningAttributesJointData[i] + (mask * 2);
     }
 
-    {
-        const Int id = importer->meshForName(fixMeshName("Mesh_1"_s, ".dae"_s, _assimpVersion));
-        CORRADE_VERIFY(id != -1);
-        Containers::Optional<Trade::MeshData> mesh = importer->mesh(id);
-        CORRADE_VERIFY(mesh);
-        CORRADE_VERIFY(mesh->hasAttribute(jointsAttribute));
-        CORRADE_COMPARE(mesh->attributeFormat(jointsAttribute), VertexFormat::Vector4ui);
-        Containers::ArrayView<const Vector4ui> jointData = id == 0
-            ? Containers::arrayView(MeshSkinningAttributesJointData)
-            : Containers::arrayView(shiftedJointData);
-        CORRADE_COMPARE_AS(mesh->attribute<Vector4ui>(jointsAttribute),
-            Containers::arrayView(jointData), TestSuite::Compare::Container);
-        CORRADE_VERIFY(mesh->hasAttribute(weightsAttribute));
-        CORRADE_COMPARE(mesh->attributeFormat(weightsAttribute), VertexFormat::Vector4);
-        CORRADE_COMPARE_AS(mesh->attribute<Vector4>(weightsAttribute),
-            Containers::arrayView(MeshSkinningAttributesWeightData),
-            TestSuite::Compare::Container);
-    } {
-        const Int id = importer->meshForName(fixMeshName("Mesh_2"_s, ".dae"_s, _assimpVersion));
+    for(const char* meshName: {"Mesh_1", "Mesh_2"}) {
+        const Int id = importer->meshForName(fixMeshName(meshName, ".dae"_s, _assimpVersion));
         CORRADE_VERIFY(id != -1);
         Containers::Optional<Trade::MeshData> mesh = importer->mesh(id);
         CORRADE_VERIFY(mesh);
