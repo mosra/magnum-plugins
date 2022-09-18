@@ -84,6 +84,11 @@ install:
 - IF "%TARGET%" == "desktop" IF "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2019" IF "%COMPILER:~0,4%" == "msvc" appveyor DownloadFile https://ci.magnum.graphics/libjpeg-turbo-2.0.6-windows-2019.zip && 7z x libjpeg-turbo-2.0.6-windows-2019.zip -o%APPVEYOR_BUILD_FOLDER%\deps
 - IF "%TARGET%" == "desktop" IF "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2017" IF "%COMPILER:~0,4%" == "msvc" appveyor DownloadFile https://ci.magnum.graphics/libjpeg-turbo-2.0.6-windows-2016.zip && 7z x libjpeg-turbo-2.0.6-windows-2016.zip -o%APPVEYOR_BUILD_FOLDER%\deps
 
+# libwebp, except for RT and MinGW because of course "a windows binary" by
+# Google is MSVC only
+- IF NOT "%TARGET%" == "rt" IF NOT "%COMPILER%" == "mingw" IF NOT EXIST %APPVEYOR_BUILD_FOLDER%\libwebp-1.2.4-windows-x64.zip appveyor DownloadFile https://storage.googleapis.com/downloads.webmproject.org/releases/webp/libwebp-1.2.4-windows-x64.zip
+- IF NOT "%TARGET%" == "rt" IF NOT "%COMPILER%" == "mingw" 7z x libwebp-1.2.4-windows-x64.zip && ren libwebp-1.2.4-windows-x64 libwebp
+
 # OpenAL
 - IF NOT "%TARGET%" == "rt" IF NOT EXIST %APPVEYOR_BUILD_FOLDER%\openal-soft-1.19.1-bin.zip appveyor DownloadFile https://openal-soft.org/openal-binaries/openal-soft-1.19.1-bin.zip
 - IF NOT "%TARGET%" == "rt" 7z x openal-soft-1.19.1-bin.zip && ren openal-soft-1.19.1-bin openal && echo [General] > %APPDATA%/alsoft.ini & echo drivers=null >> %APPDATA%/alsoft.ini
@@ -148,3 +153,4 @@ cache:
 - basis_universal-%BASIS_VERSION%.zip -> package/ci/appveyor-cache-reset.txt
 # meshoptimizer
 - v0.14.zip -> package/ci/appveyor-cache-reset.txt
+- libwebp-1.2.4-windows-x64.zip -> package/ci/appveyor-cache-reset.txt
