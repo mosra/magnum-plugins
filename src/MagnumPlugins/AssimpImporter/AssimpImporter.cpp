@@ -523,7 +523,7 @@ void AssimpImporter::doOpenData(Containers::Array<char>&& data, DataFlags) {
 
             const size_t numDescendants = countNodeDescendants(root);
             arrayReserve(_f->nodes, numDescendants);
-            arrayAppend(_f->nodes, Containers::arrayView(const_cast<const aiNode* const*>(root->mChildren), root->mNumChildren));
+            arrayAppend(_f->nodes, Containers::arrayView(root->mChildren, root->mNumChildren));
             _f->nodeIndices.reserve(numDescendants);
             _f->rootTransformation = Matrix4::from(reinterpret_cast<const float*>(&root->mTransformation)).transposed();
 
@@ -543,7 +543,7 @@ void AssimpImporter::doOpenData(Containers::Array<char>&& data, DataFlags) {
         for(std::size_t i = 0; i < _f->nodes.size(); ++i) {
             const aiNode* node = _f->nodes[i];
             _f->nodeIndices[node] = UnsignedInt(i);
-            arrayAppend(_f->nodes, Containers::arrayView(const_cast<const aiNode* const*>(node->mChildren), node->mNumChildren));
+            arrayAppend(_f->nodes, Containers::arrayView(node->mChildren, node->mNumChildren));
         }
     }
 
