@@ -58,7 +58,8 @@ namespace Magnum {
 -   New @relativeref{Trade,StbResizeImageConverter} for image downsampling and
     upsampling
 -   New @relativeref{Trade,WebPImporter} for importing WebP files (see
-    [mosra/magnum-plugins#121](https://github.com/mosra/magnum-plugins/pull/121))
+    [mosra/magnum-plugins#121](https://github.com/mosra/magnum-plugins/pull/121),
+    [mosra/magnum-plugins#126](https://github.com/mosra/magnum-plugins/pull/126))
 -   New @relativeref{Trade,GltfImporter} plugin for importing glTF files, which
     is a smaller, faster-compiling, faster-importing and more memory-friendly
     drop-in replacement for now-deprecated `TinyGltfImporter`. Originally built

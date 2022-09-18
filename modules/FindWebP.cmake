@@ -39,7 +39,10 @@
 #
 
 # Library
-find_library(WebP_LIBRARY NAMES webp libwebp)
+find_library(WebP_LIBRARY NAMES webp
+    # Prebuilt Windows binaries have a `lib` prefix as well, even though they
+    # shouldn't, sigh: https://developers.google.com/speed/webp/download
+    libwebp)
 
 # Include dir
 find_path(WebP_INCLUDE_DIR

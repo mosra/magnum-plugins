@@ -67,7 +67,8 @@ namespace Magnum {
     @ref Trade::DdsImporter "DdsImporter" and
     @ref Audio::StbVorbisImporter "StbVorbisAudioImporter" plugins,
     improvements to @ref Trade::TinyGltfImporter "TinyGltfImporter" and
-    @ref Text::StbTrueTypeFont "StbTrueTypeFont"
+    @ref Text::StbTrueTypeFont "StbTrueTypeFont"; Windows-specific updates and
+    fixes
 -   **Jonathan Mercier-Ganady** ([\@Jmgr](https://github.com/Jmgr)) --- build
     fixes
 -   **Konstantinos Chatzilygeroudis** ([\@costashatz](https://github.com/costashatz))
