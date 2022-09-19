@@ -1373,10 +1373,10 @@ void AssimpImporterTest::skin() {
        the comment for ExportedFileData. */
     const Matrix4 correction{data.correction.toMatrix()};
 
-    constexpr Containers::StringView objectNames[]{
+    const Containers::StringView objectNames[]{
         "Mesh_1"_s, "Mesh_2"_s, "Plane"_s
     };
-    constexpr Containers::StringView jointNames[][2]{
+    const Containers::StringView jointNames[][2]{
         {"Node_1"_s, "Node_2"_s},
         {"Node_3"_s, "Node_4"_s}
     };
