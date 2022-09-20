@@ -57,9 +57,8 @@ namespace Magnum { namespace Trade {
 
 @m_keywords{PLY}
 
-Supports Little- and Big-Endian binary PLY (`*.ply`) files with triangle and
-quad meshes. Imports vertex positions, normals, 2D texture coordinates, vertex
-colors, custom attributes and per-face data as well.
+Imports Little- and Big-Endian binary PLY (`*.ply`) files. You can use
+@ref StanfordSceneConverter to encode meshes into this format.
 
 @section Trade-StanfordImporter-usage Usage
 
