@@ -6,7 +6,7 @@
     Copyright © 2017, 2020, 2021, 2022 Jonathan Hale <squareys@googlemail.com>
     Copyright © 2018 Konstantinos Chatzilygeroudis <costashatz@gmail.com>
     Copyright © 2019, 2020 Max Schwarz <max.schwarz@ais.uni-bonn.de>
-    Copyright © 2021 Pablo Escobar <mail@rvrs.in>
+    Copyright © 2021, 2022 Pablo Escobar <mail@rvrs.in>
 
     Permission is hereby granted, free of charge, to any person obtaining a
     copy of this software and associated documentation files (the "Software"),

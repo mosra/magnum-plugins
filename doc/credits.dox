@@ -89,9 +89,9 @@ namespace Magnum {
     @relativeref{Trade,KtxImporter}, @relativeref{Trade,KtxImageConverter},
     @relativeref{Trade,GltfImporter}, upgrades to
     @relativeref{Trade,BasisImporter} and @relativeref{Trade,BasisImageConverter},
-    animation and skinning support in @ref Trade::AssimpImporter "AssimpImporter",
-    improved @relativeref{Trade,TinyGltfImporter} robustness, documentation
-    updates
+    animation and skinning support and general maintenance of
+    @ref Trade::AssimpImporter "AssimpImporter", improved
+    @relativeref{Trade,TinyGltfImporter} robustness, documentation updates
 -   **[\@playgroo](https://github.com/playgroo)** --- Debian package updates
 -   **Séverin Lemaignan** ([\@severin-lemaignan](https://github.com/severin-lemaignan))
     --- buildsystem fixes, bugreports

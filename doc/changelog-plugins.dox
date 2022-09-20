@@ -121,6 +121,8 @@ namespace Magnum {
     @cb{.ini} Debone @ce
 -   @relativeref{Trade,AssimpImporter} now provides the `3mfImporter` alias
     for convenient loading of `*.3mf` files
+-   Adapted @relativeref{Trade,AssimpImporter} to changes in version 5.2.5 and
+    cleaned up STL usage (see [mosra/magnum-plugins#130](https://github.com/mosra/magnum-plugins/pull/130))
 -   @relativeref{Trade,DdsImporter} now supports also 1D textures, cube maps,
     1D, 2D and cube map arrays; all DXGI depth, stencil and compressed formats,
     legacy non-DXGI RGBX, BGRX, BC4 and BC5 formats, BGR(A) formats also for
