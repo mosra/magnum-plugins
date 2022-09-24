@@ -257,7 +257,7 @@ through @ref configuration(). The assembler options are used also during
 validation in case the input is a SPIR-V assembly. See below for all options
 and their default values.
 
-@snippet MagnumPlugins/SpirvToolsShaderConverter/SpirvToolsShaderConverter.conf configuration_
+@snippet MagnumPlugins/SpirvToolsShaderConverter/SpirvToolsConverter.conf configuration_
 
 See @ref plugins-configuration for more information and an example showing how
 to edit the configuration values.
