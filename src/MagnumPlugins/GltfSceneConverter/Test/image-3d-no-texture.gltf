@@ -2,6 +2,9 @@
   "asset": {
     "version": "2.0"
   },
+  "extensionsUsed": [
+    "KHR_texture_ktx"
+  ],
   "images": [
     {
       "uri": "image-3d-no-texture.0.ktx2"

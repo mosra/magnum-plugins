@@ -379,52 +379,51 @@ const struct {
     const char* expected;
     const char* expectedOtherFile;
     const char* expectedWarning;
+    bool expectedExtension;
 } AddImage2DData[]{
     {"*.gltf", "PngImageConverter", "PngImporter",
         false, {}, {}, {}, {},
-        "image.gltf", "image.0.png", nullptr},
+        "image.gltf", "image.0.png", nullptr, false},
     /* The image (or the buffer) is the same as image.0.png in these three
        variants, not testing its contents */
     {"*.gltf, name", "PngImageConverter", "PngImporter",
         false, "A very pingy image", {}, {}, {},
-        "image-name.gltf", nullptr, nullptr},
+        "image-name.gltf", nullptr, nullptr, false},
     {"*.gltf, bundled, accessor names", "PngImageConverter", "PngImporter",
         true, {}, {}, {}, true,
-        "image-accessor-names.gltf", nullptr, nullptr},
+        "image-accessor-names.gltf", nullptr, nullptr, false},
     {"*.gltf, bundled, name, accessor names", "PngImageConverter", "PngImporter",
         true, "A rather pingy image", {}, {}, true,
-        "image-name-accessor-names.gltf", nullptr, nullptr},
+        "image-name-accessor-names.gltf", nullptr, nullptr, false},
     {"*.glb", "PngImageConverter", "PngImporter",
         false, {}, {}, {}, {},
-        "image.glb", nullptr, nullptr},
+        "image.glb", nullptr, nullptr, false},
     {"*.gltf, bundled", "PngImageConverter", "PngImporter",
         false, {}, {}, {}, true,
-        "image-bundled.gltf", "image-bundled.bin", nullptr},
+        "image-bundled.gltf", "image-bundled.bin", nullptr, false},
     {"*.glb, not bundled", "PngImageConverter", "PngImporter",
         false, {}, {}, {}, false,
-        "image-not-bundled.glb", "image-not-bundled.0.png", nullptr},
+        "image-not-bundled.glb", "image-not-bundled.0.png", nullptr, false},
     {"JPEG", "JpegImageConverter", "JpegImporter",
         false, {}, {}, {}, {},
-        "image-jpeg.glb", nullptr, nullptr},
+        "image-jpeg.glb", nullptr, nullptr, false},
     {"KTX2+Basis", "BasisKtxImageConverter", "BasisImporter",
         false, {}, {}, {}, {},
-        "image-basis.glb", nullptr, nullptr},
+        "image-basis.glb", nullptr, nullptr, true},
     {"KTX2 with extension", "KtxImageConverter", "KtxImporter",
         false, {}, true, {}, {},
-        "image-ktx.glb", nullptr, nullptr},
+        "image-ktx.glb", nullptr, nullptr, true},
     {"KTX2 without extension", "KtxImageConverter", "KtxImporter",
         false, {}, {}, false, {},
-        /* The file is exactly the same, the only difference would be with
-           a texture reference */
-        "image-ktx.glb", nullptr,
+        "image-ktx-no-extension.glb", nullptr,
         "Trade::GltfSceneConverter::add(): KTX2 images can be saved using the KHR_texture_ktx extension, enable experimentalKhrTextureKtx to use it\n"
-        "Trade::GltfSceneConverter::add(): strict mode disabled, allowing image/ktx2 MIME type for an image\n"},
+        "Trade::GltfSceneConverter::add(): strict mode disabled, allowing image/ktx2 MIME type for an image\n", false},
     /* Explicitly using TGA converter from stb_image to avoid minor differences
        if Magnum's own TgaImageConverter is present as well */
     {"TGA", "StbTgaImageConverter", "TgaImporter",
         false, {}, {}, false, {},
         "image-tga.glb", nullptr,
-        "Trade::GltfSceneConverter::add(): strict mode disabled, allowing image/x-tga MIME type for an image\n"},
+        "Trade::GltfSceneConverter::add(): strict mode disabled, allowing image/x-tga MIME type for an image\n", false},
 };
 
 const struct {
@@ -478,6 +477,12 @@ const struct {
         ImageData2D{PixelFormat::R32F, {1, 1}, DataFlags{}, "abc"},
         "Trade::StbImageConverter::convertToData(): PixelFormat::R32F is not supported for BMP/JPEG/PNG/TGA output\n"
         "Trade::GltfSceneConverter::add(): can't convert an image\n"},
+    /* This tests that an extension isn't accidentally added even after a
+       failure */
+    {"conversion failed for a format that needs an extension", "BasisKtxImageConverter", ".gltf",
+        ImageData2D{PixelFormat::RG16Unorm, {1, 1}, DataFlags{}, "abc"},
+        "Trade::BasisImageConverter::convertToData(): unsupported format PixelFormat::RG16Unorm\n"
+        "Trade::GltfSceneConverter::add(): can't convert an image file\n"},
 };
 
 const struct {
@@ -501,6 +506,8 @@ const struct {
     {"invalid MIME type", "OpenExrImageConverter", ".gltf",
         ImageData3D{PixelFormat::RG16F, {1, 1, 1}, DataFlags{}, "abc", ImageFlag3D::Array},
         "image/x-exr is not a valid MIME type for a 3D glTF image"},
+    /* Also tests that an extension isn't accidentally added even after a
+       failure */
     {"conversion to file failed", "BasisKtxImageConverter", ".gltf",
         ImageData3D{PixelFormat::R32F, {1, 1, 1}, DataFlags{}, "abc", ImageFlag3D::Array},
         "Trade::BasisImageConverter::convertToData(): unsupported format PixelFormat::R32F\n"
@@ -2361,9 +2368,9 @@ void GltfSceneConverterTest::addImage2D() {
     const Containers::Optional<Containers::String> gltf = Utility::Path::readString(filename);
     CORRADE_VERIFY(gltf);
 
-    /* For images alone, no extensions should be recorded -- they only get so
-       if a texture references the image */
-    CORRADE_VERIFY(!gltf->contains("extensionsUsed"));
+    /* For images alone, extensions should be recorded only as used -- they get
+       recorded as required only once a texture references the image */
+    CORRADE_COMPARE(gltf->contains("extensionsUsed"), data.expectedExtension);
     CORRADE_VERIFY(!gltf->contains("extensionsRequired"));
 
     if(_importerManager.loadState("GltfImporter") == PluginManager::LoadState::NotFound)
@@ -2477,6 +2484,15 @@ void GltfSceneConverterTest::addImage3D() {
 
     /* There shouldn't be any *.bin written, unless the image is put into it */
     CORRADE_COMPARE(Utility::Path::exists(Utility::Path::splitExtension(Utility::Path::join(GLTFSCENECONVERTER_TEST_DIR, data.expected)).first() + ".bin"), Containers::StringView{data.expectedOtherFile}.hasSuffix(".bin"));
+
+    /* Verify various expectations that might be missed when just looking at
+       the file */
+    const Containers::Optional<Containers::String> gltf = Utility::Path::readString(filename);
+    CORRADE_VERIFY(gltf);
+
+    /* As there is a texture, the extension is also required now */
+    CORRADE_VERIFY(gltf->contains("extensionsUsed"));
+    CORRADE_VERIFY(gltf->contains("extensionsRequired"));
 
     if(_importerManager.loadState("GltfImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("GltfImporter plugin not found, cannot test a rountrip");
@@ -2806,6 +2822,13 @@ void GltfSceneConverterTest::addImageInvalid2D() {
             CORRADE_COMPARE(out.str(), Utility::formatString("Trade::GltfSceneConverter::add(): {}\n", data.message));
     }
 
+    /* Try adding the same image again, to catch assertions due to potential
+       internal state mismatches */
+    {
+        Error redirectError{nullptr};
+        CORRADE_VERIFY(!converter->add(data.image));
+    }
+
     /* The file should not get corrupted by this error */
     CORRADE_VERIFY(converter->endFile());
     CORRADE_COMPARE_AS(filename,
@@ -2837,6 +2860,13 @@ void GltfSceneConverterTest::addImageInvalid3D() {
             CORRADE_COMPARE(out.str(), Utility::formatString(data.message, filename));
         else
             CORRADE_COMPARE(out.str(), Utility::formatString("Trade::GltfSceneConverter::add(): {}\n", data.message));
+    }
+
+    /* Try adding the same image again, to catch assertions due to potential
+       internal state mismatches */
+    {
+        Error redirectError{nullptr};
+        CORRADE_VERIFY(!converter->add(data.image));
     }
 
     /* The file should not get corrupted by this error */
@@ -2915,7 +2945,8 @@ void GltfSceneConverterTest::addTextureMultiple() {
     converter->configuration().setValue("imageConverter", "PngImageConverter");
     CORRADE_VERIFY(converter->add(ImageView2D{PixelFormat::RGB8Unorm, {1, 1}, "yey"}));
 
-    /* Second image Basis, unused */
+    /* Second image Basis, unused. It will have a KHR_texture_basisu in
+       extensionsUsed but not in extensionRequired. */
     converter->configuration().setValue("imageConverter", "BasisKtxImageConverter");
     CORRADE_VERIFY(converter->add(ImageView2D{PixelFormat::RGB8Unorm, {1, 1}, "yey"}, "Basis-encoded, unused"));
 
@@ -2941,14 +2972,6 @@ void GltfSceneConverterTest::addTextureMultiple() {
     CORRADE_COMPARE_AS(filename,
         Utility::Path::join(GLTFSCENECONVERTER_TEST_DIR, "texture-multiple.gltf"),
         TestSuite::Compare::File);
-
-    /* Verify various expectations that might be missed when just looking at
-       the file */
-    const Containers::Optional<Containers::String> gltf = Utility::Path::readString(filename);
-    CORRADE_VERIFY(gltf);
-    /* The Basis image is not referenced and thus there should be no extension
-       reference */
-    CORRADE_VERIFY(!gltf->contains("KHR_texture_basisu"));
 
     if(_importerManager.loadState("GltfImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("GltfImporter plugin not found, cannot test a rountrip");

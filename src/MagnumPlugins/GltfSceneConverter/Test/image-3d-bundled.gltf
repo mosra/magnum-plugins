@@ -2,6 +2,12 @@
   "asset": {
     "version": "2.0"
   },
+  "extensionsUsed": [
+    "KHR_texture_ktx"
+  ],
+  "extensionsRequired": [
+    "KHR_texture_ktx"
+  ],
   "buffers": [
     {
       "uri": "image-3d-bundled.bin",

@@ -1793,6 +1793,13 @@ bool GltfSceneConverter::doAdd(CORRADE_UNUSED const UnsignedInt id, const Textur
        JSON. Otherwise we'd end up with a partly-written JSON in case of an
        unsupported mesh, corruputing the output. */
 
+    /* Mark the extension as required. This is only done if an image actually
+       gets referenced by a texture. */
+    if(textureExtension != GltfExtension{}) {
+        _state->requiredExtensions |= textureExtension;
+        _state->usedExtensions &= ~textureExtension;
+    }
+
     /* If this is a first texture, open the texture array */
     if(_state->gltfTextures.isEmpty())
         _state->gltfTextures.beginArray();
@@ -2070,10 +2077,22 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const ImageData2D& image, c
 
     const UnsignedInt gltfImageId = image2DCount() + image3DCount();
     CORRADE_INTERNAL_ASSERT(gltfImageId == (_state->gltfImages.isEmpty() ? 0 : _state->gltfImages.currentArraySize()));
+
+    /* If the image writing fails due to an error, don't add any extensions
+       -- otherwise we'd blow up on the asserts below when adding the next
+       image */
+    if(!convertAndWriteImage(id, name, *imageConverter, image, bundleImages))
+        return false;
+
     CORRADE_INTERNAL_ASSERT(_state->image2DIdsTextureExtensions.size() == id);
     arrayAppend(_state->image2DIdsTextureExtensions, InPlaceInit, gltfImageId, extension);
 
-    return convertAndWriteImage(id, name, *imageConverter, image, bundleImages);
+    /* Mark the extension as used. As required will be marked only if
+       referenced by a texture. */
+    if(extension != GltfExtension{})
+        _state->usedExtensions |= extension;
+
+    return true;
 }
 
 bool GltfSceneConverter::doAdd(const UnsignedInt id, const ImageData3D& image, const Containers::StringView name) {
@@ -2129,10 +2148,22 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const ImageData3D& image, c
 
     const UnsignedInt gltfImageId = image2DCount() + image3DCount();
     CORRADE_INTERNAL_ASSERT(gltfImageId == (_state->gltfImages.isEmpty() ? 0 : _state->gltfImages.currentArraySize()));
+
+    /* If the image writing fails due to an error, don't add any extensions
+       -- otherwise we'd blow up on the asserts below when adding the next
+       image */
+    if(!convertAndWriteImage(id, name, *imageConverter, image, bundleImages))
+        return false;
+
     CORRADE_INTERNAL_ASSERT(_state->image3DIdsTextureExtensionsLayerCount.size() == id);
     arrayAppend(_state->image3DIdsTextureExtensionsLayerCount, InPlaceInit, gltfImageId, extension, UnsignedInt(image.size().z()));
 
-    return convertAndWriteImage(id, name, *imageConverter, image, bundleImages);
+    /* Mark the extension as used. As required will be marked only if
+       referenced by a texture. */
+    if(extension != GltfExtension{})
+        _state->usedExtensions |= extension;
+
+    return true;
 }
 
 }}
