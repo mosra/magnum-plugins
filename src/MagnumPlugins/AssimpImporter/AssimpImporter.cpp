@@ -1623,9 +1623,7 @@ Containers::Optional<MaterialData> AssimpImporter::doMaterial(const UnsignedInt 
                         Warning{} << "Trade::AssimpImporter::material(): property" << key << "is an integer array of" << property.mDataLength << "bytes, saving as a typeless buffer";
                         /* Abusing Pointer to indicate this is a buffer.
                            Together with other similar cases it's processed
-                           below and turned into MaterialAttributeType::String. */
-                        /** @todo add MaterialAttributeType::Buffer for opaque
-                            buffer data that can't be viewed as a string */
+                           below and turned into MaterialAttributeType::Buffer. */
                         type = MaterialAttributeType::Pointer;
                     }
                 } else if(property.mType == aiPTI_Float) {
@@ -1667,21 +1665,22 @@ Containers::Optional<MaterialData> AssimpImporter::doMaterial(const UnsignedInt 
 
                 CORRADE_INTERNAL_ASSERT(type != MaterialAttributeType{});
 
-                Containers::StringView value;
+                Containers::StringView valueString;
+                Containers::ArrayView<const void> valueBuffer;
                 std::size_t valueSize;
                 const void* valuePointer;
                 if(type == MaterialAttributeType::Pointer) {
-                    /* Typeless buffer, turn it into an owned String */
-                    type = MaterialAttributeType::String;
-                    value = {property.mData, property.mDataLength};
-                    /* +2 is null byte + size */
-                    valueSize = property.mDataLength + 2;
-                    valuePointer = &value;
+                    /* Typeless buffer, turn it into an owned Buffer */
+                    type = MaterialAttributeType::Buffer;
+                    valueBuffer = {property.mData, property.mDataLength};
+                    /* +1 is size */
+                    valueSize = property.mDataLength + 1;
+                    valuePointer = &valueBuffer;
                 } else if(type == MaterialAttributeType::String) {
-                    value = materialPropertyString(property);
+                    valueString = materialPropertyString(property);
                     /* +2 is null byte + size */
-                    valueSize = value.size() + 2;
-                    valuePointer = &value;
+                    valueSize = valueString.size() + 2;
+                    valuePointer = &valueString;
                 } else {
                     valueSize = materialAttributeTypeSize(type);
                     valuePointer = property.mData;

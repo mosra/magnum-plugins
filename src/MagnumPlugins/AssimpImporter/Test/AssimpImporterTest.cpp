@@ -2368,10 +2368,10 @@ void AssimpImporterTest::materialRaw() {
            when all the other importers write them as ints */
         const Containers::StringView name = extractMaterialKey(AI_MATKEY_TWOSIDED);
         CORRADE_VERIFY(material->hasAttribute(name));
-        CORRADE_COMPARE(material->attributeType(name), MaterialAttributeType::String);
-        Containers::StringView value = material->attribute<Containers::StringView>(name);
+        CORRADE_COMPARE(material->attributeType(name), MaterialAttributeType::Buffer);
+        Containers::ArrayView<const bool> value = Containers::arrayCast<const bool>(material->attribute<Containers::ArrayView<const void>>(name));
         CORRADE_COMPARE(value.size(), 1);
-        CORRADE_VERIFY(value.front() != 0);
+        CORRADE_VERIFY(value.front());
     } {
         constexpr Containers::StringView name = _AI_MATKEY_TEXTURE_BASE ".NORMALS"_s;
         CORRADE_VERIFY(material->hasAttribute(name));
@@ -2408,10 +2408,9 @@ void AssimpImporterTest::materialRaw() {
         const bool hasAttribute = material->hasAttribute(name);
         CORRADE_VERIFY(hasAttribute);
         if(hasAttribute) {
-            /* Opaque buffer converted to String */
-            CORRADE_COMPARE(material->attributeType(name), MaterialAttributeType::String);
-            Containers::StringView value = material->attribute<Containers::StringView>(name);
-            /* +1 is null byte */
+            /* Opaque buffer converted to Buffer */
+            CORRADE_COMPARE(material->attributeType(name), MaterialAttributeType::Buffer);
+            Containers::ArrayView<const void> value = material->attribute<Containers::ArrayView<const void>>(name);
             CORRADE_COMPARE(value.size(), sizeof(aiUVTransform));
             const aiUVTransform& transform = *reinterpret_cast<const aiUVTransform*>(value.data());
             const Vector2 scaling{transform.mScaling.x, transform.mScaling.y};
