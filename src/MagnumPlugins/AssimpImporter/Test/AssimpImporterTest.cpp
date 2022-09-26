@@ -119,7 +119,7 @@ struct AssimpImporterTest: TestSuite::Tester {
     void materialStlWhiteAmbientPatch();
     void materialWhiteAmbientTexture();
     void materialMultipleTextures();
-    void materialTextureCoordinateSets();
+    void materialTextureCoordinates();
     void materialTextureLayers();
     void materialRawUnrecognized();
     void materialRaw();
@@ -262,7 +262,7 @@ AssimpImporterTest::AssimpImporterTest() {
               &AssimpImporterTest::materialStlWhiteAmbientPatch,
               &AssimpImporterTest::materialWhiteAmbientTexture,
               &AssimpImporterTest::materialMultipleTextures,
-              &AssimpImporterTest::materialTextureCoordinateSets,
+              &AssimpImporterTest::materialTextureCoordinates,
               &AssimpImporterTest::materialTextureLayers,
               &AssimpImporterTest::materialRawUnrecognized,
               &AssimpImporterTest::materialRaw,
@@ -2133,10 +2133,10 @@ void AssimpImporterTest::materialMultipleTextures() {
     }
 }
 
-void AssimpImporterTest::materialTextureCoordinateSets() {
+void AssimpImporterTest::materialTextureCoordinates() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
 
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "material-coordinate-sets.dae")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "material-texture-coordinates.dae")));
 
     Containers::Optional<MaterialData> material = importer->material(0);
     CORRADE_VERIFY(material);
