@@ -98,6 +98,8 @@ namespace Magnum {
 -   @ref Trade::AssimpImporter "AssimpImporter" now imports camera, light and
     scene names, orthographic camera properties and custom material properties
     (see [mosra/magnum-plugins#116](https://github.com/mosra/magnum-plugins/pull/116))
+-   @relativeref{Trade,AssimpImporter} can now import material texture
+    transformation attributes
 -   @ref Trade::AssimpImporter "AssimpImporter" can now import animations and
     skins (see [mosra/magnum-plugins#97](https://github.com/mosra/magnum-plugins/pull/97),
     [mosra/magnum-plugins#99](https://github.com/mosra/magnum-plugins/pull/99)

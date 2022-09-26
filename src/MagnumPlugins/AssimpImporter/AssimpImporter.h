@@ -343,6 +343,9 @@ verbosity levels in each instance.
     [assimp/assimp#2059](https://github.com/assimp/assimp/issues/2059). This
     workaround can be disabled using the @cb{.ini} forceWhiteAmbientToBlack @ce
     @ref Trade-AssimpImporter-configuration "configuration option".
+-   @ref MaterialAttribute::DiffuseTextureMatrix and similar matrix attributes
+    for other textures are imported, although it's currently unclear whether
+    the transformation is correct when texture rotations are involved
 
 @subsection Trade-AssimpImporter-behavior-lights Light import
 

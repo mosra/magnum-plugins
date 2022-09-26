@@ -119,6 +119,7 @@ struct AssimpImporterTest: TestSuite::Tester {
     void materialStlWhiteAmbientPatch();
     void materialWhiteAmbientTexture();
     void materialMultipleTextures();
+    void materialTextureMatrix();
     void materialTextureCoordinates();
     void materialTextureLayers();
     void materialRawUnrecognized();
@@ -262,6 +263,7 @@ AssimpImporterTest::AssimpImporterTest() {
               &AssimpImporterTest::materialStlWhiteAmbientPatch,
               &AssimpImporterTest::materialWhiteAmbientTexture,
               &AssimpImporterTest::materialMultipleTextures,
+              &AssimpImporterTest::materialTextureMatrix,
               &AssimpImporterTest::materialTextureCoordinates,
               &AssimpImporterTest::materialTextureLayers,
               &AssimpImporterTest::materialRawUnrecognized,
@@ -1895,7 +1897,8 @@ void AssimpImporterTest::materialTexture() {
     CORRADE_VERIFY(material);
     CORRADE_COMPARE(material->types(), MaterialType::Phong);
     CORRADE_COMPARE(material->layerCount(), 1);
-    CORRADE_COMPARE(material->attributeCount(), 10); /* includes zero texcoords */
+    /* includes 3 zero texcoords and 3 identity matrices */
+    CORRADE_COMPARE(material->attributeCount(), 13);
 
     const auto& phong = material->as<PhongMaterialData>();
     {
@@ -2130,6 +2133,56 @@ void AssimpImporterTest::materialMultipleTextures() {
         CORRADE_COMPARE(image->format(), PixelFormat::RGB8Unorm);
         CORRADE_COMPARE(image->size(), Vector2i(1));
         CORRADE_COMPARE(image->pixels<Color3ub>()[0][0], 0xffff00_rgb); /* y.png */
+    }
+}
+
+void AssimpImporterTest::materialTextureMatrix() {
+    if(_assimpVersion < 510)
+        CORRADE_SKIP("glTF texture transform is supported since Assimp 5.1.");
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+
+    /* Funnily enough, while Assimp provides the texture transform attribute
+       for COLLADA files (which we then skip in materialTexture()), the spec
+       itself doesn't seem to actually support such a thing. Testing with glTF
+       instead, there we unfortunately can check only with the diffuse texture
+       as PBR isn't hooked up yet. */
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "material-texture-matrix.gltf")));
+
+    {
+        Containers::Optional<MaterialData> material = importer->material("offset + scale");
+        CORRADE_VERIFY(material);
+        const auto& phong = material->as<PhongMaterialData>();
+
+        CORRADE_VERIFY(phong.hasTextureTransformation());
+        CORRADE_VERIFY(phong.hasAttribute(MaterialAttribute::DiffuseTexture));
+        CORRADE_COMPARE(phong.diffuseTextureMatrix(), (Matrix3{
+                {0.5f, 0.0f, 0.0f},
+                {0.0f, 0.5f, 0.0f},
+                {0.0f, -0.5f, 1.0f}
+        }));
+    } {
+        Containers::Optional<MaterialData> material = importer->material("all");
+        CORRADE_VERIFY(material);
+        const auto& phong = material->as<PhongMaterialData>();
+
+        CORRADE_VERIFY(phong.hasTextureTransformation());
+        CORRADE_VERIFY(phong.hasAttribute(MaterialAttribute::DiffuseTexture));
+
+        {
+            CORRADE_EXPECT_FAIL("The result is different from GltfImporter, but both give the correct output for the TextureTransformTest glTF model. Huh?");
+            CORRADE_COMPARE(phong.diffuseTextureMatrix(), (Matrix3{
+                {0.164968f, 0.472002f, 0.0f},
+                {-0.472002f, 0.164968f, 0.0f},
+                {0.472002f, -0.164968f, 1.0f}
+            }));
+        } {
+            CORRADE_COMPARE(phong.diffuseTextureMatrix(), (Matrix3{
+                {0.164968f, 0.472002f, 0.0f},
+                {-0.472002f, 0.164968f, 0.0f},
+                {1.21055f, -0.568485f, 1.0f}
+            }));
+        }
     }
 }
 

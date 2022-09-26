@@ -97,6 +97,12 @@ template<> struct StringViewConverter<const char, aiString> {
 
 namespace Magnum { namespace Math { namespace Implementation {
 
+template<> struct VectorConverter<2, Float, aiVector2D> {
+    static Vector<2, Float> from(const aiVector2D& other) {
+        return {other.x, other.y};
+    }
+};
+
 template<> struct VectorConverter<3, Float, aiColor3D> {
     static Vector<3, Float> from(const aiColor3D& other) {
         return {other.r, other.g, other.b};
@@ -1554,6 +1560,45 @@ Containers::Optional<MaterialData> AssimpImporter::doMaterial(const UnsignedInt 
                         if(attribute != MaterialAttribute{})
                             data = {attribute, textureIndex};
                         ++textureIndex;
+
+                    /* Texture matrix */
+                    } else if(key == _AI_MATKEY_UVTRANSFORM_BASE && property.mType == aiPTI_Float && property.mDataLength == 20) {
+                        switch(property.mSemantic) {
+                            case aiTextureType_AMBIENT:
+                                attribute = MaterialAttribute::AmbientTextureMatrix;
+                                break;
+                            case aiTextureType_DIFFUSE:
+                                attribute = MaterialAttribute::DiffuseTextureMatrix;
+                                break;
+                            case aiTextureType_SPECULAR:
+                                attribute = MaterialAttribute::SpecularTextureMatrix;
+                                break;
+                            case aiTextureType_NORMALS:
+                                attribute = MaterialAttribute::NormalTextureMatrix;
+                                break;
+                        }
+
+                        /* Save only if the name is recognized (and let it
+                           be imported as a custom attribute otherwise) */
+                        if(attribute != MaterialAttribute{}) {
+                            const auto& transform = *reinterpret_cast<const aiUVTransform*>(property.mData);
+                            data = {attribute,
+                                Matrix3::translation(Vector2{transform.mTranslation})*
+                                /* The rotation is said to be around (0.5, 0.5)
+                                   so we translate, rotate, and translate back.
+                                   It's also said to be counterclockwise in the
+                                   aiUVTransform docs, but at least the glTF
+                                   importer makes it clockwise, judging from
+                                   the output for the TextureTransformTest
+                                   glTF model. The rotation probably isn't
+                                   really correct either, see the
+                                   materialTextureMatrix() test for further
+                                   details. */
+                                Matrix3::translation(Vector2{0.5f})*
+                                Matrix3::rotation(Rad{-transform.mRotation})*
+                                Matrix3::translation(Vector2{-0.5f})*
+                                Matrix3::scaling(Vector2{transform.mScaling})};
+                        }
 
                     /* Texture coordinate set index */
                     } else if(key == _AI_MATKEY_UVWSRC_BASE && property.mType == aiPTI_Integer && property.mDataLength == 4) {
