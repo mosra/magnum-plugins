@@ -3660,6 +3660,12 @@ void GltfSceneConverterTest::addScene() {
         SceneFieldData{sceneFieldCustom(5318008),
             Containers::stridedArrayView(sceneData->trs).slice(&Scene::Trs::mapping),
             Containers::stridedArrayView(sceneData->trs).slice(&Scene::Trs::translation)},
+        /* ImporterState field is ignored but without a warning */
+        SceneFieldData{SceneField::ImporterState,
+            SceneMappingType::UnsignedShort,
+            Containers::stridedArrayView(sceneData->trs).slice(&Scene::Trs::mapping),
+            SceneFieldType::Pointer,
+            Containers::stridedArrayView(sceneData->trs).slice(&Scene::Trs::translation)},
         SceneFieldData{SceneField::Scaling,
             Containers::stridedArrayView(sceneData->trs).slice(&Scene::Trs::mapping),
             Containers::stridedArrayView(sceneData->trs).slice(&Scene::Trs::scaling)},

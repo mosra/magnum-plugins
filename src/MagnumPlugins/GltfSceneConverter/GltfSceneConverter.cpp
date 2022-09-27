@@ -601,6 +601,10 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const SceneData& scene, con
             childOffsets[childOffsets.size() - 2] == parentFieldSize);
     }
 
+    /* A mask for skipping fields that were deliberately left out due to being
+       handled differently, having unsupported formats etc. */
+    Containers::BitArray usedFields{ValueInit, scene.fieldCount()};
+
     /* Calculate count of field assignments for each object. Initially shifted
        by two values, `objectFieldOffsets[i + 2]` is the count of fields for
        object `i`. */
@@ -616,6 +620,8 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const SceneData& scene, con
                counting them separately */
             scene.fieldName(i) == SceneField::MeshMaterial
         ) continue;
+
+        usedFields.set(i);
 
         const Containers::ArrayView<UnsignedInt> mapping = mappingStorage.prefix(scene.fieldSize(i));
         scene.mappingInto(i, mapping);
@@ -656,6 +662,8 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const SceneData& scene, con
     bool hasScaling = false;
     std::size_t meshMaterialCount = 0;
     for(UnsignedInt i = 0; i != scene.fieldCount(); ++i) {
+        if(!usedFields[i]) continue;
+
         const std::size_t size = scene.fieldSize(i);
         switch(scene.fieldName(i)) {
             case SceneField::Transformation:
@@ -677,13 +685,8 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const SceneData& scene, con
                 meshMaterialCount = size;
                 continue;
 
-            /* Parent was handled above already */
-            case SceneField::Parent:
-            /* MeshMaterial is used only in combination with a Mesh, alone it
-               doesn't contribute to meshMaterialCount */
-            case SceneField::MeshMaterial:
-            /* ImporterState is ignored, it makes no sense to save a pointer
-               value */
+            /* ImporterState is ignored without a warning, it makes no sense to
+               save a pointer value */
             case SceneField::ImporterState:
                 continue;
 
@@ -693,6 +696,13 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const SceneData& scene, con
             case SceneField::Camera:
             case SceneField::Skin:
                 break;
+
+            /* These should be excluded from the usedFields mask already */
+            /* LCOV_EXCL_START */
+            case SceneField::Parent:
+            case SceneField::MeshMaterial:
+                CORRADE_INTERNAL_ASSERT_UNREACHABLE();
+            /* LCOV_EXCL_STOP */
         }
 
         Warning{} << "Trade::GltfSceneConverter::add():" << scene.fieldName(i) << "was not used";
@@ -725,9 +735,7 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const SceneData& scene, con
        `fieldIds[objectFieldOffsets[i + 1]]` contains field IDs for object `i`,
        same with `offsets`. */
     for(UnsignedInt i = 0, iMax = scene.fieldCount(); i != iMax; ++i) {
-        /* Same as in the previous loop */
-        if(scene.fieldName(i) == SceneField::Parent ||
-           scene.fieldName(i) == SceneField::MeshMaterial) continue;
+        if(!usedFields[i]) continue;
 
         const std::size_t fieldSize = scene.fieldSize(i);
         const Containers::ArrayView<UnsignedInt> mapping = mappingStorage.prefix(fieldSize);
