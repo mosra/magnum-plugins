@@ -1411,7 +1411,7 @@ void GltfSceneConverterTest::empty() {
         TestSuite::Compare::StringToFile);
 
     if(_importerManager.loadState("GltfImporter") == PluginManager::LoadState::NotFound)
-        CORRADE_SKIP("GltfImporter plugin not found, cannot test a rountrip");
+        CORRADE_SKIP("GltfImporter plugin not found, cannot test a roundtrip");
 
     /* The file should load without errors */
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("GltfImporter");
@@ -1477,7 +1477,7 @@ void GltfSceneConverterTest::metadata() {
         TestSuite::Compare::StringToFile);
 
     if(_importerManager.loadState("GltfImporter") == PluginManager::LoadState::NotFound)
-        CORRADE_SKIP("GltfImporter plugin not found, cannot test a rountrip");
+        CORRADE_SKIP("GltfImporter plugin not found, cannot test a roundtrip");
 
     /* The file should load if we ignore required extensions */
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("GltfImporter");
@@ -1573,7 +1573,7 @@ void GltfSceneConverterTest::addMesh() {
     CORRADE_COMPARE(gltf->contains("name"), data.dataName ||data.accessorNames);
 
     if(_importerManager.loadState("GltfImporter") == PluginManager::LoadState::NotFound)
-        CORRADE_SKIP("GltfImporter plugin not found, cannot test a rountrip");
+        CORRADE_SKIP("GltfImporter plugin not found, cannot test a roundtrip");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("GltfImporter");
     CORRADE_VERIFY(importer->openFile(filename));
@@ -1660,7 +1660,7 @@ void GltfSceneConverterTest::addMeshNonInterleaved() {
     CORRADE_VERIFY(!gltf->contains("extensionsRequired"));
 
     if(_importerManager.loadState("GltfImporter") == PluginManager::LoadState::NotFound)
-        CORRADE_SKIP("GltfImporter plugin not found, cannot test a rountrip");
+        CORRADE_SKIP("GltfImporter plugin not found, cannot test a roundtrip");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("GltfImporter");
     CORRADE_VERIFY(importer->openFile(filename));
@@ -1736,7 +1736,7 @@ void GltfSceneConverterTest::addMeshNoAttributes() {
     CORRADE_VERIFY(!gltf->contains("extensionsRequired"));
 
     if(_importerManager.loadState("GltfImporter") == PluginManager::LoadState::NotFound)
-        CORRADE_SKIP("GltfImporter plugin not found, cannot test a rountrip");
+        CORRADE_SKIP("GltfImporter plugin not found, cannot test a roundtrip");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("GltfImporter");
     CORRADE_VERIFY(importer->openFile(filename));
@@ -1790,7 +1790,7 @@ void GltfSceneConverterTest::addMeshNoIndices() {
     CORRADE_VERIFY(!gltf->contains("extensionsRequired"));
 
     if(_importerManager.loadState("GltfImporter") == PluginManager::LoadState::NotFound)
-        CORRADE_SKIP("GltfImporter plugin not found, cannot test a rountrip");
+        CORRADE_SKIP("GltfImporter plugin not found, cannot test a roundtrip");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("GltfImporter");
     CORRADE_VERIFY(importer->openFile(filename));
@@ -1847,7 +1847,7 @@ void GltfSceneConverterTest::addMeshNoIndicesNoAttributes() {
     CORRADE_VERIFY(!gltf->contains("accessors"));
 
     if(_importerManager.loadState("GltfImporter") == PluginManager::LoadState::NotFound)
-        CORRADE_SKIP("GltfImporter plugin not found, cannot test a rountrip");
+        CORRADE_SKIP("GltfImporter plugin not found, cannot test a roundtrip");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("GltfImporter");
     CORRADE_VERIFY(importer->openFile(filename));
@@ -1894,7 +1894,7 @@ void GltfSceneConverterTest::addMeshNoIndicesNoVertices() {
         CORRADE_VERIFY(!Utility::Path::exists(Utility::Path::join(GLTFSCENECONVERTER_TEST_OUTPUT_DIR, "mesh-no-indices-no-vertices.bin")));
 
     if(_importerManager.loadState("GltfImporter") == PluginManager::LoadState::NotFound)
-        CORRADE_SKIP("GltfImporter plugin not found, cannot test a rountrip");
+        CORRADE_SKIP("GltfImporter plugin not found, cannot test a roundtrip");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("GltfImporter");
     CORRADE_VERIFY(importer->openFile(filename));
@@ -1960,7 +1960,7 @@ void GltfSceneConverterTest::addMeshAttribute() {
     }
 
     if(_importerManager.loadState("GltfImporter") == PluginManager::LoadState::NotFound)
-        CORRADE_SKIP("GltfImporter plugin not found, cannot test a rountrip");
+        CORRADE_SKIP("GltfImporter plugin not found, cannot test a roundtrip");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("GltfImporter");
     CORRADE_VERIFY(importer->openFile(filename));
@@ -2049,7 +2049,7 @@ void GltfSceneConverterTest::addMeshDuplicateAttribute() {
         TestSuite::Compare::File);
 
     if(_importerManager.loadState("GltfImporter") == PluginManager::LoadState::NotFound)
-        CORRADE_SKIP("GltfImporter plugin not found, cannot test a rountrip");
+        CORRADE_SKIP("GltfImporter plugin not found, cannot test a roundtrip");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("GltfImporter");
     CORRADE_VERIFY(importer->openFile(filename));
@@ -2193,7 +2193,7 @@ void GltfSceneConverterTest::addMeshCustomObjectIdAttributeName() {
         TestSuite::Compare::File);
 
     if(_importerManager.loadState("GltfImporter") == PluginManager::LoadState::NotFound)
-        CORRADE_SKIP("GltfImporter plugin not found, cannot test a rountrip");
+        CORRADE_SKIP("GltfImporter plugin not found, cannot test a roundtrip");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("GltfImporter");
 
@@ -2249,7 +2249,7 @@ void GltfSceneConverterTest::addMeshMultiple() {
         TestSuite::Compare::File);
 
     if(_importerManager.loadState("GltfImporter") == PluginManager::LoadState::NotFound)
-        CORRADE_SKIP("GltfImporter plugin not found, cannot test a rountrip");
+        CORRADE_SKIP("GltfImporter plugin not found, cannot test a roundtrip");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("GltfImporter");
     CORRADE_VERIFY(importer->openFile(filename));
@@ -2374,9 +2374,9 @@ void GltfSceneConverterTest::addImage2D() {
     CORRADE_VERIFY(!gltf->contains("extensionsRequired"));
 
     if(_importerManager.loadState("GltfImporter") == PluginManager::LoadState::NotFound)
-        CORRADE_SKIP("GltfImporter plugin not found, cannot test a rountrip");
+        CORRADE_SKIP("GltfImporter plugin not found, cannot test a roundtrip");
     if(_importerManager.loadState(data.importerPlugin) == PluginManager::LoadState::NotFound)
-        CORRADE_SKIP(data.importerPlugin << "plugin not found, cannot test a rountrip");
+        CORRADE_SKIP(data.importerPlugin << "plugin not found, cannot test a roundtrip");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("GltfImporter");
     CORRADE_VERIFY(importer->openFile(filename));
@@ -2411,9 +2411,9 @@ void GltfSceneConverterTest::addImageCompressed2D() {
         TestSuite::Compare::File);
 
     if(_importerManager.loadState("GltfImporter") == PluginManager::LoadState::NotFound)
-        CORRADE_SKIP("GltfImporter plugin not found, cannot test a rountrip");
+        CORRADE_SKIP("GltfImporter plugin not found, cannot test a roundtrip");
     if(_importerManager.loadState("KtxImporter") == PluginManager::LoadState::NotFound)
-        CORRADE_SKIP("KtxImporter plugin not found, cannot test a rountrip");
+        CORRADE_SKIP("KtxImporter plugin not found, cannot test a roundtrip");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("GltfImporter");
 
@@ -2495,9 +2495,9 @@ void GltfSceneConverterTest::addImage3D() {
     CORRADE_VERIFY(gltf->contains("extensionsRequired"));
 
     if(_importerManager.loadState("GltfImporter") == PluginManager::LoadState::NotFound)
-        CORRADE_SKIP("GltfImporter plugin not found, cannot test a rountrip");
+        CORRADE_SKIP("GltfImporter plugin not found, cannot test a roundtrip");
     if(_importerManager.loadState("KtxImporter") == PluginManager::LoadState::NotFound)
-        CORRADE_SKIP("KtxImporter plugin not found, cannot test a rountrip");
+        CORRADE_SKIP("KtxImporter plugin not found, cannot test a roundtrip");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("GltfImporter");
 
@@ -2546,9 +2546,9 @@ void GltfSceneConverterTest::addImageCompressed3D() {
         TestSuite::Compare::File);
 
     if(_importerManager.loadState("GltfImporter") == PluginManager::LoadState::NotFound)
-        CORRADE_SKIP("GltfImporter plugin not found, cannot test a rountrip");
+        CORRADE_SKIP("GltfImporter plugin not found, cannot test a roundtrip");
     if(_importerManager.loadState("KtxImporter") == PluginManager::LoadState::NotFound)
-        CORRADE_SKIP("KtxImporter plugin not found, cannot test a rountrip");
+        CORRADE_SKIP("KtxImporter plugin not found, cannot test a roundtrip");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("GltfImporter");
 
@@ -2703,11 +2703,11 @@ void GltfSceneConverterTest::addImageMultiple() {
         TestSuite::Compare::File);
 
     if(_importerManager.loadState("GltfImporter") == PluginManager::LoadState::NotFound)
-        CORRADE_SKIP("GltfImporter plugin not found, cannot test a rountrip");
+        CORRADE_SKIP("GltfImporter plugin not found, cannot test a roundtrip");
     if(_importerManager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
-        CORRADE_SKIP("PngImporter plugin not found, cannot test a rountrip");
+        CORRADE_SKIP("PngImporter plugin not found, cannot test a roundtrip");
     if(_importerManager.loadState("JpegImporter") == PluginManager::LoadState::NotFound)
-        CORRADE_SKIP("JpegImporter plugin not found, cannot test a rountrip");
+        CORRADE_SKIP("JpegImporter plugin not found, cannot test a roundtrip");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("GltfImporter");
 
@@ -2974,7 +2974,7 @@ void GltfSceneConverterTest::addTextureMultiple() {
         TestSuite::Compare::File);
 
     if(_importerManager.loadState("GltfImporter") == PluginManager::LoadState::NotFound)
-        CORRADE_SKIP("GltfImporter plugin not found, cannot test a rountrip");
+        CORRADE_SKIP("GltfImporter plugin not found, cannot test a roundtrip");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("GltfImporter");
     importer->configuration().setValue("experimentalKhrTextureKtx", true);
@@ -3102,7 +3102,7 @@ void GltfSceneConverterTest::addMaterial() {
         TestSuite::Compare::File);
 
     if(_importerManager.loadState("GltfImporter") == PluginManager::LoadState::NotFound)
-        CORRADE_SKIP("GltfImporter plugin not found, cannot test a rountrip");
+        CORRADE_SKIP("GltfImporter plugin not found, cannot test a roundtrip");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("GltfImporter");
     CORRADE_VERIFY(importer->openFile(filename));
@@ -3180,7 +3180,7 @@ void GltfSceneConverterTest::addMaterial2DArrayTextures() {
         TestSuite::Compare::File);
 
     if(_importerManager.loadState("GltfImporter") == PluginManager::LoadState::NotFound)
-        CORRADE_SKIP("GltfImporter plugin not found, cannot test a rountrip");
+        CORRADE_SKIP("GltfImporter plugin not found, cannot test a roundtrip");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("GltfImporter");
     importer->configuration().setValue("experimentalKhrTextureKtx", true);
@@ -3320,7 +3320,7 @@ void GltfSceneConverterTest::addMaterialMultiple() {
         TestSuite::Compare::File);
 
     if(_importerManager.loadState("GltfImporter") == PluginManager::LoadState::NotFound)
-        CORRADE_SKIP("GltfImporter plugin not found, cannot test a rountrip");
+        CORRADE_SKIP("GltfImporter plugin not found, cannot test a roundtrip");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("GltfImporter");
 
@@ -3495,7 +3495,7 @@ void GltfSceneConverterTest::textureCoordinateYFlip() {
         TestSuite::Compare::File);
 
     if(_importerManager.loadState("GltfImporter") == PluginManager::LoadState::NotFound)
-        CORRADE_SKIP("GltfImporter plugin not found, cannot test a rountrip");
+        CORRADE_SKIP("GltfImporter plugin not found, cannot test a roundtrip");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("GltfImporter");
 
@@ -3552,7 +3552,7 @@ void GltfSceneConverterTest::addSceneEmpty() {
         TestSuite::Compare::File);
 
     if(_importerManager.loadState("GltfImporter") == PluginManager::LoadState::NotFound)
-        CORRADE_SKIP("GltfImporter plugin not found, cannot test a rountrip");
+        CORRADE_SKIP("GltfImporter plugin not found, cannot test a roundtrip");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("GltfImporter");
     CORRADE_VERIFY(importer->openFile(filename));
@@ -3687,7 +3687,7 @@ void GltfSceneConverterTest::addScene() {
         TestSuite::Compare::File);
 
     if(_importerManager.loadState("GltfImporter") == PluginManager::LoadState::NotFound)
-        CORRADE_SKIP("GltfImporter plugin not found, cannot test a rountrip");
+        CORRADE_SKIP("GltfImporter plugin not found, cannot test a roundtrip");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("GltfImporter");
     CORRADE_VERIFY(importer->openFile(filename));
@@ -3840,7 +3840,7 @@ void GltfSceneConverterTest::addSceneMeshesMaterials() {
         TestSuite::Compare::File);
 
     if(_importerManager.loadState("GltfImporter") == PluginManager::LoadState::NotFound)
-        CORRADE_SKIP("GltfImporter plugin not found, cannot test a rountrip");
+        CORRADE_SKIP("GltfImporter plugin not found, cannot test a roundtrip");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("GltfImporter");
     CORRADE_VERIFY(importer->openFile(filename));
