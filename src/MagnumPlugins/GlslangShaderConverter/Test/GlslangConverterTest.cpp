@@ -240,10 +240,14 @@ const struct {
        looks strange in the disassembly, but that's all */
     {"Vulkan 1.1 shader with debug info",
         Stage{}, "shader.vk.frag", nullptr,
+        #if defined(GLSLANG_VERSION_MAJOR) && GLSLANG_VERSION_MAJOR*1000 + GLSLANG_VERSION_MINOR >= 11011
+        "shader.vk.debug.spv",
+        /* Versions before 11.11 (11.4 at least) don't emit OpLine %1 34 11
+           before the main OpFunction */
+        #elif defined(GLSLANG_VERSION_MAJOR)
+        "shader.vk.debug-glslang11.spv",
         /* Versions before 10 emit extra OpModuleProcessed "use-storage-buffer"
            https://github.com/KhronosGroup/glslang/issues/1829 */
-        #if defined(GLSLANG_VERSION_MAJOR)
-        "shader.vk.debug.spv",
         #else
         "shader.vk.debug-glslang8.spv",
         #endif
