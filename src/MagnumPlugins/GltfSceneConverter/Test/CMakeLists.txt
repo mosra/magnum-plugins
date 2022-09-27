@@ -150,6 +150,7 @@ corrade_add_test(GltfSceneConverterTest GltfSceneConverterTest.cpp
         metadata.gltf
         metadata-explicit-implicit-extensions.gltf
         scene.gltf
+        scene-custom-fields.gltf
         scene-empty.gltf
         scene-invalid.gltf
         scene-meshes-materials.gltf

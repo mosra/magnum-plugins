@@ -354,12 +354,16 @@ the plugin supports also 3D images and 2D array textures using a proposed
 -   Object and scene names, if passed, are saved into the file
 -   The scene is required to only be added after all meshes and materials it
     references
+-   Custom @ref SceneFieldType::Float, @ref SceneFieldType::UnsignedInt and
+    @ref SceneFieldType::Int fields are exported if a name is set for them via
+    @ref setSceneFieldName(). Custom fields of other types and without a name
+    assigned are ignored with a warning.
 -   At the moment, only @ref SceneField::Parent,
     @relativeref{SceneField,Transformation},
     @relativeref{SceneField,Translation}, @relativeref{SceneField,Rotation},
     @relativeref{SceneField,Scaling}, @relativeref{SceneField,Mesh}
-    and @relativeref{SceneField,MeshMaterial} is exported, other fields are
-    ignored with a warning
+    and @relativeref{SceneField,MeshMaterial} is exported, other builtin fields
+    are ignored with a warning
 -   At the moment, duplicate fields including multiple mesh assignments are
     ignored with a warning
 -   At the moment, only a single scene can be exported. As a consequence,
@@ -390,6 +394,7 @@ class MAGNUM_GLTFSCENECONVERTER_EXPORT GltfSceneConverter: public AbstractSceneC
         MAGNUM_GLTFSCENECONVERTER_LOCAL void doAbort() override;
 
         MAGNUM_GLTFSCENECONVERTER_LOCAL void doSetObjectName(UnsignedLong object, Containers::StringView name) override;
+        MAGNUM_GLTFSCENECONVERTER_LOCAL void doSetSceneFieldName(UnsignedInt field, Containers::StringView name) override;
         MAGNUM_GLTFSCENECONVERTER_LOCAL bool doAdd(const UnsignedInt id, const SceneData& scene, Containers::StringView name) override;
 
         MAGNUM_GLTFSCENECONVERTER_LOCAL void doSetMeshAttributeName(UnsignedShort attribute, Containers::StringView name) override;
