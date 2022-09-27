@@ -102,6 +102,7 @@ struct GltfSceneConverterTest: TestSuite::Tester {
 
     void addTexture();
     void addTextureMultiple();
+    void addTextureDeduplicatedSamplers();
     /* Multiple 2D + 3D textures tested in addMaterial2DArrayTextures() */
     void addTextureInvalid();
 
@@ -595,6 +596,14 @@ const struct {
             SamplerWrapping::ClampToEdge,
             0},
         "expected a 2D or 2D array texture, got Trade::TextureType::Texture1DArray"},
+    {"unsupported sampler wrapping", {}, "image.gltf",
+        TextureData{TextureType::Texture2D,
+            SamplerFilter::Nearest,
+            SamplerFilter::Nearest,
+            SamplerMipmap::Base,
+            SamplerWrapping::ClampToBorder,
+            0},
+        "unsupported texture wrapping SamplerWrapping::ClampToBorder"},
 };
 
 const struct {
@@ -1291,7 +1300,8 @@ GltfSceneConverterTest::GltfSceneConverterTest() {
     addInstancedTests({&GltfSceneConverterTest::addTexture},
         Containers::arraySize(AddTextureData));
 
-    addTests({&GltfSceneConverterTest::addTextureMultiple});
+    addTests({&GltfSceneConverterTest::addTextureMultiple,
+              &GltfSceneConverterTest::addTextureDeduplicatedSamplers});
 
     addInstancedTests({&GltfSceneConverterTest::addTextureInvalid},
         Containers::arraySize(AddTextureInvalidData));
@@ -2926,6 +2936,10 @@ void GltfSceneConverterTest::addTexture() {
     CORRADE_COMPARE(importer->textureCount(), 1);
     Containers::Optional<TextureData> imported = importer->texture(0);
     CORRADE_VERIFY(imported);
+    CORRADE_COMPARE(imported->minificationFilter(), SamplerFilter::Nearest);
+    CORRADE_COMPARE(imported->magnificationFilter(), SamplerFilter::Nearest);
+    CORRADE_COMPARE(imported->mipmapFilter(), SamplerMipmap::Base);
+    CORRADE_COMPARE(imported->wrapping(), (Math::Vector3<SamplerWrapping>{SamplerWrapping::ClampToEdge, SamplerWrapping::ClampToEdge, SamplerWrapping::Repeat}));
     CORRADE_COMPARE(imported->image(), 0);
 }
 
@@ -2958,16 +2972,16 @@ void GltfSceneConverterTest::addTextureMultiple() {
 
     /* Reference third and first image from two textures */
     CORRADE_VERIFY(converter->add(TextureData{TextureType::Texture2D,
+        SamplerFilter::Linear,
         SamplerFilter::Nearest,
-        SamplerFilter::Nearest,
-        SamplerMipmap::Base,
-        SamplerWrapping::ClampToEdge,
+        SamplerMipmap::Nearest,
+        {SamplerWrapping::MirroredRepeat, SamplerWrapping::ClampToEdge, SamplerWrapping{}},
         2}));
     CORRADE_VERIFY(converter->add(TextureData{TextureType::Texture2D,
         SamplerFilter::Nearest,
-        SamplerFilter::Nearest,
-        SamplerMipmap::Base,
-        SamplerWrapping::ClampToEdge,
+        SamplerFilter::Linear,
+        SamplerMipmap::Linear,
+        {SamplerWrapping::Repeat, SamplerWrapping::MirroredRepeat, SamplerWrapping{}},
         0}));
 
     CORRADE_VERIFY(converter->endFile());
@@ -2987,11 +3001,113 @@ void GltfSceneConverterTest::addTextureMultiple() {
     CORRADE_COMPARE(importer->textureCount(), 2);
     Containers::Optional<TextureData> imported0 = importer->texture(0);
     CORRADE_VERIFY(imported0);
+    CORRADE_COMPARE(imported0->minificationFilter(), SamplerFilter::Linear);
+    CORRADE_COMPARE(imported0->magnificationFilter(), SamplerFilter::Nearest);
+    CORRADE_COMPARE(imported0->mipmapFilter(), SamplerMipmap::Nearest);
+    CORRADE_COMPARE(imported0->wrapping(), (Math::Vector3<SamplerWrapping>{SamplerWrapping::MirroredRepeat, SamplerWrapping::ClampToEdge, SamplerWrapping::Repeat}));
     CORRADE_COMPARE(imported0->image(), 2);
 
     Containers::Optional<TextureData> imported1 = importer->texture(1);
     CORRADE_VERIFY(imported1);
+    CORRADE_COMPARE(imported1->minificationFilter(), SamplerFilter::Nearest);
+    CORRADE_COMPARE(imported1->magnificationFilter(), SamplerFilter::Linear);
+    CORRADE_COMPARE(imported1->mipmapFilter(), SamplerMipmap::Linear);
+    CORRADE_COMPARE(imported1->wrapping(), (Math::Vector3<SamplerWrapping>{SamplerWrapping::Repeat, SamplerWrapping::MirroredRepeat, SamplerWrapping::Repeat}));
     CORRADE_COMPARE(imported1->image(), 0);
+}
+
+void GltfSceneConverterTest::addTextureDeduplicatedSamplers() {
+    if(_imageConverterManager.loadState("PngImageConverter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("PngImageConverter plugin not found, cannot test");
+
+    Containers::Pointer<AbstractSceneConverter> converter =  _converterManager.instantiate("GltfSceneConverter");
+
+    Containers::String filename = Utility::Path::join(GLTFSCENECONVERTER_TEST_OUTPUT_DIR, "texture-deduplicated-samplers.gltf");
+    CORRADE_VERIFY(converter->beginFile(filename));
+
+    CORRADE_VERIFY(converter->add(ImageView2D{PixelFormat::RGB8Unorm, {1, 1}, "yey"}));
+
+    CORRADE_VERIFY(converter->add(TextureData{TextureType::Texture2D,
+        SamplerFilter::Nearest,
+        SamplerFilter::Nearest,
+        SamplerMipmap::Nearest,
+        {SamplerWrapping::Repeat, SamplerWrapping::Repeat, SamplerWrapping{}},
+        0}));
+    CORRADE_VERIFY(converter->add(TextureData{TextureType::Texture2D,
+        SamplerFilter::Linear,
+        SamplerFilter::Nearest,
+        SamplerMipmap::Nearest,
+        {SamplerWrapping::Repeat, SamplerWrapping::Repeat, SamplerWrapping{}},
+        0}, "Different minification filter"));
+    CORRADE_VERIFY(converter->add(TextureData{TextureType::Texture2D,
+        SamplerFilter::Nearest,
+        SamplerFilter::Linear,
+        SamplerMipmap::Nearest,
+        {SamplerWrapping::Repeat, SamplerWrapping::Repeat, SamplerWrapping{}},
+        0}, "Different magnification filter"));
+    CORRADE_VERIFY(converter->add(TextureData{TextureType::Texture2D,
+        SamplerFilter::Nearest,
+        SamplerFilter::Nearest,
+        SamplerMipmap::Linear,
+        {SamplerWrapping::Repeat, SamplerWrapping::Repeat, SamplerWrapping{}},
+        0}, "Different mipmap filter"));
+    CORRADE_VERIFY(converter->add(TextureData{TextureType::Texture2D,
+        SamplerFilter::Nearest,
+        SamplerFilter::Nearest,
+        SamplerMipmap::Nearest,
+        {SamplerWrapping::ClampToEdge, SamplerWrapping::Repeat, SamplerWrapping{}},
+        0}, "Different wrapping X"));
+    CORRADE_VERIFY(converter->add(TextureData{TextureType::Texture2D,
+        SamplerFilter::Nearest,
+        SamplerFilter::Nearest,
+        SamplerMipmap::Nearest,
+        {SamplerWrapping::Repeat, SamplerWrapping::ClampToEdge, SamplerWrapping{}},
+        0}, "Different wrapping Y"));
+
+    CORRADE_VERIFY(converter->add(TextureData{TextureType::Texture2D,
+        SamplerFilter::Nearest,
+        SamplerFilter::Nearest,
+        SamplerMipmap::Nearest,
+        {SamplerWrapping::Repeat, SamplerWrapping::Repeat, SamplerWrapping{}},
+        0}, "Should reuse sampler 0"));
+    CORRADE_VERIFY(converter->add(TextureData{TextureType::Texture2D,
+        SamplerFilter::Linear,
+        SamplerFilter::Nearest,
+        SamplerMipmap::Nearest,
+        {SamplerWrapping::Repeat, SamplerWrapping::Repeat, SamplerWrapping{}},
+        0}, "Should reuse sampler 1"));
+    CORRADE_VERIFY(converter->add(TextureData{TextureType::Texture2D,
+        SamplerFilter::Nearest,
+        SamplerFilter::Linear,
+        SamplerMipmap::Nearest,
+        {SamplerWrapping::Repeat, SamplerWrapping::Repeat, SamplerWrapping{}},
+        0}, "Should reuse sampler 2"));
+    CORRADE_VERIFY(converter->add(TextureData{TextureType::Texture2D,
+        SamplerFilter::Nearest,
+        SamplerFilter::Nearest,
+        SamplerMipmap::Linear,
+        {SamplerWrapping::Repeat, SamplerWrapping::Repeat, SamplerWrapping{}},
+        0}, "Should reuse sampler 3"));
+    CORRADE_VERIFY(converter->add(TextureData{TextureType::Texture2D,
+        SamplerFilter::Nearest,
+        SamplerFilter::Nearest,
+        SamplerMipmap::Nearest,
+        {SamplerWrapping::ClampToEdge, SamplerWrapping::Repeat, SamplerWrapping{}},
+        0}, "Should reuse sampler 4"));
+    CORRADE_VERIFY(converter->add(TextureData{TextureType::Texture2D,
+        SamplerFilter::Nearest,
+        SamplerFilter::Nearest,
+        SamplerMipmap::Nearest,
+        {SamplerWrapping::Repeat, SamplerWrapping::ClampToEdge, SamplerWrapping{}},
+        0}, "Should reuse sampler 5"));
+
+    CORRADE_VERIFY(converter->endFile());
+    CORRADE_COMPARE_AS(filename,
+        Utility::Path::join(GLTFSCENECONVERTER_TEST_DIR, "texture-deduplicated-samplers.gltf"),
+        TestSuite::Compare::File);
+
+    /* Not testing file roundtrip as sampler deduplication doesn't really
+       make any difference there */
 }
 
 void GltfSceneConverterTest::addTextureInvalid() {

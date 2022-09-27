@@ -273,7 +273,6 @@ See @ref building-plugins, @ref cmake-plugins, @ref plugins and
 -   The texture is required to only be added after all images it references
 -   At the moment, there's no support for exporting multi-level images even
     though the KTX2 container is capable of storing these.
--   At the moment, texture sampler properties are not exported.
 
 @subsubsection Trade-GltfSceneConverter-behavior-images-array 2D array texture export
 

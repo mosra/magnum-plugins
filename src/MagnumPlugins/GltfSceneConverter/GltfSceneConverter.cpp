@@ -100,6 +100,9 @@ struct GltfSceneConverter::State {
     Containers::Array<Containers::String> objectNames;
     /* Scene field names */
     std::unordered_map<UnsignedInt, Containers::String> sceneFieldNames;
+    /* Unique texture samplers. Key is packing all sampler properties, value is
+       the output glTF sampler index. */
+    std::unordered_map<UnsignedInt, UnsignedInt> uniqueSamplers;
 
     /* Output format. Defaults for a binary output. */
     bool binary = true;
@@ -149,6 +152,7 @@ struct GltfSceneConverter::State {
     Utility::JsonWriter gltfNodes;
     Utility::JsonWriter gltfScenes;
     Utility::JsonWriter gltfMaterials;
+    Utility::JsonWriter gltfSamplers;
     Utility::JsonWriter gltfTextures;
     Utility::JsonWriter gltfImages;
 
@@ -221,6 +225,7 @@ bool GltfSceneConverter::doBeginData() {
             &_state->gltfNodes,
             &_state->gltfScenes,
             &_state->gltfMaterials,
+            &_state->gltfSamplers,
             &_state->gltfTextures,
             &_state->gltfImages
         })
@@ -383,6 +388,8 @@ Containers::Optional<Containers::Array<char>> GltfSceneConverter::doEndData() {
 
     if(!_state->gltfMaterials.isEmpty())
         json.writeKey("materials"_s).writeJson(_state->gltfMaterials.endArray().toString());
+    if(!_state->gltfSamplers.isEmpty())
+        json.writeKey("samplers"_s).writeJson(_state->gltfSamplers.endArray().toString());
     if(!_state->gltfTextures.isEmpty())
         json.writeKey("textures"_s).writeJson(_state->gltfTextures.endArray().toString());
     if(!_state->gltfImages.isEmpty())
@@ -1946,6 +1953,16 @@ bool GltfSceneConverter::doAdd(CORRADE_UNUSED const UnsignedInt id, const Textur
         return {};
     }
 
+    /* Check if the wrapping mode is supported by glTF */
+    for(const std::size_t i: {0, 1}) {
+        if(texture.wrapping()[i] != SamplerWrapping::ClampToEdge &&
+           texture.wrapping()[i] != SamplerWrapping::MirroredRepeat &&
+           texture.wrapping()[i] != SamplerWrapping::Repeat) {
+            Error{} << "Trade::GltfSceneConverter::add(): unsupported texture wrapping" << texture.wrapping()[i];
+            return {};
+        }
+    }
+
     /* At this point we're sure nothing will fail so we can start writing the
        JSON. Otherwise we'd end up with a partly-written JSON in case of an
        unsupported mesh, corruputing the output. */
@@ -1955,6 +1972,90 @@ bool GltfSceneConverter::doAdd(CORRADE_UNUSED const UnsignedInt id, const Textur
     if(textureExtension != GltfExtension{}) {
         _state->requiredExtensions |= textureExtension;
         _state->usedExtensions &= ~textureExtension;
+    }
+
+    /* Calculate unique sampler identifier. If we already have it, reference
+       its ID. Otherwise create a new one. */
+    const UnsignedInt samplerIdentifier =
+        UnsignedInt(texture.wrapping()[0]) << 16 |
+        UnsignedInt(texture.wrapping()[1]) << 12 |
+        UnsignedInt(texture.minificationFilter()) << 8 |
+        UnsignedInt(texture.mipmapFilter()) << 4 |
+        UnsignedInt(texture.magnificationFilter()) << 0;
+    auto foundSampler = _state->uniqueSamplers.find(samplerIdentifier);
+    if(foundSampler == _state->uniqueSamplers.end()) {
+        /* If this is a first sampler, open the sampler array */
+        if(_state->gltfSamplers.isEmpty())
+            _state->gltfSamplers.beginArray();
+
+        UnsignedInt gltfWrapping[2];
+        for(const std::size_t i: {0, 1}) {
+            switch(texture.wrapping()[i]) {
+                case SamplerWrapping::ClampToEdge:
+                    gltfWrapping[i] = Implementation::GltfWrappingClampToEdge;
+                    break;
+                case SamplerWrapping::MirroredRepeat:
+                    gltfWrapping[i] = Implementation::GltfWrappingMirroredRepeat;
+                    break;
+                /* This is the default, so it could possibly be omitted.
+                   However, because the filters don't have defaults defined (so
+                   we're writing them always) and because we're deduplicating
+                   the samplers in the file, omitting a single value doesn't
+                   really make a difference in the resulting file size. */
+                case SamplerWrapping::Repeat:
+                    gltfWrapping[i] = Implementation::GltfWrappingRepeat;
+                    break;
+                /* Unsupported modes checked above already */
+                default: CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+            }
+        }
+        UnsignedInt gltfMinFilter;
+        switch(texture.minificationFilter()) {
+            case SamplerFilter::Nearest:
+                gltfMinFilter = Implementation::GltfFilterNearest;
+                break;
+            case SamplerFilter::Linear:
+                gltfMinFilter = Implementation::GltfFilterLinear;
+                break;
+            default: CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+        }
+        /* Using same enum decomposition trick as in Magnum/GL/Sampler.cpp */
+        constexpr UnsignedInt GltfMipmapNearest = Implementation::GltfFilterNearestMipmapNearest & ~Implementation::GltfFilterNearest;
+        constexpr UnsignedInt GltfMipmapLinear = Implementation::GltfFilterNearestMipmapLinear & ~Implementation::GltfFilterNearest;
+        static_assert(
+            (Implementation::GltfFilterLinear|GltfMipmapNearest) == Implementation::GltfFilterLinearMipmapNearest &&
+            (Implementation::GltfFilterLinear|GltfMipmapLinear) == Implementation::GltfFilterLinearMipmapLinear,
+            "unexpected glTF sampler filter constants");
+        switch(texture.mipmapFilter()) {
+            case SamplerMipmap::Base:
+                /* Nothing */
+                break;
+            case SamplerMipmap::Nearest:
+                gltfMinFilter |= GltfMipmapNearest;
+                break;
+            case SamplerMipmap::Linear:
+                gltfMinFilter |= GltfMipmapLinear;
+                break;
+            default: CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+        }
+        UnsignedInt gltfMagFilter;
+        switch(texture.magnificationFilter()) {
+            case SamplerFilter::Nearest:
+                gltfMagFilter = Implementation::GltfFilterNearest;
+                break;
+            case SamplerFilter::Linear:
+                gltfMagFilter = Implementation::GltfFilterLinear;
+                break;
+            default: CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+        }
+        _state->gltfSamplers.beginObject()
+            .writeKey("wrapS"_s).write(gltfWrapping[0])
+            .writeKey("wrapT"_s).write(gltfWrapping[1])
+            .writeKey("minFilter"_s).write(gltfMinFilter)
+            .writeKey("magFilter"_s).write(gltfMagFilter)
+        .endObject();
+
+        foundSampler = _state->uniqueSamplers.emplace(samplerIdentifier, _state->uniqueSamplers.size()).first;
     }
 
     /* If this is a first texture, open the texture array */
@@ -1973,6 +2074,7 @@ bool GltfSceneConverter::doAdd(CORRADE_UNUSED const UnsignedInt id, const Textur
             Containers::ScopeGuard gltfTexture = _state->gltfTextures.beginObjectScope();
 
             _state->gltfTextures
+                .writeKey("sampler"_s).write(foundSampler->second)
                 .writeKey("extensions"_s).beginObject()
                     .writeKey(textureExtensionString).beginObject()
                         .writeKey("source"_s).write(gltfImageId)
@@ -1987,6 +2089,8 @@ bool GltfSceneConverter::doAdd(CORRADE_UNUSED const UnsignedInt id, const Textur
     /* 2D texture is just one */
     } else if(texture.type() == TextureType::Texture2D) {
         Containers::ScopeGuard gltfTexture = _state->gltfTextures.beginObjectScope();
+
+        _state->gltfTextures.writeKey("sampler"_s).write(foundSampler->second);
 
         /* Image that doesn't need any extension (PNG or JPEG or whatever else
            with strict mode disabled), write directly */

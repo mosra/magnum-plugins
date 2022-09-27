@@ -8,8 +8,17 @@
   "extensionsRequired": [
     "KHR_texture_ktx"
   ],
+  "samplers": [
+    {
+      "wrapS": 33071,
+      "wrapT": 33071,
+      "minFilter": 9728,
+      "magFilter": 9728
+    }
+  ],
   "textures": [
     {
+      "sampler": 0,
       "extensions": {
         "KHR_texture_ktx": {
           "source": 0

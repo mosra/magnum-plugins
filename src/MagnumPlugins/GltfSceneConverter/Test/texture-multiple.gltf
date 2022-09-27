@@ -9,8 +9,23 @@
   "extensionsRequired": [
     "KHR_texture_ktx"
   ],
+  "samplers": [
+    {
+      "wrapS": 33648,
+      "wrapT": 33071,
+      "minFilter": 9985,
+      "magFilter": 9728
+    },
+    {
+      "wrapS": 10497,
+      "wrapT": 33648,
+      "minFilter": 9986,
+      "magFilter": 9729
+    }
+  ],
   "textures": [
     {
+      "sampler": 0,
       "extensions": {
         "KHR_texture_ktx": {
           "source": 2
@@ -18,6 +33,7 @@
       }
     },
     {
+      "sampler": 1,
       "source": 0
     }
   ],

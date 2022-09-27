@@ -2,8 +2,17 @@
   "asset": {
     "version": "2.0"
   },
+  "samplers": [
+    {
+      "wrapS": 33071,
+      "wrapT": 33071,
+      "minFilter": 9728,
+      "magFilter": 9728
+    }
+  ],
   "textures": [
     {
+      "sampler": 0,
       "source": 0,
       "name": "A texty name for a pingy image"
     }

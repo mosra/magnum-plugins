@@ -164,8 +164,9 @@ corrade_add_test(GltfSceneConverterTest GltfSceneConverterTest.cpp
         texcoord-flip-normalized-unsigned-short.glb
         texcoord-flip-normalized-unsigned-short-material.glb
         texcoord-flip-short-material.glb
-        texture-basis.gltf
         texture.gltf
+        texture-basis.gltf
+        texture-deduplicated-samplers.gltf
         texture-jpeg.gltf
         texture-ktx.gltf
         texture-ktx-no-extension.gltf
