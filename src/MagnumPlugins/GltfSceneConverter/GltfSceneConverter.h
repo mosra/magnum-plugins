@@ -331,9 +331,15 @@ the plugin supports also 3D images and 2D array textures using a proposed
 -   Material names, if passed, are saved into the file
 -   The material is required to only be added after all textures it references
 -   An informational warning is printed for all attributes that were unused
-    due to not having a glTF equivalent (such as Phong properties), due to
-    referring to a texture but the texture attribute isn't present or due to
-    the support not being implemented yet
+    due to not having a glTF equivalent, due to referring to a texture but the
+    texture attribute isn't present or due to the support not being implemented
+    yet. The only exception is Phong @ref MaterialAttribute::DiffuseColor and
+    @relativeref{MaterialAttribute,DiffuseTexture} properties if they match the
+    corresponding @ref MaterialAttribute::BaseColor /
+    @relativeref{MaterialAttribute,BaseColorTexture} attributes. Such
+    attributes are produced by @ref GltfImporter for compatibility purposes
+    when the @cb{.ini} phongMaterialFallback @ce @ref Trade-GltfImporter-configuration "configuration option"
+    is enabled and are redundant.
 -   At the moment, custom material properties and layers are not exported
 
 @subsection Trade-GltfSceneConverter-behavior-scenes Scene export

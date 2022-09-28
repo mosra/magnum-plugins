@@ -945,7 +945,65 @@ const struct {
             {MaterialAttribute::EmissiveTexture, 0u},
             {MaterialAttribute::EmissiveTextureMatrix,
                 Matrix3::rotation(-35.0_degf)}}},
-        "Trade::GltfSceneConverter::add(): material attribute EmissiveTextureMatrix rotation was not used\n"}
+        "Trade::GltfSceneConverter::add(): material attribute EmissiveTextureMatrix rotation was not used\n"},
+    /* These two should get removed once GltfImporter's phongMaterialFallback
+       option is gone */
+    {"phong diffuse attributes matching base color", true, "material-metallicroughness.gltf",
+        MaterialData{{}, {
+            {MaterialAttribute::BaseColor, Color4{0.1f, 0.2f, 0.3f, 0.4f}},
+            {MaterialAttribute::DiffuseColor, Color4{0.1f, 0.2f, 0.3f, 0.4f}},
+            {MaterialAttribute::BaseColorTexture, 0u},
+            {MaterialAttribute::DiffuseTexture, 0u},
+            {MaterialAttribute::BaseColorTextureMatrix,
+                Matrix3::translation({0.25f, 1.0f})},
+            {MaterialAttribute::DiffuseTextureMatrix,
+                Matrix3::translation({0.25f, 1.0f})},
+            {MaterialAttribute::BaseColorTextureCoordinates, 10u},
+            {MaterialAttribute::DiffuseTextureCoordinates, 10u},
+            {MaterialAttribute::BaseColorTextureLayer, 0u},
+            {MaterialAttribute::DiffuseTextureLayer, 0u},
+            {MaterialAttribute::Metalness, 0.25f},
+            {MaterialAttribute::Roughness, 0.75f},
+            {MaterialAttribute::NoneRoughnessMetallicTexture, 0u},
+            {MaterialAttribute::MetalnessTextureMatrix,
+                Matrix3::translation({0.25f, 0.0f})*
+                Matrix3::scaling({-0.25f, 0.75f})},
+            {MaterialAttribute::MetalnessTextureCoordinates, 11u},
+            {MaterialAttribute::RoughnessTextureMatrix,
+                Matrix3::translation({0.25f, 0.0f})*
+                Matrix3::scaling({-0.25f, 0.75f})},
+            {MaterialAttribute::RoughnessTextureCoordinates, 11u}}},
+        "" /* No warnings */},
+    {"phong diffuse attributes not matching base color", true, "material-metallicroughness.gltf",
+        MaterialData{{}, {
+            {MaterialAttribute::BaseColor, Color4{0.1f, 0.2f, 0.3f, 0.4f}},
+            {MaterialAttribute::DiffuseColor, Color4{}},
+            {MaterialAttribute::BaseColorTexture, 0u},
+            {MaterialAttribute::DiffuseTexture, 1u},
+            {MaterialAttribute::BaseColorTextureMatrix,
+                Matrix3::translation({0.25f, 1.0f})},
+            {MaterialAttribute::DiffuseTextureMatrix,
+                Matrix3{}},
+            {MaterialAttribute::BaseColorTextureCoordinates, 10u},
+            {MaterialAttribute::DiffuseTextureCoordinates, 11u},
+            {MaterialAttribute::BaseColorTextureLayer, 0u},
+            {MaterialAttribute::DiffuseTextureLayer, 1u},
+            {MaterialAttribute::Metalness, 0.25f},
+            {MaterialAttribute::Roughness, 0.75f},
+            {MaterialAttribute::NoneRoughnessMetallicTexture, 0u},
+            {MaterialAttribute::MetalnessTextureMatrix,
+                Matrix3::translation({0.25f, 0.0f})*
+                Matrix3::scaling({-0.25f, 0.75f})},
+            {MaterialAttribute::MetalnessTextureCoordinates, 11u},
+            {MaterialAttribute::RoughnessTextureMatrix,
+                Matrix3::translation({0.25f, 0.0f})*
+                Matrix3::scaling({-0.25f, 0.75f})},
+            {MaterialAttribute::RoughnessTextureCoordinates, 11u}}},
+        "Trade::GltfSceneConverter::add(): material attribute DiffuseColor was not used\n"
+        "Trade::GltfSceneConverter::add(): material attribute DiffuseTexture was not used\n"
+        "Trade::GltfSceneConverter::add(): material attribute DiffuseTextureCoordinates was not used\n"
+        "Trade::GltfSceneConverter::add(): material attribute DiffuseTextureLayer was not used\n"
+        "Trade::GltfSceneConverter::add(): material attribute DiffuseTextureMatrix was not used\n"},
 };
 
 const struct {

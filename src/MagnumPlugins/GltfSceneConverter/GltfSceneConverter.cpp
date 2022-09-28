@@ -1911,6 +1911,38 @@ bool GltfSceneConverter::doAdd(UnsignedInt, const MaterialData& material, const 
     if(name)
         _state->gltfMaterials.writeKey("name"_s).write(name);
 
+    /* For backwards compatibility GltfImporter copies BaseColor-related
+       attributes to DiffuseColor etc. Mark them as used if they're the same
+       so it doesn't warn about them being unused. If they're not the same, a
+       warning should still be printed. */
+    /** @todo remove once GltfImporter's phongMaterialFallback option is gone */
+    {
+        const auto baseColorId = material.findAttributeId(MaterialAttribute::BaseColor);
+        const auto diffuseColorId = material.findAttributeId(MaterialAttribute::DiffuseColor);
+        if(baseColorId && diffuseColorId && material.attribute<Color4>(*baseColorId) == material.attribute<Color4>(*diffuseColorId))
+            maskedMaterial.mask.set(*diffuseColorId);
+    } {
+        const auto baseColorTextureId = material.findAttributeId(MaterialAttribute::BaseColorTexture);
+        const auto diffuseTextureId = material.findAttributeId(MaterialAttribute::DiffuseTexture);
+        if(baseColorTextureId && diffuseTextureId && material.attribute<UnsignedInt>(*baseColorTextureId) == material.attribute<UnsignedInt>(*diffuseTextureId))
+            maskedMaterial.mask.set(*diffuseTextureId);
+    }  {
+        const auto baseColorTextureMatrixId = material.findAttributeId(MaterialAttribute::BaseColorTextureMatrix);
+        const auto diffuseTextureMatrixId = material.findAttributeId(MaterialAttribute::DiffuseTextureMatrix);
+        if(baseColorTextureMatrixId && diffuseTextureMatrixId && material.attribute<Matrix3>(*baseColorTextureMatrixId) == material.attribute<Matrix3>(*diffuseTextureMatrixId))
+            maskedMaterial.mask.set(*diffuseTextureMatrixId);
+    } {
+        const auto baseColorTextureCoordinatesId = material.findAttributeId(MaterialAttribute::BaseColorTextureCoordinates);
+        const auto diffuseTextureCoordinatesId = material.findAttributeId(MaterialAttribute::DiffuseTextureCoordinates);
+        if(baseColorTextureCoordinatesId && diffuseTextureCoordinatesId && material.attribute<UnsignedInt>(*baseColorTextureCoordinatesId) == material.attribute<UnsignedInt>(*diffuseTextureCoordinatesId))
+            maskedMaterial.mask.set(*diffuseTextureCoordinatesId);
+    } {
+        const auto baseColorTextureLayerId = material.findAttributeId(MaterialAttribute::BaseColorTextureLayer);
+        const auto diffuseTextureLayerId = material.findAttributeId(MaterialAttribute::DiffuseTextureLayer);
+        if(baseColorTextureLayerId && diffuseTextureLayerId && material.attribute<UnsignedInt>(*baseColorTextureLayerId) == material.attribute<UnsignedInt>(*diffuseTextureLayerId))
+            maskedMaterial.mask.set(*diffuseTextureLayerId);
+    }
+
     /* Report unused attributes and layers */
     /** @todo some "iterate unset bits" API for this? */
     for(std::size_t i = 0; i != material.attributeCount(); ++i) {
