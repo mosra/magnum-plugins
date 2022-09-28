@@ -120,11 +120,6 @@ Import of morph data is not supported at the moment.
 
 @subsection Trade-GltfImporter-behavior-objects Scene import
 
--   If no @cb{.json} "scene" @ce property is present and the file contains at
-    least one scene, @ref defaultScene() returns @cpp 0 @ce instead of
-    @cpp -1 @ce. According to the [glTF 2.0 specification](https://www.khronos.org/registry/glTF/specs/2.0/glTF-2.0.html#scenes)
-    the importer is free to not render anything, but the suggested behavior
-    would break even some official sample models.
 -   Imported scenes always have @ref SceneMappingType::UnsignedInt and are
     always 3D. The @ref objectCount() returns count of all nodes in the file,
     while @ref SceneData::mappingBound() returns an upper bound on node IDs

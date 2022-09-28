@@ -296,6 +296,11 @@ namespace Magnum {
     Z-flip on uncompressed images to ensure consistency with other importers,
     code that relied on the previous broken behavior will break. Either Y-flip
     the files or set the @cb{.ini} assumeYUpZBackward @ce option to fix this.
+-   @relativeref{Trade,GltfImporter} no longer returns @cpp 0 @ce from
+    @relativeref{Trade::AbstractImporter,defaultScene()} if
+    no @cb{.json} "scene" @ce property is present and the file contains at
+    least one scene, and returns @cpp -1 @ce instead. This is in order to
+    support use cases depending on the (lack of the) default scene specifier.
 
 @subsection changelog-plugins-latest-documentation Documentation
 
