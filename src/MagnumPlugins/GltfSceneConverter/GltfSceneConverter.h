@@ -379,7 +379,7 @@ the plugin supports also 3D images and 2D array textures using a proposed
 It's possible to tune various output options through @ref configuration(). See
 below for all options and their default values:
 
-@snippet MagnumPlugins/GltfSceneConverter/GltfSceneConverter.conf config
+@snippet MagnumPlugins/GltfSceneConverter/GltfSceneConverter.conf configuration_
 
 See @ref plugins-configuration for more information and an example showing how
 to edit the configuration values.
