@@ -1118,6 +1118,15 @@ const struct {
 
 const struct {
     const char* name;
+    Int defaultScene;
+    const char* expected;
+} AddSceneEmptyData[]{
+    {"", -1, "scene-empty.gltf"},
+    {"default scene", 0, "scene-empty-default.gltf"}
+};
+
+const struct {
+    const char* name;
     Containers::StringView dataName;
     UnsignedShort offset;
     const char* expected;
@@ -1324,7 +1333,8 @@ GltfSceneConverterTest::GltfSceneConverterTest() {
     addInstancedTests({&GltfSceneConverterTest::textureCoordinateYFlip},
         Containers::arraySize(TextureCoordinateYFlipData));
 
-    addTests({&GltfSceneConverterTest::addSceneEmpty});
+    addInstancedTests({&GltfSceneConverterTest::addSceneEmpty},
+        Containers::arraySize(AddSceneEmptyData));
 
     addInstancedTests({&GltfSceneConverterTest::addScene},
         Containers::arraySize(AddSceneData));
@@ -3652,9 +3662,12 @@ void GltfSceneConverterTest::textureCoordinateYFlip() {
 }
 
 void GltfSceneConverterTest::addSceneEmpty() {
+    auto&& data = AddSceneEmptyData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     Containers::Pointer<AbstractSceneConverter> converter =  _converterManager.instantiate("GltfSceneConverter");
 
-    Containers::String filename = Utility::Path::join(GLTFSCENECONVERTER_TEST_OUTPUT_DIR, "scene-empty.gltf");
+    Containers::String filename = Utility::Path::join(GLTFSCENECONVERTER_TEST_OUTPUT_DIR, data.expected);
     CORRADE_VERIFY(converter->beginFile(filename));
 
     CORRADE_VERIFY(converter->add(SceneData{SceneMappingType::UnsignedByte, 0, nullptr, {
@@ -3664,9 +3677,12 @@ void GltfSceneConverterTest::addSceneEmpty() {
             SceneFieldType::Matrix4x4, nullptr},
     }}));
 
+    if(data.defaultScene != -1)
+        converter->setDefaultScene(data.defaultScene);
+
     CORRADE_VERIFY(converter->endFile());
     CORRADE_COMPARE_AS(filename,
-        Utility::Path::join(GLTFSCENECONVERTER_TEST_DIR, "scene-empty.gltf"),
+        Utility::Path::join(GLTFSCENECONVERTER_TEST_DIR, data.expected),
         TestSuite::Compare::File);
 
     if(_importerManager.loadState("GltfImporter") == PluginManager::LoadState::NotFound)
@@ -3684,6 +3700,9 @@ void GltfSceneConverterTest::addSceneEmpty() {
     /* There is ImporterState & Parent always, plus Transformation to indicate
        a 3D scene */
     CORRADE_COMPARE(imported->fieldCount(), 3);
+
+    /* The scene should be set as default only if we called the function */
+    CORRADE_COMPARE(importer->defaultScene(), data.defaultScene);
 }
 
 void GltfSceneConverterTest::addScene() {

@@ -156,6 +156,8 @@ struct GltfSceneConverter::State {
     Utility::JsonWriter gltfTextures;
     Utility::JsonWriter gltfImages;
 
+    Int defaultScene = -1;
+
     Containers::Array<char> buffer;
 };
 
@@ -401,8 +403,11 @@ Containers::Optional<Containers::Array<char>> GltfSceneConverter::doEndData() {
         json.writeKey("nodes"_s).writeJson(_state->gltfNodes.toString());
     if(!_state->gltfScenes.isEmpty()) {
         json.writeKey("scenes"_s).writeJson(_state->gltfScenes.toString());
-        /* Currently there's at most one scene, so no need to write the default
-           scene */
+        /* Write the default scnee ID, if set. Currently there's at most one
+           scene so it can only be either not present or present and set to 0,
+           but certain importers might require it to be present. */
+        if(_state->defaultScene != -1)
+            json.writeKey("scene"_s).write(_state->defaultScene);
     }
 
     /* Done! */
@@ -461,6 +466,10 @@ Containers::Optional<Containers::Array<char>> GltfSceneConverter::doEndData() {
 
 void GltfSceneConverter::doAbort() {
     _state = {};
+}
+
+void GltfSceneConverter::doSetDefaultScene(const UnsignedInt id) {
+    _state->defaultScene = id;
 }
 
 void GltfSceneConverter::doSetObjectName(const UnsignedLong object, const Containers::StringView name) {
