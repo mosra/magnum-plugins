@@ -25,6 +25,7 @@
 
 #include "MeshOptimizerSceneConverter.h"
 
+#include <Corrade/Containers/Iterable.h>
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/Reference.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
@@ -38,7 +39,7 @@
 #include <Magnum/Trade/ArrayAllocator.h>
 #include <Magnum/Trade/MeshData.h>
 #include <meshoptimizer.h>
-
+#include <Corrade/Containers/StringView.h>
 namespace Magnum { namespace Trade {
 
 MeshOptimizerSceneConverter::MeshOptimizerSceneConverter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin): AbstractSceneConverter{manager, plugin} {}
@@ -583,4 +584,4 @@ Containers::Optional<MeshData> MeshOptimizerSceneConverter::doConvert(const Mesh
 }}
 
 CORRADE_PLUGIN_REGISTER(MeshOptimizerSceneConverter, Magnum::Trade::MeshOptimizerSceneConverter,
-    "cz.mosra.magnum.Trade.AbstractSceneConverter/0.1.2")
+    "cz.mosra.magnum.Trade.AbstractSceneConverter/0.2")
