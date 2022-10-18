@@ -2,6 +2,12 @@
   "asset": {
     "version": "2.0"
   },
+  "extensionsUsed": [
+    "KHR_texture_ktx"
+  ],
+  "extensionsRequired": [
+    "KHR_texture_ktx"
+  ],
   "buffers": [
     {
       "uri": "image-3d-bundled.bin",
@@ -15,8 +21,17 @@
       "byteLength": 210
     }
   ],
+  "samplers": [
+    {
+      "wrapS": 33071,
+      "wrapT": 33071,
+      "minFilter": 9728,
+      "magFilter": 9728
+    }
+  ],
   "textures": [
     {
+      "sampler": 0,
       "extensions": {
         "KHR_texture_ktx": {
           "source": 0,
@@ -25,6 +40,7 @@
       }
     },
     {
+      "sampler": 0,
       "extensions": {
         "KHR_texture_ktx": {
           "source": 0,

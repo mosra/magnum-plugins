@@ -61,6 +61,8 @@ Exports full scenes to either `*.gltf` files with an external `*.bin` buffer or
 to a self-contained `*.glb`. You can use @ref GltfImporter to import scenes in
 this format.
 
+@experimental
+
 @section Trade-GltfSceneConverter-usage Usage
 
 This plugin depends on the @ref Trade library and is built if
@@ -273,7 +275,6 @@ See @ref building-plugins, @ref cmake-plugins, @ref plugins and
 -   The texture is required to only be added after all images it references
 -   At the moment, there's no support for exporting multi-level images even
     though the KTX2 container is capable of storing these.
--   At the moment, texture sampler properties are not exported.
 
 @subsubsection Trade-GltfSceneConverter-behavior-images-array 2D array texture export
 
@@ -332,9 +333,15 @@ the plugin supports also 3D images and 2D array textures using a proposed
 -   Material names, if passed, are saved into the file
 -   The material is required to only be added after all textures it references
 -   An informational warning is printed for all attributes that were unused
-    due to not having a glTF equivalent (such as Phong properties), due to
-    referring to a texture but the texture attribute isn't present or due to
-    the support not being implemented yet
+    due to not having a glTF equivalent, due to referring to a texture but the
+    texture attribute isn't present or due to the support not being implemented
+    yet. The only exception is Phong @ref MaterialAttribute::DiffuseColor and
+    @relativeref{MaterialAttribute,DiffuseTexture} properties if they match the
+    corresponding @ref MaterialAttribute::BaseColor /
+    @relativeref{MaterialAttribute,BaseColorTexture} attributes. Such
+    attributes are produced by @ref GltfImporter for compatibility purposes
+    when the @cb{.ini} phongMaterialFallback @ce @ref Trade-GltfImporter-configuration "configuration option"
+    is enabled and are redundant.
 -   At the moment, custom material properties and layers are not exported
 
 @subsection Trade-GltfSceneConverter-behavior-scenes Scene export
@@ -354,12 +361,16 @@ the plugin supports also 3D images and 2D array textures using a proposed
 -   Object and scene names, if passed, are saved into the file
 -   The scene is required to only be added after all meshes and materials it
     references
+-   Custom @ref SceneFieldType::Float, @ref SceneFieldType::UnsignedInt and
+    @ref SceneFieldType::Int fields are exported if a name is set for them via
+    @ref setSceneFieldName(). Custom fields of other types and without a name
+    assigned are ignored with a warning.
 -   At the moment, only @ref SceneField::Parent,
     @relativeref{SceneField,Transformation},
     @relativeref{SceneField,Translation}, @relativeref{SceneField,Rotation},
     @relativeref{SceneField,Scaling}, @relativeref{SceneField,Mesh}
-    and @relativeref{SceneField,MeshMaterial} is exported, other fields are
-    ignored with a warning
+    and @relativeref{SceneField,MeshMaterial} is exported, other builtin fields
+    are ignored with a warning
 -   At the moment, duplicate fields including multiple mesh assignments are
     ignored with a warning
 -   At the moment, only a single scene can be exported. As a consequence,
@@ -370,7 +381,7 @@ the plugin supports also 3D images and 2D array textures using a proposed
 It's possible to tune various output options through @ref configuration(). See
 below for all options and their default values:
 
-@snippet MagnumPlugins/GltfSceneConverter/GltfSceneConverter.conf config
+@snippet MagnumPlugins/GltfSceneConverter/GltfSceneConverter.conf configuration_
 
 See @ref plugins-configuration for more information and an example showing how
 to edit the configuration values.
@@ -389,7 +400,9 @@ class MAGNUM_GLTFSCENECONVERTER_EXPORT GltfSceneConverter: public AbstractSceneC
         MAGNUM_GLTFSCENECONVERTER_LOCAL Containers::Optional<Containers::Array<char>> doEndData() override;
         MAGNUM_GLTFSCENECONVERTER_LOCAL void doAbort() override;
 
+        MAGNUM_GLTFSCENECONVERTER_LOCAL void doSetDefaultScene(UnsignedInt id) override;
         MAGNUM_GLTFSCENECONVERTER_LOCAL void doSetObjectName(UnsignedLong object, Containers::StringView name) override;
+        MAGNUM_GLTFSCENECONVERTER_LOCAL void doSetSceneFieldName(UnsignedInt field, Containers::StringView name) override;
         MAGNUM_GLTFSCENECONVERTER_LOCAL bool doAdd(const UnsignedInt id, const SceneData& scene, Containers::StringView name) override;
 
         MAGNUM_GLTFSCENECONVERTER_LOCAL void doSetMeshAttributeName(UnsignedShort attribute, Containers::StringView name) override;

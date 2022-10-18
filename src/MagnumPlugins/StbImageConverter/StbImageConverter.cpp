@@ -190,27 +190,29 @@ Containers::Optional<Containers::Array<char>> StbImageConverter::doConvertToData
 }
 
 bool StbImageConverter::doConvertToFile(const ImageView2D& image, const Containers::StringView filename) {
-    /** @todo once Directory is std::string-free, use splitExtension() */
-    const Containers::String normalized = Utility::String::lowercase(filename);
+    /* We don't detect any double extensions yet, so we can normalize just the
+       extension. In case we eventually might, it'd have to be split() instead
+       to save at least by normalizing just the filename and not the path. */
+    const Containers::String normalizedExtension = Utility::String::lowercase(Utility::Path::splitExtension(filename).second());
 
     /* Save the previous format to restore it back after, detect the format
        from extension if it's not supplied explicitly */
     const Format previousFormat = _format;
     if(_format == Format{}) {
-        if(normalized.hasSuffix(".bmp"_s))
+        if(normalizedExtension == ".bmp"_s)
             _format = Format::Bmp;
-        else if(normalized.hasSuffix(".hdr"_s))
+        else if(normalizedExtension == ".hdr"_s)
             _format = Format::Hdr;
-        else if(normalized.hasSuffix(".jpg"_s) ||
-                normalized.hasSuffix(".jpeg"_s) ||
-                normalized.hasSuffix(".jpe"_s))
+        else if(normalizedExtension == ".jpg"_s ||
+                normalizedExtension == ".jpeg"_s ||
+                normalizedExtension == ".jpe"_s)
             _format = Format::Jpeg;
-        else if(normalized.hasSuffix(".png"_s))
+        else if(normalizedExtension == ".png"_s)
             _format = Format::Png;
-        else if(normalized.hasSuffix(".tga"_s) ||
-                normalized.hasSuffix(".vda"_s) ||
-                normalized.hasSuffix(".icb"_s) ||
-                normalized.hasSuffix( ".vst"_s))
+        else if(normalizedExtension == ".tga"_s ||
+                normalizedExtension == ".vda"_s ||
+                normalizedExtension == ".icb"_s ||
+                normalizedExtension ==  ".vst"_s)
             _format = Format::Tga;
         else {
             Error{} << "Trade::StbImageConverter::convertToFile(): cannot determine output format for" << Utility::Path::split(filename).second() << "(plugin loaded as" << plugin() << Error::nospace << ", use one of the Stb{Bmp,Hdr,Jpeg,Png,Tga}ImageConverter aliases or a corresponding file extension)";

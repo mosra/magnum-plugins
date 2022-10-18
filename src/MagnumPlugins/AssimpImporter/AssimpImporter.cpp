@@ -6,7 +6,7 @@
     Copyright © 2017, 2020, 2021, 2022 Jonathan Hale <squareys@googlemail.com>
     Copyright © 2018 Konstantinos Chatzilygeroudis <costashatz@gmail.com>
     Copyright © 2019, 2020 Max Schwarz <max.schwarz@ais.uni-bonn.de>
-    Copyright © 2021 Pablo Escobar <mail@rvrs.in>
+    Copyright © 2021, 2022 Pablo Escobar <mail@rvrs.in>
 
     Permission is hereby granted, free of charge, to any person obtaining a
     copy of this software and associated documentation files (the "Software"),
@@ -31,13 +31,17 @@
 
 #include <cctype>
 #include <unordered_map>
+#include <Corrade/Containers/Array.h>
 #include <Corrade/Containers/ArrayTuple.h>
 #include <Corrade/Containers/ArrayView.h>
-#include <Corrade/Containers/ArrayViewStl.h>
 #include <Corrade/Containers/BigEnumSet.h>
 #include <Corrade/Containers/GrowableArray.h>
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/Pair.h>
+#include <Corrade/Containers/Triple.h>
+#include <Corrade/Containers/String.h>
+#include <Corrade/Containers/StringView.h>
+#include <Corrade/Containers/StringStlHash.h>
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/Format.h>
@@ -71,10 +75,33 @@
 #include <assimp/Logger.hpp>
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
+#include <assimp/version.h>
 
 #include "configureInternal.h"
 
+namespace Corrade { namespace Containers { namespace Implementation {
+
+template<> struct StringConverter<aiString> {
+    static String from(const aiString& other) {
+        return String{other.C_Str(), other.length};
+    }
+};
+
+template<> struct StringViewConverter<const char, aiString> {
+    static StringView from(const aiString& other) {
+        return StringView{other.C_Str(), other.length, Containers::StringViewFlag::NullTerminated};
+    }
+};
+
+}}}
+
 namespace Magnum { namespace Math { namespace Implementation {
+
+template<> struct VectorConverter<2, Float, aiVector2D> {
+    static Vector<2, Float> from(const aiVector2D& other) {
+        return {other.x, other.y};
+    }
+};
 
 template<> struct VectorConverter<3, Float, aiColor3D> {
     static Vector<3, Float> from(const aiColor3D& other) {
@@ -96,44 +123,40 @@ using namespace Containers::Literals;
 
 struct AssimpImporter::File {
     Containers::Optional<Containers::String> filePath;
+    UnsignedInt assimpVersion = 0;
     bool importerIsGltf = false;
     const aiScene* scene = nullptr;
     /* Index -> pointer, pointer -> index conversion for nodes as they're
        represented in a tree. Needed by objectCount() (which is const) so can't
        be delayed to scenne() parsing. */
-    std::vector<aiNode*> nodes;
+    Containers::Array<const aiNode*> nodes;
     std::unordered_map<const aiNode*, UnsignedInt> nodeIndices;
     /* (materialPointer, propertyIndexInsideMaterial, imageIndex) tuple,
        imageIndex points to the (deduplicated) images array */
-    std::vector<std::tuple<const aiMaterial*, UnsignedInt, UnsignedInt>> textures;
+    Containers::Array<Containers::Triple<const aiMaterial*, UnsignedInt, UnsignedInt>> textures;
     /* (materialPointer, propertyIndexInsideMaterial) tuple defining the first
        (unique) location of an image */
-    std::vector<std::pair<const aiMaterial*, UnsignedInt>> images;
+    Containers::Array<Containers::Pair<const aiMaterial*, UnsignedInt>> images;
 
-    std::unordered_map<std::string, UnsignedInt> materialIndicesForName;
+    std::unordered_map<Containers::String, UnsignedInt> materialIndicesForName;
     std::unordered_map<const aiMaterial*, UnsignedInt> textureIndices;
 
-    Containers::Optional<std::unordered_map<std::string, Int>>
+    /* We can use StringView for the keys because they point to aiString mName
+       in the scene, which stay valid for as long as a file is opened */
+    Containers::Optional<std::unordered_map<Containers::StringView, Int>>
         animationsForName,
         camerasForName,
         lightsForName,
         meshesForName,
         skinsForName;
 
-    /* Joint ids and weights are the only custom attributes in this importer */
-    std::unordered_map<std::string, MeshAttribute> meshAttributesForName{
-        {"JOINTS", meshAttributeCustom(0)},
-        {"WEIGHTS", meshAttributeCustom(1)}
-    };
-    std::vector<std::string> meshAttributeNames{"JOINTS", "WEIGHTS"};
-
-    std::vector<std::size_t> meshesWithBones;
+    Containers::Array<std::size_t> meshesWithBones;
     /* For each mesh: the index of its skin (before any merging), or -1 */
-    std::vector<Int> meshSkins;
+    Containers::Array<Int> meshSkins;
     bool mergeSkins = false;
     /* For each mesh, map from mesh-relative bones to merged bone list */
-    std::vector<std::vector<UnsignedInt>> boneMap;
-    std::vector<const aiBone*> mergedBones;
+    Containers::Array<Containers::Array<UnsignedInt>> boneMap;
+    Containers::Array<const aiBone*> mergedBones;
 
     UnsignedInt imageImporterId = ~UnsignedInt{};
     Containers::Optional<AnyImageImporter> imageImporter;
@@ -142,6 +165,10 @@ struct AssimpImporter::File {
 };
 
 namespace {
+
+/* Joint ids and weights are the only custom attributes in this importer */
+constexpr MeshAttribute JointsAttribute = meshAttributeCustom(0);
+constexpr MeshAttribute WeightsAttribute = meshAttributeCustom(1);
 
 void fillDefaultConfiguration(Utility::ConfigurationGroup& conf) {
     /** @todo horrible workaround, fix this properly */
@@ -179,6 +206,14 @@ Containers::Pointer<Assimp::Importer> createImporter(Utility::ConfigurationGroup
         conf.value<int>("maxJointWeights"));
 
     return importer;
+}
+
+std::size_t countNodeDescendants(const aiNode* node) {
+    std::size_t count = node->mNumChildren;
+    for(aiNode* child: Containers::arrayView(node->mChildren, node->mNumChildren)) {
+        count += countNodeDescendants(child);
+    }
+    return count;
 }
 
 bool isDummyBone(const aiBone* bone) {
@@ -269,7 +304,7 @@ struct IoSystem: Assimp::IOSystem {
     char getOsSeparator() const override { return '/'; }
 
     Assimp::IOStream* Open(const char* file, const char* mode) override {
-        CORRADE_INTERNAL_ASSERT(mode == std::string{"rb"});
+        CORRADE_INTERNAL_ASSERT(mode == "rb"_s);
         #ifdef CORRADE_NO_ASSERT
         static_cast<void>(mode);
         #endif
@@ -394,6 +429,17 @@ void AssimpImporter::doOpenData(Containers::Array<char>&& data, DataFlags) {
 
     CORRADE_INTERNAL_ASSERT(_f->scene);
 
+    _f->assimpVersion = aiGetVersionMajor()*100 + aiGetVersionMinor()*10
+        #if ASSIMP_HAS_VERSION_PATCH
+        + aiGetVersionPatch()
+        #endif
+        ;
+
+    /* Assimp 5.0.0 reports itself as 4.1.0 */
+    #if ASSIMP_IS_VERSION_5_OR_GREATER
+    _f->assimpVersion =  Math::max(_f->assimpVersion, 500u);
+    #endif
+
     /* Get name of importer. Useful for workarounds based on importer/file
        type. If the _importer isn't populated, we got called from doOpenState()
        and we can't really do much here. */
@@ -408,37 +454,52 @@ void AssimpImporter::doOpenData(Containers::Array<char>&& data, DataFlags) {
     }
 
     /* Fill hashmaps for index lookup for materials & textures */
+    std::size_t numTextures = 0;
+    for(aiMaterial* mat: Containers::arrayView(_f->scene->mMaterials, _f->scene->mNumMaterials))
+        for(aiMaterialProperty* property: Containers::arrayView(mat->mProperties, mat->mNumProperties))
+            if(Containers::StringView{property->mKey} == _AI_MATKEY_TEXTURE_BASE)
+                ++numTextures;
+    arrayReserve(_f->textures, numTextures);
+    arrayReserve(_f->images, numTextures);
+    _f->textureIndices.reserve(numTextures);
     _f->materialIndicesForName.reserve(_f->scene->mNumMaterials);
+
     aiString matName;
     UnsignedInt textureIndex = 0;
-    std::unordered_map<std::string, UnsignedInt> uniqueImages;
-    for(std::size_t i = 0; i < _f->scene->mNumMaterials; ++i) {
+    std::unordered_map<Containers::StringView, UnsignedInt> uniqueImages;
+    uniqueImages.reserve(numTextures);
+    for(UnsignedInt i = 0; i < _f->scene->mNumMaterials; ++i) {
         const aiMaterial* mat = _f->scene->mMaterials[i];
 
         if(mat->Get(AI_MATKEY_NAME, matName) == AI_SUCCESS) {
-            std::string name = matName.C_Str();
-            _f->materialIndicesForName[name] = i;
+            /* Avoid a copy if we can. Can't insert with the non-owned String
+               key because that'd be a dangling view. */
+            auto found = _f->materialIndicesForName.find(Containers::String::nullTerminatedView(matName));
+            if(found == _f->materialIndicesForName.end())
+                _f->materialIndicesForName[matName] = i;
+            else
+                found->second = i;
         }
 
         /* Store first possible texture index for this material, next textures
            use successive indices. */
         _f->textureIndices[mat] = textureIndex;
-        for(std::size_t j = 0; j != mat->mNumProperties; ++j) {
+        for(UnsignedInt j = 0; j != mat->mNumProperties; ++j) {
             /* We're only interested in AI_MATKEY_TEXTURE_* properties */
             const aiMaterialProperty& property = *mat->mProperties[j];
-            if(Containers::StringView{property.mKey.C_Str(), property.mKey.length} != _AI_MATKEY_TEXTURE_BASE) continue;
+            if(Containers::StringView{property.mKey} != _AI_MATKEY_TEXTURE_BASE) continue;
 
             /* For images ensure we have an unique path so each file isn't
                imported more than once. Each image then points to j-th property
                of the material, which is then used to retrieve its path again. */
-            Containers::StringView texturePath = materialPropertyString(property);
+            const Containers::StringView texturePath = materialPropertyString(property);
             auto uniqueImage = uniqueImages.emplace(texturePath, _f->images.size());
-            if(uniqueImage.second) _f->images.emplace_back(mat, j);
+            if(uniqueImage.second) arrayAppend(_f->images, InPlaceInit, mat, j);
 
             /* Each texture points to j-th property of the material, which is
                then used to retrieve related info, plus an index into the
                unique images array */
-            _f->textures.emplace_back(mat, j, uniqueImage.first->second);
+            arrayAppend(_f->textures, InPlaceInit, mat, j, uniqueImage.first->second);
             ++textureIndex;
         }
     }
@@ -466,9 +527,10 @@ void AssimpImporter::doOpenData(Containers::Array<char>&& data, DataFlags) {
                we didn't miss anything in the root node. */
             CORRADE_INTERNAL_ASSERT(!_importer || !root->mNumMeshes);
 
-            _f->nodes.reserve(root->mNumChildren);
-            _f->nodes.insert(_f->nodes.end(), root->mChildren, root->mChildren + root->mNumChildren);
-            _f->nodeIndices.reserve(root->mNumChildren);
+            const std::size_t numDescendants = countNodeDescendants(root);
+            arrayReserve(_f->nodes, numDescendants);
+            arrayAppend(_f->nodes, Containers::arrayView(root->mChildren, root->mNumChildren));
+            _f->nodeIndices.reserve(numDescendants);
             _f->rootTransformation = Matrix4::from(reinterpret_cast<const float*>(&root->mTransformation)).transposed();
 
         /* In various cases (PreTransformVertices enabled when the file has a
@@ -478,17 +540,16 @@ void AssimpImporter::doOpenData(Containers::Array<char>&& data, DataFlags) {
            transformation is not desired, so set it to identity. This branch is
            explicitly verified in the sceneCollapsedNode() test case. */
         } else {
-            _f->nodes.push_back(root);
-            _f->nodeIndices.reserve(1);
+            arrayAppend(_f->nodes, root);
             _f->rootTransformation = Matrix4{};
         }
 
         /* Unpack the node tree into a linear array we can index into. Insert
            into a vector may invalidate iterators, so we use indices here. */
         for(std::size_t i = 0; i < _f->nodes.size(); ++i) {
-            aiNode* node = _f->nodes[i];
+            const aiNode* node = _f->nodes[i];
             _f->nodeIndices[node] = UnsignedInt(i);
-            _f->nodes.insert(_f->nodes.end(), node->mChildren, node->mChildren + node->mNumChildren);
+            arrayAppend(_f->nodes, Containers::arrayView(node->mChildren, node->mNumChildren));
         }
     }
 
@@ -508,14 +569,15 @@ void AssimpImporter::doOpenData(Containers::Array<char>&& data, DataFlags) {
     #endif
 
     /* Find meshes with bone data, those are our skins */
-    _f->meshSkins.reserve(_f->scene->mNumMeshes);
+    _f->meshSkins = Containers::Array<Int>{NoInit, _f->scene->mNumMeshes};
+    arrayReserve(_f->meshesWithBones, _f->scene->mNumMeshes);
     for(std::size_t i = 0; i != _f->scene->mNumMeshes; ++i) {
         Int skin = -1;
         if(_f->scene->mMeshes[i]->HasBones()) {
             skin = _f->meshesWithBones.size();
-            _f->meshesWithBones.push_back(i);
+            arrayAppend(_f->meshesWithBones, i);
         }
-        _f->meshSkins.push_back(skin);
+        _f->meshSkins[i] = skin;
     }
 
     /* Can't be changed per skin-import because it affects joint id vertex
@@ -524,12 +586,17 @@ void AssimpImporter::doOpenData(Containers::Array<char>&& data, DataFlags) {
 
     /* De-duplicate bones across all skinned meshes */
     if(_f->mergeSkins) {
-        _f->boneMap.resize(_f->meshesWithBones.size());
+        std::size_t numBones = 0;
+        for(UnsignedInt mesh: _f->meshesWithBones)
+            numBones += _f->scene->mMeshes[mesh]->mNumBones;
+        arrayReserve(_f->mergedBones, numBones);
+
+        _f->boneMap = Containers::Array<Containers::Array<UnsignedInt>>{ValueInit, _f->meshesWithBones.size()};
         for(std::size_t s = 0; s < _f->meshesWithBones.size(); ++s) {
             const UnsignedInt id = _f->meshesWithBones[s];
             const aiMesh* mesh = _f->scene->mMeshes[id];
             auto& map = _f->boneMap[s];
-            map.reserve(mesh->mNumBones);
+            arrayReserve(map, mesh->mNumBones);
             for(const aiBone* bone: Containers::arrayView(mesh->mBones, mesh->mNumBones)) {
                 Int index = -1;
                 for(std::size_t i = 0; i != _f->mergedBones.size(); ++i) {
@@ -543,9 +610,9 @@ void AssimpImporter::doOpenData(Containers::Array<char>&& data, DataFlags) {
                 }
                 if(index == -1) {
                     index = _f->mergedBones.size();
-                    _f->mergedBones.push_back(bone);
+                    arrayAppend(_f->mergedBones, bone);
                 }
-                map.push_back(index);
+                arrayAppend(map, index);
             }
         }
     }
@@ -589,7 +656,7 @@ UnsignedInt AssimpImporter::doSceneCount() const { return _f->scene->mRootNode ?
 
 Int AssimpImporter::doSceneForName(const Containers::StringView name) {
     #if ASSIMP_HAS_SCENE_NAME
-    if(_f->scene->mRootNode && name == _f->scene->mName.C_Str())
+    if(_f->scene->mRootNode && name == _f->scene->mName)
         return 0;
     #else
     static_cast<void>(name);
@@ -599,7 +666,7 @@ Int AssimpImporter::doSceneForName(const Containers::StringView name) {
 
 Containers::String AssimpImporter::doSceneName(UnsignedInt) {
     #if ASSIMP_HAS_SCENE_NAME
-    return _f->scene->mName.C_Str();
+    return _f->scene->mName;
     #else
     return {};
     #endif
@@ -807,7 +874,7 @@ Long AssimpImporter::doObjectForName(const Containers::StringView name) {
 }
 
 Containers::String AssimpImporter::doObjectName(const UnsignedLong id) {
-    return _f->nodes[id]->mName.C_Str();
+    return _f->nodes[id]->mName;
 }
 
 UnsignedInt AssimpImporter::doCameraCount() const {
@@ -819,7 +886,7 @@ Int AssimpImporter::doCameraForName(const Containers::StringView name) {
         _f->camerasForName.emplace();
         _f->camerasForName->reserve(_f->scene->mNumCameras);
         for(std::size_t i = 0; i != _f->scene->mNumCameras; ++i)
-            _f->camerasForName->emplace(std::string(_f->scene->mCameras[i]->mName.C_Str()), i);
+            _f->camerasForName->emplace(_f->scene->mCameras[i]->mName, i);
     }
 
     const auto found = _f->camerasForName->find(name);
@@ -827,7 +894,7 @@ Int AssimpImporter::doCameraForName(const Containers::StringView name) {
 }
 
 Containers::String AssimpImporter::doCameraName(const UnsignedInt id) {
-    return _f->scene->mCameras[id]->mName.C_Str();
+    return _f->scene->mCameras[id]->mName;
 }
 
 Containers::Optional<CameraData> AssimpImporter::doCamera(UnsignedInt id) {
@@ -858,7 +925,7 @@ Int AssimpImporter::doLightForName(const Containers::StringView name) {
         _f->lightsForName.emplace();
         _f->lightsForName->reserve(_f->scene->mNumLights);
         for(std::size_t i = 0; i != _f->scene->mNumLights; ++i)
-            _f->lightsForName->emplace(std::string(_f->scene->mLights[i]->mName.C_Str()), i);
+            _f->lightsForName->emplace(_f->scene->mLights[i]->mName, i);
     }
 
     const auto found = _f->lightsForName->find(name);
@@ -866,7 +933,7 @@ Int AssimpImporter::doLightForName(const Containers::StringView name) {
 }
 
 Containers::String AssimpImporter::doLightName(const UnsignedInt id) {
-    return _f->scene->mLights[id]->mName.C_Str();
+    return _f->scene->mLights[id]->mName;
 }
 
 Containers::Optional<LightData> AssimpImporter::doLight(UnsignedInt id) {
@@ -918,7 +985,7 @@ Int AssimpImporter::doMeshForName(const Containers::StringView name) {
         _f->meshesForName.emplace();
         _f->meshesForName->reserve(_f->scene->mNumMeshes);
         for(std::size_t i = 0; i != _f->scene->mNumMeshes; ++i) {
-            _f->meshesForName->emplace(_f->scene->mMeshes[i]->mName.C_Str(), i);
+            _f->meshesForName->emplace(_f->scene->mMeshes[i]->mName, i);
         }
     }
 
@@ -927,7 +994,7 @@ Int AssimpImporter::doMeshForName(const Containers::StringView name) {
 }
 
 Containers::String AssimpImporter::doMeshName(const UnsignedInt id) {
-    return _f->scene->mMeshes[id]->mName.C_Str();
+    return _f->scene->mMeshes[id]->mName;
 }
 
 Containers::Optional<MeshData> AssimpImporter::doMesh(const UnsignedInt id, UnsignedInt) {
@@ -1103,20 +1170,17 @@ Containers::Optional<MeshData> AssimpImporter::doMesh(const UnsignedInt id, Unsi
 
     /* Joints and joint weights */
     if(mesh->HasBones()) {
-        const MeshAttribute jointsAttribute = _f->meshAttributesForName["JOINTS"];
-        const MeshAttribute weightsAttribute = _f->meshAttributesForName["WEIGHTS"];
-
         Containers::Array<Containers::StridedArrayView1D<Vector4ui>> jointIds{jointLayerCount};
         Containers::Array<Containers::StridedArrayView1D<Vector4>> jointWeights{jointLayerCount};
         for(std::size_t layer = 0; layer < jointLayerCount; ++layer) {
             jointIds[layer] = {vertexData, reinterpret_cast<Vector4ui*>(vertexData + attributeOffset),
                 vertexCount, stride};
-            attributeData[attributeIndex++] = MeshAttributeData{jointsAttribute, jointIds[layer]};
+            attributeData[attributeIndex++] = MeshAttributeData{JointsAttribute, jointIds[layer]};
             attributeOffset += sizeof(Vector4ui);
 
             jointWeights[layer] = {vertexData, reinterpret_cast<Vector4*>(vertexData + attributeOffset),
                 vertexCount, stride};
-            attributeData[attributeIndex++] = MeshAttributeData{weightsAttribute, jointWeights[layer]};
+            attributeData[attributeIndex++] = MeshAttributeData{WeightsAttribute, jointWeights[layer]};
             attributeOffset += sizeof(Vector4);
 
             /* zero-fill, single vertices can have less than the max joint
@@ -1148,15 +1212,13 @@ Containers::Optional<MeshData> AssimpImporter::doMesh(const UnsignedInt id, Unsi
             }
         }
 
-        /* Assimp glTF 2 importer only reads one set of joint weight
-           attributes:
-            https://github.com/assimp/assimp/blob/1d33131e902ff3f6b571ee3964c666698a99eb0f/code/AssetLib/glTF2/glTF2Importer.cpp#L940
-           Even worse, it's the last(!!) set because they're getting the
-           attribute name wrong (JOINT instead of JOINTS) which breaks their
-           index extraction:
-            https://github.com/assimp/assimp/blob/1d33131e902ff3f6b571ee3964c666698a99eb0f/code/AssetLib/glTF2/glTF2Asset.inl#L1499
-        */
-        if(_f->importerIsGltf && jointLayerCount == 1) {
+        /* Assimp glTF 2 importer before version 5.2.5 only read one set of
+           joint weight attributes:
+           https://github.com/assimp/assimp/commit/a0f375162d48d5a8e70dde2e01f98fa4c5f9b879
+           Try to detect such a case and print a warning. We need to check
+           < 524 because 5.2.0 to 5.2.4 report their version as 520 but 5.2.5
+           is the first to report 524. */
+        if(_f->importerIsGltf && jointLayerCount == 1 && _f->assimpVersion < 524) {
             for(const Vector4& weight: jointWeights[0]) {
                 const Float sum = weight.sum();
                 /* Be very lenient here for shitty exporters. This should still
@@ -1165,7 +1227,8 @@ Containers::Optional<MeshData> AssimpImporter::doMesh(const UnsignedInt id, Unsi
                 constexpr Float Epsilon = 0.1f;
                 if(!Math::equal(sum, 0.0f) && Math::abs(1.0f - sum) > Epsilon) {
                     Warning{} <<
-                        "Trade::AssimpImporter::mesh(): found non-normalized " "joint weights, possibly a result of Assimp reading "
+                        "Trade::AssimpImporter::mesh(): found non-normalized "
+                        "joint weights, possibly a result of Assimp reading "
                         "joint weights incorrectly. Consult the importer "
                         "documentation for more information";
                     break;
@@ -1198,18 +1261,21 @@ Containers::Optional<MeshData> AssimpImporter::doMesh(const UnsignedInt id, Unsi
 }
 
 MeshAttribute AssimpImporter::doMeshAttributeForName(const Containers::StringView name) {
-    return _f ? _f->meshAttributesForName[name] : MeshAttribute{};
+    if(name == "JOINTS"_s) return JointsAttribute;
+    if(name == "WEIGHTS"_s) return WeightsAttribute;
+    return {};
 }
 
 Containers::String AssimpImporter::doMeshAttributeName(UnsignedShort name) {
-    return _f && name < _f->meshAttributeNames.size() ?
-        _f->meshAttributeNames[name] : "";
+    if(meshAttributeCustom(name) == JointsAttribute) return "JOINTS"_s;
+    if(meshAttributeCustom(name) == WeightsAttribute) return "WEIGHTS"_s;
+    return {};
 }
 
 UnsignedInt AssimpImporter::doMaterialCount() const { return _f->scene->mNumMaterials; }
 
 Int AssimpImporter::doMaterialForName(const Containers::StringView name) {
-    auto found = _f->materialIndicesForName.find(name);
+    auto found = _f->materialIndicesForName.find(Containers::String::nullTerminatedView(name));
     return found != _f->materialIndicesForName.end() ? found->second : -1;
 }
 
@@ -1218,7 +1284,7 @@ Containers::String AssimpImporter::doMaterialName(const UnsignedInt id) {
     aiString name;
     mat->Get(AI_MATKEY_NAME, name);
 
-    return name.C_Str();
+    return name;
 }
 
 namespace {
@@ -1388,14 +1454,14 @@ Containers::Optional<MaterialData> AssimpImporter::doMaterial(const UnsignedInt 
                texture index even for the skipped properties so we have the
                mapping correct */
             if(property.mIndex != layer) {
-                if(Containers::StringView{property.mKey.C_Str(), property.mKey.length} == _AI_MATKEY_TEXTURE_BASE)
+                if(Containers::StringView{property.mKey} == _AI_MATKEY_TEXTURE_BASE)
                     ++textureIndex;
                 continue;
             }
 
             using namespace Containers::Literals;
 
-            const Containers::StringView key{property.mKey.C_Str(), property.mKey.length, Containers::StringViewFlag::NullTerminated};
+            const Containers::StringView key{property.mKey};
 
             /* AI_MATKEY_* are in form "bla",0,0, so extract the first part
                and turn it into a StringView for string comparison. The
@@ -1495,6 +1561,45 @@ Containers::Optional<MaterialData> AssimpImporter::doMaterial(const UnsignedInt 
                             data = {attribute, textureIndex};
                         ++textureIndex;
 
+                    /* Texture matrix */
+                    } else if(key == _AI_MATKEY_UVTRANSFORM_BASE && property.mType == aiPTI_Float && property.mDataLength == 20) {
+                        switch(property.mSemantic) {
+                            case aiTextureType_AMBIENT:
+                                attribute = MaterialAttribute::AmbientTextureMatrix;
+                                break;
+                            case aiTextureType_DIFFUSE:
+                                attribute = MaterialAttribute::DiffuseTextureMatrix;
+                                break;
+                            case aiTextureType_SPECULAR:
+                                attribute = MaterialAttribute::SpecularTextureMatrix;
+                                break;
+                            case aiTextureType_NORMALS:
+                                attribute = MaterialAttribute::NormalTextureMatrix;
+                                break;
+                        }
+
+                        /* Save only if the name is recognized (and let it
+                           be imported as a custom attribute otherwise) */
+                        if(attribute != MaterialAttribute{}) {
+                            const auto& transform = *reinterpret_cast<const aiUVTransform*>(property.mData);
+                            data = {attribute,
+                                Matrix3::translation(Vector2{transform.mTranslation})*
+                                /* The rotation is said to be around (0.5, 0.5)
+                                   so we translate, rotate, and translate back.
+                                   It's also said to be counterclockwise in the
+                                   aiUVTransform docs, but at least the glTF
+                                   importer makes it clockwise, judging from
+                                   the output for the TextureTransformTest
+                                   glTF model. The rotation probably isn't
+                                   really correct either, see the
+                                   materialTextureMatrix() test for further
+                                   details. */
+                                Matrix3::translation(Vector2{0.5f})*
+                                Matrix3::rotation(Rad{-transform.mRotation})*
+                                Matrix3::translation(Vector2{-0.5f})*
+                                Matrix3::scaling(Vector2{transform.mScaling})};
+                        }
+
                     /* Texture coordinate set index */
                     } else if(key == _AI_MATKEY_UVWSRC_BASE && property.mType == aiPTI_Integer && property.mDataLength == 4) {
                         type = MaterialAttributeType::UnsignedInt;
@@ -1563,9 +1668,7 @@ Containers::Optional<MaterialData> AssimpImporter::doMaterial(const UnsignedInt 
                         Warning{} << "Trade::AssimpImporter::material(): property" << key << "is an integer array of" << property.mDataLength << "bytes, saving as a typeless buffer";
                         /* Abusing Pointer to indicate this is a buffer.
                            Together with other similar cases it's processed
-                           below and turned into MaterialAttributeType::String. */
-                        /** @todo add MaterialAttributeType::Buffer for opaque
-                            buffer data that can't be viewed as a string */
+                           below and turned into MaterialAttributeType::Buffer. */
                         type = MaterialAttributeType::Pointer;
                     }
                 } else if(property.mType == aiPTI_Float) {
@@ -1607,36 +1710,22 @@ Containers::Optional<MaterialData> AssimpImporter::doMaterial(const UnsignedInt 
 
                 CORRADE_INTERNAL_ASSERT(type != MaterialAttributeType{});
 
-                Containers::StringView value;
+                Containers::StringView valueString;
+                Containers::ArrayView<const void> valueBuffer;
                 std::size_t valueSize;
                 const void* valuePointer;
-                aiString tempString;
                 if(type == MaterialAttributeType::Pointer) {
-                    /* Typeless buffer, turn it into an owned String */
-                    type = MaterialAttributeType::String;
-                    value = {property.mData, property.mDataLength};
-                    /* +2 is null byte + size */
-                    valueSize = property.mDataLength + 2;
-                    valuePointer = &value;
+                    /* Typeless buffer, turn it into an owned Buffer */
+                    type = MaterialAttributeType::Buffer;
+                    valueBuffer = {property.mData, property.mDataLength};
+                    /* +1 is size */
+                    valueSize = property.mDataLength + 1;
+                    valuePointer = &valueBuffer;
                 } else if(type == MaterialAttributeType::String) {
-                    /* Prior to version 5.0.0 aiString::length is a size_t but
-                       the material property code (and only that!) pretends
-                       it's a uint32_t, storing the string data at offset 4:
-                       (WARNING: Don't look if you're easily scared, this code
-                       is nightmare material. You were warned!)
-                       https://github.com/assimp/assimp/blob/v4.1.0/code/MaterialSystem.cpp#L526
-                       This incurs a copy but I don't want to commit the same
-                       pointer crimes as assimp. */
-                    #if !ASSIMP_IS_VERSION_5_OR_GREATER
-                    mat->Get(property.mKey.C_Str(), property.mSemantic, property.mIndex, tempString);
-                    const aiString& str = tempString;
-                    #else
-                    const aiString& str = *reinterpret_cast<aiString*>(property.mData);
-                    #endif
-                    value = {str.C_Str(), str.length};
+                    valueString = materialPropertyString(property);
                     /* +2 is null byte + size */
-                    valueSize = value.size() + 2;
-                    valuePointer = &value;
+                    valueSize = valueString.size() + 2;
+                    valuePointer = &valueString;
                 } else {
                     valueSize = materialAttributeTypeSize(type);
                     valuePointer = property.mData;
@@ -1696,8 +1785,8 @@ Containers::Optional<TextureData> AssimpImporter::doTexture(const UnsignedInt id
     };
 
     aiTextureMapMode mapMode;
-    const aiMaterial* mat = std::get<0>(_f->textures[id]);
-    const aiTextureType type = aiTextureType(mat->mProperties[std::get<1>(_f->textures[id])]->mSemantic);
+    const aiMaterial* mat = _f->textures[id].first();
+    const aiTextureType type = aiTextureType(mat->mProperties[_f->textures[id].second()]->mSemantic);
     SamplerWrapping wrappingU = SamplerWrapping::ClampToEdge;
     SamplerWrapping wrappingV = SamplerWrapping::ClampToEdge;
     if(mat->Get(AI_MATKEY_MAPPINGMODE_U(type, 0), mapMode) == AI_SUCCESS)
@@ -1709,14 +1798,14 @@ Containers::Optional<TextureData> AssimpImporter::doTexture(const UnsignedInt id
 
     return TextureData{TextureType::Texture2D,
         SamplerFilter::Linear, SamplerFilter::Linear, SamplerMipmap::Linear,
-        {wrappingU, wrappingV, SamplerWrapping::ClampToEdge}, std::get<2>(_f->textures[id]), &_f->textures[id]};
+        {wrappingU, wrappingV, SamplerWrapping::ClampToEdge}, _f->textures[id].third(), &_f->textures[id]};
 }
 
 UnsignedInt AssimpImporter::doImage2DCount() const { return _f->images.size(); }
 
 AbstractImporter* AssimpImporter::setupOrReuseImporterForImage(const UnsignedInt id, const char* const errorPrefix) {
-    const aiMaterial* mat = _f->images[id].first;
-    const aiTextureType type = aiTextureType(mat->mProperties[_f->images[id].second]->mSemantic);
+    const aiMaterial* mat = _f->images[id].first();
+    const aiTextureType type = aiTextureType(mat->mProperties[_f->images[id].second()]->mSemantic);
 
     /* Looking for the same ID, so reuse an importer populated before. If the
        previous attempt failed, the importer is not set, so return nullptr in
@@ -1742,7 +1831,7 @@ AbstractImporter* AssimpImporter::setupOrReuseImporterForImage(const UnsignedInt
     importer.setFlags(flags());
     if(fileCallback()) importer.setFileCallback(fileCallback(), fileCallbackUserData());
 
-    const Containers::StringView path = texturePath.C_Str();
+    const Containers::StringView path = texturePath;
 
     /* Loading of embedded textures was changed to a lookup using the full path
        embedded with the scene file rather than an index prefixed with '*' in
@@ -1841,7 +1930,7 @@ Int AssimpImporter::doAnimationForName(const Containers::StringView name) {
         _f->animationsForName.emplace();
         _f->animationsForName->reserve(_f->scene->mNumAnimations);
         for(std::size_t i = 0; i != _f->scene->mNumAnimations; ++i)
-            _f->animationsForName->emplace(std::string(_f->scene->mAnimations[i]->mName.C_Str()), i);
+            _f->animationsForName->emplace(_f->scene->mAnimations[i]->mName, i);
     }
 
     const auto found = _f->animationsForName->find(name);
@@ -1851,7 +1940,7 @@ Int AssimpImporter::doAnimationForName(const Containers::StringView name) {
 Containers::String AssimpImporter::doAnimationName(UnsignedInt id) {
     /* If the animations are merged, don't report any names */
     if(configuration().value<bool>("mergeAnimationClips")) return {};
-    return _f->scene->mAnimations[id]->mName.C_Str();
+    return _f->scene->mAnimations[id]->mName;
 }
 
 namespace {
@@ -2153,7 +2242,7 @@ Containers::Optional<AnimationData> AssimpImporter::doAnimation(UnsignedInt id) 
 UnsignedInt AssimpImporter::doSkin3DCount() const {
     /* If the skins are merged, there's at most one */
     if(_f->mergeSkins)
-        return _f->meshesWithBones.empty() ? 0 : 1;
+        return _f->meshesWithBones.isEmpty() ? 0 : 1;
 
     return _f->meshesWithBones.size();
 }
@@ -2167,7 +2256,7 @@ Int AssimpImporter::doSkin3DForName(const Containers::StringView name) {
         _f->skinsForName->reserve(_f->meshesWithBones.size());
         for(std::size_t i = 0; i != _f->meshesWithBones.size(); ++i)
             _f->skinsForName->emplace(
-                _f->scene->mMeshes[_f->meshesWithBones[i]]->mName.C_Str(), i);
+                _f->scene->mMeshes[_f->meshesWithBones[i]]->mName, i);
     }
 
     const auto found = _f->skinsForName->find(name);
@@ -2177,7 +2266,7 @@ Int AssimpImporter::doSkin3DForName(const Containers::StringView name) {
 Containers::String AssimpImporter::doSkin3DName(const UnsignedInt id) {
     /* If the skins are merged, don't report any names */
     if(_f->mergeSkins) return {};
-    return _f->scene->mMeshes[_f->meshesWithBones[id]]->mName.C_Str();
+    return _f->scene->mMeshes[_f->meshesWithBones[id]]->mName;
 }
 
 Containers::Optional<SkinData3D> AssimpImporter::doSkin3D(const UnsignedInt id) {

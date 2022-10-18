@@ -58,7 +58,9 @@ namespace Magnum { namespace Trade {
 
 @m_keywords{PLY}
 
-Exports to either Little- or Big-Endian binary files with triangle faces.
+Exports meshes to either Little- or Big-Endian binary `*.ply` files with
+triangle faces. You can use @ref StanfordImporter to import files in this
+format.
 
 @section Trade-StanfordSceneConverter-usage Usage
 

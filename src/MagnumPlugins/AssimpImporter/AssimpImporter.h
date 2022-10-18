@@ -6,7 +6,7 @@
     Copyright © 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019,
                 2020, 2021, 2022 Vladimír Vondruš <mosra@centrum.cz>
     Copyright © 2017 Jonathan Hale <squareys@googlemail.com>
-    Copyright © 2021 Pablo Escobar <mail@rvrs.in>
+    Copyright © 2021, 2022 Pablo Escobar <mail@rvrs.in>
 
     Permission is hereby granted, free of charge, to any person obtaining a
     copy of this software and associated documentation files (the "Software"),
@@ -343,6 +343,9 @@ verbosity levels in each instance.
     [assimp/assimp#2059](https://github.com/assimp/assimp/issues/2059). This
     workaround can be disabled using the @cb{.ini} forceWhiteAmbientToBlack @ce
     @ref Trade-AssimpImporter-configuration "configuration option".
+-   @ref MaterialAttribute::DiffuseTextureMatrix and similar matrix attributes
+    for other textures are imported, although it's currently unclear whether
+    the transformation is correct when texture rotations are involved
 
 @subsection Trade-AssimpImporter-behavior-lights Light import
 
@@ -396,9 +399,10 @@ verbosity levels in each instance.
     change this limit by setting the @cb{.ini} maxJointWeights @ce
     @ref Trade-AssimpImporter-configuration "configuration option".
 -   Assimp doesn't correctly import glTF meshes with multiple sets of joint
-    weights, only the last set will be imported. A warning is printed when this
-    is detected, but it may misfire for other meshes with non-normalized
-    weights.
+    weights prior to version 5.2.5. Depending on the version it either fails to
+    import the file at all or imports either the first or the last set of joint
+    weights. A warning is printed when this is detected, but it may misfire for
+    other meshes with non-normalized weights.
 -   Multi-primitive meshes are split by Assimp into individual meshes, nodes
     that reference a multi-primitive mesh have multiple @ref SceneField::Mesh
     (and @ref SceneField::MeshMaterial) entries in the imported @ref SceneData.

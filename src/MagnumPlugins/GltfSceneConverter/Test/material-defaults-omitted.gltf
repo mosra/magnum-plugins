@@ -23,8 +23,17 @@
       }
     }
   ],
+  "samplers": [
+    {
+      "wrapS": 33071,
+      "wrapT": 33071,
+      "minFilter": 9728,
+      "magFilter": 9728
+    }
+  ],
   "textures": [
     {
+      "sampler": 0,
       "source": 0
     }
   ],

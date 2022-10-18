@@ -1,0 +1,109 @@
+{
+  "asset": {
+    "version": "2.0"
+  },
+  "samplers": [
+    {
+      "wrapS": 10497,
+      "wrapT": 10497,
+      "minFilter": 9984,
+      "magFilter": 9728
+    },
+    {
+      "wrapS": 10497,
+      "wrapT": 10497,
+      "minFilter": 9985,
+      "magFilter": 9728
+    },
+    {
+      "wrapS": 10497,
+      "wrapT": 10497,
+      "minFilter": 9984,
+      "magFilter": 9729
+    },
+    {
+      "wrapS": 10497,
+      "wrapT": 10497,
+      "minFilter": 9986,
+      "magFilter": 9728
+    },
+    {
+      "wrapS": 33071,
+      "wrapT": 10497,
+      "minFilter": 9984,
+      "magFilter": 9728
+    },
+    {
+      "wrapS": 10497,
+      "wrapT": 33071,
+      "minFilter": 9984,
+      "magFilter": 9728
+    }
+  ],
+  "textures": [
+    {
+      "sampler": 0,
+      "source": 0
+    },
+    {
+      "sampler": 1,
+      "source": 0,
+      "name": "Different minification filter"
+    },
+    {
+      "sampler": 2,
+      "source": 0,
+      "name": "Different magnification filter"
+    },
+    {
+      "sampler": 3,
+      "source": 0,
+      "name": "Different mipmap filter"
+    },
+    {
+      "sampler": 4,
+      "source": 0,
+      "name": "Different wrapping X"
+    },
+    {
+      "sampler": 5,
+      "source": 0,
+      "name": "Different wrapping Y"
+    },
+    {
+      "sampler": 0,
+      "source": 0,
+      "name": "Should reuse sampler 0"
+    },
+    {
+      "sampler": 1,
+      "source": 0,
+      "name": "Should reuse sampler 1"
+    },
+    {
+      "sampler": 2,
+      "source": 0,
+      "name": "Should reuse sampler 2"
+    },
+    {
+      "sampler": 3,
+      "source": 0,
+      "name": "Should reuse sampler 3"
+    },
+    {
+      "sampler": 4,
+      "source": 0,
+      "name": "Should reuse sampler 4"
+    },
+    {
+      "sampler": 5,
+      "source": 0,
+      "name": "Should reuse sampler 5"
+    }
+  ],
+  "images": [
+    {
+      "uri": "texture-deduplicated-samplers.0.png"
+    }
+  ]
+}

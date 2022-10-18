@@ -4,7 +4,7 @@
 #   Copyright © 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019,
 #               2020, 2021, 2022 Vladimír Vondruš <mosra@centrum.cz>
 #   Copyright © 2017 Jonathan Hale <squareys@googlemail.com>
-#   Copyright © 2021 Pablo Escobar <mail@rvrs.in>
+#   Copyright © 2021, 2022 Pablo Escobar <mail@rvrs.in>
 #
 #   Permission is hereby granted, free of charge, to any person obtaining a
 #   copy of this software and associated documentation files (the "Software"),
@@ -77,7 +77,7 @@ file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/checkAssimpVersionLanguageOverride.cmake 
 enable_language(C)
 
 # Go through all versions of interest and pick the highest one that compiles
-foreach(_version 20210102 20201123 20200225 20191122 20190915 20160716 20151031)
+foreach(_version 20220502 20210102 20201123 20200225 20191122 20190915 20160716 20151031)
     try_compile(_works ${CMAKE_CURRENT_BINARY_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/checkAssimpVersion.cpp
         ${_ASSIMP_TRY_COMPILE_LINK_OR_INCLUDE}

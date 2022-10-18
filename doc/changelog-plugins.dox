@@ -58,7 +58,8 @@ namespace Magnum {
 -   New @relativeref{Trade,StbResizeImageConverter} for image downsampling and
     upsampling
 -   New @relativeref{Trade,WebPImporter} for importing WebP files (see
-    [mosra/magnum-plugins#121](https://github.com/mosra/magnum-plugins/pull/121))
+    [mosra/magnum-plugins#121](https://github.com/mosra/magnum-plugins/pull/121),
+    [mosra/magnum-plugins#126](https://github.com/mosra/magnum-plugins/pull/126))
 -   New @relativeref{Trade,GltfImporter} plugin for importing glTF files, which
     is a smaller, faster-compiling, faster-importing and more memory-friendly
     drop-in replacement for now-deprecated `TinyGltfImporter`. Originally built
@@ -97,6 +98,8 @@ namespace Magnum {
 -   @ref Trade::AssimpImporter "AssimpImporter" now imports camera, light and
     scene names, orthographic camera properties and custom material properties
     (see [mosra/magnum-plugins#116](https://github.com/mosra/magnum-plugins/pull/116))
+-   @relativeref{Trade,AssimpImporter} can now import material texture
+    transformation attributes
 -   @ref Trade::AssimpImporter "AssimpImporter" can now import animations and
     skins (see [mosra/magnum-plugins#97](https://github.com/mosra/magnum-plugins/pull/97),
     [mosra/magnum-plugins#99](https://github.com/mosra/magnum-plugins/pull/99)
@@ -120,6 +123,8 @@ namespace Magnum {
     @cb{.ini} Debone @ce
 -   @relativeref{Trade,AssimpImporter} now provides the `3mfImporter` alias
     for convenient loading of `*.3mf` files
+-   Adapted @relativeref{Trade,AssimpImporter} to changes in version 5.2.5 and
+    cleaned up STL usage (see [mosra/magnum-plugins#130](https://github.com/mosra/magnum-plugins/pull/130))
 -   @relativeref{Trade,DdsImporter} now supports also 1D textures, cube maps,
     1D, 2D and cube map arrays; all DXGI depth, stencil and compressed formats,
     legacy non-DXGI RGBX, BGRX, BC4 and BC5 formats, BGR(A) formats also for
@@ -291,6 +296,11 @@ namespace Magnum {
     Z-flip on uncompressed images to ensure consistency with other importers,
     code that relied on the previous broken behavior will break. Either Y-flip
     the files or set the @cb{.ini} assumeYUpZBackward @ce option to fix this.
+-   @relativeref{Trade,GltfImporter} no longer returns @cpp 0 @ce from
+    @relativeref{Trade::AbstractImporter,defaultScene()} if
+    no @cb{.json} "scene" @ce property is present and the file contains at
+    least one scene, and returns @cpp -1 @ce instead. This is in order to
+    support use cases depending on the (lack of the) default scene specifier.
 
 @subsection changelog-plugins-latest-documentation Documentation
 

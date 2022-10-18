@@ -6,7 +6,7 @@
     Copyright © 2017, 2020, 2021 Jonathan Hale <squareys@googlemail.com>
     Copyright © 2018 Konstantinos Chatzilygeroudis <costashatz@gmail.com>
     Copyright © 2019, 2020 Max Schwarz <max.schwarz@ais.uni-bonn.de>
-    Copyright © 2021 Pablo Escobar <mail@rvrs.in>
+    Copyright © 2021, 2022 Pablo Escobar <mail@rvrs.in>
 
     Permission is hereby granted, free of charge, to any person obtaining a
     copy of this software and associated documentation files (the "Software"),
@@ -119,7 +119,8 @@ struct AssimpImporterTest: TestSuite::Tester {
     void materialStlWhiteAmbientPatch();
     void materialWhiteAmbientTexture();
     void materialMultipleTextures();
-    void materialTextureCoordinateSets();
+    void materialTextureMatrix();
+    void materialTextureCoordinates();
     void materialTextureLayers();
     void materialRawUnrecognized();
     void materialRaw();
@@ -262,7 +263,8 @@ AssimpImporterTest::AssimpImporterTest() {
               &AssimpImporterTest::materialStlWhiteAmbientPatch,
               &AssimpImporterTest::materialWhiteAmbientTexture,
               &AssimpImporterTest::materialMultipleTextures,
-              &AssimpImporterTest::materialTextureCoordinateSets,
+              &AssimpImporterTest::materialTextureMatrix,
+              &AssimpImporterTest::materialTextureCoordinates,
               &AssimpImporterTest::materialTextureLayers,
               &AssimpImporterTest::materialRawUnrecognized,
               &AssimpImporterTest::materialRaw,
@@ -459,7 +461,7 @@ void AssimpImporterTest::animation() {
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "exported-animation"_s + data.suffix)));
 
     struct Node {
-        const char* name;
+        const Containers::StringView name;
         Vector3 translation;
         Quaternion rotation;
         Vector3 scaling;
@@ -474,9 +476,9 @@ void AssimpImporterTest::animation() {
 
     /* Find animation target nodes by their name */
     Node nodes[3]{
-        {"Rotating", {}, {}, {}},
-        {"Scaling", {}, {}, {}},
-        {"Translating", {}, {}, {}}
+        {"Rotating"_s, {}, {}, {}},
+        {"Scaling"_s, {}, {}, {}},
+        {"Translating"_s, {}, {}, {}}
     };
     Node* nodeMap[3]{};
 
@@ -484,11 +486,11 @@ void AssimpImporterTest::animation() {
     CORRADE_COMPARE(objectCount, Containers::arraySize(nodes));
 
     for(UnsignedInt i = 0; i < objectCount; i++) {
-        const std::string name = importer->objectName(i);
+        const Containers::String name = importer->objectName(i);
         for(Node& n: nodes) {
             /* Exported Collada files have spaces replaced with underscores,
                so check for the first words only */
-            if(name.find(n.name) == 0) {
+            if(name.hasPrefix(n.name)) {
                 /* Node names in the test files are unique */
                 CORRADE_VERIFY(!nodeMap[i]);
                 nodeMap[i] = &n;
@@ -1324,15 +1326,15 @@ bool supportsSkinning(const Containers::StringView fileName, unsigned int assimp
 /* Since 5.1.0 the Collada importer uses the mesh ID as the name. Imitate the
    Blender(?) exporter that generated the IDs from the name. A bit hacky but
    still better than special-casing every test that loads meshes by name. */
-std::string fixMeshName(const Containers::StringView meshName, const Containers::StringView fileName, unsigned int assimpVersion) {
-    std::string fixed = meshName;
+Containers::String fixMeshName(const Containers::StringView meshName, const Containers::StringView fileName, unsigned int assimpVersion) {
     if(assimpVersion >= 510 && fileName.hasSuffix(".dae"_s)) {
-        for(char& c: fixed)
+        Containers::String fixed = meshName + "-mesh";
+        for(char& c: fixed.prefix(meshName.size()))
             if(c != '-' && !std::isalnum(static_cast<unsigned char>(c))) c = '_';
-        fixed += "-mesh";
+        return fixed;
+    } else {
+        return meshName;
     }
-
-    return fixed;
 }
 
 void AssimpImporterTest::skin() {
@@ -1373,17 +1375,17 @@ void AssimpImporterTest::skin() {
        the comment for ExportedFileData. */
     const Matrix4 correction{data.correction.toMatrix()};
 
-    constexpr Containers::StringView objectNames[]{
+    const Containers::StringView objectNames[]{
         "Mesh_1"_s, "Mesh_2"_s, "Plane"_s
     };
-    const std::string jointNames[][2]{
-        {"Node_1", "Node_2"},
-        {"Node_3", "Node_4"}
+    const Containers::StringView jointNames[][2]{
+        {"Node_1"_s, "Node_2"_s},
+        {"Node_3"_s, "Node_4"_s}
     };
 
     for(UnsignedInt i = 0; i != Containers::arraySize(objectNames) - 1; ++i) {
         /* Skin names are taken from mesh names, skin order is arbitrary */
-        const std::string meshName = fixMeshName(objectNames[i], data.suffix, _assimpVersion);
+        const Containers::String meshName = fixMeshName(objectNames[i], data.suffix, _assimpVersion);
         const Int skinIndex = importer->skin3DForName(meshName);
         CORRADE_VERIFY(skinIndex != -1);
         CORRADE_COMPARE(importer->skin3DName(skinIndex), meshName);
@@ -1396,11 +1398,11 @@ void AssimpImporterTest::skin() {
         /* Don't check joint order, only presence */
         Containers::ArrayView<const UnsignedInt> joints = skin->joints();
         CORRADE_COMPARE(joints.size(), Containers::arraySize(jointNames[i]));
-        for(const std::string& name: jointNames[i]) {
+        for(Containers::StringView name: jointNames[i]) {
             auto found = std::find_if(joints.begin(), joints.end(), [&](UnsignedInt joint) {
                     /* Blender's Collada exporter adds an Armature_ prefix to
                        object names */
-                    return Utility::String::endsWith(importer->objectName(joint), name);
+                    return importer->objectName(joint).hasSuffix(name);
                 });
             CORRADE_VERIFY(found != joints.end());
         }
@@ -1427,7 +1429,7 @@ void AssimpImporterTest::skin() {
 
     {
         /* Unskinned meshes and mesh nodes shouldn't have a skin */
-        const std::string meshName = fixMeshName(objectNames[2], data.suffix, _assimpVersion);
+        const Containers::String meshName = fixMeshName(objectNames[2], data.suffix, _assimpVersion);
         CORRADE_VERIFY(importer->meshForName(meshName) != -1);
         CORRADE_COMPARE(importer->skin3DForName(meshName), -1);
         Long meshObject = importer->objectForName(objectNames[2]);
@@ -1501,21 +1503,34 @@ void AssimpImporterTest::skinMerge() {
     CORRADE_VERIFY(skin);
     CORRADE_VERIFY(!skin->importerState()); /* No particular skin */
 
-    constexpr UnsignedInt expectedObjects[]{0, 0, 3, 4, 5, 6};
-    constexpr Matrix4 expectedBones[] {
-        /* 0 and 1: same name and matrix */
+    const Long originalJoints[]{
+        /* Skin1 */
+        importer->objectForName("A"),
+        importer->objectForName("B"),
+        importer->objectForName("C"),
+        /* Skin2 */
+        importer->objectForName("A"),
+        importer->objectForName("D"),
+        importer->objectForName("E"),
+    };
+    const Matrix4 originalMatrices[] {
+        /* Skin1 */
         Matrix4::translation(Vector3::xAxis()),
-        Matrix4::translation(Vector3::xAxis()),
-        /* 2: common name with 0 and 1, but different matrix */
         Matrix4::translation(Vector3::zAxis()),
-        /* 3 and 4: same matrix, but different name */
         Matrix4::translation(Vector3::yAxis()),
+        /* Skin2 */
+        Matrix4::translation(Vector3::xAxis()),
         Matrix4::translation(Vector3::yAxis()),
-        /* unique */
         Matrix4::translation(Vector3::zAxis())
     };
-    /* Relying on the skin order here, this *might* break in the future */
-    constexpr UnsignedInt mergeOrder[]{1, 2, 3, 4, 5};
+    /* Relying on the skin order here (Skin2 merged after Skin1), this *might*
+       break in the future */
+    constexpr UnsignedInt mergeOrder[]{
+        /* Skin1, all joints */
+        0, 1, 2,
+        /* Skin 2, joint 3 is a duplicate of joint 0 */
+        4, 5
+    };
 
     Containers::ArrayView<const UnsignedInt> joints = skin->joints();
     Containers::ArrayView<const Matrix4> inverseBindMatrices = skin->inverseBindMatrices();
@@ -1524,9 +1539,9 @@ void AssimpImporterTest::skinMerge() {
 
     for(UnsignedInt i = 0; i != joints.size(); ++i) {
         CORRADE_ITERATION(i);
-        CORRADE_COMPARE(joints[i], expectedObjects[mergeOrder[i]]);
+        CORRADE_COMPARE(joints[i], originalJoints[mergeOrder[i]]);
         CORRADE_VERIFY(!scene->meshesMaterialsFor(joints[i]));
-        CORRADE_COMPARE(inverseBindMatrices[i], expectedBones[mergeOrder[i]]);
+        CORRADE_COMPARE(inverseBindMatrices[i], originalMatrices[mergeOrder[i]]);
     }
 }
 
@@ -1882,7 +1897,8 @@ void AssimpImporterTest::materialTexture() {
     CORRADE_VERIFY(material);
     CORRADE_COMPARE(material->types(), MaterialType::Phong);
     CORRADE_COMPARE(material->layerCount(), 1);
-    CORRADE_COMPARE(material->attributeCount(), 10); /* includes zero texcoords */
+    /* includes 3 zero texcoords and 3 identity matrices */
+    CORRADE_COMPARE(material->attributeCount(), 13);
 
     const auto& phong = material->as<PhongMaterialData>();
     {
@@ -2120,10 +2136,60 @@ void AssimpImporterTest::materialMultipleTextures() {
     }
 }
 
-void AssimpImporterTest::materialTextureCoordinateSets() {
+void AssimpImporterTest::materialTextureMatrix() {
+    if(_assimpVersion < 510)
+        CORRADE_SKIP("glTF texture transform is supported since Assimp 5.1.");
+
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
 
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "material-coordinate-sets.dae")));
+    /* Funnily enough, while Assimp provides the texture transform attribute
+       for COLLADA files (which we then skip in materialTexture()), the spec
+       itself doesn't seem to actually support such a thing. Testing with glTF
+       instead, there we unfortunately can check only with the diffuse texture
+       as PBR isn't hooked up yet. */
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "material-texture-matrix.gltf")));
+
+    {
+        Containers::Optional<MaterialData> material = importer->material("offset + scale");
+        CORRADE_VERIFY(material);
+        const auto& phong = material->as<PhongMaterialData>();
+
+        CORRADE_VERIFY(phong.hasTextureTransformation());
+        CORRADE_VERIFY(phong.hasAttribute(MaterialAttribute::DiffuseTexture));
+        CORRADE_COMPARE(phong.diffuseTextureMatrix(), (Matrix3{
+                {0.5f, 0.0f, 0.0f},
+                {0.0f, 0.5f, 0.0f},
+                {0.0f, -0.5f, 1.0f}
+        }));
+    } {
+        Containers::Optional<MaterialData> material = importer->material("all");
+        CORRADE_VERIFY(material);
+        const auto& phong = material->as<PhongMaterialData>();
+
+        CORRADE_VERIFY(phong.hasTextureTransformation());
+        CORRADE_VERIFY(phong.hasAttribute(MaterialAttribute::DiffuseTexture));
+
+        {
+            CORRADE_EXPECT_FAIL("The result is different from GltfImporter, but both give the correct output for the TextureTransformTest glTF model. Huh?");
+            CORRADE_COMPARE(phong.diffuseTextureMatrix(), (Matrix3{
+                {0.164968f, 0.472002f, 0.0f},
+                {-0.472002f, 0.164968f, 0.0f},
+                {0.472002f, -0.164968f, 1.0f}
+            }));
+        } {
+            CORRADE_COMPARE(phong.diffuseTextureMatrix(), (Matrix3{
+                {0.164968f, 0.472002f, 0.0f},
+                {-0.472002f, 0.164968f, 0.0f},
+                {1.21055f, -0.568485f, 1.0f}
+            }));
+        }
+    }
+}
+
+void AssimpImporterTest::materialTextureCoordinates() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "material-texture-coordinates.dae")));
 
     Containers::Optional<MaterialData> material = importer->material(0);
     CORRADE_VERIFY(material);
@@ -2355,10 +2421,10 @@ void AssimpImporterTest::materialRaw() {
            when all the other importers write them as ints */
         const Containers::StringView name = extractMaterialKey(AI_MATKEY_TWOSIDED);
         CORRADE_VERIFY(material->hasAttribute(name));
-        CORRADE_COMPARE(material->attributeType(name), MaterialAttributeType::String);
-        Containers::StringView value = material->attribute<Containers::StringView>(name);
+        CORRADE_COMPARE(material->attributeType(name), MaterialAttributeType::Buffer);
+        Containers::ArrayView<const bool> value = Containers::arrayCast<const bool>(material->attribute<Containers::ArrayView<const void>>(name));
         CORRADE_COMPARE(value.size(), 1);
-        CORRADE_VERIFY(value.front() != 0);
+        CORRADE_VERIFY(value.front());
     } {
         constexpr Containers::StringView name = _AI_MATKEY_TEXTURE_BASE ".NORMALS"_s;
         CORRADE_VERIFY(material->hasAttribute(name));
@@ -2395,10 +2461,9 @@ void AssimpImporterTest::materialRaw() {
         const bool hasAttribute = material->hasAttribute(name);
         CORRADE_VERIFY(hasAttribute);
         if(hasAttribute) {
-            /* Opaque buffer converted to String */
-            CORRADE_COMPARE(material->attributeType(name), MaterialAttributeType::String);
-            Containers::StringView value = material->attribute<Containers::StringView>(name);
-            /* +1 is null byte */
+            /* Opaque buffer converted to Buffer */
+            CORRADE_COMPARE(material->attributeType(name), MaterialAttributeType::Buffer);
+            Containers::ArrayView<const void> value = material->attribute<Containers::ArrayView<const void>>(name);
             CORRADE_COMPARE(value.size(), sizeof(aiUVTransform));
             const aiUVTransform& transform = *reinterpret_cast<const aiUVTransform*>(value.data());
             const Vector2 scaling{transform.mScaling.x, transform.mScaling.y};
@@ -2518,7 +2583,7 @@ void AssimpImporterTest::mesh() {
        scene */
     CORRADE_COMPARE(importer->meshCount(), 2);
 
-    const std::string name = fixMeshName("Cube", ".dae", _assimpVersion);
+    const Containers::String name = fixMeshName("Cube", ".dae", _assimpVersion);
     CORRADE_COMPARE(importer->meshName(1), name);
     CORRADE_COMPARE(importer->meshForName(name), 1);
     CORRADE_COMPARE(importer->meshForName("nonexistent"), -1);
@@ -2665,23 +2730,28 @@ void AssimpImporterTest::polygonMesh() {
 
 void AssimpImporterTest::meshCustomAttributes() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "mesh.dae")));
 
-    /* Custom attributes should be available right after loading a file,
-       even for files without joint weights */
-    const MeshAttribute jointsAttribute = importer->meshAttributeForName("JOINTS");
-    CORRADE_COMPARE(jointsAttribute, meshAttributeCustom(0));
-    CORRADE_COMPARE(importer->meshAttributeName(jointsAttribute), "JOINTS");
-    CORRADE_COMPARE(importer->meshAttributeForName("Nonexistent"), MeshAttribute{});
+    for(std::size_t i = 0; i != 2; ++i) {
+        CORRADE_ITERATION((i == 0 ? "No file opened" : "File opened"));
 
-    const MeshAttribute weightsAttribute = importer->meshAttributeForName("WEIGHTS");
-    CORRADE_COMPARE(weightsAttribute, meshAttributeCustom(1));
-    CORRADE_COMPARE(importer->meshAttributeName(weightsAttribute), "WEIGHTS");
+        /* Custom attributes are always available */
+        const MeshAttribute jointsAttribute = importer->meshAttributeForName("JOINTS");
+        CORRADE_COMPARE(jointsAttribute, meshAttributeCustom(0));
+        CORRADE_COMPARE(importer->meshAttributeName(jointsAttribute), "JOINTS");
+        CORRADE_COMPARE(importer->meshAttributeForName("Nonexistent"), MeshAttribute{});
 
-    /* These two are the only possible custom attributes */
-    CORRADE_COMPARE(importer->meshAttributeName(meshAttributeCustom(2)), "");
-    CORRADE_COMPARE(importer->meshAttributeName(meshAttributeCustom(564)), "");
-    CORRADE_COMPARE(importer->meshAttributeForName("thing"), MeshAttribute{});
+        const MeshAttribute weightsAttribute = importer->meshAttributeForName("WEIGHTS");
+        CORRADE_COMPARE(weightsAttribute, meshAttributeCustom(1));
+        CORRADE_COMPARE(importer->meshAttributeName(weightsAttribute), "WEIGHTS");
+
+        /* These two are the only possible custom attributes */
+        CORRADE_COMPARE(importer->meshAttributeName(meshAttributeCustom(2)), "");
+        CORRADE_COMPARE(importer->meshAttributeName(meshAttributeCustom(564)), "");
+        CORRADE_COMPARE(importer->meshAttributeForName("thing"), MeshAttribute{});
+
+        /* Same checks again but this time with a file openend */
+        CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "mesh.dae")));
+    }
 }
 
 constexpr Vector4ui MeshSkinningAttributesJointData[]{
@@ -2717,18 +2787,25 @@ void AssimpImporterTest::meshSkinningAttributes() {
     if(!supportsSkinning(data.suffix, _assimpVersion))
         CORRADE_SKIP("Skin data for this file type is not supported with the current version of Assimp");
 
+    /* Skinned attribute import is broken in 5.2.4 (and only there):
+       https://github.com/assimp/assimp/commit/c8dafe0d2887242285c0080c6cbbea8c1f1c8094
+       We need this weird check because v5.2.0 through v5.2.4 report as
+       520 and v5.2.5 reports as 524. */
+    if(ASSIMP_VERSION >= 20220502 && _assimpVersion < 524)
+        CORRADE_SKIP("Skinning attribute import is broken with the current version of Assimp");
+
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "skin"_s + data.suffix)));
 
     const MeshAttribute jointsAttribute = importer->meshAttributeForName("JOINTS");
     const MeshAttribute weightsAttribute = importer->meshAttributeForName("WEIGHTS");
 
-    const std::string meshNames[]{
+    const Containers::String meshNames[]{
         fixMeshName("Mesh_1"_s, data.suffix, _assimpVersion),
         fixMeshName("Mesh_2"_s, data.suffix, _assimpVersion)
     };
 
-    for(const std::string& meshName: meshNames) {
+    for(Containers::StringView meshName: meshNames) {
         Containers::Optional<MeshData> mesh;
         std::ostringstream out;
         {
@@ -2760,6 +2837,9 @@ void AssimpImporterTest::meshSkinningAttributes() {
 }
 
 void AssimpImporterTest::meshSkinningAttributesMultiple() {
+    if(ASSIMP_VERSION >= 20220502 && _assimpVersion < 524)
+        CORRADE_SKIP("Skinning attribute import is broken with the current version of Assimp");
+
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
     /* Disable default limit, 0 = no limit  */
     CORRADE_COMPARE(importer->configuration().value<UnsignedInt>("maxJointWeights"), 4);
@@ -2796,17 +2876,21 @@ void AssimpImporterTest::meshSkinningAttributesMultipleGltf() {
     if(!supportsSkinning(".gltf"_s, _assimpVersion))
         CORRADE_SKIP("glTF 2 skinning is not supported with the current version of Assimp");
 
-    /* Assimp glTF 2 importer only reads the last(!) set of joint weights. On
-       5.1.0 it outright fails to import because of broken extra validation:
-       https://github.com/assimp/assimp/issues/4178 */
+    if(ASSIMP_VERSION >= 20220502 && _assimpVersion < 524)
+        CORRADE_SKIP("Skinning attribute import is broken with the current version of Assimp");
+
+    /* Versions from 5.1.0 to 5.2.2 fail to import the file because of broken
+       validation checks:
+       https://github.com/assimp/assimp/issues/4178
+       Because all tags from v5.2.0 to v5.2.4 report their version as 5.2.0,
+       we end up incorrectly skipping this test on v5.2.3 and v5.2.4 as well.
+       Oh well. Can't verify that openFile() fails either, because it doesn't
+       *actually* fail on the versions we incorrectly skip. */
+    if(_assimpVersion >= 510 && _assimpVersion <= 522)
+        CORRADE_SKIP("Current version of assimp fails to import files with multiple sets of skinning attributes");
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
     importer->configuration().setValue("maxJointWeights", 0);
-
-    if(_assimpVersion >= 510) {
-        CORRADE_VERIFY(!importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "skin-multiple-sets.gltf")));
-        CORRADE_SKIP("Current version of assimp fails to import files with multiple sets of skinning attributes");
-    }
 
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "skin-multiple-sets.gltf")));
 
@@ -2822,35 +2906,52 @@ void AssimpImporterTest::meshSkinningAttributesMultipleGltf() {
 
     CORRADE_VERIFY(mesh);
     CORRADE_VERIFY(mesh->hasAttribute(jointsAttribute));
-    CORRADE_COMPARE(mesh->attributeFormat(jointsAttribute), VertexFormat::Vector4ui);
     CORRADE_VERIFY(mesh->hasAttribute(weightsAttribute));
-    CORRADE_COMPARE(mesh->attributeFormat(weightsAttribute), VertexFormat::Vector4);
 
     {
-        CORRADE_EXPECT_FAIL("glTF 2 importer only reads one set of joint weights.");
+        /* Prior to version 5.2.5 only one set of weights is imported. Using <
+           instead of <= because tag v5.2.4 reports version 5.2.0, but v5.2.5
+           reports version 5.2.4. */
+        CORRADE_EXPECT_FAIL_IF(_assimpVersion < 524, "glTF 2 importer < 5.2.5 only reads one set of joint weights.");
         CORRADE_COMPARE(mesh->attributeCount(jointsAttribute), 2);
         CORRADE_COMPARE(mesh->attributeCount(weightsAttribute), 2);
     }
 
-    Containers::StridedArrayView1D<const Vector4ui> joints = mesh->attribute<Vector4ui>(jointsAttribute);
-    CORRADE_VERIFY(joints);
-    Containers::StridedArrayView1D<const Vector4> weights = mesh->attribute<Vector4>(weightsAttribute);
-    CORRADE_VERIFY(weights);
-
-    CORRADE_COMPARE(out.str(),
-        "Trade::AssimpImporter::mesh(): found non-normalized joint weights, possibly "
-        "a result of Assimp reading joint weights incorrectly. Consult the importer "
-        "documentation for more information\n");
-
-    {
-        CORRADE_EXPECT_FAIL("glTF 2 importer only reads the last set of joint weights.");
-        constexpr Vector4ui joint{0, 1, 2, 3};
-        constexpr Vector4 weight{0.125f};
-        CORRADE_COMPARE(joints.front(), joint);
-        CORRADE_COMPARE(weights.front(), weight);
+    if(_assimpVersion < 524) {
+        CORRADE_COMPARE(out.str(),
+            "Trade::AssimpImporter::mesh(): found non-normalized joint weights, possibly "
+            "a result of Assimp reading joint weights incorrectly. Consult the importer "
+            "documentation for more information\n");
+    } else {
+        CORRADE_COMPARE(out.str(), "");
     }
 
-    /* Colors, on the other hand, work */
+    constexpr Vector4ui JointValues[2]{{0, 1, 2, 3}, {4, 5, 6, 7}};
+    constexpr Vector4 WeightValues[2]{Vector4{0.125f}, {0.1f, 0.1f, 0.1f, 0.2f}};
+
+    const UnsignedInt attributeCount = Utility::min(2u, Utility::min(mesh->attributeCount(jointsAttribute),
+        mesh->attributeCount(weightsAttribute)));
+    for(size_t i = 0; i < attributeCount; ++i) {
+        CORRADE_ITERATION(i);
+
+        CORRADE_COMPARE(mesh->attributeFormat(jointsAttribute, i), VertexFormat::Vector4ui);
+        CORRADE_COMPARE(mesh->attributeFormat(weightsAttribute, i), VertexFormat::Vector4);
+
+        Containers::StridedArrayView1D<const Vector4ui> joints = mesh->attribute<Vector4ui>(jointsAttribute, i);
+        CORRADE_VERIFY(joints);
+        Containers::StridedArrayView1D<const Vector4> weights = mesh->attribute<Vector4>(weightsAttribute, i);
+        CORRADE_VERIFY(weights);
+
+        {
+            /* We skip the entire test for 5.1.0 - 5.2.4 but this still XFAILs
+               on versions below 5.1.0 */
+            CORRADE_EXPECT_FAIL_IF(_assimpVersion <= 522, "glTF 2 importer < 5.2.3 only reads the last set of joint weights.");
+            CORRADE_COMPARE(joints.front(), JointValues[i]);
+            CORRADE_COMPARE(weights.front(), WeightValues[i]);
+        }
+    }
+
+    /* Multiple sets of color works fine on all versions */
     CORRADE_VERIFY(mesh->hasAttribute(MeshAttribute::Color));
     CORRADE_COMPARE(mesh->attributeCount(MeshAttribute::Color), 2);
 
@@ -2863,6 +2964,9 @@ void AssimpImporterTest::meshSkinningAttributesMultipleGltf() {
 }
 
 void AssimpImporterTest::meshSkinningAttributesMaxJointWeights() {
+    if(ASSIMP_VERSION >= 20220502 && _assimpVersion < 524)
+        CORRADE_SKIP("Skinning attribute import is broken with the current version of Assimp");
+
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
     importer->configuration().setValue("maxJointWeights", 6);
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "skin-multiple-sets.dae")));
@@ -2901,6 +3005,9 @@ void AssimpImporterTest::meshSkinningAttributesDummyWeightRemoval() {
     if(!supportsSkinning(".gltf"_s, _assimpVersion))
         CORRADE_SKIP("glTF 2 skinning is not supported with the current version of Assimp");
 
+    if(ASSIMP_VERSION >= 20220502 && _assimpVersion < 524)
+        CORRADE_SKIP("Skinning attribute import is broken with the current version of Assimp");
+
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
     importer->configuration().setValue("maxJointWeights", 0);
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "skin-dummy-weights.gltf")));
@@ -2928,6 +3035,9 @@ void AssimpImporterTest::meshSkinningAttributesDummyWeightRemoval() {
 }
 
 void AssimpImporterTest::meshSkinningAttributesMerge() {
+    if(ASSIMP_VERSION >= 20220502 && _assimpVersion < 524)
+        CORRADE_SKIP("Skinning attribute import is broken with the current version of Assimp");
+
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
     importer->configuration().setValue("mergeSkins", true);
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "skin.dae")));
@@ -2946,25 +3056,8 @@ void AssimpImporterTest::meshSkinningAttributesMerge() {
         shiftedJointData[i] = MeshSkinningAttributesJointData[i] + (mask * 2);
     }
 
-    {
-        const Int id = importer->meshForName(fixMeshName("Mesh_1"_s, ".dae"_s, _assimpVersion));
-        CORRADE_VERIFY(id != -1);
-        Containers::Optional<Trade::MeshData> mesh = importer->mesh(id);
-        CORRADE_VERIFY(mesh);
-        CORRADE_VERIFY(mesh->hasAttribute(jointsAttribute));
-        CORRADE_COMPARE(mesh->attributeFormat(jointsAttribute), VertexFormat::Vector4ui);
-        Containers::ArrayView<const Vector4ui> jointData = id == 0
-            ? Containers::arrayView(MeshSkinningAttributesJointData)
-            : Containers::arrayView(shiftedJointData);
-        CORRADE_COMPARE_AS(mesh->attribute<Vector4ui>(jointsAttribute),
-            Containers::arrayView(jointData), TestSuite::Compare::Container);
-        CORRADE_VERIFY(mesh->hasAttribute(weightsAttribute));
-        CORRADE_COMPARE(mesh->attributeFormat(weightsAttribute), VertexFormat::Vector4);
-        CORRADE_COMPARE_AS(mesh->attribute<Vector4>(weightsAttribute),
-            Containers::arrayView(MeshSkinningAttributesWeightData),
-            TestSuite::Compare::Container);
-    } {
-        const Int id = importer->meshForName(fixMeshName("Mesh_2"_s, ".dae"_s, _assimpVersion));
+    for(const char* meshName: {"Mesh_1", "Mesh_2"}) {
+        const Int id = importer->meshForName(fixMeshName(meshName, ".dae"_s, _assimpVersion));
         CORRADE_VERIFY(id != -1);
         Containers::Optional<Trade::MeshData> mesh = importer->mesh(id);
         CORRADE_VERIFY(mesh);
@@ -2992,7 +3085,7 @@ void AssimpImporterTest::meshMultiplePrimitives() {
     /* Two meshes, but one has two primitives and one three. */
     CORRADE_COMPARE(importer->meshCount(), 5);
     {
-        const std::string name = fixMeshName("Multi-primitive triangle fan, line strip", ".dae", _assimpVersion);
+        const Containers::String name = fixMeshName("Multi-primitive triangle fan, line strip", ".dae", _assimpVersion);
         CORRADE_COMPARE(importer->meshName(0), name);
         CORRADE_COMPARE(importer->meshName(1), name);
         CORRADE_COMPARE(importer->meshForName(name), 0);
@@ -3004,7 +3097,7 @@ void AssimpImporterTest::meshMultiplePrimitives() {
         CORRADE_VERIFY(mesh1);
         CORRADE_COMPARE(mesh1->primitive(), MeshPrimitive::Lines);
     } {
-        const std::string name = fixMeshName("Multi-primitive lines, triangles, triangle strip", ".dae", _assimpVersion);
+        const Containers::String name = fixMeshName("Multi-primitive lines, triangles, triangle strip", ".dae", _assimpVersion);
         CORRADE_COMPARE(importer->meshName(2), name);
         CORRADE_COMPARE(importer->meshName(3), name);
         CORRADE_COMPARE(importer->meshName(4), name);

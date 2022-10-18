@@ -2166,12 +2166,11 @@ Int GltfImporter::doDefaultScene() const {
     /* While https://www.khronos.org/registry/glTF/specs/2.0/glTF-2.0.html#scenes
        says that "When scene is undefined, client implementations MAY delay
        rendering until a particular scene is requested.", several official
-       sample glTF models (e.g. the AnimatedTriangle) have no "scene" property,
-       so that's a bit stupid behavior to have. As per discussion at
-       https://github.com/KhronosGroup/glTF/issues/815#issuecomment-274286889,
-       if a default scene isn't defined and there is at least one scene, just
-       use the first one. */
-    return _d->gltfScenes.isEmpty() ? -1 : 0;
+       sample glTF models (e.g. the AnimatedTriangle) have no "scene" property.
+       We could return 0 here if there's at least one scene, but certain use cases may want to rely on (lack of) presence of the scene property, so
+       just return -1 if it's not there. Related discussion also at
+       https://github.com/KhronosGroup/glTF/issues/815#issuecomment-274286889 */
+    return -1;
 }
 
 UnsignedInt GltfImporter::doSceneCount() const {

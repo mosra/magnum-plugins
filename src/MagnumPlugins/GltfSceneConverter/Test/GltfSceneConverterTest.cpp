@@ -102,6 +102,7 @@ struct GltfSceneConverterTest: TestSuite::Tester {
 
     void addTexture();
     void addTextureMultiple();
+    void addTextureDeduplicatedSamplers();
     /* Multiple 2D + 3D textures tested in addMaterial2DArrayTextures() */
     void addTextureInvalid();
 
@@ -117,6 +118,7 @@ struct GltfSceneConverterTest: TestSuite::Tester {
     void addSceneEmpty();
     void addScene();
     void addSceneMeshesMaterials();
+    void addSceneCustomFields();
     void addSceneNoParentField();
     void addSceneMultiple();
     void addSceneInvalid();
@@ -379,52 +381,51 @@ const struct {
     const char* expected;
     const char* expectedOtherFile;
     const char* expectedWarning;
+    bool expectedExtension;
 } AddImage2DData[]{
     {"*.gltf", "PngImageConverter", "PngImporter",
         false, {}, {}, {}, {},
-        "image.gltf", "image.0.png", nullptr},
+        "image.gltf", "image.0.png", nullptr, false},
     /* The image (or the buffer) is the same as image.0.png in these three
        variants, not testing its contents */
     {"*.gltf, name", "PngImageConverter", "PngImporter",
         false, "A very pingy image", {}, {}, {},
-        "image-name.gltf", nullptr, nullptr},
+        "image-name.gltf", nullptr, nullptr, false},
     {"*.gltf, bundled, accessor names", "PngImageConverter", "PngImporter",
         true, {}, {}, {}, true,
-        "image-accessor-names.gltf", nullptr, nullptr},
+        "image-accessor-names.gltf", nullptr, nullptr, false},
     {"*.gltf, bundled, name, accessor names", "PngImageConverter", "PngImporter",
         true, "A rather pingy image", {}, {}, true,
-        "image-name-accessor-names.gltf", nullptr, nullptr},
+        "image-name-accessor-names.gltf", nullptr, nullptr, false},
     {"*.glb", "PngImageConverter", "PngImporter",
         false, {}, {}, {}, {},
-        "image.glb", nullptr, nullptr},
+        "image.glb", nullptr, nullptr, false},
     {"*.gltf, bundled", "PngImageConverter", "PngImporter",
         false, {}, {}, {}, true,
-        "image-bundled.gltf", "image-bundled.bin", nullptr},
+        "image-bundled.gltf", "image-bundled.bin", nullptr, false},
     {"*.glb, not bundled", "PngImageConverter", "PngImporter",
         false, {}, {}, {}, false,
-        "image-not-bundled.glb", "image-not-bundled.0.png", nullptr},
+        "image-not-bundled.glb", "image-not-bundled.0.png", nullptr, false},
     {"JPEG", "JpegImageConverter", "JpegImporter",
         false, {}, {}, {}, {},
-        "image-jpeg.glb", nullptr, nullptr},
+        "image-jpeg.glb", nullptr, nullptr, false},
     {"KTX2+Basis", "BasisKtxImageConverter", "BasisImporter",
         false, {}, {}, {}, {},
-        "image-basis.glb", nullptr, nullptr},
+        "image-basis.glb", nullptr, nullptr, true},
     {"KTX2 with extension", "KtxImageConverter", "KtxImporter",
         false, {}, true, {}, {},
-        "image-ktx.glb", nullptr, nullptr},
+        "image-ktx.glb", nullptr, nullptr, true},
     {"KTX2 without extension", "KtxImageConverter", "KtxImporter",
         false, {}, {}, false, {},
-        /* The file is exactly the same, the only difference would be with
-           a texture reference */
-        "image-ktx.glb", nullptr,
+        "image-ktx-no-extension.glb", nullptr,
         "Trade::GltfSceneConverter::add(): KTX2 images can be saved using the KHR_texture_ktx extension, enable experimentalKhrTextureKtx to use it\n"
-        "Trade::GltfSceneConverter::add(): strict mode disabled, allowing image/ktx2 MIME type for an image\n"},
+        "Trade::GltfSceneConverter::add(): strict mode disabled, allowing image/ktx2 MIME type for an image\n", false},
     /* Explicitly using TGA converter from stb_image to avoid minor differences
        if Magnum's own TgaImageConverter is present as well */
     {"TGA", "StbTgaImageConverter", "TgaImporter",
         false, {}, {}, false, {},
         "image-tga.glb", nullptr,
-        "Trade::GltfSceneConverter::add(): strict mode disabled, allowing image/x-tga MIME type for an image\n"},
+        "Trade::GltfSceneConverter::add(): strict mode disabled, allowing image/x-tga MIME type for an image\n", false},
 };
 
 const struct {
@@ -478,6 +479,12 @@ const struct {
         ImageData2D{PixelFormat::R32F, {1, 1}, DataFlags{}, "abc"},
         "Trade::StbImageConverter::convertToData(): PixelFormat::R32F is not supported for BMP/JPEG/PNG/TGA output\n"
         "Trade::GltfSceneConverter::add(): can't convert an image\n"},
+    /* This tests that an extension isn't accidentally added even after a
+       failure */
+    {"conversion failed for a format that needs an extension", "BasisKtxImageConverter", ".gltf",
+        ImageData2D{PixelFormat::RG16Unorm, {1, 1}, DataFlags{}, "abc"},
+        "Trade::BasisImageConverter::convertToData(): unsupported format PixelFormat::RG16Unorm\n"
+        "Trade::GltfSceneConverter::add(): can't convert an image file\n"},
 };
 
 const struct {
@@ -501,6 +508,8 @@ const struct {
     {"invalid MIME type", "OpenExrImageConverter", ".gltf",
         ImageData3D{PixelFormat::RG16F, {1, 1, 1}, DataFlags{}, "abc", ImageFlag3D::Array},
         "image/x-exr is not a valid MIME type for a 3D glTF image"},
+    /* Also tests that an extension isn't accidentally added even after a
+       failure */
     {"conversion to file failed", "BasisKtxImageConverter", ".gltf",
         ImageData3D{PixelFormat::R32F, {1, 1, 1}, DataFlags{}, "abc", ImageFlag3D::Array},
         "Trade::BasisImageConverter::convertToData(): unsupported format PixelFormat::R32F\n"
@@ -587,6 +596,14 @@ const struct {
             SamplerWrapping::ClampToEdge,
             0},
         "expected a 2D or 2D array texture, got Trade::TextureType::Texture1DArray"},
+    {"unsupported sampler wrapping", {}, "image.gltf",
+        TextureData{TextureType::Texture2D,
+            SamplerFilter::Nearest,
+            SamplerFilter::Nearest,
+            SamplerMipmap::Base,
+            SamplerWrapping::ClampToBorder,
+            0},
+        "unsupported texture wrapping SamplerWrapping::ClampToBorder"},
 };
 
 const struct {
@@ -928,7 +945,65 @@ const struct {
             {MaterialAttribute::EmissiveTexture, 0u},
             {MaterialAttribute::EmissiveTextureMatrix,
                 Matrix3::rotation(-35.0_degf)}}},
-        "Trade::GltfSceneConverter::add(): material attribute EmissiveTextureMatrix rotation was not used\n"}
+        "Trade::GltfSceneConverter::add(): material attribute EmissiveTextureMatrix rotation was not used\n"},
+    /* These two should get removed once GltfImporter's phongMaterialFallback
+       option is gone */
+    {"phong diffuse attributes matching base color", true, "material-metallicroughness.gltf",
+        MaterialData{{}, {
+            {MaterialAttribute::BaseColor, Color4{0.1f, 0.2f, 0.3f, 0.4f}},
+            {MaterialAttribute::DiffuseColor, Color4{0.1f, 0.2f, 0.3f, 0.4f}},
+            {MaterialAttribute::BaseColorTexture, 0u},
+            {MaterialAttribute::DiffuseTexture, 0u},
+            {MaterialAttribute::BaseColorTextureMatrix,
+                Matrix3::translation({0.25f, 1.0f})},
+            {MaterialAttribute::DiffuseTextureMatrix,
+                Matrix3::translation({0.25f, 1.0f})},
+            {MaterialAttribute::BaseColorTextureCoordinates, 10u},
+            {MaterialAttribute::DiffuseTextureCoordinates, 10u},
+            {MaterialAttribute::BaseColorTextureLayer, 0u},
+            {MaterialAttribute::DiffuseTextureLayer, 0u},
+            {MaterialAttribute::Metalness, 0.25f},
+            {MaterialAttribute::Roughness, 0.75f},
+            {MaterialAttribute::NoneRoughnessMetallicTexture, 0u},
+            {MaterialAttribute::MetalnessTextureMatrix,
+                Matrix3::translation({0.25f, 0.0f})*
+                Matrix3::scaling({-0.25f, 0.75f})},
+            {MaterialAttribute::MetalnessTextureCoordinates, 11u},
+            {MaterialAttribute::RoughnessTextureMatrix,
+                Matrix3::translation({0.25f, 0.0f})*
+                Matrix3::scaling({-0.25f, 0.75f})},
+            {MaterialAttribute::RoughnessTextureCoordinates, 11u}}},
+        "" /* No warnings */},
+    {"phong diffuse attributes not matching base color", true, "material-metallicroughness.gltf",
+        MaterialData{{}, {
+            {MaterialAttribute::BaseColor, Color4{0.1f, 0.2f, 0.3f, 0.4f}},
+            {MaterialAttribute::DiffuseColor, Color4{}},
+            {MaterialAttribute::BaseColorTexture, 0u},
+            {MaterialAttribute::DiffuseTexture, 1u},
+            {MaterialAttribute::BaseColorTextureMatrix,
+                Matrix3::translation({0.25f, 1.0f})},
+            {MaterialAttribute::DiffuseTextureMatrix,
+                Matrix3{}},
+            {MaterialAttribute::BaseColorTextureCoordinates, 10u},
+            {MaterialAttribute::DiffuseTextureCoordinates, 11u},
+            {MaterialAttribute::BaseColorTextureLayer, 0u},
+            {MaterialAttribute::DiffuseTextureLayer, 1u},
+            {MaterialAttribute::Metalness, 0.25f},
+            {MaterialAttribute::Roughness, 0.75f},
+            {MaterialAttribute::NoneRoughnessMetallicTexture, 0u},
+            {MaterialAttribute::MetalnessTextureMatrix,
+                Matrix3::translation({0.25f, 0.0f})*
+                Matrix3::scaling({-0.25f, 0.75f})},
+            {MaterialAttribute::MetalnessTextureCoordinates, 11u},
+            {MaterialAttribute::RoughnessTextureMatrix,
+                Matrix3::translation({0.25f, 0.0f})*
+                Matrix3::scaling({-0.25f, 0.75f})},
+            {MaterialAttribute::RoughnessTextureCoordinates, 11u}}},
+        "Trade::GltfSceneConverter::add(): material attribute DiffuseColor was not used\n"
+        "Trade::GltfSceneConverter::add(): material attribute DiffuseTexture was not used\n"
+        "Trade::GltfSceneConverter::add(): material attribute DiffuseTextureCoordinates was not used\n"
+        "Trade::GltfSceneConverter::add(): material attribute DiffuseTextureLayer was not used\n"
+        "Trade::GltfSceneConverter::add(): material attribute DiffuseTextureMatrix was not used\n"},
 };
 
 const struct {
@@ -1097,6 +1172,15 @@ const struct {
                 Matrix3::scaling({0.005f, 0.0025f})}
         }},
         "texcoord-flip-short-material.glb"},
+};
+
+const struct {
+    const char* name;
+    Int defaultScene;
+    const char* expected;
+} AddSceneEmptyData[]{
+    {"", -1, "scene-empty.gltf"},
+    {"default scene", 0, "scene-empty-default.gltf"}
 };
 
 const struct {
@@ -1283,7 +1367,8 @@ GltfSceneConverterTest::GltfSceneConverterTest() {
     addInstancedTests({&GltfSceneConverterTest::addTexture},
         Containers::arraySize(AddTextureData));
 
-    addTests({&GltfSceneConverterTest::addTextureMultiple});
+    addTests({&GltfSceneConverterTest::addTextureMultiple,
+              &GltfSceneConverterTest::addTextureDeduplicatedSamplers});
 
     addInstancedTests({&GltfSceneConverterTest::addTextureInvalid},
         Containers::arraySize(AddTextureInvalidData));
@@ -1306,12 +1391,14 @@ GltfSceneConverterTest::GltfSceneConverterTest() {
     addInstancedTests({&GltfSceneConverterTest::textureCoordinateYFlip},
         Containers::arraySize(TextureCoordinateYFlipData));
 
-    addTests({&GltfSceneConverterTest::addSceneEmpty});
+    addInstancedTests({&GltfSceneConverterTest::addSceneEmpty},
+        Containers::arraySize(AddSceneEmptyData));
 
     addInstancedTests({&GltfSceneConverterTest::addScene},
         Containers::arraySize(AddSceneData));
 
     addTests({&GltfSceneConverterTest::addSceneMeshesMaterials,
+              &GltfSceneConverterTest::addSceneCustomFields,
               &GltfSceneConverterTest::addSceneNoParentField,
               &GltfSceneConverterTest::addSceneMultiple});
 
@@ -1404,7 +1491,7 @@ void GltfSceneConverterTest::empty() {
         TestSuite::Compare::StringToFile);
 
     if(_importerManager.loadState("GltfImporter") == PluginManager::LoadState::NotFound)
-        CORRADE_SKIP("GltfImporter plugin not found, cannot test a rountrip");
+        CORRADE_SKIP("GltfImporter plugin not found, cannot test a roundtrip");
 
     /* The file should load without errors */
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("GltfImporter");
@@ -1470,7 +1557,7 @@ void GltfSceneConverterTest::metadata() {
         TestSuite::Compare::StringToFile);
 
     if(_importerManager.loadState("GltfImporter") == PluginManager::LoadState::NotFound)
-        CORRADE_SKIP("GltfImporter plugin not found, cannot test a rountrip");
+        CORRADE_SKIP("GltfImporter plugin not found, cannot test a roundtrip");
 
     /* The file should load if we ignore required extensions */
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("GltfImporter");
@@ -1566,7 +1653,7 @@ void GltfSceneConverterTest::addMesh() {
     CORRADE_COMPARE(gltf->contains("name"), data.dataName ||data.accessorNames);
 
     if(_importerManager.loadState("GltfImporter") == PluginManager::LoadState::NotFound)
-        CORRADE_SKIP("GltfImporter plugin not found, cannot test a rountrip");
+        CORRADE_SKIP("GltfImporter plugin not found, cannot test a roundtrip");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("GltfImporter");
     CORRADE_VERIFY(importer->openFile(filename));
@@ -1653,7 +1740,7 @@ void GltfSceneConverterTest::addMeshNonInterleaved() {
     CORRADE_VERIFY(!gltf->contains("extensionsRequired"));
 
     if(_importerManager.loadState("GltfImporter") == PluginManager::LoadState::NotFound)
-        CORRADE_SKIP("GltfImporter plugin not found, cannot test a rountrip");
+        CORRADE_SKIP("GltfImporter plugin not found, cannot test a roundtrip");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("GltfImporter");
     CORRADE_VERIFY(importer->openFile(filename));
@@ -1729,7 +1816,7 @@ void GltfSceneConverterTest::addMeshNoAttributes() {
     CORRADE_VERIFY(!gltf->contains("extensionsRequired"));
 
     if(_importerManager.loadState("GltfImporter") == PluginManager::LoadState::NotFound)
-        CORRADE_SKIP("GltfImporter plugin not found, cannot test a rountrip");
+        CORRADE_SKIP("GltfImporter plugin not found, cannot test a roundtrip");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("GltfImporter");
     CORRADE_VERIFY(importer->openFile(filename));
@@ -1783,7 +1870,7 @@ void GltfSceneConverterTest::addMeshNoIndices() {
     CORRADE_VERIFY(!gltf->contains("extensionsRequired"));
 
     if(_importerManager.loadState("GltfImporter") == PluginManager::LoadState::NotFound)
-        CORRADE_SKIP("GltfImporter plugin not found, cannot test a rountrip");
+        CORRADE_SKIP("GltfImporter plugin not found, cannot test a roundtrip");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("GltfImporter");
     CORRADE_VERIFY(importer->openFile(filename));
@@ -1840,7 +1927,7 @@ void GltfSceneConverterTest::addMeshNoIndicesNoAttributes() {
     CORRADE_VERIFY(!gltf->contains("accessors"));
 
     if(_importerManager.loadState("GltfImporter") == PluginManager::LoadState::NotFound)
-        CORRADE_SKIP("GltfImporter plugin not found, cannot test a rountrip");
+        CORRADE_SKIP("GltfImporter plugin not found, cannot test a roundtrip");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("GltfImporter");
     CORRADE_VERIFY(importer->openFile(filename));
@@ -1887,7 +1974,7 @@ void GltfSceneConverterTest::addMeshNoIndicesNoVertices() {
         CORRADE_VERIFY(!Utility::Path::exists(Utility::Path::join(GLTFSCENECONVERTER_TEST_OUTPUT_DIR, "mesh-no-indices-no-vertices.bin")));
 
     if(_importerManager.loadState("GltfImporter") == PluginManager::LoadState::NotFound)
-        CORRADE_SKIP("GltfImporter plugin not found, cannot test a rountrip");
+        CORRADE_SKIP("GltfImporter plugin not found, cannot test a roundtrip");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("GltfImporter");
     CORRADE_VERIFY(importer->openFile(filename));
@@ -1953,7 +2040,7 @@ void GltfSceneConverterTest::addMeshAttribute() {
     }
 
     if(_importerManager.loadState("GltfImporter") == PluginManager::LoadState::NotFound)
-        CORRADE_SKIP("GltfImporter plugin not found, cannot test a rountrip");
+        CORRADE_SKIP("GltfImporter plugin not found, cannot test a roundtrip");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("GltfImporter");
     CORRADE_VERIFY(importer->openFile(filename));
@@ -2042,7 +2129,7 @@ void GltfSceneConverterTest::addMeshDuplicateAttribute() {
         TestSuite::Compare::File);
 
     if(_importerManager.loadState("GltfImporter") == PluginManager::LoadState::NotFound)
-        CORRADE_SKIP("GltfImporter plugin not found, cannot test a rountrip");
+        CORRADE_SKIP("GltfImporter plugin not found, cannot test a roundtrip");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("GltfImporter");
     CORRADE_VERIFY(importer->openFile(filename));
@@ -2186,7 +2273,7 @@ void GltfSceneConverterTest::addMeshCustomObjectIdAttributeName() {
         TestSuite::Compare::File);
 
     if(_importerManager.loadState("GltfImporter") == PluginManager::LoadState::NotFound)
-        CORRADE_SKIP("GltfImporter plugin not found, cannot test a rountrip");
+        CORRADE_SKIP("GltfImporter plugin not found, cannot test a roundtrip");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("GltfImporter");
 
@@ -2242,7 +2329,7 @@ void GltfSceneConverterTest::addMeshMultiple() {
         TestSuite::Compare::File);
 
     if(_importerManager.loadState("GltfImporter") == PluginManager::LoadState::NotFound)
-        CORRADE_SKIP("GltfImporter plugin not found, cannot test a rountrip");
+        CORRADE_SKIP("GltfImporter plugin not found, cannot test a roundtrip");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("GltfImporter");
     CORRADE_VERIFY(importer->openFile(filename));
@@ -2361,15 +2448,15 @@ void GltfSceneConverterTest::addImage2D() {
     const Containers::Optional<Containers::String> gltf = Utility::Path::readString(filename);
     CORRADE_VERIFY(gltf);
 
-    /* For images alone, no extensions should be recorded -- they only get so
-       if a texture references the image */
-    CORRADE_VERIFY(!gltf->contains("extensionsUsed"));
+    /* For images alone, extensions should be recorded only as used -- they get
+       recorded as required only once a texture references the image */
+    CORRADE_COMPARE(gltf->contains("extensionsUsed"), data.expectedExtension);
     CORRADE_VERIFY(!gltf->contains("extensionsRequired"));
 
     if(_importerManager.loadState("GltfImporter") == PluginManager::LoadState::NotFound)
-        CORRADE_SKIP("GltfImporter plugin not found, cannot test a rountrip");
+        CORRADE_SKIP("GltfImporter plugin not found, cannot test a roundtrip");
     if(_importerManager.loadState(data.importerPlugin) == PluginManager::LoadState::NotFound)
-        CORRADE_SKIP(data.importerPlugin << "plugin not found, cannot test a rountrip");
+        CORRADE_SKIP(data.importerPlugin << "plugin not found, cannot test a roundtrip");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("GltfImporter");
     CORRADE_VERIFY(importer->openFile(filename));
@@ -2404,9 +2491,9 @@ void GltfSceneConverterTest::addImageCompressed2D() {
         TestSuite::Compare::File);
 
     if(_importerManager.loadState("GltfImporter") == PluginManager::LoadState::NotFound)
-        CORRADE_SKIP("GltfImporter plugin not found, cannot test a rountrip");
+        CORRADE_SKIP("GltfImporter plugin not found, cannot test a roundtrip");
     if(_importerManager.loadState("KtxImporter") == PluginManager::LoadState::NotFound)
-        CORRADE_SKIP("KtxImporter plugin not found, cannot test a rountrip");
+        CORRADE_SKIP("KtxImporter plugin not found, cannot test a roundtrip");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("GltfImporter");
 
@@ -2478,10 +2565,19 @@ void GltfSceneConverterTest::addImage3D() {
     /* There shouldn't be any *.bin written, unless the image is put into it */
     CORRADE_COMPARE(Utility::Path::exists(Utility::Path::splitExtension(Utility::Path::join(GLTFSCENECONVERTER_TEST_DIR, data.expected)).first() + ".bin"), Containers::StringView{data.expectedOtherFile}.hasSuffix(".bin"));
 
+    /* Verify various expectations that might be missed when just looking at
+       the file */
+    const Containers::Optional<Containers::String> gltf = Utility::Path::readString(filename);
+    CORRADE_VERIFY(gltf);
+
+    /* As there is a texture, the extension is also required now */
+    CORRADE_VERIFY(gltf->contains("extensionsUsed"));
+    CORRADE_VERIFY(gltf->contains("extensionsRequired"));
+
     if(_importerManager.loadState("GltfImporter") == PluginManager::LoadState::NotFound)
-        CORRADE_SKIP("GltfImporter plugin not found, cannot test a rountrip");
+        CORRADE_SKIP("GltfImporter plugin not found, cannot test a roundtrip");
     if(_importerManager.loadState("KtxImporter") == PluginManager::LoadState::NotFound)
-        CORRADE_SKIP("KtxImporter plugin not found, cannot test a rountrip");
+        CORRADE_SKIP("KtxImporter plugin not found, cannot test a roundtrip");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("GltfImporter");
 
@@ -2530,9 +2626,9 @@ void GltfSceneConverterTest::addImageCompressed3D() {
         TestSuite::Compare::File);
 
     if(_importerManager.loadState("GltfImporter") == PluginManager::LoadState::NotFound)
-        CORRADE_SKIP("GltfImporter plugin not found, cannot test a rountrip");
+        CORRADE_SKIP("GltfImporter plugin not found, cannot test a roundtrip");
     if(_importerManager.loadState("KtxImporter") == PluginManager::LoadState::NotFound)
-        CORRADE_SKIP("KtxImporter plugin not found, cannot test a rountrip");
+        CORRADE_SKIP("KtxImporter plugin not found, cannot test a roundtrip");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("GltfImporter");
 
@@ -2687,11 +2783,11 @@ void GltfSceneConverterTest::addImageMultiple() {
         TestSuite::Compare::File);
 
     if(_importerManager.loadState("GltfImporter") == PluginManager::LoadState::NotFound)
-        CORRADE_SKIP("GltfImporter plugin not found, cannot test a rountrip");
+        CORRADE_SKIP("GltfImporter plugin not found, cannot test a roundtrip");
     if(_importerManager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
-        CORRADE_SKIP("PngImporter plugin not found, cannot test a rountrip");
+        CORRADE_SKIP("PngImporter plugin not found, cannot test a roundtrip");
     if(_importerManager.loadState("JpegImporter") == PluginManager::LoadState::NotFound)
-        CORRADE_SKIP("JpegImporter plugin not found, cannot test a rountrip");
+        CORRADE_SKIP("JpegImporter plugin not found, cannot test a roundtrip");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("GltfImporter");
 
@@ -2806,6 +2902,13 @@ void GltfSceneConverterTest::addImageInvalid2D() {
             CORRADE_COMPARE(out.str(), Utility::formatString("Trade::GltfSceneConverter::add(): {}\n", data.message));
     }
 
+    /* Try adding the same image again, to catch assertions due to potential
+       internal state mismatches */
+    {
+        Error redirectError{nullptr};
+        CORRADE_VERIFY(!converter->add(data.image));
+    }
+
     /* The file should not get corrupted by this error */
     CORRADE_VERIFY(converter->endFile());
     CORRADE_COMPARE_AS(filename,
@@ -2837,6 +2940,13 @@ void GltfSceneConverterTest::addImageInvalid3D() {
             CORRADE_COMPARE(out.str(), Utility::formatString(data.message, filename));
         else
             CORRADE_COMPARE(out.str(), Utility::formatString("Trade::GltfSceneConverter::add(): {}\n", data.message));
+    }
+
+    /* Try adding the same image again, to catch assertions due to potential
+       internal state mismatches */
+    {
+        Error redirectError{nullptr};
+        CORRADE_VERIFY(!converter->add(data.image));
     }
 
     /* The file should not get corrupted by this error */
@@ -2894,6 +3004,10 @@ void GltfSceneConverterTest::addTexture() {
     CORRADE_COMPARE(importer->textureCount(), 1);
     Containers::Optional<TextureData> imported = importer->texture(0);
     CORRADE_VERIFY(imported);
+    CORRADE_COMPARE(imported->minificationFilter(), SamplerFilter::Nearest);
+    CORRADE_COMPARE(imported->magnificationFilter(), SamplerFilter::Nearest);
+    CORRADE_COMPARE(imported->mipmapFilter(), SamplerMipmap::Base);
+    CORRADE_COMPARE(imported->wrapping(), (Math::Vector3<SamplerWrapping>{SamplerWrapping::ClampToEdge, SamplerWrapping::ClampToEdge, SamplerWrapping::Repeat}));
     CORRADE_COMPARE(imported->image(), 0);
 }
 
@@ -2915,7 +3029,8 @@ void GltfSceneConverterTest::addTextureMultiple() {
     converter->configuration().setValue("imageConverter", "PngImageConverter");
     CORRADE_VERIFY(converter->add(ImageView2D{PixelFormat::RGB8Unorm, {1, 1}, "yey"}));
 
-    /* Second image Basis, unused */
+    /* Second image Basis, unused. It will have a KHR_texture_basisu in
+       extensionsUsed but not in extensionRequired. */
     converter->configuration().setValue("imageConverter", "BasisKtxImageConverter");
     CORRADE_VERIFY(converter->add(ImageView2D{PixelFormat::RGB8Unorm, {1, 1}, "yey"}, "Basis-encoded, unused"));
 
@@ -2925,16 +3040,16 @@ void GltfSceneConverterTest::addTextureMultiple() {
 
     /* Reference third and first image from two textures */
     CORRADE_VERIFY(converter->add(TextureData{TextureType::Texture2D,
+        SamplerFilter::Linear,
         SamplerFilter::Nearest,
-        SamplerFilter::Nearest,
-        SamplerMipmap::Base,
-        SamplerWrapping::ClampToEdge,
+        SamplerMipmap::Nearest,
+        {SamplerWrapping::MirroredRepeat, SamplerWrapping::ClampToEdge, SamplerWrapping{}},
         2}));
     CORRADE_VERIFY(converter->add(TextureData{TextureType::Texture2D,
         SamplerFilter::Nearest,
-        SamplerFilter::Nearest,
-        SamplerMipmap::Base,
-        SamplerWrapping::ClampToEdge,
+        SamplerFilter::Linear,
+        SamplerMipmap::Linear,
+        {SamplerWrapping::Repeat, SamplerWrapping::MirroredRepeat, SamplerWrapping{}},
         0}));
 
     CORRADE_VERIFY(converter->endFile());
@@ -2942,16 +3057,8 @@ void GltfSceneConverterTest::addTextureMultiple() {
         Utility::Path::join(GLTFSCENECONVERTER_TEST_DIR, "texture-multiple.gltf"),
         TestSuite::Compare::File);
 
-    /* Verify various expectations that might be missed when just looking at
-       the file */
-    const Containers::Optional<Containers::String> gltf = Utility::Path::readString(filename);
-    CORRADE_VERIFY(gltf);
-    /* The Basis image is not referenced and thus there should be no extension
-       reference */
-    CORRADE_VERIFY(!gltf->contains("KHR_texture_basisu"));
-
     if(_importerManager.loadState("GltfImporter") == PluginManager::LoadState::NotFound)
-        CORRADE_SKIP("GltfImporter plugin not found, cannot test a rountrip");
+        CORRADE_SKIP("GltfImporter plugin not found, cannot test a roundtrip");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("GltfImporter");
     importer->configuration().setValue("experimentalKhrTextureKtx", true);
@@ -2962,11 +3069,113 @@ void GltfSceneConverterTest::addTextureMultiple() {
     CORRADE_COMPARE(importer->textureCount(), 2);
     Containers::Optional<TextureData> imported0 = importer->texture(0);
     CORRADE_VERIFY(imported0);
+    CORRADE_COMPARE(imported0->minificationFilter(), SamplerFilter::Linear);
+    CORRADE_COMPARE(imported0->magnificationFilter(), SamplerFilter::Nearest);
+    CORRADE_COMPARE(imported0->mipmapFilter(), SamplerMipmap::Nearest);
+    CORRADE_COMPARE(imported0->wrapping(), (Math::Vector3<SamplerWrapping>{SamplerWrapping::MirroredRepeat, SamplerWrapping::ClampToEdge, SamplerWrapping::Repeat}));
     CORRADE_COMPARE(imported0->image(), 2);
 
     Containers::Optional<TextureData> imported1 = importer->texture(1);
     CORRADE_VERIFY(imported1);
+    CORRADE_COMPARE(imported1->minificationFilter(), SamplerFilter::Nearest);
+    CORRADE_COMPARE(imported1->magnificationFilter(), SamplerFilter::Linear);
+    CORRADE_COMPARE(imported1->mipmapFilter(), SamplerMipmap::Linear);
+    CORRADE_COMPARE(imported1->wrapping(), (Math::Vector3<SamplerWrapping>{SamplerWrapping::Repeat, SamplerWrapping::MirroredRepeat, SamplerWrapping::Repeat}));
     CORRADE_COMPARE(imported1->image(), 0);
+}
+
+void GltfSceneConverterTest::addTextureDeduplicatedSamplers() {
+    if(_imageConverterManager.loadState("PngImageConverter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("PngImageConverter plugin not found, cannot test");
+
+    Containers::Pointer<AbstractSceneConverter> converter =  _converterManager.instantiate("GltfSceneConverter");
+
+    Containers::String filename = Utility::Path::join(GLTFSCENECONVERTER_TEST_OUTPUT_DIR, "texture-deduplicated-samplers.gltf");
+    CORRADE_VERIFY(converter->beginFile(filename));
+
+    CORRADE_VERIFY(converter->add(ImageView2D{PixelFormat::RGB8Unorm, {1, 1}, "yey"}));
+
+    CORRADE_VERIFY(converter->add(TextureData{TextureType::Texture2D,
+        SamplerFilter::Nearest,
+        SamplerFilter::Nearest,
+        SamplerMipmap::Nearest,
+        {SamplerWrapping::Repeat, SamplerWrapping::Repeat, SamplerWrapping{}},
+        0}));
+    CORRADE_VERIFY(converter->add(TextureData{TextureType::Texture2D,
+        SamplerFilter::Linear,
+        SamplerFilter::Nearest,
+        SamplerMipmap::Nearest,
+        {SamplerWrapping::Repeat, SamplerWrapping::Repeat, SamplerWrapping{}},
+        0}, "Different minification filter"));
+    CORRADE_VERIFY(converter->add(TextureData{TextureType::Texture2D,
+        SamplerFilter::Nearest,
+        SamplerFilter::Linear,
+        SamplerMipmap::Nearest,
+        {SamplerWrapping::Repeat, SamplerWrapping::Repeat, SamplerWrapping{}},
+        0}, "Different magnification filter"));
+    CORRADE_VERIFY(converter->add(TextureData{TextureType::Texture2D,
+        SamplerFilter::Nearest,
+        SamplerFilter::Nearest,
+        SamplerMipmap::Linear,
+        {SamplerWrapping::Repeat, SamplerWrapping::Repeat, SamplerWrapping{}},
+        0}, "Different mipmap filter"));
+    CORRADE_VERIFY(converter->add(TextureData{TextureType::Texture2D,
+        SamplerFilter::Nearest,
+        SamplerFilter::Nearest,
+        SamplerMipmap::Nearest,
+        {SamplerWrapping::ClampToEdge, SamplerWrapping::Repeat, SamplerWrapping{}},
+        0}, "Different wrapping X"));
+    CORRADE_VERIFY(converter->add(TextureData{TextureType::Texture2D,
+        SamplerFilter::Nearest,
+        SamplerFilter::Nearest,
+        SamplerMipmap::Nearest,
+        {SamplerWrapping::Repeat, SamplerWrapping::ClampToEdge, SamplerWrapping{}},
+        0}, "Different wrapping Y"));
+
+    CORRADE_VERIFY(converter->add(TextureData{TextureType::Texture2D,
+        SamplerFilter::Nearest,
+        SamplerFilter::Nearest,
+        SamplerMipmap::Nearest,
+        {SamplerWrapping::Repeat, SamplerWrapping::Repeat, SamplerWrapping{}},
+        0}, "Should reuse sampler 0"));
+    CORRADE_VERIFY(converter->add(TextureData{TextureType::Texture2D,
+        SamplerFilter::Linear,
+        SamplerFilter::Nearest,
+        SamplerMipmap::Nearest,
+        {SamplerWrapping::Repeat, SamplerWrapping::Repeat, SamplerWrapping{}},
+        0}, "Should reuse sampler 1"));
+    CORRADE_VERIFY(converter->add(TextureData{TextureType::Texture2D,
+        SamplerFilter::Nearest,
+        SamplerFilter::Linear,
+        SamplerMipmap::Nearest,
+        {SamplerWrapping::Repeat, SamplerWrapping::Repeat, SamplerWrapping{}},
+        0}, "Should reuse sampler 2"));
+    CORRADE_VERIFY(converter->add(TextureData{TextureType::Texture2D,
+        SamplerFilter::Nearest,
+        SamplerFilter::Nearest,
+        SamplerMipmap::Linear,
+        {SamplerWrapping::Repeat, SamplerWrapping::Repeat, SamplerWrapping{}},
+        0}, "Should reuse sampler 3"));
+    CORRADE_VERIFY(converter->add(TextureData{TextureType::Texture2D,
+        SamplerFilter::Nearest,
+        SamplerFilter::Nearest,
+        SamplerMipmap::Nearest,
+        {SamplerWrapping::ClampToEdge, SamplerWrapping::Repeat, SamplerWrapping{}},
+        0}, "Should reuse sampler 4"));
+    CORRADE_VERIFY(converter->add(TextureData{TextureType::Texture2D,
+        SamplerFilter::Nearest,
+        SamplerFilter::Nearest,
+        SamplerMipmap::Nearest,
+        {SamplerWrapping::Repeat, SamplerWrapping::ClampToEdge, SamplerWrapping{}},
+        0}, "Should reuse sampler 5"));
+
+    CORRADE_VERIFY(converter->endFile());
+    CORRADE_COMPARE_AS(filename,
+        Utility::Path::join(GLTFSCENECONVERTER_TEST_DIR, "texture-deduplicated-samplers.gltf"),
+        TestSuite::Compare::File);
+
+    /* Not testing file roundtrip as sampler deduplication doesn't really
+       make any difference there */
 }
 
 void GltfSceneConverterTest::addTextureInvalid() {
@@ -3079,7 +3288,7 @@ void GltfSceneConverterTest::addMaterial() {
         TestSuite::Compare::File);
 
     if(_importerManager.loadState("GltfImporter") == PluginManager::LoadState::NotFound)
-        CORRADE_SKIP("GltfImporter plugin not found, cannot test a rountrip");
+        CORRADE_SKIP("GltfImporter plugin not found, cannot test a roundtrip");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("GltfImporter");
     CORRADE_VERIFY(importer->openFile(filename));
@@ -3157,7 +3366,7 @@ void GltfSceneConverterTest::addMaterial2DArrayTextures() {
         TestSuite::Compare::File);
 
     if(_importerManager.loadState("GltfImporter") == PluginManager::LoadState::NotFound)
-        CORRADE_SKIP("GltfImporter plugin not found, cannot test a rountrip");
+        CORRADE_SKIP("GltfImporter plugin not found, cannot test a roundtrip");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("GltfImporter");
     importer->configuration().setValue("experimentalKhrTextureKtx", true);
@@ -3297,7 +3506,7 @@ void GltfSceneConverterTest::addMaterialMultiple() {
         TestSuite::Compare::File);
 
     if(_importerManager.loadState("GltfImporter") == PluginManager::LoadState::NotFound)
-        CORRADE_SKIP("GltfImporter plugin not found, cannot test a rountrip");
+        CORRADE_SKIP("GltfImporter plugin not found, cannot test a roundtrip");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("GltfImporter");
 
@@ -3472,7 +3681,7 @@ void GltfSceneConverterTest::textureCoordinateYFlip() {
         TestSuite::Compare::File);
 
     if(_importerManager.loadState("GltfImporter") == PluginManager::LoadState::NotFound)
-        CORRADE_SKIP("GltfImporter plugin not found, cannot test a rountrip");
+        CORRADE_SKIP("GltfImporter plugin not found, cannot test a roundtrip");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("GltfImporter");
 
@@ -3511,9 +3720,12 @@ void GltfSceneConverterTest::textureCoordinateYFlip() {
 }
 
 void GltfSceneConverterTest::addSceneEmpty() {
+    auto&& data = AddSceneEmptyData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     Containers::Pointer<AbstractSceneConverter> converter =  _converterManager.instantiate("GltfSceneConverter");
 
-    Containers::String filename = Utility::Path::join(GLTFSCENECONVERTER_TEST_OUTPUT_DIR, "scene-empty.gltf");
+    Containers::String filename = Utility::Path::join(GLTFSCENECONVERTER_TEST_OUTPUT_DIR, data.expected);
     CORRADE_VERIFY(converter->beginFile(filename));
 
     CORRADE_VERIFY(converter->add(SceneData{SceneMappingType::UnsignedByte, 0, nullptr, {
@@ -3523,13 +3735,16 @@ void GltfSceneConverterTest::addSceneEmpty() {
             SceneFieldType::Matrix4x4, nullptr},
     }}));
 
+    if(data.defaultScene != -1)
+        converter->setDefaultScene(data.defaultScene);
+
     CORRADE_VERIFY(converter->endFile());
     CORRADE_COMPARE_AS(filename,
-        Utility::Path::join(GLTFSCENECONVERTER_TEST_DIR, "scene-empty.gltf"),
+        Utility::Path::join(GLTFSCENECONVERTER_TEST_DIR, data.expected),
         TestSuite::Compare::File);
 
     if(_importerManager.loadState("GltfImporter") == PluginManager::LoadState::NotFound)
-        CORRADE_SKIP("GltfImporter plugin not found, cannot test a rountrip");
+        CORRADE_SKIP("GltfImporter plugin not found, cannot test a roundtrip");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("GltfImporter");
     CORRADE_VERIFY(importer->openFile(filename));
@@ -3543,6 +3758,9 @@ void GltfSceneConverterTest::addSceneEmpty() {
     /* There is ImporterState & Parent always, plus Transformation to indicate
        a 3D scene */
     CORRADE_COMPARE(imported->fieldCount(), 3);
+
+    /* The scene should be set as default only if we called the function */
+    CORRADE_COMPARE(importer->defaultScene(), data.defaultScene);
 }
 
 void GltfSceneConverterTest::addScene() {
@@ -3633,9 +3851,11 @@ void GltfSceneConverterTest::addScene() {
         SceneFieldData{SceneField::Rotation,
             Containers::stridedArrayView(sceneData->trs).slice(&Scene::Trs::mapping),
             Containers::stridedArrayView(sceneData->trs).slice(&Scene::Trs::rotation)},
-        /* Ignored custom field, produces another warning */
-        SceneFieldData{sceneFieldCustom(5318008),
+        /* ImporterState field is ignored but without a warning */
+        SceneFieldData{SceneField::ImporterState,
+            SceneMappingType::UnsignedShort,
             Containers::stridedArrayView(sceneData->trs).slice(&Scene::Trs::mapping),
+            SceneFieldType::Pointer,
             Containers::stridedArrayView(sceneData->trs).slice(&Scene::Trs::translation)},
         SceneFieldData{SceneField::Scaling,
             Containers::stridedArrayView(sceneData->trs).slice(&Scene::Trs::mapping),
@@ -3648,7 +3868,6 @@ void GltfSceneConverterTest::addScene() {
         CORRADE_VERIFY(converter->add(scene, data.dataName));
         CORRADE_COMPARE(out.str(), Utility::formatString(
             "Trade::GltfSceneConverter::add(): Trade::SceneField::Light was not used\n"
-            "Trade::GltfSceneConverter::add(): Trade::SceneField::Custom(5318008) was not used\n"
             "Trade::GltfSceneConverter::add(): parentless object {} was not used\n", data.offset + 4));
     }
 
@@ -3658,7 +3877,7 @@ void GltfSceneConverterTest::addScene() {
         TestSuite::Compare::File);
 
     if(_importerManager.loadState("GltfImporter") == PluginManager::LoadState::NotFound)
-        CORRADE_SKIP("GltfImporter plugin not found, cannot test a rountrip");
+        CORRADE_SKIP("GltfImporter plugin not found, cannot test a roundtrip");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("GltfImporter");
     CORRADE_VERIFY(importer->openFile(filename));
@@ -3811,7 +4030,7 @@ void GltfSceneConverterTest::addSceneMeshesMaterials() {
         TestSuite::Compare::File);
 
     if(_importerManager.loadState("GltfImporter") == PluginManager::LoadState::NotFound)
-        CORRADE_SKIP("GltfImporter plugin not found, cannot test a rountrip");
+        CORRADE_SKIP("GltfImporter plugin not found, cannot test a roundtrip");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("GltfImporter");
     CORRADE_VERIFY(importer->openFile(filename));
@@ -3850,6 +4069,156 @@ void GltfSceneConverterTest::addSceneMeshesMaterials() {
     CORRADE_COMPARE(importer->meshName(2), "Mesh 1");
     CORRADE_COMPARE(importer->meshName(3), "Mesh 3");
     CORRADE_COMPARE(importer->meshName(4), "Mesh 1");
+}
+
+void GltfSceneConverterTest::addSceneCustomFields() {
+    Containers::Pointer<AbstractSceneConverter> converter =  _converterManager.instantiate("GltfSceneConverter");
+
+    Containers::String filename = Utility::Path::join(GLTFSCENECONVERTER_TEST_OUTPUT_DIR, "scene-custom-fields.gltf");
+    CORRADE_VERIFY(converter->beginFile(filename));
+
+    converter->setObjectName(0, "Custom field after builtin");
+    converter->setObjectName(1, "To verify the 32-bit integer precision doesn't get lost along the way");
+    converter->setObjectName(2, "Custom field between builtin");
+    converter->setObjectName(3, "Custom field before builtin");
+    converter->setObjectName(4, "Custom fields without a name, omitted");
+
+    constexpr SceneField SceneFieldUnsignedInt = sceneFieldCustom(2322);
+    constexpr SceneField SceneFieldInt = sceneFieldCustom(1766);
+    /* Using huge IDs shouldn't cause any issues */
+    constexpr SceneField SceneFieldFloat = sceneFieldCustom(0x7fffffff);
+    constexpr SceneField SceneFieldNameless = sceneFieldCustom(5318008);
+    constexpr SceneField SceneFieldUnsupported = sceneFieldCustom(13);
+
+    converter->setSceneFieldName(SceneFieldUnsignedInt, "customUnsignedInt");
+    converter->setSceneFieldName(SceneFieldInt, "customInt");
+    converter->setSceneFieldName(SceneFieldFloat, "customFloat");
+    /* CustomFieldNameless, ahem, doesn't have a name assigned */
+    converter->setSceneFieldName(SceneFieldUnsupported, "customVector2");
+
+    /* Adding also some builtin fields to verify the two can coexist */
+    struct Scene {
+        UnsignedInt parentMapping[5];
+        Int parent[1];
+        Containers::Pair<UnsignedInt, Vector3> translations[3];
+        Containers::Pair<UnsignedInt, UnsignedInt> customUnsignedInt[2];
+        Containers::Pair<UnsignedInt, Int> customInt[2];
+        Containers::Pair<UnsignedInt, UnsignedInt> customNameless[1];
+        Containers::Pair<UnsignedInt, Vector2> customUnsupported[1];
+        Vector3 scalings[3];
+        Containers::Pair<UnsignedInt, Float> customFloat[3];
+    } sceneData[]{{
+        {0, 1, 2, 3, 4},
+        {-1},
+        {{0, Vector3{1.0f, 2.0f, 3.0f}},
+         {2, Vector3{4.0f, 5.0f, 6.0f}},
+         {3, Vector3{}}}, /* Trivial, omitted */
+        {{0, 176},
+         {1, 4294967295}},
+        {{1, Int(-2147483648)},
+         {2, 25}},
+        {{4, 666}},
+        {{0, Vector2{1.0f, 2.0f}}},
+        {/*0*/ Vector3{1.0f, 1.0f, 1.0f}, /* Trivial, omitted */
+         /*2*/ Vector3{7.0f, 8.0f, 9.0f},
+         /*3*/ Vector3{0.5f, 0.5f, 0.5f}},
+        {{2, 17.5f},
+         {0, 0.125f},
+         {2, 25.5f}}, /* Duplicate, second ignored with a warning */
+    }};
+
+    SceneData scene{SceneMappingType::UnsignedInt, 5, {}, sceneData, {
+        SceneFieldData{SceneField::Parent,
+            Containers::stridedArrayView(sceneData->parentMapping),
+            Containers::stridedArrayView(sceneData->parent).broadcasted<0>(5)},
+        SceneFieldData{SceneField::Translation,
+            Containers::stridedArrayView(sceneData->translations).slice(&Containers::Pair<UnsignedInt, Vector3>::first),
+            Containers::stridedArrayView(sceneData->translations).slice(&Containers::Pair<UnsignedInt, Vector3>::second)},
+        /* Deliberately specify custom fields among builtin ones to verify the
+           order doesn't cause the output to be mixed up */
+        SceneFieldData{SceneFieldUnsignedInt,
+            Containers::stridedArrayView(sceneData->customUnsignedInt).slice(&Containers::Pair<UnsignedInt, UnsignedInt>::first),
+            Containers::stridedArrayView(sceneData->customUnsignedInt).slice(&Containers::Pair<UnsignedInt, UnsignedInt>::second)},
+        SceneFieldData{SceneFieldInt,
+            Containers::stridedArrayView(sceneData->customInt).slice(&Containers::Pair<UnsignedInt, Int>::first),
+            Containers::stridedArrayView(sceneData->customInt).slice(&Containers::Pair<UnsignedInt, Int>::second)},
+        SceneFieldData{SceneFieldNameless,
+            Containers::stridedArrayView(sceneData->customNameless).slice(&Containers::Pair<UnsignedInt, UnsignedInt>::first),
+            Containers::stridedArrayView(sceneData->customNameless).slice(&Containers::Pair<UnsignedInt, UnsignedInt>::second)},
+        SceneFieldData{SceneFieldUnsupported,
+            Containers::stridedArrayView(sceneData->customUnsupported).slice(&Containers::Pair<UnsignedInt, Vector2>::first),
+            Containers::stridedArrayView(sceneData->customUnsupported).slice(&Containers::Pair<UnsignedInt, Vector2>::second)},
+        SceneFieldData{SceneField::Scaling,
+            Containers::stridedArrayView(sceneData->translations).slice(&Containers::Pair<UnsignedInt, Vector3>::first),
+            Containers::stridedArrayView(sceneData->scalings)},
+        SceneFieldData{SceneFieldFloat,
+            Containers::stridedArrayView(sceneData->customFloat).slice(&Containers::Pair<UnsignedInt, Float>::first),
+            Containers::stridedArrayView(sceneData->customFloat).slice(&Containers::Pair<UnsignedInt, Float>::second)},
+    }};
+
+    {
+        std::ostringstream out;
+        Warning redirectWarning{&out};
+        CORRADE_VERIFY(converter->add(scene));
+        CORRADE_COMPARE(out.str(),
+            "Trade::GltfSceneConverter::add(): custom scene field 5318008 has no name assigned, skipping\n"
+            "Trade::GltfSceneConverter::add(): custom scene field customVector2 has unsupported type Trade::SceneFieldType::Vector2, skipping\n"
+            "Trade::GltfSceneConverter::add(): ignoring duplicate field customFloat for object 2\n");
+    }
+
+    CORRADE_VERIFY(converter->endFile());
+    CORRADE_COMPARE_AS(filename,
+        Utility::Path::join(GLTFSCENECONVERTER_TEST_DIR, "scene-custom-fields.gltf"),
+        TestSuite::Compare::File);
+
+    if(_importerManager.loadState("GltfImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("GltfImporter plugin not found, cannot test a roundtrip");
+
+    Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("GltfImporter");
+    importer->configuration().group("customSceneFieldTypes")->addValue("customUnsignedInt", "UnsignedInt");
+    importer->configuration().group("customSceneFieldTypes")->addValue("customInt", "Int");
+    CORRADE_VERIFY(importer->openFile(filename));
+
+    SceneField importedSceneFieldUnsignedInt = importer->sceneFieldForName("customUnsignedInt");
+    SceneField importedSceneFieldInt = importer->sceneFieldForName("customInt");
+    SceneField importedSceneFieldFloat = importer->sceneFieldForName("customFloat");
+    CORRADE_VERIFY(importedSceneFieldUnsignedInt != SceneField{});
+    CORRADE_VERIFY(importedSceneFieldInt != SceneField{});
+    CORRADE_VERIFY(importedSceneFieldFloat != SceneField{});
+
+    /* There should be exactly one scene */
+    CORRADE_COMPARE(importer->sceneCount(), 1);
+    Containers::Optional<SceneData> imported = importer->scene(0);
+    CORRADE_VERIFY(imported);
+    /* Not testing Parent, Translation, Scaling and ImporterState */
+    CORRADE_COMPARE(imported->fieldCount(), 3 + 4);
+
+    CORRADE_VERIFY(imported->hasField(importedSceneFieldUnsignedInt));
+    CORRADE_COMPARE(imported->fieldType(importedSceneFieldUnsignedInt), SceneFieldType::UnsignedInt);
+    CORRADE_COMPARE_AS(imported->mapping<UnsignedInt>(importedSceneFieldUnsignedInt),
+        Containers::arrayView({0u, 1u}),
+        TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(imported->field<UnsignedInt>(importedSceneFieldUnsignedInt),
+        Containers::arrayView({176u, 4294967295u}),
+        TestSuite::Compare::Container);
+
+    CORRADE_VERIFY(imported->hasField(importedSceneFieldInt));
+    CORRADE_COMPARE(imported->fieldType(importedSceneFieldInt), SceneFieldType::Int);
+    CORRADE_COMPARE_AS(imported->mapping<UnsignedInt>(importedSceneFieldInt),
+        Containers::arrayView({1u, 2u}),
+        TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(imported->field<Int>(importedSceneFieldInt),
+        Containers::arrayView({Int(-2147483648), 25}),
+        TestSuite::Compare::Container);
+
+    CORRADE_VERIFY(imported->hasField(importedSceneFieldFloat));
+    CORRADE_COMPARE(imported->fieldType(importedSceneFieldFloat), SceneFieldType::Float);
+    CORRADE_COMPARE_AS(imported->mapping<UnsignedInt>(importedSceneFieldFloat),
+        Containers::arrayView({0u, 2u}),
+        TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(imported->field<Float>(importedSceneFieldFloat),
+        Containers::arrayView({0.125f, 17.5f}),
+        TestSuite::Compare::Container);
 }
 
 void GltfSceneConverterTest::addSceneNoParentField() {

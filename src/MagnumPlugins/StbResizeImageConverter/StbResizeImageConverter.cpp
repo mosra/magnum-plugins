@@ -64,6 +64,10 @@ Containers::Optional<ImageData3D> convertInternal(const ImageView3D& image, Util
         return {};
     }
     const Vector2i size = configuration.value<Vector2i>("size");
+    if(!size.product()) {
+        Error{} << "Trade::StbResizeImageConverter::convert(): invalid output image size" << Debug::packed << size;
+        return {};
+    }
 
     /* Data type and component count. Branching on isPixelFormatDepthOrStencil()
        to avoid having a dedicated error path for depth/stencil formats. */

@@ -67,7 +67,8 @@ namespace Magnum {
     @ref Trade::DdsImporter "DdsImporter" and
     @ref Audio::StbVorbisImporter "StbVorbisAudioImporter" plugins,
     improvements to @ref Trade::TinyGltfImporter "TinyGltfImporter" and
-    @ref Text::StbTrueTypeFont "StbTrueTypeFont"
+    @ref Text::StbTrueTypeFont "StbTrueTypeFont"; Windows-specific updates and
+    fixes
 -   **Jonathan Mercier-Ganady** ([\@Jmgr](https://github.com/Jmgr)) --- build
     fixes
 -   **Konstantinos Chatzilygeroudis** ([\@costashatz](https://github.com/costashatz))
@@ -88,9 +89,9 @@ namespace Magnum {
     @relativeref{Trade,KtxImporter}, @relativeref{Trade,KtxImageConverter},
     @relativeref{Trade,GltfImporter}, upgrades to
     @relativeref{Trade,BasisImporter} and @relativeref{Trade,BasisImageConverter},
-    animation and skinning support in @ref Trade::AssimpImporter "AssimpImporter",
-    improved @relativeref{Trade,TinyGltfImporter} robustness, documentation
-    updates
+    animation and skinning support and general maintenance of
+    @ref Trade::AssimpImporter "AssimpImporter", improved
+    @relativeref{Trade,TinyGltfImporter} robustness, documentation updates
 -   **[\@playgroo](https://github.com/playgroo)** --- Debian package updates
 -   **Séverin Lemaignan** ([\@severin-lemaignan](https://github.com/severin-lemaignan))
     --- buildsystem fixes, bugreports

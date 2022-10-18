@@ -110,7 +110,6 @@ struct GltfImporterTest: TestSuite::Tester {
     void scene();
     void sceneInvalidWholeFile();
     void sceneInvalid();
-    void sceneDefaultNoScenes();
     void sceneDefaultNoDefault();
     void sceneDefaultOutOfBounds();
     void sceneTransformation();
@@ -1555,8 +1554,7 @@ GltfImporterTest::GltfImporterTest() {
     addInstancedTests({&GltfImporterTest::sceneInvalid},
         Containers::arraySize(SceneInvalidData));
 
-    addTests({&GltfImporterTest::sceneDefaultNoScenes,
-              &GltfImporterTest::sceneDefaultNoDefault,
+    addTests({&GltfImporterTest::sceneDefaultNoDefault,
               &GltfImporterTest::sceneDefaultOutOfBounds,
               &GltfImporterTest::sceneTransformation,
               &GltfImporterTest::sceneTransformationQuaternionNormalizationEnabled,
@@ -2947,21 +2945,13 @@ void GltfImporterTest::sceneInvalid() {
         CORRADE_COMPARE(out.str(), Utility::formatString("Trade::GltfImporter::scene(): {}\n", data.message));
 }
 
-void GltfImporterTest::sceneDefaultNoScenes() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "empty.gltf")));
-
-    /* There is no scene, can't have any default */
-    CORRADE_COMPARE(importer->defaultScene(), -1);
-    CORRADE_COMPARE(importer->sceneCount(), 0);
-}
-
 void GltfImporterTest::sceneDefaultNoDefault() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "scene-default-none.gltf")));
 
-    /* There is at least one scene, it's made default */
-    CORRADE_COMPARE(importer->defaultScene(), 0);
+    /* There is at least one scene, but it's not made default as some use cases
+       may rely on the (lack of the) "scene" property. */
+    CORRADE_COMPARE(importer->defaultScene(), -1);
     CORRADE_COMPARE(importer->sceneCount(), 1);
 }
 

@@ -205,7 +205,7 @@ void StanfordSceneConverterTest::nonIndexedAllAttributes() {
         TestSuite::Compare::StringToFile);
 
     if(_importerManager.loadState("StanfordImporter") == PluginManager::LoadState::NotFound)
-        CORRADE_SKIP("StanfordImporter plugin not found, cannot test a rountrip");
+        CORRADE_SKIP("StanfordImporter plugin not found, cannot test a roundtrip");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("StanfordImporter");
     if(data.objectIdAttribute)
@@ -308,7 +308,7 @@ template<class T> void StanfordSceneConverterTest::indexed() {
         TestSuite::Compare::StringToFile);
 
     if(_importerManager.loadState("StanfordImporter") == PluginManager::LoadState::NotFound)
-        CORRADE_SKIP("StanfordImporter plugin not found, cannot test a rountrip");
+        CORRADE_SKIP("StanfordImporter plugin not found, cannot test a roundtrip");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("StanfordImporter");
     CORRADE_VERIFY(importer->openData(*out));
@@ -360,7 +360,7 @@ void StanfordSceneConverterTest::threeComponentColors() {
         TestSuite::Compare::StringToFile);
 
     if(_importerManager.loadState("StanfordImporter") == PluginManager::LoadState::NotFound)
-        CORRADE_SKIP("StanfordImporter plugin not found, cannot test a rountrip");
+        CORRADE_SKIP("StanfordImporter plugin not found, cannot test a roundtrip");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("StanfordImporter");
     CORRADE_VERIFY(importer->openData(*out));
@@ -417,7 +417,7 @@ void StanfordSceneConverterTest::triangleFan() {
         TestSuite::Compare::StringToFile);
 
     if(_importerManager.loadState("StanfordImporter") == PluginManager::LoadState::NotFound)
-        CORRADE_SKIP("StanfordImporter plugin not found, cannot test a rountrip");
+        CORRADE_SKIP("StanfordImporter plugin not found, cannot test a roundtrip");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("StanfordImporter");
     CORRADE_VERIFY(importer->openData(*out));
@@ -467,7 +467,7 @@ void StanfordSceneConverterTest::indexedTriangleStrip() {
         TestSuite::Compare::StringToFile);
 
     if(_importerManager.loadState("StanfordImporter") == PluginManager::LoadState::NotFound)
-        CORRADE_SKIP("StanfordImporter plugin not found, cannot test a rountrip");
+        CORRADE_SKIP("StanfordImporter plugin not found, cannot test a roundtrip");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("StanfordImporter");
     CORRADE_VERIFY(importer->openData(*out));
@@ -602,7 +602,7 @@ void StanfordSceneConverterTest::ignoredAttributes() {
         TestSuite::Compare::StringToFile);
 
     if(_importerManager.loadState("StanfordImporter") == PluginManager::LoadState::NotFound)
-        CORRADE_SKIP("StanfordImporter plugin not found, cannot test a rountrip");
+        CORRADE_SKIP("StanfordImporter plugin not found, cannot test a roundtrip");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("StanfordImporter");
     CORRADE_VERIFY(importer->openData(*out));

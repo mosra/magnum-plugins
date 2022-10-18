@@ -89,9 +89,10 @@ corrade_add_test(AssimpImporterTest AssimpImporterTest.cpp
         light-area.fbx # Converted from light-area.blend
         material-color.dae
         material-texture.dae
+        material-texture-coordinates.dae
+        material-texture-matrix.gltf
         material-color-texture.mtl
         material-color-texture.obj
-        material-coordinate-sets.dae
         material-layers.fbx
         material-raw.fbx
         material-raw.gltf

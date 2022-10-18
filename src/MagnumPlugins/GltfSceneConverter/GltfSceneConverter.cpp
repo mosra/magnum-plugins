@@ -25,6 +25,7 @@
 
 #include "GltfSceneConverter.h"
 
+#include <unordered_map>
 #include <Corrade/Containers/ArrayTuple.h>
 #include <Corrade/Containers/ArrayViewStl.h> /** @todo drop once Configuration is STL-free */
 #include <Corrade/Containers/BitArray.h>
@@ -35,6 +36,7 @@
 #include <Corrade/Containers/Pair.h>
 #include <Corrade/Containers/Triple.h>
 #include <Corrade/Containers/ScopeGuard.h>
+#include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/Format.h>
 #include <Corrade/Utility/JsonWriter.h>
@@ -96,6 +98,11 @@ struct GltfSceneConverter::State {
     Containers::Array<Containers::Pair<UnsignedShort, Containers::String>> customMeshAttributes;
     /* Object names */
     Containers::Array<Containers::String> objectNames;
+    /* Scene field names */
+    std::unordered_map<UnsignedInt, Containers::String> sceneFieldNames;
+    /* Unique texture samplers. Key is packing all sampler properties, value is
+       the output glTF sampler index. */
+    std::unordered_map<UnsignedInt, UnsignedInt> uniqueSamplers;
 
     /* Output format. Defaults for a binary output. */
     bool binary = true;
@@ -145,8 +152,11 @@ struct GltfSceneConverter::State {
     Utility::JsonWriter gltfNodes;
     Utility::JsonWriter gltfScenes;
     Utility::JsonWriter gltfMaterials;
+    Utility::JsonWriter gltfSamplers;
     Utility::JsonWriter gltfTextures;
     Utility::JsonWriter gltfImages;
+
+    Int defaultScene = -1;
 
     Containers::Array<char> buffer;
 };
@@ -217,6 +227,7 @@ bool GltfSceneConverter::doBeginData() {
             &_state->gltfNodes,
             &_state->gltfScenes,
             &_state->gltfMaterials,
+            &_state->gltfSamplers,
             &_state->gltfTextures,
             &_state->gltfImages
         })
@@ -379,6 +390,8 @@ Containers::Optional<Containers::Array<char>> GltfSceneConverter::doEndData() {
 
     if(!_state->gltfMaterials.isEmpty())
         json.writeKey("materials"_s).writeJson(_state->gltfMaterials.endArray().toString());
+    if(!_state->gltfSamplers.isEmpty())
+        json.writeKey("samplers"_s).writeJson(_state->gltfSamplers.endArray().toString());
     if(!_state->gltfTextures.isEmpty())
         json.writeKey("textures"_s).writeJson(_state->gltfTextures.endArray().toString());
     if(!_state->gltfImages.isEmpty())
@@ -387,11 +400,14 @@ Containers::Optional<Containers::Array<char>> GltfSceneConverter::doEndData() {
     /* Nodes and scenes, those got written all at once in
        doAdd(const SceneData&) so no need to close anything */
     if(!_state->gltfNodes.isEmpty())
-        json.writeKey("nodes").writeJson(_state->gltfNodes.toString());
+        json.writeKey("nodes"_s).writeJson(_state->gltfNodes.toString());
     if(!_state->gltfScenes.isEmpty()) {
-        json.writeKey("scenes").writeJson(_state->gltfScenes.toString());
-        /* Currently there's at most one scene, so no need to write the default
-           scene */
+        json.writeKey("scenes"_s).writeJson(_state->gltfScenes.toString());
+        /* Write the default scnee ID, if set. Currently there's at most one
+           scene so it can only be either not present or present and set to 0,
+           but certain importers might require it to be present. */
+        if(_state->defaultScene != -1)
+            json.writeKey("scene"_s).write(_state->defaultScene);
     }
 
     /* Done! */
@@ -413,16 +429,15 @@ Containers::Optional<Containers::Array<char>> GltfSceneConverter::doEndData() {
 
         /* glTF header */
         Containers::arrayAppend<ArrayAllocator>(out,
-            Containers::ArrayView<const char>{"glTF\x02\x00\x00\x00"_s});
-        /** @todo WTF the casts here */
+            "glTF\x02\x00\x00\x00"_s);
         Containers::arrayAppend<ArrayAllocator>(out,
-            Containers::arrayView(CharCaster{UnsignedInt(totalSize)}.data));
+            CharCaster{UnsignedInt(totalSize)}.data);
 
         /* JSON chunk header */
-        /** @todo WTF the cast here */
         Containers::arrayAppend<ArrayAllocator>(out,
-            Containers::arrayView(CharCaster{UnsignedInt(json.size())}.data));
-        Containers::arrayAppend<ArrayAllocator>(out, {'J', 'S', 'O', 'N'});
+            CharCaster{UnsignedInt(json.size())}.data);
+        Containers::arrayAppend<ArrayAllocator>(out,
+            "JSON"_s);
 
     /* Otherwise reserve just for the JSON */
     } else Containers::arrayReserve<ArrayAllocator>(out, json.size());
@@ -433,17 +448,16 @@ Containers::Optional<Containers::Array<char>> GltfSceneConverter::doEndData() {
        in plugins. */
     /** @todo make it possible to specify an external allocator in JsonWriter
         once allocators-as-arguments are a thing */
-    /** @todo WTF the casts here */
-    Containers::arrayAppend<ArrayAllocator>(out, Containers::ArrayView<const char>(json.toString()));
+    Containers::arrayAppend<ArrayAllocator>(out, json.toString());
 
     /* Add the buffer as a second BIN chunk for a binary glTF */
     if(_state->binary && !_state->buffer.isEmpty()) {
-        /** @todo WTF the cast here */
         Containers::arrayAppend<ArrayAllocator>(out,
-            Containers::arrayView(CharCaster{UnsignedInt(_state->buffer.size())}.data));
-        Containers::arrayAppend<ArrayAllocator>(out, {'B', 'I', 'N', '\0'});
-        /** @todo WTF the casts here */
-        Containers::arrayAppend<ArrayAllocator>(out, Containers::ArrayView<const char>(_state->buffer));
+            CharCaster{UnsignedInt(_state->buffer.size())}.data);
+        Containers::arrayAppend<ArrayAllocator>(out,
+            "BIN\0"_s);
+        Containers::arrayAppend<ArrayAllocator>(out,
+            _state->buffer);
     }
 
     /* GCC 4.8 and Clang 3.8 need extra help here */
@@ -454,10 +468,18 @@ void GltfSceneConverter::doAbort() {
     _state = {};
 }
 
+void GltfSceneConverter::doSetDefaultScene(const UnsignedInt id) {
+    _state->defaultScene = id;
+}
+
 void GltfSceneConverter::doSetObjectName(const UnsignedLong object, const Containers::StringView name) {
     if(_state->objectNames.size() <= object)
         arrayResize(_state->objectNames, object + 1);
     _state->objectNames[object] = Containers::String::nullTerminatedGlobalView(name);
+}
+
+void GltfSceneConverter::doSetSceneFieldName(const UnsignedInt field, const Containers::StringView name) {
+    _state->sceneFieldNames[field] = Containers::String::nullTerminatedGlobalView(name);
 }
 
 bool GltfSceneConverter::doAdd(const UnsignedInt id, const SceneData& scene, const Containers::StringView name) {
@@ -603,21 +625,50 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const SceneData& scene, con
             childOffsets[childOffsets.size() - 2] == parentFieldSize);
     }
 
+    /* A mask for skipping fields that were deliberately left out due to being
+       handled differently, having unsupported formats etc. */
+    Containers::BitArray usedFields{ValueInit, scene.fieldCount()};
+
     /* Calculate count of field assignments for each object. Initially shifted
        by two values, `objectFieldOffsets[i + 2]` is the count of fields for
        object `i`. */
     for(UnsignedInt i = 0, iMax = scene.fieldCount(); i != iMax; ++i) {
+        const SceneField name = scene.fieldName(i);
+
         /* Skip fields that are treated differently */
         if(
             /* Parents are converted to a child list instead -- a presence of
                a parent field doesn't say anything about given object having
                any children */
-            scene.fieldName(i) == SceneField::Parent ||
+            name == SceneField::Parent ||
             /* Materials are tied to the Mesh field -- if Mesh exists,
                Materials have the exact same mapping, thus there's no point in
                counting them separately */
-            scene.fieldName(i) == SceneField::MeshMaterial
+            name == SceneField::MeshMaterial
         ) continue;
+
+        /* Custom fields */
+        if(isSceneFieldCustom(name)) {
+            /* Skip ones for which we don't have a name */
+            const auto found = _state->sceneFieldNames.find(sceneFieldCustom(name));
+            if(found == _state->sceneFieldNames.end()) {
+                Warning{} << "Trade::GltfSceneConverter::add(): custom scene field" << sceneFieldCustom(name) << "has no name assigned, skipping";
+                continue;
+            }
+
+            /* Allow only scalar numbers for now */
+            /** @todo For vectors / matrices it would be about `+= size`
+                instead of `++objectFieldOffsets` below */
+            const SceneFieldType type = scene.fieldType(i);
+            if(type != SceneFieldType::UnsignedInt &&
+               type != SceneFieldType::Int &&
+               type != SceneFieldType::Float) {
+                Warning{} << "Trade::GltfSceneConverter::add(): custom scene field" << found->second << "has unsupported type" << type << Debug::nospace << ", skipping";
+                continue;
+            }
+        }
+
+        usedFields.set(i);
 
         const Containers::ArrayView<UnsignedInt> mapping = mappingStorage.prefix(scene.fieldSize(i));
         scene.mappingInto(i, mapping);
@@ -657,9 +708,13 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const SceneData& scene, con
     bool hasRotation = false;
     bool hasScaling = false;
     std::size_t meshMaterialCount = 0;
+    std::size_t customFieldCount = 0;
     for(UnsignedInt i = 0; i != scene.fieldCount(); ++i) {
+        if(!usedFields[i]) continue;
+
         const std::size_t size = scene.fieldSize(i);
-        switch(scene.fieldName(i)) {
+        const SceneField fieldName = scene.fieldName(i);
+        switch(fieldName) {
             case SceneField::Transformation:
                 transformationCount = size;
                 continue;
@@ -679,13 +734,8 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const SceneData& scene, con
                 meshMaterialCount = size;
                 continue;
 
-            /* Parent was handled above already */
-            case SceneField::Parent:
-            /* MeshMaterial is used only in combination with a Mesh, alone it
-               doesn't contribute to meshMaterialCount */
-            case SceneField::MeshMaterial:
-            /* ImporterState is ignored, it makes no sense to save a pointer
-               value */
+            /* ImporterState is ignored without a warning, it makes no sense to
+               save a pointer value */
             case SceneField::ImporterState:
                 continue;
 
@@ -695,9 +745,18 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const SceneData& scene, con
             case SceneField::Camera:
             case SceneField::Skin:
                 break;
+
+            /* These should be excluded from the usedFields mask already */
+            /* LCOV_EXCL_START */
+            case SceneField::Parent:
+            case SceneField::MeshMaterial:
+                CORRADE_INTERNAL_ASSERT_UNREACHABLE();
+            /* LCOV_EXCL_STOP */
         }
 
-        Warning{} << "Trade::GltfSceneConverter::add():" << scene.fieldName(i) << "was not used";
+        if(isSceneFieldCustom(fieldName))
+            customFieldCount += size;
+        else Warning{} << "Trade::GltfSceneConverter::add():" << scene.fieldName(i) << "was not used";
     }
 
     /* Allocate space for field IDs and offsets as well as actual field data.
@@ -711,6 +770,13 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const SceneData& scene, con
     Containers::ArrayView<Vector3> scalings;
     Containers::StridedArrayView1D<Containers::Pair<UnsignedInt, Int>> meshesMaterials;
     Containers::MutableBitArrayView hasTrs;
+    /** @todo Abusing the fact that all allowed extras types are 32-bit now,
+        when 64-bit types are introduced there has to be a second 64-bit array
+        to satisfy alignment. For composite types (vectors, matrices) however
+        it's enough to just take more items at once. Smaller types such as
+        bools could fit into the 32-bit but strings would need a separate
+        storage. */
+    Containers::ArrayView<UnsignedInt> customFieldsUnsignedInt;
     Containers::ArrayTuple fieldStorage{
         {NoInit, totalFieldCount, fieldIds},
         {NoInit, totalFieldCount, fieldOffsets},
@@ -719,17 +785,20 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const SceneData& scene, con
         {NoInit, hasRotation ? trsCount : 0, rotations},
         {NoInit, hasScaling ? trsCount : 0, scalings},
         {NoInit, meshMaterialCount, meshesMaterials},
-        {ValueInit, std::size_t(scene.mappingBound()), hasTrs}
+        {ValueInit, std::size_t(scene.mappingBound()), hasTrs},
+        {NoInit, customFieldCount, customFieldsUnsignedInt}
     };
+    const auto customFieldsFloat = Containers::arrayCast<Float>(customFieldsUnsignedInt);
+    const auto customFieldsInt = Containers::arrayCast<Int>(customFieldsUnsignedInt);
 
     /* Populate field ID and offset arrays. This makes `objectFieldOffsets`
        finally unshifted, so `fieldIds[objectFieldOffsets[i]]` to
        `fieldIds[objectFieldOffsets[i + 1]]` contains field IDs for object `i`,
        same with `offsets`. */
     for(UnsignedInt i = 0, iMax = scene.fieldCount(); i != iMax; ++i) {
-        /* Same as in the previous loop */
-        if(scene.fieldName(i) == SceneField::Parent ||
-           scene.fieldName(i) == SceneField::MeshMaterial) continue;
+        /* Custom fields are handled in a separate loop below */
+        if(!usedFields[i] || isSceneFieldCustom(scene.fieldName(i)))
+            continue;
 
         const std::size_t fieldSize = scene.fieldSize(i);
         const Containers::ArrayView<UnsignedInt> mapping = mappingStorage.prefix(fieldSize);
@@ -745,6 +814,40 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const SceneData& scene, con
             fieldIds[objectFieldOffset] = i;
             fieldOffsets[objectFieldOffset] = j;
             ++objectFieldOffset;
+        }
+    } {
+        std::size_t offset = 0;
+        for(UnsignedInt i = 0, iMax = scene.fieldCount(); i != iMax; ++i) {
+            /* Only custom fields here, this means they're always last and all
+               together, which makes it possible to write the "extras" object
+               in one run. */
+            if(!usedFields[i] || !isSceneFieldCustom(scene.fieldName(i)))
+                continue;
+
+            const std::size_t fieldSize = scene.fieldSize(i);
+            const Containers::ArrayView<UnsignedInt> mapping = mappingStorage.prefix(fieldSize);
+            scene.mappingInto(i, mapping);
+            for(std::size_t j = 0; j != fieldSize; ++j) {
+                const UnsignedInt object = mapping[j];
+
+                /* Objects that have no parent field are not exported thus
+                   their fields don't need to be counted either */
+                if(!hasParent[object]) continue;
+
+                std::size_t& objectFieldOffset = objectFieldOffsets[object + 1];
+                fieldIds[objectFieldOffset] = i;
+                /* As we put all custom fields into a single array, the offset
+                   needs to also include sizes of all previous custom fields
+                   already written. */
+                /** @todo Currently abusing the fact that all whitelisted types
+                    are numeric and 32bit. Once types of other sizes or string
+                    / etc. fields are supported, there needs to be one offset
+                    per type. */
+                fieldOffsets[objectFieldOffset] = offset + j;
+                ++objectFieldOffset;
+            }
+
+            offset += fieldSize;
         }
     }
     CORRADE_INTERNAL_ASSERT(
@@ -783,6 +886,34 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const SceneData& scene, con
         }
     }
 
+    /* Populate custom field data */
+    {
+        std::size_t offset = 0;
+        for(std::size_t i = 0; i != scene.fieldCount(); ++i) {
+            if(!usedFields[i] || !isSceneFieldCustom(scene.fieldName(i)))
+                continue;
+
+            /** @todo this could be easily extended for 8- and 16-bit values,
+                just Math::cast()'ing them to the output */
+            const SceneFieldType type = scene.fieldType(i);
+            const std::size_t size = scene.fieldSize(i);
+            if(type == SceneFieldType::UnsignedInt) Utility::copy(
+                scene.field<UnsignedInt>(i),
+                customFieldsUnsignedInt.slice(offset, offset + size));
+            else if(type == SceneFieldType::Int) Utility::copy(
+                scene.field<Int>(i),
+                customFieldsInt.slice(offset, offset + size));
+            else if(type == SceneFieldType::Float) Utility::copy(
+                scene.field<Float>(i),
+                customFieldsFloat.slice(offset, offset + size));
+            else CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+
+            offset += size;
+        }
+
+        CORRADE_INTERNAL_ASSERT(offset == customFieldCount);
+    }
+
     /* Go object by object and consume the fields, populating the glTF node
        array. The output is currently restricted to a single scene, so the
        glTF nodes array should still be empty at this point. Otherwise we'd
@@ -807,8 +938,14 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const SceneData& scene, con
 
         /* Write the children array, if there's any */
         if(childOffsets[object + 1] - childOffsets[object]) {
-            _state->gltfNodes.writeKey("children").writeArray(children.slice(childOffsets[object], childOffsets[object + 1]));
+            _state->gltfNodes.writeKey("children"_s).writeArray(children.slice(childOffsets[object], childOffsets[object + 1]));
         }
+
+        /* Whether glTF node extras object for custom fields is open. This
+           should always happen only after all non-custom fields are written
+           (to avoid unrelated data being written inside extras as well), and
+           is checked below. */
+        bool extrasOpen = false;
 
         SceneField previous{};
         for(std::size_t i = objectFieldOffsets[object], iMax = objectFieldOffsets[object + 1]; i != iMax; ++i) {
@@ -816,11 +953,43 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const SceneData& scene, con
             const SceneField fieldName = scene.fieldName(fieldIds[i]);
             if(fieldName == previous) {
                 /** @todo special-case meshes (make multi-primitive meshes) */
-                Warning{} << "Trade::GltfSceneConverter::add(): ignoring duplicate field" << previous << "for object" << object;
+                Warning w;
+                w << "Trade::GltfSceneConverter::add(): ignoring duplicate field";
+                if(isSceneFieldCustom(fieldName)) {
+                    const auto found = _state->sceneFieldNames.find(sceneFieldCustom(fieldName));
+                    CORRADE_INTERNAL_ASSERT(found != _state->sceneFieldNames.end());
+                    w << found->second;
+                } else w << previous;
+                w << "for object" << object;
                 continue;
             }
 
             previous = fieldName;
+
+            /* If the field is custom, handle it and continue to the next
+               one (which should also be a custom one, if there's any). If
+               it's not custom, the extras object should not be open. */
+            if(isSceneFieldCustom(fieldName)) {
+                if(!extrasOpen) {
+                    _state->gltfNodes.writeKey("extras"_s).beginObject();
+                    extrasOpen = true;
+                }
+
+                const auto found = _state->sceneFieldNames.find(sceneFieldCustom(fieldName));
+                CORRADE_INTERNAL_ASSERT(found != _state->sceneFieldNames.end());
+                _state->gltfNodes.writeKey(found->second);
+
+                const SceneFieldType type = scene.fieldType(fieldIds[i]);
+                if(type == SceneFieldType::UnsignedInt)
+                    _state->gltfNodes.write(customFieldsUnsignedInt[offset]);
+                else if(type == SceneFieldType::Int)
+                    _state->gltfNodes.write(customFieldsInt[offset]);
+                else if(type == SceneFieldType::Float)
+                    _state->gltfNodes.write(customFieldsFloat[offset]);
+                else CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+
+                continue;
+            } else CORRADE_INTERNAL_ASSERT(!extrasOpen);
 
             if(fieldName == SceneField::Transformation) {
                 /* § 5.25 (Node) says a node can have either a matrix or a TRS,
@@ -829,17 +998,17 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const SceneData& scene, con
                    be present." so I guess it's an exclusive or, thus a matrix
                    gets written only if there's no TRS. */
                 if(transformations[offset] != Matrix4{} && !hasTrs[object])
-                    _state->gltfNodes.writeKey("matrix").writeArray(transformations[offset].data(), 4);
+                    _state->gltfNodes.writeKey("matrix"_s).writeArray(transformations[offset].data(), 4);
             } else if(fieldName == SceneField::Translation) {
                 if(translations[offset] != Vector3{})
-                    _state->gltfNodes.writeKey("translation").writeArray(translations[offset].data());
+                    _state->gltfNodes.writeKey("translation"_s).writeArray(translations[offset].data());
             } else if(fieldName == SceneField::Rotation) {
                 if(rotations[offset] != Quaternion{})
                     /* glTF also uses the XYZW order */
-                    _state->gltfNodes.writeKey("rotation").writeArray(rotations[offset].data());
+                    _state->gltfNodes.writeKey("rotation"_s).writeArray(rotations[offset].data());
             } else if(fieldName == SceneField::Scaling) {
                 if(scalings[offset] != Vector3{1.0f})
-                    _state->gltfNodes.writeKey("scale").writeArray(scalings[offset].data());
+                    _state->gltfNodes.writeKey("scale"_s).writeArray(scalings[offset].data());
             } else if(fieldName == SceneField::Mesh) {
                 Containers::Optional<UnsignedInt> meshId;
                 for(UnsignedInt j = 0; j != _state->meshMaterialAssignments.size(); ++j) {
@@ -853,7 +1022,7 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const SceneData& scene, con
                     meshId = _state->meshMaterialAssignments.size();
                     arrayAppend(_state->meshMaterialAssignments, meshesMaterials[offset]);
                 }
-                _state->gltfNodes.writeKey("mesh").write(*meshId);
+                _state->gltfNodes.writeKey("mesh"_s).write(*meshId);
 
             } else if(fieldName == SceneField::Parent ||
                       fieldName == SceneField::MeshMaterial) {
@@ -861,15 +1030,17 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const SceneData& scene, con
                    here */
                 CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
 
-            /* Not-yet-handled or custom field, nothing to do. Doesn't make
-               sense to filter them in the field ID/offset-populating loop
-               above as most fields including custom ones will be eventually
-               supported anyway. */
+            /* Not-yet-handled field, nothing to do. Doesn't make sense to
+               filter them in the field ID/offset-populating loop above as most
+               fields including custom ones will be eventually supported
+               anyway. */
             } else continue;
         }
 
+        if(extrasOpen) _state->gltfNodes.endObject();
+
         if(_state->objectNames.size() > object && _state->objectNames[object])
-            _state->gltfNodes.writeKey("name").write(_state->objectNames[object]);
+            _state->gltfNodes.writeKey("name"_s).write(_state->objectNames[object]);
     }
 
     /* Scene object referencing the root children */
@@ -878,11 +1049,11 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const SceneData& scene, con
     CORRADE_INTERNAL_ASSERT(_state->gltfScenes.currentArraySize() == id);
     Containers::ScopeGuard gltfScene = _state->gltfScenes.beginObjectScope();
     if(childOffsets[0]) {
-        _state->gltfScenes.writeKey("nodes").writeArray(children.prefix(childOffsets[0]));
+        _state->gltfScenes.writeKey("nodes"_s).writeArray(children.prefix(childOffsets[0]));
     }
 
     if(name)
-        _state->gltfScenes.writeKey("name").write(name);
+        _state->gltfScenes.writeKey("name"_s).write(name);
 
     return true;
 }
@@ -1738,7 +1909,39 @@ bool GltfSceneConverter::doAdd(UnsignedInt, const MaterialData& material, const 
     }
 
     if(name)
-        _state->gltfMaterials.writeKey("name").write(name);
+        _state->gltfMaterials.writeKey("name"_s).write(name);
+
+    /* For backwards compatibility GltfImporter copies BaseColor-related
+       attributes to DiffuseColor etc. Mark them as used if they're the same
+       so it doesn't warn about them being unused. If they're not the same, a
+       warning should still be printed. */
+    /** @todo remove once GltfImporter's phongMaterialFallback option is gone */
+    {
+        const auto baseColorId = material.findAttributeId(MaterialAttribute::BaseColor);
+        const auto diffuseColorId = material.findAttributeId(MaterialAttribute::DiffuseColor);
+        if(baseColorId && diffuseColorId && material.attribute<Color4>(*baseColorId) == material.attribute<Color4>(*diffuseColorId))
+            maskedMaterial.mask.set(*diffuseColorId);
+    } {
+        const auto baseColorTextureId = material.findAttributeId(MaterialAttribute::BaseColorTexture);
+        const auto diffuseTextureId = material.findAttributeId(MaterialAttribute::DiffuseTexture);
+        if(baseColorTextureId && diffuseTextureId && material.attribute<UnsignedInt>(*baseColorTextureId) == material.attribute<UnsignedInt>(*diffuseTextureId))
+            maskedMaterial.mask.set(*diffuseTextureId);
+    }  {
+        const auto baseColorTextureMatrixId = material.findAttributeId(MaterialAttribute::BaseColorTextureMatrix);
+        const auto diffuseTextureMatrixId = material.findAttributeId(MaterialAttribute::DiffuseTextureMatrix);
+        if(baseColorTextureMatrixId && diffuseTextureMatrixId && material.attribute<Matrix3>(*baseColorTextureMatrixId) == material.attribute<Matrix3>(*diffuseTextureMatrixId))
+            maskedMaterial.mask.set(*diffuseTextureMatrixId);
+    } {
+        const auto baseColorTextureCoordinatesId = material.findAttributeId(MaterialAttribute::BaseColorTextureCoordinates);
+        const auto diffuseTextureCoordinatesId = material.findAttributeId(MaterialAttribute::DiffuseTextureCoordinates);
+        if(baseColorTextureCoordinatesId && diffuseTextureCoordinatesId && material.attribute<UnsignedInt>(*baseColorTextureCoordinatesId) == material.attribute<UnsignedInt>(*diffuseTextureCoordinatesId))
+            maskedMaterial.mask.set(*diffuseTextureCoordinatesId);
+    } {
+        const auto baseColorTextureLayerId = material.findAttributeId(MaterialAttribute::BaseColorTextureLayer);
+        const auto diffuseTextureLayerId = material.findAttributeId(MaterialAttribute::DiffuseTextureLayer);
+        if(baseColorTextureLayerId && diffuseTextureLayerId && material.attribute<UnsignedInt>(*baseColorTextureLayerId) == material.attribute<UnsignedInt>(*diffuseTextureLayerId))
+            maskedMaterial.mask.set(*diffuseTextureLayerId);
+    }
 
     /* Report unused attributes and layers */
     /** @todo some "iterate unset bits" API for this? */
@@ -1791,9 +1994,110 @@ bool GltfSceneConverter::doAdd(CORRADE_UNUSED const UnsignedInt id, const Textur
         return {};
     }
 
+    /* Check if the wrapping mode is supported by glTF */
+    for(const std::size_t i: {0, 1}) {
+        if(texture.wrapping()[i] != SamplerWrapping::ClampToEdge &&
+           texture.wrapping()[i] != SamplerWrapping::MirroredRepeat &&
+           texture.wrapping()[i] != SamplerWrapping::Repeat) {
+            Error{} << "Trade::GltfSceneConverter::add(): unsupported texture wrapping" << texture.wrapping()[i];
+            return {};
+        }
+    }
+
     /* At this point we're sure nothing will fail so we can start writing the
        JSON. Otherwise we'd end up with a partly-written JSON in case of an
        unsupported mesh, corruputing the output. */
+
+    /* Mark the extension as required. This is only done if an image actually
+       gets referenced by a texture. */
+    if(textureExtension != GltfExtension{}) {
+        _state->requiredExtensions |= textureExtension;
+        _state->usedExtensions &= ~textureExtension;
+    }
+
+    /* Calculate unique sampler identifier. If we already have it, reference
+       its ID. Otherwise create a new one. */
+    const UnsignedInt samplerIdentifier =
+        UnsignedInt(texture.wrapping()[0]) << 16 |
+        UnsignedInt(texture.wrapping()[1]) << 12 |
+        UnsignedInt(texture.minificationFilter()) << 8 |
+        UnsignedInt(texture.mipmapFilter()) << 4 |
+        UnsignedInt(texture.magnificationFilter()) << 0;
+    auto foundSampler = _state->uniqueSamplers.find(samplerIdentifier);
+    if(foundSampler == _state->uniqueSamplers.end()) {
+        /* If this is a first sampler, open the sampler array */
+        if(_state->gltfSamplers.isEmpty())
+            _state->gltfSamplers.beginArray();
+
+        UnsignedInt gltfWrapping[2];
+        for(const std::size_t i: {0, 1}) {
+            switch(texture.wrapping()[i]) {
+                case SamplerWrapping::ClampToEdge:
+                    gltfWrapping[i] = Implementation::GltfWrappingClampToEdge;
+                    break;
+                case SamplerWrapping::MirroredRepeat:
+                    gltfWrapping[i] = Implementation::GltfWrappingMirroredRepeat;
+                    break;
+                /* This is the default, so it could possibly be omitted.
+                   However, because the filters don't have defaults defined (so
+                   we're writing them always) and because we're deduplicating
+                   the samplers in the file, omitting a single value doesn't
+                   really make a difference in the resulting file size. */
+                case SamplerWrapping::Repeat:
+                    gltfWrapping[i] = Implementation::GltfWrappingRepeat;
+                    break;
+                /* Unsupported modes checked above already */
+                default: CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+            }
+        }
+        UnsignedInt gltfMinFilter;
+        switch(texture.minificationFilter()) {
+            case SamplerFilter::Nearest:
+                gltfMinFilter = Implementation::GltfFilterNearest;
+                break;
+            case SamplerFilter::Linear:
+                gltfMinFilter = Implementation::GltfFilterLinear;
+                break;
+            default: CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+        }
+        /* Using same enum decomposition trick as in Magnum/GL/Sampler.cpp */
+        constexpr UnsignedInt GltfMipmapNearest = Implementation::GltfFilterNearestMipmapNearest & ~Implementation::GltfFilterNearest;
+        constexpr UnsignedInt GltfMipmapLinear = Implementation::GltfFilterNearestMipmapLinear & ~Implementation::GltfFilterNearest;
+        static_assert(
+            (Implementation::GltfFilterLinear|GltfMipmapNearest) == Implementation::GltfFilterLinearMipmapNearest &&
+            (Implementation::GltfFilterLinear|GltfMipmapLinear) == Implementation::GltfFilterLinearMipmapLinear,
+            "unexpected glTF sampler filter constants");
+        switch(texture.mipmapFilter()) {
+            case SamplerMipmap::Base:
+                /* Nothing */
+                break;
+            case SamplerMipmap::Nearest:
+                gltfMinFilter |= GltfMipmapNearest;
+                break;
+            case SamplerMipmap::Linear:
+                gltfMinFilter |= GltfMipmapLinear;
+                break;
+            default: CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+        }
+        UnsignedInt gltfMagFilter;
+        switch(texture.magnificationFilter()) {
+            case SamplerFilter::Nearest:
+                gltfMagFilter = Implementation::GltfFilterNearest;
+                break;
+            case SamplerFilter::Linear:
+                gltfMagFilter = Implementation::GltfFilterLinear;
+                break;
+            default: CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+        }
+        _state->gltfSamplers.beginObject()
+            .writeKey("wrapS"_s).write(gltfWrapping[0])
+            .writeKey("wrapT"_s).write(gltfWrapping[1])
+            .writeKey("minFilter"_s).write(gltfMinFilter)
+            .writeKey("magFilter"_s).write(gltfMagFilter)
+        .endObject();
+
+        foundSampler = _state->uniqueSamplers.emplace(samplerIdentifier, _state->uniqueSamplers.size()).first;
+    }
 
     /* If this is a first texture, open the texture array */
     if(_state->gltfTextures.isEmpty())
@@ -1811,6 +2115,7 @@ bool GltfSceneConverter::doAdd(CORRADE_UNUSED const UnsignedInt id, const Textur
             Containers::ScopeGuard gltfTexture = _state->gltfTextures.beginObjectScope();
 
             _state->gltfTextures
+                .writeKey("sampler"_s).write(foundSampler->second)
                 .writeKey("extensions"_s).beginObject()
                     .writeKey(textureExtensionString).beginObject()
                         .writeKey("source"_s).write(gltfImageId)
@@ -1825,6 +2130,8 @@ bool GltfSceneConverter::doAdd(CORRADE_UNUSED const UnsignedInt id, const Textur
     /* 2D texture is just one */
     } else if(texture.type() == TextureType::Texture2D) {
         Containers::ScopeGuard gltfTexture = _state->gltfTextures.beginObjectScope();
+
+        _state->gltfTextures.writeKey("sampler"_s).write(foundSampler->second);
 
         /* Image that doesn't need any extension (PNG or JPEG or whatever else
            with strict mode disabled), write directly */
@@ -1932,8 +2239,7 @@ template<UnsignedInt dimensions> bool GltfSceneConverter::convertAndWriteImage(c
             return {};
         }
 
-        /** @todo ugh, fix the casts already */
-        imageData = arrayAppend(_state->buffer, arrayView(*out));
+        imageData = arrayAppend(_state->buffer, *out);
     } else {
         /* All existing image converters that return a MIME type return an
            extension as well, so we can (currently) get away with an assert.
@@ -2073,10 +2379,22 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const ImageData2D& image, c
 
     const UnsignedInt gltfImageId = image2DCount() + image3DCount();
     CORRADE_INTERNAL_ASSERT(gltfImageId == (_state->gltfImages.isEmpty() ? 0 : _state->gltfImages.currentArraySize()));
+
+    /* If the image writing fails due to an error, don't add any extensions
+       -- otherwise we'd blow up on the asserts below when adding the next
+       image */
+    if(!convertAndWriteImage(id, name, *imageConverter, image, bundleImages))
+        return false;
+
     CORRADE_INTERNAL_ASSERT(_state->image2DIdsTextureExtensions.size() == id);
     arrayAppend(_state->image2DIdsTextureExtensions, InPlaceInit, gltfImageId, extension);
 
-    return convertAndWriteImage(id, name, *imageConverter, image, bundleImages);
+    /* Mark the extension as used. As required will be marked only if
+       referenced by a texture. */
+    if(extension != GltfExtension{})
+        _state->usedExtensions |= extension;
+
+    return true;
 }
 
 bool GltfSceneConverter::doAdd(const UnsignedInt id, const ImageData3D& image, const Containers::StringView name) {
@@ -2132,10 +2450,22 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const ImageData3D& image, c
 
     const UnsignedInt gltfImageId = image2DCount() + image3DCount();
     CORRADE_INTERNAL_ASSERT(gltfImageId == (_state->gltfImages.isEmpty() ? 0 : _state->gltfImages.currentArraySize()));
+
+    /* If the image writing fails due to an error, don't add any extensions
+       -- otherwise we'd blow up on the asserts below when adding the next
+       image */
+    if(!convertAndWriteImage(id, name, *imageConverter, image, bundleImages))
+        return false;
+
     CORRADE_INTERNAL_ASSERT(_state->image3DIdsTextureExtensionsLayerCount.size() == id);
     arrayAppend(_state->image3DIdsTextureExtensionsLayerCount, InPlaceInit, gltfImageId, extension, UnsignedInt(image.size().z()));
 
-    return convertAndWriteImage(id, name, *imageConverter, image, bundleImages);
+    /* Mark the extension as used. As required will be marked only if
+       referenced by a texture. */
+    if(extension != GltfExtension{})
+        _state->usedExtensions |= extension;
+
+    return true;
 }
 
 }}

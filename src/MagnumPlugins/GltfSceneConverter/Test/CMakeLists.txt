@@ -96,6 +96,7 @@ corrade_add_test(GltfSceneConverterTest GltfSceneConverterTest.cpp
         image-jpeg.glb
         image-ktx.glb
         image-ktx-compressed.glb
+        image-ktx-no-extension.glb
         image-multiple.gltf image-multiple.bin image-multiple.1.png
         image-name-accessor-names.gltf
         image-name.gltf
@@ -149,7 +150,9 @@ corrade_add_test(GltfSceneConverterTest GltfSceneConverterTest.cpp
         metadata.gltf
         metadata-explicit-implicit-extensions.gltf
         scene.gltf
+        scene-custom-fields.gltf
         scene-empty.gltf
+        scene-empty-default.gltf
         scene-invalid.gltf
         scene-meshes-materials.gltf
         scene-name.gltf
@@ -162,8 +165,9 @@ corrade_add_test(GltfSceneConverterTest GltfSceneConverterTest.cpp
         texcoord-flip-normalized-unsigned-short.glb
         texcoord-flip-normalized-unsigned-short-material.glb
         texcoord-flip-short-material.glb
-        texture-basis.gltf
         texture.gltf
+        texture-basis.gltf
+        texture-deduplicated-samplers.gltf
         texture-jpeg.gltf
         texture-ktx.gltf
         texture-ktx-no-extension.gltf

@@ -64,17 +64,18 @@ struct PngImporterTest: TestSuite::Tester {
     PluginManager::Manager<AbstractImporter> _manager{"nonexistent"};
 };
 
+using namespace Containers::Literals;
 using namespace Math::Literals;
 
 constexpr struct {
     const char* name;
-    Containers::ArrayView<const char> data; /** @todo string view once done */
+    Containers::StringView data;
     const char* error;
 } InvalidData[] {
-    /* GCC 4.8 needs the explicit cast :( */
-    {"invalid signature", Containers::arrayView("invalid"), "wrong file signature"},
-    {"short signature", Containers::arrayView("\x89PNG"), "signature too short"},
-    {"only signature", Containers::arrayView("\x89PNG\x0d\x0a\x1a\x0a"), "error: file too short"}
+    {"invalid signature", "invalid"_s, "wrong file signature"},
+    {"short signature", "\x89PNG"_s, "signature too short"},
+    {"invalid signature with trailing zeros", "\x89PNG\x0d\x0a\x1a\x00"_s, "wrong file signature"},
+    {"only signature", "\x89PNG\x0d\x0a\x1a\x0a"_s, "error: file too short"}
 };
 
 constexpr struct {
@@ -195,8 +196,7 @@ void PngImporterTest::invalid() {
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("PngImporter");
     /* The open does just a memory copy, so it doesn't fail */
-    /** @todo use a StringView instead of stripping the null terminator */
-    CORRADE_VERIFY(importer->openData(data.data.prefix(data.data.size() - 1)));
+    CORRADE_VERIFY(importer->openData(data.data));
 
     std::ostringstream out;
     Error redirectError{&out};

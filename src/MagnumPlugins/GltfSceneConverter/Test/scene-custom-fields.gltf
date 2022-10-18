@@ -1,0 +1,43 @@
+{
+  "asset": {
+    "version": "2.0"
+  },
+  "nodes": [
+    {
+      "translation": [1, 2, 3],
+      "extras": {
+        "customUnsignedInt": 176,
+        "customFloat": 0.125
+      },
+      "name": "Custom field after builtin"
+    },
+    {
+      "extras": {
+        "customUnsignedInt": 4294967295,
+        "customInt": -2147483648
+      },
+      "name": "To verify the 32-bit integer precision doesn't get lost along the way"
+    },
+    {
+      "translation": [4, 5, 6],
+      "scale": [7, 8, 9],
+      "extras": {
+        "customInt": 25,
+        "customFloat": 17.5
+      },
+      "name": "Custom field between builtin"
+    },
+    {
+      "scale": [0.5, 0.5, 0.5],
+      "name": "Custom field before builtin"
+    },
+    {
+      "name": "Custom fields without a name, omitted"
+    }
+  ],
+  "scenes": [
+    {
+      "nodes": [0, 1, 2, 3, 4]
+    }
+  ]
+}

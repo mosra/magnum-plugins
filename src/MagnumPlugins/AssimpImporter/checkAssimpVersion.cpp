@@ -3,7 +3,7 @@
 
     Copyright © 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019,
                 2020, 2021, 2022 Vladimír Vondruš <mosra@centrum.cz>
-    Copyright © 2021 Pablo Escobar <mail@rvrs.in>
+    Copyright © 2021, 2022 Pablo Escobar <mail@rvrs.in>
 
     Permission is hereby granted, free of charge, to any person obtaining a
     copy of this software and associated documentation files (the "Software"),
@@ -28,6 +28,7 @@
 #include <assimp/MathFunctions.h>
 #endif
 
+#include <assimp/material.h>
 #include <assimp/matrix4x4.h>
 #include <assimp/scene.h>
 #include <assimp/quaternion.h>
@@ -40,6 +41,20 @@
 
 int main() {
     int ret = 0;
+
+    /* Version that breaks skinning vertex attribute import:
+       https://github.com/assimp/assimp/commit/c8dafe0d2887242285c0080c6cbbea8c1f1c8094
+       Check for aiTextureTypeToString() that got renamed from
+       TextureTypeToString() in
+       https://github.com/assimp/assimp/commit/e8abb0fc1cbe1a046dcc9cdbafb2d2dfb9e5c032
+
+       This got fixed fairly quickly in 5.2.5:
+       https://github.com/assimp/assimp/commit/fd6c534efc78c6a27bc2ef35ef4b0e20977a31d8
+       and can't really be handled by the importer, but the check is still used
+       to XFAIL the corresponding test on that version. */
+    #if CHECK_VERSION >= 20220502
+    aiTextureTypeToString(aiTextureType_NONE);
+    #endif
 
     /* Version that breaks aiAnimation::mTicksPerSecond for FBX:
        https://github.com/assimp/assimp/commit/b3e1ee3ca0d825d384044867fc30cd0bc8417be6

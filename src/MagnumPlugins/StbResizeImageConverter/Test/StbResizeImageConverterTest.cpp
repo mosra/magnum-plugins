@@ -159,11 +159,10 @@ void StbResizeImageConverterTest::emptyOutputImage() {
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("StbResizeImageConverter");
     converter->configuration().setValue("size", (Vector2i{1, 0}));
 
-    /* Apparently this doesn't cause any issue, heh */
-    Containers::Optional<ImageData2D> out = converter->convert(image);
-    CORRADE_VERIFY(out);
-    CORRADE_COMPARE(out->size(), (Vector2i{1, 0}));
-    CORRADE_COMPARE(out->format(), PixelFormat::RG8Srgb);
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!converter->convert(image));
+    CORRADE_COMPARE(out.str(), "Trade::StbResizeImageConverter::convert(): invalid output image size {1, 0}\n");
 }
 
 void StbResizeImageConverterTest::unsupportedFormat() {
