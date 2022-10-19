@@ -72,7 +72,7 @@ build() {
 
 check() {
     cd "$_rootdir/build-clang-threadsanitizer"
-    TSAN_OPTIONS="color=always" CORRADE_TEST_COLOR=ON ctest --output-on-failure -j5
+    TSAN_OPTIONS="color=always" CORRADE_TEST_COLOR=ON ctest --output-on-failure -j9
 }
 
 package() {
