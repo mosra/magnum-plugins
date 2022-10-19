@@ -58,7 +58,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
 file(GENERATE OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/configure.h
     INPUT ${CMAKE_CURRENT_BINARY_DIR}/configure.h.in)
 
-corrade_add_test(GltfImporterDecodeTest GltfImporterDecodeTest.cpp)
+corrade_add_test(GltfImporterDecodeTest GltfImporterDecodeTest.cpp LIBRARIES Magnum::Magnum)
 target_include_directories(GltfImporterDecodeTest PRIVATE ${PROJECT_SOURCE_DIR}/src)
 
 corrade_add_resource(GltfImporterTest_RESOURCES resources.conf)
