@@ -97,6 +97,8 @@ namespace Magnum {
     --- buildsystem fixes, bugreports
 -   **[\@sigman78](https://github.com/sigman78)** --- initial MSVC 2017 port,
     Vcpkg package
+-   **Stanislaw Halik** ([\@sthalik](https://github.com/sthalik)** --- libc++
+    build fixes
 -   **Tobias Stein** ([\@NussknackerXXL](https://github.com/NussknackerXXL)) ---
     the @ref Trade::TinyGltfImporter "TinyGltfImporter" plugin
 */

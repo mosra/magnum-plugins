@@ -208,6 +208,8 @@ namespace Magnum {
     [mosra/magnum-plugins#123](https://github.com/mosra/magnum-plugins/pull/123).
 -   Fixed wrong `.gitattributes` option for LF line endings in MSYS PKGBUILDs
     (see [mosra/magnum-plugins#125](https://github.com/mosra/magnum-plugins/issues/125))
+-   Fixed a build breakage with libc++ 15+ (see
+    [mosra/magnum-plugins#131](https://github.com/mosra/magnum-plugins/pull/131))
 
 @subsection changelog-plugins-latest-bugfixes Bug fixes
 
