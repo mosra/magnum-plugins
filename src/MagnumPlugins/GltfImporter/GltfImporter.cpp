@@ -69,8 +69,8 @@
 #include "MagnumPlugins/GltfImporter/decode.h"
 #include "MagnumPlugins/GltfImporter/Gltf.h"
 
-#ifdef CORRADE_MSVC2015_COMPATIBILITY
-/* Otherwise std::unique() fails to compile on MSVC 2015. Other compilers are
+#if defined CORRADE_MSVC2015_COMPATIBILITY || defined CORRADE_TARGET_LIBCXX
+/* Otherwise std::unique() fails to compile. Other compilers are
    fine without. */
 #include <Corrade/Containers/StridedArrayViewStl.h>
 #endif
