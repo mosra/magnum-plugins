@@ -1011,7 +1011,7 @@ Containers::Optional<MeshData> AssimpImporter::doMesh(const UnsignedInt id, Unsi
         here and in GltfImporter if/when it gets approved */
     MeshPrimitive primitive;
     const aiPrimitiveType primitiveType = aiPrimitiveType(mesh->mPrimitiveTypes &
-        (aiPrimitiveType_POINT | aiPrimitiveType_LINE | aiPrimitiveType_TRIANGLE));
+        (aiPrimitiveType_POINT|aiPrimitiveType_LINE|aiPrimitiveType_TRIANGLE));
     if(primitiveType == aiPrimitiveType_POINT) {
         primitive = MeshPrimitive::Points;
     } else if(primitiveType == aiPrimitiveType_LINE) {
