@@ -1010,14 +1010,18 @@ Containers::Optional<MeshData> AssimpImporter::doMesh(const UnsignedInt id, Unsi
         from https://github.com/KhronosGroup/glTF/pull/1620, consider support
         here and in GltfImporter if/when it gets approved */
     MeshPrimitive primitive;
+    UnsignedInt expectedFaceSize;
     const aiPrimitiveType primitiveType = aiPrimitiveType(mesh->mPrimitiveTypes &
         (aiPrimitiveType_POINT|aiPrimitiveType_LINE|aiPrimitiveType_TRIANGLE));
     if(primitiveType == aiPrimitiveType_POINT) {
         primitive = MeshPrimitive::Points;
+        expectedFaceSize = 1;
     } else if(primitiveType == aiPrimitiveType_LINE) {
         primitive = MeshPrimitive::Lines;
+        expectedFaceSize = 2;
     } else if(primitiveType == aiPrimitiveType_TRIANGLE) {
         primitive = MeshPrimitive::Triangles;
+        expectedFaceSize = 3;
     } else {
         Error() << "Trade::AssimpImporter::mesh(): unsupported aiPrimitiveType" << mesh->mPrimitiveTypes;
         return Containers::NullOpt;
@@ -1246,19 +1250,20 @@ Containers::Optional<MeshData> AssimpImporter::doMesh(const UnsignedInt id, Unsi
 
     /* Import indices. There doesn't seem to be any shortcut to just copy all
        index data in a single go, so having to iterate over faces. Ugh. */
-    Containers::Array<UnsignedInt> indexData;
-    Containers::arrayReserve<ArrayAllocator>(indexData, mesh->mNumFaces*3);
+    Containers::Array<char> indexData{NoInit, mesh->mNumFaces*expectedFaceSize*sizeof(UnsignedInt)};
+    Containers::ArrayView<UnsignedInt> indices = Containers::arrayCast<UnsignedInt>(indexData);
     for(std::size_t faceIndex = 0; faceIndex < mesh->mNumFaces; ++faceIndex) {
         const aiFace& face = mesh->mFaces[faceIndex];
-        CORRADE_ASSERT(face.mNumIndices <= 3, "Trade::AssimpImporter::mesh(): triangulation while loading should have ensured <= 3 vertices per primitive", {});
+        /* For polygons triangulation should have ensured that each face is a
+           triangle. */
+        CORRADE_ASSERT(face.mNumIndices == expectedFaceSize, "Trade::AssimpImporter::mesh(): expected" << expectedFaceSize << "indices per face for" << primitive << "but got" << face.mNumIndices << "indices for face" << faceIndex, {});
 
-        Containers::arrayAppend<ArrayAllocator>(indexData, {face.mIndices, face.mNumIndices});
+        for(std::size_t i = 0; i != face.mNumIndices; ++i)
+            indices[faceIndex*expectedFaceSize + i] = face.mIndices[i];
     }
 
-    MeshIndexData indices{indexData};
     return MeshData{primitive,
-        Containers::arrayAllocatorCast<char, ArrayAllocator>(std::move(indexData)),
-        indices,
+        std::move(indexData), MeshIndexData{indices},
         std::move(vertexData), std::move(attributeData),
         MeshData::ImplicitVertexCount, mesh};
 }
