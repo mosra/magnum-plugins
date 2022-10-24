@@ -1006,6 +1006,9 @@ Containers::Optional<MeshData> AssimpImporter::doMesh(const UnsignedInt id, Unsi
        indicates that consecutive triangles form an ngon. That flag is always
        set for triangulated meshes. Masking all known types to future-proof
        this against more random flags getting added. */
+    /** @todo aiPrimitiveType_NGONEncodingFlag is related to FB_ngon_encoding
+        from https://github.com/KhronosGroup/glTF/pull/1620, consider support
+        here and in GltfImporter if/when it gets approved */
     MeshPrimitive primitive;
     const aiPrimitiveType primitiveType = aiPrimitiveType(mesh->mPrimitiveTypes &
         (aiPrimitiveType_POINT | aiPrimitiveType_LINE | aiPrimitiveType_TRIANGLE));
