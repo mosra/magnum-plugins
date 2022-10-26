@@ -27,6 +27,7 @@
 
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/StridedArrayView.h>
+#include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Magnum/ImageView.h>
 #include <Magnum/PixelFormat.h>
@@ -58,16 +59,20 @@ Containers::Optional<ImageData3D> convertInternal(const ImageView3D& image, Util
         return {};
     }
 
-    /* Output size */
+    /* Target output size. The final output size depends on wheter upscaling is
+       disabled. */
     if(!configuration.value<Containers::StringView>("size")) {
         Error{} << "Trade::StbResizeImageConverter::convert(): output size was not specified";
         return {};
     }
-    const Vector2i size = configuration.value<Vector2i>("size");
-    if(!size.product()) {
-        Error{} << "Trade::StbResizeImageConverter::convert(): invalid output image size" << Debug::packed << size;
+    const Vector2i targetSize = configuration.value<Vector2i>("size");
+    if(!targetSize.product()) {
+        Error{} << "Trade::StbResizeImageConverter::convert(): invalid output image size" << Debug::packed << targetSize;
         return {};
     }
+
+    /* Actual output size depending on whether upsampling is desired or not */
+    const Vector2i size = configuration.value<bool>("upsample") ? targetSize : Vector2i{Math::min(targetSize, image.size().xy())};
 
     /* Data type and component count. Branching on isPixelFormatDepthOrStencil()
        to avoid having a dedicated error path for depth/stencil formats. */
@@ -145,6 +150,15 @@ Containers::Optional<ImageData3D> convertInternal(const ImageView3D& image, Util
 
     const Containers::StridedArrayView4D<const char> srcPixels = image.pixels();
     const Containers::StridedArrayView4D<char> dstPixels = out.mutablePixels();
+
+    /* If the target size is the same as the image size, or if upsampling is
+       disabled and the image is smaller (or equal) in both dimensions, just
+       copy the data over to avoid needless work and undesired artifacts */
+    if(image.size().xy() == targetSize || (!configuration.value<bool>("upsample") && (image.size().xy() <= targetSize).all())) {
+        Utility::copy(srcPixels, dstPixels);
+        return Containers::optional(std::move(out));
+    }
+
     /* Apart from wrong input (which we check here), the only way this function
        could fail is due to a memory allocation failure. Which is likely only
        when doing some really crazy upsample, and then it'd fail already when

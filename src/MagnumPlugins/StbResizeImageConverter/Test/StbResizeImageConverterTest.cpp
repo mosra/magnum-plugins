@@ -62,6 +62,8 @@ struct StbResizeImageConverterTest: TestSuite::Tester {
     void threeDimensions();
     void array2D();
 
+    void upsample();
+
     /* Explicitly forbid system-wide plugin dependencies */
     PluginManager::Manager<AbstractImageConverter> _converterManager{"nonexistent"};
 };
@@ -101,6 +103,38 @@ const struct {
         {0xc64f8299_rgba, 0x91b3b366_rgba}},
 };
 
+const struct {
+    const char* name;
+    Containers::Optional<bool> upsample;
+    Vector2i inputSize;
+    Vector2i targetSize;
+    Vector2i expectedSize;
+    Color3ub expected[4];
+} UpsampleData[]{
+    {"downsample on X, upsample on Y",
+        {}, {3, 1}, {2, 2}, {2, 2},
+        {0xff4353_rgb, 0x9bca96_rgb,
+         0xff4353_rgb, 0x9bca96_rgb}},
+    {"downsample on Y, upsample on X",
+        {}, {1, 3}, {2, 2}, {2, 2},
+        {0xff4353_rgb, 0xff4353_rgb,
+         0x9bca96_rgb, 0x9bca96_rgb}},
+    {"downsample on X, upsample on Y disabled",
+        false, {3, 1}, {2, 2}, {2, 1},
+        {0xff4353_rgb, 0x9bca96_rgb, {}, {}}},
+    {"downsample on Y, upsample on X disabled",
+        false, {1, 3}, {2, 2}, {1, 2},
+        {0xff4353_rgb, 0x9bca96_rgb, {}, {}}},
+    {"direct copy, no size change",
+        {}, {3, 1}, {3, 1}, {3, 1},
+        {0xff3366_rgb, 0xff6633_rgb, 0x66ffcc_rgb, {}}},
+    {"direct copy, upsample on XY disabled",
+        /* It shouldn't attempt to allocate the whole target size if it's not
+           used */
+        false, {3, 1}, {0xfffffff, 0xfffffff}, {3, 1},
+        {0xff3366_rgb, 0xff6633_rgb, 0x66ffcc_rgb, {}}},
+};
+
 StbResizeImageConverterTest::StbResizeImageConverterTest() {
     addTests({&StbResizeImageConverterTest::emptySize,
               &StbResizeImageConverterTest::emptyInputImage,
@@ -120,6 +154,9 @@ StbResizeImageConverterTest::StbResizeImageConverterTest() {
 
               &StbResizeImageConverterTest::threeDimensions,
               &StbResizeImageConverterTest::array2D});
+
+    addInstancedTests({&StbResizeImageConverterTest::upsample},
+        Containers::arraySize(UpsampleData));
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. */
@@ -376,6 +413,38 @@ void StbResizeImageConverterTest::array2D() {
             (ImageView2D{PixelStorage{}.setAlignment(1), PixelFormat::RGB8Unorm, {2, 1}, Containers::arrayView(expected).exceptPrefix(i*2)}),
             DebugTools::CompareImage);
     }
+}
+
+void StbResizeImageConverterTest::upsample() {
+    auto&& data = UpsampleData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    const Color3ub input[]{
+        0xff3366_rgb, 0xff6633_rgb, 0x66ffcc_rgb
+    };
+
+    Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("StbResizeImageConverter");
+
+    if(data.upsample)
+        converter->configuration().setValue("upsample", *data.upsample);
+
+    converter->configuration().setValue("size", data.targetSize);
+
+    Containers::Optional<ImageData2D> out = converter->convert(ImageView2D{
+        PixelStorage{}.setAlignment(1),
+        PixelFormat::RGB8Unorm, data.inputSize, input});
+    CORRADE_VERIFY(out);
+
+    /* If the size doesn't change, the data shouldn't either */
+    if(data.expectedSize == data.inputSize)
+        CORRADE_COMPARE_AS(*out, (ImageView2D{
+            PixelStorage{}.setAlignment(1),
+            PixelFormat::RGB8Unorm, data.expectedSize, input
+        }), DebugTools::CompareImage);
+    else CORRADE_COMPARE_AS(*out, (ImageView2D{
+            PixelStorage{}.setAlignment(1),
+            PixelFormat::RGB8Unorm, data.expectedSize, data.expected
+        }), DebugTools::CompareImage);
 }
 
 }}}}
