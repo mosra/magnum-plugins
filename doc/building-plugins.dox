@@ -308,6 +308,11 @@ projects instead:
 brew install --HEAD mosra/magnum/corrade
 brew install --HEAD mosra/magnum/magnum
 brew install --HEAD mosra/magnum/magnum-plugins
+
+# If already installed, use the following to upgrade, in the same order
+brew upgrade --fetch-HEAD mosra/magnum/corrade
+brew upgrade --fetch-HEAD mosra/magnum/magnum
+brew upgrade --fetch-HEAD mosra/magnum/magnum-plugins
 @endcode
 
 When installing from the `*.rb` files you need to install the
