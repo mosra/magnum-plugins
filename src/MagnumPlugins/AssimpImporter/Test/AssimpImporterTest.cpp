@@ -525,7 +525,7 @@ void AssimpImporterTest::animation() {
                 case AnimationTrackTargetType::Scaling3D:
                     player.add(animation->track<Vector3>(j), nodeMap[target]->scaling);
                     break;
-                default: CORRADE_FAIL_IF(true, "Unexpected track target type");
+                default: CORRADE_FAIL("Unexpected track target type" << animation->trackTargetType(j));
             }
         }
 
