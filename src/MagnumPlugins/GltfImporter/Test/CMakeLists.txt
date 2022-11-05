@@ -34,7 +34,7 @@ else()
     set(GLTFIMPORTER_TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 endif()
 
-find_package(Magnum REQUIRED MeshTools)
+find_package(Magnum REQUIRED DebugTools MeshTools)
 
 if(NOT MAGNUM_GLTFIMPORTER_BUILD_STATIC)
     set(GLTFIMPORTER_PLUGIN_FILENAME $<TARGET_FILE:GltfImporter>)
@@ -66,7 +66,10 @@ corrade_add_resource(GltfImporterTest_RESOURCES resources.conf)
 corrade_add_test(GltfImporterTest
     GltfImporterTest.cpp
     ${GltfImporterTest_RESOURCES}
-    LIBRARIES Magnum::Trade Magnum::MeshTools
+    LIBRARIES
+        Magnum::DebugTools
+        Magnum::MeshTools
+        Magnum::Trade
     FILES
         animation.gltf
         animation.glb

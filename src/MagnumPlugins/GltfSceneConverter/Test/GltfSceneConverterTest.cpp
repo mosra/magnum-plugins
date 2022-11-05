@@ -42,6 +42,7 @@
 #include <Corrade/Utility/Path.h>
 #include <Magnum/PixelFormat.h>
 #include <Magnum/ImageView.h>
+#include <Magnum/DebugTools/CompareMaterial.h>
 #include <Magnum/Math/Color.h>
 #include <Magnum/Math/Matrix3.h>
 #include <Magnum/Math/Matrix4.h>
@@ -57,7 +58,6 @@
 #include <Magnum/Trade/TextureData.h>
 
 #include "configure.h"
-#include "../../GltfImporter/Test/compareMaterials.h"
 
 namespace Magnum { namespace Trade { namespace Test { namespace {
 
@@ -3302,7 +3302,9 @@ void GltfSceneConverterTest::addMaterial() {
     CORRADE_COMPARE(importer->materialCount(), 1);
     Containers::Optional<MaterialData> imported = importer->material(0);
     CORRADE_VERIFY(imported);
-    compareMaterials(*imported, filterMaterialAttributes(data.material, data.expectedTypes, data.expectedRemove, data.expectedAdd));
+    CORRADE_COMPARE_AS(*imported,
+        filterMaterialAttributes(data.material, data.expectedTypes, data.expectedRemove, data.expectedAdd),
+        DebugTools::CompareMaterial);
 }
 
 void GltfSceneConverterTest::addMaterial2DArrayTextures() {
@@ -3406,11 +3408,12 @@ void GltfSceneConverterTest::addMaterial2DArrayTextures() {
     CORRADE_COMPARE(importer->materialCount(), 1);
     Containers::Optional<MaterialData> importedMaterial = importer->material(0);
     CORRADE_VERIFY(importedMaterial);
-    compareMaterials(*importedMaterial, filterMaterialAttributes(material,
+    CORRADE_COMPARE_AS(*importedMaterial, filterMaterialAttributes(material,
         MaterialType::PbrMetallicRoughness,
         /* Emissive layer is 0 and for a 2D image, which is same as not present
            at all */
-        Containers::arrayView({MaterialAttribute::EmissiveTextureLayer}), {}));
+        Containers::arrayView({MaterialAttribute::EmissiveTextureLayer}), {}),
+        DebugTools::CompareMaterial);
 }
 
 void GltfSceneConverterTest::addMaterialUnusedAttributes() {
@@ -3520,11 +3523,11 @@ void GltfSceneConverterTest::addMaterialMultiple() {
     CORRADE_COMPARE(importer->materialCount(), 2);
     Containers::Optional<MaterialData> imported0 = importer->material(0);
     CORRADE_VERIFY(imported0);
-    compareMaterials(*imported0, material0);
+    CORRADE_COMPARE_AS(*imported0, material0, DebugTools::CompareMaterial);
 
     Containers::Optional<MaterialData> imported1 = importer->material(1);
     CORRADE_VERIFY(imported1);
-    compareMaterials(*imported1, material1);
+    CORRADE_COMPARE_AS(*imported1, material1, DebugTools::CompareMaterial);
 }
 
 void GltfSceneConverterTest::addMaterialInvalid() {

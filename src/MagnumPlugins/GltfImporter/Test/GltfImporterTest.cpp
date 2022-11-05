@@ -45,6 +45,7 @@
 #include <Magnum/FileCallback.h>
 #include <Magnum/Mesh.h>
 #include <Magnum/PixelFormat.h>
+#include <Magnum/DebugTools/CompareMaterial.h>
 #include <Magnum/Math/CubicHermite.h>
 #include <Magnum/MeshTools/Transform.h>
 #include <Magnum/Trade/AbstractImporter.h>
@@ -64,7 +65,6 @@
 #include <Magnum/Sampler.h>
 
 #include "configure.h"
-#include "compareMaterials.h"
 
 namespace Magnum { namespace Trade { namespace Test { namespace {
 
@@ -4331,7 +4331,9 @@ void GltfImporterTest::materialPbrMetallicRoughness() {
         Containers::Optional<Trade::MaterialData> material = importer->material(expected.first());
         CORRADE_ITERATION(expected.first());
         CORRADE_VERIFY(material);
-        compareMaterials(*material, expected.second());
+        CORRADE_COMPARE_AS(*material,
+            expected.second(),
+            DebugTools::CompareMaterial);
 
         /* Verify the attributes aren't accidentally mismatched and it always
            classifies as packed metallic/roughness texture if one of them is
@@ -4436,7 +4438,9 @@ void GltfImporterTest::materialPbrSpecularGlossiness() {
         Containers::Optional<Trade::MaterialData> material = importer->material(expected.first());
         CORRADE_ITERATION(expected.first());
         CORRADE_VERIFY(material);
-        compareMaterials(*material, expected.second());
+        CORRADE_COMPARE_AS(*material,
+            expected.second(),
+            DebugTools::CompareMaterial);
 
         /* Verify the attributes aren't accidentally mismatched and it always
            classifies as packed specular/glossiness texture if one of them is
@@ -4532,7 +4536,9 @@ void GltfImporterTest::materialCommon() {
         Containers::Optional<Trade::MaterialData> material = importer->material(expected.first());
         CORRADE_ITERATION(expected.first());
         CORRADE_VERIFY(material);
-        compareMaterials(*material, expected.second());
+        CORRADE_COMPARE_AS(*material,
+            expected.second(),
+            DebugTools::CompareMaterial);
     }
 }
 
@@ -4549,10 +4555,10 @@ void GltfImporterTest::materialUnlit() {
     Containers::Optional<Trade::MaterialData> material = importer->material(0);
     CORRADE_VERIFY(material);
     /* Metallic/roughness is removed from types */
-    compareMaterials(*material, MaterialData{MaterialType::Flat, {
+    CORRADE_COMPARE_AS(*material, (MaterialData{MaterialType::Flat, {
         {MaterialAttribute::BaseColor, Color4{0.7f, 0.8f, 0.9f, 1.1f}},
         {MaterialAttribute::BaseColorTexture, 1u}
-    }});
+    }}), DebugTools::CompareMaterial);
 }
 
 void GltfImporterTest::materialExtras() {
@@ -4622,9 +4628,9 @@ void GltfImporterTest::materialExtras() {
             Warning redirectWarning{&out};
             material = importer->material(name);
         }
-        CORRADE_VERIFY(material);
 
-        const MaterialData expected{MaterialType::PbrMetallicRoughness|MaterialType::PbrClearCoat, {
+        CORRADE_VERIFY(material);
+        CORRADE_COMPARE_AS(*material, (MaterialData{MaterialType::PbrMetallicRoughness|MaterialType::PbrClearCoat, {
             {MaterialAttribute::BaseColor, Color4{0.8f, 0.2f, 0.4f, 0.3f}},
             {MaterialAttribute::BaseColorTexture, 0u},
             {MaterialAttribute::DoubleSided, true},
@@ -4648,9 +4654,7 @@ void GltfImporterTest::materialExtras() {
             {Trade::MaterialAttribute::LayerName, "ClearCoat"_s},
             {MaterialAttribute::LayerFactor, 0.5f},
             {MaterialAttribute::Roughness, 0.0f}
-        }, {17, 20}};
-
-        compareMaterials(*material, expected);
+        }, {17, 20}}), DebugTools::CompareMaterial);
 
         CORRADE_COMPARE(out.str(), "Trade::GltfImporter::material(): property invalid is not a numeric array, skipping\n");
     }
@@ -4762,7 +4766,9 @@ void GltfImporterTest::materialClearCoat() {
         Containers::Optional<Trade::MaterialData> material = importer->material(expected.first());
         CORRADE_ITERATION(expected.first());
         CORRADE_VERIFY(material);
-        compareMaterials(*material, expected.second());
+        CORRADE_COMPARE_AS(*material,
+            expected.second(),
+            DebugTools::CompareMaterial);
 
         /* Verify the attributes aren't accidentally mismatched and it always
            classifies as packed factor/roughness texture if both point to
@@ -4861,7 +4867,9 @@ void GltfImporterTest::materialPhongFallback() {
         Containers::Optional<Trade::MaterialData> material = importer->material(expected.first());
         CORRADE_ITERATION(expected.first());
         CORRADE_VERIFY(material);
-        compareMaterials(*material, expected.second());
+        CORRADE_COMPARE_AS(*material,
+            expected.second(),
+            DebugTools::CompareMaterial);
     }
 }
 
@@ -4879,10 +4887,10 @@ void GltfImporterTest::materialRaw() {
         Warning redirectWarning{&outWarning};
         Error redirectError{&outError};
         material = importer->material("raw");
-        CORRADE_VERIFY(material);
     }
 
-    const MaterialData expected{MaterialType::PbrMetallicRoughness|MaterialType::PbrClearCoat, {
+    CORRADE_VERIFY(material);
+    CORRADE_COMPARE_AS(*material, (MaterialData{MaterialType::PbrMetallicRoughness|MaterialType::PbrClearCoat, {
         /* Standard layer import still works */
         {MaterialAttribute::BaseColor, Color4{0.8f, 0.2f, 0.4f, 0.3f}},
         {MaterialAttribute::BaseColorTexture, 0u},
@@ -4931,9 +4939,7 @@ void GltfImporterTest::materialRaw() {
            KHR_materials_unlit, where just the presence of the extension alone
            affects material properties */
         {Trade::MaterialAttribute::LayerName, "#VENDOR_empty_extension_object"_s},
-    }, {3, 6, 7, 14, 29, 30}};
-
-    compareMaterials(*material, expected);
+    }, {3, 6, 7, 14, 29, 30}}), DebugTools::CompareMaterial);
 
     /** @todo maybe reduce the variants since there's a catch-all error for
         most of them now? */
@@ -5008,7 +5014,9 @@ void GltfImporterTest::materialRawIor() {
         Containers::Optional<Trade::MaterialData> material = importer->material(expected.first());
         CORRADE_ITERATION(expected.first());
         CORRADE_VERIFY(material);
-        compareMaterials(*material, expected.second());
+        CORRADE_COMPARE_AS(*material,
+            expected.second(),
+            DebugTools::CompareMaterial);
     }
 }
 
@@ -5072,7 +5080,9 @@ void GltfImporterTest::materialRawSpecular() {
         Containers::Optional<Trade::MaterialData> material = importer->material(expected.first());
         CORRADE_ITERATION(expected.first());
         CORRADE_VERIFY(material);
-        compareMaterials(*material, expected.second());
+        CORRADE_COMPARE_AS(*material,
+            expected.second(),
+            DebugTools::CompareMaterial);
     }
 }
 
@@ -5124,7 +5134,9 @@ void GltfImporterTest::materialRawTransmission() {
         Containers::Optional<Trade::MaterialData> material = importer->material(expected.first());
         CORRADE_ITERATION(expected.first());
         CORRADE_VERIFY(material);
-        compareMaterials(*material, expected.second());
+        CORRADE_COMPARE_AS(*material,
+            expected.second(),
+            DebugTools::CompareMaterial);
     }
 }
 
@@ -5180,7 +5192,9 @@ void GltfImporterTest::materialRawVolume() {
         Containers::Optional<Trade::MaterialData> material = importer->material(expected.first());
         CORRADE_ITERATION(expected.first());
         CORRADE_VERIFY(material);
-        compareMaterials(*material, expected.second());
+        CORRADE_COMPARE_AS(*material,
+            expected.second(),
+            DebugTools::CompareMaterial);
     }
 }
 
@@ -5243,7 +5257,9 @@ void GltfImporterTest::materialRawSheen() {
         Containers::Optional<Trade::MaterialData> material = importer->material(expected.first());
         CORRADE_ITERATION(expected.first());
         CORRADE_VERIFY(material);
-        compareMaterials(*material, expected.second());
+        CORRADE_COMPARE_AS(*material,
+            expected.second(),
+            DebugTools::CompareMaterial);
     }
 
     CORRADE_COMPARE(out.str(),
@@ -5260,21 +5276,24 @@ void GltfImporterTest::materialRawOutOfBounds() {
 
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "material-raw.gltf")));
 
-    /** @todo merge with materialRaw()? since the same error is if the texture
-        has no index property */
-    const MaterialData expected{{}, {
+    std::ostringstream out;
+    Containers::Optional<MaterialData> material;
+    {
+        Error redirectError{&out};
+        Warning redirectWarning{&out};
+        material = importer->material("raw out-of-bounds");
+    }
+
+    CORRADE_VERIFY(material);
+    CORRADE_COMPARE_AS(*material, (MaterialData{{}, {
         /* Texture object is ignored because it has an invalid index, the rest
            is kept */
         {Trade::MaterialAttribute::LayerName, "#MAGNUM_material_snake"_s},
         {"snakeFactor"_s, 6.6f}
-    }, {0, 2}};
+    }, {0, 2}}), DebugTools::CompareMaterial);
 
-    std::ostringstream out;
-    Error redirectError{&out};
-    Warning redirectWarning{&out};
-    Containers::Optional<Trade::MaterialData> material = importer->material("raw out-of-bounds");
-    CORRADE_VERIFY(material);
-    compareMaterials(*material, expected);
+    /** @todo merge with materialRaw()? since the same error is if the texture
+        has no index property */
     CORRADE_COMPARE(out.str(),
         "Trade::GltfImporter::material(): snakeTexture index 2 out of range for 2 textures\n"
         "Trade::GltfImporter::material(): property snakeTexture has an invalid texture object, skipping\n");
@@ -5920,14 +5939,12 @@ void GltfImporterTest::experimentalKhrTextureKtxPhongFallback() {
         Containers::Optional<Trade::MaterialData> material = importer->material(name);
         CORRADE_ITERATION(name);
         CORRADE_VERIFY(material);
-
-        MaterialData expected{MaterialType::PbrMetallicRoughness|MaterialType::Phong, {
+        CORRADE_COMPARE_AS(*material, (MaterialData{MaterialType::PbrMetallicRoughness|MaterialType::Phong, {
             {MaterialAttribute::BaseColorTexture, 1u},
             {MaterialAttribute::BaseColorTextureLayer, 55u},
             {MaterialAttribute::DiffuseTexture, 1u},
             {MaterialAttribute::DiffuseTextureLayer, 55u},
-        }};
-        compareMaterials(*material, expected);
+        }}), DebugTools::CompareMaterial);
 
     /* Nothing gets added */
     } {
@@ -5935,13 +5952,11 @@ void GltfImporterTest::experimentalKhrTextureKtxPhongFallback() {
         Containers::Optional<Trade::MaterialData> material = importer->material(name);
         CORRADE_ITERATION(name);
         CORRADE_VERIFY(material);
-
-        MaterialData expected{MaterialType::PbrSpecularGlossiness|MaterialType::Phong, {
+        CORRADE_COMPARE_AS(*material, (MaterialData{MaterialType::PbrSpecularGlossiness|MaterialType::Phong, {
             {MaterialAttribute::DiffuseTexture, 1u},
             {MaterialAttribute::DiffuseTextureLayer, 55u},
             {MaterialAttribute::SpecularGlossinessTexture, 0u},
-        }};
-        compareMaterials(*material, expected);
+        }}), DebugTools::CompareMaterial);
 
     /* Nothing gets added here either */
     } {
@@ -5949,14 +5964,12 @@ void GltfImporterTest::experimentalKhrTextureKtxPhongFallback() {
         Containers::Optional<Trade::MaterialData> material = importer->material(name);
         CORRADE_ITERATION(name);
         CORRADE_VERIFY(material);
-
-        MaterialData expected{MaterialType::PbrSpecularGlossiness|MaterialType::Phong, {
+        CORRADE_COMPARE_AS(*material, (MaterialData{MaterialType::PbrSpecularGlossiness|MaterialType::Phong, {
             {MaterialAttribute::DiffuseTexture, 0u},
             {MaterialAttribute::SpecularGlossinessTexture, 1u},
             {MaterialAttribute::SpecularTextureLayer, 55u},
             {MaterialAttribute::GlossinessTextureLayer, 55u},
-        }};
-        compareMaterials(*material, expected);
+        }}), DebugTools::CompareMaterial);
     }
 }
 
