@@ -28,6 +28,7 @@
 
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/Triple.h>
+#include <Corrade/Containers/StringIterable.h>
 #include <Corrade/Containers/StringView.h>
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/ConfigurationGroup.h>

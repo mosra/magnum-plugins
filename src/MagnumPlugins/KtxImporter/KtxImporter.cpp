@@ -31,6 +31,7 @@
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/StaticArray.h>
 #include <Corrade/Containers/String.h>
+#include <Corrade/Containers/StringIterable.h>
 #include <Corrade/Containers/StringView.h>
 #include <Corrade/PluginManager/PluginMetadata.h>
 #include <Corrade/Utility/Algorithms.h>
