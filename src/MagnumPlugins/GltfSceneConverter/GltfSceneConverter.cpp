@@ -270,8 +270,10 @@ Containers::Optional<Containers::Array<char>> GltfSceneConverter::doEndData() {
            implicitly inherits all required extensions. For clean code, an
            extension should be either in the used list or in the required list,
            never in both. */
-        CORRADE_INTERNAL_ASSERT(!(_state->usedExtensions&_state->requiredExtensions));
-        const GltfExtensions usedExtensions = _state->usedExtensions|_state->requiredExtensions;
+        CORRADE_INTERNAL_ASSERT(!(_state->usedExtensions & _state->requiredExtensions));
+        /* Mutable in order to check that we didn't forget to handle any after
+           the loop */
+        GltfExtensions usedExtensions = _state->usedExtensions|_state->requiredExtensions;
         const Containers::Pair<GltfExtension, Containers::StringView> extensionStrings[]{
             {GltfExtension::KhrMaterialsUnlit, "KHR_materials_unlit"_s},
             {GltfExtension::KhrMeshQuantization, "KHR_mesh_quantization"_s},
@@ -284,7 +286,10 @@ Containers::Optional<Containers::Array<char>> GltfSceneConverter::doEndData() {
                 extensionsUsed.push_back(i.second());
             if((_state->requiredExtensions & i.first()) && !contains(extensionsRequired, i.second()))
                 extensionsRequired.push_back(i.second());
+
+            usedExtensions &= ~i.first();
         }
+        CORRADE_INTERNAL_ASSERT(!usedExtensions);
 
         if(!extensionsUsed.empty()) {
             json.writeKey("extensionsUsed"_s);
