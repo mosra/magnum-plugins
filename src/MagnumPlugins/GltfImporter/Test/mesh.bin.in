@@ -1,4 +1,4 @@
-type = '<3Bx 3f3f4f 3f3f4f 3f3f4f 2f2f2f III'
+type = '<3Bx 3f3f4f 3f3f4f 3f3f4f 2f2f2f HHH'
 input = [
     # indices
     0, 1, 2,
@@ -13,7 +13,7 @@ input = [
     0.0, 0.5,
     0.3, 0.3,
 
-    #non-interleaved object IDs
+    # non-interleaved object IDs
     215, 71, 133
 ]
 

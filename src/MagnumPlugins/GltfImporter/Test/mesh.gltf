@@ -88,7 +88,7 @@
       "name": "4",
       "bufferView": 3,
       "byteOffset": 0,
-      "componentType": 5125,
+      "componentType": 5123,
       "count": 3,
       "type": "SCALAR"
     }
@@ -113,12 +113,12 @@
     {
       "buffer": 0,
       "byteOffset": 148,
-      "byteLength": 12
+      "byteLength": 6
     }
   ],
   "buffers": [
     {
-      "byteLength": 160,
+      "byteLength": 154,
       "uri": "mesh.bin"
     }
   ]

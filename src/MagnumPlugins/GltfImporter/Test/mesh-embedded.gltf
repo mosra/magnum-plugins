@@ -88,7 +88,7 @@
       "name": "4",
       "bufferView": 3,
       "byteOffset": 0,
-      "componentType": 5125,
+      "componentType": 5123,
       "count": 3,
       "type": "SCALAR"
     }
@@ -113,13 +113,13 @@
     {
       "buffer": 0,
       "byteOffset": 148,
-      "byteLength": 12
+      "byteLength": 6
     }
   ],
   "buffers": [
     {
-      "byteLength": 160,
-      "uri": "data:application/octet-stream;base64,AAECAAAAwD8AAIC/AAAAv83MzD3NzEw+mpmZPs3MzL3NzEy+mpmZvgAAgD8AAAC/AAAgQAAAQD/NzMw+AAAAP5qZGT/NzMy+AAAAv5qZGb8AAIC/AAAAwAAAgD+amZk+MzMzP83MTD9mZmY/MzMzv83MTL9mZma/AACAP5qZmT4AAAAAAAAAAAAAAD+amZk+mpmZPtcAAABHAAAAhQAAAA=="
+      "byteLength": 154,
+      "uri": "data:application/octet-stream;base64,AAECAAAAwD8AAIC/AAAAv83MzD3NzEw+mpmZPs3MzL3NzEy+mpmZvgAAgD8AAAC/AAAgQAAAQD/NzMw+AAAAP5qZGT/NzMy+AAAAv5qZGb8AAIC/AAAAwAAAgD+amZk+MzMzP83MTD9mZmY/MzMzv83MTL9mZma/AACAP5qZmT4AAAAAAAAAAAAAAD+amZk+mpmZPtcARwCFAA=="
     }
   ]
 }

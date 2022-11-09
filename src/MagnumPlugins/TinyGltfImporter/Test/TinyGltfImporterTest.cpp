@@ -2136,9 +2136,9 @@ void TinyGltfImporterTest::mesh() {
         }), TestSuite::Compare::Container);
 
     CORRADE_VERIFY(mesh->hasAttribute(MeshAttribute::ObjectId));
-    CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::ObjectId), VertexFormat::UnsignedInt);
-    CORRADE_COMPARE_AS(mesh->attribute<UnsignedInt>(MeshAttribute::ObjectId),
-        Containers::arrayView<UnsignedInt>({
+    CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::ObjectId), VertexFormat::UnsignedShort);
+    CORRADE_COMPARE_AS(mesh->attribute<UnsignedShort>(MeshAttribute::ObjectId),
+        Containers::arrayView<UnsignedShort>({
             215, 71, 133
         }), TestSuite::Compare::Container);
 }
