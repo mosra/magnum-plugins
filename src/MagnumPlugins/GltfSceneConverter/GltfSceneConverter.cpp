@@ -244,7 +244,7 @@ Containers::Optional<Containers::Array<char>> GltfSceneConverter::doEndData() {
     /* Asset object, always present */
     {
         json.writeKey("asset"_s);
-        Containers::ScopeGuard gltfAsset = json.beginObjectScope();
+        const Containers::ScopeGuard gltfAsset = json.beginObjectScope();
 
         json.writeKey("version"_s).write("2.0"_s);
 
@@ -293,12 +293,12 @@ Containers::Optional<Containers::Array<char>> GltfSceneConverter::doEndData() {
 
         if(!extensionsUsed.empty()) {
             json.writeKey("extensionsUsed"_s);
-            Containers::ScopeGuard gltfExtensionsUsed = json.beginArrayScope();
+            const Containers::ScopeGuard gltfExtensionsUsed = json.beginArrayScope();
             for(const Containers::StringView i: extensionsUsed) json.write(i);
         }
         if(!extensionsRequired.empty()) {
             json.writeKey("extensionsRequired"_s);
-            Containers::ScopeGuard gltfExtensionsRequired = json.beginArrayScope();
+            const Containers::ScopeGuard gltfExtensionsRequired = json.beginArrayScope();
             for(const Containers::StringView i: extensionsRequired) json.write(i);
         }
     }
@@ -307,8 +307,8 @@ Containers::Optional<Containers::Array<char>> GltfSceneConverter::doEndData() {
        views referencing it */
     if(!_state->buffer.isEmpty() || !_state->gltfBufferViews.isEmpty()) {
         json.writeKey("buffers"_s);
-        Containers::ScopeGuard gltfBuffers = json.beginArrayScope();
-        Containers::ScopeGuard gltfBuffer = json.beginObjectScope();
+        const Containers::ScopeGuard gltfBuffers = json.beginArrayScope();
+        const Containers::ScopeGuard gltfBuffer = json.beginObjectScope();
 
         /* If not writing a binary glTF and the buffer is non-empty, save the
            buffer to an external file and reference it. In a binary glTF the
@@ -346,13 +346,13 @@ Containers::Optional<Containers::Array<char>> GltfSceneConverter::doEndData() {
         const Containers::ScopeGuard gltfMeshes = json.beginArrayScope();
 
         const auto writeMesh = [](Utility::JsonWriter& json, const MeshProperties& mesh, Int material) {
-            Containers::ScopeGuard gltfMesh = json.beginObjectScope();
+            const Containers::ScopeGuard gltfMesh = json.beginObjectScope();
             json.writeKey("primitives"_s);
 
             /* Just a single primitive for each */
             {
-                Containers::ScopeGuard gltfPrimitives = json.beginArrayScope();
-                Containers::ScopeGuard gltfPrimitive = json.beginObjectScope();
+                const Containers::ScopeGuard gltfPrimitives = json.beginArrayScope();
+                const Containers::ScopeGuard gltfPrimitive = json.beginObjectScope();
 
                 /* Indices, if any */
                 if(mesh.gltfIndices)
@@ -361,7 +361,7 @@ Containers::Optional<Containers::Array<char>> GltfSceneConverter::doEndData() {
                 /* Attributes */
                 if(!mesh.gltfAttributes.isEmpty()) {
                     json.writeKey("attributes"_s);
-                    Containers::ScopeGuard gltfAttributes = json.beginObjectScope();
+                    const Containers::ScopeGuard gltfAttributes = json.beginObjectScope();
                     for(const Containers::Pair<Containers::String, UnsignedInt>& gltfAttribute: mesh.gltfAttributes)
                         json.writeKey(gltfAttribute.first()).write(gltfAttribute.second());
                 }
@@ -939,7 +939,7 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const SceneData& scene, con
 
         if(_state->gltfNodes.isEmpty())
             gltfNodes = _state->gltfNodes.beginArrayScope();
-        Containers::ScopeGuard gltfNode = _state->gltfNodes.beginObjectScope();
+        const Containers::ScopeGuard gltfNode = _state->gltfNodes.beginObjectScope();
 
         /* Write the children array, if there's any */
         if(childOffsets[object + 1] - childOffsets[object]) {
@@ -1050,9 +1050,9 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const SceneData& scene, con
 
     /* Scene object referencing the root children */
     CORRADE_INTERNAL_ASSERT(_state->gltfScenes.isEmpty());
-    Containers::ScopeGuard gltfScenes = _state->gltfScenes.beginArrayScope();
+    const Containers::ScopeGuard gltfScenes = _state->gltfScenes.beginArrayScope();
     CORRADE_INTERNAL_ASSERT(_state->gltfScenes.currentArraySize() == id);
-    Containers::ScopeGuard gltfScene = _state->gltfScenes.beginObjectScope();
+    const Containers::ScopeGuard gltfScene = _state->gltfScenes.beginObjectScope();
     if(childOffsets[0]) {
         _state->gltfScenes.writeKey("nodes"_s).writeArray(children.prefix(childOffsets[0]));
     }
@@ -1432,7 +1432,7 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const MeshData& mesh, const
             const Containers::ArrayView<char> indexData = arrayAppend(_state->buffer, mesh.indices().asContiguous());
 
             const std::size_t gltfBufferViewIndex = _state->gltfBufferViews.currentArraySize();
-            Containers::ScopeGuard gltfBufferView = _state->gltfBufferViews.beginObjectScope();
+            const Containers::ScopeGuard gltfBufferView = _state->gltfBufferViews.beginObjectScope();
             _state->gltfBufferViews
                 .writeKey("buffer"_s).write(0)
                 /** @todo could be omitted if zero, is that useful for anything? */
@@ -1445,7 +1445,7 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const MeshData& mesh, const
                     id, name));
 
             const std::size_t gltfAccessorIndex = _state->gltfAccessors.currentArraySize();
-            Containers::ScopeGuard gltfAccessor = _state->gltfAccessors.beginObjectScope();
+            const Containers::ScopeGuard gltfAccessor = _state->gltfAccessors.beginObjectScope();
             _state->gltfAccessors
                 .writeKey("bufferView"_s).write(gltfBufferViewIndex)
                 /* bufferOffset is implicitly 0 */
@@ -1492,7 +1492,7 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const MeshData& mesh, const
             const std::size_t formatSize = vertexFormatSize(format);
             const std::size_t attributeStride = mesh.attributeStride(i);
             const std::size_t gltfBufferViewIndex = _state->gltfBufferViews.currentArraySize();
-            Containers::ScopeGuard gltfBufferView = _state->gltfBufferViews.beginObjectScope();
+            const Containers::ScopeGuard gltfBufferView = _state->gltfBufferViews.beginObjectScope();
             _state->gltfBufferViews
                 .writeKey("buffer"_s).write(0)
                 /* Byte offset could be omitted if zero but since that
@@ -1528,7 +1528,7 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const MeshData& mesh, const
                     id, name, gltfAttributeNamesTypes[i].first()));
 
             const UnsignedInt gltfAccessorIndex = _state->gltfAccessors.currentArraySize();
-            Containers::ScopeGuard gltfAccessor = _state->gltfAccessors.beginObjectScope();
+            const Containers::ScopeGuard gltfAccessor = _state->gltfAccessors.beginObjectScope();
             _state->gltfAccessors
                 .writeKey("bufferView"_s).write(gltfBufferViewIndex)
                 /* We don't share views among accessors yet, so bufferOffset is
@@ -1659,7 +1659,7 @@ bool GltfSceneConverter::doAdd(UnsignedInt, const MaterialData& material, const 
     if(_state->gltfMaterials.isEmpty())
         _state->gltfMaterials.beginArray();
 
-    Containers::ScopeGuard gltfMaterial = _state->gltfMaterials.beginObjectScope();
+    const Containers::ScopeGuard gltfMaterial = _state->gltfMaterials.beginObjectScope();
 
     const bool keepDefaults = configuration().value<bool>("keepMaterialDefaults");
 
@@ -1751,7 +1751,7 @@ bool GltfSceneConverter::doAdd(UnsignedInt, const MaterialData& material, const 
     };
     auto writeTexture = [&](MaskedMaterial& maskedMaterial, Containers::StringView name, UnsignedInt textureAttributeId, Containers::StringView prefix) {
         _state->gltfMaterials.writeKey(name);
-        Containers::ScopeGuard gltfTexture = _state->gltfMaterials.beginObjectScope();
+        const Containers::ScopeGuard gltfTexture = _state->gltfMaterials.beginObjectScope();
 
         writeTextureContents(maskedMaterial, textureAttributeId, prefix);
     };
@@ -1794,7 +1794,7 @@ bool GltfSceneConverter::doAdd(UnsignedInt, const MaterialData& material, const 
            foundMetalnessTexture || foundNoneRoughnessMetallicTexture)
         {
             _state->gltfMaterials.writeKey("pbrMetallicRoughness"_s);
-            Containers::ScopeGuard gltfMaterialPbrMetallicRoughness = _state->gltfMaterials.beginObjectScope();
+            const Containers::ScopeGuard gltfMaterialPbrMetallicRoughness = _state->gltfMaterials.beginObjectScope();
 
             if(baseColor && (keepDefaults || *baseColor != 0xffffffff_rgbaf))
                 _state->gltfMaterials
@@ -1837,7 +1837,7 @@ bool GltfSceneConverter::doAdd(UnsignedInt, const MaterialData& material, const 
     /* Normal texture properties; ignored if there's no texture */
     if(const auto foundNormalTexture = maskedMaterial.findId(MaterialAttribute::NormalTexture)) {
         _state->gltfMaterials.writeKey("normalTexture"_s);
-        Containers::ScopeGuard gltfTexture = _state->gltfMaterials.beginObjectScope();
+        const Containers::ScopeGuard gltfTexture = _state->gltfMaterials.beginObjectScope();
 
         writeTextureContents(maskedMaterial, *foundNormalTexture, {});
 
@@ -1854,7 +1854,7 @@ bool GltfSceneConverter::doAdd(UnsignedInt, const MaterialData& material, const 
     /* Occlusion texture properties; ignored if there's no texture */
     if(const auto foundOcclusionTexture = maskedMaterial.findId(MaterialAttribute::OcclusionTexture)) {
         _state->gltfMaterials.writeKey("occlusionTexture"_s);
-        Containers::ScopeGuard gltfTexture = _state->gltfMaterials.beginObjectScope();
+        const Containers::ScopeGuard gltfTexture = _state->gltfMaterials.beginObjectScope();
 
         writeTextureContents(maskedMaterial, *foundOcclusionTexture, {});
 
@@ -2117,7 +2117,7 @@ bool GltfSceneConverter::doAdd(CORRADE_UNUSED const UnsignedInt id, const Textur
 
         const UnsignedInt layerCount = _state->image3DIdsTextureExtensionsLayerCount[texture.image()].third();
         for(UnsignedInt layer = 0; layer != layerCount; ++layer) {
-            Containers::ScopeGuard gltfTexture = _state->gltfTextures.beginObjectScope();
+            const Containers::ScopeGuard gltfTexture = _state->gltfTextures.beginObjectScope();
 
             _state->gltfTextures
                 .writeKey("sampler"_s).write(foundSampler->second)
@@ -2134,7 +2134,7 @@ bool GltfSceneConverter::doAdd(CORRADE_UNUSED const UnsignedInt id, const Textur
 
     /* 2D texture is just one */
     } else if(texture.type() == TextureType::Texture2D) {
-        Containers::ScopeGuard gltfTexture = _state->gltfTextures.beginObjectScope();
+        const Containers::ScopeGuard gltfTexture = _state->gltfTextures.beginObjectScope();
 
         _state->gltfTextures.writeKey("sampler"_s).write(foundSampler->second);
 
@@ -2276,7 +2276,7 @@ template<UnsignedInt dimensions> bool GltfSceneConverter::convertAndWriteImage(c
     if(_state->gltfImages.isEmpty())
         _state->gltfImages.beginArray();
 
-    Containers::ScopeGuard gltfImage = _state->gltfImages.beginObjectScope();
+    const Containers::ScopeGuard gltfImage = _state->gltfImages.beginObjectScope();
 
     /* Bundled image, needs a buffer view and a MIME type */
     if(bundleImages) {
@@ -2290,7 +2290,7 @@ template<UnsignedInt dimensions> bool GltfSceneConverter::convertAndWriteImage(c
 
         /* Reference the image data from a buffer view */
         const std::size_t gltfBufferViewIndex = _state->gltfBufferViews.currentArraySize();
-        Containers::ScopeGuard gltfBufferView = _state->gltfBufferViews.beginObjectScope();
+        const Containers::ScopeGuard gltfBufferView = _state->gltfBufferViews.beginObjectScope();
         _state->gltfBufferViews
             .writeKey("buffer"_s).write(0)
             /** @todo could be omitted if zero, is that useful for anything? */
