@@ -3059,15 +3059,10 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
         /* Object ID, name custom. To avoid confusion, print the error together
            with saying it's an object ID attribute */
         } else if(attribute.first() == configuration().value<Containers::StringView>("objectIdAttribute")) {
-            name = MeshAttribute::ObjectId;
-
-            if(accessor->second() != VertexFormat::UnsignedInt &&
-               accessor->second() != VertexFormat::UnsignedShort &&
-               accessor->second() != VertexFormat::UnsignedByte) {
-                /* Here the VertexFormat prefix would not be confusing but
-                   print it without to be consistent with other messages */
-                Error{} << "Trade::GltfImporter::mesh(): unsupported object ID attribute" << attribute.first() << "type" << Debug::packed << accessor->second();
-                return {};
+            if(accessor->second() == VertexFormat::UnsignedInt ||
+               accessor->second() == VertexFormat::UnsignedShort ||
+               accessor->second() == VertexFormat::UnsignedByte) {
+                name = MeshAttribute::ObjectId;
             }
 
         /* Custom or unrecognized attributes, map to an ID. Any type is
@@ -3077,9 +3072,17 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
         }
 
         if(name == MeshAttribute{}) {
+            Error e;
+            e << "Trade::GltfImporter::mesh(): unsupported";
+
+            /* If the attribute is meant to be recognized as an object ID,
+               mention it as such to avoid confusion */
+            if(attribute.first() == configuration().value<Containers::StringView>("objectIdAttribute"))
+                e << "object ID attribute";
+
             /* Here the VertexFormat prefix would not be confusing but print it
                without to be consistent with other messages */
-            Error{} << "Trade::GltfImporter::mesh(): unsupported" << attribute.first() << "format" << Debug::packed << accessor->second();
+            e << attribute.first() << "format" << Debug::packed << accessor->second();
             return {};
         }
 
