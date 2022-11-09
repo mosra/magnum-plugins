@@ -1,0 +1,61 @@
+{
+  "asset": {
+    "version": "2.0"
+  },
+  "meshes": [
+    {
+      "primitives": [
+        {
+          "attributes": {
+            "_OFFSET": 0
+          },
+          "mode": 0
+        }
+      ]
+    },
+    {
+      "primitives": [
+        {
+          "attributes": {
+            "_OBJECT_ID": 1
+          },
+          "mode": 0
+        }
+      ]
+    }
+  ],
+  "accessors": [
+    {
+      "name": "0",
+      "bufferView": 0,
+      "componentType": 5125,
+      "count": 1,
+      "type": "VEC2"
+    },
+    {
+      "name": "1",
+      "bufferView": 1,
+      "componentType": 5125,
+      "count": 1,
+      "type": "SCALAR"
+    }
+  ],
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteOffset": 0,
+      "byteLength": 8
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 8,
+      "byteLength": 4
+    }
+  ],
+  "buffers": [
+    {
+      "byteLength": 12,
+      "uri": "mesh-unsigned-int-vertex-formats.bin"
+    }
+  ]
+}

@@ -2911,8 +2911,7 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
         }
     }
 
-    /* Attributes, if present. The glTF spec requires a primitive to define an
-       attribute property with at least one attribute, but we allow without. */
+    /* Attributes */
     Containers::Array<Containers::Pair<Containers::StringView, UnsignedInt>> attributeOrder;
     if(const Utility::JsonToken* gltfAttributes = gltfPrimitive.find("attributes"_s)) {
         /* Primitive attributes object parsed in doOpenData() already, for
@@ -2927,6 +2926,15 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
 
             arrayAppend(attributeOrder, InPlaceInit, gltfAttribute.key(), gltfAttribute.value().asUnsignedInt());
         }
+    }
+
+    /* 3.7.2.1 (Geometry § Meshes § Overview) says "Primitives specify one or
+       more attributes", but we allow also none unless the strict option is
+       enabled. Not printing a warning if the strict option is disabled as
+       Magnum can handle the attribute-less MeshData just fine. */
+    if(attributeOrder.isEmpty() && configuration().value<bool>("strict")) {
+        Error{} << "Trade::GltfImporter::mesh(): strict mode enabled, disallowing a mesh with no attributes";
+        return {};
     }
 
     /* Sort and remove duplicates except the last one. Attributes sorted by
@@ -2982,6 +2990,11 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
         /* Get the accessor view */
         Containers::Optional<Containers::Triple<Containers::StridedArrayView2D<const char>, VertexFormat, UnsignedInt>> accessor = parseAccessor("Trade::GltfImporter::mesh():", attribute.second());
         if(!accessor) return {};
+
+        if(configuration().value<bool>("strict") && vertexFormatComponentFormat(accessor->second()) == VertexFormat::UnsignedInt) {
+            Error{} << "Trade::GltfImporter::mesh(): strict mode enabled, disallowing" << attribute.first() << "with a 32-bit integer vertex format" << Debug::packed << accessor->second();
+            return {};
+        }
 
         /* Whitelist supported attribute and format combinations. If not
            allowed, name stays empty, which produces an error in a single place
@@ -3101,6 +3114,15 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
 
     /* Verify we really filled all attributes */
     CORRADE_INTERNAL_ASSERT(attributeId == attributeData.size());
+
+    /* 3.7.2.1 (Geometry § Meshes § Overview) says "[count] MUST be non-zero",
+       but we allow also none unless the strict option is enabled. Not printing
+       a warning if the strict option is disabled as Magnum can handle the
+       vertex-less MeshData just fine. */
+    if(!vertexCount && configuration().value<bool>("strict")) {
+        Error{} << "Trade::GltfImporter::mesh(): strict mode enabled, disallowing a mesh with no vertices";
+        return {};
+    }
 
     /* Allocate & copy vertex data, if any */
     Containers::ArrayView<const char> inputVertexData{reinterpret_cast<const char*>(bufferRange.min()), bufferRange.size()};

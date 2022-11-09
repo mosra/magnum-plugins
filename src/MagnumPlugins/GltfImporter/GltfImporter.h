@@ -273,6 +273,12 @@ Import of morph data is not supported at the moment.
     however since glTF has no way of specifying vertex count for those,
     returned @ref Trade::MeshData::vertexCount() is set to @cpp 0 @ce
 
+By default, the mesh import silently allows certain features that aren't
+strictly valid according to the glTF specification, such as 32-bit integer
+@ref VertexFormat, because they're useful in general. Enable the
+@cb{.ini} strict @ce @ref Trade-GltfImporter-configuration "configuration option"
+to fail the import in such cases instead.
+
 Custom and unrecognized vertex attributes of allowed types are present in the
 imported meshes as well. Their mapping to/from a string can be queried using
 @ref meshAttributeName() and @ref meshAttributeForName(). Attributes with

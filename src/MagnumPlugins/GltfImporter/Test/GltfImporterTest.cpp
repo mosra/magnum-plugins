@@ -134,6 +134,7 @@ struct GltfImporterTest: TestSuite::Tester {
     void meshDuplicateAttributes();
     void meshUnorderedAttributes();
     void meshMultiplePrimitives();
+    void meshUnsignedIntVertexFormats();
     void meshPrimitivesTypes();
     void meshSizeNotMultipleOfStride();
     void meshInvalidWholeFile();
@@ -718,6 +719,39 @@ constexpr struct {
     {"invalid inverseBindMatrices property",
         "Utility::Json::parseUnsignedInt(): expected a number, got Utility::JsonToken::Type::Array at {}:52:30\n"
         "Trade::GltfImporter::skin3D(): invalid inverseBindMatrices property\n"},
+};
+
+const struct {
+    const char* name;
+    Containers::Optional<bool> strict;
+    const char* message;
+} MeshNoAttributesData[]{
+    {"", {}, ""},
+    {"strict", true, "Trade::GltfImporter::mesh(): strict mode enabled, disallowing a mesh with no attributes\n"}
+};
+
+const struct {
+    const char* name;
+    const char* suffix;
+    Containers::Optional<bool> strict;
+    const char* message;
+} MeshNoVerticesData[]{
+    {"ascii", ".gltf", {}, ""},
+    {"binary", ".glb", {}, ""},
+    {"strict, ascii", ".gltf", true, "Trade::GltfImporter::mesh(): strict mode enabled, disallowing a mesh with no vertices\n"},
+    {"strict, binary", ".glb", true, "Trade::GltfImporter::mesh(): strict mode enabled, disallowing a mesh with no vertices\n"}
+};
+
+const struct {
+    const char* name;
+    Containers::Optional<bool> strict;
+    const char* message;
+} MeshUnsignedIntVertexFormatsData[]{
+    {"", {},
+        ""},
+    {"strict", true,
+        "Trade::GltfImporter::mesh(): strict mode enabled, disallowing _OFFSET with a 32-bit integer vertex format Vector2ui\n"
+        "Trade::GltfImporter::mesh(): strict mode enabled, disallowing _OBJECT_ID with a 32-bit integer vertex format UnsignedInt\n"},
 };
 
 constexpr struct {
@@ -1573,12 +1607,16 @@ GltfImporterTest::GltfImporterTest() {
     addInstancedTests({&GltfImporterTest::mesh},
                       Containers::arraySize(MultiFileData));
 
-    addTests({&GltfImporterTest::meshNoAttributes,
-              &GltfImporterTest::meshNoIndices,
-              &GltfImporterTest::meshNoIndicesNoAttributes});
+    addInstancedTests({&GltfImporterTest::meshNoAttributes},
+        Containers::arraySize(MeshNoAttributesData));
+
+    addTests({&GltfImporterTest::meshNoIndices});
+
+    addInstancedTests({&GltfImporterTest::meshNoIndicesNoAttributes},
+        Containers::arraySize(MeshNoAttributesData));
 
     addInstancedTests({&GltfImporterTest::meshNoIndicesNoVerticesNoBufferUri},
-        Containers::arraySize(SingleFileData));
+        Containers::arraySize(MeshNoVerticesData));
 
     addTests({&GltfImporterTest::meshColors,
               &GltfImporterTest::meshSkinAttributes,
@@ -1587,6 +1625,9 @@ GltfImporterTest::GltfImporterTest() {
               &GltfImporterTest::meshDuplicateAttributes,
               &GltfImporterTest::meshUnorderedAttributes,
               &GltfImporterTest::meshMultiplePrimitives});
+
+    addInstancedTests({&GltfImporterTest::meshUnsignedIntVertexFormats},
+        Containers::arraySize(MeshUnsignedIntVertexFormatsData));
 
     addInstancedTests({&GltfImporterTest::meshPrimitivesTypes},
         Containers::arraySize(MeshPrimitivesTypesData));
@@ -3520,18 +3561,33 @@ void GltfImporterTest::mesh() {
 }
 
 void GltfImporterTest::meshNoAttributes() {
+    auto&& data = MeshNoAttributesData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
+
+    if(data.strict)
+        importer->configuration().setValue("strict", *data.strict);
+
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "mesh.gltf")));
 
-    Containers::Optional<Trade::MeshData> mesh = importer->mesh("Attribute-less indexed mesh");
-    CORRADE_VERIFY(mesh);
-    CORRADE_COMPARE(mesh->primitive(), MeshPrimitive::Triangles);
-    CORRADE_VERIFY(mesh->isIndexed());
-    CORRADE_COMPARE_AS(mesh->indicesAsArray(),
-        Containers::arrayView<UnsignedInt>({0, 1, 2}),
-        TestSuite::Compare::Container);
-    CORRADE_COMPARE(mesh->vertexCount(), 0);
-    CORRADE_COMPARE(mesh->attributeCount(), 0);
+    Containers::Optional<Trade::MeshData> mesh;
+    std::ostringstream out;
+    {
+        Error redirectError{&out};
+        mesh = importer->mesh("Attribute-less indexed mesh");
+    }
+    CORRADE_COMPARE(!!mesh, !data.strict || !*data.strict); CORRADE_COMPARE(out.str(), data.message);
+
+    if(mesh) {
+        CORRADE_COMPARE(mesh->primitive(), MeshPrimitive::Triangles);
+        CORRADE_VERIFY(mesh->isIndexed());
+        CORRADE_COMPARE_AS(mesh->indicesAsArray(),
+            Containers::arrayView<UnsignedInt>({0, 1, 2}),
+            TestSuite::Compare::Container);
+        CORRADE_COMPARE(mesh->vertexCount(), 0);
+        CORRADE_COMPARE(mesh->attributeCount(), 0);
+    }
 }
 
 void GltfImporterTest::meshNoIndices() {
@@ -3557,32 +3613,61 @@ void GltfImporterTest::meshNoIndices() {
 }
 
 void GltfImporterTest::meshNoIndicesNoAttributes() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "mesh.gltf")));
-
-    Containers::Optional<Trade::MeshData> mesh = importer->mesh("Attribute-less mesh");
-    CORRADE_VERIFY(mesh);
-    CORRADE_COMPARE(mesh->primitive(), MeshPrimitive::Triangles);
-    CORRADE_VERIFY(!mesh->isIndexed());
-    CORRADE_COMPARE(mesh->vertexCount(), 0);
-    CORRADE_COMPARE(mesh->attributeCount(), 0);
-}
-
-void GltfImporterTest::meshNoIndicesNoVerticesNoBufferUri() {
-    auto&& data = SingleFileData[testCaseInstanceId()];
+    auto&& data = MeshNoAttributesData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
+
+    if(data.strict)
+        importer->configuration().setValue("strict", *data.strict);
+
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "mesh.gltf")));
+
+    Containers::Optional<Trade::MeshData> mesh;
+    std::ostringstream out;
+    {
+        Error redirectError{&out};
+        mesh = importer->mesh("Attribute-less mesh");
+    }
+
+    CORRADE_COMPARE(!!mesh, !data.strict || !*data.strict); CORRADE_COMPARE(out.str(), data.message);
+
+    if(mesh) {
+        CORRADE_COMPARE(mesh->primitive(), MeshPrimitive::Triangles);
+        CORRADE_VERIFY(!mesh->isIndexed());
+        CORRADE_COMPARE(mesh->vertexCount(), 0);
+        CORRADE_COMPARE(mesh->attributeCount(), 0);
+    }
+}
+
+void GltfImporterTest::meshNoIndicesNoVerticesNoBufferUri() {
+    auto&& data = MeshNoVerticesData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
+
+    if(data.strict)
+        importer->configuration().setValue("strict", *data.strict);
+
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "mesh-no-indices-no-vertices-no-buffer-uri"_s + data.suffix)));
 
-    Containers::Optional<Trade::MeshData> mesh = importer->mesh(0);
-    CORRADE_VERIFY(mesh);
-    CORRADE_COMPARE(mesh->primitive(), MeshPrimitive::Triangles);
-    CORRADE_VERIFY(!mesh->isIndexed());
-    CORRADE_COMPARE(mesh->vertexCount(), 0);
-    CORRADE_COMPARE(mesh->attributeCount(), 1);
-    CORRADE_VERIFY(mesh->hasAttribute(MeshAttribute::Position));
-    CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::Position), VertexFormat::Vector3);
+    Containers::Optional<Trade::MeshData> mesh;
+    std::ostringstream out;
+    {
+        Error redirectError{&out};
+        mesh = importer->mesh(0);
+    }
+
+    CORRADE_COMPARE(!!mesh, !data.strict || !*data.strict); CORRADE_COMPARE(out.str(), data.message);
+
+    if(mesh) {
+        CORRADE_COMPARE(mesh->primitive(), MeshPrimitive::Triangles);
+        CORRADE_VERIFY(!mesh->isIndexed());
+        CORRADE_COMPARE(mesh->vertexCount(), 0);
+        CORRADE_COMPARE(mesh->attributeCount(), 1);
+        CORRADE_VERIFY(mesh->hasAttribute(MeshAttribute::Position));
+        CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::Position), VertexFormat::Vector3);
+    }
 }
 
 void GltfImporterTest::meshColors() {
@@ -3908,6 +3993,51 @@ void GltfImporterTest::meshMultiplePrimitives() {
     CORRADE_COMPARE_AS(scene->field<Int>(SceneField::MeshMaterial), Containers::arrayView<Int>({
         1, 2, 0, 3, 1, 2, 0, -1, 1
     }), TestSuite::Compare::Container);
+}
+
+void GltfImporterTest::meshUnsignedIntVertexFormats() {
+    auto&& data = MeshUnsignedIntVertexFormatsData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
+
+    if(data.strict)
+        importer->configuration().setValue("strict", *data.strict);
+
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "mesh-unsigned-int-vertex-formats.gltf")));
+    CORRADE_COMPARE(importer->meshCount(), 2);
+
+    Containers::Optional<Trade::MeshData> mesh0;
+    Containers::Optional<Trade::MeshData> mesh1;
+    std::ostringstream out;
+    {
+        Error redirectError{&out};
+        mesh0 = importer->mesh(0);
+        mesh1 = importer->mesh(1);
+    }
+
+    CORRADE_COMPARE(!!mesh0, !data.strict || !*data.strict);
+    CORRADE_COMPARE(!!mesh1, !data.strict || !*data.strict);
+    CORRADE_COMPARE(out.str(), data.message);
+
+    if(mesh0) {
+        CORRADE_COMPARE(mesh0->attributeCount(), 1);
+        CORRADE_VERIFY(isMeshAttributeCustom(mesh0->attributeName(0)));
+        CORRADE_COMPARE(importer->meshAttributeName(mesh0->attributeName(0)), "_OFFSET");
+        CORRADE_COMPARE(mesh0->attributeFormat(0), VertexFormat::Vector2ui);
+        CORRADE_COMPARE_AS(mesh0->attribute<Vector2ui>(0), Containers::arrayView({
+            Vector2ui{0xaaaaaaaau, 0xbbbbbbbbu}
+        }), TestSuite::Compare::Container);
+    }
+
+    if(mesh1) {
+        CORRADE_COMPARE(mesh1->attributeCount(), 1);
+        CORRADE_COMPARE(mesh1->attributeName(0), MeshAttribute::ObjectId);
+        CORRADE_COMPARE(mesh1->attributeFormat(0), VertexFormat::UnsignedInt);
+        CORRADE_COMPARE_AS(mesh1->attribute<UnsignedInt>(0), Containers::arrayView({
+            0xccccccccu
+        }), TestSuite::Compare::Container);
+    }
 }
 
 void GltfImporterTest::meshPrimitivesTypes() {
