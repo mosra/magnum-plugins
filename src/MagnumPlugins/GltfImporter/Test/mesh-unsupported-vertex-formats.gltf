@@ -1,0 +1,95 @@
+{
+  "asset": {
+    "version": "2.0"
+  },
+  "note": "each mesh has a valid POSITION attribute to verify the actually correct attributes aren't skipped or broken in some way",
+  "meshes": [
+    {
+      "primitives": [
+        {
+          "attributes": {
+            "COLOR_3": 0,
+            "POSITION": 1
+          },
+          "mode": 0
+        }
+      ]
+    },
+    {
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 1,
+            "_OBJECT_ID": 2
+          },
+          "mode": 0
+        }
+      ]
+    },
+    {
+      "primitives": [
+        {
+          "attributes": {
+            "JOINTS_7": 3,
+            "POSITION": 1
+          },
+          "mode": 0
+        }
+      ]
+    }
+  ],
+  "accessors": [
+    {
+      "bufferView": 0,
+      "componentType": 5123,
+      "count": 1,
+      "type": "VEC4"
+    },
+    {
+      "bufferView": 1,
+      "componentType": 5126,
+      "count": 1,
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 2,
+      "componentType": 5122,
+      "count": 1,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 3,
+      "componentType": 5121,
+      "count": 1,
+      "type": "VEC3"
+    }
+  ],
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteOffset": 0,
+      "byteLength": 8
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 8,
+      "byteLength": 12
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 20,
+      "byteLength": 2
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 22,
+      "byteLength": 3
+    }
+  ],
+  "buffers": [
+    {
+      "byteLength": 25,
+      "uri": "mesh-unsupported-vertex-formats.bin"
+    }
+  ]
+}

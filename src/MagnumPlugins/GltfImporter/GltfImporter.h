@@ -266,6 +266,13 @@ Import of morph data is not supported at the moment.
     name, use the @cb{.ini} objectIdAttribute @ce
     @ref Trade-GltfImporter-configuration "configuration option" to change
     the identifier that's being looked for.
+-   If a builtin attribute doesn't match the above-specified types, a message
+    is printed to @relativeref{Magnum,Warning} and it's imported as a custom
+    attribute instead, with its name available through
+    @ref meshAttributeName(). Such attributes are an invalid glTF but this
+    allows the application to import them and fix in a postprocessing step.
+    Enable the @cb{.ini} strict @ce @ref Trade-GltfImporter-configuration "configuration option"
+    to fail the import in such cases instead.
 -   Multi-primitive meshes are split into individual meshes, nodes that
     reference a multi-primitive mesh have multiple @ref SceneField::Mesh
     (and @ref SceneField::MeshMaterial) entries in the imported @ref SceneData.

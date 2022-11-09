@@ -1220,21 +1220,21 @@ void GltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags da
                     Debug{} << "Trade::GltfImporter::openData(): file contains non-normalized texture coordinates, implicitly enabling textureCoordinateYFlipInMaterial";
                     _d->textureCoordinateYFlipInMaterial = true;
                 }
-
-            /* If the name isn't recognized, add the attribute to custom if not
-               there already */
-            } else if(!isBuiltinMeshAttribute(configuration(), gltfAttribute.key())) {
-                /* The spec says that all user-defined attributes must
-                   start with an underscore. We don't really care and just
-                   print a warning. */
-                if(!gltfAttribute.key().hasPrefix("_"_s))
-                    Warning{} << "Trade::GltfImporter::openData(): unknown attribute" << gltfAttribute.key() << Debug::nospace << ", importing as custom attribute";
-
-                if(_d->meshAttributesForName.emplace(gltfAttribute.key(),
-                    meshAttributeCustom(_d->meshAttributeNames.size())).second
-                )
-                    arrayAppend(_d->meshAttributeNames, gltfAttribute.key());
             }
+
+            /* Add the attribute to custom if not there already. Do it for all
+               builtin attributes as well, as those may still get imported as
+               custom if they have a strange vertex format. */
+            if(_d->meshAttributesForName.emplace(gltfAttribute.key(),
+                meshAttributeCustom(_d->meshAttributeNames.size())).second
+            )
+                arrayAppend(_d->meshAttributeNames, gltfAttribute.key());
+
+            /* The spec says that all user-defined attributes must start with
+               an underscore. We don't really care and just print a warning. */
+            /** @todo make this fail if strict mode is enabled? */
+            if(!isBuiltinMeshAttribute(configuration(), gltfAttribute.key()) && !gltfAttribute.key().hasPrefix("_"_s))
+                Warning{} << "Trade::GltfImporter::openData(): unknown attribute" << gltfAttribute.key() << Debug::nospace << ", importing as custom attribute";
         }
     }
 
@@ -3071,8 +3071,10 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
             name = _d->meshAttributesForName.at(attribute.first());
         }
 
+        /* A type that's not valid for given builtin attribute */
         if(name == MeshAttribute{}) {
-            Error e;
+            /* Print either an error or a warning */
+            Debug e = configuration().value<bool>("strict") ? static_cast<Debug&&>(Error{}) : static_cast<Debug&&>(Warning{});
             e << "Trade::GltfImporter::mesh(): unsupported";
 
             /* If the attribute is meant to be recognized as an object ID,
@@ -3083,7 +3085,18 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
             /* Here the VertexFormat prefix would not be confusing but print it
                without to be consistent with other messages */
             e << attribute.first() << "format" << Debug::packed << accessor->second();
-            return {};
+
+            /* In strict mode this is a failure. Otherwise we import it as a
+               custom attribute. The meshAttributesForName contains all
+               attribute names found in the file, including the builtin
+               ones. */
+            if(configuration().value<bool>("strict")) {
+                e << Debug::nospace << ", set strict=false to import as a custom atttribute";
+                return {};
+            } else {
+                e << Debug::nospace << ", importing as a custom attribute";
+                name = _d->meshAttributesForName.at(attribute.first());
+            }
         }
 
         /* Remember which buffer the attribute is in and the range, for

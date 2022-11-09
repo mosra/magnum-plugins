@@ -24,171 +24,11 @@
       ]
     },
     {
-      "name": "unexpected position type",
-      "primitives": [
-        {
-          "attributes": {
-            "POSITION": 2
-          }
-        }
-      ]
-    },
-    {
-      "name": "unsupported position component type",
-      "primitives": [
-        {
-          "attributes": {
-            "POSITION": 3
-          }
-        }
-      ]
-    },
-    {
-      "name": "unexpected normal type",
-      "primitives": [
-        {
-          "attributes": {
-            "NORMAL": 2
-          }
-        }
-      ]
-    },
-    {
-      "name": "unsupported normal component type",
-      "primitives": [
-        {
-          "attributes": {
-            "NORMAL": 3
-          }
-        }
-      ]
-    },
-    {
-      "name": "unexpected tangent type",
-      "primitives": [
-        {
-          "attributes": {
-            "TANGENT": 0
-          }
-        }
-      ]
-    },
-    {
-      "name": "unsupported tangent component type",
-      "primitives": [
-        {
-          "attributes": {
-            "TANGENT": 5
-          }
-        }
-      ]
-    },
-    {
-      "name": "unexpected texcoord type",
-      "primitives": [
-        {
-          "attributes": {
-            "TEXCOORD_0": 3
-          }
-        }
-      ]
-    },
-    {
-      "name": "unsupported texcoord component type",
-      "primitives": [
-        {
-          "attributes": {
-            "TEXCOORD_0": 4
-          }
-        }
-      ]
-    },
-    {
-      "name": "unexpected color type",
-      "primitives": [
-        {
-          "attributes": {
-            "COLOR_0": 1
-          }
-        }
-      ]
-    },
-    {
-      "name": "unsupported color component type",
-      "primitives": [
-        {
-          "attributes": {
-            "COLOR_0": 5
-          }
-        }
-      ]
-    },
-    {
-      "name": "unexpected joints type",
-      "primitives": [
-        {
-          "attributes": {
-            "JOINTS_0": 0
-          }
-        }
-      ]
-    },
-    {
-      "name": "unsupported joints component type",
-      "primitives": [
-        {
-          "attributes": {
-            "JOINTS_0": 5
-          }
-        }
-      ]
-    },
-    {
-      "name": "unexpected weights type",
-      "primitives": [
-        {
-          "attributes": {
-            "WEIGHTS_0": 7
-          }
-        }
-      ]
-    },
-    {
-      "name": "unsupported weights component type",
-      "primitives": [
-        {
-          "attributes": {
-            "WEIGHTS_0": 5
-          }
-        }
-      ]
-    },
-    {
-      "name": "unexpected object id type",
-      "primitives": [
-        {
-          "attributes": {
-            "_OBJECT_ID": 6
-          }
-        }
-      ]
-    },
-    {
-      "name": "unsupported object id component type",
-      "primitives": [
-        {
-          "attributes": {
-            "_OBJECT_ID": 7
-          }
-        }
-      ]
-    },
-    {
       "name": "unexpected index type",
       "primitives": [
         {
           "attributes": {},
-          "indices": 6
+          "indices": 2
         }
       ]
     },
@@ -197,7 +37,7 @@
       "primitives": [
         {
           "attributes": {},
-          "indices": 7
+          "indices": 3
         }
       ]
     },
@@ -206,7 +46,7 @@
       "primitives": [
         {
           "attributes": {},
-          "indices": 8
+          "indices": 4
         }
       ]
     },
@@ -215,7 +55,7 @@
       "primitives": [
         {
           "attributes": {},
-          "indices": 9
+          "indices": 5
         }
       ]
     },
@@ -224,7 +64,7 @@
       "primitives": [
         {
           "attributes": {
-            "COLOR_0": 10
+            "COLOR_0": 6
           }
         }
       ]
@@ -234,7 +74,7 @@
       "primitives": [
         {
           "attributes": {
-            "_THING": 11
+            "_THING": 7
           }
         }
       ]
@@ -244,7 +84,7 @@
       "primitives": [
         {
           "attributes": {
-            "_THING": 12
+            "_THING": 8
           }
         }
       ]
@@ -254,7 +94,7 @@
       "primitives": [
         {
           "attributes": {
-            "_THING": 13
+            "_THING": 9
           }
         }
       ]
@@ -264,7 +104,7 @@
       "primitives": [
         {
           "attributes": {
-            "_THING": 22
+            "_THING": 18
           }
         }
       ]
@@ -274,7 +114,7 @@
       "primitives": [
         {
           "attributes": {
-            "_THING": 23
+            "_THING": 19
           }
         }
       ]
@@ -284,7 +124,7 @@
       "primitives": [
         {
           "attributes": {
-            "POSITION": 14
+            "POSITION": 10
           }
         }
       ]
@@ -295,7 +135,7 @@
         {
           "attributes": {
             "POSITION": 0,
-            "TEXCOORD_0": 16
+            "TEXCOORD_0": 12
           }
         }
       ]
@@ -305,7 +145,7 @@
       "primitives": [
         {
           "attributes": {},
-          "indices": 17
+          "indices": 13
         }
       ]
     },
@@ -314,7 +154,7 @@
       "primitives": [
         {
           "attributes": {
-            "POSITION": 18
+            "POSITION": 14
           }
         }
       ]
@@ -324,7 +164,7 @@
       "primitives": [
         {
           "attributes": {},
-          "indices": 19
+          "indices": 15
         }
       ]
     },
@@ -333,7 +173,7 @@
       "primitives": [
         {
           "attributes": {
-            "POSITION": 20
+            "POSITION": 16
           }
         }
       ]
@@ -343,7 +183,7 @@
       "primitives": [
         {
           "attributes": {
-            "POSITION": 21
+            "POSITION": 17
           }
         }
       ]
@@ -353,7 +193,7 @@
       "primitives": [
         {
           "attributes": {
-            "NORMAL": 44
+            "NORMAL": 40
           }
         }
       ]
@@ -363,7 +203,7 @@
       "primitives": [
         {
           "attributes": {},
-          "indices": 44
+          "indices": 40
         }
       ]
     },
@@ -372,7 +212,7 @@
       "primitives": [
         {
           "attributes": {
-            "POSITION": 24
+            "POSITION": 20
           }
         }
       ]
@@ -382,7 +222,7 @@
       "primitives": [
         {
           "attributes": {
-            "POSITION": 25
+            "POSITION": 21
           }
         }
       ]
@@ -392,7 +232,7 @@
       "primitives": [
         {
           "attributes": {
-            "POSITION": 43
+            "POSITION": 39
           }
         }
       ]
@@ -402,7 +242,7 @@
       "primitives": [
         {
           "attributes": {
-            "POSITION": 26
+            "POSITION": 22
           }
         }
       ]
@@ -412,7 +252,7 @@
       "primitives": [
         {
           "attributes": {
-            "POSITION": 27
+            "POSITION": 23
           }
         }
       ]
@@ -422,7 +262,7 @@
       "primitives": [
         {
           "attributes": {
-            "POSITION": 28
+            "POSITION": 24
           }
         }
       ]
@@ -432,7 +272,7 @@
       "primitives": [
         {
           "attributes": {
-            "POSITION": 29
+            "POSITION": 25
           }
         }
       ]
@@ -442,7 +282,7 @@
       "primitives": [
         {
           "attributes": {
-            "POSITION": 30
+            "POSITION": 26
           }
         }
       ]
@@ -452,7 +292,7 @@
       "primitives": [
         {
           "attributes": {
-            "POSITION": 31
+            "POSITION": 27
           }
         }
       ]
@@ -462,7 +302,7 @@
       "primitives": [
         {
           "attributes": {
-            "POSITION": 32
+            "POSITION": 28
           }
         }
       ]
@@ -472,7 +312,7 @@
       "primitives": [
         {
           "attributes": {
-            "POSITION": 33
+            "POSITION": 29
           }
         }
       ]
@@ -482,7 +322,7 @@
       "primitives": [
         {
           "attributes": {
-            "POSITION": 15
+            "POSITION": 11
           }
         }
       ]
@@ -492,7 +332,7 @@
       "primitives": [
         {
           "attributes": {
-            "POSITION": 34
+            "POSITION": 30
           }
         }
       ]
@@ -502,7 +342,7 @@
       "primitives": [
         {
           "attributes": {
-            "POSITION": 35
+            "POSITION": 31
           }
         }
       ]
@@ -512,7 +352,7 @@
       "primitives": [
         {
           "attributes": {
-            "POSITION": 36
+            "POSITION": 32
           }
         }
       ]
@@ -522,7 +362,7 @@
       "primitives": [
         {
           "attributes": {
-            "POSITION": 37
+            "POSITION": 33
           }
         }
       ]
@@ -532,7 +372,7 @@
       "primitives": [
         {
           "attributes": {
-            "POSITION": 38
+            "POSITION": 34
           }
         }
       ]
@@ -542,7 +382,7 @@
       "primitives": [
         {
           "attributes": {
-            "POSITION": 39
+            "POSITION": 35
           }
         }
       ]
@@ -552,7 +392,7 @@
       "primitives": [
         {
           "attributes": {
-            "POSITION": 40
+            "POSITION": 36
           }
         }
       ]
@@ -562,7 +402,7 @@
       "primitives": [
         {
           "attributes": {
-            "POSITION": 41
+            "POSITION": 37
           }
         }
       ]
@@ -572,7 +412,7 @@
       "primitives": [
         {
           "attributes": {
-            "POSITION": 42
+            "POSITION": 38
           }
         }
       ]
@@ -623,48 +463,20 @@
     },
     {
       "name": "2",
-      "bufferView": 0,
-      "componentType": 5126,
+      "bufferView": 1,
+      "componentType": 5125,
       "count": 3,
       "type": "VEC2"
     },
     {
       "name": "3",
       "bufferView": 1,
-      "componentType": 5125,
-      "count": 1,
-      "type": "VEC3"
-    },
-    {
-      "name": "4",
-      "bufferView": 0,
-      "componentType": 5125,
-      "count": 3,
-      "type": "VEC2"
-    },
-    {
-      "name": "5",
-      "bufferView": 0,
-      "componentType": 5120,
-      "count": 3,
-      "type": "VEC4"
-    },
-    {
-      "name": "6",
-      "bufferView": 1,
-      "componentType": 5125,
-      "count": 3,
-      "type": "VEC2"
-    },
-    {
-      "name": "7",
-      "bufferView": 1,
       "componentType": 5122,
       "count": 3,
       "type": "SCALAR"
     },
     {
-      "name": "8",
+      "name": "4",
       "bufferView": 1,
       "componentType": 5125,
       "normalized": true,
@@ -672,21 +484,21 @@
       "type": "SCALAR"
     },
     {
-      "name": "9",
+      "name": "5",
       "bufferView": 0,
       "componentType": 5125,
       "count": 3,
       "type": "SCALAR"
     },
     {
-      "name": "10",
+      "name": "6",
       "bufferView": 0,
       "componentType": 5126,
       "count": 2,
       "type": "VEC4"
     },
     {
-      "name": "11",
+      "name": "7",
       "bufferView": 0,
       "componentType": 5126,
       "normalized": true,
@@ -694,7 +506,7 @@
       "type": "SCALAR"
     },
     {
-      "name": "12",
+      "name": "8",
       "bufferView": 0,
       "componentType": 5125,
       "normalized": true,
@@ -702,7 +514,7 @@
       "type": "SCALAR"
     },
     {
-      "name": "13",
+      "name": "9",
       "bufferView": 1,
       "componentType": 5120,
       "normalized": false,
@@ -710,7 +522,7 @@
       "type": "MAT2"
     },
     {
-      "name": "14",
+      "name": "10",
       "bufferView": 0,
       "componentType": 5126,
       "count": 1,
@@ -727,146 +539,146 @@
       }
     },
     {
-      "name": "15",
+      "name": "11",
       "componentType": 5126,
       "count": 1,
       "type": "VEC3"
     },
     {
-      "name": "16",
+      "name": "12",
       "bufferView": 2,
       "componentType": 5126,
       "count": 3,
       "type": "VEC2"
     },
     {
-      "name": "17",
+      "name": "13",
       "bufferView": 0,
       "componentType": 5125,
       "count": 4,
       "type": "SCALAR"
     },
     {
-      "name": "18",
+      "name": "14",
       "bufferView": 0,
       "componentType": 5126,
       "count": 4,
       "type": "VEC3"
     },
     {
-      "name": "19",
+      "name": "15",
       "bufferView": 3,
       "componentType": 5126,
       "count": 3,
       "type": "VEC3"
     },
     {
-      "name": "20",
+      "name": "16",
       "bufferView": 4,
       "componentType": 5126,
       "count": 3,
       "type": "VEC3"
     },
     {
-      "name": "21",
+      "name": "17",
       "bufferView": 16,
       "componentType": 5126,
       "count": 9,
       "type": "VEC3"
     },
     {
-      "name": "22",
+      "name": "18",
       "bufferView": 0,
       "componentType": 5126,
       "count": 0,
       "type": "EEE"
     },
     {
-      "name": "23",
+      "name": "19",
       "bufferView": 0,
       "componentType": 9999,
       "count": 0,
       "type": "SCALAR"
     },
     {
-      "name": "24",
+      "name": "20",
       "bufferView": 5,
       "componentType": 5126,
       "count": 0,
       "type": "VEC3"
     },
     {
-      "name": "25",
+      "name": "21",
       "bufferView": 6,
       "componentType": 5126,
       "count": 0,
       "type": "VEC3"
     },
     {
-      "name": "26",
+      "name": "22",
       "bufferView": 7,
       "componentType": 5126,
       "count": 0,
       "type": "VEC3"
     },
     {
-      "name": "27",
+      "name": "23",
       "bufferView": 8,
       "componentType": 5126,
       "count": 0,
       "type": "VEC3"
     },
     {
-      "name": "28",
+      "name": "24",
       "bufferView": 9,
       "componentType": 5126,
       "count": 0,
       "type": "VEC3"
     },
     {
-      "name": "29",
+      "name": "25",
       "bufferView": 10,
       "componentType": 5126,
       "count": 0,
       "type": "VEC3"
     },
     {
-      "name": "30",
+      "name": "26",
       "bufferView": 11,
       "componentType": 5126,
       "count": 0,
       "type": "VEC3"
     },
     {
-      "name": "31",
+      "name": "27",
       "bufferView": 12,
       "componentType": 5126,
       "count": 0,
       "type": "VEC3"
     },
     {
-      "name": "32",
+      "name": "28",
       "bufferView": 13,
       "componentType": 5126,
       "count": 0,
       "type": "VEC3"
     },
     {
-      "name": "33",
+      "name": "29",
       "bufferView": 14,
       "componentType": 5126,
       "count": 0,
       "type": "VEC3"
     },
     {
-      "name": "34",
+      "name": "30",
       "bufferView": -1,
       "componentType": 5126,
       "count": 0,
       "type": "VEC3"
     },
     {
-      "name": "35",
+      "name": "31",
       "bufferView": 0,
       "byteOffset": -1,
       "componentType": 5126,
@@ -874,46 +686,46 @@
       "type": "VEC3"
     },
     {
-      "name": "36",
+      "name": "32",
       "bufferView": 0,
       "count": 0,
       "type": "VEC3"
     },
     {
-      "name": "37",
+      "name": "33",
       "bufferView": 0,
       "componentType": -1,
       "count": 0,
       "type": "VEC3"
     },
     {
-      "name": "38",
+      "name": "34",
       "bufferView": 0,
       "componentType": 5126,
       "type": "VEC3"
     },
     {
-      "name": "39",
+      "name": "35",
       "bufferView": 0,
       "componentType": 5126,
       "count": -1,
       "type": "VEC3"
     },
     {
-      "name": "40",
+      "name": "36",
       "bufferView": 0,
       "componentType": 5126,
       "count": 0
     },
     {
-      "name": "41",
+      "name": "37",
       "bufferView": 0,
       "componentType": 5126,
       "count": 0,
       "type": 3034
     },
     {
-      "name": "42",
+      "name": "38",
       "bufferView": 0,
       "componentType": 5126,
       "count": 0,
@@ -921,7 +733,7 @@
       "normalized": null
     },
     {
-      "name": "43",
+      "name": "39",
       "bufferView": 15,
       "componentType": 5126,
       "count": 0,

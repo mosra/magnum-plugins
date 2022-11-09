@@ -174,6 +174,8 @@ corrade_add_test(GltfImporterTest
         mesh-unordered-attributes.gltf
         mesh-unsigned-int-vertex-formats.gltf
         mesh-unsigned-int-vertex-formats.bin
+        mesh-unsupported-vertex-formats.gltf
+        mesh-unsupported-vertex-formats.bin
         přívodní-šňůra.gltf
         přívodní-šňůra.bin
         přívodní-šňůra.png
