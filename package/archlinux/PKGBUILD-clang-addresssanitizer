@@ -79,5 +79,3 @@ package() {
     cd "$_rootdir/build-clang-addresssanitizer"
     DESTDIR="$pkgdir/" ninja install
 }
-
-# kate: hl bash
