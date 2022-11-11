@@ -60,7 +60,7 @@ if(MAGNUM_STBRESIZEIMAGECONVERTER_BUILD_STATIC)
 endif()
 
 if(MAGNUM_BUILD_TESTS)
-    add_subdirectory(Test)
+    add_subdirectory(Test ${EXCLUDE_FROM_ALL_IF_TEST_TARGET})
 endif()
 
 # MagnumPlugins StbResizeImageConverter target alias for superprojects

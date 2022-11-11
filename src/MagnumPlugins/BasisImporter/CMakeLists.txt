@@ -86,7 +86,7 @@ if(MAGNUM_BASISIMPORTER_BUILD_STATIC)
 endif()
 
 if(MAGNUM_BUILD_TESTS)
-    add_subdirectory(Test)
+    add_subdirectory(Test ${EXCLUDE_FROM_ALL_IF_TEST_TARGET})
 endif()
 
 # MagnumPlugins BasisImporter target alias for superprojects

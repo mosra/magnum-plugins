@@ -46,19 +46,28 @@ if(CORRADE_TARGET_EMSCRIPTEN AND NOT TARGET_GLES2)
 endif()
 
 if(MAGNUM_WITH_BASISIMPORTER)
-    add_library(snippets-BasisImporter STATIC
+    add_library(snippets-BasisImporter STATIC ${EXCLUDE_FROM_ALL_IF_TEST_TARGET}
         BasisImporter.cpp)
     target_link_libraries(snippets-BasisImporter PRIVATE Magnum::Trade)
+    if(CORRADE_TESTSUITE_TEST_TARGET)
+        add_dependencies(${CORRADE_TESTSUITE_TEST_TARGET} snippets-BasisImporter)
+    endif()
 endif()
 
 if(MAGNUM_WITH_GLTFIMPORTER)
-    add_library(snippets-GltfImporter STATIC
+    add_library(snippets-GltfImporter STATIC ${EXCLUDE_FROM_ALL_IF_TEST_TARGET}
         GltfImporter.cpp)
     target_link_libraries(snippets-GltfImporter PRIVATE Magnum::Trade)
+    if(CORRADE_TESTSUITE_TEST_TARGET)
+        add_dependencies(${CORRADE_TESTSUITE_TEST_TARGET} snippets-GltfImporter)
+    endif()
 endif()
 
 if(MAGNUM_WITH_STBIMAGEIMPORTER)
-    add_library(snippets-StbImageImporter STATIC
+    add_library(snippets-StbImageImporter STATIC ${EXCLUDE_FROM_ALL_IF_TEST_TARGET}
         StbImageImporter.cpp)
     target_link_libraries(snippets-StbImageImporter PRIVATE Magnum::Trade)
+    if(CORRADE_TESTSUITE_TEST_TARGET)
+        add_dependencies(${CORRADE_TESTSUITE_TEST_TARGET} snippets-StbImageImporter)
+    endif()
 endif()

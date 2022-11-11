@@ -87,7 +87,7 @@ if(MAGNUM_TINYGLTFIMPORTER_BUILD_STATIC)
 endif()
 
 if(MAGNUM_BUILD_TESTS)
-    add_subdirectory(Test)
+    add_subdirectory(Test ${EXCLUDE_FROM_ALL_IF_TEST_TARGET})
 endif()
 
 # MagnumPlugins TinyGltfImporter target alias for superprojects

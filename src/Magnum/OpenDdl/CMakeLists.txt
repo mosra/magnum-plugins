@@ -85,7 +85,7 @@ install(FILES ${MagnumOpenDdl_HEADERS} DESTINATION ${MAGNUM_INCLUDE_INSTALL_DIR}
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/configure.h DESTINATION ${MAGNUM_INCLUDE_INSTALL_DIR}/OpenDdl)
 
 if(MAGNUM_BUILD_TESTS)
-    add_subdirectory(Test)
+    add_subdirectory(Test ${EXCLUDE_FROM_ALL_IF_TEST_TARGET})
 endif()
 
 # MagnumPlugins OpenDdl target alias for superprojects
