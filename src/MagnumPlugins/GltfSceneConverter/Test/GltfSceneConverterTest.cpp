@@ -3713,7 +3713,7 @@ void GltfSceneConverterTest::textureCoordinateYFlip() {
 
     /* Transformed texture coordinates should be the same regardless of the
        setting */
-    if(Containers::Optional<Matrix3> matrix = material->tryAttribute<Matrix3>(MaterialAttribute::BaseColorTextureMatrix))
+    if(Containers::Optional<Matrix3> matrix = material->findAttribute<Matrix3>(MaterialAttribute::BaseColorTextureMatrix))
         MeshTools::transformPointsInPlace(*matrix, texCoords);
     CORRADE_COMPARE_AS(texCoords, Containers::arrayView<Vector2>({
         {1.0f, 0.5f},

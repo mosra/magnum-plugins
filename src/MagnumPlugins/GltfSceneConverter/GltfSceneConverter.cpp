@@ -1620,7 +1620,7 @@ bool GltfSceneConverter::doAdd(UnsignedInt, const MaterialData& material, const 
            0. */
         CORRADE_INTERNAL_ASSERT(textureCount() + 1 == _state->textureIdOffsets.size());
         const Containers::String layerAttributeName = materialAttributeName(attribute) + "Layer"_s;
-        if(const Containers::Optional<UnsignedInt> layer = material.tryAttribute<UnsignedInt>(layerAttributeName)) {
+        if(const Containers::Optional<UnsignedInt> layer = material.findAttribute<UnsignedInt>(layerAttributeName)) {
             const UnsignedInt textureLayerCount = _state->textureIdOffsets[index + 1] - _state->textureIdOffsets[index];
             if(*layer >= textureLayerCount) {
                 Error{} << "Trade::GltfSceneConverter::add(): material attribute" << layerAttributeName << "value" << *layer << "out of range for" << textureLayerCount << "layers in texture" << index;
