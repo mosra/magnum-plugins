@@ -219,7 +219,7 @@ importer-specific data accessors:
 -   Calling @ref importerState() returns pointer to parsed @ref OpenDdl::Document
 -   Calling `*::importerState()` on data class instances returned from this
     importer return pointer to @ref OpenDdl::Structure of these types:
-    -   @ref AbstractMaterialData::importerState() returns @ref OpenGex::Material
+    -   @ref MaterialData::importerState() returns @ref OpenGex::Material
         structure
     -   @ref CameraData::importerState() returns @ref OpenGex::CameraObject
         structure
@@ -227,9 +227,10 @@ importer-specific data accessors:
         structure
     -   @ref MeshData::importerState() returns @ref OpenGex::GeometryObject
         structure
-    -   @ref ObjectData3D::importerState() returns @ref OpenGex::Node,
-        @ref OpenGex::BoneNode, @ref OpenGex::GeometryNode,
-        @ref OpenGex::CameraNode or @ref OpenGex::LightNode structure
+    -   @ref SceneData objects have a @ref SceneField::ImporterState returning
+        an @ref OpenGex::Node, @ref OpenGex::BoneNode,
+        @ref OpenGex::GeometryNode, @ref OpenGex::CameraNode or
+        @ref OpenGex::LightNode structure
 */
 class MAGNUM_OPENGEXIMPORTER_EXPORT OpenGexImporter: public AbstractImporter {
     public:
