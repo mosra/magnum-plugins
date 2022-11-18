@@ -209,6 +209,10 @@ if(MAGNUM_BUILD_DEPRECATED AND MAGNUM_WITH_TINYGLTFIMPORTER)
     add_subdirectory(TinyGltfImporter)
 endif()
 
+if(MAGNUM_WITH_UFBXIMPORTER)
+    add_subdirectory(UfbxImporter)
+endif()
+
 if(MAGNUM_WITH_WEBPIMPORTER)
     add_subdirectory(WebPImporter)
 endif()
