@@ -165,6 +165,7 @@ option(MAGNUM_WITH_STLIMPORTER "Build StlImporter plugin" OFF)
 if(MAGNUM_BUILD_DEPRECATED)
     option(MAGNUM_WITH_TINYGLTFIMPORTER "Build TinyGltfImporter plugin" OFF)
 endif()
+option(MAGNUM_WITH_UFBXIMPORTER "Build UfbxImporter plugin" OFF)
 option(MAGNUM_WITH_WEBPIMPORTER "Build WebPImporter plugin" OFF)
 
 option(MAGNUM_BUILD_TESTS "Build unit tests" OFF)
