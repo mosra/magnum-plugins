@@ -332,7 +332,7 @@ Containers::Array<char> readDataFormatDescriptor(Containers::ArrayView<const cha
     const UnsignedInt offset = Utility::Endianness::littleEndian(header.dfdByteOffset);
     const UnsignedInt length = Utility::Endianness::littleEndian(header.dfdByteLength);
     Containers::Array<char> data{ValueInit, length};
-    Utility::copy(fileData.exceptPrefix(offset).prefix(length), data);
+    Utility::copy(fileData.sliceSize(offset, length), data);
 
     return data;
 }
@@ -344,7 +344,7 @@ Containers::String readKeyValueData(Containers::ArrayView<const char> fileData) 
     const UnsignedInt offset = Utility::Endianness::littleEndian(header.kvdByteOffset);
     const UnsignedInt length = Utility::Endianness::littleEndian(header.kvdByteLength);
     Containers::String data{ValueInit, length};
-    Utility::copy(fileData.exceptPrefix(offset).prefix(length), data);
+    Utility::copy(fileData.sliceSize(offset, length), data);
 
     return data;
 }
@@ -447,7 +447,7 @@ KtxImageConverterTest::KtxImageConverterTest() {
         const UnsignedInt size = *reinterpret_cast<UnsignedInt*>(dfdData.data() + offset);
         CORRADE_INTERNAL_ASSERT(size > 0);
         CORRADE_INTERNAL_ASSERT(size%4 == 0);
-        dfdMap.emplace(format, dfdData.exceptPrefix(offset).prefix(size));
+        dfdMap.emplace(format, dfdData.sliceSize(offset, size));
         offset += size;
     }
     CORRADE_INTERNAL_ASSERT(offset == dfdData.size());

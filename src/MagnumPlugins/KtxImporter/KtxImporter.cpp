@@ -329,7 +329,7 @@ void KtxImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFlags
         /* Print a useful error for a KTX file with an unsupported version.
            KTX1 uses the same magic string but with a different version string. */
         if(identifier.hasPrefix(expected.prefix(Implementation::KtxFileVersionOffset))) {
-            const Containers::StringView version = identifier.exceptPrefix(Implementation::KtxFileVersionOffset).prefix(Implementation::KtxFileVersionLength);
+            const Containers::StringView version = identifier.sliceSize(Implementation::KtxFileVersionOffset, Implementation::KtxFileVersionLength);
             if(version != "20"_s) {
                 Error{} << "Trade::KtxImporter::openData(): unsupported KTX version, expected 20 but got" << version;
                 return;
@@ -555,7 +555,7 @@ void KtxImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFlags
        layers, faces/slices, rows, columns. */
     const std::size_t levelIndexSize = numMipmaps*sizeof(Implementation::KtxLevel);
     const auto levelIndex = Containers::arrayCast<Implementation::KtxLevel>(
-        f->in.exceptPrefix(sizeof(Implementation::KtxHeader)).prefix(levelIndexSize));
+        f->in.sliceSize(sizeof(Implementation::KtxHeader), levelIndexSize));
 
     /* Extract image data views. Only one image with extra dimensions for array
        layers and/or cube map faces, except for 3D array images where it's one
@@ -613,7 +613,7 @@ void KtxImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFlags
 
         for(UnsignedInt image = 0; image != numImages; ++image) {
             const std::size_t offset = level.byteOffset + image*imageLength;
-            f->imageData[image][i] = {levelSize, f->in.exceptPrefix(offset).prefix(imageLength)};
+            f->imageData[image][i] = {levelSize, f->in.sliceSize(offset, imageLength)};
         }
 
         /* Halve each dimension, rounding down */
@@ -639,7 +639,7 @@ void KtxImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFlags
     };
 
     if(header.kvdByteLength > 0) {
-        Containers::ArrayView<const char> keyValueData{f->in.exceptPrefix(header.kvdByteOffset).prefix(header.kvdByteLength)};
+        Containers::ArrayView<const char> keyValueData{f->in.sliceSize(header.kvdByteOffset, header.kvdByteLength)};
         /* Loop through entries, each one consisting of:
 
            UnsignedInt length
@@ -658,7 +658,7 @@ void KtxImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFlags
             current += sizeof(length);
 
             if(current + length <= keyValueData.size()) {
-                const Containers::StringView entry{keyValueData.exceptPrefix(current).prefix(length)};
+                const Containers::StringView entry{keyValueData.sliceSize(current, length)};
                 const Containers::Array3<Containers::StringView> split = entry.partition('\0');
                 const auto key = split[0];
                 const auto value = split[2];

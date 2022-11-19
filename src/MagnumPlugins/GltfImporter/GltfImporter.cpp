@@ -1677,10 +1677,10 @@ Containers::Optional<AnimationData> GltfImporter::doAnimation(UnsignedInt id) {
             /* View on the key data */
             const auto inputDataFound = samplerData.find(sampler.input);
             CORRADE_INTERNAL_ASSERT(inputDataFound != samplerData.end());
-            const auto keys = Containers::arrayCast<Float>(
-                data.exceptPrefix(inputDataFound->second.outputOffset).prefix(
-                    input.first().size()[0]*
-                    input.first().size()[1]));
+            const auto keys = Containers::arrayCast<Float>(data.sliceSize(
+                inputDataFound->second.outputOffset,
+                input.first().size()[0]*
+                input.first().size()[1]));
 
             /* Decide on value properties. Again, the accessor should be
                already parsed from above, so just retrieve its view instead of
@@ -1691,9 +1691,10 @@ Containers::Optional<AnimationData> GltfImporter::doAnimation(UnsignedInt id) {
             Animation::TrackViewStorage<const Float> track;
             const auto outputDataFound = samplerData.find(sampler.output);
             CORRADE_INTERNAL_ASSERT(outputDataFound != samplerData.end());
-            const auto outputData = data.exceptPrefix(outputDataFound->second.outputOffset)
-                .prefix(output.first().size()[0]*
-                        output.first().size()[1]);
+            const auto outputData = data.sliceSize(
+                outputDataFound->second.outputOffset,
+                output.first().size()[0]*
+                output.first().size()[1]);
             UnsignedInt& timeTrackUsed = outputDataFound->second.timeTrack;
 
             const std::size_t valuesPerKey = sampler.interpolation == Animation::Interpolation::Spline ? 3 : 1;

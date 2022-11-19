@@ -710,7 +710,7 @@ template<UnsignedInt dimensions, template<UnsignedInt, typename> class View> Con
                    text output */
                 Error{} << "Trade::KtxImageConverter::convertToData(): invalid character in orientation, expected" <<
                     ValidOrientations[i].prefix(1) << "or" << ValidOrientations[i].exceptPrefix(1) <<
-                    "but got" << Containers::StringView{orientation}.exceptPrefix(i).prefix(1);
+                    "but got" << Containers::StringView{orientation}.sliceSize(i, 1);
                 return {};
             }
         }
@@ -757,9 +757,9 @@ template<UnsignedInt dimensions, template<UnsignedInt, typename> class View> Con
             *reinterpret_cast<UnsignedInt*>(keyValueData.exceptPrefix(kvdOffset).data()) = length;
             Utility::Endianness::littleEndianInPlace(length);
             kvdOffset += sizeof(length);
-            Utility::copy(key, keyValueData.exceptPrefix(kvdOffset).prefix(key.size()));
+            Utility::copy(key, keyValueData.sliceSize(kvdOffset, key.size()));
             kvdOffset += entry.first().size() + 1;
-            Utility::copy(value, keyValueData.exceptPrefix(kvdOffset).prefix(value.size()));
+            Utility::copy(value, keyValueData.sliceSize(kvdOffset, value.size()));
             kvdOffset += entry.second().size() + 1;
             kvdOffset = (kvdOffset + 3)/4*4;
         }
@@ -854,7 +854,7 @@ template<UnsignedInt dimensions, template<UnsignedInt, typename> class View> Con
     for(UnsignedInt i = 0; i != levelIndex.size(); ++i) {
         const Implementation::KtxLevel& level = levelIndex[i];
         const auto& image = imageLevels[i];
-        const auto pixels = data.exceptPrefix(level.byteOffset).prefix(level.byteLength);
+        const auto pixels = data.sliceSize(level.byteOffset, level.byteLength);
         copyPixels(image, pixels);
 
         endianSwap(pixels, header.typeSize);
@@ -864,20 +864,20 @@ template<UnsignedInt dimensions, template<UnsignedInt, typename> class View> Con
             level.uncompressedByteLength);
     }
 
-    Utility::copy(Containers::arrayCast<const char>(levelIndex), data.exceptPrefix(offset).prefix(levelIndexSize));
+    Utility::copy(Containers::arrayCast<const char>(levelIndex), data.sliceSize(offset, levelIndexSize));
     offset += levelIndexSize;
 
     header.dfdByteOffset = offset;
     header.dfdByteLength = dataFormatDescriptor.size();
     offset += header.dfdByteLength;
 
-    Utility::copy(dataFormatDescriptor, data.exceptPrefix(header.dfdByteOffset).prefix(header.dfdByteLength));
+    Utility::copy(dataFormatDescriptor, data.sliceSize(header.dfdByteOffset, header.dfdByteLength));
 
     if(!keyValueData.isEmpty()) {
         header.kvdByteOffset = offset;
         header.kvdByteLength = keyValueData.size();
 
-        Utility::copy(keyValueData, data.exceptPrefix(header.kvdByteOffset).prefix(header.kvdByteLength));
+        Utility::copy(keyValueData, data.sliceSize(header.kvdByteOffset, header.kvdByteLength));
     }
 
     /* Endian-swap once we're done using the header data */

@@ -2146,10 +2146,10 @@ Containers::Optional<AnimationData> AssimpImporter::doAnimation(UnsignedInt id) 
             if(targetTypes & AnimationTrackTargetType::Translation3D) {
                 const size_t keyCount = channel->mNumPositionKeys;
                 const auto keys = Containers::arrayCast<Float>(
-                    data.exceptPrefix(dataOffset).prefix(keyCount*sizeof(Float)));
+                    data.sliceSize(dataOffset, keyCount*sizeof(Float)));
                 dataOffset += keys.size()*sizeof(keys[0]);
                 const auto values = Containers::arrayCast<Vector3>(
-                    data.exceptPrefix(dataOffset).prefix(keyCount*sizeof(Vector3)));
+                    data.sliceSize(dataOffset, keyCount*sizeof(Vector3)));
                 dataOffset += values.size()*sizeof(values[0]);
 
                 for(size_t k = 0; k < channel->mNumPositionKeys; ++k) {
@@ -2172,10 +2172,10 @@ Containers::Optional<AnimationData> AssimpImporter::doAnimation(UnsignedInt id) 
             if(targetTypes & AnimationTrackTargetType::Rotation3D) {
                 const size_t keyCount = channel->mNumRotationKeys;
                 const auto keys = Containers::arrayCast<Float>(
-                    data.exceptPrefix(dataOffset).prefix(keyCount*sizeof(Float)));
+                    data.sliceSize(dataOffset, keyCount*sizeof(Float)));
                 dataOffset += keys.size()*sizeof(keys[0]);
                 const auto values = Containers::arrayCast<Quaternion>(
-                    data.exceptPrefix(dataOffset).prefix(keyCount*sizeof(Quaternion)));
+                    data.sliceSize(dataOffset, keyCount*sizeof(Quaternion)));
                 dataOffset += values.size()*sizeof(values[0]);
 
                 for(size_t k = 0; k < channel->mNumRotationKeys; ++k) {
@@ -2217,10 +2217,10 @@ Containers::Optional<AnimationData> AssimpImporter::doAnimation(UnsignedInt id) 
             if(targetTypes & AnimationTrackTargetType::Scaling3D) {
                 const std::size_t keyCount = channel->mNumScalingKeys;
                 const auto keys = Containers::arrayCast<Float>(
-                    data.exceptPrefix(dataOffset).prefix(keyCount*sizeof(Float)));
+                    data.sliceSize(dataOffset, keyCount*sizeof(Float)));
                 dataOffset += keys.size()*sizeof(keys[0]);
                 const auto values = Containers::arrayCast<Vector3>(
-                    data.exceptPrefix(dataOffset).prefix(keyCount*sizeof(Vector3)));
+                    data.sliceSize(dataOffset, keyCount*sizeof(Vector3)));
                 dataOffset += values.size()*sizeof(values[0]);
 
                 for(std::size_t k = 0; k < channel->mNumScalingKeys; ++k) {

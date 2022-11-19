@@ -154,7 +154,7 @@ Containers::Optional<Containers::Array<char>> StbImageConverter::doConvertToData
     Containers::Array<unsigned char> reversedData{NoInit, image.pixelSize()*image.size().product()};
     std::size_t outputStride = image.pixelSize()*image.size().x();
     for(Int y = 0; y != image.size().y(); ++y) {
-        auto row = inputData.exceptPrefix(y*dataProperties.second.x()).prefix(outputStride);
+        auto row = inputData.sliceSize(y*dataProperties.second.x(), outputStride);
         std::copy(row.begin(), row.end(), reversedData.exceptPrefix((image.size().y() - y - 1)*outputStride).begin());
     }
 
