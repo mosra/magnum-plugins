@@ -231,19 +231,24 @@ struct GltfImporter::Document {
        we need them in three different places and on-demand construction would
        be too annoying to test. */
     std::unordered_map<Containers::StringView, SceneField> sceneFieldsForName;
-    std::unordered_map<Containers::StringView, MeshAttribute>
-        meshAttributesForName{
-         /* Not a builtin MeshAttribute yet, but expected to be used by
-            people until builtin support is added. Wouldn't strictly need to be
-            present if the file has no skinning meshes but having them present
-            in the map always makes the implementation simpler. */
+    std::unordered_map<Containers::StringView, MeshAttribute> meshAttributesForName{
+        #ifdef MAGNUM_BUILD_DEPRECATED
+         /* Added as aliases of MeshAttribute::JointIds and
+            MeshAttribute::Weights for backwards compatibility with code that
+            used skinning even before there was builtin support for it.
+            Wouldn't strictly need to be present if the file has no skinning
+            meshes but having them present in the map always makes the
+            implementation simpler. */
         {"JOINTS"_s, meshAttributeCustom(0)},
         {"WEIGHTS"_s, meshAttributeCustom(1)}
+        #endif
     };
     Containers::Array<Containers::Pair<Containers::StringView, SceneFieldType>> sceneFieldNamesTypes;
     Containers::Array<Containers::StringView> meshAttributeNames{InPlaceInit, {
+        #ifdef MAGNUM_BUILD_DEPRECATED
         "JOINTS"_s,
         "WEIGHTS"_s
+        #endif
     }};
 
     /* Mapping for multi-primitive meshes:
@@ -2998,6 +3003,8 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
     UnsignedInt bufferId = 0;
     UnsignedInt vertexCount = 0;
     std::size_t attributeId = 0;
+    UnsignedInt jointIdAttributeCount = 0;
+    UnsignedInt weightAttributeCount = 0;
     Containers::Pair<Containers::StringView, Int> lastNumberedAttribute;
     Math::Range1D<std::size_t> bufferRange;
     Containers::Array<MeshAttributeData> attributeData{uniqueAttributeCount};
@@ -3045,6 +3052,7 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
            allowed, name stays empty, which produces an error in a single place
            below. */
         MeshAttribute name{};
+        UnsignedShort arraySize = 0;
         if(baseAttributeName == "POSITION"_s) {
             if(accessor->second() == VertexFormat::Vector3 ||
                accessor->second() == VertexFormat::Vector3b ||
@@ -3085,22 +3093,31 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
                accessor->second() == VertexFormat::Vector3usNormalized ||
                accessor->second() == VertexFormat::Vector4usNormalized)
                 name = MeshAttribute::Color;
-        /* Not a builtin MeshAttribute yet, but expected to be used by people
-           until builtin support is added */
+        /* Joints and weights are represented as an array attribute, so the
+           vertex format gets changed to a component format and the component
+           count becomes the array size. */
+        /** @todo consider merging JOINTS_0, JOINTS_1 etc if they follow each
+            other and have the same type */
         } else if(baseAttributeName == "JOINTS"_s) {
             if(accessor->second() == VertexFormat::Vector4ub ||
-               accessor->second() == VertexFormat::Vector4us)
-                /** @todo update once these are builtin, but provide an opt-out
-                    compatibility alias */
-                name = _d->meshAttributesForName.at(baseAttributeName);
+               accessor->second() == VertexFormat::Vector4us) {
+                ++jointIdAttributeCount;
+                name = MeshAttribute::JointIds;
+                arraySize = vertexFormatComponentCount(accessor->second());
+                accessor->second() = vertexFormatComponentFormat(accessor->second());
+            }
         } else if(baseAttributeName == "WEIGHTS"_s) {
             if(accessor->second() == VertexFormat::Vector4 ||
                accessor->second() == VertexFormat::Vector4ubNormalized ||
-               accessor->second() == VertexFormat::Vector4usNormalized)
-                /** @todo update once these are builtin, but provide an opt-out
-                    compatibility alias */
-                name = _d->meshAttributesForName.at(baseAttributeName);
-
+               accessor->second() == VertexFormat::Vector4usNormalized) {
+                ++weightAttributeCount;
+                name = MeshAttribute::Weights;
+                arraySize = vertexFormatComponentCount(accessor->second());
+                /* vertexFormatComponentFormat() strips the normalized bit from
+                   the format, need to go through the full vertexFormat()
+                   composer instead */
+                accessor->second() = vertexFormat(accessor->second(), 1, isVertexFormatNormalized(accessor->second()));
+            }
         /* Object ID, name custom. To avoid confusion, print the error together
            with saying it's an object ID attribute */
         } else if(attribute.first() == configuration().value<Containers::StringView>("objectIdAttribute")) {
@@ -3170,11 +3187,28 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
 
         /* Fill in an attribute. Points to the input data, will be patched to
            the output data once we know where it's allocated. */
-        attributeData[attributeId++] = MeshAttributeData{name, accessor->second(), accessor->first()};
+        attributeData[attributeId++] = MeshAttributeData{name, accessor->second(), accessor->first(), arraySize};
+
+        /* For backwards compatibility insert also a custom "JOINTS" /
+           "WEIGHTS" attribute which is a Vector4<T> instead of T[4] */
+        #ifdef MAGNUM_BUILD_DEPRECATED
+        if((name == MeshAttribute::JointIds || name == MeshAttribute::Weights) && configuration().value<bool>("compatibilitySkinningAttributes")) {
+            arrayInsert(attributeData, attributeId++, InPlaceInit, _d->meshAttributesForName.at(baseAttributeName), vertexFormat(accessor->second(), arraySize, isVertexFormatNormalized(accessor->second())), accessor->first());
+        }
+        #endif
     }
 
     /* Verify we really filled all attributes */
     CORRADE_INTERNAL_ASSERT(attributeId == attributeData.size());
+
+    /* If the deprecated "JOINTS" and "WEIGHTS" attributes were added, the
+       array was turned into a growable one (for simplicity). Convert it back
+       to a regular one to avoid assertions in AbstractImporter due to
+       potentially-dangling deleter pointers */
+    #ifdef MAGNUM_BUILD_DEPRECATED
+    if(configuration().value<bool>("compatibilitySkinningAttributes"))
+        arrayShrink(attributeData, DefaultInit);
+    #endif
 
     /* 3.7.2.1 (Geometry § Meshes § Overview) says "[count] MUST be non-zero",
        but we allow also none unless the strict option is enabled. Not printing
@@ -3182,6 +3216,15 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
        vertex-less MeshData just fine. */
     if(!vertexCount && configuration().value<bool>("strict")) {
         Error{} << "Trade::GltfImporter::mesh(): strict mode enabled, disallowing a mesh with no vertices";
+        return {};
+    }
+
+    /* 3.7.3.3 (Geometry § Skins § Skinned mesh attributes) says "For a given
+       primitive, the number of JOINTS_n attribute sets MUST be equal to the
+       number of WEIGHTS_n attribute sets". Which aligns well with the
+       assertion that's in MeshData itself. */
+    if(jointIdAttributeCount != weightAttributeCount) {
+        Error{} << "Trade::GltfImporter::mesh(): the mesh has" << jointIdAttributeCount << "JOINTS_n attributes but" << weightAttributeCount << "WEIGHTS_n attributes";
         return {};
     }
 
@@ -3209,7 +3252,7 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
             vertexCount, attributeData[i].stride()};
 
         attributeData[i] = MeshAttributeData{attributeData[i].name(),
-            attributeData[i].format(), data};
+            attributeData[i].format(), data, attributeData[i].arraySize()};
 
         /* Flip Y axis of texture coordinates, unless it's done in the material
            instead */

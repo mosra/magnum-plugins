@@ -744,6 +744,23 @@ const struct {
     {"strict, binary", ".glb", true, "Trade::GltfImporter::mesh(): strict mode enabled, disallowing a mesh with no vertices\n"}
 };
 
+/** @todo remove once the compatibilitySkinningAttributes option is gone */
+const struct {
+    const char* name;
+    #ifdef MAGNUM_BUILD_DEPRECATED
+    Containers::Optional<bool> compatibilitySkinningAttributes;
+    #endif
+} MeshSkinAttributeData[]{
+    {"",
+        #ifdef MAGNUM_BUILD_DEPRECATED
+        {}
+        #endif
+        },
+    #ifdef MAGNUM_BUILD_DEPRECATED
+    {"no compatibility attributes", false},
+    #endif
+};
+
 const struct {
     const char* name;
     Containers::Optional<bool> strict;
@@ -878,14 +895,16 @@ const struct {
         "Trade::GltfImporter::openData(): accessor 1 has invalid normalized property\n"},
 };
 
-constexpr struct {
-    const char* name;
+const struct {
+    TestSuite::TestCaseDescriptionSourceLocation name;
     const char* message;
 } MeshInvalidData[]{
     {"unrecognized primitive",
         "unrecognized primitive 666"},
     {"different vertex count for each accessor",
         "mismatched vertex count for attribute TEXCOORD_0, expected 3 but got 4"},
+    {"different number of WEIGHTS and JOINTS attributes",
+        "the mesh has 2 JOINTS_n attributes but 1 WEIGHTS_n attributes"},
     {"unexpected index type",
         "unsupported index type Vector2ui"},
     {"unsupported index component type",
@@ -921,72 +940,72 @@ constexpr struct {
     {"buffer view index out of bounds",
         "buffer view index 16 out of range for 16 buffer views"},
     {"accessor index out of bounds",
-        "accessor index 40 out of range for 40 accessors"},
+        "accessor index 42 out of range for 42 accessors"},
     {"mesh index accessor out of bounds",
-        "accessor index 40 out of range for 40 accessors"},
+        "accessor index 42 out of range for 42 accessors"},
     {"buffer with missing uri property",
         "buffer 2 has missing uri property"},
     {"buffer with invalid uri property",
-        "Utility::Json::parseString(): expected a string, got Utility::JsonToken::Type::Array at {}:849:14\n"
+        "Utility::Json::parseString(): expected a string, got Utility::JsonToken::Type::Array at {}:875:14\n"
         "Trade::GltfImporter::mesh(): buffer 3 has invalid uri property\n"},
     {"buffer with invalid uri",
         "invalid URI escape sequence %%"},
     {"buffer with missing byteLength property",
         "buffer 5 has missing or invalid byteLength property"},
     {"buffer with invalid byteLength property",
-        "Utility::Json::parseSize(): too large integer literal -3 at {}:863:21\n"
+        "Utility::Json::parseSize(): too large integer literal -3 at {}:889:21\n"
         "Trade::GltfImporter::mesh(): buffer 6 has missing or invalid byteLength property\n"},
     {"buffer view with missing buffer property",
         "buffer view 9 has missing or invalid buffer property"},
     {"buffer view with invalid buffer property",
-        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:799:17\n"
+        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:825:17\n"
         "Trade::GltfImporter::mesh(): buffer view 10 has missing or invalid buffer property\n"},
     {"buffer view with invalid byteOffset property",
-        "Utility::Json::parseSize(): too large integer literal -1 at {}:805:21\n"
+        "Utility::Json::parseSize(): too large integer literal -1 at {}:831:21\n"
         "Trade::GltfImporter::mesh(): buffer view 11 has invalid byteOffset property\n"},
     {"buffer view with missing byteLength property",
         "buffer view 12 has missing or invalid byteLength property"},
     {"buffer view with invalid byteLength property",
-        "Utility::Json::parseSize(): too large integer literal -12 at {}:815:21\n"
+        "Utility::Json::parseSize(): too large integer literal -12 at {}:841:21\n"
         "Trade::GltfImporter::mesh(): buffer view 13 has missing or invalid byteLength property\n"},
     {"buffer view with invalid byteStride property",
-        "Utility::Json::parseUnsignedInt(): too large integer literal -4 at {}:821:21\n"
+        "Utility::Json::parseUnsignedInt(): too large integer literal -4 at {}:847:21\n"
         "Trade::GltfImporter::mesh(): buffer view 14 has invalid byteStride property\n"},
     {"accessor with missing bufferView property",
         "accessor 11 has missing or invalid bufferView property"},
     {"accessor with invalid bufferView property",
-        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:675:21\n"
+        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:687:21\n"
         "Trade::GltfImporter::mesh(): accessor 30 has missing or invalid bufferView property\n"},
     {"accessor with invalid byteOffset property",
-        "Utility::Json::parseSize(): too large integer literal -1 at {}:683:21\n"
+        "Utility::Json::parseSize(): too large integer literal -1 at {}:695:21\n"
         "Trade::GltfImporter::mesh(): accessor 31 has invalid byteOffset property\n"},
     {"accessor with missing componentType property",
         "accessor 32 has missing or invalid componentType property"},
     {"accessor with invalid componentType property",
-        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:697:24\n"
+        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:709:24\n"
         "Trade::GltfImporter::mesh(): accessor 33 has missing or invalid componentType property\n"},
     {"accessor with missing count property",
         "accessor 34 has missing or invalid count property"},
     {"accessor with invalid count property",
-        "Utility::Json::parseSize(): too large integer literal -1 at {}:711:16\n"
+        "Utility::Json::parseSize(): too large integer literal -1 at {}:723:16\n"
         "Trade::GltfImporter::mesh(): accessor 35 has missing or invalid count property\n"},
     {"accessor with missing type property",
         "accessor 36 has missing or invalid type property"},
     {"accessor with invalid type property",
-        "Utility::Json::parseString(): expected a string, got Utility::JsonToken::Type::Number at {}:725:15\n"
+        "Utility::Json::parseString(): expected a string, got Utility::JsonToken::Type::Number at {}:737:15\n"
         "Trade::GltfImporter::mesh(): accessor 37 has missing or invalid type property\n"},
     {"accessor with invalid normalized property",
-        "Utility::Json::parseBool(): expected a bool, got Utility::JsonToken::Type::Null at {}:733:21\n"
+        "Utility::Json::parseBool(): expected a bool, got Utility::JsonToken::Type::Null at {}:745:21\n"
         "Trade::GltfImporter::mesh(): accessor 38 has invalid normalized property\n"},
     {"invalid primitive property",
-        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:424:19\n"
+        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:436:19\n"
         "Trade::GltfImporter::mesh(): invalid primitive mode property\n"},
     {"invalid attribute property",
-        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:434:26\n"
+        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:446:26\n"
         "Trade::GltfImporter::mesh(): invalid attribute _WEIRD_EH\n"},
     {"invalid indices property",
-        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:444:22\n"
-        "Trade::GltfImporter::mesh(): invalid indices property\n"}
+        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:456:22\n"
+        "Trade::GltfImporter::mesh(): invalid indices property\n"},
 };
 
 constexpr struct {
@@ -1605,9 +1624,12 @@ GltfImporterTest::GltfImporterTest() {
     addInstancedTests({&GltfImporterTest::meshNoIndicesNoVerticesNoBufferUri},
         Containers::arraySize(MeshNoVerticesData));
 
-    addTests({&GltfImporterTest::meshColors,
-              &GltfImporterTest::meshSkinAttributes,
-              &GltfImporterTest::meshCustomAttributes,
+    addTests({&GltfImporterTest::meshColors});
+
+    addInstancedTests({&GltfImporterTest::meshSkinAttributes},
+        Containers::arraySize(MeshSkinAttributeData));
+
+    addTests({&GltfImporterTest::meshCustomAttributes,
               &GltfImporterTest::meshCustomAttributesNoFileOpened,
               &GltfImporterTest::meshDuplicateAttributes,
               &GltfImporterTest::meshUnorderedAttributes,
@@ -3512,26 +3534,31 @@ void GltfImporterTest::mesh() {
     CORRADE_COMPARE(importer->meshForName("Indexed mesh"), 0);
     CORRADE_COMPARE(importer->meshForName("Nonexistent"), -1);
 
-    /* These are present always; see the meshSkinAttributes() test case for
-       details */
+    /* These are present always on a deprecated build; see the
+       meshSkinAttributes() test case for details */
+    #ifdef MAGNUM_BUILD_DEPRECATED
+    const UnsignedInt customAttributeOffset = 2;
     CORRADE_COMPARE(importer->meshAttributeName(meshAttributeCustom(0)), "JOINTS");
     CORRADE_COMPARE(importer->meshAttributeName(meshAttributeCustom(1)), "WEIGHTS");
+    #else
+    const UnsignedInt customAttributeOffset = 0;
+    #endif
 
     /* All attributes including the builtin ones are exposed via
        meshAttributeForName() to prepare for fallback cases where they get
        may get imported as custom. See the meshUnsupportedVertexFormats() test
        case for more information. */
-    CORRADE_COMPARE(importer->meshAttributeName(meshAttributeCustom(2)), "NORMAL");
-    CORRADE_COMPARE(importer->meshAttributeName(meshAttributeCustom(3)), "POSITION");
-    CORRADE_COMPARE(importer->meshAttributeName(meshAttributeCustom(4)), "TANGENT");
-    CORRADE_COMPARE(importer->meshAttributeName(meshAttributeCustom(5)), "_OBJECT_ID");
-    CORRADE_COMPARE(importer->meshAttributeName(meshAttributeCustom(6)), "TEXCOORD_0");
-    CORRADE_COMPARE(importer->meshAttributeName(meshAttributeCustom(7)), "");
+    CORRADE_COMPARE(importer->meshAttributeName(meshAttributeCustom(customAttributeOffset + 0)), "NORMAL");
+    CORRADE_COMPARE(importer->meshAttributeName(meshAttributeCustom(customAttributeOffset + 1)), "POSITION");
+    CORRADE_COMPARE(importer->meshAttributeName(meshAttributeCustom(customAttributeOffset + 2)), "TANGENT");
+    CORRADE_COMPARE(importer->meshAttributeName(meshAttributeCustom(customAttributeOffset + 3)), "_OBJECT_ID");
+    CORRADE_COMPARE(importer->meshAttributeName(meshAttributeCustom(customAttributeOffset + 4)), "TEXCOORD_0");
+    CORRADE_COMPARE(importer->meshAttributeName(meshAttributeCustom(customAttributeOffset + 5)), "");
 
     /* Check inverse mapping as well */
-    CORRADE_COMPARE(importer->meshAttributeForName("POSITION"), meshAttributeCustom(3));
-    CORRADE_COMPARE(importer->meshAttributeForName("TEXCOORD_0"), meshAttributeCustom(6));
-    CORRADE_COMPARE(importer->meshAttributeForName("_OBJECT_ID"), meshAttributeCustom(5));
+    CORRADE_COMPARE(importer->meshAttributeForName("POSITION"), meshAttributeCustom(customAttributeOffset + 1));
+    CORRADE_COMPARE(importer->meshAttributeForName("TEXCOORD_0"), meshAttributeCustom(customAttributeOffset + 4));
+    CORRADE_COMPARE(importer->meshAttributeForName("_OBJECT_ID"), meshAttributeCustom(customAttributeOffset + 3));
 
     Containers::Optional<Trade::MeshData> mesh = importer->mesh(0);
     CORRADE_VERIFY(mesh);
@@ -3742,23 +3769,44 @@ void GltfImporterTest::meshColors() {
 }
 
 void GltfImporterTest::meshSkinAttributes() {
+    auto&& data = MeshSkinAttributeData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
+
+    #ifdef MAGNUM_BUILD_DEPRECATED
+    if(data.compatibilitySkinningAttributes)
+        importer->configuration().setValue("compatibilitySkinningAttributes", *data.compatibilitySkinningAttributes);
+    #endif
+
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "mesh-skin-attributes.gltf")));
 
-    /* The mapping should be available even before the mesh is imported */
+    /* The backwards compatibility mapping should be available even before the
+       mesh is imported, and for robustness always regardless of whether
+       compatibilitySkinningAttributes is set. Otherwise it could happen that
+       it won't get added during file opening, but then
+       compatibilitySkinningAttributes gets flipped back on and mesh import
+       asserts because there's no entry for JOINTS / WEIGHTS in the map. */
     const MeshAttribute jointsAttribute = importer->meshAttributeForName("JOINTS");
-    CORRADE_COMPARE(jointsAttribute, meshAttributeCustom(0));
     const MeshAttribute weightsAttribute = importer->meshAttributeForName("WEIGHTS");
+    #ifdef MAGNUM_BUILD_DEPRECATED
+    const UnsignedInt customAttributeOffset = 2;
+    CORRADE_COMPARE(jointsAttribute, meshAttributeCustom(0));
     CORRADE_COMPARE(weightsAttribute, meshAttributeCustom(1));
+    #else
+    const UnsignedInt customAttributeOffset = 0;
+    CORRADE_COMPARE(jointsAttribute, MeshAttribute{});
+    CORRADE_COMPARE(weightsAttribute, MeshAttribute{});
+    #endif
 
     /* However, the actual numbered names are exposed as well -- which is for
        the case when they would have an invalid vertex format, and thus would
        get imported as custom. See the meshUnsupportedVertexFormats() test case
        for more information. */
-    CORRADE_COMPARE(importer->meshAttributeForName("JOINTS_0"), meshAttributeCustom(2));
-    CORRADE_COMPARE(importer->meshAttributeForName("JOINTS_1"), meshAttributeCustom(3));
-    CORRADE_COMPARE(importer->meshAttributeForName("WEIGHTS_0"), meshAttributeCustom(4));
-    CORRADE_COMPARE(importer->meshAttributeForName("WEIGHTS_1"), meshAttributeCustom(5));
+    CORRADE_COMPARE(importer->meshAttributeForName("JOINTS_0"), meshAttributeCustom(customAttributeOffset + 0));
+    CORRADE_COMPARE(importer->meshAttributeForName("JOINTS_1"), meshAttributeCustom(customAttributeOffset + 1));
+    CORRADE_COMPARE(importer->meshAttributeForName("WEIGHTS_0"), meshAttributeCustom(customAttributeOffset + 2));
+    CORRADE_COMPARE(importer->meshAttributeForName("WEIGHTS_1"), meshAttributeCustom(customAttributeOffset + 3));
 
     CORRADE_COMPARE(importer->meshCount(), 1);
 
@@ -3766,7 +3814,15 @@ void GltfImporterTest::meshSkinAttributes() {
     CORRADE_VERIFY(mesh);
     CORRADE_VERIFY(!mesh->isIndexed());
 
-    CORRADE_COMPARE(mesh->attributeCount(), 5);
+    /* Position + two pairs of joints & weights */
+    #ifdef MAGNUM_BUILD_DEPRECATED
+    if(!data.compatibilitySkinningAttributes || *data.compatibilitySkinningAttributes) {
+        CORRADE_COMPARE(mesh->attributeCount(), 5 + 4);
+    } else
+    #endif
+    {
+        CORRADE_COMPARE(mesh->attributeCount(), 5);
+    }
     CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::Position), VertexFormat::Vector3);
     CORRADE_COMPARE_AS(mesh->attribute<Vector3>(MeshAttribute::Position),
         Containers::arrayView<Vector3>({
@@ -3775,37 +3831,85 @@ void GltfImporterTest::meshSkinAttributes() {
             {-2.0f, 1.0f, 0.3f}
         }), TestSuite::Compare::Container);
 
-    /* Custom attributes with multiple sets */
-    CORRADE_COMPARE(mesh->attributeCount(jointsAttribute), 2);
-    CORRADE_COMPARE(mesh->attributeFormat(jointsAttribute, 0), VertexFormat::Vector4ub);
-    CORRADE_COMPARE_AS(mesh->attribute<Vector4ub>(jointsAttribute),
+    /* Attributes. All of them are currently four-component so casting to a
+       Vector4<T> for easier comparison */
+    /** @todo implement multi-dimensional support in Compare::Container instead
+        and drop the workaround */
+    CORRADE_COMPARE(mesh->attributeCount(MeshAttribute::JointIds), 2);
+    CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::JointIds, 0), VertexFormat::UnsignedByte);
+    CORRADE_COMPARE(mesh->attributeArraySize(MeshAttribute::JointIds, 0), 4);
+    CORRADE_COMPARE_AS((Containers::arrayCast<1, const Vector4ub>(mesh->attribute<UnsignedByte[]>(MeshAttribute::JointIds, 0))),
         Containers::arrayView<Vector4ub>({
             {1,  2,  3,  4},
             {5,  6,  7,  8},
             {9, 10, 11, 12}
         }), TestSuite::Compare::Container);
-    CORRADE_COMPARE(mesh->attributeFormat(jointsAttribute, 1), VertexFormat::Vector4us);
-    CORRADE_COMPARE_AS(mesh->attribute<Vector4us>(jointsAttribute, 1),
+    CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::JointIds, 1), VertexFormat::UnsignedShort);
+    CORRADE_COMPARE(mesh->attributeArraySize(MeshAttribute::JointIds, 1), 4);
+    CORRADE_COMPARE_AS((Containers::arrayCast<1, const Vector4us>(mesh->attribute<UnsignedShort[]>(MeshAttribute::JointIds, 1))),
         Containers::arrayView<Vector4us>({
             {13, 14, 15, 16},
             {17, 18, 19, 20},
             {21, 22, 23, 24}
         }), TestSuite::Compare::Container);
-    CORRADE_COMPARE(mesh->attributeCount(weightsAttribute), 2);
-    CORRADE_COMPARE(mesh->attributeFormat(weightsAttribute, 0), VertexFormat::Vector4);
-    CORRADE_COMPARE_AS(mesh->attribute<Vector4>(weightsAttribute),
+    CORRADE_COMPARE(mesh->attributeCount(MeshAttribute::Weights), 2);
+    CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::Weights, 0), VertexFormat::Float);
+    CORRADE_COMPARE(mesh->attributeArraySize(MeshAttribute::Weights, 0), 4);
+    CORRADE_COMPARE_AS((Containers::arrayCast<1, const Vector4>(mesh->attribute<Float[]>(MeshAttribute::Weights, 0))),
         Containers::arrayView<Vector4>({
             {0.125f, 0.25f, 0.375f, 0.0f},
             {0.1f,   0.05f, 0.05f,  0.05f},
             {0.2f,   0.0f,  0.3f,   0.0f}
         }), TestSuite::Compare::Container);
-    CORRADE_COMPARE(mesh->attributeFormat(weightsAttribute, 1), VertexFormat::Vector4usNormalized);
-    CORRADE_COMPARE_AS(mesh->attribute<Vector4us>(weightsAttribute, 1),
+    CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::Weights, 1), VertexFormat::UnsignedShortNormalized);
+    CORRADE_COMPARE(mesh->attributeArraySize(MeshAttribute::Weights, 1), 4);
+    CORRADE_COMPARE_AS((Containers::arrayCast<1, const Vector4us>(mesh->attribute<UnsignedShort[]>(MeshAttribute::Weights, 1))),
         Containers::arrayView<Vector4us>({
             {       0, 0xffff/8,         0, 0xffff/8},
             {0xffff/2, 0xffff/8, 0xffff/16, 0xffff/16},
             {       0, 0xffff/4, 0xffff/4,  0}
         }), TestSuite::Compare::Container);
+
+    /* Backwards compatibility custom attributes */
+    #ifdef MAGNUM_BUILD_DEPRECATED
+    if(!data.compatibilitySkinningAttributes || *data.compatibilitySkinningAttributes) {
+        CORRADE_COMPARE(mesh->attributeCount(jointsAttribute), 2);
+        CORRADE_COMPARE(mesh->attributeFormat(jointsAttribute, 0), VertexFormat::Vector4ub);
+        CORRADE_COMPARE_AS(mesh->attribute<Vector4ub>(jointsAttribute),
+            Containers::arrayView<Vector4ub>({
+                {1,  2,  3,  4},
+                {5,  6,  7,  8},
+                {9, 10, 11, 12}
+            }), TestSuite::Compare::Container);
+        CORRADE_COMPARE(mesh->attributeFormat(jointsAttribute, 1), VertexFormat::Vector4us);
+        CORRADE_COMPARE_AS(mesh->attribute<Vector4us>(jointsAttribute, 1),
+            Containers::arrayView<Vector4us>({
+                {13, 14, 15, 16},
+                {17, 18, 19, 20},
+                {21, 22, 23, 24}
+            }), TestSuite::Compare::Container);
+        CORRADE_COMPARE(mesh->attributeCount(weightsAttribute), 2);
+        CORRADE_COMPARE(mesh->attributeFormat(weightsAttribute, 0), VertexFormat::Vector4);
+        CORRADE_COMPARE_AS(mesh->attribute<Vector4>(weightsAttribute),
+            Containers::arrayView<Vector4>({
+                {0.125f, 0.25f, 0.375f, 0.0f},
+                {0.1f,   0.05f, 0.05f,  0.05f},
+                {0.2f,   0.0f,  0.3f,   0.0f}
+            }), TestSuite::Compare::Container);
+        CORRADE_COMPARE(mesh->attributeFormat(weightsAttribute, 1), VertexFormat::Vector4usNormalized);
+        CORRADE_COMPARE_AS(mesh->attribute<Vector4us>(weightsAttribute, 1),
+            Containers::arrayView<Vector4us>({
+                {       0, 0xffff/8,         0, 0xffff/8},
+                {0xffff/2, 0xffff/8, 0xffff/16, 0xffff/16},
+                {       0, 0xffff/4, 0xffff/4,  0}
+            }), TestSuite::Compare::Container);
+
+        /* The compat attributes should alias the builtin ones, not have the
+           data duplicated */
+        CORRADE_COMPARE(mesh->attributeOffset(jointsAttribute), mesh->attributeOffset(MeshAttribute::JointIds));
+        CORRADE_COMPARE(mesh->attributeOffset(weightsAttribute), mesh->attributeOffset(MeshAttribute::Weights));
+    }
+    #endif
 }
 
 void GltfImporterTest::meshCustomAttributes() {
@@ -3822,25 +3926,34 @@ void GltfImporterTest::meshCustomAttributes() {
             "Trade::GltfImporter::openData(): unknown attribute NOT_AN_IDENTITY, importing as custom attribute\n");
     }
 
+    /* On a deprecated build the first two attributes are hardcoded JOINTS and
+       WEIGHTS */
+    const UnsignedInt customAttributeOffset =
+        #ifdef MAGNUM_BUILD_DEPRECATED
+        2
+        #else
+        0
+        #endif
+        ;
+
     /* The mapping should be available even before the mesh is imported.
-       Attributes are sorted in declaration order; the first two attributes are
-       hardcoded JOINTS and WEIGHTS. */
+       Attributes are sorted in declaration order. */
     const MeshAttribute tbnAttribute = importer->meshAttributeForName("_TBN");
-    CORRADE_COMPARE(tbnAttribute, meshAttributeCustom(2));
+    CORRADE_COMPARE(tbnAttribute, meshAttributeCustom(customAttributeOffset + 0));
     CORRADE_COMPARE(importer->meshAttributeName(tbnAttribute), "_TBN");
     CORRADE_COMPARE(importer->meshAttributeForName("Nonexistent"), MeshAttribute{});
 
     const MeshAttribute uvRotation = importer->meshAttributeForName("_UV_ROTATION");
-    CORRADE_COMPARE(uvRotation, meshAttributeCustom(3));
+    CORRADE_COMPARE(uvRotation, meshAttributeCustom(customAttributeOffset + 1));
     CORRADE_COMPARE(importer->meshAttributeName(uvRotation), "_UV_ROTATION");
 
     const MeshAttribute tbnPreciserAttribute = importer->meshAttributeForName("_TBN_PRECISER");
     const MeshAttribute objectIdAttribute = importer->meshAttributeForName("OBJECT_ID3");
 
     const MeshAttribute doubleShotAttribute = importer->meshAttributeForName("_DOUBLE_SHOT");
-    CORRADE_COMPARE(doubleShotAttribute, meshAttributeCustom(8));
+    CORRADE_COMPARE(doubleShotAttribute, meshAttributeCustom(customAttributeOffset + 6));
     const MeshAttribute negativePaddingAttribute = importer->meshAttributeForName("_NEGATIVE_PADDING");
-    CORRADE_COMPARE(negativePaddingAttribute, meshAttributeCustom(6));
+    CORRADE_COMPARE(negativePaddingAttribute, meshAttributeCustom(customAttributeOffset + 4));
     const MeshAttribute notAnIdentityAttribute = importer->meshAttributeForName("NOT_AN_IDENTITY");
     CORRADE_VERIFY(notAnIdentityAttribute != MeshAttribute{});
 

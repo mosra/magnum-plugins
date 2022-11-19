@@ -24,6 +24,18 @@
       ]
     },
     {
+      "name": "different number of WEIGHTS and JOINTS attributes",
+      "primitives": [
+        {
+          "attributes": {
+            "JOINTS_0": 40,
+            "WEIGHTS_0": 41,
+            "JOINTS_1": 40
+          }
+        }
+      ]
+    },
+    {
       "name": "unexpected index type",
       "primitives": [
         {
@@ -193,7 +205,7 @@
       "primitives": [
         {
           "attributes": {
-            "NORMAL": 40
+            "NORMAL": 42
           }
         }
       ]
@@ -203,7 +215,7 @@
       "primitives": [
         {
           "attributes": {},
-          "indices": 40
+          "indices": 42
         }
       ]
     },
@@ -738,6 +750,20 @@
       "componentType": 5126,
       "count": 0,
       "type": "VEC3"
+    },
+    {
+      "name": "40",
+      "bufferView": 1,
+      "componentType": 5123,
+      "count": 2,
+      "type": "VEC4"
+    },
+    {
+      "name": "41",
+      "bufferView": 1,
+      "componentType": 5126,
+      "count": 2,
+      "type": "VEC4"
     }
   ],
   "bufferViews": [

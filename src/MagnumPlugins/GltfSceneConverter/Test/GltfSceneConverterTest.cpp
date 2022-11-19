@@ -2132,17 +2132,16 @@ void GltfSceneConverterTest::addMeshDuplicateAttribute() {
         CORRADE_SKIP("GltfImporter plugin not found, cannot test a roundtrip");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("GltfImporter");
+
+    importer->configuration().setValue("compatibilitySkinningAttributes", false);
+
     CORRADE_VERIFY(importer->openFile(filename));
     CORRADE_COMPARE(importer->meshCount(), 1);
 
-    const MeshAttribute importedJointsAttribute = importer->meshAttributeForName("JOINTS");
-    const MeshAttribute importedWeightsAttribute = importer->meshAttributeForName("WEIGHTS");
     const MeshAttribute importedSecondaryPositionAttribute = importer->meshAttributeForName("_POSITION_1");
     const MeshAttribute importedSecondaryObjectIdAttribute = importer->meshAttributeForName("_OBJECT_ID_1");
     const MeshAttribute importedCustomAttribute = importer->meshAttributeForName("_YOLO");
     const MeshAttribute importedSecondaryCustomAttribute = importer->meshAttributeForName("_YOLO_1");
-    CORRADE_VERIFY(importedJointsAttribute != MeshAttribute{});
-    CORRADE_VERIFY(importedWeightsAttribute != MeshAttribute{});
     CORRADE_VERIFY(importedSecondaryPositionAttribute != MeshAttribute{});
     CORRADE_VERIFY(importedSecondaryObjectIdAttribute != MeshAttribute{});
     CORRADE_VERIFY(importedCustomAttribute != MeshAttribute{});
@@ -2154,7 +2153,7 @@ void GltfSceneConverterTest::addMeshDuplicateAttribute() {
     CORRADE_VERIFY(!imported->isIndexed());
     CORRADE_COMPARE(imported->attributeCount(), 15);
 
-    /* CgltfImporter (stable-)sorts the attributes first to figure out the
+    /* GltfImporter (stable-)sorts the attributes first to figure out the
        numbering. Check that the numbers match by comparing types. */
 
     CORRADE_COMPARE(imported->attributeName(0), MeshAttribute::Color);
@@ -2162,10 +2161,12 @@ void GltfSceneConverterTest::addMeshDuplicateAttribute() {
     CORRADE_COMPARE(imported->attributeName(1), MeshAttribute::Color);
     CORRADE_COMPARE(imported->attributeFormat(1), VertexFormat::Vector3ubNormalized);
 
-    CORRADE_COMPARE(imported->attributeName(2), importedJointsAttribute);
-    CORRADE_COMPARE(imported->attributeFormat(2), VertexFormat::Vector4ub);
-    CORRADE_COMPARE(imported->attributeName(3), importedJointsAttribute);
-    CORRADE_COMPARE(imported->attributeFormat(3), VertexFormat::Vector4us);
+    CORRADE_COMPARE(imported->attributeName(2), MeshAttribute::JointIds);
+    CORRADE_COMPARE(imported->attributeFormat(2), VertexFormat::UnsignedByte);
+    CORRADE_COMPARE(imported->attributeArraySize(2), 4);
+    CORRADE_COMPARE(imported->attributeName(3), MeshAttribute::JointIds);
+    CORRADE_COMPARE(imported->attributeFormat(3), VertexFormat::UnsignedShort);
+    CORRADE_COMPARE(imported->attributeArraySize(3), 4);
 
     CORRADE_COMPARE(imported->attributeName(4), MeshAttribute::Position);
     CORRADE_COMPARE(imported->attributeFormat(4), VertexFormat::Vector3);
@@ -2177,10 +2178,12 @@ void GltfSceneConverterTest::addMeshDuplicateAttribute() {
     CORRADE_COMPARE(imported->attributeName(7), MeshAttribute::TextureCoordinates);
     CORRADE_COMPARE(imported->attributeFormat(7), VertexFormat::Vector2ubNormalized);
 
-    CORRADE_COMPARE(imported->attributeName(8), importedWeightsAttribute);
-    CORRADE_COMPARE(imported->attributeFormat(8), VertexFormat::Vector4ubNormalized);
-    CORRADE_COMPARE(imported->attributeName(9), importedWeightsAttribute);
-    CORRADE_COMPARE(imported->attributeFormat(9), VertexFormat::Vector4);
+    CORRADE_COMPARE(imported->attributeName(8), MeshAttribute::Weights);
+    CORRADE_COMPARE(imported->attributeFormat(8), VertexFormat::UnsignedByteNormalized);
+    CORRADE_COMPARE(imported->attributeArraySize(8), 4);
+    CORRADE_COMPARE(imported->attributeName(9), MeshAttribute::Weights);
+    CORRADE_COMPARE(imported->attributeFormat(9), VertexFormat::Float);
+    CORRADE_COMPARE(imported->attributeArraySize(9), 4);
 
     CORRADE_COMPARE(imported->attributeName(10), MeshAttribute::ObjectId);
     CORRADE_COMPARE(imported->attributeFormat(10), VertexFormat::UnsignedShort);

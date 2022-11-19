@@ -255,13 +255,24 @@ Import of morph data is not supported at the moment.
     @ref VertexFormat::Vector4ubNormalized,
     @ref VertexFormat::Vector3usNormalized or
     @ref VertexFormat::Vector4usNormalized
--   Joint IDs and weights for skinning are imported as custom vertex attributes
-    named "JOINTS" and "WEIGHTS". Their mapping to/from a string can be queried
-    using @ref meshAttributeName() and @ref meshAttributeForName().
-    Joint IDs are imported as @ref VertexFormat::Vector4ub or
-    @ref VertexFormat::Vector4us. Joint weights are imported as
-    @ref VertexFormat::Vector4, @ref VertexFormat::Vector4ubNormalized or
-    @ref VertexFormat::Vector4usNormalized.
+-   Skin joint IDs are imported as *arrays* of @ref VertexFormat::UnsignedByte
+    or @ref VertexFormat::UnsignedShort, skin weights then as arrays of
+    @ref VertexFormat::Float, @ref VertexFormat::UnsignedByteNormalized or
+    @ref VertexFormat::UnsignedShortNormalized. The
+    @ref MeshData::attributeArraySize() is currently always @cpp 4 @ce, but is
+    reserved to change (for example representing two consecutive sets as a
+    single array of 8 items). For backwards compatibility, unless the
+    @cb{.ini} compatibilitySkinningAttributes @ce
+    @ref Trade-GltfImporter-configuration "configuration option" or
+    @ref MAGNUM_BUILD_DEPRECATED is disabled, these are also exposed as custom
+    @cpp "JOINTS" @ce and @cpp "WEIGHTS" @ce attributes with
+    @ref VertexFormat::Vector4ub /
+    @ref VertexFormat::Vector4us and @ref VertexFormat::Vector4 /
+    @ref VertexFormat::Vector4ubNormalized /
+    @ref VertexFormat::Vector4usNormalized (non-array) formats, respectively,
+    with as many instances of these as needed to cover all array items. The
+    compatibility attributes *alias* the builtin ones, i.e. point to the same
+    memory, so their presence causes no extra overhead.
 -   Per-vertex object ID attribute is imported as either
     @ref VertexFormat::UnsignedInt, @ref VertexFormat::UnsignedShort or
     @ref VertexFormat::UnsignedByte. By default `_OBJECT_ID` is the recognized
