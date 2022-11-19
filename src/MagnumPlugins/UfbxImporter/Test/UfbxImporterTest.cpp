@@ -27,9 +27,9 @@
 #include <sstream>
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/ArrayView.h>
+#include <Corrade/Containers/StringView.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
-#include <Corrade/Containers/StringView.h>
 #include <Magnum/Math/Vector3.h>
 #include <Magnum/Trade/AbstractImporter.h>
 #include <Magnum/Trade/MeshData.h>
