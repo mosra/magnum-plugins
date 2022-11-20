@@ -895,8 +895,7 @@ Containers::Optional<MaterialData> UfbxImporter::doMaterial(UnsignedInt id) {
     }
 
     if (material->features.double_sided.enabled) {
-        bool value = true;
-        arrayAppend(attributes, {MaterialAttribute::DoubleSided, value});
+        arrayAppend(attributes, {MaterialAttribute::DoubleSided, true});
         
     }
 
