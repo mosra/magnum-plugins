@@ -253,9 +253,6 @@ struct UfbxImporter::State {
     Containers::Optional<AnyImageImporter> imageImporter;
 };
 
-UfbxImporter::UfbxImporter() {
-}
-
 UfbxImporter::UfbxImporter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin): AbstractImporter{manager, plugin} {
 }
 

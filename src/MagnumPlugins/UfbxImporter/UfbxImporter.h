@@ -55,9 +55,6 @@ namespace Magnum { namespace Trade {
 
 class MAGNUM_UFBXIMPORTER_EXPORT UfbxImporter: public AbstractImporter {
     public:
-        /** @brief Default constructor */
-        explicit UfbxImporter();
-
         /** @brief Plugin manager constructor */
         explicit UfbxImporter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin);
 
