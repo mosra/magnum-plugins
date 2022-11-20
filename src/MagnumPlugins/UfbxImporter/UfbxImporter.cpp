@@ -49,6 +49,84 @@
 #include <Magnum/Trade/SceneData.h>
 #include <MagnumPlugins/AnyImageImporter/AnyImageImporter.h>
 
+namespace Corrade { namespace Containers { namespace Implementation {
+
+template<> struct StringConverter<ufbx_string> {
+    static String from(const ufbx_string &other) {
+        return String{other.data, other.length};
+    }
+};
+template<> struct StringViewConverter<const char, ufbx_string> {
+    static StringView from(const ufbx_string &other) {
+        return StringView{other.data, other.length, Containers::StringViewFlag::NullTerminated};
+    }
+};
+
+}}}
+
+namespace Magnum { namespace Math { namespace Implementation {
+
+template<> struct VectorConverter<2, Float, ufbx_vec2> {
+    static Vector<2, Float> from(const ufbx_vec2& other) {
+        return {Float(other.x), Float(other.y)};
+    }
+};
+
+template<> struct VectorConverter<3, Float, ufbx_vec3> {
+    static Vector<3, Float> from(const ufbx_vec3& other) {
+        return {Float(other.x), Float(other.y), Float(other.z)};
+    }
+};
+
+template<> struct VectorConverter<4, Float, ufbx_vec4> {
+    static Vector<4, Float> from(const ufbx_vec4& other) {
+        return {Float(other.x), Float(other.y), Float(other.z), Float(other.w)};
+    }
+};
+
+template<> struct QuaternionConverter<Float, ufbx_quat> {
+    constexpr static Quaternion<Float> from(const ufbx_quat& other) {
+        return {{Float(other.x), Float(other.y), Float(other.z)}, Float(other.w)};
+    }
+};
+
+template<> struct VectorConverter<2, Double, ufbx_vec2> {
+    static Vector<2, Double> from(const ufbx_vec2& other) {
+        return {other.x, other.y};
+    }
+};
+
+template<> struct VectorConverter<3, Double, ufbx_vec3> {
+    static Vector<3, Double> from(const ufbx_vec3& other) {
+        return {other.x, other.y, other.z};
+    }
+};
+
+template<> struct VectorConverter<4, Double, ufbx_vec4> {
+    static Vector<4, Double> from(const ufbx_vec4& other) {
+        return {other.x, other.y, other.z, other.w};
+    }
+};
+
+template<> struct QuaternionConverter<Double, ufbx_quat> {
+    constexpr static Quaternion<Double> from(const ufbx_quat& other) {
+        return {{other.x, other.y, other.z}, other.w};
+    }
+};
+
+template<> struct RectangularMatrixConverter<4, 3, Double, ufbx_matrix> {
+    constexpr static RectangularMatrix<4, 3, Double> from(const ufbx_matrix& other) {
+        return RectangularMatrix<4, 3, Double>{
+            Vector3d(other.cols[0]),
+            Vector3d(other.cols[1]),
+            Vector3d(other.cols[2]),
+            Vector3d(other.cols[3]),
+        };
+    }
+};
+
+}}}
+
 namespace Magnum { namespace Trade {
     
 using namespace Containers::Literals;
@@ -96,57 +174,29 @@ inline SamplerWrapping toSamplerWrapping(ufbx_wrap_mode mode) {
     }
 }
 
-inline Containers::String asString(ufbx_string str) {
-    return Containers::String{str.data, str.length};
-}
-
-inline Containers::StringView asStringView(ufbx_string str) {
-    return Containers::StringView{str.data, str.length, Containers::StringViewFlag::NullTerminated};
-}
-
-inline Vector2 asVector2(const ufbx_vec2 &v) {
-    return Vector2{ (Float)v.x, (Float)v.y };
-}
-
-inline Vector3 asVector3(const ufbx_vec3 &v) {
-    return Vector3{ (Float)v.x, (Float)v.y, (Float)v.z };
-}
-
-inline Vector4 asVector4(const ufbx_vec4 &v) {
-    return Vector4{ (Float)v.x, (Float)v.y, (Float)v.z, (Float)v.w };
-}
-
-inline Color4 asColor4(const ufbx_vec4 &v) {
-    return Color4{ (Float)v.x, (Float)v.y, (Float)v.z, (Float)v.w };
-}
-
-inline Quaterniond asQuaterniond(const ufbx_quat &q) {
-    return Quaterniond{ Vector3d{q.x, q.y, q.z}, q.w };
-}
-
 inline void logError(const char *prefix, const ufbx_error &error) {
     if (error.info_length > 0) {
-        Error{} << prefix << asStringView(error.description) << " (" << error.info << ")";
+        Error{} << prefix << Containers::StringView(error.description) << " (" << error.info << ")";
     } else {
-        Error{} << prefix << asStringView(error.description);
+        Error{} << prefix << Containers::StringView(error.description);
     }
 }
 
 inline void pushVector2(Containers::Array<char> &arr, size_t &offset, const ufbx_vec2 &v) {
     CORRADE_INTERNAL_ASSERT(offset + sizeof(Vector2) <= arr.size());
-    *(Vector2*)(arr.data() + offset) = asVector2(v);
+    *(Vector2*)(arr.data() + offset) = Vector2(v);
     offset += sizeof(Vector2);
 }
 
 inline void pushVector3(Containers::Array<char> &arr, size_t &offset, const ufbx_vec3 &v) {
     CORRADE_INTERNAL_ASSERT(offset + sizeof(Vector3) <= arr.size());
-    *(Vector3*)(arr.data() + offset) = asVector3(v);
+    *(Vector3*)(arr.data() + offset) = Vector3(v);
     offset += sizeof(Vector3);
 }
 
 inline void pushColor4(Containers::Array<char> &arr, size_t &offset, const ufbx_vec4 &v) {
     CORRADE_INTERNAL_ASSERT(offset + sizeof(Color4) <= arr.size());
-    *(Color4*)(arr.data() + offset) = asColor4(v);
+    *(Color4*)(arr.data() + offset) = Color4(v);
     offset += sizeof(Color4);
 }
 
@@ -417,10 +467,10 @@ Containers::Optional<SceneData> UfbxImporter::doScene(UnsignedInt) {
             parents[nodeId] = -1;
         }
 
-        transformations[nodeId] = Matrix4x3d::from(node->node_to_parent.v);
-        translations[nodeId] = Vector3d::from(node->local_transform.translation.v);
-        rotations[nodeId] = asQuaterniond(node->local_transform.rotation);
-        scalings[nodeId] = Vector3d::from(node->local_transform.scale.v);
+        transformations[nodeId] = Matrix4x3d(node->node_to_parent);
+        translations[nodeId] = Vector3d(node->local_transform.translation);
+        rotations[nodeId] = Quaterniond(node->local_transform.rotation);
+        scalings[nodeId] = Vector3d(node->local_transform.scale);
 
         UnsignedInt objectId = nodeId;
 
@@ -432,10 +482,10 @@ Containers::Optional<SceneData> UfbxImporter::doScene(UnsignedInt) {
             nodeObjects[geomId] = geomId;
             importerState[geomId] = nullptr;
             parents[geomId] = (Int)nodeId;
-            transformations[geomId] = Matrix4x3d::from(node->geometry_to_node.v);
-            translations[geomId] = Vector3d::from(node->geometry_transform.translation.v);
-            rotations[geomId] = asQuaterniond(node->geometry_transform.rotation);
-            scalings[geomId] = Vector3d::from(node->geometry_transform.scale.v);
+            transformations[geomId] = Matrix4x3d(node->geometry_to_node);
+            translations[geomId] = Vector3d(node->geometry_transform.translation);
+            rotations[geomId] = Quaterniond(node->geometry_transform.rotation);
+            scalings[geomId] = Vector3d(node->geometry_transform.scale);
 
             ++syntheticNodeCount;
         }
@@ -539,7 +589,7 @@ Long UfbxImporter::doObjectForName(const Containers::StringView name) {
 Containers::String UfbxImporter::doObjectName(const UnsignedLong id) {
     ufbx_scene *scene = _state->scene.get();
     if(id < scene->nodes.count) {
-        return asString(scene->nodes[id]->name);
+        return scene->nodes[id]->name;
     } else {
         return {};
     }
@@ -554,7 +604,7 @@ Int UfbxImporter::doCameraForName(const Containers::StringView name) {
 }
 
 Containers::String UfbxImporter::doCameraName(const UnsignedInt id) {
-    return asString(_state->scene->cameras[id]->name);
+    return _state->scene->cameras[id]->name;
 }
 
 Containers::Optional<CameraData> UfbxImporter::doCamera(UnsignedInt id) {
@@ -585,7 +635,7 @@ Int UfbxImporter::doLightForName(Containers::StringView name) {
 }
 
 Containers::String UfbxImporter::doLightName(UnsignedInt id) {
-    return asString(_state->scene->lights[id]->name);
+    return _state->scene->lights[id]->name;
 }
 
 Containers::Optional<LightData> UfbxImporter::doLight(UnsignedInt id) {
@@ -798,7 +848,7 @@ Int UfbxImporter::doMaterialForName(Containers::StringView name) {
 }
 
 Containers::String UfbxImporter::doMaterialName(UnsignedInt id) {
-    return asString(_state->scene->materials[id]->name);
+    return _state->scene->materials[id]->name;
 }
 
 Containers::Optional<MaterialData> UfbxImporter::doMaterial(UnsignedInt id) {
@@ -856,10 +906,10 @@ Containers::Optional<MaterialData> UfbxImporter::doMaterial(UnsignedInt id) {
                     Float value = (Float)colorMap.value_real * factor;
                     arrayAppend(attributes, {mapping.attrib, value});
                 } else if (mapping.type == MaterialAttributeType::Vector3) {
-                    Vector3 value = asVector3(colorMap.value_vec3) * factor;
+                    Vector3 value = Vector3(colorMap.value_vec3) * factor;
                     arrayAppend(attributes, {mapping.attrib, value});
                 } else if (mapping.type == MaterialAttributeType::Vector4) {
-                    Vector4 value = asVector4(colorMap.value_vec4) * factor;
+                    Vector4 value = Vector4(colorMap.value_vec4) * factor;
                     arrayAppend(attributes, {mapping.attrib, value});
                 } else {
                     CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
@@ -924,7 +974,7 @@ Int UfbxImporter::doTextureForName(Containers::StringView name) {
 }
 
 Containers::String UfbxImporter::doTextureName(UnsignedInt id) {
-    return asString(_state->scene->textures[id]->name);
+    return _state->scene->textures[id]->name;
 }
 
 Containers::Optional<TextureData> UfbxImporter::doTexture(UnsignedInt id) {
@@ -970,7 +1020,7 @@ AbstractImporter* UfbxImporter::setupOrReuseImporterForImage(UnsignedInt id, con
             return nullptr;
         }
 
-        if(!importer.openFile(asStringView(texture->filename)))
+        if(!importer.openFile(texture->filename))
             return nullptr;
     }
 
