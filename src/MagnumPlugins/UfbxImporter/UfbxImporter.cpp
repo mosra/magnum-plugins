@@ -161,9 +161,9 @@ struct MaterialMapping {
 };
 
 static const MaterialMapping materialMapsFbx[] = {
-    { MaterialAttributeType::Vector4, MaterialAttribute::DiffuseColor, MaterialAttribute::DiffuseTexture, MaterialAttribute::DiffuseTextureMatrix, MaterialAttribute::DiffuseTextureCoordinates, UFBX_MATERIAL_FBX_DIFFUSE_COLOR, UFBX_MATERIAL_FBX_DIFFUSE_COLOR },
-    { MaterialAttributeType::Vector4, MaterialAttribute::SpecularColor, MaterialAttribute::SpecularTexture, MaterialAttribute::SpecularTextureMatrix, MaterialAttribute::SpecularTextureCoordinates, UFBX_MATERIAL_FBX_SPECULAR_COLOR, UFBX_MATERIAL_FBX_SPECULAR_COLOR },
-    { MaterialAttributeType::Vector4, MaterialAttribute::AmbientColor, MaterialAttribute::AmbientTexture, MaterialAttribute::AmbientTextureMatrix, MaterialAttribute::AmbientTextureCoordinates, UFBX_MATERIAL_FBX_AMBIENT_COLOR, UFBX_MATERIAL_FBX_AMBIENT_COLOR },
+    { MaterialAttributeType::Vector4, MaterialAttribute::DiffuseColor, MaterialAttribute::DiffuseTexture, MaterialAttribute::DiffuseTextureMatrix, MaterialAttribute::DiffuseTextureCoordinates, UFBX_MATERIAL_FBX_DIFFUSE_COLOR, UFBX_MATERIAL_FBX_DIFFUSE_FACTOR },
+    { MaterialAttributeType::Vector4, MaterialAttribute::SpecularColor, MaterialAttribute::SpecularTexture, MaterialAttribute::SpecularTextureMatrix, MaterialAttribute::SpecularTextureCoordinates, UFBX_MATERIAL_FBX_SPECULAR_COLOR, UFBX_MATERIAL_FBX_SPECULAR_FACTOR },
+    { MaterialAttributeType::Vector4, MaterialAttribute::AmbientColor, MaterialAttribute::AmbientTexture, MaterialAttribute::AmbientTextureMatrix, MaterialAttribute::AmbientTextureCoordinates, UFBX_MATERIAL_FBX_AMBIENT_COLOR, UFBX_MATERIAL_FBX_AMBIENT_FACTOR },
     { MaterialAttributeType::Vector3, MaterialAttribute::EmissiveColor, MaterialAttribute::EmissiveTexture, MaterialAttribute::EmissiveTextureMatrix, MaterialAttribute::EmissiveTextureCoordinates, UFBX_MATERIAL_FBX_EMISSION_COLOR, UFBX_MATERIAL_FBX_EMISSION_FACTOR },
     { MaterialAttributeType::Float, MaterialAttribute::Shininess, (MaterialAttribute)0, (MaterialAttribute)0, (MaterialAttribute)0, UFBX_MATERIAL_FBX_SPECULAR_EXPONENT, -1 },
     { (MaterialAttributeType)0, (MaterialAttribute)0, MaterialAttribute::NormalTexture, MaterialAttribute::NormalTextureMatrix, MaterialAttribute::NormalTextureCoordinates, UFBX_MATERIAL_FBX_NORMAL_MAP, -1 },
