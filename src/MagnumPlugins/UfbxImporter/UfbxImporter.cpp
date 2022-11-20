@@ -112,6 +112,10 @@ inline Vector3 asVector3(const ufbx_vec3 &v) {
     return Vector3{ (Float)v.x, (Float)v.y, (Float)v.z };
 }
 
+inline Vector4 asVector4(const ufbx_vec4 &v) {
+    return Vector4{ (Float)v.x, (Float)v.y, (Float)v.z, (Float)v.w };
+}
+
 inline Color4 asColor4(const ufbx_vec4 &v) {
     return Color4{ (Float)v.x, (Float)v.y, (Float)v.z, (Float)v.w };
 }
@@ -157,16 +161,16 @@ struct MaterialMapping {
 };
 
 static const MaterialMapping materialMapsFbx[] = {
-    { MaterialAttributeType::Vector3, MaterialAttribute::DiffuseColor, MaterialAttribute::DiffuseTexture, MaterialAttribute::DiffuseTextureMatrix, MaterialAttribute::DiffuseTextureCoordinates, UFBX_MATERIAL_FBX_DIFFUSE_COLOR, UFBX_MATERIAL_FBX_DIFFUSE_COLOR },
-    { MaterialAttributeType::Vector3, MaterialAttribute::SpecularColor, MaterialAttribute::SpecularTexture, MaterialAttribute::SpecularTextureMatrix, MaterialAttribute::SpecularTextureCoordinates, UFBX_MATERIAL_FBX_SPECULAR_COLOR, UFBX_MATERIAL_FBX_SPECULAR_COLOR },
-    { MaterialAttributeType::Vector3, MaterialAttribute::AmbientColor, MaterialAttribute::AmbientTexture, MaterialAttribute::AmbientTextureMatrix, MaterialAttribute::AmbientTextureCoordinates, UFBX_MATERIAL_FBX_AMBIENT_COLOR, UFBX_MATERIAL_FBX_AMBIENT_COLOR },
+    { MaterialAttributeType::Vector4, MaterialAttribute::DiffuseColor, MaterialAttribute::DiffuseTexture, MaterialAttribute::DiffuseTextureMatrix, MaterialAttribute::DiffuseTextureCoordinates, UFBX_MATERIAL_FBX_DIFFUSE_COLOR, UFBX_MATERIAL_FBX_DIFFUSE_COLOR },
+    { MaterialAttributeType::Vector4, MaterialAttribute::SpecularColor, MaterialAttribute::SpecularTexture, MaterialAttribute::SpecularTextureMatrix, MaterialAttribute::SpecularTextureCoordinates, UFBX_MATERIAL_FBX_SPECULAR_COLOR, UFBX_MATERIAL_FBX_SPECULAR_COLOR },
+    { MaterialAttributeType::Vector4, MaterialAttribute::AmbientColor, MaterialAttribute::AmbientTexture, MaterialAttribute::AmbientTextureMatrix, MaterialAttribute::AmbientTextureCoordinates, UFBX_MATERIAL_FBX_AMBIENT_COLOR, UFBX_MATERIAL_FBX_AMBIENT_COLOR },
     { MaterialAttributeType::Vector3, MaterialAttribute::EmissiveColor, MaterialAttribute::EmissiveTexture, MaterialAttribute::EmissiveTextureMatrix, MaterialAttribute::EmissiveTextureCoordinates, UFBX_MATERIAL_FBX_EMISSION_COLOR, UFBX_MATERIAL_FBX_EMISSION_FACTOR },
     { MaterialAttributeType::Float, MaterialAttribute::Shininess, (MaterialAttribute)0, (MaterialAttribute)0, (MaterialAttribute)0, UFBX_MATERIAL_FBX_SPECULAR_EXPONENT, -1 },
     { (MaterialAttributeType)0, (MaterialAttribute)0, MaterialAttribute::NormalTexture, MaterialAttribute::NormalTextureMatrix, MaterialAttribute::NormalTextureCoordinates, UFBX_MATERIAL_FBX_NORMAL_MAP, -1 },
 };
 
 static const MaterialMapping materialMapsPbr[] = {
-    { MaterialAttributeType::Vector3, MaterialAttribute::BaseColor, MaterialAttribute::BaseColorTexture, MaterialAttribute::BaseColorTextureMatrix, MaterialAttribute::BaseColorTextureCoordinates, UFBX_MATERIAL_PBR_BASE_COLOR, UFBX_MATERIAL_PBR_BASE_FACTOR },
+    { MaterialAttributeType::Vector4, MaterialAttribute::BaseColor, MaterialAttribute::BaseColorTexture, MaterialAttribute::BaseColorTextureMatrix, MaterialAttribute::BaseColorTextureCoordinates, UFBX_MATERIAL_PBR_BASE_COLOR, UFBX_MATERIAL_PBR_BASE_FACTOR },
     { MaterialAttributeType::Float, MaterialAttribute::Metalness, MaterialAttribute::MetalnessTexture, MaterialAttribute::MetalnessTextureMatrix, MaterialAttribute::MetalnessTextureCoordinates, UFBX_MATERIAL_PBR_METALNESS, -1 },
     { MaterialAttributeType::Float, MaterialAttribute::Roughness, MaterialAttribute::RoughnessTexture, MaterialAttribute::RoughnessTextureMatrix, MaterialAttribute::RoughnessTextureCoordinates, UFBX_MATERIAL_PBR_ROUGHNESS, -1 },
     { MaterialAttributeType::Vector3, MaterialAttribute::EmissiveColor, MaterialAttribute::EmissiveTexture, MaterialAttribute::EmissiveTextureMatrix, MaterialAttribute::EmissiveTextureCoordinates, UFBX_MATERIAL_PBR_EMISSION_COLOR, UFBX_MATERIAL_PBR_EMISSION_FACTOR },
@@ -183,8 +187,16 @@ struct TextureBlob {
 
 struct UfbxImporter::State {
     ufbx_scene_ref scene;
+
     Containers::Array<MeshChunk> meshChunks;
+
+    /* Mapping from ufbx_mesh.typed_id -> State.meshChunks */
+    Containers::Array<UnsignedInt> meshChunkBase;
+
+    UnsignedInt nodeIdOffset = 0;
+    UnsignedInt originalNodeCount = 0;
     UnsignedInt nodeCountWithSynthetic = 0;
+
     bool fromFile = false;
 
     UnsignedInt imageImporterId = ~UnsignedInt{};
@@ -232,14 +244,78 @@ void UfbxImporter::doOpenFile(Containers::StringView filename) {
 }
 
 void UfbxImporter::doOpenState(const void* state, Containers::StringView path) {
-    ufbx_scene *scene_ptr = (ufbx_scene*)state;
+    ufbx_scene *scene = (ufbx_scene*)state;
 
     /* Retain a copy of the scene, also asserts `state` is in fact an `ufbx_scene` */
-    ufbx_retain(scene_ptr);
+    ufbx_retain(scene);
 
     _state.reset(new State{});
     _state->fromFile = !path.isEmpty();
-    _state->scene = ufbx_scene_ref{scene_ptr};
+    _state->scene = ufbx_scene_ref{scene};
+
+    /* We need to split meshes into chunks per material, so precompute the
+       number of required chunks at the start, as eg. meshCount() depends on it */
+    {
+        UnsignedInt chunkCount = 0;
+        arrayResize(_state->meshChunkBase, (UnsignedInt)scene->meshes.count);
+
+        /* ufbx meshes can contain per-face materials so we need to separate them
+           into pieces containing a single material for SceneData. */
+        for(std::size_t i = 0; i < scene->meshes.count; ++i) {
+            ufbx_mesh *mesh = scene->meshes[i];
+
+            _state->meshChunkBase[i] = chunkCount;
+
+            for(const ufbx_mesh_material &mat : mesh->materials) {
+                if(mat.num_faces == 0) continue;
+                ++chunkCount;
+            }
+        }
+
+        arrayResize(_state->meshChunks, chunkCount);
+
+        /* Initialize mesh chunks */
+        {
+            UnsignedInt chunkOffset = 0;
+            for(ufbx_mesh *mesh : scene->meshes) {
+                for (std::size_t i = 0; i < mesh->materials.count; ++i) {
+                    const ufbx_mesh_material &mat = mesh->materials[i];
+                    if(mat.num_faces == 0) continue;
+
+                    MeshChunk &chunk = _state->meshChunks[chunkOffset];
+                    chunk.meshId = mesh->typed_id;
+                    chunk.meshMaterialIndex = (UnsignedInt)i;
+                }
+            }
+        }
+    }
+
+    /* Count the final number of nodes in the scene, we may remove some (root)
+       or add (synthetic geometry transform nodes) */
+    {
+        const bool preserveRootNode = configuration().value<bool>("preserveRootNode");
+        const bool geometricTransformNodes = configuration().value<bool>("geometricTransformNodes");
+
+        _state->nodeIdOffset = 0;
+        _state->originalNodeCount = (UnsignedInt)scene->nodes.count;
+
+        if(!preserveRootNode) {
+            --_state->originalNodeCount;
+            ++_state->nodeIdOffset;
+        }
+
+        _state->nodeCountWithSynthetic = _state->originalNodeCount;
+
+        /* Reserve space for nodes if we want to create dummy nodes for geometric
+           transforms */
+        if(geometricTransformNodes) {
+            for(ufbx_node *node : scene->nodes) {
+                if(node->has_geometry_transform) {
+                    ++_state->nodeCountWithSynthetic;
+                }
+            }
+        }
+    }
 }
 
 Int UfbxImporter::doDefaultScene() const { return 0; }
@@ -257,71 +333,29 @@ Containers::String UfbxImporter::doSceneName(UnsignedInt) {
 Containers::Optional<SceneData> UfbxImporter::doScene(UnsignedInt) {
     ufbx_scene *scene = _state->scene.get();
 
-
-
-    UnsignedInt nodeIdOffset = 0;
-    UnsignedInt originalNodeCount = (UnsignedInt)scene->nodes.count;
-    UnsignedInt syntheticNodeCount = 0;
-
-    const bool geometricTransformNodes = configuration().value<bool>("geometricTransformNodes");
     const bool preserveRootNode = configuration().value<bool>("preserveRootNode");
-    if(!preserveRootNode) {
-        --originalNodeCount;
-    }
+    const bool geometricTransformNodes = configuration().value<bool>("geometricTransformNodes");
 
     UnsignedInt meshCount = 0;
     UnsignedInt skinCount = 0;
-    UnsignedInt nodeCount = originalNodeCount;
+    UnsignedInt nodeCount = _state->nodeCountWithSynthetic;
     UnsignedInt cameraCount = 0;
     UnsignedInt lightCount = 0;
-    UnsignedInt chunkCount = 0;
 
     /* Mapping from ufbx_mesh.typed_id -> State.meshChunks */
     Containers::Array<UnsignedInt> meshChunkBase{ (UnsignedInt)scene->meshes.count };
-
-    /* Reserve space for nodes if we want to create dummy nodes for geometric
-       transforms */
-    if(geometricTransformNodes) {
-        for(ufbx_node *node : scene->nodes) {
-            if(node->has_geometry_transform) {
-                ++nodeCount;
-            }
-        }
-    }
 
     /* ufbx meshes can contain per-face materials so we need to separate them
        into pieces containing a single material for SceneData. */
     for(std::size_t i = 0; i < scene->meshes.count; ++i) {
         ufbx_mesh *mesh = scene->meshes[i];
 
-        meshChunkBase[i] = chunkCount;
-
-        UnsignedInt instances = (UnsignedInt)mesh->instances.count;
+        UnsignedInt instanceCount = (UnsignedInt)mesh->instances.count;
         for(const ufbx_mesh_material &mat : mesh->materials) {
             if(mat.num_faces == 0) continue;
-
-            ++chunkCount;
-
-            meshCount += instances;
+            meshCount += instanceCount;
             if(mesh->skin_deformers.count > 0)
-                skinCount += instances;
-        }
-    }
-
-    Containers::arrayResize(_state->meshChunks, chunkCount);
-
-    /* Initialize mesh chunks */
-    {
-        UnsignedInt chunkOffset = 0;
-        for(ufbx_mesh *mesh : scene->meshes) {
-            for (std::size_t i = 0; i < mesh->materials.count; ++i) {
-                const ufbx_mesh_material &mat = mesh->materials[i];
-                if(mat.num_faces == 0) continue;
-
-                MeshChunk &chunk = _state->meshChunks[chunkOffset];
-                chunk.meshId = mesh->typed_id;
-                chunk.meshMaterialIndex = (UnsignedInt)i;
-            }
+                skinCount += instanceCount;
         }
     }
 
@@ -347,6 +381,7 @@ Containers::Optional<SceneData> UfbxImporter::doScene(UnsignedInt) {
     Containers::ArrayView<UnsignedInt> lightObjects;
     Containers::ArrayView<UnsignedInt> lights;
     Containers::Array<char> data = Containers::ArrayTuple{
+        {NoInit, nodeCount, nodeObjects},
         {NoInit, nodeCount, importerState},
         {NoInit, nodeCount, parents},
         {NoInit, nodeCount, transformations},
@@ -368,39 +403,43 @@ Containers::Optional<SceneData> UfbxImporter::doScene(UnsignedInt) {
     UnsignedInt meshMaterialOffset = 0;
     UnsignedInt lightOffset = 0;
     UnsignedInt cameraOffset = 0;
+    UnsignedInt syntheticNodeCount = 0;
+    UnsignedInt nodeIdOffset = _state->nodeIdOffset;
 
     for(std::size_t i = 0; i < scene->nodes.count; i++) {
         ufbx_node *node = scene->nodes[i];
+        if (!preserveRootNode && node->is_root) continue;
+
         UnsignedInt nodeId = node->typed_id - nodeIdOffset;
 
-        nodeObjects[i] = i;
-        importerState[i] = (const void*)node;
+        nodeObjects[nodeId] = nodeId;
+        importerState[nodeId] = (const void*)node;
 
         if (node->parent && (preserveRootNode || !node->parent->is_root)) {
-            parents[i] = (Int)(node->parent->typed_id - nodeIdOffset);
+            parents[nodeId] = (Int)(node->parent->typed_id - nodeIdOffset);
         } else {
-            parents[i] = -1;
+            parents[nodeId] = -1;
         }
 
-        transformations[i] = Matrix4x3d::from(node->node_to_parent.v);
-        translations[i] = Vector3d::from(node->local_transform.translation.v);
-        rotations[i] = asQuaterniond(node->local_transform.rotation);
-        scalings[i] = Vector3d::from(node->local_transform.scale.v);
+        transformations[nodeId] = Matrix4x3d::from(node->node_to_parent.v);
+        translations[nodeId] = Vector3d::from(node->local_transform.translation.v);
+        rotations[nodeId] = asQuaterniond(node->local_transform.rotation);
+        scalings[nodeId] = Vector3d::from(node->local_transform.scale.v);
 
         UnsignedInt objectId = nodeId;
 
         /* Create synthetic geometry node if necessary */
         if(geometricTransformNodes && node->has_geometry_transform) {
-            UnsignedInt gi = originalNodeCount + syntheticNodeCount;
-            objectId = gi;
+            UnsignedInt geomId = _state->originalNodeCount + syntheticNodeCount;
+            objectId = geomId;
 
-            nodeObjects[gi] = gi;
-            importerState[gi] = nullptr;
-            parents[gi] = (Int)nodeId;
-            transformations[gi] = Matrix4x3d::from(node->geometry_to_node.v);
-            translations[gi] = Vector3d::from(node->geometry_transform.translation.v);
-            rotations[gi] = asQuaterniond(node->geometry_transform.rotation);
-            scalings[gi] = Vector3d::from(node->geometry_transform.scale.v);
+            nodeObjects[geomId] = geomId;
+            importerState[geomId] = nullptr;
+            parents[geomId] = (Int)nodeId;
+            transformations[geomId] = Matrix4x3d::from(node->geometry_to_node.v);
+            translations[geomId] = Vector3d::from(node->geometry_transform.translation.v);
+            rotations[geomId] = asQuaterniond(node->geometry_transform.rotation);
+            scalings[geomId] = Vector3d::from(node->geometry_transform.scale.v);
 
             ++syntheticNodeCount;
         }
@@ -445,10 +484,10 @@ Containers::Optional<SceneData> UfbxImporter::doScene(UnsignedInt) {
         }
     }
 
-    CORRADE_INTERNAL_ASSERT(
-        meshMaterialOffset == meshMaterialObjects.size() &&
-        lightOffset == lightObjects.size() &&
-        cameraOffset == cameraObjects.size());
+    CORRADE_INTERNAL_ASSERT(meshMaterialOffset == meshMaterialObjects.size());
+    CORRADE_INTERNAL_ASSERT(lightOffset == lightObjects.size());
+    CORRADE_INTERNAL_ASSERT(cameraOffset == cameraObjects.size());
+    CORRADE_INTERNAL_ASSERT(_state->originalNodeCount + syntheticNodeCount == _state->nodeCountWithSynthetic);
 
     /* Put everything together. For simplicity the imported data could always
        have all fields present, with some being empty, but this gives less
@@ -483,8 +522,6 @@ Containers::Optional<SceneData> UfbxImporter::doScene(UnsignedInt) {
     /* Convert back to the default deleter to avoid dangling deleter function
        pointer issues when unloading the plugin */
     arrayShrink(fields, DefaultInit);
-
-    _state->nodeCountWithSynthetic = nodeCount;
 
     return SceneData{SceneMappingType::UnsignedInt, nodeCount, std::move(data), std::move(fields), scene};
 }
@@ -638,7 +675,7 @@ Containers::Optional<MeshData> UfbxImporter::doMesh(UnsignedInt id, UnsignedInt 
     attributeCount += mesh->color_sets.count;
     stride += mesh->color_sets.count * sizeof(Color4);
 
-    Containers::Array<UnsignedInt> triangleIndices{mesh->max_face_triangles};
+    Containers::Array<UnsignedInt> triangleIndices{mesh->max_face_triangles * 3};
 
     Containers::Array<char> vertexData{NoInit, stride*indexCount};
     size_t vertexOffset = 0;
@@ -679,9 +716,8 @@ Containers::Optional<MeshData> UfbxImporter::doMesh(UnsignedInt id, UnsignedInt 
     }
 
     /* Shrink the vertices to the actually needed amount */
-    Containers::arrayResize(vertexData, vertexCount);
+    Containers::arrayResize(vertexData, vertexCount * stride);
     Containers::arrayShrink(vertexData, DefaultInit);
-
 
     /* List attributes on the new vertex data */
     Containers::Array<MeshAttributeData> attributeData{attributeCount};
@@ -825,6 +861,9 @@ Containers::Optional<MaterialData> UfbxImporter::doMaterial(UnsignedInt id) {
                     arrayAppend(attributes, {mapping.attrib, value});
                 } else if (mapping.type == MaterialAttributeType::Vector3) {
                     Vector3 value = asVector3(colorMap.value_vec3) * factor;
+                    arrayAppend(attributes, {mapping.attrib, value});
+                } else if (mapping.type == MaterialAttributeType::Vector4) {
+                    Vector4 value = asVector4(colorMap.value_vec4) * factor;
                     arrayAppend(attributes, {mapping.attrib, value});
                 } else {
                     CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
