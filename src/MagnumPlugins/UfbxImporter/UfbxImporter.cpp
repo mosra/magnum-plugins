@@ -912,8 +912,9 @@ Containers::Optional<MaterialData> UfbxImporter::doMaterial(UnsignedInt id) {
     }
 
     Containers::Array<UnsignedInt> layers{ 1 };
-    return MaterialData{types, std::move(attributes), std::move(layers), material};
+    layers.back() = (UnsignedInt)attributes.size();
 
+    return MaterialData{types, std::move(attributes), std::move(layers), material};
 }
 
 UnsignedInt UfbxImporter::doTextureCount() const {
