@@ -342,9 +342,6 @@ Containers::Optional<SceneData> UfbxImporter::doScene(UnsignedInt) {
     UnsignedInt cameraCount = 0;
     UnsignedInt lightCount = 0;
 
-    /* Mapping from ufbx_mesh.typed_id -> State.meshChunks */
-    Containers::Array<UnsignedInt> meshChunkBase{ (UnsignedInt)scene->meshes.count };
-
     /* ufbx meshes can contain per-face materials so we need to separate them
        into pieces containing a single material for SceneData. */
     for(std::size_t i = 0; i < scene->meshes.count; ++i) {
@@ -449,7 +446,7 @@ Containers::Optional<SceneData> UfbxImporter::doScene(UnsignedInt) {
 
                 /* We may need to add multiple "chunks" for each mesh as one
                    ufbx_mesh may contain multiple materials. */
-                UnsignedInt chunkOffset = meshChunkBase[mesh->typed_id];
+                UnsignedInt chunkOffset = _state->meshChunkBase[mesh->typed_id];
                 for (const ufbx_mesh_material &mat : mesh->materials) {
                     if (mat.num_faces == 0) continue;
 
