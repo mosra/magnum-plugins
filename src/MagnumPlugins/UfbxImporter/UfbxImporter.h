@@ -68,7 +68,50 @@ class MAGNUM_UFBXIMPORTER_EXPORT UfbxImporter: public AbstractImporter {
 
         MAGNUM_UFBXIMPORTER_LOCAL bool doIsOpened() const override;
         MAGNUM_UFBXIMPORTER_LOCAL void doOpenData(Containers::Array<char>&& data, DataFlags dataFlags) override;
+        MAGNUM_UFBXIMPORTER_LOCAL void doOpenFile(Containers::StringView filename) override;
+        MAGNUM_UFBXIMPORTER_LOCAL void doOpenState(const void* state, Containers::StringView filePath) override;
         MAGNUM_UFBXIMPORTER_LOCAL void doClose() override;
+
+        MAGNUM_UFBXIMPORTER_LOCAL Int doDefaultScene() const override;
+        MAGNUM_UFBXIMPORTER_LOCAL UnsignedInt doSceneCount() const override;
+        MAGNUM_UFBXIMPORTER_LOCAL Int doSceneForName(Containers::StringView name) override;
+        MAGNUM_UFBXIMPORTER_LOCAL Containers::String doSceneName(UnsignedInt id) override;
+        MAGNUM_UFBXIMPORTER_LOCAL Containers::Optional<SceneData> doScene(UnsignedInt id) override;
+
+        MAGNUM_UFBXIMPORTER_LOCAL const void* doImporterState() const override;
+
+        MAGNUM_UFBXIMPORTER_LOCAL UnsignedLong doObjectCount() const override;
+        MAGNUM_UFBXIMPORTER_LOCAL Long doObjectForName(Containers::StringView name) override;
+        MAGNUM_UFBXIMPORTER_LOCAL Containers::String doObjectName(UnsignedLong id) override;
+
+        MAGNUM_UFBXIMPORTER_LOCAL UnsignedInt doCameraCount() const override;
+        MAGNUM_UFBXIMPORTER_LOCAL Int doCameraForName(Containers::StringView name) override;
+        MAGNUM_UFBXIMPORTER_LOCAL Containers::String doCameraName(UnsignedInt id) override;
+        MAGNUM_UFBXIMPORTER_LOCAL Containers::Optional<CameraData> doCamera(UnsignedInt id) override;
+
+        MAGNUM_UFBXIMPORTER_LOCAL UnsignedInt doLightCount() const override;
+        MAGNUM_UFBXIMPORTER_LOCAL Int doLightForName(Containers::StringView name) override;
+        MAGNUM_UFBXIMPORTER_LOCAL Containers::String doLightName(UnsignedInt id) override;
+        MAGNUM_UFBXIMPORTER_LOCAL Containers::Optional<LightData> doLight(UnsignedInt id) override;
+
+        MAGNUM_UFBXIMPORTER_LOCAL UnsignedInt doMeshCount() const override;
+        MAGNUM_UFBXIMPORTER_LOCAL Containers::Optional<MeshData> doMesh(UnsignedInt id, UnsignedInt level) override;
+
+        MAGNUM_UFBXIMPORTER_LOCAL UnsignedInt doMaterialCount() const override;
+        MAGNUM_UFBXIMPORTER_LOCAL Int doMaterialForName(Containers::StringView name) override;
+        MAGNUM_UFBXIMPORTER_LOCAL Containers::String doMaterialName(UnsignedInt id) override;
+        MAGNUM_UFBXIMPORTER_LOCAL Containers::Optional<MaterialData> doMaterial(UnsignedInt id) override;
+
+        MAGNUM_UFBXIMPORTER_LOCAL UnsignedInt doTextureCount() const override;
+        MAGNUM_UFBXIMPORTER_LOCAL Int doTextureForName(Containers::StringView name) override;
+        MAGNUM_UFBXIMPORTER_LOCAL Containers::String doTextureName(UnsignedInt id) override;
+        MAGNUM_UFBXIMPORTER_LOCAL Containers::Optional<TextureData> doTexture(UnsignedInt id) override;
+
+        MAGNUM_UFBXIMPORTER_LOCAL AbstractImporter* setupOrReuseImporterForImage(UnsignedInt id, const char* errorPrefix);
+
+        MAGNUM_UFBXIMPORTER_LOCAL UnsignedInt doImage2DCount() const override;
+        MAGNUM_UFBXIMPORTER_LOCAL UnsignedInt doImage2DLevelCount(UnsignedInt id) override;
+        MAGNUM_UFBXIMPORTER_LOCAL Containers::Optional<ImageData2D> doImage2D(UnsignedInt id, UnsignedInt level) override;
 
         struct State;
         Containers::Pointer<State> _state;
