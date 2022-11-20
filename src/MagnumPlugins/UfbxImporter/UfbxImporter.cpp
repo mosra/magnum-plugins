@@ -870,7 +870,7 @@ Containers::Optional<MaterialData> UfbxImporter::doMaterial(UnsignedInt id) {
             if (mapping.texture != (MaterialAttribute)0) {
                 ufbx_texture *texture = colorMap.texture;
                 if (texture && colorMap.texture_enabled && !addedAttributes[(UnsignedInt)mapping.texture]) {
-                    addedAttributes.set((UnsignedInt)mapping.attrib, true);
+                    addedAttributes.set((UnsignedInt)mapping.texture, true);
                     arrayAppend(attributes, {mapping.texture, (UnsignedInt)texture->typed_id});
 
                     if (mapping.textureMatrix != (MaterialAttribute)0 && texture->has_uv_transform) {
