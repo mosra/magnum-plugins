@@ -275,17 +275,16 @@ void UfbxImporter::doOpenState(const void* state, Containers::StringView path) {
         arrayResize(_state->meshChunks, chunkCount);
 
         /* Initialize mesh chunks */
-        {
-            UnsignedInt chunkOffset = 0;
-            for(ufbx_mesh *mesh : scene->meshes) {
-                for (std::size_t i = 0; i < mesh->materials.count; ++i) {
-                    const ufbx_mesh_material &mat = mesh->materials[i];
-                    if(mat.num_faces == 0) continue;
+        for(ufbx_mesh *mesh : scene->meshes) {
+            UnsignedInt chunkOffset = _state->meshChunkBase[mesh->typed_id];
+            for (std::size_t i = 0; i < mesh->materials.count; ++i) {
+                const ufbx_mesh_material &mat = mesh->materials[i];
+                if(mat.num_faces == 0) continue;
 
-                    MeshChunk &chunk = _state->meshChunks[chunkOffset];
-                    chunk.meshId = mesh->typed_id;
-                    chunk.meshMaterialIndex = (UnsignedInt)i;
-                }
+                MeshChunk &chunk = _state->meshChunks[chunkOffset];
+                chunk.meshId = mesh->typed_id;
+                chunk.meshMaterialIndex = (UnsignedInt)i;
+                ++chunkOffset;
             }
         }
     }
