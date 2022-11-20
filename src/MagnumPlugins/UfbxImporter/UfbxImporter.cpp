@@ -368,14 +368,6 @@ Int UfbxImporter::doDefaultScene() const { return 0; }
 
 UnsignedInt UfbxImporter::doSceneCount() const { return 1; }
 
-Int UfbxImporter::doSceneForName(Containers::StringView) {
-    return -1;
-}
-
-Containers::String UfbxImporter::doSceneName(UnsignedInt) {
-    return {};
-}
-
 Containers::Optional<SceneData> UfbxImporter::doScene(UnsignedInt) {
     ufbx_scene *scene = _state->scene.get();
 
