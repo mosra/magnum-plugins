@@ -35,8 +35,10 @@
 /* Do we want this? */
 #define UFBX_NO_ERROR_STACK
 
+#include "ufbx.h"
 #include "ufbx.c"
 
+#include <limits>
 #include <unordered_map>
 #include <Corrade/Containers/Array.h>
 #include <Corrade/Containers/ArrayTuple.h>
@@ -56,6 +58,7 @@
 #include <Magnum/Trade/ImageData.h>
 #include <Magnum/Trade/LightData.h>
 #include <Magnum/Trade/SceneData.h>
+#include <Magnum/MeshTools/RemoveDuplicates.h>
 #include <MagnumPlugins/AnyImageImporter/AnyImageImporter.h>
 
 namespace Corrade { namespace Containers { namespace Implementation {
@@ -191,22 +194,8 @@ inline void logError(const char *prefix, const ufbx_error &error) {
     }
 }
 
-inline void pushVector2(Containers::Array<char> &arr, size_t &offset, const ufbx_vec2 &v) {
-    CORRADE_INTERNAL_ASSERT(offset + sizeof(Vector2) <= arr.size());
-    *(Vector2*)(arr.data() + offset) = Vector2(v);
-    offset += sizeof(Vector2);
-}
-
-inline void pushVector3(Containers::Array<char> &arr, size_t &offset, const ufbx_vec3 &v) {
-    CORRADE_INTERNAL_ASSERT(offset + sizeof(Vector3) <= arr.size());
-    *(Vector3*)(arr.data() + offset) = Vector3(v);
-    offset += sizeof(Vector3);
-}
-
-inline void pushColor4(Containers::Array<char> &arr, size_t &offset, const ufbx_vec4 &v) {
-    CORRADE_INTERNAL_ASSERT(offset + sizeof(Color4) <= arr.size());
-    *(Color4*)(arr.data() + offset) = Color4(v);
-    offset += sizeof(Color4);
+inline UnsignedInt unboundedIfNegative(Int value) {
+    return value >= 0 ? value : std::numeric_limits<UnsignedLong>::max();
 }
 
 struct MaterialMapping {
@@ -682,84 +671,71 @@ Containers::Optional<MeshData> UfbxImporter::doMesh(UnsignedInt id, UnsignedInt 
 
     const UnsignedInt indexCount = mat.num_triangles * 3;
 
-    /* Gather all attributes. Position is there always, others are optional */
-    std::size_t attributeCount = 1;
-    std::size_t stride = sizeof(Vector3);
+    const UnsignedInt maxUvSets = unboundedIfNegative(configuration().value<Int>("maxUvSets"));
+    const UnsignedInt maxTangentSets = unboundedIfNegative(configuration().value<Int>("maxTangentSets"));
+    const UnsignedInt maxColorSets = unboundedIfNegative(configuration().value<Int>("maxColorSets"));
+        
+    UnsignedInt uvSetCount = Utility::min(UnsignedInt(mesh->uv_sets.count), maxUvSets);
+    UnsignedInt tangentSetCount = Utility::min(uvSetCount, maxTangentSets);
+    UnsignedInt bitangentSetCount = tangentSetCount;
+    UnsignedInt colorSetCount = Utility::min(UnsignedInt(mesh->color_sets.count), maxColorSets);
+
+    /* Include tangents for UV layers until we hit a layer with missing or
+       incomplete tangents as at that point the implicit mapping breaks. */
+    for (UnsignedInt i = 0; i < tangentSetCount; i++) {
+        ufbx_uv_set &uv_set = mesh->uv_sets[i];
+        if (!uv_set.vertex_tangent.exists || !mesh->uv_sets[i].vertex_bitangent.exists) {
+            /* Include the last partial tangent/bitangent set */
+            tangentSetCount = i + (uv_set.vertex_tangent.exists ? 1u : 0u);
+            bitangentSetCount = i + + (uv_set.vertex_bitangent.exists ? 1u : 0u);
+            break;
+        }
+    }
+
+    /* Calculate the stride (ie. size of a single vertex) */
+    std::size_t attributeCount = 0;
+    std::size_t stride = 0;
+
+    /* ufbx guarantees that position always exists */
+    CORRADE_INTERNAL_ASSERT(mesh->vertex_position.exists);
+    ++attributeCount;
+    stride += sizeof(Vector3);
 
     if(mesh->vertex_normal.exists) {
         ++attributeCount;
         stride += sizeof(Vector3);
     }
 
-    if(mesh->vertex_tangent.exists) {
-        ++attributeCount;
-        stride += sizeof(Vector3);
-    }
+    attributeCount += uvSetCount;
+    stride += uvSetCount * sizeof(Vector2);
 
-    if(mesh->vertex_bitangent.exists) {
-        ++attributeCount;
-        stride += sizeof(Vector3);
-    }
+    attributeCount += tangentSetCount;
+    stride += tangentSetCount * sizeof(Vector3);
 
-    attributeCount += mesh->uv_sets.count;
-    stride += mesh->uv_sets.count * sizeof(Vector2);
+    attributeCount += bitangentSetCount;
+    stride += bitangentSetCount * sizeof(Vector3);
 
-    attributeCount += mesh->color_sets.count;
-    stride += mesh->color_sets.count * sizeof(Color4);
+    attributeCount += colorSetCount;
+    stride += colorSetCount * sizeof(Color4);
 
     Containers::Array<UnsignedInt> triangleIndices{mesh->max_face_triangles * 3};
-
     Containers::Array<char> vertexData{NoInit, stride*indexCount};
-    size_t vertexOffset = 0;
 
-    for(UnsignedInt faceIndex : mat.face_indices) {
-        ufbx_face face = mesh->faces[faceIndex];
-        UnsignedInt numTriangles = ufbx_triangulate_face(triangleIndices.data(), triangleIndices.size(), mesh, face);
-        UnsignedInt numIndices = numTriangles * 3;
-
-        for(UnsignedInt i = 0; i < numIndices; i++) {
-            UnsignedInt ix = triangleIndices[i];
-
-            pushVector3(vertexData, vertexOffset, mesh->vertex_position[ix]);
-            if (mesh->vertex_normal.exists)
-                pushVector3(vertexData, vertexOffset, mesh->vertex_normal[ix]);
-            if (mesh->vertex_tangent.exists)
-                pushVector3(vertexData, vertexOffset, mesh->vertex_tangent[ix]);
-            if (mesh->vertex_bitangent.exists)
-                pushVector3(vertexData, vertexOffset, mesh->vertex_bitangent[ix]);
-            for (const ufbx_uv_set &set : mesh->uv_sets)
-                pushVector2(vertexData, vertexOffset, set.vertex_uv[ix]);
-            for (const ufbx_color_set &set : mesh->color_sets)
-                pushColor4(vertexData, vertexOffset, set.vertex_color[ix]);
-        }
-    }
-
-    CORRADE_INTERNAL_ASSERT(vertexOffset == vertexData.size());
-
-    Containers::Array<char> indexData{NoInit, indexCount*sizeof(UnsignedInt)};
-    Containers::ArrayView<UnsignedInt> indices = Containers::arrayCast<UnsignedInt>(indexData);
-
-    ufbx_vertex_stream stream { vertexData.data(), stride };
-    ufbx_error error;
-    size_t vertexCount = ufbx_generate_indices(&stream, 1, indices.data(), indices.size(), nullptr, &error);
-    if (vertexCount == 0 && !indices.isEmpty()) {
-        logError("Trade::UfbxImporter::mesh(): generating indices failed: ", error);
-        return {};
-    }
-
-    /* Shrink the vertices to the actually needed amount */
-    Containers::arrayResize(vertexData, vertexCount * stride);
-    Containers::arrayShrink(vertexData, DefaultInit);
-
-    /* List attributes on the new vertex data */
     Containers::Array<MeshAttributeData> attributeData{attributeCount};
     UnsignedInt attributeOffset = 0;
     UnsignedInt attributeIndex = 0;
 
+    Containers::StridedArrayView1D<Vector3> positions;
+    Containers::StridedArrayView1D<Vector3> normals;
+    Containers::Array<Containers::StridedArrayView1D<Vector2>> uvSets{uvSetCount};
+    Containers::Array<Containers::StridedArrayView1D<Vector3>> tangentSets{tangentSetCount};
+    Containers::Array<Containers::StridedArrayView1D<Vector3>> bitangentSets{bitangentSetCount};
+    Containers::Array<Containers::StridedArrayView1D<Color4>> colorSets{colorSetCount};
+
     {
-        Containers::StridedArrayView1D<Vector3> positions{vertexData,
+        positions = {vertexData,
             reinterpret_cast<Vector3*>(vertexData + attributeOffset),
-            vertexCount, stride};
+            indexCount, stride};
 
         attributeData[attributeIndex++] = MeshAttributeData{
             MeshAttribute::Position, positions};
@@ -767,62 +743,99 @@ Containers::Optional<MeshData> UfbxImporter::doMesh(UnsignedInt id, UnsignedInt 
     }
 
     if (mesh->vertex_normal.exists) {
-        Containers::StridedArrayView1D<Vector3> normals{vertexData,
+        normals = {vertexData,
             reinterpret_cast<Vector3*>(vertexData + attributeOffset),
-            vertexCount, stride};
+            indexCount, stride};
 
         attributeData[attributeIndex++] = MeshAttributeData{
             MeshAttribute::Normal, normals};
         attributeOffset += sizeof(Vector3);
     }
 
-    if (mesh->vertex_tangent.exists) {
-        Containers::StridedArrayView1D<Vector3> tangents{vertexData,
-            reinterpret_cast<Vector3*>(vertexData + attributeOffset),
-            vertexCount, stride};
-
-        attributeData[attributeIndex++] = MeshAttributeData{
-            MeshAttribute::Tangent, tangents};
-        attributeOffset += sizeof(Vector3);
-    }
-
-    if (mesh->vertex_bitangent.exists) {
-        Containers::StridedArrayView1D<Vector3> bitangents{vertexData,
-            reinterpret_cast<Vector3*>(vertexData + attributeOffset),
-            vertexCount, stride};
-
-        attributeData[attributeIndex++] = MeshAttributeData{
-            MeshAttribute::Bitangent, bitangents};
-        attributeOffset += sizeof(Vector3);
-    }
-
-    for (std::size_t set = 0; set < mesh->uv_sets.count; set++) {
-        Containers::StridedArrayView1D<Vector2> bitangents{vertexData,
+    for (UnsignedInt i = 0; i < uvSetCount; ++i) {
+        uvSets[i] = {vertexData,
             reinterpret_cast<Vector2*>(vertexData + attributeOffset),
-            vertexCount, stride};
+            indexCount, stride};
 
         attributeData[attributeIndex++] = MeshAttributeData{
-            MeshAttribute::TextureCoordinates, bitangents};
+            MeshAttribute::TextureCoordinates, uvSets[i]};
         attributeOffset += sizeof(Vector2);
     }
 
-    for (std::size_t set = 0; set < mesh->color_sets.count; set++) {
-        Containers::StridedArrayView1D<Color4> bitangents{vertexData,
-            reinterpret_cast<Color4*>(vertexData + attributeOffset),
-            vertexCount, stride};
+    for (UnsignedInt i = 0; i < tangentSetCount; ++i) {
+        tangentSets[i] = {vertexData,
+            reinterpret_cast<Vector3*>(vertexData + attributeOffset),
+            indexCount, stride};
 
         attributeData[attributeIndex++] = MeshAttributeData{
-            MeshAttribute::Color, bitangents};
+            MeshAttribute::Tangent, tangentSets[i]};
+        attributeOffset += sizeof(Vector3);
+    }
+
+    for (UnsignedInt i = 0; i < tangentSetCount; ++i) {
+        bitangentSets[i] = {vertexData,
+            reinterpret_cast<Vector3*>(vertexData + attributeOffset),
+            indexCount, stride};
+
+        attributeData[attributeIndex++] = MeshAttributeData{
+            MeshAttribute::Bitangent, bitangentSets[i]};
+        attributeOffset += sizeof(Vector3);
+    }
+
+    for (UnsignedInt i = 0; i < colorSetCount; ++i) {
+        colorSets[i] = {vertexData,
+            reinterpret_cast<Color4*>(vertexData + attributeOffset),
+            indexCount, stride};
+
+        attributeData[attributeIndex++] = MeshAttributeData{
+            MeshAttribute::Color, colorSets[i]};
         attributeOffset += sizeof(Color4);
     }
 
     CORRADE_INTERNAL_ASSERT(attributeIndex == attributeCount);
     CORRADE_INTERNAL_ASSERT(attributeOffset == stride);
 
-    return MeshData{MeshPrimitive::Triangles,
+    UnsignedInt dstIx = 0;
+    for(UnsignedInt faceIndex : mat.face_indices) {
+        ufbx_face face = mesh->faces[faceIndex];
+        UnsignedInt numTriangles = ufbx_triangulate_face(triangleIndices.data(), triangleIndices.size(), mesh, face);
+        UnsignedInt numIndices = numTriangles * 3;
+
+        for(UnsignedInt i = 0; i < numIndices; i++) {
+            UnsignedInt srcIx = triangleIndices[i];
+
+            positions[dstIx] = Vector3(mesh->vertex_position[srcIx]);
+            if (mesh->vertex_normal.exists)
+                normals[dstIx] = Vector3(mesh->vertex_normal[srcIx]);
+            for (UnsignedInt set = 0; set < uvSetCount; ++set)
+                uvSets[set][dstIx] = Vector2(mesh->uv_sets[set].vertex_uv[srcIx]);
+            for (UnsignedInt set = 0; set < tangentSetCount; ++set)
+                tangentSets[set][dstIx] = Vector3(mesh->uv_sets[set].vertex_tangent[srcIx]);
+            for (UnsignedInt set = 0; set < bitangentSetCount; ++set)
+                bitangentSets[set][dstIx] = Vector3(mesh->uv_sets[set].vertex_bitangent[srcIx]);
+            for (UnsignedInt set = 0; set < colorSetCount; ++set)
+                colorSets[set][dstIx] = Color4(mesh->color_sets[set].vertex_color[srcIx]);
+            dstIx++;
+        }
+    }
+
+    Containers::Array<char> indexData{NoInit, indexCount*sizeof(UnsignedInt)};
+    Containers::ArrayView<UnsignedInt> indices = Containers::arrayCast<UnsignedInt>(indexData);
+
+    /* The vertex data is unindexed, so generate a contiguous index range */
+    for (UnsignedInt i = 0; i < indexCount; i++)
+        indices[i] = i;
+
+    MeshData meshData{MeshPrimitive::Triangles,
         std::move(indexData), MeshIndexData{indices},
         std::move(vertexData), std::move(attributeData),
-        UnsignedInt(vertexCount)};
+        UnsignedInt(indexCount)};
+
+    const bool generateIndices = configuration().value<bool>("generateIndices");
+    if (generateIndices)
+        meshData = MeshTools::removeDuplicates(meshData);
+
+    return meshData;
 }
 
 UnsignedInt UfbxImporter::doMaterialCount() const {

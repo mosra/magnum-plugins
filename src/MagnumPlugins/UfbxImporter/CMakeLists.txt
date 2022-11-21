@@ -24,7 +24,7 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
-find_package(Magnum REQUIRED Trade AnyImageImporter)
+find_package(Magnum REQUIRED Trade MeshTools AnyImageImporter)
 
 if(MAGNUM_BUILD_PLUGINS_STATIC AND NOT DEFINED MAGNUM_UFBXIMPORTER_BUILD_STATIC)
     set(MAGNUM_UFBXIMPORTER_BUILD_STATIC 1)
@@ -52,7 +52,7 @@ target_include_directories(UfbxImporter PUBLIC
 # TODO(bqqbarbhg): This shouldn't be necessary from a warning standpoint at least
 # as the library is written to support very strict warning environments.
 target_include_directories(UfbxImporter SYSTEM PRIVATE ${PROJECT_SOURCE_DIR}/src/external/ufbx)
-target_link_libraries(UfbxImporter PUBLIC Magnum::Trade)
+target_link_libraries(UfbxImporter PUBLIC Magnum::Trade Magnum::MeshTools)
 if(CORRADE_TARGET_WINDOWS)
     target_link_libraries(UfbxImporter PUBLIC Magnum::AnyImageImporter)
 elseif(MAGNUM_UFBXIMPORTER_BUILD_STATIC)
