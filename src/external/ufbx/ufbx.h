@@ -2444,7 +2444,7 @@ struct ufbx_texture {
 	ufbx_wrap_mode wrap_v;
 
 	// UV transform
-    bool has_uv_transform;       // < Has a non-identity `transform` and derived matrices.
+	bool has_uv_transform;       // < Has a non-identity `transform` and derived matrices.
 	ufbx_transform uv_transform; // < Texture transformation in UV space
 	ufbx_matrix texture_to_uv;   // < Matrix representation of `transform`
 	ufbx_matrix uv_to_texture;   // < UV coordinate to normalized texture coordinate matrix
@@ -2907,6 +2907,10 @@ typedef struct ufbx_metadata {
 	// May contain `ufbx_mesh_material` entries where `ufbx_mesh_material.material == NULL`.
 	// NOTE: The corresponding `ufbx_node.material[]` will be empty in this case.
 	bool may_contain_null_materials;
+
+	// May contain meshes with no defined vertex position.
+	// NOTE: `ufbx_mesh.vertex_position.exists` may be `false`!
+	bool may_contain_missing_vertex_position;
 
 	// Some API guarantees do not apply (depending on unsafe options used).
 	// Loaded with `ufbx_load_opts.allow_unsafe` enabled.
@@ -3526,6 +3530,10 @@ typedef struct ufbx_load_opts {
 	// with a `NULL` material pointer. This can be more convenient if you need
 	// to split models into parts per material.
 	bool allow_null_material;
+
+	// Allow meshes with no vertex position attribute.
+	// NOTE: If this is set `ufbx_mesh.vertex_position.exists` may be `false`.
+	bool allow_missing_vertex_position;
 
 	// Generate vertex normals for a meshes that are missing normals.
 	// You can see if the normals have been generated from `ufbx_mesh.generated_normals`.

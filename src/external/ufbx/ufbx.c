@@ -48,6 +48,9 @@
 	#if !defined(UFBX_NO_FORMAT_OBJ)
 		#define UFBXI_FEATURE_FORMAT_OBJ 1
 	#endif
+#endif
+
+#if defined(UFBX_DEV)
 	#if !defined(UFBX_NO_ERROR_STACK)
 		#define UFBXI_FEATURE_ERROR_STACK 1
 	#endif
@@ -4304,10 +4307,10 @@ static const char ufbxi_EdgeIndexArray[] = "EdgeIndexArray";
 static const char ufbxi_Edges[] = "Edges";
 static const char ufbxi_EmissiveColor[] = "EmissiveColor";
 static const char ufbxi_Entry[] = "Entry";
-static const char ufbxi_FarPlane[] = "FarPlane";
 static const char ufbxi_FBXHeaderExtension[] = "FBXHeaderExtension";
 static const char ufbxi_FBXVersion[] = "FBXVersion";
 static const char ufbxi_FKEffector[] = "FKEffector";
+static const char ufbxi_FarPlane[] = "FarPlane";
 static const char ufbxi_FbxPropertyEntry[] = "FbxPropertyEntry";
 static const char ufbxi_FbxSemanticEntry[] = "FbxSemanticEntry";
 static const char ufbxi_FieldOfViewX[] = "FieldOfViewX";
@@ -4593,10 +4596,10 @@ static ufbx_string ufbxi_strings[] = {
 	{ ufbxi_Edges, 5 },
 	{ ufbxi_EmissiveColor, 13 },
 	{ ufbxi_Entry, 5 },
-	{ ufbxi_FarPlane, 8 },
 	{ ufbxi_FBXHeaderExtension, 18 },
 	{ ufbxi_FBXVersion, 10 },
 	{ ufbxi_FKEffector, 10 },
+	{ ufbxi_FarPlane, 8 },
 	{ ufbxi_FbxPropertyEntry, 16 },
 	{ ufbxi_FbxSemanticEntry, 16 },
 	{ ufbxi_FieldOfView, 11 },
@@ -14651,14 +14654,14 @@ ufbxi_nodiscard static ufbxi_noinline int ufbxi_mtl_load(ufbxi_context *uc)
 #else
 ufbxi_nodiscard static ufbxi_forceinline int ufbxi_obj_load(ufbxi_context *uc)
 {
-    ufbxi_fmt_err_info(&uc->error, "UFBX_ENABLE_FORMAT_OBJ");
+	ufbxi_fmt_err_info(&uc->error, "UFBX_ENABLE_FORMAT_OBJ");
 	ufbxi_fail_msg("UFBXI_FEATURE_FORMAT_OBJ", "Feature disabled");
 	return 0;
 }
 
 ufbxi_nodiscard static ufbxi_forceinline int ufbxi_mtl_load(ufbxi_context *uc)
 {
-    ufbxi_fmt_err_info(&uc->error, "UFBX_ENABLE_FORMAT_OBJ");
+	ufbxi_fmt_err_info(&uc->error, "UFBX_ENABLE_FORMAT_OBJ");
 	ufbxi_fail_msg("UFBXI_FEATURE_FORMAT_OBJ", "Feature disabled");
 	return 0;
 }
@@ -17519,6 +17522,15 @@ ufbxi_nodiscard ufbxi_noinline static int ufbxi_finalize_scene(ufbxi_context *uc
 			ufbxi_check(ufbxi_fetch_dst_elements(uc, &mesh->cache_deformers, &mesh->element, search_node, NULL, UFBX_ELEMENT_CACHE_DEFORMER));
 			ufbxi_check(ufbxi_fetch_deformers(uc, &mesh->all_deformers, &mesh->element, search_node));
 
+			// Vertex position must always exist if not explicitly allowed to be missing
+			if (!mesh->vertex_position.exists && !uc->opts.allow_missing_vertex_position) {
+				ufbxi_check(mesh->num_indices == 0);
+				mesh->vertex_position.exists = true;
+				mesh->vertex_position.unique_per_vertex = true;
+				mesh->skinned_position.exists = true;
+				mesh->skinned_position.unique_per_vertex = true;
+			}
+
 			// Update metadata
 			if (mesh->max_face_triangles > uc->scene.metadata.max_face_triangles) {
 				uc->scene.metadata.max_face_triangles = mesh->max_face_triangles;
@@ -18255,6 +18267,8 @@ ufbxi_noinline static void ufbxi_update_node(ufbx_node *node)
 		node->local_transform = ufbxi_get_transform(&node->props, node->rotation_order);
 		node->geometry_transform = ufbxi_get_geometry_transform(&node->props);
 		node->node_to_parent = ufbx_transform_to_matrix(&node->local_transform); 
+	} else {
+		node->geometry_transform = ufbx_identity_transform;
 	}
 
 	ufbx_node *parent = node->parent;
@@ -18589,11 +18603,11 @@ ufbxi_noinline static void ufbxi_update_texture(ufbx_texture *texture)
 {
 	texture->uv_transform = ufbxi_get_texture_transform(&texture->props);
 	if (!ufbxi_is_transform_identity(texture->uv_transform)) {
-        texture->has_uv_transform = true;
+		texture->has_uv_transform = true;
 		texture->texture_to_uv = ufbx_transform_to_matrix(&texture->uv_transform);
 		texture->uv_to_texture = ufbx_matrix_invert(&texture->texture_to_uv);
 	} else {
-        texture->has_uv_transform = false;
+		texture->has_uv_transform = false;
 		texture->texture_to_uv = ufbx_identity_matrix;
 		texture->uv_to_texture = ufbx_identity_matrix;
 	}
@@ -19764,7 +19778,7 @@ static ufbxi_noinline ufbx_geometry_cache *ufbxi_load_geometry_cache(ufbx_string
 {
 	if (p_error) {
 		memset(p_error, 0, sizeof(ufbx_error));
-        ufbxi_fmt_err_info(p_error, "UFBX_ENABLE_GEOMETRY_CACHE");
+		ufbxi_fmt_err_info(p_error, "UFBX_ENABLE_GEOMETRY_CACHE");
 		ufbxi_report_err_msg(p_error, "UFBXI_FEATURE_GEOMETRY_CACHE", "Feature disabled");
 	}
 	return NULL;
@@ -19839,9 +19853,9 @@ ufbxi_nodiscard static ufbxi_noinline int ufbxi_load_external_cache(ufbxi_contex
 	file->data = cache;
 	return 1;
 #else
-    if (uc->opts.ignore_missing_external_files) return 1;
+	if (uc->opts.ignore_missing_external_files) return 1;
 
-    ufbxi_fmt_err_info(&uc->error, "UFBX_ENABLE_GEOMETRY_CACHE");
+	ufbxi_fmt_err_info(&uc->error, "UFBX_ENABLE_GEOMETRY_CACHE");
 	ufbxi_fail_msg("UFBXI_FEATURE_GEOMETRY_CACHE", "Feature disabled");
 #endif
 }
@@ -20248,6 +20262,10 @@ ufbxi_nodiscard static ufbxi_noinline int ufbxi_load_imp(ufbxi_context *uc)
 
 	if (uc->opts.allow_null_material) {
 		uc->scene.metadata.may_contain_null_materials = true;
+	}
+
+	if (uc->opts.allow_missing_vertex_position) {
+		uc->scene.metadata.may_contain_missing_vertex_position = true;
 	}
 
 	uc->scene.metadata.creator.data = ufbxi_empty_char;
@@ -23748,7 +23766,7 @@ ufbxi_noinline static ufbx_mesh *ufbxi_subdivide_mesh(const ufbx_mesh *mesh, siz
 {
 	if (p_error) {
 		memset(p_error, 0, sizeof(ufbx_error));
-        ufbxi_fmt_err_info(p_error, "UFBX_ENABLE_SUBDIVISION");
+		ufbxi_fmt_err_info(p_error, "UFBX_ENABLE_SUBDIVISION");
 		ufbxi_report_err_msg(p_error, "UFBXI_FEATURE_SUBDIVISION", "Feature disabled");
 	}
 	return NULL;
@@ -23893,6 +23911,7 @@ static ufbxi_noinline size_t ufbxi_generate_indices(const ufbx_vertex_stream *us
 	ufbxi_free_ator(&ator);
 
 	return result_vertices;
+
 }
 
 #else
@@ -24739,7 +24758,7 @@ ufbx_abi ufbx_scene *ufbx_evaluate_scene(const ufbx_scene *scene, const ufbx_ani
 #else
 	if (error) {
 		memset(error, 0, sizeof(ufbx_error));
-        ufbxi_fmt_err_info(error, "UFBX_ENABLE_SCENE_EVALUATION");
+		ufbxi_fmt_err_info(error, "UFBX_ENABLE_SCENE_EVALUATION");
 		ufbxi_report_err_msg(error, "UFBXI_FEATURE_SCENE_EVALUATION", "Feature disabled");
 	}
 	return NULL;
@@ -25627,7 +25646,7 @@ ufbx_abi ufbx_line_curve *ufbx_tessellate_nurbs_curve(const ufbx_nurbs_curve *cu
 #else
 	if (error) {
 		memset(error, 0, sizeof(ufbx_error));
-        ufbxi_fmt_err_info(error, "UFBX_ENABLE_TESSELLATION");
+		ufbxi_fmt_err_info(error, "UFBX_ENABLE_TESSELLATION");
 		ufbxi_report_err_msg(error, "UFBXI_FEATURE_TESSELLATION", "Feature disabled");
 	}
 	return NULL;
@@ -25667,7 +25686,6 @@ ufbx_abi ufbx_mesh *ufbx_tessellate_nurbs_surface(const ufbx_nurbs_surface *surf
 #else
 	if (error) {
 		memset(error, 0, sizeof(ufbx_error));
-        ufbxi_fmt_err_info(error, "UFBX_ENABLE_TESSELLATION");
 		ufbxi_report_err_msg(error, "UFBXI_FEATURE_TESSELLATION", "Feature disabled");
 	}
 	return NULL;
