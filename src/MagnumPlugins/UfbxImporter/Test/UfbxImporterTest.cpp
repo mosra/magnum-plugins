@@ -43,17 +43,24 @@ struct UfbxImporterTest: TestSuite::Tester {
 
     void dummy();
 
-    /* Explicitly forbid system-wide plugin dependencies */
-    PluginManager::Manager<AbstractImporter> _manager{"nonexistent"};
+    /* Needs to load AnyImageImporter from a system-wide location */
+    PluginManager::Manager<AbstractImporter> _manager;
 };
 
 UfbxImporterTest::UfbxImporterTest() {
     addTests({&UfbxImporterTest::dummy});
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
-       already loaded. */
+       already loaded. It also pulls in the AnyImageImporter dependency. */
     #ifdef UFBXIMPORTER_PLUGIN_FILENAME
     CORRADE_INTERNAL_ASSERT_OUTPUT(_manager.load(UFBXIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
+    #endif
+
+    /* Reset the plugin dir after so it doesn't load anything else from the
+       filesystem. Do this also in case of static plugins (no _FILENAME
+       defined) so it doesn't attempt to load dynamic system-wide plugins. */
+    #ifndef CORRADE_PLUGINMANAGER_NO_DYNAMIC_PLUGIN_SUPPORT
+    _manager.setPluginDirectory({});
     #endif
 }
 
