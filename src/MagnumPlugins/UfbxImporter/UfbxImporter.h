@@ -66,7 +66,7 @@ class MAGNUM_UFBXIMPORTER_EXPORT UfbxImporter: public AbstractImporter {
         MAGNUM_UFBXIMPORTER_LOCAL bool doIsOpened() const override;
         MAGNUM_UFBXIMPORTER_LOCAL void doOpenData(Containers::Array<char>&& data, DataFlags dataFlags) override;
         MAGNUM_UFBXIMPORTER_LOCAL void doOpenFile(Containers::StringView filename) override;
-        MAGNUM_UFBXIMPORTER_LOCAL void openInternal(const void* state, bool fromFile);
+        MAGNUM_UFBXIMPORTER_LOCAL void openInternal(void* state, bool fromFile);
         MAGNUM_UFBXIMPORTER_LOCAL void doClose() override;
 
         MAGNUM_UFBXIMPORTER_LOCAL Int doDefaultScene() const override;

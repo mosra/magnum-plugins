@@ -143,7 +143,7 @@ template<> struct RectangularMatrixConverter<4, 3, Double, ufbx_matrix> {
 }}}
 
 namespace Magnum { namespace Trade {
-    
+
 using namespace Containers::Literals;
 
 namespace {
@@ -292,9 +292,8 @@ void UfbxImporter::doOpenFile(Containers::StringView filename) {
     openInternal(scene, true);
 }
 
-void UfbxImporter::openInternal(const void* state, bool fromFile) {
-    ufbx_scene *scene = (ufbx_scene*)state;
-
+void UfbxImporter::openInternal(void* state, bool fromFile) {
+    ufbx_scene *scene = static_cast<ufbx_scene*>(state);
 
     _state.reset(new State{});
     _state->fromFile = fromFile;
@@ -676,7 +675,7 @@ Containers::Optional<MeshData> UfbxImporter::doMesh(UnsignedInt id, UnsignedInt 
     const UnsignedInt maxUvSets = unboundedIfNegative(configuration().value<Int>("maxUvSets"));
     const UnsignedInt maxTangentSets = unboundedIfNegative(configuration().value<Int>("maxTangentSets"));
     const UnsignedInt maxColorSets = unboundedIfNegative(configuration().value<Int>("maxColorSets"));
-        
+
     UnsignedInt uvSetCount = Utility::min(UnsignedInt(mesh->uv_sets.count), maxUvSets);
     UnsignedInt tangentSetCount = Utility::min(uvSetCount, maxTangentSets);
     UnsignedInt bitangentSetCount = tangentSetCount;
@@ -695,8 +694,8 @@ Containers::Optional<MeshData> UfbxImporter::doMesh(UnsignedInt id, UnsignedInt 
     }
 
     /* Calculate the stride (ie. size of a single vertex) */
-    std::size_t attributeCount = 0;
-    std::size_t stride = 0;
+    UnsignedInt attributeCount = 0;
+    UnsignedInt stride = 0;
 
     /* ufbx guarantees that position always exists */
     CORRADE_INTERNAL_ASSERT(mesh->vertex_position.exists);
@@ -947,7 +946,7 @@ Containers::Optional<MaterialData> UfbxImporter::doMaterial(UnsignedInt id) {
 
     if (material->features.double_sided.enabled) {
         arrayAppend(attributes, {MaterialAttribute::DoubleSided, true});
-        
+
     }
 
     /* Can't use growable deleters in a plugin, convert back to the default
