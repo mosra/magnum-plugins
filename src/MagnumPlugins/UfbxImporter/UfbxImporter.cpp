@@ -72,6 +72,9 @@ template<> struct StringViewConverter<const char, ufbx_string> {
     static StringView from(const ufbx_string &other) {
         return StringView{other.data, other.length, Containers::StringViewFlag::NullTerminated};
     }
+    static ufbx_string to(StringView other) {
+        return ufbx_string{other.data(), other.size()};
+    }
 };
 
 }}}
@@ -271,12 +274,14 @@ void UfbxImporter::doOpenData(Containers::Array<char>&& data, const DataFlags) {
     }
 
     /* Handle the opened scene with doOpenState() */
-    doOpenState(scene, {});
+    openInternal(scene, {});
     ufbx_free(scene);
 }
 
 void UfbxImporter::doOpenFile(Containers::StringView filename) {
     ufbx_load_opts opts = loadOptsFromConfiguration(configuration());
+    opts.filename = filename;
+
     ufbx_error error;
     ufbx_scene *scene = ufbx_load_file_len(filename.data(), filename.size(), &opts, &error);
     if (!scene) {
@@ -284,18 +289,15 @@ void UfbxImporter::doOpenFile(Containers::StringView filename) {
     }
 
     /* Handle the opened scene with doOpenState() */
-    doOpenState(scene, filename);
-    ufbx_free(scene);
+    openInternal(scene, true);
 }
 
-void UfbxImporter::doOpenState(const void* state, Containers::StringView path) {
+void UfbxImporter::openInternal(const void* state, bool fromFile) {
     ufbx_scene *scene = (ufbx_scene*)state;
 
-    /* Retain a copy of the scene, also asserts `state` is in fact an `ufbx_scene` */
-    ufbx_retain(scene);
 
     _state.reset(new State{});
-    _state->fromFile = !path.isEmpty();
+    _state->fromFile = fromFile;
     _state->scene = ufbx_scene_ref{scene};
 
     /* We need to split meshes into chunks per material, so precompute the
