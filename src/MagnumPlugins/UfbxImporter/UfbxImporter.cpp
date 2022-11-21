@@ -411,7 +411,6 @@ Containers::Optional<SceneData> UfbxImporter::doScene(UnsignedInt) {
 
     /* Allocate the output array. */
     Containers::ArrayView<UnsignedInt> nodeObjects;
-    Containers::ArrayView<const void*> importerState;
     Containers::ArrayView<Int> parents;
     Containers::ArrayView<Matrix4x3d> transformations;
     Containers::ArrayView<Vector3d> translations;
@@ -426,7 +425,6 @@ Containers::Optional<SceneData> UfbxImporter::doScene(UnsignedInt) {
     Containers::ArrayView<UnsignedInt> lights;
     Containers::Array<char> data = Containers::ArrayTuple{
         {NoInit, nodeCount, nodeObjects},
-        {NoInit, nodeCount, importerState},
         {NoInit, nodeCount, parents},
         {NoInit, nodeCount, transformations},
         {NoInit, nodeCount, translations},
@@ -457,7 +455,6 @@ Containers::Optional<SceneData> UfbxImporter::doScene(UnsignedInt) {
         UnsignedInt nodeId = node->typed_id - nodeIdOffset;
 
         nodeObjects[nodeId] = nodeId;
-        importerState[nodeId] = (const void*)node;
 
         if (node->parent && (preserveRootNode || !node->parent->is_root)) {
             parents[nodeId] = Int(node->parent->typed_id - nodeIdOffset);
@@ -478,7 +475,6 @@ Containers::Optional<SceneData> UfbxImporter::doScene(UnsignedInt) {
             objectId = geomId;
 
             nodeObjects[geomId] = geomId;
-            importerState[geomId] = nullptr;
             parents[geomId] = Int(nodeId);
             transformations[geomId] = Matrix4x3d(node->geometry_to_node);
             translations[geomId] = Vector3d(node->geometry_transform.translation);
@@ -538,12 +534,11 @@ Containers::Optional<SceneData> UfbxImporter::doScene(UnsignedInt) {
        noise for asset introspection purposes. */
     Containers::Array<SceneFieldData> fields;
 
-    /* Parent, ImporterState, Transformation and TRS all share the implicit
+    /* Parent, Transformation and TRS all share the implicit
        object mapping */
     arrayAppend(fields, {
         /** @todo once there's a flag to annotate implicit fields */
         SceneFieldData{SceneField::Parent, nodeObjects, parents, SceneFieldFlag::ImplicitMapping},
-        SceneFieldData{SceneField::ImporterState, nodeObjects, importerState, SceneFieldFlag::ImplicitMapping},
         SceneFieldData{SceneField::Transformation, nodeObjects, transformations, SceneFieldFlag::ImplicitMapping},
         SceneFieldData{SceneField::Translation, nodeObjects, translations, SceneFieldFlag::ImplicitMapping},
         SceneFieldData{SceneField::Rotation, nodeObjects, rotations, SceneFieldFlag::ImplicitMapping},
@@ -567,11 +562,7 @@ Containers::Optional<SceneData> UfbxImporter::doScene(UnsignedInt) {
        pointer issues when unloading the plugin */
     arrayShrink(fields, DefaultInit);
 
-    return SceneData{SceneMappingType::UnsignedInt, nodeCount, std::move(data), std::move(fields), scene};
-}
-
-const void* UfbxImporter::doImporterState() const {
-    return _state->scene.get();
+    return SceneData{SceneMappingType::UnsignedInt, nodeCount, std::move(data), std::move(fields)};
 }
 
 UnsignedLong UfbxImporter::doObjectCount() const {
@@ -611,13 +602,11 @@ Containers::Optional<CameraData> UfbxImporter::doCamera(UnsignedInt id) {
     if (cam->projection_mode == UFBX_PROJECTION_MODE_PERSPECTIVE) {
         return CameraData{CameraType::Orthographic3D,
             Vector2{Float(cam->orthographic_size.x), Float(cam->orthographic_size.y)},
-            Float(cam->near_plane), Float(cam->far_plane),
-            cam};
+            Float(cam->near_plane), Float(cam->far_plane)};
     } else if (cam->projection_mode == UFBX_PROJECTION_MODE_ORTOGRAPHIC) {
         return CameraData{CameraType::Perspective3D,
             Deg(Float(cam->field_of_view_deg.x)), Float(cam->aspect_ratio),
-            Float(cam->near_plane), Float(cam->far_plane),
-            cam};
+            Float(cam->near_plane), Float(cam->far_plane)};
     } else {
         Error() << "Trade::UfbxImporter::light(): camera projection mode" << cam->projection_mode << "is not supported";
         return {};
@@ -677,8 +666,7 @@ Containers::Optional<LightData> UfbxImporter::doLight(UnsignedInt id) {
     }
 
     return LightData{lightType, color, intensity, attenuation,
-        Deg{Float(l->inner_angle)}, Deg{Float(l->outer_angle)},
-        l};
+        Deg{Float(l->inner_angle)}, Deg{Float(l->outer_angle)}};
 }
 
 UnsignedInt UfbxImporter::doMeshCount() const {
@@ -834,7 +822,7 @@ Containers::Optional<MeshData> UfbxImporter::doMesh(UnsignedInt id, UnsignedInt 
     return MeshData{MeshPrimitive::Triangles,
         std::move(indexData), MeshIndexData{indices},
         std::move(vertexData), std::move(attributeData),
-        UnsignedInt(vertexCount), mesh};
+        UnsignedInt(vertexCount)};
 }
 
 UnsignedInt UfbxImporter::doMaterialCount() const {
@@ -960,7 +948,7 @@ Containers::Optional<MaterialData> UfbxImporter::doMaterial(UnsignedInt id) {
     Containers::Array<UnsignedInt> layers{ 1 };
     layers.back() = UnsignedInt(attributes.size());
 
-    return MaterialData{types, std::move(attributes), std::move(layers), material};
+    return MaterialData{types, std::move(attributes), std::move(layers)};
 }
 
 UnsignedInt UfbxImporter::doTextureCount() const {
@@ -984,7 +972,7 @@ Containers::Optional<TextureData> UfbxImporter::doTexture(UnsignedInt id) {
     /* @todo: Image deduplication */
     return TextureData{TextureType::Texture2D,
         SamplerFilter::Linear, SamplerFilter::Linear, SamplerMipmap::Linear,
-        {wrappingU, wrappingV, SamplerWrapping::ClampToEdge}, id, texture};
+        {wrappingU, wrappingV, SamplerWrapping::ClampToEdge}, id};
 }
 
 AbstractImporter* UfbxImporter::setupOrReuseImporterForImage(UnsignedInt id, const char* errorPrefix) {

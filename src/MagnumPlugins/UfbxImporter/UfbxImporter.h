@@ -73,8 +73,6 @@ class MAGNUM_UFBXIMPORTER_EXPORT UfbxImporter: public AbstractImporter {
         MAGNUM_UFBXIMPORTER_LOCAL UnsignedInt doSceneCount() const override;
         MAGNUM_UFBXIMPORTER_LOCAL Containers::Optional<SceneData> doScene(UnsignedInt id) override;
 
-        MAGNUM_UFBXIMPORTER_LOCAL const void* doImporterState() const override;
-
         MAGNUM_UFBXIMPORTER_LOCAL UnsignedLong doObjectCount() const override;
         MAGNUM_UFBXIMPORTER_LOCAL Long doObjectForName(Containers::StringView name) override;
         MAGNUM_UFBXIMPORTER_LOCAL Containers::String doObjectName(UnsignedLong id) override;
