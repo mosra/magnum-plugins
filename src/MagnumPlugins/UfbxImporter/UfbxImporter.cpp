@@ -858,8 +858,8 @@ Containers::Optional<MaterialData> UfbxImporter::doMaterial(UnsignedInt id) {
     };
 
     MaterialMappingList mappingLists[] = {
-        { materialMapsFbx, material->fbx.maps },
-        { materialMapsPbr, material->pbr.maps },
+        { Containers::arrayView(materialMapsFbx), Containers::arrayView(material->fbx.maps) },
+        { Containers::arrayView(materialMapsPbr), Containers::arrayView(material->pbr.maps) },
     };
 
     Containers::BitArray addedAttributes { ValueInit, 128 };
