@@ -42,12 +42,12 @@
 	#if !defined(UFBX_NO_TRIANGULATION)
 		#define UFBXI_FEATURE_TRIANGULATION 1
 	#endif
+	#if !defined(UFBX_NO_INDEX_GENERATION)
+		#define UFBXI_FEATURE_INDEX_GENERATION 1
+	#endif
 	#if !defined(UFBX_NO_FORMAT_OBJ)
 		#define UFBXI_FEATURE_FORMAT_OBJ 1
 	#endif
-#endif
-
-#if defined(UFBX_DEV)
 	#if !defined(UFBX_NO_ERROR_STACK)
 		#define UFBXI_FEATURE_ERROR_STACK 1
 	#endif
@@ -67,6 +67,9 @@
 #endif
 #if !defined(UFBXI_FEATURE_TRIANGULATION) && defined(UFBX_ENABLE_TRIANGULATION)
 	#define UFBXI_FEATURE_TRIANGULATION 1
+#endif
+#if !defined(UFBXI_FEATURE_INDEX_GENERATION) && defined(UFBX_ENABLE_INDEX_GENERATION)
+	#define UFBXI_FEATURE_INDEX_GENERATION 1
 #endif
 #if !defined(UFBXI_FEATURE_FORMAT_OBJ) && defined(UFBX_ENABLE_FORMAT_OBJ)
 	#define UFBXI_FEATURE_FORMAT_OBJ 1
@@ -89,6 +92,9 @@
 #endif
 #if !defined(UFBXI_FEATURE_TRIANGULATION)
 	#define UFBXI_FEATURE_TRIANGULATION 0
+#endif
+#if !defined(UFBXI_FEATURE_INDEX_GENERATION)
+	#define UFBXI_FEATURE_INDEX_GENERATION 0
 #endif
 #if !defined(UFBXI_FEATURE_FORMAT_OBJ)
 	#define UFBXI_FEATURE_FORMAT_OBJ 0
@@ -117,7 +123,7 @@
 	#define UFBXI_FEATURE_KD 0
 #endif
 
-#if !UFBXI_FEATURE_SUBDIVISION || !UFBXI_FEATURE_TESSELLATION || !UFBXI_FEATURE_GEOMETRY_CACHE || !UFBXI_FEATURE_SCENE_EVALUATION || !UFBXI_FEATURE_TRIANGULATION || !UFBXI_FEATURE_XML || !UFBXI_FEATURE_SPATIAL || !UFBXI_FEATURE_KD
+#if !UFBXI_FEATURE_SUBDIVISION || !UFBXI_FEATURE_TESSELLATION || !UFBXI_FEATURE_GEOMETRY_CACHE || !UFBXI_FEATURE_SCENE_EVALUATION || !UFBXI_FEATURE_TRIANGULATION || !UFBXI_FEATURE_INDEX_GENERATION || !UFBXI_FEATURE_XML || !UFBXI_FEATURE_SPATIAL || !UFBXI_FEATURE_KD
 	#define UFBXI_PARTIAL_FEATURES 1
 #endif
 
@@ -14645,12 +14651,14 @@ ufbxi_nodiscard static ufbxi_noinline int ufbxi_mtl_load(ufbxi_context *uc)
 #else
 ufbxi_nodiscard static ufbxi_forceinline int ufbxi_obj_load(ufbxi_context *uc)
 {
+    ufbxi_fmt_err_info(&uc->error, "UFBX_ENABLE_FORMAT_OBJ");
 	ufbxi_fail_msg("UFBXI_FEATURE_FORMAT_OBJ", "Feature disabled");
 	return 0;
 }
 
 ufbxi_nodiscard static ufbxi_forceinline int ufbxi_mtl_load(ufbxi_context *uc)
 {
+    ufbxi_fmt_err_info(&uc->error, "UFBX_ENABLE_FORMAT_OBJ");
 	ufbxi_fail_msg("UFBXI_FEATURE_FORMAT_OBJ", "Feature disabled");
 	return 0;
 }
@@ -19756,6 +19764,7 @@ static ufbxi_noinline ufbx_geometry_cache *ufbxi_load_geometry_cache(ufbx_string
 {
 	if (p_error) {
 		memset(p_error, 0, sizeof(ufbx_error));
+        ufbxi_fmt_err_info(p_error, "UFBX_ENABLE_GEOMETRY_CACHE");
 		ufbxi_report_err_msg(p_error, "UFBXI_FEATURE_GEOMETRY_CACHE", "Feature disabled");
 	}
 	return NULL;
@@ -19830,6 +19839,9 @@ ufbxi_nodiscard static ufbxi_noinline int ufbxi_load_external_cache(ufbxi_contex
 	file->data = cache;
 	return 1;
 #else
+    if (uc->opts.ignore_missing_external_files) return 1;
+
+    ufbxi_fmt_err_info(&uc->error, "UFBX_ENABLE_GEOMETRY_CACHE");
 	ufbxi_fail_msg("UFBXI_FEATURE_GEOMETRY_CACHE", "Feature disabled");
 #endif
 }
@@ -23736,6 +23748,7 @@ ufbxi_noinline static ufbx_mesh *ufbxi_subdivide_mesh(const ufbx_mesh *mesh, siz
 {
 	if (p_error) {
 		memset(p_error, 0, sizeof(ufbx_error));
+        ufbxi_fmt_err_info(p_error, "UFBX_ENABLE_SUBDIVISION");
 		ufbxi_report_err_msg(p_error, "UFBXI_FEATURE_SUBDIVISION", "Feature disabled");
 	}
 	return NULL;
@@ -23744,6 +23757,8 @@ ufbxi_noinline static ufbx_mesh *ufbxi_subdivide_mesh(const ufbx_mesh *mesh, siz
 #endif
 
 // -- Utility
+
+#if UFBXI_FEATURE_INDEX_GENERATION
 
 static int ufbxi_map_cmp_vertex(void *user, const void *va, const void *vb)
 {
@@ -23878,8 +23893,21 @@ static ufbxi_noinline size_t ufbxi_generate_indices(const ufbx_vertex_stream *us
 	ufbxi_free_ator(&ator);
 
 	return result_vertices;
-
 }
+
+#else
+
+static ufbxi_noinline size_t ufbxi_generate_indices(const ufbx_vertex_stream *user_streams, size_t num_streams, uint32_t *indices, size_t num_indices, const ufbx_allocator_opts *allocator, ufbx_error *error)
+{
+	if (error) {
+		memset(error, 0, sizeof(ufbx_error));
+        ufbxi_fmt_err_info(error, "UFBX_ENABLE_INDEX_GENERATION");
+		ufbxi_report_err_msg(error, "UFBXI_FEATURE_INDEX_GENERATION", "Feature disabled");
+	}
+	return NULL;
+}
+
+#endif
 
 static ufbxi_noinline void ufbxi_free_scene_imp(ufbxi_scene_imp *imp)
 {
@@ -24711,6 +24739,7 @@ ufbx_abi ufbx_scene *ufbx_evaluate_scene(const ufbx_scene *scene, const ufbx_ani
 #else
 	if (error) {
 		memset(error, 0, sizeof(ufbx_error));
+        ufbxi_fmt_err_info(error, "UFBX_ENABLE_SCENE_EVALUATION");
 		ufbxi_report_err_msg(error, "UFBXI_FEATURE_SCENE_EVALUATION", "Feature disabled");
 	}
 	return NULL;
@@ -25598,6 +25627,7 @@ ufbx_abi ufbx_line_curve *ufbx_tessellate_nurbs_curve(const ufbx_nurbs_curve *cu
 #else
 	if (error) {
 		memset(error, 0, sizeof(ufbx_error));
+        ufbxi_fmt_err_info(error, "UFBX_ENABLE_TESSELLATION");
 		ufbxi_report_err_msg(error, "UFBXI_FEATURE_TESSELLATION", "Feature disabled");
 	}
 	return NULL;
@@ -25637,6 +25667,7 @@ ufbx_abi ufbx_mesh *ufbx_tessellate_nurbs_surface(const ufbx_nurbs_surface *surf
 #else
 	if (error) {
 		memset(error, 0, sizeof(ufbx_error));
+        ufbxi_fmt_err_info(error, "UFBX_ENABLE_TESSELLATION");
 		ufbxi_report_err_msg(error, "UFBXI_FEATURE_TESSELLATION", "Feature disabled");
 	}
 	return NULL;
