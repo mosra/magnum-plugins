@@ -195,7 +195,7 @@ inline void logError(const char *prefix, const ufbx_error &error) {
 }
 
 inline UnsignedInt unboundedIfNegative(Int value) {
-    return value >= 0 ? value : std::numeric_limits<UnsignedLong>::max();
+    return value >= 0 ? UnsignedInt(value) : std::numeric_limits<UnsignedInt>::max();
 }
 
 struct MaterialMapping {
