@@ -129,8 +129,7 @@ target_include_directories(AssimpImporterTest PRIVATE
     # and hence doesn't get the binary dir in the include dirs.
     ${PROJECT_BINARY_DIR}/src)
 if(MAGNUM_ASSIMPIMPORTER_BUILD_STATIC)
-    target_link_libraries(AssimpImporterTest PRIVATE
-        AssimpImporter Magnum::AnyImageImporter)
+    target_link_libraries(AssimpImporterTest PRIVATE AssimpImporter)
     if(MAGNUM_WITH_DDSIMPORTER)
         target_link_libraries(AssimpImporterTest PRIVATE DdsImporter)
     endif()
