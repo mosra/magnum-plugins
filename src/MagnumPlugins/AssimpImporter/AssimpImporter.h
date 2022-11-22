@@ -390,14 +390,19 @@ verbosity levels in each instance.
 -   The imported model always has either both @ref MeshAttribute::Tangent
     @ref MeshAttribute::Bitangent or neither of them, tangents are always
     three-component with binormals separate.
--   Joint IDs and weights for skinning are imported as custom vertex attributes
-    named "JOINTS" and "WEIGHTS" with formats @ref VertexFormat::Vector4ui and
-    @ref VertexFormat::Vector4, respectively. Imported meshes always have
-    either both or neither of them. Their mapping to/from a string can be
-    queried using @ref meshAttributeName() and @ref meshAttributeForName(). By
-    default, the number of weights per vertex is limited to 4, but you can
-    change this limit by setting the @cb{.ini} maxJointWeights @ce
-    @ref Trade-AssimpImporter-configuration "configuration option".
+-   Skin joint IDs are imported as *arrays* of @ref VertexFormat::UnsignedInt,
+    skin weights then as arrays of @ref VertexFormat::Float, with
+    @ref MeshData::attributeArraySize() varying based on how many per-vertex
+    weights there's at most in given mesh. You can limit this with the
+    @cb{.ini} maxJointWeights @ce @ref Trade-AssimpImporter-configuration "configuration option". For backwards compatibility, unless the
+    @cb{.ini} compatibilitySkinningAttributes @ce
+    @ref Trade-AssimpImporter-configuration "configuration option" or
+    @ref MAGNUM_BUILD_DEPRECATED is disabled, these are also exposed as custom
+    @cpp "JOINTS" @ce and @cpp "WEIGHTS" @ce attributes with
+    @ref VertexFormat::Vector4ui and @ref VertexFormat::Vector4 (non-array)
+    formats, respectively, with as many instances of these as needed to cover
+    all array items. The compatibility attributes *alias* the builtin ones,
+    i.e. point to the same memory, so their presence causes no extra overhead.
 -   Assimp doesn't correctly import glTF meshes with multiple sets of joint
     weights prior to version 5.2.5. Depending on the version it either fails to
     import the file at all or imports either the first or the last set of joint
@@ -531,8 +536,12 @@ class MAGNUM_ASSIMPIMPORTER_EXPORT AssimpImporter: public AbstractImporter {
         MAGNUM_ASSIMPIMPORTER_LOCAL Int doMeshForName(Containers::StringView name) override;
         MAGNUM_ASSIMPIMPORTER_LOCAL Containers::String doMeshName(UnsignedInt id) override;
         MAGNUM_ASSIMPIMPORTER_LOCAL Containers::Optional<MeshData> doMesh(UnsignedInt id, UnsignedInt level) override;
+        #ifdef MAGNUM_BUILD_DEPRECATED
+        /* For JOINTS and WEIGHTS, which are included only for backwards
+           compatibility. All other attributes are builtin. */
         MAGNUM_ASSIMPIMPORTER_LOCAL MeshAttribute doMeshAttributeForName(Containers::StringView name) override;
         MAGNUM_ASSIMPIMPORTER_LOCAL Containers::String doMeshAttributeName(UnsignedShort name) override;
+        #endif
 
         MAGNUM_ASSIMPIMPORTER_LOCAL UnsignedInt doMaterialCount() const override;
         MAGNUM_ASSIMPIMPORTER_LOCAL Int doMaterialForName(Containers::StringView name) override;

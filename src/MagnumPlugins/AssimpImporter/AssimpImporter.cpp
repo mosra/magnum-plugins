@@ -166,9 +166,11 @@ struct AssimpImporter::File {
 
 namespace {
 
+#ifdef MAGNUM_BUILD_DEPRECATED
 /* Joint ids and weights are the only custom attributes in this importer */
 constexpr MeshAttribute JointsAttribute = meshAttributeCustom(0);
 constexpr MeshAttribute WeightsAttribute = meshAttributeCustom(1);
+#endif
 
 void fillDefaultConfiguration(Utility::ConfigurationGroup& conf) {
     /** @todo horrible workaround, fix this properly */
@@ -1056,13 +1058,15 @@ Containers::Optional<MeshData> AssimpImporter::doMesh(const UnsignedInt id, Unsi
     attributeCount += mesh->GetNumColorChannels();
     stride += mesh->GetNumColorChannels()*sizeof(Color4);
 
-    /* Determine the number of joint weight layers */
-    std::size_t jointLayerCount = 0;
+    /* Determine the max number of joints assigned to a particular vertex */
+    std::size_t maxJointCount = 0;
+    /** @todo drop this variable and use just maxJointCount everywhere once
+        the compatibilitySkinningAttributes option is gone */
+    std::size_t roundedJointCount = 0;
     Containers::Array<UnsignedByte> jointCounts{ValueInit, vertexCount};
     if(mesh->HasBones()) {
         /* Assimp does things the roundabout way of storing per-vertex weights
            in the bones affecting the mesh, we have to undo that */
-        std::size_t maxJointCount = 0;
         for(const aiBone* bone: Containers::arrayView(mesh->mBones, mesh->mNumBones)) {
             if(isDummyBone(bone))
                 continue;
@@ -1080,14 +1084,28 @@ Containers::Optional<MeshData> AssimpImporter::doMesh(const UnsignedInt id, Unsi
             }
         }
 
+        /* Should not get larger than the limit count set in the config */
         #ifndef CORRADE_NO_ASSERT
         const UnsignedInt jointCountLimit = configuration().value<UnsignedInt>("maxJointWeights");
         CORRADE_INTERNAL_ASSERT(jointCountLimit == 0 || maxJointCount <= jointCountLimit);
         #endif
 
-        jointLayerCount = (maxJointCount + 3)/4;
-        attributeCount += jointLayerCount*2;
-        stride += jointLayerCount*(sizeof(Vector4ui) + sizeof(Vector4));
+        /* If we supply the compatibility JOINTS and WEIGHTS attributes, pad
+           the attributes to a multiple of 4 because users expect those to be
+           four-component vectors. Each set of four is then added as an
+           additional two attributes. */
+        #ifdef MAGNUM_BUILD_DEPRECATED
+        if(configuration().value<bool>("compatibilitySkinningAttributes")) {
+            roundedJointCount = 4*((maxJointCount + 3)/4);
+            attributeCount += 2*(roundedJointCount/4);
+        } else
+        #endif
+        {
+            roundedJointCount = maxJointCount;
+        }
+
+        attributeCount += 2;
+        stride += roundedJointCount*(sizeof(UnsignedInt) + sizeof(Float));
     }
 
     /* Allocate vertex data, fill in the attributes */
@@ -1177,29 +1195,50 @@ Containers::Optional<MeshData> AssimpImporter::doMesh(const UnsignedInt id, Unsi
 
     /* Joints and joint weights */
     if(mesh->HasBones()) {
-        Containers::Array<Containers::StridedArrayView1D<Vector4ui>> jointIds{jointLayerCount};
-        Containers::Array<Containers::StridedArrayView1D<Vector4>> jointWeights{jointLayerCount};
-        for(std::size_t layer = 0; layer < jointLayerCount; ++layer) {
-            jointIds[layer] = {vertexData, reinterpret_cast<Vector4ui*>(vertexData + attributeOffset),
-                vertexCount, stride};
-            attributeData[attributeIndex++] = MeshAttributeData{JointsAttribute, jointIds[layer]};
-            attributeOffset += sizeof(Vector4ui);
+        Containers::StridedArrayView2D<UnsignedInt> jointIds{vertexData,
+            reinterpret_cast<UnsignedInt*>(vertexData + attributeOffset),
+            {vertexCount, roundedJointCount}, {stride, sizeof(UnsignedInt)}};
+        attributeData[attributeIndex++] = MeshAttributeData{MeshAttribute::JointIds,
+            /** @todo drop the prefix() once roundedJointCount is gone */
+            jointIds.prefix({vertexCount, maxJointCount})};
+        attributeOffset += sizeof(UnsignedInt)*roundedJointCount;
+        #ifdef MAGNUM_BUILD_DEPRECATED
+        if(configuration().value<bool>("compatibilitySkinningAttributes")) {
+            for(std::size_t layer = 0; layer != roundedJointCount; layer += 4)
+                attributeData[attributeIndex++] = MeshAttributeData{JointsAttribute, Containers::arrayCast<1, const Vector4ui>(jointIds.sliceSize({0, layer}, {vertexCount, 4}))};
+        }
+        #endif
 
-            jointWeights[layer] = {vertexData, reinterpret_cast<Vector4*>(vertexData + attributeOffset),
-                vertexCount, stride};
-            attributeData[attributeIndex++] = MeshAttributeData{WeightsAttribute, jointWeights[layer]};
-            attributeOffset += sizeof(Vector4);
+        Containers::StridedArrayView2D<Float> weights{vertexData,
+            reinterpret_cast<Float*>(vertexData + attributeOffset),
+            {vertexCount, roundedJointCount}, {stride, sizeof(Float)}};
+        attributeData[attributeIndex++] = MeshAttributeData{MeshAttribute::Weights,
+            /** @todo drop the prefix() once roundedJointCount is gone */
+            weights.prefix({vertexCount, maxJointCount})};
+        attributeOffset += sizeof(Float)*roundedJointCount;
+        #ifdef MAGNUM_BUILD_DEPRECATED
+        if(configuration().value<bool>("compatibilitySkinningAttributes")) {
+            for(std::size_t layer = 0; layer != roundedJointCount; layer += 4)
+                attributeData[attributeIndex++] = MeshAttributeData{WeightsAttribute, Containers::arrayCast<1, const Vector4>(weights.sliceSize({0, layer}, {vertexCount, 4}))};
+        }
+        #endif
 
-            /* zero-fill, single vertices can have less than the max joint
-               count */
-            for(std::size_t i = 0; i < vertexCount; ++i) {
-                jointIds[layer][i] = {};
-                jointWeights[layer][i] = {};
+        /* Zero-fill, single vertices can have less than the max joint count */
+        /** @todo use Utility::fill() once it exists */
+        for(std::size_t i = 0; i < vertexCount; ++i) {
+            for(std::size_t j = 0; j < roundedJointCount; ++j) {
+                jointIds[i][j] = {};
+                weights[i][j] = {};
             }
         }
 
         const Int skin = _f->meshSkins[id];
         CORRADE_INTERNAL_ASSERT(skin != -1);
+        /** @todo use Utility::fill() once it exists, especially here where it
+            could be a single memset() but due to how AMAZING the STL is, it's
+            a stupid loop internally because the 0 is a 32-bit int while
+            jointCounts are 8-bit and so a "conversion" has to happen on every
+            iteration. */
         std::fill(jointCounts.begin(), jointCounts.end(), 0);
 
         for(std::size_t b = 0; b != mesh->mNumBones; ++b) {
@@ -1211,10 +1250,8 @@ Containers::Optional<MeshData> AssimpImporter::doMesh(const UnsignedInt id, Unsi
                 if(isDummyBone(bone))
                     continue;
                 UnsignedByte& jointCount = jointCounts[weight.mVertexId];
-                const UnsignedByte layer = jointCount / 4;
-                const UnsignedByte element = jointCount % 4;
-                jointIds[layer][weight.mVertexId][element] = boneIndex;
-                jointWeights[layer][weight.mVertexId][element] = weight.mWeight;
+                jointIds[weight.mVertexId][jointCount] = boneIndex;
+                weights[weight.mVertexId][jointCount] = weight.mWeight;
                 jointCount++;
             }
         }
@@ -1225,9 +1262,13 @@ Containers::Optional<MeshData> AssimpImporter::doMesh(const UnsignedInt id, Unsi
            Try to detect such a case and print a warning. We need to check
            < 524 because 5.2.0 to 5.2.4 report their version as 520 but 5.2.5
            is the first to report 524. */
-        if(_f->importerIsGltf && jointLayerCount == 1 && _f->assimpVersion < 524) {
-            for(const Vector4& weight: jointWeights[0]) {
-                const Float sum = weight.sum();
+        if(_f->importerIsGltf && maxJointCount == 4 && _f->assimpVersion < 524) {
+            for(const Containers::StridedArrayView1D<Float> weightArray: weights) {
+                /** @todo sum() in Math/FunctionsBatch.h */
+                Float sum = 0.0f;
+                for(Float weight: weightArray)
+                    sum += weight;
+
                 /* Be very lenient here for shitty exporters. This should still
                    catch most cases of the first set of weights being
                    discarded. */
@@ -1268,6 +1309,7 @@ Containers::Optional<MeshData> AssimpImporter::doMesh(const UnsignedInt id, Unsi
         MeshData::ImplicitVertexCount, mesh};
 }
 
+#ifdef MAGNUM_BUILD_DEPRECATED
 MeshAttribute AssimpImporter::doMeshAttributeForName(const Containers::StringView name) {
     if(name == "JOINTS"_s) return JointsAttribute;
     if(name == "WEIGHTS"_s) return WeightsAttribute;
@@ -1279,6 +1321,7 @@ Containers::String AssimpImporter::doMeshAttributeName(UnsignedShort name) {
     if(meshAttributeCustom(name) == WeightsAttribute) return "WEIGHTS"_s;
     return {};
 }
+#endif
 
 UnsignedInt AssimpImporter::doMaterialCount() const { return _f->scene->mNumMaterials; }
 

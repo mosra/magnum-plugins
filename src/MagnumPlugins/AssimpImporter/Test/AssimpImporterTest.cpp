@@ -130,7 +130,11 @@ struct AssimpImporterTest: TestSuite::Tester {
     void pointMesh();
     void lineMesh();
     void polygonMesh();
+    #ifdef MAGNUM_BUILD_DEPRECATED
+    /* For JOINTS and WEIGHTS, which are included only for backwards
+       compatibility. All other attributes are builtin. */
     void meshCustomAttributes();
+    #endif
     void meshSkinningAttributes();
     void meshSkinningAttributesMultiple();
     void meshSkinningAttributesMultipleGltf();
@@ -201,6 +205,59 @@ const struct {
     {"Collada", ".dae", Quaternion::rotation(-90.0_degf, Vector3::xAxis())},
     {"FBX", ".fbx", {}},
     {"glTF", ".gltf", {}}
+};
+
+/* Like ExportedFileData, but with compatibilitySkinningAttributes added */
+/** @todo go back to ExportedFileData once the compatibilitySkinningAttributes
+    option is gone */
+const struct {
+    const char* name;
+    const char* suffix;
+    Quaternion correction;
+    UnsignedInt extraAttributeCount;
+    Containers::Optional<bool> compatibilitySkinningAttributes;
+} MeshSkinningAttributesData[]{
+    /* Blender's Collada exporter doesn't seem to apply axis change
+       inside animations/skins correctly. Do it manually, consistent
+       with export up and forward axis (see exported-animation.md):
+       y = z, z = -y */
+    {"Collada", ".dae", Quaternion::rotation(-90.0_degf, Vector3::xAxis()),
+       2, {}},
+    #ifdef MAGNUM_BUILD_DEPRECATED
+    {"Collada, no compatibility attributes", ".dae", Quaternion::rotation(-90.0_degf, Vector3::xAxis()),
+        2, false},
+    #endif
+    {"FBX", ".fbx", {},
+        2, {}},
+    #ifdef MAGNUM_BUILD_DEPRECATED
+    {"FBX, no compatibility attributes", ".fbx", {},
+        2, false},
+    #endif
+    {"glTF", ".gltf", {},
+        /* While Collada and FBX have positions + normals, glTF only
+           positions */
+        1, {}},
+    #ifdef MAGNUM_BUILD_DEPRECATED
+    {"glTF, no compatibility attributes", ".gltf", {},
+        1, false}
+    #endif
+};
+
+/** @todo remove once the compatibilitySkinningAttributes option is gone */
+const struct {
+    const char* name;
+    #ifdef MAGNUM_BUILD_DEPRECATED
+    Containers::Optional<bool> compatibilitySkinningAttributes;
+    #endif
+} MeshSkinningAttributesMultipleData[]{
+    {"",
+        #ifdef MAGNUM_BUILD_DEPRECATED
+        {}
+        #endif
+        },
+    #ifdef MAGNUM_BUILD_DEPRECATED
+    {"no compatibility attributes", false},
+    #endif
 };
 
 constexpr struct {
@@ -274,15 +331,23 @@ AssimpImporterTest::AssimpImporterTest() {
               &AssimpImporterTest::pointMesh,
               &AssimpImporterTest::lineMesh,
               &AssimpImporterTest::polygonMesh,
-              &AssimpImporterTest::meshCustomAttributes});
+              #ifdef MAGNUM_BUILD_DEPRECATED
+              &AssimpImporterTest::meshCustomAttributes
+              #endif
+              });
 
     addInstancedTests({&AssimpImporterTest::meshSkinningAttributes},
-        Containers::arraySize(ExportedFileData));
+        Containers::arraySize(MeshSkinningAttributesData));
 
-    addTests({&AssimpImporterTest::meshSkinningAttributesMultiple,
-              &AssimpImporterTest::meshSkinningAttributesMultipleGltf,
-              &AssimpImporterTest::meshSkinningAttributesMaxJointWeights,
-              &AssimpImporterTest::meshSkinningAttributesDummyWeightRemoval,
+    addInstancedTests({&AssimpImporterTest::meshSkinningAttributesMultiple},
+        Containers::arraySize(MeshSkinningAttributesMultipleData));
+
+    addTests({&AssimpImporterTest::meshSkinningAttributesMultipleGltf});
+
+    addInstancedTests({&AssimpImporterTest::meshSkinningAttributesMaxJointWeights},
+        Containers::arraySize(MeshSkinningAttributesMultipleData));
+
+    addTests({&AssimpImporterTest::meshSkinningAttributesDummyWeightRemoval,
               &AssimpImporterTest::meshSkinningAttributesMerge,
               &AssimpImporterTest::meshMultiplePrimitives,
               &AssimpImporterTest::emptyCollada,
@@ -2728,7 +2793,11 @@ void AssimpImporterTest::polygonMesh() {
         }), TestSuite::Compare::Container);
 }
 
+#ifdef MAGNUM_BUILD_DEPRECATED
 void AssimpImporterTest::meshCustomAttributes() {
+    /* Testing JOINTS and WEIGHTS, which are included only for backwards
+       compatibility. All other attributes are builtin. */
+
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
 
     for(std::size_t i = 0; i != 2; ++i) {
@@ -2753,7 +2822,10 @@ void AssimpImporterTest::meshCustomAttributes() {
         CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "mesh.dae")));
     }
 }
+#endif
 
+/** @todo turn into just 2-component vectors once the
+    compatibilitySkinningAttributes option is gone */
 constexpr Vector4ui MeshSkinningAttributesJointData[]{
     {0, 0, 0, 0},
     {0, 0, 0, 0},
@@ -2781,7 +2853,7 @@ constexpr Vector4 MeshSkinningAttributesWeightData[]{
 };
 
 void AssimpImporterTest::meshSkinningAttributes() {
-    auto&& data = ExportedFileData[testCaseInstanceId()];
+    auto&& data = MeshSkinningAttributesData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
     if(!supportsSkinning(data.suffix, _assimpVersion))
@@ -2795,10 +2867,23 @@ void AssimpImporterTest::meshSkinningAttributes() {
         CORRADE_SKIP("Skinning attribute import is broken with the current version of Assimp");
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+
+    #ifdef MAGNUM_BUILD_DEPRECATED
+    if(data.compatibilitySkinningAttributes)
+        importer->configuration().setValue("compatibilitySkinningAttributes", *data.compatibilitySkinningAttributes);
+    #endif
+
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "skin"_s + data.suffix)));
 
     const MeshAttribute jointsAttribute = importer->meshAttributeForName("JOINTS");
     const MeshAttribute weightsAttribute = importer->meshAttributeForName("WEIGHTS");
+    #ifdef MAGNUM_BUILD_DEPRECATED
+    CORRADE_COMPARE(jointsAttribute, meshAttributeCustom(0));
+    CORRADE_COMPARE(weightsAttribute, meshAttributeCustom(1));
+    #else
+    CORRADE_COMPARE(jointsAttribute, MeshAttribute{});
+    CORRADE_COMPARE(weightsAttribute, MeshAttribute{});
+    #endif
 
     const Containers::String meshNames[]{
         fixMeshName("Mesh_1"_s, data.suffix, _assimpVersion),
@@ -2814,20 +2899,52 @@ void AssimpImporterTest::meshSkinningAttributes() {
         }
         /* No warning about glTF dropping sets of weights */
         CORRADE_COMPARE(out.str(), "");
-
         CORRADE_VERIFY(mesh);
-        CORRADE_VERIFY(mesh->hasAttribute(jointsAttribute));
-        CORRADE_COMPARE(mesh->attributeCount(jointsAttribute), 1);
-        CORRADE_COMPARE(mesh->attributeFormat(jointsAttribute), VertexFormat::Vector4ui);
-        CORRADE_COMPARE_AS(mesh->attribute<Vector4ui>(jointsAttribute),
-            Containers::arrayView(MeshSkinningAttributesJointData),
+
+        /* Position, maybe normal + one pair of joints & weights */
+        #ifdef MAGNUM_BUILD_DEPRECATED
+        if(!data.compatibilitySkinningAttributes || *data.compatibilitySkinningAttributes) {
+            CORRADE_COMPARE(mesh->attributeCount(), data.extraAttributeCount + 2 + 2);
+        } else
+        #endif
+        {
+            CORRADE_COMPARE(mesh->attributeCount(), data.extraAttributeCount + 2);
+        }
+
+        /* The array is two-component, cast both sides to Vector2 for easier
+           comparison */
+        CORRADE_VERIFY(mesh->hasAttribute(MeshAttribute::JointIds));
+        CORRADE_COMPARE(mesh->attributeCount(MeshAttribute::JointIds), 1);
+        CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::JointIds), VertexFormat::UnsignedInt);
+        CORRADE_COMPARE(mesh->attributeArraySize(MeshAttribute::JointIds), 2);
+        CORRADE_COMPARE_AS((Containers::arrayCast<1, const Vector2ui>(mesh->attribute<UnsignedInt[]>(MeshAttribute::JointIds))),
+            Containers::arrayCast<const Vector2ui>(Containers::stridedArrayView(MeshSkinningAttributesJointData)),
             TestSuite::Compare::Container);
-        CORRADE_VERIFY(mesh->hasAttribute(weightsAttribute));
-        CORRADE_COMPARE(mesh->attributeCount(weightsAttribute), 1);
-        CORRADE_COMPARE(mesh->attributeFormat(weightsAttribute), VertexFormat::Vector4);
-        CORRADE_COMPARE_AS(mesh->attribute<Vector4>(weightsAttribute),
-            Containers::arrayView(MeshSkinningAttributesWeightData),
+
+        CORRADE_VERIFY(mesh->hasAttribute(MeshAttribute::Weights));
+        CORRADE_COMPARE(mesh->attributeCount(MeshAttribute::Weights), 1);
+        CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::Weights), VertexFormat::Float);
+        CORRADE_COMPARE(mesh->attributeArraySize(MeshAttribute::Weights), 2);
+        CORRADE_COMPARE_AS((Containers::arrayCast<1, const Vector2>(mesh->attribute<Float[]>(MeshAttribute::Weights))),
+            Containers::arrayCast<const Vector2>(Containers::stridedArrayView(MeshSkinningAttributesWeightData)),
             TestSuite::Compare::Container);
+
+        #ifdef MAGNUM_BUILD_DEPRECATED
+        if(!data.compatibilitySkinningAttributes || *data.compatibilitySkinningAttributes) {
+            CORRADE_VERIFY(mesh->hasAttribute(jointsAttribute));
+            CORRADE_COMPARE(mesh->attributeCount(jointsAttribute), 1);
+            CORRADE_COMPARE(mesh->attributeFormat(jointsAttribute), VertexFormat::Vector4ui);
+            CORRADE_COMPARE_AS(mesh->attribute<Vector4ui>(jointsAttribute),
+                Containers::arrayView(MeshSkinningAttributesJointData),
+                TestSuite::Compare::Container);
+            CORRADE_VERIFY(mesh->hasAttribute(weightsAttribute));
+            CORRADE_COMPARE(mesh->attributeCount(weightsAttribute), 1);
+            CORRADE_COMPARE(mesh->attributeFormat(weightsAttribute), VertexFormat::Vector4);
+            CORRADE_COMPARE_AS(mesh->attribute<Vector4>(weightsAttribute),
+                Containers::arrayView(MeshSkinningAttributesWeightData),
+                TestSuite::Compare::Container);
+        }
+        #endif
     }
 
     /* No skin joint node using this mesh */
@@ -2837,39 +2954,100 @@ void AssimpImporterTest::meshSkinningAttributes() {
 }
 
 void AssimpImporterTest::meshSkinningAttributesMultiple() {
+    auto&& data = MeshSkinningAttributesMultipleData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     if(ASSIMP_VERSION >= 20220502 && _assimpVersion < 524)
         CORRADE_SKIP("Skinning attribute import is broken with the current version of Assimp");
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
-    /* Disable default limit, 0 = no limit  */
-    CORRADE_COMPARE(importer->configuration().value<UnsignedInt>("maxJointWeights"), 4);
-    importer->configuration().setValue("maxJointWeights", 0);
+
+    #ifdef MAGNUM_BUILD_DEPRECATED
+    if(data.compatibilitySkinningAttributes)
+        importer->configuration().setValue("compatibilitySkinningAttributes", *data.compatibilitySkinningAttributes);
+    #endif
+
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "skin-multiple-sets.dae")));
-
-    const MeshAttribute jointsAttribute = importer->meshAttributeForName("JOINTS");
-    const MeshAttribute weightsAttribute = importer->meshAttributeForName("WEIGHTS");
-
-    constexpr UnsignedInt AttributeCount = 3;
 
     Containers::Optional<Trade::MeshData> mesh = importer->mesh(fixMeshName("Mesh_1"_s, ".dae"_s, _assimpVersion));
     CORRADE_VERIFY(mesh);
-    CORRADE_VERIFY(mesh->hasAttribute(jointsAttribute));
-    CORRADE_COMPARE(mesh->attributeCount(jointsAttribute), AttributeCount);
-    CORRADE_COMPARE(mesh->attributeFormat(jointsAttribute), VertexFormat::Vector4ui);
-    CORRADE_VERIFY(mesh->hasAttribute(weightsAttribute));
-    CORRADE_COMPARE(mesh->attributeCount(weightsAttribute), AttributeCount);
-    CORRADE_COMPARE(mesh->attributeFormat(weightsAttribute), VertexFormat::Vector4);
 
-    for(UnsignedInt i = 0; i != AttributeCount; ++i) {
-        Containers::StridedArrayView1D<const Vector4ui> joints = mesh->attribute<Vector4ui>(jointsAttribute, i);
-        Containers::StridedArrayView1D<const Vector4> weights = mesh->attribute<Vector4>(weightsAttribute, i);
-        const Vector4ui jointValues = Vector4ui{0, 1, 2, 3} + Vector4ui{i*4};
-        constexpr Vector4 weightValues = Vector4{0.083333f};
-        for(UnsignedInt v = 0; v != joints.size(); ++v) {
-            CORRADE_COMPARE(joints[v], jointValues);
-            CORRADE_COMPARE(weights[v], weightValues);
+    /* Position, normal + one pair of joints & weights and three compat pairs */
+    #ifdef MAGNUM_BUILD_DEPRECATED
+    if(!data.compatibilitySkinningAttributes || *data.compatibilitySkinningAttributes) {
+        CORRADE_COMPARE(mesh->attributeCount(), 2 + 2 + 3*2);
+    } else
+    #endif
+    {
+        CORRADE_COMPARE(mesh->attributeCount(), 2 + 2);
+    }
+
+    CORRADE_COMPARE(mesh->attributeCount(MeshAttribute::JointIds), 1);
+    CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::JointIds), VertexFormat::UnsignedInt);
+    /* Array size that isn't divisible by 4 is tested in
+       meshSkinningAttributesMaxJointWeights() */
+    CORRADE_COMPARE(mesh->attributeArraySize(MeshAttribute::JointIds), 12);
+    CORRADE_COMPARE_AS((Containers::arrayCast<1, const Math::Vector<12, UnsignedInt>>(mesh->attribute<UnsignedInt[]>(MeshAttribute::JointIds))), (Containers::arrayView<const Math::Vector<12, UnsignedInt>>({
+        {0u, 1u, 2u, 3u, 4u, 5u, 6u, 7u, 8u, 9u, 10u, 11u},
+        {0u, 1u, 2u, 3u, 4u, 5u, 6u, 7u, 8u, 9u, 10u, 11u},
+        {0u, 1u, 2u, 3u, 4u, 5u, 6u, 7u, 8u, 9u, 10u, 11u},
+        {0u, 1u, 2u, 3u, 4u, 5u, 6u, 7u, 8u, 9u, 10u, 11u},
+        {0u, 1u, 2u, 3u, 4u, 5u, 6u, 7u, 8u, 9u, 10u, 11u},
+
+        {0u, 1u, 2u, 3u, 4u, 5u, 6u, 7u, 8u, 9u, 10u, 11u},
+        {0u, 1u, 2u, 3u, 4u, 5u, 6u, 7u, 8u, 9u, 10u, 11u},
+        {0u, 1u, 2u, 3u, 4u, 5u, 6u, 7u, 8u, 9u, 10u, 11u},
+        {0u, 1u, 2u, 3u, 4u, 5u, 6u, 7u, 8u, 9u, 10u, 11u},
+        {0u, 1u, 2u, 3u, 4u, 5u, 6u, 7u, 8u, 9u, 10u, 11u},
+    })), TestSuite::Compare::Container);
+
+    CORRADE_COMPARE(mesh->attributeCount(MeshAttribute::Weights), 1);
+    CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::Weights), VertexFormat::Float);
+    CORRADE_COMPARE(mesh->attributeArraySize(MeshAttribute::Weights), 12);
+    CORRADE_COMPARE_AS((Containers::arrayCast<1, const Math::Vector<12, Float>>(mesh->attribute<Float[]>(MeshAttribute::Weights))), Containers::arrayView({
+        Math::Vector<12, Float>{0.083333f},
+        Math::Vector<12, Float>{0.083333f},
+        Math::Vector<12, Float>{0.083333f},
+        Math::Vector<12, Float>{0.083333f},
+        Math::Vector<12, Float>{0.083333f},
+
+        Math::Vector<12, Float>{0.083333f},
+        Math::Vector<12, Float>{0.083333f},
+        Math::Vector<12, Float>{0.083333f},
+        Math::Vector<12, Float>{0.083333f},
+        Math::Vector<12, Float>{0.083333f},
+    }), TestSuite::Compare::Container);
+
+    #ifdef MAGNUM_BUILD_DEPRECATED
+    if(data.compatibilitySkinningAttributes && *data.compatibilitySkinningAttributes) {
+        const MeshAttribute jointsAttribute = importer->meshAttributeForName("JOINTS");
+        const MeshAttribute weightsAttribute = importer->meshAttributeForName("WEIGHTS");
+
+        constexpr UnsignedInt AttributeCount = 3;
+
+        CORRADE_COMPARE(mesh->attributeCount(jointsAttribute), AttributeCount);
+        CORRADE_COMPARE(mesh->attributeFormat(jointsAttribute), VertexFormat::Vector4ui);
+
+        CORRADE_COMPARE(mesh->attributeCount(weightsAttribute), AttributeCount);
+        CORRADE_COMPARE(mesh->attributeFormat(weightsAttribute), VertexFormat::Vector4);
+
+        /* The compat attributes should alias the builtin ones, not have the
+           data duplicated */
+        CORRADE_COMPARE(mesh->attributeOffset(jointsAttribute), mesh->attributeOffset(MeshAttribute::JointIds));
+        CORRADE_COMPARE(mesh->attributeOffset(weightsAttribute), mesh->attributeOffset(MeshAttribute::Weights));
+
+        for(UnsignedInt i = 0; i != AttributeCount; ++i) {
+            Containers::StridedArrayView1D<const Vector4ui> joints = mesh->attribute<Vector4ui>(jointsAttribute, i);
+            Containers::StridedArrayView1D<const Vector4> weights = mesh->attribute<Vector4>(weightsAttribute, i);
+            const Vector4ui jointValues = Vector4ui{0, 1, 2, 3} + Vector4ui{i*4};
+            constexpr Vector4 weightValues = Vector4{0.083333f};
+            for(UnsignedInt v = 0; v != joints.size(); ++v) {
+                CORRADE_COMPARE(joints[v], jointValues);
+                CORRADE_COMPARE(weights[v], weightValues);
+            }
         }
     }
+    #endif
 }
 
 void AssimpImporterTest::meshSkinningAttributesMultipleGltf() {
@@ -2890,12 +3068,14 @@ void AssimpImporterTest::meshSkinningAttributesMultipleGltf() {
         CORRADE_SKIP("Current version of assimp fails to import files with multiple sets of skinning attributes");
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
-    importer->configuration().setValue("maxJointWeights", 0);
+
+    /* Not testing the backwards compatibility JOINTS and WEIGHTS here, as that
+       is tested enough in meshSkinningAttributesMultiple() and
+       meshSkinningAttributesMaxJointWeights() -- this test only verifies
+       sanity of glTF import */
+    importer->configuration().setValue("compatibilitySkinningAttributes", false);
 
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "skin-multiple-sets.gltf")));
-
-    const MeshAttribute jointsAttribute = importer->meshAttributeForName("JOINTS");
-    const MeshAttribute weightsAttribute = importer->meshAttributeForName("WEIGHTS");
 
     Containers::Optional<MeshData> mesh;
     std::ostringstream out;
@@ -2905,16 +3085,18 @@ void AssimpImporterTest::meshSkinningAttributesMultipleGltf() {
     }
 
     CORRADE_VERIFY(mesh);
-    CORRADE_VERIFY(mesh->hasAttribute(jointsAttribute));
-    CORRADE_VERIFY(mesh->hasAttribute(weightsAttribute));
+    CORRADE_COMPARE(mesh->attributeCount(MeshAttribute::JointIds), 1);
+    CORRADE_COMPARE(mesh->attributeCount(MeshAttribute::Weights), 1);
+    CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::JointIds), VertexFormat::UnsignedInt);
+    CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::Weights), VertexFormat::Float);
 
     {
         /* Prior to version 5.2.5 only one set of weights is imported. Using <
            instead of <= because tag v5.2.4 reports version 5.2.0, but v5.2.5
            reports version 5.2.4. */
         CORRADE_EXPECT_FAIL_IF(_assimpVersion < 524, "glTF 2 importer < 5.2.5 only reads one set of joint weights.");
-        CORRADE_COMPARE(mesh->attributeCount(jointsAttribute), 2);
-        CORRADE_COMPARE(mesh->attributeCount(weightsAttribute), 2);
+        CORRADE_COMPARE(mesh->attributeArraySize(MeshAttribute::JointIds), 8);
+        CORRADE_COMPARE(mesh->attributeArraySize(MeshAttribute::Weights), 8);
     }
 
     if(_assimpVersion < 524) {
@@ -2926,29 +3108,18 @@ void AssimpImporterTest::meshSkinningAttributesMultipleGltf() {
         CORRADE_COMPARE(out.str(), "");
     }
 
-    constexpr Vector4ui JointValues[2]{{0, 1, 2, 3}, {4, 5, 6, 7}};
-    constexpr Vector4 WeightValues[2]{Vector4{0.125f}, {0.1f, 0.1f, 0.1f, 0.2f}};
+    const UnsignedInt importedArraySize = Utility::min(UnsignedShort{8}, mesh->attributeArraySize(MeshAttribute::JointIds));
 
-    const UnsignedInt attributeCount = Utility::min(2u, Utility::min(mesh->attributeCount(jointsAttribute),
-        mesh->attributeCount(weightsAttribute)));
-    for(size_t i = 0; i < attributeCount; ++i) {
-        CORRADE_ITERATION(i);
-
-        CORRADE_COMPARE(mesh->attributeFormat(jointsAttribute, i), VertexFormat::Vector4ui);
-        CORRADE_COMPARE(mesh->attributeFormat(weightsAttribute, i), VertexFormat::Vector4);
-
-        Containers::StridedArrayView1D<const Vector4ui> joints = mesh->attribute<Vector4ui>(jointsAttribute, i);
-        CORRADE_VERIFY(joints);
-        Containers::StridedArrayView1D<const Vector4> weights = mesh->attribute<Vector4>(weightsAttribute, i);
-        CORRADE_VERIFY(weights);
-
-        {
-            /* We skip the entire test for 5.1.0 - 5.2.4 but this still XFAILs
-               on versions below 5.1.0 */
-            CORRADE_EXPECT_FAIL_IF(_assimpVersion <= 522, "glTF 2 importer < 5.2.3 only reads the last set of joint weights.");
-            CORRADE_COMPARE(joints.front(), JointValues[i]);
-            CORRADE_COMPARE(weights.front(), WeightValues[i]);
-        }
+    {
+        /* We skip the entire test for 5.1.0 - 5.2.4 but this still XFAILs on
+           versions below 5.1.0 */
+        CORRADE_EXPECT_FAIL_IF(_assimpVersion <= 522, "glTF 2 importer < 5.2.3 only reads the last set of joint weights.");
+        CORRADE_COMPARE_AS(mesh->attribute<UnsignedInt[]>(MeshAttribute::JointIds).front().prefix(importedArraySize), Containers::arrayView({
+            0u, 1u, 2u, 3u, 4u, 5u, 6u, 7u
+        }).prefix(importedArraySize), TestSuite::Compare::Container);
+        CORRADE_COMPARE_AS(mesh->attribute<Float[]>(MeshAttribute::Weights).front().prefix(importedArraySize), Containers::arrayView({
+            0.125f, 0.125f, 0.125f, 0.125f, 0.1f, 0.1f, 0.1f, 0.2f
+        }).prefix(importedArraySize), TestSuite::Compare::Container);
     }
 
     /* Multiple sets of color works fine on all versions */
@@ -2964,41 +3135,107 @@ void AssimpImporterTest::meshSkinningAttributesMultipleGltf() {
 }
 
 void AssimpImporterTest::meshSkinningAttributesMaxJointWeights() {
+    auto&& data = MeshSkinningAttributesMultipleData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     if(ASSIMP_VERSION >= 20220502 && _assimpVersion < 524)
         CORRADE_SKIP("Skinning attribute import is broken with the current version of Assimp");
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+
     importer->configuration().setValue("maxJointWeights", 6);
+    #ifdef MAGNUM_BUILD_DEPRECATED
+    if(data.compatibilitySkinningAttributes)
+        importer->configuration().setValue("compatibilitySkinningAttributes", *data.compatibilitySkinningAttributes);
+    #endif
+
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "skin-multiple-sets.dae")));
-
-    const MeshAttribute jointsAttribute = importer->meshAttributeForName("JOINTS");
-    const MeshAttribute weightsAttribute = importer->meshAttributeForName("WEIGHTS");
-
-    /* 6 weights = 2 sets of 4, last two weights zero */
-    constexpr UnsignedInt AttributeCount = 2;
 
     Containers::Optional<Trade::MeshData> mesh = importer->mesh(fixMeshName("Mesh_1"_s, ".dae"_s, _assimpVersion));
     CORRADE_VERIFY(mesh);
-    CORRADE_VERIFY(mesh->hasAttribute(jointsAttribute));
-    CORRADE_COMPARE(mesh->attributeCount(jointsAttribute), AttributeCount);
-    CORRADE_COMPARE(mesh->attributeFormat(jointsAttribute), VertexFormat::Vector4ui);
-    CORRADE_VERIFY(mesh->hasAttribute(weightsAttribute));
-    CORRADE_COMPARE(mesh->attributeCount(weightsAttribute), AttributeCount);
-    CORRADE_COMPARE(mesh->attributeFormat(weightsAttribute), VertexFormat::Vector4);
 
-    constexpr Vector4ui jointValues[]{{0, 1, 2, 3}, {4, 5, 0, 0}};
-    /* Assimp normalized the weights */
-    constexpr Float Weight = 0.083333f * 2.0f;
-    constexpr Vector4 weightValues[]{Vector4{Weight}, Vector4::pad(Vector2{Weight})};
+    /* Position, normal + one pair of joints & weights and two compat pairs */
+    #ifdef MAGNUM_BUILD_DEPRECATED
+    if(!data.compatibilitySkinningAttributes || *data.compatibilitySkinningAttributes) {
+        CORRADE_COMPARE(mesh->attributeCount(), 2 + 2 + 2*2);
+    } else
+    #endif
+    {
+        CORRADE_COMPARE(mesh->attributeCount(), 2 + 2);
+    }
 
-    for(UnsignedInt i = 0; i != AttributeCount; ++i) {
-        Containers::StridedArrayView1D<const Vector4ui> joints = mesh->attribute<Vector4ui>(jointsAttribute, i);
-        Containers::StridedArrayView1D<const Vector4> weights = mesh->attribute<Vector4>(weightsAttribute, i);
-        for(UnsignedInt v = 0; v != joints.size(); ++v) {
-            CORRADE_COMPARE(joints[v], jointValues[i]);
-            CORRADE_COMPARE(weights[v], weightValues[i]);
+    CORRADE_COMPARE(mesh->attributeCount(MeshAttribute::JointIds), 1);
+    CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::JointIds), VertexFormat::UnsignedInt);
+    /* Array size that isn't divisible by 4 is tested in
+       meshSkinningAttributesMaxJointWeights() */
+    CORRADE_COMPARE(mesh->attributeArraySize(MeshAttribute::JointIds), 6);
+    CORRADE_COMPARE_AS((Containers::arrayCast<1, const Math::Vector<6, UnsignedInt>>(mesh->attribute<UnsignedInt[]>(MeshAttribute::JointIds))), (Containers::arrayView<const Math::Vector<6, UnsignedInt>>({
+        {0u, 1u, 2u, 3u, 4u, 5u},
+        {0u, 1u, 2u, 3u, 4u, 5u},
+        {0u, 1u, 2u, 3u, 4u, 5u},
+        {0u, 1u, 2u, 3u, 4u, 5u},
+        {0u, 1u, 2u, 3u, 4u, 5u},
+
+        {0u, 1u, 2u, 3u, 4u, 5u},
+        {0u, 1u, 2u, 3u, 4u, 5u},
+        {0u, 1u, 2u, 3u, 4u, 5u},
+        {0u, 1u, 2u, 3u, 4u, 5u},
+        {0u, 1u, 2u, 3u, 4u, 5u},
+    })), TestSuite::Compare::Container);
+
+    CORRADE_COMPARE(mesh->attributeCount(MeshAttribute::Weights), 1);
+    CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::Weights), VertexFormat::Float);
+    CORRADE_COMPARE(mesh->attributeArraySize(MeshAttribute::Weights), 6);
+    CORRADE_COMPARE_AS((Containers::arrayCast<1, const Math::Vector<6, Float>>(mesh->attribute<Float[]>(MeshAttribute::Weights))), Containers::arrayView({
+        /* Assimp normalized the weights */
+        Math::Vector<6, Float>{0.083333f*2.0f},
+        Math::Vector<6, Float>{0.083333f*2.0f},
+        Math::Vector<6, Float>{0.083333f*2.0f},
+        Math::Vector<6, Float>{0.083333f*2.0f},
+        Math::Vector<6, Float>{0.083333f*2.0f},
+
+        Math::Vector<6, Float>{0.083333f*2.0f},
+        Math::Vector<6, Float>{0.083333f*2.0f},
+        Math::Vector<6, Float>{0.083333f*2.0f},
+        Math::Vector<6, Float>{0.083333f*2.0f},
+        Math::Vector<6, Float>{0.083333f*2.0f},
+    }), TestSuite::Compare::Container);
+
+    #ifdef MAGNUM_BUILD_DEPRECATED
+    if(!data.compatibilitySkinningAttributes || *data.compatibilitySkinningAttributes) {
+        const MeshAttribute jointsAttribute = importer->meshAttributeForName("JOINTS");
+        const MeshAttribute weightsAttribute = importer->meshAttributeForName("WEIGHTS");
+
+        /* 6 weights = 2 sets of 4, last two weights zero */
+        constexpr UnsignedInt AttributeCount = 2;
+
+        CORRADE_VERIFY(mesh->hasAttribute(jointsAttribute));
+        CORRADE_COMPARE(mesh->attributeCount(jointsAttribute), AttributeCount);
+        CORRADE_COMPARE(mesh->attributeFormat(jointsAttribute), VertexFormat::Vector4ui);
+        CORRADE_VERIFY(mesh->hasAttribute(weightsAttribute));
+        CORRADE_COMPARE(mesh->attributeCount(weightsAttribute), AttributeCount);
+        CORRADE_COMPARE(mesh->attributeFormat(weightsAttribute), VertexFormat::Vector4);
+
+        /* The compat attributes should alias the builtin ones, not have the
+           data duplicated */
+        CORRADE_COMPARE(mesh->attributeOffset(jointsAttribute), mesh->attributeOffset(MeshAttribute::JointIds));
+        CORRADE_COMPARE(mesh->attributeOffset(weightsAttribute), mesh->attributeOffset(MeshAttribute::Weights));
+
+        constexpr Vector4ui jointValues[]{{0, 1, 2, 3}, {4, 5, 0, 0}};
+        /* Assimp normalized the weights */
+        constexpr Float Weight = 0.083333f * 2.0f;
+        constexpr Vector4 weightValues[]{Vector4{Weight}, Vector4::pad(Vector2{Weight})};
+
+        for(UnsignedInt i = 0; i != AttributeCount; ++i) {
+            Containers::StridedArrayView1D<const Vector4ui> joints = mesh->attribute<Vector4ui>(jointsAttribute, i);
+            Containers::StridedArrayView1D<const Vector4> weights = mesh->attribute<Vector4>(weightsAttribute, i);
+            for(UnsignedInt v = 0; v != joints.size(); ++v) {
+                CORRADE_COMPARE(joints[v], jointValues[i]);
+                CORRADE_COMPARE(weights[v], weightValues[i]);
+            }
         }
     }
+    #endif
 }
 
 void AssimpImporterTest::meshSkinningAttributesDummyWeightRemoval() {
@@ -3009,29 +3246,27 @@ void AssimpImporterTest::meshSkinningAttributesDummyWeightRemoval() {
         CORRADE_SKIP("Skinning attribute import is broken with the current version of Assimp");
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
-    importer->configuration().setValue("maxJointWeights", 0);
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "skin-dummy-weights.gltf")));
 
-    const MeshAttribute jointsAttribute = importer->meshAttributeForName("JOINTS");
-    const MeshAttribute weightsAttribute = importer->meshAttributeForName("WEIGHTS");
+    /* Not testing the backwards compatibility JOINTS and WEIGHTS here, as that
+       is tested enough in meshSkinningAttributesMultiple() and
+       meshSkinningAttributesMaxJointWeights() -- this test only verifies
+       sanity of glTF import */
+    importer->configuration().setValue("compatibilitySkinningAttributes", false);
 
     Containers::Optional<Trade::MeshData> mesh = importer->mesh("Mesh");
     CORRADE_VERIFY(mesh);
+    CORRADE_COMPARE(mesh->attributeCount(MeshAttribute::JointIds), 1);
+    CORRADE_COMPARE(mesh->attributeCount(MeshAttribute::Weights), 1);
 
-    /* Without ignoring dummy weights, the max joint count per vertex
-       would be too high, giving us extra sets of (empty) weights. */
-    CORRADE_COMPARE(mesh->attributeCount(jointsAttribute), 1);
-    CORRADE_COMPARE(mesh->attributeCount(weightsAttribute), 1);
-
-    Containers::StridedArrayView1D<const Vector4ui> joints = mesh->attribute<Vector4ui>(jointsAttribute);
-    CORRADE_VERIFY(joints);
-    Containers::StridedArrayView1D<const Vector4> weights = mesh->attribute<Vector4>(weightsAttribute);
-    CORRADE_VERIFY(weights);
-
-    constexpr Vector4ui joint{0, 1, 2, 5};
-    constexpr Vector4 weight{0.25f};
-    CORRADE_COMPARE(joints.front(), joint);
-    CORRADE_COMPARE(weights.front(), weight);
+    /* Without ignoring dummy weights, the joint count per vertex (attribute
+       array size) would be > 4 */
+    CORRADE_COMPARE_AS(mesh->attribute<UnsignedInt[]>(MeshAttribute::JointIds).front(), Containers::arrayView({
+        0u, 1u, 2u, 5u
+    }), TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(mesh->attribute<Float[]>(MeshAttribute::Weights).front(), Containers::arrayView({
+        0.25f, 0.25f, 0.25f, 0.25f
+    }), TestSuite::Compare::Container);
 }
 
 void AssimpImporterTest::meshSkinningAttributesMerge() {
@@ -3042,18 +3277,21 @@ void AssimpImporterTest::meshSkinningAttributesMerge() {
     importer->configuration().setValue("mergeSkins", true);
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "skin.dae")));
 
-    const MeshAttribute jointsAttribute = importer->meshAttributeForName("JOINTS");
-    const MeshAttribute weightsAttribute = importer->meshAttributeForName("WEIGHTS");
+    /* Not testing the backwards compatibility JOINTS and WEIGHTS here, as that
+       is tested enough in meshSkinningAttributesMultiple() and
+       meshSkinningAttributesMaxJointWeights() -- this test only verifies
+       sanity of glTF import */
+    importer->configuration().setValue("compatibilitySkinningAttributes", false);
 
     /* The first mesh (inside aiScene::mMeshes, order is arbitrary) has its
        bones added to the global bone list first, only the second one has
        shifted joint indices */
-    Containers::Array<Vector4ui> shiftedJointData{Containers::arraySize(MeshSkinningAttributesJointData)};
+    Containers::Array<Vector2ui> shiftedJointData{Containers::arraySize(MeshSkinningAttributesJointData)};
     for(UnsignedInt i = 0; i != shiftedJointData.size(); ++i) {
         /* Shift by 2 where weight is non-zero */
-        const BitVector4 nonZero = Math::notEqual(MeshSkinningAttributesWeightData[i], Vector4{0.0f});
-        const Vector4ui mask{nonZero[0], nonZero[1], nonZero[2], nonZero[3]};
-        shiftedJointData[i] = MeshSkinningAttributesJointData[i] + (mask * 2);
+        const BitVector2 nonZero = Math::notEqual(MeshSkinningAttributesWeightData[i].xy(), Vector2{0.0f});
+        const Vector2ui mask{nonZero[0], nonZero[1]};
+        shiftedJointData[i] = MeshSkinningAttributesJointData[i].xy() + (mask * 2);
     }
 
     for(const char* meshName: {"Mesh_1", "Mesh_2"}) {
@@ -3061,18 +3299,20 @@ void AssimpImporterTest::meshSkinningAttributesMerge() {
         CORRADE_VERIFY(id != -1);
         Containers::Optional<Trade::MeshData> mesh = importer->mesh(id);
         CORRADE_VERIFY(mesh);
-        CORRADE_VERIFY(mesh->hasAttribute(jointsAttribute));
-        CORRADE_COMPARE(mesh->attributeFormat(jointsAttribute), VertexFormat::Vector4ui);
-        Containers::ArrayView<const Vector4ui> jointData = id == 0
-            ? Containers::arrayView(MeshSkinningAttributesJointData)
+        CORRADE_VERIFY(mesh->hasAttribute(MeshAttribute::JointIds));
+        CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::JointIds), VertexFormat::UnsignedInt);
+        CORRADE_COMPARE(mesh->attributeArraySize(MeshAttribute::JointIds), 2);
+        Containers::StridedArrayView1D<const Vector2ui> jointData = id == 0
+            ? Containers::arrayCast<const Vector2ui>(Containers::stridedArrayView(MeshSkinningAttributesJointData))
             : Containers::arrayView(shiftedJointData);
-        CORRADE_COMPARE_AS(mesh->attribute<Vector4ui>(jointsAttribute),
-            Containers::arrayView(jointData), TestSuite::Compare::Container);
+        CORRADE_COMPARE_AS((Containers::arrayCast<1, const Vector2ui>(mesh->attribute<UnsignedInt[]>(MeshAttribute::JointIds))),
+            jointData, TestSuite::Compare::Container);
         /* Weights should stay the same */
-        CORRADE_VERIFY(mesh->hasAttribute(weightsAttribute));
-        CORRADE_COMPARE(mesh->attributeFormat(weightsAttribute), VertexFormat::Vector4);
-        CORRADE_COMPARE_AS(mesh->attribute<Vector4>(weightsAttribute),
-            Containers::arrayView(MeshSkinningAttributesWeightData),
+        CORRADE_VERIFY(mesh->hasAttribute(MeshAttribute::Weights));
+        CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::Weights), VertexFormat::Float);
+        CORRADE_COMPARE(mesh->attributeArraySize(MeshAttribute::Weights), 2);
+        CORRADE_COMPARE_AS((Containers::arrayCast<1, const Vector2>(mesh->attribute<Float[]>(MeshAttribute::Weights))),
+            Containers::arrayCast<const Vector2>(Containers::stridedArrayView(MeshSkinningAttributesWeightData)),
             TestSuite::Compare::Container);
     }
 }
