@@ -2,32 +2,32 @@ clone_depth: 1
 
 environment:
   matrix:
-  - TARGET: desktop
-    COMPILER: msvc
-    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
-    APPVEYOR_JOB_NAME: windows-msvc2015
-  - TARGET: desktop
-    COMPILER: msvc
-    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
-    APPVEYOR_JOB_NAME: windows-msvc2017
-  - TARGET: desktop
-    COMPILER: msvc
-    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
-    APPVEYOR_JOB_NAME: windows-msvc2019
-  - TARGET: desktop
-    COMPILER: msvc
-    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2022
-    APPVEYOR_JOB_NAME: windows-msvc2022
-  - TARGET: desktop
-    COMPILER: msvc
-    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
-    APPVEYOR_JOB_NAME: windows-static-msvc2019
-    BUILD_STATIC: ON
-  - TARGET: desktop
-    COMPILER: msvc
-    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2022
-    APPVEYOR_JOB_NAME: windows-static-msvc2022
-    BUILD_STATIC: ON
+  # - TARGET: desktop
+  #   COMPILER: msvc
+  #   APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
+  #   APPVEYOR_JOB_NAME: windows-msvc2015
+  # - TARGET: desktop
+  #   COMPILER: msvc
+  #   APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+  #   APPVEYOR_JOB_NAME: windows-msvc2017
+  # - TARGET: desktop
+  #   COMPILER: msvc
+  #   APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
+  #   APPVEYOR_JOB_NAME: windows-msvc2019
+  # - TARGET: desktop
+  #   COMPILER: msvc
+  #   APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2022
+  #   APPVEYOR_JOB_NAME: windows-msvc2022
+  # - TARGET: desktop
+  #   COMPILER: msvc
+  #   APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
+  #   APPVEYOR_JOB_NAME: windows-static-msvc2019
+  #   BUILD_STATIC: ON
+  # - TARGET: desktop
+  #   COMPILER: msvc
+  #   APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2022
+  #   APPVEYOR_JOB_NAME: windows-static-msvc2022
+  #   BUILD_STATIC: ON
   - TARGET: desktop
     COMPILER: msvc-clang
     APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
@@ -36,29 +36,29 @@ environment:
     COMPILER: msvc-clang
     APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2022
     APPVEYOR_JOB_NAME: windows-msvc2022-clang
-  - TARGET: desktop
-    COMPILER: msvc
-    # Same reasoning as in Corrade for /EHsc
-    COMPILER_EXTRA: -DCMAKE_CXX_FLAGS="/permissive- /EHsc" -DMSVC_COMPATIBILITY=OFF
-    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
-    APPVEYOR_JOB_NAME: windows-conforming-msvc2019
-  - TARGET: desktop
-    COMPILER: msvc
-    # Not playing with fire and using /EHsc on 2022 as well
-    COMPILER_EXTRA: -DCMAKE_CXX_FLAGS="/permissive- /EHsc" -DMSVC_COMPATIBILITY=OFF
-    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2022
-    APPVEYOR_JOB_NAME: windows-conforming-msvc2022
-  - TARGET: desktop
-    COMPILER: mingw
-    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
-    APPVEYOR_JOB_NAME: windows-mingw
-  - TARGET: rt
-    # This actually isn't needed anywhere, but without this the %COMPILE:~0,4%
-    # expressions cause a "The syntax of the command is incorrect." sometimes
-    # but not in all cases. What the fuck, cmd.exe.
-    COMPILER: msvc
-    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
-    APPVEYOR_JOB_NAME: windows-rt-msvc2017
+  # - TARGET: desktop
+  #   COMPILER: msvc
+  #   # Same reasoning as in Corrade for /EHsc
+  #   COMPILER_EXTRA: -DCMAKE_CXX_FLAGS="/permissive- /EHsc" -DMSVC_COMPATIBILITY=OFF
+  #   APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
+  #   APPVEYOR_JOB_NAME: windows-conforming-msvc2019
+  # - TARGET: desktop
+  #   COMPILER: msvc
+  #   # Not playing with fire and using /EHsc on 2022 as well
+  #   COMPILER_EXTRA: -DCMAKE_CXX_FLAGS="/permissive- /EHsc" -DMSVC_COMPATIBILITY=OFF
+  #   APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2022
+  #   APPVEYOR_JOB_NAME: windows-conforming-msvc2022
+  # - TARGET: desktop
+  #   COMPILER: mingw
+  #   APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+  #   APPVEYOR_JOB_NAME: windows-mingw
+  # - TARGET: rt
+  #   # This actually isn't needed anywhere, but without this the %COMPILE:~0,4%
+  #   # expressions cause a "The syntax of the command is incorrect." sometimes
+  #   # but not in all cases. What the fuck, cmd.exe.
+  #   COMPILER: msvc
+  #   APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+  #   APPVEYOR_JOB_NAME: windows-rt-msvc2017
 
 install:
 # Ninja. `cinst ninja` started 503ing in late November 2019 and wasn't really
