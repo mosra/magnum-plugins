@@ -67,14 +67,14 @@ struct PngImporterTest: TestSuite::Tester {
 using namespace Containers::Literals;
 using namespace Math::Literals;
 
-constexpr struct {
-    const char* name;
+const struct {
+    TestSuite::TestCaseDescriptionSourceLocation name;
     Containers::StringView data;
     const char* error;
 } InvalidData[] {
-    {"invalid signature", "invalid"_s, "wrong file signature"},
-    {"short signature", "\x89PNG"_s, "signature too short"},
-    {"invalid signature with trailing zeros", "\x89PNG\x0d\x0a\x1a\x00"_s, "wrong file signature"},
+    {"invalid signature", "invalid!"_s, "error: Not a PNG file"},
+    {"short signature", "\x89PNG"_s, "error: file too short"},
+    {"invalid signature with trailing zeros", "\x89PNG\x0d\x0a\x1a\x00"_s, "error: PNG file corrupted by ASCII conversion"},
     {"only signature", "\x89PNG\x0d\x0a\x1a\x0a"_s, "error: file too short"}
 };
 

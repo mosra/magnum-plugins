@@ -84,13 +84,6 @@ void PngImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFlags
 UnsignedInt PngImporter::doImage2DCount() const { return 1; }
 
 Containers::Optional<ImageData2D> PngImporter::doImage2D(UnsignedInt, UnsignedInt) {
-    /* Verify file signature. Older libpngs want a mutable pointer, can't
-       const. */
-    if(png_sig_cmp(reinterpret_cast<unsigned char*>(_in.data()), 0, Math::min(std::size_t(8), _in.size())) != 0) {
-        Error() << "Trade::PngImporter::image2D(): wrong file signature";
-        return Containers::NullOpt;
-    }
-
     /* Structures for reading the file */
     png_structp file = png_create_read_struct(PNG_LIBPNG_VER_STRING, nullptr, nullptr, nullptr);
     /** @todo this will assert if the PNG major/minor version doesn't match,
@@ -122,23 +115,14 @@ Containers::Optional<ImageData2D> PngImporter::doImage2D(UnsignedInt, UnsignedIn
         Warning{} << "Trade::PngImporter::image2D(): warning:" << message;
     });
 
-    /* Input starts right after the header */
-    if(_in.size() < 8) {
-        Error{} << "Trade::PngImporter::image2D(): signature too short";
-        return Containers::NullOpt;
-    }
-    Containers::ArrayView<char> input = _in.exceptPrefix(8);
-
     /* Set functions for reading */
+    Containers::ArrayView<char> input = _in;
     png_set_read_fn(file, &input, [](const png_structp file, const png_bytep data, const png_size_t length) {
         auto&& input = *reinterpret_cast<Containers::ArrayView<char>*>(png_get_io_ptr(file));
         if(input.size() < length) png_error(file, "file too short");
         std::memcpy(data, input.begin(), length);
         input = input.exceptPrefix(length);
     });
-
-    /* The signature is already read */
-    png_set_sig_bytes(file, 8);
 
     /* Read file information */
     png_read_info(file, info);
