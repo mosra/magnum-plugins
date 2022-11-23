@@ -102,37 +102,55 @@ Containers::Optional<ImageData2D> PngImporter::doImage2D(UnsignedInt, UnsignedIn
     }};
     Containers::Array<png_bytep> rows;
     Containers::Array<char> data;
+    /* For exiting out of error callbacks via longjmp. Can't use the builtin
+       png_jmpbuf() because the errors can happen inside
+       png_create_read_struct(), thus even before the png.file gets filled, and
+       thus even before we can call setjmp(png_jmpbuf(png.file)). Yet the
+       official documentation says absolutely nothing about handling such case,
+       F.F.S. */
+    std::jmp_buf jmpbuf;
+    /* We may arrive here from the longjmp from the error callback */
+    if(setjmp(jmpbuf))
+        return {};
 
     /* Create the read structure. Directly set up also error/warning
        callbacks because if done here and not in a subsequent
        png_set_error_fn() call, it'll gracefully handle also libpng version
        mismatch errors. */
-    png.file = png_create_read_struct(PNG_LIBPNG_VER_STRING, nullptr, [](const png_structp file, const png_const_charp message) {
+    png.file = png_create_read_struct(PNG_LIBPNG_VER_STRING, &jmpbuf, [](const png_structp file, const png_const_charp message) {
         Error{} << "Trade::PngImporter::image2D(): error:" << message;
         /* Since we're replacing the png_default_error() function, we need to
            call std::longjmp() ourselves -- otherwise the default error
-           handling with stderr printing kicks in. */
-        std::longjmp(png_jmpbuf(file), 1);
-    }, [](png_structp, const png_const_charp message) {
+           handling with stderr printing kicks in. See above for why
+           png_jmpbuf() can't be used. */
+        std::longjmp(*static_cast<std::jmp_buf*>(png_get_error_ptr(file)), 1);
+    }, [](const png_structp file, const png_const_charp message) {
         /* If there's a mismatch in the passed PNG_LIBPNG_VER_STRING major or
            minor version (but not patch version), png_create_read_struct()
            returns a nullptr. However, such a *fatal* error is treated as a
            warning by the library, directed to the warning callback:
              https://github.com/glennrp/libpng/blob/07b8803110da160b158ebfef872627da6c85cbdf/png.c#L219-L240
            That may cause great confusion ("why image2D() returns a NullOpt if
-           it was just a warning??"), so I'm detecting that and annotating it
-           as an error instead.
+           it was just a warning??"), so I'm detecting that, annotating it as
+           an error instead, and jumping to the error return so we don't end up
+           with a nullptr `png.file` below.
 
            Unfortunately this case is annoyingly hard to test automatically, so
            the following branch is uncovered. */
-        if(Containers::StringView{message}.hasPrefix("Application built with libpng-"_s))
+        if(Containers::StringView{message}.hasPrefix("Application built with libpng-"_s)) {
             Error{} << "Trade::PngImporter::image2D(): error:" << message;
-        else
+            std::longjmp(*static_cast<std::jmp_buf*>(png_get_error_ptr(file)), 1);
+        } else
             Warning{} << "Trade::PngImporter::image2D(): warning:" << message;
     });
-    /* If png_create_read_struct() failed, png.file is a nullptr. Apart from
-       that we may arrive here from the longjmp from the error callback. */
-    if(!png.file || setjmp(png_jmpbuf(png.file)))
+    /* If png_create_read_struct() failed with an error or "failed with a
+       warning" due to the version mismatch), in both cases it longjmp()'d and
+       already returned above. So if we get to this point, the file pointer
+       should always be there. */
+    CORRADE_INTERNAL_ASSERT(png.file);
+
+    // FFS
+    if(setjmp(jmpbuf))
         return {};
 
     png.info = png_create_info_struct(png.file);
