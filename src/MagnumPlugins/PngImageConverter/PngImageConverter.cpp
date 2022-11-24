@@ -62,9 +62,6 @@ Containers::String PngImageConverter::doMimeType() const {
 }
 
 Containers::Optional<Containers::Array<char>> PngImageConverter::doConvertToData(const ImageView2D& image) {
-    CORRADE_ASSERT(std::strcmp(PNG_LIBPNG_VER_STRING, png_libpng_ver) == 0,
-        "Trade::PngImageConverter::convertToData(): libpng version mismatch, got" << png_libpng_ver << "but expected" << PNG_LIBPNG_VER_STRING, {});
-
     /* Warn about lost metadata */
     if(image.flags() & ImageFlag2D::Array) {
         Warning{} << "Trade::PngImageConverter::convertToData(): 1D array images are unrepresentable in PNG, saving as a regular 2D image";
@@ -113,6 +110,10 @@ Containers::Optional<Containers::Array<char>> PngImageConverter::doConvertToData
     }
 
     png_structp file = png_create_write_struct(PNG_LIBPNG_VER_STRING, nullptr, nullptr, nullptr);
+    /** @todo this will assert if the PNG major/minor version doesn't match,
+        with "libpng warning: Application built with libpng-1.7.0 but running
+        with 1.6.38" being printed to stdout, the proper fix is to set error
+        callbacks directly in the png_create_write_struct() call */
     CORRADE_INTERNAL_ASSERT(file);
     png_infop info = png_create_info_struct(file);
     CORRADE_INTERNAL_ASSERT(info);

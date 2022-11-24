@@ -84,9 +84,6 @@ void PngImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFlags
 UnsignedInt PngImporter::doImage2DCount() const { return 1; }
 
 Containers::Optional<ImageData2D> PngImporter::doImage2D(UnsignedInt, UnsignedInt) {
-    CORRADE_ASSERT(std::strcmp(PNG_LIBPNG_VER_STRING, png_libpng_ver) == 0,
-        "Trade::PngImporter::image2D(): libpng version mismatch, got" << png_libpng_ver << "but expected" << PNG_LIBPNG_VER_STRING, Containers::NullOpt);
-
     /* Verify file signature. Older libpngs want a mutable pointer, can't
        const. */
     if(png_sig_cmp(reinterpret_cast<unsigned char*>(_in.data()), 0, Math::min(std::size_t(8), _in.size())) != 0) {
@@ -96,6 +93,10 @@ Containers::Optional<ImageData2D> PngImporter::doImage2D(UnsignedInt, UnsignedIn
 
     /* Structures for reading the file */
     png_structp file = png_create_read_struct(PNG_LIBPNG_VER_STRING, nullptr, nullptr, nullptr);
+    /** @todo this will assert if the PNG major/minor version doesn't match,
+        with "libpng warning: Application built with libpng-1.7.0 but running
+        with 1.6.38" being printed to stdout, the proper fix is to set error
+        callbacks directly in the png_create_read_struct() call */
     CORRADE_INTERNAL_ASSERT(file);
     png_infop info = png_create_info_struct(file);
     CORRADE_INTERNAL_ASSERT(info);

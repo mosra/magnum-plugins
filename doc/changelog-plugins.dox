@@ -261,6 +261,10 @@ namespace Magnum {
 -   Fixed loading of embedded FBX textures in @relativeref{Trade,AssimpImporter}
     (see [mosra/magnum-plugins#127](https://github.com/mosra/magnum-plugins/issues/127),
     [mosra/magnum-plugins#128](https://github.com/mosra/magnum-plugins/pull/128))
+-   @relativeref{Trade,PngImporter} and @relativeref{Trade,PngImageConverter}
+    no longer asserts if the patch version of libpng changed, such as when a
+    system package was upgraded from 1.6.37 to 1.6.38. If the major or minor
+    version changes, it's still an assert.
 
 @subsection changelog-plugins-latest-deprecated Deprecated APIs
 
