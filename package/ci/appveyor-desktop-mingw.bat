@@ -46,6 +46,10 @@ cmake .. ^
 cmake --build . --target install || exit /b
 cd .. && cd .. || exit /b
 
+rem Similarly, libpng built by GH Actions fails to link because of some
+rem __security_cookie. It wasn't built before, so I won't bother building it
+rem now either. TODO for later.
+
 rem Build meshoptimizer
 IF NOT EXIST %APPVEYOR_BUILD_FOLDER%\v0.14.zip appveyor DownloadFile https://github.com/zeux/meshoptimizer/archive/v0.14.zip || exit /b
 7z x v0.14.zip || exit /b

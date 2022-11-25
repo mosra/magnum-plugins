@@ -14,16 +14,6 @@ rem currently disabled -- https://github.com/catchorg/Catch2/issues/1113
 if "%COMPILER%" == "msvc-clang" if "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2022" set COMPILER_EXTRA=-DCMAKE_C_COMPILER="C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/Llvm/bin/clang-cl.exe" -DCMAKE_CXX_COMPILER="C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/Llvm/bin/clang-cl.exe" -DCMAKE_LINKER="C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/Llvm/bin/lld-link.exe" -DCMAKE_C_FLAGS="-m64 /EHsc" -DCMAKE_CXX_FLAGS="-m64 /EHsc"
 if "%COMPILER%" == "msvc-clang" if "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2019" set COMPILER_EXTRA=-DCMAKE_C_COMPILER="C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Tools/Llvm/bin/clang-cl.exe" -DCMAKE_CXX_COMPILER="C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Tools/Llvm/bin/clang-cl.exe" -DCMAKE_LINKER="C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Tools/Llvm/bin/lld-link.exe" -DCMAKE_C_FLAGS="-m64 /EHsc" -DCMAKE_CXX_FLAGS="-m64 /EHsc"
 
-rem Build libPNG. As of 2020-08-17, vcpkg is broken on the 2019 image and needs
-rem updating. Disabling the libPNG build there for now.
-IF "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2019" set EXCEPT_IF_VCPKG_IS_BROKEN=OFF
-IF NOT "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2019" set EXCEPT_IF_VCPKG_IS_BROKEN=ON
-IF NOT "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2019" vcpkg install libpng:x64-windows || exit /b
-
-rem Some dependencies are built on GitHub Actions and there the only available
-rem MSVC version is 2019. Better than nothing, but eh.
-IF "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2019" set ONLY_ON_MSVC2019=ON
-IF NOT "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2019" set ONLY_ON_MSVC2019=OFF
 IF "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2015" set EXCEPT_MSVC2015=OFF
 IF NOT "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2015" set EXCEPT_MSVC2015=ON
 
@@ -133,8 +123,8 @@ cmake .. ^
     -DMAGNUM_WITH_OPENEXRIMAGECONVERTER=%EXCEPT_MSVC2015% ^
     -DMAGNUM_WITH_OPENEXRIMPORTER=%EXCEPT_MSVC2015% ^
     -DMAGNUM_WITH_OPENGEXIMPORTER=ON ^
-    -DMAGNUM_WITH_PNGIMAGECONVERTER=%EXCEPT_IF_VCPKG_IS_BROKEN% ^
-    -DMAGNUM_WITH_PNGIMPORTER=%EXCEPT_IF_VCPKG_IS_BROKEN% ^
+    -DMAGNUM_WITH_PNGIMAGECONVERTER=%EXCEPT_MSVC2015% ^
+    -DMAGNUM_WITH_PNGIMPORTER=%EXCEPT_MSVC2015% ^
     -DMAGNUM_WITH_PRIMITIVEIMPORTER=ON ^
     -DMAGNUM_WITH_SPIRVTOOLSSHADERCONVERTER=%EXCEPT_MSVC2015% ^
     -DMAGNUM_WITH_STANFORDIMPORTER=ON ^
