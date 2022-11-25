@@ -169,6 +169,17 @@ ufbx_load_opts loadOptsFromConfiguration(Utility::ConfigurationGroup& conf) {
     opts.ignore_embedded = conf.value<bool>("ignoreEmbedded");
     opts.ignore_all_content = conf.value<bool>("ignoreAllContent");
 
+    /* @todo: ufbx can normalize scenes to units/coordinate systems, this is a
+      very rudimentary implementation used for testing. Not sure how exposing
+      something like this in configuration would work. Also for extra goodness
+      it depends on preserveRootNode as that's where ufbx writes the mapping.
+      Another alternative would be to expose the current scene units as some
+      custom scene fields and let users do the math. */
+    if (conf.value<bool>("normalizeUnits")) {
+        opts.target_axes = ufbx_axes_right_handed_y_up;
+        opts.target_unit_meters = 1.0f;
+    }
+
     /* We need to split meshes by material so create a dummy ufbx_mesh_material
        containing the whole mesh to make processing code simpler. */
     opts.allow_null_material = true;
