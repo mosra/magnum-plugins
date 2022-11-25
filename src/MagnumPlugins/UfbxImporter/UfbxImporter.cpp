@@ -32,8 +32,10 @@
 #define UFBX_NO_SUBDIVISION
 #define UFBX_NO_SCENE_EVALUATION
 
-/* Do we want this? */
-#define UFBX_NO_ERROR_STACK
+/* Include error stack on debug builds for juicy details in bugreports */
+#if !defined(CORRADE_IS_DEBUG_BUILD) && defined(NDEBUG)
+    #define UFBX_NO_ERROR_STACK
+#endif
 
 #include "ufbx.h"
 #include "ufbx.c"
@@ -189,8 +191,12 @@ inline SamplerWrapping toSamplerWrapping(ufbx_wrap_mode mode) {
     }
 }
 
-inline void logError(const char *prefix, const ufbx_error &error) {
-    if (error.info_length > 0) {
+inline void logError(const char *prefix, const ufbx_error &error, ImporterFlags flags) {
+    if (flags & ImporterFlag::Verbose) {
+        char message[1024];
+        ufbx_format_error(message, sizeof(message), &error);
+        Error{} << prefix << message;
+    } else if (error.info) {
         Error{} << prefix << Containers::StringView(error.description) << " (" << error.info << ")";
     } else {
         Error{} << prefix << Containers::StringView(error.description);
@@ -270,7 +276,7 @@ void UfbxImporter::doOpenData(Containers::Array<char>&& data, const DataFlags) {
     ufbx_error error;
     ufbx_scene *scene = ufbx_load_memory(data.data(), data.size(), &opts, &error);
     if (!scene) {
-        logError("Trade::UfbxImporter::openData(): loading failed: ", error);
+        logError("Trade::UfbxImporter::openData(): loading failed: ", error, flags());
     }
 
     /* Handle the opened scene with doOpenState() */
@@ -285,7 +291,7 @@ void UfbxImporter::doOpenFile(Containers::StringView filename) {
     ufbx_error error;
     ufbx_scene *scene = ufbx_load_file_len(filename.data(), filename.size(), &opts, &error);
     if (!scene) {
-        logError("Trade::UfbxImporter::openData(): loading failed: ", error);
+        logError("Trade::UfbxImporter::openData(): loading failed: ", error, flags());
     }
 
     /* Handle the opened scene with doOpenState() */
