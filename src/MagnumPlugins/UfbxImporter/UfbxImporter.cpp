@@ -961,7 +961,7 @@ Containers::Optional<MaterialData> UfbxImporter::doMaterial(UnsignedInt id) {
                         Matrix3 value = {
                             { Float(mat.m00), Float(mat.m10), 0.0f },
                             { Float(mat.m01), Float(mat.m11), 0.0f },
-                            { Float(mat.m03), Float(mat.m13), 0.0f },
+                            { Float(mat.m03), Float(mat.m13), 1.0f },
                         };
 
                         arrayAppend(attributes, {mapping.textureMatrix, value});
