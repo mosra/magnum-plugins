@@ -49,6 +49,7 @@
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/Math.h>
+#include <Corrade/Utility/Path.h>
 #include <Magnum/Math/Matrix3.h>
 #include <Magnum/Math/RectangularMatrix.h>
 #include <Magnum/Math/Vector3.h>
@@ -675,8 +676,16 @@ Containers::Optional<LightData> UfbxImporter::doLight(UnsignedInt id) {
         attenuation = {1.0f, 0.0f, 0.0f};
     }
 
+    Float innerAngle = 360.0f;
+    Float outerAngle = 360.0f;
+
+    if (lightType == LightData::Type::Spot) {
+        innerAngle = Math::clamp(Float(l->inner_angle), 0.0f, 360.0f);
+        outerAngle = Math::clamp(Float(l->inner_angle), innerAngle, 360.0f);
+    }
+
     return LightData{lightType, color, intensity, attenuation,
-        Deg{Float(l->inner_angle)}, Deg{Float(l->outer_angle)}};
+        Deg{innerAngle}, Deg{outerAngle}};
 }
 
 UnsignedInt UfbxImporter::doMeshCount() const {
@@ -793,7 +802,7 @@ Containers::Optional<MeshData> UfbxImporter::doMesh(UnsignedInt id, UnsignedInt 
         attributeOffset += sizeof(Vector3);
     }
 
-    for (UnsignedInt i = 0; i < tangentSetCount; ++i) {
+    for (UnsignedInt i = 0; i < bitangentSetCount; ++i) {
         bitangentSets[i] = {vertexData,
             reinterpret_cast<Vector3*>(vertexData + attributeOffset),
             indexCount, stride};
@@ -1035,13 +1044,16 @@ AbstractImporter* UfbxImporter::setupOrReuseImporterForImage(UnsignedInt id, con
         if(!importer.openData(textureData))
             return nullptr;
     } else if (texture->filename.length > 0) {
-        if (_state->fromFile && !fileCallback()) {
+        if (!_state->fromFile && !fileCallback()) {
             Error{} << errorPrefix << "external images can be imported only when opening files from the filesystem or if a file callback is present";
             return nullptr;
         }
 
         if(!importer.openFile(texture->filename))
             return nullptr;
+    } else {
+        Error{} << errorPrefix << "empty filename";
+        return nullptr;
     }
 
     if(importer.image2DCount() != 1) {
