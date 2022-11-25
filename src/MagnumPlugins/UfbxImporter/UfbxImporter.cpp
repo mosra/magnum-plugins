@@ -389,6 +389,7 @@ Containers::Optional<SceneData> UfbxImporter::doScene(UnsignedInt) {
 
     const bool preserveRootNode = configuration().value<bool>("preserveRootNode");
     const bool geometricTransformNodes = configuration().value<bool>("geometricTransformNodes");
+    const bool perInstanceMaterials = configuration().value<bool>("perInstanceMaterials");
 
     UnsignedInt meshCount = 0;
     UnsignedInt skinCount = 0;
@@ -497,7 +498,8 @@ Containers::Optional<SceneData> UfbxImporter::doScene(UnsignedInt) {
                 /* We may need to add multiple "chunks" for each mesh as one
                    ufbx_mesh may contain multiple materials. */
                 UnsignedInt chunkOffset = _state->meshChunkBase[mesh->typed_id];
-                for (const ufbx_mesh_material &mat : mesh->materials) {
+                for (UnsignedInt matIndex = 0; matIndex < mesh->materials.count; ++matIndex) {
+                    const ufbx_mesh_material &mat = mesh->materials[matIndex];
                     if (mat.num_faces == 0) continue;
 
                     /* Meshes should ignore geometry transform if skinned as
@@ -509,7 +511,8 @@ Containers::Optional<SceneData> UfbxImporter::doScene(UnsignedInt) {
                     }
 
                     if (mat.material) {
-                        meshMaterials[meshMaterialOffset] = Int(mat.material->typed_id);
+                        ufbx_material *material = perInstanceMaterials ? node->materials[matIndex] : mat.material;
+                        meshMaterials[meshMaterialOffset] = Int(material->typed_id);
                     } else {
                         meshMaterials[meshMaterialOffset] = -1;
                     }
