@@ -920,7 +920,7 @@ Containers::Optional<MaterialData> UfbxImporter::doMaterial(UnsignedInt id) {
                 }
             }
 
-            if (mapping.attrib != MaterialAttribute(0) && !addedAttributes[UnsignedInt(mapping.attrib)]) {
+            if (colorMap.has_value && mapping.attrib != MaterialAttribute(0) && !addedAttributes[UnsignedInt(mapping.attrib)]) {
                 addedAttributes.set(UnsignedInt(mapping.attrib), true);
                 if (mapping.type == MaterialAttributeType::Float) {
                     Float value = Float(colorMap.value_real) * factor;
@@ -929,7 +929,7 @@ Containers::Optional<MaterialData> UfbxImporter::doMaterial(UnsignedInt id) {
                     Vector3 value = Vector3(colorMap.value_vec3) * factor;
                     arrayAppend(attributes, {mapping.attrib, value});
                 } else if (mapping.type == MaterialAttributeType::Vector4) {
-                    Vector4 value = Vector4(colorMap.value_vec4) * factor;
+                    Vector4 value = Vector4(colorMap.value_vec4) * Vector4{factor,factor,factor,1.0f};
                     arrayAppend(attributes, {mapping.attrib, value});
                 } else {
                     CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
