@@ -173,11 +173,13 @@ cmake .. ^
     -DMAGNUM_BUILD_GL_TESTS=ON ^
     -G Ninja || exit /b
 cmake --build . || exit /b
-cmake --build . --target install || exit /b
 
 rem Test
 set CORRADE_TEST_COLOR=ON
 ctest -V || exit /b
+
+rem Test install, after running the tests as for them it shouldn't be needed
+cmake --build . --target install || exit /b
 
 rem Coverage upload
 set PATH=C:\msys64\usr\bin;%PATH%
