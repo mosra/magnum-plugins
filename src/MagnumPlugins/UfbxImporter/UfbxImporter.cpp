@@ -40,8 +40,6 @@
 #include "ufbx.h"
 #include "ufbx.c"
 
-#include <limits>
-#include <unordered_map>
 #include <Corrade/Containers/Array.h>
 #include <Corrade/Containers/ArrayTuple.h>
 #include <Corrade/Containers/BitArray.h>
@@ -216,7 +214,7 @@ inline void logError(const char *prefix, const ufbx_error &error, ImporterFlags 
 }
 
 inline UnsignedInt unboundedIfNegative(Int value) {
-    return value >= 0 ? UnsignedInt(value) : std::numeric_limits<UnsignedInt>::max();
+    return value >= 0 ? UnsignedInt(value) : ~UnsignedInt{};
 }
 
 struct MaterialMapping {
