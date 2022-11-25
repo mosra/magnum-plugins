@@ -14,39 +14,11 @@ rem currently disabled -- https://github.com/catchorg/Catch2/issues/1113
 if "%COMPILER%" == "msvc-clang" if "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2022" set COMPILER_EXTRA=-DCMAKE_C_COMPILER="C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/Llvm/bin/clang-cl.exe" -DCMAKE_CXX_COMPILER="C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/Llvm/bin/clang-cl.exe" -DCMAKE_LINKER="C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/Llvm/bin/lld-link.exe" -DCMAKE_C_FLAGS="-m64 /EHsc" -DCMAKE_CXX_FLAGS="-m64 /EHsc"
 if "%COMPILER%" == "msvc-clang" if "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2019" set COMPILER_EXTRA=-DCMAKE_C_COMPILER="C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Tools/Llvm/bin/clang-cl.exe" -DCMAKE_CXX_COMPILER="C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Tools/Llvm/bin/clang-cl.exe" -DCMAKE_LINKER="C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Tools/Llvm/bin/lld-link.exe" -DCMAKE_C_FLAGS="-m64 /EHsc" -DCMAKE_CXX_FLAGS="-m64 /EHsc"
 
+set EXCEPT_MSVC2015=ON
+set EXCEPT_MSVC2017=ON
 IF "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2015" set EXCEPT_MSVC2015=OFF
-IF NOT "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2015" set EXCEPT_MSVC2015=ON
-
-rem Build meshoptimizer
-IF NOT EXIST %APPVEYOR_BUILD_FOLDER%\v0.14.zip appveyor DownloadFile https://github.com/zeux/meshoptimizer/archive/v0.14.zip || exit /b
-7z x v0.14.zip || exit /b
-ren meshoptimizer-0.14 meshoptimizer || exit /b
-cd meshoptimizer || exit /b
-mkdir build && cd build || exit /b
-cmake .. ^
-    -DCMAKE_BUILD_TYPE=Debug ^
-    -DCMAKE_INSTALL_PREFIX=%APPVEYOR_BUILD_FOLDER%/deps ^
-    %COMPILER_EXTRA% -G Ninja || exit /b
-cmake --build . --target install || exit /b
-cd .. && cd .. || exit /b
-
-rem Build zstd
-IF NOT EXIST %APPVEYOR_BUILD_FOLDER%\v1.5.0.zip appveyor DownloadFile https://github.com/facebook/zstd/archive/refs/tags/v1.5.0.zip || exit /b
-7z x v1.5.0.zip || exit /b
-ren zstd-1.5.0 zstd || exit /b
-cd zstd || exit /b
-rem There's already a directory named `build`
-mkdir build_ && cd build_ || exit /b
-cmake ../build/cmake ^
-    -DCMAKE_BUILD_TYPE=Debug ^
-    -DCMAKE_INSTALL_PREFIX=%APPVEYOR_BUILD_FOLDER%/deps ^
-    -DZSTD_BUILD_PROGRAMS=OFF ^
-    -DZSTD_BUILD_SHARED=OFF ^
-    -DZSTD_BUILD_STATIC=ON ^
-    -DZSTD_MULTITHREAD_SUPPORT=OFF ^
-    %COMPILER_EXTRA% -G Ninja || exit /b
-cmake --build . --target install || exit /b
-cd .. && cd .. || exit /b
+IF "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2015" set EXCEPT_MSVC2017=OFF
+IF "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2017" set EXCEPT_MSVC2017=OFF
 
 rem Build Corrade
 git clone --depth 1 https://github.com/mosra/corrade.git || exit /b
@@ -100,8 +72,8 @@ cmake .. ^
     -DCMAKE_PREFIX_PATH=%APPVEYOR_BUILD_FOLDER%/openal;%APPVEYOR_BUILD_FOLDER%/libwebp;%APPVEYOR_BUILD_FOLDER%/devil;C:/Tools/vcpkg/installed/x64-windows ^
     -DMAGNUM_WITH_ASSIMPIMPORTER=%EXCEPT_MSVC2015% ^
     -DMAGNUM_WITH_ASTCIMPORTER=ON ^
-    -DMAGNUM_WITH_BASISIMAGECONVERTER=ON ^
-    -DMAGNUM_WITH_BASISIMPORTER=ON -DBASIS_UNIVERSAL_DIR=%APPVEYOR_BUILD_FOLDER%/basis_universal ^
+    -DMAGNUM_WITH_BASISIMAGECONVERTER=%EXCEPT_MSVC2015% ^
+    -DMAGNUM_WITH_BASISIMPORTER=%EXCEPT_MSVC2015% -DBASIS_UNIVERSAL_DIR=%APPVEYOR_BUILD_FOLDER%/basis_universal ^
     -DMAGNUM_WITH_CGLTFIMPORTER=ON ^
     -DMAGNUM_WITH_DDSIMPORTER=ON ^
     -DMAGNUM_WITH_DEVILIMAGEIMPORTER=ON ^
@@ -118,7 +90,7 @@ cmake .. ^
     -DMAGNUM_WITH_JPEGIMPORTER=%EXCEPT_MSVC2015% ^
     -DMAGNUM_WITH_KTXIMAGECONVERTER=ON ^
     -DMAGNUM_WITH_KTXIMPORTER=ON ^
-    -DMAGNUM_WITH_MESHOPTIMIZERSCENECONVERTER=ON ^
+    -DMAGNUM_WITH_MESHOPTIMIZERSCENECONVERTER=%EXCEPT_MSVC2017% ^
     -DMAGNUM_WITH_MINIEXRIMAGECONVERTER=ON ^
     -DMAGNUM_WITH_OPENEXRIMAGECONVERTER=%EXCEPT_MSVC2015% ^
     -DMAGNUM_WITH_OPENEXRIMPORTER=%EXCEPT_MSVC2015% ^

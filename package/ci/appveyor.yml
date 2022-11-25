@@ -142,6 +142,17 @@ install:
 # For some reason zlibstatic.a is already present? from Assimp? let's overwrite
 - IF "%TARGET%" == "desktop" IF "%COMPILER%" == "mingw" appveyor DownloadFile https://ci.magnum.graphics/zlib-1.2.13-windows-mingw.zip && 7z x -aoa zlib-1.2.13-windows-mingw.zip -o%APPVEYOR_BUILD_FOLDER%\deps
 
+# zstd for MSVC 2022, 2019 and clang-cl; MinGW. MSVC 2017 seems to work well
+# with the 2019 build. Needed by Basis Universal.
+- IF "%TARGET%" == "desktop" IF "%COMPILER:~0,4%" == "msvc" appveyor DownloadFile https://ci.magnum.graphics/zstd-1.5.2-windows-2019.zip && 7z x zstd-1.5.2-windows-2019.zip -o%APPVEYOR_BUILD_FOLDER%\deps
+- IF "%TARGET%" == "desktop" IF "%COMPILER%" == "mingw" appveyor DownloadFile https://ci.magnum.graphics/zstd-1.5.2-windows-mingw.zip && 7z x zstd-1.5.2-windows-mingw.zip -o%APPVEYOR_BUILD_FOLDER%\deps
+
+# meshoptimizer for MSVC 2022, 2019 and clang-cl; MinGW. MSVC 2017 doesn't work
+# with the 2019 build unfortunately, and can't build it because of
+# https://github.com/actions/runner-images/issues/3294
+- IF "%TARGET%" == "desktop" IF "%COMPILER:~0,4%" == "msvc" appveyor DownloadFile https://ci.magnum.graphics/meshoptimizer-0.18-windows-2019-debug.zip && 7z x meshoptimizer-0.18-windows-2019-debug.zip -o%APPVEYOR_BUILD_FOLDER%\deps
+- IF "%TARGET%" == "desktop" IF "%COMPILER%" == "mingw" appveyor DownloadFile https://ci.magnum.graphics/meshoptimizer-0.18-windows-mingw.zip && 7z x meshoptimizer-0.18-windows-mingw.zip -o%APPVEYOR_BUILD_FOLDER%\deps
+
 build_script:
 - IF NOT "%BUILD_STATIC%" == "ON" set BUILD_STATIC=OFF
 - IF "%TARGET%" == "desktop" IF "%COMPILER:~0,4%" == "msvc" call package\ci\appveyor-desktop.bat
