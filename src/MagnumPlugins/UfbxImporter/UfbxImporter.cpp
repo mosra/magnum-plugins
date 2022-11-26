@@ -233,8 +233,8 @@ static const MaterialMapping materialMapsFbx[] = {
     { MaterialAttributeType::Vector4, MaterialAttribute::SpecularColor, MaterialAttribute::SpecularTexture, MaterialAttribute::SpecularTextureMatrix, MaterialAttribute::SpecularTextureCoordinates, UFBX_MATERIAL_FBX_SPECULAR_COLOR, UFBX_MATERIAL_FBX_SPECULAR_FACTOR },
     { MaterialAttributeType::Vector4, MaterialAttribute::AmbientColor, MaterialAttribute::AmbientTexture, MaterialAttribute::AmbientTextureMatrix, MaterialAttribute::AmbientTextureCoordinates, UFBX_MATERIAL_FBX_AMBIENT_COLOR, UFBX_MATERIAL_FBX_AMBIENT_FACTOR },
     { MaterialAttributeType::Vector3, MaterialAttribute::EmissiveColor, MaterialAttribute::EmissiveTexture, MaterialAttribute::EmissiveTextureMatrix, MaterialAttribute::EmissiveTextureCoordinates, UFBX_MATERIAL_FBX_EMISSION_COLOR, UFBX_MATERIAL_FBX_EMISSION_FACTOR },
-    { MaterialAttributeType::Float, MaterialAttribute::Shininess, MaterialAttribute(0), MaterialAttribute(0), MaterialAttribute(0), UFBX_MATERIAL_FBX_SPECULAR_EXPONENT, -1 },
-    { MaterialAttributeType(0), MaterialAttribute(0), MaterialAttribute::NormalTexture, MaterialAttribute::NormalTextureMatrix, MaterialAttribute::NormalTextureCoordinates, UFBX_MATERIAL_FBX_NORMAL_MAP, -1 },
+    { MaterialAttributeType::Float, MaterialAttribute::Shininess, MaterialAttribute{}, MaterialAttribute{}, MaterialAttribute{}, UFBX_MATERIAL_FBX_SPECULAR_EXPONENT, -1 },
+    { MaterialAttributeType{}, MaterialAttribute{}, MaterialAttribute::NormalTexture, MaterialAttribute::NormalTextureMatrix, MaterialAttribute::NormalTextureCoordinates, UFBX_MATERIAL_FBX_NORMAL_MAP, -1 },
 };
 
 static const MaterialMapping materialMapsPbr[] = {
@@ -242,8 +242,8 @@ static const MaterialMapping materialMapsPbr[] = {
     { MaterialAttributeType::Float, MaterialAttribute::Metalness, MaterialAttribute::MetalnessTexture, MaterialAttribute::MetalnessTextureMatrix, MaterialAttribute::MetalnessTextureCoordinates, UFBX_MATERIAL_PBR_METALNESS, -1 },
     { MaterialAttributeType::Float, MaterialAttribute::Roughness, MaterialAttribute::RoughnessTexture, MaterialAttribute::RoughnessTextureMatrix, MaterialAttribute::RoughnessTextureCoordinates, UFBX_MATERIAL_PBR_ROUGHNESS, -1 },
     { MaterialAttributeType::Vector3, MaterialAttribute::EmissiveColor, MaterialAttribute::EmissiveTexture, MaterialAttribute::EmissiveTextureMatrix, MaterialAttribute::EmissiveTextureCoordinates, UFBX_MATERIAL_PBR_EMISSION_COLOR, UFBX_MATERIAL_PBR_EMISSION_FACTOR },
-    { MaterialAttributeType(0), MaterialAttribute(0), MaterialAttribute::NormalTexture, MaterialAttribute::NormalTextureMatrix, MaterialAttribute::NormalTextureCoordinates, UFBX_MATERIAL_PBR_NORMAL_MAP, -1 },
-    { MaterialAttributeType(0), MaterialAttribute(0), MaterialAttribute::OcclusionTexture, MaterialAttribute::OcclusionTextureMatrix, MaterialAttribute::OcclusionTextureCoordinates, UFBX_MATERIAL_PBR_AMBIENT_OCCLUSION, -1 },
+    { MaterialAttributeType{}, MaterialAttribute{}, MaterialAttribute::NormalTexture, MaterialAttribute::NormalTextureMatrix, MaterialAttribute::NormalTextureCoordinates, UFBX_MATERIAL_PBR_NORMAL_MAP, -1 },
+    { MaterialAttributeType{}, MaterialAttribute{}, MaterialAttribute::OcclusionTexture, MaterialAttribute::OcclusionTextureMatrix, MaterialAttribute::OcclusionTextureCoordinates, UFBX_MATERIAL_PBR_AMBIENT_OCCLUSION, -1 },
 };
 
 struct FileOpener {
@@ -971,7 +971,7 @@ Containers::Optional<MaterialData> UfbxImporter::doMaterial(UnsignedInt id) {
                 }
             }
 
-            if (colorMap.has_value && mapping.attrib != MaterialAttribute(0) && !addedAttributes[UnsignedInt(mapping.attrib)]) {
+            if (colorMap.has_value && mapping.attrib != MaterialAttribute{} && !addedAttributes[UnsignedInt(mapping.attrib)]) {
                 addedAttributes.set(UnsignedInt(mapping.attrib), true);
                 if (mapping.type == MaterialAttributeType::Float) {
                     Float value = Float(colorMap.value_real) * factor;
@@ -987,13 +987,13 @@ Containers::Optional<MaterialData> UfbxImporter::doMaterial(UnsignedInt id) {
                 }
             }
 
-            if (mapping.texture != MaterialAttribute(0)) {
+            if (mapping.texture != MaterialAttribute{}) {
                 ufbx_texture *texture = colorMap.texture;
                 if (texture && colorMap.texture_enabled && !addedAttributes[UnsignedInt(mapping.texture)]) {
                     addedAttributes.set(UnsignedInt(mapping.texture), true);
                     arrayAppend(attributes, {mapping.texture, UnsignedInt(texture->typed_id)});
 
-                    if (mapping.textureMatrix != MaterialAttribute(0) && texture->has_uv_transform) {
+                    if (mapping.textureMatrix != MaterialAttribute{} && texture->has_uv_transform) {
 
                         /* Texture matrix should be connected to texture */
                         CORRADE_INTERNAL_ASSERT(!addedAttributes[UnsignedInt(mapping.textureMatrix)]);
