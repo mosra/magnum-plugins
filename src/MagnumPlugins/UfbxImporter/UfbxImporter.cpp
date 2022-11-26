@@ -681,7 +681,7 @@ Containers::Optional<LightData> UfbxImporter::doLight(UnsignedInt id) {
     const ufbx_light* l = _state->scene->lights[id];
 
     Float intensity = Float(l->intensity);
-    Color3 color { Float(l->color.x), Float(l->color.y), Float(l->color.z) };
+    Color3 color{l->color};
 
     Vector3 attenuation;
     LightData::Type lightType;
