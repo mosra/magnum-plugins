@@ -48,6 +48,7 @@
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/Math.h>
 #include <Corrade/Utility/Path.h>
+#include <Magnum/FileCallback.h>
 #include <Magnum/Math/Matrix3.h>
 #include <Magnum/Math/RectangularMatrix.h>
 #include <Magnum/Math/Vector3.h>
