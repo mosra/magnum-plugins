@@ -906,7 +906,8 @@ Containers::Optional<MeshData> UfbxImporter::doMesh(UnsignedInt id, UnsignedInt 
     if (generateIndices)
         meshData = MeshTools::removeDuplicates(meshData);
 
-    return std::move(meshData);
+    /* GCC 4.8 needs extra help here */
+    return Containers::optional(std::move(meshData));
 }
 
 UnsignedInt UfbxImporter::doMaterialCount() const {
