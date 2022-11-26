@@ -48,7 +48,8 @@ corrade_add_test(UfbxImporterTest UfbxImporterTest.cpp
     LIBRARIES Magnum::Trade
     FILES
         blender-default.fbx
-        triangle.fbx)
+        triangle.fbx
+        lights.fbx)
 
 target_include_directories(UfbxImporterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>)
 if(MAGNUM_UFBXIMPORTER_BUILD_STATIC)

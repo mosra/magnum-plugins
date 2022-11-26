@@ -31,16 +31,20 @@
 #include <Corrade/Containers/String.h>
 #include <Corrade/Containers/StringStl.h>
 #include <Corrade/Containers/StringView.h>
+#include <Corrade/Containers/Triple.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
 #include <Corrade/TestSuite/Compare/Numeric.h>
 #include <Corrade/TestSuite/Compare/String.h>
 #include <Corrade/Utility/Path.h>
 #include <Corrade/Utility/String.h>
+#include <Magnum/Math/Angle.h>
 #include <Magnum/Math/Vector3.h>
 #include <Magnum/Math/Vector4.h>
+#include <Magnum/Math/Quaternion.h>
 #include <Magnum/Trade/AbstractImporter.h>
 #include <Magnum/Trade/MeshData.h>
+#include <Magnum/Trade/LightData.h>
 #include <Magnum/Trade/SceneData.h>
 
 #include "configure.h"
@@ -58,6 +62,7 @@ struct UfbxImporterTest: TestSuite::Tester {
     void openFileFailed();
     void openDataFailed();
     void mesh();
+    void light();
 
     /* Needs to load AnyImageImporter from a system-wide location */
     PluginManager::Manager<AbstractImporter> _manager;
@@ -69,7 +74,8 @@ UfbxImporterTest::UfbxImporterTest() {
               &UfbxImporterTest::openFileFailed,
               &UfbxImporterTest::openDataFailed});
 
-    addTests({&UfbxImporterTest::mesh});
+    addTests({&UfbxImporterTest::mesh,
+              &UfbxImporterTest::light});
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. It also pulls in the AnyImageImporter dependency. */
@@ -216,6 +222,142 @@ void UfbxImporterTest::mesh() {
     CORRADE_COMPARE_AS(scene->field<Int>(SceneField::MeshMaterial), Containers::arrayView<Int>({
         0,
     }), TestSuite::Compare::Container);
+}
+
+void UfbxImporterTest::light() {
+    std::ostringstream out;
+    Error redirectError{&out};
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "lights.fbx")));
+
+    CORRADE_COMPARE(importer->objectCount(), 6);
+    CORRADE_COMPARE(importer->lightCount(), 6);
+
+    Containers::Optional<SceneData> scene = importer->scene(0);
+    CORRADE_VERIFY(scene);
+
+    const SceneField sceneFieldVisibility = importer->sceneFieldForName("Visibility"_s);
+    CORRADE_VERIFY(scene->hasField(sceneFieldVisibility));
+
+    Containers::StridedArrayView1D<const Vector3d> translations = scene->field<Vector3d>(SceneField::Translation);
+    CORRADE_VERIFY(scene->fieldFlags(SceneField::Translation) & SceneFieldFlag::ImplicitMapping);
+
+    Containers::StridedArrayView1D<const UnsignedByte> visibilities = scene->field<UnsignedByte>(sceneFieldVisibility);
+    CORRADE_VERIFY(scene->fieldFlags(sceneFieldVisibility) & SceneFieldFlag::ImplicitMapping);
+
+    /* FBX files often don't have names for "attributes" such as lights so
+       we need to go through objects. In theory we could propagate names from
+       the objects to attributes but this would break with instancing. */
+
+    {
+        /* The plug-in does not support the following light types:
+           Ambient light(|ambientLight1)  will be exported as an inactive
+           point light with the Visibility value set to off. */
+        Long objectId = importer->objectForName("ambientLight1");
+        CORRADE_COMPARE(importer->objectName(objectId), "ambientLight1");
+        CORRADE_COMPARE(translations[objectId], (Vector3d{0.0f,0.0f,0.0f}));
+        CORRADE_COMPARE(visibilities[objectId], false);
+
+        Containers::Array<UnsignedInt> lights = scene->lightsFor(objectId);
+        CORRADE_COMPARE(lights.size(), 1);
+
+        Containers::Optional<LightData> light = importer->light(lights[0]);
+        CORRADE_VERIFY(light);
+        CORRADE_COMPARE(light->type(), LightData::Type::Point);
+        CORRADE_COMPARE(light->color(), (Color3{0.11f, 0.12f, 0.13f}));
+        CORRADE_COMPARE(light->intensity(), 1.0f);
+        CORRADE_COMPARE(light->range(), Constants::inf());
+        CORRADE_COMPARE(light->attenuation(), (Vector3{1.0f,0.0f,0.0f}));
+    }
+
+    {
+        Long objectId = importer->objectForName("directionalLight1");
+        CORRADE_COMPARE(importer->objectName(objectId), "directionalLight1");
+        CORRADE_COMPARE(translations[objectId], (Vector3d{1.0f,0.0f,0.0f}));
+        CORRADE_COMPARE(visibilities[objectId], true);
+
+        Containers::Array<UnsignedInt> lights = scene->lightsFor(objectId);
+        CORRADE_COMPARE(lights.size(), 1);
+
+        Containers::Optional<LightData> light = importer->light(lights[0]);
+        CORRADE_VERIFY(light);
+        CORRADE_COMPARE(light->type(), LightData::Type::Directional);
+        CORRADE_COMPARE(light->color(), (Color3{0.21f, 0.22f, 0.23f}));
+        CORRADE_COMPARE(light->intensity(), 2.0f);
+        CORRADE_COMPARE(light->range(), Constants::inf());
+        CORRADE_COMPARE(light->attenuation(), (Vector3{1.0f,0.0f,0.0f}));
+    }
+
+    {
+        Long objectId = importer->objectForName("pointLight1");
+        CORRADE_COMPARE(importer->objectName(objectId), "pointLight1");
+        CORRADE_COMPARE(translations[objectId], (Vector3d{2.0f,0.0f,0.0f}));
+        CORRADE_COMPARE(visibilities[objectId], true);
+
+        Containers::Array<UnsignedInt> lights = scene->lightsFor(objectId);
+        CORRADE_COMPARE(lights.size(), 1);
+
+        Containers::Optional<LightData> light = importer->light(lights[0]);
+        CORRADE_VERIFY(light);
+        CORRADE_COMPARE(light->type(), LightData::Type::Point);
+        CORRADE_COMPARE(light->color(), (Color3{0.31f, 0.32f, 0.33f}));
+        CORRADE_COMPARE(light->intensity(), 3.0f);
+        CORRADE_COMPARE(light->range(), Constants::inf());
+        CORRADE_COMPARE(light->attenuation(), (Vector3{0.0f,1.0f,0.0f}));
+    }
+
+    {
+        Long objectId = importer->objectForName("spotLight1");
+        CORRADE_COMPARE(translations[objectId], (Vector3d{3.0f,0.0f,0.0f}));
+        CORRADE_COMPARE(importer->objectName(objectId), "spotLight1");
+        CORRADE_COMPARE(visibilities[objectId], true);
+
+        Containers::Array<UnsignedInt> lights = scene->lightsFor(objectId);
+        CORRADE_COMPARE(lights.size(), 1);
+
+        Containers::Optional<LightData> light = importer->light(lights[0]);
+        CORRADE_VERIFY(light);
+        CORRADE_COMPARE(light->type(), LightData::Type::Spot);
+        CORRADE_COMPARE(light->color(), (Color3{0.41f, 0.42f, 0.43f}));
+        CORRADE_COMPARE(light->intensity(), 4.0f);
+        CORRADE_COMPARE(light->range(), Constants::inf());
+        CORRADE_COMPARE(light->attenuation(), (Vector3{0.0f,0.0f,1.0f}));
+        CORRADE_COMPARE(light->innerConeAngle(), 12.0_degf);
+        CORRADE_COMPARE(light->outerConeAngle(), 80.0_degf);
+    }
+
+    {
+        Long objectId = importer->objectForName("areaLight1");
+        CORRADE_COMPARE(translations[objectId], (Vector3d{4.0f,0.0f,0.0f}));
+        CORRADE_COMPARE(importer->objectName(objectId), "areaLight1");
+        CORRADE_COMPARE(visibilities[objectId], true);
+
+        Containers::Array<UnsignedInt> lights = scene->lightsFor(objectId);
+        CORRADE_COMPARE(lights.size(), 1);
+
+        /* Area lights are not supported */
+        Containers::Optional<LightData> light = importer->light(lights[0]);
+        CORRADE_VERIFY(!light);
+    }
+
+    {
+        Long objectId = importer->objectForName("volumeLight1");
+        CORRADE_COMPARE(translations[objectId], (Vector3d{5.0f,0.0f,0.0f}));
+        CORRADE_COMPARE(importer->objectName(objectId), "volumeLight1");
+        CORRADE_COMPARE(visibilities[objectId], true);
+
+        Containers::Array<UnsignedInt> lights = scene->lightsFor(objectId);
+        CORRADE_COMPARE(lights.size(), 1);
+
+        /* Volume lights are not supported */
+        Containers::Optional<LightData> light = importer->light(lights[0]);
+        CORRADE_VERIFY(!light);
+    }
+
+    CORRADE_COMPARE(out.str(),
+        "Trade::UfbxImporter::light(): light type 3 is not supported\n"
+        "Trade::UfbxImporter::light(): light type 4 is not supported\n"_s);
 }
 
 }}}}

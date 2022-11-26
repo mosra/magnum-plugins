@@ -650,13 +650,14 @@ UnsignedLong UfbxImporter::doObjectCount() const {
 Long UfbxImporter::doObjectForName(const Containers::StringView name) {
     ufbx_scene *scene = _state->scene.get();
     ufbx_node *node = ufbx_find_node_len(scene, name.data(), name.size());
-    return node ? Long(node->typed_id) : -1;
+    return node ? Long(node->typed_id - _state->nodeIdOffset) : -1;
 }
 
 Containers::String UfbxImporter::doObjectName(const UnsignedLong id) {
     ufbx_scene *scene = _state->scene.get();
-    if(id < scene->nodes.count) {
-        return scene->nodes[id]->name;
+    UnsignedLong localId = id + _state->nodeIdOffset;
+    if(localId < scene->nodes.count) {
+        return scene->nodes[localId]->name;
     } else {
         return {};
     }
@@ -719,8 +720,8 @@ Containers::Optional<LightData> UfbxImporter::doLight(UnsignedInt id) {
     } else if(l->type == UFBX_LIGHT_SPOT) {
         lightType = LightData::Type::Spot;
     } else {
-        /** @todo area lights */
-        Error() << "Trade::UfbxImporter::light(): light type" << l->type << "is not supported";
+        /** @todo area and volume lights */
+        Error{} << "Trade::UfbxImporter::light(): light type" << l->type << "is not supported";
         return {};
     }
 
@@ -734,7 +735,7 @@ Containers::Optional<LightData> UfbxImporter::doLight(UnsignedInt id) {
         Warning{} << "Trade::UfbxImporter::light(): cubic attenuation not supported, patching to quadratic";
         attenuation = {0.0f, 0.0f, 1.0f};
     } else {
-        Error() << "Trade::UfbxImporter::light(): light type" << l->type << "is not supported";
+        Error{} << "Trade::UfbxImporter::light(): light type" << l->type << "is not supported";
     }
 
 
@@ -748,7 +749,7 @@ Containers::Optional<LightData> UfbxImporter::doLight(UnsignedInt id) {
 
     if (lightType == LightData::Type::Spot) {
         innerAngle = Math::clamp(Float(l->inner_angle), 0.0f, 360.0f);
-        outerAngle = Math::clamp(Float(l->inner_angle), innerAngle, 360.0f);
+        outerAngle = Math::clamp(Float(l->outer_angle), innerAngle, 360.0f);
     }
 
     return LightData{lightType, color, intensity, attenuation,
