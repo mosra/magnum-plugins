@@ -38,8 +38,10 @@
 #include <Corrade/Utility/Path.h>
 #include <Corrade/Utility/String.h>
 #include <Magnum/Math/Vector3.h>
+#include <Magnum/Math/Vector4.h>
 #include <Magnum/Trade/AbstractImporter.h>
 #include <Magnum/Trade/MeshData.h>
+#include <Magnum/Trade/SceneData.h>
 
 #include "configure.h"
 
@@ -55,6 +57,7 @@ struct UfbxImporterTest: TestSuite::Tester {
     void openData();
     void openFileFailed();
     void openDataFailed();
+    void mesh();
 
     /* Needs to load AnyImageImporter from a system-wide location */
     PluginManager::Manager<AbstractImporter> _manager;
@@ -65,6 +68,8 @@ UfbxImporterTest::UfbxImporterTest() {
               &UfbxImporterTest::openData,
               &UfbxImporterTest::openFileFailed,
               &UfbxImporterTest::openDataFailed});
+
+    addTests({&UfbxImporterTest::mesh});
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. It also pulls in the AnyImageImporter dependency. */
@@ -134,6 +139,80 @@ void UfbxImporterTest::openDataFailed() {
     constexpr const char data[] = "what";
     CORRADE_VERIFY(!importer->openData({data, sizeof(data)}));
     CORRADE_COMPARE(out.str(), "Trade::UfbxImporter::openData(): loading failed: Unrecognized file format\n"_s);
+}
+
+void UfbxImporterTest::mesh() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "triangle.fbx")));
+
+    CORRADE_COMPARE(importer->meshCount(), 1);
+
+    /* FBX files don't have reliable mesh names, so go by index */
+    Containers::Optional<MeshData> mesh = importer->mesh(0);
+    CORRADE_VERIFY(mesh);
+
+    CORRADE_COMPARE(mesh->primitive(), MeshPrimitive::Triangles);
+
+    CORRADE_VERIFY(mesh->isIndexed());
+    CORRADE_COMPARE_AS(mesh->indices<UnsignedInt>(),
+        Containers::arrayView<UnsignedInt>({0, 1, 2}),
+        TestSuite::Compare::Container);
+
+    CORRADE_COMPARE(mesh->attributeCount(), 6);
+    CORRADE_COMPARE(mesh->attributeCount(MeshAttribute::Position), 1);
+    CORRADE_COMPARE_AS(mesh->attribute<Vector3>(MeshAttribute::Position),
+        Containers::arrayView<Vector3>({
+            {1.0f, -1.0f, 0.0f}, {1.0f, 1.0f, 0.0f}, {-1.0f, -1.0f, 0.0f}
+        }), TestSuite::Compare::Container);
+    CORRADE_COMPARE(mesh->attributeCount(MeshAttribute::Normal), 1);
+    CORRADE_COMPARE_AS(mesh->attribute<Vector3>(MeshAttribute::Normal),
+        Containers::arrayView<Vector3>({
+            {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 1.0f}
+        }), TestSuite::Compare::Container);
+    CORRADE_COMPARE(mesh->attributeCount(MeshAttribute::Tangent), 1);
+    CORRADE_COMPARE_AS(mesh->attribute<Vector3>(MeshAttribute::Tangent),
+        Containers::arrayView<Vector3>({
+            {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f, 0.0f},
+        }), TestSuite::Compare::Container);
+    CORRADE_COMPARE(mesh->attributeCount(MeshAttribute::Bitangent), 1);
+    CORRADE_COMPARE_AS(mesh->attribute<Vector3>(MeshAttribute::Bitangent),
+        Containers::arrayView<Vector3>({
+            {0.0f, 1.0f, 0.0f}, {0.0f, 1.0f, 0.0f}, {0.0f, 1.0f, 0.0f},
+        }), TestSuite::Compare::Container);
+    CORRADE_COMPARE(mesh->attributeCount(MeshAttribute::TextureCoordinates), 1);
+    CORRADE_COMPARE_AS(mesh->attribute<Vector2>(MeshAttribute::TextureCoordinates),
+        Containers::arrayView<Vector2>({
+            {1.0f, 0.0f}, {1.0f, 1.0f}, {0.0f, 0.0f},
+        }), TestSuite::Compare::Container);
+    CORRADE_COMPARE(mesh->attributeCount(MeshAttribute::Color), 1);
+    CORRADE_COMPARE_AS(mesh->attribute<Vector4>(MeshAttribute::Color),
+        Containers::arrayView<Vector4>({
+            {0.0f, 0.0f, 1.0f, 1.0f}, {0.0f, 1.0f, 0.0f, 1.0f}, {1.0f, 0.0f, 0.0f, 1.0f},
+        }), TestSuite::Compare::Container);
+
+    CORRADE_COMPARE(importer->sceneCount(), 1);
+
+    Containers::Optional<SceneData> scene = importer->scene(0);
+    CORRADE_VERIFY(scene);
+    CORRADE_COMPARE(scene->fieldCount(), 6);
+
+    /* Fields we're not interested in */
+    CORRADE_VERIFY(scene->hasField(SceneField::Parent));
+    CORRADE_VERIFY(scene->hasField(SceneField::Translation));
+    CORRADE_VERIFY(scene->hasField(SceneField::Rotation));
+    CORRADE_VERIFY(scene->hasField(SceneField::Scaling));
+
+    CORRADE_VERIFY(scene->hasField(SceneField::Mesh));
+    CORRADE_VERIFY(scene->hasField(SceneField::MeshMaterial));
+    CORRADE_COMPARE_AS(scene->mapping<UnsignedInt>(SceneField::Mesh), Containers::arrayView<UnsignedInt>({
+        0,
+    }), TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(scene->field<UnsignedInt>(SceneField::Mesh), Containers::arrayView<UnsignedInt>({
+        0,
+    }), TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(scene->field<Int>(SceneField::MeshMaterial), Containers::arrayView<Int>({
+        0,
+    }), TestSuite::Compare::Container);
 }
 
 }}}}
