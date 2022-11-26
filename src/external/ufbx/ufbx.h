@@ -2053,6 +2053,7 @@ typedef enum ufbx_material_pbr_map {
 
 // Known material features
 typedef enum ufbx_material_feature {
+	UFBX_MATERIAL_FEATURE_PBR,
 	UFBX_MATERIAL_FEATURE_METALNESS,
 	UFBX_MATERIAL_FEATURE_DIFFUSE,
 	UFBX_MATERIAL_FEATURE_SPECULAR,
@@ -2169,6 +2170,7 @@ typedef struct ufbx_material_features {
 	union {
 		ufbx_material_feature_info features[UFBX_MATERIAL_FEATURE_COUNT];
 		struct {
+			ufbx_material_feature_info pbr;
 			ufbx_material_feature_info metalness;
 			ufbx_material_feature_info diffuse;
 			ufbx_material_feature_info specular;

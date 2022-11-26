@@ -15968,6 +15968,7 @@ static const ufbxi_shader_mapping ufbxi_obj_features[] = {
 };
 
 enum {
+	UFBXI_MAT_PBR = 1 << UFBX_MATERIAL_FEATURE_PBR,
 	UFBXI_MAT_METALNESS = 1 << UFBX_MATERIAL_FEATURE_METALNESS,
 	UFBXI_MAT_DIFFUSE = 1 << UFBX_MATERIAL_FEATURE_DIFFUSE,
 	UFBXI_MAT_SPECULAR = 1 << UFBX_MATERIAL_FEATURE_SPECULAR,
@@ -16008,19 +16009,19 @@ static const ufbxi_shader_mapping_list ufbxi_shader_pbr_mappings[] = {
 	{ // UFBX_SHADER_OSL_STANDARD_SURFACE
 		ufbxi_osl_standard_shader_pbr_mapping, ufbxi_arraycount(ufbxi_osl_standard_shader_pbr_mapping),
 		ufbxi_osl_standard_shader_features, ufbxi_arraycount(ufbxi_osl_standard_shader_features),
-		(uint32_t)(UFBXI_MAT_METALNESS | UFBXI_MAT_DIFFUSE | UFBXI_MAT_SPECULAR | UFBXI_MAT_COAT
+		(uint32_t)(UFBXI_MAT_PBR | UFBXI_MAT_METALNESS | UFBXI_MAT_DIFFUSE | UFBXI_MAT_SPECULAR | UFBXI_MAT_COAT
 			| UFBXI_MAT_SHEEN | UFBXI_MAT_TRANSMISSION | UFBXI_MAT_OPACITY | UFBXI_MAT_IOR | UFBXI_MAT_DIFFUSE_ROUGHNESS),
 	},
 	{ // UFBX_SHADER_ARNOLD_STANDARD_SURFACE
 		ufbxi_arnold_shader_pbr_mapping, ufbxi_arraycount(ufbxi_arnold_shader_pbr_mapping),
 		ufbxi_arnold_shader_features, ufbxi_arraycount(ufbxi_arnold_shader_features),
-		(uint32_t)(UFBXI_MAT_METALNESS | UFBXI_MAT_DIFFUSE | UFBXI_MAT_SPECULAR | UFBXI_MAT_COAT
+		(uint32_t)(UFBXI_MAT_PBR | UFBXI_MAT_METALNESS | UFBXI_MAT_DIFFUSE | UFBXI_MAT_SPECULAR | UFBXI_MAT_COAT
 			| UFBXI_MAT_SHEEN | UFBXI_MAT_TRANSMISSION | UFBXI_MAT_OPACITY | UFBXI_MAT_IOR | UFBXI_MAT_DIFFUSE_ROUGHNESS),
 	},
 	{ // UFBX_SHADER_3DS_MAX_PHYSICAL_MATERIAL
 		ufbxi_3ds_max_physical_material_pbr_mapping, ufbxi_arraycount(ufbxi_3ds_max_physical_material_pbr_mapping),
 		ufbxi_3ds_max_physical_material_features, ufbxi_arraycount(ufbxi_3ds_max_physical_material_features),
-		(uint32_t)(UFBXI_MAT_METALNESS | UFBXI_MAT_DIFFUSE | UFBXI_MAT_COAT
+		(uint32_t)(UFBXI_MAT_PBR | UFBXI_MAT_METALNESS | UFBXI_MAT_DIFFUSE | UFBXI_MAT_COAT
 			| UFBXI_MAT_SHEEN | UFBXI_MAT_TRANSMISSION | UFBXI_MAT_OPACITY | UFBXI_MAT_IOR),
 		{ NULL, 0 }, ufbxi_string_literal("_map"),    // texture_prefix/suffix
 		{ NULL, 0 }, ufbxi_string_literal("_map_on"), // texture_enabled_prefix/suffix
@@ -16028,35 +16029,35 @@ static const ufbxi_shader_mapping_list ufbxi_shader_pbr_mappings[] = {
 	{ // UFBX_SHADER_3DS_MAX_PBR_METAL_ROUGH
 		ufbxi_3ds_max_pbr_metal_rough_pbr_mapping, ufbxi_arraycount(ufbxi_3ds_max_pbr_metal_rough_pbr_mapping),
 		NULL, 0,
-		(uint32_t)(UFBXI_MAT_METALNESS | UFBXI_MAT_DIFFUSE | UFBXI_MAT_OPACITY),
+		(uint32_t)(UFBXI_MAT_PBR | UFBXI_MAT_METALNESS | UFBXI_MAT_DIFFUSE | UFBXI_MAT_OPACITY),
 		{ NULL, 0 }, ufbxi_string_literal("_map"), // texture_prefix/suffix
 		{ NULL, 0 }, { NULL, 0 }, // texture_enabled_prefix/suffix
 	},
 	{ // UFBX_SHADER_3DS_MAX_PBR_SPEC_GLOSS
 		ufbxi_3ds_max_pbr_spec_gloss_pbr_mapping, ufbxi_arraycount(ufbxi_3ds_max_pbr_spec_gloss_pbr_mapping),
 		NULL, 0,
-		(uint32_t)(UFBXI_MAT_SPECULAR | UFBXI_MAT_DIFFUSE | UFBXI_MAT_OPACITY),
+		(uint32_t)(UFBXI_MAT_PBR | UFBXI_MAT_SPECULAR | UFBXI_MAT_DIFFUSE | UFBXI_MAT_OPACITY),
 		{ NULL, 0 }, ufbxi_string_literal("_map"), // texture_prefix/suffix
 		{ NULL, 0 }, { NULL, 0 }, // texture_enabled_prefix/suffix
 	},
 	{ // UFBX_SHADER_GLTF_MATERIAL
 		ufbxi_gltf_material_pbr_mapping, ufbxi_arraycount(ufbxi_gltf_material_pbr_mapping),
 		ufbxi_gltf_material_features, ufbxi_arraycount(ufbxi_gltf_material_features),
-		(uint32_t)(UFBXI_MAT_METALNESS | UFBXI_MAT_DIFFUSE | UFBXI_MAT_EMISSION | UFBXI_MAT_OPACITY | UFBXI_MAT_AMBIENT_OCCLUSION),
+		(uint32_t)(UFBXI_MAT_PBR | UFBXI_MAT_METALNESS | UFBXI_MAT_DIFFUSE | UFBXI_MAT_EMISSION | UFBXI_MAT_OPACITY | UFBXI_MAT_AMBIENT_OCCLUSION),
 		{ NULL, 0 }, ufbxi_string_literal("Map"), // texture_prefix/suffix
 		{ NULL, 0 }, { NULL, 0 }, // texture_enabled_prefix/suffix
 	},
 	{ // UFBX_SHADER_SHADERFX_GRAPH
 		ufbxi_shaderfx_graph_pbr_mapping, ufbxi_arraycount(ufbxi_shaderfx_graph_pbr_mapping),
 		NULL, 0,
-		(uint32_t)(UFBXI_MAT_METALNESS | UFBXI_MAT_DIFFUSE | UFBXI_MAT_EMISSION | UFBXI_MAT_AMBIENT_OCCLUSION),
+		(uint32_t)(UFBXI_MAT_PBR | UFBXI_MAT_METALNESS | UFBXI_MAT_DIFFUSE | UFBXI_MAT_EMISSION | UFBXI_MAT_AMBIENT_OCCLUSION),
 		ufbxi_string_literal("TEX_"), ufbxi_string_literal("_map"), // texture_prefix/suffix
 		ufbxi_string_literal("use_"), ufbxi_string_literal("_map"), // texture_enabled_prefix/suffix
 	}, 
 	{ // UFBX_SHADER_BLENDER_PHONG
 		ufbxi_blender_phong_shader_pbr_mapping, ufbxi_arraycount(ufbxi_blender_phong_shader_pbr_mapping),
 		NULL, 0,
-		(uint32_t)(UFBXI_MAT_METALNESS | UFBXI_MAT_DIFFUSE | UFBXI_MAT_EMISSION),
+		(uint32_t)(UFBXI_MAT_PBR | UFBXI_MAT_METALNESS | UFBXI_MAT_DIFFUSE | UFBXI_MAT_EMISSION),
 	},
 	{ // UFBX_SHADER_WAVEFRONT_MTL
 		ufbxi_obj_pbr_mapping, ufbxi_arraycount(ufbxi_obj_pbr_mapping),
