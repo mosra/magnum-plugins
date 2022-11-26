@@ -634,6 +634,7 @@ SceneField UfbxImporter::doSceneFieldForName(Containers::StringView name) {
         if(name == sceneFieldNames[i])
             return sceneFieldCustom(i);
     }
+    return SceneField{};
 }
 
 Containers::String UfbxImporter::doSceneFieldName(UnsignedInt name) {
