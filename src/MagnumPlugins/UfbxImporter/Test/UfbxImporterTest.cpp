@@ -29,6 +29,7 @@
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/ArrayView.h>
 #include <Corrade/Containers/String.h>
+#include <Corrade/Containers/StringStl.h>
 #include <Corrade/Containers/StringView.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
