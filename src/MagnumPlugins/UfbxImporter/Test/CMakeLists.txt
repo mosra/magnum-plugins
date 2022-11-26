@@ -45,7 +45,11 @@ file(GENERATE OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/configure.h
     INPUT ${CMAKE_CURRENT_BINARY_DIR}/configure.h.in)
 
 corrade_add_test(UfbxImporterTest UfbxImporterTest.cpp
-    LIBRARIES Magnum::Trade)
+    LIBRARIES Magnum::Trade
+    FILES
+        blender-default.fbx
+        triangle.fbx)
+
 target_include_directories(UfbxImporterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>)
 if(MAGNUM_UFBXIMPORTER_BUILD_STATIC)
     target_link_libraries(UfbxImporterTest PRIVATE UfbxImporter)
