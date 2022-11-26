@@ -194,13 +194,16 @@ void UfbxImporterTest::mesh() {
 
     Containers::Optional<SceneData> scene = importer->scene(0);
     CORRADE_VERIFY(scene);
-    CORRADE_COMPARE(scene->fieldCount(), 6);
+    CORRADE_COMPARE(scene->fieldCount(), 7);
+
+    const SceneField sceneFieldVisibility = importer->sceneFieldForName("Visibility"_s);
 
     /* Fields we're not interested in */
     CORRADE_VERIFY(scene->hasField(SceneField::Parent));
     CORRADE_VERIFY(scene->hasField(SceneField::Translation));
     CORRADE_VERIFY(scene->hasField(SceneField::Rotation));
     CORRADE_VERIFY(scene->hasField(SceneField::Scaling));
+    CORRADE_VERIFY(scene->hasField(sceneFieldVisibility));
 
     CORRADE_VERIFY(scene->hasField(SceneField::Mesh));
     CORRADE_VERIFY(scene->hasField(SceneField::MeshMaterial));

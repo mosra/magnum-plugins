@@ -150,6 +150,12 @@ using namespace Containers::Literals;
 
 namespace {
 
+constexpr SceneField SceneFieldVisibility = sceneFieldCustom(0);
+
+constexpr Containers::StringView sceneFieldNames[] = {
+    "Visibility"_s,
+};
+
 struct MeshChunk {
     uint32_t meshId;
     uint32_t meshMaterialIndex;
@@ -471,6 +477,7 @@ Containers::Optional<SceneData> UfbxImporter::doScene(UnsignedInt) {
     Containers::ArrayView<Vector3d> translations;
     Containers::ArrayView<Quaterniond> rotations;
     Containers::ArrayView<Vector3d> scalings;
+    Containers::ArrayView<UnsignedByte> visibilities; /* @todo should be bool */
     Containers::ArrayView<UnsignedInt> meshMaterialObjects;
     Containers::ArrayView<UnsignedInt> meshes;
     Containers::ArrayView<Int> meshMaterials;
@@ -484,6 +491,7 @@ Containers::Optional<SceneData> UfbxImporter::doScene(UnsignedInt) {
         {NoInit, nodeCount, translations},
         {NoInit, nodeCount, rotations},
         {NoInit, nodeCount, scalings},
+        {NoInit, nodeCount, visibilities},
         {NoInit, meshCount, meshMaterialObjects},
         {NoInit, meshCount, meshes},
         {NoInit, meshCount, meshMaterials},
@@ -519,6 +527,7 @@ Containers::Optional<SceneData> UfbxImporter::doScene(UnsignedInt) {
         translations[nodeId] = Vector3d(node->local_transform.translation);
         rotations[nodeId] = Quaterniond(node->local_transform.rotation);
         scalings[nodeId] = Vector3d(node->local_transform.scale);
+        visibilities[nodeId] = (UnsignedByte)node->visible;
 
         UnsignedInt objectId = nodeId;
 
@@ -532,6 +541,7 @@ Containers::Optional<SceneData> UfbxImporter::doScene(UnsignedInt) {
             translations[geomId] = Vector3d(node->geometry_transform.translation);
             rotations[geomId] = Quaterniond(node->geometry_transform.rotation);
             scalings[geomId] = Vector3d(node->geometry_transform.scale);
+            visibilities[nodeId] = 1;
 
             ++syntheticNodeCount;
         }
@@ -595,7 +605,8 @@ Containers::Optional<SceneData> UfbxImporter::doScene(UnsignedInt) {
         SceneFieldData{SceneField::Parent, nodeObjects, parents, SceneFieldFlag::ImplicitMapping},
         SceneFieldData{SceneField::Translation, nodeObjects, translations, SceneFieldFlag::ImplicitMapping},
         SceneFieldData{SceneField::Rotation, nodeObjects, rotations, SceneFieldFlag::ImplicitMapping},
-        SceneFieldData{SceneField::Scaling, nodeObjects, scalings, SceneFieldFlag::ImplicitMapping}
+        SceneFieldData{SceneField::Scaling, nodeObjects, scalings, SceneFieldFlag::ImplicitMapping},
+        SceneFieldData{SceneFieldVisibility, nodeObjects, visibilities, SceneFieldFlag::ImplicitMapping},
     });
 
     /* All other fields have the mapping ordered (they get filed as we iterate
@@ -616,6 +627,19 @@ Containers::Optional<SceneData> UfbxImporter::doScene(UnsignedInt) {
     arrayShrink(fields, DefaultInit);
 
     return SceneData{SceneMappingType::UnsignedInt, nodeCount, std::move(data), std::move(fields)};
+}
+
+SceneField UfbxImporter::doSceneFieldForName(Containers::StringView name) {
+    for(UnsignedInt i = 0; i < Containers::arraySize(sceneFieldNames); ++i) {
+        if(name == sceneFieldNames[i])
+            return sceneFieldCustom(i);
+    }
+}
+
+Containers::String UfbxImporter::doSceneFieldName(UnsignedInt name) {
+    if(name < Containers::arraySize(sceneFieldNames))
+        return sceneFieldNames[name];
+    return {};
 }
 
 UnsignedLong UfbxImporter::doObjectCount() const {
