@@ -168,6 +168,7 @@ ufbx_load_opts loadOptsFromConfiguration(Utility::ConfigurationGroup& conf) {
     opts.ignore_animation = conf.value<bool>("ignoreAnimation");
     opts.ignore_embedded = conf.value<bool>("ignoreEmbedded");
     opts.ignore_all_content = conf.value<bool>("ignoreAllContent");
+    opts.ignore_missing_external_files = true;
 
     /* @todo: ufbx can normalize scenes to units/coordinate systems, this is a
       very rudimentary implementation used for testing. Not sure how exposing
