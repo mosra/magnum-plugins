@@ -48,9 +48,6 @@
 	#if !defined(UFBX_NO_FORMAT_OBJ)
 		#define UFBXI_FEATURE_FORMAT_OBJ 1
 	#endif
-#endif
-
-#if defined(UFBX_DEV)
 	#if !defined(UFBX_NO_ERROR_STACK)
 		#define UFBXI_FEATURE_ERROR_STACK 1
 	#endif
@@ -5640,6 +5637,48 @@ static void ufbxi_file_close(void *user)
 {
 	FILE *file = (FILE*)user;
 	fclose(file);
+}
+
+typedef struct {
+    const void *data;
+    size_t size;
+    size_t position;
+    ufbx_close_memory_cb close_cb;
+
+    // Own allocation information
+    size_t self_size;
+    ufbxi_allocator ator;
+    ufbx_error error;
+    char data_copy[];
+} ufbxi_memory_stream;
+
+static size_t ufbxi_memory_read(void *user, void *data, size_t max_size)
+{
+	ufbxi_memory_stream *stream = (ufbxi_memory_stream*)user;
+    size_t to_read = ufbxi_min_sz(stream->size - stream->position, max_size);
+    memcpy(data, (const char*)stream->data + stream->position, to_read);
+    stream->position += to_read;
+    return to_read;
+}
+
+static bool ufbxi_memory_skip(void *user, size_t size)
+{
+	ufbxi_memory_stream *stream = (ufbxi_memory_stream*)user;
+    if (stream->position + size >= stream->size) return false;
+    stream->position += size;
+    return true;
+}
+
+static void ufbxi_memory_close(void *user)
+{
+	ufbxi_memory_stream *stream = (ufbxi_memory_stream*)user;
+    if (stream->close_cb.fn) {
+        stream->close_cb.fn(stream->close_cb.user, (void*)stream->data, stream->size);
+    }
+
+    ufbxi_allocator ator = stream->ator;
+    ufbxi_free_size(&ator, stream->self_size, stream, 1);
+    ufbxi_free_ator(&ator);
 }
 
 // -- XML
@@ -13352,6 +13391,56 @@ ufbxi_nodiscard ufbxi_noinline static int ufbxi_resolve_relative_filename(ufbxi_
 	return 1;
 }
 
+// Open file utility
+
+static void *ufbxi_ator_alloc(void *user, size_t size)
+{
+    ufbxi_allocator *ator = (ufbxi_allocator*)user;
+    return ufbxi_alloc(ator, char, size);
+}
+
+static void *ufbxi_ator_realloc(void *user, void *old_ptr, size_t old_size, size_t new_size)
+{
+    ufbxi_allocator *ator = (ufbxi_allocator*)user;
+    return ufbxi_realloc(ator, char, old_ptr, old_size, new_size);
+}
+
+static void ufbxi_ator_free(void *user, void *ptr, size_t size)
+{
+    ufbxi_allocator *ator = (ufbxi_allocator*)user;
+    ufbxi_free(ator, char, ptr, size);
+}
+
+static ufbxi_noinline void ufbxi_setup_ator_allocator(ufbx_allocator *allocator, ufbxi_allocator *ator)
+{
+    allocator->alloc_fn = &ufbxi_ator_alloc;
+    allocator->realloc_fn = &ufbxi_ator_realloc;
+    allocator->free_fn = &ufbxi_ator_free;
+    allocator->user = ator;
+}
+
+static ufbxi_noinline bool ufbxi_open_file(const ufbx_open_file_cb *cb, ufbx_stream *stream, const char *path, size_t path_len, const ufbx_blob *original_filename, ufbxi_allocator *ator, ufbx_open_file_type type)
+{
+    if (!cb || !cb->fn) return false;
+
+    ufbx_open_file_info info;
+    if (ator) {
+        ufbxi_setup_ator_allocator(&info.temp_allocator, ator);
+    } else {
+        memset(&info.temp_allocator, 0, sizeof(info.temp_allocator));
+    }
+
+    if (original_filename) {
+        info.original_filename = *original_filename;
+    } else {
+        info.original_filename.data = path;
+        info.original_filename.size = path_len;
+    }
+    info.type = type;
+
+    return cb->fn(cb->user, stream, path, path_len, &info);
+}
+
 #define ufbxi_patch_zero(dst, src) do { \
 		ufbx_assert((dst) == 0 || (dst) == (src)); \
 		(dst) = (src); \
@@ -14596,12 +14685,12 @@ ufbxi_nodiscard static ufbxi_noinline int ufbxi_obj_load_mtl(ufbxi_context *uc)
 
 	if (uc->opts.open_file_cb.fn) {
 		if (uc->opts.obj_mtl_path.length > 0) {
-			has_stream = uc->opts.open_file_cb.fn(uc->opts.open_file_cb.user, &stream, uc->opts.obj_mtl_path.data, uc->opts.obj_mtl_path.length);
+			has_stream = ufbxi_open_file(&uc->opts.open_file_cb, &stream, uc->opts.obj_mtl_path.data, uc->opts.obj_mtl_path.length, NULL, &uc->ator_tmp, UFBX_OPEN_FILE_OBJ_MTL);
 		} else {
 			if (uc->obj.mtllib_relative_path.size > 0) {
 				ufbx_blob dst;
 				ufbxi_check(ufbxi_resolve_relative_filename(uc, (ufbxi_strblob*)&dst, (const ufbxi_strblob*)&uc->obj.mtllib_relative_path, true));
-				has_stream = uc->opts.open_file_cb.fn(uc->opts.open_file_cb.user, &stream, (const char*)dst.data, dst.size);
+				has_stream = ufbxi_open_file(&uc->opts.open_file_cb, &stream, (const char*)dst.data, dst.size, &uc->obj.mtllib_relative_path, &uc->ator_tmp, UFBX_OPEN_FILE_OBJ_MTL);
 			}
 		}
 
@@ -14614,7 +14703,7 @@ ufbxi_nodiscard static ufbxi_noinline int ufbxi_obj_load_mtl(ufbxi_context *uc)
 				copy[path.length - 3] = copy[path.length - 3] == 'O' ? 'M' : 'm';
 				copy[path.length - 2] = copy[path.length - 2] == 'B' ? 'T' : 't';
 				copy[path.length - 1] = copy[path.length - 1] == 'J' ? 'L' : 'l';
-				has_stream = uc->opts.open_file_cb.fn(uc->opts.open_file_cb.user, &stream, copy, path.length);
+				has_stream = ufbxi_open_file(&uc->opts.open_file_cb, &stream, copy, path.length, NULL, &uc->ator_tmp, UFBX_OPEN_FILE_OBJ_MTL);
 			}
 		}
 	}
@@ -17463,7 +17552,7 @@ ufbxi_nodiscard ufbxi_noinline static int ufbxi_finalize_scene(ufbxi_context *uc
 			if (mesh->materials.count > 0) {
 				ufbxi_for_ptr_list(ufbx_node, p_node, mesh->instances) {
 					ufbx_node *node = *p_node;
-					if (node->materials.count < mesh->materials.count) {
+					if (node->materials.count < mesh->materials.count && mesh->materials.data[0].material != NULL) {
 						ufbx_material **materials = ufbxi_push(&uc->result, ufbx_material*, mesh->materials.count);
 						ufbxi_check(materials);
 						ufbxi_nounroll for (size_t i = 0; i < node->materials.count; i++) {
@@ -19441,11 +19530,11 @@ ufbxi_nodiscard static ufbxi_noinline int ufbxi_cache_load_file(ufbxi_cache_cont
 	return 1;
 }
 
-ufbxi_nodiscard static ufbxi_noinline int ufbxi_cache_try_open_file(ufbxi_cache_context *cc, ufbx_string filename, bool *p_found)
+ufbxi_nodiscard static ufbxi_noinline int ufbxi_cache_try_open_file(ufbxi_cache_context *cc, ufbx_string filename, const ufbx_blob *original_filename, bool *p_found)
 {
 	memset(&cc->stream, 0, sizeof(cc->stream));
 	ufbxi_regression_assert(strlen(filename.data) == filename.length);
-	if (!cc->open_file_cb.fn(cc->open_file_cb.user, &cc->stream, filename.data, filename.length)) {
+	if (!ufbxi_open_file(&cc->open_file_cb, &cc->stream, filename.data, filename.length, original_filename, cc->ator_tmp, UFBX_OPEN_FILE_GEOMETRY_CACHE)) {
 		return 1;
 	}
 
@@ -19635,7 +19724,7 @@ static ufbxi_noinline int ufbxi_cache_load_imp(ufbxi_cache_context *cc, ufbx_str
 	cc->channel_name.data = ufbxi_empty_char;
 
 	if (!cc->open_file_cb.fn) {
-		cc->open_file_cb.fn = ufbx_open_file;
+		cc->open_file_cb.fn = ufbx_default_open_file;
 	}
 
 	// Make sure the filename we pass to `open_file_fn()` is NULL-terminated
@@ -20479,7 +20568,7 @@ static ufbxi_noinline ufbx_scene *ufbxi_load(ufbxi_context *uc, const ufbx_load_
 	}
 
 	if (!uc->opts.open_file_cb.fn) {
-		uc->opts.open_file_cb.fn = &ufbx_open_file;
+		uc->opts.open_file_cb.fn = &ufbx_default_open_file;
 	}
 
 	uc->string_pool.error = &uc->error;
@@ -24090,10 +24179,8 @@ const size_t ufbx_element_type_size[UFBX_ELEMENT_TYPE_COUNT] = {
 	sizeof(ufbx_metadata_object),
 };
 
-ufbx_abi bool ufbx_open_file(void *user, ufbx_stream *stream, const char *path, size_t path_len)
+ufbx_abi bool ufbx_open_file(ufbx_stream *stream, const char *path, size_t path_len)
 {
-	(void)user;
-
 	ufbxi_allocator tmp_ator = { 0 };
 	ufbx_error tmp_error = { UFBX_ERROR_NONE };
 	ufbxi_init_ator(&tmp_error, &tmp_ator, NULL, "filename");
@@ -24105,6 +24192,56 @@ ufbx_abi bool ufbx_open_file(void *user, ufbx_stream *stream, const char *path, 
 	stream->close_fn = &ufbxi_file_close;
 	stream->user = f;
 	return true;
+}
+
+ufbx_abi bool ufbx_default_open_file(void *user, ufbx_stream *stream, const char *path, size_t path_len, const ufbx_open_file_info *info)
+{
+    (void)user;
+    (void)info;
+    return ufbx_open_file(stream, path, path_len);
+}
+
+ufbx_abi bool ufbx_open_memory(ufbx_stream *stream, const void *data, size_t data_size, const ufbx_open_memory_opts *opts)
+{
+    ufbx_open_memory_opts local_opts;
+    if (!opts) {
+        memset(&local_opts, 0, sizeof(local_opts));
+        opts = &local_opts;
+    }
+
+    ufbx_error local_error = { UFBX_ERROR_NONE };
+    ufbxi_allocator ator;
+    ufbxi_init_ator(&local_error, &ator, &opts->allocator, "memory");
+
+    size_t copy_size = opts->no_copy ? 0 : data_size;
+
+    // Align the allocation size to 8 bytes to make sure the header is aligned.
+    size_t self_size = ufbxi_align_to_mask(sizeof(ufbxi_memory_stream) + data_size, ~(size_t)7);
+
+    void *memory = ufbxi_alloc(&ator, char, self_size);
+    if (!memory) {
+        ufbxi_free_ator(&ator);
+        return false;
+    }
+
+    ufbxi_memory_stream *mem = (ufbxi_memory_stream*)memory;
+    mem->size = data_size;
+
+    if (!opts->no_copy) {
+        memcpy(mem->data_copy, data, data_size);
+        mem->data = mem->data_copy;
+    }
+
+    // Transplant the allocator in the result blob
+    mem->ator = ator;
+    mem->ator.error = &mem->error;
+
+    stream->read_fn = ufbxi_memory_read;
+    stream->skip_fn = ufbxi_memory_skip;
+    stream->close_fn = ufbxi_memory_close;
+    stream->user = mem;
+
+    return true;
 }
 
 ufbx_abi bool ufbx_is_thread_safe(void)
@@ -24128,6 +24265,37 @@ ufbx_abi ufbx_scene *ufbx_load_file(const char *filename, const ufbx_load_opts *
 
 ufbx_abi ufbx_scene *ufbx_load_file_len(const char *filename, size_t filename_len, const ufbx_load_opts *opts, ufbx_error *error)
 {
+	ufbx_load_opts opts_copy;
+	if (opts) {
+		opts_copy = *opts;
+	} else {
+		memset(&opts_copy, 0, sizeof(opts_copy));
+	}
+	if (opts_copy.filename.length == 0 || opts_copy.filename.data == NULL) {
+		opts_copy.filename.data = filename;
+		opts_copy.filename.length = filename_len;
+	}
+
+    // Defer to `ufbx_load_stream()` if the user so prefers.
+    if (!opts->open_main_file_with_default && opts->open_file_cb.fn) {
+        ufbx_stream stream = { 0 };
+        if (ufbxi_open_file(&opts->open_file_cb, &stream, filename, filename_len, NULL, NULL, UFBX_OPEN_FILE_MAIN_MODEL)) {
+            return ufbx_load_stream_prefix(&stream, NULL, 0, &opts_copy, error);
+        } else {
+            // TODO: Factor this?
+			error->stack_size = 1;
+			error->type = UFBX_ERROR_FILE_NOT_FOUND;
+			error->description.data = "File not found";
+			error->description.length = strlen(error->description.data);
+			error->stack[0].description.data = "File not found";
+			error->stack[0].description.length = strlen(error->stack[0].description.data);
+			error->stack[0].function.data = ufbxi_function;
+			error->stack[0].function.length = strlen(ufbxi_function);
+			error->stack[0].source_line = ufbxi_line;
+            return NULL;
+        }
+    }
+
 	ufbxi_allocator tmp_ator = { 0 };
 	ufbx_error tmp_error = { UFBX_ERROR_NONE };
 	ufbxi_init_ator(&tmp_error, &tmp_ator, opts ? &opts->temp_allocator : NULL, "filename");
@@ -24147,17 +24315,6 @@ ufbx_abi ufbx_scene *ufbx_load_file_len(const char *filename, size_t filename_le
 			error->stack[0].source_line = ufbxi_line;
 		}
 		return NULL;
-	}
-
-	ufbx_load_opts opts_copy;
-	if (opts) {
-		opts_copy = *opts;
-	} else {
-		memset(&opts_copy, 0, sizeof(opts_copy));
-	}
-	if (opts_copy.filename.length == 0 || opts_copy.filename.data == NULL) {
-		opts_copy.filename.data = filename;
-		opts_copy.filename.length = filename_len;
 	}
 
 	ufbx_scene *scene = ufbx_load_stdio(file, &opts_copy, error);
@@ -26169,7 +26326,7 @@ ufbx_abi ufbxi_noinline size_t ufbx_read_geometry_cache_real(const ufbx_cache_fr
 	}
 
 	if (!opts.open_file_cb.fn) {
-		opts.open_file_cb.fn = ufbx_open_file;
+		opts.open_file_cb.fn = ufbx_default_open_file;
 	}
 
 	// `ufbx_geometry_cache_data_opts` must be cleared to zero first!
@@ -26210,7 +26367,7 @@ ufbx_abi ufbxi_noinline size_t ufbx_read_geometry_cache_real(const ufbx_cache_fr
 	src_count = ufbxi_min_sz(src_count, count);
 
 	ufbx_stream stream = { 0 };
-	if (!opts.open_file_cb.fn(opts.open_file_cb.user, &stream, frame->filename.data, frame->filename.length)) {
+	if (!ufbxi_open_file(&opts.open_file_cb, &stream, frame->filename.data, frame->filename.length, NULL, NULL, UFBX_OPEN_FILE_GEOMETRY_CACHE)) {
 		return 0;
 	}
 

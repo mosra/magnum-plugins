@@ -245,12 +245,46 @@ static const MaterialMapping materialMapsPbr[] = {
     { MaterialAttributeType(0), MaterialAttribute(0), MaterialAttribute::OcclusionTexture, MaterialAttribute::OcclusionTextureMatrix, MaterialAttribute::OcclusionTextureCoordinates, UFBX_MATERIAL_PBR_AMBIENT_OCCLUSION, -1 },
 };
 
-}
+struct FileOpener {
+    FileOpener(): _callback{nullptr}, _userData{nullptr} {}
+    explicit FileOpener(Containers::Optional<Containers::ArrayView<const char>>(*callback)(const std::string&, InputFileCallbackPolicy, void*), void* userData): _callback{callback}, _userData{userData} {}
 
-struct TextureBlob {
-    const void *data;
-    std::size_t size;
+    bool operator()(ufbx_stream *stream, const char *path, size_t path_len, const ufbx_open_file_info *info)
+    {
+        switch (info->type) {
+        case UFBX_OPEN_FILE_MAIN_MODEL:
+        case UFBX_OPEN_FILE_OBJ_MTL:
+            /* Continue loading below */
+            break;
+        default:
+            /* Ignore all others */
+            return false;
+        }
+
+        /* If we don't have a callback just defer to ufbx file loading */
+        if (!_callback) {
+            return ufbx_open_file(stream, path, path_len);
+        }
+
+        std::string file{path, path_len};
+        const Containers::Optional<Containers::ArrayView<const char>> data = _callback(file, InputFileCallbackPolicy::LoadTemporary, _userData);
+        if(!data) return false;
+
+        ufbx_open_memory_opts opts = { };
+        opts.allocator.allocator = info->temp_allocator;
+
+        /* We don't need to copy the file data as it's guaranteed to live for
+           the duration of the load function we are currently executing */
+        opts.no_copy = true;
+
+        return ufbx_open_memory(stream, data->data(), data->size(), &opts);
+    }
+
+    Containers::Optional<Containers::ArrayView<const char>> (*_callback)(const std::string&, InputFileCallbackPolicy, void*);
+    void *_userData;
 };
+
+}
 
 struct UfbxImporter::State {
     ufbx_scene_ref scene;
@@ -268,6 +302,7 @@ struct UfbxImporter::State {
 
     UnsignedInt imageImporterId = ~UnsignedInt{};
     Containers::Optional<AnyImageImporter> imageImporter;
+
 };
 
 UfbxImporter::UfbxImporter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin): AbstractImporter{manager, plugin} {
@@ -283,6 +318,10 @@ void UfbxImporter::doClose() { _state = nullptr; }
 
 void UfbxImporter::doOpenData(Containers::Array<char>&& data, const DataFlags) {
     ufbx_load_opts opts = loadOptsFromConfiguration(configuration());
+
+    FileOpener opener{fileCallback(), fileCallbackUserData()};
+    opts.open_file_cb = &opener;
+
     ufbx_error error;
     ufbx_scene *scene = ufbx_load_memory(data.data(), data.size(), &opts, &error);
     if (!scene) {
@@ -297,6 +336,9 @@ void UfbxImporter::doOpenData(Containers::Array<char>&& data, const DataFlags) {
 void UfbxImporter::doOpenFile(Containers::StringView filename) {
     ufbx_load_opts opts = loadOptsFromConfiguration(configuration());
     opts.filename = filename;
+
+    FileOpener opener{fileCallback(), fileCallbackUserData()};
+    opts.open_file_cb = &opener;
 
     ufbx_error error;
     ufbx_scene *scene = ufbx_load_file_len(filename.data(), filename.size(), &opts, &error);
