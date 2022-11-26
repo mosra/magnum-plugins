@@ -310,7 +310,7 @@ UfbxImporter::UfbxImporter(PluginManager::AbstractManager& manager, const Contai
 
 UfbxImporter::~UfbxImporter() = default;
 
-ImporterFeatures UfbxImporter::doFeatures() const { return ImporterFeature::OpenData|ImporterFeature::OpenState|ImporterFeature::FileCallback; }
+ImporterFeatures UfbxImporter::doFeatures() const { return ImporterFeature::OpenData|ImporterFeature::FileCallback; }
 
 bool UfbxImporter::doIsOpened() const { return !!_state; }
 
