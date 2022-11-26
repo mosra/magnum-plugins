@@ -463,7 +463,6 @@ Containers::Optional<SceneData> UfbxImporter::doScene(UnsignedInt) {
     /* Allocate the output array. */
     Containers::ArrayView<UnsignedInt> nodeObjects;
     Containers::ArrayView<Int> parents;
-    Containers::ArrayView<Matrix4x3d> transformations;
     Containers::ArrayView<Vector3d> translations;
     Containers::ArrayView<Quaterniond> rotations;
     Containers::ArrayView<Vector3d> scalings;
@@ -477,7 +476,6 @@ Containers::Optional<SceneData> UfbxImporter::doScene(UnsignedInt) {
     Containers::Array<char> data = Containers::ArrayTuple{
         {NoInit, nodeCount, nodeObjects},
         {NoInit, nodeCount, parents},
-        {NoInit, nodeCount, transformations},
         {NoInit, nodeCount, translations},
         {NoInit, nodeCount, rotations},
         {NoInit, nodeCount, scalings},
@@ -513,7 +511,6 @@ Containers::Optional<SceneData> UfbxImporter::doScene(UnsignedInt) {
             parents[nodeId] = -1;
         }
 
-        transformations[nodeId] = Matrix4x3d(node->node_to_parent);
         translations[nodeId] = Vector3d(node->local_transform.translation);
         rotations[nodeId] = Quaterniond(node->local_transform.rotation);
         scalings[nodeId] = Vector3d(node->local_transform.scale);
@@ -527,7 +524,6 @@ Containers::Optional<SceneData> UfbxImporter::doScene(UnsignedInt) {
 
             nodeObjects[geomId] = geomId;
             parents[geomId] = Int(nodeId);
-            transformations[geomId] = Matrix4x3d(node->geometry_to_node);
             translations[geomId] = Vector3d(node->geometry_transform.translation);
             rotations[geomId] = Quaterniond(node->geometry_transform.rotation);
             scalings[geomId] = Vector3d(node->geometry_transform.scale);
@@ -592,7 +588,6 @@ Containers::Optional<SceneData> UfbxImporter::doScene(UnsignedInt) {
     arrayAppend(fields, {
         /** @todo once there's a flag to annotate implicit fields */
         SceneFieldData{SceneField::Parent, nodeObjects, parents, SceneFieldFlag::ImplicitMapping},
-        SceneFieldData{SceneField::Transformation, nodeObjects, transformations, SceneFieldFlag::ImplicitMapping},
         SceneFieldData{SceneField::Translation, nodeObjects, translations, SceneFieldFlag::ImplicitMapping},
         SceneFieldData{SceneField::Rotation, nodeObjects, rotations, SceneFieldFlag::ImplicitMapping},
         SceneFieldData{SceneField::Scaling, nodeObjects, scalings, SceneFieldFlag::ImplicitMapping}
