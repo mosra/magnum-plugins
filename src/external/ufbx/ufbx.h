@@ -3437,7 +3437,7 @@ typedef struct ufbx_progress_cb {
 	void *user;
 
 	UFBX_CALLBACK_IMPL(ufbx_progress_cb, ufbx_progress_fn, ufbx_progress_result,
-		(void *local_user, const ufbx_progress *progress),
+		(void *user, const ufbx_progress *progress),
 		(progress))
 } ufbx_progress_cb;
 
