@@ -71,10 +71,10 @@ typedef double ufbx_real;
 
 #if defined(__cplusplus) && (__cplusplus >= 201103L || (defined(_MSC_VER) && _MSC_VER >= 1900))
 	#define UFBX_CALLBACK_IMPL(p_name, p_fn, p_return, p_params, p_args) \
+        template <typename F> static p_return _cpp_adapter p_params { F &f = *static_cast<F*>(user); return f p_args; } \
 		p_name() = default; \
 		p_name(p_fn *f) : fn(f), user(nullptr) { } \
-		template <typename F> p_name(F *f) \
-			: fn([] p_params -> p_return { typename F &local_f = *static_cast<typename F*>(local_user); return local_f p_args; }), user((void*)f) { }
+		template <typename F> p_name(F *f) : fn(&_cpp_adapter<F>), user((void*)f) { }
 #else
 	#define UFBX_CALLBACK_IMPL(p_name, p_fn, p_return, p_params, p_args)
 #endif
@@ -3294,7 +3294,7 @@ typedef struct ufbx_open_file_cb {
 	void *user;
 
 	UFBX_CALLBACK_IMPL(ufbx_open_file_cb, ufbx_open_file_fn, bool,
-		(void *local_user, ufbx_stream *stream, const char *path, size_t path_len, const ufbx_open_file_info *info),
+		(void *user, ufbx_stream *stream, const char *path, size_t path_len, const ufbx_open_file_info *info),
 		(stream, path, path_len, info))
 } ufbx_open_file_cb;
 
@@ -3306,7 +3306,7 @@ typedef struct ufbx_close_memory_cb {
 	void *user;
 
 	UFBX_CALLBACK_IMPL(ufbx_close_memory_cb, ufbx_close_memory_fn, void,
-		(void *local_user, void *data, size_t data_size),
+		(void *user, void *data, size_t data_size),
 		(data, data_size))
 } ufbx_close_memory_cb;
 
