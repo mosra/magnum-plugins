@@ -24283,6 +24283,7 @@ ufbx_abi ufbx_scene *ufbx_load_file_len(const char *filename, size_t filename_le
             return ufbx_load_stream_prefix(&stream, NULL, 0, &opts_copy, error);
         } else {
             // TODO: Factor this?
+			ufbxi_set_err_info(error, filename, filename_len);
 			error->stack_size = 1;
 			error->type = UFBX_ERROR_FILE_NOT_FOUND;
 			error->description.data = "File not found";

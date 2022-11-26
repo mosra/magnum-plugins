@@ -25,11 +25,17 @@
 */
 
 #include <sstream>
+#include <string>
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/ArrayView.h>
+#include <Corrade/Containers/String.h>
 #include <Corrade/Containers/StringView.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
+#include <Corrade/TestSuite/Compare/Numeric.h>
+#include <Corrade/TestSuite/Compare/String.h>
+#include <Corrade/Utility/Path.h>
+#include <Corrade/Utility/String.h>
 #include <Magnum/Math/Vector3.h>
 #include <Magnum/Trade/AbstractImporter.h>
 #include <Magnum/Trade/MeshData.h>
@@ -38,17 +44,26 @@
 
 namespace Magnum { namespace Trade { namespace Test { namespace {
 
+using namespace Math::Literals;
+using namespace Containers::Literals;
+
 struct UfbxImporterTest: TestSuite::Tester {
     explicit UfbxImporterTest();
 
-    void dummy();
+    void openFile();
+    void openData();
+    void openFileFailed();
+    void openDataFailed();
 
     /* Needs to load AnyImageImporter from a system-wide location */
     PluginManager::Manager<AbstractImporter> _manager;
 };
 
 UfbxImporterTest::UfbxImporterTest() {
-    addTests({&UfbxImporterTest::dummy});
+    addTests({&UfbxImporterTest::openFile,
+              &UfbxImporterTest::openData,
+              &UfbxImporterTest::openFileFailed,
+              &UfbxImporterTest::openDataFailed});
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. It also pulls in the AnyImageImporter dependency. */
@@ -64,8 +79,60 @@ UfbxImporterTest::UfbxImporterTest() {
     #endif
 }
 
-void UfbxImporterTest::dummy() {
-    CORRADE_COMPARE(1 + 1, 2);
+void UfbxImporterTest::openFile() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
+
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "blender-default.fbx")));
+    CORRADE_VERIFY(importer->isOpened());
+    CORRADE_COMPARE(importer->sceneCount(), 1);
+    CORRADE_COMPARE(importer->objectCount(), 3);
+    CORRADE_COMPARE(importer->meshCount(), 1);
+    CORRADE_COMPARE(importer->lightCount(), 1);
+    CORRADE_COMPARE(importer->cameraCount(), 1);
+    CORRADE_COMPARE(importer->animationCount(), 0);
+    CORRADE_COMPARE(importer->skin3DCount(), 0);
+
+    importer->close();
+    CORRADE_VERIFY(!importer->isOpened());
+}
+
+void UfbxImporterTest::openData() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
+
+    Containers::Optional<Containers::Array<char>> data = Utility::Path::read(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "blender-default.fbx"));
+    CORRADE_VERIFY(importer->openData(*data));
+    CORRADE_VERIFY(importer->isOpened());
+    CORRADE_COMPARE(importer->sceneCount(), 1);
+    CORRADE_COMPARE(importer->objectCount(), 3);
+    CORRADE_COMPARE(importer->meshCount(), 1);
+    CORRADE_COMPARE(importer->lightCount(), 1);
+    CORRADE_COMPARE(importer->cameraCount(), 1);
+    CORRADE_COMPARE(importer->animationCount(), 0);
+    CORRADE_COMPARE(importer->skin3DCount(), 0);
+
+    importer->close();
+    CORRADE_VERIFY(!importer->isOpened());
+}
+
+void UfbxImporterTest::openFileFailed() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
+
+    std::ostringstream out;
+    Error redirectError{&out};
+
+    CORRADE_VERIFY(!importer->openFile("i-do-not-exist.foo"));
+    CORRADE_COMPARE(out.str(), "Trade::UfbxImporter::openData(): loading failed: File not found: i-do-not-exist.foo\n"_s);
+}
+
+void UfbxImporterTest::openDataFailed() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
+
+    std::ostringstream out;
+    Error redirectError{&out};
+
+    constexpr const char data[] = "what";
+    CORRADE_VERIFY(!importer->openData({data, sizeof(data)}));
+    CORRADE_COMPARE(out.str(), "Trade::UfbxImporter::openData(): loading failed: Unrecognized file format\n"_s);
 }
 
 }}}}

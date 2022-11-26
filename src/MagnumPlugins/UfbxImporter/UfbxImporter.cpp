@@ -207,11 +207,11 @@ inline void logError(const char *prefix, const ufbx_error &error, ImporterFlags 
     if (flags & ImporterFlag::Verbose) {
         char message[1024];
         ufbx_format_error(message, sizeof(message), &error);
-        Error{} << prefix << message;
-    } else if (error.info) {
-        Error{} << prefix << Containers::StringView(error.description) << " (" << error.info << ")";
+        Error{Utility::Debug::Flag::NoSpace} << prefix << message;
+    } else if (error.info_length > 0) {
+        Error{Utility::Debug::Flag::NoSpace} << prefix << Containers::StringView(error.description) << ": " << Containers::StringView(error.info, error.info_length);
     } else {
-        Error{} << prefix << Containers::StringView(error.description);
+        Error{Utility::Debug::Flag::NoSpace} << prefix << Containers::StringView(error.description);
     }
 }
 
@@ -319,6 +319,8 @@ bool UfbxImporter::doIsOpened() const { return !!_state; }
 void UfbxImporter::doClose() { _state = nullptr; }
 
 void UfbxImporter::doOpenData(Containers::Array<char>&& data, const DataFlags) {
+    _state.reset();
+
     ufbx_load_opts opts = loadOptsFromConfiguration(configuration());
 
     FileOpener opener{fileCallback(), fileCallbackUserData()};
@@ -328,14 +330,16 @@ void UfbxImporter::doOpenData(Containers::Array<char>&& data, const DataFlags) {
     ufbx_scene *scene = ufbx_load_memory(data.data(), data.size(), &opts, &error);
     if (!scene) {
         logError("Trade::UfbxImporter::openData(): loading failed: ", error, flags());
+        return;
     }
 
     /* Handle the opened scene with doOpenState() */
     openInternal(scene, {});
-    ufbx_free(scene);
 }
 
 void UfbxImporter::doOpenFile(Containers::StringView filename) {
+    _state.reset();
+
     ufbx_load_opts opts = loadOptsFromConfiguration(configuration());
     opts.filename = filename;
 
@@ -346,6 +350,7 @@ void UfbxImporter::doOpenFile(Containers::StringView filename) {
     ufbx_scene *scene = ufbx_load_file_len(filename.data(), filename.size(), &opts, &error);
     if (!scene) {
         logError("Trade::UfbxImporter::openData(): loading failed: ", error, flags());
+        return;
     }
 
     /* Handle the opened scene with doOpenState() */
