@@ -74,7 +74,7 @@ typedef double ufbx_real;
 		p_name() = default; \
 		p_name(p_fn *f) : fn(f), user(nullptr) { } \
 		template <typename F> p_name(F *f) \
-			: fn([] p_params -> p_return { F &local_f = *(F*)local_user; return local_f p_args; }), user((void*)f) { }
+			: fn([] p_params -> p_return { typename F &local_f = *static_cast<typename F*>(local_user); return local_f p_args; }), user((void*)f) { }
 #else
 	#define UFBX_CALLBACK_IMPL(p_name, p_fn, p_return, p_params, p_args)
 #endif
