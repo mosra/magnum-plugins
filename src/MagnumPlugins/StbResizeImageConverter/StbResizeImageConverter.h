@@ -56,8 +56,6 @@ namespace Magnum { namespace Trade {
 @brief Image resizing using stb_image_resize
 @m_since_latest_{plugins}
 
-@m_keywords{OpenExrImageConverter}
-
 Performs downsampling and upsampling of 8-bit, 16-bit and float 2D and 2D array
 or cube images using the [stb_image_resize](https://github.com/nothings/stb)
 library.
