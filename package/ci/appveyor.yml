@@ -10,10 +10,10 @@ environment:
   #   COMPILER: msvc
   #   APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
   #   APPVEYOR_JOB_NAME: windows-msvc2017
-  # - TARGET: desktop
-  #   COMPILER: msvc
-  #   APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
-  #   APPVEYOR_JOB_NAME: windows-msvc2019
+  - TARGET: desktop
+    COMPILER: msvc
+    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
+    APPVEYOR_JOB_NAME: windows-msvc2019
   # - TARGET: desktop
   #   COMPILER: msvc
   #   APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2022
@@ -91,7 +91,8 @@ install:
 
 # libpng, for MSVC 2022, 2019 and clang-cl. MSVC 2017 seems to work well with
 # the 2019 build, MinGW doesn't work at all due to ABI issues.
-- IF "%TARGET%" == "desktop" IF "%COMPILER:~0,4%" == "msvc" appveyor DownloadFile https://ci.magnum.graphics/libpng-1.6.39-windows-2019.zip && 7z x libpng-1.6.39-windows-2019.zip -o%APPVEYOR_BUILD_FOLDER%\deps
+- IF "%TARGET%" == "desktop" IF "%COMPILER%" == "msvc" appveyor DownloadFile https://ci.magnum.graphics/libpng-1.6.39-windows-2019.zip && 7z x libpng-1.6.39-windows-2019.zip -o%APPVEYOR_BUILD_FOLDER%\deps
+- IF "%TARGET%" == "desktop" IF "%COMPILER%" == "msvc-clang" appveyor DownloadFile https://ci.magnum.graphics/libpng-1.6.39-windows-2019-clang-cl.zip && 7z x libpng-1.6.39-windows-2019-clang-cl.zip -o%APPVEYOR_BUILD_FOLDER%\deps
 
 # OpenAL
 - IF NOT "%TARGET%" == "rt" IF NOT EXIST %APPVEYOR_BUILD_FOLDER%\openal-soft-1.19.1-bin.zip appveyor DownloadFile https://openal-soft.org/openal-binaries/openal-soft-1.19.1-bin.zip
