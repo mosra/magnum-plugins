@@ -527,7 +527,7 @@ Containers::Optional<SceneData> UfbxImporter::doScene(UnsignedInt) {
         translations[nodeId] = Vector3d(node->local_transform.translation);
         rotations[nodeId] = Quaterniond(node->local_transform.rotation);
         scalings[nodeId] = Vector3d(node->local_transform.scale);
-        visibilities[nodeId] = (UnsignedByte)node->visible;
+        visibilities[nodeId] = static_cast<UnsignedByte>(node->visible);
 
         UnsignedInt objectId = nodeId;
 
