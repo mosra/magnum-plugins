@@ -435,7 +435,7 @@ Released 2020-06-27, tagged as
 -   `TinyGltfImporter` translation of PBR materials into a Phong shading model
     left @ref Trade::PhongMaterialData::shininess() set at @cpp 1.0f @ce, which
     wasn't a good default. Now it's set to @cpp 80.0f @ce to match defaults
-    of @ref Shaders::Phong
+    of @cpp Shaders::Phong @ce
 -   Support for the [KHR_materials_cmnBlinnPhong](https://github.com/KhronosGroup/glTF/tree/gltf2-common-materials/extensions/Khronos/KHR_materials_cmnBlinnPhong)
     glTF extension has been removed from `TinyGltfImporter, as it seems to be
     effectively abandoned. The branch didn't see any update since 2017 and
