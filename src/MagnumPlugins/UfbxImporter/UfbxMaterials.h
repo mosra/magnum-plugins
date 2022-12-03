@@ -43,16 +43,19 @@ typedef Containers::EnumSet<MaterialExclusionGroup> MaterialExclusionGroups;
 
 struct MaterialMapping {
     UfbxMaterialLayer layer;
-    MaterialAttributeType attributeType = {};
+    MaterialAttributeType attributeType;
     Containers::StringView attribute;
 
     /* Override the attribute of the texture, defaults to attribute+"Texture" */
     Containers::StringView textureAttribute;
 
-    Int valueMap = -1;
-    Int factorMap = -1;
+    Int valueMap;
+    Int factorMap;
 
-    MaterialExclusionGroup exclusionGroup = MaterialExclusionGroup{};
+    MaterialExclusionGroup exclusionGroup;
+
+    constexpr MaterialMapping(UfbxMaterialLayer layer, MaterialAttributeType attributeType, Containers::StringView attribute, Containers::StringView textureAttribute, Int valueMap, Int factorMap=-1, MaterialExclusionGroup exclusionGroup=MaterialExclusionGroup{})
+        : layer(layer), attributeType(attributeType), attribute(attribute), textureAttribute(textureAttribute), valueMap(valueMap), factorMap(factorMap), exclusionGroup(exclusionGroup) { }
 };
 
 const constexpr MaterialMapping materialMappingFbx[] = {
