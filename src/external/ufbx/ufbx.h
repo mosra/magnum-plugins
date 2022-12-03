@@ -23,11 +23,15 @@
 #elif defined(__clang__)
 	#pragma clang diagnostic push
 	#pragma clang diagnostic ignored "-Wpedantic"
-	#pragma clang diagnostic ignored "-Wzero-as-null-pointer-constant"
+	#if defined(__cplusplus)
+		#pragma clang diagnostic ignored "-Wzero-as-null-pointer-constant"
+	#endif
 #elif defined(__GNUC__)
 	#pragma GCC diagnostic push
 	#pragma GCC diagnostic ignored "-Wpedantic"
-	#pragma GCC diagnostic ignored "-Wzero-as-null-pointer-constant"
+	#if defined(__cplusplus)
+		#pragma GCC diagnostic ignored "-Wzero-as-null-pointer-constant"
+	#endif
 #endif
 
 #if defined(_MSC_VER)
@@ -332,8 +336,8 @@ typedef enum ufbx_prop_flags {
 	UFBX_PROP_FLAG_VALUE_VEC2 = 0x200000,
 	UFBX_PROP_FLAG_VALUE_VEC3 = 0x400000,
 	UFBX_PROP_FLAG_VALUE_VEC4 = 0x800000,
-	UFBX_PROP_FLAG_VALUE_INT = 0x100000,
-	UFBX_PROP_FLAG_VALUE_STR = 0x2000000,
+	UFBX_PROP_FLAG_VALUE_INT  = 0x1000000,
+	UFBX_PROP_FLAG_VALUE_STR  = 0x2000000,
 	UFBX_PROP_FLAG_VALUE_BLOB = 0x4000000,
 
 	UFBX_PROP_FLAG_FORCE_32BIT = 0x7fffffff,
