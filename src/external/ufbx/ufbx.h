@@ -20,7 +20,6 @@
 	#pragma warning(push)
 	#pragma warning(disable: 4201) // nonstandard extension used: nameless struct/union
 	#pragma warning(disable: 4505) // unreferenced local function has been removed
-	#define ufbx_inline static __forceinline
 #elif defined(__clang__)
 	#pragma clang diagnostic push
 	#pragma clang diagnostic ignored "-Wpedantic"
@@ -31,7 +30,9 @@
 	#pragma GCC diagnostic ignored "-Wzero-as-null-pointer-constant"
 #endif
 
-#if defined(__GNUC__)
+#if defined(_MSC_VER)
+	#define ufbx_inline static __forceinline
+#elif defined(__GNUC__)
 	#define ufbx_inline static inline __attribute__((always_inline, unused))
 #else
 	#define ufbx_inline static
