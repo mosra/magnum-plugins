@@ -49,9 +49,7 @@ target_include_directories(UfbxImporter PUBLIC
     ${PROJECT_BINARY_DIR}/src)
 
 # Include the ufbx files as a system directory to supress warnings
-# TODO(bqqbarbhg): This shouldn't be necessary from a warning standpoint at least
-# as the library is written to support very strict warning environments.
-target_include_directories(UfbxImporter SYSTEM PRIVATE ${PROJECT_SOURCE_DIR}/src/external/ufbx)
+target_include_directories(UfbxImporter PRIVATE ${PROJECT_SOURCE_DIR}/src/external/ufbx)
 target_link_libraries(UfbxImporter PUBLIC Magnum::Trade Magnum::MeshTools)
 if(CORRADE_TARGET_WINDOWS)
     target_link_libraries(UfbxImporter PUBLIC Magnum::AnyImageImporter)

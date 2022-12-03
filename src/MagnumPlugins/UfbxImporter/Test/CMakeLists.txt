@@ -51,6 +51,7 @@ corrade_add_test(UfbxImporterTest UfbxImporterTest.cpp
         triangle.fbx
         lights.fbx)
 
+target_include_directories(UfbxImporterTest PRIVATE ${PROJECT_SOURCE_DIR}/src/external/ufbx)
 target_include_directories(UfbxImporterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>)
 if(MAGNUM_UFBXIMPORTER_BUILD_STATIC)
     target_link_libraries(UfbxImporterTest PRIVATE UfbxImporter)
