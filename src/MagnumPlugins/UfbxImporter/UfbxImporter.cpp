@@ -33,10 +33,13 @@
 #define UFBX_NO_TESSELLATION
 #define UFBX_NO_SUBDIVISION
 #define UFBX_NO_SCENE_EVALUATION
+#define UFBX_NO_SKINNING_EVALUATION
 
 /* Include error stack on debug builds for juicy details in bugreports */
 #if !defined(CORRADE_IS_DEBUG_BUILD) && defined(NDEBUG)
     #define UFBX_NO_ERROR_STACK
+#else
+    #define UFBX_ENABLE_ERROR_STACK
 #endif
 
 #include "ufbx.h"
