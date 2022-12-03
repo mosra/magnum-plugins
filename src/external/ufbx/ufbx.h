@@ -28,8 +28,12 @@
 #endif
 
 #ifndef ufbx_assert
-	#include <assert.h>
-	#define ufbx_assert(cond) assert(cond)
+	#if !defined(UFBX_NO_ASSERT)
+		#include <assert.h>
+		#define ufbx_assert(cond) assert(cond)
+	#else
+		#define ufbx_assert(cond) (void)0
+	#endif
 #endif
 
 // Pointer may be `NULL`.
@@ -71,7 +75,7 @@ typedef double ufbx_real;
 
 #if defined(__cplusplus) && (__cplusplus >= 201103L || (defined(_MSC_VER) && _MSC_VER >= 1900))
 	#define UFBX_CALLBACK_IMPL(p_name, p_fn, p_return, p_params, p_args) \
-        template <typename F> static p_return _cpp_adapter p_params { F &f = *static_cast<F*>(user); return f p_args; } \
+		template <typename F> static p_return _cpp_adapter p_params { F &f = *static_cast<F*>(user); return f p_args; } \
 		p_name() = default; \
 		p_name(p_fn *f) : fn(f), user(nullptr) { } \
 		template <typename F> p_name(F *f) : fn(&_cpp_adapter<F>), user((void*)f) { }
@@ -674,8 +678,8 @@ struct ufbx_node {
 	// True if this node is the implicit root node of the scene.
 	bool is_root;
 
-    // True if the node has a non-identity `geometry_transform`.
-    bool has_geometry_transform;
+	// True if the node has a non-identity `geometry_transform`.
+	bool has_geometry_transform;
 
 	// How deep is this node in the parent hierarchy. Root node is at depth `0`
 	// and the immediate children of root at `1`.
@@ -1231,14 +1235,14 @@ struct ufbx_camera {
 	// Equal to `field_of_view_tan` if perspective, `orthographic_size` if orthographic.
 	ufbx_vec2 projection_plane;
 
-    // Aspect ratio of the camera.
-    ufbx_real aspect_ratio;
+	// Aspect ratio of the camera.
+	ufbx_real aspect_ratio;
 
-    // Near plane of the frustum in units from the camera.
-    ufbx_real near_plane;
+	// Near plane of the frustum in units from the camera.
+	ufbx_real near_plane;
 
-    // Far plane of the frustum in units from the camera.
-    ufbx_real far_plane;
+	// Far plane of the frustum in units from the camera.
+	ufbx_real far_plane;
 
 	// Advanced properties used to compute the above
 	ufbx_aspect_mode aspect_mode;
@@ -1892,11 +1896,6 @@ typedef struct ufbx_material_map {
 	// NOTE: Some shading models allow this to be `true` even if `texture == NULL`.
 	bool texture_enabled;
 
-	// Set if the texture values should be interpreted as `1 - x`.
-	// Used on various `roughness` maps when the native software uses smoothness values.
-	// NOTE: Does not apply to `value_real`, ufbx inverts those values internally.
-	bool texture_inverted;
-
 	// Set to `true` if this feature should be disabled (specific to shader type).
 	bool feature_disabled;
 
@@ -2046,6 +2045,9 @@ typedef enum ufbx_material_pbr_map {
 	UFBX_MATERIAL_PBR_MATTE_FACTOR,
 	UFBX_MATERIAL_PBR_MATTE_COLOR,
 	UFBX_MATERIAL_PBR_AMBIENT_OCCLUSION,
+	UFBX_MATERIAL_PBR_GLOSSINESS,
+	UFBX_MATERIAL_PBR_COAT_GLOSSINESS,
+	UFBX_MATERIAL_PBR_TRANSMISSION_GLOSSINESS,
 
 	UFBX_MATERIAL_PBR_MAP_COUNT,
 	UFBX_MATERIAL_PBR_MAP_FORCE_32BIT = 0x7fffffff,
@@ -2073,6 +2075,9 @@ typedef enum ufbx_material_feature {
 	UFBX_MATERIAL_FEATURE_EXIT_TO_BACKGROUND,
 	UFBX_MATERIAL_FEATURE_INTERNAL_REFLECTIONS,
 	UFBX_MATERIAL_FEATURE_DOUBLE_SIDED,
+	UFBX_MATERIAL_FEATURE_ROUGHNESS_AS_GLOSSINESS,
+	UFBX_MATERIAL_FEATURE_COAT_ROUGHNESS_AS_GLOSSINESS,
+	UFBX_MATERIAL_FEATURE_TRANSMISSION_ROUGHNESS_AS_GLOSSINESS,
 
 	UFBX_MATERIAL_FEATURE_COUNT,
 	UFBX_MATERIAL_FEATURE_FORCE_32BIT = 0x7fffffff,
@@ -2162,6 +2167,9 @@ typedef struct ufbx_material_pbr_maps {
 			ufbx_material_map matte_factor;
 			ufbx_material_map matte_color;
 			ufbx_material_map ambient_occlusion;
+			ufbx_material_map glossiness;
+			ufbx_material_map coat_glossiness;
+			ufbx_material_map transmission_glossiness;
 		};
 	};
 } ufbx_material_pbr_maps;
@@ -2190,6 +2198,9 @@ typedef struct ufbx_material_features {
 			ufbx_material_feature_info exit_to_background;
 			ufbx_material_feature_info internal_reflections;
 			ufbx_material_feature_info double_sided;
+			ufbx_material_feature_info roughness_as_glossiness;
+			ufbx_material_feature_info coat_roughness_as_glossiness;
+			ufbx_material_feature_info transmission_roughness_as_glossiness;
 		};
 	};
 } ufbx_material_features;
@@ -2914,6 +2925,10 @@ typedef struct ufbx_metadata {
 	// NOTE: `ufbx_mesh.vertex_position.exists` may be `false`!
 	bool may_contain_missing_vertex_position;
 
+	// Arrays may contain items with `NULL` element references.
+	// See `ufbx_load_opts.connect_broken_elements`.
+	bool may_contain_broken_elements;
+
 	// Some API guarantees do not apply (depending on unsafe options used).
 	// Loaded with `ufbx_load_opts.allow_unsafe` enabled.
 	bool unsafe;
@@ -3268,24 +3283,24 @@ typedef struct ufbx_stream {
 } ufbx_stream;
 
 typedef enum ufbx_open_file_type {
-    UFBX_OPEN_FILE_MAIN_MODEL,     // < Main model file
-    UFBX_OPEN_FILE_GEOMETRY_CACHE, // < Unknown geometry cache file
-    UFBX_OPEN_FILE_OBJ_MTL,        // < .mtl material library file
+	UFBX_OPEN_FILE_MAIN_MODEL,     // < Main model file
+	UFBX_OPEN_FILE_GEOMETRY_CACHE, // < Unknown geometry cache file
+	UFBX_OPEN_FILE_OBJ_MTL,        // < .mtl material library file
 
-    UFBX_OPEN_FILE_TYPE_COUNT,
-    UFBX_OPEN_FILE_TYPE_FORCE_32BIT = 0x7fffffff,
+	UFBX_OPEN_FILE_TYPE_COUNT,
+	UFBX_OPEN_FILE_TYPE_FORCE_32BIT = 0x7fffffff,
 } ufbx_open_file_type;
 
 typedef struct ufbx_open_file_info {
-    // Kind of file to load.
-    ufbx_open_file_type type;
+	// Kind of file to load.
+	ufbx_open_file_type type;
 
-    // Temporary allocator to use.
-    ufbx_allocator temp_allocator;
+	// Temporary allocator to use.
+	ufbx_allocator temp_allocator;
 
 	// Original filename in the file, not resolved or UTF-8 encoded.
-    // NOTE: Not necessarily NULL-terminated!
-    ufbx_blob original_filename;
+	// NOTE: Not necessarily NULL-terminated!
+	ufbx_blob original_filename;
 } ufbx_open_file_info;
 
 // Callback for opening an external file from the filesystem
@@ -3314,22 +3329,22 @@ typedef struct ufbx_close_memory_cb {
 
 // Options for `ufbx_open_memory()`.
 typedef struct ufbx_open_memory_opts {
-    uint32_t _begin_zero;
+	uint32_t _begin_zero;
 
-    // Allocator to allocate the memory with.
-    // NOTE: Used even if no copy is made to allocate a small metadata block.
-    ufbx_allocator_opts allocator;
+	// Allocator to allocate the memory with.
+	// NOTE: Used even if no copy is made to allocate a small metadata block.
+	ufbx_allocator_opts allocator;
 
-    // Do not copy the memory.
-    // You can use `close_cb` to free the memory when the stream is closed.
-    // NOTE: This means the provided data pointer is referenced after creating
-    // the memory stream, make sure the data stays valid until the stream is closed!
-    ufbx_unsafe bool no_copy;
+	// Do not copy the memory.
+	// You can use `close_cb` to free the memory when the stream is closed.
+	// NOTE: This means the provided data pointer is referenced after creating
+	// the memory stream, make sure the data stays valid until the stream is closed!
+	ufbx_unsafe bool no_copy;
 
-    // Callback to free the memory blob.
-    ufbx_close_memory_cb close_cb;
+	// Callback to free the memory blob.
+	ufbx_close_memory_cb close_cb;
 
-    uint32_t _end_zero;
+	uint32_t _end_zero;
 } ufbx_open_memory_opts;
 
 // Detailed error stack frame
@@ -3594,8 +3609,8 @@ typedef struct ufbx_load_opts {
 	// You can see if the normals have been generated from `ufbx_mesh.generated_normals`.
 	bool generate_missing_normals;
 
-    // Ignore `open_file_cb` when loading the main file.
-    bool open_main_file_with_default;
+	// Ignore `open_file_cb` when loading the main file.
+	bool open_main_file_with_default;
 
 	// Path separator character, defaults to '\' on Windows and '/' otherwise.
 	char path_separator;
@@ -4161,11 +4176,6 @@ ufbx_abi ufbx_geometry_cache *ufbx_load_geometry_cache_len(
 ufbx_abi void ufbx_free_geometry_cache(ufbx_geometry_cache *cache);
 ufbx_abi void ufbx_retain_geometry_cache(ufbx_geometry_cache *cache);
 
-ufbx_abi size_t ufbx_get_read_geometry_cache_real_num_data(const ufbx_cache_frame *frame);
-ufbx_abi size_t ufbx_get_sample_geometry_cache_real_num_data(const ufbx_cache_channel *channel, double time);
-ufbx_abi size_t ufbx_get_read_geometry_cache_vec3_num_data(const ufbx_cache_frame *frame);
-ufbx_abi size_t ufbx_get_sample_geometry_cache_vec3_num_data(const ufbx_cache_channel *channel, double time);
-
 ufbx_abi size_t ufbx_read_geometry_cache_real(const ufbx_cache_frame *frame, ufbx_real *data, size_t num_data, const ufbx_geometry_cache_data_opts *opts);
 ufbx_abi size_t ufbx_sample_geometry_cache_real(const ufbx_cache_channel *channel, double time, ufbx_real *data, size_t num_data, const ufbx_geometry_cache_data_opts *opts);
 ufbx_abi size_t ufbx_read_geometry_cache_vec3(const ufbx_cache_frame *frame, ufbx_vec3 *data, size_t num_data, const ufbx_geometry_cache_data_opts *opts);
@@ -4273,6 +4283,7 @@ ufbx_abi size_t ufbx_ffi_get_triangulate_face_num_indices(const ufbx_face *face)
 ufbx_abi uint32_t ufbx_ffi_triangulate_face(uint32_t *indices, size_t num_indices, const ufbx_mesh *mesh, const ufbx_face *face);
 
 ufbx_inline size_t ufbx_check_index(size_t index, size_t count) {
+	(void)count;
 	ufbx_assert(index < count);
 	return index;
 }
@@ -4309,14 +4320,14 @@ struct ufbx_ref {
 		ufbx_free(ptr);
 		ufbx_retain(ref.ptr);
 		ptr = ref.ptr;
-        return *this;
+		return *this;
 	}
 
 	ufbx_ref &operator=(ufbx_ref &&ref) noexcept {
 		if (&ref == this) return *this;
 		ptr = ref.ptr;
 		ref.ptr = nullptr;
-        return *this;
+		return *this;
 	}
 
 	void reset() noexcept {
