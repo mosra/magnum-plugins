@@ -26,6 +26,8 @@
 
 #include "UfbxImporter.h"
 
+#define ufbx_abi static
+
 #define UFBX_NO_INDEX_GENERATION
 #define UFBX_NO_GEOMETRY_CACHE
 #define UFBX_NO_TESSELLATION
