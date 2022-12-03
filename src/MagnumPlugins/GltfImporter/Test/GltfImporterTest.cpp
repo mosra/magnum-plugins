@@ -3271,14 +3271,14 @@ void GltfImporterTest::sceneCustomFields() {
     SceneField sceneFieldFlags = importer->sceneFieldForName("flags");
     CORRADE_COMPARE(sceneFieldRadius, sceneFieldCustom(1));
     CORRADE_COMPARE(sceneFieldOffset, sceneFieldCustom(2));
-    CORRADE_COMPARE(sceneFieldFlags, sceneFieldCustom(3));
+    CORRADE_COMPARE(sceneFieldFlags, sceneFieldCustom(4));
     CORRADE_COMPARE(importer->sceneFieldName(sceneFieldCustom(1)), "radius");
     CORRADE_COMPARE(importer->sceneFieldName(sceneFieldCustom(2)), "offset");
-    CORRADE_COMPARE(importer->sceneFieldName(sceneFieldCustom(3)), "flags");
+    CORRADE_COMPARE(importer->sceneFieldName(sceneFieldCustom(4)), "flags");
 
     /* Unlike in materials, case of custom names is not normalized */
-    CORRADE_COMPARE(importer->sceneFieldForName("UppercaseName"), sceneFieldCustom(4));
-    CORRADE_COMPARE(importer->sceneFieldName(sceneFieldCustom(4)), "UppercaseName");
+    CORRADE_COMPARE(importer->sceneFieldForName("UppercaseName"), sceneFieldCustom(3));
+    CORRADE_COMPARE(importer->sceneFieldName(sceneFieldCustom(3)), "UppercaseName");
 
     /* Names of custom fields should get gathered right after import,
        independently of whether they are in any scene. Only extras of known
@@ -3311,13 +3311,13 @@ void GltfImporterTest::sceneCustomFields() {
             "Trade::GltfImporter::scene(): node 3 extras invalidNullField property is Utility::JsonToken::Type::Null, skipping\n"
             "Trade::GltfImporter::scene(): node 3 extras invalidArrayField property is Utility::JsonToken::Type::Array, skipping\n"
             "Trade::GltfImporter::scene(): node 3 extras invalidObjectField property is Utility::JsonToken::Type::Object, skipping\n"
-            "Utility::Json::parseFloat(): invalid floating-point literal 56.0f at {0}:33:19\n"
-            "Trade::GltfImporter::scene(): invalid node 4 extras radius property, skipping\n"
+            "Utility::Json::parseFloat(): invalid floating-point literal 56.0f at {0}:47:19\n"
+            "Trade::GltfImporter::scene(): invalid node 6 extras radius property, skipping\n"
             /* These fail only because the fields have the type overriden */
-            "Utility::Json::parseInt(): invalid integer literal 23.5 at {0}:34:19\n"
-            "Trade::GltfImporter::scene(): invalid node 4 extras offset property, skipping\n"
-            "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {0}:35:18\n"
-            "Trade::GltfImporter::scene(): invalid node 4 extras flags property, skipping\n", filename));
+            "Utility::Json::parseInt(): invalid integer literal 23.5 at {0}:48:19\n"
+            "Trade::GltfImporter::scene(): invalid node 6 extras offset property, skipping\n"
+            "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {0}:49:18\n"
+            "Trade::GltfImporter::scene(): invalid node 6 extras flags property, skipping\n", filename));
 
         /* Parent, ImporterState and Transformation (for marking the scene as
            3D) is there always, plus `radius`, `index` and `UppercaseName`
@@ -3330,7 +3330,7 @@ void GltfImporterTest::sceneCustomFields() {
         CORRADE_VERIFY(scene->hasField(sceneFieldRadius));
         CORRADE_COMPARE(scene->fieldType(sceneFieldRadius), SceneFieldType::Float);
         CORRADE_COMPARE_AS(scene->mapping<UnsignedInt>(sceneFieldRadius),
-            Containers::arrayView({6u, 6u, 8u}),
+            Containers::arrayView({5u, 5u, 8u}),
             TestSuite::Compare::Container);
         CORRADE_COMPARE_AS(scene->field<Float>(sceneFieldRadius),
             Containers::arrayView({5.25f, 3.5f, 0.5f}),
@@ -3339,7 +3339,7 @@ void GltfImporterTest::sceneCustomFields() {
         CORRADE_VERIFY(scene->hasField(sceneFieldOffset));
         CORRADE_COMPARE(scene->fieldType(sceneFieldOffset), SceneFieldType::Int);
         CORRADE_COMPARE_AS(scene->mapping<UnsignedInt>(sceneFieldOffset),
-            Containers::arrayView({6u, 6u, 7u}),
+            Containers::arrayView({5u, 5u, 7u}),
             TestSuite::Compare::Container);
         CORRADE_COMPARE_AS(scene->field<Int>(sceneFieldOffset),
             /* W.T.F., C, why do I need a cast for this?! */

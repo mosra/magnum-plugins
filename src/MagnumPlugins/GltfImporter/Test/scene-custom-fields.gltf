@@ -27,15 +27,6 @@
       }
     },
     {
-      "name": "invalid values",
-      "note": "the offset and flags fail only because they're set to be parsed as Int and UnsignedInt, respectively",
-      "extras": {
-        "radius": 56.0f,
-        "offset": 23.5,
-        "flags": -1
-      }
-    },
-    {
       "name": "empty extras",
       "extras": {}
     },
@@ -47,6 +38,15 @@
         "UppercaseName": -56,
         "offset": -22,
         "radius": 3.5
+      }
+    },
+    {
+      "name": "invalid values",
+      "note": "the offset and flags fail only because they're set to be parsed as Int and UnsignedInt, respectively",
+      "extras": {
+        "radius": 56.0f,
+        "offset": 23.5,
+        "flags": -1
       }
     },
     {
