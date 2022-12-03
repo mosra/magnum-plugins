@@ -54,6 +54,7 @@ corrade_add_test(UfbxImporterTest UfbxImporterTest.cpp
     LIBRARIES Magnum::Trade
     FILES
         blender-default.fbx
+        blender-materials.fbx
         triangle.fbx
         lights.fbx)
 
