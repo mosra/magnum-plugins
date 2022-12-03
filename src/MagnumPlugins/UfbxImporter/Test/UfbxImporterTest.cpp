@@ -37,7 +37,7 @@
 #include <Corrade/Containers/Triple.h>
 #include <Corrade/Containers/BitArray.h>
 #include <Corrade/Containers/StaticArray.h>
-#include <Corrade/Utility/DebugSTL.h>
+#include <Corrade/Utility/DebugStl.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
 #include <Corrade/TestSuite/Compare/Numeric.h>
