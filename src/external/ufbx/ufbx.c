@@ -282,6 +282,7 @@
 	#pragma clang diagnostic ignored "-Wmissing-field-initializers"
 	#pragma clang diagnostic ignored "-Wmissing-braces"
 	#pragma clang diagnostic ignored "-Wdouble-promotion"
+	#pragma clang diagnostic ignored "-Wzero-as-null-pointer-constant"
 	#pragma clang diagnostic ignored "-Wpedantic"
 	#if defined(UFBX_STANDARD_C)
 		#pragma clang diagnostic ignored "-Wunused-function"
@@ -300,6 +301,7 @@
 	#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
 	#pragma GCC diagnostic ignored "-Wmissing-braces"
 	#pragma GCC diagnostic ignored "-Wdouble-promotion"
+	#pragma GCC diagnostic ignored "-Wzero-as-null-pointer-constant"
 	#pragma GCC diagnostic ignored "-Wpedantic"
 	#if defined(UFBX_STANDARD_C)
 		#pragma GCC diagnostic ignored "-Wunused-function"
@@ -3687,7 +3689,7 @@ static ufbxi_noinline void *ufbxi_map_find_size(ufbxi_map *map, size_t size, uin
 	uint32_t mask = map->mask, scan = 0;
 
 	uint32_t ref = hash & ~mask;
-	if (!mask || scan == UINT32_MAX) return NULL;
+	if (!mask || scan == UINT32_MAX) return 0;
 
 	// Scan entries until we find an exact match of the hash or until we hit
 	// an element that has lower scan distance than our search (Robin Hood).
@@ -7598,7 +7600,7 @@ ufbxi_nodiscard ufbxi_noinline static int ufbxi_binary_parse_node(ufbxi_context 
 					input.buffer = NULL;
 					input.buffer_size = 0;
 					input.read_fn = NULL;
-					input.read_user = NULL;
+					input.read_user = 0;
 					uc->data += encoded_size;
 					uc->data_size -= encoded_size;
 					ufbxi_check(ufbxi_resume_progress(uc));
@@ -12636,8 +12638,8 @@ ufbxi_nodiscard ufbxi_noinline static int ufbxi_read_take_prop_channel(ufbxi_con
 		}
 
 		// Find 1-3 channel nodes thast contain a `Key:` node
-		ufbxi_node *channel_nodes[3] = { NULL };
-		const char *channel_names[3] = { NULL };
+		ufbxi_node *channel_nodes[3] = { 0 };
+		const char *channel_names[3] = { 0 };
 		size_t num_channel_nodes = 0;
 
 		if (ufbxi_find_child(node, ufbxi_Key) || ufbxi_find_child(node, ufbxi_Default)) {
@@ -14375,7 +14377,7 @@ ufbxi_nodiscard static ufbxi_noinline int ufbxi_obj_pop_meshes(ufbxi_context *uc
 	// Check if the file has disjoint vertices
 	bool non_disjoint[UFBXI_OBJ_NUM_ATTRIBS] = { 0 };
 	uint64_t next_min[UFBXI_OBJ_NUM_ATTRIBS] = { 0 };
-	ufbx_real_list vertices[UFBXI_OBJ_NUM_ATTRIBS_EXT] = { NULL };
+	ufbx_real_list vertices[UFBXI_OBJ_NUM_ATTRIBS_EXT] = { 0 };
 	bool *color_valid = NULL;
 
 	size_t max_indices = 0;
@@ -14798,7 +14800,7 @@ ufbxi_nodiscard static ufbxi_noinline int ufbxi_obj_load_mtl(ufbxi_context *uc)
 		uc->opts.obj_mtl_path.length = strlen(uc->opts.obj_mtl_path.data);
 	}
 
-	ufbx_stream stream = { NULL };
+	ufbx_stream stream = { 0 };
 	bool has_stream = false;
 
 	if (uc->opts.open_file_cb.fn) {
@@ -20324,7 +20326,7 @@ static ufbxi_noinline int ufbxi_scale_units(ufbxi_context *uc, ufbx_real target_
 				scale.y *= ratio;
 				scale.z *= ratio;
 
-				ufbx_prop new_prop = { NULL };
+				ufbx_prop new_prop = { 0 };
 				new_prop.name.data = ufbxi_Lcl_Scaling;
 				new_prop.name.length = sizeof(ufbxi_Lcl_Scaling) - 1;
 				new_prop._internal_key = ufbxi_get_name_key(ufbxi_Lcl_Scaling, sizeof(ufbxi_Lcl_Scaling) - 1);
@@ -24383,7 +24385,7 @@ const size_t ufbx_element_type_size[UFBX_ELEMENT_TYPE_COUNT] = {
 
 ufbx_abi bool ufbx_open_file(ufbx_stream *stream, const char *path, size_t path_len)
 {
-	ufbxi_allocator tmp_ator = { NULL };
+	ufbxi_allocator tmp_ator = { 0 };
 	ufbx_error tmp_error = { UFBX_ERROR_NONE };
 	ufbxi_init_ator(&tmp_error, &tmp_ator, NULL, "filename");
 	FILE *f = ufbxi_fopen(path, path_len, &tmp_ator);
@@ -24413,7 +24415,7 @@ ufbx_abi bool ufbx_open_memory(ufbx_stream *stream, const void *data, size_t dat
 	ufbx_assert(opts->_begin_zero == 0 && opts->_end_zero == 0);
 
 	ufbx_error local_error = { UFBX_ERROR_NONE };
-	ufbxi_allocator ator = { NULL };
+	ufbxi_allocator ator = { 0 };
 	ufbxi_init_ator(&local_error, &ator, &opts->allocator, "memory");
 
 	size_t copy_size = opts->no_copy ? 0 : data_size;
@@ -24488,7 +24490,7 @@ ufbx_abi ufbx_scene *ufbx_load_file_len(const char *filename, size_t filename_le
 
 	// Defer to `ufbx_load_stream()` if the user so prefers.
 	if (!opts->open_main_file_with_default && opts->open_file_cb.fn) {
-		ufbx_stream stream = { NULL };
+		ufbx_stream stream = { 0 };
 		if (ufbxi_open_file(&opts->open_file_cb, &stream, filename, filename_len, NULL, NULL, UFBX_OPEN_FILE_MAIN_MODEL)) {
 			return ufbx_load_stream_prefix(&stream, NULL, 0, &opts_copy, error);
 		} else {
@@ -24507,7 +24509,7 @@ ufbx_abi ufbx_scene *ufbx_load_file_len(const char *filename, size_t filename_le
 		}
 	}
 
-	ufbxi_allocator tmp_ator = { NULL };
+	ufbxi_allocator tmp_ator = { 0 };
 	ufbx_error tmp_error = { UFBX_ERROR_NONE };
 	ufbxi_init_ator(&tmp_error, &tmp_ator, opts ? &opts->temp_allocator : NULL, "filename");
 
@@ -24797,7 +24799,7 @@ ufbx_abi ufbx_anim_prop *ufbx_find_anim_prop_len(const ufbx_anim_layer *layer, c
 
 ufbx_abi ufbxi_noinline ufbx_anim_prop_list ufbx_find_anim_props(const ufbx_anim_layer *layer, const ufbx_element *element)
 {
-	ufbx_anim_prop_list result = { NULL };
+	ufbx_anim_prop_list result = { 0 };
 	ufbx_assert(layer);
 	ufbx_assert(element);
 	if (!layer || !element) return result;
