@@ -434,7 +434,7 @@ void UfbxImporter::openInternal(void* state, bool fromFile) {
         if (!texture->has_file) continue;
 
         UnsignedInt id = texture->typed_id;
-        _state->textureRemap[id] = (Int)_state->textures.size();
+        _state->textureRemap[id] = Int(_state->textures.size());
         arrayAppend(_state->textures, { id, texture->file_index });
     }
 
@@ -1170,8 +1170,8 @@ UnsignedInt UfbxImporter::doTextureCount() const {
 }
 
 Int UfbxImporter::doTextureForName(Containers::StringView name) {
-    ufbx_texture *texture = (ufbx_texture*)ufbx_find_element_len(_state->scene.get(), UFBX_ELEMENT_TEXTURE, name.data(), name.size());
-    return texture ? _state->textureRemap[texture->typed_id] : -1;
+    ufbx_element *element = ufbx_find_element_len(_state->scene.get(), UFBX_ELEMENT_TEXTURE, name.data(), name.size());
+    return element ? _state->textureRemap[element->typed_id] : -1;
 }
 
 Containers::String UfbxImporter::doTextureName(UnsignedInt id) {
