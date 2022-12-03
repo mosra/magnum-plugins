@@ -79,6 +79,7 @@ struct UfbxImporterTest: TestSuite::Tester {
     void openDataFailed();
     void mesh();
     void light();
+    void lightName();
     void materialMapping();
     void blenderMaterials();
     void meshMaterials();
@@ -95,7 +96,8 @@ UfbxImporterTest::UfbxImporterTest() {
               &UfbxImporterTest::openDataFailed});
 
     addTests({&UfbxImporterTest::mesh,
-              &UfbxImporterTest::light});
+              &UfbxImporterTest::light,
+              &UfbxImporterTest::lightName});
 
     addTests({&UfbxImporterTest::materialMapping});
 
@@ -384,6 +386,21 @@ void UfbxImporterTest::light() {
     CORRADE_COMPARE(out.str(),
         "Trade::UfbxImporter::light(): light type 3 is not supported\n"
         "Trade::UfbxImporter::light(): light type 4 is not supported\n");
+}
+
+void UfbxImporterTest::lightName() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "blender-default.fbx")));
+
+    CORRADE_COMPARE(importer->lightCount(), 1);
+
+    Int lightId = importer->lightForName("Light");
+    CORRADE_COMPARE(lightId, 0);
+
+    Int nonLightId = importer->lightForName("None");
+    CORRADE_COMPARE(nonLightId, -1);
+
+    CORRADE_COMPARE(importer->lightName(0), "Light");
 }
 
 void UfbxImporterTest::materialMapping() {
