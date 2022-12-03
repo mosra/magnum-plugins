@@ -3269,24 +3269,28 @@ void GltfImporterTest::sceneCustomFields() {
     SceneField sceneFieldRadius = importer->sceneFieldForName("radius");
     SceneField sceneFieldOffset = importer->sceneFieldForName("offset");
     SceneField sceneFieldFlags = importer->sceneFieldForName("flags");
-    CORRADE_COMPARE(sceneFieldRadius, sceneFieldCustom(5));
-    CORRADE_COMPARE(sceneFieldOffset, sceneFieldCustom(6));
-    CORRADE_COMPARE(sceneFieldFlags, sceneFieldCustom(7));
-    CORRADE_COMPARE(importer->sceneFieldName(sceneFieldCustom(5)), "radius");
-    CORRADE_COMPARE(importer->sceneFieldName(sceneFieldCustom(6)), "offset");
-    CORRADE_COMPARE(importer->sceneFieldName(sceneFieldCustom(7)), "flags");
+    CORRADE_COMPARE(sceneFieldRadius, sceneFieldCustom(1));
+    CORRADE_COMPARE(sceneFieldOffset, sceneFieldCustom(2));
+    CORRADE_COMPARE(sceneFieldFlags, sceneFieldCustom(3));
+    CORRADE_COMPARE(importer->sceneFieldName(sceneFieldCustom(1)), "radius");
+    CORRADE_COMPARE(importer->sceneFieldName(sceneFieldCustom(2)), "offset");
+    CORRADE_COMPARE(importer->sceneFieldName(sceneFieldCustom(3)), "flags");
 
     /* Unlike in materials, case of custom names is not normalized */
-    CORRADE_COMPARE(importer->sceneFieldForName("UppercaseName"), sceneFieldCustom(8));
-    CORRADE_COMPARE(importer->sceneFieldName(sceneFieldCustom(8)), "UppercaseName");
+    CORRADE_COMPARE(importer->sceneFieldForName("UppercaseName"), sceneFieldCustom(4));
+    CORRADE_COMPARE(importer->sceneFieldName(sceneFieldCustom(4)), "UppercaseName");
 
     /* Names of custom fields should get gathered right after import,
-       independently of whether they have a useful type or are in any scene */
-    CORRADE_COMPARE(importer->sceneFieldForName("invalidBoolField"), sceneFieldCustom(1));
+       independently of whether they are in any scene. Only extras of known
+       types are considered, though. */
+    CORRADE_COMPARE(importer->sceneFieldForName("invalidBoolField"), SceneField{});
+    CORRADE_COMPARE(importer->sceneFieldForName("invalidNullField"), SceneField{});
+    CORRADE_COMPARE(importer->sceneFieldForName("invalidArrayField"), SceneField{});
+    CORRADE_COMPARE(importer->sceneFieldForName("invalidObjectField"), SceneField{});
     CORRADE_COMPARE(importer->sceneFieldForName("registeredButNotInAnyScene"), sceneFieldCustom(0));
 
     /* Unknown fields */
-    CORRADE_COMPARE(importer->sceneFieldName(sceneFieldCustom(9)), "");
+    CORRADE_COMPARE(importer->sceneFieldName(sceneFieldCustom(5)), "");
     CORRADE_COMPARE(importer->sceneFieldForName("nonexistent"), SceneField{});
 
     /* Two scenes, each having a different subset of custom fields */

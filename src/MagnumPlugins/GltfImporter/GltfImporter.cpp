@@ -1090,6 +1090,13 @@ void GltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags da
 
         const Utility::ConfigurationGroup* customSceneFieldTypeConfiguration = configuration().group("customSceneFieldTypes");
         for(const Utility::JsonObjectItem gltfExtra: gltfExtras->asObject()) {
+            /* Skip everything that's not a number or a string for now. A
+               warning about a skipped extra due to unsupported type will be
+               printed in doScene(). */
+            if(gltfExtra.value().type() != Utility::JsonToken::Type::Number &&
+               gltfExtra.value().type() != Utility::JsonToken::Type::String)
+                continue;
+
             if(_d->sceneFieldsForName.emplace(gltfExtra.key(), sceneFieldCustom(_d->sceneFieldNamesTypes.size())).second) {
                 /* If the field has the type specified in configuration,
                    override the default */

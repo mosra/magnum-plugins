@@ -18,7 +18,7 @@
     },
     {
       "name": "ignored types",
-      "note": "these will still have their names registered",
+      "note": "none of these will have their names registered",
       "extras": {
         "invalidBoolField": true,
         "invalidNullField": null,
