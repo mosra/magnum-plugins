@@ -47,12 +47,19 @@
 #include <Magnum/Math/Angle.h>
 #include <Magnum/Math/Vector3.h>
 #include <Magnum/Math/Vector4.h>
+#include <Magnum/Math/Color.h>
 #include <Magnum/Math/Quaternion.h>
 #include <Magnum/Trade/AbstractImporter.h>
 #include <Magnum/Trade/MeshData.h>
 #include <Magnum/Trade/LightData.h>
 #include <Magnum/Trade/SceneData.h>
+#include <Magnum/Trade/TextureData.h>
+#include <Magnum/Trade/ImageData.h>
 #include <Magnum/Trade/MaterialData.h>
+#include <Magnum/Trade/PhongMaterialData.h>
+#include <Magnum/Trade/PbrMetallicRoughnessMaterialData.h>
+#include <Magnum/Trade/PbrSpecularGlossinessMaterialData.h>
+#include <Magnum/Trade/PbrClearCoatMaterialData.h>
 
 #include "../UfbxMaterials.h"
 
@@ -73,6 +80,9 @@ struct UfbxImporterTest: TestSuite::Tester {
     void mesh();
     void light();
     void materialMapping();
+    void blenderMaterials();
+    void meshMaterials();
+    void imageEmbedded();
 
     /* Needs to load AnyImageImporter from a system-wide location */
     PluginManager::Manager<AbstractImporter> _manager;
@@ -88,6 +98,10 @@ UfbxImporterTest::UfbxImporterTest() {
               &UfbxImporterTest::light});
 
     addTests({&UfbxImporterTest::materialMapping});
+
+    addTests({&UfbxImporterTest::blenderMaterials,
+              &UfbxImporterTest::meshMaterials,
+              &UfbxImporterTest::imageEmbedded});
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. It also pulls in the AnyImageImporter dependency. */
@@ -444,6 +458,236 @@ void UfbxImporterTest::materialMapping() {
     for(UnsignedInt i = 0; i < UFBX_MATERIAL_PBR_MAP_COUNT; ++i) {
         CORRADE_ITERATION(i);
         CORRADE_VERIFY(usedUfbxMaps[1][i]);
+    }
+}
+
+void UfbxImporterTest::blenderMaterials() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
+
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "blender-materials.fbx")));
+    CORRADE_VERIFY(importer->isOpened());
+    CORRADE_COMPARE(importer->sceneCount(), 1);
+    CORRADE_COMPARE(importer->materialCount(), 3);
+
+    {
+        Containers::Optional<MaterialData> material = importer->material("Default");
+        CORRADE_VERIFY(material);
+        CORRADE_COMPARE(material->types(), MaterialType::Phong|MaterialType::PbrMetallicRoughness);
+
+        {
+            const PhongMaterialData& phong = material->as<PhongMaterialData>();
+            CORRADE_COMPARE(phong.diffuseColor(), (Color4{0.8f, 0.8f, 0.8f, 1.0f}));
+            CORRADE_COMPARE(phong.shininess(), 25.0f);
+        }
+
+        {
+            const PbrMetallicRoughnessMaterialData& pbr = material->as<PbrMetallicRoughnessMaterialData>();
+            CORRADE_COMPARE(pbr.baseColor(), (Color4{0.8f, 0.8f, 0.8f, 1.0f}));
+            CORRADE_COMPARE(pbr.emissiveColor(), (Color3{0.0f, 0.0f, 0.0f}));
+            CORRADE_COMPARE(pbr.metalness(), 0.0f);
+            CORRADE_COMPARE(pbr.roughness(), 0.5f);
+        }
+    }
+
+    {
+        Containers::Optional<MaterialData> material = importer->material("Top");
+        CORRADE_VERIFY(material);
+        CORRADE_COMPARE(material->types(), MaterialType::Phong|MaterialType::PbrMetallicRoughness);
+
+        {
+            const PhongMaterialData& phong = material->as<PhongMaterialData>();
+            CORRADE_COMPARE(phong.diffuseColor(), (Color4{0.1f, 0.2f, 0.3f, 1.0f}));
+            CORRADE_COMPARE(phong.shininess(), 4.0f);
+        }
+
+        {
+            const PbrMetallicRoughnessMaterialData& pbr = material->as<PbrMetallicRoughnessMaterialData>();
+            CORRADE_COMPARE(pbr.baseColor(), (Color4{0.1f, 0.2f, 0.3f, 0.9f}));
+            CORRADE_COMPARE(pbr.emissiveColor(), (Color3{0.4f, 0.5f, 0.6f}));
+            CORRADE_COMPARE(pbr.metalness(), 0.7f);
+            CORRADE_COMPARE(pbr.roughness(), 0.8f);
+        }
+    }
+
+    {
+        Containers::Optional<MaterialData> material = importer->material("Textures");
+        CORRADE_VERIFY(material);
+        CORRADE_COMPARE(material->types(), MaterialType::Phong|MaterialType::PbrMetallicRoughness);
+
+        {
+            const PhongMaterialData& phong = material->as<PhongMaterialData>();
+
+            {
+                CORRADE_VERIFY(phong.hasAttribute(MaterialAttribute::DiffuseTexture));
+                Containers::Optional<TextureData> texture = importer->texture(phong.diffuseTexture());
+                CORRADE_VERIFY(texture);
+                CORRADE_COMPARE(importer->image2DName(texture->image()), "blender-materials.fbm\\checkerboard_diffuse.png");
+            }
+        }
+
+        {
+            const PbrMetallicRoughnessMaterialData& pbr = material->as<PbrMetallicRoughnessMaterialData>();
+
+            {
+                CORRADE_VERIFY(pbr.hasAttribute(MaterialAttribute::BaseColorTexture));
+                Containers::Optional<TextureData> texture = importer->texture(pbr.baseColorTexture());
+                CORRADE_VERIFY(texture);
+                CORRADE_COMPARE(importer->image2DName(texture->image()), "blender-materials.fbm\\checkerboard_diffuse.png");
+            }
+
+            {
+                CORRADE_VERIFY(pbr.hasAttribute(MaterialAttribute::EmissiveTexture));
+                Containers::Optional<TextureData> texture = importer->texture(pbr.emissiveTexture());
+                CORRADE_VERIFY(texture);
+                CORRADE_COMPARE(importer->image2DName(texture->image()), "blender-materials.fbm\\checkerboard_emissive.png");
+            }
+
+            {
+                CORRADE_VERIFY(pbr.hasAttribute(MaterialAttribute::RoughnessTexture));
+                Containers::Optional<TextureData> texture = importer->texture(pbr.roughnessTexture());
+                CORRADE_VERIFY(texture);
+                CORRADE_COMPARE(importer->image2DName(texture->image()), "blender-materials.fbm\\checkerboard_roughness.png");
+            }
+
+            {
+                CORRADE_VERIFY(pbr.hasAttribute(MaterialAttribute::MetalnessTexture));
+                Containers::Optional<TextureData> texture = importer->texture(pbr.metalnessTexture());
+                CORRADE_VERIFY(texture);
+                CORRADE_COMPARE(importer->image2DName(texture->image()), "blender-materials.fbm\\checkerboard_metallic.png");
+            }
+        }
+
+        {
+            CORRADE_VERIFY(material->hasAttribute("opacityTexture"));
+            UnsignedInt textureId = material->attribute<UnsignedInt>("opacityTexture");
+            Containers::Optional<TextureData> texture = importer->texture(textureId);
+            CORRADE_VERIFY(texture);
+            CORRADE_COMPARE(importer->image2DName(texture->image()), "blender-materials.fbm\\checkerboard_transparency.png");
+        }
+    }
+}
+
+void UfbxImporterTest::meshMaterials() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
+
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "blender-materials.fbx")));
+    CORRADE_VERIFY(importer->isOpened());
+    CORRADE_COMPARE(importer->sceneCount(), 1);
+    CORRADE_COMPARE(importer->objectCount(), 1);
+    CORRADE_COMPARE(importer->materialCount(), 3);
+    CORRADE_COMPARE(importer->meshCount(), 3);
+
+    Containers::Optional<SceneData> scene = importer->scene(0);
+    CORRADE_VERIFY(scene);
+
+    CORRADE_VERIFY(scene->hasField(SceneField::MeshMaterial));
+    CORRADE_COMPARE_AS(scene->mapping<UnsignedInt>(SceneField::Mesh), Containers::arrayView<UnsignedInt>({
+        0, 0, 0,
+    }), TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(scene->field<UnsignedInt>(SceneField::Mesh), Containers::arrayView<UnsignedInt>({
+        0, 1, 2,
+    }), TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(scene->field<Int>(SceneField::MeshMaterial), Containers::arrayView<Int>({
+        0, 1, 2,
+    }), TestSuite::Compare::Container);
+
+    CORRADE_COMPARE(importer->materialName(0), "Default");
+    CORRADE_COMPARE(importer->materialName(1), "Top");
+    CORRADE_COMPARE(importer->materialName(2), "Textures");
+
+    /* 'Default' material is on the sides */
+    {
+        Containers::Optional<MeshData> mesh = importer->mesh(0);
+        CORRADE_VERIFY(mesh);
+        CORRADE_COMPARE(mesh->indexCount(), 4*2*3);
+
+        UnsignedInt vertexCount = mesh->vertexCount();
+        Containers::StridedArrayView1D<const Vector3> normal = mesh->attribute<Vector3>(MeshAttribute::Normal);
+        for (UnsignedInt i = 0; i < vertexCount; ++i) {
+            CORRADE_ITERATION(i);
+            CORRADE_COMPARE(normal[i].z(), 0.0f);
+        }
+    }
+
+    /* 'Top' material is on the top face (+Z in Blender local) */
+    {
+        Containers::Optional<MeshData> mesh = importer->mesh(1);
+        CORRADE_VERIFY(mesh);
+        CORRADE_COMPARE(mesh->indexCount(), 2*3);
+
+        CORRADE_COMPARE(mesh->attributeCount(MeshAttribute::Position), 1);
+        CORRADE_COMPARE(mesh->attributeCount(MeshAttribute::Normal), 1);
+
+        UnsignedInt vertexCount = mesh->vertexCount();
+        Containers::StridedArrayView1D<const Vector3> position = mesh->attribute<Vector3>(MeshAttribute::Position);
+        Containers::StridedArrayView1D<const Vector3> normal = mesh->attribute<Vector3>(MeshAttribute::Normal);
+        for (UnsignedInt i = 0; i < vertexCount; ++i) {
+            CORRADE_ITERATION(i);
+            CORRADE_COMPARE(position[i].z(), 1.0f);
+            CORRADE_COMPARE(normal[i], (Vector3{0.0f,0.0f,1.0f}));
+        }
+    }
+
+    /* 'Textures' material is on the bottom face (-Z in Blender local) */
+    {
+        Containers::Optional<MeshData> mesh = importer->mesh(2);
+        CORRADE_VERIFY(mesh);
+        CORRADE_COMPARE(mesh->indexCount(), 2*3);
+
+        CORRADE_COMPARE(mesh->attributeCount(MeshAttribute::Position), 1);
+        CORRADE_COMPARE(mesh->attributeCount(MeshAttribute::Normal), 1);
+
+        UnsignedInt vertexCount = mesh->vertexCount();
+        Containers::StridedArrayView1D<const Vector3> position = mesh->attribute<Vector3>(MeshAttribute::Position);
+        Containers::StridedArrayView1D<const Vector3> normal = mesh->attribute<Vector3>(MeshAttribute::Normal);
+        for (UnsignedInt i = 0; i < vertexCount; ++i) {
+            CORRADE_ITERATION(i);
+            CORRADE_COMPARE(position[i].z(), -1.0f);
+            CORRADE_COMPARE(normal[i], (Vector3{0.0f,0.0f,-1.0f}));
+        }
+    }
+
+}
+
+void UfbxImporterTest::imageEmbedded() {
+    if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("PngImporter plugin not found, cannot test");
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
+
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "blender-materials.fbx")));
+    CORRADE_VERIFY(importer->isOpened());
+
+    UnsignedInt imageCount = importer->image2DCount();
+    CORRADE_COMPARE(imageCount, 5);
+
+    struct TestImage {
+        Containers::StringView name;
+        Color4ub topLeftPixelColor;
+        Color4ub bottomLeftPixelColor;
+    };
+
+    TestImage testImages[] = {
+        { "blender-materials.fbm\\checkerboard_diffuse.png",      0x7c5151ff_rgba, 0x3d2828ff_rgba },
+        { "blender-materials.fbm\\checkerboard_emissive.png",     0x44743bff_rgba, 0x223a1dff_rgba },
+        { "blender-materials.fbm\\checkerboard_roughness.png",    0x5f3228ff_rgba, 0x2f1914ff_rgba },
+        { "blender-materials.fbm\\checkerboard_metallic.png",     0x63422cff_rgba, 0x312116ff_rgba },
+        { "blender-materials.fbm\\checkerboard_transparency.png", 0x407177ff_rgba, 0x1f373aff_rgba },
+    };
+
+    for (const TestImage& testImage : testImages) {
+        CORRADE_ITERATION(testImage.name);
+
+        Int optionalId = importer->image2DForName(testImage.name);
+        CORRADE_VERIFY(optionalId >= 0);
+        UnsignedInt id = UnsignedInt(optionalId);
+
+        CORRADE_COMPARE(importer->image2DLevelCount(id), 1);
+        Containers::Optional<ImageData2D> image = importer->image2D(id);
+        CORRADE_VERIFY(image);
+        CORRADE_COMPARE(image->size(), (Vector2i{128,128}));
+        CORRADE_COMPARE(image->pixels<Color4ub>()[0][0], testImage.bottomLeftPixelColor);
+        CORRADE_COMPARE(image->pixels<Color4ub>()[127][0], testImage.topLeftPixelColor);
     }
 }
 

@@ -34,6 +34,12 @@ else()
     set(UFBXIMPORTER_TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 endif()
 
+if(NOT MAGNUM_ASSIMPIMPORTER_BUILD_STATIC)
+    if(MAGNUM_WITH_STBIMAGEIMPORTER)
+        set(STBIMAGEIMPORTER_PLUGIN_FILENAME $<TARGET_FILE:StbImageImporter>)
+    endif()
+endif()
+
 if(NOT MAGNUM_UFBXIMPORTER_BUILD_STATIC)
     set(UFBXIMPORTER_PLUGIN_FILENAME $<TARGET_FILE:UfbxImporter>)
 endif()
@@ -55,9 +61,15 @@ target_include_directories(UfbxImporterTest PRIVATE ${PROJECT_SOURCE_DIR}/src/ex
 target_include_directories(UfbxImporterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>)
 if(MAGNUM_UFBXIMPORTER_BUILD_STATIC)
     target_link_libraries(UfbxImporterTest PRIVATE UfbxImporter)
+    if(MAGNUM_WITH_STBIMAGEIMPORTER)
+        target_link_libraries(UfbxImporterTest PRIVATE StbImageImporter)
+    endif()
 else()
     # So the plugins get properly built when building the test
     add_dependencies(UfbxImporterTest UfbxImporter)
+    if(MAGNUM_WITH_STBIMAGEIMPORTER)
+        add_dependencies(UfbxImporterTest StbImageImporter)
+    endif()
 endif()
 if(CORRADE_BUILD_STATIC AND NOT MAGNUM_UFBXIMPORTER_BUILD_STATIC)
     # CMake < 3.4 does this implicitly, but 3.4+ not anymore (see CMP0065).
