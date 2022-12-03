@@ -279,6 +279,11 @@ struct FileOpener {
     void *_userData;
 };
 
+struct FileTexture {
+    UnsignedInt textureIndex;
+    UnsignedInt fileIndex;
+};
+
 }
 
 struct UfbxImporter::State {
@@ -298,6 +303,9 @@ struct UfbxImporter::State {
     UnsignedInt imageImporterId = ~UnsignedInt{};
     Containers::Optional<AnyImageImporter> imageImporter;
 
+    std::unordered_map<std::string, UnsignedInt> textureNameMap;
+    Containers::Array<FileTexture> textures;
+    Containers::Array<Int> textureRemap;
 };
 
 UfbxImporter::UfbxImporter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin): AbstractImporter{manager, plugin} {
@@ -417,6 +425,23 @@ void UfbxImporter::openInternal(void* state, bool fromFile) {
                     ++_state->nodeCountWithSynthetic;
                 }
             }
+        }
+    }
+
+    /* Use only textures which have a potential file */
+    arrayResize(_state->textureRemap, scene->textures.count, -1);
+    for (ufbx_texture *texture : scene->textures) {
+        if (!texture->has_file) continue;
+
+        UnsignedInt id = texture->typed_id;
+        _state->textureRemap[id] = (Int)_state->textures.size();
+        arrayAppend(_state->textures, { id, texture->file_index });
+    }
+
+    for (UnsignedInt i = 0; i < scene->texture_files.count; ++i) {
+        ufbx_string name = scene->texture_files[i].relative_filename;
+        if (name.length > 0) {
+            _state->textureNameMap.emplace(std::string(name.data, name.length), i);
         }
     }
 }
@@ -950,8 +975,12 @@ Containers::Optional<MaterialData> UfbxImporter::doMaterial(UnsignedInt id) {
         { Containers::arrayView(materialMappingFbx), Containers::arrayView(material->fbx.maps) },
     };
 
-    /* Flexible for custom layers (layered textures) */
-    Containers::Array<Containers::Array<MaterialAttributeData>> attributeLayers{UfbxMaterialLayerCount};
+    /* Attributes for a single UfbxMaterialLayer */
+    struct UfbxMaterialLayerAttributes {
+        Containers::Array<MaterialAttributeData> defaultLayer;
+        Containers::Array<Containers::Array<MaterialAttributeData>> extraLayers;
+    };
+    Containers::StaticArray<UfbxMaterialLayerCount, UfbxMaterialLayerAttributes> layerAttributes;
 
     MaterialTypes types;
 
@@ -975,8 +1004,8 @@ Containers::Optional<MaterialData> UfbxImporter::doMaterial(UnsignedInt id) {
         types |= MaterialType::PbrClearCoat;
     }
 
-
     for (UnsignedInt listIndex = 0; listIndex < 2; ++listIndex) {
+        bool pbr = listIndex == 0;
         const MaterialMappingList &list = mappingLists[listIndex];
         for (const MaterialMapping &mapping : list.mappings) {
             const ufbx_material_map &map = list.maps[mapping.valueMap];
@@ -991,7 +1020,7 @@ Containers::Optional<MaterialData> UfbxImporter::doMaterial(UnsignedInt id) {
                 seenExclusionGroups |= mapping.exclusionGroup;
             }
 
-            Float factor = 1.0f;
+            Float factor = 1.0f, opacity = 1.0f;
             if (mapping.factorMap >= 0) {
                 const ufbx_material_map &factorMap = list.maps[mapping.factorMap];
                 if (factorMap.has_value) {
@@ -999,10 +1028,20 @@ Containers::Optional<MaterialData> UfbxImporter::doMaterial(UnsignedInt id) {
                 }
             }
 
+            /* Handle some special cases */
+
+            /* Patch opacity to BaseColor.a */
+            if (pbr && mapping.valueMap == UFBX_MATERIAL_PBR_BASE_COLOR) {
+                if (material->pbr.opacity.has_value) {
+                    opacity = Float(material->pbr.opacity.value_real);
+                }
+            }
+
             Containers::StringView attribute = mapping.attribute;
+            UfbxMaterialLayerAttributes &attributesForLayer = layerAttributes[UnsignedInt(mapping.layer)];
 
             if (attribute && map.has_value) {
-                Containers::Array<MaterialAttributeData> &attributes = attributeLayers[UnsignedInt(mapping.layer)];
+                Containers::Array<MaterialAttributeData> &attributes = attributesForLayer.defaultLayer;
                 if (mapping.attributeType == MaterialAttributeType::Float) {
                     Float value = Float(map.value_real) * factor;
                     arrayAppend(attributes, {attribute, value});
@@ -1010,7 +1049,7 @@ Containers::Optional<MaterialData> UfbxImporter::doMaterial(UnsignedInt id) {
                     Vector3 value = Vector3(map.value_vec3) * factor;
                     arrayAppend(attributes, {attribute, value});
                 } else if (mapping.attributeType == MaterialAttributeType::Vector4) {
-                    Vector4 value = Vector4(map.value_vec4) * Vector4{factor,factor,factor,1.0f};
+                    Vector4 value = Vector4(map.value_vec4) * Vector4{factor,factor,factor,opacity};
                     arrayAppend(attributes, {attribute, value});
                 } else if (mapping.attributeType == MaterialAttributeType::Long) {
                     arrayAppend(attributes, {attribute, map.value_int});
@@ -1025,8 +1064,10 @@ Containers::Optional<MaterialData> UfbxImporter::doMaterial(UnsignedInt id) {
                      UFBX_TEXTURE_SHADER: Arbitrary references in a shader graph
                    Normal UFBX_TEXTURE_FILE textures also always contain
                    a single texture (themselves) in file_textures */
-                for (UnsignedInt i = 0; i < map.texture->file_textures.count; ++i) {
-                    ufbx_texture *texture = map.texture->file_textures[i];
+                UnsignedInt layer = 0;
+                for (ufbx_texture *texture : map.texture->file_textures) {
+                    Int textureId = _state->textureRemap[texture->typed_id];
+                    if (textureId < 0) continue;
 
                     Containers::String textureAttribute;
                     if (mapping.textureAttribute)
@@ -1034,26 +1075,13 @@ Containers::Optional<MaterialData> UfbxImporter::doMaterial(UnsignedInt id) {
                     else
                         textureAttribute = attribute + "Texture"_s;
 
-                    UnsignedInt layer;
-                    if (i == 0) {
-                        layer = UnsignedInt(mapping.layer);
-                    } else {
-                        layer = UnsignedInt(UfbxMaterialLayer::Custom) + (i - 1);
+                    if (layer > 0 && layer - 1 > attributesForLayer.extraLayers.size())
+                        arrayResize(attributesForLayer.extraLayers, layer);
 
-                        /* Ugh edge case: All the layered textures go into the
-                           same namespace in further layers so names that won't
-                           normally collide might, eg. NormalTexture (BaseLayer)
-                           NormalTexture (ClearCoat). */
-                        if (mapping.layer != UfbxMaterialLayer::Base) {
-                            textureAttribute = ufbxMaterialLayerNames[UnsignedInt(mapping.layer)] + "." + textureAttribute;
-                        }
-                    }
+                    Containers::Array<MaterialAttributeData> &attributes = layer == 0
+                        ? attributesForLayer.defaultLayer : attributesForLayer.extraLayers[layer - 1];
 
-                    if (layer > attributeLayers.size())
-                        arrayResize(attributeLayers, layer + 1);
-
-                    Containers::Array<MaterialAttributeData> &attributes = attributeLayers[layer];
-                    arrayAppend(attributes, {textureAttribute, UnsignedInt(texture->typed_id)});
+                    arrayAppend(attributes, {textureAttribute, UnsignedInt(textureId)});
 
                     if (texture->has_uv_transform) {
                         const Containers::String matrixAttribute = textureAttribute + "Matrix"_s;
@@ -1073,15 +1101,19 @@ Containers::Optional<MaterialData> UfbxImporter::doMaterial(UnsignedInt id) {
                        there are shaders/recursive layers involved..
                        Only include layer details if it matches with the actual
                        file textures. */
-                    if (texture->type == UFBX_TEXTURE_LAYERED && i < texture->layers.count) {
-                        const ufbx_texture_layer &texLayer = texture->layers[i];
+                    if (texture->type == UFBX_TEXTURE_LAYERED && layer < texture->layers.count) {
+                        const ufbx_texture_layer &texLayer = texture->layers[layer];
                         if (texLayer.texture == texture) {
                             const Containers::String blendModeAttribute = textureAttribute + "BlendMode"_s;
                             const Containers::String blendAlphaAttribute = textureAttribute + "BlendAlpha"_s;
+                            /* @todo: Convert blend mode names to string?
+                               Should probably add some support for enum names in ufbx.. */
                             arrayAppend(attributes, {blendModeAttribute, UnsignedInt(texLayer.blend_mode)});
                             arrayAppend(attributes, {blendAlphaAttribute, UnsignedInt(texLayer.alpha)});
                         }
                     }
+
+                    ++layer;
                 }
             }
         }
@@ -1092,19 +1124,36 @@ Containers::Optional<MaterialData> UfbxImporter::doMaterial(UnsignedInt id) {
 
     /* Concatenate all layers, the first layer is special and doesn't have a
        LayerName entry and gets a zero attribute layer if necessary. */
-    for (UnsignedInt layer = 0; layer < attributeLayers.size(); ++layer) {
-        Containers::ArrayView<MaterialAttributeData> attributes = attributeLayers[layer];
+    for (UnsignedInt layer = 0; layer < layerAttributes.size(); ++layer) {
+        UfbxMaterialLayerAttributes &attributesForLayer = layerAttributes[UnsignedInt(layer)];
 
         /* Skip empty layers after the first one */
-        if (layer != 0 && attributes.isEmpty()) continue;
+        if (layer != 0 && attributesForLayer.defaultLayer.isEmpty()) continue;
 
-        UnsignedInt layerAttributeCount = UnsignedInt(attributes.size());
-        if (layer != 0 && layer < UfbxMaterialLayerCount) {
-            arrayAppend(flatAttributes, {MaterialAttribute::LayerName, ufbxMaterialLayerNames[layer]});
-            ++layerAttributeCount;
+        UnsignedInt layerAttributeCount = 0;
+
+        /* Default layer */
+        {
+            Containers::ArrayView<MaterialAttributeData> attributes = attributesForLayer.defaultLayer;
+            if (layer != 0) {
+                arrayAppend(flatAttributes, {MaterialAttribute::LayerName, ufbxMaterialLayerNames[layer]});
+                ++layerAttributeCount;
+            }
+            arrayAppend(flatAttributes, attributes);
+            layerAttributeCount += attributes.size();
         }
 
-        arrayAppend(flatAttributes, attributes);
+        /* Extra layers */
+        for (UnsignedInt i = 0; i < attributesForLayer.extraLayers.size(); ++i) {
+            Containers::ArrayView<MaterialAttributeData> attributes = attributesForLayer.extraLayers[i];
+            if (layer != 0) {
+                arrayAppend(flatAttributes, {MaterialAttribute::LayerName, ufbxMaterialLayerNames[layer]});
+                ++layerAttributeCount;
+            }
+            arrayAppend(flatAttributes, attributes);
+            layerAttributeCount += attributes.size();
+        }
+
         arrayAppend(layerSizes, layerAttributeCount);
     }
 
@@ -1117,19 +1166,22 @@ Containers::Optional<MaterialData> UfbxImporter::doMaterial(UnsignedInt id) {
 }
 
 UnsignedInt UfbxImporter::doTextureCount() const {
-    return UnsignedInt(_state->scene->textures.count);
+    return UnsignedInt(_state->textures.size());
 }
 
 Int UfbxImporter::doTextureForName(Containers::StringView name) {
-    return typedId(ufbx_find_element_len(_state->scene.get(), UFBX_ELEMENT_TEXTURE, name.data(), name.size()));
+    ufbx_texture *texture = (ufbx_texture*)ufbx_find_element_len(_state->scene.get(), UFBX_ELEMENT_TEXTURE, name.data(), name.size());
+    return texture ? _state->textureRemap[texture->typed_id] : -1;
 }
 
 Containers::String UfbxImporter::doTextureName(UnsignedInt id) {
-    return _state->scene->textures[id]->name;
+    const FileTexture& fileTexture = _state->textures[id];
+    return _state->scene->textures[fileTexture.textureIndex]->name;
 }
 
 Containers::Optional<TextureData> UfbxImporter::doTexture(UnsignedInt id) {
-    ufbx_texture *texture = _state->scene->textures[id];
+    const FileTexture& fileTexture = _state->textures[id];
+    ufbx_texture *texture = _state->scene->textures[fileTexture.textureIndex];
 
     SamplerWrapping wrappingU = toSamplerWrapping(texture->wrap_u);
     SamplerWrapping wrappingV = toSamplerWrapping(texture->wrap_v);
@@ -1137,11 +1189,11 @@ Containers::Optional<TextureData> UfbxImporter::doTexture(UnsignedInt id) {
     /* @todo: Image deduplication */
     return TextureData{TextureType::Texture2D,
         SamplerFilter::Linear, SamplerFilter::Linear, SamplerMipmap::Linear,
-        {wrappingU, wrappingV, SamplerWrapping::ClampToEdge}, id};
+        {wrappingU, wrappingV, SamplerWrapping::ClampToEdge}, fileTexture.fileIndex};
 }
 
 AbstractImporter* UfbxImporter::setupOrReuseImporterForImage(UnsignedInt id, const char* errorPrefix) {
-    ufbx_texture *texture = _state->scene->textures[id];
+    ufbx_texture_file &file = _state->scene->texture_files[id];
 
     /* Looking for the same ID, so reuse an importer populated before. If the
        previous attempt failed, the importer is not set, so return nullptr in
@@ -1161,17 +1213,17 @@ AbstractImporter* UfbxImporter::setupOrReuseImporterForImage(UnsignedInt id, con
     importer.setFlags(flags());
     if(fileCallback()) importer.setFileCallback(fileCallback(), fileCallbackUserData());
 
-    if (texture->content.size > 0) {
-        auto textureData = Containers::ArrayView<const char>(reinterpret_cast<const char*>(texture->content.data), texture->content.size);
+    if (file.content.size > 0) {
+        auto textureData = Containers::ArrayView<const char>(reinterpret_cast<const char*>(file.content.data), file.content.size);
         if(!importer.openData(textureData))
             return nullptr;
-    } else if (texture->filename.length > 0) {
+    } else if (file.filename.length > 0) {
         if (!_state->fromFile && !fileCallback()) {
             Error{} << errorPrefix << "external images can be imported only when opening files from the filesystem or if a file callback is present";
             return nullptr;
         }
 
-        if(!importer.openFile(texture->filename))
+        if(!importer.openFile(file.filename))
             return nullptr;
     } else {
         Error{} << errorPrefix << "empty filename";
@@ -1187,7 +1239,7 @@ AbstractImporter* UfbxImporter::setupOrReuseImporterForImage(UnsignedInt id, con
 }
 
 UnsignedInt UfbxImporter::doImage2DCount() const {
-    return UnsignedInt(_state->scene->textures.count);
+    return UnsignedInt(_state->scene->texture_files.count);
 }
 
 UnsignedInt UfbxImporter::doImage2DLevelCount(UnsignedInt id) {
@@ -1208,6 +1260,19 @@ Containers::Optional<ImageData2D> UfbxImporter::doImage2D(UnsignedInt id, Unsign
     if(!importer) return Containers::NullOpt;
 
     return importer->image2D(0, level);
+}
+
+Int UfbxImporter::doImage2DForName(Containers::StringView name) {
+    auto it = _state->textureNameMap.find(name);
+    if (it != _state->textureNameMap.end()) {
+        return Int(it->second);
+    } else {
+        return -1;
+    }
+}
+
+Containers::String UfbxImporter::doImage2DName(UnsignedInt id) {
+    return _state->scene->texture_files[id].relative_filename;
 }
 
 }}

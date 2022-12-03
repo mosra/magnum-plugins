@@ -17,10 +17,9 @@ enum class UfbxMaterialLayer: UnsignedInt {
     Subsurface,
     Sheen,
     Matte,
-    Custom,
 };
 
-constexpr UnsignedInt UfbxMaterialLayerCount = UnsignedInt(UfbxMaterialLayer::Custom);
+constexpr UnsignedInt UfbxMaterialLayerCount = UnsignedInt(UfbxMaterialLayer::Matte) + 1;
 
 const constexpr Containers::StringView ufbxMaterialLayerNames[] = {
     {},
@@ -132,8 +131,8 @@ const constexpr MaterialMapping materialMappingPbr[] = {
     /* @todo This could be it's own layer */
     { UfbxMaterialLayer::Base, MaterialAttributeType::Vector3, "EmissiveColor"_s, "EmissiveTexture"_s, UFBX_MATERIAL_PBR_EMISSION_COLOR, UFBX_MATERIAL_PBR_EMISSION_FACTOR, MaterialExclusionGroup::Emission },
 
-    /* @todo Should this be translated into BaseColor.a?
-       It represents non-physical fade out in the PBR model. */
+    /* Copied over to BaseColor.a but we need to keep this copy as it might have
+       a texture connected to it */
     { UfbxMaterialLayer::Base, MaterialAttributeType::Float, "opacity"_s, {}, UFBX_MATERIAL_PBR_OPACITY },
 
     { UfbxMaterialLayer::Base, MaterialAttributeType::Float, "indirectDiffuse"_s, {}, UFBX_MATERIAL_PBR_INDIRECT_DIFFUSE },
