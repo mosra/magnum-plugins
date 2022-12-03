@@ -1105,7 +1105,15 @@ void GltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags da
                     option at all */
                 const Containers::StringView typeString = customSceneFieldTypeConfiguration ? customSceneFieldTypeConfiguration->value<Containers::StringView>(gltfExtra.key()) : ""_s;
                 SceneFieldType type;
-                if(!typeString) type = SceneFieldType::Float;
+                if(!typeString) switch(gltfExtra.value().type()) {
+                    case Utility::JsonToken::Type::Number:
+                        type = SceneFieldType::Float;
+                        break;
+                    case Utility::JsonToken::Type::String:
+                        type = SceneFieldType::StringOffset32;
+                        break;
+                    default: CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+                }
                 #define _c(type_) if(typeString == #type_ ## _s) type = SceneFieldType::type_;
                 else _c(Float)
                 else _c(UnsignedInt)
@@ -2262,6 +2270,7 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
     UnsignedInt lightCount = 0;
     UnsignedInt cameraCount = 0;
     UnsignedInt skinCount = 0;
+    std::size_t extraStringSize = 0;
     /* Separate counter for every recognized extra field plus two extra items
        to turn this into an offset array later */
     Containers::Array<UnsignedInt> extraOffsets{ValueInit, _d->sceneFieldNamesTypes.size() + 2};
@@ -2378,7 +2387,8 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
            import */
         if(const Utility::JsonToken* const gltfExtras = gltfNode.find("extras"_s)) {
             if(gltfExtras->type() == Utility::JsonToken::Type::Object) for(const Utility::JsonObjectItem gltfExtra: gltfExtras->asObject()) {
-                if(gltfExtra.value().type() == Utility::JsonToken::Type::Number) {
+                if(gltfExtra.value().type() == Utility::JsonToken::Type::Number ||
+                   gltfExtra.value().type() == Utility::JsonToken::Type::String) {
                     const UnsignedInt customFieldId = sceneFieldCustom(_d->sceneFieldsForName.at(gltfExtra.key()));
                     bool success;
                     switch(_d->sceneFieldNamesTypes[customFieldId].second()) {
@@ -2389,6 +2399,11 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
                         _c(UnsignedInt)
                         _c(Int)
                         #undef _c
+                        case SceneFieldType::StringOffset32: {
+                            const Containers::Optional<Containers::StringView> string = _d->gltf->parseString(gltfExtra.value());
+                            if((success = !!string))
+                                extraStringSize += string->size();
+                        } break;
                         default: CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
                     }
                     if(!success) {
@@ -2403,6 +2418,9 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
             } else Warning{} << "Trade::GltfImporter::scene(): node" << i << "extras property is" << gltfExtras->type() << Debug::nospace << ", skipping";
         }
     }
+
+    /** @todo switch to 64-bit offsets if there's many strings */
+    CORRADE_INTERNAL_ASSERT(extraStringSize <= ~UnsignedInt{});
 
     /* Turn the extraCount into an offset array. After this step,
        `extraOffsets[i + 1]` to `extraOffsets[i + 2]` is the range of data for
@@ -2438,11 +2456,12 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
     Containers::ArrayView<UnsignedInt> skinObjects;
     Containers::ArrayView<UnsignedInt> skins;
     Containers::ArrayView<UnsignedInt> extraObjects;
+    Containers::MutableStringView extrasStrings;
     /* This gets later cast to extrasFloat and extrasInt */
     /** @todo Abusing the fact that all allowed extras types are 32-bit now,
         when 64-bit types are introduced there has to be a second 64-bit array
-        to satisfy alignment. For composite types (vectors, matrices) however
-        it's enough to just take more items at once. */
+        to satisfy alignment. For composite types (pairs, vectors, matrices)
+        however it's enough to just take more items at once. */
     Containers::ArrayView<UnsignedInt> extrasUnsignedInt;
     Containers::Array<char> data = Containers::ArrayTuple{
         {NoInit, objects.size(), parentImporterStateObjects},
@@ -2463,6 +2482,7 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
         {NoInit, cameraCount, cameras},
         {NoInit, skinCount, skinObjects},
         {NoInit, skinCount, skins},
+        {NoInit, extraStringSize, extrasStrings},
         {NoInit, extraCount, extraObjects},
         {NoInit, extraCount, extrasUnsignedInt}
     };
@@ -2485,6 +2505,7 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
     std::size_t lightOffset = 0;
     std::size_t cameraOffset = 0;
     std::size_t skinOffset = 0;
+    std::size_t extraStringOffset = 0;
     for(std::size_t i = 0; i != objects.size(); ++i) {
         const UnsignedInt nodeI = objects[i];
         const Utility::JsonToken& gltfNode = _d->gltfNodes[nodeI].first();
@@ -2624,7 +2645,10 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
            an invalid literal). */
         if(const Utility::JsonToken* const gltfExtras = gltfNode.find("extras"_s)) {
             if(gltfExtras->type() == Utility::JsonToken::Type::Object) for(const Utility::JsonObjectItem gltfExtra: gltfExtras->asObject()) {
-                if(gltfExtra.value().type() == Utility::JsonToken::Type::Number && gltfExtra.value().isParsed()) {
+                if(gltfExtra.value().isParsed() && (
+                    gltfExtra.value().type() == Utility::JsonToken::Type::Number ||
+                    gltfExtra.value().type() == Utility::JsonToken::Type::String
+                )) {
                     const UnsignedInt customFieldId = sceneFieldCustom(_d->sceneFieldsForName.at(gltfExtra.key()));
                     /* Now the offsets are shifted by 1, after this loop
                        they'll be shifted by 0 for the final SceneFieldData
@@ -2643,6 +2667,12 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
                         _c(UnsignedInt)
                         _c(Int)
                         #undef _c
+                        case SceneFieldType::StringOffset32: {
+                            const Containers::StringView string = gltfExtra.value().asString();
+                            Utility::copy(string, extrasStrings.sliceSize(extraStringOffset, string.size()));
+                            extraStringOffset += string.size();
+                            extrasUnsignedInt[extraOffset] = extraStringOffset;
+                        } break;
                         default: CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
                     }
                     /** @todo when composite types are introduced, this has to
@@ -2660,7 +2690,8 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
         meshMaterialOffset == meshMaterialObjects.size() &&
         lightOffset == lightObjects.size() &&
         cameraOffset == cameraObjects.size() &&
-        skinOffset == skinObjects.size());
+        skinOffset == skinObjects.size() &&
+        extraStringOffset == extraStringSize);
 
     /* Put everything together. For simplicity the imported data could always
        have all fields present, with some being empty, but this gives less
@@ -2714,10 +2745,16 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
     for(std::size_t i = 0; i != _d->sceneFieldNamesTypes.size(); ++i) {
         const std::size_t begin = extraOffsets[i];
         const std::size_t end = extraOffsets[i + 1];
-        if(begin != end) arrayAppend(fields, SceneFieldData{sceneFieldCustom(i),
-            SceneMappingType::UnsignedInt, extraObjects.slice(begin, end),
-            _d->sceneFieldNamesTypes[i].second(), extrasUnsignedInt.slice(begin, end)
-        });
+        if(begin != end) {
+            const SceneFieldType fieldType = _d->sceneFieldNamesTypes[i].second();
+            if(fieldType == SceneFieldType::StringOffset32)
+                arrayAppend(fields, SceneFieldData{sceneFieldCustom(i),
+                SceneMappingType::UnsignedInt, extraObjects.slice(begin, end),
+                extrasStrings.data(), fieldType, extrasUnsignedInt.slice(begin, end)});
+            else arrayAppend(fields, SceneFieldData{sceneFieldCustom(i),
+                SceneMappingType::UnsignedInt, extraObjects.slice(begin, end),
+                fieldType, extrasUnsignedInt.slice(begin, end)});
+        }
     }
 
     /* Convert back to the default deleter to avoid dangling deleter function

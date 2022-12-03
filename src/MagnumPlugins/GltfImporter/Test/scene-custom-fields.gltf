@@ -37,16 +37,20 @@
         "offset": 17,
         "UppercaseName": -56,
         "offset": -22,
+        "category": "duplicated",
+        "category": "very",
         "radius": 3.5
       }
     },
     {
       "name": "invalid values",
-      "note": "the offset and flags fail only because they're set to be parsed as Int and UnsignedInt, respectively",
+      "note": "the offset and flags fail only because they're set to be parsed as Int and UnsignedInt, respectively; category is then supposed to be a string and offset a number",
       "extras": {
         "radius": 56.0f,
         "offset": 23.5,
-        "flags": -1
+        "category": 155,
+        "flags": -1,
+        "offset": "none"
       }
     },
     {
@@ -57,13 +61,15 @@
     },
     {
       "extras": {
-        "radius": 0.5
+        "radius": 0.5,
+        "category": "noteless"
       }
     },
     {
       "note": "to verify the 32-bit precision doesn't get lost along the way",
       "extras": {
         "radius": 5.5,
+        "category": "positive",
         "flags": 4294967295
       }
     }
