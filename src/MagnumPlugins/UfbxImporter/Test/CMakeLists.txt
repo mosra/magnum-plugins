@@ -59,7 +59,7 @@ corrade_add_test(UfbxImporterTest UfbxImporterTest.cpp
     FILES
         blender-default.fbx
         blender-materials.fbx
-        maay-material-arnold.fbx
+        maya-material-arnold.fbx
         triangle.fbx
         lights.fbx)
 
