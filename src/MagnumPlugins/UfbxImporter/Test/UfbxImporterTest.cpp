@@ -44,6 +44,7 @@
 #include <Corrade/TestSuite/Compare/String.h>
 #include <Corrade/Utility/Path.h>
 #include <Corrade/Utility/String.h>
+#include <Magnum/DebugTools/CompareMaterial.h>
 #include <Magnum/Math/Angle.h>
 #include <Magnum/Math/Vector3.h>
 #include <Magnum/Math/Vector4.h>
@@ -83,6 +84,7 @@ struct UfbxImporterTest: TestSuite::Tester {
     void lightName();
     void materialMapping();
     void blenderMaterials();
+    void mayaMaterialArnold();
     void meshMaterials();
     void imageEmbedded();
 
@@ -104,6 +106,7 @@ UfbxImporterTest::UfbxImporterTest() {
     addTests({&UfbxImporterTest::materialMapping});
 
     addTests({&UfbxImporterTest::blenderMaterials,
+              &UfbxImporterTest::mayaMaterialArnold,
               &UfbxImporterTest::meshMaterials,
               &UfbxImporterTest::imageEmbedded});
 
@@ -661,6 +664,76 @@ void UfbxImporterTest::blenderMaterials() {
             CORRADE_COMPARE(importer->image2DName(texture->image()), "blender-materials.fbm\\checkerboard_transparency.png");
         }
     }
+}
+
+void UfbxImporterTest::mayaMaterialArnold() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
+
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "maya-material-arnold.fbx")));
+    CORRADE_COMPARE(importer->materialCount(), 1);
+
+    Containers::Optional<MaterialData> material = importer->material("aiStandardSurface1");
+    CORRADE_VERIFY(material);
+
+    CORRADE_COMPARE(material->types(), MaterialType::PbrMetallicRoughness|MaterialType::PbrClearCoat);
+
+    auto factor = [](Float value){ return Vector4{value, value, value, 1.0f}; };
+
+    MaterialData reference{MaterialType::PbrMetallicRoughness|MaterialType::PbrClearCoat, {
+        {MaterialAttribute::BaseColor, Color4{0.02f, 0.03f, 0.04f, 1.0f} * factor(0.01f)},
+        {"diffuseRoughness", 0.05f},
+        {MaterialAttribute::Metalness, 0.06f},
+        {MaterialAttribute::SpecularColor, Color4{0.08f, 0.09f, 0.10f, 1.0f} * factor(0.07f)},
+        {MaterialAttribute::Roughness, 0.11f},
+        {"specularIor", 0.12f},
+        {"specularAnisotropy", 0.13f},
+        {"specularRotation", 0.14f},
+        {MaterialAttribute::EmissiveColor, Color3{0.52f, 0.5299f, 0.54f} * Vector3{0.51f}}, /* bad rounding in file */
+        {"thinFilmThickness", 0.55f},
+        {"thinFilmIor", 0.56f},
+        {"opacity", Color3{0.57f, 0.58f, 0.5899f}}, /* bad rounding in file */
+        {"indirectDiffuse", 0.63f},
+        {"indirectSpecular", 0.64f},
+
+        {MaterialAttribute::LayerName, "ClearCoat"},
+        {MaterialAttribute::LayerFactor, 0.35f},
+        {"color", Color3{0.36f, 0.37f, 0.38f}},
+        {MaterialAttribute::Roughness, 0.39f},
+        {"ior", 0.40f},
+        {"anisotropy", 0.41f},
+        {"rotation", 0.42f},
+
+        {MaterialAttribute::LayerName, "transmission"},
+        {MaterialAttribute::LayerFactor, 0.15f},
+        {"color", Vector3{0.16f, 0.17f, 0.18f}},
+        {"depth", 0.19f},
+        {"scatter", Vector3{0.20f, 0.21f, 0.22f}},
+        {"scatterAnisotropy", 0.23f},
+        {"dispersion", 0.24f},
+        {"extraRoughness", 0.25f},
+        {"enableInAov", true},
+        {"priority", Long(69)},
+
+        {MaterialAttribute::LayerName, "subsurface"},
+        {MaterialAttribute::LayerFactor, 0.26f},
+        {"color", Color3{0.27f, 0.28f, 0.29f}},
+        {"radius", Color3{0.30f, 0.31f, 0.32f}},
+        {"scale", 0.33f},
+        {"anisotropy", 0.34f},
+        {"type", Long(1)},
+
+        {MaterialAttribute::LayerName, "sheen"},
+        {MaterialAttribute::LayerFactor, 0.46f},
+        {"color", Color3{0.47f, 0.48f, 0.49f}},
+        {MaterialAttribute::Roughness, 0.50f},
+
+        {MaterialAttribute::LayerName, "matte"},
+        {MaterialAttribute::LayerFactor, 0.68f},
+        {"color", Color3{0.65f, 0.66f, 0.67f}},
+
+    }, {14, 21, 31, 38, 42, 45}};
+
+    CORRADE_COMPARE_AS(*material, reference, DebugTools::CompareMaterial);
 }
 
 void UfbxImporterTest::meshMaterials() {

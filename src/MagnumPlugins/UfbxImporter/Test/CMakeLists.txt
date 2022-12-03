@@ -34,6 +34,8 @@ else()
     set(UFBXIMPORTER_TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 endif()
 
+find_package(Magnum REQUIRED DebugTools)
+
 if(NOT MAGNUM_ASSIMPIMPORTER_BUILD_STATIC)
     if(MAGNUM_WITH_STBIMAGEIMPORTER)
         set(STBIMAGEIMPORTER_PLUGIN_FILENAME $<TARGET_FILE:StbImageImporter>)
@@ -51,10 +53,13 @@ file(GENERATE OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/configure.h
     INPUT ${CMAKE_CURRENT_BINARY_DIR}/configure.h.in)
 
 corrade_add_test(UfbxImporterTest UfbxImporterTest.cpp
-    LIBRARIES Magnum::Trade
+    LIBRARIES
+        Magnum::DebugTools
+        Magnum::Trade
     FILES
         blender-default.fbx
         blender-materials.fbx
+        maay-material-arnold.fbx
         triangle.fbx
         lights.fbx)
 

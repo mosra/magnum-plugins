@@ -1030,13 +1030,6 @@ Containers::Optional<MaterialData> UfbxImporter::doMaterial(UnsignedInt id) {
 
             /* Handle some special cases */
 
-            /* Patch opacity to BaseColor.a */
-            if (pbr && mapping.valueMap == UFBX_MATERIAL_PBR_BASE_COLOR) {
-                if (material->pbr.opacity.has_value) {
-                    opacity = Float(material->pbr.opacity.value_real);
-                }
-            }
-
             Containers::StringView attribute = mapping.attribute;
             UfbxMaterialLayerAttributes &attributesForLayer = layerAttributes[UnsignedInt(mapping.layer)];
 
@@ -1053,6 +1046,8 @@ Containers::Optional<MaterialData> UfbxImporter::doMaterial(UnsignedInt id) {
                     arrayAppend(attributes, {attribute, value});
                 } else if (mapping.attributeType == MaterialAttributeType::Long) {
                     arrayAppend(attributes, {attribute, map.value_int});
+                } else if (mapping.attributeType == MaterialAttributeType::Bool) {
+                    arrayAppend(attributes, {attribute, map.value_int != 0});
                 } else {
                     CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
                 }
@@ -1121,6 +1116,7 @@ Containers::Optional<MaterialData> UfbxImporter::doMaterial(UnsignedInt id) {
 
     Containers::Array<MaterialAttributeData> flatAttributes;
     Containers::Array<UnsignedInt> layerSizes;
+    UnsignedInt layerOffset = 0;
 
     /* Concatenate all layers, the first layer is special and doesn't have a
        LayerName entry and gets a zero attribute layer if necessary. */
@@ -1154,7 +1150,8 @@ Containers::Optional<MaterialData> UfbxImporter::doMaterial(UnsignedInt id) {
             layerAttributeCount += attributes.size();
         }
 
-        arrayAppend(layerSizes, layerAttributeCount);
+        layerOffset += layerAttributeCount;
+        arrayAppend(layerSizes, layerOffset);
     }
 
     /* Convert back to the default deleter to avoid dangling deleter function
