@@ -77,6 +77,7 @@ struct UfbxImporterTest: TestSuite::Tester {
     void openData();
     void openFileFailed();
     void openDataFailed();
+    void scene();
     void mesh();
     void light();
     void lightName();
@@ -95,7 +96,8 @@ UfbxImporterTest::UfbxImporterTest() {
               &UfbxImporterTest::openFileFailed,
               &UfbxImporterTest::openDataFailed});
 
-    addTests({&UfbxImporterTest::mesh,
+    addTests({&UfbxImporterTest::scene,
+              &UfbxImporterTest::mesh,
               &UfbxImporterTest::light,
               &UfbxImporterTest::lightName});
 
@@ -173,6 +175,83 @@ void UfbxImporterTest::openDataFailed() {
     constexpr const char data[] = "what";
     CORRADE_VERIFY(!importer->openData({data, sizeof(data)}));
     CORRADE_COMPARE(out.str(), "Trade::UfbxImporter::openData(): loading failed: Unrecognized file format\n");
+}
+
+void UfbxImporterTest::scene() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "blender-default.fbx")));
+
+    const SceneField sceneFieldVisibility = importer->sceneFieldForName("Visibility"_s);
+    const SceneField sceneFieldInvalid = importer->sceneFieldForName("ThisFieldDoesNotExist"_s);
+    CORRADE_VERIFY(isSceneFieldCustom(sceneFieldVisibility));
+    CORRADE_COMPARE(sceneFieldInvalid, SceneField{});
+
+    Containers::Optional<SceneData> scene = importer->scene(0);
+    CORRADE_VERIFY(scene);
+    CORRADE_COMPARE(scene->fieldCount(), 9);
+
+    CORRADE_VERIFY(scene->hasField(SceneField::Parent));
+    CORRADE_VERIFY(scene->hasField(SceneField::Translation));
+    CORRADE_VERIFY(scene->hasField(SceneField::Rotation));
+    CORRADE_VERIFY(scene->hasField(SceneField::Scaling));
+    CORRADE_VERIFY(scene->hasField(sceneFieldVisibility));
+    CORRADE_VERIFY(scene->hasField(SceneField::Mesh));
+    CORRADE_VERIFY(scene->hasField(SceneField::MeshMaterial));
+    CORRADE_VERIFY(scene->hasField(SceneField::Light));
+    CORRADE_VERIFY(scene->hasField(SceneField::Camera));
+
+    {
+        Long optionalId = importer->objectForName("Cube");
+        CORRADE_COMPARE_AS(optionalId, 0, TestSuite::Compare::GreaterOrEqual);
+        UnsignedLong id = UnsignedLong(optionalId);
+        CORRADE_COMPARE(importer->objectName(id), "Cube");
+
+        auto meshMaterials = scene->meshesMaterialsFor(id);
+        CORRADE_COMPARE(meshMaterials.size(), 1);
+
+        auto lights = scene->lightsFor(id);
+        CORRADE_COMPARE(lights.size(), 0);
+
+        auto cameras = scene->camerasFor(id);
+        CORRADE_COMPARE(cameras.size(), 0);
+    }
+
+    {
+        Long optionalId = importer->objectForName("Light");
+        CORRADE_COMPARE_AS(optionalId, 0, TestSuite::Compare::GreaterOrEqual);
+        UnsignedLong id = UnsignedLong(optionalId);
+        CORRADE_COMPARE(importer->objectName(id), "Light");
+
+        auto meshMaterials = scene->meshesMaterialsFor(id);
+        CORRADE_COMPARE(meshMaterials.size(), 0);
+
+        auto lights = scene->lightsFor(id);
+        CORRADE_COMPARE(lights.size(), 1);
+
+        auto cameras = scene->camerasFor(id);
+        CORRADE_COMPARE(cameras.size(), 0);
+    }
+
+    {
+        Long optionalId = importer->objectForName("Camera");
+        CORRADE_COMPARE_AS(optionalId, 0, TestSuite::Compare::GreaterOrEqual);
+        UnsignedLong id = UnsignedLong(optionalId);
+        CORRADE_COMPARE(importer->objectName(id), "Camera");
+
+        auto meshMaterials = scene->meshesMaterialsFor(id);
+        CORRADE_COMPARE(meshMaterials.size(), 0);
+
+        auto lights = scene->lightsFor(id);
+        CORRADE_COMPARE(lights.size(), 0);
+
+        auto cameras = scene->camerasFor(id);
+        CORRADE_COMPARE(cameras.size(), 1);
+    }
+
+    {
+        Long optionalId = importer->objectForName("ThisObjectDoesNotExist");
+        CORRADE_COMPARE_AS(optionalId, 0, TestSuite::Compare::Less);
+    }
 }
 
 void UfbxImporterTest::mesh() {
