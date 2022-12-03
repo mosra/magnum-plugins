@@ -45,6 +45,8 @@
 #include "ufbx.h"
 #include "ufbx.c"
 
+#include "UfbxMaterials.h"
+
 #include <unordered_map>
 
 #include <Corrade/Containers/Array.h>
@@ -233,204 +235,9 @@ inline UnsignedInt unboundedIfNegative(Int value) {
     return value >= 0 ? UnsignedInt(value) : ~UnsignedInt{};
 }
 
-enum class UfbxMaterialLayer: UnsignedInt {
-    Base,
-    Coat,
-    Transmission,
-    Subsurface,
-    Sheen,
-    Matte,
-    Custom,
-};
-
-constexpr UnsignedInt UfbxMaterialLayerCount = UnsignedInt(UfbxMaterialLayer::Custom);
-
-const constexpr Containers::StringView ufbxMaterialLayerNames[] = {
-    {},
-    "Coat"_s,
-    "transmission"_s,
-    "subsurface"_s,
-    "sheen"_s,
-    "matte"_s,
-};
-static_assert(Containers::arraySize(ufbxMaterialLayerNames) == UfbxMaterialLayerCount, "Wrong amount of material layer names");
-
-/* Some properties are represented as multiple alternatives and we want to
-   pick only a single one. */
-enum class MaterialExclusionGroup: UnsignedInt {
-    NormalTexture = 1 << 0,
-    Emission = 1 << 1,
-    Displacement = 1 << 2,
-};
-
-typedef Containers::EnumSet<MaterialExclusionGroup> MaterialExclusionGroups;
-
-struct MaterialMapping {
-    UfbxMaterialLayer layer;
-    MaterialAttributeType attributeType = {};
-    Containers::StringView attribute;
-
-    /* Override the attribute of the texture, defaults to attribute+"Texture" */
-    Containers::StringView textureAttribute;
-
-    Int valueMap = -1;
-    Int factorMap = -1;
-
-    MaterialExclusionGroup exclusionGroup = MaterialExclusionGroup{};
-};
-
-const constexpr MaterialMapping materialMappingFbx[] = {
-    { UfbxMaterialLayer::Base, MaterialAttributeType::Vector4, "DiffuseColor"_s, "DiffuseTexture"_s, UFBX_MATERIAL_FBX_DIFFUSE_COLOR, UFBX_MATERIAL_FBX_DIFFUSE_FACTOR },
-    { UfbxMaterialLayer::Base, MaterialAttributeType::Vector4, "SpecularColor"_s, "SpecularTexture"_s, UFBX_MATERIAL_FBX_SPECULAR_COLOR, UFBX_MATERIAL_FBX_SPECULAR_FACTOR },
-    { UfbxMaterialLayer::Base, MaterialAttributeType::Float, "Shininess"_s, "shininessTexture"_s, UFBX_MATERIAL_FBX_SPECULAR_EXPONENT },
-    { UfbxMaterialLayer::Base, MaterialAttributeType::Vector4, "reflectionColor"_s, "reflectionTexture"_s, UFBX_MATERIAL_FBX_REFLECTION_COLOR, UFBX_MATERIAL_FBX_REFLECTION_FACTOR },
-    { UfbxMaterialLayer::Base, MaterialAttributeType::Vector4, "transparencyColor"_s, "transparencyTexture"_s, UFBX_MATERIAL_FBX_TRANSPARENCY_COLOR, UFBX_MATERIAL_FBX_TRANSPARENCY_FACTOR },
-    { UfbxMaterialLayer::Base, MaterialAttributeType::Vector3, "EmissiveColor"_s, "EmissiveTexture"_s, UFBX_MATERIAL_FBX_EMISSION_COLOR, UFBX_MATERIAL_FBX_EMISSION_FACTOR, MaterialExclusionGroup::Emission },
-    { UfbxMaterialLayer::Base, MaterialAttributeType::Vector4, "AmbientColor"_s, "AmbientTexture"_s, UFBX_MATERIAL_FBX_AMBIENT_COLOR, UFBX_MATERIAL_FBX_AMBIENT_FACTOR },
-    { UfbxMaterialLayer::Base, MaterialAttributeType{}, {}, "NormalTexture"_s, UFBX_MATERIAL_FBX_NORMAL_MAP, -1, MaterialExclusionGroup::NormalTexture },
-    { UfbxMaterialLayer::Base, MaterialAttributeType{}, {}, "NormalTexture"_s, UFBX_MATERIAL_FBX_BUMP, -1, MaterialExclusionGroup::NormalTexture },
-    { UfbxMaterialLayer::Base, MaterialAttributeType{}, {}, "displacementTexture"_s, UFBX_MATERIAL_FBX_DISPLACEMENT },
-    { UfbxMaterialLayer::Base, MaterialAttributeType::Float, {}, "displacementFactor"_s, UFBX_MATERIAL_FBX_DISPLACEMENT_FACTOR },
-    { UfbxMaterialLayer::Base, MaterialAttributeType{}, {}, "vectorDisplacementTexture"_s, UFBX_MATERIAL_FBX_DISPLACEMENT },
-    { UfbxMaterialLayer::Base, MaterialAttributeType::Float, {}, "vectorDisplacementFactor"_s, UFBX_MATERIAL_FBX_DISPLACEMENT_FACTOR },
-};
-
-const constexpr MaterialMapping materialMappingPbr[] = {
-    { UfbxMaterialLayer::Base, MaterialAttributeType::Vector4, "BaseColor"_s, {}, UFBX_MATERIAL_PBR_BASE_COLOR, UFBX_MATERIAL_PBR_BASE_FACTOR },
-    { UfbxMaterialLayer::Base, MaterialAttributeType::Float, "Roughness"_s, {}, UFBX_MATERIAL_PBR_ROUGHNESS },
-    { UfbxMaterialLayer::Base, MaterialAttributeType::Float, "Metalness"_s, {}, UFBX_MATERIAL_PBR_METALNESS },
-    { UfbxMaterialLayer::Base, MaterialAttributeType::Float, "diffuseRoughness"_s, {}, UFBX_MATERIAL_PBR_DIFFUSE_ROUGHNESS },
-
-    /* Specular "layer", it's not really a layer as it modifies the specular
-       implicitly defined by BaseColor and Metalness */
-    /* Note: This is semantically different from SpecularColor, which is the
-       Phong specular, this is akin to KHR_materials_specular. I guess this
-       could be also worded as "specularTint" */
-    { UfbxMaterialLayer::Base, MaterialAttributeType::Vector3, "specularColor"_s, {}, UFBX_MATERIAL_FBX_SPECULAR_COLOR, UFBX_MATERIAL_FBX_SPECULAR_FACTOR },
-    { UfbxMaterialLayer::Base, MaterialAttributeType::Float, "specularIor"_s, {}, UFBX_MATERIAL_PBR_SPECULAR_IOR },
-    { UfbxMaterialLayer::Base, MaterialAttributeType::Float, "specularAnisotropy"_s, {}, UFBX_MATERIAL_PBR_SPECULAR_ANISOTROPY },
-    { UfbxMaterialLayer::Base, MaterialAttributeType::Float, "specularRotation"_s, {}, UFBX_MATERIAL_PBR_SPECULAR_ANISOTROPY },
-
-    { UfbxMaterialLayer::Transmission, MaterialAttributeType::Float, "LayerFactor"_s, {}, UFBX_MATERIAL_PBR_TRANSMISSION_FACTOR },
-    { UfbxMaterialLayer::Transmission, MaterialAttributeType::Vector3, "color"_s, {}, UFBX_MATERIAL_PBR_TRANSMISSION_COLOR },
-    { UfbxMaterialLayer::Transmission, MaterialAttributeType::Float, "depth"_s, {}, UFBX_MATERIAL_PBR_TRANSMISSION_COLOR },
-    { UfbxMaterialLayer::Transmission, MaterialAttributeType::Float, "scatter"_s, {}, UFBX_MATERIAL_PBR_TRANSMISSION_SCATTER },
-    { UfbxMaterialLayer::Transmission, MaterialAttributeType::Float, "scatterAnisotropy"_s, {}, UFBX_MATERIAL_PBR_TRANSMISSION_SCATTER_ANISOTROPY },
-    { UfbxMaterialLayer::Transmission, MaterialAttributeType::Float, "dispersion"_s, {}, UFBX_MATERIAL_PBR_TRANSMISSION_DISPERSION },
-    { UfbxMaterialLayer::Transmission, MaterialAttributeType::Float, "extraRoughness"_s, {}, UFBX_MATERIAL_PBR_TRANSMISSION_EXTRA_ROUGHNESS },
-    { UfbxMaterialLayer::Transmission, MaterialAttributeType::Long, "priority"_s, {}, UFBX_MATERIAL_PBR_TRANSMISSION_PRIORITY },
-
-    { UfbxMaterialLayer::Subsurface, MaterialAttributeType::Float, "LayerFactor"_s, {}, UFBX_MATERIAL_PBR_SUBSURFACE_FACTOR },
-    { UfbxMaterialLayer::Subsurface, MaterialAttributeType::Vector3, "color"_s, {}, UFBX_MATERIAL_PBR_SUBSURFACE_COLOR },
-    { UfbxMaterialLayer::Subsurface, MaterialAttributeType::Float, "radius"_s, {}, UFBX_MATERIAL_PBR_SUBSURFACE_RADIUS },
-    { UfbxMaterialLayer::Subsurface, MaterialAttributeType::Float, "scale"_s, {}, UFBX_MATERIAL_PBR_SUBSURFACE_SCALE },
-    { UfbxMaterialLayer::Subsurface, MaterialAttributeType::Float, "anisotropy"_s, {}, UFBX_MATERIAL_PBR_SUBSURFACE_ANISOTROPY },
-    { UfbxMaterialLayer::Subsurface, MaterialAttributeType::Vector3, "tintColor"_s, {}, UFBX_MATERIAL_PBR_SUBSURFACE_TINT_COLOR },
-    { UfbxMaterialLayer::Subsurface, MaterialAttributeType::Long, "type"_s, {}, UFBX_MATERIAL_PBR_SUBSURFACE_TYPE },
-
-    { UfbxMaterialLayer::Sheen, MaterialAttributeType::Float, "LayerFactor"_s, {}, UFBX_MATERIAL_PBR_SHEEN_FACTOR },
-    { UfbxMaterialLayer::Sheen, MaterialAttributeType::Vector3, "color"_s, {}, UFBX_MATERIAL_PBR_SHEEN_COLOR },
-    { UfbxMaterialLayer::Sheen, MaterialAttributeType::Float, "roughness"_s, {}, UFBX_MATERIAL_PBR_SHEEN_ROUGHNESS },
-
-    { UfbxMaterialLayer::Coat, MaterialAttributeType::Float, "LayerFactor"_s, {}, UFBX_MATERIAL_PBR_COAT_FACTOR },
-    { UfbxMaterialLayer::Coat, MaterialAttributeType::Vector3, "color"_s, {}, UFBX_MATERIAL_PBR_COAT_COLOR },
-    { UfbxMaterialLayer::Coat, MaterialAttributeType::Float, "Roughness"_s, {}, UFBX_MATERIAL_PBR_COAT_ROUGHNESS },
-    { UfbxMaterialLayer::Coat, MaterialAttributeType::Float, "ior"_s, {}, UFBX_MATERIAL_PBR_COAT_IOR },
-    { UfbxMaterialLayer::Coat, MaterialAttributeType::Float, "anisotropy"_s, {}, UFBX_MATERIAL_PBR_COAT_ANISOTROPY },
-    { UfbxMaterialLayer::Coat, MaterialAttributeType::Float, "rotation"_s, {}, UFBX_MATERIAL_PBR_COAT_ROTATION },
-    { UfbxMaterialLayer::Coat, MaterialAttributeType{}, {}, "NormalTexture"_s, UFBX_MATERIAL_PBR_COAT_NORMAL },
-    { UfbxMaterialLayer::Coat, MaterialAttributeType::Float, "affectBaseColor"_s, {}, UFBX_MATERIAL_PBR_COAT_AFFECT_BASE_COLOR },
-    { UfbxMaterialLayer::Coat, MaterialAttributeType::Float, "affectBaseRoughness"_s, {}, UFBX_MATERIAL_PBR_COAT_AFFECT_BASE_ROUGHNESS },
-
-    { UfbxMaterialLayer::Base, MaterialAttributeType::Float, "thinFilmThickness"_s, {}, UFBX_MATERIAL_PBR_THIN_FILM_THICKNESS },
-    { UfbxMaterialLayer::Base, MaterialAttributeType::Float, "thinFilmIor"_s, {}, UFBX_MATERIAL_PBR_THIN_FILM_IOR },
-
-    /* @todo This could be it's own layer */
-    { UfbxMaterialLayer::Base, MaterialAttributeType::Vector3, "EmissiveColor"_s, "EmissiveTexture"_s, UFBX_MATERIAL_PBR_EMISSION_COLOR, UFBX_MATERIAL_PBR_EMISSION_FACTOR, MaterialExclusionGroup::Emission },
-
-    /* @todo Should this be translated into BaseColor.a?
-       It represents non-physical fade out in the PBR model. */
-    { UfbxMaterialLayer::Base, MaterialAttributeType::Float, "opacity"_s, {}, UFBX_MATERIAL_PBR_OPACITY },
-
-    { UfbxMaterialLayer::Base, MaterialAttributeType::Float, "indirectDiffuse"_s, {}, UFBX_MATERIAL_PBR_INDIRECT_DIFFUSE },
-    { UfbxMaterialLayer::Base, MaterialAttributeType::Float, "indirectSpecular"_s, {}, UFBX_MATERIAL_PBR_INDIRECT_SPECULAR },
-
-    { UfbxMaterialLayer::Base, MaterialAttributeType{}, {}, "NormalTexture"_s, UFBX_MATERIAL_PBR_NORMAL_MAP, -1, MaterialExclusionGroup::NormalTexture },
-    { UfbxMaterialLayer::Base, MaterialAttributeType{}, {}, "tangentTexture"_s, UFBX_MATERIAL_PBR_TANGENT_MAP },
-    { UfbxMaterialLayer::Base, MaterialAttributeType{}, {}, "displacementTexture"_s, UFBX_MATERIAL_PBR_DISPLACEMENT_MAP, -1, MaterialExclusionGroup::Displacement },
-
-    { UfbxMaterialLayer::Matte, MaterialAttributeType::Float, "LayerFactor"_s, {}, UFBX_MATERIAL_PBR_MATTE_FACTOR },
-    { UfbxMaterialLayer::Matte, MaterialAttributeType::Vector3, "color"_s, {}, UFBX_MATERIAL_PBR_MATTE_COLOR },
-
-    { UfbxMaterialLayer::Base, MaterialAttributeType{}, {}, "OcclusionTexture"_s, UFBX_MATERIAL_PBR_AMBIENT_OCCLUSION },
-};
-
-void validateMaterialMappings()
+inline bool mapUsed(const ufbx_material_map &map)
 {
-    /* Make sure all the ufbx maps are used at least once and that there are
-       no duplicate Magnum attributes without MaterialExclusionGroup */
-
-    Containers::ArrayView<const MaterialMapping> mappingLists[] = {
-        Containers::arrayView(materialMappingFbx),
-        Containers::arrayView(materialMappingPbr),
-    };
-
-    Containers::StaticArray<UfbxMaterialLayerCount, std::unordered_map<std::string, MaterialExclusionGroup>> usedAttributeNames;
-
-    Containers::BitArray usedUfbxMaps[2] = {
-        Containers::BitArray{ ValueInit, UFBX_MATERIAL_FBX_MAP_COUNT },
-        Containers::BitArray{ ValueInit, UFBX_MATERIAL_PBR_MAP_COUNT },
-    };
-
-    for(UnsignedInt type = 0; type < 2; ++type) {
-        for (const MaterialMapping &mapping : mappingLists[type]) {
-            std::size_t layer = std::size_t(mapping.layer);
-
-            if (mapping.valueMap >= 0)
-                usedUfbxMaps[type].set(std::size_t(mapping.valueMap));
-            if (mapping.factorMap >= 0)
-                usedUfbxMaps[type].set(std::size_t(mapping.factorMap));
-
-            /* Copy to std::string so we don't do unnecessary conversions on
-               lookups, also this is far from performance critical */
-            std::string attribute = mapping.attribute;
-            std::string textureAttribute = mapping.textureAttribute;
-
-            if (!attribute.empty()) {
-                auto found = usedAttributeNames[layer].find(attribute);
-                if (found != usedAttributeNames[layer].end()) {
-                    /* If we have a duplicate material attribute name it must
-                       be defined under the same exclusion group */
-                    CORRADE_INTERNAL_ASSERT(mapping.exclusionGroup != MaterialExclusionGroup{});
-                    CORRADE_INTERNAL_ASSERT(mapping.exclusionGroup == found->second);
-                } else {
-                    usedAttributeNames[layer].insert({ attribute, mapping.exclusionGroup });
-                }
-
-                if (textureAttribute.empty())
-                    textureAttribute = attribute + "Texture";
-            }
-
-            if (!textureAttribute.empty()) {
-                auto found = usedAttributeNames[layer].find(textureAttribute);
-                if (found != usedAttributeNames[layer].end()) {
-                    /* If we have a duplicate material attribute name it must
-                       be defined under the same exclusion group */
-                    CORRADE_INTERNAL_ASSERT(mapping.exclusionGroup != MaterialExclusionGroup{});
-                    CORRADE_INTERNAL_ASSERT(mapping.exclusionGroup == found->second);
-                } else {
-                    usedAttributeNames[layer].insert({ textureAttribute, mapping.exclusionGroup });
-                }
-            }
-        }
-    }
-
-    /* Make sure all the ufbx maps are accounted for */
-    /* @todo: Could we fail with an index in the message here? */
-    for(UnsignedInt i = 0; i < UFBX_MATERIAL_FBX_MAP_COUNT; ++i)
-        CORRADE_INTERNAL_ASSERT(usedUfbxMaps[0][i]);
-    for(UnsignedInt i = 0; i < UFBX_MATERIAL_PBR_MAP_COUNT; ++i)
-        CORRADE_INTERNAL_ASSERT(usedUfbxMaps[1][i]);
+    return map.has_value || map.texture != nullptr;
 }
 
 struct FileOpener {
@@ -1132,9 +939,6 @@ Containers::String UfbxImporter::doMaterialName(UnsignedInt id) {
 Containers::Optional<MaterialData> UfbxImporter::doMaterial(UnsignedInt id) {
     ufbx_material *material = _state->scene->materials[id];
 
-    /* @todo Do this only in tests? At least only in debug/once */
-    validateMaterialMappings();
-
     MaterialExclusionGroups seenExclusionGroups;
 
     struct MaterialMappingList {
@@ -1149,42 +953,30 @@ Containers::Optional<MaterialData> UfbxImporter::doMaterial(UnsignedInt id) {
     /* Flexible for custom layers (layered textures) */
     Containers::Array<Containers::Array<MaterialAttributeData>> attributeLayers{UfbxMaterialLayerCount};
 
-    Containers::String attribute;
-
     MaterialTypes types;
 
     /* Do some feature detection */
 
     /* If we have DiffuseColor specified from the FBX properties the fallback
        FBX material should be quite well defined. */
-    if (material->fbx.diffuse_color.has_value) {
+    if (mapUsed(material->fbx.diffuse_color)) {
         types |= MaterialType::Phong;
     }
 
-    /* ufbx supports glossiness through ufbx_material_map::texture_inverted and
-       inverts the values internally. This is done due to 3ds Max having material
-       models where the roughness inversion is controlled via a property
-       "roughness_inv", "coat_roughness_inv", etc. But seems to be actually very
-       confusing to users. Maybe there should be just glossiness maps instead.
-       If this change is done need to clean up some code here.. */
-    bool roughnessIsGlossiness = material->pbr.roughness.texture_inverted;
-    if (material->features.pbr.enabled) {
-        if (material->features.metalness.enabled && !roughnessIsGlossiness) {
-            types |= MaterialType::PbrMetallicRoughness;
-        } else if (material->features.specular.enabled && roughnessIsGlossiness) {
-            types |= MaterialType::PbrSpecularGlossiness;
-        }
-        /* Missing: PbrMetallicGlossiness, PbrSpecularRoughness, but these
-           are quite rare in practice */
+    if (mapUsed(material->pbr.metalness) && mapUsed(material->pbr.roughness)) {
+        types |= MaterialType::PbrMetallicRoughness;
     }
 
-    if (material->pbr.coat_factor.has_value || material->pbr.coat_factor.texture) {
+    if (mapUsed(material->pbr.specular_color) && mapUsed(material->pbr.glossiness)) {
+        types |= MaterialType::PbrSpecularGlossiness;
+    }
+
+    if (mapUsed(material->pbr.coat_factor)) {
         types |= MaterialType::PbrClearCoat;
     }
 
 
     for (UnsignedInt listIndex = 0; listIndex < 2; ++listIndex) {
-        bool pbr = listIndex == 0;
         const MaterialMappingList &list = mappingLists[listIndex];
         for (const MaterialMapping &mapping : list.mappings) {
             const ufbx_material_map &map = list.maps[mapping.valueMap];
@@ -1209,18 +1001,10 @@ Containers::Optional<MaterialData> UfbxImporter::doMaterial(UnsignedInt id) {
 
             Containers::StringView attribute = mapping.attribute;
 
-            /* Translate roughness to glossiness if necessary */
-            bool invertFloat = false;
-            if (pbr && mapping.valueMap == UFBX_MATERIAL_PBR_ROUGHNESS && roughnessIsGlossiness) {
-                attribute = "Glossiness"_s;
-                invertFloat = true;
-            }
-
             if (attribute && map.has_value) {
                 Containers::Array<MaterialAttributeData> &attributes = attributeLayers[UnsignedInt(mapping.layer)];
                 if (mapping.attributeType == MaterialAttributeType::Float) {
                     Float value = Float(map.value_real) * factor;
-                    if (invertFloat) value = 1.0f - value;
                     arrayAppend(attributes, {attribute, value});
                 } else if (mapping.attributeType == MaterialAttributeType::Vector3) {
                     Vector3 value = Vector3(map.value_vec3) * factor;
@@ -1290,12 +1074,12 @@ Containers::Optional<MaterialData> UfbxImporter::doMaterial(UnsignedInt id) {
                        Only include layer details if it matches with the actual
                        file textures. */
                     if (texture->type == UFBX_TEXTURE_LAYERED && i < texture->layers.count) {
-                        const ufbx_texture_layer &layer = texture->layers[i];
-                        if (layer.texture == texture) {
+                        const ufbx_texture_layer &texLayer = texture->layers[i];
+                        if (texLayer.texture == texture) {
                             const Containers::String blendModeAttribute = textureAttribute + "BlendMode"_s;
                             const Containers::String blendAlphaAttribute = textureAttribute + "BlendAlpha"_s;
-                            arrayAppend(attributes, {blendModeAttribute, UnsignedInt(layer.blend_mode)});
-                            arrayAppend(attributes, {blendAlphaAttribute, UnsignedInt(layer.alpha)});
+                            arrayAppend(attributes, {blendModeAttribute, UnsignedInt(texLayer.blend_mode)});
+                            arrayAppend(attributes, {blendAlphaAttribute, UnsignedInt(texLayer.alpha)});
                         }
                     }
                 }

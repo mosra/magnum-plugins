@@ -26,12 +26,18 @@
 
 #include <sstream>
 #include <string>
+#include <unordered_map>
+
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/ArrayView.h>
+#include <Corrade/Containers/Pair.h>
 #include <Corrade/Containers/String.h>
 #include <Corrade/Containers/StringStl.h>
 #include <Corrade/Containers/StringView.h>
 #include <Corrade/Containers/Triple.h>
+#include <Corrade/Containers/BitArray.h>
+#include <Corrade/Containers/StaticArray.h>
+#include <Corrade/Utility/DebugSTL.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
 #include <Corrade/TestSuite/Compare/Numeric.h>
@@ -46,6 +52,9 @@
 #include <Magnum/Trade/MeshData.h>
 #include <Magnum/Trade/LightData.h>
 #include <Magnum/Trade/SceneData.h>
+#include <Magnum/Trade/MaterialData.h>
+
+#include "../UfbxMaterials.h"
 
 #include "configure.h"
 
@@ -63,6 +72,7 @@ struct UfbxImporterTest: TestSuite::Tester {
     void openDataFailed();
     void mesh();
     void light();
+    void materialMapping();
 
     /* Needs to load AnyImageImporter from a system-wide location */
     PluginManager::Manager<AbstractImporter> _manager;
@@ -76,6 +86,8 @@ UfbxImporterTest::UfbxImporterTest() {
 
     addTests({&UfbxImporterTest::mesh,
               &UfbxImporterTest::light});
+
+    addTests({&UfbxImporterTest::materialMapping});
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. It also pulls in the AnyImageImporter dependency. */
@@ -133,7 +145,7 @@ void UfbxImporterTest::openFileFailed() {
     Error redirectError{&out};
 
     CORRADE_VERIFY(!importer->openFile("i-do-not-exist.foo"));
-    CORRADE_COMPARE(out.str(), "Trade::UfbxImporter::openData(): loading failed: File not found: i-do-not-exist.foo\n"_s);
+    CORRADE_COMPARE(out.str(), "Trade::UfbxImporter::openData(): loading failed: File not found: i-do-not-exist.foo\n");
 }
 
 void UfbxImporterTest::openDataFailed() {
@@ -144,7 +156,7 @@ void UfbxImporterTest::openDataFailed() {
 
     constexpr const char data[] = "what";
     CORRADE_VERIFY(!importer->openData({data, sizeof(data)}));
-    CORRADE_COMPARE(out.str(), "Trade::UfbxImporter::openData(): loading failed: Unrecognized file format\n"_s);
+    CORRADE_COMPARE(out.str(), "Trade::UfbxImporter::openData(): loading failed: Unrecognized file format\n");
 }
 
 void UfbxImporterTest::mesh() {
@@ -357,7 +369,82 @@ void UfbxImporterTest::light() {
 
     CORRADE_COMPARE(out.str(),
         "Trade::UfbxImporter::light(): light type 3 is not supported\n"
-        "Trade::UfbxImporter::light(): light type 4 is not supported\n"_s);
+        "Trade::UfbxImporter::light(): light type 4 is not supported\n");
+}
+
+void UfbxImporterTest::materialMapping() {
+    /* Make sure all the ufbx maps are used at least once and that there are
+       no duplicate Magnum attributes without MaterialExclusionGroup */
+
+    Containers::ArrayView<const MaterialMapping> mappingLists[] = {
+        Containers::arrayView(materialMappingFbx),
+        Containers::arrayView(materialMappingPbr),
+    };
+
+    Containers::StaticArray<UfbxMaterialLayerCount, std::unordered_map<std::string, MaterialExclusionGroup>> usedAttributeNames;
+
+    Containers::BitArray usedUfbxMaps[2] = {
+        Containers::BitArray{ ValueInit, UFBX_MATERIAL_FBX_MAP_COUNT },
+        Containers::BitArray{ ValueInit, UFBX_MATERIAL_PBR_MAP_COUNT },
+    };
+
+    for(UnsignedInt type = 0; type < 2; ++type) {
+        for (const MaterialMapping &mapping : mappingLists[type]) {
+            std::size_t layer = std::size_t(mapping.layer);
+
+            if (mapping.valueMap >= 0)
+                usedUfbxMaps[type].set(std::size_t(mapping.valueMap));
+            if (mapping.factorMap >= 0)
+                usedUfbxMaps[type].set(std::size_t(mapping.factorMap));
+
+            /* Copy to std::string so we don't do unnecessary conversions on
+               lookups, also this is far from performance critical */
+            std::string attribute = mapping.attribute;
+            std::string textureAttribute = mapping.textureAttribute;
+
+            if (!attribute.empty()) {
+                CORRADE_ITERATION(attribute);
+
+                auto found = usedAttributeNames[layer].find(attribute);
+                if (found != usedAttributeNames[layer].end()) {
+                    /* If we have a duplicate material attribute name it must
+                       be defined under the same exclusion group */
+                    CORRADE_VERIFY(mapping.exclusionGroup != MaterialExclusionGroup{});
+                    CORRADE_COMPARE(UnsignedInt(mapping.exclusionGroup), UnsignedInt(found->second));
+                } else {
+                    usedAttributeNames[layer].insert({ attribute, mapping.exclusionGroup });
+                }
+
+                if (textureAttribute.empty())
+                    textureAttribute = attribute + "Texture";
+            }
+
+            if (!textureAttribute.empty()) {
+                CORRADE_ITERATION(textureAttribute);
+
+                auto found = usedAttributeNames[layer].find(textureAttribute);
+                if (found != usedAttributeNames[layer].end()) {
+                    /* If we have a duplicate material attribute name it must
+                       be defined under the same exclusion group */
+                    CORRADE_VERIFY(mapping.exclusionGroup != MaterialExclusionGroup{});
+                    CORRADE_COMPARE(UnsignedInt(mapping.exclusionGroup), UnsignedInt(found->second));
+                } else {
+                    usedAttributeNames[layer].insert({ textureAttribute, mapping.exclusionGroup });
+                }
+            }
+        }
+    }
+
+    /* Make sure all the ufbx maps are accounted for */
+    /* @todo: Could we fail with an index in the message here? */
+    for(UnsignedInt i = 0; i < UFBX_MATERIAL_FBX_MAP_COUNT; ++i) {
+        CORRADE_ITERATION(i);
+        CORRADE_VERIFY(usedUfbxMaps[0][i]);
+    }
+    for(UnsignedInt i = 0; i < UFBX_MATERIAL_PBR_MAP_COUNT; ++i) {
+        CORRADE_ITERATION(i);
+        CORRADE_VERIFY(usedUfbxMaps[1][i]);
+    }
 }
 
 }}}}
