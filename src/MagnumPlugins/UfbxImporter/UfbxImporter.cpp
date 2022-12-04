@@ -166,6 +166,45 @@ constexpr Containers::StringView sceneFieldNames[] = {
     "Visibility"_s,
 };
 
+Containers::StringView blendModeToString(ufbx_blend_mode mode) {
+    switch (mode) {
+    case UFBX_BLEND_TRANSLUCENT: return "translucent"_s;
+	case UFBX_BLEND_ADDITIVE: return "additive"_s;
+	case UFBX_BLEND_MULTIPLY: return "multiply"_s;
+	case UFBX_BLEND_MULTIPLY_2X: return "multiply2x"_s;
+	case UFBX_BLEND_OVER: return "over"_s;
+	case UFBX_BLEND_REPLACE: return "replace"_s;
+	case UFBX_BLEND_DISSOLVE: return "dissolve"_s;
+	case UFBX_BLEND_DARKEN: return "darken"_s;
+	case UFBX_BLEND_COLOR_BURN: return "colorBurn"_s;
+	case UFBX_BLEND_LINEAR_BURN: return "linearBurn"_s;
+	case UFBX_BLEND_DARKER_COLOR: return "darkerColor"_s;
+	case UFBX_BLEND_LIGHTEN: return "lighten"_s;
+	case UFBX_BLEND_SCREEN: return "screen"_s;
+	case UFBX_BLEND_COLOR_DODGE: return "colorDodge"_s;
+	case UFBX_BLEND_LINEAR_DODGE: return "linearDodge"_s;
+	case UFBX_BLEND_LIGHTER_COLOR: return "lighterColor"_s;
+	case UFBX_BLEND_SOFT_LIGHT: return "softLight"_s;
+	case UFBX_BLEND_HARD_LIGHT: return "hardLight"_s;
+	case UFBX_BLEND_VIVID_LIGHT: return "vividLight"_s;
+	case UFBX_BLEND_LINEAR_LIGHT: return "linearLight"_s;
+	case UFBX_BLEND_PIN_LIGHT: return "pinLight"_s;
+	case UFBX_BLEND_HARD_MIX: return "hardMix"_s;
+	case UFBX_BLEND_DIFFERENCE: return "difference"_s;
+	case UFBX_BLEND_EXCLUSION: return "exclusion"_s;
+	case UFBX_BLEND_SUBTRACT: return "subtract"_s;
+	case UFBX_BLEND_DIVIDE: return "divide"_s;
+	case UFBX_BLEND_HUE: return "hue"_s;
+	case UFBX_BLEND_SATURATION: return "saturation"_s;
+	case UFBX_BLEND_COLOR: return "color"_s;
+	case UFBX_BLEND_LUMINOSITY: return "luminosity"_s;
+	case UFBX_BLEND_OVERLAY: return "overlay"_s;
+    default:
+        Warning{} << "Unhandled blend mode" << Int(mode);
+        return {};
+    }
+}
+
 struct MeshChunk {
     uint32_t meshId;
     uint32_t meshMaterialIndex;
@@ -512,9 +551,6 @@ Containers::Optional<SceneData> UfbxImporter::doScene(UnsignedInt) {
         {NoInit, lightCount, lightObjects},
         {NoInit, lightCount, lights},
     };
-
-    /* Temporary array for synthetic geometry transform node IDs */
-    // TEMP Containers::Array<Int> nodeIdToGeometryNodeId{originalNodeCount};
 
     UnsignedInt meshMaterialOffset = 0;
     UnsignedInt lightOffset = 0;
@@ -1077,7 +1113,7 @@ Containers::Optional<MaterialData> UfbxImporter::doMaterial(UnsignedInt id) {
                     else
                         textureAttribute = attribute + "Texture"_s;
 
-                    if (layer > 0 && layer - 1 > attributesForLayer.extraLayers.size())
+                    if (layer > 0 && layer - 1 >= attributesForLayer.extraLayers.size())
                         arrayResize(attributesForLayer.extraLayers, layer);
 
                     Containers::Array<MaterialAttributeData> &attributes = layer == 0
@@ -1103,15 +1139,13 @@ Containers::Optional<MaterialData> UfbxImporter::doMaterial(UnsignedInt id) {
                        there are shaders/recursive layers involved..
                        Only include layer details if it matches with the actual
                        file textures. */
-                    if (texture->type == UFBX_TEXTURE_LAYERED && layer < texture->layers.count) {
-                        const ufbx_texture_layer &texLayer = texture->layers[layer];
+                    if (map.texture->type == UFBX_TEXTURE_LAYERED && layer < map.texture->layers.count) {
+                        const ufbx_texture_layer &texLayer = map.texture->layers[layer];
                         if (texLayer.texture == texture) {
                             const Containers::String blendModeAttribute = textureAttribute + "BlendMode"_s;
                             const Containers::String blendAlphaAttribute = textureAttribute + "BlendAlpha"_s;
-                            /* @todo: Convert blend mode names to string?
-                               Should probably add some support for enum names in ufbx.. */
-                            arrayAppend(attributes, {blendModeAttribute, UnsignedInt(texLayer.blend_mode)});
-                            arrayAppend(attributes, {blendAlphaAttribute, UnsignedInt(texLayer.alpha)});
+                            arrayAppend(attributes, {blendModeAttribute, blendModeToString(texLayer.blend_mode)});
+                            arrayAppend(attributes, {blendAlphaAttribute, Float(texLayer.alpha)});
                         }
                     }
 
@@ -1133,10 +1167,9 @@ Containers::Optional<MaterialData> UfbxImporter::doMaterial(UnsignedInt id) {
         /* Skip empty layers after the first one */
         if (layer != 0 && attributesForLayer.defaultLayer.isEmpty()) continue;
 
-        UnsignedInt layerAttributeCount = 0;
-
         /* Default layer */
         {
+            UnsignedInt layerAttributeCount = 0;
             Containers::ArrayView<MaterialAttributeData> attributes = attributesForLayer.defaultLayer;
             if (layer != 0) {
                 arrayAppend(flatAttributes, {MaterialAttribute::LayerName, ufbxMaterialLayerNames[layer]});
@@ -1144,10 +1177,14 @@ Containers::Optional<MaterialData> UfbxImporter::doMaterial(UnsignedInt id) {
             }
             arrayAppend(flatAttributes, attributes);
             layerAttributeCount += attributes.size();
+
+            layerOffset += layerAttributeCount;
+            arrayAppend(layerSizes, layerOffset);
         }
 
         /* Extra layers */
         for (UnsignedInt i = 0; i < attributesForLayer.extraLayers.size(); ++i) {
+            UnsignedInt layerAttributeCount = 0;
             Containers::ArrayView<MaterialAttributeData> attributes = attributesForLayer.extraLayers[i];
             if (layer != 0) {
                 arrayAppend(flatAttributes, {MaterialAttribute::LayerName, ufbxMaterialLayerNames[layer]});
@@ -1155,10 +1192,11 @@ Containers::Optional<MaterialData> UfbxImporter::doMaterial(UnsignedInt id) {
             }
             arrayAppend(flatAttributes, attributes);
             layerAttributeCount += attributes.size();
+
+            layerOffset += layerAttributeCount;
+            arrayAppend(layerSizes, layerOffset);
         }
 
-        layerOffset += layerAttributeCount;
-        arrayAppend(layerSizes, layerOffset);
     }
 
     /* Convert back to the default deleter to avoid dangling deleter function

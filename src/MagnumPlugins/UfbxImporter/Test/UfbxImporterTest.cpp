@@ -37,6 +37,7 @@
 #include <Corrade/Containers/Triple.h>
 #include <Corrade/Containers/BitArray.h>
 #include <Corrade/Containers/StaticArray.h>
+#include <Corrade/Containers/GrowableArray.h>
 #include <Corrade/Utility/DebugStl.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
@@ -86,6 +87,7 @@ struct UfbxImporterTest: TestSuite::Tester {
     void blenderMaterials();
     void materialMayaArnold();
     void materialMaxPhysical();
+    void materialLayeredPbrTextures();
     void meshMaterials();
     void imageEmbedded();
 
@@ -109,6 +111,7 @@ UfbxImporterTest::UfbxImporterTest() {
     addTests({&UfbxImporterTest::blenderMaterials,
               &UfbxImporterTest::materialMayaArnold,
               &UfbxImporterTest::materialMaxPhysical,
+              &UfbxImporterTest::materialLayeredPbrTextures,
               &UfbxImporterTest::meshMaterials,
               &UfbxImporterTest::imageEmbedded});
 
@@ -187,8 +190,10 @@ void UfbxImporterTest::scene() {
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "blender-default.fbx")));
 
     const SceneField sceneFieldVisibility = importer->sceneFieldForName("Visibility"_s);
-    const SceneField sceneFieldInvalid = importer->sceneFieldForName("ThisFieldDoesNotExist"_s);
     CORRADE_VERIFY(isSceneFieldCustom(sceneFieldVisibility));
+    CORRADE_COMPARE(importer->sceneFieldName(sceneFieldVisibility), "Visibility");
+
+    const SceneField sceneFieldInvalid = importer->sceneFieldForName("ThisFieldDoesNotExist"_s);
     CORRADE_COMPARE(sceneFieldInvalid, SceneField{});
 
     Containers::Optional<SceneData> scene = importer->scene(0);
@@ -788,6 +793,78 @@ void UfbxImporterTest::materialMaxPhysical() {
     }, {12, 19, 24, 30}};
 
     CORRADE_COMPARE_AS(*material, reference, DebugTools::CompareMaterial);
+}
+
+void UfbxImporterTest::materialLayeredPbrTextures() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
+
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "layered-pbr-textures.fbx")));
+    CORRADE_COMPARE(importer->materialCount(), 1);
+
+    Containers::Optional<MaterialData> material = importer->material("LayeredMaterial");
+    CORRADE_VERIFY(material);
+
+    Containers::Array<UnsignedInt> baseLayerIds;
+    Containers::Array<UnsignedInt> coatLayerIds;
+    Containers::Array<UnsignedInt> sheenLayerIds;
+
+    UnsignedInt layerCount = material->layerCount();
+    for (UnsignedInt id = 0; id < layerCount; ++id) {
+        Containers::StringView name = material->layerName(id);
+        if (name.isEmpty()) {
+            arrayAppend(baseLayerIds, id);
+        } else if (name == "ClearCoat") {
+            arrayAppend(coatLayerIds, id);
+        } else if (name == "sheen") {
+            arrayAppend(sheenLayerIds, id);
+        }
+    }
+
+    CORRADE_COMPARE(baseLayerIds.size(), 3);
+    CORRADE_COMPARE(coatLayerIds.size(), 3);
+    CORRADE_COMPARE(sheenLayerIds.size(), 2);
+
+    struct AttributeTextureLayer {
+        UnsignedInt layer;
+        Containers::StringView attribute;
+        Containers::StringView imageName;
+        Containers::StringView blendMode;
+        Float blendAlpha;
+    };
+
+    AttributeTextureLayer attributeTextureLayers[] = {
+        { baseLayerIds[0], "BaseColorTexture", "tex-red.png", "over", 1.0f },
+        { baseLayerIds[1], "BaseColorTexture", "tex-green.png", "over", 0.25f },
+        { baseLayerIds[2], "BaseColorTexture", "tex-blue.png", "additive", 0.75f },
+        { coatLayerIds[0], "colorTexture", "tex-cyan.png", "over", 1.0f },
+        { coatLayerIds[1], "colorTexture", "tex-pink.png", "softLight", 0.33f },
+        { coatLayerIds[2], "colorTexture", "tex-yellow.png", "multiply", 0.66f },
+        { coatLayerIds[0], "RoughnessTexture", "tex-black.png", "over", 1.0f },
+        { coatLayerIds[1], "RoughnessTexture", "tex-white.png", "screen", 0.5f },
+        { sheenLayerIds[0], "LayerFactorTexture", "tex-black.png", "over", 1.0f },
+        { sheenLayerIds[1], "LayerFactorTexture", "tex-white.png", "replace", 0.5f },
+    };
+
+    for (UnsignedInt i = 0; i < Containers::arraySize(attributeTextureLayers); ++i) {
+        CORRADE_ITERATION(i);
+
+        const AttributeTextureLayer &texLayer = attributeTextureLayers[i];
+        CORRADE_VERIFY(material->hasAttribute(texLayer.layer, texLayer.attribute));
+        UnsignedInt textureId = material->attribute<UnsignedInt>(texLayer.layer, texLayer.attribute);
+
+        Containers::Optional<TextureData> texture = importer->texture(textureId);
+        CORRADE_VERIFY(texture);
+
+        CORRADE_COMPARE(importer->image2DName(texture->image()), texLayer.imageName);
+
+        const Containers::String blendModeAttribute = texLayer.attribute + "BlendMode"_s;
+        CORRADE_VERIFY(material->hasAttribute(texLayer.layer, blendModeAttribute));
+        CORRADE_COMPARE(material->attribute<Containers::StringView>(texLayer.layer, blendModeAttribute), texLayer.blendMode);
+
+        const Containers::String blendAlphaAttribute = texLayer.attribute + "BlendAlpha"_s;
+        CORRADE_VERIFY(material->hasAttribute(texLayer.layer, blendAlphaAttribute));
+        CORRADE_COMPARE(material->attribute<Float>(texLayer.layer, blendAlphaAttribute), texLayer.blendAlpha);
+    }
 }
 
 void UfbxImporterTest::meshMaterials() {

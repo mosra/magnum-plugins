@@ -61,8 +61,18 @@ corrade_add_test(UfbxImporterTest UfbxImporterTest.cpp
         blender-materials.fbx
         maya-material-arnold.fbx
         max-material-physical.fbx
+        layered-pbr-textures.fbx
         triangle.fbx
-        lights.fbx)
+        lights.fbx
+        tex-black.png
+        tex-blue.png
+        tex-cyan.png
+        tex-green.png
+        tex-pink.png
+        tex-red.png
+        tex-white.png
+        tex-yellow.png)
+
 
 target_include_directories(UfbxImporterTest PRIVATE ${PROJECT_SOURCE_DIR}/src/external/ufbx)
 target_include_directories(UfbxImporterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>)
