@@ -90,6 +90,7 @@ struct UfbxImporterTest: TestSuite::Tester {
     void materialLayeredPbrTextures();
     void meshMaterials();
     void imageEmbedded();
+    void imageDeduplication();
 
     /* Needs to load AnyImageImporter from a system-wide location */
     PluginManager::Manager<AbstractImporter> _manager;
@@ -112,8 +113,10 @@ UfbxImporterTest::UfbxImporterTest() {
               &UfbxImporterTest::materialMayaArnold,
               &UfbxImporterTest::materialMaxPhysical,
               &UfbxImporterTest::materialLayeredPbrTextures,
-              &UfbxImporterTest::meshMaterials,
-              &UfbxImporterTest::imageEmbedded});
+              &UfbxImporterTest::meshMaterials});
+
+    addTests({&UfbxImporterTest::imageEmbedded,
+              &UfbxImporterTest::imageDeduplication});
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. It also pulls in the AnyImageImporter dependency. */
@@ -954,9 +957,7 @@ void UfbxImporterTest::imageEmbedded() {
         CORRADE_SKIP("PngImporter plugin not found, cannot test");
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
-
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "blender-materials.fbx")));
-    CORRADE_VERIFY(importer->isOpened());
 
     UnsignedInt imageCount = importer->image2DCount();
     CORRADE_COMPARE(imageCount, 5);
@@ -988,6 +989,39 @@ void UfbxImporterTest::imageEmbedded() {
         CORRADE_COMPARE(image->size(), (Vector2i{128,128}));
         CORRADE_COMPARE(image->pixels<Color4ub>()[0][0], testImage.bottomLeftPixelColor);
         CORRADE_COMPARE(image->pixels<Color4ub>()[127][0], testImage.topLeftPixelColor);
+    }
+}
+
+void UfbxImporterTest::imageDeduplication() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "layered-pbr-textures.fbx")));
+
+    Containers::Pair<Containers::StringView, Containers::StringView> textureToImage[] = {
+        { "Map #2", "tex-red.png" },
+        { "Map #3", "tex-green.png" },
+        { "Map #4", "tex-blue.png" },
+        { "Map #9", "tex-cyan.png" },
+        { "Map #10", "tex-pink.png" },
+        { "Map #11", "tex-yellow.png" },
+        { "Map #14", "tex-black.png" },
+        { "Map #15", "tex-white.png" },
+        { "Map #16", "tex-black.png" },
+        { "Map #17", "tex-white.png" },
+    };
+
+    CORRADE_COMPARE(importer->image2DCount(), 8);
+
+    for (UnsignedInt i = 0; i < Containers::arraySize(textureToImage); ++i) {
+        CORRADE_ITERATION(i);
+
+        Containers::StringView textureName = textureToImage[i].first();
+        Containers::StringView imageName = textureToImage[i].second();
+
+        Containers::Optional<TextureData> texture = importer->texture(textureName);
+        CORRADE_VERIFY(texture);
+
+        CORRADE_COMPARE(importer->image2DName(texture->image()), imageName);
+        CORRADE_COMPARE(importer->image2DForName(imageName), texture->image());
     }
 }
 
