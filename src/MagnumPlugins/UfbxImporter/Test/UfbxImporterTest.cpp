@@ -200,6 +200,9 @@ struct UfbxImporterTest: TestSuite::Tester {
     void normalizeUnits();
     void normalizeUnitsNoRoot();
 
+    void geometryCache();
+    void geometryCacheFileCallback();
+
     /* Needs to load AnyImageImporter from a system-wide location */
     PluginManager::Manager<AbstractImporter> _manager;
 };
@@ -260,6 +263,9 @@ UfbxImporterTest::UfbxImporterTest() {
 
     addTests({&UfbxImporterTest::normalizeUnits,
               &UfbxImporterTest::normalizeUnitsNoRoot});
+
+    addTests({&UfbxImporterTest::geometryCache,
+              &UfbxImporterTest::geometryCacheFileCallback});
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. It also pulls in the AnyImageImporter dependency. */
@@ -2017,6 +2023,25 @@ void UfbxImporterTest::normalizeUnitsNoRoot() {
         CORRADE_COMPARE(trs->second(), (Quaternion{{0.5f, 0.5f, 0.5f}, 0.5f})); /* Euler (90, 90, 0) */
         CORRADE_COMPARE(trs->third(), (Vector3{20.0f, 40.0f, 60.0f}));
     }
+}
+
+void UfbxImporterTest::geometryCache() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
+
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "geometry-cache.fbx")));
+}
+
+void UfbxImporterTest::geometryCacheFileCallback() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
+
+    FileCallbackFiles files;
+    importer->setFileCallback(&fileCallbackFunc, &files);
+
+    CORRADE_VERIFY(importer->openFile("geometry-cache.fbx"));
+
+    /* Should not attempt to load geometry caches */
+    CORRADE_COMPARE(files.size(), 1);
+    CORRADE_VERIFY(files.find("geometry-cache.fbx") != files.end());
 }
 
 }}}}
