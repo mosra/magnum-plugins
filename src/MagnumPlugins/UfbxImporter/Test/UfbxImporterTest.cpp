@@ -99,6 +99,8 @@ struct UfbxImporterTest: TestSuite::Tester {
     void meshMaterials();
     void imageEmbedded();
     void imageExternal();
+    void imageFileCallback();
+    void imageFileCallbackNotFound();
     void imageDeduplication();
 
     /* Needs to load AnyImageImporter from a system-wide location */
@@ -131,6 +133,8 @@ UfbxImporterTest::UfbxImporterTest() {
 
     addTests({&UfbxImporterTest::imageEmbedded,
               &UfbxImporterTest::imageExternal,
+              &UfbxImporterTest::imageFileCallback,
+              &UfbxImporterTest::imageFileCallbackNotFound,
               &UfbxImporterTest::imageDeduplication});
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
@@ -168,6 +172,7 @@ void UfbxImporterTest::openData() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
 
     Containers::Optional<Containers::Array<char>> data = Utility::Path::read(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "blender-default.fbx"));
+    CORRADE_VERIFY(data);
     CORRADE_VERIFY(importer->openData(*data));
     CORRADE_VERIFY(importer->isOpened());
     CORRADE_COMPARE(importer->sceneCount(), 1);
@@ -1118,6 +1123,80 @@ void UfbxImporterTest::imageExternal() {
         CORRADE_COMPARE(image->size(), (Vector2i{1, 1}));
         CORRADE_COMPARE(image->pixels<Color3ub>()[0][0], imageColor);
     }
+}
+
+void UfbxImporterTest::imageFileCallback() {
+    if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("PngImporter plugin not found, cannot test");
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
+
+    std::unordered_map<std::string, Containers::Optional<Containers::Array<char>>> files;
+    importer->setFileCallback([](const std::string& filename, InputFileCallbackPolicy policy,
+        std::unordered_map<std::string, Containers::Optional<Containers::Array<char>>> &files) {
+            Containers::String path = Utility::Path::join(UFBXIMPORTER_TEST_DIR, filename);
+
+            Containers::Optional<Containers::Array<char>> &data = files[filename];
+            if (!data)
+                data = Utility::Path::read(path);
+
+            Containers::Optional<Containers::ArrayView<const char>> result;
+            if (data)
+                result = Containers::optional(Containers::ArrayView<const char>(*data));
+            return result;
+        }, files);
+
+    Containers::Pair<Containers::StringView, Color3ub> imageColors[] = {
+        { "tex-red.png",    0xff0000_rgb },
+        { "tex-green.png",  0x00ff00_rgb },
+        { "tex-blue.png",   0x0000ff_rgb },
+        { "tex-cyan.png",   0x00ffff_rgb },
+        { "tex-pink.png",   0xff00ff_rgb },
+        { "tex-yellow.png", 0xffff00_rgb },
+        { "tex-black.png",  0x000000_rgb },
+        { "tex-white.png",  0xffffff_rgb },
+    };
+
+    CORRADE_VERIFY(importer->openFile("layered-pbr-textures.fbx"));
+    CORRADE_VERIFY(importer->isOpened());
+    CORRADE_COMPARE(importer->image2DCount(), 8);
+    for (UnsignedInt i = 0; i < Containers::arraySize(imageColors); ++i) {
+        CORRADE_ITERATION(i);
+
+        Containers::StringView imageName = imageColors[i].first();
+        Color4ub imageColor = imageColors[i].second();
+
+        Containers::Optional<ImageData2D> image = importer->image2D(imageName);
+        CORRADE_VERIFY(image);
+        CORRADE_COMPARE(image->size(), (Vector2i{1, 1}));
+        CORRADE_COMPARE(image->pixels<Color3ub>()[0][0], imageColor);
+
+        CORRADE_VERIFY(files.find(imageName) != files.end());
+    }
+}
+
+void UfbxImporterTest::imageFileCallbackNotFound() {
+    if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("PngImporter plugin not found, cannot test");
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
+
+    UnsignedInt callCount = 0;
+    importer->setFileCallback([](const std::string&, InputFileCallbackPolicy, UnsignedInt &callCount) {
+            ++callCount;
+            return Containers::Optional<Containers::ArrayView<const char>>{};
+        }, callCount);
+
+    Containers::Optional<Containers::Array<char>> data = Utility::Path::read(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "layered-pbr-textures.fbx"));
+    CORRADE_VERIFY(data);
+    CORRADE_VERIFY(importer->openData(*data));
+    CORRADE_COMPARE(importer->image2DCount(), 8);
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!importer->image2D(0));
+    CORRADE_COMPARE(out.str(), "Trade::AbstractImporter::openFile(): cannot open file tex-red.png\n");
+    CORRADE_COMPARE(callCount, 1);
 }
 
 void UfbxImporterTest::imageDeduplication() {
