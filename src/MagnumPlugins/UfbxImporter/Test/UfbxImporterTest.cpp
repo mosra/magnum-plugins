@@ -1970,7 +1970,7 @@ void UfbxImporterTest::normalizeUnitsNoRoot() {
     Warning redirectWarning{&out};
 
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "units-cm-z-up.fbx")));
-    CORRADE_COMPARE(out.str(), "Trade::UfbxImporter::openFile(): normalizeUnits has no effect unless preserveRootNode is enabled");
+    CORRADE_COMPARE(out.str(), "Trade::UfbxImporter::openFile(): normalizeUnits has no effect unless preserveRootNode is enabled\n");
 
     CORRADE_COMPARE(importer->objectCount(), 1);
 
