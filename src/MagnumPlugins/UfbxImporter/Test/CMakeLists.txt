@@ -74,6 +74,8 @@ corrade_add_test(UfbxImporterTest UfbxImporterTest.cpp
         lights.fbx
         bad-decay-lights.fbx
         image-absolute-path.fbx
+        image-broken-external.fbx
+        image-broken-embedded.fbx
         units-cm-z-up.fbx
         geometry-cache.fbx
         static-skin.fbx

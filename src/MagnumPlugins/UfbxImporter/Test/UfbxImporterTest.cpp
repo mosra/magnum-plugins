@@ -192,6 +192,8 @@ struct UfbxImporterTest: TestSuite::Tester {
     void imageNonExistentName();
     void imageAbsolutePath();
     void imageNot2D();
+    void imageBrokenExternal();
+    void imageBrokenEmbedded();
 
     void objCube();
     void objCubeFileCallback();
@@ -258,7 +260,9 @@ UfbxImporterTest::UfbxImporterTest() {
               &UfbxImporterTest::imageDeduplication,
               &UfbxImporterTest::imageNonExistentName,
               &UfbxImporterTest::imageAbsolutePath,
-              &UfbxImporterTest::imageNot2D});
+              &UfbxImporterTest::imageNot2D,
+              &UfbxImporterTest::imageBrokenExternal,
+              &UfbxImporterTest::imageBrokenEmbedded});
 
     addTests({&UfbxImporterTest::objCube,
               &UfbxImporterTest::objCubeFileCallback,
@@ -1880,6 +1884,42 @@ void UfbxImporterTest::imageNot2D() {
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->image2D(0));
     CORRADE_COMPARE(out.str(), "Trade::UfbxImporter::image2D(): expected exactly one 2D image in an image file but got 0\n");
+}
+
+void UfbxImporterTest::imageBrokenExternal() {
+    if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("PngImporter plugin not found, cannot test");
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "image-broken-external.fbx")));
+
+    CORRADE_COMPARE(importer->image2DCount(), 1);
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!importer->image2D(0));
+
+    /* There should be some error but let's not depend on which PngImporter
+       we get here or it's implementation details. */
+    CORRADE_COMPARE_AS(out.str(), "", TestSuite::Compare::NotEqual);
+}
+
+void UfbxImporterTest::imageBrokenEmbedded() {
+    if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("PngImporter plugin not found, cannot test");
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "image-broken-embedded.fbx")));
+
+    CORRADE_COMPARE(importer->image2DCount(), 1);
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!importer->image2D(0));
+
+    /* There should be some error but let's not depend on which PngImporter
+       we get here or it's implementation details. */
+    CORRADE_COMPARE_AS(out.str(), "", TestSuite::Compare::NotEqual);
 }
 
 void UfbxImporterTest::objCube() {
