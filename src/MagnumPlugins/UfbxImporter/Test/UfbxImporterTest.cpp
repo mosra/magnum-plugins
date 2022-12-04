@@ -217,7 +217,7 @@ void UfbxImporterTest::fileCallback() {
 
     std::unordered_map<std::string, Containers::Array<char>> files;
     files["not/a/path/blender-default.fbx"] = *std::move(fbx);
-    importer->setFileCallback([](const std::string& filename, InputFileCallbackPolicy policy,
+    importer->setFileCallback([](const std::string& filename, InputFileCallbackPolicy,
         std::unordered_map<std::string, Containers::Array<char>>& files) {
             return Containers::optional(Containers::ArrayView<const char>(files.at(filename)));
         }, files);
@@ -1132,7 +1132,7 @@ void UfbxImporterTest::imageFileCallback() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
 
     std::unordered_map<std::string, Containers::Optional<Containers::Array<char>>> files;
-    importer->setFileCallback([](const std::string& filename, InputFileCallbackPolicy policy,
+    importer->setFileCallback([](const std::string& filename, InputFileCallbackPolicy,
         std::unordered_map<std::string, Containers::Optional<Containers::Array<char>>> &files) {
             Containers::String path = Utility::Path::join(UFBXIMPORTER_TEST_DIR, filename);
 
