@@ -111,6 +111,21 @@ void matchStackTraceLine(Containers::StringView line)
     ++i;
 }
 
+using FileCallbackFiles = std::unordered_map<std::string, Containers::Optional<Containers::Array<char>>>;
+Containers::Optional<Containers::ArrayView<const char>> fileCallbackFunc(const std::string& filename, InputFileCallbackPolicy, void *user) {
+    auto &files = *static_cast<FileCallbackFiles*>(user);
+
+    Containers::Optional<Containers::Array<char>> &data = files[filename];
+
+    Containers::String path = Utility::Path::join(UFBXIMPORTER_TEST_DIR, filename);
+    if (!data && Utility::Path::exists(path))
+        data = Utility::Path::read(path);
+
+    if (data)
+        return Containers::optional(Containers::ArrayView<const char>(*data));
+    return {};
+}
+
 using namespace Math::Literals;
 using namespace Containers::Literals;
 
@@ -170,6 +185,11 @@ struct UfbxImporterTest: TestSuite::Tester {
     void imageDeduplication();
     void imageNonExistentName();
 
+    void objCube();
+    void objCubeFileCallback();
+    void objMissingMtl();
+    void objMissingMtlFileCallback();
+
     /* Needs to load AnyImageImporter from a system-wide location */
     PluginManager::Manager<AbstractImporter> _manager;
 };
@@ -216,6 +236,11 @@ UfbxImporterTest::UfbxImporterTest() {
               &UfbxImporterTest::imageFileCallbackNotFound,
               &UfbxImporterTest::imageDeduplication,
               &UfbxImporterTest::imageNonExistentName});
+
+    addTests({&UfbxImporterTest::objCube,
+              &UfbxImporterTest::objCubeFileCallback,
+              &UfbxImporterTest::objMissingMtl,
+              &UfbxImporterTest::objMissingMtlFileCallback});
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. It also pulls in the AnyImageImporter dependency. */
@@ -1552,20 +1577,8 @@ void UfbxImporterTest::imageFileCallback() {
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
 
-    std::unordered_map<std::string, Containers::Optional<Containers::Array<char>>> files;
-    importer->setFileCallback([](const std::string& filename, InputFileCallbackPolicy,
-        std::unordered_map<std::string, Containers::Optional<Containers::Array<char>>> &files) {
-            Containers::String path = Utility::Path::join(UFBXIMPORTER_TEST_DIR, filename);
-
-            Containers::Optional<Containers::Array<char>> &data = files[filename];
-            if (!data)
-                data = Utility::Path::read(path);
-
-            Containers::Optional<Containers::ArrayView<const char>> result;
-            if (data)
-                result = Containers::optional(Containers::ArrayView<const char>(*data));
-            return result;
-        }, files);
+    FileCallbackFiles files;
+    importer->setFileCallback(&fileCallbackFunc, &files);
 
     Containers::Pair<Containers::StringView, Color3ub> imageColors[] = {
         { "tex-red.png",    0xff0000_rgb },
@@ -1664,6 +1677,114 @@ void UfbxImporterTest::imageNonExistentName() {
     CORRADE_COMPARE(importer->image2DCount(), 8);
     Int id = importer->image2DForName("not-an-image");
     CORRADE_COMPARE_AS(id, 0, TestSuite::Compare::Less);
+}
+
+
+void UfbxImporterTest::objCube() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
+
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "cube.obj")));
+    CORRADE_COMPARE(importer->sceneCount(), 1);
+    CORRADE_COMPARE(importer->objectCount(), 1);
+    CORRADE_COMPARE(importer->meshCount(), 1);
+    CORRADE_COMPARE(importer->materialCount(), 1);
+
+    CORRADE_COMPARE(importer->objectForName("Cube"), 0);
+
+    Int materialId = importer->materialForName("Material");
+    CORRADE_COMPARE(materialId, 0);
+    Containers::Optional<MaterialData> material = importer->material(UnsignedInt(materialId));
+    CORRADE_VERIFY(material);
+
+    MaterialData reference{MaterialType::Phong, {
+        {MaterialAttribute::AmbientColor, Color4{1.0f, 0.0f, 0.0f, 1.0f}},
+        {MaterialAttribute::DiffuseColor, Color4{0.0f, 1.0f, 0.0f, 1.0f}},
+        {MaterialAttribute::SpecularColor, Color4{0.0f, 0.0f, 1.0f, 1.0f}},
+        {MaterialAttribute::EmissiveColor, Color3{0.5f, 0.5f, 0.5f}},
+        {MaterialAttribute::Shininess, 250.0f},
+    }};
+    CORRADE_COMPARE_AS(*material, reference, DebugTools::CompareMaterial);
+}
+
+void UfbxImporterTest::objCubeFileCallback() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
+
+    FileCallbackFiles files;
+    importer->setFileCallback(&fileCallbackFunc, &files);
+
+    CORRADE_VERIFY(importer->openFile("cube.obj"));
+    CORRADE_COMPARE(files.size(), 2);
+    CORRADE_VERIFY(files.find("cube.obj") != files.end());
+    CORRADE_VERIFY(files.find("cube.mtl") != files.end());
+
+    CORRADE_COMPARE(importer->sceneCount(), 1);
+    CORRADE_COMPARE(importer->objectCount(), 1);
+    CORRADE_COMPARE(importer->meshCount(), 1);
+    CORRADE_COMPARE(importer->materialCount(), 1);
+
+    CORRADE_COMPARE(importer->objectForName("Cube"), 0);
+
+    Int materialId = importer->materialForName("Material");
+    CORRADE_COMPARE(materialId, 0);
+    Containers::Optional<MaterialData> material = importer->material(UnsignedInt(materialId));
+    CORRADE_VERIFY(material);
+
+    MaterialData reference{MaterialType::Phong, {
+        {MaterialAttribute::AmbientColor, Color4{1.0f, 0.0f, 0.0f, 1.0f}},
+        {MaterialAttribute::DiffuseColor, Color4{0.0f, 1.0f, 0.0f, 1.0f}},
+        {MaterialAttribute::SpecularColor, Color4{0.0f, 0.0f, 1.0f, 1.0f}},
+        {MaterialAttribute::EmissiveColor, Color3{0.5f, 0.5f, 0.5f}},
+        {MaterialAttribute::Shininess, 250.0f},
+    }};
+    CORRADE_COMPARE_AS(*material, reference, DebugTools::CompareMaterial);
+}
+
+void UfbxImporterTest::objMissingMtl() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
+
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "missing-mtl.obj")));
+    CORRADE_COMPARE(importer->sceneCount(), 1);
+    CORRADE_COMPARE(importer->objectCount(), 1);
+    CORRADE_COMPARE(importer->meshCount(), 1);
+    CORRADE_COMPARE(importer->materialCount(), 1);
+
+    CORRADE_COMPARE(importer->objectForName("Cube"), 0);
+
+    Int materialId = importer->materialForName("Material");
+    CORRADE_COMPARE(materialId, 0);
+    Containers::Optional<MaterialData> material = importer->material(UnsignedInt(materialId));
+    CORRADE_VERIFY(material);
+
+    MaterialData reference{MaterialType{}, {}};
+    CORRADE_COMPARE_AS(*material, reference, DebugTools::CompareMaterial);
+}
+
+void UfbxImporterTest::objMissingMtlFileCallback() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
+
+    FileCallbackFiles files;
+    importer->setFileCallback(&fileCallbackFunc, &files);
+
+    CORRADE_VERIFY(importer->openFile("missing-mtl.obj"));
+    CORRADE_COMPARE(files.size(), 2);
+    CORRADE_VERIFY(files.find("missing-mtl.obj") != files.end());
+    CORRADE_VERIFY(files.find("missing-mtl.mtl") != files.end());
+    CORRADE_VERIFY(!files.find("missing-mtl.mtl")->second);
+
+    CORRADE_COMPARE(importer->sceneCount(), 1);
+    CORRADE_COMPARE(importer->objectCount(), 1);
+    CORRADE_COMPARE(importer->meshCount(), 1);
+    CORRADE_COMPARE(importer->materialCount(), 1);
+
+    CORRADE_COMPARE(importer->objectForName("Cube"), 0);
+
+    Int materialId = importer->materialForName("Material");
+    CORRADE_COMPARE(materialId, 0);
+    Containers::Optional<MaterialData> material = importer->material(UnsignedInt(materialId));
+    CORRADE_VERIFY(material);
+
+    MaterialData reference{MaterialType{}, {}};
+    CORRADE_COMPARE_AS(*material, reference, DebugTools::CompareMaterial);
 }
 
 }}}}

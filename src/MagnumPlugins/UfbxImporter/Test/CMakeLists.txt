@@ -67,6 +67,9 @@ corrade_add_test(UfbxImporterTest UfbxImporterTest.cpp
         texture-transform.fbx
         triangle.fbx
         lights.fbx
+        cube.obj
+        cube.mtl
+        missing-mtl.mtl
         tex-black.png
         tex-blue.png
         tex-cyan.png
