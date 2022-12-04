@@ -162,6 +162,7 @@ struct UfbxImporterTest: TestSuite::Tester {
     void scene();
     void mesh();
     void camera();
+    void cameraName();
     void light();
     void lightName();
     void lightBadDecay();
@@ -218,6 +219,7 @@ UfbxImporterTest::UfbxImporterTest() {
     addTests({&UfbxImporterTest::scene,
               &UfbxImporterTest::mesh,
               &UfbxImporterTest::camera,
+              &UfbxImporterTest::cameraName,
               &UfbxImporterTest::light,
               &UfbxImporterTest::lightName,
               &UfbxImporterTest::lightBadDecay});
@@ -633,6 +635,21 @@ void UfbxImporterTest::camera() {
         CORRADE_COMPARE(camera->far(), 456.0f);
         CORRADE_COMPARE(camera->size(), (Vector2{10.0f * (16.0f/9.0f), 10.0f}));
     }
+}
+
+void UfbxImporterTest::cameraName() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "blender-default.fbx")));
+
+    CORRADE_COMPARE(importer->cameraCount(), 1);
+
+    Int cameraId = importer->cameraForName("Camera");
+    CORRADE_COMPARE(cameraId, 0);
+
+    Int noncameraId = importer->cameraForName("None");
+    CORRADE_COMPARE(noncameraId, -1);
+
+    CORRADE_COMPARE(importer->cameraName(0), "Camera");
 }
 
 void UfbxImporterTest::light() {
