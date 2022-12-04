@@ -27,6 +27,7 @@
 #include <sstream>
 #include <string>
 #include <unordered_map>
+#include <regex>
 
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/ArrayView.h>
@@ -83,6 +84,8 @@ struct UfbxImporterTest: TestSuite::Tester {
 
     void fileCallback();
     void fileCallbackNotFound();
+    void fileCallbackEmpty();
+    void fileCallbackEmptyVerbose();
 
     void scene();
     void mesh();
@@ -109,7 +112,9 @@ UfbxImporterTest::UfbxImporterTest() {
               &UfbxImporterTest::openDataFailed});
 
     addTests({&UfbxImporterTest::fileCallback,
-              &UfbxImporterTest::fileCallbackNotFound});
+              &UfbxImporterTest::fileCallbackNotFound,
+              &UfbxImporterTest::fileCallbackEmpty,
+              &UfbxImporterTest::fileCallbackEmptyVerbose});
 
     addTests({&UfbxImporterTest::scene,
               &UfbxImporterTest::mesh,
@@ -230,8 +235,7 @@ void UfbxImporterTest::fileCallbackNotFound() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
     CORRADE_VERIFY(importer->features() & ImporterFeature::FileCallback);
 
-    importer->setFileCallback([](const std::string&, InputFileCallbackPolicy,
-        void*) {
+    importer->setFileCallback([](const std::string&, InputFileCallbackPolicy, void*) {
             return Containers::Optional<Containers::ArrayView<const char>>{};
         });
 
@@ -239,6 +243,45 @@ void UfbxImporterTest::fileCallbackNotFound() {
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->openFile("some-file.fbx"));
     CORRADE_COMPARE(out.str(), "Trade::UfbxImporter::openFile(): loading failed: File not found: some-file.fbx\n");
+}
+
+void UfbxImporterTest::fileCallbackEmpty() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
+    CORRADE_VERIFY(importer->features() & ImporterFeature::FileCallback);
+
+    importer->setFileCallback([](const std::string&, InputFileCallbackPolicy, void*) {
+            return Containers::Optional<Containers::ArrayView<const char>>{InPlaceInit};
+        });
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!importer->openFile("some-file.fbx"));
+    CORRADE_COMPARE(out.str(), "Trade::UfbxImporter::openFile(): loading failed: Failed to load\n");
+}
+
+void UfbxImporterTest::fileCallbackEmptyVerbose() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
+    CORRADE_VERIFY(importer->features() & ImporterFeature::FileCallback);
+
+    importer->setFlags(ImporterFlag::Verbose);
+    importer->setFileCallback([](const std::string&, InputFileCallbackPolicy, void*) {
+            return Containers::Optional<Containers::ArrayView<const char>>{InPlaceInit};
+        });
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!importer->openFile("some-file.fbx"));
+
+    /* Output should contain a stack trace */
+    std::vector<std::string> lines = Utility::String::splitWithoutEmptyParts(out.str(), '\n');
+    CORRADE_COMPARE_AS(lines.size(), 1, TestSuite::Compare::Greater);
+
+    std::regex stackPattern{"^\\s*[0-9]+:[A-Za-z0-9_]+:.*$"};
+    for (std::size_t i = 1; i < lines.size(); ++i) {
+        /* This could be done with CORRADE_COMPARE_AS(..., CompareRegex) or something? */
+        CORRADE_ITERATION(lines[i]);
+        CORRADE_VERIFY(std::regex_match(lines[i], stackPattern));
+    }
 }
 
 void UfbxImporterTest::scene() {

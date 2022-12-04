@@ -262,7 +262,7 @@ inline void logError(const char *prefix, const ufbx_error &error, ImporterFlags 
     if (flags & ImporterFlag::Verbose) {
         char message[1024];
         ufbx_format_error(message, sizeof(message), &error);
-        Error{Utility::Debug::Flag::NoSpace} << prefix << message;
+        Error{Utility::Debug::Flag::NoSpace|Utility::Debug::Flag::NoNewlineAtTheEnd} << prefix << message;
     } else if (error.info_length > 0) {
         Error{Utility::Debug::Flag::NoSpace} << prefix << Containers::StringView(error.description) << ": " << Containers::StringView(error.info, error.info_length);
     } else {
