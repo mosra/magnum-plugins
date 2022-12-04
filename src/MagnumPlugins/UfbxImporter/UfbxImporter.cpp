@@ -389,7 +389,7 @@ void UfbxImporter::doOpenFile(Containers::StringView filename) {
     ufbx_error error;
     ufbx_scene *scene = ufbx_load_file_len(filename.data(), filename.size(), &opts, &error);
     if (!scene) {
-        logError("Trade::UfbxImporter::openData(): loading failed: ", error, flags());
+        logError("Trade::UfbxImporter::openFile(): loading failed: ", error, flags());
         return;
     }
 

@@ -45,6 +45,7 @@
 #include <Corrade/TestSuite/Compare/String.h>
 #include <Corrade/Utility/Path.h>
 #include <Corrade/Utility/String.h>
+#include <Magnum/FileCallback.h>
 #include <Magnum/DebugTools/CompareMaterial.h>
 #include <Magnum/Math/Angle.h>
 #include <Magnum/Math/Vector3.h>
@@ -79,6 +80,10 @@ struct UfbxImporterTest: TestSuite::Tester {
     void openData();
     void openFileFailed();
     void openDataFailed();
+
+    void fileCallback();
+    void fileCallbackNotFound();
+
     void scene();
     void mesh();
     void light();
@@ -102,6 +107,9 @@ UfbxImporterTest::UfbxImporterTest() {
               &UfbxImporterTest::openData,
               &UfbxImporterTest::openFileFailed,
               &UfbxImporterTest::openDataFailed});
+
+    addTests({&UfbxImporterTest::fileCallback,
+              &UfbxImporterTest::fileCallbackNotFound});
 
     addTests({&UfbxImporterTest::scene,
               &UfbxImporterTest::mesh,
@@ -176,7 +184,7 @@ void UfbxImporterTest::openFileFailed() {
     Error redirectError{&out};
 
     CORRADE_VERIFY(!importer->openFile("i-do-not-exist.foo"));
-    CORRADE_COMPARE(out.str(), "Trade::UfbxImporter::openData(): loading failed: File not found: i-do-not-exist.foo\n");
+    CORRADE_COMPARE(out.str(), "Trade::UfbxImporter::openFile(): loading failed: File not found: i-do-not-exist.foo\n");
 }
 
 void UfbxImporterTest::openDataFailed() {
@@ -188,6 +196,49 @@ void UfbxImporterTest::openDataFailed() {
     constexpr const char data[] = "what";
     CORRADE_VERIFY(!importer->openData({data, sizeof(data)}));
     CORRADE_COMPARE(out.str(), "Trade::UfbxImporter::openData(): loading failed: Unrecognized file format\n");
+}
+
+void UfbxImporterTest::fileCallback() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
+    CORRADE_VERIFY(importer->features() & ImporterFeature::FileCallback);
+
+    Containers::Optional<Containers::Array<char>> fbx = Utility::Path::read(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "blender-default.fbx"));
+    CORRADE_VERIFY(fbx);
+
+    std::unordered_map<std::string, Containers::Array<char>> files;
+    files["not/a/path/blender-default.fbx"] = *std::move(fbx);
+    importer->setFileCallback([](const std::string& filename, InputFileCallbackPolicy policy,
+        std::unordered_map<std::string, Containers::Array<char>>& files) {
+            return Containers::optional(Containers::ArrayView<const char>(files.at(filename)));
+        }, files);
+
+    CORRADE_VERIFY(importer->openFile("not/a/path/blender-default.fbx"));
+    CORRADE_VERIFY(importer->isOpened());
+    CORRADE_COMPARE(importer->sceneCount(), 1);
+    CORRADE_COMPARE(importer->objectCount(), 3);
+    CORRADE_COMPARE(importer->meshCount(), 1);
+    CORRADE_COMPARE(importer->lightCount(), 1);
+    CORRADE_COMPARE(importer->cameraCount(), 1);
+    CORRADE_COMPARE(importer->animationCount(), 0);
+    CORRADE_COMPARE(importer->skin3DCount(), 0);
+
+    importer->close();
+    CORRADE_VERIFY(!importer->isOpened());
+}
+
+void UfbxImporterTest::fileCallbackNotFound() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
+    CORRADE_VERIFY(importer->features() & ImporterFeature::FileCallback);
+
+    importer->setFileCallback([](const std::string&, InputFileCallbackPolicy,
+        void*) {
+            return Containers::Optional<Containers::ArrayView<const char>>{};
+        });
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!importer->openFile("some-file.fbx"));
+    CORRADE_COMPARE(out.str(), "Trade::UfbxImporter::openFile(): loading failed: File not found: some-file.fbx\n");
 }
 
 void UfbxImporterTest::scene() {
