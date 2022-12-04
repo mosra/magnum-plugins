@@ -204,6 +204,8 @@ struct UfbxImporterTest: TestSuite::Tester {
     void geometryCache();
     void geometryCacheFileCallback();
 
+    void staticSkin();
+
     /* Needs to load AnyImageImporter from a system-wide location */
     PluginManager::Manager<AbstractImporter> _manager;
 };
@@ -268,6 +270,8 @@ UfbxImporterTest::UfbxImporterTest() {
 
     addTests({&UfbxImporterTest::geometryCache,
               &UfbxImporterTest::geometryCacheFileCallback});
+
+    addTests({&UfbxImporterTest::staticSkin});
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. It also pulls in the AnyImageImporter dependency. */
@@ -2059,6 +2063,37 @@ void UfbxImporterTest::geometryCacheFileCallback() {
     /* Should not attempt to load geometry caches */
     CORRADE_COMPARE(files.size(), 1);
     CORRADE_VERIFY(files.find("geometry-cache.fbx") != files.end());
+}
+
+void UfbxImporterTest::staticSkin() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "static-skin.fbx")));
+
+    CORRADE_COMPARE(importer->objectCount(), 5);
+
+    Containers::Optional<SceneData> scene = importer->scene(0);
+    CORRADE_VERIFY(scene);
+
+    Containers::Pair<Containers::StringView, Containers::StringView> parents[] = {
+        { "pCube1", "" },
+        { "joint1", "" },
+        { "joint2", "joint1" },
+        { "joint3", "joint2" },
+        { "joint4", "joint3" },
+    };
+
+    for (const auto &pair : parents) {
+        Long objectId = importer->objectForName(pair.first());
+        CORRADE_COMPARE_AS(objectId, 0, TestSuite::Compare::GreaterOrEqual);
+
+        Containers::Optional<Long> parentId = scene->parentFor(objectId);
+        CORRADE_VERIFY(parentId);
+        if (!pair.second().isEmpty()) {
+            CORRADE_COMPARE(importer->objectName(*parentId), pair.second());
+        } else {
+            CORRADE_COMPARE_AS(*parentId, 0, TestSuite::Compare::Less);
+        }
+    }
 }
 
 }}}}
