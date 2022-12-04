@@ -181,6 +181,7 @@ struct UfbxImporterTest: TestSuite::Tester {
     void materialLayeredPbrTextures();
     void meshMaterials();
     void textureTransform();
+    void textureWrapModes();
 
     void imageEmbedded();
     void imageExternal();
@@ -240,7 +241,8 @@ UfbxImporterTest::UfbxImporterTest() {
               &UfbxImporterTest::materialMaxPbrSpecGloss,
               &UfbxImporterTest::materialLayeredPbrTextures,
               &UfbxImporterTest::meshMaterials,
-              &UfbxImporterTest::textureTransform});
+              &UfbxImporterTest::textureTransform,
+              &UfbxImporterTest::textureWrapModes});
 
     addTests({&UfbxImporterTest::imageEmbedded,
               &UfbxImporterTest::imageExternal,
@@ -1611,6 +1613,35 @@ void UfbxImporterTest::textureTransform() {
     CORRADE_COMPARE(phong.findAttribute<Matrix3>(MaterialAttribute::EmissiveTextureMatrix),
         Matrix3::rotation(90.0_degf).inverted());
 
+}
+
+void UfbxImporterTest::textureWrapModes() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "texture-wrap-modes.fbx")));
+
+    {
+        Containers::Optional<TextureData> texture = importer->texture("repeatRepeat");
+        CORRADE_VERIFY(texture);
+        CORRADE_COMPARE(texture->wrapping(), (Math::Vector3<SamplerWrapping>{SamplerWrapping::Repeat, SamplerWrapping::Repeat, SamplerWrapping::ClampToEdge}));
+    }
+
+    {
+        Containers::Optional<TextureData> texture = importer->texture("clampRepeat");
+        CORRADE_VERIFY(texture);
+        CORRADE_COMPARE(texture->wrapping(), (Math::Vector3<SamplerWrapping>{SamplerWrapping::ClampToEdge, SamplerWrapping::Repeat, SamplerWrapping::ClampToEdge}));
+    }
+
+    {
+        Containers::Optional<TextureData> texture = importer->texture("repeatClamp");
+        CORRADE_VERIFY(texture);
+        CORRADE_COMPARE(texture->wrapping(), (Math::Vector3<SamplerWrapping>{SamplerWrapping::Repeat, SamplerWrapping::ClampToEdge, SamplerWrapping::ClampToEdge}));
+    }
+
+    {
+        Containers::Optional<TextureData> texture = importer->texture("clampClamp");
+        CORRADE_VERIFY(texture);
+        CORRADE_COMPARE(texture->wrapping(), (Math::Vector3<SamplerWrapping>{SamplerWrapping::ClampToEdge, SamplerWrapping::ClampToEdge, SamplerWrapping::ClampToEdge}));
+    }
 }
 
 void UfbxImporterTest::imageEmbedded() {
