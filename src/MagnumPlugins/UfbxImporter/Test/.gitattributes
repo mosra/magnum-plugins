@@ -8,3 +8,5 @@
 #
 
 *.fbx binary diff=hex
+*.png binary diff=hex
+*.dds binary diff=hex

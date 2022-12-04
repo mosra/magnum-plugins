@@ -191,6 +191,7 @@ struct UfbxImporterTest: TestSuite::Tester {
     void imageDeduplication();
     void imageNonExistentName();
     void imageAbsolutePath();
+    void imageNot2D();
 
     void objCube();
     void objCubeFileCallback();
@@ -254,7 +255,8 @@ UfbxImporterTest::UfbxImporterTest() {
               &UfbxImporterTest::imageFileCallbackNotFound,
               &UfbxImporterTest::imageDeduplication,
               &UfbxImporterTest::imageNonExistentName,
-              &UfbxImporterTest::imageAbsolutePath});
+              &UfbxImporterTest::imageAbsolutePath,
+              &UfbxImporterTest::imageNot2D});
 
     addTests({&UfbxImporterTest::objCube,
               &UfbxImporterTest::objCubeFileCallback,
@@ -1859,6 +1861,21 @@ void UfbxImporterTest::imageAbsolutePath() {
 
     CORRADE_VERIFY(!importer->image2D(0));
     CORRADE_COMPARE(out.str(), "Trade::UfbxImporter::image2D(): skipping external image defined by absolute path: /absolute/path/to/tex-red.png\n");
+}
+
+void UfbxImporterTest::imageNot2D() {
+    if(_manager.loadState("DdsImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("DdsImporter plugin not found, cannot test");
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "image-3d.obj")));
+
+    CORRADE_COMPARE(importer->image2DCount(), 1);
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!importer->image2D(0));
+    CORRADE_COMPARE(out.str(), "Trade::UfbxImporter::image2D(): expected exactly one 2D image in an image file but got 0\n");
 }
 
 void UfbxImporterTest::objCube() {

@@ -37,6 +37,9 @@ endif()
 find_package(Magnum REQUIRED DebugTools)
 
 if(NOT MAGNUM_ASSIMPIMPORTER_BUILD_STATIC)
+    if(MAGNUM_WITH_DDSIMPORTER)
+        set(DDSIMPORTER_PLUGIN_FILENAME $<TARGET_FILE:DdsImporter>)
+    endif()
     if(MAGNUM_WITH_STBIMAGEIMPORTER)
         set(STBIMAGEIMPORTER_PLUGIN_FILENAME $<TARGET_FILE:StbImageImporter>)
     endif()
@@ -75,6 +78,9 @@ corrade_add_test(UfbxImporterTest UfbxImporterTest.cpp
         cube.obj
         cube.mtl
         missing-mtl.obj
+        image-3d.obj
+        image-3d.mtl
+        image-3d.dds
         tex-black.png
         tex-blue.png
         tex-cyan.png
@@ -89,12 +95,18 @@ target_include_directories(UfbxImporterTest PRIVATE ${PROJECT_SOURCE_DIR}/src/ex
 target_include_directories(UfbxImporterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>)
 if(MAGNUM_UFBXIMPORTER_BUILD_STATIC)
     target_link_libraries(UfbxImporterTest PRIVATE UfbxImporter)
+    if(MAGNUM_WITH_DDSIMPORTER)
+        target_link_libraries(UfbxImporterTest PRIVATE DdsImporter)
+    endif()
     if(MAGNUM_WITH_STBIMAGEIMPORTER)
         target_link_libraries(UfbxImporterTest PRIVATE StbImageImporter)
     endif()
 else()
     # So the plugins get properly built when building the test
     add_dependencies(UfbxImporterTest UfbxImporter)
+    if(MAGNUM_WITH_DDSIMPORTER)
+        add_dependencies(UfbxImporterTest DdsImporter)
+    endif()
     if(MAGNUM_WITH_STBIMAGEIMPORTER)
         add_dependencies(UfbxImporterTest StbImageImporter)
     endif()
