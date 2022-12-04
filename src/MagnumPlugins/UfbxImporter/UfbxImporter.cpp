@@ -225,6 +225,13 @@ ufbx_load_opts loadOptsFromConfiguration(Utility::ConfigurationGroup& conf) {
     opts.ignore_all_content = conf.value<bool>("ignoreAllContent");
     opts.ignore_missing_external_files = true;
 
+    Long maxTemporaryMemory = conf.value<Long>("maxTemporaryMemory");
+    Long maxResultMemory = conf.value<Long>("maxResultMemory");
+    if (maxTemporaryMemory >= 0)
+        opts.temp_allocator.memory_limit = size_t(Utility::max(maxTemporaryMemory, Long(1)));
+    if (maxResultMemory >= 0)
+        opts.result_allocator.memory_limit = size_t(Utility::max(maxResultMemory, Long(1)));
+
     /* @todo: ufbx can normalize scenes to units/coordinate systems, this is a
       very rudimentary implementation used for testing. Not sure how exposing
       something like this in configuration would work. Also for extra goodness

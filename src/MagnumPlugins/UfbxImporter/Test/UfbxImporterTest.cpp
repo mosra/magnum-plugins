@@ -38,6 +38,7 @@
 #include <Corrade/Containers/BitArray.h>
 #include <Corrade/Containers/StaticArray.h>
 #include <Corrade/Containers/GrowableArray.h>
+#include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/DebugStl.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
@@ -113,6 +114,19 @@ void matchStackTraceLine(Containers::StringView line)
 using namespace Math::Literals;
 using namespace Containers::Literals;
 
+constexpr struct {
+    Long maxMemory;
+    bool shouldLoad;
+} MaxMemoryData[]{
+    {0, false},
+    {1, false},
+    {4096, false},
+    {64*1024*1024, true},
+    {Long(0x7fffffffu) + 1, true},
+    {Long(0xffffffffu) + 1, true},
+    {-999, true},
+};
+
 struct UfbxImporterTest: TestSuite::Tester {
     explicit UfbxImporterTest();
 
@@ -120,6 +134,9 @@ struct UfbxImporterTest: TestSuite::Tester {
     void openData();
     void openFileFailed();
     void openDataFailed();
+
+    void maxTemporaryMemory();
+    void maxResultMemory();
 
     void fileCallback();
     void fileCallbackNotFound();
@@ -153,6 +170,11 @@ UfbxImporterTest::UfbxImporterTest() {
               &UfbxImporterTest::openData,
               &UfbxImporterTest::openFileFailed,
               &UfbxImporterTest::openDataFailed});
+
+    addInstancedTests({&UfbxImporterTest::maxTemporaryMemory,
+                       &UfbxImporterTest::maxResultMemory},
+        Containers::arraySize(MaxMemoryData));
+
 
     addTests({&UfbxImporterTest::fileCallback,
               &UfbxImporterTest::fileCallbackNotFound,
@@ -249,6 +271,38 @@ void UfbxImporterTest::openDataFailed() {
     constexpr const char data[] = "what";
     CORRADE_VERIFY(!importer->openData({data, sizeof(data)}));
     CORRADE_COMPARE(out.str(), "Trade::UfbxImporter::openData(): loading failed: Unrecognized file format\n");
+}
+
+void UfbxImporterTest::maxTemporaryMemory() {
+    auto&& data = MaxMemoryData[testCaseInstanceId()];
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
+
+    importer->configuration().setValue<Long>("maxTemporaryMemory", data.maxMemory);
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_COMPARE(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "blender-default.fbx")), data.shouldLoad);
+    if (data.shouldLoad) {
+        CORRADE_COMPARE(out.str(), "");
+    } else {
+        CORRADE_COMPARE(out.str(), "Trade::UfbxImporter::openFile(): loading failed: Memory limit exceeded: temp\n");
+    }
+}
+
+void UfbxImporterTest::maxResultMemory() {
+    auto&& data = MaxMemoryData[testCaseInstanceId()];
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
+
+    importer->configuration().setValue<Long>("maxResultMemory", data.maxMemory);
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_COMPARE(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "blender-default.fbx")), data.shouldLoad);
+    if (data.shouldLoad) {
+        CORRADE_COMPARE(out.str(), "");
+    } else {
+        CORRADE_COMPARE(out.str(), "Trade::UfbxImporter::openFile(): loading failed: Memory limit exceeded: result\n");
+    }
 }
 
 void UfbxImporterTest::fileCallback() {
