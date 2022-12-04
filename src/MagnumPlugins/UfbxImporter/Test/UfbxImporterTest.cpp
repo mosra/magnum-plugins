@@ -162,6 +162,7 @@ struct UfbxImporterTest: TestSuite::Tester {
     void mesh();
     void light();
     void lightName();
+    void lightBadDecay();
 
     void geometricTransform();
     void geometricTransformPreserveRoot();
@@ -213,7 +214,8 @@ UfbxImporterTest::UfbxImporterTest() {
     addTests({&UfbxImporterTest::scene,
               &UfbxImporterTest::mesh,
               &UfbxImporterTest::light,
-              &UfbxImporterTest::lightName});
+              &UfbxImporterTest::lightName,
+              &UfbxImporterTest::lightBadDecay});
 
     addTests({&UfbxImporterTest::geometricTransform,
               &UfbxImporterTest::geometricTransformPreserveRoot,
@@ -737,6 +739,52 @@ void UfbxImporterTest::lightName() {
     CORRADE_COMPARE(nonLightId, -1);
 
     CORRADE_COMPARE(importer->lightName(0), "Light");
+}
+
+void UfbxImporterTest::lightBadDecay() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "bad-decay-lights.fbx")));
+
+    CORRADE_COMPARE(importer->lightCount(), 2);
+
+    Containers::Optional<SceneData> scene = importer->scene(0);
+    CORRADE_VERIFY(scene);
+
+    {
+        Long objectId = importer->objectForName("cubic");
+        CORRADE_COMPARE_AS(objectId, 0, TestSuite::Compare::GreaterOrEqual);
+
+        Containers::Array<UnsignedInt> lights = scene->lightsFor(UnsignedLong(objectId));
+        CORRADE_COMPARE(lights.size(), 1);
+
+        std::ostringstream out;
+        Warning redirectWarning{&out};
+
+        Containers::Optional<LightData> light = importer->light(lights[0]);
+        CORRADE_VERIFY(light);
+        CORRADE_COMPARE(light->type(), LightData::Type::Point);
+        CORRADE_COMPARE(light->attenuation(), (Vector3{0.0f, 0.0f, 1.0f}));
+
+        CORRADE_COMPARE(out.str(), "Trade::UfbxImporter::light(): cubic attenuation not supported, patching to quadratic\n");
+    }
+
+    {
+        Long objectId = importer->objectForName("directionalDecay");
+        CORRADE_COMPARE_AS(objectId, 0, TestSuite::Compare::GreaterOrEqual);
+
+        Containers::Array<UnsignedInt> lights = scene->lightsFor(UnsignedLong(objectId));
+        CORRADE_COMPARE(lights.size(), 1);
+
+        std::ostringstream out;
+        Warning redirectWarning{&out};
+
+        Containers::Optional<LightData> light = importer->light(lights[0]);
+        CORRADE_VERIFY(light);
+        CORRADE_COMPARE(light->type(), LightData::Type::Directional);
+        CORRADE_COMPARE(light->attenuation(), (Vector3{1.0f, 0.0f, 0.0f}));
+
+        CORRADE_COMPARE(out.str(), "Trade::UfbxImporter::light(): patching attenuation Vector(0, 0, 1) to Vector(1, 0, 0) for Trade::LightData::Type::Directional\n");
+    }
 }
 
 void UfbxImporterTest::geometricTransform() {

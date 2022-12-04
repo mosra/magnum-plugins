@@ -792,7 +792,7 @@ Containers::Optional<LightData> UfbxImporter::doLight(UnsignedInt id) {
         Warning{} << "Trade::UfbxImporter::light(): cubic attenuation not supported, patching to quadratic";
         attenuation = {0.0f, 0.0f, 1.0f};
     } else {
-        Error{} << "Trade::UfbxImporter::light(): light type" << l->type << "is not supported";
+        Error{} << "Trade::UfbxImporter::light(): light decay" << l->decay << "is not supported"; /* LCOV_EXCL_LINE */
     }
 
 
