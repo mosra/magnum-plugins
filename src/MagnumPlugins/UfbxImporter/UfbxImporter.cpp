@@ -1030,6 +1030,13 @@ Containers::Optional<MaterialData> UfbxImporter::doMaterial(UnsignedInt id) {
 
             /* Handle some special cases */
 
+            /* Patch opacity to BaseColor.a */
+            if (pbr && mapping.valueMap == UFBX_MATERIAL_PBR_BASE_COLOR) {
+                if (material->pbr.opacity.has_value && material->pbr.opacity.value_components == 1) {
+                    opacity = Float(material->pbr.opacity.value_real);
+                }
+            }
+
             Containers::StringView attribute = mapping.attribute;
             UfbxMaterialLayerAttributes &attributesForLayer = layerAttributes[UnsignedInt(mapping.layer)];
 

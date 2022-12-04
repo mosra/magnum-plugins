@@ -60,6 +60,7 @@ corrade_add_test(UfbxImporterTest UfbxImporterTest.cpp
         blender-default.fbx
         blender-materials.fbx
         maya-material-arnold.fbx
+        max-material-physical.fbx
         triangle.fbx
         lights.fbx)
 

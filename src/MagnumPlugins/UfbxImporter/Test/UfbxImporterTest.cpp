@@ -84,7 +84,8 @@ struct UfbxImporterTest: TestSuite::Tester {
     void lightName();
     void materialMapping();
     void blenderMaterials();
-    void mayaMaterialArnold();
+    void materialMayaArnold();
+    void materialMaxPhysical();
     void meshMaterials();
     void imageEmbedded();
 
@@ -106,7 +107,8 @@ UfbxImporterTest::UfbxImporterTest() {
     addTests({&UfbxImporterTest::materialMapping});
 
     addTests({&UfbxImporterTest::blenderMaterials,
-              &UfbxImporterTest::mayaMaterialArnold,
+              &UfbxImporterTest::materialMayaArnold,
+              &UfbxImporterTest::materialMaxPhysical,
               &UfbxImporterTest::meshMaterials,
               &UfbxImporterTest::imageEmbedded});
 
@@ -666,7 +668,7 @@ void UfbxImporterTest::blenderMaterials() {
     }
 }
 
-void UfbxImporterTest::mayaMaterialArnold() {
+void UfbxImporterTest::materialMayaArnold() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
 
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "maya-material-arnold.fbx")));
@@ -674,8 +676,6 @@ void UfbxImporterTest::mayaMaterialArnold() {
 
     Containers::Optional<MaterialData> material = importer->material("aiStandardSurface1");
     CORRADE_VERIFY(material);
-
-    CORRADE_COMPARE(material->types(), MaterialType::PbrMetallicRoughness|MaterialType::PbrClearCoat);
 
     auto factor = [](Float value){ return Vector4{value, value, value, 1.0f}; };
 
@@ -697,7 +697,7 @@ void UfbxImporterTest::mayaMaterialArnold() {
 
         {MaterialAttribute::LayerName, "ClearCoat"},
         {MaterialAttribute::LayerFactor, 0.35f},
-        {"color", Color3{0.36f, 0.37f, 0.38f}},
+        {"color", Color4{0.36f, 0.37f, 0.38f, 1.0f}},
         {MaterialAttribute::Roughness, 0.39f},
         {"ior", 0.40f},
         {"anisotropy", 0.41f},
@@ -705,7 +705,7 @@ void UfbxImporterTest::mayaMaterialArnold() {
 
         {MaterialAttribute::LayerName, "transmission"},
         {MaterialAttribute::LayerFactor, 0.15f},
-        {"color", Vector3{0.16f, 0.17f, 0.18f}},
+        {"color", Vector4{0.16f, 0.17f, 0.18f, 1.0f}},
         {"depth", 0.19f},
         {"scatter", Vector3{0.20f, 0.21f, 0.22f}},
         {"scatterAnisotropy", 0.23f},
@@ -716,7 +716,7 @@ void UfbxImporterTest::mayaMaterialArnold() {
 
         {MaterialAttribute::LayerName, "subsurface"},
         {MaterialAttribute::LayerFactor, 0.26f},
-        {"color", Color3{0.27f, 0.28f, 0.29f}},
+        {"color", Color4{0.27f, 0.28f, 0.29f, 1.0f}},
         {"radius", Color3{0.30f, 0.31f, 0.32f}},
         {"scale", 0.33f},
         {"anisotropy", 0.34f},
@@ -732,6 +732,60 @@ void UfbxImporterTest::mayaMaterialArnold() {
         {"color", Color3{0.65f, 0.66f, 0.67f}},
 
     }, {14, 21, 31, 38, 42, 45}};
+
+    CORRADE_COMPARE_AS(*material, reference, DebugTools::CompareMaterial);
+}
+
+void UfbxImporterTest::materialMaxPhysical() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
+
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "max-material-physical.fbx")));
+    CORRADE_COMPARE(importer->materialCount(), 1);
+
+    Containers::Optional<MaterialData> material = importer->material("PhysicalMaterial");
+    CORRADE_VERIFY(material);
+
+    auto factor = [](Float value){ return Vector4{value, value, value, 1.0f}; };
+
+    MaterialData reference{MaterialType::Phong|MaterialType::PbrMetallicRoughness|MaterialType::PbrClearCoat, {
+        /* Phong */
+        {MaterialAttribute::AmbientColor, Color4{0.0002f, 0.0003f, 0.0004f, 1.0f}},
+        {MaterialAttribute::DiffuseColor, Color4{0.0002f, 0.0003f, 0.0004f, 1.0f}},
+        {MaterialAttribute::SpecularColor, Color4{1.0f, 1.0f, 1.0f, 1.0f}},
+        {MaterialAttribute::Shininess, 675.587890625f},
+
+        /* Physical */
+        {MaterialAttribute::BaseColor, Color4{0.02f, 0.03f, 0.04f, 0.05f} * factor(0.01f)},
+        {MaterialAttribute::Roughness, 0.06f},
+        {MaterialAttribute::Metalness, 0.07f},
+        {"specularIor", 0.80f}, /* 3ds Max doesn't allow IOR less than 0.1 */
+        {MaterialAttribute::EmissiveColor, Color3{0.28f, 0.29f, 0.30f} * Vector3{0.27f}},
+        {"specularAnisotropy", 0.32f},
+        {"specularRotation", 0.33f},
+        {"diffuseRoughness", 0.37f},
+
+        {MaterialAttribute::LayerName, "ClearCoat"},
+        {MaterialAttribute::LayerFactor, 0.38f},
+        {"color", Color4{0.39f, 0.40f, 0.41f, 0.42f}},
+        {MaterialAttribute::Roughness, 0.43f},
+        {"ior", 0.44f},
+        {"affectBaseColor", 0.45f},
+        {"affectBaseRoughness", 0.46f},
+
+        {MaterialAttribute::LayerName, "transmission"},
+        {MaterialAttribute::LayerFactor, 0.09f},
+        {"color", Vector4{0.10f, 0.11f, 0.12f, 0.13f}},
+        {MaterialAttribute::Roughness, 0.14f},
+        {"depth", 0.059055f}, /* unit conversion in file */
+
+        {MaterialAttribute::LayerName, "subsurface"},
+        {MaterialAttribute::LayerFactor, 0.16f},
+        {"tintColor", Color4{0.17f, 0.18f, 0.19f, 0.20f}},
+        {"color", Color4{0.21f, 0.22f, 0.23f, 0.24f}},
+        {"radius", Color3{0.098425}}, /* unit conversion in file */
+        {"scale", 0.26f},
+
+    }, {12, 19, 24, 30}};
 
     CORRADE_COMPARE_AS(*material, reference, DebugTools::CompareMaterial);
 }

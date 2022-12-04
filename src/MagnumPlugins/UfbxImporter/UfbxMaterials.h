@@ -92,23 +92,23 @@ const constexpr MaterialMapping materialMappingPbr[] = {
     MaterialMapping{ UfbxMaterialLayer::Base, MaterialAttributeType::Float, "specularRotation"_s, {}, UFBX_MATERIAL_PBR_SPECULAR_ROTATION },
 
     MaterialMapping{ UfbxMaterialLayer::Transmission, MaterialAttributeType::Float, "LayerFactor"_s, {}, UFBX_MATERIAL_PBR_TRANSMISSION_FACTOR },
-    MaterialMapping{ UfbxMaterialLayer::Transmission, MaterialAttributeType::Vector3, "color"_s, {}, UFBX_MATERIAL_PBR_TRANSMISSION_COLOR },
+    MaterialMapping{ UfbxMaterialLayer::Transmission, MaterialAttributeType::Vector4, "color"_s, {}, UFBX_MATERIAL_PBR_TRANSMISSION_COLOR },
     MaterialMapping{ UfbxMaterialLayer::Transmission, MaterialAttributeType::Float, "depth"_s, {}, UFBX_MATERIAL_PBR_TRANSMISSION_DEPTH },
     MaterialMapping{ UfbxMaterialLayer::Transmission, MaterialAttributeType::Vector3, "scatter"_s, {}, UFBX_MATERIAL_PBR_TRANSMISSION_SCATTER },
     MaterialMapping{ UfbxMaterialLayer::Transmission, MaterialAttributeType::Float, "scatterAnisotropy"_s, {}, UFBX_MATERIAL_PBR_TRANSMISSION_SCATTER_ANISOTROPY },
     MaterialMapping{ UfbxMaterialLayer::Transmission, MaterialAttributeType::Float, "dispersion"_s, {}, UFBX_MATERIAL_PBR_TRANSMISSION_DISPERSION },
-    MaterialMapping{ UfbxMaterialLayer::Transmission, MaterialAttributeType::Float, "roughness"_s, {}, UFBX_MATERIAL_PBR_TRANSMISSION_ROUGHNESS },
-    MaterialMapping{ UfbxMaterialLayer::Transmission, MaterialAttributeType::Float, "glossiness"_s, {}, UFBX_MATERIAL_PBR_TRANSMISSION_GLOSSINESS },
+    MaterialMapping{ UfbxMaterialLayer::Transmission, MaterialAttributeType::Float, "Roughness"_s, {}, UFBX_MATERIAL_PBR_TRANSMISSION_ROUGHNESS },
+    MaterialMapping{ UfbxMaterialLayer::Transmission, MaterialAttributeType::Float, "Glossiness"_s, {}, UFBX_MATERIAL_PBR_TRANSMISSION_GLOSSINESS },
     MaterialMapping{ UfbxMaterialLayer::Transmission, MaterialAttributeType::Float, "extraRoughness"_s, {}, UFBX_MATERIAL_PBR_TRANSMISSION_EXTRA_ROUGHNESS },
     MaterialMapping{ UfbxMaterialLayer::Transmission, MaterialAttributeType::Long, "priority"_s, {}, UFBX_MATERIAL_PBR_TRANSMISSION_PRIORITY },
     MaterialMapping{ UfbxMaterialLayer::Transmission, MaterialAttributeType::Bool, "enableInAov"_s, {}, UFBX_MATERIAL_PBR_TRANSMISSION_ENABLE_IN_AOV },
 
     MaterialMapping{ UfbxMaterialLayer::Subsurface, MaterialAttributeType::Float, "LayerFactor"_s, {}, UFBX_MATERIAL_PBR_SUBSURFACE_FACTOR },
-    MaterialMapping{ UfbxMaterialLayer::Subsurface, MaterialAttributeType::Vector3, "color"_s, {}, UFBX_MATERIAL_PBR_SUBSURFACE_COLOR },
+    MaterialMapping{ UfbxMaterialLayer::Subsurface, MaterialAttributeType::Vector4, "color"_s, {}, UFBX_MATERIAL_PBR_SUBSURFACE_COLOR },
     MaterialMapping{ UfbxMaterialLayer::Subsurface, MaterialAttributeType::Vector3, "radius"_s, {}, UFBX_MATERIAL_PBR_SUBSURFACE_RADIUS },
     MaterialMapping{ UfbxMaterialLayer::Subsurface, MaterialAttributeType::Float, "scale"_s, {}, UFBX_MATERIAL_PBR_SUBSURFACE_SCALE },
     MaterialMapping{ UfbxMaterialLayer::Subsurface, MaterialAttributeType::Float, "anisotropy"_s, {}, UFBX_MATERIAL_PBR_SUBSURFACE_ANISOTROPY },
-    MaterialMapping{ UfbxMaterialLayer::Subsurface, MaterialAttributeType::Vector3, "tintColor"_s, {}, UFBX_MATERIAL_PBR_SUBSURFACE_TINT_COLOR },
+    MaterialMapping{ UfbxMaterialLayer::Subsurface, MaterialAttributeType::Vector4, "tintColor"_s, {}, UFBX_MATERIAL_PBR_SUBSURFACE_TINT_COLOR },
     MaterialMapping{ UfbxMaterialLayer::Subsurface, MaterialAttributeType::Long, "type"_s, {}, UFBX_MATERIAL_PBR_SUBSURFACE_TYPE },
 
     MaterialMapping{ UfbxMaterialLayer::Sheen, MaterialAttributeType::Float, "LayerFactor"_s, {}, UFBX_MATERIAL_PBR_SHEEN_FACTOR },
@@ -116,7 +116,7 @@ const constexpr MaterialMapping materialMappingPbr[] = {
     MaterialMapping{ UfbxMaterialLayer::Sheen, MaterialAttributeType::Float, "Roughness"_s, {}, UFBX_MATERIAL_PBR_SHEEN_ROUGHNESS },
 
     MaterialMapping{ UfbxMaterialLayer::Coat, MaterialAttributeType::Float, "LayerFactor"_s, {}, UFBX_MATERIAL_PBR_COAT_FACTOR },
-    MaterialMapping{ UfbxMaterialLayer::Coat, MaterialAttributeType::Vector3, "color"_s, {}, UFBX_MATERIAL_PBR_COAT_COLOR },
+    MaterialMapping{ UfbxMaterialLayer::Coat, MaterialAttributeType::Vector4, "color"_s, {}, UFBX_MATERIAL_PBR_COAT_COLOR },
     MaterialMapping{ UfbxMaterialLayer::Coat, MaterialAttributeType::Float, "Roughness"_s, {}, UFBX_MATERIAL_PBR_COAT_ROUGHNESS },
     MaterialMapping{ UfbxMaterialLayer::Coat, MaterialAttributeType::Float, "Glossiness"_s, {}, UFBX_MATERIAL_PBR_COAT_GLOSSINESS },
     MaterialMapping{ UfbxMaterialLayer::Coat, MaterialAttributeType::Float, "ior"_s, {}, UFBX_MATERIAL_PBR_COAT_IOR },
@@ -132,7 +132,7 @@ const constexpr MaterialMapping materialMappingPbr[] = {
     /* @todo This could be it's own layer */
     MaterialMapping{ UfbxMaterialLayer::Base, MaterialAttributeType::Vector3, "EmissiveColor"_s, "EmissiveTexture"_s, UFBX_MATERIAL_PBR_EMISSION_COLOR, UFBX_MATERIAL_PBR_EMISSION_FACTOR, MaterialExclusionGroup::Emission },
 
-    /* @todo In some materials this can be scalar and copied to BaseColor.a */
+    /* Patched to BaseColor.a if scalar */
     MaterialMapping{ UfbxMaterialLayer::Base, MaterialAttributeType::Vector3, "opacity"_s, {}, UFBX_MATERIAL_PBR_OPACITY },
 
     MaterialMapping{ UfbxMaterialLayer::Base, MaterialAttributeType::Float, "indirectDiffuse"_s, {}, UFBX_MATERIAL_PBR_INDIRECT_DIFFUSE },
