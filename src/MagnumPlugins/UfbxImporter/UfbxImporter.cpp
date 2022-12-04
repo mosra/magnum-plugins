@@ -168,6 +168,7 @@ constexpr Containers::StringView sceneFieldNames[] = {
 
 Containers::StringView blendModeToString(ufbx_blend_mode mode) {
     switch (mode) {
+    /* LCOV_EXCL_START */
     case UFBX_BLEND_TRANSLUCENT: return "translucent"_s;
 	case UFBX_BLEND_ADDITIVE: return "additive"_s;
 	case UFBX_BLEND_MULTIPLY: return "multiply"_s;
@@ -202,6 +203,7 @@ Containers::StringView blendModeToString(ufbx_blend_mode mode) {
     default:
         Warning{} << "Unhandled blend mode" << Int(mode);
         return {};
+    /* LCOV_EXCL_STOP */
     }
 }
 
