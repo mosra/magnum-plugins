@@ -70,6 +70,7 @@ corrade_add_test(UfbxImporterTest UfbxImporterTest.cpp
         lights.fbx
         bad-decay-lights.fbx
         image-absolute-path.fbx
+        units-cm-z-up.fbx
         cube.obj
         cube.mtl
         missing-mtl.obj

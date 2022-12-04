@@ -212,7 +212,7 @@ struct MeshChunk {
     uint32_t meshMaterialIndex;
 };
 
-ufbx_load_opts loadOptsFromConfiguration(Utility::ConfigurationGroup& conf) {
+ufbx_load_opts loadOptsFromConfiguration(const char *errorPrefix, Utility::ConfigurationGroup& conf) {
     static_cast<void>(conf);
 
     ufbx_load_opts opts = { };
@@ -234,15 +234,14 @@ ufbx_load_opts loadOptsFromConfiguration(Utility::ConfigurationGroup& conf) {
     if (maxResultMemory >= 0)
         opts.result_allocator.memory_limit = size_t(Utility::max(maxResultMemory, Long(1)));
 
-    /* @todo: ufbx can normalize scenes to units/coordinate systems, this is a
-      very rudimentary implementation used for testing. Not sure how exposing
-      something like this in configuration would work. Also for extra goodness
-      it depends on preserveRootNode as that's where ufbx writes the mapping.
-      Another alternative would be to expose the current scene units as some
-      custom scene fields and let users do the math. */
+    /* @todo: Depends on preserveRootNode, could be made to work without with
+       some non-trivial work here or on ufbx side.. */
     if (conf.value<bool>("normalizeUnits")) {
         opts.target_axes = ufbx_axes_right_handed_y_up;
         opts.target_unit_meters = 1.0f;
+        if (!conf.value<bool>("preserveRootNode")) {
+            Warning{} << errorPrefix << "normalizeUnits has no effect unless preserveRootNode is enabled";
+        }
     }
 
     /* We need to split meshes by material so create a dummy ufbx_mesh_material
@@ -370,7 +369,7 @@ void UfbxImporter::doClose() { _state = nullptr; }
 void UfbxImporter::doOpenData(Containers::Array<char>&& data, const DataFlags) {
     _state.reset();
 
-    ufbx_load_opts opts = loadOptsFromConfiguration(configuration());
+    ufbx_load_opts opts = loadOptsFromConfiguration("Trade::UfbxImporter::openData():", configuration());
 
     FileOpener opener{fileCallback(), fileCallbackUserData()};
     opts.open_file_cb = &opener;
@@ -389,7 +388,7 @@ void UfbxImporter::doOpenData(Containers::Array<char>&& data, const DataFlags) {
 void UfbxImporter::doOpenFile(Containers::StringView filename) {
     _state.reset();
 
-    ufbx_load_opts opts = loadOptsFromConfiguration(configuration());
+    ufbx_load_opts opts = loadOptsFromConfiguration("Trade::UfbxImporter::openFile():", configuration());
     opts.filename = filename;
 
     FileOpener opener{fileCallback(), fileCallbackUserData()};

@@ -196,6 +196,9 @@ struct UfbxImporterTest: TestSuite::Tester {
     void objMissingMtl();
     void objMissingMtlFileCallback();
 
+    void normalizeUnits();
+    void normalizeUnitsNoRoot();
+
     /* Needs to load AnyImageImporter from a system-wide location */
     PluginManager::Manager<AbstractImporter> _manager;
 };
@@ -252,6 +255,9 @@ UfbxImporterTest::UfbxImporterTest() {
               &UfbxImporterTest::objCubeFileCallback,
               &UfbxImporterTest::objMissingMtl,
               &UfbxImporterTest::objMissingMtlFileCallback});
+
+    addTests({&UfbxImporterTest::normalizeUnits,
+              &UfbxImporterTest::normalizeUnitsNoRoot});
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. It also pulls in the AnyImageImporter dependency. */
@@ -881,7 +887,7 @@ void UfbxImporterTest::geometricTransform() {
     const Containers::Pair<UnsignedInt, Containers::Triple<Vector3,Quaternion,Vector3>> referenceTrs[] = {
         /* Box001 */
         {0, {{0.0f, -10.0f, 0.0f},
-             {{0.0f, 0.0f, -0.707107}, 0.707107f}, /* Euler (0, 0, -90) */
+             {{0.0f, 0.0f, -0.707107f}, 0.707107f}, /* Euler (0, 0, -90) */
              {1.0f, 2.0f, 1.0f}}}, 
         /* Box002 */
         {1, {{0.0f, 0.0f, 20.0f},
@@ -936,7 +942,7 @@ void UfbxImporterTest::geometricTransformPreserveRoot() {
         {0, {{0.0f, 0.0f, 0.0f}, {}, {1.0f, 1.0f, 1.0f}}},
         /* Box001 */
         {1, {{0.0f, -10.0f, 0.0f},
-             {{0.0f, 0.0f, -0.707107}, 0.707107f}, /* Euler (0, 0, -90) */
+             {{0.0f, 0.0f, -0.707107f}, 0.707107f}, /* Euler (0, 0, -90) */
              {1.0f, 2.0f, 1.0f}}}, 
         /* Box002 */
         {2, {{0.0f, 0.0f, 20.0f},
@@ -986,7 +992,7 @@ void UfbxImporterTest::geometricTransformNoGeometric() {
     const Containers::Pair<UnsignedInt, Containers::Triple<Vector3,Quaternion,Vector3>> referenceTrs[] = {
         /* Box001 */
         {0, {{0.0f, -10.0f, 0.0f},
-             {{0.0f, 0.0f, -0.707107}, 0.707107f}, /* Euler (0, 0, -90) */
+             {{0.0f, 0.0f, -0.707107f}, 0.707107f}, /* Euler (0, 0, -90) */
              {1.0f, 2.0f, 1.0f}}}, 
         /* Box002 */
         {1, {{0.0f, 0.0f, 20.0f},
@@ -1032,7 +1038,7 @@ void UfbxImporterTest::geometricTransformNoGeometricPreserveRoot() {
         {0, {{0.0f, 0.0f, 0.0f}, {}, {1.0f, 1.0f, 1.0f}}},
         /* Box001 */
         {1, {{0.0f, -10.0f, 0.0f},
-             {{0.0f, 0.0f, -0.707107}, 0.707107f}, /* Euler (0, 0, -90) */
+             {{0.0f, 0.0f, -0.707107f}, 0.707107f}, /* Euler (0, 0, -90) */
              {1.0f, 2.0f, 1.0f}}}, 
         /* Box002 */
         {2, {{0.0f, 0.0f, 20.0f},
@@ -1923,6 +1929,63 @@ void UfbxImporterTest::objMissingMtlFileCallback() {
 
     MaterialData reference{MaterialType{}, {}};
     CORRADE_COMPARE_AS(*material, reference, DebugTools::CompareMaterial);
+}
+
+void UfbxImporterTest::normalizeUnits() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
+    importer->configuration().setValue("normalizeUnits", true);
+    importer->configuration().setValue("preserveRootNode", true);
+
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "units-cm-z-up.fbx")));
+    CORRADE_COMPARE(importer->objectCount(), 2);
+
+    Containers::Optional<SceneData> scene = importer->scene(0);
+    CORRADE_VERIFY(scene);
+
+    {
+        /* Root node */
+        CORRADE_COMPARE(importer->objectName(0), "");
+        Containers::Optional<Containers::Triple<Vector3, Quaternion, Vector3>> trs = scene->translationRotationScaling3DFor(0);
+        CORRADE_VERIFY(trs);
+        CORRADE_COMPARE(trs->first(), (Vector3{0.0f, 0.0f, 0.0f}));
+        CORRADE_COMPARE(trs->second(), (Quaternion{{-0.707107f, 0.0f, 0.0f}, 0.707107f})); /* Euler (-90, 0, 0) */
+        CORRADE_COMPARE(trs->third(), (Vector3{0.01f})); /* centimeters to meters */
+    }
+
+    {
+        CORRADE_COMPARE(importer->objectName(1), "Empty");
+        Containers::Optional<Containers::Triple<Vector3, Quaternion, Vector3>> trs = scene->translationRotationScaling3DFor(1);
+        CORRADE_VERIFY(trs);
+        CORRADE_COMPARE(trs->first(), (Vector3{100.0f, -300.0f, 200.0f}));
+        CORRADE_COMPARE(trs->second(), (Quaternion{{0.5f, 0.5f, 0.5f}, 0.5f})); /* Euler (90, 90, 0) */
+        CORRADE_COMPARE(trs->third(), (Vector3{20.0f, 40.0f, 60.0f}));
+    }
+}
+
+void UfbxImporterTest::normalizeUnitsNoRoot() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
+    importer->configuration().setValue("normalizeUnits", true);
+
+    std::ostringstream out;
+    Warning redirectWarning{&out};
+
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "units-cm-z-up.fbx")));
+    CORRADE_COMPARE(out.str(), "Trade::UfbxImporter::openFile(): normalizeUnits has no effect unless preserveRootNode is enabled");
+
+    CORRADE_COMPARE(importer->objectCount(), 1);
+
+    Containers::Optional<SceneData> scene = importer->scene(0);
+    CORRADE_VERIFY(scene);
+
+    /* @todo: These values could be normalized to units for in the future */
+    {
+        CORRADE_COMPARE(importer->objectName(0), "Empty");
+        Containers::Optional<Containers::Triple<Vector3, Quaternion, Vector3>> trs = scene->translationRotationScaling3DFor(0);
+        CORRADE_VERIFY(trs);
+        CORRADE_COMPARE(trs->first(), (Vector3{100.0f, -300.0f, 200.0f}));
+        CORRADE_COMPARE(trs->second(), (Quaternion{{0.5f, 0.5f, 0.5f}, 0.5f})); /* Euler (90, 90, 0) */
+        CORRADE_COMPARE(trs->third(), (Vector3{20.0f, 40.0f, 60.0f}));
+    }
 }
 
 }}}}
