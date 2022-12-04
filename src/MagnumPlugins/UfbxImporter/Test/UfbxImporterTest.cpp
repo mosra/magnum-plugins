@@ -1137,8 +1137,6 @@ void UfbxImporterTest::materialMayaArnold() {
     Containers::Optional<MaterialData> material = importer->material("aiStandardSurface1");
     CORRADE_VERIFY(material);
 
-    auto factor = [](Float value){ return Vector4{value, value, value, 1.0f}; };
-
     MaterialData reference{MaterialType::PbrMetallicRoughness|MaterialType::PbrClearCoat, {
         {MaterialAttribute::BaseColor, Color4{0.02f, 0.03f, 0.04f, 1.0f} * factor(0.01f)},
         {"diffuseRoughness", 0.05f},
@@ -1205,8 +1203,6 @@ void UfbxImporterTest::materialMaxPhysical() {
     Containers::Optional<MaterialData> material = importer->material("PhysicalMaterial");
     CORRADE_VERIFY(material);
 
-    auto factor = [](Float value){ return Vector4{value, value, value, 1.0f}; };
-
     MaterialData reference{MaterialType::Phong|MaterialType::PbrMetallicRoughness|MaterialType::PbrClearCoat, {
         /* Phong */
         {MaterialAttribute::AmbientColor, Color4{0.0002f, 0.0003f, 0.0004f, 1.0f}},
@@ -1259,8 +1255,6 @@ void UfbxImporterTest::materialMaxPbrSpecGloss() {
 
     Containers::Optional<MaterialData> material = importer->material("02 - Default");
     CORRADE_VERIFY(material);
-
-    auto factor = [](Float value){ return Vector4{value, value, value, 1.0f}; };
 
     Int texDiffuse = importer->textureForName("Map #18");
     Int texSpecular = importer->textureForName("Map #19");
