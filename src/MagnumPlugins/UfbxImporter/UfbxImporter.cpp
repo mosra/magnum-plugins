@@ -744,8 +744,11 @@ Containers::Optional<CameraData> UfbxImporter::doCamera(UnsignedInt id) {
             Vector2{Float(cam->orthographic_size.x), Float(cam->orthographic_size.y)},
             Float(cam->near_plane), Float(cam->far_plane)};
     } else {
-        Error() << "Trade::UfbxImporter::light(): camera projection mode" << cam->projection_mode << "is not supported";
+        /* Not expected to gain new projection modes */
+        /* LCOV_EXCL_START */
+        Error() << "Trade::UfbxImporter::camera(): camera projection mode" << cam->projection_mode << "is not supported";
         return {};
+        /* LCOV_EXCL_STOP */
     }
 }
 
