@@ -63,6 +63,7 @@ corrade_add_test(UfbxImporterTest UfbxImporterTest.cpp
         max-material-physical.fbx
         max-material-spec-gloss.fbx
         layered-pbr-textures.fbx
+        geometric-transform.fbx
         triangle.fbx
         lights.fbx
         tex-black.png

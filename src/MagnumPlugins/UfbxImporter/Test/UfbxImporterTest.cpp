@@ -147,13 +147,21 @@ struct UfbxImporterTest: TestSuite::Tester {
     void mesh();
     void light();
     void lightName();
+
+    void geometricTransform();
+    void geometricTransformPreserveRoot();
+    void geometricTransformNoGeometric();
+    void geometricTransformNoGeometricPreserveRoot();
+
     void materialMapping();
+
     void blenderMaterials();
     void materialMayaArnold();
     void materialMaxPhysical();
     void materialMaxPbrSpecGloss();
     void materialLayeredPbrTextures();
     void meshMaterials();
+
     void imageEmbedded();
     void imageExternal();
     void imageFileCallback();
@@ -185,6 +193,11 @@ UfbxImporterTest::UfbxImporterTest() {
               &UfbxImporterTest::mesh,
               &UfbxImporterTest::light,
               &UfbxImporterTest::lightName});
+
+    addTests({&UfbxImporterTest::geometricTransform,
+              &UfbxImporterTest::geometricTransformPreserveRoot,
+              &UfbxImporterTest::geometricTransformNoGeometric,
+              &UfbxImporterTest::geometricTransformNoGeometricPreserveRoot});
 
     addTests({&UfbxImporterTest::materialMapping});
 
@@ -697,6 +710,200 @@ void UfbxImporterTest::lightName() {
     CORRADE_COMPARE(nonLightId, -1);
 
     CORRADE_COMPARE(importer->lightName(0), "Light");
+}
+
+void UfbxImporterTest::geometricTransform() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "geometric-transform.fbx")));
+
+    /* Two real objects and two geometric transform helpers */
+    CORRADE_COMPARE(importer->objectCount(), 4);
+    CORRADE_COMPARE(importer->objectName(0), "Box001");
+    CORRADE_COMPARE(importer->objectName(1), "Box002");
+    CORRADE_COMPARE(importer->objectName(2), "");
+    CORRADE_COMPARE(importer->objectName(3), "");
+
+    Containers::Optional<SceneData> scene = importer->scene(0);
+    CORRADE_VERIFY(scene);
+
+    CORRADE_VERIFY(scene->hasField(SceneField::Parent));
+    CORRADE_VERIFY(scene->hasField(SceneField::Translation));
+    CORRADE_VERIFY(scene->hasField(SceneField::Rotation));
+    CORRADE_VERIFY(scene->hasField(SceneField::Scaling));
+
+    CORRADE_COMPARE_AS(scene->field<Int>(SceneField::Parent), Containers::arrayView<Int>({
+        -1, 0, 0, 1,
+    }), TestSuite::Compare::Container);
+ 
+    /* The meshes should be parented under their geometric transform helpers */
+    CORRADE_COMPARE_AS(scene->meshesMaterialsAsArray(), (Containers::arrayView<Containers::Pair<UnsignedInt, Containers::Pair<UnsignedInt, Int>>>({
+        {2, {0, -1}},
+        {3, {1, -1}},
+    })), TestSuite::Compare::Container);
+
+    const Containers::Pair<UnsignedInt, Containers::Triple<Vector3,Quaternion,Vector3>> referenceTrs[] = {
+        /* Box001 */
+        {0, {{0.0f, -10.0f, 0.0f},
+             {{0.0f, 0.0f, -0.707107}, 0.707107f}, /* Euler (0, 0, -90) */
+             {1.0f, 2.0f, 1.0f}}}, 
+        /* Box002 */
+        {1, {{0.0f, 0.0f, 20.0f},
+             {{0.0f, 0.0f, -1.0f}, 0.0f}, /* Euler (0, 0, -180) */
+             {1.0f, 0.5f, 1.0f}}},
+        /* Box001 Geometric */
+        {2, {{0.0f, 0.0f, 10.0f},
+             {{0.0f, 0.707107f, 0.0f}, 0.707107f}, /* Euler (0, 90, 0) */
+             {1.0f, 1.0f, 2.0f}}},
+        /* Box002 Geometric */
+        {3, {{10.0f, 0.0f, 0.0f},
+             {},
+             {1.0f, 1.0f, 1.0f}}}, 
+    };
+    CORRADE_COMPARE_AS(scene->translationsRotationsScalings3DAsArray(),
+        Containers::arrayView(referenceTrs), TestSuite::Compare::Container);
+}
+
+void UfbxImporterTest::geometricTransformPreserveRoot() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
+    importer->configuration().setValue("preserveRootNode", true);
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "geometric-transform.fbx")));
+
+    /* Two real objects, root, and two geometric transform helpers */
+    CORRADE_COMPARE(importer->objectCount(), 5);
+    CORRADE_COMPARE(importer->objectName(0), "");
+    CORRADE_COMPARE(importer->objectName(1), "Box001");
+    CORRADE_COMPARE(importer->objectName(2), "Box002");
+    CORRADE_COMPARE(importer->objectName(3), "");
+    CORRADE_COMPARE(importer->objectName(4), "");
+
+    Containers::Optional<SceneData> scene = importer->scene(0);
+    CORRADE_VERIFY(scene);
+
+    CORRADE_VERIFY(scene->hasField(SceneField::Parent));
+    CORRADE_VERIFY(scene->hasField(SceneField::Translation));
+    CORRADE_VERIFY(scene->hasField(SceneField::Rotation));
+    CORRADE_VERIFY(scene->hasField(SceneField::Scaling));
+
+    CORRADE_COMPARE_AS(scene->field<Int>(SceneField::Parent), Containers::arrayView<Int>({
+        -1, 0, 1, 1, 2,
+    }), TestSuite::Compare::Container);
+ 
+    /* The meshes should be parented under their geometric transform helpers */
+    CORRADE_COMPARE_AS(scene->meshesMaterialsAsArray(), (Containers::arrayView<Containers::Pair<UnsignedInt, Containers::Pair<UnsignedInt, Int>>>({
+        {3, {0, -1}},
+        {4, {1, -1}},
+    })), TestSuite::Compare::Container);
+
+    const Containers::Pair<UnsignedInt, Containers::Triple<Vector3,Quaternion,Vector3>> referenceTrs[] = {
+        /* (root) */
+        {0, {{0.0f, 0.0f, 0.0f}, {}, {1.0f, 1.0f, 1.0f}}},
+        /* Box001 */
+        {1, {{0.0f, -10.0f, 0.0f},
+             {{0.0f, 0.0f, -0.707107}, 0.707107f}, /* Euler (0, 0, -90) */
+             {1.0f, 2.0f, 1.0f}}}, 
+        /* Box002 */
+        {2, {{0.0f, 0.0f, 20.0f},
+             {{0.0f, 0.0f, -1.0f}, 0.0f}, /* Euler (0, 0, -180) */
+             {1.0f, 0.5f, 1.0f}}},
+        /* Box001 Geometric */
+        {3, {{0.0f, 0.0f, 10.0f},
+             {{0.0f, 0.707107f, 0.0f}, 0.707107f}, /* Euler (0, 90, 0) */
+             {1.0f, 1.0f, 2.0f}}},
+        /* Box002 Geometric */
+        {4, {{10.0f, 0.0f, 0.0f},
+             {},
+             {1.0f, 1.0f, 1.0f}}}, 
+    };
+    CORRADE_COMPARE_AS(scene->translationsRotationsScalings3DAsArray(),
+        Containers::arrayView(referenceTrs), TestSuite::Compare::Container);
+}
+
+void UfbxImporterTest::geometricTransformNoGeometric() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
+    importer->configuration().setValue("geometricTransformNodes", false);
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "geometric-transform.fbx")));
+
+    /* Two real objects only */
+    CORRADE_COMPARE(importer->objectCount(), 2);
+    CORRADE_COMPARE(importer->objectName(0), "Box001");
+    CORRADE_COMPARE(importer->objectName(1), "Box002");
+
+    Containers::Optional<SceneData> scene = importer->scene(0);
+    CORRADE_VERIFY(scene);
+
+    CORRADE_VERIFY(scene->hasField(SceneField::Parent));
+    CORRADE_VERIFY(scene->hasField(SceneField::Translation));
+    CORRADE_VERIFY(scene->hasField(SceneField::Rotation));
+    CORRADE_VERIFY(scene->hasField(SceneField::Scaling));
+
+    CORRADE_COMPARE_AS(scene->field<Int>(SceneField::Parent), Containers::arrayView<Int>({
+        -1, 0,
+    }), TestSuite::Compare::Container);
+ 
+    /* The meshes should be parented under their geometric transform helpers */
+    CORRADE_COMPARE_AS(scene->meshesMaterialsAsArray(), (Containers::arrayView<Containers::Pair<UnsignedInt, Containers::Pair<UnsignedInt, Int>>>({
+        {0, {0, -1}},
+        {1, {1, -1}},
+    })), TestSuite::Compare::Container);
+
+    const Containers::Pair<UnsignedInt, Containers::Triple<Vector3,Quaternion,Vector3>> referenceTrs[] = {
+        /* Box001 */
+        {0, {{0.0f, -10.0f, 0.0f},
+             {{0.0f, 0.0f, -0.707107}, 0.707107f}, /* Euler (0, 0, -90) */
+             {1.0f, 2.0f, 1.0f}}}, 
+        /* Box002 */
+        {1, {{0.0f, 0.0f, 20.0f},
+             {{0.0f, 0.0f, -1.0f}, 0.0f}, /* Euler (0, 0, -180) */
+             {1.0f, 0.5f, 1.0f}}},
+    };
+    CORRADE_COMPARE_AS(scene->translationsRotationsScalings3DAsArray(),
+        Containers::arrayView(referenceTrs), TestSuite::Compare::Container);
+}
+
+void UfbxImporterTest::geometricTransformNoGeometricPreserveRoot() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
+    importer->configuration().setValue("geometricTransformNodes", false);
+    importer->configuration().setValue("preserveRootNode", true);
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "geometric-transform.fbx")));
+
+    /* Two real objects and root */
+    CORRADE_COMPARE(importer->objectCount(), 3);
+    CORRADE_COMPARE(importer->objectName(0), "");
+    CORRADE_COMPARE(importer->objectName(1), "Box001");
+    CORRADE_COMPARE(importer->objectName(2), "Box002");
+
+    Containers::Optional<SceneData> scene = importer->scene(0);
+    CORRADE_VERIFY(scene);
+
+    CORRADE_VERIFY(scene->hasField(SceneField::Parent));
+    CORRADE_VERIFY(scene->hasField(SceneField::Translation));
+    CORRADE_VERIFY(scene->hasField(SceneField::Rotation));
+    CORRADE_VERIFY(scene->hasField(SceneField::Scaling));
+
+    CORRADE_COMPARE_AS(scene->field<Int>(SceneField::Parent), Containers::arrayView<Int>({
+        -1, 0, 1,
+    }), TestSuite::Compare::Container);
+ 
+    /* The meshes should be parented under their geometric transform helpers */
+    CORRADE_COMPARE_AS(scene->meshesMaterialsAsArray(), (Containers::arrayView<Containers::Pair<UnsignedInt, Containers::Pair<UnsignedInt, Int>>>({
+        {1, {0, -1}},
+        {2, {1, -1}},
+    })), TestSuite::Compare::Container);
+
+    const Containers::Pair<UnsignedInt, Containers::Triple<Vector3,Quaternion,Vector3>> referenceTrs[] = {
+        /* (root) */
+        {0, {{0.0f, 0.0f, 0.0f}, {}, {1.0f, 1.0f, 1.0f}}},
+        /* Box001 */
+        {1, {{0.0f, -10.0f, 0.0f},
+             {{0.0f, 0.0f, -0.707107}, 0.707107f}, /* Euler (0, 0, -90) */
+             {1.0f, 2.0f, 1.0f}}}, 
+        /* Box002 */
+        {2, {{0.0f, 0.0f, 20.0f},
+             {{0.0f, 0.0f, -1.0f}, 0.0f}, /* Euler (0, 0, -180) */
+             {1.0f, 0.5f, 1.0f}}},
+    };
+    CORRADE_COMPARE_AS(scene->translationsRotationsScalings3DAsArray(),
+        Containers::arrayView(referenceTrs), TestSuite::Compare::Container);
 }
 
 void UfbxImporterTest::materialMapping() {
