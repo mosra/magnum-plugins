@@ -75,6 +75,7 @@ corrade_add_test(UfbxImporterTest UfbxImporterTest.cpp
         image-absolute-path.fbx
         units-cm-z-up.fbx
         geometry-cache.fbx
+        static-skin.fbx
         cube.obj
         cube.mtl
         missing-mtl.obj
