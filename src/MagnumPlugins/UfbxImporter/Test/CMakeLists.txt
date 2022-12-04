@@ -66,6 +66,7 @@ corrade_add_test(UfbxImporterTest UfbxImporterTest.cpp
         geometric-transform.fbx
         texture-transform.fbx
         triangle.fbx
+        cameras.fbx
         lights.fbx
         bad-decay-lights.fbx
         image-absolute-path.fbx

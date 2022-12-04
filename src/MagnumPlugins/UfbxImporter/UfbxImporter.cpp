@@ -736,12 +736,12 @@ Containers::Optional<CameraData> UfbxImporter::doCamera(UnsignedInt id) {
     ufbx_camera *cam = _state->scene->cameras[id];
 
     if (cam->projection_mode == UFBX_PROJECTION_MODE_PERSPECTIVE) {
-        return CameraData{CameraType::Orthographic3D,
-            Vector2{Float(cam->orthographic_size.x), Float(cam->orthographic_size.y)},
-            Float(cam->near_plane), Float(cam->far_plane)};
-    } else if (cam->projection_mode == UFBX_PROJECTION_MODE_ORTOGRAPHIC) {
         return CameraData{CameraType::Perspective3D,
             Deg(Float(cam->field_of_view_deg.x)), Float(cam->aspect_ratio),
+            Float(cam->near_plane), Float(cam->far_plane)};
+    } else if (cam->projection_mode == UFBX_PROJECTION_MODE_ORTOGRAPHIC) {
+        return CameraData{CameraType::Orthographic3D,
+            Vector2{Float(cam->orthographic_size.x), Float(cam->orthographic_size.y)},
             Float(cam->near_plane), Float(cam->far_plane)};
     } else {
         Error() << "Trade::UfbxImporter::light(): camera projection mode" << cam->projection_mode << "is not supported";

@@ -59,6 +59,7 @@
 #include <Magnum/Trade/SceneData.h>
 #include <Magnum/Trade/TextureData.h>
 #include <Magnum/Trade/ImageData.h>
+#include <Magnum/Trade/CameraData.h>
 #include <Magnum/Trade/MaterialData.h>
 #include <Magnum/Trade/PhongMaterialData.h>
 #include <Magnum/Trade/PbrMetallicRoughnessMaterialData.h>
@@ -160,6 +161,7 @@ struct UfbxImporterTest: TestSuite::Tester {
 
     void scene();
     void mesh();
+    void camera();
     void light();
     void lightName();
     void lightBadDecay();
@@ -215,6 +217,7 @@ UfbxImporterTest::UfbxImporterTest() {
 
     addTests({&UfbxImporterTest::scene,
               &UfbxImporterTest::mesh,
+              &UfbxImporterTest::camera,
               &UfbxImporterTest::light,
               &UfbxImporterTest::lightName,
               &UfbxImporterTest::lightBadDecay});
@@ -592,6 +595,44 @@ void UfbxImporterTest::mesh() {
     CORRADE_COMPARE_AS(scene->field<Int>(SceneField::MeshMaterial), Containers::arrayView<Int>({
         0,
     }), TestSuite::Compare::Container);
+}
+
+void UfbxImporterTest::camera() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "cameras.fbx")));
+
+    CORRADE_COMPARE(importer->objectCount(), 3);
+    CORRADE_COMPARE(importer->cameraCount(), 3);
+
+    {
+        Containers::Optional<CameraData> camera = importer->camera("cameraPerspective");
+        CORRADE_VERIFY(camera);
+
+        CORRADE_COMPARE(camera->type(), CameraType::Perspective3D);
+        CORRADE_COMPARE(camera->near(), 0.123f);
+        CORRADE_COMPARE(camera->far(), 123.0f);
+        CORRADE_COMPARE(camera->aspectRatio(), 16.0f/9.0f);
+    }
+
+    {
+        Containers::Optional<CameraData> camera = importer->camera("cameraOrthographicFill");
+        CORRADE_VERIFY(camera);
+
+        CORRADE_COMPARE(camera->type(), CameraType::Orthographic3D);
+        CORRADE_COMPARE(camera->near(), 0.456f);
+        CORRADE_COMPARE(camera->far(), 456.0f);
+        CORRADE_COMPARE(camera->size(), (Vector2{10.0f, 10.0f / (16.0f/9.0f)}));
+    }
+
+    {
+        Containers::Optional<CameraData> camera = importer->camera("cameraOrthographicOverscan");
+        CORRADE_VERIFY(camera);
+
+        CORRADE_COMPARE(camera->type(), CameraType::Orthographic3D);
+        CORRADE_COMPARE(camera->near(), 0.456f);
+        CORRADE_COMPARE(camera->far(), 456.0f);
+        CORRADE_COMPARE(camera->size(), (Vector2{10.0f * (16.0f/9.0f), 10.0f}));
+    }
 }
 
 void UfbxImporterTest::light() {
