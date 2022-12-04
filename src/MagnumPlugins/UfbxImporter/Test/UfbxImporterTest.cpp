@@ -27,7 +27,6 @@
 #include <sstream>
 #include <string>
 #include <unordered_map>
-#include <regex>
 
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/ArrayView.h>
@@ -70,6 +69,46 @@
 #include "configure.h"
 
 namespace Magnum { namespace Trade { namespace Test { namespace {
+
+void matchStackTraceLine(Containers::StringView line)
+{
+    /* Manual parsing for regex " +[0-9]+:[A-Za-z0-9_]:.*"
+       Originally used std::regex but that didn't compile on some
+       platforms on CI.. */
+
+    std::size_t i = 0;
+    while (i < line.size()) {
+        char c = line[i];
+        if (c != ' ') break;
+        ++i;
+    }
+
+    std::size_t lineNumberChars = 0;
+    while (i < line.size()) {
+        char c = line[i];
+        if (!(c >= '0' && c <= '9')) break;
+        ++i;
+        ++lineNumberChars;
+    }
+    CORRADE_COMPARE_AS(lineNumberChars, 0, TestSuite::Compare::Greater);
+
+    CORRADE_COMPARE_AS(i, line.size(), TestSuite::Compare::Less);
+    CORRADE_COMPARE(line[i], ':');
+    ++i;
+
+    std::size_t functionChars = 0;
+    while (i < line.size()) {
+        char c = line[i];
+        if (!((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '_')) break;
+        ++i;
+        ++functionChars;
+    }
+    CORRADE_COMPARE_AS(functionChars, 0, TestSuite::Compare::Greater);
+
+    CORRADE_COMPARE_AS(i, line.size(), TestSuite::Compare::Less);
+    CORRADE_COMPARE(line[i], ':');
+    ++i;
+}
 
 using namespace Math::Literals;
 using namespace Containers::Literals;
@@ -281,11 +320,9 @@ void UfbxImporterTest::fileCallbackEmptyVerbose() {
     std::vector<std::string> lines = Utility::String::splitWithoutEmptyParts(out.str(), '\n');
     CORRADE_COMPARE_AS(lines.size(), 1, TestSuite::Compare::Greater);
 
-    std::regex stackPattern{"^\\s*[0-9]+:[A-Za-z0-9_]+:.*$"};
     for (std::size_t i = 1; i < lines.size(); ++i) {
-        /* This could be done with CORRADE_COMPARE_AS(..., CompareRegex) or something? */
         CORRADE_ITERATION(lines[i]);
-        CORRADE_VERIFY(std::regex_match(lines[i], stackPattern));
+        matchStackTraceLine(lines[i]);
     }
 }
 
