@@ -90,6 +90,7 @@ struct UfbxImporterTest: TestSuite::Tester {
     void materialLayeredPbrTextures();
     void meshMaterials();
     void imageEmbedded();
+    void imageExternal();
     void imageDeduplication();
 
     /* Needs to load AnyImageImporter from a system-wide location */
@@ -116,6 +117,7 @@ UfbxImporterTest::UfbxImporterTest() {
               &UfbxImporterTest::meshMaterials});
 
     addTests({&UfbxImporterTest::imageEmbedded,
+              &UfbxImporterTest::imageExternal,
               &UfbxImporterTest::imageDeduplication});
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
@@ -790,7 +792,7 @@ void UfbxImporterTest::materialMaxPhysical() {
         {MaterialAttribute::LayerFactor, 0.16f},
         {"tintColor", Color4{0.17f, 0.18f, 0.19f, 0.20f}},
         {"color", Color4{0.21f, 0.22f, 0.23f, 0.24f}},
-        {"radius", Color3{0.098425}}, /* unit conversion in file */
+        {"radius", Color3{0.098425f}}, /* unit conversion in file */
         {"scale", 0.26f},
 
     }, {12, 19, 24, 30}};
@@ -989,6 +991,38 @@ void UfbxImporterTest::imageEmbedded() {
         CORRADE_COMPARE(image->size(), (Vector2i{128,128}));
         CORRADE_COMPARE(image->pixels<Color4ub>()[0][0], testImage.bottomLeftPixelColor);
         CORRADE_COMPARE(image->pixels<Color4ub>()[127][0], testImage.topLeftPixelColor);
+    }
+}
+
+void UfbxImporterTest::imageExternal() {
+    if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("PngImporter plugin not found, cannot test");
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "layered-pbr-textures.fbx")));
+
+    Containers::Pair<Containers::StringView, Color3ub> imageColors[] = {
+        { "tex-red.png",    0xff0000_rgb },
+        { "tex-green.png",  0x00ff00_rgb },
+        { "tex-blue.png",   0x0000ff_rgb },
+        { "tex-cyan.png",   0x00ffff_rgb },
+        { "tex-pink.png",   0xff00ff_rgb },
+        { "tex-yellow.png", 0xffff00_rgb },
+        { "tex-black.png",  0x000000_rgb },
+        { "tex-white.png",  0xffffff_rgb },
+    };
+
+    CORRADE_COMPARE(importer->image2DCount(), 8);
+    for (UnsignedInt i = 0; i < Containers::arraySize(imageColors); ++i) {
+        CORRADE_ITERATION(i);
+
+        Containers::StringView imageName = imageColors[i].first();
+        Color4ub imageColor = imageColors[i].second();
+
+        Containers::Optional<ImageData2D> image = importer->image2D(imageName);
+        CORRADE_VERIFY(image);
+        CORRADE_COMPARE(image->size(), (Vector2i{1, 1}));
+        CORRADE_COMPARE(image->pixels<Color3ub>()[0][0], imageColor);
     }
 }
 
