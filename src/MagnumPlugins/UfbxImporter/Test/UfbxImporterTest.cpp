@@ -315,15 +315,19 @@ void UfbxImporterTest::fileCallbackEmptyVerbose() {
     std::ostringstream out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->openFile("some-file.fbx"));
-
-    /* Output should contain a stack trace */
     std::vector<std::string> lines = Utility::String::splitWithoutEmptyParts(out.str(), '\n');
+
+    /* Output should contain a stack trace on debug */
+#if !defined(CORRADE_IS_DEBUG_BUILD) && defined(NDEBUG)
+    CORRADE_COMPARE(lines.size(), 1);
+#else
     CORRADE_COMPARE_AS(lines.size(), 1, TestSuite::Compare::Greater);
 
     for (std::size_t i = 1; i < lines.size(); ++i) {
         CORRADE_ITERATION(lines[i]);
         matchStackTraceLine(lines[i]);
     }
+#endif
 }
 
 void UfbxImporterTest::scene() {
