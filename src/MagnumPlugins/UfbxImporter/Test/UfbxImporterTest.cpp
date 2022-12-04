@@ -141,6 +141,7 @@ struct UfbxImporterTest: TestSuite::Tester {
     void imageFileCallback();
     void imageFileCallbackNotFound();
     void imageDeduplication();
+    void imageNonExistentName();
 
     /* Needs to load AnyImageImporter from a system-wide location */
     PluginManager::Manager<AbstractImporter> _manager;
@@ -174,7 +175,8 @@ UfbxImporterTest::UfbxImporterTest() {
               &UfbxImporterTest::imageExternal,
               &UfbxImporterTest::imageFileCallback,
               &UfbxImporterTest::imageFileCallbackNotFound,
-              &UfbxImporterTest::imageDeduplication});
+              &UfbxImporterTest::imageDeduplication,
+              &UfbxImporterTest::imageNonExistentName});
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. It also pulls in the AnyImageImporter dependency. */
@@ -340,6 +342,10 @@ void UfbxImporterTest::scene() {
 
     const SceneField sceneFieldInvalid = importer->sceneFieldForName("ThisFieldDoesNotExist"_s);
     CORRADE_COMPARE(sceneFieldInvalid, SceneField{});
+    CORRADE_COMPARE(importer->sceneFieldName(sceneFieldCustom(9001)), "");
+
+    Int defaultScene = importer->defaultScene();
+    CORRADE_COMPARE(defaultScene, 0);
 
     Containers::Optional<SceneData> scene = importer->scene(0);
     CORRADE_VERIFY(scene);
@@ -1265,12 +1271,25 @@ void UfbxImporterTest::imageDeduplication() {
         Containers::StringView textureName = textureToImage[i].first();
         Containers::StringView imageName = textureToImage[i].second();
 
-        Containers::Optional<TextureData> texture = importer->texture(textureName);
+        Int id = importer->textureForName(textureName);
+        CORRADE_COMPARE_AS(id, 0, TestSuite::Compare::GreaterOrEqual);
+        CORRADE_COMPARE(importer->textureName(UnsignedInt(id)), textureName);
+
+        Containers::Optional<TextureData> texture = importer->texture(UnsignedInt(id));
         CORRADE_VERIFY(texture);
 
         CORRADE_COMPARE(importer->image2DName(texture->image()), imageName);
         CORRADE_COMPARE(importer->image2DForName(imageName), texture->image());
     }
+}
+
+void UfbxImporterTest::imageNonExistentName() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "layered-pbr-textures.fbx")));
+
+    CORRADE_COMPARE(importer->image2DCount(), 8);
+    Int id = importer->image2DForName("not-an-image");
+    CORRADE_COMPARE_AS(id, 0, TestSuite::Compare::Less);
 }
 
 }}}}
