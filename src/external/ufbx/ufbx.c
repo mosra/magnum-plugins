@@ -16267,12 +16267,25 @@ ufbxi_noinline static void ufbxi_fetch_mapping_maps(ufbx_material *material, ufb
 						ufbxi_mat_transform_fn transform_fn = ufbxi_mat_transform_fns[mapping->transform];
 						transform_fn(&map->value_vec4);
 					}
-					if ((mapping->flags & UFBXI_SHADER_MAPPING_DEFAULT_W_1) != 0 && (prop->flags & UFBX_PROP_FLAG_VALUE_VEC4) == 0) {
+
+					uint32_t prop_flags = (uint32_t)prop->flags;
+					if ((mapping->flags & UFBXI_SHADER_MAPPING_DEFAULT_W_1) != 0 && (prop_flags & UFBX_PROP_FLAG_VALUE_VEC4) == 0) {
 						map->value_vec4.w = 1.0f;
 					}
-					if ((mapping->flags & UFBXI_SHADER_MAPPING_WIDEN_TO_RGB) != 0 && (prop->flags & UFBX_PROP_FLAG_VALUE_REAL) != 0) {
+					if ((mapping->flags & UFBXI_SHADER_MAPPING_WIDEN_TO_RGB) != 0 && (prop_flags & UFBX_PROP_FLAG_VALUE_REAL) != 0) {
 						map->value_vec3.y = map->value_vec3.x;
 						map->value_vec3.z = map->value_vec3.x;
+					}
+					if ((prop_flags & UFBX_PROP_FLAG_VALUE_REAL) != 0) {
+						map->value_components = 1;
+					} else if ((prop_flags & UFBX_PROP_FLAG_VALUE_VEC2) != 0) {
+						map->value_components = 2;
+					} else if ((prop_flags & UFBX_PROP_FLAG_VALUE_VEC3) != 0) {
+						map->value_components = 3;
+					} else if ((prop_flags & UFBX_PROP_FLAG_VALUE_VEC4) != 0) {
+						map->value_components = 4;
+					} else {
+						map->value_components = 0;
 					}
 				}
 			}

@@ -1913,6 +1913,9 @@ typedef struct ufbx_material_map {
 	// Set to `true` if this feature should be disabled (specific to shader type).
 	bool feature_disabled;
 
+	// Number of components in the value from 1 to 4 if defined, 0 if not.
+	uint8_t value_components;
+
 } ufbx_material_map;
 
 // Material feature
