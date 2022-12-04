@@ -134,6 +134,7 @@ struct UfbxImporterTest: TestSuite::Tester {
     void blenderMaterials();
     void materialMayaArnold();
     void materialMaxPhysical();
+    void materialMaxPbrSpecGloss();
     void materialLayeredPbrTextures();
     void meshMaterials();
     void imageEmbedded();
@@ -168,6 +169,7 @@ UfbxImporterTest::UfbxImporterTest() {
     addTests({&UfbxImporterTest::blenderMaterials,
               &UfbxImporterTest::materialMayaArnold,
               &UfbxImporterTest::materialMaxPhysical,
+              &UfbxImporterTest::materialMaxPbrSpecGloss,
               &UfbxImporterTest::materialLayeredPbrTextures,
               &UfbxImporterTest::meshMaterials});
 
@@ -676,6 +678,20 @@ void UfbxImporterTest::materialMapping() {
             if (!attribute.empty()) {
                 CORRADE_ITERATION(attribute);
 
+                CORRADE_COMPARE_AS(mapping.attributeType, MaterialAttributeType{}, TestSuite::Compare::NotEqual);
+
+                switch (mapping.attributeType) {
+                case MaterialAttributeType::Float:
+                case MaterialAttributeType::Vector3:
+                case MaterialAttributeType::Vector4:
+                case MaterialAttributeType::Long:
+                case MaterialAttributeType::Bool:
+                    break;
+                default:
+                    CORRADE_FAIL("Unimplemented MaterialAttributeType: " << mapping.attributeType);
+                    break;
+                }
+
                 auto found = usedAttributeNames[layer].find(attribute);
                 if (found != usedAttributeNames[layer].end()) {
                     /* If we have a duplicate material attribute name it must
@@ -690,7 +706,7 @@ void UfbxImporterTest::materialMapping() {
                     textureAttribute = attribute + "Texture";
             }
 
-            if (!textureAttribute.empty()) {
+            if (!textureAttribute.empty() && textureAttribute != MaterialMapping::DisallowTexture) {
                 CORRADE_ITERATION(textureAttribute);
 
                 auto found = usedAttributeNames[layer].find(textureAttribute);
@@ -918,6 +934,7 @@ void UfbxImporterTest::materialMaxPhysical() {
         {MaterialAttribute::EmissiveColor, Color3{0.28f, 0.29f, 0.30f} * Vector3{0.27f}},
         {"specularAnisotropy", 0.32f},
         {"specularRotation", 0.33f},
+        {"displacementFactor", 0.36f},
         {"diffuseRoughness", 0.37f},
 
         {MaterialAttribute::LayerName, "ClearCoat"},
@@ -941,7 +958,61 @@ void UfbxImporterTest::materialMaxPhysical() {
         {"radius", Color3{0.098425f}}, /* unit conversion in file */
         {"scale", 0.26f},
 
-    }, {12, 19, 24, 30}};
+    }, {13, 20, 25, 31}};
+
+    CORRADE_COMPARE_AS(*material, reference, DebugTools::CompareMaterial);
+}
+
+void UfbxImporterTest::materialMaxPbrSpecGloss() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
+
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "max-material-spec-gloss.fbx")));
+    CORRADE_COMPARE(importer->materialCount(), 1);
+
+    Containers::Optional<MaterialData> material = importer->material("02 - Default");
+    CORRADE_VERIFY(material);
+
+    auto factor = [](Float value){ return Vector4{value, value, value, 1.0f}; };
+
+    Int texDiffuse = importer->textureForName("Map #18");
+    Int texSpecular = importer->textureForName("Map #19");
+    Int texWeight = importer->textureForName("Map #20");
+    Int texAmbient = importer->textureForName("Map #21");
+    Int texNormal = importer->textureForName("Map #22");
+    Int texEmissive = importer->textureForName("Map #23");
+    Int texDisplacement = importer->textureForName("Map #24");
+    Int texTransparency = importer->textureForName("Map #25");
+
+    CORRADE_COMPARE_AS(texDiffuse, 0, TestSuite::Compare::GreaterOrEqual);
+    CORRADE_COMPARE_AS(texSpecular, 0, TestSuite::Compare::GreaterOrEqual);
+    CORRADE_COMPARE_AS(texWeight, 0, TestSuite::Compare::GreaterOrEqual);
+    CORRADE_COMPARE_AS(texAmbient, 0, TestSuite::Compare::GreaterOrEqual);
+    CORRADE_COMPARE_AS(texNormal, 0, TestSuite::Compare::GreaterOrEqual);
+    CORRADE_COMPARE_AS(texEmissive, 0, TestSuite::Compare::GreaterOrEqual);
+    CORRADE_COMPARE_AS(texDisplacement, 0, TestSuite::Compare::GreaterOrEqual);
+    CORRADE_COMPARE_AS(texTransparency, 0, TestSuite::Compare::GreaterOrEqual);
+
+    MaterialData reference{MaterialType::Phong|MaterialType::PbrSpecularGlossiness, {
+        /* Phong */
+        {MaterialAttribute::AmbientColor, Color4{0.01f, 0.02f, 0.03f, 1.0f}},
+        {MaterialAttribute::DiffuseColor, Color4{0.01f, 0.02f, 0.03f, 1.0f}},
+        {MaterialAttribute::Shininess, 1024.0f},
+
+        /* Physical */
+        {MaterialAttribute::BaseColor, Color4{0.01f, 0.02f, 0.03f, 0.04f}},
+        {MaterialAttribute::BaseColorTexture, UnsignedInt(texDiffuse)},
+        {MaterialAttribute::SpecularColor, Color4{0.05f, 0.06f, 0.07f, 0.08f}},
+        {MaterialAttribute::SpecularTexture, UnsignedInt(texSpecular)},
+        {MaterialAttribute::Glossiness, 0.09f},
+        {MaterialAttribute::GlossinessTexture, UnsignedInt(texWeight)},
+        {MaterialAttribute::EmissiveColor, Color3{0.12f, 0.13f, 0.14f}},
+        {MaterialAttribute::EmissiveTexture, UnsignedInt(texEmissive)},
+        {"displacementFactor", 0.16f},
+        {"displacementTexture", UnsignedInt(texDisplacement)},
+        {MaterialAttribute::NormalTexture, UnsignedInt(texNormal)},
+        {MaterialAttribute::OcclusionTexture, UnsignedInt(texAmbient)},
+        {"opacityTexture", UnsignedInt(texTransparency)},
+    }};
 
     CORRADE_COMPARE_AS(*material, reference, DebugTools::CompareMaterial);
 }
