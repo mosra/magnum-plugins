@@ -1137,6 +1137,8 @@ void UfbxImporterTest::materialMayaArnold() {
     Containers::Optional<MaterialData> material = importer->material("aiStandardSurface1");
     CORRADE_VERIFY(material);
 
+    auto factor = [](Float value){ return Vector4{value, value, value, 1.0f}; };
+
     MaterialData reference{MaterialType::PbrMetallicRoughness|MaterialType::PbrClearCoat, {
         {MaterialAttribute::BaseColor, Color4{0.02f, 0.03f, 0.04f, 1.0f} * factor(0.01f)},
         {"diffuseRoughness", 0.05f},
@@ -1202,6 +1204,8 @@ void UfbxImporterTest::materialMaxPhysical() {
 
     Containers::Optional<MaterialData> material = importer->material("PhysicalMaterial");
     CORRADE_VERIFY(material);
+
+    auto factor = [](Float value){ return Vector4{value, value, value, 1.0f}; };
 
     MaterialData reference{MaterialType::Phong|MaterialType::PbrMetallicRoughness|MaterialType::PbrClearCoat, {
         /* Phong */
