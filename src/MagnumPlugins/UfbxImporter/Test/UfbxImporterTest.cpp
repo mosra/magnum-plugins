@@ -161,6 +161,7 @@ struct UfbxImporterTest: TestSuite::Tester {
     void materialMaxPbrSpecGloss();
     void materialLayeredPbrTextures();
     void meshMaterials();
+    void textureTransform();
 
     void imageEmbedded();
     void imageExternal();
@@ -206,7 +207,8 @@ UfbxImporterTest::UfbxImporterTest() {
               &UfbxImporterTest::materialMaxPhysical,
               &UfbxImporterTest::materialMaxPbrSpecGloss,
               &UfbxImporterTest::materialLayeredPbrTextures,
-              &UfbxImporterTest::meshMaterials});
+              &UfbxImporterTest::meshMaterials,
+              &UfbxImporterTest::textureTransform});
 
     addTests({&UfbxImporterTest::imageEmbedded,
               &UfbxImporterTest::imageExternal,
@@ -1352,7 +1354,6 @@ void UfbxImporterTest::materialLayeredPbrTextures() {
 
 void UfbxImporterTest::meshMaterials() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
-
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "blender-materials.fbx")));
     CORRADE_VERIFY(importer->isOpened());
     CORRADE_COMPARE(importer->sceneCount(), 1);
@@ -1429,6 +1430,47 @@ void UfbxImporterTest::meshMaterials() {
             CORRADE_COMPARE(normal[i], (Vector3{0.0f,0.0f,-1.0f}));
         }
     }
+
+}
+
+void UfbxImporterTest::textureTransform() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "texture-transform.fbx")));
+
+    Containers::Optional<MaterialData> material = importer->material("lambert1");
+    CORRADE_VERIFY(material);
+    CORRADE_COMPARE(material->types(), MaterialType::Phong);
+
+    const PhongMaterialData& phong = material->as<PhongMaterialData>();
+
+    Int texFile1 = importer->textureForName("file1");
+    Int texFile2 = importer->textureForName("file2");
+    Int texFile3 = importer->textureForName("file3");
+
+    CORRADE_COMPARE_AS(texFile1, 0, TestSuite::Compare::GreaterOrEqual);
+    CORRADE_COMPARE_AS(texFile2, 0, TestSuite::Compare::GreaterOrEqual);
+    CORRADE_COMPARE_AS(texFile3, 0, TestSuite::Compare::GreaterOrEqual);
+
+    CORRADE_VERIFY(phong.hasAttribute(MaterialAttribute::DiffuseTexture));
+    CORRADE_VERIFY(phong.hasAttribute(MaterialAttribute::DiffuseTextureMatrix));
+
+    CORRADE_COMPARE(phong.diffuseTexture(), UnsignedInt(texFile1));
+    CORRADE_COMPARE(phong.diffuseTextureMatrix(),
+        Matrix3::scaling(Vector2{2.0f, 3.0f}).inverted());
+
+    CORRADE_VERIFY(phong.hasAttribute(MaterialAttribute::AmbientTexture));
+    CORRADE_VERIFY(phong.hasAttribute(MaterialAttribute::AmbientTextureMatrix));
+
+    CORRADE_COMPARE(phong.ambientTexture(), UnsignedInt(texFile2));
+    CORRADE_COMPARE(phong.ambientTextureMatrix(),
+        Matrix3::translation(Vector2{1.0f, 2.0f}).inverted());
+
+    CORRADE_VERIFY(phong.hasAttribute(MaterialAttribute::EmissiveTexture));
+    CORRADE_VERIFY(phong.hasAttribute(MaterialAttribute::EmissiveTextureMatrix));
+
+    CORRADE_COMPARE(phong.findAttribute<UnsignedInt>(MaterialAttribute::EmissiveTexture), UnsignedInt(texFile3));
+    CORRADE_COMPARE(phong.findAttribute<Matrix3>(MaterialAttribute::EmissiveTextureMatrix),
+        Matrix3::rotation(90.0_degf).inverted());
 
 }
 

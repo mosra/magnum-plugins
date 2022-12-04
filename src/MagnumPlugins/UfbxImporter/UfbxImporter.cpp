@@ -1049,6 +1049,10 @@ Containers::Optional<MaterialData> UfbxImporter::doMaterial(UnsignedInt id) {
 
     for (UnsignedInt listIndex = 0; listIndex < 2; ++listIndex) {
         bool pbr = listIndex == 0;
+
+        /* Ignore implicitly derived PBR values */
+        if (pbr && !material->features.pbr.enabled) continue;
+
         const MaterialMappingList &list = mappingLists[listIndex];
         for (const MaterialMapping &mapping : list.mappings) {
             const ufbx_material_map &map = list.maps[mapping.valueMap];
