@@ -1281,7 +1281,7 @@ AbstractImporter* UfbxImporter::setupOrReuseImporterForImage(UnsignedInt id, con
         if(!importer.openFile(file.filename))
             return nullptr;
     } else {
-        Error{} << errorPrefix << "empty filename";
+        Error{} << errorPrefix << "skipping external image defined by absolute path:" << Containers::StringView(file.absolute_filename);
         return nullptr;
     }
 

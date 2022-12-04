@@ -181,10 +181,12 @@ struct UfbxImporterTest: TestSuite::Tester {
 
     void imageEmbedded();
     void imageExternal();
+    void imageExternalFromData();
     void imageFileCallback();
     void imageFileCallbackNotFound();
     void imageDeduplication();
     void imageNonExistentName();
+    void imageAbsolutePath();
 
     void objCube();
     void objCubeFileCallback();
@@ -234,10 +236,12 @@ UfbxImporterTest::UfbxImporterTest() {
 
     addTests({&UfbxImporterTest::imageEmbedded,
               &UfbxImporterTest::imageExternal,
+              &UfbxImporterTest::imageExternalFromData,
               &UfbxImporterTest::imageFileCallback,
               &UfbxImporterTest::imageFileCallbackNotFound,
               &UfbxImporterTest::imageDeduplication,
-              &UfbxImporterTest::imageNonExistentName});
+              &UfbxImporterTest::imageNonExistentName,
+              &UfbxImporterTest::imageAbsolutePath});
 
     addTests({&UfbxImporterTest::objCube,
               &UfbxImporterTest::objCubeFileCallback,
@@ -1617,6 +1621,24 @@ void UfbxImporterTest::imageExternal() {
     }
 }
 
+void UfbxImporterTest::imageExternalFromData() {
+    if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("PngImporter plugin not found, cannot test");
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
+
+    Containers::Optional<Containers::Array<char>> data = Utility::Path::read(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "layered-pbr-textures.fbx"));
+    CORRADE_VERIFY(data);
+    CORRADE_VERIFY(importer->openData(*data));
+
+    CORRADE_COMPARE(importer->image2DCount(), 8);
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!importer->image2D(0));
+    CORRADE_COMPARE(out.str(), "Trade::UfbxImporter::image2D(): external images can be imported only when opening files from the filesystem or if a file callback is present\n");
+}
+
 void UfbxImporterTest::imageFileCallback() {
     if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("PngImporter plugin not found, cannot test");
@@ -1725,6 +1747,18 @@ void UfbxImporterTest::imageNonExistentName() {
     CORRADE_COMPARE_AS(id, 0, TestSuite::Compare::Less);
 }
 
+void UfbxImporterTest::imageAbsolutePath() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "image-absolute-path.fbx")));
+
+    CORRADE_COMPARE(importer->image2DCount(), 1);
+
+    std::ostringstream out;
+    Error redirectError{&out};
+
+    CORRADE_VERIFY(!importer->image2D(0));
+    CORRADE_COMPARE(out.str(), "Trade::UfbxImporter::image2D(): skipping external image defined by absolute path: /absolute/path/to/tex-red.png\n");
+}
 
 void UfbxImporterTest::objCube() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
