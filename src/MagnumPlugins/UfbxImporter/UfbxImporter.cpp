@@ -293,15 +293,9 @@ struct FileOpener {
 
     bool operator()(ufbx_stream *stream, const char *path, size_t path_len, const ufbx_open_file_info *info)
     {
-        switch (info->type) {
-        case UFBX_OPEN_FILE_MAIN_MODEL:
-        case UFBX_OPEN_FILE_OBJ_MTL:
-            /* Continue loading below */
-            break;
-        default:
-            /* Ignore all others */
-            return false;
-        }
+        /* We should never try to load geometry caches as they are disabled at
+           compile time */
+        CORRADE_INTERNAL_ASSERT(info->type != UFBX_OPEN_FILE_GEOMETRY_CACHE);
 
         /* If we don't have a callback just defer to ufbx file loading */
         if (!_callback) {
