@@ -47,7 +47,12 @@ struct MaterialMapping {
 
     /* Sentinel valeu to sue as textureAttribute do disallow any texture for
        this mapping as empty is implcitly derived from attribute, see below */
-    static constexpr Containers::StringView DisallowTexture = " "_s;
+    /* Note: This has to be a function instead of a value as otherwise it leads
+       to linker errors in the array constructors below.
+       "relocation R_X86_64_PC32 against undefined symbol
+       `_ZN6Magnum5Trade12_GLOBAL__N_115MaterialMapping15DisallowTextureE' can
+       not be used when making a shared object; recompile with -fPIC" */
+    static constexpr Containers::StringView DisallowTexture() { return " "_s; };
 
     UfbxMaterialLayer layer;
     MaterialAttributeType attributeType;
@@ -147,7 +152,7 @@ const constexpr MaterialMapping materialMappingPbr[] = {
     MaterialMapping{ UfbxMaterialLayer::Base, MaterialAttributeType{}, {}, "NormalTexture"_s, UFBX_MATERIAL_PBR_NORMAL_MAP, -1, MaterialExclusionGroup::NormalTexture },
     MaterialMapping{ UfbxMaterialLayer::Base, MaterialAttributeType{}, {}, "tangentTexture"_s, UFBX_MATERIAL_PBR_TANGENT_MAP },
     MaterialMapping{ UfbxMaterialLayer::Base, MaterialAttributeType{}, {}, "displacementTexture"_s, UFBX_MATERIAL_PBR_DISPLACEMENT_MAP, -1, MaterialExclusionGroup::Displacement },
-    MaterialMapping{ UfbxMaterialLayer::Base, MaterialAttributeType::Float, "displacementFactor"_s, MaterialMapping::DisallowTexture, UFBX_MATERIAL_PBR_DISPLACEMENT_MAP, -1, MaterialExclusionGroup::DisplacementFactor },
+    MaterialMapping{ UfbxMaterialLayer::Base, MaterialAttributeType::Float, "displacementFactor"_s, MaterialMapping::DisallowTexture(), UFBX_MATERIAL_PBR_DISPLACEMENT_MAP, -1, MaterialExclusionGroup::DisplacementFactor },
 
     MaterialMapping{ UfbxMaterialLayer::Matte, MaterialAttributeType::Float, "LayerFactor"_s, {}, UFBX_MATERIAL_PBR_MATTE_FACTOR },
     MaterialMapping{ UfbxMaterialLayer::Matte, MaterialAttributeType::Vector3, "color"_s, {}, UFBX_MATERIAL_PBR_MATTE_COLOR },
