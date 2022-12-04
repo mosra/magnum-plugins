@@ -69,7 +69,7 @@ corrade_add_test(UfbxImporterTest UfbxImporterTest.cpp
         lights.fbx
         cube.obj
         cube.mtl
-        missing-mtl.mtl
+        missing-mtl.obj
         tex-black.png
         tex-blue.png
         tex-cyan.png
