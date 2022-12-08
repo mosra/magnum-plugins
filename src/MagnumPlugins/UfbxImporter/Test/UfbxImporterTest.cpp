@@ -880,8 +880,8 @@ void UfbxImporterTest::geometricTransform() {
     /* Two real objects and two geometric transform helpers */
     CORRADE_COMPARE(importer->objectCount(), 4);
     CORRADE_COMPARE(importer->objectName(0), "Box001");
-    CORRADE_COMPARE(importer->objectName(1), "Box002");
-    CORRADE_COMPARE(importer->objectName(2), "");
+    CORRADE_COMPARE(importer->objectName(1), "");
+    CORRADE_COMPARE(importer->objectName(2), "Box002");
     CORRADE_COMPARE(importer->objectName(3), "");
 
     Containers::Optional<SceneData> scene = importer->scene(0);
@@ -893,12 +893,12 @@ void UfbxImporterTest::geometricTransform() {
     CORRADE_VERIFY(scene->hasField(SceneField::Scaling));
 
     CORRADE_COMPARE_AS(scene->field<Int>(SceneField::Parent), Containers::arrayView<Int>({
-        -1, 0, 0, 1,
+        -1, 0, 0, 2,
     }), TestSuite::Compare::Container);
  
     /* The meshes should be parented under their geometric transform helpers */
     CORRADE_COMPARE_AS(scene->meshesMaterialsAsArray(), (Containers::arrayView<Containers::Pair<UnsignedInt, Containers::Pair<UnsignedInt, Int>>>({
-        {2, {0, -1}},
+        {1, {0, -1}},
         {3, {1, -1}},
     })), TestSuite::Compare::Container);
 
@@ -907,14 +907,14 @@ void UfbxImporterTest::geometricTransform() {
         {0, {{0.0f, -10.0f, 0.0f},
              {{0.0f, 0.0f, -0.707107f}, 0.707107f}, /* Euler (0, 0, -90) */
              {1.0f, 2.0f, 1.0f}}}, 
-        /* Box002 */
-        {1, {{0.0f, 0.0f, 20.0f},
-             {{0.0f, 0.0f, -1.0f}, 0.0f}, /* Euler (0, 0, -180) */
-             {1.0f, 0.5f, 1.0f}}},
         /* Box001 Geometric */
-        {2, {{0.0f, 0.0f, 10.0f},
+        {1, {{0.0f, 0.0f, 10.0f},
              {{0.0f, 0.707107f, 0.0f}, 0.707107f}, /* Euler (0, 90, 0) */
              {1.0f, 1.0f, 2.0f}}},
+        /* Box002 */
+        {2, {{0.0f, 0.0f, 20.0f},
+             {{0.0f, 0.0f, -1.0f}, 0.0f}, /* Euler (0, 0, -180) */
+             {1.0f, 0.5f, 1.0f}}},
         /* Box002 Geometric */
         {3, {{10.0f, 0.0f, 0.0f},
              {},
@@ -933,8 +933,8 @@ void UfbxImporterTest::geometricTransformPreserveRoot() {
     CORRADE_COMPARE(importer->objectCount(), 5);
     CORRADE_COMPARE(importer->objectName(0), "");
     CORRADE_COMPARE(importer->objectName(1), "Box001");
-    CORRADE_COMPARE(importer->objectName(2), "Box002");
-    CORRADE_COMPARE(importer->objectName(3), "");
+    CORRADE_COMPARE(importer->objectName(2), "");
+    CORRADE_COMPARE(importer->objectName(3), "Box002");
     CORRADE_COMPARE(importer->objectName(4), "");
 
     Containers::Optional<SceneData> scene = importer->scene(0);
@@ -946,12 +946,12 @@ void UfbxImporterTest::geometricTransformPreserveRoot() {
     CORRADE_VERIFY(scene->hasField(SceneField::Scaling));
 
     CORRADE_COMPARE_AS(scene->field<Int>(SceneField::Parent), Containers::arrayView<Int>({
-        -1, 0, 1, 1, 2,
+        -1, 0, 1, 1, 3,
     }), TestSuite::Compare::Container);
  
     /* The meshes should be parented under their geometric transform helpers */
     CORRADE_COMPARE_AS(scene->meshesMaterialsAsArray(), (Containers::arrayView<Containers::Pair<UnsignedInt, Containers::Pair<UnsignedInt, Int>>>({
-        {3, {0, -1}},
+        {2, {0, -1}},
         {4, {1, -1}},
     })), TestSuite::Compare::Container);
 
@@ -962,14 +962,14 @@ void UfbxImporterTest::geometricTransformPreserveRoot() {
         {1, {{0.0f, -10.0f, 0.0f},
              {{0.0f, 0.0f, -0.707107f}, 0.707107f}, /* Euler (0, 0, -90) */
              {1.0f, 2.0f, 1.0f}}}, 
-        /* Box002 */
-        {2, {{0.0f, 0.0f, 20.0f},
-             {{0.0f, 0.0f, -1.0f}, 0.0f}, /* Euler (0, 0, -180) */
-             {1.0f, 0.5f, 1.0f}}},
         /* Box001 Geometric */
-        {3, {{0.0f, 0.0f, 10.0f},
+        {2, {{0.0f, 0.0f, 10.0f},
              {{0.0f, 0.707107f, 0.0f}, 0.707107f}, /* Euler (0, 90, 0) */
              {1.0f, 1.0f, 2.0f}}},
+        /* Box002 */
+        {3, {{0.0f, 0.0f, 20.0f},
+             {{0.0f, 0.0f, -1.0f}, 0.0f}, /* Euler (0, 0, -180) */
+             {1.0f, 0.5f, 1.0f}}},
         /* Box002 Geometric */
         {4, {{10.0f, 0.0f, 0.0f},
              {},
@@ -2064,25 +2064,19 @@ void UfbxImporterTest::normalizeUnitsNoRoot() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
     importer->configuration().setValue("normalizeUnits", true);
 
-    std::ostringstream out;
-    Warning redirectWarning{&out};
-
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "units-cm-z-up.fbx")));
-    CORRADE_COMPARE(out.str(), "Trade::UfbxImporter::openFile(): normalizeUnits has no effect unless preserveRootNode is enabled\n");
-
     CORRADE_COMPARE(importer->objectCount(), 1);
 
     Containers::Optional<SceneData> scene = importer->scene(0);
     CORRADE_VERIFY(scene);
 
-    /* @todo: These values could be normalized to units for in the future */
     {
         CORRADE_COMPARE(importer->objectName(0), "Empty");
         Containers::Optional<Containers::Triple<Vector3, Quaternion, Vector3>> trs = scene->translationRotationScaling3DFor(0);
         CORRADE_VERIFY(trs);
-        CORRADE_COMPARE(trs->first(), (Vector3{100.0f, -300.0f, 200.0f}));
-        CORRADE_COMPARE(trs->second(), (Quaternion{{0.5f, 0.5f, 0.5f}, 0.5f})); /* Euler (90, 90, 0) */
-        CORRADE_COMPARE(trs->third(), (Vector3{20.0f, 40.0f, 60.0f}));
+        CORRADE_COMPARE(trs->first(), (Vector3{1.0f, 2.0f, 3.0f}));
+        CORRADE_COMPARE(trs->second(), (Quaternion{{0.0f, 0.707107f, 0.0f}, 0.707107f})); /* Euler (0, 90, 0) */
+        CORRADE_COMPARE(trs->third(), (Vector3{0.2f, 0.4f, 0.6f}));
     }
 }
 

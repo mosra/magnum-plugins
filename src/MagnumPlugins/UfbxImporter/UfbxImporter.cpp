@@ -212,7 +212,7 @@ struct MeshChunk {
     uint32_t meshMaterialIndex;
 };
 
-ufbx_load_opts loadOptsFromConfiguration(const char *errorPrefix, Utility::ConfigurationGroup& conf) {
+ufbx_load_opts loadOptsFromConfiguration(Utility::ConfigurationGroup& conf) {
     static_cast<void>(conf);
 
     ufbx_load_opts opts = { };
@@ -234,14 +234,23 @@ ufbx_load_opts loadOptsFromConfiguration(const char *errorPrefix, Utility::Confi
     if (maxResultMemory >= 0)
         opts.result_allocator.memory_limit = size_t(Utility::max(maxResultMemory, Long(1)));
 
-    /* @todo: Depends on preserveRootNode, could be made to work without with
-       some non-trivial work here or on ufbx side.. */
+    /* @todo expose more of these as options? need to think of reasonable
+       defaults anyways, feels like ignoring geometry transform is not great */
+
+    if (conf.value<bool>("preserveRootNode"))
+        opts.space_conversion = UFBX_SPACE_CONVERSION_TRANSFORM_ROOT;
+    else
+        opts.space_conversion = UFBX_SPACE_CONVERSION_ADJUST_TRANSFORMS;
+
+    const bool geometricTransformNodes = conf.value<bool>("geometricTransformNodes");
+    if(geometricTransformNodes)
+        opts.geometry_transform_handling = UFBX_GEOMETRY_TRANSFORM_HANDLING_HELPER_NODES;
+    else
+        opts.geometry_transform_handling = UFBX_GEOMETRY_TRANSFORM_HANDLING_PRESERVE; /* MODIFY_GEOMETRY? */
+
     if (conf.value<bool>("normalizeUnits")) {
         opts.target_axes = ufbx_axes_right_handed_y_up;
         opts.target_unit_meters = 1.0f;
-        if (!conf.value<bool>("preserveRootNode")) {
-            Warning{} << errorPrefix << "normalizeUnits has no effect unless preserveRootNode is enabled";
-        }
     }
 
     /* We need to split meshes by material so create a dummy ufbx_mesh_material
@@ -336,8 +345,7 @@ struct UfbxImporter::State {
     Containers::Array<UnsignedInt> meshChunkBase;
 
     UnsignedInt nodeIdOffset = 0;
-    UnsignedInt originalNodeCount = 0;
-    UnsignedInt nodeCountWithSynthetic = 0;
+    UnsignedInt objectCount = 0;
 
     bool fromFile = false;
 
@@ -363,7 +371,7 @@ void UfbxImporter::doClose() { _state = nullptr; }
 void UfbxImporter::doOpenData(Containers::Array<char>&& data, const DataFlags) {
     _state.reset();
 
-    ufbx_load_opts opts = loadOptsFromConfiguration("Trade::UfbxImporter::openData():", configuration());
+    ufbx_load_opts opts = loadOptsFromConfiguration(configuration());
 
     FileOpener opener{fileCallback(), fileCallbackUserData()};
     opts.open_file_cb = &opener;
@@ -382,7 +390,7 @@ void UfbxImporter::doOpenData(Containers::Array<char>&& data, const DataFlags) {
 void UfbxImporter::doOpenFile(Containers::StringView filename) {
     _state.reset();
 
-    ufbx_load_opts opts = loadOptsFromConfiguration("Trade::UfbxImporter::openFile():", configuration());
+    ufbx_load_opts opts = loadOptsFromConfiguration(configuration());
     opts.filename = filename;
 
     FileOpener opener{fileCallback(), fileCallbackUserData()};
@@ -442,30 +450,16 @@ void UfbxImporter::openInternal(void* state, bool fromFile) {
         }
     }
 
-    /* Count the final number of nodes in the scene, we may remove some (root)
-       or add (synthetic geometry transform nodes) */
+    /* Count the final number of nodes in the scene as we may remove the root */
     {
         const bool preserveRootNode = configuration().value<bool>("preserveRootNode");
-        const bool geometricTransformNodes = configuration().value<bool>("geometricTransformNodes");
 
         _state->nodeIdOffset = 0;
-        _state->originalNodeCount = UnsignedInt(scene->nodes.count);
+        _state->objectCount = UnsignedInt(scene->nodes.count);
 
         if(!preserveRootNode) {
-            --_state->originalNodeCount;
+            --_state->objectCount;
             ++_state->nodeIdOffset;
-        }
-
-        _state->nodeCountWithSynthetic = _state->originalNodeCount;
-
-        /* Reserve space for nodes if we want to create dummy nodes for geometric
-           transforms */
-        if(geometricTransformNodes) {
-            for(ufbx_node *node : scene->nodes) {
-                if(node->has_geometry_transform) {
-                    ++_state->nodeCountWithSynthetic;
-                }
-            }
         }
     }
 
@@ -495,12 +489,11 @@ Containers::Optional<SceneData> UfbxImporter::doScene(UnsignedInt) {
     ufbx_scene *scene = _state->scene.get();
 
     const bool preserveRootNode = configuration().value<bool>("preserveRootNode");
-    const bool geometricTransformNodes = configuration().value<bool>("geometricTransformNodes");
     const bool perInstanceMaterials = configuration().value<bool>("perInstanceMaterials");
 
     UnsignedInt meshCount = 0;
     UnsignedInt skinCount = 0;
-    UnsignedInt nodeCount = _state->nodeCountWithSynthetic;
+    UnsignedInt nodeCount = _state->objectCount;
     UnsignedInt cameraCount = 0;
     UnsignedInt lightCount = 0;
 
@@ -557,7 +550,6 @@ Containers::Optional<SceneData> UfbxImporter::doScene(UnsignedInt) {
     UnsignedInt meshMaterialOffset = 0;
     UnsignedInt lightOffset = 0;
     UnsignedInt cameraOffset = 0;
-    UnsignedInt syntheticNodeCount = 0;
     UnsignedInt nodeIdOffset = _state->nodeIdOffset;
 
     for(std::size_t i = 0; i < scene->nodes.count; i++) {
@@ -579,23 +571,6 @@ Containers::Optional<SceneData> UfbxImporter::doScene(UnsignedInt) {
         scalings[nodeId] = Vector3d(node->local_transform.scale);
         visibilities[nodeId] = static_cast<UnsignedByte>(node->visible);
 
-        UnsignedInt objectId = nodeId;
-
-        /* Create synthetic geometry node if necessary */
-        if(geometricTransformNodes && node->has_geometry_transform) {
-            UnsignedInt geomId = _state->originalNodeCount + syntheticNodeCount;
-            objectId = geomId;
-
-            nodeObjects[geomId] = geomId;
-            parents[geomId] = Int(nodeId);
-            translations[geomId] = Vector3d(node->geometry_transform.translation);
-            rotations[geomId] = Quaterniond(node->geometry_transform.rotation);
-            scalings[geomId] = Vector3d(node->geometry_transform.scale);
-            visibilities[nodeId] = 1;
-
-            ++syntheticNodeCount;
-        }
-
         for (ufbx_element *element : node->all_attribs) {
             if (ufbx_mesh *mesh = ufbx_as_mesh(element)) {
 
@@ -606,14 +581,7 @@ Containers::Optional<SceneData> UfbxImporter::doScene(UnsignedInt) {
                     const ufbx_mesh_material &mat = mesh->materials[matIndex];
                     if (mat.num_faces == 0) continue;
 
-                    /* Meshes should ignore geometry transform if skinned as
-                       the skinning matrices already contain them */
-                    if (mesh->skin_deformers.count > 0) {
-                        meshMaterialObjects[meshMaterialOffset] = nodeId;
-                    } else {
-                        meshMaterialObjects[meshMaterialOffset] = objectId;
-                    }
-
+                    meshMaterialObjects[meshMaterialOffset] = nodeId;
                     if (mat.material) {
                         ufbx_material *material = perInstanceMaterials ? node->materials[matIndex] : mat.material;
                         meshMaterials[meshMaterialOffset] = Int(material->typed_id);
@@ -627,11 +595,11 @@ Containers::Optional<SceneData> UfbxImporter::doScene(UnsignedInt) {
                 }
 
             } else if (ufbx_light *light = ufbx_as_light(element)) {
-                lightObjects[lightOffset] = objectId;
+                lightObjects[lightOffset] = nodeId;
                 lights[lightOffset] = light->typed_id;
                 ++lightOffset;
             } else if (ufbx_camera *camera = ufbx_as_camera(element)) {
-                cameraObjects[cameraOffset] = objectId;
+                cameraObjects[cameraOffset] = nodeId;
                 cameras[cameraOffset] = camera->typed_id;
                 ++cameraOffset;
             }
@@ -641,7 +609,6 @@ Containers::Optional<SceneData> UfbxImporter::doScene(UnsignedInt) {
     CORRADE_INTERNAL_ASSERT(meshMaterialOffset == meshMaterialObjects.size());
     CORRADE_INTERNAL_ASSERT(lightOffset == lightObjects.size());
     CORRADE_INTERNAL_ASSERT(cameraOffset == cameraObjects.size());
-    CORRADE_INTERNAL_ASSERT(_state->originalNodeCount + syntheticNodeCount == _state->nodeCountWithSynthetic);
 
     /* Put everything together. For simplicity the imported data could always
        have all fields present, with some being empty, but this gives less
@@ -694,7 +661,7 @@ Containers::String UfbxImporter::doSceneFieldName(UnsignedInt name) {
 }
 
 UnsignedLong UfbxImporter::doObjectCount() const {
-    return _state->nodeCountWithSynthetic;
+    return _state->objectCount;
 }
 
 Long UfbxImporter::doObjectForName(const Containers::StringView name) {
