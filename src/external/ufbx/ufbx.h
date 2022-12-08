@@ -636,6 +636,10 @@ struct ufbx_node {
 	// is multiple attributes this will be the first one.
 	ufbx_nullable ufbx_element *attrib;
 
+	// Geometry trasnform helper if one exists.
+	// See `UFBX_GEOMETRY_TRANSFORM_HANDLING_HELPER_NODES`.
+	ufbx_nullable ufbx_node *geometry_transform_helper;
+
 	// `attrib->type` if `attrib` is defined, otherwise `UFBX_ELEMENT_UNKNOWN`.
 	ufbx_element_type attrib_type;
 
@@ -682,6 +686,13 @@ struct ufbx_node {
 	// Equivalent to `ufbx_matrix_mul(&node_to_world, &geometry_to_node)`.
 	ufbx_matrix geometry_to_world;
 
+	// ufbx-specific adjustment for switching between coodrinate/unit systems.
+	// HINT: In most cases you don't need to deal with these as these are baked
+	// into all the transforms above and into `ufbx_evaluate_transform()`.
+	ufbx_quat adjust_pre_rotation;  // < Rotation applied between parent and self
+	ufbx_vec3 adjust_pre_scale;     // < Scaling applied between parent and self
+	ufbx_quat adjust_post_rotation; // < Rotation applied in local space at the end
+
 	// Materials used by `mesh` or other `attrib`.
 	// There may be multiple copies of a single `ufbx_mesh` with different materials
 	// in the `ufbx_node` instances.
@@ -695,6 +706,14 @@ struct ufbx_node {
 
 	// True if the node has a non-identity `geometry_transform`.
 	bool has_geometry_transform;
+
+	// If `true` the transform is adjusted by ufbx, not enabled by default.
+	// See `adjust_pre_rotation`, `adjust_pre_scale`, `adjust_post_rotation`.
+	bool has_adjust_transform;
+
+	// True if this node is node is a syntehtic geometry transform helper.
+	// See `UFBX_GEOMETRY_TRANSFORM_HANDLING_HELPER_NODES`.
+	bool is_geometry_transform_helper;
 
 	// How deep is this node in the parent hierarchy. Root node is at depth `0`
 	// and the immediate children of root at `1`.
@@ -1209,6 +1228,27 @@ typedef enum ufbx_aperture_format {
 	UFBX_APERTURE_FORMAT_FORCE_32BIT = 0x7fffffff,
 } ufbx_aperture_format;
 
+typedef enum ufbx_coordinate_axis {
+	UFBX_COORDINATE_AXIS_POSITIVE_X,
+	UFBX_COORDINATE_AXIS_NEGATIVE_X,
+	UFBX_COORDINATE_AXIS_POSITIVE_Y,
+	UFBX_COORDINATE_AXIS_NEGATIVE_Y,
+	UFBX_COORDINATE_AXIS_POSITIVE_Z,
+	UFBX_COORDINATE_AXIS_NEGATIVE_Z,
+	UFBX_COORDINATE_AXIS_UNKNOWN,
+
+	UFBX_COORDINATE_AXIS_COUNT,
+	UFBX_COORDINATE_AXIS_FORCE_32BIT = 0x7fffffff,
+} ufbx_coordinate_axis;
+
+// Coordinate axes the scene is represented in.
+// NOTE: `front` is the _opposite_ from forward!
+typedef struct ufbx_coordinate_axes {
+	ufbx_coordinate_axis right;
+	ufbx_coordinate_axis up;
+	ufbx_coordinate_axis front;
+} ufbx_coordinate_axes;
+
 // Camera attached to a `ufbx_node`
 struct ufbx_camera {
 	union { ufbx_element element; struct {
@@ -1258,6 +1298,11 @@ struct ufbx_camera {
 
 	// Far plane of the frustum in units from the camera.
 	ufbx_real far_plane;
+
+	// Coordinate system that the projection uses.
+	// FBX saves cameras with +X forward and +Y up, but you can override this using
+	// `ufbx_load_opts.target_camera_axes` and it will be reflected here.
+	ufbx_coordinate_axes projection_axes;
 
 	// Advanced properties used to compute the above
 	ufbx_aspect_mode aspect_mode;
@@ -2975,7 +3020,7 @@ typedef struct ufbx_metadata {
 
 	// Some API guarantees do not apply (depending on unsafe options used).
 	// Loaded with `ufbx_load_opts.allow_unsafe` enabled.
-	bool unsafe;
+	bool is_unsafe;
 
 	ufbx_string creator;
 	bool big_endian;
@@ -3016,27 +3061,6 @@ typedef struct ufbx_metadata {
 	ufbx_blob raw_original_file_path;
 
 } ufbx_metadata;
-
-typedef enum ufbx_coordinate_axis {
-	UFBX_COORDINATE_AXIS_POSITIVE_X,
-	UFBX_COORDINATE_AXIS_NEGATIVE_X,
-	UFBX_COORDINATE_AXIS_POSITIVE_Y,
-	UFBX_COORDINATE_AXIS_NEGATIVE_Y,
-	UFBX_COORDINATE_AXIS_POSITIVE_Z,
-	UFBX_COORDINATE_AXIS_NEGATIVE_Z,
-	UFBX_COORDINATE_AXIS_UNKNOWN,
-
-	UFBX_COORDINATE_AXIS_COUNT,
-	UFBX_COORDINATE_AXIS_FORCE_32BIT = 0x7fffffff,
-} ufbx_coordinate_axis;
-
-// Coordinate axes the scene is represented in.
-// NOTE: `front` is the _opposite_ from forward!
-typedef struct ufbx_coordinate_axes {
-	ufbx_coordinate_axis right;
-	ufbx_coordinate_axis up;
-	ufbx_coordinate_axis front;
-} ufbx_coordinate_axes;
 
 typedef enum ufbx_time_mode {
 	UFBX_TIME_MODE_DEFAULT,
@@ -3489,7 +3513,7 @@ typedef enum ufbx_progress_result {
 	UFBX_PROGRESS_CONTINUE = 0x100,
 	UFBX_PROGRESS_CANCEL = 0x200,
 
-	UFBX_PROGRESS_FORCE_32BIT = 0x7fffffff,
+	UFBX_PROGRESS_RESULT_FORCE_32BIT = 0x7fffffff,
 } ufbx_progress_result;
 
 // Called periodically with the current progress
@@ -3592,6 +3616,58 @@ typedef enum ufbx_unicode_error_handling {
 	UFBX_UNICODE_ERROR_HANDLING_FORCE_32BIT = 0x7fffffff,
 } ufbx_unicode_error_handling;
 
+// How to handle FBX node geometry transforms.
+// FBX nodes can have "geometry transforms" that affect only the attached meshes,
+// but not the children. This is not allowed in many scene representations so
+// ufbx provides some ways to simplify them.
+// Geometry transforms can also be used to transform any other attributes such
+// as lights or cameras.
+typedef enum ufbx_geometry_transform_handling {
+
+	// Preserve the geometry transforms as-is.
+	// To be correct for all files you have to use `ufbx_node.geometry_transform`,
+	// `ufbx_node.geometry_to_node`, or `ufbx_node.geometry_to_world` to compensate
+	// for any potential geometry transforms.
+	UFBX_GEOMETRY_TRANSFORM_HANDLING_PRESERVE,
+
+	// Add helper nodes between the nodes and geometry where needed.
+	// The created nodes have `ufbx_node.is_geometry_transform_helper` set and are
+	// named `ufbx_load_opts.geometry_transform_helper_name`.
+	UFBX_GEOMETRY_TRANSFORM_HANDLING_HELPER_NODES,
+
+	// Modify the geometry of meshes attached to nodes with geometry transforms.
+	// Will add helper nodes like `UFBX_GEOMETRY_TRANSFORM_HANDLING_HELPER_NODES` if
+	// necessary, for example if there are multiple instances of the same mesh with
+	// geometry transforms.
+	UFBX_GEOMETRY_TRANSFORM_HANDLING_MODIFY_GEOMETRY,
+
+	// Modify the geometry of meshes attached to nodes with geometry transforms.
+	// NOTE: This will not work correctly for instanced geometry.
+	UFBX_GEOMETRY_TRANSFORM_HANDLING_MODIFY_GEOMETRY_NO_FALLBACK,
+
+	UFBX_GEOMETRY_TRANSFORM_HANDLING_COUNT,
+	UFBX_GEOMETRY_TRANSFORM_HANDLING_FORCE_32BIT = 0x7fffffff,
+} ufbx_geometry_transform_handling;
+
+// Specify how unit / coordinate system conversion should be performed.
+// Affects how `ufbx_load_opts.target_axes` and `ufbx_load_opts.target_unit_meters` work,
+// has no effect if neither is specified.
+typedef enum ufbx_space_conversion {
+
+	// Store the space conversion transform in the root node.
+	// Sets `ufbx_node.local_transform` of the root node.
+	UFBX_SPACE_CONVERSION_TRANSFORM_ROOT,
+
+	// Perform the conversion by using "adjust" transforms.
+	// Compensates for the transforms using `ufbx_node.adjust_pre_rotation` and
+	// `ufbx_node.adjust_pre_scale`. You don't need to account for these unless
+	// you are manually building trasnforms from `ufbx_props`.
+	UFBX_SPACE_CONVERSION_ADJUST_TRANSFORMS,
+
+	UFBX_SPACE_CONVERSION_COUNT,
+	UFBX_SPACE_CONVERSION_FORCE_32BIT = 0x7fffffff,
+} ufbx_space_conversion;
+
 // -- Main API
 
 // Options for `ufbx_load_file/memory/stream/stdio()`
@@ -3684,6 +3760,14 @@ typedef struct ufbx_load_opts {
 	// External file callbacks (defaults to stdio.h)
 	ufbx_open_file_cb open_file_cb;
 
+	// How to handle geometry transforms in the nodes.
+	// See `ufbx_geometry_transform_handling` for an explanation.
+	ufbx_geometry_transform_handling geometry_transform_handling;
+
+	// How to perform space conversion by `target_axes` and `target_unit_meters`.
+	// See `ufbx_space_conversion` for an explanation.
+	ufbx_space_conversion space_conversion;
+
 	// Apply an implicit root transformation to match axes.
 	// Used if `ufbx_coordinate_axes_valid(target_axes)`.
 	ufbx_coordinate_axes target_axes;
@@ -3692,11 +3776,33 @@ typedef struct ufbx_load_opts {
 	// By default units are not scaled.
 	ufbx_real target_unit_meters;
 
+	// Target space for camera.
+	// By default FBX cameras point towards the positive X axis.
+	// Used if `ufbx_coordinate_axes_valid(target_camera_axes)`.
+	ufbx_coordinate_axes target_camera_axes;
+
+	// Target space for directed lights.
+	// By default FBX lights point towards the negative Y axis.
+	// Used if `ufbx_coordinate_axes_valid(target_light_axes)`.
+	ufbx_coordinate_axes target_light_axes;
+
+	// Name for dummy geometry transform helper nodes.
+	// See `UFBX_GEOMETRY_TRANSFORM_HANDLING_HELPER_NODES`.
+	ufbx_string geometry_transform_helper_name;
+
 	// Do not scale necessary properties curves with `target_unit_meters`.
+	// Used only if `space_conversion == UFBX_SPACE_CONVERSION_TRANSFORM_ROOT`.
 	bool no_prop_unit_scaling;
 
 	// Do not scale necessary animation curves with `target_unit_meters`.
+	// Used only if `space_conversion == UFBX_SPACE_CONVERSION_TRANSFORM_ROOT`.
 	bool no_anim_curve_unit_scaling;
+
+	// Normalize vertex normals.
+	bool normalize_normals;
+
+	// Normalize tangents and bitangents.
+	bool normalize_tangents;
 
 	// Override for the root transform
 	bool use_root_transform;
@@ -4052,7 +4158,7 @@ ufbx_abi bool ufbx_open_file(ufbx_stream *stream, const char *path, size_t path_
 ufbx_abi bool ufbx_default_open_file(void *user, ufbx_stream *stream, const char *path, size_t path_len, const ufbx_open_file_info *info);
 
 // NOTE: Uses the default ufbx allocator!
-ufbx_abi bool ufbx_open_memory(ufbx_stream *stream, const void *data, size_t data_size, const ufbx_open_memory_opts *opts);
+ufbx_abi bool ufbx_open_memory(ufbx_stream *stream, const void *data, size_t data_size, const ufbx_open_memory_opts *opts, ufbx_error *error);
 
 // Animation evaluation
 
@@ -4329,18 +4435,11 @@ ufbx_abi void ufbx_ffi_get_weighted_face_normal(ufbx_vec3 *retval, const ufbx_ve
 ufbx_abi size_t ufbx_ffi_get_triangulate_face_num_indices(const ufbx_face *face);
 ufbx_abi uint32_t ufbx_ffi_triangulate_face(uint32_t *indices, size_t num_indices, const ufbx_mesh *mesh, const ufbx_face *face);
 
-ufbx_inline size_t ufbx_check_index(size_t index, size_t count) {
-	(void)count;
-	ufbx_assert(index < count);
-	return index;
-}
-
-#define ufbx_at(list, index) ((list).data[ufbx_check_index((index), (list).count)])
-
 #ifdef __cplusplus
 }
 #endif
 
+// bindgen-disable
 #if defined(__cplusplus) && (__cplusplus >= 201103L || (defined(_MSC_VER) && _MSC_VER >= 1900))
 
 ufbx_inline void ufbx_retain(ufbx_scene *scene) { ufbx_retain_scene(scene); }
@@ -4402,6 +4501,7 @@ typedef ufbx_ref<ufbx_line_curve> ufbx_line_curve_ref;
 typedef ufbx_ref<ufbx_geometry_cache> ufbx_geometry_cache_ref;
 
 #endif
+// bindgen-enable
 
 #if defined(_MSC_VER)
 	#pragma warning(pop)
