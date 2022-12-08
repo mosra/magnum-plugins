@@ -77,6 +77,7 @@ corrade_add_test(UfbxImporterTest UfbxImporterTest.cpp
         image-broken-external.fbx
         image-broken-embedded.fbx
         units-cm-z-up.fbx
+        maya-camera-light-orientation.fbx
         geometry-cache.fbx
         static-skin.fbx
         cube.obj

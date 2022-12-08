@@ -163,9 +163,11 @@ struct UfbxImporterTest: TestSuite::Tester {
     void mesh();
     void camera();
     void cameraName();
+    void cameraOrientation();
     void light();
     void lightName();
     void lightBadDecay();
+    void lightOrientation();
 
     void geometricTransform();
     void geometricTransformPreserveRoot();
@@ -232,8 +234,10 @@ UfbxImporterTest::UfbxImporterTest() {
               &UfbxImporterTest::mesh,
               &UfbxImporterTest::camera,
               &UfbxImporterTest::cameraName,
+              &UfbxImporterTest::cameraOrientation,
               &UfbxImporterTest::light,
               &UfbxImporterTest::lightName,
+              &UfbxImporterTest::lightOrientation,
               &UfbxImporterTest::lightBadDecay});
 
     addTests({&UfbxImporterTest::geometricTransform,
@@ -676,6 +680,24 @@ void UfbxImporterTest::cameraName() {
     CORRADE_COMPARE(importer->cameraName(0), "Camera");
 }
 
+void UfbxImporterTest::cameraOrientation() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "maya-camera-light-orientation.fbx")));
+
+    Containers::Optional<SceneData> scene = importer->scene(0);
+    CORRADE_VERIFY(scene);
+
+    Long objectId = importer->objectForName("forwardCamera");
+    CORRADE_COMPARE_AS(objectId, 0, TestSuite::Compare::GreaterOrEqual);
+
+    /* camera pointing towards -Z in the file, should not be rotated */
+    Containers::Optional<Containers::Triple<Vector3, Quaternion, Vector3>> trs = scene->translationRotationScaling3DFor(objectId);
+    CORRADE_VERIFY(trs);
+    CORRADE_COMPARE(trs->first(), (Vector3{0.0f, 0.0f, 0.0f}));
+    CORRADE_COMPARE(trs->second(), (Quaternion{{0.0f, 0.0f, 0.0f}, 1.0f}));
+    CORRADE_COMPARE(trs->third(), (Vector3{1.0f}));
+}
+
 void UfbxImporterTest::light() {
     std::ostringstream out;
     Error redirectError{&out};
@@ -871,6 +893,24 @@ void UfbxImporterTest::lightBadDecay() {
 
         CORRADE_COMPARE(out.str(), "Trade::UfbxImporter::light(): patching attenuation Vector(0, 0, 1) to Vector(1, 0, 0) for Trade::LightData::Type::Directional\n");
     }
+}
+
+void UfbxImporterTest::lightOrientation() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "maya-camera-light-orientation.fbx")));
+
+    Containers::Optional<SceneData> scene = importer->scene(0);
+    CORRADE_VERIFY(scene);
+
+    Long objectId = importer->objectForName("forwardLight");
+    CORRADE_COMPARE_AS(objectId, 0, TestSuite::Compare::GreaterOrEqual);
+
+    /* light pointing towards -Z in the file, should not be rotated */
+    Containers::Optional<Containers::Triple<Vector3, Quaternion, Vector3>> trs = scene->translationRotationScaling3DFor(objectId);
+    CORRADE_VERIFY(trs);
+    CORRADE_COMPARE(trs->first(), (Vector3{0.0f, 0.0f, 0.0f}));
+    CORRADE_COMPARE(trs->second(), (Quaternion{{0.0f, 0.0f, 0.0f}, 1.0f}));
+    CORRADE_COMPARE(trs->third(), (Vector3{1.0f}));
 }
 
 void UfbxImporterTest::geometricTransform() {

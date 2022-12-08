@@ -248,6 +248,9 @@ ufbx_load_opts loadOptsFromConfiguration(Utility::ConfigurationGroup& conf) {
     else
         opts.geometry_transform_handling = UFBX_GEOMETRY_TRANSFORM_HANDLING_PRESERVE; /* MODIFY_GEOMETRY? */
 
+    opts.target_light_axes = ufbx_axes_right_handed_y_up;
+    opts.target_camera_axes = ufbx_axes_right_handed_y_up;
+
     if (conf.value<bool>("normalizeUnits")) {
         opts.target_axes = ufbx_axes_right_handed_y_up;
         opts.target_unit_meters = 1.0f;
