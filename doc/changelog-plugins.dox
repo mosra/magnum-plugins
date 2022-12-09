@@ -313,7 +313,8 @@ namespace Magnum {
 @subsection changelog-plugins-latest-documentation Documentation
 
 -   Various fixes and updates (see [mosra/magnum-plugins#98](https://github.com/mosra/magnum-plugins/pull/98),
-    [mosra/magnum-plugins#114](https://github.com/mosra/magnum-plugins/pull/114))
+    [mosra/magnum-plugins#114](https://github.com/mosra/magnum-plugins/pull/114),
+    [mosra/magnum-plugins#135](https://github.com/mosra/magnum-plugins/pull/135))
 
 @section changelog-plugins-2020-06 2020.06
 
