@@ -657,13 +657,8 @@ Long UfbxImporter::doObjectForName(const Containers::StringView name) {
 }
 
 Containers::String UfbxImporter::doObjectName(const UnsignedLong id) {
-    const ufbx_scene* scene = _state->scene.get();
-    UnsignedLong localId = id + _state->nodeIdOffset;
-    if(localId < scene->nodes.count) {
-        return scene->nodes[localId]->name;
-    } else {
-        return {};
-    }
+    /* Should always be in bounds as AbstractImporter validates the index */
+    return _state->scene->nodes[id + _state->nodeIdOffset]->name;
 }
 
 UnsignedInt UfbxImporter::doCameraCount() const {
