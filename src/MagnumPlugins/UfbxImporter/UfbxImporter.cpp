@@ -36,10 +36,10 @@
 #define UFBX_NO_SKINNING_EVALUATION
 
 /* Include error stack on debug builds for juicy details in bugreports */
-#if !defined(CORRADE_IS_DEBUG_BUILD) && defined(NDEBUG)
-    #define UFBX_NO_ERROR_STACK
-#else
+#if defined(CORRADE_IS_DEBUG_BUILD) || !defined(NDEBUG)
     #define UFBX_ENABLE_ERROR_STACK
+#else
+    #define UFBX_NO_ERROR_STACK
 #endif
 
 #include "ufbx.h"
@@ -975,15 +975,21 @@ Containers::String UfbxImporter::doMaterialName(UnsignedInt id) {
 Containers::Optional<MaterialData> UfbxImporter::doMaterial(UnsignedInt id) {
     ufbx_material *material = _state->scene->materials[id];
 
+    const bool preserveMaterialFactors = configuration().value<bool>("preserveMaterialFactors");
+
     MaterialExclusionGroups seenExclusionGroups;
 
     struct MaterialMappingList {
         Containers::ArrayView<const MaterialMapping> mappings;
         Containers::ArrayView<ufbx_material_map> maps;
+        bool pbr;
+        bool factor;
     };
     MaterialMappingList mappingLists[] = {
-        { Containers::arrayView(materialMappingPbr), Containers::arrayView(material->pbr.maps) },
-        { Containers::arrayView(materialMappingFbx), Containers::arrayView(material->fbx.maps) },
+        { Containers::arrayView(materialMappingPbr), Containers::arrayView(material->pbr.maps), true, false },
+        { Containers::arrayView(materialMappingFbx), Containers::arrayView(material->fbx.maps), false, false },
+        { Containers::arrayView(materialMappingPbrFactor), Containers::arrayView(material->pbr.maps), true, true },
+        { Containers::arrayView(materialMappingFbxFactor), Containers::arrayView(material->fbx.maps), false, true },
     };
 
     /* Attributes for a single UfbxMaterialLayer */
@@ -1015,13 +1021,13 @@ Containers::Optional<MaterialData> UfbxImporter::doMaterial(UnsignedInt id) {
         types |= MaterialType::PbrClearCoat;
     }
 
-    for (UnsignedInt listIndex = 0; listIndex < 2; ++listIndex) {
-        bool pbr = listIndex == 0;
-
+    for(const MaterialMappingList &list : mappingLists) {
         /* Ignore implicitly derived PBR values */
-        if (pbr && !material->features.pbr.enabled) continue;
+        if (list.pbr && !material->features.pbr.enabled) continue;
 
-        const MaterialMappingList &list = mappingLists[listIndex];
+        /* Ignore factors if we don't want to retain them */
+        if (list.factor && !preserveMaterialFactors) continue;
+
         for (const MaterialMapping &mapping : list.mappings) {
             const ufbx_material_map &map = list.maps[mapping.valueMap];
 
@@ -1035,10 +1041,13 @@ Containers::Optional<MaterialData> UfbxImporter::doMaterial(UnsignedInt id) {
                 seenExclusionGroups |= mapping.exclusionGroup;
             }
 
+            Containers::StringView attribute = mapping.attribute;
+            UfbxMaterialLayerAttributes &attributesForLayer = layerAttributes[UnsignedInt(mapping.layer)];
+
             Float factor = 1.0f, opacity = 1.0f;
             if (mapping.factorMap >= 0) {
                 const ufbx_material_map &factorMap = list.maps[mapping.factorMap];
-                if (factorMap.has_value) {
+                if (factorMap.has_value && !preserveMaterialFactors) {
                     factor = Float(factorMap.value_real);
                 }
             }
@@ -1046,14 +1055,11 @@ Containers::Optional<MaterialData> UfbxImporter::doMaterial(UnsignedInt id) {
             /* Handle some special cases */
 
             /* Patch opacity to BaseColor.a */
-            if (pbr && mapping.valueMap == UFBX_MATERIAL_PBR_BASE_COLOR) {
+            if (list.pbr && mapping.valueMap == UFBX_MATERIAL_PBR_BASE_COLOR) {
                 if (material->pbr.opacity.has_value && material->pbr.opacity.value_components == 1) {
                     opacity = Float(material->pbr.opacity.value_real);
                 }
             }
-
-            Containers::StringView attribute = mapping.attribute;
-            UfbxMaterialLayerAttributes &attributesForLayer = layerAttributes[UnsignedInt(mapping.layer)];
 
             if (attribute && map.has_value) {
                 Containers::Array<MaterialAttributeData> &attributes = attributesForLayer.defaultLayer;

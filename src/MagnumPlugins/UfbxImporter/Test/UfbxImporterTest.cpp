@@ -177,8 +177,12 @@ struct UfbxImporterTest: TestSuite::Tester {
     void materialMapping();
 
     void blenderMaterials();
+    void materialMayaPhong();
+    void materialMayaPhongFactors();
     void materialMayaArnold();
+    void materialMayaArnoldFactors();
     void materialMaxPhysical();
+    void materialMaxPhysicalFactors();
     void materialMaxPbrSpecGloss();
     void materialLayeredPbrTextures();
     void meshMaterials();
@@ -248,8 +252,12 @@ UfbxImporterTest::UfbxImporterTest() {
     addTests({&UfbxImporterTest::materialMapping});
 
     addTests({&UfbxImporterTest::blenderMaterials,
+              &UfbxImporterTest::materialMayaPhong,
+              &UfbxImporterTest::materialMayaPhongFactors,
               &UfbxImporterTest::materialMayaArnold,
+              &UfbxImporterTest::materialMayaArnoldFactors,
               &UfbxImporterTest::materialMaxPhysical,
+              &UfbxImporterTest::materialMaxPhysicalFactors,
               &UfbxImporterTest::materialMaxPbrSpecGloss,
               &UfbxImporterTest::materialLayeredPbrTextures,
               &UfbxImporterTest::meshMaterials,
@@ -1114,23 +1122,35 @@ void UfbxImporterTest::materialMapping() {
     Containers::ArrayView<const MaterialMapping> mappingLists[] = {
         Containers::arrayView(materialMappingFbx),
         Containers::arrayView(materialMappingPbr),
+        Containers::arrayView(materialMappingFbxFactor),
+        Containers::arrayView(materialMappingPbrFactor),
     };
 
     Containers::StaticArray<UfbxMaterialLayerCount, std::unordered_map<std::string, MaterialExclusionGroup>> usedAttributeNames;
 
-    Containers::BitArray usedUfbxMaps[2] = {
+    Containers::BitArray usedUfbxMaps[4] = {
+        Containers::BitArray{ ValueInit, UFBX_MATERIAL_FBX_MAP_COUNT },
+        Containers::BitArray{ ValueInit, UFBX_MATERIAL_PBR_MAP_COUNT },
         Containers::BitArray{ ValueInit, UFBX_MATERIAL_FBX_MAP_COUNT },
         Containers::BitArray{ ValueInit, UFBX_MATERIAL_PBR_MAP_COUNT },
     };
 
-    for(UnsignedInt type = 0; type < 2; ++type) {
+    Containers::BitArray usedFactorMaps[2] = {
+        Containers::BitArray{ ValueInit, UFBX_MATERIAL_FBX_MAP_COUNT },
+        Containers::BitArray{ ValueInit, UFBX_MATERIAL_PBR_MAP_COUNT },
+    };
+
+    for(UnsignedInt type = 0; type < 4; ++type) {
         for (const MaterialMapping &mapping : mappingLists[type]) {
             std::size_t layer = std::size_t(mapping.layer);
 
             if (mapping.valueMap >= 0)
                 usedUfbxMaps[type].set(std::size_t(mapping.valueMap));
-            if (mapping.factorMap >= 0)
+            if (mapping.factorMap >= 0) {
+                CORRADE_COMPARE_AS(type, 2, TestSuite::Compare::Less);
                 usedUfbxMaps[type].set(std::size_t(mapping.factorMap));
+                usedFactorMaps[type].set(std::size_t(mapping.factorMap));
+            }
 
             /* Copy to std::string so we don't do unnecessary conversions on
                lookups, also this is far from performance critical */
@@ -1193,6 +1213,20 @@ void UfbxImporterTest::materialMapping() {
     for(UnsignedInt i = 0; i < UFBX_MATERIAL_PBR_MAP_COUNT; ++i) {
         CORRADE_ITERATION(i);
         CORRADE_VERIFY(usedUfbxMaps[1][i]);
+    }
+
+    /* Make sure each factor property has a matching factor */
+    for(UnsignedInt i = 0; i < UFBX_MATERIAL_FBX_MAP_COUNT; ++i) {
+        CORRADE_ITERATION(i);
+        if (usedFactorMaps[0][i]) {
+            CORRADE_VERIFY(usedUfbxMaps[2][i]);
+        }
+    }
+    for(UnsignedInt i = 0; i < UFBX_MATERIAL_PBR_MAP_COUNT; ++i) {
+        CORRADE_ITERATION(i);
+        if (usedFactorMaps[1][i]) {
+            CORRADE_VERIFY(usedUfbxMaps[3][i]);
+        }
     }
 }
 
@@ -1302,6 +1336,65 @@ void UfbxImporterTest::blenderMaterials() {
     }
 }
 
+void UfbxImporterTest::materialMayaPhong() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
+
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "maya-material-phong.fbx")));
+    CORRADE_COMPARE(importer->materialCount(), 1);
+
+    Containers::Optional<MaterialData> material = importer->material("phong1");
+    CORRADE_VERIFY(material);
+
+    auto factor = [](Float value){ return Vector4{value, value, value, 1.0f}; };
+
+    MaterialData reference{MaterialType::Phong, {
+        {MaterialAttribute::DiffuseColor, Color4{0.01f, 0.02f, 0.03f, 1.0f} * factor(0.13f)},
+        {"transparencyColor", Color4{0.04f, 0.05f, 0.06f, 1.0f}},
+        {MaterialAttribute::AmbientColor, Color4{0.07f, 0.08f, 0.09f, 1.0f}},
+        {MaterialAttribute::EmissiveColor, Color3{0.10f, 0.11f, 0.12f}},
+        {MaterialAttribute::Shininess, 17.0f},
+        {MaterialAttribute::SpecularColor, Color4{0.18f, 0.19f, 0.20f, 1.0f}},
+        {"reflectionColor", Color4{0.22f, 0.23f, 0.24f, 1.0f} * factor(0.21f)},
+        {"bumpFactor", 1.0f},
+        {"displacementFactor", 1.0f},
+        {"vectorDisplacementFactor", 1.0f},
+    }};
+
+    CORRADE_COMPARE_AS(*material, reference, DebugTools::CompareMaterial);
+}
+
+void UfbxImporterTest::materialMayaPhongFactors() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
+    importer->configuration().setValue("preserveMaterialFactors", true);
+
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "maya-material-phong.fbx")));
+    CORRADE_COMPARE(importer->materialCount(), 1);
+
+    Containers::Optional<MaterialData> material = importer->material("phong1");
+    CORRADE_VERIFY(material);
+
+    MaterialData reference{MaterialType::Phong, {
+        {MaterialAttribute::DiffuseColor, Color4{0.01f, 0.02f, 0.03f, 1.0f}},
+        {"diffuseFactor", 0.13f},
+        {"transparencyColor", Color4{0.04f, 0.05f, 0.06f, 1.0f}},
+        {MaterialAttribute::AmbientColor, Color4{0.07f, 0.08f, 0.09f, 1.0f}},
+        {"ambientFactor", 1.0f},
+        {MaterialAttribute::EmissiveColor, Color3{0.10f, 0.11f, 0.12f}},
+        {"emissiveFactor", 1.0f},
+        {MaterialAttribute::Shininess, 17.0f},
+        {MaterialAttribute::SpecularColor, Color4{0.18f, 0.19f, 0.20f, 1.0f}},
+        {"specularFactor", 1.0f},
+        {"reflectionColor", Color4{0.22f, 0.23f, 0.24f, 1.0f}},
+        {"reflectionFactor", 0.21f},
+        {"transparencyFactor", 1.0f},
+        {"bumpFactor", 1.0f},
+        {"displacementFactor", 1.0f},
+        {"vectorDisplacementFactor", 1.0f},
+    }};
+
+    CORRADE_COMPARE_AS(*material, reference, DebugTools::CompareMaterial);
+}
+
 void UfbxImporterTest::materialMayaArnold() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
 
@@ -1370,6 +1463,76 @@ void UfbxImporterTest::materialMayaArnold() {
     CORRADE_COMPARE_AS(*material, reference, DebugTools::CompareMaterial);
 }
 
+void UfbxImporterTest::materialMayaArnoldFactors() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
+    importer->configuration().setValue("preserveMaterialFactors", true);
+
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "maya-material-arnold.fbx")));
+    CORRADE_COMPARE(importer->materialCount(), 1);
+
+    Containers::Optional<MaterialData> material = importer->material("aiStandardSurface1");
+    CORRADE_VERIFY(material);
+
+    MaterialData reference{MaterialType::PbrMetallicRoughness|MaterialType::PbrClearCoat, {
+        {MaterialAttribute::BaseColor, Color4{0.02f, 0.03f, 0.04f, 1.0f}},
+        {"baseFactor", 0.01f},
+        {"diffuseRoughness", 0.05f},
+        {MaterialAttribute::Metalness, 0.06f},
+        {MaterialAttribute::SpecularColor, Color4{0.08f, 0.09f, 0.10f, 1.0f}},
+        {"specularFactor", 0.07f},
+        {MaterialAttribute::Roughness, 0.11f},
+        {"specularIor", 0.12f},
+        {"specularAnisotropy", 0.13f},
+        {"specularRotation", 0.14f},
+        {MaterialAttribute::EmissiveColor, Color3{0.52f, 0.5299f, 0.54f}}, /* bad rounding in file */
+        {"emissiveFactor", 0.51f},
+        {"thinFilmThickness", 0.55f},
+        {"thinFilmIor", 0.56f},
+        {"opacity", Color3{0.57f, 0.58f, 0.5899f}}, /* bad rounding in file */
+        {"indirectDiffuse", 0.63f},
+        {"indirectSpecular", 0.64f},
+
+        {MaterialAttribute::LayerName, "ClearCoat"},
+        {MaterialAttribute::LayerFactor, 0.35f},
+        {"color", Color4{0.36f, 0.37f, 0.38f, 1.0f}},
+        {MaterialAttribute::Roughness, 0.39f},
+        {"ior", 0.40f},
+        {"anisotropy", 0.41f},
+        {"rotation", 0.42f},
+
+        {MaterialAttribute::LayerName, "transmission"},
+        {MaterialAttribute::LayerFactor, 0.15f},
+        {"color", Vector4{0.16f, 0.17f, 0.18f, 1.0f}},
+        {"depth", 0.19f},
+        {"scatter", Vector3{0.20f, 0.21f, 0.22f}},
+        {"scatterAnisotropy", 0.23f},
+        {"dispersion", 0.24f},
+        {"extraRoughness", 0.25f},
+        {"enableInAov", true},
+        {"priority", Long(69)},
+
+        {MaterialAttribute::LayerName, "subsurface"},
+        {MaterialAttribute::LayerFactor, 0.26f},
+        {"color", Color4{0.27f, 0.28f, 0.29f, 1.0f}},
+        {"radius", Color3{0.30f, 0.31f, 0.32f}},
+        {"scale", 0.33f},
+        {"anisotropy", 0.34f},
+        {"type", Long(1)},
+
+        {MaterialAttribute::LayerName, "sheen"},
+        {MaterialAttribute::LayerFactor, 0.46f},
+        {"color", Color3{0.47f, 0.48f, 0.49f}},
+        {MaterialAttribute::Roughness, 0.50f},
+
+        {MaterialAttribute::LayerName, "matte"},
+        {MaterialAttribute::LayerFactor, 0.68f},
+        {"color", Color3{0.65f, 0.66f, 0.67f}},
+
+    }, {17, 24, 34, 41, 45, 48}};
+
+    CORRADE_COMPARE_AS(*material, reference, DebugTools::CompareMaterial);
+}
+
 void UfbxImporterTest::materialMaxPhysical() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
 
@@ -1421,6 +1584,64 @@ void UfbxImporterTest::materialMaxPhysical() {
         {"scale", 0.26f},
 
     }, {13, 20, 25, 31}};
+
+    CORRADE_COMPARE_AS(*material, reference, DebugTools::CompareMaterial);
+}
+
+void UfbxImporterTest::materialMaxPhysicalFactors() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
+    importer->configuration().setValue("preserveMaterialFactors", true);
+
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "max-material-physical.fbx")));
+    CORRADE_COMPARE(importer->materialCount(), 1);
+
+    Containers::Optional<MaterialData> material = importer->material("PhysicalMaterial");
+    CORRADE_VERIFY(material);
+
+    MaterialData reference{MaterialType::Phong|MaterialType::PbrMetallicRoughness|MaterialType::PbrClearCoat, {
+        /* Phong */
+        {MaterialAttribute::AmbientColor, Color4{0.0002f, 0.0003f, 0.0004f, 1.0f}},
+        {MaterialAttribute::DiffuseColor, Color4{0.0002f, 0.0003f, 0.0004f, 1.0f}},
+        {MaterialAttribute::SpecularColor, Color4{1.0f, 1.0f, 1.0f, 1.0f}},
+        {MaterialAttribute::Shininess, 675.587890625f},
+        {"specularFactor", 1.0f},
+        {"transparencyFactor", 0.00594f},
+
+        /* Physical */
+        {MaterialAttribute::BaseColor, Color4{0.02f, 0.03f, 0.04f, 0.05f}},
+        {"baseFactor", 0.01f},
+        {MaterialAttribute::Roughness, 0.06f},
+        {MaterialAttribute::Metalness, 0.07f},
+        {"specularIor", 0.80f}, /* 3ds Max doesn't allow IOR less than 0.1 */
+        {MaterialAttribute::EmissiveColor, Color3{0.28f, 0.29f, 0.30f}},
+        {"emissiveFactor", 0.27f},
+        {"specularAnisotropy", 0.32f},
+        {"specularRotation", 0.33f},
+        {"displacementFactor", 0.36f},
+        {"diffuseRoughness", 0.37f},
+
+        {MaterialAttribute::LayerName, "ClearCoat"},
+        {MaterialAttribute::LayerFactor, 0.38f},
+        {"color", Color4{0.39f, 0.40f, 0.41f, 0.42f}},
+        {MaterialAttribute::Roughness, 0.43f},
+        {"ior", 0.44f},
+        {"affectBaseColor", 0.45f},
+        {"affectBaseRoughness", 0.46f},
+
+        {MaterialAttribute::LayerName, "transmission"},
+        {MaterialAttribute::LayerFactor, 0.09f},
+        {"color", Vector4{0.10f, 0.11f, 0.12f, 0.13f}},
+        {MaterialAttribute::Roughness, 0.14f},
+        {"depth", 0.059055f}, /* unit conversion in file */
+
+        {MaterialAttribute::LayerName, "subsurface"},
+        {MaterialAttribute::LayerFactor, 0.16f},
+        {"tintColor", Color4{0.17f, 0.18f, 0.19f, 0.20f}},
+        {"color", Color4{0.21f, 0.22f, 0.23f, 0.24f}},
+        {"radius", Color3{0.098425f}}, /* unit conversion in file */
+        {"scale", 0.26f},
+
+    }, {17, 24, 29, 35}};
 
     CORRADE_COMPARE_AS(*material, reference, DebugTools::CompareMaterial);
 }

@@ -63,6 +63,7 @@ corrade_add_test(UfbxImporterTest UfbxImporterTest.cpp
         blender-default.fbx
         blender-materials.fbx
         maya-material-arnold.fbx
+        maya-material-phong.fbx
         max-material-physical.fbx
         max-material-spec-gloss.fbx
         layered-pbr-textures.fbx
