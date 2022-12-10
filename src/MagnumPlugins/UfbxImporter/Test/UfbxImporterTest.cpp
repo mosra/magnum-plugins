@@ -186,6 +186,8 @@ struct UfbxImporterTest: TestSuite::Tester {
     void materialMaxPbrSpecGloss();
     void materialLayeredPbrTextures();
     void meshMaterials();
+    void instancedMaterial();
+    void instancedMaterialDisabled();
     void textureTransform();
     void textureWrapModes();
 
@@ -261,6 +263,8 @@ UfbxImporterTest::UfbxImporterTest() {
               &UfbxImporterTest::materialMaxPbrSpecGloss,
               &UfbxImporterTest::materialLayeredPbrTextures,
               &UfbxImporterTest::meshMaterials,
+              &UfbxImporterTest::instancedMaterial,
+              &UfbxImporterTest::instancedMaterialDisabled,
               &UfbxImporterTest::textureTransform,
               &UfbxImporterTest::textureWrapModes});
 
@@ -1849,6 +1853,101 @@ void UfbxImporterTest::meshMaterials() {
         }
     }
 
+}
+
+void UfbxImporterTest::instancedMaterial() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "instanced-material.fbx")));
+    CORRADE_VERIFY(importer->isOpened());
+    CORRADE_COMPARE(importer->sceneCount(), 1);
+    CORRADE_COMPARE(importer->objectCount(), 3);
+    CORRADE_COMPARE(importer->materialCount(), 6);
+    CORRADE_COMPARE(importer->meshCount(), 4);
+
+    Long modelA = importer->objectForName("ModelA");
+    Long modelB = importer->objectForName("ModelB");
+    Long modelC = importer->objectForName("ModelC");
+    Int materialA = importer->materialForName("MaterialA");
+    Int materialB = importer->materialForName("MaterialB");
+    Int materialC = importer->materialForName("MaterialC");
+    Int topA = importer->materialForName("TopA");
+    Int topB = importer->materialForName("TopB");
+    Int topC = importer->materialForName("TopC");
+
+    CORRADE_COMPARE_AS(modelA, 0, TestSuite::Compare::GreaterOrEqual);
+    CORRADE_COMPARE_AS(modelB, 0, TestSuite::Compare::GreaterOrEqual);
+    CORRADE_COMPARE_AS(modelC, 0, TestSuite::Compare::GreaterOrEqual);
+    CORRADE_COMPARE_AS(materialA, 0, TestSuite::Compare::GreaterOrEqual);
+    CORRADE_COMPARE_AS(materialB, 0, TestSuite::Compare::GreaterOrEqual);
+    CORRADE_COMPARE_AS(materialC, 0, TestSuite::Compare::GreaterOrEqual);
+    CORRADE_COMPARE_AS(topA, 0, TestSuite::Compare::GreaterOrEqual);
+    CORRADE_COMPARE_AS(topB, 0, TestSuite::Compare::GreaterOrEqual);
+    CORRADE_COMPARE_AS(topC, 0, TestSuite::Compare::GreaterOrEqual);
+
+    Containers::Optional<SceneData> scene = importer->scene(0);
+    CORRADE_VERIFY(scene);
+
+    CORRADE_COMPARE_AS(scene->meshesMaterialsFor(UnsignedLong(modelA)), (Containers::arrayView<Containers::Pair<UnsignedInt, Int>>({
+        { 0, materialA }, { 1, topA },
+    })), TestSuite::Compare::Container);
+
+    CORRADE_COMPARE_AS(scene->meshesMaterialsFor(UnsignedLong(modelB)), (Containers::arrayView<Containers::Pair<UnsignedInt, Int>>({
+        { 2, materialB }, { 3, topB },
+    })), TestSuite::Compare::Container);
+
+    /* Note: Re-uses mesh from A with different materials! */
+    CORRADE_COMPARE_AS(scene->meshesMaterialsFor(UnsignedLong(modelC)), (Containers::arrayView<Containers::Pair<UnsignedInt, Int>>({
+        { 0, materialC }, { 1, topC },
+    })), TestSuite::Compare::Container);
+}
+
+void UfbxImporterTest::instancedMaterialDisabled() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
+    importer->configuration().setValue("perInstanceMaterials", false);
+
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "instanced-material.fbx")));
+    CORRADE_VERIFY(importer->isOpened());
+    CORRADE_COMPARE(importer->sceneCount(), 1);
+    CORRADE_COMPARE(importer->objectCount(), 3);
+    CORRADE_COMPARE(importer->materialCount(), 6);
+    CORRADE_COMPARE(importer->meshCount(), 4);
+
+    Long modelA = importer->objectForName("ModelA");
+    Long modelB = importer->objectForName("ModelB");
+    Long modelC = importer->objectForName("ModelC");
+    Int materialA = importer->materialForName("MaterialA");
+    Int materialB = importer->materialForName("MaterialB");
+    Int materialC = importer->materialForName("MaterialC");
+    Int topA = importer->materialForName("TopA");
+    Int topB = importer->materialForName("TopB");
+    Int topC = importer->materialForName("TopC");
+
+    CORRADE_COMPARE_AS(modelA, 0, TestSuite::Compare::GreaterOrEqual);
+    CORRADE_COMPARE_AS(modelB, 0, TestSuite::Compare::GreaterOrEqual);
+    CORRADE_COMPARE_AS(modelC, 0, TestSuite::Compare::GreaterOrEqual);
+    CORRADE_COMPARE_AS(materialA, 0, TestSuite::Compare::GreaterOrEqual);
+    CORRADE_COMPARE_AS(materialB, 0, TestSuite::Compare::GreaterOrEqual);
+    CORRADE_COMPARE_AS(materialC, 0, TestSuite::Compare::GreaterOrEqual);
+    CORRADE_COMPARE_AS(topA, 0, TestSuite::Compare::GreaterOrEqual);
+    CORRADE_COMPARE_AS(topB, 0, TestSuite::Compare::GreaterOrEqual);
+    CORRADE_COMPARE_AS(topC, 0, TestSuite::Compare::GreaterOrEqual);
+
+    Containers::Optional<SceneData> scene = importer->scene(0);
+    CORRADE_VERIFY(scene);
+
+    CORRADE_COMPARE_AS(scene->meshesMaterialsFor(UnsignedLong(modelA)), (Containers::arrayView<Containers::Pair<UnsignedInt, Int>>({
+        { 0, materialA }, { 1, topA },
+    })), TestSuite::Compare::Container);
+
+    CORRADE_COMPARE_AS(scene->meshesMaterialsFor(UnsignedLong(modelB)), (Containers::arrayView<Containers::Pair<UnsignedInt, Int>>({
+        { 2, materialB }, { 3, topB },
+    })), TestSuite::Compare::Container);
+
+    /* Note: Should have it's own material like in instancedMaterial() but user
+       requested using the default one for the mesh! */
+    CORRADE_COMPARE_AS(scene->meshesMaterialsFor(UnsignedLong(modelC)), (Containers::arrayView<Containers::Pair<UnsignedInt, Int>>({
+        { 0, materialA }, { 1, topA },
+    })), TestSuite::Compare::Container);
 }
 
 void UfbxImporterTest::textureTransform() {
