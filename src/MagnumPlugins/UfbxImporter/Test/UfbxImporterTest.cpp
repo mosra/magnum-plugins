@@ -79,16 +79,16 @@ void matchStackTraceLine(Containers::StringView line)
        platforms on CI.. */
 
     std::size_t i = 0;
-    while (i < line.size()) {
+    while(i < line.size()) {
         char c = line[i];
-        if (c != ' ') break;
+        if(c != ' ') break;
         ++i;
     }
 
     std::size_t lineNumberChars = 0;
-    while (i < line.size()) {
+    while(i < line.size()) {
         char c = line[i];
-        if (!(c >= '0' && c <= '9')) break;
+        if(!(c >= '0' && c <= '9')) break;
         ++i;
         ++lineNumberChars;
     }
@@ -99,9 +99,9 @@ void matchStackTraceLine(Containers::StringView line)
     ++i;
 
     std::size_t functionChars = 0;
-    while (i < line.size()) {
+    while(i < line.size()) {
         char c = line[i];
-        if (!((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '_')) break;
+        if(!((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '_')) break;
         ++i;
         ++functionChars;
     }
@@ -113,16 +113,16 @@ void matchStackTraceLine(Containers::StringView line)
 }
 
 using FileCallbackFiles = std::unordered_map<std::string, Containers::Optional<Containers::Array<char>>>;
-Containers::Optional<Containers::ArrayView<const char>> fileCallbackFunc(const std::string& filename, InputFileCallbackPolicy, void *user) {
-    auto &files = *static_cast<FileCallbackFiles*>(user);
+Containers::Optional<Containers::ArrayView<const char>> fileCallbackFunc(const std::string& filename, InputFileCallbackPolicy, void* user) {
+    auto& files = *static_cast<FileCallbackFiles*>(user);
 
-    Containers::Optional<Containers::Array<char>> &data = files[filename];
+    Containers::Optional<Containers::Array<char>>& data = files[filename];
 
     Containers::String path = Utility::Path::join(UFBXIMPORTER_TEST_DIR, filename);
-    if (!data && Utility::Path::exists(path))
+    if(!data && Utility::Path::exists(path))
         data = Utility::Path::read(path);
 
-    if (data)
+    if(data)
         return Containers::optional(Containers::ArrayView<const char>(*data));
     return {};
 }
@@ -373,7 +373,7 @@ void UfbxImporterTest::maxTemporaryMemory() {
     std::ostringstream out;
     Error redirectError{&out};
     CORRADE_COMPARE(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "blender-default.fbx")), data.shouldLoad);
-    if (data.shouldLoad) {
+    if(data.shouldLoad) {
         CORRADE_COMPARE(out.str(), "");
     } else {
         CORRADE_COMPARE(out.str(), "Trade::UfbxImporter::openFile(): loading failed: Memory limit exceeded: temp\n");
@@ -389,7 +389,7 @@ void UfbxImporterTest::maxResultMemory() {
     std::ostringstream out;
     Error redirectError{&out};
     CORRADE_COMPARE(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "blender-default.fbx")), data.shouldLoad);
-    if (data.shouldLoad) {
+    if(data.shouldLoad) {
         CORRADE_COMPARE(out.str(), "");
     } else {
         CORRADE_COMPARE(out.str(), "Trade::UfbxImporter::openFile(): loading failed: Memory limit exceeded: result\n");
@@ -472,7 +472,7 @@ void UfbxImporterTest::fileCallbackEmptyVerbose() {
 #else
     CORRADE_COMPARE_AS(lines.size(), 1, TestSuite::Compare::Greater);
 
-    for (std::size_t i = 1; i < lines.size(); ++i) {
+    for(std::size_t i = 1; i < lines.size(); ++i) {
         CORRADE_ITERATION(lines[i]);
         matchStackTraceLine(lines[i]);
     }
@@ -947,7 +947,7 @@ void UfbxImporterTest::geometricTransform() {
     CORRADE_COMPARE_AS(scene->field<Int>(SceneField::Parent), Containers::arrayView<Int>({
         -1, 0, 0, 2,
     }), TestSuite::Compare::Container);
- 
+
     /* The meshes should be parented under their geometric transform helpers */
     CORRADE_COMPARE_AS(scene->meshesMaterialsAsArray(), (Containers::arrayView<Containers::Pair<UnsignedInt, Containers::Pair<UnsignedInt, Int>>>({
         {1, {0, -1}},
@@ -958,7 +958,7 @@ void UfbxImporterTest::geometricTransform() {
         /* Box001 */
         {0, {{0.0f, -10.0f, 0.0f},
              {{0.0f, 0.0f, -0.707107f}, 0.707107f}, /* Euler (0, 0, -90) */
-             {1.0f, 2.0f, 1.0f}}}, 
+             {1.0f, 2.0f, 1.0f}}},
         /* Box001 Geometric */
         {1, {{0.0f, 0.0f, 10.0f},
              {{0.0f, 0.707107f, 0.0f}, 0.707107f}, /* Euler (0, 90, 0) */
@@ -970,7 +970,7 @@ void UfbxImporterTest::geometricTransform() {
         /* Box002 Geometric */
         {3, {{10.0f, 0.0f, 0.0f},
              {},
-             {1.0f, 1.0f, 1.0f}}}, 
+             {1.0f, 1.0f, 1.0f}}},
     };
     CORRADE_COMPARE_AS(scene->translationsRotationsScalings3DAsArray(),
         Containers::arrayView(referenceTrs), TestSuite::Compare::Container);
@@ -1000,7 +1000,7 @@ void UfbxImporterTest::geometricTransformPreserveRoot() {
     CORRADE_COMPARE_AS(scene->field<Int>(SceneField::Parent), Containers::arrayView<Int>({
         -1, 0, 1, 1, 3,
     }), TestSuite::Compare::Container);
- 
+
     /* The meshes should be parented under their geometric transform helpers */
     CORRADE_COMPARE_AS(scene->meshesMaterialsAsArray(), (Containers::arrayView<Containers::Pair<UnsignedInt, Containers::Pair<UnsignedInt, Int>>>({
         {2, {0, -1}},
@@ -1013,7 +1013,7 @@ void UfbxImporterTest::geometricTransformPreserveRoot() {
         /* Box001 */
         {1, {{0.0f, -10.0f, 0.0f},
              {{0.0f, 0.0f, -0.707107f}, 0.707107f}, /* Euler (0, 0, -90) */
-             {1.0f, 2.0f, 1.0f}}}, 
+             {1.0f, 2.0f, 1.0f}}},
         /* Box001 Geometric */
         {2, {{0.0f, 0.0f, 10.0f},
              {{0.0f, 0.707107f, 0.0f}, 0.707107f}, /* Euler (0, 90, 0) */
@@ -1025,7 +1025,7 @@ void UfbxImporterTest::geometricTransformPreserveRoot() {
         /* Box002 Geometric */
         {4, {{10.0f, 0.0f, 0.0f},
              {},
-             {1.0f, 1.0f, 1.0f}}}, 
+             {1.0f, 1.0f, 1.0f}}},
     };
     CORRADE_COMPARE_AS(scene->translationsRotationsScalings3DAsArray(),
         Containers::arrayView(referenceTrs), TestSuite::Compare::Container);
@@ -1052,7 +1052,7 @@ void UfbxImporterTest::geometricTransformNoGeometric() {
     CORRADE_COMPARE_AS(scene->field<Int>(SceneField::Parent), Containers::arrayView<Int>({
         -1, 0,
     }), TestSuite::Compare::Container);
- 
+
     /* The meshes should be parented under their geometric transform helpers */
     CORRADE_COMPARE_AS(scene->meshesMaterialsAsArray(), (Containers::arrayView<Containers::Pair<UnsignedInt, Containers::Pair<UnsignedInt, Int>>>({
         {0, {0, -1}},
@@ -1063,7 +1063,7 @@ void UfbxImporterTest::geometricTransformNoGeometric() {
         /* Box001 */
         {0, {{0.0f, -10.0f, 0.0f},
              {{0.0f, 0.0f, -0.707107f}, 0.707107f}, /* Euler (0, 0, -90) */
-             {1.0f, 2.0f, 1.0f}}}, 
+             {1.0f, 2.0f, 1.0f}}},
         /* Box002 */
         {1, {{0.0f, 0.0f, 20.0f},
              {{0.0f, 0.0f, -1.0f}, 0.0f}, /* Euler (0, 0, -180) */
@@ -1096,7 +1096,7 @@ void UfbxImporterTest::geometricTransformNoGeometricPreserveRoot() {
     CORRADE_COMPARE_AS(scene->field<Int>(SceneField::Parent), Containers::arrayView<Int>({
         -1, 0, 1,
     }), TestSuite::Compare::Container);
- 
+
     /* The meshes should be parented under their geometric transform helpers */
     CORRADE_COMPARE_AS(scene->meshesMaterialsAsArray(), (Containers::arrayView<Containers::Pair<UnsignedInt, Containers::Pair<UnsignedInt, Int>>>({
         {1, {0, -1}},
@@ -1109,7 +1109,7 @@ void UfbxImporterTest::geometricTransformNoGeometricPreserveRoot() {
         /* Box001 */
         {1, {{0.0f, -10.0f, 0.0f},
              {{0.0f, 0.0f, -0.707107f}, 0.707107f}, /* Euler (0, 0, -90) */
-             {1.0f, 2.0f, 1.0f}}}, 
+             {1.0f, 2.0f, 1.0f}}},
         /* Box002 */
         {2, {{0.0f, 0.0f, 20.0f},
              {{0.0f, 0.0f, -1.0f}, 0.0f}, /* Euler (0, 0, -180) */
@@ -1145,12 +1145,12 @@ void UfbxImporterTest::materialMapping() {
     };
 
     for(UnsignedInt type = 0; type < 4; ++type) {
-        for (const MaterialMapping &mapping : mappingLists[type]) {
+        for(const MaterialMapping& mapping : mappingLists[type]) {
             std::size_t layer = std::size_t(mapping.layer);
 
-            if (mapping.valueMap >= 0)
+            if(mapping.valueMap >= 0)
                 usedUfbxMaps[type].set(std::size_t(mapping.valueMap));
-            if (mapping.factorMap >= 0) {
+            if(mapping.factorMap >= 0) {
                 CORRADE_COMPARE_AS(type, 2, TestSuite::Compare::Less);
                 usedUfbxMaps[type].set(std::size_t(mapping.factorMap));
                 usedFactorMaps[type].set(std::size_t(mapping.factorMap));
@@ -1161,7 +1161,7 @@ void UfbxImporterTest::materialMapping() {
             std::string attribute = mapping.attribute;
             std::string textureAttribute = mapping.textureAttribute;
 
-            if (!attribute.empty()) {
+            if(!attribute.empty()) {
                 CORRADE_ITERATION(attribute);
 
                 CORRADE_COMPARE_AS(mapping.attributeType, MaterialAttributeType{}, TestSuite::Compare::NotEqual);
@@ -1179,7 +1179,7 @@ void UfbxImporterTest::materialMapping() {
                 }
 
                 auto found = usedAttributeNames[layer].find(attribute);
-                if (found != usedAttributeNames[layer].end()) {
+                if(found != usedAttributeNames[layer].end()) {
                     /* If we have a duplicate material attribute name it must
                        be defined under the same exclusion group */
                     CORRADE_VERIFY(mapping.exclusionGroup != MaterialExclusionGroup{});
@@ -1188,15 +1188,15 @@ void UfbxImporterTest::materialMapping() {
                     usedAttributeNames[layer].insert({ attribute, mapping.exclusionGroup });
                 }
 
-                if (textureAttribute.empty())
+                if(textureAttribute.empty())
                     textureAttribute = attribute + "Texture";
             }
 
-            if (!textureAttribute.empty() && textureAttribute != MaterialMapping::DisallowTexture()) {
+            if(!textureAttribute.empty() && textureAttribute != MaterialMapping::DisallowTexture()) {
                 CORRADE_ITERATION(textureAttribute);
 
                 auto found = usedAttributeNames[layer].find(textureAttribute);
-                if (found != usedAttributeNames[layer].end()) {
+                if(found != usedAttributeNames[layer].end()) {
                     /* If we have a duplicate material attribute name it must
                        be defined under the same exclusion group */
                     CORRADE_VERIFY(mapping.exclusionGroup != MaterialExclusionGroup{});
@@ -1222,13 +1222,13 @@ void UfbxImporterTest::materialMapping() {
     /* Make sure each factor property has a matching factor */
     for(UnsignedInt i = 0; i < UFBX_MATERIAL_FBX_MAP_COUNT; ++i) {
         CORRADE_ITERATION(i);
-        if (usedFactorMaps[0][i]) {
+        if(usedFactorMaps[0][i]) {
             CORRADE_VERIFY(usedUfbxMaps[2][i]);
         }
     }
     for(UnsignedInt i = 0; i < UFBX_MATERIAL_PBR_MAP_COUNT; ++i) {
         CORRADE_ITERATION(i);
-        if (usedFactorMaps[1][i]) {
+        if(usedFactorMaps[1][i]) {
             CORRADE_VERIFY(usedUfbxMaps[3][i]);
         }
     }
@@ -1716,13 +1716,13 @@ void UfbxImporterTest::materialLayeredPbrTextures() {
     Containers::Array<UnsignedInt> sheenLayerIds;
 
     UnsignedInt layerCount = material->layerCount();
-    for (UnsignedInt id = 0; id < layerCount; ++id) {
+    for(UnsignedInt id = 0; id < layerCount; ++id) {
         Containers::StringView name = material->layerName(id);
-        if (name.isEmpty()) {
+        if(name.isEmpty()) {
             arrayAppend(baseLayerIds, id);
-        } else if (name == "ClearCoat") {
+        } else if(name == "ClearCoat") {
             arrayAppend(coatLayerIds, id);
-        } else if (name == "sheen") {
+        } else if(name == "sheen") {
             arrayAppend(sheenLayerIds, id);
         }
     }
@@ -1752,10 +1752,10 @@ void UfbxImporterTest::materialLayeredPbrTextures() {
         { sheenLayerIds[1], "LayerFactorTexture", "tex-white.png", "replace", 0.5f },
     };
 
-    for (UnsignedInt i = 0; i < Containers::arraySize(attributeTextureLayers); ++i) {
+    for(UnsignedInt i = 0; i < Containers::arraySize(attributeTextureLayers); ++i) {
         CORRADE_ITERATION(i);
 
-        const AttributeTextureLayer &texLayer = attributeTextureLayers[i];
+        const AttributeTextureLayer& texLayer = attributeTextureLayers[i];
         CORRADE_VERIFY(material->hasAttribute(texLayer.layer, texLayer.attribute));
         UnsignedInt textureId = material->attribute<UnsignedInt>(texLayer.layer, texLayer.attribute);
 
@@ -1809,7 +1809,7 @@ void UfbxImporterTest::meshMaterials() {
 
         UnsignedInt vertexCount = mesh->vertexCount();
         Containers::StridedArrayView1D<const Vector3> normal = mesh->attribute<Vector3>(MeshAttribute::Normal);
-        for (UnsignedInt i = 0; i < vertexCount; ++i) {
+        for(UnsignedInt i = 0; i < vertexCount; ++i) {
             CORRADE_ITERATION(i);
             CORRADE_COMPARE(normal[i].z(), 0.0f);
         }
@@ -1827,7 +1827,7 @@ void UfbxImporterTest::meshMaterials() {
         UnsignedInt vertexCount = mesh->vertexCount();
         Containers::StridedArrayView1D<const Vector3> position = mesh->attribute<Vector3>(MeshAttribute::Position);
         Containers::StridedArrayView1D<const Vector3> normal = mesh->attribute<Vector3>(MeshAttribute::Normal);
-        for (UnsignedInt i = 0; i < vertexCount; ++i) {
+        for(UnsignedInt i = 0; i < vertexCount; ++i) {
             CORRADE_ITERATION(i);
             CORRADE_COMPARE(position[i].z(), 1.0f);
             CORRADE_COMPARE(normal[i], (Vector3{0.0f,0.0f,1.0f}));
@@ -1846,7 +1846,7 @@ void UfbxImporterTest::meshMaterials() {
         UnsignedInt vertexCount = mesh->vertexCount();
         Containers::StridedArrayView1D<const Vector3> position = mesh->attribute<Vector3>(MeshAttribute::Position);
         Containers::StridedArrayView1D<const Vector3> normal = mesh->attribute<Vector3>(MeshAttribute::Normal);
-        for (UnsignedInt i = 0; i < vertexCount; ++i) {
+        for(UnsignedInt i = 0; i < vertexCount; ++i) {
             CORRADE_ITERATION(i);
             CORRADE_COMPARE(position[i].z(), -1.0f);
             CORRADE_COMPARE(normal[i], (Vector3{0.0f,0.0f,-1.0f}));
@@ -2044,7 +2044,7 @@ void UfbxImporterTest::imageEmbedded() {
         { "blender-materials.fbm\\checkerboard_transparency.png", 0x407177ff_rgba, 0x1f373aff_rgba },
     };
 
-    for (const TestImage& testImage : testImages) {
+    for(const TestImage& testImage : testImages) {
         CORRADE_ITERATION(testImage.name);
 
         Int optionalId = importer->image2DForName(testImage.name);
@@ -2079,7 +2079,7 @@ void UfbxImporterTest::imageExternal() {
     };
 
     CORRADE_COMPARE(importer->image2DCount(), 8);
-    for (UnsignedInt i = 0; i < Containers::arraySize(imageColors); ++i) {
+    for(UnsignedInt i = 0; i < Containers::arraySize(imageColors); ++i) {
         CORRADE_ITERATION(i);
 
         Containers::StringView imageName = imageColors[i].first();
@@ -2133,7 +2133,7 @@ void UfbxImporterTest::imageFileCallback() {
     CORRADE_VERIFY(importer->openFile("layered-pbr-textures.fbx"));
     CORRADE_VERIFY(importer->isOpened());
     CORRADE_COMPARE(importer->image2DCount(), 8);
-    for (UnsignedInt i = 0; i < Containers::arraySize(imageColors); ++i) {
+    for(UnsignedInt i = 0; i < Containers::arraySize(imageColors); ++i) {
         CORRADE_ITERATION(i);
 
         Containers::StringView imageName = imageColors[i].first();
@@ -2155,7 +2155,7 @@ void UfbxImporterTest::imageFileCallbackNotFound() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
 
     UnsignedInt callCount = 0;
-    importer->setFileCallback([](const std::string&, InputFileCallbackPolicy, UnsignedInt &callCount) {
+    importer->setFileCallback([](const std::string&, InputFileCallbackPolicy, UnsignedInt& callCount) {
             ++callCount;
             return Containers::Optional<Containers::ArrayView<const char>>{};
         }, callCount);
@@ -2191,7 +2191,7 @@ void UfbxImporterTest::imageDeduplication() {
 
     CORRADE_COMPARE(importer->image2DCount(), 8);
 
-    for (UnsignedInt i = 0; i < Containers::arraySize(textureToImage); ++i) {
+    for(UnsignedInt i = 0; i < Containers::arraySize(textureToImage); ++i) {
         CORRADE_ITERATION(i);
 
         Containers::StringView textureName = textureToImage[i].first();
@@ -2476,13 +2476,13 @@ void UfbxImporterTest::staticSkin() {
         { "joint4", "joint3" },
     };
 
-    for (const auto &pair : parents) {
+    for(const auto& pair : parents) {
         Long objectId = importer->objectForName(pair.first());
         CORRADE_COMPARE_AS(objectId, 0, TestSuite::Compare::GreaterOrEqual);
 
         Containers::Optional<Long> parentId = scene->parentFor(objectId);
         CORRADE_VERIFY(parentId);
-        if (!pair.second().isEmpty()) {
+        if(!pair.second().isEmpty()) {
             CORRADE_COMPARE(importer->objectName(*parentId), pair.second());
         } else {
             CORRADE_COMPARE_AS(*parentId, 0, TestSuite::Compare::Less);

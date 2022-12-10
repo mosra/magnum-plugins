@@ -47,7 +47,7 @@ typedef Containers::EnumSet<MaterialExclusionGroup> MaterialExclusionGroups;
 
 struct MaterialMapping {
 
-    /* Sentinel valeu to sue as textureAttribute do disallow any texture for
+    /* Sentinel value to use as textureAttribute do disallow any texture for
        this mapping as empty is implcitly derived from attribute, see below */
     /* Note: This has to be a function instead of a value as otherwise it leads
        to linker errors in the array constructors below.
@@ -58,14 +58,25 @@ struct MaterialMapping {
 
     UfbxMaterialLayer layer;
     MaterialAttributeType attributeType;
+
+    /* Named MaterialAttribute or a custom name */
     Containers::StringView attribute;
 
     /* Override the attribute of the texture, defaults to attribute+"Texture" */
     Containers::StringView textureAttribute;
 
+    /* ufbx_material_map (or -1 for none) for the value */
     Int valueMap;
+
+    /* ufbx_material_map (or -1 for none) for the factor. This is by default
+       multiplied into the value of valueMap unless user explicitly asks for the
+       factors */
     Int factorMap;
 
+    /* Multiple MaterialMapping entries may have the same attribute name which
+       is forbidden by MaterialData. UfbxImporter::doMaterial() keeps track of
+       an EnumSet of these bits to prevent name collisions. These are validated
+       to be exclusive at test time in UfbxImporterTest::materialMapping() */
     MaterialExclusionGroup exclusionGroup;
 
     constexpr MaterialMapping(UfbxMaterialLayer layer, MaterialAttributeType attributeType, Containers::StringView attribute, Containers::StringView textureAttribute, Int valueMap, Int factorMap=-1, MaterialExclusionGroup exclusionGroup=MaterialExclusionGroup{})
@@ -178,4 +189,3 @@ const constexpr MaterialMapping materialMappingPbrFactor[] = {
 };
 
 }}}
-
