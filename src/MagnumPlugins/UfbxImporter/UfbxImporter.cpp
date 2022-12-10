@@ -566,8 +566,11 @@ Containers::Optional<SceneData> UfbxImporter::doScene(UnsignedInt) {
 
                     /* Fetch the material from the ufbx_node to get per instance
                        materials unless configured otherwise */
-                    const ufbx_material* material = perInstanceMaterials
-                        ? node->materials[materialIndex] : mat.material;
+                    const ufbx_material* material = nullptr;
+                    if(perInstanceMaterials && materialIndex < node->materials.count)
+                        material = node->materials[materialIndex];
+                    else
+                        material = mat.material;
 
                     meshMaterialObjects[meshMaterialOffset] = nodeId;
                     meshes[meshMaterialOffset] = chunkOffset;
