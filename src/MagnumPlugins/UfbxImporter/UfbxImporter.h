@@ -133,10 +133,16 @@ used for debugging or reporting issues.
     @ref SceneFieldType::Int), @ref SceneField::Translation (of type @ref SceneFieldType::Vector3d),
     @ref SceneField::Rotation (of type @ref SceneFieldType::Quaterniond),
     @ref SceneField::Scaling (of type @ref SceneFieldType::Vector3d) and
-    importer-specific @cpp "Visibility" @ce (of type @ref SceneFieldType::UnsignedByte
-    representing a boolean value).
+    importer-specific flags @cpp "Visibility" @ce and @cpp "GeometricTransformHelper" @ce
+    (of type @ref SceneFieldType::UnsignedByte representing a boolean value).
     These five fields share the same object mapping with
     @ref SceneFieldFlag::ImplicitMapping set.
+-   Scene field @cpp "Visibility" @ce specifies whether objects should be visible
+    in some application-defined manner.
+-   Scene field @cpp "GeometricTransformHelper" @ce is set on synthetic nodes
+    that are not part of the original file, but represent FBX files' ability to
+    transform geometry without affecting children, see @ref Trade-UfbxImporter-scene-processing
+    for further details.
 -   If the scene references meshes, a @ref SceneField::Mesh (of type
     @ref SceneFieldType::UnsignedInt) and a @ref SceneField::MeshMaterial (of
     type @ref SceneFieldType::Int) is present, both with
