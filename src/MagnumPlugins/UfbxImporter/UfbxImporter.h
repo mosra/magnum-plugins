@@ -182,7 +182,6 @@ used for debugging or reporting issues.
 
 @subsection Trade-UfbxImporter-behavior-meshes Mesh import
 
--   Only triangle meshes are loaded (quad and poly meshes are triangularized)
 -   Vertex creases and any edge or face attributes are not imported
 -   The importer follows types used by ufbx truncated to 32-bit floats, thus indices are always
     @ref MeshIndexType::UnsignedInt, positions, normals, tangents and
@@ -192,6 +191,11 @@ used for debugging or reporting issues.
     as double-precision floats.
 -   If a mesh contains multiple materials it is split into parts and the node
     contains each part as a separte mesh/material entry.
+-   If a mesh contains faces with 1 or 2 vertices (ie. points or lines) they
+    are separated to meshes with the correct primitives (@ref MeshPrimitive::Points
+    and @ref MeshPrimitive::Lines)
+-   Faces with more than three vertices are triangulated and reresented as
+    @ref MeshPrimitive::Triangles.
 
 The meshes are indexed by default unless cb{.ini} generateIndices @ce @ref Trade-UfbxImporter-configuration "configuration option"
 is disabled. Vertex position is always defined, normals can be missing unless

@@ -333,6 +333,8 @@ struct MeshChunk {
     UnsignedInt meshId;
     /* ufbx_mesh::materials[] (NOT ufbx_scene::materials[] !) */
     UnsignedInt meshMaterialIndex;
+    /* Faces are filtered based on the primitive type */
+    MeshPrimitive primitive;
 };
 
 struct FileTexture {
@@ -340,6 +342,11 @@ struct FileTexture {
     UnsignedInt textureIndex;
     /* ufbx_scene::file_textures[] */
     UnsignedInt fileTextureIndex;
+};
+
+struct MeshChunkMapping {
+    /* Index range within State::meshChunks[] */
+    UnsignedInt baseIndex, count;
 };
 
 }
@@ -351,7 +358,7 @@ struct UfbxImporter::State {
     Containers::Array<MeshChunk> meshChunks;
 
     /* Mapping from ufbx_scene::meshes[] -> State::meshChunks[] */
-    Containers::Array<UnsignedInt> meshChunkBase;
+    Containers::Array<MeshChunkMapping> meshChunkMapping;
 
     /* Offset subtracted from ufbx IDs to UfbxImporter::object() IDs, usually
        one as the root node is excluded */
@@ -434,16 +441,24 @@ void UfbxImporter::openInternal(void* state, bool fromFile) {
 
     /* Split meshes into chunks by material, ufbx_mesh::materials[] has always
        at least one material as we use ufbx_load_opts::allow_null_material. */
-    arrayResize(_state->meshChunkBase, UnsignedInt(scene->meshes.count));
+    arrayResize(_state->meshChunkMapping, UnsignedInt(scene->meshes.count));
     for(UnsignedInt i = 0; i < scene->meshes.count; ++i) {
         const ufbx_mesh* mesh = scene->meshes[i];
 
-        _state->meshChunkBase[i] = UnsignedInt(_state->meshChunks.size());
+        MeshChunkMapping& mapping = _state->meshChunkMapping[i];
+        mapping.baseIndex = UnsignedInt(_state->meshChunks.size());
         for(UnsignedInt j = 0; j < mesh->materials.count; ++j) {
             const ufbx_mesh_material& mat = mesh->materials[j];
-            if(mat.num_faces == 0) continue;
-            arrayAppend(_state->meshChunks, {mesh->typed_id, j});
+
+            if(mat.num_point_faces > 0)
+                arrayAppend(_state->meshChunks, {mesh->typed_id, j, MeshPrimitive::Points});
+            if(mat.num_line_faces > 0)
+                arrayAppend(_state->meshChunks, {mesh->typed_id, j, MeshPrimitive::Lines});
+            if(mat.num_triangles > 0)
+                arrayAppend(_state->meshChunks, {mesh->typed_id, j, MeshPrimitive::Triangles});
         }
+
+        mapping.count = UnsignedInt(_state->meshChunks.size()) - mapping.baseIndex;
     }
 
     /* Count the final number of nodes in the scene as we may remove the root. */
@@ -493,12 +508,10 @@ Containers::Optional<SceneData> UfbxImporter::doScene(UnsignedInt) {
     /* We need to bind each chunk of a mesh to each node that refers to it */
     for(const ufbx_mesh* mesh : scene->meshes) {
         UnsignedInt instanceCount = UnsignedInt(mesh->instances.count);
-        for(const ufbx_mesh_material& mat : mesh->materials) {
-            if(mat.num_faces == 0) continue;
-            meshCount += instanceCount;
-            if(mesh->skin_deformers.count > 0)
-                skinCount += instanceCount;
-        }
+        UnsignedInt chunkCount = _state->meshChunkMapping[mesh->typed_id].count;
+        meshCount += instanceCount * chunkCount;
+        if(mesh->skin_deformers.count > 0)
+            skinCount += instanceCount * chunkCount;
     }
 
     /* Collect instanced camera/light counts */
@@ -560,9 +573,11 @@ Containers::Optional<SceneData> UfbxImporter::doScene(UnsignedInt) {
         for(const ufbx_element* element : node->all_attribs) {
             if(const ufbx_mesh* mesh = ufbx_as_mesh(element)) {
                 UnsignedInt materialIndex = 0;
-                UnsignedInt chunkOffset = _state->meshChunkBase[mesh->typed_id];
-                for(const ufbx_mesh_material& mat : mesh->materials) {
-                    if(mat.num_faces == 0) continue;
+                MeshChunkMapping chunkMapping = _state->meshChunkMapping[mesh->typed_id];
+                for(UnsignedInt i = 0; i < chunkMapping.count; ++i) {
+                    UnsignedInt chunkIndex = chunkMapping.baseIndex + i;
+                    const MeshChunk& chunk = _state->meshChunks[chunkIndex];
+                    const ufbx_mesh_material& mat = mesh->materials[chunk.meshMaterialIndex];
 
                     /* Fetch the material from the ufbx_node to get per instance
                        materials unless configured otherwise */
@@ -573,11 +588,10 @@ Containers::Optional<SceneData> UfbxImporter::doScene(UnsignedInt) {
                         material = mat.material;
 
                     meshMaterialObjects[meshMaterialOffset] = nodeId;
-                    meshes[meshMaterialOffset] = chunkOffset;
+                    meshes[meshMaterialOffset] = chunkIndex;
                     meshMaterials[meshMaterialOffset] = material ? Int(material->typed_id) : -1;
 
                     ++meshMaterialOffset;
-                    ++chunkOffset;
                     ++materialIndex;
                 }
             } else if(const ufbx_light* light = ufbx_as_light(element)) {
@@ -766,7 +780,13 @@ Containers::Optional<MeshData> UfbxImporter::doMesh(UnsignedInt id, UnsignedInt 
     const ufbx_mesh* mesh = _state->scene->meshes[chunk.meshId];
     const ufbx_mesh_material mat = mesh->materials[chunk.meshMaterialIndex];
 
-    const UnsignedInt indexCount = mat.num_triangles * 3;
+    UnsignedInt indexCount = 0;
+    switch(chunk.primitive) {
+    case MeshPrimitive::Points: indexCount = mat.num_point_faces * 1; break;
+    case MeshPrimitive::Lines: indexCount = mat.num_line_faces * 2; break;
+    case MeshPrimitive::Triangles: indexCount = mat.num_triangles * 3; break;
+    default: CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+    }
 
     const UnsignedInt maxUvSets = unboundedIfNegative(configuration().value<Int>("maxUvSets"));
     const UnsignedInt maxTangentSets = unboundedIfNegative(configuration().value<Int>("maxTangentSets"));
@@ -815,7 +835,8 @@ Containers::Optional<MeshData> UfbxImporter::doMesh(UnsignedInt id, UnsignedInt 
     attributeCount += colorSetCount;
     stride += colorSetCount * sizeof(Color4);
 
-    Containers::Array<UnsignedInt> triangleIndices{mesh->max_face_triangles * 3};
+    /* Need space for maximum triangles or at least a single point/line */
+    Containers::Array<UnsignedInt> primitiveIndices{Utility::max(mesh->max_face_triangles * 3, size_t(2))};
     Containers::Array<char> vertexData{NoInit, stride*indexCount};
 
     Containers::Array<MeshAttributeData> attributeData{attributeCount};
@@ -896,10 +917,26 @@ Containers::Optional<MeshData> UfbxImporter::doMesh(UnsignedInt id, UnsignedInt 
     for(UnsignedInt faceIndex : mat.face_indices) {
         const ufbx_face face = mesh->faces[faceIndex];
 
-        const UnsignedInt numTriangles = ufbx_triangulate_face(triangleIndices.data(), triangleIndices.size(), mesh, face);
-        const UnsignedInt numIndices = numTriangles * 3;
+        UnsignedInt numIndices = 0;
+
+        switch(chunk.primitive) {
+        case MeshPrimitive::Points:
+            numIndices = face.num_indices == 1 ? 1u : 0u;
+            primitiveIndices[0] = face.index_begin;
+            break;
+        case MeshPrimitive::Lines:
+            numIndices = face.num_indices == 2 ? 2u : 0u;
+            primitiveIndices[0] = face.index_begin + 0;
+            primitiveIndices[1] = face.index_begin + 1;
+            break;
+        case MeshPrimitive::Triangles:
+            numIndices = ufbx_triangulate_face(primitiveIndices.data(), primitiveIndices.size(), mesh, face) * 3;
+            break;
+        default: CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+        }
+
         for(UnsignedInt i = 0; i < numIndices; i++) {
-            const UnsignedInt srcIx = triangleIndices[i];
+            const UnsignedInt srcIx = primitiveIndices[i];
 
             positions[dstIx] = Vector3(mesh->vertex_position[srcIx]);
             if(mesh->vertex_normal.exists)
@@ -923,7 +960,7 @@ Containers::Optional<MeshData> UfbxImporter::doMesh(UnsignedInt id, UnsignedInt 
     for(UnsignedInt i = 0; i < indexCount; i++)
         indices[i] = i;
 
-    MeshData meshData{MeshPrimitive::Triangles,
+    MeshData meshData{chunk.primitive,
         std::move(indexData), MeshIndexData{indices},
         std::move(vertexData), std::move(attributeData),
         UnsignedInt(indexCount)};

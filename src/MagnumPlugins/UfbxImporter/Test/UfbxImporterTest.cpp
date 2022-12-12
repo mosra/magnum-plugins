@@ -161,6 +161,7 @@ struct UfbxImporterTest: TestSuite::Tester {
 
     void scene();
     void mesh();
+    void meshPointLine();
     void camera();
     void cameraName();
     void cameraOrientation();
@@ -238,6 +239,7 @@ UfbxImporterTest::UfbxImporterTest() {
 
     addTests({&UfbxImporterTest::scene,
               &UfbxImporterTest::mesh,
+              &UfbxImporterTest::meshPointLine,
               &UfbxImporterTest::camera,
               &UfbxImporterTest::cameraName,
               &UfbxImporterTest::cameraOrientation,
@@ -636,6 +638,86 @@ void UfbxImporterTest::mesh() {
     }), TestSuite::Compare::Container);
     CORRADE_COMPARE_AS(scene->field<Int>(SceneField::MeshMaterial), Containers::arrayView<Int>({
         0,
+    }), TestSuite::Compare::Container);
+}
+
+void UfbxImporterTest::meshPointLine() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "mesh-point-line.fbx")));
+
+    CORRADE_COMPARE(importer->meshCount(), 3);
+
+    {
+        Containers::Optional<MeshData> mesh = importer->mesh(0);
+        CORRADE_VERIFY(mesh);
+
+        CORRADE_COMPARE(mesh->primitive(), MeshPrimitive::Points);
+
+        CORRADE_VERIFY(mesh->isIndexed());
+        CORRADE_COMPARE_AS(mesh->indices<UnsignedInt>(),
+            Containers::arrayView<UnsignedInt>({0}),
+            TestSuite::Compare::Container);
+
+        CORRADE_COMPARE(mesh->attributeCount(MeshAttribute::Position), 1);
+        CORRADE_COMPARE_AS(mesh->attribute<Vector3>(MeshAttribute::Position),
+            Containers::arrayView<Vector3>({
+                {-0.5f, 0.5f, 0.5f},
+            }), TestSuite::Compare::Container);
+    }
+
+    {
+        Containers::Optional<MeshData> mesh = importer->mesh(1);
+        CORRADE_VERIFY(mesh);
+
+        CORRADE_COMPARE(mesh->primitive(), MeshPrimitive::Lines);
+
+        CORRADE_VERIFY(mesh->isIndexed());
+        CORRADE_COMPARE_AS(mesh->indices<UnsignedInt>(),
+            Containers::arrayView<UnsignedInt>({0, 1}),
+            TestSuite::Compare::Container);
+
+        CORRADE_COMPARE(mesh->attributeCount(MeshAttribute::Position), 1);
+        CORRADE_COMPARE_AS(mesh->attribute<Vector3>(MeshAttribute::Position),
+            Containers::arrayView<Vector3>({
+                {0.5f, 0.5f, -0.5f}, {-0.5f, 0.5, -0.5f},
+            }), TestSuite::Compare::Container);
+    }
+
+    {
+        Containers::Optional<MeshData> mesh = importer->mesh(2);
+        CORRADE_VERIFY(mesh);
+
+        CORRADE_COMPARE(mesh->primitive(), MeshPrimitive::Triangles);
+
+        CORRADE_VERIFY(mesh->isIndexed());
+        CORRADE_COMPARE(mesh->indices<UnsignedInt>().size(), 21);
+    }
+
+    CORRADE_COMPARE(importer->sceneCount(), 1);
+
+    Containers::Optional<SceneData> scene = importer->scene(0);
+    CORRADE_VERIFY(scene);
+    CORRADE_COMPARE(scene->fieldCount(), 7);
+
+    const SceneField sceneFieldVisibility = importer->sceneFieldForName("Visibility"_s);
+
+    /* Fields we're not interested in */
+    CORRADE_VERIFY(scene->hasField(SceneField::Parent));
+    CORRADE_VERIFY(scene->hasField(SceneField::Translation));
+    CORRADE_VERIFY(scene->hasField(SceneField::Rotation));
+    CORRADE_VERIFY(scene->hasField(SceneField::Scaling));
+    CORRADE_VERIFY(scene->hasField(sceneFieldVisibility));
+
+    CORRADE_VERIFY(scene->hasField(SceneField::Mesh));
+    CORRADE_VERIFY(scene->hasField(SceneField::MeshMaterial));
+    CORRADE_COMPARE_AS(scene->mapping<UnsignedInt>(SceneField::Mesh), Containers::arrayView<UnsignedInt>({
+        0,0,0,
+    }), TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(scene->field<UnsignedInt>(SceneField::Mesh), Containers::arrayView<UnsignedInt>({
+        0,1,2,
+    }), TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(scene->field<Int>(SceneField::MeshMaterial), Containers::arrayView<Int>({
+        0,0,0,
     }), TestSuite::Compare::Container);
 }
 

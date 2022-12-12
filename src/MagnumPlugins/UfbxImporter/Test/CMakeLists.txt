@@ -71,6 +71,7 @@ corrade_add_test(UfbxImporterTest UfbxImporterTest.cpp
         geometric-transform.fbx
         texture-transform.fbx
         texture-wrap-modes.fbx
+        mesh-point-line.fbx
         triangle.fbx
         cameras.fbx
         lights.fbx
