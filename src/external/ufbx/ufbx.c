@@ -10960,8 +10960,8 @@ ufbxi_nodiscard ufbxi_noinline static int ufbxi_process_indices(ufbxi_context *u
 	ufbxi_check(mesh->faces.data);
 
 	size_t num_triangles = 0;
-	size_t num_bad_faces = 0;
 	size_t max_face_triangles = 0;
+	size_t num_bad_faces[3] = { 0 };
 
 	ufbx_face *dst_face = mesh->faces.data;
 	uint32_t *p_face_begin = index_data;
@@ -10978,7 +10978,7 @@ ufbxi_nodiscard ufbxi_noinline static int ufbxi_process_indices(ufbxi_context *u
 				num_triangles += num_indices - 2;
 				max_face_triangles = ufbxi_max_sz(max_face_triangles, num_indices - 2);
 			} else {
-				num_bad_faces++;
+				num_bad_faces[num_indices]++;
 			}
 			dst_face++;
 			p_face_begin = p_ix + 1;
@@ -10991,7 +10991,9 @@ ufbxi_nodiscard ufbxi_noinline static int ufbxi_process_indices(ufbxi_context *u
 	mesh->faces.count = mesh->num_faces;
 	mesh->num_triangles = num_triangles;
 	mesh->max_face_triangles = max_face_triangles;
-	mesh->num_bad_faces = num_bad_faces;
+	mesh->num_empty_faces = num_bad_faces[0];
+	mesh->num_point_faces = num_bad_faces[1];
+	mesh->num_line_faces = num_bad_faces[2];
 
 	mesh->vertex_first_index.count = mesh->num_vertices;
 	mesh->vertex_first_index.data = ufbxi_push(&uc->result, uint32_t, mesh->num_vertices);
@@ -13828,20 +13830,22 @@ ufbxi_nodiscard static ufbxi_noinline int ufbxi_finalize_mesh(ufbxi_buf *buf, uf
 	if (mesh->num_triangles == 0 || mesh->max_face_triangles == 0) {
 		size_t num_triangles = 0;
 		size_t max_face_triangles = 0;
-		size_t num_bad_faces = 0;
+		size_t num_bad_faces[3] = { 0 };
 		ufbxi_nounroll ufbxi_for_list(ufbx_face, face, mesh->faces) {
 			if (face->num_indices >= 3) {
 				size_t tris = face->num_indices - 2;
 				num_triangles += tris;
 				max_face_triangles = ufbxi_max_sz(max_face_triangles, tris);
 			} else {
-				num_bad_faces++;
+				num_bad_faces[face->num_indices]++;
 			}
 		}
 
 		ufbxi_patch_zero(mesh->num_triangles, num_triangles);
 		ufbxi_patch_zero(mesh->max_face_triangles, max_face_triangles);
-		ufbxi_patch_zero(mesh->num_bad_faces, num_bad_faces);
+		ufbxi_patch_zero(mesh->num_empty_faces, num_bad_faces[0]);
+		ufbxi_patch_zero(mesh->num_point_faces, num_bad_faces[1]);
+		ufbxi_patch_zero(mesh->num_line_faces, num_bad_faces[2]);
 	}
 
 	if (!mesh->skinned_position.exists) {
@@ -15165,6 +15169,9 @@ ufbxi_nodiscard ufbxi_noinline static int ufbxi_pre_finalize_scene(ufbxi_context
 	uint32_t *instance_counts = ufbxi_push_zero(&uc->tmp_parse, uint32_t, num_elements);
 	ufbxi_check(instance_counts);
 
+	bool *modify_not_supported = ufbxi_push_zero(&uc->tmp_parse, bool, num_elements);
+	ufbxi_check(modify_not_supported);
+
 	uint64_t *fbx_ids = ufbxi_push_zero(&uc->tmp_parse, uint64_t, num_elements);
 	ufbxi_check(fbx_ids);
 
@@ -15189,6 +15196,18 @@ ufbxi_nodiscard ufbxi_noinline static int ufbxi_pre_finalize_scene(ufbxi_context
 			if (dst->type == UFBX_ELEMENT_NODE) {
 				if (src->type >= UFBX_ELEMENT_TYPE_FIRST_ATTRIB && src->type <= UFBX_ELEMENT_TYPE_LAST_ATTRIB) {
 					++instance_counts[src->element_id];
+
+					// These must match what can be trasnsformed in `ufbxi_handle_geometry_transforms()`
+					switch (src->type) {
+					case UFBX_ELEMENT_MESH:
+					case UFBX_ELEMENT_LINE_CURVE:
+					case UFBX_ELEMENT_NURBS_CURVE:
+					case UFBX_ELEMENT_NURBS_SURFACE:
+						break; // Nop, supported
+					default:
+						modify_not_supported[dst->element_id] = true;
+						break;
+					}
 				}
 			}
 		}
@@ -15217,8 +15236,10 @@ ufbxi_nodiscard ufbxi_noinline static int ufbxi_pre_finalize_scene(ufbxi_context
 		if (element->type == UFBX_ELEMENT_NODE) {
 			ufbx_node *node = (ufbx_node*)element;
 			// Setup a geometry transform helper for nodes that have instanced attributes
-			if (uc->opts.geometry_transform_handling == UFBX_GEOMETRY_TRANSFORM_HANDLING_MODIFY_GEOMETRY && instance_counts[i] > 1) {
-				ufbxi_check(ufbxi_setup_geometry_transform_helper(uc, node, fbx_id));
+			if (uc->opts.geometry_transform_handling == UFBX_GEOMETRY_TRANSFORM_HANDLING_MODIFY_GEOMETRY) {
+				if (instance_counts[i] > 1 || modify_not_supported[i]) {
+					ufbxi_check(ufbxi_setup_geometry_transform_helper(uc, node, fbx_id));
+				}
 			}
 		}
 	}
@@ -17770,6 +17791,9 @@ ufbxi_nodiscard ufbxi_noinline static int ufbxi_validate_indices(ufbxi_context *
 	return 1;
 }
 
+ufbx_static_assert(mesh_mat_point_faces, offsetof(ufbx_mesh_material, num_point_faces) - offsetof(ufbx_mesh_material, num_empty_faces) == 1 * sizeof(size_t));
+ufbx_static_assert(mesh_mat_line_faces, offsetof(ufbx_mesh_material, num_line_faces) - offsetof(ufbx_mesh_material, num_empty_faces) == 2 * sizeof(size_t));
+
 ufbxi_nodiscard static ufbxi_noinline int ufbxi_finalize_mesh_material(ufbxi_buf *buf, ufbx_error *error, ufbx_mesh *mesh)
 {
 	if (!mesh->face_material.count) return 1;
@@ -17788,6 +17812,9 @@ ufbxi_nodiscard static ufbxi_noinline int ufbxi_finalize_mesh_material(ufbxi_buf
 		mesh->materials.data[mat_ix].num_faces++;
 		if (face.num_indices >= 3) {
 			mesh->materials.data[mat_ix].num_triangles += face.num_indices - 2;
+		} else {
+			// `num_empty/point/line_faces` are consecutive, see static asserts above.
+			(&mesh->materials.data[mat_ix].num_empty_faces)[face.num_indices]++;
 		}
 	}
 
@@ -18246,6 +18273,9 @@ ufbxi_nodiscard ufbxi_noinline static int ufbxi_finalize_scene(ufbxi_context *uc
 				ufbx_mesh_material *mat = &mesh->materials.data[0];
 				mat->num_faces = mesh->num_faces;
 				mat->num_triangles = mesh->num_triangles;
+				mat->num_empty_faces = mesh->num_empty_faces;
+				mat->num_point_faces = mesh->num_point_faces;
+				mat->num_line_faces = mesh->num_line_faces;
 				mat->face_indices.data = uc->consecutive_indices;
 				mat->face_indices.count = mat->num_faces;
 				mesh->face_material.data = uc->zero_indices;
@@ -24430,6 +24460,9 @@ ufbxi_nodiscard static ufbxi_noinline int ufbxi_subdivide_mesh_level(ufbxi_subdi
 	ufbxi_for_list(ufbx_mesh_material, mat, result->materials) {
 		mat->num_faces = 0;
 		mat->num_triangles = 0;
+		mat->num_empty_faces = 0;
+		mat->num_point_faces = 0;
+		mat->num_line_faces = 0;
 	}
 
 	size_t index_offset = 0;
@@ -24521,7 +24554,9 @@ ufbxi_nodiscard static ufbxi_noinline int ufbxi_subdivide_mesh_imp(ufbxi_subdivi
 
 	// Subdivision always results in a mesh that consists only of quads
 	mesh->max_face_triangles = 2;
-	mesh->num_bad_faces = 0;
+	mesh->num_empty_faces = 0;
+	mesh->num_point_faces = 0;
+	mesh->num_line_faces = 0;
 
 	if (!sc->opts.interpolate_normals && !sc->opts.ignore_normals) {
 
