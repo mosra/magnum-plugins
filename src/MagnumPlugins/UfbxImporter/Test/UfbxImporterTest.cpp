@@ -498,7 +498,7 @@ void UfbxImporterTest::scene() {
 
     Containers::Optional<SceneData> scene = importer->scene(0);
     CORRADE_VERIFY(scene);
-    CORRADE_COMPARE(scene->fieldCount(), 9);
+    CORRADE_COMPARE(scene->fieldCount(), 10);
 
     CORRADE_VERIFY(scene->hasField(SceneField::Parent));
     CORRADE_VERIFY(scene->hasField(SceneField::Translation));
@@ -617,7 +617,7 @@ void UfbxImporterTest::mesh() {
 
     Containers::Optional<SceneData> scene = importer->scene(0);
     CORRADE_VERIFY(scene);
-    CORRADE_COMPARE(scene->fieldCount(), 7);
+    CORRADE_COMPARE(scene->fieldCount(), 8);
 
     const SceneField sceneFieldVisibility = importer->sceneFieldForName("Visibility"_s);
 
@@ -697,9 +697,10 @@ void UfbxImporterTest::meshPointLine() {
 
     Containers::Optional<SceneData> scene = importer->scene(0);
     CORRADE_VERIFY(scene);
-    CORRADE_COMPARE(scene->fieldCount(), 7);
+    CORRADE_COMPARE(scene->fieldCount(), 8);
 
     const SceneField sceneFieldVisibility = importer->sceneFieldForName("Visibility"_s);
+    const SceneField sceneFieldGeometricTransformHelper = importer->sceneFieldForName("GeometricTransformHelper"_s);
 
     /* Fields we're not interested in */
     CORRADE_VERIFY(scene->hasField(SceneField::Parent));
@@ -707,6 +708,7 @@ void UfbxImporterTest::meshPointLine() {
     CORRADE_VERIFY(scene->hasField(SceneField::Rotation));
     CORRADE_VERIFY(scene->hasField(SceneField::Scaling));
     CORRADE_VERIFY(scene->hasField(sceneFieldVisibility));
+    CORRADE_VERIFY(scene->hasField(sceneFieldGeometricTransformHelper));
 
     CORRADE_VERIFY(scene->hasField(SceneField::Mesh));
     CORRADE_VERIFY(scene->hasField(SceneField::MeshMaterial));
@@ -1018,6 +1020,8 @@ void UfbxImporterTest::geometricTransform() {
     CORRADE_COMPARE(importer->objectName(2), "Box002");
     CORRADE_COMPARE(importer->objectName(3), "");
 
+    const SceneField sceneFieldGeometricTransformHelper = importer->sceneFieldForName("GeometricTransformHelper"_s);
+
     Containers::Optional<SceneData> scene = importer->scene(0);
     CORRADE_VERIFY(scene);
 
@@ -1025,9 +1029,14 @@ void UfbxImporterTest::geometricTransform() {
     CORRADE_VERIFY(scene->hasField(SceneField::Translation));
     CORRADE_VERIFY(scene->hasField(SceneField::Rotation));
     CORRADE_VERIFY(scene->hasField(SceneField::Scaling));
+    CORRADE_VERIFY(scene->hasField(sceneFieldGeometricTransformHelper));
 
     CORRADE_COMPARE_AS(scene->field<Int>(SceneField::Parent), Containers::arrayView<Int>({
         -1, 0, 0, 2,
+    }), TestSuite::Compare::Container);
+
+    CORRADE_COMPARE_AS(scene->field<UnsignedByte>(sceneFieldGeometricTransformHelper), Containers::arrayView<UnsignedByte>({
+        0, 1, 0, 1,
     }), TestSuite::Compare::Container);
 
     /* The meshes should be parented under their geometric transform helpers */
@@ -1071,6 +1080,8 @@ void UfbxImporterTest::geometricTransformPreserveRoot() {
     CORRADE_COMPARE(importer->objectName(3), "Box002");
     CORRADE_COMPARE(importer->objectName(4), "");
 
+    const SceneField sceneFieldGeometricTransformHelper = importer->sceneFieldForName("GeometricTransformHelper"_s);
+
     Containers::Optional<SceneData> scene = importer->scene(0);
     CORRADE_VERIFY(scene);
 
@@ -1078,9 +1089,14 @@ void UfbxImporterTest::geometricTransformPreserveRoot() {
     CORRADE_VERIFY(scene->hasField(SceneField::Translation));
     CORRADE_VERIFY(scene->hasField(SceneField::Rotation));
     CORRADE_VERIFY(scene->hasField(SceneField::Scaling));
+    CORRADE_VERIFY(scene->hasField(sceneFieldGeometricTransformHelper));
 
     CORRADE_COMPARE_AS(scene->field<Int>(SceneField::Parent), Containers::arrayView<Int>({
         -1, 0, 1, 1, 3,
+    }), TestSuite::Compare::Container);
+
+    CORRADE_COMPARE_AS(scene->field<UnsignedByte>(sceneFieldGeometricTransformHelper), Containers::arrayView<UnsignedByte>({
+        0, 0, 1, 0, 1,
     }), TestSuite::Compare::Container);
 
     /* The meshes should be parented under their geometric transform helpers */
@@ -1123,6 +1139,8 @@ void UfbxImporterTest::geometricTransformNoGeometric() {
     CORRADE_COMPARE(importer->objectName(0), "Box001");
     CORRADE_COMPARE(importer->objectName(1), "Box002");
 
+    const SceneField sceneFieldGeometricTransformHelper = importer->sceneFieldForName("GeometricTransformHelper"_s);
+
     Containers::Optional<SceneData> scene = importer->scene(0);
     CORRADE_VERIFY(scene);
 
@@ -1130,9 +1148,14 @@ void UfbxImporterTest::geometricTransformNoGeometric() {
     CORRADE_VERIFY(scene->hasField(SceneField::Translation));
     CORRADE_VERIFY(scene->hasField(SceneField::Rotation));
     CORRADE_VERIFY(scene->hasField(SceneField::Scaling));
+    CORRADE_VERIFY(scene->hasField(sceneFieldGeometricTransformHelper));
 
     CORRADE_COMPARE_AS(scene->field<Int>(SceneField::Parent), Containers::arrayView<Int>({
         -1, 0,
+    }), TestSuite::Compare::Container);
+
+    CORRADE_COMPARE_AS(scene->field<UnsignedByte>(sceneFieldGeometricTransformHelper), Containers::arrayView<UnsignedByte>({
+        0, 0,
     }), TestSuite::Compare::Container);
 
     /* The meshes should be parented under their geometric transform helpers */

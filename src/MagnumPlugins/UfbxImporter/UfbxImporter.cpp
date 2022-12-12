@@ -161,9 +161,11 @@ using namespace Containers::Literals;
 namespace {
 
 constexpr SceneField SceneFieldVisibility = sceneFieldCustom(0);
+constexpr SceneField SceneFieldGeometricTransformHelper = sceneFieldCustom(1);
 
 constexpr Containers::StringView sceneFieldNames[] = {
     "Visibility"_s,
+    "GeometricTransformHelper"_s,
 };
 
 Containers::StringView blendModeToString(ufbx_blend_mode mode) {
@@ -527,6 +529,7 @@ Containers::Optional<SceneData> UfbxImporter::doScene(UnsignedInt) {
     Containers::ArrayView<Quaterniond> rotations;
     Containers::ArrayView<Vector3d> scalings;
     Containers::ArrayView<UnsignedByte> visibilities; /* @todo should be bool */
+    Containers::ArrayView<UnsignedByte> geometricTransformHelpers; /* @todo should be bool */
     Containers::ArrayView<UnsignedInt> meshMaterialObjects;
     Containers::ArrayView<UnsignedInt> meshes;
     Containers::ArrayView<Int> meshMaterials;
@@ -541,6 +544,7 @@ Containers::Optional<SceneData> UfbxImporter::doScene(UnsignedInt) {
         {NoInit, nodeCount, rotations},
         {NoInit, nodeCount, scalings},
         {NoInit, nodeCount, visibilities},
+        {NoInit, nodeCount, geometricTransformHelpers},
         {NoInit, meshCount, meshMaterialObjects},
         {NoInit, meshCount, meshes},
         {NoInit, meshCount, meshMaterials},
@@ -569,6 +573,7 @@ Containers::Optional<SceneData> UfbxImporter::doScene(UnsignedInt) {
         rotations[nodeId] = Quaterniond(node->local_transform.rotation);
         scalings[nodeId] = Vector3d(node->local_transform.scale);
         visibilities[nodeId] = UnsignedByte(node->visible);
+        geometricTransformHelpers[nodeId] = UnsignedInt(node->is_geometry_transform_helper);
 
         for(const ufbx_element* element : node->all_attribs) {
             if(const ufbx_mesh* mesh = ufbx_as_mesh(element)) {
@@ -625,6 +630,7 @@ Containers::Optional<SceneData> UfbxImporter::doScene(UnsignedInt) {
         SceneFieldData{SceneField::Rotation, nodeObjects, rotations, SceneFieldFlag::ImplicitMapping},
         SceneFieldData{SceneField::Scaling, nodeObjects, scalings, SceneFieldFlag::ImplicitMapping},
         SceneFieldData{SceneFieldVisibility, nodeObjects, visibilities, SceneFieldFlag::ImplicitMapping},
+        SceneFieldData{SceneFieldGeometricTransformHelper, nodeObjects, geometricTransformHelpers, SceneFieldFlag::ImplicitMapping},
     });
 
     /* All other fields have the mapping ordered (they get filed as we iterate
