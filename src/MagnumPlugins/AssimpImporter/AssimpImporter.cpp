@@ -243,6 +243,7 @@ AssimpImporter::AssimpImporter(PluginManager::AbstractManager& manager, const Co
 AssimpImporter::~AssimpImporter() {
     /* Because we are dealing with a crappy singleton here, we need to make
        sure to clean up everything that might have been set earlier */
+    /** @todo wait how does this work with multiple simultaenous instances?! */
     if(flags() & ImporterFlag::Verbose) Assimp::DefaultLogger::kill();
 }
 
