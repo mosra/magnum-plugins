@@ -1802,7 +1802,8 @@ Containers::Optional<TextureData> AssimpImporter::doTexture(const UnsignedInt id
     if(mat->Get(AI_MATKEY_MAPPINGMODE_V(type, 0), mapMode) == AI_SUCCESS)
         wrappingV = toWrapping(mapMode);
 
-    /** @todo AI_MATKEY_GLTF_MAPPINGFILTER_{MIN, MAG} for glTF */
+    /** @todo AI_MATKEY_GLTF_MAPPINGFILTER_{MIN, MAG} for glTF, is there
+        anything else? */
 
     return TextureData{TextureType::Texture2D,
         SamplerFilter::Linear, SamplerFilter::Linear, SamplerMipmap::Linear,
