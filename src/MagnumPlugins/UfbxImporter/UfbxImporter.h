@@ -148,7 +148,7 @@ used for debugging or reporting issues.
     type @ref SceneFieldType::Int) is present, both with
     @ref SceneFieldFlag::OrderedMapping set. Missing material IDs are @cpp -1 @ce.
     If a mesh contains multiple materials it is split into parts and the node
-    contains each part as a separte mesh/material entry.
+    contains each part as a separate mesh/material entry.
     The same mesh can appear instanced multiple times under many
     nodes with different materials. See @ref Trade-UfbxImporter-instancing for further details.
 -   If the scene references cameras, a @ref SceneField::Camera (of type
@@ -196,11 +196,11 @@ used for debugging or reporting issues.
     @ref VertexFormat::Vector4. Most FBX files contain geometry data natively
     as double-precision floats.
 -   If a mesh contains multiple materials it is split into parts and the node
-    contains each part as a separte mesh/material entry.
+    contains each part as a separate mesh/material entry.
 -   If a mesh contains faces with 1 or 2 vertices (ie. points or lines) they
     are separated to meshes with the correct primitives (@ref MeshPrimitive::Points
     and @ref MeshPrimitive::Lines)
--   Faces with more than three vertices are triangulated and reresented as
+-   Faces with more than three vertices are triangulated and represented as
     @ref MeshPrimitive::Triangles.
 
 The meshes are indexed by default unless cb{.ini} generateIndices @ce @ref Trade-UfbxImporter-configuration "configuration option"

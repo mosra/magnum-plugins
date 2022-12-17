@@ -48,7 +48,7 @@ typedef Containers::EnumSet<MaterialExclusionGroup> MaterialExclusionGroups;
 struct MaterialMapping {
 
     /* Sentinel value to use as textureAttribute do disallow any texture for
-       this mapping as empty is implcitly derived from attribute, see below */
+       this mapping as empty is implicitly derived from attribute, see below */
     /* Note: This has to be a function instead of a value as otherwise it leads
        to linker errors in the array constructors below.
        "relocation R_X86_64_PC32 against undefined symbol

@@ -33,7 +33,7 @@
 #define UFBX_NO_SCENE_EVALUATION
 #define UFBX_NO_SKINNING_EVALUATION
 
-/* Include error stack on debug builds for juicy details in bugreports */
+/* Include error stack on debug builds for juicy details in bug reports */
 #if defined(CORRADE_IS_DEBUG_BUILD) || !defined(NDEBUG)
     #define UFBX_ENABLE_ERROR_STACK
 #else
@@ -172,36 +172,36 @@ Containers::StringView blendModeToString(ufbx_blend_mode mode) {
     switch (mode) {
     /* LCOV_EXCL_START */
     case UFBX_BLEND_TRANSLUCENT: return "translucent"_s;
-	case UFBX_BLEND_ADDITIVE: return "additive"_s;
-	case UFBX_BLEND_MULTIPLY: return "multiply"_s;
-	case UFBX_BLEND_MULTIPLY_2X: return "multiply2x"_s;
-	case UFBX_BLEND_OVER: return "over"_s;
-	case UFBX_BLEND_REPLACE: return "replace"_s;
-	case UFBX_BLEND_DISSOLVE: return "dissolve"_s;
-	case UFBX_BLEND_DARKEN: return "darken"_s;
-	case UFBX_BLEND_COLOR_BURN: return "colorBurn"_s;
-	case UFBX_BLEND_LINEAR_BURN: return "linearBurn"_s;
-	case UFBX_BLEND_DARKER_COLOR: return "darkerColor"_s;
-	case UFBX_BLEND_LIGHTEN: return "lighten"_s;
-	case UFBX_BLEND_SCREEN: return "screen"_s;
-	case UFBX_BLEND_COLOR_DODGE: return "colorDodge"_s;
-	case UFBX_BLEND_LINEAR_DODGE: return "linearDodge"_s;
-	case UFBX_BLEND_LIGHTER_COLOR: return "lighterColor"_s;
-	case UFBX_BLEND_SOFT_LIGHT: return "softLight"_s;
-	case UFBX_BLEND_HARD_LIGHT: return "hardLight"_s;
-	case UFBX_BLEND_VIVID_LIGHT: return "vividLight"_s;
-	case UFBX_BLEND_LINEAR_LIGHT: return "linearLight"_s;
-	case UFBX_BLEND_PIN_LIGHT: return "pinLight"_s;
-	case UFBX_BLEND_HARD_MIX: return "hardMix"_s;
-	case UFBX_BLEND_DIFFERENCE: return "difference"_s;
-	case UFBX_BLEND_EXCLUSION: return "exclusion"_s;
-	case UFBX_BLEND_SUBTRACT: return "subtract"_s;
-	case UFBX_BLEND_DIVIDE: return "divide"_s;
-	case UFBX_BLEND_HUE: return "hue"_s;
-	case UFBX_BLEND_SATURATION: return "saturation"_s;
-	case UFBX_BLEND_COLOR: return "color"_s;
-	case UFBX_BLEND_LUMINOSITY: return "luminosity"_s;
-	case UFBX_BLEND_OVERLAY: return "overlay"_s;
+    case UFBX_BLEND_ADDITIVE: return "additive"_s;
+    case UFBX_BLEND_MULTIPLY: return "multiply"_s;
+    case UFBX_BLEND_MULTIPLY_2X: return "multiply2x"_s;
+    case UFBX_BLEND_OVER: return "over"_s;
+    case UFBX_BLEND_REPLACE: return "replace"_s;
+    case UFBX_BLEND_DISSOLVE: return "dissolve"_s;
+    case UFBX_BLEND_DARKEN: return "darken"_s;
+    case UFBX_BLEND_COLOR_BURN: return "colorBurn"_s;
+    case UFBX_BLEND_LINEAR_BURN: return "linearBurn"_s;
+    case UFBX_BLEND_DARKER_COLOR: return "darkerColor"_s;
+    case UFBX_BLEND_LIGHTEN: return "lighten"_s;
+    case UFBX_BLEND_SCREEN: return "screen"_s;
+    case UFBX_BLEND_COLOR_DODGE: return "colorDodge"_s;
+    case UFBX_BLEND_LINEAR_DODGE: return "linearDodge"_s;
+    case UFBX_BLEND_LIGHTER_COLOR: return "lighterColor"_s;
+    case UFBX_BLEND_SOFT_LIGHT: return "softLight"_s;
+    case UFBX_BLEND_HARD_LIGHT: return "hardLight"_s;
+    case UFBX_BLEND_VIVID_LIGHT: return "vividLight"_s;
+    case UFBX_BLEND_LINEAR_LIGHT: return "linearLight"_s;
+    case UFBX_BLEND_PIN_LIGHT: return "pinLight"_s;
+    case UFBX_BLEND_HARD_MIX: return "hardMix"_s;
+    case UFBX_BLEND_DIFFERENCE: return "difference"_s;
+    case UFBX_BLEND_EXCLUSION: return "exclusion"_s;
+    case UFBX_BLEND_SUBTRACT: return "subtract"_s;
+    case UFBX_BLEND_DIVIDE: return "divide"_s;
+    case UFBX_BLEND_HUE: return "hue"_s;
+    case UFBX_BLEND_SATURATION: return "saturation"_s;
+    case UFBX_BLEND_COLOR: return "color"_s;
+    case UFBX_BLEND_LUMINOSITY: return "luminosity"_s;
+    case UFBX_BLEND_OVERLAY: return "overlay"_s;
     default:
         Warning{} << "Unhandled blend mode" << Int(mode);
         return {};
