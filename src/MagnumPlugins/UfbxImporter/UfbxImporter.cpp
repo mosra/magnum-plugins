@@ -334,7 +334,7 @@ struct FileOpener {
            the duration of the load function we are currently executing */
         opts.no_copy = true;
 
-        return ufbx_open_memory(stream, data->data(), data->size(), &opts, NULL);
+        return ufbx_open_memory(stream, data->data(), data->size(), &opts, nullptr);
     }
 
     Containers::Optional<Containers::ArrayView<const char>> (*_callback)(const std::string&, InputFileCallbackPolicy, void*);
