@@ -2277,9 +2277,8 @@ void UfbxImporterTest::imageBrokenEmbedded() {
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->image2D(0));
 
-    /* There should be some error but let's not depend on which PngImporter
-       we get here or it's implementation details. */
-    CORRADE_COMPARE_AS(out.str(), "", TestSuite::Compare::NotEqual);
+    CORRADE_COMPARE(out.str(),
+        "Trade::AnyImageImporter::openData(): cannot determine the format from signature 0xbadbadfb\n");
 }
 
 void UfbxImporterTest::objCube() {
