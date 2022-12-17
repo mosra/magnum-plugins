@@ -1314,17 +1314,15 @@ AbstractImporter* UfbxImporter::setupOrReuseImporterForImage(UnsignedInt id, con
         auto textureData = Containers::ArrayView<const char>(reinterpret_cast<const char*>(file.content.data), file.content.size);
         if(!importer.openData(textureData))
             return nullptr;
-    } else if(file.filename.length > 0) {
+    } else {
         if(!_state->fromFile && !fileCallback()) {
             Error{} << errorPrefix << "external images can be imported only when opening files from the filesystem or if a file callback is present";
             return nullptr;
         }
 
-        if(!importer.openFile(file.filename))
+        ufbx_string filename = file.filename.length > 0 ? file.filename : file.absolute_filename;
+        if(!importer.openFile(filename))
             return nullptr;
-    } else {
-        Error{} << errorPrefix << "skipping external image defined by absolute path:" << Containers::StringView(file.absolute_filename);
-        return nullptr;
     }
 
     if(importer.image2DCount() != 1) {

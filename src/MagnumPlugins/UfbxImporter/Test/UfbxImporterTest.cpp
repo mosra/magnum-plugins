@@ -2225,7 +2225,7 @@ void UfbxImporterTest::imageAbsolutePath() {
     Error redirectError{&out};
 
     CORRADE_VERIFY(!importer->image2D(0));
-    CORRADE_COMPARE(out.str(), "Trade::UfbxImporter::image2D(): skipping external image defined by absolute path: /absolute/path/to/tex-red.png\n");
+    CORRADE_COMPARE_AS(out.str(), "Trade::AbstractImporter::openFile(): cannot open file /absolute/path/to/tex-red.png", TestSuite::Compare::StringContains);
 }
 
 void UfbxImporterTest::imageNot2D() {
