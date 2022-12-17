@@ -2256,9 +2256,9 @@ void UfbxImporterTest::imageBrokenExternal() {
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->image2D(0));
 
-    /* There should be some error but let's not depend on which PngImporter
-       we get here or it's implementation details. */
-    CORRADE_COMPARE_AS(out.str(), "", TestSuite::Compare::NotEqual);
+    CORRADE_COMPARE_AS(out.str(), 
+        "Trade::StbImageImporter::image2D(): cannot open the image: ",
+        TestSuite::Compare::StringHasPrefix);
 }
 
 void UfbxImporterTest::imageBrokenEmbedded() {
