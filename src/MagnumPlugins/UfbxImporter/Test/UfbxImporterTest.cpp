@@ -216,6 +216,8 @@ struct UfbxImporterTest: TestSuite::Tester {
     void geometryCacheFileCallback();
 
     void staticSkin();
+    void multiWarning();
+    void multiWarningData();
 
     /* Needs to load AnyImageImporter from a system-wide location */
     PluginManager::Manager<AbstractImporter> _manager;
@@ -293,7 +295,9 @@ UfbxImporterTest::UfbxImporterTest() {
     addTests({&UfbxImporterTest::geometryCache,
               &UfbxImporterTest::geometryCacheFileCallback});
 
-    addTests({&UfbxImporterTest::staticSkin});
+    addTests({&UfbxImporterTest::staticSkin,
+              &UfbxImporterTest::multiWarning,
+              &UfbxImporterTest::multiWarningData});
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. It also pulls in the AnyImageImporter dependency. */
@@ -2449,7 +2453,13 @@ void UfbxImporterTest::objCubeFileCallback() {
 void UfbxImporterTest::objMissingMtl() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
 
+    std::ostringstream out;
+    Warning redirectWarning{&out};
+
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "missing-mtl.obj")));
+    CORRADE_COMPARE_AS(out.str(), "Trade::UfbxImporter::openFile(): Could not open .mtl file:", TestSuite::Compare::StringHasPrefix);
+    CORRADE_COMPARE_AS(out.str(), "missing-mtl.mtl", TestSuite::Compare::StringContains);
+
     CORRADE_COMPARE(importer->sceneCount(), 1);
     CORRADE_COMPARE(importer->objectCount(), 1);
     CORRADE_COMPARE(importer->meshCount(), 1);
@@ -2472,7 +2482,12 @@ void UfbxImporterTest::objMissingMtlFileCallback() {
     FileCallbackFiles files;
     importer->setFileCallback(&fileCallbackFunc, &files);
 
+    std::ostringstream out;
+    Warning redirectWarning{&out};
+
     CORRADE_VERIFY(importer->openFile("missing-mtl.obj"));
+    CORRADE_COMPARE(out.str(), "Trade::UfbxImporter::openFile(): Could not open .mtl file: missing-mtl.mtl\n");
+
     CORRADE_COMPARE(files.size(), 2);
     CORRADE_VERIFY(files.find("missing-mtl.obj") != files.end());
     CORRADE_VERIFY(files.find("missing-mtl.mtl") != files.end());
@@ -2593,6 +2608,32 @@ void UfbxImporterTest::staticSkin() {
             CORRADE_COMPARE_AS(*parentId, 0, TestSuite::Compare::Less);
         }
     }
+}
+
+void UfbxImporterTest::multiWarning() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
+
+    std::ostringstream out;
+    Warning redirectWarning{&out};
+
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "warning-cube.fbx")));
+    CORRADE_COMPARE(out.str(),
+        "Trade::UfbxImporter::openFile(): Clamped index (x4)\n"
+        "Trade::UfbxImporter::openFile(): Bad UTF-8 string\n");
+}
+
+void UfbxImporterTest::multiWarningData() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
+
+    std::ostringstream out;
+    Warning redirectWarning{&out};
+
+    Containers::Optional<Containers::Array<char>> data = Utility::Path::read(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "warning-cube.fbx"));
+    CORRADE_VERIFY(data);
+    CORRADE_VERIFY(importer->openData(*data));
+    CORRADE_COMPARE(out.str(),
+        "Trade::UfbxImporter::openData(): Clamped index (x4)\n"
+        "Trade::UfbxImporter::openData(): Bad UTF-8 string\n");
 }
 
 }}}}

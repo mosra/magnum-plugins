@@ -435,6 +435,14 @@ void UfbxImporter::doOpenFile(Containers::StringView filename) {
 void UfbxImporter::openInternal(void* state, bool fromFile) {
     ufbx_scene* scene = static_cast<ufbx_scene*>(state);
 
+    Containers::StringView warningPrefix = fromFile ? "Trade::UfbxImporter::openFile(): "_s : "Trade::UfbxImporter::openData(): "_s;
+    for(const ufbx_warning& warning : scene->metadata.warnings) {
+        if(warning.count > 1)
+            Warning{Utility::Debug::Flag::NoSpace} << warningPrefix << Containers::StringView(warning.description) << " (x" << warning.count << ")";
+        else
+            Warning{Utility::Debug::Flag::NoSpace} << warningPrefix << Containers::StringView(warning.description);
+    }
+
     const bool preserveRootNode = configuration().value<bool>("preserveRootNode");
 
     _state.reset(new State{});
