@@ -517,7 +517,6 @@ UnsignedInt UfbxImporter::doSceneCount() const { return 1; }
 Containers::Optional<SceneData> UfbxImporter::doScene(UnsignedInt) {
     const ufbx_scene* scene = _state->scene.get();
 
-    const bool perInstanceMaterials = configuration().value<bool>("perInstanceMaterials");
     const bool retainGeometryTransforms = configuration().value("geometryTransformHandling") == "preserve";
 
     const UnsignedInt nodeCount = _state->objectCount;
@@ -621,7 +620,7 @@ Containers::Optional<SceneData> UfbxImporter::doScene(UnsignedInt) {
                     /* Fetch the material from the ufbx_node to get per instance
                        materials unless configured otherwise */
                     const ufbx_material* material = nullptr;
-                    if(perInstanceMaterials && materialIndex < node->materials.count)
+                    if(materialIndex < node->materials.count)
                         material = node->materials[materialIndex];
                     else
                         material = mat.material;
