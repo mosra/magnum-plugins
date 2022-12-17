@@ -1264,7 +1264,6 @@ void UfbxImporterTest::materialMapping() {
     }
 
     /* Make sure all the ufbx maps are accounted for */
-    /* @todo: Could we fail with an index in the message here? */
     for(UnsignedInt i = 0; i < UFBX_MATERIAL_FBX_MAP_COUNT; ++i) {
         CORRADE_ITERATION(i);
         CORRADE_VERIFY(usedUfbxMaps[0][i]);
