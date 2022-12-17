@@ -102,12 +102,12 @@ const constexpr MaterialMapping materialMappingFbx[] = {
 };
 
 const constexpr MaterialMapping materialMappingFbxFactor[] = {
-    MaterialMapping{ UfbxMaterialLayer::Base, MaterialAttributeType::Float, "diffuseFactor"_s, {}, UFBX_MATERIAL_FBX_DIFFUSE_FACTOR },
-    MaterialMapping{ UfbxMaterialLayer::Base, MaterialAttributeType::Float, "specularFactor"_s, {}, UFBX_MATERIAL_FBX_SPECULAR_FACTOR, -1, MaterialExclusionGroup::SpecularFactor },
-    MaterialMapping{ UfbxMaterialLayer::Base, MaterialAttributeType::Float, "reflectionFactor"_s, {}, UFBX_MATERIAL_FBX_REFLECTION_FACTOR },
-    MaterialMapping{ UfbxMaterialLayer::Base, MaterialAttributeType::Float, "transparencyFactor"_s, {}, UFBX_MATERIAL_FBX_TRANSPARENCY_FACTOR },
-    MaterialMapping{ UfbxMaterialLayer::Base, MaterialAttributeType::Float, "emissiveFactor"_s, {}, UFBX_MATERIAL_FBX_EMISSION_FACTOR, -1, MaterialExclusionGroup::EmissionFactor },
-    MaterialMapping{ UfbxMaterialLayer::Base, MaterialAttributeType::Float, "ambientFactor"_s, {}, UFBX_MATERIAL_FBX_AMBIENT_FACTOR },
+    MaterialMapping{ UfbxMaterialLayer::Base, MaterialAttributeType::Float, "diffuseColorFactor"_s, {}, UFBX_MATERIAL_FBX_DIFFUSE_FACTOR },
+    MaterialMapping{ UfbxMaterialLayer::Base, MaterialAttributeType::Float, "specularColorFactor"_s, {}, UFBX_MATERIAL_FBX_SPECULAR_FACTOR, -1, MaterialExclusionGroup::SpecularFactor },
+    MaterialMapping{ UfbxMaterialLayer::Base, MaterialAttributeType::Float, "reflectionColorFactor"_s, {}, UFBX_MATERIAL_FBX_REFLECTION_FACTOR },
+    MaterialMapping{ UfbxMaterialLayer::Base, MaterialAttributeType::Float, "transparencyColorFactor"_s, {}, UFBX_MATERIAL_FBX_TRANSPARENCY_FACTOR },
+    MaterialMapping{ UfbxMaterialLayer::Base, MaterialAttributeType::Float, "emissiveColorFactor"_s, {}, UFBX_MATERIAL_FBX_EMISSION_FACTOR, -1, MaterialExclusionGroup::EmissionFactor },
+    MaterialMapping{ UfbxMaterialLayer::Base, MaterialAttributeType::Float, "ambientColorFactor"_s, {}, UFBX_MATERIAL_FBX_AMBIENT_FACTOR },
 };
 
 const constexpr MaterialMapping materialMappingPbr[] = {
@@ -183,9 +183,9 @@ const constexpr MaterialMapping materialMappingPbr[] = {
 };
 
 const constexpr MaterialMapping materialMappingPbrFactor[] = {
-    MaterialMapping{ UfbxMaterialLayer::Base, MaterialAttributeType::Float, "baseFactor"_s, {}, UFBX_MATERIAL_PBR_BASE_FACTOR },
-    MaterialMapping{ UfbxMaterialLayer::Base, MaterialAttributeType::Float, "specularFactor"_s, {}, UFBX_MATERIAL_PBR_SPECULAR_FACTOR, -1, MaterialExclusionGroup::SpecularFactor },
-    MaterialMapping{ UfbxMaterialLayer::Base, MaterialAttributeType::Float, "emissiveFactor"_s, {}, UFBX_MATERIAL_PBR_EMISSION_FACTOR, -1, MaterialExclusionGroup::EmissionFactor },
+    MaterialMapping{ UfbxMaterialLayer::Base, MaterialAttributeType::Float, "baseColorFactor"_s, {}, UFBX_MATERIAL_PBR_BASE_FACTOR },
+    MaterialMapping{ UfbxMaterialLayer::Base, MaterialAttributeType::Float, "specularColorFactor"_s, {}, UFBX_MATERIAL_PBR_SPECULAR_FACTOR, -1, MaterialExclusionGroup::SpecularFactor },
+    MaterialMapping{ UfbxMaterialLayer::Base, MaterialAttributeType::Float, "emissiveColorFactor"_s, {}, UFBX_MATERIAL_PBR_EMISSION_FACTOR, -1, MaterialExclusionGroup::EmissionFactor },
 };
 
 }}}
