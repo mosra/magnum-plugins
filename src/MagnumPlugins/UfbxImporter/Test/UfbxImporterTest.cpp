@@ -210,8 +210,9 @@ struct UfbxImporterTest: TestSuite::Tester {
     void objMissingMtl();
     void objMissingMtlFileCallback();
 
-    void normalizeUnits();
-    void normalizeUnitsNoRoot();
+    void normalizeUnitsAdjustTransforms();
+    void normalizeUnitsTransformRoot();
+    void normalizeUnitsInvalidHandling();
 
     void geometryCache();
     void geometryCacheFileCallback();
@@ -290,8 +291,9 @@ UfbxImporterTest::UfbxImporterTest() {
               &UfbxImporterTest::objMissingMtl,
               &UfbxImporterTest::objMissingMtlFileCallback});
 
-    addTests({&UfbxImporterTest::normalizeUnits,
-              &UfbxImporterTest::normalizeUnitsNoRoot});
+    addTests({&UfbxImporterTest::normalizeUnitsAdjustTransforms,
+              &UfbxImporterTest::normalizeUnitsTransformRoot,
+              &UfbxImporterTest::normalizeUnitsInvalidHandling});
 
     addTests({&UfbxImporterTest::geometryCache,
               &UfbxImporterTest::geometryCacheFileCallback});
@@ -1208,13 +1210,13 @@ void UfbxImporterTest::geometricTransformPreserve() {
 
 void UfbxImporterTest::geometricTransformInvalidHandling() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
-    importer->configuration().setValue("geometryTransformHandling", "invalidHandling");
+    importer->configuration().setValue("geometryTransformHandling", "invalidGeometryHandling");
 
     std::ostringstream out;
     Error redirectError{&out};
 
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "geometric-transform.fbx")));
-    CORRADE_COMPARE(out.str(), "Trade::UfbxImporter::openFile(): Unsupported geometryTransformHandling configuration: invalidHandling\n");
+    CORRADE_COMPARE(out.str(), "Trade::UfbxImporter::openFile(): Unsupported geometryTransformHandling configuration: invalidGeometryHandling\n");
 }
 
 void UfbxImporterTest::materialMapping() {
@@ -2498,10 +2500,31 @@ void UfbxImporterTest::objMissingMtlFileCallback() {
     CORRADE_COMPARE_AS(*material, reference, DebugTools::CompareMaterial);
 }
 
-void UfbxImporterTest::normalizeUnits() {
+void UfbxImporterTest::normalizeUnitsAdjustTransforms() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
     importer->configuration().setValue("normalizeUnits", true);
-    importer->configuration().setValue("preserveRootNode", true);
+    importer->configuration().setValue("unitNormalizationHandling", "adjustTransforms");
+
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "units-cm-z-up.fbx")));
+    CORRADE_COMPARE(importer->objectCount(), 1);
+
+    Containers::Optional<SceneData> scene = importer->scene(0);
+    CORRADE_VERIFY(scene);
+
+    {
+        CORRADE_COMPARE(importer->objectName(0), "Empty");
+        Containers::Optional<Containers::Triple<Vector3, Quaternion, Vector3>> trs = scene->translationRotationScaling3DFor(0);
+        CORRADE_VERIFY(trs);
+        CORRADE_COMPARE(trs->first(), (Vector3{1.0f, 2.0f, 3.0f}));
+        CORRADE_COMPARE(trs->second(), (Quaternion{{0.0f, 0.707107f, 0.0f}, 0.707107f})); /* Euler (0, 90, 0) */
+        CORRADE_COMPARE(trs->third(), (Vector3{0.2f, 0.4f, 0.6f}));
+    }
+}
+
+void UfbxImporterTest::normalizeUnitsTransformRoot() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
+    importer->configuration().setValue("normalizeUnits", true);
+    importer->configuration().setValue("unitNormalizationHandling", "transformRoot");
 
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "units-cm-z-up.fbx")));
     CORRADE_COMPARE(importer->objectCount(), 2);
@@ -2529,24 +2552,16 @@ void UfbxImporterTest::normalizeUnits() {
     }
 }
 
-void UfbxImporterTest::normalizeUnitsNoRoot() {
+void UfbxImporterTest::normalizeUnitsInvalidHandling() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
     importer->configuration().setValue("normalizeUnits", true);
+    importer->configuration().setValue("unitNormalizationHandling", "invalidUnitHandling");
+
+    std::ostringstream out;
+    Error redirectError{&out};
 
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "units-cm-z-up.fbx")));
-    CORRADE_COMPARE(importer->objectCount(), 1);
-
-    Containers::Optional<SceneData> scene = importer->scene(0);
-    CORRADE_VERIFY(scene);
-
-    {
-        CORRADE_COMPARE(importer->objectName(0), "Empty");
-        Containers::Optional<Containers::Triple<Vector3, Quaternion, Vector3>> trs = scene->translationRotationScaling3DFor(0);
-        CORRADE_VERIFY(trs);
-        CORRADE_COMPARE(trs->first(), (Vector3{1.0f, 2.0f, 3.0f}));
-        CORRADE_COMPARE(trs->second(), (Quaternion{{0.0f, 0.707107f, 0.0f}, 0.707107f})); /* Euler (0, 90, 0) */
-        CORRADE_COMPARE(trs->third(), (Vector3{0.2f, 0.4f, 0.6f}));
-    }
+    CORRADE_COMPARE(out.str(), "Trade::UfbxImporter::openFile(): Unsupported unitNormalizationHandling configuration: invalidUnitHandling\n");
 }
 
 void UfbxImporterTest::geometryCache() {

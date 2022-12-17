@@ -221,7 +221,7 @@ ufbx_load_opts loadOptsFromConfiguration(Utility::ConfigurationGroup& conf, cons
     const Long maxTemporaryMemory = conf.value<Long>("maxTemporaryMemory");
     const Long maxResultMemory = conf.value<Long>("maxResultMemory");
     const std::string geometryTransformHandling = conf.value("geometryTransformHandling");
-    const bool preserveRootNode = conf.value<bool>("preserveRootNode");
+    const std::string unitNormalizationHandling = conf.value("unitNormalizationHandling");
     const bool normalizeUnits = conf.value<bool>("normalizeUnits");
 
     opts.generate_missing_normals = conf.value<bool>("generateMissingNormals");
@@ -248,10 +248,12 @@ ufbx_load_opts loadOptsFromConfiguration(Utility::ConfigurationGroup& conf, cons
 
     /* @todo expose more of these as options? need to think of reasonable
        defaults anyways, feels like ignoring geometry transform is not great */
-    if(preserveRootNode)
+    if(unitNormalizationHandling == "transformRoot")
         opts.space_conversion = UFBX_SPACE_CONVERSION_TRANSFORM_ROOT;
-    else
+    else if(unitNormalizationHandling == "adjustTransforms")
         opts.space_conversion = UFBX_SPACE_CONVERSION_ADJUST_TRANSFORMS;
+    else
+        Error{} << errorPrefix << "Unsupported unitNormalizationHandling configuration:" << Containers::StringView(unitNormalizationHandling);
 
     if(geometryTransformHandling == "preserve")
         opts.geometry_transform_handling = UFBX_GEOMETRY_TRANSFORM_HANDLING_PRESERVE;
@@ -392,6 +394,9 @@ struct UfbxImporter::State {
     /* Cached AnyImageImporter for image2D() and image2DLevelCount */
     UnsignedInt imageImporterId = ~UnsignedInt{};
     Containers::Optional<AnyImageImporter> imageImporter;
+
+    /* If true preserve the implicit root node */
+    bool preserveRootNode = false;
 };
 
 UfbxImporter::UfbxImporter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin): AbstractImporter{manager, plugin} {
@@ -406,8 +411,6 @@ bool UfbxImporter::doIsOpened() const { return !!_state; }
 void UfbxImporter::doClose() { _state = nullptr; }
 
 void UfbxImporter::doOpenData(Containers::Array<char>&& data, const DataFlags) {
-    _state.reset();
-
     ufbx_load_opts opts = loadOptsFromConfiguration(configuration(), "Trade::UfbxImporter::openData():");
 
     FileOpener opener{fileCallback(), fileCallbackUserData()};
@@ -420,12 +423,10 @@ void UfbxImporter::doOpenData(Containers::Array<char>&& data, const DataFlags) {
         return;
     }
 
-    openInternal(scene, {});
+    openInternal(scene, &opts, {});
 }
 
 void UfbxImporter::doOpenFile(Containers::StringView filename) {
-    _state.reset();
-
     ufbx_load_opts opts = loadOptsFromConfiguration(configuration(), "Trade::UfbxImporter::openFile():");
     opts.filename = filename;
 
@@ -439,11 +440,12 @@ void UfbxImporter::doOpenFile(Containers::StringView filename) {
         return;
     }
 
-    openInternal(scene, true);
+    openInternal(scene, &opts, true);
 }
 
-void UfbxImporter::openInternal(void* state, bool fromFile) {
-    ufbx_scene* scene = static_cast<ufbx_scene*>(state);
+void UfbxImporter::openInternal(void* opaqueScene, const void* opaqueOpts, bool fromFile) {
+    ufbx_scene* scene = static_cast<ufbx_scene*>(opaqueScene);
+    const ufbx_load_opts& opts = *static_cast<const ufbx_load_opts*>(opaqueOpts);
 
     Containers::StringView warningPrefix = fromFile ? "Trade::UfbxImporter::openFile(): "_s : "Trade::UfbxImporter::openData(): "_s;
     for(const ufbx_warning& warning : scene->metadata.warnings) {
@@ -453,9 +455,10 @@ void UfbxImporter::openInternal(void* state, bool fromFile) {
             Warning{Utility::Debug::Flag::NoSpace} << warningPrefix << Containers::StringView(warning.description);
     }
 
-    const bool preserveRootNode = configuration().value<bool>("preserveRootNode");
-
     _state.reset(new State{});
+    if (opts.space_conversion == UFBX_SPACE_CONVERSION_TRANSFORM_ROOT)
+        _state->preserveRootNode = true;
+
     _state->fromFile = fromFile;
     _state->scene = ufbx_scene_ref{scene};
 
@@ -484,7 +487,7 @@ void UfbxImporter::openInternal(void* state, bool fromFile) {
     /* Count the final number of nodes in the scene as we may remove the root. */
     _state->nodeIdOffset = 0;
     _state->objectCount = UnsignedInt(scene->nodes.count);
-    if(!preserveRootNode) {
+    if(!_state->preserveRootNode) {
         --_state->objectCount;
         ++_state->nodeIdOffset;
     }
@@ -514,7 +517,6 @@ UnsignedInt UfbxImporter::doSceneCount() const { return 1; }
 Containers::Optional<SceneData> UfbxImporter::doScene(UnsignedInt) {
     const ufbx_scene* scene = _state->scene.get();
 
-    const bool preserveRootNode = configuration().value<bool>("preserveRootNode");
     const bool perInstanceMaterials = configuration().value<bool>("perInstanceMaterials");
     const bool retainGeometryTransforms = configuration().value("geometryTransformHandling") == "preserve";
 
@@ -585,11 +587,11 @@ Containers::Optional<SceneData> UfbxImporter::doScene(UnsignedInt) {
     UnsignedInt cameraOffset = 0;
 
     for (const ufbx_node* node : scene->nodes) {
-        if(!preserveRootNode && node->is_root) continue;
+        if(!_state->preserveRootNode && node->is_root) continue;
 
         UnsignedInt nodeId = node->typed_id - nodeIdOffset;
         nodeObjects[nodeId] = nodeId;
-        if(node->parent && (preserveRootNode || !node->parent->is_root)) {
+        if(node->parent && (_state->preserveRootNode || !node->parent->is_root)) {
             parents[nodeId] = Int(node->parent->typed_id - nodeIdOffset);
         } else {
             parents[nodeId] = -1;
