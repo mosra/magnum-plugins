@@ -174,46 +174,6 @@ constexpr Containers::StringView sceneFieldNames[] = {
     "GeometryScaling"_s,
 };
 
-Containers::StringView blendModeToString(ufbx_blend_mode mode) {
-    switch(mode) {
-    /* LCOV_EXCL_START */
-    case UFBX_BLEND_TRANSLUCENT: return "translucent"_s;
-    case UFBX_BLEND_ADDITIVE: return "additive"_s;
-    case UFBX_BLEND_MULTIPLY: return "multiply"_s;
-    case UFBX_BLEND_MULTIPLY_2X: return "multiply2x"_s;
-    case UFBX_BLEND_OVER: return "over"_s;
-    case UFBX_BLEND_REPLACE: return "replace"_s;
-    case UFBX_BLEND_DISSOLVE: return "dissolve"_s;
-    case UFBX_BLEND_DARKEN: return "darken"_s;
-    case UFBX_BLEND_COLOR_BURN: return "colorBurn"_s;
-    case UFBX_BLEND_LINEAR_BURN: return "linearBurn"_s;
-    case UFBX_BLEND_DARKER_COLOR: return "darkerColor"_s;
-    case UFBX_BLEND_LIGHTEN: return "lighten"_s;
-    case UFBX_BLEND_SCREEN: return "screen"_s;
-    case UFBX_BLEND_COLOR_DODGE: return "colorDodge"_s;
-    case UFBX_BLEND_LINEAR_DODGE: return "linearDodge"_s;
-    case UFBX_BLEND_LIGHTER_COLOR: return "lighterColor"_s;
-    case UFBX_BLEND_SOFT_LIGHT: return "softLight"_s;
-    case UFBX_BLEND_HARD_LIGHT: return "hardLight"_s;
-    case UFBX_BLEND_VIVID_LIGHT: return "vividLight"_s;
-    case UFBX_BLEND_LINEAR_LIGHT: return "linearLight"_s;
-    case UFBX_BLEND_PIN_LIGHT: return "pinLight"_s;
-    case UFBX_BLEND_HARD_MIX: return "hardMix"_s;
-    case UFBX_BLEND_DIFFERENCE: return "difference"_s;
-    case UFBX_BLEND_EXCLUSION: return "exclusion"_s;
-    case UFBX_BLEND_SUBTRACT: return "subtract"_s;
-    case UFBX_BLEND_DIVIDE: return "divide"_s;
-    case UFBX_BLEND_HUE: return "hue"_s;
-    case UFBX_BLEND_SATURATION: return "saturation"_s;
-    case UFBX_BLEND_COLOR: return "color"_s;
-    case UFBX_BLEND_LUMINOSITY: return "luminosity"_s;
-    case UFBX_BLEND_OVERLAY: return "overlay"_s;
-    /* LCOV_EXCL_STOP */
-    }
-
-    CORRADE_INTERNAL_ASSERT_UNREACHABLE();
-}
-
 ufbx_load_opts loadOptsFromConfiguration(Utility::ConfigurationGroup& conf, const char *errorPrefix) {
     ufbx_load_opts opts = {};
 
@@ -304,10 +264,6 @@ inline void logError(const char* prefix, const ufbx_error& error, ImporterFlags 
 
 inline UnsignedInt unboundedIfNegative(Int value) {
     return value >= 0 ? UnsignedInt(value) : ~UnsignedInt{};
-}
-
-inline bool mapUsed(const ufbx_material_map& map) {
-    return map.has_value || map.texture != nullptr;
 }
 
 struct FileOpener {
@@ -1031,6 +987,54 @@ Containers::String UfbxImporter::doMaterialName(UnsignedInt id) {
     return _state->scene->materials[id]->name;
 }
 
+namespace {
+
+Containers::StringView blendModeToString(ufbx_blend_mode mode) {
+    switch(mode) {
+    /* LCOV_EXCL_START */
+    case UFBX_BLEND_TRANSLUCENT: return "translucent"_s;
+    case UFBX_BLEND_ADDITIVE: return "additive"_s;
+    case UFBX_BLEND_MULTIPLY: return "multiply"_s;
+    case UFBX_BLEND_MULTIPLY_2X: return "multiply2x"_s;
+    case UFBX_BLEND_OVER: return "over"_s;
+    case UFBX_BLEND_REPLACE: return "replace"_s;
+    case UFBX_BLEND_DISSOLVE: return "dissolve"_s;
+    case UFBX_BLEND_DARKEN: return "darken"_s;
+    case UFBX_BLEND_COLOR_BURN: return "colorBurn"_s;
+    case UFBX_BLEND_LINEAR_BURN: return "linearBurn"_s;
+    case UFBX_BLEND_DARKER_COLOR: return "darkerColor"_s;
+    case UFBX_BLEND_LIGHTEN: return "lighten"_s;
+    case UFBX_BLEND_SCREEN: return "screen"_s;
+    case UFBX_BLEND_COLOR_DODGE: return "colorDodge"_s;
+    case UFBX_BLEND_LINEAR_DODGE: return "linearDodge"_s;
+    case UFBX_BLEND_LIGHTER_COLOR: return "lighterColor"_s;
+    case UFBX_BLEND_SOFT_LIGHT: return "softLight"_s;
+    case UFBX_BLEND_HARD_LIGHT: return "hardLight"_s;
+    case UFBX_BLEND_VIVID_LIGHT: return "vividLight"_s;
+    case UFBX_BLEND_LINEAR_LIGHT: return "linearLight"_s;
+    case UFBX_BLEND_PIN_LIGHT: return "pinLight"_s;
+    case UFBX_BLEND_HARD_MIX: return "hardMix"_s;
+    case UFBX_BLEND_DIFFERENCE: return "difference"_s;
+    case UFBX_BLEND_EXCLUSION: return "exclusion"_s;
+    case UFBX_BLEND_SUBTRACT: return "subtract"_s;
+    case UFBX_BLEND_DIVIDE: return "divide"_s;
+    case UFBX_BLEND_HUE: return "hue"_s;
+    case UFBX_BLEND_SATURATION: return "saturation"_s;
+    case UFBX_BLEND_COLOR: return "color"_s;
+    case UFBX_BLEND_LUMINOSITY: return "luminosity"_s;
+    case UFBX_BLEND_OVERLAY: return "overlay"_s;
+    /* LCOV_EXCL_STOP */
+    }
+
+    CORRADE_INTERNAL_ASSERT_UNREACHABLE();
+}
+
+inline bool isMapUsed(const ufbx_material_map& map) {
+    return map.has_value || map.texture != nullptr;
+}
+
+}
+
 Containers::Optional<MaterialData> UfbxImporter::doMaterial(UnsignedInt id) {
     const ufbx_material* material = _state->scene->materials[id];
 
@@ -1070,20 +1074,20 @@ Containers::Optional<MaterialData> UfbxImporter::doMaterial(UnsignedInt id) {
 
     /* If we have DiffuseColor specified from the FBX properties the fallback
        FBX material should be quite well defined. */
-    if(mapUsed(material->fbx.diffuse_color)) {
+    if(isMapUsed(material->fbx.diffuse_color)) {
         types |= MaterialType::Phong;
     }
 
     /* PbrMetallicRoughness and PbrSpecularGlossiness are mutually exclusive,
        most PBR models in FBX use MetallicRoughness as a base but support
        tinting the specular color */
-    if(mapUsed(material->pbr.metalness) && mapUsed(material->pbr.roughness)) {
+    if(isMapUsed(material->pbr.metalness) && isMapUsed(material->pbr.roughness)) {
         types |= MaterialType::PbrMetallicRoughness;
-    } else if(mapUsed(material->pbr.specular_color) && mapUsed(material->pbr.glossiness)) {
+    } else if(isMapUsed(material->pbr.specular_color) && isMapUsed(material->pbr.glossiness)) {
         types |= MaterialType::PbrSpecularGlossiness;
     }
 
-    if(mapUsed(material->pbr.coat_factor)) {
+    if(isMapUsed(material->pbr.coat_factor)) {
         types |= MaterialType::PbrClearCoat;
     }
 
