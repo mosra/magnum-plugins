@@ -83,6 +83,7 @@ corrade_add_test(UfbxImporterTest UfbxImporterTest.cpp
         maya-camera-light-orientation.fbx
         geometry-cache.fbx
         static-skin.fbx
+        warning-cube.fbx
         cube.obj
         cube.mtl
         missing-mtl.obj
