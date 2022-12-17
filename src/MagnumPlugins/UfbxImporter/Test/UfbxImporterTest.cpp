@@ -1403,16 +1403,14 @@ void UfbxImporterTest::materialMayaPhong() {
     Containers::Optional<MaterialData> material = importer->material("phong1");
     CORRADE_VERIFY(material);
 
-    auto factor = [](Float value){ return Vector4{value, value, value, 1.0f}; };
-
     MaterialData reference{MaterialType::Phong, {
-        {MaterialAttribute::DiffuseColor, Color4{0.01f, 0.02f, 0.03f, 1.0f} * factor(0.13f)},
+        {MaterialAttribute::DiffuseColor, Color4{0.01f, 0.02f, 0.03f, 1.0f} * Color4{0.13f, 1.0f}},
         {"transparencyColor", Color4{0.04f, 0.05f, 0.06f, 1.0f}},
         {MaterialAttribute::AmbientColor, Color4{0.07f, 0.08f, 0.09f, 1.0f}},
         {MaterialAttribute::EmissiveColor, Color3{0.10f, 0.11f, 0.12f}},
         {MaterialAttribute::Shininess, 17.0f},
         {MaterialAttribute::SpecularColor, Color4{0.18f, 0.19f, 0.20f, 1.0f}},
-        {"reflectionColor", Color4{0.22f, 0.23f, 0.24f, 1.0f} * factor(0.21f)},
+        {"reflectionColor", Color4{0.22f, 0.23f, 0.24f, 1.0f} * Color4{0.21f, 1.0f}},
         {"bumpFactor", 1.0f},
         {"displacementFactor", 1.0f},
         {"vectorDisplacementFactor", 1.0f},
@@ -1462,13 +1460,11 @@ void UfbxImporterTest::materialMayaArnold() {
     Containers::Optional<MaterialData> material = importer->material("aiStandardSurface1");
     CORRADE_VERIFY(material);
 
-    auto factor = [](Float value){ return Vector4{value, value, value, 1.0f}; };
-
     MaterialData reference{MaterialType::PbrMetallicRoughness|MaterialType::PbrClearCoat, {
-        {MaterialAttribute::BaseColor, Color4{0.02f, 0.03f, 0.04f, 1.0f} * factor(0.01f)},
+        {MaterialAttribute::BaseColor, Color4{0.02f, 0.03f, 0.04f, 1.0f} * Color4{0.01f, 1.0f}},
         {"diffuseRoughness", 0.05f},
         {MaterialAttribute::Metalness, 0.06f},
-        {MaterialAttribute::SpecularColor, Color4{0.08f, 0.09f, 0.10f, 1.0f} * factor(0.07f)},
+        {MaterialAttribute::SpecularColor, Color4{0.08f, 0.09f, 0.10f, 1.0f} * Color4{0.07f, 1.0f}},
         {MaterialAttribute::Roughness, 0.11f},
         {"specularIor", 0.12f},
         {"specularAnisotropy", 0.13f},
@@ -1600,8 +1596,6 @@ void UfbxImporterTest::materialMaxPhysical() {
     Containers::Optional<MaterialData> material = importer->material("PhysicalMaterial");
     CORRADE_VERIFY(material);
 
-    auto factor = [](Float value){ return Vector4{value, value, value, 1.0f}; };
-
     MaterialData reference{MaterialType::Phong|MaterialType::PbrMetallicRoughness|MaterialType::PbrClearCoat, {
         /* Phong */
         {MaterialAttribute::AmbientColor, Color4{0.0002f, 0.0003f, 0.0004f, 1.0f}},
@@ -1610,7 +1604,7 @@ void UfbxImporterTest::materialMaxPhysical() {
         {MaterialAttribute::Shininess, 675.587890625f},
 
         /* Physical */
-        {MaterialAttribute::BaseColor, Color4{0.02f, 0.03f, 0.04f, 0.05f} * factor(0.01f)},
+        {MaterialAttribute::BaseColor, Color4{0.02f, 0.03f, 0.04f, 0.05f} * Color4{0.01f, 1.0f}},
         {MaterialAttribute::Roughness, 0.06f},
         {MaterialAttribute::Metalness, 0.07f},
         {"specularIor", 0.80f}, /* 3ds Max doesn't allow IOR less than 0.1 */
