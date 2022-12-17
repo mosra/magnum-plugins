@@ -239,17 +239,6 @@ inline Int typedId(const ufbx_element* element) {
     return element ? Int(element->typed_id) : -1;
 }
 
-inline SamplerWrapping toSamplerWrapping(ufbx_wrap_mode mode) {
-    if(mode == UFBX_WRAP_CLAMP) {
-        return SamplerWrapping::ClampToEdge;
-    } else if(mode == UFBX_WRAP_REPEAT) {
-        return SamplerWrapping::Repeat;
-    } else {
-        /* @todo: What to do about unhandled enums */
-        return SamplerWrapping::Repeat; /* LCOV_EXCL_LINE */
-    }
-}
-
 inline void logError(const char* prefix, const ufbx_error& error, ImporterFlags flags) {
     if(flags & ImporterFlag::Verbose) {
         char message[1024];
@@ -1275,6 +1264,19 @@ Int UfbxImporter::doTextureForName(Containers::StringView name) {
 Containers::String UfbxImporter::doTextureName(UnsignedInt id) {
     const FileTexture& fileTexture = _state->textures[id];
     return _state->scene->textures[fileTexture.textureIndex]->name;
+}
+
+namespace {
+
+inline SamplerWrapping toSamplerWrapping(ufbx_wrap_mode mode) {
+    switch(mode) {
+    case UFBX_WRAP_REPEAT: return SamplerWrapping::Repeat;
+    case UFBX_WRAP_CLAMP: return SamplerWrapping::ClampToEdge;
+    }
+
+    CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+}
+
 }
 
 Containers::Optional<TextureData> UfbxImporter::doTexture(UnsignedInt id) {
