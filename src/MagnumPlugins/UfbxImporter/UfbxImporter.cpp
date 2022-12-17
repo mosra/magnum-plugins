@@ -175,7 +175,7 @@ constexpr Containers::StringView sceneFieldNames[] = {
 };
 
 Containers::StringView blendModeToString(ufbx_blend_mode mode) {
-    switch (mode) {
+    switch(mode) {
     /* LCOV_EXCL_START */
     case UFBX_BLEND_TRANSLUCENT: return "translucent"_s;
     case UFBX_BLEND_ADDITIVE: return "additive"_s;
@@ -208,11 +208,10 @@ Containers::StringView blendModeToString(ufbx_blend_mode mode) {
     case UFBX_BLEND_COLOR: return "color"_s;
     case UFBX_BLEND_LUMINOSITY: return "luminosity"_s;
     case UFBX_BLEND_OVERLAY: return "overlay"_s;
-    default:
-        Warning{} << "Unhandled blend mode" << Int(mode);
-        return {};
     /* LCOV_EXCL_STOP */
     }
+
+    CORRADE_INTERNAL_ASSERT_UNREACHABLE();
 }
 
 ufbx_load_opts loadOptsFromConfiguration(Utility::ConfigurationGroup& conf, const char *errorPrefix) {
@@ -739,21 +738,19 @@ Containers::String UfbxImporter::doCameraName(const UnsignedInt id) {
 Containers::Optional<CameraData> UfbxImporter::doCamera(UnsignedInt id) {
     const ufbx_camera* camera = _state->scene->cameras[id];
 
-    if(camera->projection_mode == UFBX_PROJECTION_MODE_PERSPECTIVE) {
+    switch(camera->projection_mode) {
+    case UFBX_PROJECTION_MODE_PERSPECTIVE:
         return CameraData{CameraType::Perspective3D,
             Deg(Float(camera->field_of_view_deg.x)), Float(camera->aspect_ratio),
             Float(camera->near_plane), Float(camera->far_plane)};
-    } else if(camera->projection_mode == UFBX_PROJECTION_MODE_ORTHOGRAPHIC) {
+    case UFBX_PROJECTION_MODE_ORTHOGRAPHIC:
         return CameraData{CameraType::Orthographic3D,
             Vector2(camera->orthographic_size),
             Float(camera->near_plane), Float(camera->far_plane)};
-    } else {
-        /* Not expected to gain new projection modes */
-        /* LCOV_EXCL_START */
-        Error() << "Trade::UfbxImporter::camera(): camera projection mode" << camera->projection_mode << "is not supported";
-        return {};
-        /* LCOV_EXCL_STOP */
     }
+
+    /* Not expected to gain new projection modes */
+    CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
 }
 
 UnsignedInt UfbxImporter::doLightCount() const {
