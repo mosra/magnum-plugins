@@ -97,7 +97,8 @@ corrade_add_test(UfbxImporterTest UfbxImporterTest.cpp
         tex-pink.png
         tex-red.png
         tex-white.png
-        tex-yellow.png)
+        tex-yellow.png
+        tex-broken.png)
 
 
 target_include_directories(UfbxImporterTest PRIVATE ${PROJECT_SOURCE_DIR}/src/external/ufbx)
