@@ -1026,7 +1026,7 @@ Containers::StringView blendModeToString(ufbx_blend_mode mode) {
     /* LCOV_EXCL_STOP */
     }
 
-    CORRADE_INTERNAL_ASSERT_UNREACHABLE();
+    CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
 }
 
 inline bool isMapUsed(const ufbx_material_map& map) {
