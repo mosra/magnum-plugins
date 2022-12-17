@@ -161,11 +161,17 @@ using namespace Containers::Literals;
 namespace {
 
 constexpr SceneField SceneFieldVisibility = sceneFieldCustom(0);
-constexpr SceneField SceneFieldGeometricTransformHelper = sceneFieldCustom(1);
+constexpr SceneField SceneFieldGeometryTransformHelper = sceneFieldCustom(1);
+constexpr SceneField SceneFieldGeometryTranslation = sceneFieldCustom(2);
+constexpr SceneField SceneFieldGeometryRotation = sceneFieldCustom(3);
+constexpr SceneField SceneFieldGeometryScaling = sceneFieldCustom(4);
 
 constexpr Containers::StringView sceneFieldNames[] = {
     "Visibility"_s,
-    "GeometricTransformHelper"_s,
+    "GeometryTransformHelper"_s,
+    "GeometryTranslation"_s,
+    "GeometryRotation"_s,
+    "GeometryScaling"_s,
 };
 
 Containers::StringView blendModeToString(ufbx_blend_mode mode) {
@@ -209,12 +215,12 @@ Containers::StringView blendModeToString(ufbx_blend_mode mode) {
     }
 }
 
-ufbx_load_opts loadOptsFromConfiguration(Utility::ConfigurationGroup& conf) {
+ufbx_load_opts loadOptsFromConfiguration(Utility::ConfigurationGroup& conf, const char *errorPrefix) {
     ufbx_load_opts opts = {};
 
     const Long maxTemporaryMemory = conf.value<Long>("maxTemporaryMemory");
     const Long maxResultMemory = conf.value<Long>("maxResultMemory");
-    const bool geometricTransformNodes = conf.value<bool>("geometricTransformNodes");
+    const std::string geometryTransformHandling = conf.value("geometryTransformHandling");
     const bool preserveRootNode = conf.value<bool>("preserveRootNode");
     const bool normalizeUnits = conf.value<bool>("normalizeUnits");
 
@@ -247,10 +253,14 @@ ufbx_load_opts loadOptsFromConfiguration(Utility::ConfigurationGroup& conf) {
     else
         opts.space_conversion = UFBX_SPACE_CONVERSION_ADJUST_TRANSFORMS;
 
-    if(geometricTransformNodes)
+    if(geometryTransformHandling == "preserve")
+        opts.geometry_transform_handling = UFBX_GEOMETRY_TRANSFORM_HANDLING_PRESERVE;
+    else if(geometryTransformHandling == "helperNodes")
         opts.geometry_transform_handling = UFBX_GEOMETRY_TRANSFORM_HANDLING_HELPER_NODES;
+    else if(geometryTransformHandling == "modifyGeometry")
+        opts.geometry_transform_handling = UFBX_GEOMETRY_TRANSFORM_HANDLING_MODIFY_GEOMETRY;
     else
-        opts.geometry_transform_handling = UFBX_GEOMETRY_TRANSFORM_HANDLING_PRESERVE; /* MODIFY_GEOMETRY? */
+        Error{} << errorPrefix << "Unsupported geometryTransformHandling configuration:" << Containers::StringView(geometryTransformHandling);
 
     if(normalizeUnits) {
         opts.target_axes = ufbx_axes_right_handed_y_up;
@@ -398,7 +408,7 @@ void UfbxImporter::doClose() { _state = nullptr; }
 void UfbxImporter::doOpenData(Containers::Array<char>&& data, const DataFlags) {
     _state.reset();
 
-    ufbx_load_opts opts = loadOptsFromConfiguration(configuration());
+    ufbx_load_opts opts = loadOptsFromConfiguration(configuration(), "Trade::UfbxImporter::openData():");
 
     FileOpener opener{fileCallback(), fileCallbackUserData()};
     opts.open_file_cb = &opener;
@@ -416,7 +426,7 @@ void UfbxImporter::doOpenData(Containers::Array<char>&& data, const DataFlags) {
 void UfbxImporter::doOpenFile(Containers::StringView filename) {
     _state.reset();
 
-    ufbx_load_opts opts = loadOptsFromConfiguration(configuration());
+    ufbx_load_opts opts = loadOptsFromConfiguration(configuration(), "Trade::UfbxImporter::openFile():");
     opts.filename = filename;
 
     FileOpener opener{fileCallback(), fileCallbackUserData()};
@@ -506,9 +516,11 @@ Containers::Optional<SceneData> UfbxImporter::doScene(UnsignedInt) {
 
     const bool preserveRootNode = configuration().value<bool>("preserveRootNode");
     const bool perInstanceMaterials = configuration().value<bool>("perInstanceMaterials");
+    const bool retainGeometryTransforms = configuration().value("geometryTransformHandling") == "preserve";
 
     const UnsignedInt nodeCount = _state->objectCount;
     const UnsignedInt nodeIdOffset = _state->nodeIdOffset;
+    const UnsignedInt geometryTransformCount = retainGeometryTransforms ? nodeCount : 0;
 
     UnsignedInt meshCount = 0;
     UnsignedInt skinCount = 0;
@@ -537,7 +549,10 @@ Containers::Optional<SceneData> UfbxImporter::doScene(UnsignedInt) {
     Containers::ArrayView<Quaterniond> rotations;
     Containers::ArrayView<Vector3d> scalings;
     Containers::ArrayView<UnsignedByte> visibilities; /* @todo should be bool */
-    Containers::ArrayView<UnsignedByte> geometricTransformHelpers; /* @todo should be bool */
+    Containers::ArrayView<UnsignedByte> geometryTransformHelpers; /* @todo should be bool */
+    Containers::ArrayView<Vector3d> geometryTranslations;
+    Containers::ArrayView<Quaterniond> geometryRotations;
+    Containers::ArrayView<Vector3d> geometryScalings;
     Containers::ArrayView<UnsignedInt> meshMaterialObjects;
     Containers::ArrayView<UnsignedInt> meshes;
     Containers::ArrayView<Int> meshMaterials;
@@ -552,7 +567,10 @@ Containers::Optional<SceneData> UfbxImporter::doScene(UnsignedInt) {
         {NoInit, nodeCount, rotations},
         {NoInit, nodeCount, scalings},
         {NoInit, nodeCount, visibilities},
-        {NoInit, nodeCount, geometricTransformHelpers},
+        {NoInit, nodeCount, geometryTransformHelpers},
+        {NoInit, geometryTransformCount, geometryTranslations},
+        {NoInit, geometryTransformCount, geometryRotations},
+        {NoInit, geometryTransformCount, geometryScalings},
         {NoInit, meshCount, meshMaterialObjects},
         {NoInit, meshCount, meshes},
         {NoInit, meshCount, meshMaterials},
@@ -581,7 +599,13 @@ Containers::Optional<SceneData> UfbxImporter::doScene(UnsignedInt) {
         rotations[nodeId] = Quaterniond(node->local_transform.rotation);
         scalings[nodeId] = Vector3d(node->local_transform.scale);
         visibilities[nodeId] = UnsignedByte(node->visible);
-        geometricTransformHelpers[nodeId] = UnsignedInt(node->is_geometry_transform_helper);
+        geometryTransformHelpers[nodeId] = UnsignedInt(node->is_geometry_transform_helper);
+
+        if(retainGeometryTransforms) {
+            geometryTranslations[nodeId] = Vector3d(node->geometry_transform.translation);
+            geometryRotations[nodeId] = Quaterniond(node->geometry_transform.rotation);
+            geometryScalings[nodeId] = Vector3d(node->geometry_transform.scale);
+        }
 
         for(const ufbx_element* element : node->all_attribs) {
             if(const ufbx_mesh* mesh = ufbx_as_mesh(element)) {
@@ -638,7 +662,17 @@ Containers::Optional<SceneData> UfbxImporter::doScene(UnsignedInt) {
         SceneFieldData{SceneField::Rotation, nodeObjects, rotations, SceneFieldFlag::ImplicitMapping},
         SceneFieldData{SceneField::Scaling, nodeObjects, scalings, SceneFieldFlag::ImplicitMapping},
         SceneFieldData{SceneFieldVisibility, nodeObjects, visibilities, SceneFieldFlag::ImplicitMapping},
-        SceneFieldData{SceneFieldGeometricTransformHelper, nodeObjects, geometricTransformHelpers, SceneFieldFlag::ImplicitMapping},
+        SceneFieldData{SceneFieldGeometryTransformHelper, nodeObjects, geometryTransformHelpers, SceneFieldFlag::ImplicitMapping},
+    });
+
+    /* Geometry transforms if user wants to preserve them */
+    if(retainGeometryTransforms) arrayAppend(fields, {
+        /** @todo once there's a flag to annotate implicit fields, omit the
+            parent field if it's all -1s; or alternatively we could also have a
+            stride of 0 for this case */
+        SceneFieldData{SceneFieldGeometryTranslation, nodeObjects, geometryTranslations, SceneFieldFlag::ImplicitMapping},
+        SceneFieldData{SceneFieldGeometryRotation, nodeObjects, geometryRotations, SceneFieldFlag::ImplicitMapping},
+        SceneFieldData{SceneFieldGeometryScaling, nodeObjects, geometryScalings, SceneFieldFlag::ImplicitMapping},
     });
 
     /* All other fields have the mapping ordered (they get filed as we iterate
