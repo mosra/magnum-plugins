@@ -2216,6 +2216,9 @@ void UfbxImporterTest::imageNonExistentName() {
 }
 
 void UfbxImporterTest::imageAbsolutePath() {
+    if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("PngImporter plugin not found, cannot test");
+
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "image-absolute-path.fbx")));
 
