@@ -700,7 +700,7 @@ Containers::Optional<CameraData> UfbxImporter::doCamera(UnsignedInt id) {
         return CameraData{CameraType::Perspective3D,
             Deg(Float(camera->field_of_view_deg.x)), Float(camera->aspect_ratio),
             Float(camera->near_plane), Float(camera->far_plane)};
-    } else if(camera->projection_mode == UFBX_PROJECTION_MODE_ORTOGRAPHIC) {
+    } else if(camera->projection_mode == UFBX_PROJECTION_MODE_ORTHOGRAPHIC) {
         return CameraData{CameraType::Orthographic3D,
             Vector2(camera->orthographic_size),
             Float(camera->near_plane), Float(camera->far_plane)};
