@@ -174,9 +174,7 @@ constexpr Containers::StringView sceneFieldNames[] = {
     "GeometryScaling"_s,
 };
 
-ufbx_load_opts loadOptsFromConfiguration(Utility::ConfigurationGroup& conf, const char* errorPrefix) {
-    ufbx_load_opts opts = {};
-
+bool getLoadOptsFromConfiguration(ufbx_load_opts& opts, Utility::ConfigurationGroup& conf, const char* errorPrefix) {
     const Long maxTemporaryMemory = conf.value<Long>("maxTemporaryMemory");
     const Long maxResultMemory = conf.value<Long>("maxResultMemory");
     const std::string geometryTransformHandling = conf.value("geometryTransformHandling");
@@ -207,21 +205,25 @@ ufbx_load_opts loadOptsFromConfiguration(Utility::ConfigurationGroup& conf, cons
 
     /* @todo expose more of these as options? need to think of reasonable
        defaults anyways, feels like ignoring geometry transform is not great */
-    if(unitNormalizationHandling == "transformRoot")
+    if(unitNormalizationHandling == "transformRoot") {
         opts.space_conversion = UFBX_SPACE_CONVERSION_TRANSFORM_ROOT;
-    else if(unitNormalizationHandling == "adjustTransforms")
+    } else if(unitNormalizationHandling == "adjustTransforms") {
         opts.space_conversion = UFBX_SPACE_CONVERSION_ADJUST_TRANSFORMS;
-    else
+    } else {
         Error{} << errorPrefix << "Unsupported unitNormalizationHandling configuration:" << Containers::StringView(unitNormalizationHandling);
+        return false;
+    }
 
-    if(geometryTransformHandling == "preserve")
+    if(geometryTransformHandling == "preserve") {
         opts.geometry_transform_handling = UFBX_GEOMETRY_TRANSFORM_HANDLING_PRESERVE;
-    else if(geometryTransformHandling == "helperNodes")
+    } else if(geometryTransformHandling == "helperNodes") {
         opts.geometry_transform_handling = UFBX_GEOMETRY_TRANSFORM_HANDLING_HELPER_NODES;
-    else if(geometryTransformHandling == "modifyGeometry")
+    } else if(geometryTransformHandling == "modifyGeometry") {
         opts.geometry_transform_handling = UFBX_GEOMETRY_TRANSFORM_HANDLING_MODIFY_GEOMETRY;
-    else
+    } else {
         Error{} << errorPrefix << "Unsupported geometryTransformHandling configuration:" << Containers::StringView(geometryTransformHandling);
+        return false;
+    }
 
     if(normalizeUnits) {
         opts.target_axes = ufbx_axes_right_handed_y_up;
@@ -232,7 +234,7 @@ ufbx_load_opts loadOptsFromConfiguration(Utility::ConfigurationGroup& conf, cons
        containing the whole mesh to make processing code simpler. */
     opts.allow_null_material = true;
 
-    return opts;
+    return true;
 }
 
 inline Int typedId(const ufbx_element* element) {
@@ -351,7 +353,9 @@ bool UfbxImporter::doIsOpened() const { return !!_state; }
 void UfbxImporter::doClose() { _state = nullptr; }
 
 void UfbxImporter::doOpenData(Containers::Array<char>&& data, const DataFlags) {
-    ufbx_load_opts opts = loadOptsFromConfiguration(configuration(), "Trade::UfbxImporter::openData():");
+    ufbx_load_opts opts = { };
+    if (!getLoadOptsFromConfiguration(opts, configuration(), "Trade::UfbxImporter::openData():"))
+        return;
 
     FileOpener opener{fileCallback(), fileCallbackUserData()};
     opts.open_file_cb = &opener;
@@ -367,11 +371,14 @@ void UfbxImporter::doOpenData(Containers::Array<char>&& data, const DataFlags) {
 }
 
 void UfbxImporter::doOpenFile(Containers::StringView filename) {
-    ufbx_load_opts opts = loadOptsFromConfiguration(configuration(), "Trade::UfbxImporter::openFile():");
-    opts.filename = filename;
+    ufbx_load_opts opts = { };
+    if (!getLoadOptsFromConfiguration(opts, configuration(), "Trade::UfbxImporter::openFile():"))
+        return;
 
     FileOpener opener{fileCallback(), fileCallbackUserData()};
     opts.open_file_cb = &opener;
+
+    opts.filename = filename;
 
     ufbx_error error;
     ufbx_scene* scene = ufbx_load_file_len(filename.data(), filename.size(), &opts, &error);

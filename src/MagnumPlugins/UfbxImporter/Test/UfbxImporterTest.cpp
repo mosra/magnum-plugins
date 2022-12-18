@@ -1168,7 +1168,7 @@ void UfbxImporterTest::geometricTransformInvalidHandling() {
     std::ostringstream out;
     Error redirectError{&out};
 
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "geometric-transform.fbx")));
+    CORRADE_VERIFY(!importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "geometric-transform.fbx")));
     CORRADE_COMPARE(out.str(), "Trade::UfbxImporter::openFile(): Unsupported geometryTransformHandling configuration: invalidGeometryHandling\n");
 }
 
@@ -2459,7 +2459,7 @@ void UfbxImporterTest::normalizeUnitsInvalidHandling() {
     std::ostringstream out;
     Error redirectError{&out};
 
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "units-cm-z-up.fbx")));
+    CORRADE_VERIFY(!importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "units-cm-z-up.fbx")));
     CORRADE_COMPARE(out.str(), "Trade::UfbxImporter::openFile(): Unsupported unitNormalizationHandling configuration: invalidUnitHandling\n");
 }
 
