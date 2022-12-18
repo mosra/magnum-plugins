@@ -56,7 +56,7 @@ namespace Magnum { namespace Trade {
 /**
 @brief ufbx importer
 
-@m_keywords{FbxImporter, ObjImporter}
+@m_keywords{FbxImporter ObjImporter}
 
 Imports FBX files using [ufbx](https://github.com/bqqbarbhg/ufbx), also
 supports OBJ files despite the name.
@@ -103,7 +103,7 @@ See @ref building-plugins, @ref cmake-plugins, @ref plugins and
 
 @section Trade-UfbxImporter-behavior Behavior and limitations
 
-The plugin supports @ref ImporterFeature::OpenData, @relativeref{ImporterFeature,OpenState} and @relativeref{ImporterFeature,FileCallback} features.
+The plugin supports @ref ImporterFeature::OpenData and @relativeref{ImporterFeature,FileCallback} features.
 Immediate dependencies are loaded during the initial import meaning the
 callback is called with @ref InputFileCallbackPolicy::LoadTemporary.
 In case of images, the files are loaded on-demand inside @ref image2D() calls
@@ -112,20 +112,17 @@ with @ref InputFileCallbackPolicy::LoadTemporary and
 read.
 
 The importer recognizes @ref ImporterFlag::Verbose if built in debug mode
-(@ref CORRADE_IS_DEBUG_BUILD or @cpp NDEBUG @ce if not defined). The verbose
-logging prints detailed ufbx-internal callstacks on load failure that can be
-used for debugging or reporting issues.
+(@cpp CORRADE_IS_DEBUG_BUILD @ce defined or @cpp NDEBUG @ce not defined). The
+verbose logging prints detailed ufbx-internal callstacks on load failure that
+can be used for debugging or reporting issues.
 
 @subsection Trade-UfbxImporter-behavior-scene Scene import
 
 -   ufbx supports only a single scene, though in practice it is extremely rare
     to have FBX files containing more than a single scene.
--   FBX files contain an implicit root node that is ignored unless the
-    @cb{.ini} preserveRootNode @ce @ref Trade-UfbxImporter-configuration "configuration option" is enabled.
 -   FBX files may contain nodes with "geometric transforms" that transform only
     the mesh of the node without affecting children. These are converted to
-    unnamed helper nodes in the scene unless the @cb{.ini} geometricTransformNodes @ce
-    @ref Trade-UfbxImporter-configuration "configuration option" is explicitly disabled.
+    unnamed helper nodes by default, see @ref Trade-UfbxImporter-processing-geometry-transforms for further options and information.
 -   Imported scenes always have @ref SceneMappingType::UnsignedInt, with
     @ref SceneData::mappingBound() equal to @ref objectCount(). The scene is
     always 3D.
@@ -134,14 +131,14 @@ used for debugging or reporting issues.
     @ref SceneField::Rotation (of type @ref SceneFieldType::Quaterniond),
     @ref SceneField::Scaling (of type @ref SceneFieldType::Vector3d) and
     importer-specific flags @cpp "Visibility" @ce and @cpp "GeometricTransformHelper" @ce
-    (of type @ref SceneFieldType::UnsignedByte representing a boolean value).
+    (both of type @ref SceneFieldType::UnsignedByte representing a boolean value).
     These five fields share the same object mapping with
     @ref SceneFieldFlag::ImplicitMapping set.
 -   Scene field @cpp "Visibility" @ce specifies whether objects should be visible
     in some application-defined manner.
--   Scene field @cpp "GeometricTransformHelper" @ce is set on synthetic nodes
+-   Scene field @cpp "GeometryTransformHelper" @ce is set on synthetic nodes
     that are not part of the original file, but represent FBX files' ability to
-    transform geometry without affecting children, see @ref Trade-UfbxImporter-scene-processing
+    transform geometry without affecting children, see @ref Trade-UfbxImporter-processing-geometry-transforms
     for further details.
 -   If the scene references meshes, a @ref SceneField::Mesh (of type
     @ref SceneFieldType::UnsignedInt) and a @ref SceneField::MeshMaterial (of
@@ -150,17 +147,18 @@ used for debugging or reporting issues.
     If a mesh contains multiple materials it is split into parts and the node
     contains each part as a separate mesh/material entry.
     The same mesh can appear instanced multiple times under many
-    nodes with different materials. See @ref Trade-UfbxImporter-instancing for further details.
+    nodes with different materials.
 -   If the scene references cameras, a @ref SceneField::Camera (of type
     @ref SceneFieldType::UnsignedInt) is present, with
     @ref SceneFieldFlag::OrderedMapping set. A single camera can be referenced
-    by multiple nodes. See @ref Trade-UfbxImporter-instancing for further
-    details.
+    by multiple nodes.
 -   If the scene references lights, a @ref SceneField::Light (of type
     @ref SceneFieldType::UnsignedInt) is present, with
     @ref SceneFieldFlag::OrderedMapping set. A single light can be referenced
-    by multiple nodes. See @ref Trade-UfbxImporter-instancing for further
-    details.
+    by multiple nodes.
+-   The node transformations are expressed in a file dependent units and axes.
+    @ref UfbxImporter supports normalizing them to a consistent space, see
+    @ref Trade-UfbxImporter-processing-unit-normalization for further details.
 
 @subsection Trade-UfbxImporter-behavior-materials Material import
 
@@ -170,14 +168,17 @@ used for debugging or reporting issues.
 -   The legacy FBX material model and most PBR material models have factors
     for various attributes, by default these are premultiplied into the value
     but you can retain them using the @cb{.ini} preserveMaterialFactors @ce @ref Trade-UfbxImporter-configuration "configuration option"
--   Two-sided property and alpha mode is not imported.
 -   ufbx tries to normalize the various vendor-specific PBR material modes into
     a single set of attributes that are imported, see @ref Trade-UfbxImporter-pbr-attributes
     for an exhaustive listing.
 -   @ref MaterialAttribute::DiffuseTextureMatrix and similar matrix attributes
     for other textures are imported.
 -   @ref MaterialAttribute::DiffuseTextureCoordinates and similar UV layer
-    attributes are not supported.
+    attributes are not supported, as FBX stores them as UV set names instead of
+    layer indices, and the conversion would be fragile.
+-   FBX materials have no equivalent for the @ref MaterialAttribute::DoubleSided,
+    @ref MaterialAttribute::AlphaMask and @ref MaterialAttribute::AlphaBlend
+    properties, and thus they are undefined for materials.
 
 @subsection Trade-UfbxImporter-behavior-lights Light import
 
@@ -199,17 +200,89 @@ used for debugging or reporting issues.
     contains each part as a separate mesh/material entry.
 -   If a mesh contains faces with 1 or 2 vertices (ie. points or lines) they
     are separated to meshes with the correct primitives (@ref MeshPrimitive::Points
-    and @ref MeshPrimitive::Lines)
+    and @relativeref{MeshPrimitive,Lines})
 -   Faces with more than three vertices are triangulated and represented as
     @ref MeshPrimitive::Triangles.
+
+@subsection Trade-UfbxImporter-behavior-textures Texture import
+
+-   Only textures with filenames are retained in the imported scene as textures.
+-   Layered textures are converted into material layers.
+-   FBX textures have no defined @ref SamplerFilter, so @ref UfbxImporter sets
+    all filters to @ref SamplerFilter::Linear.
+
+@subsection Trade-UfbxImporter-behavior-images Image import
+
+-   Both external and embedded images are supported via the @ref AnyImageImporter
+    plugin.
+-   Only 2D images are supported.
 
 The meshes are indexed by default unless cb{.ini} generateIndices @ce @ref Trade-UfbxImporter-configuration "configuration option"
 is disabled. Vertex position is always defined, normals can be missing unless
 cb{.ini} generateMissingNormals @ce @ref Trade-UfbxImporter-configuration "configuration option"
 is set. There are an arbitrary amount of UV/tangent/bitangent/color sets, you
 can specify a maximum limit using cb{.ini} maxUvSets @ce,
-cb{.ini} maxTangentSets @ce, cb{.ini} maxColorSets @ce @ref Trade-UfbxImporter-configuration "configuration options",
+cb{.ini} maxTangentSets @ce and cb{.ini} maxColorSets @ce @ref Trade-UfbxImporter-configuration "configuration options",
 note that setting any to zero disables loading any tangents etc.
+
+@section Trade-UfbxImporter-processing Scene processing
+
+Plain FBX files can be tedious to work with as they can contain unusual scene
+graph features and may be defined in arbitrary coordinate/unit spaces. ufbx can
+process the scene representation internally to make it easier to interpret,
+which is exposed as @ref Trade-UfbxImporter-configuration "configuration options"
+explained below.
+
+@subsection Trade-UfbxImporter-processing-unit-normalization Unit normalization
+
+FBX supports arbitrary coordinate systems and units. The default unit is in
+centimeters (which can often be seen as exporting a file from Blender with the
+default settings and ending up with a file where everything is 100x larger),
+though meters and even inches are reasonably common. The coordinate systems
+most commonly are right-handed Y-up or Z-up.
+
+Currently the plugin does not support querying the coordinate/unit system of the
+file so the only way to deal with units is using the cb{.ini} normalizeUnits @ce @ref Trade-UfbxImporter-configuration "configuration option".
+This will normalize the file into the glTF system: units are one meter and the
+coordinates are +X right, +Y up, -Z forward (+Z front in FBX terms). By default
+the option will adjust the object transforms directly, meaning if you load a
+file authored in the glTF space it should look like what it did before exporting.
+
+If you want to retain the node transformations written in the FBX *file*, you can
+set the cb{.ini} unitNormalizationHandling @ce @ref Trade-UfbxImporter-configuration "configuration option"
+to @cpp "transformRoot" @ce, this will result in the scene containing an
+additional root node containing the unit/axis transform as transform/rotation/scaling.
+
+@subsection Trade-UfbxImporter-processing-geometry-transforms Geometry transforms
+
+FBX nodes can contain somewhat confusingly named "geometric transforms" which
+are referred to "geometry transforms" here for clarity. These transformations
+only affect the immediate geometry (or rarely attached light, camera, etc.) of
+the node, without transforming the child nodes. Most scene graphs don't natively
+support this, including the standard one in @ref SceneData.
+
+By default @ref UfbxImporter creates "helper nodes" that contain the geometry
+transforms, so by default they will be transparently supported without any extra
+implementation effort. @ref SceneData returned by @ref UfbxImporter contains an
+extra @ref SceneField named @cpp "GeometryTransformHelper" @ce mapped implicitly
+per node containing information whether a node is a helper or a normal one.
+
+You can change how @ref UfbxImporter handles the geometry transforms via the
+cb{.ini} geometryTransformHandling @ce @ref Trade-UfbxImporter-configuration "configuration option",
+the default option being @cpp "helperNodes" @ce.
+
+Using @cpp "modifyGeometry" @ce will attempt to elide the helper nodes by
+modifying the actual mesh geometry, "baking" the geometry transform into the
+vertex data. This will fall back into creating helper nodes if necessary, for
+example for lights/cameras or instanced meshes.
+
+Using @cpp "preserve" @ce will not modify the scene at all and exposes the
+original geometry transform values via three additional @ref SceneField s
+per node: @cpp "GeometryTranslation" @ce (@ref Vector3d),
+@cpp "GeometryRotation" @ce (@ref Quaterniond) and @cpp "GeometryRotation" @ce
+(@ref Vector3d). These behave in the same way as the standard @ref SceneField::Translation,
+@relativeref{SceneFiel,Rotation} and @relativeref{SceneField,Scaling}, but
+affect only the immediate geometry of the node.
 
 @section Trade-UfbxImporter-configuration Plugin-specific configuration
 
@@ -233,43 +306,43 @@ parameters:
 
 Layer | Attribute | Type | OSL parameter
 ----- | --------- | ---- | -------------
-Base | baseFactor [1] | Float | base
-Base | BaseColor | Vector4 | base_color
-Base | Roughness | Float | specular_roughness
-Base | Metalness | Float | metalness
-Base | diffuseRoughness | Float | diffuse_roughness
-Base | specularFactor [1] | Float | specular
-Base | SpecularColor | Vector4 | specular_color
-Base | specularIor | Float | specular_IOR
-Base | specularAnisotropy | Float | specular_anisotropy
-Base | specularRotation | Float | specular_rotation
-Base | thinFilmThickness | Float | thin_film_thickness
-Base | thinFilmIor | Float | thin_film_IOR
-Base | emissiveFactor [1] | Float | emission
-Base | EmissiveColor | Vector3 | emission_color
-Base | opacity | Vector3 | opacity
-ClearCoat | LayerFactor | Float | coat
-ClearCoat | color | Vector4 | coat_color
-ClearCoat | Roughness | Float | coat_roughness
-ClearCoat | ior | Float | coat_IOR
-ClearCoat | anisotropy | Float | coat_anisotropy
-ClearCoat | rotation | Float | coat_rotation
-ClearCoat | NormalTexture | UnsignedInt | coat_normal
-transmission | LayerFactor | Float | transmission
-transmission | color | Vector4 | transmission_color
-transmission | depth | Float | transmission_depth
-transmission | scatter | Vector3 | transmission_scatter
-transmission | scatterAnisotropy | Float | transmission_scatter_anisotropy
-transmission | dispersion | Float | transmission_dispersion
-transmission | extraRoughness | Float | transmission_extra_roughness
-subsurface | LayerFactor | Float | subsurface
-subsurface | color | Vector4 | subsurface_color
-subsurface | radius | Vector3 | subsurface_radius
-subsurface | scale | Float | subsurface_scale
-subsurface | anisotropy | Float | subsurface_anisotropy
-sheen | LayerFactor | Float | sheen
-sheen | color | Vector3 | sheen_color
-sheen | Roughness | Float | sheen_roughness
+Base | baseColorFactor [1] | @relativeref{MaterialAttributeType,Float} | base
+Base | BaseColor | @relativeref{MaterialAttributeType,Vector4} | base_color
+Base | Roughness | @relativeref{MaterialAttributeType,Float} | specular_roughness
+Base | Metalness | @relativeref{MaterialAttributeType,Float} | metalness
+Base | diffuseRoughness | @relativeref{MaterialAttributeType,Float} | diffuse_roughness
+Base | specularColorFactor [1] | @relativeref{MaterialAttributeType,Float} | specular
+Base | SpecularColor | @relativeref{MaterialAttributeType,Vector4} | specular_color
+Base | specularIor | @relativeref{MaterialAttributeType,Float} | specular_IOR
+Base | specularAnisotropy | @relativeref{MaterialAttributeType,Float} | specular_anisotropy
+Base | specularRotation | @relativeref{MaterialAttributeType,Float} | specular_rotation
+Base | thinFilmThickness | @relativeref{MaterialAttributeType,Float} | thin_film_thickness
+Base | thinFilmIor | @relativeref{MaterialAttributeType,Float} | thin_film_IOR
+Base | emissiveColorFactor [1] | @relativeref{MaterialAttributeType,Float} | emission
+Base | EmissiveColor | @relativeref{MaterialAttributeType,Vector3} | emission_color
+Base | opacity | @relativeref{MaterialAttributeType,Vector3} | opacity
+ClearCoat | LayerFactor | @relativeref{MaterialAttributeType,Float} | coat
+ClearCoat | color | @relativeref{MaterialAttributeType,Vector4} | coat_color
+ClearCoat | Roughness | @relativeref{MaterialAttributeType,Float} | coat_roughness
+ClearCoat | ior | @relativeref{MaterialAttributeType,Float} | coat_IOR
+ClearCoat | anisotropy | @relativeref{MaterialAttributeType,Float} | coat_anisotropy
+ClearCoat | rotation | @relativeref{MaterialAttributeType,Float} | coat_rotation
+ClearCoat | NormalTexture | @relativeref{MaterialAttributeType,UnsignedInt} | coat_normal
+transmission | LayerFactor | @relativeref{MaterialAttributeType,Float} | transmission
+transmission | color | @relativeref{MaterialAttributeType,Vector4} | transmission_color
+transmission | depth | @relativeref{MaterialAttributeType,Float} | transmission_depth
+transmission | scatter | @relativeref{MaterialAttributeType,Vector3} | transmission_scatter
+transmission | scatterAnisotropy | @relativeref{MaterialAttributeType,Float} | transmission_scatter_anisotropy
+transmission | dispersion | @relativeref{MaterialAttributeType,Float} | transmission_dispersion
+transmission | extraRoughness | @relativeref{MaterialAttributeType,Float} | transmission_extra_roughness
+subsurface | LayerFactor | @relativeref{MaterialAttributeType,Float} | subsurface
+subsurface | color | @relativeref{MaterialAttributeType,Vector4} | subsurface_color
+subsurface | radius | @relativeref{MaterialAttributeType,Vector3} | subsurface_radius
+subsurface | scale | @relativeref{MaterialAttributeType,Float} | subsurface_scale
+subsurface | anisotropy | @relativeref{MaterialAttributeType,Float} | subsurface_anisotropy
+sheen | LayerFactor | @relativeref{MaterialAttributeType,Float} | sheen
+sheen | color | @relativeref{MaterialAttributeType,Vector3} | sheen_color
+sheen | Roughness | @relativeref{MaterialAttributeType,Float} | sheen_roughness
 
 [1] Requires @cb{.ini} preserveMaterialFactors @ce @ref Trade-UfbxImporter-configuration "configuration option" to be enabled.
 
@@ -277,25 +350,25 @@ Other attributes not defined by the OSL Standard Surface:
 
 Layer | Attribute | Type | Description
 ----- | --------- | ---- | -----------
-Base | Glossiness | Float | Inverse of roughness used by some material models
-Base | NormalTexture | UnsignedInt | Tangent-space normal map texture
-Base | OcclusionTexture | UnsignedInt | Ambient occlusion texture
-Base | tangentTexture | UnsignedInt | Tangent re-orientation texture
-Base | displacementTexture | UnsignedInt | Displacement texture
-Base | displacementFactor | Float | Displacement texture weight
-Base | indirectDiffuse | Float | Factor for indirect diffuse lighting
-Base | indirectSpecular | Float | Factor for indirect specular lighting
-ClearCoat | Glossiness | Float | Inverse of roughness used by some material models
-ClearCoat | affectBaseColor | Float | Modify the base color based on the coat color
-ClearCoat | affectBaseRoughness | Float | Modify the base roughness based on the coat roughness
-transmission | Roughness | Float | Transmission roughness (base Roughness not added)
-transmission | Glossiness | Float | Inverse of roughness used by some material models
-transmission | priority | Long | IOR transmission priority
-transmission | enableInAov | Bool | Render transmission into AOVs (Arbitrary Output Variable)
-subsurface | tintColor | Vector4 | Extra tint color that is multiplied after SSS calculation
-subsurface | type | Long | Shader-specific subsurface random walk type
-matte | LayerFactor | Float | Matte surface weight
-matte | color | Vector3 | Matte surface color
+Base | Glossiness | @relativeref{MaterialAttributeType,Float} | Inverse of roughness used by some material models
+Base | NormalTexture | @relativeref{MaterialAttributeType,UnsignedInt} | Tangent-space normal map texture
+Base | OcclusionTexture | @relativeref{MaterialAttributeType,UnsignedInt} | Ambient occlusion texture
+Base | tangentTexture | @relativeref{MaterialAttributeType,UnsignedInt} | Tangent re-orientation texture
+Base | displacementTexture | @relativeref{MaterialAttributeType,UnsignedInt} | Displacement texture
+Base | displacementFactor | @relativeref{MaterialAttributeType,Float} | Displacement texture weight
+Base | indirectDiffuse | @relativeref{MaterialAttributeType,Float} | Factor for indirect diffuse lighting
+Base | indirectSpecular | @relativeref{MaterialAttributeType,Float} | Factor for indirect specular lighting
+ClearCoat | Glossiness | @relativeref{MaterialAttributeType,Float} | Inverse of roughness used by some material models
+ClearCoat | affectBaseColor | @relativeref{MaterialAttributeType,Float} | Modify the base color based on the coat color
+ClearCoat | affectBaseRoughness | @relativeref{MaterialAttributeType,Float} | Modify the base roughness based on the coat roughness
+transmission | Roughness | @relativeref{MaterialAttributeType,Float} | Transmission roughness (base Roughness not added)
+transmission | Glossiness | @relativeref{MaterialAttributeType,Float} | Inverse of roughness used by some material models
+transmission | priority | @relativeref{MaterialAttributeType,Long} | IOR transmission priority
+transmission | enableInAov | @relativeref{MaterialAttributeType,Bool} | Render transmission into AOVs (Arbitrary Output Variable)
+subsurface | tintColor | @relativeref{MaterialAttributeType,Vector4} | Extra tint color that is multiplied after SSS calculation
+subsurface | type | @relativeref{MaterialAttributeType,Long} | Shader-specific subsurface random walk type
+matte | LayerFactor | @relativeref{MaterialAttributeType,Float} | Matte surface weight
+matte | color | @relativeref{MaterialAttributeType,Vector3} | Matte surface color
 
 */
 class MAGNUM_UFBXIMPORTER_EXPORT UfbxImporter: public AbstractImporter {
