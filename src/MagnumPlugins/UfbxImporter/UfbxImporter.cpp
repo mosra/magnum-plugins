@@ -251,10 +251,6 @@ inline void logError(const char* prefix, const ufbx_error& error, ImporterFlags 
     }
 }
 
-inline UnsignedInt unboundedIfNegative(Int value) {
-    return value >= 0 ? UnsignedInt(value) : ~UnsignedInt{};
-}
-
 struct FileOpener {
     FileOpener(): _callback{nullptr}, _userData{nullptr} {}
     explicit FileOpener(Containers::Optional<Containers::ArrayView<const char>>(*callback)(const std::string&, InputFileCallbackPolicy, void*), void* userData): _callback{callback}, _userData{userData} {}
@@ -762,6 +758,14 @@ Containers::Optional<LightData> UfbxImporter::doLight(UnsignedInt id) {
 
 UnsignedInt UfbxImporter::doMeshCount() const {
     return UnsignedInt(_state->meshChunks.size());
+}
+
+namespace {
+
+inline UnsignedInt unboundedIfNegative(Int value) {
+    return value >= 0 ? UnsignedInt(value) : ~UnsignedInt{};
+}
+
 }
 
 Containers::Optional<MeshData> UfbxImporter::doMesh(UnsignedInt id, UnsignedInt level) {
