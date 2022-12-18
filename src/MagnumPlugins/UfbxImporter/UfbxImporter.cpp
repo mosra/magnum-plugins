@@ -174,7 +174,7 @@ constexpr Containers::StringView sceneFieldNames[] = {
     "GeometryScaling"_s,
 };
 
-ufbx_load_opts loadOptsFromConfiguration(Utility::ConfigurationGroup& conf, const char *errorPrefix) {
+ufbx_load_opts loadOptsFromConfiguration(Utility::ConfigurationGroup& conf, const char* errorPrefix) {
     ufbx_load_opts opts = {};
 
     const Long maxTemporaryMemory = conf.value<Long>("maxTemporaryMemory");
@@ -396,7 +396,7 @@ void UfbxImporter::openInternal(void* opaqueScene, const void* opaqueOpts, bool 
     }
 
     _state.reset(new State{});
-    if (opts.space_conversion == UFBX_SPACE_CONVERSION_TRANSFORM_ROOT)
+    if(opts.space_conversion == UFBX_SPACE_CONVERSION_TRANSFORM_ROOT)
         _state->preserveRootNode = true;
 
     _state->fromFile = fromFile;
@@ -525,7 +525,7 @@ Containers::Optional<SceneData> UfbxImporter::doScene(UnsignedInt) {
     UnsignedInt lightOffset = 0;
     UnsignedInt cameraOffset = 0;
 
-    for (const ufbx_node* node : scene->nodes) {
+    for(const ufbx_node* node : scene->nodes) {
         if(!_state->preserveRootNode && node->is_root) continue;
 
         UnsignedInt nodeId = node->typed_id - nodeIdOffset;
@@ -1109,7 +1109,7 @@ Containers::Optional<MaterialData> UfbxImporter::doMaterial(UnsignedInt id) {
             /* Premultiply factor unless configured not to */
             Float factor = 1.0f;
             if(mapping.factorMap >= 0) {
-                const ufbx_material_map &factorMap = list.maps[mapping.factorMap];
+                const ufbx_material_map& factorMap = list.maps[mapping.factorMap];
                 if(factorMap.has_value && !preserveMaterialFactors) {
                     factor = Float(factorMap.value_real);
                 }
@@ -1125,7 +1125,7 @@ Containers::Optional<MaterialData> UfbxImporter::doMaterial(UnsignedInt id) {
 
             /* Create an attribute for the value if defined */
             if(attribute && map.has_value) {
-                Containers::Array<MaterialAttributeData> &attributes = attributesForLayer.defaultLayer;
+                Containers::Array<MaterialAttributeData>& attributes = attributesForLayer.defaultLayer;
                 if(mapping.attributeType == MaterialAttributeType::Float) {
                     Float value = Float(map.value_real) * factor;
                     arrayAppend(attributes, {attribute, value});
@@ -1159,7 +1159,7 @@ Containers::Optional<MaterialData> UfbxImporter::doMaterial(UnsignedInt id) {
                     /* Make sure we have a layer to add the attribute to */
                     if(layer > 0 && layer - 1 >= attributesForLayer.extraLayers.size())
                         arrayResize(attributesForLayer.extraLayers, layer);
-                    Containers::Array<MaterialAttributeData> &attributes = layer == 0
+                    Containers::Array<MaterialAttributeData>& attributes = layer == 0
                         ? attributesForLayer.defaultLayer
                         : attributesForLayer.extraLayers[layer - 1];
 

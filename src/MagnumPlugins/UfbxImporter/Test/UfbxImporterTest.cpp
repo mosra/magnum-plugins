@@ -1219,7 +1219,7 @@ void UfbxImporterTest::materialMapping() {
 
                 CORRADE_COMPARE_AS(mapping.attributeType, MaterialAttributeType{}, TestSuite::Compare::NotEqual);
 
-                switch (mapping.attributeType) {
+                switch(mapping.attributeType) {
                 case MaterialAttributeType::Float:
                 case MaterialAttributeType::Vector3:
                 case MaterialAttributeType::Vector4:
@@ -2259,7 +2259,7 @@ void UfbxImporterTest::imageBrokenExternal() {
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->image2D(0));
 
-    CORRADE_COMPARE_AS(out.str(), 
+    CORRADE_COMPARE_AS(out.str(),
         "Trade::StbImageImporter::image2D(): cannot open the image: ",
         TestSuite::Compare::StringHasPrefix);
 }
