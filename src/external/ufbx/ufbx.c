@@ -658,7 +658,7 @@ ufbx_static_assert(sizeof_f64, sizeof(double) == 8);
 
 // -- Version
 
-#define UFBX_SOURCE_VERSION ufbx_pack_version(0, 1, 1)
+#define UFBX_SOURCE_VERSION ufbx_pack_version(0, 2, 1)
 const uint32_t ufbx_source_version = UFBX_SOURCE_VERSION;
 
 ufbx_static_assert(source_header_version, UFBX_SOURCE_VERSION/1000u == UFBX_HEADER_VERSION/1000u);
@@ -695,6 +695,52 @@ ufbx_static_assert(source_header_version, UFBX_SOURCE_VERSION/1000u == UFBX_HEAD
 	#define ufbxi_dev_assert(cond) ufbx_assert(cond)
 #else
 	#define ufbxi_dev_assert(cond) (void)0
+#endif
+
+#if defined(UFBX_REGRESSION)
+	#define UFBXI_IS_REGRESSION 1
+#else
+	#define UFBXI_IS_REGRESSION 0
+#endif
+
+#if defined(_MSC_VER)
+	#define ufbxi_thread_local __declspec(thread)
+#elif defined(__GNUC__) || defined(__clang__)
+	#define ufbxi_thread_local __thread
+#elif UFBXI_HAS_CPP11
+	#define ufbxi_thread_local thread_local
+#elif UFBX_STDC >= 201112L
+	#define ufbxi_thread_local _Thread_local
+#endif
+
+#if defined(UFBXI_ANALYSIS_RECURSIVE)
+	#define ufbxi_recursive_function(m_ret, m_name, m_args, m_max_depth, m_params) UFBXI_RECURSIVE_FUNCTION(m_name, m_max_depth);
+	#define ufbxi_recursive_function_void(m_name, m_args, m_max_depth, m_params) UFBXI_RECURSIVE_FUNCTION(m_name, m_max_depth);
+#elif UFBXI_IS_REGRESSION && defined(ufbxi_thread_local)
+	#define ufbxi_recursive_function(m_ret, m_name, m_args, m_max_depth, m_params) \
+		{ \
+			m_ret m_name##_rec m_params; \
+			static ufbxi_thread_local unsigned ufbxi_recursion_depth; \
+			ufbx_assert(ufbxi_recursion_depth < m_max_depth); \
+			++ufbxi_recursion_depth; \
+			m_ret ret = m_name##_rec m_args; \
+			--ufbxi_recursion_depth; \
+			return ret; \
+		} \
+		m_ret m_name##_rec m_params
+	#define ufbxi_recursive_function_void(m_name, m_args, m_max_depth, m_params) \
+		{ \
+			void m_name##_rec m_params; \
+			static ufbxi_thread_local unsigned ufbxi_recursion_depth; \
+			ufbx_assert(ufbxi_recursion_depth < m_max_depth); \
+			++ufbxi_recursion_depth; \
+			m_name##_rec m_args; \
+			--ufbxi_recursion_depth; \
+		} \
+		void m_name##_rec m_params
+#else
+	#define ufbxi_recursive_function(m_ret, m_name, m_args, m_max_depth, m_params)
+	#define ufbxi_recursive_function_void(m_name, m_args, m_max_depth, m_params)
 #endif
 
 // -- Utility
@@ -1361,7 +1407,7 @@ ufbxi_bit_chunk_refill(ufbxi_bit_stream *s, const char *ptr)
 	// Copy any left-over data to the beginning of `buffer`
 	size_t left = ufbxi_to_size(s->chunk_real_end - ptr);
 	ufbxi_dev_assert(left < 64);
-	memmove(s->buffer, ptr, left);
+	if (left > 0) memmove(s->buffer, ptr, left);
 
 	s->num_read_before_chunk += ufbxi_to_size(ptr - s->chunk_begin);
 
@@ -1404,8 +1450,8 @@ static ufbxi_noinline void ufbxi_bit_stream_init(ufbxi_bit_stream *s, const ufbx
 	s->progress_cb = input->progress_cb;
 	s->chunk_begin = (const char*)input->data;
 	s->chunk_ptr = (const char*)input->data;
-	s->chunk_end = (const char*)input->data + data_size - 8;
-	s->chunk_real_end = (const char*)input->data + data_size;
+	s->chunk_end = ufbxi_add_ptr((const char*)input->data, ufbxi_max_sz(8, data_size) - 8);
+	s->chunk_real_end = ufbxi_add_ptr((const char*)input->data, data_size);
 	s->input_left = input->total_size - data_size;
 
 	// Use the user buffer if it's large enough, otherwise `local_buffer`
@@ -3565,7 +3611,10 @@ static ufbxi_noinline void ufbxi_map_free(ufbxi_map *map)
 #endif
 }
 
+// Recursion limit: log2(2^64 / sizeof(ufbxi_aa_node))
 static ufbxi_noinline ufbxi_aa_node *ufbxi_aa_tree_insert(ufbxi_map *map, ufbxi_aa_node *node, const void *value, uint32_t index, size_t item_size)
+	ufbxi_recursive_function(ufbxi_aa_node *, ufbxi_aa_tree_insert, (map, node, value, index, item_size), 59,
+		(ufbxi_map *map, ufbxi_aa_node *node, const void *value, uint32_t index, size_t item_size))
 {
 	if (!node) {
 		ufbxi_aa_node *new_node = ufbxi_push(&map->aa_buf, ufbxi_aa_node, 1);
@@ -4011,11 +4060,14 @@ ufbxi_nodiscard static ufbxi_noinline int ufbxi_warnf_imp(ufbxi_warnings *ws, uf
 	return ok;
 }
 
-ufbxi_nodiscard static ufbxi_noinline int ufbxi_pop_warnings(ufbxi_warnings *ws, ufbx_warning_list *warnings)
+ufbxi_nodiscard static ufbxi_noinline int ufbxi_pop_warnings(ufbxi_warnings *ws, ufbx_warning_list *warnings, bool *p_has_warning)
 {
 	warnings->count = ws->tmp_stack.num_items;
 	warnings->data = ufbxi_push_pop(ws->result, &ws->tmp_stack, ufbx_warning, warnings->count);
 	ufbxi_check_err(ws->error, warnings->data);
+	ufbxi_for_list(ufbx_warning, warning, *warnings) {
+		p_has_warning[warning->type] = true;
+	}
 	return 1;
 }
 
@@ -6026,7 +6078,7 @@ static ufbxi_forceinline void ufbxi_xml_advance(ufbxi_xml_context *xc)
 
 ufbxi_nodiscard static ufbxi_noinline int ufbxi_xml_push_token_char(ufbxi_xml_context *xc, char c)
 {
-	if (xc->tok_len == xc->tok_cap) {
+	if (xc->tok_len == xc->tok_cap || UFBXI_IS_REGRESSION) {
 		ufbxi_check_err(&xc->error, ufbxi_grow_array(xc->ator, &xc->tok, &xc->tok_cap, xc->tok_len + 1));
 	}
 	xc->tok[xc->tok_len++] = c;
@@ -6161,7 +6213,10 @@ static ufbxi_noinline int ufbxi_xml_read_until(ufbxi_xml_context *xc, ufbx_strin
 	return 1;
 }
 
+// Recursion limited by check at the start
 static ufbxi_noinline int ufbxi_xml_parse_tag(ufbxi_xml_context *xc, size_t depth, bool *p_closing, const char *opening)
+	ufbxi_recursive_function(int, ufbxi_xml_parse_tag, (xc, depth, p_closing, opening), UFBXI_MAX_XML_DEPTH + 1,
+		(ufbxi_xml_context *xc, size_t depth, bool *p_closing, const char *opening))
 {
 	ufbxi_check_err(&xc->error, depth < UFBXI_MAX_XML_DEPTH);
 
@@ -7377,7 +7432,7 @@ ufbxi_nodiscard static ufbxi_noinline int ufbxi_binary_convert_array(ufbxi_conte
 		switch (src_type) {
 		case 'c': ufbxi_convert_loop_slow(int32_t, (int32_t), 1, *val); break;
 		// case 'i': ufbxi_convert_loop_slow(int32_t, (int32_t), 4, ufbxi_read_i32(val)); break;
-		case 'l': ufbxi_convert_loop_fast(int32_t, (int32_t), 8, ufbxi_read_i64(val)); break;
+		case 'l': ufbxi_convert_loop_slow(int32_t, (int32_t), 8, ufbxi_read_i64(val)); break;
 		case 'f': ufbxi_convert_loop_slow(int32_t, ufbxi_f64_to_i32, 4, ufbxi_read_f32(val)); break;
 		case 'd': ufbxi_convert_loop_slow(int32_t, ufbxi_f64_to_i32, 8, ufbxi_read_f64(val)); break;
 		default: ufbxi_fail("Bad array source type");
@@ -7387,7 +7442,7 @@ ufbxi_nodiscard static ufbxi_noinline int ufbxi_binary_convert_array(ufbxi_conte
 	case 'l':
 		switch (src_type) {
 		case 'c': ufbxi_convert_loop_slow(int64_t, (int64_t), 1, *val); break;
-		case 'i': ufbxi_convert_loop_fast(int64_t, (int64_t), 4, ufbxi_read_i32(val)); break;
+		case 'i': ufbxi_convert_loop_slow(int64_t, (int64_t), 4, ufbxi_read_i32(val)); break;
 		// case 'l': ufbxi_convert_loop_slow(int64_t, (int64_t), 8, ufbxi_read_i64(val)); break;
 		case 'f': ufbxi_convert_loop_slow(int64_t, ufbxi_f64_to_i64, 4, ufbxi_read_f32(val)); break;
 		case 'd': ufbxi_convert_loop_slow(int64_t, ufbxi_f64_to_i64, 8, ufbxi_read_f64(val)); break;
@@ -7555,7 +7610,10 @@ ufbxi_nodiscard ufbxi_noinline static void *ufbxi_push_array_data(ufbxi_context 
 	return data;
 }
 
+// Recursion limited by check at the start
 ufbxi_nodiscard ufbxi_noinline static int ufbxi_binary_parse_node(ufbxi_context *uc, uint32_t depth, ufbxi_parse_state parent_state, bool *p_end, ufbxi_buf *tmp_buf, bool recursive)
+	ufbxi_recursive_function(int, ufbxi_binary_parse_node, (uc, depth, parent_state, p_end, tmp_buf, recursive), UFBXI_MAX_NODE_DEPTH + 1,
+		(ufbxi_context *uc, uint32_t depth, ufbxi_parse_state parent_state, bool *p_end, ufbxi_buf *tmp_buf, bool recursive))
 {
 	// https://code.blender.org/2013/08/fbx-binary-file-format-specification
 	// Parse an FBX document node in the binary format
@@ -8495,7 +8553,10 @@ ufbxi_nodiscard static ufbxi_noinline int ufbxi_ascii_read_float_array(ufbxi_con
 	return 1;
 }
 
+// Recursion limited by check at the start
 ufbxi_nodiscard ufbxi_noinline static int ufbxi_ascii_parse_node(ufbxi_context *uc, uint32_t depth, ufbxi_parse_state parent_state, bool *p_end, ufbxi_buf *tmp_buf, bool recursive)
+	ufbxi_recursive_function(int, ufbxi_ascii_parse_node, (uc, depth, parent_state, p_end, tmp_buf, recursive), UFBXI_MAX_NODE_DEPTH + 1,
+		(ufbxi_context *uc, uint32_t depth, ufbxi_parse_state parent_state, bool *p_end, ufbxi_buf *tmp_buf, bool recursive))
 {
 	ufbxi_ascii *ua = &uc->ascii;
 
@@ -8854,7 +8915,10 @@ ufbxi_nodiscard static ufbxi_forceinline ufbx_dom_node *ufbxi_get_dom_node(ufbxi
 	return ufbxi_get_dom_node_imp(uc, node);
 }
 
+// Recursion limited by check in ufbxi_[binary/ascii]_parse_node()
 ufbxi_nodiscard static ufbxi_noinline int ufbxi_retain_dom_node(ufbxi_context *uc, ufbxi_node *node, ufbx_dom_node **p_dom_node)
+	ufbxi_recursive_function(int, ufbxi_retain_dom_node, (uc, node, p_dom_node), UFBXI_MAX_NODE_DEPTH + 1,
+		(ufbxi_context *uc, ufbxi_node *node, ufbx_dom_node **p_dom_node))
 {
 	ufbx_dom_node *dst = ufbxi_push_zero(&uc->result, ufbx_dom_node, 1);
 	ufbxi_check(dst);
@@ -9013,7 +9077,10 @@ static ufbxi_noinline bool ufbxi_next_line(ufbx_string *line, ufbx_string *buf, 
 	return true;
 }
 
+// Recursion limited by compile time patterns
 static ufbxi_noinline const char *ufbxi_match_skip(const char *fmt, bool alternation)
+	ufbxi_recursive_function(const char *, ufbxi_match_skip, (fmt, alternation), 4,
+		(const char *fmt, bool alternation))
 {
 	for (;;) {
 		char c = *fmt++;
@@ -9044,7 +9111,10 @@ static ufbxi_noinline const char *ufbxi_match_skip(const char *fmt, bool alterna
 	}
 }
 
+// Recursion limited by compile time patterns
 static ufbxi_noinline bool ufbxi_match_imp(const char **p_str, const char *end, const char **p_fmt)
+	ufbxi_recursive_function(bool, ufbxi_match_imp, (p_str, end, p_fmt), 4,
+		(const char **p_str, const char *end, const char **p_fmt))
 {
 	const char *str_original_begin = *p_str;
 	const char *str = str_original_begin;
@@ -10363,7 +10433,6 @@ ufbxi_nodiscard ufbxi_noinline static int ufbxi_insert_fbx_id(ufbxi_context *uc,
 {
 	uint32_t hash = ufbxi_hash64(fbx_id);
 	ufbxi_fbx_id_entry *entry = ufbxi_map_find(&uc->fbx_id_map, ufbxi_fbx_id_entry, hash, &fbx_id);
-	// TODO: Strict / warn about duplicate objects
 
 	if (!entry) {
 		entry = ufbxi_map_insert(&uc->fbx_id_map, ufbxi_fbx_id_entry, hash, &fbx_id);
@@ -10371,6 +10440,8 @@ ufbxi_nodiscard ufbxi_noinline static int ufbxi_insert_fbx_id(ufbxi_context *uc,
 		entry->fbx_id = fbx_id;
 		entry->element_id = element_id;
 		entry->user_id = 0;
+	} else {
+		ufbxi_check(ufbxi_warnf(UFBX_WARNING_DUPLICATE_OBJECT_ID, "Duplicate object ID"));
 	}
 
 	return 1;
@@ -10668,10 +10739,8 @@ ufbxi_nodiscard ufbxi_noinline static int ufbxi_check_indices(ufbxi_context *uc,
 			// If the indices refer to an external buffer we need to
 			// allocate a separate buffer for them
 			if (!owns_indices) {
-				uint32_t *new_indices = ufbxi_push(&uc->result, uint32_t, num_indices);
-				ufbxi_check(new_indices);
-				memcpy(new_indices, indices, sizeof(uint32_t) * num_indices);
-				indices = new_indices;
+				indices = ufbxi_push_copy(&uc->result, uint32_t, num_indices, indices);
+				ufbxi_check(indices);
 				owns_indices = true;
 			}
 			ufbxi_check(ufbxi_fix_index(uc, &indices[i], ix, num_elems));
@@ -10814,6 +10883,8 @@ ufbxi_nodiscard ufbxi_noinline static int ufbxi_read_truncated_array(ufbxi_conte
 
 	void *data = arr->data;
 	if (arr->size < size) {
+		ufbxi_check(ufbxi_warnf(UFBX_WARNING_TRUNCATED_ARRAY, "Truncated array: %s", name));
+
 		size_t elem_size = ufbxi_array_type_size(fmt);
 		void *new_data = ufbxi_push_size(&uc->result, elem_size, size);
 		ufbxi_check(new_data);
@@ -10825,7 +10896,7 @@ ufbxi_nodiscard ufbxi_noinline static int ufbxi_read_truncated_array(ufbxi_conte
 				memcpy((char*)new_data + i * elem_size, first_elem, elem_size);
 			}
 		} else {
-			memset((char*)new_data + arr->size * elem_size, 0, (size - arr->size) * elem_size);
+			memset(new_data, 0, size * elem_size);
 		}
 		data = new_data;
 	}
@@ -10877,13 +10948,6 @@ static ufbxi_noinline bool ufbxi_blend_offset_less(void *user, const void *va, c
 
 ufbxi_nodiscard ufbxi_noinline static int ufbxi_sort_blend_offsets(ufbxi_context *uc, ufbxi_blend_offset *offsets, size_t count)
 {
-	// Practically always ordered
-	while (count >= 2 && offsets[0].vertex <= offsets[1].vertex) {
-		offsets += 1;
-		count -= 1;
-	}
-	if (count <= 1) return 1;
-
 	ufbxi_check(ufbxi_grow_array(&uc->ator_tmp, &uc->tmp_arr, &uc->tmp_arr_size, count * sizeof(ufbxi_blend_offset)));
 	ufbxi_stable_sort(sizeof(ufbxi_blend_offset), 16, offsets, uc->tmp_arr, count, &ufbxi_blend_offset_less, NULL);
 	return 1;
@@ -12917,7 +12981,11 @@ ufbxi_nodiscard ufbxi_noinline static int ufbxi_read_take_anim_channel(ufbxi_con
 	return 1;
 }
 
+// Recursion limited as it is further called only for `name="T"/"R"/"S"` and
+// cannot enter the `name=="Transform"` branch.
 ufbxi_nodiscard ufbxi_noinline static int ufbxi_read_take_prop_channel(ufbxi_context *uc, ufbxi_node *node, uint64_t target_fbx_id, uint64_t layer_fbx_id, ufbx_string name)
+	ufbxi_recursive_function(int, ufbxi_read_take_prop_channel, (uc, node, target_fbx_id, layer_fbx_id, name), 2,
+		(ufbxi_context *uc, ufbxi_node *node, uint64_t target_fbx_id, uint64_t layer_fbx_id, ufbx_string name))
 {
 	if (name.data == ufbxi_Transform) {
 		// Pre-7000 have transform keyframes in a deeply nested structure,
@@ -13477,10 +13545,12 @@ ufbxi_nodiscard ufbxi_noinline static int ufbxi_read_legacy_mesh(ufbxi_context *
 		ufbx_uv_set *set = ufbxi_push_zero(&uc->result, ufbx_uv_set, 1);
 		ufbxi_check(set);
 		set->index = 0;
-		set->name = ufbx_empty_string;
+		set->name.data = ufbxi_empty_char;
 		ufbxi_check(ufbxi_read_vertex_element(uc, mesh, uv_info, (ufbx_vertex_attrib*)&set->vertex_uv,
 			ufbxi_TextureUV, ufbxi_TextureUVVerticeIndex, 'r', 2));
 
+		mesh->uv_sets.data = set;
+		mesh->uv_sets.count = 1;
 		mesh->vertex_uv = set->vertex_uv;
 	}
 
@@ -15118,8 +15188,6 @@ ufbxi_nodiscard static ufbxi_noinline int ufbxi_obj_load_mtl(ufbxi_context *uc)
 		ufbxi_check(ufbxi_obj_parse_mtl(uc));
 		return 1;
 	}
-
-	if (!uc->opts.load_external_files) return 1;
 
 	ufbx_stream stream = { 0 };
 	bool has_stream = false;
@@ -18329,20 +18397,6 @@ ufbxi_nodiscard ufbxi_noinline static int ufbxi_finalize_scene(ufbxi_context *uc
 				}
 			}
 
-			// Search for a non-standard `ufbx:UVBoundary` property in both the mesh and node
-			ufbx_prop *uv_prop = ufbx_find_prop(&mesh->props, "ufbx:UVBoundary");
-			if (!uv_prop) {
-				ufbxi_for_ptr_list(ufbx_node, p_node, mesh->instances) {
-					uv_prop = ufbx_find_prop(&(*p_node)->props, "ufbx:UVBoundary");
-					if (uv_prop) break;
-				}
-			}
-			if (uv_prop && uv_prop->value_int >= 0 && uv_prop->value_int <= UFBX_SUBDIVISION_BOUNDARY_SHARP_INTERIOR) {
-				mesh->subdivision_uv_boundary = (ufbx_subdivision_boundary)uv_prop->value_int;
-			} else {
-				mesh->subdivision_uv_boundary = UFBX_SUBDIVISION_BOUNDARY_SHARP_BOUNDARY;
-			}
-
 			// Push a NULL material if necessary if requested
 			if (mesh->materials.count == 0 && uc->opts.allow_null_material) {
 				mesh->materials.data = ufbxi_push_zero(&uc->result, ufbx_mesh_material, 1);
@@ -21344,7 +21398,7 @@ ufbxi_nodiscard static ufbxi_noinline int ufbxi_load_imp(ufbxi_context *uc)
 	}
 
 	// Pop warnings to metadata
-	ufbxi_check(ufbxi_pop_warnings(&uc->warnings, &uc->scene.metadata.warnings));
+	ufbxi_check(ufbxi_pop_warnings(&uc->warnings, &uc->scene.metadata.warnings, uc->scene.metadata.has_warning));
 
 	// Copy local data to the scene
 	uc->scene.metadata.version = uc->version;
@@ -21660,7 +21714,11 @@ static double ufbxi_pow_abs(double v, double e)
 	return sign * ufbx_pow(v * sign, e);
 }
 
+// Recursion is limited by the fact that we recurse only when the property name is "Lcl Rotation"
+// and when recursing we always evaluate the property "RotationOrder"
 static ufbxi_noinline void ufbxi_combine_anim_layer(ufbxi_anim_layer_combine_ctx *ctx, ufbx_anim_layer *layer, ufbx_real weight, const char *prop_name, ufbx_vec3 *result, const ufbx_vec3 *value)
+	ufbxi_recursive_function_void(ufbxi_combine_anim_layer, (ctx, layer, weight, prop_name, result, value), 2,
+		(ufbxi_anim_layer_combine_ctx *ctx, ufbx_anim_layer *layer, ufbx_real weight, const char *prop_name, ufbx_vec3 *result, const ufbx_vec3 *value))
 {
 	if (layer->compose_rotation && layer->blended && prop_name == ufbxi_Lcl_Rotation && !ctx->has_rotation_order) {
 		ufbx_prop rp = ufbx_evaluate_prop_len(&ctx->anim, ctx->element, ufbxi_RotationOrder, sizeof(ufbxi_RotationOrder) - 1, ctx->time);
@@ -21777,7 +21835,11 @@ static ufbxi_noinline void ufbxi_evaluate_props(const ufbx_anim *anim, const ufb
 	}
 }
 
+// Recursion limited by not calling `ufbx_evaluate_prop_len()` with a connected property,
+// meaning it will never call `ufbxi_evaluate_connected_prop()` again indirectly.
 static ufbxi_noinline void ufbxi_evaluate_connected_prop(ufbx_prop *prop, const ufbx_anim *anim, const ufbx_element *element, const char *name, double time)
+	ufbxi_recursive_function_void(ufbxi_evaluate_connected_prop, (prop, anim, element, name, time), 3,
+		(ufbx_prop *prop, const ufbx_anim *anim, const ufbx_element *element, const char *name, double time))
 {
 	ufbx_connection *conn = ufbxi_find_prop_connection(element, name);
 
@@ -21787,7 +21849,8 @@ static ufbxi_noinline void ufbxi_evaluate_connected_prop(ufbx_prop *prop, const 
 		conn = next_conn;
 	}
 
-	if (conn) {
+	// Found a non-cyclic connection
+	if (conn && !ufbxi_find_prop_connection(conn->src, conn->src_prop.data)) {
 		ufbx_prop ep = ufbx_evaluate_prop_len(anim, conn->src, conn->src_prop.data, conn->src_prop.length, time);
 		prop->value_vec4 = ep.value_vec4;
 		prop->value_int = ep.value_int;
@@ -22984,7 +23047,10 @@ ufbxi_forceinline static bool ufbxi_kd_check_point(ufbxi_ngon_context *nc, const
 	return false;
 }
 
+// Recursion limited by 32-bit indices in input, minus halvings from `ufbxi_kd_check_fast()`
 ufbxi_noinline static bool ufbxi_kd_check_slow(ufbxi_ngon_context *nc, const ufbxi_kd_triangle *tri, uint32_t begin, uint32_t count, uint32_t axis)
+	ufbxi_recursive_function(bool, ufbxi_kd_check_slow, (nc, tri, begin, count, axis), 32 - UFBXI_KD_FAST_DEPTH,
+		(ufbxi_ngon_context *nc, const ufbxi_kd_triangle *tri, uint32_t begin, uint32_t count, uint32_t axis))
 {
 	ufbx_vertex_vec3 pos = nc->positions;
 	uint32_t *kd_indices = nc->kd_indices;
@@ -23022,7 +23088,10 @@ ufbxi_noinline static bool ufbxi_kd_check_slow(ufbxi_ngon_context *nc, const ufb
 	return false;
 }
 
+// Recursion limited by `UFBXI_KD_FAST_DEPTH`
 ufbxi_noinline static bool ufbxi_kd_check_fast(ufbxi_ngon_context *nc, const ufbxi_kd_triangle *tri, uint32_t kd_index, uint32_t axis, uint32_t depth)
+	ufbxi_recursive_function(bool, ufbxi_kd_check_fast, (nc, tri, kd_index, axis, depth), UFBXI_KD_FAST_DEPTH,
+		(ufbxi_ngon_context *nc, const ufbxi_kd_triangle *tri, uint32_t kd_index, uint32_t axis, uint32_t depth))
 {
 	ufbx_vertex_vec3 pos = nc->positions;
 
@@ -23039,7 +23108,7 @@ ufbxi_noinline static bool ufbxi_kd_check_fast(ufbxi_ngon_context *nc, const ufb
 
 			// Check for the point on the split plane
 			ufbx_vec3 point = pos.values.data[pos.indices.data[nc->face.index_begin + node.index]];
-			if(ufbxi_kd_check_point(nc, tri, node.index, point)) {
+			if (ufbxi_kd_check_point(nc, tri, node.index, point)) {
 				return true;
 			}
 
@@ -23079,7 +23148,10 @@ ufbxi_noinline static bool ufbxi_kd_index_less(void *user, const void *va, const
 	return da < db;
 }
 
+// Recursion limited by 32-bit indices in input
 ufbxi_noinline static void ufbxi_kd_build(ufbxi_ngon_context *nc, uint32_t *indices, uint32_t *tmp, uint32_t num, uint32_t axis, uint32_t fast_index, uint32_t depth)
+	ufbxi_recursive_function_void(ufbxi_kd_build, (nc, indices, tmp, num, axis, fast_index, depth), 32,
+		(ufbxi_ngon_context *nc, uint32_t *indices, uint32_t *tmp, uint32_t num, uint32_t axis, uint32_t fast_index, uint32_t depth))
 {
 	if (num == 0) return;
 

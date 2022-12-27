@@ -161,7 +161,8 @@ typedef double ufbx_real;
 #define ufbx_version_minor(version) ((uint32_t)(version)/1000u%1000u)
 #define ufbx_version_patch(version) ((uint32_t)(version)%1000u)
 
-#define UFBX_HEADER_VERSION ufbx_pack_version(0, 1, 1)
+#define UFBX_HEADER_VERSION ufbx_pack_version(0, 2, 1)
+#define UFBX_VERSION UFBX_HEADER_VERSION
 
 // -- Basic types
 
@@ -3102,6 +3103,9 @@ typedef enum ufbx_warning_type UFBX_ENUM_REPR {
 	// `mtllib` statement.
 	UFBX_WARNING_IMPLICIT_MTL,
 
+	// Truncated array has been auto-expanded.
+	UFBX_WARNING_TRUNCATED_ARRAY,
+
 	// Out-of-bounds index has been clamped to be in-bounds.
 	// HINT: You can use `ufbx_index_error_handling` to adjust behavior.
 	UFBX_WARNING_INDEX_CLAMPED,
@@ -3113,6 +3117,9 @@ typedef enum ufbx_warning_type UFBX_ENUM_REPR {
 	// Non-node element connected to root.
 	UFBX_WARNING_BAD_ELEMENT_CONNECTED_TO_ROOT,
 
+	// Duplicated object ID in the file, connections will be wrong.
+	UFBX_WARNING_DUPLICATE_OBJECT_ID,
+
 	// Warnings after this one are deduplicated.
 	// See `ufbx_warning.count` for how many times they happened.
 	UFBX_WARNING_TYPE_FIRST_DEDUPLICATED = UFBX_WARNING_INDEX_CLAMPED,
@@ -3120,7 +3127,7 @@ typedef enum ufbx_warning_type UFBX_ENUM_REPR {
 	UFBX_ENUM_FORCE_WIDTH(UFBX_WARNING_TYPE)
 } ufbx_warning_type;
 
-UFBX_ENUM_TYPE(ufbx_warning_type, UFBX_WARNING_TYPE, UFBX_WARNING_BAD_ELEMENT_CONNECTED_TO_ROOT);
+UFBX_ENUM_TYPE(ufbx_warning_type, UFBX_WARNING_TYPE, UFBX_WARNING_DUPLICATE_OBJECT_ID);
 
 // Warning about a non-fatal issue in the file.
 // Often contains information about issues that ufbx has corrected about the
@@ -3140,6 +3147,8 @@ UFBX_LIST_TYPE(ufbx_warning_list, ufbx_warning);
 typedef struct ufbx_metadata {
 
 	// List of non-fatal warnings about the file.
+	// If you need to only check whether a specific warning was triggered you
+	// can use `ufbx_metadata.has_warning[]`.
 	ufbx_warning_list warnings;
 
 	// FBX ASCII file format.
@@ -3170,6 +3179,10 @@ typedef struct ufbx_metadata {
 	// Some API guarantees do not apply (depending on unsafe options used).
 	// Loaded with `ufbx_load_opts.allow_unsafe` enabled.
 	bool is_unsafe;
+
+	// Flag for each possible warning type.
+	// See `ufbx_metadata.warnings[]` for detailed warning information.
+	bool has_warning[UFBX_WARNING_TYPE_COUNT];
 
 	ufbx_string creator;
 	bool big_endian;
@@ -3845,7 +3858,13 @@ typedef struct ufbx_load_opts {
 	bool evaluate_skinning; // < Evaluate skinning (see ufbx_mesh.skinned_vertices)
 	bool evaluate_caches;   // < Evaluate vertex caches (see ufbx_mesh.skinned_vertices)
 
-	// WARNING: Potentially unsafe! Try to open external files such as geometry caches
+	// Try to open external files referenced by the main file automatically.
+	// Applies to geometry caches and .mtl files for OBJ.
+	// NOTE: This may be risky for untrusted data as the input files may contain
+	// references to arbitrary paths in the filesystem.
+	// NOTE: This only applies to files *implicitly* referenced by the scene, if
+	// you request additional files via eg. `ufbx_load_opts.obj_mtl_path` they
+	// are still loaded.
 	bool load_external_files;
 
 	// Don't fail loading if external files are not found.
