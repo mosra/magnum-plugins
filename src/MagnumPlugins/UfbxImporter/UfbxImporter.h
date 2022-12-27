@@ -58,7 +58,7 @@ namespace Magnum { namespace Trade {
 
 @m_keywords{FbxImporter ObjImporter}
 
-Imports FBX files using [ufbx](https://github.com/bqqbarbhg/ufbx), also
+Imports FBX files using [ufbx](https://github.com/ufbx/ufbx), also
 supports OBJ files despite the name.
 
 Supports importing of scene, object, camera, mesh, texture and image data.
