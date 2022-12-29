@@ -232,7 +232,7 @@ void GltfImporterDecodeTest::base64Invalid() {
 
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_COMPARE(decodeBase64("foo():", data.input), Containers::NullOpt);
+    CORRADE_VERIFY(!decodeBase64("foo():", data.input));
     CORRADE_COMPARE(out.str(), Utility::formatString("foo(): {}\n", data.message));
 }
 
