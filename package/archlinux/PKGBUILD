@@ -64,6 +64,7 @@ build() {
         -DMAGNUM_WITH_STBVORBISAUDIOIMPORTER=ON \
         -DMAGNUM_WITH_STLIMPORTER=ON \
         -DMAGNUM_WITH_TINYGLTFIMPORTER=ON \
+        -DMAGNUM_WITH_UFBXIMPORTER=ON \
         -DMAGNUM_WITH_WEBPIMPORTER=ON \
         -G "Ninja Multi-Config"
     ninja all:all
