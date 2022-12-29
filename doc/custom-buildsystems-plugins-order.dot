@@ -55,6 +55,7 @@ digraph "Magnum Plugins dependency order" {
     GltfImporter [class="m-success"]
     CgltfImporter [class="m-dim"]
     TinyGltfImporter [class="m-dim"]
+    UfbxImporter [class="m-success"]
     MeshOptimizerSceneConverter [class="m-success"]
     StanfordImporter [class="m-success"]
     StanfordSceneConverter [class="m-success"]
@@ -89,6 +90,8 @@ digraph "Magnum Plugins dependency order" {
     CgltfImporter -> AnyImageImporter [class="m-dim"]
     TinyGltfImporter -> MagnumTrade [class="m-dim"]
     TinyGltfImporter -> AnyImageImporter [class="m-dim"]
+    UfbxImporter -> MagnumTrade
+    UfbxImporter -> AnyImageImporter
 
     StanfordImporter -> MagnumTrade
     StanfordImporter -> MagnumMeshTools
@@ -99,7 +102,7 @@ digraph "Magnum Plugins dependency order" {
 
     /* To make the graph less wide */
     SceneConverter -> ImageConverter -> Importer [style="invis"]
-    TinyGltfImporter -> CgltfImporter -> GltfImporter -> AssimpImporter [style="invis"]
+    TinyGltfImporter -> CgltfImporter -> UfbxImporter -> GltfImporter -> AssimpImporter [style="invis"]
     FreeTypeFont -> Font [style="invis"]
     MeshOptimizerSceneConverter -> StanfordSceneConverter -> StanfordImporter [style="invis"]
 }

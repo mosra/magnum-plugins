@@ -165,6 +165,10 @@
  * @m_deprecated_since_latest Use the @relativeref{Magnum,Trade::GltfImporter}
  *      plugin instead.
  */
+/** @dir MagnumPlugins/UfbxImporter
+ * @brief Plugin @ref Magnum::Trade::UfbxImporter
+ * @m_since_latest_{plugins}
+ */
  /** @dir MagnumPlugins/WebPImporter
  * @brief Plugin @ref Magnum::Trade::WebPImporter
  * @m_since_latest_{plugins}
