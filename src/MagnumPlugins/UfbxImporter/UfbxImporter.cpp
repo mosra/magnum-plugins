@@ -1188,9 +1188,11 @@ Containers::Optional<MaterialData> UfbxImporter::doMaterial(UnsignedInt id) {
                         const Containers::String matrixAttribute = textureAttribute + "Matrix"_s;
                         const ufbx_matrix& mat = map.texture->uv_to_texture;
                         const Matrix3 value{
-                            {Float(mat.m00), Float(mat.m10), 0.0f},
-                            {Float(mat.m01), Float(mat.m11), 0.0f},
-                            {Float(mat.m03), Float(mat.m13), 1.0f},
+                            Vector3{Vector3d{mat.cols[0]}},
+                            Vector3{Vector3d{mat.cols[1]}},
+                            /* mat.cols[2] and m23, containing the third
+                               dimension, skipped */
+                            Vector3{Vector3d{mat.m03, mat.m13, 1.0}}
                         };
                         arrayAppend(attributes, {matrixAttribute, value});
                     }
