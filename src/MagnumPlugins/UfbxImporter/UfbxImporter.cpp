@@ -1156,7 +1156,7 @@ Containers::Optional<MaterialData> UfbxImporter::doMaterial(UnsignedInt id) {
             }
 
             /* Create a texture attribute if defined and allowed */
-            if(map.texture && mapping.textureAttribute != MaterialMapping::DisallowTexture()) {
+            if(map.texture && mapping.textureAttribute != MaterialMapping::DisallowTexture) {
                 /* We may have multiple file_textures in two cases:
                      UFBX_TEXTURE_LAYERED: Well defined texture layers
                      UFBX_TEXTURE_SHADER: Arbitrary references in a shader graph

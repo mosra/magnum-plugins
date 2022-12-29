@@ -76,12 +76,7 @@ typedef Containers::EnumSet<MaterialExclusionGroup> MaterialExclusionGroups;
 struct MaterialMapping {
     /* Sentinel value to use as textureAttribute do disallow any texture for
        this mapping as empty is implicitly derived from attribute, see below */
-    /* Note: This has to be a function instead of a value as otherwise it leads
-       to linker errors in the array constructors below.
-       "relocation R_X86_64_PC32 against undefined symbol
-       `_ZN6Magnum5Trade12_GLOBAL__N_115MaterialMapping15DisallowTextureE' can
-       not be used when making a shared object; recompile with -fPIC" */
-    static constexpr Containers::StringView DisallowTexture() { return " "_s; };
+    static constexpr Containers::StringView DisallowTexture = " "_s;
 
     UfbxMaterialLayer layer;
     MaterialAttributeType attributeType;
@@ -109,6 +104,8 @@ struct MaterialMapping {
     constexpr MaterialMapping(UfbxMaterialLayer layer, MaterialAttributeType attributeType, Containers::StringView attribute, Containers::StringView textureAttribute, Int valueMap, Int factorMap=-1, MaterialExclusionGroup exclusionGroup=MaterialExclusionGroup{})
         : layer(layer), attributeType(attributeType), attribute(attribute), textureAttribute(textureAttribute), valueMap(valueMap), factorMap(factorMap), exclusionGroup(exclusionGroup) {}
 };
+
+constexpr Containers::StringView MaterialMapping::DisallowTexture;
 
 constexpr MaterialMapping materialMappingFbx[]{
     {UfbxMaterialLayer::Base, MaterialAttributeType::Vector4, "DiffuseColor"_s, "DiffuseTexture"_s, UFBX_MATERIAL_FBX_DIFFUSE_COLOR, UFBX_MATERIAL_FBX_DIFFUSE_FACTOR},
@@ -201,7 +198,7 @@ constexpr MaterialMapping materialMappingPbr[]{
     {UfbxMaterialLayer::Base, MaterialAttributeType{}, {}, "NormalTexture"_s, UFBX_MATERIAL_PBR_NORMAL_MAP, -1, MaterialExclusionGroup::NormalTexture},
     {UfbxMaterialLayer::Base, MaterialAttributeType{}, {}, "tangentTexture"_s, UFBX_MATERIAL_PBR_TANGENT_MAP},
     {UfbxMaterialLayer::Base, MaterialAttributeType{}, {}, "displacementTexture"_s, UFBX_MATERIAL_PBR_DISPLACEMENT_MAP, -1, MaterialExclusionGroup::Displacement},
-    {UfbxMaterialLayer::Base, MaterialAttributeType::Float, "displacementFactor"_s, MaterialMapping::DisallowTexture(), UFBX_MATERIAL_PBR_DISPLACEMENT_MAP, -1, MaterialExclusionGroup::DisplacementFactor},
+    {UfbxMaterialLayer::Base, MaterialAttributeType::Float, "displacementFactor"_s, MaterialMapping::DisallowTexture, UFBX_MATERIAL_PBR_DISPLACEMENT_MAP, -1, MaterialExclusionGroup::DisplacementFactor},
 
     {UfbxMaterialLayer::Matte, MaterialAttributeType::Float, "LayerFactor"_s, {}, UFBX_MATERIAL_PBR_MATTE_FACTOR},
     {UfbxMaterialLayer::Matte, MaterialAttributeType::Vector3, "color"_s, {}, UFBX_MATERIAL_PBR_MATTE_COLOR},

@@ -1218,7 +1218,7 @@ void UfbxImporterTest::materialMapping() {
                     textureAttribute = attribute + "Texture";
             }
 
-            if(!textureAttribute.empty() && textureAttribute != MaterialMapping::DisallowTexture()) {
+            if(!textureAttribute.empty() && textureAttribute != MaterialMapping::DisallowTexture) {
                 CORRADE_ITERATION(textureAttribute);
 
                 auto found = usedAttributeNames[layer].find(textureAttribute);
