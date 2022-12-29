@@ -194,13 +194,12 @@ UfbxImporterTest::UfbxImporterTest() {
                        &UfbxImporterTest::maxResultMemory},
         Containers::arraySize(MaxMemoryData));
 
-
     addTests({&UfbxImporterTest::fileCallback,
               &UfbxImporterTest::fileCallbackNotFound,
               &UfbxImporterTest::fileCallbackEmpty,
-              &UfbxImporterTest::fileCallbackEmptyVerbose});
+              &UfbxImporterTest::fileCallbackEmptyVerbose,
 
-    addTests({&UfbxImporterTest::scene,
+              &UfbxImporterTest::scene,
               &UfbxImporterTest::mesh,
               &UfbxImporterTest::meshPointLine,
               &UfbxImporterTest::camera,
@@ -209,16 +208,16 @@ UfbxImporterTest::UfbxImporterTest() {
               &UfbxImporterTest::light,
               &UfbxImporterTest::lightName,
               &UfbxImporterTest::lightOrientation,
-              &UfbxImporterTest::lightBadDecay});
+              &UfbxImporterTest::lightBadDecay,
 
-    addTests({&UfbxImporterTest::geometricTransformHelperNodes,
+              &UfbxImporterTest::geometricTransformHelperNodes,
               &UfbxImporterTest::geometricTransformModifyGeometry,
               &UfbxImporterTest::geometricTransformPreserve,
-              &UfbxImporterTest::geometricTransformInvalidHandling});
+              &UfbxImporterTest::geometricTransformInvalidHandling,
 
-    addTests({&UfbxImporterTest::materialMapping});
+              &UfbxImporterTest::materialMapping,
 
-    addTests({&UfbxImporterTest::blenderMaterials,
+              &UfbxImporterTest::blenderMaterials,
               &UfbxImporterTest::materialMayaPhong,
               &UfbxImporterTest::materialMayaPhongFactors,
               &UfbxImporterTest::materialMayaArnold,
@@ -230,9 +229,9 @@ UfbxImporterTest::UfbxImporterTest() {
               &UfbxImporterTest::meshMaterials,
               &UfbxImporterTest::instancedMaterial,
               &UfbxImporterTest::textureTransform,
-              &UfbxImporterTest::textureWrapModes});
+              &UfbxImporterTest::textureWrapModes,
 
-    addTests({&UfbxImporterTest::imageEmbedded,
+              &UfbxImporterTest::imageEmbedded,
               &UfbxImporterTest::imageExternal,
               &UfbxImporterTest::imageExternalFromData,
               &UfbxImporterTest::imageFileCallback,
@@ -242,21 +241,21 @@ UfbxImporterTest::UfbxImporterTest() {
               &UfbxImporterTest::imageAbsolutePath,
               &UfbxImporterTest::imageNot2D,
               &UfbxImporterTest::imageBrokenExternal,
-              &UfbxImporterTest::imageBrokenEmbedded});
+              &UfbxImporterTest::imageBrokenEmbedded,
 
-    addTests({&UfbxImporterTest::objCube,
+              &UfbxImporterTest::objCube,
               &UfbxImporterTest::objCubeFileCallback,
               &UfbxImporterTest::objMissingMtl,
-              &UfbxImporterTest::objMissingMtlFileCallback});
+              &UfbxImporterTest::objMissingMtlFileCallback,
 
-    addTests({&UfbxImporterTest::normalizeUnitsAdjustTransforms,
+              &UfbxImporterTest::normalizeUnitsAdjustTransforms,
               &UfbxImporterTest::normalizeUnitsTransformRoot,
-              &UfbxImporterTest::normalizeUnitsInvalidHandling});
+              &UfbxImporterTest::normalizeUnitsInvalidHandling,
 
-    addTests({&UfbxImporterTest::geometryCache,
-              &UfbxImporterTest::geometryCacheFileCallback});
+              &UfbxImporterTest::geometryCache,
+              &UfbxImporterTest::geometryCacheFileCallback,
 
-    addTests({&UfbxImporterTest::staticSkin,
+              &UfbxImporterTest::staticSkin,
               &UfbxImporterTest::multiWarning,
               &UfbxImporterTest::multiWarningData});
 
@@ -434,11 +433,11 @@ void UfbxImporterTest::fileCallbackEmptyVerbose() {
     std::vector<std::string> lines = Utility::String::splitWithoutEmptyParts(out.str(), '\n');
 
     /* Output should contain a stack trace on debug */
-#if !defined(CORRADE_IS_DEBUG_BUILD) && defined(NDEBUG)
+    #if !defined(CORRADE_IS_DEBUG_BUILD) && defined(NDEBUG)
     CORRADE_COMPARE(lines.size(), 1);
-#else
+    #else
     CORRADE_COMPARE_AS(lines.size(), 1, TestSuite::Compare::Greater);
-#endif
+    #endif
 }
 
 void UfbxImporterTest::scene() {
@@ -484,9 +483,7 @@ void UfbxImporterTest::scene() {
 
         auto cameras = scene->camerasFor(id);
         CORRADE_COMPARE(cameras.size(), 0);
-    }
-
-    {
+    } {
         Long optionalId = importer->objectForName("Light");
         CORRADE_COMPARE_AS(optionalId, 0, TestSuite::Compare::GreaterOrEqual);
         UnsignedLong id = UnsignedLong(optionalId);
@@ -500,9 +497,7 @@ void UfbxImporterTest::scene() {
 
         auto cameras = scene->camerasFor(id);
         CORRADE_COMPARE(cameras.size(), 0);
-    }
-
-    {
+    } {
         Long optionalId = importer->objectForName("Camera");
         CORRADE_COMPARE_AS(optionalId, 0, TestSuite::Compare::GreaterOrEqual);
         UnsignedLong id = UnsignedLong(optionalId);
@@ -516,9 +511,7 @@ void UfbxImporterTest::scene() {
 
         auto cameras = scene->camerasFor(id);
         CORRADE_COMPARE(cameras.size(), 1);
-    }
-
-    {
+    } {
         Long optionalId = importer->objectForName("ThisObjectDoesNotExist");
         CORRADE_COMPARE_AS(optionalId, 0, TestSuite::Compare::Less);
     }
@@ -623,9 +616,7 @@ void UfbxImporterTest::meshPointLine() {
             Containers::arrayView<Vector3>({
                 {-0.5f, 0.5f, 0.5f},
             }), TestSuite::Compare::Container);
-    }
-
-    {
+    } {
         Containers::Optional<MeshData> mesh = importer->mesh(1);
         CORRADE_VERIFY(mesh);
 
@@ -641,9 +632,7 @@ void UfbxImporterTest::meshPointLine() {
             Containers::arrayView<Vector3>({
                 {0.5f, 0.5f, -0.5f}, {-0.5f, 0.5, -0.5f},
             }), TestSuite::Compare::Container);
-    }
-
-    {
+    } {
         Containers::Optional<MeshData> mesh = importer->mesh(2);
         CORRADE_VERIFY(mesh);
 
@@ -698,9 +687,7 @@ void UfbxImporterTest::camera() {
         CORRADE_COMPARE(camera->near(), 0.123f);
         CORRADE_COMPARE(camera->far(), 123.0f);
         CORRADE_COMPARE(camera->aspectRatio(), 16.0f/9.0f);
-    }
-
-    {
+    } {
         Containers::Optional<CameraData> camera = importer->camera("cameraOrthographicFill");
         CORRADE_VERIFY(camera);
 
@@ -708,9 +695,7 @@ void UfbxImporterTest::camera() {
         CORRADE_COMPARE(camera->near(), 0.456f);
         CORRADE_COMPARE(camera->far(), 456.0f);
         CORRADE_COMPARE(camera->size(), (Vector2{10.0f, 10.0f / (16.0f/9.0f)}));
-    }
-
-    {
+    } {
         Containers::Optional<CameraData> camera = importer->camera("cameraOrthographicOverscan");
         CORRADE_VERIFY(camera);
 
@@ -786,7 +771,7 @@ void UfbxImporterTest::light() {
            point light with the Visibility value set to off. */
         Long objectId = importer->objectForName("ambientLight1");
         CORRADE_COMPARE(importer->objectName(objectId), "ambientLight1");
-        CORRADE_COMPARE(translations[objectId], (Vector3d{0.0f,0.0f,0.0f}));
+        CORRADE_COMPARE(translations[objectId], (Vector3d{0.0, 0.0, 0.0}));
         CORRADE_COMPARE(visibilities[objectId], false);
 
         Containers::Array<UnsignedInt> lights = scene->lightsFor(objectId);
@@ -798,13 +783,11 @@ void UfbxImporterTest::light() {
         CORRADE_COMPARE(light->color(), (Color3{0.11f, 0.12f, 0.13f}));
         CORRADE_COMPARE(light->intensity(), 1.0f);
         CORRADE_COMPARE(light->range(), Constants::inf());
-        CORRADE_COMPARE(light->attenuation(), (Vector3{1.0f,0.0f,0.0f}));
-    }
-
-    {
+        CORRADE_COMPARE(light->attenuation(), (Vector3{1.0f, 0.0f, 0.0f}));
+    } {
         Long objectId = importer->objectForName("directionalLight1");
         CORRADE_COMPARE(importer->objectName(objectId), "directionalLight1");
-        CORRADE_COMPARE(translations[objectId], (Vector3d{1.0f,0.0f,0.0f}));
+        CORRADE_COMPARE(translations[objectId], (Vector3d{1.0, 0.0, 0.0}));
         CORRADE_COMPARE(visibilities[objectId], true);
 
         Containers::Array<UnsignedInt> lights = scene->lightsFor(objectId);
@@ -816,13 +799,11 @@ void UfbxImporterTest::light() {
         CORRADE_COMPARE(light->color(), (Color3{0.21f, 0.22f, 0.23f}));
         CORRADE_COMPARE(light->intensity(), 2.0f);
         CORRADE_COMPARE(light->range(), Constants::inf());
-        CORRADE_COMPARE(light->attenuation(), (Vector3{1.0f,0.0f,0.0f}));
-    }
-
-    {
+        CORRADE_COMPARE(light->attenuation(), (Vector3{1.0f, 0.0f, 0.0f}));
+    } {
         Long objectId = importer->objectForName("pointLight1");
         CORRADE_COMPARE(importer->objectName(objectId), "pointLight1");
-        CORRADE_COMPARE(translations[objectId], (Vector3d{2.0f,0.0f,0.0f}));
+        CORRADE_COMPARE(translations[objectId], (Vector3d{2.0, 0.0, 0.0}));
         CORRADE_COMPARE(visibilities[objectId], true);
 
         Containers::Array<UnsignedInt> lights = scene->lightsFor(objectId);
@@ -834,10 +815,8 @@ void UfbxImporterTest::light() {
         CORRADE_COMPARE(light->color(), (Color3{0.31f, 0.32f, 0.33f}));
         CORRADE_COMPARE(light->intensity(), 3.0f);
         CORRADE_COMPARE(light->range(), Constants::inf());
-        CORRADE_COMPARE(light->attenuation(), (Vector3{0.0f,1.0f,0.0f}));
-    }
-
-    {
+        CORRADE_COMPARE(light->attenuation(), (Vector3{0.0f, 1.0f, 0.0f}));
+    } {
         Long objectId = importer->objectForName("spotLight1");
         CORRADE_COMPARE(translations[objectId], (Vector3d{3.0f,0.0f,0.0f}));
         CORRADE_COMPARE(importer->objectName(objectId), "spotLight1");
@@ -855,11 +834,9 @@ void UfbxImporterTest::light() {
         CORRADE_COMPARE(light->attenuation(), (Vector3{0.0f,0.0f,1.0f}));
         CORRADE_COMPARE(light->innerConeAngle(), 12.0_degf);
         CORRADE_COMPARE(light->outerConeAngle(), 80.0_degf);
-    }
-
-    {
+    } {
         Long objectId = importer->objectForName("areaLight1");
-        CORRADE_COMPARE(translations[objectId], (Vector3d{4.0f,0.0f,0.0f}));
+        CORRADE_COMPARE(translations[objectId], (Vector3d{4.0, 0.0, 0.0}));
         CORRADE_COMPARE(importer->objectName(objectId), "areaLight1");
         CORRADE_COMPARE(visibilities[objectId], true);
 
@@ -869,11 +846,9 @@ void UfbxImporterTest::light() {
         /* Area lights are not supported */
         Containers::Optional<LightData> light = importer->light(lights[0]);
         CORRADE_VERIFY(!light);
-    }
-
-    {
+    } {
         Long objectId = importer->objectForName("volumeLight1");
-        CORRADE_COMPARE(translations[objectId], (Vector3d{5.0f,0.0f,0.0f}));
+        CORRADE_COMPARE(translations[objectId], (Vector3d{5.0, 0.0, 0.0}));
         CORRADE_COMPARE(importer->objectName(objectId), "volumeLight1");
         CORRADE_COMPARE(visibilities[objectId], true);
 
@@ -930,9 +905,7 @@ void UfbxImporterTest::lightBadDecay() {
         CORRADE_COMPARE(light->attenuation(), (Vector3{0.0f, 0.0f, 1.0f}));
 
         CORRADE_COMPARE(out.str(), "Trade::UfbxImporter::light(): cubic attenuation not supported, patching to quadratic\n");
-    }
-
-    {
+    } {
         Long objectId = importer->objectForName("directionalDecay");
         CORRADE_COMPARE_AS(objectId, 0, TestSuite::Compare::GreaterOrEqual);
 
@@ -1005,7 +978,7 @@ void UfbxImporterTest::geometricTransformHelperNodes() {
         {3, {1, -1}},
     })), TestSuite::Compare::Container);
 
-    const Containers::Pair<UnsignedInt, Containers::Triple<Vector3,Quaternion,Vector3>> referenceTrs[] = {
+    const Containers::Pair<UnsignedInt, Containers::Triple<Vector3,Quaternion,Vector3>> referenceTrs[]{
         /* Box001 */
         {0, {{0.0f, -10.0f, 0.0f},
              {{0.0f, 0.0f, -0.707107f}, 0.707107f}, /* Euler (0, 0, -90) */
@@ -1061,7 +1034,7 @@ void UfbxImporterTest::geometricTransformModifyGeometry() {
         {1, {1, -1}},
     })), TestSuite::Compare::Container);
 
-    const Containers::Pair<UnsignedInt, Containers::Triple<Vector3,Quaternion,Vector3>> referenceTrs[] = {
+    const Containers::Pair<UnsignedInt, Containers::Triple<Vector3,Quaternion,Vector3>> referenceTrs[]{
         /* Box001 */
         {0, {{0.0f, -10.0f, 0.0f},
              {{0.0f, 0.0f, -0.707107f}, 0.707107f}, /* Euler (0, 0, -90) */
@@ -1115,7 +1088,7 @@ void UfbxImporterTest::geometricTransformPreserve() {
         {1, {1, -1}},
     })), TestSuite::Compare::Container);
 
-    const Containers::Pair<UnsignedInt, Containers::Triple<Vector3,Quaternion,Vector3>> referenceTrs[] = {
+    const Containers::Pair<UnsignedInt, Containers::Triple<Vector3,Quaternion,Vector3>> referenceTrs[]{
         /* Box001 */
         {0, {{0.0f, -10.0f, 0.0f},
              {{0.0f, 0.0f, -0.707107f}, 0.707107f}, /* Euler (0, 0, -90) */
@@ -1176,7 +1149,7 @@ void UfbxImporterTest::materialMapping() {
     /* Make sure all the ufbx maps are used at least once and that there are
        no duplicate Magnum attributes without MaterialExclusionGroup */
 
-    Containers::ArrayView<const MaterialMapping> mappingLists[] = {
+    Containers::ArrayView<const MaterialMapping> mappingLists[]{
         Containers::arrayView(materialMappingFbx),
         Containers::arrayView(materialMappingPbr),
         Containers::arrayView(materialMappingFbxFactor),
@@ -1185,20 +1158,20 @@ void UfbxImporterTest::materialMapping() {
 
     Containers::StaticArray<UfbxMaterialLayerCount, std::unordered_map<std::string, MaterialExclusionGroup>> usedAttributeNames;
 
-    Containers::BitArray usedUfbxMaps[4] = {
-        Containers::BitArray{ ValueInit, UFBX_MATERIAL_FBX_MAP_COUNT },
-        Containers::BitArray{ ValueInit, UFBX_MATERIAL_PBR_MAP_COUNT },
-        Containers::BitArray{ ValueInit, UFBX_MATERIAL_FBX_MAP_COUNT },
-        Containers::BitArray{ ValueInit, UFBX_MATERIAL_PBR_MAP_COUNT },
+    Containers::BitArray usedUfbxMaps[]{
+        Containers::BitArray{ValueInit, UFBX_MATERIAL_FBX_MAP_COUNT},
+        Containers::BitArray{ValueInit, UFBX_MATERIAL_PBR_MAP_COUNT},
+        Containers::BitArray{ValueInit, UFBX_MATERIAL_FBX_MAP_COUNT},
+        Containers::BitArray{ValueInit, UFBX_MATERIAL_PBR_MAP_COUNT},
     };
 
-    Containers::BitArray usedFactorMaps[2] = {
-        Containers::BitArray{ ValueInit, UFBX_MATERIAL_FBX_MAP_COUNT },
-        Containers::BitArray{ ValueInit, UFBX_MATERIAL_PBR_MAP_COUNT },
+    Containers::BitArray usedFactorMaps[]{
+        Containers::BitArray{ValueInit, UFBX_MATERIAL_FBX_MAP_COUNT},
+        Containers::BitArray{ValueInit, UFBX_MATERIAL_PBR_MAP_COUNT},
     };
 
     for(UnsignedInt type = 0; type < 4; ++type) {
-        for(const MaterialMapping& mapping : mappingLists[type]) {
+        for(const MaterialMapping& mapping: mappingLists[type]) {
             std::size_t layer = std::size_t(mapping.layer);
 
             if(mapping.valueMap >= 0)
@@ -1220,15 +1193,15 @@ void UfbxImporterTest::materialMapping() {
                 CORRADE_COMPARE_AS(mapping.attributeType, MaterialAttributeType{}, TestSuite::Compare::NotEqual);
 
                 switch(mapping.attributeType) {
-                case MaterialAttributeType::Float:
-                case MaterialAttributeType::Vector3:
-                case MaterialAttributeType::Vector4:
-                case MaterialAttributeType::Long:
-                case MaterialAttributeType::Bool:
-                    break;
-                default:
-                    CORRADE_FAIL("Unimplemented MaterialAttributeType: " << mapping.attributeType);
-                    break;
+                    case MaterialAttributeType::Float:
+                    case MaterialAttributeType::Vector3:
+                    case MaterialAttributeType::Vector4:
+                    case MaterialAttributeType::Long:
+                    case MaterialAttributeType::Bool:
+                        break;
+                    default:
+                        CORRADE_FAIL("Unimplemented MaterialAttributeType: " << mapping.attributeType);
+                        break;
                 }
 
                 auto found = usedAttributeNames[layer].find(attribute);
@@ -1238,7 +1211,7 @@ void UfbxImporterTest::materialMapping() {
                     CORRADE_VERIFY(mapping.exclusionGroup != MaterialExclusionGroup{});
                     CORRADE_COMPARE(UnsignedInt(mapping.exclusionGroup), UnsignedInt(found->second));
                 } else {
-                    usedAttributeNames[layer].insert({ attribute, mapping.exclusionGroup });
+                    usedAttributeNames[layer].emplace(attribute, mapping.exclusionGroup);
                 }
 
                 if(textureAttribute.empty())
@@ -1255,7 +1228,7 @@ void UfbxImporterTest::materialMapping() {
                     CORRADE_VERIFY(mapping.exclusionGroup != MaterialExclusionGroup{});
                     CORRADE_COMPARE(UnsignedInt(mapping.exclusionGroup), UnsignedInt(found->second));
                 } else {
-                    usedAttributeNames[layer].insert({ textureAttribute, mapping.exclusionGroup });
+                    usedAttributeNames[layer].emplace(textureAttribute, mapping.exclusionGroup);
                 }
             }
         }
@@ -1303,18 +1276,14 @@ void UfbxImporterTest::blenderMaterials() {
             const PhongMaterialData& phong = material->as<PhongMaterialData>();
             CORRADE_COMPARE(phong.diffuseColor(), (Color4{0.8f, 0.8f, 0.8f, 1.0f}));
             CORRADE_COMPARE(phong.shininess(), 25.0f);
-        }
-
-        {
+        } {
             const PbrMetallicRoughnessMaterialData& pbr = material->as<PbrMetallicRoughnessMaterialData>();
             CORRADE_COMPARE(pbr.baseColor(), (Color4{0.8f, 0.8f, 0.8f, 1.0f}));
             CORRADE_COMPARE(pbr.emissiveColor(), (Color3{0.0f, 0.0f, 0.0f}));
             CORRADE_COMPARE(pbr.metalness(), 0.0f);
             CORRADE_COMPARE(pbr.roughness(), 0.5f);
         }
-    }
-
-    {
+    } {
         Containers::Optional<MaterialData> material = importer->material("Top");
         CORRADE_VERIFY(material);
         CORRADE_COMPARE(material->types(), MaterialType::Phong|MaterialType::PbrMetallicRoughness);
@@ -1323,18 +1292,14 @@ void UfbxImporterTest::blenderMaterials() {
             const PhongMaterialData& phong = material->as<PhongMaterialData>();
             CORRADE_COMPARE(phong.diffuseColor(), (Color4{0.1f, 0.2f, 0.3f, 1.0f}));
             CORRADE_COMPARE(phong.shininess(), 4.0f);
-        }
-
-        {
+        } {
             const PbrMetallicRoughnessMaterialData& pbr = material->as<PbrMetallicRoughnessMaterialData>();
             CORRADE_COMPARE(pbr.baseColor(), (Color4{0.1f, 0.2f, 0.3f, 0.9f}));
             CORRADE_COMPARE(pbr.emissiveColor(), (Color3{0.4f, 0.5f, 0.6f}));
             CORRADE_COMPARE(pbr.metalness(), 0.7f);
             CORRADE_COMPARE(pbr.roughness(), 0.8f);
         }
-    }
-
-    {
+    } {
         Containers::Optional<MaterialData> material = importer->material("Textures");
         CORRADE_VERIFY(material);
         CORRADE_COMPARE(material->types(), MaterialType::Phong|MaterialType::PbrMetallicRoughness);
@@ -1348,9 +1313,7 @@ void UfbxImporterTest::blenderMaterials() {
                 CORRADE_VERIFY(texture);
                 CORRADE_COMPARE(importer->image2DName(texture->image()), "blender-materials.fbm\\checkerboard_diffuse.png");
             }
-        }
-
-        {
+        } {
             const PbrMetallicRoughnessMaterialData& pbr = material->as<PbrMetallicRoughnessMaterialData>();
 
             {
@@ -1358,31 +1321,23 @@ void UfbxImporterTest::blenderMaterials() {
                 Containers::Optional<TextureData> texture = importer->texture(pbr.baseColorTexture());
                 CORRADE_VERIFY(texture);
                 CORRADE_COMPARE(importer->image2DName(texture->image()), "blender-materials.fbm\\checkerboard_diffuse.png");
-            }
-
-            {
+            } {
                 CORRADE_VERIFY(pbr.hasAttribute(MaterialAttribute::EmissiveTexture));
                 Containers::Optional<TextureData> texture = importer->texture(pbr.emissiveTexture());
                 CORRADE_VERIFY(texture);
                 CORRADE_COMPARE(importer->image2DName(texture->image()), "blender-materials.fbm\\checkerboard_emissive.png");
-            }
-
-            {
+            } {
                 CORRADE_VERIFY(pbr.hasAttribute(MaterialAttribute::RoughnessTexture));
                 Containers::Optional<TextureData> texture = importer->texture(pbr.roughnessTexture());
                 CORRADE_VERIFY(texture);
                 CORRADE_COMPARE(importer->image2DName(texture->image()), "blender-materials.fbm\\checkerboard_roughness.png");
-            }
-
-            {
+            } {
                 CORRADE_VERIFY(pbr.hasAttribute(MaterialAttribute::MetalnessTexture));
                 Containers::Optional<TextureData> texture = importer->texture(pbr.metalnessTexture());
                 CORRADE_VERIFY(texture);
                 CORRADE_COMPARE(importer->image2DName(texture->image()), "blender-materials.fbm\\checkerboard_metallic.png");
             }
-        }
-
-        {
+        } {
             CORRADE_VERIFY(material->hasAttribute("opacityTexture"));
             UnsignedInt textureId = material->attribute<UnsignedInt>("opacityTexture");
             Containers::Optional<TextureData> texture = importer->texture(textureId);
@@ -1509,7 +1464,6 @@ void UfbxImporterTest::materialMayaArnold() {
         {MaterialAttribute::LayerName, "matte"},
         {MaterialAttribute::LayerFactor, 0.68f},
         {"color", Color3{0.65f, 0.66f, 0.67f}},
-
     }, {14, 21, 31, 38, 42, 45}};
 
     CORRADE_COMPARE_AS(*material, reference, DebugTools::CompareMaterial);
@@ -1579,7 +1533,6 @@ void UfbxImporterTest::materialMayaArnoldFactors() {
         {MaterialAttribute::LayerName, "matte"},
         {MaterialAttribute::LayerFactor, 0.68f},
         {"color", Color3{0.65f, 0.66f, 0.67f}},
-
     }, {17, 24, 34, 41, 45, 48}};
 
     CORRADE_COMPARE_AS(*material, reference, DebugTools::CompareMaterial);
@@ -1632,7 +1585,6 @@ void UfbxImporterTest::materialMaxPhysical() {
         {"color", Color4{0.21f, 0.22f, 0.23f, 0.24f}},
         {"radius", Color3{0.098425f}}, /* unit conversion in file */
         {"scale", 0.26f},
-
     }, {13, 20, 25, 31}};
 
     CORRADE_COMPARE_AS(*material, reference, DebugTools::CompareMaterial);
@@ -1690,7 +1642,6 @@ void UfbxImporterTest::materialMaxPhysicalFactors() {
         {"color", Color4{0.21f, 0.22f, 0.23f, 0.24f}},
         {"radius", Color3{0.098425f}}, /* unit conversion in file */
         {"scale", 0.26f},
-
     }, {17, 24, 29, 35}};
 
     CORRADE_COMPARE_AS(*material, reference, DebugTools::CompareMaterial);
@@ -1777,31 +1728,29 @@ void UfbxImporterTest::materialLayeredPbrTextures() {
     CORRADE_COMPARE(coatLayerIds.size(), 3);
     CORRADE_COMPARE(sheenLayerIds.size(), 2);
 
-    struct AttributeTextureLayer {
+    const struct {
         UnsignedInt layer;
         Containers::StringView attribute;
         Containers::StringView imageName;
         Containers::StringView blendMode;
         Float blendAlpha;
-    };
-
-    AttributeTextureLayer attributeTextureLayers[] = {
-        { baseLayerIds[0], "BaseColorTexture", "tex-red.png", "over", 1.0f },
-        { baseLayerIds[1], "BaseColorTexture", "tex-green.png", "over", 0.25f },
-        { baseLayerIds[2], "BaseColorTexture", "tex-blue.png", "additive", 0.75f },
-        { coatLayerIds[0], "colorTexture", "tex-cyan.png", "over", 1.0f },
-        { coatLayerIds[1], "colorTexture", "tex-pink.png", "softLight", 0.33f },
-        { coatLayerIds[2], "colorTexture", "tex-yellow.png", "multiply", 0.66f },
-        { coatLayerIds[0], "RoughnessTexture", "tex-black.png", "over", 1.0f },
-        { coatLayerIds[1], "RoughnessTexture", "tex-white.png", "screen", 0.5f },
-        { sheenLayerIds[0], "LayerFactorTexture", "tex-black.png", "over", 1.0f },
-        { sheenLayerIds[1], "LayerFactorTexture", "tex-white.png", "replace", 0.5f },
+    } attributeTextureLayers[]{
+        {baseLayerIds[0], "BaseColorTexture", "tex-red.png", "over", 1.0f},
+        {baseLayerIds[1], "BaseColorTexture", "tex-green.png", "over", 0.25f},
+        {baseLayerIds[2], "BaseColorTexture", "tex-blue.png", "additive", 0.75f},
+        {coatLayerIds[0], "colorTexture", "tex-cyan.png", "over", 1.0f},
+        {coatLayerIds[1], "colorTexture", "tex-pink.png", "softLight", 0.33f},
+        {coatLayerIds[2], "colorTexture", "tex-yellow.png", "multiply", 0.66f},
+        {coatLayerIds[0], "RoughnessTexture", "tex-black.png", "over", 1.0f},
+        {coatLayerIds[1], "RoughnessTexture", "tex-white.png", "screen", 0.5f},
+        {sheenLayerIds[0], "LayerFactorTexture", "tex-black.png", "over", 1.0f},
+        {sheenLayerIds[1], "LayerFactorTexture", "tex-white.png", "replace",0.5f},
     };
 
     for(UnsignedInt i = 0; i < Containers::arraySize(attributeTextureLayers); ++i) {
         CORRADE_ITERATION(i);
 
-        const AttributeTextureLayer& texLayer = attributeTextureLayers[i];
+        const auto& texLayer = attributeTextureLayers[i];
         CORRADE_VERIFY(material->hasAttribute(texLayer.layer, texLayer.attribute));
         UnsignedInt textureId = material->attribute<UnsignedInt>(texLayer.layer, texLayer.attribute);
 
@@ -1859,10 +1808,9 @@ void UfbxImporterTest::meshMaterials() {
             CORRADE_ITERATION(i);
             CORRADE_COMPARE(normal[i].z(), 0.0f);
         }
-    }
 
     /* 'Top' material is on the top face (+Z in Blender local) */
-    {
+    } {
         Containers::Optional<MeshData> mesh = importer->mesh(1);
         CORRADE_VERIFY(mesh);
         CORRADE_COMPARE(mesh->indexCount(), 2*3);
@@ -1878,10 +1826,9 @@ void UfbxImporterTest::meshMaterials() {
             CORRADE_COMPARE(position[i].z(), 1.0f);
             CORRADE_COMPARE(normal[i], (Vector3{0.0f,0.0f,1.0f}));
         }
-    }
 
     /* 'Textures' material is on the bottom face (-Z in Blender local) */
-    {
+    } {
         Containers::Optional<MeshData> mesh = importer->mesh(2);
         CORRADE_VERIFY(mesh);
         CORRADE_COMPARE(mesh->indexCount(), 2*3);
@@ -1898,7 +1845,6 @@ void UfbxImporterTest::meshMaterials() {
             CORRADE_COMPARE(normal[i], (Vector3{0.0f,0.0f,-1.0f}));
         }
     }
-
 }
 
 void UfbxImporterTest::instancedMaterial() {
@@ -1934,16 +1880,19 @@ void UfbxImporterTest::instancedMaterial() {
     CORRADE_VERIFY(scene);
 
     CORRADE_COMPARE_AS(scene->meshesMaterialsFor(UnsignedLong(modelA)), (Containers::arrayView<Containers::Pair<UnsignedInt, Int>>({
-        { 0, materialA }, { 1, topA },
+        {0, materialA},
+        {1, topA},
     })), TestSuite::Compare::Container);
 
     CORRADE_COMPARE_AS(scene->meshesMaterialsFor(UnsignedLong(modelB)), (Containers::arrayView<Containers::Pair<UnsignedInt, Int>>({
-        { 2, materialB }, { 3, topB },
+        {2, materialB},
+        {3, topB},
     })), TestSuite::Compare::Container);
 
     /* Note: Re-uses mesh from A with different materials! */
     CORRADE_COMPARE_AS(scene->meshesMaterialsFor(UnsignedLong(modelC)), (Containers::arrayView<Containers::Pair<UnsignedInt, Int>>({
-        { 0, materialC }, { 1, topC },
+        {0, materialC},
+        {1, topC},
     })), TestSuite::Compare::Container);
 }
 
@@ -1996,21 +1945,15 @@ void UfbxImporterTest::textureWrapModes() {
         Containers::Optional<TextureData> texture = importer->texture("repeatRepeat");
         CORRADE_VERIFY(texture);
         CORRADE_COMPARE(texture->wrapping(), (Math::Vector3<SamplerWrapping>{SamplerWrapping::Repeat, SamplerWrapping::Repeat, SamplerWrapping::ClampToEdge}));
-    }
-
-    {
+    } {
         Containers::Optional<TextureData> texture = importer->texture("clampRepeat");
         CORRADE_VERIFY(texture);
         CORRADE_COMPARE(texture->wrapping(), (Math::Vector3<SamplerWrapping>{SamplerWrapping::ClampToEdge, SamplerWrapping::Repeat, SamplerWrapping::ClampToEdge}));
-    }
-
-    {
+    } {
         Containers::Optional<TextureData> texture = importer->texture("repeatClamp");
         CORRADE_VERIFY(texture);
         CORRADE_COMPARE(texture->wrapping(), (Math::Vector3<SamplerWrapping>{SamplerWrapping::Repeat, SamplerWrapping::ClampToEdge, SamplerWrapping::ClampToEdge}));
-    }
-
-    {
+    } {
         Containers::Optional<TextureData> texture = importer->texture("clampClamp");
         CORRADE_VERIFY(texture);
         CORRADE_COMPARE(texture->wrapping(), (Math::Vector3<SamplerWrapping>{SamplerWrapping::ClampToEdge, SamplerWrapping::ClampToEdge, SamplerWrapping::ClampToEdge}));
@@ -2027,21 +1970,19 @@ void UfbxImporterTest::imageEmbedded() {
     UnsignedInt imageCount = importer->image2DCount();
     CORRADE_COMPARE(imageCount, 5);
 
-    struct TestImage {
+    const struct {
         Containers::StringView name;
         Color4ub topLeftPixelColor;
         Color4ub bottomLeftPixelColor;
+    } testImages[]{
+        {"blender-materials.fbm\\checkerboard_diffuse.png",      0x7c5151ff_rgba, 0x3d2828ff_rgba},
+        {"blender-materials.fbm\\checkerboard_emissive.png",     0x44743bff_rgba, 0x223a1dff_rgba},
+        {"blender-materials.fbm\\checkerboard_roughness.png",    0x5f3228ff_rgba, 0x2f1914ff_rgba},
+        {"blender-materials.fbm\\checkerboard_metallic.png",     0x63422cff_rgba, 0x312116ff_rgba},
+        {"blender-materials.fbm\\checkerboard_transparency.png", 0x407177ff_rgba, 0x1f373aff_rgba},
     };
 
-    TestImage testImages[] = {
-        { "blender-materials.fbm\\checkerboard_diffuse.png",      0x7c5151ff_rgba, 0x3d2828ff_rgba },
-        { "blender-materials.fbm\\checkerboard_emissive.png",     0x44743bff_rgba, 0x223a1dff_rgba },
-        { "blender-materials.fbm\\checkerboard_roughness.png",    0x5f3228ff_rgba, 0x2f1914ff_rgba },
-        { "blender-materials.fbm\\checkerboard_metallic.png",     0x63422cff_rgba, 0x312116ff_rgba },
-        { "blender-materials.fbm\\checkerboard_transparency.png", 0x407177ff_rgba, 0x1f373aff_rgba },
-    };
-
-    for(const TestImage& testImage : testImages) {
+    for(const auto& testImage: testImages) {
         CORRADE_ITERATION(testImage.name);
 
         Int optionalId = importer->image2DForName(testImage.name);
@@ -2064,15 +2005,15 @@ void UfbxImporterTest::imageExternal() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "layered-pbr-textures.fbx")));
 
-    Containers::Pair<Containers::StringView, Color3ub> imageColors[] = {
-        { "tex-red.png",    0xff0000_rgb },
-        { "tex-green.png",  0x00ff00_rgb },
-        { "tex-blue.png",   0x0000ff_rgb },
-        { "tex-cyan.png",   0x00ffff_rgb },
-        { "tex-pink.png",   0xff00ff_rgb },
-        { "tex-yellow.png", 0xffff00_rgb },
-        { "tex-black.png",  0x000000_rgb },
-        { "tex-white.png",  0xffffff_rgb },
+    Containers::Pair<Containers::StringView, Color3ub> imageColors[]{
+        {"tex-red.png",    0xff0000_rgb},
+        {"tex-green.png",  0x00ff00_rgb},
+        {"tex-blue.png",   0x0000ff_rgb},
+        {"tex-cyan.png",   0x00ffff_rgb},
+        {"tex-pink.png",   0xff00ff_rgb},
+        {"tex-yellow.png", 0xffff00_rgb},
+        {"tex-black.png",  0x000000_rgb},
+        {"tex-white.png",  0xffffff_rgb},
     };
 
     CORRADE_COMPARE(importer->image2DCount(), 8);
@@ -2116,15 +2057,15 @@ void UfbxImporterTest::imageFileCallback() {
     FileCallbackFiles files;
     importer->setFileCallback(&fileCallbackFunc, &files);
 
-    Containers::Pair<Containers::StringView, Color3ub> imageColors[] = {
-        { "tex-red.png",    0xff0000_rgb },
-        { "tex-green.png",  0x00ff00_rgb },
-        { "tex-blue.png",   0x0000ff_rgb },
-        { "tex-cyan.png",   0x00ffff_rgb },
-        { "tex-pink.png",   0xff00ff_rgb },
-        { "tex-yellow.png", 0xffff00_rgb },
-        { "tex-black.png",  0x000000_rgb },
-        { "tex-white.png",  0xffffff_rgb },
+    Containers::Pair<Containers::StringView, Color3ub> imageColors[]{
+        {"tex-red.png",    0xff0000_rgb},
+        {"tex-green.png",  0x00ff00_rgb},
+        {"tex-blue.png",   0x0000ff_rgb},
+        {"tex-cyan.png",   0x00ffff_rgb},
+        {"tex-pink.png",   0xff00ff_rgb},
+        {"tex-yellow.png", 0xffff00_rgb},
+        {"tex-black.png",  0x000000_rgb},
+        {"tex-white.png",  0xffffff_rgb},
     };
 
     CORRADE_VERIFY(importer->openFile("layered-pbr-textures.fbx"));
@@ -2173,17 +2114,17 @@ void UfbxImporterTest::imageDeduplication() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "layered-pbr-textures.fbx")));
 
-    Containers::Pair<Containers::StringView, Containers::StringView> textureToImage[] = {
-        { "Map #2", "tex-red.png" },
-        { "Map #3", "tex-green.png" },
-        { "Map #4", "tex-blue.png" },
-        { "Map #9", "tex-cyan.png" },
-        { "Map #10", "tex-pink.png" },
-        { "Map #11", "tex-yellow.png" },
-        { "Map #14", "tex-black.png" },
-        { "Map #15", "tex-white.png" },
-        { "Map #16", "tex-black.png" },
-        { "Map #17", "tex-white.png" },
+    Containers::Pair<Containers::StringView, Containers::StringView> textureToImage[]{
+        {"Map #2", "tex-red.png"},
+        {"Map #3", "tex-green.png"},
+        {"Map #4", "tex-blue.png"},
+        {"Map #9", "tex-cyan.png"},
+        {"Map #10", "tex-pink.png"},
+        {"Map #11", "tex-yellow.png"},
+        {"Map #14", "tex-black.png"},
+        {"Map #15", "tex-white.png"},
+        {"Map #16", "tex-black.png"},
+        {"Map #17", "tex-white.png"},
     };
 
     CORRADE_COMPARE(importer->image2DCount(), 8);
@@ -2439,9 +2380,7 @@ void UfbxImporterTest::normalizeUnitsTransformRoot() {
         CORRADE_COMPARE(trs->first(), (Vector3{0.0f, 0.0f, 0.0f}));
         CORRADE_COMPARE(trs->second(), (Quaternion{{-0.707107f, 0.0f, 0.0f}, 0.707107f})); /* Euler (-90, 0, 0) */
         CORRADE_COMPARE(trs->third(), (Vector3{0.01f})); /* centimeters to meters */
-    }
-
-    {
+    } {
         CORRADE_COMPARE(importer->objectName(1), "Empty");
         Containers::Optional<Containers::Triple<Vector3, Quaternion, Vector3>> trs = scene->translationRotationScaling3DFor(1);
         CORRADE_VERIFY(trs);
@@ -2491,15 +2430,15 @@ void UfbxImporterTest::staticSkin() {
     Containers::Optional<SceneData> scene = importer->scene(0);
     CORRADE_VERIFY(scene);
 
-    Containers::Pair<Containers::StringView, Containers::StringView> parents[] = {
-        { "pCube1", "" },
-        { "joint1", "" },
-        { "joint2", "joint1" },
-        { "joint3", "joint2" },
-        { "joint4", "joint3" },
+    Containers::Pair<Containers::StringView, Containers::StringView> parents[]{
+        {"pCube1", ""},
+        {"joint1", ""},
+        {"joint2", "joint1"},
+        {"joint3", "joint2"},
+        {"joint4", "joint3"},
     };
 
-    for(const auto& pair : parents) {
+    for(const auto& pair: parents) {
         Long objectId = importer->objectForName(pair.first());
         CORRADE_COMPARE_AS(objectId, 0, TestSuite::Compare::GreaterOrEqual);
 

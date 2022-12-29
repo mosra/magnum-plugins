@@ -37,16 +37,13 @@ endif()
 find_package(Magnum REQUIRED DebugTools)
 
 if(NOT MAGNUM_UFBXIMPORTER_BUILD_STATIC)
+    set(UFBXIMPORTER_PLUGIN_FILENAME $<TARGET_FILE:UfbxImporter>)
     if(MAGNUM_WITH_DDSIMPORTER)
         set(DDSIMPORTER_PLUGIN_FILENAME $<TARGET_FILE:DdsImporter>)
     endif()
     if(MAGNUM_WITH_STBIMAGEIMPORTER)
         set(STBIMAGEIMPORTER_PLUGIN_FILENAME $<TARGET_FILE:StbImageImporter>)
     endif()
-endif()
-
-if(NOT MAGNUM_UFBXIMPORTER_BUILD_STATIC)
-    set(UFBXIMPORTER_PLUGIN_FILENAME $<TARGET_FILE:UfbxImporter>)
 endif()
 
 # First replace ${} variables, then $<> generator expressions
@@ -99,7 +96,6 @@ corrade_add_test(UfbxImporterTest UfbxImporterTest.cpp
         tex-white.png
         tex-yellow.png
         tex-broken.png)
-
 
 target_include_directories(UfbxImporterTest PRIVATE ${PROJECT_SOURCE_DIR}/src/external/ufbx)
 target_include_directories(UfbxImporterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>)
