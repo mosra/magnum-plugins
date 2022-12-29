@@ -26,28 +26,6 @@
 
 #include "UfbxImporter.h"
 
-#define UFBX_NO_INDEX_GENERATION
-#define UFBX_NO_GEOMETRY_CACHE
-#define UFBX_NO_TESSELLATION
-#define UFBX_NO_SUBDIVISION
-#define UFBX_NO_SCENE_EVALUATION
-#define UFBX_NO_SKINNING_EVALUATION
-
-/* Include error stack on debug builds for juicy details in bug reports */
-#if defined(CORRADE_IS_DEBUG_BUILD) || !defined(NDEBUG)
-    #define UFBX_ENABLE_ERROR_STACK
-#else
-    #define UFBX_NO_ERROR_STACK
-#endif
-
-/* Embed ufbx into the translation unit as static, allows for more optimizations
-   and users to have an alternate version of ufbx loaded simultaneously */
-#define ufbx_abi static
-#include "ufbx.h"
-#include "ufbx.c"
-
-#include "UfbxMaterials.h"
-
 #include <unordered_map>
 #include <Corrade/Containers/Array.h>
 #include <Corrade/Containers/ArrayTuple.h>
@@ -72,6 +50,28 @@
 #include <Magnum/Trade/SceneData.h>
 #include <Magnum/MeshTools/RemoveDuplicates.h>
 #include <MagnumPlugins/AnyImageImporter/AnyImageImporter.h>
+
+#define UFBX_NO_INDEX_GENERATION
+#define UFBX_NO_GEOMETRY_CACHE
+#define UFBX_NO_TESSELLATION
+#define UFBX_NO_SUBDIVISION
+#define UFBX_NO_SCENE_EVALUATION
+#define UFBX_NO_SKINNING_EVALUATION
+
+/* Include error stack on debug builds for juicy details in bug reports */
+#if defined(CORRADE_IS_DEBUG_BUILD) || !defined(NDEBUG)
+    #define UFBX_ENABLE_ERROR_STACK
+#else
+    #define UFBX_NO_ERROR_STACK
+#endif
+
+/* Embed ufbx into the translation unit as static, allows for more optimizations
+   and users to have an alternate version of ufbx loaded simultaneously */
+#define ufbx_abi static
+#include "ufbx.h"
+#include "ufbx.c"
+
+#include "UfbxMaterials.h"
 
 namespace Corrade { namespace Containers { namespace Implementation {
 
