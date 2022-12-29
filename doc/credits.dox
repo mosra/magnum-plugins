@@ -93,6 +93,8 @@ namespace Magnum {
     @ref Trade::AssimpImporter "AssimpImporter", improved
     @relativeref{Trade,TinyGltfImporter} robustness, documentation updates
 -   **[\@playgroo](https://github.com/playgroo)** --- Debian package updates
+-   **Samuli Raivio** ([\@bqqbarbhg](https://github.com/bqqbarbhg)) ---
+    @relativeref{Trade,UfbxImporter} plugin and the ufbx library itself
 -   **Séverin Lemaignan** ([\@severin-lemaignan](https://github.com/severin-lemaignan))
     --- buildsystem fixes, bugreports
 -   **[\@sigman78](https://github.com/sigman78)** --- initial MSVC 2017 port,
