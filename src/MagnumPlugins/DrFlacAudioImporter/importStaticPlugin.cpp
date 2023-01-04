@@ -27,6 +27,7 @@
 
 #ifdef MAGNUM_DRFLACAUDIOIMPORTER_BUILD_STATIC
 #include <Corrade/PluginManager/AbstractManager.h>
+#include <Corrade/Utility/Macros.h>
 
 static int magnumDrFlacAudioImporterStaticImporter() {
     CORRADE_PLUGIN_IMPORT(DrFlacAudioImporter)

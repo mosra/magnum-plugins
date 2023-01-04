@@ -27,6 +27,7 @@
 
 #ifdef MAGNUM_MESHOPTIMIZERSCENECONVERTER_BUILD_STATIC
 #include <Corrade/PluginManager/AbstractManager.h>
+#include <Corrade/Utility/Macros.h>
 
 static int magnumMeshOptimizerSceneConverterStaticImporter() {
     CORRADE_PLUGIN_IMPORT(MeshOptimizerSceneConverter)

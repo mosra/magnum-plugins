@@ -27,6 +27,7 @@
 
 #ifdef MAGNUM_DEVILIMAGEIMPORTER_BUILD_STATIC
 #include <Corrade/PluginManager/AbstractManager.h>
+#include <Corrade/Utility/Macros.h>
 
 static int magnumDevIlImageImporterStaticImporter() {
     CORRADE_PLUGIN_IMPORT(DevIlImageImporter)

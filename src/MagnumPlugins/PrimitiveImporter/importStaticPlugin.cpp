@@ -27,6 +27,7 @@
 
 #ifdef MAGNUM_PRIMITIVEIMPORTER_BUILD_STATIC
 #include <Corrade/PluginManager/AbstractManager.h>
+#include <Corrade/Utility/Macros.h>
 
 static int magnumPrimitiveImporterStaticImporter() {
     CORRADE_PLUGIN_IMPORT(PrimitiveImporter)

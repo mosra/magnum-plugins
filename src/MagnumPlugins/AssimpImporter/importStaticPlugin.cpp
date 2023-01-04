@@ -27,6 +27,7 @@
 
 #ifdef MAGNUM_ASSIMPIMPORTER_BUILD_STATIC
 #include <Corrade/PluginManager/AbstractManager.h>
+#include <Corrade/Utility/Macros.h>
 
 static int magnumAssimpImporterStaticImporter() {
     CORRADE_PLUGIN_IMPORT(AssimpImporter)

@@ -27,6 +27,7 @@
 
 #ifdef MAGNUM_STBDXTIMAGECONVERTER_BUILD_STATIC
 #include <Corrade/PluginManager/AbstractManager.h>
+#include <Corrade/Utility/Macros.h>
 
 static int magnumStbDxtImageConverterStaticImporter() {
     CORRADE_PLUGIN_IMPORT(StbDxtImageConverter)

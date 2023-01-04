@@ -27,6 +27,7 @@
 
 #ifdef MAGNUM_STBTRUETYPEFONT_BUILD_STATIC
 #include <Corrade/PluginManager/AbstractManager.h>
+#include <Corrade/Utility/Macros.h>
 
 static int magnumStbTrueTypeFontStaticImporter() {
     CORRADE_PLUGIN_IMPORT(StbTrueTypeFont)

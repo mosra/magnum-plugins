@@ -27,6 +27,7 @@
 
 #ifdef MAGNUM_FREETYPEFONT_BUILD_STATIC
 #include <Corrade/PluginManager/AbstractManager.h>
+#include <Corrade/Utility/Macros.h>
 
 static int magnumFreeTypeFontStaticImporter() {
     CORRADE_PLUGIN_IMPORT(FreeTypeFont)

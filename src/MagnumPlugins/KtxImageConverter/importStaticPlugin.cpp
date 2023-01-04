@@ -28,6 +28,7 @@
 
 #ifdef MAGNUM_KTXIMAGECONVERTER_BUILD_STATIC
 #include <Corrade/PluginManager/AbstractManager.h>
+#include <Corrade/Utility/Macros.h>
 
 static int magnumKtxImageConverterStaticImporter() {
     CORRADE_PLUGIN_IMPORT(KtxImageConverter)

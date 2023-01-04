@@ -27,6 +27,7 @@
 
 #ifdef MAGNUM_JPEGIMPORTER_BUILD_STATIC
 #include <Corrade/PluginManager/AbstractManager.h>
+#include <Corrade/Utility/Macros.h>
 
 static int magnumJpegImporterStaticImporter() {
     CORRADE_PLUGIN_IMPORT(JpegImporter)

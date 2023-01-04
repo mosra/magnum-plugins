@@ -28,6 +28,7 @@
 
 #ifdef MAGNUM_DRMP3AUDIOIMPORTER_BUILD_STATIC
 #include <Corrade/PluginManager/AbstractManager.h>
+#include <Corrade/Utility/Macros.h>
 
 static int magnumDrMp3AudioImporterStaticImporter() {
     CORRADE_PLUGIN_IMPORT(DrMp3AudioImporter)

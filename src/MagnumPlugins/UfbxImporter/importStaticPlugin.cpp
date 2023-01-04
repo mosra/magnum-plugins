@@ -27,6 +27,7 @@
 
 #ifdef MAGNUM_UFBXIMPORTER_BUILD_STATIC
 #include <Corrade/PluginManager/AbstractManager.h>
+#include <Corrade/Utility/Macros.h>
 
 static int magnumUfbxImporterStaticImporter() {
     CORRADE_PLUGIN_IMPORT(UfbxImporter)

@@ -27,6 +27,7 @@
 
 #ifdef MAGNUM_DDSIMPORTER_BUILD_STATIC
 #include <Corrade/PluginManager/AbstractManager.h>
+#include <Corrade/Utility/Macros.h>
 
 static int magnumDdsImporterStaticImporter() {
     CORRADE_PLUGIN_IMPORT(DdsImporter)

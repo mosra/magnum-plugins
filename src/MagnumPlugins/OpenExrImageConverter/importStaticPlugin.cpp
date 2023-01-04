@@ -27,6 +27,7 @@
 
 #ifdef MAGNUM_OPENEXRIMAGECONVERTER_BUILD_STATIC
 #include <Corrade/PluginManager/AbstractManager.h>
+#include <Corrade/Utility/Macros.h>
 
 static int magnumOpenExrImageConverterStaticImporter() {
     CORRADE_PLUGIN_IMPORT(OpenExrImageConverter)

@@ -27,6 +27,7 @@
 
 #ifdef MAGNUM_FAAD2AUDIOIMPORTER_BUILD_STATIC
 #include <Corrade/PluginManager/AbstractManager.h>
+#include <Corrade/Utility/Macros.h>
 
 static int magnumFaad2AudioImporterStaticImporter() {
     CORRADE_PLUGIN_IMPORT(Faad2AudioImporter)

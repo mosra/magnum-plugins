@@ -27,6 +27,7 @@
 
 #ifdef MAGNUM_SPIRVTOOLSSHADERCONVERTER_BUILD_STATIC
 #include <Corrade/PluginManager/AbstractManager.h>
+#include <Corrade/Utility/Macros.h>
 
 static int magnumSpirvToolsShaderConverterStaticImporter() {
     CORRADE_PLUGIN_IMPORT(SpirvToolsShaderConverter)

@@ -27,6 +27,7 @@
 
 #ifdef MAGNUM_OPENGEXIMPORTER_BUILD_STATIC
 #include <Corrade/PluginManager/AbstractManager.h>
+#include <Corrade/Utility/Macros.h>
 
 static int magnumOpenGexImporterStaticImporter() {
     CORRADE_PLUGIN_IMPORT(OpenGexImporter)

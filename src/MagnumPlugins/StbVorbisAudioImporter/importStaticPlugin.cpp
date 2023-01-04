@@ -27,6 +27,7 @@
 
 #ifdef MAGNUM_STBVORBISAUDIOIMPORTER_BUILD_STATIC
 #include <Corrade/PluginManager/AbstractManager.h>
+#include <Corrade/Utility/Macros.h>
 
 static int magnumStbVorbisAudioImporterStaticImporter() {
     CORRADE_PLUGIN_IMPORT(StbVorbisAudioImporter)

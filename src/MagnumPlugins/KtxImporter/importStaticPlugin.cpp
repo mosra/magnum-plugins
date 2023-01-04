@@ -28,6 +28,7 @@
 
 #ifdef MAGNUM_KTXIMPORTER_BUILD_STATIC
 #include <Corrade/PluginManager/AbstractManager.h>
+#include <Corrade/Utility/Macros.h>
 
 static int magnumKtxImporterStaticImporter() {
     CORRADE_PLUGIN_IMPORT(KtxImporter)

@@ -27,6 +27,7 @@
 
 #ifdef MAGNUM_MINIEXRIMAGECONVERTER_BUILD_STATIC
 #include <Corrade/PluginManager/AbstractManager.h>
+#include <Corrade/Utility/Macros.h>
 
 static int magnumMiniExrImageConverterStaticImporter() {
     CORRADE_PLUGIN_IMPORT(MiniExrImageConverter)

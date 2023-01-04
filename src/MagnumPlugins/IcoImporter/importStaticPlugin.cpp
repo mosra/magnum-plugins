@@ -28,6 +28,7 @@
 
 #ifdef MAGNUM_ICOIMPORTER_BUILD_STATIC
 #include <Corrade/PluginManager/AbstractManager.h>
+#include <Corrade/Utility/Macros.h>
 
 static int magnumIcoImporterStaticImporter() {
     CORRADE_PLUGIN_IMPORT(IcoImporter)

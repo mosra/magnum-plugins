@@ -27,6 +27,7 @@
 
 #ifdef MAGNUM_ASTCIMPORTER_BUILD_STATIC
 #include <Corrade/PluginManager/AbstractManager.h>
+#include <Corrade/Utility/Macros.h>
 
 static int magnumAstcImporterStaticImporter() {
     CORRADE_PLUGIN_IMPORT(AstcImporter)

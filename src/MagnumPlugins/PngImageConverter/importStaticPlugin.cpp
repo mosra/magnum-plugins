@@ -27,6 +27,7 @@
 
 #ifdef MAGNUM_PNGIMAGECONVERTER_BUILD_STATIC
 #include <Corrade/PluginManager/AbstractManager.h>
+#include <Corrade/Utility/Macros.h>
 
 static int magnumPngImageConverterStaticImporter() {
     CORRADE_PLUGIN_IMPORT(PngImageConverter)
