@@ -770,9 +770,6 @@ void GltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags da
         }
     }
 
-    /** @todo this means that if openFile() got passed a global string, Json
-        will still make a copy of it -- need a way to preserve the globalness
-        inside non-owned String */
     Containers::Optional<Utility::Json> gltf = Utility::Json::fromString(json, _d->filename ? Containers::StringView{*_d->filename} : Containers::StringView{}, 0, jsonByteOffset);
     if(!gltf || !gltf->parseObject(gltf->root())) {
         Error{} << "Trade::GltfImporter::openData(): invalid JSON";
