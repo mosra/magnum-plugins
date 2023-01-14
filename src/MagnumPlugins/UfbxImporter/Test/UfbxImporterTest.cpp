@@ -60,6 +60,7 @@
 #include <Magnum/Trade/MeshData.h>
 #include <Magnum/Trade/LightData.h>
 #include <Magnum/Trade/SceneData.h>
+#include <Magnum/Trade/AnimationData.h>
 #include <Magnum/Trade/TextureData.h>
 #include <Magnum/Trade/ImageData.h>
 #include <Magnum/Trade/CameraData.h>
@@ -152,6 +153,8 @@ struct UfbxImporterTest: TestSuite::Tester {
     void staticSkin();
     void multiWarning();
     void multiWarningData();
+
+    void animationInterpolation();
 
     /* Needs to load AnyImageImporter from a system-wide location */
     PluginManager::Manager<AbstractImporter> _manager;
@@ -287,7 +290,8 @@ UfbxImporterTest::UfbxImporterTest() {
               &UfbxImporterTest::geometryCache,
               &UfbxImporterTest::geometryCacheFileCallback,
 
-              &UfbxImporterTest::staticSkin});
+              &UfbxImporterTest::staticSkin,
+              &UfbxImporterTest::animationInterpolation});
 
     addInstancedTests({
         &UfbxImporterTest::multiWarning,
@@ -2620,6 +2624,87 @@ void UfbxImporterTest::multiWarningData() {
         CORRADE_COMPARE(out.str(),
             "Trade::UfbxImporter::openData(): Clamped index (x4)\n"
             "Trade::UfbxImporter::openData(): Bad UTF-8 string\n");
+}
+
+void UfbxImporterTest::animationInterpolation() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
+
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "animation-interpolation.fbx")));
+
+    CORRADE_COMPARE(importer->animationCount(), 1);
+
+    Containers::Optional<AnimationData> animation = importer->animation(0);
+    CORRADE_VERIFY(animation);
+
+    const float epsilon = 0.001f;
+
+    auto track = animation->track<Vector3>(2);
+
+    CORRADE_COMPARE_AS(track.keys(),
+        Containers::arrayView<Float>({
+            /* Resampled cubic */
+            0.0f / 30.0f,
+            1.0f / 30.0f,
+            2.0f / 30.0f,
+            3.0f / 30.0f,
+            4.0f / 30.0f,
+            5.0f / 30.0f,
+            6.0f / 30.0f,
+            7.0f / 30.0f,
+            8.0f / 30.0f,
+            9.0f / 30.0f,
+            /* Linear */
+            10.0f / 30.0f,
+            /* Constant previous */
+            20.0f / 30.0f,
+            25.0f / 30.0f - epsilon,
+            /* Constant next */
+            25.0f / 30.0f,
+            25.0f / 30.0f + epsilon,
+            /* Constant previous */
+            30.0f / 30.0f,
+            35.0f / 30.0f - epsilon,
+            /* Linear */
+            35.0f / 30.0f,
+            /* Constant next */
+            40.0f / 30.0f,
+            40.0f / 30.0f + epsilon,
+            /* Final */
+            45.0f / 30.0f,
+        }), TestSuite::Compare::Container);
+
+    CORRADE_COMPARE_AS(track.values(),
+        Containers::arrayView<Vector3>({
+            /* Resampled cubic */
+            {0.0f, 0.0f, 0.0f},
+            {-0.855245f, 0.0f, 0.0f},
+            {-1.13344f, 0.0f, 0.0f},
+            {-1.17802f, 0.0f, 0.0f},
+            {-1.10882f, 0.0f, 0.0f},
+            {-0.991537f, 0.0f, 0.0f},
+            {-0.875223f, 0.0f, 0.0f},
+            {-0.808958f, 0.0f, 0.0f},
+            {-0.858419f, 0.0f, 0.0f},
+            {-1.14293f, 0.0f, 0.0f},
+            /* Linear */
+            {-2.0f, 0.0f, 0.0f},
+            /* Constant previous */
+            {-4.0f, 0.0f, 0.0f},
+            {-4.0f, 0.0f, 0.0f},
+            /* Constant next */
+            {-6.0f, 0.0f, 0.0f},
+            {-8.0f, 0.0f, 0.0f},
+            /* Constant previous */
+            {-8.0f, 0.0f, 0.0f},
+            {-8.0f, 0.0f, 0.0f},
+            /* Linear */
+            {-10.0f, 0.0f, 0.0f},
+            /* Constant next */
+            {-12.0f, 0.0f, 0.0f},
+            {-14.0f, 0.0f, 0.0f},
+            /* Final */
+            {-14.0f, 0.0f, 0.0f},
+        }), TestSuite::Compare::Container);
 }
 
 }}}}

@@ -81,6 +81,7 @@ corrade_add_test(UfbxImporterTest UfbxImporterTest.cpp
         geometry-cache.fbx
         static-skin.fbx
         warning-cube.fbx
+        animation-interpolation.fbx
         cube.obj
         cube.mtl
         missing-mtl.obj

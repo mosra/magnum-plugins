@@ -1516,12 +1516,12 @@ void appendKeyTimes(const ResampleOptions &resampleOptions, Containers::Array<Do
         switch(prev.interpolation) {
         case UFBX_INTERPOLATION_CONSTANT_PREV:
             if(resampleOptions.constantInterpolationDuration > 0.0 && timeDelta > resampleOptions.constantInterpolationDuration) {
-                arrayAppend(keyTimes, prev.time + resampleOptions.constantInterpolationDuration);
+                arrayAppend(keyTimes, next.time - resampleOptions.constantInterpolationDuration);
             }
             break;
         case UFBX_INTERPOLATION_CONSTANT_NEXT:
             if(resampleOptions.constantInterpolationDuration > 0.0 && timeDelta > resampleOptions.constantInterpolationDuration) {
-                arrayAppend(keyTimes, next.time - resampleOptions.constantInterpolationDuration);
+                arrayAppend(keyTimes, prev.time + resampleOptions.constantInterpolationDuration);
             }
             break;
         case UFBX_INTERPOLATION_LINEAR:
@@ -1539,7 +1539,7 @@ void appendKeyTimes(const ResampleOptions &resampleOptions, Containers::Array<Do
             Long step = Long(std::ceil((prev.time + resampleOptions.minimumResampleStep) * resampleRate));
             for(;;) {
                 Double time = step / resampleRate;
-                if(time >= prev.time - resampleOptions.minimumResampleStep) break;
+                if(time >= next.time - resampleOptions.minimumResampleStep) break;
                 arrayAppend(keyTimes, time);
                 step += 1;
             }
