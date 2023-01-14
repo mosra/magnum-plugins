@@ -267,7 +267,8 @@ namespace Magnum {
 -   @relativeref{Trade,PngImporter} and @relativeref{Trade,PngImageConverter}
     no longer asserts if the patch version of libpng changed, such as when a
     system package was upgraded from 1.6.37 to 1.6.38. If the major or minor
-    version changes, it's still an assert.
+    version changes, it's now a runtime error, produced by libpng itself,
+    instead of an assert.
 
 @subsection changelog-plugins-latest-deprecated Deprecated APIs
 

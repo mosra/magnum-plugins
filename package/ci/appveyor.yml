@@ -2,32 +2,32 @@ clone_depth: 1
 
 environment:
   matrix:
-  - TARGET: desktop
-    COMPILER: msvc
-    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
-    APPVEYOR_JOB_NAME: windows-msvc2015
-  - TARGET: desktop
-    COMPILER: msvc
-    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
-    APPVEYOR_JOB_NAME: windows-msvc2017
+  # - TARGET: desktop
+  #   COMPILER: msvc
+  #   APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
+  #   APPVEYOR_JOB_NAME: windows-msvc2015
+  # - TARGET: desktop
+  #   COMPILER: msvc
+  #   APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+  #   APPVEYOR_JOB_NAME: windows-msvc2017
   - TARGET: desktop
     COMPILER: msvc
     APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
     APPVEYOR_JOB_NAME: windows-msvc2019
-  - TARGET: desktop
-    COMPILER: msvc
-    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2022
-    APPVEYOR_JOB_NAME: windows-msvc2022
-  - TARGET: desktop
-    COMPILER: msvc
-    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
-    APPVEYOR_JOB_NAME: windows-static-msvc2019
-    BUILD_STATIC: ON
-  - TARGET: desktop
-    COMPILER: msvc
-    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2022
-    APPVEYOR_JOB_NAME: windows-static-msvc2022
-    BUILD_STATIC: ON
+  # - TARGET: desktop
+  #   COMPILER: msvc
+  #   APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2022
+  #   APPVEYOR_JOB_NAME: windows-msvc2022
+  # - TARGET: desktop
+  #   COMPILER: msvc
+  #   APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
+  #   APPVEYOR_JOB_NAME: windows-static-msvc2019
+  #   BUILD_STATIC: ON
+  # - TARGET: desktop
+  #   COMPILER: msvc
+  #   APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2022
+  #   APPVEYOR_JOB_NAME: windows-static-msvc2022
+  #   BUILD_STATIC: ON
   - TARGET: desktop
     COMPILER: msvc-clang
     APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
@@ -36,29 +36,29 @@ environment:
     COMPILER: msvc-clang
     APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2022
     APPVEYOR_JOB_NAME: windows-msvc2022-clang
-  - TARGET: desktop
-    COMPILER: msvc
-    # Same reasoning as in Corrade for /EHsc
-    COMPILER_EXTRA: -DCMAKE_CXX_FLAGS="/permissive- /EHsc" -DMSVC_COMPATIBILITY=OFF
-    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
-    APPVEYOR_JOB_NAME: windows-conforming-msvc2019
-  - TARGET: desktop
-    COMPILER: msvc
-    # Not playing with fire and using /EHsc on 2022 as well
-    COMPILER_EXTRA: -DCMAKE_CXX_FLAGS="/permissive- /EHsc" -DMSVC_COMPATIBILITY=OFF
-    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2022
-    APPVEYOR_JOB_NAME: windows-conforming-msvc2022
-  - TARGET: desktop
-    COMPILER: mingw
-    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
-    APPVEYOR_JOB_NAME: windows-mingw
-  - TARGET: rt
-    # This actually isn't needed anywhere, but without this the %COMPILE:~0,4%
-    # expressions cause a "The syntax of the command is incorrect." sometimes
-    # but not in all cases. What the fuck, cmd.exe.
-    COMPILER: msvc
-    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
-    APPVEYOR_JOB_NAME: windows-rt-msvc2017
+  # - TARGET: desktop
+  #   COMPILER: msvc
+  #   # Same reasoning as in Corrade for /EHsc
+  #   COMPILER_EXTRA: -DCMAKE_CXX_FLAGS="/permissive- /EHsc" -DMSVC_COMPATIBILITY=OFF
+  #   APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
+  #   APPVEYOR_JOB_NAME: windows-conforming-msvc2019
+  # - TARGET: desktop
+  #   COMPILER: msvc
+  #   # Not playing with fire and using /EHsc on 2022 as well
+  #   COMPILER_EXTRA: -DCMAKE_CXX_FLAGS="/permissive- /EHsc" -DMSVC_COMPATIBILITY=OFF
+  #   APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2022
+  #   APPVEYOR_JOB_NAME: windows-conforming-msvc2022
+  # - TARGET: desktop
+  #   COMPILER: mingw
+  #   APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+  #   APPVEYOR_JOB_NAME: windows-mingw
+  # - TARGET: rt
+  #   # This actually isn't needed anywhere, but without this the %COMPILE:~0,4%
+  #   # expressions cause a "The syntax of the command is incorrect." sometimes
+  #   # but not in all cases. What the fuck, cmd.exe.
+  #   COMPILER: msvc
+  #   APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+  #   APPVEYOR_JOB_NAME: windows-rt-msvc2017
 
 install:
 # Ninja. `cinst ninja` started 503ing in late November 2019 and wasn't really
@@ -91,7 +91,8 @@ install:
 
 # libpng, for MSVC 2022, 2019 and clang-cl. MSVC 2017 seems to work well with
 # the 2019 build, MinGW doesn't work at all due to ABI issues.
-- IF "%TARGET%" == "desktop" IF "%COMPILER:~0,4%" == "msvc" appveyor DownloadFile https://ci.magnum.graphics/libpng-1.6.39-windows-2019.zip && 7z x libpng-1.6.39-windows-2019.zip -o%APPVEYOR_BUILD_FOLDER%\deps
+- IF "%TARGET%" == "desktop" IF "%COMPILER%" == "msvc" appveyor DownloadFile https://ci.magnum.graphics/libpng-1.6.39-windows-2019.zip && 7z x libpng-1.6.39-windows-2019.zip -o%APPVEYOR_BUILD_FOLDER%\deps
+- IF "%TARGET%" == "desktop" IF "%COMPILER%" == "msvc-clang" appveyor DownloadFile https://ci.magnum.graphics/libpng-1.6.39-windows-2019-clang-cl.zip && 7z x libpng-1.6.39-windows-2019-clang-cl.zip -o%APPVEYOR_BUILD_FOLDER%\deps
 
 # OpenAL
 - IF NOT "%TARGET%" == "rt" IF NOT EXIST %APPVEYOR_BUILD_FOLDER%\openal-soft-1.19.1-bin.zip appveyor DownloadFile https://openal-soft.org/openal-binaries/openal-soft-1.19.1-bin.zip
