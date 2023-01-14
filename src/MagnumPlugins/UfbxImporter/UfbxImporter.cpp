@@ -1458,7 +1458,7 @@ bool hasComplexRotation(const ufbx_node* node) {
 
 struct AnimProp {
     /* ufbx_scene::nodes[] */
-    uint32_t nodeId = ~0u;
+    UnsignedInt nodeId;
     Containers::StringView name;
 
     bool operator==(const AnimProp& rhs) const {
@@ -1605,7 +1605,7 @@ Containers::Optional<AnimationData> UfbxImporter::doAnimation(UnsignedInt id) {
     for(const ufbx_anim_layer* layer : layers) {
         for(const ufbx_anim_prop& prop : layer->anim_props) {
             if(prop.element->type != UFBX_ELEMENT_NODE) continue;
-            ufbx_node* node = (ufbx_node*)prop.element;
+            ufbx_node* node = reinterpret_cast<ufbx_node*>(prop.element);
             if(node->is_root) continue;
             Containers::StringView name(prop.prop_name);
             arrayAppend(animProps, {node->typed_id, name});
@@ -1684,7 +1684,7 @@ Containers::Optional<AnimationData> UfbxImporter::doAnimation(UnsignedInt id) {
 
         /* If there's no key times there is just a default value, handle it by
            having two keys at the boundaries */
-        if(keyTimes.empty()) {
+        if(keyTimes.isEmpty()) {
             arrayAppend(keyTimes, anim->time_begin);
             arrayAppend(keyTimes, anim->time_end);
         }
