@@ -1436,27 +1436,28 @@ Int UfbxImporter::doAnimationForName(Containers::StringView name) {
 namespace {
 
 bool hasComplexTranslation(const ufbx_node* node) {
+    /* These properties make scaling/rotation affect the final translation */
     for(const char* name : {UFBX_ScalingPivot, UFBX_RotationPivot, UFBX_RotationOffset, UFBX_ScalingOffset}) {
         ufbx_prop *prop = ufbx_find_prop(&node->props, name);
         if(!prop) continue;
         if(Vector3(prop->value_vec3) != Vector3{}) return true;
         if((prop->flags & UFBX_PROP_FLAG_ANIMATED) != 0) return true;
     }
-
     return false;
 }
 
 bool hasComplexRotation(const ufbx_node* node) {
+    /* These properties affect the rotation if animated */
     for(const char* name : {UFBX_PreRotation, UFBX_PostRotation}) {
         ufbx_prop *prop = ufbx_find_prop(&node->props, name);
         if(!prop) continue;
         if((prop->flags & UFBX_PROP_FLAG_ANIMATED) != 0) return true;
     }
-
     return false;
 }
 
 struct AnimProp {
+    /* ufbx_scene::nodes[] */
     uint32_t nodeId = ~0u;
     Containers::StringView name;
 
@@ -1478,12 +1479,12 @@ void sortAndDeduplicate(Containers::Array<T> &data) {
 
     std::size_t count = data.size(), dst = 0;
     for(std::size_t src = 0; src < count; ) {
-		if (dst != src)
-			data[dst] = data[src];
+        if(dst != src)
+            data[dst] = data[src];
         do {
             ++src;
         } while(src < count && data[dst] == data[src]);
-		++dst;
+        ++dst;
     }
     if(dst != count) {
         arrayResize(data, dst);
@@ -1509,7 +1510,7 @@ void appendKeyTimes(const ResampleOptions &resampleOptions, Containers::Array<Do
         const ufbx_keyframe& next = curve->keyframes[i + 1];
         double timeDelta = next.time - prev.time;
 
-        // TODO: Verify that keyframes are monotonic in ufbx
+        /* @todo: Verify that keyframes are monotonic in ufbx */
 
         Double resampleRate = 0.0;
         switch(prev.interpolation) {
@@ -1554,6 +1555,7 @@ void appendKeyTimes(const ResampleOptions &resampleOptions, Containers::Array<Do
 const Containers::StringView complexTranslationSources[] = {
     UFBX_Lcl_Translation,
     UFBX_Lcl_Rotation,
+    UFBX_Lcl_Scaling,
     UFBX_PreRotation,
     UFBX_PostRotation,
     UFBX_RotationOffset,
@@ -1604,7 +1606,7 @@ Containers::Optional<AnimationData> UfbxImporter::doAnimation(UnsignedInt id) {
         for(const ufbx_anim_prop& prop : layer->anim_props) {
             if(prop.element->type != UFBX_ELEMENT_NODE) continue;
             ufbx_node* node = (ufbx_node*)prop.element;
-			if(node->is_root) continue;
+            if(node->is_root) continue;
             Containers::StringView name(prop.prop_name);
             arrayAppend(animProps, {node->typed_id, name});
         }
@@ -1680,12 +1682,12 @@ Containers::Optional<AnimationData> UfbxImporter::doAnimation(UnsignedInt id) {
             sortAndDeduplicate(keyTimes);
         }
 
-		/* If there's no key times there is just a default value, handle it by
-		   having two keys at the boundaries */
-		if (keyTimes.empty()) {
-			arrayAppend(keyTimes, anim->time_begin);
-			arrayAppend(keyTimes, anim->time_end);
-		}
+        /* If there's no key times there is just a default value, handle it by
+           having two keys at the boundaries */
+        if(keyTimes.empty()) {
+            arrayAppend(keyTimes, anim->time_begin);
+            arrayAppend(keyTimes, anim->time_end);
+        }
 
         std::size_t keyCount = keyTimes.size();
 
@@ -1712,12 +1714,12 @@ Containers::Optional<AnimationData> UfbxImporter::doAnimation(UnsignedInt id) {
         case AnimationTrackTargetType::Rotation3D:
             {
                 Containers::ArrayView<Quaternion> values = Containers::arrayCast<Quaternion>(arrayAppend(valueBuffer, NoInit, keyCount * sizeof(Quaternion)));
-				ufbx_quat prev = ufbx_identity_quat;
+                ufbx_quat prev = ufbx_identity_quat;
                 for(std::size_t i = 0; i < keyCount; ++i) {
                     ufbx_transform t = ufbx_evaluate_transform(anim, node, keyTimes[i]);
-					ufbx_quat quat = ufbx_quat_fix_antipodal(t.rotation, prev);
+                    ufbx_quat quat = ufbx_quat_fix_antipodal(t.rotation, prev);
                     values[i] = Quaternion(quat).normalized();
-					prev = quat;
+                    prev = quat;
                 }
             }
             break;
