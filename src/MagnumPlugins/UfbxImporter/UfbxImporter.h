@@ -478,6 +478,11 @@ class MAGNUM_UFBXIMPORTER_EXPORT UfbxImporter: public AbstractImporter {
         MAGNUM_UFBXIMPORTER_LOCAL Int doImage2DForName(Containers::StringView name) override;
         MAGNUM_UFBXIMPORTER_LOCAL Containers::String doImage2DName(UnsignedInt id) override;
 
+        MAGNUM_UFBXIMPORTER_LOCAL UnsignedInt doAnimationCount() const override;
+        MAGNUM_UFBXIMPORTER_LOCAL Containers::String doAnimationName(UnsignedInt id) override;
+        MAGNUM_UFBXIMPORTER_LOCAL Int doAnimationForName(Containers::StringView name) override;
+        MAGNUM_UFBXIMPORTER_LOCAL Containers::Optional<AnimationData> doAnimation(UnsignedInt id) override;
+
         struct State;
         Containers::Pointer<State> _state;
 };

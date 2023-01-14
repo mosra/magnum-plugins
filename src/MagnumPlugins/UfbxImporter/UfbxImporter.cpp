@@ -26,6 +26,7 @@
 
 #include "UfbxImporter.h"
 
+#include <algorithm>
 #include <unordered_map>
 #include <Corrade/Containers/Array.h>
 #include <Corrade/Containers/ArrayTuple.h>
@@ -34,6 +35,7 @@
 #include <Corrade/Containers/StridedBitArrayView.h>
 #include <Corrade/Containers/GrowableArray.h>
 #include <Corrade/Containers/Optional.h>
+#include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/Math.h>
 #include <Corrade/Utility/Path.h>
@@ -49,6 +51,7 @@
 #include <Magnum/Trade/ImageData.h>
 #include <Magnum/Trade/LightData.h>
 #include <Magnum/Trade/SceneData.h>
+#include <Magnum/Trade/AnimationData.h>
 #include <Magnum/MeshTools/RemoveDuplicates.h>
 #include <MagnumPlugins/AnyImageImporter/AnyImageImporter.h>
 
@@ -341,6 +344,8 @@ struct UfbxImporter::State {
 
     /* If true preserve the implicit root node */
     bool preserveRootNode = false;
+
+    bool animationLayers = false;
 };
 
 UfbxImporter::UfbxImporter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin): AbstractImporter{manager, plugin} {}
@@ -411,6 +416,8 @@ void UfbxImporter::openInternal(void* opaqueScene, const void* opaqueOpts, bool 
 
     _state->fromFile = fromFile;
     _state->scene = ufbx_scene_ref{scene};
+
+    _state->animationLayers = configuration().value<bool>("animationLayers");
 
     /* Split meshes into chunks by material, ufbx_mesh::materials[] has always
        at least one material as we use ufbx_load_opts::allow_null_material. */
@@ -1407,6 +1414,389 @@ Int UfbxImporter::doImage2DForName(Containers::StringView name) {
 
 Containers::String UfbxImporter::doImage2DName(UnsignedInt id) {
     return _state->scene->texture_files[id].relative_filename;
+}
+
+UnsignedInt UfbxImporter::doAnimationCount() const {
+    return UnsignedInt(_state->animationLayers ? _state->scene->anim_layers.count : _state->scene->anim_stacks.count);
+}
+
+Containers::String UfbxImporter::doAnimationName(UnsignedInt id) {
+    if(_state->animationLayers) {
+        return _state->scene->anim_layers[id]->name;
+    } else {
+        return _state->scene->anim_stacks[id]->name;
+    }
+}
+
+Int UfbxImporter::doAnimationForName(Containers::StringView name) {
+    ufbx_element_type type = _state->animationLayers ? UFBX_ELEMENT_ANIM_LAYER : UFBX_ELEMENT_ANIM_STACK;
+    return typedId(ufbx_find_element_len(_state->scene.get(), type, name.data(), name.size()));
+}
+
+namespace {
+
+bool hasComplexTranslation(const ufbx_node* node) {
+    /* These properties make scaling/rotation affect the final translation */
+    for(const char* name : {UFBX_ScalingPivot, UFBX_RotationPivot, UFBX_RotationOffset, UFBX_ScalingOffset}) {
+        ufbx_prop *prop = ufbx_find_prop(&node->props, name);
+        if(!prop) continue;
+        if(Vector3(prop->value_vec3) != Vector3{}) return true;
+        if((prop->flags & UFBX_PROP_FLAG_ANIMATED) != 0) return true;
+    }
+    return false;
+}
+
+bool hasComplexRotation(const ufbx_node* node) {
+    /* These properties affect the rotation if animated */
+    for(const char* name : {UFBX_PreRotation, UFBX_PostRotation}) {
+        ufbx_prop *prop = ufbx_find_prop(&node->props, name);
+        if(!prop) continue;
+        if((prop->flags & UFBX_PROP_FLAG_ANIMATED) != 0) return true;
+    }
+    return false;
+}
+
+struct AnimProp {
+    /* ufbx_scene::nodes[] */
+    UnsignedInt nodeId;
+    Containers::StringView name;
+
+    bool operator==(const AnimProp& rhs) const {
+        if(nodeId != rhs.nodeId) return false;
+        if(name != rhs.name) return false;
+        return true;
+    }
+
+    bool operator<(const AnimProp& rhs) const {
+        if(nodeId != rhs.nodeId) return nodeId < rhs.nodeId;
+        return name < rhs.name;
+    }
+};
+
+template <typename T>
+void sortAndDeduplicate(Containers::Array<T> &data, std::size_t beginIndex = 0) {
+    auto rangeBegin = data.begin() + beginIndex;
+    std::sort(rangeBegin, data.end());
+    size_t uniqueCount = std::unique(rangeBegin, data.end()) - rangeBegin;
+    if(beginIndex + uniqueCount != data.size())
+        arrayResize(data, beginIndex + uniqueCount);
+}
+
+struct ResampleOptions {
+    /* Rate (Hz) for resampling linear keyframe segments */
+    Double linearResampleRate = 0.0;
+    /* Rate (Hz) for resampling cubic keyframe segments */
+    Double cubicResampleRate = 0.0;
+    /* Minimum duration (sec) between resampled times and actual keyframes */
+    Double minimumResampleStep = 0.0;
+    /* Duration (sec) for interpolating constant changes  */
+    Double constantInterpolationDuration = 0.0;
+};
+
+void appendKeyTimes(const ResampleOptions &resampleOptions, Containers::Array<Double> &keyTimes, const ufbx_anim_curve* curve) {
+    if(!curve) return;
+
+    for(std::size_t i = 0; i + 1 < curve->keyframes.count; ++i) {
+        const ufbx_keyframe& prev = curve->keyframes[i];
+        const ufbx_keyframe& next = curve->keyframes[i + 1];
+        double timeDelta = next.time - prev.time;
+
+        /* @todo: Verify that keyframes are monotonic in ufbx */
+
+        Double resampleRate = 0.0;
+        switch(prev.interpolation) {
+        case UFBX_INTERPOLATION_CONSTANT_PREV:
+            if(resampleOptions.constantInterpolationDuration > 0.0 && timeDelta > resampleOptions.constantInterpolationDuration) {
+                arrayAppend(keyTimes, next.time - resampleOptions.constantInterpolationDuration);
+            }
+            break;
+        case UFBX_INTERPOLATION_CONSTANT_NEXT:
+            if(resampleOptions.constantInterpolationDuration > 0.0 && timeDelta > resampleOptions.constantInterpolationDuration) {
+                arrayAppend(keyTimes, prev.time + resampleOptions.constantInterpolationDuration);
+            }
+            break;
+        case UFBX_INTERPOLATION_LINEAR:
+            resampleRate = resampleOptions.linearResampleRate;
+            break;
+        case UFBX_INTERPOLATION_CUBIC:
+            resampleRate = resampleOptions.cubicResampleRate;
+            break;
+        }
+
+        arrayAppend(keyTimes, prev.time);
+        if(resampleRate > 0.0) {
+            /* Generate resampling times at a global interval so that we have
+               mathcing times even if keyframes don't line up in each channel. */
+            Long step = Long(std::ceil((prev.time + resampleOptions.minimumResampleStep) * resampleRate));
+            for(;;) {
+                Double time = step / resampleRate;
+                if(time >= next.time - resampleOptions.minimumResampleStep) break;
+                arrayAppend(keyTimes, time);
+                step += 1;
+            }
+        }
+    }
+
+    if(curve->keyframes.count > 0) {
+        const ufbx_keyframe& last = curve->keyframes[curve->keyframes.count - 1];
+        arrayAppend(keyTimes, last.time);
+    }
+}
+
+constexpr Containers::StringView complexTranslationSources[] = {
+    UFBX_Lcl_Translation ""_s,
+    UFBX_Lcl_Rotation ""_s,
+    UFBX_Lcl_Scaling ""_s,
+    UFBX_PreRotation ""_s,
+    UFBX_PostRotation ""_s,
+    UFBX_RotationOffset ""_s,
+    UFBX_ScalingOffset ""_s,
+    UFBX_RotationPivot ""_s,
+    UFBX_ScalingPivot ""_s,
+};
+
+constexpr Containers::StringView complexRotationSources[] = {
+    UFBX_Lcl_Rotation ""_s,
+    UFBX_PreRotation ""_s,
+    UFBX_PostRotation ""_s,
+};
+
+struct AnimTrack {
+    UnsignedInt targetId;
+    UnsignedInt ufbxNodeId;
+    AnimationTrackTarget target;
+    AnimationTrackType type;
+    std::size_t keyTimeBufferOffset;
+
+    Containers::ArrayView<float> times;
+    Containers::StridedArrayView2D<char> values;
+};
+
+constexpr AnimationTrackTarget AnimationTrackTargetVisibility = animationTrackTargetCustom(0);
+
+}
+
+Containers::Optional<AnimationData> UfbxImporter::doAnimation(UnsignedInt id) {
+    const ufbx_scene* scene = _state->scene.get();
+    const ufbx_anim *anim = nullptr;
+
+    Containers::ArrayView<ufbx_anim_layer*> layers;
+    if(_state->animationLayers) {
+        ufbx_anim_layer* layer = _state->scene->anim_layers[id];
+        layers = {&_state->scene->anim_layers[id], 1};
+        anim = &layer->anim;
+    } else {
+        ufbx_anim_stack* stack = _state->scene->anim_stacks[id];
+        layers = {stack->layers.data, stack->layers.count};
+        anim = &stack->anim;
+    }
+
+    Containers::Array<AnimProp> animProps;
+
+    for(const ufbx_anim_layer* layer : layers) {
+        for(const ufbx_anim_prop& prop : layer->anim_props) {
+            if(prop.element->type != UFBX_ELEMENT_NODE) continue;
+            ufbx_node* node = reinterpret_cast<ufbx_node*>(prop.element);
+            if(node->is_root) continue;
+            Containers::StringView name(prop.prop_name);
+            arrayAppend(animProps, {node->typed_id, name});
+        }
+    }
+
+    sortAndDeduplicate(animProps);
+
+    const Double resampleRate = configuration().value<Double>("resampleRate");
+    const bool resampleRotation = configuration().value<bool>("resampleRotation");
+    const Double minimumSampleRate = configuration().value<Double>("minimumSampleRate");
+    const Double constantInterpolationDuration = configuration().value<Double>("constantInterpolationDuration");
+
+    Containers::Array<double> keyTimeBuffer;
+    Containers::Array<AnimTrack> animTracks;
+
+    Containers::Array<Containers::ArrayTuple::Item> animDataItems;
+
+    /* We must reserve capacity for animTracks beforehand as we'll be storing
+       references into it in animDataItems */
+    arrayReserve(animTracks, animProps.size());
+
+    for(const AnimProp& prop : animProps) {
+        const ufbx_node* node = scene->nodes[prop.nodeId];
+        ResampleOptions resampleOptions;
+
+        resampleOptions.cubicResampleRate = resampleRate;
+        resampleOptions.constantInterpolationDuration = constantInterpolationDuration;
+        if(minimumSampleRate > 0.0)
+            resampleOptions.minimumResampleStep = 0.5 / minimumSampleRate;
+
+        Containers::ArrayView<const Containers::StringView> keySources{&prop.name, 1};
+
+        AnimationTrackTarget target;
+        AnimationTrackType trackType;
+        bool complexTranslation = false;
+
+        if(prop.name == UFBX_Lcl_Translation ""_s) {
+            target = AnimationTrackTarget::Translation3D;
+            trackType = AnimationTrackType::Vector3;
+            if(hasComplexTranslation(node)) {
+                keySources = Containers::arrayView(complexTranslationSources);
+                complexTranslation = true;
+            }
+        } else if(prop.name == UFBX_Lcl_Rotation ""_s) {
+            target = AnimationTrackTarget::Rotation3D;
+            trackType = AnimationTrackType::Quaternion;
+            if(hasComplexRotation(node))
+                keySources = Containers::arrayView(complexRotationSources);
+        } else if(prop.name == UFBX_Lcl_Scaling ""_s) {
+            target = AnimationTrackTarget::Scaling3D;
+            trackType = AnimationTrackType::Vector3;
+        } else if(prop.name == UFBX_Visibility ""_s) {
+            target = AnimationTrackTargetVisibility;
+            trackType = AnimationTrackType::Bool;
+        } else {
+            continue;
+        }
+
+        UnsignedInt valueSize = animationTrackTypeSize(trackType);
+        UnsignedInt valueAlignment = animationTrackTypeAlignment(trackType);
+
+        const std::size_t keyTimeBufferOffset = keyTimeBuffer.size();
+        for(const ufbx_anim_layer* layer : layers) {
+            for(const Containers::StringView& source : keySources) {
+                const ufbx_anim_prop *aprop = ufbx_find_anim_prop_len(layer, &node->element, source.data(), source.size());
+                if(!aprop) continue;
+
+                ResampleOptions curveOptions = resampleOptions;
+
+                /* If the property is expressed in Euler angles we need to
+                   resample even linear curves */
+                if((resampleRotation || complexTranslation) && (source == UFBX_Lcl_Rotation ""_s || source == UFBX_PreRotation ""_s || source == UFBX_PostRotation ""_s))
+                    curveOptions.linearResampleRate = curveOptions.cubicResampleRate;
+
+                for(const ufbx_anim_curve* curve : aprop->anim_value->curves)
+                    appendKeyTimes(curveOptions, keyTimeBuffer, curve);
+            }
+
+            /* Layer weight affects result if we're combining animations */
+            if(!_state->animationLayers) {
+                if(const ufbx_anim_prop *aprop = ufbx_find_anim_prop(layer, &layer->element, UFBX_Weight)) {
+                    appendKeyTimes(resampleOptions, keyTimeBuffer, aprop->anim_value->curves[0]);
+                }
+            }
+
+            sortAndDeduplicate(keyTimeBuffer, keyTimeBufferOffset);
+        }
+
+        /* If there's no key times there is just a default value, handle it by
+           having two keys at the boundaries */
+        if(keyTimeBuffer.size() == keyTimeBufferOffset) {
+            arrayAppend(keyTimeBuffer, anim->time_begin);
+            arrayAppend(keyTimeBuffer, anim->time_end);
+        }
+
+        const std::size_t keyCount = keyTimeBuffer.size() - keyTimeBufferOffset;
+
+        arrayAppend(animTracks, {
+            prop.nodeId - _state->nodeIdOffset,
+            prop.nodeId,
+            target,
+            trackType,
+            keyTimeBufferOffset,
+        });
+
+        AnimTrack &animTrack = animTracks.back();
+        arrayAppend(animDataItems, { NoInit, keyCount, animTrack.times });
+        arrayAppend(animDataItems, { NoInit, keyCount, valueSize, valueAlignment, animTrack.values });
+    }
+
+    Containers::Array<AnimationTrackData> tracks{DefaultInit, animTracks.size()};
+
+    Containers::Array<char> data = Containers::ArrayTuple{animDataItems};
+
+    for(const AnimTrack& track : animTracks) {
+        const ufbx_node* node = scene->nodes[track.ufbxNodeId];
+        Containers::ArrayView<double> keyTimes = keyTimeBuffer.sliceSize(track.keyTimeBufferOffset, track.times.size());
+
+        for(UnsignedInt i = 0; i < keyTimes.size(); ++i) {
+            track.times[i] = Float(keyTimes[i]);
+        }
+
+        switch(track.target) {
+        case AnimationTrackTarget::Translation3D:
+            {
+                Containers::StridedArrayView1D<Vector3> values = Containers::arrayCast<1, Vector3>(track.values);
+                for(std::size_t i = 0; i < keyTimes.size(); ++i) {
+                    ufbx_transform t = ufbx_evaluate_transform(anim, node, keyTimes[i]);
+                    values[i] = Vector3(t.translation);
+                }
+            }
+            break;
+        case AnimationTrackTarget::Rotation3D:
+            {
+                Containers::StridedArrayView1D<Quaternion> values = Containers::arrayCast<1, Quaternion>(track.values);
+                ufbx_quat prev = ufbx_identity_quat;
+                for(std::size_t i = 0; i < keyTimes.size(); ++i) {
+                    ufbx_transform t = ufbx_evaluate_transform(anim, node, keyTimes[i]);
+                    ufbx_quat quat = ufbx_quat_fix_antipodal(t.rotation, prev);
+                    values[i] = Quaternion(quat).normalized();
+                    prev = quat;
+                }
+            }
+            break;
+        case AnimationTrackTarget::Scaling3D:
+            {
+                Containers::StridedArrayView1D<Vector3> values = Containers::arrayCast<1, Vector3>(track.values);
+                for(std::size_t i = 0; i < keyTimes.size(); ++i) {
+                    ufbx_transform t = ufbx_evaluate_transform(anim, node, keyTimes[i]);
+                    values[i] = Vector3(t.scale);
+                }
+            }
+            break;
+        #if defined(CORRADE_TARGET_MSVC)
+            #pragma warning(push)
+            #pragma warning(disable: 4063) // case '32768' is not a valid value for switch of enum 'Magnum::Trade::AnimationTrackTarget'
+        #endif
+        case AnimationTrackTargetVisibility:
+            {
+                Containers::StridedArrayView1D<bool> values = Containers::arrayCast<1, bool>(track.values);
+                for(std::size_t i = 0; i < keyTimes.size(); ++i) {
+                    ufbx_prop p = ufbx_evaluate_prop(anim, &node->element, UFBX_Visibility, keyTimes[i]);
+                    values[i] = p.value_int != 0;
+                }
+            }
+            break;
+        #if defined(CORRADE_TARGET_MSVC)
+            #pragma warning(pop)
+        #endif
+        default: CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+        }
+    }
+
+    for(std::size_t i = 0; i < animTracks.size(); ++i) {
+        const AnimTrack& animTrack = animTracks[i];
+
+        Containers::StridedArrayView1D<const void> values = animTrack.values.transposed<0, 1>()[0];
+
+        /* @todo: Could detect tracks that have constant interpolation for every keyframe? */
+        constexpr Animation::Interpolation interpolation = Animation::Interpolation::Linear;
+
+        /* @todo: Does FBX store these? */
+        constexpr Animation::Extrapolation extrapolationBefore = Animation::Extrapolation::Constant;
+        constexpr Animation::Extrapolation extrapolationAfter = Animation::Extrapolation::Constant;
+
+        tracks[i] = AnimationTrackData{
+            animTrack.target,
+            UnsignedLong(animTrack.targetId),
+            animTrack.type,
+            animTrack.type,
+            animTrack.times,
+            values,
+            interpolation,
+            extrapolationBefore,
+            extrapolationAfter,
+        };
+    }
+
+    return AnimationData{std::move(data), std::move(tracks)};
 }
 
 }}
