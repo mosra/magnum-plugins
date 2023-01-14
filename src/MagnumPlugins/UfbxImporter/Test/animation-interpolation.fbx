@@ -9,10 +9,10 @@ FBXHeaderExtension:  {
 		Year: 2023
 		Month: 1
 		Day: 15
-		Hour: 0
-		Minute: 58
-		Second: 38
-		Millisecond: 767
+		Hour: 1
+		Minute: 25
+		Second: 24
+		Millisecond: 843
 	}
 	Creator: "FBX SDK/FBX Plugins version 2020.3"
 	OtherFlags:  {
@@ -37,13 +37,13 @@ FBXHeaderExtension:  {
 			P: "Original|ApplicationVendor", "KString", "", "", "Autodesk"
 			P: "Original|ApplicationName", "KString", "", "", "Maya"
 			P: "Original|ApplicationVersion", "KString", "", "", "2023"
-			P: "Original|DateTime_GMT", "DateTime", "", "", "14/01/2023 22:58:38.766"
+			P: "Original|DateTime_GMT", "DateTime", "", "", "14/01/2023 23:25:24.841"
 			P: "Original|FileName", "KString", "", "", "D:\Dev\wonder\bootstrap\magnum-plugins\src\MagnumPlugins\UfbxImporter\Test\animation-interpolation.fbx"
 			P: "LastSaved", "Compound", "", ""
 			P: "LastSaved|ApplicationVendor", "KString", "", "", "Autodesk"
 			P: "LastSaved|ApplicationName", "KString", "", "", "Maya"
 			P: "LastSaved|ApplicationVersion", "KString", "", "", "2023"
-			P: "LastSaved|DateTime_GMT", "DateTime", "", "", "14/01/2023 22:58:38.766"
+			P: "LastSaved|DateTime_GMT", "DateTime", "", "", "14/01/2023 23:25:24.841"
 			P: "Original|ApplicationActiveProject", "KString", "", "", "D:\Dev\wonder\bootstrap\magnum-plugins\src\MagnumPlugins\UfbxImporter\Test"
 			P: "Original|ApplicationNativeFile", "KString", "", "", "W:\Temp\ufbx_test_source\animation_interpolation.mb"
 		}
@@ -80,7 +80,7 @@ GlobalSettings:  {
 
 Documents:  {
 	Count: 1
-	Document: 2089664415872, "", "Scene" {
+	Document: 2091379394384, "", "Scene" {
 		Properties70:  {
 			P: "SourceObject", "object", "", ""
 			P: "ActiveAnimStackName", "KString", "", "", "Take 001"
@@ -264,7 +264,7 @@ Definitions:  {
 ;------------------------------------------------------------------
 
 Objects:  {
-	Geometry: 2090086902272, "Geometry::", "Mesh" {
+	Geometry: 2089642475872, "Geometry::", "Mesh" {
 		Vertices: *24 {
 			a: -0.5,-0.5,0.5,0.5,-0.5,0.5,-0.5,0.5,0.5,0.5,0.5,0.5,-0.5,0.5,-0.5,0.5,0.5,-0.5,-0.5,-0.5,-0.5,0.5,-0.5,-0.5
 		} 
@@ -357,20 +357,20 @@ Objects:  {
 			}
 		}
 	}
-	Model: 2092721185888, "Model::pCube1", "Mesh" {
+	Model: 2092721197488, "Model::pCube1", "Mesh" {
 		Version: 232
 		Properties70:  {
 			P: "RotationActive", "bool", "", "",1
 			P: "InheritType", "enum", "", "",1
 			P: "ScalingMax", "Vector3D", "Vector", "",0,0,0
 			P: "DefaultAttributeIndex", "int", "Integer", "",0
-			P: "Lcl Translation", "Lcl Translation", "", "A+",-10.4,0,0
+			P: "Lcl Translation", "Lcl Translation", "", "A+",-16,0,0
 			P: "currentUVSet", "KString", "", "U", "map1"
 		}
 		Shading: T
 		Culling: "CullingOff"
 	}
-	Material: 2092379273728, "Material::lambert1", "" {
+	Material: 2092379288128, "Material::lambert1", "" {
 		Version: 102
 		ShadingModel: "lambert"
 		MultiLayer: 0
@@ -385,55 +385,55 @@ Objects:  {
 			P: "Opacity", "double", "Number", "",1
 		}
 	}
-	AnimationStack: 2089665839600, "AnimStack::Take 001", "" {
+	AnimationStack: 2093494163184, "AnimStack::Take 001", "" {
 		Properties70:  {
 			P: "LocalStop", "KTime", "Time", "",92372316000
 			P: "ReferenceStop", "KTime", "Time", "",92372316000
 		}
 	}
-	AnimationCurve: 2089664062528, "AnimCurve::", "" {
+	AnimationCurve: 2091379356080, "AnimCurve::", "" {
 		Default: 0
 		KeyVer: 4009
-		KeyTime: *8 {
-			a: 0,15395386000,30790772000,38488465000,46186158000,53883851000,61581544000,69279237000
+		KeyTime: *10 {
+			a: 0,15395386000,30790772000,38488465000,46186158000,53883851000,61581544000,69279237000,76976930000,84674623000
 		} 
-		KeyValueFloat: *8 {
-			a: 0,-2,-4,-6,-8,-10,-12,-14
+		KeyValueFloat: *10 {
+			a: 0,-2,-4,-6,-8,-10,-12,-14,-16,-14
 		} 
-		;KeyAttrFlags: Cubic|TangeantUser|WeightedRight|WeightedNextLeft, Linear, Constant|ConstantStandard, Constant|ConstantNext, Constant|ConstantStandard, Linear, Constant|ConstantNext, Cubic|TangeantUser
-		KeyAttrFlags: *8 {
-			a: 50332680,1028,2,258,2,1028,258,1032
+		;KeyAttrFlags: Cubic|TangeantUser|WeightedRight|WeightedNextLeft, Linear, Constant|ConstantStandard, Constant|ConstantNext, Constant|ConstantStandard, Linear, Constant|ConstantNext, Constant|ConstantStandard, Constant|ConstantNext, Cubic|TangeantUser
+		KeyAttrFlags: *10 {
+			a: 50332680,1028,2,258,2,1028,258,2,258,1032
 		} 
-		;KeyAttrDataFloat: RightSlope:-44.2699, NextLeftSlope:-43.9211, RightWeight:0.20212, NextLeftWeight:0.205021, RightVelocity:0, NextLeftVelocity:0; RightSlope:-6, NextLeftSlope:-6, RightWeight:0.333333, NextLeftWeight:0.333333, RightVelocity:0, NextLeftVelocity:0; RightSlope:0, NextLeftSlope:0, RightWeight:0.333333, NextLeftWeight:0.333333, RightVelocity:0, NextLeftVelocity:0; RightAuto:0, NextLeftAuto:-12; RightSlope:0, NextLeftSlope:-12, RightWeight:0.333333, NextLeftWeight:0.333333, RightVelocity:0, NextLeftVelocity:0; RightSlope:-12, NextLeftSlope:-12, RightWeight:0.333333, NextLeftWeight:0.333333, RightVelocity:0, NextLeftVelocity:0; RightAuto:0, NextLeftAuto:0; RightSlope:0, NextLeftSlope:0, RightWeight:0.333333, NextLeftWeight:0.333333, RightVelocity:0, NextLeftVelocity:0
-		KeyAttrDataFloat: *32 {
-			a: -1036970907,-1037062350,134350821,0,-1061158912,-1061158912,218434821,0,0,0,218434821,0,0,-1052770304,218434821,0,0,-1052770304,218434821,0,-1052770304,-1052770304,218434821,0,0,0,218434821,0,0,0,218434821,0
+		;KeyAttrDataFloat: RightSlope:-44.2699, NextLeftSlope:-43.9211, RightWeight:0.20212, NextLeftWeight:0.205021, RightVelocity:0, NextLeftVelocity:0; RightSlope:-6, NextLeftSlope:-6, RightWeight:0.333333, NextLeftWeight:0.333333, RightVelocity:0, NextLeftVelocity:0; RightSlope:0, NextLeftSlope:0, RightWeight:0.333333, NextLeftWeight:0.333333, RightVelocity:0, NextLeftVelocity:0; RightAuto:0, NextLeftAuto:-12; RightSlope:0, NextLeftSlope:-12, RightWeight:0.333333, NextLeftWeight:0.333333, RightVelocity:0, NextLeftVelocity:0; RightSlope:-12, NextLeftSlope:-12, RightWeight:0.333333, NextLeftWeight:0.333333, RightVelocity:0, NextLeftVelocity:0; RightAuto:0, NextLeftAuto:-12; RightSlope:0, NextLeftSlope:0, RightWeight:0.333333, NextLeftWeight:0.333333, RightVelocity:0, NextLeftVelocity:0; RightAuto:0, NextLeftAuto:0; RightSlope:0, NextLeftSlope:0, RightWeight:0.333333, NextLeftWeight:0.333333, RightVelocity:0, NextLeftVelocity:0
+		KeyAttrDataFloat: *40 {
+			a: -1036970907,-1037062350,134350821,0,-1061158912,-1061158912,218434821,0,0,0,218434821,0,0,-1052770304,218434821,0,0,-1052770304,218434821,0,-1052770304,-1052770304,218434821,0,0,-1052770304,218434821,0,0,0,218434821,0,0,0,218434821,0,0,0,218434821,0
 		} 
-		KeyAttrRefCount: *8 {
-			a: 1,1,1,1,1,1,1,1
+		KeyAttrRefCount: *10 {
+			a: 1,1,1,1,1,1,1,1,1,1
 		} 
 	}
-	AnimationCurveNode: 2089665838768, "AnimCurveNode::T", "" {
+	AnimationCurveNode: 2093494163600, "AnimCurveNode::T", "" {
 		Properties70:  {
-			P: "d|X", "Number", "", "A",-10.4
+			P: "d|X", "Number", "", "A",-16
 			P: "d|Y", "Number", "", "A",0
 			P: "d|Z", "Number", "", "A",0
 		}
 	}
-	AnimationCurveNode: 2089665835648, "AnimCurveNode::S", "" {
+	AnimationCurveNode: 2093494161312, "AnimCurveNode::S", "" {
 		Properties70:  {
 			P: "d|X", "Number", "", "A",1
 			P: "d|Y", "Number", "", "A",1
 			P: "d|Z", "Number", "", "A",1
 		}
 	}
-	AnimationCurveNode: 2089665836896, "AnimCurveNode::R", "" {
+	AnimationCurveNode: 2093494157984, "AnimCurveNode::R", "" {
 		Properties70:  {
 			P: "d|X", "Number", "", "A",0
 			P: "d|Y", "Number", "", "A",0
 			P: "d|Z", "Number", "", "A",0
 		}
 	}
-	AnimationLayer: 2089664745744, "AnimLayer::BaseLayer", "" {
+	AnimationLayer: 2092761888688, "AnimLayer::BaseLayer", "" {
 	}
 }
 
@@ -443,37 +443,37 @@ Objects:  {
 Connections:  {
 	
 	;Model::pCube1, Model::RootNode
-	C: "OO",2092721185888,0
+	C: "OO",2092721197488,0
 	
 	;AnimLayer::BaseLayer, AnimStack::Take 001
-	C: "OO",2089664745744,2089665839600
+	C: "OO",2092761888688,2093494163184
 	
 	;AnimCurveNode::T, AnimLayer::BaseLayer
-	C: "OO",2089665838768,2089664745744
+	C: "OO",2093494163600,2092761888688
 	
 	;AnimCurveNode::S, AnimLayer::BaseLayer
-	C: "OO",2089665835648,2089664745744
+	C: "OO",2093494161312,2092761888688
 	
 	;AnimCurveNode::R, AnimLayer::BaseLayer
-	C: "OO",2089665836896,2089664745744
+	C: "OO",2093494157984,2092761888688
 	
 	;Geometry::, Model::pCube1
-	C: "OO",2090086902272,2092721185888
+	C: "OO",2089642475872,2092721197488
 	
 	;Material::lambert1, Model::pCube1
-	C: "OO",2092379273728,2092721185888
+	C: "OO",2092379288128,2092721197488
 	
 	;AnimCurveNode::T, Model::pCube1
-	C: "OP",2089665838768,2092721185888, "Lcl Translation"
+	C: "OP",2093494163600,2092721197488, "Lcl Translation"
 	
 	;AnimCurveNode::R, Model::pCube1
-	C: "OP",2089665836896,2092721185888, "Lcl Rotation"
+	C: "OP",2093494157984,2092721197488, "Lcl Rotation"
 	
 	;AnimCurveNode::S, Model::pCube1
-	C: "OP",2089665835648,2092721185888, "Lcl Scaling"
+	C: "OP",2093494161312,2092721197488, "Lcl Scaling"
 	
 	;AnimCurve::, AnimCurveNode::T
-	C: "OP",2089664062528,2089665838768, "d|X"
+	C: "OP",2091379356080,2093494163600, "d|X"
 }
 ;Takes section
 ;----------------------------------------------------

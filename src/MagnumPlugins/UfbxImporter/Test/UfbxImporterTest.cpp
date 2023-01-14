@@ -2669,8 +2669,14 @@ void UfbxImporterTest::animationInterpolation() {
             /* Constant next */
             40.0f / 30.0f,
             40.0f / 30.0f + epsilon,
-            /* Final */
+            /* Constant previous */
             45.0f / 30.0f,
+            50.0f / 30.0f - epsilon,
+            /* Constant next */
+            50.0f / 30.0f,
+            50.0f / 30.0f + epsilon,
+            /* Final */
+            55.0f / 30.0f,
         }), TestSuite::Compare::Container);
 
     CORRADE_COMPARE_AS(track.values(),
@@ -2701,6 +2707,12 @@ void UfbxImporterTest::animationInterpolation() {
             {-10.0f, 0.0f, 0.0f},
             /* Constant next */
             {-12.0f, 0.0f, 0.0f},
+            {-14.0f, 0.0f, 0.0f},
+            /* Constant previous */
+            {-14.0f, 0.0f, 0.0f},
+            {-14.0f, 0.0f, 0.0f},
+            /* Constant next */
+            {-16.0f, 0.0f, 0.0f},
             {-14.0f, 0.0f, 0.0f},
             /* Final */
             {-14.0f, 0.0f, 0.0f},
