@@ -194,6 +194,14 @@ implemented neither in stb_image_write nor in stb_image.
 Conversion to 16-bit PNGs is not supported. Use @ref PngImageConverter instead
 if you need to deal with 16-bit pixel formats.
 
+@subsection Trade-StbImageConverter-behavior-tga-rle RLE encoding of TGA files
+
+TGA files produced by @ref TgaImageConverter are often slightly smaller than
+files produced by `stb_image_write`. Same case is for TGA files produced by
+ImageMagick and `-compress RunLengthEncoded`, they're slightly different than
+files produced by `stb_image_write` but also larger. The cause is currently
+unknown, could be some unhandled optimization corner case in both libraries.
+
 @section Trade-StbImageConverter-configuration Plugin-specific configuration
 
 For some formats, it's possible to tune various output options through
