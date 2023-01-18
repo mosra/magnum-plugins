@@ -73,37 +73,6 @@
 
 namespace Magnum { namespace Trade { namespace Test { namespace {
 
-using FileCallbackFiles = std::unordered_map<std::string, Containers::Optional<Containers::Array<char>>>;
-Containers::Optional<Containers::ArrayView<const char>> fileCallbackFunc(const std::string& filename, InputFileCallbackPolicy, void* user) {
-    auto& files = *static_cast<FileCallbackFiles*>(user);
-
-    Containers::Optional<Containers::Array<char>>& data = files[filename];
-
-    Containers::String path = Utility::Path::join(UFBXIMPORTER_TEST_DIR, filename);
-    if(!data && Utility::Path::exists(path))
-        data = Utility::Path::read(path);
-
-    if(data)
-        return Containers::optional(Containers::ArrayView<const char>(*data));
-    return {};
-}
-
-using namespace Math::Literals;
-using namespace Containers::Literals;
-
-constexpr struct {
-    Long maxMemory;
-    bool shouldLoad;
-} MaxMemoryData[]{
-    {0, false},
-    {1, false},
-    {4096, false},
-    {64*1024*1024, true},
-    {Long(0x7fffffffu) + 1, true},
-    {Long(0xffffffffu) + 1, true},
-    {-999, true},
-};
-
 struct UfbxImporterTest: TestSuite::Tester {
     explicit UfbxImporterTest();
 
@@ -182,6 +151,37 @@ struct UfbxImporterTest: TestSuite::Tester {
 
     /* Needs to load AnyImageImporter from a system-wide location */
     PluginManager::Manager<AbstractImporter> _manager;
+};
+
+using FileCallbackFiles = std::unordered_map<std::string, Containers::Optional<Containers::Array<char>>>;
+Containers::Optional<Containers::ArrayView<const char>> fileCallbackFunc(const std::string& filename, InputFileCallbackPolicy, void* user) {
+    auto& files = *static_cast<FileCallbackFiles*>(user);
+
+    Containers::Optional<Containers::Array<char>>& data = files[filename];
+
+    Containers::String path = Utility::Path::join(UFBXIMPORTER_TEST_DIR, filename);
+    if(!data && Utility::Path::exists(path))
+        data = Utility::Path::read(path);
+
+    if(data)
+        return Containers::optional(Containers::ArrayView<const char>(*data));
+    return {};
+}
+
+using namespace Math::Literals;
+using namespace Containers::Literals;
+
+const struct {
+    Long maxMemory;
+    bool shouldLoad;
+} MaxMemoryData[]{
+    {0, false},
+    {1, false},
+    {4096, false},
+    {64*1024*1024, true},
+    {Long(0x7fffffffu) + 1, true},
+    {Long(0xffffffffu) + 1, true},
+    {-999, true},
 };
 
 UfbxImporterTest::UfbxImporterTest() {
