@@ -973,8 +973,8 @@ Containers::Optional<MeshData> UfbxImporter::doMesh(UnsignedInt id, UnsignedInt 
         UnsignedInt(indexCount)};
 
     /* Generate proper indices if configured (or by default) */
-    const bool generateIndices = configuration().value<bool>("generateIndices");
-    if(generateIndices) meshData = MeshTools::removeDuplicates(meshData);
+    if(configuration().value<bool>("generateIndices"))
+        meshData = MeshTools::removeDuplicates(meshData);
 
     /* GCC 4.8 needs extra help here */
     return Containers::optional(std::move(meshData));
