@@ -172,6 +172,15 @@ using namespace Math::Literals;
 using namespace Containers::Literals;
 
 const struct {
+    const char* name;
+    Containers::Optional<bool> generateIndices;
+    bool expectedIndices;
+} MeshGenerateIndicesData[]{
+    {"", {}, true},
+    {"don't generate indices", false, false}
+};
+
+const struct {
     Long maxMemory;
     bool shouldLoad;
 } MaxMemoryData[]{
@@ -199,10 +208,13 @@ UfbxImporterTest::UfbxImporterTest() {
               &UfbxImporterTest::fileCallbackEmpty,
               &UfbxImporterTest::fileCallbackEmptyVerbose,
 
-              &UfbxImporterTest::scene,
-              &UfbxImporterTest::mesh,
-              &UfbxImporterTest::meshPointLine,
-              &UfbxImporterTest::camera,
+              &UfbxImporterTest::scene});
+
+    addInstancedTests({&UfbxImporterTest::mesh,
+                       &UfbxImporterTest::meshPointLine},
+        Containers::arraySize(MeshGenerateIndicesData));
+
+    addTests({&UfbxImporterTest::camera,
               &UfbxImporterTest::cameraName,
               &UfbxImporterTest::cameraOrientation,
               &UfbxImporterTest::light,
@@ -524,7 +536,12 @@ void UfbxImporterTest::scene() {
 }
 
 void UfbxImporterTest::mesh() {
+    auto&& data = MeshGenerateIndicesData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
+    if(data.generateIndices)
+        importer->configuration().setValue("generateIndices", *data.generateIndices);
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "triangle.fbx")));
 
     CORRADE_COMPARE(importer->meshCount(), 1);
@@ -535,11 +552,17 @@ void UfbxImporterTest::mesh() {
 
     CORRADE_COMPARE(mesh->primitive(), MeshPrimitive::Triangles);
 
-    CORRADE_VERIFY(mesh->isIndexed());
-    CORRADE_COMPARE_AS(mesh->indices<UnsignedInt>(),
-        Containers::arrayView<UnsignedInt>({0, 1, 2}),
-        TestSuite::Compare::Container);
+    CORRADE_COMPARE(mesh->isIndexed(), data.expectedIndices);
+    if(data.expectedIndices) {
+        CORRADE_COMPARE_AS(mesh->indices<UnsignedInt>(),
+            Containers::arrayView<UnsignedInt>({0, 1, 2}),
+            TestSuite::Compare::Container);
+    }
 
+    /* There isn't anything to deduplicate in the file, so the vertex data are
+       the same in both cases */
+    /** @todo maybe it might make sense to actually verify that duplicates got
+        removed? */
     CORRADE_COMPARE(mesh->attributeCount(), 6);
     CORRADE_COMPARE(mesh->attributeCount(MeshAttribute::Position), 1);
     CORRADE_COMPARE_AS(mesh->attribute<Vector3>(MeshAttribute::Position),
@@ -601,7 +624,12 @@ void UfbxImporterTest::mesh() {
 }
 
 void UfbxImporterTest::meshPointLine() {
+    auto&& data = MeshGenerateIndicesData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
+    if(data.generateIndices)
+        importer->configuration().setValue("generateIndices", *data.generateIndices);
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "mesh-point-line.fbx")));
 
     CORRADE_COMPARE(importer->meshCount(), 3);
@@ -612,11 +640,15 @@ void UfbxImporterTest::meshPointLine() {
 
         CORRADE_COMPARE(mesh->primitive(), MeshPrimitive::Points);
 
-        CORRADE_VERIFY(mesh->isIndexed());
-        CORRADE_COMPARE_AS(mesh->indices<UnsignedInt>(),
+        CORRADE_COMPARE(mesh->isIndexed(), data.expectedIndices);
+        if(data.expectedIndices) CORRADE_COMPARE_AS(mesh->indices<UnsignedInt>(),
             Containers::arrayView<UnsignedInt>({0}),
             TestSuite::Compare::Container);
 
+        /* There isn't anything to deduplicate in the file, so the vertex data
+           are the same in both cases */
+        /** @todo maybe it might make sense to actually verify that duplicates
+            got removed? */
         CORRADE_COMPARE(mesh->attributeCount(MeshAttribute::Position), 1);
         CORRADE_COMPARE_AS(mesh->attribute<Vector3>(MeshAttribute::Position),
             Containers::arrayView<Vector3>({
@@ -628,11 +660,15 @@ void UfbxImporterTest::meshPointLine() {
 
         CORRADE_COMPARE(mesh->primitive(), MeshPrimitive::Lines);
 
-        CORRADE_VERIFY(mesh->isIndexed());
-        CORRADE_COMPARE_AS(mesh->indices<UnsignedInt>(),
+        CORRADE_COMPARE(mesh->isIndexed(), data.expectedIndices);
+        if(data.expectedIndices) CORRADE_COMPARE_AS(mesh->indices<UnsignedInt>(),
             Containers::arrayView<UnsignedInt>({0, 1}),
             TestSuite::Compare::Container);
 
+        /* There isn't anything to deduplicate in the file, so the vertex data
+           are the same in both cases */
+        /** @todo maybe it might make sense to actually verify that duplicates
+            got removed? */
         CORRADE_COMPARE(mesh->attributeCount(MeshAttribute::Position), 1);
         CORRADE_COMPARE_AS(mesh->attribute<Vector3>(MeshAttribute::Position),
             Containers::arrayView<Vector3>({
@@ -644,8 +680,9 @@ void UfbxImporterTest::meshPointLine() {
 
         CORRADE_COMPARE(mesh->primitive(), MeshPrimitive::Triangles);
 
-        CORRADE_VERIFY(mesh->isIndexed());
-        CORRADE_COMPARE(mesh->indices<UnsignedInt>().size(), 21);
+        CORRADE_COMPARE(mesh->isIndexed(), data.expectedIndices);
+        if(data.expectedIndices)
+            CORRADE_COMPARE(mesh->indices<UnsignedInt>().size(), 21);
     }
 
     CORRADE_COMPARE(importer->sceneCount(), 1);

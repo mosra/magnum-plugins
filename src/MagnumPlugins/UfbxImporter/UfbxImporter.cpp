@@ -960,19 +960,11 @@ Containers::Optional<MeshData> UfbxImporter::doMesh(UnsignedInt id, UnsignedInt 
         }
     }
 
-    Containers::Array<char> indexData{NoInit, indexCount*sizeof(UnsignedInt)};
-    Containers::ArrayView<UnsignedInt> indices = Containers::arrayCast<UnsignedInt>(indexData);
-
-    /* The vertex data is unindexed, so generate a contiguous index range */
-    for(UnsignedInt i = 0; i < indexCount; i++)
-        indices[i] = i;
-
     MeshData meshData{chunk.primitive,
-        std::move(indexData), MeshIndexData{indices},
         std::move(vertexData), std::move(attributeData),
         UnsignedInt(indexCount)};
 
-    /* Generate proper indices if configured (or by default) */
+    /* Deduplicate the data into an indexed mesh if desired */
     if(configuration().value<bool>("generateIndices"))
         meshData = MeshTools::removeDuplicates(meshData);
 
