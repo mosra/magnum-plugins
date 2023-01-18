@@ -2662,6 +2662,9 @@ void GltfSceneConverterTest::addImagePropagateFlags() {
     converter->configuration().setValue("imageConverter", "TgaImageConverter");
     /* So it allows using a TGA image */
     converter->configuration().setValue("strict", false);
+    /* So it doesn't try to use RLE first and then falls back to uncompressed
+       because RLE is larger, producing one extra verbose message */
+    converter->configuration().group("imageConverter")->setValue("rle", false);
 
     CORRADE_VERIFY(converter->beginData());
 
