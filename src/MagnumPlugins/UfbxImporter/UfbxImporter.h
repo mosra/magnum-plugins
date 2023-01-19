@@ -182,6 +182,8 @@ Animations and skinning-related data are not imported at the moment.
 -   Supports both legacy FBX Phong material model and more modern PBR
     materials, in some cases both are defined as PBR materials may have a
     legacy Phong material filled as a fallback.
+-   [PBR material properties in OBJ files](http://exocortex.com/blog/extending_wavefront_mtl_to_support_pbr)
+    are supported as well.
 -   The legacy FBX material model and most PBR material models have factors for
     various attributes, by default these are premultiplied into the value but
     you can retain them using the @cb{.ini} preserveMaterialFactors @ce
