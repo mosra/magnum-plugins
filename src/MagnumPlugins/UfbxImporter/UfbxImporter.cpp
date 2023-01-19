@@ -456,9 +456,35 @@ void UfbxImporter::openInternal(void* opaqueScene, const void* opaqueOpts, bool 
     }
 }
 
-Int UfbxImporter::doDefaultScene() const { return 0; }
+Int UfbxImporter::doDefaultScene() const {
+    /* Keep in sync with doSceneCount() */
+    switch(_state->scene->metadata.file_format) {
+        case UFBX_FILE_FORMAT_FBX:
+        case UFBX_FILE_FORMAT_OBJ:
+            return 0;
+        case UFBX_FILE_FORMAT_MTL:
+            return -1;
+        case UFBX_FILE_FORMAT_UNKNOWN:
+            CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+    }
 
-UnsignedInt UfbxImporter::doSceneCount() const { return 1; }
+    CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+}
+
+UnsignedInt UfbxImporter::doSceneCount() const {
+    /* Keep in sync with doDefaultScene() */
+    switch(_state->scene->metadata.file_format) {
+        case UFBX_FILE_FORMAT_FBX:
+        case UFBX_FILE_FORMAT_OBJ:
+            return 1;
+        case UFBX_FILE_FORMAT_MTL:
+            return 0;
+        case UFBX_FILE_FORMAT_UNKNOWN:
+            CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+    }
+
+    CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+}
 
 Containers::Optional<SceneData> UfbxImporter::doScene(UnsignedInt) {
     const ufbx_scene* scene = _state->scene.get();

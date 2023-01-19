@@ -138,6 +138,8 @@ struct UfbxImporterTest: TestSuite::Tester {
     void objMissingMtl();
     void objMissingMtlFileCallback();
 
+    void mtl();
+
     void normalizeUnitsAdjustTransforms();
     void normalizeUnitsTransformRoot();
     void normalizeUnitsInvalidHandling();
@@ -259,6 +261,8 @@ UfbxImporterTest::UfbxImporterTest() {
               &UfbxImporterTest::objCubeFileCallback,
               &UfbxImporterTest::objMissingMtl,
               &UfbxImporterTest::objMissingMtlFileCallback,
+
+              &UfbxImporterTest::mtl,
 
               &UfbxImporterTest::normalizeUnitsAdjustTransforms,
               &UfbxImporterTest::normalizeUnitsTransformRoot,
@@ -470,8 +474,7 @@ void UfbxImporterTest::scene() {
     CORRADE_COMPARE(sceneFieldInvalid, SceneField{});
     CORRADE_COMPARE(importer->sceneFieldName(sceneFieldCustom(9001)), "");
 
-    Int defaultScene = importer->defaultScene();
-    CORRADE_COMPARE(defaultScene, 0);
+    CORRADE_COMPARE(importer->defaultScene(), 0);
 
     Containers::Optional<SceneData> scene = importer->scene(0);
     CORRADE_VERIFY(scene);
@@ -2270,6 +2273,7 @@ void UfbxImporterTest::objCube() {
 
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "cube.obj")));
     CORRADE_COMPARE(importer->sceneCount(), 1);
+    CORRADE_COMPARE(importer->defaultScene(), 0);
     CORRADE_COMPARE(importer->objectCount(), 1);
     CORRADE_COMPARE(importer->meshCount(), 1);
     CORRADE_COMPARE(importer->materialCount(), 1);
@@ -2380,6 +2384,34 @@ void UfbxImporterTest::objMissingMtlFileCallback() {
     CORRADE_VERIFY(material);
 
     MaterialData reference{MaterialType{}, {}};
+    CORRADE_COMPARE_AS(*material, reference, DebugTools::CompareMaterial);
+}
+
+void UfbxImporterTest::mtl() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
+
+    /* Same as objCube(), but importing the referenced `*.mtl` file directly --
+       should result in just the material properties being present, no scene or
+       mesh data */
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "cube.mtl")));
+    CORRADE_COMPARE(importer->sceneCount(), 0);
+    CORRADE_COMPARE(importer->defaultScene(), -1);
+    CORRADE_COMPARE(importer->objectCount(), 0);
+    CORRADE_COMPARE(importer->meshCount(), 0);
+    CORRADE_COMPARE(importer->materialCount(), 1);
+
+    Int materialId = importer->materialForName("Material");
+    CORRADE_COMPARE(materialId, 0);
+    Containers::Optional<MaterialData> material = importer->material(UnsignedInt(materialId));
+    CORRADE_VERIFY(material);
+
+    MaterialData reference{MaterialType::Phong, {
+        {MaterialAttribute::AmbientColor, Color4{1.0f, 0.0f, 0.0f, 1.0f}},
+        {MaterialAttribute::DiffuseColor, Color4{0.0f, 1.0f, 0.0f, 1.0f}},
+        {MaterialAttribute::SpecularColor, Color4{0.0f, 0.0f, 1.0f, 1.0f}},
+        {MaterialAttribute::EmissiveColor, Color3{0.5f, 0.5f, 0.5f}},
+        {MaterialAttribute::Shininess, 250.0f},
+    }};
     CORRADE_COMPARE_AS(*material, reference, DebugTools::CompareMaterial);
 }
 

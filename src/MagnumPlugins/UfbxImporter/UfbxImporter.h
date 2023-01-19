@@ -132,8 +132,11 @@ Animations and skinning-related data are not imported at the moment.
 
 @subsection Trade-UfbxImporter-behavior-scene Scene import
 
--   `ufbx` supports only a single scene, though in practice it is extremely rare
-    to have FBX files containing more than a single scene.
+-   `ufbx` supports only a single scene, though in practice it is extremely
+    rare to have FBX files containing more than a single scene. The only
+    exception is OBJ `.mtl` files when opened directly instead of through the
+    top-level `.obj` --- those are treated as material libraries and thus
+    expose no scene at all.
 -   FBX files may contain nodes with "geometric transforms" that transform only
     the mesh of the node without affecting children. These are converted to
     unnamed helper nodes by default, see
@@ -200,6 +203,9 @@ Animations and skinning-related data are not imported at the moment.
     @ref MaterialAttribute::DoubleSided, @ref MaterialAttribute::AlphaMask and
     @ref MaterialAttribute::AlphaBlend properties, and thus they are undefined
     for materials.
+-   In addition to opening OBJ files, `ufbx` allows directly opening a `.mtl`
+    file, which will result in just the material data being parsed, without any
+    meshes or a scene present.
 
 @subsection Trade-UfbxImporter-behavior-lights Light import
 
