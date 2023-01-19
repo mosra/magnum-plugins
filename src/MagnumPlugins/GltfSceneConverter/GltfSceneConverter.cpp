@@ -69,6 +69,8 @@ namespace Magnum { namespace Trade {
 
 namespace {
 
+/* Each value here needs a corresponding entry in extensionStrings inside
+   doEndData(). Values sorted by name. */
 enum class GltfExtension {
     KhrMaterialsUnlit = 1 << 0,
     KhrMeshQuantization = 1 << 1,
