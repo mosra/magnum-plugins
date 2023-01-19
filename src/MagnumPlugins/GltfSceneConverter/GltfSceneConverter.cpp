@@ -1563,13 +1563,13 @@ namespace {
 /* Remembers which attributes were accessed to subsequently handle ones that
    weren't */
 struct MaskedMaterial {
-    explicit MaskedMaterial(const MaterialData& material, UnsignedInt layer = 0): material(material), layer{layer}, mask{ValueInit, material.attributeCount(layer)} {}
+    explicit MaskedMaterial(const MaterialData& material, Containers::MutableBitArrayView mask, UnsignedInt layer = 0): material(material), layer{layer}, mask{mask} {}
 
     Containers::Optional<UnsignedInt> findId(MaterialAttribute name) {
         const Containers::Optional<UnsignedInt> found = material.findAttributeId(layer, name);
         if(!found) return {};
 
-        mask.set(*found);
+        mask.set(material.attributeDataOffset(layer) + *found);
         return found;
     }
 
@@ -1577,7 +1577,7 @@ struct MaskedMaterial {
         const Containers::Optional<UnsignedInt> found = material.findAttributeId(layer, name);
         if(!found) return {};
 
-        mask.set(*found);
+        mask.set(material.attributeDataOffset(layer) + *found);
         return material.attribute<T>(layer, *found);
     }
 
@@ -1585,13 +1585,13 @@ struct MaskedMaterial {
         const Containers::Optional<UnsignedInt> found = material.findAttributeId(layer, name);
         if(!found) return {};
 
-        mask.set(*found);
+        mask.set(material.attributeDataOffset(layer) + *found);
         return material.attribute<T>(layer, *found);
     }
 
     const MaterialData& material;
     UnsignedInt layer;
-    Containers::BitArray mask;
+    Containers::MutableBitArrayView mask;
 };
 
 }
@@ -1774,21 +1774,27 @@ bool GltfSceneConverter::doAdd(UnsignedInt, const MaterialData& material, const 
        accessed attributes in a bitfield. That's asymptotically slower, but has
        a much smaller constant overhead due to only needing a single
        JsonWriter, so probably still faster than the O(n) idea. */
-    MaskedMaterial maskedMaterial{material};
+    Containers::BitArray mask{ValueInit, material.attributeData().size()};
+    MaskedMaterial maskedBaseMaterial{material, mask};
+
+    /* A mask for layers, so empty layers are properly detected and reported as
+       well. The first layer is accessed always, so mark it as such. */
+    Containers::BitArray layerMask{ValueInit, material.layerCount()};
+    layerMask.set(0);
 
     /* Metallic/roughness material properties. Write only if there's actually
        something; texture properties will get ignored if there's no texture. */
     {
-        const auto baseColor = maskedMaterial.find<Color4>(MaterialAttribute::BaseColor);
-        const auto metalness = maskedMaterial.find<Float>(MaterialAttribute::Metalness);
-        const auto roughness = maskedMaterial.find<Float>(MaterialAttribute::Roughness);
-        const auto foundBaseColorTexture = maskedMaterial.findId(MaterialAttribute::BaseColorTexture);
+        const auto baseColor = maskedBaseMaterial.find<Color4>(MaterialAttribute::BaseColor);
+        const auto metalness = maskedBaseMaterial.find<Float>(MaterialAttribute::Metalness);
+        const auto roughness = maskedBaseMaterial.find<Float>(MaterialAttribute::Roughness);
+        const auto foundBaseColorTexture = maskedBaseMaterial.findId(MaterialAttribute::BaseColorTexture);
         /* It was checked above that the correct Metallic/Roughness packing
            is used, so we can check either just for the metalness texture or
            for the combined one -- the roughness texture attributes are then
            exactly the same */
-        const auto foundMetalnessTexture = maskedMaterial.findId(MaterialAttribute::MetalnessTexture);
-        const auto foundNoneRoughnessMetallicTexture = maskedMaterial.findId(MaterialAttribute::NoneRoughnessMetallicTexture);
+        const auto foundMetalnessTexture = maskedBaseMaterial.findId(MaterialAttribute::MetalnessTexture);
+        const auto foundNoneRoughnessMetallicTexture = maskedBaseMaterial.findId(MaterialAttribute::NoneRoughnessMetallicTexture);
         if((baseColor && (keepDefaults || *baseColor != 0xffffffff_rgbaf)) ||
            (metalness && (keepDefaults || Math::notEqual(*metalness, 1.0f))) ||
            (roughness && (keepDefaults || Math::notEqual(*roughness, 1.0f))) ||
@@ -1802,7 +1808,7 @@ bool GltfSceneConverter::doAdd(UnsignedInt, const MaterialData& material, const 
                 _state->gltfMaterials
                     .writeKey("baseColorFactor"_s).writeArray(baseColor->data());
             if(foundBaseColorTexture)
-                writeTexture(maskedMaterial, "baseColorTexture"_s, *foundBaseColorTexture, {});
+                writeTexture(maskedBaseMaterial, "baseColorTexture"_s, *foundBaseColorTexture, {});
 
             if(metalness && (keepDefaults || Math::notEqual(*metalness, 1.0f)))
                 _state->gltfMaterials
@@ -1811,60 +1817,60 @@ bool GltfSceneConverter::doAdd(UnsignedInt, const MaterialData& material, const 
                 _state->gltfMaterials
                     .writeKey("roughnessFactor"_s).write(*roughness);
             if(foundMetalnessTexture) {
-                writeTexture(maskedMaterial, "metallicRoughnessTexture"_s, *foundMetalnessTexture, {});
+                writeTexture(maskedBaseMaterial, "metallicRoughnessTexture"_s, *foundMetalnessTexture, {});
 
                 /* Mark the swizzles and roughness properties as used, if
                    present, by simply looking them up -- we checked they're
                    valid and consistent with metalness above */
-                maskedMaterial.findId(MaterialAttribute::MetalnessTextureSwizzle);
-                maskedMaterial.findId(MaterialAttribute::RoughnessTexture);
-                maskedMaterial.findId(MaterialAttribute::RoughnessTextureSwizzle);
-                maskedMaterial.findId(MaterialAttribute::RoughnessTextureMatrix);
-                maskedMaterial.findId(MaterialAttribute::RoughnessTextureCoordinates);
-                maskedMaterial.findId(MaterialAttribute::RoughnessTextureLayer);
+                maskedBaseMaterial.findId(MaterialAttribute::MetalnessTextureSwizzle);
+                maskedBaseMaterial.findId(MaterialAttribute::RoughnessTexture);
+                maskedBaseMaterial.findId(MaterialAttribute::RoughnessTextureSwizzle);
+                maskedBaseMaterial.findId(MaterialAttribute::RoughnessTextureMatrix);
+                maskedBaseMaterial.findId(MaterialAttribute::RoughnessTextureCoordinates);
+                maskedBaseMaterial.findId(MaterialAttribute::RoughnessTextureLayer);
 
             } else if(foundNoneRoughnessMetallicTexture) {
-                writeTexture(maskedMaterial, "metallicRoughnessTexture"_s, *foundNoneRoughnessMetallicTexture, "MetalnessTexture"_s);
+                writeTexture(maskedBaseMaterial, "metallicRoughnessTexture"_s, *foundNoneRoughnessMetallicTexture, "MetalnessTexture"_s);
 
                 /* Mark the roughness properties as used, if present, by simply
                    looking them up -- we checked they're consistent with
                    metalness above */
-                maskedMaterial.findId(MaterialAttribute::RoughnessTextureMatrix);
-                maskedMaterial.findId(MaterialAttribute::RoughnessTextureCoordinates);
-                maskedMaterial.findId(MaterialAttribute::RoughnessTextureLayer);
+                maskedBaseMaterial.findId(MaterialAttribute::RoughnessTextureMatrix);
+                maskedBaseMaterial.findId(MaterialAttribute::RoughnessTextureCoordinates);
+                maskedBaseMaterial.findId(MaterialAttribute::RoughnessTextureLayer);
             }
         }
     }
 
     /* Normal texture properties; ignored if there's no texture */
-    if(const auto foundNormalTexture = maskedMaterial.findId(MaterialAttribute::NormalTexture)) {
+    if(const auto foundNormalTexture = maskedBaseMaterial.findId(MaterialAttribute::NormalTexture)) {
         _state->gltfMaterials.writeKey("normalTexture"_s);
         const Containers::ScopeGuard gltfTexture = _state->gltfMaterials.beginObjectScope();
 
-        writeTextureContents(maskedMaterial, *foundNormalTexture, {});
+        writeTextureContents(maskedBaseMaterial, *foundNormalTexture, {});
 
         /* Mark the swizzle as used, if present, by simply looking it up -- we
            checked it's valid above */
-        maskedMaterial.findId(MaterialAttribute::NormalTextureSwizzle);
+        maskedBaseMaterial.findId(MaterialAttribute::NormalTextureSwizzle);
 
-        const auto normalTextureScale = maskedMaterial.find<Float>(MaterialAttribute::NormalTextureScale);
+        const auto normalTextureScale = maskedBaseMaterial.find<Float>(MaterialAttribute::NormalTextureScale);
         if(normalTextureScale && (keepDefaults || Math::notEqual(*normalTextureScale, 1.0f)))
             _state->gltfMaterials
                 .writeKey("scale"_s).write(*normalTextureScale);
     }
 
     /* Occlusion texture properties; ignored if there's no texture */
-    if(const auto foundOcclusionTexture = maskedMaterial.findId(MaterialAttribute::OcclusionTexture)) {
+    if(const auto foundOcclusionTexture = maskedBaseMaterial.findId(MaterialAttribute::OcclusionTexture)) {
         _state->gltfMaterials.writeKey("occlusionTexture"_s);
         const Containers::ScopeGuard gltfTexture = _state->gltfMaterials.beginObjectScope();
 
-        writeTextureContents(maskedMaterial, *foundOcclusionTexture, {});
+        writeTextureContents(maskedBaseMaterial, *foundOcclusionTexture, {});
 
         /* Mark the swizzle as used, if present, by simply looking it up -- we
            checked it's valid above */
-        maskedMaterial.findId(MaterialAttribute::OcclusionTextureSwizzle);
+        maskedBaseMaterial.findId(MaterialAttribute::OcclusionTextureSwizzle);
 
-        const auto occlusionTextureStrength = maskedMaterial.find<Float>(MaterialAttribute::OcclusionTextureStrength);
+        const auto occlusionTextureStrength = maskedBaseMaterial.find<Float>(MaterialAttribute::OcclusionTextureStrength);
         if(occlusionTextureStrength && (keepDefaults || Math::notEqual(*occlusionTextureStrength, 1.0f)))
             _state->gltfMaterials
                 .writeKey("strength"_s).write(*occlusionTextureStrength);
@@ -1872,20 +1878,20 @@ bool GltfSceneConverter::doAdd(UnsignedInt, const MaterialData& material, const 
 
     /* Emissive factor */
     {
-        const auto emissiveColor = maskedMaterial.find<Color3>(MaterialAttribute::EmissiveColor);
+        const auto emissiveColor = maskedBaseMaterial.find<Color3>(MaterialAttribute::EmissiveColor);
         if(emissiveColor && (keepDefaults || *emissiveColor != 0x000000_rgbf))
             _state->gltfMaterials
                 .writeKey("emissiveFactor"_s).writeArray(emissiveColor->data());
     }
 
     /* Emissive texture properties; ignored if there's no texture */
-    if(const auto foundEmissiveTexture = maskedMaterial.findId(MaterialAttribute::EmissiveTexture))
-        writeTexture(maskedMaterial, "emissiveTexture"_s, *foundEmissiveTexture, {});
+    if(const auto foundEmissiveTexture = maskedBaseMaterial.findId(MaterialAttribute::EmissiveTexture))
+        writeTexture(maskedBaseMaterial, "emissiveTexture"_s, *foundEmissiveTexture, {});
 
     /* Alpha mode and cutoff */
     {
-        const auto alphaMask = maskedMaterial.find<Float>(MaterialAttribute::AlphaMask);
-        const auto alphaBlend = maskedMaterial.find<bool>(MaterialAttribute::AlphaBlend);
+        const auto alphaMask = maskedBaseMaterial.find<Float>(MaterialAttribute::AlphaMask);
+        const auto alphaBlend = maskedBaseMaterial.find<bool>(MaterialAttribute::AlphaBlend);
         if(alphaBlend && *alphaBlend) {
             _state->gltfMaterials.writeKey("alphaMode"_s).write("BLEND"_s);
             /* Alpha mask ignored in this case */
@@ -1901,7 +1907,7 @@ bool GltfSceneConverter::doAdd(UnsignedInt, const MaterialData& material, const 
 
     /* Double sided */
     {
-        const auto doubleSided = maskedMaterial.find<bool>(MaterialAttribute::DoubleSided);
+        const auto doubleSided = maskedBaseMaterial.find<bool>(MaterialAttribute::DoubleSided);
         if(doubleSided && (keepDefaults || *doubleSided))
             _state->gltfMaterials.writeKey("doubleSided"_s).write(*doubleSided);
     }
@@ -1927,42 +1933,66 @@ bool GltfSceneConverter::doAdd(UnsignedInt, const MaterialData& material, const 
         const auto baseColorId = material.findAttributeId(MaterialAttribute::BaseColor);
         const auto diffuseColorId = material.findAttributeId(MaterialAttribute::DiffuseColor);
         if(baseColorId && diffuseColorId && material.attribute<Color4>(*baseColorId) == material.attribute<Color4>(*diffuseColorId))
-            maskedMaterial.mask.set(*diffuseColorId);
+            maskedBaseMaterial.mask.set(*diffuseColorId);
     } {
         const auto baseColorTextureId = material.findAttributeId(MaterialAttribute::BaseColorTexture);
         const auto diffuseTextureId = material.findAttributeId(MaterialAttribute::DiffuseTexture);
         if(baseColorTextureId && diffuseTextureId && material.attribute<UnsignedInt>(*baseColorTextureId) == material.attribute<UnsignedInt>(*diffuseTextureId))
-            maskedMaterial.mask.set(*diffuseTextureId);
+            maskedBaseMaterial.mask.set(*diffuseTextureId);
     }  {
         const auto baseColorTextureMatrixId = material.findAttributeId(MaterialAttribute::BaseColorTextureMatrix);
         const auto diffuseTextureMatrixId = material.findAttributeId(MaterialAttribute::DiffuseTextureMatrix);
         if(baseColorTextureMatrixId && diffuseTextureMatrixId && material.attribute<Matrix3>(*baseColorTextureMatrixId) == material.attribute<Matrix3>(*diffuseTextureMatrixId))
-            maskedMaterial.mask.set(*diffuseTextureMatrixId);
+            maskedBaseMaterial.mask.set(*diffuseTextureMatrixId);
     } {
         const auto baseColorTextureCoordinatesId = material.findAttributeId(MaterialAttribute::BaseColorTextureCoordinates);
         const auto diffuseTextureCoordinatesId = material.findAttributeId(MaterialAttribute::DiffuseTextureCoordinates);
         if(baseColorTextureCoordinatesId && diffuseTextureCoordinatesId && material.attribute<UnsignedInt>(*baseColorTextureCoordinatesId) == material.attribute<UnsignedInt>(*diffuseTextureCoordinatesId))
-            maskedMaterial.mask.set(*diffuseTextureCoordinatesId);
+            maskedBaseMaterial.mask.set(*diffuseTextureCoordinatesId);
     } {
         const auto baseColorTextureLayerId = material.findAttributeId(MaterialAttribute::BaseColorTextureLayer);
         const auto diffuseTextureLayerId = material.findAttributeId(MaterialAttribute::DiffuseTextureLayer);
         if(baseColorTextureLayerId && diffuseTextureLayerId && material.attribute<UnsignedInt>(*baseColorTextureLayerId) == material.attribute<UnsignedInt>(*diffuseTextureLayerId))
-            maskedMaterial.mask.set(*diffuseTextureLayerId);
+            maskedBaseMaterial.mask.set(*diffuseTextureLayerId);
     }
 
     /* Report unused attributes and layers */
-    /** @todo some "iterate unset bits" API for this? */
-    for(std::size_t i = 0; i != material.attributeCount(); ++i) {
-        if(!maskedMaterial.mask[i])
-            Warning{} << "Trade::GltfSceneConverter::add(): material attribute" << material.attributeName(i) << "was not used";
-    }
-    for(std::size_t i = 1; i != material.layerCount(); ++i) {
-        /** @todo redo this once we actually use some layers */
-        Warning w;
-        w << "Trade::GltfSceneConverter::add(): material layer" << i;
-        if(material.layerName(i))
-            w << "(" << Debug::nospace << material.layerName(i) << Debug::nospace << ")";
-        w << "was not used";
+    for(std::size_t layer = 0, layerMax = material.layerCount(); layer != layerMax; ++layer) {
+        const Containers::StringView layerName = material.layerName(layer);
+
+        /* If the whole layer is unused, print just a single warning instead of
+           one warning for all attributes in the layer. This also causes
+           warnings to be properly printed for empty layers. */
+        if(!layerMask[layer]) {
+            Warning w;
+            w << "Trade::GltfSceneConverter::add(): material layer" << layer;
+            if(layerName)
+                w << "(" << Debug::nospace << layerName << Debug::nospace << ")";
+            w << "was not used";
+            continue;
+        }
+
+        /* If the layer was used, print warnings for just the attributes that
+           weren't. Except for layer names, which are only used for lookup. */
+        const UnsignedInt offset = material.attributeDataOffset(layer);
+        for(std::size_t i = 0, iMax = material.attributeCount(layer); i != iMax; ++i) {
+            /** @todo some "iterate unset bits" API for this? */
+            if(!mask[offset + i]) {
+                const Containers::StringView attributeName = material.attributeName(layer, i);
+                if(attributeName == materialAttributeName(MaterialAttribute::LayerName))
+                    continue;
+
+                Warning w;
+                w << "Trade::GltfSceneConverter::add(): material attribute" << attributeName;
+                if(layer != 0) {
+                    w << "in layer" << layer;
+                    if(layerName)
+                        w << "(" << Debug::nospace << layerName << Debug::nospace << ")";
+                }
+
+                w << "was not used";
+            }
+        }
     }
 
     return true;
