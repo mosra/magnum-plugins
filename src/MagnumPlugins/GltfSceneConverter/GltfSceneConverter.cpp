@@ -1597,8 +1597,6 @@ struct MaskedMaterial {
 }
 
 bool GltfSceneConverter::doAdd(UnsignedInt, const MaterialData& material, const Containers::StringView name) {
-    const auto& pbrMetallicRoughnessMaterial = material.as<PbrMetallicRoughnessMaterialData>();
-
     /* Check that all referenced textures are in bounds */
     for(const MaterialAttribute attribute: {
         MaterialAttribute::BaseColorTexture,
@@ -1632,25 +1630,28 @@ bool GltfSceneConverter::doAdd(UnsignedInt, const MaterialData& material, const 
     }
 
     /* Check that all textures are using a compatible packing */
-    if(pbrMetallicRoughnessMaterial.hasMetalnessTexture() != pbrMetallicRoughnessMaterial.hasRoughnessTexture()) {
-        /** @todo turn this into a warning and ignore the lone texture in that
-            case? */
-        Error{} << "Trade::GltfSceneConverter::add(): can only represent a combined metallic/roughness texture or neither of them";
-        return {};
-    }
-    if(pbrMetallicRoughnessMaterial.hasMetalnessTexture() && pbrMetallicRoughnessMaterial.hasRoughnessTexture() && !pbrMetallicRoughnessMaterial.hasNoneRoughnessMetallicTexture()) {
-        /** @todo this message is confusing if swizzle is alright but e.g.
-            Matrix or Coordinates are different */
-        Error{} << "Trade::GltfSceneConverter::add(): unsupported" << Debug::packed << pbrMetallicRoughnessMaterial.metalnessTextureSwizzle() << Debug::nospace << "/" << Debug::nospace << Debug::packed << pbrMetallicRoughnessMaterial.roughnessTextureSwizzle() << "packing of a metallic/roughness texture";
-        return {};
-    }
-    if(material.hasAttribute(MaterialAttribute::NormalTexture) && pbrMetallicRoughnessMaterial.normalTextureSwizzle() != MaterialTextureSwizzle::RGB) {
-        Error{} << "Trade::GltfSceneConverter::add(): unsupported" << Debug::packed << pbrMetallicRoughnessMaterial.normalTextureSwizzle() << "packing of a normal texture";
-        return {};
-    }
-    if(material.hasAttribute(MaterialAttribute::OcclusionTexture) && pbrMetallicRoughnessMaterial.occlusionTextureSwizzle() != MaterialTextureSwizzle::R) {
-        Error{} << "Trade::GltfSceneConverter::add(): unsupported" << Debug::packed << pbrMetallicRoughnessMaterial.occlusionTextureSwizzle() << "packing of an occlusion texture";
-        return {};
+    {
+        const auto& pbrMetallicRoughnessMaterial = material.as<PbrMetallicRoughnessMaterialData>();
+        if(pbrMetallicRoughnessMaterial.hasMetalnessTexture() != pbrMetallicRoughnessMaterial.hasRoughnessTexture()) {
+            /** @todo turn this into a warning and ignore the lone texture in
+                that case? */
+            Error{} << "Trade::GltfSceneConverter::add(): can only represent a combined metallic/roughness texture or neither of them";
+            return {};
+        }
+        if(pbrMetallicRoughnessMaterial.hasMetalnessTexture() && pbrMetallicRoughnessMaterial.hasRoughnessTexture() && !pbrMetallicRoughnessMaterial.hasNoneRoughnessMetallicTexture()) {
+            /** @todo this message is confusing if swizzle is alright but e.g.
+                Matrix or Coordinates are different */
+            Error{} << "Trade::GltfSceneConverter::add(): unsupported" << Debug::packed << pbrMetallicRoughnessMaterial.metalnessTextureSwizzle() << Debug::nospace << "/" << Debug::nospace << Debug::packed << pbrMetallicRoughnessMaterial.roughnessTextureSwizzle() << "packing of a metallic/roughness texture";
+            return {};
+        }
+        if(pbrMetallicRoughnessMaterial.hasAttribute(MaterialAttribute::NormalTexture) && pbrMetallicRoughnessMaterial.normalTextureSwizzle() != MaterialTextureSwizzle::RGB) {
+            Error{} << "Trade::GltfSceneConverter::add(): unsupported" << Debug::packed << pbrMetallicRoughnessMaterial.normalTextureSwizzle() << "packing of a normal texture";
+            return {};
+        }
+        if(pbrMetallicRoughnessMaterial.hasAttribute(MaterialAttribute::OcclusionTexture) && pbrMetallicRoughnessMaterial.occlusionTextureSwizzle() != MaterialTextureSwizzle::R) {
+            Error{} << "Trade::GltfSceneConverter::add(): unsupported" << Debug::packed << pbrMetallicRoughnessMaterial.occlusionTextureSwizzle() << "packing of an occlusion texture";
+            return {};
+        }
     }
 
     /* At this point we're sure nothing will fail so we can start writing the
