@@ -878,7 +878,7 @@ const struct {
 };
 
 const struct {
-    const char* name;
+    TestSuite::TestCaseDescriptionSourceLocation name;
     bool needsTexture;
     const char* expected;
     MaterialData material;
@@ -931,12 +931,12 @@ const struct {
     {"unused attributes and layers", false, "material-empty.gltf",
         MaterialData{{}, {
             {MaterialAttribute::Shininess, 15.0f},
-            {MaterialAttribute::SpecularTexture, 0u},
+            {MaterialAttribute::DiffuseColor, 0xff6633aa_rgbaf},
             {MaterialLayer::ClearCoat},
             {MaterialAttribute::LayerFactor, 0.5f},
         }, {2, 3, 4}},
+        "Trade::GltfSceneConverter::add(): material attribute DiffuseColor was not used\n"
         "Trade::GltfSceneConverter::add(): material attribute Shininess was not used\n"
-        "Trade::GltfSceneConverter::add(): material attribute SpecularTexture was not used\n"
         /* It especially shouldn't warn about unused attribute LayerName */
         "Trade::GltfSceneConverter::add(): material layer 1 (ClearCoat) was not used\n"
         "Trade::GltfSceneConverter::add(): material layer 2 was not used\n"},
@@ -1011,19 +1011,47 @@ const struct {
 };
 
 const struct {
-    const char* name;
+    TestSuite::TestCaseDescriptionSourceLocation name;
     MaterialData material;
     const char* message;
 } AddMaterialInvalidData[]{
     {"texture out of bounds",
         MaterialData{{}, {
-            {MaterialAttribute::MetalnessTexture, 1u},
-        }}, "material attribute MetalnessTexture references texture 1 but only 1 were added so far"},
+            {MaterialAttribute::OcclusionTexture, 1u},
+        }}, "material attribute OcclusionTexture references texture 1 but only 1 were added so far"},
+    {"texture in a layer out of bounds",
+        MaterialData{{}, {
+            {MaterialLayer::ClearCoat},
+            {MaterialAttribute::NormalTexture, 2u}
+        }, {0, 2}}, "material attribute NormalTexture in layer ClearCoat references texture 2 but only 1 were added so far"},
     {"2D texture layer out of bounds",
         MaterialData{{}, {
             {MaterialAttribute::EmissiveTexture, 0u},
             {MaterialAttribute::EmissiveTextureLayer, 1u},
         }}, "material attribute EmissiveTextureLayer value 1 out of range for 1 layers in texture 0"},
+    {"2D texture global layer out of bounds",
+        MaterialData{{}, {
+            {MaterialAttribute::EmissiveTexture, 0u},
+            {MaterialAttribute::TextureLayer, 1u},
+        }}, "material attribute TextureLayer value 1 out of range for 1 layers in texture 0"},
+    {"2D texture layer in a layer out of bounds",
+        MaterialData{{}, {
+            {MaterialLayer::ClearCoat},
+            {MaterialAttribute::LayerFactorTexture, 0u},
+            {MaterialAttribute::LayerFactorTextureLayer, 1u},
+        }, {0, 3}}, "material attribute LayerFactorTextureLayer in layer ClearCoat value 1 out of range for 1 layers in texture 0"},
+    {"2D texture material-layer-local layer in a layer out of bounds",
+        MaterialData{{}, {
+            {MaterialLayer::ClearCoat},
+            {MaterialAttribute::LayerFactorTexture, 0u},
+            {MaterialAttribute::TextureLayer, 1u},
+        }, {0, 3}}, "material attribute TextureLayer in layer ClearCoat value 1 out of range for 1 layers in texture 0"},
+    {"2D texture global layer in a layer out of bounds",
+        MaterialData{{}, {
+            {MaterialAttribute::TextureLayer, 1u},
+            {MaterialLayer::ClearCoat},
+            {MaterialAttribute::LayerFactorTexture, 0u},
+        }, {1, 3}}, "material attribute TextureLayer value 1 out of range for 1 layers in texture 0"},
     {"metallic/roughness, unsupported packing",
         MaterialData{{}, {
             {MaterialAttribute::MetalnessTexture, 0u},

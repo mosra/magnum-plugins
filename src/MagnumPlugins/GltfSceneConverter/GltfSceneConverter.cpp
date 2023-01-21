@@ -1597,34 +1597,78 @@ struct MaskedMaterial {
 }
 
 bool GltfSceneConverter::doAdd(UnsignedInt, const MaterialData& material, const Containers::StringView name) {
-    /* Check that all referenced textures are in bounds */
-    for(const MaterialAttribute attribute: {
-        MaterialAttribute::BaseColorTexture,
-        MaterialAttribute::MetalnessTexture,
-        MaterialAttribute::RoughnessTexture,
-        MaterialAttribute::NormalTexture,
-        MaterialAttribute::OcclusionTexture,
-        MaterialAttribute::EmissiveTexture
-    }) {
-        const Containers::Optional<UnsignedInt> id = material.findAttributeId(attribute);
-        if(!id) continue;
+    /* Check that all referenced textures are in bounds. Because enumerating
+       all potentially used textures would be very prone to accidentally
+       missing some, it goes through all attributes and matches ones that end
+       with `Texture` and are builtin (i.e., start with an uppercase letter
+       and are in a builtin layer). Custom attributes are not checked as they
+       could use some totally different indexing scheme. */
+    for(UnsignedInt layer = 0, layerMax = material.layerCount(); layer != layerMax; ++layer) {
+        /* Custom and unnamed layers (except the base layer) are not checked
+           either */
+        const Containers::StringView layerName = material.layerName(layer);
+        if(layer && (!layerName || !std::isupper(layerName.front())))
+            continue;
 
-        const UnsignedInt index = material.attribute<UnsignedInt>(*id);
-        if(index >= textureCount()) {
-            Error{} << "Trade::GltfSceneConverter::add(): material attribute" << material.attributeName(*id) << "references texture" << index << "but only" << textureCount() << "were added so far";
-            return {};
-        }
+        for(UnsignedInt i = 0, iMax = material.attributeCount(layer); i != iMax; ++i) {
+            const Containers::StringView attributeName = material.attributeName(layer, i);
+            if(!attributeName.hasSuffix("Texture"_s) ||
+               !std::isupper(attributeName.front()) ||
+               /* Ignore also Phong DiffuseTexture -- it isn't and never will
+                  be exported on its own, it's only checked if is the same as
+                  BaseColorTexture and if not it produces a warning */
+               /** @todo remove this once GltfImporter no longer implements
+                   phongMaterialFallback */
+               attributeName == "DiffuseTexture"_s)
+                continue;
 
-        /* If there's a layer, validate that it's in bounds as well. For 2D
-           textures the layer count is implicitly 1, so the layer can only be
-           0. */
-        CORRADE_INTERNAL_ASSERT(textureCount() + 1 == _state->textureIdOffsets.size());
-        const Containers::String layerAttributeName = materialAttributeName(attribute) + "Layer"_s;
-        if(const Containers::Optional<UnsignedInt> layer = material.findAttribute<UnsignedInt>(layerAttributeName)) {
-            const UnsignedInt textureLayerCount = _state->textureIdOffsets[index + 1] - _state->textureIdOffsets[index];
-            if(*layer >= textureLayerCount) {
-                Error{} << "Trade::GltfSceneConverter::add(): material attribute" << layerAttributeName << "value" << *layer << "out of range for" << textureLayerCount << "layers in texture" << index;
+            /* Assuming that builtin *Texture attributes have the right type.
+               If you have a custom Texture attribute with an uppercase first
+               letter, it's your fault. sorry. */
+            CORRADE_INTERNAL_ASSERT(material.attributeType(layer, i) == MaterialAttributeType::UnsignedInt);
+            const UnsignedInt index = material.attribute<UnsignedInt>(layer, i);
+            if(index >= textureCount()) {
+                Error e;
+                e << "Trade::GltfSceneConverter::add(): material attribute" << attributeName;
+                if(layer != 0) {
+                    /* Nameless layers should have been skipped above */
+                    CORRADE_INTERNAL_ASSERT(layerName);
+                    e << "in layer" << layerName;
+                }
+                e << "references texture" << index << "but only" << textureCount() << "were added so far";
                 return {};
+            }
+
+            /* If there's a layer, validate that it's in bounds as well. For 2D
+               textures the layer count is implicitly 1, so the layer can only
+               be 0. Again assuming the *TextureLayer attribute has the right
+               type. If there's no layer attribute directly for the texture,
+               check the material-layer-local and global fallbacks as well. */
+            CORRADE_INTERNAL_ASSERT(textureCount() + 1 == _state->textureIdOffsets.size());
+            Containers::String textureLayerAttributeName = attributeName + "Layer"_s;
+            UnsignedInt materialLayerUsedForTextureLayer = layer;
+            Containers::Optional<UnsignedInt> textureLayer = material.findAttribute<UnsignedInt>(layer, textureLayerAttributeName);
+            if(!textureLayer) {
+                textureLayerAttributeName = Containers::String::nullTerminatedGlobalView(materialAttributeName(MaterialAttribute::TextureLayer));
+                textureLayer = material.findAttribute<UnsignedInt>(layer, MaterialAttribute::TextureLayer);
+            }
+            if(!textureLayer && layer) {
+                materialLayerUsedForTextureLayer = 0;
+                textureLayer = material.findAttribute<UnsignedInt>(0, MaterialAttribute::TextureLayer);
+            }
+            if(textureLayer) {
+                const UnsignedInt textureLayerCount = _state->textureIdOffsets[index + 1] - _state->textureIdOffsets[index];
+                if(*textureLayer >= textureLayerCount) {
+                    Error e;
+                    e << "Trade::GltfSceneConverter::add(): material attribute" << textureLayerAttributeName;
+                    if(materialLayerUsedForTextureLayer != 0) {
+                        /* Nameless layers should have been skipped above */
+                        CORRADE_INTERNAL_ASSERT(layerName);
+                        e << "in layer" << layerName;
+                    }
+                    e << "value" << *textureLayer << "out of range for" << textureLayerCount << "layers in texture" << index;
+                    return {};
+                }
             }
         }
     }
