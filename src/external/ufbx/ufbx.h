@@ -4742,6 +4742,10 @@ typedef ufbx_ref<ufbx_geometry_cache> ufbx_geometry_cache_ref;
 // Used by: `ufbx_node`.
 #define UFBX_Visibility "Visibility"
 
+// Weight of an animation layer in percentage (100.0 being full).
+// Used by: `ufbx_anim_layer`.
+#define UFBX_Weight "Weight"
+
 #if defined(_MSC_VER)
 	#pragma warning(pop)
 #elif defined(__clang__)

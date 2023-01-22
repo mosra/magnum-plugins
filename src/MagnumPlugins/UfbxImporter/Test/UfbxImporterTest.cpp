@@ -155,6 +155,8 @@ struct UfbxImporterTest: TestSuite::Tester {
     void multiWarningData();
 
     void animationInterpolation();
+    void animationLayersMerged();
+    void animationLayersRetained();
 
     /* Needs to load AnyImageImporter from a system-wide location */
     PluginManager::Manager<AbstractImporter> _manager;
@@ -291,7 +293,10 @@ UfbxImporterTest::UfbxImporterTest() {
               &UfbxImporterTest::geometryCacheFileCallback,
 
               &UfbxImporterTest::staticSkin,
-              &UfbxImporterTest::animationInterpolation});
+
+              &UfbxImporterTest::animationInterpolation,
+              &UfbxImporterTest::animationLayersMerged,
+              &UfbxImporterTest::animationLayersRetained});
 
     addInstancedTests({
         &UfbxImporterTest::multiWarning,
@@ -2628,7 +2633,6 @@ void UfbxImporterTest::multiWarningData() {
 
 void UfbxImporterTest::animationInterpolation() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
-
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "animation-interpolation.fbx")));
 
     CORRADE_COMPARE(importer->animationCount(), 1);
@@ -2638,6 +2642,7 @@ void UfbxImporterTest::animationInterpolation() {
 
     const float epsilon = 0.001f;
 
+    /* @todo: Search by target */
     auto track = animation->track<Vector3>(2);
 
     CORRADE_COMPARE_AS(track.keys(),
@@ -2717,6 +2722,159 @@ void UfbxImporterTest::animationInterpolation() {
             /* Final */
             {-14.0f, 0.0f, 0.0f},
         }), TestSuite::Compare::Container);
+}
+
+void UfbxImporterTest::animationLayersMerged() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "animation-layer.fbx")));
+
+    CORRADE_COMPARE(importer->animationCount(), 1);
+
+    const float epsilon = 0.001f;
+
+    Containers::Optional<AnimationData> animation = importer->animation(0);
+    CORRADE_VERIFY(animation);
+
+    /* @todo: Search by target */
+    auto track = animation->track<Vector3>(2);
+
+    CORRADE_COMPARE_AS(track.keys(),
+        Containers::arrayView<Float>({
+            /* Initial */
+            0.0f / 24.0f,
+            /* Layer 1 X */
+            6.0f / 24.0f,
+            /* Layer 1 Weight */
+            8.0f / 24.0f - epsilon,
+            8.0f / 24.0f,
+            /* Layer 0 X */
+            12.0f / 24.0f,
+            /* Layer 1 Weight */
+            14.0f / 24.0f - epsilon,
+            14.0f / 24.0f,
+            /* Layer 1 X */
+            18.0f / 24.0f,
+            /* Layer 1 Weight */
+            22.0f / 24.0f - epsilon,
+            22.0f / 24.0f,
+            /* Final */
+            24.0f / 24.0f,
+        }), TestSuite::Compare::Container);
+
+    CORRADE_COMPARE_AS(track.values(),
+        Containers::arrayView<Vector3>({
+            /* Initial */
+            {0.0f, 0.0f, 0.0f},
+            /* Layer 1 X */
+            {2.0f, 0.0f, 0.0f},
+            /* Layer 1 Weight */
+            {3.15267f, 0.0f, 0.0f},
+            {3.041667f, 0.0f, 0.0f},
+            /* Layer 0 X */
+            {5.125f, 0.0f, 0.0f},
+            /* Layer 1 Weight */
+            {4.83683f, 0.0f, 0.0f},
+            {3.833333f, 0.0f, 0.0f},
+            /* Layer 1 X */
+            {2.75f, 0.0f, 0.0f},
+            /* Layer 1 Weight */
+            {1.42467f, 0.0f, 0.0f},
+            {2.166667f, 0.0f, 0.0f},
+            /* Final */
+            {1.5f, 0.0f, 0.0f},
+        }), TestSuite::Compare::Container);
+
+    /* X evaluated at frames in Maya */
+    constexpr UnsignedInt KeyCount = 25;
+    const Float reference[KeyCount] = {
+        0.0f,
+        0.333333f,
+        0.666667f,
+        1.0f,
+        1.333333f,
+        1.666667f,
+        2.0f,
+        2.583333f,
+        3.041667f,
+        3.5625f,
+        4.083333f,
+        4.604167f,
+        5.125f,
+        4.979167f,
+        3.833333f,
+        3.5625f,
+        3.291667f,
+        3.020833f,
+        2.75f,
+        2.416667f,
+        2.083333f,
+        1.75f,
+        2.166667f,
+        1.833333f,
+        1.5f,
+    };
+
+    size_t hint = 0;
+    for(UnsignedInt i = 0; i < KeyCount; ++i) {
+        Float t = Float(i) / 24.0f;
+        CORRADE_ITERATION(i);
+        CORRADE_COMPARE(track.at(t, hint), (Vector3{reference[i], 0.0f, 0.0f}));
+    }
+}
+
+void UfbxImporterTest::animationLayersRetained() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
+    importer->configuration().setValue("animationLayers", true);
+
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "animation-layer.fbx")));
+
+    CORRADE_COMPARE(importer->animationCount(), 2);
+
+    {
+        Containers::Optional<AnimationData> animation = importer->animation("BaseLayer");
+        CORRADE_VERIFY(animation);
+
+        /* @todo: Search by target */
+        auto track = animation->track<Vector3>(2);
+
+        CORRADE_COMPARE_AS(track.keys(),
+            Containers::arrayView<Float>({
+                0.0f / 24.0f,
+                12.0f / 24.0f,
+                24.0f / 24.0f,
+            }), TestSuite::Compare::Container);
+
+        CORRADE_COMPARE_AS(track.values(),
+            Containers::arrayView<Vector3>({
+                {0.0f, 0.0f, 0.0f},
+                {4.0f, 0.0f, 0.0f},
+                {0.0f, 0.0f, 0.0f},
+            }), TestSuite::Compare::Container);
+    }
+
+    {
+        Containers::Optional<AnimationData> animation = importer->animation("AnimLayer1");
+        CORRADE_VERIFY(animation);
+
+        /* @todo: Search by target */
+        auto track = animation->track<Vector3>(2);
+
+        CORRADE_COMPARE_AS(track.keys(),
+            Containers::arrayView<Float>({
+                0.0f / 24.0f,
+                6.0f / 24.0f,
+                18.0f / 24.0f,
+                24.0f / 24.0f,
+            }), TestSuite::Compare::Container);
+
+        CORRADE_COMPARE_AS(track.values(),
+            Containers::arrayView<Vector3>({
+                {0.0f, 0.0f, 0.0f},
+                {0.0f, 0.0f, 0.0f},
+                {3.0f, 0.0f, 0.0f},
+                {3.0f, 0.0f, 0.0f},
+            }), TestSuite::Compare::Container);
+    }
 }
 
 }}}}

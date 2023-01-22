@@ -1771,11 +1771,18 @@ Containers::Optional<AnimationData> UfbxImporter::doAnimation(UnsignedInt id) {
         arrayResize(keyTimes, NoInit, 0);
         for(const ufbx_anim_layer* layer : layers) {
             for(const Containers::StringView& source : keySources) {
-                ufbx_anim_prop *aprop = ufbx_find_anim_prop_len(layer, &node->element, source.data(), source.size());
+                const ufbx_anim_prop *aprop = ufbx_find_anim_prop_len(layer, &node->element, source.data(), source.size());
                 if(!aprop) continue;
 
                 for(const ufbx_anim_curve* curve : aprop->anim_value->curves)
                     appendKeyTimes(resampleOptions, keyTimes, curve);
+            }
+
+            /* Layer weight affects result if we're combining animations */
+            if(!_state->animationLayers) {
+                if(const ufbx_anim_prop *aprop = ufbx_find_anim_prop(layer, &layer->element, UFBX_Weight)) {
+                    appendKeyTimes(resampleOptions, keyTimes, aprop->anim_value->curves[0]);
+                }
             }
 
             sortAndDeduplicate(keyTimes);
