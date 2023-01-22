@@ -49,6 +49,7 @@
 #include <Corrade/Utility/Path.h>
 #include <Corrade/Utility/String.h>
 #include <Magnum/FileCallback.h>
+#include <Magnum/Animation/Player.h>
 #include <Magnum/DebugTools/CompareMaterial.h>
 #include <Magnum/Math/Angle.h>
 #include <Magnum/Math/Vector3.h>
@@ -157,6 +158,7 @@ struct UfbxImporterTest: TestSuite::Tester {
     void animationInterpolation();
     void animationLayersMerged();
     void animationLayersRetained();
+    void animationStacks();
 
     /* Needs to load AnyImageImporter from a system-wide location */
     PluginManager::Manager<AbstractImporter> _manager;
@@ -296,7 +298,8 @@ UfbxImporterTest::UfbxImporterTest() {
 
               &UfbxImporterTest::animationInterpolation,
               &UfbxImporterTest::animationLayersMerged,
-              &UfbxImporterTest::animationLayersRetained});
+              &UfbxImporterTest::animationLayersRetained,
+              &UfbxImporterTest::animationStacks});
 
     addInstancedTests({
         &UfbxImporterTest::multiWarning,
@@ -2874,6 +2877,105 @@ void UfbxImporterTest::animationLayersRetained() {
                 {3.0f, 0.0f, 0.0f},
                 {3.0f, 0.0f, 0.0f},
             }), TestSuite::Compare::Container);
+    }
+}
+
+namespace {
+
+struct AnimTarget {
+    const UnsignedLong objectId;
+    Vector3 translation;
+    Quaternion rotation;
+    Vector3 scaling;
+};
+
+Containers::Optional<Animation::Player<Float>> createAnimationPlayer(const AnimationData &animation, Containers::ArrayView<AnimTarget> targets) {
+    Animation::Player<Float> player;
+    for(UnsignedInt j = 0; j < animation.trackCount(); j++) {
+        AnimTarget* target = nullptr;
+        const UnsignedInt targetId = animation.trackTarget(j);
+        for(UnsignedInt i = 0; i < targets.size(); ++i) {
+            if(targets[i].objectId == targetId) {
+                target = &targets[i];
+                break;
+            }
+        }
+        CORRADE_ASSERT(target != nullptr, "Expected to find a target", Containers::NullOpt);
+
+        switch(animation.trackTargetType(j)) {
+            case AnimationTrackTargetType::Translation3D:
+                player.add(animation.track<Vector3>(j), target->translation);
+                break;
+            case AnimationTrackTargetType::Rotation3D:
+                player.add(animation.track<Quaternion>(j), target->rotation);
+                break;
+            case AnimationTrackTargetType::Scaling3D:
+                player.add(animation.track<Vector3>(j), target->scaling);
+                break;
+            default:
+                CORRADE_ASSERT(false, "Unhandled target type", Containers::NullOpt);
+        }
+    }
+    return std::move(player);
+}
+
+}
+
+void UfbxImporterTest::animationStacks() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "animation-stacks.fbx")));
+
+    CORRADE_COMPARE(importer->animationCount(), 3);
+
+    Long cubeId = importer->objectForName("Cube");
+    CORRADE_COMPARE_AS(cubeId, 0, TestSuite::Compare::GreaterOrEqual);
+
+    {
+        Containers::Optional<AnimationData> animation = importer->animation("Cube|Lift");
+        CORRADE_VERIFY(animation);
+
+        AnimTarget targets[] = {{UnsignedLong(cubeId)}};
+        Containers::Optional<Animation::Player<Float>> player = createAnimationPlayer(*animation, Containers::arrayView(targets));
+        CORRADE_VERIFY(player);
+
+        player->play(0.0f);
+        player->advance(10.0f/24.0f);
+
+        CORRADE_COMPARE(targets[0].translation, (Vector3{0.0f, 1.0f, 0.0f}));
+        CORRADE_COMPARE(targets[0].rotation, (Quaternion{{-0.707107f, 0.0f, 0.0f}, 0.707107f})); /* Euler (-90, 0, 0) */
+        CORRADE_COMPARE(targets[0].scaling, (Vector3{1.0f, 1.0f, 1.0f}));
+    }
+
+    {
+        Containers::Optional<AnimationData> animation = importer->animation("Cube|Spin");
+        CORRADE_VERIFY(animation);
+
+        AnimTarget targets[] = {{UnsignedLong(cubeId)}};
+        Containers::Optional<Animation::Player<Float>> player = createAnimationPlayer(*animation, Containers::arrayView(targets));
+        CORRADE_VERIFY(player);
+
+        player->play(0.0f);
+        player->advance(10.0f/24.0f);
+
+        CORRADE_COMPARE(targets[0].translation, (Vector3{0.0f, 0.0f, 0.0f}));
+        CORRADE_COMPARE(targets[0].rotation, (Quaternion{{-0.5, 0.5, 0.5}, 0.5})); /* Euler (-90, 90, 0) */
+        CORRADE_COMPARE(targets[0].scaling, (Vector3{1.0f, 1.0f, 1.0f}));
+    }
+
+    {
+        Containers::Optional<AnimationData> animation = importer->animation("Cube|Grow");
+        CORRADE_VERIFY(animation);
+
+        AnimTarget targets[] = {{UnsignedLong(cubeId)}};
+        Containers::Optional<Animation::Player<Float>> player = createAnimationPlayer(*animation, Containers::arrayView(targets));
+        CORRADE_VERIFY(player);
+
+        player->play(0.0f);
+        player->advance(10.0f/24.0f);
+
+        CORRADE_COMPARE(targets[0].translation, (Vector3{0.0f, 0.0f, 0.0f}));
+        CORRADE_COMPARE(targets[0].rotation, (Quaternion{{-0.707107f, 0.0f, 0.0f}, 0.707107f})); /* Euler (-90, 0, 0) */
+        CORRADE_COMPARE(targets[0].scaling, (Vector3{2.0f, 2.0f, 2.0f}));
     }
 }
 
