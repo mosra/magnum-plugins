@@ -1701,22 +1701,30 @@ Containers::Optional<AnimationData> UfbxImporter::doAnimation(UnsignedInt id) {
 
     Containers::Array<AnimProp> animProps;
 
+    const Double resampleRate = configuration().value<Double>("resampleRate");
+    const bool resampleRotation = configuration().value<bool>("resampleRotation");
+    const Double minimumSampleRate = configuration().value<Double>("minimumSampleRate");
+    const Double constantInterpolationDuration = configuration().value<Double>("constantInterpolationDuration");
+    const bool animateFullTransform = configuration().value<bool>("animateFullTransform");
+
     for(const ufbx_anim_layer* layer : layers) {
         for(const ufbx_anim_prop& prop : layer->anim_props) {
             if(prop.element->type != UFBX_ELEMENT_NODE) continue;
             ufbx_node* node = reinterpret_cast<ufbx_node*>(prop.element);
             if(node->is_root) continue;
             Containers::StringView name(prop.prop_name);
-            arrayAppend(animProps, {node->typed_id, name});
+
+            if(animateFullTransform && (name == UFBX_Lcl_Translation || name == UFBX_Lcl_Rotation || name == UFBX_Lcl_Scaling)) {
+                arrayAppend(animProps, {node->typed_id, UFBX_Lcl_Translation});
+                arrayAppend(animProps, {node->typed_id, UFBX_Lcl_Rotation});
+                arrayAppend(animProps, {node->typed_id, UFBX_Lcl_Scaling});
+            } else {
+                arrayAppend(animProps, {node->typed_id, name});
+            }
         }
     }
 
     sortAndDeduplicate(animProps);
-
-    const Double resampleRate = configuration().value<Double>("resampleRate");
-    const bool resampleRotation = configuration().value<bool>("resampleRotation");
-    const Double minimumSampleRate = configuration().value<Double>("minimumSampleRate");
-    const Double constantInterpolationDuration = configuration().value<Double>("constantInterpolationDuration");
 
     Containers::Array<double> keyTimes;
     Containers::Array<AnimTrack> animTracks;
