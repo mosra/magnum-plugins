@@ -84,6 +84,7 @@ corrade_add_test(UfbxImporterTest UfbxImporterTest.cpp
         animation-interpolation.fbx
         animation-layer.fbx
         animation-stacks.fbx
+        animation-space.fbx
         cube.obj
         cube.mtl
         missing-mtl.obj
