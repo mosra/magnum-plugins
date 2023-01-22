@@ -214,6 +214,15 @@ const struct {
     {-999, true},
 };
 
+constexpr struct {
+    Containers::StringView filename;
+} AnimationSpaceData[]{
+    {"animation-space-y-up-m.fbx"_s},
+    {"animation-space-y-up-cm.fbx"_s},
+    {"animation-space-z-up-m.fbx"_s},
+    {"animation-space-z-up-cm.fbx"_s},
+};
+
 UfbxImporterTest::UfbxImporterTest() {
     addTests({&UfbxImporterTest::openFile,
               &UfbxImporterTest::openData,
@@ -300,8 +309,11 @@ UfbxImporterTest::UfbxImporterTest() {
               &UfbxImporterTest::animationInterpolation,
               &UfbxImporterTest::animationLayersMerged,
               &UfbxImporterTest::animationLayersRetained,
-              &UfbxImporterTest::animationStacks,
-              &UfbxImporterTest::animationSpaceNormalization});
+              &UfbxImporterTest::animationStacks});
+
+    addInstancedTests({&UfbxImporterTest::animationSpaceNormalization},
+        Containers::arraySize(AnimationSpaceData));
+
 
     addInstancedTests({
         &UfbxImporterTest::multiWarning,
@@ -2982,11 +2994,13 @@ void UfbxImporterTest::animationStacks() {
 }
 
 void UfbxImporterTest::animationSpaceNormalization() {
+    auto&& data = AnimationSpaceData[testCaseInstanceId()];
+
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
     importer->configuration().setValue("normalizeUnits", true);
     importer->configuration().setValue("animateFullTransform", true);
 
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "animation-space.fbx")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, data.filename)));
 
     CORRADE_COMPARE(importer->animationCount(), 1);
 
