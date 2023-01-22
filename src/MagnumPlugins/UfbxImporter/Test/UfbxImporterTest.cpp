@@ -165,6 +165,7 @@ struct UfbxImporterTest: TestSuite::Tester {
     void animationStacks();
     void animationLayerNames();
     void animationStackNames();
+    void animationSpaceNormalization();
 
     /* Needs to load AnyImageImporter from a system-wide location */
     PluginManager::Manager<AbstractImporter> _manager;
@@ -224,6 +225,15 @@ constexpr struct {
 } ResampleRotationData[]{
     {true},
     {false},
+};
+
+constexpr struct {
+    Containers::StringView filename;
+} AnimationSpaceData[]{
+    {"animation-space-y-up-m.fbx"_s},
+    {"animation-space-y-up-cm.fbx"_s},
+    {"animation-space-z-up-m.fbx"_s},
+    {"animation-space-z-up-cm.fbx"_s},
 };
 
 UfbxImporterTest::UfbxImporterTest() {
@@ -328,6 +338,9 @@ UfbxImporterTest::UfbxImporterTest() {
               &UfbxImporterTest::animationStacks,
               &UfbxImporterTest::animationLayerNames,
               &UfbxImporterTest::animationStackNames});
+
+    addInstancedTests({&UfbxImporterTest::animationSpaceNormalization},
+        Containers::arraySize(AnimationSpaceData));
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. It also pulls in the AnyImageImporter dependency. */
@@ -3247,6 +3260,79 @@ void UfbxImporterTest::animationStackNames() {
     CORRADE_COMPARE(importer->animationForName("Cube|Lift"), 1);
     CORRADE_COMPARE(importer->animationForName("Cube|Spin"), 2);
     CORRADE_COMPARE(importer->animationForName("Nonexistent"), -1);
+}
+
+void UfbxImporterTest::animationSpaceNormalization() {
+    auto&& data = AnimationSpaceData[testCaseInstanceId()];
+    setTestCaseDescription(Utility::format("{}", data.filename));
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
+    importer->configuration().setValue("normalizeUnits", true);
+    importer->configuration().setValue("animateFullTransform", true);
+
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, data.filename)));
+
+    CORRADE_COMPARE(importer->animationCount(), 1);
+
+    Containers::Optional<AnimationData> animation = importer->animation(0);
+    CORRADE_VERIFY(animation);
+
+    Long cubeId = importer->objectForName("Cube");
+    Long squashId = importer->objectForName("Squash");
+    CORRADE_COMPARE_AS(cubeId, 0, TestSuite::Compare::GreaterOrEqual);
+    CORRADE_COMPARE_AS(squashId, 0, TestSuite::Compare::GreaterOrEqual);
+
+    constexpr UnsignedInt SampleCount = 3;
+    constexpr UnsignedInt TargetCount = 2;
+
+    AnimTarget targets[TargetCount] = {
+        {UnsignedLong(cubeId)},
+        {UnsignedLong(squashId)},
+    };
+    Containers::Optional<Animation::Player<Float>> player = createAnimationPlayer(*animation, Containers::arrayView(targets));
+    CORRADE_VERIFY(player);
+
+    const Containers::Triple<Vector3,Quaternion,Vector3> reference[SampleCount][TargetCount] = {
+        {
+            {{0.0f, 0.0f, 0.0f},
+             {{-0.707107f, 0.0f, 0.0f}, 0.707107f}, /* Euler (-90, 0, 0) */
+             {1.0f, 1.0f, 1.0f}},
+            {{0.0f, 0.0f, 0.0f},
+             {{-0.707107f, 0.0f, 0.0f}, 0.707107f}, /* Euler (-90, 0, 0) */
+             {1.0f, 1.0f, 1.0f}},
+        },
+        {
+            {{0.5f, 1.5f, -1.0f},
+             {{-0.653282f, 0.270598f, 0.270598f}, 0.653282f}, /* Euler (-90, 0, 45) */
+             {1.0f, 1.0f, 1.0f}},
+            {{0.0f, 0.0f, 0.0f},
+             {{-0.707107f, 0.0f, 0.0f}, 0.707107f}, /* Euler (-90, 0, 0) */
+             {2.0f, 2.0f, 0.125f}},
+        },
+        {
+            {{1.0f, 3.0f, -2.0f},
+             {{-0.5f, 0.5f, 0.5f}, 0.5f}, /* Euler (-90, 0, 90) */
+             {1.0f, 1.0f, 1.0f}},
+            {{0.0f, 0.0f, 0.0f},
+             {{-0.707107f, 0.0f, 0.0f}, 0.707107f}, /* Euler (-90, 0, 0) */
+             {0.5f, 0.5f, 1.5f}},
+        },
+    };
+
+    player->play(0.0f);
+
+    for(UnsignedInt i = 0; i < SampleCount; ++i) {
+        CORRADE_ITERATION(i);
+
+        player->advance(Float(i) * (12.0f/24.0f));
+
+        for(UnsignedInt j = 0; j < TargetCount; ++j) {
+            CORRADE_ITERATION(j);
+            CORRADE_COMPARE(targets[j].translation, reference[i][j].first());
+            CORRADE_COMPARE(targets[j].rotation, reference[i][j].second());
+            CORRADE_COMPARE(targets[j].scaling, reference[i][j].third());
+        }
+    }
 }
 
 }}}}
