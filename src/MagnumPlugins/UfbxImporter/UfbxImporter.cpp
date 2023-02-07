@@ -1679,7 +1679,13 @@ Containers::Optional<AnimationData> UfbxImporter::doAnimation(UnsignedInt id) {
             /* Layer weight affects result if we're combining animations */
             if(!_state->animationLayers) {
                 if(const ufbx_anim_prop *aprop = ufbx_find_anim_prop(layer, &layer->element, UFBX_Weight)) {
-                    appendKeyTimes(resampleOptions, keyTimeBuffer, aprop->anim_value->curves[0]);
+                    /* We need to resample linear weight changes as they can
+                       cause non-linear behavior with fully linear tracks. For
+                       example take a cube that moves linearly in a layer whose
+                       weight increases linearly as well, causing acceleration. */
+                    ResampleOptions weightResampleOptions = resampleOptions;
+                    weightResampleOptions.linearResampleRate = weightResampleOptions.cubicResampleRate;
+                    appendKeyTimes(weightResampleOptions, keyTimeBuffer, aprop->anim_value->curves[0]);
                 }
             }
 
