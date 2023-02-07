@@ -41,6 +41,7 @@
 #include <Corrade/Utility/Path.h>
 #include <Magnum/FileCallback.h>
 #include <Magnum/Math/Matrix3.h>
+#include <Magnum/Math/Matrix4.h>
 #include <Magnum/Math/RectangularMatrix.h>
 #include <Magnum/Math/Vector3.h>
 #include <Magnum/Math/Quaternion.h>
@@ -52,6 +53,7 @@
 #include <Magnum/Trade/LightData.h>
 #include <Magnum/Trade/SceneData.h>
 #include <Magnum/Trade/AnimationData.h>
+#include <Magnum/Trade/SkinData.h>
 #include <Magnum/MeshTools/RemoveDuplicates.h>
 #include <MagnumPlugins/AnyImageImporter/AnyImageImporter.h>
 
@@ -194,6 +196,7 @@ bool getLoadOptsFromConfiguration(ufbx_load_opts& opts, Utility::ConfigurationGr
     opts.ignore_embedded = conf.value<bool>("ignoreEmbedded");
     opts.ignore_all_content = conf.value<bool>("ignoreAllContent");
     opts.ignore_missing_external_files = true;
+    opts.clean_skin_weights = true;
 
     /* Substitute zero maximum memory to one, so that if the user computes the
        maximum memory and ends up with zero it doesn't result in unlimited */
@@ -516,8 +519,19 @@ Containers::Optional<SceneData> UfbxImporter::doScene(UnsignedInt) {
         UnsignedInt instanceCount = UnsignedInt(mesh->instances.count);
         UnsignedInt chunkCount = _state->meshChunkMapping[mesh->typed_id].count;
         meshCount += instanceCount * chunkCount;
-        if(mesh->skin_deformers.count > 0)
-            skinCount += instanceCount * chunkCount;
+    }
+
+    /* Skins are bound to meshes in FBX but nodes here, so count each node
+       that contains at least a single skin. */
+    for(const ufbx_node* node: scene->nodes) {
+        for(const ufbx_element* attrib: node->all_attribs) {
+            if(const ufbx_mesh* mesh = ufbx_as_mesh(attrib)) {
+                if(mesh->skin_deformers.count > 0) {
+                    ++skinCount;
+                    break;
+                }
+            }
+        }
     }
 
     /* Collect instanced camera/light counts */
@@ -544,6 +558,8 @@ Containers::Optional<SceneData> UfbxImporter::doScene(UnsignedInt) {
     Containers::ArrayView<UnsignedInt> cameras;
     Containers::ArrayView<UnsignedInt> lightObjects;
     Containers::ArrayView<UnsignedInt> lights;
+    Containers::ArrayView<UnsignedInt> skinObjects;
+    Containers::ArrayView<UnsignedInt> skins;
     Containers::Array<char> data = Containers::ArrayTuple{
         {NoInit, nodeCount, nodeObjects},
         {NoInit, nodeCount, parents},
@@ -562,9 +578,12 @@ Containers::Optional<SceneData> UfbxImporter::doScene(UnsignedInt) {
         {NoInit, cameraCount, cameras},
         {NoInit, lightCount, lightObjects},
         {NoInit, lightCount, lights},
+        {NoInit, skinCount, skinObjects},
+        {NoInit, skinCount, skins},
     };
 
     UnsignedInt meshMaterialOffset = 0;
+    UnsignedInt skinOffset = 0;
     UnsignedInt lightOffset = 0;
     UnsignedInt cameraOffset = 0;
 
@@ -625,11 +644,26 @@ Containers::Optional<SceneData> UfbxImporter::doScene(UnsignedInt) {
                 ++cameraOffset;
             }
         }
+
+        /* Add a single skin connection to the node if it has a skinned mesh.
+           This is a bit inexact but in practice nodes never have more than a
+           single mesh even though the format in theory supports it. */
+        for(const ufbx_element* element: node->all_attribs) {
+            if(const ufbx_mesh* mesh = ufbx_as_mesh(element)) {
+                if(mesh->skin_deformers.count > 0) {
+                    skinObjects[skinOffset] = nodeId;
+                    skins[skinOffset] = mesh->skin_deformers[0]->typed_id;
+                    ++skinOffset;
+                    break;
+                }
+            }
+        }
     }
 
     CORRADE_INTERNAL_ASSERT(meshMaterialOffset == meshMaterialObjects.size());
     CORRADE_INTERNAL_ASSERT(lightOffset == lightObjects.size());
     CORRADE_INTERNAL_ASSERT(cameraOffset == cameraObjects.size());
+    CORRADE_INTERNAL_ASSERT(skinOffset == skins.size());
 
     /* Put everything together. For simplicity the imported data could always
        have all fields present, with some being empty, but this gives less noise
@@ -670,6 +704,9 @@ Containers::Optional<SceneData> UfbxImporter::doScene(UnsignedInt) {
     });
     if(cameraCount) arrayAppend(fields, SceneFieldData{
         SceneField::Camera, cameraObjects, cameras, SceneFieldFlag::OrderedMapping
+    });
+    if(skinCount) arrayAppend(fields, SceneFieldData{
+        SceneField::Skin, skinObjects, skins, SceneFieldFlag::OrderedMapping
     });
 
     /* Convert back to the default deleter to avoid dangling deleter function
@@ -837,9 +874,13 @@ Containers::Optional<MeshData> UfbxImporter::doMesh(UnsignedInt id, UnsignedInt 
     const UnsignedInt maxUvSets = unboundedIfNegative(configuration().value<Int>("maxUvSets"));
     const UnsignedInt maxTangentSets = unboundedIfNegative(configuration().value<Int>("maxTangentSets"));
     const UnsignedInt maxColorSets = unboundedIfNegative(configuration().value<Int>("maxColorSets"));
+    const UnsignedInt maxJointWeights = unboundedIfNegative(configuration().value<Int>("maxJointWeights"));
 
     const UnsignedInt uvSetCount = Utility::min(UnsignedInt(mesh->uv_sets.count), maxUvSets);
     const UnsignedInt colorSetCount = Utility::min(UnsignedInt(mesh->color_sets.count), maxColorSets);
+
+    const ufbx_skin_deformer* skin = mesh->skin_deformers.count > 0 ? mesh->skin_deformers[0] : nullptr;
+    const UnsignedInt jointWeightCount = skin ? Utility::min(UnsignedInt(skin->max_weights_per_vertex), maxJointWeights) : 0;
 
     /* Include tangents for UV layers until we hit a layer with missing or
        incomplete tangents as at that point the implicit mapping breaks. */
@@ -881,6 +922,12 @@ Containers::Optional<MeshData> UfbxImporter::doMesh(UnsignedInt id, UnsignedInt 
     attributeCount += colorSetCount;
     stride += colorSetCount*sizeof(Color4);
 
+    attributeCount += jointWeightCount > 0 ? 1 : 0;
+    stride += jointWeightCount*sizeof(UnsignedInt);
+
+    attributeCount += jointWeightCount > 0 ? 1 : 0;
+    stride += jointWeightCount*sizeof(Float);
+
     /* Need space for maximum triangles or at least a single point/line */
     Containers::Array<UnsignedInt> primitiveIndices{Utility::max(mesh->max_face_triangles * 3, std::size_t(2))};
     Containers::Array<char> vertexData{NoInit, stride*indexCount};
@@ -895,6 +942,8 @@ Containers::Optional<MeshData> UfbxImporter::doMesh(UnsignedInt id, UnsignedInt 
     Containers::Array<Containers::StridedArrayView1D<Vector3>> tangentSets{tangentSetCount};
     Containers::Array<Containers::StridedArrayView1D<Vector3>> bitangentSets{bitangentSetCount};
     Containers::Array<Containers::StridedArrayView1D<Color4>> colorSets{colorSetCount};
+    Containers::StridedArrayView2D<UnsignedInt> jointIds;
+    Containers::StridedArrayView2D<Float> weights;
 
     {
         positions = {vertexData,
@@ -956,6 +1005,26 @@ Containers::Optional<MeshData> UfbxImporter::doMesh(UnsignedInt id, UnsignedInt 
         attributeOffset += sizeof(Color4);
     }
 
+    if (jointWeightCount > 0) {
+        jointIds = {vertexData,
+            reinterpret_cast<UnsignedInt*>(vertexData + attributeOffset),
+            {indexCount, jointWeightCount}, {Int(stride), sizeof(UnsignedInt)}};
+
+        attributeData[attributeIndex++] = MeshAttributeData{
+            MeshAttribute::JointIds, jointIds};
+        attributeOffset += sizeof(UnsignedInt)*jointWeightCount;
+    }
+
+    if (jointWeightCount > 0) {
+        weights = {vertexData,
+            reinterpret_cast<Float*>(vertexData + attributeOffset),
+            {indexCount, jointWeightCount}, {Int(stride), sizeof(Float)}};
+
+        attributeData[attributeIndex++] = MeshAttributeData{
+            MeshAttribute::Weights, weights};
+        attributeOffset += sizeof(Float)*jointWeightCount;
+    }
+
     CORRADE_INTERNAL_ASSERT(attributeIndex == attributeCount);
     CORRADE_INTERNAL_ASSERT(attributeOffset == stride);
 
@@ -985,6 +1054,7 @@ Containers::Optional<MeshData> UfbxImporter::doMesh(UnsignedInt id, UnsignedInt 
             const UnsignedInt srcIx = primitiveIndices[i];
 
             positions[dstIx] = Vector3(mesh->vertex_position[srcIx]);
+
             if(mesh->vertex_normal.exists)
                 normals[dstIx] = Vector3(mesh->vertex_normal[srcIx]);
             for(UnsignedInt set = 0; set < uvSetCount; ++set)
@@ -995,6 +1065,31 @@ Containers::Optional<MeshData> UfbxImporter::doMesh(UnsignedInt id, UnsignedInt 
                 bitangentSets[set][dstIx] = Vector3(mesh->uv_sets[set].vertex_bitangent[srcIx]);
             for(UnsignedInt set = 0; set < colorSetCount; ++set)
                 colorSets[set][dstIx] = Color4(mesh->color_sets[set].vertex_color[srcIx]);
+
+            if(jointWeightCount > 0) {
+                ufbx_skin_vertex vertex = skin->vertices[mesh->vertex_indices[srcIx]];
+                UnsignedInt weightCount = Utility::min(vertex.num_weights, jointWeightCount);
+                Float totalWeight = 0.0f;
+
+                /* We can simply take the first N weights from the skin as they
+                   are sorted in descending order by ufbx. */
+                for(UnsignedInt j = 0; j < weightCount; ++j) {
+                    ufbx_skin_weight weight = skin->weights[vertex.weight_begin + j];
+                    jointIds[dstIx][j] = weight.cluster_index;
+                    weights[dstIx][j] = Float(weight.weight);
+                    totalWeight += Float(weight.weight);
+                }
+                for(UnsignedInt j = weightCount; j < jointWeightCount; ++j) {
+                    jointIds[dstIx][j] = 0;
+                    weights[dstIx][j] = 0.0f;
+                }
+                if(totalWeight > 0.0f) {
+                    for(UnsignedInt j = 0; j < weightCount; ++j) {
+                        weights[dstIx][j] /= totalWeight;
+                    }
+                }
+            }
+
             dstIx++;
         }
     }
@@ -1813,6 +1908,34 @@ Containers::Optional<AnimationData> UfbxImporter::doAnimation(UnsignedInt id) {
     }
 
     return AnimationData{std::move(data), std::move(tracks)};
+}
+
+UnsignedInt UfbxImporter::doSkin3DCount() const {
+    return UnsignedInt(_state->scene->skin_deformers.count);
+}
+
+Int UfbxImporter::doSkin3DForName(Containers::StringView name) {
+    return typedId(ufbx_find_element_len(_state->scene.get(), UFBX_ELEMENT_SKIN_DEFORMER, name.data(), name.size()));
+}
+
+Containers::String UfbxImporter::doSkin3DName(UnsignedInt id) {
+    return _state->scene->skin_deformers[id]->name;
+}
+
+Containers::Optional<SkinData3D> UfbxImporter::doSkin3D(UnsignedInt id) {
+    const ufbx_scene* scene = _state->scene.get();
+    const ufbx_skin_deformer* skin = scene->skin_deformers[id];
+
+    Containers::Array<UnsignedInt> joints{NoInit, skin->clusters.count};
+    Containers::Array<Matrix4> inverseBindMatrices{ValueInit, skin->clusters.count};
+
+    for(std::size_t i = 0; i < skin->clusters.count; ++i) {
+        const ufbx_skin_cluster* cluster = skin->clusters[i];
+        joints[i] = cluster->bone_node->typed_id - _state->nodeIdOffset;
+        inverseBindMatrices[i] = Matrix4(Matrix4x3(Matrix4x3d(cluster->geometry_to_bone)));
+    }
+
+    return SkinData3D{std::move(joints), std::move(inverseBindMatrices)};
 }
 
 }}

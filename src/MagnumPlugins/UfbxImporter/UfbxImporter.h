@@ -483,6 +483,11 @@ class MAGNUM_UFBXIMPORTER_EXPORT UfbxImporter: public AbstractImporter {
         MAGNUM_UFBXIMPORTER_LOCAL Int doAnimationForName(Containers::StringView name) override;
         MAGNUM_UFBXIMPORTER_LOCAL Containers::Optional<AnimationData> doAnimation(UnsignedInt id) override;
 
+        MAGNUM_UFBXIMPORTER_LOCAL UnsignedInt doSkin3DCount() const override;
+        MAGNUM_UFBXIMPORTER_LOCAL Int doSkin3DForName(Containers::StringView name) override;
+        MAGNUM_UFBXIMPORTER_LOCAL Containers::String doSkin3DName(UnsignedInt id) override;
+        MAGNUM_UFBXIMPORTER_LOCAL Containers::Optional<SkinData3D> doSkin3D(UnsignedInt id) override;
+
         struct State;
         Containers::Pointer<State> _state;
 };

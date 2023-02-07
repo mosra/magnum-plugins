@@ -54,6 +54,7 @@
 #include <Magnum/Math/Angle.h>
 #include <Magnum/Math/Vector3.h>
 #include <Magnum/Math/Vector4.h>
+#include <Magnum/Math/Matrix4.h>
 #include <Magnum/Math/Color.h>
 #include <Magnum/Math/Quaternion.h>
 #include <Magnum/Math/PackingBatch.h>
@@ -61,6 +62,7 @@
 #include <Magnum/Trade/MeshData.h>
 #include <Magnum/Trade/LightData.h>
 #include <Magnum/Trade/SceneData.h>
+#include <Magnum/Trade/SkinData.h>
 #include <Magnum/Trade/AnimationData.h>
 #include <Magnum/Trade/TextureData.h>
 #include <Magnum/Trade/ImageData.h>
@@ -168,6 +170,9 @@ struct UfbxImporterTest: TestSuite::Tester {
     void animationStackNames();
     void animationSpaceNormalization();
 
+    void skinning();
+    void skinNames();
+
     /* Needs to load AnyImageImporter from a system-wide location */
     PluginManager::Manager<AbstractImporter> _manager;
 };
@@ -235,6 +240,17 @@ constexpr struct {
     {"animation-space-y-up-cm.fbx"_s},
     {"animation-space-z-up-m.fbx"_s},
     {"animation-space-z-up-cm.fbx"_s},
+};
+
+constexpr struct {
+    Int maxJointWeights;
+} WeightLimitData[]{
+    {0},
+    {1},
+    {2},
+    {3},
+    {4},
+    {-1},
 };
 
 UfbxImporterTest::UfbxImporterTest() {
@@ -343,6 +359,11 @@ UfbxImporterTest::UfbxImporterTest() {
 
     addInstancedTests({&UfbxImporterTest::animationSpaceNormalization},
         Containers::arraySize(AnimationSpaceData));
+
+    addInstancedTests({&UfbxImporterTest::skinning},
+        Containers::arraySize(WeightLimitData));
+
+    addTests({&UfbxImporterTest::skinNames});
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. It also pulls in the AnyImageImporter dependency. */
@@ -3401,6 +3422,126 @@ void UfbxImporterTest::animationSpaceNormalization() {
             CORRADE_COMPARE(targets[j].scaling, reference[i][j].third());
         }
     }
+}
+
+void UfbxImporterTest::skinning() {
+    auto&& data = WeightLimitData[testCaseInstanceId()];
+    setTestCaseDescription(Utility::format("maxJointWeights={}", data.maxJointWeights));
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
+    importer->configuration().setValue("maxJointWeights", data.maxJointWeights);
+
+    const UnsignedInt jointWeightCount = data.maxJointWeights >= 0 ? Utility::min(UnsignedInt(data.maxJointWeights), 3u) : 3u;
+
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "skinning.fbx")));
+
+    CORRADE_COMPARE(importer->meshCount(), 1);
+    CORRADE_COMPARE(importer->skin3DCount(), 1);
+
+    Long joint1 = importer->objectForName("joint1");
+    Long joint2 = importer->objectForName("joint2");
+    Long joint3 = importer->objectForName("joint3");
+    CORRADE_COMPARE_AS(joint1, 0, TestSuite::Compare::GreaterOrEqual);
+    CORRADE_COMPARE_AS(joint2, 0, TestSuite::Compare::GreaterOrEqual);
+    CORRADE_COMPARE_AS(joint3, 0, TestSuite::Compare::GreaterOrEqual);
+
+    Containers::Optional<SkinData3D> skin = importer->skin3D(0);
+    CORRADE_VERIFY(skin);
+
+    CORRADE_COMPARE_AS(skin->joints(), Containers::arrayView<UnsignedInt>({
+            UnsignedInt(joint1), UnsignedInt(joint2), UnsignedInt(joint3),
+        }), TestSuite::Compare::Container);
+
+    /* Maya does some weird business with joint orientation, the two posable
+       joints orient X to the joint direction, but the last "tip" joint is
+       left at the default orientation */
+    const Matrix4 jointMatrix = Matrix4::rotationZ(Deg{90.0f});
+    const Matrix4 tipMatrix = Matrix4{};
+    CORRADE_COMPARE_AS(skin->inverseBindMatrices(), Containers::arrayView<Matrix4>({
+            (Matrix4::translation(Vector3{0.0f, 0.0f, 0.0f}) * jointMatrix).inverted(),
+            (Matrix4::translation(Vector3{0.0f, 2.0f, 0.0f}) * jointMatrix).inverted(),
+            (Matrix4::translation(Vector3{0.0f, 4.0f, 0.0f}) * tipMatrix).inverted(),
+        }), TestSuite::Compare::Container);
+
+    Containers::Optional<MeshData> mesh = importer->mesh(0);
+    CORRADE_VERIFY(mesh);
+
+    Containers::StridedArrayView1D<const Vector3> positions = mesh->attribute<Vector3>(MeshAttribute::Position);
+
+    if (jointWeightCount > 0) {
+        Containers::StridedArrayView2D<const UnsignedInt> joints = mesh->attribute<UnsignedInt[]>(MeshAttribute::JointIds);
+        Containers::StridedArrayView2D<const Float> weights = mesh->attribute<Float[]>(MeshAttribute::Weights);
+
+        /* The mesh is a thrice extruded cube, symmetric to the bones on the XZ
+           plane so we can correlate the weights with the Y coordinate */
+        struct JointRef {
+            Float y;
+            UnsignedInt joints[3];
+            Float weights[3];
+        };
+        const JointRef jointRefByWeightLimit[3][5] = {
+            {
+                {0.0f, {0u}, {1.0f}},
+                {1.0f, {0u}, {1.0f}},
+                {2.0f, {0u}, {1.0f}},
+                {3.0f, {1u}, {1.0f}},
+                {4.0f, {1u}, {1.0f}},
+            },
+            {
+                {0.0f, {0u, 1u}, {0.987805f, 0.012195f}},
+                {1.0f, {0u, 1u}, {0.9f, 0.1f}},
+                {2.0f, {0u, 1u}, {0.5f, 0.5f}},
+                {3.0f, {1u, 0u}, {0.9f, 0.1f}},
+                {4.0f, {1u, 2u}, {0.5f, 0.5f}},
+            },
+            {
+                {0.0f, {0u, 1u, 0u}, {0.987805f, 0.012195f, 0.000000f}},
+                {1.0f, {0u, 1u, 2u}, {0.897762f, 0.099751f, 0.002486f}},
+                {2.0f, {0u, 1u, 2u}, {0.496933f, 0.496933f, 0.006134f}},
+                {3.0f, {1u, 0u, 2u}, {0.818182f, 0.090909f, 0.090909f}},
+                {4.0f, {1u, 2u, 0u}, {0.496933f, 0.496933f, 0.006134f}},
+            },
+        };
+
+        Containers::ArrayView<const JointRef> jointRef = jointRefByWeightLimit[jointWeightCount - 1];
+
+        const UnsignedInt vertexCount = mesh->vertexCount();
+        for(UnsignedInt i = 0; i < vertexCount; ++i) {
+            CORRADE_ITERATION(i);
+            const Vector3 position = positions[i];
+            Containers::StridedArrayView1D<const UnsignedInt> joint = joints[i];
+            Containers::StridedArrayView1D<const Float> weight = weights[i];
+
+            bool found = false;
+            for(UnsignedInt j = 0; j < jointRef.size(); ++j) {
+                CORRADE_ITERATION(j);
+                const JointRef& ref = jointRef[j];
+                if(Math::abs(position.y() - ref.y) >= 0.001f) continue;
+
+                Containers::ArrayView<const UnsignedInt> refJoints = Containers::arrayView(ref.joints).slice(0u, jointWeightCount);
+                Containers::ArrayView<const Float> refWeights = Containers::arrayView(ref.weights).slice(0u, jointWeightCount);
+
+                CORRADE_COMPARE_AS(joint, refJoints, TestSuite::Compare::Container);
+                CORRADE_COMPARE_AS(weight, refWeights, TestSuite::Compare::Container);
+                found = true;
+                break;
+            }
+            CORRADE_VERIFY(found);
+        }
+    } else {
+        CORRADE_VERIFY(!mesh->hasAttribute(MeshAttribute::JointIds));
+        CORRADE_VERIFY(!mesh->hasAttribute(MeshAttribute::Weights));
+    }
+}
+
+void UfbxImporterTest::skinNames() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "skinning-blender.fbx")));
+
+    CORRADE_COMPARE(importer->skin3DCount(), 1);
+    CORRADE_COMPARE(importer->skin3DName(0), "Armature");
+    CORRADE_COMPARE(importer->skin3DForName("Armature"), 0);
+    CORRADE_COMPARE(importer->skin3DForName("Nonexistent"), -1);
 }
 
 }}}}
