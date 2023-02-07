@@ -1571,19 +1571,9 @@ struct AnimProp {
 template <typename T>
 void sortAndDeduplicate(Containers::Array<T> &data) {
     std::sort(data.begin(), data.end());
-
-    std::size_t count = data.size(), dst = 0;
-    for(std::size_t src = 0; src < count; ) {
-        if(dst != src)
-            data[dst] = data[src];
-        do {
-            ++src;
-        } while(src < count && data[dst] == data[src]);
-        ++dst;
-    }
-    if(dst != count) {
-        arrayResize(data, dst);
-    }
+    size_t uniqueCount = std::unique(data.begin(), data.end()) - data.begin();
+    if(uniqueCount != data.size())
+        arrayResize(data, uniqueCount);
 }
 
 struct ResampleOptions {
