@@ -1926,19 +1926,19 @@ Containers::Optional<AnimationData> UfbxImporter::doAnimation(UnsignedInt id) {
     return AnimationData{std::move(data), std::move(tracks)};
 }
 
-MAGNUM_UFBXIMPORTER_LOCAL UnsignedInt UfbxImporter::doSkin3DCount() const {
+UnsignedInt UfbxImporter::doSkin3DCount() const {
     return UnsignedInt(_state->scene->skin_deformers.count);
 }
 
-MAGNUM_UFBXIMPORTER_LOCAL Int UfbxImporter::doSkin3DForName(Containers::StringView name) {
+Int UfbxImporter::doSkin3DForName(Containers::StringView name) {
     return typedId(ufbx_find_element_len(_state->scene.get(), UFBX_ELEMENT_SKIN_DEFORMER, name.data(), name.size()));
 }
 
-MAGNUM_UFBXIMPORTER_LOCAL Containers::String UfbxImporter::doSkin3DName(UnsignedInt id) {
+Containers::String UfbxImporter::doSkin3DName(UnsignedInt id) {
     return _state->scene->skin_deformers[id]->name;
 }
 
-MAGNUM_UFBXIMPORTER_LOCAL Containers::Optional<SkinData3D> UfbxImporter::doSkin3D(UnsignedInt id) {
+Containers::Optional<SkinData3D> UfbxImporter::doSkin3D(UnsignedInt id) {
     const ufbx_scene* scene = _state->scene.get();
     const ufbx_skin_deformer* skin = scene->skin_deformers[id];
 
