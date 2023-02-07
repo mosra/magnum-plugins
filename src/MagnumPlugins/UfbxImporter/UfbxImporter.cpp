@@ -1677,11 +1677,11 @@ Containers::Optional<AnimationData> UfbxImporter::doAnimation(UnsignedInt id) {
     Containers::ArrayView<ufbx_anim_layer*> layers;
     if(_state->animationLayers) {
         ufbx_anim_layer* layer = _state->scene->anim_layers[id];
-        layers = Containers::arrayView(&_state->scene->anim_layers[id], 1);
+        layers = {&_state->scene->anim_layers[id], 1};
         anim = &layer->anim;
     } else {
         ufbx_anim_stack* stack = _state->scene->anim_stacks[id];
-        layers = Containers::arrayView(stack->layers.data, stack->layers.count);
+        layers = {stack->layers.data, stack->layers.count};
         anim = &stack->anim;
     }
 
@@ -1729,7 +1729,7 @@ Containers::Optional<AnimationData> UfbxImporter::doAnimation(UnsignedInt id) {
         if(minimumSampleRate > 0.0)
             resampleOptions.minimumResampleStep = 0.5 / minimumSampleRate;
 
-        Containers::ArrayView<const Containers::StringView> keySources = Containers::arrayView(&prop.name, 1);
+        Containers::ArrayView<const Containers::StringView> keySources{&prop.name, 1};
 
         AnimationTrackTargetType target;
         AnimationTrackType trackType;
