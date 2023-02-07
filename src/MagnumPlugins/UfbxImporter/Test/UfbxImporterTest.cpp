@@ -158,6 +158,8 @@ struct UfbxImporterTest: TestSuite::Tester {
     void animationInterpolation();
     void animationLayersMerged();
     void animationLayersRetained();
+    void animationLayersNonLinearWeight();
+    void animationLayersNonLinearWeightNonResampled();
     void animationStacks();
     void animationSpaceNormalization();
 
@@ -309,6 +311,8 @@ UfbxImporterTest::UfbxImporterTest() {
               &UfbxImporterTest::animationInterpolation,
               &UfbxImporterTest::animationLayersMerged,
               &UfbxImporterTest::animationLayersRetained,
+              &UfbxImporterTest::animationLayersNonLinearWeight,
+              &UfbxImporterTest::animationLayersNonLinearWeightNonResampled,
               &UfbxImporterTest::animationStacks});
 
     addInstancedTests({&UfbxImporterTest::animationSpaceNormalization},
@@ -2890,6 +2894,82 @@ void UfbxImporterTest::animationLayersRetained() {
                 {0.0f, 0.0f, 0.0f},
                 {3.0f, 0.0f, 0.0f},
                 {3.0f, 0.0f, 0.0f},
+            }), TestSuite::Compare::Container);
+    }
+}
+
+void UfbxImporterTest::animationLayersNonLinearWeight() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
+    importer->configuration().setValue("minimumSampleRate", 10.0f);
+    importer->configuration().setValue("resampleRate", 10.0f);
+
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "animation-layer-nonlinear-weight.fbx")));
+    CORRADE_COMPARE(importer->animationCount(), 1);
+
+    {
+        Containers::Optional<AnimationData> animation = importer->animation(0);
+        CORRADE_VERIFY(animation);
+
+        /* @todo: Search by target */
+        auto track = animation->track<Vector3>(2);
+
+        CORRADE_COMPARE_AS(track.keys(),
+            Containers::arrayView<Float>({
+                0.0f,
+                0.1f,
+                0.2f,
+                0.3f,
+                0.4f,
+                0.5f,
+                0.6f,
+                0.7f,
+                0.8f,
+                0.9f,
+                1.0f,
+            }), TestSuite::Compare::Container);
+
+        CORRADE_COMPARE_AS(track.values(),
+            Containers::arrayView<Vector3>({
+                {0.0f, 0.0f, 0.0f},
+                {0.1f, 0.0f, 0.0f},
+                {0.4f, 0.0f, 0.0f},
+                {0.9f, 0.0f, 0.0f},
+                {1.6f, 0.0f, 0.0f},
+                {2.5f, 0.0f, 0.0f},
+                {3.6f, 0.0f, 0.0f},
+                {4.9f, 0.0f, 0.0f},
+                {6.4f, 0.0f, 0.0f},
+                {8.1f, 0.0f, 0.0f},
+                {10.0f, 0.0f, 0.0f},
+            }), TestSuite::Compare::Container);
+    }
+}
+
+void UfbxImporterTest::animationLayersNonLinearWeightNonResampled() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
+    importer->configuration().setValue("minimumSampleRate", 0.0f);
+    importer->configuration().setValue("resampleRate", 0.0f);
+
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "animation-layer-nonlinear-weight.fbx")));
+    CORRADE_COMPARE(importer->animationCount(), 1);
+
+    {
+        Containers::Optional<AnimationData> animation = importer->animation(0);
+        CORRADE_VERIFY(animation);
+
+        /* @todo: Search by target */
+        auto track = animation->track<Vector3>(2);
+
+        CORRADE_COMPARE_AS(track.keys(),
+            Containers::arrayView<Float>({
+                0.0f,
+                1.0f,
+            }), TestSuite::Compare::Container);
+
+        CORRADE_COMPARE_AS(track.values(),
+            Containers::arrayView<Vector3>({
+                {0.0f, 0.0f, 0.0f},
+                {10.0f, 0.0f, 0.0f},
             }), TestSuite::Compare::Container);
     }
 }

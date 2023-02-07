@@ -83,6 +83,7 @@ corrade_add_test(UfbxImporterTest UfbxImporterTest.cpp
         warning-cube.fbx
         animation-interpolation.fbx
         animation-layer.fbx
+        animation-layer-nonlinear-weight.fbx
         animation-stacks.fbx
         animation-space-y-up-cm.fbx
         animation-space-y-up-m.fbx
