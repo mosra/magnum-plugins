@@ -879,14 +879,7 @@ Containers::Optional<MeshData> UfbxImporter::doMesh(UnsignedInt id, UnsignedInt 
     const UnsignedInt colorSetCount = Utility::min(UnsignedInt(mesh->color_sets.count), maxColorSets);
 
     const ufbx_skin_deformer* skin = mesh->skin_deformers.count > 0 ? mesh->skin_deformers[0] : nullptr;
-
-    UnsignedInt jointWeightCount = 0;
-    if(skin) {
-        for(const ufbx_skin_vertex& vertex : skin->vertices) {
-            jointWeightCount = Utility::max(jointWeightCount, vertex.num_weights);
-        }
-    }
-    jointWeightCount = Utility::min(jointWeightCount, maxJointWeights);
+    const UnsignedInt jointWeightCount = skin ? Utility::min(UnsignedInt(skin->max_weights_per_vertex), maxJointWeights) : 0;
 
     /* Include tangents for UV layers until we hit a layer with missing or
        incomplete tangents as at that point the implicit mapping breaks. */
