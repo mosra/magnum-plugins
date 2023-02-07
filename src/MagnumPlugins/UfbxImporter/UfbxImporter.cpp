@@ -1071,6 +1071,8 @@ Containers::Optional<MeshData> UfbxImporter::doMesh(UnsignedInt id, UnsignedInt 
                 UnsignedInt weightCount = Utility::min(vertex.num_weights, jointWeightCount);
                 Float totalWeight = 0.0f;
 
+                /* We can simply take the first N weights from the skin as they
+                   are sorted in descending order by ufbx. */
                 for(UnsignedInt j = 0; j < weightCount; ++j) {
                     ufbx_skin_weight weight = skin->weights[vertex.weight_begin + j];
                     jointIds[dstIx][j] = weight.cluster_index;
