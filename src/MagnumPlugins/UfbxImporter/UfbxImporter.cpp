@@ -1647,22 +1647,22 @@ void appendKeyTimes(const ResampleOptions &resampleOptions, Containers::Array<Do
     }
 }
 
-const Containers::StringView complexTranslationSources[] = {
-    UFBX_Lcl_Translation,
-    UFBX_Lcl_Rotation,
-    UFBX_Lcl_Scaling,
-    UFBX_PreRotation,
-    UFBX_PostRotation,
-    UFBX_RotationOffset,
-    UFBX_ScalingOffset,
-    UFBX_RotationPivot,
-    UFBX_ScalingPivot,
+constexpr Containers::StringView complexTranslationSources[] = {
+    UFBX_Lcl_Translation ""_s,
+    UFBX_Lcl_Rotation ""_s,
+    UFBX_Lcl_Scaling ""_s,
+    UFBX_PreRotation ""_s,
+    UFBX_PostRotation ""_s,
+    UFBX_RotationOffset ""_s,
+    UFBX_ScalingOffset ""_s,
+    UFBX_RotationPivot ""_s,
+    UFBX_ScalingPivot ""_s,
 };
 
-const Containers::StringView complexRotationSources[] = {
-    UFBX_Lcl_Rotation,
-    UFBX_PreRotation,
-    UFBX_PostRotation,
+constexpr Containers::StringView complexRotationSources[] = {
+    UFBX_Lcl_Rotation ""_s,
+    UFBX_PreRotation ""_s,
+    UFBX_PostRotation ""_s,
 };
 
 struct AnimTrack {
