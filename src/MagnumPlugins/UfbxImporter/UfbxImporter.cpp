@@ -1701,9 +1701,11 @@ Containers::Optional<AnimationData> UfbxImporter::doAnimation(UnsignedInt id) {
             Containers::StringView name(prop.prop_name);
 
             if(animateFullTransform && (name == UFBX_Lcl_Translation || name == UFBX_Lcl_Rotation || name == UFBX_Lcl_Scaling)) {
-                arrayAppend(animProps, {node->typed_id, UFBX_Lcl_Translation});
-                arrayAppend(animProps, {node->typed_id, UFBX_Lcl_Rotation});
-                arrayAppend(animProps, {node->typed_id, UFBX_Lcl_Scaling});
+            arrayAppend(animProps, {
+                    {node->typed_id, UFBX_Lcl_Translation},
+                    {node->typed_id, UFBX_Lcl_Rotation},
+                    {node->typed_id, UFBX_Lcl_Scaling},
+                });
             } else {
                 arrayAppend(animProps, {node->typed_id, name});
             }
