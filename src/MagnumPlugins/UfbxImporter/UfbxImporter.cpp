@@ -1008,7 +1008,7 @@ Containers::Optional<MeshData> UfbxImporter::doMesh(UnsignedInt id, UnsignedInt 
     if (jointWeightCount > 0) {
         jointIds = {vertexData,
             reinterpret_cast<UnsignedInt*>(vertexData + attributeOffset),
-            {indexCount, jointWeightCount}, {stride, sizeof(UnsignedInt)}};
+            {indexCount, jointWeightCount}, {Int(stride), sizeof(UnsignedInt)}};
 
         attributeData[attributeIndex++] = MeshAttributeData{
             MeshAttribute::JointIds, jointIds};
@@ -1018,7 +1018,7 @@ Containers::Optional<MeshData> UfbxImporter::doMesh(UnsignedInt id, UnsignedInt 
     if (jointWeightCount > 0) {
         weights = {vertexData,
             reinterpret_cast<Float*>(vertexData + attributeOffset),
-            {indexCount, jointWeightCount}, {stride, sizeof(Float)}};
+            {indexCount, jointWeightCount}, {Int(stride), sizeof(Float)}};
 
         attributeData[attributeIndex++] = MeshAttributeData{
             MeshAttribute::Weights, weights};
