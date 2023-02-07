@@ -196,6 +196,7 @@ bool getLoadOptsFromConfiguration(ufbx_load_opts& opts, Utility::ConfigurationGr
     opts.ignore_embedded = conf.value<bool>("ignoreEmbedded");
     opts.ignore_all_content = conf.value<bool>("ignoreAllContent");
     opts.ignore_missing_external_files = true;
+    opts.clean_skin_weights = true;
 
     /* Substitute zero maximum memory to one, so that if the user computes the
        maximum memory and ends up with zero it doesn't result in unlimited */
