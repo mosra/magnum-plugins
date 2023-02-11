@@ -159,6 +159,7 @@ struct UfbxImporterTest: TestSuite::Tester {
 
     void animationInterpolation();
     void animationRotationPivot();
+    void animationVisibility();
     void animationLayersMerged();
     void animationLayersRetained();
     void animationLayersNonLinearWeight();
@@ -344,7 +345,8 @@ UfbxImporterTest::UfbxImporterTest() {
     addInstancedTests({&UfbxImporterTest::animationRotationPivot},
         Containers::arraySize(ResampleRotationData));
 
-    addTests({&UfbxImporterTest::animationLayersMerged,
+    addTests({&UfbxImporterTest::animationVisibility,
+              &UfbxImporterTest::animationLayersMerged,
               &UfbxImporterTest::animationLayersRetained,
               &UfbxImporterTest::animationLayersNonLinearWeight,
               &UfbxImporterTest::animationLayersNonLinearWeightNonResampled,
@@ -2876,6 +2878,60 @@ void UfbxImporterTest::animationRotationPivot() {
             /* Linear */
             (Vector3{2.0f, 2.0f, 2.0f}),
         }), TestSuite::Compare::Container);
+}
+
+void UfbxImporterTest::animationVisibility() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "animation-visibility.fbx")));
+
+    constexpr AnimationTrackTargetType CustomAnimationTrackTargetVisibility = AnimationTrackTargetType(UnsignedByte(AnimationTrackTargetType::Custom) + 0);
+
+    CORRADE_COMPARE(importer->objectName(0), "pCube1");
+    CORRADE_COMPARE(importer->objectName(1), "pCube2");
+
+    Containers::Optional<AnimationData> animation = importer->animation(0);
+    CORRADE_VERIFY(animation);
+
+    auto visibility1 = trackByTarget<bool>(*animation, 0, CustomAnimationTrackTargetVisibility);
+    auto visibility2 = trackByTarget<bool>(*animation, 1, CustomAnimationTrackTargetVisibility);
+
+    const float epsilon = 0.001f;
+
+    CORRADE_COMPARE_AS(visibility1.keys(),
+        Containers::arrayView<Float>({
+            0.0f / 24.0f,
+            4.0f / 24.0f - epsilon,
+            4.0f / 24.0f,
+            8.0f / 24.0f - epsilon,
+            8.0f / 24.0f,
+            12.0f / 24.0f - epsilon,
+            12.0f / 24.0f,
+        }), TestSuite::Compare::Container);
+
+    CORRADE_COMPARE_AS(visibility1.values(),
+        Containers::arrayView<bool>({
+            false, false, true, true, false, false, true,
+        }), TestSuite::Compare::Container);
+
+    CORRADE_COMPARE_AS(visibility2.keys(),
+        Containers::arrayView<Float>({
+            0.0f / 24.0f,
+            6.0f / 24.0f - epsilon,
+            6.0f / 24.0f,
+            12.0f / 24.0f - epsilon,
+            12.0f / 24.0f,
+        }), TestSuite::Compare::Container);
+
+    CORRADE_COMPARE_AS(visibility2.values(),
+        Containers::arrayView<bool>({
+            true, true, false, false, true,
+        }), TestSuite::Compare::Container);
+
+    /* Make sure that the translation channel of the second node is correctly
+       aligned. As all value data is packed contiguously the visibility bools
+       from the first node misalign the buffer, needing padding between */
+    auto translation2 = trackByTarget<Vector3>(*animation, 1, AnimationTrackTargetType::Translation3D);
+    CORRADE_COMPARE_AS(uintptr_t(translation2.values().data()), alignof(Vector3), TestSuite::Compare::Divisible);
 }
 
 void UfbxImporterTest::animationLayersMerged() {
