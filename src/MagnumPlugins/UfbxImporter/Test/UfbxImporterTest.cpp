@@ -159,6 +159,7 @@ struct UfbxImporterTest: TestSuite::Tester {
 
     void animationInterpolation();
     void animationRotationPivot();
+    void animationPreRotation();
     void animationVisibility();
     void animationLayersMerged();
     void animationLayersRetained();
@@ -343,7 +344,10 @@ UfbxImporterTest::UfbxImporterTest() {
         Containers::arraySize(QuietData));
 
     addInstancedTests({&UfbxImporterTest::animationRotationPivot},
-        Containers::arraySize(ResampleRotationData));
+
+    addInstancedTests({&UfbxImporterTest::animationRotationPivot,
+                       &UfbxImporterTest::animationPreRotation},
+                       Containers::arraySize(ResampleRotationData));
 
     addTests({&UfbxImporterTest::animationVisibility,
               &UfbxImporterTest::animationLayersMerged,
@@ -2932,6 +2936,70 @@ void UfbxImporterTest::animationVisibility() {
        from the first node misalign the buffer, needing padding between */
     auto translation2 = trackByTarget<Vector3>(*animation, 1, AnimationTrackTargetType::Translation3D);
     CORRADE_COMPARE_AS(uintptr_t(translation2.values().data()), alignof(Vector3), TestSuite::Compare::Divisible);
+}
+
+void UfbxImporterTest::animationPreRotation() {
+    auto&& data = ResampleRotationData[testCaseInstanceId()];
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
+    importer->configuration().setValue("resampleRotation", data.resampleRotation);
+    importer->configuration().setValue("resampleRate", 12.0f);
+
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "animation-pre-rotation.fbx")));
+    CORRADE_COMPARE(importer->animationCount(), 1);
+
+    Containers::Optional<AnimationData> animation = importer->animation(0);
+    CORRADE_VERIFY(animation);
+
+    CORRADE_COMPARE(importer->objectName(0), "pCube1");
+
+    auto track = trackByTarget<Quaternion>(*animation, 0, AnimationTrackTargetType::Rotation3D);
+
+    if(data.resampleRotation) {
+        CORRADE_COMPARE_AS(track.keys(),
+            Containers::arrayView<Float>({
+                /* Lcl Rotation (resampled) */
+                0.0f / 24.0f,
+                2.0f / 24.0f,
+                4.0f / 24.0f,
+                /* PreRotation */
+                8.0f / 24.0f,
+                10.0f / 24.0f,
+                12.0f / 24.0f,
+            }), TestSuite::Compare::Container);
+
+        CORRADE_COMPARE_AS(track.values(),
+            Containers::arrayView<Quaternion>({
+                /* Lcl Rotation */
+                Quaternion::rotation(Deg{0.0f}, Vector3::yAxis()),
+                Quaternion::rotation(Deg{22.5f}, Vector3::yAxis()),
+                Quaternion::rotation(Deg{45.0f}, Vector3::yAxis()),
+                /* PreRotation */
+                Quaternion::rotation(Deg{45.0f}, Vector3::yAxis()),
+                Quaternion::rotation(Deg{67.5f}, Vector3::yAxis()),
+                Quaternion::rotation(Deg{90.0f}, Vector3::yAxis()),
+            }), TestSuite::Compare::Container);
+    } else {
+        CORRADE_COMPARE_AS(track.keys(),
+            Containers::arrayView<Float>({
+                /* Lcl Rotation */
+                0.0f / 24.0f,
+                4.0f / 24.0f,
+                /* PreRotation */
+                8.0f / 24.0f,
+                12.0f / 24.0f,
+            }), TestSuite::Compare::Container);
+
+        CORRADE_COMPARE_AS(track.values(),
+            Containers::arrayView<Quaternion>({
+                /* Lcl Rotation */
+                Quaternion::rotation(Deg{0.0f}, Vector3::yAxis()),
+                Quaternion::rotation(Deg{45.0f}, Vector3::yAxis()),
+                /* PreRotation */
+                Quaternion::rotation(Deg{45.0f}, Vector3::yAxis()),
+                Quaternion::rotation(Deg{90.0f}, Vector3::yAxis()),
+            }), TestSuite::Compare::Container);
+    }
 }
 
 void UfbxImporterTest::animationLayersMerged() {
