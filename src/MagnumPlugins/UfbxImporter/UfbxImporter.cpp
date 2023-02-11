@@ -1551,7 +1551,9 @@ bool hasComplexRotation(const ufbx_node* node) {
     return false;
 }
 
-struct AnimProp {
+/* ??? LCOV thinks that the following line requires coverage (an implicit
+   constructor maybe), but even with that AnimTrack is constructed anyways */
+struct AnimProp { /* LCOV_EXCL_LINE */
     /* ufbx_scene::nodes[] */
     UnsignedInt nodeId;
     Containers::StringView name;
@@ -1655,9 +1657,7 @@ constexpr Containers::StringView complexRotationSources[] = {
     UFBX_PostRotation ""_s,
 };
 
-/* ??? LCOV thinks that the following line requires coverage (an implicit
-   constructor maybe), but even with that AnimTrack is constructed anyways */
-struct AnimTrack { /* LCOV_EXCL_LINE */
+struct AnimTrack {
     UnsignedInt targetId;
     AnimationTrackTargetType targetType;
     AnimationTrackType trackType;
