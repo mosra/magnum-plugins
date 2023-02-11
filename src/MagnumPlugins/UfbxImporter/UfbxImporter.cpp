@@ -1655,7 +1655,9 @@ constexpr Containers::StringView complexRotationSources[] = {
     UFBX_PostRotation ""_s,
 };
 
-struct AnimTrack {
+/* ??? LCOV thinks that the following line requires coverage (an implicit
+   constructor maybe), but even with that AnimTrack is constructed anyways */
+struct AnimTrack { /* LCOV_EXCL_LINE */
     UnsignedInt targetId;
     AnimationTrackTargetType targetType;
     AnimationTrackType trackType;
