@@ -1734,28 +1734,29 @@ Containers::Optional<AnimationData> UfbxImporter::doAnimation(UnsignedInt id) {
         AnimationTrackTargetType target;
         AnimationTrackType trackType;
         UnsignedInt valueAlignment;
+        bool complexTranslation = false;
 
-        if(prop.name == UFBX_Lcl_Translation) {
+        if(prop.name == UFBX_Lcl_Translation ""_s) {
             target = AnimationTrackTargetType::Translation3D;
             trackType = AnimationTrackType::Vector3;
             valueAlignment = alignof(Vector3);
 
-            if(hasComplexTranslation(node))
+            if(hasComplexTranslation(node)) {
                 keySources = Containers::arrayView(complexTranslationSources);
-        } else if(prop.name == UFBX_Lcl_Rotation) {
+                complexTranslation = true;
+            }
+        } else if(prop.name == UFBX_Lcl_Rotation ""_s) {
             target = AnimationTrackTargetType::Rotation3D;
             trackType = AnimationTrackType::Quaternion;
             valueAlignment = alignof(Quaternion);
 
-            if(resampleRotation)
-                resampleOptions.linearResampleRate = resampleOptions.cubicResampleRate;
             if(hasComplexRotation(node))
                 keySources = Containers::arrayView(complexRotationSources);
-        } else if(prop.name == UFBX_Lcl_Scaling) {
+        } else if(prop.name == UFBX_Lcl_Scaling ""_s) {
             target = AnimationTrackTargetType::Scaling3D;
             trackType = AnimationTrackType::Vector3;
             valueAlignment = alignof(Vector3);
-        } else if(prop.name == UFBX_Visibility) {
+        } else if(prop.name == UFBX_Visibility ""_s) {
             target = CustomAnimationTrackTargetVisibility;
             trackType = AnimationTrackType::Bool;
             valueAlignment = alignof(bool);
@@ -1770,8 +1771,15 @@ Containers::Optional<AnimationData> UfbxImporter::doAnimation(UnsignedInt id) {
                 const ufbx_anim_prop *aprop = ufbx_find_anim_prop_len(layer, &node->element, source.data(), source.size());
                 if(!aprop) continue;
 
+                ResampleOptions curveOptions = resampleOptions;
+
+                /* If the property is expressed in Euler angles we need to
+                   resample even linear curves */
+                if((resampleRotation || complexTranslation) && (source == UFBX_Lcl_Rotation ""_s || source == UFBX_PreRotation ""_s || source == UFBX_PostRotation ""_s))
+                    curveOptions.linearResampleRate = curveOptions.cubicResampleRate;
+
                 for(const ufbx_anim_curve* curve : aprop->anim_value->curves)
-                    appendKeyTimes(resampleOptions, keyTimes, curve);
+                    appendKeyTimes(curveOptions, keyTimes, curve);
             }
 
             /* Layer weight affects result if we're combining animations */

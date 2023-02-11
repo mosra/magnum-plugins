@@ -82,6 +82,7 @@ corrade_add_test(UfbxImporterTest UfbxImporterTest.cpp
         static-skin.fbx
         warning-cube.fbx
         animation-interpolation.fbx
+        animation-rotation-pivot.fbx
         animation-layer.fbx
         animation-layer-nonlinear-weight.fbx
         animation-stacks.fbx
@@ -90,6 +91,7 @@ corrade_add_test(UfbxImporterTest UfbxImporterTest.cpp
         animation-space-z-up-cm.fbx
         animation-space-z-up-m.fbx
         skinning.fbx
+        skinning-blender.fbx
         cube.obj
         cube.mtl
         missing-mtl.obj

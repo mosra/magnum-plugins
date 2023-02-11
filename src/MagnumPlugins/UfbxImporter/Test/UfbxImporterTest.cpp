@@ -158,14 +158,18 @@ struct UfbxImporterTest: TestSuite::Tester {
     void multiWarningData();
 
     void animationInterpolation();
+    void animationRotationPivot();
     void animationLayersMerged();
     void animationLayersRetained();
     void animationLayersNonLinearWeight();
     void animationLayersNonLinearWeightNonResampled();
     void animationStacks();
+    void animationLayerNames();
+    void animationStackNames();
     void animationSpaceNormalization();
 
     void skinning();
+    void skinNames();
 
     /* Needs to load AnyImageImporter from a system-wide location */
     PluginManager::Manager<AbstractImporter> _manager;
@@ -238,6 +242,13 @@ constexpr struct {
     {3},
     {4},
     {-1},
+};
+
+constexpr struct {
+    bool resampleRotation;
+} ResampleRotationData[]{
+    {true},
+    {false},
 };
 
 UfbxImporterTest::UfbxImporterTest() {
@@ -323,12 +334,23 @@ UfbxImporterTest::UfbxImporterTest() {
 
               &UfbxImporterTest::staticSkin,
 
-              &UfbxImporterTest::animationInterpolation,
-              &UfbxImporterTest::animationLayersMerged,
+              &UfbxImporterTest::animationInterpolation});
+
+    addInstancedTests({
+        &UfbxImporterTest::multiWarning,
+        &UfbxImporterTest::multiWarningData},
+        Containers::arraySize(QuietData));
+
+    addInstancedTests({&UfbxImporterTest::animationRotationPivot},
+        Containers::arraySize(ResampleRotationData));
+
+    addTests({&UfbxImporterTest::animationLayersMerged,
               &UfbxImporterTest::animationLayersRetained,
               &UfbxImporterTest::animationLayersNonLinearWeight,
               &UfbxImporterTest::animationLayersNonLinearWeightNonResampled,
-              &UfbxImporterTest::animationStacks});
+              &UfbxImporterTest::animationStacks,
+              &UfbxImporterTest::animationLayerNames,
+              &UfbxImporterTest::animationStackNames});
 
     addInstancedTests({&UfbxImporterTest::animationSpaceNormalization},
         Containers::arraySize(AnimationSpaceData));
@@ -336,10 +358,7 @@ UfbxImporterTest::UfbxImporterTest() {
     addInstancedTests({&UfbxImporterTest::skinning},
         Containers::arraySize(WeightLimitData));
 
-    addInstancedTests({
-        &UfbxImporterTest::multiWarning,
-        &UfbxImporterTest::multiWarningData},
-        Containers::arraySize(QuietData));
+    addTests({&UfbxImporterTest::skinNames});
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. It also pulls in the AnyImageImporter dependency. */
@@ -2669,6 +2688,22 @@ void UfbxImporterTest::multiWarningData() {
             "Trade::UfbxImporter::openData(): Bad UTF-8 string\n");
 }
 
+namespace {
+
+template<class V, class R = Animation::ResultOf<V>>
+inline const Animation::TrackView<const Float, const V, R>& trackByTarget(const AnimationData &animation, UnsignedInt target, AnimationTrackTargetType targetType)
+{
+    for(UnsignedInt i = 0; i < animation.trackCount(); ++i) {
+        if(animation.trackTarget(i) == target && animation.trackTargetType(i) == targetType) {
+            return animation.track<V, R>(i);
+        }
+    }
+    CORRADE_FAIL("Track not found for target" << target << "type" << targetType);
+    return {};
+}
+
+}
+
 void UfbxImporterTest::animationInterpolation() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "animation-interpolation.fbx")));
@@ -2680,8 +2715,7 @@ void UfbxImporterTest::animationInterpolation() {
 
     const float epsilon = 0.001f;
 
-    /* @todo: Search by target */
-    auto track = animation->track<Vector3>(2);
+    auto track = trackByTarget<Vector3>(*animation, 0, AnimationTrackTargetType::Translation3D);
 
     CORRADE_COMPARE_AS(track.keys(),
         Containers::arrayView<Float>({
@@ -2762,6 +2796,88 @@ void UfbxImporterTest::animationInterpolation() {
         }), TestSuite::Compare::Container);
 }
 
+void UfbxImporterTest::animationRotationPivot() {
+    auto&& data = ResampleRotationData[testCaseInstanceId()];
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
+    importer->configuration().setValue("resampleRotation", data.resampleRotation);
+
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "animation-rotation-pivot.fbx")));
+
+    CORRADE_COMPARE(importer->animationCount(), 1);
+
+    Containers::Optional<AnimationData> animation = importer->animation(0);
+    CORRADE_VERIFY(animation);
+
+    auto rotation = trackByTarget<Quaternion>(*animation, 0, AnimationTrackTargetType::Rotation3D);
+    auto translation = trackByTarget<Vector3>(*animation, 0, AnimationTrackTargetType::Translation3D);
+
+    if(data.resampleRotation) {
+        CORRADE_COMPARE_AS(rotation.keys(),
+            Containers::arrayView<Float>({
+                /* Resampled Euler */
+                0.0f / 30.0f,
+                1.0f / 30.0f,
+                2.0f / 30.0f,
+                3.0f / 30.0f,
+                4.0f / 30.0f,
+                5.0f / 30.0f,
+            }), TestSuite::Compare::Container);
+
+        CORRADE_COMPARE_AS(rotation.values(),
+            Containers::arrayView<Quaternion>({
+                /* Resampled Euler */
+                Quaternion::rotation(Deg{0.0f}, Vector3::yAxis()),
+                Quaternion::rotation(Deg{18.0f}, Vector3::yAxis()),
+                Quaternion::rotation(Deg{36.0f}, Vector3::yAxis()),
+                Quaternion::rotation(Deg{54.0f}, Vector3::yAxis()),
+                Quaternion::rotation(Deg{72.0f}, Vector3::yAxis()),
+                Quaternion::rotation(Deg{90.0f}, Vector3::yAxis()),
+            }), TestSuite::Compare::Container);
+    } else {
+        CORRADE_COMPARE_AS(rotation.keys(),
+            Containers::arrayView<Float>({
+                /* Non-resampled Euler */
+                0.0f / 30.0f,
+                5.0f / 30.0f,
+            }), TestSuite::Compare::Container);
+
+        CORRADE_COMPARE_AS(rotation.values(),
+            Containers::arrayView<Quaternion>({
+                /* Non-resampled Euler */
+                Quaternion::rotation(Deg{0.0f}, Vector3::yAxis()),
+                Quaternion::rotation(Deg{90.0f}, Vector3::yAxis()),
+            }), TestSuite::Compare::Container);
+    }
+
+    /* Rotation is always resampled for complex translations */
+    CORRADE_COMPARE_AS(translation.keys(),
+        Containers::arrayView<Float>({
+            /* Resampled Euler (complex due to pivot) */
+            0.0f / 30.0f,
+            1.0f / 30.0f,
+            2.0f / 30.0f,
+            3.0f / 30.0f,
+            4.0f / 30.0f,
+            5.0f / 30.0f,
+            /* Linear */
+            15.0f / 30.0f,
+        }), TestSuite::Compare::Container);
+
+    CORRADE_COMPARE_AS(translation.values(),
+        Containers::arrayView<Vector3>({
+            /* Resampled Euler */
+            (Vector3{0.0f, 0.0f, 0.0f}),
+            (Vector3{0.097887f, 0.133333f, 0.618034f}),
+            (Vector3{0.381966f, 0.266667f, 1.17557f}),
+            (Vector3{0.824429f, 0.4f, 1.61803f}),
+            (Vector3{1.38197f, 0.533333f, 1.90211f}),
+            (Vector3{2.0f, 0.666667f, 2.0f}),
+            /* Linear */
+            (Vector3{2.0f, 2.0f, 2.0f}),
+        }), TestSuite::Compare::Container);
+}
+
 void UfbxImporterTest::animationLayersMerged() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "animation-layer.fbx")));
@@ -2773,8 +2889,7 @@ void UfbxImporterTest::animationLayersMerged() {
     Containers::Optional<AnimationData> animation = importer->animation(0);
     CORRADE_VERIFY(animation);
 
-    /* @todo: Search by target */
-    auto track = animation->track<Vector3>(2);
+    auto track = trackByTarget<Vector3>(*animation, 0, AnimationTrackTargetType::Translation3D);
 
     CORRADE_COMPARE_AS(track.keys(),
         Containers::arrayView<Float>({
@@ -2872,8 +2987,7 @@ void UfbxImporterTest::animationLayersRetained() {
         Containers::Optional<AnimationData> animation = importer->animation("BaseLayer");
         CORRADE_VERIFY(animation);
 
-        /* @todo: Search by target */
-        auto track = animation->track<Vector3>(2);
+        auto track = trackByTarget<Vector3>(*animation, 0, AnimationTrackTargetType::Translation3D);
 
         CORRADE_COMPARE_AS(track.keys(),
             Containers::arrayView<Float>({
@@ -2894,8 +3008,7 @@ void UfbxImporterTest::animationLayersRetained() {
         Containers::Optional<AnimationData> animation = importer->animation("AnimLayer1");
         CORRADE_VERIFY(animation);
 
-        /* @todo: Search by target */
-        auto track = animation->track<Vector3>(2);
+        auto track = trackByTarget<Vector3>(*animation, 0, AnimationTrackTargetType::Translation3D);
 
         CORRADE_COMPARE_AS(track.keys(),
             Containers::arrayView<Float>({
@@ -2927,8 +3040,7 @@ void UfbxImporterTest::animationLayersNonLinearWeight() {
         Containers::Optional<AnimationData> animation = importer->animation(0);
         CORRADE_VERIFY(animation);
 
-        /* @todo: Search by target */
-        auto track = animation->track<Vector3>(2);
+        auto track = trackByTarget<Vector3>(*animation, 0, AnimationTrackTargetType::Translation3D);
 
         CORRADE_COMPARE_AS(track.keys(),
             Containers::arrayView<Float>({
@@ -2974,8 +3086,7 @@ void UfbxImporterTest::animationLayersNonLinearWeightNonResampled() {
         Containers::Optional<AnimationData> animation = importer->animation(0);
         CORRADE_VERIFY(animation);
 
-        /* @todo: Search by target */
-        auto track = animation->track<Vector3>(2);
+        auto track = trackByTarget<Vector3>(*animation, 0, AnimationTrackTargetType::Translation3D);
 
         CORRADE_COMPARE_AS(track.keys(),
             Containers::arrayView<Float>({
@@ -3088,6 +3199,31 @@ void UfbxImporterTest::animationStacks() {
         CORRADE_COMPARE(targets[0].rotation, (Quaternion{{-0.707107f, 0.0f, 0.0f}, 0.707107f})); /* Euler (-90, 0, 0) */
         CORRADE_COMPARE(targets[0].scaling, (Vector3{2.0f, 2.0f, 2.0f}));
     }
+}
+
+void UfbxImporterTest::animationLayerNames() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
+    importer->configuration().setValue("animationLayers", true);
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "animation-layer.fbx")));
+
+    CORRADE_COMPARE(importer->animationName(0), "BaseLayer");
+    CORRADE_COMPARE(importer->animationName(1), "AnimLayer1");
+    CORRADE_COMPARE(importer->animationForName("BaseLayer"), 0);
+    CORRADE_COMPARE(importer->animationForName("AnimLayer1"), 1);
+    CORRADE_COMPARE(importer->animationForName("Nonexistent"), -1);
+}
+
+void UfbxImporterTest::animationStackNames() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "animation-stacks.fbx")));
+
+    CORRADE_COMPARE(importer->animationName(0), "Cube|Grow");
+    CORRADE_COMPARE(importer->animationName(1), "Cube|Lift");
+    CORRADE_COMPARE(importer->animationName(2), "Cube|Spin");
+    CORRADE_COMPARE(importer->animationForName("Cube|Grow"), 0);
+    CORRADE_COMPARE(importer->animationForName("Cube|Lift"), 1);
+    CORRADE_COMPARE(importer->animationForName("Cube|Spin"), 2);
+    CORRADE_COMPARE(importer->animationForName("Nonexistent"), -1);
 }
 
 void UfbxImporterTest::animationSpaceNormalization() {
@@ -3269,6 +3405,16 @@ void UfbxImporterTest::skinning() {
         CORRADE_VERIFY(!mesh->hasAttribute(MeshAttribute::JointIds));
         CORRADE_VERIFY(!mesh->hasAttribute(MeshAttribute::Weights));
     }
+}
+
+void UfbxImporterTest::skinNames() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "skinning-blender.fbx")));
+
+    CORRADE_COMPARE(importer->skin3DCount(), 1);
+    CORRADE_COMPARE(importer->skin3DName(0), "Armature");
+    CORRADE_COMPARE(importer->skin3DForName("Armature"), 0);
+    CORRADE_COMPARE(importer->skin3DForName("Nonexistent"), -1);
 }
 
 }}}}
