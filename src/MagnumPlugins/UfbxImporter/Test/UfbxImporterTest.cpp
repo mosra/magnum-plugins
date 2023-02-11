@@ -3213,30 +3213,30 @@ void UfbxImporterTest::skinning() {
            plane so we can correlate the weights with the Y coordinate */
         struct JointRef {
             Float y;
-            Containers::ArrayView<const UnsignedInt> joints;
-            Containers::ArrayView<const Float> weights;
+            UnsignedInt joints[3];
+            Float weights[3];
         };
         const JointRef jointRefByWeightLimit[3][5] = {
             {
-                {0.0f, Containers::arrayView({0u}), Containers::arrayView({1.0f})},
-                {1.0f, Containers::arrayView({0u}), Containers::arrayView({1.0f})},
-                {2.0f, Containers::arrayView({0u}), Containers::arrayView({1.0f})},
-                {3.0f, Containers::arrayView({1u}), Containers::arrayView({1.0f})},
-                {4.0f, Containers::arrayView({1u}), Containers::arrayView({1.0f})},
+                {0.0f, {0u}, {1.0f}},
+                {1.0f, {0u}, {1.0f}},
+                {2.0f, {0u}, {1.0f}},
+                {3.0f, {1u}, {1.0f}},
+                {4.0f, {1u}, {1.0f}},
             },
             {
-                {0.0f, Containers::arrayView({0u, 1u}), Containers::arrayView({0.987805f, 0.012195f})},
-                {1.0f, Containers::arrayView({0u, 1u}), Containers::arrayView({0.9f, 0.1f})},
-                {2.0f, Containers::arrayView({0u, 1u}), Containers::arrayView({0.5f, 0.5f})},
-                {3.0f, Containers::arrayView({1u, 0u}), Containers::arrayView({0.9f, 0.1f})},
-                {4.0f, Containers::arrayView({1u, 2u}), Containers::arrayView({0.5f, 0.5f})},
+                {0.0f, {0u, 1u}, {0.987805f, 0.012195f}},
+                {1.0f, {0u, 1u}, {0.9f, 0.1f}},
+                {2.0f, {0u, 1u}, {0.5f, 0.5f}},
+                {3.0f, {1u, 0u}, {0.9f, 0.1f}},
+                {4.0f, {1u, 2u}, {0.5f, 0.5f}},
             },
             {
-                {0.0f, Containers::arrayView({0u, 1u, 0u}), Containers::arrayView({0.987805f, 0.012195f, 0.000000f})},
-                {1.0f, Containers::arrayView({0u, 1u, 2u}), Containers::arrayView({0.897762f, 0.099751f, 0.002486f})},
-                {2.0f, Containers::arrayView({0u, 1u, 2u}), Containers::arrayView({0.496933f, 0.496933f, 0.006134f})},
-                {3.0f, Containers::arrayView({1u, 0u, 2u}), Containers::arrayView({0.818182f, 0.090909f, 0.090909f})},
-                {4.0f, Containers::arrayView({1u, 2u, 0u}), Containers::arrayView({0.496933f, 0.496933f, 0.006134f})},
+                {0.0f, {0u, 1u, 0u}, {0.987805f, 0.012195f, 0.000000f}},
+                {1.0f, {0u, 1u, 2u}, {0.897762f, 0.099751f, 0.002486f}},
+                {2.0f, {0u, 1u, 2u}, {0.496933f, 0.496933f, 0.006134f}},
+                {3.0f, {1u, 0u, 2u}, {0.818182f, 0.090909f, 0.090909f}},
+                {4.0f, {1u, 2u, 0u}, {0.496933f, 0.496933f, 0.006134f}},
             },
         };
 
@@ -3255,8 +3255,11 @@ void UfbxImporterTest::skinning() {
                 const JointRef& ref = jointRef[j];
                 if(Math::abs(position.y() - ref.y) >= 0.001f) continue;
 
-                CORRADE_COMPARE_AS(joint, ref.joints, TestSuite::Compare::Container);
-                CORRADE_COMPARE_AS(weight, ref.weights, TestSuite::Compare::Container);
+                Containers::ArrayView<const UnsignedInt> refJoints = Containers::arrayView(ref.joints).slice(0u, jointWeightCount);
+                Containers::ArrayView<const Float> refWeights = Containers::arrayView(ref.weights).slice(0u, jointWeightCount);
+
+                CORRADE_COMPARE_AS(joint, refJoints, TestSuite::Compare::Container);
+                CORRADE_COMPARE_AS(weight, refWeights, TestSuite::Compare::Container);
                 found = true;
                 break;
             }
