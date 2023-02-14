@@ -204,8 +204,9 @@ bool getLoadOptsFromConfiguration(ufbx_load_opts& opts, Utility::ConfigurationGr
     opts.target_light_axes = ufbx_axes_right_handed_y_up;
     opts.target_camera_axes = ufbx_axes_right_handed_y_up;
 
-    /* @todo expose more of these as options? need to think of reasonable
-       defaults anyways, feels like ignoring geometry transform is not great */
+    /** @todo expose more of these as options? need to think of reasonable
+        defaults anyways, feels like ignoring geometry transform is not
+        great */
     if(unitNormalizationHandling == "transformRoot") {
         opts.space_conversion = UFBX_SPACE_CONVERSION_TRANSFORM_ROOT;
     } else if(unitNormalizationHandling == "adjustTransforms") {
