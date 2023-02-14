@@ -26,6 +26,7 @@
 #include "OpenExrImporter.h"
 
 #include <thread> /* std::thread::hardware_concurrency(), sigh */
+#include <Corrade/Containers/BitArray.h>
 #include <Corrade/Containers/GrowableArray.h>
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/StringIterable.h>
@@ -245,8 +246,7 @@ void OpenExrImporter::doOpenData(Containers::Array<char>&& data, const DataFlags
         https://github.com/AcademySoftwareFoundation/openexr/blob/v3.0.4/src/lib/OpenEXR/ImfTiledInputFile.cpp#L1408
        */
     if(state->tiledFile && !state->tiledFile->isComplete()) {
-        /** @todo BitArray */
-        Containers::Array<bool> tilesPresentInLevel{DirectInit, std::size_t(state->tiledFile->numLevels()), false};
+        Containers::BitArray tilesPresentInLevel{ValueInit, std::size_t(state->tiledFile->numLevels())};
         try {
             for(Int level = 0; level != state->tiledFile->numLevels(); ++level) {
                 for(Int y = 0; y != state->tiledFile->numYTiles(level); ++y) {
@@ -260,7 +260,7 @@ void OpenExrImporter::doOpenData(Containers::Array<char>&& data, const DataFlags
                         state->tiledFile->rawTileData(dx, dy, lx, ly, pixelData, pixelDataSize);
 
                         /* If it didn't throw, mark this level as present */
-                        tilesPresentInLevel[lx] = true;
+                        tilesPresentInLevel.set(lx);
                     }
                 }
             }
