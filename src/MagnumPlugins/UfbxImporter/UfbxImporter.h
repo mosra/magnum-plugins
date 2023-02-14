@@ -151,9 +151,8 @@ Animations and skinning-related data are not imported at the moment.
     @ref SceneFieldType::Quaterniond), @ref SceneField::Scaling (of type
     @ref SceneFieldType::Vector3d) and importer-specific flags
     @cpp "Visibility" @ce and @cpp "GeometricTransformHelper" @ce (both of type
-    @ref SceneFieldType::UnsignedByte representing a boolean value). These five
-    fields share the same object mapping with @ref SceneFieldFlag::ImplicitMapping
-    set.
+    @ref SceneFieldType::Bit). These five fields share the same object mapping
+    with @ref SceneFieldFlag::ImplicitMapping set.
 -   Scene field @cpp "Visibility" @ce specifies whether objects should be
     visible in some application-defined manner.
 -   Scene field @cpp "GeometryTransformHelper" @ce is set on synthetic nodes

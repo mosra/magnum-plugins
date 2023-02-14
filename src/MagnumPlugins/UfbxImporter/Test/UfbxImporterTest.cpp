@@ -37,6 +37,7 @@
 #include <Corrade/Containers/Triple.h>
 #include <Corrade/Containers/BitArray.h>
 #include <Corrade/Containers/StaticArray.h>
+#include <Corrade/Containers/StridedBitArrayView.h>
 #include <Corrade/Containers/GrowableArray.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/DebugStl.h>
@@ -804,7 +805,7 @@ void UfbxImporterTest::light() {
     Containers::StridedArrayView1D<const Vector3d> translations = scene->field<Vector3d>(SceneField::Translation);
     CORRADE_VERIFY(scene->fieldFlags(SceneField::Translation) & SceneFieldFlag::ImplicitMapping);
 
-    Containers::StridedArrayView1D<const UnsignedByte> visibilities = scene->field<UnsignedByte>(sceneFieldVisibility);
+    Containers::StridedBitArrayView1D visibilities = scene->fieldBits(sceneFieldVisibility);
     CORRADE_VERIFY(scene->fieldFlags(sceneFieldVisibility) & SceneFieldFlag::ImplicitMapping);
 
     /* FBX files often don't have names for "attributes" such as lights so
@@ -1014,9 +1015,9 @@ void UfbxImporterTest::geometricTransformHelperNodes() {
         -1, 0, 0, 2,
     }), TestSuite::Compare::Container);
 
-    CORRADE_COMPARE_AS(scene->field<UnsignedByte>(sceneFieldGeometryTransformHelper), Containers::arrayView<UnsignedByte>({
-        0, 1, 0, 1,
-    }), TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(scene->fieldBits(sceneFieldGeometryTransformHelper), Containers::stridedArrayView({
+        false, true, false, true
+    }).sliceBit(0), TestSuite::Compare::Container);
 
     /* The meshes should be parented under their geometric transform helpers */
     CORRADE_COMPARE_AS(scene->meshesMaterialsAsArray(), (Containers::arrayView<Containers::Pair<UnsignedInt, Containers::Pair<UnsignedInt, Int>>>({
@@ -1071,9 +1072,9 @@ void UfbxImporterTest::geometricTransformModifyGeometry() {
         -1, 0,
     }), TestSuite::Compare::Container);
 
-    CORRADE_COMPARE_AS(scene->field<UnsignedByte>(sceneFieldGeometryTransformHelper), Containers::arrayView<UnsignedByte>({
-        0, 0,
-    }), TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(scene->fieldBits(sceneFieldGeometryTransformHelper), Containers::stridedArrayView({
+        false, false
+    }).sliceBit(0), TestSuite::Compare::Container);
 
     CORRADE_COMPARE_AS(scene->meshesMaterialsAsArray(), (Containers::arrayView<Containers::Pair<UnsignedInt, Containers::Pair<UnsignedInt, Int>>>({
         {0, {0, -1}},
@@ -1125,9 +1126,9 @@ void UfbxImporterTest::geometricTransformPreserve() {
         -1, 0,
     }), TestSuite::Compare::Container);
 
-    CORRADE_COMPARE_AS(scene->field<UnsignedByte>(sceneFieldGeometryTransformHelper), Containers::arrayView<UnsignedByte>({
-        0, 0,
-    }), TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(scene->fieldBits(sceneFieldGeometryTransformHelper), Containers::stridedArrayView({
+        false, false
+    }).sliceBit(0), TestSuite::Compare::Container);
 
     CORRADE_COMPARE_AS(scene->meshesMaterialsAsArray(), (Containers::arrayView<Containers::Pair<UnsignedInt, Containers::Pair<UnsignedInt, Int>>>({
         {0, {0, -1}},

@@ -31,6 +31,7 @@
 #include <Corrade/Containers/ArrayTuple.h>
 #include <Corrade/Containers/BitArray.h>
 #include <Corrade/Containers/StaticArray.h>
+#include <Corrade/Containers/StridedBitArrayView.h>
 #include <Corrade/Containers/GrowableArray.h>
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
@@ -521,8 +522,8 @@ Containers::Optional<SceneData> UfbxImporter::doScene(UnsignedInt) {
     Containers::ArrayView<Vector3d> translations;
     Containers::ArrayView<Quaterniond> rotations;
     Containers::ArrayView<Vector3d> scalings;
-    Containers::ArrayView<UnsignedByte> visibilities; /* @todo should be bool */
-    Containers::ArrayView<UnsignedByte> geometryTransformHelpers; /* @todo should be bool */
+    Containers::MutableBitArrayView visibilities;
+    Containers::MutableBitArrayView geometryTransformHelpers;
     Containers::ArrayView<Vector3d> geometryTranslations;
     Containers::ArrayView<Quaterniond> geometryRotations;
     Containers::ArrayView<Vector3d> geometryScalings;
@@ -571,8 +572,8 @@ Containers::Optional<SceneData> UfbxImporter::doScene(UnsignedInt) {
         translations[nodeId] = Vector3d(node->local_transform.translation);
         rotations[nodeId] = Quaterniond(node->local_transform.rotation);
         scalings[nodeId] = Vector3d(node->local_transform.scale);
-        visibilities[nodeId] = UnsignedByte(node->visible);
-        geometryTransformHelpers[nodeId] = UnsignedInt(node->is_geometry_transform_helper);
+        visibilities.set(nodeId, node->visible);
+        geometryTransformHelpers.set(nodeId, node->is_geometry_transform_helper);
 
         if(retainGeometryTransforms) {
             geometryTranslations[nodeId] = Vector3d(node->geometry_transform.translation);
