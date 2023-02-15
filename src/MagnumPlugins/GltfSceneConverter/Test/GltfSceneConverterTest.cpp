@@ -3728,13 +3728,13 @@ void GltfSceneConverterTest::textureCoordinateYFlip() {
     CORRADE_COMPARE(importer->meshCount(), 1);
     CORRADE_COMPARE(importer->materialCount(), 1);
 
-    Containers::Optional<Trade::MeshData> mesh = importer->mesh(0);
+    Containers::Optional<MeshData> mesh = importer->mesh(0);
     CORRADE_VERIFY(mesh);
     CORRADE_VERIFY(mesh->hasAttribute(MeshAttribute::TextureCoordinates));
     Containers::Array<Vector2> texCoords = mesh->textureCoordinates2DAsArray();
 
     /* Texture transform is added to materials that don't have it yet */
-    Containers::Optional<Trade::MaterialData> material = importer->material(0);
+    Containers::Optional<MaterialData> material = importer->material(0);
     CORRADE_VERIFY(material);
 
     CORRADE_COMPARE(material->hasAttribute(MaterialAttribute::BaseColorTextureMatrix),
