@@ -331,7 +331,9 @@ the plugin supports also 3D images and 2D array textures using a proposed
     enabled, all material textures will contain an Y-flip transformation in
     addition to any existing transformation.
 -   Material names, if passed, are saved into the file
--   The material is required to only be added after all textures it references
+-   The material is required to only be added after all textures it references,
+    in case of @ref Trade-GltfSceneConverter-behavior-images-array "2D array textures"
+    it's also required to reference only existing layers
 -   An informational warning is printed for all attributes that were unused
     due to not having a glTF equivalent, due to referring to a texture but the
     texture attribute isn't present or due to the support not being implemented
