@@ -766,7 +766,8 @@ const struct {
     {"explicit default texture swizzle", true, {}, "material-default-texture-swizzle.gltf", {},
         MaterialData{{}, {
             /* The swizzles are just checked but not written anywhere, so this
-               is the same as specifying just the textures alone */
+               is the same as specifying just the textures alone, and it
+               shouldn't produce any warning. */
             {MaterialAttribute::NormalTexture, 0u},
             {MaterialAttribute::NormalTextureSwizzle, MaterialTextureSwizzle::RGB},
             {MaterialAttribute::OcclusionTexture, 0u},
@@ -3302,7 +3303,8 @@ void GltfSceneConverterTest::addMaterial() {
             0}));
     }
 
-    /* There should be no warning about unused attributes */
+    /* There should be no warning about unused attributes, actual warnings are
+       tested in addMaterialUnusedAttributes() instead */
     {
         std::ostringstream out;
         Warning redirectWarning{&out};
