@@ -617,7 +617,7 @@ const struct {
     const char* expected;
     Containers::StringView dataName;
     MaterialData material;
-    Containers::Array<MaterialAttribute> expectedRemove;
+    Containers::Array<Containers::Pair<UnsignedInt, MaterialAttribute>> expectedRemove;
     Containers::Optional<MaterialData> expectedAdd;
 } AddMaterialData[]{
     {"empty", false, {}, "material-empty.gltf", {},
@@ -650,10 +650,10 @@ const struct {
             {MaterialAttribute::EmissiveTextureCoordinates, 9u},
             {MaterialAttribute::EmissiveTextureLayer, 0u}, /* unused */
         }}, {InPlaceInit, {
-            MaterialAttribute::AlphaMask,
-            MaterialAttribute::NormalTextureLayer,
-            MaterialAttribute::OcclusionTextureLayer,
-            MaterialAttribute::EmissiveTextureLayer
+            {0, MaterialAttribute::AlphaMask},
+            {0, MaterialAttribute::NormalTextureLayer},
+            {0, MaterialAttribute::OcclusionTextureLayer},
+            {0, MaterialAttribute::EmissiveTextureLayer}
         }}, {}},
     {"alpha mask", false, {}, "material-alpha-mask.gltf", {},
         MaterialData{{}, {
@@ -686,13 +686,13 @@ const struct {
             {MaterialAttribute::RoughnessTextureCoordinates, 11u},
             {MaterialAttribute::RoughnessTextureLayer, 0u}, /* unused */
         }}, {InPlaceInit, {
-            MaterialAttribute::BaseColorTextureLayer,
-            MaterialAttribute::MetalnessTexture,
-            MaterialAttribute::MetalnessTextureSwizzle,
-            MaterialAttribute::MetalnessTextureLayer,
-            MaterialAttribute::RoughnessTexture,
-            MaterialAttribute::RoughnessTextureSwizzle,
-            MaterialAttribute::RoughnessTextureLayer
+            {0, MaterialAttribute::BaseColorTextureLayer},
+            {0, MaterialAttribute::MetalnessTexture},
+            {0, MaterialAttribute::MetalnessTextureSwizzle},
+            {0, MaterialAttribute::MetalnessTextureLayer},
+            {0, MaterialAttribute::RoughnessTexture},
+            {0, MaterialAttribute::RoughnessTextureSwizzle},
+            {0, MaterialAttribute::RoughnessTextureLayer}
         }}, MaterialData{MaterialType::PbrMetallicRoughness, {
             MaterialAttributeData{MaterialAttribute::NoneRoughnessMetallicTexture, 0u}
         }}},
@@ -718,9 +718,9 @@ const struct {
             {MaterialAttribute::RoughnessTextureCoordinates, 11u},
             {MaterialAttribute::RoughnessTextureLayer, 0u}, /* unused */
         }}, {InPlaceInit, {
-            MaterialAttribute::BaseColorTextureLayer,
-            MaterialAttribute::MetalnessTextureLayer,
-            MaterialAttribute::RoughnessTextureLayer
+            {0, MaterialAttribute::BaseColorTextureLayer},
+            {0, MaterialAttribute::MetalnessTextureLayer},
+            {0, MaterialAttribute::RoughnessTextureLayer}
         }}, MaterialData{MaterialType::PbrMetallicRoughness, {}}},
     {"metallic/roughness, global texture attributes", true, {}, "material-metallicroughness.gltf", {},
         MaterialData{{}, {
@@ -745,13 +745,13 @@ const struct {
             {MaterialAttribute::TextureCoordinates, 11u},
             {MaterialAttribute::TextureLayer, 0u}, /* unused */
         }}, {InPlaceInit, {
-            MaterialAttribute::MetalnessTexture,
-            MaterialAttribute::MetalnessTextureSwizzle,
-            MaterialAttribute::RoughnessTextureSwizzle,
-            MaterialAttribute::RoughnessTexture,
-            MaterialAttribute::TextureMatrix,
-            MaterialAttribute::TextureCoordinates,
-            MaterialAttribute::TextureLayer,
+            {0, MaterialAttribute::MetalnessTexture},
+            {0, MaterialAttribute::MetalnessTextureSwizzle},
+            {0, MaterialAttribute::RoughnessTextureSwizzle},
+            {0, MaterialAttribute::RoughnessTexture},
+            {0, MaterialAttribute::TextureMatrix},
+            {0, MaterialAttribute::TextureCoordinates},
+            {0, MaterialAttribute::TextureLayer},
         }}, MaterialData{MaterialType::PbrMetallicRoughness, {
             MaterialAttributeData{MaterialAttribute::NoneRoughnessMetallicTexture, 0u},
             MaterialAttributeData{MaterialAttribute::MetalnessTextureMatrix,
@@ -774,8 +774,8 @@ const struct {
             /* No EmissiveTextureSwizzle or BaseColorTextureSwizzle attributes,
                Metallic and Roughness textures won't work with defaults */
         }}, {InPlaceInit, {
-            MaterialAttribute::NormalTextureSwizzle,
-            MaterialAttribute::OcclusionTextureSwizzle
+            {0, MaterialAttribute::NormalTextureSwizzle},
+            {0, MaterialAttribute::OcclusionTextureSwizzle}
         }}, {}},
     {"default values kept", true, true, "material-defaults-kept.gltf", {},
         MaterialData{{}, {
@@ -836,26 +836,26 @@ const struct {
             {MaterialAttribute::RoughnessTextureMatrix, Matrix3{}},
             {MaterialAttribute::RoughnessTextureCoordinates, 0u},
         }}, {InPlaceInit, {
-            MaterialAttribute::AlphaBlend,
-            MaterialAttribute::DoubleSided,
-            MaterialAttribute::NormalTextureScale,
-            MaterialAttribute::NormalTextureMatrix,
-            MaterialAttribute::NormalTextureCoordinates,
-            MaterialAttribute::OcclusionTextureStrength,
-            MaterialAttribute::OcclusionTextureMatrix,
-            MaterialAttribute::OcclusionTextureCoordinates,
-            MaterialAttribute::EmissiveColor,
-            MaterialAttribute::EmissiveTextureMatrix,
-            MaterialAttribute::EmissiveTextureCoordinates,
-            MaterialAttribute::BaseColor,
-            MaterialAttribute::BaseColorTextureMatrix,
-            MaterialAttribute::BaseColorTextureCoordinates,
-            MaterialAttribute::Metalness,
-            MaterialAttribute::Roughness,
-            MaterialAttribute::MetalnessTextureMatrix,
-            MaterialAttribute::MetalnessTextureCoordinates,
-            MaterialAttribute::RoughnessTextureMatrix,
-            MaterialAttribute::RoughnessTextureCoordinates,
+            {0, MaterialAttribute::AlphaBlend},
+            {0, MaterialAttribute::DoubleSided},
+            {0, MaterialAttribute::NormalTextureScale},
+            {0, MaterialAttribute::NormalTextureMatrix},
+            {0, MaterialAttribute::NormalTextureCoordinates},
+            {0, MaterialAttribute::OcclusionTextureStrength},
+            {0, MaterialAttribute::OcclusionTextureMatrix},
+            {0, MaterialAttribute::OcclusionTextureCoordinates},
+            {0, MaterialAttribute::EmissiveColor},
+            {0, MaterialAttribute::EmissiveTextureMatrix},
+            {0, MaterialAttribute::EmissiveTextureCoordinates},
+            {0, MaterialAttribute::BaseColor},
+            {0, MaterialAttribute::BaseColorTextureMatrix},
+            {0, MaterialAttribute::BaseColorTextureCoordinates},
+            {0, MaterialAttribute::Metalness},
+            {0, MaterialAttribute::Roughness},
+            {0, MaterialAttribute::MetalnessTextureMatrix},
+            {0, MaterialAttribute::MetalnessTextureCoordinates},
+            {0, MaterialAttribute::RoughnessTextureMatrix},
+            {0, MaterialAttribute::RoughnessTextureCoordinates},
         }}, MaterialData{MaterialType::PbrMetallicRoughness, {}}},
     {"alpha mask default values kept", false, true, "material-alpha-mask-defaults-kept.gltf", {},
         MaterialData{{}, {
@@ -3257,10 +3257,10 @@ void GltfSceneConverterTest::addTextureInvalid() {
 
 namespace {
 
-MaterialData filterMaterialAttributes(const MaterialData& material, Containers::ArrayView<const MaterialAttribute> remove, const Containers::Optional<MaterialData>& add) {
+MaterialData filterMaterialAttributes(const MaterialData& material, Containers::ArrayView<const Containers::Pair<UnsignedInt, MaterialAttribute>> remove, const Containers::Optional<MaterialData>& add) {
     Containers::BitArray attributesToKeep{DirectInit, material.attributeData().size(), true};
-    for(const MaterialAttribute attribute: remove)
-        attributesToKeep.reset(material.attributeId(attribute));
+    for(const Containers::Pair<UnsignedInt, MaterialAttribute>& attribute: remove)
+        attributesToKeep.reset(material.attributeDataOffset(attribute.first()) + material.attributeId(attribute.first(), attribute.second()));
 
     /* Remove all original MaterialTypes from the input, if any are to be added
        they're in `add` */
@@ -3439,7 +3439,7 @@ void GltfSceneConverterTest::addMaterial2DArrayTextures() {
     CORRADE_COMPARE_AS(*importedMaterial, filterMaterialAttributes(material,
         /* Emissive layer is 0 and for a 2D image, which is same as not present
            at all */
-        Containers::arrayView({MaterialAttribute::EmissiveTextureLayer}),
+        Containers::arrayView({Containers::pair(0u, MaterialAttribute::EmissiveTextureLayer)}),
         MaterialData{MaterialType::PbrMetallicRoughness, {}}),
         DebugTools::CompareMaterial);
 }
