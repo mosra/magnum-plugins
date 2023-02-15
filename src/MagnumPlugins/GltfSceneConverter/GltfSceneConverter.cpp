@@ -53,6 +53,7 @@
 #include <Magnum/Trade/MaterialData.h>
 #include <Magnum/Trade/MeshData.h>
 #include <Magnum/Trade/PbrMetallicRoughnessMaterialData.h>
+#include <Magnum/Trade/PbrClearCoatMaterialData.h>
 #include <Magnum/Trade/TextureData.h>
 #include <Magnum/Trade/SceneData.h>
 
@@ -72,11 +73,12 @@ namespace {
 /* Each value here needs a corresponding entry in extensionStrings inside
    doEndData(). Values sorted by name. */
 enum class GltfExtension {
-    KhrMaterialsUnlit = 1 << 0,
-    KhrMeshQuantization = 1 << 1,
-    KhrTextureBasisu = 1 << 2,
-    KhrTextureKtx = 1 << 3,
-    KhrTextureTransform = 1 << 4
+    KhrMaterialsClearCoat = 1 << 0,
+    KhrMaterialsUnlit = 1 << 1,
+    KhrMeshQuantization = 1 << 2,
+    KhrTextureBasisu = 1 << 3,
+    KhrTextureKtx = 1 << 4,
+    KhrTextureTransform = 1 << 5,
 };
 typedef Containers::EnumSet<GltfExtension> GltfExtensions;
 CORRADE_ENUMSET_OPERATORS(GltfExtensions)
@@ -277,6 +279,7 @@ Containers::Optional<Containers::Array<char>> GltfSceneConverter::doEndData() {
            the loop */
         GltfExtensions usedExtensions = _state->usedExtensions|_state->requiredExtensions;
         const Containers::Pair<GltfExtension, Containers::StringView> extensionStrings[]{
+            {GltfExtension::KhrMaterialsClearCoat, "KHR_materials_clearcoat"_s},
             {GltfExtension::KhrMaterialsUnlit, "KHR_materials_unlit"_s},
             {GltfExtension::KhrMeshQuantization, "KHR_mesh_quantization"_s},
             {GltfExtension::KhrTextureBasisu, "KHR_texture_basisu"_s},
@@ -1589,6 +1592,14 @@ struct MaskedMaterial {
         return material.attribute<T>(layer, *found);
     }
 
+    template<class T> Containers::Optional<T> findBaseLayer(MaterialAttribute name) {
+        const Containers::Optional<UnsignedInt> found = material.findAttributeId(0, name);
+        if(!found) return {};
+
+        mask.set(*found);
+        return material.attribute<T>(0, *found);
+    }
+
     const MaterialData& material;
     UnsignedInt layer;
     Containers::MutableBitArrayView mask;
@@ -1697,6 +1708,23 @@ bool GltfSceneConverter::doAdd(UnsignedInt, const MaterialData& material, const 
             return {};
         }
     }
+    if(material.hasLayer(MaterialLayer::ClearCoat)) {
+        const auto& pbrClearCoatMaterial = material.as<PbrClearCoatMaterialData>();
+        if(pbrClearCoatMaterial.hasAttribute(MaterialAttribute::LayerFactorTexture) &&
+        pbrClearCoatMaterial.layerFactorTextureSwizzle() != MaterialTextureSwizzle::R) {
+            Error{} << "Trade::GltfSceneConverter::add(): unsupported" << Debug::packed << pbrClearCoatMaterial.layerFactorTextureSwizzle() << "packing of a clear coat layer factor texture";
+            return {};
+        }
+        if(pbrClearCoatMaterial.hasAttribute(MaterialAttribute::RoughnessTexture) &&
+        pbrClearCoatMaterial.roughnessTextureSwizzle() != MaterialTextureSwizzle::G) {
+            Error{} << "Trade::GltfSceneConverter::add(): unsupported" << Debug::packed << pbrClearCoatMaterial.roughnessTextureSwizzle() << "packing of a clear coat roughness texture";
+            return {};
+        }
+        if(pbrClearCoatMaterial.hasAttribute(MaterialAttribute::NormalTexture) && pbrClearCoatMaterial.normalTextureSwizzle() != MaterialTextureSwizzle::RGB) {
+            Error{} << "Trade::GltfSceneConverter::add(): unsupported" << Debug::packed << pbrClearCoatMaterial.normalTextureSwizzle() << "packing of a clear coat normal texture";
+            return {};
+        }
+    }
 
     /* At this point we're sure nothing will fail so we can start writing the
        JSON. Otherwise we'd end up with a partly-written JSON in case of an
@@ -1710,36 +1738,48 @@ bool GltfSceneConverter::doAdd(UnsignedInt, const MaterialData& material, const 
 
     const bool keepDefaults = configuration().value<bool>("keepMaterialDefaults");
 
-    auto writeTextureContents = [&](MaskedMaterial& maskedMaterial, UnsignedInt textureAttributeId, Containers::StringView prefix) {
-        if(!prefix) prefix = maskedMaterial.material.attributeName(textureAttributeId);
+    auto writeTextureContents = [&](MaskedMaterial& maskedMaterial, const UnsignedInt layer, const UnsignedInt textureAttributeId, Containers::StringView prefix) {
+        if(!prefix) prefix = maskedMaterial.material.attributeName(layer, textureAttributeId);
 
         /* Bounds of all textures should have been verified at the very top */
-        const UnsignedInt texture = maskedMaterial.material.attribute<UnsignedInt>(textureAttributeId);
+        const UnsignedInt texture = maskedMaterial.material.attribute<UnsignedInt>(layer, textureAttributeId);
         CORRADE_INTERNAL_ASSERT(texture < _state->textureIdOffsets.size());
 
-        /* Texture layer. If there's no such attribute, it's implicitly 0.
-           Layer index bounds should have been verified at the very top as
-           well. */
-        Containers::Optional<UnsignedInt> layer = maskedMaterial.find<UnsignedInt>(prefix + "Layer"_s);
-        if(!layer)
-            layer = maskedMaterial.find<UnsignedInt>(MaterialAttribute::TextureLayer);
-        if(!layer)
-            layer = 0;
-        CORRADE_INTERNAL_ASSERT(*layer < _state->textureIdOffsets[texture + 1] - _state->textureIdOffsets[texture]);
+        /* Texture layer. If there's no such attribute and there's neither a
+           material-layer-local or a global fallback, it's implicitly 0. Layer
+           index bounds (including fallback layer attributes) should have been
+           verified at the very top as well. */
+        Containers::Optional<UnsignedInt> textureLayer = maskedMaterial.find<UnsignedInt>(prefix + "Layer"_s);
+        if(!textureLayer)
+            textureLayer = maskedMaterial.find<UnsignedInt>(MaterialAttribute::TextureLayer);
+        if(!textureLayer && layer)
+            textureLayer = maskedMaterial.findBaseLayer<UnsignedInt>(MaterialAttribute::TextureLayer);
+        if(!textureLayer)
+            textureLayer = 0;
+        CORRADE_INTERNAL_ASSERT(*textureLayer < _state->textureIdOffsets[texture + 1] - _state->textureIdOffsets[texture]);
 
-        _state->gltfMaterials.writeKey("index"_s).write(_state->textureIdOffsets[texture] + *layer);
+        _state->gltfMaterials.writeKey("index"_s).write(_state->textureIdOffsets[texture] + *textureLayer);
 
+        /* Texture coordinates. If there's no such attribute, check also a
+           material-layer-local and global fallback. */
         Containers::Optional<UnsignedInt> textureCoordinates = maskedMaterial.find<UnsignedInt>(prefix + "Coordinates"_s);
         if(!textureCoordinates)
             textureCoordinates = maskedMaterial.find<UnsignedInt>(MaterialAttribute::TextureCoordinates);
+        if(!textureCoordinates && layer)
+            textureCoordinates = maskedMaterial.findBaseLayer<UnsignedInt>(MaterialAttribute::TextureCoordinates);
         if(textureCoordinates && (keepDefaults || *textureCoordinates != 0))
             _state->gltfMaterials.writeKey("texCoord"_s).write(*textureCoordinates);
 
+        /* Texture matrix. If there's no such attribute, check also a
+           material-layer-local and global fallback. */
         Containers::String textureMatrixAttribute = prefix + "Matrix"_s;
         Containers::Optional<Matrix3> textureMatrix = maskedMaterial.find<Matrix3>(textureMatrixAttribute);
         if(!textureMatrix) {
-            textureMatrixAttribute = materialAttributeName(MaterialAttribute::TextureMatrix);
-            textureMatrix = maskedMaterial.find<Matrix3>(textureMatrixAttribute);
+            textureMatrixAttribute =  Containers::String::nullTerminatedGlobalView(materialAttributeName(MaterialAttribute::TextureMatrix));
+            textureMatrix = maskedMaterial.find<Matrix3>(MaterialAttribute::TextureMatrix);
+        }
+        if(!textureMatrix && layer) {
+            textureMatrix = maskedMaterial.findBaseLayer<Matrix3>(MaterialAttribute::TextureMatrix);
         }
 
         /* If there's no matrix but we're told to Y-flip texture coordinates in
@@ -1756,7 +1796,14 @@ bool GltfSceneConverter::doAdd(UnsignedInt, const MaterialData& material, const 
                scaling. */
             const Matrix3 exceptRotation = Matrix3::translation(textureMatrix->translation())*Matrix3::scaling(textureMatrix->scaling()*Math::sign(textureMatrix->diagonal().xy()));
             if(exceptRotation != *textureMatrix) {
-                Warning{} << "Trade::GltfSceneConverter::add(): material attribute" << textureMatrixAttribute << "rotation was not used";
+                Warning w;
+                w << "Trade::GltfSceneConverter::add(): material attribute" << textureMatrixAttribute;
+                if(layer) {
+                    const Containers::StringView layerName = maskedMaterial.material.layerName(layer);
+                    CORRADE_INTERNAL_ASSERT(layerName);
+                    w << "in layer" << layer << "(" << Debug::nospace << layerName << Debug::nospace << ")";
+                }
+                w << "rotation was not used";
             }
 
             /* Flip the matrix to have origin upper left */
@@ -1796,11 +1843,11 @@ bool GltfSceneConverter::doAdd(UnsignedInt, const MaterialData& material, const 
             }
         }
     };
-    auto writeTexture = [&](MaskedMaterial& maskedMaterial, Containers::StringView name, UnsignedInt textureAttributeId, Containers::StringView prefix) {
+    auto writeTexture = [&](MaskedMaterial& maskedMaterial, const Containers::StringView name, const UnsignedInt layer, const UnsignedInt textureAttributeId, const Containers::StringView prefix) {
         _state->gltfMaterials.writeKey(name);
         const Containers::ScopeGuard gltfTexture = _state->gltfMaterials.beginObjectScope();
 
-        writeTextureContents(maskedMaterial, textureAttributeId, prefix);
+        writeTextureContents(maskedMaterial, layer, textureAttributeId, prefix);
     };
 
     /* Originally I wanted to go through all material attributes sequentially,
@@ -1853,7 +1900,7 @@ bool GltfSceneConverter::doAdd(UnsignedInt, const MaterialData& material, const 
                 _state->gltfMaterials
                     .writeKey("baseColorFactor"_s).writeArray(baseColor->data());
             if(foundBaseColorTexture)
-                writeTexture(maskedBaseMaterial, "baseColorTexture"_s, *foundBaseColorTexture, {});
+                writeTexture(maskedBaseMaterial, "baseColorTexture"_s, 0, *foundBaseColorTexture, {});
 
             if(metalness && (keepDefaults || Math::notEqual(*metalness, 1.0f)))
                 _state->gltfMaterials
@@ -1862,7 +1909,7 @@ bool GltfSceneConverter::doAdd(UnsignedInt, const MaterialData& material, const 
                 _state->gltfMaterials
                     .writeKey("roughnessFactor"_s).write(*roughness);
             if(foundMetalnessTexture) {
-                writeTexture(maskedBaseMaterial, "metallicRoughnessTexture"_s, *foundMetalnessTexture, {});
+                writeTexture(maskedBaseMaterial, "metallicRoughnessTexture"_s, 0, *foundMetalnessTexture, {});
 
                 /* Mark the swizzles and roughness properties as used, if
                    present, by simply looking them up -- we checked they're
@@ -1875,7 +1922,7 @@ bool GltfSceneConverter::doAdd(UnsignedInt, const MaterialData& material, const 
                 maskedBaseMaterial.findId(MaterialAttribute::RoughnessTextureLayer);
 
             } else if(foundNoneRoughnessMetallicTexture) {
-                writeTexture(maskedBaseMaterial, "metallicRoughnessTexture"_s, *foundNoneRoughnessMetallicTexture, "MetalnessTexture"_s);
+                writeTexture(maskedBaseMaterial, "metallicRoughnessTexture"_s, 0, *foundNoneRoughnessMetallicTexture, "MetalnessTexture"_s);
 
                 /* Mark the roughness properties as used, if present, by simply
                    looking them up -- we checked they're consistent with
@@ -1887,29 +1934,32 @@ bool GltfSceneConverter::doAdd(UnsignedInt, const MaterialData& material, const 
         }
     }
 
-    /* Normal texture properties; ignored if there's no texture */
-    if(const auto foundNormalTexture = maskedBaseMaterial.findId(MaterialAttribute::NormalTexture)) {
-        _state->gltfMaterials.writeKey("normalTexture"_s);
+    /* Normal texture properties; ignored if there's no texture. A lambda
+       because the texture is used also in the ClearCoat layer. */
+    const auto writeNormalTexture = [&](MaskedMaterial& maskedMaterial, const Containers::StringView name, const UnsignedInt layer, const UnsignedInt textureAttributeId) {
+        _state->gltfMaterials.writeKey(name);
         const Containers::ScopeGuard gltfTexture = _state->gltfMaterials.beginObjectScope();
 
-        writeTextureContents(maskedBaseMaterial, *foundNormalTexture, {});
+        writeTextureContents(maskedMaterial, layer, textureAttributeId, {});
 
         /* Mark the swizzle as used, if present, by simply looking it up -- we
            checked it's valid above */
-        maskedBaseMaterial.findId(MaterialAttribute::NormalTextureSwizzle);
+        maskedMaterial.findId(MaterialAttribute::NormalTextureSwizzle);
 
-        const auto normalTextureScale = maskedBaseMaterial.find<Float>(MaterialAttribute::NormalTextureScale);
+        const auto normalTextureScale = maskedMaterial.find<Float>(MaterialAttribute::NormalTextureScale);
         if(normalTextureScale && (keepDefaults || Math::notEqual(*normalTextureScale, 1.0f)))
             _state->gltfMaterials
                 .writeKey("scale"_s).write(*normalTextureScale);
-    }
+    };
+    if(const auto foundNormalTexture = maskedBaseMaterial.findId(MaterialAttribute::NormalTexture))
+        writeNormalTexture(maskedBaseMaterial, "normalTexture"_s, 0, *foundNormalTexture);
 
     /* Occlusion texture properties; ignored if there's no texture */
     if(const auto foundOcclusionTexture = maskedBaseMaterial.findId(MaterialAttribute::OcclusionTexture)) {
         _state->gltfMaterials.writeKey("occlusionTexture"_s);
         const Containers::ScopeGuard gltfTexture = _state->gltfMaterials.beginObjectScope();
 
-        writeTextureContents(maskedBaseMaterial, *foundOcclusionTexture, {});
+        writeTextureContents(maskedBaseMaterial, 0, *foundOcclusionTexture, {});
 
         /* Mark the swizzle as used, if present, by simply looking it up -- we
            checked it's valid above */
@@ -1931,7 +1981,7 @@ bool GltfSceneConverter::doAdd(UnsignedInt, const MaterialData& material, const 
 
     /* Emissive texture properties; ignored if there's no texture */
     if(const auto foundEmissiveTexture = maskedBaseMaterial.findId(MaterialAttribute::EmissiveTexture))
-        writeTexture(maskedBaseMaterial, "emissiveTexture"_s, *foundEmissiveTexture, {});
+        writeTexture(maskedBaseMaterial, "emissiveTexture"_s, 0, *foundEmissiveTexture, {});
 
     /* Alpha mode and cutoff */
     {
@@ -1957,13 +2007,82 @@ bool GltfSceneConverter::doAdd(UnsignedInt, const MaterialData& material, const 
             _state->gltfMaterials.writeKey("doubleSided"_s).write(*doubleSided);
     }
 
-    /* Flat material */
-    if(material.types() & MaterialType::Flat) {
-        _state->usedExtensions |= GltfExtension::KhrMaterialsUnlit;
-        _state->gltfMaterials.writeKey("extensions"_s)
-            .beginObject()
-                .writeKey("KHR_materials_unlit"_s).beginObject().endObject()
-            .endObject();
+    /* Extensions -- write only if there's actually any */
+    {
+        const Containers::Optional<UnsignedInt> clearCoatLayerId = material.findLayerId(MaterialLayer::ClearCoat);
+        if((material.types() & MaterialType::Flat) ||
+            clearCoatLayerId
+        ) {
+            _state->gltfMaterials.writeKey("extensions"_s);
+            const Containers::ScopeGuard gltfExtensions = _state->gltfMaterials.beginObjectScope();
+
+            /* Flat material */
+            if(material.types() & MaterialType::Flat) {
+                _state->usedExtensions |= GltfExtension::KhrMaterialsUnlit;
+                _state->gltfMaterials
+                    .writeKey("KHR_materials_unlit"_s).beginObject().endObject();
+            }
+
+            /* Clear coat. Include if the layer is present, independently of
+               being included in the MaterialTypes (which, except for Flat, is
+               just a hint of what's in there) */
+            if(clearCoatLayerId) {
+                layerMask.set(*clearCoatLayerId);
+                _state->usedExtensions |= GltfExtension::KhrMaterialsClearCoat;
+                _state->gltfMaterials.writeKey("KHR_materials_clearcoat"_s);
+                const Containers::ScopeGuard gltfClearCoat = _state->gltfMaterials.beginObjectScope();
+
+                MaskedMaterial maskedClearCoatMaterial{material, mask, *clearCoatLayerId};
+
+                /* Clear coat layer factor. Our default is 1.0 (so it doesn't
+                   have to be always specified if a factor texture is present
+                   as well) while glTF's is 0.0 so it has to be added even if
+                   it's missing. */
+                {
+                    auto layerFactor = maskedClearCoatMaterial.find<Float>(MaterialAttribute::LayerFactor);
+                    if(!layerFactor)
+                        layerFactor = 1.0f;
+                    if(keepDefaults || *layerFactor != 0.0f)
+                        _state->gltfMaterials
+                            .writeKey("clearcoatFactor"_s).write(*layerFactor);
+                }
+
+                /* Layer texture properties; ignored if there's no texture */
+                if(const auto foundFactorTexture = maskedClearCoatMaterial.findId(MaterialAttribute::LayerFactorTexture)) {
+                    writeTexture(maskedClearCoatMaterial, "clearcoatTexture"_s, *clearCoatLayerId, *foundFactorTexture, {});
+
+                    /* Mark the swizzle as used, if present, by simply looking
+                       it up -- we checked it's valid above */
+                    maskedClearCoatMaterial.findId(MaterialAttribute::LayerFactorTextureSwizzle);
+                }
+
+                /* Clear coat roughness. Similarly to above, our default is 1.0
+                   while glTF's is 0.0 so it has to be added even if it's
+                   missing. */
+                {
+                    auto roughness = maskedClearCoatMaterial.find<Float>(MaterialAttribute::Roughness);
+                    if(!roughness)
+                        roughness = 1.0f;
+                    if(keepDefaults || *roughness != 0.0f)
+                        _state->gltfMaterials
+                            .writeKey("clearcoatRoughnessFactor"_s).write(*roughness);
+                }
+
+                /* Roughness texture properties; ignored if there's no
+                   texture */
+                if(const auto foundRoughnessTexture = maskedClearCoatMaterial.findId(MaterialAttribute::RoughnessTexture)) {
+                    writeTexture(maskedClearCoatMaterial, "clearcoatRoughnessTexture"_s, *clearCoatLayerId, *foundRoughnessTexture, {});
+
+                    /* Mark the swizzle as used, if present, by simply looking
+                       it up -- we checked it's valid above */
+                    maskedClearCoatMaterial.findId(MaterialAttribute::RoughnessTextureSwizzle);
+                }
+
+                /* Clear coat normal texture */
+                if(const auto foundNormalTexture = maskedClearCoatMaterial.findId(MaterialAttribute::NormalTexture))
+                    writeNormalTexture(maskedClearCoatMaterial, "clearcoatNormalTexture"_s, *clearCoatLayerId, *foundNormalTexture);
+            }
+        }
     }
 
     if(name)
@@ -2237,6 +2356,7 @@ bool GltfSceneConverter::doAdd(CORRADE_UNUSED const UnsignedInt id, const Textur
                     break;
                 /* LCOV_EXCL_START */
                 case GltfExtension::KhrMaterialsUnlit:
+                case GltfExtension::KhrMaterialsClearCoat:
                 case GltfExtension::KhrMeshQuantization:
                 case GltfExtension::KhrTextureTransform:
                     CORRADE_INTERNAL_ASSERT_UNREACHABLE();

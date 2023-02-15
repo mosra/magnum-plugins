@@ -611,7 +611,7 @@ const struct {
 };
 
 const struct {
-    const char* name;
+    TestSuite::TestCaseDescriptionSourceLocation name;
     bool needsTexture;
     Containers::Optional<bool> keepDefaults;
     const char* expected;
@@ -875,6 +875,163 @@ const struct {
                though they make no sense for a flat-shaded material */
             {MaterialAttribute::Roughness, 0.57f}
         }}, {}, MaterialData{MaterialType::Flat, {}}},
+    {"clear coat", true, {}, "material-clearcoat.gltf", {},
+        MaterialData{{}, {
+            {MaterialLayer::ClearCoat},
+            {MaterialAttribute::LayerFactor, 0.7f},
+            {MaterialAttribute::LayerFactorTexture, 0u},
+            {MaterialAttribute::LayerFactorTextureMatrix,
+                Matrix3::translation({0.25f, 1.0f})},
+            {MaterialAttribute::LayerFactorTextureCoordinates, 1u},
+            {MaterialAttribute::LayerFactorTextureLayer, 0u}, /* unused */
+            {MaterialAttribute::Roughness, 0.8f},
+            {MaterialAttribute::RoughnessTexture, 0u},
+            {MaterialAttribute::RoughnessTextureMatrix,
+                Matrix3::translation({0.25f, 0.0f})*
+                Matrix3::scaling({-0.25f, 0.75f})},
+            {MaterialAttribute::RoughnessTextureSwizzle, MaterialTextureSwizzle::G},
+            {MaterialAttribute::RoughnessTextureCoordinates, 2u},
+            {MaterialAttribute::RoughnessTextureLayer, 0u}, /* unused */
+            {MaterialAttribute::NormalTexture, 0u},
+            {MaterialAttribute::NormalTextureScale, 0.75f},
+            {MaterialAttribute::NormalTextureMatrix,
+                Matrix3::scaling({-0.25f, 0.75f})},
+            {MaterialAttribute::NormalTextureCoordinates, 3u},
+            {MaterialAttribute::NormalTextureLayer, 0u}, /* unused */
+        }, {0, 17}}, {InPlaceInit, {
+            {1, MaterialAttribute::LayerFactorTextureLayer},
+            {1, MaterialAttribute::RoughnessTextureLayer},
+            {1, MaterialAttribute::NormalTextureLayer}
+        }}, MaterialData{MaterialType::PbrClearCoat, {}}},
+    {"clear coat, layer-global texture attributes", true, {}, "material-clearcoat.gltf", {},
+        /* Priority between global, layer-local and local attributes (and
+           messages produced due to that) is tested in a corresponding case in
+           addMaterialUnusedAttributes() */
+        MaterialData{{}, {
+            {MaterialLayer::ClearCoat},
+            {MaterialAttribute::LayerFactor, 0.7f},
+            {MaterialAttribute::LayerFactorTexture, 0u},
+            /* This one is local, this overriding the TextureMatrix in the
+               layer */
+            {MaterialAttribute::LayerFactorTextureMatrix,
+                Matrix3::translation({0.25f, 1.0f})},
+            /* This one is local, thus overriding the TextureCoordinates in the
+               layer */
+            {MaterialAttribute::LayerFactorTextureCoordinates, 1u},
+            {MaterialAttribute::LayerFactorTextureLayer, 0u}, /* unused */
+            {MaterialAttribute::Roughness, 0.8f},
+            {MaterialAttribute::RoughnessTexture, 0u},
+            /* This one is again local */
+            {MaterialAttribute::RoughnessTextureMatrix,
+                Matrix3::translation({0.25f, 0.0f})*
+                Matrix3::scaling({-0.25f, 0.75f})},
+            {MaterialAttribute::RoughnessTextureSwizzle, MaterialTextureSwizzle::G},
+            {MaterialAttribute::TextureCoordinates, 2u},
+            {MaterialAttribute::RoughnessTextureLayer, 0u}, /* unused */
+            {MaterialAttribute::NormalTexture, 0u},
+            {MaterialAttribute::NormalTextureScale, 0.75f},
+            {MaterialAttribute::TextureMatrix,
+                Matrix3::scaling({-0.25f, 0.75f})},
+            /* This one is again local */
+            {MaterialAttribute::NormalTextureCoordinates, 3u},
+            {MaterialAttribute::NormalTextureLayer, 0u}, /* unused */
+        }, {0, 17}}, {InPlaceInit, {
+            {1, MaterialAttribute::LayerFactorTextureLayer},
+            {1, MaterialAttribute::RoughnessTextureLayer},
+            {1, MaterialAttribute::NormalTextureLayer},
+            /* THese two get replaced by local attributes */
+            {1, MaterialAttribute::TextureCoordinates},
+            {1, MaterialAttribute::TextureMatrix},
+        }}, MaterialData{MaterialType::PbrClearCoat, {
+            {MaterialAttribute::NormalTextureMatrix,
+                Matrix3::scaling({-0.25f, 0.75f})},
+            {MaterialAttribute::RoughnessTextureCoordinates, 2u}
+        }, {0, 2}}},
+    {"clear coat, global texture attributes", true, {}, "material-clearcoat.gltf", {},
+        MaterialData{{}, {
+            {MaterialAttribute::TextureMatrix,
+                Matrix3::translation({0.25f, 1.0f})},
+            {MaterialAttribute::TextureCoordinates, 2u},
+            {MaterialLayer::ClearCoat},
+            {MaterialAttribute::LayerFactor, 0.7f},
+            {MaterialAttribute::LayerFactorTexture, 0u},
+            {MaterialAttribute::LayerFactorTextureLayer, 0u}, /* unused */
+            /* This one is local, thus overriding the global
+               TextureCoordinates */
+            {MaterialAttribute::LayerFactorTextureCoordinates, 1u},
+            {MaterialAttribute::Roughness, 0.8f},
+            {MaterialAttribute::RoughnessTexture, 0u},
+            /* This one is local, this overriding the global TextureMatrix */
+            {MaterialAttribute::RoughnessTextureMatrix,
+                Matrix3::translation({0.25f, 0.0f})*
+                Matrix3::scaling({-0.25f, 0.75f})},
+            {MaterialAttribute::RoughnessTextureSwizzle, MaterialTextureSwizzle::G},
+            {MaterialAttribute::RoughnessTextureLayer, 0u}, /* unused */
+            {MaterialAttribute::NormalTexture, 0u},
+            {MaterialAttribute::NormalTextureScale, 0.75f},
+            /* This one is again local */
+            {MaterialAttribute::NormalTextureMatrix,
+                Matrix3::scaling({-0.25f, 0.75f})},
+            /* This one is again local */
+            {MaterialAttribute::NormalTextureCoordinates, 3u},
+            {MaterialAttribute::NormalTextureLayer, 0u}, /* unused */
+        }, {2, 17}}, {InPlaceInit, {
+            {0, MaterialAttribute::TextureMatrix},
+            {0, MaterialAttribute::TextureCoordinates},
+            {1, MaterialAttribute::LayerFactorTextureLayer},
+            {1, MaterialAttribute::RoughnessTextureLayer},
+            {1, MaterialAttribute::NormalTextureLayer},
+        }}, MaterialData{MaterialType::PbrClearCoat, {
+            {MaterialAttribute::LayerFactorTextureMatrix,
+                Matrix3::translation({0.25f, 1.0f})},
+            {MaterialAttribute::RoughnessTextureCoordinates, 2u},
+        }, {0, 2}}},
+    {"clear coat, explicit default texture swizzle", true, {}, "material-clearcoat-default-texture-swizzle.gltf", {},
+        MaterialData{{}, {
+            /* The swizzles are just checked but not written anywhere, so this
+               is the same as specifying just the textures alone, and it
+               shouldn't produce any warning. */
+            {MaterialLayer::ClearCoat},
+            {MaterialAttribute::LayerFactor, 0.0f},
+            {MaterialAttribute::LayerFactorTexture, 0u},
+            {MaterialAttribute::LayerFactorTextureSwizzle, MaterialTextureSwizzle::R},
+            {MaterialAttribute::Roughness, 0.0f},
+            {MaterialAttribute::NormalTexture, 0u},
+            {MaterialAttribute::NormalTextureSwizzle, MaterialTextureSwizzle::RGB},
+            /* The Roughness texture won't work with the default */
+        }, {0, 7}}, {InPlaceInit, {
+            {1, MaterialAttribute::LayerFactorTextureSwizzle},
+            {1, MaterialAttribute::NormalTextureSwizzle}
+        }}, MaterialData{MaterialType::PbrClearCoat, {}}},
+    {"clear coat, Magnum defaults", false, {}, "material-clearcoat-magnum-defaults.gltf", {},
+        MaterialData{{}, {
+            {MaterialLayer::ClearCoat},
+            /* The glTF should have factor and roughness set to 1, and the
+               imported material as well as the importer doesn't do any
+               explicit "defaults cleanup" */
+        }, {0, 1}}, {}, MaterialData{MaterialType::PbrClearCoat, {
+            {MaterialAttribute::LayerFactor, 1.0f},
+            {MaterialAttribute::Roughness, 1.0f},
+        }, {0, 2}}},
+    {"clear coat, glTF defaults kept", true, true, "material-clearcoat-gltf-defaults-kept.gltf", {},
+        MaterialData{{}, {
+            {MaterialLayer::ClearCoat},
+            {MaterialAttribute::LayerFactor, 0.0f},
+            {MaterialAttribute::Roughness, 0.0f},
+            {MaterialAttribute::NormalTexture, 0u},
+            {MaterialAttribute::NormalTextureScale, 1.0f},
+        }, {0, 5}}, {}, MaterialData{MaterialType::PbrClearCoat, {}}},
+    {"clear coat, glTF defaults omitted", true, {}, "material-clearcoat-gltf-defaults-omitted.gltf", {},
+        MaterialData{{}, {
+            /* Same as above */
+            {MaterialLayer::ClearCoat},
+            {MaterialAttribute::LayerFactor, 0.0f},
+            {MaterialAttribute::Roughness, 0.0f},
+            {MaterialAttribute::NormalTexture, 0u},
+            {MaterialAttribute::NormalTextureScale, 1.0f},
+        }, {0, 5}}, {InPlaceInit, {
+            {1, MaterialAttribute::NormalTextureScale}
+        }}, MaterialData{MaterialType::PbrClearCoat, {}}},
 };
 
 const struct {
@@ -928,28 +1085,105 @@ const struct {
         "Trade::GltfSceneConverter::add(): material attribute RoughnessTextureCoordinates was not used\n"
         "Trade::GltfSceneConverter::add(): material attribute RoughnessTextureLayer was not used\n"
         "Trade::GltfSceneConverter::add(): material attribute RoughnessTextureMatrix was not used\n"},
-    {"unused attributes and layers", false, "material-empty.gltf",
+    {"unused attributes and layers", true, "material-unused-attributes-layers.gltf",
         MaterialData{{}, {
-            {MaterialAttribute::Shininess, 15.0f},
-            {MaterialAttribute::DiffuseColor, 0xff6633aa_rgbaf},
-            {MaterialLayer::ClearCoat},
-            {MaterialAttribute::LayerFactor, 0.5f},
-        }, {2, 3, 4}},
-        "Trade::GltfSceneConverter::add(): material attribute DiffuseColor was not used\n"
-        "Trade::GltfSceneConverter::add(): material attribute Shininess was not used\n"
-        /* It especially shouldn't warn about unused attribute LayerName */
-        "Trade::GltfSceneConverter::add(): material layer 1 (ClearCoat) was not used\n"
-        "Trade::GltfSceneConverter::add(): material layer 2 was not used\n"},
-    {"unused texture rotation", true, "material-defaults-omitted.gltf",
-        MaterialData{{}, {
-            {MaterialAttribute::BaseColorTexture, 0u},
-            {MaterialAttribute::NoneRoughnessMetallicTexture, 0u},
-            {MaterialAttribute::NormalTexture, 0u},
-            {MaterialAttribute::OcclusionTexture, 0u},
             {MaterialAttribute::EmissiveTexture, 0u},
             {MaterialAttribute::EmissiveTextureMatrix,
-                Matrix3::rotation(-35.0_degf)}}},
-        "Trade::GltfSceneConverter::add(): material attribute EmissiveTextureMatrix rotation was not used\n"},
+                Matrix3::translation({1.0f, 2.0f})*Matrix3::rotation(-35.0_degf)},
+            {MaterialAttribute::DiffuseColor, 0xff6633aa_rgbaf},
+            {MaterialAttribute::Shininess, 15.0f},
+            {MaterialLayer::ClearCoat},
+            {MaterialAttribute::LayerFactor, 0.0f}, /* glTF default, omitted */
+            {MaterialAttribute::NormalTexture, 0u},
+            {MaterialAttribute::NormalTextureMatrix,
+                Matrix3::rotation(-35.0_degf)},
+            {MaterialAttribute::Roughness, 0.0f}, /* glTF default, omitted */
+            {MaterialAttribute::SpecularColor, 0xffffff00_rgbaf},
+            {MaterialAttribute::LayerName, "ThinFilm"},
+            {MaterialAttribute::LayerFactor, 0.5f},
+        }, {4, 10, 11, 12}},
+        "Trade::GltfSceneConverter::add(): material attribute EmissiveTextureMatrix rotation was not used\n"
+        "Trade::GltfSceneConverter::add(): material attribute NormalTextureMatrix in layer 1 (ClearCoat) rotation was not used\n"
+        "Trade::GltfSceneConverter::add(): material attribute DiffuseColor was not used\n"
+        "Trade::GltfSceneConverter::add(): material attribute Shininess was not used\n"
+        "Trade::GltfSceneConverter::add(): material attribute SpecularColor in layer 1 (ClearCoat) was not used\n"
+        /* It especially shouldn't warn about unused attribute LayerName */
+        "Trade::GltfSceneConverter::add(): material layer 2 (ThinFilm) was not used\n"
+        "Trade::GltfSceneConverter::add(): material layer 3 was not used\n"},
+    {"clear coat, layer-local/local texture attribute priority", true, "material-clearcoat.gltf",
+        MaterialData{{}, {
+            /* There's a layer-local TextureMatrix, TextureCoordinates and
+               TextureLayer, so these will stay unused */
+            {MaterialAttribute::TextureMatrix,
+                Matrix3::scaling({0.75f, -0.25f})},
+            {MaterialAttribute::TextureCoordinates, 17u},
+            {MaterialAttribute::TextureLayer, 33u},
+            {MaterialLayer::ClearCoat},
+            {MaterialAttribute::LayerFactor, 0.7f},
+            {MaterialAttribute::LayerFactorTexture, 0u},
+            /* This one is local, this overriding the TextureMatrix in the
+               layer */
+            {MaterialAttribute::LayerFactorTextureMatrix,
+                Matrix3::translation({0.25f, 1.0f})},
+            /* This one is local, thus overriding the TextureCoordinates in the
+               layer */
+            {MaterialAttribute::LayerFactorTextureCoordinates, 1u},
+            {MaterialAttribute::LayerFactorTextureLayer, 0u}, /* unused */
+            {MaterialAttribute::Roughness, 0.8f},
+            {MaterialAttribute::RoughnessTexture, 0u},
+            /* This one is again local */
+            {MaterialAttribute::RoughnessTextureMatrix,
+                Matrix3::translation({0.25f, 0.0f})*
+                Matrix3::scaling({-0.25f, 0.75f})},
+            {MaterialAttribute::RoughnessTextureSwizzle, MaterialTextureSwizzle::G},
+            {MaterialAttribute::TextureCoordinates, 2u},
+            {MaterialAttribute::RoughnessTextureLayer, 0u}, /* unused */
+            {MaterialAttribute::NormalTexture, 0u},
+            {MaterialAttribute::NormalTextureScale, 0.75f},
+            {MaterialAttribute::TextureMatrix,
+                Matrix3::scaling({-0.25f, 0.75f})},
+            /* This one is again local */
+            {MaterialAttribute::NormalTextureCoordinates, 3u},
+            {MaterialAttribute::NormalTextureLayer, 0u},
+            /* There are all local layers so this one stays unused as well */
+            {MaterialAttribute::TextureLayer, 71u},
+        }, {3, 21}},
+        "Trade::GltfSceneConverter::add(): material attribute TextureCoordinates was not used\n"
+        "Trade::GltfSceneConverter::add(): material attribute TextureLayer was not used\n"
+        "Trade::GltfSceneConverter::add(): material attribute TextureMatrix was not used\n"
+        "Trade::GltfSceneConverter::add(): material attribute TextureLayer in layer 1 (ClearCoat) was not used\n"},
+    {"clear coat, global texture attributes", true, "material-clearcoat.gltf",
+        MaterialData{{}, {
+            {MaterialAttribute::TextureMatrix,
+                Matrix3::translation({0.25f, 1.0f})},
+            {MaterialAttribute::TextureCoordinates, 1u},
+            /* There are all local layers so this one stays unused */
+            {MaterialAttribute::TextureLayer, 33u},
+            {MaterialLayer::ClearCoat},
+            {MaterialAttribute::LayerFactor, 0.7f},
+            {MaterialAttribute::LayerFactorTexture, 0u},
+            {MaterialAttribute::LayerFactorTextureLayer, 0u}, /* unused */
+            {MaterialAttribute::Roughness, 0.8f},
+            {MaterialAttribute::RoughnessTexture, 0u},
+            /* This one is local, this overriding the global TextureMatrix */
+            {MaterialAttribute::RoughnessTextureMatrix,
+                Matrix3::translation({0.25f, 0.0f})*
+                Matrix3::scaling({-0.25f, 0.75f})},
+            {MaterialAttribute::RoughnessTextureSwizzle, MaterialTextureSwizzle::G},
+            /* This one is local, thus overriding the global
+               TextureCoordinates */
+            {MaterialAttribute::RoughnessTextureCoordinates, 2u},
+            {MaterialAttribute::RoughnessTextureLayer, 0u}, /* unused */
+            {MaterialAttribute::NormalTexture, 0u},
+            {MaterialAttribute::NormalTextureScale, 0.75f},
+            /* This one is again local */
+            {MaterialAttribute::NormalTextureMatrix,
+                Matrix3::scaling({-0.25f, 0.75f})},
+            /* This one is again local */
+            {MaterialAttribute::NormalTextureCoordinates, 3u},
+            {MaterialAttribute::NormalTextureLayer, 0u}, /* unused */
+        }, {3, 18}},
+        "Trade::GltfSceneConverter::add(): material attribute TextureLayer was not used\n"},
     /* These two should get removed once GltfImporter's phongMaterialFallback
        option is gone */
     {"phong diffuse attributes matching base color", true, "material-metallicroughness.gltf",
@@ -1077,7 +1311,25 @@ const struct {
         MaterialData{{}, {
             {MaterialAttribute::OcclusionTexture, 0u},
             {MaterialAttribute::OcclusionTextureSwizzle, MaterialTextureSwizzle::B},
-        }}, "unsupported B packing of an occlusion texture"}
+        }}, "unsupported B packing of an occlusion texture"},
+    {"unsupported clear coat layer factor texture packing",
+        MaterialData{{}, {
+            {MaterialLayer::ClearCoat},
+            {MaterialAttribute::LayerFactorTexture, 0u},
+            {MaterialAttribute::LayerFactorTextureSwizzle, MaterialTextureSwizzle::B},
+        }, {0, 3}}, "unsupported B packing of a clear coat layer factor texture"},
+    {"unsupported clear coat roughness texture packing",
+        MaterialData{{}, {
+            {MaterialLayer::ClearCoat},
+            {MaterialAttribute::RoughnessTexture, 0u},
+            /* implicit swizzle, which is R */
+        }, {0, 2}}, "unsupported R packing of a clear coat roughness texture"},
+    {"unsupported clear coat normal texture packing",
+        MaterialData{{}, {
+            {MaterialLayer::ClearCoat},
+            {MaterialAttribute::NormalTexture, 0u},
+            {MaterialAttribute::NormalTextureSwizzle, MaterialTextureSwizzle::BA},
+        }, {0, 3}}, "unsupported BA packing of a clear coat normal texture"},
 };
 
 /* Reusing the already-invented GltfImporter/Test/texcoord-flip.bin.in. The

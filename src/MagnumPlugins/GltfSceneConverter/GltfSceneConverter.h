@@ -321,6 +321,9 @@ the plugin supports also 3D images and 2D array textures using a proposed
     [KHR_materials_unlit](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_materials_unlit/README.md)
     extension is included in the output. Other @ref MaterialTypes are ignored,
     the material is only filled based on the attributes present.
+-   If @ref MaterialLayer::ClearCoat is present, the
+    [KHR_materials_clearcoat](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_materials_clearcoat/README.md)
+    extension is included in the output.
 -   If any
     @ref MaterialAttribute::BaseColorTextureMatrix "MaterialAttribute::*TextureMatrix"
     attributes are present, the [KHR_texture_transform](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_texture_transform/README.md)

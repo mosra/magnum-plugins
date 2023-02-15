@@ -1,0 +1,41 @@
+{
+  "asset": {
+    "version": "2.0"
+  },
+  "extensionsUsed": [
+    "KHR_materials_clearcoat"
+  ],
+  "materials": [
+    {
+      "extensions": {
+        "KHR_materials_clearcoat": {
+          "clearcoatFactor": 0,
+          "clearcoatRoughnessFactor": 0,
+          "clearcoatNormalTexture": {
+            "index": 0,
+            "scale": 1
+          }
+        }
+      }
+    }
+  ],
+  "samplers": [
+    {
+      "wrapS": 33071,
+      "wrapT": 33071,
+      "minFilter": 9728,
+      "magFilter": 9728
+    }
+  ],
+  "textures": [
+    {
+      "sampler": 0,
+      "source": 0
+    }
+  ],
+  "images": [
+    {
+      "uri": "material-clearcoat-gltf-defaults-kept.0.png"
+    }
+  ]
+}

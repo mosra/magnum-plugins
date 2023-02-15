@@ -110,6 +110,11 @@ corrade_add_test(GltfSceneConverterTest GltfSceneConverterTest.cpp
         material-alpha-mask-defaults-kept.gltf
         material-alpha-mask-defaults-omitted.gltf
         material-alpha-mask.gltf
+        material-clearcoat.gltf
+        material-clearcoat-default-texture-swizzle.gltf
+        material-clearcoat-gltf-defaults-kept.gltf
+        material-clearcoat-gltf-defaults-omitted.gltf
+        material-clearcoat-magnum-defaults.gltf
         material-common.gltf
         material-defaults-kept.gltf
         material-defaults-omitted.gltf
@@ -119,6 +124,7 @@ corrade_add_test(GltfSceneConverterTest GltfSceneConverterTest.cpp
         material-multiple.gltf
         material-name.gltf
         material-unlit.gltf
+        material-unused-attributes-layers.gltf
         mesh-accessor-names.gltf
         mesh-attribute-bitangent.gltf
         mesh-attribute-color3.gltf

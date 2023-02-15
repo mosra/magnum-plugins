@@ -1,0 +1,71 @@
+{
+  "asset": {
+    "version": "2.0"
+  },
+  "extensionsUsed": [
+    "KHR_materials_clearcoat",
+    "KHR_texture_transform"
+  ],
+  "extensionsRequired": [
+    "KHR_texture_transform"
+  ],
+  "materials": [
+    {
+      "extensions": {
+        "KHR_materials_clearcoat": {
+          "clearcoatFactor": 0.7,
+          "clearcoatTexture": {
+            "index": 0,
+            "texCoord": 1,
+            "extensions": {
+              "KHR_texture_transform": {
+                "offset": [0.25, -1]
+              }
+            }
+          },
+          "clearcoatRoughnessFactor": 0.8,
+          "clearcoatRoughnessTexture": {
+            "index": 0,
+            "texCoord": 2,
+            "extensions": {
+              "KHR_texture_transform": {
+                "offset": [0.25, 0.25],
+                "scale": [-0.25, 0.75]
+              }
+            }
+          },
+          "clearcoatNormalTexture": {
+            "index": 0,
+            "texCoord": 3,
+            "extensions": {
+              "KHR_texture_transform": {
+                "offset": [0, 0.25],
+                "scale": [-0.25, 0.75]
+              }
+            },
+            "scale": 0.75
+          }
+        }
+      }
+    }
+  ],
+  "samplers": [
+    {
+      "wrapS": 33071,
+      "wrapT": 33071,
+      "minFilter": 9728,
+      "magFilter": 9728
+    }
+  ],
+  "textures": [
+    {
+      "sampler": 0,
+      "source": 0
+    }
+  ],
+  "images": [
+    {
+      "uri": "material-clearcoat.0.png"
+    }
+  ]
+}
