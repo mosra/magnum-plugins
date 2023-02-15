@@ -617,14 +617,13 @@ const struct {
     const char* expected;
     Containers::StringView dataName;
     MaterialData material;
-    MaterialTypes expectedTypes;
     Containers::Array<MaterialAttribute> expectedRemove;
-    Containers::Array<MaterialAttributeData> expectedAdd;
+    Containers::Optional<MaterialData> expectedAdd;
 } AddMaterialData[]{
     {"empty", false, {}, "material-empty.gltf", {},
-        MaterialData{{}, {}}, {}, {}, {}},
+        MaterialData{{}, {}}, {}, {}},
     {"name", false, {}, "material-name.gltf", "A nicely useless material",
-        MaterialData{{}, {}}, {}, {}, {}},
+        MaterialData{{}, {}}, {}, {}},
     {"common", true, {}, "material-common.gltf", {},
         MaterialData{{}, {
             /* More than one texture tested in addMaterialMultiple() */
@@ -650,7 +649,7 @@ const struct {
                 Matrix3::scaling({0.25f, -0.125f})},
             {MaterialAttribute::EmissiveTextureCoordinates, 9u},
             {MaterialAttribute::EmissiveTextureLayer, 0u}, /* unused */
-        }}, {}, {InPlaceInit, {
+        }}, {InPlaceInit, {
             MaterialAttribute::AlphaMask,
             MaterialAttribute::NormalTextureLayer,
             MaterialAttribute::OcclusionTextureLayer,
@@ -659,7 +658,7 @@ const struct {
     {"alpha mask", false, {}, "material-alpha-mask.gltf", {},
         MaterialData{{}, {
             {MaterialAttribute::AlphaMask, 0.75f},
-        }}, {}, {}, {}},
+        }}, {}, {}},
     {"metallic/roughness", true, {}, "material-metallicroughness.gltf", {},
         MaterialData{{}, {
             {MaterialAttribute::BaseColor, Color4{0.1f, 0.2f, 0.3f, 0.4f}},
@@ -686,7 +685,7 @@ const struct {
             {MaterialAttribute::RoughnessTextureSwizzle, MaterialTextureSwizzle::G},
             {MaterialAttribute::RoughnessTextureCoordinates, 11u},
             {MaterialAttribute::RoughnessTextureLayer, 0u}, /* unused */
-        }}, MaterialType::PbrMetallicRoughness, {InPlaceInit, {
+        }}, {InPlaceInit, {
             MaterialAttribute::BaseColorTextureLayer,
             MaterialAttribute::MetalnessTexture,
             MaterialAttribute::MetalnessTextureSwizzle,
@@ -694,7 +693,7 @@ const struct {
             MaterialAttribute::RoughnessTexture,
             MaterialAttribute::RoughnessTextureSwizzle,
             MaterialAttribute::RoughnessTextureLayer
-        }}, {InPlaceInit, {
+        }}, MaterialData{MaterialType::PbrMetallicRoughness, {
             MaterialAttributeData{MaterialAttribute::NoneRoughnessMetallicTexture, 0u}
         }}},
     {"metallic/roughness, packed texture attribute", true, {}, "material-metallicroughness.gltf", {},
@@ -718,11 +717,11 @@ const struct {
                 Matrix3::scaling({-0.25f, 0.75f})},
             {MaterialAttribute::RoughnessTextureCoordinates, 11u},
             {MaterialAttribute::RoughnessTextureLayer, 0u}, /* unused */
-        }}, MaterialType::PbrMetallicRoughness, {InPlaceInit, {
+        }}, {InPlaceInit, {
             MaterialAttribute::BaseColorTextureLayer,
             MaterialAttribute::MetalnessTextureLayer,
             MaterialAttribute::RoughnessTextureLayer
-        }}, {}},
+        }}, MaterialData{MaterialType::PbrMetallicRoughness, {}}},
     {"metallic/roughness, global texture attributes", true, {}, "material-metallicroughness.gltf", {},
         MaterialData{{}, {
             {MaterialAttribute::BaseColor, Color4{0.1f, 0.2f, 0.3f, 0.4f}},
@@ -745,7 +744,7 @@ const struct {
                 Matrix3::scaling({-0.25f, 0.75f})},
             {MaterialAttribute::TextureCoordinates, 11u},
             {MaterialAttribute::TextureLayer, 0u}, /* unused */
-        }}, MaterialType::PbrMetallicRoughness, {InPlaceInit, {
+        }}, {InPlaceInit, {
             MaterialAttribute::MetalnessTexture,
             MaterialAttribute::MetalnessTextureSwizzle,
             MaterialAttribute::RoughnessTextureSwizzle,
@@ -753,7 +752,7 @@ const struct {
             MaterialAttribute::TextureMatrix,
             MaterialAttribute::TextureCoordinates,
             MaterialAttribute::TextureLayer,
-        }}, {InPlaceInit, {
+        }}, MaterialData{MaterialType::PbrMetallicRoughness, {
             MaterialAttributeData{MaterialAttribute::NoneRoughnessMetallicTexture, 0u},
             MaterialAttributeData{MaterialAttribute::MetalnessTextureMatrix,
                 Matrix3::translation({0.25f, 0.0f})*
@@ -774,7 +773,7 @@ const struct {
             {MaterialAttribute::OcclusionTextureSwizzle, MaterialTextureSwizzle::R},
             /* No EmissiveTextureSwizzle or BaseColorTextureSwizzle attributes,
                Metallic and Roughness textures won't work with defaults */
-        }}, {}, {InPlaceInit, {
+        }}, {InPlaceInit, {
             MaterialAttribute::NormalTextureSwizzle,
             MaterialAttribute::OcclusionTextureSwizzle
         }}, {}},
@@ -807,7 +806,7 @@ const struct {
             {MaterialAttribute::MetalnessTextureCoordinates, 0u},
             {MaterialAttribute::RoughnessTextureMatrix, Matrix3{}},
             {MaterialAttribute::RoughnessTextureCoordinates, 0u},
-        }}, MaterialType::PbrMetallicRoughness, {}, {}},
+        }}, {}, MaterialData{MaterialType::PbrMetallicRoughness, {}}},
     {"default values omitted", true, {}, "material-defaults-omitted.gltf", {},
         MaterialData{{}, {
             /* Same as above */
@@ -836,7 +835,7 @@ const struct {
             {MaterialAttribute::MetalnessTextureCoordinates, 0u},
             {MaterialAttribute::RoughnessTextureMatrix, Matrix3{}},
             {MaterialAttribute::RoughnessTextureCoordinates, 0u},
-        }}, MaterialType::PbrMetallicRoughness, {InPlaceInit, {
+        }}, {InPlaceInit, {
             MaterialAttribute::AlphaBlend,
             MaterialAttribute::DoubleSided,
             MaterialAttribute::NormalTextureScale,
@@ -857,16 +856,16 @@ const struct {
             MaterialAttribute::MetalnessTextureCoordinates,
             MaterialAttribute::RoughnessTextureMatrix,
             MaterialAttribute::RoughnessTextureCoordinates,
-        }}, {}},
+        }}, MaterialData{MaterialType::PbrMetallicRoughness, {}}},
     {"alpha mask default values kept", false, true, "material-alpha-mask-defaults-kept.gltf", {},
         MaterialData{{}, {
             {MaterialAttribute::AlphaMask, 0.5f},
-        }}, {}, {}, {}},
+        }}, {}, {}},
     {"alpha mask default values omitted", false, {}, "material-alpha-mask-defaults-omitted.gltf", {},
         MaterialData{{}, {
             /* Same as above */
             {MaterialAttribute::AlphaMask, 0.5f},
-        }}, {}, {}, {}},
+        }}, {}, {}},
     {"unlit", false, {}, "material-unlit.gltf", {},
         /* PbrMetallicRoughness should not get added on import, only Flat */
         MaterialData{MaterialType::Flat, {
@@ -874,7 +873,7 @@ const struct {
             /* To avoid data loss, non-flat properties are still written, even
                though they make no sense for a flat-shaded material */
             {MaterialAttribute::Roughness, 0.57f}
-        }}, MaterialType::Flat, {}, {}}
+        }}, {}, MaterialData{MaterialType::Flat, {}}},
 };
 
 const struct {
@@ -3258,21 +3257,17 @@ void GltfSceneConverterTest::addTextureInvalid() {
 
 namespace {
 
-MaterialData filterMaterialAttributes(const MaterialData& material, MaterialTypes types, Containers::ArrayView<const MaterialAttribute> remove, Containers::ArrayView<const MaterialAttributeData> add) {
+MaterialData filterMaterialAttributes(const MaterialData& material, Containers::ArrayView<const MaterialAttribute> remove, const Containers::Optional<MaterialData>& add) {
     Containers::BitArray attributesToKeep{DirectInit, material.attributeData().size(), true};
     for(const MaterialAttribute attribute: remove)
         attributesToKeep.reset(material.attributeId(attribute));
 
-    /* Put the material attributes to a mutable array that can be sorted so the
-       caller doesn't need to do that */
-    Containers::Array<MaterialAttributeData> addSortable;
-    arrayAppend(addSortable, add);
+    /* Remove all original MaterialTypes from the input, if any are to be added
+       they're in `add` */
+    MaterialData filtered = MaterialTools::filterAttributes(material, attributesToKeep, {});
+    if(!add) return filtered;
 
-    /* Remove all original MaterialTypes from the input and replace them with
-       the passed */
-    Containers::Optional<Trade::MaterialData> out = MaterialTools::merge(
-        MaterialTools::filterAttributes(material, attributesToKeep, {}),
-        MaterialData{types, std::move(addSortable)});
+    Containers::Optional<MaterialData> out = MaterialTools::merge(filtered, *add);
     CORRADE_VERIFY(out);
     return *std::move(out);
 }
@@ -3336,7 +3331,7 @@ void GltfSceneConverterTest::addMaterial() {
     Containers::Optional<MaterialData> imported = importer->material(0);
     CORRADE_VERIFY(imported);
     CORRADE_COMPARE_AS(*imported,
-        filterMaterialAttributes(data.material, data.expectedTypes, data.expectedRemove, data.expectedAdd),
+        filterMaterialAttributes(data.material, data.expectedRemove, data.expectedAdd),
         DebugTools::CompareMaterial);
 }
 
@@ -3442,10 +3437,10 @@ void GltfSceneConverterTest::addMaterial2DArrayTextures() {
     Containers::Optional<MaterialData> importedMaterial = importer->material(0);
     CORRADE_VERIFY(importedMaterial);
     CORRADE_COMPARE_AS(*importedMaterial, filterMaterialAttributes(material,
-        MaterialType::PbrMetallicRoughness,
         /* Emissive layer is 0 and for a 2D image, which is same as not present
            at all */
-        Containers::arrayView({MaterialAttribute::EmissiveTextureLayer}), {}),
+        Containers::arrayView({MaterialAttribute::EmissiveTextureLayer}),
+        MaterialData{MaterialType::PbrMetallicRoughness, {}}),
         DebugTools::CompareMaterial);
 }
 
