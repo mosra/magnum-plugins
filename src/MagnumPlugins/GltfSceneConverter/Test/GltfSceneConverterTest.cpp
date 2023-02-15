@@ -650,12 +650,12 @@ const struct {
                 Matrix3::scaling({0.25f, -0.125f})},
             {MaterialAttribute::EmissiveTextureCoordinates, 9u},
             {MaterialAttribute::EmissiveTextureLayer, 0u}, /* unused */
-        }}, {}, Containers::array({
+        }}, {}, {InPlaceInit, {
             MaterialAttribute::AlphaMask,
             MaterialAttribute::NormalTextureLayer,
             MaterialAttribute::OcclusionTextureLayer,
             MaterialAttribute::EmissiveTextureLayer
-        }), {}},
+        }}, {}},
     {"alpha mask", false, {}, "material-alpha-mask.gltf", {},
         MaterialData{{}, {
             {MaterialAttribute::AlphaMask, 0.75f},
@@ -686,7 +686,7 @@ const struct {
             {MaterialAttribute::RoughnessTextureSwizzle, MaterialTextureSwizzle::G},
             {MaterialAttribute::RoughnessTextureCoordinates, 11u},
             {MaterialAttribute::RoughnessTextureLayer, 0u}, /* unused */
-        }}, MaterialType::PbrMetallicRoughness, Containers::array({
+        }}, MaterialType::PbrMetallicRoughness, {InPlaceInit, {
             MaterialAttribute::BaseColorTextureLayer,
             MaterialAttribute::MetalnessTexture,
             MaterialAttribute::MetalnessTextureSwizzle,
@@ -694,9 +694,9 @@ const struct {
             MaterialAttribute::RoughnessTexture,
             MaterialAttribute::RoughnessTextureSwizzle,
             MaterialAttribute::RoughnessTextureLayer
-        }), Containers::array({
+        }}, {InPlaceInit, {
             MaterialAttributeData{MaterialAttribute::NoneRoughnessMetallicTexture, 0u}
-        })},
+        }}},
     {"metallic/roughness, packed texture attribute", true, {}, "material-metallicroughness.gltf", {},
         MaterialData{{}, {
             {MaterialAttribute::BaseColor, Color4{0.1f, 0.2f, 0.3f, 0.4f}},
@@ -718,11 +718,11 @@ const struct {
                 Matrix3::scaling({-0.25f, 0.75f})},
             {MaterialAttribute::RoughnessTextureCoordinates, 11u},
             {MaterialAttribute::RoughnessTextureLayer, 0u}, /* unused */
-        }}, MaterialType::PbrMetallicRoughness, Containers::array({
+        }}, MaterialType::PbrMetallicRoughness, {InPlaceInit, {
             MaterialAttribute::BaseColorTextureLayer,
             MaterialAttribute::MetalnessTextureLayer,
             MaterialAttribute::RoughnessTextureLayer
-        }), {}},
+        }}, {}},
     {"metallic/roughness, global texture attributes", true, {}, "material-metallicroughness.gltf", {},
         MaterialData{{}, {
             {MaterialAttribute::BaseColor, Color4{0.1f, 0.2f, 0.3f, 0.4f}},
@@ -745,7 +745,7 @@ const struct {
                 Matrix3::scaling({-0.25f, 0.75f})},
             {MaterialAttribute::TextureCoordinates, 11u},
             {MaterialAttribute::TextureLayer, 0u}, /* unused */
-        }}, MaterialType::PbrMetallicRoughness, Containers::array({
+        }}, MaterialType::PbrMetallicRoughness, {InPlaceInit, {
             MaterialAttribute::MetalnessTexture,
             MaterialAttribute::MetalnessTextureSwizzle,
             MaterialAttribute::RoughnessTextureSwizzle,
@@ -753,7 +753,7 @@ const struct {
             MaterialAttribute::TextureMatrix,
             MaterialAttribute::TextureCoordinates,
             MaterialAttribute::TextureLayer,
-        }), Containers::array({
+        }}, {InPlaceInit, {
             MaterialAttributeData{MaterialAttribute::NoneRoughnessMetallicTexture, 0u},
             MaterialAttributeData{MaterialAttribute::MetalnessTextureMatrix,
                 Matrix3::translation({0.25f, 0.0f})*
@@ -763,7 +763,7 @@ const struct {
             MaterialAttributeData{MaterialAttribute::RoughnessTextureMatrix,
                 Matrix3::translation({0.25f, 0.0f})*
                 Matrix3::scaling({-0.25f, 0.75f})},
-        })},
+        }}},
     {"explicit default texture swizzle", true, {}, "material-default-texture-swizzle.gltf", {},
         MaterialData{{}, {
             /* The swizzles are just checked but not written anywhere, so this
@@ -774,10 +774,10 @@ const struct {
             {MaterialAttribute::OcclusionTextureSwizzle, MaterialTextureSwizzle::R},
             /* No EmissiveTextureSwizzle or BaseColorTextureSwizzle attributes,
                Metallic and Roughness textures won't work with defaults */
-        }}, {}, Containers::array({
+        }}, {}, {InPlaceInit, {
             MaterialAttribute::NormalTextureSwizzle,
             MaterialAttribute::OcclusionTextureSwizzle
-        }), {}},
+        }}, {}},
     {"default values kept", true, true, "material-defaults-kept.gltf", {},
         MaterialData{{}, {
             /* Textures have to be present, otherwise the texture-related
@@ -836,7 +836,7 @@ const struct {
             {MaterialAttribute::MetalnessTextureCoordinates, 0u},
             {MaterialAttribute::RoughnessTextureMatrix, Matrix3{}},
             {MaterialAttribute::RoughnessTextureCoordinates, 0u},
-        }}, MaterialType::PbrMetallicRoughness, Containers::array({
+        }}, MaterialType::PbrMetallicRoughness, {InPlaceInit, {
             MaterialAttribute::AlphaBlend,
             MaterialAttribute::DoubleSided,
             MaterialAttribute::NormalTextureScale,
@@ -857,7 +857,7 @@ const struct {
             MaterialAttribute::MetalnessTextureCoordinates,
             MaterialAttribute::RoughnessTextureMatrix,
             MaterialAttribute::RoughnessTextureCoordinates,
-        }), {}},
+        }}, {}},
     {"alpha mask default values kept", false, true, "material-alpha-mask-defaults-kept.gltf", {},
         MaterialData{{}, {
             {MaterialAttribute::AlphaMask, 0.5f},
