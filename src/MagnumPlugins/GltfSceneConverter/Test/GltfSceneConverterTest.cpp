@@ -24,6 +24,8 @@
 */
 
 #include <sstream>
+#include <Corrade/Containers/BitArray.h>
+#include <Corrade/Containers/BitArrayView.h>
 #include <Corrade/Containers/GrowableArray.h>
 #include <Corrade/Containers/Iterable.h>
 #include <Corrade/Containers/Optional.h>
@@ -47,6 +49,8 @@
 #include <Magnum/Math/Matrix3.h>
 #include <Magnum/Math/Matrix4.h>
 #include <Magnum/Math/Quaternion.h>
+#include <Magnum/MaterialTools/Filter.h>
+#include <Magnum/MaterialTools/Merge.h>
 #include <Magnum/MeshTools/Transform.h>
 #include <Magnum/Trade/AbstractImageConverter.h>
 #include <Magnum/Trade/AbstractImporter.h>
@@ -3227,27 +3231,22 @@ void GltfSceneConverterTest::addTextureInvalid() {
 namespace {
 
 MaterialData filterMaterialAttributes(const MaterialData& material, MaterialTypes types, Containers::ArrayView<const MaterialAttribute> remove, Containers::ArrayView<const MaterialAttributeData> add) {
-    /* Currently only the base layer */
-    CORRADE_INTERNAL_ASSERT(material.layerCount() == 1);
+    Containers::BitArray attributesToKeep{DirectInit, material.attributeData().size(), true};
+    for(const MaterialAttribute attribute: remove)
+        attributesToKeep.reset(material.attributeId(attribute));
 
-    Containers::Array<MaterialAttributeData> out;
+    /* Put the material attributes to a mutable array that can be sorted so the
+       caller doesn't need to do that */
+    Containers::Array<MaterialAttributeData> addSortable;
+    arrayAppend(addSortable, add);
 
-    /* O(n^2), yes, sorry. Need to be fixed if made into a public API. */
-    for(UnsignedInt i = 0; i != material.attributeCount(); ++i) {
-        bool excluded = false;
-        for(std::size_t j = 0; j != remove.size(); ++j) {
-            if(material.attributeName(i) == materialAttributeName(remove[j])) {
-                excluded = true;
-                break;
-            }
-        }
-
-        if(!excluded) arrayAppend(out, material.attributeData()[i]);
-    }
-
-    arrayAppend(out, add);
-
-    return MaterialData{types, std::move(out)};
+    /* Remove all original MaterialTypes from the input and replace them with
+       the passed */
+    Containers::Optional<Trade::MaterialData> out = MaterialTools::merge(
+        MaterialTools::filterAttributes(material, attributesToKeep, {}),
+        MaterialData{types, std::move(addSortable)});
+    CORRADE_VERIFY(out);
+    return *std::move(out);
 }
 
 }
@@ -3304,7 +3303,7 @@ void GltfSceneConverterTest::addMaterial() {
     importer->configuration().setValue("phongMaterialFallback", false);
 
     /* There should be exactly one material, looking exactly the same as the
-       original */
+       filtered original */
     CORRADE_COMPARE(importer->materialCount(), 1);
     Containers::Optional<MaterialData> imported = importer->material(0);
     CORRADE_VERIFY(imported);

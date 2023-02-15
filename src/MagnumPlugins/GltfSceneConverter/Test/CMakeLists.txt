@@ -35,7 +35,7 @@ else()
     set(GLTFSCENECONVERTER_TEST_OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR})
 endif()
 
-find_package(Magnum REQUIRED DebugTools MeshTools)
+find_package(Magnum REQUIRED DebugTools MaterialTools MeshTools)
 
 if(NOT MAGNUM_GLTFSCENECONVERTER_BUILD_STATIC)
     set(GLTFSCENECONVERTER_PLUGIN_FILENAME $<TARGET_FILE:GltfSceneConverter>)
@@ -77,6 +77,7 @@ file(GENERATE OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/configure.h
 corrade_add_test(GltfSceneConverterTest GltfSceneConverterTest.cpp
     LIBRARIES
         Magnum::DebugTools
+        Magnum::MaterialTools
         Magnum::MeshTools
         Magnum::Trade
     FILES
