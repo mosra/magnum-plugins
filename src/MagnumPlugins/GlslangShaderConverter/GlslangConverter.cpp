@@ -821,7 +821,7 @@ bool GlslangConverter::doConvertFileToFile(const Stage stage, const Containers::
 }
 
 Containers::Optional<Containers::Array<char>> GlslangConverter::doConvertDataToData(const Stage stage, const Containers::ArrayView<const char> data) {
-    /* If we're validating a file, save the input filename for use in a
+    /* If we're converting a file, save the input filename for use in a
        potential error message. Clear it so next time plain data is validated
        the error messages aren't based on stale information. This is done as
        early as possible so the early exits don't leave it in inconsistent
