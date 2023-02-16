@@ -1738,7 +1738,7 @@ bool GltfSceneConverter::doAdd(UnsignedInt, const MaterialData& material, const 
 
     const bool keepDefaults = configuration().value<bool>("keepMaterialDefaults");
 
-    auto writeTextureContents = [&](MaskedMaterial& maskedMaterial, const UnsignedInt layer, const UnsignedInt textureAttributeId, Containers::StringView prefix) {
+    const auto writeTextureContents = [this, keepDefaults](MaskedMaterial& maskedMaterial, const UnsignedInt layer, const UnsignedInt textureAttributeId, Containers::StringView prefix) {
         if(!prefix) prefix = maskedMaterial.material.attributeName(layer, textureAttributeId);
 
         /* Bounds of all textures should have been verified at the very top */
@@ -1843,7 +1843,7 @@ bool GltfSceneConverter::doAdd(UnsignedInt, const MaterialData& material, const 
             }
         }
     };
-    auto writeTexture = [&](MaskedMaterial& maskedMaterial, const Containers::StringView name, const UnsignedInt layer, const UnsignedInt textureAttributeId, const Containers::StringView prefix) {
+    const auto writeTexture = [this, &writeTextureContents](MaskedMaterial& maskedMaterial, const Containers::StringView name, const UnsignedInt layer, const UnsignedInt textureAttributeId, const Containers::StringView prefix) {
         _state->gltfMaterials.writeKey(name);
         const Containers::ScopeGuard gltfTexture = _state->gltfMaterials.beginObjectScope();
 
@@ -1936,7 +1936,7 @@ bool GltfSceneConverter::doAdd(UnsignedInt, const MaterialData& material, const 
 
     /* Normal texture properties; ignored if there's no texture. A lambda
        because the texture is used also in the ClearCoat layer. */
-    const auto writeNormalTexture = [&](MaskedMaterial& maskedMaterial, const Containers::StringView name, const UnsignedInt layer, const UnsignedInt textureAttributeId) {
+    const auto writeNormalTexture = [this, keepDefaults, &writeTextureContents](MaskedMaterial& maskedMaterial, const Containers::StringView name, const UnsignedInt layer, const UnsignedInt textureAttributeId) {
         _state->gltfMaterials.writeKey(name);
         const Containers::ScopeGuard gltfTexture = _state->gltfMaterials.beginObjectScope();
 
