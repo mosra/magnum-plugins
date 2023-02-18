@@ -1738,7 +1738,61 @@ bool GltfSceneConverter::doAdd(UnsignedInt, const MaterialData& material, const 
 
     const bool keepDefaults = configuration().value<bool>("keepMaterialDefaults");
 
-    const auto writeTextureContents = [this, keepDefaults](MaskedMaterial& maskedMaterial, const UnsignedInt layer, const UnsignedInt textureAttributeId, Containers::StringView prefix) {
+    /* A dedicated lambda as the matrix is also written for textures in custom
+       layers */
+    const auto writeTextureMatrix = [this, keepDefaults](const Containers::StringView textureMatrixAttribute, UnsignedInt layer, Containers::StringView layerName, const Matrix3& textureMatrix) {
+        /* Arbitrary rotation not supported yet, as there's several equivalent
+           decompositions for an arbitrary matrix and I'm too lazy to try to
+           find the most minimal one each time. This way I can also get away
+           with just reusing the diagonal signs for scaling. */
+        const Matrix3 exceptRotation = Matrix3::translation(textureMatrix.translation())*Matrix3::scaling(textureMatrix.scaling()*Math::sign(textureMatrix.diagonal().xy()));
+        if(exceptRotation != textureMatrix) {
+            Warning w;
+            w << "Trade::GltfSceneConverter::add(): material attribute" << textureMatrixAttribute;
+            if(layer) {
+                CORRADE_INTERNAL_ASSERT(layerName);
+                w << "in layer" << layer << "(" << Debug::nospace << layerName << Debug::nospace << ")";
+            }
+            w << "rotation was not used";
+        }
+
+        /* Flip the matrix to have origin upper left */
+        Matrix3 matrix =
+            Matrix3::translation(Vector2::yAxis(1.0f))*
+            Matrix3::scaling(Vector2::yScale(-1.0f))*
+            exceptRotation;
+
+        /* If material needs an Y-flip, the mesh doesn't have the texture
+           coordinates flipped and thus we don't need to unflip them
+           first */
+        if(!configuration().value<bool>("textureCoordinateYFlipInMaterial"))
+            matrix = matrix*
+                Matrix3::translation(Vector2::yAxis(1.0f))*
+                Matrix3::scaling(Vector2::yScale(-1.0f));
+
+        if(keepDefaults || matrix != Matrix3{}) {
+            _state->requiredExtensions |= GltfExtension::KhrTextureTransform;
+
+            const Vector2 translation = matrix.translation();
+            const Vector2 scaling = matrix.scaling()*Math::sign(matrix.diagonal().xy());
+
+            _state->gltfMaterials.writeKey("extensions"_s)
+                .beginObject()
+                    .writeKey("KHR_texture_transform"_s).beginObject();
+
+            if(keepDefaults || translation != Vector2{})
+                _state->gltfMaterials
+                    .writeKey("offset"_s).writeArray(translation.data());
+            if(keepDefaults || scaling != Vector2{1.0f})
+                _state->gltfMaterials
+                    .writeKey("scale"_s).writeArray(scaling.data());
+
+            _state->gltfMaterials
+                    .endObject()
+                .endObject();
+        }
+    };
+    const auto writeTextureContents = [this, keepDefaults, &writeTextureMatrix](MaskedMaterial& maskedMaterial, const UnsignedInt layer, const UnsignedInt textureAttributeId, Containers::StringView prefix) {
         if(!prefix) prefix = maskedMaterial.material.attributeName(layer, textureAttributeId);
 
         /* Bounds of all textures should have been verified at the very top */
@@ -1783,65 +1837,13 @@ bool GltfSceneConverter::doAdd(UnsignedInt, const MaterialData& material, const 
         }
 
         /* If there's no matrix but we're told to Y-flip texture coordinates in
-           the material, add an identity -- down below it'll be converted to an
-           Y-flipping one */
+           the material, add an identity -- in writeTextureMatrix() it'll be
+           converted to a Y-flipping one */
         if(!textureMatrix && configuration().value<bool>("textureCoordinateYFlipInMaterial"))
             textureMatrix.emplace();
 
-        if(textureMatrix) {
-            /* Arbitrary rotation not supported yet, as there's several
-               equivalent decompositions for an arbitrary matrix and I'm too
-               lazy to try to find the most minimal one each time. This way I
-               can also get away with just reusing the diagonal signs for
-               scaling. */
-            const Matrix3 exceptRotation = Matrix3::translation(textureMatrix->translation())*Matrix3::scaling(textureMatrix->scaling()*Math::sign(textureMatrix->diagonal().xy()));
-            if(exceptRotation != *textureMatrix) {
-                Warning w;
-                w << "Trade::GltfSceneConverter::add(): material attribute" << textureMatrixAttribute;
-                if(layer) {
-                    const Containers::StringView layerName = maskedMaterial.material.layerName(layer);
-                    CORRADE_INTERNAL_ASSERT(layerName);
-                    w << "in layer" << layer << "(" << Debug::nospace << layerName << Debug::nospace << ")";
-                }
-                w << "rotation was not used";
-            }
-
-            /* Flip the matrix to have origin upper left */
-            Matrix3 matrix =
-                Matrix3::translation(Vector2::yAxis(1.0f))*
-                Matrix3::scaling(Vector2::yScale(-1.0f))*
-                exceptRotation;
-
-            /* If material needs an Y-flip, the mesh doesn't have the texture
-               coordinates flipped and thus we don't need to unflip them
-               first */
-            if(!configuration().value<bool>("textureCoordinateYFlipInMaterial"))
-                matrix = matrix*
-                    Matrix3::translation(Vector2::yAxis(1.0f))*
-                    Matrix3::scaling(Vector2::yScale(-1.0f));
-
-            if(keepDefaults || matrix != Matrix3{}) {
-                _state->requiredExtensions |= GltfExtension::KhrTextureTransform;
-
-                const Vector2 translation = matrix.translation();
-                const Vector2 scaling = matrix.scaling()*Math::sign(matrix.diagonal().xy());
-
-                _state->gltfMaterials.writeKey("extensions"_s)
-                    .beginObject()
-                        .writeKey("KHR_texture_transform"_s).beginObject();
-
-                if(keepDefaults || translation != Vector2{})
-                    _state->gltfMaterials
-                        .writeKey("offset"_s).writeArray(translation.data());
-                if(keepDefaults || scaling != Vector2{1.0f})
-                    _state->gltfMaterials
-                        .writeKey("scale"_s).writeArray(scaling.data());
-
-                _state->gltfMaterials
-                        .endObject()
-                    .endObject();
-            }
-        }
+        if(textureMatrix)
+            writeTextureMatrix(textureMatrixAttribute, layer, maskedMaterial.material.layerName(layer), *textureMatrix);
     };
     const auto writeTexture = [this, &writeTextureContents](MaskedMaterial& maskedMaterial, const Containers::StringView name, const UnsignedInt layer, const UnsignedInt textureAttributeId, const Containers::StringView prefix) {
         _state->gltfMaterials.writeKey(name);
