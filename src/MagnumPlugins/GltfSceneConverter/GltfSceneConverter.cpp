@@ -25,6 +25,7 @@
 
 #include "GltfSceneConverter.h"
 
+#include <cctype> /* std::isupper() */
 #include <unordered_map>
 #include <Corrade/Containers/ArrayTuple.h>
 #include <Corrade/Containers/ArrayViewStl.h> /** @todo drop once Configuration is STL-free */
@@ -117,6 +118,10 @@ struct GltfSceneConverter::State {
        exclusive, what's in requiredExtensions shouldn't be in usedExtensions
        as well. */
     GltfExtensions usedExtensions, requiredExtensions;
+    /* Extension strings added by custom material layers. Those are always
+       only used, required only if the user explicitly adds them to the
+       extensionRequired configuration option. */
+    Containers::Array<Containers::String> usedCustomExtensions;
 
     /* Because in glTF a material is tightly coupled with a mesh instead of
        being only assigned from a scene node, all meshes go to this array first
@@ -264,11 +269,20 @@ Containers::Optional<Containers::Array<char>> GltfSceneConverter::doEndData() {
         std::vector<Containers::StringView> extensionsUsed = configuration().values<Containers::StringView>("extensionUsed");
         std::vector<Containers::StringView> extensionsRequired = configuration().values<Containers::StringView>("extensionRequired");
 
+        /** @todo use some set container instead once we have a variant that
+            doesn't allocate like mad */
         const auto contains = [](Containers::ArrayView<const Containers::StringView> extensions, Containers::StringView extension) {
             for(const Containers::StringView i: extensions)
                 if(i == extension) return true;
             return false;
         };
+
+        /* Add extensions used by custom material layers */
+        for(const Containers::String& i: _state->usedCustomExtensions) {
+            if(!contains(extensionsUsed, i))
+                extensionsUsed.push_back(i);
+        }
+
         /* To avoid issues where an extension would accidentally get added only
            to the required extension list but not used, the used list
            implicitly inherits all required extensions. For clean code, an
@@ -1568,6 +1582,14 @@ namespace {
 struct MaskedMaterial {
     explicit MaskedMaterial(const MaterialData& material, Containers::MutableBitArrayView mask, UnsignedInt layer = 0): material(material), layer{layer}, mask{mask} {}
 
+    Containers::Optional<UnsignedInt> findId(Containers::StringView name) {
+        const Containers::Optional<UnsignedInt> found = material.findAttributeId(layer, name);
+        if(!found) return {};
+
+        mask.set(material.attributeDataOffset(layer) + *found);
+        return found;
+    }
+
     Containers::Optional<UnsignedInt> findId(MaterialAttribute name) {
         const Containers::Optional<UnsignedInt> found = material.findAttributeId(layer, name);
         if(!found) return {};
@@ -2009,11 +2031,118 @@ bool GltfSceneConverter::doAdd(UnsignedInt, const MaterialData& material, const 
             _state->gltfMaterials.writeKey("doubleSided"_s).write(*doubleSided);
     }
 
+    /* Helper lambda to write material attributes in either unrecognized
+       extensions or in extras */
+    const auto writeMaterialAttribute = [this, &material](MaskedMaterial maskedMaterial, const Containers::StringView attributeName, const UnsignedInt layer, const UnsignedInt attribute) {
+        const MaterialAttributeType attributeType = material.attributeType(layer, attribute);
+
+        /* Ignore attributes of unrepresentable types. They'll be reported as
+           unused at the end. */
+        if(attributeType == MaterialAttributeType::Pointer ||
+           attributeType == MaterialAttributeType::MutablePointer ||
+           attributeType == MaterialAttributeType::Buffer ||
+           attributeType == MaterialAttributeType::TextureSwizzle ||
+           /* Matrices could be written as flat arrays but then it's impossible
+              to infer the dimensions; and nested arrays are ugly and not used
+              by any extension in practice */
+           /** @todo revisit when extensions actually use them (introduce array
+               attributes, for example, or point directly to the JSON) */
+           attributeType == MaterialAttributeType::Matrix2x2 ||
+           attributeType == MaterialAttributeType::Matrix2x3 ||
+           attributeType == MaterialAttributeType::Matrix2x4 ||
+           attributeType == MaterialAttributeType::Matrix3x2 ||
+           attributeType == MaterialAttributeType::Matrix3x3 ||
+           attributeType == MaterialAttributeType::Matrix3x4 ||
+           attributeType == MaterialAttributeType::Matrix4x2 ||
+           attributeType == MaterialAttributeType::Matrix4x3)
+            return;
+
+        /* Now it can't fail anymore, write the attribute */
+        _state->gltfMaterials.writeKey(attributeName);
+        switch(material.attributeType(layer, attribute)) {
+            #define _ct(value, type)                            \
+                case MaterialAttributeType::value:              \
+                    _state->gltfMaterials.write(material.attribute<type>(layer, attribute)); \
+                    break;
+            #define _cc(type, cast)                            \
+                case MaterialAttributeType::type:              \
+                    _state->gltfMaterials.write(cast(material.attribute<type>(layer, attribute))); \
+                    break;
+            #define _c(type) _ct(type, type)
+            #define _ca(type)                                   \
+                case MaterialAttributeType::type:               \
+                    _state->gltfMaterials.writeArray(material.attribute<type>(layer, attribute).data()); \
+                    break;
+            /* Wrap matrices with a line break after every column (they're
+               column-major, so first column is first `Rows` items of the
+               array) */
+            #define _cm(type)                                   \
+                case MaterialAttributeType::type:               \
+                    _state->gltfMaterials.writeArray(material.attribute<type>(layer, attribute).data(), type::Rows); \
+                    break;
+            /* LCOV_EXCL_START */
+            _ct(Bool, bool)
+            _c(Float)
+            _cc(Deg, Float)
+            _cc(Rad, Float)
+            _c(UnsignedInt)
+            _c(Int)
+            _c(UnsignedLong)
+            _c(Long)
+            _ca(Vector2)
+            _ca(Vector2ui)
+            _ca(Vector2i)
+            _ca(Vector3)
+            _ca(Vector3ui)
+            _ca(Vector3i)
+            _ca(Vector4)
+            _ca(Vector4ui)
+            _ca(Vector4i)
+            _ct(String, Containers::StringView)
+            /* LCOV_EXCL_STOP */
+            #undef _c
+            #undef _ct
+            #undef _cc
+            #undef _ca
+            #undef _cm
+
+            /* These were handled above already */
+            /* LCOV_EXCL_START */
+            case MaterialAttributeType::Pointer:
+            case MaterialAttributeType::MutablePointer:
+            case MaterialAttributeType::Buffer:
+            case MaterialAttributeType::TextureSwizzle:
+            case MaterialAttributeType::Matrix2x2:
+            case MaterialAttributeType::Matrix2x3:
+            case MaterialAttributeType::Matrix2x4:
+            case MaterialAttributeType::Matrix3x2:
+            case MaterialAttributeType::Matrix3x3:
+            case MaterialAttributeType::Matrix3x4:
+            case MaterialAttributeType::Matrix4x2:
+            case MaterialAttributeType::Matrix4x3:
+                CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+            /* LCOV_EXCL_STOP */
+        }
+
+        /* If not skipped, mark the material as used */
+        maskedMaterial.mask.set(material.attributeDataOffset(layer) + attribute);
+    };
+
     /* Extensions -- write only if there's actually any */
     {
         const Containers::Optional<UnsignedInt> clearCoatLayerId = material.findLayerId(MaterialLayer::ClearCoat);
+
+        /* Layers starting with a # are unrecognized extensions parsed by
+           GltfImporter, we want to write those back */
+        bool hasCustomExtensions = false;
+        for(UnsignedInt i = 0; i != material.layerCount(); ++i) if(material.layerName(i).hasPrefix('#')) {
+            hasCustomExtensions = true;
+            break;
+        }
+
         if((material.types() & MaterialType::Flat) ||
-            clearCoatLayerId
+            clearCoatLayerId ||
+            hasCustomExtensions
         ) {
             _state->gltfMaterials.writeKey("extensions"_s);
             const Containers::ScopeGuard gltfExtensions = _state->gltfMaterials.beginObjectScope();
@@ -2083,6 +2212,209 @@ bool GltfSceneConverter::doAdd(UnsignedInt, const MaterialData& material, const 
                 /* Clear coat normal texture */
                 if(const auto foundNormalTexture = maskedClearCoatMaterial.findId(MaterialAttribute::NormalTexture))
                     writeNormalTexture(maskedClearCoatMaterial, "clearcoatNormalTexture"_s, *clearCoatLayerId, *foundNormalTexture);
+            }
+
+            /* Unrecognized extensions parsed by GltfImporter are starting with
+               a #. We don't understand those either so no checking is
+               performed, just write them in the same way as GltfImporter
+               parsed them. */
+            if(hasCustomExtensions) for(UnsignedInt layer = 0; layer != material.layerCount(); ++layer) {
+                const Containers::StringView layerName = material.layerName(layer);
+                if(!layerName.hasPrefix('#')) continue;
+
+                const Containers::StringView extensionName = layerName.exceptPrefix("#"_s);
+                arrayAppend(_state->usedCustomExtensions, Containers::String::nullTerminatedGlobalView(extensionName));
+
+                _state->gltfMaterials.writeKey(extensionName);
+                const Containers::ScopeGuard gltfExtension = _state->gltfMaterials.beginObjectScope();
+
+                layerMask.set(layer);
+                MaskedMaterial maskedLayerMaterial{material, mask, layer};
+
+                /* Go through all attributes in this layer and write them.
+                   Since the layer is named, the first attribute should be the
+                   layer name -- skip it. */
+                CORRADE_INTERNAL_ASSERT(material.attributeCount(layer) > 0 && material.attributeName(layer, 0) == materialAttributeName(MaterialAttribute::LayerName));
+                for(UnsignedInt attribute = 1; attribute != material.attributeCount(layer); ++attribute) {
+                    /* GltfImporter writes attributes of custom extensions with
+                       a lowercase name -- if it's uppercase it's fishy, better
+                       just skip it */
+                    const Containers::StringView attributeName = material.attributeName(layer, attribute);
+                    if(std::isupper(attributeName.front()))
+                        continue;
+
+                    /* A texture, attempt to write as a texture object but
+                       with graceful fallbacks if something doesn't match -- we
+                       don't pretend to understand anything in custom
+                       extensions */
+                    if(attributeName.hasSuffix("Texture"_s)) {
+                        /* Set the attribute as used. If we don't use it in the
+                           end, we'll print a warning why, so another warning
+                           about it not being used would be redundant noise. */
+                        maskedLayerMaterial.mask.set(material.attributeDataOffset(layer) + attribute);
+
+                        /* If the *Texture attribute isn't UnsignedInt, print a
+                           warning and skip it altogether */
+                        if(material.attributeType(layer, attribute) != MaterialAttributeType::UnsignedInt) {
+                            Warning{} << "Trade::GltfSceneConverter::add(): custom material attribute" << attributeName << "in layer" << layer << "(" << Debug::nospace << layerName << Debug::nospace << ")" << "is" << material.attributeType(layer, attribute) << Debug::nospace << ", not writing a textureInfo object";
+                            continue;
+                        }
+
+                        const UnsignedInt texture = material.attribute<UnsignedInt>(layer, attribute);
+
+                        /* If the texture is not in bounds, print a warning and
+                           skip it entirely -- it'd be skipped on import in
+                           GltfImporter otherwise anyway */
+                        if(texture >= textureCount()) {
+                            Warning{} << "Trade::GltfSceneConverter::add(): custom material attribute" << attributeName << "in layer" << layer << "(" << Debug::nospace << layerName << Debug::nospace << ")" << "references texture" << texture << "but only" << textureCount() << "textures were added so far, skipping";
+                            continue;
+                        }
+
+                        /* Look also for the layer attribute. If there's no
+                           such attribute and there's neither a
+                           material-layer-local or a global fallback, it's
+                           implicitly 0. If it isn't UnsignedInt, print a
+                           warning and use implicit 0 instead. The fallbacks
+                           are builtin so they're always UnsignedInt. */
+                        Containers::Optional<UnsignedInt> textureLayer;
+                        UnsignedInt materialLayerUsedForTextureLayer = layer;
+                        Containers::String layerAttributeName = attributeName + "Layer"_s;
+                        if(const Containers::Optional<UnsignedInt> attributeId = maskedLayerMaterial.findId(layerAttributeName)) {
+                            const MaterialAttributeType attributeType = material.attributeType(layer, *attributeId);
+                            if(attributeType != MaterialAttributeType::UnsignedInt) {
+                                Warning{} << "Trade::GltfSceneConverter::add(): custom material attribute" << layerAttributeName << "in layer" << layer << "(" << Debug::nospace << layerName << Debug::nospace << ")" << "is" << attributeType << Debug::nospace << ", referencing layer 0 instead";
+                                textureLayer = 0;
+                            } else {
+                                textureLayer = material.attribute<UnsignedInt>(layer, *attributeId);
+                            }
+                        }
+                        if(!textureLayer) {
+                            layerAttributeName = materialAttributeName(MaterialAttribute::TextureLayer);
+                            textureLayer = maskedLayerMaterial.find<UnsignedInt>(MaterialAttribute::TextureLayer);
+                        }
+                        if(!textureLayer && layer) {
+                            materialLayerUsedForTextureLayer = 0;
+                            textureLayer = maskedLayerMaterial.findBaseLayer<UnsignedInt>(MaterialAttribute::TextureLayer);
+                        }
+                        if(!textureLayer)
+                            textureLayer = 0;
+
+                        /* If the layer is not in bounds, print a warning and
+                           skip the texture entirely -- it'd be skipped on
+                           import in GltfImporter otherwise anyway */
+                        CORRADE_INTERNAL_ASSERT(textureCount() + 1 == _state->textureIdOffsets.size());
+                        if(*textureLayer >= _state->textureIdOffsets[texture + 1] - _state->textureIdOffsets[texture]) {
+                            Warning w;
+                            w << "Trade::GltfSceneConverter::add(): material attribute" << layerAttributeName;
+                            if(materialLayerUsedForTextureLayer)
+                                w << "in layer" << materialLayerUsedForTextureLayer << "(" << Debug::nospace << layerName << Debug::nospace << ")";
+                            w << "value" << *textureLayer << "out of range for" << _state->textureIdOffsets[texture + 1] - _state->textureIdOffsets[texture] << "layers in texture" << texture << Debug::nospace << ", skipping";
+                            continue;
+                        }
+
+                        /* Begin the texture object, write its index */
+                        _state->gltfMaterials.writeKey(attributeName);
+                        const Containers::ScopeGuard gltfTexture = _state->gltfMaterials.beginObjectScope();
+
+                        _state->gltfMaterials.writeKey("index"_s).write(_state->textureIdOffsets[texture] + *textureLayer);
+
+                        /* Texture coordinates. If there's no such attribute,
+                           check also a material-layer-local and global
+                           fallback. If it isn't UnsignedInt, print a warning
+                           instead. The fallbacks are builtin so they're always
+                           UnsignedInt. */
+                        Containers::Optional<UnsignedInt> textureCoordinates;
+                        {
+                            const Containers::String coordinatesAttributeName = attributeName + "Coordinates"_s;
+                            if(const Containers::Optional<UnsignedInt> attributeId = maskedLayerMaterial.findId(coordinatesAttributeName)) {
+                                const MaterialAttributeType attributeType = material.attributeType(layer, *attributeId);
+                                if(attributeType != MaterialAttributeType::UnsignedInt) {
+                                    Warning{} << "Trade::GltfSceneConverter::add(): custom material attribute" << coordinatesAttributeName << "in layer" << layer << "(" << Debug::nospace << layerName << Debug::nospace << ")" << "is" << attributeType << Debug::nospace << ", not exporting any texture coordinate set";
+                                } else
+                                    textureCoordinates = material.attribute<UnsignedInt>(layer, *attributeId);
+                            }
+                        }
+                        if(!textureCoordinates)
+                            textureCoordinates = maskedLayerMaterial.find<UnsignedInt>(MaterialAttribute::TextureCoordinates);
+                        if(!textureCoordinates && layer)
+                            textureCoordinates = maskedLayerMaterial.findBaseLayer<UnsignedInt>(MaterialAttribute::TextureCoordinates);
+                        if(textureCoordinates && (keepDefaults || *textureCoordinates != 0))
+                            _state->gltfMaterials.writeKey("texCoord"_s).write(*textureCoordinates);
+
+                        /* Texture matrix. If there's no such attribute, check
+                           also a material-layer-local and global fallback. If
+                           they aren't UnsignedInt, print a
+                           warning instead. The fallbacks are builtin so
+                           they're always UnsignedInt. */
+                        Containers::Optional<Matrix3> textureMatrix;
+                        Containers::String textureMatrixAttributeName = attributeName + "Matrix"_s;
+                        UnsignedInt materialLayerUsedForTextureMatrix = layer;
+                        {
+                            if(const Containers::Optional<UnsignedInt> attributeId = maskedLayerMaterial.findId(textureMatrixAttributeName)) {
+                                const MaterialAttributeType attributeType = material.attributeType(layer, *attributeId);
+                                if(attributeType != MaterialAttributeType::Matrix3x3) {
+                                    Warning{} << "Trade::GltfSceneConverter::add(): custom material attribute" << textureMatrixAttributeName << "in layer" << layer << "(" << Debug::nospace << layerName << Debug::nospace << ")" << "is" << attributeType << Debug::nospace << ", not exporting any texture transform";
+                                } else
+                                    textureMatrix = material.attribute<Matrix3>(layer, *attributeId);
+                            }
+                        }
+                        if(!textureMatrix) {
+                            textureMatrixAttributeName =  Containers::String::nullTerminatedGlobalView(materialAttributeName(MaterialAttribute::TextureMatrix));
+                            textureMatrix = maskedLayerMaterial.find<Matrix3>(MaterialAttribute::TextureMatrix);
+                        }
+                        if(!textureMatrix && layer) {
+                            materialLayerUsedForTextureMatrix = 0;
+                            textureMatrix = maskedLayerMaterial.findBaseLayer<Matrix3>(MaterialAttribute::TextureMatrix);
+                        }
+
+                        /* If there's no matrix but we're told to Y-flip
+                           texture coordinates in the material, add an identity
+                           -- in writeTextureMatrix() it'll be converted to a
+                           Y-flipping one */
+                        if(!textureMatrix && configuration().value<bool>("textureCoordinateYFlipInMaterial"))
+                            textureMatrix.emplace();
+
+                        if(textureMatrix)
+                            /* The layerName is used only if
+                               materialLayerUsedForTextureMatrix is non-zero */
+                            writeTextureMatrix(textureMatrixAttributeName, materialLayerUsedForTextureMatrix, layerName, *textureMatrix);
+
+                        continue;
+                    }
+
+                    /* Ignore all other texture-related attributes. If they
+                       were written by the above, that's good, if not, they'll
+                       be reported as unused at the end. */
+                    if(attributeName.hasSuffix("TextureCoordinates"_s) ||
+                       attributeName.hasSuffix("TextureLayer"_s) ||
+                       attributeName.hasSuffix("TextureMatrix"_s) ||
+                       attributeName.hasSuffix("TextureSwizzle"_s))
+                        continue;
+
+                    writeMaterialAttribute(maskedLayerMaterial, attributeName, layer, attribute);
+                }
+            }
+        }
+    }
+
+    /* Put all custom attributes from the base layer (if there are any) into
+       extras. This is again consistent with what GltfImporter does. */
+    {
+        bool hasCustomAttributes = false;
+        for(UnsignedInt attribute = 0; attribute != material.attributeCount(); ++attribute) if(!std::isupper(material.attributeName(attribute).front())) {
+            hasCustomAttributes = true;
+            break;
+        }
+
+        if(hasCustomAttributes) {
+            _state->gltfMaterials.writeKey("extras"_s);
+            const Containers::ScopeGuard gltfExtras = _state->gltfMaterials.beginObjectScope();
+
+            for(UnsignedInt attribute = 0; attribute != material.attributeCount(); ++attribute) {
+                const Containers::StringView attributeName = material.attributeName(attribute);
+                if(std::isupper(attributeName.front())) continue;
+
+                writeMaterialAttribute(maskedBaseMaterial, attributeName, 0, attribute);
             }
         }
     }

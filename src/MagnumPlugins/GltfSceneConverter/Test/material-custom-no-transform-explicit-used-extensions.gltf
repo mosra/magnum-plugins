@@ -1,0 +1,40 @@
+{
+  "asset": {
+    "version": "2.0"
+  },
+  "extensionsUsed": [
+    "MAGNUM_is_amazing",
+    "KHR_texture_transform_should_not_be_here",
+    "AND_no_extension_twice"
+  ],
+  "materials": [
+    {
+      "extensions": {
+        "KHR_texture_transform_should_not_be_here": {
+          "withNoTransformTexture": {
+            "index": 0
+          }
+        }
+      }
+    }
+  ],
+  "samplers": [
+    {
+      "wrapS": 33071,
+      "wrapT": 33071,
+      "minFilter": 9728,
+      "magFilter": 9728
+    }
+  ],
+  "textures": [
+    {
+      "sampler": 0,
+      "source": 0
+    }
+  ],
+  "images": [
+    {
+      "uri": "material-custom-no-transform-explicit-used-extensions.0.png"
+    }
+  ]
+}

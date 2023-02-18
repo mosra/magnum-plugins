@@ -1,0 +1,156 @@
+{
+  "asset": {
+    "version": "2.0"
+  },
+  "extensionsUsed": [
+    "COMPLETELY_empty_layer",
+    "EXT_another_extension",
+    "EXT_custom_extension",
+    "MAGNUM_materials_decal",
+    "KHR_texture_ktx",
+    "KHR_texture_transform"
+  ],
+  "extensionsRequired": [
+    "KHR_texture_ktx",
+    "KHR_texture_transform"
+  ],
+  "materials": [
+    {
+      "extensions": {
+        "COMPLETELY_empty_layer": {},
+        "EXT_another_extension": {
+          "integerProperty": -1,
+          "layerFactorTexture": {
+            "index": 3,
+            "texCoord": 222,
+            "extensions": {
+              "KHR_texture_transform": {
+                "offset": [3, -4]
+              }
+            }
+          }
+        },
+        "EXT_custom_extension": {
+          "customTexture": {
+            "index": 0,
+            "texCoord": 8,
+            "extensions": {
+              "KHR_texture_transform": {
+                "offset": [0, -1],
+                "scale": [0.5, 2]
+              }
+            }
+          },
+          "floatProperty": 3.14,
+          "grungeTexture": {
+            "index": 0,
+            "texCoord": 777,
+            "extensions": {
+              "KHR_texture_transform": {
+                "offset": [1, -2]
+              }
+            }
+          },
+          "normalTexture": {
+            "index": 5,
+            "texCoord": 777,
+            "extensions": {
+              "KHR_texture_transform": {
+                "offset": [0, -1],
+                "scale": [0.5, 2]
+              }
+            }
+          },
+          "normalTextureScale": 0.3
+        },
+        "MAGNUM_materials_decal": {
+          "decalTexture": {
+            "index": 4,
+            "texCoord": 222,
+            "extensions": {
+              "KHR_texture_transform": {
+                "offset": [0, -1],
+                "scale": [0.5, 2]
+              }
+            }
+          }
+        }
+      },
+      "extras": {
+        "category": "FANCY",
+        "fancinessDirection": [0.5, 0.3, 0],
+        "fullCircle": 360,
+        "unrecognizedTexture": 5,
+        "unrecognizedTextureLayer": 666,
+        "veryCustom": true
+      }
+    }
+  ],
+  "samplers": [
+    {
+      "wrapS": 33071,
+      "wrapT": 33071,
+      "minFilter": 9728,
+      "magFilter": 9728
+    }
+  ],
+  "textures": [
+    {
+      "sampler": 0,
+      "source": 0
+    },
+    {
+      "sampler": 0,
+      "extensions": {
+        "KHR_texture_ktx": {
+          "source": 1,
+          "layer": 0
+        }
+      }
+    },
+    {
+      "sampler": 0,
+      "extensions": {
+        "KHR_texture_ktx": {
+          "source": 1,
+          "layer": 1
+        }
+      }
+    },
+    {
+      "sampler": 0,
+      "extensions": {
+        "KHR_texture_ktx": {
+          "source": 1,
+          "layer": 2
+        }
+      }
+    },
+    {
+      "sampler": 0,
+      "extensions": {
+        "KHR_texture_ktx": {
+          "source": 1,
+          "layer": 3
+        }
+      }
+    },
+    {
+      "sampler": 0,
+      "extensions": {
+        "KHR_texture_ktx": {
+          "source": 1,
+          "layer": 4
+        }
+      }
+    }
+  ],
+  "images": [
+    {
+      "uri": "material-custom.0.png"
+    },
+    {
+      "uri": "material-custom.0.ktx2"
+    }
+  ]
+}

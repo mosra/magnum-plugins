@@ -341,13 +341,84 @@ the plugin supports also 3D images and 2D array textures using a proposed
     due to not having a glTF equivalent, due to referring to a texture but the
     texture attribute isn't present or due to the support not being implemented
     yet. The only exception is Phong @ref MaterialAttribute::DiffuseColor and
-    @relativeref{MaterialAttribute,DiffuseTexture} properties if they match the
+    @relativeref{MaterialAttribute,DiffuseTexture} attributes if they match the
     corresponding @ref MaterialAttribute::BaseColor /
     @relativeref{MaterialAttribute,BaseColorTexture} attributes. Such
     attributes are produced by @ref GltfImporter for compatibility purposes
     when the @cb{.ini} phongMaterialFallback @ce @ref Trade-GltfImporter-configuration "configuration option"
     is enabled and are redundant.
--   At the moment, custom material properties and layers are not exported
+-   Custom material attributes and layers are exported in a way inverse to
+    @ref Trade-GltfImporter-behavior-materials "what GltfImporter does", with
+    the intent to fully preserve yet-unrecognized extensions and material
+    extras if an imported glTF file is exported back:
+    -   Custom attributes (i.e., ones not starting with an uppercase letter)
+        in the base layers are written to glTF `extras` object in the material
+    -   Custom layers with a name that start with a `#` are assumed to be glTF
+        extensions and are written to glTF `extensions` object in the material,
+        with the layer name (except the `#`) used as extension name. Other
+        custom layers and unnamed layers are ignored with a warning.
+    -   @ref MaterialAttributeType::String,
+        @relativeref{MaterialAttributeType,Bool}
+        and @relativeref{MaterialAttributeType,Float} are exported as-is,
+        @relativeref{MaterialAttributeType,UnsignedInt},
+        @relativeref{MaterialAttributeType,Int},
+        @relativeref{MaterialAttributeType,UnsignedLong} and
+        @relativeref{MaterialAttributeType,Long} are converted to a JSON
+        double-precision number. @relativeref{MaterialAttributeType,Deg} and
+        @relativeref{MaterialAttributeType,Rad} are exported as a plain number,
+        losing their original unit
+    -   @ref MaterialAttributeType::Vector2,
+        @relativeref{MaterialAttributeType,Vector3} and
+        @relativeref{MaterialAttributeType,Vector4} are exported as numeric
+        arrays, @relativeref{MaterialAttributeType,Vector2ui},
+        @relativeref{MaterialAttributeType,Vector2i},
+        @relativeref{MaterialAttributeType,Vector3ui},
+        @relativeref{MaterialAttributeType,Vector3i},
+        @relativeref{MaterialAttributeType,Vector4ui} and
+        @relativeref{MaterialAttributeType,Vector4i} are converted to arrays of
+        JSON double-precision numbers.
+    -   Custom attributes inside extension layers that end with `*Texture`
+        and are @ref MaterialAttributeType::UnsignedInt are recognized as
+        texture references and written as a glTF [textureInfo](https://www.khronos.org/registry/glTF/specs/2.0/glTF-2.0.html#reference-textureinfo)
+        objects, with corresponding `*TextureLayer` attributes (if they are
+        @ref MaterialAttributeType::UnsignedInt) then recognized as
+        @ref Trade-GltfSceneConverter-behavior-images-array "2D array texture layers",
+        `*TextureCoordinates` (if @ref MaterialAttributeType::UnsignedInt) as
+        coordinate index and `*TextureMatrix` (if
+        @ref MaterialAttributeType::Matrix3x3) as a texture matrix. Layer-local
+        and global fallback to @ref MaterialAttribute::TextureLayer,
+        @relativeref{MaterialAttribute,TextureCoordinates} and
+        @relativeref{MaterialAttribute,TextureMatrix} applies to the custom
+        attributes as well. The texture ID and layer attributes are
+        bounds-checked against existing textures and layer count of existing
+        textures and the whole texture is ignored with a warning if either of
+        the two is outside of the bounds. If any of these has an unexpected
+        type, it's ignored with a warning.
+    -   `*Texture` and related attributes inside the base layer (as opposed to
+        custom layers) have no special handling, so they'll be exported as
+        numbers. `*Texture`-related attributes inside extension layers that
+        have no base `*Texture` attribute are ignored with a warning.
+    -   @ref MaterialAttributeType::Pointer,
+        @relativeref{MaterialAttributeType,MutablePointer} and
+        @relativeref{MaterialAttributeType,Buffer} attributes are ignored with
+        a warning.
+    -   Custom @ref MaterialAttributeType::TextureSwizzle attributes are always
+        ignored with a warning, as glTF doesn't have a builtin way to describe
+        a texture swizzle. (In contrast, builtin @ref MaterialAttributeType::TextureSwizzle
+        attributes are used to check if given texture is compatible with the
+        layout glTF expects or potentially used to pick a glTF extension that
+        enables support for given swizzle.)
+    -   @ref MaterialAttributeType::Matrix2x2 and other matrix attributes,
+        except for @ref MaterialAttribute::TextureMatrix as described above,
+        are ignored with a warning. While they could be flattened to JSON
+        arrays as well, it's impossible to know whether they're a vector or a
+        matrix on import and so they're not exported at the moment because
+        @ref GltfImporter wouldn't be able to import them anyway.
+    -   Attributes in extension layers starting with an uppercase letter,
+        except for @ref MaterialAttribute::TextureLayer,
+        @relativeref{MaterialAttribute,TextureCoordinates} and
+        @relativeref{MaterialAttribute,TextureMatrix}, are ignored with a
+        warning.
 
 @subsection Trade-GltfSceneConverter-behavior-scenes Scene export
 

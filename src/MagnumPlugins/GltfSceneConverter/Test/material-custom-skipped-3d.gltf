@@ -1,0 +1,92 @@
+{
+  "asset": {
+    "version": "2.0"
+  },
+  "extensionsUsed": [
+    "EXT_invalid_textures",
+    "EXT_invalid_textures2",
+    "KHR_texture_ktx"
+  ],
+  "extensionsRequired": [
+    "KHR_texture_ktx"
+  ],
+  "materials": [
+    {
+      "extensions": {
+        "EXT_invalid_textures": {},
+        "EXT_invalid_textures2": {
+          "noRotationTexture": {
+            "index": 0
+          }
+        }
+      }
+    }
+  ],
+  "samplers": [
+    {
+      "wrapS": 33071,
+      "wrapT": 33071,
+      "minFilter": 9728,
+      "magFilter": 9728
+    }
+  ],
+  "textures": [
+    {
+      "sampler": 0,
+      "source": 0
+    },
+    {
+      "sampler": 0,
+      "extensions": {
+        "KHR_texture_ktx": {
+          "source": 1,
+          "layer": 0
+        }
+      }
+    },
+    {
+      "sampler": 0,
+      "extensions": {
+        "KHR_texture_ktx": {
+          "source": 1,
+          "layer": 1
+        }
+      }
+    },
+    {
+      "sampler": 0,
+      "extensions": {
+        "KHR_texture_ktx": {
+          "source": 1,
+          "layer": 2
+        }
+      }
+    },
+    {
+      "sampler": 0,
+      "extensions": {
+        "KHR_texture_ktx": {
+          "source": 1,
+          "layer": 3
+        }
+      }
+    },
+    {
+      "sampler": 0,
+      "extensions": {
+        "KHR_texture_ktx": {
+          "source": 1,
+          "layer": 4
+        }
+      }
+    }
+  ],
+  "images": [
+    {
+      "uri": "material-custom-skipped-3d.0.png"
+    },
+    {
+      "uri": "material-custom-skipped-3d.0.ktx2"
+    }
+  ]
+}

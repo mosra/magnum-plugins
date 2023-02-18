@@ -1,0 +1,61 @@
+{
+  "asset": {
+    "version": "2.0"
+  },
+  "extensionsUsed": [
+    "EXT_invalid_attributes",
+    "EXT_invalid_textures",
+    "EXT_oob_textures",
+    "KHR_texture_transform"
+  ],
+  "extensionsRequired": [
+    "KHR_texture_transform"
+  ],
+  "materials": [
+    {
+      "extensions": {
+        "EXT_invalid_attributes": {},
+        "EXT_invalid_textures": {
+          "boolCoordinatesTexture": {
+            "index": 0
+          },
+          "intMatrixTexture": {
+            "index": 0
+          },
+          "rotatedTexture": {
+            "index": 0,
+            "extensions": {
+              "KHR_texture_transform": {
+                "offset": [1, -2]
+              }
+            }
+          },
+          "stringLayerTexture": {
+            "index": 0
+          }
+        },
+        "EXT_oob_textures": {}
+      },
+      "extras": {}
+    }
+  ],
+  "samplers": [
+    {
+      "wrapS": 33071,
+      "wrapT": 33071,
+      "minFilter": 9728,
+      "magFilter": 9728
+    }
+  ],
+  "textures": [
+    {
+      "sampler": 0,
+      "source": 0
+    }
+  ],
+  "images": [
+    {
+      "uri": "material-custom-skipped.0.png"
+    }
+  ]
+}

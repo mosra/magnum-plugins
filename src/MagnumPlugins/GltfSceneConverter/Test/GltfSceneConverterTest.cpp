@@ -36,6 +36,7 @@
 #include <Corrade/TestSuite/Compare/Container.h>
 #include <Corrade/TestSuite/Compare/File.h>
 #include <Corrade/TestSuite/Compare/FileToString.h>
+#include <Corrade/TestSuite/Compare/Numeric.h>
 #include <Corrade/TestSuite/Compare/StringToFile.h>
 #include <Corrade/TestSuite/Compare/String.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
@@ -113,6 +114,7 @@ struct GltfSceneConverterTest: TestSuite::Tester {
     void addMaterial();
     void addMaterial2DArrayTextures();
     void addMaterialUnusedAttributes();
+    void addMaterialCustom();
     void addMaterialMultiple();
     void addMaterialInvalid();
     void addMaterial2DArrayTextureLayerOutOfBounds();
@@ -1246,6 +1248,228 @@ const struct {
 
 const struct {
     TestSuite::TestCaseDescriptionSourceLocation name;
+    bool needsTexture, needsTexture3D;
+    const char* expected;
+    Containers::Array<const char*> explicitUsedExtensions;
+    MaterialData material;
+    Containers::Array<Containers::Pair<UnsignedInt, const char*>> expectedRemoveAttributes;
+    Containers::Array<UnsignedInt> expectedRemoveLayers;
+    Containers::Optional<MaterialData> expectedAdd;
+    const char* expectedWarning;
+} AddMaterialCustomData[]{
+    {"", true, true, "material-custom.gltf", {},
+        MaterialData{{}, {
+            /* Gets wrapped to have each column on a separate line */
+            {"category", "FANCY"},
+            {"fancinessDirection", Vector3{0.5f, 0.3f, 0.0f}},
+            {"fullCircle", 360.0_degf},
+            {"unrecognizedTexture", 5u},
+            {"unrecognizedTextureLayer", 666u},
+            {"veryCustom", true},
+            /* Used by layerFactorTexture */
+            {MaterialAttribute::TextureCoordinates, 222u},
+            /* Used by normalTexture and customTexture */
+            {MaterialAttribute::TextureMatrix, Matrix3::scaling({0.5f, 2.0f})},
+            /* Used by decalTexture */
+            {MaterialAttribute::TextureLayer, 3u},
+
+            {MaterialAttribute::LayerName, "#COMPLETELY_empty_layer"},
+
+            {MaterialAttribute::LayerName, "#EXT_another_extension"},
+            {"integerProperty", -1},
+            {"layerFactorTexture", 1u},
+                /* Uses layer-local texture matrix and layer */
+            /* Used by layerTexture */
+            {MaterialAttribute::TextureMatrix, Matrix3::translation({3.0f, 4.0f})},
+            /* Used by layerTexture */
+            {MaterialAttribute::TextureLayer, 2u},
+
+            {MaterialAttribute::LayerName, "#EXT_custom_extension"},
+            {"customTexture", 0u},
+            {"customTextureCoordinates", 8u},
+                /* Uses global matrix and layer-local layer */
+            {"floatProperty", 3.14f},
+            {"grungeTexture", 0u},
+            {"grungeTextureMatrix", Matrix3::translation({1.0f, 2.0f})},
+                /* Uses layer-local coordinates */
+            {"normalTexture", 1u},
+            /* Gets written as a regular attribute, not as a normalTexture
+               property */
+            {"normalTextureScale", 0.3f},
+            {"normalTextureLayer", 4u},
+                /* Uses global matrix and layer-local coordinates */
+            /* Used by normalTexture and grungeTexture */
+            {MaterialAttribute::TextureCoordinates, 777u},
+            /* Used by grungeTexture and customTexture */
+            {MaterialAttribute::TextureLayer, 0u},
+
+            {MaterialAttribute::LayerName, "#MAGNUM_materials_decal"},
+            {"decalTexture", 1u},
+                /* Uses global layer and matrix */
+        }, {9, 10, 15, 26, 28}}, {InPlaceInit, {
+            /* Non-float scalar properties are converted to float */
+            {0, "fullCircle"},
+            {0, "unrecognizedTexture"},
+            {0, "unrecognizedTextureLayer"},
+            {2, "integerProperty"},
+            /* Global texture properties are converted to local */
+            {0, "TextureCoordinates"},
+            {0, "TextureLayer"},
+            {0, "TextureMatrix"},
+            {0, "TextureCoordinates"},
+            {2, "TextureLayer"},
+            {2, "TextureMatrix"},
+            {3, "TextureCoordinates"},
+            /* Zero texture layer is omitted */
+            {3, "TextureLayer"},
+        }}, {}, MaterialData{{}, {
+            /* Non-float scalar properties are converted to float */
+            {"fullCircle", 360.0f},
+            {"unrecognizedTexture", 5.0f},
+            {"unrecognizedTextureLayer", 666.0f},
+            {"integerProperty", -1.0f},
+            /* Global texture properties are converted to local */
+            {"layerFactorTextureCoordinates", 222u},
+            {"layerFactorTextureLayer", 2u},
+            {"layerFactorTextureMatrix", Matrix3::translation({3.0f, 4.0f})},
+            {"customTextureMatrix", Matrix3::scaling({0.5f, 2.0f})},
+            {"grungeTextureCoordinates", 777u},
+            {"normalTextureCoordinates", 777u},
+            {"normalTextureMatrix", Matrix3::scaling({0.5f, 2.0f})},
+            {"decalTextureCoordinates", 222u},
+            {"decalTextureLayer", 3u},
+            {"decalTextureMatrix", Matrix3::scaling({0.5f, 2.0f})},
+        }, {3, 3, 7, 11, 14}},
+        ""},
+    {"no KHR_texture_transform, explicit extensionsUsed", true, false, "material-custom-no-transform-explicit-used-extensions.gltf",
+        {InPlaceInit, {
+            "MAGNUM_is_amazing",
+            "KHR_texture_transform_should_not_be_here",
+            "AND_no_extension_twice"
+        }},
+        MaterialData{{}, {
+            {MaterialAttribute::LayerName, "#KHR_texture_transform_should_not_be_here"},
+            {"withNoTransformTexture", 0u},
+        }, {0, 2}}, {}, {}, {},
+        ""},
+    {"skipped attributes", true, false, "material-custom-skipped.gltf", {},
+        MaterialData{{}, {
+            /* The unused attributes/layers are reported at the end, after all
+               other failures */
+            {"NotCustomAttribute", "uppercase!"},
+            {"bufferAttribute", Containers::ArrayView<const void>{"yay"}},
+            {"matrixAttribute", Matrix2x4{}},
+            {"pointerAttribute", &AddMaterialData[0]},
+
+            {MaterialAttribute::LayerName, "#EXT_invalid_attributes"},
+            {"NotCustomAttributeEither", "UPPERCASE"},
+            /* This one is not a fallback used by any texture */
+            {MaterialAttribute::TextureMatrix, Matrix3{}},
+            {"pointerAttributeAgain", &AddMaterialData[1]},
+            {"unusedTextureLayer", 5u},
+
+            {MaterialAttribute::LayerName, "#EXT_invalid_textures"},
+            {"boolCoordinatesTexture", 0u},
+            {"boolCoordinatesTextureCoordinates", true},
+            {"floatTexture", 15.0f},
+            {"intMatrixTexture", 0u},
+            {"intMatrixTextureMatrix", -17},
+            {"rotatedTexture", 0u},
+            {"rotatedTextureMatrix", Matrix3::translation({1.0f, 2.0f})*Matrix3::rotation(35.0_degf)},
+            {"stringLayerTexture", 0u},
+            {"stringLayerTextureLayer", "second"},
+
+            {MaterialAttribute::LayerName, "#EXT_oob_textures"},
+            {"oobLayerInATexture", 0u},
+            {"oobLayerInATextureLayer", 1u},
+            {"oobGlobalLayerInATexture", 0u},
+            {MaterialAttribute::TextureLayer, 2u},
+            {"oobTexture", 1u},
+
+            /* A completely empty layer here */
+
+            {MaterialAttribute::LayerName, "notAnExtension"},
+            {"thisIsNotWritten", "anywhere"},
+        }, {4, 9, 19, 25, 25, 27}}, {InPlaceInit, {
+            {0, "NotCustomAttribute"},
+            {0, "bufferAttribute"},
+            {0, "matrixAttribute"},
+            {0, "pointerAttribute"},
+            {1, "NotCustomAttributeEither"},
+            {1, "TextureMatrix"},
+            {1, "pointerAttributeAgain"},
+            {1, "unusedTextureLayer"},
+            {2, "boolCoordinatesTextureCoordinates"},
+            {2, "floatTexture"},
+            {2, "intMatrixTextureMatrix"},
+            /* Only translation kept from this one */
+            {2, "rotatedTextureMatrix"},
+            {2, "stringLayerTextureLayer"},
+            {3, "TextureLayer"},
+            {3, "oobGlobalLayerInATexture"},
+            {3, "oobLayerInATexture"},
+            {3, "oobLayerInATextureLayer"},
+            {3, "oobTexture"},
+        }}, {InPlaceInit, {
+            4, 5
+        }}, MaterialData{{}, {
+            {"rotatedTextureMatrix", Matrix3::translation({1.0f, 2.0f})}
+        }, {0, 0, 1}},
+        "Trade::GltfSceneConverter::add(): custom material attribute boolCoordinatesTextureCoordinates in layer 2 (#EXT_invalid_textures) is Trade::MaterialAttributeType::Bool, not exporting any texture coordinate set\n"
+        "Trade::GltfSceneConverter::add(): custom material attribute floatTexture in layer 2 (#EXT_invalid_textures) is Trade::MaterialAttributeType::Float, not writing a textureInfo object\n"
+        "Trade::GltfSceneConverter::add(): custom material attribute intMatrixTextureMatrix in layer 2 (#EXT_invalid_textures) is Trade::MaterialAttributeType::Int, not exporting any texture transform\n"
+        "Trade::GltfSceneConverter::add(): material attribute rotatedTextureMatrix in layer 2 (#EXT_invalid_textures) rotation was not used\n"
+        "Trade::GltfSceneConverter::add(): custom material attribute stringLayerTextureLayer in layer 2 (#EXT_invalid_textures) is Trade::MaterialAttributeType::String, referencing layer 0 instead\n"
+        "Trade::GltfSceneConverter::add(): material attribute TextureLayer in layer 3 (#EXT_oob_textures) value 2 out of range for 1 layers in texture 0, skipping\n"
+        "Trade::GltfSceneConverter::add(): material attribute oobLayerInATextureLayer in layer 3 (#EXT_oob_textures) value 1 out of range for 1 layers in texture 0, skipping\n"
+        "Trade::GltfSceneConverter::add(): custom material attribute oobTexture in layer 3 (#EXT_oob_textures) references texture 1 but only 1 textures were added so far, skipping\n"
+
+        "Trade::GltfSceneConverter::add(): material attribute NotCustomAttribute was not used\n"
+        "Trade::GltfSceneConverter::add(): material attribute bufferAttribute was not used\n"
+        "Trade::GltfSceneConverter::add(): material attribute matrixAttribute was not used\n"
+        "Trade::GltfSceneConverter::add(): material attribute pointerAttribute was not used\n"
+        "Trade::GltfSceneConverter::add(): material attribute NotCustomAttributeEither in layer 1 (#EXT_invalid_attributes) was not used\n"
+        "Trade::GltfSceneConverter::add(): material attribute TextureMatrix in layer 1 (#EXT_invalid_attributes) was not used\n"
+        "Trade::GltfSceneConverter::add(): material attribute pointerAttributeAgain in layer 1 (#EXT_invalid_attributes) was not used\n"
+        "Trade::GltfSceneConverter::add(): material attribute unusedTextureLayer in layer 1 (#EXT_invalid_attributes) was not used\n"
+        "Trade::GltfSceneConverter::add(): material layer 4 was not used\n"
+        "Trade::GltfSceneConverter::add(): material layer 5 (notAnExtension) was not used\n"},
+    {"skipped attributes, 3D textures", true, true, "material-custom-skipped-3d.gltf", {},
+        MaterialData{{}, {
+            {MaterialAttribute::TextureLayer, 8u},
+            {MaterialAttribute::TextureMatrix, Matrix3::rotation(35.0_degf)},
+
+            {MaterialAttribute::LayerName, "#EXT_invalid_textures"},
+            {MaterialAttribute::TextureLayer, 7u},
+            {"oobTexture", 3u},
+            {"oobLayerInATexture", 1u},
+            {"oobLayerInATextureLayer", 5u},
+            {"oobLayerLocalLayerInATexture", 1u},
+
+            {MaterialAttribute::LayerName, "#EXT_invalid_textures2"},
+            {"oobGlobalLayerInATexture", 1u},
+            {"noRotationTexture", 0u},
+            {"noRotationTextureLayer", 0u}, /* implicit, ignored */
+        }, {2, 8, 12}}, {InPlaceInit, {
+            {0, "TextureLayer"},
+            {0, "TextureMatrix"},
+            {1, "TextureLayer"},
+            {1, "oobLayerInATexture"},
+            {1, "oobLayerInATextureLayer"},
+            {1, "oobLayerLocalLayerInATexture"},
+            {1, "oobTexture"},
+            {2, "oobGlobalLayerInATexture"},
+            {2, "noRotationTextureLayer"},
+        }}, {}, {},
+        "Trade::GltfSceneConverter::add(): material attribute oobLayerInATextureLayer in layer 1 (#EXT_invalid_textures) value 5 out of range for 5 layers in texture 1, skipping\n"
+        "Trade::GltfSceneConverter::add(): material attribute TextureLayer in layer 1 (#EXT_invalid_textures) value 7 out of range for 5 layers in texture 1, skipping\n"
+        "Trade::GltfSceneConverter::add(): custom material attribute oobTexture in layer 1 (#EXT_invalid_textures) references texture 3 but only 2 textures were added so far, skipping\n"
+        "Trade::GltfSceneConverter::add(): material attribute TextureMatrix rotation was not used\n"
+        "Trade::GltfSceneConverter::add(): material attribute TextureLayer value 8 out of range for 5 layers in texture 1, skipping\n"},
+};
+
+const struct {
+    TestSuite::TestCaseDescriptionSourceLocation name;
     MaterialData material;
     const char* message;
 } AddMaterialInvalidData[]{
@@ -1386,6 +1610,15 @@ const struct {
             MaterialAttributeData{MaterialAttribute::BaseColorTexture, 0u},
         }},
         "texcoord-flip-floats-material.glb"},
+    {"floats, flip in material, custom material attribute", true, {},
+        MeshData{MeshPrimitive::Triangles, {}, TextureCoordinateYFlipFloat, {
+            MeshAttributeData{MeshAttribute::TextureCoordinates, Containers::arrayView(TextureCoordinateYFlipFloat)}
+        }},
+        MaterialData{{}, {
+            {MaterialAttribute::LayerName, "#EXT_wonderful_extension"},
+            {"wonderfulTexture", 0u},
+        }, {0, 2}},
+        "texcoord-flip-floats-material-custom-material-attribute.glb"},
     {"normalized unsigned byte", {}, {},
         MeshData{MeshPrimitive::Triangles, {}, TextureCoordinateYFlipNormalizedUnsignedByte, {
             MeshAttributeData{MeshAttribute::TextureCoordinates, VertexFormat::Vector2ubNormalized, Containers::arrayView(TextureCoordinateYFlipNormalizedUnsignedByte)}
@@ -1664,6 +1897,9 @@ GltfSceneConverterTest::GltfSceneConverterTest() {
 
     addInstancedTests({&GltfSceneConverterTest::addMaterialUnusedAttributes},
         Containers::arraySize(AddMaterialUnusedAttributesData));
+
+    addInstancedTests({&GltfSceneConverterTest::addMaterialCustom},
+        Containers::arraySize(AddMaterialCustomData));
 
     addTests({&GltfSceneConverterTest::addMaterialMultiple});
 
@@ -3738,6 +3974,101 @@ void GltfSceneConverterTest::addMaterialUnusedAttributes() {
         TestSuite::Compare::File);
 }
 
+void GltfSceneConverterTest::addMaterialCustom() {
+    auto&& data = AddMaterialCustomData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    if(data.needsTexture && _imageConverterManager.loadState("PngImageConverter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("PngImageConverter plugin not found, cannot test");
+    if(data.needsTexture3D && _imageConverterManager.loadState("KtxImageConverter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("KtxImageConverter plugin not found, cannot test");
+
+    Containers::Pointer<AbstractSceneConverter> converter =  _converterManager.instantiate("GltfSceneConverter");
+
+    Containers::String filename = Utility::Path::join(GLTFSCENECONVERTER_TEST_OUTPUT_DIR, data.expected);
+    CORRADE_VERIFY(converter->beginFile(filename));
+
+    if(data.needsTexture) {
+        /* Add an image to be referenced by a texture */
+        CORRADE_VERIFY(converter->add(ImageView2D{PixelFormat::RGB8Unorm, {1, 1}, "yey"}));
+
+        /* Add a texture to be referenced by a material */
+        CORRADE_VERIFY(converter->add(TextureData{TextureType::Texture2D,
+            SamplerFilter::Nearest,
+            SamplerFilter::Nearest,
+            SamplerMipmap::Base,
+            SamplerWrapping::ClampToEdge,
+            0}));
+    }
+
+    if(data.needsTexture3D) {
+        converter->configuration().setValue("experimentalKhrTextureKtx", true);
+        converter->configuration().setValue("imageConverter", "KtxImageConverter");
+
+        /* Add an image to be referenced by a texture */
+        CORRADE_VERIFY(converter->add(ImageView3D{PixelFormat::RGB8Unorm, {1, 1, 5}, "yey0yey1yey2yey3yey", ImageFlag3D::Array}));
+
+        /* Add a texture to be referenced by a material */
+        CORRADE_VERIFY(converter->add(TextureData{TextureType::Texture2DArray,
+            SamplerFilter::Nearest,
+            SamplerFilter::Nearest,
+            SamplerMipmap::Base,
+            SamplerWrapping::ClampToEdge,
+            0}));
+    }
+
+    for(const char* i: data.explicitUsedExtensions)
+        converter->configuration().addValue("extensionUsed", i);
+
+    {
+        std::ostringstream out;
+        Warning redirectWarning{&out};
+        CORRADE_VERIFY(converter->add(data.material));
+        CORRADE_COMPARE(out.str(), data.expectedWarning);
+    }
+
+    CORRADE_VERIFY(converter->endFile());
+    CORRADE_COMPARE_AS(filename,
+        Utility::Path::join(GLTFSCENECONVERTER_TEST_DIR, data.expected),
+        TestSuite::Compare::File);
+
+    if(_importerManager.loadState("GltfImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("GltfImporter plugin not found, cannot test a roundtrip");
+
+    Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("GltfImporter");
+    if(data.needsTexture3D)
+        importer->configuration().setValue("experimentalKhrTextureKtx", true);
+    CORRADE_VERIFY(importer->openFile(filename));
+
+    /* Disable Phong material fallback (enabled by default for compatibility),
+       no use for that here */
+    importer->configuration().setValue("phongMaterialFallback", false);
+
+    /* Filter the expected-to-be-removed attributes and layers from the
+       input */
+    Containers::BitArray attributesToKeep{DirectInit, data.material.attributeData().size(), true};
+    for(const Containers::Pair<UnsignedInt, const char*>& attribute: data.expectedRemoveAttributes)
+        attributesToKeep.reset(data.material.attributeDataOffset(attribute.first()) + data.material.attributeId(attribute.first(), attribute.second()));
+    Containers::BitArray layersToKeep{DirectInit, data.material.layerCount(), true};
+    for(UnsignedInt layer: data.expectedRemoveLayers)
+        layersToKeep.reset(layer);
+    MaterialData filtered = MaterialTools::filterAttributesLayers(data.material, attributesToKeep, layersToKeep);
+    if(data.expectedAdd) {
+        Containers::Optional<MaterialData> out = MaterialTools::merge(filtered, *data.expectedAdd);
+        CORRADE_VERIFY(out);
+        filtered = *std::move(out);
+    }
+
+    /* There should be exactly one material, looking exactly the same as the
+       filtered original */
+    CORRADE_COMPARE(importer->materialCount(), 1);
+    Containers::Optional<MaterialData> imported = importer->material(0);
+    CORRADE_VERIFY(imported);
+    CORRADE_COMPARE_AS(*imported,
+        filtered,
+        DebugTools::CompareMaterial);
+}
+
 void GltfSceneConverterTest::addMaterialMultiple() {
     if(_imageConverterManager.loadState("PngImageConverter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("PngImageConverter plugin not found, cannot test");
@@ -3989,13 +4320,28 @@ void GltfSceneConverterTest::textureCoordinateYFlip() {
     Containers::Optional<MaterialData> material = importer->material(0);
     CORRADE_VERIFY(material);
 
-    CORRADE_COMPARE(material->hasAttribute(MaterialAttribute::BaseColorTextureMatrix),
+    /* In case of custom material attributes, they're in custom layers, and
+       then the first attribute in that layer is the layer name */
+    UnsignedInt layer = material->layerCount() - 1;
+    UnsignedInt firstAttributeId = layer ? 1 : 0;
+
+    /* Assume the first material attribute in the last layer is the actual
+       texture, derive the matrix attribute name from it */
+    CORRADE_COMPARE_AS(material->attributeCount(layer),
+        firstAttributeId,
+        TestSuite::Compare::Greater);
+    CORRADE_COMPARE_AS(material->attributeName(layer, firstAttributeId),
+        "Texture",
+        TestSuite::Compare::StringHasSuffix);
+    const Containers::String matrixAttribute = material->attributeName(layer, firstAttributeId) + "Matrix"_s;
+
+    CORRADE_COMPARE(material->hasAttribute(layer, matrixAttribute),
         (data.textureCoordinateYFlipInMaterial && *data.textureCoordinateYFlipInMaterial) ||
-        data.material.hasAttribute(MaterialAttribute::BaseColorTextureMatrix));
+        data.material.hasAttribute(layer, matrixAttribute));
 
     /* Transformed texture coordinates should be the same regardless of the
        setting */
-    if(Containers::Optional<Matrix3> matrix = material->findAttribute<Matrix3>(MaterialAttribute::BaseColorTextureMatrix))
+    if(Containers::Optional<Matrix3> matrix = material->findAttribute<Matrix3>(layer, matrixAttribute))
         MeshTools::transformPointsInPlace(*matrix, texCoords);
     CORRADE_COMPARE_AS(texCoords, Containers::arrayView<Vector2>({
         {1.0f, 0.5f},

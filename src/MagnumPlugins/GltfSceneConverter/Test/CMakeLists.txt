@@ -115,6 +115,10 @@ corrade_add_test(GltfSceneConverterTest GltfSceneConverterTest.cpp
         material-clearcoat-gltf-defaults-kept.gltf
         material-clearcoat-gltf-defaults-omitted.gltf
         material-clearcoat-magnum-defaults.gltf
+        material-custom.gltf
+        material-custom-no-transform-explicit-used-extensions.gltf
+        material-custom-skipped.gltf
+        material-custom-skipped-3d.gltf
         material-common.gltf
         material-defaults-kept.gltf
         material-defaults-omitted.gltf
@@ -169,6 +173,7 @@ corrade_add_test(GltfSceneConverterTest GltfSceneConverterTest.cpp
         # Not glTFs because there's many combinations
         texcoord-flip-floats.glb
         texcoord-flip-floats-material.glb
+        texcoord-flip-floats-material-custom-material-attribute.glb
         texcoord-flip-normalized-byte-material.glb
         texcoord-flip-normalized-unsigned-byte.glb
         texcoord-flip-normalized-unsigned-byte-material.glb
