@@ -168,12 +168,13 @@ Import of morph data is not supported at the moment.
     are imported as custom scene fields, with names exposed through
     @ref sceneFieldName() / @ref sceneFieldForName() right upon opening the
     file. The `extras` property has to be an object, otherwise it's ignored
-    with a warning. Numeric values are implicitly imported as
-    @ref SceneFieldType::Float and the type can be overriden using the
-    @cb{.ini} [customSceneFieldTypes] @ce @ref Trade-GltfImporter-configuration "configuration group",
-    string values are implicitly imported as @ref SceneFieldType::StringOffset32.
-    Other value types and values that don't have a consistent type for given
-    key across all nodes are ignored with a warning.
+    with a warning. Boolean values are imported as @ref SceneFieldType::Bit,
+    numeric values are implicitly imported as @ref SceneFieldType::Float and
+    the type can be overriden using the @cb{.ini} [customSceneFieldTypes] @ce
+    @ref Trade-GltfImporter-configuration "configuration group", string values
+    are imported as @ref SceneFieldType::StringOffset32. Other value types and
+    values that don't have a consistent type for given key across all nodes are
+    ignored with a warning.
 
 @subsection Trade-GltfImporter-behavior-animations Animation and skin import
 

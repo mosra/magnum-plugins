@@ -29,6 +29,7 @@
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/Pair.h>
 #include <Corrade/Containers/StaticArray.h>
+#include <Corrade/Containers/StridedBitArrayView.h>
 #include <Corrade/Containers/StringIterable.h>
 #include <Corrade/Containers/Triple.h>
 #include <Corrade/PluginManager/PluginMetadata.h>
@@ -3291,16 +3292,19 @@ void GltfImporterTest::sceneCustomFields() {
     /* Test mapping in both directions */
     SceneField sceneFieldRadius = importer->sceneFieldForName("radius");
     SceneField sceneFieldOffset = importer->sceneFieldForName("offset");
+    SceneField sceneFieldVisible = importer->sceneFieldForName("visible");
     SceneField sceneFieldCategory = importer->sceneFieldForName("category");
     SceneField sceneFieldFlags = importer->sceneFieldForName("flags");
     CORRADE_COMPARE(sceneFieldRadius, sceneFieldCustom(1));
     CORRADE_COMPARE(sceneFieldOffset, sceneFieldCustom(2));
-    CORRADE_COMPARE(sceneFieldCategory, sceneFieldCustom(4));
-    CORRADE_COMPARE(sceneFieldFlags, sceneFieldCustom(5));
+    CORRADE_COMPARE(sceneFieldVisible, sceneFieldCustom(4));
+    CORRADE_COMPARE(sceneFieldCategory, sceneFieldCustom(5));
+    CORRADE_COMPARE(sceneFieldFlags, sceneFieldCustom(6));
     CORRADE_COMPARE(importer->sceneFieldName(sceneFieldCustom(1)), "radius");
     CORRADE_COMPARE(importer->sceneFieldName(sceneFieldCustom(2)), "offset");
-    CORRADE_COMPARE(importer->sceneFieldName(sceneFieldCustom(4)), "category");
-    CORRADE_COMPARE(importer->sceneFieldName(sceneFieldCustom(5)), "flags");
+    CORRADE_COMPARE(importer->sceneFieldName(sceneFieldCustom(4)), "visible");
+    CORRADE_COMPARE(importer->sceneFieldName(sceneFieldCustom(5)), "category");
+    CORRADE_COMPARE(importer->sceneFieldName(sceneFieldCustom(6)), "flags");
 
     /* Unlike in materials, case of custom names is not normalized */
     CORRADE_COMPARE(importer->sceneFieldForName("UppercaseName"), sceneFieldCustom(3));
@@ -3309,14 +3313,13 @@ void GltfImporterTest::sceneCustomFields() {
     /* Names of custom fields should get gathered right after import,
        independently of whether they are in any scene. Only extras of known
        types are considered, though. */
-    CORRADE_COMPARE(importer->sceneFieldForName("invalidBoolField"), SceneField{});
     CORRADE_COMPARE(importer->sceneFieldForName("invalidNullField"), SceneField{});
     CORRADE_COMPARE(importer->sceneFieldForName("invalidArrayField"), SceneField{});
     CORRADE_COMPARE(importer->sceneFieldForName("invalidObjectField"), SceneField{});
     CORRADE_COMPARE(importer->sceneFieldForName("registeredButNotInAnyScene"), sceneFieldCustom(0));
 
     /* Unknown fields */
-    CORRADE_COMPARE(importer->sceneFieldName(sceneFieldCustom(6)), "");
+    CORRADE_COMPARE(importer->sceneFieldName(sceneFieldCustom(7)), "");
     CORRADE_COMPARE(importer->sceneFieldForName("nonexistent"), SceneField{});
 
     /* Two scenes, each having a different subset of custom fields */
@@ -3333,7 +3336,6 @@ void GltfImporterTest::sceneCustomFields() {
         CORRADE_VERIFY(scene);
         CORRADE_COMPARE(out.str(), Utility::formatString(
             "Trade::GltfImporter::scene(): node 2 extras property is Utility::JsonToken::Type::Array, skipping\n"
-            "Trade::GltfImporter::scene(): node 3 extras invalidBoolField property is Utility::JsonToken::Type::Bool, skipping\n"
             "Trade::GltfImporter::scene(): node 3 extras invalidNullField property is Utility::JsonToken::Type::Null, skipping\n"
             "Trade::GltfImporter::scene(): node 3 extras invalidArrayField property is Utility::JsonToken::Type::Array, skipping\n"
             "Trade::GltfImporter::scene(): node 3 extras invalidObjectField property is Utility::JsonToken::Type::Object, skipping\n"
@@ -3346,13 +3348,15 @@ void GltfImporterTest::sceneCustomFields() {
             "Trade::GltfImporter::scene(): invalid node 6 extras category property, skipping\n"
             "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {0}:52:18\n"
             "Trade::GltfImporter::scene(): invalid node 6 extras flags property, skipping\n"
-            "Utility::Json::parseInt(): expected a number, got Utility::JsonToken::Type::String at {0}:53:19\n"
+            "Utility::Json::parseBool(): expected a bool, got Utility::JsonToken::Type::Number at /home/mosra/Code/magnum-plugins/src/MagnumPlugins/GltfImporter/Test/scene-custom-fields.gltf:53:20\n"
+            "Trade::GltfImporter::scene(): invalid node 6 extras visible property, skipping\n"
+            "Utility::Json::parseInt(): expected a number, got Utility::JsonToken::Type::String at {0}:54:19\n"
             "Trade::GltfImporter::scene(): invalid node 6 extras offset property, skipping\n", filename));
 
         /* Parent, ImporterState and Transformation (for marking the scene as
-           3D) is there always, plus `radius`, `offset`, `UppercaseName` and
-           `category` fields used in nodes of the first scene */
-        CORRADE_COMPARE(scene->fieldCount(), 3 + 4);
+           3D) is there always, plus `radius`, `offset`, `UppercaseName`,
+           `visible` and `category` fields used in nodes of the first scene */
+        CORRADE_COMPARE(scene->fieldCount(), 3 + 5);
 
         CORRADE_VERIFY(scene->hasField(SceneField::Parent));
         CORRADE_VERIFY(scene->hasField(SceneField::ImporterState));
@@ -3376,6 +3380,15 @@ void GltfImporterTest::sceneCustomFields() {
             Containers::arrayView({17, -22, Int(-2147483648)}),
             TestSuite::Compare::Container);
 
+        CORRADE_VERIFY(scene->hasField(sceneFieldVisible));
+        CORRADE_COMPARE(scene->fieldType(sceneFieldVisible), SceneFieldType::Bit);
+        CORRADE_COMPARE_AS(scene->mapping<UnsignedInt>(sceneFieldVisible),
+            Containers::arrayView({5u, 7u, 8u}),
+            TestSuite::Compare::Container);
+        CORRADE_COMPARE_AS(scene->fieldBits(sceneFieldVisible), Containers::stridedArrayView({
+            true, false, true
+        }).sliceBit(0), TestSuite::Compare::Container);
+
         CORRADE_VERIFY(scene->hasField(sceneFieldCategory));
         CORRADE_COMPARE(scene->fieldType(sceneFieldCategory), SceneFieldType::StringOffset32);
         CORRADE_COMPARE_AS(scene->mapping<UnsignedInt>(sceneFieldCategory),
@@ -3397,9 +3410,9 @@ void GltfImporterTest::sceneCustomFields() {
         CORRADE_COMPARE(out.str(), "");
 
         /* Parent, ImporterState and Transformation (for marking the scene as
-           3D) is there always, plus `radius`, `flags` and `category` fields
-           used in nodes of the second scene */
-        CORRADE_COMPARE(scene->fieldCount(), 3 + 3);
+           3D) is there always, plus `radius`, `flags`, `visible` and
+           `category` fields used in nodes of the second scene */
+        CORRADE_COMPARE(scene->fieldCount(), 3 + 4);
 
         CORRADE_VERIFY(scene->hasField(sceneFieldRadius));
         CORRADE_COMPARE(scene->fieldType(sceneFieldRadius), SceneFieldType::Float);
@@ -3418,6 +3431,15 @@ void GltfImporterTest::sceneCustomFields() {
         CORRADE_COMPARE_AS(scene->field<UnsignedInt>(sceneFieldFlags),
             Containers::arrayView({4294967295u}),
             TestSuite::Compare::Container);
+
+        CORRADE_VERIFY(scene->hasField(sceneFieldVisible));
+        CORRADE_COMPARE(scene->fieldType(sceneFieldVisible), SceneFieldType::Bit);
+        CORRADE_COMPARE_AS(scene->mapping<UnsignedInt>(sceneFieldVisible),
+            Containers::arrayView({9u, 8u}),
+            TestSuite::Compare::Container);
+        CORRADE_COMPARE_AS(scene->fieldBits(sceneFieldVisible), Containers::stridedArrayView({
+            false, true
+        }).sliceBit(0), TestSuite::Compare::Container);
 
         CORRADE_VERIFY(scene->hasField(sceneFieldCategory));
         CORRADE_COMPARE(scene->fieldType(sceneFieldCategory), SceneFieldType::StringOffset32);

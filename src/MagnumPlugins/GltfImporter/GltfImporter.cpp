@@ -37,6 +37,7 @@
 #include <Corrade/Containers/Pair.h>
 #include <Corrade/Containers/Reference.h>
 #include <Corrade/Containers/StaticArray.h>
+#include <Corrade/Containers/StridedBitArrayView.h>
 #include <Corrade/Containers/String.h>
 #include <Corrade/Containers/StringStlHash.h>
 #include <Corrade/Containers/StringView.h>
@@ -1092,10 +1093,11 @@ void GltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags da
 
         const Utility::ConfigurationGroup* customSceneFieldTypeConfiguration = configuration().group("customSceneFieldTypes");
         for(const Utility::JsonObjectItem gltfExtra: gltfExtras->asObject()) {
-            /* Skip everything that's not a number or a string for now. A
+            /* Skip everything that's not a bool, number or a string for now. A
                warning about a skipped extra due to unsupported type will be
                printed in doScene(). */
-            if(gltfExtra.value().type() != Utility::JsonToken::Type::Number &&
+            if(gltfExtra.value().type() != Utility::JsonToken::Type::Bool &&
+               gltfExtra.value().type() != Utility::JsonToken::Type::Number &&
                gltfExtra.value().type() != Utility::JsonToken::Type::String)
                 continue;
 
@@ -1108,6 +1110,9 @@ void GltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags da
                 const Containers::StringView typeString = customSceneFieldTypeConfiguration ? customSceneFieldTypeConfiguration->value<Containers::StringView>(gltfExtra.key()) : ""_s;
                 SceneFieldType type;
                 if(!typeString) switch(gltfExtra.value().type()) {
+                    case Utility::JsonToken::Type::Bool:
+                        type = SceneFieldType::Bit;
+                        break;
                     case Utility::JsonToken::Type::Number:
                         type = SceneFieldType::Float;
                         break;
@@ -2273,9 +2278,13 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
     UnsignedInt cameraCount = 0;
     UnsignedInt skinCount = 0;
     std::size_t extraStringSize = 0;
-    /* Separate counter for every recognized extra field plus two extra items
-       to turn this into an offset array later */
+    /* Separate counter for every recognized extra field. Number and string
+       fields are put into `extraOffsets`, bit fields into `extraBitOffsets`
+       (i.e., an element is never non-zero in both). These are then turned into
+       offsets into `extras` and `extrasBits` arrays, for which there's two
+       extra items at the front. */
     Containers::Array<UnsignedInt> extraOffsets{ValueInit, _d->sceneFieldNamesTypes.size() + 2};
+    Containers::Array<UnsignedInt> extraBitOffsets{ValueInit, _d->sceneFieldNamesTypes.size() + 2};
     for(const UnsignedInt i: objects) {
         const Utility::JsonToken& gltfNode = _d->gltfNodes[i].first();
 
@@ -2389,7 +2398,8 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
            import */
         if(const Utility::JsonToken* const gltfExtras = gltfNode.find("extras"_s)) {
             if(gltfExtras->type() == Utility::JsonToken::Type::Object) for(const Utility::JsonObjectItem gltfExtra: gltfExtras->asObject()) {
-                if(gltfExtra.value().type() == Utility::JsonToken::Type::Number ||
+                if(gltfExtra.value().type() == Utility::JsonToken::Type::Bool ||
+                   gltfExtra.value().type() == Utility::JsonToken::Type::Number ||
                    gltfExtra.value().type() == Utility::JsonToken::Type::String) {
                     const UnsignedInt customFieldId = sceneFieldCustom(_d->sceneFieldsForName.at(gltfExtra.key()));
                     bool success = false;
@@ -2397,6 +2407,11 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
                     /* Leave extraOffsets[0] and [1] at 0 to turn this into an
                        offset array later */
                     switch(_d->sceneFieldNamesTypes[customFieldId].second()) {
+                        case SceneFieldType::Bit:
+                            if(_d->gltf->parseBool(gltfExtra.value())) {
+                                success = true;
+                                ++extraBitOffsets[customFieldId + 2];
+                            } break;
                         /** @todo when composite types are introduced, this has
                             to `+= sceneFieldComponentCount*sceneFieldVectorCount`
                             or some such instead */
@@ -2427,14 +2442,21 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
     /** @todo switch to 64-bit offsets if there's many strings */
     CORRADE_INTERNAL_ASSERT(extraStringSize <= ~UnsignedInt{});
 
-    /* Turn the extraCount into an offset array. After this step,
-       `extraOffsets[i + 1]` to `extraOffsets[i + 2]` is the range of data for
-       extra field `sceneFieldCustom(i)`; extraOffsets[0] and [1] is 0. */
+    /* Turn the `extraOffsets` and `extraBitOffsets` into an offset array.
+       After this step, `extra*Offsets[i + 1]` to `extra*Offsets[i + 2]` is the
+       range of data for extra field `sceneFieldCustom(i)`; `extra*Offsets[0]`
+       and `[1]` is 0. */
     std::size_t extraCount = 0;
+    std::size_t extraBitCount = 0;
     for(UnsignedInt& i: extraOffsets) {
         const UnsignedInt count = i;
         i += extraCount;
         extraCount += count;
+    }
+    for(UnsignedInt& i: extraBitOffsets) {
+        const UnsignedInt count = i;
+        i += extraBitCount;
+        extraBitCount += count;
     }
 
     /* If all objects that have transformations have TRS as well, no need to
@@ -2468,6 +2490,8 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
         to satisfy alignment. For composite types (pairs, vectors, matrices)
         however it's enough to just take more items at once. */
     Containers::ArrayView<UnsignedInt> extrasUnsignedInt;
+    Containers::ArrayView<UnsignedInt> extraBitObjects;
+    Containers::MutableBitArrayView extrasBits;
     Containers::Array<char> data = Containers::ArrayTuple{
         {NoInit, objects.size(), parentImporterStateObjects},
         {NoInit, objects.size(), parents},
@@ -2489,7 +2513,9 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
         {NoInit, skinCount, skins},
         {NoInit, extraStringSize, extrasStrings},
         {NoInit, extraCount, extraObjects},
-        {NoInit, extraCount, extrasUnsignedInt}
+        {NoInit, extraCount, extrasUnsignedInt},
+        {NoInit, extraBitCount, extraBitObjects},
+        {NoInit, extraBitCount, extrasBits},
     };
     const auto extrasFloat = Containers::arrayCast<Float>(extrasUnsignedInt);
     const auto extrasInt = Containers::arrayCast<Int>(extrasUnsignedInt);
@@ -2651,6 +2677,7 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
         if(const Utility::JsonToken* const gltfExtras = gltfNode.find("extras"_s)) {
             if(gltfExtras->type() == Utility::JsonToken::Type::Object) for(const Utility::JsonObjectItem gltfExtra: gltfExtras->asObject()) {
                 if(gltfExtra.value().isParsed() && (
+                    gltfExtra.value().type() == Utility::JsonToken::Type::Bool ||
                     gltfExtra.value().type() == Utility::JsonToken::Type::Number ||
                     gltfExtra.value().type() == Utility::JsonToken::Type::String
                 )) {
@@ -2660,6 +2687,12 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
                        they'll be shifted by 0 for the final SceneFieldData
                        population */
                     switch(_d->sceneFieldNamesTypes[customFieldId].second()) {
+                        case SceneFieldType::Bit: {
+                            UnsignedInt& extraBitOffset = extraBitOffsets[customFieldId + 1];
+                            extraBitObjects[extraBitOffset] = nodeI;
+                            extrasBits.set(extraBitOffset, gltfExtra.value().asBool());
+                            ++extraBitOffset;
+                        } break;
                         #define _c(type) case SceneFieldType::type: {       \
                             UnsignedInt& extraOffset = extraOffsets[customFieldId + 1]; \
                             extraObjects[extraOffset] = nodeI;              \
@@ -2745,14 +2778,24 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
        range of data for extra field sceneFieldCustom(i). Add it if it's
        non-empty. */
     for(std::size_t i = 0; i != _d->sceneFieldNamesTypes.size(); ++i) {
-        const std::size_t begin = extraOffsets[i];
-        const std::size_t end = extraOffsets[i + 1];
+        const SceneFieldType fieldType = _d->sceneFieldNamesTypes[i].second();
+        std::size_t begin, end;
+        if(fieldType == SceneFieldType::Bit) {
+            begin = extraBitOffsets[i];
+            end = extraBitOffsets[i + 1];
+        } else {
+            begin = extraOffsets[i];
+            end = extraOffsets[i + 1];
+        }
         if(begin != end) {
-            const SceneFieldType fieldType = _d->sceneFieldNamesTypes[i].second();
             if(fieldType == SceneFieldType::StringOffset32)
                 arrayAppend(fields, SceneFieldData{sceneFieldCustom(i),
                 SceneMappingType::UnsignedInt, extraObjects.slice(begin, end),
                 extrasStrings.data(), fieldType, extrasUnsignedInt.slice(begin, end)});
+            else if(fieldType == SceneFieldType::Bit)
+                arrayAppend(fields, SceneFieldData{sceneFieldCustom(i),
+                SceneMappingType::UnsignedInt, extraBitObjects.slice(begin, end),
+                extrasBits.slice(begin, end)});
             else arrayAppend(fields, SceneFieldData{sceneFieldCustom(i),
                 SceneMappingType::UnsignedInt, extraObjects.slice(begin, end),
                 fieldType, extrasUnsignedInt.slice(begin, end)});
