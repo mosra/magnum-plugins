@@ -303,8 +303,8 @@ the plugin supports also 3D images and 2D array textures using a proposed
 
 @subsection Trade-GltfSceneConverter-behavior-materials Material export
 
--   Implicitly, only attributes that from glTF material defaults are written to
-    save file on size. Enable the @cb{.ini} keepMaterialDefaults @ce
+-   Implicitly, only attributes that are different from glTF material defaults
+    are written to save file on size. Enable the @cb{.ini} keepMaterialDefaults @ce
     @ref Trade-GltfSceneConverter-configuration "configuration option" to
     write them as well.
 -   Both a separate @ref MaterialAttribute::MetalnessTexture and
