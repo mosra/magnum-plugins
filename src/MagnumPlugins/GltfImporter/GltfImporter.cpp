@@ -2392,30 +2392,33 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
                 if(gltfExtra.value().type() == Utility::JsonToken::Type::Number ||
                    gltfExtra.value().type() == Utility::JsonToken::Type::String) {
                     const UnsignedInt customFieldId = sceneFieldCustom(_d->sceneFieldsForName.at(gltfExtra.key()));
-                    bool success;
+                    bool success = false;
+
+                    /* Leave extraOffsets[0] and [1] at 0 to turn this into an
+                       offset array later */
                     switch(_d->sceneFieldNamesTypes[customFieldId].second()) {
-                        #define _c(type) case SceneFieldType::type:         \
-                            success = !!_d->gltf->parse ## type(gltfExtra.value()); \
-                            break;
+                        /** @todo when composite types are introduced, this has
+                            to `+= sceneFieldComponentCount*sceneFieldVectorCount`
+                            or some such instead */
+                        #define _c(type) case SceneFieldType::type: \
+                            if(_d->gltf->parse ## type(gltfExtra.value())) { \
+                                success = true;                             \
+                                ++extraOffsets[customFieldId + 2];          \
+                            } break;
                         _c(Float)
                         _c(UnsignedInt)
                         _c(Int)
                         #undef _c
-                        case SceneFieldType::StringOffset32: {
-                            const Containers::Optional<Containers::StringView> string = _d->gltf->parseString(gltfExtra.value());
-                            if((success = !!string))
-                                extraStringSize += string->size();
-                        } break;
+                        case SceneFieldType::StringOffset32:
+                            if(const Containers::Optional<Containers::StringView> parsed = _d->gltf->parseString(gltfExtra.value())) {
+                                success = true;
+                                ++extraOffsets[customFieldId + 2];
+                                extraStringSize += parsed->size();
+                            } break;
                         default: CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
                     }
-                    if(!success) {
-                        Warning{} << "Trade::GltfImporter::scene(): invalid node" << i << "extras" << gltfExtra.key() << "property, skipping";
-                        continue;
-                    }
 
-                    /* Leave extraOffsets[0] and [1] at 0 to turn this into
-                       an offset array later. */
-                    ++extraOffsets[customFieldId + 2];
+                    if(!success) Warning{} << "Trade::GltfImporter::scene(): invalid node" << i << "extras" << gltfExtra.key() << "property, skipping";
                 } else Warning{} << "Trade::GltfImporter::scene(): node" << i << "extras" << gltfExtra.key() << "property is" << gltfExtra.value().type() << Debug::nospace << ", skipping";
             } else Warning{} << "Trade::GltfImporter::scene(): node" << i << "extras property is" << gltfExtras->type() << Debug::nospace << ", skipping";
         }
@@ -2652,35 +2655,32 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
                     gltfExtra.value().type() == Utility::JsonToken::Type::String
                 )) {
                     const UnsignedInt customFieldId = sceneFieldCustom(_d->sceneFieldsForName.at(gltfExtra.key()));
+
                     /* Now the offsets are shifted by 1, after this loop
                        they'll be shifted by 0 for the final SceneFieldData
                        population */
-                    UnsignedInt& extraOffset = extraOffsets[customFieldId + 1];
-                    extraObjects[extraOffset] = nodeI;
-                    /* All views are the same memory, so the offset is common
-                       for all */
-                    /** @todo when 64-bit types are introduced, they have to
-                        have a separate offset */
                     switch(_d->sceneFieldNamesTypes[customFieldId].second()) {
-                        #define _c(type) case SceneFieldType::type:         \
+                        #define _c(type) case SceneFieldType::type: {       \
+                            UnsignedInt& extraOffset = extraOffsets[customFieldId + 1]; \
+                            extraObjects[extraOffset] = nodeI;              \
                             extras ## type[extraOffset] = gltfExtra.value().as ## type(); \
-                            break;
+                            ++extraOffset;                                  \
+                        } break;
                         _c(Float)
                         _c(UnsignedInt)
                         _c(Int)
                         #undef _c
                         case SceneFieldType::StringOffset32: {
+                            UnsignedInt& extraOffset = extraOffsets[customFieldId + 1];
+                            extraObjects[extraOffset] = nodeI;
                             const Containers::StringView string = gltfExtra.value().asString();
                             Utility::copy(string, extrasStrings.sliceSize(extraStringOffset, string.size()));
                             extraStringOffset += string.size();
                             extrasUnsignedInt[extraOffset] = extraStringOffset;
+                            ++extraOffset;
                         } break;
                         default: CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
                     }
-                    /** @todo when composite types are introduced, this has to
-                        be `+= sceneFieldComponentCount*sceneFieldVectorCount`
-                        or some such instead */
-                    ++extraOffset;
                 }
             }
         }
