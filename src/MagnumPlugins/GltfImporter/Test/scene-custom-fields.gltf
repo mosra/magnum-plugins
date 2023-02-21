@@ -22,7 +22,6 @@
       "extras": {
         "invalidNullField": null,
         "invalidHeterogeneousArrayField": [3, 17, "hey", 26],
-        "invalidEmptyArrayField": [],
         "invalidObjectField": {}
       }
     },
@@ -77,6 +76,14 @@
       }
     },
     {
+      "name": "empty array values",
+      "note": "since an empty array would add precisely 0 fields to the scene even if we knew its concrete type, it doesn't make sense to warn about it",
+      "extras": {
+        "emptyArray": [],
+        "radius": []
+      }
+    },
+    {
       "note": "to verify the 32-bit precision doesn't get lost along the way",
       "extras": {
         "visible": false,
@@ -104,11 +111,11 @@
   ],
   "scenes": [
     {
-      "nodes": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+      "nodes": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
     },
     {
       "note": "fields get specified in order of node discovery",
-      "nodes": [11, 10]
+      "nodes": [12, 11]
     }
   ]
 }

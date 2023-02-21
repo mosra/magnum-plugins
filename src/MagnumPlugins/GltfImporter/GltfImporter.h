@@ -175,9 +175,9 @@ Import of morph data is not supported at the moment.
     are imported as @ref SceneFieldType::StringOffset32. Homogeneous arrays
     with boolean, numeric and string values are imported as multiple values
     of the same field, same approach is taken if the `extras` property contains
-    the same key multiple times. Other value types, empty and heterogeneous
-    arrays, and values that don't have a consistent type for given key across
-    all nodes are ignored with a warning.
+    the same key multiple times. Other value types, heterogeneous arrays and
+    values that don't have a consistent type for given key across all nodes are
+    ignored with a warning.
 
 @subsection Trade-GltfImporter-behavior-animations Animation and skin import
 

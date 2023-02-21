@@ -3295,6 +3295,7 @@ void GltfImporterTest::sceneCustomFields() {
     SceneField sceneFieldVisible = importer->sceneFieldForName("visible");
     SceneField sceneFieldCategory = importer->sceneFieldForName("category");
     SceneField sceneFieldFlags = importer->sceneFieldForName("flags");
+    SceneField sceneFieldEmptyArray = importer->sceneFieldForName("emptyArray");
     CORRADE_COMPARE(sceneFieldRadius, sceneFieldCustom(1));
     CORRADE_COMPARE(sceneFieldOffset, sceneFieldCustom(2));
     CORRADE_COMPARE(sceneFieldVisible, sceneFieldCustom(4));
@@ -3305,6 +3306,12 @@ void GltfImporterTest::sceneCustomFields() {
     CORRADE_COMPARE(importer->sceneFieldName(sceneFieldCustom(4)), "visible");
     CORRADE_COMPARE(importer->sceneFieldName(sceneFieldCustom(5)), "category");
     CORRADE_COMPARE(importer->sceneFieldName(sceneFieldCustom(6)), "flags");
+
+    {
+        CORRADE_EXPECT_FAIL("Empty arrays are ignored when parsing the extras.");
+        CORRADE_COMPARE(sceneFieldEmptyArray, sceneFieldCustom(7));
+        CORRADE_COMPARE(importer->sceneFieldName(sceneFieldCustom(7)), "emptyArray");
+    }
 
     /* Unlike in materials, case of custom names is not normalized */
     CORRADE_COMPARE(importer->sceneFieldForName("UppercaseName"), sceneFieldCustom(3));
@@ -3338,28 +3345,27 @@ void GltfImporterTest::sceneCustomFields() {
         CORRADE_COMPARE_AS(out.str(), Utility::formatString(
             "Trade::GltfImporter::scene(): node 2 extras property is Utility::JsonToken::Type::Array, skipping\n"
             "Trade::GltfImporter::scene(): node 3 extras invalidNullField property is Utility::JsonToken::Type::Null, skipping\n"
-            "Trade::GltfImporter::scene(): node 3 extras invalidHeterogeneousArrayField property is a heterogeneous or empty array, skipping\n"
-            "Trade::GltfImporter::scene(): node 3 extras invalidEmptyArrayField property is a heterogeneous or empty array, skipping\n"
+            "Trade::GltfImporter::scene(): node 3 extras invalidHeterogeneousArrayField property is a heterogeneous array, skipping\n"
             "Trade::GltfImporter::scene(): node 3 extras invalidObjectField property is Utility::JsonToken::Type::Object, skipping\n"
-            "Utility::Json::parseFloat(): invalid floating-point literal 56.0f at {0}:60:19\n"
+            "Utility::Json::parseFloat(): invalid floating-point literal 56.0f at {0}:59:19\n"
             "Trade::GltfImporter::scene(): invalid node 7 extras radius property, skipping\n"
             /* These fail only because the fields have the type overriden */
-            "Utility::Json::parseInt(): invalid integer literal 23.5 at {0}:61:19\n"
+            "Utility::Json::parseInt(): invalid integer literal 23.5 at {0}:60:19\n"
             "Trade::GltfImporter::scene(): invalid node 7 extras offset property, skipping\n"
-            "Utility::Json::parseString(): expected a string, got Utility::JsonToken::Type::Number at {0}:62:21\n"
+            "Utility::Json::parseString(): expected a string, got Utility::JsonToken::Type::Number at {0}:61:21\n"
             "Trade::GltfImporter::scene(): invalid node 7 extras category property, skipping\n"
-            "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {0}:63:18\n"
+            "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {0}:62:18\n"
             "Trade::GltfImporter::scene(): invalid node 7 extras flags property, skipping\n"
-            "Utility::Json::parseBool(): expected a bool, got Utility::JsonToken::Type::Number at {0}:64:20\n"
+            "Utility::Json::parseBool(): expected a bool, got Utility::JsonToken::Type::Number at {0}:63:20\n"
             "Trade::GltfImporter::scene(): invalid node 7 extras visible property, skipping\n"
-            "Utility::Json::parseInt(): expected a number, got Utility::JsonToken::Type::String at {0}:65:19\n"
+            "Utility::Json::parseInt(): expected a number, got Utility::JsonToken::Type::String at {0}:64:19\n"
             "Trade::GltfImporter::scene(): invalid node 7 extras offset property, skipping\n"
-            "Utility::Json::parseFloatArray(): expected a number, got Utility::JsonToken::Type::String at {0}:72:20\n"
+            "Utility::Json::parseFloatArray(): expected a number, got Utility::JsonToken::Type::String at {0}:71:20\n"
             "Trade::GltfImporter::scene(): invalid node 8 extras radius array property, skipping\n"
-            "Trade::GltfImporter::scene(): node 8 extras category property is a heterogeneous or empty array, skipping\n"
-            "Utility::Json::parseIntArray(): invalid integer literal 3.14 at {0}:74:20\n"
+            "Trade::GltfImporter::scene(): node 8 extras category property is a heterogeneous array, skipping\n"
+            "Utility::Json::parseIntArray(): invalid integer literal 3.14 at {0}:73:20\n"
             "Trade::GltfImporter::scene(): invalid node 8 extras offset array property, skipping\n"
-            "Utility::Json::parseUnsignedIntArray(): too large integer literal -15 at {0}:75:19\n"
+            "Utility::Json::parseUnsignedIntArray(): too large integer literal -15 at {0}:74:19\n"
             "Trade::GltfImporter::scene(): invalid node 8 extras flags array property, skipping\n"
             "Trade::GltfImporter::scene(): node 8 extras property is an array of Utility::JsonToken::Type::Array, skipping\n", filename),
             TestSuite::Compare::String);
@@ -3375,7 +3381,7 @@ void GltfImporterTest::sceneCustomFields() {
         CORRADE_VERIFY(scene->hasField(sceneFieldRadius));
         CORRADE_COMPARE(scene->fieldType(sceneFieldRadius), SceneFieldType::Float);
         CORRADE_COMPARE_AS(scene->mapping<UnsignedInt>(sceneFieldRadius),
-            Containers::arrayView({5u, 5u, 6u, 6u, 6u, 6u, 10u}),
+            Containers::arrayView({5u, 5u, 6u, 6u, 6u, 6u, 11u}),
             TestSuite::Compare::Container);
         CORRADE_COMPARE_AS(scene->field<Float>(sceneFieldRadius), Containers::arrayView({
             5.25f, 3.5f, 15.3f, 56.2f, -17.22f, 0.5f, 0.5f
@@ -3384,7 +3390,7 @@ void GltfImporterTest::sceneCustomFields() {
         CORRADE_VERIFY(scene->hasField(sceneFieldOffset));
         CORRADE_COMPARE(scene->fieldType(sceneFieldOffset), SceneFieldType::Int);
         CORRADE_COMPARE_AS(scene->mapping<UnsignedInt>(sceneFieldOffset),
-            Containers::arrayView({5u, 5u, 6u, 6u, 9u, 9u, 9u}),
+            Containers::arrayView({5u, 5u, 6u, 6u, 10u, 10u, 10u}),
             TestSuite::Compare::Container);
         CORRADE_COMPARE_AS(scene->field<Int>(sceneFieldOffset), Containers::arrayView({
             /* W.T.F., C, why do I need a cast for this?! */
@@ -3394,7 +3400,7 @@ void GltfImporterTest::sceneCustomFields() {
         CORRADE_VERIFY(scene->hasField(sceneFieldVisible));
         CORRADE_COMPARE(scene->fieldType(sceneFieldVisible), SceneFieldType::Bit);
         CORRADE_COMPARE_AS(scene->mapping<UnsignedInt>(sceneFieldVisible),
-            Containers::arrayView({5u, 6u, 6u, 6u, 6u, 9u, 10u}),
+            Containers::arrayView({5u, 6u, 6u, 6u, 6u, 10u, 11u}),
             TestSuite::Compare::Container);
         CORRADE_COMPARE_AS(scene->fieldBits(sceneFieldVisible), Containers::stridedArrayView({
             true, true, false, false, true, false, true
@@ -3403,7 +3409,7 @@ void GltfImporterTest::sceneCustomFields() {
         CORRADE_VERIFY(scene->hasField(sceneFieldCategory));
         CORRADE_COMPARE(scene->fieldType(sceneFieldCategory), SceneFieldType::StringOffset32);
         CORRADE_COMPARE_AS(scene->mapping<UnsignedInt>(sceneFieldCategory),
-            Containers::arrayView({5u, 5u, 6u, 6u, 10u}),
+            Containers::arrayView({5u, 5u, 6u, 6u, 11u}),
             TestSuite::Compare::Container);
         CORRADE_COMPARE_AS(scene->fieldStrings(sceneFieldCategory), Containers::arrayView({
             "duplicated"_s, "very"_s, "hello"_s, "world"_s, "noteless"_s
@@ -3428,7 +3434,7 @@ void GltfImporterTest::sceneCustomFields() {
         CORRADE_VERIFY(scene->hasField(sceneFieldRadius));
         CORRADE_COMPARE(scene->fieldType(sceneFieldRadius), SceneFieldType::Float);
         CORRADE_COMPARE_AS(scene->mapping<UnsignedInt>(sceneFieldRadius),
-            Containers::arrayView({11u, 10u}),
+            Containers::arrayView({12u, 11u}),
             TestSuite::Compare::Container);
         CORRADE_COMPARE_AS(scene->field<Float>(sceneFieldRadius),
             Containers::arrayView({5.5f, 0.5f}),
@@ -3437,7 +3443,7 @@ void GltfImporterTest::sceneCustomFields() {
         CORRADE_VERIFY(scene->hasField(sceneFieldFlags));
         CORRADE_COMPARE(scene->fieldType(sceneFieldFlags), SceneFieldType::UnsignedInt);
         CORRADE_COMPARE_AS(scene->mapping<UnsignedInt>(sceneFieldFlags),
-            Containers::arrayView({11u, 11u, 11u}),
+            Containers::arrayView({12u, 12u, 12u}),
             TestSuite::Compare::Container);
         CORRADE_COMPARE_AS(scene->field<UnsignedInt>(sceneFieldFlags),
             Containers::arrayView({4294967295u, 0u, 4294967295u}),
@@ -3446,7 +3452,7 @@ void GltfImporterTest::sceneCustomFields() {
         CORRADE_VERIFY(scene->hasField(sceneFieldVisible));
         CORRADE_COMPARE(scene->fieldType(sceneFieldVisible), SceneFieldType::Bit);
         CORRADE_COMPARE_AS(scene->mapping<UnsignedInt>(sceneFieldVisible),
-            Containers::arrayView({11u, 10u}),
+            Containers::arrayView({12u, 11u}),
             TestSuite::Compare::Container);
         CORRADE_COMPARE_AS(scene->fieldBits(sceneFieldVisible), Containers::stridedArrayView({
             false, true
@@ -3455,7 +3461,7 @@ void GltfImporterTest::sceneCustomFields() {
         CORRADE_VERIFY(scene->hasField(sceneFieldCategory));
         CORRADE_COMPARE(scene->fieldType(sceneFieldCategory), SceneFieldType::StringOffset32);
         CORRADE_COMPARE_AS(scene->mapping<UnsignedInt>(sceneFieldCategory),
-            Containers::arrayView({11u, 10u}),
+            Containers::arrayView({12u, 11u}),
             TestSuite::Compare::Container);
         CORRADE_COMPARE_AS(scene->fieldStrings(sceneFieldCategory), Containers::arrayView({
             "positive"_s, "noteless"_s

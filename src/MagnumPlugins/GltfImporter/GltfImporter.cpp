@@ -1099,6 +1099,12 @@ void GltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags da
                about a non-homogeneous type will be printed in doScene(). */
             Utility::JsonToken::Type tokenType;
             if(gltfExtra.value().type() == Utility::JsonToken::Type::Array) {
+                /** @todo this skips also empty arrays, which then don't have
+                    the key registered among custom scene fields which may
+                    break workflows that rely on it being present even if all
+                    uses of it are an empty array -- add a placeholder with
+                    "unknown type" instead and set it once a non-empty array or
+                    a non-array value is found */
                 if(const Containers::Optional<Utility::JsonToken::Type> commonType = gltfExtra.value().commonArrayType())
                     tokenType = *commonType;
                 else continue;
@@ -2449,9 +2455,14 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
 
                 /* Arrays, imported as multiple scalar fields */
                 } else if(gltfExtra.value().type() == Utility::JsonToken::Type::Array) {
+                    /* Skip empty arrays -- those don't add anything to the
+                       output anyway so printing a warning message for them is
+                       counterproductive */
+                    if(gltfExtra.value().childCount() == 0)
+                        continue;
                     const Containers::Optional<Utility::JsonToken::Type> arrayType = gltfExtra.value().commonArrayType();
                     if(!arrayType) {
-                        Warning{} << "Trade::GltfImporter::scene(): node" << i << "extras" << gltfExtra.key() << "property is a heterogeneous or empty array, skipping";
+                        Warning{} << "Trade::GltfImporter::scene(): node" << i << "extras" << gltfExtra.key() << "property is a heterogeneous array, skipping";
                         continue;
                     }
                     if(*arrayType != Utility::JsonToken::Type::Bool &&
