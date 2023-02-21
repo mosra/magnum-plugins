@@ -39,6 +39,7 @@
 #include <Corrade/Containers/StaticArray.h>
 #include <Corrade/Containers/StridedBitArrayView.h>
 #include <Corrade/Containers/String.h>
+#include <Corrade/Containers/StringIterable.h>
 #include <Corrade/Containers/StringStlHash.h>
 #include <Corrade/Containers/StringView.h>
 #include <Corrade/Containers/Triple.h>
@@ -1093,12 +1094,22 @@ void GltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags da
 
         const Utility::ConfigurationGroup* customSceneFieldTypeConfiguration = configuration().group("customSceneFieldTypes");
         for(const Utility::JsonObjectItem gltfExtra: gltfExtras->asObject()) {
-            /* Skip everything that's not a bool, number or a string for now. A
-               warning about a skipped extra due to unsupported type will be
-               printed in doScene(). */
-            if(gltfExtra.value().type() != Utility::JsonToken::Type::Bool &&
-               gltfExtra.value().type() != Utility::JsonToken::Type::Number &&
-               gltfExtra.value().type() != Utility::JsonToken::Type::String)
+            /* Get token type. If the extra field is an array, we can parse it
+               if all items are of a common type. If not, skip it -- a warning
+               about a non-homogeneous type will be printed in doScene(). */
+            Utility::JsonToken::Type tokenType;
+            if(gltfExtra.value().type() == Utility::JsonToken::Type::Array) {
+                if(const Containers::Optional<Utility::JsonToken::Type> commonType = gltfExtra.value().commonArrayType())
+                    tokenType = *commonType;
+                else continue;
+            } else tokenType = gltfExtra.value().type();
+
+            /* For the actual type or common array type skip everything that's
+               not a bool, number or a string. A warning about a skipped extra
+               due to unsupported type will be printed in doScene(). */
+            if(tokenType != Utility::JsonToken::Type::Bool &&
+               tokenType != Utility::JsonToken::Type::Number &&
+               tokenType != Utility::JsonToken::Type::String)
                 continue;
 
             if(_d->sceneFieldsForName.emplace(gltfExtra.key(), sceneFieldCustom(_d->sceneFieldNamesTypes.size())).second) {
@@ -1109,7 +1120,7 @@ void GltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags da
                     option at all */
                 const Containers::StringView typeString = customSceneFieldTypeConfiguration ? customSceneFieldTypeConfiguration->value<Containers::StringView>(gltfExtra.key()) : ""_s;
                 SceneFieldType type;
-                if(!typeString) switch(gltfExtra.value().type()) {
+                if(!typeString) switch(tokenType) {
                     case Utility::JsonToken::Type::Bool:
                         type = SceneFieldType::Bit;
                         break;
@@ -2398,6 +2409,7 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
            import */
         if(const Utility::JsonToken* const gltfExtras = gltfNode.find("extras"_s)) {
             if(gltfExtras->type() == Utility::JsonToken::Type::Object) for(const Utility::JsonObjectItem gltfExtra: gltfExtras->asObject()) {
+                /* Scalars */
                 if(gltfExtra.value().type() == Utility::JsonToken::Type::Bool ||
                    gltfExtra.value().type() == Utility::JsonToken::Type::Number ||
                    gltfExtra.value().type() == Utility::JsonToken::Type::String) {
@@ -2434,6 +2446,52 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
                     }
 
                     if(!success) Warning{} << "Trade::GltfImporter::scene(): invalid node" << i << "extras" << gltfExtra.key() << "property, skipping";
+
+                /* Arrays, imported as multiple scalar fields */
+                } else if(gltfExtra.value().type() == Utility::JsonToken::Type::Array) {
+                    const Containers::Optional<Utility::JsonToken::Type> arrayType = gltfExtra.value().commonArrayType();
+                    if(!arrayType) {
+                        Warning{} << "Trade::GltfImporter::scene(): node" << i << "extras" << gltfExtra.key() << "property is a heterogeneous or empty array, skipping";
+                        continue;
+                    }
+                    if(*arrayType != Utility::JsonToken::Type::Bool &&
+                       *arrayType != Utility::JsonToken::Type::Number &&
+                       *arrayType != Utility::JsonToken::Type::String) {
+                        Warning{} << "Trade::GltfImporter::scene(): node" << i << "extras property is an array of" << *arrayType << Debug::nospace << ", skipping";
+                        continue;
+                    }
+
+                    const UnsignedInt customFieldId = sceneFieldCustom(_d->sceneFieldsForName.at(gltfExtra.key()));
+                    bool success = false;
+
+                    /* Leave extraOffsets[0] and [1] at 0 to turn this into an
+                       offset array later */
+                    switch(_d->sceneFieldNamesTypes[customFieldId].second()) {
+                        case SceneFieldType::Bit:
+                            if(const Containers::Optional<Containers::StridedBitArrayView1D> parsed = _d->gltf->parseBitArray(gltfExtra.value())) {
+                                success = true;
+                                extraBitOffsets[customFieldId + 2] += parsed->size();
+                            } break;
+                        #define _c(type) case SceneFieldType::type: \
+                            if(const Containers::Optional<Containers::StridedArrayView1D<const type>> parsed = _d->gltf->parse ## type ## Array(gltfExtra.value())) { \
+                                success = true;                             \
+                                extraOffsets[customFieldId + 2] += parsed->size(); \
+                            } break;
+                        _c(Float)
+                        _c(UnsignedInt)
+                        _c(Int)
+                        #undef _c
+                        case SceneFieldType::StringOffset32:
+                            if(const Containers::Optional<Containers::StringIterable> parsed = _d->gltf->parseStringArray(gltfExtra.value())) {
+                                success = true;
+                                extraOffsets[customFieldId + 2] += parsed->size();
+                                for(Containers::StringView i: *parsed)
+                                    extraStringSize += i.size();
+                            } break;
+                        default: CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+                    }
+
+                    if(!success) Warning{} << "Trade::GltfImporter::scene(): invalid node" << i << "extras" << gltfExtra.key() << "array property, skipping";
                 } else Warning{} << "Trade::GltfImporter::scene(): node" << i << "extras" << gltfExtra.key() << "property is" << gltfExtra.value().type() << Debug::nospace << ", skipping";
             } else Warning{} << "Trade::GltfImporter::scene(): node" << i << "extras property is" << gltfExtras->type() << Debug::nospace << ", skipping";
         }
@@ -2676,6 +2734,63 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
            an invalid literal). */
         if(const Utility::JsonToken* const gltfExtras = gltfNode.find("extras"_s)) {
             if(gltfExtras->type() == Utility::JsonToken::Type::Object) for(const Utility::JsonObjectItem gltfExtra: gltfExtras->asObject()) {
+                if(gltfExtra.value().type() == Utility::JsonToken::Type::Array) {
+                    const Containers::Optional<Utility::JsonToken::Type> arrayType = gltfExtra.value().commonArrayType();
+                    /* Skip what caused a parse error above. Since we didn't
+                       bother parsing arrays of types other than bool, number
+                       or string, this will skip them as well. */
+                    if(!arrayType || !gltfExtra.value().commonParsedArrayType())
+                        continue;
+                    CORRADE_INTERNAL_ASSERT(
+                        *arrayType == Utility::JsonToken::Type::Bool ||
+                        *arrayType == Utility::JsonToken::Type::Number ||
+                        *arrayType == Utility::JsonToken::Type::String);
+
+                    const UnsignedInt customFieldId = sceneFieldCustom(_d->sceneFieldsForName.at(gltfExtra.key()));
+
+                    /* Now the offsets are shifted by 1, after this loop
+                       they'll be shifted by 0 for the final SceneFieldData
+                       population. All these are done with a plain for loop
+                       instead of Utility::copy() because we also need to fill
+                       in the node index. */
+                    switch(_d->sceneFieldNamesTypes[customFieldId].second()) {
+                        case SceneFieldType::Bit: {
+                            UnsignedInt& extraBitOffset = extraBitOffsets[customFieldId + 1];
+                            const Containers::StridedBitArrayView1D array = gltfExtra.value().asBitArray();
+                            for(std::size_t i = 0; i != array.size(); ++i) {
+                                extraBitObjects[extraBitOffset] = nodeI;
+                                extrasBits.set(extraBitOffset, array[i]);
+                                ++extraBitOffset;
+                            }
+                        } break;
+                        #define _c(type) case SceneFieldType::type: {       \
+                            UnsignedInt& extraOffset = extraOffsets[customFieldId + 1]; \
+                            const Containers::StridedArrayView1D<const type> array = gltfExtra.value().as ## type ## Array(); \
+                            for(std::size_t i = 0; i != array.size(); ++i) { \
+                                extraObjects[extraOffset] = nodeI;          \
+                                extras ## type[extraOffset] = array[i];     \
+                                ++extraOffset;                              \
+                            }                                               \
+                        } break;
+                        _c(Float)
+                        _c(UnsignedInt)
+                        _c(Int)
+                        #undef _c
+                        case SceneFieldType::StringOffset32: {
+                            UnsignedInt& extraOffset = extraOffsets[customFieldId + 1];
+                            const Containers::StringIterable array = gltfExtra.value().asStringArray();
+                            for(std::size_t i = 0; i != array.size(); ++i) {
+                                extraObjects[extraOffset] = nodeI;
+                                Utility::copy(array[i], extrasStrings.sliceSize(extraStringOffset, array[i].size()));
+                                extraStringOffset += array[i].size();
+                                extrasUnsignedInt[extraOffset] = extraStringOffset;
+                                ++extraOffset;
+                            }
+                        } break;
+                        default: CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+                    }
+                }
+
                 if(gltfExtra.value().isParsed() && (
                     gltfExtra.value().type() == Utility::JsonToken::Type::Bool ||
                     gltfExtra.value().type() == Utility::JsonToken::Type::Number ||

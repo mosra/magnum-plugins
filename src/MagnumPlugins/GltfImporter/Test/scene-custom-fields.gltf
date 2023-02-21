@@ -21,7 +21,8 @@
       "note": "none of these will have their names registered",
       "extras": {
         "invalidNullField": null,
-        "invalidArrayField": [],
+        "invalidHeterogeneousArrayField": [3, 17, "hey", 26],
+        "invalidEmptyArrayField": [],
         "invalidObjectField": {}
       }
     },
@@ -43,6 +44,16 @@
       }
     },
     {
+      "name": "array values",
+      "note": "arrays are then treated as multiple values of the same name so having the same key once as an array and once as a number is fine",
+      "extras": {
+          "radius": [15.3, 56.2, -17.22, 0.5],
+          "offset": [226, -1767],
+          "category": ["hello", "world"],
+          "visible": [true, false, false, true]
+      }
+    },
+    {
       "name": "invalid values",
       "note": "the offset and flags fail only because they're set to be parsed as Int and UnsignedInt, respectively; category is then supposed to be a string, visible a bool and offset a number",
       "extras": {
@@ -55,10 +66,22 @@
       }
     },
     {
+      "name": "invalid array values",
+      "note": "similarly to above, the offset and flags fail only because they're set to be parsed as Int and UnsignedInt; category then a string and visible a bool -- in particular, it doesn't matter that they are arrays",
+      "extras": {
+        "radius": ["this", "isn't", "a float"],
+        "category": ["not", false, "homogeneous", null, "type"],
+        "offset": [3.14],
+        "flags": [-15, 33],
+        "visible": [[], [], []]
+      }
+    },
+    {
       "note": "to verify the 32-bit precision doesn't get lost along the way",
       "extras": {
         "visible": false,
-        "offset": -2147483648
+        "offset": -2147483648,
+        "offset": [2147483647, -2147483648]
       }
     },
     {
@@ -74,17 +97,18 @@
         "radius": 5.5,
         "visible": false,
         "category": "positive",
-        "flags": 4294967295
+        "flags": 4294967295,
+        "flags": [0, 4294967295]
       }
     }
   ],
   "scenes": [
     {
-      "nodes": [1, 2, 3, 4, 5, 6, 7, 8]
+      "nodes": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
     },
     {
       "note": "fields get specified in order of node discovery",
-      "nodes": [9, 8]
+      "nodes": [11, 10]
     }
   ]
 }
