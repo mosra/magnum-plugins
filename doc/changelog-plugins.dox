@@ -183,6 +183,9 @@ namespace Magnum {
     [mosra/magnum#523](https://github.com/mosra/magnum/issues/523).
 -   `UseEmscripten` is no longer implicitly included on Emscripten as it's not
     needed for anything (see [mosra/magnum#490](https://github.com/mosra/magnum/issues/490))
+-   It's now possible to use `<PackageName>_ROOT` to point to install locations
+    of dependencies such as Corrade on CMake 3.12+, in addition to putting them
+    all together inside `CMAKE_PREFIX_PATH`. See also [mosra/magnum#614](https://github.com/mosra/magnum/issues/614).
 -   On CMake 3.16 and newer, `FindMagnumPlugins.cmake` can provide additional
     details if some component is not found.
 -   `FindAssimp.cmake` now attempts to use installed Assimp CMake config files,
