@@ -166,12 +166,19 @@ Containers::Optional<Containers::Array<char>> decodeBase64(const char* const err
         out[iOut + 2] = (n >>  0) & 0xff;
     }
 
+    /* Without the CORRADE_ASSUME() GCC 12 says "warning: ‘n’ may be used
+       uninitialized" with the |= expression below. The pad2 variable is only
+       non-zero if pad1 is as well, but the compiler can't figure that out on
+       its own, gotta help it. */
     UnsignedInt n;
     if(pad1) n =
         UnsignedInt(Base64Values[in[sizeFullBlocks + 0]]) << 18 |
         UnsignedInt(Base64Values[in[sizeFullBlocks + 1]]) << 12;
-    if(pad2) n |=
+    if(pad2) {
+        CORRADE_ASSUME(pad1);
+        n |=
         UnsignedInt(Base64Values[in[sizeFullBlocks + 2]]) <<  6;
+    }
     if CORRADE_UNLIKELY(pad1 && (n & 0xff000000u)) {
         Error{} << errorPrefix << "invalid Base64 padding bytes" << string.slice(sizeFullBlocks, sizeFullBlocks + 1 + pad1 + pad2);
         return {};
