@@ -1125,8 +1125,11 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const MeshData& mesh, const
             return {};
     }
 
-    /* Check and convert mesh index type */
-    Int gltfIndexType;
+    /* Check and convert mesh index type. Have to zero-initialize even though
+       it's *clearly* set in all cases below because otherwise GCC 12 complains
+       that "warning: ‘gltfIndexType’ may be used uninitialized". Unhelpful
+       time-wasting warnings yet again. */
+    Int gltfIndexType{};
     if(mesh.isIndexed()) {
         if(!mesh.indices().isContiguous()) {
             Error{} << "Trade::GltfSceneConverter::add(): non-contiguous mesh index arrays are not supported";
