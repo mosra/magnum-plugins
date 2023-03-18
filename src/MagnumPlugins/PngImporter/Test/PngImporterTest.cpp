@@ -311,10 +311,10 @@ void PngImporterTest::rgb16() {
     CORRADE_COMPARE(image->size(), Vector2i(2, 3));
     CORRADE_COMPARE(image->format(), PixelFormat::RGB16Unorm);
 
-    CORRADE_COMPARE_AS(Containers::arrayCast<const UnsignedShort>(image->pixels().asContiguous()), Containers::arrayView<UnsignedShort>({
-        1, 2, 3, 2, 3, 4,
-        3, 4, 5, 4, 5, 6,
-        5, 6, 7, 6, 7, 8
+    CORRADE_COMPARE_AS(image->pixels<Vector3us>().asContiguous(), Containers::arrayView<Vector3us>({
+        {1, 2, 3}, {2, 3, 4},
+        {3, 4, 5}, {4, 5, 6},
+        {5, 6, 7}, {6, 7, 8}
     }), TestSuite::Compare::Container);
 }
 
@@ -344,7 +344,7 @@ void PngImporterTest::rgba() {
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     {
-        CORRADE_EXPECT_FAIL_IF(testCaseInstanceId() == 1,
+        CORRADE_EXPECT_FAIL_IF(Containers::StringView{data.name}.contains("CgBI"),
             "Stock libPNG can't handle CgBI.");
         CORRADE_VERIFY(image);
     }
