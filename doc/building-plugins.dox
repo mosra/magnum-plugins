@@ -416,6 +416,8 @@ By default no plugins are built and you need to select them manually:
 -   `MAGNUM_WITH_SPIRVTOOLSSHADERCONVERTER` --- Build the
     @ref ShaderTools::SpirvToolsConverter "SpirvToolsShaderConverter" plugin.
     Depends on [SPIRV-Tools](https://github.com/KhronosGroup/SPIRV-Tools).
+-   `MAGNUM_WITH_SPNGIMPORTER` --- Build the @relativeref{Trade,SpngImporter}
+    plugin. Depends on [libspng](https://libspng.org).
 -   `MAGNUM_WITH_STANFORDIMPORTER` --- Build the
     @ref Trade::StanfordImporter "StanfordImporter" plugin.
 -   `MAGNUM_WITH_STANFORDSCENECONVERTER` --- Build the

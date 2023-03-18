@@ -187,6 +187,27 @@ commands:
             -G Ninja
           ninja install
 
+  install-libspng:
+    steps:
+    - run:
+        name: Install libspng
+        # 0.7.3 suffers from https://github.com/randy408/libspng/pull/245
+        # which makes the static-only build impossible, using 0.7.2 until a new
+        # version is tagged.
+        command: |
+          export LIBSPNG_VERSION=0.7.2
+          mkdir -p $HOME/libspng && cd $HOME/libspng
+          wget -nc --no-check-certificate https://github.com/randy408/libspng/archive/v$LIBSPNG_VERSION.tar.gz
+          tar --strip-components=1 -xzf v$LIBSPNG_VERSION.tar.gz
+          mkdir build && cd build
+          cmake .. -DCMAKE_BUILD_TYPE=Debug \
+            -DSPNG_SHARED=OFF \
+            -DBUILD_EXAMPLES=OFF \
+            -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
+            -DCMAKE_INSTALL_PREFIX=$HOME/deps \
+            -G Ninja
+          ninja install
+
   install-basis:
     steps:
     - run:
@@ -289,6 +310,7 @@ jobs:
         version: "3.4.3"
     - install-basis
     - install-meshoptimizer
+    - install-libspng
     # In repos only since 20.04, but even then would probably hit the GCC 4.8 /
     # 5 ABI break in std::string, so keeping our own build
     - install-glslang:
@@ -315,6 +337,7 @@ jobs:
         extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng-dev libdevil-dev libharfbuzz-dev libassimp-dev libzstd-dev glslang-dev libopenexr-dev libwebp-dev spirv-tools
     - install-basis
     - install-meshoptimizer
+    - install-libspng
     - build:
         script: unix-desktop.sh
     - lcov
@@ -337,6 +360,7 @@ jobs:
         version: "3.4.3"
     - install-basis
     - install-meshoptimizer
+    - install-libspng
     # These two are in repos only since 20.04, but even then would probably hit
     # the GCC 4.8 / 5 ABI break in std::string, so keeping our own builds
     - install-glslang:
@@ -367,6 +391,7 @@ jobs:
         version: "3.4.3"
     - install-basis
     - install-meshoptimizer
+    - install-libspng
     # These two are in repos only since 20.04, but even then would probably hit
     # the GCC 4.8 / 5 ABI break in std::string, so keeping our own builds
     - install-glslang:
@@ -396,6 +421,7 @@ jobs:
         version: "3.4.3"
     - install-basis
     - install-meshoptimizer
+    - install-libspng
     # These two are in repos only since 20.04
     - install-glslang:
         build: ubuntu-16.04-gcc5
@@ -428,6 +454,7 @@ jobs:
         version: "3.4.3"
     - install-basis
     - install-meshoptimizer
+    - install-libspng
     # These two are in repos only since 20.04
     - install-glslang:
         build: ubuntu-16.04-gcc5
@@ -443,7 +470,7 @@ jobs:
       CONFIGURATION: Debug
     steps:
     - install-base-macos:
-        extra: faad2 harfbuzz assimp devil spirv-tools glslang openexr webp wget zstd
+        extra: faad2 harfbuzz assimp devil spirv-tools glslang openexr webp wget zstd libspng
     - install-basis
     - install-meshoptimizer
     - build:
@@ -459,7 +486,7 @@ jobs:
       CONFIGURATION: Debug
     steps:
     - install-base-macos:
-        extra: faad2 harfbuzz assimp devil spirv-tools glslang openexr webp wget zstd
+        extra: faad2 harfbuzz assimp devil spirv-tools glslang openexr webp wget zstd libspng
     - install-basis
     - install-meshoptimizer
     - build:

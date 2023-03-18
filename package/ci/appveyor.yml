@@ -153,6 +153,10 @@ install:
 - IF "%TARGET%" == "desktop" IF "%COMPILER:~0,4%" == "msvc" appveyor DownloadFile https://ci.magnum.graphics/meshoptimizer-0.18-windows-2019-debug.zip && 7z x meshoptimizer-0.18-windows-2019-debug.zip -o%APPVEYOR_BUILD_FOLDER%\deps
 - IF "%TARGET%" == "desktop" IF "%COMPILER%" == "mingw" appveyor DownloadFile https://ci.magnum.graphics/meshoptimizer-0.18-windows-mingw.zip && 7z x meshoptimizer-0.18-windows-mingw.zip -o%APPVEYOR_BUILD_FOLDER%\deps
 
+# libspng for MSVC
+- IF "%TARGET%" == "desktop" IF "%COMPILER:~0,4%" == "msvc" appveyor DownloadFile https://ci.magnum.graphics/libspng-0.7.2-windows-2019.zip && 7z x libspng-0.7.2-windows-2019.zip -o%APPVEYOR_BUILD_FOLDER%\deps
+- IF "%TARGET%" == "desktop" IF "%COMPILER%" == "mingw" appveyor DownloadFile https://ci.magnum.graphics/libspng-0.7.2-windows-mingw.zip && 7z x libspng-0.7.2-windows-mingw.zip -o%APPVEYOR_BUILD_FOLDER%\deps
+
 build_script:
 - IF NOT "%BUILD_STATIC%" == "ON" set BUILD_STATIC=OFF
 - IF "%TARGET%" == "desktop" IF "%COMPILER:~0,4%" == "msvc" call package\ci\appveyor-desktop.bat

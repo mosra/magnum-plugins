@@ -133,6 +133,10 @@
  * @brief Plugin @ref Magnum::ShaderTools::SpirvToolsConverter
  * @m_since_latest_{plugins}
  */
+/** @dir MagnumPlugins/SpngImporter
+ * @brief Plugin @ref Magnum::Trade::SpngImporter
+ * @m_since_latest_{plugins}
+ */
 /** @dir MagnumPlugins/StanfordImporter
  * @brief Plugin @ref Magnum::Trade::StanfordImporter
  */

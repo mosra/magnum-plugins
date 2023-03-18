@@ -169,6 +169,10 @@ if(MAGNUM_WITH_SPIRVTOOLSSHADERCONVERTER)
     add_subdirectory(SpirvToolsShaderConverter)
 endif()
 
+if(MAGNUM_WITH_SPNGIMPORTER)
+    add_subdirectory(SpngImporter)
+endif()
+
 if(MAGNUM_WITH_STANFORDIMPORTER)
     add_subdirectory(StanfordImporter)
 endif()
