@@ -55,10 +55,10 @@ namespace Magnum { namespace Trade {
 /**
 @brief PNG importer plugin
 
-Supports Portable Network Graphics (`*.png`) grayscale, grayscale+alpha, RGB or
-RGBA images with 8 and 16 bits per channel. Palleted images and images with
-transparency mask are automatically converted to G(A) / RGB(A). You can use
-@ref PngImageConverter to encode images into this format.
+Supports Portable Network Graphics (`*.png`) grayscale, grayscale+alpha, RGB
+and RGBA images with 1, 2, 4, 8 and 16 bits per channel. Palleted images and
+images with transparency mask are automatically converted to G(A) / RGB(A). You
+can use @ref PngImageConverter to encode images into this format.
 
 @m_class{m-block m-success}
 
