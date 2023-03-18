@@ -117,9 +117,9 @@ Containers::Optional<ImageData2D> SpngImporter::doImage2D(UnsignedInt, UnsignedI
     }
 
     /* Decide on the pixel format */
-    spng_format spngFormat;
-    PixelFormat format;
-    std::size_t pixelSize;
+    spng_format spngFormat{};
+    PixelFormat format{};
+    std::size_t pixelSize{};
     /* 1, 2, 4 and 8 bits, expanded to 8 */
     if(ihdr.bit_depth <= 8) switch(colorType) {
         case SPNG_COLOR_TYPE_GRAYSCALE:
@@ -190,6 +190,10 @@ Containers::Optional<ImageData2D> SpngImporter::doImage2D(UnsignedInt, UnsignedI
         }
     /* There isn't any other bit depth */
     } else CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+
+    /* Not using default cases in the above switches to get notified about new
+       enum values, nevertheless should check that they actually got written */
+    CORRADE_INTERNAL_ASSERT(spngFormat && UnsignedInt(format) && pixelSize);
 
     /* Allocate output data with rows aligned to 4 bytes */
     const std::size_t stride = 4*((pixelSize*ihdr.width + 3)/4);
