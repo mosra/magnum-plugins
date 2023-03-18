@@ -18,6 +18,7 @@ class MagnumPlugins < Formula
   # NOBODY EVER USES, and cairo itself depends on a ton of other stuff.
   depends_on "harfbuzz" => :optional
   depends_on "libpng" => :recommended
+  depends_on "libspng" => :recommended
   depends_on "jpeg" => :recommended
   depends_on "openexr" => :recommended
   depends_on "spirv-tools" => :recommended
@@ -99,6 +100,7 @@ class MagnumPlugins < Formula
         "-D#{option_prefix}WITH_PNGIMPORTER=#{(build.with? 'libpng') ? 'ON' : 'OFF'}",
         "-D#{option_prefix}WITH_PRIMITIVEIMPORTER=ON",
         "-DMAGNUM_WITH_SPIRVTOOLSSHADERCONVERTER=#{(build.with? 'spirv-tools') ? 'ON' : 'OFF'}",
+        "-D#{option_prefix}WITH_SPNGIMPORTER=#{(build.with? 'libspng') ? 'ON' : 'OFF'}",
         "-D#{option_prefix}WITH_STANFORDIMPORTER=ON",
         "-D#{option_prefix}WITH_STANFORDSCENECONVERTER=ON",
         "-DMAGNUM_WITH_STBDXTIMAGECONVERTER=ON",
