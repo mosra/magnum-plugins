@@ -67,7 +67,7 @@ images with transparency mask are automatically converted to G(A) / RGB(A).
 This plugin provides the `PngImporter` plugin and can be considerably faster
 than @ref PngImporter, especially when combined with [zlib-ng](https://github.com/zlib-ng/zlib-ng).
 
-@m_class{m-block m-primary}
+@m_class{m-block m-success}
 
 @thirdparty This plugin makes use of the
     [libspng](https://libspng.org) library by [\@randy408](https://github.com/randy408),

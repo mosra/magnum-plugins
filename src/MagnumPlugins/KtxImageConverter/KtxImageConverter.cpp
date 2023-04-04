@@ -691,7 +691,7 @@ template<UnsignedInt dimensions, template<UnsignedInt, typename> class View> Con
     const auto swizzle = configuration.value<Containers::StringView>("swizzle");
     const auto writerName = configuration.value<Containers::StringView>("writerName");
 
-    /* Cube map and array images don't have the last demension included
+    /* Cube map and array images don't have the last dimension included
        in the orientation string */
     const ImageFlags3D flags = ImageFlag3D(UnsignedShort(imageLevels[0].flags()));
     const UnsignedInt orientationDimensions = dimensions - (flags & (ImageFlag3D::Array|ImageFlag3D::CubeMap) ? 1 : 0);
