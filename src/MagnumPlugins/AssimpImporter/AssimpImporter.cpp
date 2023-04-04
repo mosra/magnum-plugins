@@ -2046,7 +2046,7 @@ Containers::Optional<AnimationData> AssimpImporter::doAnimation(UnsignedInt id) 
        the correct track count and data array size up front, so determine this
        and remember it for the actual loop that extracts the tracks. BigEnumSet
        because EnumSet requires binary-exclusive enum values. */
-    typedef Containers::BigEnumSet<AnimationTrackTargetType> TargetTypes;
+    typedef Containers::BigEnumSet<AnimationTrackTargetType, 1> TargetTypes;
     Containers::Array<TargetTypes> channelTargetTypes{channelCount};
 
     /* Calculate total data size and track count. If merging all animations
