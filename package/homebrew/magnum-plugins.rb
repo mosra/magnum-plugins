@@ -100,7 +100,7 @@ class MagnumPlugins < Formula
         "-D#{option_prefix}WITH_PNGIMPORTER=#{(build.with? 'libpng') ? 'ON' : 'OFF'}",
         "-D#{option_prefix}WITH_PRIMITIVEIMPORTER=ON",
         "-DMAGNUM_WITH_SPIRVTOOLSSHADERCONVERTER=#{(build.with? 'spirv-tools') ? 'ON' : 'OFF'}",
-        "-D#{option_prefix}WITH_SPNGIMPORTER=#{(build.with? 'libspng') ? 'ON' : 'OFF'}",
+        "-DMAGNUM_WITH_SPNGIMPORTER=#{(build.with? 'libspng') ? 'ON' : 'OFF'}",
         "-D#{option_prefix}WITH_STANFORDIMPORTER=ON",
         "-D#{option_prefix}WITH_STANFORDSCENECONVERTER=ON",
         "-DMAGNUM_WITH_STBDXTIMAGECONVERTER=ON",
