@@ -1408,4 +1408,4 @@ Containers::String UfbxImporter::doImage2DName(UnsignedInt id) {
 }}
 
 CORRADE_PLUGIN_REGISTER(UfbxImporter, Magnum::Trade::UfbxImporter,
-    "cz.mosra.magnum.Trade.AbstractImporter/0.5")
+    "cz.mosra.magnum.Trade.AbstractImporter/0.5.1")

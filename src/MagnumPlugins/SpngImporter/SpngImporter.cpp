@@ -241,4 +241,4 @@ Containers::Optional<ImageData2D> SpngImporter::doImage2D(UnsignedInt, UnsignedI
 }}
 
 CORRADE_PLUGIN_REGISTER(SpngImporter, Magnum::Trade::SpngImporter,
-    "cz.mosra.magnum.Trade.AbstractImporter/0.5")
+    "cz.mosra.magnum.Trade.AbstractImporter/0.5.1")

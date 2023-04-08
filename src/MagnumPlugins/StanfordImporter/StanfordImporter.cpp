@@ -890,4 +890,4 @@ Containers::String StanfordImporter::doMeshAttributeName(UnsignedShort name) {
 }}
 
 CORRADE_PLUGIN_REGISTER(StanfordImporter, Magnum::Trade::StanfordImporter,
-    "cz.mosra.magnum.Trade.AbstractImporter/0.5")
+    "cz.mosra.magnum.Trade.AbstractImporter/0.5.1")

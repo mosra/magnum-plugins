@@ -4840,4 +4840,4 @@ const void* GltfImporter::doImporterState() const {
 }}
 
 CORRADE_PLUGIN_REGISTER(GltfImporter, Magnum::Trade::GltfImporter,
-    "cz.mosra.magnum.Trade.AbstractImporter/0.5")
+    "cz.mosra.magnum.Trade.AbstractImporter/0.5.1")

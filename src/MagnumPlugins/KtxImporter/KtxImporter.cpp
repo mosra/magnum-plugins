@@ -979,4 +979,4 @@ Containers::Optional<TextureData> KtxImporter::doTexture(UnsignedInt id) {
 }}
 
 CORRADE_PLUGIN_REGISTER(KtxImporter, Magnum::Trade::KtxImporter,
-    "cz.mosra.magnum.Trade.AbstractImporter/0.5")
+    "cz.mosra.magnum.Trade.AbstractImporter/0.5.1")

@@ -778,4 +778,4 @@ Containers::Optional<TextureData> DdsImporter::doTexture(UnsignedInt) {
 }}
 
 CORRADE_PLUGIN_REGISTER(DdsImporter, Magnum::Trade::DdsImporter,
-    "cz.mosra.magnum.Trade.AbstractImporter/0.5")
+    "cz.mosra.magnum.Trade.AbstractImporter/0.5.1")

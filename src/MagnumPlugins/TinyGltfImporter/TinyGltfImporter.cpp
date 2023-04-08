@@ -2634,5 +2634,5 @@ const void* TinyGltfImporter::doImporterState() const {
 
 CORRADE_IGNORE_DEPRECATED_PUSH
 CORRADE_PLUGIN_REGISTER(TinyGltfImporter, Magnum::Trade::TinyGltfImporter,
-    "cz.mosra.magnum.Trade.AbstractImporter/0.5")
+    "cz.mosra.magnum.Trade.AbstractImporter/0.5.1")
 CORRADE_IGNORE_DEPRECATED_POP

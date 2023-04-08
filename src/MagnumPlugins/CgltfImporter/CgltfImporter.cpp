@@ -28,4 +28,4 @@
 #include "CgltfImporter.h"
 
 CORRADE_PLUGIN_REGISTER(CgltfImporter, Magnum::Trade::GltfImporter,
-    "cz.mosra.magnum.Trade.AbstractImporter/0.5")
+    "cz.mosra.magnum.Trade.AbstractImporter/0.5.1")
