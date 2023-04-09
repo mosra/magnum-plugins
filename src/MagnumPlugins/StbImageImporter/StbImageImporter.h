@@ -94,6 +94,13 @@ when using a plugin dedicated for given format.
 
 @section Trade-StbImageImporter-usage Usage
 
+@m_class{m-note m-success}
+
+@par
+    This class is a plugin that's meant to be dynamically loaded and used
+    through the base @ref AbstractImporter interface. See its documentation for
+    introduction and usage examples.
+
 This plugin depends on the @ref Trade library and is built if
 `MAGNUM_WITH_STBIMAGEIMPORTER` is enabled when building Magnum Plugins. To use
 as a dynamic plugin, load @cpp "StbImageImporter" @ce via

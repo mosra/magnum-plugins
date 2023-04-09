@@ -86,6 +86,13 @@ This plugin provides `BasisImporterEacR`, `BasisImporterEacRG`,
 
 @section Trade-BasisImporter-usage Usage
 
+@m_class{m-note m-success}
+
+@par
+    This class is a plugin that's meant to be dynamically loaded and used
+    through the base @ref AbstractImporter interface. See its documentation for
+    introduction and usage examples.
+
 This plugin depends on the @ref Trade and [Basis Universal](https://github.com/binomialLLC/basis_universal)
 libraries and is built if `MAGNUM_WITH_BASISIMPORTER` is enabled when building
 Magnum Plugins. To use as a dynamic plugin, load @cpp "BasisImporter" @ce via

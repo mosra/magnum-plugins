@@ -78,6 +78,13 @@ This plugin provides `FbxImporter` and `ObjImporter`.
 
 @section Trade-UfbxImporter-usage Usage
 
+@m_class{m-note m-success}
+
+@par
+    This class is a plugin that's meant to be dynamically loaded and used
+    through the base @ref AbstractImporter interface. See its documentation for
+    introduction and usage examples.
+
 This plugin depends on the @ref Trade and @ref MeshTools libraries
 and the @ref AnyImageImporter plugin and is built if
 `MAGNUM_WITH_UFBXIMPORTER` is enabled when building Magnum Plugins.

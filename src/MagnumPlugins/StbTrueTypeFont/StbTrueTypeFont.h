@@ -84,6 +84,13 @@ fonts opened with @ref FreeTypeFont using the same size.
 
 @section Text-StbTrueTypeFont-usage Usage
 
+@m_class{m-note m-success}
+
+@par
+    This class is a plugin that's meant to be dynamically loaded and used
+    through the base @ref AbstractFont interface. See its documentation for
+    introduction and usage examples.
+
 This plugin depends on the @ref Text library and is built if
 `MAGNUM_WITH_STBTRUETYPEFONT` is enabled when building Magnum Plugins and
 depends on the @ref Text library. To use as a dynamic plugin, load

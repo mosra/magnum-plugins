@@ -74,6 +74,13 @@ This plugins provides `AacAudioImporter`.
 
 @section Audio-Faad2Importer-usage Usage
 
+@m_class{m-note m-success}
+
+@par
+    This class is a plugin that's meant to be dynamically loaded and used
+    through the base @ref AbstractImporter interface. See its documentation for
+    introduction and usage examples.
+
 This plugin depends on the @ref Audio library and is built if
 `MAGNUM_WITH_FAAD2AUDIOIMPORTER` is enabled when building Magnum Plugins. To
 use as a dynamic plugin, load @cpp "Faad2AudioImporter" @ce via

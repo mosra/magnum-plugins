@@ -134,6 +134,13 @@ This plugin provides `3dsImporter`, `3mfImporter`, `Ac3dImporter`,
 
 @section Trade-AssimpImporter-usage Usage
 
+@m_class{m-note m-success}
+
+@par
+    This class is a plugin that's meant to be dynamically loaded and used
+    through the base @ref AbstractImporter interface. See its documentation for
+    introduction and usage examples.
+
 This plugin depends on the @ref Trade and [Assimp](http://assimp.org) libraries
 and the @ref AnyImageImporter plugin and is built if `MAGNUM_WITH_ASSIMPIMPORTER`
 is enabled when building Magnum Plugins. To use as a dynamic plugin, load

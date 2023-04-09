@@ -81,6 +81,13 @@ This plugin provides the `TrueTypeFont` and `OpenTypeFont` plugins.
 
 @section Text-FreeTypeFont-usage Usage
 
+@m_class{m-note m-success}
+
+@par
+    This class is a plugin that's meant to be dynamically loaded and used
+    through the base @ref AbstractFont interface. See its documentation for
+    introduction and usage examples.
+
 This plugin depends on the @ref Text and [FreeType](http://www.freetype.org)
 libraries and is built if `MAGNUM_WITH_FREETYPEFONT` is enabled when building
 Magnum Plugins. To use as a dynamic plugin, load @cpp "FreeTypeFont" @ce via

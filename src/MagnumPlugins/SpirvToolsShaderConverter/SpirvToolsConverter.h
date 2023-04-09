@@ -79,6 +79,13 @@ plugins.
 
 @section ShaderTools-SpirvToolsConverter-usage Usage
 
+@m_class{m-note m-success}
+
+@par
+    This class is a plugin that's meant to be dynamically loaded and used
+    through the base @ref AbstractConverter interface. See its documentation
+    for introduction and usage examples.
+
 This plugin depends on the @ref ShaderTools and [SPIRV-Tools](https://github.com/KhronosGroup/SPIRV-Tools)
 libraries and is built if `MAGNUM_WITH_SPIRVTOOLSSHADERCONVERTER` is enabled
 when building Magnum Plugins. To use as a dynamic plugin, load

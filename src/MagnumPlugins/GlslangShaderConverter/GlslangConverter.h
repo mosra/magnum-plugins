@@ -78,6 +78,13 @@ plugins.
 
 @section ShaderTools-GlslangConverter-usage Usage
 
+@m_class{m-note m-success}
+
+@par
+    This class is a plugin that's meant to be dynamically loaded and used
+    through the base @ref AbstractConverter interface. See its documentation
+    for introduction and usage examples.
+
 This plugin depends on the @ref ShaderTools and [Glslang](https://github.com/KhronosGroup/glslang)
 libraries and is built if `MAGNUM_WITH_GLSLANGSHADERCONVERTER` is enabled when
 building Magnum Plugins. To use as a dynamic plugin, load

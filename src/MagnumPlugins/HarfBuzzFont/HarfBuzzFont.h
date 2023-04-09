@@ -76,6 +76,13 @@ This plugin provides the `TrueTypeFont` and `OpenTypeFont` plugins.
 
 @section Text-HarfBuzzFont-usage Usage
 
+@m_class{m-note m-success}
+
+@par
+    This class is a plugin that's meant to be dynamically loaded and used
+    through the base @ref AbstractFont interface. See its documentation for
+    introduction and usage examples.
+
 This plugin depends on the @ref Text and
 [HarfBuzz](http://www.freedesktop.org/wiki/Software/HarfBuzz) libraries and the
 @ref FreeTypeFont plugin. It is built if `MAGNUM_WITH_HARFBUZZFONT` is enabled

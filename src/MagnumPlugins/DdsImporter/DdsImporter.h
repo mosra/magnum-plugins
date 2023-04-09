@@ -59,6 +59,13 @@ Supports DirectDraw Surface images (`*.dds`).
 
 @section Trade-DdsImporter-usage Usage
 
+@m_class{m-note m-success}
+
+@par
+    This class is a plugin that's meant to be dynamically loaded and used
+    through the base @ref AbstractImporter interface. See its documentation for
+    introduction and usage examples.
+
 This plugin depends on the @ref Trade library and is built if
 `MAGNUM_WITH_DDSIMPORTER` is enabled when building Magnum Plugins. To use as a
 dynamic plugin, load @cpp "DdsImporter" @ce via @ref Corrade::PluginManager::Manager.

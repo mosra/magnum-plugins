@@ -63,6 +63,13 @@ Supports importing of scene, object, camera, mesh, texture and image data.
 
 @section Trade-OpenGexImporter-usage Usage
 
+@m_class{m-note m-success}
+
+@par
+    This class is a plugin that's meant to be dynamically loaded and used
+    through the base @ref AbstractImporter interface. See its documentation for
+    introduction and usage examples.
+
 This plugin depends on the @ref Trade and @ref OpenDdl libraries and the
 @ref AnyImageImporter plugin. It is built if `MAGNUM_WITH_OPENGEXIMPORTER` is
 enabled when building Magnum Plugins. To use as a dynamic plugin, load
