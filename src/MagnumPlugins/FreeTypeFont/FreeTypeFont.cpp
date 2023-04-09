@@ -212,4 +212,4 @@ std::tuple<Range2D, Range2D, Vector2> FreeTypeLayouter::doRenderGlyph(const Unsi
 }}
 
 CORRADE_PLUGIN_REGISTER(FreeTypeFont, Magnum::Text::FreeTypeFont,
-    "cz.mosra.magnum.Text.AbstractFont/0.3")
+    MAGNUM_TEXT_ABSTRACTFONT_PLUGIN_INTERFACE)

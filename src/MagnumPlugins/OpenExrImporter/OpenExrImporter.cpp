@@ -653,4 +653,4 @@ Containers::Optional<ImageData3D> OpenExrImporter::doImage3D(UnsignedInt, const 
 }}
 
 CORRADE_PLUGIN_REGISTER(OpenExrImporter, Magnum::Trade::OpenExrImporter,
-    "cz.mosra.magnum.Trade.AbstractImporter/0.5.1")
+    MAGNUM_TRADE_ABSTRACTIMPORTER_PLUGIN_INTERFACE)

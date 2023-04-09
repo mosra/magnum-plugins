@@ -102,4 +102,4 @@ Containers::Array<char> StbVorbisImporter::doData() {
 }}
 
 CORRADE_PLUGIN_REGISTER(StbVorbisAudioImporter, Magnum::Audio::StbVorbisImporter,
-    "cz.mosra.magnum.Audio.AbstractImporter/0.1")
+    MAGNUM_AUDIO_ABSTRACTIMPORTER_PLUGIN_INTERFACE)

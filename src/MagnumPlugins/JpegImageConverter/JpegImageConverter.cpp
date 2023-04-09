@@ -194,4 +194,4 @@ Containers::Optional<Containers::Array<char>> JpegImageConverter::doConvertToDat
 }}
 
 CORRADE_PLUGIN_REGISTER(JpegImageConverter, Magnum::Trade::JpegImageConverter,
-    "cz.mosra.magnum.Trade.AbstractImageConverter/0.3.3")
+    MAGNUM_TRADE_ABSTRACTIMAGECONVERTER_PLUGIN_INTERFACE)

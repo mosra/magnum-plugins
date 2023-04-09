@@ -680,4 +680,4 @@ BasisImporter::TargetFormat BasisImporter::targetFormat() const {
 }}
 
 CORRADE_PLUGIN_REGISTER(BasisImporter, Magnum::Trade::BasisImporter,
-    "cz.mosra.magnum.Trade.AbstractImporter/0.5.1")
+    MAGNUM_TRADE_ABSTRACTIMPORTER_PLUGIN_INTERFACE)

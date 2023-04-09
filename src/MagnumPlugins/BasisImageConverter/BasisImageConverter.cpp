@@ -481,4 +481,4 @@ bool BasisImageConverter::doConvertToFile(Containers::ArrayView<const ImageView3
 }}
 
 CORRADE_PLUGIN_REGISTER(BasisImageConverter, Magnum::Trade::BasisImageConverter,
-    "cz.mosra.magnum.Trade.AbstractImageConverter/0.3.3")
+    MAGNUM_TRADE_ABSTRACTIMAGECONVERTER_PLUGIN_INTERFACE)

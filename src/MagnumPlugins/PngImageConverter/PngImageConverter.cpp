@@ -181,4 +181,4 @@ Containers::Optional<Containers::Array<char>> PngImageConverter::doConvertToData
 }}
 
 CORRADE_PLUGIN_REGISTER(PngImageConverter, Magnum::Trade::PngImageConverter,
-    "cz.mosra.magnum.Trade.AbstractImageConverter/0.3.3")
+    MAGNUM_TRADE_ABSTRACTIMAGECONVERTER_PLUGIN_INTERFACE)

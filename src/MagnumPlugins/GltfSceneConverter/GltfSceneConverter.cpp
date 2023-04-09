@@ -3010,4 +3010,4 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const ImageData3D& image, c
 }}
 
 CORRADE_PLUGIN_REGISTER(GltfSceneConverter, Magnum::Trade::GltfSceneConverter,
-    "cz.mosra.magnum.Trade.AbstractSceneConverter/0.2.1")
+    MAGNUM_TRADE_ABSTRACTSCENECONVERTER_PLUGIN_INTERFACE)

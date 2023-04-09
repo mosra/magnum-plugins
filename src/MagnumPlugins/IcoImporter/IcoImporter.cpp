@@ -163,4 +163,4 @@ Containers::Optional<ImageData2D> IcoImporter::doImage2D(UnsignedInt, UnsignedIn
 }}
 
 CORRADE_PLUGIN_REGISTER(IcoImporter, Magnum::Trade::IcoImporter,
-    "cz.mosra.magnum.Trade.AbstractImporter/0.5.1")
+    MAGNUM_TRADE_ABSTRACTIMPORTER_PLUGIN_INTERFACE)

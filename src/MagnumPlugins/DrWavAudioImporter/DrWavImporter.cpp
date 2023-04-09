@@ -227,4 +227,4 @@ Containers::Array<char> DrWavImporter::doData() {
 }}
 
 CORRADE_PLUGIN_REGISTER(DrWavAudioImporter, Magnum::Audio::DrWavImporter,
-    "cz.mosra.magnum.Audio.AbstractImporter/0.1")
+    MAGNUM_AUDIO_ABSTRACTIMPORTER_PLUGIN_INTERFACE)

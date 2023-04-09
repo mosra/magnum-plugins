@@ -109,4 +109,4 @@ Containers::Array<char> DrMp3Importer::doData() {
 }}
 
 CORRADE_PLUGIN_REGISTER(DrMp3AudioImporter, Magnum::Audio::DrMp3Importer,
-    "cz.mosra.magnum.Audio.AbstractImporter/0.1")
+    MAGNUM_AUDIO_ABSTRACTIMPORTER_PLUGIN_INTERFACE)

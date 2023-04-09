@@ -236,4 +236,4 @@ Containers::Optional<ImageData3D> AstcImporter::doImage3D(UnsignedInt, UnsignedI
 }}
 
 CORRADE_PLUGIN_REGISTER(AstcImporter, Magnum::Trade::AstcImporter,
-    "cz.mosra.magnum.Trade.AbstractImporter/0.5.1")
+    MAGNUM_TRADE_ABSTRACTIMPORTER_PLUGIN_INTERFACE)

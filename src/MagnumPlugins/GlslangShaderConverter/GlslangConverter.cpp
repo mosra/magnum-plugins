@@ -1003,4 +1003,4 @@ Containers::Optional<Containers::Array<char>> GlslangConverter::doConvertDataToD
 }}
 
 CORRADE_PLUGIN_REGISTER(GlslangShaderConverter, Magnum::ShaderTools::GlslangConverter,
-    "cz.mosra.magnum.ShaderTools.AbstractConverter/0.1.1")
+    MAGNUM_SHADERTOOLS_ABSTRACTCONVERTER_PLUGIN_INTERFACE)

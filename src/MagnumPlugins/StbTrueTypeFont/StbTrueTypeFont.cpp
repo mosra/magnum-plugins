@@ -228,4 +228,4 @@ std::tuple<Range2D, Range2D, Vector2> StbTrueTypeFont::Layouter::doRenderGlyph(c
 }}
 
 CORRADE_PLUGIN_REGISTER(StbTrueTypeFont, Magnum::Text::StbTrueTypeFont,
-    "cz.mosra.magnum.Text.AbstractFont/0.3")
+    MAGNUM_TEXT_ABSTRACTFONT_PLUGIN_INTERFACE)

@@ -153,4 +153,4 @@ Containers::Optional<ImageData2D> WebPImporter::doImage2D(UnsignedInt, UnsignedI
 }}
 
 CORRADE_PLUGIN_REGISTER(WebPImporter, Magnum::Trade::WebPImporter,
-    "cz.mosra.magnum.Trade.AbstractImporter/0.5.1")
+    MAGNUM_TRADE_ABSTRACTIMPORTER_PLUGIN_INTERFACE)

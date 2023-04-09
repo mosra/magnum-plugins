@@ -940,4 +940,4 @@ Containers::Optional<Containers::Array<char>> KtxImageConverter::doConvertToData
 }}
 
 CORRADE_PLUGIN_REGISTER(KtxImageConverter, Magnum::Trade::KtxImageConverter,
-    "cz.mosra.magnum.Trade.AbstractImageConverter/0.3.3")
+    MAGNUM_TRADE_ABSTRACTIMAGECONVERTER_PLUGIN_INTERFACE)

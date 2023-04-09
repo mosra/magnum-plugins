@@ -510,4 +510,4 @@ Containers::Optional<Containers::Array<char>> SpirvToolsConverter::doConvertData
 }}
 
 CORRADE_PLUGIN_REGISTER(SpirvToolsShaderConverter, Magnum::ShaderTools::SpirvToolsConverter,
-    "cz.mosra.magnum.ShaderTools.AbstractConverter/0.1.1")
+    MAGNUM_SHADERTOOLS_ABSTRACTCONVERTER_PLUGIN_INTERFACE)

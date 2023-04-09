@@ -115,4 +115,4 @@ Containers::Array<char> Faad2Importer::doData() {
 }}
 
 CORRADE_PLUGIN_REGISTER(Faad2AudioImporter, Magnum::Audio::Faad2Importer,
-    "cz.mosra.magnum.Audio.AbstractImporter/0.1")
+    MAGNUM_AUDIO_ABSTRACTIMPORTER_PLUGIN_INTERFACE)
