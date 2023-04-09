@@ -685,7 +685,7 @@ Containers::Optional<AnimationData> TinyGltfImporter::doAnimation(UnsignedInt id
             /* Decide on value properties. Not using checkedAccessor() as this
                was all checked above once already. */
             const tinygltf::Accessor& output = _d->model.accessors[sampler.output];
-            AnimationTrackTargetType target;
+            AnimationTrackTarget target;
             AnimationTrackType type, resultType;
             Animation::TrackViewStorage<const Float> track;
             const auto outputDataFound = samplerData.find(sampler.output);
@@ -703,7 +703,7 @@ Containers::Optional<AnimationData> TinyGltfImporter::doAnimation(UnsignedInt id
                 }
 
                 /* View on the value data */
-                target = AnimationTrackTargetType::Translation3D;
+                target = AnimationTrackTarget::Translation3D;
                 resultType = AnimationTrackType::Vector3;
                 if(interpolation == Animation::Interpolation::Spline) {
                     /* Postprocess the spline track. This can be done only once
@@ -736,7 +736,7 @@ Containers::Optional<AnimationData> TinyGltfImporter::doAnimation(UnsignedInt id
                 }
 
                 /* View on the value data */
-                target = AnimationTrackTargetType::Rotation3D;
+                target = AnimationTrackTarget::Rotation3D;
                 resultType = AnimationTrackType::Quaternion;
                 if(interpolation == Animation::Interpolation::Spline) {
                     /* Postprocess the spline track. This can be done only once
@@ -790,7 +790,7 @@ Containers::Optional<AnimationData> TinyGltfImporter::doAnimation(UnsignedInt id
                 }
 
                 /* View on the value data */
-                target = AnimationTrackTargetType::Scaling3D;
+                target = AnimationTrackTarget::Scaling3D;
                 resultType = AnimationTrackType::Vector3;
                 if(interpolation == Animation::Interpolation::Spline) {
                     /* Postprocess the spline track. This can be done only once
@@ -836,9 +836,13 @@ Containers::Optional<AnimationData> TinyGltfImporter::doAnimation(UnsignedInt id
                 return Containers::NullOpt;
             }
 
+            /* As the whole plugin is deprecated, it's not worth wasting time
+               with porting to non-deprecated APIs */
+            CORRADE_IGNORE_DEPRECATED_PUSH
             tracks[trackId++] = AnimationTrackData{type, resultType, target,
                 UnsignedInt(channel.target_node),
                 track};
+            CORRADE_IGNORE_DEPRECATED_POP
         }
     }
 
