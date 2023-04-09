@@ -2046,7 +2046,7 @@ Containers::Optional<AnimationData> AssimpImporter::doAnimation(UnsignedInt id) 
        the correct track count and data array size up front, so determine this
        and remember it for the actual loop that extracts the tracks. BigEnumSet
        because EnumSet requires binary-exclusive enum values. */
-    typedef Containers::BigEnumSet<AnimationTrackTargetType, 1> TargetTypes;
+    typedef Containers::BigEnumSet<AnimationTrackTarget, 1> TargetTypes;
     Containers::Array<TargetTypes> channelTargetTypes{channelCount};
 
     /* Calculate total data size and track count. If merging all animations
@@ -2119,11 +2119,11 @@ Containers::Optional<AnimationData> AssimpImporter::doAnimation(UnsignedInt id) 
 
             TargetTypes targetTypes;
             if(translationKeyCount > 0)
-                targetTypes |= AnimationTrackTargetType::Translation3D;
+                targetTypes |= AnimationTrackTarget::Translation3D;
             if(rotationKeyCount > 0)
-                targetTypes |= AnimationTrackTargetType::Rotation3D;
+                targetTypes |= AnimationTrackTarget::Rotation3D;
             if(scalingKeyCount > 0)
-                targetTypes |= AnimationTrackTargetType::Scaling3D;
+                targetTypes |= AnimationTrackTarget::Scaling3D;
             channelTargetTypes[currentChannel++] = targetTypes;
 
             /** @todo handle alignment once we do more than just four-byte types */
@@ -2188,7 +2188,7 @@ Containers::Optional<AnimationData> AssimpImporter::doAnimation(UnsignedInt id) 
             const TargetTypes targetTypes = channelTargetTypes[currentChannel++];
 
             /* Translation */
-            if(targetTypes & AnimationTrackTargetType::Translation3D) {
+            if(targetTypes & AnimationTrackTarget::Translation3D) {
                 const size_t keyCount = channel->mNumPositionKeys;
                 const auto keys = Containers::arrayCast<Float>(
                     data.sliceSize(dataOffset, keyCount*sizeof(Float)));
@@ -2203,18 +2203,14 @@ Containers::Optional<AnimationData> AssimpImporter::doAnimation(UnsignedInt id) 
                     values[k] = Vector3::from(&channel->mPositionKeys[k].mValue[0]);
                 }
 
-                const auto track = Animation::TrackView<const Float, const Vector3>{
-                    keys, values, interpolation,
-                    animationInterpolatorFor<Vector3>(interpolation),
-                    extrapolationBefore, extrapolationAfter};
-
-                tracks[trackId++] = AnimationTrackData{AnimationTrackType::Vector3,
-                    AnimationTrackType::Vector3, AnimationTrackTargetType::Translation3D,
-                    static_cast<UnsignedInt>(target), track };
+                tracks[trackId++] = AnimationTrackData{
+                    AnimationTrackTarget::Translation3D, UnsignedLong(target),
+                    keys, stridedArrayView(values),
+                    interpolation, extrapolationBefore, extrapolationAfter};
             }
 
             /* Rotation */
-            if(targetTypes & AnimationTrackTargetType::Rotation3D) {
+            if(targetTypes & AnimationTrackTarget::Rotation3D) {
                 const size_t keyCount = channel->mNumRotationKeys;
                 const auto keys = Containers::arrayCast<Float>(
                     data.sliceSize(dataOffset, keyCount*sizeof(Float)));
@@ -2248,18 +2244,14 @@ Containers::Optional<AnimationData> AssimpImporter::doAnimation(UnsignedInt id) 
                     }
                 }
 
-                const auto track = Animation::TrackView<const Float, const Quaternion>{
-                    keys, values, interpolation,
-                    animationInterpolatorFor<Quaternion>(interpolation),
-                    extrapolationBefore, extrapolationAfter};
-
-                tracks[trackId++] = AnimationTrackData{AnimationTrackType::Quaternion,
-                    AnimationTrackType::Quaternion, AnimationTrackTargetType::Rotation3D,
-                    static_cast<UnsignedInt>(target), track};
+                tracks[trackId++] = AnimationTrackData{
+                    AnimationTrackTarget::Rotation3D, UnsignedLong(target),
+                    keys, stridedArrayView(values),
+                    interpolation, extrapolationBefore, extrapolationAfter};
             }
 
             /* Scale */
-            if(targetTypes & AnimationTrackTargetType::Scaling3D) {
+            if(targetTypes & AnimationTrackTarget::Scaling3D) {
                 const std::size_t keyCount = channel->mNumScalingKeys;
                 const auto keys = Containers::arrayCast<Float>(
                     data.sliceSize(dataOffset, keyCount*sizeof(Float)));
@@ -2273,14 +2265,10 @@ Containers::Optional<AnimationData> AssimpImporter::doAnimation(UnsignedInt id) 
                     values[k] = Vector3::from(&channel->mScalingKeys[k].mValue[0]);
                 }
 
-                const auto track = Animation::TrackView<const Float, const Vector3>{
-                    keys, values, interpolation,
-                    animationInterpolatorFor<Vector3>(interpolation),
-                    extrapolationBefore,
-                    extrapolationAfter};
-                tracks[trackId++] = AnimationTrackData{AnimationTrackType::Vector3,
-                    AnimationTrackType::Vector3, AnimationTrackTargetType::Scaling3D,
-                    static_cast<UnsignedInt>(target), track};
+                tracks[trackId++] = AnimationTrackData{
+                    AnimationTrackTarget::Scaling3D, UnsignedLong(target),
+                    keys, stridedArrayView(values),
+                    interpolation, extrapolationBefore, extrapolationAfter};
             }
         }
     }

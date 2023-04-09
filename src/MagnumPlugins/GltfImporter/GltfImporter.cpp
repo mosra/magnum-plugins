@@ -1725,9 +1725,9 @@ Containers::Optional<AnimationData> GltfImporter::doAnimation(UnsignedInt id) {
                already parsed from above, so just retrieve its view instead of
                going through parseAccessor() again. */
             const Containers::Triple<Containers::StridedArrayView2D<const char>, VertexFormat, UnsignedInt>& output = *_d->accessors[sampler.output];
-            AnimationTrackTargetType target;
+            AnimationTrackTarget target;
             AnimationTrackType type, resultType;
-            Animation::TrackViewStorage<const Float> track;
+            Containers::StridedArrayView1D<const void> typeErasedValues;
             const auto outputDataFound = samplerData.find(sampler.output);
             CORRADE_INTERNAL_ASSERT(outputDataFound != samplerData.end());
             const auto outputData = data.sliceSize(
@@ -1758,8 +1758,8 @@ Containers::Optional<AnimationData> GltfImporter::doAnimation(UnsignedInt id) {
                     return {};
                 }
 
-                /* View on the value data */
-                target = AnimationTrackTargetType::Translation3D;
+                /* Create a view on the value data */
+                target = AnimationTrackTarget::Translation3D;
                 resultType = AnimationTrackType::Vector3;
                 if(sampler.interpolation == Animation::Interpolation::Spline) {
                     /* Postprocess the spline track. This can be done only once
@@ -1769,17 +1769,10 @@ Containers::Optional<AnimationData> GltfImporter::doAnimation(UnsignedInt id) {
                     postprocessSplineTrack(timeTrackUsed, keys, values);
 
                     type = AnimationTrackType::CubicHermite3D;
-                    track = Animation::TrackView<const Float, const CubicHermite3D>{
-                        keys, values, sampler.interpolation,
-                        animationInterpolatorFor<CubicHermite3D>(sampler.interpolation),
-                        Animation::Extrapolation::Constant};
+                    typeErasedValues = values;
                 } else {
                     type = AnimationTrackType::Vector3;
-                    track = Animation::TrackView<const Float, const Vector3>{keys,
-                        Containers::arrayCast<Vector3>(outputData),
-                        sampler.interpolation,
-                        animationInterpolatorFor<Vector3>(sampler.interpolation),
-                        Animation::Extrapolation::Constant};
+                    typeErasedValues = Containers::arrayCast<Vector3>(outputData);
                 }
 
             /* Rotation */
@@ -1795,7 +1788,7 @@ Containers::Optional<AnimationData> GltfImporter::doAnimation(UnsignedInt id) {
                 }
 
                 /* View on the value data */
-                target = AnimationTrackTargetType::Rotation3D;
+                target = AnimationTrackTarget::Rotation3D;
                 resultType = AnimationTrackType::Quaternion;
                 if(sampler.interpolation == Animation::Interpolation::Spline) {
                     /* Postprocess the spline track. This can be done only once
@@ -1805,10 +1798,7 @@ Containers::Optional<AnimationData> GltfImporter::doAnimation(UnsignedInt id) {
                     postprocessSplineTrack(timeTrackUsed, keys, values);
 
                     type = AnimationTrackType::CubicHermiteQuaternion;
-                    track = Animation::TrackView<const Float, const CubicHermiteQuaternion>{
-                        keys, values, sampler.interpolation,
-                        animationInterpolatorFor<CubicHermiteQuaternion>(sampler.interpolation),
-                        Animation::Extrapolation::Constant};
+                    typeErasedValues = values;
                 } else {
                     /* Ensure shortest path is always chosen. Not doing this
                        for spline interpolation, there it would cause war and
@@ -1835,10 +1825,7 @@ Containers::Optional<AnimationData> GltfImporter::doAnimation(UnsignedInt id) {
                     }
 
                     type = AnimationTrackType::Quaternion;
-                    track = Animation::TrackView<const Float, const Quaternion>{
-                        keys, values, sampler.interpolation,
-                        animationInterpolatorFor<Quaternion>(sampler.interpolation),
-                        Animation::Extrapolation::Constant};
+                    typeErasedValues = values;
                 }
 
             /* Scale */
@@ -1852,7 +1839,7 @@ Containers::Optional<AnimationData> GltfImporter::doAnimation(UnsignedInt id) {
                 }
 
                 /* View on the value data */
-                target = AnimationTrackTargetType::Scaling3D;
+                target = AnimationTrackTarget::Scaling3D;
                 resultType = AnimationTrackType::Vector3;
                 if(sampler.interpolation == Animation::Interpolation::Spline) {
                     /* Postprocess the spline track. This can be done only once
@@ -1862,17 +1849,10 @@ Containers::Optional<AnimationData> GltfImporter::doAnimation(UnsignedInt id) {
                     postprocessSplineTrack(timeTrackUsed, keys, values);
 
                     type = AnimationTrackType::CubicHermite3D;
-                    track = Animation::TrackView<const Float, const CubicHermite3D>{
-                        keys, values, sampler.interpolation,
-                        animationInterpolatorFor<CubicHermite3D>(sampler.interpolation),
-                        Animation::Extrapolation::Constant};
+                    typeErasedValues = values;
                 } else {
                     type = AnimationTrackType::Vector3;
-                    track = Animation::TrackView<const Float, const Vector3>{keys,
-                        Containers::arrayCast<Vector3>(outputData),
-                        sampler.interpolation,
-                        animationInterpolatorFor<Vector3>(sampler.interpolation),
-                        Animation::Extrapolation::Constant};
+                    typeErasedValues = Containers::arrayCast<Vector3>(outputData);
                 }
 
             } else {
@@ -1893,8 +1873,10 @@ Containers::Optional<AnimationData> GltfImporter::doAnimation(UnsignedInt id) {
                 }
             }
 
-            tracks[trackId++] = AnimationTrackData{type, resultType, target,
-                gltfTargetNode->asUnsignedInt(), track};
+            tracks[trackId++] = AnimationTrackData{
+                target, gltfTargetNode->asUnsignedInt(),
+                type, resultType, keys, typeErasedValues,
+                sampler.interpolation, Animation::Extrapolation::Constant};
         }
     }
 

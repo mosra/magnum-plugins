@@ -580,17 +580,17 @@ void AssimpImporterTest::animation() {
             CORRADE_COMPARE(track.interpolation(), Animation::Interpolation::Linear);
 
             const UnsignedInt target = animation->trackTarget(j);
-            switch(animation->trackTargetType(j)) {
-                case AnimationTrackTargetType::Translation3D:
+            switch(animation->trackTargetName(j)) {
+                case AnimationTrackTarget::Translation3D:
                     player.add(animation->track<Vector3>(j), nodeMap[target]->translation);
                     break;
-                case AnimationTrackTargetType::Rotation3D:
+                case AnimationTrackTarget::Rotation3D:
                     player.add(animation->track<Quaternion>(j), nodeMap[target]->rotation);
                     break;
-                case AnimationTrackTargetType::Scaling3D:
+                case AnimationTrackTarget::Scaling3D:
                     player.add(animation->track<Vector3>(j), nodeMap[target]->scaling);
                     break;
-                default: CORRADE_FAIL("Unexpected track target type" << animation->trackTargetType(j));
+                default: CORRADE_FAIL("Unexpected track target type" << animation->trackTargetName(j));
             }
         }
 
@@ -673,15 +673,15 @@ void AssimpImporterTest::animation() {
 }
 
 struct AnimationTarget {
-    AnimationTrackTargetType type;
+    AnimationTrackTarget type;
     UnsignedInt keyCount;
     UnsignedInt channel;
 };
 
 const Containers::StaticArray<3, AnimationTarget> AnimationGltfLinearTargets{
-    AnimationTarget{AnimationTrackTargetType::Rotation3D, 2, ~0u},
-    AnimationTarget{AnimationTrackTargetType::Translation3D, 4, ~0u},
-    AnimationTarget{AnimationTrackTargetType::Scaling3D, 4, ~0u}
+    AnimationTarget{AnimationTrackTarget::Rotation3D, 2, ~0u},
+    AnimationTarget{AnimationTrackTarget::Translation3D, 4, ~0u},
+    AnimationTarget{AnimationTrackTarget::Scaling3D, 4, ~0u}
 };
 
 void AssimpImporterTest::animationGltf() {
@@ -737,7 +737,7 @@ void AssimpImporterTest::animationGltf() {
         const UnsignedInt ch0 = targets[0].channel;
         CORRADE_COMPARE(animation->trackType(ch0), AnimationTrackType::Quaternion);
         CORRADE_COMPARE(animation->trackResultType(ch0), AnimationTrackType::Quaternion);
-        CORRADE_COMPARE(animation->trackTargetType(ch0), AnimationTrackTargetType::Rotation3D);
+        CORRADE_COMPARE(animation->trackTargetName(ch0), AnimationTrackTarget::Rotation3D);
         CORRADE_COMPARE(animation->trackTarget(ch0), 0);
         Animation::TrackView<const Float, const Quaternion> rotation = animation->track<Quaternion>(ch0);
         CORRADE_COMPARE(rotation.interpolation(), Animation::Interpolation::Linear);
@@ -766,7 +766,7 @@ void AssimpImporterTest::animationGltf() {
         const UnsignedInt ch1 = targets[1].channel;
         CORRADE_COMPARE(animation->trackType(ch1), AnimationTrackType::Vector3);
         CORRADE_COMPARE(animation->trackResultType(ch1), AnimationTrackType::Vector3);
-        CORRADE_COMPARE(animation->trackTargetType(ch1), AnimationTrackTargetType::Translation3D);
+        CORRADE_COMPARE(animation->trackTargetName(ch1), AnimationTrackTarget::Translation3D);
         CORRADE_COMPARE(animation->trackTarget(ch1), 1);
         Animation::TrackView<const Float, const Vector3> translation = animation->track<Vector3>(ch1);
         CORRADE_COMPARE(translation.interpolation(), Animation::Interpolation::Linear);
@@ -786,7 +786,7 @@ void AssimpImporterTest::animationGltf() {
         const UnsignedInt ch2 = targets[2].channel;
         CORRADE_COMPARE(animation->trackType(ch2), AnimationTrackType::Vector3);
         CORRADE_COMPARE(animation->trackResultType(ch2), AnimationTrackType::Vector3);
-        CORRADE_COMPARE(animation->trackTargetType(ch2), AnimationTrackTargetType::Scaling3D);
+        CORRADE_COMPARE(animation->trackTargetName(ch2), AnimationTrackTarget::Scaling3D);
         CORRADE_COMPARE(animation->trackTarget(ch2), 2);
         Animation::TrackView<const Float, const Vector3> scaling = animation->track<Vector3>(ch2);
         CORRADE_COMPARE(scaling.interpolation(), Animation::Interpolation::Linear);
@@ -874,7 +874,7 @@ void AssimpImporterTest::animationGltfSpline() {
     const UnsignedInt ch0 = targets[0].channel;
     CORRADE_COMPARE(animation->trackType(ch0), AnimationTrackType::Quaternion);
     CORRADE_COMPARE(animation->trackResultType(ch0), AnimationTrackType::Quaternion);
-    CORRADE_COMPARE(animation->trackTargetType(ch0), AnimationTrackTargetType::Rotation3D);
+    CORRADE_COMPARE(animation->trackTargetName(ch0), AnimationTrackTarget::Rotation3D);
     CORRADE_COMPARE(animation->trackTarget(ch0), 3);
     Animation::TrackView<const Float, const Quaternion> rotation = animation->track<Quaternion>(ch0);
     CORRADE_COMPARE(rotation.interpolation(), Animation::Interpolation::Linear);
@@ -899,7 +899,7 @@ void AssimpImporterTest::animationGltfSpline() {
     const UnsignedInt ch1 = targets[1].channel;
     CORRADE_COMPARE(animation->trackType(ch1), AnimationTrackType::Vector3);
     CORRADE_COMPARE(animation->trackResultType(ch1), AnimationTrackType::Vector3);
-    CORRADE_COMPARE(animation->trackTargetType(ch1), AnimationTrackTargetType::Translation3D);
+    CORRADE_COMPARE(animation->trackTargetName(ch1), AnimationTrackTarget::Translation3D);
     CORRADE_COMPARE(animation->trackTarget(ch1), 4);
     Animation::TrackView<const Float, const Vector3> translation = animation->track<Vector3>(ch1);
     CORRADE_COMPARE(translation.interpolation(), Animation::Interpolation::Linear);
@@ -924,7 +924,7 @@ void AssimpImporterTest::animationGltfSpline() {
     const UnsignedInt ch2 = targets[2].channel;
     CORRADE_COMPARE(animation->trackType(ch2), AnimationTrackType::Vector3);
     CORRADE_COMPARE(animation->trackResultType(ch2), AnimationTrackType::Vector3);
-    CORRADE_COMPARE(animation->trackTargetType(ch2), AnimationTrackTargetType::Scaling3D);
+    CORRADE_COMPARE(animation->trackTargetName(ch2), AnimationTrackTarget::Scaling3D);
     CORRADE_COMPARE(animation->trackTarget(ch2), 5);
     Animation::TrackView<const Float, const Vector3> scaling = animation->track<Vector3>(ch2);
     CORRADE_COMPARE(scaling.interpolation(), Animation::Interpolation::Linear);
@@ -1008,7 +1008,7 @@ void AssimpImporterTest::animationDummyTracksRemovalEnabled() {
         AnimationTarget& target = targets[animation->trackTarget(i)];
         CORRADE_COMPARE(target.channel, ~0u);
         target.channel = i;
-        CORRADE_COMPARE(animation->trackTargetType(i), target.type);
+        CORRADE_COMPARE(animation->trackTargetName(i), target.type);
         CORRADE_COMPARE(animation->track(i).size(), target.keyCount);
     }
 
@@ -1058,10 +1058,10 @@ void AssimpImporterTest::animationDummyTracksRemovalDisabled() {
 
     /* Animation type for each track within a channel.
        Tracks within channels are always added in the order T,R,S */
-    constexpr AnimationTrackTargetType trackAnimationType[]{
-        AnimationTrackTargetType::Translation3D,
-        AnimationTrackTargetType::Rotation3D,
-        AnimationTrackTargetType::Scaling3D
+    constexpr AnimationTrackTarget trackAnimationType[]{
+        AnimationTrackTarget::Translation3D,
+        AnimationTrackTarget::Rotation3D,
+        AnimationTrackTarget::Scaling3D
     };
 
     /* T/R/S tracks (1 original + 2 dummy tracks) for each object */
@@ -1075,8 +1075,8 @@ void AssimpImporterTest::animationDummyTracksRemovalDisabled() {
         AnimationTarget& target = targets[animation->trackTarget(i)];
         CORRADE_VERIFY(target.channel == ~0u || target.channel == channel);
         target.channel = channel;
-        CORRADE_COMPARE(animation->trackTargetType(i), trackAnimationType[indexWithinChannel]);
-        const UnsignedInt keyCount = animation->trackTargetType(i) == target.type
+        CORRADE_COMPARE(animation->trackTargetName(i), trackAnimationType[indexWithinChannel]);
+        const UnsignedInt keyCount = animation->trackTargetName(i) == target.type
             ? target.keyCount : 1;
         CORRADE_COMPARE(animation->track(i).size(), keyCount);
     }
@@ -1334,7 +1334,7 @@ void AssimpImporterTest::animationMerge() {
     /* Rotation, linearly interpolated */
     const UnsignedInt ch0 = linearTargets[0].channel;
     CORRADE_COMPARE(animation->trackType(ch0), AnimationTrackType::Quaternion);
-    CORRADE_COMPARE(animation->trackTargetType(ch0), AnimationTrackTargetType::Rotation3D);
+    CORRADE_COMPARE(animation->trackTargetName(ch0), AnimationTrackTarget::Rotation3D);
     CORRADE_COMPARE(animation->trackTarget(ch0), 0);
     Animation::TrackView<const Float, const Quaternion> rotation = animation->track<Quaternion>(ch0);
     CORRADE_COMPARE(rotation.interpolation(), Animation::Interpolation::Linear);
@@ -1343,7 +1343,7 @@ void AssimpImporterTest::animationMerge() {
     /* Translation, constant interpolated, sharing keys with scaling */
     const UnsignedInt ch1 = linearTargets[1].channel;
     CORRADE_COMPARE(animation->trackType(ch1), AnimationTrackType::Vector3);
-    CORRADE_COMPARE(animation->trackTargetType(ch1), AnimationTrackTargetType::Translation3D);
+    CORRADE_COMPARE(animation->trackTargetName(ch1), AnimationTrackTarget::Translation3D);
     CORRADE_COMPARE(animation->trackTarget(ch1), 1);
     Animation::TrackView<const Float, const Vector3> translation = animation->track<Vector3>(ch1);
     CORRADE_COMPARE(translation.interpolation(), Animation::Interpolation::Linear);
@@ -1352,7 +1352,7 @@ void AssimpImporterTest::animationMerge() {
     /* Scaling, linearly interpolated, sharing keys with translation */
     const UnsignedInt ch2 = linearTargets[2].channel;
     CORRADE_COMPARE(animation->trackType(ch2), AnimationTrackType::Vector3);
-    CORRADE_COMPARE(animation->trackTargetType(ch2), AnimationTrackTargetType::Scaling3D);
+    CORRADE_COMPARE(animation->trackTargetName(ch2), AnimationTrackTarget::Scaling3D);
     CORRADE_COMPARE(animation->trackTarget(ch2), 2);
     Animation::TrackView<const Float, const Vector3> scaling = animation->track<Vector3>(ch2);
     CORRADE_COMPARE(scaling.interpolation(), Animation::Interpolation::Linear);
@@ -1361,7 +1361,7 @@ void AssimpImporterTest::animationMerge() {
     /* Rotation, spline interpolated */
     const UnsignedInt ch3 = splineTargets[0].channel;
     CORRADE_COMPARE(animation->trackType(ch3), AnimationTrackType::Quaternion);
-    CORRADE_COMPARE(animation->trackTargetType(ch3), AnimationTrackTargetType::Rotation3D);
+    CORRADE_COMPARE(animation->trackTargetName(ch3), AnimationTrackTarget::Rotation3D);
     CORRADE_COMPARE(animation->trackTarget(ch3), 3);
     Animation::TrackView<const Float, const Quaternion> rotation2 = animation->track<Quaternion>(ch3);
     CORRADE_COMPARE(rotation2.interpolation(), Animation::Interpolation::Linear);
@@ -1369,7 +1369,7 @@ void AssimpImporterTest::animationMerge() {
     /* Translation, spline interpolated */
     const UnsignedInt ch4 = splineTargets[1].channel;
     CORRADE_COMPARE(animation->trackType(ch4), AnimationTrackType::Vector3);
-    CORRADE_COMPARE(animation->trackTargetType(ch4), AnimationTrackTargetType::Translation3D);
+    CORRADE_COMPARE(animation->trackTargetName(ch4), AnimationTrackTarget::Translation3D);
     CORRADE_COMPARE(animation->trackTarget(ch4), 4);
     Animation::TrackView<const Float, const Vector3> translation2 = animation->track<Vector3>(ch4);
     CORRADE_COMPARE(translation2.interpolation(), Animation::Interpolation::Linear);
@@ -1377,7 +1377,7 @@ void AssimpImporterTest::animationMerge() {
     /* Scaling, spline interpolated */
     const UnsignedInt ch5 = splineTargets[2].channel;
     CORRADE_COMPARE(animation->trackType(ch5), AnimationTrackType::Vector3);
-    CORRADE_COMPARE(animation->trackTargetType(ch5), AnimationTrackTargetType::Scaling3D);
+    CORRADE_COMPARE(animation->trackTargetName(ch5), AnimationTrackTarget::Scaling3D);
     CORRADE_COMPARE(animation->trackTarget(ch5), 5);
     Animation::TrackView<const Float, const Vector3> scaling2 = animation->track<Vector3>(ch5);
     CORRADE_COMPARE(scaling2.interpolation(), Animation::Interpolation::Linear);
