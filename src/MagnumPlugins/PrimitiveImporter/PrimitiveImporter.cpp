@@ -239,11 +239,11 @@ UnsignedInt PrimitiveImporter::doSceneCount() const { return 2; }
 Containers::Optional<SceneData> PrimitiveImporter::doScene(const UnsignedInt id) {
     if(id == 0) return SceneData{SceneMappingType::UnsignedInt,
         Containers::arraySize(Names),
-        {}, Scene2D, sceneFieldDataNonOwningArray(SceneFields2D)};
+        DataFlag::Global, Scene2D, sceneFieldDataNonOwningArray(SceneFields2D)};
 
     if(id == 1) return SceneData{SceneMappingType::UnsignedInt,
         Containers::arraySize(Names),
-        {}, Scene3D, sceneFieldDataNonOwningArray(SceneFields3D)};
+        DataFlag::Global, Scene3D, sceneFieldDataNonOwningArray(SceneFields3D)};
 
     CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
 }
