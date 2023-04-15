@@ -398,11 +398,25 @@ const struct {
 
 const struct {
     const char* name;
+    ImporterFlags flags;
     Containers::Optional<bool> assumeYUp;
     const char* message;
 } CompressedFlipWarningData[]{
-    {"", {}, "Trade::DdsImporter::openData(): block-compressed image is assumed to be encoded with Y down and Z forward, imported data will have wrong orientation. Enable assumeYUpZBackward to suppress this warning.\n"},
-    {"assume Y up", true, ""}
+    {"", {}, {},
+        "Trade::DdsImporter::openData(): block-compressed image is assumed to be encoded with Y down and Z forward, imported data will have wrong orientation. Enable assumeYUpZBackward to suppress this warning.\n"},
+    {"quiet", ImporterFlag::Quiet, {},
+        ""},
+    {"assume Y up", {}, true,
+        ""}
+};
+
+const struct {
+    const char* name;
+    ImporterFlags flags;
+    bool quiet;
+} QuietData[]{
+    {"", {}, false},
+    {"quiet", ImporterFlag::Quiet, true}
 };
 
 const struct {
@@ -490,8 +504,10 @@ DdsImporterTest::DdsImporterTest() {
     addInstancedTests({&DdsImporterTest::rgba3D},
         Containers::arraySize(SwizzleFlipRgba3DData));
 
-    addTests({&DdsImporterTest::extraDataAtTheEnd,
-              &DdsImporterTest::incompleteCubeMap});
+    addInstancedTests({
+        &DdsImporterTest::extraDataAtTheEnd,
+        &DdsImporterTest::incompleteCubeMap},
+        Containers::arraySize(QuietData));
 
     addInstancedTests({&DdsImporterTest::r3DZeroFieldsZeroDepthZeroMips},
         Containers::arraySize(ZeroFieldsData));
@@ -729,6 +745,7 @@ void DdsImporterTest::dxt3() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
+    importer->addFlags(data.flags);
     if(data.assumeYUp)
         importer->configuration().setValue("assumeYUpZBackward", *data.assumeYUp);
     else
@@ -1124,20 +1141,28 @@ void DdsImporterTest::rgba3D() {
 }
 
 void DdsImporterTest::extraDataAtTheEnd() {
+    auto&& data = QuietData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     Containers::Optional<Containers::Array<char>> file = Utility::Path::read(Utility::Path::join(DDSIMPORTER_TEST_DIR, "r8unorm.dds"));
     CORRADE_VERIFY(file);
     CORRADE_COMPARE(file->size(), 134);
 
-    char data[160];
-    Utility::copy(*file, Containers::arrayView(data).prefix(file->size()));
+    char fileData[160];
+    Utility::copy(*file, Containers::arrayView(fileData).prefix(file->size()));
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
+    importer->addFlags(data.flags);
+
     std::stringstream out;
     {
         Warning redirectWarning{&out};
-        CORRADE_VERIFY(importer->openData(data));
+        CORRADE_VERIFY(importer->openData(fileData));
     }
-    CORRADE_COMPARE(out.str(), "Trade::DdsImporter::openData(): ignoring 26 extra bytes at the end of file\n");
+    if(data.quiet)
+        CORRADE_COMPARE(out.str(), "");
+    else
+        CORRADE_COMPARE(out.str(), "Trade::DdsImporter::openData(): ignoring 26 extra bytes at the end of file\n");
     CORRADE_COMPARE(importer->image1DCount(), 0);
     CORRADE_COMPARE(importer->image2DCount(), 1);
     CORRADE_COMPARE(importer->image2DLevelCount(0), 1);
@@ -1165,13 +1190,21 @@ void DdsImporterTest::extraDataAtTheEnd() {
 }
 
 void DdsImporterTest::incompleteCubeMap() {
+    auto&& data = QuietData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
+    importer->addFlags(data.flags);
+
     std::stringstream out;
     {
         Warning redirectWarning{&out};
         CORRADE_VERIFY(importer->openFile(Utility::Path::join(DDSIMPORTER_TEST_DIR, "rgba8unorm-cube-incomplete.dds")));
     }
-    CORRADE_COMPARE(out.str(), "Trade::DdsImporter::openData(): the image is an incomplete cubemap, importing faces as 5 array layers\n");
+    if(data.quiet)
+        CORRADE_COMPARE(out.str(), "");
+    else
+        CORRADE_COMPARE(out.str(), "Trade::DdsImporter::openData(): the image is an incomplete cubemap, importing faces as 5 array layers\n");
     CORRADE_COMPARE(importer->image1DCount(), 0);
     CORRADE_COMPARE(importer->image2DCount(), 0);
     CORRADE_COMPARE(importer->image3DCount(), 1);

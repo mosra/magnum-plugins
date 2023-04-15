@@ -552,7 +552,8 @@ void DdsImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dat
                 f->imageFlags |= ImageFlag3D::CubeMap;
             } else {
                 f->imageFlags |= ImageFlag3D::Array;
-                Warning{} << "Trade::DdsImporter::openData(): the image is an incomplete cubemap, importing faces as" << f->sliceCount << "array layers";
+                if(!(flags() & ImporterFlag::Quiet))
+                    Warning{} << "Trade::DdsImporter::openData(): the image is an incomplete cubemap, importing faces as" << f->sliceCount << "array layers";
             }
         } else {
             f->dimensions = 2;
@@ -590,7 +591,7 @@ void DdsImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dat
     if(expectedSize > f->in.size()) {
         Error() << "Trade::DdsImporter::openData(): file too short, expected" << expectedSize << "bytes for" << f->sliceCount << "slices with" << f->levelCount << "levels and" << f->sliceSize << "bytes each but got" << f->in.size();
         return;
-    } else if(expectedSize < f->in.size()) {
+    } else if(expectedSize < f->in.size() && !(flags() & ImporterFlag::Quiet)) {
         Warning{} << "Trade::DdsImporter::openData(): ignoring" << f->in.size() - expectedSize << "extra bytes at the end of file";
     }
 
@@ -604,7 +605,8 @@ void DdsImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dat
         /* Can't flip compressed blocks at the moment, so print a warning at
            least */
         if(f->compressed) {
-            Warning{} << "Trade::DdsImporter::openData(): block-compressed image is assumed to be encoded with Y down and Z forward, imported data will have wrong orientation. Enable assumeYUpZBackward to suppress this warning.";
+            if(!(flags() & ImporterFlag::Quiet))
+                Warning{} << "Trade::DdsImporter::openData(): block-compressed image is assumed to be encoded with Y down and Z forward, imported data will have wrong orientation. Enable assumeYUpZBackward to suppress this warning.";
 
         /* For uncompressed data decide about the flip orientations */
         } else {
