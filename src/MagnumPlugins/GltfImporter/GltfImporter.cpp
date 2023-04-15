@@ -4228,7 +4228,15 @@ Containers::Optional<MaterialData> GltfImporter::doMaterial(const UnsignedInt id
            recommends objects for interoperability, makes our life easier, too:
            https://www.khronos.org/registry/glTF/specs/2.0/glTF-2.0.html#reference-extras */
         if(gltfExtras->type() == Utility::JsonToken::Type::Object) {
-            if(_d->gltf->parseObject(*gltfExtras)) {
+            bool parsed;
+            {
+                /* Redirect error messages from Json::parse*() to the warning
+                   output as they are non-fatal and only lead to the extras
+                   being skipped */
+                Error redirectError{Warning::output()};
+                parsed = !!_d->gltf->parseObject(*gltfExtras);
+            }
+            if(parsed) {
                 Containers::Array<Containers::Reference<const Utility::JsonToken>> gltfExtraKeys;
                 for(const Utility::JsonToken& i: gltfExtras->asObject())
                     arrayAppend(gltfExtraKeys, InPlaceInit, i);

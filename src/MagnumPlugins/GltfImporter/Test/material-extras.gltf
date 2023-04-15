@@ -20,6 +20,12 @@
       "extras": {}
     },
     {
+      "name": "invalid keys",
+      "extras": {
+        "\uhhhh": 3
+      }
+    },
+    {
       "name": "invalid",
       "extras": {
         "nestedObject": {

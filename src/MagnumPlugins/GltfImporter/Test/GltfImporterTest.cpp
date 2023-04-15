@@ -4967,7 +4967,8 @@ void GltfImporterTest::materialExtras() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
     importer->configuration().setValue("phongMaterialFallback", false);
 
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "material-extras.gltf")));
+    Containers::String filename = Utility::Path::join(GLTFIMPORTER_TEST_DIR, "material-extras.gltf");
+    CORRADE_VERIFY(importer->openFile(filename));
 
     {
         for(const char* name: {"primitive", "string", "array"}) {
@@ -4994,6 +4995,25 @@ void GltfImporterTest::materialExtras() {
         CORRADE_VERIFY(material);
         CORRADE_COMPARE(material->layerCount(), 1);
         CORRADE_COMPARE(material->attributeCount(), 0);
+    } {
+        const char* name = "invalid keys";
+        CORRADE_ITERATION(name);
+        Containers::Optional<MaterialData> material;
+        std::ostringstream outWarning, outError;
+        {
+            Warning redirectWarning{&outWarning};
+            Error redirectError{&outError};
+            material = importer->material(name);
+        }
+        CORRADE_VERIFY(material);
+        CORRADE_COMPARE(material->layerCount(), 1);
+        CORRADE_COMPARE(material->attributeCount(), 0);
+
+        /* As these are all non-fatal messages, all should be warnings */
+        CORRADE_COMPARE(outError.str(), "");
+        CORRADE_COMPARE(outWarning.str(), Utility::formatString(
+            "Utility::Json::parseObject(): invalid unicode escape sequence \\uhhhh at {0}:25:10\n"
+            "Trade::GltfImporter::material(): extras object has invalid keys, skipping\n", filename));
     } {
         const char* name = "invalid";
         CORRADE_ITERATION(name);
