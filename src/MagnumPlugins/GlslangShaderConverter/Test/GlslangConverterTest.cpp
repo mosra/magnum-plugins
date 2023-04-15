@@ -269,6 +269,11 @@ const struct {
         }}, true,
         "ShaderTools::GlslangConverter::convertDataToData(): compilation succeeded with the following message:\n"
         "WARNING: 0:4: 'reserved__word' : identifiers containing consecutive underscores (\"__\") are reserved\n"},
+    {"compile warning, Quiet",
+        ConverterFlag::Quiet, {InPlaceInit, {
+            {"RESERVED_IDENTIFIER", ""}
+        }}, true,
+        ""},
     {"compile warning, WarningAsError",
         ConverterFlag::WarningAsError, {InPlaceInit, {
             {"RESERVED_IDENTIFIER", ""}
@@ -290,6 +295,13 @@ const struct {
         }}, false,
         "ShaderTools::GlslangConverter::convertDataToData(): compilation succeeded with the following message:\n"
         "WARNING: 0:4: 'reserved__word' : identifiers containing consecutive underscores (\"__\") are reserved\n"
+        "ShaderTools::GlslangConverter::convertDataToData(): linking failed:\n"
+        "ERROR: Linking vertex stage: Missing entry point: Each stage requires one entry point\n"},
+    {"compile warning + link error, Quiet",
+        ConverterFlag::Quiet, {InPlaceInit, {
+            {"RESERVED_IDENTIFIER", ""},
+            {"NO_MAIN", ""}
+        }}, false,
         "ShaderTools::GlslangConverter::convertDataToData(): linking failed:\n"
         "ERROR: Linking vertex stage: Missing entry point: Each stage requires one entry point\n"}
     /** @todo link warning? found only one w/ HLSL where it can have no
