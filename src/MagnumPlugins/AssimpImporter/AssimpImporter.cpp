@@ -1717,6 +1717,7 @@ Containers::Optional<MaterialData> AssimpImporter::doMaterial(const UnsignedInt 
                     else if(property.mDataLength == 16)
                         type = MaterialAttributeType::Vector4i;
                     else {
+                        /** @todo is there any such case even? */
                         Warning{} << "Trade::AssimpImporter::material(): property" << key << "is an integer array of" << property.mDataLength << "bytes, saving as a typeless buffer";
                         /* Abusing Pointer to indicate this is a buffer.
                            Together with other similar cases it's processed
@@ -1755,10 +1756,7 @@ Containers::Optional<MaterialData> AssimpImporter::doMaterial(const UnsignedInt 
                     type = MaterialAttributeType::Pointer;
                 } else if(property.mType == aiPTI_String) {
                     type = MaterialAttributeType::String;
-                } else {
-                    Warning{} << "Trade::AssimpImporter::material(): property" << key << "has unknown type" << property.mType << Debug::nospace << ", saving as a typeless buffer";
-                    type = MaterialAttributeType::Pointer;
-                }
+                } else CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
 
                 CORRADE_INTERNAL_ASSERT(type != MaterialAttributeType{});
 
