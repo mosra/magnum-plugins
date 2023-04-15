@@ -2088,15 +2088,16 @@ void KtxImporterTest::swizzle() {
         header.vkFormat = Utility::Endianness::littleEndian(data.vkFormat);
     }
 
-    std::ostringstream outDebug;
-    Debug redirectDebug{&outDebug};
-
-    CORRADE_VERIFY(importer->openData(*fileData));
+    std::ostringstream out;
+    {
+        Debug redirectDebug{&out};
+        CORRADE_VERIFY(importer->openData(*fileData));
+    }
 
     std::string expectedMessage = "Trade::KtxImporter::openData(): image will be flipped along y\n";
     if(data.message)
         expectedMessage += Utility::formatString("Trade::KtxImporter::openData(): {}\n", data.message);
-    CORRADE_COMPARE(outDebug.str(), expectedMessage);
+    CORRADE_COMPARE(out.str(), expectedMessage);
 
     CORRADE_COMPARE(importer->image2DCount(), 1);
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
@@ -2110,12 +2111,13 @@ void KtxImporterTest::swizzleMultipleBytes() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
     importer->addFlags(ImporterFlag::Verbose);
 
-    std::ostringstream outDebug;
-    Debug redirectDebug{&outDebug};
+    std::ostringstream out;
+    {
+        Debug redirectDebug{&out};
+        CORRADE_VERIFY(importer->openFile(Utility::Path::join(KTXIMPORTER_TEST_DIR, "bgr-swizzle-bgr-16bit.ktx2")));
+    }
 
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(KTXIMPORTER_TEST_DIR, "bgr-swizzle-bgr-16bit.ktx2")));
-
-    CORRADE_COMPARE(outDebug.str(),
+    CORRADE_COMPARE(out.str(),
         "Trade::KtxImporter::openData(): image will be flipped along y\n"
         "Trade::KtxImporter::openData(): format requires conversion from BGR to RGB\n");
 
