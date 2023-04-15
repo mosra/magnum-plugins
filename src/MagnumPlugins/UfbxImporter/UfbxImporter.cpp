@@ -395,12 +395,14 @@ void UfbxImporter::openInternal(void* opaqueScene, const void* opaqueOpts, bool 
     ufbx_scene* scene = static_cast<ufbx_scene*>(opaqueScene);
     const ufbx_load_opts& opts = *static_cast<const ufbx_load_opts*>(opaqueOpts);
 
-    Containers::StringView warningPrefix = fromFile ? "Trade::UfbxImporter::openFile(): "_s : "Trade::UfbxImporter::openData(): "_s;
-    for(const ufbx_warning& warning: scene->metadata.warnings) {
-        if(warning.count > 1)
-            Warning{Utility::Debug::Flag::NoSpace} << warningPrefix << Containers::StringView(warning.description) << " (x" << warning.count << ")";
-        else
-            Warning{Utility::Debug::Flag::NoSpace} << warningPrefix << Containers::StringView(warning.description);
+    if(!(flags() & ImporterFlag::Quiet)) {
+        const Containers::StringView warningPrefix = fromFile ? "Trade::UfbxImporter::openFile(): "_s : "Trade::UfbxImporter::openData(): "_s;
+        for(const ufbx_warning& warning: scene->metadata.warnings) {
+            if(warning.count > 1)
+                Warning{Utility::Debug::Flag::NoSpace} << warningPrefix << Containers::StringView(warning.description) << " (x" << warning.count << ")";
+            else
+                Warning{Utility::Debug::Flag::NoSpace} << warningPrefix << Containers::StringView(warning.description);
+        }
     }
 
     _state.reset(new State{});
@@ -767,7 +769,8 @@ Containers::Optional<LightData> UfbxImporter::doLight(UnsignedInt id) {
     } else if(light->decay == UFBX_LIGHT_DECAY_QUADRATIC) {
         attenuation = {0.0f, 0.0f, 1.0f};
     } else if(light->decay == UFBX_LIGHT_DECAY_CUBIC) {
-        Warning{} << "Trade::UfbxImporter::light(): cubic attenuation not supported, patching to quadratic";
+        if(!(flags() & ImporterFlag::Quiet))
+            Warning{} << "Trade::UfbxImporter::light(): cubic attenuation not supported, patching to quadratic";
         attenuation = {0.0f, 0.0f, 1.0f};
     } else {
         Error{} << "Trade::UfbxImporter::light(): light decay" << light->decay << "is not supported"; /* LCOV_EXCL_LINE */
@@ -775,7 +778,8 @@ Containers::Optional<LightData> UfbxImporter::doLight(UnsignedInt id) {
 
     /* FBX and many modeling programs don't constrain decay to match ligh type */
     if((lightType == LightData::Type::Directional || lightType == LightData::Type::Ambient) && attenuation != Vector3{1.0f, 0.0f, 0.0f}) {
-        Warning{} << "Trade::UfbxImporter::light(): patching attenuation" << attenuation << "to" << Vector3{1.0f, 0.0f, 0.0f} << "for" << lightType;
+        if(!(flags() & ImporterFlag::Quiet))
+            Warning{} << "Trade::UfbxImporter::light(): patching attenuation" << attenuation << "to" << Vector3{1.0f, 0.0f, 0.0f} << "for" << lightType;
         attenuation = {1.0f, 0.0f, 0.0f};
     }
 

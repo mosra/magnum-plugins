@@ -185,6 +185,15 @@ const struct {
 };
 
 const struct {
+    const char* name;
+    ImporterFlags flags;
+    bool quiet;
+} QuietData[]{
+    {"", {}, false},
+    {"quiet", ImporterFlag::Quiet, true}
+};
+
+const struct {
     Long maxMemory;
     bool shouldLoad;
 } MaxMemoryData[]{
@@ -223,10 +232,12 @@ UfbxImporterTest::UfbxImporterTest() {
               &UfbxImporterTest::cameraOrientation,
               &UfbxImporterTest::light,
               &UfbxImporterTest::lightName,
-              &UfbxImporterTest::lightOrientation,
-              &UfbxImporterTest::lightBadDecay,
+              &UfbxImporterTest::lightOrientation});
 
-              &UfbxImporterTest::geometricTransformHelperNodes,
+    addInstancedTests({&UfbxImporterTest::lightBadDecay},
+        Containers::arraySize(QuietData));
+
+    addTests({&UfbxImporterTest::geometricTransformHelperNodes,
               &UfbxImporterTest::geometricTransformModifyGeometry,
               &UfbxImporterTest::geometricTransformPreserve,
               &UfbxImporterTest::geometricTransformInvalidHandling,
@@ -260,11 +271,14 @@ UfbxImporterTest::UfbxImporterTest() {
               &UfbxImporterTest::imageBrokenEmbedded,
 
               &UfbxImporterTest::objCube,
-              &UfbxImporterTest::objCubeFileCallback,
-              &UfbxImporterTest::objMissingMtl,
-              &UfbxImporterTest::objMissingMtlFileCallback,
+              &UfbxImporterTest::objCubeFileCallback});
 
-              &UfbxImporterTest::mtl,
+    addInstancedTests({
+        &UfbxImporterTest::objMissingMtl,
+        &UfbxImporterTest::objMissingMtlFileCallback},
+        Containers::arraySize(QuietData));
+
+    addTests({&UfbxImporterTest::mtl,
 
               &UfbxImporterTest::normalizeUnitsAdjustTransforms,
               &UfbxImporterTest::normalizeUnitsTransformRoot,
@@ -273,9 +287,12 @@ UfbxImporterTest::UfbxImporterTest() {
               &UfbxImporterTest::geometryCache,
               &UfbxImporterTest::geometryCacheFileCallback,
 
-              &UfbxImporterTest::staticSkin,
-              &UfbxImporterTest::multiWarning,
-              &UfbxImporterTest::multiWarningData});
+              &UfbxImporterTest::staticSkin});
+
+    addInstancedTests({
+        &UfbxImporterTest::multiWarning,
+        &UfbxImporterTest::multiWarningData},
+        Containers::arraySize(QuietData));
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. It also pulls in the AnyImageImporter dependency. */
@@ -933,7 +950,11 @@ void UfbxImporterTest::lightName() {
 }
 
 void UfbxImporterTest::lightBadDecay() {
+    auto&& data = QuietData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
+    importer->addFlags(data.flags);
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "bad-decay-lights.fbx")));
 
     CORRADE_COMPARE(importer->lightCount(), 2);
@@ -949,14 +970,18 @@ void UfbxImporterTest::lightBadDecay() {
         CORRADE_COMPARE(lights.size(), 1);
 
         std::ostringstream out;
-        Warning redirectWarning{&out};
-
-        Containers::Optional<LightData> light = importer->light(lights[0]);
+        Containers::Optional<LightData> light;
+        {
+            Warning redirectWarning{&out};
+            light = importer->light(lights[0]);
+        }
         CORRADE_VERIFY(light);
         CORRADE_COMPARE(light->type(), LightData::Type::Point);
         CORRADE_COMPARE(light->attenuation(), (Vector3{0.0f, 0.0f, 1.0f}));
-
-        CORRADE_COMPARE(out.str(), "Trade::UfbxImporter::light(): cubic attenuation not supported, patching to quadratic\n");
+        if(data.quiet)
+            CORRADE_COMPARE(out.str(), "");
+        else
+            CORRADE_COMPARE(out.str(), "Trade::UfbxImporter::light(): cubic attenuation not supported, patching to quadratic\n");
     } {
         Long objectId = importer->objectForName("directionalDecay");
         CORRADE_COMPARE_AS(objectId, 0, TestSuite::Compare::GreaterOrEqual);
@@ -965,14 +990,18 @@ void UfbxImporterTest::lightBadDecay() {
         CORRADE_COMPARE(lights.size(), 1);
 
         std::ostringstream out;
-        Warning redirectWarning{&out};
-
-        Containers::Optional<LightData> light = importer->light(lights[0]);
+        Containers::Optional<LightData> light;
+        {
+            Warning redirectWarning{&out};
+            light = importer->light(lights[0]);
+        }
         CORRADE_VERIFY(light);
         CORRADE_COMPARE(light->type(), LightData::Type::Directional);
         CORRADE_COMPARE(light->attenuation(), (Vector3{1.0f, 0.0f, 0.0f}));
-
-        CORRADE_COMPARE(out.str(), "Trade::UfbxImporter::light(): patching attenuation Vector(0, 0, 1) to Vector(1, 0, 0) for Trade::LightData::Type::Directional\n");
+        if(data.quiet)
+            CORRADE_COMPARE(out.str(), "");
+        else
+            CORRADE_COMPARE(out.str(), "Trade::UfbxImporter::light(): patching attenuation Vector(0, 0, 1) to Vector(1, 0, 0) for Trade::LightData::Type::Directional\n");
     }
 }
 
@@ -2335,14 +2364,23 @@ void UfbxImporterTest::objCubeFileCallback() {
 }
 
 void UfbxImporterTest::objMissingMtl() {
+    auto&& data = QuietData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
+    importer->addFlags(data.flags);
 
     std::ostringstream out;
-    Warning redirectWarning{&out};
-
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "missing-mtl.obj")));
-    CORRADE_COMPARE_AS(out.str(), "Trade::UfbxImporter::openFile(): Could not open .mtl file:", TestSuite::Compare::StringHasPrefix);
-    CORRADE_COMPARE_AS(out.str(), "missing-mtl.mtl", TestSuite::Compare::StringContains);
+    {
+        Warning redirectWarning{&out};
+        CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "missing-mtl.obj")));
+    }
+    if(data.quiet)
+        CORRADE_COMPARE(out.str(), "");
+    else {
+        CORRADE_COMPARE_AS(out.str(), "Trade::UfbxImporter::openFile(): Could not open .mtl file:", TestSuite::Compare::StringHasPrefix);
+        CORRADE_COMPARE_AS(out.str(), "missing-mtl.mtl", TestSuite::Compare::StringContains);
+    }
 
     CORRADE_COMPARE(importer->sceneCount(), 1);
     CORRADE_COMPARE(importer->objectCount(), 1);
@@ -2361,16 +2399,24 @@ void UfbxImporterTest::objMissingMtl() {
 }
 
 void UfbxImporterTest::objMissingMtlFileCallback() {
+    auto&& data = QuietData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
+    importer->addFlags(data.flags);
 
     FileCallbackFiles files;
     importer->setFileCallback(&fileCallbackFunc, &files);
 
     std::ostringstream out;
-    Warning redirectWarning{&out};
-
-    CORRADE_VERIFY(importer->openFile("missing-mtl.obj"));
-    CORRADE_COMPARE(out.str(), "Trade::UfbxImporter::openFile(): Could not open .mtl file: missing-mtl.mtl\n");
+    {
+        Warning redirectWarning{&out};
+        CORRADE_VERIFY(importer->openFile("missing-mtl.obj"));
+    }
+    if(data.quiet)
+        CORRADE_COMPARE(out.str(), "");
+    else
+        CORRADE_COMPARE(out.str(), "Trade::UfbxImporter::openFile(): Could not open .mtl file: missing-mtl.mtl\n");
 
     CORRADE_COMPARE(files.size(), 2);
     CORRADE_VERIFY(files.find("missing-mtl.obj") != files.end());
@@ -2534,29 +2580,46 @@ void UfbxImporterTest::staticSkin() {
 }
 
 void UfbxImporterTest::multiWarning() {
+    auto&& data = QuietData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
+    importer->addFlags(data.flags);
 
     std::ostringstream out;
-    Warning redirectWarning{&out};
-
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "warning-cube.fbx")));
-    CORRADE_COMPARE(out.str(),
-        "Trade::UfbxImporter::openFile(): Clamped index (x4)\n"
-        "Trade::UfbxImporter::openFile(): Bad UTF-8 string\n");
+    {
+        Warning redirectWarning{&out};
+        CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "warning-cube.fbx")));
+    }
+    if(data.quiet)
+        CORRADE_COMPARE(out.str(), "");
+    else
+        CORRADE_COMPARE(out.str(),
+            "Trade::UfbxImporter::openFile(): Clamped index (x4)\n"
+            "Trade::UfbxImporter::openFile(): Bad UTF-8 string\n");
 }
 
 void UfbxImporterTest::multiWarningData() {
+    auto&& data = QuietData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
+    importer->addFlags(data.flags);
+
+    Containers::Optional<Containers::Array<char>> fileData = Utility::Path::read(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "warning-cube.fbx"));
+    CORRADE_VERIFY(fileData);
 
     std::ostringstream out;
-    Warning redirectWarning{&out};
-
-    Containers::Optional<Containers::Array<char>> data = Utility::Path::read(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "warning-cube.fbx"));
-    CORRADE_VERIFY(data);
-    CORRADE_VERIFY(importer->openData(*data));
-    CORRADE_COMPARE(out.str(),
-        "Trade::UfbxImporter::openData(): Clamped index (x4)\n"
-        "Trade::UfbxImporter::openData(): Bad UTF-8 string\n");
+    {
+        Warning redirectWarning{&out};
+        CORRADE_VERIFY(importer->openData(*fileData));
+    }
+    if(data.quiet)
+        CORRADE_COMPARE(out.str(), "");
+    else
+        CORRADE_COMPARE(out.str(),
+            "Trade::UfbxImporter::openData(): Clamped index (x4)\n"
+            "Trade::UfbxImporter::openData(): Bad UTF-8 string\n");
 }
 
 }}}}
