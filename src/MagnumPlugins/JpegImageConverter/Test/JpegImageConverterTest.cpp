@@ -71,11 +71,23 @@ struct JpegImageConverterTest: TestSuite::Tester {
 
 const struct {
     const char* name;
-    ImageFlags2D flags;
+    ImageConverterFlags flags;
+    bool quiet;
+} QuietData[]{
+    {"", {}, false},
+    {"quiet", ImageConverterFlag::Quiet, true}
+};
+
+const struct {
+    const char* name;
+    ImageConverterFlags converterFlags;
+    ImageFlags2D imageFlags;
     const char* message;
 } UnsupportedMetadataData[]{
-    {"1D array", ImageFlag2D::Array,
-        "1D array images are unrepresentable in JPEG, saving as a regular 2D image"}
+    {"1D array", {}, ImageFlag2D::Array,
+        "1D array images are unrepresentable in JPEG, saving as a regular 2D image"},
+    {"1D array, quiet", ImageConverterFlag::Quiet, ImageFlag2D::Array,
+        nullptr},
 };
 
 JpegImageConverterTest::JpegImageConverterTest() {
@@ -83,11 +95,12 @@ JpegImageConverterTest::JpegImageConverterTest() {
               &JpegImageConverterTest::conversionError,
 
               &JpegImageConverterTest::rgb80Percent,
-              &JpegImageConverterTest::rgb100Percent,
+              &JpegImageConverterTest::rgb100Percent});
 
-              &JpegImageConverterTest::rgba80Percent,
+    addInstancedTests({&JpegImageConverterTest::rgba80Percent},
+        Containers::arraySize(QuietData));
 
-              &JpegImageConverterTest::grayscale80Percent,
+    addTests({&JpegImageConverterTest::grayscale80Percent,
               &JpegImageConverterTest::grayscale100Percent});
 
     addInstancedTests({&JpegImageConverterTest::unsupportedMetadata},
@@ -273,7 +286,11 @@ void JpegImageConverterTest::rgb100Percent() {
 }
 
 void JpegImageConverterTest::rgba80Percent() {
+    auto&& data = QuietData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("JpegImageConverter");
+    converter->addFlags(data.flags);
     CORRADE_COMPARE(converter->configuration().value<Float>("jpegQuality"), 0.8f);
 
     /* If we don't have libjpeg-turbo, exporting RGBA will fail */
@@ -291,19 +308,22 @@ void JpegImageConverterTest::rgba80Percent() {
     /* RGBA should be exported as RGB, with the alpha channel ignored (and a
        warning about that printed) */
     std::ostringstream out;
-    Containers::Optional<Containers::Array<char>> data;
+    Containers::Optional<Containers::Array<char>> imageData;
     {
         Warning redirectWarning{&out};
-        data = converter->convertToData(OriginalRgba);
+        imageData = converter->convertToData(OriginalRgba);
     }
-    CORRADE_VERIFY(data);
-    CORRADE_COMPARE(out.str(), "Trade::JpegImageConverter::convertToData(): ignoring alpha channel\n");
+    CORRADE_VERIFY(imageData);
+    if(data.quiet)
+        CORRADE_COMPARE(out.str(), "");
+    else
+        CORRADE_COMPARE(out.str(), "Trade::JpegImageConverter::convertToData(): ignoring alpha channel\n");
 
     if(_importerManager.loadState("JpegImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("JpegImporter plugin not found, cannot test");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("JpegImporter");
-    CORRADE_VERIFY(importer->openData(*data));
+    CORRADE_VERIFY(importer->openData(*imageData));
     Containers::Optional<Trade::ImageData2D> converted = importer->image2D(0);
     CORRADE_VERIFY(converted);
     CORRADE_COMPARE(converted->size(), Vector2i(6, 4));
@@ -325,7 +345,7 @@ void JpegImageConverterTest::rgba80Percent() {
        problems for traditional non-turbo libjpeg */
     Containers::Optional<Containers::Array<char>> dataRgb = converter->convertToData(OriginalRgb);
     CORRADE_VERIFY(dataRgb);
-    CORRADE_COMPARE_AS(*data, *dataRgb, TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(*imageData, *dataRgb, TestSuite::Compare::Container);
 }
 
 constexpr const char OriginalGrayscaleData[] = {
@@ -404,14 +424,18 @@ void JpegImageConverterTest::unsupportedMetadata() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("JpegImageConverter");
+    converter->addFlags(data.converterFlags);
 
     const char imageData[4]{};
-    ImageView2D image{PixelFormat::RGB8Unorm, {1, 1}, imageData, data.flags};
+    ImageView2D image{PixelFormat::RGB8Unorm, {1, 1}, imageData, data.imageFlags};
 
     std::ostringstream out;
     Warning redirectWarning{&out};
     CORRADE_VERIFY(converter->convertToData(image));
-    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::JpegImageConverter::convertToData(): {}\n", data.message));
+    if(!data.message)
+        CORRADE_COMPARE(out.str(), "");
+    else
+        CORRADE_COMPARE(out.str(), Utility::formatString("Trade::JpegImageConverter::convertToData(): {}\n", data.message));
 }
 
 }}}}

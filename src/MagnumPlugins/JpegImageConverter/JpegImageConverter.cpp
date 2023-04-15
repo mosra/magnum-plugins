@@ -74,7 +74,7 @@ Containers::String JpegImageConverter::doMimeType() const {
 
 Containers::Optional<Containers::Array<char>> JpegImageConverter::doConvertToData(const ImageView2D& image) {
     /* Warn about lost metadata */
-    if(image.flags() & ImageFlag2D::Array) {
+    if(image.flags() & ImageFlag2D::Array && !(flags() & ImageConverterFlag::Quiet)) {
         Warning{} << "Trade::JpegImageConverter::convertToData(): 1D array images are unrepresentable in JPEG, saving as a regular 2D image";
     }
 
@@ -95,7 +95,8 @@ Containers::Optional<Containers::Array<char>> JpegImageConverter::doConvertToDat
             #ifdef JCS_EXTENSIONS
             components = 4;
             colorSpace = JCS_EXT_RGBX;
-            Warning{} << "Trade::JpegImageConverter::convertToData(): ignoring alpha channel";
+            if(!(flags() & ImageConverterFlag::Quiet))
+                Warning{} << "Trade::JpegImageConverter::convertToData(): ignoring alpha channel";
             break;
             #else
             Error{} << "Trade::JpegImageConverter::convertToData(): RGBA input (with alpha ignored) requires libjpeg-turbo";
