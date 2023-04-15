@@ -185,6 +185,15 @@ struct AssimpImporterTest: TestSuite::Tester {
     unsigned int _assimpVersion;
 };
 
+const struct {
+    const char* name;
+    ImporterFlags flags;
+    bool quiet;
+} QuietData[]{
+    {"", {}, false},
+    {"quiet", ImporterFlag::Quiet, true}
+};
+
 constexpr struct {
     const char* name;
     ImporterFlags flags;
@@ -284,9 +293,12 @@ AssimpImporterTest::AssimpImporterTest() {
         Containers::arraySize(ExportedFileData));
 
     addTests({&AssimpImporterTest::animationGltf,
-              &AssimpImporterTest::animationGltfNoScene,
-              &AssimpImporterTest::animationGltfBrokenSplineWarning,
-              &AssimpImporterTest::animationGltfSpline});
+              &AssimpImporterTest::animationGltfNoScene});
+
+    addInstancedTests({&AssimpImporterTest::animationGltfBrokenSplineWarning},
+        Containers::arraySize(QuietData));
+
+    addTests({&AssimpImporterTest::animationGltfSpline});
 
     addInstancedTests({&AssimpImporterTest::animationGltfTicksPerSecondPatching,
                        &AssimpImporterTest::animationDummyTracksRemovalEnabled,
@@ -294,9 +306,12 @@ AssimpImporterTest::AssimpImporterTest() {
         Containers::arraySize(VerboseData));
 
     addTests({&AssimpImporterTest::animationShortestPathOptimizationEnabled,
-              &AssimpImporterTest::animationShortestPathOptimizationDisabled,
-              &AssimpImporterTest::animationQuaternionNormalizationEnabled,
-              &AssimpImporterTest::animationQuaternionNormalizationDisabled,
+              &AssimpImporterTest::animationShortestPathOptimizationDisabled});
+
+    addInstancedTests({&AssimpImporterTest::animationQuaternionNormalizationEnabled},
+        Containers::arraySize(QuietData));
+
+    addTests({&AssimpImporterTest::animationQuaternionNormalizationDisabled,
               &AssimpImporterTest::animationMergeEmpty,
               &AssimpImporterTest::animationMerge});
 
@@ -309,23 +324,32 @@ AssimpImporterTest::AssimpImporterTest() {
 
               &AssimpImporterTest::camera,
               &AssimpImporterTest::cameraOrthographic,
-              &AssimpImporterTest::light,
-              &AssimpImporterTest::lightDirectionalBlender,
-              &AssimpImporterTest::lightUnsupported,
+              &AssimpImporterTest::light});
+
+    addInstancedTests({&AssimpImporterTest::lightDirectionalBlender},
+        Containers::arraySize(QuietData));
+
+    addTests({&AssimpImporterTest::lightUnsupported,
               &AssimpImporterTest::cameraLightReferencedByTwoNodes,
 
               &AssimpImporterTest::materialColor,
               &AssimpImporterTest::materialTexture,
-              &AssimpImporterTest::materialColorTexture,
-              &AssimpImporterTest::materialStlWhiteAmbientPatch,
-              &AssimpImporterTest::materialWhiteAmbientTexture,
+              &AssimpImporterTest::materialColorTexture});
+
+    addInstancedTests({&AssimpImporterTest::materialStlWhiteAmbientPatch},
+        Containers::arraySize(QuietData));
+
+    addTests({&AssimpImporterTest::materialWhiteAmbientTexture,
               &AssimpImporterTest::materialMultipleTextures,
               &AssimpImporterTest::materialTextureMatrix,
               &AssimpImporterTest::materialTextureCoordinates,
               &AssimpImporterTest::materialTextureLayers,
-              &AssimpImporterTest::materialRawUnrecognized,
-              &AssimpImporterTest::materialRaw,
-              &AssimpImporterTest::materialRawTextureLayers,
+              &AssimpImporterTest::materialRawUnrecognized});
+
+    addInstancedTests({&AssimpImporterTest::materialRaw},
+        Containers::arraySize(QuietData));
+
+    addTests({&AssimpImporterTest::materialRawTextureLayers,
 
               &AssimpImporterTest::mesh,
               &AssimpImporterTest::pointMesh,
@@ -342,7 +366,8 @@ AssimpImporterTest::AssimpImporterTest() {
     addInstancedTests({&AssimpImporterTest::meshSkinningAttributesMultiple},
         Containers::arraySize(MeshSkinningAttributesMultipleData));
 
-    addTests({&AssimpImporterTest::meshSkinningAttributesMultipleGltf});
+    addInstancedTests({&AssimpImporterTest::meshSkinningAttributesMultipleGltf},
+        Containers::arraySize(QuietData));
 
     addInstancedTests({&AssimpImporterTest::meshSkinningAttributesMaxJointWeights},
         Containers::arraySize(MeshSkinningAttributesMultipleData));
@@ -818,6 +843,9 @@ void AssimpImporterTest::animationGltfNoScene() {
 }
 
 void AssimpImporterTest::animationGltfBrokenSplineWarning() {
+    auto&& data = QuietData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     if(!supportsAnimation(".gltf"_s, _assimpVersion))
         CORRADE_SKIP("glTF 2 animation is not supported with the current version of Assimp");
 
@@ -825,15 +853,17 @@ void AssimpImporterTest::animationGltfBrokenSplineWarning() {
     CORRADE_SKIP("Current version of assimp correctly imports glTF spline-interpolated animations.");
     #else
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+    importer->addFlags(data.flags);
 
     std::ostringstream out;
     {
         Warning redirectWarning{&out};
         CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "animation.gltf")));
     }
-    CORRADE_COMPARE(out.str(), "Trade::AssimpImporter::openData(): spline-interpolated animations imported "
-        "from this file are most likely broken using this version of Assimp. Consult the "
-        "importer documentation for more information.\n");
+    if(data.quiet)
+        CORRADE_COMPARE(out.str(), "");
+    else
+        CORRADE_COMPARE(out.str(), "Trade::AssimpImporter::openData(): spline-interpolated animations imported from this file are most likely broken using this version of Assimp. Consult the importer documentation for more information.\n");
     #endif
 }
 
@@ -1210,10 +1240,14 @@ void AssimpImporterTest::animationShortestPathOptimizationDisabled() {
 }
 
 void AssimpImporterTest::animationQuaternionNormalizationEnabled() {
+    auto&& data = QuietData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     if(!supportsAnimation(".gltf"_s, _assimpVersion))
         CORRADE_SKIP("glTF 2 animation is not supported with the current version of Assimp");
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+    importer->addFlags(data.flags);
     /* Enabled by default */
     CORRADE_VERIFY(importer->configuration().value<bool>("normalizeQuaternions"));
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "animation-patching.gltf")));
@@ -1225,9 +1259,12 @@ void AssimpImporterTest::animationQuaternionNormalizationEnabled() {
         animation = importer->animation("Quaternion normalization patching");
     }
     CORRADE_VERIFY(animation);
-    CORRADE_COMPARE_AS(out.str(),
-        "Trade::AssimpImporter::animation(): quaternions in some rotation tracks were renormalized\n",
-        TestSuite::Compare::StringContains);
+    if(data.quiet)
+        CORRADE_COMPARE(out.str(), "");
+    else
+        CORRADE_COMPARE_AS(out.str(),
+            "Trade::AssimpImporter::animation(): quaternions in some rotation tracks were renormalized\n",
+            TestSuite::Compare::StringContains);
     CORRADE_COMPARE(animation->trackCount(), 1);
     CORRADE_COMPARE(animation->trackType(0), AnimationTrackType::Quaternion);
 
@@ -1781,12 +1818,16 @@ void AssimpImporterTest::light() {
 }
 
 void AssimpImporterTest::lightDirectionalBlender() {
+    auto&& data = QuietData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     /* Versions before 5.1.3 say "BLEND: Expected at least one object with no
        parent". */
     if(_assimpVersion < 513)
         CORRADE_SKIP("Blender 2.8+ files are supported only since Assimp 5.1.3.");
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+    importer->addFlags(data.flags);
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "light-directional.blend")));
 
     /* While COLLADA files (the light() test above) have the attenuation as
@@ -1800,7 +1841,10 @@ void AssimpImporterTest::lightDirectionalBlender() {
     CORRADE_COMPARE(light->color(), (Color3{0.3f, 0.4f, 0.5f}));
     CORRADE_COMPARE(light->intensity(), 1.0f);
     CORRADE_COMPARE(light->attenuation(), (Vector3{1.0f, 0.0f, 0.0f}));
-    CORRADE_COMPARE(out.str(), "Trade::AssimpImporter::light(): patching attenuation Vector(1, 0.16, 0.0064) to Vector(1, 0, 0) for Trade::LightData::Type::Directional\n");
+    if(data.quiet)
+        CORRADE_COMPARE(out.str(), "");
+    else
+        CORRADE_COMPARE(out.str(), "Trade::AssimpImporter::light(): patching attenuation Vector(1, 0.16, 0.0064) to Vector(1, 0, 0) for Trade::LightData::Type::Directional\n");
 }
 
 void AssimpImporterTest::lightUnsupported() {
@@ -2027,7 +2071,11 @@ void AssimpImporterTest::materialColorTexture() {
 }
 
 void AssimpImporterTest::materialStlWhiteAmbientPatch() {
+    auto&& data = QuietData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+    importer->addFlags(data.flags);
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "quad.stl")));
 
     CORRADE_COMPARE(importer->materialCount(), 1);
@@ -2041,7 +2089,9 @@ void AssimpImporterTest::materialStlWhiteAmbientPatch() {
 
     CORRADE_VERIFY(material);
     CORRADE_COMPARE(material->types(), MaterialType::Phong);
-    {
+    if(data.quiet)
+        CORRADE_COMPARE(out.str(), "");
+    else {
         CORRADE_EXPECT_FAIL_IF(_assimpVersion < 410 || _assimpVersion >= 500,
             "Assimp < 4.1 and >= 5.0 behaves properly regarding STL material ambient");
         CORRADE_COMPARE(out.str(), "Trade::AssimpImporter::material(): white ambient detected, forcing back to black\n");
@@ -2373,7 +2423,11 @@ void AssimpImporterTest::materialRawUnrecognized() {
 }
 
 void AssimpImporterTest::materialRaw() {
+    auto&& data = QuietData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+    importer->addFlags(data.flags);
     /* Disabled by default */
     CORRADE_VERIFY(!importer->configuration().value<bool>("forceRawMaterialData"));
     importer->configuration().setValue("forceRawMaterialData", true);
@@ -2438,9 +2492,12 @@ void AssimpImporterTest::materialRaw() {
             CORRADE_COMPARE(material->attribute<Containers::StringView>(4), "Ministry of Finance (Turkmenistan)");
         }
 
-        CORRADE_COMPARE(out.str(),
-            "Trade::AssimpImporter::material(): property $raw.LongNameLongNameLongNameLongNameLongNameLongNameLongName is too large with 67 bytes, skipping\n"
-            "Trade::AssimpImporter::material(): property $raw.LongValue is too large with 70 bytes, skipping\n");
+        if(data.quiet)
+            CORRADE_COMPARE(out.str(), "");
+        else
+            CORRADE_COMPARE(out.str(),
+                "Trade::AssimpImporter::material(): property $raw.LongNameLongNameLongNameLongNameLongNameLongNameLongName is too large with 67 bytes, skipping\n"
+                "Trade::AssimpImporter::material(): property $raw.LongValue is too large with 70 bytes, skipping\n");
     }
 
     if(_assimpVersion < 410)
@@ -2456,7 +2513,11 @@ void AssimpImporterTest::materialRaw() {
         CORRADE_COMPARE(importer->materialCount(), 1);
     }
 
-    material = importer->material("raw");
+    {
+        out.str({});
+        Warning redirectWarning{&out};
+        material = importer->material("raw");
+    }
     CORRADE_VERIFY(material);
     CORRADE_COMPARE(material->types(), MaterialType{});
     {
@@ -2464,6 +2525,11 @@ void AssimpImporterTest::materialRaw() {
             "glTF files with non-0 texture coordinate set add an extra diffuse-only material layer.");
         CORRADE_COMPARE(material->layerCount(), 1);
     }
+    /* Versions before Assimp 5.1.0 don't import AI_MATKEY_UVTRANSFORM */
+    if(_assimpVersion < 510 || data.quiet)
+        CORRADE_COMPARE(out.str(), "");
+    else
+        CORRADE_COMPARE(out.str(), "Trade::AssimpImporter::material(): property $tex.uvtrafo is a float array of 20 bytes, saving as a typeless buffer\n");
 
     /* Attributes that would normally be recognized */
     CORRADE_VERIFY(!material->hasAttribute(MaterialAttribute::DiffuseColor));
@@ -3051,6 +3117,9 @@ void AssimpImporterTest::meshSkinningAttributesMultiple() {
 }
 
 void AssimpImporterTest::meshSkinningAttributesMultipleGltf() {
+    auto&& data = QuietData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     if(!supportsSkinning(".gltf"_s, _assimpVersion))
         CORRADE_SKIP("glTF 2 skinning is not supported with the current version of Assimp");
 
@@ -3068,6 +3137,7 @@ void AssimpImporterTest::meshSkinningAttributesMultipleGltf() {
         CORRADE_SKIP("Current version of assimp fails to import files with multiple sets of skinning attributes");
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+    importer->addFlags(data.flags);
 
     /* Not testing the backwards compatibility JOINTS and WEIGHTS here, as that
        is tested enough in meshSkinningAttributesMultiple() and
@@ -3099,14 +3169,11 @@ void AssimpImporterTest::meshSkinningAttributesMultipleGltf() {
         CORRADE_COMPARE(mesh->attributeArraySize(MeshAttribute::Weights), 8);
     }
 
-    if(_assimpVersion < 524) {
+    if(_assimpVersion < 524 && !data.quiet)
         CORRADE_COMPARE(out.str(),
-            "Trade::AssimpImporter::mesh(): found non-normalized joint weights, possibly "
-            "a result of Assimp reading joint weights incorrectly. Consult the importer "
-            "documentation for more information\n");
-    } else {
+            "Trade::AssimpImporter::mesh(): found non-normalized joint weights, possibly a result of Assimp reading joint weights incorrectly. Consult the importer documentation for more information\n");
+    else
         CORRADE_COMPARE(out.str(), "");
-    }
 
     const UnsignedInt importedArraySize = Utility::min(UnsignedShort{8}, mesh->attributeArraySize(MeshAttribute::JointIds));
 

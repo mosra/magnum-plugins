@@ -564,10 +564,8 @@ void AssimpImporter::doOpenData(Containers::Array<char>&& data, DataFlags) {
        files without spline-interpolated animations, but for doOpenState and
        doOpenFile we have no access to the file content to check if the file
        contains "CUBICSPLINE". */
-    if(_f->scene->HasAnimations() && _f->importerIsGltf) {
-        Warning{} << "Trade::AssimpImporter::openData(): spline-interpolated animations imported "
-            "from this file are most likely broken using this version of Assimp. Consult the "
-            "importer documentation for more information.";
+    if(!(flags() & ImporterFlag::Quiet) && _f->scene->HasAnimations() && _f->importerIsGltf) {
+        Warning{} << "Trade::AssimpImporter::openData(): spline-interpolated animations imported from this file are most likely broken using this version of Assimp. Consult the importer documentation for more information.";
     }
     #endif
 
@@ -970,7 +968,8 @@ Containers::Optional<LightData> AssimpImporter::doLight(UnsignedInt id) {
         could be used to restore the `range` property: https://github.com/assimp/assimp/blob/985a5b9667b25390a00e217ee2086882a101d74a/code/AssetLib/Blender/BlenderLoader.cpp#L1251-L1262 */
     Vector3 attenuation{l->mAttenuationConstant, l->mAttenuationLinear, l->mAttenuationQuadratic};
     if((lightType == LightData::Type::Directional || lightType == LightData::Type::Ambient) && attenuation != Vector3{1.0f, 0.0f, 0.0f}) {
-        Warning{} << "Trade::AssimpImporter::light(): patching attenuation" << attenuation << "to" << Vector3{1.0f, 0.0f, 0.0f} << "for" << lightType;
+        if(!(flags() & ImporterFlag::Quiet))
+            Warning{} << "Trade::AssimpImporter::light(): patching attenuation" << attenuation << "to" << Vector3{1.0f, 0.0f, 0.0f} << "for" << lightType;
         attenuation = {1.0f, 0.0f, 0.0f};
     }
 
@@ -1275,11 +1274,8 @@ Containers::Optional<MeshData> AssimpImporter::doMesh(const UnsignedInt id, Unsi
                    discarded. */
                 constexpr Float Epsilon = 0.1f;
                 if(!Math::equal(sum, 0.0f) && Math::abs(1.0f - sum) > Epsilon) {
-                    Warning{} <<
-                        "Trade::AssimpImporter::mesh(): found non-normalized "
-                        "joint weights, possibly a result of Assimp reading "
-                        "joint weights incorrectly. Consult the importer "
-                        "documentation for more information";
+                    if(!(flags() & ImporterFlag::Quiet))
+                        Warning{} << "Trade::AssimpImporter::mesh(): found non-normalized joint weights, possibly a result of Assimp reading joint weights incorrectly. Consult the importer documentation for more information";
                     break;
                 }
             }
@@ -1564,7 +1560,8 @@ Containers::Optional<MaterialData> AssimpImporter::doMaterial(const UnsignedInt 
                            well, makes no sense. */
                         aiString texturePath;
                         if(configuration().value<bool>("forceWhiteAmbientToBlack") && data.value<Color4>() == Color4{1.0f} && mat->Get(AI_MATKEY_TEXTURE(aiTextureType_AMBIENT, layer), texturePath) != AI_SUCCESS) {
-                            Warning{} << "Trade::AssimpImporter::material(): white ambient detected, forcing back to black";
+                            if(!(flags() & ImporterFlag::Quiet))
+                                Warning{} << "Trade::AssimpImporter::material(): white ambient detected, forcing back to black";
                             data = {MaterialAttribute::AmbientColor, Color4{0.0f, 1.0f}};
                         }
 
@@ -1718,7 +1715,8 @@ Containers::Optional<MaterialData> AssimpImporter::doMaterial(const UnsignedInt 
                         type = MaterialAttributeType::Vector4i;
                     else {
                         /** @todo is there any such case even? */
-                        Warning{} << "Trade::AssimpImporter::material(): property" << key << "is an integer array of" << property.mDataLength << "bytes, saving as a typeless buffer";
+                        if(!(flags() & ImporterFlag::Quiet))
+                            Warning{} << "Trade::AssimpImporter::material(): property" << key << "is an integer array of" << property.mDataLength << "bytes, saving as a typeless buffer";
                         /* Abusing Pointer to indicate this is a buffer.
                            Together with other similar cases it's processed
                            below and turned into MaterialAttributeType::Buffer. */
@@ -1736,7 +1734,8 @@ Containers::Optional<MaterialData> AssimpImporter::doMaterial(const UnsignedInt 
                     else if(property.mDataLength == 16)
                         type = MaterialAttributeType::Vector4;
                     else {
-                        Warning{} << "Trade::AssimpImporter::material(): property" << key << "is a float array of" << property.mDataLength << "bytes, saving as a typeless buffer";
+                        if(!(flags() & ImporterFlag::Quiet))
+                            Warning{} << "Trade::AssimpImporter::material(): property" << key << "is a float array of" << property.mDataLength << "bytes, saving as a typeless buffer";
                         type = MaterialAttributeType::Pointer;
                     }
                 }
@@ -1748,7 +1747,8 @@ Containers::Optional<MaterialData> AssimpImporter::doMaterial(const UnsignedInt 
                         everywhere.
                         Always assert? Ignore if ASSIMP_DOUBLE_PRECISION is
                         not defined? */
-                    Warning{} << "Trade::AssimpImporter::material():" << key << "is a double precision property, saving as a typeless buffer";
+                    if(!(flags() & ImporterFlag::Quiet))
+                        Warning{} << "Trade::AssimpImporter::material():" << key << "is a double precision property, saving as a typeless buffer";
                     type = MaterialAttributeType::Pointer;
                 }
                 #endif
@@ -1788,8 +1788,8 @@ Containers::Optional<MaterialData> AssimpImporter::doMaterial(const UnsignedInt 
 
                 /* +1 is null byte for the key */
                 if(valueSize + keyString.size() + 1 + sizeof(MaterialAttributeType) > sizeof(MaterialAttributeData)) {
-                    Warning{} << "Trade::AssimpImporter::material(): property" << keyString <<
-                        "is too large with" << valueSize + keyString.size() << "bytes, skipping";
+                    if(!(flags() & ImporterFlag::Quiet))
+                        Warning{} << "Trade::AssimpImporter::material(): property" << keyString << "is too large with" << valueSize + keyString.size() << "bytes, skipping";
                     continue;
                 }
 
@@ -2271,7 +2271,7 @@ Containers::Optional<AnimationData> AssimpImporter::doAnimation(UnsignedInt id) 
         }
     }
 
-    if(hadToRenormalize)
+    if(hadToRenormalize && !(flags() & ImporterFlag::Quiet))
         Warning{} << "Trade::AssimpImporter::animation(): quaternions in some rotation tracks were renormalized";
 
     return AnimationData{std::move(data), std::move(tracks),
