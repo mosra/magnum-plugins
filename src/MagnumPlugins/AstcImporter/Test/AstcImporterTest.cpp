@@ -117,26 +117,40 @@ const struct {
 const struct {
     const char* name;
     const char* format;
+    ImporterFlags flags;
     Containers::Optional<bool> assumeYUpZBackward;
     CompressedPixelFormat expectedFormat2D, expectedFormat3D;
     const char* message;
 } FormatData[]{
-    {"", nullptr, {},
+    {"", nullptr, {}, {},
         CompressedPixelFormat::Astc8x8RGBAUnorm,
         CompressedPixelFormat::Astc3x3x3RGBAUnorm,
         "Trade::AstcImporter::openData(): image is assumed to be encoded with Y down and Z forward, imported data will have wrong orientation. Enable assumeYUpZBackward to suppress this warning.\n"},
-    {"assume Y up and Z backward", nullptr, true,
+    {"quiet", nullptr, ImporterFlag::Quiet, {},
         CompressedPixelFormat::Astc8x8RGBAUnorm,
         CompressedPixelFormat::Astc3x3x3RGBAUnorm,
         ""},
-    {"sRGB", "srgb", {},
+    {"assume Y up and Z backward", nullptr, {}, true,
+        CompressedPixelFormat::Astc8x8RGBAUnorm,
+        CompressedPixelFormat::Astc3x3x3RGBAUnorm,
+        ""},
+    {"sRGB", "srgb", {}, {},
         CompressedPixelFormat::Astc8x8RGBASrgb,
         CompressedPixelFormat::Astc3x3x3RGBASrgb,
         "Trade::AstcImporter::openData(): image is assumed to be encoded with Y down and Z forward, imported data will have wrong orientation. Enable assumeYUpZBackward to suppress this warning.\n"},
-    {"float", "float", {},
+    {"float", "float", {}, {},
         CompressedPixelFormat::Astc8x8RGBAF,
         CompressedPixelFormat::Astc3x3x3RGBAF,
         "Trade::AstcImporter::openData(): image is assumed to be encoded with Y down and Z forward, imported data will have wrong orientation. Enable assumeYUpZBackward to suppress this warning.\n"},
+};
+
+const struct {
+    const char* name;
+    ImporterFlags flags;
+    bool quiet;
+} QuietData[]{
+    {"", {}, false},
+    {"quiet", ImporterFlag::Quiet, true}
 };
 
 /* Shared among all plugins that implement data copying optimizations */
@@ -177,8 +191,10 @@ AstcImporterTest::AstcImporterTest() {
     addInstancedTests({&AstcImporterTest::threeDimensions},
         Containers::arraySize(FormatData));
 
-    addTests({&AstcImporterTest::fileTooLong2D,
-              &AstcImporterTest::fileTooLong3D});
+    addInstancedTests({
+        &AstcImporterTest::fileTooLong2D,
+        &AstcImporterTest::fileTooLong3D},
+        Containers::arraySize(QuietData));
 
     addInstancedTests({&AstcImporterTest::openMemory},
         Containers::arraySize(OpenMemoryData));
@@ -336,6 +352,7 @@ void AstcImporterTest::twoDimensions() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AstcImporter");
+    importer->addFlags(data.flags);
     if(data.format)
         importer->configuration().setValue("format", data.format);
     else
@@ -421,6 +438,7 @@ void AstcImporterTest::threeDimensions() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AstcImporter");
+    importer->addFlags(data.flags);
     if(data.format)
         importer->configuration().setValue("format", data.format);
     else
@@ -456,19 +474,26 @@ void AstcImporterTest::threeDimensions() {
 }
 
 void AstcImporterTest::fileTooLong2D() {
+    auto&& data = QuietData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AstcImporter");
+    importer->addFlags(data.flags);
     /* Suppress the other warning so we have just the one we're looking for */
     importer->configuration().setValue("assumeYUpZBackward", true);
 
     /* Add some extra stuff at the end of the file */
-    Containers::Optional<Containers::String> data = Utility::Path::readString(Utility::Path::join(ASTCIMPORTER_TEST_DIR, "8x8.astc"));
-    CORRADE_VERIFY(data);
+    Containers::Optional<Containers::String> fileData = Utility::Path::readString(Utility::Path::join(ASTCIMPORTER_TEST_DIR, "8x8.astc"));
+    CORRADE_VERIFY(fileData);
     std::ostringstream out;
     {
         Warning redirectWarning{&out};
-        CORRADE_VERIFY(importer->openData(*data + "HAHA"));
+        CORRADE_VERIFY(importer->openData(*fileData + "HAHA"));
     }
-    CORRADE_COMPARE(out.str(), "Trade::AstcImporter::openData(): ignoring 4 extra bytes at the end of file\n");
+    if(data.quiet)
+        CORRADE_COMPARE(out.str(), "");
+    else
+        CORRADE_COMPARE(out.str(), "Trade::AstcImporter::openData(): ignoring 4 extra bytes at the end of file\n");
     CORRADE_COMPARE(importer->image2DCount(), 1);
 
     Containers::Optional<ImageData2D> image = importer->image2D(0);
@@ -483,19 +508,26 @@ void AstcImporterTest::fileTooLong2D() {
 }
 
 void AstcImporterTest::fileTooLong3D() {
+    auto&& data = QuietData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AstcImporter");
+    importer->addFlags(data.flags);
     /* Suppress the other warning so we have just the one we're looking for */
     importer->configuration().setValue("assumeYUpZBackward", true);
 
     /* Add some extra stuff at the end of the file */
-    Containers::Optional<Containers::String> data = Utility::Path::readString(Utility::Path::join(ASTCIMPORTER_TEST_DIR, "3x3x3.astc"));
-    CORRADE_VERIFY(data);
+    Containers::Optional<Containers::String> fileData = Utility::Path::readString(Utility::Path::join(ASTCIMPORTER_TEST_DIR, "3x3x3.astc"));
+    CORRADE_VERIFY(fileData);
     std::ostringstream out;
     {
         Warning redirectWarning{&out};
-        CORRADE_VERIFY(importer->openData(*data + "HAHA"));
+        CORRADE_VERIFY(importer->openData(*fileData + "HAHA"));
     }
-    CORRADE_COMPARE(out.str(), "Trade::AstcImporter::openData(): ignoring 4 extra bytes at the end of file\n");
+    if(data.quiet)
+        CORRADE_COMPARE(out.str(), "");
+    else
+        CORRADE_COMPARE(out.str(), "Trade::AstcImporter::openData(): ignoring 4 extra bytes at the end of file\n");
     CORRADE_COMPARE(importer->image3DCount(), 1);
 
     Containers::Optional<ImageData3D> image = importer->image3D(0);

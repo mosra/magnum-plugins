@@ -172,13 +172,13 @@ void AstcImporter::doOpenData(Containers::Array<char>&& data, const DataFlags da
     if(sizeof(AstcHeader) + dataSize > data.size()) {
         Error{} << "Trade::AstcImporter::openData(): file too short, expected" << sizeof(AstcHeader) + dataSize << "bytes but got" << data.size();
         return;
-    } else if(sizeof(AstcHeader) + dataSize < data.size()) {
+    } else if(!(flags() & ImporterFlag::Quiet) && sizeof(AstcHeader) + dataSize < data.size()) {
         Warning{} << "Trade::AstcImporter::openData(): ignoring" << data.size() - sizeof(AstcHeader) - dataSize << "extra bytes at the end of file";
     }
 
     /* Unlike KTX or Basis, the file format doesn't contain any orientation
        metadata, so we have to rely on an externally-provided hint */
-    if(!configuration().value<bool>("assumeYUpZBackward")) {
+    if(!(flags() & ImporterFlag::Quiet) && !configuration().value<bool>("assumeYUpZBackward")) {
         Warning{} << "Trade::AstcImporter::openData(): image is assumed to be encoded with Y down and Z forward, imported data will have wrong orientation. Enable assumeYUpZBackward to suppress this warning.";
     }
 
