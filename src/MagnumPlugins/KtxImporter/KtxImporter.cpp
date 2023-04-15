@@ -483,7 +483,7 @@ void KtxImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFlags
         const auto format = configuration().group("basis")->value<Containers::StringView>("format");
         if(!format.isEmpty()) {
             const auto originalFormat = basisImporter->configuration().value<Containers::StringView>("format");
-            if(!originalFormat.isEmpty() && format != originalFormat)
+            if(!(flags() & ImporterFlag::Quiet) && !originalFormat.isEmpty() && format != originalFormat)
                 Warning{} << "Trade::KtxImporter::openData(): overwriting BasisImporter format from" << originalFormat << "to" << format;
             basisImporter->configuration().setValue("format", format);
         }
@@ -574,7 +574,8 @@ void KtxImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFlags
 
         /* Both lengths should be equal without supercompression. Be lenient here
            and only emit a warning in case some shitty exporter gets this wrong. */
-        if(header.supercompressionScheme == Implementation::SuperCompressionScheme::None &&
+        if(!(flags() & ImporterFlag::Quiet) &&
+            header.supercompressionScheme == Implementation::SuperCompressionScheme::None &&
             level.byteLength != level.uncompressedByteLength)
         {
             Warning{} << "Trade::KtxImporter::openData(): byte length" << level.byteLength
@@ -663,15 +664,18 @@ void KtxImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFlags
                 const auto key = split[0];
                 const auto value = split[2];
 
-                if(key.isEmpty())
-                    Warning{} << "Trade::KtxImporter::openData(): invalid key/value entry, skipping";
-                else {
+                if(key.isEmpty()) {
+                    if(!(flags() & ImporterFlag::Quiet))
+                        Warning{} << "Trade::KtxImporter::openData(): invalid key/value entry, skipping";
+                } else {
                     for(UnsignedInt i = 0; i != Containers::arraySize(keyValueEntries); ++i) {
                         if(key == keyValueEntries[i].key) {
-                            if(!keyValueEntries[i].value.isEmpty())
-                                Warning{} << "Trade::KtxImporter::openData(): key" << key << "already set, skipping";
-                            else
+                            if(!keyValueEntries[i].value.isEmpty()) {
+                                if(!(flags() & ImporterFlag::Quiet))
+                                    Warning{} << "Trade::KtxImporter::openData(): key" << key << "already set, skipping";
+                            } else {
                                 keyValueEntries[i].value = value;
+                            }
                             break;
                         }
                     }
@@ -722,8 +726,8 @@ void KtxImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFlags
             for(UnsignedByte i = 0; i != f->numDimensions; ++i)
                 f->flip.set(i, flip[i]);
 
-            Warning{} << "Trade::KtxImporter::openData(): missing or invalid "
-                "orientation, assuming" << ", "_s.join(Containers::arrayView(defaultDirections).prefix(f->numDimensions));
+            if(!(flags() & ImporterFlag::Quiet))
+                Warning{} << "Trade::KtxImporter::openData(): missing or invalid orientation, assuming" << ", "_s.join(Containers::arrayView(defaultDirections).prefix(f->numDimensions));
         }
     }
 
@@ -731,9 +735,8 @@ void KtxImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFlags
        Emit a warning and pretend there is no flipping necessary. */
     if(f->pixelFormat.isCompressed && f->flip.any()) {
         f->flip = BitVector3{};
-        Warning{} << "Trade::KtxImporter::openData(): block-compressed image "
-            "was encoded with non-default axis orientations, imported data "
-            "will have wrong orientation";
+        if(!(flags() & ImporterFlag::Quiet))
+            Warning{} << "Trade::KtxImporter::openData(): block-compressed image was encoded with non-default axis orientations, imported data will have wrong orientation";
     }
 
     /** @todo KTX spec seems to really insist on rd for cube maps but the
@@ -744,10 +747,8 @@ void KtxImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFlags
 
     /* Incomplete cube maps are a 'feature' of KTX files. We just import them
        as layers (which is how they're exposed to us). */
-    if(numFaces != 6 && !keyValueEntries[KeyValueType::CubeMapIncomplete].value.isEmpty()) {
-        Warning{} << "Trade::KtxImporter::openData(): image contains incomplete "
-            "cube map faces, importing faces as array layers";
-    }
+    if(!(flags() & ImporterFlag::Quiet) && numFaces != 6 && !keyValueEntries[KeyValueType::CubeMapIncomplete].value.isEmpty())
+        Warning{} << "Trade::KtxImporter::openData(): image contains incomplete cube map faces, importing faces as array layers";
 
     /* Read swizzle information */
     if(!f->pixelFormat.isDepth) {

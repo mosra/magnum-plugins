@@ -37,6 +37,7 @@
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
 #include <Corrade/TestSuite/Compare/Numeric.h>
+#include <Corrade/TestSuite/Compare/String.h>
 #include <Corrade/TestSuite/Compare/StringToFile.h>
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
@@ -111,10 +112,10 @@ struct KtxImporterTest: TestSuite::Tester {
     void forwardBasisPluginNotFound();
 
     void keyValueDataEmpty();
-    void keyValueDataInvalid();
-    void keyValueDataInvalidIgnored();
+    template<ImporterFlag flag = ImporterFlag{}> void keyValueDataInvalid();
+    template<ImporterFlag flag = ImporterFlag{}> void keyValueDataInvalidIgnored();
 
-    void orientationInvalid();
+    template<ImporterFlag flag = ImporterFlag{}> void orientationInvalid();
     void orientationFlip();
     void orientationFlipCompressed();
 
@@ -215,52 +216,61 @@ const struct {
 constexpr UnsignedByte VK_FORMAT_D32_SFLOAT = 126;
 
 const struct {
-    const char* name;
+    TestSuite::TestCaseDescriptionSourceLocation name;
     const char* file;
+    ImporterFlags flags;
     std::size_t offset;
     const char value;
     const char* message;
 } InvalidData[]{
-    {"signature", "2d-rgb.ktx2",
+    {"signature", "2d-rgb.ktx2", {},
         offsetof(Implementation::KtxHeader, identifier) + sizeof(Implementation::KtxHeader::identifier) - 1, 0,
         "wrong file signature"},
-    {"type size", "2d-rgb.ktx2",
+    {"type size", "2d-rgb.ktx2", {},
         offsetof(Implementation::KtxHeader, typeSize), 7,
         "unsupported type size 7"},
-    {"image size x", "2d-rgb.ktx2",
+    {"image size x", "2d-rgb.ktx2", {},
         offsetof(Implementation::KtxHeader, imageSize), 0,
         "invalid image size, width is 0"},
-    {"image size y", "3d.ktx2",
+    {"image size y", "3d.ktx2", {},
         offsetof(Implementation::KtxHeader, imageSize) + sizeof(UnsignedInt), 0,
         "invalid image size, depth is 3 but height is 0"},
-    {"face count", "2d-rgb.ktx2",
+    {"face count", "2d-rgb.ktx2", {},
         offsetof(Implementation::KtxHeader, faceCount), 3,
         "expected either 1 or 6 faces for cube maps but got 3"},
-    {"cube not square", "2d-rgb.ktx2",
+    {"cube not square", "2d-rgb.ktx2", {},
         offsetof(Implementation::KtxHeader, faceCount), 6,
         "cube map dimensions must be 2D and square, but got Vector(4, 3, 0)"},
-    {"cube 3d", "3d.ktx2",
+    {"cube 3d", "3d.ktx2", {},
         offsetof(Implementation::KtxHeader, faceCount), 6,
         "cube map dimensions must be 2D and square, but got Vector(4, 3, 3)"},
-    {"level count", "2d-rgb.ktx2",
+    {"level count", "2d-rgb.ktx2", {},
         offsetof(Implementation::KtxHeader, levelCount), 7,
         "expected at most 3 mip levels but got 7"},
-    {"custom format", "2d-rgb.ktx2",
+    {"custom format", "2d-rgb.ktx2", {},
         offsetof(Implementation::KtxHeader, vkFormat), 0,
         "custom formats are not supported"},
-    {"compressed type size", "2d-compressed-etc2.ktx2",
+    {"compressed type size", "2d-compressed-etc2.ktx2", {},
         offsetof(Implementation::KtxHeader, typeSize), 4,
         "invalid type size for compressed format, expected 1 but got 4"},
-    {"supercompression", "2d-rgb.ktx2",
+    {"supercompression", "2d-rgb.ktx2", {},
         offsetof(Implementation::KtxHeader, supercompressionScheme), 1,
         "supercompression is currently not supported"},
-    {"3d depth", "3d.ktx2",
+    {"3d depth", "3d.ktx2", {},
         offsetof(Implementation::KtxHeader, vkFormat), VK_FORMAT_D32_SFLOAT,
         "3D images can't have depth/stencil format"},
-    {"level data too short", "2d-rgb.ktx2",
+    {"level data too short", "2d-rgb.ktx2", {},
+        sizeof(Implementation::KtxHeader) + offsetof(Implementation::KtxLevel, byteLength), 1,
+        "Trade::KtxImporter::openData(): byte length 1 is not equal to uncompressed byte length 36 for an image without supercompression, ignoring the latter\n"
+        "Trade::KtxImporter::openData(): level data too short, expected at least 36 bytes but got 1\n"},
+    {"level data too short, quiet", "2d-rgb.ktx2", ImporterFlag::Quiet,
         sizeof(Implementation::KtxHeader) + offsetof(Implementation::KtxLevel, byteLength), 1,
         "level data too short, expected at least 36 bytes but got 1"},
-    {"3D layered level data too short", "3d-layers.ktx2",
+    {"3D layered level data too short", "3d-layers.ktx2", {},
+        sizeof(Implementation::KtxHeader) + offsetof(Implementation::KtxLevel, byteLength), 108,
+        "Trade::KtxImporter::openData(): byte length 108 is not equal to uncompressed byte length 216 for an image without supercompression, ignoring the latter\n"
+        "Trade::KtxImporter::openData(): level data too short, expected at least 216 bytes but got 108\n"},
+    {"3D layered level data too short, quiet", "3d-layers.ktx2", ImporterFlag::Quiet,
         sizeof(Implementation::KtxHeader) + offsetof(Implementation::KtxLevel, byteLength), 108,
         "level data too short, expected at least 216 bytes but got 108"}
 };
@@ -319,6 +329,15 @@ const struct {
     {"BC3", "2d-compressed-bc3.ktx2", CompressedPixelFormat::Bc3RGBASrgb, {8, 8}},
     {"ETC2", "2d-compressed-etc2.ktx2", CompressedPixelFormat::Etc2RGB8Srgb, {9, 10}},
     {"ASTC", "2d-compressed-astc.ktx2", CompressedPixelFormat::Astc12x10RGBASrgb, {9, 10}}
+};
+
+const struct {
+    const char* name;
+    ImporterFlags flags;
+    bool quiet;
+} QuietData[]{
+    {"", {}, false},
+    {"quiet", ImporterFlag::Quiet, true}
 };
 
 const struct {
@@ -384,6 +403,7 @@ const struct {
     const char* name;
     const char* ktxFormat;
     const char* basisFormat;
+    ImporterFlags flags;
     CompressedPixelFormat expectedFormat;
     const char* expectedWarning;
 } ForwardBasisFormatData[]{
@@ -391,17 +411,20 @@ const struct {
        any KTX file produced by it (and not by our BasisImageConverter, which
        patches that in after) will warn no matter whether it was flipped or
        not: https://github.com/BinomialLLC/basis_universal/issues/258 */
-    {"set in KtxImporter", "Etc2RGBA", nullptr,
+    {"set in KtxImporter", "Etc2RGBA", nullptr, {},
         CompressedPixelFormat::Etc2RGBA8Srgb,
         "Trade::BasisImporter::openData(): the image was not encoded Y-flipped, imported data will have wrong orientation\n"},
-    {"set in BasisImporter", nullptr, "Bc3RGBA",
+    {"set in BasisImporter", nullptr, "Bc3RGBA", {},
         CompressedPixelFormat::Bc3RGBASrgb,
         "Trade::BasisImporter::openData(): the image was not encoded Y-flipped, imported data will have wrong orientation\n"},
-    {"set in both to different", "Etc2RGBA", "Bc3RGBA",
+    {"set in both to different", "Etc2RGBA", "Bc3RGBA", {},
         CompressedPixelFormat::Etc2RGBA8Srgb,
         "Trade::KtxImporter::openData(): overwriting BasisImporter format from Bc3RGBA to Etc2RGBA\n"
         "Trade::BasisImporter::openData(): the image was not encoded Y-flipped, imported data will have wrong orientation\n"},
-    {"set in both to the same", "Bc3RGBA", "Bc3RGBA",
+    {"set in both to different, quiet", "Etc2RGBA", "Bc3RGBA", ImporterFlag::Quiet,
+        CompressedPixelFormat::Etc2RGBA8Srgb,
+        ""},
+    {"set in both to the same", "Bc3RGBA", "Bc3RGBA", {},
         CompressedPixelFormat::Bc3RGBASrgb,
         "Trade::BasisImporter::openData(): the image was not encoded Y-flipped, imported data will have wrong orientation\n"}
 };
@@ -593,10 +616,12 @@ KtxImporterTest::KtxImporterTest() {
         Containers::arraySize(CompressedImage2DData));
 
     addTests({&KtxImporterTest::image2DCompressedMipmaps,
-              &KtxImporterTest::image2DCompressedLayers,
+              &KtxImporterTest::image2DCompressedLayers});
 
-              &KtxImporterTest::imageCubeMapIncomplete,
-              &KtxImporterTest::imageCubeMap,
+    addInstancedTests({&KtxImporterTest::imageCubeMapIncomplete},
+        Containers::arraySize(QuietData));
+
+    addTests({&KtxImporterTest::imageCubeMap,
               &KtxImporterTest::imageCubeMapLayers,
               &KtxImporterTest::imageCubeMapMipmaps,
 
@@ -615,23 +640,34 @@ KtxImporterTest::KtxImporterTest() {
     addInstancedTests({&KtxImporterTest::forwardBasisInvalid},
         Containers::arraySize(ForwardBasisInvalidData));
 
-    addTests({&KtxImporterTest::forwardBasisPluginNotFound,
+    addTests({&KtxImporterTest::forwardBasisPluginNotFound});
 
-              &KtxImporterTest::keyValueDataEmpty});
+    addInstancedTests({&KtxImporterTest::keyValueDataEmpty},
+        Containers::arraySize(QuietData));
 
-    addInstancedTests({&KtxImporterTest::keyValueDataInvalid},
+    /* MSVC needs explicit type due to default template args */
+    addInstancedTests<KtxImporterTest>({
+        &KtxImporterTest::keyValueDataInvalid,
+        &KtxImporterTest::keyValueDataInvalid<ImporterFlag::Quiet>},
         Containers::arraySize(InvalidKeyValueData));
 
-    addInstancedTests({&KtxImporterTest::keyValueDataInvalidIgnored},
+    /* MSVC needs explicit type due to default template args */
+    addInstancedTests<KtxImporterTest>({
+        &KtxImporterTest::keyValueDataInvalidIgnored,
+        &KtxImporterTest::keyValueDataInvalidIgnored<ImporterFlag::Quiet>},
         Containers::arraySize(IgnoredInvalidKeyValueData));
 
-    addInstancedTests({&KtxImporterTest::orientationInvalid},
+    /* MSVC needs explicit type due to default template args */
+    addInstancedTests<KtxImporterTest>({
+        &KtxImporterTest::orientationInvalid,
+        &KtxImporterTest::orientationInvalid<ImporterFlag::Quiet>},
         Containers::arraySize(InvalidOrientationData));
 
     addInstancedTests({&KtxImporterTest::orientationFlip},
         Containers::arraySize(FlipData));
 
-    addTests({&KtxImporterTest::orientationFlipCompressed});
+    addInstancedTests({&KtxImporterTest::orientationFlipCompressed},
+        Containers::arraySize(QuietData));
 
     addInstancedTests({&KtxImporterTest::swizzle},
         Containers::arraySize(SwizzleData));
@@ -681,16 +717,29 @@ void KtxImporterTest::invalid() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
+    importer->addFlags(data.flags);
+
     Containers::Optional<Containers::Array<char>> fileData = Utility::Path::read(Utility::Path::join(KTXIMPORTER_TEST_DIR, data.file));
     CORRADE_COMPARE_AS(data.offset, fileData->size(), TestSuite::Compare::Less);
 
     (*fileData)[data.offset] = data.value;
 
     std::ostringstream out;
-    Error redirectError{&out};
-
-    CORRADE_VERIFY(!importer->openData(*fileData));
-    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::KtxImporter::openData(): {}\n", data.message));
+    {
+        Error redirectError{&out};
+        Warning redirectWarning{&out};
+        CORRADE_VERIFY(!importer->openData(*fileData));
+    }
+    /* Sometimes there's also a warning, in that case take the message
+       verbatim */
+    if(Containers::StringView{data.message}.hasSuffix('\n'))
+        CORRADE_COMPARE_AS(out.str(),
+            data.message,
+            TestSuite::Compare::String);
+    else
+        CORRADE_COMPARE_AS(out.str(),
+            Utility::formatString("Trade::KtxImporter::openData(): {}\n", data.message),
+            TestSuite::Compare::String);
 }
 
 void KtxImporterTest::invalidVersion() {
@@ -1377,7 +1426,12 @@ const Color3ub FacesRgbData[2][6][2][2]{
 };
 
 void KtxImporterTest::imageCubeMapIncomplete() {
+    auto&& data = QuietData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
+    importer->setFlags(data.flags);
+
     Containers::Optional<Containers::Array<char>> fileData = Utility::Path::read(Utility::Path::join(KTXIMPORTER_TEST_DIR, "cubemap.ktx2"));
     CORRADE_VERIFY(fileData);
     CORRADE_COMPARE_AS(fileData->size(),
@@ -1386,22 +1440,24 @@ void KtxImporterTest::imageCubeMapIncomplete() {
 
     /* All 6 bits set, should still emit a warning because the check only happens
        when face count is not 6 */
-    const char data[1]{0x3f};
+    const char cubemapData[1]{0x3f};
     /* Not a string, so no terminating 0 */
-    Containers::Array<char> keyValueData = createKeyValueData("KTXcubemapIncomplete"_s, Containers::arrayView(data));
+    Containers::Array<char> keyValueData = createKeyValueData("KTXcubemapIncomplete"_s, Containers::arrayView(cubemapData));
     patchKeyValueData(keyValueData, *fileData);
 
     Implementation::KtxHeader& header = *reinterpret_cast<Implementation::KtxHeader*>(fileData->data());
     header.layerCount = Utility::Endianness::littleEndian(6u);
     header.faceCount = Utility::Endianness::littleEndian(1u);
 
-    std::ostringstream outWarning;
-    Warning redirectWarning{&outWarning};
-
+    std::ostringstream out;
+    Warning redirectWarning{&out};
     CORRADE_VERIFY(importer->openData(*fileData));
-    CORRADE_COMPARE(outWarning.str(),
-        "Trade::KtxImporter::openData(): missing or invalid orientation, assuming right, down\n"
-        "Trade::KtxImporter::openData(): image contains incomplete cube map faces, importing faces as array layers\n");
+    if(data.quiet)
+        CORRADE_COMPARE(out.str(), "");
+    else
+        CORRADE_COMPARE(out.str(),
+            "Trade::KtxImporter::openData(): missing or invalid orientation, assuming right, down\n"
+            "Trade::KtxImporter::openData(): image contains incomplete cube map faces, importing faces as array layers\n");
 
     CORRADE_COMPARE(importer->image3DCount(), 1);
     CORRADE_COMPARE(importer->image3DLevelCount(0), 1);
@@ -1757,6 +1813,7 @@ void KtxImporterTest::forwardBasisFormat() {
     }};
 
     Containers::Pointer<AbstractImporter> importer = _managerWithBasisImporter.instantiate("KtxImporter");
+    importer->addFlags(data.flags);
 
     if(data.ktxFormat)
         importer->configuration().group("basis")->setValue("format", data.ktxFormat);
@@ -1819,7 +1876,12 @@ void KtxImporterTest::forwardBasisPluginNotFound() {
 }
 
 void KtxImporterTest::keyValueDataEmpty() {
+    auto&& data = QuietData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
+    importer->addFlags(data.flags);
+
     Containers::Optional<Containers::Array<char>> fileData = Utility::Path::read(Utility::Path::join(KTXIMPORTER_TEST_DIR, "2d-rgb.ktx2"));
     CORRADE_VERIFY(fileData);
     CORRADE_COMPARE_AS(fileData->size(),
@@ -1829,77 +1891,105 @@ void KtxImporterTest::keyValueDataEmpty() {
     Implementation::KtxHeader& header = *reinterpret_cast<Implementation::KtxHeader*>(fileData->data());
     header.kvdByteLength = Utility::Endianness::littleEndian(0u);
 
-    std::ostringstream outWarning;
-    Warning redirectWarning{&outWarning};
-
-    CORRADE_VERIFY(importer->openData(*fileData));
+    std::ostringstream out;
+    {
+        Warning redirectWarning{&out};
+        CORRADE_VERIFY(importer->openData(*fileData));
+    }
     /* This test doubles for empty orientation data, but there should be no
        other warnings */
-    CORRADE_COMPARE(outWarning.str(), "Trade::KtxImporter::openData(): missing or invalid orientation, assuming right, down\n");
+    if(data.quiet)
+        CORRADE_COMPARE(out.str(), "");
+    else
+        CORRADE_COMPARE(out.str(), "Trade::KtxImporter::openData(): missing or invalid orientation, assuming right, down\n");
 }
 
-void KtxImporterTest::keyValueDataInvalid() {
+template<ImporterFlag flag> void KtxImporterTest::keyValueDataInvalid() {
     auto&& data = InvalidKeyValueData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
+    if(flag == ImporterFlag::Quiet)
+        setTestCaseTemplateName("ImporterFlag::Quiet");
 
     /* Invalid key/value data that might hint at a broken file so the importer
        should warn and try to continue the import */
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
+    importer->setFlags(flag);
+
     Containers::Optional<Containers::Array<char>> fileData = Utility::Path::read(Utility::Path::join(KTXIMPORTER_TEST_DIR, "2d-rgb.ktx2"));
     CORRADE_VERIFY(fileData);
 
     patchKeyValueData(data.data, *fileData);
 
-    std::ostringstream outWarning;
-    Warning redirectWarning{&outWarning};
-
+    std::ostringstream out;
+    {
+        Warning redirectWarning{&out};
+        CORRADE_VERIFY(importer->openData(*fileData));
+    }
     /* Import succeeds with a warning */
-    CORRADE_VERIFY(importer->openData(*fileData));
-    CORRADE_COMPARE(outWarning.str(), Utility::formatString(
-        "Trade::KtxImporter::openData(): {}\n"
-        "Trade::KtxImporter::openData(): missing or invalid orientation, assuming right, down\n",
+    if(flag == ImporterFlag::Quiet)
+        CORRADE_COMPARE(out.str(), "");
+    else
+        CORRADE_COMPARE(out.str(), Utility::formatString(
+            "Trade::KtxImporter::openData(): {}\n"
+            "Trade::KtxImporter::openData(): missing or invalid orientation, assuming right, down\n",
         data.message));
 }
 
-void KtxImporterTest::keyValueDataInvalidIgnored() {
+template<ImporterFlag flag> void KtxImporterTest::keyValueDataInvalidIgnored() {
     auto&& data = IgnoredInvalidKeyValueData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
+    if(flag == ImporterFlag::Quiet)
+        setTestCaseTemplateName("ImporterFlag::Quiet");
 
     /* Invalid (according to the spec) key/value data that can just be
        ignored without warning because it doesn't affect the import */
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
+    importer->setFlags(flag);
+
     Containers::Optional<Containers::Array<char>> fileData = Utility::Path::read(Utility::Path::join(KTXIMPORTER_TEST_DIR, "2d-rgb.ktx2"));
     CORRADE_VERIFY(fileData);
 
     patchKeyValueData(data.data, *fileData);
 
-    std::ostringstream outWarning;
-    Warning redirectWarning{&outWarning};
-
+    std::ostringstream out;
+    {
+        Warning redirectWarning{&out};
+        CORRADE_VERIFY(importer->openData(*fileData));
+    }
     /* No warning besides missing orientation */
-    CORRADE_VERIFY(importer->openData(*fileData));
-    CORRADE_COMPARE(outWarning.str(), "Trade::KtxImporter::openData(): missing or invalid orientation, assuming right, down\n");
+    if(flag == ImporterFlag::Quiet)
+        CORRADE_COMPARE(out.str(), "");
+    else
+        CORRADE_COMPARE(out.str(), "Trade::KtxImporter::openData(): missing or invalid orientation, assuming right, down\n");
 }
 
-void KtxImporterTest::orientationInvalid() {
+template<ImporterFlag flag> void KtxImporterTest::orientationInvalid() {
     auto&& data = InvalidOrientationData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
+    if(flag == ImporterFlag::Quiet)
+        setTestCaseTemplateName("ImporterFlag::Quiet");
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
+    importer->setFlags(flag);
+
     Containers::Optional<Containers::Array<char>> fileData = Utility::Path::read(Utility::Path::join(KTXIMPORTER_TEST_DIR, data.file));
     CORRADE_VERIFY(fileData);
 
     patchKeyValueData(createKeyValueData("KTXorientation"_s, data.orientation), *fileData);
 
-    std::ostringstream outWarning;
-    Warning redirectWarning{&outWarning};
-    CORRADE_VERIFY(importer->openData(*fileData));
-
+    std::ostringstream out;
+    {
+        Warning redirectWarning{&out};
+        CORRADE_VERIFY(importer->openData(*fileData));
+    }
     constexpr Containers::StringView orientations[]{"right"_s, "down"_s, "forward"_s};
     const Containers::String orientationString = ", "_s.join(Containers::arrayView(orientations).prefix(data.dimensions));
-    CORRADE_COMPARE(outWarning.str(), Utility::formatString("Trade::KtxImporter::openData(): missing or invalid orientation, assuming {}\n", orientationString));
+    if(flag == ImporterFlag::Quiet)
+        CORRADE_COMPARE(out.str(), "");
+    else
+        CORRADE_COMPARE(out.str(), Utility::formatString("Trade::KtxImporter::openData(): missing or invalid orientation, assuming {}\n", orientationString));
 }
 
 void KtxImporterTest::orientationFlip() {
@@ -1959,19 +2049,24 @@ void KtxImporterTest::orientationFlip() {
 }
 
 void KtxImporterTest::orientationFlipCompressed() {
+    auto&& data = QuietData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
+    importer->setFlags(data.flags);
 
     /* Just check for the warning, image2DCompressed checks that the output is
        as expected */
 
-    std::ostringstream outWarning;
-    Warning redirectWarning{&outWarning};
-
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(KTXIMPORTER_TEST_DIR, "2d-compressed-bc1.ktx2")));
-    CORRADE_COMPARE(outWarning.str(),
-        "Trade::KtxImporter::openData(): block-compressed image "
-        "was encoded with non-default axis orientations, imported data "
-        "will have wrong orientation\n");
+    std::ostringstream out;
+    {
+        Warning redirectWarning{&out};
+        CORRADE_VERIFY(importer->openFile(Utility::Path::join(KTXIMPORTER_TEST_DIR, "2d-compressed-bc1.ktx2")));
+    }
+    if(data.quiet)
+        CORRADE_COMPARE(out.str(), "");
+    else
+        CORRADE_COMPARE(out.str(), "Trade::KtxImporter::openData(): block-compressed image was encoded with non-default axis orientations, imported data will have wrong orientation\n");
 }
 
 void KtxImporterTest::swizzle() {

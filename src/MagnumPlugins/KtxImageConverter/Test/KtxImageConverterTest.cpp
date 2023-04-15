@@ -301,6 +301,15 @@ const struct {
 
 const struct {
     const char* name;
+    ImageConverterFlags flags;
+    bool quiet;
+} QuietData[]{
+    {"", {}, false},
+    {"quiet", ImageConverterFlag::Quiet, true}
+};
+
+const struct {
+    const char* name;
     const char* value;
     ImageFlags3D imageFlags;
     const char* message;
@@ -405,8 +414,10 @@ KtxImageConverterTest::KtxImageConverterTest() {
         Containers::arraySize(PvrtcRgbData));
 
     addTests({&KtxImageConverterTest::configurationOrientation,
-              &KtxImageConverterTest::configurationOrientationLessDimensions,
-              &KtxImageConverterTest::configurationOrientationEmpty});
+              &KtxImageConverterTest::configurationOrientationLessDimensions});
+
+    addInstancedTests({&KtxImageConverterTest::configurationOrientationEmpty},
+        Containers::arraySize(QuietData));
 
     addInstancedTests({&KtxImageConverterTest::configurationOrientationInvalid},
         Containers::arraySize(InvalidOrientationData));
@@ -418,9 +429,12 @@ KtxImageConverterTest::KtxImageConverterTest() {
         Containers::arraySize(InvalidSwizzleData));
 
     addTests({&KtxImageConverterTest::configurationWriterName,
-              &KtxImageConverterTest::configurationWriterNameEmpty,
-              &KtxImageConverterTest::configurationEmpty,
-              &KtxImageConverterTest::configurationSorted,
+              &KtxImageConverterTest::configurationWriterNameEmpty});
+
+    addInstancedTests({&KtxImageConverterTest::configurationEmpty},
+        Containers::arraySize(QuietData));
+
+    addTests({&KtxImageConverterTest::configurationSorted,
 
               &KtxImageConverterTest::convertTwice});
 
@@ -1290,19 +1304,29 @@ void KtxImageConverterTest::configurationOrientationLessDimensions() {
 }
 
 void KtxImageConverterTest::configurationOrientationEmpty() {
+    auto&& data = QuietData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("KtxImageConverter");
+    converter->addFlags(data.flags);
     CORRADE_VERIFY(converter->configuration().setValue("orientation", ""));
 
     const UnsignedByte bytes[4]{};
 
     std::ostringstream out;
-    Warning redirectWarning{&out};
-    Containers::Optional<Containers::Array<char>> data = converter->convertToData(ImageView2D{PixelFormat::RGBA8Unorm, {1, 1}, bytes});
-    CORRADE_VERIFY(data);
-    CORRADE_COMPARE(out.str(), "Trade::KtxImageConverter::convertToData(): empty orientation string, assuming right, down\n");
+    Containers::Optional<Containers::Array<char>> imageData;
+    {
+        Warning redirectWarning{&out};
+        imageData = converter->convertToData(ImageView2D{PixelFormat::RGBA8Unorm, {1, 1}, bytes});
+    }
+    CORRADE_VERIFY(imageData);
+    if(data.quiet)
+        CORRADE_COMPARE(out.str(), "");
+    else
+        CORRADE_COMPARE(out.str(), "Trade::KtxImageConverter::convertToData(): empty orientation string, assuming right, down\n");
 
     /* Empty orientation isn't written to key/value data at all */
-    Containers::String keyValueData = readKeyValueData(*data);
+    Containers::String keyValueData = readKeyValueData(*imageData);
     CORRADE_VERIFY(!keyValueData.contains("KTXorientation"_s));
 }
 
@@ -1392,7 +1416,11 @@ void KtxImageConverterTest::configurationWriterNameEmpty() {
 }
 
 void KtxImageConverterTest::configurationEmpty() {
+    auto&& data = QuietData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("KtxImageConverter");
+    converter->addFlags(data.flags);
     CORRADE_VERIFY(converter->configuration().removeValue("writerName"));
     CORRADE_VERIFY(converter->configuration().removeValue("swizzle"));
     CORRADE_VERIFY(converter->configuration().removeValue("orientation"));
@@ -1400,14 +1428,20 @@ void KtxImageConverterTest::configurationEmpty() {
     const UnsignedByte bytes[4]{};
 
     std::ostringstream out;
-    Warning redirectWarning{&out};
-    Containers::Optional<Containers::Array<char>> data = converter->convertToData(ImageView3D{PixelFormat::RGBA8Unorm, {1, 1, 1}, bytes});
-    CORRADE_VERIFY(data);
-    CORRADE_COMPARE(out.str(), "Trade::KtxImageConverter::convertToData(): empty orientation string, assuming right, down, forward\n");
+    Containers::Optional<Containers::Array<char>> imageData;
+    {
+        Warning redirectWarning{&out};
+        imageData = converter->convertToData(ImageView3D{PixelFormat::RGBA8Unorm, {1, 1, 1}, bytes});
+    }
+    CORRADE_VERIFY(imageData);
+    if(data.quiet)
+        CORRADE_COMPARE(out.str(), "");
+    else
+        CORRADE_COMPARE(out.str(), "Trade::KtxImageConverter::convertToData(): empty orientation string, assuming right, down, forward\n");
 
     /* Key/value data should not be written if it only contains empty values */
 
-    const Implementation::KtxHeader& header = *reinterpret_cast<const Implementation::KtxHeader*>(data->data());
+    const Implementation::KtxHeader& header = *reinterpret_cast<const Implementation::KtxHeader*>(imageData->data());
     CORRADE_COMPARE(header.kvdByteOffset, 0);
     CORRADE_COMPARE(header.kvdByteLength, 0);
 }

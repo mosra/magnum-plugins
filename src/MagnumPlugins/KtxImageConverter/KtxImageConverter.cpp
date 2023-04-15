@@ -668,7 +668,7 @@ constexpr Containers::StringView DefaultDirections[3]{
 /* Using a template template parameter to deduce the image dimensions while
    matching both ImageView and CompressedImageView. Matching on the ImageView
    typedefs doesn't work, so we need the extra parameter of BasicImageView. */
-template<UnsignedInt dimensions, template<UnsignedInt, typename> class View> Containers::Optional<Containers::Array<char>> convertLevels(Containers::ArrayView<const View<dimensions, const char>> imageLevels, const Utility::ConfigurationGroup& configuration) {
+template<UnsignedInt dimensions, template<UnsignedInt, typename> class View> Containers::Optional<Containers::Array<char>> convertLevels(Containers::ArrayView<const View<dimensions, const char>> imageLevels, const Utility::ConfigurationGroup& configuration, const ImageConverterFlags converterFlags) {
     const auto format = imageLevels.front().format();
     if(isFormatImplementationSpecific(format)) {
         Error{} << "Trade::KtxImageConverter::convertToData(): implementation-specific formats are not supported";
@@ -693,8 +693,8 @@ template<UnsignedInt dimensions, template<UnsignedInt, typename> class View> Con
 
     /* Cube map and array images don't have the last dimension included
        in the orientation string */
-    const ImageFlags3D flags = ImageFlag3D(UnsignedShort(imageLevels[0].flags()));
-    const UnsignedInt orientationDimensions = dimensions - (flags & (ImageFlag3D::Array|ImageFlag3D::CubeMap) ? 1 : 0);
+    const ImageFlags3D imageFlags = ImageFlag3D(UnsignedShort(imageLevels[0].flags()));
+    const UnsignedInt orientationDimensions = dimensions - (imageFlags & (ImageFlag3D::Array|ImageFlag3D::CubeMap) ? 1 : 0);
     if(orientation) {
         /* It's "at least" instead of exactly because the default configuration
            option is for all three dimensions */
@@ -714,7 +714,7 @@ template<UnsignedInt dimensions, template<UnsignedInt, typename> class View> Con
                 return {};
             }
         }
-    } else {
+    } else if(!(converterFlags & ImageConverterFlag::Quiet)) {
         Warning{} << "Trade::KtxImageConverter::convertToData(): empty orientation string, assuming" << ", "_s.join(Containers::arrayView(DefaultDirections).prefix(orientationDimensions));
     }
 
@@ -770,7 +770,7 @@ template<UnsignedInt dimensions, template<UnsignedInt, typename> class View> Con
        the last dimension. */
     const Math::Vector<dimensions, Int> size = imageLevels.front().size();
     Math::Vector<dimensions, Int> mipMask{1};
-    if(flags & (ImageFlag3D::CubeMap|ImageFlag3D::Array))
+    if(imageFlags & (ImageFlag3D::CubeMap|ImageFlag3D::Array))
         mipMask[dimensions - 1] = 0;
     const UnsignedInt numMipmaps = Math::min<UnsignedInt>(imageLevels.size(), Math::log2((size*mipMask).max()) + 1);
     if(imageLevels.size() > numMipmaps) {
@@ -835,11 +835,11 @@ template<UnsignedInt dimensions, template<UnsignedInt, typename> class View> Con
     /* Array and cube images have the last dimension 0, instead layer and face
        count is filled. Face count is 6 for cube maps, layer count != 0 only if
        it's a cube map array. */
-    if(flags & (ImageFlag3D::Array|ImageFlag3D::CubeMap)) {
+    if(imageFlags & (ImageFlag3D::Array|ImageFlag3D::CubeMap)) {
         header.imageSize[dimensions - 1] = 0;
-        if(flags & ImageFlag3D::CubeMap) {
+        if(imageFlags & ImageFlag3D::CubeMap) {
             header.faceCount = 6;
-            header.layerCount = flags & ImageFlag3D::Array ? size[dimensions - 1]/6 : 0;
+            header.layerCount = imageFlags & ImageFlag3D::Array ? size[dimensions - 1]/6 : 0;
         } else {
             header.faceCount = 1;
             header.layerCount = size[dimensions - 1];
@@ -914,27 +914,27 @@ Containers::String KtxImageConverter::doMimeType() const {
 }
 
 Containers::Optional<Containers::Array<char>> KtxImageConverter::doConvertToData(Containers::ArrayView<const ImageView1D> imageLevels) {
-    return convertLevels(imageLevels, configuration());
+    return convertLevels(imageLevels, configuration(), flags());
 }
 
 Containers::Optional<Containers::Array<char>> KtxImageConverter::doConvertToData(Containers::ArrayView<const ImageView2D> imageLevels) {
-    return convertLevels(imageLevels, configuration());
+    return convertLevels(imageLevels, configuration(), flags());
 }
 
 Containers::Optional<Containers::Array<char>> KtxImageConverter::doConvertToData(Containers::ArrayView<const ImageView3D> imageLevels) {
-    return convertLevels(imageLevels, configuration());
+    return convertLevels(imageLevels, configuration(), flags());
 }
 
 Containers::Optional<Containers::Array<char>> KtxImageConverter::doConvertToData(Containers::ArrayView<const CompressedImageView1D> imageLevels) {
-    return convertLevels(imageLevels, configuration());
+    return convertLevels(imageLevels, configuration(), flags());
 }
 
 Containers::Optional<Containers::Array<char>> KtxImageConverter::doConvertToData(Containers::ArrayView<const CompressedImageView2D> imageLevels) {
-    return convertLevels(imageLevels, configuration());
+    return convertLevels(imageLevels, configuration(), flags());
 }
 
 Containers::Optional<Containers::Array<char>> KtxImageConverter::doConvertToData(Containers::ArrayView<const CompressedImageView3D> imageLevels) {
-    return convertLevels(imageLevels, configuration());
+    return convertLevels(imageLevels, configuration(), flags());
 }
 
 }}
