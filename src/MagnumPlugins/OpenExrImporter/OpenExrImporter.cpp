@@ -173,7 +173,8 @@ void OpenExrImporter::doOpenData(Containers::Array<char>&& data, const DataFlags
             /* Ripmap files need extra care, we don't support those at the
                moment. */
             if(state->tiledFile->levelMode() == Imf::RIPMAP_LEVELS) {
-                Warning{} << "Trade::OpenExrImporter::openData(): ripmap files not supported, importing only the top level";
+                if(!(flags() & ImporterFlag::Quiet))
+                    Warning{} << "Trade::OpenExrImporter::openData(): ripmap files not supported, importing only the top level";
                 state->tiledFile = Containers::NullOpt;
                 state->stream.seekg(0);
                 state->file.emplace(state->stream, threadCount - 1);

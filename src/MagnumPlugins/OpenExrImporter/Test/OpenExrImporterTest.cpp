@@ -92,12 +92,19 @@ using namespace Math::Literals;
 const struct {
     const char* name;
     const char* filename;
+    ImporterFlags flags;
     const char* message;
 } Rgb16fData[] {
-    {"", "rgb16f.exr", ""},
-    {"custom data/display window", "rgb16f-custom-windows.exr", ""},
-    {"tiled", "rgb16f-tiled.exr", ""},
-    {"ripmap", "rgb16f-ripmap.exr", "Trade::OpenExrImporter::openData(): ripmap files not supported, importing only the top level\n"}
+    {"", "rgb16f.exr", {},
+        ""},
+    {"custom data/display window", "rgb16f-custom-windows.exr", {},
+        ""},
+    {"tiled", "rgb16f-tiled.exr", {},
+        ""},
+    {"ripmap", "rgb16f-ripmap.exr", {},
+        "Trade::OpenExrImporter::openData(): ripmap files not supported, importing only the top level\n"},
+    {"ripmap, quiet", "rgb16f-ripmap.exr", ImporterFlag::Quiet,
+        ""}
 };
 
 const struct {
@@ -297,6 +304,7 @@ void OpenExrImporterTest::rgb16f() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenExrImporter");
+    importer->addFlags(data.flags);
 
     std::ostringstream out;
     {

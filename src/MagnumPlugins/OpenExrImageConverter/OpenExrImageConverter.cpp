@@ -375,7 +375,7 @@ Containers::Optional<Containers::Array<char>> convertToDataInternal(const Utilit
 
 Containers::Optional<Containers::Array<char>> OpenExrImageConverter::doConvertToData(const Containers::ArrayView<const ImageView2D> imageLevels) {
     /* Warn about lost metadata */
-    if(imageLevels[0].flags() & ImageFlag2D::Array) {
+    if((imageLevels[0].flags() & ImageFlag2D::Array) && !(flags() & ImageConverterFlag::Quiet)) {
         Warning{} << "Trade::OpenExrImageConverter::convertToData(): 1D array images are unrepresentable in OpenEXR, saving as a regular 2D image";
     }
 
