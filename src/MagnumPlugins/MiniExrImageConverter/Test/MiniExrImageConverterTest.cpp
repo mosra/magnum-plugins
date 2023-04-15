@@ -56,11 +56,14 @@ struct MiniExrImageConverterTest: TestSuite::Tester {
 
 const struct {
     const char* name;
-    ImageFlags2D flags;
+    ImageConverterFlags converterFlags;
+    ImageFlags2D imageFlags;
     const char* message;
 } UnsupportedMetadataData[]{
-    {"1D array", ImageFlag2D::Array,
-        "1D array images are unrepresentable in OpenEXR, saving as a regular 2D image"}
+    {"1D array", {}, ImageFlag2D::Array,
+        "1D array images are unrepresentable in OpenEXR, saving as a regular 2D image"},
+    {"1D array, quiet", ImageConverterFlag::Quiet, ImageFlag2D::Array,
+        nullptr},
 };
 
 MiniExrImageConverterTest::MiniExrImageConverterTest() {
@@ -135,14 +138,18 @@ void MiniExrImageConverterTest::unsupportedMetadata() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImageConverter> converter = _manager.instantiate("MiniExrImageConverter");
+    converter->addFlags(data.converterFlags);
 
     const char imageData[8]{};
-    ImageView2D image{PixelFormat::RGBA16F, {1, 1}, imageData, data.flags};
+    ImageView2D image{PixelFormat::RGBA16F, {1, 1}, imageData, data.imageFlags};
 
     std::ostringstream out;
     Warning redirectWarning{&out};
     CORRADE_VERIFY(converter->convertToData(image));
-    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::MiniExrImageConverter::convertToData(): {}\n", data.message));
+    if(!data.message)
+        CORRADE_COMPARE(out.str(), "");
+    else
+        CORRADE_COMPARE(out.str(), Utility::formatString("Trade::MiniExrImageConverter::convertToData(): {}\n", data.message));
 }
 
 }}}}

@@ -62,7 +62,7 @@ Containers::String MiniExrImageConverter::doMimeType() const {
 
 Containers::Optional<Containers::Array<char>> MiniExrImageConverter::doConvertToData(const ImageView2D& image) {
     /* Warn about lost metadata */
-    if(image.flags() & ImageFlag2D::Array) {
+    if((image.flags() & ImageFlag2D::Array) && !(flags() & ImageConverterFlag::Quiet)) {
         Warning{} << "Trade::MiniExrImageConverter::convertToData(): 1D array images are unrepresentable in OpenEXR, saving as a regular 2D image";
     }
 
