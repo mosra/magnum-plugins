@@ -101,7 +101,7 @@ Containers::Optional<Containers::Array<char>> StbImageConverter::doConvertToData
     }
 
     /* Warn about lost metadata */
-    if(image.flags() & ImageFlag2D::Array) {
+    if((image.flags() & ImageFlag2D::Array) && !(flags() & ImageConverterFlag::Quiet)) {
         Warning{} << "Trade::StbImageConverter::convertToData(): 1D array images are unrepresentable in any of the formats, saving as a regular 2D image";
     }
 
@@ -110,13 +110,13 @@ Containers::Optional<Containers::Array<char>> StbImageConverter::doConvertToData
         switch(image.format()) {
             case PixelFormat::R8Unorm:      components = 1; break;
             case PixelFormat::RG8Unorm:
-                if(_format == Format::Bmp || _format == Format::Jpeg)
+                if((_format == Format::Bmp || _format == Format::Jpeg) && !(flags() & ImageConverterFlag::Quiet))
                     Warning{} << "Trade::StbImageConverter::convertToData(): ignoring green channel for BMP/JPEG output";
                 components = 2;
                 break;
             case PixelFormat::RGB8Unorm:    components = 3; break;
             case PixelFormat::RGBA8Unorm:
-                if(_format == Format::Bmp || _format == Format::Jpeg)
+                if((_format == Format::Bmp || _format == Format::Jpeg) && !(flags() & ImageConverterFlag::Quiet))
                     Warning{} << "Trade::StbImageConverter::convertToData(): ignoring alpha channel for BMP/JPEG output";
                 components = 4;
                 break;
@@ -128,12 +128,14 @@ Containers::Optional<Containers::Array<char>> StbImageConverter::doConvertToData
         switch(image.format()) {
             case PixelFormat::R32F:         components = 1; break;
             case PixelFormat::RG32F:
-                Warning{} << "Trade::StbImageConverter::convertToData(): ignoring green channel for HDR output";
+                if(!(flags() & ImageConverterFlag::Quiet))
+                    Warning{} << "Trade::StbImageConverter::convertToData(): ignoring green channel for HDR output";
                 components = 2;
                 break;
             case PixelFormat::RGB32F:       components = 3; break;
             case PixelFormat::RGBA32F:
-                Warning{} << "Trade::StbImageConverter::convertToData(): ignoring alpha channel for HDR output";
+                if(!(flags() & ImageConverterFlag::Quiet))
+                    Warning{} << "Trade::StbImageConverter::convertToData(): ignoring alpha channel for HDR output";
                 components = 4;
                 break;
             default:
