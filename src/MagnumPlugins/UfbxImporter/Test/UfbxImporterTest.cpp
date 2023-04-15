@@ -45,6 +45,7 @@
 #include <Corrade/TestSuite/Compare/Container.h>
 #include <Corrade/TestSuite/Compare/Numeric.h>
 #include <Corrade/TestSuite/Compare/String.h>
+#include <Corrade/Utility/Format.h>
 #include <Corrade/Utility/Path.h>
 #include <Corrade/Utility/String.h>
 #include <Magnum/FileCallback.h>
@@ -355,6 +356,8 @@ void UfbxImporterTest::openDataFailed() {
 
 void UfbxImporterTest::maxTemporaryMemory() {
     auto&& data = MaxMemoryData[testCaseInstanceId()];
+    setTestCaseDescription(Utility::format("{}", data.maxMemory));
+
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
 
     importer->configuration().setValue<Long>("maxTemporaryMemory", data.maxMemory);
@@ -371,6 +374,8 @@ void UfbxImporterTest::maxTemporaryMemory() {
 
 void UfbxImporterTest::maxResultMemory() {
     auto&& data = MaxMemoryData[testCaseInstanceId()];
+    setTestCaseDescription(Utility::format("{}", data.maxMemory));
+
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
 
     importer->configuration().setValue<Long>("maxResultMemory", data.maxMemory);
