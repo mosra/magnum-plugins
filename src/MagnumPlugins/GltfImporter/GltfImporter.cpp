@@ -2412,9 +2412,6 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
                                 success = true;
                                 ++extraBitOffsets[customFieldId + 2];
                             } break;
-                        /** @todo when composite types are introduced, this has
-                            to `+= sceneFieldComponentCount*sceneFieldVectorCount`
-                            or some such instead */
                         #define _c(type) case SceneFieldType::type: \
                             if(_d->gltf->parse ## type(gltfExtra.value())) { \
                                 success = true;                             \
