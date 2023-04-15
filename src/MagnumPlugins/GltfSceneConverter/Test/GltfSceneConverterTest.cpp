@@ -96,8 +96,8 @@ struct GltfSceneConverterTest: TestSuite::Tester {
     void addImageCompressed3D();
     void addImagePropagateFlags();
     void addImagePropagateConfiguration();
-    void addImagePropagateConfigurationGroup();
     void addImagePropagateConfigurationUnknown();
+    void addImagePropagateConfigurationGroup();
     void addImageMultiple();
     /* Multiple 2D + 3D images tested in addMaterial2DArrayTextures() */
     void addImageNoConverterManager();
@@ -1869,8 +1869,8 @@ GltfSceneConverterTest::GltfSceneConverterTest() {
     addTests({&GltfSceneConverterTest::addImageCompressed3D,
               &GltfSceneConverterTest::addImagePropagateFlags,
               &GltfSceneConverterTest::addImagePropagateConfiguration,
-              &GltfSceneConverterTest::addImagePropagateConfigurationGroup,
               &GltfSceneConverterTest::addImagePropagateConfigurationUnknown,
+              &GltfSceneConverterTest::addImagePropagateConfigurationGroup,
               &GltfSceneConverterTest::addImageMultiple,
               &GltfSceneConverterTest::addImageNoConverterManager,
               &GltfSceneConverterTest::addImageExternalToData});
