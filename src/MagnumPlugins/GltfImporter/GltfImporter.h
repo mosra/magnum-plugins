@@ -649,8 +649,8 @@ class MAGNUM_GLTFIMPORTER_EXPORT GltfImporter: public AbstractImporter {
         MAGNUM_GLTFIMPORTER_LOCAL Containers::Optional<Containers::ArrayView<const char>> parseBuffer(const char* const errorPrefix, UnsignedInt id);
         MAGNUM_GLTFIMPORTER_LOCAL Containers::Optional<Containers::Triple<Containers::ArrayView<const char>, UnsignedInt, UnsignedInt>> parseBufferView(const char* errorPrefix, UnsignedInt bufferViewId);
         MAGNUM_GLTFIMPORTER_LOCAL Containers::Optional<Containers::Triple<Containers::StridedArrayView2D<const char>, VertexFormat, UnsignedInt>> parseAccessor(const char* const errorPrefix, UnsignedInt accessorId);
-        MAGNUM_GLTFIMPORTER_LOCAL bool materialTexture(const Utility::JsonToken& gltfTexture, Containers::Array<MaterialAttributeData>& attributes, Containers::StringView attribute, Containers::StringView extraAttributePrefix);
-        MAGNUM_GLTFIMPORTER_LOCAL bool materialTexture(const Utility::JsonToken& gltfTexture, Containers::Array<MaterialAttributeData>& attributes, Containers::StringView attribute);
+        MAGNUM_GLTFIMPORTER_LOCAL bool materialTexture(const Utility::JsonToken& gltfTexture, Containers::Array<MaterialAttributeData>& attributes, Containers::StringView attribute, Containers::StringView extraAttributePrefix, bool warningOnly = false);
+        MAGNUM_GLTFIMPORTER_LOCAL bool materialTexture(const Utility::JsonToken& gltfTexture, Containers::Array<MaterialAttributeData>& attributes, Containers::StringView attribute, bool warningOnly = false);
 
         MAGNUM_GLTFIMPORTER_LOCAL const void* doImporterState() const override;
 

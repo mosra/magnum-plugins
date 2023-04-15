@@ -2404,30 +2404,37 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
                     const UnsignedInt customFieldId = sceneFieldCustom(_d->sceneFieldsForName.at(gltfExtra.key()));
                     bool success = false;
 
-                    /* Leave extraOffsets[0] and [1] at 0 to turn this into an
-                       offset array later */
-                    switch(_d->sceneFieldNamesTypes[customFieldId].second()) {
-                        case SceneFieldType::Bit:
-                            if(_d->gltf->parseBool(gltfExtra.value())) {
-                                success = true;
-                                ++extraBitOffsets[customFieldId + 2];
-                            } break;
-                        #define _c(type) case SceneFieldType::type: \
-                            if(_d->gltf->parse ## type(gltfExtra.value())) { \
-                                success = true;                             \
-                                ++extraOffsets[customFieldId + 2];          \
-                            } break;
-                        _c(Float)
-                        _c(UnsignedInt)
-                        _c(Int)
-                        #undef _c
-                        case SceneFieldType::StringOffset32:
-                            if(const Containers::Optional<Containers::StringView> parsed = _d->gltf->parseString(gltfExtra.value())) {
-                                success = true;
-                                ++extraOffsets[customFieldId + 2];
-                                extraStringSize += parsed->size();
-                            } break;
-                        default: CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+                    {
+                        /* Redirect error messages from Json::parse*() to the
+                           warning output as they are non-fatal and only lead
+                           to given extra field being skipped */
+                        Error redirectError{Warning::output()};
+
+                        /* Leave extraOffsets[0] and [1] at 0 to turn this into
+                           an offset array later */
+                        switch(_d->sceneFieldNamesTypes[customFieldId].second()) {
+                            case SceneFieldType::Bit:
+                                if(_d->gltf->parseBool(gltfExtra.value())) {
+                                    success = true;
+                                    ++extraBitOffsets[customFieldId + 2];
+                                } break;
+                            #define _c(type) case SceneFieldType::type: \
+                                if(_d->gltf->parse ## type(gltfExtra.value())) { \
+                                    success = true;                         \
+                                    ++extraOffsets[customFieldId + 2];      \
+                                } break;
+                            _c(Float)
+                            _c(UnsignedInt)
+                            _c(Int)
+                            #undef _c
+                            case SceneFieldType::StringOffset32:
+                                if(const Containers::Optional<Containers::StringView> parsed = _d->gltf->parseString(gltfExtra.value())) {
+                                    success = true;
+                                    ++extraOffsets[customFieldId + 2];
+                                    extraStringSize += parsed->size();
+                                } break;
+                            default: CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+                        }
                     }
 
                     if(!success) Warning{} << "Trade::GltfImporter::scene(): invalid node" << i << "extras" << gltfExtra.key() << "property, skipping";
@@ -2454,31 +2461,38 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
                     const UnsignedInt customFieldId = sceneFieldCustom(_d->sceneFieldsForName.at(gltfExtra.key()));
                     bool success = false;
 
-                    /* Leave extraOffsets[0] and [1] at 0 to turn this into an
-                       offset array later */
-                    switch(_d->sceneFieldNamesTypes[customFieldId].second()) {
-                        case SceneFieldType::Bit:
-                            if(const Containers::Optional<Containers::StridedBitArrayView1D> parsed = _d->gltf->parseBitArray(gltfExtra.value())) {
-                                success = true;
-                                extraBitOffsets[customFieldId + 2] += parsed->size();
-                            } break;
-                        #define _c(type) case SceneFieldType::type: \
-                            if(const Containers::Optional<Containers::StridedArrayView1D<const type>> parsed = _d->gltf->parse ## type ## Array(gltfExtra.value())) { \
-                                success = true;                             \
-                                extraOffsets[customFieldId + 2] += parsed->size(); \
-                            } break;
-                        _c(Float)
-                        _c(UnsignedInt)
-                        _c(Int)
-                        #undef _c
-                        case SceneFieldType::StringOffset32:
-                            if(const Containers::Optional<Containers::StringIterable> parsed = _d->gltf->parseStringArray(gltfExtra.value())) {
-                                success = true;
-                                extraOffsets[customFieldId + 2] += parsed->size();
-                                for(Containers::StringView i: *parsed)
-                                    extraStringSize += i.size();
-                            } break;
-                        default: CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+                    {
+                        /* Redirect error messages from Json::parse*() to the
+                           warning output as they are non-fatal and only lead
+                           to given extra field being skipped */
+                        Error redirectError{Warning::output()};
+
+                        /* Leave extraOffsets[0] and [1] at 0 to turn this into
+                           an offset array later */
+                        switch(_d->sceneFieldNamesTypes[customFieldId].second()) {
+                            case SceneFieldType::Bit:
+                                if(const Containers::Optional<Containers::StridedBitArrayView1D> parsed = _d->gltf->parseBitArray(gltfExtra.value())) {
+                                    success = true;
+                                    extraBitOffsets[customFieldId + 2] += parsed->size();
+                                } break;
+                            #define _c(type) case SceneFieldType::type: \
+                                if(const Containers::Optional<Containers::StridedArrayView1D<const type>> parsed = _d->gltf->parse ## type ## Array(gltfExtra.value())) { \
+                                    success = true;                             \
+                                    extraOffsets[customFieldId + 2] += parsed->size(); \
+                                } break;
+                            _c(Float)
+                            _c(UnsignedInt)
+                            _c(Int)
+                            #undef _c
+                            case SceneFieldType::StringOffset32:
+                                if(const Containers::Optional<Containers::StringIterable> parsed = _d->gltf->parseStringArray(gltfExtra.value())) {
+                                    success = true;
+                                    extraOffsets[customFieldId + 2] += parsed->size();
+                                    for(Containers::StringView i: *parsed)
+                                        extraStringSize += i.size();
+                                } break;
+                            default: CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+                        }
                     }
 
                     if(!success) Warning{} << "Trade::GltfImporter::scene(): invalid node" << i << "extras" << gltfExtra.key() << "array property, skipping";
@@ -3596,7 +3610,15 @@ Containers::Optional<MaterialAttributeData> parseMaterialAttribute(Utility::Json
 
     /* Bool */
     } else if(gltfValue.type() == Utility::JsonToken::Type::Bool) {
-        if(const Containers::Optional<bool> b = gltf.parseBool(gltfValue)) {
+        Containers::Optional<bool> b;
+        {
+            /* Redirect error messages from Json::parse*() to the warning
+               output as they are non-fatal and only lead to given attribute
+               being skipped */
+            Error redirectError{Warning::output()};
+            b = gltf.parseBool(gltfValue);
+        }
+        if(b) {
             type = MaterialAttributeType::Bool;
             *reinterpret_cast<bool*>(attributeData) = *b;
         } else {
@@ -3610,7 +3632,15 @@ Containers::Optional<MaterialAttributeData> parseMaterialAttribute(Utility::Json
            ambiguous. E.g. integer attributes may use exponent notation and
            decimal points, making correct type detection depend on glTF
            exporter behaviour. */
-        if(const Containers::Optional<Float> f = gltf.parseFloat(gltfValue)) {
+        Containers::Optional<Float> f;
+        {
+            /* Redirect error messages from Json::parse*() to the warning
+               output as they are non-fatal and only lead to given attribute
+               being skipped */
+            Error redirectError{Warning::output()};
+            f = gltf.parseFloat(gltfValue);
+        }
+        if(f) {
             type = MaterialAttributeType::Float;
             *reinterpret_cast<Float*>(attributeData) = *f;
         } else {
@@ -3620,7 +3650,15 @@ Containers::Optional<MaterialAttributeData> parseMaterialAttribute(Utility::Json
 
     /* String */
     } else if(gltfValue.type() == Utility::JsonToken::Type::String) {
-        if(const Containers::Optional<Containers::StringView> s = gltf.parseString(gltfValue)) {
+        Containers::Optional<Containers::StringView> s;
+        {
+            /* Redirect error messages from Json::parse*() to the warning
+               output as they are non-fatal and only lead to given attribute
+               being skipped */
+            Error redirectError{Warning::output()};
+            s = gltf.parseString(gltfValue);
+        }
+        if(s) {
             type = MaterialAttributeType::String;
             attributeStringView = *s;
         } else {
@@ -3656,9 +3694,9 @@ Containers::Optional<MaterialAttributeData> parseMaterialAttribute(Utility::Json
 
 /* In this case, extra attributes such as Matrix or Coordinates are prefixed
    with the attribute */
-bool GltfImporter::materialTexture(const Utility::JsonToken& gltfTexture, Containers::Array<MaterialAttributeData>& attributes, const Containers::StringView attribute) {
+bool GltfImporter::materialTexture(const Utility::JsonToken& gltfTexture, Containers::Array<MaterialAttributeData>& attributes, const Containers::StringView attribute, bool warningOnly) {
     CORRADE_INTERNAL_ASSERT(attribute);
-    return materialTexture(gltfTexture, attributes, attribute, attribute);
+    return materialTexture(gltfTexture, attributes, attribute, attribute, warningOnly);
 }
 
 /* The attribute can be empty in case of adding e.g. a combined
@@ -3667,15 +3705,15 @@ bool GltfImporter::materialTexture(const Utility::JsonToken& gltfTexture, Contai
    `attribute=SpecularGlossinessTexture` and
    `extraAttributePrefix=SpecularTexture` and s second call is `attribute=` and
    `extraAttributePrefix=GlossinessTexture`. */
-bool GltfImporter::materialTexture(const Utility::JsonToken& gltfTexture, Containers::Array<MaterialAttributeData>& attributes, const Containers::StringView attribute, const Containers::StringView extraAttributePrefix) {
+bool GltfImporter::materialTexture(const Utility::JsonToken& gltfTexture, Containers::Array<MaterialAttributeData>& attributes, const Containers::StringView attribute, const Containers::StringView extraAttributePrefix, bool warningOnly) {
     if(!_d->gltf->parseObject(gltfTexture)) {
-        Error{} << "Trade::GltfImporter::material(): invalid" << gltfTexture.parent()->asString() << "property";
+        (warningOnly ? static_cast<Debug&&>(Warning{}) : static_cast<Debug&&>(Error{})) << "Trade::GltfImporter::material(): invalid" << gltfTexture.parent()->asString() << "property";
         return false;
     }
 
     const Utility::JsonToken* const gltfIndex = gltfTexture.find("index"_s);
     if(!gltfIndex || !_d->gltf->parseUnsignedInt(*gltfIndex)) {
-        Error{} << "Trade::GltfImporter::material(): missing or invalid" << gltfTexture.parent()->asString() << "index property";
+        (warningOnly ? static_cast<Debug&&>(Warning{}) : static_cast<Debug&&>(Error{})) << "Trade::GltfImporter::material(): missing or invalid" << gltfTexture.parent()->asString() << "index property";
         return false;
     }
     if(gltfIndex->asUnsignedInt() >= _d->gltfTextures.size()) {
@@ -3683,7 +3721,7 @@ bool GltfImporter::materialTexture(const Utility::JsonToken& gltfTexture, Contai
            potentially deduplicated KHR_texture_ktx textures. That should be
            fine, since fixing the error will happen on the input file, before
            any deduplication. */
-        Error{} << "Trade::GltfImporter::material():" << gltfTexture.parent()->asString() << "index" << gltfIndex->asUnsignedInt() << "out of range for" << _d->gltfTextures.size() << "textures";
+        (warningOnly ? static_cast<Debug&&>(Warning{}) : static_cast<Debug&&>(Error{})) << "Trade::GltfImporter::material():" << gltfTexture.parent()->asString() << "index" << gltfIndex->asUnsignedInt() << "out of range for" << _d->gltfTextures.size() << "textures";
         return false;
     }
     const UnsignedInt uniqueIndex = _d->uniqueTextureForGltfTexture[gltfIndex->asUnsignedInt()];
@@ -3705,7 +3743,7 @@ bool GltfImporter::materialTexture(const Utility::JsonToken& gltfTexture, Contai
            (gltfTextureLayer = gltfKhrTextureKtx->find("layer"_s)))
         {
             if(!_d->gltf->parseUnsignedInt(*gltfTextureLayer)) {
-                Error{} << "Trade::GltfImporter::material(): invalid KHR_texture_ktx layer property";
+                (warningOnly ? static_cast<Debug&&>(Warning{}) : static_cast<Debug&&>(Error{})) << "Trade::GltfImporter::material(): invalid KHR_texture_ktx layer property";
                 return false;
             }
 
@@ -3720,7 +3758,7 @@ bool GltfImporter::materialTexture(const Utility::JsonToken& gltfTexture, Contai
     Containers::Optional<UnsignedInt> texCoord;
     if(const Utility::JsonToken* const gltfTexCoord = gltfTexture.find("texCoord"_s)) {
         if(!_d->gltf->parseUnsignedInt(*gltfTexCoord)) {
-            Error{} << "Trade::GltfImporter::material(): invalid" << gltfTexture.parent()->asString() << "texcoord property";
+            (warningOnly ? static_cast<Debug&&>(Warning{}) : static_cast<Debug&&>(Error{})) << "Trade::GltfImporter::material(): invalid" << gltfTexture.parent()->asString() << "texcoord property";
             return false;
         }
 
@@ -3731,7 +3769,7 @@ bool GltfImporter::materialTexture(const Utility::JsonToken& gltfTexture, Contai
     const Utility::JsonToken* gltfKhrTextureTransform = nullptr;
     if(const Utility::JsonToken* const gltfExtensions = gltfTexture.find("extensions"_s)) {
         if(!_d->gltf->parseObject(*gltfExtensions)) {
-            Error{} << "Trade::GltfImporter::material(): invalid" << gltfTexture.parent()->asString() << "extensions property";
+            (warningOnly ? static_cast<Debug&&>(Warning{}) : static_cast<Debug&&>(Error{})) << "Trade::GltfImporter::material(): invalid" << gltfTexture.parent()->asString() << "extensions property";
             return false;
         }
 
@@ -3741,7 +3779,7 @@ bool GltfImporter::materialTexture(const Utility::JsonToken& gltfTexture, Contai
            the following verified with https://github.com/KhronosGroup/glTF-Sample-Models/tree/master/2.0/TextureTransformTest */
         gltfKhrTextureTransform = gltfExtensions->find("KHR_texture_transform"_s);
         if(gltfKhrTextureTransform && !_d->gltf->parseObject(*gltfKhrTextureTransform)) {
-            Error{} << "Trade::GltfImporter::material(): invalid" << gltfTexture.parent()->asString() << "KHR_texture_transform extension";
+            (warningOnly ? static_cast<Debug&&>(Warning{}) : static_cast<Debug&&>(Error{})) << "Trade::GltfImporter::material(): invalid" << gltfTexture.parent()->asString() << "KHR_texture_transform extension";
             return false;
         }
         if(gltfKhrTextureTransform && checkMaterialAttributeSize(matrixAttribute, MaterialAttributeType::Matrix3x3)) {
@@ -3759,7 +3797,7 @@ bool GltfImporter::materialTexture(const Utility::JsonToken& gltfTexture, Contai
                applying transformation to a different set) */
             if(const Utility::JsonToken* const gltfTexCoord = gltfKhrTextureTransform->find("texCoord"_s)) {
                 if(!_d->gltf->parseUnsignedInt(*gltfTexCoord)) {
-                    Error{} << "Trade::GltfImporter::material(): invalid" << gltfTexture.parent()->asString() << "KHR_texture_transform texcoord property";
+                    (warningOnly ? static_cast<Debug&&>(Warning{}) : static_cast<Debug&&>(Error{})) << "Trade::GltfImporter::material(): invalid" << gltfTexture.parent()->asString() << "KHR_texture_transform texcoord property";
                     return false;
                 }
 
@@ -3770,7 +3808,7 @@ bool GltfImporter::materialTexture(const Utility::JsonToken& gltfTexture, Contai
             if(const Utility::JsonToken* const gltfScale = gltfKhrTextureTransform->find("scale"_s)) {
                 const Containers::Optional<Containers::StridedArrayView1D<const float>> scalingArray = _d->gltf->parseFloatArray(*gltfScale, 2);
                 if(!scalingArray) {
-                    Error{} << "Trade::GltfImporter::material(): invalid" << gltfTexture.parent()->asString() << "KHR_texture_transform scale property";
+                    (warningOnly ? static_cast<Debug&&>(Warning{}) : static_cast<Debug&&>(Error{})) << "Trade::GltfImporter::material(): invalid" << gltfTexture.parent()->asString() << "KHR_texture_transform scale property";
                     return false;
                 }
 
@@ -3781,7 +3819,7 @@ bool GltfImporter::materialTexture(const Utility::JsonToken& gltfTexture, Contai
             Rad rotation;
             if(const Utility::JsonToken* const gltfRotation = gltfKhrTextureTransform->find("rotation"_s)) {
                 if(!_d->gltf->parseFloat(*gltfRotation)) {
-                    Error{} << "Trade::GltfImporter::material(): invalid" << gltfTexture.parent()->asString() << "KHR_texture_transform rotation property";
+                    (warningOnly ? static_cast<Debug&&>(Warning{}) : static_cast<Debug&&>(Error{})) << "Trade::GltfImporter::material(): invalid" << gltfTexture.parent()->asString() << "KHR_texture_transform rotation property";
                     return false;
                 }
 
@@ -3796,7 +3834,7 @@ bool GltfImporter::materialTexture(const Utility::JsonToken& gltfTexture, Contai
             if(const Utility::JsonToken* const gltfOffset = gltfKhrTextureTransform->find("offset"_s)) {
                 const Containers::Optional<Containers::StridedArrayView1D<const Float>> offsetArray = _d->gltf->parseFloatArray(*gltfOffset, 2);
                 if(!offsetArray) {
-                    Error{} << "Trade::GltfImporter::material(): invalid" << gltfTexture.parent()->asString() << "KHR_texture_transform offset property";
+                    (warningOnly ? static_cast<Debug&&>(Warning{}) : static_cast<Debug&&>(Error{})) << "Trade::GltfImporter::material(): invalid" << gltfTexture.parent()->asString() << "KHR_texture_transform offset property";
                     return false;
                 }
 
@@ -4365,7 +4403,7 @@ Containers::Optional<MaterialData> GltfImporter::doMaterial(const UnsignedInt id
                     continue;
                 }
 
-                if(!materialTexture(gltfValue, attributes, name)) {
+                if(!materialTexture(gltfValue, attributes, name, /* warningOnly */ true)) {
                     Warning{} << "Trade::GltfImporter::material(): property" << name << "has an invalid texture object, skipping";
                     continue;
                 }
@@ -4376,7 +4414,15 @@ Containers::Optional<MaterialData> GltfImporter::doMaterial(const UnsignedInt id
                     out what's handled by materialTexture() and add the rest,
                     basically same as done for extras */
                 if(const Utility::JsonToken* const gltfTextureScale = gltfValue.find("scale"_s)) {
-                    if(!_d->gltf->parseFloat(*gltfTextureScale)) {
+                    bool parsed;
+                    {
+                        /* Redirect error messages from Json::parse*() to the
+                           warning output as they are non-fatal and only lead
+                           to given attribute being skipped */
+                        Error redirectError{Warning::output()};
+                        parsed = !!_d->gltf->parseFloat(*gltfTextureScale);
+                    }
+                    if(!parsed) {
                         Warning{} << "Trade::GltfImporter::material(): invalid" << extensionName << name << "scale property, skipping";
                         continue;
                     }

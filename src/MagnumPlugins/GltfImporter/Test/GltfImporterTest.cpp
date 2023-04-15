@@ -3335,14 +3335,16 @@ void GltfImporterTest::sceneCustomFields() {
 
     {
         Containers::Optional<Trade::SceneData> scene;
-        std::ostringstream out;
+        std::ostringstream outWarning, outError;
         {
-            Warning redirectWarning{&out};
-            Error redirectError{&out};
+            Warning redirectWarning{&outWarning};
+            Error redirectError{&outError};
             scene = importer->scene(0);
         }
         CORRADE_VERIFY(scene);
-        CORRADE_COMPARE_AS(out.str(), Utility::formatString(
+        /* As these are all non-fatal messages, all should be warnings */
+        CORRADE_COMPARE(outError.str(), "");
+        CORRADE_COMPARE_AS(outWarning.str(), Utility::formatString(
             "Trade::GltfImporter::scene(): node 2 extras property is Utility::JsonToken::Type::Array, skipping\n"
             "Trade::GltfImporter::scene(): node 3 extras invalidNullField property is Utility::JsonToken::Type::Null, skipping\n"
             "Trade::GltfImporter::scene(): node 3 extras invalidHeterogeneousArrayField property is a heterogeneous array, skipping\n"
@@ -4971,16 +4973,19 @@ void GltfImporterTest::materialExtras() {
         for(const char* name: {"primitive", "string", "array"}) {
             CORRADE_ITERATION(name);
             Containers::Optional<MaterialData> material;
-            std::ostringstream out;
+            std::ostringstream outWarning, outError;
             {
-                Warning redirectWarning{&out};
+                Warning redirectWarning{&outWarning};
+                Error redirectError{&outError};
                 material = importer->material(name);
             }
             CORRADE_VERIFY(material);
             CORRADE_COMPARE(material->layerCount(), 1);
             CORRADE_COMPARE(material->attributeCount(), 0);
 
-            CORRADE_COMPARE(out.str(), "Trade::GltfImporter::material(): extras property is not an object, skipping\n");
+            /* As these are all non-fatal messages, all should be warnings */
+            CORRADE_COMPARE(outError.str(), "");
+            CORRADE_COMPARE(outWarning.str(), "Trade::GltfImporter::material(): extras property is not an object, skipping\n");
         }
     } {
         const char* name = "empty";
@@ -4993,9 +4998,10 @@ void GltfImporterTest::materialExtras() {
         const char* name = "invalid";
         CORRADE_ITERATION(name);
         Containers::Optional<MaterialData> material;
-        std::ostringstream out;
+        std::ostringstream outWarning, outError;
         {
-            Warning redirectWarning{&out};
+            Warning redirectWarning{&outWarning};
+            Error redirectError{&outError};
             material = importer->material(name);
         }
         CORRADE_VERIFY(material);
@@ -5005,7 +5011,9 @@ void GltfImporterTest::materialExtras() {
 
         /** @todo maybe reduce the variants since there's a catch-all error for
             most of them now? */
-        CORRADE_COMPARE(out.str(),
+        /* As these are all non-fatal messages, all should be warnings */
+        CORRADE_COMPARE(outError.str(), "");
+        CORRADE_COMPARE(outWarning.str(),
             "Trade::GltfImporter::material(): property with an empty name, skipping\n"
             "Trade::GltfImporter::material(): property aValueThatWontFit is too large with 84 bytes, skipping\n"
             "Trade::GltfImporter::material(): property anIncrediblyLongNameThatSadlyWontFitPaddingPaddingPadding!! is too large with 63 bytes, skipping\n"
@@ -5023,9 +5031,10 @@ void GltfImporterTest::materialExtras() {
         const char* name = "extras";
         CORRADE_ITERATION(name);
         Containers::Optional<MaterialData> material;
-        std::ostringstream out;
+        std::ostringstream outWarning, outError;
         {
-            Warning redirectWarning{&out};
+            Warning redirectWarning{&outWarning};
+            Error redirectError{&outError};
             material = importer->material(name);
         }
 
@@ -5056,7 +5065,9 @@ void GltfImporterTest::materialExtras() {
             {MaterialAttribute::Roughness, 0.0f}
         }, {17, 20}}), DebugTools::CompareMaterial);
 
-        CORRADE_COMPARE(out.str(), "Trade::GltfImporter::material(): property invalid is not a numeric array, skipping\n");
+        /* As these are all non-fatal messages, all should be warnings */
+        CORRADE_COMPARE(outError.str(), "");
+        CORRADE_COMPARE(outWarning.str(), "Trade::GltfImporter::material(): property invalid is not a numeric array, skipping\n");
     }
 }
 
@@ -5343,7 +5354,9 @@ void GltfImporterTest::materialRaw() {
 
     /** @todo maybe reduce the variants since there's a catch-all error for
         most of them now? */
-    CORRADE_COMPARE(outWarning.str(),
+    /* As these are all non-fatal messages, all should be warnings */
+    CORRADE_COMPARE(outError.str(), "");
+    CORRADE_COMPARE_AS(outWarning.str(), Utility::formatString(
         /* MAGNUM_material_forbidden_types. Attributes are sorted by name. */
         "Trade::GltfImporter::material(): extension with an empty name, skipping\n"
         "Trade::GltfImporter::material(): property with an empty name, skipping\n"
@@ -5358,13 +5371,13 @@ void GltfImporterTest::materialRaw() {
         "Trade::GltfImporter::material(): property anIncrediblyLongNameThatSadlyWontFitPaddingPaddingPadding!! is too large with 63 bytes, skipping\n"
         "Trade::GltfImporter::material(): property boolArray is not a numeric array, skipping\n"
         "Trade::GltfImporter::material(): property emptyArray is an invalid or unrepresentable numeric vector, skipping\n"
-        /* Error from Utility::Json precedes this */
+        "Utility::Json::parseBool(): invalid bool literal fail at {0}:119:36\n"
         "Trade::GltfImporter::material(): property invalidBool is invalid, skipping\n"
-        /* Error from Utility::Json precedes this */
+        "Utility::Json::parseFloat(): invalid floating-point literal 0f at {0}:120:37\n"
         "Trade::GltfImporter::material(): property invalidFloat is invalid, skipping\n"
-        /* Error from Utility::Json precedes this */
+        "Utility::Json::parseString(): invalid unicode escape sequence \\uhhhh at {0}:121:39\n"
         "Trade::GltfImporter::material(): property invalidString is invalid, skipping\n"
-        /* Error about missing or invalid index precedes this */
+        "Trade::GltfImporter::material(): missing or invalid invalidTexture index property\n"
         "Trade::GltfImporter::material(): property invalidTexture has an invalid texture object, skipping\n"
         "Trade::GltfImporter::material(): property mixedBoolArray is not a numeric array, skipping\n"
         "Trade::GltfImporter::material(): property mixedObjectArray is not a numeric array, skipping\n"
@@ -5373,17 +5386,12 @@ void GltfImporterTest::materialRaw() {
         "Trade::GltfImporter::material(): property null is a null, skipping\n"
         "Trade::GltfImporter::material(): property oversizedArray is an invalid or unrepresentable numeric vector, skipping\n"
         "Trade::GltfImporter::material(): property stringArray is not a numeric array, skipping\n"
-        /* Error about expecting a number but getting a string precedes this */
+        "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::String at {0}:60:34\n"
         "Trade::GltfImporter::material(): invalid MAGNUM_material_snake scaleIsAStringTexture scale property, skipping\n"
         /* MAGNUM_material_type_zoo */
         "Trade::GltfImporter::material(): property invalid is not a numeric array, skipping\n"
-        "Trade::GltfImporter::material(): extension name VENDOR_material_thisnameiswaytoolongforalayername! is too long with 50 characters, skipping\n");
-    CORRADE_COMPARE(outError.str(), Utility::formatString(
-        "Utility::Json::parseBool(): invalid bool literal fail at {0}:119:36\n"
-        "Utility::Json::parseFloat(): invalid floating-point literal 0f at {0}:120:37\n"
-        "Utility::Json::parseString(): invalid unicode escape sequence \\uhhhh at {0}:121:39\n"
-        "Trade::GltfImporter::material(): missing or invalid invalidTexture index property\n"
-        "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::String at {0}:60:34\n", filename));
+        "Trade::GltfImporter::material(): extension name VENDOR_material_thisnameiswaytoolongforalayername! is too long with 50 characters, skipping\n", filename),
+        TestSuite::Compare::String);
 }
 
 void GltfImporterTest::materialRawIor() {
