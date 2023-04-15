@@ -57,7 +57,7 @@ struct StanfordSceneConverterTest: TestSuite::Tester {
     void twoComponentPositions();
     void invalidEndianness();
 
-    void ignoredAttributes();
+    template<SceneConverterFlag flag = SceneConverterFlag{}> void ignoredAttributes();
 
     /* Explicitly forbid system-wide plugin dependencies */
     PluginManager::Manager<AbstractSceneConverter> _converterManager{"nonexistent"};
@@ -126,7 +126,10 @@ StanfordSceneConverterTest::StanfordSceneConverterTest() {
               &StanfordSceneConverterTest::twoComponentPositions,
               &StanfordSceneConverterTest::invalidEndianness});
 
-    addInstancedTests({&StanfordSceneConverterTest::ignoredAttributes},
+    /* MSVC needs explicit type due to default template args */
+    addInstancedTests<StanfordSceneConverterTest>({
+        &StanfordSceneConverterTest::ignoredAttributes,
+        &StanfordSceneConverterTest::ignoredAttributes<SceneConverterFlag::Quiet>},
         Containers::arraySize(IgnoredAttributesData));
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
@@ -557,9 +560,11 @@ void StanfordSceneConverterTest::invalidEndianness() {
         "Trade::StanfordSceneConverter::convertToData(): invalid option endianness=wrong\n");
 }
 
-void StanfordSceneConverterTest::ignoredAttributes() {
+template<SceneConverterFlag flag> void StanfordSceneConverterTest::ignoredAttributes() {
     auto&& data = IgnoredAttributesData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
+    if(flag == SceneConverterFlag::Quiet)
+        setTestCaseTemplateName("SceneConverterFlag::Quiet");
 
     const struct Vertex {
         Vector3 position;
@@ -585,6 +590,7 @@ void StanfordSceneConverterTest::ignoredAttributes() {
     }};
 
     Containers::Pointer<AbstractSceneConverter> converter =  _converterManager.instantiate("StanfordSceneConverter");
+    converter->addFlags(flag);
     converter->configuration().setValue("endianness", "little");
 
     Containers::Optional<Containers::Array<char>> out;
@@ -593,8 +599,10 @@ void StanfordSceneConverterTest::ignoredAttributes() {
         Warning redirectWarning{&wout};
         out = converter->convertToData(mesh);
     }
-    CORRADE_COMPARE(wout.str(),
-        Utility::formatString("Trade::StanfordSceneConverter::convertToData(): {}\n", data.message));
+    if(flag == SceneConverterFlag::Quiet)
+        CORRADE_COMPARE(wout.str(), "");
+    else
+        CORRADE_COMPARE(wout.str(), Utility::formatString("Trade::StanfordSceneConverter::convertToData(): {}\n", data.message));
     CORRADE_VERIFY(out);
     /** @todo Compare::DataToFile */
     CORRADE_COMPARE_AS(Containers::StringView{*out},

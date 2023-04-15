@@ -115,7 +115,8 @@ Containers::Optional<Containers::Array<char>> StanfordSceneConverter::doConvertT
         const MeshAttribute name = triangles.attributeName(i);
         const VertexFormat format = triangles.attributeFormat(i);
         if(isVertexFormatImplementationSpecific(format)) {
-            Warning{} << "Trade::StanfordSceneConverter::convertToData(): skipping attribute" << name << "with" << format;
+            if(!(flags() & SceneConverterFlag::Quiet))
+                Warning{} << "Trade::StanfordSceneConverter::convertToData(): skipping attribute" << name << "with" << format;
             continue;
         }
 
@@ -152,7 +153,8 @@ Containers::Optional<Containers::Array<char>> StanfordSceneConverter::doConvertT
                 formatString = "int";
                 break;
             default:
-                Warning{} << "Trade::StanfordSceneConverter::convertToData(): skipping attribute" << name << "with unsupported format" << format;
+                if(!(flags() & SceneConverterFlag::Quiet))
+                    Warning{} << "Trade::StanfordSceneConverter::convertToData(): skipping attribute" << name << "with unsupported format" << format;
                 continue;
         }
 
@@ -201,7 +203,8 @@ Containers::Optional<Containers::Array<char>> StanfordSceneConverter::doConvertT
         /* Something else, skip */
         /** @todo add setMeshAttributeName() and enable this for custom attribs */
         } else {
-            Warning{} << "Trade::StanfordSceneConverter::convertToData(): skipping unsupported attribute" << name;
+            if(!(flags() & SceneConverterFlag::Quiet))
+                Warning{} << "Trade::StanfordSceneConverter::convertToData(): skipping unsupported attribute" << name;
             continue;
         }
 
