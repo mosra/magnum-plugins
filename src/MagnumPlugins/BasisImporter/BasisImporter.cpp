@@ -378,7 +378,8 @@ void BasisImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFla
                      they wouldn't halve in the z-dimension as users would very
                      likely expect
                    - so why is this type here at all, actually?? */
-                Warning{} << "Trade::BasisImporter::openData(): importing 3D texture as a 2D array texture";
+                if(!(flags() & ImporterFlag::Quiet))
+                    Warning{} << "Trade::BasisImporter::openData(): importing 3D texture as a 2D array texture";
                 state->imageFlags |= ImageFlag3D::Array;
                 break;
             default:
@@ -463,7 +464,7 @@ void BasisImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFla
     /* There's one image with faces/layers, or multiple images without any */
     CORRADE_INTERNAL_ASSERT(state->numImages == 1 || state->numSlices == 1);
 
-    if(!state->isYFlipped) {
+    if(!(flags() & ImporterFlag::Quiet) && !state->isYFlipped) {
         /** @todo replace with the flag once the PR is submitted */
         /** @todo or could we at least flip if output is set to (uncompressed)
             RGBA? it would be inconsistent tho */
@@ -486,7 +487,7 @@ template<UnsignedInt dimensions> Containers::Optional<ImageData<dimensions>> Bas
     const auto targetFormatStr = configuration().value<Containers::StringView>("format");
     TargetFormat targetFormat;
     if(!targetFormatStr) {
-        if(!_state->noTranscodeFormatWarningPrinted)
+        if(!(flags() & ImporterFlag::Quiet) && !_state->noTranscodeFormatWarningPrinted)
             Warning{} << prefix << "no format to transcode to was specified, falling back to uncompressed RGBA8. To get rid of this warning either load the plugin via one of its BasisImporterEtc1RGB, ... aliases, or explicitly set the format option in plugin configuration.";
         targetFormat = TargetFormat::RGBA8;
         _state->noTranscodeFormatWarningPrinted = true;

@@ -111,6 +111,18 @@ constexpr struct {
     {"KTX2", ".ktx2"}
 };
 
+const struct {
+    const char* name;
+    const char* extension;
+    ImporterFlags flags;
+    bool quiet;
+} RgbUncompressedNoFlipData[] {
+    {"Basis", ".basis", {}, false},
+    {"Basis, quiet", ".basis", ImporterFlag::Quiet, true},
+    {"KTX2", ".ktx2", {}, false},
+    {"KTX2, quiet", ".ktx2", ImporterFlag::Quiet, true}
+};
+
 constexpr struct {
     const char* name;
     const Containers::ArrayView<const char> data;
@@ -154,6 +166,15 @@ constexpr struct {
 } FileTooShortData[] {
     {"Basis", "rgb.basis", 64, "invalid basis header"},
     {"KTX2", "rgb.ktx2", 64, "invalid KTX2 header, or not Basis compressed; might want to use KtxImporter instead"}
+};
+
+const struct {
+    const char* name;
+    ImporterFlags flags;
+    bool quiet;
+} QuietData[]{
+    {"", {}, false},
+    {"quiet", ImporterFlag::Quiet, true}
 };
 
 #ifdef MAGNUM_BUILD_DEPRECATED
@@ -242,13 +263,16 @@ constexpr struct {
 const struct {
     const char* name;
     const char* extension;
+    ImporterFlags flags;
     const char* message;
 } Image3DData[]{
     /* In case of Basis, the image is marked as 3D. Which doesn't make sense
        as the mip levels don't shrink along Z, so we patch the type to say 2D
        array and print a warning. */
-    {"Basis", ".basis",
+    {"Basis", ".basis", {},
         "Trade::BasisImporter::openData(): importing 3D texture as a 2D array texture\n"},
+    {"Basis", ".basis", ImporterFlag::Quiet,
+        ""},
     /* On the other hand, for KTX2 files, the image is always marked as 2D
        array and never as 3D, so no warning here.
 
@@ -260,8 +284,10 @@ const struct {
 
        In other words, the data *does have* correct orientation, it's just not
        marked as such, leading to an annoying warning. */
-    {"KTX2", ".ktx2",
-        "Trade::BasisImporter::openData(): the image was not encoded Y-flipped, imported data will have wrong orientation\n"}
+    {"KTX2", ".ktx2", {},
+        "Trade::BasisImporter::openData(): the image was not encoded Y-flipped, imported data will have wrong orientation\n"},
+    {"KTX2, quiet", ".ktx2", ImporterFlag::Quiet,
+        ""}
 };
 
 const struct {
@@ -302,8 +328,10 @@ BasisImporterTest::BasisImporterTest() {
     addInstancedTests({&BasisImporterTest::fileTooShort},
                       Containers::arraySize(FileTooShortData));
 
-    addTests({&BasisImporterTest::unconfigured,
-              &BasisImporterTest::invalidConfiguredFormat,
+    addInstancedTests({&BasisImporterTest::unconfigured},
+        Containers::arraySize(QuietData));
+
+    addTests({&BasisImporterTest::invalidConfiguredFormat,
               &BasisImporterTest::unsupportedFormat,
               &BasisImporterTest::transcodingFailure,
               &BasisImporterTest::nonBasisKtx});
@@ -313,9 +341,13 @@ BasisImporterTest::BasisImporterTest() {
                       Containers::arraySize(TextureData));
     #endif
 
-    addInstancedTests({&BasisImporterTest::rgbUncompressed,
-                       &BasisImporterTest::rgbUncompressedNoFlip,
-                       &BasisImporterTest::rgbUncompressedLinear,
+    addInstancedTests({&BasisImporterTest::rgbUncompressed},
+        Containers::arraySize(FileTypeData));
+
+    addInstancedTests({&BasisImporterTest::rgbUncompressedNoFlip},
+        Containers::arraySize(RgbUncompressedNoFlipData));
+
+    addInstancedTests({&BasisImporterTest::rgbUncompressedLinear,
                        &BasisImporterTest::rgbaUncompressed,
                        &BasisImporterTest::rgbaUncompressedUastc},
                       Containers::arraySize(FileTypeData));
@@ -436,7 +468,11 @@ void BasisImporterTest::fileTooShort() {
 }
 
 void BasisImporterTest::unconfigured() {
+    auto&& data = QuietData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporter");
+    importer->addFlags(data.flags);
 
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(BASISIMPORTER_TEST_DIR, "rgb.basis")));
 
@@ -453,7 +489,10 @@ void BasisImporterTest::unconfigured() {
     CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Srgb);
     CORRADE_COMPARE(image->size(), (Vector2i{63, 27}));
 
-    CORRADE_COMPARE(out.str(), "Trade::BasisImporter::image2D(): no format to transcode to was specified, falling back to uncompressed RGBA8. To get rid of this warning either load the plugin via one of its BasisImporterEtc1RGB, ... aliases, or explicitly set the format option in plugin configuration.\n");
+    if(data.quiet)
+        CORRADE_COMPARE(out.str(), "");
+    else
+        CORRADE_COMPARE(out.str(), "Trade::BasisImporter::image2D(): no format to transcode to was specified, falling back to uncompressed RGBA8. To get rid of this warning either load the plugin via one of its BasisImporterEtc1RGB, ... aliases, or explicitly set the format option in plugin configuration.\n");
 
     if(_manager.loadState("AnyImageImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("AnyImageImporter plugin not found, cannot test contents");
@@ -534,6 +573,8 @@ void BasisImporterTest::texture() {
             Warning redirectWarning{&out};
             CORRADE_VERIFY(importer->openFile(Utility::Path::join(BASISIMPORTER_TEST_DIR, Containers::StringView{data.fileBase} + fileType.extension)));
         }
+        /* Not testing ImporterFlag::Quiet here as this functionality is
+           deprecated */
         CORRADE_COMPARE(out.str(), data.warning[i]);
 
         const Vector3ui counts{
@@ -621,16 +662,21 @@ void BasisImporterTest::rgbUncompressed() {
 }
 
 void BasisImporterTest::rgbUncompressedNoFlip() {
-    auto&& data = FileTypeData[testCaseInstanceId()];
+    auto&& data = RgbUncompressedNoFlipData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporterRGBA8");
+    importer->addFlags(data.flags);
+
     std::ostringstream out;
     {
         Warning redirectWarning{&out};
         CORRADE_VERIFY(importer->openFile(Utility::Path::join(BASISIMPORTER_TEST_DIR, "rgb-noflip"_s + data.extension)));
     }
-    CORRADE_COMPARE(out.str(), "Trade::BasisImporter::openData(): the image was not encoded Y-flipped, imported data will have wrong orientation\n");
+    if(data.quiet)
+        CORRADE_COMPARE(out.str(), "");
+    else
+        CORRADE_COMPARE(out.str(), "Trade::BasisImporter::openData(): the image was not encoded Y-flipped, imported data will have wrong orientation\n");
     CORRADE_COMPARE(importer->image2DCount(), 1);
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
@@ -1023,6 +1069,8 @@ void BasisImporterTest::image3D() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporterRGBA8");
+    importer->addFlags(data.flags);
+
     std::ostringstream out;
     {
         Warning redirectWarning{&out};
@@ -1063,6 +1111,7 @@ void BasisImporterTest::image3DMipmaps() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporterRGBA8");
+    importer->addFlags(data.flags);
 
     std::ostringstream out;
     {

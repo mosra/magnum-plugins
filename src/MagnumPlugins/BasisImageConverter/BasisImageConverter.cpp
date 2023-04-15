@@ -86,11 +86,11 @@ template<UnsignedInt dimensions> Containers::Optional<Containers::Array<char>> c
 
         params.m_tex_type = basist::basis_texture_type::cBASISTexType2D;
     } else if(dimensions == 3) {
-        const ImageFlags3D flags = ImageFlag3D(UnsignedShort(imageLevels[0].flags()));
+        const ImageFlags3D imageFlags = ImageFlag3D(UnsignedShort(imageLevels[0].flags()));
 
         /* Cube map and cube map array is the same thing, distinguishable only
            by number of layers */
-        if(flags & ImageFlag3D::CubeMap) {
+        if(imageFlags & ImageFlag3D::CubeMap) {
             params.m_tex_type = basist::basis_texture_type::cBASISTexTypeCubemapArray;
 
         /* Encoding 3D images as KTX2 always produces 2D array images and mip
@@ -99,7 +99,7 @@ template<UnsignedInt dimensions> Containers::Optional<Containers::Array<char>> c
            a possible z-flip, so print a warning in case the input image wasn't
            marked as a 2D array. */
         } else {
-            if(!(flags & ImageFlag3D::Array)) {
+            if(!(flags & ImageConverterFlag::Quiet) && !(imageFlags & ImageFlag3D::Array)) {
                 Warning{} << "Trade::BasisImageConverter::convertToData(): exporting 3D image as a 2D array image";
             }
 
@@ -199,7 +199,7 @@ template<UnsignedInt dimensions> Containers::Optional<Containers::Array<char>> c
     PARAM_CONFIG(mip_fast, bool);
     PARAM_CONFIG(mip_smallest_dimension, int);
 
-    if(params.m_mip_gen && numMipmaps > 1) {
+    if(params.m_mip_gen && numMipmaps > 1 && !(flags & ImageConverterFlag::Quiet)) {
         Warning{} << "Trade::BasisImageConverter::convertToData(): found user-supplied mip levels, ignoring mip_gen config value";
         params.m_mip_gen = false;
     }

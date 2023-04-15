@@ -194,11 +194,25 @@ const struct {
 
 const struct {
     const char* name;
-    ImageFlags3D flags;
+    ImageConverterFlags flags;
+    bool quiet;
+} QuietData[]{
+    {"", {}, false},
+    {"quiet", ImageConverterFlag::Quiet, true}
+};
+
+const struct {
+    const char* name;
+    ImageConverterFlags converterFlags;
+    ImageFlags3D imageFlags;
     const char* message;
 } Convert2DArrayData[]{
-    {"2D array", ImageFlag3D::Array, ""},
-    {"3D", {}, "Trade::BasisImageConverter::convertToData(): exporting 3D image as a 2D array image\n"}
+    {"2D array", {}, ImageFlag3D::Array,
+        ""},
+    {"3D", {}, {},
+        "Trade::BasisImageConverter::convertToData(): exporting 3D image as a 2D array image\n"},
+    {"3D, quiet", ImageConverterFlag::Quiet, {},
+        ""}
 };
 
 constexpr struct {
@@ -300,7 +314,8 @@ BasisImageConverterTest::BasisImageConverterTest() {
     addInstancedTests({&BasisImageConverterTest::convertUastcPatchAwaySrgb},
         Containers::arraySize(ConvertUastcPatchAwaySrgbData));
 
-    addTests({&BasisImageConverterTest::convert2DMipmaps});
+    addInstancedTests({&BasisImageConverterTest::convert2DMipmaps},
+        Containers::arraySize(QuietData));
 
     addInstancedTests({&BasisImageConverterTest::convert2DArray},
         Containers::arraySize(Convert2DArrayData));
@@ -799,6 +814,9 @@ void BasisImageConverterTest::convertUastcPatchAwaySrgb() {
 }
 
 void BasisImageConverterTest::convert2DMipmaps() {
+    auto&& data = QuietData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("PngImporter plugin not found, cannot test contents");
 
@@ -825,6 +843,7 @@ void BasisImageConverterTest::convert2DMipmaps() {
     }
 
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("BasisImageConverter");
+    converter->addFlags(data.flags);
 
     /* Off by default */
     CORRADE_COMPARE(converter->configuration().value<bool>("mip_gen"), false);
@@ -838,7 +857,10 @@ void BasisImageConverterTest::convert2DMipmaps() {
 
     Containers::Optional<Containers::Array<char>> compressedData = converter->convertToData({*levels[0].imageWithSkip, *levels[1].imageWithSkip, *levels[2].imageWithSkip});
     CORRADE_VERIFY(compressedData);
-    CORRADE_COMPARE(out.str(), "Trade::BasisImageConverter::convertToData(): found user-supplied mip levels, ignoring mip_gen config value\n");
+    if(data.quiet)
+        CORRADE_COMPARE(out.str(), "");
+    else
+        CORRADE_COMPARE(out.str(), "Trade::BasisImageConverter::convertToData(): found user-supplied mip levels, ignoring mip_gen config value\n");
 
     if(_manager.loadState("BasisImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("BasisImporter plugin not found, cannot test");
@@ -888,7 +910,7 @@ void BasisImageConverterTest::convert2DArray() {
 
     /* Take the input image and create two more variants of it */
     Containers::Array<char> originalData{NoInit, originalSlice->data().size()*3};
-    MutableImageView3D originalImage{originalSlice->format(), {originalSlice->size(), 3}, originalData, data.flags};
+    MutableImageView3D originalImage{originalSlice->format(), {originalSlice->size(), 3}, originalData, data.imageFlags};
     Utility::copy(originalSlice->pixels(), originalImage.pixels()[0]);
     Containers::StridedArrayView3D<Color4ub> pixels = originalImage.pixels<Color4ub>();
     for(Int y = 0; y != originalImage.size().y(); ++y) {
@@ -904,6 +926,7 @@ void BasisImageConverterTest::convert2DArray() {
     const Image3D imageWithSkip = copyImageWithSkip<Color4ub>(ImageView3D(originalImage), {7, 8, 5});
 
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("BasisImageConverter");
+    converter->addFlags(data.converterFlags);
 
     std::ostringstream out;
     Containers::Optional<Containers::Array<char>> compressedData;
