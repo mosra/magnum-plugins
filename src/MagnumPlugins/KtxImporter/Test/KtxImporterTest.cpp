@@ -1984,7 +1984,9 @@ template<ImporterFlag flag> void KtxImporterTest::orientationInvalid() {
         Warning redirectWarning{&out};
         CORRADE_VERIFY(importer->openData(*fileData));
     }
-    constexpr Containers::StringView orientations[]{"right"_s, "down"_s, "forward"_s};
+    /* GCC 4.8 "cannot initialize" if this is constexpr due to the function
+       being a template */
+    Containers::StringView orientations[]{"right"_s, "down"_s, "forward"_s};
     const Containers::String orientationString = ", "_s.join(Containers::arrayView(orientations).prefix(data.dimensions));
     if(flag == ImporterFlag::Quiet)
         CORRADE_COMPARE(out.str(), "");
