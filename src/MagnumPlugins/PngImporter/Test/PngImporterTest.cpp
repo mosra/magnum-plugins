@@ -70,12 +70,30 @@ using namespace Math::Literals;
 const struct {
     TestSuite::TestCaseDescriptionSourceLocation name;
     Containers::StringView data;
-    const char* error;
+    const char* message;
 } InvalidData[] {
-    {"invalid signature", "invalid!"_s, "error: Not a PNG file"},
-    {"short signature", "\x89PNG"_s, "error: file too short"},
-    {"invalid signature with trailing zeros", "\x89PNG\x0d\x0a\x1a\x00"_s, "error: PNG file corrupted by ASCII conversion"},
-    {"only signature", "\x89PNG\x0d\x0a\x1a\x0a"_s, "error: file too short"}
+    {"invalid signature",
+        "invalid!"_s,
+        "error: Not a PNG file"},
+    {"short signature",
+        "\x89PNG"_s,
+        "error: file too short"},
+    {"invalid signature with trailing zeros",
+        "\x89PNG\x0d\x0a\x1a\x00"_s,
+        "error: PNG file corrupted by ASCII conversion"},
+    {"only signature",
+        "\x89PNG\x0d\x0a\x1a\x0a"_s,
+        "error: file too short"},
+    {"zero width",
+        "\x89PNG\x0d\x0a\x1a\x0a"
+        "\x00\x00\x00\x0DIHDR"  /* HDR chunk, 13 bytes */
+        "\x00\x00\x00\x00"      /* width, big-endian */
+        "\x00\x00\x00\x02"      /* height, big-endian */
+        "\x08\x04"              /* bit depth, color type */
+        "\x00\x00\x00"          /* compression, filter, interlace method */
+        "\xdc\x4a\x15\x92"_s,   /* hex(zlib.crc32(b'IHDR...')), big-endian */
+        "Trade::PngImporter::image2D(): warning: Image width is zero in IHDR\n"
+        "Trade::PngImporter::image2D(): error: Invalid IHDR data\n"}
 };
 
 constexpr struct {
@@ -199,9 +217,15 @@ void PngImporterTest::invalid() {
     CORRADE_VERIFY(importer->openData(data.data));
 
     std::ostringstream out;
+    Warning redirectWarning{&out};
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->image2D(0));
-    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::PngImporter::image2D(): {}\n", data.error));
+    /* Sometimes there's also a warning, in that case take the message
+       verbatim */
+    if(Containers::StringView{data.message}.hasSuffix('\n'))
+        CORRADE_COMPARE(out.str(), data.message);
+    else
+        CORRADE_COMPARE(out.str(), Utility::formatString("Trade::PngImporter::image2D(): {}\n", data.message));
 }
 
 void PngImporterTest::gray() {
