@@ -676,7 +676,8 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const SceneData& scene, con
             /* Skip ones for which we don't have a name */
             const auto found = _state->sceneFieldNames.find(sceneFieldCustom(name));
             if(found == _state->sceneFieldNames.end()) {
-                Warning{} << "Trade::GltfSceneConverter::add(): custom scene field" << sceneFieldCustom(name) << "has no name assigned, skipping";
+                if(!(flags() & SceneConverterFlag::Quiet))
+                    Warning{} << "Trade::GltfSceneConverter::add(): custom scene field" << sceneFieldCustom(name) << "has no name assigned, skipping";
                 continue;
             }
 
@@ -687,7 +688,8 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const SceneData& scene, con
             if(type != SceneFieldType::UnsignedInt &&
                type != SceneFieldType::Int &&
                type != SceneFieldType::Float) {
-                Warning{} << "Trade::GltfSceneConverter::add(): custom scene field" << found->second << "has unsupported type" << type << Debug::nospace << ", skipping";
+                if(!(flags() & SceneConverterFlag::Quiet))
+                    Warning{} << "Trade::GltfSceneConverter::add(): custom scene field" << found->second << "has unsupported type" << type << Debug::nospace << ", skipping";
                 continue;
             }
         }
@@ -780,7 +782,8 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const SceneData& scene, con
 
         if(isSceneFieldCustom(fieldName))
             customFieldCount += size;
-        else Warning{} << "Trade::GltfSceneConverter::add():" << scene.fieldName(i) << "was not used";
+        else if(!(flags() & SceneConverterFlag::Quiet))
+            Warning{} << "Trade::GltfSceneConverter::add():" << scene.fieldName(i) << "was not used";
     }
 
     /* Allocate space for field IDs and offsets as well as actual field data.
@@ -951,7 +954,7 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const SceneData& scene, con
     for(UnsignedLong object = 0; object != scene.mappingBound(); ++object) {
         /* Objects that have no parent field are not exported */
         if(!hasParent[object]) {
-            if(hasData[object])
+            if(!(flags() & SceneConverterFlag::Quiet) && hasData[object])
                 Warning{} << "Trade::GltfSceneConverter::add(): parentless object" << object << "was not used";
             continue;
         }
@@ -977,14 +980,16 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const SceneData& scene, con
             const SceneField fieldName = scene.fieldName(fieldIds[i]);
             if(fieldName == previous) {
                 /** @todo special-case meshes (make multi-primitive meshes) */
-                Warning w;
-                w << "Trade::GltfSceneConverter::add(): ignoring duplicate field";
-                if(isSceneFieldCustom(fieldName)) {
-                    const auto found = _state->sceneFieldNames.find(sceneFieldCustom(fieldName));
-                    CORRADE_INTERNAL_ASSERT(found != _state->sceneFieldNames.end());
-                    w << found->second;
-                } else w << previous;
-                w << "for object" << object;
+                if(!(flags() & SceneConverterFlag::Quiet)) {
+                    Warning w;
+                    w << "Trade::GltfSceneConverter::add(): ignoring duplicate field";
+                    if(isSceneFieldCustom(fieldName)) {
+                        const auto found = _state->sceneFieldNames.find(sceneFieldCustom(fieldName));
+                        CORRADE_INTERNAL_ASSERT(found != _state->sceneFieldNames.end());
+                        w << found->second;
+                    } else w << previous;
+                    w << "for object" << object;
+                }
                 continue;
             }
 
@@ -1164,7 +1169,8 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const MeshData& mesh, const
         if(configuration().value<bool>("strict")) {
             Error{} << "Trade::GltfSceneConverter::add(): attribute-less meshes are not valid glTF, set strict=false to allow them";
             return {};
-        } else Warning{} << "Trade::GltfSceneConverter::add(): strict mode disabled, allowing an attribute-less mesh";
+        } else if(!(flags() & SceneConverterFlag::Quiet))
+            Warning{} << "Trade::GltfSceneConverter::add(): strict mode disabled, allowing an attribute-less mesh";
 
     /* 3.7.2.1 (Geometry § Meshes § Overview) says "[count] MUST be non-zero";
        we allow this in non-strict mode. Attribute-less meshes in glTF
@@ -1173,7 +1179,8 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const MeshData& mesh, const
         if(configuration().value<bool>("strict")) {
             Error{} << "Trade::GltfSceneConverter::add(): meshes with zero vertices are not valid glTF, set strict=false to allow them";
             return {};
-        } else Warning{} << "Trade::GltfSceneConverter::add(): strict mode disabled, allowing a mesh with zero vertices";
+        } else if(!(flags() & SceneConverterFlag::Quiet))
+            Warning{} << "Trade::GltfSceneConverter::add(): strict mode disabled, allowing a mesh with zero vertices";
     }
 
     /* Check and convert attributes */
@@ -1301,12 +1308,14 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const MeshData& mesh, const
                 case MeshAttribute::Tangent:
                     CORRADE_INTERNAL_ASSERT(componentCount == 3);
                     gltfAttributeName = Containers::String::nullTerminatedGlobalView("_TANGENT3"_s);
-                    Warning{} << "Trade::GltfSceneConverter::add(): exporting three-component mesh tangents as a custom" << gltfAttributeName << "attribute";
+                    if(!(flags() & SceneConverterFlag::Quiet))
+                        Warning{} << "Trade::GltfSceneConverter::add(): exporting three-component mesh tangents as a custom" << gltfAttributeName << "attribute";
                     break;
 
                 case MeshAttribute::Bitangent:
                     gltfAttributeName = Containers::String::nullTerminatedGlobalView("_BITANGENT"_s);
-                    Warning{} << "Trade::GltfSceneConverter::add(): exporting separate mesh bitangents as a custom" << gltfAttributeName << "attribute";
+                    if(!(flags() & SceneConverterFlag::Quiet))
+                        Warning{} << "Trade::GltfSceneConverter::add(): exporting separate mesh bitangents as a custom" << gltfAttributeName << "attribute";
                     break;
 
                 case MeshAttribute::ObjectId:
@@ -1331,7 +1340,8 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const MeshData& mesh, const
                 }
                 if(!gltfAttributeName) {
                     gltfAttributeName = Utility::format("_{}", meshAttributeCustom(attributeName));
-                    Warning{} << "Trade::GltfSceneConverter::add(): no name set for" << attributeName << Debug::nospace << ", exporting as" << gltfAttributeName;
+                    if(!(flags() & SceneConverterFlag::Quiet))
+                        Warning{} << "Trade::GltfSceneConverter::add(): no name set for" << attributeName << Debug::nospace << ", exporting as" << gltfAttributeName;
                 }
             }
         }
@@ -1406,7 +1416,8 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const MeshData& mesh, const
             if(configuration().value<bool>("strict")) {
                 Error{} << "Trade::GltfSceneConverter::add(): mesh attributes with" << format << "are not valid glTF, set strict=false to allow them";
                 return {};
-            } else Warning{} << "Trade::GltfSceneConverter::add(): strict mode disabled, allowing a 32-bit integer attribute" << gltfAttributeName;
+            } else if(!(flags() & SceneConverterFlag::Quiet))
+                Warning{} << "Trade::GltfSceneConverter::add(): strict mode disabled, allowing a 32-bit integer attribute" << gltfAttributeName;
 
             gltfAccessorComponentType = Implementation::GltfTypeUnsignedInt;
         } else if(componentFormat == VertexFormat::Float)
@@ -1771,7 +1782,7 @@ bool GltfSceneConverter::doAdd(UnsignedInt, const MaterialData& material, const 
            find the most minimal one each time. This way I can also get away
            with just reusing the diagonal signs for scaling. */
         const Matrix3 exceptRotation = Matrix3::translation(textureMatrix.translation())*Matrix3::scaling(textureMatrix.scaling()*Math::sign(textureMatrix.diagonal().xy()));
-        if(exceptRotation != textureMatrix) {
+        if(!(flags() & SceneConverterFlag::Quiet) && exceptRotation != textureMatrix) {
             Warning w;
             w << "Trade::GltfSceneConverter::add(): material attribute" << textureMatrixAttribute;
             if(layer) {
@@ -2259,7 +2270,8 @@ bool GltfSceneConverter::doAdd(UnsignedInt, const MaterialData& material, const 
                         /* If the *Texture attribute isn't UnsignedInt, print a
                            warning and skip it altogether */
                         if(material.attributeType(layer, attribute) != MaterialAttributeType::UnsignedInt) {
-                            Warning{} << "Trade::GltfSceneConverter::add(): custom material attribute" << attributeName << "in layer" << layer << "(" << Debug::nospace << layerName << Debug::nospace << ")" << "is" << material.attributeType(layer, attribute) << Debug::nospace << ", not writing a textureInfo object";
+                            if(!(flags() & SceneConverterFlag::Quiet))
+                                Warning{} << "Trade::GltfSceneConverter::add(): custom material attribute" << attributeName << "in layer" << layer << "(" << Debug::nospace << layerName << Debug::nospace << ")" << "is" << material.attributeType(layer, attribute) << Debug::nospace << ", not writing a textureInfo object";
                             continue;
                         }
 
@@ -2269,7 +2281,8 @@ bool GltfSceneConverter::doAdd(UnsignedInt, const MaterialData& material, const 
                            skip it entirely -- it'd be skipped on import in
                            GltfImporter otherwise anyway */
                         if(texture >= textureCount()) {
-                            Warning{} << "Trade::GltfSceneConverter::add(): custom material attribute" << attributeName << "in layer" << layer << "(" << Debug::nospace << layerName << Debug::nospace << ")" << "references texture" << texture << "but only" << textureCount() << "textures were added so far, skipping";
+                            if(!(flags() & SceneConverterFlag::Quiet))
+                                Warning{} << "Trade::GltfSceneConverter::add(): custom material attribute" << attributeName << "in layer" << layer << "(" << Debug::nospace << layerName << Debug::nospace << ")" << "references texture" << texture << "but only" << textureCount() << "textures were added so far, skipping";
                             continue;
                         }
 
@@ -2285,7 +2298,8 @@ bool GltfSceneConverter::doAdd(UnsignedInt, const MaterialData& material, const 
                         if(const Containers::Optional<UnsignedInt> attributeId = maskedLayerMaterial.findId(layerAttributeName)) {
                             const MaterialAttributeType attributeType = material.attributeType(layer, *attributeId);
                             if(attributeType != MaterialAttributeType::UnsignedInt) {
-                                Warning{} << "Trade::GltfSceneConverter::add(): custom material attribute" << layerAttributeName << "in layer" << layer << "(" << Debug::nospace << layerName << Debug::nospace << ")" << "is" << attributeType << Debug::nospace << ", referencing layer 0 instead";
+                                if(!(flags() & SceneConverterFlag::Quiet))
+                                    Warning{} << "Trade::GltfSceneConverter::add(): custom material attribute" << layerAttributeName << "in layer" << layer << "(" << Debug::nospace << layerName << Debug::nospace << ")" << "is" << attributeType << Debug::nospace << ", referencing layer 0 instead";
                                 textureLayer = 0;
                             } else {
                                 textureLayer = material.attribute<UnsignedInt>(layer, *attributeId);
@@ -2307,11 +2321,13 @@ bool GltfSceneConverter::doAdd(UnsignedInt, const MaterialData& material, const 
                            import in GltfImporter otherwise anyway */
                         CORRADE_INTERNAL_ASSERT(textureCount() + 1 == _state->textureIdOffsets.size());
                         if(*textureLayer >= _state->textureIdOffsets[texture + 1] - _state->textureIdOffsets[texture]) {
-                            Warning w;
-                            w << "Trade::GltfSceneConverter::add(): material attribute" << layerAttributeName;
-                            if(materialLayerUsedForTextureLayer)
-                                w << "in layer" << materialLayerUsedForTextureLayer << "(" << Debug::nospace << layerName << Debug::nospace << ")";
-                            w << "value" << *textureLayer << "out of range for" << _state->textureIdOffsets[texture + 1] - _state->textureIdOffsets[texture] << "layers in texture" << texture << Debug::nospace << ", skipping";
+                            if(!(flags() & SceneConverterFlag::Quiet)) {
+                                Warning w;
+                                w << "Trade::GltfSceneConverter::add(): material attribute" << layerAttributeName;
+                                if(materialLayerUsedForTextureLayer)
+                                    w << "in layer" << materialLayerUsedForTextureLayer << "(" << Debug::nospace << layerName << Debug::nospace << ")";
+                                w << "value" << *textureLayer << "out of range for" << _state->textureIdOffsets[texture + 1] - _state->textureIdOffsets[texture] << "layers in texture" << texture << Debug::nospace << ", skipping";
+                            }
                             continue;
                         }
 
@@ -2332,7 +2348,8 @@ bool GltfSceneConverter::doAdd(UnsignedInt, const MaterialData& material, const 
                             if(const Containers::Optional<UnsignedInt> attributeId = maskedLayerMaterial.findId(coordinatesAttributeName)) {
                                 const MaterialAttributeType attributeType = material.attributeType(layer, *attributeId);
                                 if(attributeType != MaterialAttributeType::UnsignedInt) {
-                                    Warning{} << "Trade::GltfSceneConverter::add(): custom material attribute" << coordinatesAttributeName << "in layer" << layer << "(" << Debug::nospace << layerName << Debug::nospace << ")" << "is" << attributeType << Debug::nospace << ", not exporting any texture coordinate set";
+                                    if(!(flags() & SceneConverterFlag::Quiet))
+                                        Warning{} << "Trade::GltfSceneConverter::add(): custom material attribute" << coordinatesAttributeName << "in layer" << layer << "(" << Debug::nospace << layerName << Debug::nospace << ")" << "is" << attributeType << Debug::nospace << ", not exporting any texture coordinate set";
                                 } else
                                     textureCoordinates = material.attribute<UnsignedInt>(layer, *attributeId);
                             }
@@ -2356,7 +2373,8 @@ bool GltfSceneConverter::doAdd(UnsignedInt, const MaterialData& material, const 
                             if(const Containers::Optional<UnsignedInt> attributeId = maskedLayerMaterial.findId(textureMatrixAttributeName)) {
                                 const MaterialAttributeType attributeType = material.attributeType(layer, *attributeId);
                                 if(attributeType != MaterialAttributeType::Matrix3x3) {
-                                    Warning{} << "Trade::GltfSceneConverter::add(): custom material attribute" << textureMatrixAttributeName << "in layer" << layer << "(" << Debug::nospace << layerName << Debug::nospace << ")" << "is" << attributeType << Debug::nospace << ", not exporting any texture transform";
+                                    if(!(flags() & SceneConverterFlag::Quiet))
+                                        Warning{} << "Trade::GltfSceneConverter::add(): custom material attribute" << textureMatrixAttributeName << "in layer" << layer << "(" << Debug::nospace << layerName << Debug::nospace << ")" << "is" << attributeType << Debug::nospace << ", not exporting any texture transform";
                                 } else
                                     textureMatrix = material.attribute<Matrix3>(layer, *attributeId);
                             }
@@ -2458,7 +2476,7 @@ bool GltfSceneConverter::doAdd(UnsignedInt, const MaterialData& material, const 
     }
 
     /* Report unused attributes and layers */
-    for(std::size_t layer = 0, layerMax = material.layerCount(); layer != layerMax; ++layer) {
+    if(!(flags() & SceneConverterFlag::Quiet)) for(std::size_t layer = 0, layerMax = material.layerCount(); layer != layerMax; ++layer) {
         const Containers::StringView layerName = material.layerName(layer);
 
         /* If the whole layer is unused, print just a single warning instead of
@@ -2741,11 +2759,13 @@ Containers::Pointer<AbstractImageConverter> loadAndInstantiateImageConverter(Plu
     /* Propagate flags that are common between scene and image converters */
     if(flags & SceneConverterFlag::Verbose)
         imageConverter->addFlags(ImageConverterFlag::Verbose);
+    if(flags & SceneConverterFlag::Quiet)
+        imageConverter->addFlags(ImageConverterFlag::Quiet);
 
     /* Propagate configuration values */
     Utility::ConfigurationGroup& imageConverterConfiguration = imageConverter->configuration();
     for(const Containers::Pair<Containers::StringView, Containers::StringView> value: configuration.group("imageConverter")->values()) {
-        if(!imageConverterConfiguration.hasValue(value.first()))
+        if(!(flags & SceneConverterFlag::Quiet) && !imageConverterConfiguration.hasValue(value.first()))
             Warning{} << "Trade::GltfSceneConverter::add(): option" << value.first() << "not recognized by" << plugin;
 
         imageConverterConfiguration.setValue(value.first(), value.second());
@@ -2754,7 +2774,8 @@ Containers::Pointer<AbstractImageConverter> loadAndInstantiateImageConverter(Plu
         /** @todo once image converters have groups, propagate that as well;
             then it might make sense to expose, test and reuse Magnum's own
             MagnumPlugins/Implementation/propagateConfiguration.h */
-        Warning{} << "Trade::GltfSceneConverter::add(): image converter configuration group propagation not implemented yet, ignoring";
+        if(!(flags & SceneConverterFlag::Quiet))
+            Warning{} << "Trade::GltfSceneConverter::add(): image converter configuration group propagation not implemented yet, ignoring";
     }
 
     if(!(imageConverter->features() >= expectedFeatures)) {
@@ -2905,13 +2926,14 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const ImageData2D& image, c
             return {};
         }
 
-        if(mimeType == "image/ktx2"_s && !configuration().value<bool>("experimentalKhrTextureKtx"))
+        if(!(flags() & SceneConverterFlag::Quiet) && mimeType == "image/ktx2"_s && !configuration().value<bool>("experimentalKhrTextureKtx"))
             Warning{} << "Trade::GltfSceneConverter::add(): KTX2 images can be saved using the KHR_texture_ktx extension, enable experimentalKhrTextureKtx to use it";
 
         if(configuration().value<bool>("strict")) {
             Error{} << "Trade::GltfSceneConverter::add():" << mimeType << "is not a valid MIME type for a glTF image, set strict=false to allow it";
             return {};
-        } else Warning{} << "Trade::GltfSceneConverter::add(): strict mode disabled, allowing" << mimeType << "MIME type for an image";
+        } else if(!(flags() & SceneConverterFlag::Quiet))
+            Warning{} << "Trade::GltfSceneConverter::add(): strict mode disabled, allowing" << mimeType << "MIME type for an image";
 
         extension = GltfExtension{};
     }

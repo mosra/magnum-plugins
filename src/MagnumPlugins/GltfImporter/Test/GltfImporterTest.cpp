@@ -451,6 +451,15 @@ const struct {
         "Trade::GltfImporter::openData(): invalid scene property\n"}
 };
 
+const struct {
+    const char* name;
+    ImporterFlags flags;
+    bool quiet;
+} QuietData[]{
+    {"", {}, false},
+    {"quiet", ImporterFlag::Quiet, true}
+};
+
 constexpr struct {
     const char* name;
     const char* suffix;
@@ -776,20 +785,28 @@ const struct {
 
 const struct {
     const char* name;
+    ImporterFlags flags;
     Containers::Optional<bool> strict;
     const char* message;
 } MeshUnsupportedVertexFormatsData[]{
-    {"", {},
+    {"", {}, {},
         "Trade::GltfImporter::mesh(): found attribute COLOR_3 but expected COLOR_0\n"
         "Trade::GltfImporter::mesh(): unsupported COLOR_3 format Vector4us, importing as a custom attribute\n"
         "Trade::GltfImporter::mesh(): unsupported object ID attribute _OBJECT_ID format Short, importing as a custom attribute\n"
         "Trade::GltfImporter::mesh(): found attribute JOINTS_7 but expected JOINTS_0\n"
         "Trade::GltfImporter::mesh(): unsupported JOINTS_7 format Vector3ub, importing as a custom attribute\n"},
-    {"strict", true,
+    {"quiet", ImporterFlag::Quiet, {},
+        ""},
+    {"strict", {}, true,
         "Trade::GltfImporter::mesh(): found attribute COLOR_3 but expected COLOR_0\n"
         "Trade::GltfImporter::mesh(): unsupported COLOR_3 format Vector4us, set strict=false to import as a custom atttribute\n"
         "Trade::GltfImporter::mesh(): unsupported object ID attribute _OBJECT_ID format Short, set strict=false to import as a custom atttribute\n"
         "Trade::GltfImporter::mesh(): found attribute JOINTS_7 but expected JOINTS_0\n"
+        "Trade::GltfImporter::mesh(): unsupported JOINTS_7 format Vector3ub, set strict=false to import as a custom atttribute\n"},
+    {"strict, quiet", ImporterFlag::Quiet, true,
+        /* Warnings omitted, errors stay */
+        "Trade::GltfImporter::mesh(): unsupported COLOR_3 format Vector4us, set strict=false to import as a custom atttribute\n"
+        "Trade::GltfImporter::mesh(): unsupported object ID attribute _OBJECT_ID format Short, set strict=false to import as a custom atttribute\n"
         "Trade::GltfImporter::mesh(): unsupported JOINTS_7 format Vector3ub, set strict=false to import as a custom atttribute\n"},
 };
 
@@ -1532,8 +1549,10 @@ GltfImporterTest::GltfImporterTest() {
     addInstancedTests({&GltfImporterTest::openError},
                       Containers::arraySize(OpenErrorData));
 
-    addTests({&GltfImporterTest::openFileError,
-              &GltfImporterTest::openIgnoreUnknownChunk});
+    addTests({&GltfImporterTest::openFileError});
+
+    addInstancedTests({&GltfImporterTest::openIgnoreUnknownChunk},
+        Containers::arraySize(QuietData));
 
     addInstancedTests({&GltfImporterTest::openExternalDataOrder},
         Containers::arraySize(SingleFileData));
@@ -1550,8 +1569,10 @@ GltfImporterTest::GltfImporterTest() {
                       Containers::arraySize(InvalidUriData));
 
     addTests({&GltfImporterTest::requiredExtensions,
-              &GltfImporterTest::requiredExtensionsUnsupported,
-              &GltfImporterTest::requiredExtensionsUnsupportedDisabled});
+              &GltfImporterTest::requiredExtensionsUnsupported});
+
+    addInstancedTests({&GltfImporterTest::requiredExtensionsUnsupportedDisabled},
+        Containers::arraySize(QuietData));
 
     addInstancedTests({&GltfImporterTest::animation},
                       Containers::arraySize(MultiFileData));
@@ -1571,9 +1592,12 @@ GltfImporterTest::GltfImporterTest() {
               &GltfImporterTest::animationSplineSharedWithDifferentTimeTrack,
 
               &GltfImporterTest::animationShortestPathOptimizationEnabled,
-              &GltfImporterTest::animationShortestPathOptimizationDisabled,
-              &GltfImporterTest::animationQuaternionNormalizationEnabled,
-              &GltfImporterTest::animationQuaternionNormalizationDisabled,
+              &GltfImporterTest::animationShortestPathOptimizationDisabled});
+
+    addInstancedTests({&GltfImporterTest::animationQuaternionNormalizationEnabled},
+        Containers::arraySize(QuietData));
+
+    addTests({&GltfImporterTest::animationQuaternionNormalizationDisabled,
               &GltfImporterTest::animationMergeEmpty,
               &GltfImporterTest::animationMerge});
 
@@ -1597,11 +1621,17 @@ GltfImporterTest::GltfImporterTest() {
 
     addTests({&GltfImporterTest::sceneDefaultNoDefault,
               &GltfImporterTest::sceneDefaultOutOfBounds,
-              &GltfImporterTest::sceneTransformation,
-              &GltfImporterTest::sceneTransformationQuaternionNormalizationEnabled,
-              &GltfImporterTest::sceneTransformationQuaternionNormalizationDisabled,
-              &GltfImporterTest::sceneCustomFields,
-              &GltfImporterTest::sceneCustomFieldsInvalidConfiguration});
+              &GltfImporterTest::sceneTransformation});
+
+    addInstancedTests({&GltfImporterTest::sceneTransformationQuaternionNormalizationEnabled},
+        Containers::arraySize(QuietData));
+
+    addTests({&GltfImporterTest::sceneTransformationQuaternionNormalizationDisabled});
+
+    addInstancedTests({&GltfImporterTest::sceneCustomFields},
+        Containers::arraySize(QuietData));
+
+    addTests({&GltfImporterTest::sceneCustomFieldsInvalidConfiguration});
 
     addInstancedTests({&GltfImporterTest::skin},
         Containers::arraySize(MultiFileData));
@@ -1630,11 +1660,16 @@ GltfImporterTest::GltfImporterTest() {
     addInstancedTests({&GltfImporterTest::meshSkinAttributes},
         Containers::arraySize(MeshSkinAttributeData));
 
-    addTests({&GltfImporterTest::meshCustomAttributes,
-              &GltfImporterTest::meshCustomAttributesNoFileOpened,
-              &GltfImporterTest::meshDuplicateAttributes,
-              &GltfImporterTest::meshUnorderedAttributes,
-              &GltfImporterTest::meshMultiplePrimitives});
+    addInstancedTests({&GltfImporterTest::meshCustomAttributes},
+        Containers::arraySize(QuietData));
+
+    addTests({&GltfImporterTest::meshCustomAttributesNoFileOpened,
+              &GltfImporterTest::meshDuplicateAttributes});
+
+    addInstancedTests({&GltfImporterTest::meshUnorderedAttributes},
+        Containers::arraySize(QuietData));
+
+    addTests({&GltfImporterTest::meshMultiplePrimitives});
 
     addInstancedTests({&GltfImporterTest::meshUnsignedIntVertexFormats},
         Containers::arraySize(MeshUnsignedIntVertexFormatsData));
@@ -1659,17 +1694,25 @@ GltfImporterTest::GltfImporterTest() {
     addTests({&GltfImporterTest::materialPbrMetallicRoughness,
               &GltfImporterTest::materialPbrSpecularGlossiness,
               &GltfImporterTest::materialCommon,
-              &GltfImporterTest::materialUnlit,
-              &GltfImporterTest::materialExtras,
-              &GltfImporterTest::materialClearCoat,
-              &GltfImporterTest::materialPhongFallback,
-              &GltfImporterTest::materialRaw,
-              &GltfImporterTest::materialRawIor,
+              &GltfImporterTest::materialUnlit});
+
+    addInstancedTests({&GltfImporterTest::materialExtras},
+        Containers::arraySize(QuietData));
+
+    addTests({&GltfImporterTest::materialClearCoat,
+              &GltfImporterTest::materialPhongFallback});
+
+    addInstancedTests({&GltfImporterTest::materialRaw},
+        Containers::arraySize(QuietData));
+
+    addTests({&GltfImporterTest::materialRawIor,
               &GltfImporterTest::materialRawSpecular,
               &GltfImporterTest::materialRawTransmission,
               &GltfImporterTest::materialRawVolume,
-              &GltfImporterTest::materialRawSheen,
-              &GltfImporterTest::materialRawOutOfBounds});
+              &GltfImporterTest::materialRawSheen});
+
+    addInstancedTests({&GltfImporterTest::materialRawOutOfBounds},
+        Containers::arraySize(QuietData));
 
     addInstancedTests({&GltfImporterTest::materialInvalid},
         Containers::arraySize(MaterialInvalidData));
@@ -1708,8 +1751,10 @@ GltfImporterTest::GltfImporterTest() {
 
     addTests({&GltfImporterTest::experimentalKhrTextureKtx2D,
               &GltfImporterTest::experimentalKhrTextureKtx2DArray,
-              &GltfImporterTest::experimentalKhrTextureKtxPhongFallback,
-              &GltfImporterTest::experimentalKhrTextureKtxNotEnabled});
+              &GltfImporterTest::experimentalKhrTextureKtxPhongFallback});
+
+    addInstancedTests({&GltfImporterTest::experimentalKhrTextureKtxNotEnabled},
+        Containers::arraySize(QuietData));
 
     addInstancedTests({&GltfImporterTest::experimentalKhrTextureKtxInvalidWholeFile},
         Containers::arraySize(ExperimentalTextureKtxInvalidWholeFileData));
@@ -1823,7 +1868,11 @@ void GltfImporterTest::openFileError() {
 }
 
 void GltfImporterTest::openIgnoreUnknownChunk() {
+    auto&& data = QuietData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
+    importer->addFlags(data.flags);
 
     std::ostringstream out;
     Warning redirectWarning{&out};
@@ -1834,7 +1883,10 @@ void GltfImporterTest::openIgnoreUnknownChunk() {
         "\x02\x00\x00\0BIN\0\xab\xcd" /* this one gets picked, other ignored */
         "\x03\x00\x00\0BIG\0\xef\xff\xff"
         "\x05\x00\x00\0BIN\0\x01\x23\x45\x67\x89"_s)); /* duplicate BIN ignored */
-    CORRADE_COMPARE(out.str(),
+    if(data.quiet)
+        CORRADE_COMPARE(out.str(), "");
+    else
+        CORRADE_COMPARE(out.str(),
         "Trade::GltfImporter::openData(): ignoring chunk 0x424942 at 47\n"
         "Trade::GltfImporter::openData(): ignoring chunk 0x474942 at 69\n"
         "Trade::GltfImporter::openData(): ignoring chunk 0x4e4942 at 80\n");
@@ -2012,13 +2064,20 @@ void GltfImporterTest::requiredExtensionsUnsupported() {
 }
 
 void GltfImporterTest::requiredExtensionsUnsupportedDisabled() {
+    auto&& data = QuietData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
+    importer->addFlags(data.flags);
     CORRADE_VERIFY(importer->configuration().setValue("ignoreRequiredExtensions", true));
 
     std::ostringstream out;
-    Warning redirectError{&out};
+    Warning redirectWarning{&out};
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "required-extensions-unsupported.gltf")));
-    CORRADE_COMPARE(out.str(), "Trade::GltfImporter::openData(): required extension EXT_lights_image_based not supported, ignoring\n");
+    if(data.quiet)
+        CORRADE_COMPARE(out.str(), "");
+    else
+        CORRADE_COMPARE(out.str(), "Trade::GltfImporter::openData(): required extension EXT_lights_image_based not supported, ignoring\n");
 }
 
 void GltfImporterTest::animation() {
@@ -2483,7 +2542,11 @@ void GltfImporterTest::animationShortestPathOptimizationDisabled() {
 }
 
 void GltfImporterTest::animationQuaternionNormalizationEnabled() {
+    auto&& data = QuietData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
+    importer->addFlags(data.flags);
     /* Enabled by default */
     CORRADE_VERIFY(importer->configuration().value<bool>("normalizeQuaternions"));
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "animation-patching.gltf")));
@@ -2491,11 +2554,14 @@ void GltfImporterTest::animationQuaternionNormalizationEnabled() {
     Containers::Optional<AnimationData> animation;
     std::ostringstream out;
     {
-        Warning warningRedirection{&out};
+        Warning redirectWarning{&out};
         animation = importer->animation("Quaternion normalization patching");
     }
     CORRADE_VERIFY(animation);
-    CORRADE_COMPARE(out.str(), "Trade::GltfImporter::animation(): quaternions in some rotation tracks were renormalized\n");
+    if(data.quiet)
+        CORRADE_COMPARE(out.str(), "");
+    else
+        CORRADE_COMPARE(out.str(), "Trade::GltfImporter::animation(): quaternions in some rotation tracks were renormalized\n");
     CORRADE_COMPARE(animation->trackCount(), 1);
     CORRADE_COMPARE(animation->trackType(0), AnimationTrackType::Quaternion);
 
@@ -3234,7 +3300,11 @@ void GltfImporterTest::sceneTransformation() {
 }
 
 void GltfImporterTest::sceneTransformationQuaternionNormalizationEnabled() {
+    auto&& data = QuietData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
+    importer->addFlags(data.flags);
     /* Enabled by default */
     CORRADE_VERIFY(importer->configuration().value<bool>("normalizeQuaternions"));
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "scene-transformation-patching.gltf")));
@@ -3247,7 +3317,10 @@ void GltfImporterTest::sceneTransformationQuaternionNormalizationEnabled() {
         scene = importer->scene(0);
     }
     CORRADE_VERIFY(scene);
-    CORRADE_COMPARE(out.str(), "Trade::GltfImporter::scene(): rotation quaternion of node 3 was renormalized\n");
+    if(data.quiet)
+        CORRADE_COMPARE(out.str(), "");
+    else
+        CORRADE_COMPARE(out.str(), "Trade::GltfImporter::scene(): rotation quaternion of node 3 was renormalized\n");
 
     Containers::Optional<Containers::Triple<Vector3, Quaternion, Vector3>> trs = scene->translationRotationScaling3DFor(3);
     CORRADE_VERIFY(trs);
@@ -3276,7 +3349,11 @@ void GltfImporterTest::sceneTransformationQuaternionNormalizationDisabled() {
 }
 
 void GltfImporterTest::sceneCustomFields() {
+    auto&& data = QuietData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
+    importer->setFlags(data.flags);
 
     /* Types can be overriden only before opening a file */
     importer->configuration().group("customSceneFieldTypes")->addValue("offset", "Int");
@@ -3344,7 +3421,9 @@ void GltfImporterTest::sceneCustomFields() {
         CORRADE_VERIFY(scene);
         /* As these are all non-fatal messages, all should be warnings */
         CORRADE_COMPARE(outError.str(), "");
-        CORRADE_COMPARE_AS(outWarning.str(), Utility::formatString(
+        if(data.quiet)
+            CORRADE_COMPARE(outWarning.str(), "");
+        else CORRADE_COMPARE_AS(outWarning.str(), Utility::formatString(
             "Trade::GltfImporter::scene(): node 2 extras property is Utility::JsonToken::Type::Array, skipping\n"
             "Trade::GltfImporter::scene(): node 3 extras invalidNullField property is Utility::JsonToken::Type::Null, skipping\n"
             "Trade::GltfImporter::scene(): node 3 extras invalidHeterogeneousArrayField property is a heterogeneous array, skipping\n"
@@ -3954,18 +4033,24 @@ void GltfImporterTest::meshSkinAttributes() {
 }
 
 void GltfImporterTest::meshCustomAttributes() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
+    auto&& data = QuietData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
 
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
+    importer->addFlags(data.flags);
+
+    std::ostringstream out;
     {
-        std::ostringstream out;
         Warning redirectWarning{&out};
         CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "mesh-custom-attributes.gltf")));
-        CORRADE_COMPARE(importer->meshCount(), 2);
-
+    }
+    CORRADE_COMPARE(importer->meshCount(), 2);
+    if(data.quiet)
+        CORRADE_COMPARE(out.str(), "");
+    else
         CORRADE_COMPARE(out.str(),
             "Trade::GltfImporter::openData(): unknown attribute OBJECT_ID3, importing as custom attribute\n"
             "Trade::GltfImporter::openData(): unknown attribute NOT_AN_IDENTITY, importing as custom attribute\n");
-    }
 
     /* On a deprecated build the first two attributes are hardcoded JOINTS and
        WEIGHTS */
@@ -4073,7 +4158,11 @@ void GltfImporterTest::meshDuplicateAttributes() {
 }
 
 void GltfImporterTest::meshUnorderedAttributes() {
+    auto&& data = QuietData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
+    importer->addFlags(data.flags);
 
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "mesh-unordered-attributes.gltf")));
     CORRADE_COMPARE(importer->meshCount(), 1);
@@ -4094,10 +4183,12 @@ void GltfImporterTest::meshUnorderedAttributes() {
     CORRADE_COMPARE(mesh->attributeCount(), 7);
 
     /* No warning about _CUSTOM_4 and _CUSTOM_1 */
-    CORRADE_COMPARE(out.str(),
-        "Trade::GltfImporter::mesh(): found attribute COLOR_3 but expected COLOR_0\n"
-        "Trade::GltfImporter::mesh(): found attribute COLOR_9 but expected COLOR_4\n"
-    );
+    if(data.quiet)
+        CORRADE_COMPARE(out.str(), "");
+    else
+        CORRADE_COMPARE(out.str(),
+            "Trade::GltfImporter::mesh(): found attribute COLOR_3 but expected COLOR_0\n"
+            "Trade::GltfImporter::mesh(): found attribute COLOR_9 but expected COLOR_4\n");
 
     /* Sets of the same attribute are imported in ascending set order. Checking
        the formats should be enough to test the import order. */
@@ -4239,6 +4330,7 @@ void GltfImporterTest::meshUnsupportedVertexFormats() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
+    importer->addFlags(data.flags);
 
     if(data.strict)
         importer->configuration().setValue("strict", *data.strict);
@@ -4964,7 +5056,11 @@ void GltfImporterTest::materialUnlit() {
 }
 
 void GltfImporterTest::materialExtras() {
+    auto&& data = QuietData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
+    importer->addFlags(data.flags);
     importer->configuration().setValue("phongMaterialFallback", false);
 
     Containers::String filename = Utility::Path::join(GLTFIMPORTER_TEST_DIR, "material-extras.gltf");
@@ -4983,10 +5079,12 @@ void GltfImporterTest::materialExtras() {
             CORRADE_VERIFY(material);
             CORRADE_COMPARE(material->layerCount(), 1);
             CORRADE_COMPARE(material->attributeCount(), 0);
-
             /* As these are all non-fatal messages, all should be warnings */
             CORRADE_COMPARE(outError.str(), "");
-            CORRADE_COMPARE(outWarning.str(), "Trade::GltfImporter::material(): extras property is not an object, skipping\n");
+            if(data.quiet)
+                CORRADE_COMPARE(outWarning.str(), "");
+            else
+                CORRADE_COMPARE(outWarning.str(), "Trade::GltfImporter::material(): extras property is not an object, skipping\n");
         }
     } {
         const char* name = "empty";
@@ -5011,7 +5109,9 @@ void GltfImporterTest::materialExtras() {
 
         /* As these are all non-fatal messages, all should be warnings */
         CORRADE_COMPARE(outError.str(), "");
-        CORRADE_COMPARE(outWarning.str(), Utility::formatString(
+        if(data.quiet)
+            CORRADE_COMPARE(outWarning.str(), "");
+        else CORRADE_COMPARE(outWarning.str(), Utility::formatString(
             "Utility::Json::parseObject(): invalid unicode escape sequence \\uhhhh at {0}:25:10\n"
             "Trade::GltfImporter::material(): extras object has invalid keys, skipping\n", filename));
     } {
@@ -5033,7 +5133,9 @@ void GltfImporterTest::materialExtras() {
             most of them now? */
         /* As these are all non-fatal messages, all should be warnings */
         CORRADE_COMPARE(outError.str(), "");
-        CORRADE_COMPARE(outWarning.str(),
+        if(data.quiet)
+            CORRADE_COMPARE(outWarning.str(), "");
+        else CORRADE_COMPARE(outWarning.str(),
             "Trade::GltfImporter::material(): property with an empty name, skipping\n"
             "Trade::GltfImporter::material(): property aValueThatWontFit is too large with 84 bytes, skipping\n"
             "Trade::GltfImporter::material(): property anIncrediblyLongNameThatSadlyWontFitPaddingPaddingPadding!! is too large with 63 bytes, skipping\n"
@@ -5087,7 +5189,10 @@ void GltfImporterTest::materialExtras() {
 
         /* As these are all non-fatal messages, all should be warnings */
         CORRADE_COMPARE(outError.str(), "");
-        CORRADE_COMPARE(outWarning.str(), "Trade::GltfImporter::material(): property invalid is not a numeric array, skipping\n");
+        if(data.quiet)
+            CORRADE_COMPARE(outWarning.str(), "");
+        else
+            CORRADE_COMPARE(outWarning.str(), "Trade::GltfImporter::material(): property invalid is not a numeric array, skipping\n");
     }
 }
 
@@ -5305,7 +5410,11 @@ void GltfImporterTest::materialPhongFallback() {
 }
 
 void GltfImporterTest::materialRaw() {
+    auto&& data = QuietData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
+    importer->addFlags(data.flags);
     importer->configuration().setValue("phongMaterialFallback", false);
 
     Containers::String filename = Utility::Path::join(GLTFIMPORTER_TEST_DIR, "material-raw.gltf");
@@ -5376,7 +5485,9 @@ void GltfImporterTest::materialRaw() {
         most of them now? */
     /* As these are all non-fatal messages, all should be warnings */
     CORRADE_COMPARE(outError.str(), "");
-    CORRADE_COMPARE_AS(outWarning.str(), Utility::formatString(
+    if(data.quiet)
+        CORRADE_COMPARE(outWarning.str(), "");
+    else CORRADE_COMPARE_AS(outWarning.str(), Utility::formatString(
         /* MAGNUM_material_forbidden_types. Attributes are sorted by name. */
         "Trade::GltfImporter::material(): extension with an empty name, skipping\n"
         "Trade::GltfImporter::material(): property with an empty name, skipping\n"
@@ -5696,8 +5807,11 @@ void GltfImporterTest::materialRawSheen() {
 }
 
 void GltfImporterTest::materialRawOutOfBounds() {
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
+    auto&& data = QuietData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
 
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
+    importer->addFlags(data.flags);
     /* Disable Phong material fallback (enabled by default for compatibility),
        testing that separately in materialPhongFallback() */
     importer->configuration().setValue("phongMaterialFallback", false);
@@ -5722,9 +5836,12 @@ void GltfImporterTest::materialRawOutOfBounds() {
 
     /** @todo merge with materialRaw()? since the same error is if the texture
         has no index property */
-    CORRADE_COMPARE(out.str(),
-        "Trade::GltfImporter::material(): snakeTexture index 2 out of range for 2 textures\n"
-        "Trade::GltfImporter::material(): property snakeTexture has an invalid texture object, skipping\n");
+    if(data.quiet)
+        CORRADE_COMPARE(out.str(), "");
+    else
+        CORRADE_COMPARE(out.str(),
+            "Trade::GltfImporter::material(): snakeTexture index 2 out of range for 2 textures\n"
+            "Trade::GltfImporter::material(): property snakeTexture has an invalid texture object, skipping\n");
 }
 
 void GltfImporterTest::materialInvalid() {
@@ -6402,17 +6519,25 @@ void GltfImporterTest::experimentalKhrTextureKtxPhongFallback() {
 }
 
 void GltfImporterTest::experimentalKhrTextureKtxNotEnabled() {
+    auto&& data = QuietData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
+    importer->addFlags(data.flags);
     CORRADE_COMPARE(importer->configuration().value("experimentalKhrTextureKtx"), "false");
 
     std::ostringstream out;
     Warning redirectWarning{&out};
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "texture-ktx.gltf")));
-    CORRADE_COMPARE(out.str(), Utility::formatString(
-        /* First is a warning, second is an error */
-        "Trade::GltfImporter::openData(): used extension KHR_texture_ktx is experimental, enable experimentalKhrTextureKtx to use it\n"
-        "Trade::GltfImporter::openData(): required extension KHR_texture_ktx not supported, enable ignoreRequiredExtensions to ignore\n"));
+
+    if(data.quiet)
+        CORRADE_COMPARE(out.str(),
+            "Trade::GltfImporter::openData(): required extension KHR_texture_ktx not supported, enable ignoreRequiredExtensions to ignore\n");
+    else
+        CORRADE_COMPARE(out.str(),
+            "Trade::GltfImporter::openData(): used extension KHR_texture_ktx is experimental, enable experimentalKhrTextureKtx to use it\n"
+            "Trade::GltfImporter::openData(): required extension KHR_texture_ktx not supported, enable ignoreRequiredExtensions to ignore\n");
 }
 
 void GltfImporterTest::experimentalKhrTextureKtxInvalidWholeFile() {

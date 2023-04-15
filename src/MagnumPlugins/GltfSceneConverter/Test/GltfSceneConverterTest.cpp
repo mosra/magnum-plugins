@@ -113,8 +113,8 @@ struct GltfSceneConverterTest: TestSuite::Tester {
 
     void addMaterial();
     void addMaterial2DArrayTextures();
-    void addMaterialUnusedAttributes();
-    void addMaterialCustom();
+    template<SceneConverterFlag flag = SceneConverterFlag{}> void addMaterialUnusedAttributes();
+    template<SceneConverterFlag flag = SceneConverterFlag{}> void addMaterialCustom();
     void addMaterialMultiple();
     void addMaterialInvalid();
     void addMaterial2DArrayTextureLayerOutOfBounds();
@@ -168,6 +168,28 @@ const struct {
 
 const struct {
     const char* name;
+    SceneConverterFlags flags;
+    bool quiet;
+} QuietData[]{
+    {"", {}, false},
+    {"quiet", SceneConverterFlag::Quiet, true}
+};
+
+const struct {
+    const char* name;
+    bool binary;
+    SceneConverterFlags flags;
+    Containers::StringView suffix;
+    bool quiet;
+} FileVariantStrictWarningData[] {
+    {"*.gltf", false, {}, ".gltf", false},
+    {"*.gltf, quiet", false, SceneConverterFlag::Quiet, ".gltf", true},
+    {"*.glb", true, {}, ".glb", false},
+    {"*.glb, quiet", true, SceneConverterFlag::Quiet, ".glb", true}
+};
+
+const struct {
+    const char* name;
     Containers::Optional<bool> binary;
     const char* expected;
 } OutputFormatDetectionToDataData[]{
@@ -196,6 +218,7 @@ const struct {
     MeshAttribute attribute;
     VertexFormat format;
     const char* customName;
+    SceneConverterFlags flags;
     Containers::Optional<bool> strict;
     Containers::Optional<bool> textureCoordinateYFlipInMaterial;
     bool expectedKhrMeshQuantization;
@@ -204,56 +227,81 @@ const struct {
     const char* expectedWarning;
 } AddMeshAttributeData[]{
     {"positions, quantized", MeshAttribute::Position, VertexFormat::Vector3s,
-        nullptr, {}, {}, true, nullptr,
-        "mesh-attribute-position-quantized.gltf", nullptr},
+        nullptr, {}, {}, {}, true, nullptr,
+        "mesh-attribute-position-quantized.gltf",
+        nullptr},
     {"normals, quantized", MeshAttribute::Normal, VertexFormat::Vector3bNormalized,
-        nullptr, {}, {}, true, nullptr,
-        "mesh-attribute-normal-quantized.gltf", nullptr},
+        nullptr, {}, {}, {}, true, nullptr,
+        "mesh-attribute-normal-quantized.gltf",
+        nullptr},
     {"tangents", MeshAttribute::Tangent, VertexFormat::Vector4,
-        nullptr, {}, {}, false, nullptr,
-        "mesh-attribute-tangent.gltf", nullptr},
+        nullptr, {}, {}, {}, false, nullptr,
+        "mesh-attribute-tangent.gltf",
+        nullptr},
     {"tangents, quantized", MeshAttribute::Tangent, VertexFormat::Vector4sNormalized,
-        nullptr, {}, {}, true, nullptr,
-        "mesh-attribute-tangent-quantized.gltf", nullptr},
+        nullptr, {}, {}, {}, true, nullptr,
+        "mesh-attribute-tangent-quantized.gltf",
+        nullptr},
     {"three-component tangents", MeshAttribute::Tangent, VertexFormat::Vector3,
-        nullptr, {}, {}, false, "_TANGENT3",
+        nullptr, {}, {}, {}, false, "_TANGENT3",
         "mesh-attribute-tangent3.gltf",
         "exporting three-component mesh tangents as a custom _TANGENT3 attribute"},
+    {"three-component tangents, quiet", MeshAttribute::Tangent, VertexFormat::Vector3,
+        nullptr, SceneConverterFlag::Quiet, {}, {}, false, "_TANGENT3",
+        "mesh-attribute-tangent3.gltf",
+        nullptr},
     {"bitangents", MeshAttribute::Bitangent, VertexFormat::Vector3,
-        nullptr, {}, {}, false, "_BITANGENT",
+        nullptr, {}, {}, {}, false, "_BITANGENT",
         "mesh-attribute-bitangent.gltf",
         "exporting separate mesh bitangents as a custom _BITANGENT attribute"},
+    {"bitangents, quiet", MeshAttribute::Bitangent, VertexFormat::Vector3,
+        nullptr, SceneConverterFlag::Quiet, {}, {}, false, "_BITANGENT",
+        "mesh-attribute-bitangent.gltf",
+        nullptr},
     {"texture coordinates", MeshAttribute::TextureCoordinates, VertexFormat::Vector2,
-        nullptr, {}, {}, false, nullptr,
-        "mesh-attribute-texture-coordinates.gltf", nullptr},
+        nullptr, {}, {}, {}, false, nullptr,
+        "mesh-attribute-texture-coordinates.gltf",
+        nullptr},
     {"texture coordinates, quantized", MeshAttribute::TextureCoordinates, VertexFormat::Vector2ub,
-        nullptr, {}, true, true, nullptr,
-        "mesh-attribute-texture-coordinates-quantized.gltf", nullptr},
+        nullptr, {}, {}, true, true, nullptr,
+        "mesh-attribute-texture-coordinates-quantized.gltf",
+        nullptr},
     {"three-component colors", MeshAttribute::Color, VertexFormat::Vector3,
-        nullptr, {}, {}, false, nullptr,
-        "mesh-attribute-color3.gltf", nullptr},
+        nullptr, {}, {}, {}, false, nullptr,
+        "mesh-attribute-color3.gltf",
+        nullptr},
     {"four-component colors", MeshAttribute::Color, VertexFormat::Vector4,
-        nullptr, {}, {}, false, nullptr,
-        "mesh-attribute-color4.gltf", nullptr},
+        nullptr, {}, {}, {}, false, nullptr,
+        "mesh-attribute-color4.gltf",
+        nullptr},
     {"four-component colors, quantized", MeshAttribute::Color, VertexFormat::Vector4usNormalized,
-        nullptr, {}, {}, false, nullptr,
-        "mesh-attribute-color4us.gltf", nullptr},
+        nullptr, {}, {}, {}, false, nullptr,
+        "mesh-attribute-color4us.gltf",
+        nullptr},
     {"8-bit object ID", MeshAttribute::ObjectId, VertexFormat::UnsignedByte,
-        nullptr, {}, {}, false, nullptr,
-        "mesh-attribute-objectidub.gltf", nullptr},
+        nullptr, {}, {}, {}, false, nullptr,
+        "mesh-attribute-objectidub.gltf",
+        nullptr},
     {"32-bit object ID", MeshAttribute::ObjectId, VertexFormat::UnsignedInt,
-        nullptr, false, {}, false, nullptr,
+        nullptr, {}, false, {}, false, nullptr,
         "mesh-attribute-objectidui.gltf",
         "strict mode disabled, allowing a 32-bit integer attribute _OBJECT_ID"},
+    {"32-bit object ID, quiet", MeshAttribute::ObjectId, VertexFormat::UnsignedInt,
+        nullptr, SceneConverterFlag::Quiet, false, {}, false, nullptr,
+        "mesh-attribute-objectidui.gltf",
+        nullptr},
     {"2x2 matrix, quantized, aligned", meshAttributeCustom(2123), VertexFormat::Matrix2x2bNormalizedAligned,
-        "_ROTATION2D", {}, {}, false, "_ROTATION2D",
-        "mesh-attribute-matrix2x2b.gltf", nullptr},
+        "_ROTATION2D", {}, {}, {}, false, "_ROTATION2D",
+        "mesh-attribute-matrix2x2b.gltf",
+        nullptr},
     {"3x3 matrix, quantized, aligned", meshAttributeCustom(4564), VertexFormat::Matrix3x3sNormalizedAligned,
-        "_TBN", {}, {}, false, "_TBN",
-        "mesh-attribute-matrix3x3s.gltf", nullptr},
+        "_TBN", {}, {}, {}, false, "_TBN",
+        "mesh-attribute-matrix3x3s.gltf",
+        nullptr},
     {"4x4 matrix, quantized", meshAttributeCustom(0), VertexFormat::Matrix4x4bNormalized,
-        "_TRANSFORMATION", {}, {}, false, "_TRANSFORMATION",
-        "mesh-attribute-matrix4x4b.gltf", nullptr}
+        "_TRANSFORMATION", {}, {}, {}, false, "_TRANSFORMATION",
+        "mesh-attribute-matrix4x4b.gltf",
+        nullptr}
 };
 
 const UnsignedInt AddMeshInvalidIndices[4]{};
@@ -379,6 +427,7 @@ const struct {
     const char* name;
     const char* converterPlugin;
     const char* importerPlugin;
+    SceneConverterFlags flags;
     bool accessorNames;
     Containers::StringView dataName;
     Containers::Optional<bool> experimentalKhrTextureKtx;
@@ -386,52 +435,70 @@ const struct {
     Containers::Optional<bool> bundle;
     const char* expected;
     const char* expectedOtherFile;
-    const char* expectedWarning;
     bool expectedExtension;
+    const char* expectedWarning;
 } AddImage2DData[]{
     {"*.gltf", "PngImageConverter", "PngImporter",
-        false, {}, {}, {}, {},
-        "image.gltf", "image.0.png", nullptr, false},
+        {}, false, {}, {}, {}, {},
+        "image.gltf", "image.0.png", false,
+        nullptr},
     /* The image (or the buffer) is the same as image.0.png in these three
        variants, not testing its contents */
     {"*.gltf, name", "PngImageConverter", "PngImporter",
-        false, "A very pingy image", {}, {}, {},
-        "image-name.gltf", nullptr, nullptr, false},
+        {}, false, "A very pingy image", {}, {}, {},
+        "image-name.gltf", nullptr, false,
+        nullptr},
     {"*.gltf, bundled, accessor names", "PngImageConverter", "PngImporter",
-        true, {}, {}, {}, true,
-        "image-accessor-names.gltf", nullptr, nullptr, false},
+        {}, true, {}, {}, {}, true,
+        "image-accessor-names.gltf", nullptr, false,
+        nullptr},
     {"*.gltf, bundled, name, accessor names", "PngImageConverter", "PngImporter",
-        true, "A rather pingy image", {}, {}, true,
-        "image-name-accessor-names.gltf", nullptr, nullptr, false},
+        {}, true, "A rather pingy image", {}, {}, true,
+        "image-name-accessor-names.gltf", nullptr, false,
+        nullptr},
     {"*.glb", "PngImageConverter", "PngImporter",
-        false, {}, {}, {}, {},
-        "image.glb", nullptr, nullptr, false},
+        {}, false, {}, {}, {}, {},
+        "image.glb", nullptr, false,
+        nullptr},
     {"*.gltf, bundled", "PngImageConverter", "PngImporter",
-        false, {}, {}, {}, true,
-        "image-bundled.gltf", "image-bundled.bin", nullptr, false},
+        {}, false, {}, {}, {}, true,
+        "image-bundled.gltf", "image-bundled.bin", false,
+        nullptr},
     {"*.glb, not bundled", "PngImageConverter", "PngImporter",
-        false, {}, {}, {}, false,
-        "image-not-bundled.glb", "image-not-bundled.0.png", nullptr, false},
+        {}, false, {}, {}, {}, false,
+        "image-not-bundled.glb", "image-not-bundled.0.png", false,
+        nullptr},
     {"JPEG", "JpegImageConverter", "JpegImporter",
-        false, {}, {}, {}, {},
-        "image-jpeg.glb", nullptr, nullptr, false},
+        {}, false, {}, {}, {}, {},
+        "image-jpeg.glb", nullptr, false,
+        nullptr},
     {"KTX2+Basis", "BasisKtxImageConverter", "BasisImporter",
-        false, {}, {}, {}, {},
-        "image-basis.glb", nullptr, nullptr, true},
+        {}, false, {}, {}, {}, {},
+        "image-basis.glb", nullptr, true,
+        nullptr},
     {"KTX2 with extension", "KtxImageConverter", "KtxImporter",
-        false, {}, true, {}, {},
-        "image-ktx.glb", nullptr, nullptr, true},
+        {}, false, {}, true, {}, {},
+        "image-ktx.glb", nullptr, true,
+        nullptr},
     {"KTX2 without extension", "KtxImageConverter", "KtxImporter",
-        false, {}, {}, false, {},
-        "image-ktx-no-extension.glb", nullptr,
+        {}, false, {}, {}, false, {},
+        "image-ktx-no-extension.glb", nullptr, false,
         "Trade::GltfSceneConverter::add(): KTX2 images can be saved using the KHR_texture_ktx extension, enable experimentalKhrTextureKtx to use it\n"
-        "Trade::GltfSceneConverter::add(): strict mode disabled, allowing image/ktx2 MIME type for an image\n", false},
+        "Trade::GltfSceneConverter::add(): strict mode disabled, allowing image/ktx2 MIME type for an image\n"},
+    {"KTX2 without extension, quiet", "KtxImageConverter", "KtxImporter",
+        SceneConverterFlag::Quiet, false, {}, {}, false, {},
+        "image-ktx-no-extension.glb", nullptr, false,
+        nullptr},
     /* Explicitly using TGA converter from stb_image to avoid minor differences
        if Magnum's own TgaImageConverter is present as well */
     {"TGA", "StbTgaImageConverter", "TgaImporter",
-        false, {}, {}, false, {},
-        "image-tga.glb", nullptr,
-        "Trade::GltfSceneConverter::add(): strict mode disabled, allowing image/x-tga MIME type for an image\n", false},
+        {}, false, {}, {}, false, {},
+        "image-tga.glb", nullptr, false,
+        "Trade::GltfSceneConverter::add(): strict mode disabled, allowing image/x-tga MIME type for an image\n"},
+    {"TGA, quiet", "StbTgaImageConverter", "TgaImporter",
+        SceneConverterFlag::Quiet, false, {}, {}, false, {},
+        "image-tga.glb", nullptr, false,
+        nullptr},
 };
 
 const struct {
@@ -448,6 +515,22 @@ const struct {
         "image-3d-bundled.gltf", "image-3d-bundled.bin"},
     {"*.glb, not bundled", false,
         "image-3d-not-bundled.glb", "image-3d-not-bundled.0.ktx2"},
+};
+
+const struct {
+    const char* name;
+    SceneConverterFlags converterFlags;
+    ImageFlags2D imageFlags;
+    const char* message;
+} AddImagePropagateFlagsData[]{
+    {"", {}, ImageFlag2D::Array,
+        "Trade::GltfSceneConverter::add(): strict mode disabled, allowing image/x-tga MIME type for an image\n"
+        "Trade::TgaImageConverter::convertToData(): 1D array images are unrepresentable in TGA, saving as a regular 2D image\n"},
+    {"quiet", SceneConverterFlag::Quiet, ImageFlag2D::Array,
+        ""},
+    {"verbose", SceneConverterFlag::Verbose, {},
+        "Trade::GltfSceneConverter::add(): strict mode disabled, allowing image/x-tga MIME type for an image\n"
+        "Trade::TgaImageConverter::convertToData(): converting from RGB to BGR\n"}
 };
 
 const struct {
@@ -1702,13 +1785,16 @@ const struct {
 
 const struct {
     const char* name;
+    SceneConverterFlags flags;
     Containers::StringView dataName;
     UnsignedShort offset;
     const char* expected;
+    bool quiet;
 } AddSceneData[]{
-    {"", {}, 0, "scene.gltf"},
-    {"name", "A simple sceen!", 0, "scene-name.gltf"},
-    {"object ID with an offset", {}, 350, "scene.gltf"}
+    {"", {}, {}, 0, "scene.gltf", false},
+    {"quiet", SceneConverterFlag::Quiet, {}, 0, "scene.gltf", true},
+    {"name", {}, "A simple sceen!", 0, "scene-name.gltf", false},
+    {"object ID with an offset", {}, {}, 350, "scene.gltf", false}
 };
 
 const Containers::Pair<UnsignedInt, Int> SceneInvalidParentMappingOutOfBounds[]{
@@ -1837,21 +1923,27 @@ GltfSceneConverterTest::GltfSceneConverterTest() {
     addInstancedTests({&GltfSceneConverterTest::addMesh},
         Containers::arraySize(FileVariantWithNamesData));
 
-    addTests({&GltfSceneConverterTest::addMeshNonInterleaved,
-              &GltfSceneConverterTest::addMeshNoAttributes,
-              &GltfSceneConverterTest::addMeshNoIndices});
+    addTests({&GltfSceneConverterTest::addMeshNonInterleaved});
+
+    addInstancedTests({
+        &GltfSceneConverterTest::addMeshNoAttributes,
+        &GltfSceneConverterTest::addMeshNoIndices},
+        Containers::arraySize(QuietData));
 
     addInstancedTests({&GltfSceneConverterTest::addMeshNoIndicesNoAttributes,
                        &GltfSceneConverterTest::addMeshNoIndicesNoVertices},
-        Containers::arraySize(FileVariantData));
+        Containers::arraySize(FileVariantStrictWarningData));
 
     addInstancedTests({&GltfSceneConverterTest::addMeshAttribute},
         Containers::arraySize(AddMeshAttributeData));
 
     addTests({&GltfSceneConverterTest::addMeshDuplicateAttribute,
-              &GltfSceneConverterTest::addMeshCustomAttributeResetName,
-              &GltfSceneConverterTest::addMeshCustomAttributeNoName,
-              &GltfSceneConverterTest::addMeshCustomObjectIdAttributeName,
+              &GltfSceneConverterTest::addMeshCustomAttributeResetName});
+
+    addInstancedTests({&GltfSceneConverterTest::addMeshCustomAttributeNoName},
+        Containers::arraySize(QuietData));
+
+    addTests({&GltfSceneConverterTest::addMeshCustomObjectIdAttributeName,
 
               &GltfSceneConverterTest::addMeshMultiple});
 
@@ -1866,12 +1958,19 @@ GltfSceneConverterTest::GltfSceneConverterTest() {
     addInstancedTests({&GltfSceneConverterTest::addImage3D},
         Containers::arraySize(AddImage3DData));
 
-    addTests({&GltfSceneConverterTest::addImageCompressed3D,
-              &GltfSceneConverterTest::addImagePropagateFlags,
-              &GltfSceneConverterTest::addImagePropagateConfiguration,
-              &GltfSceneConverterTest::addImagePropagateConfigurationUnknown,
-              &GltfSceneConverterTest::addImagePropagateConfigurationGroup,
-              &GltfSceneConverterTest::addImageMultiple,
+    addTests({&GltfSceneConverterTest::addImageCompressed3D});
+
+    addInstancedTests({&GltfSceneConverterTest::addImagePropagateFlags},
+        Containers::arraySize(AddImagePropagateFlagsData));
+
+    addTests({&GltfSceneConverterTest::addImagePropagateConfiguration});
+
+    addInstancedTests({
+        &GltfSceneConverterTest::addImagePropagateConfigurationUnknown,
+        &GltfSceneConverterTest::addImagePropagateConfigurationGroup},
+        Containers::arraySize(QuietData));
+
+    addTests({&GltfSceneConverterTest::addImageMultiple,
               &GltfSceneConverterTest::addImageNoConverterManager,
               &GltfSceneConverterTest::addImageExternalToData});
 
@@ -1895,10 +1994,16 @@ GltfSceneConverterTest::GltfSceneConverterTest() {
 
     addTests({&GltfSceneConverterTest::addMaterial2DArrayTextures});
 
-    addInstancedTests({&GltfSceneConverterTest::addMaterialUnusedAttributes},
+    /* MSVC needs explicit type due to default template args */
+    addInstancedTests<GltfSceneConverterTest>({
+        &GltfSceneConverterTest::addMaterialUnusedAttributes,
+        &GltfSceneConverterTest::addMaterialUnusedAttributes<SceneConverterFlag::Quiet>},
         Containers::arraySize(AddMaterialUnusedAttributesData));
 
-    addInstancedTests({&GltfSceneConverterTest::addMaterialCustom},
+    /* MSVC needs explicit type due to default template args */
+    addInstancedTests<GltfSceneConverterTest>({
+        &GltfSceneConverterTest::addMaterialCustom,
+        &GltfSceneConverterTest::addMaterialCustom<SceneConverterFlag::Quiet>},
         Containers::arraySize(AddMaterialCustomData));
 
     addTests({&GltfSceneConverterTest::addMaterialMultiple});
@@ -1917,10 +2022,13 @@ GltfSceneConverterTest::GltfSceneConverterTest() {
     addInstancedTests({&GltfSceneConverterTest::addScene},
         Containers::arraySize(AddSceneData));
 
-    addTests({&GltfSceneConverterTest::addSceneMeshesMaterials,
-              &GltfSceneConverterTest::addSceneCustomFields,
-              &GltfSceneConverterTest::addSceneNoParentField,
-              &GltfSceneConverterTest::addSceneMultiple});
+    addInstancedTests({
+        &GltfSceneConverterTest::addSceneMeshesMaterials,
+        &GltfSceneConverterTest::addSceneCustomFields,
+        &GltfSceneConverterTest::addSceneNoParentField},
+        Containers::arraySize(QuietData));
+
+    addTests({&GltfSceneConverterTest::addSceneMultiple});
 
     addInstancedTests({&GltfSceneConverterTest::addSceneInvalid},
         Containers::arraySize(AddSceneInvalidData));
@@ -2292,6 +2400,9 @@ void GltfSceneConverterTest::addMeshNonInterleaved() {
 }
 
 void GltfSceneConverterTest::addMeshNoAttributes() {
+    auto&& data = QuietData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     const UnsignedByte indices[] {
         0, 2, 1, 2, 1, 2
     };
@@ -2410,10 +2521,11 @@ void GltfSceneConverterTest::addMeshNoIndices() {
 }
 
 void GltfSceneConverterTest::addMeshNoIndicesNoAttributes() {
-    auto&& data = FileVariantData[testCaseInstanceId()];
+    auto&& data = FileVariantStrictWarningData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractSceneConverter> converter =  _converterManager.instantiate("GltfSceneConverter");
+    converter->addFlags(data.flags);
 
     /* Attribute-less meshes are not valid glTF, but we accept that under a
        flag */
@@ -2422,12 +2534,15 @@ void GltfSceneConverterTest::addMeshNoIndicesNoAttributes() {
     Containers::String filename = Utility::Path::join(GLTFSCENECONVERTER_TEST_OUTPUT_DIR, "mesh-no-indices-no-attributes" + data.suffix);
     CORRADE_VERIFY(converter->beginFile(filename));
 
+    std::ostringstream out;
     {
-        std::ostringstream out;
         Warning redirectWarning{&out};
         CORRADE_VERIFY(converter->add(MeshData{MeshPrimitive::TriangleFan, 0}));
-        CORRADE_COMPARE(out.str(), "Trade::GltfSceneConverter::add(): strict mode disabled, allowing an attribute-less mesh\n");
     }
+    if(data.quiet)
+        CORRADE_COMPARE(out.str(), "");
+    else
+        CORRADE_COMPARE(out.str(), "Trade::GltfSceneConverter::add(): strict mode disabled, allowing an attribute-less mesh\n");
 
     CORRADE_VERIFY(converter->endFile());
     CORRADE_COMPARE_AS(filename,
@@ -2462,7 +2577,7 @@ void GltfSceneConverterTest::addMeshNoIndicesNoAttributes() {
 }
 
 void GltfSceneConverterTest::addMeshNoIndicesNoVertices() {
-    auto&& data = FileVariantData[testCaseInstanceId()];
+    auto&& data = FileVariantStrictWarningData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
     MeshData mesh{MeshPrimitive::TriangleStrip, nullptr, {
@@ -2470,6 +2585,7 @@ void GltfSceneConverterTest::addMeshNoIndicesNoVertices() {
     }, 0};
 
     Containers::Pointer<AbstractSceneConverter> converter =  _converterManager.instantiate("GltfSceneConverter");
+    converter->addFlags(data.flags);
 
     /* Vertex-less meshes are not valid glTF, but we accept that under a
        flag */
@@ -2478,12 +2594,15 @@ void GltfSceneConverterTest::addMeshNoIndicesNoVertices() {
     Containers::String filename = Utility::Path::join(GLTFSCENECONVERTER_TEST_OUTPUT_DIR, "mesh-no-indices-no-vertices" + data.suffix);
     CORRADE_VERIFY(converter->beginFile(filename));
 
+    std::ostringstream out;
     {
-        std::ostringstream out;
         Warning redirectWarning{&out};
         CORRADE_VERIFY(converter->add(mesh));
-        CORRADE_COMPARE(out.str(), "Trade::GltfSceneConverter::add(): strict mode disabled, allowing a mesh with zero vertices\n");
     }
+    if(data.quiet)
+        CORRADE_COMPARE(out.str(), "");
+    else
+        CORRADE_COMPARE(out.str(), "Trade::GltfSceneConverter::add(): strict mode disabled, allowing a mesh with zero vertices\n");
 
     CORRADE_VERIFY(converter->endFile());
     CORRADE_COMPARE_AS(filename,
@@ -2521,6 +2640,7 @@ void GltfSceneConverterTest::addMeshAttribute() {
     }};
 
     Containers::Pointer<AbstractSceneConverter> converter =  _converterManager.instantiate("GltfSceneConverter");
+    converter->setFlags(data.flags);
 
     const Containers::String filename = Utility::Path::join(GLTFSCENECONVERTER_TEST_OUTPUT_DIR, data.expected);
     CORRADE_VERIFY(converter->beginFile(filename));
@@ -2748,12 +2868,16 @@ void GltfSceneConverterTest::addMeshCustomAttributeResetName() {
 }
 
 void GltfSceneConverterTest::addMeshCustomAttributeNoName() {
+    auto&& data = QuietData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     const char vertices[4]{};
     MeshData mesh{MeshPrimitive::LineLoop, {}, vertices, {
         MeshAttributeData{meshAttributeCustom(31434), VertexFormat::Float, 0, 1, 4}
     }};
 
     Containers::Pointer<AbstractSceneConverter> converter =  _converterManager.instantiate("GltfSceneConverter");
+    converter->addFlags(data.flags);
 
     Containers::String filename = Utility::Path::join(GLTFSCENECONVERTER_TEST_OUTPUT_DIR, "mesh-custom-attribute-no-name.gltf");
     CORRADE_VERIFY(converter->beginFile(filename));
@@ -2762,12 +2886,15 @@ void GltfSceneConverterTest::addMeshCustomAttributeNoName() {
     converter->setMeshAttributeName(meshAttributeCustom(30560), "_YOLO");
     converter->setMeshAttributeName(meshAttributeCustom(31995), "_MEH");
 
+    std::ostringstream out;
     {
-        std::ostringstream out;
         Warning redirectWarning{&out};
         CORRADE_VERIFY(converter->add(mesh));
-        CORRADE_COMPARE(out.str(), "Trade::GltfSceneConverter::add(): no name set for Trade::MeshAttribute::Custom(31434), exporting as _31434\n");
     }
+    if(data.quiet)
+        CORRADE_COMPARE(out.str(), "");
+    else
+        CORRADE_COMPARE(out.str(), "Trade::GltfSceneConverter::add(): no name set for Trade::MeshAttribute::Custom(31434), exporting as _31434\n");
 
     CORRADE_VERIFY(converter->endFile());
     CORRADE_COMPARE_AS(filename,
@@ -2921,6 +3048,7 @@ void GltfSceneConverterTest::addImage2D() {
         CORRADE_SKIP(data.converterPlugin << "plugin not found, cannot test");
 
     Containers::Pointer<AbstractSceneConverter> converter =  _converterManager.instantiate("GltfSceneConverter");
+    converter->addFlags(data.flags);
 
     converter->configuration().setValue("imageConverter", data.converterPlugin);
     converter->configuration().setValue("accessorNames", data.accessorNames);
@@ -3169,6 +3297,9 @@ void GltfSceneConverterTest::addImageCompressed3D() {
 }
 
 void GltfSceneConverterTest::addImagePropagateFlags() {
+    auto&& data = AddImagePropagateFlagsData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     if(_imageConverterManager.loadState("TgaImageConverter") == PluginManager::LoadState::NotFound ||
        /* TgaImageConverter is also provided by StbImageConverter, which
           doesn't make use of Flags::Verbose, so that one can't be used to test
@@ -3177,7 +3308,7 @@ void GltfSceneConverterTest::addImagePropagateFlags() {
         CORRADE_SKIP("(Non-aliased) TgaImageConverter plugin not found, cannot test");
 
     Containers::Pointer<AbstractSceneConverter> converter =  _converterManager.instantiate("GltfSceneConverter");
-    converter->addFlags(SceneConverterFlag::Verbose);
+    converter->addFlags(data.converterFlags);
 
     converter->configuration().setValue("imageConverter", "TgaImageConverter");
     /* So it allows using a TGA image */
@@ -3189,9 +3320,12 @@ void GltfSceneConverterTest::addImagePropagateFlags() {
     CORRADE_VERIFY(converter->beginData());
 
     std::ostringstream out;
-    Debug redirectOutput{&out};
-    CORRADE_VERIFY(converter->add(ImageView2D{PixelFormat::RGB8Unorm, {1, 1}, "yey"}));
-    CORRADE_COMPARE(out.str(), "Trade::TgaImageConverter::convertToData(): converting from RGB to BGR\n");
+    {
+        Debug redirectOutput{&out};
+        Warning redirectWarning{&out};
+        CORRADE_VERIFY(converter->add(ImageView2D{PixelFormat::RGB8Unorm, {1, 1}, "yey", data.imageFlags}));
+    }
+    CORRADE_COMPARE(out.str(), data.message);
 
     CORRADE_VERIFY(converter->endData());
 
@@ -3227,10 +3361,14 @@ void GltfSceneConverterTest::addImagePropagateConfiguration() {
 }
 
 void GltfSceneConverterTest::addImagePropagateConfigurationUnknown() {
+    auto&& data = QuietData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     if(_imageConverterManager.loadState("PngImageConverter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("PngImageConverter plugin not found, cannot test");
 
     Containers::Pointer<AbstractSceneConverter> converter =  _converterManager.instantiate("GltfSceneConverter");
+    converter->setFlags(data.flags);
 
     Utility::ConfigurationGroup* imageConverterConfiguration = converter->configuration().group("imageConverter");
     CORRADE_VERIFY(imageConverterConfiguration);
@@ -3241,17 +3379,24 @@ void GltfSceneConverterTest::addImagePropagateConfigurationUnknown() {
     std::ostringstream out;
     Warning redirectWarning{&out};
     CORRADE_VERIFY(converter->add(ImageView2D{PixelFormat::RGB8Unorm, {1, 1}, "yey"}));
-    CORRADE_COMPARE(out.str(), "Trade::GltfSceneConverter::add(): option quality not recognized by PngImageConverter\n");
+    if(data.quiet)
+        CORRADE_COMPARE(out.str(), "");
+    else
+        CORRADE_COMPARE(out.str(), "Trade::GltfSceneConverter::add(): option quality not recognized by PngImageConverter\n");
 
     /* No need to test anything apart from the message above */
     CORRADE_VERIFY(converter->endData());
 }
 
 void GltfSceneConverterTest::addImagePropagateConfigurationGroup() {
+    auto&& data = QuietData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     if(_imageConverterManager.loadState("PngImageConverter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("PngImageConverter plugin not found, cannot test");
 
     Containers::Pointer<AbstractSceneConverter> converter =  _converterManager.instantiate("GltfSceneConverter");
+    converter->addFlags(data.flags);
 
     Utility::ConfigurationGroup* imageConverterConfiguration = converter->configuration().group("imageConverter");
     CORRADE_VERIFY(imageConverterConfiguration);
@@ -3262,7 +3407,10 @@ void GltfSceneConverterTest::addImagePropagateConfigurationGroup() {
     std::ostringstream out;
     Warning redirectWarning{&out};
     CORRADE_VERIFY(converter->add(ImageView2D{PixelFormat::RGB8Unorm, {1, 1}, "yey"}));
-    CORRADE_COMPARE(out.str(), "Trade::GltfSceneConverter::add(): image converter configuration group propagation not implemented yet, ignoring\n");
+    if(data.quiet)
+        CORRADE_COMPARE(out.str(), "");
+    else
+        CORRADE_COMPARE(out.str(), "Trade::GltfSceneConverter::add(): image converter configuration group propagation not implemented yet, ignoring\n");
 
     /* No need to test anything apart from the message above */
     CORRADE_VERIFY(converter->endData());
@@ -3934,14 +4082,17 @@ void GltfSceneConverterTest::addMaterial2DArrayTextures() {
         DebugTools::CompareMaterial);
 }
 
-void GltfSceneConverterTest::addMaterialUnusedAttributes() {
+template<SceneConverterFlag flag> void GltfSceneConverterTest::addMaterialUnusedAttributes() {
     auto&& data = AddMaterialUnusedAttributesData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
+    if(flag == SceneConverterFlag::Quiet)
+        setTestCaseTemplateName("SceneConverterFlag::Quiet");
 
     if(data.needsTexture && _imageConverterManager.loadState("PngImageConverter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("PngImageConverter plugin not found, cannot test");
 
     Containers::Pointer<AbstractSceneConverter> converter =  _converterManager.instantiate("GltfSceneConverter");
+    converter->addFlags(flag);
 
     Containers::String filename = Utility::Path::join(GLTFSCENECONVERTER_TEST_OUTPUT_DIR, data.expected);
     CORRADE_VERIFY(converter->beginFile(filename));
@@ -3963,7 +4114,10 @@ void GltfSceneConverterTest::addMaterialUnusedAttributes() {
         std::ostringstream out;
         Warning redirectWarning{&out};
         CORRADE_VERIFY(converter->add(data.material));
-        CORRADE_COMPARE(out.str(), data.expectedWarning);
+        if(flag == SceneConverterFlag::Quiet)
+            CORRADE_COMPARE(out.str(), "");
+        else
+            CORRADE_COMPARE(out.str(), data.expectedWarning);
     }
 
     /* Testing the contents would be too time-consuming, the file itself has to
@@ -3974,9 +4128,11 @@ void GltfSceneConverterTest::addMaterialUnusedAttributes() {
         TestSuite::Compare::File);
 }
 
-void GltfSceneConverterTest::addMaterialCustom() {
+template<SceneConverterFlag flag> void GltfSceneConverterTest::addMaterialCustom() {
     auto&& data = AddMaterialCustomData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
+    if(flag == SceneConverterFlag::Quiet)
+        setTestCaseTemplateName("SceneConverterFlag::Quiet");
 
     if(data.needsTexture && _imageConverterManager.loadState("PngImageConverter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("PngImageConverter plugin not found, cannot test");
@@ -3984,6 +4140,7 @@ void GltfSceneConverterTest::addMaterialCustom() {
         CORRADE_SKIP("KtxImageConverter plugin not found, cannot test");
 
     Containers::Pointer<AbstractSceneConverter> converter =  _converterManager.instantiate("GltfSceneConverter");
+    converter->addFlags(flag);
 
     Containers::String filename = Utility::Path::join(GLTFSCENECONVERTER_TEST_OUTPUT_DIR, data.expected);
     CORRADE_VERIFY(converter->beginFile(filename));
@@ -4024,7 +4181,10 @@ void GltfSceneConverterTest::addMaterialCustom() {
         std::ostringstream out;
         Warning redirectWarning{&out};
         CORRADE_VERIFY(converter->add(data.material));
-        CORRADE_COMPARE(out.str(), data.expectedWarning);
+        if(flag == SceneConverterFlag::Quiet)
+            CORRADE_COMPARE(out.str(), "");
+        else
+            CORRADE_COMPARE(out.str(), data.expectedWarning);
     }
 
     CORRADE_VERIFY(converter->endFile());
@@ -4399,6 +4559,7 @@ void GltfSceneConverterTest::addScene() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractSceneConverter> converter =  _converterManager.instantiate("GltfSceneConverter");
+    converter->addFlags(data.flags);
 
     Containers::String filename = Utility::Path::join(GLTFSCENECONVERTER_TEST_OUTPUT_DIR, data.expected);
     CORRADE_VERIFY(converter->beginFile(filename));
@@ -4493,14 +4654,17 @@ void GltfSceneConverterTest::addScene() {
             Containers::stridedArrayView(sceneData->trs).slice(&Scene::Trs::scaling)},
     }};
 
+    std::ostringstream out;
     {
-        std::ostringstream out;
         Warning redirectWarning{&out};
         CORRADE_VERIFY(converter->add(scene, data.dataName));
+    }
+    if(data.quiet)
+        CORRADE_COMPARE(out.str(), "");
+    else
         CORRADE_COMPARE(out.str(), Utility::formatString(
             "Trade::GltfSceneConverter::add(): Trade::SceneField::Light was not used\n"
             "Trade::GltfSceneConverter::add(): parentless object {} was not used\n", data.offset + 4));
-    }
 
     CORRADE_VERIFY(converter->endFile());
     CORRADE_COMPARE_AS(filename,
@@ -4573,7 +4737,11 @@ void GltfSceneConverterTest::addScene() {
 }
 
 void GltfSceneConverterTest::addSceneMeshesMaterials() {
+    auto&& data = QuietData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     Containers::Pointer<AbstractSceneConverter> converter =  _converterManager.instantiate("GltfSceneConverter");
+    converter->addFlags(data.flags);
 
     Containers::String filename = Utility::Path::join(GLTFSCENECONVERTER_TEST_OUTPUT_DIR, "scene-meshes-materials.gltf");
     CORRADE_VERIFY(converter->beginFile(filename));
@@ -4646,14 +4814,17 @@ void GltfSceneConverterTest::addSceneMeshesMaterials() {
             Containers::stridedArrayView(sceneData->meshesMaterials).slice(&Containers::Triple<UnsignedInt, UnsignedInt, Int>::third)},
     }};
 
+    std::ostringstream out;
     {
-        std::ostringstream out;
         Warning redirectWarning{&out};
         CORRADE_VERIFY(converter->add(scene));
+    }
+    if(data.quiet)
+        CORRADE_COMPARE(out.str(), "");
+    else
         CORRADE_COMPARE(out.str(),
             "Trade::GltfSceneConverter::add(): parentless object 30 was not used\n"
             "Trade::GltfSceneConverter::add(): ignoring duplicate field Trade::SceneField::Mesh for object 50\n");
-    }
 
     CORRADE_VERIFY(converter->endFile());
     CORRADE_COMPARE_AS(filename,
@@ -4703,7 +4874,11 @@ void GltfSceneConverterTest::addSceneMeshesMaterials() {
 }
 
 void GltfSceneConverterTest::addSceneCustomFields() {
+    auto&& data = QuietData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     Containers::Pointer<AbstractSceneConverter> converter =  _converterManager.instantiate("GltfSceneConverter");
+    converter->addFlags(data.flags);
 
     Containers::String filename = Utility::Path::join(GLTFSCENECONVERTER_TEST_OUTPUT_DIR, "scene-custom-fields.gltf");
     CORRADE_VERIFY(converter->beginFile(filename));
@@ -4787,15 +4962,18 @@ void GltfSceneConverterTest::addSceneCustomFields() {
             Containers::stridedArrayView(sceneData->customFloat).slice(&Containers::Pair<UnsignedInt, Float>::second)},
     }};
 
+    std::ostringstream out;
     {
-        std::ostringstream out;
         Warning redirectWarning{&out};
         CORRADE_VERIFY(converter->add(scene));
+    }
+    if(data.quiet)
+        CORRADE_COMPARE(out.str(), "");
+    else
         CORRADE_COMPARE(out.str(),
             "Trade::GltfSceneConverter::add(): custom scene field 5318008 has no name assigned, skipping\n"
             "Trade::GltfSceneConverter::add(): custom scene field customVector2 has unsupported type Trade::SceneFieldType::Vector2, skipping\n"
             "Trade::GltfSceneConverter::add(): ignoring duplicate field customFloat for object 2\n");
-    }
 
     CORRADE_VERIFY(converter->endFile());
     CORRADE_COMPARE_AS(filename,
@@ -4853,7 +5031,11 @@ void GltfSceneConverterTest::addSceneCustomFields() {
 }
 
 void GltfSceneConverterTest::addSceneNoParentField() {
+    auto&& data = QuietData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     Containers::Pointer<AbstractSceneConverter> converter =  _converterManager.instantiate("GltfSceneConverter");
+    converter->addFlags(data.flags);
 
     Containers::String filename = Utility::Path::join(GLTFSCENECONVERTER_TEST_OUTPUT_DIR, "scene-empty.gltf");
     CORRADE_VERIFY(converter->beginFile(filename));
@@ -4869,14 +5051,17 @@ void GltfSceneConverterTest::addSceneNoParentField() {
             Containers::stridedArrayView(translations).slice(&Containers::Pair<UnsignedInt, Vector3>::second)}
     }};
 
+    std::ostringstream out;
     {
-        std::ostringstream out;
         Warning redirectWarning{&out};
         CORRADE_VERIFY(converter->add(scene));
+    }
+    if(data.quiet)
+        CORRADE_COMPARE(out.str(), "");
+    else
         CORRADE_COMPARE(out.str(),
             "Trade::GltfSceneConverter::add(): parentless object 0 was not used\n"
             "Trade::GltfSceneConverter::add(): parentless object 1 was not used\n");
-    }
 
     CORRADE_VERIFY(converter->endFile());
     CORRADE_COMPARE_AS(filename,
