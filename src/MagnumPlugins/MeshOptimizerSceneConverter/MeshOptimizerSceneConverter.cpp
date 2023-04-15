@@ -84,14 +84,15 @@ void analyze(const MeshData& mesh, const Utility::ConfigurationGroup& configurat
     else CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
 }
 
-void analyzePost(const char* prefix, const MeshData& mesh, const Utility::ConfigurationGroup& configuration, const Containers::StridedArrayView1D<const Vector3> positions, Containers::Optional<UnsignedInt>& vertexSize, meshopt_VertexCacheStatistics& vertexCacheStatsBefore, meshopt_VertexFetchStatistics& vertexFetchStatsBefore, meshopt_OverdrawStatistics& overdrawStatsBefore) {
+void analyzePost(const char* prefix, const MeshData& mesh, const Utility::ConfigurationGroup& configuration, const SceneConverterFlags flags, const Containers::StridedArrayView1D<const Vector3> positions, Containers::Optional<UnsignedInt>& vertexSize, meshopt_VertexCacheStatistics& vertexCacheStatsBefore, meshopt_VertexFetchStatistics& vertexFetchStatsBefore, meshopt_OverdrawStatistics& overdrawStatsBefore) {
     /* If vertex size is zero, it means there was an implementation-specific
        vertex format somewhere. Print a warning about that. */
     CORRADE_INTERNAL_ASSERT(vertexSize);
     if(!*vertexSize) for(UnsignedInt i = 0; i != mesh.attributeCount(); ++i) {
         VertexFormat format = mesh.attributeFormat(i);
         if(isVertexFormatImplementationSpecific(format)) {
-            Warning{} << prefix << "can't analyze vertex fetch for" << format;
+            if(!(flags & SceneConverterFlag::Quiet))
+                Warning{} << prefix << "can't analyze vertex fetch for" << format;
             break;
         }
     }
@@ -281,7 +282,7 @@ bool MeshOptimizerSceneConverter::doConvertInPlace(MeshData& mesh) {
         return false;
 
     if(flags() & SceneConverterFlag::Verbose)
-        analyzePost("Trade::MeshOptimizerSceneConverter::convertInPlace():", mesh, configuration(), positions, vertexSize, vertexCacheStatsBefore, vertexFetchStatsBefore, overdrawStatsBefore);
+        analyzePost("Trade::MeshOptimizerSceneConverter::convertInPlace():", mesh, configuration(), flags(), positions, vertexSize, vertexCacheStatsBefore, vertexFetchStatsBefore, overdrawStatsBefore);
 
     return true;
 }
@@ -421,7 +422,7 @@ Containers::Optional<MeshData> MeshOptimizerSceneConverter::doConvert(const Mesh
 
     /* Print before & after stats if verbose output is requested */
     if(flags() & SceneConverterFlag::Verbose)
-        analyzePost("Trade::MeshOptimizerSceneConverter::convert():", out, configuration(), positions, vertexSize, vertexCacheStatsBefore, vertexFetchStatsBefore, overdrawStatsBefore);
+        analyzePost("Trade::MeshOptimizerSceneConverter::convert():", out, configuration(), flags(), positions, vertexSize, vertexCacheStatsBefore, vertexFetchStatsBefore, overdrawStatsBefore);
 
     /* GCC 4.8 needs an explicit conversion, otherwise it tries to copy the
        thing and fails */

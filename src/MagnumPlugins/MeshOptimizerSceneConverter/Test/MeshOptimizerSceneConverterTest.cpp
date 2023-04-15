@@ -27,6 +27,7 @@
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
+#include <Corrade/TestSuite/Compare/String.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/DebugStl.h> /** @todo remove once Debug is stream-free */
 #include <Corrade/Utility/FormatStl.h> /** @todo remove once Debug is stream-free */
@@ -91,6 +92,18 @@ struct MeshOptimizerSceneConverterTest: TestSuite::Tester {
 
 const struct {
     const char* name;
+    SceneConverterFlags flags;
+    bool quiet;
+} QuietVerboseData[]{
+    {"verbose", SceneConverterFlag::Verbose, false},
+    /* A bit silly at first, but makes it possible to hide the warning that's
+       only present in case the verbose output is enabled. Which means it's
+       not an error to pass both, it has a valid use case! */
+    {"verbose + quiet", SceneConverterFlag::Verbose|SceneConverterFlag::Quiet, true},
+};
+
+const struct {
+    const char* name;
     const char* option;
 } SimplifyErrorData[] {
     {"", "simplify"},
@@ -127,9 +140,12 @@ MeshOptimizerSceneConverterTest::MeshOptimizerSceneConverterTest() {
         &MeshOptimizerSceneConverterTest::verbose<UnsignedByte>,
         &MeshOptimizerSceneConverterTest::verbose<UnsignedShort>,
         &MeshOptimizerSceneConverterTest::verbose<UnsignedInt>,
-        &MeshOptimizerSceneConverterTest::verboseCustomAttribute,
-        &MeshOptimizerSceneConverterTest::verboseImplementationSpecificAttribute,
+        &MeshOptimizerSceneConverterTest::verboseCustomAttribute});
 
+    addInstancedTests({&MeshOptimizerSceneConverterTest::verboseImplementationSpecificAttribute},
+        Containers::arraySize(QuietVerboseData));
+
+    addTests({
         &MeshOptimizerSceneConverterTest::inPlaceOptimizeEmpty<UnsignedByte>,
         &MeshOptimizerSceneConverterTest::inPlaceOptimizeEmpty<UnsignedShort>,
         &MeshOptimizerSceneConverterTest::inPlaceOptimizeEmpty<UnsignedInt>,
@@ -632,8 +648,11 @@ void MeshOptimizerSceneConverterTest::verboseCustomAttribute() {
 }
 
 void MeshOptimizerSceneConverterTest::verboseImplementationSpecificAttribute() {
+    auto&& data = QuietVerboseData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     Containers::Pointer<AbstractSceneConverter> converter = _manager.instantiate("MeshOptimizerSceneConverter");
-    converter->setFlags(SceneConverterFlag::Verbose);
+    converter->setFlags(data.flags);
 
     /* Using an 8-bit type to complement the verbose() test, which can't fit
        into there */
@@ -664,20 +683,33 @@ void MeshOptimizerSceneConverterTest::verboseImplementationSpecificAttribute() {
             /* Same as in inPlaceOptimizeVertexFetch() */
             0, 1, 2, 2, 1, 3, 3, 1, 4, 2, 3, 5, 6, 3, 4, 3
         }), TestSuite::Compare::Container);
-    /* GCC 4.8 can't handle raw string literals inside macros */
-    const char* expected = R"(Trade::MeshOptimizerSceneConverter::convertInPlace(): can't analyze vertex fetch for VertexFormat::ImplementationSpecific(0x1234)
-Trade::MeshOptimizerSceneConverter::convertInPlace(): processing stats:
-  vertex cache:
-    136 -> 49 transformed vertices
-    1 -> 1 executed warps
-    ACMR 1.7 -> 0.6125
-    ATVR 3.2381 -> 1.16667
-  overdraw:
-    149965 -> 149965 shaded pixels
-    149965 -> 149965 covered pixels
-    overdraw 1 -> 1
-)";
-    CORRADE_COMPARE(out.str(), expected);
+    if(data.quiet)
+        CORRADE_COMPARE_AS(out.str(),
+            "Trade::MeshOptimizerSceneConverter::convertInPlace(): processing stats:\n"
+            "  vertex cache:\n"
+            "    136 -> 49 transformed vertices\n"
+            "    1 -> 1 executed warps\n"
+            "    ACMR 1.7 -> 0.6125\n"
+            "    ATVR 3.2381 -> 1.16667\n"
+            "  overdraw:\n"
+            "    149965 -> 149965 shaded pixels\n"
+            "    149965 -> 149965 covered pixels\n"
+            "    overdraw 1 -> 1\n",
+            TestSuite::Compare::String);
+    else
+        CORRADE_COMPARE_AS(out.str(),
+            "Trade::MeshOptimizerSceneConverter::convertInPlace(): can't analyze vertex fetch for VertexFormat::ImplementationSpecific(0x1234)\n"
+            "Trade::MeshOptimizerSceneConverter::convertInPlace(): processing stats:\n"
+            "  vertex cache:\n"
+            "    136 -> 49 transformed vertices\n"
+            "    1 -> 1 executed warps\n"
+            "    ACMR 1.7 -> 0.6125\n"
+            "    ATVR 3.2381 -> 1.16667\n"
+            "  overdraw:\n"
+            "    149965 -> 149965 shaded pixels\n"
+            "    149965 -> 149965 covered pixels\n"
+            "    overdraw 1 -> 1\n",
+            TestSuite::Compare::String);
 }
 
 template<class T> void MeshOptimizerSceneConverterTest::inPlaceOptimizeEmpty() {
