@@ -63,7 +63,7 @@ Containers::String PngImageConverter::doMimeType() const {
 
 Containers::Optional<Containers::Array<char>> PngImageConverter::doConvertToData(const ImageView2D& image) {
     /* Warn about lost metadata */
-    if(image.flags() & ImageFlag2D::Array) {
+    if((image.flags() & ImageFlag2D::Array) && !(flags() & ImageConverterFlag::Quiet)) {
         Warning{} << "Trade::PngImageConverter::convertToData(): 1D array images are unrepresentable in PNG, saving as a regular 2D image";
     }
 
@@ -129,9 +129,12 @@ Containers::Optional<Containers::Array<char>> PngImageConverter::doConvertToData
     png_set_error_fn(file, nullptr, [](const png_structp file, const png_const_charp message) {
         Error{} << "Trade::PngImageConverter::convertToData(): error:" << message;
         std::longjmp(png_jmpbuf(file), 1);
-    }, [](png_structp, const png_const_charp message) {
-        Warning{} << "Trade::PngImageConverter::convertToData(): warning:" << message;
-    });
+    }, flags() & ImageConverterFlag::Quiet ?
+        [](png_structp, png_const_charp) {} :
+        [](png_structp, const png_const_charp message) {
+            Warning{} << "Trade::PngImageConverter::convertToData(): warning:" << message;
+        }
+    );
 
     png_set_write_fn(file, &output, [](png_structp file, png_bytep data, png_size_t length){
         auto&& output = *reinterpret_cast<std::string*>(png_get_io_ptr(file));

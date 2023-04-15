@@ -62,18 +62,32 @@ struct PngImageConverterTest: TestSuite::Tester {
 
 const struct {
     const char* name;
-    ImageFlags2D flags;
+    ImageConverterFlags flags;
+    bool quiet;
+} QuietData[]{
+    {"", {}, false},
+    {"quiet", ImageConverterFlag::Quiet, true}
+};
+
+const struct {
+    const char* name;
+    ImageConverterFlags converterFlags;
+    ImageFlags2D imageFlags;
     const char* message;
 } UnsupportedMetadataData[]{
-    {"1D array", ImageFlag2D::Array,
-        "1D array images are unrepresentable in PNG, saving as a regular 2D image"}
+    {"1D array", {}, ImageFlag2D::Array,
+        "1D array images are unrepresentable in PNG, saving as a regular 2D image"},
+    {"1D array, quiet", ImageConverterFlag::Quiet, ImageFlag2D::Array,
+        nullptr},
 };
 
 PngImageConverterTest::PngImageConverterTest() {
-    addTests({&PngImageConverterTest::wrongFormat,
-              &PngImageConverterTest::conversionError,
+    addTests({&PngImageConverterTest::wrongFormat});
 
-              &PngImageConverterTest::rgb,
+    addInstancedTests({&PngImageConverterTest::conversionError},
+        Containers::arraySize(QuietData));
+
+    addTests({&PngImageConverterTest::rgb,
               &PngImageConverterTest::rgb16,
 
               &PngImageConverterTest::grayscale,
@@ -104,20 +118,29 @@ void PngImageConverterTest::wrongFormat() {
 }
 
 void PngImageConverterTest::conversionError() {
+    auto&& data = QuietData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    /* Important: this also tests warning suppression! */
+
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("PngImageConverter");
+    converter->addFlags(data.flags);
 
     /* Because zero-size images are disallowed by the base implementation
        already, we can't abuse that for checking conversion errors. PNG image
        width/height is limited to 31 bits, so let's pretend we have a 2 GB
        image. Hope this won't trigger sanitizers. */
-    const char data[1]{};
+    const char imageData[1]{};
     std::ostringstream out;
     Warning redirectWarning{&out};
     Error redirectError{&out};
-    CORRADE_VERIFY(!converter->convertToData(ImageView2D{PixelFormat::R8Unorm, {0x7fffffff, 1}, {data, 1u << 31}}));
-    CORRADE_COMPARE(out.str(),
-        "Trade::PngImageConverter::convertToData(): warning: Image width exceeds user limit in IHDR\n"
-        "Trade::PngImageConverter::convertToData(): error: Invalid IHDR data\n");
+    CORRADE_VERIFY(!converter->convertToData(ImageView2D{PixelFormat::R8Unorm, {0x7fffffff, 1}, {imageData, 1u << 31}}));
+    if(data.quiet)
+        CORRADE_COMPARE(out.str(),
+            "Trade::PngImageConverter::convertToData(): error: Invalid IHDR data\n");
+    else CORRADE_COMPARE(out.str(),
+            "Trade::PngImageConverter::convertToData(): warning: Image width exceeds user limit in IHDR\n"
+            "Trade::PngImageConverter::convertToData(): error: Invalid IHDR data\n");
 }
 
 constexpr const char OriginalRgbData[] = {
@@ -291,14 +314,18 @@ void PngImageConverterTest::unsupportedMetadata() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("PngImageConverter");
+    converter->addFlags(data.converterFlags);
 
     const char imageData[4]{};
-    ImageView2D image{PixelFormat::RGBA8Unorm, {1, 1}, imageData, data.flags};
+    ImageView2D image{PixelFormat::RGBA8Unorm, {1, 1}, imageData, data.imageFlags};
 
     std::ostringstream out;
     Warning redirectWarning{&out};
     CORRADE_VERIFY(converter->convertToData(image));
-    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::PngImageConverter::convertToData(): {}\n", data.message));
+    if(!data.message)
+        CORRADE_COMPARE(out.str(), "");
+    else
+        CORRADE_COMPARE(out.str(), Utility::formatString("Trade::PngImageConverter::convertToData(): {}\n", data.message));
 }
 
 }}}}

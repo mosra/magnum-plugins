@@ -69,22 +69,23 @@ using namespace Math::Literals;
 
 const struct {
     TestSuite::TestCaseDescriptionSourceLocation name;
+    ImporterFlags flags;
     Containers::StringView data;
     const char* message;
 } InvalidData[] {
-    {"invalid signature",
+    {"invalid signature", {},
         "invalid!"_s,
         "error: Not a PNG file"},
-    {"short signature",
+    {"short signature", {},
         "\x89PNG"_s,
         "error: file too short"},
-    {"invalid signature with trailing zeros",
+    {"invalid signature with trailing zeros", {},
         "\x89PNG\x0d\x0a\x1a\x00"_s,
         "error: PNG file corrupted by ASCII conversion"},
-    {"only signature",
+    {"only signature", {},
         "\x89PNG\x0d\x0a\x1a\x0a"_s,
         "error: file too short"},
-    {"zero width",
+    {"zero width", {},
         "\x89PNG\x0d\x0a\x1a\x0a"
         "\x00\x00\x00\x0DIHDR"  /* HDR chunk, 13 bytes */
         "\x00\x00\x00\x00"      /* width, big-endian */
@@ -93,7 +94,16 @@ const struct {
         "\x00\x00\x00"          /* compression, filter, interlace method */
         "\xdc\x4a\x15\x92"_s,   /* hex(zlib.crc32(b'IHDR...')), big-endian */
         "Trade::PngImporter::image2D(): warning: Image width is zero in IHDR\n"
-        "Trade::PngImporter::image2D(): error: Invalid IHDR data\n"}
+        "Trade::PngImporter::image2D(): error: Invalid IHDR data\n"},
+    {"zero width, quiet", ImporterFlag::Quiet,
+        "\x89PNG\x0d\x0a\x1a\x0a"
+        "\x00\x00\x00\x0DIHDR"  /* Same as above */
+        "\x00\x00\x00\x00"
+        "\x00\x00\x00\x02"
+        "\x08\x04"
+        "\x00\x00\x00"
+        "\xdc\x4a\x15\x92"_s,
+        "error: Invalid IHDR data"}
 };
 
 constexpr struct {
@@ -213,6 +223,8 @@ void PngImporterTest::invalid() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("PngImporter");
+    importer->addFlags(data.flags);
+
     /* The open does just a memory copy, so it doesn't fail */
     CORRADE_VERIFY(importer->openData(data.data));
 

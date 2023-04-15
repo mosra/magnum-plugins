@@ -111,9 +111,12 @@ Containers::Optional<ImageData2D> PngImporter::doImage2D(UnsignedInt, UnsignedIn
     png_set_error_fn(file, nullptr, [](const png_structp file, const png_const_charp message) {
         Error{} << "Trade::PngImporter::image2D(): error:" << message;
         std::longjmp(png_jmpbuf(file), 1);
-    }, [](png_structp, const png_const_charp message) {
-        Warning{} << "Trade::PngImporter::image2D(): warning:" << message;
-    });
+    }, flags() & ImporterFlag::Quiet ?
+        [](png_structp, png_const_charp) {} :
+        [](png_structp, const png_const_charp message) {
+            Warning{} << "Trade::PngImporter::image2D(): warning:" << message;
+        }
+    );
 
     /* Set functions for reading */
     Containers::ArrayView<char> input = _in;
