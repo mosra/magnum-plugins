@@ -3552,17 +3552,19 @@ void AssimpImporterTest::scene() {
 }
 
 void AssimpImporterTest::sceneName() {
-    #if !ASSIMP_HAS_SCENE_NAME
-    CORRADE_SKIP("Current version of assimp doesn't expose scene names.");
-    #endif
-
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "scene-name.gltf")));
 
     CORRADE_COMPARE(importer->sceneCount(), 1);
+    #if ASSIMP_HAS_SCENE_NAME
     CORRADE_COMPARE(importer->sceneName(0), "This is the scene");
     CORRADE_COMPARE(importer->sceneForName("This is the scene"), 0);
     CORRADE_COMPARE(importer->sceneForName("Other scene"), -1);
+    #else
+    CORRADE_INFO("Current version of assimp doesn't expose scene names.");
+    CORRADE_COMPARE(importer->sceneName(0), "");
+    CORRADE_COMPARE(importer->sceneForName("This is the scene"), -1);
+    #endif
 }
 
 void AssimpImporterTest::sceneCollapsedNode() {
