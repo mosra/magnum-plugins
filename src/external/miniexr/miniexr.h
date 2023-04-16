@@ -14,6 +14,8 @@
 #define COMPILE_TEST_MAIN_ENTRYPOINT 1
 
 
+#define _CRT_SECURE_NO_WARNINGS
+
 #include <assert.h>
 #include <string.h>
 #include <stdlib.h>
@@ -84,13 +86,13 @@ unsigned char* miniexr_write (unsigned width, unsigned height, unsigned channels
 		// end of header
 		0,
 	};
-	const int kHeaderSize = ARRAY_SIZE(kHeader);
+	const size_t kHeaderSize = ARRAY_SIZE(kHeader);
 
-	const int kScanlineTableSize = 8 * height;
-	const unsigned pixelRowSize = width * 3 * 2;
-	const unsigned fullRowSize = pixelRowSize + 8;
+	const size_t kScanlineTableSize = 8 * height;
+	const size_t pixelRowSize = width * 3 * 2;
+	const size_t fullRowSize = pixelRowSize + 8;
 
-	unsigned bufSize = kHeaderSize + kScanlineTableSize + height * fullRowSize;
+	size_t bufSize = kHeaderSize + kScanlineTableSize + height * fullRowSize;
 	unsigned char* buf = (unsigned char*)malloc (bufSize);
 	if (!buf)
 		return NULL;
@@ -99,9 +101,9 @@ unsigned char* miniexr_write (unsigned width, unsigned height, unsigned channels
 	memcpy (buf, kHeader, kHeaderSize);
 
 	// line offset table
-	unsigned ofs = kHeaderSize + kScanlineTableSize;
+	size_t ofs = kHeaderSize + kScanlineTableSize;
 	unsigned char* ptr = buf + kHeaderSize;
-	for (int y = 0; y < height; ++y)
+	for (unsigned y = 0; y < height; ++y)
 	{
 		*ptr++ = ofs & 0xFF;
 		*ptr++ = (ofs >> 8) & 0xFF;
@@ -116,8 +118,8 @@ unsigned char* miniexr_write (unsigned width, unsigned height, unsigned channels
 
 	// scanline data
 	const unsigned char* src = (const unsigned char*)rgba16f;
-	const int stride = channels * 2;
-	for (int y = 0; y < height; ++y)
+	const unsigned stride = channels * 2;
+	for (unsigned y = 0; y < height; ++y)
 	{
 		// coordinate
 		*ptr++ = y & 0xFF;
@@ -132,21 +134,21 @@ unsigned char* miniexr_write (unsigned width, unsigned height, unsigned channels
 		// B, G, R
 		const unsigned char* chsrc;
 		chsrc = src + 4;
-		for (int x = 0; x < width; ++x)
+		for (unsigned x = 0; x < width; ++x)
 		{
 			*ptr++ = chsrc[0];
 			*ptr++ = chsrc[1];
 			chsrc += stride;
 		}
 		chsrc = src + 2;
-		for (int x = 0; x < width; ++x)
+		for (unsigned x = 0; x < width; ++x)
 		{
 			*ptr++ = chsrc[0];
 			*ptr++ = chsrc[1];
 			chsrc += stride;
 		}
 		chsrc = src + 0;
-		for (int x = 0; x < width; ++x)
+		for (unsigned x = 0; x < width; ++x)
 		{
 			*ptr++ = chsrc[0];
 			*ptr++ = chsrc[1];
@@ -156,7 +158,7 @@ unsigned char* miniexr_write (unsigned width, unsigned height, unsigned channels
 		src += width * stride;
 	}
 
-	assert (ptr - buf == bufSize);
+	assert (ptr == buf + bufSize);
 
 	*outSize = bufSize;
 	return buf;
