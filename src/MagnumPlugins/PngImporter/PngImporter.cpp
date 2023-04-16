@@ -112,8 +112,14 @@ Containers::Optional<ImageData2D> PngImporter::doImage2D(UnsignedInt, UnsignedIn
         Error{} << "Trade::PngImporter::image2D(): error:" << message;
         std::longjmp(png_jmpbuf(file), 1);
     }, flags() & ImporterFlag::Quiet ?
-        [](png_structp, png_const_charp) {} :
-        [](png_structp, const png_const_charp message) {
+        /* MSVC w/o /permissive- "cannot convert <lambda> to <lambda>", ffs.
+           Casting just one of the two is enough. */
+        #ifndef CORRADE_MSVC_COMPATIBILITY
+        [](png_structp, png_const_charp) {}
+        #else
+        static_cast<void(*)(png_structp, png_const_charp)>([](png_structp, png_const_charp) {})
+        #endif
+        : [](png_structp, const png_const_charp message) {
             Warning{} << "Trade::PngImporter::image2D(): warning:" << message;
         }
     );
