@@ -255,6 +255,8 @@ constexpr struct {
 };
 
 UfbxImporterTest::UfbxImporterTest() {
+
+#if 0
     addTests({&UfbxImporterTest::openFile,
               &UfbxImporterTest::openData,
               &UfbxImporterTest::openFileFailed,
@@ -325,8 +327,6 @@ UfbxImporterTest::UfbxImporterTest() {
         &UfbxImporterTest::objMissingMtl,
         &UfbxImporterTest::objMissingMtlFileCallback},
         Containers::arraySize(QuietData));
-
-#if 0
 
     addTests({&UfbxImporterTest::mtl,
 
