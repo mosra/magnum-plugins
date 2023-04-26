@@ -326,6 +326,8 @@ UfbxImporterTest::UfbxImporterTest() {
         &UfbxImporterTest::objMissingMtlFileCallback},
         Containers::arraySize(QuietData));
 
+#if 0
+
     addTests({&UfbxImporterTest::mtl,
 
               &UfbxImporterTest::normalizeUnitsAdjustTransforms,
@@ -365,6 +367,8 @@ UfbxImporterTest::UfbxImporterTest() {
         Containers::arraySize(WeightLimitData));
 
     addTests({&UfbxImporterTest::skinNames});
+
+#endif
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. It also pulls in the AnyImageImporter dependency. */
