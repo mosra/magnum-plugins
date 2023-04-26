@@ -343,8 +343,6 @@ UfbxImporterTest::UfbxImporterTest() {
         &UfbxImporterTest::multiWarningData},
         Containers::arraySize(QuietData));
 
-    addInstancedTests({&UfbxImporterTest::animationRotationPivot},
-
     addInstancedTests({&UfbxImporterTest::animationRotationPivot,
                        &UfbxImporterTest::animationPreRotation},
                        Containers::arraySize(ResampleRotationData));
@@ -2697,10 +2695,10 @@ void UfbxImporterTest::multiWarningData() {
 namespace {
 
 template<class V, class R = Animation::ResultOf<V>>
-inline const Animation::TrackView<const Float, const V, R>& trackByTarget(const AnimationData &animation, UnsignedInt target, AnimationTrackTargetType targetType)
+inline const Animation::TrackView<const Float, const V, R> trackByTarget(const AnimationData &animation, UnsignedInt target, AnimationTrackTarget targetType)
 {
     for(UnsignedInt i = 0; i < animation.trackCount(); ++i) {
-        if(animation.trackTarget(i) == target && animation.trackTargetType(i) == targetType) {
+        if(animation.trackTarget(i) == target && animation.trackTargetName(i) == targetType) {
             return animation.track<V, R>(i);
         }
     }
@@ -2721,7 +2719,7 @@ void UfbxImporterTest::animationInterpolation() {
 
     const float epsilon = 0.001f;
 
-    auto track = trackByTarget<Vector3>(*animation, 0, AnimationTrackTargetType::Translation3D);
+    auto track = trackByTarget<Vector3>(*animation, 0, AnimationTrackTarget::Translation3D);
 
     CORRADE_COMPARE_AS(track.keys(),
         Containers::arrayView<Float>({
@@ -2815,8 +2813,8 @@ void UfbxImporterTest::animationRotationPivot() {
     Containers::Optional<AnimationData> animation = importer->animation(0);
     CORRADE_VERIFY(animation);
 
-    auto rotation = trackByTarget<Quaternion>(*animation, 0, AnimationTrackTargetType::Rotation3D);
-    auto translation = trackByTarget<Vector3>(*animation, 0, AnimationTrackTargetType::Translation3D);
+    auto rotation = trackByTarget<Quaternion>(*animation, 0, AnimationTrackTarget::Rotation3D);
+    auto translation = trackByTarget<Vector3>(*animation, 0, AnimationTrackTarget::Translation3D);
 
     if(data.resampleRotation) {
         CORRADE_COMPARE_AS(rotation.keys(),
@@ -2888,7 +2886,7 @@ void UfbxImporterTest::animationVisibility() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "animation-visibility.fbx")));
 
-    constexpr AnimationTrackTargetType CustomAnimationTrackTargetVisibility = AnimationTrackTargetType(UnsignedByte(AnimationTrackTargetType::Custom) + 0);
+    constexpr AnimationTrackTarget CustomAnimationTrackTargetVisibility = animationTrackTargetCustom(0);
 
     CORRADE_COMPARE(importer->objectName(0), "pCube1");
     CORRADE_COMPARE(importer->objectName(1), "pCube2");
@@ -2934,7 +2932,7 @@ void UfbxImporterTest::animationVisibility() {
     /* Make sure that the translation channel of the second node is correctly
        aligned. As all value data is packed contiguously the visibility bools
        from the first node misalign the buffer, needing padding between */
-    auto translation2 = trackByTarget<Vector3>(*animation, 1, AnimationTrackTargetType::Translation3D);
+    auto translation2 = trackByTarget<Vector3>(*animation, 1, AnimationTrackTarget::Translation3D);
     CORRADE_COMPARE_AS(uintptr_t(translation2.values().data()), alignof(Vector3), TestSuite::Compare::Divisible);
 }
 
@@ -2953,7 +2951,7 @@ void UfbxImporterTest::animationPreRotation() {
 
     CORRADE_COMPARE(importer->objectName(0), "pCube1");
 
-    auto track = trackByTarget<Quaternion>(*animation, 0, AnimationTrackTargetType::Rotation3D);
+    auto track = trackByTarget<Quaternion>(*animation, 0, AnimationTrackTarget::Rotation3D);
 
     if(data.resampleRotation) {
         CORRADE_COMPARE_AS(track.keys(),
@@ -3013,7 +3011,7 @@ void UfbxImporterTest::animationLayersMerged() {
     Containers::Optional<AnimationData> animation = importer->animation(0);
     CORRADE_VERIFY(animation);
 
-    auto track = trackByTarget<Vector3>(*animation, 0, AnimationTrackTargetType::Translation3D);
+    auto track = trackByTarget<Vector3>(*animation, 0, AnimationTrackTarget::Translation3D);
 
     CORRADE_COMPARE_AS(track.keys(),
         Containers::arrayView<Float>({
@@ -3111,7 +3109,7 @@ void UfbxImporterTest::animationLayersRetained() {
         Containers::Optional<AnimationData> animation = importer->animation("BaseLayer");
         CORRADE_VERIFY(animation);
 
-        auto track = trackByTarget<Vector3>(*animation, 0, AnimationTrackTargetType::Translation3D);
+        auto track = trackByTarget<Vector3>(*animation, 0, AnimationTrackTarget::Translation3D);
 
         CORRADE_COMPARE_AS(track.keys(),
             Containers::arrayView<Float>({
@@ -3132,7 +3130,7 @@ void UfbxImporterTest::animationLayersRetained() {
         Containers::Optional<AnimationData> animation = importer->animation("AnimLayer1");
         CORRADE_VERIFY(animation);
 
-        auto track = trackByTarget<Vector3>(*animation, 0, AnimationTrackTargetType::Translation3D);
+        auto track = trackByTarget<Vector3>(*animation, 0, AnimationTrackTarget::Translation3D);
 
         CORRADE_COMPARE_AS(track.keys(),
             Containers::arrayView<Float>({
@@ -3164,7 +3162,7 @@ void UfbxImporterTest::animationLayersNonLinearWeight() {
         Containers::Optional<AnimationData> animation = importer->animation(0);
         CORRADE_VERIFY(animation);
 
-        auto track = trackByTarget<Vector3>(*animation, 0, AnimationTrackTargetType::Translation3D);
+        auto track = trackByTarget<Vector3>(*animation, 0, AnimationTrackTarget::Translation3D);
 
         CORRADE_COMPARE_AS(track.keys(),
             Containers::arrayView<Float>({
@@ -3210,7 +3208,7 @@ void UfbxImporterTest::animationLayersNonLinearWeightNonResampled() {
         Containers::Optional<AnimationData> animation = importer->animation(0);
         CORRADE_VERIFY(animation);
 
-        auto track = trackByTarget<Vector3>(*animation, 0, AnimationTrackTargetType::Translation3D);
+        auto track = trackByTarget<Vector3>(*animation, 0, AnimationTrackTarget::Translation3D);
 
         CORRADE_COMPARE_AS(track.keys(),
             Containers::arrayView<Float>({
@@ -3248,14 +3246,14 @@ Containers::Optional<Animation::Player<Float>> createAnimationPlayer(const Anima
         }
         CORRADE_ASSERT(target != nullptr, "Expected to find a target", Containers::NullOpt);
 
-        switch(animation.trackTargetType(j)) {
-            case AnimationTrackTargetType::Translation3D:
+        switch(animation.trackTargetName(j)) {
+            case AnimationTrackTarget::Translation3D:
                 player.add(animation.track<Vector3>(j), target->translation);
                 break;
-            case AnimationTrackTargetType::Rotation3D:
+            case AnimationTrackTarget::Rotation3D:
                 player.add(animation.track<Quaternion>(j), target->rotation);
                 break;
-            case AnimationTrackTargetType::Scaling3D:
+            case AnimationTrackTarget::Scaling3D:
                 player.add(animation.track<Vector3>(j), target->scaling);
                 break;
             default:

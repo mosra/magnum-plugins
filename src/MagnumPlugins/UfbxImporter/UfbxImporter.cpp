@@ -79,6 +79,11 @@
 
 #include "UfbxMaterials.h"
 
+#if defined(CORRADE_TARGET_MSVC)
+    // warning C4063: case '32768' is not a valid value for switch of enum 'Magnum::Trade::AnimationTrackTarget'
+    #pragma warning(disable: 4063)
+#endif
+
 namespace Corrade { namespace Containers { namespace Implementation {
 
 template<> struct StringConverter<ufbx_string> {
@@ -1659,16 +1664,16 @@ constexpr Containers::StringView complexRotationSources[] = {
 
 struct AnimTrack {
     UnsignedInt targetId;
-    AnimationTrackTargetType targetType;
-    AnimationTrackType trackType;
+    AnimationTrackTarget target;
+    AnimationTrackType type;
     std::size_t keyCount;
     std::size_t timeOffset;
     std::size_t valueOffset;
     std::size_t valuesSize;
+    std::size_t valueElementSize;
 };
 
-constexpr AnimationTrackTargetType CustomAnimationTrackTargetVisibility = AnimationTrackTargetType(UnsignedByte(AnimationTrackTargetType::Custom) + 0);
-constexpr AnimationTrackTargetType CustomAnimationTrackTargetInvalid = AnimationTrackTargetType(UnsignedByte(AnimationTrackTargetType::Custom) + 1);
+constexpr AnimationTrackTarget CustomAnimationTrackTargetVisibility = animationTrackTargetCustom(0);
 
 }
 
@@ -1733,13 +1738,13 @@ Containers::Optional<AnimationData> UfbxImporter::doAnimation(UnsignedInt id) {
 
         Containers::ArrayView<const Containers::StringView> keySources{&prop.name, 1};
 
-        AnimationTrackTargetType target;
+        AnimationTrackTarget target;
         AnimationTrackType trackType;
         UnsignedInt valueAlignment;
         bool complexTranslation = false;
 
         if(prop.name == UFBX_Lcl_Translation ""_s) {
-            target = AnimationTrackTargetType::Translation3D;
+            target = AnimationTrackTarget::Translation3D;
             trackType = AnimationTrackType::Vector3;
             valueAlignment = alignof(Vector3);
 
@@ -1748,14 +1753,14 @@ Containers::Optional<AnimationData> UfbxImporter::doAnimation(UnsignedInt id) {
                 complexTranslation = true;
             }
         } else if(prop.name == UFBX_Lcl_Rotation ""_s) {
-            target = AnimationTrackTargetType::Rotation3D;
+            target = AnimationTrackTarget::Rotation3D;
             trackType = AnimationTrackType::Quaternion;
             valueAlignment = alignof(Quaternion);
 
             if(hasComplexRotation(node))
                 keySources = Containers::arrayView(complexRotationSources);
         } else if(prop.name == UFBX_Lcl_Scaling ""_s) {
-            target = AnimationTrackTargetType::Scaling3D;
+            target = AnimationTrackTarget::Scaling3D;
             trackType = AnimationTrackType::Vector3;
             valueAlignment = alignof(Vector3);
         } else if(prop.name == UFBX_Visibility ""_s) {
@@ -1818,20 +1823,23 @@ Containers::Optional<AnimationData> UfbxImporter::doAnimation(UnsignedInt id) {
         while(valueBuffer.size() % valueAlignment != 0)
             arrayAppend(valueBuffer, 0);
         std::size_t valueOffset = valueBuffer.size();
+        std::size_t valueElementSize = 0;
 
         switch(target) {
-        case AnimationTrackTargetType::Translation3D:
+        case AnimationTrackTarget::Translation3D:
             {
                 Containers::ArrayView<Vector3> values = Containers::arrayCast<Vector3>(arrayAppend(valueBuffer, NoInit, keyCount * sizeof(Vector3)));
+                valueElementSize = sizeof(Vector3);
                 for(std::size_t i = 0; i < keyCount; ++i) {
                     ufbx_transform t = ufbx_evaluate_transform(anim, node, keyTimes[i]);
                     values[i] = Vector3(t.translation);
                 }
             }
             break;
-        case AnimationTrackTargetType::Rotation3D:
+        case AnimationTrackTarget::Rotation3D:
             {
                 Containers::ArrayView<Quaternion> values = Containers::arrayCast<Quaternion>(arrayAppend(valueBuffer, NoInit, keyCount * sizeof(Quaternion)));
+                valueElementSize = sizeof(Quaternion);
                 ufbx_quat prev = ufbx_identity_quat;
                 for(std::size_t i = 0; i < keyCount; ++i) {
                     ufbx_transform t = ufbx_evaluate_transform(anim, node, keyTimes[i]);
@@ -1841,9 +1849,10 @@ Containers::Optional<AnimationData> UfbxImporter::doAnimation(UnsignedInt id) {
                 }
             }
             break;
-        case AnimationTrackTargetType::Scaling3D:
+        case AnimationTrackTarget::Scaling3D:
             {
                 Containers::ArrayView<Vector3> values = Containers::arrayCast<Vector3>(arrayAppend(valueBuffer, NoInit, keyCount * sizeof(Vector3)));
+                valueElementSize = sizeof(Vector3);
                 for(std::size_t i = 0; i < keyCount; ++i) {
                     ufbx_transform t = ufbx_evaluate_transform(anim, node, keyTimes[i]);
                     values[i] = Vector3(t.scale);
@@ -1853,6 +1862,7 @@ Containers::Optional<AnimationData> UfbxImporter::doAnimation(UnsignedInt id) {
         case CustomAnimationTrackTargetVisibility:
             {
                 Containers::ArrayView<bool> values = Containers::arrayCast<bool>(arrayAppend(valueBuffer, NoInit, keyCount * sizeof(bool)));
+                valueElementSize = sizeof(bool);
                 for(std::size_t i = 0; i < keyCount; ++i) {
                     ufbx_prop p = ufbx_evaluate_prop(anim, &node->element, UFBX_Visibility, keyTimes[i]);
                     values[i] = p.value_int != 0;
@@ -1871,6 +1881,7 @@ Containers::Optional<AnimationData> UfbxImporter::doAnimation(UnsignedInt id) {
             timeOffset,
             valueOffset,
             valuesSize,
+            valueElementSize,
         });
     }
 
@@ -1890,48 +1901,26 @@ Containers::Optional<AnimationData> UfbxImporter::doAnimation(UnsignedInt id) {
         const AnimTrack& animTrack = animTracks[i];
 
         Containers::ArrayView<Float> times = timeData.sliceSize(animTrack.timeOffset, animTrack.keyCount);
-        Containers::ArrayView<char> values = valueData.sliceSize(animTrack.valueOffset, animTrack.valuesSize);
+        Containers::ArrayView<char> valueBytes = valueData.sliceSize(animTrack.valueOffset, animTrack.valuesSize);
+        Containers::StridedArrayView1D<const void> stridedValues{valueBytes, times.size(), animTrack.valueElementSize};
 
+        /* @todo: Could detect tracks that have constant interpolation for every keyframe? */
         constexpr Animation::Interpolation interpolation = Animation::Interpolation::Linear;
 
         /* @todo: Does FBX store these? */
         constexpr Animation::Extrapolation extrapolationBefore = Animation::Extrapolation::Constant;
         constexpr Animation::Extrapolation extrapolationAfter = Animation::Extrapolation::Constant;
 
-        /* No exposed way to do this parametrically */
-        Animation::TrackViewStorage<const Float> view;
-        switch(animTrack.trackType) {
-
-        case AnimationTrackType::Vector3:
-            view = Animation::TrackView<const Float, const Vector3>{
-                times, Containers::arrayCast<const Vector3>(values), interpolation,
-                animationInterpolatorFor<Vector3>(interpolation),
-                extrapolationBefore, extrapolationAfter};
-            break;
-
-        case AnimationTrackType::Quaternion:
-            view = Animation::TrackView<const Float, const Quaternion>{
-                times, Containers::arrayCast<const Quaternion>(values), interpolation,
-                animationInterpolatorFor<Quaternion>(interpolation),
-                extrapolationBefore, extrapolationAfter};
-            break;
-
-        case AnimationTrackType::Bool:
-            view = Animation::TrackView<const Float, const bool>{
-                times, Containers::arrayCast<const bool>(values), interpolation,
-                animationInterpolatorFor<bool>(interpolation),
-                extrapolationBefore, extrapolationAfter};
-            break;
-
-        default: CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
-        }
-
         tracks[i] = AnimationTrackData{
-            animTrack.trackType,
-            animTrack.trackType,
-            animTrack.targetType,
+            animTrack.target,
             UnsignedLong(animTrack.targetId),
-            view,
+            animTrack.type,
+            animTrack.type,
+            times,
+            stridedValues,
+            interpolation,
+            extrapolationBefore,
+            extrapolationAfter,
         };
     }
 
