@@ -1669,7 +1669,11 @@ struct AnimTrack {
     Containers::StridedArrayView2D<char> values;
 };
 
-constexpr AnimationTrackTarget CustomAnimationTrackTargetVisibility = animationTrackTargetCustom(0);
+constexpr AnimationTrackTarget AnimationTrackTargetVisibility = animationTrackTargetCustom(0);
+
+constexpr Containers::StringView animationTrackTargetNames[]{
+    "Visibility"_s,
+};
 
 }
 
@@ -1757,7 +1761,7 @@ Containers::Optional<AnimationData> UfbxImporter::doAnimation(UnsignedInt id) {
             target = AnimationTrackTarget::Scaling3D;
             trackType = AnimationTrackType::Vector3;
         } else if(prop.name == UFBX_Visibility ""_s) {
-            target = CustomAnimationTrackTargetVisibility;
+            target = AnimationTrackTargetVisibility;
             trackType = AnimationTrackType::Bool;
         } else {
             continue;
@@ -1868,7 +1872,7 @@ Containers::Optional<AnimationData> UfbxImporter::doAnimation(UnsignedInt id) {
             #pragma warning(push)
             #pragma warning(disable: 4063) // case '32768' is not a valid value for switch of enum 'Magnum::Trade::AnimationTrackTarget'
         #endif
-        case CustomAnimationTrackTargetVisibility:
+        case AnimationTrackTargetVisibility:
             {
                 Containers::StridedArrayView1D<bool> values = Containers::arrayCast<1, bool>(track.values);
                 for(std::size_t i = 0; i < keyTimes.size(); ++i) {
@@ -1915,6 +1919,19 @@ Containers::Optional<AnimationData> UfbxImporter::doAnimation(UnsignedInt id) {
     } else {
         return AnimationData{std::move(data), std::move(tracks)};
     }
+}
+
+AnimationTrackTarget UfbxImporter::doAnimationTrackTargetForName(Containers::StringView name) {
+    for(UnsignedInt i = 0; i < Containers::arraySize(animationTrackTargetNames); ++i) {
+        if(name == animationTrackTargetNames[i]) return animationTrackTargetCustom(i);
+    }
+    return AnimationTrackTarget{};
+}
+
+Containers::String UfbxImporter::doAnimationTrackTargetName(UnsignedShort name) {
+    if(name < Containers::arraySize(animationTrackTargetNames))
+        return animationTrackTargetNames[name];
+    return {};
 }
 
 UnsignedInt UfbxImporter::doSkin3DCount() const {
