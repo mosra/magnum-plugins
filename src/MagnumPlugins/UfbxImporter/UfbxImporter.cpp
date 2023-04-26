@@ -79,11 +79,6 @@
 
 #include "UfbxMaterials.h"
 
-#if defined(CORRADE_TARGET_MSVC)
-    // warning C4063: case '32768' is not a valid value for switch of enum 'Magnum::Trade::AnimationTrackTarget'
-    #pragma warning(disable: 4063)
-#endif
-
 namespace Corrade { namespace Containers { namespace Implementation {
 
 template<> struct StringConverter<ufbx_string> {
@@ -1859,6 +1854,10 @@ Containers::Optional<AnimationData> UfbxImporter::doAnimation(UnsignedInt id) {
                 }
             }
             break;
+        #if defined(CORRADE_TARGET_MSVC)
+            #pragma warning(push)
+            #pragma warning(disable: 4063) // case '32768' is not a valid value for switch of enum 'Magnum::Trade::AnimationTrackTarget'
+        #endif
         case CustomAnimationTrackTargetVisibility:
             {
                 Containers::ArrayView<bool> values = Containers::arrayCast<bool>(arrayAppend(valueBuffer, NoInit, keyCount * sizeof(bool)));
@@ -1869,6 +1868,9 @@ Containers::Optional<AnimationData> UfbxImporter::doAnimation(UnsignedInt id) {
                 }
             }
             break;
+        #if defined(CORRADE_TARGET_MSVC)
+            #pragma warning(pop)
+        #endif
         default: CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
         }
 
