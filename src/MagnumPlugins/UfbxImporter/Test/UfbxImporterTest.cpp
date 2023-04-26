@@ -168,6 +168,7 @@ struct UfbxImporterTest: TestSuite::Tester {
     void animationStacks();
     void animationLayerNames();
     void animationStackNames();
+    void animationMultiClip();
     void animationSpaceNormalization();
 
     void skinning();
@@ -355,7 +356,8 @@ UfbxImporterTest::UfbxImporterTest() {
               &UfbxImporterTest::animationLayersNonLinearWeightNonResampled,
               &UfbxImporterTest::animationStacks,
               &UfbxImporterTest::animationLayerNames,
-              &UfbxImporterTest::animationStackNames});
+              &UfbxImporterTest::animationStackNames,
+              &UfbxImporterTest::animationMultiClip});
 
     addInstancedTests({&UfbxImporterTest::animationSpaceNormalization},
         Containers::arraySize(AnimationSpaceData));
@@ -2718,6 +2720,8 @@ void UfbxImporterTest::animationInterpolation() {
     Containers::Optional<AnimationData> animation = importer->animation(0);
     CORRADE_VERIFY(animation);
 
+    CORRADE_COMPARE(animation->duration(), (Range1D{0.0f, 2.0f}));
+
     const float epsilon = 0.001f;
 
     auto track = trackByTarget<Vector3>(*animation, 0, AnimationTrackTarget::Translation3D);
@@ -3014,6 +3018,8 @@ void UfbxImporterTest::animationLayersMerged() {
     Containers::Optional<AnimationData> animation = importer->animation(0);
     CORRADE_VERIFY(animation);
 
+    CORRADE_COMPARE(animation->duration(), (Range1D{0.0f, 1.875f}));
+
     auto track = trackByTarget<Vector3>(*animation, 0, AnimationTrackTarget::Translation3D);
 
     CORRADE_COMPARE_AS(track.keys(),
@@ -3112,6 +3118,8 @@ void UfbxImporterTest::animationLayersRetained() {
         Containers::Optional<AnimationData> animation = importer->animation("BaseLayer");
         CORRADE_VERIFY(animation);
 
+        CORRADE_COMPARE(animation->duration(), (Range1D{0.0f, 1.0f}));
+
         auto track = trackByTarget<Vector3>(*animation, 0, AnimationTrackTarget::Translation3D);
 
         CORRADE_COMPARE_AS(track.keys(),
@@ -3132,6 +3140,8 @@ void UfbxImporterTest::animationLayersRetained() {
     {
         Containers::Optional<AnimationData> animation = importer->animation("AnimLayer1");
         CORRADE_VERIFY(animation);
+
+        CORRADE_COMPARE(animation->duration(), (Range1D{0.0f, 1.0f}));
 
         auto track = trackByTarget<Vector3>(*animation, 0, AnimationTrackTarget::Translation3D);
 
@@ -3349,6 +3359,33 @@ void UfbxImporterTest::animationStackNames() {
     CORRADE_COMPARE(importer->animationForName("Cube|Lift"), 1);
     CORRADE_COMPARE(importer->animationForName("Cube|Spin"), 2);
     CORRADE_COMPARE(importer->animationForName("Nonexistent"), -1);
+}
+
+void UfbxImporterTest::animationMultiClip() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "animation-multi-clip.fbx")));
+
+    CORRADE_COMPARE(importer->animationName(0), "MoveX");
+    CORRADE_COMPARE(importer->animationName(1), "MoveZ");
+    CORRADE_COMPARE(importer->animationName(2), "MoveY");
+
+    {
+        Containers::Optional<AnimationData> animation = importer->animation("MoveX");
+        CORRADE_VERIFY(animation);
+        CORRADE_COMPARE(animation->duration(), (Range1D{0.0f / 24.0f, 11.0f / 24.0f}));
+    }
+
+    {
+        Containers::Optional<AnimationData> animation = importer->animation("MoveZ");
+        CORRADE_VERIFY(animation);
+        CORRADE_COMPARE(animation->duration(), (Range1D{12.0f / 24.0f, 23.0f / 24.0f}));
+    }
+
+    {
+        Containers::Optional<AnimationData> animation = importer->animation("MoveY");
+        CORRADE_VERIFY(animation);
+        CORRADE_COMPARE(animation->duration(), (Range1D{24.0f / 24.0f, 30.0f / 24.0f}));
+    }
 }
 
 void UfbxImporterTest::animationSpaceNormalization() {
