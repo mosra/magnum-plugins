@@ -261,7 +261,6 @@ UfbxImporterTest::UfbxImporterTest() {
               &UfbxImporterTest::openFileFailed,
               &UfbxImporterTest::openDataFailed});
 
-#if 0
     addInstancedTests({&UfbxImporterTest::maxTemporaryMemory,
                        &UfbxImporterTest::maxResultMemory},
         Containers::arraySize(MaxMemoryData));
@@ -367,8 +366,6 @@ UfbxImporterTest::UfbxImporterTest() {
         Containers::arraySize(WeightLimitData));
 
     addTests({&UfbxImporterTest::skinNames});
-
-#endif
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. It also pulls in the AnyImageImporter dependency. */
