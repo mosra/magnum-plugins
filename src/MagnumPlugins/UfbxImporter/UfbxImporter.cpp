@@ -1571,11 +1571,12 @@ struct AnimProp { /* LCOV_EXCL_LINE */
 };
 
 template <typename T>
-void sortAndDeduplicate(Containers::Array<T> &data) {
-    std::sort(data.begin(), data.end());
-    size_t uniqueCount = std::unique(data.begin(), data.end()) - data.begin();
-    if(uniqueCount != data.size())
-        arrayResize(data, uniqueCount);
+void sortAndDeduplicate(Containers::Array<T> &data, std::size_t beginIndex = 0) {
+    auto rangeBegin = data.begin() + beginIndex;
+    std::sort(rangeBegin, data.end());
+    size_t uniqueCount = std::unique(rangeBegin, data.end()) - rangeBegin;
+    if(beginIndex + uniqueCount != data.size())
+        arrayResize(data, beginIndex + uniqueCount);
 }
 
 struct ResampleOptions {
@@ -1659,13 +1660,13 @@ constexpr Containers::StringView complexRotationSources[] = {
 
 struct AnimTrack {
     UnsignedInt targetId;
+    UnsignedInt ufbxNodeId;
     AnimationTrackTarget target;
     AnimationTrackType type;
-    std::size_t keyCount;
-    std::size_t timeOffset;
-    std::size_t valueOffset;
-    std::size_t valuesSize;
-    std::size_t valueElementSize;
+    std::size_t keyTimeBufferOffset;
+
+    Containers::ArrayView<float> times;
+    Containers::StridedArrayView2D<char> values;
 };
 
 constexpr AnimationTrackTarget CustomAnimationTrackTargetVisibility = animationTrackTargetCustom(0);
@@ -1716,11 +1717,14 @@ Containers::Optional<AnimationData> UfbxImporter::doAnimation(UnsignedInt id) {
 
     sortAndDeduplicate(animProps);
 
-    Containers::Array<double> keyTimes;
+    Containers::Array<double> keyTimeBuffer;
     Containers::Array<AnimTrack> animTracks;
 
-    Containers::Array<Float> timeBuffer;
-    Containers::Array<char> valueBuffer;
+    Containers::Array<Containers::ArrayTuple::Item> animDataItems;
+
+    /* We must reserve capacity for animTracks beforehand as we'll be storing
+       references into it in animDataItems */
+    arrayReserve(animTracks, animProps.size());
 
     for(const AnimProp& prop : animProps) {
         const ufbx_node* node = scene->nodes[prop.nodeId];
@@ -1735,12 +1739,13 @@ Containers::Optional<AnimationData> UfbxImporter::doAnimation(UnsignedInt id) {
 
         AnimationTrackTarget target;
         AnimationTrackType trackType;
-        UnsignedInt valueAlignment;
+        UnsignedInt valueSize, valueAlignment;
         bool complexTranslation = false;
 
         if(prop.name == UFBX_Lcl_Translation ""_s) {
             target = AnimationTrackTarget::Translation3D;
             trackType = AnimationTrackType::Vector3;
+            valueSize = sizeof(Vector3);
             valueAlignment = alignof(Vector3);
 
             if(hasComplexTranslation(node)) {
@@ -1750,6 +1755,7 @@ Containers::Optional<AnimationData> UfbxImporter::doAnimation(UnsignedInt id) {
         } else if(prop.name == UFBX_Lcl_Rotation ""_s) {
             target = AnimationTrackTarget::Rotation3D;
             trackType = AnimationTrackType::Quaternion;
+            valueSize = sizeof(Quaternion);
             valueAlignment = alignof(Quaternion);
 
             if(hasComplexRotation(node))
@@ -1757,17 +1763,18 @@ Containers::Optional<AnimationData> UfbxImporter::doAnimation(UnsignedInt id) {
         } else if(prop.name == UFBX_Lcl_Scaling ""_s) {
             target = AnimationTrackTarget::Scaling3D;
             trackType = AnimationTrackType::Vector3;
+            valueSize = sizeof(Vector3);
             valueAlignment = alignof(Vector3);
         } else if(prop.name == UFBX_Visibility ""_s) {
             target = CustomAnimationTrackTargetVisibility;
             trackType = AnimationTrackType::Bool;
+            valueSize = sizeof(bool);
             valueAlignment = alignof(bool);
         } else {
             continue;
         }
 
-        /* arrayClear() doesn't seem to exist */
-        arrayResize(keyTimes, NoInit, 0);
+        const std::size_t keyTimeBufferOffset = keyTimeBuffer.size();
         for(const ufbx_anim_layer* layer : layers) {
             for(const Containers::StringView& source : keySources) {
                 const ufbx_anim_prop *aprop = ufbx_find_anim_prop_len(layer, &node->element, source.data(), source.size());
@@ -1781,7 +1788,7 @@ Containers::Optional<AnimationData> UfbxImporter::doAnimation(UnsignedInt id) {
                     curveOptions.linearResampleRate = curveOptions.cubicResampleRate;
 
                 for(const ufbx_anim_curve* curve : aprop->anim_value->curves)
-                    appendKeyTimes(curveOptions, keyTimes, curve);
+                    appendKeyTimes(curveOptions, keyTimeBuffer, curve);
             }
 
             /* Layer weight affects result if we're combining animations */
@@ -1793,39 +1800,52 @@ Containers::Optional<AnimationData> UfbxImporter::doAnimation(UnsignedInt id) {
                        weight increases linearly as well, causing acceleration. */
                     ResampleOptions weightResampleOptions = resampleOptions;
                     weightResampleOptions.linearResampleRate = weightResampleOptions.cubicResampleRate;
-                    appendKeyTimes(weightResampleOptions, keyTimes, aprop->anim_value->curves[0]);
+                    appendKeyTimes(weightResampleOptions, keyTimeBuffer, aprop->anim_value->curves[0]);
                 }
             }
 
-            sortAndDeduplicate(keyTimes);
+            sortAndDeduplicate(keyTimeBuffer, keyTimeBufferOffset);
         }
 
         /* If there's no key times there is just a default value, handle it by
            having two keys at the boundaries */
-        if(keyTimes.isEmpty()) {
-            arrayAppend(keyTimes, anim->time_begin);
-            arrayAppend(keyTimes, anim->time_end);
+        if(keyTimeBuffer.size() == keyTimeBufferOffset) {
+            arrayAppend(keyTimeBuffer, anim->time_begin);
+            arrayAppend(keyTimeBuffer, anim->time_end);
         }
 
-        std::size_t keyCount = keyTimes.size();
+        const std::size_t keyCount = keyTimeBuffer.size() - keyTimeBufferOffset;
 
-        std::size_t timeOffset = timeBuffer.size();
-        Containers::ArrayView<Float> times = arrayAppend(timeBuffer, NoInit, keyCount);
-        for(std::size_t i = 0; i < keyCount; ++i) {
-            times[i] = Float(keyTimes[i]);
+        arrayAppend(animTracks, {
+            prop.nodeId - _state->nodeIdOffset,
+            prop.nodeId,
+            target,
+            trackType,
+            keyTimeBufferOffset,
+        });
+
+        AnimTrack &animTrack = animTracks.back();
+        arrayAppend(animDataItems, { NoInit, keyCount, animTrack.times });
+        arrayAppend(animDataItems, { NoInit, keyCount, valueSize, valueAlignment, animTrack.values });
+    }
+
+    Containers::Array<AnimationTrackData> tracks{DefaultInit, animTracks.size()};
+
+    Containers::Array<char> data = Containers::ArrayTuple{animDataItems};
+
+    for(const AnimTrack& track : animTracks) {
+        const ufbx_node* node = scene->nodes[track.ufbxNodeId];
+        Containers::ArrayView<double> keyTimes = keyTimeBuffer.sliceSize(track.keyTimeBufferOffset, track.times.size());
+
+        for(UnsignedInt i = 0; i < keyTimes.size(); ++i) {
+            track.times[i] = Float(keyTimes[i]);
         }
 
-        while(valueBuffer.size() % valueAlignment != 0)
-            arrayAppend(valueBuffer, 0);
-        std::size_t valueOffset = valueBuffer.size();
-        std::size_t valueElementSize = 0;
-
-        switch(target) {
+        switch(track.target) {
         case AnimationTrackTarget::Translation3D:
             {
-                Containers::ArrayView<Vector3> values = Containers::arrayCast<Vector3>(arrayAppend(valueBuffer, NoInit, keyCount * sizeof(Vector3)));
-                valueElementSize = sizeof(Vector3);
-                for(std::size_t i = 0; i < keyCount; ++i) {
+                Containers::StridedArrayView1D<Vector3> values = Containers::arrayCast<1, Vector3>(track.values);
+                for(std::size_t i = 0; i < keyTimes.size(); ++i) {
                     ufbx_transform t = ufbx_evaluate_transform(anim, node, keyTimes[i]);
                     values[i] = Vector3(t.translation);
                 }
@@ -1833,10 +1853,9 @@ Containers::Optional<AnimationData> UfbxImporter::doAnimation(UnsignedInt id) {
             break;
         case AnimationTrackTarget::Rotation3D:
             {
-                Containers::ArrayView<Quaternion> values = Containers::arrayCast<Quaternion>(arrayAppend(valueBuffer, NoInit, keyCount * sizeof(Quaternion)));
-                valueElementSize = sizeof(Quaternion);
+                Containers::StridedArrayView1D<Quaternion> values = Containers::arrayCast<1, Quaternion>(track.values);
                 ufbx_quat prev = ufbx_identity_quat;
-                for(std::size_t i = 0; i < keyCount; ++i) {
+                for(std::size_t i = 0; i < keyTimes.size(); ++i) {
                     ufbx_transform t = ufbx_evaluate_transform(anim, node, keyTimes[i]);
                     ufbx_quat quat = ufbx_quat_fix_antipodal(t.rotation, prev);
                     values[i] = Quaternion(quat).normalized();
@@ -1846,9 +1865,8 @@ Containers::Optional<AnimationData> UfbxImporter::doAnimation(UnsignedInt id) {
             break;
         case AnimationTrackTarget::Scaling3D:
             {
-                Containers::ArrayView<Vector3> values = Containers::arrayCast<Vector3>(arrayAppend(valueBuffer, NoInit, keyCount * sizeof(Vector3)));
-                valueElementSize = sizeof(Vector3);
-                for(std::size_t i = 0; i < keyCount; ++i) {
+                Containers::StridedArrayView1D<Vector3> values = Containers::arrayCast<1, Vector3>(track.values);
+                for(std::size_t i = 0; i < keyTimes.size(); ++i) {
                     ufbx_transform t = ufbx_evaluate_transform(anim, node, keyTimes[i]);
                     values[i] = Vector3(t.scale);
                 }
@@ -1860,9 +1878,8 @@ Containers::Optional<AnimationData> UfbxImporter::doAnimation(UnsignedInt id) {
         #endif
         case CustomAnimationTrackTargetVisibility:
             {
-                Containers::ArrayView<bool> values = Containers::arrayCast<bool>(arrayAppend(valueBuffer, NoInit, keyCount * sizeof(bool)));
-                valueElementSize = sizeof(bool);
-                for(std::size_t i = 0; i < keyCount; ++i) {
+                Containers::StridedArrayView1D<bool> values = Containers::arrayCast<1, bool>(track.values);
+                for(std::size_t i = 0; i < keyTimes.size(); ++i) {
                     ufbx_prop p = ufbx_evaluate_prop(anim, &node->element, UFBX_Visibility, keyTimes[i]);
                     values[i] = p.value_int != 0;
                 }
@@ -1873,38 +1890,12 @@ Containers::Optional<AnimationData> UfbxImporter::doAnimation(UnsignedInt id) {
         #endif
         default: CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
         }
-
-        std::size_t valuesSize = valueBuffer.size() - valueOffset;
-        arrayAppend(animTracks, {
-            prop.nodeId - _state->nodeIdOffset,
-            target,
-            trackType,
-            keyCount,
-            timeOffset,
-            valueOffset,
-            valuesSize,
-            valueElementSize,
-        });
     }
-
-    Containers::Array<AnimationTrackData> tracks{DefaultInit, animTracks.size()};
-
-    Containers::ArrayView<Float> timeData;
-    Containers::ArrayView<char> valueData;
-    Containers::Array<char> data = Containers::ArrayTuple{
-        {NoInit, timeBuffer.size(), timeData},
-        {NoInit, valueBuffer.size(), valueData},
-    };
-
-    Utility::copy(timeBuffer, timeData);
-    Utility::copy(valueBuffer, valueData);
 
     for(std::size_t i = 0; i < animTracks.size(); ++i) {
         const AnimTrack& animTrack = animTracks[i];
 
-        Containers::ArrayView<Float> times = timeData.sliceSize(animTrack.timeOffset, animTrack.keyCount);
-        Containers::ArrayView<char> valueBytes = valueData.sliceSize(animTrack.valueOffset, animTrack.valuesSize);
-        Containers::StridedArrayView1D<const void> stridedValues{valueBytes, times.size(), animTrack.valueElementSize};
+        Containers::StridedArrayView1D<const void> values{animTrack.values.asContiguous(), animTrack.values.size()[0], animTrack.values.stride()[0]};
 
         /* @todo: Could detect tracks that have constant interpolation for every keyframe? */
         constexpr Animation::Interpolation interpolation = Animation::Interpolation::Linear;
@@ -1918,8 +1909,8 @@ Containers::Optional<AnimationData> UfbxImporter::doAnimation(UnsignedInt id) {
             UnsignedLong(animTrack.targetId),
             animTrack.type,
             animTrack.type,
-            times,
-            stridedValues,
+            animTrack.times,
+            values,
             interpolation,
             extrapolationBefore,
             extrapolationAfter,
