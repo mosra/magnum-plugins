@@ -1926,7 +1926,12 @@ Containers::Optional<AnimationData> UfbxImporter::doAnimation(UnsignedInt id) {
         };
     }
 
-    return AnimationData{std::move(data), std::move(tracks)};
+    /* Use explicit duration if it's valid */
+    if(anim->time_begin < anim->time_end) {
+        return AnimationData{std::move(data), std::move(tracks), Range1D{Float(anim->time_begin), Float(anim->time_end)}};
+    } else {
+        return AnimationData{std::move(data), std::move(tracks)};
+    }
 }
 
 UnsignedInt UfbxImporter::doSkin3DCount() const {

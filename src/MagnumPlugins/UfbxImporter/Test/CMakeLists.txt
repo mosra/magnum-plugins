@@ -92,6 +92,7 @@ corrade_add_test(UfbxImporterTest UfbxImporterTest.cpp
         animation-space-y-up-m.fbx
         animation-space-z-up-cm.fbx
         animation-space-z-up-m.fbx
+        animation-multi-clip.fbx
         skinning.fbx
         skinning-blender.fbx
         cube.obj
