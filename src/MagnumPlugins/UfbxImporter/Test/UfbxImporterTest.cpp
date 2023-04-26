@@ -103,8 +103,8 @@ struct UfbxImporterTest: TestSuite::Tester {
     void lightOrientation();
 
     void geometricTransformHelperNodes();
-    void geometricTransformPreserve();
     void geometricTransformModifyGeometry();
+    void geometricTransformPreserve();
     void geometricTransformInvalidHandling();
 
     void materialMapping();
@@ -231,11 +231,12 @@ UfbxImporterTest::UfbxImporterTest() {
               &UfbxImporterTest::cameraName,
               &UfbxImporterTest::cameraOrientation,
               &UfbxImporterTest::light,
-              &UfbxImporterTest::lightName,
-              &UfbxImporterTest::lightOrientation});
+              &UfbxImporterTest::lightName});
 
     addInstancedTests({&UfbxImporterTest::lightBadDecay},
         Containers::arraySize(QuietData));
+
+    addTests({&UfbxImporterTest::lightOrientation});
 
     addTests({&UfbxImporterTest::geometricTransformHelperNodes,
               &UfbxImporterTest::geometricTransformModifyGeometry,
