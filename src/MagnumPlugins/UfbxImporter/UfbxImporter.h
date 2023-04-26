@@ -482,6 +482,8 @@ class MAGNUM_UFBXIMPORTER_EXPORT UfbxImporter: public AbstractImporter {
         MAGNUM_UFBXIMPORTER_LOCAL Containers::String doAnimationName(UnsignedInt id) override;
         MAGNUM_UFBXIMPORTER_LOCAL Int doAnimationForName(Containers::StringView name) override;
         MAGNUM_UFBXIMPORTER_LOCAL Containers::Optional<AnimationData> doAnimation(UnsignedInt id) override;
+        MAGNUM_UFBXIMPORTER_LOCAL AnimationTrackTarget doAnimationTrackTargetForName(Containers::StringView name) override;
+        MAGNUM_UFBXIMPORTER_LOCAL Containers::String doAnimationTrackTargetName(UnsignedShort name) override;
 
         MAGNUM_UFBXIMPORTER_LOCAL UnsignedInt doSkin3DCount() const override;
         MAGNUM_UFBXIMPORTER_LOCAL Int doSkin3DForName(Containers::StringView name) override;

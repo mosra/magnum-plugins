@@ -2957,6 +2957,14 @@ void UfbxImporterTest::animationVisibility() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "animation-visibility.fbx")));
 
+    const AnimationTrackTarget animationTrackTargetVisibility = importer->animationTrackTargetForName("Visibility"_s);
+    CORRADE_VERIFY(isAnimationTrackTargetCustom(animationTrackTargetVisibility));
+    CORRADE_COMPARE(importer->animationTrackTargetName(animationTrackTargetVisibility), "Visibility");
+
+    const AnimationTrackTarget animationTrackTargetInvalid = importer->animationTrackTargetForName("ThisFieldDoesNotExist"_s);
+    CORRADE_COMPARE(animationTrackTargetInvalid, AnimationTrackTarget{});
+    CORRADE_COMPARE(importer->animationTrackTargetName(animationTrackTargetCustom(9001)), "");
+
     constexpr AnimationTrackTarget CustomAnimationTrackTargetVisibility = animationTrackTargetCustom(0);
 
     CORRADE_COMPARE(importer->objectName(0), "pCube1");

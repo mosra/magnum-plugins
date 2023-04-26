@@ -1669,6 +1669,10 @@ struct AnimTrack {
 
 constexpr AnimationTrackTarget AnimationTrackTargetVisibility = animationTrackTargetCustom(0);
 
+constexpr Containers::StringView animationTrackTargetNames[]{
+    "Visibility"_s,
+};
+
 }
 
 Containers::Optional<AnimationData> UfbxImporter::doAnimation(UnsignedInt id) {
@@ -1913,6 +1917,19 @@ Containers::Optional<AnimationData> UfbxImporter::doAnimation(UnsignedInt id) {
     } else {
         return AnimationData{std::move(data), std::move(tracks)};
     }
+}
+
+AnimationTrackTarget UfbxImporter::doAnimationTrackTargetForName(Containers::StringView name) {
+    for(UnsignedInt i = 0; i < Containers::arraySize(animationTrackTargetNames); ++i) {
+        if(name == animationTrackTargetNames[i]) return animationTrackTargetCustom(i);
+    }
+    return AnimationTrackTarget{};
+}
+
+Containers::String UfbxImporter::doAnimationTrackTargetName(UnsignedShort name) {
+    if(name < Containers::arraySize(animationTrackTargetNames))
+        return animationTrackTargetNames[name];
+    return {};
 }
 
 UnsignedInt UfbxImporter::doSkin3DCount() const {
