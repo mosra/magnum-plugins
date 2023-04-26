@@ -1739,15 +1739,11 @@ Containers::Optional<AnimationData> UfbxImporter::doAnimation(UnsignedInt id) {
 
         AnimationTrackTarget target;
         AnimationTrackType trackType;
-        UnsignedInt valueSize, valueAlignment;
         bool complexTranslation = false;
 
         if(prop.name == UFBX_Lcl_Translation ""_s) {
             target = AnimationTrackTarget::Translation3D;
             trackType = AnimationTrackType::Vector3;
-            valueSize = sizeof(Vector3);
-            valueAlignment = alignof(Vector3);
-
             if(hasComplexTranslation(node)) {
                 keySources = Containers::arrayView(complexTranslationSources);
                 complexTranslation = true;
@@ -1755,24 +1751,20 @@ Containers::Optional<AnimationData> UfbxImporter::doAnimation(UnsignedInt id) {
         } else if(prop.name == UFBX_Lcl_Rotation ""_s) {
             target = AnimationTrackTarget::Rotation3D;
             trackType = AnimationTrackType::Quaternion;
-            valueSize = sizeof(Quaternion);
-            valueAlignment = alignof(Quaternion);
-
             if(hasComplexRotation(node))
                 keySources = Containers::arrayView(complexRotationSources);
         } else if(prop.name == UFBX_Lcl_Scaling ""_s) {
             target = AnimationTrackTarget::Scaling3D;
             trackType = AnimationTrackType::Vector3;
-            valueSize = sizeof(Vector3);
-            valueAlignment = alignof(Vector3);
         } else if(prop.name == UFBX_Visibility ""_s) {
             target = CustomAnimationTrackTargetVisibility;
             trackType = AnimationTrackType::Bool;
-            valueSize = sizeof(bool);
-            valueAlignment = alignof(bool);
         } else {
             continue;
         }
+
+        UnsignedInt valueSize = animationTrackTypeSize(trackType);
+        UnsignedInt valueAlignment = animationTrackTypeAlignment(trackType);
 
         const std::size_t keyTimeBufferOffset = keyTimeBuffer.size();
         for(const ufbx_anim_layer* layer : layers) {
