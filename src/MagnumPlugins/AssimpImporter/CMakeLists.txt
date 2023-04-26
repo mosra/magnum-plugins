@@ -89,6 +89,7 @@ foreach(_version 20220502 20210102 20201123 20200225 20191122 20190915 20160716 
             # have to use an internal variable for that instead.
             ${CORRADE_CXX11_STANDARD_FLAG}
         CMAKE_FLAGS
+            -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
             -DCMAKE_PROJECT_CMAKE_TRY_COMPILE_INCLUDE=${CMAKE_CURRENT_BINARY_DIR}/checkAssimpVersionLanguageOverride.cmake
         OUTPUT_VARIABLE _version_output)
     if(_works)
