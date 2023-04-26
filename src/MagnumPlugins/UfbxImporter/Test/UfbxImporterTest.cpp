@@ -2802,6 +2802,7 @@ void UfbxImporterTest::animationInterpolation() {
 
 void UfbxImporterTest::animationRotationPivot() {
     auto&& data = ResampleRotationData[testCaseInstanceId()];
+    setTestCaseDescription(Utility::format("resampleRotation={}", data.resampleRotation ? "true" : "false"));
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
     importer->configuration().setValue("resampleRotation", data.resampleRotation);
@@ -2938,6 +2939,7 @@ void UfbxImporterTest::animationVisibility() {
 
 void UfbxImporterTest::animationPreRotation() {
     auto&& data = ResampleRotationData[testCaseInstanceId()];
+    setTestCaseDescription(Utility::format("resampleRotation={}", data.resampleRotation ? "true" : "false"));
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
     importer->configuration().setValue("resampleRotation", data.resampleRotation);
@@ -3350,6 +3352,7 @@ void UfbxImporterTest::animationStackNames() {
 
 void UfbxImporterTest::animationSpaceNormalization() {
     auto&& data = AnimationSpaceData[testCaseInstanceId()];
+    setTestCaseDescription(Utility::format("{}", data.filename));
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
     importer->configuration().setValue("normalizeUnits", true);
@@ -3422,6 +3425,7 @@ void UfbxImporterTest::animationSpaceNormalization() {
 
 void UfbxImporterTest::skinning() {
     auto&& data = WeightLimitData[testCaseInstanceId()];
+    setTestCaseDescription(Utility::format("maxJointWeights={}", data.maxJointWeights));
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
     importer->configuration().setValue("maxJointWeights", data.maxJointWeights);
