@@ -256,12 +256,12 @@ constexpr struct {
 
 UfbxImporterTest::UfbxImporterTest() {
 
-#if 0
     addTests({&UfbxImporterTest::openFile,
               &UfbxImporterTest::openData,
               &UfbxImporterTest::openFileFailed,
               &UfbxImporterTest::openDataFailed});
 
+#if 0
     addInstancedTests({&UfbxImporterTest::maxTemporaryMemory,
                        &UfbxImporterTest::maxResultMemory},
         Containers::arraySize(MaxMemoryData));
