@@ -662,7 +662,7 @@ ufbx_static_assert(sizeof_f64, sizeof(double) == 8);
 
 // -- Version
 
-#define UFBX_SOURCE_VERSION ufbx_pack_version(0, 3, 0)
+#define UFBX_SOURCE_VERSION ufbx_pack_version(0, 4, 0)
 const uint32_t ufbx_source_version = UFBX_SOURCE_VERSION;
 
 ufbx_static_assert(source_header_version, UFBX_SOURCE_VERSION/1000u == UFBX_HEADER_VERSION/1000u);
@@ -18251,7 +18251,7 @@ ufbxi_nodiscard ufbxi_noinline static int ufbxi_finalize_scene(ufbxi_context *uc
 			skin->weights.data = ufbxi_push_zero(&uc->result, ufbx_skin_weight, total_weights);
 			ufbxi_check(skin->weights.data);
 
-            bool retain_all = !uc->opts.clean_skin_weights;
+			bool retain_all = !uc->opts.clean_skin_weights;
 
 			// Count the number of weights per vertex
 			ufbxi_for_ptr_list(ufbx_skin_cluster, p_cluster, skin->clusters) {
@@ -25674,8 +25674,8 @@ ufbx_abi ufbx_real ufbx_evaluate_curve(const ufbx_anim_curve *curve, double time
 
 		const ufbx_keyframe *prev = next - 1;
 
-        // Exact keyframe
-        if (time == prev->time) return prev->value;
+		// Exact keyframe
+		if (prev->time == time) return prev->value;
 
 		double rcp_delta = 1.0 / (next->time - prev->time);
 		double t = (time - prev->time) * rcp_delta;
