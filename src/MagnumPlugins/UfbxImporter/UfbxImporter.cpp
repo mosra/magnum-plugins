@@ -1891,7 +1891,7 @@ Containers::Optional<AnimationData> UfbxImporter::doAnimation(UnsignedInt id) {
     for(std::size_t i = 0; i < animTracks.size(); ++i) {
         const AnimTrack& animTrack = animTracks[i];
 
-        Containers::StridedArrayView1D<const void> values{animTrack.values.asContiguous(), animTrack.values.size()[0], animTrack.values.stride()[0]};
+        Containers::StridedArrayView1D<const void> values = animTrack.values.transposed<0, 1>()[0];
 
         /* @todo: Could detect tracks that have constant interpolation for every keyframe? */
         constexpr Animation::Interpolation interpolation = Animation::Interpolation::Linear;
