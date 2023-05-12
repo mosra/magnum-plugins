@@ -3248,6 +3248,8 @@ void UfbxImporterTest::animationLayersNonLinearWeightNonResampled() {
 namespace {
 
 struct AnimTarget {
+    /*implicit*/ AnimTarget(UnsignedLong objectId): objectId{objectId} {}
+
     const UnsignedLong objectId;
     Vector3 translation;
     Quaternion rotation;

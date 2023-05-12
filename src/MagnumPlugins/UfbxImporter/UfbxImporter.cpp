@@ -1810,13 +1810,15 @@ Containers::Optional<AnimationData> UfbxImporter::doAnimation(UnsignedInt id) {
 
         const std::size_t keyCount = keyTimeBuffer.size() - keyTimeBufferOffset;
 
-        arrayAppend(animTracks, {
+        arrayAppend(animTracks, InPlaceInit,
             prop.nodeId - _state->nodeIdOffset,
             prop.nodeId,
             target,
             trackType,
             keyTimeBufferOffset,
-        });
+            nullptr,
+            nullptr
+        );
 
         AnimTrack &animTrack = animTracks.back();
         arrayAppend(animDataItems, { NoInit, keyCount, animTrack.times });
