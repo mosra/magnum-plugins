@@ -3283,7 +3283,9 @@ Containers::Optional<Animation::Player<Float>> createAnimationPlayer(const Anima
                 CORRADE_ASSERT(false, "Unhandled target type", Containers::NullOpt);
         }
     }
-    return std::move(player);
+
+    /* GCC 4.8 needs extra help here */
+    return Containers::optional(std::move(player));
 }
 
 }
