@@ -118,6 +118,10 @@ See @ref building-plugins, @ref cmake-plugins, @ref plugins and
 The PNG file format doesn't have a way to distinguish between 2D and 1D array
 images. If an image has @ref ImageFlag2D::Array set, a warning is printed and
 the file is saved as a regular 2D image.
+
+The plugin recognizes @ref ImageConverterFlag::Quiet, which will cause all
+conversion warnings, coming either from the plugin or libpng itself, to be
+suppressed.
 */
 class MAGNUM_PNGIMAGECONVERTER_EXPORT PngImageConverter: public AbstractImageConverter {
     public:

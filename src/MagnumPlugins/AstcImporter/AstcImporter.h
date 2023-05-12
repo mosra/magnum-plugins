@@ -133,6 +133,9 @@ option enforces use of a 3D ASTC format), but other tools might.
     @cb{.ini} assumeYUpZBackward @ce @ref Trade-AstcImporter-configuration "configuration option"
     to assume the OpenGL coordinate system and silence the warning.
 
+The plugin recognizes @ref ImporterFlag::Quiet, which will cause all import
+warnings to be suppressed.
+
 @section Trade-AstcImporter-configuration Plugin-specific configuration
 
 It's possible to tune various import options through @ref configuration(). See

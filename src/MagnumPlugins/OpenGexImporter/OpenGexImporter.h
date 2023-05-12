@@ -124,6 +124,10 @@ read.
 -   On OpenGL ES, usage of double type and on WebGL additionally also usage of
     64bit integer types results in parsing error.
 
+While the importer doesn't recognize any @ref ImporterFlag itself, all
+@ref ImporterFlags are propagated to image importer plugins the importer
+delegates to.
+
 @subsection Trade-OpenGexImporter-behavior-scenes Scene import
 
 -   OpenGEX supports only a single scene and has no way to assign a scene name.

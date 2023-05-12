@@ -123,7 +123,8 @@ Imports images in the following formats:
     encodes X right, Y up, Z backward files by default.
 
 The importer recognizes @ref ImporterFlag::Verbose, printing additional info
-when the flag is enabled.
+when the flag is enabled. @ref ImporterFlag::Quiet is recognized as well and
+causes all import warnings to be suppressed.
 
 @subsection Trade-KtxImporter-behavior-types Image types
 

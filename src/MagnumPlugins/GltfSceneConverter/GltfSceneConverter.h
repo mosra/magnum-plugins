@@ -109,6 +109,12 @@ See @ref building-plugins, @ref cmake-plugins, @ref plugins and
 
 -   At the moment, alignment rules for the `*.glb` layout are not respected.
 
+The plugin recognizes @ref SceneConverterFlag::Quiet, which will cause all
+conversion warnings to be suppressed. Both @ref SceneConverterFlag::Quiet and
+@ref SceneConverterFlag::Verbose are also translated to corresponding
+@ref ImageConverterFlags and propagated to image converter plugins the
+converter delegates to.
+
 @subsection Trade-GltfSceneConverter-behavior-meshes Mesh export
 
 -   The @ref MeshData is exported with its exact binary layout. Only padding

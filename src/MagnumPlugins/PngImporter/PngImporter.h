@@ -120,6 +120,9 @@ Grayscale images are imported as @ref PixelFormat::R8Unorm /
 @ref PixelFormat::RGBA16Unorm. All imported images use default
 @ref PixelStorage parameters.
 
+The plugin recognizes @ref ImporterFlag::Quiet, which will cause all import
+warnings, coming either from the plugin or libpng itself, to be suppressed.
+
 @subsection Trade-PngImporter-behavior-cgbi Apple CgBI PNGs
 
 CgBI is a proprietary Apple-specific extension to PNG

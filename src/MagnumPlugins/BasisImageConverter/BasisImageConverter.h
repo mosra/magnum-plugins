@@ -126,6 +126,9 @@ See @ref building-plugins, @ref cmake-plugins, @ref plugins and
 
 @section Trade-BasisImageConverter-behavior Behavior and limitations
 
+The plugin recognizes @ref ImageConverterFlag::Quiet, which will cause all
+conversion warnings to be suppressed.
+
 @subsection Trade-BasisImageConverter-behavior-formats Supported formats
 
 The @ref PixelFormat::R8Unorm, @relativeref{PixelFormat,R8Srgb},

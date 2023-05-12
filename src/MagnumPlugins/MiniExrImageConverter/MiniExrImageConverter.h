@@ -123,6 +123,9 @@ and the file is saved as a regular 2D image.
 
 As OpenEXR doesn't have a registered MIME type, @ref mimeType() returns
 @cpp "image/x-exr" @ce.
+
+The plugin recognizes @ref ImageConverterFlag::Quiet, which will cause all
+conversion warnings to be suppressed.
 */
 class MAGNUM_MINIEXRIMAGECONVERTER_EXPORT MiniExrImageConverter: public AbstractImageConverter {
     public:

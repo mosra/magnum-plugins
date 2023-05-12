@@ -117,7 +117,8 @@ See @ref building-plugins, @ref cmake-plugins, @ref plugins and
     silence the warning for compressed data.
 
 The importer recognizes @ref ImporterFlag::Verbose, printing additional info
-when the flag is enabled.
+when the flag is enabled. @ref ImporterFlag::Quiet is recognized as well and
+causes all import warnings to be suppressed.
 
 @subsection Trade-DdsImporter-behavior-types Image types
 

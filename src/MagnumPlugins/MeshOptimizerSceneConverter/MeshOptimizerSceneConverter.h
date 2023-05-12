@@ -144,7 +144,8 @@ strides.
 
 When @ref SceneConverterFlag::Verbose is enabled, the plugin prints the output
 from meshoptimizer's [efficiency analyzers](https://github.com/zeux/meshoptimizer#efficiency-analyzers)
-before and after the operation.
+before and after the operation. @ref SceneConverterFlag::Quiet is recognized as
+well and causes all conversion warnings to be suppressed.
 
 @subsection Trade-MeshOptimizerSceneConverter-behavior-simplification Mesh simplification
 

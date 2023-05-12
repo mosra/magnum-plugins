@@ -156,6 +156,9 @@ See @ref building-plugins, @ref cmake-plugins, @ref plugins and
 As OpenEXR doesn't have a registered MIME type, @ref mimeType() returns
 @cpp "image/x-exr" @ce.
 
+The plugin recognizes @ref ImageConverterFlag::Quiet, which will cause all
+conversion warnings to be suppressed.
+
 @subsection Trade-OpenExrImageConverter-behavior-channel-mapping Channel mapping
 
 Images with @ref PixelFormat::R16F / @relativeref{PixelFormat,RG16F} /

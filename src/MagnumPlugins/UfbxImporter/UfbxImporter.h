@@ -133,7 +133,10 @@ read.
 The importer recognizes @ref ImporterFlag::Verbose if built in debug mode
 (@ref CORRADE_IS_DEBUG_BUILD defined or @cpp NDEBUG @ce not defined). The
 verbose logging prints detailed `ufbx`-internal callstacks on load failure that
-can be used for debugging or reporting issues.
+can be used for debugging or reporting issues. @ref ImporterFlag::Quiet is
+recognized as well and causes all import warnings to be suppressed. All
+@ref ImporterFlags are also propagated to image importer plugins the importer
+delegates to.
 
 @subsection Trade-UfbxImporter-behavior-scene Scene import
 

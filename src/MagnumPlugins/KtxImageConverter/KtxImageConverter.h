@@ -104,6 +104,9 @@ See @ref building-plugins, @ref cmake-plugins, @ref plugins and
 
 @section Trade-KtxImageConverter-behavior Behavior and limitations
 
+The plugin recognizes @ref ImageConverterFlag::Quiet, which will cause all
+conversion warnings to be suppressed.
+
 @subsection Trade-KtxImageConverter-behavior-formats Supported formats
 
 The following formats can be written:

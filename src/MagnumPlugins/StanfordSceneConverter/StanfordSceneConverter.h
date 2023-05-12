@@ -146,6 +146,9 @@ and @ref MeshPrimitive::TriangleFan meshes are converted to indexed
 @ref MeshPrimitive::Triangles first; points, lines and other primitives are
 not supported.
 
+The plugin recognizes @ref SceneConverterFlag::Quiet, which will cause all
+conversion warnings to be suppressed.
+
 @section Trade-StanfordSceneConverter-configuration Plugin-specific configuration
 
 It's possible to tune various output options through @ref configuration(). See

@@ -149,6 +149,9 @@ See @ref building-plugins, @ref cmake-plugins, @ref plugins and
 
 @section Trade-OpenExrImporter-behavior Behavior and limitations
 
+The plugin recognizes @ref ImporterFlag::Quiet, which will cause all import
+warnings to be suppressed.
+
 @subsection Trade-OpenExrImporter-behavior-channel-mapping Channel mapping
 
 Images containing `R`, `G`, `B` or `A` channels are imported as

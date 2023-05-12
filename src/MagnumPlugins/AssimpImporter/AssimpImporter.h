@@ -209,7 +209,9 @@ read.
 The importer recognizes @ref ImporterFlag::Verbose, enabling verbose logging
 in Assimp when the flag is enabled. However please note that since Assimp
 handles logging through a global singleton, it's not possible to have different
-verbosity levels in each instance.
+verbosity levels in each instance. @ref ImporterFlag::Quiet is recognized as
+well and causes all import warnings to be suppressed. All @ref ImporterFlags
+are also propagated to image importer plugins the importer delegates to.
 
 @subsection Trade-AssimpImporter-behavior-scene Scene import
 

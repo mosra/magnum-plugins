@@ -191,6 +191,9 @@ see their documentation for more information. If the plugin is loaded as
 values are also independent of what file extension is used in a call to
 @ref convertToFile().
 
+The plugin recognizes @ref ImageConverterFlag::Quiet, which will cause all
+conversion warnings to be suppressed.
+
 @subsection Trade-StbImageConverter-behavior-arithmetic-jpeg Arithmetic JPEG encoding
 
 [Arithmetic coding](https://en.wikipedia.org/wiki/Arithmetic_coding) is

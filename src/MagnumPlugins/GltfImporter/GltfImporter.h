@@ -125,6 +125,10 @@ disabled with the @cb{.ini} ignoreRequiredExtensions @ce
 
 Import of morph data is not supported at the moment.
 
+The plugin recognizes @ref ImporterFlag::Quiet, which will cause all import
+warnings to be suppressed. All @ref ImporterFlags are also propagated to image
+importer plugins the importer delegates to.
+
 @subsection Trade-GltfImporter-behavior-objects Scene import
 
 -   Imported scenes always have @ref SceneMappingType::UnsignedInt and are
