@@ -2118,7 +2118,7 @@ void AssimpImporterTest::materialWhiteAmbientTexture() {
 
     /* ASS IMP reports TWO materials for an OBJ. The parser code is so lazy
        that it just has the first material totally empty. Wonderful. Lost one
-       hour on this and my hair is even greyer now. */
+       hour on this and my hair is even grayer now. */
     {
         CORRADE_EXPECT_FAIL("Assimp reports one material more than it should for OBJ and the first is always useless.");
         CORRADE_COMPARE(importer->materialCount(), 1);

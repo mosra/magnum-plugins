@@ -276,7 +276,7 @@ void SpngImporterTest::grayAlpha() {
     {
         /* https://github.com/randy408/libspng/blob/ea6ca5bc18246a338a40b8ae0a55f77928442e28/spng/spng.c#L642-L647 */
         CORRADE_EXPECT_FAIL_IF(!Containers::StringView{data.name}.contains("tRNS"),
-            "libspng doesn't implement expansion of 8-bit grey+alpha formats.");
+            "libspng doesn't implement expansion of 8-bit gray+alpha formats.");
         CORRADE_COMPARE(image->format(), PixelFormat::RG8Unorm);
     }
 
