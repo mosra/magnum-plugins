@@ -45,16 +45,16 @@
 #include <Magnum/Math/RectangularMatrix.h>
 #include <Magnum/Math/Vector3.h>
 #include <Magnum/Math/Quaternion.h>
-#include <Magnum/Trade/MeshData.h>
+#include <Magnum/MeshTools/RemoveDuplicates.h>
+#include <Magnum/Trade/AnimationData.h>
 #include <Magnum/Trade/CameraData.h>
 #include <Magnum/Trade/MaterialData.h>
-#include <Magnum/Trade/TextureData.h>
+#include <Magnum/Trade/MeshData.h>
 #include <Magnum/Trade/ImageData.h>
 #include <Magnum/Trade/LightData.h>
 #include <Magnum/Trade/SceneData.h>
-#include <Magnum/Trade/AnimationData.h>
 #include <Magnum/Trade/SkinData.h>
-#include <Magnum/MeshTools/RemoveDuplicates.h>
+#include <Magnum/Trade/TextureData.h>
 #include <MagnumPlugins/AnyImageImporter/AnyImageImporter.h>
 
 #define UFBX_NO_INDEX_GENERATION
