@@ -1825,8 +1825,10 @@ Containers::Optional<AnimationData> UfbxImporter::doAnimation(UnsignedInt id) {
         );
 
         AnimTrack& animTrack = animTracks.back();
-        arrayAppend(animDataItems, { NoInit, keyCount, animTrack.times });
-        arrayAppend(animDataItems, { NoInit, keyCount, valueSize, valueAlignment, animTrack.values });
+        arrayAppend(animDataItems, {
+            {NoInit, keyCount, animTrack.times},
+            {NoInit, keyCount, valueSize, valueAlignment, animTrack.values}
+        });
     }
 
     Containers::Array<AnimationTrackData> tracks{DefaultInit, animTracks.size()};
