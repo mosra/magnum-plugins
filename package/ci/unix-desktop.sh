@@ -104,7 +104,21 @@ cmake .. \
     -DMAGNUM_BUILD_PLUGINS_STATIC=$BUILD_STATIC \
     -G Ninja
 ninja $NINJA_JOBS
-ASAN_OPTIONS="color=always" LSAN_OPTIONS="color=always" TSAN_OPTIONS="color=always" CORRADE_TEST_COLOR=ON ctest -V
+
+# UfbxImporter likely triggers https://github.com/google/sanitizers/issues/1322
+# since https://github.com/mosra/magnum-plugins/pull/136 when running the
+# imageEmbedded() test case. It manifests as
+#
+#   Tracer caught signal 11: addr=0x0 pc=0x512718 sp=0x7fc42b3d3d10
+#   ==8082==LeakSanitizer has encountered a fatal error.
+#
+# only when running through CTest from CMake 3.4, not directly, and
+# ASAN_OPTIONS=intercept_tls_get_addr=0 (as suggested in the issue above) seems
+# to fix it. May want to revisit once https://reviews.llvm.org/D147459 lands in
+# a public release and that public release becomes Magnum's "min spec" target.
+# So around 2030 I'd say.
+ASAN_OPTIONS="color=always" LSAN_OPTIONS="color=always" TSAN_OPTIONS="color=always" CORRADE_TEST_COLOR=ON ctest -V -E UfbxImporter
+ASAN_OPTIONS="color=always intercept_tls_get_addr=0" LSAN_OPTIONS="color=always" TSAN_OPTIONS="color=always" CORRADE_TEST_COLOR=ON ctest -V -R UfbxImporter
 
 # Test install, after running the tests as for them it shouldn't be needed
 ninja install
