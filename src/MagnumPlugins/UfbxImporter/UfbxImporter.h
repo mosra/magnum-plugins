@@ -249,12 +249,12 @@ setting any to zero disables loading any tangents etc.
 
 -   FBX represents rotations using Euler angles, which are converted to
     quaternions on import.
--   Cubic FBX animation curves are resampled as linear interpolation as time
-    tangents prevent representing them as cubic Hermite splines, the resampling
-    rate can be configured via the @cb{.ini} resampleRate
+-   Cubic FBX animation curves are resampled to linear interpolation as time
+    tangents prevent representing them via cubic Hermite splines. The
+    resampling rate can be configured via the @cb{.ini} resampleRate
     @ce @ref Trade-UfbxImporter-configuration "configuration option".
--   FBX represents rotations as Euler angles so even linear rotations are
-    resampled by default to preserve the original motion, this can be disabled
+-   As FBX represents rotations using Euler angles, even linear rotations are
+    resampled by default to preserve the original motion. This can be disabled
     via the @cb{.ini} resampleRotation @ce
     @ref Trade-UfbxImporter-configuration "configuration option".
 -   Morph targets are not supported
@@ -266,16 +266,16 @@ setting any to zero disables loading any tangents etc.
     @ref Trade-UfbxImporter-configuration "configuration option" to import each
     animation layer as an individual animation. Currently this loses
     information about what layers animation stacks contain.
--   As many FBX exporters resample animations, to avoid double resampling
-    @ref UfbxImporter will avoid resampling closely spaced keyframes, this
-    interval can be adjusted via the @cb{.ini} minimumSampleRate @ce
-    @ref Trade-UfbxImporter-configuration "configuration option".
--   Constant keyframes are represented as nearly equal time keyframes, the
+-   As many FBX exporters resample animations already, to avoid double
+    resampling @ref UfbxImporter will avoid resampling closely spaced
+    keyframes. This interval can be adjusted via the
+    @cb{.ini} minimumSampleRate @ce @ref Trade-UfbxImporter-configuration "configuration option".
+-   Constant keyframes are represented as nearly-equal time keyframes. The
     constant interpolation interval can be adjusted via the
     @cb{.ini} constantInterpolationDuration @ce
     @ref Trade-UfbxImporter-configuration "configuration option".
 -   Skin deformers are supported but only the first skin deformer for a mesh is
-    imported currently.
+    imported at the moment.
 
 @subsection Trade-UfbxImporter-behavior-textures Texture import
 
