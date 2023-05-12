@@ -478,8 +478,9 @@ Int UfbxImporter::doDefaultScene() const {
             return 0;
         case UFBX_FILE_FORMAT_MTL:
             return -1;
-        case UFBX_FILE_FORMAT_UNKNOWN:
-            CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+        /* LCOV_EXCL_START */
+        case UFBX_FILE_FORMAT_UNKNOWN: CORRADE_INTERNAL_ASSERT_UNREACHABLE();
+        /* LCOV_EXCL_STOP */
     }
 
     CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
@@ -493,8 +494,10 @@ UnsignedInt UfbxImporter::doSceneCount() const {
             return 1;
         case UFBX_FILE_FORMAT_MTL:
             return 0;
+        /* LCOV_EXCL_START */
         case UFBX_FILE_FORMAT_UNKNOWN:
-            CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+            CORRADE_INTERNAL_ASSERT_UNREACHABLE();
+        /* LCOV_EXCL_STOP */
     }
 
     CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
