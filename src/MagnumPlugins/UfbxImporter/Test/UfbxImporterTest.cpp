@@ -2701,7 +2701,7 @@ template<class V, class R = Animation::ResultOf<V>> inline const Animation::Trac
         }
     }
     CORRADE_FAIL("Track not found for target" << target << "type" << targetType);
-    return {};
+    CORRADE_INTERNAL_ASSERT_UNREACHABLE();
 }
 
 void UfbxImporterTest::animationInterpolation() {
