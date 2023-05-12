@@ -31,10 +31,10 @@
 #include <Magnum/Math/PackingBatch.h>
 #include <Magnum/Math/Vector3.h>
 #include <Magnum/MeshTools/Combine.h>
+#include <Magnum/MeshTools/Copy.h>
 #include <Magnum/MeshTools/Duplicate.h>
 #include <Magnum/MeshTools/GenerateIndices.h>
 #include <Magnum/MeshTools/Interleave.h>
-#include <Magnum/MeshTools/Reference.h>
 #include <Magnum/Trade/ArrayAllocator.h>
 #include <Magnum/Trade/MeshData.h>
 #include <meshoptimizer.h>
@@ -300,7 +300,7 @@ Containers::Optional<MeshData> MeshOptimizerSceneConverter::doConvert(const Mesh
 
     /* Make the mesh interleaved (with a contiguous index array) and owned
        first */
-    MeshData out = MeshTools::owned(MeshTools::interleave(mesh));
+    MeshData out = MeshTools::copy(MeshTools::interleave(mesh));
     CORRADE_INTERNAL_ASSERT(MeshTools::isInterleaved(out));
     CORRADE_INTERNAL_ASSERT(!out.isIndexed() || out.indices().isContiguous());
 
