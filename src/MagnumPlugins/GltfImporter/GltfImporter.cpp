@@ -2157,11 +2157,11 @@ Containers::Optional<LightData> GltfImporter::doLight(const UnsignedInt id) {
             outerConeAngle = Rad{*angle};
         }
 
-        if(innerConeAngle < Rad(0.0_degf) || innerConeAngle >= outerConeAngle || outerConeAngle >= Rad(90.0_degf)) {
+        if(innerConeAngle < Rad(0.0_degf) || innerConeAngle >= outerConeAngle || outerConeAngle > Rad(Constants::piHalf())) {
             Error{} << "Trade::GltfImporter::light(): spot inner and outer cone angle" << Deg(innerConeAngle) << "and" << Deg(outerConeAngle) << "out of allowed bounds";
             return {};
         }
-    } else innerConeAngle = outerConeAngle = 180.0_degf;
+    } else innerConeAngle = outerConeAngle = Rad(Constants::pi());
 
     /* Range should be infinity for directional lights. Because there's no way
        to represent infinity in JSON, directly suggest to remove the range

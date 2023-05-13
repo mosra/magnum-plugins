@@ -655,8 +655,8 @@ const struct {
         "expected orthographic zfar larger than znear of 0.5, got 0.5"},
 };
 
-constexpr struct {
-    const char* name;
+const struct {
+    TestSuite::TestCaseDescriptionSourceLocation name;
     const char* message;
 } LightInvalidData[]{
     {"unknown type",
@@ -665,41 +665,44 @@ constexpr struct {
         "range can't be defined for a directional light"},
     {"spot with too small inner angle",
         "spot inner and outer cone angle Deg(-0.572958) and Deg(45) out of allowed bounds"},
-    /* These are kinda silly (not sure why inner can't be the same as outer),
-       but let's follow the spec */
+    /* It's 90.00000648617464 which is outside of the reasonable float range so
+       the message is a bit weird. Exactly 90° is allowed, and is tested in
+       light() */
     {"spot with too large outer angle",
-        "spot inner and outer cone angle Deg(0) and Deg(90.5273) out of allowed bounds"},
+        "spot inner and outer cone angle Deg(0) and Deg(90) out of allowed bounds"},
+    /* This one is kinda silly (not sure why inner can't be the same as outer),
+       but let's follow the spec */
     {"spot with inner angle same as outer",
         "spot inner and outer cone angle Deg(14.3239) and Deg(14.3239) out of allowed bounds"},
     {"invalid color property",
-        "Utility::Json::parseFloatArray(): expected an array, got Utility::JsonToken::Type::String at {}:42:20\n"
+        "Utility::Json::parseFloatArray(): expected an array, got Utility::JsonToken::Type::String at {}:43:20\n"
         "Trade::GltfImporter::light(): invalid color property\n"},
     {"invalid color array size",
-        "Utility::Json::parseFloatArray(): expected a 3-element array, got 4 at {}:47:20\n"
+        "Utility::Json::parseFloatArray(): expected a 3-element array, got 4 at {}:48:20\n"
         "Trade::GltfImporter::light(): invalid color property\n"},
     {"invalid intensity property",
-        "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::String at {}:52:24\n"
+        "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::String at {}:53:24\n"
         "Trade::GltfImporter::light(): invalid intensity property\n"},
     {"invalid range property",
-        "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::String at {}:57:20\n"
+        "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::String at {}:58:20\n"
         "Trade::GltfImporter::light(): invalid range property\n"},
     {"zero range",
         "expected positive range, got 0"},
     {"missing type property",
         "missing or invalid type property"},
     {"invalid type property",
-        "Utility::Json::parseString(): expected a string, got Utility::JsonToken::Type::Number at {}:69:19\n"
+        "Utility::Json::parseString(): expected a string, got Utility::JsonToken::Type::Number at {}:70:19\n"
         "Trade::GltfImporter::light(): missing or invalid type property\n"},
     {"missing spot property",
         "missing or invalid spot property"},
     {"invalid spot property",
-        "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Number at {}:78:19\n"
+        "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Number at {}:79:19\n"
         "Trade::GltfImporter::light(): missing or invalid spot property\n"},
     {"invalid spot innerConeAngle property",
-        "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::Bool at {}:84:31\n"
+        "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::Bool at {}:85:31\n"
         "Trade::GltfImporter::light(): invalid spot innerConeAngle property\n"},
     {"invalid spot outerConeAngle property",
-        "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::Bool at {}:91:31\n"
+        "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::Bool at {}:92:31\n"
         "Trade::GltfImporter::light(): invalid spot outerConeAngle property\n"}
 };
 
@@ -2800,7 +2803,7 @@ void GltfImporterTest::light() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "light.gltf")));
 
-    CORRADE_COMPARE(importer->lightCount(), 4);
+    CORRADE_COMPARE(importer->lightCount(), 5);
     CORRADE_COMPARE(importer->lightName(1), "Spot");
     CORRADE_COMPARE(importer->lightForName("Spot"), 1);
     CORRADE_COMPARE(importer->lightForName("Nonexistent"), -1);
@@ -2838,6 +2841,13 @@ void GltfImporterTest::light() {
         /* glTF has half-angles, we have full angles */
         CORRADE_COMPARE(light->outerConeAngle(), 45.0_degf*2.0f);
     } {
+        Containers::Optional<Trade::LightData> light = importer->light("Spot with 90° outer angle");
+        CORRADE_VERIFY(light);
+        CORRADE_COMPARE(light->type(), LightData::Type::Spot);
+        CORRADE_COMPARE(light->innerConeAngle(), 0.0_degf);
+        /* glTF has half-angles, we have full angles */
+        CORRADE_COMPARE(light->outerConeAngle(), 90.0_degf*2.0f);
+    } {
         Containers::Optional<Trade::LightData> light = importer->light("Sun");
         CORRADE_VERIFY(light);
         CORRADE_COMPARE(light->type(), LightData::Type::Directional);
@@ -2865,9 +2875,13 @@ void GltfImporterTest::lightInvalid() {
        potential placeholder for the filename, otherwise just the sentence
        without any placeholder */
     if(Containers::StringView{data.message}.hasSuffix('\n'))
-        CORRADE_COMPARE(out.str(), Utility::formatString(data.message, filename));
+        CORRADE_COMPARE_AS(out.str(),
+            Utility::formatString(data.message, filename),
+            TestSuite::Compare::String);
     else
-        CORRADE_COMPARE(out.str(), Utility::formatString("Trade::GltfImporter::light(): {}\n", data.message));
+        CORRADE_COMPARE_AS(out.str(),
+            Utility::formatString("Trade::GltfImporter::light(): {}\n", data.message),
+            TestSuite::Compare::String);
 }
 
 void GltfImporterTest::scene() {

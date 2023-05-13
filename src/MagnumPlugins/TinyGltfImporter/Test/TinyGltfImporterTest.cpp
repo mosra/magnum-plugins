@@ -1461,7 +1461,7 @@ void TinyGltfImporterTest::cameraInvalidType() {
 
 void TinyGltfImporterTest::light() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "light.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(TINYGLTFIMPORTER_TEST_DIR, "light.gltf")));
 
     CORRADE_COMPARE(importer->lightCount(), 4);
     CORRADE_COMPARE(importer->lightName(1), "Spot");

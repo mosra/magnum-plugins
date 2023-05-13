@@ -23,9 +23,10 @@
         },
         {
           "name": "spot with too large outer angle",
+          "note": "Python json.dumps(math.pi*0.5) is 1.5707963267948966, this is the closest higher value that fails",
           "type": "spot",
           "spot": {
-            "outerConeAngle": 1.58
+            "outerConeAngle": 1.57079644
           }
         },
         {
