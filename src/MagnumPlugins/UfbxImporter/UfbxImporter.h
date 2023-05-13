@@ -260,6 +260,8 @@ setting any to zero disables loading any tangents etc.
     resampled by default to preserve the original motion. This can be disabled
     via the @cb{.ini} resampleRotation @ce
     @ref Trade-UfbxImporter-configuration "configuration option".
+-   FBX supports animating object visibility as well, which are imported with
+    a custom animation track target named @cpp "visibility" @ce
 -   Morph targets are not supported
 -   Animation tracks are always imported with
     @ref Animation::Extrapolation::Constant because FBX does not contain any
