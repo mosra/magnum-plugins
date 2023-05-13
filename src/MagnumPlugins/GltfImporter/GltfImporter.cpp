@@ -2110,13 +2110,13 @@ Containers::Optional<LightData> GltfImporter::doLight(const UnsignedInt id) {
     }
 
     /* Light type */
-    LightData::Type type;
+    LightType type;
     if(gltfType->asString() == "point"_s) {
-        type = LightData::Type::Point;
+        type = LightType::Point;
     } else if(gltfType->asString() == "spot"_s) {
-        type = LightData::Type::Spot;
+        type = LightType::Spot;
     } else if(gltfType->asString() == "directional"_s) {
-        type = LightData::Type::Directional;
+        type = LightType::Directional;
     } else {
         Error{} << "Trade::GltfImporter::light(): unrecognized type" << gltfType->asString();
         return {};
@@ -2127,7 +2127,7 @@ Containers::Optional<LightData> GltfImporter::doLight(const UnsignedInt id) {
        confusion report a potential error in the original half-angles and
        double the angle only at the end. */
     Rad innerConeAngle{NoInit}, outerConeAngle{NoInit};
-    if(type == LightData::Type::Spot) {
+    if(type == LightType::Spot) {
         innerConeAngle = 0.0_degf;
         outerConeAngle = 45.0_degf;
 
@@ -2166,7 +2166,7 @@ Containers::Optional<LightData> GltfImporter::doLight(const UnsignedInt id) {
     /* Range should be infinity for directional lights. Because there's no way
        to represent infinity in JSON, directly suggest to remove the range
        property, don't even bother printing the value. */
-    if(type == LightData::Type::Directional && gltfRange) {
+    if(type == LightType::Directional && gltfRange) {
         Error{} << "Trade::GltfImporter::light(): range can't be defined for a directional light";
         return {};
     }

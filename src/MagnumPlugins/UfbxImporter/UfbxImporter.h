@@ -216,9 +216,9 @@ delegates to.
 
 @subsection Trade-UfbxImporter-behavior-lights Light import
 
--   @ref LightData::Type::Directional and @ref LightData::Type::Ambient expect
-    the attenuation to be constant, but FBX is not required to follow that.
-    In that case the attenuation value from the file is ignored.
+-   @ref LightType::Directional and @ref LightType::Ambient expect the
+    attenuation to be constant, but FBX is not required to follow that. In that
+    case the attenuation value from the file is ignored.
 -   Area and volume lights are not supported
 
 @subsection Trade-UfbxImporter-behavior-meshes Mesh import

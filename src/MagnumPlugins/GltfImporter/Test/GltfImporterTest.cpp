@@ -2811,7 +2811,7 @@ void GltfImporterTest::light() {
     {
         Containers::Optional<Trade::LightData> light = importer->light("Point with everything implicit");
         CORRADE_VERIFY(light);
-        CORRADE_COMPARE(light->type(), LightData::Type::Point);
+        CORRADE_COMPARE(light->type(), LightType::Point);
         CORRADE_COMPARE(light->color(), (Color3{1.0f, 1.0f, 1.0f}));
         CORRADE_COMPARE(light->intensity(), 1.0f);
         CORRADE_COMPARE(light->attenuation(), (Vector3{1.0f, 0.0f, 1.0f}));
@@ -2825,7 +2825,7 @@ void GltfImporterTest::light() {
     } {
         Containers::Optional<Trade::LightData> light = importer->light("Spot");
         CORRADE_VERIFY(light);
-        CORRADE_COMPARE(light->type(), LightData::Type::Spot);
+        CORRADE_COMPARE(light->type(), LightType::Spot);
         CORRADE_COMPARE(light->color(), (Color3{0.28f, 0.19f, 1.0f}));
         CORRADE_COMPARE(light->intensity(), 2.1f);
         CORRADE_COMPARE(light->attenuation(), (Vector3{1.0f, 0.0f, 1.0f}));
@@ -2836,21 +2836,21 @@ void GltfImporterTest::light() {
     } {
         Containers::Optional<Trade::LightData> light = importer->light("Spot with implicit angles");
         CORRADE_VERIFY(light);
-        CORRADE_COMPARE(light->type(), LightData::Type::Spot);
+        CORRADE_COMPARE(light->type(), LightType::Spot);
         CORRADE_COMPARE(light->innerConeAngle(), 0.0_degf);
         /* glTF has half-angles, we have full angles */
         CORRADE_COMPARE(light->outerConeAngle(), 45.0_degf*2.0f);
     } {
         Containers::Optional<Trade::LightData> light = importer->light("Spot with 90° outer angle");
         CORRADE_VERIFY(light);
-        CORRADE_COMPARE(light->type(), LightData::Type::Spot);
+        CORRADE_COMPARE(light->type(), LightType::Spot);
         CORRADE_COMPARE(light->innerConeAngle(), 0.0_degf);
         /* glTF has half-angles, we have full angles */
         CORRADE_COMPARE(light->outerConeAngle(), 90.0_degf*2.0f);
     } {
         Containers::Optional<Trade::LightData> light = importer->light("Sun");
         CORRADE_VERIFY(light);
-        CORRADE_COMPARE(light->type(), LightData::Type::Directional);
+        CORRADE_COMPARE(light->type(), LightType::Directional);
         CORRADE_COMPARE(light->color(), (Color3{1.0f, 0.08f, 0.14f}));
         CORRADE_COMPARE(light->intensity(), 0.1f);
     }

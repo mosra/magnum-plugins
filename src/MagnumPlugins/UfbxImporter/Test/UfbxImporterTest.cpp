@@ -924,7 +924,7 @@ void UfbxImporterTest::light() {
 
         Containers::Optional<LightData> light = importer->light(lights[0]);
         CORRADE_VERIFY(light);
-        CORRADE_COMPARE(light->type(), LightData::Type::Point);
+        CORRADE_COMPARE(light->type(), LightType::Point);
         CORRADE_COMPARE(light->color(), (Color3{0.11f, 0.12f, 0.13f}));
         CORRADE_COMPARE(light->intensity(), 1.0f);
         CORRADE_COMPARE(light->range(), Constants::inf());
@@ -940,7 +940,7 @@ void UfbxImporterTest::light() {
 
         Containers::Optional<LightData> light = importer->light(lights[0]);
         CORRADE_VERIFY(light);
-        CORRADE_COMPARE(light->type(), LightData::Type::Directional);
+        CORRADE_COMPARE(light->type(), LightType::Directional);
         CORRADE_COMPARE(light->color(), (Color3{0.21f, 0.22f, 0.23f}));
         CORRADE_COMPARE(light->intensity(), 2.0f);
         CORRADE_COMPARE(light->range(), Constants::inf());
@@ -956,7 +956,7 @@ void UfbxImporterTest::light() {
 
         Containers::Optional<LightData> light = importer->light(lights[0]);
         CORRADE_VERIFY(light);
-        CORRADE_COMPARE(light->type(), LightData::Type::Point);
+        CORRADE_COMPARE(light->type(), LightType::Point);
         CORRADE_COMPARE(light->color(), (Color3{0.31f, 0.32f, 0.33f}));
         CORRADE_COMPARE(light->intensity(), 3.0f);
         CORRADE_COMPARE(light->range(), Constants::inf());
@@ -972,7 +972,7 @@ void UfbxImporterTest::light() {
 
         Containers::Optional<LightData> light = importer->light(lights[0]);
         CORRADE_VERIFY(light);
-        CORRADE_COMPARE(light->type(), LightData::Type::Spot);
+        CORRADE_COMPARE(light->type(), LightType::Spot);
         CORRADE_COMPARE(light->color(), (Color3{0.41f, 0.42f, 0.43f}));
         CORRADE_COMPARE(light->intensity(), 4.0f);
         CORRADE_COMPARE(light->range(), Constants::inf());
@@ -1052,7 +1052,7 @@ void UfbxImporterTest::lightBadDecay() {
             light = importer->light(lights[0]);
         }
         CORRADE_VERIFY(light);
-        CORRADE_COMPARE(light->type(), LightData::Type::Point);
+        CORRADE_COMPARE(light->type(), LightType::Point);
         CORRADE_COMPARE(light->attenuation(), (Vector3{0.0f, 0.0f, 1.0f}));
         if(data.quiet)
             CORRADE_COMPARE(out.str(), "");
@@ -1072,12 +1072,12 @@ void UfbxImporterTest::lightBadDecay() {
             light = importer->light(lights[0]);
         }
         CORRADE_VERIFY(light);
-        CORRADE_COMPARE(light->type(), LightData::Type::Directional);
+        CORRADE_COMPARE(light->type(), LightType::Directional);
         CORRADE_COMPARE(light->attenuation(), (Vector3{1.0f, 0.0f, 0.0f}));
         if(data.quiet)
             CORRADE_COMPARE(out.str(), "");
         else
-            CORRADE_COMPARE(out.str(), "Trade::UfbxImporter::light(): patching attenuation Vector(0, 0, 1) to Vector(1, 0, 0) for Trade::LightData::Type::Directional\n");
+            CORRADE_COMPARE(out.str(), "Trade::UfbxImporter::light(): patching attenuation Vector(0, 0, 1) to Vector(1, 0, 0) for Trade::LightType::Directional\n");
     }
 }
 

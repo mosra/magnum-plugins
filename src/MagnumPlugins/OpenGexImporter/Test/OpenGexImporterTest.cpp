@@ -689,7 +689,7 @@ void OpenGexImporterTest::light() {
     {
         Containers::Optional<LightData> light = importer->light(0);
         CORRADE_VERIFY(light);
-        CORRADE_COMPARE(light->type(), LightData::Type::Directional);
+        CORRADE_COMPARE(light->type(), LightType::Directional);
         CORRADE_COMPARE(light->color(), (Color3{0.7f, 1.0f, 0.1f}));
         CORRADE_COMPARE(light->intensity(), 3.0f);
 
@@ -697,7 +697,7 @@ void OpenGexImporterTest::light() {
     } {
         Containers::Optional<LightData> light = importer->light(1);
         CORRADE_VERIFY(light);
-        CORRADE_COMPARE(light->type(), LightData::Type::Point);
+        CORRADE_COMPARE(light->type(), LightType::Point);
         CORRADE_COMPARE(light->color(), (Color3{1.0f, 1.0f, 1.0f}));
         CORRADE_COMPARE(light->intensity(), 0.5f);
 
@@ -705,7 +705,7 @@ void OpenGexImporterTest::light() {
     } {
         Containers::Optional<LightData> light = importer->light(2);
         CORRADE_VERIFY(light);
-        CORRADE_COMPARE(light->type(), LightData::Type::Spot);
+        CORRADE_COMPARE(light->type(), LightType::Spot);
         CORRADE_COMPARE(light->color(), (Color3{0.1f, 0.0f, 0.1f}));
         CORRADE_COMPARE(light->intensity(), 1.0f);
     }

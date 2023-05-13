@@ -905,13 +905,13 @@ Containers::Optional<LightData> TinyGltfImporter::doLight(UnsignedInt id) {
     const tinygltf::Light& light = _d->model.lights[id];
 
     /* Light type */
-    LightData::Type type;
+    LightType type;
     if(light.type == "point") {
-        type = LightData::Type::Point;
+        type = LightType::Point;
     } else if(light.type == "spot") {
-        type = LightData::Type::Spot;
+        type = LightType::Spot;
     } else if(light.type == "directional") {
-        type = LightData::Type::Directional;
+        type = LightType::Directional;
     } else {
         Error{} << "Trade::TinyGltfImporter::light(): invalid light type" << light.type;
         return Containers::NullOpt;
@@ -933,7 +933,7 @@ Containers::Optional<LightData> TinyGltfImporter::doLight(UnsignedInt id) {
        confusion report a potential error in the original half-angles and
        double the angle only at the end. */
     Rad innerConeAngle{NoInit}, outerConeAngle{NoInit};
-    if(type == LightData::Type::Spot) {
+    if(type == LightType::Spot) {
         innerConeAngle = Rad{Float(light.spot.innerConeAngle)};
         outerConeAngle = Rad{Float(light.spot.outerConeAngle)};
 
@@ -953,7 +953,7 @@ Containers::Optional<LightData> TinyGltfImporter::doLight(UnsignedInt id) {
     /* Range should be infinity for directional lights. Because there's no way
        to represent infinity in JSON, directly suggest to remove the range
        property, don't even bother printing the value. */
-    if(type == LightData::Type::Directional && range != Constants::inf()) {
+    if(type == LightType::Directional && range != Constants::inf()) {
         Error{} << "Trade::TinyGltfImporter::light(): range can't be defined for a directional light";
         return Containers::NullOpt;
     }

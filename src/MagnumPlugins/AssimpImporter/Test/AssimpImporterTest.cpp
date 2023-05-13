@@ -1753,7 +1753,7 @@ void AssimpImporterTest::light() {
     {
         Containers::Optional<Trade::LightData> light = importer->light("Spot");
         CORRADE_VERIFY(light);
-        CORRADE_COMPARE(light->type(), LightData::Type::Spot);
+        CORRADE_COMPARE(light->type(), LightType::Spot);
         CORRADE_COMPARE(light->color(), (Color3{0.12f, 0.24f, 0.36f}));
         CORRADE_COMPARE(light->intensity(), 1.0f);
         CORRADE_COMPARE(light->range(), Constants::inf());
@@ -1767,7 +1767,7 @@ void AssimpImporterTest::light() {
     } {
         Containers::Optional<Trade::LightData> light = importer->light("Point");
         CORRADE_VERIFY(light);
-        CORRADE_COMPARE(light->type(), LightData::Type::Point);
+        CORRADE_COMPARE(light->type(), LightType::Point);
         CORRADE_COMPARE(light->color(), (Color3{0.5f, 0.25f, 0.05f}));
         CORRADE_COMPARE(light->intensity(), 1.0f);
         CORRADE_COMPARE(light->range(), Constants::inf());
@@ -1777,7 +1777,7 @@ void AssimpImporterTest::light() {
     } {
         Containers::Optional<Trade::LightData> light = importer->light("Sun");
         CORRADE_VERIFY(light);
-        CORRADE_COMPARE(light->type(), LightData::Type::Directional);
+        CORRADE_COMPARE(light->type(), LightType::Directional);
         /* This one has intensity of 10, which gets premultiplied to the
            color */
         CORRADE_COMPARE(light->color(), (Color3{1.0f, 0.15f, 0.45f})*10.0f);
@@ -1788,7 +1788,7 @@ void AssimpImporterTest::light() {
     } {
         Containers::Optional<Trade::LightData> light = importer->light("Ambient");
         CORRADE_VERIFY(light);
-        CORRADE_COMPARE(light->type(), LightData::Type::Ambient);
+        CORRADE_COMPARE(light->type(), LightType::Ambient);
         CORRADE_COMPARE(light->color(), (Color3{0.01f, 0.02f, 0.05f}));
         CORRADE_COMPARE(light->intensity(), 1.0f);
         CORRADE_COMPARE(light->attenuation(), (Vector3{1.0f, 0.0f, 0.0f}));
@@ -1837,14 +1837,14 @@ void AssimpImporterTest::lightDirectionalBlender() {
     Warning redirectWarning{&out};
     Containers::Optional<LightData> light = importer->light("Sun");
     CORRADE_VERIFY(light);
-    CORRADE_COMPARE(light->type(), LightData::Type::Directional);
+    CORRADE_COMPARE(light->type(), LightType::Directional);
     CORRADE_COMPARE(light->color(), (Color3{0.3f, 0.4f, 0.5f}));
     CORRADE_COMPARE(light->intensity(), 1.0f);
     CORRADE_COMPARE(light->attenuation(), (Vector3{1.0f, 0.0f, 0.0f}));
     if(data.quiet)
         CORRADE_COMPARE(out.str(), "");
     else
-        CORRADE_COMPARE(out.str(), "Trade::AssimpImporter::light(): patching attenuation Vector(1, 0.16, 0.0064) to Vector(1, 0, 0) for Trade::LightData::Type::Directional\n");
+        CORRADE_COMPARE(out.str(), "Trade::AssimpImporter::light(): patching attenuation Vector(1, 0.16, 0.0064) to Vector(1, 0, 0) for Trade::LightType::Directional\n");
 }
 
 void AssimpImporterTest::lightUnsupported() {
@@ -1889,7 +1889,7 @@ void AssimpImporterTest::cameraLightReferencedByTwoNodes() {
 
         Containers::Optional<LightData> light = importer->light(id);
         CORRADE_VERIFY(light);
-        CORRADE_COMPARE(light->type(), LightData::Type::Directional);
+        CORRADE_COMPARE(light->type(), LightType::Directional);
         /* This one has intensity of 10, which gets premultiplied to the
            color */
         CORRADE_COMPARE(light->color(), (Color3{1.0f, 0.15f, 0.45f})*10.0f);

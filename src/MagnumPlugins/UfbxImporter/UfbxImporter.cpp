@@ -795,13 +795,13 @@ Containers::Optional<LightData> UfbxImporter::doLight(UnsignedInt id) {
     const Float intensity = Float(light->intensity);
     const Color3 color{light->color};
 
-    LightData::Type lightType;
+    LightType lightType;
     if(light->type == UFBX_LIGHT_POINT) {
-        lightType = LightData::Type::Point;
+        lightType = LightType::Point;
     } else if(light->type == UFBX_LIGHT_DIRECTIONAL) {
-        lightType = LightData::Type::Directional;
+        lightType = LightType::Directional;
     } else if(light->type == UFBX_LIGHT_SPOT) {
-        lightType = LightData::Type::Spot;
+        lightType = LightType::Spot;
     } else {
         /** @todo area and volume lights */
         Error{} << "Trade::UfbxImporter::light(): light type" << light->type << "is not supported";
@@ -824,7 +824,7 @@ Containers::Optional<LightData> UfbxImporter::doLight(UnsignedInt id) {
     }
 
     /* FBX and many modeling programs don't constrain decay to match ligh type */
-    if((lightType == LightData::Type::Directional || lightType == LightData::Type::Ambient) && attenuation != Vector3{1.0f, 0.0f, 0.0f}) {
+    if((lightType == LightType::Directional || lightType == LightType::Ambient) && attenuation != Vector3{1.0f, 0.0f, 0.0f}) {
         if(!(flags() & ImporterFlag::Quiet))
             Warning{} << "Trade::UfbxImporter::light(): patching attenuation" << attenuation << "to" << Vector3{1.0f, 0.0f, 0.0f} << "for" << lightType;
         attenuation = {1.0f, 0.0f, 0.0f};
@@ -832,7 +832,7 @@ Containers::Optional<LightData> UfbxImporter::doLight(UnsignedInt id) {
 
     Float innerAngle = 360.0f;
     Float outerAngle = 360.0f;
-    if(lightType == LightData::Type::Spot) {
+    if(lightType == LightType::Spot) {
         innerAngle = Math::clamp(Float(light->inner_angle), 0.0f, 360.0f);
         outerAngle = Math::clamp(Float(light->outer_angle), innerAngle, 360.0f);
     }

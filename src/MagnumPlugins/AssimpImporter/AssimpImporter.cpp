@@ -940,19 +940,19 @@ Containers::String AssimpImporter::doLightName(const UnsignedInt id) {
 Containers::Optional<LightData> AssimpImporter::doLight(UnsignedInt id) {
     const aiLight* l = _f->scene->mLights[id];
 
-    LightData::Type lightType;
+    LightType lightType;
     Color3 color; /** @todo specular color? */
     if(l->mType == aiLightSource_DIRECTIONAL) {
-        lightType = LightData::Type::Directional;
+        lightType = LightType::Directional;
         color = Color3{l->mColorDiffuse};
     } else if(l->mType == aiLightSource_POINT) {
-        lightType = LightData::Type::Point;
+        lightType = LightType::Point;
         color = Color3{l->mColorDiffuse};
     } else if(l->mType == aiLightSource_SPOT) {
-        lightType = LightData::Type::Spot;
+        lightType = LightType::Spot;
         color = Color3{l->mColorDiffuse};
     } else if(l->mType == aiLightSource_AMBIENT) {
-        lightType = LightData::Type::Ambient;
+        lightType = LightType::Ambient;
         color = Color3{l->mColorAmbient};
     } else {
         /** @todo area lights */
@@ -967,7 +967,7 @@ Containers::Optional<LightData> AssimpImporter::doLight(UnsignedInt id) {
     /** @todo for blender the values are calculated from max distance, which
         could be used to restore the `range` property: https://github.com/assimp/assimp/blob/985a5b9667b25390a00e217ee2086882a101d74a/code/AssetLib/Blender/BlenderLoader.cpp#L1251-L1262 */
     Vector3 attenuation{l->mAttenuationConstant, l->mAttenuationLinear, l->mAttenuationQuadratic};
-    if((lightType == LightData::Type::Directional || lightType == LightData::Type::Ambient) && attenuation != Vector3{1.0f, 0.0f, 0.0f}) {
+    if((lightType == LightType::Directional || lightType == LightType::Ambient) && attenuation != Vector3{1.0f, 0.0f, 0.0f}) {
         if(!(flags() & ImporterFlag::Quiet))
             Warning{} << "Trade::AssimpImporter::light(): patching attenuation" << attenuation << "to" << Vector3{1.0f, 0.0f, 0.0f} << "for" << lightType;
         attenuation = {1.0f, 0.0f, 0.0f};

@@ -364,10 +364,10 @@ are also propagated to image importer plugins the importer delegates to.
     -   Specular color
     -   Custom light orientation vectors --- the orientation is always only
         inherited from the node containing the light
--   @ref LightData::Type::Directional and @ref LightData::Type::Ambient expect
-    the attenuation to be constant, but Assimp doesn't follow that for certain
-    file formats (such as Blender). In that case the attenuation value from
-    Assimp is ignored.
+-   @ref LightType::Directional and @ref LightType::Ambient expect the
+    attenuation to be constant, but Assimp doesn't follow that for certain file
+    formats (such as Blender). In that case the attenuation value from Assimp
+    is ignored.
 -   Area lights are not supported
 -   For certain file formats (such as COLLADA), if a light isn't referenced by
     any node, it gets ignored during import

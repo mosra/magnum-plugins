@@ -617,14 +617,14 @@ Containers::Optional<LightData> OpenGexImporter::doLight(UnsignedInt id) {
 
     Color3 lightColor{1.0f};
     Float lightIntensity{1.0f};
-    LightData::Type lightType;
+    LightType lightType;
     const auto type = light.propertyOf(OpenGex::type);
     if(type.as<std::string>() == "infinite")
-        lightType = LightData::Type::Directional;
+        lightType = LightType::Directional;
     else if(type.as<std::string>() == "point")
-        lightType = LightData::Type::Point;
+        lightType = LightType::Point;
     else if(type.as<std::string>() == "spot")
-        lightType = LightData::Type::Spot;
+        lightType = LightType::Spot;
     else {
         Error() << "Trade::OpenGexImporter::light(): invalid type";
         return Containers::NullOpt;
