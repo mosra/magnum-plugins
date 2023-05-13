@@ -561,9 +561,9 @@ void UfbxImporterTest::scene() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "blender-default.fbx")));
 
-    const SceneField sceneFieldVisibility = importer->sceneFieldForName("Visibility"_s);
-    CORRADE_VERIFY(isSceneFieldCustom(sceneFieldVisibility));
-    CORRADE_COMPARE(importer->sceneFieldName(sceneFieldVisibility), "Visibility");
+    const SceneField sceneFieldVisibility = importer->sceneFieldForName("visibility"_s);
+    CORRADE_VERIFY(sceneFieldVisibility != SceneField{});
+    CORRADE_COMPARE(importer->sceneFieldName(sceneFieldVisibility), "visibility");
 
     const SceneField sceneFieldInvalid = importer->sceneFieldForName("ThisFieldDoesNotExist"_s);
     CORRADE_COMPARE(sceneFieldInvalid, SceneField{});
@@ -699,7 +699,8 @@ void UfbxImporterTest::mesh() {
     CORRADE_VERIFY(scene);
     CORRADE_COMPARE(scene->fieldCount(), 8);
 
-    const SceneField sceneFieldVisibility = importer->sceneFieldForName("Visibility"_s);
+    const SceneField sceneFieldVisibility = importer->sceneFieldForName("visibility"_s);
+    CORRADE_VERIFY(sceneFieldVisibility != SceneField{});
 
     /* Fields we're not interested in */
     CORRADE_VERIFY(scene->hasField(SceneField::Parent));
@@ -789,8 +790,10 @@ void UfbxImporterTest::meshPointLine() {
     CORRADE_VERIFY(scene);
     CORRADE_COMPARE(scene->fieldCount(), 8);
 
-    const SceneField sceneFieldVisibility = importer->sceneFieldForName("Visibility"_s);
-    const SceneField sceneFieldGeometryTransformHelper = importer->sceneFieldForName("GeometryTransformHelper"_s);
+    const SceneField sceneFieldVisibility = importer->sceneFieldForName("visibility"_s);
+    const SceneField sceneFieldGeometryTransformHelper = importer->sceneFieldForName("geometryTransformHelper"_s);
+    CORRADE_VERIFY(sceneFieldVisibility != SceneField{});
+    CORRADE_VERIFY(sceneFieldGeometryTransformHelper != SceneField{});
 
     /* Fields we're not interested in */
     CORRADE_VERIFY(scene->hasField(SceneField::Parent));
@@ -893,7 +896,8 @@ void UfbxImporterTest::light() {
     Containers::Optional<SceneData> scene = importer->scene(0);
     CORRADE_VERIFY(scene);
 
-    const SceneField sceneFieldVisibility = importer->sceneFieldForName("Visibility"_s);
+    const SceneField sceneFieldVisibility = importer->sceneFieldForName("visibility"_s);
+    CORRADE_VERIFY(sceneFieldVisibility != SceneField{});
     CORRADE_VERIFY(scene->hasField(sceneFieldVisibility));
 
     Containers::StridedArrayView1D<const Vector3d> translations = scene->field<Vector3d>(SceneField::Translation);
@@ -1106,7 +1110,8 @@ void UfbxImporterTest::geometricTransformHelperNodes() {
     CORRADE_COMPARE(importer->objectName(2), "Box002");
     CORRADE_COMPARE(importer->objectName(3), "");
 
-    const SceneField sceneFieldGeometryTransformHelper = importer->sceneFieldForName("GeometryTransformHelper"_s);
+    const SceneField sceneFieldGeometryTransformHelper = importer->sceneFieldForName("geometryTransformHelper"_s);
+    CORRADE_VERIFY(sceneFieldGeometryTransformHelper != SceneField{});
 
     Containers::Optional<SceneData> scene = importer->scene(0);
     CORRADE_VERIFY(scene);
@@ -1163,7 +1168,8 @@ void UfbxImporterTest::geometricTransformModifyGeometry() {
     CORRADE_COMPARE(importer->objectName(0), "Box001");
     CORRADE_COMPARE(importer->objectName(1), "Box002");
 
-    const SceneField sceneFieldGeometryTransformHelper = importer->sceneFieldForName("GeometryTransformHelper"_s);
+    const SceneField sceneFieldGeometryTransformHelper = importer->sceneFieldForName("geometryTransformHelper"_s);
+    CORRADE_VERIFY(sceneFieldGeometryTransformHelper != SceneField{});
 
     Containers::Optional<SceneData> scene = importer->scene(0);
     CORRADE_VERIFY(scene);
@@ -1211,10 +1217,14 @@ void UfbxImporterTest::geometricTransformPreserve() {
     CORRADE_COMPARE(importer->objectName(0), "Box001");
     CORRADE_COMPARE(importer->objectName(1), "Box002");
 
-    const SceneField sceneFieldGeometryTransformHelper = importer->sceneFieldForName("GeometryTransformHelper"_s);
-    const SceneField sceneFieldGeometryTranslation = importer->sceneFieldForName("GeometryTranslation"_s);
-    const SceneField sceneFieldGeometryRotation = importer->sceneFieldForName("GeometryRotation"_s);
-    const SceneField sceneFieldGeometryScaling = importer->sceneFieldForName("GeometryScaling"_s);
+    const SceneField sceneFieldGeometryTransformHelper = importer->sceneFieldForName("geometryTransformHelper"_s);
+    const SceneField sceneFieldGeometryTranslation = importer->sceneFieldForName("geometryTranslation"_s);
+    const SceneField sceneFieldGeometryRotation = importer->sceneFieldForName("geometryRotation"_s);
+    const SceneField sceneFieldGeometryScaling = importer->sceneFieldForName("geometryScaling"_s);
+    CORRADE_VERIFY(sceneFieldGeometryTransformHelper != SceneField{});
+    CORRADE_VERIFY(sceneFieldGeometryTranslation != SceneField{});
+    CORRADE_VERIFY(sceneFieldGeometryRotation != SceneField{});
+    CORRADE_VERIFY(sceneFieldGeometryScaling != SceneField{});
 
     Containers::Optional<SceneData> scene = importer->scene(0);
     CORRADE_VERIFY(scene);
@@ -2940,11 +2950,11 @@ void UfbxImporterTest::animationVisibility() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "animation-visibility.fbx")));
 
-    const AnimationTrackTarget animationTrackTargetVisibility = importer->animationTrackTargetForName("Visibility"_s);
-    CORRADE_VERIFY(isAnimationTrackTargetCustom(animationTrackTargetVisibility));
-    CORRADE_COMPARE(importer->animationTrackTargetName(animationTrackTargetVisibility), "Visibility");
+    const AnimationTrackTarget animationTrackTargetVisibility = importer->animationTrackTargetForName("visibility"_s);
+    CORRADE_VERIFY(animationTrackTargetVisibility != AnimationTrackTarget{});
+    CORRADE_COMPARE(importer->animationTrackTargetName(animationTrackTargetVisibility), "visibility");
 
-    const AnimationTrackTarget animationTrackTargetInvalid = importer->animationTrackTargetForName("ThisFieldDoesNotExist"_s);
+    const AnimationTrackTarget animationTrackTargetInvalid = importer->animationTrackTargetForName("thisFieldDoesNotExist"_s);
     CORRADE_COMPARE(animationTrackTargetInvalid, AnimationTrackTarget{});
     CORRADE_COMPARE(importer->animationTrackTargetName(animationTrackTargetCustom(9001)), "");
 

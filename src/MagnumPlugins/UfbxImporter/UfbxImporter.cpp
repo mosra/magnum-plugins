@@ -173,11 +173,11 @@ constexpr SceneField SceneFieldGeometryRotation = sceneFieldCustom(3);
 constexpr SceneField SceneFieldGeometryScaling = sceneFieldCustom(4);
 
 constexpr Containers::StringView sceneFieldNames[]{
-    "Visibility"_s,
-    "GeometryTransformHelper"_s,
-    "GeometryTranslation"_s,
-    "GeometryRotation"_s,
-    "GeometryScaling"_s,
+    "visibility"_s,
+    "geometryTransformHelper"_s,
+    "geometryTranslation"_s,
+    "geometryRotation"_s,
+    "geometryScaling"_s,
 };
 
 bool getLoadOptsFromConfiguration(ufbx_load_opts& opts, Utility::ConfigurationGroup& conf, const char* errorPrefix) {
@@ -1676,7 +1676,7 @@ struct AnimTrack {
 constexpr AnimationTrackTarget AnimationTrackTargetVisibility = animationTrackTargetCustom(0);
 
 constexpr Containers::StringView animationTrackTargetNames[]{
-    "Visibility"_s,
+    "visibility"_s,
 };
 
 }

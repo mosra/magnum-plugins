@@ -158,12 +158,12 @@ delegates to.
     @ref SceneFieldType::Vector3d), @ref SceneField::Rotation (of type
     @ref SceneFieldType::Quaterniond), @ref SceneField::Scaling (of type
     @ref SceneFieldType::Vector3d) and importer-specific flags
-    @cpp "Visibility" @ce and @cpp "GeometricTransformHelper" @ce (both of type
+    @cpp "visibility" @ce and @cpp "geometricTransformHelper" @ce (both of type
     @ref SceneFieldType::Bit). These five fields share the same object mapping
     with @ref SceneFieldFlag::ImplicitMapping set.
--   Scene field @cpp "Visibility" @ce specifies whether objects should be
+-   Scene field @cpp "visibility" @ce specifies whether objects should be
     visible in some application-defined manner.
--   Scene field @cpp "GeometryTransformHelper" @ce is set on synthetic nodes
+-   Scene field @cpp "geometryTransformHelper" @ce is set on synthetic nodes
     that are not part of the original file, but represent FBX files' ability to
     transform geometry without affecting children, see
     @ref Trade-UfbxImporter-processing-geometry-transforms for further details.
@@ -336,7 +336,7 @@ natively support this, including the standard one in @ref SceneData.
 By default @ref UfbxImporter creates "helper nodes" that contain the geometry
 transforms, so by default they will be transparently supported without any
 extra implementation effort. @ref SceneData returned by @ref UfbxImporter
-contains an extra @ref SceneField named @cpp "GeometryTransformHelper" @ce
+contains an extra @ref SceneField named @cpp "geometryTransformHelper" @ce
 mapped implicitly per node containing information whether a node is a helper or
 a normal one.
 
@@ -351,9 +351,9 @@ lights/cameras or instanced meshes.
 
 Using `preserve` will not modify the scene at all and exposes the original
 geometry transform values via three additional @ref SceneField "SceneFields"
-per node: @cpp "GeometryTranslation" @ce (@ref SceneFieldType::Vector3d),
-@cpp "GeometryRotation" @ce (@ref SceneFieldType::Quaterniond) and
-@cpp "GeometryRotation" @ce (@ref SceneFieldType::Vector3d). These behave in
+per node: @cpp "geometryTranslation" @ce (@ref SceneFieldType::Vector3d),
+@cpp "geometryRotation" @ce (@ref SceneFieldType::Quaterniond) and
+@cpp "geometryRotation" @ce (@ref SceneFieldType::Vector3d). These behave in
 the same way as the standard @ref SceneField::Translation,
 @relativeref{SceneField,Rotation} and @relativeref{SceneField,Scaling}, but
 affect only the immediate geometry of the node.
