@@ -1313,9 +1313,9 @@ MeshAttribute AssimpImporter::doMeshAttributeForName(const Containers::StringVie
     return {};
 }
 
-Containers::String AssimpImporter::doMeshAttributeName(UnsignedShort name) {
-    if(meshAttributeCustom(name) == JointsAttribute) return "JOINTS"_s;
-    if(meshAttributeCustom(name) == WeightsAttribute) return "WEIGHTS"_s;
+Containers::String AssimpImporter::doMeshAttributeName(MeshAttribute name) {
+    if(name == JointsAttribute) return "JOINTS"_s;
+    if(name == WeightsAttribute) return "WEIGHTS"_s;
     return {};
 }
 #endif

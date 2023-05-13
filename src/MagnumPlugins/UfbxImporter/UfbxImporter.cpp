@@ -726,9 +726,9 @@ SceneField UfbxImporter::doSceneFieldForName(Containers::StringView name) {
     return SceneField{};
 }
 
-Containers::String UfbxImporter::doSceneFieldName(UnsignedInt name) {
-    if(name < Containers::arraySize(sceneFieldNames))
-        return sceneFieldNames[name];
+Containers::String UfbxImporter::doSceneFieldName(SceneField name) {
+    if(sceneFieldCustom(name) < Containers::arraySize(sceneFieldNames))
+        return sceneFieldNames[sceneFieldCustom(name)];
     return {};
 }
 
@@ -1932,9 +1932,9 @@ AnimationTrackTarget UfbxImporter::doAnimationTrackTargetForName(Containers::Str
     return AnimationTrackTarget{};
 }
 
-Containers::String UfbxImporter::doAnimationTrackTargetName(UnsignedShort name) {
-    if(name < Containers::arraySize(animationTrackTargetNames))
-        return animationTrackTargetNames[name];
+Containers::String UfbxImporter::doAnimationTrackTargetName(AnimationTrackTarget name) {
+    if(animationTrackTargetCustom(name) < Containers::arraySize(animationTrackTargetNames))
+        return animationTrackTargetNames[animationTrackTargetCustom(name)];
     return {};
 }
 

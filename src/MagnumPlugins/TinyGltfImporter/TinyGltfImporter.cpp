@@ -1858,9 +1858,9 @@ MeshAttribute TinyGltfImporter::doMeshAttributeForName(const Containers::StringV
     return _d ? _d->meshAttributesForName[name] : MeshAttribute{};
 }
 
-Containers::String TinyGltfImporter::doMeshAttributeName(UnsignedShort name) {
-    return _d && name < _d->meshAttributeNames.size() ?
-        _d->meshAttributeNames[name] : "";
+Containers::String TinyGltfImporter::doMeshAttributeName(MeshAttribute name) {
+    return _d && meshAttributeCustom(name) < _d->meshAttributeNames.size() ?
+        _d->meshAttributeNames[meshAttributeCustom(name)] : "";
 }
 
 UnsignedInt TinyGltfImporter::doMaterialCount() const {

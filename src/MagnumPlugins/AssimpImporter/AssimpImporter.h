@@ -549,7 +549,7 @@ class MAGNUM_ASSIMPIMPORTER_EXPORT AssimpImporter: public AbstractImporter {
         /* For JOINTS and WEIGHTS, which are included only for backwards
            compatibility. All other attributes are builtin. */
         MAGNUM_ASSIMPIMPORTER_LOCAL MeshAttribute doMeshAttributeForName(Containers::StringView name) override;
-        MAGNUM_ASSIMPIMPORTER_LOCAL Containers::String doMeshAttributeName(UnsignedShort name) override;
+        MAGNUM_ASSIMPIMPORTER_LOCAL Containers::String doMeshAttributeName(MeshAttribute name) override;
         #endif
 
         MAGNUM_ASSIMPIMPORTER_LOCAL UnsignedInt doMaterialCount() const override;

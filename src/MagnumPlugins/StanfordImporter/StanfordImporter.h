@@ -220,7 +220,7 @@ class MAGNUM_STANFORDIMPORTER_EXPORT StanfordImporter: public AbstractImporter {
         MAGNUM_STANFORDIMPORTER_LOCAL UnsignedInt doMeshLevelCount(UnsignedInt id) override;
         MAGNUM_STANFORDIMPORTER_LOCAL Containers::Optional<MeshData> doMesh(UnsignedInt id, UnsignedInt level) override;
         MAGNUM_STANFORDIMPORTER_LOCAL MeshAttribute doMeshAttributeForName(const Containers::StringView name) override;
-        MAGNUM_STANFORDIMPORTER_LOCAL Containers::String doMeshAttributeName(UnsignedShort name) override;
+        MAGNUM_STANFORDIMPORTER_LOCAL Containers::String doMeshAttributeName(MeshAttribute name) override;
 
         struct State;
         Containers::Pointer<State> _state;

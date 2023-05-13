@@ -100,10 +100,11 @@ struct GltfSceneConverter::State {
        in order to know how to name the external buffer file. */
     Containers::Optional<Containers::StringView> filename;
     /* Custom mesh attribute names */
-    Containers::Array<Containers::Pair<UnsignedShort, Containers::String>> customMeshAttributes;
+    Containers::Array<Containers::Pair<MeshAttribute, Containers::String>> customMeshAttributes;
     /* Object names */
     Containers::Array<Containers::String> objectNames;
-    /* Scene field names */
+    /* Scene field names. Can't use SceneField as the key because GCC 4.8
+       doesn't have std::hash implemented for enums, F.F.S. */
     std::unordered_map<UnsignedInt, Containers::String> sceneFieldNames;
     /* Unique texture samplers. Key is packing all sampler properties, value is
        the output glTF sampler index. */
@@ -502,8 +503,8 @@ void GltfSceneConverter::doSetObjectName(const UnsignedLong object, const Contai
     _state->objectNames[object] = Containers::String::nullTerminatedGlobalView(name);
 }
 
-void GltfSceneConverter::doSetSceneFieldName(const UnsignedInt field, const Containers::StringView name) {
-    _state->sceneFieldNames[field] = Containers::String::nullTerminatedGlobalView(name);
+void GltfSceneConverter::doSetSceneFieldName(const SceneField field, const Containers::StringView name) {
+    _state->sceneFieldNames[sceneFieldCustom(field)] = Containers::String::nullTerminatedGlobalView(name);
 }
 
 bool GltfSceneConverter::doAdd(const UnsignedInt id, const SceneData& scene, const Containers::StringView name) {
@@ -1087,9 +1088,9 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const SceneData& scene, con
     return true;
 }
 
-void GltfSceneConverter::doSetMeshAttributeName(const UnsignedShort attribute, Containers::StringView name) {
+void GltfSceneConverter::doSetMeshAttributeName(const MeshAttribute attribute, Containers::StringView name) {
     /* Replace the previous entry if already set */
-    for(Containers::Pair<UnsignedShort, Containers::String>& i: _state->customMeshAttributes) {
+    for(Containers::Pair<MeshAttribute, Containers::String>& i: _state->customMeshAttributes) {
         if(i.first() == attribute) {
             i.second() = Containers::String::nullTerminatedGlobalView(name);
             return;
@@ -1330,9 +1331,8 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const MeshData& mesh, const
                generate one from the numeric value if not supplied */
             if(!gltfAttributeName) {
                 CORRADE_INTERNAL_ASSERT(isMeshAttributeCustom(attributeName));
-                const UnsignedInt customAttributeId = meshAttributeCustom(attributeName);
-                for(const Containers::Pair<UnsignedShort, Containers::String>& j: _state->customMeshAttributes) {
-                    if(j.first() == customAttributeId) {
+                for(const Containers::Pair<MeshAttribute, Containers::String>& j: _state->customMeshAttributes) {
+                    if(j.first() == attributeName) {
                         /* Make a non-owning reference to avoid a copy */
                         gltfAttributeName = Containers::String::nullTerminatedView(j.second());
                         break;

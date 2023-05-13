@@ -2944,9 +2944,9 @@ SceneField GltfImporter::doSceneFieldForName(const Containers::StringView name) 
     return _d ? _d->sceneFieldsForName[name] : SceneField{};
 }
 
-Containers::String GltfImporter::doSceneFieldName(const UnsignedInt name) {
-    return _d && name < _d->sceneFieldNamesTypes.size() ?
-        _d->sceneFieldNamesTypes[name].first() : ""_s;
+Containers::String GltfImporter::doSceneFieldName(const SceneField name) {
+    return _d && sceneFieldCustom(name) < _d->sceneFieldNamesTypes.size() ?
+        _d->sceneFieldNamesTypes[sceneFieldCustom(name)].first() : ""_s;
 }
 
 UnsignedLong GltfImporter::doObjectCount() const {
@@ -3510,9 +3510,9 @@ MeshAttribute GltfImporter::doMeshAttributeForName(const Containers::StringView 
     return _d ? _d->meshAttributesForName[name] : MeshAttribute{};
 }
 
-Containers::String GltfImporter::doMeshAttributeName(const UnsignedShort name) {
-    return _d && name < _d->meshAttributeNames.size() ?
-        _d->meshAttributeNames[name] : ""_s;
+Containers::String GltfImporter::doMeshAttributeName(const MeshAttribute name) {
+    return _d && meshAttributeCustom(name) < _d->meshAttributeNames.size() ?
+        _d->meshAttributeNames[meshAttributeCustom(name)] : ""_s;
 }
 
 UnsignedInt GltfImporter::doMaterialCount() const {

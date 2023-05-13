@@ -553,7 +553,7 @@ class CORRADE_DEPRECATED("use GltfImporter instead") MAGNUM_TINYGLTFIMPORTER_EXP
         MAGNUM_TINYGLTFIMPORTER_LOCAL Containers::String doMeshName(UnsignedInt id) override;
         MAGNUM_TINYGLTFIMPORTER_LOCAL Containers::Optional<MeshData> doMesh(UnsignedInt id, UnsignedInt level) override;
         MAGNUM_TINYGLTFIMPORTER_LOCAL MeshAttribute doMeshAttributeForName(Containers::StringView name) override;
-        MAGNUM_TINYGLTFIMPORTER_LOCAL Containers::String doMeshAttributeName(UnsignedShort name) override;
+        MAGNUM_TINYGLTFIMPORTER_LOCAL Containers::String doMeshAttributeName(MeshAttribute name) override;
 
         MAGNUM_TINYGLTFIMPORTER_LOCAL bool materialTexture(const char* name, UnsignedInt texture, UnsignedInt texCoord, const tinygltf::Value& extensions, Containers::Array<MaterialAttributeData>& attributes, MaterialAttribute attribute, MaterialAttribute matrixAttribute, MaterialAttribute coordinateAttribute) const;
 

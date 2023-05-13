@@ -882,9 +882,9 @@ MeshAttribute StanfordImporter::doMeshAttributeForName(const Containers::StringV
     return _state ? _state->attributeNameMap[name] : MeshAttribute{};
 }
 
-Containers::String StanfordImporter::doMeshAttributeName(UnsignedShort name) {
-    return _state && name < _state->attributeNames.size() ?
-        _state->attributeNames[name] : "";
+Containers::String StanfordImporter::doMeshAttributeName(MeshAttribute name) {
+    return _state && meshAttributeCustom(name) < _state->attributeNames.size() ?
+        _state->attributeNames[meshAttributeCustom(name)] : "";
 }
 
 }}

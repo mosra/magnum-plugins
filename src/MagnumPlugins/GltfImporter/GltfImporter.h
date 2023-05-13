@@ -607,7 +607,7 @@ class MAGNUM_GLTFIMPORTER_EXPORT GltfImporter: public AbstractImporter {
         MAGNUM_GLTFIMPORTER_LOCAL Containers::String doSceneName(UnsignedInt id) override;
         MAGNUM_GLTFIMPORTER_LOCAL Containers::Optional<SceneData> doScene(UnsignedInt id) override;
         MAGNUM_GLTFIMPORTER_LOCAL SceneField doSceneFieldForName(Containers::StringView name) override;
-        MAGNUM_GLTFIMPORTER_LOCAL Containers::String doSceneFieldName(UnsignedInt name) override;
+        MAGNUM_GLTFIMPORTER_LOCAL Containers::String doSceneFieldName(SceneField name) override;
 
         MAGNUM_GLTFIMPORTER_LOCAL UnsignedLong doObjectCount() const override;
         MAGNUM_GLTFIMPORTER_LOCAL Long doObjectForName(Containers::StringView name) override;
@@ -623,7 +623,7 @@ class MAGNUM_GLTFIMPORTER_EXPORT GltfImporter: public AbstractImporter {
         MAGNUM_GLTFIMPORTER_LOCAL Containers::String doMeshName(UnsignedInt id) override;
         MAGNUM_GLTFIMPORTER_LOCAL Containers::Optional<MeshData> doMesh(UnsignedInt id, UnsignedInt level) override;
         MAGNUM_GLTFIMPORTER_LOCAL MeshAttribute doMeshAttributeForName(Containers::StringView name) override;
-        MAGNUM_GLTFIMPORTER_LOCAL Containers::String doMeshAttributeName(UnsignedShort name) override;
+        MAGNUM_GLTFIMPORTER_LOCAL Containers::String doMeshAttributeName(MeshAttribute name) override;
 
         MAGNUM_GLTFIMPORTER_LOCAL UnsignedInt doMaterialCount() const override;
         MAGNUM_GLTFIMPORTER_LOCAL Int doMaterialForName(Containers::StringView name) override;
