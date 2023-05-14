@@ -109,7 +109,9 @@ Containers::Optional<Containers::Array<char>> StanfordSceneConverter::doConvertT
        PLY or the name is unknown will have offset kept at ~std::size_t{}. */
     Containers::Array<std::size_t> offsets{DirectInit, triangles.attributeCount(), ~std::size_t{}};
     std::size_t vertexSize = 0;
-    header += Utility::formatString("element vertex {}\n", triangles.vertexCount());
+    Utility::formatInto(header, header.size(),
+        "element vertex {}\n",
+        triangles.vertexCount());
     for(UnsignedInt i = 0; i != triangles.attributeCount(); ++i) {
         const MeshAttribute name = triangles.attributeName(i);
         const VertexFormat format = triangles.attributeFormat(i);
@@ -164,27 +166,27 @@ Containers::Optional<Containers::Array<char>> StanfordSceneConverter::doConvertT
                 return {};
             }
 
-            header += Utility::formatString(
+            Utility::formatInto(header, header.size(),
                 "property {0} x\n"
                 "property {0} y\n"
                 "property {0} z\n", formatString);
 
         /* Normals */
         } else if(name == MeshAttribute::Normal) {
-            header += Utility::formatString(
+            Utility::formatInto(header, header.size(),
                 "property {0} nx\n"
                 "property {0} ny\n"
                 "property {0} nz\n", formatString);
 
         /* Texture coordinates */
         } else if(name == MeshAttribute::TextureCoordinates) {
-            header += Utility::formatString(
+            Utility::formatInto(header, header.size(),
                 "property {0} u\n"
                 "property {0} v\n", formatString);
 
         /* Colors */
         } else if(name == MeshAttribute::Color) {
-            header += Utility::formatString(
+            Utility::formatInto(header, header.size(),
                 vertexFormatComponentCount(format) == 3 ?
                     "property {0} red\n"
                     "property {0} green\n"
@@ -196,7 +198,8 @@ Containers::Optional<Containers::Array<char>> StanfordSceneConverter::doConvertT
 
         /* Object ID */
         } else if(name == MeshAttribute::ObjectId) {
-            header += Utility::formatString("property {} {}\n", formatString,
+            Utility::formatInto(header, header.size(),
+                "property {} {}\n", formatString,
                 configuration().value("objectIdAttribute"));
 
         /* Something else, skip */
@@ -231,7 +234,7 @@ Containers::Optional<Containers::Array<char>> StanfordSceneConverter::doConvertT
     /* Wrap up the header -- for face attributes we have just the index list */
     /** @todo once multi-mesh conversion is supported, this could accept a
         MeshAttribute::Face with per-face attribs */
-    header += Utility::formatString(
+    Utility::formatInto(header, header.size(),
         "element face {}\n"
         "property list uchar {} vertex_indices\n"
         "end_header\n",
