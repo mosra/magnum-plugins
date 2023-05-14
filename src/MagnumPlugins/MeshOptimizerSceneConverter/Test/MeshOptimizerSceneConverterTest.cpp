@@ -83,7 +83,7 @@ struct MeshOptimizerSceneConverterTest: TestSuite::Tester {
     void simplifyNoPositions();
     template<class T> void simplify();
     template<class T> void simplifySloppy();
-
+    void simplifyEmptyIndexBuffer();
     void simplifyVerbose();
 
     /* Explicitly forbid system-wide plugin dependencies */
@@ -170,6 +170,7 @@ MeshOptimizerSceneConverterTest::MeshOptimizerSceneConverterTest() {
         &MeshOptimizerSceneConverterTest::simplifySloppy<UnsignedByte>,
         &MeshOptimizerSceneConverterTest::simplifySloppy<UnsignedShort>,
         &MeshOptimizerSceneConverterTest::simplifySloppy<UnsignedInt>,
+        &MeshOptimizerSceneConverterTest::simplifyEmptyIndexBuffer,
         &MeshOptimizerSceneConverterTest::simplifyVerbose});
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
@@ -1121,6 +1122,32 @@ template<class T> void MeshOptimizerSceneConverterTest::simplifySloppy() {
             {0.333333f, 0.5f},
             {0.5f, 0.75}
         }), TestSuite::Compare::Container);
+}
+
+void MeshOptimizerSceneConverterTest::simplifyEmptyIndexBuffer() {
+    Vector3 positions[2]{};
+
+    MeshData mesh{MeshPrimitive::Triangles,
+        nullptr, MeshIndexData{Containers::ArrayView<UnsignedShort>{}},
+        {}, positions, {
+            MeshAttributeData{MeshAttribute::Position,
+                Containers::arrayView(positions)}
+        }};
+    CORRADE_VERIFY(mesh.isIndexed());
+    CORRADE_COMPARE(mesh.indexCount(), 0);
+    CORRADE_COMPARE(mesh.vertexCount(), 2);
+
+    Containers::Pointer<AbstractSceneConverter> converter = _manager.instantiate("MeshOptimizerSceneConverter");
+    converter->configuration().setValue("simplify", true);
+
+    Containers::Optional<MeshData> simplified = converter->convert(mesh);
+    CORRADE_VERIFY(simplified);
+    CORRADE_COMPARE(simplified->indexCount(), 0);
+    CORRADE_COMPARE(simplified->vertexCount(), 0);
+    CORRADE_COMPARE(simplified->attributeCount(), 1);
+    CORRADE_COMPARE_AS(simplified->attribute<Vector3>(MeshAttribute::Position),
+        nullptr,
+        TestSuite::Compare::Container);
 }
 
 void MeshOptimizerSceneConverterTest::simplifyVerbose() {
