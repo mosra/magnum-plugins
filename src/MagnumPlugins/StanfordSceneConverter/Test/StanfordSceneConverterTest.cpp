@@ -430,6 +430,7 @@ void StanfordSceneConverterTest::triangleFan() {
 
     CORRADE_VERIFY(importedMesh->isIndexed());
     CORRADE_COMPARE(importedMesh->indexType(), MeshIndexType::UnsignedInt);
+    /* The index buffer gets created for the fan */
     CORRADE_COMPARE_AS(importedMesh->indices<UnsignedInt>(),
         Containers::arrayView<UnsignedInt>({0, 1, 2, 0, 2, 3}),
         TestSuite::Compare::Container);
@@ -439,6 +440,7 @@ void StanfordSceneConverterTest::triangleFan() {
     CORRADE_COMPARE(importedMesh->attributeFormat(MeshAttribute::Position), VertexFormat::Vector3);
     CORRADE_COMPARE(importedMesh->attributeOffset(MeshAttribute::Position), 0);
     CORRADE_COMPARE(importedMesh->attributeStride(MeshAttribute::Position), 12);
+    /* The order of positions stays the same */
     CORRADE_COMPARE_AS(importedMesh->attribute<Vector3>(MeshAttribute::Position),
         Containers::arrayView(positions),
         TestSuite::Compare::Container);
@@ -480,8 +482,9 @@ void StanfordSceneConverterTest::indexedTriangleStrip() {
 
     CORRADE_VERIFY(importedMesh->isIndexed());
     CORRADE_COMPARE(importedMesh->indexType(), MeshIndexType::UnsignedInt);
+    /* The index buffer gets expanded for the strip */
     CORRADE_COMPARE_AS(importedMesh->indices<UnsignedInt>(),
-        Containers::arrayView<UnsignedInt>({0, 1, 2, 2, 1, 3}),
+        Containers::arrayView<UnsignedInt>({1, 2, 0, 0, 2, 3}),
         TestSuite::Compare::Container);
 
     CORRADE_COMPARE(importedMesh->attributeCount(), 1);
@@ -489,13 +492,10 @@ void StanfordSceneConverterTest::indexedTriangleStrip() {
     CORRADE_COMPARE(importedMesh->attributeFormat(MeshAttribute::Position), VertexFormat::Vector3);
     CORRADE_COMPARE(importedMesh->attributeOffset(MeshAttribute::Position), 0);
     CORRADE_COMPARE(importedMesh->attributeStride(MeshAttribute::Position), 12);
+    /* The order of positions stays the same */
     CORRADE_COMPARE_AS(importedMesh->attribute<Vector3>(MeshAttribute::Position),
-        Containers::arrayView<Vector3>({
-            {-1.0f, -1.0f, 0.0f},
-            { 1.0f, -1.0f, 0.0f},
-            { 0.0f,  0.0f, 0.0f},
-            { 1.0f,  1.0f, 0.0f}
-        }), TestSuite::Compare::Container);
+        Containers::arrayView(positions),
+        TestSuite::Compare::Container);
 }
 
 void StanfordSceneConverterTest::empty() {

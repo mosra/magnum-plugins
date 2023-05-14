@@ -47,10 +47,9 @@ SceneConverterFeatures StanfordSceneConverter::doFeatures() const { return Scene
 Containers::Optional<Containers::Array<char>> StanfordSceneConverter::doConvertToData(const MeshData& mesh) {
     /* Convert to an indexed triangle mesh if it's a strip/fan */
     MeshData triangles{MeshPrimitive::Triangles, 0};
-    if(mesh.primitive() == MeshPrimitive::TriangleStrip || mesh.primitive() == MeshPrimitive::TriangleFan) {
-        if(mesh.isIndexed())
-            triangles = MeshTools::generateIndices(MeshTools::duplicate(mesh));
-        else triangles = MeshTools::generateIndices(std::move(mesh));
+    if(mesh.primitive() == MeshPrimitive::TriangleStrip ||
+       mesh.primitive() == MeshPrimitive::TriangleFan) {
+        triangles = MeshTools::generateIndices(std::move(mesh));
 
     /* If it's triangles already, make a non-owning reference to the original */
     } else if(mesh.primitive() == MeshPrimitive::Triangles) {
