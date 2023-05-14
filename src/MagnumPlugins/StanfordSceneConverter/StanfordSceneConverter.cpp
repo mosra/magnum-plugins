@@ -262,7 +262,7 @@ Containers::Optional<Containers::Array<char>> StanfordSceneConverter::doConvertT
     Utility::copy(Containers::ArrayView<const char>{header.data(), header.size()}, out.prefix(header.size()));
 
     /* Copy the vertices */
-    Containers::ArrayView<char> vertexData = out.slice(header.size(), header.size() + vertexDataSize);
+    Containers::ArrayView<char> vertexData = out.sliceSize(header.size(), vertexDataSize);
     for(UnsignedInt i = 0; i != triangles.attributeCount(); ++i) {
         if(offsets[i] == ~std::size_t{}) continue;
 
