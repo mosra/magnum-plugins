@@ -305,10 +305,9 @@ Containers::Optional<MeshData> MeshOptimizerSceneConverter::doConvert(const Mesh
     CORRADE_INTERNAL_ASSERT(!out.isIndexed() || out.indices().isContiguous());
 
     /* Convert to an indexed triangle mesh if we have a strip or a fan */
-    if(out.primitive() == MeshPrimitive::TriangleStrip || out.primitive() == MeshPrimitive::TriangleFan) {
-        if(out.isIndexed()) out = MeshTools::duplicate(out);
+    if(out.primitive() == MeshPrimitive::TriangleStrip ||
+       out.primitive() == MeshPrimitive::TriangleFan)
         out = MeshTools::generateIndices(std::move(out));
-    }
 
     meshopt_VertexCacheStatistics vertexCacheStatsBefore;
     meshopt_VertexFetchStatistics vertexFetchStatsBefore;
