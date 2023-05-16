@@ -41,7 +41,10 @@ file(GENERATE OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/configure.h
     INPUT ${CMAKE_CURRENT_BINARY_DIR}/configure.h.in)
 
 corrade_add_test(PngImageConverterTest PngImageConverterTest.cpp
-    LIBRARIES Magnum::Trade)
+    LIBRARIES Magnum::Trade
+    FILES
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/PngImporter/Test/gray16.png
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/PngImporter/Test/rgb16.png)
 target_include_directories(PngImageConverterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>)
 if(MAGNUM_PNGIMAGECONVERTER_BUILD_STATIC)
     target_link_libraries(PngImageConverterTest PRIVATE PngImageConverter)

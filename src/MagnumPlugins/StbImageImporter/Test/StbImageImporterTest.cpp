@@ -235,9 +235,9 @@ void StbImageImporterTest::grayPng16() {
     CORRADE_COMPARE(image->format(), PixelFormat::R16Unorm);
 
     CORRADE_COMPARE_AS(image->pixels<UnsignedShort>().asContiguous(), Containers::arrayView<UnsignedShort>({
-        1, 2,
-        3, 4,
-        5, 6
+        1000, 2000,
+        3000, 4000,
+        5000, 6000
     }), TestSuite::Compare::Container);
 }
 
@@ -256,9 +256,9 @@ void StbImageImporterTest::grayPng16FourChannel() {
 
     CORRADE_COMPARE_AS(Containers::arrayCast<const UnsignedShort>(image->pixels().asContiguous()), Containers::arrayView<UnsignedShort>({
         /* First channel expanded three times, full alpha */
-        1, 1, 1, 65535, 2, 2, 2, 65535,
-        3, 3, 3, 65535, 4, 4, 4, 65535,
-        5, 5, 5, 65535, 6, 6, 6, 65535
+        1000, 1000, 1000, 65535, 2000, 2000, 2000, 65535,
+        3000, 3000, 3000, 65535, 4000, 4000, 4000, 65535,
+        5000, 5000, 5000, 65535, 6000, 6000, 6000, 65535
     }), TestSuite::Compare::Container);
 }
 
@@ -329,9 +329,9 @@ void StbImageImporterTest::rgbPng16() {
     CORRADE_COMPARE(image->format(), PixelFormat::RGB16Unorm);
 
     CORRADE_COMPARE_AS(Containers::arrayCast<const UnsignedShort>(image->pixels().asContiguous()), Containers::arrayView<UnsignedShort>({
-        1, 2, 3, 2, 3, 4,
-        3, 4, 5, 4, 5, 6,
-        5, 6, 7, 6, 7, 8
+        1000, 2000, 3000, 2000, 3000, 4000,
+        3000, 4000, 5000, 4000, 5000, 6000,
+        5000, 6000, 7000, 6000, 7000, 8000
     }), TestSuite::Compare::Container);
 }
 
@@ -350,11 +350,10 @@ void StbImageImporterTest::rgbPng16OneChannel() {
 
     CORRADE_COMPARE_AS(Containers::arrayCast<const UnsignedShort>(image->pixels().asContiguous()), Containers::arrayView<UnsignedShort>({
         /* The RGB channels are converted to luminance... though with an 8-bit
-           equation so I have no idea what the heck is happening. Granted, the
-           result looks as if it would be just the first channel extracted. */
-        1, 2,
-        3, 4,
-        5, 6
+           equation so I have no idea what the heck is happening */
+        1812, 2812,
+        3812, 4812,
+        5812, 6812
     }), TestSuite::Compare::Container);
 }
 

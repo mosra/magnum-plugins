@@ -256,9 +256,9 @@ void SpngImporterTest::gray16() {
     CORRADE_COMPARE(image->format(), PixelFormat::R16Unorm);
 
     CORRADE_COMPARE_AS(image->pixels<UnsignedShort>().asContiguous(), Containers::arrayView<UnsignedShort>({
-        1, 2,
-        3, 4,
-        5, 6
+        1000, 2000,
+        3000, 4000,
+        5000, 6000
     }), TestSuite::Compare::Container);
 }
 
@@ -347,9 +347,9 @@ void SpngImporterTest::rgb16() {
     CORRADE_COMPARE(image->format(), PixelFormat::RGB16Unorm);
 
     CORRADE_COMPARE_AS(image->pixels<Vector3us>().asContiguous(), Containers::arrayView<Vector3us>({
-        {1, 2, 3}, {2, 3, 4},
-        {3, 4, 5}, {4, 5, 6},
-        {5, 6, 7}, {6, 7, 8}
+        {1000, 2000, 3000}, {2000, 3000, 4000},
+        {3000, 4000, 5000}, {4000, 5000, 6000},
+        {5000, 6000, 7000}, {6000, 7000, 8000}
     }), TestSuite::Compare::Container);
 }
 
@@ -415,9 +415,9 @@ void SpngImporterTest::openMemory() {
     CORRADE_COMPARE(image->format(), PixelFormat::R16Unorm);
 
     CORRADE_COMPARE_AS(image->pixels<UnsignedShort>().asContiguous(), Containers::arrayView<UnsignedShort>({
-        1, 2,
-        3, 4,
-        5, 6
+        1000, 2000,
+        3000, 4000,
+        5000, 6000
     }), TestSuite::Compare::Container);
 }
 

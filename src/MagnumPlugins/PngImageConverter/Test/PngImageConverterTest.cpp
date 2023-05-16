@@ -197,18 +197,18 @@ constexpr const UnsignedShort OriginalRgbData16[] = {
     /* Skip */
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 
-    1, 2, 3, 2, 3, 4, 0, 0, 0, 0,
-    3, 4, 5, 4, 5, 6, 0, 0, 0, 0,
-    5, 6, 7, 6, 7, 8, 0, 0, 0, 0
+    1000, 2000, 3000, 2000, 3000, 4000, 0, 0, 0, 0,
+    3000, 4000, 5000, 4000, 5000, 6000, 0, 0, 0, 0,
+    5000, 6000, 7000, 6000, 7000, 8000, 0, 0, 0, 0
 };
 
 const ImageView2D OriginalRgb16{PixelStorage{}.setSkip({0, 1, 0}).setRowLength(3),
     PixelFormat::RGB16Unorm, {2, 3}, OriginalRgbData16};
 
 constexpr const UnsignedShort ConvertedRgbData16[] = {
-    1, 2, 3, 2, 3, 4,
-    3, 4, 5, 4, 5, 6,
-    5, 6, 7, 6, 7, 8
+    1000, 2000, 3000, 2000, 3000, 4000,
+    3000, 4000, 5000, 4000, 5000, 6000,
+    5000, 6000, 7000, 6000, 7000, 8000
 };
 
 void PngImageConverterTest::rgb16() {
@@ -281,18 +281,18 @@ constexpr const UnsignedShort OriginalGrayscaleData16[] = {
     /* Skip */
     0, 0, 0, 0,
 
-    1, 2, 0, 0,
-    3, 4, 0, 0,
-    5, 6, 0, 0
+    1000, 2000, 0, 0,
+    3000, 4000, 0, 0,
+    5000, 6000, 0, 0
 };
 
 const ImageView2D OriginalGrayscale16{PixelStorage{}.setSkip({0, 1, 0}).setRowLength(3),
     PixelFormat::R16Unorm, {2, 3}, OriginalGrayscaleData16};
 
 constexpr const UnsignedShort ConvertedGrayscaleData16[] = {
-    1, 2,
-    3, 4,
-    5, 6
+    1000, 2000,
+    3000, 4000,
+    5000, 6000
 };
 
 void PngImageConverterTest::grayscale16() {
