@@ -53,7 +53,8 @@ file(GENERATE OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/configure.h
 corrade_add_test(StbImageConverterTest StbImageConverterTest.cpp
     LIBRARIES Magnum::Trade Magnum::DebugTools
     FILES
-        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/StbImageImporter/Test/rgb.hdr)
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/StbImageImporter/Test/rgb.hdr
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/StbImageImporter/Test/rrr.hdr)
 target_include_directories(StbImageConverterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>)
 if(MAGNUM_STBIMAGECONVERTER_BUILD_STATIC)
     target_link_libraries(StbImageConverterTest PRIVATE StbImageConverter)
