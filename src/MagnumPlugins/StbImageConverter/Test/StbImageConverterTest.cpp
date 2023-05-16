@@ -127,10 +127,12 @@ StbImageConverterTest::StbImageConverterTest() {
 
     addTests({&StbImageConverterTest::hdrGrayscale});
 
-    addInstancedTests({
-        &StbImageConverterTest::hdrRg,
-        &StbImageConverterTest::hdrRgb,
-        &StbImageConverterTest::hdrRgba},
+    addInstancedTests({&StbImageConverterTest::hdrRg},
+        Containers::arraySize(QuietData));
+
+    addTests({&StbImageConverterTest::hdrRgb});
+
+    addInstancedTests({&StbImageConverterTest::hdrRgba},
         Containers::arraySize(QuietData));
 
     addTests({&StbImageConverterTest::jpegRgb80Percent,
