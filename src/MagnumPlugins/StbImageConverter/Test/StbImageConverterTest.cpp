@@ -272,25 +272,25 @@ void StbImageConverterTest::bmpRg() {
 }
 
 constexpr const Float OriginalGrayscale32FData[] = {
-    1.0f, 2.0f,
-    3.0f, 4.0f,
-    5.0f, 6.0f
+    0.0f, 1.0f,
+    2.0f, 2.5f,
+    1.5f, 0.5f
 };
 
 const ImageView2D OriginalGrayscale32F{PixelFormat::R32F, {2, 3}, OriginalGrayscale32FData};
 
 constexpr const Float OriginalRg32FData[] = {
-    1.0f, 1.5f, 2.0f, 2.5f,
-    3.0f, 3.5f, 4.0f, 4.5f,
-    5.0f, 5.5f, 6.0f, 6.5f
+    0.0f, 0.5f, 1.0f, 1.5f,
+    2.0f, 2.5f, 2.5f, 2.0f,
+    1.5f, 1.0f, 0.5f, 0.0f
 };
 
 const ImageView2D OriginalRg32F{PixelFormat::RG32F, {2, 3}, OriginalRg32FData};
 
 constexpr const Float ConvertedGrayscale32FData[] = {
-    1.0f, 1.0f, 1.0f, 2.0f, 2.0f, 2.0f,
-    3.0f, 3.0f, 3.0f, 4.0f, 4.0f, 4.0f,
-    5.0f, 5.0f, 5.0f, 6.0f, 6.0f, 6.0f
+    0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,
+    2.0f, 2.0f, 2.0f, 2.5f, 2.5f, 2.5f,
+    1.5f, 1.5f, 1.5f, 0.5f, 0.5f, 0.5f,
 };
 
 void StbImageConverterTest::hdrGrayscale() {
@@ -358,17 +358,17 @@ void StbImageConverterTest::hdrRg() {
 }
 
 constexpr const Float OriginalRgb32FData[] = {
-    1.0f, 1.5f, 2.0f, 2.5f, 3.0f, 3.5f,
-    4.0f, 4.5f, 5.0f, 5.5f, 6.0f, 6.5f,
-    7.0f, 7.5f, 8.0f, 8.5f, 9.0f, 9.5f
+    0.0f, 0.5f, 1.0f, 1.5f, 2.0f, 2.5f,
+    3.0f, 3.5f, 4.0f, 1.0f, 0.5f, 0.0f,
+    0.0f, 0.5f, 1.0f, 4.5f, 5.0f, 5.5f,
 };
 
 const ImageView2D OriginalRgb32F{PixelFormat::RGB32F, {2, 3}, OriginalRgb32FData};
 
 constexpr const Float OriginalRgba32FData[] = {
-    1.0f, 1.5f, 2.0f, 0.0f, 2.5f, 3.0f, 3.5f, 0.0f,
-    4.0f, 4.5f, 5.0f, 0.0f, 5.5f, 6.0f, 6.5f, 0.0f,
-    7.0f, 7.5f, 8.0f, 0.0f, 8.5f, 9.0f, 9.5f, 0.0f
+    0.0f, 0.5f, 1.0f, 0.0f, 1.5f, 2.0f, 2.5f, 0.0f,
+    3.0f, 3.5f, 4.0f, 0.0f, 1.0f, 0.5f, 0.0f, 0.0f,
+    0.0f, 0.5f, 1.0f, 0.0f, 4.5f, 5.0f, 5.5f, 0.0f
 };
 
 const ImageView2D OriginalRgba32F{PixelFormat::RGBA32F, {2, 3}, OriginalRgba32FData};
