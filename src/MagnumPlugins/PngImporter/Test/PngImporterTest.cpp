@@ -30,10 +30,13 @@
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
 #include <Corrade/Utility/Algorithms.h>
+#include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/DebugStl.h> /** @todo remove once Debug is stream-free */
 #include <Corrade/Utility/FormatStl.h> /** @todo remove once Debug is stream-free */
 #include <Corrade/Utility/Path.h>
+#include <Magnum/ImageView.h>
 #include <Magnum/PixelFormat.h>
+#include <Magnum/DebugTools/CompareImage.h>
 #include <Magnum/Math/Color.h>
 #include <Magnum/Trade/AbstractImporter.h>
 #include <Magnum/Trade/ImageData.h>
@@ -55,6 +58,10 @@ struct PngImporterTest: TestSuite::Tester {
     void rgb16();
     void rgbPalette1bit();
     void rgba();
+
+    void forceBitDepth8();
+    void forceBitDepth16();
+    void forceBitDepthInvalid();
 
     void openMemory();
     void openTwice();
@@ -155,6 +162,85 @@ constexpr struct {
     {"tRNS alpha mask", "rgba-trns.png"},
 };
 
+const struct {
+    TestSuite::TestCaseDescriptionSourceLocation name;
+    const char* filename;
+    PixelFormat format;
+    Vector2i size;
+    Containers::Array<char> data;
+    bool verbose;
+    const char* message;
+} ForceBitDepth8Data[]{
+    {"already 8-bit", "rgba.png", PixelFormat::RGBA8Unorm, {3, 2}, {InPlaceInit, {
+        /* Same as in rgba() */
+        '\xde', '\xad', '\xb5', '\xff',
+        '\xca', '\xfe', '\x77', '\xff',
+        '\x00', '\x00', '\x00', '\x00',
+        '\xca', '\xfe', '\x77', '\xff',
+        '\x00', '\x00', '\x00', '\x00',
+        '\xde', '\xad', '\xb5', '\xff'
+    }}, true, nullptr},
+    {"RGB", "rgb16.png", PixelFormat::RGB8Unorm, {2, 3}, {InPlaceInit, {
+        '\x04', '\x08', '\x0c',
+        '\x08', '\x0c', '\x10',
+        '\x0c', '\x10', '\x13',
+        '\x10', '\x13', '\x17',
+        '\x13', '\x17', '\x1b',
+        '\x17', '\x1b', '\x1f'
+    }}, false, nullptr},
+    {"RGB, verbose", "rgb16.png", PixelFormat::RGB8Unorm, {2, 3}, {InPlaceInit, {
+        '\x04', '\x08', '\x0c',
+        '\x08', '\x0c', '\x10',
+        '\x0c', '\x10', '\x13',
+        '\x10', '\x13', '\x17',
+        '\x13', '\x17', '\x1b',
+        '\x17', '\x1b', '\x1f'
+    }}, true, "Trade::PngImporter::image2D(): stripping 16-bit channels to 8-bit\n"},
+    {"gray", "gray16.png", PixelFormat::R8Unorm, {2, 3}, {InPlaceInit, {
+        4, 8,
+        12, 16,
+        19, 23
+    }}, false, nullptr}
+};
+
+const struct {
+    TestSuite::TestCaseDescriptionSourceLocation name;
+    const char* filename;
+    PixelFormat format;
+    Vector2i size;
+    Containers::Array<UnsignedShort> data;
+    bool verbose;
+    const char* message;
+} ForceBitDepth16Data[]{
+    {"already 16-bit", "gray16.png", PixelFormat::R16Unorm, {2, 3}, {InPlaceInit, {
+        /* Same as in gray16() */
+        1000, 2000,
+        3000, 4000,
+        5000, 6000
+    }}, true, nullptr},
+    {"RGBA", "rgba.png", PixelFormat::RGBA16Unorm, {3, 2}, {InPlaceInit, {
+        /* Yes, those pixels are zero in the original as well. Huh. */
+        57054, 44461, 46517, 65535,
+        51914, 65278, 30583, 65535,
+        0, 0, 0, 0,
+        51914, 65278, 30583, 65535,
+        0, 0, 0, 0,
+        57054, 44461, 46517, 65535,
+    }}, false, nullptr},
+    {"RGBA, verbose", "rgba.png", PixelFormat::RGBA16Unorm, {3, 2}, {InPlaceInit, {
+        57054, 44461, 46517, 65535,
+        51914, 65278, 30583, 65535,
+        0, 0, 0, 0,
+        51914, 65278, 30583, 65535,
+        0, 0, 0, 0,
+        57054, 44461, 46517, 65535,
+    }}, true, "Trade::PngImporter::image2D(): expanding 8-bit channels to 16-bit\n"},
+    {"gray", "gray.png", PixelFormat::R16Unorm, {3, 2}, {InPlaceInit, {
+        65535, 34952, 0,
+        34952, 0, 65535
+    }}, false, nullptr}
+};
+
 /* Shared among all plugins that implement data copying optimizations */
 const struct {
     const char* name;
@@ -193,6 +279,14 @@ PngImporterTest::PngImporterTest() {
 
     addInstancedTests({&PngImporterTest::rgba},
         Containers::arraySize(RgbaData));
+
+    addInstancedTests({&PngImporterTest::forceBitDepth8},
+        Containers::arraySize(ForceBitDepth8Data));
+
+    addInstancedTests({&PngImporterTest::forceBitDepth16},
+        Containers::arraySize(ForceBitDepth16Data));
+
+    addTests({&PngImporterTest::forceBitDepthInvalid});
 
     addInstancedTests({&PngImporterTest::openMemory},
         Containers::arraySize(OpenMemoryData));
@@ -397,6 +491,70 @@ void PngImporterTest::rgba() {
         '\x00', '\x00', '\x00', '\x00',
         '\xde', '\xad', '\xb5', '\xff'
     }), TestSuite::Compare::Container);
+}
+
+void PngImporterTest::forceBitDepth8() {
+    auto&& data = ForceBitDepth8Data[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("PngImporter");
+    importer->configuration().setValue("forceBitDepth", 8);
+    if(data.verbose) importer->addFlags(ImporterFlag::Verbose);
+
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(PNGIMPORTER_TEST_DIR, data.filename)));
+
+    std::ostringstream out;
+    Containers::Optional<ImageData2D> image;
+    {
+        Debug redirectOutput{&out};
+        image = importer->image2D(0);
+    }
+    CORRADE_VERIFY(image);
+    CORRADE_COMPARE_AS(*image,
+        (ImageView2D{PixelStorage{}.setAlignment(1), data.format, data.size, data.data}),
+        DebugTools::CompareImage);
+    if(data.message)
+        CORRADE_COMPARE(out.str(), data.message);
+    else
+        CORRADE_COMPARE(out.str(), "");
+}
+
+void PngImporterTest::forceBitDepth16() {
+    auto&& data = ForceBitDepth16Data[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("PngImporter");
+    importer->configuration().setValue("forceBitDepth", 16);
+    if(data.verbose) importer->addFlags(ImporterFlag::Verbose);
+
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(PNGIMPORTER_TEST_DIR, data.filename)));
+
+    std::ostringstream out;
+    Containers::Optional<ImageData2D> image;
+    {
+        Debug redirectOutput{&out};
+        image = importer->image2D(0);
+    }
+    CORRADE_VERIFY(image);
+    CORRADE_COMPARE_AS(*image,
+        (ImageView2D{PixelStorage{}.setAlignment(1), data.format, data.size, data.data}),
+        DebugTools::CompareImage);
+    if(data.message)
+        CORRADE_COMPARE(out.str(), data.message);
+    else
+        CORRADE_COMPARE(out.str(), "");
+}
+
+void PngImporterTest::forceBitDepthInvalid() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("PngImporter");
+    importer->configuration().setValue("forceBitDepth", 4);
+
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(PNGIMPORTER_TEST_DIR, "rgba.png")));
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!importer->image2D(0));
+    CORRADE_COMPARE(out.str(), "Trade::PngImporter::image2D(): expected forceBitDepth to be 0, 8 or 16 but got 4\n");
 }
 
 void PngImporterTest::openMemory() {

@@ -171,11 +171,17 @@ Containers::Optional<ImageData2D> StbImageImporter::doImage2D(const UnsignedInt 
     Int components;
 
     const Int forceChannelCount = configuration().value<Int>("forceChannelCount");
+    const Int forceBitDepth = configuration().value<Int>("forceBitDepth");
+    const bool isHdr = stbi_is_hdr_from_memory(reinterpret_cast<const stbi_uc*>(_in->data.data()), _in->data.size());
+    const bool is16bit = stbi_is_16_bit_from_memory(reinterpret_cast<const stbi_uc*>(_in->data.data()), _in->data.size());
 
     stbi_uc* data;
     std::size_t channelSize;
     PixelFormat format;
-    if(stbi_is_hdr_from_memory(reinterpret_cast<const stbi_uc*>(_in->data.data()), _in->data.size())) {
+    if((isHdr && !forceBitDepth) || forceBitDepth == 32) {
+        if(!isHdr && (flags() & ImporterFlag::Verbose))
+            Debug{} << "Trade::StbImageImporter::image2D(): expanding" << (is16bit ? "16-bit" : "8-bit") << "channels to 32-bit float";
+
         data = reinterpret_cast<stbi_uc*>(stbi_loadf_from_memory(reinterpret_cast<const stbi_uc*>(_in->data.data()), _in->data.size(), &size.x(), &size.y(), &components, forceChannelCount));
         channelSize = 4;
         /* stb_image still returns the original component count in components,
@@ -188,7 +194,10 @@ Containers::Optional<ImageData2D> StbImageImporter::doImage2D(const UnsignedInt 
             case 4: format = PixelFormat::RGBA32F;      break;
             default: CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
         }
-    } else if(stbi_is_16_bit_from_memory(reinterpret_cast<const stbi_uc*>(_in->data.data()), _in->data.size())) {
+    } else if((is16bit && !forceBitDepth) || forceBitDepth == 16) {
+        if(!is16bit && (flags() & ImporterFlag::Verbose))
+            Debug{} << "Trade::StbImageImporter::image2D():" << (isHdr ? "stripping 32-bit float" : "expanding 8-bit") << "channels to 16-bit";
+
         data = reinterpret_cast<stbi_uc*>(stbi_load_16_from_memory(reinterpret_cast<const stbi_uc*>(_in->data.data()), _in->data.size(), &size.x(), &size.y(), &components, forceChannelCount));
         channelSize = 2;
         /* stb_image still returns the original component count in components,
@@ -202,6 +211,14 @@ Containers::Optional<ImageData2D> StbImageImporter::doImage2D(const UnsignedInt 
             default: CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
         }
     } else {
+        if(forceBitDepth && forceBitDepth != 8) {
+            Error{} << "Trade::StbImageImporter::image2D(): expected forceBitDepth to be 0, 8, 16 or 32 but got" << configuration().value<Containers::StringView>("forceBitDepth");
+            return {};
+        }
+
+        if((isHdr || is16bit) && (flags() & ImporterFlag::Verbose))
+            Debug{} << "Trade::StbImageImporter::image2D(): stripping" << (isHdr ? "32-bit float" : "16-bit") << "channels to 8-bit";
+
         data = stbi_load_from_memory(reinterpret_cast<const stbi_uc*>(_in->data.data()), _in->data.size(), &size.x(), &size.y(), &components, forceChannelCount);
         channelSize = 1;
         /* stb_image still returns the original component count in components,

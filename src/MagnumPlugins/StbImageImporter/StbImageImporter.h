@@ -145,13 +145,16 @@ LDR images are imported as @ref PixelFormat::RGB8Unorm /
 @ref PixelFormat::RG32F. Certain formats support only some channel counts (for
 example Radiance HDR can only be three-component), however it's possible to
 override the desired channel count using the @cb{.ini} forceChannelCount @ce
-@ref Trade-StbImageImporter-configuration "configuration option".
+@ref Trade-StbImageImporter-configuration "configuration option". The
+@cb{.ini} forceBitDepth @ce option makes it possible to convert the images to a
+different bit depth.
 
 Images are imported with default @ref PixelStorage parameters except for
 alignment, which may be changed to @cpp 1 @ce if the data require it.
 
 The importer is thread-safe if Corrade and Magnum is compiled with
-@ref CORRADE_BUILD_MULTITHREADED enabled.
+@ref CORRADE_BUILD_MULTITHREADED enabled. The importer recognizes
+@ref ImporterFlag::Verbose, printing additional info when the flag is enabled.
 
 @subsection Trade-StbImageImporter-behavior-bmp BMP support
 

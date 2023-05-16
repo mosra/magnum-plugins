@@ -173,6 +173,10 @@ namespace Magnum {
     passed and treat is as a regular 2D image. In case of
     @relativeref{Trade,BasisImageConverter} this is an error, as treating the
     image as 2D would incur a significant data loss.
+-   @relativeref{Trade,PngImporter} and @relativeref{Trade,StbImageImporter}
+    now expose a @cb{.ini} forceBitDepth @ce option which allows to convert the
+    images to a different bit depth using libpng and stb_image own
+    functionality
 
 @subsection changelog-plugins-latest-buildsystem Build system
 

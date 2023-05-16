@@ -117,6 +117,10 @@ Containers::Optional<ImageData2D> SpngImporter::doImage2D(UnsignedInt, UnsignedI
     }
 
     /* Decide on the pixel format */
+    /** @todo implement forceBitDepth once SPNG_FMT_G16 / SPNG_FMT_RGB16 is a
+        thing, otherwise i'd have to explicitly handle all combinations of
+        forced / non-forced bit depth and channel count and that's a nightmare
+        to test */
     spng_format spngFormat{};
     PixelFormat format{};
     std::size_t pixelSize{};

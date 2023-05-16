@@ -27,6 +27,8 @@
 # property that would have to be set on each target separately.
 set(CMAKE_FOLDER "MagnumPlugins/StbImageImporter/Test")
 
+find_package(Magnum REQUIRED DebugTools)
+
 if(NOT CORRADE_TARGET_EMSCRIPTEN)
     set(THREADS_PREFER_PTHREAD_FLAG TRUE)
     find_package(Threads REQUIRED)
@@ -53,7 +55,9 @@ file(GENERATE OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/configure.h
     INPUT ${CMAKE_CURRENT_BINARY_DIR}/configure.h.in)
 
 corrade_add_test(StbImageImporterTest StbImageImporterTest.cpp
-    LIBRARIES Magnum::Trade
+    LIBRARIES
+        Magnum::DebugTools
+        Magnum::Trade
     FILES
         # https://github.com/python-pillow/Pillow/blob/8c9100e267f40a63081b344220abaa57325a3d6d/Tests/images/dispose_bgnd.gif
         dispose_bgnd.gif

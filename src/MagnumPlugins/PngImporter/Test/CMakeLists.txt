@@ -27,6 +27,8 @@
 # property that would have to be set on each target separately.
 set(CMAKE_FOLDER "MagnumPlugins/PngImporter/Test")
 
+find_package(Magnum REQUIRED DebugTools)
+
 if(NOT MAGNUM_PNGIMPORTER_BUILD_STATIC)
     set(PNGIMPORTER_PLUGIN_FILENAME $<TARGET_FILE:PngImporter>)
 endif()
@@ -38,7 +40,9 @@ file(GENERATE OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/configure.h
     INPUT ${CMAKE_CURRENT_BINARY_DIR}/configure.h.in)
 
 corrade_add_test(PngImporterTest PngImporterTest.cpp
-    LIBRARIES Magnum::Trade
+    LIBRARIES
+        Magnum::DebugTools
+        Magnum::Trade
     FILES
         ga.png
         ga-trns.png

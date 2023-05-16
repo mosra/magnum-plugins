@@ -40,6 +40,7 @@
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/ScopeGuard.h>
 #include <Corrade/Utility/Algorithms.h>
+#include <Corrade/Utility/Configuration.h>
 #include <Corrade/Utility/Debug.h>
 #include <Magnum/PixelFormat.h>
 #include <Magnum/Math/Functions.h>
@@ -202,6 +203,26 @@ Containers::Optional<ImageData2D> PngImporter::doImage2D(UnsignedInt, UnsignedIn
            here (which can be < 8), expecting the png_set_*() function to give
            back 8-bit channels */
         bits = 8;
+    }
+
+    /* Enable 8-to-16 or 16-to-8 conversion if desired */
+    if(const Int forceBitDepth = configuration().value<Int>("forceBitDepth")) {
+        if(forceBitDepth == 8 && bits != 8) {
+            CORRADE_INTERNAL_ASSERT(bits == 16);
+            if(flags() & ImporterFlag::Verbose)
+                Debug{} << "Trade::PngImporter::image2D(): stripping" << bits << Debug::nospace << "-bit channels to 8-bit";
+            png_set_scale_16(file);
+            bits = 8;
+        } else if(forceBitDepth == 16 && bits != 16) {
+            CORRADE_INTERNAL_ASSERT(bits == 8);
+            if(flags() & ImporterFlag::Verbose)
+                Debug{} << "Trade::PngImporter::image2D(): expanding" << bits << Debug::nospace << "-bit channels to 16-bit";
+            png_set_expand_16(file);
+            bits = 16;
+        } else if(forceBitDepth != 8 && forceBitDepth != 16) {
+            Error{} << "Trade::PngImporter::image2D(): expected forceBitDepth to be 0, 8 or 16 but got" << configuration().value<Containers::StringView>("forceBitDepth");
+            return {};
+        }
     }
 
     /** @todo there's an option to convert alpha to premultiplied on load:

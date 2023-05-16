@@ -118,10 +118,14 @@ Grayscale images are imported as @ref PixelFormat::R8Unorm /
 @ref PixelFormat::RG16Unorm, RGB as @ref PixelFormat::RGB8Unorm /
 @ref PixelFormat::RGB16Unorm and RGBA as @ref PixelFormat::RGBA8Unorm /
 @ref PixelFormat::RGBA16Unorm. All imported images use default
-@ref PixelStorage parameters.
+@ref PixelStorage parameters. It's possible to use the @cb{.ini} forceBitDepth @ce
+@ref Trade-PngImporter-configuration "configuration option" to import
+8-bit-per-channel images as 16-bit and vice versa.
 
-The plugin recognizes @ref ImporterFlag::Quiet, which will cause all import
-warnings, coming either from the plugin or libpng itself, to be suppressed.
+The importer recognizes @ref ImporterFlag::Verbose, printing additional info
+when the flag is enabled. @ref ImporterFlag::Quiet is recognized as well and
+causes all import warnings, coming either from the plugin or libpng itself, to
+be suppressed.
 
 @subsection Trade-PngImporter-behavior-cgbi Apple CgBI PNGs
 
@@ -133,6 +137,16 @@ which has the support.
 
 The test for this plugin contains a file that can be used for verifying CgBI
 support.
+
+@section Trade-PngImporter-configuration Plugin-specific configuration
+
+For some formats, it's possible to tune various output options through
+@ref configuration(). See below for all options and their default values:
+
+@snippet MagnumPlugins/PngImporter/PngImporter.conf configuration_
+
+See @ref plugins-configuration for more information and an example showing how
+to edit the configuration values.
 */
 class MAGNUM_PNGIMPORTER_EXPORT PngImporter: public AbstractImporter {
     public:
