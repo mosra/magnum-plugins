@@ -27,6 +27,7 @@
 
 #include <Corrade/Containers/Iterable.h>
 #include <Corrade/Containers/Optional.h>
+#include <Corrade/Containers/Reference.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Magnum/Math/PackingBatch.h>
 #include <Magnum/Math/Vector3.h>
@@ -38,7 +39,7 @@
 #include <Magnum/Trade/ArrayAllocator.h>
 #include <Magnum/Trade/MeshData.h>
 #include <meshoptimizer.h>
-
+#include <Corrade/Containers/StringView.h>
 namespace Magnum { namespace Trade {
 
 MeshOptimizerSceneConverter::MeshOptimizerSceneConverter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin): AbstractSceneConverter{manager, plugin} {}
@@ -224,6 +225,36 @@ bool convertInPlaceInternal(const char* prefix, MeshData& mesh, const SceneConve
         } else CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
     }
 
+    if((configuration.value<bool>("encodeVertex") || configuration.value<bool>("decodeVertex")) && (mesh.vertexData().size() > 256)) {
+        Error{} << prefix << "Compression and decompression is not possible with vertex data bigger than 256 bytes";
+        return false;
+    }
+
+    if(configuration.value<bool>("encodeVertex")) {
+        unsigned int encoded_attribute_count = 0;
+        for(UnsignedInt i = 0; i < mesh.attributeCount(); ++i) {
+            if(isVertexFormatImplementationSpecific(mesh.attributeFormat(i))) encoded_attribute_count++;
+        }
+        if(encoded_attribute_count == mesh.attributeCount()) {
+            Error{} << prefix << "Compression is not possible when all attributes are in implementation-specific format";
+            return false;
+        }
+    }
+
+    if(configuration.value<bool>("decodeVertex")) {
+        for(UnsignedInt i = 0; i < mesh.attributeCount(); ++i) {
+            if(!isVertexFormatImplementationSpecific(mesh.attributeFormat(i))) {
+                Error{} << prefix << "Decompression of the vertex data requires all attributes to be compressed";
+                return false;
+            }
+        }
+    }
+
+    if((configuration.value<bool>("encodeIndex") || configuration.value<bool>("decodeIndex")) && mesh.indexCount()%3 != 0) {
+        Error{} << prefix << "Only the index data mapped to triangles -hence divisible by 3- may be de/compressed";
+        return false;
+    }
+
     return true;
 }
 
@@ -318,6 +349,64 @@ template<std::size_t(*F)(UnsignedInt*, const UnsignedInt*, std::size_t, const Fl
     return F;
 }
 
+}
+
+std::vector<unsigned char> encodeVertex(const MeshData& mesh) {
+    auto owned_mesh = MeshTools::owned(mesh);
+    std::vector<unsigned char> buffer;
+    if(MeshTools::isInterleaved(mesh)) {
+        buffer.resize(meshopt_encodeVertexBufferBound(owned_mesh.vertexCount(), owned_mesh.attributeStride(0)));
+        buffer.resize(meshopt_encodeVertexBuffer(&buffer[0], buffer.size(), owned_mesh.vertexData(), owned_mesh.vertexCount(),
+                                                 owned_mesh.attributeStride(0)));
+    } else {
+        buffer.reserve(owned_mesh.vertexData().size());
+
+        /* Non-interleaved vertex buffer is handled by encoding each attribute data separately due to the stride */
+        for(UnsignedInt i = 0; i < owned_mesh.attributeCount(); i++) {
+            auto format_size = sizeof(owned_mesh.attributeFormat(i));
+
+            std::vector<unsigned char> buf(meshopt_encodeVertexBufferBound(owned_mesh.vertexCount(), owned_mesh.attributeStride(i)));
+            if(owned_mesh.attributeName(i) == Trade::MeshAttribute::Position){
+                if(owned_mesh.attributeStride(i)/format_size == 2) {
+                    buf.resize(meshopt_encodeVertexBuffer(&buf[0], buf.size(), owned_mesh.positions2DAsArray(), owned_mesh.vertexCount(), owned_mesh.attributeStride(i)));
+                }
+                else if(owned_mesh.attributeStride(i)/format_size == 3) {
+                    buf.resize(meshopt_encodeVertexBuffer(&buf[0], buf.size(), owned_mesh.positions3DAsArray(), owned_mesh.vertexCount(), owned_mesh.attributeStride(i)));
+                }
+            }
+            if(owned_mesh.attributeName(i) == Trade::MeshAttribute::TextureCoordinates) {
+                buf.resize(meshopt_encodeVertexBuffer(&buf[0], buf.size(), owned_mesh.textureCoordinates2DAsArray(), owned_mesh.vertexCount(), owned_mesh.attributeStride(i)));
+            }
+            if(owned_mesh.attributeName(i) == Trade::MeshAttribute::Color) {
+                buf.resize(meshopt_encodeVertexBuffer(&buf[0], buf.size(), owned_mesh.colorsAsArray(), owned_mesh.vertexCount(), owned_mesh.attributeStride(i)));
+            }
+            std::move(buf.begin(), buf.end(), std::back_inserter(buffer));
+        }
+        buffer.shrink_to_fit();
+    }
+    CORRADE_INTERNAL_ASSERT(!buffer.empty() && buffer.size() < owned_mesh.vertexData().size());
+    return buffer;
+}
+
+Containers::Array<char> decodeVertex(const MeshData& mesh) {
+    auto owned_mesh = MeshTools::owned(mesh);
+    if(MeshTools::isInterleaved(owned_mesh)) {
+        Containers::Array<char> decoded{NoInit, owned_mesh.vertexCount()*owned_mesh.attributeStride(0)};
+        Containers::ArrayView<const unsigned char> encoded_data = Containers::arrayCast<const unsigned char>(owned_mesh.vertexData());
+        int result = meshopt_decodeVertexBuffer(decoded.data(), owned_mesh.vertexCount(), owned_mesh.attributeStride(0),
+                                                encoded_data.data(), encoded_data.size());
+        return decoded;
+    } else {
+        auto last_attribute_size = owned_mesh.vertexCount()*owned_mesh.attributeStride(owned_mesh.attributeCount()-1);
+        Containers::Array<char> decoded{NoInit, owned_mesh.attributeOffset(owned_mesh.attributeCount()-1)+last_attribute_size};
+        for(unsigned int i=0; i < owned_mesh.attributeCount(); ++i) {
+            Containers::ArrayView<const unsigned char> data = Containers::arrayCast<const unsigned char>(owned_mesh.attribute(i).asContiguous());
+            const std::size_t vertexSize = owned_mesh.attributeStride(i);
+            int result = meshopt_decodeVertexBuffer(decoded.data(), owned_mesh.vertexCount(), vertexSize,
+                                                     data, data.size());
+        }
+        return decoded;
+    }
 }
 
 Containers::Optional<MeshData> MeshOptimizerSceneConverter::doConvert(const MeshData& mesh) {
@@ -418,6 +507,70 @@ Containers::Optional<MeshData> MeshOptimizerSceneConverter::doConvert(const Mesh
            using a now-gone array */
         if(flags() & SceneConverterFlag::Verbose)
             populatePositions(out, positionStorage, positions);
+    }
+
+    if(configuration().value<bool>("encodeIndex")) {
+        out = MeshTools::owned(mesh);
+
+        std::vector<unsigned char> index_buffer(meshopt_encodeIndexBufferBound(out.indexCount(), out.vertexCount()));
+        index_buffer.resize(meshopt_encodeIndexBuffer(&index_buffer[0], index_buffer.size(), out.indexData().data(), out.indexCount()));
+
+        if(index_buffer.empty() || index_buffer.size() > out.indexData().size()) {
+            Error{} << "Trade::MeshOptimizerSceneConverter::convert(): index buffer encoding failed: encoded buffer size:"
+                    << index_buffer.size() << "original index data size:" << out.indexData().size();
+            return Containers::NullOpt;
+        }
+
+        out = Trade::MeshData{out.primitive(), {}, index_buffer, Trade::MeshIndexData{index_buffer}, {},
+                              out.vertexData(), out.releaseAttributeData(), out.vertexCount()};
+    }
+
+    if(configuration().value<bool>("decodeIndex")) {
+        out = MeshTools::owned(mesh);
+        Containers::Array<unsigned int> decodedIndex{NoInit, out.indexCount()*meshIndexTypeSize(out.indexType())};
+        int result = meshopt_decodeIndexBuffer(decodedIndex.data(), out.indexCount(),
+                                              reinterpret_cast<const unsigned char *>(out.indexData().data()), out.indexData().size());
+        if(result != 0) {
+            Error{} << "Trade::MeshOptimizerSceneConverter::convert(): index buffer decoding failed";
+            return Containers::NullOpt;
+        }
+
+        out = Trade::MeshData{out.primitive(), {}, decodedIndex, Trade::MeshIndexData{decodedIndex}, {},
+                              out.vertexData(), out.releaseAttributeData(), out.vertexCount()};
+    }
+
+    if(configuration().value<bool>("encodeVertex")) {
+        meshopt_encodeVertexVersion(0);
+
+        out = MeshTools::owned(mesh);
+        auto attributes = MeshTools::owned(mesh).releaseAttributeData();
+        for(UnsignedInt i = 0; i < out.attributeCount(); ++i) {
+            const VertexFormat encodedFormat = !isVertexFormatImplementationSpecific(out.attributeFormat(i)) ?
+                                               vertexFormatWrap(out.attributeFormat(i)) : out.attributeFormat(i);
+            attributes[i] = Trade::MeshAttributeData{out.attributeName(i), encodedFormat,
+                                                out.attributeOffset(i), out.vertexCount(),
+                                                out.attributeStride(i), out.attributeArraySize(i)};
+        }
+        std::vector<unsigned char> encoded_buffer = encodeVertex(out);
+        out = Trade::MeshData{out.primitive(), Trade::DataFlags{}, out.indexData(), Trade::MeshIndexData{out.indices()}, Trade::DataFlag::Mutable,
+                              encoded_buffer, std::move(attributes)};
+    }
+
+    if(configuration().value<bool>("decodeVertex")) {
+        out = MeshTools::owned(mesh);
+        auto attributes = MeshTools::owned(mesh).releaseAttributeData();
+        for(UnsignedInt i = 0; i != out.attributeCount(); ++i) {
+            const VertexFormat originalFormat = vertexFormatUnwrap<VertexFormat>(out.attributeFormat(i));
+            attributes[i] = Trade::MeshAttributeData{out.attributeName(i), originalFormat,
+                                                     out.attributeOffset(i), out.vertexCount(),
+                                                     out.attributeStride(i), out.attributeArraySize(i)};
+        }
+        Containers::Array<char> decoded{NoInit, out.vertexCount()*out.attributeStride(0)};
+        Containers::ArrayView<const unsigned char> encoded_data = Containers::arrayCast<const unsigned char>(out.vertexData());
+        int result = meshopt_decodeVertexBuffer(decoded.data(), out.vertexCount(), out.attributeStride(0),
+                                                encoded_data.data(), encoded_data.size());
+        out = Trade::MeshData{out.primitive(), Trade::DataFlags{}, out.indexData(), Trade::MeshIndexData{out.indices()}, Trade::DataFlag::Mutable,
+                              decoded, std::move(attributes)};
     }
 
     /* Print before & after stats if verbose output is requested */
