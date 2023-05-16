@@ -33,9 +33,11 @@
 #include <Corrade/Utility/FormatStl.h> /** @todo remove once Debug is stream-free */
 #include <Magnum/Math/Vector3.h>
 #include <Magnum/MeshTools/CompressIndices.h>
+#include <Magnum/MeshTools/GenerateIndices.h>
 #include <Magnum/MeshTools/Interleave.h>
 #include <Magnum/Primitives/Circle.h>
 #include <Magnum/Primitives/Icosphere.h>
+#include <Magnum/Primitives/Plane.h>
 #include <Magnum/Primitives/Square.h>
 #include <Magnum/Primitives/UVSphere.h>
 #include <Magnum/Trade/AbstractSceneConverter.h>
@@ -85,6 +87,7 @@ struct MeshOptimizerSceneConverterTest: TestSuite::Tester {
     template<class T> void simplifySloppy();
     void simplifyEmptyIndexBuffer();
     void simplifyVerbose();
+    void simplifyEmpty();
 
     /* Explicitly forbid system-wide plugin dependencies */
     PluginManager::Manager<AbstractSceneConverter> _manager{"nonexistent"};
@@ -108,6 +111,21 @@ const struct {
 } SimplifyErrorData[] {
     {"", "simplify"},
     {"sloppy", "simplifySloppy"}
+};
+
+const struct {
+    const char* name;
+    Containers::Optional<bool> failEmpty;
+    Containers::Optional<UnsignedInt> inputIndexCount;
+    Float targetError;
+    const char* message;
+} SimplifyEmptyData[]{
+    {"simplified to empty", {}, {}, 2.0f, nullptr},
+    {"simplified to empty, failEmpty", true, {}, 2.0f,
+        "Trade::MeshOptimizerSceneConverter::convert(): simplification resulted in an empty mesh\n"},
+    /* If the input is empty already, don't fail anything */
+    {"empty input", {}, 0, 1.0e-2f, nullptr},
+    {"empty input, failEmpty", {}, 0, 1.0e-2f, nullptr},
 };
 
 MeshOptimizerSceneConverterTest::MeshOptimizerSceneConverterTest() {
@@ -172,6 +190,9 @@ MeshOptimizerSceneConverterTest::MeshOptimizerSceneConverterTest() {
         &MeshOptimizerSceneConverterTest::simplifySloppy<UnsignedInt>,
         &MeshOptimizerSceneConverterTest::simplifyEmptyIndexBuffer,
         &MeshOptimizerSceneConverterTest::simplifyVerbose});
+
+    addInstancedTests({&MeshOptimizerSceneConverterTest::simplifyEmpty},
+        Containers::arraySize(SimplifyEmptyData));
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. */
@@ -1189,6 +1210,42 @@ void MeshOptimizerSceneConverterTest::simplifyVerbose() {
     overdraw 1 -> 1
 )";
     CORRADE_COMPARE(out.str(), expected);
+}
+
+void MeshOptimizerSceneConverterTest::simplifyEmpty() {
+    auto&& data = SimplifyEmptyData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    MeshData mesh = MeshTools::generateIndices(Primitives::planeSolid());
+
+    MeshData input{mesh.primitive(),
+        {}, data.inputIndexCount ? nullptr : mesh.indexData(),
+            MeshIndexData{mesh.indices().prefix(data.inputIndexCount ? *data.inputIndexCount : mesh.indexCount())},
+        {}, mesh.vertexData(),
+            meshAttributeDataNonOwningArray(mesh.attributeData())};
+
+    Containers::Pointer<AbstractSceneConverter> converter = _manager.instantiate("MeshOptimizerSceneConverter");
+    converter->configuration().setValue("simplifySloppy", true);
+    converter->configuration().setValue("simplifyTargetIndexCountThreshold", 0.5f);
+    converter->configuration().setValue("simplifyTargetError", data.targetError);
+    if(data.failEmpty)
+        converter->configuration().setValue("simplifyFailEmpty", *data.failEmpty);
+
+    std::ostringstream out;
+    Containers::Optional<MeshData> simplified;
+    {
+        Error redirectError{&out};
+        simplified = converter->convert(input);
+    }
+
+    if(data.message) {
+        CORRADE_VERIFY(!simplified);
+        CORRADE_COMPARE(out.str(), data.message);
+    } else {
+        CORRADE_VERIFY(simplified);
+        CORRADE_COMPARE(simplified->indexCount(), 0);
+        CORRADE_COMPARE(out.str(), "");
+    }
 }
 
 }}}}

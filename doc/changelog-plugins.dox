@@ -177,6 +177,10 @@ namespace Magnum {
     now expose a @cb{.ini} forceBitDepth @ce option which allows to convert the
     images to a different bit depth using libpng and stb_image own
     functionality
+-   Added a @cb{.ini} simplifyFailEmpty @ce option to
+    @relativeref{Trade,MeshOptimizerSceneConverter} that makes the
+    simplification fail if it would result in an empty mesh instead of just
+    returning it
 
 @subsection changelog-plugins-latest-buildsystem Build system
 

@@ -163,6 +163,12 @@ to new locations. It only requires the mesh to have a position attribute, mesh
 connectivity and face seams are figured out from the index buffer. As with all
 other operations, all original attributes are preserved.
 
+The simplification can result in the whole mesh being removed if either the
+@cb{.ini} simplifyTargetError @ce is set too high or the input consists of just
+degenerate triangles. By default a mesh with zero vertices is returned in that
+case, enable the @cb{.ini} simplifyFailEmpty @ce option to make the process
+fail in that case instead.
+
 @section Trade-MeshOptimizerSceneConverter-configuration Plugin-specific configuration
 
 It's possible to tune various output options through @ref configuration(). See

@@ -376,6 +376,11 @@ Containers::Optional<MeshData> MeshOptimizerSceneConverter::doConvert(const Mesh
             );
         }
 
+        if(!vertexCount && configuration().value<bool>("simplifyFailEmpty")) {
+            Error{} << "Trade::MeshOptimizerSceneConverter::convert(): simplification resulted in an empty mesh";
+            return {};
+        }
+
         Containers::arrayResize<Trade::ArrayAllocator>(outputIndices, vertexCount);
 
         /* Take the original mesh vertex data with the reduced index buffer and
