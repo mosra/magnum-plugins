@@ -29,8 +29,10 @@
 #include <Corrade/Containers/StridedArrayView.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
+#include <Corrade/TestSuite/Compare/StringToFile.h>
 #include <Corrade/Utility/DebugStl.h> /** @todo remove once Debug is stream-free */
 #include <Corrade/Utility/FormatStl.h>
+#include <Corrade/Utility/Path.h>
 #include <Magnum/ImageView.h>
 #include <Magnum/PixelFormat.h>
 #include <Magnum/Trade/AbstractImageConverter.h>
@@ -212,6 +214,9 @@ constexpr const UnsignedShort ConvertedRgbData16[] = {
 void PngImageConverterTest::rgb16() {
     Containers::Optional<Containers::Array<char>> data = _converterManager.instantiate("PngImageConverter")->convertToData(OriginalRgb16);
     CORRADE_VERIFY(data);
+    CORRADE_COMPARE_AS(*data,
+        Utility::Path::join(PNGIMPORTER_TEST_DIR, "rgb16.png"),
+        TestSuite::Compare::StringToFile);
 
     if(_importerManager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("PngImporter plugin not found, cannot test");
@@ -293,6 +298,9 @@ constexpr const UnsignedShort ConvertedGrayscaleData16[] = {
 void PngImageConverterTest::grayscale16() {
     Containers::Optional<Containers::Array<char>> data = _converterManager.instantiate("PngImageConverter")->convertToData(OriginalGrayscale16);
     CORRADE_VERIFY(data);
+    CORRADE_COMPARE_AS(*data,
+        Utility::Path::join(PNGIMPORTER_TEST_DIR, "gray16.png"),
+        TestSuite::Compare::StringToFile);
 
     if(_importerManager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("PngImporter plugin not found, cannot test");
