@@ -390,9 +390,9 @@ void StbImageImporterTest::rgbHdr() {
     CORRADE_COMPARE(image->format(), PixelFormat::RGB32F);
     CORRADE_COMPARE_AS(Containers::arrayCast<const Float>(image->data()),
         Containers::arrayView<float>({
-            1.0f, 1.0f, 1.0f, 2.0f, 2.0f, 2.0f,
-            3.0f, 3.0f, 3.0f, 4.0f, 4.0f, 4.0f,
-            5.0f, 5.0f, 5.0f, 6.0f, 6.0f, 6.0f
+            1.0f, 1.5f, 2.0f, 2.5f, 3.0f, 3.5f,
+            4.0f, 4.5f, 5.0f, 5.5f, 6.0f, 6.5f,
+            7.0f, 7.5f, 8.0f, 8.5f, 9.0f, 9.5f
         }), TestSuite::Compare::Container);
 }
 
@@ -411,9 +411,9 @@ void StbImageImporterTest::rgbHdrOneChannel() {
     CORRADE_COMPARE(image->format(), PixelFormat::R32F);
     CORRADE_COMPARE_AS(Containers::arrayCast<const Float>(image->data()),
         Containers::arrayView<Float>({
-            1.0f, 2.0f,
-            3.0f, 4.0f,
-            5.0f, 6.0f
+            1.5f, 3.0f,
+            4.5f, 6.0f,
+            7.5f, 9.0f
         }), TestSuite::Compare::Container);
 }
 
@@ -433,9 +433,9 @@ void StbImageImporterTest::rgbHdrFourChannels() {
     CORRADE_COMPARE_AS(Containers::arrayCast<const Float>(image->data()),
         Containers::arrayView<Float>({
             /* Implicit full alpha */
-            1.0f, 1.0f, 1.0f, 1.0f, 2.0f, 2.0f, 2.0f, 1.0f,
-            3.0f, 3.0f, 3.0f, 1.0f, 4.0f, 4.0f, 4.0f, 1.0f,
-            5.0f, 5.0f, 5.0f, 1.0f, 6.0f, 6.0f, 6.0f, 1.0f
+            1.0f, 1.5f, 2.0f, 1.0f, 2.5f, 3.0f, 3.5f, 1.0f,
+            4.0f, 4.5f, 5.0f, 1.0f, 5.5f, 6.0f, 6.5f, 1.0f,
+            7.0f, 7.5f, 8.0f, 1.0f, 8.5f, 9.0f, 9.5f, 1.0f
         }), TestSuite::Compare::Container);
 }
 

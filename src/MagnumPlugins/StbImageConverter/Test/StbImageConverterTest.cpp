@@ -27,6 +27,7 @@
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
+#include <Corrade/TestSuite/Compare/StringToFile.h>
 #include <Corrade/TestSuite/Compare/String.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/DebugStl.h> /** @todo remove once Debug is stream-free */
@@ -333,6 +334,9 @@ void StbImageConverterTest::hdrRg() {
         fileData = converter->convertToData(OriginalRg32F);
     }
     CORRADE_VERIFY(fileData);
+    CORRADE_COMPARE_AS(*fileData,
+        Utility::Path::join(STBIMAGEIMPORTER_TEST_DIR, "rrr.hdr"),
+        TestSuite::Compare::StringToFile);
     if(data.quiet)
         CORRADE_COMPARE(out.str(), "");
     else
@@ -376,6 +380,9 @@ void StbImageConverterTest::hdrRgb() {
 
     Containers::Optional<Containers::Array<char>> data = converter->convertToData(OriginalRgb32F);
     CORRADE_VERIFY(data);
+    CORRADE_COMPARE_AS(*data,
+        Utility::Path::join(STBIMAGEIMPORTER_TEST_DIR, "rgb.hdr"),
+        TestSuite::Compare::StringToFile);
 
     if(_importerManager.loadState("StbImageImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("StbImageImporter plugin not found, cannot test");
@@ -409,6 +416,9 @@ void StbImageConverterTest::hdrRgba() {
         fileData = converter->convertToData(OriginalRgba32F);
     }
     CORRADE_VERIFY(fileData);
+    CORRADE_COMPARE_AS(*fileData,
+        Utility::Path::join(STBIMAGEIMPORTER_TEST_DIR, "rgb.hdr"),
+        TestSuite::Compare::StringToFile);
     if(data.quiet)
         CORRADE_COMPARE(out.str(), "");
     else

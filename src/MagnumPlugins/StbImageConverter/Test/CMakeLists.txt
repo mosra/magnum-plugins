@@ -30,8 +30,10 @@ set(CMAKE_FOLDER "MagnumPlugins/StbImageConverter/Test")
 find_package(Magnum REQUIRED DebugTools)
 
 if(CORRADE_TARGET_EMSCRIPTEN OR CORRADE_TARGET_ANDROID)
+    set(STBIMAGEIMPORTER_TEST_DIR ".")
     set(STBIMAGECONVERTER_TEST_OUTPUT_DIR "write")
 else()
+    set(STBIMAGEIMPORTER_TEST_DIR ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/StbImageImporter/Test)
     set(STBIMAGECONVERTER_TEST_OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR})
 endif()
 
@@ -49,7 +51,9 @@ file(GENERATE OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/configure.h
     INPUT ${CMAKE_CURRENT_BINARY_DIR}/configure.h.in)
 
 corrade_add_test(StbImageConverterTest StbImageConverterTest.cpp
-    LIBRARIES Magnum::Trade Magnum::DebugTools)
+    LIBRARIES Magnum::Trade Magnum::DebugTools
+    FILES
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/StbImageImporter/Test/rgb.hdr)
 target_include_directories(StbImageConverterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>)
 if(MAGNUM_STBIMAGECONVERTER_BUILD_STATIC)
     target_link_libraries(StbImageConverterTest PRIVATE StbImageConverter)

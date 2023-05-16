@@ -65,7 +65,8 @@ corrade_add_test(StbImageImporterTest StbImageImporterTest.cpp
         ../../PngImporter/Test/rgba-iphone.png
         ../../JpegImporter/Test/gray.jpg
         ../../JpegImporter/Test/rgb.jpg
-        rgb.hdr)
+        rgb.hdr
+        rrr.hdr)
 target_include_directories(StbImageImporterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>)
 if(MAGNUM_STBIMAGEIMPORTER_BUILD_STATIC)
     target_link_libraries(StbImageImporterTest PRIVATE StbImageImporter)
