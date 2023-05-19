@@ -2803,9 +2803,8 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
                         } break;
                         default: CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
                     }
-                }
 
-                if(gltfExtra.value().isParsed() && (
+                } else if(gltfExtra.value().isParsed() && (
                     gltfExtra.value().type() == Utility::JsonToken::Type::Bool ||
                     gltfExtra.value().type() == Utility::JsonToken::Type::Number ||
                     gltfExtra.value().type() == Utility::JsonToken::Type::String
