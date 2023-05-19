@@ -2278,13 +2278,21 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
     UnsignedInt cameraCount = 0;
     UnsignedInt skinCount = 0;
     std::size_t extraStringSize = 0;
-    /* Separate counter for every recognized extra field. Number and string
-       fields are put into `extraOffsets`, bit fields into `extraBitOffsets`
-       (i.e., an element is never non-zero in both). These are then turned into
-       offsets into `extras` and `extrasBits` arrays, for which there's two
+    /* Separate counter for every recognized extra field. Mappings are put into
+       `extraMappingOffsets`, number and string fields are put into
+       `extraDataOffsets`, bit fields into `extraBitOffsets` (i.e., an element
+       is never non-zero in both `extraDataOffsets` and `extraBitOffsets`).
+       These are then turned into offsets into `extraMappings`,
+       `extrasUnsignedInt` and `extrasBits` arrays, for which there's two
        extra items at the front. */
-    Containers::Array<UnsignedInt> extraOffsets{ValueInit, _d->sceneFieldNamesTypes.size() + 2};
-    Containers::Array<UnsignedInt> extraBitOffsets{ValueInit, _d->sceneFieldNamesTypes.size() + 2};
+    Containers::ArrayView<UnsignedInt> extraMappingOffsets;
+    Containers::ArrayView<UnsignedInt> extraDataOffsets;
+    Containers::ArrayView<UnsignedInt> extraBitOffsets;
+    Containers::ArrayTuple extraOffsetStorage{
+        {ValueInit, _d->sceneFieldNamesTypes.size() + 2, extraMappingOffsets},
+        {ValueInit, _d->sceneFieldNamesTypes.size() + 2, extraDataOffsets},
+        {ValueInit, _d->sceneFieldNamesTypes.size() + 2, extraBitOffsets}
+    };
     for(const UnsignedInt i: objects) {
         const Utility::JsonToken& gltfNode = _d->gltfNodes[i].first();
 
@@ -2418,12 +2426,14 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
                             case SceneFieldType::Bit:
                                 if(_d->gltf->parseBool(gltfExtra.value())) {
                                     success = true;
+                                    ++extraMappingOffsets[customFieldId + 2];
                                     ++extraBitOffsets[customFieldId + 2];
                                 } break;
                             #define _c(type) case SceneFieldType::type: \
                                 if(_d->gltf->parse ## type(gltfExtra.value())) { \
                                     success = true;                         \
-                                    ++extraOffsets[customFieldId + 2];      \
+                                    ++extraMappingOffsets[customFieldId + 2]; \
+                                    ++extraDataOffsets[customFieldId + 2];  \
                                 } break;
                             _c(Float)
                             _c(UnsignedInt)
@@ -2432,7 +2442,8 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
                             case SceneFieldType::StringOffset32:
                                 if(const Containers::Optional<Containers::StringView> parsed = _d->gltf->parseString(gltfExtra.value())) {
                                     success = true;
-                                    ++extraOffsets[customFieldId + 2];
+                                    ++extraMappingOffsets[customFieldId + 2];
+                                    ++extraDataOffsets[customFieldId + 2];
                                     extraStringSize += parsed->size();
                                 } break;
                             default: CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
@@ -2479,12 +2490,14 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
                             case SceneFieldType::Bit:
                                 if(const Containers::Optional<Containers::StridedBitArrayView1D> parsed = _d->gltf->parseBitArray(gltfExtra.value())) {
                                     success = true;
+                                    extraMappingOffsets[customFieldId + 2] += parsed->size();
                                     extraBitOffsets[customFieldId + 2] += parsed->size();
                                 } break;
                             #define _c(type) case SceneFieldType::type: \
                                 if(const Containers::Optional<Containers::StridedArrayView1D<const type>> parsed = _d->gltf->parse ## type ## Array(gltfExtra.value())) { \
                                     success = true;                             \
-                                    extraOffsets[customFieldId + 2] += parsed->size(); \
+                                    extraMappingOffsets[customFieldId + 2] += parsed->size(); \
+                                    extraDataOffsets[customFieldId + 2] += parsed->size(); \
                                 } break;
                             _c(Float)
                             _c(UnsignedInt)
@@ -2493,7 +2506,8 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
                             case SceneFieldType::StringOffset32:
                                 if(const Containers::Optional<Containers::StringIterable> parsed = _d->gltf->parseStringArray(gltfExtra.value())) {
                                     success = true;
-                                    extraOffsets[customFieldId + 2] += parsed->size();
+                                    extraMappingOffsets[customFieldId + 2] += parsed->size();
+                                    extraDataOffsets[customFieldId + 2] += parsed->size();
                                     for(Containers::StringView i: *parsed)
                                         extraStringSize += i.size();
                                 } break;
@@ -2513,16 +2527,22 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
     /** @todo switch to 64-bit offsets if there's many strings */
     CORRADE_INTERNAL_ASSERT(extraStringSize <= ~UnsignedInt{});
 
-    /* Turn the `extraOffsets` and `extraBitOffsets` into an offset array.
-       After this step, `extra*Offsets[i + 1]` to `extra*Offsets[i + 2]` is the
-       range of data for extra field `sceneFieldCustom(i)`; `extra*Offsets[0]`
-       and `[1]` is 0. */
-    std::size_t extraCount = 0;
+    /* Turn the `extra*Offsets` into an offset array. After this step,
+       `extra*Offsets[i + 1]` to `extra*Offsets[i + 2]` is the range of data
+       for extra field `sceneFieldCustom(i)`; `extra*Offsets[0]` and `[1]` is
+       0. */
+    std::size_t extraMappingCount = 0;
+    std::size_t extraDataCount = 0;
     std::size_t extraBitCount = 0;
-    for(UnsignedInt& i: extraOffsets) {
+    for(UnsignedInt& i: extraMappingOffsets) {
         const UnsignedInt count = i;
-        i += extraCount;
-        extraCount += count;
+        i += extraMappingCount;
+        extraMappingCount += count;
+    }
+    for(UnsignedInt& i: extraDataOffsets) {
+        const UnsignedInt count = i;
+        i += extraDataCount;
+        extraDataCount += count;
     }
     for(UnsignedInt& i: extraBitOffsets) {
         const UnsignedInt count = i;
@@ -2553,7 +2573,7 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
     Containers::ArrayView<UnsignedInt> cameras;
     Containers::ArrayView<UnsignedInt> skinObjects;
     Containers::ArrayView<UnsignedInt> skins;
-    Containers::ArrayView<UnsignedInt> extraObjects;
+    Containers::ArrayView<UnsignedInt> extraMappings;
     Containers::MutableStringView extrasStrings;
     /* This gets later cast to extrasFloat and extrasInt */
     /** @todo Abusing the fact that all allowed extras types are 32-bit now,
@@ -2561,7 +2581,6 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
         to satisfy alignment. For composite types (pairs, vectors, matrices)
         however it's enough to just take more items at once. */
     Containers::ArrayView<UnsignedInt> extrasUnsignedInt;
-    Containers::ArrayView<UnsignedInt> extraBitObjects;
     Containers::MutableBitArrayView extrasBits;
     Containers::Array<char> data = Containers::ArrayTuple{
         {NoInit, objects.size(), parentImporterStateObjects},
@@ -2582,10 +2601,9 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
         {NoInit, cameraCount, cameras},
         {NoInit, skinCount, skinObjects},
         {NoInit, skinCount, skins},
+        {NoInit, extraMappingCount, extraMappings},
         {NoInit, extraStringSize, extrasStrings},
-        {NoInit, extraCount, extraObjects},
-        {NoInit, extraCount, extrasUnsignedInt},
-        {NoInit, extraBitCount, extraBitObjects},
+        {NoInit, extraDataCount, extrasUnsignedInt},
         {NoInit, extraBitCount, extrasBits},
     };
     const auto extrasFloat = Containers::arrayCast<Float>(extrasUnsignedInt);
@@ -2769,20 +2787,20 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
                        in the node index. */
                     switch(_d->sceneFieldNamesTypes[customFieldId].second()) {
                         case SceneFieldType::Bit: {
+                            UnsignedInt& extraMappingOffset = extraMappingOffsets[customFieldId + 1];
                             UnsignedInt& extraBitOffset = extraBitOffsets[customFieldId + 1];
                             const Containers::StridedBitArrayView1D array = gltfExtra.value().asBitArray();
                             for(std::size_t i = 0; i != array.size(); ++i) {
-                                extraBitObjects[extraBitOffset] = nodeI;
-                                extrasBits.set(extraBitOffset, array[i]);
-                                ++extraBitOffset;
+                                extraMappings[extraMappingOffset++] = nodeI;
+                                extrasBits.set(extraBitOffset++, array[i]);
                             }
                         } break;
                         #define _c(type) case SceneFieldType::type: {       \
-                            UnsignedInt& extraOffset = extraOffsets[customFieldId + 1]; \
+                            UnsignedInt& extraMappingOffset = extraMappingOffsets[customFieldId + 1]; \
+                            UnsignedInt& extraDataOffset = extraDataOffsets[customFieldId + 1]; \
                             for(const type value: gltfExtra.value().as ## type ## Array()) { \
-                                extraObjects[extraOffset] = nodeI;          \
-                                extras ## type[extraOffset] = value;        \
-                                ++extraOffset;                              \
+                                extraMappings[extraMappingOffset++] = nodeI; \
+                                extras ## type[extraDataOffset++] = value;  \
                             }                                               \
                         } break;
                         _c(Float)
@@ -2790,13 +2808,13 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
                         _c(Int)
                         #undef _c
                         case SceneFieldType::StringOffset32: {
-                            UnsignedInt& extraOffset = extraOffsets[customFieldId + 1];
+                            UnsignedInt& extraMappingOffset = extraMappingOffsets[customFieldId + 1];
+                            UnsignedInt& extraDataOffset = extraDataOffsets[customFieldId + 1];
                             for(const Containers::StringView string: gltfExtra.value().asStringArray()) {
-                                extraObjects[extraOffset] = nodeI;
+                                extraMappings[extraMappingOffset++] = nodeI;
                                 Utility::copy(string, extrasStrings.sliceSize(extraStringOffset, string.size()));
                                 extraStringOffset += string.size();
-                                extrasUnsignedInt[extraOffset] = extraStringOffset;
-                                ++extraOffset;
+                                extrasUnsignedInt[extraDataOffset++] = extraStringOffset;
                             }
                         } break;
                         default: CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
@@ -2814,29 +2832,29 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
                        population */
                     switch(_d->sceneFieldNamesTypes[customFieldId].second()) {
                         case SceneFieldType::Bit: {
+                            UnsignedInt& extraMappingOffset = extraMappingOffsets[customFieldId + 1];
                             UnsignedInt& extraBitOffset = extraBitOffsets[customFieldId + 1];
-                            extraBitObjects[extraBitOffset] = nodeI;
-                            extrasBits.set(extraBitOffset, gltfExtra.value().asBool());
-                            ++extraBitOffset;
+                            extraMappings[extraMappingOffset++] = nodeI;
+                            extrasBits.set(extraBitOffset++, gltfExtra.value().asBool());
                         } break;
                         #define _c(type) case SceneFieldType::type: {       \
-                            UnsignedInt& extraOffset = extraOffsets[customFieldId + 1]; \
-                            extraObjects[extraOffset] = nodeI;              \
-                            extras ## type[extraOffset] = gltfExtra.value().as ## type(); \
-                            ++extraOffset;                                  \
+                            UnsignedInt& extraMappingOffset = extraMappingOffsets[customFieldId + 1]; \
+                            UnsignedInt& extraDataOffset = extraDataOffsets[customFieldId + 1]; \
+                            extraMappings[extraMappingOffset++] = nodeI;    \
+                            extras ## type[extraDataOffset++] = gltfExtra.value().as ## type(); \
                         } break;
                         _c(Float)
                         _c(UnsignedInt)
                         _c(Int)
                         #undef _c
                         case SceneFieldType::StringOffset32: {
-                            UnsignedInt& extraOffset = extraOffsets[customFieldId + 1];
-                            extraObjects[extraOffset] = nodeI;
+                            UnsignedInt& extraMappingOffset = extraMappingOffsets[customFieldId + 1];
+                            UnsignedInt& extraDataOffset = extraDataOffsets[customFieldId + 1];
+                            extraMappings[extraMappingOffset++] = nodeI;
                             const Containers::StringView string = gltfExtra.value().asString();
                             Utility::copy(string, extrasStrings.sliceSize(extraStringOffset, string.size()));
                             extraStringOffset += string.size();
-                            extrasUnsignedInt[extraOffset] = extraStringOffset;
-                            ++extraOffset;
+                            extrasUnsignedInt[extraDataOffset++] = extraStringOffset;
                         } break;
                         default: CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
                     }
@@ -2907,26 +2925,27 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
        non-empty. */
     for(std::size_t i = 0; i != _d->sceneFieldNamesTypes.size(); ++i) {
         const SceneFieldType fieldType = _d->sceneFieldNamesTypes[i].second();
-        std::size_t begin, end;
+        const Containers::StridedArrayView1D<UnsignedInt> mapping = extraMappings.slice(extraMappingOffsets[i], extraMappingOffsets[i + 1]);
+        std::size_t dataBegin, dataEnd;
         if(fieldType == SceneFieldType::Bit) {
-            begin = extraBitOffsets[i];
-            end = extraBitOffsets[i + 1];
+            dataBegin = extraBitOffsets[i];
+            dataEnd = extraBitOffsets[i + 1];
         } else {
-            begin = extraOffsets[i];
-            end = extraOffsets[i + 1];
+            dataBegin = extraDataOffsets[i];
+            dataEnd = extraDataOffsets[i + 1];
         }
-        if(begin != end) {
+        if(dataBegin != dataEnd) {
             if(fieldType == SceneFieldType::StringOffset32)
                 arrayAppend(fields, SceneFieldData{sceneFieldCustom(i),
-                SceneMappingType::UnsignedInt, extraObjects.slice(begin, end),
-                extrasStrings.data(), fieldType, extrasUnsignedInt.slice(begin, end)});
+                SceneMappingType::UnsignedInt, mapping,
+                extrasStrings.data(), fieldType, extrasUnsignedInt.slice(dataBegin, dataEnd)});
             else if(fieldType == SceneFieldType::Bit)
                 arrayAppend(fields, SceneFieldData{sceneFieldCustom(i),
-                SceneMappingType::UnsignedInt, extraBitObjects.slice(begin, end),
-                extrasBits.slice(begin, end)});
+                SceneMappingType::UnsignedInt, mapping,
+                extrasBits.slice(dataBegin, dataEnd)});
             else arrayAppend(fields, SceneFieldData{sceneFieldCustom(i),
-                SceneMappingType::UnsignedInt, extraObjects.slice(begin, end),
-                fieldType, extrasUnsignedInt.slice(begin, end)});
+                SceneMappingType::UnsignedInt, mapping,
+                fieldType, extrasUnsignedInt.slice(dataBegin, dataEnd)});
         }
     }
 
