@@ -2970,6 +2970,8 @@ void GltfImporterTest::scene() {
            object 3 has a material */
         CORRADE_VERIFY(scene->hasField(SceneField::Mesh));
         CORRADE_VERIFY(scene->hasField(SceneField::MeshMaterial));
+        CORRADE_COMPARE(scene->fieldFlags(SceneField::Mesh), SceneFieldFlag::MultiEntry);
+        CORRADE_COMPARE(scene->fieldFlags(SceneField::MeshMaterial), SceneFieldFlag::MultiEntry);
         CORRADE_COMPARE_AS(scene->mapping<UnsignedInt>(SceneField::Mesh), Containers::arrayView<UnsignedInt>({
             2, 6, 3
         }), TestSuite::Compare::Container);
@@ -3027,6 +3029,7 @@ void GltfImporterTest::scene() {
            other mesh with a material, the material field is not present */
         CORRADE_VERIFY(scene->hasField(SceneField::Mesh));
         CORRADE_VERIFY(!scene->hasField(SceneField::MeshMaterial));
+        CORRADE_COMPARE(scene->fieldFlags(SceneField::Mesh), SceneFieldFlag::MultiEntry);
         CORRADE_COMPARE_AS(scene->mapping<UnsignedInt>(SceneField::Mesh), Containers::arrayView<UnsignedInt>({
             2
         }), TestSuite::Compare::Container);

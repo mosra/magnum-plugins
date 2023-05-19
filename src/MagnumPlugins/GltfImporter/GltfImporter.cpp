@@ -2886,11 +2886,13 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
         SceneField::Transformation, SceneMappingType::UnsignedInt, nullptr, SceneFieldType::Matrix4x4, nullptr
     });
 
+    /* Multiple meshes (and materials) can be attached to a glTF node, but not
+       anything else */
     if(meshCount) arrayAppend(fields, SceneFieldData{
-        SceneField::Mesh, meshMaterialObjects, meshes
+        SceneField::Mesh, meshMaterialObjects, meshes, SceneFieldFlag::MultiEntry,
     });
     if(hasMeshMaterials) arrayAppend(fields, SceneFieldData{
-        SceneField::MeshMaterial, meshMaterialObjects, meshMaterials
+        SceneField::MeshMaterial, meshMaterialObjects, meshMaterials, SceneFieldFlag::MultiEntry,
     });
     if(lightCount) arrayAppend(fields, SceneFieldData{
         SceneField::Light, lightObjects, lights
