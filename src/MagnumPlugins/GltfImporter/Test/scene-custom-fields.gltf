@@ -38,6 +38,7 @@
         "offset": -22,
         "visible": true,
         "category": "duplicated",
+        "alias": "different string field data should't get mixed together",
         "category": "very",
         "radius": 3.5
       }
@@ -95,6 +96,7 @@
       "extras": {
         "radius": 0.5,
         "visible": true,
+        "alias": "seriously, not mixed",
         "category": "noteless"
       }
     },
