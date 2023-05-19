@@ -2779,10 +2779,9 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
                         } break;
                         #define _c(type) case SceneFieldType::type: {       \
                             UnsignedInt& extraOffset = extraOffsets[customFieldId + 1]; \
-                            const Containers::StridedArrayView1D<const type> array = gltfExtra.value().as ## type ## Array(); \
-                            for(std::size_t i = 0; i != array.size(); ++i) { \
+                            for(const type value: gltfExtra.value().as ## type ## Array()) { \
                                 extraObjects[extraOffset] = nodeI;          \
-                                extras ## type[extraOffset] = array[i];     \
+                                extras ## type[extraOffset] = value;        \
                                 ++extraOffset;                              \
                             }                                               \
                         } break;
@@ -2792,11 +2791,10 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
                         #undef _c
                         case SceneFieldType::StringOffset32: {
                             UnsignedInt& extraOffset = extraOffsets[customFieldId + 1];
-                            const Containers::StringIterable array = gltfExtra.value().asStringArray();
-                            for(std::size_t i = 0; i != array.size(); ++i) {
+                            for(const Containers::StringView string: gltfExtra.value().asStringArray()) {
                                 extraObjects[extraOffset] = nodeI;
-                                Utility::copy(array[i], extrasStrings.sliceSize(extraStringOffset, array[i].size()));
-                                extraStringOffset += array[i].size();
+                                Utility::copy(string, extrasStrings.sliceSize(extraStringOffset, string.size()));
+                                extraStringOffset += string.size();
                                 extrasUnsignedInt[extraOffset] = extraStringOffset;
                                 ++extraOffset;
                             }
