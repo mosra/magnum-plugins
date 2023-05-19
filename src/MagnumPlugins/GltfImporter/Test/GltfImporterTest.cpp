@@ -2969,6 +2969,7 @@ void GltfImporterTest::scene() {
         /* Objects 2, 6, 3 (in order they were discovered) have a mesh, only
            object 3 has a material */
         CORRADE_VERIFY(scene->hasField(SceneField::Mesh));
+        CORRADE_VERIFY(scene->hasField(SceneField::MeshMaterial));
         CORRADE_COMPARE_AS(scene->mapping<UnsignedInt>(SceneField::Mesh), Containers::arrayView<UnsignedInt>({
             2, 6, 3
         }), TestSuite::Compare::Container);
@@ -3025,13 +3026,13 @@ void GltfImporterTest::scene() {
         /* Object 2 has a mesh, but since it has no material and there's no
            other mesh with a material, the material field is not present */
         CORRADE_VERIFY(scene->hasField(SceneField::Mesh));
+        CORRADE_VERIFY(!scene->hasField(SceneField::MeshMaterial));
         CORRADE_COMPARE_AS(scene->mapping<UnsignedInt>(SceneField::Mesh), Containers::arrayView<UnsignedInt>({
             2
         }), TestSuite::Compare::Container);
         CORRADE_COMPARE_AS(scene->field<UnsignedInt>(SceneField::Mesh), Containers::arrayView<UnsignedInt>({
             1
         }), TestSuite::Compare::Container);
-        CORRADE_VERIFY(!scene->hasField(SceneField::MeshMaterial));
     }
 }
 
@@ -3380,7 +3381,8 @@ void GltfImporterTest::sceneCustomFields() {
     Containers::String filename = Utility::Path::join(GLTFIMPORTER_TEST_DIR, "scene-custom-fields.gltf");
     CORRADE_VERIFY(importer->openFile(filename));
 
-    /* Test mapping in both directions */
+    /* Test mapping in both directions. Verify also the concrete IDs to ensure
+       it's not adding a new entry for each occurence. */
     SceneField sceneFieldRadius = importer->sceneFieldForName("radius");
     SceneField sceneFieldOffset = importer->sceneFieldForName("offset");
     SceneField sceneFieldVisible = importer->sceneFieldForName("visible");
@@ -3392,11 +3394,11 @@ void GltfImporterTest::sceneCustomFields() {
     CORRADE_COMPARE(sceneFieldVisible, sceneFieldCustom(4));
     CORRADE_COMPARE(sceneFieldCategory, sceneFieldCustom(5));
     CORRADE_COMPARE(sceneFieldFlags, sceneFieldCustom(6));
-    CORRADE_COMPARE(importer->sceneFieldName(sceneFieldCustom(1)), "radius");
-    CORRADE_COMPARE(importer->sceneFieldName(sceneFieldCustom(2)), "offset");
-    CORRADE_COMPARE(importer->sceneFieldName(sceneFieldCustom(4)), "visible");
-    CORRADE_COMPARE(importer->sceneFieldName(sceneFieldCustom(5)), "category");
-    CORRADE_COMPARE(importer->sceneFieldName(sceneFieldCustom(6)), "flags");
+    CORRADE_COMPARE(importer->sceneFieldName(sceneFieldRadius), "radius");
+    CORRADE_COMPARE(importer->sceneFieldName(sceneFieldOffset), "offset");
+    CORRADE_COMPARE(importer->sceneFieldName(sceneFieldVisible), "visible");
+    CORRADE_COMPARE(importer->sceneFieldName(sceneFieldCategory), "category");
+    CORRADE_COMPARE(importer->sceneFieldName(sceneFieldFlags), "flags");
 
     {
         CORRADE_EXPECT_FAIL("Empty arrays are ignored when parsing the extras.");
@@ -3404,7 +3406,8 @@ void GltfImporterTest::sceneCustomFields() {
         CORRADE_COMPARE(importer->sceneFieldName(sceneFieldCustom(7)), "emptyArray");
     }
 
-    /* Unlike in materials, case of custom names is not normalized */
+    /* Unlike in materials, case of custom names is not normalized. Such naming
+       crimes should be rather rare though. */
     CORRADE_COMPARE(importer->sceneFieldForName("UppercaseName"), sceneFieldCustom(3));
     CORRADE_COMPARE(importer->sceneFieldName(sceneFieldCustom(3)), "UppercaseName");
 
