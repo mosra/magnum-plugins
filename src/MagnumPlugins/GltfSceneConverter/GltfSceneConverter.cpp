@@ -37,6 +37,8 @@
 #include <Corrade/Containers/Pair.h>
 #include <Corrade/Containers/Triple.h>
 #include <Corrade/Containers/ScopeGuard.h>
+#include <Corrade/Containers/StridedBitArrayView.h>
+#include <Corrade/Containers/StringIterable.h>
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/Format.h>
@@ -688,7 +690,10 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const SceneData& scene, con
             const SceneFieldType type = scene.fieldType(i);
             if(type != SceneFieldType::UnsignedInt &&
                type != SceneFieldType::Int &&
-               type != SceneFieldType::Float) {
+               type != SceneFieldType::Float &&
+               type != SceneFieldType::Bit &&
+               !Implementation::isSceneFieldTypeString(type))
+            {
                 if(!(flags() & SceneConverterFlag::Quiet))
                     Warning{} << "Trade::GltfSceneConverter::add(): custom scene field" << found->second << "has unsupported type" << type << Debug::nospace << ", skipping";
                 continue;
@@ -736,6 +741,8 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const SceneData& scene, con
     bool hasScaling = false;
     std::size_t meshMaterialCount = 0;
     std::size_t customFieldCount = 0;
+    std::size_t customBitFieldCount = 0;
+    std::size_t customStringFieldCount = 0;
     for(UnsignedInt i = 0; i != scene.fieldCount(); ++i) {
         if(!usedFields[i]) continue;
 
@@ -781,8 +788,15 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const SceneData& scene, con
             /* LCOV_EXCL_STOP */
         }
 
-        if(isSceneFieldCustom(fieldName))
-            customFieldCount += size;
+        if(isSceneFieldCustom(fieldName)) {
+            const SceneFieldType fieldType = scene.fieldType(i);
+            if(fieldType == SceneFieldType::Bit)
+                customBitFieldCount += size;
+            else if(Implementation::isSceneFieldTypeString(fieldType))
+                customStringFieldCount += size;
+            else
+                customFieldCount += size;
+        }
         else if(!(flags() & SceneConverterFlag::Quiet))
             Warning{} << "Trade::GltfSceneConverter::add():" << scene.fieldName(i) << "was not used";
     }
@@ -801,10 +815,10 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const SceneData& scene, con
     /** @todo Abusing the fact that all allowed extras types are 32-bit now,
         when 64-bit types are introduced there has to be a second 64-bit array
         to satisfy alignment. For composite types (vectors, matrices) however
-        it's enough to just take more items at once. Smaller types such as
-        bools could fit into the 32-bit but strings would need a separate
-        storage. */
+        it's enough to just take more items at once. */
     Containers::ArrayView<UnsignedInt> customFieldsUnsignedInt;
+    Containers::MutableBitArrayView customFieldsBit;
+    Containers::ArrayView<Containers::StringView> customFieldsString;
     Containers::ArrayTuple fieldStorage{
         {NoInit, totalFieldCount, fieldIds},
         {NoInit, totalFieldCount, fieldOffsets},
@@ -814,7 +828,9 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const SceneData& scene, con
         {NoInit, hasScaling ? trsCount : 0, scalings},
         {NoInit, meshMaterialCount, meshesMaterials},
         {ValueInit, std::size_t(scene.mappingBound()), hasTrs},
-        {NoInit, customFieldCount, customFieldsUnsignedInt}
+        {NoInit, customFieldCount, customFieldsUnsignedInt},
+        {NoInit, customBitFieldCount, customFieldsBit},
+        {NoInit, customStringFieldCount, customFieldsString},
     };
     const auto customFieldsFloat = Containers::arrayCast<Float>(customFieldsUnsignedInt);
     const auto customFieldsInt = Containers::arrayCast<Int>(customFieldsUnsignedInt);
@@ -845,12 +861,23 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const SceneData& scene, con
         }
     } {
         std::size_t offset = 0;
+        std::size_t bitOffset = 0;
+        std::size_t stringOffset = 0;
         for(UnsignedInt i = 0, iMax = scene.fieldCount(); i != iMax; ++i) {
             /* Only custom fields here, this means they're always last and all
                together, which makes it possible to write the "extras" object
                in one run. */
             if(!usedFields[i] || !isSceneFieldCustom(scene.fieldName(i)))
                 continue;
+
+            const SceneFieldType fieldType = scene.fieldType(i);
+            std::size_t* usedOffset;
+            if(fieldType == SceneFieldType::Bit)
+                usedOffset = &bitOffset;
+            else if(Implementation::isSceneFieldTypeString(fieldType))
+                usedOffset = &stringOffset;
+            else
+                usedOffset = &offset;
 
             const std::size_t fieldSize = scene.fieldSize(i);
             const Containers::ArrayView<UnsignedInt> mapping = mappingStorage.prefix(fieldSize);
@@ -867,15 +894,11 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const SceneData& scene, con
                 /* As we put all custom fields into a single array, the offset
                    needs to also include sizes of all previous custom fields
                    already written. */
-                /** @todo Currently abusing the fact that all whitelisted types
-                    are numeric and 32bit. Once types of other sizes or string
-                    / etc. fields are supported, there needs to be one offset
-                    per type. */
-                fieldOffsets[objectFieldOffset] = offset + j;
+                fieldOffsets[objectFieldOffset] = *usedOffset + j;
                 ++objectFieldOffset;
             }
 
-            offset += fieldSize;
+            *usedOffset += fieldSize;
         }
     }
     CORRADE_INTERNAL_ASSERT(
@@ -917,6 +940,8 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const SceneData& scene, con
     /* Populate custom field data */
     {
         std::size_t offset = 0;
+        std::size_t bitOffset = 0;
+        std::size_t stringOffset = 0;
         for(std::size_t i = 0; i != scene.fieldCount(); ++i) {
             if(!usedFields[i] || !isSceneFieldCustom(scene.fieldName(i)))
                 continue;
@@ -925,21 +950,36 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const SceneData& scene, con
                 just Math::cast()'ing them to the output */
             const SceneFieldType type = scene.fieldType(i);
             const std::size_t size = scene.fieldSize(i);
-            if(type == SceneFieldType::UnsignedInt) Utility::copy(
-                scene.field<UnsignedInt>(i),
-                customFieldsUnsignedInt.slice(offset, offset + size));
-            else if(type == SceneFieldType::Int) Utility::copy(
-                scene.field<Int>(i),
-                customFieldsInt.slice(offset, offset + size));
-            else if(type == SceneFieldType::Float) Utility::copy(
-                scene.field<Float>(i),
-                customFieldsFloat.slice(offset, offset + size));
-            else CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
-
-            offset += size;
+            if(type == SceneFieldType::UnsignedInt) {
+                Utility::copy(scene.field<UnsignedInt>(i),
+                    customFieldsUnsignedInt.slice(offset, offset + size));
+                offset += size;
+            } else if(type == SceneFieldType::Int) {
+                Utility::copy(scene.field<Int>(i),
+                    customFieldsInt.slice(offset, offset + size));
+                offset += size;
+            } else if(type == SceneFieldType::Float) {
+                Utility::copy(scene.field<Float>(i),
+                    customFieldsFloat.slice(offset, offset + size));
+                offset += size;
+            } else if(type == SceneFieldType::Bit) {
+                /** @todo Utility::copy() for bits, *finally* */
+                const Containers::StridedBitArrayView1D bits = scene.fieldBits(i);
+                for(std::size_t i = 0; i != bits.size(); ++i)
+                    customFieldsBit.set(bitOffset + i, bits[i]);
+                bitOffset += size;
+            } else if(Implementation::isSceneFieldTypeString(type)) {
+                const Containers::StringIterable strings = scene.fieldStrings(i);
+                for(std::size_t i = 0; i != strings.size(); ++i)
+                    customFieldsString[stringOffset + i] = strings[i];
+                stringOffset += size;
+            } else CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
         }
 
-        CORRADE_INTERNAL_ASSERT(offset == customFieldCount);
+        CORRADE_INTERNAL_ASSERT(
+            offset == customFieldCount &&
+            bitOffset == customBitFieldCount &&
+            stringOffset == customStringFieldCount);
     }
 
     /* Go object by object and consume the fields, populating the glTF node
@@ -1034,6 +1074,12 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const SceneData& scene, con
                     } else if(type == SceneFieldType::Float) {
                         for(std::size_t j = 0; j != customFieldArraySize; ++j)
                             _state->gltfNodes.write(customFieldsFloat[fieldOffsets[i + j]]);
+                    } else if(type == SceneFieldType::Bit) {
+                        for(std::size_t j = 0; j != customFieldArraySize; ++j)
+                            _state->gltfNodes.write(customFieldsBit[fieldOffsets[i + j]]);
+                    } else if(Implementation::isSceneFieldTypeString(type)) {
+                        for(std::size_t j = 0; j != customFieldArraySize; ++j)
+                            _state->gltfNodes.write(customFieldsString[fieldOffsets[i + j]]);
                     } else CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
                     _state->gltfNodes.endArray();
 
@@ -1049,6 +1095,10 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const SceneData& scene, con
                         _state->gltfNodes.write(customFieldsInt[offset]);
                     else if(type == SceneFieldType::Float)
                         _state->gltfNodes.write(customFieldsFloat[offset]);
+                    else if(type == SceneFieldType::Bit)
+                        _state->gltfNodes.write(customFieldsBit[offset]);
+                    else if(Implementation::isSceneFieldTypeString(type))
+                        _state->gltfNodes.write(customFieldsString[offset]);
                     else CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
                 }
 

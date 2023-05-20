@@ -30,6 +30,8 @@
 #include <Corrade/Containers/Iterable.h>
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/Pair.h>
+#include <Corrade/Containers/StridedBitArrayView.h>
+#include <Corrade/Containers/StringIterable.h>
 #include <Corrade/Containers/Triple.h>
 #include <Corrade/PluginManager/PluginMetadata.h>
 #include <Corrade/TestSuite/Tester.h>
@@ -4893,20 +4895,28 @@ void GltfSceneConverterTest::addSceneCustomFields() {
     constexpr SceneField SceneFieldInt = sceneFieldCustom(1766);
     /* Using huge IDs shouldn't cause any issues */
     constexpr SceneField SceneFieldFloat = sceneFieldCustom(0x7fffffff);
+    constexpr SceneField SceneFieldBit = sceneFieldCustom(11);
+    constexpr SceneField SceneFieldString = sceneFieldCustom(12);
     constexpr SceneField SceneFieldNameless = sceneFieldCustom(5318008);
     constexpr SceneField SceneFieldUnsupported = sceneFieldCustom(13);
     constexpr SceneField SceneFieldFloatArray = sceneFieldCustom(14);
     constexpr SceneField SceneFieldUnsignedArray = sceneFieldCustom(15);
     constexpr SceneField SceneFieldIntArray = sceneFieldCustom(16);
+    constexpr SceneField SceneFieldBitArray = sceneFieldCustom(17);
+    constexpr SceneField SceneFieldStringArray = sceneFieldCustom(18);
 
     converter->setSceneFieldName(SceneFieldUnsignedInt, "customUnsignedInt");
     converter->setSceneFieldName(SceneFieldInt, "customInt");
     converter->setSceneFieldName(SceneFieldFloat, "customFloat");
+    converter->setSceneFieldName(SceneFieldBit, "customBit");
+    converter->setSceneFieldName(SceneFieldString, "customString");
     /* CustomFieldNameless, ahem, doesn't have a name assigned */
     converter->setSceneFieldName(SceneFieldUnsupported, "customVector2");
     converter->setSceneFieldName(SceneFieldFloatArray, "customFloatArray");
     converter->setSceneFieldName(SceneFieldUnsignedArray, "customUnsignedArray");
     converter->setSceneFieldName(SceneFieldIntArray, "customIntArray");
+    converter->setSceneFieldName(SceneFieldBitArray, "customBitArray");
+    converter->setSceneFieldName(SceneFieldStringArray, "customStringArray");
 
     /* Adding also some builtin fields to verify the two can coexist */
     struct Scene {
@@ -4915,6 +4925,9 @@ void GltfSceneConverterTest::addSceneCustomFields() {
         Containers::Pair<UnsignedInt, Vector3> translations[3];
         Containers::Pair<UnsignedInt, UnsignedInt> customUnsignedInt[2];
         Containers::Pair<UnsignedInt, Int> customInt[2];
+        Containers::Pair<UnsignedInt, bool> customBit[3];
+        char customStringData[11];
+        Containers::Pair<UnsignedInt, UnsignedByte> customStringOffsets[3];
         Containers::Pair<UnsignedInt, UnsignedInt> customNameless[1];
         Containers::Pair<UnsignedInt, Vector2> customUnsupported[1];
         Vector3 scalings[3];
@@ -4922,6 +4935,9 @@ void GltfSceneConverterTest::addSceneCustomFields() {
         Containers::Pair<UnsignedInt, Float> customFloatArray[6];
         Containers::Pair<UnsignedInt, UnsignedInt> customUnsignedArray[2];
         Containers::Pair<UnsignedInt, Int> customIntArray[3];
+        Containers::Pair<UnsignedInt, bool> customBitArray[5];
+        char customStringArrayData[18];
+        Containers::Pair<UnsignedInt, UnsignedByte> customStringArrayOffsets[3];
     } sceneData[]{{
         {0, 1, 2, 3, 4},
         {-1},
@@ -4932,6 +4948,13 @@ void GltfSceneConverterTest::addSceneCustomFields() {
          {1, 4294967295}},
         {{1, Int(-2147483648)},
          {2, 25}},
+        {{0, true},
+         {3, false},
+         {1, true}},
+        "helloyesno",
+        {{2, 5},
+         {0, 8},
+         {1, 10}},
         {{4, 666}},
         {{0, Vector2{1.0f, 2.0f}}},
         {/*0*/ Vector3{1.0f, 1.0f, 1.0f}, /* Trivial, omitted */
@@ -4950,7 +4973,16 @@ void GltfSceneConverterTest::addSceneCustomFields() {
          {0, 4294967295}},
         {{1, -15},
          {0, Int(-2147483648)},
-         {1, 2147483647}}
+         {1, 2147483647}},
+        {{2, false},
+         {0, false},
+         {2, true},
+         {0, false},
+         {2, false}},
+        "verynicebeautiful",
+        {{3, 4},
+         {0, 8},
+         {3, 17}},
     }};
 
     SceneData scene{SceneMappingType::UnsignedInt, 5, {}, sceneData, {
@@ -4968,6 +5000,13 @@ void GltfSceneConverterTest::addSceneCustomFields() {
         SceneFieldData{SceneFieldInt,
             Containers::stridedArrayView(sceneData->customInt).slice(&Containers::Pair<UnsignedInt, Int>::first),
             Containers::stridedArrayView(sceneData->customInt).slice(&Containers::Pair<UnsignedInt, Int>::second)},
+        SceneFieldData{SceneFieldBit,
+            Containers::stridedArrayView(sceneData->customBit).slice(&Containers::Pair<UnsignedInt, bool>::first),
+            Containers::stridedArrayView(sceneData->customBit).slice(&Containers::Pair<UnsignedInt, bool>::second).sliceBit(0)},
+        SceneFieldData{SceneFieldString,
+            Containers::stridedArrayView(sceneData->customStringOffsets).slice(&Containers::Pair<UnsignedInt, UnsignedByte>::first),
+            sceneData->customStringData, SceneFieldType::StringOffset8,
+            Containers::stridedArrayView(sceneData->customStringOffsets).slice(&Containers::Pair<UnsignedInt, UnsignedByte>::second)},
         SceneFieldData{SceneFieldNameless,
             Containers::stridedArrayView(sceneData->customNameless).slice(&Containers::Pair<UnsignedInt, UnsignedInt>::first),
             Containers::stridedArrayView(sceneData->customNameless).slice(&Containers::Pair<UnsignedInt, UnsignedInt>::second)},
@@ -4991,6 +5030,15 @@ void GltfSceneConverterTest::addSceneCustomFields() {
         SceneFieldData{SceneFieldFloatArray,
             Containers::stridedArrayView(sceneData->customFloatArray).slice(&Containers::Pair<UnsignedInt, Float>::first),
             Containers::stridedArrayView(sceneData->customFloatArray).slice(&Containers::Pair<UnsignedInt, Float>::second),
+            SceneFieldFlag::MultiEntry},
+        SceneFieldData{SceneFieldBitArray,
+            Containers::stridedArrayView(sceneData->customBitArray).slice(&Containers::Pair<UnsignedInt, bool>::first),
+            Containers::stridedArrayView(sceneData->customBitArray).slice(&Containers::Pair<UnsignedInt, bool>::second).sliceBit(0),
+            SceneFieldFlag::MultiEntry},
+        SceneFieldData{SceneFieldStringArray,
+            Containers::stridedArrayView(sceneData->customStringArrayOffsets).slice(&Containers::Pair<UnsignedInt, UnsignedByte>::first),
+            sceneData->customStringArrayData, SceneFieldType::StringOffset8,
+            Containers::stridedArrayView(sceneData->customStringArrayOffsets).slice(&Containers::Pair<UnsignedInt, UnsignedByte>::second),
             SceneFieldFlag::MultiEntry},
     }};
 
@@ -5025,23 +5073,31 @@ void GltfSceneConverterTest::addSceneCustomFields() {
 
     SceneField importedSceneFieldUnsignedInt = importer->sceneFieldForName("customUnsignedInt");
     SceneField importedSceneFieldInt = importer->sceneFieldForName("customInt");
+    SceneField importedSceneFieldBit = importer->sceneFieldForName("customBit");
+    SceneField importedSceneFieldString = importer->sceneFieldForName("customString");
     SceneField importedSceneFieldFloat = importer->sceneFieldForName("customFloat");
     SceneField importedSceneFieldFloatArray = importer->sceneFieldForName("customFloatArray");
     SceneField importedSceneFieldUnsignedArray = importer->sceneFieldForName("customUnsignedArray");
     SceneField importedSceneFieldIntArray = importer->sceneFieldForName("customIntArray");
+    SceneField importedSceneFieldBitArray = importer->sceneFieldForName("customBitArray");
+    SceneField importedSceneFieldStringArray = importer->sceneFieldForName("customStringArray");
     CORRADE_VERIFY(importedSceneFieldUnsignedInt != SceneField{});
     CORRADE_VERIFY(importedSceneFieldInt != SceneField{});
+    CORRADE_VERIFY(importedSceneFieldBit != SceneField{});
+    CORRADE_VERIFY(importedSceneFieldString != SceneField{});
     CORRADE_VERIFY(importedSceneFieldFloat != SceneField{});
     CORRADE_VERIFY(importedSceneFieldFloatArray != SceneField{});
     CORRADE_VERIFY(importedSceneFieldUnsignedArray != SceneField{});
     CORRADE_VERIFY(importedSceneFieldIntArray != SceneField{});
+    CORRADE_VERIFY(importedSceneFieldBitArray != SceneField{});
+    CORRADE_VERIFY(importedSceneFieldStringArray != SceneField{});
 
     /* There should be exactly one scene */
     CORRADE_COMPARE(importer->sceneCount(), 1);
     Containers::Optional<SceneData> imported = importer->scene(0);
     CORRADE_VERIFY(imported);
     /* Not testing Parent, Translation, Scaling and ImporterState */
-    CORRADE_COMPARE(imported->fieldCount(), 6 + 4);
+    CORRADE_COMPARE(imported->fieldCount(), 10 + 4);
 
     CORRADE_VERIFY(imported->hasField(importedSceneFieldUnsignedInt));
     CORRADE_COMPARE(imported->fieldType(importedSceneFieldUnsignedInt), SceneFieldType::UnsignedInt);
@@ -5068,6 +5124,24 @@ void GltfSceneConverterTest::addSceneCustomFields() {
         TestSuite::Compare::Container);
     CORRADE_COMPARE_AS(imported->field<Float>(importedSceneFieldFloat),
         Containers::arrayView({0.125f, 17.5f}),
+        TestSuite::Compare::Container);
+
+    CORRADE_VERIFY(imported->hasField(importedSceneFieldBit));
+    CORRADE_COMPARE(imported->fieldType(importedSceneFieldBit), SceneFieldType::Bit);
+    CORRADE_COMPARE_AS(imported->mapping<UnsignedInt>(importedSceneFieldBit),
+        Containers::arrayView({0u, 1u, 3u}),
+        TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(imported->fieldBits(importedSceneFieldBit),
+        Containers::stridedArrayView({true, true, false}).sliceBit(0),
+        TestSuite::Compare::Container);
+
+    CORRADE_VERIFY(imported->hasField(importedSceneFieldString));
+    CORRADE_COMPARE(imported->fieldType(importedSceneFieldString), SceneFieldType::StringOffset32);
+    CORRADE_COMPARE_AS(imported->mapping<UnsignedInt>(importedSceneFieldString),
+        Containers::arrayView({0u, 1u, 2u}),
+        TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(imported->fieldStrings(importedSceneFieldString),
+        (Containers::StringIterable{"yes", "no", "hello"}),
         TestSuite::Compare::Container);
 
     CORRADE_VERIFY(imported->hasField(importedSceneFieldFloatArray));
@@ -5098,6 +5172,26 @@ void GltfSceneConverterTest::addSceneCustomFields() {
         TestSuite::Compare::Container);
     CORRADE_COMPARE_AS(imported->field<Int>(importedSceneFieldIntArray),
         Containers::arrayView({Int(-2147483648), -15,2147483647}),
+        TestSuite::Compare::Container);
+
+    CORRADE_VERIFY(imported->hasField(importedSceneFieldBitArray));
+    CORRADE_COMPARE(imported->fieldType(importedSceneFieldBitArray), SceneFieldType::Bit);
+    CORRADE_COMPARE(imported->fieldFlags(importedSceneFieldBitArray), SceneFieldFlag::MultiEntry);
+    CORRADE_COMPARE_AS(imported->mapping<UnsignedInt>(importedSceneFieldBitArray),
+        Containers::arrayView({0u, 0u, 2u, 2u, 2u}),
+        TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(imported->fieldBits(importedSceneFieldBitArray),
+        Containers::stridedArrayView({false, false, false, true, false}).sliceBit(0),
+        TestSuite::Compare::Container);
+
+    CORRADE_VERIFY(imported->hasField(importedSceneFieldStringArray));
+    CORRADE_COMPARE(imported->fieldType(importedSceneFieldStringArray), SceneFieldType::StringOffset32);
+    CORRADE_COMPARE(imported->fieldFlags(importedSceneFieldStringArray), SceneFieldFlag::MultiEntry);
+    CORRADE_COMPARE_AS(imported->mapping<UnsignedInt>(importedSceneFieldStringArray),
+        Containers::arrayView({0u, 3u, 3u}),
+        TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(imported->fieldStrings(importedSceneFieldStringArray),
+        (Containers::StringIterable{"nice", "very", "beautiful"}),
         TestSuite::Compare::Container);
 }
 

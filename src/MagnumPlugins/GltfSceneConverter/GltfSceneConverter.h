@@ -452,8 +452,9 @@ the plugin supports also 3D images and 2D array textures using a proposed
 -   Object and scene names, if passed, are saved into the file
 -   The scene is required to only be added after all meshes and materials it
     references
--   Custom @ref SceneFieldType::Float, @ref SceneFieldType::UnsignedInt and
-    @ref SceneFieldType::Int fields are exported if a name is set for them via
+-   Custom @ref SceneFieldType::Float, @relativeref{SceneFieldType,UnsignedInt},
+    @relativeref{SceneFieldType,Int}, @relativeref{SceneFieldType,Bit} and
+    string fields are exported if a name is set for them via
     @ref setSceneFieldName(). Custom fields of other types and without a name
     assigned are ignored with a warning. Fields that have
     @ref SceneFieldFlag::MultiEntry set are exported as arrays, otherwise
