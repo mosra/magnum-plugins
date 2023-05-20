@@ -190,8 +190,10 @@ importer plugins the importer delegates to.
     values that don't have a consistent type for given key across all nodes are
     ignored with a warning.
 -   @ref SceneField::Mesh and @ref SceneField::MeshMaterial fields are always
-    marked with @ref SceneFieldFlag::MultiEntry. No other fields can have
-    multiple entries for a single object.
+    marked with @ref SceneFieldFlag::MultiEntry. No other builtin fields can
+    have multiple entries for a single object. Node `extras` that were parsed
+    from an array are also marked with @ref SceneFieldFlag::MultiEntry in order
+    to unambiguously distinguish them from non-array values.
 
 @subsection Trade-GltfImporter-behavior-animations Animation and skin import
 

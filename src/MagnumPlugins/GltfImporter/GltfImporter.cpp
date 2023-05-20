@@ -245,7 +245,7 @@ struct GltfImporter::Document {
         {"WEIGHTS"_s, meshAttributeCustom(1)}
         #endif
     };
-    Containers::Array<Containers::Pair<Containers::StringView, SceneFieldType>> sceneFieldNamesTypes;
+    Containers::Array<Containers::Triple<Containers::StringView, SceneFieldType, SceneFieldFlags>> sceneFieldNamesTypesFlags;
     Containers::Array<Containers::StringView> meshAttributeNames{InPlaceInit, {
         #ifdef MAGNUM_BUILD_DEPRECATED
         "JOINTS"_s,
@@ -1099,6 +1099,7 @@ void GltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags da
                if all items are of a common type. If not, skip it -- a warning
                about a non-homogeneous type will be printed in doScene(). */
             Utility::JsonToken::Type tokenType;
+            bool isArray;
             if(gltfExtra.value().type() == Utility::JsonToken::Type::Array) {
                 /** @todo this skips also empty arrays, which then don't have
                     the key registered among custom scene fields which may
@@ -1109,7 +1110,11 @@ void GltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags da
                 if(const Containers::Optional<Utility::JsonToken::Type> commonType = gltfExtra.value().commonArrayType())
                     tokenType = *commonType;
                 else continue;
-            } else tokenType = gltfExtra.value().type();
+                isArray = true;
+            } else {
+                tokenType = gltfExtra.value().type();
+                isArray = false;
+            }
 
             /* For the actual type or common array type skip everything that's
                not a bool, number or a string. A warning about a skipped extra
@@ -1119,7 +1124,7 @@ void GltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags da
                tokenType != Utility::JsonToken::Type::String)
                 continue;
 
-            if(_d->sceneFieldsForName.emplace(gltfExtra.key(), sceneFieldCustom(_d->sceneFieldNamesTypes.size())).second) {
+            if(_d->sceneFieldsForName.emplace(gltfExtra.key(), sceneFieldCustom(_d->sceneFieldNamesTypesFlags.size())).second) {
                 /* If the field has the type specified in configuration,
                    override the default */
                 /** @todo use findValue() once the Configuration API is
@@ -1152,7 +1157,10 @@ void GltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags da
                     return;
                 }
 
-                arrayAppend(_d->sceneFieldNamesTypes, InPlaceInit, gltfExtra.key(), type);
+                arrayAppend(_d->sceneFieldNamesTypesFlags, InPlaceInit,
+                    gltfExtra.key(),
+                    type,
+                    isArray ? SceneFieldFlag::MultiEntry : SceneFieldFlags{});
             }
         }
     }
@@ -2292,11 +2300,11 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
        below */
     Containers::ArrayView<UnsignedInt> baseStringOffsets;
     Containers::ArrayTuple extraOffsetStorage{
-        {ValueInit, _d->sceneFieldNamesTypes.size() + 2, extraMappingOffsets},
-        {ValueInit, _d->sceneFieldNamesTypes.size() + 2, extraDataOffsets},
-        {ValueInit, _d->sceneFieldNamesTypes.size() + 2, extraBitOffsets},
-        {ValueInit, _d->sceneFieldNamesTypes.size() + 2, extraStringOffsets},
-        {ValueInit, _d->sceneFieldNamesTypes.size(), baseStringOffsets}
+        {ValueInit, _d->sceneFieldNamesTypesFlags.size() + 2, extraMappingOffsets},
+        {ValueInit, _d->sceneFieldNamesTypesFlags.size() + 2, extraDataOffsets},
+        {ValueInit, _d->sceneFieldNamesTypesFlags.size() + 2, extraBitOffsets},
+        {ValueInit, _d->sceneFieldNamesTypesFlags.size() + 2, extraStringOffsets},
+        {ValueInit, _d->sceneFieldNamesTypesFlags.size(), baseStringOffsets}
     };
     for(const UnsignedInt i: objects) {
         const Utility::JsonToken& gltfNode = _d->gltfNodes[i].first();
@@ -2416,6 +2424,12 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
                    gltfExtra.value().type() == Utility::JsonToken::Type::Number ||
                    gltfExtra.value().type() == Utility::JsonToken::Type::String) {
                     const UnsignedInt customFieldId = sceneFieldCustom(_d->sceneFieldsForName.at(gltfExtra.key()));
+                    if(_d->sceneFieldNamesTypesFlags[customFieldId].third() & SceneFieldFlag::MultiEntry) {
+                        if(!(flags() & ImporterFlag::Quiet))
+                            Warning{} << "Trade::GltfImporter::scene(): node" << i << "extras" << gltfExtra.key() << "property was expected to be an array, skipping";
+                        continue;
+                    }
+
                     bool success = false;
 
                     {
@@ -2427,7 +2441,7 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
 
                         /* Leave extraOffsets[0] and [1] at 0 to turn this into
                            an offset array later */
-                        switch(_d->sceneFieldNamesTypes[customFieldId].second()) {
+                        switch(_d->sceneFieldNamesTypesFlags[customFieldId].second()) {
                             case SceneFieldType::Bit:
                                 if(_d->gltf->parseBool(gltfExtra.value())) {
                                     success = true;
@@ -2480,6 +2494,12 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
                     }
 
                     const UnsignedInt customFieldId = sceneFieldCustom(_d->sceneFieldsForName.at(gltfExtra.key()));
+                    if(!(_d->sceneFieldNamesTypesFlags[customFieldId].third() & SceneFieldFlag::MultiEntry)) {
+                        if(!(flags() & ImporterFlag::Quiet))
+                            Warning{} << "Trade::GltfImporter::scene(): node" << i << "extras" << gltfExtra.key() << "property was not expected to be an array, skipping";
+                        continue;
+                    }
+
                     bool success = false;
 
                     {
@@ -2491,7 +2511,7 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
 
                         /* Leave extraOffsets[0] and [1] at 0 to turn this into
                            an offset array later */
-                        switch(_d->sceneFieldNamesTypes[customFieldId].second()) {
+                        switch(_d->sceneFieldNamesTypesFlags[customFieldId].second()) {
                             case SceneFieldType::Bit:
                                 if(const Containers::Optional<Containers::StridedBitArrayView1D> parsed = _d->gltf->parseBitArray(gltfExtra.value())) {
                                     success = true;
@@ -2562,7 +2582,7 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
        array, as extraStringOffsets will get further modified below. While all
        strings are in a single contiguous array, fields index into them with
        offsets that's relative to the base offset for given field. */
-    for(std::size_t i = 0; i != _d->sceneFieldNamesTypes.size(); ++i)
+    for(std::size_t i = 0; i != _d->sceneFieldNamesTypesFlags.size(); ++i)
         baseStringOffsets[i] = extraStringOffsets[i + 1];
 
     /** @todo switch to 64-bit offsets if there's many strings */
@@ -2802,7 +2822,7 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
                        population. All these are done with a plain for loop
                        instead of Utility::copy() because we also need to fill
                        in the node index. */
-                    switch(_d->sceneFieldNamesTypes[customFieldId].second()) {
+                    switch(_d->sceneFieldNamesTypesFlags[customFieldId].second()) {
                         case SceneFieldType::Bit: {
                             UnsignedInt& extraMappingOffset = extraMappingOffsets[customFieldId + 1];
                             UnsignedInt& extraBitOffset = extraBitOffsets[customFieldId + 1];
@@ -2848,7 +2868,7 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
                     /* Now the offsets are shifted by 1, after this loop
                        they'll be shifted by 0 for the final SceneFieldData
                        population */
-                    switch(_d->sceneFieldNamesTypes[customFieldId].second()) {
+                    switch(_d->sceneFieldNamesTypesFlags[customFieldId].second()) {
                         case SceneFieldType::Bit: {
                             UnsignedInt& extraMappingOffset = extraMappingOffsets[customFieldId + 1];
                             UnsignedInt& extraBitOffset = extraBitOffsets[customFieldId + 1];
@@ -2941,8 +2961,9 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
     /* Extras. At this point, `extraOffsets[i]` to `extraOffsets[i + 1]` is the
        range of data for extra field sceneFieldCustom(i). Add it if it's
        non-empty. */
-    for(std::size_t i = 0; i != _d->sceneFieldNamesTypes.size(); ++i) {
-        const SceneFieldType fieldType = _d->sceneFieldNamesTypes[i].second();
+    for(std::size_t i = 0; i != _d->sceneFieldNamesTypesFlags.size(); ++i) {
+        const SceneFieldType fieldType = _d->sceneFieldNamesTypesFlags[i].second();
+        const SceneFieldFlags fieldFlags = _d->sceneFieldNamesTypesFlags[i].third();
         const Containers::StridedArrayView1D<UnsignedInt> mapping = extraMappings.slice(extraMappingOffsets[i], extraMappingOffsets[i + 1]);
         std::size_t dataBegin, dataEnd;
         if(fieldType == SceneFieldType::Bit) {
@@ -2962,10 +2983,10 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
             else if(fieldType == SceneFieldType::Bit)
                 arrayAppend(fields, SceneFieldData{sceneFieldCustom(i),
                 SceneMappingType::UnsignedInt, mapping,
-                extrasBits.slice(dataBegin, dataEnd)});
+                extrasBits.slice(dataBegin, dataEnd), fieldFlags});
             else arrayAppend(fields, SceneFieldData{sceneFieldCustom(i),
                 SceneMappingType::UnsignedInt, mapping,
-                fieldType, extrasUnsignedInt.slice(dataBegin, dataEnd)});
+                fieldType, extrasUnsignedInt.slice(dataBegin, dataEnd), fieldFlags});
         }
     }
 
@@ -2983,8 +3004,8 @@ SceneField GltfImporter::doSceneFieldForName(const Containers::StringView name) 
 }
 
 Containers::String GltfImporter::doSceneFieldName(const SceneField name) {
-    return _d && sceneFieldCustom(name) < _d->sceneFieldNamesTypes.size() ?
-        _d->sceneFieldNamesTypes[sceneFieldCustom(name)].first() : ""_s;
+    return _d && sceneFieldCustom(name) < _d->sceneFieldNamesTypesFlags.size() ?
+        _d->sceneFieldNamesTypesFlags[sceneFieldCustom(name)].first() : ""_s;
 }
 
 UnsignedLong GltfImporter::doObjectCount() const {

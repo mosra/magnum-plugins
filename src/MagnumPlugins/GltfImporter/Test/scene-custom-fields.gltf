@@ -30,7 +30,7 @@
       "extras": {}
     },
     {
-      "note": "duplicate keys are turned into multiple occurences of the same field because that's the zero-effort way to handle those",
+      "note": "duplicate keys are turned into multiple occurences of the same field because that's the zero-effort way to handle those; and they won't get marked as MultiEntry that way",
       "extras": {
         "radius": 5.25,
         "offset": 17,
@@ -45,12 +45,14 @@
     },
     {
       "name": "array values",
-      "note": "arrays are then treated as multiple values of the same name so having the same key once as an array and once as a number is fine",
+      "note": "duplicate keys are just turned into longer arrays; MultiEntry is added even for arrays with just a single item",
       "extras": {
-          "radius": [15.3, 56.2, -17.22, 0.5],
-          "offset": [226, -1767],
-          "category": ["hello", "world"],
-          "visible": [true, false, false, true]
+          "floatArray": [1.5, 2.25, 3.125],
+          "unsignedArray": [26, 78, 22],
+          "intArray": [-5],
+          "boolArray": [false, true],
+          "stringArray": ["yes", "ultimately", "actually"],
+          "floatArray": [15.2, 16.1]
       }
     },
     {
@@ -67,13 +69,15 @@
     },
     {
       "name": "invalid array values",
-      "note": "similarly to above, the offset and flags fail only because they're set to be parsed as Int and UnsignedInt; category then a string and visible a bool -- in particular, it doesn't matter that they are arrays",
+      "note": "non-matching types, non-array fields that are arrays, array fields that are no longer arrays",
       "extras": {
-        "radius": ["this", "isn't", "a float"],
-        "category": ["not", false, "homogeneous", null, "type"],
-        "offset": [3.14],
-        "flags": [-15, 33],
-        "visible": [[], [], []]
+        "floatArray": ["this", "isn't", "a float"],
+        "stringArray": ["not", false, "homogeneous", null, "type"],
+        "intArray": [3.14],
+        "unsignedArray": [-15, 33],
+        "boolArray": [[], [], []],
+        "radius": [14.5, 0.3],
+        "floatArray": 15.6
       }
     },
     {
@@ -89,7 +93,7 @@
       "extras": {
         "visible": false,
         "offset": -2147483648,
-        "offset": [2147483647, -2147483648]
+        "intArray": [-2147483648, 2147483647]
       }
     },
     {
@@ -107,7 +111,7 @@
         "visible": false,
         "category": "positive",
         "flags": 4294967295,
-        "flags": [0, 4294967295]
+        "unsignedArray": [0, 4294967295]
       }
     }
   ],
