@@ -253,11 +253,13 @@ converter delegates to.
 -   Images are converted using a converter specified in the
     @cb{.ini} imageConverter @ce
     @ref Trade-GltfSceneConverter-configuration "configuration option",
-    propagating flags set via @ref setFlags() and all configuration options
-    from the @cb{.ini} [imageConverter] @ce group to it. An
-    @ref AbstractImageConverter plugin manager has to be registered
-    using @relativeref{Corrade,PluginManager::Manager::registerExternalManager()}
-    for image conversion to work.
+    propagating flags set via @ref setFlags(). An @ref AbstractImageConverter
+    plugin manager has to be registered using
+    @relativeref{Corrade,PluginManager::Manager::registerExternalManager()}
+    for image conversion to work. Options for a particular converter are meant
+    to be set globally via
+    @relativeref{Corrade,PluginManager::Manager::metadata()} through the image
+    converter manager.
 -   By default, images are saved as external files for a `*.gltf` output and
     embedded into the buffer for a `*.glb` output. This behavior can be
     overriden using the @cb{.ini} bundleImages @ce
