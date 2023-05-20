@@ -979,8 +979,20 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const SceneData& scene, con
         for(std::size_t i = objectFieldOffsets[object], iMax = objectFieldOffsets[object + 1]; i != iMax; ++i) {
             const std::size_t offset = fieldOffsets[i];
             const SceneField fieldName = scene.fieldName(fieldIds[i]);
-            if(fieldName == previous) {
-                /** @todo special-case meshes (make multi-primitive meshes) */
+            const SceneFieldFlags fieldFlags = scene.fieldFlags(fieldIds[i]);
+
+            /* If the field is custom and marked as MultiEntry, grab all
+               values for this object (they're stored consecutively in that
+               case) */
+            std::size_t customFieldArraySize = 0;
+            if(isSceneFieldCustom(fieldName) && (fieldFlags & SceneFieldFlag::MultiEntry)) {
+                do ++customFieldArraySize;
+                while(i + customFieldArraySize != iMax && fieldIds[i + customFieldArraySize] == fieldIds[i]);
+
+            /* Warn otherwise -- for custom fields that have duplicates but
+               aren't marked with MultiEntry, and for builtin fields as well */
+            /** @todo special-case meshes (make multi-primitive meshes) */
+            } else if(fieldName == previous) {
                 if(!(flags() & SceneConverterFlag::Quiet)) {
                     Warning w;
                     w << "Trade::GltfSceneConverter::add(): ignoring duplicate field";
@@ -1009,14 +1021,36 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const SceneData& scene, con
                 CORRADE_INTERNAL_ASSERT(found != _state->sceneFieldNames.end());
                 _state->gltfNodes.writeKey(found->second);
 
+                /* If there's an array, write it as such */
                 const SceneFieldType type = scene.fieldType(fieldIds[i]);
-                if(type == SceneFieldType::UnsignedInt)
-                    _state->gltfNodes.write(customFieldsUnsignedInt[offset]);
-                else if(type == SceneFieldType::Int)
-                    _state->gltfNodes.write(customFieldsInt[offset]);
-                else if(type == SceneFieldType::Float)
-                    _state->gltfNodes.write(customFieldsFloat[offset]);
-                else CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+                if(customFieldArraySize) {
+                    _state->gltfNodes.beginCompactArray();
+                    if(type == SceneFieldType::UnsignedInt) {
+                        for(std::size_t j = 0; j != customFieldArraySize; ++j)
+                            _state->gltfNodes.write(customFieldsUnsignedInt[fieldOffsets[i + j]]);
+                    } else if(type == SceneFieldType::Int) {
+                        for(std::size_t j = 0; j != customFieldArraySize; ++j)
+                            _state->gltfNodes.write(customFieldsInt[fieldOffsets[i + j]]);
+                    } else if(type == SceneFieldType::Float) {
+                        for(std::size_t j = 0; j != customFieldArraySize; ++j)
+                            _state->gltfNodes.write(customFieldsFloat[fieldOffsets[i + j]]);
+                    } else CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+                    _state->gltfNodes.endArray();
+
+                    /* Skip the remaining array items as otherwise they would
+                       warn in the next iteration */
+                    i += customFieldArraySize - 1;
+
+                /* Otherwise write a scalar */
+                } else {
+                    if(type == SceneFieldType::UnsignedInt)
+                        _state->gltfNodes.write(customFieldsUnsignedInt[offset]);
+                    else if(type == SceneFieldType::Int)
+                        _state->gltfNodes.write(customFieldsInt[offset]);
+                    else if(type == SceneFieldType::Float)
+                        _state->gltfNodes.write(customFieldsFloat[offset]);
+                    else CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+                }
 
                 continue;
             } else CORRADE_INTERNAL_ASSERT(!extrasOpen);

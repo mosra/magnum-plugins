@@ -7,6 +7,8 @@
       "translation": [1, 2, 3],
       "extras": {
         "customUnsignedInt": 176,
+        "customUnsignedArray": [1234, 4294967295],
+        "customIntArray": [-2147483648],
         "customFloat": 0.125
       },
       "name": "Custom field after builtin"
@@ -14,7 +16,9 @@
     {
       "extras": {
         "customUnsignedInt": 4294967295,
-        "customInt": -2147483648
+        "customInt": -2147483648,
+        "customIntArray": [-15, 2147483647],
+        "customFloatArray": [1]
       },
       "name": "To verify the 32-bit integer precision doesn't get lost along the way"
     },
@@ -23,12 +27,16 @@
       "scale": [7, 8, 9],
       "extras": {
         "customInt": 25,
-        "customFloat": 17.5
+        "customFloat": 17.5,
+        "customFloatArray": [0.25, 0.125]
       },
       "name": "Custom field between builtin"
     },
     {
       "scale": [0.5, 0.5, 0.5],
+      "extras": {
+        "customFloatArray": [12.3, 45.6, 78.9]
+      },
       "name": "Custom field before builtin"
     },
     {

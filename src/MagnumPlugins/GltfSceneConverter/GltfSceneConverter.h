@@ -455,15 +455,17 @@ the plugin supports also 3D images and 2D array textures using a proposed
 -   Custom @ref SceneFieldType::Float, @ref SceneFieldType::UnsignedInt and
     @ref SceneFieldType::Int fields are exported if a name is set for them via
     @ref setSceneFieldName(). Custom fields of other types and without a name
-    assigned are ignored with a warning.
+    assigned are ignored with a warning. Fields that have
+    @ref SceneFieldFlag::MultiEntry set are exported as arrays, otherwise
+    duplicate entries for the same object are ignored with a warning.
 -   At the moment, only @ref SceneField::Parent,
     @relativeref{SceneField,Transformation},
     @relativeref{SceneField,Translation}, @relativeref{SceneField,Rotation},
     @relativeref{SceneField,Scaling}, @relativeref{SceneField,Mesh}
     and @relativeref{SceneField,MeshMaterial} is exported, other builtin fields
     are ignored with a warning
--   At the moment, duplicate fields including multiple mesh assignments are
-    ignored with a warning
+-   At the moment, duplicate builtin fields including multiple mesh assignments
+    are ignored with a warning
 -   At the moment, only a single scene can be exported. As a consequence,
     information about the default scene is redundant and thus not written.
 
