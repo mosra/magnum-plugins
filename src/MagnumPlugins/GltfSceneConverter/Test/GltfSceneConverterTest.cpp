@@ -4753,11 +4753,17 @@ void GltfSceneConverterTest::addSceneMeshesMaterials() {
     {
         Warning silenceWarning{nullptr};
         converter->configuration().setValue("strict", false);
-        /* Naming them to see how they were reordered */
-        CORRADE_VERIFY(converter->add(MeshData{MeshPrimitive::Triangles, 0}, "Mesh 0"));
-        CORRADE_VERIFY(converter->add(MeshData{MeshPrimitive::Triangles, 0}, "Mesh 1"));
-        CORRADE_VERIFY(converter->add(MeshData{MeshPrimitive::Triangles, 0}, "Mesh 2"));
-        CORRADE_VERIFY(converter->add(MeshData{MeshPrimitive::Triangles, 0}, "Mesh 3"));
+        /* Naming them to see how they were reordered; use also a different
+           primitive to spot unnecessary duplicates in the output */
+        CORRADE_VERIFY(converter->add(MeshData{MeshPrimitive::Points, 0}, "Mesh 0"));
+        CORRADE_VERIFY(converter->add(MeshData{MeshPrimitive::Lines, 0}, "Mesh 1"));
+        CORRADE_VERIFY(converter->add(MeshData{MeshPrimitive::LineLoop, 0}, "Mesh 2"));
+        CORRADE_VERIFY(converter->add(MeshData{MeshPrimitive::LineStrip, 0}, "Mesh 3"));
+        CORRADE_VERIFY(converter->add(MeshData{MeshPrimitive::Triangles, 0}, "Mesh 4"));
+        /* These two are different but with the same name, thus their name
+           should get preserved */
+        CORRADE_VERIFY(converter->add(MeshData{MeshPrimitive::TriangleStrip, 0}, "Multimesh 5"));
+        CORRADE_VERIFY(converter->add(MeshData{MeshPrimitive::TriangleFan, 0}, "Multimesh 5"));
         converter->configuration().setValue("strict", true);
     }
 
@@ -4765,13 +4771,28 @@ void GltfSceneConverterTest::addSceneMeshesMaterials() {
     {
         CORRADE_VERIFY(converter->add(MaterialData{{}, {}}, "Material 0"));
         CORRADE_VERIFY(converter->add(MaterialData{{}, {}}, "Material 1"));
+        CORRADE_VERIFY(converter->add(MaterialData{{}, {}}, "Material 2"));
     }
 
     /* Deliberately using large & sparse object IDs to verify the warnings
-       reference them and not the remapped ones */
+       reference them and not the remapped ones. Preserve the IDs in object
+       names for easier debugging tho. */
+    converter->setObjectName(0, "Object 0");
+    converter->setObjectName(10, "Object 10");
+    converter->setObjectName(20, "Object 20");
+    converter->setObjectName(30, "Object 30");
+    converter->setObjectName(40, "Object 40");
+    converter->setObjectName(50, "Object 50");
+    converter->setObjectName(60, "Object 60");
+    converter->setObjectName(70, "Object 70");
+    converter->setObjectName(80, "Object 80");
+    converter->setObjectName(90, "Object 90");
+    converter->setObjectName(100, "Object 100");
+    converter->setObjectName(110, "Object 110");
+    converter->setObjectName(120, "Object 120");
     struct Scene {
-        Containers::Pair<UnsignedInt, Int> parents[8];
-        Containers::Triple<UnsignedInt, UnsignedInt, Int> meshesMaterials[9];
+        Containers::Pair<UnsignedInt, Int> parents[12];
+        Containers::Triple<UnsignedInt, UnsignedInt, Int> meshesMaterials[18];
     } sceneData[]{{
         /* Object 30 is without a parent, thus ignored */
         {{0, -1},
@@ -4781,26 +4802,60 @@ void GltfSceneConverterTest::addSceneMeshesMaterials() {
          {50, -1},
          {60, -1},
          {70, -1},
-         {80, -1}},
+         {80, -1},
+         {90, -1},
+         {100, -1},
+         {110, -1},
+         {120, -1}},
 
-        /* Object 10 is without any mesh, mesh 2 is referenced by two objects;
-           object 50 referencing two meshes (ignored with a warning).
+        /* - Object 10 is without any mesh
+           - Mesh 4 is not referenced by any objects, so it gets added at the
+             end
 
-           Then, mesh 1 is used again with a material; mesh 3 is used twice
-           and both times with the same material. */
+           Single-mesh assignments (first block):
+
+           - Mesh 2 is referenced by objects 0 and 40 without a material so it
+             should appear just once in the output
+           - Mesh 3 is used by objects 60 and 80 both times with the same
+             material so it should again appear just once
+           - Mesh 1 is used by object 120 without a material, by object 70 with
+             a material and by object 30 with a different material. Object 30
+             doesn't have a parent and thus isn't included, so the mesh appears
+             just twice in the output, not three times.
+
+           Multi-mesh assignments (second block):
+
+           - Object 50 has three mesh assignments, which should be preserved.
+             They have different names so the name isn't preserved.
+           - Object 90 has the same but in different order so it should
+             reference the same
+           - Object 100 references two meshes with the same name, thus the name
+             gets preserved
+           - Object 110 references the same two meshes as object 100, but with
+             one material assignment different, so it gets a new mesh. Name is
+             preserved again. */
         {{40, 2, -1},
-         {50, 1, -1},
-         {30, 1, -1},
+         {120, 1, -1},
          {20, 0, -1},
-         {50, 0, -1},
          {0, 2, -1},
-
          {60, 3, 0},
+         {30, 1, 2},
          {70, 1, 1},
-         {80, 3, 0}},
+         {80, 3, 0},
+
+         {50, 0, 2},
+         {90, 3, 0},
+         {50, 3, 0},
+         {90, 1, -1},
+         {90, 0, 2},
+         {100, 5, 2},
+         {100, 6, -1},
+         {50, 1, -1},
+         {110, 5, 2},
+         {110, 6, 0}},
     }};
 
-    SceneData scene{SceneMappingType::UnsignedInt, 90, {}, sceneData, {
+    SceneData scene{SceneMappingType::UnsignedInt, 130, {}, sceneData, {
         /* To mark the scene as 3D */
         SceneFieldData{SceneField::Transformation,
             SceneMappingType::UnsignedInt, nullptr,
@@ -4824,9 +4879,9 @@ void GltfSceneConverterTest::addSceneMeshesMaterials() {
     if(data.quiet)
         CORRADE_COMPARE(out.str(), "");
     else
+        /* Shouldn't warn about any duplicate fields */
         CORRADE_COMPARE(out.str(),
-            "Trade::GltfSceneConverter::add(): parentless object 30 was not used\n"
-            "Trade::GltfSceneConverter::add(): ignoring duplicate field Trade::SceneField::Mesh for object 50\n");
+            "Trade::GltfSceneConverter::add(): parentless object 30 was not used\n");
 
     CORRADE_VERIFY(converter->endFile());
     CORRADE_COMPARE_AS(filename,
@@ -4841,10 +4896,24 @@ void GltfSceneConverterTest::addSceneMeshesMaterials() {
 
     /* There should be exactly one scene */
     CORRADE_COMPARE(importer->sceneCount(), 1);
-    CORRADE_COMPARE(importer->objectCount(), 8);
+    CORRADE_COMPARE(importer->objectCount(), 12);
+    CORRADE_COMPARE(importer->objectName(0), "Object 0");
+    CORRADE_COMPARE(importer->objectName(1), "Object 10");
+    CORRADE_COMPARE(importer->objectName(2), "Object 20");
+    /* Object 30 didn't have a parent so it got excluded */
+    CORRADE_COMPARE(importer->objectName(3), "Object 40");
+    CORRADE_COMPARE(importer->objectName(4), "Object 50");
+    CORRADE_COMPARE(importer->objectName(5), "Object 60");
+    CORRADE_COMPARE(importer->objectName(6), "Object 70");
+    CORRADE_COMPARE(importer->objectName(7), "Object 80");
+    CORRADE_COMPARE(importer->objectName(8), "Object 90");
+    CORRADE_COMPARE(importer->objectName(9), "Object 100");
+    CORRADE_COMPARE(importer->objectName(10), "Object 110");
+    CORRADE_COMPARE(importer->objectName(11), "Object 120");
+
     Containers::Optional<SceneData> imported = importer->scene(0);
     CORRADE_VERIFY(imported);
-    CORRADE_COMPARE(imported->mappingBound(), 8);
+    CORRADE_COMPARE(imported->mappingBound(), 12);
     /* Not testing Parent, Transformation and ImporterState */
     CORRADE_COMPARE(imported->fieldCount(), 2 + 3);
 
@@ -4852,27 +4921,57 @@ void GltfSceneConverterTest::addSceneMeshesMaterials() {
        because we're picking unique mesh/material combinations as they
        appear */
     CORRADE_VERIFY(imported->hasField(SceneField::Mesh));
-    CORRADE_COMPARE_AS(imported->mapping<UnsignedInt>(SceneField::Mesh),
-        Containers::arrayView({0u, 3u, 2u, 4u, 5u, 6u, 7u}),
-        TestSuite::Compare::Container);
-    CORRADE_COMPARE_AS(imported->field<UnsignedInt>(SceneField::Mesh),
-        Containers::arrayView({0u, 0u, 1u, 2u, 3u, 4u, 3u}),
-        TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(imported->mapping<UnsignedInt>(SceneField::Mesh), Containers::arrayView<UnsignedInt>({
+        /* Object 50 and 90 have 3 meshes, object 100 and 110 have 2 */
+         0,  3,  2,  4,  4,  4,  5,  6,  7,  8,  8,  8,  9,  9, 10, 10, 11
+    }), TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(imported->field<UnsignedInt>(SceneField::Mesh), Containers::arrayView<UnsignedInt>({
+        /* Objects 0 and 40, 60 and 80 share the same mesh, objects 50 and 90
+           share the same group of 3 meshes. No deduplication is done inside
+           the multi-meshes at the moment, even though e.g. mesh 2 has the same
+           data as mesh 1. */
+         0,  0,  1,  2,  3,  4,  5,  6,  5,  2,  3,  4,  7,  8,  9, 10, 11
+    }), TestSuite::Compare::Container);
 
     CORRADE_VERIFY(imported->hasField(SceneField::MeshMaterial));
     /* Mapping same as Mesh */
-    CORRADE_COMPARE_AS(imported->field<Int>(SceneField::MeshMaterial),
-        Containers::arrayView({-1, -1, -1, -1, 0, 1, 0}),
-        TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(imported->field<Int>(SceneField::MeshMaterial), Containers::arrayView({
+        /* Meshes that have the same ID also have the same material
+           assignment (Again, no deduplication done there) */
+        -1, -1, -1,  2, -1,  0,  0,  1,  0,  2, -1,  0,  2, -1,  2,  0, -1
+    }), TestSuite::Compare::Container);
 
-    /* The meshes, however, will be reordered and duplicated if assigned to
-       different materials */
-    CORRADE_COMPARE(importer->meshCount(), 5);
+    /* Meshes have their name preserved except for multi-meshes that are
+       combined from meshes with different names */
+    CORRADE_COMPARE(importer->meshCount(), 13);
     CORRADE_COMPARE(importer->meshName(0), "Mesh 2");
     CORRADE_COMPARE(importer->meshName(1), "Mesh 0");
-    CORRADE_COMPARE(importer->meshName(2), "Mesh 1");
-    CORRADE_COMPARE(importer->meshName(3), "Mesh 3");
-    CORRADE_COMPARE(importer->meshName(4), "Mesh 1");
+    CORRADE_COMPARE(importer->meshName(2), "");
+    CORRADE_COMPARE(importer->meshName(3), "");
+    CORRADE_COMPARE(importer->meshName(4), "");
+    CORRADE_COMPARE(importer->meshName(5), "Mesh 3");
+    CORRADE_COMPARE(importer->meshName(6), "Mesh 1");
+    CORRADE_COMPARE(importer->meshName(7), "Multimesh 5");
+    CORRADE_COMPARE(importer->meshName(8), "Multimesh 5");
+    CORRADE_COMPARE(importer->meshName(9), "Multimesh 5");
+    CORRADE_COMPARE(importer->meshName(10), "Multimesh 5");
+    CORRADE_COMPARE(importer->meshName(11), "Mesh 1");
+    CORRADE_COMPARE(importer->meshName(12), "Mesh 4");
+
+    /* For the multi-mesh the only way to check its relation to the input is to
+       compare the primitive */
+    Containers::Pair<UnsignedInt, MeshPrimitive> expectedPrimitives[]{
+        {2, MeshPrimitive::Points},
+        {3, MeshPrimitive::Lines},
+        {4, MeshPrimitive::LineStrip}
+    };
+    for(Containers::Pair<UnsignedInt, MeshPrimitive> i: expectedPrimitives) {
+        CORRADE_ITERATION(i.first());
+
+        Containers::Optional<MeshData> importedMesh = importer->mesh(i.first());
+        CORRADE_VERIFY(importedMesh);
+        CORRADE_COMPARE(importedMesh->primitive(), i.second());
+    }
 }
 
 void GltfSceneConverterTest::addSceneCustomFields() {

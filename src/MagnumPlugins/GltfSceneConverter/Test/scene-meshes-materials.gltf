@@ -5,25 +5,39 @@
   "meshes": [
     {
       "primitives": [
-        {}
+        {
+          "mode": 2
+        }
       ],
       "name": "Mesh 2"
     },
     {
       "primitives": [
-        {}
+        {
+          "mode": 0
+        }
       ],
       "name": "Mesh 0"
     },
     {
       "primitives": [
-        {}
-      ],
-      "name": "Mesh 1"
+        {
+          "mode": 0,
+          "material": 2
+        },
+        {
+          "mode": 1
+        },
+        {
+          "mode": 3,
+          "material": 0
+        }
+      ]
     },
     {
       "primitives": [
         {
+          "mode": 3,
           "material": 0
         }
       ],
@@ -32,10 +46,50 @@
     {
       "primitives": [
         {
+          "mode": 1,
           "material": 1
         }
       ],
       "name": "Mesh 1"
+    },
+    {
+      "primitives": [
+        {
+          "mode": 5,
+          "material": 2
+        },
+        {
+          "mode": 6
+        }
+      ],
+      "name": "Multimesh 5"
+    },
+    {
+      "primitives": [
+        {
+          "mode": 5,
+          "material": 2
+        },
+        {
+          "mode": 6,
+          "material": 0
+        }
+      ],
+      "name": "Multimesh 5"
+    },
+    {
+      "primitives": [
+        {
+          "mode": 1
+        }
+      ],
+      "name": "Mesh 1"
+    },
+    {
+      "primitives": [
+        {}
+      ],
+      "name": "Mesh 4"
     }
   ],
   "materials": [
@@ -44,35 +98,63 @@
     },
     {
       "name": "Material 1"
+    },
+    {
+      "name": "Material 2"
     }
   ],
   "nodes": [
     {
-      "mesh": 0
-    },
-    {},
-    {
-      "mesh": 1
+      "mesh": 0,
+      "name": "Object 0"
     },
     {
-      "mesh": 0
+      "name": "Object 10"
     },
     {
-      "mesh": 2
+      "mesh": 1,
+      "name": "Object 20"
     },
     {
-      "mesh": 3
+      "mesh": 0,
+      "name": "Object 40"
     },
     {
-      "mesh": 4
+      "mesh": 2,
+      "name": "Object 50"
     },
     {
-      "mesh": 3
+      "mesh": 3,
+      "name": "Object 60"
+    },
+    {
+      "mesh": 4,
+      "name": "Object 70"
+    },
+    {
+      "mesh": 3,
+      "name": "Object 80"
+    },
+    {
+      "mesh": 2,
+      "name": "Object 90"
+    },
+    {
+      "mesh": 5,
+      "name": "Object 100"
+    },
+    {
+      "mesh": 6,
+      "name": "Object 110"
+    },
+    {
+      "mesh": 7,
+      "name": "Object 120"
     }
   ],
   "scenes": [
     {
-      "nodes": [0, 3, 2, 1, 4, 5, 6, 7]
+      "nodes": [0, 3, 2, 1, 4, 5, 6, 7, 8, 9, 10, 11]
     }
   ]
 }

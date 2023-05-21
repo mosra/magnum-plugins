@@ -26,6 +26,7 @@
 #include "GltfSceneConverter.h"
 
 #include <cctype> /* std::isupper() */
+#include <algorithm> /* std::sort() */
 #include <unordered_map>
 #include <Corrade/Containers/ArrayTuple.h>
 #include <Corrade/Containers/ArrayViewStl.h> /** @todo drop once Configuration is STL-free */
@@ -132,13 +133,20 @@ struct GltfSceneConverter::State {
        end.
 
        If a mesh is referenced from a scene, it goes into
-       meshMaterialAssignments, where the first is index into the meshes array
-       and second is the material (or -1 if no material). The item index is
-       glTF mesh ID, which is referenced by the scene. Meshes not referenced
-       in the scene are not referenced from meshMaterialAssignments and are
-       written at the very end. */
+       `meshMaterialAssignments`, where the first is index into the meshes
+       array and second is the material (or -1 if no material). In order to
+       support multiple mesh assignments per objects, the assignments are first
+       sorted, added one by one to `meshMaterialAssignments`, and then the
+       final size of `meshMaterialAssignments` is appended to
+       `meshMaterialAssignmentRanges`. Thus there item `i` to `i + 1` denote
+       the set of meshes for glTF mesh ID `i`, which is then referenced by the
+       scene.
+
+       Meshes not referenced in the scene are not referenced from
+       `meshMaterialAssignments` and are written at the very end. */
     Containers::Array<MeshProperties> meshes;
     Containers::Array<Containers::Pair<UnsignedInt, Int>> meshMaterialAssignments;
+    Containers::Array<UnsignedInt> meshMaterialAssignmentRanges;
 
     /* For each 2D image contains its index in the gltfImages array (which is
        used for referencing from a texture) and a texture extension if needed
@@ -367,14 +375,15 @@ Containers::Optional<Containers::Array<char>> GltfSceneConverter::doEndData() {
         json.writeKey("meshes"_s);
         const Containers::ScopeGuard gltfMeshes = json.beginArrayScope();
 
-        const auto writeMesh = [](Utility::JsonWriter& json, const MeshProperties& mesh, Int material) {
+        const auto writeMesh = [](Utility::JsonWriter& json, Containers::ArrayView<const MeshProperties> meshProperties, const Containers::ArrayView<const Containers::Pair<UnsignedInt, Int>> meshMaterialAssignments) {
             const Containers::ScopeGuard gltfMesh = json.beginObjectScope();
-            json.writeKey("primitives"_s);
+            json.writeKey("primitives"_s)
+                .beginArray();
 
-            /* Just a single primitive for each */
-            {
-                const Containers::ScopeGuard gltfPrimitives = json.beginArrayScope();
+            /* One primitive for each mesh/material assignment */
+            for(const Containers::Pair<UnsignedInt, Int> meshMaterialAssignment: meshMaterialAssignments) {
                 const Containers::ScopeGuard gltfPrimitive = json.beginObjectScope();
+                const MeshProperties& mesh = meshProperties[meshMaterialAssignment.first()];
 
                 /* Indices, if any */
                 if(mesh.gltfIndices)
@@ -393,25 +402,49 @@ Containers::Optional<Containers::Array<char>> GltfSceneConverter::doEndData() {
                     json.writeKey("mode"_s).write(*mesh.gltfMode);
 
                 /* Material */
-                if(material != -1)
-                    json.writeKey("material"_s).write(material);
+                if(meshMaterialAssignment.second() != -1)
+                    json.writeKey("material"_s).write(meshMaterialAssignment.second());
             }
 
-            if(mesh.gltfName)
-                json.writeKey("name"_s).write(mesh.gltfName);
+            json.endArray();
+
+            /* Write a name only if all meshes have the same (which is the case
+               for example if the input was parsed by GltfImporter from a
+               multi-mesh file) and the name is not empty. This implies that
+               the name is also written if there's just a single mesh. */
+            Containers::Optional<Containers::StringView> nameToUse;
+            for(const Containers::Pair<UnsignedInt, Int> meshMaterialAssignment: meshMaterialAssignments) {
+                const Containers::StringView name = meshProperties[meshMaterialAssignment.first()].gltfName;
+                if(!nameToUse) nameToUse = name;
+                else if(nameToUse != name) {
+                    nameToUse = {};
+                    break;
+                }
+            }
+            if(nameToUse && *nameToUse)
+                json.writeKey("name"_s).write(*nameToUse);
         };
 
+        /* Remember which meshes were referenced from a scene. The ones that
+           weren't are written at the end, without a material assignment. */
         Containers::BitArray referencedMeshes{DirectInit, _state->meshes.size(), false};
-        for(const Containers::Pair<UnsignedInt, Int> meshMaterialAssignment: _state->meshMaterialAssignments) {
-            referencedMeshes.set(meshMaterialAssignment.first());
 
-            writeMesh(json, _state->meshes[meshMaterialAssignment.first()], meshMaterialAssignment.second());
+        /* `meshMaterialAssignmentRanges` is either empty or contains i + 1
+           items for i meshes referenced by the scene */
+        if(!_state->meshMaterialAssignmentRanges.isEmpty()) for(std::size_t i = 0; i != _state->meshMaterialAssignmentRanges.size() - 1; ++i) {
+            const Containers::ArrayView<const Containers::Pair<UnsignedInt, Int>> meshMaterialAssignments = _state->meshMaterialAssignments.slice(_state->meshMaterialAssignmentRanges[i], _state->meshMaterialAssignmentRanges[i + 1]);
+
+            for(const Containers::Pair<UnsignedInt, Int> meshMaterialAssignment: meshMaterialAssignments)
+                referencedMeshes.set(meshMaterialAssignment.first());
+
+            writeMesh(json, _state->meshes, meshMaterialAssignments);
         }
 
-        for(std::size_t i = 0; i != _state->meshes.size(); ++i) {
+        for(UnsignedInt i = 0; i != _state->meshes.size(); ++i) {
             if(referencedMeshes[i]) continue;
 
-            writeMesh(json, _state->meshes[i], -1);
+            const Containers::Pair<UnsignedInt, Int> meshMaterial[]{{i, -1}};
+            writeMesh(json, _state->meshes, meshMaterial);
         }
     }
 
@@ -1015,23 +1048,29 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const SceneData& scene, con
            is checked below. */
         bool extrasOpen = false;
 
+        /* A temporary array for sorting multi-mesh assignments in order to
+           deduplicate them. Gets cleared and refilled for each object that has
+           a Mesh field. */
+        Containers::Array<Containers::Pair<UnsignedInt, Int>> sortedMeshMaterialAssignments;
+
         SceneField previous{};
         for(std::size_t i = objectFieldOffsets[object], iMax = objectFieldOffsets[object + 1]; i != iMax; ++i) {
             const std::size_t offset = fieldOffsets[i];
             const SceneField fieldName = scene.fieldName(fieldIds[i]);
             const SceneFieldFlags fieldFlags = scene.fieldFlags(fieldIds[i]);
 
-            /* If the field is custom and marked as MultiEntry, grab all
-               values for this object (they're stored consecutively in that
-               case) */
-            std::size_t customFieldArraySize = 0;
-            if(isSceneFieldCustom(fieldName) && (fieldFlags & SceneFieldFlag::MultiEntry)) {
-                do ++customFieldArraySize;
-                while(i + customFieldArraySize != iMax && fieldIds[i + customFieldArraySize] == fieldIds[i]);
+            /* If the field is a mesh assignment or is custom and marked as
+               MultiEntry, grab all values for this object (they're stored
+               consecutively in that case) */
+            std::size_t multiEntryFieldSize = 0;
+            if(fieldName == SceneField::Mesh ||
+               (isSceneFieldCustom(fieldName) && (fieldFlags & SceneFieldFlag::MultiEntry)))
+            {
+                do ++multiEntryFieldSize;
+                while(i + multiEntryFieldSize != iMax && fieldIds[i + multiEntryFieldSize] == fieldIds[i]);
 
             /* Warn otherwise -- for custom fields that have duplicates but
                aren't marked with MultiEntry, and for builtin fields as well */
-            /** @todo special-case meshes (make multi-primitive meshes) */
             } else if(fieldName == previous) {
                 if(!(flags() & SceneConverterFlag::Quiet)) {
                     Warning w;
@@ -1063,29 +1102,29 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const SceneData& scene, con
 
                 /* If there's an array, write it as such */
                 const SceneFieldType type = scene.fieldType(fieldIds[i]);
-                if(customFieldArraySize) {
+                if(multiEntryFieldSize) {
                     _state->gltfNodes.beginCompactArray();
                     if(type == SceneFieldType::UnsignedInt) {
-                        for(std::size_t j = 0; j != customFieldArraySize; ++j)
+                        for(std::size_t j = 0; j != multiEntryFieldSize; ++j)
                             _state->gltfNodes.write(customFieldsUnsignedInt[fieldOffsets[i + j]]);
                     } else if(type == SceneFieldType::Int) {
-                        for(std::size_t j = 0; j != customFieldArraySize; ++j)
+                        for(std::size_t j = 0; j != multiEntryFieldSize; ++j)
                             _state->gltfNodes.write(customFieldsInt[fieldOffsets[i + j]]);
                     } else if(type == SceneFieldType::Float) {
-                        for(std::size_t j = 0; j != customFieldArraySize; ++j)
+                        for(std::size_t j = 0; j != multiEntryFieldSize; ++j)
                             _state->gltfNodes.write(customFieldsFloat[fieldOffsets[i + j]]);
                     } else if(type == SceneFieldType::Bit) {
-                        for(std::size_t j = 0; j != customFieldArraySize; ++j)
+                        for(std::size_t j = 0; j != multiEntryFieldSize; ++j)
                             _state->gltfNodes.write(customFieldsBit[fieldOffsets[i + j]]);
                     } else if(Implementation::isSceneFieldTypeString(type)) {
-                        for(std::size_t j = 0; j != customFieldArraySize; ++j)
+                        for(std::size_t j = 0; j != multiEntryFieldSize; ++j)
                             _state->gltfNodes.write(customFieldsString[fieldOffsets[i + j]]);
                     } else CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
                     _state->gltfNodes.endArray();
 
                     /* Skip the remaining array items as otherwise they would
                        warn in the next iteration */
-                    i += customFieldArraySize - 1;
+                    i += multiEntryFieldSize - 1;
 
                 /* Otherwise write a scalar */
                 } else {
@@ -1124,19 +1163,64 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const SceneData& scene, con
                 if(scalings[offset] != Vector3{1.0f})
                     _state->gltfNodes.writeKey("scale"_s).writeArray(scalings[offset].data());
             } else if(fieldName == SceneField::Mesh) {
+                /* Gather and sort all mesh assignments */
+                CORRADE_INTERNAL_ASSERT(multiEntryFieldSize >= 1);
+                /** @todo arrayClear(), *finally */
+                arrayResize(sortedMeshMaterialAssignments, 0);
+                for(std::size_t j = 0; j != multiEntryFieldSize; ++j)
+                    arrayAppend(sortedMeshMaterialAssignments, meshesMaterials[fieldOffsets[i + j]]);
+                std::sort(sortedMeshMaterialAssignments.begin(), sortedMeshMaterialAssignments.end(), [](const Containers::Pair<UnsignedInt, Int> a, const Containers::Pair<UnsignedInt, Int> b) {
+                    return
+                        a.first() < b.first() ||
+                        (a.first() == b.first() && a.second() < b.second());
+                });
+
+                /* Try to find this sequence among already used assignments.
+                   `meshMaterialAssignmentRanges` is either empty or contains
+                   i + 1 items for i meshes referenced by the scene. */
                 Containers::Optional<UnsignedInt> meshId;
-                for(UnsignedInt j = 0; j != _state->meshMaterialAssignments.size(); ++j) {
-                    /** @todo something better than O(n^2) lookup! */
-                    if(_state->meshMaterialAssignments[j] == meshesMaterials[offset]) {
-                        meshId = j;
-                        break;
+                if(!_state->meshMaterialAssignmentRanges.isEmpty()) for(UnsignedInt j = 0; j != _state->meshMaterialAssignmentRanges.size() - 1; ++j) {
+                    const Containers::ArrayView<const Containers::Pair<UnsignedInt, Int>> meshMaterialAssignmentCandidates = _state->meshMaterialAssignments.slice(_state->meshMaterialAssignmentRanges[j], _state->meshMaterialAssignmentRanges[j + 1]);
+
+                    /* If it has different mesh count, it's definitely not what
+                       we're looking for */
+                    if(meshMaterialAssignmentCandidates.size() != sortedMeshMaterialAssignments.size())
+                        continue;
+
+                    /* Inverse the logic to not need to invent horrible shit to
+                       break out of two loops at once -- set the meshId upfront
+                       and unset it if comparison fails, then break out of the
+                       outer loop if it's still set at the end */
+                    meshId = j;
+                    /** @todo something better than O(n^3) lookup? sigh */
+                    for(std::size_t k = 0; k != sortedMeshMaterialAssignments.size(); ++k) {
+                        if(meshMaterialAssignmentCandidates[k] != sortedMeshMaterialAssignments[k]) {
+                            meshId = {};
+                            break;
+                        }
                     }
+                    if(meshId)
+                        break;
                 }
+
+                /* If not found, add the sorted sequence as a new assignment.
+                   If meshMaterialAssignmentRanges is empty, add 0 as the first
+                   element. */
                 if(!meshId) {
-                    meshId = _state->meshMaterialAssignments.size();
-                    arrayAppend(_state->meshMaterialAssignments, meshesMaterials[offset]);
+                    arrayAppend(_state->meshMaterialAssignments, sortedMeshMaterialAssignments);
+
+                    if(_state->meshMaterialAssignmentRanges.isEmpty())
+                        arrayAppend(_state->meshMaterialAssignmentRanges, 0);
+
+                    meshId = _state->meshMaterialAssignmentRanges.size() - 1;
+                    arrayAppend(_state->meshMaterialAssignmentRanges, _state->meshMaterialAssignments.size());
                 }
+
                 _state->gltfNodes.writeKey("mesh"_s).write(*meshId);
+
+                /* Skip the remaining mesh assignments as otherwise they would
+                   warn in the next iteration */
+                i += multiEntryFieldSize - 1;
 
             } else if(fieldName == SceneField::Parent ||
                       fieldName == SceneField::MeshMaterial) {

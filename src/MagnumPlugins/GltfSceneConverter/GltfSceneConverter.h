@@ -240,8 +240,13 @@ converter delegates to.
     enabled.
 -   Due to a material and a mesh being tied together in a glTF file, meshes
     that are referenced by a scene are written in the order they are referenced
-    from @ref SceneData, and get duplicated (including the name) if the same
-    mesh gets used with different materials.
+    from @ref SceneData. They and get duplicated (including the name) if the
+    same mesh gets used with different materials, but their vertex and index
+    data stay shared. If multiple meshes are assigned to a single object, a
+    glTF multi-primitive mesh is formed of them. In that case the name is
+    preserved only if all meshes referenced by the object have the same. Meshes
+    that were not referenced by any scene are written at the end, without any
+    material assignment.
 -   At the moment, alignment rules for vertex stride are not respected.
 -   At the moment, each attribute has its own dedicated buffer view instead of
     a single view being shared by multiple interleaved attributes. This also
@@ -452,6 +457,9 @@ the plugin supports also 3D images and 2D array textures using a proposed
 -   Object and scene names, if passed, are saved into the file
 -   The scene is required to only be added after all meshes and materials it
     references
+-   Multiple @ref SceneField::Mesh and @ref SceneField::MeshMaterial entries
+    per object are turned into multi-mesh primitives. Other duplicate builtin
+    fields are ignored with a warning.
 -   Custom @ref SceneFieldType::Float, @relativeref{SceneFieldType,UnsignedInt},
     @relativeref{SceneFieldType,Int}, @relativeref{SceneFieldType,Bit} and
     string fields are exported if a name is set for them via
@@ -464,8 +472,6 @@ the plugin supports also 3D images and 2D array textures using a proposed
     @relativeref{SceneField,Translation}, @relativeref{SceneField,Rotation},
     @relativeref{SceneField,Scaling}, @relativeref{SceneField,Mesh}
     and @relativeref{SceneField,MeshMaterial} is exported, other builtin fields
-    are ignored with a warning
--   At the moment, duplicate builtin fields including multiple mesh assignments
     are ignored with a warning
 -   At the moment, only a single scene can be exported. As a consequence,
     information about the default scene is redundant and thus not written.
