@@ -4571,7 +4571,7 @@ void GltfSceneConverterTest::addScene() {
        not* change the output in any way. */
     struct Scene {
         Containers::Pair<UnsignedShort, Int> parents[5];
-        Containers::Pair<UnsignedShort, Matrix4> transformations[5];
+        Containers::Pair<UnsignedShort, Matrix4> transformations[6];
         struct Trs {
             UnsignedShort mapping;
             Vector3 translation;
@@ -4587,7 +4587,9 @@ void GltfSceneConverterTest::addScene() {
          {UnsignedShort(data.offset + 1), data.offset + 5},
          {UnsignedShort(data.offset + 5), data.offset + 2}},
 
-        /* One object should be without any transformation */
+        /* One object should be without any transformation. One object has the
+           transformation accidentally specified twice, which should be ignored
+           with a warning. */
         {{UnsignedShort(data.offset + 2),
             Matrix4::translation({0.5f, 0.25f, 0.125f})*
             Matrix4::rotationZ(15.0_degf)*
@@ -4599,6 +4601,9 @@ void GltfSceneConverterTest::addScene() {
          {UnsignedShort(data.offset + 1),
             Matrix4::rotationY(60.0_degf)},
          {UnsignedShort(data.offset + 5),
+            Matrix4::rotationZ(15.0_degf)*
+            Matrix4::translation({7.0f, 8.0f, 9.0f})},
+         {UnsignedShort(data.offset + 5), /* duplicate */
             Matrix4::rotationZ(15.0_degf)*
             Matrix4::translation({7.0f, 8.0f, 9.0f})}},
 
@@ -4666,7 +4671,10 @@ void GltfSceneConverterTest::addScene() {
     else
         CORRADE_COMPARE(out.str(), Utility::formatString(
             "Trade::GltfSceneConverter::add(): Trade::SceneField::Light was not used\n"
-            "Trade::GltfSceneConverter::add(): parentless object {} was not used\n", data.offset + 4));
+            "Trade::GltfSceneConverter::add(): parentless object {} was not used\n"
+            "Trade::GltfSceneConverter::add(): ignoring duplicate field Trade::SceneField::Transformation for object {}\n",
+            data.offset + 4,
+            data.offset + 5));
 
     CORRADE_VERIFY(converter->endFile());
     CORRADE_COMPARE_AS(filename,
