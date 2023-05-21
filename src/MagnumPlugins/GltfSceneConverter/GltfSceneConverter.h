@@ -473,8 +473,8 @@ the plugin supports also 3D images and 2D array textures using a proposed
     @relativeref{SceneField,Scaling}, @relativeref{SceneField,Mesh}
     and @relativeref{SceneField,MeshMaterial} is exported, other builtin fields
     are ignored with a warning
--   At the moment, only a single scene can be exported. As a consequence,
-    information about the default scene is redundant and thus not written.
+-   At the moment, only a single scene can be exported. Default scene index is
+    however only written if @ref setDefaultScene() is called.
 
 @section Trade-GltfSceneConverter-configuration Plugin-specific config
 
