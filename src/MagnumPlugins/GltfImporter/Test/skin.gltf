@@ -36,6 +36,7 @@
   ],
   "accessors": [
     {
+      "note": "present just to ensure the first ever accessor and buffer view isn't always taken",
       "bufferView": 0,
       "componentType": 5123,
       "count": 2,
