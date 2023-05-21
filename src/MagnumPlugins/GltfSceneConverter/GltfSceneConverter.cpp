@@ -1356,8 +1356,6 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const MeshData& mesh, const
     /** @todo detect and merge interleaved attributes into common buffer views */
     Containers::Array<Containers::Triple<Containers::String, Containers::StringView, Int>> gltfAttributeNamesTypes;
     for(UnsignedInt i = 0; i != mesh.attributeCount(); ++i) {
-        arrayAppend(gltfAttributeNamesTypes, InPlaceInit);
-
         /** @todo option to skip unrepresentable attributes instead of failing
             the whole mesh */
 
@@ -1605,7 +1603,7 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const MeshData& mesh, const
             return {};
         }
 
-        gltfAttributeNamesTypes.back() = {std::move(gltfAttributeName), gltfAccessorType, gltfAccessorComponentType};
+        arrayAppend(gltfAttributeNamesTypes, InPlaceInit, std::move(gltfAttributeName), gltfAccessorType, gltfAccessorComponentType);
     }
 
     /* At this point we're sure nothing will fail so we can start writing the
