@@ -189,7 +189,20 @@ converter delegates to.
     @relativeref{VertexFormat,Vector3usNormalized} /
     @relativeref{VertexFormat,Vector4usNormalized} are supported by core glTF.
     No other formats are supported.
-    @ref MeshAttribute::ObjectId in @ref VertexFormat::UnsignedByte and
+-   @ref MeshAttribute::JointIds in @ref VertexFormat::UnsignedByteNormalized
+    and @ref VertexFormat::UnsignedShortNormalized are supported by core glTF.
+    glTF allows 32-bit integers only for index types, exporting
+    @ref VertexFormat::UnsignedInt is possible with a warning if you disable
+    the @cb{.ini} strict @ce
+    @ref Trade-GltfSceneConverter-configuration "configuration option". The
+    attribute is required to have the array size divisible by four, each
+    group of four elements is then exported as one attribute.
+-   @ref MeshAttribute::Weights in @ref VertexFormat::Float,
+    @ref VertexFormat::UnsignedByte and @ref VertexFormat::UnsignedShort are
+    supported by core glTF. No other formats are supported. The attribute is
+    required to have the array size divisible by four, each group of four
+    elements is then exported as one attribute.
+-   @ref MeshAttribute::ObjectId in @ref VertexFormat::UnsignedByte and
     @ref VertexFormat::UnsignedShort is exported as `_OBJECT_ID` by default,
     use the @cb{.ini} objectIdAttribute @ce
     @ref Trade-GltfSceneConverter-configuration "configuration option" to

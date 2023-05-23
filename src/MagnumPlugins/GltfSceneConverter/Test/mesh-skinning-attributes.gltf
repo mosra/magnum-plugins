@@ -1,0 +1,122 @@
+{
+  "asset": {
+    "version": "2.0"
+  },
+  "buffers": [
+    {
+      "uri": "mesh-skinning-attributes.bin",
+      "byteLength": 96
+    }
+  ],
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteOffset": 0,
+      "byteLength": 56,
+      "byteStride": 48
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 8,
+      "byteLength": 60,
+      "byteStride": 48
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 20,
+      "byteLength": 52,
+      "byteStride": 48
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 24,
+      "byteLength": 64,
+      "byteStride": 48
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 24,
+      "byteLength": 64,
+      "byteStride": 48
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 40,
+      "byteLength": 56,
+      "byteStride": 48
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 40,
+      "byteLength": 56,
+      "byteStride": 48
+    }
+  ],
+  "accessors": [
+    {
+      "bufferView": 0,
+      "componentType": 5123,
+      "count": 2,
+      "type": "VEC4"
+    },
+    {
+      "bufferView": 1,
+      "componentType": 5126,
+      "count": 2,
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 2,
+      "componentType": 5121,
+      "normalized": true,
+      "count": 2,
+      "type": "VEC4"
+    },
+    {
+      "bufferView": 3,
+      "componentType": 5123,
+      "normalized": true,
+      "count": 2,
+      "type": "VEC4"
+    },
+    {
+      "bufferView": 4,
+      "byteOffset": 8,
+      "componentType": 5123,
+      "normalized": true,
+      "count": 2,
+      "type": "VEC4"
+    },
+    {
+      "bufferView": 5,
+      "componentType": 5121,
+      "count": 2,
+      "type": "VEC4"
+    },
+    {
+      "bufferView": 6,
+      "byteOffset": 4,
+      "componentType": 5121,
+      "count": 2,
+      "type": "VEC4"
+    }
+  ],
+  "meshes": [
+    {
+      "primitives": [
+        {
+          "attributes": {
+            "JOINTS_0": 0,
+            "POSITION": 1,
+            "WEIGHTS_0": 2,
+            "WEIGHTS_1": 3,
+            "WEIGHTS_2": 4,
+            "JOINTS_1": 5,
+            "JOINTS_2": 6
+          },
+          "mode": 1
+        }
+      ]
+    }
+  ]
+}

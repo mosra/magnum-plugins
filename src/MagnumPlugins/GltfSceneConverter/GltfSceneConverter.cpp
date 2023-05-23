@@ -1362,9 +1362,15 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const MeshData& mesh, const
         Containers::StringView accessorType;
         Int accessorComponentType;
         UnsignedInt originalId;
+        UnsignedInt offset;
     };
     Containers::Array<GltfAttribute> gltfAttributes;
     arrayReserve(gltfAttributes, mesh.attributeCount());
+    /* Separate counter for joint IDs and weights attribute because they can
+       appear in any order. In the end they should end up being the same, as
+       matching sizes are enforced by MeshData itself. */
+    UnsignedInt jointIdsAttributeGroupCount = 0,
+        weightsAttributeGroupCount = 0;
     for(UnsignedInt i = 0; i != mesh.attributeCount(); ++i) {
         /** @todo option to skip unrepresentable attributes instead of failing
             the whole mesh */
@@ -1469,15 +1475,55 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const MeshData& mesh, const
                 return {};
             }
 
+        /* Joint IDs and weights are an array in Magnum, glTF however expects
+           them to be four-component attributes, so their array size has to be
+           a multiple of four. They're then split into multiple attributes. */
+        } else if(attributeName == MeshAttribute::JointIds) {
+            gltfAttributeName = Containers::String::nullTerminatedGlobalView("JOINTS"_s);
+
+            /* All formats supported for JointIds by Magnum are also allowed
+               here, so nothing to check. Just assert in case a new format
+               would be added in the future */
+            CORRADE_INTERNAL_ASSERT(
+                format == VertexFormat::UnsignedByte ||
+                format == VertexFormat::UnsignedShort ||
+                /* Not allowed by the spec, but we allow it in non-strict mode
+                   similarly as with ObjectId (checked below) */
+                format == VertexFormat::UnsignedInt);
+
+            const UnsignedInt arraySize = mesh.attributeArraySize(i);
+            if(arraySize % 4 != 0) {
+                Error{} << "Trade::GltfSceneConverter::add(): glTF only supports skin joint IDs with multiples of four elements, got" << arraySize;
+                return {};
+            }
+        } else if(attributeName == MeshAttribute::Weights) {
+            gltfAttributeName = Containers::String::nullTerminatedGlobalView("WEIGHTS"_s);
+
+            if(format != VertexFormat::Float &&
+               format != VertexFormat::UnsignedByteNormalized &&
+               format != VertexFormat::UnsignedShortNormalized) {
+                Error{} << "Trade::GltfSceneConverter::add(): unsupported mesh skin weights attribute format" << format;
+                return {};
+            }
+
+            const UnsignedInt arraySize = mesh.attributeArraySize(i);
+            if(arraySize % 4 != 0) {
+                Error{} << "Trade::GltfSceneConverter::add(): glTF only supports skin weights with multiples of four elements, got" << arraySize;
+                return {};
+            }
+
         /* Otherwise it's a custom attribute where anything representable by
            glTF is allowed */
         } else {
             switch(attributeName) {
+                /* All these are handled above already */
                 /* LCOV_EXCL_START */
                 case MeshAttribute::Position:
                 case MeshAttribute::Normal:
                 case MeshAttribute::TextureCoordinates:
                 case MeshAttribute::Color:
+                case MeshAttribute::JointIds:
+                case MeshAttribute::Weights:
                     CORRADE_INTERNAL_ASSERT_UNREACHABLE();
                 /* LCOV_EXCL_STOP */
 
@@ -1524,36 +1570,45 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const MeshData& mesh, const
         /** @todo spec says that POSITION accessor MUST have its min and max
             properties defined, I don't care at the moment */
 
-        const UnsignedInt vectorCount = vertexFormatVectorCount(format);
+        /* Decide on accessor type. Joint IDs and weights are array attributes
+           in Magnum so they're special-cased here. */
         Containers::StringView gltfAccessorType;
-        if(vectorCount == 1) {
-            if(componentCount == 1)
-                gltfAccessorType = "SCALAR"_s;
-            else if(componentCount == 2)
-                gltfAccessorType = "VEC2"_s;
-            else if(componentCount == 3)
-                gltfAccessorType = "VEC3"_s;
-            else if(componentCount == 4)
-                gltfAccessorType = "VEC4"_s;
-            else CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
-        } else if(vectorCount == 2 && componentCount == 2) {
-            gltfAccessorType = "MAT2"_s;
-        } else if(vectorCount == 3 && componentCount == 3) {
-            gltfAccessorType = "MAT3"_s;
-        } else if(vectorCount == 4 && componentCount == 4) {
-            gltfAccessorType = "MAT4"_s;
+        if(attributeName == MeshAttribute::JointIds ||
+           attributeName == MeshAttribute::Weights) {
+            gltfAccessorType = "VEC4"_s;
         } else {
-            Error{} << "Trade::GltfSceneConverter::add(): unrepresentable mesh vertex format" << format;
-            return {};
-        }
+            const UnsignedInt vectorCount = vertexFormatVectorCount(format);
+            if(vectorCount == 1) {
+                if(componentCount == 1)
+                    gltfAccessorType = "SCALAR"_s;
+                else if(componentCount == 2)
+                    gltfAccessorType = "VEC2"_s;
+                else if(componentCount == 3)
+                    gltfAccessorType = "VEC3"_s;
+                else if(componentCount == 4)
+                    gltfAccessorType = "VEC4"_s;
+                else CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+            } else if(vectorCount == 2 && componentCount == 2) {
+                gltfAccessorType = "MAT2"_s;
+            } else if(vectorCount == 3 && componentCount == 3) {
+                gltfAccessorType = "MAT3"_s;
+            } else if(vectorCount == 4 && componentCount == 4) {
+                gltfAccessorType = "MAT4"_s;
+            } else {
+                Error{} << "Trade::GltfSceneConverter::add(): unrepresentable mesh vertex format" << format;
+                return {};
+            }
 
-        /* glTF requires matrices to be aligned to four bytes -- i.e., using
-           the Matrix2x2bNormalizedAligned, Matrix3x3bNormalizedAligned or Matrix3x3sNormalizedAligned formats instead of the formats missing
-           the Aligned suffix. Fortunately we don't need to check each
-           individually as we have a neat tool instead. */
-        if(vectorCount != 1 && vertexFormatVectorStride(format) % 4 != 0) {
-            Error{} << "Trade::GltfSceneConverter::add(): mesh matrix attributes are required to be four-byte-aligned but got" << format;
-            return {};
+            /* glTF requires matrices to be aligned to four bytes -- i.e.,
+               using the Matrix2x2bNormalizedAligned,
+               Matrix3x3bNormalizedAligned or Matrix3x3sNormalizedAligned
+               formats instead of the formats missing the Aligned suffix.
+               Fortunately we don't need to check each individually as we have
+               a neat tool instead. */
+            if(vectorCount != 1 && vertexFormatVectorStride(format) % 4 != 0) {
+                Error{} << "Trade::GltfSceneConverter::add(): mesh matrix attributes are required to be four-byte-aligned but got" << format;
+                return {};
+            }
         }
 
         Int gltfAccessorComponentType;
@@ -1588,37 +1643,60 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const MeshData& mesh, const
             Error{} << "Trade::GltfSceneConverter::add(): unsupported mesh attribute with stride" << mesh.attributeStride(i);
             return {};
         }
-        if(mesh.attributeArraySize(i) != 0) {
-            Error{} << "Trade::GltfSceneConverter::add(): unsupported mesh attribute with array size" << mesh.attributeArraySize(i);
-            return {};
+
+        /* Joint IDs and weights are array attributes, add one attribute for
+           each group of four and number them based on the count of groups
+           found so far. It's checked above that there's exactly a multiple of
+           four in each attribute. */
+        if(attributeName == MeshAttribute::JointIds ||
+           attributeName == MeshAttribute::Weights) {
+            UnsignedInt& attributeGroupCount =
+                attributeName == MeshAttribute::JointIds ?
+                    jointIdsAttributeGroupCount :
+                    weightsAttributeGroupCount;
+            const UnsignedInt formatSize = vertexFormatSize(format);
+            for(UnsignedInt j = 0; j < mesh.attributeArraySize(i); j += 4) {
+                arrayAppend(gltfAttributes, InPlaceInit,
+                    Utility::format("{}_{}", gltfAttributeName, attributeGroupCount++),
+                    gltfAccessorType,
+                    gltfAccessorComponentType,
+                    i,
+                    j*formatSize);
+            }
+
+        /* Common handling for all other attributes */
+        } else {
+            /* If a builtin glTF numbered attribute, append an ID to the name.
+               JOINTS and WEIGHTS were handled above already. */
+            if(gltfAttributeName == "TEXCOORD"_s ||
+               gltfAttributeName == "COLOR"_s)
+            {
+                gltfAttributeName = Utility::format("{}_{}", gltfAttributeName, mesh.attributeId(i));
+
+            /* Otherwise, if it's a second or further duplicate attribute,
+               underscore it if not already and append an ID as well -- e.g.
+               second and third POSITION attribute becomes _POSITION_1 and
+               _POSITION_2, secondary _OBJECT_ID becomes _OBJECT_ID_1 */
+            } else if(const UnsignedInt attributeId = mesh.attributeId(i)) {
+                gltfAttributeName = Utility::format(
+                    gltfAttributeName.hasPrefix('_') ? "{}_{}" : "_{}_{}",
+                    gltfAttributeName, attributeId);
+            }
+
+            if(mesh.attributeArraySize(i) != 0) {
+                Error{} << "Trade::GltfSceneConverter::add(): unsupported mesh attribute with array size" << mesh.attributeArraySize(i);
+                return {};
+            }
+
+            arrayAppend(gltfAttributes, InPlaceInit,
+                std::move(gltfAttributeName),
+                gltfAccessorType,
+                gltfAccessorComponentType,
+                i, 0u);
         }
-
-        /* If a builtin glTF numbered attribute, append an ID to the name */
-        if(gltfAttributeName == "TEXCOORD"_s ||
-           gltfAttributeName == "COLOR"_s ||
-           /* Not a builtin MeshAttribute yet, but expected to be used by
-              people until builtin support is added */
-           gltfAttributeName == "JOINTS"_s ||
-           gltfAttributeName == "WEIGHTS"_s)
-        {
-            gltfAttributeName = Utility::format("{}_{}", gltfAttributeName, mesh.attributeId(i));
-
-        /* Otherwise, if it's a second or further duplicate attribute,
-           underscore it if not already and append an ID as well -- e.g. second
-           and third POSITION attribute becomes _POSITION_1 and _POSITION_2,
-           secondary _OBJECT_ID becomes _OBJECT_ID_1 */
-        } else if(const UnsignedInt attributeId = mesh.attributeId(i)) {
-            gltfAttributeName = Utility::format(
-                gltfAttributeName.hasPrefix('_') ? "{}_{}" : "_{}_{}",
-                gltfAttributeName, attributeId);
-        }
-
-        arrayAppend(gltfAttributes, InPlaceInit,
-            std::move(gltfAttributeName),
-            gltfAccessorType,
-            gltfAccessorComponentType,
-            i);
     }
+
+    CORRADE_INTERNAL_ASSERT(jointIdsAttributeGroupCount == weightsAttributeGroupCount);
 
     /* At this point we're sure nothing will fail so we can start writing the
        JSON. Otherwise we'd end up with a partly-written JSON in case of an
@@ -1683,6 +1761,7 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const MeshData& mesh, const
             /* Flip texture coordinates unless they're meant to be flipped in
                the material */
             if(mesh.attributeName(gltfAttribute.originalId) == MeshAttribute::TextureCoordinates && !configuration().value<bool>("textureCoordinateYFlipInMaterial")) {
+                CORRADE_INTERNAL_ASSERT(gltfAttribute.offset == 0);
                 Containers::StridedArrayView1D<char> data{vertexData,
                     vertexData + mesh.attributeOffset(gltfAttribute.originalId),
                     mesh.vertexCount(), mesh.attributeStride(gltfAttribute.originalId)};
@@ -1720,10 +1799,9 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const MeshData& mesh, const
             /** @todo spec says it can't be smaller than stride (for
                 single-vertex meshes), fix alongside merging buffer views for
                 interleaved attributes */
-            const std::size_t gltfByteLength = mesh.vertexCount() ?
-                /** @todo this needs to include array size once we use that for
-                    builtin attributes (skinning?) */
-                attributeStride*(mesh.vertexCount() - 1) + formatSize : 0;
+            const std::size_t gltfByteLength = mesh.vertexCount() == 0 ? 0 :
+                attributeStride*(mesh.vertexCount() - 1) +
+                formatSize*(mesh.attributeArraySize(gltfAttribute.originalId) ? mesh.attributeArraySize(gltfAttribute.originalId) : 1);
             _state->gltfBufferViews.writeKey("byteLength"_s).write(gltfByteLength);
 
             /* If byteStride is omitted, it's implicitly treated as tightly
@@ -1743,9 +1821,12 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const MeshData& mesh, const
             const UnsignedInt gltfAccessorIndex = _state->gltfAccessors.currentArraySize();
             const Containers::ScopeGuard gltfAccessor = _state->gltfAccessors.beginObjectScope();
             _state->gltfAccessors
-                .writeKey("bufferView"_s).write(gltfBufferViewIndex)
-                /* We don't share views among accessors yet, so bufferOffset is
-                   implicitly 0 */
+                .writeKey("bufferView"_s).write(gltfBufferViewIndex);
+            /* The offset is non-zero for skinning attributes that were split
+               into multiple buffer views */
+            if(gltfAttribute.offset)
+                _state->gltfAccessors.writeKey("byteOffset"_s).write(gltfAttribute.offset);
+            _state->gltfAccessors
                 .writeKey("componentType"_s).write(gltfAttribute.accessorComponentType);
             if(isVertexFormatNormalized(format))
                 _state->gltfAccessors.writeKey("normalized"_s).write(true);

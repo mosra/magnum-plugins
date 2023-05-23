@@ -149,6 +149,9 @@ corrade_add_test(GltfSceneConverterTest GltfSceneConverterTest.cpp
         mesh-custom-attribute-no-name.gltf
         mesh-custom-objectid-name.gltf
         mesh-duplicate-attribute.gltf
+        mesh-skinning-attributes-ui.gltf
+        mesh-skinning-attributes.bin
+        mesh-skinning-attributes.gltf
         mesh.glb
         mesh.gltf mesh.bin
         mesh-multiple.gltf mesh-multiple.bin

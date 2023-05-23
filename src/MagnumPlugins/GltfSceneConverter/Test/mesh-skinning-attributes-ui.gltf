@@ -1,0 +1,65 @@
+{
+  "asset": {
+    "version": "2.0"
+  },
+  "buffers": [
+    {
+      "uri": "mesh-skinning-attributes-ui.bin",
+      "byteLength": 88
+    }
+  ],
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteOffset": 0,
+      "byteLength": 56,
+      "byteStride": 44
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 12,
+      "byteLength": 60,
+      "byteStride": 44
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 28,
+      "byteLength": 60,
+      "byteStride": 44
+    }
+  ],
+  "accessors": [
+    {
+      "bufferView": 0,
+      "componentType": 5126,
+      "count": 2,
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 1,
+      "componentType": 5125,
+      "count": 2,
+      "type": "VEC4"
+    },
+    {
+      "bufferView": 2,
+      "componentType": 5126,
+      "count": 2,
+      "type": "VEC4"
+    }
+  ],
+  "meshes": [
+    {
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 0,
+            "JOINTS_0": 1,
+            "WEIGHTS_0": 2
+          },
+          "mode": 1
+        }
+      ]
+    }
+  ]
+}

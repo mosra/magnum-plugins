@@ -85,6 +85,8 @@ struct GltfSceneConverterTest: TestSuite::Tester {
     void addMeshNoIndicesNoAttributes();
     void addMeshNoIndicesNoVertices();
     void addMeshAttribute();
+    void addMeshSkinningAttributes();
+    void addMeshSkinningAttributesUnsignedInt();
     void addMeshDuplicateAttribute();
     void addMeshCustomAttributeResetName();
     void addMeshCustomAttributeNoName();
@@ -309,7 +311,7 @@ const struct {
 const UnsignedInt AddMeshInvalidIndices[4]{};
 const Vector4d AddMeshInvalidVertices[4]{};
 const struct {
-    const char* name;
+    TestSuite::TestCaseDescriptionSourceLocation name;
     bool strict;
     MeshData mesh;
     const char* message;
@@ -365,6 +367,30 @@ const struct {
             MeshAttributeData{MeshAttribute::Color, VertexFormat::Vector3h, AddMeshInvalidVertices}
         }},
         "unsupported mesh color attribute format VertexFormat::Vector3h"},
+    {"skin joint ID array size not divisible by four", false,
+        MeshData{MeshPrimitive::Points, {}, AddMeshInvalidVertices, {
+            MeshAttributeData{MeshAttribute::JointIds, VertexFormat::UnsignedByte, AddMeshInvalidVertices, 3},
+            MeshAttributeData{MeshAttribute::Weights, VertexFormat::UnsignedByteNormalized, AddMeshInvalidVertices, 3},
+        }},
+        "glTF only supports skin joint IDs with multiples of four elements, got 3"},
+    {"skin weight array size not divisible by four", false,
+        MeshData{MeshPrimitive::Points, {}, AddMeshInvalidVertices, {
+            MeshAttributeData{MeshAttribute::Weights, VertexFormat::UnsignedByteNormalized, AddMeshInvalidVertices, 5},
+            MeshAttributeData{MeshAttribute::JointIds, VertexFormat::UnsignedByte, AddMeshInvalidVertices, 5},
+        }},
+        "glTF only supports skin weights with multiples of four elements, got 5"},
+    {"32-bit skin joint IDs, strict", true,
+        MeshData{MeshPrimitive::Points, {}, AddMeshInvalidVertices, {
+            MeshAttributeData{MeshAttribute::JointIds, VertexFormat::UnsignedInt, AddMeshInvalidVertices, 4},
+            MeshAttributeData{MeshAttribute::Weights, VertexFormat::Float, AddMeshInvalidVertices, 4},
+        }},
+        "mesh attributes with VertexFormat::UnsignedInt are not valid glTF, set strict=false to allow them"},
+    {"half-float skin weights", false,
+        MeshData{MeshPrimitive::Points, {}, AddMeshInvalidVertices, {
+            MeshAttributeData{MeshAttribute::JointIds, VertexFormat::UnsignedByte, AddMeshInvalidVertices, 4},
+            MeshAttributeData{MeshAttribute::Weights, VertexFormat::Half, AddMeshInvalidVertices, 4},
+        }},
+        "unsupported mesh skin weights attribute format VertexFormat::Half"},
     {"32-bit object id, strict", true,
         MeshData{MeshPrimitive::Points, {}, AddMeshInvalidVertices, {
             MeshAttributeData{MeshAttribute::ObjectId, VertexFormat::UnsignedInt, AddMeshInvalidVertices}
@@ -1939,6 +1965,11 @@ GltfSceneConverterTest::GltfSceneConverterTest() {
     addInstancedTests({&GltfSceneConverterTest::addMeshAttribute},
         Containers::arraySize(AddMeshAttributeData));
 
+    addTests({&GltfSceneConverterTest::addMeshSkinningAttributes});
+
+    addInstancedTests({&GltfSceneConverterTest::addMeshSkinningAttributesUnsignedInt},
+        Containers::arraySize(QuietData));
+
     addTests({&GltfSceneConverterTest::addMeshDuplicateAttribute,
               &GltfSceneConverterTest::addMeshCustomAttributeResetName});
 
@@ -2701,11 +2732,214 @@ void GltfSceneConverterTest::addMeshAttribute() {
     CORRADE_COMPARE(imported->attributeFormat(0), data.format);
 }
 
+void GltfSceneConverterTest::addMeshSkinningAttributes() {
+    const struct Vertex {
+        /* The attributes are deliberately shuffled to avoid accidental order
+           assumptions in the code */
+        UnsignedShort jointIds[4];
+        Vector3 position;
+        UnsignedByte weights[4];
+        UnsignedShort secondaryWeights[8];
+        UnsignedByte secondaryJointIds[8];
+        /* UnsignedInt + Float tested in addMeshSkinningAttributesUnsignedInt()
+           below */
+    } vertices[]{
+        {{3, 5, 7, 9},
+         {1.0f, 2.0f, 3.0f},
+         {16, 32, 64, 128},
+         {1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000},
+         {10, 20, 30, 40, 50, 60, 70, 80}},
+        {{2, 4, 6, 8},
+         {4.0f, 5.0f, 6.0f},
+         {48, 96, 144, 192},
+         {9000, 10000, 11000, 12000, 13000, 14000, 15000, 16000},
+         {90, 100, 110, 120, 130, 140, 150, 160}}
+    };
+    auto view = Containers::stridedArrayView(vertices);
+
+    MeshData mesh{MeshPrimitive::Lines, {}, vertices, {
+        MeshAttributeData{MeshAttribute::JointIds,
+            VertexFormat::UnsignedShort,
+            view.slice(&Vertex::jointIds), 4},
+        MeshAttributeData{MeshAttribute::Position,
+            view.slice(&Vertex::position)},
+        MeshAttributeData{MeshAttribute::Weights,
+            VertexFormat::UnsignedByteNormalized,
+            view.slice(&Vertex::weights), 4},
+        MeshAttributeData{MeshAttribute::Weights,
+            VertexFormat::UnsignedShortNormalized,
+            view.slice(&Vertex::secondaryWeights), 8},
+        MeshAttributeData{MeshAttribute::JointIds,
+            VertexFormat::UnsignedByte,
+            view.slice(&Vertex::secondaryJointIds), 8}
+    }};
+
+    Containers::Pointer<AbstractSceneConverter> converter =  _converterManager.instantiate("GltfSceneConverter");
+
+    const Containers::String filename = Utility::Path::join(GLTFSCENECONVERTER_TEST_OUTPUT_DIR, "mesh-skinning-attributes.gltf");
+    CORRADE_VERIFY(converter->beginFile(filename));
+    CORRADE_VERIFY(converter->add(mesh));
+    CORRADE_VERIFY(converter->endFile());
+    CORRADE_COMPARE_AS(filename,
+        Utility::Path::join(GLTFSCENECONVERTER_TEST_DIR, "mesh-skinning-attributes.gltf"),
+        TestSuite::Compare::File);
+    CORRADE_COMPARE_AS(
+        Utility::Path::join(GLTFSCENECONVERTER_TEST_OUTPUT_DIR, "mesh-skinning-attributes.bin"),
+        Utility::Path::join(GLTFSCENECONVERTER_TEST_DIR, "mesh-skinning-attributes.bin"),
+        TestSuite::Compare::File);
+
+    if(_importerManager.loadState("GltfImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("GltfImporter plugin not found, cannot test a roundtrip");
+
+    Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("GltfImporter");
+    /** @todo drop once this is gone */
+    importer->configuration().setValue("compatibilitySkinningAttributes", false);
+
+    CORRADE_VERIFY(importer->openFile(filename));
+    CORRADE_COMPARE(importer->meshCount(), 1);
+
+    Containers::Optional<MeshData> imported = importer->mesh(0);
+    CORRADE_VERIFY(imported);
+    CORRADE_COMPARE(imported->attributeCount(), 7);
+    CORRADE_COMPARE(imported->attributeCount(MeshAttribute::JointIds), 3);
+    CORRADE_COMPARE(imported->attributeCount(MeshAttribute::Weights), 3);
+
+    /* Positions, just to ensure the others don't break them */
+    CORRADE_VERIFY(imported->hasAttribute(MeshAttribute::Position));
+    CORRADE_COMPARE_AS(imported->attribute<Vector3>(MeshAttribute::Position),
+        view.slice(&Vertex::position),
+        TestSuite::Compare::Container);
+
+    /* First set of skinning attributes should be added as a whole */
+    CORRADE_COMPARE(imported->attributeFormat(MeshAttribute::JointIds, 0), VertexFormat::UnsignedShort);
+    CORRADE_COMPARE(imported->attributeFormat(MeshAttribute::Weights, 0), VertexFormat::UnsignedByteNormalized);
+    CORRADE_COMPARE(imported->attributeArraySize(MeshAttribute::JointIds, 0), 4);
+    CORRADE_COMPARE(imported->attributeArraySize(MeshAttribute::Weights, 0), 4);
+    CORRADE_COMPARE_AS((Containers::arrayCast<1, const Vector4us>(imported->attribute(MeshAttribute::JointIds, 0))),
+        Containers::arrayCast<const Vector4us>(view.slice(&Vertex::jointIds)),
+        TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS((Containers::arrayCast<1, const Vector4ub>(imported->attribute(MeshAttribute::Weights, 0))),
+        Containers::arrayCast<const Vector4ub>(view.slice(&Vertex::weights)),
+        TestSuite::Compare::Container);
+
+    /* Second set split into two */
+    CORRADE_COMPARE(imported->attributeFormat(MeshAttribute::JointIds, 1), VertexFormat::UnsignedByte);
+    CORRADE_COMPARE(imported->attributeFormat(MeshAttribute::JointIds, 2), VertexFormat::UnsignedByte);
+    CORRADE_COMPARE(imported->attributeFormat(MeshAttribute::Weights, 1), VertexFormat::UnsignedShortNormalized);
+    CORRADE_COMPARE(imported->attributeFormat(MeshAttribute::Weights, 2), VertexFormat::UnsignedShortNormalized);
+    CORRADE_COMPARE(imported->attributeArraySize(MeshAttribute::JointIds, 1), 4);
+    CORRADE_COMPARE(imported->attributeArraySize(MeshAttribute::JointIds, 2), 4);
+    CORRADE_COMPARE(imported->attributeArraySize(MeshAttribute::Weights, 1), 4);
+    CORRADE_COMPARE(imported->attributeArraySize(MeshAttribute::Weights, 2), 4);
+    /** @todo ffs, add strided array view constructors from multidimensional
+        arrays, this is horrific */
+    CORRADE_COMPARE_AS((Containers::arrayCast<1, const Vector4ub>(imported->attribute(MeshAttribute::JointIds, 1))),
+        (Containers::arrayCast<1, const Vector4ub>(Containers::arrayCast<2, const UnsignedByte>(view.slice(&Vertex::secondaryJointIds)).exceptSuffix({0, 4}))),
+        TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS((Containers::arrayCast<1, const Vector4ub>(imported->attribute(MeshAttribute::JointIds, 2))),
+        (Containers::arrayCast<1, const Vector4ub>(Containers::arrayCast<2, const UnsignedByte>(view.slice(&Vertex::secondaryJointIds)).exceptPrefix({0, 4}))),
+        TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS((Containers::arrayCast<1, const Vector4us>(imported->attribute(MeshAttribute::Weights, 1))),
+        (Containers::arrayCast<1, const Vector4us>(Containers::arrayCast<2, const UnsignedShort>(view.slice(&Vertex::secondaryWeights)).exceptSuffix({0, 4}))),
+        TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS((Containers::arrayCast<1, const Vector4us>(imported->attribute(MeshAttribute::Weights, 2))),
+        (Containers::arrayCast<1, const Vector4us>(Containers::arrayCast<2, const UnsignedShort>(view.slice(&Vertex::secondaryWeights)).exceptPrefix({0, 4}))),
+        TestSuite::Compare::Container);
+}
+
+void GltfSceneConverterTest::addMeshSkinningAttributesUnsignedInt() {
+    auto&& data = QuietData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    const struct Vertex {
+        Vector3 position;
+        UnsignedInt jointIds[4];
+        Float weights[4];
+    } vertices[]{
+        {{1.0f, 2.0f, 3.0f},
+         {1, 2, 3, 4},
+         {0.125f, 0.25f, 0.375f, 0.5f}},
+        {{1.0f, 2.0f, 3.0f},
+         {5, 6, 7, 8},
+         {0.625f, 0.75f, 0.875f, 1.0f}}
+    };
+    auto view = Containers::stridedArrayView(vertices);
+
+    MeshData mesh{MeshPrimitive::Lines, {}, vertices, {
+        MeshAttributeData{MeshAttribute::Position,
+            view.slice(&Vertex::position)},
+        MeshAttributeData{MeshAttribute::JointIds,
+            VertexFormat::UnsignedInt,
+            view.slice(&Vertex::jointIds), 4},
+        MeshAttributeData{MeshAttribute::Weights,
+            VertexFormat::Float,
+            view.slice(&Vertex::weights), 4},
+    }};
+
+    Containers::Pointer<AbstractSceneConverter> converter =  _converterManager.instantiate("GltfSceneConverter");
+    converter->addFlags(data.flags);
+    /* Behavior with strict=true tested in
+       addMeshInvalid(32-bit skin joint IDs, strict) */
+    converter->configuration().setValue("strict", false);
+
+    const Containers::String filename = Utility::Path::join(GLTFSCENECONVERTER_TEST_OUTPUT_DIR, "mesh-skinning-attributes-ui.gltf");
+    CORRADE_VERIFY(converter->beginFile(filename));
+    std::ostringstream out;
+    {
+        Warning redirectWarning{&out};
+        CORRADE_VERIFY(converter->add(mesh));
+    }
+    if(data.quiet)
+        CORRADE_COMPARE(out.str(), "");
+    else
+        /* It's not JOINTS_0 because the warning happens before the final
+           attribute name is composed but that should be fine */
+        CORRADE_COMPARE(out.str(), "Trade::GltfSceneConverter::add(): strict mode disabled, allowing a 32-bit integer attribute JOINTS\n");
+
+    CORRADE_VERIFY(converter->endFile());
+    CORRADE_COMPARE_AS(filename,
+        Utility::Path::join(GLTFSCENECONVERTER_TEST_DIR, "mesh-skinning-attributes-ui.gltf"),
+        TestSuite::Compare::File);
+    /* There's not really anything special to test in the bin file, it's
+       verified thoroughly enough for other formats in
+       addMeshSkinningAttributes() above */
+
+    if(_importerManager.loadState("GltfImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("GltfImporter plugin not found, cannot test a roundtrip");
+
+    Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("GltfImporter");
+    /** @todo drop once this is gone */
+    importer->configuration().setValue("compatibilitySkinningAttributes", false);
+
+    CORRADE_VERIFY(importer->openFile(filename));
+    CORRADE_COMPARE(importer->meshCount(), 1);
+
+    Containers::Optional<MeshData> imported = importer->mesh(0);
+    CORRADE_VERIFY(imported);
+    CORRADE_COMPARE(imported->attributeCount(), 3);
+    CORRADE_COMPARE(imported->attributeCount(MeshAttribute::JointIds), 1);
+    CORRADE_COMPARE(imported->attributeCount(MeshAttribute::Weights), 1);
+
+    CORRADE_VERIFY(imported->hasAttribute(MeshAttribute::Position));
+    CORRADE_COMPARE_AS(imported->attribute<Vector3>(MeshAttribute::Position),
+        view.slice(&Vertex::position),
+        TestSuite::Compare::Container);
+
+    CORRADE_COMPARE(imported->attributeFormat(MeshAttribute::JointIds), VertexFormat::UnsignedInt);
+    CORRADE_COMPARE(imported->attributeFormat(MeshAttribute::Weights), VertexFormat::Float);
+    CORRADE_COMPARE(imported->attributeArraySize(MeshAttribute::JointIds), 4);
+    CORRADE_COMPARE(imported->attributeArraySize(MeshAttribute::Weights), 4);
+    CORRADE_COMPARE_AS((Containers::arrayCast<1, const Vector4ui>(imported->attribute(MeshAttribute::JointIds))),
+        Containers::arrayCast<const Vector4ui>(view.slice(&Vertex::jointIds)),
+        TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS((Containers::arrayCast<1, const Vector4>(imported->attribute(MeshAttribute::Weights))),
+        Containers::arrayCast<const Vector4>(view.slice(&Vertex::weights)),
+        TestSuite::Compare::Container);
+}
+
 void GltfSceneConverterTest::addMeshDuplicateAttribute() {
     const Vector4 vertices[3]{};
-    const MeshAttribute jointsAttribute = meshAttributeCustom(0);
-    const MeshAttribute weightsAttribute = meshAttributeCustom(1);
-    const MeshAttribute customAttribute = meshAttributeCustom(2);
+    const MeshAttribute customAttribute = meshAttributeCustom(0);
 
     MeshData mesh{MeshPrimitive::TriangleFan, {}, vertices, {
         /* Builtin non-numbered attribute, should have no number */
@@ -2719,12 +2953,6 @@ void GltfSceneConverterTest::addMeshDuplicateAttribute() {
             VertexFormat::Vector2, Containers::stridedArrayView(vertices)},
         MeshAttributeData{MeshAttribute::Color,
             VertexFormat::Vector4, Containers::stridedArrayView(vertices)},
-        /* Magnum custom but glTF builtin numbered attributes, should have a
-           number */
-        MeshAttributeData{jointsAttribute,
-            VertexFormat::Vector4ub, Containers::stridedArrayView(vertices)},
-        MeshAttributeData{weightsAttribute,
-            VertexFormat::Vector4ubNormalized, Containers::stridedArrayView(vertices)},
         /* Custom attribute, should have no number */
         MeshAttributeData{customAttribute,
             VertexFormat::Float, Containers::stridedArrayView(vertices)},
@@ -2742,11 +2970,6 @@ void GltfSceneConverterTest::addMeshDuplicateAttribute() {
         /* Secondary builtin non-numbered attribute */
         MeshAttributeData{MeshAttribute::Position, VertexFormat::Vector3,
             Containers::stridedArrayView(vertices)},
-        /* Secondary custom but glTF builtin numbered attributes */
-        MeshAttributeData{jointsAttribute,
-            VertexFormat::Vector4us, Containers::stridedArrayView(vertices)},
-        MeshAttributeData{weightsAttribute,
-            VertexFormat::Vector4, Containers::stridedArrayView(vertices)},
         /* Secondary custom non-numbered attribute */
         MeshAttributeData{MeshAttribute::ObjectId,
             VertexFormat::UnsignedByte, Containers::stridedArrayView(vertices)},
@@ -2759,10 +2982,6 @@ void GltfSceneConverterTest::addMeshDuplicateAttribute() {
 
     Containers::String filename = Utility::Path::join(GLTFSCENECONVERTER_TEST_OUTPUT_DIR, "mesh-duplicate-attribute.gltf");
     CORRADE_VERIFY(converter->beginFile(filename));
-    /* Magnum doesn't have a builtin enum for these two yet, but the plugin
-       will recognize them */
-    converter->setMeshAttributeName(jointsAttribute, "JOINTS");
-    converter->setMeshAttributeName(weightsAttribute, "WEIGHTS");
     converter->setMeshAttributeName(customAttribute, "_YOLO");
     CORRADE_VERIFY(converter->add(mesh));
     CORRADE_VERIFY(converter->endFile());
@@ -2774,8 +2993,6 @@ void GltfSceneConverterTest::addMeshDuplicateAttribute() {
         CORRADE_SKIP("GltfImporter plugin not found, cannot test a roundtrip");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("GltfImporter");
-
-    importer->configuration().setValue("compatibilitySkinningAttributes", false);
 
     CORRADE_VERIFY(importer->openFile(filename));
     CORRADE_COMPARE(importer->meshCount(), 1);
@@ -2793,7 +3010,7 @@ void GltfSceneConverterTest::addMeshDuplicateAttribute() {
     CORRADE_VERIFY(imported);
     CORRADE_COMPARE(imported->primitive(), MeshPrimitive::TriangleFan);
     CORRADE_VERIFY(!imported->isIndexed());
-    CORRADE_COMPARE(imported->attributeCount(), 15);
+    CORRADE_COMPARE(imported->attributeCount(), 11);
 
     /* GltfImporter (stable-)sorts the attributes first to figure out the
        numbering. Check that the numbers match by comparing types. */
@@ -2803,44 +3020,30 @@ void GltfSceneConverterTest::addMeshDuplicateAttribute() {
     CORRADE_COMPARE(imported->attributeName(1), MeshAttribute::Color);
     CORRADE_COMPARE(imported->attributeFormat(1), VertexFormat::Vector3ubNormalized);
 
-    CORRADE_COMPARE(imported->attributeName(2), MeshAttribute::JointIds);
-    CORRADE_COMPARE(imported->attributeFormat(2), VertexFormat::UnsignedByte);
-    CORRADE_COMPARE(imported->attributeArraySize(2), 4);
-    CORRADE_COMPARE(imported->attributeName(3), MeshAttribute::JointIds);
-    CORRADE_COMPARE(imported->attributeFormat(3), VertexFormat::UnsignedShort);
-    CORRADE_COMPARE(imported->attributeArraySize(3), 4);
+    CORRADE_COMPARE(imported->attributeName(2), MeshAttribute::Position);
+    CORRADE_COMPARE(imported->attributeFormat(2), VertexFormat::Vector3);
 
-    CORRADE_COMPARE(imported->attributeName(4), MeshAttribute::Position);
-    CORRADE_COMPARE(imported->attributeFormat(4), VertexFormat::Vector3);
-
+    CORRADE_COMPARE(imported->attributeName(3), MeshAttribute::TextureCoordinates);
+    CORRADE_COMPARE(imported->attributeFormat(3), VertexFormat::Vector2);
+    CORRADE_COMPARE(imported->attributeName(4), MeshAttribute::TextureCoordinates);
+    CORRADE_COMPARE(imported->attributeFormat(4), VertexFormat::Vector2usNormalized);
     CORRADE_COMPARE(imported->attributeName(5), MeshAttribute::TextureCoordinates);
-    CORRADE_COMPARE(imported->attributeFormat(5), VertexFormat::Vector2);
-    CORRADE_COMPARE(imported->attributeName(6), MeshAttribute::TextureCoordinates);
-    CORRADE_COMPARE(imported->attributeFormat(6), VertexFormat::Vector2usNormalized);
-    CORRADE_COMPARE(imported->attributeName(7), MeshAttribute::TextureCoordinates);
-    CORRADE_COMPARE(imported->attributeFormat(7), VertexFormat::Vector2ubNormalized);
+    CORRADE_COMPARE(imported->attributeFormat(5), VertexFormat::Vector2ubNormalized);
 
-    CORRADE_COMPARE(imported->attributeName(8), MeshAttribute::Weights);
-    CORRADE_COMPARE(imported->attributeFormat(8), VertexFormat::UnsignedByteNormalized);
-    CORRADE_COMPARE(imported->attributeArraySize(8), 4);
-    CORRADE_COMPARE(imported->attributeName(9), MeshAttribute::Weights);
-    CORRADE_COMPARE(imported->attributeFormat(9), VertexFormat::Float);
-    CORRADE_COMPARE(imported->attributeArraySize(9), 4);
+    CORRADE_COMPARE(imported->attributeName(6), MeshAttribute::ObjectId);
+    CORRADE_COMPARE(imported->attributeFormat(6), VertexFormat::UnsignedShort);
+    CORRADE_COMPARE(imported->attributeName(7), importedSecondaryObjectIdAttribute);
+    CORRADE_COMPARE(imported->attributeFormat(7), VertexFormat::UnsignedByte);
 
-    CORRADE_COMPARE(imported->attributeName(10), MeshAttribute::ObjectId);
-    CORRADE_COMPARE(imported->attributeFormat(10), VertexFormat::UnsignedShort);
-    CORRADE_COMPARE(imported->attributeName(11), importedSecondaryObjectIdAttribute);
-    CORRADE_COMPARE(imported->attributeFormat(11), VertexFormat::UnsignedByte);
-
-    CORRADE_COMPARE(imported->attributeName(12), importedSecondaryPositionAttribute);
+    CORRADE_COMPARE(imported->attributeName(8), importedSecondaryPositionAttribute);
     /* There's no other allowed type without extra additions, so just trust
        it's the correct one */
-    CORRADE_COMPARE(imported->attributeFormat(12), VertexFormat::Vector3);
+    CORRADE_COMPARE(imported->attributeFormat(8), VertexFormat::Vector3);
 
-    CORRADE_COMPARE(imported->attributeName(13), importedCustomAttribute);
-    CORRADE_COMPARE(imported->attributeFormat(13), VertexFormat::Float);
-    CORRADE_COMPARE(imported->attributeName(14), importedSecondaryCustomAttribute);
-    CORRADE_COMPARE(imported->attributeFormat(14), VertexFormat::ByteNormalized);
+    CORRADE_COMPARE(imported->attributeName(9), importedCustomAttribute);
+    CORRADE_COMPARE(imported->attributeFormat(9), VertexFormat::Float);
+    CORRADE_COMPARE(imported->attributeName(10), importedSecondaryCustomAttribute);
+    CORRADE_COMPARE(imported->attributeFormat(10), VertexFormat::ByteNormalized);
 }
 
 void GltfSceneConverterTest::addMeshCustomAttributeResetName() {
