@@ -1354,7 +1354,12 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const MeshData& mesh, const
 
     /* Check and convert attributes */
     /** @todo detect and merge interleaved attributes into common buffer views */
-    Containers::Array<Containers::Triple<Containers::String, Containers::StringView, Int>> gltfAttributeNamesTypes;
+    struct GltfAttribute {
+        Containers::String name;
+        Containers::StringView accessorType;
+        Int accessorComponentType;
+    };
+    Containers::Array<GltfAttribute> gltfAttributes;
     for(UnsignedInt i = 0; i != mesh.attributeCount(); ++i) {
         /** @todo option to skip unrepresentable attributes instead of failing
             the whole mesh */
@@ -1603,7 +1608,10 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const MeshData& mesh, const
                 gltfAttributeName, attributeId);
         }
 
-        arrayAppend(gltfAttributeNamesTypes, InPlaceInit, std::move(gltfAttributeName), gltfAccessorType, gltfAccessorComponentType);
+        arrayAppend(gltfAttributes, InPlaceInit,
+            std::move(gltfAttributeName),
+            gltfAccessorType,
+            gltfAccessorComponentType);
     }
 
     /* At this point we're sure nothing will fail so we can start writing the
@@ -1724,7 +1732,7 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const MeshData& mesh, const
             if(configuration().value<bool>("accessorNames"))
                 _state->gltfBufferViews.writeKey("name"_s).write(Utility::format(
                     name ? "mesh {0} ({1}) {2}" : "mesh {0} {2}",
-                    id, name, gltfAttributeNamesTypes[i].first()));
+                    id, name, gltfAttributes[i].name));
 
             const UnsignedInt gltfAccessorIndex = _state->gltfAccessors.currentArraySize();
             const Containers::ScopeGuard gltfAccessor = _state->gltfAccessors.beginObjectScope();
@@ -1732,18 +1740,18 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const MeshData& mesh, const
                 .writeKey("bufferView"_s).write(gltfBufferViewIndex)
                 /* We don't share views among accessors yet, so bufferOffset is
                    implicitly 0 */
-                .writeKey("componentType"_s).write(gltfAttributeNamesTypes[i].third());
+                .writeKey("componentType"_s).write(gltfAttributes[i].accessorComponentType);
             if(isVertexFormatNormalized(format))
                 _state->gltfAccessors.writeKey("normalized"_s).write(true);
             _state->gltfAccessors
                 .writeKey("count"_s).write(mesh.vertexCount())
-                .writeKey("type"_s).write(gltfAttributeNamesTypes[i].second());
+                .writeKey("type"_s).write(gltfAttributes[i].accessorType);
             if(configuration().value<bool>("accessorNames"))
                 _state->gltfAccessors.writeKey("name"_s).write(Utility::format(
                     name ? "mesh {0} ({1}) {2}" : "mesh {0} {2}",
-                    id, name, gltfAttributeNamesTypes[i].first()));
+                    id, name, gltfAttributes[i].name));
 
-            arrayAppend(meshProperties.gltfAttributes, InPlaceInit, gltfAttributeNamesTypes[i].first(), gltfAccessorIndex);
+            arrayAppend(meshProperties.gltfAttributes, InPlaceInit, gltfAttributes[i].name, gltfAccessorIndex);
         }
 
         /* Triangles are a default */
