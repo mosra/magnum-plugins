@@ -1963,10 +1963,10 @@ GltfSceneConverterTest::GltfSceneConverterTest() {
 
     addTests({&GltfSceneConverterTest::addMeshNonInterleaved});
 
-    addInstancedTests({
-        &GltfSceneConverterTest::addMeshNoAttributes,
-        &GltfSceneConverterTest::addMeshNoIndices},
+    addInstancedTests({&GltfSceneConverterTest::addMeshNoAttributes},
         Containers::arraySize(QuietData));
+
+    addTests({&GltfSceneConverterTest::addMeshNoIndices});
 
     addInstancedTests({&GltfSceneConverterTest::addMeshNoIndicesNoAttributes,
                        &GltfSceneConverterTest::addMeshNoIndicesNoVertices},
