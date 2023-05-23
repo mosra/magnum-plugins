@@ -783,6 +783,7 @@ const struct {
         ""},
     {"strict", true,
         "Trade::GltfImporter::mesh(): strict mode enabled, disallowing _OFFSET with a 32-bit integer vertex format Vector2ui\n"
+        "Trade::GltfImporter::mesh(): strict mode enabled, disallowing JOINTS_0 with a 32-bit integer vertex format Vector4ui\n"
         "Trade::GltfImporter::mesh(): strict mode enabled, disallowing _OBJECT_ID with a 32-bit integer vertex format UnsignedInt\n"},
 };
 
@@ -4054,8 +4055,10 @@ void GltfImporterTest::meshSkinAttributes() {
        for more information. */
     CORRADE_COMPARE(importer->meshAttributeForName("JOINTS_0"), meshAttributeCustom(customAttributeOffset + 0));
     CORRADE_COMPARE(importer->meshAttributeForName("JOINTS_1"), meshAttributeCustom(customAttributeOffset + 1));
-    CORRADE_COMPARE(importer->meshAttributeForName("WEIGHTS_0"), meshAttributeCustom(customAttributeOffset + 2));
-    CORRADE_COMPARE(importer->meshAttributeForName("WEIGHTS_1"), meshAttributeCustom(customAttributeOffset + 3));
+    CORRADE_COMPARE(importer->meshAttributeForName("JOINTS_2"), meshAttributeCustom(customAttributeOffset + 2));
+    CORRADE_COMPARE(importer->meshAttributeForName("WEIGHTS_0"), meshAttributeCustom(customAttributeOffset + 3));
+    CORRADE_COMPARE(importer->meshAttributeForName("WEIGHTS_1"), meshAttributeCustom(customAttributeOffset + 4));
+    CORRADE_COMPARE(importer->meshAttributeForName("WEIGHTS_2"), meshAttributeCustom(customAttributeOffset + 5));
 
     CORRADE_COMPARE(importer->meshCount(), 1);
 
@@ -4063,14 +4066,14 @@ void GltfImporterTest::meshSkinAttributes() {
     CORRADE_VERIFY(mesh);
     CORRADE_VERIFY(!mesh->isIndexed());
 
-    /* Position + two pairs of joints & weights */
+    /* Position + three pairs of joints & weights */
     #ifdef MAGNUM_BUILD_DEPRECATED
     if(!data.compatibilitySkinningAttributes || *data.compatibilitySkinningAttributes) {
-        CORRADE_COMPARE(mesh->attributeCount(), 5 + 4);
+        CORRADE_COMPARE(mesh->attributeCount(), 7 + 6);
     } else
     #endif
     {
-        CORRADE_COMPARE(mesh->attributeCount(), 5);
+        CORRADE_COMPARE(mesh->attributeCount(), 7);
     }
     CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::Position), VertexFormat::Vector3);
     CORRADE_COMPARE_AS(mesh->attribute<Vector3>(MeshAttribute::Position),
@@ -4084,7 +4087,7 @@ void GltfImporterTest::meshSkinAttributes() {
        Vector4<T> for easier comparison */
     /** @todo implement multi-dimensional support in Compare::Container instead
         and drop the workaround */
-    CORRADE_COMPARE(mesh->attributeCount(MeshAttribute::JointIds), 2);
+    CORRADE_COMPARE(mesh->attributeCount(MeshAttribute::JointIds), 3);
     CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::JointIds, 0), VertexFormat::UnsignedByte);
     CORRADE_COMPARE(mesh->attributeArraySize(MeshAttribute::JointIds, 0), 4);
     CORRADE_COMPARE_AS((Containers::arrayCast<1, const Vector4ub>(mesh->attribute<UnsignedByte[]>(MeshAttribute::JointIds, 0))),
@@ -4101,7 +4104,15 @@ void GltfImporterTest::meshSkinAttributes() {
             {17, 18, 19, 20},
             {21, 22, 23, 24}
         }), TestSuite::Compare::Container);
-    CORRADE_COMPARE(mesh->attributeCount(MeshAttribute::Weights), 2);
+    CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::JointIds, 2), VertexFormat::UnsignedInt);
+    CORRADE_COMPARE(mesh->attributeArraySize(MeshAttribute::JointIds, 2), 4);
+    CORRADE_COMPARE_AS((Containers::arrayCast<1, const Vector4ui>(mesh->attribute<UnsignedInt[]>(MeshAttribute::JointIds, 2))),
+        Containers::arrayView<Vector4ui>({
+            {25, 26, 27, 28},
+            {29, 30, 31, 32},
+            {33, 34, 35, 36}
+        }), TestSuite::Compare::Container);
+    CORRADE_COMPARE(mesh->attributeCount(MeshAttribute::Weights), 3);
     CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::Weights, 0), VertexFormat::Float);
     CORRADE_COMPARE(mesh->attributeArraySize(MeshAttribute::Weights, 0), 4);
     CORRADE_COMPARE_AS((Containers::arrayCast<1, const Vector4>(mesh->attribute<Float[]>(MeshAttribute::Weights, 0))),
@@ -4118,11 +4129,19 @@ void GltfImporterTest::meshSkinAttributes() {
             {0xffff/2, 0xffff/8, 0xffff/16, 0xffff/16},
             {       0, 0xffff/4, 0xffff/4,  0}
         }), TestSuite::Compare::Container);
+    CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::Weights, 2), VertexFormat::UnsignedByteNormalized);
+    CORRADE_COMPARE(mesh->attributeArraySize(MeshAttribute::Weights, 2), 4);
+    CORRADE_COMPARE_AS((Containers::arrayCast<1, const Vector4ub>(mesh->attribute<UnsignedByte[]>(MeshAttribute::Weights, 2))),
+        Containers::arrayView<Vector4ub>({
+            {0xff/2, 0xff/8, 0xff/16, 0xff/16},
+            {     0, 0xff/4, 0xff/4,  0},
+            {     0, 0xff/8,       0, 0xff/8}
+        }), TestSuite::Compare::Container);
 
     /* Backwards compatibility custom attributes */
     #ifdef MAGNUM_BUILD_DEPRECATED
     if(!data.compatibilitySkinningAttributes || *data.compatibilitySkinningAttributes) {
-        CORRADE_COMPARE(mesh->attributeCount(jointsAttribute), 2);
+        CORRADE_COMPARE(mesh->attributeCount(jointsAttribute), 3);
         CORRADE_COMPARE(mesh->attributeFormat(jointsAttribute, 0), VertexFormat::Vector4ub);
         CORRADE_COMPARE_AS(mesh->attribute<Vector4ub>(jointsAttribute),
             Containers::arrayView<Vector4ub>({
@@ -4137,7 +4156,14 @@ void GltfImporterTest::meshSkinAttributes() {
                 {17, 18, 19, 20},
                 {21, 22, 23, 24}
             }), TestSuite::Compare::Container);
-        CORRADE_COMPARE(mesh->attributeCount(weightsAttribute), 2);
+        CORRADE_COMPARE(mesh->attributeFormat(jointsAttribute, 2), VertexFormat::Vector4ui);
+        CORRADE_COMPARE_AS(mesh->attribute<Vector4ui>(jointsAttribute, 2),
+            Containers::arrayView<Vector4ui>({
+                {25, 26, 27, 28},
+                {29, 30, 31, 32},
+                {33, 34, 35, 36}
+            }), TestSuite::Compare::Container);
+        CORRADE_COMPARE(mesh->attributeCount(weightsAttribute), 3);
         CORRADE_COMPARE(mesh->attributeFormat(weightsAttribute, 0), VertexFormat::Vector4);
         CORRADE_COMPARE_AS(mesh->attribute<Vector4>(weightsAttribute),
             Containers::arrayView<Vector4>({
@@ -4151,6 +4177,13 @@ void GltfImporterTest::meshSkinAttributes() {
                 {       0, 0xffff/8,         0, 0xffff/8},
                 {0xffff/2, 0xffff/8, 0xffff/16, 0xffff/16},
                 {       0, 0xffff/4, 0xffff/4,  0}
+            }), TestSuite::Compare::Container);
+        CORRADE_COMPARE(mesh->attributeFormat(weightsAttribute, 2), VertexFormat::Vector4ubNormalized);
+        CORRADE_COMPARE_AS(mesh->attribute<Vector4ub>(weightsAttribute, 2),
+            Containers::arrayView<Vector4ub>({
+                {0xff/2, 0xff/8, 0xff/16, 0xff/16},
+                {     0, 0xff/4, 0xff/4,  0},
+                {     0, 0xff/8,       0, 0xff/8}
             }), TestSuite::Compare::Container);
 
         /* The compat attributes should alias the builtin ones, not have the
@@ -4414,24 +4447,29 @@ void GltfImporterTest::meshUnsignedIntVertexFormats() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
+    /** @todo drop once this is gone */
+    importer->configuration().setValue("compatibilitySkinningAttributes", false);
 
     if(data.strict)
         importer->configuration().setValue("strict", *data.strict);
 
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "mesh-unsigned-int-vertex-formats.gltf")));
-    CORRADE_COMPARE(importer->meshCount(), 2);
+    CORRADE_COMPARE(importer->meshCount(), 3);
 
     Containers::Optional<Trade::MeshData> mesh0;
     Containers::Optional<Trade::MeshData> mesh1;
+    Containers::Optional<Trade::MeshData> mesh2;
     std::ostringstream out;
     {
         Error redirectError{&out};
         mesh0 = importer->mesh(0);
         mesh1 = importer->mesh(1);
+        mesh2 = importer->mesh(2);
     }
 
     CORRADE_COMPARE(!!mesh0, !data.strict || !*data.strict);
     CORRADE_COMPARE(!!mesh1, !data.strict || !*data.strict);
+    CORRADE_COMPARE(!!mesh2, !data.strict || !*data.strict);
     CORRADE_COMPARE(out.str(), data.message);
 
     if(mesh0) {
@@ -4445,10 +4483,21 @@ void GltfImporterTest::meshUnsignedIntVertexFormats() {
     }
 
     if(mesh1) {
-        CORRADE_COMPARE(mesh1->attributeCount(), 1);
-        CORRADE_COMPARE(mesh1->attributeName(0), MeshAttribute::ObjectId);
+        CORRADE_COMPARE(mesh1->attributeCount(), 2);
+        /* Not testing weights, those are irrelevant here */
+        CORRADE_COMPARE(mesh1->attributeName(0), MeshAttribute::JointIds);
         CORRADE_COMPARE(mesh1->attributeFormat(0), VertexFormat::UnsignedInt);
-        CORRADE_COMPARE_AS(mesh1->attribute<UnsignedInt>(0), Containers::arrayView({
+        CORRADE_COMPARE(mesh1->attributeArraySize(0), 4);
+        CORRADE_COMPARE_AS((Containers::arrayCast<1, const Vector4ui>(mesh1->attribute(0))), Containers::arrayView({
+            Vector4ui{0xffeeffee, 0xeeffeeff, 0xddeeddee, 0xeeddeedd,}
+        }), TestSuite::Compare::Container);
+    }
+
+    if(mesh2) {
+        CORRADE_COMPARE(mesh2->attributeCount(), 1);
+        CORRADE_COMPARE(mesh2->attributeName(0), MeshAttribute::ObjectId);
+        CORRADE_COMPARE(mesh2->attributeFormat(0), VertexFormat::UnsignedInt);
+        CORRADE_COMPARE_AS(mesh2->attribute<UnsignedInt>(0), Containers::arrayView({
             0xccccccccu
         }), TestSuite::Compare::Container);
     }

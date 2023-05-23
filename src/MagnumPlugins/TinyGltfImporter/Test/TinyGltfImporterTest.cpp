@@ -2232,7 +2232,7 @@ void TinyGltfImporterTest::meshColors() {
 
 void TinyGltfImporterTest::meshSkinAttributes() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "mesh-skin-attributes.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(TINYGLTFIMPORTER_TEST_DIR, "mesh-skin-attributes.gltf")));
 
     /* The mapping should be available even before the mesh is imported */
     const MeshAttribute joints0Attribute = importer->meshAttributeForName("JOINTS_0");

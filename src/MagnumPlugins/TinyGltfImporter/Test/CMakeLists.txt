@@ -131,8 +131,8 @@ corrade_add_test(TinyGltfImporterTest
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/GltfImporter/Test/mesh-multiple-primitives.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/GltfImporter/Test/mesh-primitives-types.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/GltfImporter/Test/mesh-primitives-types.bin
-        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/GltfImporter/Test/mesh-skin-attributes.gltf
-        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/GltfImporter/Test/mesh-skin-attributes.bin
+        mesh-skin-attributes.gltf
+        mesh-skin-attributes.bin
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/GltfImporter/Test/mesh-unordered-attributes.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/GltfImporter/Test/přívodní-šňůra.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/GltfImporter/Test/přívodní-šňůra.bin

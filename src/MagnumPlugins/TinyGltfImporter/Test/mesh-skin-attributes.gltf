@@ -26,29 +26,14 @@
     {
       "bufferView": 0,
       "byteOffset": 24,
-      "componentType": 5125,
-      "count": 3,
-      "type": "VEC4"
-    },
-    {
-      "bufferView": 0,
-      "byteOffset": 40,
       "componentType": 5126,
       "count": 3,
       "type": "VEC4"
     },
     {
       "bufferView": 0,
-      "byteOffset": 56,
+      "byteOffset": 40,
       "componentType": 5123,
-      "normalized": true,
-      "count": 3,
-      "type": "VEC4"
-    },
-    {
-      "bufferView": 0,
-      "byteOffset": 64,
-      "componentType": 5121,
       "normalized": true,
       "count": 3,
       "type": "VEC4"
@@ -57,13 +42,13 @@
   "bufferViews": [
     {
       "buffer": 0,
-      "byteLength": 204,
-      "byteStride": 68
+      "byteLength": 144,
+      "byteStride": 48
     }
   ],
   "buffers": [
     {
-      "byteLength": 204,
+      "byteLength": 144,
       "uri": "mesh-skin-attributes.bin"
     }
   ],
@@ -74,10 +59,8 @@
           "attributes": {
             "JOINTS_0": 1,
             "JOINTS_1": 2,
-            "JOINTS_2": 3,
-            "WEIGHTS_0": 4,
-            "WEIGHTS_1": 5,
-            "WEIGHTS_2": 6,
+            "WEIGHTS_0": 3,
+            "WEIGHTS_1": 4,
             "POSITION": 0
           }
         }

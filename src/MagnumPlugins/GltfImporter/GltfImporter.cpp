@@ -3271,7 +3271,11 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
         Containers::Optional<Containers::Triple<Containers::StridedArrayView2D<const char>, VertexFormat, UnsignedInt>> accessor = parseAccessor("Trade::GltfImporter::mesh():", attribute.second());
         if(!accessor) return {};
 
+        /* From the builtin attributes can fire either for ObjectId or for
+           JointIds */
         if(configuration().value<bool>("strict") && vertexFormatComponentFormat(accessor->second()) == VertexFormat::UnsignedInt) {
+            /** @todo for JOINTS this prints Vector4ui while the actual
+                imported attribute is then UnsignedInt[], fix this somehow? */
             Error{} << "Trade::GltfImporter::mesh(): strict mode enabled, disallowing" << attribute.first() << "with a 32-bit integer vertex format" << Debug::packed << accessor->second();
             return {};
         }
@@ -3327,8 +3331,9 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
         /** @todo consider merging JOINTS_0, JOINTS_1 etc if they follow each
             other and have the same type */
         } else if(baseAttributeName == "JOINTS"_s) {
-            if(accessor->second() == VertexFormat::Vector4ub ||
-               accessor->second() == VertexFormat::Vector4us) {
+            if(accessor->second() == VertexFormat::Vector4ui ||
+               accessor->second() == VertexFormat::Vector4us ||
+               accessor->second() == VertexFormat::Vector4ub) {
                 ++jointIdAttributeCount;
                 name = MeshAttribute::JointIds;
                 arraySize = vertexFormatComponentCount(accessor->second());

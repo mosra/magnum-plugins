@@ -17,7 +17,18 @@
       "primitives": [
         {
           "attributes": {
-            "_OBJECT_ID": 1
+            "JOINTS_0": 1,
+            "WEIGHTS_0": 2
+          },
+          "mode": 0
+        }
+      ]
+    },
+    {
+      "primitives": [
+        {
+          "attributes": {
+            "_OBJECT_ID": 3
           },
           "mode": 0
         }
@@ -26,15 +37,26 @@
   ],
   "accessors": [
     {
-      "name": "0",
       "bufferView": 0,
       "componentType": 5125,
       "count": 1,
       "type": "VEC2"
     },
     {
-      "name": "1",
       "bufferView": 1,
+      "componentType": 5125,
+      "count": 1,
+      "type": "VEC4"
+    },
+    {
+      "bufferView": 1,
+      "componentType": 5121,
+      "count": 1,
+      "normalized": true,
+      "type": "VEC4"
+    },
+    {
+      "bufferView": 2,
       "componentType": 5125,
       "count": 1,
       "type": "SCALAR"
@@ -49,12 +71,17 @@
     {
       "buffer": 0,
       "byteOffset": 8,
+      "byteLength": 16
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 24,
       "byteLength": 4
     }
   ],
   "buffers": [
     {
-      "byteLength": 12,
+      "byteLength": 28,
       "uri": "mesh-unsigned-int-vertex-formats.bin"
     }
   ]

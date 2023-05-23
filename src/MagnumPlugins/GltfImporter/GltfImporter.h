@@ -275,9 +275,10 @@ importer plugins the importer delegates to.
     @ref VertexFormat::Vector4ubNormalized,
     @ref VertexFormat::Vector3usNormalized or
     @ref VertexFormat::Vector4usNormalized
--   Skin joint IDs are imported as *arrays* of @ref VertexFormat::UnsignedByte
-    or @ref VertexFormat::UnsignedShort, skin weights then as arrays of
-    @ref VertexFormat::Float, @ref VertexFormat::UnsignedByteNormalized or
+-   Skin joint IDs are imported as *arrays* of @ref VertexFormat::UnsignedInt,
+    @ref VertexFormat::UnsignedByte or @ref VertexFormat::UnsignedShort, skin
+    weights then as arrays of @ref VertexFormat::Float,
+    @ref VertexFormat::UnsignedByteNormalized or
     @ref VertexFormat::UnsignedShortNormalized. The
     @ref MeshData::attributeArraySize() is currently always @cpp 4 @ce, but is
     reserved to change (for example representing two consecutive sets as a
