@@ -1352,14 +1352,19 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const MeshData& mesh, const
             Warning{} << "Trade::GltfSceneConverter::add(): strict mode disabled, allowing a mesh with zero vertices";
     }
 
-    /* Check and convert attributes */
+    /* Check and convert attributes. Generally, count of attributes in the
+       output file doesn't need to match count of attributes in the input mesh
+       (although that's the common case), so the array references original mesh
+       attribute IDs. */
     /** @todo detect and merge interleaved attributes into common buffer views */
     struct GltfAttribute {
         Containers::String name;
         Containers::StringView accessorType;
         Int accessorComponentType;
+        UnsignedInt originalId;
     };
     Containers::Array<GltfAttribute> gltfAttributes;
+    arrayReserve(gltfAttributes, mesh.attributeCount());
     for(UnsignedInt i = 0; i != mesh.attributeCount(); ++i) {
         /** @todo option to skip unrepresentable attributes instead of failing
             the whole mesh */
@@ -1611,7 +1616,8 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const MeshData& mesh, const
         arrayAppend(gltfAttributes, InPlaceInit,
             std::move(gltfAttributeName),
             gltfAccessorType,
-            gltfAccessorComponentType);
+            gltfAccessorComponentType,
+            i);
     }
 
     /* At this point we're sure nothing will fail so we can start writing the
@@ -1671,15 +1677,15 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const MeshData& mesh, const
         Containers::ArrayView<char> vertexData = arrayAppend(_state->buffer, mesh.vertexData());
 
         /* Attribute views and accessors */
-        for(UnsignedInt i = 0; i != mesh.attributeCount(); ++i) {
-            const VertexFormat format = mesh.attributeFormat(i);
+        for(const GltfAttribute& gltfAttribute: gltfAttributes) {
+            const VertexFormat format = mesh.attributeFormat(gltfAttribute.originalId);
 
             /* Flip texture coordinates unless they're meant to be flipped in
                the material */
-            if(mesh.attributeName(i) == MeshAttribute::TextureCoordinates && !configuration().value<bool>("textureCoordinateYFlipInMaterial")) {
+            if(mesh.attributeName(gltfAttribute.originalId) == MeshAttribute::TextureCoordinates && !configuration().value<bool>("textureCoordinateYFlipInMaterial")) {
                 Containers::StridedArrayView1D<char> data{vertexData,
-                    vertexData + mesh.attributeOffset(i),
-                    mesh.vertexCount(), mesh.attributeStride(i)};
+                    vertexData + mesh.attributeOffset(gltfAttribute.originalId),
+                    mesh.vertexCount(), mesh.attributeStride(gltfAttribute.originalId)};
                 if(format == VertexFormat::Vector2)
                     for(auto& c: Containers::arrayCast<Vector2>(data))
                         c.y() = 1.0f - c.y();
@@ -1697,7 +1703,7 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const MeshData& mesh, const
             }
 
             const std::size_t formatSize = vertexFormatSize(format);
-            const std::size_t attributeStride = mesh.attributeStride(i);
+            const std::size_t attributeStride = mesh.attributeStride(gltfAttribute.originalId);
             const std::size_t gltfBufferViewIndex = _state->gltfBufferViews.currentArraySize();
             const Containers::ScopeGuard gltfBufferView = _state->gltfBufferViews.beginObjectScope();
             _state->gltfBufferViews
@@ -1706,7 +1712,7 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const MeshData& mesh, const
                    happens only for the very first view in a buffer and we
                    have always at most one buffer, the minimal savings are
                    not worth the inconsistency */
-                .writeKey("byteOffset"_s).write(vertexData - _state->buffer + mesh.attributeOffset(i));
+                .writeKey("byteOffset"_s).write(vertexData - _state->buffer + mesh.attributeOffset(gltfAttribute.originalId));
 
             /* Byte length, make sure to not count padding into it as that'd
                fail bound checks. If there are no vertices, the length is
@@ -1732,7 +1738,7 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const MeshData& mesh, const
             if(configuration().value<bool>("accessorNames"))
                 _state->gltfBufferViews.writeKey("name"_s).write(Utility::format(
                     name ? "mesh {0} ({1}) {2}" : "mesh {0} {2}",
-                    id, name, gltfAttributes[i].name));
+                    id, name, gltfAttribute.name));
 
             const UnsignedInt gltfAccessorIndex = _state->gltfAccessors.currentArraySize();
             const Containers::ScopeGuard gltfAccessor = _state->gltfAccessors.beginObjectScope();
@@ -1740,18 +1746,18 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const MeshData& mesh, const
                 .writeKey("bufferView"_s).write(gltfBufferViewIndex)
                 /* We don't share views among accessors yet, so bufferOffset is
                    implicitly 0 */
-                .writeKey("componentType"_s).write(gltfAttributes[i].accessorComponentType);
+                .writeKey("componentType"_s).write(gltfAttribute.accessorComponentType);
             if(isVertexFormatNormalized(format))
                 _state->gltfAccessors.writeKey("normalized"_s).write(true);
             _state->gltfAccessors
                 .writeKey("count"_s).write(mesh.vertexCount())
-                .writeKey("type"_s).write(gltfAttributes[i].accessorType);
+                .writeKey("type"_s).write(gltfAttribute.accessorType);
             if(configuration().value<bool>("accessorNames"))
                 _state->gltfAccessors.writeKey("name"_s).write(Utility::format(
                     name ? "mesh {0} ({1}) {2}" : "mesh {0} {2}",
-                    id, name, gltfAttributes[i].name));
+                    id, name, gltfAttribute.name));
 
-            arrayAppend(meshProperties.gltfAttributes, InPlaceInit, gltfAttributes[i].name, gltfAccessorIndex);
+            arrayAppend(meshProperties.gltfAttributes, InPlaceInit, gltfAttribute.name, gltfAccessorIndex);
         }
 
         /* Triangles are a default */
