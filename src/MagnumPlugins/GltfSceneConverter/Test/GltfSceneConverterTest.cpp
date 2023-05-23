@@ -79,7 +79,10 @@ struct GltfSceneConverterTest: TestSuite::Tester {
     void abort();
 
     void addMesh();
-    void addMeshNonInterleaved();
+    void addMeshBufferViewsNonInterleaved();
+    void addMeshBufferViewsInterleavedPaddingBegin();
+    void addMeshBufferViewsInterleavedPaddingBeginEnd();
+    void addMeshBufferViewsMixed();
     void addMeshNoAttributes();
     void addMeshNoIndices();
     void addMeshNoIndicesNoAttributes();
@@ -177,6 +180,15 @@ const struct {
 } QuietData[]{
     {"", {}, false},
     {"quiet", SceneConverterFlag::Quiet, true}
+};
+
+const struct {
+    const char* name;
+    SceneConverterFlags flags;
+    bool verbose;
+} VerboseData[]{
+    {"", {}, false},
+    {"verbose", SceneConverterFlag::Verbose, true}
 };
 
 const struct {
@@ -1961,7 +1973,13 @@ GltfSceneConverterTest::GltfSceneConverterTest() {
     addInstancedTests({&GltfSceneConverterTest::addMesh},
         Containers::arraySize(FileVariantWithNamesData));
 
-    addTests({&GltfSceneConverterTest::addMeshNonInterleaved});
+    addTests({&GltfSceneConverterTest::addMeshBufferViewsNonInterleaved,
+              &GltfSceneConverterTest::addMeshBufferViewsInterleavedPaddingBegin});
+
+    addInstancedTests({&GltfSceneConverterTest::addMeshBufferViewsInterleavedPaddingBeginEnd},
+        Containers::arraySize(VerboseData));
+
+    addTests({&GltfSceneConverterTest::addMeshBufferViewsMixed});
 
     addInstancedTests({&GltfSceneConverterTest::addMeshNoAttributes},
         Containers::arraySize(QuietData));
@@ -2267,19 +2285,16 @@ void GltfSceneConverterTest::addMesh() {
     auto&& data = FileVariantWithNamesData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
+    /* A simple case focusing mainly on metadata preservation. Organizing into
+       buffer views is tested thoroughly in addMeshBufferViews*() below. */
+
     const struct Vertex {
-        UnsignedInt padding0;
         Vector3 position;
-        UnsignedInt padding1[2];
         Vector3 normal;
     } vertices[]{
-        {0xaaaaaaaau,
-         {1.0f, 2.0f, 3.0f},
-         {0xffffffffu, 0xeeeeeeeeu},
+        {{1.0f, 2.0f, 3.0f},
          {7.0f, 8.0f, 9.0f}},
-        {0xddddddddu,
-         {4.0f, 5.0f, 6.0f},
-         {0xccccccccu, 0xbbbbbbbbu},
+        {{4.0f, 5.0f, 6.0f},
          {10.0f, 11.0f, 12.0f}}
     };
 
@@ -2361,85 +2376,396 @@ void GltfSceneConverterTest::addMesh() {
         TestSuite::Compare::Container);
 }
 
-void GltfSceneConverterTest::addMeshNonInterleaved() {
-    const struct {
-        UnsignedInt padding0[1];
+void GltfSceneConverterTest::addMeshBufferViewsNonInterleaved() {
+    struct Vertices {
         Vector3 positions[2];
-        UnsignedInt padding1[5];
-        Vector3 normals[2];
-        UnsignedInt padding2[2];
+        Vector2ub textureCoordinates[2];
+        UnsignedInt padding;
+        Color4ub colors[2];
     } vertices[]{{
-        {0xaaaaaaaau},
         {{1.0f, 2.0f, 3.0f}, {4.0f, 5.0f, 6.0f}},
-        {0xffffffffu, 0xeeeeeeeeu, 0xddddddddu, 0xccccccccu, 0xbbbbbbbbu},
-        {{7.0f, 8.0f, 9.0f}, {10.0f, 11.0f, 12.0f}},
-        {0x99999999u, 0x88888888u}
+        {{63, 127}, {191, 255}},
+        0xffeeffeeu,
+        {0x11223344_rgba, 0x55667788_rgba}
     }};
-
-    const UnsignedShort indices[] {
-        0, 2, 1, 2, 1, 2
-    };
-
-    MeshData mesh{MeshPrimitive::Lines,
-        {}, indices, MeshIndexData{indices},
-        {}, vertices, {
-            MeshAttributeData{MeshAttribute::Position, Containers::arrayView(vertices->positions)},
-            MeshAttributeData{MeshAttribute::Normal, Containers::arrayView(vertices->normals)}
-        }
-    };
+    MeshData mesh{MeshPrimitive::Lines, {}, vertices, {
+        /* Even with mixed up order the buffer views should be written with the
+           lowest offset first */
+        MeshAttributeData{MeshAttribute::TextureCoordinates, VertexFormat::Vector2ubNormalized, Containers::arrayView(vertices->textureCoordinates)},
+        MeshAttributeData{MeshAttribute::Position, Containers::arrayView(vertices->positions)},
+        MeshAttributeData{MeshAttribute::Color, Containers::arrayView(vertices->colors)},
+    }};
 
     Containers::Pointer<AbstractSceneConverter> converter =  _converterManager.instantiate("GltfSceneConverter");
 
-    const Containers::String filename = Utility::Path::join(GLTFSCENECONVERTER_TEST_OUTPUT_DIR, "mesh-noninterleaved.gltf");
+    const Containers::String filename = Utility::Path::join(GLTFSCENECONVERTER_TEST_OUTPUT_DIR, "mesh-buffer-views-noninterleaved.gltf");
+
     CORRADE_VERIFY(converter->beginFile(filename));
     CORRADE_VERIFY(converter->add(mesh));
     CORRADE_VERIFY(converter->endFile());
 
+    /* There should be three buffer views for three accessors and should have a
+       4-byte gap between second and third buffer view */
     CORRADE_COMPARE_AS(filename,
-        Utility::Path::join(GLTFSCENECONVERTER_TEST_DIR, "mesh-noninterleaved.gltf"),
+        Utility::Path::join(GLTFSCENECONVERTER_TEST_DIR, "mesh-buffer-views-noninterleaved.gltf"),
         TestSuite::Compare::File);
-    /* Not testing the .bin file as it won't get any special treatment compared
-       to addMesh() above */
-
-    /* Verify various expectations that might be missed when just looking at
-       the file */
-    const Containers::Optional<Containers::String> gltf = Utility::Path::readString(filename);
-    CORRADE_VERIFY(gltf);
-    /* There should be no byteStride as the attributes are all tightly packed */
-    CORRADE_VERIFY(!gltf->contains("byteStride"));
-    /* No extensions are needed for this simple case */
-    CORRADE_VERIFY(!gltf->contains("extensionsUsed"));
-    CORRADE_VERIFY(!gltf->contains("extensionsRequired"));
+    CORRADE_COMPARE_AS(
+        Utility::Path::join(GLTFSCENECONVERTER_TEST_OUTPUT_DIR, "mesh-buffer-views-noninterleaved.bin"),
+        Utility::Path::join(GLTFSCENECONVERTER_TEST_DIR, "mesh-buffer-views-noninterleaved.bin"),
+        TestSuite::Compare::File);
 
     if(_importerManager.loadState("GltfImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("GltfImporter plugin not found, cannot test a roundtrip");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("GltfImporter");
     CORRADE_VERIFY(importer->openFile(filename));
+
     CORRADE_COMPARE(importer->meshCount(), 1);
 
+    /* The data should be exactly the same size, attributes with same offsets
+       and strides */
     Containers::Optional<MeshData> imported = importer->mesh(0);
     CORRADE_VERIFY(imported);
-    CORRADE_COMPARE(imported->primitive(), MeshPrimitive::Lines);
+    CORRADE_COMPARE(imported->attributeCount(), 3);
 
-    CORRADE_COMPARE(imported->indexType(), MeshIndexType::UnsignedShort);
-    CORRADE_COMPARE_AS(imported->indices<UnsignedShort>(),
-        Containers::arrayView<UnsignedShort>({0, 2, 1, 2, 1, 2}),
-        TestSuite::Compare::Container);
-
-    CORRADE_COMPARE(imported->attributeCount(), 2);
-    /* The attributes are sorted by name by the importer to handle duplicates */
-    CORRADE_COMPARE(imported->attributeName(1), MeshAttribute::Position);
-    CORRADE_COMPARE(imported->attributeName(0), MeshAttribute::Normal);
-    CORRADE_COMPARE(imported->attributeFormat(MeshAttribute::Position), VertexFormat::Vector3);
-    CORRADE_COMPARE(imported->attributeFormat(MeshAttribute::Normal), VertexFormat::Vector3);
-    CORRADE_COMPARE(imported->attributeStride(MeshAttribute::Position), sizeof(Vector3));
-    CORRADE_COMPARE(imported->attributeStride(MeshAttribute::Normal), sizeof(Vector3));
+    CORRADE_COMPARE(imported->attributeOffset(MeshAttribute::Position),
+        offsetof(Vertices, positions));
+    CORRADE_COMPARE(imported->attributeStride(MeshAttribute::Position),
+        sizeof(Vector3));
     CORRADE_COMPARE_AS(imported->attribute<Vector3>(MeshAttribute::Position),
         Containers::arrayView(vertices->positions),
         TestSuite::Compare::Container);
-    CORRADE_COMPARE_AS(imported->attribute<Vector3>(MeshAttribute::Normal),
-        Containers::arrayView(vertices->normals),
+
+    CORRADE_COMPARE(imported->attributeOffset(MeshAttribute::TextureCoordinates),
+        offsetof(Vertices, textureCoordinates));
+    CORRADE_COMPARE(imported->attributeStride(MeshAttribute::TextureCoordinates),
+        sizeof(Vector2ub));
+    CORRADE_COMPARE_AS(imported->attribute<Vector2ub>(MeshAttribute::TextureCoordinates),
+        Containers::arrayView(vertices->textureCoordinates),
+        TestSuite::Compare::Container);
+
+    CORRADE_COMPARE(imported->attributeOffset(MeshAttribute::Color),
+        offsetof(Vertices, colors));
+    CORRADE_COMPARE(imported->attributeStride(MeshAttribute::Color),
+        sizeof(Color4ub));
+    CORRADE_COMPARE_AS(imported->attribute<Color4ub>(MeshAttribute::Color),
+        Containers::arrayView(vertices->colors),
+        TestSuite::Compare::Container);
+
+    /* And finally, this should match too */
+    CORRADE_COMPARE_AS(imported->vertexData(),
+        Containers::arrayCast<const char>(Containers::arrayView(vertices)),
+        TestSuite::Compare::Container);
+}
+
+void GltfSceneConverterTest::addMeshBufferViewsInterleavedPaddingBegin() {
+    struct Vertices {
+        Color4ub colors[2];
+        struct Interleaved {
+            UnsignedInt padding;
+            Vector3 positionNormal;
+            Vector2 textureCoordinates;
+        } interleaved[2];
+    } vertices[]{{
+        {0x11223344_rgba, 0x55667788_rgba},
+        {{0xffeeffeeu, {1.0f, 2.0f, 3.0f}, {0.25f, 0.75f}},
+         {0xddccddccu, {4.0f, 5.0f, 6.0f}, {0.5f, 1.0f}}},
+    }};
+    auto interleaved = Containers::stridedArrayView(vertices->interleaved);
+    MeshData mesh{MeshPrimitive::LineStrip, {}, vertices, {
+        /* Even with mixed up order the buffer views should be written with the
+           lowest offset first */
+        MeshAttributeData{MeshAttribute::TextureCoordinates, interleaved.slice(&Vertices::Interleaved::textureCoordinates)},
+        /* Aliases the same data. Shouldn't cause any issues or randomness in
+           the output due to std::sort() not being stable across STL
+           implementations. */
+        MeshAttributeData{MeshAttribute::Position, interleaved.slice(&Vertices::Interleaved::positionNormal)},
+        MeshAttributeData{MeshAttribute::Normal, interleaved.slice(&Vertices::Interleaved::positionNormal)},
+        /* A non-interleaved attribute at the beginning. The strided view
+           should not get shifted to overlap it. */
+        MeshAttributeData{MeshAttribute::Color, Containers::arrayView(vertices->colors)},
+    }};
+
+    Containers::Pointer<AbstractSceneConverter> converter =  _converterManager.instantiate("GltfSceneConverter");
+
+    const Containers::String filename = Utility::Path::join(GLTFSCENECONVERTER_TEST_OUTPUT_DIR, "mesh-buffer-views-interleaved-padding-begin.gltf");
+
+    CORRADE_VERIFY(converter->beginFile(filename));
+    CORRADE_VERIFY(converter->add(mesh));
+    CORRADE_VERIFY(converter->endFile());
+
+    /* There should be two buffer views for four accessors, with positions and
+       normals having a 4-byte offset */
+    CORRADE_COMPARE_AS(filename,
+        Utility::Path::join(GLTFSCENECONVERTER_TEST_DIR, "mesh-buffer-views-interleaved-padding-begin.gltf"),
+        TestSuite::Compare::File);
+    CORRADE_COMPARE_AS(
+        Utility::Path::join(GLTFSCENECONVERTER_TEST_OUTPUT_DIR, "mesh-buffer-views-interleaved-padding-begin.bin"),
+        Utility::Path::join(GLTFSCENECONVERTER_TEST_DIR, "mesh-buffer-views-interleaved-padding-begin.bin"),
+        TestSuite::Compare::File);
+
+    if(_importerManager.loadState("GltfImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("GltfImporter plugin not found, cannot test a roundtrip");
+
+    Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("GltfImporter");
+    CORRADE_VERIFY(importer->openFile(filename));
+
+    CORRADE_COMPARE(importer->meshCount(), 1);
+
+    /* The data should be exactly the same size, attributes with same offsets
+       and strides */
+    Containers::Optional<MeshData> imported = importer->mesh(0);
+    CORRADE_VERIFY(imported);
+    CORRADE_COMPARE(imported->attributeCount(), 4);
+
+    /* These two are the same */
+    for(MeshAttribute attribute: {MeshAttribute::Position, MeshAttribute::Normal}) {
+        CORRADE_ITERATION(attribute);
+        CORRADE_COMPARE(imported->attributeOffset(attribute),
+            offsetof(Vertices, interleaved) +
+            offsetof(Vertices::Interleaved, positionNormal));
+        CORRADE_COMPARE(imported->attributeStride(attribute),
+            sizeof(Vertices::Interleaved));
+        CORRADE_COMPARE_AS(imported->attribute<Vector3>(attribute),
+            interleaved.slice(&Vertices::Interleaved::positionNormal),
+            TestSuite::Compare::Container);
+    }
+
+    CORRADE_COMPARE(imported->attributeOffset(MeshAttribute::TextureCoordinates),
+        offsetof(Vertices, interleaved) +
+        offsetof(Vertices::Interleaved, textureCoordinates));
+    CORRADE_COMPARE(imported->attributeStride(MeshAttribute::TextureCoordinates),
+        sizeof(Vertices::Interleaved));
+    CORRADE_COMPARE_AS(imported->attribute<Vector2>(MeshAttribute::TextureCoordinates),
+        interleaved.slice(&Vertices::Interleaved::textureCoordinates),
+        TestSuite::Compare::Container);
+
+    CORRADE_COMPARE(imported->attributeOffset(MeshAttribute::Color),
+        offsetof(Vertices, colors));
+    CORRADE_COMPARE(imported->attributeStride(MeshAttribute::Color),
+        sizeof(Color4ub));
+    CORRADE_COMPARE_AS(imported->attribute<Color4ub>(MeshAttribute::Color),
+        Containers::arrayView(vertices->colors),
+        TestSuite::Compare::Container);
+
+    /* And finally, this should match too */
+    CORRADE_COMPARE_AS(imported->vertexData(),
+        Containers::arrayCast<const char>(Containers::arrayView(vertices)),
+        TestSuite::Compare::Container);
+}
+
+void GltfSceneConverterTest::addMeshBufferViewsInterleavedPaddingBeginEnd() {
+    auto&& data = VerboseData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    struct Vertex {
+        UnsignedInt padding1;
+        Vector3 position;
+        Vector2 textureCoordinates;
+        UnsignedInt padding2;
+    } vertices[]{
+        {0xffeeffeeu, {1.0f, 2.0f, 3.0f}, {0.25f, 0.75f}, 0xeeffeeffu},
+        {0xddccddccu, {4.0f, 5.0f, 6.0f}, {0.5f, 1.0f}, 0xccddccddu},
+    };
+    auto view = Containers::stridedArrayView(vertices);
+    /* MeshData doesn't require the end padding to be present, cut it away.
+       The glTF exporter will then need to add it back. */
+    MeshData mesh{MeshPrimitive::LineLoop, {}, Containers::arrayCast<char>(Containers::arrayView(vertices)).exceptSuffix(4), {
+        /* Again arbitrary mixed up order */
+        MeshAttributeData{MeshAttribute::TextureCoordinates, view.slice(&Vertex::textureCoordinates)},
+        MeshAttributeData{MeshAttribute::Position, view.slice(&Vertex::position)},
+    }};
+
+    Containers::Pointer<AbstractSceneConverter> converter =  _converterManager.instantiate("GltfSceneConverter");
+    converter->addFlags(data.flags);
+
+    const Containers::String filename = Utility::Path::join(GLTFSCENECONVERTER_TEST_OUTPUT_DIR, "mesh-buffer-views-interleaved-padding-begin-end.gltf");
+
+    CORRADE_VERIFY(converter->beginFile(filename));
+    std::ostringstream out;
+    {
+        Debug redirectOutput{&out};
+        CORRADE_VERIFY(converter->add(mesh));
+    }
+    if(data.verbose)
+        CORRADE_COMPARE(out.str(), "Trade::GltfSceneConverter::add(): vertex buffer was padded by 4 bytes to satisfy glTF buffer view requirements\n");
+    else
+        CORRADE_COMPARE(out.str(), "");
+    CORRADE_VERIFY(converter->endFile());
+
+    /* There should be one buffer view starting at offset 0, the position
+       accessor starting at offset 4 */
+    CORRADE_COMPARE_AS(filename,
+        Utility::Path::join(GLTFSCENECONVERTER_TEST_DIR, "mesh-buffer-views-interleaved-padding-begin-end.gltf"),
+        TestSuite::Compare::File);
+    CORRADE_COMPARE_AS(
+        Utility::Path::join(GLTFSCENECONVERTER_TEST_OUTPUT_DIR, "mesh-buffer-views-interleaved-padding-begin-end.bin"),
+        Utility::Path::join(GLTFSCENECONVERTER_TEST_DIR, "mesh-buffer-views-interleaved-padding-begin-end.bin"),
+        TestSuite::Compare::File);
+
+    if(_importerManager.loadState("GltfImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("GltfImporter plugin not found, cannot test a roundtrip");
+
+    Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("GltfImporter");
+    CORRADE_VERIFY(importer->openFile(filename));
+
+    CORRADE_COMPARE(importer->meshCount(), 1);
+
+    /* The data should be exactly the same size, attributes with same offsets
+       and strides */
+    Containers::Optional<MeshData> imported = importer->mesh(0);
+    CORRADE_VERIFY(imported);
+    CORRADE_COMPARE(imported->attributeCount(), 2);
+
+    CORRADE_COMPARE(imported->attributeOffset(MeshAttribute::Position),
+        offsetof(Vertex, position));
+    CORRADE_COMPARE(imported->attributeStride(MeshAttribute::Position),
+        sizeof(Vertex));
+    CORRADE_COMPARE_AS(imported->attribute<Vector3>(MeshAttribute::Position),
+        view.slice(&Vertex::position),
+        TestSuite::Compare::Container);
+
+    CORRADE_COMPARE(imported->attributeOffset(MeshAttribute::TextureCoordinates),
+        offsetof(Vertex, textureCoordinates));
+    CORRADE_COMPARE(imported->attributeStride(MeshAttribute::TextureCoordinates),
+        sizeof(Vertex));
+    CORRADE_COMPARE_AS(imported->attribute<Vector2>(MeshAttribute::TextureCoordinates),
+        view.slice(&Vertex::textureCoordinates),
+        TestSuite::Compare::Container);
+
+    /* And finally, this should match too -- except for the padding, which is
+       zero-filled */
+    CORRADE_COMPARE(imported->vertexData().size(), mesh.vertexData().size() + 4);
+    CORRADE_COMPARE_AS(imported->vertexData().exceptSuffix(4),
+        Containers::arrayCast<const char>(Containers::arrayView(vertices)).exceptSuffix(4),
+        TestSuite::Compare::Container);
+    /** @todo use suffix() once it takes suffix length */
+    CORRADE_COMPARE_AS(imported->vertexData().exceptPrefix(imported->vertexData().size() - 4),
+        Containers::arrayView({'\0', '\0', '\0', '\0'}),
+        TestSuite::Compare::Container);
+}
+
+void GltfSceneConverterTest::addMeshBufferViewsMixed() {
+    /* A combination of interleaved and non-interleaved data */
+    const struct Vertices {
+        /* Buffer view 0, 1 accessor */
+        Vector3 positions[2];
+        /* Buffer view 1, 2 accessors */
+        struct Interleaved1 {
+            UnsignedByte jointIds[4];
+            UnsignedShort weights[4];
+        } interleaved1[2];
+        /* Buffer view 2, 1 accessor */
+        Vector2 textureCoordinates[2];
+        /* Buffer view 3, 2 accessors */
+        struct Interleaved2 {
+            Color4ub color;
+            /* Last three items here and the immediately following byte is
+               secondary weights. Because they go over the stride, they should
+               be put into a dedicated buffer view (number 4) */
+            UnsignedShort secondaryJointIdsAndFirstThreeWeights[4];
+        } interleaved2[2];
+        UnsignedShort lastSecondaryWeight;
+        /* Buffer view 5 */
+        UnsignedShort objectIds[2];
+    } vertices[]{{
+        {{1.0f, 2.0f, 3.0f}, {4.0f, 5.0f, 6.0f}},
+        {{{1, 2, 3, 4}, {100, 200, 300, 400}},
+         {{5, 6, 7, 8}, {500, 600, 700, 800}}},
+        {{0.1f, 0.2f}, {0.3f, 0.4f}},
+        {{0xaabbccdd_rgba, {1000, 2000, 3000, 4000}},
+         {0xeeff0011_rgba, {5000, 6000, 7000, 8000}}},
+        9000,
+        {123, 213}
+    }};
+    auto interleaved1 = Containers::stridedArrayView(vertices->interleaved1);
+    auto interleaved2 = Containers::stridedArrayView(vertices->interleaved2);
+    MeshData mesh{MeshPrimitive::Lines, {}, vertices, {
+        MeshAttributeData{MeshAttribute::Position,
+            Containers::arrayView(vertices->positions)},
+        MeshAttributeData{MeshAttribute::JointIds,
+            VertexFormat::UnsignedByte, interleaved1.slice(&Vertices::Interleaved1::jointIds), 4},
+        MeshAttributeData{MeshAttribute::Weights,
+            VertexFormat::UnsignedShortNormalized, interleaved1.slice(&Vertices::Interleaved1::weights), 4},
+        MeshAttributeData{MeshAttribute::TextureCoordinates,
+            Containers::arrayView(vertices->textureCoordinates)},
+        MeshAttributeData{MeshAttribute::Color,
+            VertexFormat::Vector4ubNormalized,
+            interleaved2.slice(&Vertices::Interleaved2::color)},
+        MeshAttributeData{MeshAttribute::JointIds,
+            VertexFormat::UnsignedShort, interleaved2.slice(&Vertices::Interleaved2::secondaryJointIdsAndFirstThreeWeights), 4},
+        /* Offset-only as it goes over the stride */
+        MeshAttributeData{MeshAttribute::Weights,
+            VertexFormat::UnsignedShortNormalized,
+            offsetof(Vertices, interleaved2) +
+            offsetof(Vertices::Interleaved2, secondaryJointIdsAndFirstThreeWeights) + sizeof(UnsignedShort),
+            2, sizeof(Vertices::Interleaved2), 4},
+        MeshAttributeData{MeshAttribute::ObjectId,
+            Containers::arrayView(vertices->objectIds)},
+    }};
+
+    Containers::Pointer<AbstractSceneConverter> converter =  _converterManager.instantiate("GltfSceneConverter");
+
+    const Containers::String filename = Utility::Path::join(GLTFSCENECONVERTER_TEST_OUTPUT_DIR, "mesh-buffer-views-mixed.gltf");
+
+    CORRADE_VERIFY(converter->beginFile(filename));
+    CORRADE_VERIFY(converter->add(mesh));
+    CORRADE_VERIFY(converter->endFile());
+
+    /* There should be 6 buffer views for 8 accessors */
+    CORRADE_COMPARE_AS(filename,
+        Utility::Path::join(GLTFSCENECONVERTER_TEST_DIR, "mesh-buffer-views-mixed.gltf"),
+        TestSuite::Compare::File);
+    CORRADE_COMPARE_AS(
+        Utility::Path::join(GLTFSCENECONVERTER_TEST_OUTPUT_DIR, "mesh-buffer-views-mixed.bin"),
+        Utility::Path::join(GLTFSCENECONVERTER_TEST_DIR, "mesh-buffer-views-mixed.bin"),
+        TestSuite::Compare::File);
+
+    if(_importerManager.loadState("GltfImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("GltfImporter plugin not found, cannot test a roundtrip");
+
+    Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("GltfImporter");
+    /** @todo drop once this is gone */
+    importer->configuration().setValue("compatibilitySkinningAttributes", false);
+    CORRADE_VERIFY(importer->openFile(filename));
+
+    CORRADE_COMPARE(importer->meshCount(), 1);
+
+    /* The data should be exactly the same size, attributes with same offsets
+       and strides. Test just the data as those are sufficiently random, if
+       there's something really wrong it would be caught by the tests above. */
+    Containers::Optional<MeshData> imported = importer->mesh(0);
+    CORRADE_VERIFY(imported);
+    CORRADE_COMPARE(imported->attributeCount(), 8);
+    CORRADE_COMPARE_AS(imported->attribute<Vector3>(MeshAttribute::Position),
+        Containers::arrayView(vertices->positions),
+        TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS((Containers::arrayCast<1, const Vector4ub>(imported->attribute(MeshAttribute::JointIds, 0))),
+        Containers::arrayCast<const Vector4ub>(interleaved1.slice(&Vertices::Interleaved1::jointIds)),
+        TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS((Containers::arrayCast<1, const Vector4us>(imported->attribute(MeshAttribute::Weights, 0))),
+        Containers::arrayCast<const Vector4us>(interleaved1.slice(&Vertices::Interleaved1::weights)),
+        TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(imported->attribute<Vector2>(MeshAttribute::TextureCoordinates),
+        Containers::arrayView(vertices->textureCoordinates),
+        TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(imported->attribute<Color4ub>(MeshAttribute::Color),
+        interleaved2.slice(&Vertices::Interleaved2::color),
+        TestSuite::Compare::Container);
+
+    /* Verifying these manually to be sure about what's happening -- there's
+       overlap on three items */
+    CORRADE_COMPARE_AS((Containers::arrayCast<1, const Vector4us>(imported->attribute(MeshAttribute::JointIds, 1))), Containers::arrayView<Vector4us>({
+        {1000, 2000, 3000, 4000},
+        {5000, 6000, 7000, 8000},
+    }), TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS((Containers::arrayCast<1, const Vector4us>(imported->attribute(MeshAttribute::Weights, 1))), Containers::arrayView<Vector4us>({
+        {2000, 3000, 4000, 0xffee},
+        {6000, 7000, 8000, 9000},
+    }), TestSuite::Compare::Container);
+
+    CORRADE_COMPARE_AS(imported->attribute<UnsignedShort>(MeshAttribute::ObjectId),
+        Containers::arrayView(vertices->objectIds),
         TestSuite::Compare::Container);
 }
 

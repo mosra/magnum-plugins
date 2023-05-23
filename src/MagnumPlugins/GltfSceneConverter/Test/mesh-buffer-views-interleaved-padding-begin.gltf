@@ -4,54 +4,65 @@
   },
   "buffers": [
     {
-      "uri": "mesh.bin",
-      "byteLength": 72
+      "uri": "mesh-buffer-views-interleaved-padding-begin.bin",
+      "byteLength": 56
     }
   ],
   "bufferViews": [
     {
       "buffer": 0,
       "byteOffset": 0,
-      "byteLength": 24
+      "byteLength": 8,
+      "byteStride": 4
     },
     {
       "buffer": 0,
-      "byteOffset": 24,
+      "byteOffset": 8,
       "byteLength": 48,
       "byteStride": 24
     }
   ],
   "accessors": [
     {
+      "bufferView": 1,
+      "byteOffset": 16,
+      "componentType": 5126,
+      "count": 2,
+      "type": "VEC2"
+    },
+    {
+      "bufferView": 1,
+      "byteOffset": 4,
+      "componentType": 5126,
+      "count": 2,
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 1,
+      "byteOffset": 4,
+      "componentType": 5126,
+      "count": 2,
+      "type": "VEC3"
+    },
+    {
       "bufferView": 0,
-      "componentType": 5125,
-      "count": 6,
-      "type": "SCALAR"
-    },
-    {
-      "bufferView": 1,
-      "componentType": 5126,
+      "componentType": 5121,
+      "normalized": true,
       "count": 2,
-      "type": "VEC3"
-    },
-    {
-      "bufferView": 1,
-      "byteOffset": 12,
-      "componentType": 5126,
-      "count": 2,
-      "type": "VEC3"
+      "type": "VEC4"
     }
   ],
   "meshes": [
     {
       "primitives": [
         {
-          "indices": 0,
           "attributes": {
+            "TEXCOORD_0": 0,
             "POSITION": 1,
-            "NORMAL": 2
+            "NORMAL": 2,
+            "COLOR_0": 3
           },
-          "mode": 0
+          "mode": 3
         }
       ]
     }

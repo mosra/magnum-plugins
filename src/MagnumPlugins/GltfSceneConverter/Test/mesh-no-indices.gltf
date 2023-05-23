@@ -12,7 +12,8 @@
     {
       "buffer": 0,
       "byteOffset": 0,
-      "byteLength": 36
+      "byteLength": 36,
+      "byteStride": 12
     }
   ],
   "accessors": [

@@ -5,7 +5,7 @@
   "buffers": [
     {
       "uri": "mesh-name.bin",
-      "byteLength": 96
+      "byteLength": 72
     }
   ],
   "bufferViews": [
@@ -16,15 +16,9 @@
     },
     {
       "buffer": 0,
-      "byteOffset": 28,
+      "byteOffset": 24,
       "byteLength": 48,
-      "byteStride": 36
-    },
-    {
-      "buffer": 0,
-      "byteOffset": 48,
-      "byteLength": 48,
-      "byteStride": 36
+      "byteStride": 24
     }
   ],
   "accessors": [
@@ -41,7 +35,8 @@
       "type": "VEC3"
     },
     {
-      "bufferView": 2,
+      "bufferView": 1,
+      "byteOffset": 12,
       "componentType": 5126,
       "count": 2,
       "type": "VEC3"

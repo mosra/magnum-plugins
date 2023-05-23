@@ -1356,7 +1356,6 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const MeshData& mesh, const
        output file doesn't need to match count of attributes in the input mesh
        (although that's the common case), so the array references original mesh
        attribute IDs. */
-    /** @todo detect and merge interleaved attributes into common buffer views */
     struct GltfAttribute {
         Containers::String name;
         Containers::StringView accessorType;
@@ -1723,6 +1722,98 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const MeshData& mesh, const
 
     CORRADE_INTERNAL_ASSERT(jointIdsAttributeGroupCount == weightsAttributeGroupCount);
 
+    /* Group attributes into (strided) buffer views in a way that satisfies
+       glTF requirements, in particular vertex count times stride not leaking
+       out of the buffer view. */
+
+    /* Attributes sorted by their offset. Each item is (offset, original
+       attribute ID). */
+    Containers::ArrayView<Containers::Pair<std::size_t, std::size_t>> attributesSortedByOffset;
+    /* Buffer views to create. Each is (minOffset, stride) with minOffset being
+       the earliest offset of any attribute in that view. Conservatively
+       allocating for a case where each attribute would be its own view, a
+       prefix gets used. */
+    Containers::ArrayView<Containers::Pair<std::size_t, std::size_t>> bufferViews;
+    /* Buffer view indices assigned to particular attributes, pointing to
+       `bufferViews` above. */
+    Containers::ArrayView<UnsignedInt> bufferViewAssignments;
+    Containers::ArrayTuple bufferViewAssignmentStorage{
+        {NoInit, mesh.attributeCount(), attributesSortedByOffset},
+        {NoInit, mesh.attributeCount(), bufferViews},
+        {NoInit, mesh.attributeCount(), bufferViewAssignments},
+    };
+
+    /* Sort attributes by their offset to group them into (strided) buffer
+       views.  */
+    for(UnsignedInt i = 0; i != mesh.attributeCount(); ++i)
+        attributesSortedByOffset[i] = {mesh.attributeOffset(i), i};
+    std::sort(attributesSortedByOffset.begin(), attributesSortedByOffset.end(), [](const Containers::Pair<std::size_t, std::size_t> a, const Containers::Pair<std::size_t, std::size_t> b) {
+        return
+            a.first() < b.first() ||
+                (a.first() == b.first() && a.second() < b.second());
+    });
+
+    /* Make each buffer view encompass a contiguous range of attributes with
+       the same stride as long as their relative offset together with type size
+       fits into the stride. */
+    std::size_t bufferViewOffset = 0;
+    for(const Containers::Pair<std::size_t, std::size_t> offsetId: attributesSortedByOffset) {
+        /* If we have no buffer views yet, attribute stride is different from
+           the current buffer view stride, or attribute offset together with
+           type size doesn't current buffer view stride anymore, add a new
+           buffer view */
+        if(bufferViewOffset == 0 ||
+           /* Negative strides were disallowed above already so the cast is
+              fine */
+           std::size_t(mesh.attributeStride(offsetId.second())) != bufferViews[bufferViewOffset - 1].second() ||
+            /* Implementation-specific vertex formats were disallowed above
+               already so it's safe to call vertexFormatSize(). Make sure to
+               include array size in the calculation for JointIds and
+               Weights. */
+           offsetId.first() + vertexFormatSize(mesh.attributeFormat(offsetId.second()))*(mesh.attributeArraySize(offsetId.second()) ? mesh.attributeArraySize(offsetId.second()) : 1) > bufferViews[bufferViewOffset - 1].first() + bufferViews[bufferViewOffset - 1].second())
+        {
+            bufferViews[bufferViewOffset++] = {
+                offsetId.first(),
+                std::size_t(mesh.attributeStride(offsetId.second()))
+            };
+        }
+
+        /* Remember the buffer view assigned to this attribute */
+        CORRADE_INTERNAL_ASSERT(bufferViewOffset > 0);
+        bufferViewAssignments[offsetId.second()] = bufferViewOffset - 1;
+    }
+
+    /* Go over the buffer views (minOffset, maxOffset, stride) and check that
+       they fit into the vertex data size. If not (for example if there is
+       initial padding in an interleaved vertex), try to move their initial
+       offset earlier. If that's still not enough (for example if there's both
+       an initial and final padding, in which case MeshData doesn't require the
+       final padding to be included in the data) pad the buffer. */
+    const std::size_t vertexDataSize = mesh.vertexData().size();
+    std::size_t vertexBufferPadding = 0;
+    for(Containers::Pair<std::size_t, std::size_t>& bufferView: bufferViews.prefix(bufferViewOffset)) {
+        /* If the view fits into the vertex buffer, nothing to adjust */
+        const std::size_t bufferEnd = bufferView.first() + mesh.vertexCount()*bufferView.second();
+        if(bufferEnd <= vertexDataSize)
+            continue;
+
+        /* Shift the buffer back, ideally to make `bufferEnd` align with
+           `vertexDataSize`. Earlier it doesn't make sense because that could
+           omit some data at the end. We can also only shift back so minOffset
+           doesn't become negative. */
+        const std::size_t shiftBack = Math::min(
+            bufferEnd - vertexDataSize,
+            bufferView.first());
+        bufferView.first() -= shiftBack;
+
+        /* If the shift wasn't enough, we had to pad at the end */
+        if(bufferEnd - shiftBack > vertexDataSize) {
+            vertexBufferPadding = bufferEnd - shiftBack - vertexDataSize;
+            if((flags() & SceneConverterFlag::Verbose))
+                Debug{} << "Trade::GltfSceneConverter::add(): vertex buffer was padded by" << vertexBufferPadding << "bytes to satisfy glTF buffer view requirements";
+        }
+    }
+
     /* At this point we're sure nothing will fail so we can start writing the
        JSON. Otherwise we'd end up with a partly-written JSON in case of an
        unsupported mesh, corruputing the output. */
@@ -1776,8 +1867,61 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const MeshData& mesh, const
             meshProperties.gltfIndices = gltfAccessorIndex;
         }
 
-        /* Vertex data */
-        Containers::ArrayView<char> vertexData = arrayAppend(_state->buffer, mesh.vertexData());
+        /* Vertex data, plus any padding after. The view needs to include also
+           the padding so it can get sliced to strided views without asserts. */
+        Containers::ArrayView<char> vertexData = arrayAppend(_state->buffer, NoInit, mesh.vertexData().size() + vertexBufferPadding);
+        Utility::copy(mesh.vertexData(), vertexData.prefix(mesh.vertexData().size()));
+        /** @todo any better API for this? Utility::fill()? this is silly */
+        for(char& i: vertexData.exceptPrefix(mesh.vertexData().size()))
+            i = '\0';
+
+        /* Remember the base buffer view index to which `bufferViewAssignments`
+           are relative to. If there are no buffer views, the buffer view
+           array might not even be opened yet. There are also no attributes in
+           that case, thus use a deliberately wrong value to catch accidental
+           access. */
+        const std::size_t gltfBaseBufferViewIndex = bufferViewOffset ?
+            _state->gltfBufferViews.currentArraySize() : ~std::size_t{};
+
+        /* Write buffer views (minOffset, maxOffset, stride) */
+        for(const Containers::Pair<std::size_t, std::size_t> bufferView: bufferViews.prefix(bufferViewOffset)) {
+            const Containers::ScopeGuard gltfBufferView = _state->gltfBufferViews.beginObjectScope();
+
+            _state->gltfBufferViews
+                .writeKey("buffer"_s).write(0)
+                /* Byte offset could be omitted if zero but since that
+                   happens only for the very first view in a buffer and we
+                   have always at most one buffer, the minimal savings are
+                   not worth the inconsistency */
+                .writeKey("byteOffset"_s).write(vertexData - _state->buffer + bufferView.first())
+                .writeKey("byteLength"_s).write(mesh.vertexCount()*bufferView.second())
+                /* Byte stride could be omitted if there would be just one
+                   tightly packed accessor (in which case it'd be implicitly
+                   treated as tightly packed, same as in GL). Tracking count of
+                   accessors assigned to each view and then also maintaining an
+                   info about whether the single accessor is tightly-packed is
+                   a lot of extra work and the gains from being able to
+                   omit byteStride are dubious.
+
+                   It could be somewhat doable by just tracking count of
+                   strided accessors to each buffer view and omitting
+                   byteStride if there's 0, but this would omit byteStride also
+                   if there's multiple tightly-packed accessors (for example,
+                   for an aliased attribute) and § 3.6.2.4 disallows that:
+                   "When two or more vertex attribute accessors use the same
+                   bufferView, its byteStride MUST be defined." */
+                /** @todo if vertex count is zero, this value is higher than
+                    byteLength, is that a problem? glTF explicitly disallows
+                    byteLength == 0 so this is uncharted waters anyway :D */
+                .writeKey("byteStride"_s).write(bufferView.second());
+
+            if(configuration().value<bool>("accessorNames"))
+                _state->gltfBufferViews.writeKey("name"_s).write(Utility::format(
+                    name ? "mesh {0} ({1}) vertices" : "mesh {0} vertices",
+                    id, name));
+
+            /** @todo target */
+        }
 
         /* Attribute views and accessors */
         for(const GltfAttribute& gltfAttribute: gltfAttributes) {
@@ -1806,51 +1950,14 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const MeshData& mesh, const
                 else CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
             }
 
-            const std::size_t formatSize = vertexFormatSize(format);
-            const std::size_t attributeStride = mesh.attributeStride(gltfAttribute.originalId);
-            const std::size_t gltfBufferViewIndex = _state->gltfBufferViews.currentArraySize();
-            const Containers::ScopeGuard gltfBufferView = _state->gltfBufferViews.beginObjectScope();
-            _state->gltfBufferViews
-                .writeKey("buffer"_s).write(0)
-                /* Byte offset could be omitted if zero but since that
-                   happens only for the very first view in a buffer and we
-                   have always at most one buffer, the minimal savings are
-                   not worth the inconsistency */
-                .writeKey("byteOffset"_s).write(vertexData - _state->buffer + mesh.attributeOffset(gltfAttribute.originalId));
-
-            /* Byte length, make sure to not count padding into it as that'd
-               fail bound checks. If there are no vertices, the length is
-               zero. */
-            /** @todo spec says it can't be smaller than stride (for
-                single-vertex meshes), fix alongside merging buffer views for
-                interleaved attributes */
-            const std::size_t gltfByteLength = mesh.vertexCount() == 0 ? 0 :
-                attributeStride*(mesh.vertexCount() - 1) +
-                formatSize*(mesh.attributeArraySize(gltfAttribute.originalId) ? mesh.attributeArraySize(gltfAttribute.originalId) : 1);
-            _state->gltfBufferViews.writeKey("byteLength"_s).write(gltfByteLength);
-
-            /* If byteStride is omitted, it's implicitly treated as tightly
-               packed, same as in GL. If/once views get shared, this needs to
-               also check that the view isn't shared among multiple
-               accessors. */
-            if(attributeStride != formatSize)
-                _state->gltfBufferViews.writeKey("byteStride"_s).write(attributeStride);
-
-            /** @todo target, once we don't have one view per accessor */
-
-            if(configuration().value<bool>("accessorNames"))
-                _state->gltfBufferViews.writeKey("name"_s).write(Utility::format(
-                    name ? "mesh {0} ({1}) {2}" : "mesh {0} {2}",
-                    id, name, gltfAttribute.name));
-
             const UnsignedInt gltfAccessorIndex = _state->gltfAccessors.currentArraySize();
             const Containers::ScopeGuard gltfAccessor = _state->gltfAccessors.beginObjectScope();
             _state->gltfAccessors
-                .writeKey("bufferView"_s).write(gltfBufferViewIndex);
-            /* The offset is non-zero for skinning attributes that were split
-               into multiple buffer views */
-            if(gltfAttribute.offset)
-                _state->gltfAccessors.writeKey("byteOffset"_s).write(gltfAttribute.offset);
+                .writeKey("bufferView"_s).write(gltfBaseBufferViewIndex + bufferViewAssignments[gltfAttribute.originalId]);
+            /* Write byteOffset only if non-zero. Compared to byteStride in the
+               buffer view above, this is easy to do, so why not. */
+            if(const std::size_t gltfByteOffset = mesh.attributeOffset(gltfAttribute.originalId) + gltfAttribute.offset - bufferViews[bufferViewAssignments[gltfAttribute.originalId]].first())
+                _state->gltfAccessors.writeKey("byteOffset"_s).write(gltfByteOffset);
             _state->gltfAccessors
                 .writeKey("componentType"_s).write(gltfAttribute.accessorComponentType);
             if(isVertexFormatNormalized(format))

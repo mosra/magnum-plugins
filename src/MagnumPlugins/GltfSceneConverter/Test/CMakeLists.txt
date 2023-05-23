@@ -146,6 +146,14 @@ corrade_add_test(GltfSceneConverterTest GltfSceneConverterTest.cpp
         mesh-attribute-tangent3.gltf
         mesh-attribute-texture-coordinates.gltf
         mesh-attribute-texture-coordinates-quantized.gltf
+        mesh-buffer-views-interleaved-padding-begin-end.bin
+        mesh-buffer-views-interleaved-padding-begin-end.gltf
+        mesh-buffer-views-interleaved-padding-begin.bin
+        mesh-buffer-views-interleaved-padding-begin.gltf
+        mesh-buffer-views-mixed.bin
+        mesh-buffer-views-mixed.gltf
+        mesh-buffer-views-noninterleaved.bin
+        mesh-buffer-views-noninterleaved.gltf
         mesh-custom-attribute-no-name.gltf
         mesh-custom-objectid-name.gltf
         mesh-duplicate-attribute.gltf
@@ -163,7 +171,6 @@ corrade_add_test(GltfSceneConverterTest GltfSceneConverterTest.cpp
         mesh-no-indices-no-attributes.gltf
         mesh-no-indices-no-vertices.glb
         mesh-no-indices-no-vertices.gltf
-        mesh-noninterleaved.gltf
         metadata.gltf
         metadata-explicit-implicit-extensions.gltf
         scene.gltf

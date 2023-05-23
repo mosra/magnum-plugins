@@ -1,0 +1,123 @@
+{
+  "asset": {
+    "version": "2.0"
+  },
+  "buffers": [
+    {
+      "uri": "mesh-buffer-views-mixed.bin",
+      "byteLength": 96
+    }
+  ],
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteOffset": 0,
+      "byteLength": 24,
+      "byteStride": 12
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 24,
+      "byteLength": 24,
+      "byteStride": 12
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 48,
+      "byteLength": 16,
+      "byteStride": 8
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 64,
+      "byteLength": 24,
+      "byteStride": 12
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 70,
+      "byteLength": 24,
+      "byteStride": 12
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 90,
+      "byteLength": 4,
+      "byteStride": 2
+    }
+  ],
+  "accessors": [
+    {
+      "bufferView": 0,
+      "componentType": 5126,
+      "count": 2,
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 1,
+      "componentType": 5121,
+      "count": 2,
+      "type": "VEC4"
+    },
+    {
+      "bufferView": 1,
+      "byteOffset": 4,
+      "componentType": 5123,
+      "normalized": true,
+      "count": 2,
+      "type": "VEC4"
+    },
+    {
+      "bufferView": 2,
+      "componentType": 5126,
+      "count": 2,
+      "type": "VEC2"
+    },
+    {
+      "bufferView": 3,
+      "componentType": 5121,
+      "normalized": true,
+      "count": 2,
+      "type": "VEC4"
+    },
+    {
+      "bufferView": 3,
+      "byteOffset": 4,
+      "componentType": 5123,
+      "count": 2,
+      "type": "VEC4"
+    },
+    {
+      "bufferView": 4,
+      "componentType": 5123,
+      "normalized": true,
+      "count": 2,
+      "type": "VEC4"
+    },
+    {
+      "bufferView": 5,
+      "componentType": 5123,
+      "count": 2,
+      "type": "SCALAR"
+    }
+  ],
+  "meshes": [
+    {
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 0,
+            "JOINTS_0": 1,
+            "WEIGHTS_0": 2,
+            "TEXCOORD_0": 3,
+            "COLOR_0": 4,
+            "JOINTS_1": 5,
+            "WEIGHTS_1": 6,
+            "_OBJECT_ID": 7
+          },
+          "mode": 1
+        }
+      ]
+    }
+  ]
+}

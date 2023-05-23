@@ -119,7 +119,8 @@ converter delegates to.
 
 -   The @ref MeshData is exported with its exact binary layout. Only padding
     before and after an index view is omitted, the vertex buffer is saved
-    verbatim into the glTF buffer.
+    verbatim into the glTF buffer. The vertex buffer may get padded with zeros
+    at the end to satisfy glTF buffer bounds requirements.
 -   @ref MeshPrimitive::Points, @relativeref{MeshPrimitive,Lines},
     @relativeref{MeshPrimitive,LineLoop},
     @relativeref{MeshPrimitive,LineStrip},
@@ -247,10 +248,9 @@ converter delegates to.
     prefixed with an underscore if not already and suffixed with `_1`, `_2`,
     ..., so e.g. a second position attribute becomes `_POSITION_1`.
 -   Mesh name, if passed, is saved into the file. Additionally the buffer views
-    and accessors referenced by it will be annotated with mesh ID and name,
-    and attribute index and name if the @cb{.ini} accessorNames @ce
-    @ref Trade-GltfSceneConverter-configuration "configuration option" is
-    enabled.
+    and accessors referenced by it will be annotated with mesh ID and name if
+    the @cb{.ini} accessorNames @ce @ref Trade-GltfSceneConverter-configuration "configuration option"
+    is enabled.
 -   Due to a material and a mesh being tied together in a glTF file, meshes
     that are referenced by a scene are written in the order they are referenced
     from @ref SceneData. They and get duplicated (including the name) if the
@@ -261,10 +261,6 @@ converter delegates to.
     that were not referenced by any scene are written at the end, without any
     material assignment.
 -   At the moment, alignment rules for vertex stride are not respected.
--   At the moment, each attribute has its own dedicated buffer view instead of
-    a single view being shared by multiple interleaved attributes. This also
-    implies that for single-vertex meshes the buffer view size might sometimes
-    be larger than stride, which is not allowed by the spec.
 
 @subsection Trade-GltfSceneConverter-behavior-images Image and texture export
 

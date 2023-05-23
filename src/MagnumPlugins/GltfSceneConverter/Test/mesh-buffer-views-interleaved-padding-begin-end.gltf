@@ -4,23 +4,31 @@
   },
   "buffers": [
     {
-      "uri": "mesh-attribute-color3.bin",
-      "byteLength": 32
+      "uri": "mesh-buffer-views-interleaved-padding-begin-end.bin",
+      "byteLength": 56
     }
   ],
   "bufferViews": [
     {
       "buffer": 0,
       "byteOffset": 0,
-      "byteLength": 32,
-      "byteStride": 32
+      "byteLength": 56,
+      "byteStride": 28
     }
   ],
   "accessors": [
     {
       "bufferView": 0,
+      "byteOffset": 16,
       "componentType": 5126,
-      "count": 1,
+      "count": 2,
+      "type": "VEC2"
+    },
+    {
+      "bufferView": 0,
+      "byteOffset": 4,
+      "componentType": 5126,
+      "count": 2,
       "type": "VEC3"
     }
   ],
@@ -29,7 +37,8 @@
       "primitives": [
         {
           "attributes": {
-            "COLOR_0": 0
+            "TEXCOORD_0": 0,
+            "POSITION": 1
           },
           "mode": 2
         }

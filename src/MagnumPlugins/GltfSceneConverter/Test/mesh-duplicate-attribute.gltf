@@ -12,66 +12,7 @@
     {
       "buffer": 0,
       "byteOffset": 0,
-      "byteLength": 44,
-      "byteStride": 16
-    },
-    {
-      "buffer": 0,
-      "byteOffset": 0,
-      "byteLength": 34,
-      "byteStride": 16
-    },
-    {
-      "buffer": 0,
-      "byteOffset": 0,
-      "byteLength": 40,
-      "byteStride": 16
-    },
-    {
-      "buffer": 0,
-      "byteOffset": 0,
-      "byteLength": 48
-    },
-    {
-      "buffer": 0,
-      "byteOffset": 0,
-      "byteLength": 36,
-      "byteStride": 16
-    },
-    {
-      "buffer": 0,
-      "byteOffset": 0,
-      "byteLength": 36,
-      "byteStride": 16
-    },
-    {
-      "buffer": 0,
-      "byteOffset": 0,
-      "byteLength": 35,
-      "byteStride": 16
-    },
-    {
-      "buffer": 0,
-      "byteOffset": 0,
-      "byteLength": 34,
-      "byteStride": 16
-    },
-    {
-      "buffer": 0,
-      "byteOffset": 0,
-      "byteLength": 44,
-      "byteStride": 16
-    },
-    {
-      "buffer": 0,
-      "byteOffset": 0,
-      "byteLength": 33,
-      "byteStride": 16
-    },
-    {
-      "buffer": 0,
-      "byteOffset": 0,
-      "byteLength": 33,
+      "byteLength": 48,
       "byteStride": 16
     }
   ],
@@ -83,64 +24,64 @@
       "type": "VEC3"
     },
     {
-      "bufferView": 1,
+      "bufferView": 0,
       "componentType": 5123,
       "count": 3,
       "type": "SCALAR"
     },
     {
-      "bufferView": 2,
+      "bufferView": 0,
       "componentType": 5126,
       "count": 3,
       "type": "VEC2"
     },
     {
-      "bufferView": 3,
+      "bufferView": 0,
       "componentType": 5126,
       "count": 3,
       "type": "VEC4"
     },
     {
-      "bufferView": 4,
+      "bufferView": 0,
       "componentType": 5126,
       "count": 3,
       "type": "SCALAR"
     },
     {
-      "bufferView": 5,
+      "bufferView": 0,
       "componentType": 5123,
       "normalized": true,
       "count": 3,
       "type": "VEC2"
     },
     {
-      "bufferView": 6,
+      "bufferView": 0,
       "componentType": 5121,
       "normalized": true,
       "count": 3,
       "type": "VEC3"
     },
     {
-      "bufferView": 7,
+      "bufferView": 0,
       "componentType": 5121,
       "normalized": true,
       "count": 3,
       "type": "VEC2"
     },
     {
-      "bufferView": 8,
+      "bufferView": 0,
       "componentType": 5126,
       "count": 3,
       "type": "VEC3"
     },
     {
-      "bufferView": 9,
+      "bufferView": 0,
       "componentType": 5121,
       "count": 3,
       "type": "SCALAR"
     },
     {
-      "bufferView": 10,
+      "bufferView": 0,
       "componentType": 5120,
       "normalized": true,
       "count": 3,

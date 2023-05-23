@@ -12,13 +12,7 @@
     {
       "buffer": 0,
       "byteOffset": 0,
-      "byteLength": 2,
-      "byteStride": 4
-    },
-    {
-      "buffer": 0,
-      "byteOffset": 0,
-      "byteLength": 1,
+      "byteLength": 4,
       "byteStride": 4
     }
   ],
@@ -30,7 +24,7 @@
       "type": "SCALAR"
     },
     {
-      "bufferView": 1,
+      "bufferView": 0,
       "componentType": 5121,
       "count": 1,
       "type": "SCALAR"

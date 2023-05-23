@@ -12,43 +12,7 @@
     {
       "buffer": 0,
       "byteOffset": 0,
-      "byteLength": 56,
-      "byteStride": 48
-    },
-    {
-      "buffer": 0,
-      "byteOffset": 8,
-      "byteLength": 60,
-      "byteStride": 48
-    },
-    {
-      "buffer": 0,
-      "byteOffset": 20,
-      "byteLength": 52,
-      "byteStride": 48
-    },
-    {
-      "buffer": 0,
-      "byteOffset": 24,
-      "byteLength": 64,
-      "byteStride": 48
-    },
-    {
-      "buffer": 0,
-      "byteOffset": 24,
-      "byteLength": 64,
-      "byteStride": 48
-    },
-    {
-      "buffer": 0,
-      "byteOffset": 40,
-      "byteLength": 56,
-      "byteStride": 48
-    },
-    {
-      "buffer": 0,
-      "byteOffset": 40,
-      "byteLength": 56,
+      "byteLength": 96,
       "byteStride": 48
     }
   ],
@@ -60,42 +24,46 @@
       "type": "VEC4"
     },
     {
-      "bufferView": 1,
+      "bufferView": 0,
+      "byteOffset": 8,
       "componentType": 5126,
       "count": 2,
       "type": "VEC3"
     },
     {
-      "bufferView": 2,
+      "bufferView": 0,
+      "byteOffset": 20,
       "componentType": 5121,
       "normalized": true,
       "count": 2,
       "type": "VEC4"
     },
     {
-      "bufferView": 3,
+      "bufferView": 0,
+      "byteOffset": 24,
       "componentType": 5123,
       "normalized": true,
       "count": 2,
       "type": "VEC4"
     },
     {
-      "bufferView": 4,
-      "byteOffset": 8,
+      "bufferView": 0,
+      "byteOffset": 32,
       "componentType": 5123,
       "normalized": true,
       "count": 2,
       "type": "VEC4"
     },
     {
-      "bufferView": 5,
+      "bufferView": 0,
+      "byteOffset": 40,
       "componentType": 5121,
       "count": 2,
       "type": "VEC4"
     },
     {
-      "bufferView": 6,
-      "byteOffset": 4,
+      "bufferView": 0,
+      "byteOffset": 44,
       "componentType": 5121,
       "count": 2,
       "type": "VEC4"

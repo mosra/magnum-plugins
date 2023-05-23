@@ -12,19 +12,7 @@
     {
       "buffer": 0,
       "byteOffset": 0,
-      "byteLength": 56,
-      "byteStride": 44
-    },
-    {
-      "buffer": 0,
-      "byteOffset": 12,
-      "byteLength": 60,
-      "byteStride": 44
-    },
-    {
-      "buffer": 0,
-      "byteOffset": 28,
-      "byteLength": 60,
+      "byteLength": 88,
       "byteStride": 44
     }
   ],
@@ -36,13 +24,15 @@
       "type": "VEC3"
     },
     {
-      "bufferView": 1,
+      "bufferView": 0,
+      "byteOffset": 12,
       "componentType": 5125,
       "count": 2,
       "type": "VEC4"
     },
     {
-      "bufferView": 2,
+      "bufferView": 0,
+      "byteOffset": 28,
       "componentType": 5126,
       "count": 2,
       "type": "VEC4"

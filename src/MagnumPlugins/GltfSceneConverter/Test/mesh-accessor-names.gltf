@@ -5,7 +5,7 @@
   "buffers": [
     {
       "uri": "mesh-accessor-names.bin",
-      "byteLength": 96
+      "byteLength": 72
     }
   ],
   "bufferViews": [
@@ -17,17 +17,10 @@
     },
     {
       "buffer": 0,
-      "byteOffset": 28,
+      "byteOffset": 24,
       "byteLength": 48,
-      "byteStride": 36,
-      "name": "mesh 0 POSITION"
-    },
-    {
-      "buffer": 0,
-      "byteOffset": 48,
-      "byteLength": 48,
-      "byteStride": 36,
-      "name": "mesh 0 NORMAL"
+      "byteStride": 24,
+      "name": "mesh 0 vertices"
     }
   ],
   "accessors": [
@@ -46,7 +39,8 @@
       "name": "mesh 0 POSITION"
     },
     {
-      "bufferView": 2,
+      "bufferView": 1,
+      "byteOffset": 12,
       "componentType": 5126,
       "count": 2,
       "type": "VEC3",
