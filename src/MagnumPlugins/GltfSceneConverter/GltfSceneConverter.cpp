@@ -1514,26 +1514,6 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const MeshData& mesh, const
         /** @todo spec says that POSITION accessor MUST have its min and max
             properties defined, I don't care at the moment */
 
-        /* If a builtin glTF numbered attribute, append an ID to the name */
-        if(gltfAttributeName == "TEXCOORD"_s ||
-           gltfAttributeName == "COLOR"_s ||
-           /* Not a builtin MeshAttribute yet, but expected to be used by
-              people until builtin support is added */
-           gltfAttributeName == "JOINTS"_s ||
-           gltfAttributeName == "WEIGHTS"_s)
-        {
-            gltfAttributeName = Utility::format("{}_{}", gltfAttributeName, mesh.attributeId(i));
-
-        /* Otherwise, if it's a second or further duplicate attribute,
-           underscore it if not already and append an ID as well -- e.g. second
-           and third POSITION attribute becomes _POSITION_1 and _POSITION_2,
-           secondary _OBJECT_ID becomes _OBJECT_ID_1 */
-        } else if(const UnsignedInt attributeId = mesh.attributeId(i)) {
-            gltfAttributeName = Utility::format(
-                gltfAttributeName.hasPrefix('_') ? "{}_{}" : "_{}_{}",
-                gltfAttributeName, attributeId);
-        }
-
         const UnsignedInt vectorCount = vertexFormatVectorCount(format);
         Containers::StringView gltfAccessorType;
         if(vectorCount == 1) {
@@ -1601,6 +1581,26 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const MeshData& mesh, const
         if(mesh.attributeArraySize(i) != 0) {
             Error{} << "Trade::GltfSceneConverter::add(): unsupported mesh attribute with array size" << mesh.attributeArraySize(i);
             return {};
+        }
+
+        /* If a builtin glTF numbered attribute, append an ID to the name */
+        if(gltfAttributeName == "TEXCOORD"_s ||
+           gltfAttributeName == "COLOR"_s ||
+           /* Not a builtin MeshAttribute yet, but expected to be used by
+              people until builtin support is added */
+           gltfAttributeName == "JOINTS"_s ||
+           gltfAttributeName == "WEIGHTS"_s)
+        {
+            gltfAttributeName = Utility::format("{}_{}", gltfAttributeName, mesh.attributeId(i));
+
+        /* Otherwise, if it's a second or further duplicate attribute,
+           underscore it if not already and append an ID as well -- e.g. second
+           and third POSITION attribute becomes _POSITION_1 and _POSITION_2,
+           secondary _OBJECT_ID becomes _OBJECT_ID_1 */
+        } else if(const UnsignedInt attributeId = mesh.attributeId(i)) {
+            gltfAttributeName = Utility::format(
+                gltfAttributeName.hasPrefix('_') ? "{}_{}" : "_{}_{}",
+                gltfAttributeName, attributeId);
         }
 
         arrayAppend(gltfAttributeNamesTypes, InPlaceInit, std::move(gltfAttributeName), gltfAccessorType, gltfAccessorComponentType);
