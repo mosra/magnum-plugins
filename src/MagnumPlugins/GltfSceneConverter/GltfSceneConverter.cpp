@@ -1366,7 +1366,6 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const MeshData& mesh, const
         }
 
         const UnsignedInt componentCount = vertexFormatComponentCount(format);
-        const UnsignedInt vectorCount = vertexFormatVectorCount(format);
         const MeshAttribute attributeName = mesh.attributeName(i);
 
         /* Positions are always three-component, two-component positions would
@@ -1535,6 +1534,7 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const MeshData& mesh, const
                 gltfAttributeName, attributeId);
         }
 
+        const UnsignedInt vectorCount = vertexFormatVectorCount(format);
         Containers::StringView gltfAccessorType;
         if(vectorCount == 1) {
             if(componentCount == 1)
