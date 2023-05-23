@@ -308,6 +308,16 @@ const struct {
         nullptr}
 };
 
+/** @todo drop this once compatibilitySkinningAttributes no longer exists in
+    AssimpImporter and GltfImporter */
+const struct {
+    const char* name;
+    bool compatibilityAttributes;
+} AddMeshSkinningAttributesData[]{
+    {"", false},
+    {"with compatibility skinning attributes", true}
+};
+
 const UnsignedInt AddMeshInvalidIndices[4]{};
 const Vector4d AddMeshInvalidVertices[4]{};
 const struct {
@@ -1965,7 +1975,8 @@ GltfSceneConverterTest::GltfSceneConverterTest() {
     addInstancedTests({&GltfSceneConverterTest::addMeshAttribute},
         Containers::arraySize(AddMeshAttributeData));
 
-    addTests({&GltfSceneConverterTest::addMeshSkinningAttributes});
+    addInstancedTests({&GltfSceneConverterTest::addMeshSkinningAttributes},
+        Containers::arraySize(AddMeshSkinningAttributesData));
 
     addInstancedTests({&GltfSceneConverterTest::addMeshSkinningAttributesUnsignedInt},
         Containers::arraySize(QuietData));
@@ -2733,6 +2744,9 @@ void GltfSceneConverterTest::addMeshAttribute() {
 }
 
 void GltfSceneConverterTest::addMeshSkinningAttributes() {
+    auto&& data = AddMeshSkinningAttributesData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     const struct Vertex {
         /* The attributes are deliberately shuffled to avoid accidental order
            assumptions in the code */
@@ -2757,7 +2771,7 @@ void GltfSceneConverterTest::addMeshSkinningAttributes() {
     };
     auto view = Containers::stridedArrayView(vertices);
 
-    MeshData mesh{MeshPrimitive::Lines, {}, vertices, {
+    Containers::Array<MeshAttributeData> attributes{InPlaceInit, {
         MeshAttributeData{MeshAttribute::JointIds,
             VertexFormat::UnsignedShort,
             view.slice(&Vertex::jointIds), 4},
@@ -2778,7 +2792,22 @@ void GltfSceneConverterTest::addMeshSkinningAttributes() {
 
     const Containers::String filename = Utility::Path::join(GLTFSCENECONVERTER_TEST_OUTPUT_DIR, "mesh-skinning-attributes.gltf");
     CORRADE_VERIFY(converter->beginFile(filename));
-    CORRADE_VERIFY(converter->add(mesh));
+
+    /* These should get ignored during export */
+    if(data.compatibilityAttributes) {
+        arrayAppend(attributes, {
+            MeshAttributeData{meshAttributeCustom(667),
+                VertexFormat::Vector4ub,
+                view.slice(&Vertex::secondaryJointIds)},
+            MeshAttributeData{meshAttributeCustom(776),
+                VertexFormat::Vector4usNormalized,
+                view.slice(&Vertex::secondaryWeights)},
+        });
+        converter->setMeshAttributeName(meshAttributeCustom(667), "JOINTS");
+        converter->setMeshAttributeName(meshAttributeCustom(776), "WEIGHTS");
+    }
+
+    CORRADE_VERIFY(converter->add(MeshData{MeshPrimitive::Lines, {}, vertices, std::move(attributes)}));
     CORRADE_VERIFY(converter->endFile());
     CORRADE_COMPARE_AS(filename,
         Utility::Path::join(GLTFSCENECONVERTER_TEST_DIR, "mesh-skinning-attributes.gltf"),

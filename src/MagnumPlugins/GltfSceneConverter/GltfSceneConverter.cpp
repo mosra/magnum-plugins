@@ -1375,6 +1375,32 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const MeshData& mesh, const
         /** @todo option to skip unrepresentable attributes instead of failing
             the whole mesh */
 
+        const MeshAttribute attributeName = mesh.attributeName(i);
+
+        /* For backwards compatibility GltfImporter and AssimpImporter aliases
+           the JointIds and Weights attributes to custom JOINTS and WEIGHTS.
+           Skip them if they have the name defined and there's a corresponding
+           builtin attribute. Not testing that they actually alias the builtin
+           ones since it's non-trivial due to how they're converted to arrays,
+           also not testing for expected type, this should be enough to cover
+           the actual cases. */
+        /** @todo remove once compatibilitySkinningAttributes is dropped in
+            these plugins */
+        {
+            bool skip = false;
+            for(const Containers::Pair<MeshAttribute, Containers::String>& j: _state->customMeshAttributes) {
+                if(j.first() == attributeName &&
+                   ((j.second() == "JOINTS"_s && mesh.hasAttribute(MeshAttribute::JointIds)) ||
+                    (j.second() == "WEIGHTS"_s && mesh.hasAttribute(MeshAttribute::Weights))))
+                {
+                    skip = true;
+                    break;
+                }
+            }
+            if(skip)
+                continue;
+        }
+
         const VertexFormat format = mesh.attributeFormat(i);
         if(isVertexFormatImplementationSpecific(format)) {
             Error{} << "Trade::GltfSceneConverter::add(): implementation-specific vertex format" << reinterpret_cast<void*>(vertexFormatUnwrap(format)) << "can't be exported";
@@ -1382,7 +1408,6 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const MeshData& mesh, const
         }
 
         const UnsignedInt componentCount = vertexFormatComponentCount(format);
-        const MeshAttribute attributeName = mesh.attributeName(i);
 
         /* Positions are always three-component, two-component positions would
            fail */
