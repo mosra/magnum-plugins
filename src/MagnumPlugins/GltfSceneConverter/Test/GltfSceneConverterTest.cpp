@@ -75,6 +75,7 @@ struct GltfSceneConverterTest: TestSuite::Tester {
     void outputFormatDetectionToData();
     void outputFormatDetectionToFile();
     void metadata();
+    void generatorVersion();
 
     void abort();
 
@@ -146,6 +147,9 @@ struct GltfSceneConverterTest: TestSuite::Tester {
     PluginManager::Manager<AbstractSceneConverter> _converterManager{"nonexistent"};
     /* Needs to load AnyImageImporter from a system-wide location */
     PluginManager::Manager<AbstractImporter> _importerManager;
+    /* Original generator name from config before it gets emptied for smaller
+       test files */
+    Containers::String _originalGeneratorName;
 };
 
 using namespace Containers::Literals;
@@ -1985,6 +1989,7 @@ GltfSceneConverterTest::GltfSceneConverterTest() {
         Containers::arraySize(OutputFormatDetectionToFileData));
 
     addTests({&GltfSceneConverterTest::metadata,
+              &GltfSceneConverterTest::generatorVersion,
               &GltfSceneConverterTest::abort});
 
     addInstancedTests({&GltfSceneConverterTest::addMesh},
@@ -2174,8 +2179,12 @@ GltfSceneConverterTest::GltfSceneConverterTest() {
     _imageConverterManager.setPluginDirectory("nonexistent");
     #endif
 
-    /* By default don't write the generator name for smaller test files */
-    CORRADE_INTERNAL_ASSERT_EXPRESSION(_converterManager.metadata("GltfSceneConverter"))->configuration().setValue("generator", "");
+    /* By default don't write the generator name for smaller test files.
+       Remember the original value however, for the generatorVersion() test
+       case. */
+    Utility::ConfigurationGroup& configuration = CORRADE_INTERNAL_ASSERT_EXPRESSION(_converterManager.metadata("GltfSceneConverter"))->configuration();
+    _originalGeneratorName = configuration.value<Containers::StringView>("generator");
+    configuration.setValue("generator", "");
     if(PluginManager::PluginMetadata* metadata = _imageConverterManager.metadata("KtxImageConverter"))
         metadata->configuration().setValue("generator", "");
 
@@ -2275,6 +2284,32 @@ void GltfSceneConverterTest::metadata() {
     importer->configuration().setValue("ignoreRequiredExtensions", true);
     CORRADE_VERIFY(importer->openData(*out));
     /** @todo once ImporterExtraAttribute is a thing, verify these are parsed */
+}
+
+void GltfSceneConverterTest::generatorVersion() {
+    Containers::Pointer<AbstractSceneConverter> converter =  _converterManager.instantiate("GltfSceneConverter");
+    /* Restore the original generator name that was emptied in the constructor
+       for smaller test files */
+    converter->configuration().setValue("generator", _originalGeneratorName);
+    /* Get a formatted text file out, not a binary that's default for to-data
+       output */
+    converter->configuration().setValue("binary", false);
+
+    CORRADE_VERIFY(converter->beginData());
+    Containers::Optional<Containers::Array<char>> out = converter->endData();
+    CORRADE_VERIFY(out);
+
+    Containers::StringView string = *out;
+
+    /* The formatting is tested thoroughly in VersionTest */
+    CORRADE_COMPARE_AS(string,
+        "\"generator\": \"Magnum GltfSceneConverter v",
+        TestSuite::Compare::StringContains);
+
+    /* Get everything until the next ". Eh what a terrible API!? */
+    Containers::StringView found = string.find("\"generator\": \"");
+    found = string.slice(found.end(), string.end());
+    CORRADE_INFO("Generator string found:" << found.prefix(found.find("\"").begin()));
 }
 
 void GltfSceneConverterTest::abort() {

@@ -63,6 +63,10 @@ endif()
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/versionPlugins.h.cmake
                ${CMAKE_CURRENT_BINARY_DIR}/versionPlugins.h)
 
+# Force IDEs to display all header files in project view
+add_custom_target(MagnumPlugins-headers SOURCES
+    Implementation/formatPluginsVersion.h)
+
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/versionPlugins.h DESTINATION ${MAGNUM_INCLUDE_INSTALL_DIR})
 
 if(MAGNUM_WITH_OPENDDL)

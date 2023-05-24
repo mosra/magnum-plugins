@@ -25,9 +25,11 @@
 
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Numeric.h>
+#include <Corrade/TestSuite/Compare/String.h>
 
 #include "Magnum/Magnum.h"
 #include "Magnum/versionPlugins.h"
+#include "Magnum/Implementation/formatPluginsVersion.h"
 
 namespace Magnum { namespace Test { namespace {
 
@@ -35,10 +37,12 @@ struct VersionTest: TestSuite::Tester {
     explicit VersionTest();
 
     void test();
+    void format();
 };
 
 VersionTest::VersionTest() {
-    addTests({&VersionTest::test});
+    addTests({&VersionTest::test,
+              &VersionTest::format});
 }
 
 void VersionTest::test() {
@@ -68,6 +72,37 @@ void VersionTest::test() {
     CORRADE_COMPARE_AS(MAGNUMPLUGINS_VERSION_MONTH, 12, TestSuite::Compare::LessOrEqual);
     #ifdef MAGNUMPLUGINS_VERSION_COMMIT
     CORRADE_COMPARE_AS(MAGNUMPLUGINS_VERSION_COMMIT, 0, TestSuite::Compare::GreaterOrEqual);
+    #endif
+}
+
+void VersionTest::format() {
+    Containers::String version = Implementation::formatPluginsVersion();
+    CORRADE_INFO("Formatted version:" << version);
+
+    #ifdef CORRADE_IS_DEBUG_BUILD
+    CORRADE_COMPARE(version, "v<dev>");
+    #else
+    /* This check will break in the year 2030 */
+    CORRADE_COMPARE_AS(version, "v202", TestSuite::Compare::StringHasPrefix);
+
+    /* If no commit info is available, it's just the tag alone, thus no dashes
+       or `g` characters */
+    #if !defined(CORRADE_VERSION_COMMIT) && !defined(MAGNUM_VERSION_COMMIT) && !defined(MAGNUMPLUGINS_VERSION_COMMIT)
+    CORRADE_COMPARE_AS(version, "-", TestSuite::Compare::StringNotContains);
+    CORRADE_COMPARE_AS(version, "g", TestSuite::Compare::StringNotContains);
+
+    /* Otherwise, if some info is not available, there are placeholders but
+       also commit info */
+    #elif !defined(CORRADE_VERSION_COMMIT) || !defined(MAGNUM_VERSION_COMMIT) || !defined(MAGNUMPLUGINS_VERSION_COMMIT)
+    CORRADE_COMPARE_AS(version, "-xxxx", TestSuite::Compare::StringContains);
+    CORRADE_COMPARE_AS(version, "g", TestSuite::Compare::StringContains);
+
+    /* Otherwise there should be no placeholders and only commit info */
+    #else
+    CORRADE_COMPARE_AS(version, "-xxxx", TestSuite::Compare::StringNotContains);
+    CORRADE_COMPARE_AS(version, "-", TestSuite::Compare::StringContains);
+    CORRADE_COMPARE_AS(version, "g", TestSuite::Compare::StringContains);
+    #endif
     #endif
 }
 

@@ -62,6 +62,7 @@
 #include <Magnum/Trade/TextureData.h>
 #include <Magnum/Trade/SceneData.h>
 
+#include "Magnum/Implementation/formatPluginsVersion.h"
 #include "MagnumPlugins/GltfImporter/Gltf.h"
 
 /* We'd have to endian-flip everything that goes into buffers, plus the binary
@@ -271,8 +272,18 @@ Containers::Optional<Containers::Array<char>> GltfSceneConverter::doEndData() {
 
         if(const Containers::StringView copyright = configuration().value<Containers::StringView>("copyright"_s))
             json.writeKey("copyright"_s).write(copyright);
-        if(const Containers::StringView generator = configuration().value<Containers::StringView>("generator"_s))
-            json.writeKey("generator"_s).write(generator);
+        if(const Containers::StringView generator = configuration().value<Containers::StringView>("generator"_s)) {
+            /* If the generator string contains a {0}, it'll get replaced. If
+               it doesn't, it won't. It won't cause a security bug in that case
+               -- this isn't printf(), it's safe to use unsanitized inputs as
+               format templates. Worst case it'll assert if the user tries to
+               use some invalid format pattern, but that's their problem, not
+               mine. */
+            json.writeKey("generator"_s).write(Utility::format(
+                Containers::String::nullTerminatedView(generator).data(),
+                Magnum::Implementation::formatPluginsVersion()
+            ));
+        }
     }
 
     /* Used and required extensions */

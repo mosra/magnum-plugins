@@ -36,11 +36,13 @@
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/Endianness.h>
 #include <Corrade/Utility/EndiannessBatch.h>
+#include <Corrade/Utility/Format.h>
 #include <Magnum/ImageView.h>
 #include <Magnum/PixelFormat.h>
 #include <Magnum/Math/Functions.h>
 #include <Magnum/Math/Vector3.h>
 
+#include "Magnum/Implementation/formatPluginsVersion.h"
 #include "MagnumPlugins/KtxImporter/KtxHeader.h"
 
 namespace Magnum { namespace Trade {
@@ -729,10 +731,22 @@ template<UnsignedInt dimensions, template<UnsignedInt, typename> class View> Con
         return {};
     }
 
-    const Containers::Pair<Containers::StringView, Containers::StringView> keyValueMap[]{
+    /* Value has to be a String instead of a StringView due to the generated
+       writer name. The orientation and swizzle are however fortunately small
+       enough to fit into SSO. */
+    const Containers::Pair<Containers::StringView, Containers::String> keyValueMap[]{
         {"KTXorientation"_s, orientation.prefix(Math::min(std::size_t(orientationDimensions), orientation.size()))},
         {"KTXswizzle"_s, swizzle},
-        {"KTXwriter"_s, generator}
+        {"KTXwriter"_s, Utility::format(
+            /* If the generator string contains a {0}, it'll get replaced. If
+               it doesn't, it won't. It won't cause a security bug in that case
+               -- this isn't printf(), it's safe to use unsanitized inputs as
+               format templates. Worst case it'll assert if the user tries to
+               use some invalid format pattern, but that's their problem, not
+               mine. */
+            Containers::String::nullTerminatedView(generator).data(),
+            Magnum::Implementation::formatPluginsVersion()
+        )}
     };
 
     /* Calculate size */

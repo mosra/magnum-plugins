@@ -30,8 +30,10 @@
 #include <Corrade/Containers/Array.h>
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/Pair.h>
+#include <Corrade/PluginManager/PluginMetadata.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
+#include <Corrade/TestSuite/Compare/String.h>
 #include <Corrade/TestSuite/Compare/StringToFile.h>
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
@@ -114,6 +116,7 @@ struct KtxImageConverterTest: TestSuite::Tester {
     void configurationSwizzleEmpty();
     void configurationSwizzleInvalid();
     void configurationGenerator();
+    void configurationGeneratorVersion();
     void configurationGeneratorEmpty();
 
     void configurationEmpty();
@@ -127,6 +130,9 @@ struct KtxImageConverterTest: TestSuite::Tester {
 
     Containers::Array<char> dfdData;
     std::unordered_map<Implementation::VkFormat, Containers::ArrayView<const char>> dfdMap;
+    /* Original generator name from config before it gets modified for
+       predictable output files */
+    Containers::String _originalGeneratorName;
 };
 
 using namespace Containers::Literals;
@@ -429,6 +435,7 @@ KtxImageConverterTest::KtxImageConverterTest() {
         Containers::arraySize(InvalidSwizzleData));
 
     addTests({&KtxImageConverterTest::configurationGenerator,
+              &KtxImageConverterTest::configurationGeneratorVersion,
               &KtxImageConverterTest::configurationGeneratorEmpty});
 
     addInstancedTests({&KtxImageConverterTest::configurationEmpty},
@@ -465,6 +472,13 @@ KtxImageConverterTest::KtxImageConverterTest() {
         offset += size;
     }
     CORRADE_INTERNAL_ASSERT(offset == dfdData.size());
+
+    /* Drop version info from the generator name for predictable output.
+       Remember the original value however, for the
+       configurationGeneratorVersion() test case. */
+    Utility::ConfigurationGroup& configuration = CORRADE_INTERNAL_ASSERT_EXPRESSION(_converterManager.metadata("KtxImageConverter"))->configuration();
+    _originalGeneratorName = configuration.value<Containers::StringView>("generator");
+    configuration.setValue("generator", "Magnum KtxImageConverter");
 }
 
 void KtxImageConverterTest::supportedFormat() {
@@ -1389,8 +1403,6 @@ void KtxImageConverterTest::configurationSwizzleInvalid() {
 
 void KtxImageConverterTest::configurationGenerator() {
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("KtxImageConverter");
-    /* Default value */
-    CORRADE_COMPARE(converter->configuration().value("generator"), "Magnum KtxImageConverter");
     CORRADE_VERIFY(converter->configuration().setValue("generator", "KtxImageConverterTest&$%1234@\x02\n\r\t\x15!"));
 
     const UnsignedByte bytes[4]{};
@@ -1400,6 +1412,26 @@ void KtxImageConverterTest::configurationGenerator() {
     /* Writer doesn't have to be null-terminated, don't test for \0 */
     Containers::String keyValueData = readKeyValueData(*data);
     CORRADE_VERIFY(keyValueData.contains("KTXwriter\0KtxImageConverterTest&$%1234@\x02\n\r\t\x15!"_s));
+}
+
+void KtxImageConverterTest::configurationGeneratorVersion() {
+    Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("KtxImageConverter");
+    /* Put back the original value from config, which got patched for
+       predictable output */
+    converter->configuration().setValue("generator", _originalGeneratorName);
+
+    const UnsignedByte bytes[4]{};
+    Containers::Optional<Containers::Array<char>> data = converter->convertToData(ImageView2D{PixelFormat::RGBA8Unorm, {1, 1}, bytes});
+    CORRADE_VERIFY(data);
+
+    /* The formatting is tested thoroughly in VersionTest */
+    Containers::String keyValueData = readKeyValueData(*data);
+    CORRADE_COMPARE_AS(keyValueData,
+        "KTXwriter\0Magnum KtxImageConverter v",
+        TestSuite::Compare::StringContains);
+
+    /** @todo print the generator string once it's possible to safely extract
+        just the value without any other random bytes */
 }
 
 void KtxImageConverterTest::configurationGeneratorEmpty() {
