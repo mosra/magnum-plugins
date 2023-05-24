@@ -57,6 +57,10 @@ target_link_libraries(HarfBuzzFont PUBLIC
     HarfBuzz::HarfBuzz)
 if(CORRADE_TARGET_WINDOWS)
     target_link_libraries(HarfBuzzFont PUBLIC FreeTypeFont)
+elseif(MAGNUM_HARFBUZZFONT_BUILD_STATIC)
+    target_link_libraries(HarfBuzzFont INTERFACE FreeTypeFont)
+else()
+    add_dependencies(HarfBuzzFont FreeTypeFont)
 endif()
 
 install(FILES HarfBuzzFont.h ${CMAKE_CURRENT_BINARY_DIR}/configure.h

@@ -49,10 +49,10 @@ corrade_add_test(HarfBuzzFontTest HarfBuzzFontTest.cpp
     FILES ../../FreeTypeFont/Test/Oxygen.ttf)
 target_include_directories(HarfBuzzFontTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>)
 if(MAGNUM_HARFBUZZFONT_BUILD_STATIC)
-    target_link_libraries(HarfBuzzFontTest PRIVATE FreeTypeFont HarfBuzzFont)
+    target_link_libraries(HarfBuzzFontTest PRIVATE HarfBuzzFont)
 else()
     # So the plugins get properly built when building the test
-    add_dependencies(HarfBuzzFontTest FreeTypeFont HarfBuzzFont)
+    add_dependencies(HarfBuzzFontTest HarfBuzzFont)
 endif()
 # Older HB versions give slightly different results, so we need to check the
 # version in the test. Also use SYSTEM to avoid warning spam with old-style
