@@ -1,6 +1,6 @@
 #.rst:
 # Find FAAD2
-# -------------
+# ----------
 #
 # Finds the FAAD2 library. This module defines:
 #
