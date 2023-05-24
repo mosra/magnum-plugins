@@ -1452,6 +1452,8 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const MeshData& mesh, const
         } else if(attributeName == MeshAttribute::Tangent && componentCount == 4) {
             gltfAttributeName = Containers::String::nullTerminatedGlobalView("TANGENT"_s);
 
+            /* Half-float types and cross-byte-packed types not supported by
+               glTF */
             if(format == VertexFormat::Vector4bNormalized ||
                format == VertexFormat::Vector4sNormalized) {
                 _state->requiredExtensions |= GltfExtension::KhrMeshQuantization;
@@ -1465,6 +1467,8 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const MeshData& mesh, const
         } else if(attributeName == MeshAttribute::TextureCoordinates) {
             gltfAttributeName = Containers::String::nullTerminatedGlobalView("TEXCOORD"_s);
 
+            /* Half-float types and cross-byte-packed types not supported by
+               glTF */
             if(format == VertexFormat::Vector2b ||
                format == VertexFormat::Vector2bNormalized ||
                format == VertexFormat::Vector2ub ||
@@ -1490,6 +1494,8 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const MeshData& mesh, const
         } else if(attributeName == MeshAttribute::Color) {
             gltfAttributeName = Containers::String::nullTerminatedGlobalView("COLOR"_s);
 
+            /* Half-float types and cross-byte-packed types not supported by
+               glTF */
             if(format != VertexFormat::Vector3 &&
                format != VertexFormat::Vector4 &&
                format != VertexFormat::Vector3ubNormalized &&
@@ -1524,6 +1530,7 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const MeshData& mesh, const
         } else if(attributeName == MeshAttribute::Weights) {
             gltfAttributeName = Containers::String::nullTerminatedGlobalView("WEIGHTS"_s);
 
+            /* Half-float types not supported by glTF */
             if(format != VertexFormat::Float &&
                format != VertexFormat::UnsignedByteNormalized &&
                format != VertexFormat::UnsignedShortNormalized) {
