@@ -3162,10 +3162,9 @@ Containers::Pointer<AbstractImageConverter> loadAndInstantiateImageConverter(Plu
 
         imageConverterConfiguration.setValue(value.first(), value.second());
     }
+    /** @todo made obsolete by magnum-sceneconverter's --set option in May
+        2023, wait ~6 months and include this only in deprecated builds */
     if(configuration.group("imageConverter")->hasGroups()) {
-        /** @todo once image converters have groups, propagate that as well;
-            then it might make sense to expose, test and reuse Magnum's own
-            MagnumPlugins/Implementation/propagateConfiguration.h */
         if(!(flags & SceneConverterFlag::Quiet))
             Warning{} << "Trade::GltfSceneConverter::add(): image converter configuration group propagation not implemented yet, ignoring";
     }
