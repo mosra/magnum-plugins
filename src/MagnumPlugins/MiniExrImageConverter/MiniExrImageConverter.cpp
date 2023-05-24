@@ -71,7 +71,7 @@ Containers::Optional<Containers::Array<char>> MiniExrImageConverter::doConvertTo
         case PixelFormat::RGB16F: components = 3; break;
         case PixelFormat::RGBA16F: components = 4; break;
         default:
-            Error() << "Trade::MiniExrImageConverter::convertToData(): unsupported pixel format" << image.format();
+            Error() << "Trade::MiniExrImageConverter::convertToData(): unsupported format" << image.format();
             return {};
     }
 

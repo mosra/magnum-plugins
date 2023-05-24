@@ -89,7 +89,7 @@ void MiniExrImageConverterTest::wrongFormat() {
     std::ostringstream out;
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->convertToData(ImageView2D{PixelFormat::R16F, {1, 1}, data}));
-    CORRADE_COMPARE(out.str(), "Trade::MiniExrImageConverter::convertToData(): unsupported pixel format PixelFormat::R16F\n");
+    CORRADE_COMPARE(out.str(), "Trade::MiniExrImageConverter::convertToData(): unsupported format PixelFormat::R16F\n");
 }
 
 constexpr const char RgbData[] = {
