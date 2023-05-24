@@ -34,6 +34,7 @@
 #include <Corrade/Utility/Path.h>
 #include <Magnum/ImageView.h>
 #include <Magnum/PixelFormat.h>
+#include <Magnum/Math/Half.h>
 #include <Magnum/Trade/AbstractImageConverter.h>
 
 #include "configure.h"
@@ -92,22 +93,24 @@ void MiniExrImageConverterTest::wrongFormat() {
     CORRADE_COMPARE(out.str(), "Trade::MiniExrImageConverter::convertToData(): unsupported format PixelFormat::R16F\n");
 }
 
-constexpr const char RgbData[] = {
-    /* Skip */
-    0, 0, 0, 0, 0, 0, 0, 0,
+using namespace Math::Literals;
 
-    1, 2, 3, 2, 3, 4, 0, 0,
-    3, 4, 5, 4, 5, 6, 0, 0,
-    5, 6, 7, 6, 7, 8, 0, 0
+const Half RgbData[]{
+    /* Skip */
+    {}, {}, {}, {},
+
+    0.00_h, 0.25_h, 0.50_h, {},
+    0.75_h, 1.00_h, 1.25_h, {},
+    1.50_h, 1.75_h, 2.00_h, {}
 };
 
 const ImageView2D Rgb{PixelStorage{}.setSkip({0, 1, 0}),
     PixelFormat::RGB16F, {1, 3}, RgbData};
 
-constexpr const char RgbaData[] = {
-    1, 2, 3, 2, 3, 4, 9, 9,
-    3, 4, 5, 4, 5, 6, 9, 9,
-    5, 6, 7, 6, 7, 8, 9, 9
+const Half RgbaData[]{
+    0.00_h, 0.25_h, 0.50_h, 9.0_h,
+    0.75_h, 1.00_h, 1.25_h, 9.0_h,
+    1.50_h, 1.75_h, 2.00_h, 9.0_h
 };
 
 const ImageView2D Rgba{PixelFormat::RGBA16F, {1, 3}, RgbaData};
