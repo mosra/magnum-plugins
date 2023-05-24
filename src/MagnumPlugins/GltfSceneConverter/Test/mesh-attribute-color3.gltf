@@ -13,7 +13,8 @@
       "buffer": 0,
       "byteOffset": 0,
       "byteLength": 32,
-      "byteStride": 32
+      "byteStride": 32,
+      "target": 34962
     }
   ],
   "accessors": [

@@ -85,6 +85,10 @@ enum: UnsignedInt {
     GltfWrappingClampToEdge = 33071,        /* GL_CLAMP_TO_EDGE */
     GltfWrappingMirroredRepeat = 33648,     /* GL_MIRRORED_REPEAT */
     GltfWrappingRepeat = 10497,             /* GL_REPEAT */
+
+    /* Buffer target hints. Currently used only by GltfSceneConverter. */
+    GltfTargetHintArray = 34962,            /* GL_ARRAY_BUFFER */
+    GltfTargetHintElementArray = 34963      /* GL_ELEMENT_ARRAY_BUFFER */
 };
 
 }}}

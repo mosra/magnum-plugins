@@ -1844,8 +1844,8 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const MeshData& mesh, const
                 .writeKey("buffer"_s).write(0)
                 /** @todo could be omitted if zero, is that useful for anything? */
                 .writeKey("byteOffset"_s).write(indexData - _state->buffer)
-                .writeKey("byteLength"_s).write(indexData.size());
-            /** @todo target, once we don't have one view per accessor */
+                .writeKey("byteLength"_s).write(indexData.size())
+                .writeKey("target"_s).write(Implementation::GltfTargetHintElementArray);
             if(configuration().value<bool>("accessorNames"))
                 _state->gltfBufferViews.writeKey("name"_s).write(Utility::format(
                     name ? "mesh {0} ({1}) indices" : "mesh {0} indices",
@@ -1913,14 +1913,13 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const MeshData& mesh, const
                 /** @todo if vertex count is zero, this value is higher than
                     byteLength, is that a problem? glTF explicitly disallows
                     byteLength == 0 so this is uncharted waters anyway :D */
-                .writeKey("byteStride"_s).write(bufferView.second());
+                .writeKey("byteStride"_s).write(bufferView.second())
+                .writeKey("target"_s).write(Implementation::GltfTargetHintArray);
 
             if(configuration().value<bool>("accessorNames"))
                 _state->gltfBufferViews.writeKey("name"_s).write(Utility::format(
                     name ? "mesh {0} ({1}) vertices" : "mesh {0} vertices",
                     id, name));
-
-            /** @todo target */
         }
 
         /* Attribute views and accessors */

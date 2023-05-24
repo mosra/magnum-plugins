@@ -13,37 +13,43 @@
       "buffer": 0,
       "byteOffset": 0,
       "byteLength": 24,
-      "byteStride": 12
+      "byteStride": 12,
+      "target": 34962
     },
     {
       "buffer": 0,
       "byteOffset": 24,
       "byteLength": 24,
-      "byteStride": 12
+      "byteStride": 12,
+      "target": 34962
     },
     {
       "buffer": 0,
       "byteOffset": 48,
       "byteLength": 16,
-      "byteStride": 8
+      "byteStride": 8,
+      "target": 34962
     },
     {
       "buffer": 0,
       "byteOffset": 64,
       "byteLength": 24,
-      "byteStride": 12
+      "byteStride": 12,
+      "target": 34962
     },
     {
       "buffer": 0,
       "byteOffset": 70,
       "byteLength": 24,
-      "byteStride": 12
+      "byteStride": 12,
+      "target": 34962
     },
     {
       "buffer": 0,
       "byteOffset": 90,
       "byteLength": 4,
-      "byteStride": 2
+      "byteStride": 2,
+      "target": 34962
     }
   ],
   "accessors": [
