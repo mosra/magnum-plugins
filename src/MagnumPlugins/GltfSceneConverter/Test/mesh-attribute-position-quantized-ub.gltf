@@ -10,7 +10,7 @@
   ],
   "buffers": [
     {
-      "uri": "mesh-attribute-position-quantized.bin",
+      "uri": "mesh-attribute-position-quantized-ub.bin",
       "byteLength": 32
     }
   ],
@@ -26,9 +26,11 @@
   "accessors": [
     {
       "bufferView": 0,
-      "componentType": 5122,
+      "componentType": 5121,
       "count": 1,
-      "type": "VEC3"
+      "type": "VEC3",
+      "min": [0, 0, 0],
+      "max": [0, 0, 0]
     }
   ],
   "meshes": [

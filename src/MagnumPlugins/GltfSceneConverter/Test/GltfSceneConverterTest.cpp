@@ -242,9 +242,26 @@ const struct {
     const char* expected;
     const char* expectedWarning;
 } AddMeshAttributeData[]{
-    {"positions, quantized", MeshAttribute::Position, VertexFormat::Vector3s,
+    /* Enumerating various variants for position attribute types in
+       order to cover all branches in the type-dependent min/max calculation
+       for POSITION accessors. The assumption is that the minmax() call
+       itself is fine, just need to ensure that wrong types aren't used by
+       accident, leading to asserts. */
+    {"positions, quantized, normalized byte", MeshAttribute::Position, VertexFormat::Vector3bNormalized,
         nullptr, {}, {}, {}, true, nullptr,
-        "mesh-attribute-position-quantized.gltf",
+        "mesh-attribute-position-quantized-b-normalized.gltf",
+        nullptr},
+    {"positions, quantized, normalized unsigned byte", MeshAttribute::Position, VertexFormat::Vector3ub,
+        nullptr, {}, {}, {}, true, nullptr,
+        "mesh-attribute-position-quantized-ub.gltf",
+        nullptr},
+    {"positions, quantized, short", MeshAttribute::Position, VertexFormat::Vector3s,
+        nullptr, {}, {}, {}, true, nullptr,
+        "mesh-attribute-position-quantized-s.gltf",
+        nullptr},
+    {"positions, quantized, normalized unsigned short", MeshAttribute::Position, VertexFormat::Vector3usNormalized,
+        nullptr, {}, {}, {}, true, nullptr,
+        "mesh-attribute-position-quantized-us-normalized.gltf",
         nullptr},
     {"normals, quantized", MeshAttribute::Normal, VertexFormat::Vector3bNormalized,
         nullptr, {}, {}, {}, true, nullptr,

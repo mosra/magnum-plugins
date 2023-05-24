@@ -48,6 +48,7 @@
 #include <Corrade/Utility/Path.h>
 #include <Corrade/Utility/String.h>
 #include <Magnum/Math/Color.h>
+#include <Magnum/Math/FunctionsBatch.h>
 #include <Magnum/Math/Matrix3.h>
 #include <Magnum/Math/Matrix4.h>
 #include <Magnum/Math/Quaternion.h>
@@ -1591,9 +1592,6 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const MeshData& mesh, const
             }
         }
 
-        /** @todo spec says that POSITION accessor MUST have its min and max
-            properties defined, I don't care at the moment */
-
         /* Decide on accessor type. Joint IDs and weights are array attributes
            in Magnum so they're special-cased here. */
         Containers::StringView gltfAccessorType;
@@ -1924,11 +1922,12 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const MeshData& mesh, const
 
         /* Attribute views and accessors */
         for(const GltfAttribute& gltfAttribute: gltfAttributes) {
+            const MeshAttribute attributeName = mesh.attributeName(gltfAttribute.originalId);
             const VertexFormat format = mesh.attributeFormat(gltfAttribute.originalId);
 
             /* Flip texture coordinates unless they're meant to be flipped in
                the material */
-            if(mesh.attributeName(gltfAttribute.originalId) == MeshAttribute::TextureCoordinates && !configuration().value<bool>("textureCoordinateYFlipInMaterial")) {
+            if(attributeName == MeshAttribute::TextureCoordinates && !configuration().value<bool>("textureCoordinateYFlipInMaterial")) {
                 CORRADE_INTERNAL_ASSERT(gltfAttribute.offset == 0);
                 Containers::StridedArrayView1D<char> data{vertexData,
                     vertexData + mesh.attributeOffset(gltfAttribute.originalId),
@@ -1964,6 +1963,35 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const MeshData& mesh, const
             _state->gltfAccessors
                 .writeKey("count"_s).write(mesh.vertexCount())
                 .writeKey("type"_s).write(gltfAttribute.accessorType);
+
+            /* Calculate and write min/max bounds that are required for
+               POSITION accessors */
+            if(attributeName == MeshAttribute::Position) {
+                /* Cast to a float type for all cases, no precision loss should
+                   happen with the packed types */
+                /** @todo clean up once Math::minmax() is STL-free */
+                std::pair<Vector3, Vector3> minmax;
+                if(format == VertexFormat::Vector3)
+                    minmax = Math::minmax(mesh.attribute<Vector3>(gltfAttribute.originalId));
+                else if(format == VertexFormat::Vector3b ||
+                        format == VertexFormat::Vector3bNormalized)
+                    minmax = std::pair<Vector3, Vector3>{Math::minmax(mesh.attribute<Vector3b>(gltfAttribute.originalId))};
+                else if(format == VertexFormat::Vector3ub ||
+                        format == VertexFormat::Vector3ubNormalized)
+                    minmax = std::pair<Vector3, Vector3>{Math::minmax(mesh.attribute<Vector3ub>(gltfAttribute.originalId))};
+                else if(format == VertexFormat::Vector3s ||
+                        format == VertexFormat::Vector3sNormalized)
+                    minmax = std::pair<Vector3, Vector3>{Math::minmax(mesh.attribute<Vector3s>(gltfAttribute.originalId))};
+                else if(format == VertexFormat::Vector3us ||
+                        format == VertexFormat::Vector3usNormalized)
+                    minmax = std::pair<Vector3, Vector3>{Math::minmax(mesh.attribute<Vector3us>(gltfAttribute.originalId))};
+                else CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+
+                _state->gltfAccessors
+                    .writeKey("min"_s).writeArray(minmax.first.data())
+                    .writeKey("max"_s).writeArray(minmax.second.data());
+            }
+
             if(configuration().value<bool>("accessorNames"))
                 _state->gltfAccessors.writeKey("name"_s).write(Utility::format(
                     name ? "mesh {0} ({1}) {2}" : "mesh {0} {2}",

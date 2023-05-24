@@ -2,29 +2,35 @@
   "asset": {
     "version": "2.0"
   },
+  "extensionsUsed": [
+    "KHR_mesh_quantization"
+  ],
+  "extensionsRequired": [
+    "KHR_mesh_quantization"
+  ],
   "buffers": [
     {
-      "uri": "mesh-no-indices.bin",
-      "byteLength": 36
+      "uri": "mesh-attribute-position-quantized-s.bin",
+      "byteLength": 32
     }
   ],
   "bufferViews": [
     {
       "buffer": 0,
       "byteOffset": 0,
-      "byteLength": 36,
-      "byteStride": 12,
+      "byteLength": 32,
+      "byteStride": 32,
       "target": 34962
     }
   ],
   "accessors": [
     {
       "bufferView": 0,
-      "componentType": 5126,
-      "count": 3,
+      "componentType": 5122,
+      "count": 1,
       "type": "VEC3",
-      "min": [1, 2, 3],
-      "max": [7, 8, 9]
+      "min": [0, 0, 0],
+      "max": [0, 0, 0]
     }
   ],
   "meshes": [
@@ -33,7 +39,8 @@
         {
           "attributes": {
             "POSITION": 0
-          }
+          },
+          "mode": 2
         }
       ]
     }

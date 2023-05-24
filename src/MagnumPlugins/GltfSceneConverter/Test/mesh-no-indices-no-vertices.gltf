@@ -21,7 +21,9 @@
       "bufferView": 0,
       "componentType": 5126,
       "count": 0,
-      "type": "VEC3"
+      "type": "VEC3",
+      "min": [0, 0, 0],
+      "max": [0, 0, 0]
     }
   ],
   "meshes": [

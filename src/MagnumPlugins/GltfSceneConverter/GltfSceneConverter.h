@@ -152,8 +152,7 @@ converter delegates to.
     @relativeref{VertexFormat,Vector3usNormalized} will be exported with
     [KHR_mesh_quantization](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_mesh_quantization/README.md)
     being added to required extensions. Other formats or 2D positions are not
-    supported. At the moment, the position attribute doesn't have the `min` and
-    `max` properties calculated even though required by the spec.
+    supported.
 -   @ref MeshAttribute::Normal in @ref VertexFormat::Vector3 is supported by
     core glTF; @relativeref{VertexFormat,Vector3bNormalized} and
     @relativeref{VertexFormat,Vector3sNormalized} will be exported with

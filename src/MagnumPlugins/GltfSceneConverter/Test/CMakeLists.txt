@@ -140,7 +140,10 @@ corrade_add_test(GltfSceneConverterTest GltfSceneConverterTest.cpp
         mesh-attribute-normal-quantized.gltf
         mesh-attribute-objectidub.gltf
         mesh-attribute-objectidui.gltf
-        mesh-attribute-position-quantized.gltf
+        mesh-attribute-position-quantized-b-normalized.gltf
+        mesh-attribute-position-quantized-ub.gltf
+        mesh-attribute-position-quantized-s.gltf
+        mesh-attribute-position-quantized-us-normalized.gltf
         mesh-attribute-tangent.gltf
         mesh-attribute-tangent-quantized.gltf
         mesh-attribute-tangent3.gltf

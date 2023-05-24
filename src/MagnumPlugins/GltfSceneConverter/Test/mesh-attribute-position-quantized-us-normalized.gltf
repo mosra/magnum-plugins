@@ -3,33 +3,31 @@
     "version": "2.0"
   },
   "extensionsUsed": [
-    "KHR_mesh_quantization",
-    "KHR_materials_unlit",
-    "MAGNUM_is_amazing"
+    "KHR_mesh_quantization"
   ],
   "extensionsRequired": [
-    "MAGNUM_can_write_json",
     "KHR_mesh_quantization"
   ],
   "buffers": [
     {
-      "uri": "metadata-explicit-implicit-extensions.bin",
-      "byteLength": 4
+      "uri": "mesh-attribute-position-quantized-us-normalized.bin",
+      "byteLength": 32
     }
   ],
   "bufferViews": [
     {
       "buffer": 0,
       "byteOffset": 0,
-      "byteLength": 4,
-      "byteStride": 4,
+      "byteLength": 32,
+      "byteStride": 32,
       "target": 34962
     }
   ],
   "accessors": [
     {
       "bufferView": 0,
-      "componentType": 5120,
+      "componentType": 5123,
+      "normalized": true,
       "count": 1,
       "type": "VEC3",
       "min": [0, 0, 0],
@@ -46,13 +44,6 @@
           "mode": 2
         }
       ]
-    }
-  ],
-  "materials": [
-    {
-      "extensions": {
-        "KHR_materials_unlit": {}
-      }
     }
   ]
 }
