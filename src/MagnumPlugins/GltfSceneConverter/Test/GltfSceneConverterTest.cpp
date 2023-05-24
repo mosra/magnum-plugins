@@ -2177,7 +2177,7 @@ GltfSceneConverterTest::GltfSceneConverterTest() {
     /* By default don't write the generator name for smaller test files */
     CORRADE_INTERNAL_ASSERT_EXPRESSION(_converterManager.metadata("GltfSceneConverter"))->configuration().setValue("generator", "");
     if(PluginManager::PluginMetadata* metadata = _imageConverterManager.metadata("KtxImageConverter"))
-        metadata->configuration().setValue("writerName", "");
+        metadata->configuration().setValue("generator", "");
 
     /* Create the output directory if it doesn't exist yet */
     CORRADE_INTERNAL_ASSERT_OUTPUT(Utility::Path::make(GLTFSCENECONVERTER_TEST_OUTPUT_DIR));
@@ -3921,7 +3921,7 @@ void GltfSceneConverterTest::addImagePropagateConfiguration() {
 
     Utility::ConfigurationGroup* imageConverterConfiguration = converter->configuration().group("imageConverter");
     CORRADE_VERIFY(imageConverterConfiguration);
-    imageConverterConfiguration->setValue("writerName", "MAGNUM IS AWESOME");
+    imageConverterConfiguration->setValue("generator", "MAGNUM IS AWESOME");
 
     CORRADE_VERIFY(converter->beginData());
 

@@ -689,7 +689,7 @@ template<UnsignedInt dimensions, template<UnsignedInt, typename> class View> Con
 
     const auto orientation = configuration.value<Containers::StringView>("orientation");
     const auto swizzle = configuration.value<Containers::StringView>("swizzle");
-    const auto writerName = configuration.value<Containers::StringView>("writerName");
+    const auto generator = configuration.value<Containers::StringView>("generator");
 
     /* Cube map and array images don't have the last dimension included
        in the orientation string */
@@ -732,7 +732,7 @@ template<UnsignedInt dimensions, template<UnsignedInt, typename> class View> Con
     const Containers::Pair<Containers::StringView, Containers::StringView> keyValueMap[]{
         {"KTXorientation"_s, orientation.prefix(Math::min(std::size_t(orientationDimensions), orientation.size()))},
         {"KTXswizzle"_s, swizzle},
-        {"KTXwriter"_s, writerName}
+        {"KTXwriter"_s, generator}
     };
 
     /* Calculate size */

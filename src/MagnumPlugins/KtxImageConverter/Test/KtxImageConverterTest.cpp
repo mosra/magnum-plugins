@@ -113,8 +113,8 @@ struct KtxImageConverterTest: TestSuite::Tester {
     void configurationSwizzle();
     void configurationSwizzleEmpty();
     void configurationSwizzleInvalid();
-    void configurationWriterName();
-    void configurationWriterNameEmpty();
+    void configurationGenerator();
+    void configurationGeneratorEmpty();
 
     void configurationEmpty();
     void configurationSorted();
@@ -428,8 +428,8 @@ KtxImageConverterTest::KtxImageConverterTest() {
     addInstancedTests({&KtxImageConverterTest::configurationSwizzleInvalid},
         Containers::arraySize(InvalidSwizzleData));
 
-    addTests({&KtxImageConverterTest::configurationWriterName,
-              &KtxImageConverterTest::configurationWriterNameEmpty});
+    addTests({&KtxImageConverterTest::configurationGenerator,
+              &KtxImageConverterTest::configurationGeneratorEmpty});
 
     addInstancedTests({&KtxImageConverterTest::configurationEmpty},
         Containers::arraySize(QuietData));
@@ -741,7 +741,7 @@ void KtxImageConverterTest::convert1D() {
        instead of toktx */
     /** @todo regenerate the test files when toktx 4.1 is stable */
     converter->configuration().setValue("orientation", "r");
-    converter->configuration().setValue("writerName", WriterToktx);
+    converter->configuration().setValue("generator", WriterToktx);
 
     PixelStorage storage;
     storage.setAlignment(1);
@@ -761,7 +761,7 @@ void KtxImageConverterTest::convert1DMipmaps() {
        instead of toktx */
     /** @todo regenerate the test files when toktx 4.1 is stable */
     converter->configuration().setValue("orientation", "r");
-    converter->configuration().setValue("writerName", WriterToktx);
+    converter->configuration().setValue("generator", WriterToktx);
 
     constexpr Math::Vector<1, Int> size{4};
     const Color3ub mip0[4]{0xff0000_rgb, 0xffffff_rgb, 0x000000_rgb, 0x007f7f_rgb};
@@ -789,7 +789,7 @@ void KtxImageConverterTest::convert1DCompressed() {
 
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("KtxImageConverter");
     converter->configuration().setValue("orientation", "r");
-    converter->configuration().setValue("writerName", WriterPVRTexTool);
+    converter->configuration().setValue("generator", WriterPVRTexTool);
 
     Containers::Optional<Containers::Array<char>> blockData = Utility::Path::read(
         Utility::Path::join(KTXIMPORTER_TEST_DIR, Utility::Path::splitExtension(data.file).first() + ".bin"));
@@ -808,7 +808,7 @@ void KtxImageConverterTest::convert1DCompressed() {
 void KtxImageConverterTest::convert1DCompressedMipmaps() {
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("KtxImageConverter");
     converter->configuration().setValue("orientation", "r");
-    converter->configuration().setValue("writerName", WriterPVRTexTool);
+    converter->configuration().setValue("generator", WriterPVRTexTool);
 
     constexpr Math::Vector<1, Int> size{7};
     Containers::Optional<Containers::Array<char>> mip0 = Utility::Path::read(Utility::Path::join(KTXIMPORTER_TEST_DIR, "1d-compressed-mipmaps-mip0.bin"));
@@ -836,7 +836,7 @@ void KtxImageConverterTest::convert1DCompressedMipmaps() {
 void KtxImageConverterTest::convert1DArray() {
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("KtxImageConverter");
     converter->configuration().setValue("orientation", "rd");
-    converter->configuration().setValue("writerName", WriterPVRTexTool);
+    converter->configuration().setValue("generator", WriterPVRTexTool);
 
     PixelStorage storage;
     storage.setAlignment(1);
@@ -855,7 +855,7 @@ void KtxImageConverterTest::convert2D() {
     CORRADE_COMPARE(converter->mimeType(), "image/ktx2");
 
     converter->configuration().setValue("orientation", "rd");
-    converter->configuration().setValue("writerName", WriterToktx);
+    converter->configuration().setValue("generator", WriterToktx);
 
     PixelStorage storage;
     storage.setAlignment(1);
@@ -872,7 +872,7 @@ void KtxImageConverterTest::convert2D() {
 void KtxImageConverterTest::convert2DMipmaps() {
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("KtxImageConverter");
     converter->configuration().setValue("orientation", "rd");
-    converter->configuration().setValue("writerName", WriterToktx);
+    converter->configuration().setValue("generator", WriterToktx);
 
     constexpr Vector2i size{4, 3};
     const auto mip0 = Containers::arrayCast<const Color3ub>(Containers::arrayView(
@@ -900,7 +900,7 @@ void KtxImageConverterTest::convert2DMipmaps() {
 void KtxImageConverterTest::convert2DMipmapsIncomplete() {
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("KtxImageConverter");
     converter->configuration().setValue("orientation", "rd");
-    converter->configuration().setValue("writerName", WriterToktx);
+    converter->configuration().setValue("generator", WriterToktx);
 
     constexpr Vector2i size{4, 3};
     const auto mip0 = Containers::arrayCast<const Color3ub>(Containers::arrayView(
@@ -929,7 +929,7 @@ void KtxImageConverterTest::convert2DCompressed() {
 
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("KtxImageConverter");
     converter->configuration().setValue("orientation", "rd");
-    converter->configuration().setValue("writerName", WriterPVRTexTool);
+    converter->configuration().setValue("generator", WriterPVRTexTool);
 
     Containers::Optional<Containers::Array<char>> blockData = Utility::Path::read(Utility::Path::join(KTXIMPORTER_TEST_DIR, Utility::Path::splitExtension(data.file).first() + ".bin"));
     CORRADE_VERIFY(blockData);
@@ -947,7 +947,7 @@ void KtxImageConverterTest::convert2DCompressed() {
 void KtxImageConverterTest::convert2DCompressedMipmaps() {
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("KtxImageConverter");
     converter->configuration().setValue("orientation", "rd");
-    converter->configuration().setValue("writerName", WriterPVRTexTool);
+    converter->configuration().setValue("generator", WriterPVRTexTool);
 
     constexpr Vector2i size{9, 10};
     Containers::Optional<Containers::Array<char>> mip0 = Utility::Path::read(Utility::Path::join(KTXIMPORTER_TEST_DIR, "2d-compressed-mipmaps-mip0.bin"));
@@ -978,7 +978,7 @@ void KtxImageConverterTest::convert2DCompressedMipmaps() {
 void KtxImageConverterTest::convert2DArray() {
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("KtxImageConverter");
     converter->configuration().setValue("orientation", "rd");
-    converter->configuration().setValue("writerName", WriterPVRTexTool);
+    converter->configuration().setValue("generator", WriterPVRTexTool);
 
     PixelStorage storage;
     storage.setAlignment(1);
@@ -994,7 +994,7 @@ void KtxImageConverterTest::convert2DArray() {
 void KtxImageConverterTest::convert2DArrayMipmaps() {
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("KtxImageConverter");
     converter->configuration().setValue("orientation", "rd");
-    converter->configuration().setValue("writerName", WriterPVRTexTool);
+    converter->configuration().setValue("generator", WriterPVRTexTool);
 
     const ImageView3D inputImage0{PixelStorage{}.setAlignment(1), PixelFormat::RGB8Srgb, {4, 3, 3}, PatternRgbData2DArray, ImageFlag3D::Array};
 
@@ -1066,7 +1066,7 @@ const Color3ub FacesRgbData[2][6][2][2]{
 void KtxImageConverterTest::convertCubeMap() {
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("KtxImageConverter");
     converter->configuration().setValue("orientation", "rd");
-    converter->configuration().setValue("writerName", WriterPVRTexTool);
+    converter->configuration().setValue("generator", WriterPVRTexTool);
 
     const ImageView3D inputImage{PixelStorage{}.setAlignment(1), PixelFormat::RGB8Srgb, {2, 2, 6}, FacesRgbData, ImageFlag3D::CubeMap};
     Containers::Optional<Containers::Array<char>> output = converter->convertToData(inputImage);
@@ -1080,7 +1080,7 @@ void KtxImageConverterTest::convertCubeMap() {
 void KtxImageConverterTest::convertCubeMapMipmaps() {
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("KtxImageConverter");
     converter->configuration().setValue("orientation", "rd");
-    converter->configuration().setValue("writerName", WriterPVRTexTool);
+    converter->configuration().setValue("generator", WriterPVRTexTool);
 
     const ImageView3D inputImage0{PixelStorage{}.setAlignment(1), PixelFormat::RGB8Srgb, {2, 2, 6}, FacesRgbData, ImageFlag3D::CubeMap};
 
@@ -1106,7 +1106,7 @@ void KtxImageConverterTest::convertCubeMapMipmaps() {
 void KtxImageConverterTest::convertCubeMapArray() {
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("KtxImageConverter");
     converter->configuration().setValue("orientation", "rd");
-    converter->configuration().setValue("writerName", WriterPVRTexTool);
+    converter->configuration().setValue("generator", WriterPVRTexTool);
 
     const ImageView3D inputImage{PixelStorage{}.setAlignment(1), PixelFormat::RGB8Srgb, {2, 2, 12}, FacesRgbData, ImageFlag3D::CubeMap|ImageFlag3D::Array};
     Containers::Optional<Containers::Array<char>> output = converter->convertToData(inputImage);
@@ -1120,7 +1120,7 @@ void KtxImageConverterTest::convertCubeMapArray() {
 void KtxImageConverterTest::convert3D() {
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("KtxImageConverter");
     converter->configuration().setValue("orientation", "rdi");
-    converter->configuration().setValue("writerName", WriterPVRTexTool);
+    converter->configuration().setValue("generator", WriterPVRTexTool);
 
     PixelStorage storage;
     storage.setAlignment(1);
@@ -1168,7 +1168,7 @@ void KtxImageConverterTest::convert3DMipmaps() {
 void KtxImageConverterTest::convert3DCompressed() {
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("KtxImageConverter");
     converter->configuration().setValue("orientation", "rdi");
-    converter->configuration().setValue("writerName", WriterPVRTexTool);
+    converter->configuration().setValue("generator", WriterPVRTexTool);
 
     Containers::Optional<Containers::Array<char>> blockData = Utility::Path::read(Utility::Path::join(KTXIMPORTER_TEST_DIR, "3d-compressed.bin"));
     CORRADE_VERIFY(blockData);
@@ -1228,7 +1228,7 @@ void KtxImageConverterTest::convertFormats() {
     if(data.orientation)
         converter->configuration().setValue("orientation", data.orientation);
     if(data.writer)
-        converter->configuration().setValue("writerName", data.writer);
+        converter->configuration().setValue("generator", data.writer);
 
     PixelStorage storage;
     storage.setAlignment(1);
@@ -1387,11 +1387,11 @@ void KtxImageConverterTest::configurationSwizzleInvalid() {
     CORRADE_COMPARE(out.str(), Utility::formatString("Trade::KtxImageConverter::convertToData(): {}\n", data.message));
 }
 
-void KtxImageConverterTest::configurationWriterName() {
+void KtxImageConverterTest::configurationGenerator() {
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("KtxImageConverter");
     /* Default value */
-    CORRADE_COMPARE(converter->configuration().value("writerName"), "Magnum KtxImageConverter");
-    CORRADE_VERIFY(converter->configuration().setValue("writerName", "KtxImageConverterTest&$%1234@\x02\n\r\t\x15!"));
+    CORRADE_COMPARE(converter->configuration().value("generator"), "Magnum KtxImageConverter");
+    CORRADE_VERIFY(converter->configuration().setValue("generator", "KtxImageConverterTest&$%1234@\x02\n\r\t\x15!"));
 
     const UnsignedByte bytes[4]{};
     Containers::Optional<Containers::Array<char>> data = converter->convertToData(ImageView2D{PixelFormat::RGBA8Unorm, {1, 1}, bytes});
@@ -1402,9 +1402,9 @@ void KtxImageConverterTest::configurationWriterName() {
     CORRADE_VERIFY(keyValueData.contains("KTXwriter\0KtxImageConverterTest&$%1234@\x02\n\r\t\x15!"_s));
 }
 
-void KtxImageConverterTest::configurationWriterNameEmpty() {
+void KtxImageConverterTest::configurationGeneratorEmpty() {
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("KtxImageConverter");
-    CORRADE_VERIFY(converter->configuration().setValue("writerName", ""));
+    CORRADE_VERIFY(converter->configuration().setValue("generator", ""));
 
     const UnsignedByte bytes[4]{};
     Containers::Optional<Containers::Array<char>> data = converter->convertToData(ImageView2D{PixelFormat::RGBA8Unorm, {1, 1}, bytes});
@@ -1421,7 +1421,7 @@ void KtxImageConverterTest::configurationEmpty() {
 
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("KtxImageConverter");
     converter->addFlags(data.flags);
-    CORRADE_VERIFY(converter->configuration().removeValue("writerName"));
+    CORRADE_VERIFY(converter->configuration().removeValue("generator"));
     CORRADE_VERIFY(converter->configuration().removeValue("swizzle"));
     CORRADE_VERIFY(converter->configuration().removeValue("orientation"));
 
@@ -1448,7 +1448,7 @@ void KtxImageConverterTest::configurationEmpty() {
 
 void KtxImageConverterTest::configurationSorted() {
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("KtxImageConverter");
-    CORRADE_VERIFY(converter->configuration().setValue("writerName", "x"));
+    CORRADE_VERIFY(converter->configuration().setValue("generator", "x"));
     CORRADE_VERIFY(converter->configuration().setValue("swizzle", "barg"));
     CORRADE_VERIFY(converter->configuration().setValue("orientation", "rd"));
 
