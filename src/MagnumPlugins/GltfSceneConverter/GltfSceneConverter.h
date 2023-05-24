@@ -107,8 +107,6 @@ See @ref building-plugins, @ref cmake-plugins, @ref plugins and
 
 @section Trade-GltfSceneConverter-behavior Behavior and limitations
 
--   At the moment, alignment rules for the `*.glb` layout are not respected.
-
 The plugin recognizes @ref SceneConverterFlag::Quiet, which will cause all
 conversion warnings to be suppressed. Both @ref SceneConverterFlag::Quiet and
 @ref SceneConverterFlag::Verbose are also translated to corresponding

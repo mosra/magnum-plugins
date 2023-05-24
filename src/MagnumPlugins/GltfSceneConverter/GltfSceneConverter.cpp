@@ -490,13 +490,24 @@ Containers::Optional<Containers::Array<char>> GltfSceneConverter::doEndData() {
         const char data[4];
     };
 
+    /* Padding after JSON and binary chunks to satisfy four-byte alignment
+       requirements. Used only in case of a binary output. */
+    std::size_t jsonChunkPadding;
+    std::size_t binChunkPadding;
+
     /* Reserve the output array and write headers for a binary glTF */
     Containers::Array<char> out;
     if(_state->binary) {
+        jsonChunkPadding = 4*((json.size() + 3)/4) - json.size();
+        binChunkPadding = 4*((_state->buffer.size() + 3)/4) - _state->buffer.size();
+        CORRADE_INTERNAL_ASSERT(jsonChunkPadding <= 3 && binChunkPadding <= 3);
+
         const std::size_t totalSize = 12 + /* file header */
-            8 + json.size() + /* JSON chunk + header */
+            /* JSON chunk + header + padding */
+            8 + json.size() + jsonChunkPadding +
+            /* BIN chunk + header + padding */
             (_state->buffer.isEmpty() ? 0 :
-                8 + _state->buffer.size()); /* BIN chunk + header */
+                8 + _state->buffer.size() + binChunkPadding);
         Containers::arrayReserve<ArrayAllocator>(out, totalSize);
 
         /* glTF header */
@@ -505,14 +516,18 @@ Containers::Optional<Containers::Array<char>> GltfSceneConverter::doEndData() {
         Containers::arrayAppend<ArrayAllocator>(out,
             CharCaster{UnsignedInt(totalSize)}.data);
 
-        /* JSON chunk header */
+        /* JSON chunk header. The size includes padding. */
         Containers::arrayAppend<ArrayAllocator>(out,
-            CharCaster{UnsignedInt(json.size())}.data);
+            CharCaster{UnsignedInt(json.size() + jsonChunkPadding)}.data);
         Containers::arrayAppend<ArrayAllocator>(out,
             "JSON"_s);
 
-    /* Otherwise reserve just for the JSON */
-    } else Containers::arrayReserve<ArrayAllocator>(out, json.size());
+    /* Otherwise reserve just for the JSON. Set the padding values to a
+       nonsense to catch accidental uses. */
+    } else {
+        Containers::arrayReserve<ArrayAllocator>(out, json.size());
+        jsonChunkPadding = binChunkPadding = ~std::size_t{};
+    }
 
     /* Copy the JSON data to the output. In case of a text glTF we would
        ideally just pass the memory from the JsonWriter but the class uses an
@@ -522,14 +537,24 @@ Containers::Optional<Containers::Array<char>> GltfSceneConverter::doEndData() {
         once allocators-as-arguments are a thing */
     Containers::arrayAppend<ArrayAllocator>(out, json.toString());
 
-    /* Add the buffer as a second BIN chunk for a binary glTF */
-    if(_state->binary && !_state->buffer.isEmpty()) {
-        Containers::arrayAppend<ArrayAllocator>(out,
-            CharCaster{UnsignedInt(_state->buffer.size())}.data);
-        Containers::arrayAppend<ArrayAllocator>(out,
-            "BIN\0"_s);
-        Containers::arrayAppend<ArrayAllocator>(out,
-            _state->buffer);
+    /* In case of a binary glTF add more data after */
+    if(_state->binary) {
+        /* JSON chunk padding, have to be spaces */
+        for(char& i: Containers::arrayAppend<ArrayAllocator>(out, NoInit, jsonChunkPadding))
+            i = ' ';
+
+        /* Add the buffer as a second BIN chunk. The size includes padding
+           again, this time the padding has to be zeros. */
+        if(!_state->buffer.isEmpty()) {
+            Containers::arrayAppend<ArrayAllocator>(out,
+                CharCaster{UnsignedInt(_state->buffer.size() + binChunkPadding)}.data);
+            Containers::arrayAppend<ArrayAllocator>(out,
+                "BIN\0"_s);
+            Containers::arrayAppend<ArrayAllocator>(out,
+                _state->buffer);
+            for(char& i: Containers::arrayAppend<ArrayAllocator>(out, NoInit, binChunkPadding))
+                i = '\0';
+        }
     }
 
     /* GCC 4.8 and Clang 3.8 need extra help here */
