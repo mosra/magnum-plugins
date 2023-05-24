@@ -3567,7 +3567,7 @@ void GltfSceneConverterTest::addMeshMultiple() {
 
     const Vector3 positions[]{{1.0f, 2.0f, 3.0f}, {4.0f, 5.0f, 6.0f}};
     const Color4us colors[]{{15, 36, 760, 26000}, {38, 26, 1616, 63555}};
-    const UnsignedInt indices[]{0, 1, 0};
+    const UnsignedShort indices[]{0, 1, 0};
 
     Containers::Pointer<AbstractSceneConverter> converter =  _converterManager.instantiate("GltfSceneConverter");
 
@@ -3602,7 +3602,7 @@ void GltfSceneConverterTest::addMeshMultiple() {
     CORRADE_VERIFY(triangleFan);
     CORRADE_VERIFY(triangleFan->isIndexed());
     CORRADE_COMPARE(triangleFan->attributeCount(), 1);
-    CORRADE_COMPARE_AS(triangleFan->indices<UnsignedInt>(),
+    CORRADE_COMPARE_AS(triangleFan->indices<UnsignedShort>(),
         Containers::arrayView(indices),
         TestSuite::Compare::Container);
     CORRADE_COMPARE_AS(triangleFan->attribute<Vector3>(0),

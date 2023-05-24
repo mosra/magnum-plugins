@@ -5,26 +5,26 @@
   "buffers": [
     {
       "uri": "mesh-multiple.bin",
-      "byteLength": 52
+      "byteLength": 46
     }
   ],
   "bufferViews": [
     {
       "buffer": 0,
       "byteOffset": 0,
-      "byteLength": 12,
+      "byteLength": 6,
       "target": 34963
     },
     {
       "buffer": 0,
-      "byteOffset": 12,
+      "byteOffset": 6,
       "byteLength": 24,
       "byteStride": 12,
       "target": 34962
     },
     {
       "buffer": 0,
-      "byteOffset": 36,
+      "byteOffset": 30,
       "byteLength": 16,
       "byteStride": 8,
       "target": 34962
@@ -33,7 +33,7 @@
   "accessors": [
     {
       "bufferView": 0,
-      "componentType": 5125,
+      "componentType": 5123,
       "count": 3,
       "type": "SCALAR"
     },
