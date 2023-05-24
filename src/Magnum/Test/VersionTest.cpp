@@ -42,14 +42,24 @@ VersionTest::VersionTest() {
 }
 
 void VersionTest::test() {
-    Debug{} << "MAGNUMPLUGINS_VERSION_YEAR:" << MAGNUMPLUGINS_VERSION_YEAR;
-    Debug{} << "MAGNUMPLUGINS_VERSION_MONTH:" << MAGNUMPLUGINS_VERSION_MONTH;
     #ifdef MAGNUMPLUGINS_VERSION_COMMIT
-    Debug{} << "MAGNUMPLUGINS_VERSION_COMMIT:" << MAGNUMPLUGINS_VERSION_COMMIT;
-    Debug{} << "MAGNUMPLUGINS_VERSION_HASH:" << reinterpret_cast<void*>(MAGNUMPLUGINS_VERSION_HASH);
-    Debug{} << "MAGNUMPLUGINS_VERSION_STRING:" << MAGNUMPLUGINS_VERSION_STRING;
+    CORRADE_INFO(
+        "MAGNUMPLUGINS_VERSION_YEAR:" << MAGNUMPLUGINS_VERSION_YEAR
+        << Debug::newline <<
+        "        MAGNUMPLUGINS_VERSION_MONTH:" << MAGNUMPLUGINS_VERSION_MONTH
+        << Debug::newline <<
+        "        MAGNUMPLUGINS_VERSION_COMMIT:" << MAGNUMPLUGINS_VERSION_COMMIT
+        << Debug::newline <<
+        "        MAGNUMPLUGINS_VERSION_HASH:" << reinterpret_cast<void*>(MAGNUMPLUGINS_VERSION_HASH)
+        << Debug::newline <<
+        "        MAGNUMPLUGINS_VERSION_STRING:" << MAGNUMPLUGINS_VERSION_STRING);
     #else
-    Debug{} << "No Git version information available.";
+    CORRADE_INFO(
+        "MAGNUMPLUGINS_VERSION_YEAR:" << MAGNUMPLUGINS_VERSION_YEAR
+        << Debug::newline <<
+        "        MAGNUMPLUGINS_VERSION_MONTH:" << MAGNUMPLUGINS_VERSION_MONTH
+        << Debug::newline <<
+        "        No Git version information available.");
     #endif
 
     CORRADE_COMPARE_AS(MAGNUMPLUGINS_VERSION_YEAR, 2019, TestSuite::Compare::GreaterOrEqual);
