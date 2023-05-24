@@ -133,6 +133,9 @@ struct AssimpImporter::File {
     std::unordered_map<const aiNode*, UnsignedInt> nodeIndices;
     /* (materialPointer, propertyIndexInsideMaterial, imageIndex) tuple,
        imageIndex points to the (deduplicated) images array */
+    /** @todo this should deduplicate the textures as well, as e.g. in case of
+        rungholt.obj there's 193 different textures all having the same sampler
+        parameters sharing the same 3 images(!) */
     Containers::Array<Containers::Triple<const aiMaterial*, UnsignedInt, UnsignedInt>> textures;
     /* (materialPointer, propertyIndexInsideMaterial) tuple defining the first
        (unique) location of an image */
