@@ -17,9 +17,12 @@ build() {
     mkdir -p "$_rootdir/build"
     cd "$_rootdir/build"
 
+    # RelWithDebInfo is enabled but not built -- it's meant for profiling from
+    # within the build dir
     cmake .. \
-        -DCMAKE_CONFIGURATION_TYPES="Debug;Release" \
+        -DCMAKE_CONFIGURATION_TYPES="Debug;Release;RelWithDebInfo" \
         -DCMAKE_CROSS_CONFIGS=all \
+        -DCMAKE_CXX_FLAGS_RELWITHDEBINFO="-O2 -g -DNDEBUG -fno-omit-frame-pointer" \
         -DCMAKE_INSTALL_PREFIX=/usr \
         -DBASIS_UNIVERSAL_DIR=/opt/basis-universal \
         -DMAGNUM_BUILD_TESTS=ON \
