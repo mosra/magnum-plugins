@@ -61,8 +61,6 @@ Exports full scenes to either `*.gltf` files with an external `*.bin` buffer or
 to a self-contained `*.glb`. You can use @ref GltfImporter to import scenes in
 this format.
 
-@experimental
-
 @section Trade-GltfSceneConverter-usage Usage
 
 @m_class{m-note m-success}
