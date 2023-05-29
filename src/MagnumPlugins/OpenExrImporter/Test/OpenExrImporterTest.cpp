@@ -62,6 +62,11 @@ struct OpenExrImporterTest: TestSuite::Tester {
     void forceChannelCountMore();
     void forceChannelCountLess();
     void forceChannelCountWrong();
+    void forceChannelTypeFloat();
+    void forceChannelTypeHalf();
+    void forceChannelTypeUInt();
+    void forceChannelTypeNoOp();
+    void forceChannelTypeWrong();
 
     void customChannels();
     void customChannelsDuplicated();
@@ -113,6 +118,15 @@ const struct {
 } CubeMapData[] {
     {"", "envmap-cube.exr"},
     {"custom data/display window", "envmap-cube-custom-windows.exr"},
+};
+
+const struct {
+    const char* name;
+    ImporterFlags flags;
+    bool verbose;
+} VerboseData[]{
+    {"", {}, false},
+    {"verbose", ImporterFlag::Verbose, true}
 };
 
 const struct {
@@ -213,7 +227,15 @@ OpenExrImporterTest::OpenExrImporterTest() {
 
     addTests({&OpenExrImporterTest::forceChannelCountMore,
               &OpenExrImporterTest::forceChannelCountLess,
-              &OpenExrImporterTest::forceChannelCountWrong,
+              &OpenExrImporterTest::forceChannelCountWrong});
+
+    addInstancedTests({&OpenExrImporterTest::forceChannelTypeFloat,
+                       &OpenExrImporterTest::forceChannelTypeHalf,
+                       &OpenExrImporterTest::forceChannelTypeUInt},
+        Containers::arraySize(VerboseData));
+
+    addTests({&OpenExrImporterTest::forceChannelTypeNoOp,
+              &OpenExrImporterTest::forceChannelTypeWrong,
 
               &OpenExrImporterTest::customChannels,
               &OpenExrImporterTest::customChannelsDuplicated,
@@ -467,6 +489,139 @@ void OpenExrImporterTest::forceChannelCountWrong() {
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->image2D(0));
     CORRADE_COMPARE(out.str(), "Trade::OpenExrImporter::image2D(): forceChannelCount is expected to be 0-4, got 5\n");
+}
+
+void OpenExrImporterTest::forceChannelTypeFloat() {
+    auto&& data = VerboseData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenExrImporter");
+    importer->addFlags(data.flags);
+    importer->configuration().setValue("forceChannelType", "FLOAT");
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(OPENEXRIMPORTER_TEST_DIR, "rgb16f.exr")));
+
+    std::ostringstream out;
+    Containers::Optional<Trade::ImageData2D> image;
+    {
+        Debug redirectOutput{&out};
+        image = importer->image2D(0);
+    }
+    CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->flags(), ImageFlags2D{});
+    CORRADE_COMPARE(image->size(), Vector2i(1, 3));
+    CORRADE_COMPARE(image->format(), PixelFormat::RGB32F);
+    if(data.verbose)
+        CORRADE_COMPARE(out.str(), "Trade::OpenExrImporter::image2D(): converting HALF channels to FLOAT\n");
+    else
+        CORRADE_COMPARE(out.str(), "");
+
+    CORRADE_COMPARE_AS(Containers::arrayCast<const Float>(image->data()), Containers::arrayView({
+        0.0f, 1.0f, 2.0f,
+        3.0f, 4.0f, 5.0f,
+        6.0f, 7.0f, 8.0f,
+    }), TestSuite::Compare::Container);
+}
+
+void OpenExrImporterTest::forceChannelTypeHalf() {
+    auto&& data = VerboseData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenExrImporter");
+    importer->addFlags(data.flags);
+    importer->configuration().setValue("forceChannelType", "HALF");
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(OPENEXRIMPORTER_TEST_DIR, "rgba32f.exr")));
+
+    std::ostringstream out;
+    Containers::Optional<Trade::ImageData2D> image;
+    {
+        Debug redirectOutput{&out};
+        image = importer->image2D(0);
+    }
+    CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->flags(), ImageFlags2D{});
+    CORRADE_COMPARE(image->size(), Vector2i(1, 3));
+    CORRADE_COMPARE(image->format(), PixelFormat::RGBA16F);
+    if(data.verbose)
+        CORRADE_COMPARE(out.str(), "Trade::OpenExrImporter::image2D(): converting FLOAT channels to HALF\n");
+    else
+        CORRADE_COMPARE(out.str(), "");
+
+    CORRADE_COMPARE_AS(Containers::arrayCast<const Half>(image->data()), Containers::arrayView({
+        0.0_h, 1.0_h, 2.0_h, 3.0_h,
+        4.0_h, 5.0_h, 6.0_h, 7.0_h,
+        8.0_h, 9.0_h, 10.0_h, 11.0_h
+    }), TestSuite::Compare::Container);
+}
+
+void OpenExrImporterTest::forceChannelTypeUInt() {
+    auto&& data = VerboseData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenExrImporter");
+    importer->addFlags(data.flags);
+    importer->configuration().setValue("forceChannelType", "UINT");
+    /* Using a 16-bit-per-channel input to verify the original channel size
+       isn't accidentally used further */
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(OPENEXRIMPORTER_TEST_DIR, "rgb16f.exr")));
+
+    std::ostringstream out;
+    Containers::Optional<Trade::ImageData2D> image;
+    {
+        Debug redirectOutput{&out};
+        image = importer->image2D(0);
+    }
+    CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->flags(), ImageFlags2D{});
+    CORRADE_COMPARE(image->size(), Vector2i(1, 3));
+    CORRADE_COMPARE(image->format(), PixelFormat::RGB32UI);
+    if(data.verbose)
+        CORRADE_COMPARE(out.str(), "Trade::OpenExrImporter::image2D(): converting HALF channels to UINT\n");
+    else
+        CORRADE_COMPARE(out.str(), "");
+
+    CORRADE_COMPARE_AS(Containers::arrayCast<const UnsignedInt>(image->data()), Containers::arrayView<UnsignedInt>({
+        0, 1, 2,
+        3, 4, 5,
+        6, 7, 8,
+    }), TestSuite::Compare::Container);
+}
+
+void OpenExrImporterTest::forceChannelTypeNoOp() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenExrImporter");
+    importer->addFlags(ImporterFlag::Verbose);
+    importer->configuration().setValue("forceChannelType", "FLOAT");
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(OPENEXRIMPORTER_TEST_DIR, "rgba32f.exr")));
+
+    std::ostringstream out;
+    Containers::Optional<Trade::ImageData2D> image;
+    {
+        Debug redirectOutput{&out};
+        image = importer->image2D(0);
+    }
+    CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->flags(), ImageFlags2D{});
+    CORRADE_COMPARE(image->size(), Vector2i(1, 3));
+    CORRADE_COMPARE(image->format(), PixelFormat::RGBA32F);
+    /* No message should be printed even with verbose output as no conversion
+       is being done */
+    CORRADE_COMPARE(out.str(), "");
+
+    CORRADE_COMPARE_AS(Containers::arrayCast<const Float>(image->data()), Containers::arrayView<Float>({
+        0.0f, 1.0f, 2.0f, 3.0f,
+        4.0f, 5.0f, 6.0f, 7.0f,
+        8.0f, 9.0f, 10.0f, 11.0f
+    }), TestSuite::Compare::Container);
+}
+
+void OpenExrImporterTest::forceChannelTypeWrong() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenExrImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(OPENEXRIMPORTER_TEST_DIR, "rgba32f.exr")));
+
+    importer->configuration().setValue("forceChannelType", "RGBA8");
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!importer->image2D(0));
+    CORRADE_COMPARE(out.str(), "Trade::OpenExrImporter::image2D(): forceChannelType is expected to be FLOAT, HALF or UINT, got RGBA8\n");
 }
 
 void OpenExrImporterTest::customChannels() {

@@ -294,7 +294,7 @@ void OpenExrImporter::doOpenData(Containers::Array<char>&& data, const DataFlags
 namespace {
 
 /* level = -1 means file is InputFile, non-negative value is TiledInputFile */
-Containers::Optional<ImageData2D> imageInternal(const Utility::ConfigurationGroup& configuration, Imf::GenericInputFile& file, const Int level, const char* messagePrefix) try {
+Containers::Optional<ImageData2D> imageInternal(const Utility::ConfigurationGroup& configuration, Imf::GenericInputFile& file, const Int level, const char* const messagePrefix, const ImporterFlags flags) try {
     const Imf::Header* header;
     Imath::Box2i dataWindow;
     if(level == -1) {
@@ -362,6 +362,12 @@ Containers::Optional<ImageData2D> imageInternal(const Utility::ConfigurationGrou
         return {};
     }
 
+    constexpr const char* PixelTypeName[] {
+        "UINT",
+        "HALF",
+        "FLOAT"
+    };
+
     /* Decide on channel count and common format for all. The `channelCount` is
        always overwriten in the loop below (and then checked by the assert for
        extra robustness), but GCC tries to be "smart" and complains that it
@@ -381,12 +387,6 @@ Containers::Optional<ImageData2D> imageInternal(const Utility::ConfigurationGrou
         CORRADE_INTERNAL_ASSERT(UnsignedInt(channels[mapping[i]].type) < Imf::NUM_PIXELTYPES);
         if(!type) type = channels[mapping[i]].type;
         else if(*type != channels[mapping[i]].type) {
-            constexpr const char* PixelTypeName[] {
-                "UINT",
-                "HALF",
-                "FLOAT"
-            };
-
             /* For depth, the type is already set to FLOAT above, so this will
                double as a consistency check there as well */
             Error{} << messagePrefix << "channel" << mapping[i] << "expected to be a" << PixelTypeName[*type] << "but got" << PixelTypeName[channels[mapping[i]].type];
@@ -397,14 +397,34 @@ Containers::Optional<ImageData2D> imageInternal(const Utility::ConfigurationGrou
     /* There should be at least one channel */
     CORRADE_INTERNAL_ASSERT(type);
 
-    /* Force channel count for RGBA, if requested */
-    if(!isDepth) if(const Int forceChannelCount = configuration.value<Int>("forceChannelCount")) {
-        if(forceChannelCount < 0 || forceChannelCount > 4) {
-            Error{} << messagePrefix << "forceChannelCount is expected to be 0-4, got" << forceChannelCount;
-            return {};
+    /* Force channel count / format for RGBA, if requested */
+    if(!isDepth) {
+        if(const Int forceChannelCount = configuration.value<Int>("forceChannelCount")) {
+            if(forceChannelCount < 0 || forceChannelCount > 4) {
+                Error{} << messagePrefix << "forceChannelCount is expected to be 0-4, got" << forceChannelCount;
+                return {};
+            }
+
+            channelCount = forceChannelCount;
         }
 
-        channelCount = forceChannelCount;
+        if(const Containers::StringView forceChannelType = configuration.value<Containers::StringView>("forceChannelType")) {
+            Imf::PixelType forcedType;
+            if(forceChannelType == "FLOAT"_s)
+                forcedType = Imf::PixelType::FLOAT;
+            else if(forceChannelType == "HALF"_s)
+                forcedType = Imf::PixelType::HALF;
+            else if(forceChannelType == "UINT"_s)
+                forcedType = Imf::PixelType::UINT;
+            else {
+                Error{} << messagePrefix << "forceChannelType is expected to be FLOAT, HALF or UINT, got" << forceChannelType;
+                return {};
+            }
+
+            if(type != forcedType && (flags & ImporterFlag::Verbose))
+                Debug{} << messagePrefix << "converting" << PixelTypeName[*type] << "channels to" << PixelTypeName[forcedType];
+            type = forcedType;
+        }
     }
 
     /** @todo YUV? look how RgbaInputImage does that and apply here */
@@ -530,9 +550,9 @@ UnsignedInt OpenExrImporter::doImage2DLevelCount(UnsignedInt) {
 Containers::Optional<ImageData2D> OpenExrImporter::doImage2D(UnsignedInt, const UnsignedInt level) {
     Containers::Optional<ImageData2D> image;
     if(_state->file) {
-        image = imageInternal(configuration(), *_state->file, -1, "Trade::OpenExrImporter::image2D():");
+        image = imageInternal(configuration(), *_state->file, -1, "Trade::OpenExrImporter::image2D():", flags());
     } else {
-        image = imageInternal(configuration(), *_state->tiledFile, level, "Trade::OpenExrImporter::image2D():");
+        image = imageInternal(configuration(), *_state->tiledFile, level, "Trade::OpenExrImporter::image2D():", flags());
     }
 
     /* Let's stop here for a bit and contemplate on all the missed
@@ -589,9 +609,9 @@ UnsignedInt OpenExrImporter::doImage3DLevelCount(UnsignedInt) {
 Containers::Optional<ImageData3D> OpenExrImporter::doImage3D(UnsignedInt, const UnsignedInt level) {
     Containers::Optional<ImageData2D> image2D;
     if(_state->file) {
-        image2D = imageInternal(configuration(), *_state->file, -1, "Trade::OpenExrImporter::image3D():");
+        image2D = imageInternal(configuration(), *_state->file, -1, "Trade::OpenExrImporter::image3D():", flags());
     } else {
-        image2D = imageInternal(configuration(), *_state->tiledFile, level, "Trade::OpenExrImporter::image3D():");
+        image2D = imageInternal(configuration(), *_state->tiledFile, level, "Trade::OpenExrImporter::image3D():", flags());
     }
     if(!image2D) return {};
 
