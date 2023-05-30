@@ -65,6 +65,10 @@ if(MAGNUM_WITH_BASISIMPORTER)
     add_subdirectory(BasisImporter)
 endif()
 
+if(MAGNUM_WITH_BCDECIMAGECONVERTER)
+    add_subdirectory(BcDecImageConverter)
+endif()
+
 if(MAGNUM_BUILD_DEPRECATED AND MAGNUM_WITH_CGLTFIMPORTER)
     add_subdirectory(CgltfImporter)
 endif()

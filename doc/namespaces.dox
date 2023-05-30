@@ -41,6 +41,10 @@
  * @brief Plugin @ref Magnum::Trade::BasisImporter
  * @m_since_{plugins,2019,10}
  */
+/** @dir MagnumPlugins/BcDecImageConverter
+ * @brief Plugin @ref Magnum::Trade::BcDecImageConverter
+ * @m_since_latest_{plugins}
+ */
 /** @dir MagnumPlugins/CgltfImporter
  * @brief Plugin @ref Magnum::Trade::CgltfImporter
  * @m_deprecated_since_latest Use the @relativeref{Magnum,Trade::GltfImporter}

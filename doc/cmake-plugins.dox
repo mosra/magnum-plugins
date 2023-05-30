@@ -122,6 +122,7 @@ This command will not try to find any actual plugin. The plugins are:
 -   `AstcImporter` --- @relativeref{Trade,AstcImporter} plugin
 -   `BasisImageConverter` --- @ref Trade::BasisImageConverter "BasisImageConverter" plugin
 -   `BasisImporter` --- @ref Trade::BasisImporter "BasisImporter" plugin
+-   `BcDecImageConverter` --- @relativeref{Trade,BcDecImageConverter} plugin
 -   `CgltfImporter` @m_class{m-label m-danger} **deprecated** ---
     @ref Trade::CgltfImporter "CgltfImporter" plugin
 -   `DdsImporter` --- @ref Trade::DdsImporter "DdsImporter" plugin

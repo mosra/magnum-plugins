@@ -16,6 +16,7 @@
 #  AstcImporter                 - ASTC importer
 #  BasisImageConverter          - Basis image converter
 #  BasisImporter                - Basis importer
+#  BcDecImageConverter          - BCn image decoder using bcdec
 #  DdsImporter                  - DDS importer
 #  DevIlImageImporter           - Image importer using DevIL
 #  DrFlacAudioImporter          - FLAC audio importer using dr_flac
@@ -162,11 +163,12 @@ mark_as_advanced(MAGNUMPLUGINS_INCLUDE_DIR)
 # components from other repositories)
 set(_MAGNUMPLUGINS_LIBRARY_COMPONENTS OpenDdl)
 set(_MAGNUMPLUGINS_PLUGIN_COMPONENTS
-    AssimpImporter AstcImporter BasisImageConverter BasisImporter DdsImporter
-    DevIlImageImporter DrFlacAudioImporter DrMp3AudioImporter
-    DrWavAudioImporter Faad2AudioImporter FreeTypeFont GlslangShaderConverter
-    GltfImporter GltfSceneConverter HarfBuzzFont IcoImporter JpegImageConverter
-    JpegImporter KtxImageConverter KtxImporter MeshOptimizerSceneConverter
+    AssimpImporter AstcImporter BasisImageConverter BasisImporter
+    BcDecImageConverter DdsImporter DevIlImageImporter DrFlacAudioImporter
+    DrMp3AudioImporter DrWavAudioImporter
+    Faad2AudioImporter FreeTypeFont GlslangShaderConverter GltfImporter
+    GltfSceneConverter HarfBuzzFont IcoImporter JpegImageConverter JpegImporter
+    KtxImageConverter KtxImporter MeshOptimizerSceneConverter
     MiniExrImageConverter OpenExrImageConverter OpenExrImporter
     OpenGexImporter PngImageConverter PngImporter PrimitiveImporter
     SpirvToolsShaderConverter SpngImporter StanfordImporter
@@ -344,6 +346,7 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
                     INTERFACE_LINK_LIBRARIES basisu_transcoder)
             endif()
 
+        # BcDecImageConverter has no dependencies
         # CgltfImporter has no dependencies
         # DdsImporter has no dependencies
 

@@ -75,6 +75,7 @@ class MagnumPlugins < Formula
         "-DMAGNUM_WITH_ASTCIMPORTER=ON",
         "-D#{option_prefix}WITH_BASISIMAGECONVERTER=ON",
         "-D#{option_prefix}WITH_BASISIMPORTER=ON",
+        "-DMAGNUM_WITH_BCDECIMAGECONVERTER=ON",
         "-DMAGNUM_WITH_CGLTFIMPORTER=ON",
         "-D#{option_prefix}WITH_DDSIMPORTER=ON",
         "-D#{option_prefix}WITH_DEVILIMAGEIMPORTER=#{(build.with? 'devil') ? 'ON' : 'OFF'}",
