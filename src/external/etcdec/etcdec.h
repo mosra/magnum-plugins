@@ -406,9 +406,9 @@ static void etcdec__decompress_eac_block(const void* compressedBlock, void* deco
     unsigned char* decompressed;
     int baseCodeword, multiplier, modifier, idx;
     int i, j, k;
-    const char* modifiersPtr;
+    const signed char* modifiersPtr;
 
-    static char modifierTable[16][8] = {
+    static signed char modifierTable[16][8] = {
             { -3, -6,  -9, -15, 2, 5, 8, 14 },
             { -3, -7, -10, -13, 2, 6, 9, 12 },
             { -2, -5,  -8, -13, 1, 4, 7, 12 },
