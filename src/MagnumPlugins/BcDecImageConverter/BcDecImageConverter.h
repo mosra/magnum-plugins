@@ -57,7 +57,8 @@ namespace Magnum { namespace Trade {
 @m_since_latest_{plugins}
 
 Decodes BC1, BC2, BC3, BC4, BC5, BC6H and BC7 blocks to uncompressed RGBA using
-the [bcdec](https://github.com/iOrange/bcdec) library.
+the [bcdec](https://github.com/iOrange/bcdec) library. See also the
+@ref EtcDecImageConverter plugin for decoding ETC and EAC images.
 
 @m_class{m-block m-primary}
 

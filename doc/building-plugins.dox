@@ -367,6 +367,8 @@ By default no plugins are built and you need to select them manually:
     @ref Audio::DrMp3Importer "DrMp3AudioImporter" plugin.
 -   `MAGNUM_WITH_DRWAVAUDIOIMPORTER` --- Build the
     @ref Audio::DrWavImporter "DrWavAudioImporter" plugin.
+-   `MAGNUM_WITH_ETCDECIMAGECONVERTER` --- Build the
+    @relativeref{Trade,EtcDecImageConverter} plugin.
 -   `MAGNUM_WITH_FAAD2AUDIOIMPORTER` --- Build the
     @ref Audio::Faad2Importer "Faad2AudioImporter" plugin. Depends on
     [FAAD2](https://www.audiocoding.com/faad2.html).

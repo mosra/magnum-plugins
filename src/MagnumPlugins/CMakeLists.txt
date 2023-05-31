@@ -93,6 +93,10 @@ if(MAGNUM_WITH_DRWAVAUDIOIMPORTER)
     add_subdirectory(DrWavAudioImporter)
 endif()
 
+if(MAGNUM_WITH_ETCDECIMAGECONVERTER)
+    add_subdirectory(EtcDecImageConverter)
+endif()
+
 if(MAGNUM_WITH_FAAD2AUDIOIMPORTER)
     add_subdirectory(Faad2AudioImporter)
 endif()

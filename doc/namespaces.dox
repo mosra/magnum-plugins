@@ -66,6 +66,10 @@
 /** @dir MagnumPlugins/DrWavAudioImporter
  * @brief Plugin @ref Magnum::Audio::DrWavImporter
  */
+/** @dir MagnumPlugins/EtcDecImageConverter
+ * @brief Plugin @ref Magnum::Trade::EtcDecImageConverter
+ * @m_since_latest_{plugins}
+ */
 /** @dir MagnumPlugins/Faad2AudioImporter
  * @brief Plugin @ref Magnum::Audio::Faad2Importer
  */

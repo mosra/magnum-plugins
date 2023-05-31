@@ -82,6 +82,7 @@ class MagnumPlugins < Formula
         "-D#{option_prefix}WITH_DRFLACAUDIOIMPORTER=ON",
         "-D#{option_prefix}WITH_DRMP3AUDIOIMPORTER=ON",
         "-D#{option_prefix}WITH_DRWAVAUDIOIMPORTER=ON",
+        "-DMAGNUM_WITH_ETCDECIMAGECONVERTER=ON",
         "-D#{option_prefix}WITH_FAAD2AUDIOIMPORTER=#{(build.with? 'faad2') ? 'ON' : 'OFF'}",
         "-D#{option_prefix}WITH_FREETYPEFONT=#{(build.with? 'freetype') ? 'ON' : 'OFF'}",
         "-DMAGNUM_WITH_GLSLANGSHADERCONVERTER=#{(build.with? 'glslang') ? 'ON' : 'OFF'}",

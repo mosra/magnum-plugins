@@ -22,6 +22,7 @@
 #  DrFlacAudioImporter          - FLAC audio importer using dr_flac
 #  DrMp3AudioImporter           - MP3 audio importer using dr_mp3
 #  DrWavAudioImporter           - WAV audio importer using dr_wav
+#  EtcDecImageConverter         - ETC/EAC image decoder using etcdec
 #  Faad2AudioImporter           - AAC audio importer using FAAD2
 #  FreeTypeFont                 - FreeType font
 #  GlslangShaderConverter       - Glslang shader converter
@@ -165,7 +166,7 @@ set(_MAGNUMPLUGINS_LIBRARY_COMPONENTS OpenDdl)
 set(_MAGNUMPLUGINS_PLUGIN_COMPONENTS
     AssimpImporter AstcImporter BasisImageConverter BasisImporter
     BcDecImageConverter DdsImporter DevIlImageImporter DrFlacAudioImporter
-    DrMp3AudioImporter DrWavAudioImporter
+    DrMp3AudioImporter DrWavAudioImporter EtcDecImageConverter
     Faad2AudioImporter FreeTypeFont GlslangShaderConverter GltfImporter
     GltfSceneConverter HarfBuzzFont IcoImporter JpegImageConverter JpegImporter
     KtxImageConverter KtxImporter MeshOptimizerSceneConverter
@@ -359,6 +360,7 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
         # DrFlacAudioImporter has no dependencies
         # DrMp3AudioImporter has no dependencies
         # DrWavAudioImporter has no dependencies
+        # EtcDecImageConverter has no dependencies
 
         # Faad2AudioImporter plugin dependencies
         elseif(_component STREQUAL Faad2AudioImporter)
