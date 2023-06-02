@@ -497,12 +497,13 @@ DdsImporterTest::DdsImporterTest() {
               &DdsImporterTest::rgbaArrayDxt10,
               &DdsImporterTest::rgbaCube,
               &DdsImporterTest::rCubeDxt10,
-              &DdsImporterTest::rCubeArrayDxt10,
-              &DdsImporterTest::dxt1CubeMips,
-              &DdsImporterTest::bc7CubeMipsDxt10});
+              &DdsImporterTest::rCubeArrayDxt10});
 
     addInstancedTests({&DdsImporterTest::rgba3D},
         Containers::arraySize(SwizzleFlipRgba3DData));
+
+    addTests({&DdsImporterTest::dxt1CubeMips,
+              &DdsImporterTest::bc7CubeMipsDxt10});
 
     addInstancedTests({
         &DdsImporterTest::extraDataAtTheEnd,
@@ -1140,103 +1141,6 @@ void DdsImporterTest::rgba3D() {
     #endif
 }
 
-void DdsImporterTest::extraDataAtTheEnd() {
-    auto&& data = QuietData[testCaseInstanceId()];
-    setTestCaseDescription(data.name);
-
-    Containers::Optional<Containers::Array<char>> file = Utility::Path::read(Utility::Path::join(DDSIMPORTER_TEST_DIR, "r8unorm.dds"));
-    CORRADE_VERIFY(file);
-    CORRADE_COMPARE(file->size(), 134);
-
-    char fileData[160];
-    Utility::copy(*file, Containers::arrayView(fileData).prefix(file->size()));
-
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
-    importer->addFlags(data.flags);
-
-    std::stringstream out;
-    {
-        Warning redirectWarning{&out};
-        CORRADE_VERIFY(importer->openData(fileData));
-    }
-    if(data.quiet)
-        CORRADE_COMPARE(out.str(), "");
-    else
-        CORRADE_COMPARE(out.str(), "Trade::DdsImporter::openData(): ignoring 26 extra bytes at the end of file\n");
-    CORRADE_COMPARE(importer->image1DCount(), 0);
-    CORRADE_COMPARE(importer->image2DCount(), 1);
-    CORRADE_COMPARE(importer->image2DLevelCount(0), 1);
-    CORRADE_COMPARE(importer->image3DCount(), 0);
-
-    Containers::Optional<ImageData2D> image = importer->image2D(0);
-    CORRADE_VERIFY(image);
-    CORRADE_VERIFY(!image->isCompressed());
-    CORRADE_COMPARE(image->flags(), ImageFlags2D{});
-    CORRADE_COMPARE(image->storage().alignment(), 1);
-    CORRADE_COMPARE(image->size(), Vector2i(3, 2));
-    CORRADE_COMPARE(image->format(), PixelFormat::R8Unorm);
-    CORRADE_COMPARE_AS(image->data(), Containers::arrayView<char>({
-        '\xca', '\xde', '\xca', /* Bottom row */
-        '\xde', '\xca', '\xde', /* Top row */
-    }), TestSuite::Compare::Container);
-
-    #ifdef MAGNUM_BUILD_DEPRECATED
-    CORRADE_COMPARE(importer->textureCount(), 1);
-
-    Containers::Optional<TextureData> texture = importer->texture(0);
-    CORRADE_VERIFY(texture);
-    CORRADE_COMPARE(texture->type(), TextureType::Texture2D);
-    #endif
-}
-
-void DdsImporterTest::incompleteCubeMap() {
-    auto&& data = QuietData[testCaseInstanceId()];
-    setTestCaseDescription(data.name);
-
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
-    importer->addFlags(data.flags);
-
-    std::stringstream out;
-    {
-        Warning redirectWarning{&out};
-        CORRADE_VERIFY(importer->openFile(Utility::Path::join(DDSIMPORTER_TEST_DIR, "rgba8unorm-cube-incomplete.dds")));
-    }
-    if(data.quiet)
-        CORRADE_COMPARE(out.str(), "");
-    else
-        CORRADE_COMPARE(out.str(), "Trade::DdsImporter::openData(): the image is an incomplete cubemap, importing faces as 5 array layers\n");
-    CORRADE_COMPARE(importer->image1DCount(), 0);
-    CORRADE_COMPARE(importer->image2DCount(), 0);
-    CORRADE_COMPARE(importer->image3DCount(), 1);
-    CORRADE_COMPARE(importer->image3DLevelCount(0), 1);
-
-    Containers::Optional<ImageData3D> image = importer->image3D(0);
-    CORRADE_VERIFY(image);
-    CORRADE_VERIFY(!image->isCompressed());
-    /* Not CubeMap because it's incomplete */
-    CORRADE_COMPARE(image->flags(), ImageFlag3D::Array);
-    CORRADE_COMPARE(image->size(), (Vector3i{5, 5, 5}));
-    CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Unorm);
-    /* Verify just a small prefix and suffix to be sure the data got copied
-       -- the data should be vaguely similar to rgbaCube() */
-    CORRADE_COMPARE_AS(image->data().prefix(8), Containers::array({
-        /* First two pixels of the bottom row of the first slice */
-        '\xc7', '\xcc', '\x2f', '\x7f', '\xcb', '\x5d', '\x31', '\x9d'
-    }), TestSuite::Compare::Container);
-    /** @todo suffix() once it takes N last bytes */
-    CORRADE_COMPARE_AS(image->data().exceptPrefix(image->data().size() - 8), Containers::array({
-        /* Last two pixels of the top row of the last slice */
-        '\x3d', '\x7c', '\xbe', '\x9d', '\xc4', '\x39', '\x39', '\x2c'
-    }), TestSuite::Compare::Container);
-
-    #ifdef MAGNUM_BUILD_DEPRECATED
-    Containers::Optional<TextureData> texture = importer->texture(0);
-    CORRADE_VERIFY(texture);
-    /* Not CubeMap because it's incomplete */
-    CORRADE_COMPARE(texture->type(), TextureType::Texture2DArray);
-    #endif
-}
-
 void DdsImporterTest::dxt1CubeMips() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(DDSIMPORTER_TEST_DIR, "dxt1-cube-mips.dds")));
@@ -1365,6 +1269,103 @@ void DdsImporterTest::bc7CubeMipsDxt10() {
             '\x12', '\x11', '\x11', '\x11', '\x11', '\x11', '\x11', '\x11'
         }), TestSuite::Compare::Container);
     }
+}
+
+void DdsImporterTest::extraDataAtTheEnd() {
+    auto&& data = QuietData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    Containers::Optional<Containers::Array<char>> file = Utility::Path::read(Utility::Path::join(DDSIMPORTER_TEST_DIR, "r8unorm.dds"));
+    CORRADE_VERIFY(file);
+    CORRADE_COMPARE(file->size(), 134);
+
+    char fileData[160];
+    Utility::copy(*file, Containers::arrayView(fileData).prefix(file->size()));
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
+    importer->addFlags(data.flags);
+
+    std::stringstream out;
+    {
+        Warning redirectWarning{&out};
+        CORRADE_VERIFY(importer->openData(fileData));
+    }
+    if(data.quiet)
+        CORRADE_COMPARE(out.str(), "");
+    else
+        CORRADE_COMPARE(out.str(), "Trade::DdsImporter::openData(): ignoring 26 extra bytes at the end of file\n");
+    CORRADE_COMPARE(importer->image1DCount(), 0);
+    CORRADE_COMPARE(importer->image2DCount(), 1);
+    CORRADE_COMPARE(importer->image2DLevelCount(0), 1);
+    CORRADE_COMPARE(importer->image3DCount(), 0);
+
+    Containers::Optional<ImageData2D> image = importer->image2D(0);
+    CORRADE_VERIFY(image);
+    CORRADE_VERIFY(!image->isCompressed());
+    CORRADE_COMPARE(image->flags(), ImageFlags2D{});
+    CORRADE_COMPARE(image->storage().alignment(), 1);
+    CORRADE_COMPARE(image->size(), Vector2i(3, 2));
+    CORRADE_COMPARE(image->format(), PixelFormat::R8Unorm);
+    CORRADE_COMPARE_AS(image->data(), Containers::arrayView<char>({
+        '\xca', '\xde', '\xca', /* Bottom row */
+        '\xde', '\xca', '\xde', /* Top row */
+    }), TestSuite::Compare::Container);
+
+    #ifdef MAGNUM_BUILD_DEPRECATED
+    CORRADE_COMPARE(importer->textureCount(), 1);
+
+    Containers::Optional<TextureData> texture = importer->texture(0);
+    CORRADE_VERIFY(texture);
+    CORRADE_COMPARE(texture->type(), TextureType::Texture2D);
+    #endif
+}
+
+void DdsImporterTest::incompleteCubeMap() {
+    auto&& data = QuietData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
+    importer->addFlags(data.flags);
+
+    std::stringstream out;
+    {
+        Warning redirectWarning{&out};
+        CORRADE_VERIFY(importer->openFile(Utility::Path::join(DDSIMPORTER_TEST_DIR, "rgba8unorm-cube-incomplete.dds")));
+    }
+    if(data.quiet)
+        CORRADE_COMPARE(out.str(), "");
+    else
+        CORRADE_COMPARE(out.str(), "Trade::DdsImporter::openData(): the image is an incomplete cubemap, importing faces as 5 array layers\n");
+    CORRADE_COMPARE(importer->image1DCount(), 0);
+    CORRADE_COMPARE(importer->image2DCount(), 0);
+    CORRADE_COMPARE(importer->image3DCount(), 1);
+    CORRADE_COMPARE(importer->image3DLevelCount(0), 1);
+
+    Containers::Optional<ImageData3D> image = importer->image3D(0);
+    CORRADE_VERIFY(image);
+    CORRADE_VERIFY(!image->isCompressed());
+    /* Not CubeMap because it's incomplete */
+    CORRADE_COMPARE(image->flags(), ImageFlag3D::Array);
+    CORRADE_COMPARE(image->size(), (Vector3i{5, 5, 5}));
+    CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Unorm);
+    /* Verify just a small prefix and suffix to be sure the data got copied
+       -- the data should be vaguely similar to rgbaCube() */
+    CORRADE_COMPARE_AS(image->data().prefix(8), Containers::array({
+        /* First two pixels of the bottom row of the first slice */
+        '\xc7', '\xcc', '\x2f', '\x7f', '\xcb', '\x5d', '\x31', '\x9d'
+    }), TestSuite::Compare::Container);
+    /** @todo suffix() once it takes N last bytes */
+    CORRADE_COMPARE_AS(image->data().exceptPrefix(image->data().size() - 8), Containers::array({
+        /* Last two pixels of the top row of the last slice */
+        '\x3d', '\x7c', '\xbe', '\x9d', '\xc4', '\x39', '\x39', '\x2c'
+    }), TestSuite::Compare::Container);
+
+    #ifdef MAGNUM_BUILD_DEPRECATED
+    Containers::Optional<TextureData> texture = importer->texture(0);
+    CORRADE_VERIFY(texture);
+    /* Not CubeMap because it's incomplete */
+    CORRADE_COMPARE(texture->type(), TextureType::Texture2DArray);
+    #endif
 }
 
 void DdsImporterTest::r3DZeroFieldsZeroDepthZeroMips() {
