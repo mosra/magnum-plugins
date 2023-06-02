@@ -677,9 +677,8 @@ void BasisImporterTest::rgbUncompressed() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporterRGBA8");
-    CORRADE_COMPARE(importer->configuration().value<std::string>("format"),
-        "RGBA8");
-        std::ostringstream out;
+    CORRADE_COMPARE(importer->configuration().value("format"), "RGBA8");
+    std::ostringstream out;
     {
         Warning redirectWarning{&out};
         CORRADE_VERIFY(importer->openFile(Utility::Path::join(BASISIMPORTER_TEST_DIR,
@@ -912,15 +911,14 @@ void BasisImporterTest::rgb() {
         CORRADE_SKIP("This format is not compiled into Basis.");
     #endif
 
-    const std::string pluginName = "BasisImporter" + std::string(formatData.suffix);
+    const Containers::String pluginName = "BasisImporter"_s + formatData.suffix;
     setTestCaseDescription(formatData.suffix);
 
     for(const auto& fileType: FileTypeData) {
         CORRADE_ITERATION(fileType.name);
 
         Containers::Pointer<AbstractImporter> importer = _manager.instantiate(pluginName);
-        CORRADE_COMPARE(importer->configuration().value<std::string>("format"),
-            formatData.suffix);
+        CORRADE_COMPARE(importer->configuration().value("format"), formatData.suffix);
         /* See the comment above this variable for more details. The files used
            by this function are all encoded with Y up in convert.sh, but
            except for rgb.ktx2 (which has it patched in) the KTX files are
@@ -929,7 +927,7 @@ void BasisImporterTest::rgb() {
             importer->configuration().setValue("assumeYUp", true);
 
         CORRADE_VERIFY(importer->openFile(Utility::Path::join(BASISIMPORTER_TEST_DIR,
-            std::string{formatData.fileBase} + fileType.extension)));
+            Containers::StringView{formatData.fileBase} + fileType.extension)));
         CORRADE_COMPARE(importer->image2DCount(), 1);
 
         Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
@@ -954,15 +952,14 @@ void BasisImporterTest::rgba() {
         CORRADE_SKIP("This format is not compiled into Basis.");
     #endif
 
-    const std::string pluginName = "BasisImporter" + std::string(formatData.suffix);
+    const Containers::String pluginName = "BasisImporter"_s + formatData.suffix;
     setTestCaseDescription(formatData.suffix);
 
     for(const auto& fileType: FileTypeData) {
         CORRADE_ITERATION(fileType.name);
 
         Containers::Pointer<AbstractImporter> importer = _manager.instantiate(pluginName);
-        CORRADE_COMPARE(importer->configuration().value<std::string>("format"),
-            formatData.suffix);
+        CORRADE_COMPARE(importer->configuration().value("format"), formatData.suffix);
         /* See the comment above this variable for more details. The files used
            by this function are all encoded with Y up in convert.sh, but
            the KTX files are missing the KTXorientation metadata, causing a
@@ -998,15 +995,14 @@ void BasisImporterTest::linear() {
         CORRADE_SKIP("This format is not compiled into Basis.");
     #endif
 
-    const std::string pluginName = "BasisImporter" + std::string(formatData.suffix);
+    const Containers::String pluginName = "BasisImporter"_s + formatData.suffix;
     setTestCaseDescription(formatData.suffix);
 
     for(const auto& fileType: FileTypeData) {
         CORRADE_ITERATION(fileType.name);
 
         Containers::Pointer<AbstractImporter> importer = _manager.instantiate(pluginName);
-        CORRADE_COMPARE(importer->configuration().value<std::string>("format"),
-            formatData.suffix);
+        CORRADE_COMPARE(importer->configuration().value("format"), formatData.suffix);
         /* See the comment above this variable for more details. The files used
            by this function are all encoded with Y up in convert.sh, but the
            KTX files are missing the KTXorientation metadata, causing a
@@ -1015,7 +1011,7 @@ void BasisImporterTest::linear() {
             importer->configuration().setValue("assumeYUp", true);
 
         CORRADE_VERIFY(importer->openFile(Utility::Path::join(BASISIMPORTER_TEST_DIR,
-            std::string{formatData.fileBaseLinear} + fileType.extension)));
+            Containers::StringView{formatData.fileBaseLinear} + fileType.extension)));
         CORRADE_COMPARE(importer->image2DCount(), 1);
 
         Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
@@ -1431,8 +1427,7 @@ void BasisImporterTest::openMemory() {
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporterRGBA8");
     CORRADE_VERIFY(importer);
-    CORRADE_COMPARE(importer->configuration().value<std::string>("format"),
-        "RGBA8");
+    CORRADE_COMPARE(importer->configuration().value("format"), "RGBA8");
     Containers::Optional<Containers::Array<char>> memory = Utility::Path::read(Utility::Path::join(BASISIMPORTER_TEST_DIR, "rgba.basis"));
     CORRADE_VERIFY(memory);
     CORRADE_VERIFY(data.open(*importer, *memory));
