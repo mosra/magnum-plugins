@@ -36,7 +36,11 @@
 #include <Corrade/Utility/DebugStl.h> /** @todo remove once Debug is stream-free */
 #include <Corrade/Utility/FormatStl.h> /** @todo remove once Debug is stream-free */
 #include <Corrade/Utility/Path.h>
+#include <Magnum/ImageView.h>
 #include <Magnum/PixelFormat.h>
+#include <Magnum/Math/Vector4.h>
+#include <Magnum/DebugTools/CompareImage.h>
+#include <Magnum/Trade/AbstractImageConverter.h>
 #include <Magnum/Trade/AbstractImporter.h>
 #include <Magnum/Trade/ImageData.h>
 
@@ -87,6 +91,10 @@ struct DdsImporterTest: TestSuite::Tester {
     void r3DZeroFieldsZeroDepthZeroMips();
 
     void formats();
+    /* Flip of uncompressed formats is tested together with swizzle in rgb()
+       and rgba3D() */
+    void compressedFormatFlip();
+    void compressedFormatFlip3D();
 
     void openMemory();
     void openTwice();
@@ -94,6 +102,8 @@ struct DdsImporterTest: TestSuite::Tester {
 
     /* Explicitly forbid system-wide plugin dependencies */
     PluginManager::Manager<AbstractImporter> _manager{"nonexistent"};
+    /* For testing Y-flip of block-compressed formats */
+    PluginManager::Manager<AbstractImageConverter> _converterManager{"nonexistent"};
 };
 
 /* Enum taken verbatim from dxgiformat.h, the ASTC part then from GLI */
@@ -399,20 +409,6 @@ const struct {
 const struct {
     const char* name;
     ImporterFlags flags;
-    Containers::Optional<bool> assumeYUp;
-    const char* message;
-} CompressedFlipWarningData[]{
-    {"", {}, {},
-        "Trade::DdsImporter::openData(): block-compressed image is assumed to be encoded with Y down and Z forward, imported data will have wrong orientation. Enable assumeYUpZBackward to suppress this warning.\n"},
-    {"quiet", ImporterFlag::Quiet, {},
-        ""},
-    {"assume Y up", {}, true,
-        ""}
-};
-
-const struct {
-    const char* name;
-    ImporterFlags flags;
     bool quiet;
 } QuietData[]{
     {"", {}, false},
@@ -452,6 +448,76 @@ constexpr struct {
     {"dxt10-astc8x5unorm.dds", PixelFormat{}, CompressedPixelFormat::Astc8x5RGBAUnorm}
 };
 
+const struct {
+    const char* name;
+    const char* filename;
+    ImporterFlags flags;
+    Containers::Optional<bool> assumeYUp;
+    bool flipped;
+    const char* message;
+} CompressedFormatFlipData[]{
+    /* Picking files that look like being converted from a real image in
+       convert.sh, and not from something empty in which case a Y-flipped file
+       would look the same as not Y-flipped */
+    {"BC1, incomplete blocks",
+        "dxt1.dds", {}, {}, true,
+        "Trade::DdsImporter::image2D(): Y-flipping a compressed image that's not whole blocks, the result will be shifted by 2 pixels\n"},
+    {"BC1, incomplete blocks, verbose",
+        "dxt1.dds", ImporterFlag::Verbose, {}, true,
+        "Trade::DdsImporter::openData(): image will be flipped along y\n"
+        "Trade::DdsImporter::image2D(): Y-flipping a compressed image that's not whole blocks, the result will be shifted by 2 pixels\n"},
+    {"BC1, incomplete blocks, quiet",
+        "dxt1.dds", ImporterFlag::Quiet, {}, true, nullptr},
+    {"BC1, incomplete blocks, assume Y up, verbose",
+        "dxt1.dds", ImporterFlag::Verbose, true, false,
+        nullptr},
+    {"BC2",
+        "dxt3.dds", {}, {}, true, nullptr},
+    {"BC3, incomplete blocks",
+        "dxt5.dds", {}, {}, true,
+        "Trade::DdsImporter::image2D(): Y-flipping a compressed image that's not whole blocks, the result will be shifted by 2 pixels\n"},
+    {"BC4 unsigned, incomplete blocks",
+        "bc4unorm.dds", {}, {}, true,
+        "Trade::DdsImporter::image2D(): Y-flipping a compressed image that's not whole blocks, the result will be shifted by 2 pixels\n"},
+    {"BC5 signed, incomplete blocks",
+        "bc5snorm.dds", {}, {}, true,
+        "Trade::DdsImporter::image2D(): Y-flipping a compressed image that's not whole blocks, the result will be shifted by 2 pixels\n"},
+    /* These are all not implemented yet */
+    {"BC7, flip not implemented",
+        "dxt10-bc7.dds", {}, {}, false,
+        "Trade::DdsImporter::openData(): Y flip is not yet implemented for CompressedPixelFormat::Bc7RGBAUnorm, imported data will have wrong orientation. Enable assumeYUpZBackward to suppress this warning.\n"},
+    {"BC7, flip not implemented, quiet",
+        "dxt10-bc7.dds", ImporterFlag::Quiet, {}, false, nullptr},
+    {"BC7, flip not implemented, assume Y up, verbose",
+        "dxt10-bc7.dds", ImporterFlag::Verbose, true, false, nullptr},
+    /** @todo include ASTC (flip not implemented) once a decoder exists */
+};
+
+const struct {
+    const char* name;
+    const char* filename;
+    ImporterFlags flags;
+    Containers::Optional<bool> assumeYUpZBackward;
+    bool flippedY, flippedZ;
+    const char* message;
+} CompressedFormatFlip3DData[]{
+    {"BC1, incomplete blocks",
+        "dxt1-3d.dds", {}, {}, true, true,
+        "Trade::DdsImporter::image3D(): Y-flipping a compressed image that's not whole blocks, the result will be shifted by 3 pixels\n"},
+    {"BC1, incomplete blocks, verbose",
+        "dxt1-3d.dds", ImporterFlag::Verbose, {}, true, true,
+        "Trade::DdsImporter::openData(): image will be flipped along y and z\n"
+        "Trade::DdsImporter::image3D(): Y-flipping a compressed image that's not whole blocks, the result will be shifted by 3 pixels\n"},
+    {"BC1, incomplete blocks, assume Y up Z backward, verbose",
+        "dxt1-3d.dds", ImporterFlag::Verbose, true, false, false, nullptr},
+    {"BC7, flip not implemented, verbose",
+        "dxt10-bc7-3d.dds", ImporterFlag::Verbose, {}, false, true,
+        "Trade::DdsImporter::openData(): Y flip is not yet implemented for CompressedPixelFormat::Bc7RGBAUnorm, imported data will have wrong orientation. Enable assumeYUpZBackward to suppress this warning.\n"
+        "Trade::DdsImporter::openData(): image will be flipped along z\n"},
+    {"BC7, flip not implemented, assume Y up Z backward, verbose",
+        "dxt10-bc7-3d.dds", ImporterFlag::Verbose, true, false, false, nullptr},
+};
+
 /* Shared among all plugins that implement data copying optimizations */
 const struct {
     const char* name;
@@ -485,10 +551,8 @@ DdsImporterTest::DdsImporterTest() {
               &DdsImporterTest::rgbMips,
               &DdsImporterTest::rgbMipsDxt10});
 
-    addInstancedTests({&DdsImporterTest::dxt3},
-        Containers::arraySize(CompressedFlipWarningData));
-
-    addTests({&DdsImporterTest::dxt3IncompleteBlocks,
+    addTests({&DdsImporterTest::dxt3,
+              &DdsImporterTest::dxt3IncompleteBlocks,
               &DdsImporterTest::bc4,
               &DdsImporterTest::bc7Dxt10,
 
@@ -516,6 +580,12 @@ DdsImporterTest::DdsImporterTest() {
     addInstancedTests({&DdsImporterTest::formats},
         Containers::arraySize(FormatsData));
 
+    addInstancedTests({&DdsImporterTest::compressedFormatFlip},
+        Containers::arraySize(CompressedFormatFlipData));
+
+    addInstancedTests({&DdsImporterTest::compressedFormatFlip3D},
+        Containers::arraySize(CompressedFormatFlip3DData));
+
     addInstancedTests({&DdsImporterTest::openMemory},
         Containers::arraySize(OpenMemoryData));
 
@@ -526,6 +596,9 @@ DdsImporterTest::DdsImporterTest() {
        already loaded. */
     #ifdef DDSIMPORTER_PLUGIN_FILENAME
     CORRADE_INTERNAL_ASSERT_OUTPUT(_manager.load(DDSIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
+    #endif
+    #ifdef BCDECIMAGECONVERTER_PLUGIN_FILENAME
+    CORRADE_INTERNAL_ASSERT_OUTPUT(_converterManager.load(BCDECIMAGECONVERTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
     #endif
 }
 
@@ -742,21 +815,11 @@ void DdsImporterTest::rgbMipsDxt10() {
 }
 
 void DdsImporterTest::dxt3() {
-    auto&& data = CompressedFlipWarningData[testCaseInstanceId()];
-    setTestCaseDescription(data.name);
-
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
-    importer->addFlags(data.flags);
-    if(data.assumeYUp)
-        importer->configuration().setValue("assumeYUpZBackward", *data.assumeYUp);
-    else
-        CORRADE_COMPARE(importer->configuration().value("assumeYUpZBackward"), "false");
-    std::ostringstream out;
-    {
-        Warning redirectWarning{&out};
-        CORRADE_VERIFY(importer->openFile(Utility::Path::join(DDSIMPORTER_TEST_DIR, "dxt3.dds")));
-    }
-    CORRADE_COMPARE(out.str(), data.message);
+    /* Assume Y up orientation to get the data exactly as in the file without
+       any warnings */
+    importer->configuration().setValue("assumeYUpZBackward", true);
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(DDSIMPORTER_TEST_DIR, "dxt3.dds")));
     CORRADE_COMPARE(importer->image1DCount(), 0);
     CORRADE_COMPARE(importer->image2DCount(), 1);
     CORRADE_COMPARE(importer->image2DLevelCount(0), 1);
@@ -1436,6 +1499,161 @@ void DdsImporterTest::formats() {
     } else {
         CORRADE_VERIFY(image->isCompressed());
         CORRADE_COMPARE(image->compressedFormat(), data.compressedFormat);
+    }
+}
+
+void DdsImporterTest::compressedFormatFlip() {
+    auto&& data = CompressedFormatFlipData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    /* This won't flip the image and won't produce any warning either */
+    Containers::Pointer<AbstractImporter> importerNotFlipped = _manager.instantiate("DdsImporter");
+    importerNotFlipped->configuration().setValue("assumeYUpZBackward", true);
+    CORRADE_VERIFY(importerNotFlipped->openFile(Utility::Path::join(DDSIMPORTER_TEST_DIR, data.filename)));
+    Containers::Optional<ImageData2D> imageNotFlipped = importerNotFlipped->image2D(0);
+    CORRADE_VERIFY(imageNotFlipped);
+
+    /* This will either flip the image (with a verbose message) or print a
+       warning */
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
+    importer->addFlags(data.flags);
+    if(data.assumeYUp)
+        importer->configuration().setValue("assumeYUpZBackward", *data.assumeYUp);
+    Containers::Optional<ImageData2D> image;
+    std::ostringstream out;
+    {
+        Debug redirectOutput{&out};
+        Warning redirectWarning{&out};
+        CORRADE_VERIFY(importer->openFile(Utility::Path::join(DDSIMPORTER_TEST_DIR, data.filename)));
+        image = importer->image2D(0);
+        CORRADE_VERIFY(image);
+    }
+    if(data.message)
+        CORRADE_COMPARE(out.str(), data.message);
+    else
+        CORRADE_COMPARE(out.str(), "");
+
+    /* The images, once decoded, should then be flipped compared to each other,
+       or if flip was not made or not possible, identical */
+
+    /* Catch also ABI and interface mismatch errors */
+    if(!(_converterManager.load("BcDecImageConverter") & PluginManager::LoadState::Loaded))
+        CORRADE_SKIP("BcDecImageConverter plugin can't be loaded, cannot test decoded image equality.");
+
+    Containers::Pointer<Trade::AbstractImageConverter> decoder = _converterManager.loadAndInstantiate("BcDecImageConverter");
+    /** @todo here it might start failing for incomplete blocks at some point
+        due to the pixels being shifted, fix that by expanding the image size
+        to full blocks before decoding like in the 3D case */
+    Containers::Optional<Trade::ImageData2D> decodedNotFlipped = decoder->convert(*imageNotFlipped);
+    Containers::Optional<Trade::ImageData2D> decoded = decoder->convert(*image);
+    CORRADE_VERIFY(decodedNotFlipped);
+    CORRADE_VERIFY(decoded);
+
+    if(!data.flipped) CORRADE_COMPARE_AS(*decoded,
+        *decodedNotFlipped,
+        DebugTools::CompareImage);
+    else if(decoded->format() == PixelFormat::RGBA8Unorm)
+        CORRADE_COMPARE_AS(decoded->pixels<Vector4ub>().flipped<0>(),
+            *decodedNotFlipped,
+            DebugTools::CompareImage);
+    else if(decoded->format() == PixelFormat::RG8Unorm)
+        CORRADE_COMPARE_AS(decoded->pixels<Vector2ub>().flipped<0>(),
+            *decodedNotFlipped,
+            DebugTools::CompareImage);
+    else if(decoded->format() == PixelFormat::RG8Snorm)
+        CORRADE_COMPARE_AS(decoded->pixels<Vector2b>().flipped<0>(),
+            *decodedNotFlipped,
+            DebugTools::CompareImage);
+    else if(decoded->format() == PixelFormat::R8Unorm)
+        CORRADE_COMPARE_AS(decoded->pixels<UnsignedByte>().flipped<0>(),
+            *decodedNotFlipped,
+            DebugTools::CompareImage);
+    else CORRADE_FAIL("Unexpected format" << decoded->format());
+}
+
+void DdsImporterTest::compressedFormatFlip3D() {
+    auto&& data = CompressedFormatFlip3DData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    /* This won't flip the image and won't produce any warning either */
+    Containers::Pointer<AbstractImporter> importerNotFlipped = _manager.instantiate("DdsImporter");
+    importerNotFlipped->configuration().setValue("assumeYUpZBackward", true);
+    CORRADE_VERIFY(importerNotFlipped->openFile(Utility::Path::join(DDSIMPORTER_TEST_DIR, data.filename)));
+    Containers::Optional<ImageData3D> imageNotFlipped = importerNotFlipped->image3D(0);
+    CORRADE_VERIFY(imageNotFlipped);
+
+    /* This will either flip the image (with a verbose message) or print a
+       warning */
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
+    importer->addFlags(data.flags);
+    if(data.assumeYUpZBackward)
+        importer->configuration().setValue("assumeYUpZBackward", *data.assumeYUpZBackward);
+    Containers::Optional<ImageData3D> image;
+    std::ostringstream out;
+    {
+        Debug redirectOutput{&out};
+        Warning redirectWarning{&out};
+        CORRADE_VERIFY(importer->openFile(Utility::Path::join(DDSIMPORTER_TEST_DIR, data.filename)));
+        image = importer->image3D(0);
+        CORRADE_VERIFY(image);
+    }
+    if(data.message)
+        CORRADE_COMPARE(out.str(), data.message);
+    else
+        CORRADE_COMPARE(out.str(), "");
+
+    /* The images, once decoded, should then be flipped compared to each other,
+       or if flip was not made or not possible, identical */
+
+    /* Catch also ABI and interface mismatch errors */
+    if(!(_converterManager.load("BcDecImageConverter") & PluginManager::LoadState::Loaded))
+        CORRADE_SKIP("BcDecImageConverter plugin can't be loaded, cannot test decoded image equality.");
+
+    /* The converter doesn't support 3D images yet (waiting for CompressedImage
+       APIs to get more usable), manually convert each slice */
+    Containers::Pointer<Trade::AbstractImageConverter> decoder = _converterManager.loadAndInstantiate("BcDecImageConverter");
+    CORRADE_COMPARE(imageNotFlipped->size(), (Vector3i{5, 5, 3}));
+    const UnsignedInt blockDataSize = compressedPixelFormatBlockDataSize(imageNotFlipped->compressedFormat());
+    Containers::Optional<Trade::ImageData2D> decodedNotFlipped[]{
+        decoder->convert(CompressedImageView2D{
+            imageNotFlipped->compressedFormat(), {8, 8},
+            imageNotFlipped->data().prefix(2*2*blockDataSize)}),
+        decoder->convert(CompressedImageView2D{
+            imageNotFlipped->compressedFormat(), {8, 8},
+            imageNotFlipped->data().sliceSize(1*2*2*blockDataSize,
+                                              2*2*blockDataSize)}),
+        decoder->convert(CompressedImageView2D{
+            imageNotFlipped->compressedFormat(), {8, 8},
+            imageNotFlipped->data().sliceSize(2*2*2*blockDataSize,
+                                              2*2*blockDataSize)}),
+    };
+    Containers::Optional<Trade::ImageData2D> decoded[]{
+        decoder->convert(CompressedImageView2D{
+            image->compressedFormat(), {8, 8},
+            image->data().prefix(2*2*blockDataSize)}),
+        decoder->convert(CompressedImageView2D{
+            image->compressedFormat(), {8, 8},
+            image->data().sliceSize(1*2*2*blockDataSize,
+                                    2*2*blockDataSize)}),
+        decoder->convert(CompressedImageView2D{
+            image->compressedFormat(), {8, 8},
+            image->data().sliceSize(2*2*2*blockDataSize,
+                                    2*2*blockDataSize)}),
+    };
+
+    Vector3i zOrder = data.flippedZ ? Vector3i{2, 1, 0} : Vector3i{0, 1, 2};
+    for(Int i: {0, 1, 2}) {
+        CORRADE_VERIFY(decodedNotFlipped[i]);
+        CORRADE_VERIFY(decoded[zOrder[i]]);
+
+        if(!data.flippedY) CORRADE_COMPARE_AS(*decoded[zOrder[i]],
+            *decodedNotFlipped[i],
+            DebugTools::CompareImage);
+        else if(decoded[zOrder[i]]->format() == PixelFormat::RGBA8Unorm)
+            CORRADE_COMPARE_AS(decoded[zOrder[i]]->pixels<Vector4ub>().flipped<0>(),
+                *decodedNotFlipped[i],
+                DebugTools::CompareImage);
+        else CORRADE_FAIL("Unexpected format" << decoded[zOrder[i]]->format());
     }
 }
 

@@ -108,13 +108,17 @@ See @ref building-plugins, @ref cmake-plugins, @ref plugins and
     any orientation metadata, and so it's assumed to follow the Vulkan/D3D
     coordinate system with Y down and (for 3D textures) Z forward. Uncompressed
     images will be flipped on import to Y up and (for 3D textures) Z backward.
-    Because flipping block-compressed data is nontrivial, compressed images
-    will not be flipped on import, instead a message will be printed to
-    @relativeref{Magnum,Warning} and the data will be passed through unchanged.
+@par
+    Y-flipping block-compressed data is nontrivial and so far is implemented
+    only for BC1, BC2, BC3, BC4 and BC5 formats with APIs from
+    @ref Magnum/Math/ColorBatch.h. Other compressed formats will print a
+    message to @relativeref{Magnum,Warning} and the data will not be flipped. A
+    warning also gets printed in case the flip is performed on an image whose
+    height isn't whole blocks, as that causes the data to be shifted.
+@par
     Set the @cb{.ini} assumeYUpZBackward @ce
     @ref Trade-DdsImporter-configuration "configuration option" to assume the
-    OpenGL coordinate system, perform no flipping of uncompressed data and
-    silence the warning for compressed data.
+    OpenGL coordinate system and perform no flipping.
 
 The importer recognizes @ref ImporterFlag::Verbose, printing additional info
 when the flag is enabled. @ref ImporterFlag::Quiet is recognized as well and
@@ -252,7 +256,7 @@ class MAGNUM_DDSIMPORTER_EXPORT DdsImporter: public AbstractImporter {
         MAGNUM_DDSIMPORTER_LOCAL void doClose() override;
         MAGNUM_DDSIMPORTER_LOCAL void doOpenData(Containers::Array<char>&& data, DataFlags dataFlags) override;
 
-        template<UnsignedInt dimensions> MAGNUM_DDSIMPORTER_LOCAL ImageData<dimensions> doImage(UnsignedInt id, UnsignedInt level);
+        template<UnsignedInt dimensions> MAGNUM_DDSIMPORTER_LOCAL ImageData<dimensions> doImage(const char* messagePrefix, UnsignedInt id, UnsignedInt level);
 
         MAGNUM_DDSIMPORTER_LOCAL UnsignedInt doImage1DCount() const override;
         MAGNUM_DDSIMPORTER_LOCAL UnsignedInt doImage1DLevelCount(UnsignedInt id) override;

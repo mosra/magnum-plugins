@@ -53,4 +53,18 @@ printf '\x01' | dd of=dxt10-bc7-cube-mips.dds bs=1 seek=140 conv=notrunc
 # handle arrays correctly, there it uses just the first slice, so we can't have
 # a ground truth file for that.
 
+# 3D block-compressed textures, to test Z-flip
+nvassemble -volume rgba-5x5{,-slice1,-slice2}.png
+compressonatorcli -nomipmap -fd DXT1 output.dds dxt1-3d.dds
+compressonatorcli -nomipmap -fd BC7 output.dds dxt10-bc7-3d.dds
+rm output.dds
+# THE DAMN THING DOESN'T STORE THE ACTUAL Z SIZE IN THE FILE EITHER!!!
+#   Trade::DdsImporter::openData(): ignoring 64 extra bytes at the end of file
+# and a 5x5x1 image is what I get after opening this, the 64 bytes being 2x2x2
+# 8-byte blocks that form the second and third slice. FFS. Vaguely related:
+#   https://github.com/GPUOpen-Tools/compressonator/issues/111
+printf '\x03' | dd of=dxt1-3d.dds bs=1 seek=24 conv=notrunc
+# AND FOR DXT10 IT STORES THE DEPTH AS ARRAY SIZE!!!
+printf '\x01' | dd of=dxt10-bc7-3d.dds bs=1 seek=140 conv=notrunc
+
 rm rgba-{63x27,64x32}.tga rgb.tga rgba-5x5{,-slice1,-slice2}.png

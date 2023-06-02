@@ -35,6 +35,7 @@
 #include <Corrade/Utility/Endianness.h>
 #include <Corrade/Utility/Debug.h>
 #include <Magnum/PixelFormat.h>
+#include <Magnum/Math/ColorBatch.h>
 #include <Magnum/Math/Functions.h>
 #include <Magnum/Math/Vector3.h>
 #include <Magnum/Math/Vector4.h>
@@ -243,6 +244,7 @@ struct DdsImporter::File {
     std::size_t sliceSize; /* Size of one slice including all mip levels */
 
     bool compressed;
+    BitVector2 yzFlip{NoInit};
     union Properties {
         /* Yeah fuck off C++, this is unhelpful, this is not the point where I
            want to initialize anything, THIS IS NOT, the parent struct is */
@@ -251,7 +253,6 @@ struct DdsImporter::File {
         struct {
             PixelFormat format;
             bool needsSwizzle;
-            BitVector2 yzFlip{NoInit};
             UnsignedInt pixelSize;
         } uncompressed;
 
@@ -600,31 +601,41 @@ void DdsImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dat
        externally-provided hint. */
     if(configuration().value<bool>("assumeYUpZBackward")) {
         /* No flipping if Y up / Z backward is assumed */
-        f->properties.uncompressed.yzFlip = BitVector2{0x0};
+        f->yzFlip = BitVector2{0x0};
     } else {
-        /* Can't flip compressed blocks at the moment, so print a warning at
-           least */
-        if(f->compressed) {
-            if(!(flags() & ImporterFlag::Quiet))
-                Warning{} << "Trade::DdsImporter::openData(): block-compressed image is assumed to be encoded with Y down and Z forward, imported data will have wrong orientation. Enable assumeYUpZBackward to suppress this warning.";
+        f->yzFlip = BitVector2{0x0};
+        /* Z gets flipped only for a 3D texture */
+        if(f->dimensions == 3 && !(f->imageFlags & (ImageFlag3D::Array|ImageFlag3D::CubeMap)))
+            f->yzFlip.set(1);
+        /* Y gets flipped only if it's not a 1D (array) texture */
+        if(f->dimensions == 3 || (f->dimensions == 2 && !(f->imageFlags & ImageFlag3D::Array)))
+            f->yzFlip.set(0);
 
-        /* For uncompressed data decide about the flip orientations */
-        } else {
-            f->properties.uncompressed.yzFlip = BitVector2{0x0};
-            /* Z gets flipped only for a 3D texture */
-            if(f->dimensions == 3 && !(f->imageFlags & (ImageFlag3D::Array|ImageFlag3D::CubeMap)))
-                f->properties.uncompressed.yzFlip.set(1, true);
-            /* Y gets flipped only if it's not a 1D (array) texture */
-            if(f->dimensions == 3 || (f->dimensions == 2 && !(f->imageFlags & ImageFlag3D::Array)))
-                f->properties.uncompressed.yzFlip.set(0, true);
+        /* Only some compressed formats can be Y-flipped right now. Print a
+           warning for the others and reset the flip bit. */
+        if(f->yzFlip[0] && f->compressed &&
+            f->properties.compressed.format != CompressedPixelFormat::Bc1RGBAUnorm &&
+            f->properties.compressed.format != CompressedPixelFormat::Bc1RGBASrgb &&
+            f->properties.compressed.format != CompressedPixelFormat::Bc2RGBAUnorm &&
+            f->properties.compressed.format != CompressedPixelFormat::Bc2RGBASrgb &&
+            f->properties.compressed.format != CompressedPixelFormat::Bc3RGBAUnorm &&
+            f->properties.compressed.format != CompressedPixelFormat::Bc3RGBASrgb &&
+            f->properties.compressed.format != CompressedPixelFormat::Bc4RUnorm &&
+            f->properties.compressed.format != CompressedPixelFormat::Bc4RSnorm &&
+            f->properties.compressed.format != CompressedPixelFormat::Bc5RGUnorm &&
+            f->properties.compressed.format != CompressedPixelFormat::Bc5RGSnorm
+        ) {
+            if(!(flags() & ImporterFlag::Quiet))
+                Warning{} << "Trade::DdsImporter::openData(): Y flip is not yet implemented for" << f->properties.compressed.format << Debug::nospace << ", imported data will have wrong orientation. Enable assumeYUpZBackward to suppress this warning.";
+            f->yzFlip.reset(0);
         }
     }
 
     if(flags() & ImporterFlag::Verbose) {
-        if(f->properties.uncompressed.yzFlip.any()) {
+        if(f->yzFlip.any()) {
             const Containers::StringView axes[3]{
-                f->properties.uncompressed.yzFlip[0] ? "y"_s : ""_s,
-                f->properties.uncompressed.yzFlip[1] ? "z"_s : ""_s
+                f->yzFlip[0] ? "y"_s : ""_s,
+                f->yzFlip[1] ? "z"_s : ""_s
             };
             Debug{} << "Trade::DdsImporter::openData(): image will be flipped along" << " and "_s.joinWithoutEmptyParts(axes);
         }
@@ -665,9 +676,45 @@ void flipPixels(const BitVector2 yzFlip, const UnsignedInt pixelSize, const Vect
     if(yzFlip[1]) Utility::flipInPlace<0>(view);
 }
 
+void flipBlocks(const Vector3i& size, const ImporterFlags flags, const char* messagePrefix, const BitVector2 yzFlip, const CompressedPixelFormat format, const Vector3i& blockSize, const UnsignedInt blockDataSize, const Containers::ArrayView<char> data) {
+    const Vector3i blockCount = (size + blockSize - Vector3i{1})/blockSize;
+    const Containers::StridedArrayView4D<char> view{data, {
+        std::size_t(blockCount.z()),
+        std::size_t(blockCount.y()),
+        std::size_t(blockCount.x()),
+        blockDataSize
+    }};
+
+    if(yzFlip[0]) {
+        if(!(flags & ImporterFlag::Quiet) && size.y() % blockSize.y() != 0)
+            Warning{} << messagePrefix << "Y-flipping a compressed image that's not whole blocks, the result will be shifted by" << (blockSize.y() - (size.y() % blockSize.y())) << "pixels";
+
+        if(format == CompressedPixelFormat::Bc1RGBAUnorm ||
+           format == CompressedPixelFormat::Bc1RGBASrgb)
+            Math::yFlipBc1InPlace(view);
+        else if(format == CompressedPixelFormat::Bc2RGBAUnorm ||
+                format == CompressedPixelFormat::Bc2RGBASrgb)
+            Math::yFlipBc2InPlace(view);
+        else if(format == CompressedPixelFormat::Bc3RGBAUnorm ||
+                format == CompressedPixelFormat::Bc3RGBASrgb)
+            Math::yFlipBc3InPlace(view);
+        else if(format == CompressedPixelFormat::Bc4RUnorm ||
+                format == CompressedPixelFormat::Bc4RSnorm)
+            Math::yFlipBc4InPlace(view);
+        else if(format == CompressedPixelFormat::Bc5RGUnorm ||
+                format == CompressedPixelFormat::Bc5RGSnorm)
+            Math::yFlipBc5InPlace(view);
+        /* For all other -- not yet supported -- formats the yzFlip[0] bit was
+           reset so it shouldn't get here */
+        else CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+    }
+    if(yzFlip[1])
+        Utility::flipInPlace<0>(view);
 }
 
-template<UnsignedInt dimensions> ImageData<dimensions> DdsImporter::doImage(UnsignedInt, const UnsignedInt level) {
+}
+
+template<UnsignedInt dimensions> ImageData<dimensions> DdsImporter::doImage(const char* const messagePrefix, UnsignedInt, const UnsignedInt level) {
     /* Calculate input offset, data size and image slice size */
     const Containers::Triple<std::size_t, std::size_t, Vector3i> offsetSize = _f->compressed ?
         levelOffsetSize(_f->topLevelSliceSize, _f->properties.compressed.blockSize, _f->properties.compressed.blockDataSize, level) :
@@ -691,14 +738,17 @@ template<UnsignedInt dimensions> ImageData<dimensions> DdsImporter::doImage(Unsi
             data.slice(outputOffset, outputOffset + offsetSize.second()));
     }
 
-    /* Compressed image */
-    if(_f->compressed)
+    /* Compressed image. Flip if needed. */
+    if(_f->compressed) {
+        flipBlocks(imageSize, flags(), messagePrefix, _f->yzFlip, _f->properties.compressed.format, _f->properties.compressed.blockSize, _f->properties.compressed.blockDataSize, data);
+
         return ImageData<dimensions>{_f->properties.compressed.format, Math::Vector<dimensions, Int>::pad(imageSize), std::move(data), ImageFlag<dimensions>(UnsignedShort(_f->imageFlags))};
+    }
 
     /* Uncompressed. Swizzle and flip if needed. */
     if(_f->properties.uncompressed.needsSwizzle)
         swizzlePixels(_f->properties.uncompressed.format, data);
-    flipPixels(_f->properties.uncompressed.yzFlip, _f->properties.uncompressed.pixelSize, imageSize, data);
+    flipPixels(_f->yzFlip, _f->properties.uncompressed.pixelSize, imageSize, data);
 
     /* Adjust pixel storage if row size is not four byte aligned */
     PixelStorage storage;
@@ -719,7 +769,7 @@ UnsignedInt DdsImporter::doImage1DLevelCount(UnsignedInt) {
 }
 
 Containers::Optional<ImageData1D> DdsImporter::doImage1D(const UnsignedInt id, const UnsignedInt level) {
-    return doImage<1>(id, level);
+    return doImage<1>("Trade::DdsImporter::image1D():", id, level);
 }
 
 UnsignedInt DdsImporter::doImage2DCount() const {
@@ -731,7 +781,7 @@ UnsignedInt DdsImporter::doImage2DLevelCount(UnsignedInt) {
 }
 
 Containers::Optional<ImageData2D> DdsImporter::doImage2D(const UnsignedInt id, const UnsignedInt level) {
-    return doImage<2>(id, level);
+    return doImage<2>("Trade::DdsImporter::image2D():", id, level);
 }
 
 UnsignedInt DdsImporter::doImage3DCount() const {
@@ -743,7 +793,7 @@ UnsignedInt DdsImporter::doImage3DLevelCount(UnsignedInt) {
 }
 
 Containers::Optional<ImageData3D> DdsImporter::doImage3D(const UnsignedInt id, const UnsignedInt level) {
-    return doImage<3>(id, level);
+    return doImage<3>("Trade::DdsImporter::image3D():", id, level);
 }
 
 #ifdef MAGNUM_BUILD_DEPRECATED

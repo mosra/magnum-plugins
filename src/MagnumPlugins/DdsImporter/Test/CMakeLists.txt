@@ -34,8 +34,13 @@ else()
     set(DDSIMPORTER_TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 endif()
 
+find_package(Magnum REQUIRED DebugTools)
+
 if(NOT MAGNUM_DDSIMPORTER_BUILD_STATIC)
     set(DDSIMPORTER_PLUGIN_FILENAME $<TARGET_FILE:DdsImporter>)
+    if(MAGNUM_WITH_BCDECIMAGECONVERTER)
+        set(BCDECIMAGECONVERTER_PLUGIN_FILENAME $<TARGET_FILE:BcDecImageConverter>)
+    endif()
 endif()
 
 # First replace ${} variables, then $<> generator expressions
@@ -46,7 +51,7 @@ file(GENERATE OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/configure.h
 
 corrade_add_test(DdsImporterTest
     DdsImporterTest.cpp
-    LIBRARIES Magnum::Trade
+    LIBRARIES Magnum::Trade Magnum::DebugTools
     FILES
         bc4snorm.dds
         bc4unorm.dds
@@ -55,11 +60,13 @@ corrade_add_test(DdsImporterTest
         cube-flag-set-for-3d.dds
         depth-set-for-non-3d.dds
         dxt1.dds
+        dxt1-3d.dds
         dxt1-cube-mips.dds
         dxt10-ayuv.dds
         dxt10-array-size-set-for-3d.dds
         dxt10-astc8x5unorm.dds
         dxt10-bc7.dds
+        dxt10-bc7-3d.dds
         dxt10-bc7-cube-mips.dds
         dxt10-cube-flag-set-for-1d.dds
         dxt10-cube-flag-set-for-3d.dds
@@ -111,9 +118,15 @@ corrade_add_test(DdsImporterTest
 target_include_directories(DdsImporterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>)
 if(MAGNUM_DDSIMPORTER_BUILD_STATIC)
     target_link_libraries(DdsImporterTest PRIVATE DdsImporter)
+    if(MAGNUM_WITH_BCDECIMAGECONVERTER)
+        target_link_libraries(DdsImporterTest PRIVATE BcDecImageConverter)
+    endif()
 else()
     # So the plugins get properly built when building the test
     add_dependencies(DdsImporterTest DdsImporter)
+    if(MAGNUM_WITH_BCDECIMAGECONVERTER)
+        add_dependencies(DdsImporterTest BcDecImageConverter)
+    endif()
 endif()
 if(CORRADE_BUILD_STATIC AND NOT MAGNUM_DDSIMPORTER_BUILD_STATIC)
     # CMake < 3.4 does this implicitly, but 3.4+ not anymore (see CMP0065).
