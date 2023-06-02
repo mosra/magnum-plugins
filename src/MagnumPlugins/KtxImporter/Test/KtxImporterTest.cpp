@@ -1331,6 +1331,9 @@ void KtxImporterTest::image2DCompressed() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
+    /* Assume Y up orientation to get the data exactly as in the file without
+       any warnings */
+    importer->configuration().setValue("assumeOrientation", "ruo");
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(KTXIMPORTER_TEST_DIR, data.file)));
 
     CORRADE_COMPARE(importer->image2DCount(), 1);
@@ -1360,6 +1363,9 @@ void KtxImporterTest::image2DCompressed() {
 
 void KtxImporterTest::image2DCompressedMipmaps() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
+    /* Assume Y up orientation to get the data exactly as in the file without
+       any warnings */
+    importer->configuration().setValue("assumeOrientation", "ruo");
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(KTXIMPORTER_TEST_DIR, "2d-compressed-mipmaps.ktx2")));
 
     CORRADE_COMPARE(importer->image2DCount(), 1);
@@ -1391,6 +1397,9 @@ void KtxImporterTest::image2DCompressedMipmaps() {
 
 void KtxImporterTest::image2DCompressedLayers() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
+    /* Assume Y up orientation to get the data exactly as in the file without
+       any warnings */
+    importer->configuration().setValue("assumeOrientation", "ruo");
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(KTXIMPORTER_TEST_DIR, "2d-compressed-layers.ktx2")));
 
     CORRADE_COMPARE(importer->image3DCount(), 1);
@@ -1705,6 +1714,9 @@ void KtxImporterTest::image3DLayers() {
 
 void KtxImporterTest::image3DCompressed() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
+    /* Assume Y up orientation to get the data exactly as in the file without
+       any warnings */
+    importer->configuration().setValue("assumeOrientation", "ruo");
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(KTXIMPORTER_TEST_DIR, "3d-compressed.ktx2")));
 
     CORRADE_COMPARE(importer->image3DCount(), 1);
@@ -1737,6 +1749,9 @@ void KtxImporterTest::image3DCompressed() {
 
 void KtxImporterTest::image3DCompressedMipmaps() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
+    /* Assume Y up orientation to get the data exactly as in the file without
+       any warnings */
+    importer->configuration().setValue("assumeOrientation", "ruo");
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(KTXIMPORTER_TEST_DIR, "3d-compressed-mipmaps.ktx2")));
 
     CORRADE_COMPARE(importer->image3DCount(), 1);

@@ -782,6 +782,9 @@ void DdsImporterTest::dxt3() {
 
 void DdsImporterTest::dxt3IncompleteBlocks() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
+    /* Assume Y up orientation to get the data exactly as in the file without
+       any warnings */
+    importer->configuration().setValue("assumeYUpZBackward", true);
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(DDSIMPORTER_TEST_DIR, "dxt3-incomplete-blocks.dds")));
     CORRADE_COMPARE(importer->image1DCount(), 0);
     CORRADE_COMPARE(importer->image2DCount(), 1);
@@ -808,6 +811,9 @@ void DdsImporterTest::dxt3IncompleteBlocks() {
 
 void DdsImporterTest::bc4() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
+    /* Assume Y up orientation to get the data exactly as in the file without
+       any warnings */
+    importer->configuration().setValue("assumeYUpZBackward", true);
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(DDSIMPORTER_TEST_DIR, "bc4unorm.dds")));
     CORRADE_COMPARE(importer->image1DCount(), 0);
     CORRADE_COMPARE(importer->image2DCount(), 1);
@@ -827,6 +833,9 @@ void DdsImporterTest::bc4() {
 
 void DdsImporterTest::bc7Dxt10() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
+    /* Assume Y up orientation to get the data exactly as in the file without
+       any warnings */
+    importer->configuration().setValue("assumeYUpZBackward", true);
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(DDSIMPORTER_TEST_DIR, "dxt10-bc7.dds")));
     CORRADE_COMPARE(importer->image1DCount(), 0);
     CORRADE_COMPARE(importer->image2DCount(), 1);
@@ -1143,6 +1152,9 @@ void DdsImporterTest::rgba3D() {
 
 void DdsImporterTest::dxt1CubeMips() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
+    /* Assume Y up orientation to get the data exactly as in the file without
+       any warnings */
+    importer->configuration().setValue("assumeYUpZBackward", true);
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(DDSIMPORTER_TEST_DIR, "dxt1-cube-mips.dds")));
     CORRADE_COMPARE(importer->image1DCount(), 0);
     CORRADE_COMPARE(importer->image2DCount(), 0);
@@ -1205,6 +1217,9 @@ void DdsImporterTest::dxt1CubeMips() {
 
 void DdsImporterTest::bc7CubeMipsDxt10() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
+    /* Assume Y up orientation to get the data exactly as in the file without
+       any warnings */
+    importer->configuration().setValue("assumeYUpZBackward", true);
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(DDSIMPORTER_TEST_DIR, "dxt10-bc7-cube-mips.dds")));
     CORRADE_COMPARE(importer->image1DCount(), 0);
     CORRADE_COMPARE(importer->image2DCount(), 0);
@@ -1402,6 +1417,9 @@ void DdsImporterTest::formats() {
     setTestCaseDescription(Utility::Path::splitExtension(data.filename).first());
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
+    /* Assume Y up orientation to silence warnings. We're not testing any
+       data here so it can be set always. */
+    importer->configuration().setValue("assumeYUpZBackward", true);
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(DDSIMPORTER_TEST_DIR, data.filename)));
     CORRADE_COMPARE(importer->image1DCount(), 0);
     CORRADE_COMPARE(importer->image2DCount(), 1);
@@ -1429,6 +1447,9 @@ void DdsImporterTest::openMemory() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
+    /* Assume Y up orientation to get the data exactly as in the file without
+       any warnings */
+    importer->configuration().setValue("assumeYUpZBackward", true);
     Containers::Optional<Containers::Array<char>> memory = Utility::Path::read(Utility::Path::join(DDSIMPORTER_TEST_DIR, "dxt1.dds"));
     CORRADE_VERIFY(memory);
     CORRADE_VERIFY(data.open(*importer, *memory));
@@ -1446,6 +1467,9 @@ void DdsImporterTest::openMemory() {
 
 void DdsImporterTest::openTwice() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
+    /* Assume Y up orientation to get the data exactly as in the file without
+       any warnings */
+    importer->configuration().setValue("assumeYUpZBackward", true);
 
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(DDSIMPORTER_TEST_DIR, "dxt5.dds")));
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(DDSIMPORTER_TEST_DIR, "dxt5.dds")));
@@ -1455,6 +1479,9 @@ void DdsImporterTest::openTwice() {
 
 void DdsImporterTest::importTwice() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
+    /* Assume Y up orientation to get the data exactly as in the file without
+       any warnings */
+    importer->configuration().setValue("assumeYUpZBackward", true);
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(DDSIMPORTER_TEST_DIR, "dxt5.dds")));
 
     /* Verify that the file is rewinded for second use */
