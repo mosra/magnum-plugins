@@ -471,29 +471,50 @@ const struct {
 
 const struct {
     const char* name;
+    const char* orientation;
     const char* file;
     Vector3i size;
     PixelFormat format;
     Containers::ArrayView<const char> data;
+    ImporterFlags flags;
     Vector3ub flipped;
+    const char* message;
 } FlipData[]{
     /* Don't test everything, just a few common and interesting orientations */
-    {"l", "1d.ktx2", {4, 0, 0}, PixelFormat::RGB8Srgb,
-        Containers::arrayCast<const char>(PatternRgb1DData[0]), {true, false, false}},
-    {"r", "1d.ktx2", {4, 0, 0}, PixelFormat::RGB8Srgb,
-        Containers::arrayCast<const char>(PatternRgb1DData[0]), {false, false, false}},
+    {"l", "l", "1d.ktx2", {4, 0, 0}, PixelFormat::RGB8Srgb,
+        Containers::arrayCast<const char>(PatternRgb1DData[0]),
+        {}, {true, false, false}, nullptr},
+    {"l, verbose", "l", "1d.ktx2", {4, 0, 0}, PixelFormat::RGB8Srgb,
+        Containers::arrayCast<const char>(PatternRgb1DData[0]),
+        ImporterFlag::Verbose, {true, false, false},
+        "Trade::KtxImporter::openData(): image will be flipped along x\n"},
+    /* Nothing is flipped, so shouldn't print any message */
+    {"r, verbose", "r", "1d.ktx2", {4, 0, 0}, PixelFormat::RGB8Srgb,
+        Containers::arrayCast<const char>(PatternRgb1DData[0]),
+        ImporterFlag::Verbose, {false, false, false}, nullptr},
     /* Value of flipped is relative to the orientation on disk. Files are rd[i],
        the ground truth data expects a flip to ru[o]. */
-    {"lu", "2d-rgb.ktx2", {4, 3, 0}, PixelFormat::RGB8Srgb,
-        Containers::arrayCast<const char>(PatternRgbData[0]), {true, true, false}},
-    {"rd", "2d-rgb.ktx2", {4, 3, 0}, PixelFormat::RGB8Srgb,
-        Containers::arrayCast<const char>(PatternRgbData[0]), {false, false, false}},
-    {"luo", "3d.ktx2", {4, 3, 3}, PixelFormat::RGB8Srgb,
-        Containers::arrayCast<const char>(PatternRgbData), {true, true, true}},
-    {"rdo", "3d.ktx2", {4, 3, 3}, PixelFormat::RGB8Srgb,
-        Containers::arrayCast<const char>(PatternRgbData), {false, false, true}},
-    {"rdi", "3d.ktx2", {4, 3, 3}, PixelFormat::RGB8Srgb,
-        Containers::arrayCast<const char>(PatternRgbData), {false, false, false}}
+    {"lu", "lu", "2d-rgb.ktx2", {4, 3, 0}, PixelFormat::RGB8Srgb,
+        Containers::arrayCast<const char>(PatternRgbData[0]),
+        {}, {true, true, false}, nullptr},
+    {"rd, verbose", "rd", "2d-rgb.ktx2", {4, 3, 0}, PixelFormat::RGB8Srgb,
+        Containers::arrayCast<const char>(PatternRgbData[0]),
+        ImporterFlag::Verbose, {false, false, false},
+        "Trade::KtxImporter::openData(): image will be flipped along y\n"},
+    {"luo", "luo", "3d.ktx2", {4, 3, 3}, PixelFormat::RGB8Srgb,
+        Containers::arrayCast<const char>(PatternRgbData),
+        {}, {true, true, true}, nullptr},
+    {"rdo", "rdo", "3d.ktx2", {4, 3, 3}, PixelFormat::RGB8Srgb,
+        Containers::arrayCast<const char>(PatternRgbData),
+        {}, {false, false, true}, nullptr},
+    {"rdi, verbose", "rdi", "3d.ktx2", {4, 3, 3}, PixelFormat::RGB8Srgb,
+        Containers::arrayCast<const char>(PatternRgbData),
+        ImporterFlag::Verbose, {false, false, false},
+        "Trade::KtxImporter::openData(): image will be flipped along y and z\n"},
+    /* Nothing is flipped, so shouldn't print any message */
+    {"ruo, verbose", "ruo", "3d.ktx2", {4, 3, 3}, PixelFormat::RGB8Srgb,
+        Containers::arrayCast<const char>(PatternRgbData),
+        ImporterFlag::Verbose, {false, true, true}, nullptr}
 };
 
 const struct {
@@ -1999,12 +2020,17 @@ void KtxImporterTest::orientationFlip() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
+    importer->addFlags(data.flags);
     Containers::Optional<Containers::Array<char>> fileData = Utility::Path::read(Utility::Path::join(KTXIMPORTER_TEST_DIR, data.file));
     CORRADE_VERIFY(fileData);
 
-    patchKeyValueData(createKeyValueData("KTXorientation"_s, data.name), *fileData);
+    patchKeyValueData(createKeyValueData("KTXorientation"_s, data.orientation), *fileData);
 
-    CORRADE_VERIFY(importer->openData(*fileData));
+    std::ostringstream out;
+    {
+        Debug redirectOutput{&out};
+        CORRADE_VERIFY(importer->openData(*fileData));
+    }
 
     const Vector3i size = Math::max(data.size, 1);
     const Int dimensions = Math::min(data.size, 1).sum();
@@ -2012,18 +2038,21 @@ void KtxImporterTest::orientationFlip() {
     switch(dimensions) {
         case 1: {
             Containers::Optional<Trade::ImageData1D> image = importer->image1D(0);
+            CORRADE_VERIFY(image);
             imageData = Containers::Array<char>{image->data().size()};
             Utility::copy(image->data(), imageData);
             break;
         }
         case 2: {
             Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
+            CORRADE_VERIFY(image);
             imageData = Containers::Array<char>{image->data().size()};
             Utility::copy(image->data(), imageData);
             break;
         }
         case 3: {
             Containers::Optional<Trade::ImageData3D> image = importer->image3D(0);
+            CORRADE_VERIFY(image);
             imageData = Containers::Array<char>{image->data().size()};
             Utility::copy(image->data(), imageData);
             break;
@@ -2048,6 +2077,10 @@ void KtxImporterTest::orientationFlip() {
     Utility::copy(src, dst);
 
     CORRADE_COMPARE_AS(data.data, flippedData, TestSuite::Compare::Container);
+    if(!data.message)
+        CORRADE_COMPARE(out.str(), "");
+    else
+        CORRADE_COMPARE(out.str(), data.message);
 }
 
 void KtxImporterTest::orientationFlipCompressed() {
