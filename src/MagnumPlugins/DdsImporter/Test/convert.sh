@@ -8,20 +8,20 @@ convert ../../PngImporter/Test/rgb.png rgb.tga
 convert ../../BasisImporter/Test/rgba-64x32.png rgba-64x32.tga
 convert ../../BasisImporter/Test/rgba-63x27.png rgba-63x27.tga
 
-compressonatorcli-bin -nomipmap -fd DXT1 rgb.tga dxt1.dds
+compressonatorcli -nomipmap -fd DXT1 rgb.tga dxt1.dds
 
-compressonatorcli-bin -nomipmap -fd BC2 rgba-64x32.tga dxt3.dds
-compressonatorcli-bin -nomipmap -fd BC2 rgba-63x27.tga dxt3-incomplete-blocks.dds
+compressonatorcli -nomipmap -fd BC2 rgba-64x32.tga dxt3.dds
+compressonatorcli -nomipmap -fd BC2 rgba-63x27.tga dxt3-incomplete-blocks.dds
 
-compressonatorcli-bin -nomipmap -fd DXT5 rgb.tga dxt5.dds
+compressonatorcli -nomipmap -fd DXT5 rgb.tga dxt5.dds
 
 # This produces the legacy format somehow, not DX10
-compressonatorcli-bin -nomipmap -fd BC4 rgb.tga bc4unorm.dds
-compressonatorcli-bin -nomipmap -fd BC4_S rgb.tga bc4snorm.dds
-compressonatorcli-bin -nomipmap -fd BC5 rgb.tga bc5unorm.dds
-compressonatorcli-bin -nomipmap -fd BC5_S rgb.tga bc5snorm.dds
+compressonatorcli -nomipmap -fd BC4 rgb.tga bc4unorm.dds
+compressonatorcli -nomipmap -fd BC4_S rgb.tga bc4snorm.dds
+compressonatorcli -nomipmap -fd BC5 rgb.tga bc5unorm.dds
+compressonatorcli -nomipmap -fd BC5_S rgb.tga bc5snorm.dds
 
-compressonatorcli-bin -nomipmap -fd BC7 rgba-64x32.tga dxt10-bc7.dds
+compressonatorcli -nomipmap -fd BC7 rgba-64x32.tga dxt10-bc7.dds
 
 # Non-standard ASTC-compressed DDS using the proprietary NVidia Texture Tools
 # Exporter (download link needs a NVidia Developer Program membership)
@@ -40,9 +40,9 @@ mv output.dds rgba8unorm-cube.dds
 
 # And the final boss, cube with mips. Can't be uncompressed because the legacy
 # nvcompress NVTT tool crashes, so I have to use Compressonator which knows
-# only compressed formats. Somehow -miplevels 2 produces 3 mips?!
-compressonatorcli-bin -miplevels 2 -fd DXT1 rgba8unorm-cube.dds dxt1-cube-mips.dds
-compressonatorcli-bin -miplevels 2 -fd BC7 rgba8unorm-cube.dds dxt10-bc7-cube-mips.dds
+# only compressed formats.
+compressonatorcli -miplevels 3 -fd DXT1 rgba8unorm-cube.dds dxt1-cube-mips.dds
+compressonatorcli -miplevels 3 -fd BC7 rgba8unorm-cube.dds dxt10-bc7-cube-mips.dds
 # Compressonator saves arraySize not as cube count, but 2D slice count, so
 # patch it to contain 1 instead of 6
 # https://github.com/GPUOpen-Tools/compressonator/issues/196
