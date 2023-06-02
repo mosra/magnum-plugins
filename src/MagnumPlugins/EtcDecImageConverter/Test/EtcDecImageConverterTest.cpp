@@ -55,13 +55,15 @@ struct EtcDecImageConverterTest: TestSuite::Tester {
     PluginManager::Manager<AbstractImporter> _importerManager{"nonexistent"};
 };
 
+using namespace Containers::Literals;
+
 const struct {
     const char* name;
     Containers::String file;
     CompressedPixelFormat format;
     Containers::String expected;
     PixelFormat expectedFormat;
-    bool yFlip;
+    bool yDown;
     Containers::Optional<Int> forceChannelCount;
     Containers::Optional<Int> forceBitDepth;
     Containers::Optional<bool> eacToFloat;
@@ -152,6 +154,17 @@ void EtcDecImageConverterTest::test() {
         CORRADE_SKIP(importerName << "plugin not found, cannot test conversion");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate(importerName);
+    /* If the file isn't with Y up, we don't want the plugin to Y flip (or
+       warn), as that could be another source of error. Instead we
+       tell the importers to assume they're Y up and the expected image is
+       flipped to Y down on load. */
+    /** @todo clean this up once it's possible to configure Y flipping behavior
+        via a flag */
+    if(data.yDown) {
+        if(importerName == "KtxImporter"_s)
+            importer->configuration().setValue("assumeOrientation", "ruo");
+        else CORRADE_INTERNAL_ASSERT_UNREACHABLE();
+    }
     CORRADE_VERIFY(importer->openFile(data.file));
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
@@ -187,10 +200,10 @@ void EtcDecImageConverterTest::test() {
 
     Containers::Optional<Trade::ImageData2D> expectedImage = expectedImporter->image2D(0);
     CORRADE_VERIFY(expectedImage);
-    /* If the input KTX was not Y-flipped, flip the expected image instead */
+    /* If the input KTX was not Y up, flip the expected image instead */
     /** @todo clean this up once it's possible to configure Y flipping behavior
         via a flag */
-    if(data.yFlip)
+    if(data.yDown)
         Utility::flipInPlace<0>(expectedImage->mutablePixels());
     /* And override the pixel format to match the expected */
     CORRADE_COMPARE(pixelFormatSize(data.expectedFormat), pixelFormatSize(expectedImage->format()));

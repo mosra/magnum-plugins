@@ -55,6 +55,8 @@ struct BcDecImageConverterTest: TestSuite::Tester {
     PluginManager::Manager<AbstractImporter> _importerManager{"nonexistent"};
 };
 
+using namespace Containers::Literals;
+
 const struct {
     const char* name;
     Containers::String file;
@@ -198,12 +200,16 @@ void BcDecImageConverterTest::test() {
         CORRADE_SKIP(importerName << "plugin not found, cannot test conversion");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate(importerName);
-    /* The DDS files are not with Y up but we don't want the plugin to Y flip
-       (or warn), as that could be another source of error. Instead the
-       expected image is Y-flipped on load. */
-    if(importer->plugin() == "DdsImporter")
+    /* The DDS / KTX files are not with Y up but we don't want the plugin to Y
+       flip (or warn), as that could be another source of error. Instead we
+       tell the importers to assume they're Y up and the expected image is
+       flipped to Y down on load. */
+    /** @todo clean this up once it's possible to configure Y flipping behavior
+        via a flag */
+    if(importerName == "DdsImporter"_s)
         importer->configuration().setValue("assumeYUpZBackward", true);
-    /** @todo do the same for KTX (currently it warns) */
+    else if(importerName == "KtxImporter"_s)
+        importer->configuration().setValue("assumeOrientation", "ruo");
     CORRADE_VERIFY(importer->openFile(data.file));
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
