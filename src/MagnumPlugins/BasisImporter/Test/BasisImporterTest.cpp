@@ -492,7 +492,7 @@ void BasisImporterTest::unconfigured() {
     if(data.quiet)
         CORRADE_COMPARE(out.str(), "");
     else
-        CORRADE_COMPARE(out.str(), "Trade::BasisImporter::image2D(): no format to transcode to was specified, falling back to uncompressed RGBA8. To get rid of this warning either load the plugin via one of its BasisImporterEtc1RGB, ... aliases, or explicitly set the format option in plugin configuration.\n");
+        CORRADE_COMPARE(out.str(), "Trade::BasisImporter::image2D(): no format to transcode to was specified, falling back to uncompressed RGBA8. To get rid of this warning, either explicitly set the format option to one of Etc1RGB, Etc2RGBA, EacR, EacRG, Bc1RGB, Bc3RGBA, Bc4R, Bc5RG, Bc7RGBA, PvrtcRGB4bpp, PvrtcRGBA4bpp, Astc4x4RGBA or RGBA8, or load the plugin via one of its BasisImporterEtc1RGB, ... aliases.\n");
 
     if(_manager.loadState("AnyImageImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("AnyImageImporter plugin not found, cannot test contents");
@@ -514,7 +514,7 @@ void BasisImporterTest::invalidConfiguredFormat() {
     importer->configuration().setValue("format", "Banana");
     CORRADE_VERIFY(!importer->image2D(0));
 
-    CORRADE_COMPARE(out.str(), "Trade::BasisImporter::image2D(): invalid transcoding target format Banana, expected to be one of EacR, EacRG, Etc1RGB, Etc2RGBA, Bc1RGB, Bc3RGBA, Bc4R, Bc5RG, Bc7RGBA, Pvrtc1RGB4bpp, Pvrtc1RGBA4bpp, Astc4x4RGBA, RGBA8\n");
+    CORRADE_COMPARE(out.str(), "Trade::BasisImporter::image2D(): invalid transcoding target format Banana, expected to be one of Etc1RGB, Etc2RGBA, EacR, EacRG, Bc1RGB, Bc3RGBA, Bc4R, Bc5RG, Bc7RGBA, Pvrtc1RGB4bpp, Pvrtc1RGBA4bpp, Astc4x4RGBA or RGBA8\n");
 }
 
 void BasisImporterTest::unsupportedFormat() {

@@ -488,14 +488,14 @@ template<UnsignedInt dimensions> Containers::Optional<ImageData<dimensions>> Bas
     TargetFormat targetFormat;
     if(!targetFormatStr) {
         if(!(flags() & ImporterFlag::Quiet) && !_state->noTranscodeFormatWarningPrinted)
-            Warning{} << prefix << "no format to transcode to was specified, falling back to uncompressed RGBA8. To get rid of this warning either load the plugin via one of its BasisImporterEtc1RGB, ... aliases, or explicitly set the format option in plugin configuration.";
+            Warning{} << prefix << "no format to transcode to was specified, falling back to uncompressed RGBA8. To get rid of this warning, either explicitly set the format option to one of Etc1RGB, Etc2RGBA, EacR, EacRG, Bc1RGB, Bc3RGBA, Bc4R, Bc5RG, Bc7RGBA, PvrtcRGB4bpp, PvrtcRGBA4bpp, Astc4x4RGBA or RGBA8, or load the plugin via one of its BasisImporterEtc1RGB, ... aliases.";
         targetFormat = TargetFormat::RGBA8;
         _state->noTranscodeFormatWarningPrinted = true;
     } else {
         targetFormat = configuration().value<TargetFormat>("format");
         if(UnsignedInt(targetFormat) == ~UnsignedInt{}) {
             Error{} << prefix << "invalid transcoding target format" << targetFormatStr << Debug::nospace
-                << ", expected to be one of EacR, EacRG, Etc1RGB, Etc2RGBA, Bc1RGB, Bc3RGBA, Bc4R, Bc5RG, Bc7RGBA, Pvrtc1RGB4bpp, Pvrtc1RGBA4bpp, Astc4x4RGBA, RGBA8";
+                << ", expected to be one of Etc1RGB, Etc2RGBA, EacR, EacRG, Bc1RGB, Bc3RGBA, Bc4R, Bc5RG, Bc7RGBA, Pvrtc1RGB4bpp, Pvrtc1RGBA4bpp, Astc4x4RGBA or RGBA8";
             return Containers::NullOpt;
         }
     }
