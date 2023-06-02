@@ -106,9 +106,16 @@ using namespace Containers::Literals;
 constexpr struct {
     const char* name;
     const char* extension;
+    /* To avoid introducing circular bugs, the ground truth input files are
+       produced by `basisu` itself. THE DAMN THING however still doesn't write
+       proper KTXorientation, which means it'll print a warning by default:
+        https://github.com/BinomialLLC/basis_universal/issues/258
+       The data *is* encoded with Y up, so we just set assumeYUp to silence
+       the warning in this case. */
+    bool hasMissingOrientationMetadata;
 } FileTypeData[] {
-    {"Basis", ".basis"},
-    {"KTX2", ".ktx2"}
+    {"Basis", ".basis", false},
+    {"KTX2", ".ktx2", true}
 };
 
 const struct {
@@ -248,29 +255,53 @@ constexpr struct {
     const CompressedPixelFormat expectedLinearFormat;
 } FormatData[] {
     {"rgb", "rgba", "rgb-linear", {63, 27},
-     "Etc1RGB", CompressedPixelFormat::Etc2RGB8Srgb, CompressedPixelFormat::Etc2RGB8Unorm},
+        "Etc1RGB",
+        CompressedPixelFormat::Etc2RGB8Srgb,
+        CompressedPixelFormat::Etc2RGB8Unorm},
     {"rgb", "rgba", "rgb-linear", {63, 27},
-     "Etc2RGBA", CompressedPixelFormat::Etc2RGBA8Srgb, CompressedPixelFormat::Etc2RGBA8Unorm},
+        "Etc2RGBA",
+        CompressedPixelFormat::Etc2RGBA8Srgb,
+        CompressedPixelFormat::Etc2RGBA8Unorm},
     {"rgb", "rgba", "rgb-linear", {63, 27},
-     "Bc1RGB", CompressedPixelFormat::Bc1RGBSrgb, CompressedPixelFormat::Bc1RGBUnorm},
+        "Bc1RGB",
+        CompressedPixelFormat::Bc1RGBSrgb,
+        CompressedPixelFormat::Bc1RGBUnorm},
     {"rgb", "rgba", "rgb-linear", {63, 27},
-     "Bc3RGBA", CompressedPixelFormat::Bc3RGBASrgb, CompressedPixelFormat::Bc3RGBAUnorm},
+        "Bc3RGBA",
+        CompressedPixelFormat::Bc3RGBASrgb,
+        CompressedPixelFormat::Bc3RGBAUnorm},
     {"rgb", "rgba", "rgb-linear", {63, 27},
-     "Bc4R", CompressedPixelFormat::Bc4RUnorm, CompressedPixelFormat::Bc4RUnorm},
+        "Bc4R",
+        CompressedPixelFormat::Bc4RUnorm,
+        CompressedPixelFormat::Bc4RUnorm},
     {"rgb", "rgba", "rgb-linear", {63, 27},
-     "Bc5RG", CompressedPixelFormat::Bc5RGUnorm, CompressedPixelFormat::Bc5RGUnorm},
+        "Bc5RG",
+        CompressedPixelFormat::Bc5RGUnorm,
+        CompressedPixelFormat::Bc5RGUnorm},
     {"rgb", "rgba", "rgb-linear", {63, 27},
-     "Bc7RGBA", CompressedPixelFormat::Bc7RGBASrgb, CompressedPixelFormat::Bc7RGBAUnorm},
+        "Bc7RGBA",
+        CompressedPixelFormat::Bc7RGBASrgb,
+        CompressedPixelFormat::Bc7RGBAUnorm},
     {"rgb-pow2", "rgba-pow2", "rgb-linear-pow2", {64, 32},
-     "PvrtcRGB4bpp", CompressedPixelFormat::PvrtcRGB4bppSrgb, CompressedPixelFormat::PvrtcRGB4bppUnorm},
+        "PvrtcRGB4bpp",
+        CompressedPixelFormat::PvrtcRGB4bppSrgb,
+        CompressedPixelFormat::PvrtcRGB4bppUnorm},
     {"rgb-pow2", "rgba-pow2", "rgb-linear-pow2", {64, 32},
-     "PvrtcRGBA4bpp", CompressedPixelFormat::PvrtcRGBA4bppSrgb, CompressedPixelFormat::PvrtcRGBA4bppUnorm},
+        "PvrtcRGBA4bpp",
+        CompressedPixelFormat::PvrtcRGBA4bppSrgb,
+        CompressedPixelFormat::PvrtcRGBA4bppUnorm},
     {"rgb", "rgba", "rgb-linear", {63, 27},
-     "Astc4x4RGBA", CompressedPixelFormat::Astc4x4RGBASrgb, CompressedPixelFormat::Astc4x4RGBAUnorm},
+        "Astc4x4RGBA",
+        CompressedPixelFormat::Astc4x4RGBASrgb,
+        CompressedPixelFormat::Astc4x4RGBAUnorm},
     {"rgb", "rgba", "rgb-linear", {63, 27},
-     "EacR", CompressedPixelFormat::EacR11Unorm, CompressedPixelFormat::EacR11Unorm},
+        "EacR",
+        CompressedPixelFormat::EacR11Unorm,
+        CompressedPixelFormat::EacR11Unorm},
     {"rgb", "rgba", "rgb-linear", {63, 27},
-     "EacRG", CompressedPixelFormat::EacRG11Unorm, CompressedPixelFormat::EacRG11Unorm}
+        "EacRG",
+        CompressedPixelFormat::EacRG11Unorm,
+        CompressedPixelFormat::EacRG11Unorm}
 };
 
 const struct {
@@ -306,11 +337,13 @@ const struct {
 const struct {
     const char* name;
     const char* file;
+    /* See FileTypeData.hasMissingOrientationMetadata for details */
+    bool hasMissingOrientationMetadata;
 } VideoSeekingData[]{
-    {"Basis ETC1S", "rgba-video.basis"},
-    {"KTX2 ETC1S", "rgba-video.ktx2"},
-    {"Basis UASTC", "rgba-video-uastc.basis"},
-    {"KTX2 UASTC", "rgba-video-uastc.ktx2"}
+    {"Basis ETC1S", "rgba-video.basis", false},
+    {"KTX2 ETC1S", "rgba-video.ktx2", true},
+    {"Basis UASTC", "rgba-video-uastc.basis", false},
+    {"KTX2 UASTC", "rgba-video-uastc.ktx2", true}
 };
 
 /* Shared among all plugins that implement data copying optimizations */
@@ -652,7 +685,8 @@ void BasisImporterTest::rgbUncompressed() {
         CORRADE_VERIFY(importer->openFile(Utility::Path::join(BASISIMPORTER_TEST_DIR,
         "rgb"_s + data.extension)));
     }
-    /* There should be no Y-flip warning as the image is pre-flipped */
+    /* There should be no Y-flip warning as the image is pre-flipped (and
+       KTXorientation is patched into rgb.ktx2, see convert.sh) */
     CORRADE_COMPARE(out.str(), "");
     CORRADE_COMPARE(importer->image2DCount(), 1);
 
@@ -717,6 +751,12 @@ void BasisImporterTest::rgbUncompressedLinear() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporterRGBA8");
+    /* See the comment above this variable for more details. The
+       rgb-linear.{basis,ktx2} are both encoded with Y up in convert.sh but
+       the KTX files are missing the KTXorientation metadata, causing a
+       warning. */
+    if(data.hasMissingOrientationMetadata)
+        importer->configuration().setValue("assumeYUp", true);
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(BASISIMPORTER_TEST_DIR,
         "rgb-linear"_s + data.extension)));
     CORRADE_COMPARE(importer->image2DCount(), 1);
@@ -744,6 +784,11 @@ void BasisImporterTest::rgbaUncompressed() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporterRGBA8");
+    /* See the comment above this variable for more details. The
+       rgba.{basis,ktx2} are both encoded with Y up in convert.sh but the KTX
+       files are missing the KTXorientation metadata, causing a warning. */
+    if(data.hasMissingOrientationMetadata)
+        importer->configuration().setValue("assumeYUp", true);
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(BASISIMPORTER_TEST_DIR,
         "rgba"_s + data.extension)));
     CORRADE_COMPARE(importer->image2DCount(), 1);
@@ -771,6 +816,12 @@ void BasisImporterTest::rgbaUncompressedUastc() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporterRGBA8");
+    /* See the comment above this variable for more details. The
+       rgb-uastc.{basis,ktx2} are both encoded with Y up in convert.sh but
+       the KTX files are missing the KTXorientation metadata, causing a
+       warning. */
+    if(data.hasMissingOrientationMetadata)
+        importer->configuration().setValue("assumeYUp", true);
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(BASISIMPORTER_TEST_DIR,
         "rgba-uastc"_s + data.extension)));
     CORRADE_COMPARE(importer->image2DCount(), 1);
@@ -864,12 +915,18 @@ void BasisImporterTest::rgb() {
     const std::string pluginName = "BasisImporter" + std::string(formatData.suffix);
     setTestCaseDescription(formatData.suffix);
 
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate(pluginName);
-    CORRADE_COMPARE(importer->configuration().value<std::string>("format"),
-        formatData.suffix);
-
     for(const auto& fileType: FileTypeData) {
         CORRADE_ITERATION(fileType.name);
+
+        Containers::Pointer<AbstractImporter> importer = _manager.instantiate(pluginName);
+        CORRADE_COMPARE(importer->configuration().value<std::string>("format"),
+            formatData.suffix);
+        /* See the comment above this variable for more details. The files used
+           by this function are all encoded with Y up in convert.sh, but
+           except for rgb.ktx2 (which has it patched in) the KTX files are
+           missing the KTXorientation metadata, causing a warning. */
+        if(fileType.hasMissingOrientationMetadata && formatData.fileBase != "rgb"_s)
+            importer->configuration().setValue("assumeYUp", true);
 
         CORRADE_VERIFY(importer->openFile(Utility::Path::join(BASISIMPORTER_TEST_DIR,
             std::string{formatData.fileBase} + fileType.extension)));
@@ -900,12 +957,18 @@ void BasisImporterTest::rgba() {
     const std::string pluginName = "BasisImporter" + std::string(formatData.suffix);
     setTestCaseDescription(formatData.suffix);
 
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate(pluginName);
-    CORRADE_COMPARE(importer->configuration().value<std::string>("format"),
-        formatData.suffix);
-
     for(const auto& fileType: FileTypeData) {
         CORRADE_ITERATION(fileType.name);
+
+        Containers::Pointer<AbstractImporter> importer = _manager.instantiate(pluginName);
+        CORRADE_COMPARE(importer->configuration().value<std::string>("format"),
+            formatData.suffix);
+        /* See the comment above this variable for more details. The files used
+           by this function are all encoded with Y up in convert.sh, but
+           the KTX files are missing the KTXorientation metadata, causing a
+           warning. */
+        if(fileType.hasMissingOrientationMetadata)
+            importer->configuration().setValue("assumeYUp", true);
 
         CORRADE_VERIFY(importer->openFile(Utility::Path::join(BASISIMPORTER_TEST_DIR,
             Containers::String{formatData.fileBaseAlpha} + fileType.extension)));
@@ -938,12 +1001,18 @@ void BasisImporterTest::linear() {
     const std::string pluginName = "BasisImporter" + std::string(formatData.suffix);
     setTestCaseDescription(formatData.suffix);
 
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate(pluginName);
-    CORRADE_COMPARE(importer->configuration().value<std::string>("format"),
-        formatData.suffix);
-
     for(const auto& fileType: FileTypeData) {
         CORRADE_ITERATION(fileType.name);
+
+        Containers::Pointer<AbstractImporter> importer = _manager.instantiate(pluginName);
+        CORRADE_COMPARE(importer->configuration().value<std::string>("format"),
+            formatData.suffix);
+        /* See the comment above this variable for more details. The files used
+           by this function are all encoded with Y up in convert.sh, but the
+           KTX files are missing the KTXorientation metadata, causing a
+           warning. */
+        if(fileType.hasMissingOrientationMetadata)
+            importer->configuration().setValue("assumeYUp", true);
 
         CORRADE_VERIFY(importer->openFile(Utility::Path::join(BASISIMPORTER_TEST_DIR,
             std::string{formatData.fileBaseLinear} + fileType.extension)));
@@ -966,6 +1035,11 @@ void BasisImporterTest::array2D() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporterRGBA8");
+    /* See the comment above this variable for more details. The
+       rgb-array.{basis,ktx2} are both encoded with Y up in convert.sh but the
+       KTX files are missing the KTXorientation metadata, causing a warning. */
+    if(data.hasMissingOrientationMetadata)
+        importer->configuration().setValue("assumeYUp", true);
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(BASISIMPORTER_TEST_DIR, "rgba-array"_s + data.extension)));
 
     CORRADE_COMPARE(importer->image3DCount(), 1);
@@ -998,6 +1072,12 @@ void BasisImporterTest::array2DMipmaps() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporterRGBA8");
+    /* See the comment above this variable for more details. The
+       rgba-array-mips.{basis,ktx2} are both encoded with Y up in convert.sh
+       but the KTX files are missing the KTXorientation metadata, causing a
+       warning. */
+    if(data.hasMissingOrientationMetadata)
+        importer->configuration().setValue("assumeYUp", true);
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(BASISIMPORTER_TEST_DIR, "rgba-array-mips"_s + data.extension)));
 
     Containers::Optional<Trade::ImageData3D> levels[3];
@@ -1047,6 +1127,11 @@ void BasisImporterTest::video() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporterRGBA8");
+    /* See the comment above this variable for more details. The
+       rgba-video.{basis,ktx2} are both encoded with Y up in convert.sh but the
+       KTX files are missing the KTXorientation metadata, causing a warning. */
+    if(data.hasMissingOrientationMetadata)
+        importer->configuration().setValue("assumeYUp", true);
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(BASISIMPORTER_TEST_DIR, "rgba-video"_s + data.extension)));
 
     Containers::Optional<Trade::ImageData2D> frames[3];
@@ -1183,6 +1268,12 @@ void BasisImporterTest::cubeMap() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporterRGBA8");
+    /* See the comment above this variable for more details. The
+       rgba-cubemap.{basis,ktx2} are both encoded with Y up in convert.sh but
+       the KTX files are missing the KTXorientation metadata, causing a
+       warning. */
+    if(data.hasMissingOrientationMetadata)
+        importer->configuration().setValue("assumeYUp", true);
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(BASISIMPORTER_TEST_DIR, "rgba-cubemap"_s + data.extension)));
 
     CORRADE_COMPARE(importer->image3DCount(), 1);
@@ -1224,6 +1315,12 @@ void BasisImporterTest::cubeMapArray() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporterRGBA8");
+    /* See the comment above this variable for more details. The
+       rgba-cubemap-array.{basis,ktx2} are both encoded with Y up in convert.sh
+       but the KTX files are missing the KTXorientation metadata, causing a
+       warning. */
+    if(data.hasMissingOrientationMetadata)
+        importer->configuration().setValue("assumeYUp", true);
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(BASISIMPORTER_TEST_DIR, "rgba-cubemap-array"_s + data.extension)));
 
     CORRADE_COMPARE(importer->image3DCount(), 1);
@@ -1285,6 +1382,11 @@ void BasisImporterTest::videoSeeking() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporterRGBA8");
+    /* See the comment above this variable for more details. The files are all
+       encoded with Y up in convert.sh but the KTX files are missing the
+       KTXorientation metadata, causing a warning. */
+    if(data.hasMissingOrientationMetadata)
+        importer->configuration().setValue("assumeYUp", true);
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(BASISIMPORTER_TEST_DIR, data.file)));
 
     CORRADE_COMPARE(importer->image2DCount(), 3);
@@ -1369,6 +1471,11 @@ void BasisImporterTest::openDifferent() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporterEtc2RGBA");
 
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(BASISIMPORTER_TEST_DIR, "rgba-video.basis")));
+    /* The rgba-cubemap-array.ktx2 is encoded with Y up in convert.sh but the
+       KTX files are missing the KTXorientation metadata due to a basisu bug,
+       causing a warning. See FileTypeData.hasMissingOrientationMetadata for
+       details. */
+    importer->configuration().setValue("assumeYUp", true);
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(BASISIMPORTER_TEST_DIR, "rgba-cubemap-array.ktx2")));
     CORRADE_COMPARE(importer->image3DCount(), 1);
 
