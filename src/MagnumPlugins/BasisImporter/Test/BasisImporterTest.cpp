@@ -78,7 +78,6 @@ struct BasisImporterTest: TestSuite::Tester {
 
     void rgb();
     void rgba();
-
     void linear();
 
     void array2D();
@@ -903,6 +902,7 @@ void BasisImporterTest::rgbaUncompressedMultipleImages() {
 
 void BasisImporterTest::rgb() {
     auto& formatData = FormatData[testCaseInstanceId()];
+    setTestCaseDescription(formatData.suffix);
 
     #if defined(BASISD_SUPPORT_BC7) && !BASISD_SUPPORT_BC7
     /* BC7 is YUUGE and thus defined out on Emscripten. Skip the test if that's
@@ -912,7 +912,6 @@ void BasisImporterTest::rgb() {
     #endif
 
     const Containers::String pluginName = "BasisImporter"_s + formatData.suffix;
-    setTestCaseDescription(formatData.suffix);
 
     for(const auto& fileType: FileTypeData) {
         CORRADE_ITERATION(fileType.name);
@@ -944,6 +943,7 @@ void BasisImporterTest::rgb() {
 
 void BasisImporterTest::rgba() {
     auto& formatData = FormatData[testCaseInstanceId()];
+    setTestCaseDescription(formatData.suffix);
 
     #if defined(BASISD_SUPPORT_BC7) && !BASISD_SUPPORT_BC7
     /* BC7 is YUUGE and thus defined out on Emscripten. Skip the test if that's
@@ -953,7 +953,6 @@ void BasisImporterTest::rgba() {
     #endif
 
     const Containers::String pluginName = "BasisImporter"_s + formatData.suffix;
-    setTestCaseDescription(formatData.suffix);
 
     for(const auto& fileType: FileTypeData) {
         CORRADE_ITERATION(fileType.name);
@@ -985,6 +984,7 @@ void BasisImporterTest::rgba() {
 
 void BasisImporterTest::linear() {
     auto& formatData = FormatData[testCaseInstanceId()];
+    setTestCaseDescription(formatData.suffix);
 
     /* Test linear formats, sRGB was tested in rgb() */
 
@@ -996,7 +996,6 @@ void BasisImporterTest::linear() {
     #endif
 
     const Containers::String pluginName = "BasisImporter"_s + formatData.suffix;
-    setTestCaseDescription(formatData.suffix);
 
     for(const auto& fileType: FileTypeData) {
         CORRADE_ITERATION(fileType.name);
