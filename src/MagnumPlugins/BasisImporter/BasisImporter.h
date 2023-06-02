@@ -143,7 +143,9 @@ See @ref building-plugins, @ref cmake-plugins, @ref plugins and
     `-y_flip` to encode the image with Y up but note the orientation
     [isn't correctly written to the file with a KTX2 output](https://github.com/BinomialLLC/basis_universal/issues/258).
     The @ref BasisImageConverter encodes Y up files by default and does it
-    correctly for both Basis and KTX2 files.
+    correctly for both Basis and KTX2 files. File orientation can also be
+    overriden using the @cb{.ini} assumeYUp @ce
+    @ref Trade-BasisImporter-configuration "configuration option".
 
 The importer recognizes @ref ImporterFlag::Verbose, printing additional info
 when the flag is enabled. @ref ImporterFlag::Quiet is recognized as well and

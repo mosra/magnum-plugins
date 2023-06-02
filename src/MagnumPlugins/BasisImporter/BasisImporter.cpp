@@ -457,6 +457,11 @@ void BasisImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFla
         state->isSrgb = header.m_flags & basist::basis_header_flags::cBASISHeaderFlagSRGB;
     }
 
+    /* Override the Y-flipped status if set in configuration */
+    const Containers::StringView assumeYUp = configuration().value<Containers::StringView>("assumeYUp");
+    if(assumeYUp)
+        state->isYFlipped = configuration().value<bool>("assumeYUp");
+
     #if BASISD_SUPPORT_KTX2
     /* There has to be exactly one transcoder */
     CORRADE_INTERNAL_ASSERT(!state->ktx2Transcoder != !state->basisTranscoder);
@@ -468,7 +473,11 @@ void BasisImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFla
         /** @todo replace with the flag once the PR is submitted */
         /** @todo or could we at least flip if output is set to (uncompressed)
             RGBA? it would be inconsistent tho */
-        Warning{} << "Trade::BasisImporter::openData(): the image was not encoded Y-flipped, imported data will have wrong orientation";
+        Warning{} << "Trade::BasisImporter::openData(): the image" <<
+            (assumeYUp ?
+                "is assumed to not be Y-flipped" :
+                "was not encoded Y-flipped")
+            << Debug::nospace << ", imported data will have wrong orientation";
         //flags |= basist::basisu_transcoder::cDecodeFlagsFlipY;
     }
     if(flags() & ImporterFlag::Verbose) {

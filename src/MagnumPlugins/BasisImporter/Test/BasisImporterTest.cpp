@@ -70,7 +70,7 @@ struct BasisImporterTest: TestSuite::Tester {
     #endif
 
     void rgbUncompressed();
-    void rgbUncompressedNoFlip();
+    void rgbUncompressedFlip();
     void rgbUncompressedLinear();
     void rgbaUncompressed();
     void rgbaUncompressedUastc();
@@ -115,12 +115,25 @@ const struct {
     const char* name;
     const char* extension;
     ImporterFlags flags;
-    bool quiet;
-} RgbUncompressedNoFlipData[] {
-    {"Basis", ".basis", {}, false},
-    {"Basis, quiet", ".basis", ImporterFlag::Quiet, true},
-    {"KTX2", ".ktx2", {}, false},
-    {"KTX2, quiet", ".ktx2", ImporterFlag::Quiet, true}
+    Containers::Optional<bool> assumeYUp;
+    const char* message;
+} RgbUncompressedFlipData[] {
+    {"Basis, Y down", ".basis", {}, {},
+        "Trade::BasisImporter::openData(): the image was not encoded Y-flipped, imported data will have wrong orientation\n"},
+    {"Basis, Y down, quiet", ".basis", ImporterFlag::Quiet, {},
+        nullptr},
+    {"Basis, Y down, assume Y up", ".basis", {}, true,
+        nullptr},
+    {"Basis, Y down, assume Y down", ".basis", {}, false,
+        "Trade::BasisImporter::openData(): the image is assumed to not be Y-flipped, imported data will have wrong orientation\n"},
+    {"KTX2, no KTXorientation", ".ktx2", {}, {},
+        "Trade::BasisImporter::openData(): the image was not encoded Y-flipped, imported data will have wrong orientation\n"},
+    {"KTX2, no KTXorientation, quiet", ".ktx2", ImporterFlag::Quiet, {},
+        nullptr},
+    {"KTX2, no KTXorientation, assume Y up", ".ktx2", {}, true,
+        nullptr},
+    {"KTX2, no KTXorientation, assume Y down", ".ktx2", {}, false,
+        "Trade::BasisImporter::openData(): the image is assumed to not be Y-flipped, imported data will have wrong orientation\n"},
 };
 
 constexpr struct {
@@ -344,8 +357,8 @@ BasisImporterTest::BasisImporterTest() {
     addInstancedTests({&BasisImporterTest::rgbUncompressed},
         Containers::arraySize(FileTypeData));
 
-    addInstancedTests({&BasisImporterTest::rgbUncompressedNoFlip},
-        Containers::arraySize(RgbUncompressedNoFlipData));
+    addInstancedTests({&BasisImporterTest::rgbUncompressedFlip},
+        Containers::arraySize(RgbUncompressedFlipData));
 
     addInstancedTests({&BasisImporterTest::rgbUncompressedLinear,
                        &BasisImporterTest::rgbaUncompressed,
@@ -661,22 +674,24 @@ void BasisImporterTest::rgbUncompressed() {
         (DebugTools::CompareImageToFile{_manager, 58.334f, 6.622f}));
 }
 
-void BasisImporterTest::rgbUncompressedNoFlip() {
-    auto&& data = RgbUncompressedNoFlipData[testCaseInstanceId()];
+void BasisImporterTest::rgbUncompressedFlip() {
+    auto&& data = RgbUncompressedFlipData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporterRGBA8");
     importer->addFlags(data.flags);
+    if(data.assumeYUp)
+        importer->configuration().setValue("assumeYUp", *data.assumeYUp);
 
     std::ostringstream out;
     {
         Warning redirectWarning{&out};
         CORRADE_VERIFY(importer->openFile(Utility::Path::join(BASISIMPORTER_TEST_DIR, "rgb-noflip"_s + data.extension)));
     }
-    if(data.quiet)
-        CORRADE_COMPARE(out.str(), "");
+    if(data.message)
+        CORRADE_COMPARE(out.str(), data.message);
     else
-        CORRADE_COMPARE(out.str(), "Trade::BasisImporter::openData(): the image was not encoded Y-flipped, imported data will have wrong orientation\n");
+        CORRADE_COMPARE(out.str(), "");
     CORRADE_COMPARE(importer->image2DCount(), 1);
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);

@@ -136,6 +136,10 @@ namespace Magnum {
     for convenient loading of `*.3mf` files
 -   Adapted @relativeref{Trade,AssimpImporter} to changes in version 5.2.5 and
     cleaned up STL usage (see [mosra/magnum-plugins#130](https://github.com/mosra/magnum-plugins/pull/130))
+-   @relativeref{Trade,BasisImporter} has a new @cb{.ini} assumeYUp @ce option
+    that assumes the file is encoded Y-up even if the orientation metadata is
+    missing or says otherwise, silencing a warning about wrong orientation of
+    imported data
 -   @relativeref{Trade,DdsImporter} now supports also 1D textures, cube maps,
     1D, 2D and cube map arrays; all DXGI depth, stencil and compressed formats,
     legacy non-DXGI RGBX, BGRX, BC4 and BC5 formats, BGR(A) formats also for
