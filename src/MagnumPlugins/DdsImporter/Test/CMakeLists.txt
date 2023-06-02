@@ -46,7 +46,6 @@ file(GENERATE OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/configure.h
 
 corrade_add_test(DdsImporterTest
     DdsImporterTest.cpp
-    ${DXT10_TEST_FILES_RESOURCE}
     LIBRARIES Magnum::Trade
     FILES
         bc4snorm.dds
