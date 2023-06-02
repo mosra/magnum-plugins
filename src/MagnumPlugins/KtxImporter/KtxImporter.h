@@ -120,7 +120,9 @@ Imports images in the following formats:
     block-compressed data is nontrivial, compressed images will not be flipped
     on import. Instead a message will be printed to @relativeref{Magnum,Warning}
     and the data will be passed through unchanged. The @ref KtxImageConverter
-    encodes X right, Y up, Z backward files by default.
+    encodes X right, Y up, Z backward files by default. File orientation can
+    also be overriden using the @cb{.ini} assumeOrientation @ce
+    @ref Trade-KtxImporter-configuration "configuration option".
 
 The importer recognizes @ref ImporterFlag::Verbose, printing additional info
 when the flag is enabled. @ref ImporterFlag::Quiet is recognized as well and

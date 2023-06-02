@@ -693,12 +693,17 @@ void KtxImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFlags
        u/d = up/down
        o/i = out of/into screen
 
-       The spec strongly recommends defaulting to rdi, Magnum/GL expects ruo. */
+       The spec strongly recommends defaulting to rdi, Magnum/GL expects ruo.
+       The file orientation can be overriden from config, in which case we'll
+       just ignore KTXorientation altogether. */
     {
         constexpr auto targetOrientation = "ruo"_s;
 
         bool useDefaultOrientation = true;
-        const Containers::StringView orientation{keyValueEntries[KeyValueType::Orientation].value};
+        const Containers::StringView assumeOrientation = configuration().value<Containers::StringView>("assumeOrientation");
+        const Containers::StringView orientation =
+            assumeOrientation ? assumeOrientation :
+            Containers::StringView{keyValueEntries[KeyValueType::Orientation].value};
         /* If the orientation string is too short or invalid, a warning gets
            printed and the default is used.
            Strings that are null-terminated but too short pass the first if
@@ -727,7 +732,11 @@ void KtxImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFlags
                 f->flip.set(i, flip[i]);
 
             if(!(flags() & ImporterFlag::Quiet))
-                Warning{} << "Trade::KtxImporter::openData(): missing or invalid orientation, assuming" << ", "_s.join(Containers::arrayView(defaultDirections).prefix(f->numDimensions));
+                Warning{} << "Trade::KtxImporter::openData():" <<
+                    (assumeOrientation ?
+                        "invalid assumeOrientation option, falling back to" :
+                        "missing or invalid orientation, assuming")
+                    << ", "_s.join(Containers::arrayView(defaultDirections).prefix(f->numDimensions));
         }
     }
 
