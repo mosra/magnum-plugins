@@ -1158,7 +1158,7 @@ void KtxImporterTest::image1DCompressedMipmaps() {
            --save-diagnostic the test needs to be run 4 times to save all mips.
            But hopefully this won't really be necessary. */
         CORRADE_COMPARE_AS(Containers::StringView{image->data()},
-            Utility::Path::join(KTXIMPORTER_TEST_DIR, Utility::formatString("1d-compressed-mipmaps-mip{}.bin", i)),
+            Utility::Path::join(KTXIMPORTER_TEST_DIR, Utility::format("1d-compressed-mipmaps-mip{}.bin", i)),
             TestSuite::Compare::StringToFile);
 
         mipSize = Math::max(mipSize >> 1, 1);
@@ -1387,7 +1387,7 @@ void KtxImporterTest::image2DCompressedMipmaps() {
         const Vector3i blockCount = (Vector3i::pad(mipSize, 1) + (blockSize - Vector3i{1}))/blockSize;
         CORRADE_COMPARE(image->data().size(), blockCount.product()*compressedPixelFormatBlockDataSize(image->compressedFormat()));
         CORRADE_COMPARE_AS(Containers::StringView{image->data()},
-            Utility::Path::join(KTXIMPORTER_TEST_DIR, Utility::formatString("2d-compressed-mipmaps-mip{}.bin", i)),
+            Utility::Path::join(KTXIMPORTER_TEST_DIR, Utility::format("2d-compressed-mipmaps-mip{}.bin", i)),
             TestSuite::Compare::StringToFile);
 
         mipSize = Math::max(mipSize >> 1, 1);
@@ -2162,9 +2162,9 @@ void KtxImporterTest::swizzle() {
         CORRADE_VERIFY(importer->openData(*fileData));
     }
 
-    std::string expectedMessage = "Trade::KtxImporter::openData(): image will be flipped along Y\n";
+    Containers::String expectedMessage = "Trade::KtxImporter::openData(): image will be flipped along Y\n";
     if(data.message)
-        expectedMessage += Utility::formatString("Trade::KtxImporter::openData(): {}\n", data.message);
+        expectedMessage = expectedMessage + Utility::format("Trade::KtxImporter::openData(): {}\n", data.message);
     CORRADE_COMPARE(out.str(), expectedMessage);
 
     CORRADE_COMPARE(importer->image2DCount(), 1);
