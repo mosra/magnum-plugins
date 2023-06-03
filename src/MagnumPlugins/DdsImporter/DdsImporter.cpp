@@ -634,8 +634,8 @@ void DdsImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dat
     if(flags() & ImporterFlag::Verbose) {
         if(f->yzFlip.any()) {
             const Containers::StringView axes[3]{
-                f->yzFlip[0] ? "y"_s : ""_s,
-                f->yzFlip[1] ? "z"_s : ""_s
+                f->yzFlip[0] ? "Y"_s : ""_s,
+                f->yzFlip[1] ? "Z"_s : ""_s
             };
             Debug{} << "Trade::DdsImporter::openData(): image will be flipped along" << " and "_s.joinWithoutEmptyParts(axes);
         }

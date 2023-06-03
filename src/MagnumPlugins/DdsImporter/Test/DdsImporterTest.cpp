@@ -360,11 +360,11 @@ const struct {
         ""},
     {"BGR, verbose", "bgr8unorm.dds",
         ImporterFlag::Verbose, {},
-        "Trade::DdsImporter::openData(): image will be flipped along y\n"
+        "Trade::DdsImporter::openData(): image will be flipped along Y\n"
         "Trade::DdsImporter::openData(): format requires conversion from BGR to RGB\n"},
     {"RGB, verbose", "rgb8unorm.dds",
         ImporterFlag::Verbose, {},
-        "Trade::DdsImporter::openData(): image will be flipped along y\n"},
+        "Trade::DdsImporter::openData(): image will be flipped along Y\n"},
     {"RGB, verbose, assume Y up", "rgb8unorm-yup.dds",
         ImporterFlag::Verbose, true,
         ""}
@@ -384,11 +384,11 @@ const struct {
         ""},
     {"BGRA, verbose", "bgra8unorm-3d.dds",
         ImporterFlag::Verbose, {},
-        "Trade::DdsImporter::openData(): image will be flipped along y and z\n"
+        "Trade::DdsImporter::openData(): image will be flipped along Y and Z\n"
         "Trade::DdsImporter::openData(): format requires conversion from BGRA to RGBA\n"},
     {"RGBA, verbose", "rgba8unorm-3d.dds",
         ImporterFlag::Verbose, {},
-        "Trade::DdsImporter::openData(): image will be flipped along y and z\n"},
+        "Trade::DdsImporter::openData(): image will be flipped along Y and Z\n"},
     {"RGBA, verbose, assume Y up and Z backward", "rgba8unorm-3d-yup-zbackward.dds",
         ImporterFlag::Verbose, true,
         ""},
@@ -397,11 +397,11 @@ const struct {
         ""},
     {"DXT10 BGRA, verbose", "dxt10-bgra8unorm-3d.dds",
         ImporterFlag::Verbose, {},
-        "Trade::DdsImporter::openData(): image will be flipped along y and z\n"
+        "Trade::DdsImporter::openData(): image will be flipped along Y and Z\n"
         "Trade::DdsImporter::openData(): format requires conversion from BGRA to RGBA\n"},
     {"DXT10 RGBA, verbose", "dxt10-rgba8unorm-3d.dds",
         ImporterFlag::Verbose, {},
-        "Trade::DdsImporter::openData(): image will be flipped along y and z\n"},
+        "Trade::DdsImporter::openData(): image will be flipped along Y and Z\n"},
     /* There isn't any difference between legacy and DXT10 for Y/Z flipping, so
        not testing any "DXT10 assume Y up" variant */
 };
@@ -464,7 +464,7 @@ const struct {
         "Trade::DdsImporter::image2D(): Y-flipping a compressed image that's not whole blocks, the result will be shifted by 2 pixels\n"},
     {"BC1, incomplete blocks, verbose",
         "dxt1.dds", ImporterFlag::Verbose, {}, true,
-        "Trade::DdsImporter::openData(): image will be flipped along y\n"
+        "Trade::DdsImporter::openData(): image will be flipped along Y\n"
         "Trade::DdsImporter::image2D(): Y-flipping a compressed image that's not whole blocks, the result will be shifted by 2 pixels\n"},
     {"BC1, incomplete blocks, quiet",
         "dxt1.dds", ImporterFlag::Quiet, {}, true, nullptr},
@@ -506,14 +506,14 @@ const struct {
         "Trade::DdsImporter::image3D(): Y-flipping a compressed image that's not whole blocks, the result will be shifted by 3 pixels\n"},
     {"BC1, incomplete blocks, verbose",
         "dxt1-3d.dds", ImporterFlag::Verbose, {}, true, true,
-        "Trade::DdsImporter::openData(): image will be flipped along y and z\n"
+        "Trade::DdsImporter::openData(): image will be flipped along Y and Z\n"
         "Trade::DdsImporter::image3D(): Y-flipping a compressed image that's not whole blocks, the result will be shifted by 3 pixels\n"},
     {"BC1, incomplete blocks, assume Y up Z backward, verbose",
         "dxt1-3d.dds", ImporterFlag::Verbose, true, false, false, nullptr},
     {"BC7, flip not implemented, verbose",
         "dxt10-bc7-3d.dds", ImporterFlag::Verbose, {}, false, true,
         "Trade::DdsImporter::openData(): Y flip is not yet implemented for CompressedPixelFormat::Bc7RGBAUnorm, imported data will have wrong orientation. Enable assumeYUpZBackward to suppress this warning.\n"
-        "Trade::DdsImporter::openData(): image will be flipped along z\n"},
+        "Trade::DdsImporter::openData(): image will be flipped along Z\n"},
     {"BC7, flip not implemented, assume Y up Z backward, verbose",
         "dxt10-bc7-3d.dds", ImporterFlag::Verbose, true, false, false, nullptr},
 };

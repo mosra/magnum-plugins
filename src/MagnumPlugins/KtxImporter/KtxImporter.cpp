@@ -799,9 +799,9 @@ void KtxImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFlags
     if(flags() & ImporterFlag::Verbose) {
         if(f->flip.any()) {
             const Containers::StringView axes[3]{
-                f->flip[0] ? "x"_s : ""_s,
-                f->flip[1] ? "y"_s : ""_s,
-                f->flip[2] ? "z"_s : ""_s,
+                f->flip[0] ? "X"_s : ""_s,
+                f->flip[1] ? "Y"_s : ""_s,
+                f->flip[2] ? "Z"_s : ""_s,
             };
             Debug{} << "Trade::KtxImporter::openData(): image will be flipped along" << " and "_s.joinWithoutEmptyParts(axes);
         }

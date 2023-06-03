@@ -490,11 +490,11 @@ const struct {
     {"l, verbose", "l", "1d.ktx2", {4, 0, 0}, PixelFormat::RGB8Srgb,
         Containers::arrayCast<const char>(PatternRgb1DData[0]),
         ImporterFlag::Verbose, {true, false, false}, false,
-        "Trade::KtxImporter::openData(): image will be flipped along x\n"},
+        "Trade::KtxImporter::openData(): image will be flipped along X\n"},
     {"l, assumed, verbose", "l", "1d.ktx2", {4, 0, 0}, PixelFormat::RGB8Srgb,
         Containers::arrayCast<const char>(PatternRgb1DData[0]),
         ImporterFlag::Verbose, {true, false, false}, true,
-        "Trade::KtxImporter::openData(): image will be flipped along x\n"},
+        "Trade::KtxImporter::openData(): image will be flipped along X\n"},
     /* Nothing is flipped, so shouldn't print any message */
     {"r, verbose", "r", "1d.ktx2", {4, 0, 0}, PixelFormat::RGB8Srgb,
         Containers::arrayCast<const char>(PatternRgb1DData[0]),
@@ -507,7 +507,7 @@ const struct {
     {"rd, verbose", "rd", "2d-rgb.ktx2", {4, 3, 0}, PixelFormat::RGB8Srgb,
         Containers::arrayCast<const char>(PatternRgbData[0]),
         ImporterFlag::Verbose, {false, false, false}, false,
-        "Trade::KtxImporter::openData(): image will be flipped along y\n"},
+        "Trade::KtxImporter::openData(): image will be flipped along Y\n"},
     {"luo", "luo", "3d.ktx2", {4, 3, 3}, PixelFormat::RGB8Srgb,
         Containers::arrayCast<const char>(PatternRgbData),
         {}, {true, true, true}, false, nullptr},
@@ -517,7 +517,7 @@ const struct {
     {"rdi, verbose", "rdi", "3d.ktx2", {4, 3, 3}, PixelFormat::RGB8Srgb,
         Containers::arrayCast<const char>(PatternRgbData),
         ImporterFlag::Verbose, {false, false, false}, false,
-        "Trade::KtxImporter::openData(): image will be flipped along y and z\n"},
+        "Trade::KtxImporter::openData(): image will be flipped along Y and Z\n"},
     /* Nothing is flipped, so shouldn't print any message */
     {"ruo, verbose", "ruo", "3d.ktx2", {4, 3, 3}, PixelFormat::RGB8Srgb,
         Containers::arrayCast<const char>(PatternRgbData),
@@ -2163,7 +2163,7 @@ void KtxImporterTest::swizzle() {
         CORRADE_VERIFY(importer->openData(*fileData));
     }
 
-    std::string expectedMessage = "Trade::KtxImporter::openData(): image will be flipped along y\n";
+    std::string expectedMessage = "Trade::KtxImporter::openData(): image will be flipped along Y\n";
     if(data.message)
         expectedMessage += Utility::formatString("Trade::KtxImporter::openData(): {}\n", data.message);
     CORRADE_COMPARE(out.str(), expectedMessage);
@@ -2187,7 +2187,7 @@ void KtxImporterTest::swizzleMultipleBytes() {
     }
 
     CORRADE_COMPARE(out.str(),
-        "Trade::KtxImporter::openData(): image will be flipped along y\n"
+        "Trade::KtxImporter::openData(): image will be flipped along Y\n"
         "Trade::KtxImporter::openData(): format requires conversion from BGR to RGB\n");
 
     /* For some reason a 16-bit PNG sent through toktx ends up with 8-bit
@@ -2224,7 +2224,7 @@ void KtxImporterTest::swizzleIdentity() {
        key/value data. */
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(KTXIMPORTER_TEST_DIR, "swizzle-identity.ktx2")));
     /* No message about format requiring conversion */
-    CORRADE_COMPARE(out.str(), "Trade::KtxImporter::openData(): image will be flipped along y\n");
+    CORRADE_COMPARE(out.str(), "Trade::KtxImporter::openData(): image will be flipped along Y\n");
 }
 
 void KtxImporterTest::swizzleUnsupported() {
