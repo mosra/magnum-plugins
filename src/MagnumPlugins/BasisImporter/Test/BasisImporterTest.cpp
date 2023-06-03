@@ -225,9 +225,11 @@ const struct {
         "",
         "Trade::BasisImporter::openData(): the image was not encoded Y-flipped, imported data will have wrong orientation\n"
     }},
-    /* The KTX metadata say it's a 3D texture, but it's actually a 2D array
+    /* The Basis metadata say it's a 3D texture, but it's actually a 2D array
        because the mip levels don't shrink along Z. The texture type is thus
-       patched on import with a warning. */
+       patched on import with a warning. With the KTX2 output `-tex_type 3d`
+       marks the file as 2D array (and not 3D) so there's nothing to patch or
+       warn about. */
     {"3D", "rgba-3d", TextureType::Texture3D, TextureType::Texture2DArray, {
         "Trade::BasisImporter::openData(): importing 3D texture as a 2D array texture\n",
         "Trade::BasisImporter::openData(): the image was not encoded Y-flipped, imported data will have wrong orientation\n"
