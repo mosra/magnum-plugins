@@ -276,11 +276,12 @@ void BasisImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFla
            get it from the KTX2 header directly. */
         /** @todo Can we test this? Maybe disable this on some CI, BC7 is
             already disabled on Emscripten. */
-        const basist::ktx2_header& header = *reinterpret_cast<const basist::ktx2_header*>(state->in.data());
-        if(header.m_supercompression_scheme == basist::KTX2_SS_ZSTANDARD && !BASISD_SUPPORT_KTX2_ZSTD) {
+        #if !BASISD_SUPPORT_KTX2_ZSTD
+        if(reinterpret_cast<const basist::ktx2_header*>(state->in.data())->m_supercompression_scheme == basist::KTX2_SS_ZSTANDARD) {
             Error{} << "Trade::BasisImporter::openData(): file uses Zstandard supercompression but Basis Universal was compiled without Zstandard support";
             return;
         }
+        #endif
 
         /* Start transcoding */
         if(!state->ktx2Transcoder->start_transcoding()) {
@@ -387,9 +388,8 @@ void BasisImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFla
                     Warning{} << "Trade::BasisImporter::openData(): importing 3D texture as a 2D array texture";
                 state->imageFlags |= ImageFlag3D::Array;
                 break;
-            default:
-                /* This is caught by basis_transcoder::get_file_info() */
-                CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+            /* This is caught by basis_transcoder::get_file_info() */
+            default: CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
         }
 
         /* If the texture type is 2D, it can be multi-image. Otherwise, for
