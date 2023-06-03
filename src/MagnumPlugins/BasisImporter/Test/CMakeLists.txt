@@ -47,6 +47,12 @@ if(NOT MAGNUM_BASISIMPORTER_BUILD_STATIC)
     if(MAGNUM_WITH_STBIMAGEIMPORTER)
         set(STBIMAGEIMPORTER_PLUGIN_FILENAME $<TARGET_FILE:StbImageImporter>)
     endif()
+    if(MAGNUM_WITH_BCDECIMAGECONVERTER)
+        set(BCDECIMAGECONVERTER_PLUGIN_FILENAME $<TARGET_FILE:BcDecImageConverter>)
+    endif()
+    if(MAGNUM_WITH_ETCDECIMAGECONVERTER)
+        set(ETCDECIMAGECONVERTER_PLUGIN_FILENAME $<TARGET_FILE:EtcDecImageConverter>)
+    endif()
 endif()
 
 # First replace ${} variables, then $<> generator expressions
@@ -70,6 +76,7 @@ corrade_add_test(BasisImporterTest BasisImporterTest.cpp
         rgb-linear-pow2.ktx2
         rgb-noflip.basis
         rgb-noflip.ktx2
+        rgb-noflip-pow2.ktx2
         rgba.basis
         rgba.ktx2
         rgba-pow2.basis
@@ -89,6 +96,7 @@ corrade_add_test(BasisImporterTest BasisImporterTest.cpp
         rgba-cubemap.ktx2
         rgba-cubemap-array.basis
         rgba-cubemap-array.ktx2
+        rgba-noflip-array.ktx2
         rgba-video.basis
         rgba-video.ktx2
         rgba-video-uastc.basis
@@ -114,11 +122,23 @@ if(MAGNUM_BASISIMPORTER_BUILD_STATIC)
     if(MAGNUM_WITH_STBIMAGEIMPORTER)
         target_link_libraries(BasisImporterTest PRIVATE StbImageImporter)
     endif()
+    if(MAGNUM_WITH_BCDECIMAGECONVERTER)
+        target_link_libraries(BasisImporterTest PRIVATE BcDecImageConverter)
+    endif()
+    if(MAGNUM_WITH_ETCDECIMAGECONVERTER)
+        target_link_libraries(BasisImporterTest PRIVATE EtcDecImageConverter)
+    endif()
 else()
     # So the plugins get properly built when building the test
     add_dependencies(BasisImporterTest BasisImporter)
     if(MAGNUM_WITH_STBIMAGEIMPORTER)
         add_dependencies(BasisImporterTest StbImageImporter)
+    endif()
+    if(MAGNUM_WITH_BCDECIMAGECONVERTER)
+        add_dependencies(BasisImporterTest BcDecImageConverter)
+    endif()
+    if(MAGNUM_WITH_ETCDECIMAGECONVERTER)
+        add_dependencies(BasisImporterTest EtcDecImageConverter)
     endif()
 endif()
 if(CORRADE_BUILD_STATIC AND NOT MAGNUM_BASISIMPORTER_BUILD_STATIC)

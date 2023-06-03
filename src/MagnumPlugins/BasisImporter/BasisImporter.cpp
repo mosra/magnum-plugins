@@ -33,6 +33,7 @@
 #include <Corrade/Utility/ConfigurationValue.h>
 #include <Corrade/Utility/Debug.h>
 #include <Magnum/PixelFormat.h>
+#include <Magnum/Math/ColorBatch.h>
 #include <Magnum/Trade/ImageData.h>
 
 #include <basisu_transcoder.h>
@@ -164,8 +165,12 @@ struct BasisImporter::State {
     bool isYFlipped;
     bool isSrgb;
 
-    bool noTranscodeFormatWarningPrinted = false;
     UnsignedInt lastTranscodedImageId = ~0u;
+    Containers::Optional<TargetFormat> lastTargetFormat;
+    /* These two are reset to false in doImage() if target format changes
+       compared to lastTargetFormat */
+    bool noTranscodeFormatWarningPrinted = false;
+    bool yFlipNotPossibleWarningPrinted = false;
 
     explicit State(): codebook(basist::g_global_selector_cb_size,
         basist::g_global_selector_cb) {}
@@ -469,18 +474,9 @@ void BasisImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFla
     /* There's one image with faces/layers, or multiple images without any */
     CORRADE_INTERNAL_ASSERT(state->numImages == 1 || state->numSlices == 1);
 
-    if(!(flags() & ImporterFlag::Quiet) && !state->isYFlipped) {
-        /** @todo replace with the flag once the PR is submitted */
-        /** @todo or could we at least flip if output is set to (uncompressed)
-            RGBA? it would be inconsistent tho */
-        Warning{} << "Trade::BasisImporter::openData(): the image" <<
-            (assumeYUp ?
-                "is assumed to not be Y-flipped" :
-                "was not encoded Y-flipped")
-            << Debug::nospace << ", imported data will have wrong orientation";
-        //flags |= basist::basisu_transcoder::cDecodeFlagsFlipY;
-    }
     if(flags() & ImporterFlag::Verbose) {
+        if(!state->isYFlipped)
+            Debug{} << "Trade::BasisImporter::openData(): image will be flipped along Y";
         if(state->isVideo)
             Debug{} << "Trade::BasisImporter::openData(): file contains video frames, images must be transcoded sequentially";
     }
@@ -494,22 +490,36 @@ template<UnsignedInt dimensions> Containers::Optional<ImageData<dimensions>> Bas
     constexpr const char* prefix = prefixes[dimensions - 2];
 
     const auto targetFormatStr = configuration().value<Containers::StringView>("format");
-    TargetFormat targetFormat;
-    if(!targetFormatStr) {
-        if(!(flags() & ImporterFlag::Quiet) && !_state->noTranscodeFormatWarningPrinted)
-            Warning{} << prefix << "no format to transcode to was specified, falling back to uncompressed RGBA8. To get rid of this warning, either explicitly set the format option to one of Etc1RGB, Etc2RGBA, EacR, EacRG, Bc1RGB, Bc3RGBA, Bc4R, Bc5RG, Bc7RGBA, PvrtcRGB4bpp, PvrtcRGBA4bpp, Astc4x4RGBA or RGBA8, or load the plugin via one of its BasisImporterEtc1RGB, ... aliases.";
-        targetFormat = TargetFormat::RGBA8;
-        _state->noTranscodeFormatWarningPrinted = true;
-    } else {
+    Containers::Optional<TargetFormat> targetFormat;
+    if(targetFormatStr) {
         targetFormat = configuration().value<TargetFormat>("format");
-        if(UnsignedInt(targetFormat) == ~UnsignedInt{}) {
+        if(UnsignedInt(*targetFormat) == ~UnsignedInt{}) {
             Error{} << prefix << "invalid transcoding target format" << targetFormatStr << Debug::nospace
                 << ", expected to be one of Etc1RGB, Etc2RGBA, EacR, EacRG, Bc1RGB, Bc3RGBA, Bc4R, Bc5RG, Bc7RGBA, Pvrtc1RGB4bpp, Pvrtc1RGBA4bpp, Astc4x4RGBA or RGBA8";
             return Containers::NullOpt;
         }
     }
 
-    const auto format = basist::transcoder_texture_format(Int(targetFormat));
+    /* If the target format changed from last time, reset the warning counters
+       so they're printed again */
+    if(_state->lastTargetFormat != targetFormat) {
+        _state->lastTargetFormat = targetFormat;
+        _state->noTranscodeFormatWarningPrinted = false;
+        _state->yFlipNotPossibleWarningPrinted = false;
+    }
+
+    /* If no target format was specified, print a warning and fall back to
+       RGBA8. Don't save it to _state->lastTargetFormat because then we
+       wouldn't be able to distinguish the case of explicit RGBA8 and no
+       format set */
+    if(!targetFormat) {
+        if(!(flags() & ImporterFlag::Quiet) && !_state->noTranscodeFormatWarningPrinted)
+            Warning{} << prefix << "no format to transcode to was specified, falling back to uncompressed RGBA8. To get rid of this warning, either explicitly set the format option to one of Etc1RGB, Etc2RGBA, EacR, EacRG, Bc1RGB, Bc3RGBA, Bc4R, Bc5RG, Bc7RGBA, PvrtcRGB4bpp, PvrtcRGBA4bpp, Astc4x4RGBA or RGBA8, or load the plugin via one of its BasisImporterEtc1RGB, ... aliases.";
+        targetFormat = TargetFormat::RGBA8;
+        _state->noTranscodeFormatWarningPrinted = true;
+    }
+
+    const auto format = basist::transcoder_texture_format(Int(*targetFormat));
     const bool isUncompressed = basist::basis_transcoder_format_is_uncompressed(format);
 
     /* Some target formats may be unsupported, either because support wasn't
@@ -623,10 +633,76 @@ template<UnsignedInt dimensions> Containers::Optional<ImageData<dimensions>> Bas
         }
     }
 
-    if(isUncompressed)
-        return Trade::ImageData<dimensions>{pixelFormat(targetFormat, _state->isSrgb), Math::Vector<dimensions, Int>::pad(Vector3i{size}), std::move(dest), ImageFlag<dimensions>(UnsignedShort(_state->imageFlags))};
-    else
-        return Trade::ImageData<dimensions>{compressedPixelFormat(targetFormat, _state->isSrgb), Math::Vector<dimensions, Int>::pad(Vector3i{size}), std::move(dest), ImageFlag<dimensions>(UnsignedShort(_state->imageFlags))};
+    if(isUncompressed) {
+        Trade::ImageData<dimensions> out{pixelFormat(*targetFormat, _state->isSrgb), Math::Vector<dimensions, Int>::pad(Vector3i{size}), std::move(dest), ImageFlag<dimensions>(UnsignedShort(_state->imageFlags))};
+
+        /* Flip if needed */
+        if(!_state->isYFlipped)
+            Utility::flipInPlace<dimensions - 2>(out.mutablePixels());
+
+        /* GCC 4.8 needs extra help here */
+        return Containers::optional(std::move(out));
+    } else {
+        const CompressedPixelFormat format = compressedPixelFormat(*targetFormat, _state->isSrgb);
+
+        /* Flip if needed */
+        /** @todo In 2019, I submitted a PR to Basis that would flip the image
+            directly in the ETC1S representation:
+             https://github.com/BinomialLLC/basis_universal/pull/79
+            With that, the whole process would only need to be implemented and
+            tested for a single format where it's lossless, not on A DOZEN,
+            with some of them making quality tradeoffs. But, as usual with any
+            PRs submitted by anybody to this library, the developers just don't
+            care at all, so four years later I'm doing it myself on the output
+            formats instead. */
+        if(!_state->isYFlipped) {
+            /** @todo clean this up once blocks() is a thing */
+            const Vector3i blockSize = compressedPixelFormatBlockSize(format);
+            const Vector3i sizeInBlocks = (Vector3i{size} + blockSize - Vector3i{1})/blockSize;
+            const UnsignedInt blockDataSize = compressedPixelFormatBlockDataSize(format);
+            const Containers::StridedArrayView4D<char> blocks{dest, {
+                std::size_t(sizeInBlocks.z()),
+                std::size_t(sizeInBlocks.y()),
+                std::size_t(sizeInBlocks.x()),
+                blockDataSize
+            }};
+            bool flipped = true;
+            switch(*targetFormat) {
+                case TargetFormat::Bc1RGB:
+                    Math::yFlipBc1InPlace(blocks);
+                    break;
+                case TargetFormat::Bc3RGBA:
+                    Math::yFlipBc3InPlace(blocks);
+                    break;
+                case TargetFormat::Bc4R:
+                    Math::yFlipBc4InPlace(blocks);
+                    break;
+                case TargetFormat::Bc5RG:
+                    Math::yFlipBc5InPlace(blocks);
+                    break;
+                case TargetFormat::Etc1RGB:
+                case TargetFormat::Etc2RGBA:
+                case TargetFormat::Bc7RGBA:
+                case TargetFormat::PvrtcRGB4bpp:
+                case TargetFormat::PvrtcRGBA4bpp:
+                case TargetFormat::Astc4x4RGBA:
+                case TargetFormat::EacR:
+                case TargetFormat::EacRG:
+                    if(!(flags() & ImporterFlag::Quiet) && !_state->yFlipNotPossibleWarningPrinted)
+                        Warning{} << prefix << "Y flip is not yet implemented for" << format << Debug::nospace << ", imported data will have wrong orientation. Enable assumeYUp to suppress this warning.";
+                    _state->yFlipNotPossibleWarningPrinted = true;
+                    flipped = false;
+                    break;
+                /* We'd be in the isUncompressed branch above for this */
+                case TargetFormat::RGBA8: CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+            }
+
+            if(flipped && !(flags() & ImporterFlag::Quiet) && size.y() % blockSize.y() != 0)
+                Warning{} << prefix << "Y-flipping a compressed image that's not whole blocks, the result will be shifted by" << (blockSize.y() - (size.y() % blockSize.y())) << "pixels";
+        }
+
+        return Trade::ImageData<dimensions>{format, Math::Vector<dimensions, Int>::pad(Vector3i{size}), std::move(dest), ImageFlag<dimensions>(UnsignedShort(_state->imageFlags))};
+    }
 }
 
 UnsignedInt BasisImporter::doImage2DCount() const {

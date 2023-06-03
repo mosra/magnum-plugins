@@ -1369,6 +1369,7 @@ void BasisImageConverterTest::ktx() {
 
     CORRADE_VERIFY(compressedView.hasPrefix(KtxFileMagic));
 
+    /* Verify the orientation metadata got properly written to the file */
     char KTXorientation[] = "KTXorientation\0r?";
     KTXorientation[sizeof(KTXorientation) - 1] = data.yFlip ? 'u' : 'd';
     CORRADE_VERIFY(compressedView.contains(KTXorientation));
@@ -1382,9 +1383,10 @@ void BasisImageConverterTest::ktx() {
     CORRADE_VERIFY(image);
 
     /* Basis can only load RGBA8 uncompressed data, which corresponds to RGB1
-       from our RGB8 image data. */
+       from our RGB8 image data. The importer will check the KTXorientation
+       data and Y-flips as appropriate, so nothing else needs to be done
+       here. */
     Containers::StridedArrayView2D<const Color4ub> pixels = image->pixels<Color4ub>();
-    if(!data.yFlip) pixels = pixels.flipped<0>();
     CORRADE_COMPARE_WITH(pixels,
         Utility::Path::join(BASISIMPORTER_TEST_DIR, "rgba-63x27.png"),
         /* There are moderately significant compression artifacts */

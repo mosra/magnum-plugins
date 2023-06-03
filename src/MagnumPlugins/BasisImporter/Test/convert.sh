@@ -2,6 +2,10 @@
 
 set -e
 
+# Files generated using the v_1_15_update2 tag (it's an unannotated tag, not
+# a release, so it's not listed among releases on GitHub). Version 1.16
+# produces *wildly* different files and fails for some cases.
+
 # RGB
 basisu rgb-63x27.png -output_file rgb.basis -y_flip
 basisu rgb-63x27.png -output_file rgb.ktx2  -y_flip -ktx2
@@ -31,6 +35,8 @@ basisu rgba-63x27.png rgba-13x31.png -output_file rgba-2images-mips.basis -y_fli
 # 2D array
 basisu rgba-63x27.png rgba-63x27-slice1.png rgba-63x27-slice2.png -tex_type 2darray -output_file rgba-array.basis -force_alpha -y_flip
 basisu rgba-63x27.png rgba-63x27-slice1.png rgba-63x27-slice2.png -tex_type 2darray -output_file rgba-array.ktx2  -force_alpha -y_flip -ktx2
+# Without Y-flip for testing flipping in 3D
+basisu rgba-63x27.png rgba-63x27-slice1.png rgba-63x27-slice2.png -tex_type 2darray -output_file rgba-noflip-array.ktx2 -force_alpha -ktx2
 
 # 2D array with mipmaps
 basisu rgba-63x27.png rgba-63x27-slice1.png rgba-63x27-slice2.png -tex_type 2darray -output_file rgba-array-mips.basis -force_alpha -y_flip -mipmap -mip_smallest 16 -mip_filter box
@@ -73,7 +79,9 @@ cp rgba-array.basis invalid-cube-face-count.basis
 printf '\x02' | dd conv=notrunc of=invalid-cube-face-count.basis bs=1 seek=23
 printf '\x2c\xb0' | dd conv=notrunc of=invalid-cube-face-count.basis bs=1 seek=6
 
-# Required for PVRTC1 target, which requires pow2 dimensions
+# Required for Y-flipping of whole block and for the PVRTC1 target, which
+# requires pow2 dimensions
+basisu rgb-64x32.png -output_file rgb-noflip-pow2.ktx2 -ktx2
 basisu rgb-64x32.png -output_file rgb-pow2.basis -y_flip
 basisu rgb-64x32.png -output_file rgb-pow2.ktx2  -y_flip -ktx2
 basisu rgb-64x32.png -output_file rgb-linear-pow2.basis -y_flip -linear

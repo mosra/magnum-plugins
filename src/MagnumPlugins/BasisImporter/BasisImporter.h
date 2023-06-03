@@ -135,17 +135,24 @@ See @ref building-plugins, @ref cmake-plugins, @ref plugins and
 @m_class{m-block m-warning}
 
 @par Imported image orientation
-    Both the Basis and the KTX2 file format contains orientation metadata, but
-    because flipping block-compressed data is nontrivial, the images will not
-    be flipped on import. Instead, if the orientation doesn't match Y up, a
-    message will be printed to @relativeref{Magnum,Warning} and the data will
-    be passed through unchanged. In case of the `basisu` tool you can pass
-    `-y_flip` to encode the image with Y up but note the orientation
+    Both the Basis and the KTX2 file format can contain orientation metadata.
+    If the orientation doesn't match Y up, the plugin will attempt to Y-flip
+    the data on import. In case of the `basisu` tool you can pass `-y_flip` to
+    encode the image with Y up but note the orientation
     [isn't correctly written to the file with a KTX2 output](https://github.com/BinomialLLC/basis_universal/issues/258).
     The @ref BasisImageConverter encodes Y up files by default and does it
-    correctly for both Basis and KTX2 files. File orientation can also be
-    overriden using the @cb{.ini} assumeYUp @ce
-    @ref Trade-BasisImporter-configuration "configuration option".
+    correctly for both Basis and KTX2 files.
+@par
+    Y-flipping block-compressed data is non-trivial and so far is implemented
+    only for BC1, BC2, BC3, BC4 and BC5 formats with APIs from
+    @ref Magnum/Math/ColorBatch.h. Other compressed formats will print a
+    message to @relativeref{Magnum,Warning} and the data will not be flipped. A
+    warning also gets printed in case the flip is performed on an image whose
+    height isn't whole blocks, as that causes the data to be shifted.
+@par
+    You can also set the @cb{.ini} assumeYUp @ce
+    @ref Trade-BasisImporter-configuration "configuration option" to ignore
+    any metadata, assume the Y up orientation and perform no flipping.
 
 The importer recognizes @ref ImporterFlag::Verbose, printing additional info
 when the flag is enabled. @ref ImporterFlag::Quiet is recognized as well and

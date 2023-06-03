@@ -39,6 +39,7 @@
 #include <Magnum/PixelFormat.h>
 #include <Magnum/DebugTools/CompareImage.h>
 #include <Magnum/Math/Color.h>
+#include <Magnum/Trade/AbstractImageConverter.h>
 #include <Magnum/Trade/AbstractImporter.h>
 #include <Magnum/Trade/ImageData.h>
 
@@ -70,7 +71,6 @@ struct BasisImporterTest: TestSuite::Tester {
     #endif
 
     void rgbUncompressed();
-    void rgbUncompressedFlip();
     void rgbUncompressedLinear();
     void rgbaUncompressed();
     void rgbaUncompressedUastc();
@@ -91,6 +91,11 @@ struct BasisImporterTest: TestSuite::Tester {
     void videoSeeking();
     void videoVerbose();
 
+    void flipUncompressed();
+    void flipUncompressed3D();
+    void flip();
+    void flip3D();
+
     void openMemory();
     void openSameTwice();
     void openDifferent();
@@ -98,6 +103,8 @@ struct BasisImporterTest: TestSuite::Tester {
 
     /* Needs to load AnyImageImporter from system-wide location */
     PluginManager::Manager<AbstractImporter> _manager;
+    /* For testing Y-flip of block-compressed formats */
+    PluginManager::Manager<AbstractImageConverter> _converterManager{"nonexistent"};
 };
 
 using namespace Containers::Literals;
@@ -115,31 +122,6 @@ constexpr struct {
 } FileTypeData[] {
     {"Basis", ".basis", false},
     {"KTX2", ".ktx2", true}
-};
-
-const struct {
-    const char* name;
-    const char* extension;
-    ImporterFlags flags;
-    Containers::Optional<bool> assumeYUp;
-    const char* message;
-} RgbUncompressedFlipData[] {
-    {"Basis, Y down", ".basis", {}, {},
-        "Trade::BasisImporter::openData(): the image was not encoded Y-flipped, imported data will have wrong orientation\n"},
-    {"Basis, Y down, quiet", ".basis", ImporterFlag::Quiet, {},
-        nullptr},
-    {"Basis, Y down, assume Y up", ".basis", {}, true,
-        nullptr},
-    {"Basis, Y down, assume Y down", ".basis", {}, false,
-        "Trade::BasisImporter::openData(): the image is assumed to not be Y-flipped, imported data will have wrong orientation\n"},
-    {"KTX2, no KTXorientation", ".ktx2", {}, {},
-        "Trade::BasisImporter::openData(): the image was not encoded Y-flipped, imported data will have wrong orientation\n"},
-    {"KTX2, no KTXorientation, quiet", ".ktx2", ImporterFlag::Quiet, {},
-        nullptr},
-    {"KTX2, no KTXorientation, assume Y up", ".ktx2", {}, true,
-        nullptr},
-    {"KTX2, no KTXorientation, assume Y down", ".ktx2", {}, false,
-        "Trade::BasisImporter::openData(): the image is assumed to not be Y-flipped, imported data will have wrong orientation\n"},
 };
 
 constexpr struct {
@@ -204,26 +186,21 @@ const struct {
     Containers::Optional<TextureType> xfailType;
     const char* warning[2]; /* Basis, then KTX */
 } TextureData[]{
-    /* THE DAMN THING still doesn't write proper KTXorientation, so opening
-       any KTX file produced by it (and not by our BasisImageConverter, which
-       patches that in after) will warn no matter whether it was flipped or
-       not: https://github.com/BinomialLLC/basis_universal/issues/258 */
     {"2D", "rgb", TextureType::Texture2D, {}, {
         "",
-        /* Here we patch it in, however, see convert.sh */
         ""
     }},
     {"2D array", "rgba-array", TextureType::Texture2DArray, {}, {
         "",
-        "Trade::BasisImporter::openData(): the image was not encoded Y-flipped, imported data will have wrong orientation\n"
+        ""
     }},
     {"Cube map", "rgba-cubemap", TextureType::CubeMap, {}, {
         "",
-        "Trade::BasisImporter::openData(): the image was not encoded Y-flipped, imported data will have wrong orientation\n"
+        ""
     }},
     {"Cube map array", "rgba-cubemap-array", TextureType::CubeMapArray, {}, {
         "",
-        "Trade::BasisImporter::openData(): the image was not encoded Y-flipped, imported data will have wrong orientation\n"
+        ""
     }},
     /* The Basis metadata say it's a 3D texture, but it's actually a 2D array
        because the mip levels don't shrink along Z. The texture type is thus
@@ -232,16 +209,16 @@ const struct {
        warn about. */
     {"3D", "rgba-3d", TextureType::Texture3D, TextureType::Texture2DArray, {
         "Trade::BasisImporter::openData(): importing 3D texture as a 2D array texture\n",
-        "Trade::BasisImporter::openData(): the image was not encoded Y-flipped, imported data will have wrong orientation\n"
+        ""
     }},
     /* Same as above */
     {"3D mipmaps", "rgba-3d-mips", TextureType::Texture3D, TextureType::Texture2DArray, {
         "Trade::BasisImporter::openData(): importing 3D texture as a 2D array texture\n",
-        "Trade::BasisImporter::openData(): the image was not encoded Y-flipped, imported data will have wrong orientation\n"
+        ""
     }},
     {"Video", "rgba-video", TextureType::Texture2D, {}, {
         "",
-        "Trade::BasisImporter::openData(): the image was not encoded Y-flipped, imported data will have wrong orientation\n"
+        ""
     }}
 };
 #endif
@@ -307,16 +284,154 @@ constexpr struct {
 
 const struct {
     const char* name;
+    const char* filename;
+    ImporterFlags flags;
+    Containers::Optional<bool> assumeYUp;
+    PixelFormat expectedFormat;
+    bool flipped, flippedToPng;
+    const char* message;
+} FlipUncompressedData[] {
+    {"Y down",
+        "rgb-noflip.ktx2", {}, {},
+        PixelFormat::RGBA8Srgb, true, false, nullptr},
+    {"Y down, verbose",
+        "rgb-noflip.ktx2", ImporterFlag::Verbose, {},
+        PixelFormat::RGBA8Srgb, true, false,
+        "Trade::BasisImporter::openData(): image will be flipped along Y\n"},
+    {"Y down, assume Y up, verbose",
+        "rgb-noflip.ktx2", {}, true,
+        PixelFormat::RGBA8Srgb, false, true, nullptr},
+    {"Y up, verbose",
+        "rgb.basis", ImporterFlag::Verbose, {},
+        PixelFormat::RGBA8Srgb, false, false, nullptr},
+    {"Y up metadata missing, assume Y up, verbose",
+        /* rgb.ktx2 has the KTXorientation metadata patched in */
+        "rgb-linear.ktx2", ImporterFlag::Verbose, true,
+        PixelFormat::RGBA8Unorm, false, false, nullptr},
+};
+
+const struct {
+    TestSuite::TestCaseDescriptionSourceLocation name;
+    const char* filename;
+    ImporterFlags flags;
+    Containers::Optional<bool> assumeYUp;
+    const char* format;
+    CompressedPixelFormat expectedFormat;
+    bool flipped;
+    const char* message;
+} FlipData[] {
+    {"ETC1 RGB, flip not implemented",
+        "rgb-noflip.ktx2", {}, {},
+        "Etc1RGB", CompressedPixelFormat::Etc2RGB8Srgb, false,
+        "Trade::BasisImporter::image2D(): Y flip is not yet implemented for CompressedPixelFormat::Etc2RGB8Srgb, imported data will have wrong orientation. Enable assumeYUp to suppress this warning.\n"},
+    {"ETC1 RGB, flip not implemented, verbose",
+        "rgb-noflip.ktx2", ImporterFlag::Verbose, {},
+        "Etc1RGB", CompressedPixelFormat::Etc2RGB8Srgb, false,
+        /* The Y flip note is printed even if it's impossible to do after,
+           since the target format can be different for each image2D() call */
+        "Trade::BasisImporter::openData(): image will be flipped along Y\n"
+        "Trade::BasisImporter::image2D(): Y flip is not yet implemented for CompressedPixelFormat::Etc2RGB8Srgb, imported data will have wrong orientation. Enable assumeYUp to suppress this warning.\n"},
+    {"ETC1 RGB, flip not implemented, quiet",
+        "rgb-noflip.ktx2", ImporterFlag::Quiet, {},
+        "Etc1RGB", CompressedPixelFormat::Etc2RGB8Srgb, false,
+        nullptr},
+    {"ETC1 RGB, Y up, verbose",
+        "rgb-linear.basis", ImporterFlag::Verbose, {},
+        "Etc1RGB", CompressedPixelFormat::Etc2RGB8Unorm, false,
+        nullptr},
+    {"ETC1 RGB, assume Y up, verbose",
+        "rgb-noflip.ktx2", ImporterFlag::Verbose, true,
+        "Etc1RGB", CompressedPixelFormat::Etc2RGB8Srgb, false,
+        nullptr},
+    {"ETC2 RGBA, flip not implemented",
+        "rgb-noflip.ktx2", {}, {},
+        "Etc2RGBA", CompressedPixelFormat::Etc2RGBA8Srgb, false,
+        "Trade::BasisImporter::image2D(): Y flip is not yet implemented for CompressedPixelFormat::Etc2RGBA8Srgb, imported data will have wrong orientation. Enable assumeYUp to suppress this warning.\n"},
+    {"EAC R, flip not implemented",
+        "rgb-noflip.ktx2", {}, {},
+        "EacR", CompressedPixelFormat::EacR11Unorm, false,
+        "Trade::BasisImporter::image2D(): Y flip is not yet implemented for CompressedPixelFormat::EacR11Unorm, imported data will have wrong orientation. Enable assumeYUp to suppress this warning.\n"},
+    {"EAC RG, flip not implemented",
+        "rgb-noflip.ktx2", {}, {},
+        "EacRG", CompressedPixelFormat::EacRG11Unorm, false,
+        "Trade::BasisImporter::image2D(): Y flip is not yet implemented for CompressedPixelFormat::EacRG11Unorm, imported data will have wrong orientation. Enable assumeYUp to suppress this warning.\n"},
+    {"BC1",
+        "rgb-noflip-pow2.ktx2", {}, {},
+        "Bc1RGB", CompressedPixelFormat::Bc1RGBSrgb, true,
+        nullptr},
+    {"BC1, verbose",
+        "rgb-noflip-pow2.ktx2", ImporterFlag::Verbose, {},
+        "Bc1RGB", CompressedPixelFormat::Bc1RGBSrgb, true,
+        "Trade::BasisImporter::openData(): image will be flipped along Y\n"},
+    {"BC1, incomplete blocks",
+        "rgb-noflip.ktx2", {}, {},
+        "Bc1RGB", CompressedPixelFormat::Bc1RGBSrgb, true,
+        "Trade::BasisImporter::image2D(): Y-flipping a compressed image that's not whole blocks, the result will be shifted by 1 pixels\n"},
+    {"BC1, incomplete blocks, verbose",
+        "rgb-noflip.ktx2", ImporterFlag::Verbose, {},
+        "Bc1RGB", CompressedPixelFormat::Bc1RGBSrgb, true,
+        "Trade::BasisImporter::openData(): image will be flipped along Y\n"
+        "Trade::BasisImporter::image2D(): Y-flipping a compressed image that's not whole blocks, the result will be shifted by 1 pixels\n"},
+    {"BC1, incomplete blocks, quiet",
+        "rgb-noflip.ktx2", ImporterFlag::Quiet, {},
+        "Bc1RGB", CompressedPixelFormat::Bc1RGBSrgb, true,
+        nullptr},
+    {"BC1, Y up, verbose",
+        /* This file has Y up KTXorientation patched in */
+        "rgb.ktx2", ImporterFlag::Verbose, {},
+        "Bc1RGB", CompressedPixelFormat::Bc1RGBSrgb, false,
+        nullptr},
+    {"BC1, assume Y up, verbose",
+        "rgb-linear-pow2.ktx2", ImporterFlag::Verbose, true,
+        "Bc1RGB", CompressedPixelFormat::Bc1RGBUnorm, false,
+        nullptr},
+    {"BC1, assume Y down, verbose",
+        "rgb-linear-pow2.ktx2", ImporterFlag::Verbose, false,
+        "Bc1RGB", CompressedPixelFormat::Bc1RGBUnorm, true,
+        "Trade::BasisImporter::openData(): image will be flipped along Y\n"},
+    {"BC3",
+        "rgb-noflip-pow2.ktx2", {}, {},
+        "Bc3RGBA", CompressedPixelFormat::Bc3RGBASrgb, true,
+        nullptr},
+    {"BC4",
+        "rgb-noflip-pow2.ktx2", {}, {},
+        "Bc4R", CompressedPixelFormat::Bc4RUnorm, true,
+        nullptr},
+    {"BC5",
+        "rgb-noflip-pow2.ktx2", {}, {},
+        "Bc5RG", CompressedPixelFormat::Bc5RGUnorm, true,
+        nullptr},
+    {"BC7, flip not implemented",
+        "rgb-noflip.ktx2", {}, {},
+        "Bc7RGBA", CompressedPixelFormat::Bc7RGBASrgb, false,
+        "Trade::BasisImporter::image2D(): Y flip is not yet implemented for CompressedPixelFormat::Bc7RGBASrgb, imported data will have wrong orientation. Enable assumeYUp to suppress this warning.\n"},
+    {"PVRTC RGB, flip not implemented",
+        "rgb-noflip-pow2.ktx2", {}, {},
+        "PvrtcRGB4bpp", CompressedPixelFormat::PvrtcRGB4bppSrgb, false,
+        "Trade::BasisImporter::image2D(): Y flip is not yet implemented for CompressedPixelFormat::PvrtcRGB4bppSrgb, imported data will have wrong orientation. Enable assumeYUp to suppress this warning.\n"},
+    {"PVRTC RGBA, flip not implemented",
+        "rgb-noflip-pow2.ktx2", {}, {},
+        "PvrtcRGBA4bpp", CompressedPixelFormat::PvrtcRGBA4bppSrgb, false,
+        "Trade::BasisImporter::image2D(): Y flip is not yet implemented for CompressedPixelFormat::PvrtcRGBA4bppSrgb, imported data will have wrong orientation. Enable assumeYUp to suppress this warning.\n"},
+    {"ASTC 4x4, flip not implemented",
+        "rgb-noflip.basis", {}, {},
+        "Astc4x4RGBA", CompressedPixelFormat::Astc4x4RGBASrgb, false,
+        "Trade::BasisImporter::image2D(): Y flip is not yet implemented for CompressedPixelFormat::Astc4x4RGBASrgb, imported data will have wrong orientation. Enable assumeYUp to suppress this warning.\n"},
+};
+
+const struct {
+    const char* name;
     const char* extension;
     ImporterFlags flags;
+    Containers::Optional<bool> assumeYUp;
     const char* message;
 } Image3DData[]{
     /* In case of Basis, the image is marked as 3D. Which doesn't make sense
        as the mip levels don't shrink along Z, so we patch the type to say 2D
        array and print a warning. */
-    {"Basis", ".basis", {},
+    {"Basis", ".basis", {}, {},
         "Trade::BasisImporter::openData(): importing 3D texture as a 2D array texture\n"},
-    {"Basis", ".basis", ImporterFlag::Quiet,
+    {"Basis", ".basis", ImporterFlag::Quiet, {},
         ""},
     /* On the other hand, for KTX2 files, the image is always marked as 2D
        array and never as 3D, so no warning here.
@@ -328,11 +443,10 @@ const struct {
        https://github.com/BinomialLLC/basis_universal/issues/258
 
        In other words, the data *does have* correct orientation, it's just not
-       marked as such, leading to an annoying warning. */
-    {"KTX2", ".ktx2", {},
-        "Trade::BasisImporter::openData(): the image was not encoded Y-flipped, imported data will have wrong orientation\n"},
-    {"KTX2, quiet", ".ktx2", ImporterFlag::Quiet,
-        ""}
+       marked as such, so we have to force the orientation to not have the
+       data flipped back. */
+    {"KTX2", ".ktx2", {}, true,
+        ""},
 };
 
 const struct {
@@ -391,9 +505,6 @@ BasisImporterTest::BasisImporterTest() {
     addInstancedTests({&BasisImporterTest::rgbUncompressed},
         Containers::arraySize(FileTypeData));
 
-    addInstancedTests({&BasisImporterTest::rgbUncompressedFlip},
-        Containers::arraySize(RgbUncompressedFlipData));
-
     addInstancedTests({&BasisImporterTest::rgbUncompressedLinear,
                        &BasisImporterTest::rgbaUncompressed,
                        &BasisImporterTest::rgbaUncompressedUastc},
@@ -424,6 +535,16 @@ BasisImporterTest::BasisImporterTest() {
 
     addTests({&BasisImporterTest::videoVerbose});
 
+    addInstancedTests({&BasisImporterTest::flipUncompressed},
+        Containers::arraySize(FlipUncompressedData));
+
+    addTests({&BasisImporterTest::flipUncompressed3D});
+
+    addInstancedTests({&BasisImporterTest::flip},
+        Containers::arraySize(FlipData));
+
+    addTests({&BasisImporterTest::flip3D});
+
     addInstancedTests({&BasisImporterTest::openMemory},
         Containers::arraySize(OpenMemoryData));
 
@@ -448,6 +569,12 @@ BasisImporterTest::BasisImporterTest() {
        already loaded. */
     #ifdef BASISIMPORTER_PLUGIN_FILENAME
     CORRADE_INTERNAL_ASSERT_OUTPUT(_manager.load(BASISIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
+    #endif
+    #ifdef BCDECIMAGECONVERTER_PLUGIN_FILENAME
+    CORRADE_INTERNAL_ASSERT_OUTPUT(_converterManager.load(BCDECIMAGECONVERTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
+    #endif
+    #ifdef ETCDECIMAGECONVERTER_PLUGIN_FILENAME
+    CORRADE_INTERNAL_ASSERT_OUTPUT(_converterManager.load(ETCDECIMAGECONVERTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
     #endif
 }
 
@@ -706,44 +833,6 @@ void BasisImporterTest::rgbUncompressed() {
         Utility::Path::join(BASISIMPORTER_TEST_DIR, "rgb-63x27.png"),
         /* There are moderately significant compression artifacts */
         (DebugTools::CompareImageToFile{_manager, 58.334f, 6.622f}));
-}
-
-void BasisImporterTest::rgbUncompressedFlip() {
-    auto&& data = RgbUncompressedFlipData[testCaseInstanceId()];
-    setTestCaseDescription(data.name);
-
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporterRGBA8");
-    importer->addFlags(data.flags);
-    if(data.assumeYUp)
-        importer->configuration().setValue("assumeYUp", *data.assumeYUp);
-
-    std::ostringstream out;
-    {
-        Warning redirectWarning{&out};
-        CORRADE_VERIFY(importer->openFile(Utility::Path::join(BASISIMPORTER_TEST_DIR, "rgb-noflip"_s + data.extension)));
-    }
-    if(data.message)
-        CORRADE_COMPARE(out.str(), data.message);
-    else
-        CORRADE_COMPARE(out.str(), "");
-    CORRADE_COMPARE(importer->image2DCount(), 1);
-
-    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
-    CORRADE_VERIFY(image);
-    CORRADE_COMPARE(image->flags(), ImageFlags2D{});
-    CORRADE_VERIFY(!image->isCompressed());
-    CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Srgb);
-    CORRADE_COMPARE(image->size(), (Vector2i{63, 27}));
-
-    if(_manager.loadState("AnyImageImporter") == PluginManager::LoadState::NotFound)
-        CORRADE_SKIP("AnyImageImporter plugin not found, cannot test contents");
-    if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
-        CORRADE_SKIP("PngImporter plugin not found, cannot test contents");
-
-    CORRADE_COMPARE_WITH(Containers::arrayCast<const Color3ub>(image->pixels<Color4ub>().flipped<0>()),
-        Utility::Path::join(BASISIMPORTER_TEST_DIR, "rgb-63x27.png"),
-        /* There are moderately significant compression artifacts */
-        (DebugTools::CompareImageToFile{_manager, 51.334f, 8.643f}));
 }
 
 void BasisImporterTest::rgbUncompressedLinear() {
@@ -1167,6 +1256,8 @@ void BasisImporterTest::image3D() {
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporterRGBA8");
     importer->addFlags(data.flags);
+    if(data.assumeYUp)
+        importer->configuration().setValue("assumeYUp", *data.assumeYUp);
 
     std::ostringstream out;
     {
@@ -1208,6 +1299,8 @@ void BasisImporterTest::image3DMipmaps() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporterRGBA8");
+    if(data.assumeYUp)
+        importer->configuration().setValue("assumeYUp", *data.assumeYUp);
     importer->addFlags(data.flags);
 
     std::ostringstream out;
@@ -1419,6 +1512,283 @@ void BasisImporterTest::videoVerbose() {
     CORRADE_COMPARE(out.str(), "Trade::BasisImporter::openData(): file contains video frames, images must be transcoded sequentially\n");
 }
 
+void BasisImporterTest::flipUncompressed() {
+    auto& data = FlipUncompressedData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    /* This won't flip the image and won't produce any warning either */
+    Containers::Pointer<AbstractImporter> importerNotFlipped = _manager.instantiate("BasisImporter");
+    importerNotFlipped->configuration().setValue("format", "RGBA8");
+    importerNotFlipped->configuration().setValue("assumeYUp", true);
+    CORRADE_VERIFY(importerNotFlipped->openFile(Utility::Path::join(BASISIMPORTER_TEST_DIR, data.filename)));
+    Containers::Optional<ImageData2D> imageNotFlipped = importerNotFlipped->image2D(0);
+    CORRADE_VERIFY(imageNotFlipped);
+    CORRADE_COMPARE(imageNotFlipped->format(), data.expectedFormat);
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporter");
+    importer->configuration().setValue("format", "RGBA8");
+    importer->addFlags(data.flags);
+    if(data.assumeYUp)
+        importer->configuration().setValue("assumeYUp", *data.assumeYUp);
+
+    Containers::Optional<ImageData2D> image;
+    std::ostringstream out;
+    {
+        Debug redirectOutput{&out};
+        Warning redirectWarning{&out};
+        CORRADE_VERIFY(importer->openFile(Utility::Path::join(BASISIMPORTER_TEST_DIR, data.filename)));
+        image = importer->image2D(0);
+    }
+    CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->format(), data.expectedFormat);
+    if(data.message)
+        CORRADE_COMPARE(out.str(), data.message);
+    else
+        CORRADE_COMPARE(out.str(), "");
+
+    /* The images should then be flipped compared to each other, or if flip was
+       not made, identical */
+    if(!data.flipped) CORRADE_COMPARE_AS(*image,
+        *imageNotFlipped,
+        DebugTools::CompareImage);
+    else CORRADE_COMPARE_AS(image->pixels<Vector4ub>().flipped<0>(),
+        *imageNotFlipped,
+        DebugTools::CompareImage);
+
+    /* The image should also be relatively close to the original it was
+       compressed from */
+    if(_manager.loadState("AnyImageImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("AnyImageImporter plugin not found, cannot test contents");
+    if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("PngImporter plugin not found, cannot test contents");
+
+    /* As the PNGs are Y-flipped on import as well, the logic is different
+       here compared to above. There are moderately significant compression
+       artifacts; the alpha channel is all 1s. */
+    /** @todo clean up once it's possible to specify image orientation on
+        load with some importer flags */
+    if(!data.flippedToPng) CORRADE_COMPARE_WITH(Containers::arrayCast<const Vector3ub>(image->pixels<Vector4ub>()),
+        Utility::Path::join(BASISIMPORTER_TEST_DIR, "rgb-63x27.png"),
+        (DebugTools::CompareImageToFile{_manager, 61.0f, 8.65f}));
+    else CORRADE_COMPARE_WITH(Containers::arrayCast<const Vector3ub>(image->pixels<Vector4ub>().flipped<0>()),
+        Utility::Path::join(BASISIMPORTER_TEST_DIR, "rgb-63x27.png"),
+        (DebugTools::CompareImageToFile{_manager, 61.0f, 8.65f}));
+}
+
+void BasisImporterTest::flipUncompressed3D() {
+    /* This won't flip the image and won't produce any warning either */
+    Containers::Pointer<AbstractImporter> importerNotFlipped = _manager.instantiate("BasisImporter");
+    importerNotFlipped->configuration().setValue("format", "RGBA8");
+    importerNotFlipped->configuration().setValue("assumeYUp", true);
+    CORRADE_VERIFY(importerNotFlipped->openFile(Utility::Path::join(BASISIMPORTER_TEST_DIR, "rgba-noflip-array.ktx2")));
+    Containers::Optional<ImageData3D> imageNotFlipped = importerNotFlipped->image3D(0);
+    CORRADE_VERIFY(imageNotFlipped);
+    CORRADE_COMPARE(imageNotFlipped->format(), PixelFormat::RGBA8Srgb);
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporter");
+    importer->configuration().setValue("format", "RGBA8");
+    importer->addFlags(ImporterFlag::Verbose);
+
+    Containers::Optional<ImageData3D> image;
+    std::ostringstream out;
+    {
+        Debug redirectOutput{&out};
+        Warning redirectWarning{&out};
+        CORRADE_VERIFY(importer->openFile(Utility::Path::join(BASISIMPORTER_TEST_DIR, "rgba-noflip-array.ktx2")));
+        image = importer->image3D(0);
+    }
+    CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Srgb);
+    CORRADE_COMPARE(out.str(), "Trade::BasisImporter::openData(): image will be flipped along Y\n");
+
+    /* The images should then be Y-flipped compared to each other, with Z slice
+       order kept. Comparing slice by slice as CompareImage has no 3D support. */
+    CORRADE_COMPARE(image->size(), (Vector3i{63, 27, 3}));
+    CORRADE_COMPARE_AS(image->pixels<Vector4ub>()[0].flipped<0>(),
+        (ImageView2D{imageNotFlipped->format(), {63, 27}, imageNotFlipped->data()}),
+        DebugTools::CompareImage);
+    CORRADE_COMPARE_AS(image->pixels<Vector4ub>()[1].flipped<0>(),
+        (ImageView2D{imageNotFlipped->format(), {63, 27}, imageNotFlipped->data().exceptPrefix(4*63*27)}),
+        DebugTools::CompareImage);
+    CORRADE_COMPARE_AS(image->pixels<Vector4ub>()[2].flipped<0>(),
+        (ImageView2D{imageNotFlipped->format(), {63, 27}, imageNotFlipped->data().exceptPrefix(2*4*63*27)}),
+        DebugTools::CompareImage);
+
+    /* The image should also be relatively close to the original it was
+       compressed from */
+    if(_manager.loadState("AnyImageImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("AnyImageImporter plugin not found, cannot test contents");
+    if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("PngImporter plugin not found, cannot test contents");
+
+    /* As the PNGs are Y-flipped on import as well, the imported image should
+       simply match them. There are moderately significant compression
+       artifacts. */
+    /** @todo clean up once it's possible to specify image orientation on
+        load with some importer flags */
+    CORRADE_COMPARE_WITH(image->pixels<Color4ub>()[0],
+        Utility::Path::join(BASISIMPORTER_TEST_DIR, "rgba-63x27.png"),
+        (DebugTools::CompareImageToFile{_manager, 75.25f, 10.31f}));
+    CORRADE_COMPARE_WITH(image->pixels<Color4ub>()[1],
+        Utility::Path::join(BASISIMPORTER_TEST_DIR, "rgba-63x27-slice1.png"),
+        (DebugTools::CompareImageToFile{_manager, 58.0f, 8.30f}));
+    CORRADE_COMPARE_WITH(image->pixels<Color4ub>()[2],
+        Utility::Path::join(BASISIMPORTER_TEST_DIR, "rgba-63x27-slice2.png"),
+        (DebugTools::CompareImageToFile{_manager, 85.5f, 10.02f}));
+}
+
+void BasisImporterTest::flip() {
+    auto& data = FlipData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    /* This won't flip the image and won't produce any warning either */
+    Containers::Pointer<AbstractImporter> importerNotFlipped = _manager.instantiate("BasisImporter");
+    importerNotFlipped->configuration().setValue("format", data.format);
+    importerNotFlipped->configuration().setValue("assumeYUp", true);
+    CORRADE_VERIFY(importerNotFlipped->openFile(Utility::Path::join(BASISIMPORTER_TEST_DIR, data.filename)));
+    Containers::Optional<ImageData2D> imageNotFlipped = importerNotFlipped->image2D(0);
+    CORRADE_VERIFY(imageNotFlipped);
+    CORRADE_COMPARE(imageNotFlipped->compressedFormat(), data.expectedFormat);
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporter");
+    importer->configuration().setValue("format", data.format);
+    importer->addFlags(data.flags);
+    if(data.assumeYUp)
+        importer->configuration().setValue("assumeYUp", *data.assumeYUp);
+
+    Containers::Optional<ImageData2D> image;
+    std::ostringstream out;
+    {
+        Debug redirectOutput{&out};
+        Warning redirectWarning{&out};
+        CORRADE_VERIFY(importer->openFile(Utility::Path::join(BASISIMPORTER_TEST_DIR, data.filename)));
+        image = importer->image2D(0);
+    }
+    CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->compressedFormat(), data.expectedFormat);
+    if(data.message)
+        CORRADE_COMPARE(out.str(), data.message);
+    else
+        CORRADE_COMPARE(out.str(), "");
+
+    /* The images, once decoded, should then be flipped compared to each other,
+       or if flip was not possible, identical */
+
+    Containers::StringView decoderName;
+    if(Containers::StringView{data.format}.hasPrefix("Bc"))
+        decoderName = "BcDecImageConverter";
+    else if(Containers::StringView{data.format}.hasPrefix("Etc") ||
+            Containers::StringView{data.format}.hasPrefix("Eac"))
+        decoderName = "EtcDecImageConverter";
+    else CORRADE_SKIP("No decoder for" << data.expectedFormat << Debug::nospace << ", cannot test decoded image equality.");
+
+    /* Catch also ABI and interface mismatch errors */
+    if(!(_converterManager.load(decoderName) & PluginManager::LoadState::Loaded))
+        CORRADE_SKIP(decoderName << "plugin can't be loaded, cannot test decoded image equality.");
+
+    Containers::Pointer<Trade::AbstractImageConverter> decoder = _converterManager.loadAndInstantiate(decoderName);
+    /** @todo here it might start failing for incomplete blocks at some point
+        due to the pixels being shifted, fix that by expanding the image size
+        to full blocks before decoding like in the 3D case */
+    Containers::Optional<Trade::ImageData2D> decodedNotFlipped = decoder->convert(*imageNotFlipped);
+    Containers::Optional<Trade::ImageData2D> decoded = decoder->convert(*image);
+    CORRADE_VERIFY(decodedNotFlipped);
+    CORRADE_VERIFY(decoded);
+
+    /* The flipping is done on whole blocks, so in case of incomplete blocks
+       the comparison would fail. Round the image size up to whole blocks --
+       BcDec / EtcDec outputs are laid out like that internally already, it's
+       just the size being smaller. */
+    const Vector2i blockSize = compressedPixelFormatBlockSize(data.expectedFormat).xy();
+    ImageView2D decodedNotFlippedWholeBlocks{decodedNotFlipped->format(),
+        blockSize*((decodedNotFlipped->size() + blockSize - Vector2i{1})/blockSize),
+        decodedNotFlipped->data()};
+    ImageView2D decodedWholeBlocks{decoded->format(),
+        blockSize*((decoded->size() + blockSize - Vector2i{1})/blockSize),
+        decoded->data()};
+
+    if(!data.flipped) CORRADE_COMPARE_AS(decodedWholeBlocks,
+        decodedNotFlippedWholeBlocks,
+        DebugTools::CompareImage);
+    else if(decoded->format() == PixelFormat::RGBA8Unorm ||
+            decoded->format() == PixelFormat::RGBA8Srgb)
+        CORRADE_COMPARE_AS(decodedWholeBlocks.pixels<Vector4ub>().flipped<0>(),
+            decodedNotFlippedWholeBlocks,
+            DebugTools::CompareImage);
+    else if(decoded->format() == PixelFormat::RG8Unorm)
+        CORRADE_COMPARE_AS(decodedWholeBlocks.pixels<Vector2ub>().flipped<0>(),
+            decodedNotFlippedWholeBlocks,
+            DebugTools::CompareImage);
+    else if(decoded->format() == PixelFormat::RG8Snorm)
+        CORRADE_COMPARE_AS(decodedWholeBlocks.pixels<Vector2b>().flipped<0>(),
+            decodedNotFlippedWholeBlocks,
+            DebugTools::CompareImage);
+    else if(decoded->format() == PixelFormat::R8Unorm)
+        CORRADE_COMPARE_AS(decodedWholeBlocks.pixels<UnsignedByte>().flipped<0>(),
+            decodedNotFlippedWholeBlocks,
+            DebugTools::CompareImage);
+    else CORRADE_FAIL("Unexpected format" << decoded->format());
+}
+
+void BasisImporterTest::flip3D() {
+    /* This won't flip the image and won't produce any warning either */
+    Containers::Pointer<AbstractImporter> importerNotFlipped = _manager.instantiate("BasisImporter");
+    importerNotFlipped->configuration().setValue("format", "Bc1RGB");
+    importerNotFlipped->configuration().setValue("assumeYUp", true);
+    CORRADE_VERIFY(importerNotFlipped->openFile(Utility::Path::join(BASISIMPORTER_TEST_DIR, "rgba-noflip-array.ktx2")));
+    Containers::Optional<ImageData3D> imageNotFlipped = importerNotFlipped->image3D(0);
+    CORRADE_VERIFY(imageNotFlipped);
+    CORRADE_COMPARE(imageNotFlipped->compressedFormat(), CompressedPixelFormat::Bc1RGBSrgb);
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporter");
+    importer->configuration().setValue("format", "Bc1RGB");
+    importer->addFlags(ImporterFlag::Verbose);
+
+    Containers::Optional<ImageData3D> image;
+    std::ostringstream out;
+    {
+        Debug redirectOutput{&out};
+        Warning redirectWarning{&out};
+        CORRADE_VERIFY(importer->openFile(Utility::Path::join(BASISIMPORTER_TEST_DIR, "rgba-noflip-array.ktx2")));
+        image = importer->image3D(0);
+    }
+    CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->compressedFormat(), CompressedPixelFormat::Bc1RGBSrgb);
+    CORRADE_COMPARE(out.str(),
+        "Trade::BasisImporter::openData(): image will be flipped along Y\n"
+        "Trade::BasisImporter::image3D(): Y-flipping a compressed image that's not whole blocks, the result will be shifted by 1 pixels\n");
+
+    /* Catch also ABI and interface mismatch errors */
+    if(!(_converterManager.load("BcDecImageConverter") & PluginManager::LoadState::Loaded))
+        CORRADE_SKIP("BcDecImageConverter plugin can't be loaded, cannot test decoded image equality.");
+
+    /* The converter doesn't support 3D images yet (waiting for CompressedImage
+       APIs to get more usable), manually convert each slice, padding it to
+       whole blocks. The images should then be Y-flipped compared to each
+       other, with Z slice order kept. */
+    Containers::Pointer<Trade::AbstractImageConverter> decoder = _converterManager.loadAndInstantiate("BcDecImageConverter");
+    CORRADE_COMPARE(imageNotFlipped->size(), (Vector3i{63, 27, 3}));
+    CORRADE_COMPARE(image->size(), (Vector3i{63, 27, 3}));
+    for(Int i: {0, 1, 2}) {
+        CORRADE_ITERATION(i);
+
+        Containers::Optional<Trade::ImageData2D> decodedNotFlipped = decoder->convert(CompressedImageView2D{
+            imageNotFlipped->compressedFormat(), {64, 28},
+            imageNotFlipped->data().sliceSize(i*16*7*8,
+                                              16*7*8)});
+        Containers::Optional<Trade::ImageData2D> decoded = decoder->convert(CompressedImageView2D{
+            image->compressedFormat(), {64, 28},
+            image->data().sliceSize(i*16*7*8,
+                                    16*7*8)});
+        CORRADE_VERIFY(decodedNotFlipped);
+        CORRADE_VERIFY(decoded);
+
+        CORRADE_COMPARE_AS(decoded->pixels<Vector4ub>().flipped<0>(),
+            *decodedNotFlipped,
+            DebugTools::CompareImage);
+    }
+}
+
 void BasisImporterTest::openMemory() {
     /* Same as rgbaUncompressed() except that it uses openData() & openMemory()
        instead of openFile() to test data copying on import */
@@ -1485,23 +1855,93 @@ void BasisImporterTest::openDifferent() {
 
 void BasisImporterTest::importMultipleFormats() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(BASISIMPORTER_TEST_DIR, "rgb.basis")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(BASISIMPORTER_TEST_DIR, "rgb-noflip.basis")));
 
     /* Verify that everything is working properly with reused transcoder */
     {
+        std::ostringstream out;
+        Containers::Optional<Trade::ImageData2D> image;
+        {
+            Warning redirectWarning{&out};
+            image = importer->image2D(0);
+        }
+        CORRADE_VERIFY(image);
+        CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Srgb);
+        CORRADE_COMPARE(image->size(), (Vector2i{63, 27}));
+        CORRADE_COMPARE(out.str(), "Trade::BasisImporter::image2D(): no format to transcode to was specified, falling back to uncompressed RGBA8. To get rid of this warning, either explicitly set the format option to one of Etc1RGB, Etc2RGBA, EacR, EacRG, Bc1RGB, Bc3RGBA, Bc4R, Bc5RG, Bc7RGBA, PvrtcRGB4bpp, PvrtcRGBA4bpp, Astc4x4RGBA or RGBA8, or load the plugin via one of its BasisImporterEtc1RGB, ... aliases.\n");
+
+    /* Second time without a format change it shouldn't repeat the same
+       warning */
+    } {
+        std::ostringstream out;
+        Containers::Optional<Trade::ImageData2D> image;
+        {
+            Warning redirectWarning{&out};
+            image = importer->image2D(0);
+        }
+        CORRADE_VERIFY(image);
+        CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Srgb);
+        CORRADE_COMPARE(image->size(), (Vector2i{63, 27}));
+        /* Warning printed above already, not printed second time */
+        CORRADE_COMPARE(out.str(), "");
+
+    /* Format changed, now it should print that it's not implemented */
+    } {
         importer->configuration().setValue("format", "Etc2RGBA");
 
-        Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
+        std::ostringstream out;
+        Containers::Optional<Trade::ImageData2D> image;
+        {
+            Warning redirectWarning{&out};
+            image = importer->image2D(0);
+        }
         CORRADE_VERIFY(image);
         CORRADE_COMPARE(image->compressedFormat(), CompressedPixelFormat::Etc2RGBA8Srgb);
         CORRADE_COMPARE(image->size(), (Vector2i{63, 27}));
-    } {
-        importer->configuration().setValue("format", "Bc1RGB");
+        CORRADE_COMPARE(out.str(), "Trade::BasisImporter::image2D(): Y flip is not yet implemented for CompressedPixelFormat::Etc2RGBA8Srgb, imported data will have wrong orientation. Enable assumeYUp to suppress this warning.\n");
 
-        Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
+    /* Second time it again shouldn't */
+    } {
+        std::ostringstream out;
+        Containers::Optional<Trade::ImageData2D> image;
+        {
+            Warning redirectWarning{&out};
+            image = importer->image2D(0);
+        }
         CORRADE_VERIFY(image);
-        CORRADE_COMPARE(image->compressedFormat(), CompressedPixelFormat::Bc1RGBSrgb);
+        CORRADE_COMPARE(image->compressedFormat(), CompressedPixelFormat::Etc2RGBA8Srgb);
         CORRADE_COMPARE(image->size(), (Vector2i{63, 27}));
+        CORRADE_COMPARE(out.str(), "");
+
+    /* For a new format it should again */
+    } {
+        importer->configuration().setValue("format", "Astc4x4RGBA");
+
+        std::ostringstream out;
+        Containers::Optional<Trade::ImageData2D> image;
+        {
+            Warning redirectWarning{&out};
+            image = importer->image2D(0);
+        }
+        CORRADE_VERIFY(image);
+        CORRADE_COMPARE(image->compressedFormat(), CompressedPixelFormat::Astc4x4RGBASrgb);
+        CORRADE_COMPARE(image->size(), (Vector2i{63, 27}));
+        CORRADE_COMPARE(out.str(), "Trade::BasisImporter::image2D(): Y flip is not yet implemented for CompressedPixelFormat::Astc4x4RGBASrgb, imported data will have wrong orientation. Enable assumeYUp to suppress this warning.\n");
+
+    /* For an empty format it should again say that no format is set */
+    } {
+        importer->configuration().setValue("format", "");
+
+        std::ostringstream out;
+        Containers::Optional<Trade::ImageData2D> image;
+        {
+            Warning redirectWarning{&out};
+            image = importer->image2D(0);
+        }
+        CORRADE_VERIFY(image);
+        CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Srgb);
+        CORRADE_COMPARE(image->size(), (Vector2i{63, 27}));
+        CORRADE_COMPARE(out.str(), "Trade::BasisImporter::image2D(): no format to transcode to was specified, falling back to uncompressed RGBA8. To get rid of this warning, either explicitly set the format option to one of Etc1RGB, Etc2RGBA, EacR, EacRG, Bc1RGB, Bc3RGBA, Bc4R, Bc5RG, Bc7RGBA, PvrtcRGB4bpp, PvrtcRGBA4bpp, Astc4x4RGBA or RGBA8, or load the plugin via one of its BasisImporterEtc1RGB, ... aliases.\n");
     }
 }
 
