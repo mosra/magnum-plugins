@@ -256,6 +256,10 @@ converter delegates to.
     that were not referenced by any scene are written at the end, without any
     material assignment.
 -   At the moment, alignment rules for vertex stride are not respected.
+-   In some cases it might happen that the official Khronos glTF validator
+    will warn about `min` / `max` accessor bounds very slightly differing from
+    the calculated values. This is a known issue due to the
+    [validator floating-point comparison being overly strict](https://github.com/KhronosGroup/glTF-Validator/issues/173).
 
 @subsection Trade-GltfSceneConverter-behavior-images Image and texture export
 

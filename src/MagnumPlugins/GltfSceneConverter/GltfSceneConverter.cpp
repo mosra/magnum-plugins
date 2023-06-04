@@ -2040,9 +2040,25 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const MeshData& mesh, const
                     minmax.second = Vector3{minmaxI.second};
                 } else CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
 
+                /* A sane validator implementation would have some tolerance
+                   built in, or at the very least allow the min/max bounds to
+                   be slightly larger than the data, and then we could just
+                   save some slightly padded floats. NOT THE CASE HERE THOUGH,
+                   the official Khronos glTF validator basically demands that
+                   all glTF generators use Grisu2 as their float-to-string
+                   routines, in order to EXACTLY match the validator
+                   expectations, and there's no intention to ever fix it:
+                    https://github.com/KhronosGroup/glTF-Validator/issues/79
+                    https://github.com/KhronosGroup/glTF-Validator/issues/173
+                   Writing floats causes the validator to complain about each
+                   and every min/max accessor, sometimes MULTIPLE TIMES because
+                   the values can then be both different than its expectation
+                   and the data outside of those bounds (no shit!!). Writing
+                   doubles avoids most of these, yet there's still random
+                   corner cases as described in the above issues. */
                 _state->gltfAccessors
-                    .writeKey("min"_s).writeArray(minmax.first.data())
-                    .writeKey("max"_s).writeArray(minmax.second.data());
+                    .writeKey("min"_s).writeArray(Vector3d{minmax.first}.data())
+                    .writeKey("max"_s).writeArray(Vector3d{minmax.second}.data());
             }
 
             if(configuration().value<bool>("accessorNames"))
