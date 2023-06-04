@@ -231,8 +231,10 @@ struct GltfImporter::Document {
 
     /* Unlike the ones above, these are filled already during construction as
        we need them in three different places and on-demand construction would
-       be too annoying to test. */
-    std::unordered_map<Containers::StringView, SceneField> sceneFieldsForName;
+       be too annoying to test. The key has to be a full string and not views
+       on object keys inside the Json instance because it's joined with dots
+       for nested objects. */
+    std::unordered_map<Containers::String, SceneField> sceneFieldsForName;
     std::unordered_map<Containers::StringView, MeshAttribute> meshAttributesForName{
         #ifdef MAGNUM_BUILD_DEPRECATED
          /* Added as aliases of MeshAttribute::JointIds and
@@ -245,6 +247,9 @@ struct GltfImporter::Document {
         {"WEIGHTS"_s, meshAttributeCustom(1)}
         #endif
     };
+    /* The string views point to keys in the sceneFieldsForName map, for which
+       STL guarantees iterator stability, i.e. the strings don't get moved
+       anywhere even with SSO */
     Containers::Array<Containers::Triple<Containers::StringView, SceneFieldType, SceneFieldFlags>> sceneFieldNamesTypesFlags;
     Containers::Array<Containers::StringView> meshAttributeNames{InPlaceInit, {
         #ifdef MAGNUM_BUILD_DEPRECATED
@@ -687,8 +692,32 @@ bool isRecognized2DTextureExtension(Containers::StringView name) {
         name == "EXT_texture_webp"_s;
 }
 
-/* Used by doOpenData() */
-bool discoverSceneExtraFields(std::unordered_map<Containers::StringView, SceneField>& sceneFieldsForName, Containers::Array<Containers::Triple<Containers::StringView, SceneFieldType, SceneFieldFlags>>& sceneFieldNamesTypesFlags, const Utility::ConfigurationGroup* const customSceneFieldTypeConfiguration, const Containers::StringView key, const Utility::JsonToken& gltfExtraValue) {
+/* Used by doOpenData() but it's recursive and so it can't be a local lambda */
+bool discoverSceneExtraFields(Utility::Json& gltf, std::unordered_map<Containers::String, SceneField>& sceneFieldsForName, Containers::Array<Containers::Triple<Containers::StringView, SceneFieldType, SceneFieldFlags>>& sceneFieldNamesTypesFlags, const Utility::ConfigurationGroup* const customSceneFieldTypeConfiguration, UnsignedInt nodeI, const Containers::StringView key, const Utility::JsonToken& gltfExtraValue) {
+    /* If the value is an object, recurse into it. The field name will then be
+       all object keys concatenated with dots. */
+    if(gltfExtraValue.type() == Utility::JsonToken::Type::Object) {
+        /* If the object fails to parse because it has invalid keys (i.e.,
+           invalid Unicode escapes), fail the whole import. If we wouldn't,
+           it'd still print a message to the output which would imply an error
+           was silently ignored, which is not any better. */
+        if(!gltf.parseObject(gltfExtraValue)) {
+            Error{} << "Trade::GltfImporter::openData(): invalid node" << nodeI << "extras property";
+            return false;
+        }
+
+        for(const Utility::JsonObjectItem gltfNestedExtra: gltfExtraValue.asObject()) {
+            if(!discoverSceneExtraFields(
+                gltf, sceneFieldsForName, sceneFieldNamesTypesFlags,
+                customSceneFieldTypeConfiguration,
+                nodeI, "."_s.join({key, gltfNestedExtra.key()}), gltfNestedExtra.value())
+            )
+                return false;
+        }
+
+        return true;
+    }
+
     /* Get token type. If the extra field is an array, we can parse it if all
        items are of a common type. If not, skip it -- a warning about a
        non-homogeneous type will be printed in doScene(). */
@@ -717,7 +746,8 @@ bool discoverSceneExtraFields(std::unordered_map<Containers::StringView, SceneFi
        tokenType != Utility::JsonToken::Type::String)
         return true;
 
-    if(sceneFieldsForName.emplace(key, sceneFieldCustom(sceneFieldNamesTypesFlags.size())).second) {
+    const auto inserted = sceneFieldsForName.emplace(key, sceneFieldCustom(sceneFieldNamesTypesFlags.size()));
+    if(inserted.second) {
         /* If the field has the type specified in configuration,
            override the default */
         /** @todo use findValue() once the Configuration API is reworked,
@@ -749,7 +779,11 @@ bool discoverSceneExtraFields(std::unordered_map<Containers::StringView, SceneFi
         }
 
         arrayAppend(sceneFieldNamesTypesFlags, InPlaceInit,
-            key,
+            /* Referencing the string stored in the hashmap, which should not
+               change place as the iterators are guaranteed to be stable. This
+               way sceneFieldNamesTypesFlags can store only views and not
+               copies of the strings again. */
+            inserted.first->first,
             type,
             isArray ? SceneFieldFlag::MultiEntry : SceneFieldFlags{});
     }
@@ -1163,9 +1197,10 @@ void GltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags da
             return;
         }
 
+        /* The process is recursive so it has to be an external function */
         const Utility::ConfigurationGroup* customSceneFieldTypeConfiguration = configuration().group("customSceneFieldTypes");
         for(const Utility::JsonObjectItem gltfExtra: gltfExtras->asObject()) {
-            if(!discoverSceneExtraFields(_d->sceneFieldsForName, _d->sceneFieldNamesTypesFlags, customSceneFieldTypeConfiguration, gltfExtra.key(), gltfExtra.value()))
+            if(!discoverSceneExtraFields(*gltf, _d->sceneFieldsForName, _d->sceneFieldNamesTypesFlags, customSceneFieldTypeConfiguration, i, gltfExtra.key(), gltfExtra.value()))
                 return;
         }
     }
@@ -2233,12 +2268,20 @@ Containers::String GltfImporter::doSceneName(const UnsignedInt id) {
 
 namespace {
 
-/* Used by doScene() */
-void parseSceneExtraFields(Utility::Json& gltf, const ImporterFlags flags, const std::unordered_map<Containers::StringView, SceneField>& sceneFieldsForName, const Containers::ArrayView<const Containers::Triple<Containers::StringView, SceneFieldType, SceneFieldFlags>> sceneFieldNamesTypesFlags, const Containers::ArrayView<UnsignedInt> extraMappingOffsets, const Containers::ArrayView<UnsignedInt> extraDataOffsets, const Containers::ArrayView<UnsignedInt> extraBitOffsets, const Containers::ArrayView<UnsignedInt> extraStringOffsets, const UnsignedInt nodeI, const Containers::StringView key, const Utility::JsonToken& gltfExtraValue) {
+/* Used by doScene() but it's recursive and so it can't be a local lambda */
+void parseSceneExtraFields(Utility::Json& gltf, const ImporterFlags flags, const std::unordered_map<Containers::String, SceneField>& sceneFieldsForName, const Containers::ArrayView<const Containers::Triple<Containers::StringView, SceneFieldType, SceneFieldFlags>> sceneFieldNamesTypesFlags, const Containers::ArrayView<UnsignedInt> extraMappingOffsets, const Containers::ArrayView<UnsignedInt> extraDataOffsets, const Containers::ArrayView<UnsignedInt> extraBitOffsets, const Containers::ArrayView<UnsignedInt> extraStringOffsets, const UnsignedInt nodeI, const Containers::StringView key, const Utility::JsonToken& gltfExtraValue) {
+    /* If the value is an object, recurse into it. The field name will then be
+       all object keys concatenated with dots. */
+    if(gltfExtraValue.type() == Utility::JsonToken::Type::Object) for(const Utility::JsonObjectItem gltfNestedExtra: gltfExtraValue.asObject()) {
+        parseSceneExtraFields(gltf, flags, sceneFieldsForName,
+            sceneFieldNamesTypesFlags, extraMappingOffsets, extraDataOffsets,
+            extraBitOffsets, extraStringOffsets, nodeI,
+            "."_s.join({key, gltfNestedExtra.key()}), gltfNestedExtra.value());
+
     /* Scalars */
-    if(gltfExtraValue.type() == Utility::JsonToken::Type::Bool ||
-       gltfExtraValue.type() == Utility::JsonToken::Type::Number ||
-       gltfExtraValue.type() == Utility::JsonToken::Type::String) {
+    } else if(gltfExtraValue.type() == Utility::JsonToken::Type::Bool ||
+              gltfExtraValue.type() == Utility::JsonToken::Type::Number ||
+              gltfExtraValue.type() == Utility::JsonToken::Type::String) {
         const UnsignedInt customFieldId = sceneFieldCustom(sceneFieldsForName.at(key));
         if(sceneFieldNamesTypesFlags[customFieldId].third() & SceneFieldFlag::MultiEntry) {
             if(!(flags & ImporterFlag::Quiet))
@@ -2361,8 +2404,18 @@ void parseSceneExtraFields(Utility::Json& gltf, const ImporterFlags flags, const
         Warning{} << "Trade::GltfImporter::scene(): node" << nodeI << "extras" << key << "property is" << gltfExtraValue.type() << Debug::nospace << ", skipping";
 }
 
-void collectSceneExtraFields(const std::unordered_map<Containers::StringView, SceneField>& sceneFieldsForName, const Containers::ArrayView<const Containers::Triple<Containers::StringView, SceneFieldType, SceneFieldFlags>> sceneFieldNamesTypesFlags, const Containers::ArrayView<UnsignedInt> extraMappingOffsets, const Containers::ArrayView<UnsignedInt> extraMappings, const Containers::ArrayView<UnsignedInt> extraDataOffsets, const Containers::ArrayView<UnsignedInt> extrasUnsignedInt, const Containers::ArrayView<Int> extrasInt, const Containers::ArrayView<Float> extrasFloat, const Containers::ArrayView<UnsignedInt> extraBitOffsets, const Containers::MutableBitArrayView extrasBits, const Containers::ArrayView<UnsignedInt> extraStringOffsets, const Containers::ArrayView<UnsignedInt> baseStringOffsets, const Containers::MutableStringView extrasStrings, const UnsignedInt nodeI, const Containers::StringView key, const Utility::JsonToken& gltfExtraValue) {
-    if(gltfExtraValue.type() == Utility::JsonToken::Type::Array) {
+void collectSceneExtraFields(const std::unordered_map<Containers::String, SceneField>& sceneFieldsForName, const Containers::ArrayView<const Containers::Triple<Containers::StringView, SceneFieldType, SceneFieldFlags>> sceneFieldNamesTypesFlags, const Containers::ArrayView<UnsignedInt> extraMappingOffsets, const Containers::ArrayView<UnsignedInt> extraMappings, const Containers::ArrayView<UnsignedInt> extraDataOffsets, const Containers::ArrayView<UnsignedInt> extrasUnsignedInt, const Containers::ArrayView<Int> extrasInt, const Containers::ArrayView<Float> extrasFloat, const Containers::ArrayView<UnsignedInt> extraBitOffsets, const Containers::MutableBitArrayView extrasBits, const Containers::ArrayView<UnsignedInt> extraStringOffsets, const Containers::ArrayView<UnsignedInt> baseStringOffsets, const Containers::MutableStringView extrasStrings, const UnsignedInt nodeI, const Containers::StringView key, const Utility::JsonToken& gltfExtraValue) {
+    /* If the value is an object, recurse into it. The field name will then be
+       all object keys concatenated with dots. */
+    if(gltfExtraValue.type() == Utility::JsonToken::Type::Object) for(const Utility::JsonObjectItem gltfNestedExtra: gltfExtraValue.asObject()) {
+        collectSceneExtraFields(sceneFieldsForName, sceneFieldNamesTypesFlags,
+            extraMappingOffsets, extraMappings, extraDataOffsets,
+            extrasUnsignedInt, extrasInt, extrasFloat, extraBitOffsets,
+            extrasBits, extraStringOffsets, baseStringOffsets, extrasStrings,
+            nodeI, "."_s.join({key, gltfNestedExtra.key()}), gltfNestedExtra.value());
+
+    /* Arrays */
+    } else if(gltfExtraValue.type() == Utility::JsonToken::Type::Array) {
         const Containers::Optional<Utility::JsonToken::Type> arrayType = gltfExtraValue.commonArrayType();
         /* Skip what caused a parse error above. Since we didn't bother parsing
            arrays of types other than bool, number or string, this will skip
@@ -2652,6 +2705,7 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
         /* Extras. If it's an object, it was already parsed during initial
            import */
         if(const Utility::JsonToken* const gltfExtras = gltfNode.find("extras"_s)) {
+            /* The process is recursive so it has to be an external function */
             if(gltfExtras->type() == Utility::JsonToken::Type::Object) for(const Utility::JsonObjectItem gltfExtra: gltfExtras->asObject()) {
                 parseSceneExtraFields(*_d->gltf, flags(), _d->sceneFieldsForName, _d->sceneFieldNamesTypesFlags, extraMappingOffsets, extraDataOffsets, extraBitOffsets, extraStringOffsets, i, gltfExtra.key(), gltfExtra.value());
             } else if(!(flags() & ImporterFlag::Quiet))
@@ -2912,6 +2966,7 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
            skip if it's not an object or if the number is not parsed (i.e.,
            an invalid literal). */
         if(const Utility::JsonToken* const gltfExtras = gltfNode.find("extras"_s)) {
+            /* The process is recursive so it has to be an external function */
             if(gltfExtras->type() == Utility::JsonToken::Type::Object) for(const Utility::JsonObjectItem gltfExtra: gltfExtras->asObject()) {
                 collectSceneExtraFields(_d->sceneFieldsForName, _d->sceneFieldNamesTypesFlags, extraMappingOffsets, extraMappings, extraDataOffsets, extrasUnsignedInt, extrasInt, extrasFloat, extraBitOffsets, extrasBits, extraStringOffsets, baseStringOffsets, extrasStrings, nodeI, gltfExtra.key(), gltfExtra.value());
             }

@@ -190,6 +190,7 @@ corrade_add_test(GltfImporterTest
         scene-invalid-cycle.gltf
         scene-invalid-cycle-deep.gltf
         scene-invalid-extras-property.gltf
+        scene-invalid-nested-extras-property.gltf
         scene-invalid-multiple-parents.gltf
         scene-invalid-child-oob.gltf
         scene-invalid-node-oob.gltf

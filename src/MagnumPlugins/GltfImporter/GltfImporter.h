@@ -186,9 +186,10 @@ importer plugins the importer delegates to.
     are imported as @ref SceneFieldType::StringOffset32. Homogeneous arrays
     with boolean, numeric and string values are imported as multiple values
     of the same field, same approach is taken if the `extras` property contains
-    the same key multiple times. Other value types, heterogeneous arrays and
-    values that don't have a consistent type for given key across all nodes are
-    ignored with a warning.
+    the same key multiple times. Objects are processed recursively, with field
+    names for nested keys being separated with dots. Other value types,
+    heterogeneous arrays and values that don't have a consistent type for given
+    key across all nodes are ignored with a warning.
 -   @ref SceneField::Mesh and @ref SceneField::MeshMaterial fields are always
     marked with @ref SceneFieldFlag::MultiEntry. No other builtin fields can
     have multiple entries for a single object. Node `extras` that were parsed
