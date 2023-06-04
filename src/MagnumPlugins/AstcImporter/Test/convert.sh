@@ -9,7 +9,7 @@ astcenc -cl ../../BasisImporter/Test/rgba-63x27.png 12x10-incomplete-blocks.astc
 cp ../../BasisImporter/Test/rgba-27x27.png rgba-3d_0.png
 cp ../../BasisImporter/Test/rgba-27x27-slice1.png rgba-3d_1.png
 cp ../../BasisImporter/Test/rgba-27x27-slice2.png rgba-3d_2.png
-astcenc -cl rgba-3d.png 3x3x3.astc 3x3x3 100 -array 3
+astcenc -cl rgba-3d.png 3x3x3.astc 3x3x3 100 -zdim 3
 rm rgba-3d_{0,1,2}.png
 
 # The same, but 2D array. OF COURSE astcenc has no idea that something like
