@@ -141,3 +141,17 @@ cp 2d-compressed-mipmaps-mip3.bin 3d-compressed-mipmaps-mip3.bin
 # TODO:
 # 3D (compressed) mips so we don't have to generate our own in the converter tests
 # Should be possible once https://github.com/KhronosGroup/KTX-Software/pull/468 made it into a release
+
+# Compressed images to test Y and Z flipping, simply repacking the files used
+# to test the same in DdsImporter and making sure they have the right
+# orientation. Also remove the generator string for reproducible output.
+magnum-imageconverter ../../DdsImporter/Test/dxt3.dds -i assumeYUpZBackward -c orientation=rd,generator= 2d-compressed-bc2.ktx2
+magnum-imageconverter ../../DdsImporter/Test/dxt3.dds -i assumeYUpZBackward -c orientation=ru,generator= 2d-compressed-bc2-ru.ktx2
+magnum-imageconverter ../../DdsImporter/Test/bc4unorm.dds -i assumeYUpZBackward -c orientation=rd,generator= 2d-compressed-bc4.ktx2
+magnum-imageconverter ../../DdsImporter/Test/bc5snorm.dds -i assumeYUpZBackward -c orientation=rd,generator= 2d-compressed-bc5.ktx2
+magnum-imageconverter ../../DdsImporter/Test/dxt1-3d.dds -D3 -i assumeYUpZBackward -c orientation=rdi,generator= 3d-compressed-bc1.ktx2
+magnum-imageconverter ../../DdsImporter/Test/dxt10-bc7-3d.dds -D3 -i assumeYUpZBackward -c orientation=rdi,generator= 3d-compressed-bc7.ktx2
+magnum-imageconverter ../../DdsImporter/Test/dxt1-3d.dds -D3 -i assumeYUpZBackward -c orientation=ruo,generator= 3d-compressed-bc1-ruo.ktx2
+# Reusing AstcImporter test files same as above, just with a different
+# overriden orientation
+magnum-imageconverter ../../AstcImporter/Test/3x3x3.astc -D3 -i assumeYUpZBackward -c orientation=ruo,generator= 3d-compressed-astc3d-ruo.ktx2

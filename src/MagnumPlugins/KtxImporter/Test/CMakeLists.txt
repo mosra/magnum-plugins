@@ -36,10 +36,18 @@ else()
     set(KTXIMPORTER_TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 endif()
 
+find_package(Magnum REQUIRED DebugTools)
+
 if(NOT MAGNUM_KTXIMPORTER_BUILD_STATIC)
     set(KTXIMPORTER_PLUGIN_FILENAME $<TARGET_FILE:KtxImporter>)
     if(MAGNUM_WITH_BASISIMPORTER)
         set(BASISIMPORTER_PLUGIN_FILENAME $<TARGET_FILE:BasisImporter>)
+    endif()
+    if(MAGNUM_WITH_BCDECIMAGECONVERTER)
+        set(BCDECIMAGECONVERTER_PLUGIN_FILENAME $<TARGET_FILE:BcDecImageConverter>)
+    endif()
+    if(MAGNUM_WITH_ETCDECIMAGECONVERTER)
+        set(ETCDECIMAGECONVERTER_PLUGIN_FILENAME $<TARGET_FILE:EtcDecImageConverter>)
     endif()
 endif()
 
@@ -50,7 +58,7 @@ file(GENERATE OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/configure.h
     INPUT ${CMAKE_CURRENT_BINARY_DIR}/configure.h.in)
 
 corrade_add_test(KtxImporterTest KtxImporterTest.cpp
-    LIBRARIES Magnum::Trade
+    LIBRARIES Magnum::Trade Magnum::DebugTools
     FILES
         1d-compressed-bc1.bin
         1d-compressed-bc1.ktx2
@@ -67,8 +75,12 @@ corrade_add_test(KtxImporterTest KtxImporterTest.cpp
         2d-compressed-astc.ktx2
         2d-compressed-bc1.bin
         2d-compressed-bc1.ktx2
+        2d-compressed-bc2.ktx2
+        2d-compressed-bc2-ru.ktx2
         2d-compressed-bc3.bin
         2d-compressed-bc3.ktx2
+        2d-compressed-bc4.ktx2
+        2d-compressed-bc5.ktx2
         2d-compressed-etc2.bin
         2d-compressed-etc2.ktx2
         2d-compressed-layers.bin
@@ -94,6 +106,10 @@ corrade_add_test(KtxImporterTest KtxImporterTest.cpp
         2d-s8.ktx2
         3d-compressed-astc3d.bin
         3d-compressed-astc3d.ktx2
+        3d-compressed-astc3d-ruo.ktx2
+        3d-compressed-bc1.ktx2
+        3d-compressed-bc1-ruo.ktx2
+        3d-compressed-bc7.ktx2
         3d-compressed-etc2rgb8.bin
         3d-compressed-etc2rgb8.ktx2
         3d-compressed-mipmaps-mip0.bin
@@ -129,11 +145,23 @@ if(MAGNUM_KTXIMPORTER_BUILD_STATIC)
     if(MAGNUM_WITH_BASISIMPORTER)
         target_link_libraries(KtxImporterTest PRIVATE BasisImporter)
     endif()
+    if(MAGNUM_WITH_BCDECIMAGECONVERTER)
+        target_link_libraries(KtxImporterTest PRIVATE BcDecImageConverter)
+    endif()
+    if(MAGNUM_WITH_ETCDECIMAGECONVERTER)
+        target_link_libraries(KtxImporterTest PRIVATE EtcDecImageConverter)
+    endif()
 else()
     # So the plugins get properly built when building the test
     add_dependencies(KtxImporterTest KtxImporter)
     if(MAGNUM_WITH_BASISIMPORTER)
         add_dependencies(KtxImporterTest BasisImporter)
+    endif()
+    if(MAGNUM_WITH_BCDECIMAGECONVERTER)
+        add_dependencies(KtxImporterTest BcDecImageConverter)
+    endif()
+    if(MAGNUM_WITH_ETCDECIMAGECONVERTER)
+        add_dependencies(KtxImporterTest EtcDecImageConverter)
     endif()
 endif()
 if(CORRADE_BUILD_STATIC AND NOT MAGNUM_KTXIMPORTER_BUILD_STATIC)

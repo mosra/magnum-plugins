@@ -45,10 +45,13 @@
 #include <Corrade/Utility/Endianness.h>
 #include <Corrade/Utility/FormatStl.h> /** @todo remove once Debug is stream-free */
 #include <Corrade/Utility/Path.h>
+#include <Magnum/ImageView.h>
 #include <Magnum/PixelFormat.h>
 #include <Magnum/PixelStorage.h>
+#include <Magnum/DebugTools/CompareImage.h>
 #include <Magnum/Math/Color.h>
 #include <Magnum/Math/Swizzle.h>
+#include <Magnum/Trade/AbstractImageConverter.h>
 #include <Magnum/Trade/AbstractImporter.h>
 #include <Magnum/Trade/ImageData.h>
 
@@ -118,6 +121,7 @@ struct KtxImporterTest: TestSuite::Tester {
     template<ImporterFlag flag = ImporterFlag{}> void orientationInvalid();
     void orientationFlip();
     void orientationFlipCompressed();
+    void orientationFlipCompressed3D();
 
     void swizzle();
     void swizzleMultipleBytes();
@@ -135,6 +139,8 @@ struct KtxImporterTest: TestSuite::Tester {
        without BasisImporter present. */
     PluginManager::Manager<AbstractImporter> _manager{"nonexistent"};
     PluginManager::Manager<AbstractImporter> _managerWithBasisImporter{"nonexistent"};
+    /* For testing Y-flip of block-compressed formats */
+    PluginManager::Manager<AbstractImageConverter> _converterManager{"nonexistent"};
 };
 
 using namespace Math::Literals;
@@ -537,6 +543,94 @@ const struct {
 };
 
 const struct {
+    TestSuite::TestCaseDescriptionSourceLocation name;
+    const char* filename;
+    ImporterFlags flags;
+    const char* assumeOrientation;
+    bool flippedY;
+    const char* message;
+} FlipCompressedData[]{
+    /* Picking files that look like being converted from a real image in
+       convert.sh, and not from something empty in which case a Y-flipped file
+       would look the same as not Y-flipped */
+    {"BC1",
+        "2d-compressed-bc1.ktx2", {}, nullptr, true, nullptr},
+    {"BC1, verbose",
+        "2d-compressed-bc1.ktx2", ImporterFlag::Verbose, nullptr, true,
+        "Trade::KtxImporter::openData(): image will be flipped along Y\n"},
+    {"BC1, assume Y up, verbose",
+        "2d-compressed-bc1.ktx2", ImporterFlag::Verbose, "ruo", false, nullptr},
+    {"BC1, assume X left",
+        "2d-compressed-bc1.ktx2", {}, "ld", true,
+        "Trade::KtxImporter::openData(): X flip is not implemented for block-compressed images, imported data will have wrong orientation. Set the assumeOrientation option to suppress this warning.\n"},
+    {"BC1, assume X left, verbose",
+        "2d-compressed-bc1.ktx2", ImporterFlag::Verbose, "ld", true,
+        "Trade::KtxImporter::openData(): X flip is not implemented for block-compressed images, imported data will have wrong orientation. Set the assumeOrientation option to suppress this warning.\n"
+        "Trade::KtxImporter::openData(): image will be flipped along Y\n"},
+    {"BC1, assume X left, quiet",
+        "2d-compressed-bc1.ktx2", ImporterFlag::Quiet, "ld", true, nullptr},
+    {"BC2",
+        "2d-compressed-bc2.ktx2", {}, nullptr, true, nullptr},
+    {"BC2, Y up, verbose",
+        "2d-compressed-bc2-ru.ktx2", ImporterFlag::Verbose, nullptr, false, nullptr},
+    {"BC2, assume Y up, verbose",
+        "2d-compressed-bc3.ktx2", ImporterFlag::Verbose, "ru", false, nullptr},
+    {"BC3",
+        "2d-compressed-bc3.ktx2", {}, nullptr, true, nullptr},
+    {"BC4, incomplete blocks",
+        "2d-compressed-bc4.ktx2", {}, nullptr, true,
+        "Trade::KtxImporter::image2D(): Y-flipping a compressed image that's not whole blocks, the result will be shifted by 2 pixels\n"},
+    {"BC5, incomplete blocks",
+        "2d-compressed-bc5.ktx2", {}, nullptr, true,
+        "Trade::KtxImporter::image2D(): Y-flipping a compressed image that's not whole blocks, the result will be shifted by 2 pixels\n"},
+    {"ETC2, flip not implemented",
+        "2d-compressed-etc2.ktx2", {}, nullptr, false,
+        "Trade::KtxImporter::openData(): Y flip is not yet implemented for CompressedPixelFormat::Etc2RGB8Srgb, imported data will have wrong orientation. Set the assumeOrientation option to suppress this warning.\n"},
+    {"ETC2, flip not implemented, quiet",
+        "2d-compressed-etc2.ktx2", ImporterFlag::Quiet, nullptr, false, nullptr},
+    {"ETC2, flip not implemented, assume Y up, verbose",
+        "2d-compressed-etc2.ktx2", ImporterFlag::Verbose, "ru", false, nullptr},
+};
+
+const struct {
+    TestSuite::TestCaseDescriptionSourceLocation name;
+    const char* filename;
+    ImporterFlags flags;
+    const char* assumeOrientation;
+    bool flippedY, flippedZ;
+    const char* message;
+} FlipCompressed3DData[]{
+    {"BC1, incomplete blocks",
+        "3d-compressed-bc1.ktx2", {}, nullptr, true, true,
+        "Trade::KtxImporter::image3D(): Y-flipping a compressed image that's not whole blocks, the result will be shifted by 3 pixels\n"},
+    {"BC1, incomplete blocks, quiet",
+        "3d-compressed-bc1.ktx2", ImporterFlag::Quiet, nullptr, true, true, nullptr},
+    {"BC1, incomplete blocks, verbose",
+        "3d-compressed-bc1.ktx2", ImporterFlag::Verbose, nullptr, true, true,
+        "Trade::KtxImporter::openData(): image will be flipped along Y and Z\n"
+        "Trade::KtxImporter::image3D(): Y-flipping a compressed image that's not whole blocks, the result will be shifted by 3 pixels\n"},
+    {"BC1, incomplete blocks, Y up Z backward, verbose",
+        "3d-compressed-bc1-ruo.ktx2", ImporterFlag::Verbose, nullptr, false, false, nullptr},
+    {"BC1, incomplete blocks, assume Y up, verbose",
+        "3d-compressed-bc1.ktx2", ImporterFlag::Verbose, "rui", false, true,
+        "Trade::KtxImporter::openData(): image will be flipped along Z\n"},
+    {"BC1, incomplete blocks, assume Z backward, verbose",
+        "3d-compressed-bc1.ktx2", ImporterFlag::Verbose, "rdo", true, false,
+        "Trade::KtxImporter::openData(): image will be flipped along Y\n"
+        "Trade::KtxImporter::image3D(): Y-flipping a compressed image that's not whole blocks, the result will be shifted by 3 pixels\n"},
+    {"BC7, Y flip not implemented, verbose",
+        "3d-compressed-bc7.ktx2", ImporterFlag::Verbose, nullptr, false, true,
+        "Trade::KtxImporter::openData(): Y flip is not yet implemented for CompressedPixelFormat::Bc7RGBAUnorm, imported data will have wrong orientation. Set the assumeOrientation option to suppress this warning.\n"
+        "Trade::KtxImporter::openData(): image will be flipped along Z\n"},
+    {"ASTC 3D, neither Y nor Z flip implemented, verbose",
+        "3d-compressed-astc3d.ktx2", ImporterFlag::Verbose, nullptr, false, false,
+        "Trade::KtxImporter::openData(): Y flip is not yet implemented for CompressedPixelFormat::Astc3x3x3RGBAUnorm, imported data will have wrong orientation. Set the assumeOrientation option to suppress this warning.\n"
+        "Trade::KtxImporter::openData(): Z flip is not yet implemented for CompressedPixelFormat::Astc3x3x3RGBAUnorm, imported data will have wrong orientation. Set the assumeOrientation option to suppress this warning.\n"},
+    {"ASTC 3D, Y up Z forward, verbose",
+        "3d-compressed-astc3d-ruo.ktx2", ImporterFlag::Verbose, nullptr, false, false, nullptr},
+};
+
+const struct {
     const char* name;
     const char* file;
     PixelFormat format;
@@ -710,7 +804,10 @@ KtxImporterTest::KtxImporterTest() {
         Containers::arraySize(FlipData));
 
     addInstancedTests({&KtxImporterTest::orientationFlipCompressed},
-        Containers::arraySize(QuietData));
+        Containers::arraySize(FlipCompressedData));
+
+    addInstancedTests({&KtxImporterTest::orientationFlipCompressed3D},
+        Containers::arraySize(FlipCompressed3DData));
 
     addInstancedTests({&KtxImporterTest::swizzle},
         Containers::arraySize(SwizzleData));
@@ -735,6 +832,12 @@ KtxImporterTest::KtxImporterTest() {
     #endif
     #ifdef BASISIMPORTER_PLUGIN_FILENAME
     CORRADE_INTERNAL_ASSERT_OUTPUT(_managerWithBasisImporter.load(BASISIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
+    #endif
+    #ifdef BCDECIMAGECONVERTER_PLUGIN_FILENAME
+    CORRADE_INTERNAL_ASSERT_OUTPUT(_converterManager.load(BCDECIMAGECONVERTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
+    #endif
+    #ifdef ETCDECIMAGECONVERTER_PLUGIN_FILENAME
+    CORRADE_INTERNAL_ASSERT_OUTPUT(_converterManager.load(ETCDECIMAGECONVERTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
     #endif
 }
 
@@ -2130,24 +2233,175 @@ void KtxImporterTest::orientationFlip() {
 }
 
 void KtxImporterTest::orientationFlipCompressed() {
-    auto&& data = QuietData[testCaseInstanceId()];
+    auto&& data = FlipCompressedData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
+    /* This won't flip the image and won't produce any warning either */
+    Containers::Pointer<AbstractImporter> importerNotFlipped = _manager.instantiate("KtxImporter");
+    importerNotFlipped->configuration().setValue("assumeOrientation", "ruo");
+    CORRADE_VERIFY(importerNotFlipped->openFile(Utility::Path::join(KTXIMPORTER_TEST_DIR, data.filename)));
+    Containers::Optional<ImageData2D> imageNotFlipped = importerNotFlipped->image2D(0);
+    CORRADE_VERIFY(imageNotFlipped);
+
+    /* This will either flip the image (with a verbose message) or print a
+       warning */
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
-    importer->setFlags(data.flags);
-
-    /* Just check for the warning, image2DCompressed checks that the output is
-       as expected */
-
+    importer->addFlags(data.flags);
+    if(data.assumeOrientation)
+        importer->configuration().setValue("assumeOrientation", data.assumeOrientation);
+    Containers::Optional<ImageData2D> image;
     std::ostringstream out;
     {
+        Debug redirectOutput{&out};
         Warning redirectWarning{&out};
-        CORRADE_VERIFY(importer->openFile(Utility::Path::join(KTXIMPORTER_TEST_DIR, "2d-compressed-bc1.ktx2")));
+        CORRADE_VERIFY(importer->openFile(Utility::Path::join(KTXIMPORTER_TEST_DIR, data.filename)));
+        image = importer->image2D(0);
+        CORRADE_VERIFY(image);
     }
-    if(data.quiet)
-        CORRADE_COMPARE(out.str(), "");
+    if(data.message)
+        CORRADE_COMPARE(out.str(), data.message);
     else
-        CORRADE_COMPARE(out.str(), "Trade::KtxImporter::openData(): block-compressed image was encoded with non-default axis orientations, imported data will have wrong orientation\n");
+        CORRADE_COMPARE(out.str(), "");
+
+    /* The images, once decoded, should then be flipped compared to each other,
+       or if flip was not made or not possible, identical */
+
+    Containers::StringView decoderName;
+    if(Containers::StringView{data.name}.hasPrefix("BC"))
+        decoderName = "BcDecImageConverter";
+    else if(Containers::StringView{data.name}.hasPrefix("ETC") ||
+            Containers::StringView{data.name}.hasPrefix("EAC"))
+        decoderName = "EtcDecImageConverter";
+    else CORRADE_SKIP("No decoder for" << image->compressedFormat() << Debug::nospace << ", cannot test decoded image equality.");
+
+    /* Catch also ABI and interface mismatch errors */
+    if(!(_converterManager.load(decoderName) & PluginManager::LoadState::Loaded))
+        CORRADE_SKIP(decoderName << "plugin can't be loaded, cannot test decoded image equality.");
+
+    Containers::Pointer<Trade::AbstractImageConverter> decoder = _converterManager.loadAndInstantiate(decoderName);
+    /** @todo here it might start failing for incomplete blocks at some point
+        due to the pixels being shifted, fix that by expanding the image size
+        to full blocks before decoding like in the 3D case */
+    Containers::Optional<Trade::ImageData2D> decodedNotFlipped = decoder->convert(*imageNotFlipped);
+    Containers::Optional<Trade::ImageData2D> decoded = decoder->convert(*image);
+    CORRADE_VERIFY(decodedNotFlipped);
+    CORRADE_VERIFY(decoded);
+
+    if(!data.flippedY) CORRADE_COMPARE_AS(*decoded,
+        *decodedNotFlipped,
+        DebugTools::CompareImage);
+    else if(decoded->format() == PixelFormat::RGBA8Unorm ||
+            decoded->format() == PixelFormat::RGBA8Srgb)
+        CORRADE_COMPARE_AS(decoded->pixels<Vector4ub>().flipped<0>(),
+            *decodedNotFlipped,
+            DebugTools::CompareImage);
+    else if(decoded->format() == PixelFormat::RG8Unorm)
+        CORRADE_COMPARE_AS(decoded->pixels<Vector2ub>().flipped<0>(),
+            *decodedNotFlipped,
+            DebugTools::CompareImage);
+    else if(decoded->format() == PixelFormat::RG8Snorm)
+        CORRADE_COMPARE_AS(decoded->pixels<Vector2b>().flipped<0>(),
+            *decodedNotFlipped,
+            DebugTools::CompareImage);
+    else if(decoded->format() == PixelFormat::R8Unorm)
+        CORRADE_COMPARE_AS(decoded->pixels<UnsignedByte>().flipped<0>(),
+            *decodedNotFlipped,
+            DebugTools::CompareImage);
+    else CORRADE_FAIL("Unexpected format" << decoded->format());
+}
+
+void KtxImporterTest::orientationFlipCompressed3D() {
+    auto&& data = FlipCompressed3DData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    /* This won't flip the image and won't produce any warning either */
+    Containers::Pointer<AbstractImporter> importerNotFlipped = _manager.instantiate("KtxImporter");
+    importerNotFlipped->configuration().setValue("assumeOrientation", "ruo");
+    CORRADE_VERIFY(importerNotFlipped->openFile(Utility::Path::join(KTXIMPORTER_TEST_DIR, data.filename)));
+    Containers::Optional<ImageData3D> imageNotFlipped = importerNotFlipped->image3D(0);
+    CORRADE_VERIFY(imageNotFlipped);
+
+    /* This will either flip the image (with a verbose message) or print a
+       warning */
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
+    importer->addFlags(data.flags);
+    if(data.assumeOrientation)
+        importer->configuration().setValue("assumeOrientation", data.assumeOrientation);
+    Containers::Optional<ImageData3D> image;
+    std::ostringstream out;
+    {
+        Debug redirectOutput{&out};
+        Warning redirectWarning{&out};
+        CORRADE_VERIFY(importer->openFile(Utility::Path::join(KTXIMPORTER_TEST_DIR, data.filename)));
+        image = importer->image3D(0);
+        CORRADE_VERIFY(image);
+    }
+    if(data.message)
+        CORRADE_COMPARE(out.str(), data.message);
+    else
+        CORRADE_COMPARE(out.str(), "");
+
+    /* The images, once decoded, should then be flipped compared to each other,
+       or if flip was not made or not possible, identical */
+
+    Containers::StringView decoderName;
+    if(Containers::StringView{data.name}.hasPrefix("BC"))
+        decoderName = "BcDecImageConverter";
+    else if(Containers::StringView{data.name}.hasPrefix("ETC") ||
+            Containers::StringView{data.name}.hasPrefix("EAC"))
+        decoderName = "EtcDecImageConverter";
+    else CORRADE_SKIP("No decoder for" << image->compressedFormat() << Debug::nospace << ", cannot test decoded image equality.");
+
+    /* Catch also ABI and interface mismatch errors */
+    if(!(_converterManager.load(decoderName) & PluginManager::LoadState::Loaded))
+        CORRADE_SKIP(decoderName << "plugin can't be loaded, cannot test decoded image equality.");
+
+    /* The converter doesn't support 3D images yet (waiting for CompressedImage
+       APIs to get more usable), manually convert each slice */
+    Containers::Pointer<Trade::AbstractImageConverter> decoder = _converterManager.loadAndInstantiate(decoderName);
+    CORRADE_COMPARE(imageNotFlipped->size(), (Vector3i{5, 5, 3}));
+    const UnsignedInt blockDataSize = compressedPixelFormatBlockDataSize(imageNotFlipped->compressedFormat());
+    Containers::Optional<Trade::ImageData2D> decodedNotFlipped[]{
+        decoder->convert(CompressedImageView2D{
+            imageNotFlipped->compressedFormat(), {8, 8},
+            imageNotFlipped->data().prefix(2*2*blockDataSize)}),
+        decoder->convert(CompressedImageView2D{
+            imageNotFlipped->compressedFormat(), {8, 8},
+            imageNotFlipped->data().sliceSize(1*2*2*blockDataSize,
+                                              2*2*blockDataSize)}),
+        decoder->convert(CompressedImageView2D{
+            imageNotFlipped->compressedFormat(), {8, 8},
+            imageNotFlipped->data().sliceSize(2*2*2*blockDataSize,
+                                              2*2*blockDataSize)}),
+    };
+    Containers::Optional<Trade::ImageData2D> decoded[]{
+        decoder->convert(CompressedImageView2D{
+            image->compressedFormat(), {8, 8},
+            image->data().prefix(2*2*blockDataSize)}),
+        decoder->convert(CompressedImageView2D{
+            image->compressedFormat(), {8, 8},
+            image->data().sliceSize(1*2*2*blockDataSize,
+                                    2*2*blockDataSize)}),
+        decoder->convert(CompressedImageView2D{
+            image->compressedFormat(), {8, 8},
+            image->data().sliceSize(2*2*2*blockDataSize,
+                                    2*2*blockDataSize)}),
+    };
+
+    Vector3i zOrder = data.flippedZ ? Vector3i{2, 1, 0} : Vector3i{0, 1, 2};
+    for(Int i: {0, 1, 2}) {
+        CORRADE_VERIFY(decodedNotFlipped[i]);
+        CORRADE_VERIFY(decoded[zOrder[i]]);
+
+        if(!data.flippedY) CORRADE_COMPARE_AS(*decoded[zOrder[i]],
+            *decodedNotFlipped[i],
+            DebugTools::CompareImage);
+        else if(decoded[zOrder[i]]->format() == PixelFormat::RGBA8Unorm)
+            CORRADE_COMPARE_AS(decoded[zOrder[i]]->pixels<Vector4ub>().flipped<0>(),
+                *decodedNotFlipped[i],
+                DebugTools::CompareImage);
+        else CORRADE_FAIL("Unexpected format" << decoded[zOrder[i]]->format());
+    }
 }
 
 void KtxImporterTest::swizzle() {

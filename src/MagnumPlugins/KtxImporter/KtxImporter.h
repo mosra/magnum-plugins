@@ -115,15 +115,26 @@ Imports images in the following formats:
 @m_class{m-block m-warning}
 
 @par Imported image orientation
-    The file format contains orientation metadata and uncompressed images will
-    be flipped on import if the orientation doesn't match X right, (for 2D and
-    3D textures) Y up and (for 3D textures) Z backward. Because flipping
-    block-compressed data is nontrivial, compressed images will not be flipped
-    on import. Instead a message will be printed to @relativeref{Magnum,Warning}
-    and the data will be passed through unchanged. The @ref KtxImageConverter
-    encodes X right, Y up, Z backward files by default. File orientation can
-    also be overriden using the @cb{.ini} assumeOrientation @ce
-    @ref Trade-KtxImporter-configuration "configuration option".
+    The file format can contain orientation metadata. If the orientation
+    doesn't match X right, (for 2D and 3D textures) Y up and (for 3D textures)
+    Z backward, the plugin will attempt to flip the data on import.
+@par
+    Flipping of block-compressed data is non-trivial and so far is implemented
+    only on the Y axis for BC1, BC2, BC3, BC4 and BC5 formats with APIs from
+    @ref Magnum/Math/ColorBatch.h. Other compressed formats will print a
+    message to @relativeref{Magnum,Warning} and the data will not be Y-flipped.
+    A warning also gets printed in case the flip is performed on an image whose
+    height isn't whole blocks, as that causes the data to be shifted. Flipping
+    of block-compressed data on the X axis isn't supported and will print a
+    warning. Flipping on the Z axis is performed for all 2D block-compressed
+    formats, for 3D block-compressed formats (such as
+    @ref CompressedPixelFormat::Astc4x4x4RGBASrgb) it's not implemented yet and
+    will print a warning.
+@par
+    You can also set the @cb{.ini} assumeOrientation @ce
+    @ref Trade-KtxImporter-configuration "configuration option" to ignore any
+    metadata, assume a particular orientation and perform different or no
+    flipping at all.
 
 The importer recognizes @ref ImporterFlag::Verbose, printing additional info
 when the flag is enabled. @ref ImporterFlag::Quiet is recognized as well and
@@ -222,7 +233,7 @@ class MAGNUM_KTXIMPORTER_EXPORT KtxImporter: public AbstractImporter {
         MAGNUM_KTXIMPORTER_LOCAL void doClose() override;
         MAGNUM_KTXIMPORTER_LOCAL void doOpenData(Containers::Array<char>&& data, DataFlags dataFlags) override;
 
-        template<UnsignedInt dimensions> MAGNUM_KTXIMPORTER_LOCAL ImageData<dimensions> doImage(UnsignedInt id, UnsignedInt level);
+        template<UnsignedInt dimensions> MAGNUM_KTXIMPORTER_LOCAL ImageData<dimensions> doImage(const char* messagePrefix, UnsignedInt id, UnsignedInt level);
 
         MAGNUM_KTXIMPORTER_LOCAL UnsignedInt doImage1DCount() const override;
         MAGNUM_KTXIMPORTER_LOCAL UnsignedInt doImage1DLevelCount(UnsignedInt id) override;

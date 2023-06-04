@@ -42,6 +42,7 @@
 #include <Corrade/Utility/EndiannessBatch.h>
 #include <Magnum/PixelFormat.h>
 #include <Magnum/Math/BitVector.h>
+#include <Magnum/Math/ColorBatch.h>
 #include <Magnum/Math/Functions.h>
 #include <Magnum/Math/Swizzle.h>
 #include <Magnum/Math/Vector3.h>
@@ -740,12 +741,39 @@ void KtxImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFlags
         }
     }
 
-    /* We can't reasonably perform axis flips on block-compressed data.
-       Emit a warning and pretend there is no flipping necessary. */
-    if(f->pixelFormat.isCompressed && f->flip.any()) {
-        f->flip = BitVector3{};
-        if(!(flags() & ImporterFlag::Quiet))
-            Warning{} << "Trade::KtxImporter::openData(): block-compressed image was encoded with non-default axis orientations, imported data will have wrong orientation";
+    /* Only some axis flips are possible on compressed data. For others emit a
+       warning and pretend there is no flipping necessary. */
+    if(f->pixelFormat.isCompressed) {
+        if(f->flip[0]) {
+            if(!(flags() & ImporterFlag::Quiet))
+                Warning{} << "Trade::KtxImporter::openData(): X flip is not implemented for block-compressed images, imported data will have wrong orientation. Set the assumeOrientation option to suppress this warning.";
+            f->flip.reset(0);
+        }
+
+        if(f->flip[1] &&
+            f->pixelFormat.compressed != CompressedPixelFormat::Bc1RGBUnorm &&
+            f->pixelFormat.compressed != CompressedPixelFormat::Bc1RGBSrgb &&
+            f->pixelFormat.compressed != CompressedPixelFormat::Bc1RGBAUnorm &&
+            f->pixelFormat.compressed != CompressedPixelFormat::Bc1RGBASrgb &&
+            f->pixelFormat.compressed != CompressedPixelFormat::Bc2RGBAUnorm &&
+            f->pixelFormat.compressed != CompressedPixelFormat::Bc2RGBASrgb &&
+            f->pixelFormat.compressed != CompressedPixelFormat::Bc3RGBAUnorm &&
+            f->pixelFormat.compressed != CompressedPixelFormat::Bc3RGBASrgb &&
+            f->pixelFormat.compressed != CompressedPixelFormat::Bc4RUnorm &&
+            f->pixelFormat.compressed != CompressedPixelFormat::Bc4RSnorm &&
+            f->pixelFormat.compressed != CompressedPixelFormat::Bc5RGUnorm &&
+            f->pixelFormat.compressed != CompressedPixelFormat::Bc5RGSnorm
+        ) {
+            if(!(flags() & ImporterFlag::Quiet))
+                Warning{} << "Trade::KtxImporter::openData(): Y flip is not yet implemented for" << f->pixelFormat.compressed << Debug::nospace << ", imported data will have wrong orientation. Set the assumeOrientation option to suppress this warning.";
+            f->flip.reset(1);
+        }
+
+        if(f->flip[2] && f->pixelFormat.blockSize.z() != 1) {
+            if(!(flags() & ImporterFlag::Quiet))
+                Warning{} << "Trade::KtxImporter::openData(): Z flip is not yet implemented for" << f->pixelFormat.compressed << Debug::nospace << ", imported data will have wrong orientation. Set the assumeOrientation option to suppress this warning.";
+            f->flip.reset(2);
+        }
     }
 
     /** @todo KTX spec seems to really insist on rd for cube maps but the
@@ -823,7 +851,7 @@ void KtxImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFlags
     _f = std::move(f);
 }
 
-template<UnsignedInt dimensions> ImageData<dimensions> KtxImporter::doImage(UnsignedInt id, UnsignedInt level) {
+template<UnsignedInt dimensions> ImageData<dimensions> KtxImporter::doImage(const char* messagePrefix, UnsignedInt id, UnsignedInt level) {
     const File::LevelData& levelData = _f->imageData[id][level];
     const auto size = Math::Vector<dimensions, Int>::pad(levelData.size);
     Containers::Array<char> data{NoInit, levelData.data.size()};
@@ -833,11 +861,49 @@ template<UnsignedInt dimensions> ImageData<dimensions> KtxImporter::doImage(Unsi
        to calculate the block count for the strided array view. We already know
        the entire data size. */
     if(_f->pixelFormat.isCompressed) {
-        CORRADE_INTERNAL_ASSERT(_f->flip.none());
+        CORRADE_INTERNAL_ASSERT(!_f->flip[0]);
         CORRADE_INTERNAL_ASSERT(_f->pixelFormat.swizzle == SwizzleType::None);
         CORRADE_INTERNAL_ASSERT(_f->pixelFormat.typeSize == 1);
 
         Utility::copy(levelData.data, data);
+        /** @todo clean this up once blocks() is a thing */
+        const CompressedPixelFormat format = _f->pixelFormat.compressed;
+        const Vector3i blockSize = compressedPixelFormatBlockSize(format);
+        const Vector3i sizeInBlocks = (levelData.size + blockSize - Vector3i{1})/blockSize;
+        const UnsignedInt blockDataSize = compressedPixelFormatBlockDataSize(format);
+        const Containers::StridedArrayView4D<char> blocks{data, {
+            std::size_t(sizeInBlocks.z()),
+            std::size_t(sizeInBlocks.y()),
+            std::size_t(sizeInBlocks.x()),
+            blockDataSize
+        }};
+
+        if(_f->flip[1]) {
+            if(!(flags() & ImporterFlag::Quiet) && levelData.size.y() % blockSize.y() != 0)
+                Warning{} << messagePrefix << "Y-flipping a compressed image that's not whole blocks, the result will be shifted by" << (blockSize.y() - (levelData.size.y() % blockSize.y())) << "pixels";
+
+            if(format == CompressedPixelFormat::Bc1RGBAUnorm ||
+               format == CompressedPixelFormat::Bc1RGBASrgb)
+                Math::yFlipBc1InPlace(blocks);
+            else if(format == CompressedPixelFormat::Bc2RGBAUnorm ||
+                    format == CompressedPixelFormat::Bc2RGBASrgb)
+                Math::yFlipBc2InPlace(blocks);
+            else if(format == CompressedPixelFormat::Bc3RGBAUnorm ||
+                    format == CompressedPixelFormat::Bc3RGBASrgb)
+                Math::yFlipBc3InPlace(blocks);
+            else if(format == CompressedPixelFormat::Bc4RUnorm ||
+                    format == CompressedPixelFormat::Bc4RSnorm)
+                Math::yFlipBc4InPlace(blocks);
+            else if(format == CompressedPixelFormat::Bc5RGUnorm ||
+                    format == CompressedPixelFormat::Bc5RGSnorm)
+                Math::yFlipBc5InPlace(blocks);
+            /* For all other -- not yet supported -- formats the flip[1] bit
+               was reset so it shouldn't get here */
+            else CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+        }
+        if(_f->flip[2])
+            Utility::flipInPlace<0>(blocks);
+
         return ImageData<dimensions>{_f->pixelFormat.compressed, size, std::move(data), ImageFlag<dimensions>(UnsignedShort(_f->imageFlags))};
     }
 
@@ -900,7 +966,7 @@ Containers::Optional<ImageData1D> KtxImporter::doImage1D(UnsignedInt id, Unsigne
            1D image interface), so this will never be called */
         CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
     else
-        return doImage<1>(id, level);
+        return doImage<1>("Trade::KtxImporter::image1D():", id, level);
 }
 
 UnsignedInt KtxImporter::doImage2DCount() const {
@@ -923,7 +989,7 @@ Containers::Optional<ImageData2D> KtxImporter::doImage2D(UnsignedInt id, Unsigne
     if(_basisImporter)
         return _basisImporter->image2D(id, level);
     else
-        return doImage<2>(id, level);
+        return doImage<2>("Trade::KtxImporter::image2D():", id, level);
 }
 
 UnsignedInt KtxImporter::doImage3DCount() const {
@@ -946,7 +1012,7 @@ Containers::Optional<ImageData3D> KtxImporter::doImage3D(UnsignedInt id, const U
     if(_basisImporter)
         return _basisImporter->image3D(id, level);
     else
-        return doImage<3>(id, level);
+        return doImage<3>("Trade::KtxImporter::image3D():", id, level);
 }
 
 #ifdef MAGNUM_BUILD_DEPRECATED
