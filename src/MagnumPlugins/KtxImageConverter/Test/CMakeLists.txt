@@ -92,8 +92,8 @@ corrade_add_test(KtxImageConverterTest KtxImageConverterTest.cpp
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/KtxImporter/Test/2d-compressed-mipmaps-mip3.bin
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/KtxImporter/Test/3d.ktx2
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/KtxImporter/Test/3d-mipmaps.ktx2
-        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/KtxImporter/Test/3d-compressed.ktx2
-        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/KtxImporter/Test/3d-compressed.bin
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/KtxImporter/Test/3d-compressed-etc2rgb8.ktx2
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/KtxImporter/Test/3d-compressed-etc2rgb8.bin
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/KtxImporter/Test/3d-compressed-mipmaps.ktx2
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/KtxImporter/Test/3d-compressed-mipmaps-mip0.bin
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/KtxImporter/Test/3d-compressed-mipmaps-mip1.bin

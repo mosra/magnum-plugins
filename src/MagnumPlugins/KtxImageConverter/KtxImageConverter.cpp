@@ -382,6 +382,26 @@ Containers::Pair<Implementation::KdfBasicBlockHeader::ColorModel, Containers::Ar
         case CompressedPixelFormat::Astc12x10RGBASrgb:
         case CompressedPixelFormat::Astc12x12RGBAUnorm:
         case CompressedPixelFormat::Astc12x12RGBASrgb:
+        case CompressedPixelFormat::Astc3x3x3RGBAUnorm:
+        case CompressedPixelFormat::Astc3x3x3RGBASrgb:
+        case CompressedPixelFormat::Astc4x3x3RGBAUnorm:
+        case CompressedPixelFormat::Astc4x3x3RGBASrgb:
+        case CompressedPixelFormat::Astc4x4x3RGBAUnorm:
+        case CompressedPixelFormat::Astc4x4x3RGBASrgb:
+        case CompressedPixelFormat::Astc4x4x4RGBAUnorm:
+        case CompressedPixelFormat::Astc4x4x4RGBASrgb:
+        case CompressedPixelFormat::Astc5x4x4RGBAUnorm:
+        case CompressedPixelFormat::Astc5x4x4RGBASrgb:
+        case CompressedPixelFormat::Astc5x5x4RGBAUnorm:
+        case CompressedPixelFormat::Astc5x5x4RGBASrgb:
+        case CompressedPixelFormat::Astc5x5x5RGBAUnorm:
+        case CompressedPixelFormat::Astc5x5x5RGBASrgb:
+        case CompressedPixelFormat::Astc6x5x5RGBAUnorm:
+        case CompressedPixelFormat::Astc6x5x5RGBASrgb:
+        case CompressedPixelFormat::Astc6x6x5RGBAUnorm:
+        case CompressedPixelFormat::Astc6x6x5RGBASrgb:
+        case CompressedPixelFormat::Astc6x6x6RGBAUnorm:
+        case CompressedPixelFormat::Astc6x6x6RGBASrgb:
             return {Implementation::KdfBasicBlockHeader::ColorModel::Astc, SamplesAstc};
         case CompressedPixelFormat::Astc4x4RGBAF:
         case CompressedPixelFormat::Astc5x4RGBAF:
@@ -397,8 +417,17 @@ Containers::Pair<Implementation::KdfBasicBlockHeader::ColorModel, Containers::Ar
         case CompressedPixelFormat::Astc10x10RGBAF:
         case CompressedPixelFormat::Astc12x10RGBAF:
         case CompressedPixelFormat::Astc12x12RGBAF:
+        case CompressedPixelFormat::Astc3x3x3RGBAF:
+        case CompressedPixelFormat::Astc4x3x3RGBAF:
+        case CompressedPixelFormat::Astc4x4x3RGBAF:
+        case CompressedPixelFormat::Astc4x4x4RGBAF:
+        case CompressedPixelFormat::Astc5x4x4RGBAF:
+        case CompressedPixelFormat::Astc5x5x4RGBAF:
+        case CompressedPixelFormat::Astc5x5x5RGBAF:
+        case CompressedPixelFormat::Astc6x5x5RGBAF:
+        case CompressedPixelFormat::Astc6x6x5RGBAF:
+        case CompressedPixelFormat::Astc6x6x6RGBAF:
             return {Implementation::KdfBasicBlockHeader::ColorModel::Astc, SamplesAstcHdr};
-        /* 3D ASTC formats are not exposed in Vulkan */
         case CompressedPixelFormat::PvrtcRGB2bppUnorm:
         case CompressedPixelFormat::PvrtcRGB2bppSrgb:
         case CompressedPixelFormat::PvrtcRGBA2bppUnorm:
@@ -408,9 +437,6 @@ Containers::Pair<Implementation::KdfBasicBlockHeader::ColorModel, Containers::Ar
         case CompressedPixelFormat::PvrtcRGBA4bppUnorm:
         case CompressedPixelFormat::PvrtcRGBA4bppSrgb:
             return {Implementation::KdfBasicBlockHeader::ColorModel::Pvrtc, SamplesPvrtc};
-        default:
-            /* Default switch to suppress warnings about unhandled 3D ASTC formats */
-            break; /* LCOV_EXCL_LINE */
     }
 
     CORRADE_ASSERT_UNREACHABLE("samples(): unsupported format" << format, {}); /* LCOV_EXCL_LINE */

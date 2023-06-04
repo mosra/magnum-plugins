@@ -108,8 +108,9 @@ Imports images in the following formats:
 
 -   KTX2 with all uncompressed Vulkan formats that have an equivalent in
     @ref PixelFormat, with component swizzling as necessary
--   KTX2 with most compressed Vulkan formats that have an equivalent in
-    @ref CompressedPixelFormat. None of the 3D ASTC formats are supported.
+-   KTX2 with all compressed Vulkan formats that have an equivalent in
+    @ref CompressedPixelFormat. 3D ASTC formats are supported as well, even
+    though they have no Vulkan equivalent yet.
 
 @m_class{m-block m-warning}
 

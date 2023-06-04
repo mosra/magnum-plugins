@@ -108,10 +108,18 @@ PVRTexToolCLI -i pattern-1d-uneven.png -o 1d-compressed-etc2.ktx2 -f ETC2_RGB,UB
 
 PVRTexToolCLI -i pattern-1d-uneven.png -o 1d-compressed-mipmaps.ktx2 -m -mfilter nearest -f ETC2_RGB,UBN,sRGB
 
-PVRTexToolCLI -i pattern-uneven.png,pattern-uneven.png,black.png -o 3d-compressed.ktx2 -array -f ETC2_RGB,UBN,sRGB
-printf '\x03\x00\x00\x00\x00\x00\x00\x00' | dd conv=notrunc of=3d-compressed.ktx2 bs=1 seek=28
-printf '\x13' | dd conv=notrunc of=3d-compressed.ktx2 bs=1 seek=148
-printf 'i' | dd conv=notrunc of=3d-compressed.ktx2 bs=1 seek=169
+# See the "PVRTexTool doesn't support 3D images, sigh" note above for details
+PVRTexToolCLI -i pattern-uneven.png,pattern-uneven.png,black.png -o 3d-compressed-etc2rgb8.ktx2 -array -f ETC2_RGB,UBN,sRGB
+printf '\x03\x00\x00\x00\x00\x00\x00\x00' | dd conv=notrunc of=3d-compressed-etc2rgb8.ktx2 bs=1 seek=28
+printf '\x13' | dd conv=notrunc of=3d-compressed-etc2rgb8.ktx2 bs=1 seek=148
+printf 'i' | dd conv=notrunc of=3d-compressed-etc2rgb8.ktx2 bs=1 seek=169
+
+# 3D ASTC compression. ARM's astenc doesn't support KTX2 output and
+# KTX-Software doesn't support ASTC input. So the only way is to generate the
+# data ourselves from AstcImporter test files, force default orientation and
+# then hope for the best. The ktx2check and ktxinfo utilities say the output is
+# fine tho. Also remove the generator string for reproducible output.
+magnum-imageconverter ../../AstcImporter/Test/3x3x3.astc -D3 -i assumeYUpZBackward -c orientation=rdi,generator= 3d-compressed-astc3d.ktx2
 
 # Unlike 3d-mipmaps.ktx2, we don't have any verifiable data to check in viewers
 # for 3d-compressed-mipmaps.ktx to make sure the converter output is plausible.

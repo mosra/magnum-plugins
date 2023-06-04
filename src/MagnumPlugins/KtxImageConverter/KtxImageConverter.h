@@ -112,7 +112,7 @@ conversion warnings to be suppressed.
 The following formats can be written:
 
 -   all formats in @ref PixelFormat
--   all formats in @ref CompressedPixelFormat, except for 3D ASTC formats
+-   all formats in @ref CompressedPixelFormat
 
 @subsection Trade-KtxImageConverter-behavior-types Image types
 

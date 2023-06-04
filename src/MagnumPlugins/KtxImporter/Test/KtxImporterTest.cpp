@@ -333,6 +333,16 @@ const struct {
 
 const struct {
     const char* name;
+    const char* file;
+    CompressedPixelFormat format;
+    Vector3i size;
+} CompressedImage3DData[]{
+    {"ETC2 RGB8", "3d-compressed-etc2rgb8.ktx2", CompressedPixelFormat::Etc2RGB8Srgb, {9, 10, 3}},
+    {"ASTC 3D", "3d-compressed-astc3d.ktx2", CompressedPixelFormat::Astc3x3x3RGBAUnorm, {27, 27, 3}}
+};
+
+const struct {
+    const char* name;
     ImporterFlags flags;
     bool quiet;
 } QuietData[]{
@@ -657,9 +667,12 @@ KtxImporterTest::KtxImporterTest() {
 
               &KtxImporterTest::image3D,
               &KtxImporterTest::image3DMipmaps,
-              &KtxImporterTest::image3DLayers,
-              &KtxImporterTest::image3DCompressed,
-              &KtxImporterTest::image3DCompressedMipmaps});
+              &KtxImporterTest::image3DLayers});
+
+    addInstancedTests({&KtxImporterTest::image3DCompressed},
+        Containers::arraySize(CompressedImage3DData));
+
+    addTests({&KtxImporterTest::image3DCompressedMipmaps});
 
     addInstancedTests({&KtxImporterTest::forwardBasis},
         Containers::arraySize(ForwardBasisData));
@@ -1712,24 +1725,24 @@ void KtxImporterTest::image3DLayers() {
 }
 
 void KtxImporterTest::image3DCompressed() {
+    auto&& data = CompressedImage3DData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
     /* Assume Y up orientation to get the data exactly as in the file without
        any warnings */
     importer->configuration().setValue("assumeOrientation", "ruo");
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(KTXIMPORTER_TEST_DIR, "3d-compressed.ktx2")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(KTXIMPORTER_TEST_DIR, data.file)));
 
     CORRADE_COMPARE(importer->image3DCount(), 1);
     CORRADE_COMPARE(importer->image3DLevelCount(0), 1);
-
-    constexpr CompressedPixelFormat format = CompressedPixelFormat::Etc2RGB8Srgb;
-    constexpr Vector3i size{9, 10, 3};
 
     Containers::Optional<Trade::ImageData3D> image = importer->image3D(0);
     CORRADE_VERIFY(image);
     CORRADE_VERIFY(image->isCompressed());
     CORRADE_COMPARE(image->flags(), ImageFlags3D{});
-    CORRADE_COMPARE(image->compressedFormat(), format);
-    CORRADE_COMPARE(image->size(), size);
+    CORRADE_COMPARE(image->compressedFormat(), data.format);
+    CORRADE_COMPARE(image->size(), data.size);
 
     const CompressedPixelStorage storage = image->compressedStorage();
     CORRADE_COMPARE(storage.rowLength(), 0);
@@ -1738,11 +1751,11 @@ void KtxImporterTest::image3DCompressed() {
 
     /** @todo remove this once CompressedImage etc. tests for data size on its
         own */
-    const Vector3i blockSize = compressedPixelFormatBlockSize(format);
-    const Vector3i blockCount = (size + (blockSize - Vector3i{1}))/blockSize;
-    CORRADE_COMPARE(image->data().size(), blockCount.product()*compressedPixelFormatBlockDataSize(format));
+    const Vector3i blockSize = compressedPixelFormatBlockSize(data.format);
+    const Vector3i blockCount = (data.size + (blockSize - Vector3i{1}))/blockSize;
+    CORRADE_COMPARE(image->data().size(), blockCount.product()*compressedPixelFormatBlockDataSize(data.format));
     CORRADE_COMPARE_AS(Containers::StringView{image->data()},
-        Utility::Path::join(KTXIMPORTER_TEST_DIR, "3d-compressed.bin"),
+        Utility::Path::join(KTXIMPORTER_TEST_DIR, Utility::Path::splitExtension(data.file).first() + ".bin"),
         TestSuite::Compare::StringToFile);
 }
 

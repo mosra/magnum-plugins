@@ -62,7 +62,6 @@ struct KtxImageConverterTest: TestSuite::Tester {
 
     void supportedFormat();
     void supportedCompressedFormat();
-    void unsupportedCompressedFormat();
     void implementationSpecificFormat();
     void implementationSpecificCompressedFormat();
 
@@ -367,7 +366,6 @@ Containers::String readKeyValueData(Containers::ArrayView<const char> fileData) 
 KtxImageConverterTest::KtxImageConverterTest() {
     addTests({&KtxImageConverterTest::supportedFormat,
               &KtxImageConverterTest::supportedCompressedFormat,
-              &KtxImageConverterTest::unsupportedCompressedFormat,
               &KtxImageConverterTest::implementationSpecificFormat,
               &KtxImageConverterTest::implementationSpecificCompressedFormat,
 
@@ -500,41 +498,6 @@ void KtxImageConverterTest::supportedFormat() {
     }
 }
 
-const CompressedPixelFormat UnsupportedCompressedFormats[]{
-    /* Vulkan has no support (core or extension) for 3D ASTC formats.
-       KTX supports them, but through an unreleased extension. */
-    CompressedPixelFormat::Astc3x3x3RGBAUnorm,
-    CompressedPixelFormat::Astc3x3x3RGBASrgb,
-    CompressedPixelFormat::Astc3x3x3RGBAF,
-    CompressedPixelFormat::Astc4x3x3RGBAUnorm,
-    CompressedPixelFormat::Astc4x3x3RGBASrgb,
-    CompressedPixelFormat::Astc4x3x3RGBAF,
-    CompressedPixelFormat::Astc4x4x3RGBAUnorm,
-    CompressedPixelFormat::Astc4x4x3RGBASrgb,
-    CompressedPixelFormat::Astc4x4x3RGBAF,
-    CompressedPixelFormat::Astc4x4x4RGBAUnorm,
-    CompressedPixelFormat::Astc4x4x4RGBASrgb,
-    CompressedPixelFormat::Astc4x4x4RGBAF,
-    CompressedPixelFormat::Astc5x4x4RGBAUnorm,
-    CompressedPixelFormat::Astc5x4x4RGBASrgb,
-    CompressedPixelFormat::Astc5x4x4RGBAF,
-    CompressedPixelFormat::Astc5x5x4RGBAUnorm,
-    CompressedPixelFormat::Astc5x5x4RGBASrgb,
-    CompressedPixelFormat::Astc5x5x4RGBAF,
-    CompressedPixelFormat::Astc5x5x5RGBAUnorm,
-    CompressedPixelFormat::Astc5x5x5RGBASrgb,
-    CompressedPixelFormat::Astc5x5x5RGBAF,
-    CompressedPixelFormat::Astc6x5x5RGBAUnorm,
-    CompressedPixelFormat::Astc6x5x5RGBASrgb,
-    CompressedPixelFormat::Astc6x5x5RGBAF,
-    CompressedPixelFormat::Astc6x6x5RGBAUnorm,
-    CompressedPixelFormat::Astc6x6x5RGBASrgb,
-    CompressedPixelFormat::Astc6x6x5RGBAF,
-    CompressedPixelFormat::Astc6x6x6RGBAUnorm,
-    CompressedPixelFormat::Astc6x6x6RGBASrgb,
-    CompressedPixelFormat::Astc6x6x6RGBAF
-};
-
 void KtxImageConverterTest::supportedCompressedFormat() {
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("KtxImageConverter");
 
@@ -548,29 +511,9 @@ void KtxImageConverterTest::supportedCompressedFormat() {
     constexpr CompressedPixelFormat end = CompressedPixelFormat::PvrtcRGBA4bppSrgb;
 
     for(UnsignedInt format = UnsignedInt(start); format <= UnsignedInt(end); ++format) {
-        if(std::find(std::begin(UnsupportedCompressedFormats), std::end(UnsupportedCompressedFormats),
-            CompressedPixelFormat(format)) == std::end(UnsupportedCompressedFormats))
-        {
-            CORRADE_ITERATION(format);
-            CORRADE_VERIFY(Containers::arraySize(bytes) >= compressedPixelFormatBlockDataSize(CompressedPixelFormat(format)));
-            CORRADE_VERIFY(converter->convertToData(CompressedImageView2D{CompressedPixelFormat(format), {1, 1}, bytes}));
-        }
-    }
-}
-
-void KtxImageConverterTest::unsupportedCompressedFormat() {
-    Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("KtxImageConverter");
-
-    const UnsignedByte bytes[32]{};
-
-    for(CompressedPixelFormat format: UnsupportedCompressedFormats) {
         CORRADE_ITERATION(format);
         CORRADE_VERIFY(Containers::arraySize(bytes) >= compressedPixelFormatBlockDataSize(CompressedPixelFormat(format)));
-
-        CORRADE_VERIFY(!converter->convertToData(CompressedImageView2D{format, {1, 1}, bytes}));
-
-        /* Not testing the output message so that it shows up as a friendly
-           nagging reminder to add support for these formats */
+        CORRADE_VERIFY(converter->convertToData(CompressedImageView2D{CompressedPixelFormat(format), {1, 1}, bytes}));
     }
 }
 
@@ -635,21 +578,17 @@ void KtxImageConverterTest::dataFormatDescriptorCompressed() {
     constexpr CompressedPixelFormat end = CompressedPixelFormat::PvrtcRGBA4bppSrgb;
 
     for(UnsignedInt format = UnsignedInt(start); format <= UnsignedInt(end); ++format) {
-        if(std::find(std::begin(UnsupportedCompressedFormats), std::end(UnsupportedCompressedFormats),
-            CompressedPixelFormat(format)) == std::end(UnsupportedCompressedFormats))
-        {
-            CORRADE_ITERATION(format);
-            CORRADE_VERIFY(Containers::arraySize(bytes) >= compressedPixelFormatBlockDataSize(CompressedPixelFormat(format)));
-            Containers::Optional<Containers::Array<char>> output = converter->convertToData(CompressedImageView2D{CompressedPixelFormat(format), {1, 1}, bytes});
-            CORRADE_VERIFY(output);
+        CORRADE_ITERATION(format);
+        CORRADE_VERIFY(Containers::arraySize(bytes) >= compressedPixelFormatBlockDataSize(CompressedPixelFormat(format)));
+        Containers::Optional<Containers::Array<char>> output = converter->convertToData(CompressedImageView2D{CompressedPixelFormat(format), {1, 1}, bytes});
+        CORRADE_VERIFY(output);
 
-            const Implementation::KtxHeader& header = *reinterpret_cast<const Implementation::KtxHeader*>(output->data());
-            const Implementation::VkFormat vkFormat = Utility::Endianness::littleEndian(header.vkFormat);
+        const Implementation::KtxHeader& header = *reinterpret_cast<const Implementation::KtxHeader*>(output->data());
+        const Implementation::VkFormat vkFormat = Utility::Endianness::littleEndian(header.vkFormat);
 
-            Containers::Array<char> dfd = readDataFormatDescriptor(*output);
-            CORRADE_COMPARE(dfdMap.count(vkFormat), 1);
-            CORRADE_COMPARE_AS(dfd, dfdMap[vkFormat], TestSuite::Compare::Container);
-        }
+        Containers::Array<char> dfd = readDataFormatDescriptor(*output);
+        CORRADE_COMPARE(dfdMap.count(vkFormat), 1);
+        CORRADE_COMPARE_AS(dfd, dfdMap[vkFormat], TestSuite::Compare::Container);
     }
 }
 
@@ -1184,7 +1123,7 @@ void KtxImageConverterTest::convert3DCompressed() {
     converter->configuration().setValue("orientation", "rdi");
     converter->configuration().setValue("generator", WriterPVRTexTool);
 
-    Containers::Optional<Containers::Array<char>> blockData = Utility::Path::read(Utility::Path::join(KTXIMPORTER_TEST_DIR, "3d-compressed.bin"));
+    Containers::Optional<Containers::Array<char>> blockData = Utility::Path::read(Utility::Path::join(KTXIMPORTER_TEST_DIR, "3d-compressed-etc2rgb8.bin"));
     CORRADE_VERIFY(blockData);
     const CompressedImageView3D inputImage{CompressedPixelFormat::Etc2RGB8Srgb, {9, 10, 3}, *blockData};
 
@@ -1192,7 +1131,7 @@ void KtxImageConverterTest::convert3DCompressed() {
     CORRADE_VERIFY(output);
 
     /** @todo Compare::DataToFile */
-    Containers::Optional<Containers::Array<char>> expected = Utility::Path::read(Utility::Path::join(KTXIMPORTER_TEST_DIR, "3d-compressed.ktx2"));
+    Containers::Optional<Containers::Array<char>> expected = Utility::Path::read(Utility::Path::join(KTXIMPORTER_TEST_DIR, "3d-compressed-etc2rgb8.ktx2"));
     CORRADE_VERIFY(expected);
     CORRADE_COMPARE_AS(*output, *expected, TestSuite::Compare::Container);
 }
