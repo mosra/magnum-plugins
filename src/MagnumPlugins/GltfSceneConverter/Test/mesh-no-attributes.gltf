@@ -5,14 +5,14 @@
   "buffers": [
     {
       "uri": "mesh-no-attributes.bin",
-      "byteLength": 6
+      "byteLength": 4
     }
   ],
   "bufferViews": [
     {
       "buffer": 0,
       "byteOffset": 0,
-      "byteLength": 6,
+      "byteLength": 4,
       "target": 34963
     }
   ],
@@ -20,7 +20,7 @@
     {
       "bufferView": 0,
       "componentType": 5121,
-      "count": 6,
+      "count": 4,
       "type": "SCALAR"
     }
   ],

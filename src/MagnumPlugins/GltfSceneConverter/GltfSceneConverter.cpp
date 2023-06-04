@@ -1873,6 +1873,20 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const MeshData& mesh, const
     {
         /* Index view and accessor if the mesh is indexed */
         if(mesh.isIndexed()) {
+            /* § 3.6.2.4 requires that "the offset of an accessor [...] MUST be
+               a multiple of the size of the accessor’s component type". The
+               byteOffset could be something else for example if there's
+               (unaligned) image data preceding it. */
+            {
+                const std::size_t indexTypeSize = meshIndexTypeSize(mesh.indexType());
+                const std::size_t padding = indexTypeSize*((_state->buffer.size() + indexTypeSize - 1)/indexTypeSize) - _state->buffer.size();
+                CORRADE_INTERNAL_ASSERT(padding <= 3);
+                /** @todo any better API for this? Utility::fill()? this is
+                    silly */
+                for(char& i: arrayAppend(_state->buffer, NoInit, padding))
+                    i = '\0';
+            }
+
             /* Using indices() instead of indexData() to discard arbitrary
                padding before and after */
             /** @todo or put the whole thing there, consistently with
@@ -1906,6 +1920,20 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const MeshData& mesh, const
                     id, name));
 
             meshProperties.gltfIndices = gltfAccessorIndex;
+        }
+
+        /* § 3.6.2.4 requires that "For performance and compatibility reasons,
+           [...] accessor.byteOffset and bufferView.byteStride MUST be
+           multiples of 4". The byteOffset could be something else for example
+           if there's (unaligned) image data preceding it, or an odd number of
+           8- or 16-bit indices. Pad the buffer appropriately. */
+        /** @todo enforce also 4-byte-aligned stride */
+        {
+            const std::size_t padding = 4*((_state->buffer.size() + 3)/4) - _state->buffer.size();
+            CORRADE_INTERNAL_ASSERT(padding <= 3);
+            /** @todo any better API for this? Utility::fill()? this is silly */
+            for(char& i: arrayAppend(_state->buffer, NoInit, padding))
+                i = '\0';
         }
 
         /* Vertex data, plus any padding after. The view needs to include also

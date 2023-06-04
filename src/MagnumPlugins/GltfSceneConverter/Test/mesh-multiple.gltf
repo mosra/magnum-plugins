@@ -5,7 +5,7 @@
   "buffers": [
     {
       "uri": "mesh-multiple.bin",
-      "byteLength": 46
+      "byteLength": 48
     }
   ],
   "bufferViews": [
@@ -17,14 +17,14 @@
     },
     {
       "buffer": 0,
-      "byteOffset": 6,
+      "byteOffset": 8,
       "byteLength": 24,
       "byteStride": 12,
       "target": 34962
     },
     {
       "buffer": 0,
-      "byteOffset": 30,
+      "byteOffset": 32,
       "byteLength": 16,
       "byteStride": 8,
       "target": 34962

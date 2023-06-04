@@ -149,6 +149,7 @@ corrade_add_test(GltfSceneConverterTest GltfSceneConverterTest.cpp
         mesh-attribute-tangent3.gltf
         mesh-attribute-texture-coordinates.gltf
         mesh-attribute-texture-coordinates-quantized.gltf
+        mesh-buffer-alignment.gltf
         mesh-buffer-views-interleaved-padding-begin-end.bin
         mesh-buffer-views-interleaved-padding-begin-end.gltf
         mesh-buffer-views-interleaved-padding-begin.bin

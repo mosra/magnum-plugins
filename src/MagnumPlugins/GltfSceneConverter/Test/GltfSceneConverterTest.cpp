@@ -96,6 +96,7 @@ struct GltfSceneConverterTest: TestSuite::Tester {
     void addMeshCustomAttributeNoName();
     void addMeshCustomObjectIdAttributeName();
     void addMeshMultiple();
+    void addMeshBufferAlignment();
     void addMeshInvalid();
 
     void addImage2D();
@@ -2029,7 +2030,8 @@ GltfSceneConverterTest::GltfSceneConverterTest() {
 
     addTests({&GltfSceneConverterTest::addMeshCustomObjectIdAttributeName,
 
-              &GltfSceneConverterTest::addMeshMultiple});
+              &GltfSceneConverterTest::addMeshMultiple,
+              &GltfSceneConverterTest::addMeshBufferAlignment});
 
     addInstancedTests({&GltfSceneConverterTest::addMeshInvalid},
         Containers::arraySize(AddMeshInvalidData));
@@ -2826,7 +2828,7 @@ void GltfSceneConverterTest::addMeshNoAttributes() {
     setTestCaseDescription(data.name);
 
     const UnsignedByte indices[] {
-        0, 2, 1, 2, 1, 2
+        0, 2, 1, 2
     };
 
     MeshData mesh{MeshPrimitive::LineStrip,
@@ -2883,7 +2885,7 @@ void GltfSceneConverterTest::addMeshNoAttributes() {
     CORRADE_VERIFY(imported->isIndexed());
     CORRADE_COMPARE(imported->indexType(), MeshIndexType::UnsignedByte);
     CORRADE_COMPARE_AS(imported->indices<UnsignedByte>(),
-        Containers::arrayView<UnsignedByte>({0, 2, 1, 2, 1, 2}),
+        Containers::arrayView<UnsignedByte>({0, 2, 1, 2}),
         TestSuite::Compare::Container);
 }
 
@@ -3615,6 +3617,92 @@ void GltfSceneConverterTest::addMeshMultiple() {
     CORRADE_COMPARE(lines->attributeCount(), 1);
     CORRADE_COMPARE_AS(lines->attribute<Color4us>(0),
         Containers::arrayView(colors),
+        TestSuite::Compare::Container);
+}
+
+void GltfSceneConverterTest::addMeshBufferAlignment() {
+    Containers::Pointer<AbstractSceneConverter> converter =  _converterManager.instantiate("GltfSceneConverter");
+
+    Containers::String filename = Utility::Path::join(GLTFSCENECONVERTER_TEST_OUTPUT_DIR, "mesh-buffer-alignment.gltf");
+    converter->configuration().setValue("accessorNames", true);
+    CORRADE_VERIFY(converter->beginFile(filename));
+
+    /* Mesh with 5 1-byte indices and 3 3-byte positions. The indices should
+       start at offset 0, the positions should get padded by three bytes. */
+    UnsignedByte indicesA[]{0, 1, 2, 0, 1};
+    Vector3b positionsA[]{{1, 2, 3}, {40, 50, 60}, {7, 8, 9}};
+    MeshData a{MeshPrimitive::LineLoop,
+        {}, indicesA, MeshIndexData{indicesA},
+        {}, positionsA, {
+            MeshAttributeData{MeshAttribute::Position, Containers::arrayView(positionsA)}
+        }};
+    CORRADE_VERIFY(converter->add(a, "A"));
+
+    /* Mesh with 3 2-byte indices and 2 6-byte positions. The indices should
+       be padded by one byte (because they only need to be aligned to 2 bytes),
+       the positions should then follow them tightly. */
+    UnsignedShort indicesB[]{0, 1, 0};
+    Vector3s positionsB[]{{100, 200, 300}, {4000, 5000, 6000}};
+    MeshData b{MeshPrimitive::LineStrip,
+        {}, indicesB, MeshIndexData{indicesB},
+        {}, positionsB, {
+            MeshAttributeData{MeshAttribute::Position, Containers::arrayView(positionsB)}
+        }};
+    CORRADE_VERIFY(converter->add(b, "B"));
+
+    CORRADE_VERIFY(converter->endFile());
+
+    const Containers::Optional<Containers::String> gltf = Utility::Path::readString(filename);
+    CORRADE_VERIFY(gltf);
+    CORRADE_COMPARE_AS(*gltf,
+        Utility::Path::join(GLTFSCENECONVERTER_TEST_DIR, "mesh-buffer-alignment.gltf"),
+        TestSuite::Compare::StringToFile);
+    /* Not testing the bin file directly, it should be enough to just verify
+       the import below */
+
+    /* Verify the expected offsets that might be missed when just looking at
+       the file: */
+    CORRADE_COMPARE_AS(*gltf,
+        "\"byteOffset\": 0", /* index buffer A */
+        TestSuite::Compare::StringContains);
+    CORRADE_COMPARE_AS(*gltf,
+        "\"byteOffset\": 8", /* vertex buffer A */
+        TestSuite::Compare::StringContains);
+    CORRADE_COMPARE_AS(*gltf,
+        "\"byteOffset\": 18", /* index buffer B */
+        TestSuite::Compare::StringContains);
+    CORRADE_COMPARE_AS(*gltf,
+        "\"byteOffset\": 24", /* vertex buffer B */
+        TestSuite::Compare::StringContains);
+
+    if(_importerManager.loadState("GltfImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("GltfImporter plugin not found, cannot test a roundtrip");
+
+    Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("GltfImporter");
+    CORRADE_VERIFY(importer->openFile(filename));
+    CORRADE_COMPARE(importer->meshCount(), 2);
+
+    /* Verify the extra paddings don't mess up with the data in any way */
+    Containers::Optional<MeshData> importedA = importer->mesh(0);
+    CORRADE_VERIFY(importedA);
+    CORRADE_VERIFY(importedA->isIndexed());
+    CORRADE_COMPARE(importedA->attributeCount(), 1);
+    CORRADE_COMPARE_AS(importedA->indices<UnsignedByte>(),
+        Containers::arrayView(indicesA),
+        TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(importedA->attribute<Vector3b>(0),
+        Containers::arrayView(positionsA),
+        TestSuite::Compare::Container);
+
+    Containers::Optional<MeshData> importedB = importer->mesh(1);
+    CORRADE_VERIFY(importedB);
+    CORRADE_VERIFY(importedB->isIndexed());
+    CORRADE_COMPARE(importedB->attributeCount(), 1);
+    CORRADE_COMPARE_AS(importedB->indices<UnsignedShort>(),
+        Containers::arrayView(indicesB),
+        TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(importedB->attribute<Vector3s>(0),
+        Containers::arrayView(positionsB),
         TestSuite::Compare::Container);
 }
 

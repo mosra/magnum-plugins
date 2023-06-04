@@ -1,0 +1,109 @@
+{
+  "asset": {
+    "version": "2.0"
+  },
+  "extensionsUsed": [
+    "KHR_mesh_quantization"
+  ],
+  "extensionsRequired": [
+    "KHR_mesh_quantization"
+  ],
+  "buffers": [
+    {
+      "uri": "mesh-buffer-alignment.bin",
+      "byteLength": 36
+    }
+  ],
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteOffset": 0,
+      "byteLength": 5,
+      "target": 34963,
+      "name": "mesh 0 (A) indices"
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 8,
+      "byteLength": 9,
+      "byteStride": 3,
+      "target": 34962,
+      "name": "mesh 0 (A) vertices"
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 18,
+      "byteLength": 6,
+      "target": 34963,
+      "name": "mesh 1 (B) indices"
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 24,
+      "byteLength": 12,
+      "byteStride": 6,
+      "target": 34962,
+      "name": "mesh 1 (B) vertices"
+    }
+  ],
+  "accessors": [
+    {
+      "bufferView": 0,
+      "componentType": 5121,
+      "count": 5,
+      "type": "SCALAR",
+      "name": "mesh 0 (A) indices"
+    },
+    {
+      "bufferView": 1,
+      "componentType": 5120,
+      "count": 3,
+      "type": "VEC3",
+      "min": [1, 2, 3],
+      "max": [40, 50, 60],
+      "name": "mesh 0 (A) POSITION"
+    },
+    {
+      "bufferView": 2,
+      "componentType": 5123,
+      "count": 3,
+      "type": "SCALAR",
+      "name": "mesh 1 (B) indices"
+    },
+    {
+      "bufferView": 3,
+      "componentType": 5122,
+      "count": 2,
+      "type": "VEC3",
+      "min": [100, 200, 300],
+      "max": [4000, 5000, 6000],
+      "name": "mesh 1 (B) POSITION"
+    }
+  ],
+  "meshes": [
+    {
+      "primitives": [
+        {
+          "indices": 0,
+          "attributes": {
+            "POSITION": 1
+          },
+          "mode": 2
+        }
+      ],
+      "name": "A"
+    },
+    {
+      "primitives": [
+        {
+          "indices": 2,
+          "attributes": {
+            "POSITION": 3
+          },
+          "mode": 3
+        }
+      ],
+      "name": "B"
+    }
+  ]
+}
