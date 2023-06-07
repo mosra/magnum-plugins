@@ -1617,7 +1617,8 @@ void DdsImporterTest::compressedFormatFlip3D() {
     Containers::Optional<Trade::ImageData2D> decodedNotFlipped[]{
         decoder->convert(CompressedImageView2D{
             imageNotFlipped->compressedFormat(), {8, 8},
-            imageNotFlipped->data().prefix(2*2*blockDataSize)}),
+            imageNotFlipped->data().sliceSize(0*2*2*blockDataSize,
+                                              2*2*blockDataSize)}),
         decoder->convert(CompressedImageView2D{
             imageNotFlipped->compressedFormat(), {8, 8},
             imageNotFlipped->data().sliceSize(1*2*2*blockDataSize,

@@ -372,7 +372,7 @@ const struct {
         "attribute-less meshes are not valid glTF, set strict=false to allow them"},
     {"zero vertices, strict", true,
         MeshData{MeshPrimitive::Points, {}, AddMeshInvalidVertices, {
-            MeshAttributeData{MeshAttribute::Position, VertexFormat::Vector3, Containers::arrayView(AddMeshInvalidVertices).prefix(std::size_t{0})}
+            MeshAttributeData{MeshAttribute::Position, VertexFormat::Vector3, Containers::arrayView(AddMeshInvalidVertices).prefix(0)}
         }},
         "meshes with zero vertices are not valid glTF, set strict=false to allow them"},
     {"implementation-specific index type", false,
