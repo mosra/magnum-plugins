@@ -22,7 +22,7 @@ depends=("${MINGW_PACKAGE_PREFIX}-magnum>=$pkgver"
          "${MINGW_PACKAGE_PREFIX}-libpng"
          "${MINGW_PACKAGE_PREFIX}-openexr"
          "${MINGW_PACKAGE_PREFIX}-spirv-tools"
-         "${MINGW_PACKAGE_PREFIX}-webp")
+         "${MINGW_PACKAGE_PREFIX}-libwebp")
 makedepends=("${MINGW_PACKAGE_PREFIX}-cmake" "${MINGW_PACKAGE_PREFIX}-ninja")
 options=('!strip')
 
