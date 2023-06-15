@@ -2442,7 +2442,8 @@ bool GltfSceneConverter::doAdd(UnsignedInt, const MaterialData& material, const 
            exactly the same */
         const auto foundMetalnessTexture = maskedBaseMaterial.findId(MaterialAttribute::MetalnessTexture);
         const auto foundNoneRoughnessMetallicTexture = maskedBaseMaterial.findId(MaterialAttribute::NoneRoughnessMetallicTexture);
-        if((baseColor && (keepDefaults || *baseColor != 0xffffffff_rgbaf)) ||
+        if((material.types() & MaterialType::PbrMetallicRoughness) ||
+           (baseColor && (keepDefaults || *baseColor != 0xffffffff_rgbaf)) ||
            (metalness && (keepDefaults || Math::notEqual(*metalness, 1.0f))) ||
            (roughness && (keepDefaults || Math::notEqual(*roughness, 1.0f))) ||
            foundBaseColorTexture ||

@@ -781,6 +781,9 @@ const struct {
         MaterialData{{}, {}}, {}, {}},
     {"name", false, {}, "material-name.gltf", "A nicely useless material",
         MaterialData{{}, {}}, {}, {}},
+    {"empty with Type::PbrMetallicRoughness set", false, {}, "material-empty-metallicroughness.gltf", {},
+        MaterialData{MaterialType::PbrMetallicRoughness, {}}, {},
+        MaterialData{MaterialType::PbrMetallicRoughness, {}}},
     {"common", true, {}, "material-common.gltf", {},
         MaterialData{{}, {
             /* More than one texture tested in addMaterialMultiple() */

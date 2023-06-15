@@ -347,8 +347,14 @@ the plugin supports also 3D images and 2D array textures using a proposed
     @ref MaterialTextureSwizzle::R, if present.
 -   If @ref MaterialType::Flat is present, the
     [KHR_materials_unlit](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_materials_unlit/README.md)
-    extension is included in the output. Other @ref MaterialTypes are ignored,
-    the material is only filled based on the attributes present.
+    extension is included in the output. If
+    @ref MaterialType::PbrMetallicRoughness is present, the output material has
+    the `pbrMetallicRoughness` material property object written even if it
+    would be empty in order to make @ref GltfImporter import the material with
+    @ref MaterialType::PbrMetallicRoughness set again. Without the type
+    present, the `pbrMetallicRoughness` object is written only if non-empty.
+    Other @ref MaterialTypes are ignored, the material is only filled based on
+    the attributes present.
 -   If @ref MaterialLayer::ClearCoat is present, the
     [KHR_materials_clearcoat](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_materials_clearcoat/README.md)
     extension is included in the output.

@@ -124,6 +124,7 @@ corrade_add_test(GltfSceneConverterTest GltfSceneConverterTest.cpp
         material-defaults-omitted.gltf
         material-default-texture-swizzle.gltf
         material-empty.gltf
+        material-empty-metallicroughness.gltf
         material-metallicroughness.gltf
         material-multiple.gltf
         material-name.gltf
