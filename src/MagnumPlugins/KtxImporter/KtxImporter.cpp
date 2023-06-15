@@ -732,12 +732,18 @@ void KtxImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFlags
             for(UnsignedByte i = 0; i != f->numDimensions; ++i)
                 f->flip.set(i, flip[i]);
 
-            if(!(flags() & ImporterFlag::Quiet))
-                Warning{} << "Trade::KtxImporter::openData():" <<
-                    (assumeOrientation ?
-                        "invalid assumeOrientation option, falling back to" :
-                        "missing or invalid orientation, assuming")
-                    << ", "_s.join(Containers::arrayView(defaultDirections).prefix(f->numDimensions));
+            /** @todo once ImageFlag::YUp/YDown etc is a thing, label these as
+                "neither" instead of assuming an orientation */
+            if(!(flags() & ImporterFlag::Quiet)) {
+                Warning w;
+                w << "Trade::KtxImporter::openData():"
+                  << (assumeOrientation ?
+                    "invalid assumeOrientation option, falling back to" :
+                    "missing or invalid orientation, assuming")
+                  << ", "_s.join(Containers::arrayView(defaultDirections).prefix(f->numDimensions));
+                if(!assumeOrientation)
+                    w << Debug::nospace << ". Set the assumeOrientation option to suppress this warning.";
+            }
         }
     }
 

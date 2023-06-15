@@ -1611,7 +1611,7 @@ void KtxImporterTest::imageCubeMapIncomplete() {
         CORRADE_COMPARE(out.str(), "");
     else
         CORRADE_COMPARE(out.str(),
-            "Trade::KtxImporter::openData(): missing or invalid orientation, assuming right, down\n"
+            "Trade::KtxImporter::openData(): missing or invalid orientation, assuming right, down. Set the assumeOrientation option to suppress this warning.\n"
             "Trade::KtxImporter::openData(): image contains incomplete cube map faces, importing faces as array layers\n");
 
     CORRADE_COMPARE(importer->image3DCount(), 1);
@@ -2061,7 +2061,7 @@ void KtxImporterTest::keyValueDataEmpty() {
     if(data.quiet)
         CORRADE_COMPARE(out.str(), "");
     else
-        CORRADE_COMPARE(out.str(), "Trade::KtxImporter::openData(): missing or invalid orientation, assuming right, down\n");
+        CORRADE_COMPARE(out.str(), "Trade::KtxImporter::openData(): missing or invalid orientation, assuming right, down. Set the assumeOrientation option to suppress this warning.\n");
 }
 
 template<ImporterFlag flag> void KtxImporterTest::keyValueDataInvalid() {
@@ -2092,7 +2092,7 @@ template<ImporterFlag flag> void KtxImporterTest::keyValueDataInvalid() {
     else
         CORRADE_COMPARE(out.str(), Utility::formatString(
             "Trade::KtxImporter::openData(): {}\n"
-            "Trade::KtxImporter::openData(): missing or invalid orientation, assuming right, down\n",
+            "Trade::KtxImporter::openData(): missing or invalid orientation, assuming right, down. Set the assumeOrientation option to suppress this warning.\n",
         data.message));
 }
 
@@ -2122,7 +2122,7 @@ template<ImporterFlag flag> void KtxImporterTest::keyValueDataInvalidIgnored() {
     if(flag == ImporterFlag::Quiet)
         CORRADE_COMPARE(out.str(), "");
     else
-        CORRADE_COMPARE(out.str(), "Trade::KtxImporter::openData(): missing or invalid orientation, assuming right, down\n");
+        CORRADE_COMPARE(out.str(), "Trade::KtxImporter::openData(): missing or invalid orientation, assuming right, down. Set the assumeOrientation option to suppress this warning.\n");
 }
 
 template<ImporterFlag flag> void KtxImporterTest::orientationInvalid() {
@@ -2157,7 +2157,7 @@ template<ImporterFlag flag> void KtxImporterTest::orientationInvalid() {
     else if(data.assume)
         CORRADE_COMPARE(out.str(), Utility::formatString("Trade::KtxImporter::openData(): invalid assumeOrientation option, falling back to {}\n", orientationString));
     else
-        CORRADE_COMPARE(out.str(), Utility::formatString("Trade::KtxImporter::openData(): missing or invalid orientation, assuming {}\n", orientationString));
+        CORRADE_COMPARE(out.str(), Utility::formatString("Trade::KtxImporter::openData(): missing or invalid orientation, assuming {}. Set the assumeOrientation option to suppress this warning.\n", orientationString));
 }
 
 void KtxImporterTest::orientationFlip() {
