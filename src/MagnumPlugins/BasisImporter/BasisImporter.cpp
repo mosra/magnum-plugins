@@ -260,6 +260,11 @@ void BasisImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFla
         Utility::copy(data, state->in);
     }
 
+    /* In case of KTX2, if KTXorientation is missing in the file and this
+       option isn't set, a warning is printed below to hint at an exporter
+       bug (i.e., https://github.com/BinomialLLC/basis_universal/issues/258) */
+    const Containers::StringView assumeYUp = configuration().value<Containers::StringView>("assumeYUp");
+
     #if BASISD_SUPPORT_KTX2
     if(isKTX2) {
         state->ktx2Transcoder.emplace(&state->codebook);
@@ -317,12 +322,17 @@ void BasisImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFla
         state->compressionType = state->ktx2Transcoder->get_format();
 
         /* Get y-flip flag from KTXorientation key/value entry. If it's
-           missing, the default is Y-down. Y-up = flipped. */
-        /** @todo if it's missing, the orientation can actually be *anything*:
-            https://github.com/BinomialLLC/basis_universal/issues/258 -- once
-            ImageFlag::YUp/YDown is a thing, label these as "neither" instead
-            of assuming Y down */
+           missing, the default is Y-down. Y-up = flipped. In an ideal world,
+           we wouldn't need to warn if it's missing, but since Basis still
+           doesn't bother writing the correct metadata even after FOUR YEARS,
+           the warning is essential to help debugging cases where the input
+           data were actually Y-flipped but it's impossible to tell from the
+           file: https://github.com/BinomialLLC/basis_universal/issues/258 */
+        /** @todo once ImageFlag::YUp/YDown is a thing, label these as
+            "neither" instead of assuming Y down */
         const basisu::uint8_vec* orientation = state->ktx2Transcoder->find_key("KTXorientation");
+        if(!orientation && !assumeYUp && !(flags() & ImporterFlag::Quiet))
+            Warning{} << "Trade::BasisImporter::openData(): missing orientation metadata, assuming Y down. Set the assumeYUp option to suppress this warning.";
         state->isYFlipped = orientation && orientation->size() >= 2 && (*orientation)[1] == 'u';
 
         state->isSrgb = state->ktx2Transcoder->get_dfd_transfer_func() == basist::KTX2_KHR_DF_TRANSFER_SRGB;
@@ -463,7 +473,6 @@ void BasisImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFla
     }
 
     /* Override the Y-flipped status if set in configuration */
-    const Containers::StringView assumeYUp = configuration().value<Containers::StringView>("assumeYUp");
     if(assumeYUp)
         state->isYFlipped = configuration().value<bool>("assumeYUp");
 

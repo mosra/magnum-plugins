@@ -140,15 +140,16 @@ See @ref building-plugins, @ref cmake-plugins, @ref plugins and
     the data on import. In case of the `basisu` tool you can pass `-y_flip` to
     encode the image with Y up but note the orientation
     [isn't correctly written to the file with a KTX2 output](https://github.com/BinomialLLC/basis_universal/issues/258).
-    The @ref BasisImageConverter encodes Y up files by default and does it
-    correctly for both Basis and KTX2 files.
+    To hint about possible orientation issues, the plugin prints a message to @relativeref{Magnum,Warning} if the orientation metadata are not present in
+    a KTX2 file. The @ref BasisImageConverter encodes Y up files by default and
+    writes the metadata correctly for both Basis and KTX2 files.
 @par
     Y-flipping block-compressed data is non-trivial and so far is implemented
     only for BC1, BC2, BC3, BC4 and BC5 formats with APIs from
     @ref Magnum/Math/ColorBatch.h. Other compressed formats will print a
-    message to @relativeref{Magnum,Warning} and the data will not be flipped. A
-    warning also gets printed in case the flip is performed on an image whose
-    height isn't whole blocks, as that causes the data to be shifted.
+    warning and the data will not be flipped. A warning also gets printed in
+    case the flip is performed on an image whose height isn't whole blocks, as
+    that causes the data to be shifted.
 @par
     You can also set the @cb{.ini} assumeYUp @ce
     @ref Trade-BasisImporter-configuration "configuration option" to ignore

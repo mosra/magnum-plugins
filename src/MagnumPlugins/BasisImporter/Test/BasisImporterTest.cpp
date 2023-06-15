@@ -188,19 +188,19 @@ const struct {
 } TextureData[]{
     {"2D", "rgb", TextureType::Texture2D, {}, {
         "",
-        ""
+        "", /* rgb.ktx2 has the orientation metadata patched in */
     }},
     {"2D array", "rgba-array", TextureType::Texture2DArray, {}, {
         "",
-        ""
+        "Trade::BasisImporter::openData(): missing orientation metadata, assuming Y down. Set the assumeYUp option to suppress this warning.\n"
     }},
     {"Cube map", "rgba-cubemap", TextureType::CubeMap, {}, {
         "",
-        ""
+        "Trade::BasisImporter::openData(): missing orientation metadata, assuming Y down. Set the assumeYUp option to suppress this warning.\n"
     }},
     {"Cube map array", "rgba-cubemap-array", TextureType::CubeMapArray, {}, {
         "",
-        ""
+        "Trade::BasisImporter::openData(): missing orientation metadata, assuming Y down. Set the assumeYUp option to suppress this warning.\n"
     }},
     /* The Basis metadata say it's a 3D texture, but it's actually a 2D array
        because the mip levels don't shrink along Z. The texture type is thus
@@ -209,16 +209,16 @@ const struct {
        warn about. */
     {"3D", "rgba-3d", TextureType::Texture3D, TextureType::Texture2DArray, {
         "Trade::BasisImporter::openData(): importing 3D texture as a 2D array texture\n",
-        ""
+        "Trade::BasisImporter::openData(): missing orientation metadata, assuming Y down. Set the assumeYUp option to suppress this warning.\n"
     }},
     /* Same as above */
     {"3D mipmaps", "rgba-3d-mips", TextureType::Texture3D, TextureType::Texture2DArray, {
         "Trade::BasisImporter::openData(): importing 3D texture as a 2D array texture\n",
-        ""
+        "Trade::BasisImporter::openData(): missing orientation metadata, assuming Y down. Set the assumeYUp option to suppress this warning.\n"
     }},
     {"Video", "rgba-video", TextureType::Texture2D, {}, {
         "",
-        ""
+        "Trade::BasisImporter::openData(): missing orientation metadata, assuming Y down. Set the assumeYUp option to suppress this warning.\n"
     }}
 };
 #endif
@@ -293,11 +293,16 @@ const struct {
 } FlipUncompressedData[] {
     {"Y down",
         "rgb-noflip.ktx2", {}, {},
-        PixelFormat::RGBA8Srgb, true, false, nullptr},
+        PixelFormat::RGBA8Srgb, true, false,
+        "Trade::BasisImporter::openData(): missing orientation metadata, assuming Y down. Set the assumeYUp option to suppress this warning.\n"},
     {"Y down, verbose",
         "rgb-noflip.ktx2", ImporterFlag::Verbose, {},
         PixelFormat::RGBA8Srgb, true, false,
+        "Trade::BasisImporter::openData(): missing orientation metadata, assuming Y down. Set the assumeYUp option to suppress this warning.\n"
         "Trade::BasisImporter::openData(): image will be flipped along Y\n"},
+    {"Y down, quiet",
+        "rgb-noflip.ktx2", ImporterFlag::Quiet, {},
+        PixelFormat::RGBA8Srgb, true, false, nullptr},
     {"Y down, assume Y up, verbose",
         "rgb-noflip.ktx2", {}, true,
         PixelFormat::RGBA8Srgb, false, true, nullptr},
@@ -323,10 +328,12 @@ const struct {
     {"ETC1 RGB, flip not implemented",
         "rgb-noflip.ktx2", {}, {},
         "Etc1RGB", CompressedPixelFormat::Etc2RGB8Srgb, false,
+        "Trade::BasisImporter::openData(): missing orientation metadata, assuming Y down. Set the assumeYUp option to suppress this warning.\n"
         "Trade::BasisImporter::image2D(): Y flip is not yet implemented for CompressedPixelFormat::Etc2RGB8Srgb, imported data will have wrong orientation. Enable assumeYUp to suppress this warning.\n"},
     {"ETC1 RGB, flip not implemented, verbose",
         "rgb-noflip.ktx2", ImporterFlag::Verbose, {},
         "Etc1RGB", CompressedPixelFormat::Etc2RGB8Srgb, false,
+        "Trade::BasisImporter::openData(): missing orientation metadata, assuming Y down. Set the assumeYUp option to suppress this warning.\n"
         /* The Y flip note is printed even if it's impossible to do after,
            since the target format can be different for each image2D() call */
         "Trade::BasisImporter::openData(): image will be flipped along Y\n"
@@ -346,30 +353,36 @@ const struct {
     {"ETC2 RGBA, flip not implemented",
         "rgb-noflip.ktx2", {}, {},
         "Etc2RGBA", CompressedPixelFormat::Etc2RGBA8Srgb, false,
+        "Trade::BasisImporter::openData(): missing orientation metadata, assuming Y down. Set the assumeYUp option to suppress this warning.\n"
         "Trade::BasisImporter::image2D(): Y flip is not yet implemented for CompressedPixelFormat::Etc2RGBA8Srgb, imported data will have wrong orientation. Enable assumeYUp to suppress this warning.\n"},
     {"EAC R, flip not implemented",
         "rgb-noflip.ktx2", {}, {},
         "EacR", CompressedPixelFormat::EacR11Unorm, false,
+        "Trade::BasisImporter::openData(): missing orientation metadata, assuming Y down. Set the assumeYUp option to suppress this warning.\n"
         "Trade::BasisImporter::image2D(): Y flip is not yet implemented for CompressedPixelFormat::EacR11Unorm, imported data will have wrong orientation. Enable assumeYUp to suppress this warning.\n"},
     {"EAC RG, flip not implemented",
         "rgb-noflip.ktx2", {}, {},
         "EacRG", CompressedPixelFormat::EacRG11Unorm, false,
+        "Trade::BasisImporter::openData(): missing orientation metadata, assuming Y down. Set the assumeYUp option to suppress this warning.\n"
         "Trade::BasisImporter::image2D(): Y flip is not yet implemented for CompressedPixelFormat::EacRG11Unorm, imported data will have wrong orientation. Enable assumeYUp to suppress this warning.\n"},
     {"BC1",
         "rgb-noflip-pow2.ktx2", {}, {},
         "Bc1RGB", CompressedPixelFormat::Bc1RGBSrgb, true,
-        nullptr},
+        "Trade::BasisImporter::openData(): missing orientation metadata, assuming Y down. Set the assumeYUp option to suppress this warning.\n"},
     {"BC1, verbose",
         "rgb-noflip-pow2.ktx2", ImporterFlag::Verbose, {},
         "Bc1RGB", CompressedPixelFormat::Bc1RGBSrgb, true,
+        "Trade::BasisImporter::openData(): missing orientation metadata, assuming Y down. Set the assumeYUp option to suppress this warning.\n"
         "Trade::BasisImporter::openData(): image will be flipped along Y\n"},
     {"BC1, incomplete blocks",
         "rgb-noflip.ktx2", {}, {},
         "Bc1RGB", CompressedPixelFormat::Bc1RGBSrgb, true,
+        "Trade::BasisImporter::openData(): missing orientation metadata, assuming Y down. Set the assumeYUp option to suppress this warning.\n"
         "Trade::BasisImporter::image2D(): Y-flipping a compressed image that's not whole blocks, the result will be shifted by 1 pixels\n"},
     {"BC1, incomplete blocks, verbose",
         "rgb-noflip.ktx2", ImporterFlag::Verbose, {},
         "Bc1RGB", CompressedPixelFormat::Bc1RGBSrgb, true,
+        "Trade::BasisImporter::openData(): missing orientation metadata, assuming Y down. Set the assumeYUp option to suppress this warning.\n"
         "Trade::BasisImporter::openData(): image will be flipped along Y\n"
         "Trade::BasisImporter::image2D(): Y-flipping a compressed image that's not whole blocks, the result will be shifted by 1 pixels\n"},
     {"BC1, incomplete blocks, quiet",
@@ -392,26 +405,29 @@ const struct {
     {"BC3",
         "rgb-noflip-pow2.ktx2", {}, {},
         "Bc3RGBA", CompressedPixelFormat::Bc3RGBASrgb, true,
-        nullptr},
+        "Trade::BasisImporter::openData(): missing orientation metadata, assuming Y down. Set the assumeYUp option to suppress this warning.\n"},
     {"BC4",
         "rgb-noflip-pow2.ktx2", {}, {},
         "Bc4R", CompressedPixelFormat::Bc4RUnorm, true,
-        nullptr},
+        "Trade::BasisImporter::openData(): missing orientation metadata, assuming Y down. Set the assumeYUp option to suppress this warning.\n"},
     {"BC5",
         "rgb-noflip-pow2.ktx2", {}, {},
         "Bc5RG", CompressedPixelFormat::Bc5RGUnorm, true,
-        nullptr},
+        "Trade::BasisImporter::openData(): missing orientation metadata, assuming Y down. Set the assumeYUp option to suppress this warning.\n"},
     {"BC7, flip not implemented",
         "rgb-noflip.ktx2", {}, {},
         "Bc7RGBA", CompressedPixelFormat::Bc7RGBASrgb, false,
+        "Trade::BasisImporter::openData(): missing orientation metadata, assuming Y down. Set the assumeYUp option to suppress this warning.\n"
         "Trade::BasisImporter::image2D(): Y flip is not yet implemented for CompressedPixelFormat::Bc7RGBASrgb, imported data will have wrong orientation. Enable assumeYUp to suppress this warning.\n"},
     {"PVRTC RGB, flip not implemented",
         "rgb-noflip-pow2.ktx2", {}, {},
         "PvrtcRGB4bpp", CompressedPixelFormat::PvrtcRGB4bppSrgb, false,
+        "Trade::BasisImporter::openData(): missing orientation metadata, assuming Y down. Set the assumeYUp option to suppress this warning.\n"
         "Trade::BasisImporter::image2D(): Y flip is not yet implemented for CompressedPixelFormat::PvrtcRGB4bppSrgb, imported data will have wrong orientation. Enable assumeYUp to suppress this warning.\n"},
     {"PVRTC RGBA, flip not implemented",
         "rgb-noflip-pow2.ktx2", {}, {},
         "PvrtcRGBA4bpp", CompressedPixelFormat::PvrtcRGBA4bppSrgb, false,
+        "Trade::BasisImporter::openData(): missing orientation metadata, assuming Y down. Set the assumeYUp option to suppress this warning.\n"
         "Trade::BasisImporter::image2D(): Y flip is not yet implemented for CompressedPixelFormat::PvrtcRGBA4bppSrgb, imported data will have wrong orientation. Enable assumeYUp to suppress this warning.\n"},
     {"ASTC 4x4, flip not implemented",
         "rgb-noflip.basis", {}, {},
@@ -1599,7 +1615,9 @@ void BasisImporterTest::flipUncompressed3D() {
     }
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Srgb);
-    CORRADE_COMPARE(out.str(), "Trade::BasisImporter::openData(): image will be flipped along Y\n");
+    CORRADE_COMPARE(out.str(),
+        "Trade::BasisImporter::openData(): missing orientation metadata, assuming Y down. Set the assumeYUp option to suppress this warning.\n"
+        "Trade::BasisImporter::openData(): image will be flipped along Y\n");
 
     /* The images should then be Y-flipped compared to each other, with Z slice
        order kept. Comparing slice by slice as CompareImage has no 3D support. */
@@ -1755,6 +1773,7 @@ void BasisImporterTest::flip3D() {
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(image->compressedFormat(), CompressedPixelFormat::Bc1RGBSrgb);
     CORRADE_COMPARE(out.str(),
+        "Trade::BasisImporter::openData(): missing orientation metadata, assuming Y down. Set the assumeYUp option to suppress this warning.\n"
         "Trade::BasisImporter::openData(): image will be flipped along Y\n"
         "Trade::BasisImporter::image3D(): Y-flipping a compressed image that's not whole blocks, the result will be shifted by 1 pixels\n");
 

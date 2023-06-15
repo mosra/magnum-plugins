@@ -428,20 +428,20 @@ const struct {
 } ForwardBasisFormatData[]{
     {"set in KtxImporter", "Etc2RGBA", nullptr, {},
         CompressedPixelFormat::Etc2RGBA8Srgb,
-        ""},
+        "Trade::BasisImporter::openData(): missing orientation metadata, assuming Y down. Set the assumeYUp option to suppress this warning.\n"},
     {"set in BasisImporter", nullptr, "Bc3RGBA", {},
         CompressedPixelFormat::Bc3RGBASrgb,
-        ""},
+        "Trade::BasisImporter::openData(): missing orientation metadata, assuming Y down. Set the assumeYUp option to suppress this warning.\n"},
     {"set in both to different", "Etc2RGBA", "Bc3RGBA", {},
         CompressedPixelFormat::Etc2RGBA8Srgb,
         "Trade::KtxImporter::openData(): overwriting BasisImporter format from Bc3RGBA to Etc2RGBA\n"
-        ""},
+        "Trade::BasisImporter::openData(): missing orientation metadata, assuming Y down. Set the assumeYUp option to suppress this warning.\n"},
     {"set in both to different, quiet", "Etc2RGBA", "Bc3RGBA", ImporterFlag::Quiet,
         CompressedPixelFormat::Etc2RGBA8Srgb,
         ""},
     {"set in both to the same", "Bc3RGBA", "Bc3RGBA", {},
         CompressedPixelFormat::Bc3RGBASrgb,
-        ""}
+        "Trade::BasisImporter::openData(): missing orientation metadata, assuming Y down. Set the assumeYUp option to suppress this warning.\n"}
 };
 
 using namespace Containers::Literals;
