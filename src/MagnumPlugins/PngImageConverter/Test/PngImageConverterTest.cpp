@@ -173,6 +173,9 @@ void PngImageConverterTest::rgb() {
 
     Containers::Optional<Containers::Array<char>> data = converter->convertToData(OriginalRgb);
     CORRADE_VERIFY(data);
+    CORRADE_COMPARE_AS(*data,
+        Utility::Path::join(PNGIMAGECONVERTER_TEST_DIR, "rgb.png"),
+        TestSuite::Compare::StringToFile);
 
     if(_importerManager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("PngImporter plugin not found, cannot test");
@@ -246,6 +249,9 @@ const ImageView2D ConvertedGrayscale{PixelFormat::R8Unorm, {2, 3}, ConvertedGray
 void PngImageConverterTest::grayscale() {
     Containers::Optional<Containers::Array<char>> data = _converterManager.instantiate("PngImageConverter")->convertToData(OriginalGrayscale);
     CORRADE_VERIFY(data);
+    CORRADE_COMPARE_AS(*data,
+        Utility::Path::join(PNGIMAGECONVERTER_TEST_DIR, "gray.png"),
+        TestSuite::Compare::StringToFile);
 
     if(_importerManager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("PngImporter plugin not found, cannot test");
