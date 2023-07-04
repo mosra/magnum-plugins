@@ -27,9 +27,11 @@
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
+#include <Corrade/TestSuite/Compare/StringToFile.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/DebugStl.h> /** @todo remove once Debug is stream-free */
 #include <Corrade/Utility/FormatStl.h>
+#include <Corrade/Utility/Path.h>
 #include <Magnum/ImageView.h>
 #include <Magnum/PixelFormat.h>
 #include <Magnum/DebugTools/CompareImage.h>
@@ -224,6 +226,23 @@ void JpegImageConverterTest::rgb80Percent() {
 
     Containers::Optional<Containers::Array<char>> data = converter->convertToData(OriginalRgb);
     CORRADE_VERIFY(data);
+    /* Vanilla libjpeg 9e (i.e., not libjpeg-turbo which defines
+       JCS_EXTENSIONS, and which has JPEG_LIB_VERSION set to 80 always) and
+       older produce different results in this case. The minor version is 0
+       for nothing, 1 for a, 2 for b, etc.  */
+    #if defined(JCS_EXTENSIONS) || JPEG_LIB_VERSION_MAJOR*100 + JPEG_LIB_VERSION_MINOR >= 906
+    CORRADE_COMPARE_AS(Containers::StringView{*data},
+        Utility::Path::join(JPEGIMAGECONVERTER_TEST_DIR, "rgb-80.jpg"),
+        TestSuite::Compare::StringToFile);
+    #elif JPEG_LIB_VERSION_MAJOR*100 + JPEG_LIB_VERSION_MINOR >= 905
+    CORRADE_COMPARE_AS(Containers::StringView{*data},
+        Utility::Path::join(JPEGIMAGECONVERTER_TEST_DIR, "rgb-80-jpeg9e.jpg"),
+        TestSuite::Compare::StringToFile);
+    #else
+    CORRADE_COMPARE_AS(Containers::StringView{*data},
+        Utility::Path::join(JPEGIMAGECONVERTER_TEST_DIR, "rgb-80-jpeg9d.jpg"),
+        TestSuite::Compare::StringToFile);
+    #endif
 
     if(_importerManager.loadState("JpegImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("JpegImporter plugin not found, cannot test");
@@ -232,11 +251,13 @@ void JpegImageConverterTest::rgb80Percent() {
     CORRADE_VERIFY(importer->openData(*data));
     Containers::Optional<Trade::ImageData2D> converted = importer->image2D(0);
     CORRADE_VERIFY(converted);
-    #ifndef CORRADE_TARGET_APPLE
+    #if defined(JCS_EXTENSIONS) || JPEG_LIB_VERSION_MAJOR*100 + JPEG_LIB_VERSION_MINOR >= 906
     CORRADE_COMPARE_AS(*converted, ConvertedRgb,
         DebugTools::CompareImage);
+    #elif JPEG_LIB_VERSION_MAJOR*100 + JPEG_LIB_VERSION_MINOR >= 905
+    CORRADE_COMPARE_WITH(*converted, ConvertedRgb,
+        (DebugTools::CompareImage{3.67f, 2.21f}));
     #else
-    /* libJPEG on macOS is special */
     CORRADE_COMPARE_WITH(*converted, ConvertedRgb,
         (DebugTools::CompareImage{3.67f, 2.0f}));
     #endif
@@ -248,6 +269,19 @@ void JpegImageConverterTest::rgb100Percent() {
 
     Containers::Optional<Containers::Array<char>> data = converter->convertToData(OriginalRgb);
     CORRADE_VERIFY(data);
+    /* Vanilla libjpeg 9e (i.e., not libjpeg-turbo which defines
+       JCS_EXTENSIONS, and which has JPEG_LIB_VERSION set to 80 always) and
+       older produce a different result in this case. The minor version is 0
+       for nothing, 1 for a, 2 for b, etc.  */
+    #if defined(JCS_EXTENSIONS) || JPEG_LIB_VERSION_MAJOR*100 + JPEG_LIB_VERSION_MINOR >= 906
+    CORRADE_COMPARE_AS(Containers::StringView{*data},
+        Utility::Path::join(JPEGIMAGECONVERTER_TEST_DIR, "rgb-100.jpg"),
+        TestSuite::Compare::StringToFile);
+    #else
+    CORRADE_COMPARE_AS(Containers::StringView{*data},
+        Utility::Path::join(JPEGIMAGECONVERTER_TEST_DIR, "rgb-100-jpeg9e.jpg"),
+        TestSuite::Compare::StringToFile);
+    #endif
 
     if(_importerManager.loadState("JpegImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("JpegImporter plugin not found, cannot test");
@@ -294,26 +328,12 @@ void JpegImageConverterTest::rgba80Percent() {
         CORRADE_COMPARE(out.str(), "");
     else
         CORRADE_COMPARE(out.str(), "Trade::JpegImageConverter::convertToData(): ignoring alpha channel\n");
-
-    if(_importerManager.loadState("JpegImporter") == PluginManager::LoadState::NotFound)
-        CORRADE_SKIP("JpegImporter plugin not found, cannot test");
-
-    Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("JpegImporter");
-    CORRADE_VERIFY(importer->openData(*imageData));
-    Containers::Optional<Trade::ImageData2D> converted = importer->image2D(0);
-    CORRADE_VERIFY(converted);
-    CORRADE_COMPARE(converted->size(), Vector2i(6, 4));
-    CORRADE_COMPARE(converted->format(), PixelFormat::RGB8Unorm);
-
-    CORRADE_COMPARE_AS(*converted, ConvertedRgb,
-        DebugTools::CompareImage);
-
-    /* Finally, the output should be exactly the same as when exporting RGB,
-       bit to bit, to ensure we don't produce anything that would cause
-       problems for traditional non-turbo libjpeg */
-    Containers::Optional<Containers::Array<char>> dataRgb = converter->convertToData(OriginalRgb);
-    CORRADE_VERIFY(dataRgb);
-    CORRADE_COMPARE_AS(*imageData, *dataRgb, TestSuite::Compare::Container);
+    /* The output should be exactly the same as when exporting RGB, bit to bit,
+       to ensure we don't produce anything that would cause problems for
+       traditional non-turbo libjpeg */
+    CORRADE_COMPARE_AS(Containers::StringView{*imageData},
+        Utility::Path::join(JPEGIMAGECONVERTER_TEST_DIR, "rgb-80.jpg"),
+        TestSuite::Compare::StringToFile);
 }
 
 constexpr const char OriginalGrayscaleData[] = {
@@ -346,6 +366,9 @@ void JpegImageConverterTest::grayscale80Percent() {
 
     Containers::Optional<Containers::Array<char>> data = converter->convertToData(OriginalGrayscale);
     CORRADE_VERIFY(data);
+    CORRADE_COMPARE_AS(Containers::StringView{*data},
+        Utility::Path::join(JPEGIMAGECONVERTER_TEST_DIR, "grayscale-80.jpg"),
+        TestSuite::Compare::StringToFile);
 
     if(_importerManager.loadState("JpegImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("JpegImporter plugin not found, cannot test");
@@ -364,6 +387,9 @@ void JpegImageConverterTest::grayscale100Percent() {
 
     Containers::Optional<Containers::Array<char>> data = converter->convertToData(OriginalGrayscale);
     CORRADE_VERIFY(data);
+    CORRADE_COMPARE_AS(Containers::StringView{*data},
+        Utility::Path::join(JPEGIMAGECONVERTER_TEST_DIR, "grayscale-100.jpg"),
+        TestSuite::Compare::StringToFile);
 
     if(_importerManager.loadState("JpegImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("JpegImporter plugin not found, cannot test");

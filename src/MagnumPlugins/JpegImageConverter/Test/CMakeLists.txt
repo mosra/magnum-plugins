@@ -43,7 +43,17 @@ file(GENERATE OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/configure.h
     INPUT ${CMAKE_CURRENT_BINARY_DIR}/configure.h.in)
 
 corrade_add_test(JpegImageConverterTest JpegImageConverterTest.cpp
-    LIBRARIES Magnum::Trade Magnum::DebugTools)
+    LIBRARIES
+        Magnum::Trade
+        Magnum::DebugTools
+    FILES
+        grayscale-80.jpg
+        grayscale-100.jpg
+        rgb-80.jpg
+        rgb-80-jpeg9d.jpg
+        rgb-80-jpeg9e.jpg
+        rgb-100.jpg
+        rgb-100-jpeg9e.jpg)
 target_include_directories(JpegImageConverterTest PRIVATE
     ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>
     # JPEG_INCLUDE_DIRS is only since 3.12 (and there we should use the
