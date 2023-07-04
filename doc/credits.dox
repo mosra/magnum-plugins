@@ -40,7 +40,7 @@ namespace Magnum {
     @ref Trade::IcoImporter "IcoImporter"
 -   **Andrew ([\@sheerluck](https://github.com/sheerluck)) --- Gentoo package
     fixes
--   **Bill Robinson** ([\@wivlaro](https://github.com/wivlaroú) --- numerous
+-   **Bill Robinson** ([\@wivlaro](https://github.com/wivlaro)) --- numerous
     bug reports and fixes
 -   **[\@DJQuardaboff](https://github.com/DJQuardaboff)** --- Investigation
     into undoing horrible crimes done by windows.h
