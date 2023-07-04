@@ -25,11 +25,12 @@
 
 #include "StbImageConverter.h"
 
-#include <algorithm> /* std::copy() */ /** @todo remove */
 #include <Corrade/Containers/GrowableArray.h>
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/Pair.h>
+#include <Corrade/Containers/StridedArrayView.h>
 #include <Corrade/Containers/String.h>
+#include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/Path.h>
 #include <Corrade/Utility/String.h>
@@ -144,21 +145,16 @@ Containers::Optional<Containers::Array<char>> StbImageConverter::doConvertToData
         }
     } else CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
 
-    /* Get data properties and calculate the initial slice based on subimage
-       offset */
-    const std::pair<Math::Vector2<std::size_t>, Math::Vector2<std::size_t>> dataProperties = image.dataProperties();
-    auto inputData = Containers::arrayCast<const unsigned char>(image.data())
-        .exceptPrefix(dataProperties.first.sum());
-
-    /* Reverse rows in image data. There is stbi_flip_vertically_on_write() but
-       can't use that because the input image might be sparse (having padded
-       rows, for example). The copy makes the data tightly packed. */
-    Containers::Array<unsigned char> reversedData{NoInit, image.pixelSize()*image.size().product()};
-    std::size_t outputStride = image.pixelSize()*image.size().x();
-    for(Int y = 0; y != image.size().y(); ++y) {
-        auto row = inputData.sliceSize(y*dataProperties.second.x(), outputStride);
-        std::copy(row.begin(), row.end(), reversedData.exceptPrefix((image.size().y() - y - 1)*outputStride).begin());
-    }
+    /* Copy image pixels to a tightly-packed array with rows reversed.
+       Unfortunately there's no way to specify arbitrary strides, for Y
+       flipping there's stbi_flip_vertically_on_write() but since we have to
+       do a copy anyway we can flip during that as well. */
+    Containers::Array<char> flippedPackedData{NoInit, image.pixelSize()*image.size().product()};
+    Utility::copy(image.pixels().flipped<0>(), Containers::StridedArrayView3D<char>{flippedPackedData, {
+        std::size_t(image.size().y()),
+        std::size_t(image.size().x()),
+        image.pixelSize(),
+    }});
 
     Containers::Array<char> data;
     const auto writeFunc = [](void* context, void* data, int size) {
@@ -171,15 +167,15 @@ Containers::Optional<Containers::Array<char>> StbImageConverter::doConvertToData
        that point anyway) all of them are checked by AbstractImageConverter
        already so it's fine to just assert here. */
     if(_format == Format::Bmp) {
-        CORRADE_INTERNAL_ASSERT_OUTPUT(stbi_write_bmp_to_func(writeFunc, &data, image.size().x(), image.size().y(), components, reversedData));
+        CORRADE_INTERNAL_ASSERT_OUTPUT(stbi_write_bmp_to_func(writeFunc, &data, image.size().x(), image.size().y(), components, flippedPackedData));
     } else if(_format == Format::Jpeg) {
-        CORRADE_INTERNAL_ASSERT_OUTPUT(stbi_write_jpg_to_func(writeFunc, &data, image.size().x(), image.size().y(), components, reversedData, Int(configuration().value<Float>("jpegQuality")*100.0f)));
+        CORRADE_INTERNAL_ASSERT_OUTPUT(stbi_write_jpg_to_func(writeFunc, &data, image.size().x(), image.size().y(), components, flippedPackedData, Int(configuration().value<Float>("jpegQuality")*100.0f)));
     } else if(_format == Format::Hdr) {
-        CORRADE_INTERNAL_ASSERT_OUTPUT(stbi_write_hdr_to_func(writeFunc, &data, image.size().x(), image.size().y(), components, reinterpret_cast<float*>(reversedData.begin())));
+        CORRADE_INTERNAL_ASSERT_OUTPUT(stbi_write_hdr_to_func(writeFunc, &data, image.size().x(), image.size().y(), components, reinterpret_cast<float*>(flippedPackedData.begin())));
     } else if(_format == Format::Png) {
-        CORRADE_INTERNAL_ASSERT_OUTPUT(stbi_write_png_to_func(writeFunc, &data, image.size().x(), image.size().y(), components, reversedData, 0));
+        CORRADE_INTERNAL_ASSERT_OUTPUT(stbi_write_png_to_func(writeFunc, &data, image.size().x(), image.size().y(), components, flippedPackedData, 0));
     } else if(_format == Format::Tga) {
-        CORRADE_INTERNAL_ASSERT_OUTPUT(stbi_write_tga_to_func(writeFunc, &data, image.size().x(), image.size().y(), components, reversedData));
+        CORRADE_INTERNAL_ASSERT_OUTPUT(stbi_write_tga_to_func(writeFunc, &data, image.size().x(), image.size().y(), components, flippedPackedData));
     } else CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
 
     /* Convert the growable array back to a non-growable with the default

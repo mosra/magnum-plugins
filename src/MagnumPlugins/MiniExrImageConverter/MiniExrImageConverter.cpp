@@ -25,7 +25,7 @@
 
 #include "MiniExrImageConverter.h"
 
-#include <algorithm> /* std::copy_n() */ /** @todo remove */
+#include <cstdlib> /* std::free() */
 #include <Corrade/Containers/Array.h>
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/String.h>
@@ -76,21 +76,19 @@ Containers::Optional<Containers::Array<char>> MiniExrImageConverter::doConvertTo
             return {};
     }
 
-    /* Get data properties and calculate the initial slice based on subimage
-       offset */
-    const std::pair<Math::Vector2<std::size_t>, Math::Vector2<std::size_t>> dataProperties = image.dataProperties();
-    Containers::ArrayView<const char> inputData = image.data().exceptPrefix(dataProperties.first.sum());
-
-    /* Do Y-flip and tight packing of image data */
-    const std::size_t rowSize = image.size().x()*image.pixelSize();
-    const std::size_t rowStride = dataProperties.second.x();
-    const std::size_t packedDataSize = rowSize*image.size().y();
-    Containers::Array<char> reversedPackedData{NoInit, packedDataSize};
-    for(std::int_fast32_t y = 0; y != image.size().y(); ++y)
-        std::copy_n(inputData.exceptPrefix((image.size().y() - y - 1)*rowStride).data(), rowSize, reversedPackedData + y*rowSize);
+    /* Copy image pixels to a tightly-packed array with rows flipped.
+       Unfortunately there's no way to specify arbitrary strides, for Y
+       flipping there's stbi_flip_vertically_on_write() but since we have to
+       do a copy anyway we can flip during that as well. */
+    Containers::Array<char> flippedPackedData{NoInit, image.pixelSize()*image.size().product()};
+    Utility::copy(image.pixels().flipped<0>(), Containers::StridedArrayView3D<char>{flippedPackedData, {
+        std::size_t(image.size().y()),
+        std::size_t(image.size().x()),
+        image.pixelSize(),
+    }});
 
     std::size_t size;
-    unsigned char* const data = miniexr_write(image.size().x(), image.size().y(), components, reversedPackedData, &size);
+    unsigned char* const data = miniexr_write(image.size().x(), image.size().y(), components, flippedPackedData, &size);
     CORRADE_INTERNAL_ASSERT(data);
 
     /* miniexr uses malloc to allocate and since we can't use custom deleters,

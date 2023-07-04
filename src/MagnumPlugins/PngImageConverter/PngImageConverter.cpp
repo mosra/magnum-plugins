@@ -38,6 +38,7 @@
 #include <csetjmp>
 #include <Corrade/Containers/GrowableArray.h>
 #include <Corrade/Containers/Optional.h>
+#include <Corrade/Containers/StridedArrayView.h>
 #include <Corrade/Containers/String.h>
 #include <Magnum/ImageView.h>
 #include <Magnum/PixelFormat.h>
@@ -157,15 +158,13 @@ Containers::Optional<Containers::Array<char>> PngImageConverter::doConvertToData
         #endif
     } else CORRADE_INTERNAL_ASSERT(bitDepth == 8);
 
-    /* Get data properties and calculate the initial slice based on subimage
-       offset */
-    const std::pair<Math::Vector2<std::size_t>, Math::Vector2<std::size_t>> dataProperties = image.dataProperties();
-    auto data = Containers::arrayCast<const unsigned char>(image.data())
-        .exceptPrefix(dataProperties.first.sum());
-
-    /* Write rows in reverse order, properly take stride into account */
+    /* Write rows in reverse order. While the rows may have some padding after,
+       the actual pixels in the row should be contiguous so it should be safe
+       to pass a pointer to the first byte of each. */
+    const Containers::StridedArrayView3D<const char> pixelsFlipped = image.pixels().flipped<0>();
+    CORRADE_INTERNAL_ASSERT(pixelsFlipped.isContiguous<1>());
     for(Int y = 0; y != image.size().y(); ++y)
-        png_write_row(file, const_cast<unsigned char*>(data.exceptPrefix((image.size().y() - y - 1)*dataProperties.second.x()).data()));
+        png_write_row(file, static_cast<unsigned char*>(const_cast<void*>(pixelsFlipped[y].data())));
 
     png_write_end(file, nullptr);
     png_destroy_write_struct(&file, &info);

@@ -28,6 +28,7 @@
 #include <csetjmp>
 #include <Corrade/Containers/GrowableArray.h>
 #include <Corrade/Containers/Optional.h>
+#include <Corrade/Containers/StridedArrayView.h>
 #include <Corrade/Containers/String.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Magnum/ImageView.h>
@@ -173,15 +174,15 @@ Containers::Optional<Containers::Array<char>> JpegImageConverter::doConvertToDat
     jpeg_set_quality(&info, Int(configuration().value<Float>("jpegQuality")*100.0f), boolean(true));
     jpeg_start_compress(&info, boolean(true));
 
-    /* Get data properties and calculate the initial slice based on subimage
-       offset */
-    const std::pair<Math::Vector2<std::size_t>, Math::Vector2<std::size_t>> dataProperties = image.dataProperties();
-    Containers::ArrayView<const char> inputData = image.data().exceptPrefix(dataProperties.first.sum());
-
+    /* Write rows in reverse order. While the rows may have some padding after,
+       the actual pixels in the row should be contiguous so it should be safe
+       to pass a pointer to the first byte of each. */
+    const Containers::StridedArrayView3D<const char> pixelsFlipped = image.pixels().flipped<0>();
+    CORRADE_INTERNAL_ASSERT(pixelsFlipped.isContiguous<1>());
     while(info.next_scanline < info.image_height) {
         /* libJPEG HAVE YOU EVER HEARD ABOUT CONST ARGUMENTS?! IT'S NOT 1978
            ANYMORE */
-        JSAMPROW row = reinterpret_cast<JSAMPROW>(const_cast<char*>(inputData.exceptPrefix((image.size().y() - info.next_scanline - 1)*dataProperties.second.x()).data()));
+        JSAMPROW row = static_cast<JSAMPROW>(const_cast<void*>(pixelsFlipped[info.next_scanline].data()));
         jpeg_write_scanlines(&info, &row, 1);
     }
 
