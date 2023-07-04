@@ -29,6 +29,7 @@
 #include <Corrade/Containers/Array.h>
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/String.h>
+#include <Corrade/Utility/Algorithms.h>
 #include <Magnum/ImageView.h>
 #include <Magnum/PixelFormat.h>
 
@@ -95,7 +96,7 @@ Containers::Optional<Containers::Array<char>> MiniExrImageConverter::doConvertTo
     /* miniexr uses malloc to allocate and since we can't use custom deleters,
        copy the result into a new-allocated array instead */
     Containers::Array<char> fileData{NoInit, size};
-    std::copy_n(data, size, fileData.begin());
+    Utility::copy(Containers::arrayView(reinterpret_cast<const char*>(data), size), fileData);
     std::free(data);
 
     /* GCC 4.8 needs extra help here */
