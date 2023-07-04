@@ -87,7 +87,14 @@ enum class GltfExtension {
     KhrTextureTransform = 1 << 5,
 };
 typedef Containers::EnumSet<GltfExtension> GltfExtensions;
+#ifdef CORRADE_TARGET_CLANG
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-function"
+#endif
 CORRADE_ENUMSET_OPERATORS(GltfExtensions)
+#ifdef CORRADE_TARGET_CLANG
+#pragma clang diagnostic pop
+#endif
 
 struct MeshProperties {
     Containers::Optional<UnsignedInt> gltfMode;
