@@ -27,6 +27,8 @@
 # property that would have to be set on each target separately.
 set(CMAKE_FOLDER "MagnumPlugins/PngImageConverter/Test")
 
+find_package(Magnum REQUIRED DebugTools)
+
 if(NOT MAGNUM_PNGIMAGECONVERTER_BUILD_STATIC)
     set(PNGIMAGECONVERTER_PLUGIN_FILENAME $<TARGET_FILE:PngImageConverter>)
     if(MAGNUM_WITH_PNGIMPORTER)
@@ -41,7 +43,9 @@ file(GENERATE OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/configure.h
     INPUT ${CMAKE_CURRENT_BINARY_DIR}/configure.h.in)
 
 corrade_add_test(PngImageConverterTest PngImageConverterTest.cpp
-    LIBRARIES Magnum::Trade
+    LIBRARIES
+        Magnum::Trade
+        Magnum::DebugTools
     FILES
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/PngImporter/Test/gray16.png
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/PngImporter/Test/rgb16.png)

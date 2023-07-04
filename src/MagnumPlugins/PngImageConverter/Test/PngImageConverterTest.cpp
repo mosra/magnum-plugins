@@ -35,6 +35,7 @@
 #include <Corrade/Utility/Path.h>
 #include <Magnum/ImageView.h>
 #include <Magnum/PixelFormat.h>
+#include <Magnum/DebugTools/CompareImage.h>
 #include <Magnum/Trade/AbstractImageConverter.h>
 #include <Magnum/Trade/AbstractImporter.h>
 #include <Magnum/Trade/ImageData.h>
@@ -163,6 +164,8 @@ constexpr const char ConvertedRgbData[] = {
     5, 6, 7, 6, 7, 8, 0, 0
 };
 
+const ImageView2D ConvertedRgb{PixelFormat::RGB8Unorm, {2, 3}, ConvertedRgbData};
+
 void PngImageConverterTest::rgb() {
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("PngImageConverter");
     CORRADE_COMPARE(converter->extension(), "png");
@@ -178,19 +181,8 @@ void PngImageConverterTest::rgb() {
     CORRADE_VERIFY(importer->openData(*data));
     Containers::Optional<Trade::ImageData2D> converted = importer->image2D(0);
     CORRADE_VERIFY(converted);
-
-    CORRADE_COMPARE(converted->size(), Vector2i(2, 3));
-    CORRADE_COMPARE(converted->format(), PixelFormat::RGB8Unorm);
-
-    /* The image has four-byte aligned rows, clear the padding to deterministic
-       values */
-    CORRADE_COMPARE(converted->mutableData().size(), 24);
-    converted->mutableData()[6] = converted->mutableData()[7] =
-        converted->mutableData()[14] = converted->mutableData()[15] =
-            converted->mutableData()[22] = converted->mutableData()[23] = 0;
-
-    CORRADE_COMPARE_AS(converted->data(), Containers::arrayView(ConvertedRgbData),
-        TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(*converted, ConvertedRgb,
+        DebugTools::CompareImage);
 }
 
 constexpr const UnsignedShort OriginalRgbData16[] = {
@@ -211,6 +203,8 @@ constexpr const UnsignedShort ConvertedRgbData16[] = {
     5000, 6000, 7000, 6000, 7000, 8000
 };
 
+const ImageView2D ConvertedRgb16{PixelFormat::RGB16Unorm, {2, 3}, ConvertedRgbData16};
+
 void PngImageConverterTest::rgb16() {
     Containers::Optional<Containers::Array<char>> data = _converterManager.instantiate("PngImageConverter")->convertToData(OriginalRgb16);
     CORRADE_VERIFY(data);
@@ -225,12 +219,8 @@ void PngImageConverterTest::rgb16() {
     CORRADE_VERIFY(importer->openData(*data));
     Containers::Optional<Trade::ImageData2D> converted = importer->image2D(0);
     CORRADE_VERIFY(converted);
-
-    CORRADE_COMPARE(converted->size(), Vector2i(2, 3));
-    CORRADE_COMPARE(converted->format(), PixelFormat::RGB16Unorm);
-    CORRADE_COMPARE_AS(Containers::arrayCast<const UnsignedShort>(converted->pixels().asContiguous()),
-        Containers::arrayView(ConvertedRgbData16),
-        TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(*converted, ConvertedRgb16,
+        DebugTools::CompareImage);
 }
 
 constexpr const char OriginalGrayscaleData[] = {
@@ -251,6 +241,8 @@ constexpr const char ConvertedGrayscaleData[] = {
     5, 6, 0, 0
 };
 
+const ImageView2D ConvertedGrayscale{PixelFormat::R8Unorm, {2, 3}, ConvertedGrayscaleData};
+
 void PngImageConverterTest::grayscale() {
     Containers::Optional<Containers::Array<char>> data = _converterManager.instantiate("PngImageConverter")->convertToData(OriginalGrayscale);
     CORRADE_VERIFY(data);
@@ -262,19 +254,8 @@ void PngImageConverterTest::grayscale() {
     CORRADE_VERIFY(importer->openData(*data));
     Containers::Optional<Trade::ImageData2D> converted = importer->image2D(0);
     CORRADE_VERIFY(converted);
-
-    CORRADE_COMPARE(converted->size(), Vector2i(2, 3));
-    CORRADE_COMPARE(converted->format(), PixelFormat::R8Unorm);
-
-    /* The image has four-byte aligned rows, clear the padding to deterministic
-       values */
-    CORRADE_COMPARE(converted->mutableData().size(), 12);
-    converted->mutableData()[2] = converted->mutableData()[3] =
-        converted->mutableData()[6] = converted->mutableData()[7] =
-            converted->mutableData()[10] = converted->mutableData()[11] = 0;
-
-    CORRADE_COMPARE_AS(converted->data(), Containers::arrayView(ConvertedGrayscaleData),
-        TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(*converted, ConvertedGrayscale,
+        DebugTools::CompareImage);
 }
 
 constexpr const UnsignedShort OriginalGrayscaleData16[] = {
@@ -295,6 +276,8 @@ constexpr const UnsignedShort ConvertedGrayscaleData16[] = {
     5000, 6000
 };
 
+const ImageView2D ConvertedGrayscale16{PixelFormat::R16Unorm, {2, 3}, ConvertedGrayscaleData16};
+
 void PngImageConverterTest::grayscale16() {
     Containers::Optional<Containers::Array<char>> data = _converterManager.instantiate("PngImageConverter")->convertToData(OriginalGrayscale16);
     CORRADE_VERIFY(data);
@@ -309,12 +292,8 @@ void PngImageConverterTest::grayscale16() {
     CORRADE_VERIFY(importer->openData(*data));
     Containers::Optional<Trade::ImageData2D> converted = importer->image2D(0);
     CORRADE_VERIFY(converted);
-
-    CORRADE_COMPARE(converted->size(), Vector2i(2, 3));
-    CORRADE_COMPARE(converted->format(), PixelFormat::R16Unorm);
-    CORRADE_COMPARE_AS(converted->pixels<UnsignedShort>().asContiguous(),
-        Containers::arrayView(ConvertedGrayscaleData16),
-        TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(*converted, ConvertedGrayscale16,
+        DebugTools::CompareImage);
 }
 
 void PngImageConverterTest::unsupportedMetadata() {

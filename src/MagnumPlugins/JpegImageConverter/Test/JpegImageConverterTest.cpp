@@ -197,7 +197,6 @@ const ImageView2D OriginalRgba{PixelStorage{}.setSkip({0, 1, 0}),
    a threshold verification. Needs to have a bigger size otherwise the
    compression makes a total mess. */
 constexpr const char ConvertedRgbData[] = {
-    #ifndef CORRADE_TARGET_APPLE
     '\x00', '\x29', '\x50', '\x0c', '\x38', '\x5f',
     '\x1c', '\x48', '\x6f', '\x1f', '\x4b', '\x72',
     '\x15', '\x42', '\x69', '\x0a', '\x37', '\x5e', 0, 0,
@@ -213,26 +212,9 @@ constexpr const char ConvertedRgbData[] = {
     '\x01', '\x2d', '\x5c', '\x20', '\x4c', '\x7b',
     '\x3f', '\x6e', '\x9c', '\x48', '\x77', '\xa5',
     '\x39', '\x68', '\x96', '\x28', '\x57', '\x85', 0, 0
-    #else
-    /* libJPEG on macOS is special. This will all go away once I can use
-       DebugTools::CompareImage. */
-    '\x01', '\x27', '\x4e', '\x10', '\x36', '\x5d',
-    '\x20', '\x46', '\x6d', '\x23', '\x49', '\x70',
-    '\x19', '\x40', '\x67', '\x0e', '\x35', '\x5c', 0, 0,
-
-    '\x5f', '\x8a', '\xb5', '\x76', '\xa1', '\xcc',
-    '\x91', '\xbc', '\xe7', '\x99', '\xc4', '\xef',
-    '\x8e', '\xb9', '\xe4', '\x7c', '\xa9', '\xd3', 0, 0,
-
-    '\x4b', '\x79', '\xaa', '\x68', '\x98', '\xc8',
-    '\x8a', '\xba', '\xea', '\x96', '\xc6', '\xf6',
-    '\x8a', '\xba', '\xea', '\x79', '\xa9', '\xd9', 0, 0,
-
-    '\x00', '\x2e', '\x61', '\x1b', '\x4d', '\x80',
-    '\x3c', '\x6e', '\xa1', '\x45', '\x77', '\xaa',
-    '\x36', '\x68', '\x9b', '\x24', '\x58', '\x8a', 0, 0
-    #endif
 };
+
+const ImageView2D ConvertedRgb{PixelFormat::RGB8Unorm, {6, 4}, ConvertedRgbData};
 
 void JpegImageConverterTest::rgb80Percent() {
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("JpegImageConverter");
@@ -250,19 +232,14 @@ void JpegImageConverterTest::rgb80Percent() {
     CORRADE_VERIFY(importer->openData(*data));
     Containers::Optional<Trade::ImageData2D> converted = importer->image2D(0);
     CORRADE_VERIFY(converted);
-    CORRADE_COMPARE(converted->size(), Vector2i(6, 4));
-    CORRADE_COMPARE(converted->format(), PixelFormat::RGB8Unorm);
-
-    /* The image has four-byte aligned rows, clear the padding to deterministic
-       values */
-    CORRADE_COMPARE(converted->mutableData().size(), 80);
-    converted->mutableData()[18] = converted->mutableData()[19] =
-        converted->mutableData()[38] = converted->mutableData()[39] =
-            converted->mutableData()[58] = converted->mutableData()[59] =
-                converted->mutableData()[78] = converted->mutableData()[79] = 0;
-
-    CORRADE_COMPARE_AS(converted->data(), Containers::arrayView(ConvertedRgbData),
-        TestSuite::Compare::Container);
+    #ifndef CORRADE_TARGET_APPLE
+    CORRADE_COMPARE_AS(*converted, ConvertedRgb,
+        DebugTools::CompareImage);
+    #else
+    /* libJPEG on macOS is special */
+    CORRADE_COMPARE_WITH(*converted, ConvertedRgb,
+        (DebugTools::CompareImage{3.67f, 2.0f}));
+    #endif
 }
 
 void JpegImageConverterTest::rgb100Percent() {
@@ -279,9 +256,8 @@ void JpegImageConverterTest::rgb100Percent() {
     CORRADE_VERIFY(importer->openData(*data));
     Containers::Optional<Trade::ImageData2D> converted = importer->image2D(0);
     CORRADE_VERIFY(converted);
-
-    /* Expect only minimal difference (single bits) */
     CORRADE_COMPARE_WITH(*converted, OriginalRgb,
+        /* Expect only minimal difference (single bits) */
         (DebugTools::CompareImage{3.1f, 1.4f}));
 }
 
@@ -329,16 +305,8 @@ void JpegImageConverterTest::rgba80Percent() {
     CORRADE_COMPARE(converted->size(), Vector2i(6, 4));
     CORRADE_COMPARE(converted->format(), PixelFormat::RGB8Unorm);
 
-    /* The image has four-byte aligned rows, clear the padding to deterministic
-       values */
-    CORRADE_COMPARE(converted->data().size(), 80);
-    converted->mutableData()[18] = converted->mutableData()[19] =
-        converted->mutableData()[38] = converted->mutableData()[39] =
-            converted->mutableData()[58] = converted->mutableData()[59] =
-                converted->mutableData()[78] = converted->mutableData()[79] = 0;
-
-    CORRADE_COMPARE_AS(converted->data(), Containers::arrayView(ConvertedRgbData),
-        TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(*converted, ConvertedRgb,
+        DebugTools::CompareImage);
 
     /* Finally, the output should be exactly the same as when exporting RGB,
        bit to bit, to ensure we don't produce anything that would cause
@@ -357,6 +325,9 @@ constexpr const char OriginalGrayscaleData[] = {
     '\x00', '\x12', '\x35', '\x45', '\x34', '\x1d', 0, 0
 };
 
+const ImageView2D OriginalGrayscale{PixelStorage{}.setSkip({0, 1, 0}),
+    PixelFormat::R8Unorm, {6, 4}, OriginalGrayscaleData};
+
 /* Slightly different due to compression artifacts. See the 100% test for
    a threshold verification. Needs to have a bigger size otherwise the
    compression makes a total mess. */
@@ -367,8 +338,7 @@ constexpr const char ConvertedGrayscaleData[] = {
     '\x00', '\x19', '\x3b', '\x43', '\x32', '\x1e', 0, 0
 };
 
-const ImageView2D OriginalGrayscale{PixelStorage{}.setSkip({0, 1, 0}),
-    PixelFormat::R8Unorm, {6, 4}, OriginalGrayscaleData};
+const ImageView2D ConvertedGrayscale{PixelFormat::R8Unorm, {6, 4}, ConvertedGrayscaleData};
 
 void JpegImageConverterTest::grayscale80Percent() {
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("JpegImageConverter");
@@ -384,19 +354,8 @@ void JpegImageConverterTest::grayscale80Percent() {
     CORRADE_VERIFY(importer->openData(*data));
     Containers::Optional<Trade::ImageData2D> converted = importer->image2D(0);
     CORRADE_VERIFY(converted);
-    CORRADE_COMPARE(converted->size(), Vector2i(6, 4));
-    CORRADE_COMPARE(converted->format(), PixelFormat::R8Unorm);
-
-    /* The image has four-byte aligned rows, clear the padding to deterministic
-       values */
-    CORRADE_COMPARE(converted->data().size(), 32);
-    converted->mutableData()[6] = converted->mutableData()[7] =
-        converted->mutableData()[14] = converted->mutableData()[15] =
-            converted->mutableData()[22] = converted->mutableData()[23] =
-                converted->mutableData()[30] = converted->mutableData()[31] = 0;
-
-    CORRADE_COMPARE_AS(converted->data(), Containers::arrayView(ConvertedGrayscaleData),
-        TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(*converted, ConvertedGrayscale,
+        DebugTools::CompareImage);
 }
 
 void JpegImageConverterTest::grayscale100Percent() {
@@ -413,9 +372,8 @@ void JpegImageConverterTest::grayscale100Percent() {
     CORRADE_VERIFY(importer->openData(*data));
     Containers::Optional<Trade::ImageData2D> converted = importer->image2D(0);
     CORRADE_VERIFY(converted);
-
-    /* Expect only minimal difference (single bits) */
     CORRADE_COMPARE_WITH(*converted, OriginalGrayscale,
+        /* Expect only minimal difference (single bits) */
         (DebugTools::CompareImage{1.0f, 0.085f}));
 }
 
