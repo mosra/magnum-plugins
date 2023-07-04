@@ -183,6 +183,9 @@ Containers::Optional<Containers::Array<char>> JpegImageConverter::doConvertToDat
         /* libJPEG HAVE YOU EVER HEARD ABOUT CONST ARGUMENTS?! IT'S NOT 1978
            ANYMORE */
         JSAMPROW row = static_cast<JSAMPROW>(const_cast<void*>(pixelsFlipped[info.next_scanline].data()));
+        /** @todo would it be any faster to pass more than one at a time? 64,
+            for example? needs benchmarking, docs don't really suggest it as
+            being good for perf, just "may be more convenient" */
         jpeg_write_scanlines(&info, &row, 1);
     }
 
