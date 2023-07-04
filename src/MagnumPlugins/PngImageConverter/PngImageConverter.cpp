@@ -150,6 +150,13 @@ Containers::Optional<Containers::Array<char>> PngImageConverter::doConvertToData
         PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
     png_write_info(file, info);
 
+    /* For 16 bit depth we need to swap to big endian */
+    if(bitDepth == 16) {
+        #ifndef CORRADE_TARGET_BIG_ENDIAN
+        png_set_swap(file);
+        #endif
+    } else CORRADE_INTERNAL_ASSERT(bitDepth == 8);
+
     /* Get data properties and calculate the initial slice based on subimage
        offset */
     const std::pair<Math::Vector2<std::size_t>, Math::Vector2<std::size_t>> dataProperties = image.dataProperties();
@@ -157,19 +164,8 @@ Containers::Optional<Containers::Array<char>> PngImageConverter::doConvertToData
         .exceptPrefix(dataProperties.first.sum());
 
     /* Write rows in reverse order, properly take stride into account */
-    if(bitDepth == 8) {
-        for(Int y = 0; y != image.size().y(); ++y)
-            png_write_row(file, const_cast<unsigned char*>(data.exceptPrefix((image.size().y() - y - 1)*dataProperties.second.x()).data()));
-
-    /* For 16 bit depth we need to swap to big endian */
-    } else if(bitDepth == 16) {
-        #ifndef CORRADE_TARGET_BIG_ENDIAN
-        png_set_swap(file);
-        #endif
-        for(Int y = 0; y != image.size().y(); ++y) {
-            png_write_row(file, const_cast<unsigned char*>(reinterpret_cast<const unsigned char*>(data.exceptPrefix((image.size().y() - y - 1)*dataProperties.second.x()).data())));
-        }
-    }
+    for(Int y = 0; y != image.size().y(); ++y)
+        png_write_row(file, const_cast<unsigned char*>(data.exceptPrefix((image.size().y() - y - 1)*dataProperties.second.x()).data()));
 
     png_write_end(file, nullptr);
     png_destroy_write_struct(&file, &info);
