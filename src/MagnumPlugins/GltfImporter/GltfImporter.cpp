@@ -789,7 +789,7 @@ bool discoverSceneExtraFields(Utility::Json& gltf, std::unordered_map<Containers
     }
 
     return true;
-};
+}
 
 }
 
