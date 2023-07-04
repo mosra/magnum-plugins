@@ -26,7 +26,7 @@
 #include "JpegImageConverter.h"
 
 #include <csetjmp>
-#include <Corrade/Containers/Array.h>
+#include <Corrade/Containers/GrowableArray.h>
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/String.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
@@ -112,7 +112,7 @@ Containers::Optional<Containers::Array<char>> JpegImageConverter::doConvertToDat
     jpeg_compress_struct info;
     struct DestinationManager {
         jpeg_destination_mgr jpegDestinationManager;
-        std::string output;
+        Containers::Array<char> output;
     } destinationManager;
 
     Containers::Array<JSAMPROW> rows;
@@ -142,18 +142,22 @@ Containers::Optional<Containers::Array<char>> JpegImageConverter::doConvertToDat
     info.dest = reinterpret_cast<jpeg_destination_mgr*>(&destinationManager);
     info.dest->init_destination = [](j_compress_ptr info) {
         auto& destinationManager = *reinterpret_cast<DestinationManager*>(info->dest);
-        destinationManager.output.resize(1); /* It crashes if the buffer has zero free space */
-        info->dest->next_output_byte = reinterpret_cast<JSAMPLE*>(&destinationManager.output[0]);
+        /* It crashes if the buffer has zero free space */
+        arrayAppend(destinationManager.output, NoInit, 1);
+        info->dest->next_output_byte = reinterpret_cast<JSAMPLE*>(destinationManager.output.data());
         info->dest->free_in_buffer = destinationManager.output.size()/sizeof(JSAMPLE);
     };
     info.dest->term_destination = [](j_compress_ptr info) {
         auto& destinationManager = *reinterpret_cast<DestinationManager*>(info->dest);
-        destinationManager.output.resize(destinationManager.output.size() - info->dest->free_in_buffer);
+        arrayRemoveSuffix(destinationManager.output, info->dest->free_in_buffer);
     };
     info.dest->empty_output_buffer = [](j_compress_ptr info) -> boolean {
         auto& destinationManager = *reinterpret_cast<DestinationManager*>(info->dest);
         const std::size_t oldSize = destinationManager.output.size();
-        destinationManager.output.resize(oldSize*2); /* Double capacity each time it is exceeded */
+        /* Double capacity each time it is exceeded */
+        /** @todo have some arrayGrow() which figures out the grown size on its
+            own */
+        arrayAppend(destinationManager.output, NoInit, oldSize);
         info->dest->next_output_byte = reinterpret_cast<JSAMPLE*>(&destinationManager.output[0] + oldSize);
         info->dest->free_in_buffer = (destinationManager.output.size() - oldSize)/sizeof(JSAMPLE);
         return boolean(true);
@@ -184,12 +188,12 @@ Containers::Optional<Containers::Array<char>> JpegImageConverter::doConvertToDat
     jpeg_finish_compress(&info);
     jpeg_destroy_compress(&info);
 
-    /* Copy the string into the output array (I would kill for having std::string::release()) */
-    Containers::Array<char> fileData{NoInit, destinationManager.output.size()};
-    std::copy(destinationManager.output.begin(), destinationManager.output.end(), fileData.data());
+    /* Convert the growable array back to a non-growable with the default
+       deleter so we can return it */
+    arrayShrink(destinationManager.output);
 
     /* GCC 4.8 needs extra help here */
-    return Containers::optional(std::move(fileData));
+    return Containers::optional(std::move(destinationManager.output));
 }
 
 }}

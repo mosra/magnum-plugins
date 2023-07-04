@@ -26,7 +26,7 @@
 #include "StbImageConverter.h"
 
 #include <algorithm> /* std::copy() */ /** @todo remove */
-#include <Corrade/Containers/Array.h>
+#include <Corrade/Containers/GrowableArray.h>
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/Pair.h>
 #include <Corrade/Containers/String.h>
@@ -160,9 +160,9 @@ Containers::Optional<Containers::Array<char>> StbImageConverter::doConvertToData
         std::copy(row.begin(), row.end(), reversedData.exceptPrefix((image.size().y() - y - 1)*outputStride).begin());
     }
 
-    std::string data;
+    Containers::Array<char> data;
     const auto writeFunc = [](void* context, void* data, int size) {
-        static_cast<std::string*>(context)->append(static_cast<char*>(data), size);
+        arrayAppend(*static_cast<Containers::Array<char>*>(context), {static_cast<const char*>(data), std::size_t(size)});
     };
 
     /* All these functions can only fail if the size is zero/negative, if the
@@ -182,13 +182,12 @@ Containers::Optional<Containers::Array<char>> StbImageConverter::doConvertToData
         CORRADE_INTERNAL_ASSERT_OUTPUT(stbi_write_tga_to_func(writeFunc, &data, image.size().x(), image.size().y(), components, reversedData));
     } else CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
 
-    /* Copy the data into array (I would *love* to have a detach() function on
-       std::string) */
-    Containers::Array<char> fileData{NoInit, data.size()};
-    std::copy(data.begin(), data.end(), fileData.begin());
+    /* Convert the growable array back to a non-growable with the default
+       deleter so we can return it */
+    arrayShrink(data);
 
     /* GCC 4.8 needs extra help here */
-    return Containers::optional(std::move(fileData));
+    return Containers::optional(std::move(data));
 }
 
 bool StbImageConverter::doConvertToFile(const ImageView2D& image, const Containers::StringView filename) {

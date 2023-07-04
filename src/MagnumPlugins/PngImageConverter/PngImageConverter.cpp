@@ -25,9 +25,6 @@
 
 #include "PngImageConverter.h"
 
-#include <cstring>
-#include <algorithm> /* std::copy() */ /** @todo remove */
-#include <string> /** @todo replace with a growable array */
 #include <png.h>
 /*
     The <csetjmp> header has to be included *after* png.h, otherwise older
@@ -39,7 +36,7 @@
     New versions don't have that anymore: https://github.com/glennrp/libpng/commit/6c2e919c7eb736d230581a4c925fa67bd901fcf8
 */
 #include <csetjmp>
-#include <Corrade/Containers/Array.h>
+#include <Corrade/Containers/GrowableArray.h>
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/String.h>
 #include <Magnum/ImageView.h>
@@ -117,7 +114,7 @@ Containers::Optional<Containers::Array<char>> PngImageConverter::doConvertToData
     CORRADE_INTERNAL_ASSERT(file);
     png_infop info = png_create_info_struct(file);
     CORRADE_INTERNAL_ASSERT(info);
-    std::string output;
+    Containers::Array<char> output;
 
     /* Error handling routine. Since we're replacing the png_default_error()
        function, we need to call std::longjmp() ourselves -- otherwise the
@@ -143,10 +140,8 @@ Containers::Optional<Containers::Array<char>> PngImageConverter::doConvertToData
     );
 
     png_set_write_fn(file, &output, [](png_structp file, png_bytep data, png_size_t length){
-        auto&& output = *reinterpret_cast<std::string*>(png_get_io_ptr(file));
-        std::size_t oldSize = output.size();
-        output.resize(output.size() + length);
-        std::copy_n(data, length, &output[oldSize]);
+        auto& output = *reinterpret_cast<Containers::Array<char>*>(png_get_io_ptr(file));
+        arrayAppend(output, {reinterpret_cast<const char*>(data), length});
     }, [](png_structp){});
 
     /* Write header */
@@ -179,12 +174,12 @@ Containers::Optional<Containers::Array<char>> PngImageConverter::doConvertToData
     png_write_end(file, nullptr);
     png_destroy_write_struct(&file, &info);
 
-    /* Copy the string into the output array (I would kill for having std::string::release()) */
-    Containers::Array<char> fileData{NoInit, output.size()};
-    std::copy(output.begin(), output.end(), fileData.data());
+    /* Convert the growable array back to a non-growable with the default
+       deleter so we can return it */
+    arrayShrink(output);
 
     /* GCC 4.8 needs extra help here */
-    return Containers::optional(std::move(fileData));
+    return Containers::optional(std::move(output));
 }
 
 }}
