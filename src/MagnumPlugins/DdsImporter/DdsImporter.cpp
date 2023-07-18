@@ -475,10 +475,26 @@ void DdsImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dat
             case 116: /* D3DFMT_A32B32G32R32F */
                 matchingDxgiFormat = 2; /* DXGI_FORMAT_R32G32B32A32_FLOAT */
                 break;
+            case Utility::Endianness::fourCC('R', 'G', 'B', 'G'):
+            case Utility::Endianness::fourCC('G', 'R', 'G', 'B'):
             case Utility::Endianness::fourCC('D', 'X', 'T', '2'):
             case Utility::Endianness::fourCC('D', 'X', 'T', '4'):
+            case Utility::Endianness::fourCC('U', 'Y', 'V', 'Y'):
+            case Utility::Endianness::fourCC('Y', 'U', 'Y', '2'):
+            case 117:
             default:
-                Error() << "Trade::DdsImporter::openData(): unknown compression" << Containers::StringView{header.ddspf.fourCCChars, 4};
+                Error e;
+                e << "Trade::DdsImporter::openData(): unsupported or unrecognized format";
+                /* If it looks like a FourCC, print it as such, if not, as a
+                   number. The cases enumerated above are all from
+                    https://learn.microsoft.com/en-us/windows/win32/direct3ddds/dx-graphics-dds-pguide,
+                   however there still can be a corrupted file that has
+                   something random. */
+                if(header.ddspf.fourCCChars[0] >= 'A' &&
+                   header.ddspf.fourCCChars[0] <= 'Z')
+                    e << Containers::StringView{header.ddspf.fourCCChars, 4};
+                else
+                    e << header.ddspf.fourCC;
                 return;
         }
 

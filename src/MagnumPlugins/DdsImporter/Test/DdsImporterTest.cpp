@@ -296,15 +296,17 @@ const struct {
 };
 
 const struct {
-    const char* name;
+    TestSuite::TestCaseDescriptionSourceLocation name;
     const char* filename;
     Containers::Optional<std::size_t> size;
     const char* message;
 } InvalidData[]{
     {"wrong file signature", "wrong-signature.dds", {},
         "invalid file signature SSD "},
-    {"unknown compression", "dxt4.dds", {},
-        "unknown compression DXT4"},
+    {"unsupported FourCC", "dxt4.dds", {},
+        "unsupported or unrecognized format DXT4"},
+    {"unsupported FourCC legacy code", "fourcc-117.dds", {},
+        "unsupported or unrecognized format 117"},
     {"unknown format", "unknown-format.dds", {},
         "unknown 64 bits per pixel format with flags 0x1 and a mask {0x0, 0x0, 0x0, 0xff}"},
     {"unknown RGB format", "unknown-format-rgb.dds", {},

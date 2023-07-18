@@ -16,4 +16,5 @@ See the `convert.sh` script.
 
 The `fourcc-114.dds` was made by hand by simplifying the `dxt3.dds` file, as I
 didn't want to look around for a tool that's able to output the legacy FourCC
-formats.
+formats. The `fourcc-117.dds` is then the same, just with the FourCC value
+changed to 117.
