@@ -167,7 +167,7 @@ header:
     @ref PixelFormat::R8Unorm, with component swizzling as necessary. The
     `X` variant is not treated in any special way --- alpha channel gets
     whatever data is there.
--   Compressed FourCC `DXT1`, `DXT3`, `DXT5`, `ATI1` (BC4), `ATI2` (BC5),
+-   Compressed FourCC `DXT1`, `DXT3`, `DXT5`, `ATI1` / `BC4U`, `ATI2` / `BC5U`,
     `BC4S` and `BC5S` formats are imported as
     @ref CompressedPixelFormat::Bc1RGBAUnorm,
     @relativeref{CompressedPixelFormat,Bc2RGBAUnorm},

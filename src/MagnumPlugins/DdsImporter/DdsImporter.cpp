@@ -343,7 +343,13 @@ void DdsImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dat
                 f->compressed = true;
                 f->properties.compressed.format = CompressedPixelFormat::Bc3RGBAUnorm;
                 break;
+            /* https://learn.microsoft.com/en-us/windows/win32/direct3ddds/dx-graphics-dds-pguide
+               suggests BC4U, BC4S, ATI2 and BC5S (way to go for consistency!),
+               https://walbourn.github.io/the-dds-file-format-lives/ then
+               mentions ATI1 is sometimes used for BC4U, and BC5U is sometimes
+               used for ATI2. "A total mess" is an understatement. */
             case Utility::Endianness::fourCC('A', 'T', 'I', '1'):
+            case Utility::Endianness::fourCC('B', 'C', '4', 'U'):
                 f->compressed = true;
                 f->properties.compressed.format = CompressedPixelFormat::Bc4RUnorm;
                 break;
@@ -352,6 +358,7 @@ void DdsImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dat
                 f->properties.compressed.format = CompressedPixelFormat::Bc4RSnorm;
                 break;
             case Utility::Endianness::fourCC('A', 'T', 'I', '2'):
+            case Utility::Endianness::fourCC('B', 'C', '5', 'U'):
                 f->compressed = true;
                 f->properties.compressed.format = CompressedPixelFormat::Bc5RGUnorm;
                 break;
