@@ -142,11 +142,12 @@ namespace Magnum {
     imported data
 -   @relativeref{Trade,DdsImporter} now supports also 1D textures, cube maps,
     1D, 2D and cube map arrays; all DXGI depth, stencil and compressed formats,
-    legacy non-DXGI RGBX, BGRX, BC4 and BC5 formats, BGR(A) formats also for
-    files with the DXT10 header; uncompressed sRGB formats are now properly
-    imported as @ref PixelFormat::RGBA8Srgb instead of
-    @ref PixelFormat::RGBA8Unorm. Additionally the plugin also imports
-    non-standard ASTC formats produced by NVidia Texture Tools Exporter. See
+    legacy non-DXGI RGBX, BGRX, 16-bit normalized, half-float, float, BC4 and
+    BC5 formats, BGR(A) formats also for files with the DXT10 header;
+    uncompressed sRGB formats are now properly imported as
+    @ref PixelFormat::RGBA8Srgb instead of @ref PixelFormat::RGBA8Unorm.
+    Additionally the plugin also imports non-standard ASTC formats produced by
+    NVidia Texture Tools Exporter. See also
     [mosra/magnum-plugins#67](https://github.com/mosra/magnum-plugins/pull/67).
 -   @ref Text::FreeTypeFont "FreeTypeFont" now treats its internal global
     library handle as thread-local on all platforms except Windows, making it

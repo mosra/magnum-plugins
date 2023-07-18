@@ -61,6 +61,7 @@ struct DdsImporterTest: TestSuite::Tester {
 
     void r();
     void rgb();
+    void r32fLegacyFourCC();
     void rgDxt10();
     void rgbMips();
     void rgbMipsDxt10();
@@ -546,7 +547,8 @@ DdsImporterTest::DdsImporterTest() {
     addInstancedTests({&DdsImporterTest::rgb},
         Containers::arraySize(SwizzleFlipRgb2DData));
 
-    addTests({&DdsImporterTest::rgDxt10,
+    addTests({&DdsImporterTest::r32fLegacyFourCC,
+              &DdsImporterTest::rgDxt10,
 
               &DdsImporterTest::rgbMips,
               &DdsImporterTest::rgbMipsDxt10});
@@ -704,6 +706,26 @@ void DdsImporterTest::rgb() {
         '\xde', '\xad', '\xb5', /* Top row */
         '\xca', '\xfe', '\x77',
         '\xde', '\xad', '\xb5',
+    }), TestSuite::Compare::Container);
+}
+
+void DdsImporterTest::r32fLegacyFourCC() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(DDSIMPORTER_TEST_DIR, "fourcc-114.dds")));
+    CORRADE_COMPARE(importer->image1DCount(), 0);
+    CORRADE_COMPARE(importer->image2DCount(), 1);
+    CORRADE_COMPARE(importer->image2DLevelCount(0), 1);
+    CORRADE_COMPARE(importer->image3DCount(), 0);
+
+    Containers::Optional<ImageData2D> image = importer->image2D(0);
+    CORRADE_VERIFY(image);
+    CORRADE_VERIFY(!image->isCompressed());
+    CORRADE_COMPARE(image->flags(), ImageFlags2D{});
+    CORRADE_COMPARE(image->size(), Vector2i(3, 2));
+    CORRADE_COMPARE(image->format(), PixelFormat::R32F);
+    CORRADE_COMPARE_AS(image->pixels<Float>().asContiguous(), Containers::arrayView({
+        4.0f, 5.0f, 6.0f, /* Bottom row */
+        1.0f, 2.0f, 3.0f, /* Top row */
     }), TestSuite::Compare::Container);
 }
 

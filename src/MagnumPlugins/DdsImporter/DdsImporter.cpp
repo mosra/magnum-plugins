@@ -140,8 +140,11 @@ struct DdsHeader {
         };
         /* Used by us only if the DXT10 header isn't also present (in which
            case these are often all zeros), and used also only if the FourCC
-           flag isn't set. Theoretically for uncompressed fourCCs the fields
-           could be used for something. */
+           flag isn't set. Theoretically for uncompressed FourCCs (i.e., the
+           36, 110, 111... formats) the fields could be used for something, but
+           let's assume not. The only file with an uncompressed FourCC I have
+           from https://github.com/GPUOpen-Tools/compressonator/issues/196 has
+           all those fields set to 0. */
         UnsignedInt rgbBitCount;
         UnsignedInt rBitMask;
         UnsignedInt gBitMask;
@@ -330,6 +333,7 @@ void DdsImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dat
     bool hasDxt10Header = false;
     f->dataOffset = sizeof(DdsHeader);
     if(header.ddspf.flags & DdsPixelFormatFlag::FourCC) {
+        UnsignedInt matchingDxgiFormat = 0;
         switch(header.ddspf.fourCC) {
             case Utility::Endianness::fourCC('D', 'X', 'T', '1'):
                 f->compressed = true;
@@ -366,9 +370,6 @@ void DdsImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dat
                 f->compressed = true;
                 f->properties.compressed.format = CompressedPixelFormat::Bc5RGSnorm;
                 break;
-            /** @todo there's also a bunch of other numeric values mentioned at
-                https://docs.microsoft.com/en-us/windows/win32/direct3ddds/dx-graphics-dds-pguide
-                -- what do they represent? */
             case Utility::Endianness::fourCC('D', 'X', '1', '0'): {
                 if(f->in.size() < sizeof(DdsHeader) + sizeof(DdsHeaderDxt10)) {
                     Error{} << "Trade::DdsImporter::openData(): DXT10 file too short, expected at least" << sizeof(DdsHeader) + sizeof(DdsHeaderDxt10) << "bytes but got" << f->in.size();
@@ -445,11 +446,51 @@ void DdsImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dat
                     return;
                 }
             } break;
+            /* Additional values that aren't actually a FourCC. Just when I
+               thought it can't get any messier than this:
+                https://docs.microsoft.com/en-us/windows/win32/direct3ddds/dx-graphics-dds-pguide */
+            /** @todo this won't work on BE, needs an endian swap there but
+                Utility::Endianness::littleEndian() is not constexpr */
+            case 36:  /* D3DFMT_A16B16G16R16 */
+                matchingDxgiFormat = 11; /* DXGI_FORMAT_R16G16B16A16_UNORM */
+                break;
+            case 110: /* D3DFMT_Q16W16V16U16 */
+                matchingDxgiFormat = 13; /* DXGI_FORMAT_R16G16B16A16_SNORM */
+                break;
+            case 111: /* D3DFMT_R16F */
+                matchingDxgiFormat = 54; /* DXGI_FORMAT_R16_FLOAT */
+                break;
+            case 112: /* D3DFMT_G16R16F */
+                matchingDxgiFormat = 34; /* DXGI_FORMAT_R16G16_FLOAT */
+                break;
+            case 113: /* D3DFMT_A16B16G16R16F */
+                matchingDxgiFormat = 10; /* DXGI_FORMAT_R16G16B16A16_FLOAT */
+                break;
+            case 114: /* D3DFMT_R32F */
+                matchingDxgiFormat = 41; /* DXGI_FORMAT_R32_FLOAT */
+                break;
+            case 115: /* D3DFMT_G32R32F */
+                matchingDxgiFormat = 16; /* DXGI_FORMAT_R32G32_FLOAT */
+                break;
+            case 116: /* D3DFMT_A32B32G32R32F */
+                matchingDxgiFormat = 2; /* DXGI_FORMAT_R32G32B32A32_FLOAT */
+                break;
             case Utility::Endianness::fourCC('D', 'X', 'T', '2'):
             case Utility::Endianness::fourCC('D', 'X', 'T', '4'):
             default:
                 Error() << "Trade::DdsImporter::openData(): unknown compression" << Containers::StringView{header.ddspf.fourCCChars, 4};
                 return;
+        }
+
+        /* Handle the nasty "FourCC but actually a small number" cases from
+           above. They should all be supported uncompressed DXGI formats that
+           don't need a swizzle. */
+        if(matchingDxgiFormat) {
+            const auto& mapped = DxgiFormatMapping[matchingDxgiFormat];
+            f->compressed = false;
+            f->properties.uncompressed.format = PixelFormat(mapped.format);
+            f->properties.uncompressed.needsSwizzle = mapped.needsSwizzle;
+            CORRADE_INTERNAL_ASSERT(mapped.format && !mapped.needsSwizzle);
         }
 
     /* RGBA or RGBX with the alpha unspecified. The X variant is produced by

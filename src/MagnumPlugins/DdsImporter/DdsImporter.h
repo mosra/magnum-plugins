@@ -163,9 +163,9 @@ The following formats are supported for legacy DDS files without the DXT10
 header:
 
 -   Uncompressed RGB, RGBA / RGBX, BGR, BGRA / BGRX, R are imported as
-    @ref PixelFormat::RGB8Unorm, @ref PixelFormat::RGBA8Unorm or
-    @ref PixelFormat::R8Unorm, with component swizzling as necessary. The
-    `X` variant is not treated in any special way --- alpha channel gets
+    @ref PixelFormat::RGB8Unorm, @relativeref{PixelFormat,RGBA8Unorm} or
+    @relativeref{PixelFormat,R8Unorm}, with component swizzling as necessary.
+    The `X` variant is not treated in any special way --- alpha channel gets
     whatever data is there.
 -   Compressed FourCC `DXT1`, `DXT3`, `DXT5`, `ATI1` / `BC4U`, `ATI2` / `BC5U`,
     `BC4S` and `BC5S` formats are imported as
@@ -176,6 +176,12 @@ header:
     @relativeref{CompressedPixelFormat,Bc5RGUnorm},
     @relativeref{CompressedPixelFormat,Bc4RSnorm} and
     @relativeref{CompressedPixelFormat,Bc5RGSnorm} respectively
+-   Legacy FourCC formats 36, 110, 111, 112, 113, 114, 115 and 116 formats are
+    imported as @ref PixelFormat::RGBA16Unorm,
+    @relativeref{PixelFormat,RGBA16Snorm}, @relativeref{PixelFormat,R16F},
+    @relativeref{PixelFormat,RG16F}, @relativeref{PixelFormat,RGBA16F},
+    @relativeref{PixelFormat,R32F}, @relativeref{PixelFormat,RG32F} and
+    @relativeref{PixelFormat,RGBA32F} respectively
 
 While the legacy header support arbitrary other swizzles, anything except BGR
 and BGRA will fail to import. Other FourCC codes except the ones listed above

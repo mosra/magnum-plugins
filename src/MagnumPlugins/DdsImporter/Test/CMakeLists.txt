@@ -97,6 +97,7 @@ corrade_add_test(DdsImporterTest
         dxt3-incomplete-blocks.dds
         dxt4.dds
         dxt5.dds
+        fourcc-114.dds
         bgr8unorm.dds
         rgb8unorm.dds
         rgb8unorm-yup.dds

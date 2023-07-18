@@ -13,3 +13,7 @@ and from cubemap/array files using
 weird ASTC DDS files then with the proprietary
 [NVidia Texture Tools Exporter](https://developer.nvidia.com/nvidia-texture-tools-exporter).
 See the `convert.sh` script.
+
+The `fourcc-114.dds` was made by hand by simplifying the `dxt3.dds` file, as I
+didn't want to look around for a tool that's able to output the legacy FourCC
+formats.
