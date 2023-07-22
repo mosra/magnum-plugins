@@ -340,7 +340,7 @@ jobs:
         count: 20
     - install-gcc-4_8
     - install-cmake:
-        version: "3.4.3"
+        version: "3.5.2"
     - install-basis
     - install-meshoptimizer
     - install-libspng
@@ -363,7 +363,7 @@ jobs:
       CMAKE_CXX_FLAGS: --coverage
       CONFIGURATION: Debug
     steps:
-    # Not installing the old GCC 4.8, CMake 3.4 and other ancient stuff to
+    # Not installing the old GCC 4.8, CMake 3.5 and other ancient stuff to
     # speed up. These are tested more than enough on other jobs, plus here we
     # have a fresher Ubuntu so we can take them directly from the repos.
     - install-base-linux-arm64:
@@ -390,7 +390,7 @@ jobs:
     - cap-ninja-jobs
     - install-gcc-4_8
     - install-cmake:
-        version: "3.4.3"
+        version: "3.5.2"
     - install-basis
     - install-meshoptimizer
     - install-libspng
@@ -421,7 +421,7 @@ jobs:
     - cap-ninja-jobs
     - install-gcc-4_8
     - install-cmake:
-        version: "3.4.3"
+        version: "3.5.2"
     - install-basis
     - install-meshoptimizer
     - install-libspng
@@ -451,7 +451,7 @@ jobs:
         extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng-dev libdevil-dev libharfbuzz-dev libassimp-dev libwebp-dev libzstd-dev wget
     - install-clang
     - install-cmake:
-        version: "3.4.3"
+        version: "3.5.2"
     - install-basis
     - install-meshoptimizer
     - install-libspng
@@ -484,7 +484,7 @@ jobs:
         extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng-dev libdevil-dev libharfbuzz-dev libassimp-dev libopenexr-dev libwebp-dev libzstd-dev wget
     - install-clang
     - install-cmake:
-        version: "3.4.3"
+        version: "3.5.2"
     - install-basis
     - install-meshoptimizer
     - install-libspng
