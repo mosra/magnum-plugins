@@ -12,7 +12,12 @@
             "_UV_ROTATION": 1,
             "_TBN_PRECISER": 2,
             "OBJECT_ID3": 3
-          }
+          },
+          "targets": [
+            {
+              "_FANCY_PROPERTY3": 4
+            }
+          ]
         }
       ]
     },
@@ -22,9 +27,9 @@
       "primitives": [
         {
           "attributes": {
-            "_NEGATIVE_PADDING": 4,
-            "NOT_AN_IDENTITY": 5,
-            "_DOUBLE_SHOT": 6
+            "_NEGATIVE_PADDING": 5,
+            "NOT_AN_IDENTITY": 6,
+            "_DOUBLE_SHOT": 7
           }
         }
       ]
@@ -64,6 +69,13 @@
     },
     {
       "bufferView": 0,
+      "byteOffset": 200,
+      "componentType": 5126,
+      "count": 1,
+      "type": "VEC4"
+    },
+    {
+      "bufferView": 0,
       "byteOffset": 64,
       "componentType": 5124,
       "count": 1,
@@ -87,13 +99,13 @@
   "bufferViews": [
     {
       "buffer": 0,
-      "byteLength": 200,
-      "byteStride": 200
+      "byteLength": 216,
+      "byteStride": 216
     }
   ],
   "buffers": [
     {
-      "byteLength": 200,
+      "byteLength": 216,
       "uri": "mesh-custom-attributes.bin"
     }
   ]

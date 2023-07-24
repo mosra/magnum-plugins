@@ -36,6 +36,22 @@
           "mode": 0
         }
       ]
+    },
+    {
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 1
+          },
+          "targets": [
+            {
+              "WEIGHTS_0": 4,
+              "POSITION": 1
+            }
+          ],
+          "mode": 0
+        }
+      ]
     }
   ],
   "accessors": [
@@ -62,6 +78,12 @@
       "componentType": 5121,
       "count": 1,
       "type": "VEC3"
+    },
+    {
+      "bufferView": 4,
+      "componentType": 5126,
+      "count": 1,
+      "type": "VEC4"
     }
   ],
   "bufferViews": [
@@ -84,11 +106,16 @@
       "buffer": 0,
       "byteOffset": 22,
       "byteLength": 3
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 25,
+      "byteLength": 16
     }
   ],
   "buffers": [
     {
-      "byteLength": 25,
+      "byteLength": 41,
       "uri": "mesh-unsupported-vertex-formats.bin"
     }
   ]

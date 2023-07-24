@@ -13,7 +13,13 @@
             "COLOR_0": 1,
             "COLOR_1": 1,
             "COLOR_0": 3
-          }
+          },
+          "targets": [
+            {
+              "COLOR_0": 3,
+              "COLOR_0": 1
+            }
+          ]
         }
       ]
     }

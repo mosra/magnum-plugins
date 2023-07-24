@@ -1,0 +1,39 @@
+type = '<'
+input = []
+
+type += '3f3f 3f3f 3f3f'
+input += [
+    # positions,        # normals
+     1.5, -1.0, -0.5,   1.0, 0.0, 0.0,
+    -0.5,  2.5,  0.75,  0.0, 1.0, 0.0,
+    -2.0,  1.0,  0.3,   0.0, 0.0, 1.0
+]
+
+# Morph target 1
+type += '3H3H 3H3H 3H3H'
+input += [
+    # positions (deltas),  # normals (deltas)
+    10, 20, 30,            1, 2, 3,
+    40, 50, 60,            4, 5, 6,
+    70, 80, 90,            7, 8, 9
+]
+
+# Morph target 2
+type += '3H 3H 3H'
+input += [
+    # positions (deltas)
+    100, 200, 300,
+    400, 500, 600,
+    700, 800, 900
+]
+
+# Morph target 3
+type += '3b 3b 3b'
+input += [
+    # normals (deltas)
+    -1, -2, -3,
+    -4, -5, -6,
+    -7, -8, -9
+]
+
+# kate: hl python

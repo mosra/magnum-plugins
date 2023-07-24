@@ -456,6 +456,34 @@
           "indices": -1
         }
       ]
+    },
+    {
+      "name": "invalid morph target attribute",
+      "primitives": [
+        {
+          "attributes": {},
+          "targets": [
+            {
+              "POSITION": -1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "different vertex count for morph target attribute",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 0
+          },
+          "targets": [
+            {
+              "TEXCOORD_0": 1
+            }
+          ]
+        }
+      ]
     }
   ],
   "accessors": [

@@ -135,6 +135,7 @@ struct GltfImporterTest: TestSuite::Tester {
     void meshCustomAttributesNoFileOpened();
     void meshDuplicateAttributes();
     void meshUnorderedAttributes();
+    void meshMorphTargetAttributes();
     void meshMultiplePrimitives();
     void meshUnsignedIntVertexFormats();
     void meshUnsupportedVertexFormats();
@@ -798,20 +799,23 @@ const struct {
         "Trade::GltfImporter::mesh(): unsupported COLOR_3 format Vector4us, importing as a custom attribute\n"
         "Trade::GltfImporter::mesh(): unsupported object ID attribute _OBJECT_ID format Short, importing as a custom attribute\n"
         "Trade::GltfImporter::mesh(): found attribute JOINTS_7 but expected JOINTS_0\n"
-        "Trade::GltfImporter::mesh(): unsupported JOINTS_7 format Vector3ub, importing as a custom attribute\n"},
+        "Trade::GltfImporter::mesh(): unsupported JOINTS_7 format Vector3ub, importing as a custom attribute\n"
+        "Trade::GltfImporter::mesh(): unsupported WEIGHTS_0 format Vector4 in morph target 0, importing as a custom attribute\n"},
     {"quiet", ImporterFlag::Quiet, {},
         ""},
     {"strict", {}, true,
         "Trade::GltfImporter::mesh(): found attribute COLOR_3 but expected COLOR_0\n"
-        "Trade::GltfImporter::mesh(): unsupported COLOR_3 format Vector4us, set strict=false to import as a custom atttribute\n"
-        "Trade::GltfImporter::mesh(): unsupported object ID attribute _OBJECT_ID format Short, set strict=false to import as a custom atttribute\n"
+        "Trade::GltfImporter::mesh(): unsupported COLOR_3 format Vector4us, set strict=false to import as a custom attribute\n"
+        "Trade::GltfImporter::mesh(): unsupported object ID attribute _OBJECT_ID format Short, set strict=false to import as a custom attribute\n"
         "Trade::GltfImporter::mesh(): found attribute JOINTS_7 but expected JOINTS_0\n"
-        "Trade::GltfImporter::mesh(): unsupported JOINTS_7 format Vector3ub, set strict=false to import as a custom atttribute\n"},
+        "Trade::GltfImporter::mesh(): unsupported JOINTS_7 format Vector3ub, set strict=false to import as a custom attribute\n"
+        "Trade::GltfImporter::mesh(): unsupported WEIGHTS_0 format Vector4 in morph target 0, set strict=false to import as a custom attribute\n"},
     {"strict, quiet", ImporterFlag::Quiet, true,
         /* Warnings omitted, errors stay */
-        "Trade::GltfImporter::mesh(): unsupported COLOR_3 format Vector4us, set strict=false to import as a custom atttribute\n"
-        "Trade::GltfImporter::mesh(): unsupported object ID attribute _OBJECT_ID format Short, set strict=false to import as a custom atttribute\n"
-        "Trade::GltfImporter::mesh(): unsupported JOINTS_7 format Vector3ub, set strict=false to import as a custom atttribute\n"},
+        "Trade::GltfImporter::mesh(): unsupported COLOR_3 format Vector4us, set strict=false to import as a custom attribute\n"
+        "Trade::GltfImporter::mesh(): unsupported object ID attribute _OBJECT_ID format Short, set strict=false to import as a custom attribute\n"
+        "Trade::GltfImporter::mesh(): unsupported JOINTS_7 format Vector3ub, set strict=false to import as a custom attribute\n"
+        "Trade::GltfImporter::mesh(): unsupported WEIGHTS_0 format Vector4 in morph target 0, set strict=false to import as a custom attribute\n"},
 };
 
 constexpr struct {
@@ -897,6 +901,14 @@ const struct {
         "mesh-invalid-primitive-attributes-property.gltf",
         "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Array at {}:14:25\n"
         "Trade::GltfImporter::openData(): invalid primitive attributes property in mesh 1\n"},
+    {"invalid primitive targets property",
+        "mesh-invalid-primitive-targets-property.gltf",
+        "Utility::Json::parseArray(): expected an array, got Utility::JsonToken::Type::Object at {}:14:22\n"
+        "Trade::GltfImporter::openData(): invalid primitive targets property in mesh 1\n"},
+    {"invalid morph target",
+        "mesh-invalid-morph-target.gltf",
+        "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Number at {}:14:23\n"
+        "Trade::GltfImporter::openData(): invalid morph target 0 in mesh 1\n"},
     {"texcoord flip invalid attribute",
         "mesh-invalid-texcoord-flip-attribute.gltf",
         "Utility::Json::parseUnsignedInt(): expected a number, got Utility::JsonToken::Type::String at {}:15:27\n"
@@ -968,56 +980,56 @@ const struct {
     {"buffer with missing uri property",
         "buffer 2 has missing uri property"},
     {"buffer with invalid uri property",
-        "Utility::Json::parseString(): expected a string, got Utility::JsonToken::Type::Array at {}:875:14\n"
+        "Utility::Json::parseString(): expected a string, got Utility::JsonToken::Type::Array at {}:903:14\n"
         "Trade::GltfImporter::mesh(): buffer 3 has invalid uri property\n"},
     {"buffer with invalid uri",
         "invalid URI escape sequence %%"},
     {"buffer with missing byteLength property",
         "buffer 5 has missing or invalid byteLength property"},
     {"buffer with invalid byteLength property",
-        "Utility::Json::parseSize(): too large integer literal -3 at {}:889:21\n"
+        "Utility::Json::parseSize(): too large integer literal -3 at {}:917:21\n"
         "Trade::GltfImporter::mesh(): buffer 6 has missing or invalid byteLength property\n"},
     {"buffer view with missing buffer property",
         "buffer view 9 has missing or invalid buffer property"},
     {"buffer view with invalid buffer property",
-        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:825:17\n"
+        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:853:17\n"
         "Trade::GltfImporter::mesh(): buffer view 10 has missing or invalid buffer property\n"},
     {"buffer view with invalid byteOffset property",
-        "Utility::Json::parseSize(): too large integer literal -1 at {}:831:21\n"
+        "Utility::Json::parseSize(): too large integer literal -1 at {}:859:21\n"
         "Trade::GltfImporter::mesh(): buffer view 11 has invalid byteOffset property\n"},
     {"buffer view with missing byteLength property",
         "buffer view 12 has missing or invalid byteLength property"},
     {"buffer view with invalid byteLength property",
-        "Utility::Json::parseSize(): too large integer literal -12 at {}:841:21\n"
+        "Utility::Json::parseSize(): too large integer literal -12 at {}:869:21\n"
         "Trade::GltfImporter::mesh(): buffer view 13 has missing or invalid byteLength property\n"},
     {"buffer view with invalid byteStride property",
-        "Utility::Json::parseUnsignedInt(): too large integer literal -4 at {}:847:21\n"
+        "Utility::Json::parseUnsignedInt(): too large integer literal -4 at {}:875:21\n"
         "Trade::GltfImporter::mesh(): buffer view 14 has invalid byteStride property\n"},
     {"accessor with missing bufferView property",
         "accessor 11 has missing or invalid bufferView property"},
     {"accessor with invalid bufferView property",
-        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:687:21\n"
+        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:715:21\n"
         "Trade::GltfImporter::mesh(): accessor 30 has missing or invalid bufferView property\n"},
     {"accessor with invalid byteOffset property",
-        "Utility::Json::parseSize(): too large integer literal -1 at {}:695:21\n"
+        "Utility::Json::parseSize(): too large integer literal -1 at {}:723:21\n"
         "Trade::GltfImporter::mesh(): accessor 31 has invalid byteOffset property\n"},
     {"accessor with missing componentType property",
         "accessor 32 has missing or invalid componentType property"},
     {"accessor with invalid componentType property",
-        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:709:24\n"
+        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:737:24\n"
         "Trade::GltfImporter::mesh(): accessor 33 has missing or invalid componentType property\n"},
     {"accessor with missing count property",
         "accessor 34 has missing or invalid count property"},
     {"accessor with invalid count property",
-        "Utility::Json::parseSize(): too large integer literal -1 at {}:723:16\n"
+        "Utility::Json::parseSize(): too large integer literal -1 at {}:751:16\n"
         "Trade::GltfImporter::mesh(): accessor 35 has missing or invalid count property\n"},
     {"accessor with missing type property",
         "accessor 36 has missing or invalid type property"},
     {"accessor with invalid type property",
-        "Utility::Json::parseString(): expected a string, got Utility::JsonToken::Type::Number at {}:737:15\n"
+        "Utility::Json::parseString(): expected a string, got Utility::JsonToken::Type::Number at {}:765:15\n"
         "Trade::GltfImporter::mesh(): accessor 37 has missing or invalid type property\n"},
     {"accessor with invalid normalized property",
-        "Utility::Json::parseBool(): expected a bool, got Utility::JsonToken::Type::Null at {}:745:21\n"
+        "Utility::Json::parseBool(): expected a bool, got Utility::JsonToken::Type::Null at {}:773:21\n"
         "Trade::GltfImporter::mesh(): accessor 38 has invalid normalized property\n"},
     {"invalid primitive property",
         "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:436:19\n"
@@ -1028,6 +1040,11 @@ const struct {
     {"invalid indices property",
         "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:456:22\n"
         "Trade::GltfImporter::mesh(): invalid indices property\n"},
+    {"invalid morph target attribute",
+        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:467:27\n"
+        "Trade::GltfImporter::mesh(): invalid morph target attribute POSITION in mesh 46\n"},
+    {"different vertex count for morph target attribute",
+        "Trade::GltfImporter::mesh(): mismatched vertex count for attribute TEXCOORD_0 in morph target 0, expected 3 but got 4\n"},
 };
 
 constexpr struct {
@@ -1676,6 +1693,8 @@ GltfImporterTest::GltfImporterTest() {
 
     addInstancedTests({&GltfImporterTest::meshUnorderedAttributes},
         Containers::arraySize(QuietData));
+
+    addTests({&GltfImporterTest::meshMorphTargetAttributes});
 
     addTests({&GltfImporterTest::meshMultiplePrimitives});
 
@@ -4355,16 +4374,20 @@ void GltfImporterTest::meshCustomAttributes() {
     const MeshAttribute tbnPreciserAttribute = importer->meshAttributeForName("_TBN_PRECISER");
     const MeshAttribute objectIdAttribute = importer->meshAttributeForName("OBJECT_ID3");
 
+    const MeshAttribute fancyPropertyAttribute = importer->meshAttributeForName("_FANCY_PROPERTY3");
+    CORRADE_COMPARE(fancyPropertyAttribute, meshAttributeCustom(customAttributeOffset + 4));
+    CORRADE_COMPARE(importer->meshAttributeName(fancyPropertyAttribute), "_FANCY_PROPERTY3");
+
     const MeshAttribute doubleShotAttribute = importer->meshAttributeForName("_DOUBLE_SHOT");
-    CORRADE_COMPARE(doubleShotAttribute, meshAttributeCustom(customAttributeOffset + 6));
+    CORRADE_COMPARE(doubleShotAttribute, meshAttributeCustom(customAttributeOffset + 7));
     const MeshAttribute negativePaddingAttribute = importer->meshAttributeForName("_NEGATIVE_PADDING");
-    CORRADE_COMPARE(negativePaddingAttribute, meshAttributeCustom(customAttributeOffset + 4));
+    CORRADE_COMPARE(negativePaddingAttribute, meshAttributeCustom(customAttributeOffset + 5));
     const MeshAttribute notAnIdentityAttribute = importer->meshAttributeForName("NOT_AN_IDENTITY");
     CORRADE_VERIFY(notAnIdentityAttribute != MeshAttribute{});
 
     Containers::Optional<Trade::MeshData> mesh = importer->mesh("standard types");
     CORRADE_VERIFY(mesh);
-    CORRADE_COMPARE(mesh->attributeCount(), 4);
+    CORRADE_COMPARE(mesh->attributeCount(), 5);
 
     CORRADE_VERIFY(mesh->hasAttribute(tbnAttribute));
     CORRADE_COMPARE(mesh->attributeFormat(tbnAttribute), VertexFormat::Matrix3x3bNormalizedAligned);
@@ -4398,6 +4421,12 @@ void GltfImporterTest::meshCustomAttributes() {
         Containers::arrayView<UnsignedInt>({5678125}),
         TestSuite::Compare::Container);
 
+    CORRADE_VERIFY(mesh->hasAttribute(fancyPropertyAttribute, 0));
+    CORRADE_COMPARE(mesh->attributeFormat(fancyPropertyAttribute, 0, 0), VertexFormat::Vector4);
+    CORRADE_COMPARE_AS(mesh->attribute<Vector4>(fancyPropertyAttribute, 0, 0),
+        Containers::arrayView<Vector4>({{0.1f, 0.2f, 0.3f, 0.4f}}),
+        TestSuite::Compare::Container);
+
     /* Not testing import failure of non-core glTF attribute types, that's
        already tested in meshInvalid() */
 }
@@ -4421,7 +4450,7 @@ void GltfImporterTest::meshDuplicateAttributes() {
 
     Containers::Optional<Trade::MeshData> mesh = importer->mesh(0);
     CORRADE_VERIFY(mesh);
-    CORRADE_COMPARE(mesh->attributeCount(), 3);
+    CORRADE_COMPARE(mesh->attributeCount(), 4);
 
     /* Duplicate attributes replace previously declared attributes with the
        same name. Checking the formats should be enough to test the right
@@ -4434,6 +4463,11 @@ void GltfImporterTest::meshDuplicateAttributes() {
     CORRADE_VERIFY(mesh->hasAttribute(thingAttribute));
     CORRADE_COMPARE(mesh->attributeCount(thingAttribute), 1);
     CORRADE_COMPARE(mesh->attributeFormat(thingAttribute), VertexFormat::Vector2);
+
+    /* Duplicate morph target attribute also replace previously
+       declared attributes within their respective morph target. */
+    CORRADE_COMPARE(mesh->attributeCount(MeshAttribute::Color, 0), 1);
+    CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::Color, 0, 0), VertexFormat::Vector3);
 }
 
 void GltfImporterTest::meshUnorderedAttributes() {
@@ -4490,6 +4524,73 @@ void GltfImporterTest::meshUnorderedAttributes() {
     CORRADE_VERIFY(mesh->hasAttribute(customAttribute1));
     CORRADE_COMPARE(mesh->attributeCount(customAttribute1), 1);
     CORRADE_COMPARE(mesh->attributeFormat(customAttribute1), VertexFormat::Vector3);
+}
+
+void GltfImporterTest::meshMorphTargetAttributes() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
+
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "mesh-morph-target-attributes.gltf")));
+    CORRADE_COMPARE(importer->meshCount(), 1);
+
+    Containers::Optional<Trade::MeshData> mesh = importer->mesh(0);
+    CORRADE_VERIFY(mesh);
+    CORRADE_COMPARE(mesh->attributeCount(), 6);
+
+    /* Base mesh (position, normal and color) */
+    CORRADE_COMPARE(mesh->attributeCount(-1), 2);
+
+    CORRADE_COMPARE(mesh->attributeCount(MeshAttribute::Position), 1);
+    CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::Position), VertexFormat::Vector3);
+
+    CORRADE_COMPARE(mesh->attributeCount(MeshAttribute::Normal), 1);
+    CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::Normal), VertexFormat::Vector3);
+    CORRADE_COMPARE_AS(mesh->normalsAsArray(), Containers::arrayView<Vector3>({
+        {1.0f, 0.0f, 0.0f},
+        {0.0f, 1.0f, 0.0f},
+        {0.0f, 0.0f, 1.0f}
+    }), TestSuite::Compare::Container);
+
+    /* First morph target (position and normal) */
+    CORRADE_COMPARE(mesh->attributeCount(0), 2);
+
+    CORRADE_COMPARE(mesh->attributeCount(MeshAttribute::Position, 0), 1);
+    CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::Position, 0, 0), VertexFormat::Vector3us);
+    CORRADE_COMPARE_AS(mesh->attribute<Vector3us>(MeshAttribute::Position, 0, 0), Containers::arrayView<Vector3us>({
+        {10, 20, 30},
+        {40, 50, 60},
+        {70, 80, 90}
+    }), TestSuite::Compare::Container);
+
+    CORRADE_COMPARE(mesh->attributeCount(MeshAttribute::Normal, 0), 1);
+    CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::Normal, 0, 0), VertexFormat::Vector3sNormalized);
+    CORRADE_COMPARE_AS(mesh->attribute<Vector3s>(MeshAttribute::Normal, 0, 0), Containers::arrayView<Vector3s>({
+        {1, 2, 3},
+        {4, 5, 6},
+        {7, 8, 9}
+    }), TestSuite::Compare::Container);
+
+    /* Second morph target (position) */
+    CORRADE_COMPARE(mesh->attributeCount(1), 1);
+
+    CORRADE_COMPARE(mesh->attributeCount(MeshAttribute::Position, 1), 1);
+    CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::Position, 0, 1), VertexFormat::Vector3us);
+    CORRADE_COMPARE_AS(mesh->attribute<Vector3us>(MeshAttribute::Position, 0, 1), Containers::arrayView<Vector3us>({
+        {100, 200, 300},
+        {400, 500, 600},
+        {700, 800, 900}
+    }), TestSuite::Compare::Container);
+
+    /* Third morph target (normal) */
+    CORRADE_COMPARE(mesh->attributeCount(2), 1);
+
+    CORRADE_COMPARE(mesh->attributeCount(MeshAttribute::Normal, 2), 1);
+    CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::Normal, 0, 2), VertexFormat::Vector3bNormalized);
+    CORRADE_COMPARE_AS(mesh->attribute<Vector3b>(MeshAttribute::Normal, 0, 2), Containers::arrayView<Vector3b>({
+        {-1, -2, -3},
+        {-4, -5, -6},
+        {-7, -8, -9}
+    }), TestSuite::Compare::Container);
+
 }
 
 void GltfImporterTest::meshMultiplePrimitives() {
@@ -4631,7 +4732,7 @@ void GltfImporterTest::meshUnsupportedVertexFormats() {
         importer->configuration().setValue("strict", *data.strict);
 
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "mesh-unsupported-vertex-formats.gltf")));
-    CORRADE_COMPARE(importer->meshCount(), 3);
+    CORRADE_COMPARE(importer->meshCount(), 4);
 
     /* The data have to be split across three meshes because it always bails
        on the first error and so the subsequent errors wouldn't be caught if
@@ -4639,6 +4740,7 @@ void GltfImporterTest::meshUnsupportedVertexFormats() {
     Containers::Optional<Trade::MeshData> mesh0;
     Containers::Optional<Trade::MeshData> mesh1;
     Containers::Optional<Trade::MeshData> mesh2;
+    Containers::Optional<Trade::MeshData> mesh3;
     std::ostringstream out;
     {
         Error redirectError{&out};
@@ -4646,10 +4748,12 @@ void GltfImporterTest::meshUnsupportedVertexFormats() {
         mesh0 = importer->mesh(0);
         mesh1 = importer->mesh(1);
         mesh2 = importer->mesh(2);
+        mesh3 = importer->mesh(3);
     }
     CORRADE_COMPARE(!!mesh0, !data.strict || !*data.strict);
     CORRADE_COMPARE(!!mesh1, !data.strict || !*data.strict);
     CORRADE_COMPARE(!!mesh2, !data.strict || !*data.strict);
+    CORRADE_COMPARE(!!mesh3, !data.strict || !*data.strict);
     CORRADE_COMPARE(out.str(), data.message);
 
     if(mesh0) {
@@ -4688,9 +4792,23 @@ void GltfImporterTest::meshUnsupportedVertexFormats() {
         }), TestSuite::Compare::Container);
     }
 
-    /* All three meshes should have the same position attribute which didn't
+    if(mesh3) {
+        CORRADE_COMPARE(mesh3->attributeCount(), 3);
+        CORRADE_VERIFY(isMeshAttributeCustom(mesh3->attributeName(2)));
+
+        /* The WEIGHTS attribute is not supported as part of a morph target,
+           despite the otherwise supported Vertex4 format */
+        CORRADE_COMPARE(importer->meshAttributeName(mesh3->attributeName(2)), "WEIGHTS_0");
+        CORRADE_COMPARE(mesh3->attributeMorphTargetId(2), 0);
+        CORRADE_COMPARE(mesh3->attributeFormat(2), VertexFormat::Vector4);
+        CORRADE_COMPARE_AS(mesh3->attribute<Vector4>(2), Containers::arrayView({
+            Vector4{1.0f, 2.0f, 3.0f, 4.0f}
+        }), TestSuite::Compare::Container);
+    }
+
+    /* All four meshes should have the same position attribute which didn't
        cause an error */
-    if(mesh0) for(auto* mesh: {&*mesh0, &*mesh1, &*mesh2}) {
+    if(mesh0) for(auto* mesh: {&*mesh0, &*mesh1, &*mesh2, &*mesh3}) {
         CORRADE_VERIFY(mesh->hasAttribute(MeshAttribute::Position));
         CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::Position), VertexFormat::Vector3);
         CORRADE_COMPARE_AS(mesh->attribute<Vector3>(MeshAttribute::Position), Containers::arrayView({

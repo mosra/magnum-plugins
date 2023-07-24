@@ -1,0 +1,106 @@
+{
+  "asset": {
+    "version": "2.0"
+  },
+  "accessors": [
+    {
+      "bufferView": 0,
+      "componentType": 5126,
+      "count": 3,
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 0,
+      "byteOffset": 12,
+      "componentType": 5126,
+      "count": 3,
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 1,
+      "componentType": 5123,
+      "count": 3,
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 1,
+      "byteOffset": 6,
+      "componentType": 5122,
+      "normalized": true,
+      "count": 3,
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 2,
+      "componentType": 5123,
+      "count": 3,
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 3,
+      "componentType": 5120,
+      "normalized": true,
+      "count": 3,
+      "type": "VEC3"
+    }
+  ],
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteLength": 72,
+      "byteStride": 24,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 36,
+      "byteOffset": 72,
+      "byteStride": 12,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 18,
+      "byteOffset": 108,
+      "byteStride": 6,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 9,
+      "byteOffset": 126,
+      "byteStride": 3,
+      "target": 34962
+    }
+  ],
+  "buffers": [
+    {
+      "byteLength": 135,
+      "uri": "mesh-morph-target-attributes.bin"
+    }
+  ],
+  "meshes": [
+    {
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 0,
+            "NORMAL": 1
+          },
+          "targets": [
+            {
+              "POSITION": 2,
+              "NORMAL": 3
+            },
+            {
+              "POSITION": 4
+            },
+            {
+              "NORMAL": 5
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

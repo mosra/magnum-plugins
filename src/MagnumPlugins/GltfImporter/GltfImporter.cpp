@@ -1245,84 +1245,112 @@ void GltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags da
     if(configuration().value<bool>("textureCoordinateYFlipInMaterial"))
         _d->textureCoordinateYFlipInMaterial = true;
     for(std::size_t i = 0; i != _d->gltfMeshPrimitiveMap.size(); ++i) {
+        const auto collectCustomAttributes = [this, i](Utility::Json& gltf, const Utility::JsonToken& gltfAttributes) {
+            for(Utility::JsonObjectItem gltfAttribute: gltfAttributes.asObject()) {
+                /* Decide about texture coordinate Y flipping if not set already */
+                if(gltfAttribute.key().hasPrefix("TEXCOORD_"_s) && isBuiltinNumberedMeshAttribute(gltfAttribute.key())) {
+                    if(_d->textureCoordinateYFlipInMaterial) continue;
+
+                    /* Perform a subset of parsing and validation done in doMesh()
+                       and parseAccessor(). Not calling parseAccessor() here because it
+                       would cause the actual buffers to be loaded and a ton other
+                       validation performed, which is undesirable during the
+                       initial file opening.
+
+                       On the other hand, for simplicity also not making doMesh()
+                       or parseAccessor() assume any of this was already parsed,
+                       except for validation of the attributes object in the outer
+                       loop, which is guaranteed to be done for all meshes. */
+
+                    if(!gltf.parseUnsignedInt(gltfAttribute.value())) {
+                        Error{} << "Trade::GltfImporter::openData(): invalid attribute" << gltfAttribute.key() << "in mesh" << _d->gltfMeshPrimitiveMap[i].first();
+                        return false;
+                    }
+                    if(gltfAttribute.value().asUnsignedInt() >= _d->gltfAccessors.size()) {
+                        Error{} << "Trade::GltfImporter::openData(): accessor index" << gltfAttribute.value().asUnsignedInt() << "out of range for" << _d->gltfAccessors.size() << "accessors";
+                        return false;
+                    }
+
+                    const Utility::JsonToken& gltfAccessor = _d->gltfAccessors[gltfAttribute.value().asUnsignedInt()];
+
+                    const Utility::JsonToken* const gltfAccessorComponentType = gltfAccessor.find("componentType"_s);
+                    if(!gltfAccessorComponentType || !gltf.parseUnsignedInt(*gltfAccessorComponentType)) {
+                        Error{} << "Trade::GltfImporter::openData(): accessor" << gltfAttribute.value().asUnsignedInt() << "has missing or invalid componentType property";
+                        return false;
+                    }
+
+                    /* Normalized is optional, defaulting to false */
+                    const Utility::JsonToken* const gltfAccessorNormalized = gltfAccessor.find("normalized"_s);
+                    if(gltfAccessorNormalized && !gltf.parseBool(*gltfAccessorNormalized)) {
+                        Error{} << "Trade::GltfImporter::openData(): accessor" << gltfAttribute.value().asUnsignedInt() << "has invalid normalized property";
+                        return false;
+                    }
+
+                    const UnsignedInt accessorComponentType = gltfAccessorComponentType->asUnsignedInt();
+                    const bool normalized = gltfAccessorNormalized && gltfAccessorNormalized->asBool();
+                    if(accessorComponentType == Implementation::GltfTypeByte ||
+                       accessorComponentType == Implementation::GltfTypeShort ||
+                      (accessorComponentType == Implementation::GltfTypeUnsignedByte && !normalized) ||
+                      (accessorComponentType == Implementation::GltfTypeUnsignedShort && !normalized))
+                    {
+                        Debug{} << "Trade::GltfImporter::openData(): file contains non-normalized texture coordinates, implicitly enabling textureCoordinateYFlipInMaterial";
+                        _d->textureCoordinateYFlipInMaterial = true;
+                    }
+                }
+
+                /* Add the attribute to custom if not there already. Do it for all
+                   builtin attributes as well, as those may still get imported as
+                   custom if they have a strange vertex format. */
+                if(_d->meshAttributesForName.emplace(gltfAttribute.key(),
+                    meshAttributeCustom(_d->meshAttributeNames.size())).second
+                )
+                    arrayAppend(_d->meshAttributeNames, gltfAttribute.key());
+
+                /* The spec says that all user-defined attributes must start with
+                   an underscore. We don't really care and just print a warning. */
+                /** @todo make this fail if strict mode is enabled? */
+                if(!(flags() & ImporterFlag::Quiet) && !isBuiltinMeshAttribute(configuration(), gltfAttribute.key()) && !gltfAttribute.key().hasPrefix("_"_s))
+                    Warning{} << "Trade::GltfImporter::openData(): unknown attribute" << gltfAttribute.key() << Debug::nospace << ", importing as custom attribute";
+            }
+
+            return true;
+        };
+
         const Utility::JsonToken& gltfPrimitive = _d->gltfMeshPrimitiveMap[i].second();
 
         /* The glTF spec requires a primitive to define an attribute property
            with at least one attribute, but we're fine without here. Stricter
            checks, if any, are done in doMesh(). */
         const Utility::JsonToken* gltfAttributes = gltfPrimitive.find("attributes"_s);
-        if(!gltfAttributes) continue;
+        if(gltfAttributes) {
+            if(!gltf->parseObject(*gltfAttributes)) {
+                Error{} << "Trade::GltfImporter::openData(): invalid primitive attributes property in mesh" << _d->gltfMeshPrimitiveMap[i].first();
+                return;
+            }
 
-        if(!gltf->parseObject(*gltfAttributes)) {
-            Error{} << "Trade::GltfImporter::openData(): invalid primitive attributes property in mesh" << _d->gltfMeshPrimitiveMap[i].first();
+            if(!collectCustomAttributes(*gltf, *gltfAttributes)) {
+                return;
+            }
+        }
+
+        /* Go through any morph targets, collecting custom attributes. */
+        const Utility::JsonToken* gltfTargets = gltfPrimitive.find("targets"_s);
+        if(!gltfTargets) continue;
+
+        if(!gltf->parseArray(*gltfTargets)) {
+            Error{} << "Trade::GltfImporter::openData(): invalid primitive targets property in mesh" << _d->gltfMeshPrimitiveMap[i].first();
             return;
         }
 
-        for(Utility::JsonObjectItem gltfAttribute: gltfAttributes->asObject()) {
-            /* Decide about texture coordinate Y flipping if not set already */
-            if(gltfAttribute.key().hasPrefix("TEXCOORD_"_s) && isBuiltinNumberedMeshAttribute(gltfAttribute.key())) {
-                if(_d->textureCoordinateYFlipInMaterial) continue;
-
-                /* Perform a subset of parsing and validation done in doMesh()
-                   and parseAccessor(). Not calling parseAccessor() here because it
-                   would cause the actual buffers to be loaded and a ton other
-                   validation performed, which is undesirable during the
-                   initial file opening.
-
-                   On the other hand, for simplicity also not making doMesh()
-                   or parseAccessor() assume any of this was already parsed,
-                   except for validation of the attributes object in the outer
-                   loop, which is guaranteed to be done for all meshes. */
-
-                if(!gltf->parseUnsignedInt(gltfAttribute.value())) {
-                    Error{} << "Trade::GltfImporter::openData(): invalid attribute" << gltfAttribute.key() << "in mesh" << _d->gltfMeshPrimitiveMap[i].first();
-                    return;
-                }
-                if(gltfAttribute.value().asUnsignedInt() >= _d->gltfAccessors.size()) {
-                    Error{} << "Trade::GltfImporter::openData(): accessor index" << gltfAttribute.value().asUnsignedInt() << "out of range for" << _d->gltfAccessors.size() << "accessors";
-                    return;
-                }
-
-                const Utility::JsonToken& gltfAccessor = _d->gltfAccessors[gltfAttribute.value().asUnsignedInt()];
-
-                const Utility::JsonToken* const gltfAccessorComponentType = gltfAccessor.find("componentType"_s);
-                if(!gltfAccessorComponentType || !gltf->parseUnsignedInt(*gltfAccessorComponentType)) {
-                    Error{} << "Trade::GltfImporter::openData(): accessor" << gltfAttribute.value().asUnsignedInt() << "has missing or invalid componentType property";
-                    return;
-                }
-
-                /* Normalized is optional, defaulting to false */
-                const Utility::JsonToken* const gltfAccessorNormalized = gltfAccessor.find("normalized"_s);
-                if(gltfAccessorNormalized && !gltf->parseBool(*gltfAccessorNormalized)) {
-                    Error{} << "Trade::GltfImporter::openData(): accessor" << gltfAttribute.value().asUnsignedInt() << "has invalid normalized property";
-                    return;
-                }
-
-                const UnsignedInt accessorComponentType = gltfAccessorComponentType->asUnsignedInt();
-                const bool normalized = gltfAccessorNormalized && gltfAccessorNormalized->asBool();
-                if(accessorComponentType == Implementation::GltfTypeByte ||
-                   accessorComponentType == Implementation::GltfTypeShort ||
-                  (accessorComponentType == Implementation::GltfTypeUnsignedByte && !normalized) ||
-                  (accessorComponentType == Implementation::GltfTypeUnsignedShort && !normalized))
-                {
-                    Debug{} << "Trade::GltfImporter::openData(): file contains non-normalized texture coordinates, implicitly enabling textureCoordinateYFlipInMaterial";
-                    _d->textureCoordinateYFlipInMaterial = true;
-                }
+        for(Utility::JsonArrayItem gltfTarget: gltfTargets->asArray()) {
+            if(!gltf->parseObject(gltfTarget)) {
+                Error{} << "Trade::GltfImporter::openData(): invalid morph target" << gltfTarget.index() << "in mesh" << _d->gltfMeshPrimitiveMap[i].first();
+                return;
             }
 
-            /* Add the attribute to custom if not there already. Do it for all
-               builtin attributes as well, as those may still get imported as
-               custom if they have a strange vertex format. */
-            if(_d->meshAttributesForName.emplace(gltfAttribute.key(),
-                meshAttributeCustom(_d->meshAttributeNames.size())).second
-            )
-                arrayAppend(_d->meshAttributeNames, gltfAttribute.key());
-
-            /* The spec says that all user-defined attributes must start with
-               an underscore. We don't really care and just print a warning. */
-            /** @todo make this fail if strict mode is enabled? */
-            if(!(flags() & ImporterFlag::Quiet) && !isBuiltinMeshAttribute(configuration(), gltfAttribute.key()) && !gltfAttribute.key().hasPrefix("_"_s))
-                Warning{} << "Trade::GltfImporter::openData(): unknown attribute" << gltfAttribute.key() << Debug::nospace << ", importing as custom attribute";
+            if(!collectCustomAttributes(*gltf, gltfTarget)) {
+                return;
+            }
         }
     }
 
@@ -3261,7 +3289,7 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
     }
 
     /* Attributes */
-    Containers::Array<Containers::Pair<Containers::StringView, UnsignedInt>> attributeOrder;
+    Containers::Array<Containers::Triple<Containers::StringView, UnsignedInt, Int>> attributeOrder;
     if(const Utility::JsonToken* gltfAttributes = gltfPrimitive.find("attributes"_s)) {
         /* Primitive attributes object parsed in doOpenData() already, for
            custom attribute discovery, so we just use it directly. */
@@ -3273,7 +3301,7 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
             /* Bounds check is done in parseAccessor() later, no need to do it
                here again */
 
-            arrayAppend(attributeOrder, InPlaceInit, gltfAttribute.key(), gltfAttribute.value().asUnsignedInt());
+            arrayAppend(attributeOrder, InPlaceInit, gltfAttribute.key(), gltfAttribute.value().asUnsignedInt(), -1);
         }
     }
 
@@ -3286,15 +3314,31 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
         return {};
     }
 
+    /* Morph target attributes */
+    if(const Utility::JsonToken* gltfTargets = gltfPrimitive.find("targets"_s)) {
+        /* Morph targets array and target attribute objects parsed in doOpenData() already, for
+           custom attribute discovery, so we just use it directly. */
+        for(Utility::JsonArrayItem gltfTarget: gltfTargets->asArray()) {
+            for(Utility::JsonObjectItem gltfMorphAttribute: gltfTarget.value().asObject()) {
+                if(!_d->gltf->parseUnsignedInt(gltfMorphAttribute.value())) {
+                    Error{} << "Trade::GltfImporter::mesh(): invalid morph target attribute" << gltfMorphAttribute.key() << "in mesh" << _d->gltfMeshPrimitiveMap[id].first();
+                    return {};
+                }
+
+                arrayAppend(attributeOrder, InPlaceInit, gltfMorphAttribute.key(), gltfMorphAttribute.value().asUnsignedInt(), Int(gltfTarget.index()));
+            }
+        }
+    }
+
     /* Sort and remove duplicates except the last one. Attributes sorted by
-       name so that we add attribute sets in the correct order and can warn if
-       indices are not contiguous. */
+       name (per morph target) so that we add attribute sets in the correct
+       order and can warn if indices are not contiguous. */
     const std::size_t uniqueAttributeCount = stableSortRemoveDuplicatesToPrefix(arrayView(attributeOrder),
-        [](const Containers::Pair<Containers::StringView, UnsignedInt>& a, const Containers::Pair<Containers::StringView, UnsignedInt>& b) {
-            return a.first() < b.first();
+        [](const Containers::Triple<Containers::StringView, UnsignedInt, Int>& a, const Containers::Triple<Containers::StringView, UnsignedInt, Int>& b) {
+            return a.third() != b.third() ? a.third() < b.third() : a.first() < b.first();
         },
-        [](const Containers::Pair<Containers::StringView, UnsignedInt>& a, const Containers::Pair<Containers::StringView, UnsignedInt>& b) {
-            return a.first() == b.first();
+        [](const Containers::Triple<Containers::StringView, UnsignedInt, Int>& a, const Containers::Triple<Containers::StringView, UnsignedInt, Int>& b) {
+            return a.third() == b.third() && a.first() == b.first();
         });
 
     /* Gather all (whitelisted) attributes and the total buffer range spanning
@@ -3308,9 +3352,11 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
     Math::Range1D<std::size_t> bufferRange;
     Containers::Array<MeshAttributeData> attributeData{uniqueAttributeCount};
     /** @todo use suffix() once it takes suffix size and not prefix size */
-    for(const Containers::Pair<Containers::StringView, UnsignedInt>& attribute: attributeOrder.exceptPrefix(attributeOrder.size() - uniqueAttributeCount)) {
+    for(const Containers::Triple<Containers::StringView, UnsignedInt, Int>& attribute: attributeOrder.exceptPrefix(attributeOrder.size() - uniqueAttributeCount)) {
         /* Duplicate attribute, skip */
         if(attribute.second() == ~0u) continue;
+
+        const Int morphTargetId = attribute.third();
 
         /* Extract base name and number from builtin glTF numbered attributes,
            use the whole name otherwise */
@@ -3402,18 +3448,20 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
         /** @todo consider merging JOINTS_0, JOINTS_1 etc if they follow each
             other and have the same type */
         } else if(baseAttributeName == "JOINTS"_s) {
-            if(accessor->second() == VertexFormat::Vector4ui ||
-               accessor->second() == VertexFormat::Vector4us ||
-               accessor->second() == VertexFormat::Vector4ub) {
+            if((accessor->second() == VertexFormat::Vector4ui ||
+                accessor->second() == VertexFormat::Vector4us ||
+                accessor->second() == VertexFormat::Vector4ub) && morphTargetId == -1)
+            {
                 ++jointIdAttributeCount;
                 name = MeshAttribute::JointIds;
                 arraySize = vertexFormatComponentCount(accessor->second());
                 accessor->second() = vertexFormatComponentFormat(accessor->second());
             }
         } else if(baseAttributeName == "WEIGHTS"_s) {
-            if(accessor->second() == VertexFormat::Vector4 ||
-               accessor->second() == VertexFormat::Vector4ubNormalized ||
-               accessor->second() == VertexFormat::Vector4usNormalized) {
+            if((accessor->second() == VertexFormat::Vector4 ||
+                accessor->second() == VertexFormat::Vector4ubNormalized ||
+                accessor->second() == VertexFormat::Vector4usNormalized) && morphTargetId == -1)
+            {
                 ++weightAttributeCount;
                 name = MeshAttribute::Weights;
                 arraySize = vertexFormatComponentCount(accessor->second());
@@ -3425,9 +3473,10 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
         /* Object ID, name custom. To avoid confusion, print the error together
            with saying it's an object ID attribute */
         } else if(attribute.first() == configuration().value<Containers::StringView>("objectIdAttribute")) {
-            if(accessor->second() == VertexFormat::UnsignedInt ||
-               accessor->second() == VertexFormat::UnsignedShort ||
-               accessor->second() == VertexFormat::UnsignedByte) {
+            if((accessor->second() == VertexFormat::UnsignedInt ||
+                accessor->second() == VertexFormat::UnsignedShort ||
+                accessor->second() == VertexFormat::UnsignedByte) && morphTargetId == -1)
+            {
                 name = MeshAttribute::ObjectId;
             }
 
@@ -3454,8 +3503,12 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
                    print it without to be consistent with other messages */
                 e << attribute.first() << "format" << Debug::packed << accessor->second();
 
+                /* Indicate it's invalid for a morph target */
+                if(morphTargetId != -1)
+                    e << "in morph target" << morphTargetId;
+
                 if(configuration().value<bool>("strict"))
-                    e << Debug::nospace << ", set strict=false to import as a custom atttribute";
+                    e << Debug::nospace << ", set strict=false to import as a custom attribute";
                 else
                     e << Debug::nospace << ", importing as a custom attribute";
             }
@@ -3487,7 +3540,11 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
             bufferRange = Math::join(bufferRange, Math::Range1D<std::size_t>::fromSize(reinterpret_cast<std::size_t>(bufferView.first().data()), bufferView.first().size()));
 
             if(accessor->first().size()[0] != vertexCount) {
-                Error{} << "Trade::GltfImporter::mesh(): mismatched vertex count for attribute" << attribute.first() << Debug::nospace << ", expected" << vertexCount << "but got" << accessor->first().size()[0];
+                Debug e = Error{};
+                e << "Trade::GltfImporter::mesh(): mismatched vertex count for attribute" << attribute.first();
+                if(morphTargetId != -1)
+                    e << "in morph target" << morphTargetId;
+                e << Debug::nospace << ", expected" << vertexCount << "but got" << accessor->first().size()[0];
                 return {};
             }
         }
@@ -3496,7 +3553,7 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
 
         /* Fill in an attribute. Points to the input data, will be patched to
            the output data once we know where it's allocated. */
-        attributeData[attributeId++] = MeshAttributeData{name, accessor->second(), accessor->first(), arraySize};
+        attributeData[attributeId++] = MeshAttributeData{name, accessor->second(), accessor->first(), arraySize, morphTargetId};
 
         /* For backwards compatibility insert also a custom "JOINTS" /
            "WEIGHTS" attribute which is a Vector4<T> instead of T[4] */
@@ -3561,7 +3618,7 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
             vertexCount, attributeData[i].stride()};
 
         attributeData[i] = MeshAttributeData{attributeData[i].name(),
-            attributeData[i].format(), data, attributeData[i].arraySize()};
+            attributeData[i].format(), data, attributeData[i].arraySize(), attributeData[i].morphTargetId()};
 
         /* Flip Y axis of texture coordinates, unless it's done in the material
            instead */
