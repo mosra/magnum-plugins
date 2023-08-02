@@ -214,7 +214,7 @@ importer plugins the importer delegates to.
     @ref Trade-GltfImporter-configuration "configuration option". This doesn't
     affect spline-interpolated rotation tracks.
 -   Skin `skeleton` property is not imported
--   Morph targets are not supported
+-   Morph target animations are not supported
 -   Animation tracks are always imported with
     @ref Animation::Extrapolation::Constant, because glTF doesn't support
     anything else
@@ -314,6 +314,9 @@ importer plugins the importer delegates to.
 -   Attribute-less meshes either with or without an index buffer are supported,
     however since glTF has no way of specifying vertex count for those,
     returned @ref Trade::MeshData::vertexCount() is set to @cpp 0 @ce
+-   Morph targets, if present, have their attributes imported with
+    @ref Trade::MeshData::attributeMorphTargetId() set to index of the morph
+    target. Non-sparse buffers aren't supported for those at the moment.
 
 By default, the mesh import silently allows certain features that aren't
 strictly valid according to the glTF specification, such as 32-bit integer

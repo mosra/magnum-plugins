@@ -104,6 +104,7 @@ namespace Magnum {
     -   Range checks on scene, node, camera, mesh, material, child and light
         references in the scene hierarchy for more robust handling of broken
         files
+    -   Importing mesh morph target attributes (see [mosra/magnum-plugins#141](https://github.com/mosra/magnum-plugins/pull/141))
 -   New @relativeref{Trade,UfbxImporter} plugin for robust import of FBX and
     OBJ files including all advanced material properties (see
     [mosra/magnum-plugins#133](https://github.com/mosra/magnum-plugins/pull/133)
