@@ -1694,9 +1694,9 @@ GltfImporterTest::GltfImporterTest() {
     addInstancedTests({&GltfImporterTest::meshUnorderedAttributes},
         Containers::arraySize(QuietData));
 
-    addTests({&GltfImporterTest::meshMorphTargetAttributes});
+    addTests({&GltfImporterTest::meshMorphTargetAttributes,
 
-    addTests({&GltfImporterTest::meshMultiplePrimitives});
+              &GltfImporterTest::meshMultiplePrimitives});
 
     addInstancedTests({&GltfImporterTest::meshUnsignedIntVertexFormats},
         Containers::arraySize(MeshUnsignedIntVertexFormatsData));
