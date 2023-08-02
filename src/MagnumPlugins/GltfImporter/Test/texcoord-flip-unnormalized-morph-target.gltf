@@ -1,0 +1,66 @@
+{
+  "asset": {
+    "version": "2.0"
+  },
+  "note": "A subset of texcoord-flip-unnormalized.gltf with the attribute being in a morph target instead",
+  "meshes": [
+    {
+      "name": "signed short",
+      "primitives": [
+        {
+          "targets": [
+            {},
+            {},
+            {
+              "TEXCOORD_0": 0
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "accessors": [
+    {
+      "bufferView": 0,
+      "componentType": 5122,
+      "count": 3,
+      "type": "VEC2"
+    }
+  ],
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteOffset": 52,
+      "byteLength": 12
+    }
+  ],
+  "buffers": [
+    {
+      "note": "reusing the same as texcoord-flip.gltf",
+      "byteLength": 64,
+      "uri": "texcoord-flip.bin"
+    }
+  ],
+  "materials": [
+    {
+      "name": "transform from signed short",
+      "pbrMetallicRoughness": {
+        "baseColorTexture": {
+          "index": 0,
+          "extensions": {
+            "KHR_texture_transform": {
+              "offset": [0.0, 0.25],
+              "scale": [0.005, 0.0025]
+            }
+          }
+        }
+      }
+    }
+  ],
+  "textures": [
+    {}
+  ],
+  "extensionsUsed": [
+    "KHR_texture_transform"
+  ]
+}

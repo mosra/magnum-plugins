@@ -164,6 +164,7 @@ corrade_add_test(GltfImporterTest
         mesh-invalid-texcoord-flip-attribute-accessor-missing-component-type.gltf
         mesh-invalid-texcoord-flip-attribute-oob.gltf
         mesh-invalid-texcoord-flip-attribute.gltf
+        mesh-invalid-texcoord-flip-morph-target-attribute.gltf
         mesh-morph-target-attributes.gltf
         mesh-morph-target-attributes.bin
         mesh-multiple-primitives.gltf
@@ -212,6 +213,7 @@ corrade_add_test(GltfImporterTest
         texcoord-flip.bin
         texcoord-flip.gltf
         texcoord-flip-unnormalized.gltf
+        texcoord-flip-unnormalized-morph-target.gltf
         texture.gltf
         texture-extensions.gltf
         texture-invalid.gltf

@@ -1245,7 +1245,7 @@ void GltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags da
     if(configuration().value<bool>("textureCoordinateYFlipInMaterial"))
         _d->textureCoordinateYFlipInMaterial = true;
     for(std::size_t i = 0; i != _d->gltfMeshPrimitiveMap.size(); ++i) {
-        const auto collectCustomAttributesDecideTextureCoordinateYFlip = [this, i](Utility::Json& gltf, const Utility::JsonToken& gltfAttributes) {
+        const auto collectCustomAttributesDecideTextureCoordinateYFlip = [this, i](Utility::Json& gltf, const Utility::JsonToken& gltfAttributes, Int morphTargetId) {
             for(Utility::JsonObjectItem gltfAttribute: gltfAttributes.asObject()) {
                 /* Decide about texture coordinate Y flipping if not set
                    already */
@@ -1266,7 +1266,11 @@ void GltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags da
                        for all meshes. */
 
                     if(!gltf.parseUnsignedInt(gltfAttribute.value())) {
-                        Error{} << "Trade::GltfImporter::openData(): invalid attribute" << gltfAttribute.key() << "in mesh" << _d->gltfMeshPrimitiveMap[i].first();
+                        Error e;
+                        e << "Trade::GltfImporter::openData(): invalid attribute" << gltfAttribute.key();
+                        if(morphTargetId != -1)
+                            e << "in morph target" << morphTargetId;
+                        e << "in mesh" << _d->gltfMeshPrimitiveMap[i].first();
                         return false;
                     }
                     if(gltfAttribute.value().asUnsignedInt() >= _d->gltfAccessors.size()) {
@@ -1331,7 +1335,7 @@ void GltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags da
                 return;
             }
 
-            if(!collectCustomAttributesDecideTextureCoordinateYFlip(*gltf, *gltfAttributes))
+            if(!collectCustomAttributesDecideTextureCoordinateYFlip(*gltf, *gltfAttributes, -1))
                 return;
         }
 
@@ -1349,7 +1353,7 @@ void GltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags da
                     return;
                 }
 
-                if(!collectCustomAttributesDecideTextureCoordinateYFlip(*gltf, gltfTarget))
+                if(!collectCustomAttributesDecideTextureCoordinateYFlip(*gltf, gltfTarget.value(), gltfTarget.index()))
                     return;
             }
         }

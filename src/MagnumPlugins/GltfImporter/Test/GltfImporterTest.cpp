@@ -879,7 +879,7 @@ constexpr struct {
 };
 
 const struct {
-    const char* name;
+    TestSuite::TestCaseDescriptionSourceLocation name;
     const char* file;
     const char* message;
 } MeshInvalidWholeFileData[]{
@@ -913,6 +913,10 @@ const struct {
         "mesh-invalid-texcoord-flip-attribute.gltf",
         "Utility::Json::parseUnsignedInt(): expected a number, got Utility::JsonToken::Type::String at {}:15:27\n"
         "Trade::GltfImporter::openData(): invalid attribute TEXCOORD_3 in mesh 1\n"},
+    {"texcoord flip invalid morph target attribute",
+        "mesh-invalid-texcoord-flip-morph-target-attribute.gltf",
+        "Utility::Json::parseUnsignedInt(): expected a number, got Utility::JsonToken::Type::String at {}:18:29\n"
+        "Trade::GltfImporter::openData(): invalid attribute TEXCOORD_3 in morph target 2 in mesh 1\n"},
     {"texcoord flip attribute out of bounds",
         "mesh-invalid-texcoord-flip-attribute-oob.gltf",
         "accessor index 2 out of range for 2 accessors"},
@@ -1299,42 +1303,51 @@ constexpr struct {
     const char* meshName;
     bool flipInMaterial;
     bool hasTextureTransformation;
+    Int morphTargetId;
 } TextureCoordinateYFlipData[]{
     {"no transform",
-        "texcoord-flip.gltf", "float", false, false},
+        "texcoord-flip.gltf", "float", false, false, -1},
     {"no transform",
-        "texcoord-flip.gltf", "float", true, false},
+        "texcoord-flip.gltf", "float", true, false, -1},
     {"identity transform",
-        "texcoord-flip.gltf", "float", false, true},
+        "texcoord-flip.gltf", "float", false, true, -1},
     {"identity transform",
-        "texcoord-flip.gltf", "float", true, true},
+        "texcoord-flip.gltf", "float", true, true, -1},
     {"transform from normalized unsigned byte",
         "texcoord-flip.gltf",
-        "normalized unsigned byte", false, true},
+        "normalized unsigned byte", false, true, -1},
     {"transform from normalized unsigned byte",
         "texcoord-flip.gltf",
-        "normalized unsigned byte", true, true},
+        "normalized unsigned byte", true, true, -1},
     {"transform from normalized unsigned short",
         "texcoord-flip.gltf",
-        "normalized unsigned short", false, true},
+        "normalized unsigned short", false, true, -1},
     {"transform from normalized unsigned short",
         "texcoord-flip.gltf",
-        "normalized unsigned short", true, true},
+        "normalized unsigned short", true, true, -1},
     /* The following are in a separate file because otherwise
        textureCoordinateYFlipInMaterial would get implicitly enabled for all,
        making flips in meshes impossible to test */
     {"transform from normalized signed byte",
         "texcoord-flip-unnormalized.gltf",
-        "normalized signed byte", false, true},
+        "normalized signed byte", false, true, -1},
     {"transform from normalized signed byte",
         "texcoord-flip-unnormalized.gltf",
-        "normalized signed byte", true, true},
+        "normalized signed byte", true, true, -1},
     {"transform from signed short",
         "texcoord-flip-unnormalized.gltf",
-        "signed short", false, true},
+        "signed short", false, true, -1},
     {"transform from signed short",
         "texcoord-flip-unnormalized.gltf",
-        "signed short", true, true},
+        "signed short", true, true, -1},
+    /* Verifies that the Y flip gets correctly detected for a morph target
+       attribute as well */
+    {"transform from signed short",
+        "texcoord-flip-unnormalized-morph-target.gltf",
+        "signed short", false, true, 2},
+    {"transform from signed short",
+        "texcoord-flip-unnormalized-morph-target.gltf",
+        "signed short", true, true, 2},
 };
 
 const struct {
@@ -5087,9 +5100,13 @@ void GltfImporterTest::meshInvalidWholeFile() {
        potential placeholder for the filename, otherwise just the sentence
        without any placeholder */
     if(Containers::StringView{data.message}.hasSuffix('\n'))
-        CORRADE_COMPARE(out.str(), Utility::formatString(data.message, filename));
+        CORRADE_COMPARE_AS(out.str(),
+            Utility::formatString(data.message, filename),
+            TestSuite::Compare::String);
     else
-        CORRADE_COMPARE(out.str(), Utility::formatString("Trade::GltfImporter::openData(): {}\n", data.message));
+        CORRADE_COMPARE_AS(out.str(),
+            Utility::formatString("Trade::GltfImporter::openData(): {}\n", data.message),
+            TestSuite::Compare::String);
 }
 
 void GltfImporterTest::meshInvalid() {
@@ -6283,7 +6300,10 @@ void GltfImporterTest::materialInvalid() {
 
 void GltfImporterTest::textureCoordinateYFlip() {
     auto&& data = TextureCoordinateYFlipData[testCaseInstanceId()];
-    setTestCaseDescription(Utility::formatString("{}{}", data.materialName, data.flipInMaterial ? ", textureCoordinateYFlipInMaterial" : ""));
+    setTestCaseDescription(Utility::formatString("{}{}{}",
+        data.materialName,
+        data.morphTargetId == -1 ? "" : ", in a morph target",
+        data.flipInMaterial ? ", textureCoordinateYFlipInMaterial" : ""));
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
 
@@ -6296,8 +6316,8 @@ void GltfImporterTest::textureCoordinateYFlip() {
 
     Containers::Optional<Trade::MeshData> mesh = importer->mesh(data.meshName);
     CORRADE_VERIFY(mesh);
-    CORRADE_VERIFY(mesh->hasAttribute(MeshAttribute::TextureCoordinates));
-    Containers::Array<Vector2> texCoords = mesh->textureCoordinates2DAsArray();
+    CORRADE_VERIFY(mesh->hasAttribute(MeshAttribute::TextureCoordinates, data.morphTargetId));
+    Containers::Array<Vector2> texCoords = mesh->textureCoordinates2DAsArray(0, data.morphTargetId);
 
     /* Texture transform is added to materials that don't have it yet */
     Containers::Optional<Trade::MaterialData> material = importer->material(data.materialName);
