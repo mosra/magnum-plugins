@@ -484,6 +484,30 @@
           ]
         }
       ]
+    },
+    {
+      "name": "disallowed skinning morph target attribute",
+      "primitives": [
+        {
+          "targets": [
+            {
+              "JOINTS_0": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "disallowed object ID morph target attribute",
+      "primitives": [
+        {
+          "targets": [
+            {
+              "_OBJECT_ID": 0
+            }
+          ]
+        }
+      ]
     }
   ],
   "accessors": [

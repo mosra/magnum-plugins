@@ -3403,6 +3403,28 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
             return {};
         }
 
+        /* The MeshData class doesn't allow JointIds, Weights or ObjectId to be
+           a morph target as JointIds and ObjectId are integer formats (which
+           are hard/impossible to interpolate), and Weights cannot appear
+           without a matching JointIds. The glTF spec also disallows those in
+           morph targets, so this restriction shouldn't be a problem in
+           practice. Users can always switch to custom attributes if they need
+           (those aren't restricted), worst case this code gets changed to
+           import them as custom, like is done for example with non-normalized
+           integer colors. */
+        if(morphTargetId != -1 &&
+          (baseAttributeName == "JOINTS"_s ||
+           baseAttributeName == "WEIGHTS"_s ||
+           attribute.first() == configuration().value<Containers::StringView>("objectIdAttribute"))
+        ) {
+            Error e;
+            e << "Trade::GltfImporter::mesh():";
+            if(attribute.first() == configuration().value<Containers::StringView>("objectIdAttribute"))
+                e << "object ID attribute";
+            e << attribute.first() << "is not allowed to be a morph target";
+            return {};
+        }
+
         /* Whitelist supported attribute and format combinations. If not
            allowed, name stays empty, which produces an error in a single place
            below. */
@@ -3454,9 +3476,9 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
         /** @todo consider merging JOINTS_0, JOINTS_1 etc if they follow each
             other and have the same type */
         } else if(baseAttributeName == "JOINTS"_s) {
-            if((accessor->second() == VertexFormat::Vector4ui ||
-                accessor->second() == VertexFormat::Vector4us ||
-                accessor->second() == VertexFormat::Vector4ub) && morphTargetId == -1)
+            if(accessor->second() == VertexFormat::Vector4ui ||
+               accessor->second() == VertexFormat::Vector4us ||
+               accessor->second() == VertexFormat::Vector4ub)
             {
                 ++jointIdAttributeCount;
                 name = MeshAttribute::JointIds;
@@ -3464,9 +3486,9 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
                 accessor->second() = vertexFormatComponentFormat(accessor->second());
             }
         } else if(baseAttributeName == "WEIGHTS"_s) {
-            if((accessor->second() == VertexFormat::Vector4 ||
-                accessor->second() == VertexFormat::Vector4ubNormalized ||
-                accessor->second() == VertexFormat::Vector4usNormalized) && morphTargetId == -1)
+            if(accessor->second() == VertexFormat::Vector4 ||
+               accessor->second() == VertexFormat::Vector4ubNormalized ||
+               accessor->second() == VertexFormat::Vector4usNormalized)
             {
                 ++weightAttributeCount;
                 name = MeshAttribute::Weights;
@@ -3479,9 +3501,9 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
         /* Object ID, name custom. To avoid confusion, print the error together
            with saying it's an object ID attribute */
         } else if(attribute.first() == configuration().value<Containers::StringView>("objectIdAttribute")) {
-            if((accessor->second() == VertexFormat::UnsignedInt ||
-                accessor->second() == VertexFormat::UnsignedShort ||
-                accessor->second() == VertexFormat::UnsignedByte) && morphTargetId == -1)
+            if(accessor->second() == VertexFormat::UnsignedInt ||
+               accessor->second() == VertexFormat::UnsignedShort ||
+               accessor->second() == VertexFormat::UnsignedByte)
             {
                 name = MeshAttribute::ObjectId;
             }

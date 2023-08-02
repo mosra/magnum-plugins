@@ -800,7 +800,7 @@ const struct {
         "Trade::GltfImporter::mesh(): unsupported object ID attribute _OBJECT_ID format Short, importing as a custom attribute\n"
         "Trade::GltfImporter::mesh(): found attribute JOINTS_7 but expected JOINTS_0\n"
         "Trade::GltfImporter::mesh(): unsupported JOINTS_7 format Vector3ub, importing as a custom attribute\n"
-        "Trade::GltfImporter::mesh(): unsupported WEIGHTS_0 format Vector4 in morph target 0, importing as a custom attribute\n"},
+        "Trade::GltfImporter::mesh(): unsupported COLOR_0 format Vector4us in morph target 0, importing as a custom attribute\n"},
     {"quiet", ImporterFlag::Quiet, {},
         ""},
     {"strict", {}, true,
@@ -809,13 +809,13 @@ const struct {
         "Trade::GltfImporter::mesh(): unsupported object ID attribute _OBJECT_ID format Short, set strict=false to import as a custom attribute\n"
         "Trade::GltfImporter::mesh(): found attribute JOINTS_7 but expected JOINTS_0\n"
         "Trade::GltfImporter::mesh(): unsupported JOINTS_7 format Vector3ub, set strict=false to import as a custom attribute\n"
-        "Trade::GltfImporter::mesh(): unsupported WEIGHTS_0 format Vector4 in morph target 0, set strict=false to import as a custom attribute\n"},
+        "Trade::GltfImporter::mesh(): unsupported COLOR_0 format Vector4us in morph target 0, set strict=false to import as a custom attribute\n"},
     {"strict, quiet", ImporterFlag::Quiet, true,
         /* Warnings omitted, errors stay */
         "Trade::GltfImporter::mesh(): unsupported COLOR_3 format Vector4us, set strict=false to import as a custom attribute\n"
         "Trade::GltfImporter::mesh(): unsupported object ID attribute _OBJECT_ID format Short, set strict=false to import as a custom attribute\n"
         "Trade::GltfImporter::mesh(): unsupported JOINTS_7 format Vector3ub, set strict=false to import as a custom attribute\n"
-        "Trade::GltfImporter::mesh(): unsupported WEIGHTS_0 format Vector4 in morph target 0, set strict=false to import as a custom attribute\n"},
+        "Trade::GltfImporter::mesh(): unsupported COLOR_0 format Vector4us in morph target 0, set strict=false to import as a custom attribute\n"},
 };
 
 constexpr struct {
@@ -984,56 +984,56 @@ const struct {
     {"buffer with missing uri property",
         "buffer 2 has missing uri property"},
     {"buffer with invalid uri property",
-        "Utility::Json::parseString(): expected a string, got Utility::JsonToken::Type::Array at {}:903:14\n"
+        "Utility::Json::parseString(): expected a string, got Utility::JsonToken::Type::Array at {}:927:14\n"
         "Trade::GltfImporter::mesh(): buffer 3 has invalid uri property\n"},
     {"buffer with invalid uri",
         "invalid URI escape sequence %%"},
     {"buffer with missing byteLength property",
         "buffer 5 has missing or invalid byteLength property"},
     {"buffer with invalid byteLength property",
-        "Utility::Json::parseSize(): too large integer literal -3 at {}:917:21\n"
+        "Utility::Json::parseSize(): too large integer literal -3 at {}:941:21\n"
         "Trade::GltfImporter::mesh(): buffer 6 has missing or invalid byteLength property\n"},
     {"buffer view with missing buffer property",
         "buffer view 9 has missing or invalid buffer property"},
     {"buffer view with invalid buffer property",
-        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:853:17\n"
+        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:877:17\n"
         "Trade::GltfImporter::mesh(): buffer view 10 has missing or invalid buffer property\n"},
     {"buffer view with invalid byteOffset property",
-        "Utility::Json::parseSize(): too large integer literal -1 at {}:859:21\n"
+        "Utility::Json::parseSize(): too large integer literal -1 at {}:883:21\n"
         "Trade::GltfImporter::mesh(): buffer view 11 has invalid byteOffset property\n"},
     {"buffer view with missing byteLength property",
         "buffer view 12 has missing or invalid byteLength property"},
     {"buffer view with invalid byteLength property",
-        "Utility::Json::parseSize(): too large integer literal -12 at {}:869:21\n"
+        "Utility::Json::parseSize(): too large integer literal -12 at {}:893:21\n"
         "Trade::GltfImporter::mesh(): buffer view 13 has missing or invalid byteLength property\n"},
     {"buffer view with invalid byteStride property",
-        "Utility::Json::parseUnsignedInt(): too large integer literal -4 at {}:875:21\n"
+        "Utility::Json::parseUnsignedInt(): too large integer literal -4 at {}:899:21\n"
         "Trade::GltfImporter::mesh(): buffer view 14 has invalid byteStride property\n"},
     {"accessor with missing bufferView property",
         "accessor 11 has missing or invalid bufferView property"},
     {"accessor with invalid bufferView property",
-        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:715:21\n"
+        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:739:21\n"
         "Trade::GltfImporter::mesh(): accessor 30 has missing or invalid bufferView property\n"},
     {"accessor with invalid byteOffset property",
-        "Utility::Json::parseSize(): too large integer literal -1 at {}:723:21\n"
+        "Utility::Json::parseSize(): too large integer literal -1 at {}:747:21\n"
         "Trade::GltfImporter::mesh(): accessor 31 has invalid byteOffset property\n"},
     {"accessor with missing componentType property",
         "accessor 32 has missing or invalid componentType property"},
     {"accessor with invalid componentType property",
-        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:737:24\n"
+        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:761:24\n"
         "Trade::GltfImporter::mesh(): accessor 33 has missing or invalid componentType property\n"},
     {"accessor with missing count property",
         "accessor 34 has missing or invalid count property"},
     {"accessor with invalid count property",
-        "Utility::Json::parseSize(): too large integer literal -1 at {}:751:16\n"
+        "Utility::Json::parseSize(): too large integer literal -1 at {}:775:16\n"
         "Trade::GltfImporter::mesh(): accessor 35 has missing or invalid count property\n"},
     {"accessor with missing type property",
         "accessor 36 has missing or invalid type property"},
     {"accessor with invalid type property",
-        "Utility::Json::parseString(): expected a string, got Utility::JsonToken::Type::Number at {}:765:15\n"
+        "Utility::Json::parseString(): expected a string, got Utility::JsonToken::Type::Number at {}:789:15\n"
         "Trade::GltfImporter::mesh(): accessor 37 has missing or invalid type property\n"},
     {"accessor with invalid normalized property",
-        "Utility::Json::parseBool(): expected a bool, got Utility::JsonToken::Type::Null at {}:773:21\n"
+        "Utility::Json::parseBool(): expected a bool, got Utility::JsonToken::Type::Null at {}:797:21\n"
         "Trade::GltfImporter::mesh(): accessor 38 has invalid normalized property\n"},
     {"invalid primitive property",
         "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:436:19\n"
@@ -1049,6 +1049,10 @@ const struct {
         "Trade::GltfImporter::mesh(): invalid morph target attribute POSITION\n"},
     {"different vertex count for morph target attribute",
         "Trade::GltfImporter::mesh(): mismatched vertex count for attribute TEXCOORD_0 in morph target 0, expected 3 but got 4\n"},
+    {"disallowed skinning morph target attribute",
+        "JOINTS_0 is not allowed to be a morph target"},
+    {"disallowed object ID morph target attribute",
+        "object ID attribute _OBJECT_ID is not allowed to be a morph target"},
 };
 
 constexpr struct {
@@ -4767,7 +4771,9 @@ void GltfImporterTest::meshUnsupportedVertexFormats() {
     CORRADE_COMPARE(!!mesh1, !data.strict || !*data.strict);
     CORRADE_COMPARE(!!mesh2, !data.strict || !*data.strict);
     CORRADE_COMPARE(!!mesh3, !data.strict || !*data.strict);
-    CORRADE_COMPARE(out.str(), data.message);
+    CORRADE_COMPARE_AS(out.str(),
+        data.message,
+        TestSuite::Compare::String);
 
     if(mesh0) {
         CORRADE_COMPARE(mesh0->attributeCount(), 2);
@@ -4807,15 +4813,14 @@ void GltfImporterTest::meshUnsupportedVertexFormats() {
 
     if(mesh3) {
         CORRADE_COMPARE(mesh3->attributeCount(), 3);
-        CORRADE_VERIFY(isMeshAttributeCustom(mesh3->attributeName(2)));
-
-        /* The WEIGHTS attribute is not supported as part of a morph target,
-           despite the otherwise supported Vertex4 format */
-        CORRADE_COMPARE(importer->meshAttributeName(mesh3->attributeName(2)), "WEIGHTS_0");
-        CORRADE_COMPARE(mesh3->attributeMorphTargetId(2), 0);
-        CORRADE_COMPARE(mesh3->attributeFormat(2), VertexFormat::Vector4);
-        CORRADE_COMPARE_AS(mesh3->attribute<Vector4>(2), Containers::arrayView({
-            Vector4{1.0f, 2.0f, 3.0f, 4.0f}
+        CORRADE_VERIFY(isMeshAttributeCustom(mesh3->attributeName(1)));
+        /* This is basically the same as with mesh0, just in this case the
+           attribute appears in a morph target */
+        CORRADE_COMPARE(importer->meshAttributeName(mesh3->attributeName(1)), "COLOR_0");
+        CORRADE_COMPARE(mesh3->attributeMorphTargetId(1), 0);
+        CORRADE_COMPARE(mesh3->attributeFormat(1), VertexFormat::Vector4us);
+        CORRADE_COMPARE_AS(mesh3->attribute<Vector4us>(1), Containers::arrayView({
+            Vector4us{0x1122, 0x3344, 0x5566, 0x7788}
         }), TestSuite::Compare::Container);
     }
 
@@ -5128,9 +5133,13 @@ void GltfImporterTest::meshInvalid() {
        potential placeholder for the filename, otherwise just the sentence
        without any placeholder */
     if(Containers::StringView{data.message}.hasSuffix('\n'))
-        CORRADE_COMPARE(out.str(), Utility::formatString(data.message, filename));
+        CORRADE_COMPARE_AS(out.str(),
+            Utility::formatString(data.message, filename),
+            TestSuite::Compare::String);
     else
-        CORRADE_COMPARE(out.str(), Utility::formatString("Trade::GltfImporter::mesh(): {}\n", data.message));
+        CORRADE_COMPARE_AS(out.str(),
+            Utility::formatString("Trade::GltfImporter::mesh(): {}\n", data.message),
+            TestSuite::Compare::String);
 }
 
 void GltfImporterTest::meshInvalidBufferNotFound() {

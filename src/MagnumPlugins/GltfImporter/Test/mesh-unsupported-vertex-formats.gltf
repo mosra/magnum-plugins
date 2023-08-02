@@ -45,7 +45,7 @@
           },
           "targets": [
             {
-              "WEIGHTS_0": 4,
+              "COLOR_0": 0,
               "POSITION": 1
             }
           ],
