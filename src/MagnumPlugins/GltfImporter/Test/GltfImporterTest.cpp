@@ -1046,7 +1046,7 @@ const struct {
         "Trade::GltfImporter::mesh(): invalid indices property\n"},
     {"invalid morph target attribute",
         "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:467:27\n"
-        "Trade::GltfImporter::mesh(): invalid morph target attribute POSITION in mesh 46\n"},
+        "Trade::GltfImporter::mesh(): invalid morph target attribute POSITION\n"},
     {"different vertex count for morph target attribute",
         "Trade::GltfImporter::mesh(): mismatched vertex count for attribute TEXCOORD_0 in morph target 0, expected 3 but got 4\n"},
 };

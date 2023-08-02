@@ -3327,7 +3327,7 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
         for(Utility::JsonArrayItem gltfTarget: gltfTargets->asArray()) {
             for(Utility::JsonObjectItem gltfMorphAttribute: gltfTarget.value().asObject()) {
                 if(!_d->gltf->parseUnsignedInt(gltfMorphAttribute.value())) {
-                    Error{} << "Trade::GltfImporter::mesh(): invalid morph target attribute" << gltfMorphAttribute.key() << "in mesh" << _d->gltfMeshPrimitiveMap[id].first();
+                    Error{} << "Trade::GltfImporter::mesh(): invalid morph target attribute" << gltfMorphAttribute.key();
                     return {};
                 }
 
