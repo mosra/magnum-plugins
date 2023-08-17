@@ -47,10 +47,10 @@ class FreeTypeLayouter: public AbstractLayouter {
     private:
         std::tuple<Range2D, Range2D, Vector2> doRenderGlyph(const UnsignedInt i) override;
 
-        FT_Face font;
-        const AbstractGlyphCache& cache;
-        const Float fontSize, textSize;
-        const std::vector<FT_UInt> glyphs;
+        FT_Face _font;
+        const AbstractGlyphCache& _cache;
+        const Float _fontSize, _layoutSize;
+        const std::vector<FT_UInt> _glyphs;
 };
 
 }
@@ -182,27 +182,27 @@ Containers::Pointer<AbstractLayouter> FreeTypeFont::doLayout(const AbstractGlyph
 
 namespace {
 
-FreeTypeLayouter::FreeTypeLayouter(FT_Face font, const AbstractGlyphCache& cache, const Float fontSize, const Float textSize, std::vector<FT_UInt>&& glyphs): AbstractLayouter(glyphs.size()), font(font), cache(cache), fontSize(fontSize), textSize(textSize), glyphs(std::move(glyphs)) {}
+FreeTypeLayouter::FreeTypeLayouter(FT_Face font, const AbstractGlyphCache& cache, const Float fontSize, const Float layoutSize, std::vector<FT_UInt>&& glyphs): AbstractLayouter(glyphs.size()), _font(font), _cache(cache), _fontSize(fontSize), _layoutSize(layoutSize), _glyphs(std::move(glyphs)) {}
 
 std::tuple<Range2D, Range2D, Vector2> FreeTypeLayouter::doRenderGlyph(const UnsignedInt i) {
     /* Position of the texture in the resulting glyph, texture coordinates */
     Vector2i position;
     Range2Di rectangle;
-    std::tie(position, rectangle) = cache[glyphs[i]];
+    std::tie(position, rectangle) = _cache[_glyphs[i]];
 
     /* Normalized texture coordinates */
-    const auto textureCoordinates = Range2D(rectangle).scaled(1.0f/Vector2(cache.textureSize()));
+    const auto textureCoordinates = Range2D{rectangle}.scaled(1.0f/Vector2{_cache.textureSize()});
 
     /* Quad rectangle, computed from texture rectangle, denormalized to
        requested text size */
-    const auto quadRectangle = Range2D(Range2Di::fromSize(position, rectangle.size())).scaled(Vector2(textSize/fontSize));
+    const auto quadRectangle = Range2D(Range2Di::fromSize(position, rectangle.size())).scaled(Vector2{_layoutSize/_fontSize});
 
     /* Load glyph */
-    CORRADE_INTERNAL_ASSERT_OUTPUT(FT_Load_Glyph(font, glyphs[i], FT_LOAD_DEFAULT) == 0);
-    const FT_GlyphSlot slot = font->glyph;
+    CORRADE_INTERNAL_ASSERT_OUTPUT(FT_Load_Glyph(_font, _glyphs[i], FT_LOAD_DEFAULT) == 0);
+    const FT_GlyphSlot slot = _font->glyph;
 
     /* Glyph advance, denormalized to requested text size */
-    const Vector2 advance = Vector2(slot->advance.x, slot->advance.y)*(textSize/(64.0f*fontSize));
+    const Vector2 advance = Vector2{Float(slot->advance.x), Float(slot->advance.y)}*(_layoutSize/(64.0f*_fontSize));
 
     return std::make_tuple(quadRectangle, textureCoordinates, advance);
 }
