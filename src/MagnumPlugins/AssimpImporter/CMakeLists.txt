@@ -52,11 +52,22 @@ if(TARGET assimp) # Only defined if we have a CMake subproject
     set(_ASSIMP_TRY_COMPILE_LINK_OR_INCLUDE CMAKE_FLAGS "-DINCLUDE_DIRECTORIES=${_ASSIMP_INCLUDE_DIRECTORIES}/include\;${_ASSIMP_BINARY_INCLUDE_DIRECTORIES}/include")
     if(CMAKE_VERSION VERSION_LESS 3.6)
         message(FATAL_ERROR "Sorry, using Assimp as a CMake submodule requires CMake 3.6 in order to check for presence of various bugs. To continue, either upgrade CMake or use an external build of Assimp.")
-    else()
-        set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
     endif()
+    set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
 else()
     set(_ASSIMP_TRY_COMPILE_LINK_OR_INCLUDE LINK_LIBRARIES Assimp::Assimp)
+endif()
+
+# In addition to above, use a static library for try_compile() also to avoid
+# annoying debug/release build and _ITERATOR_DEBUG_LEVEL mismatches on Windows
+# (as they're only checked at link time). Without that, the user would need to
+# make sure to set CMAKE_TRY_COMPILE_CONFIGURATION based on what Assimp
+# libraries are found.
+if(CORRADE_TARGET_WINDOWS)
+    if(CMAKE_VERSION VERSION_LESS 3.6)
+        message(FATAL_ERROR "Sorry, using Assimp on Windows requires CMake 3.6 in order to check for presence of various bugs. To continue, either upgrade CMake or use an external build of Assimp.")
+    endif()
+    set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
 endif()
 
 # Newer versions of Assimp add C compile features that end up being propagated
@@ -89,7 +100,6 @@ foreach(_version 20220502 20210102 20201123 20200225 20191122 20190915 20160716 
             # have to use an internal variable for that instead.
             ${CORRADE_CXX11_STANDARD_FLAG}
         CMAKE_FLAGS
-            -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
             -DCMAKE_PROJECT_CMAKE_TRY_COMPILE_INCLUDE=${CMAKE_CURRENT_BINARY_DIR}/checkAssimpVersionLanguageOverride.cmake
         OUTPUT_VARIABLE _version_output)
     if(_works)
