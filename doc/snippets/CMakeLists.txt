@@ -39,12 +39,6 @@ set_directory_properties(PROPERTIES
     CORRADE_CXX_STANDARD 11
     CORRADE_USE_PEDANTIC_FLAGS ON)
 
-# Emscripten needs special flag to use WebGL 2
-if(CORRADE_TARGET_EMSCRIPTEN AND NOT TARGET_GLES2)
-    # TODO: give me INTERFACE_LINK_OPTIONS or something, please
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -s USE_WEBGL2=1")
-endif()
-
 if(MAGNUM_WITH_BASISIMPORTER)
     add_library(snippets-BasisImporter STATIC ${EXCLUDE_FROM_ALL_IF_TEST_TARGET}
         BasisImporter.cpp)
