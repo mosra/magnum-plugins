@@ -63,6 +63,18 @@ target_include_directories(GltfImporterDecodeTest PRIVATE ${PROJECT_SOURCE_DIR}/
 
 corrade_add_resource(GltfImporterTest_RESOURCES resources.conf)
 
+# Emscripten 3.1.3 changed the way files are bundled, putting them directly to
+# WASM instead of Base64'd to the JS file. However, it broke UTF-8 handling,
+# causing both a compile error (due to a syntax error in the assembly file) and
+# if that's patched, also runtime errors later.
+#   https://github.com/emscripten-core/emscripten/pull/16050
+# TODO: re-add and re-enable the test cases once a fix is made
+if(NOT CORRADE_TARGET_EMSCRIPTEN OR EMSCRIPTEN_VERSION VERSION_LESS 3.1.3)
+    set(GltfImporterTest_UTF8_FILES
+        přívodní-šňůra.gltf
+        přívodní-šňůra.bin
+        přívodní-šňůra.png)
+endif()
 corrade_add_test(GltfImporterTest
     GltfImporterTest.cpp
     ${GltfImporterTest_RESOURCES}
@@ -181,9 +193,7 @@ corrade_add_test(GltfImporterTest
         mesh-unsigned-int-vertex-formats.bin
         mesh-unsupported-vertex-formats.gltf
         mesh-unsupported-vertex-formats.bin
-        přívodní-šňůra.gltf
-        přívodní-šňůra.bin
-        přívodní-šňůra.png
+        ${GltfImporterTest_UTF8_FILES}
         required-extensions.gltf
         required-extensions-unsupported.gltf
         scene.gltf

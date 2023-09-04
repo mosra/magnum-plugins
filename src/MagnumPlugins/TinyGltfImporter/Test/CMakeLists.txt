@@ -55,6 +55,18 @@ file(GENERATE OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/configure.h
 
 corrade_add_resource(TinyGltfImporterTest_RESOURCES resources.conf)
 
+# Emscripten 3.1.3 changed the way files are bundled, putting them directly to
+# WASM instead of Base64'd to the JS file. However, it broke UTF-8 handling,
+# causing both a compile error (due to a syntax error in the assembly file) and
+# if that's patched, also runtime errors later.
+#   https://github.com/emscripten-core/emscripten/pull/16050
+# TODO: re-add and re-enable the test cases once a fix is made
+if(NOT CORRADE_TARGET_EMSCRIPTEN OR EMSCRIPTEN_VERSION VERSION_LESS 3.1.3)
+    set(TinyGltfImporterTest_UTF8_FILES
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/GltfImporter/Test/přívodní-šňůra.gltf
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/GltfImporter/Test/přívodní-šňůra.bin
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/GltfImporter/Test/přívodní-šňůra.png)
+endif()
 corrade_add_test(TinyGltfImporterTest
     TinyGltfImporterTest.cpp
     ${TinyGltfImporterTest_RESOURCES}
@@ -134,9 +146,7 @@ corrade_add_test(TinyGltfImporterTest
         mesh-skin-attributes.gltf
         mesh-skin-attributes.bin
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/GltfImporter/Test/mesh-unordered-attributes.gltf
-        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/GltfImporter/Test/přívodní-šňůra.gltf
-        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/GltfImporter/Test/přívodní-šňůra.bin
-        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/GltfImporter/Test/přívodní-šňůra.png
+        ${TinyGltfImporterTest_UTF8_FILES}
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/GltfImporter/Test/required-extensions.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/GltfImporter/Test/required-extensions-unsupported.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/GltfImporter/Test/scene.gltf
