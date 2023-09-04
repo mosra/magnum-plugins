@@ -414,11 +414,14 @@ const struct {
         "rgb-noflip-pow2.ktx2", {}, {},
         "Bc5RG", CompressedPixelFormat::Bc5RGUnorm, true,
         "Trade::BasisImporter::openData(): missing orientation metadata, assuming Y down. Set the assumeYUp option to suppress this warning.\n"},
+    /* BC7 is usually not compiled for Emscripten because it's _huge_ */
+    #if !defined(BASISD_SUPPORT_BC7) || BASISD_SUPPORT_BC7 != 0
     {"BC7, flip not implemented",
         "rgb-noflip.ktx2", {}, {},
         "Bc7RGBA", CompressedPixelFormat::Bc7RGBASrgb, false,
         "Trade::BasisImporter::openData(): missing orientation metadata, assuming Y down. Set the assumeYUp option to suppress this warning.\n"
         "Trade::BasisImporter::image2D(): Y flip is not yet implemented for CompressedPixelFormat::Bc7RGBASrgb, imported data will have wrong orientation. Enable assumeYUp to suppress this warning.\n"},
+    #endif
     {"PVRTC RGB, flip not implemented",
         "rgb-noflip-pow2.ktx2", {}, {},
         "PvrtcRGB4bpp", CompressedPixelFormat::PvrtcRGB4bppSrgb, false,
