@@ -88,10 +88,10 @@ Additionally, if you're using Magnum as a CMake subproject, bundle the
 [magnum-plugins](https://github.com/mosra/magnum-plugins) and
 [openexr](https://github.com/AcademySoftwareFoundation/openexr) repositories
 (pin OpenEXR at `v3.0.1` at least) and do the following. OpenEXR depends on
-zlib and Imath, however it's capable of fetching those dependencies on its own
-so bundling them isn't necessary. If you want to use system-installed OpenEXR,
-omit the  first part and point `CMAKE_PREFIX_PATH` to its installation dir if
-necessary.
+libdeflate (versions before 3.2.0 on zlib) and Imath, however it's capable of
+fetching those dependencies on its own so bundling them isn't necessary. If you
+want to use system-installed OpenEXR, omit the  first part and point
+`CMAKE_PREFIX_PATH` to its installation dir if necessary.
 
 @code{.cmake}
 # Disable unneeded functionality
@@ -103,6 +103,8 @@ set(OPENEXR_INSTALL_DOCS OFF CACHE BOOL "" FORCE)
 set(OPENEXR_INSTALL_EXAMPLES OFF CACHE BOOL "" FORCE)
 set(OPENEXR_INSTALL_PKG_CONFIG OFF CACHE BOOL "" FORCE)
 set(OPENEXR_INSTALL_TOOLS OFF CACHE BOOL "" FORCE)
+# OPENEXR_BUILD_TOOLS used by 3.1+, OPENEXR_BUILD_UTILS by versions before
+set(OPENEXR_BUILD_TOOLS OFF CACHE BOOL "" FORCE)
 set(OPENEXR_BUILD_UTILS OFF CACHE BOOL "" FORCE)
 # Otherwise OpenEXR uses C++14, and before OpenEXR 3.0.2 also forces C++14 on
 # all libraries that link to it.

@@ -800,7 +800,7 @@ void OpenExrImageConverterTest::customWindowsCubeMap() {
         TestSuite::Compare::StringToFile);
     #else
     CORRADE_COMPARE_AS(Containers::StringView{*data},
-        Utility::Path::join(OPENEXRIMAGECONVERTER_TEST_DIR, "envmap-cube-custom-windows11.exr"),
+        Utility::Path::join(OPENEXRIMAGECONVERTER_TEST_DIR, "envmap-cube-custom-windows-31.exr"),
         TestSuite::Compare::StringToFile);
     #endif
 
