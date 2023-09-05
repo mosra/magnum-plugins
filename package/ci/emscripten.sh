@@ -98,6 +98,30 @@ cmake ../build/cmake \
 ninja install
 cd ../..
 
+# Crosscompile OpenEXR
+export OPENEXR_VERSION=3.2.0
+wget --no-check-certificate https://github.com/AcademySoftwareFoundation/openexr/archive/v$OPENEXR_VERSION/openexr-$OPENEXR_VERSION.tar.gz
+tar -xzf openexr-$OPENEXR_VERSION.tar.gz
+cd openexr-$OPENEXR_VERSION
+mkdir build && cd build
+cmake .. \
+    -DCMAKE_TOOLCHAIN_FILE="../../toolchains/generic/Emscripten-wasm.cmake" \
+    -DCMAKE_INSTALL_PREFIX=$HOME/deps \
+    -DOPENEXR_BUILD_TOOLS=OFF \
+    -DOPENEXR_ENABLE_THREADING=OFF \
+    -DBUILD_TESTING=OFF \
+    -DBUILD_SHARED_LIBS=OFF \
+    -DOPENEXR_INSTALL_EXAMPLES=OFF \
+    -DOPENEXR_INSTALL_TOOLS=OFF \
+    -DOPENEXR_INSTALL_PKG_CONFIG=OFF \
+    -DOPENEXR_FORCE_INTERNAL_IMATH=ON \
+    -DOPENEXR_FORCE_INTERNAL_DEFLATE=ON \
+    -DIMATH_INSTALL_PKG_CONFIG=OFF \
+    -DIMATH_HALF_USE_LOOKUP_TABLE=OFF \
+    -G Ninja
+ninja install
+cd ../..
+
 # Crosscompile. MAGNUM_BUILD_GL_TESTS is enabled just to be sure, it should not
 # be needed by any plugin.
 # MAGNUM_WITH_BASISIMAGECONVERTER is disabled as it requires pthreads.
@@ -135,8 +159,8 @@ cmake .. \
     -DMAGNUM_WITH_KTXIMPORTER=ON \
     -DMAGNUM_WITH_MESHOPTIMIZERSCENECONVERTER=OFF \
     -DMAGNUM_WITH_MINIEXRIMAGECONVERTER=ON \
-    -DMAGNUM_WITH_OPENEXRIMAGECONVERTER=OFF \
-    -DMAGNUM_WITH_OPENEXRIMPORTER=OFF \
+    -DMAGNUM_WITH_OPENEXRIMAGECONVERTER=ON \
+    -DMAGNUM_WITH_OPENEXRIMPORTER=ON \
     -DMAGNUM_WITH_OPENGEXIMPORTER=ON \
     -DMAGNUM_WITH_PNGIMAGECONVERTER=OFF \
     -DMAGNUM_WITH_PNGIMPORTER=OFF \

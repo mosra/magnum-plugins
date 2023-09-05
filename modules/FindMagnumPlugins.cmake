@@ -465,6 +465,16 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
             find_package(OpenEXR REQUIRED MODULE)
             set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
                 INTERFACE_LINK_LIBRARIES OpenEXR::OpenEXR)
+            # OpenEXR uses exceptions, which need an explicit flag on
+            # Emscripten. This is most likely not propagated through its CMake
+            # config file, so doing that explicitly here.
+            if(CORRADE_TARGET_EMSCRIPTEN)
+                if(CMAKE_VERSION VERSION_LESS 3.13)
+                    message(FATAL_ERROR "CMake 3.13+ is required in order to specify Emscripten linker options")
+                endif()
+                set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
+                    INTERFACE_LINK_OPTIONS "SHELL:-s DISABLE_EXCEPTION_CATCHING=0")
+            endif()
 
         # No special setup for the OpenDdl library
         # OpenGexImporter has no dependencies

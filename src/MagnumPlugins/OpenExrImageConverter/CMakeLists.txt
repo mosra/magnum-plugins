@@ -52,6 +52,15 @@ target_include_directories(OpenExrImageConverter PUBLIC
     ${PROJECT_SOURCE_DIR}/src
     ${PROJECT_BINARY_DIR}/src)
 target_link_libraries(OpenExrImageConverter PUBLIC Magnum::Trade OpenEXR::OpenEXR)
+# OpenEXR uses exceptions. No way around those.
+# https://github.com/AcademySoftwareFoundation/openexr/issues/211
+if(CORRADE_TARGET_EMSCRIPTEN)
+    if(CMAKE_VERSION VERSION_LESS 3.13)
+        message(FATAL_ERROR "CMake 3.13+ is required in order to specify Emscripten linker options")
+    endif()
+    target_compile_options(OpenExrImageConverter PUBLIC "SHELL:-s DISABLE_EXCEPTION_CATCHING=0")
+    target_link_options(OpenExrImageConverter PUBLIC "SHELL:-s DISABLE_EXCEPTION_CATCHING=0")
+endif()
 
 install(FILES OpenExrImageConverter.h ${CMAKE_CURRENT_BINARY_DIR}/configure.h
     DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/OpenExrImageConverter)
