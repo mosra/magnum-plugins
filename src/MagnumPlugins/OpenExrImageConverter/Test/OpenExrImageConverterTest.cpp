@@ -197,7 +197,11 @@ const struct {
     {"RLE", "rle", {}, {}, 427, 602},
     /* For consistency with versions before 3.1.3 (where it's hardcoded to
        6 instead of 4 and can't be changed) */
+    #if OPENEXR_VERSION_MAJOR*10000 + OPENEXR_VERSION_MINOR*100 + OPENEXR_VERSION_PATCH >= 30200
+    {"ZIP level 6", "zip", 6, {}, 391, 407},
+    #else
     {"ZIP level 6", "zip", 6, {}, 391, 402},
+    #endif
     #if OPENEXR_VERSION_MAJOR*10000 + OPENEXR_VERSION_MINOR*100 + OPENEXR_VERSION_PATCH >= 30103
     {"ZIP level 0", "zip", 0, {}, 395, 426},
     #endif
@@ -532,9 +536,15 @@ void OpenExrImageConverterTest::cubeMap3D() {
     Containers::Optional<Containers::Array<char>> data = converter->convertToData(CubeRg16f);
     CORRADE_VERIFY(data);
     /** @todo Compare::DataToFile */
+    #if OPENEXR_VERSION_MAJOR*10000 + OPENEXR_VERSION_MINOR*100 + OPENEXR_VERSION_PATCH >= 30200
     CORRADE_COMPARE_AS(Containers::StringView{*data},
         Utility::Path::join(OPENEXRIMPORTER_TEST_DIR, "envmap-cube.exr"),
         TestSuite::Compare::StringToFile);
+    #else
+    CORRADE_COMPARE_AS(Containers::StringView{*data},
+        Utility::Path::join(OPENEXRIMAGECONVERTER_TEST_DIR, "envmap-cube-31.exr"),
+        TestSuite::Compare::StringToFile);
+    #endif
 
     /* The metadata has no effect on the actual saved data, so no point in
        importing. Verifying the metadata has to be done using the `exrheader`
@@ -616,9 +626,15 @@ void OpenExrImageConverterTest::customChannels() {
     Containers::Optional<Containers::Array<char>> data = converter->convertToData(Rgba32f);
     CORRADE_VERIFY(data);
     /** @todo Compare::DataToFile */
+    #if OPENEXR_VERSION_MAJOR*10000 + OPENEXR_VERSION_MINOR*100 + OPENEXR_VERSION_PATCH >= 30200
     CORRADE_COMPARE_AS(Containers::StringView{*data},
         Utility::Path::join(OPENEXRIMPORTER_TEST_DIR, "rgba32f-custom-channels.exr"),
         TestSuite::Compare::StringToFile);
+    #else
+    CORRADE_COMPARE_AS(Containers::StringView{*data},
+        Utility::Path::join(OPENEXRIMAGECONVERTER_TEST_DIR, "rgba32f-custom-channels-31.exr"),
+        TestSuite::Compare::StringToFile);
+    #endif
 
     if(_importerManager.loadState("OpenExrImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("OpenExrImporter plugin not found, cannot test");
@@ -778,9 +794,15 @@ void OpenExrImageConverterTest::customWindowsCubeMap() {
     Containers::Optional<Containers::Array<char>> data = converter->convertToData(CubeRg16f);
     CORRADE_VERIFY(data);
     /** @todo Compare::DataToFile */
+    #if OPENEXR_VERSION_MAJOR*10000 + OPENEXR_VERSION_MINOR*100 + OPENEXR_VERSION_PATCH >= 30200
     CORRADE_COMPARE_AS(Containers::StringView{*data},
         Utility::Path::join(OPENEXRIMPORTER_TEST_DIR, "envmap-cube-custom-windows.exr"),
         TestSuite::Compare::StringToFile);
+    #else
+    CORRADE_COMPARE_AS(Containers::StringView{*data},
+        Utility::Path::join(OPENEXRIMAGECONVERTER_TEST_DIR, "envmap-cube-custom-windows11.exr"),
+        TestSuite::Compare::StringToFile);
+    #endif
 
     if(_importerManager.loadState("OpenExrImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("OpenExrImporter plugin not found, cannot test");
@@ -1112,9 +1134,15 @@ void OpenExrImageConverterTest::levelsCubeMap() {
     Containers::Optional<Containers::Array<char>> data = converter->convertToData({image0, image1, image2});
     CORRADE_VERIFY(data);
     /** @todo Compare::DataToFile */
+    #if OPENEXR_VERSION_MAJOR*10000 + OPENEXR_VERSION_MINOR*100 + OPENEXR_VERSION_PATCH >= 30200
     CORRADE_COMPARE_AS(Containers::StringView{*data},
         Utility::Path::join(OPENEXRIMPORTER_TEST_DIR, "levels-cube.exr"),
         TestSuite::Compare::StringToFile);
+    #else
+    CORRADE_COMPARE_AS(Containers::StringView{*data},
+        Utility::Path::join(OPENEXRIMAGECONVERTER_TEST_DIR, "levels-cube-31.exr"),
+        TestSuite::Compare::StringToFile);
+    #endif
 
     if(_importerManager.loadState("OpenExrImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("OpenExrImporter plugin not found, cannot test");
@@ -1216,9 +1244,15 @@ void OpenExrImageConverterTest::levelsCubeMapIncomplete() {
     Containers::Optional<Containers::Array<char>> out = converter->convertToData({image0, image1});
     CORRADE_VERIFY(out);
     /** @todo Compare::DataToFile */
+    #if OPENEXR_VERSION_MAJOR*10000 + OPENEXR_VERSION_MINOR*100 + OPENEXR_VERSION_PATCH >= 30200
     CORRADE_COMPARE_AS(Containers::StringView{*out},
         Utility::Path::join(OPENEXRIMPORTER_TEST_DIR, "levels-cube-incomplete.exr"),
         TestSuite::Compare::StringToFile);
+    #else
+    CORRADE_COMPARE_AS(Containers::StringView{*out},
+        Utility::Path::join(OPENEXRIMAGECONVERTER_TEST_DIR, "levels-cube-incomplete-31.exr"),
+        TestSuite::Compare::StringToFile);
+    #endif
 
     if(_importerManager.loadState("OpenExrImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("OpenExrImporter plugin not found, cannot test");

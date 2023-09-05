@@ -82,7 +82,16 @@ corrade_add_test(OpenExrImageConverterTest OpenExrImageConverterTest.cpp
         ../../OpenExrImporter/Test/levels-cube.exr
         ../../OpenExrImporter/Test/levels-cube-incomplete.exr
         rb32f-custom-channels.exr
-        envmap-latlong.exr)
+        envmap-latlong.exr
+
+        # Subset of the above files for which OpenEXR 3.1.11 and older (which
+        # uses zlib) produces a different output than 3.2.0 (which uses
+        # libdeflate)
+        envmap-cube-31.exr
+        envmap-cube-custom-windows-31.exr
+        levels-cube-31.exr
+        levels-cube-incomplete-31.exr
+        rgba32f-custom-channels-31.exr)
 target_include_directories(OpenExrImageConverterTest PRIVATE
     ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>
     $<TARGET_PROPERTY:OpenEXR::OpenEXR,INTERFACE_INCLUDE_DIRECTORIES>)
