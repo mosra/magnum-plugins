@@ -436,7 +436,7 @@ Containers::Optional<Containers::Array<char>> GltfSceneConverter::doEndData() {
                 const Containers::StringView name = meshProperties[meshMaterialAssignment.first()].gltfName;
                 if(!nameToUse) nameToUse = name;
                 else if(nameToUse != name) {
-                    nameToUse = Containers::NullOpt;
+                    nameToUse = {};
                     break;
                 }
             }
