@@ -33,8 +33,18 @@
 #include <Corrade/Utility/Debug.h>
 #include <Corrade/Utility/Endianness.h>
 
+/* GCC 12 and 13 in Release warns about some clearly bogus "maybe
+   uninitialized" variables inside stb_vorbis. I DON'T CARE, THE FILE IS PULLED
+   IN WITH -isystem, YOU ARE NOT SUPPOSED TO COMPLAIN FOR THOSE */
+#if defined(CORRADE_TARGET_GCC) && !defined(CORRADE_TARGET_CLANG) && __GNUC__ >= 12
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+#endif
 #define STB_VORBIS_NO_STDIO 1
 #include "stb_vorbis.c"
+#if defined(CORRADE_TARGET_GCC) && !defined(CORRADE_TARGET_CLANG) && __GNUC__ >= 12
+#pragma GCC diagnostic pop
+#endif
 
 namespace Magnum { namespace Audio {
 

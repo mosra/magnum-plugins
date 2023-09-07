@@ -34,6 +34,12 @@
 
 using namespace Magnum;
 
+/* GCC 11+ in Release warns that "this pointer is null". Yes. It is. Fuck off,
+   those are documentation code snippets. */
+#if defined(CORRADE_TARGET_GCC) && !defined(CORRADE_TARGET_CLANG) && __GNUC__ >= 11
+#pragma GCC diagnostic ignored "-Wnonnull"
+#endif
+
 int main() {
 
 {

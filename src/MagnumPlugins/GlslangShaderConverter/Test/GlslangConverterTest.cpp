@@ -774,9 +774,20 @@ void GlslangConverterTest::convert() {
     Containers::Optional<Containers::Array<char>> output = converter->convertFileToData(data.stage, data.alias ? data.alias : data.filename);
     CORRADE_VERIFY(output);
 
+    /* GCC 12 in Release warns Optional internals not being initialized. Yet
+       another variant of https://gcc.gnu.org/bugzilla/show_bug.cgi?id=80635,
+       unfortunately the volatile workaround in Optional internals doesn't work
+       in this particular case. Version 11 and 13 is fine. */
+    #if defined(CORRADE_TARGET_GCC) && !defined(CORRADE_TARGET_CLANG) && __GNUC__ == 12
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+    #endif
     /* glslang 7.13 / 8.13 differs from 10 only in the generator version, patch
        that to have the same output */
     auto words = Containers::arrayCast<UnsignedInt>(*output);
+    #if defined(CORRADE_TARGET_GCC) && !defined(CORRADE_TARGET_CLANG) && __GNUC__ == 12
+    #pragma GCC diagnostic pop
+    #endif
     if(words.size() >= 3 && (words[2] == 524295 || words[2] == 524296))
         words[2] = 524298;
 

@@ -757,7 +757,19 @@ const char* Document::parseStructureList(const std::size_t parent, const Contain
 
     /* Parse all structures in the list */
     const char* i = data;
+    /* GCC 12 and 13 in Release warns about this variable being "maybe
+       uninitialized". HOW DARE YOU EVEN COMPLAIN? There's a call to
+       parseStructure() below, which increases _structures.size() if it doesn't
+       fail, and so `last` is never accessed if that function wasn't called,
+       resulting in `last` being filled from its return value. FUCK OFF, I'm
+       not going to zero-initialize all my variables just because something
+       thinks so, because doing THAT may hide ACTUAL bugs that would otherwise
+       get caught by the non-deterministic value of said variable. */
+    #if defined(CORRADE_TARGET_GCC) && !defined(CORRADE_TARGET_CLANG) && __GNUC__ >= 12
+    std::size_t last{};
+    #else
     std::size_t last;
+    #endif
     while(i && i != data.end() && *i != '}') {
         std::tie(i, last) = parseStructure(parent, data.suffix(i), references, buffer, error);
         i = Implementation::whitespace(data.suffix(i));
