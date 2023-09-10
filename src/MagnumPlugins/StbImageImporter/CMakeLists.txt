@@ -54,7 +54,8 @@ target_link_libraries(StbImageImporter PUBLIC Magnum::Trade)
 #   wasm-ld: error: /path/to/.emscripten_cache/sysroot/lib/wasm32-emscripten/lto/libc.a(scalbnf.o): attempt to add bitcode file after LTO.
 # Workaround from https://github.com/emscripten-core/emscripten/issues/16836,
 # same code is in FindMagnumPlugins. TODO add an upper version guard to both
-# once it's fixed: https://github.com/emscripten-core/emscripten/issues/19781
+# once the fix is released (3.1.46 probably?)
+#   https://github.com/emscripten-core/emscripten/issues/19781
 if(CORRADE_TARGET_EMSCRIPTEN AND NOT EMSCRIPTEN_VERSION VERSION_LESS 3.1.42)
     if(CMAKE_VERSION VERSION_LESS 3.13)
         message(FATAL_ERROR "CMake 3.13+ is required in order to specify Emscripten linker options")
