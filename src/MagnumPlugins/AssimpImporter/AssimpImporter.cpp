@@ -257,7 +257,7 @@ bool AssimpImporter::doIsOpened() const { return _f && _f->scene; }
 namespace {
 
 struct IoStream: Assimp::IOStream {
-    explicit IoStream(std::string filename, Containers::ArrayView<const char> data): filename{std::move(filename)}, _data{data}, _pos{} {}
+    explicit IoStream(std::string filename, Containers::ArrayView<const char> data): filename{Utility::move(filename)}, _data{data}, _pos{} {}
 
     /* mimics fread() / fseek() */
     std::size_t Read(void* buffer, std::size_t size, std::size_t count) override {
@@ -865,7 +865,7 @@ Containers::Optional<SceneData> AssimpImporter::doScene(UnsignedInt) {
     /* Convert back to the default deleter to avoid dangling deleter function
        pointer issues when unloading the plugin */
     arrayShrink(fields, DefaultInit);
-    return SceneData{SceneMappingType::UnsignedInt, _f->nodes.size(), std::move(data), std::move(fields), _f->scene->mRootNode};
+    return SceneData{SceneMappingType::UnsignedInt, _f->nodes.size(), Utility::move(data), Utility::move(fields), _f->scene->mRootNode};
 }
 
 UnsignedLong AssimpImporter::doObjectCount() const {
@@ -1304,8 +1304,8 @@ Containers::Optional<MeshData> AssimpImporter::doMesh(const UnsignedInt id, Unsi
     }
 
     return MeshData{primitive,
-        std::move(indexData), MeshIndexData{indices},
-        std::move(vertexData), std::move(attributeData),
+        Utility::move(indexData), MeshIndexData{indices},
+        Utility::move(vertexData), Utility::move(attributeData),
         MeshData::ImplicitVertexCount, mesh};
 }
 
@@ -1810,7 +1810,7 @@ Containers::Optional<MaterialData> AssimpImporter::doMaterial(const UnsignedInt 
 
     /** @todo detect PBR properties and add relevant types accordingly */
     const MaterialType materialType = forceRaw ? MaterialType{} : MaterialType::Phong;
-    return MaterialData{materialType, std::move(attributes), std::move(layers), mat};
+    return MaterialData{materialType, Utility::move(attributes), Utility::move(layers), mat};
 }
 
 UnsignedInt AssimpImporter::doTextureCount() const { return _f->textures.size(); }
@@ -1945,7 +1945,7 @@ AbstractImporter* AssimpImporter::setupOrReuseImporterForImage(const UnsignedInt
         return nullptr;
     }
 
-    return &_f->imageImporter.emplace(std::move(importer));
+    return &_f->imageImporter.emplace(Utility::move(importer));
 }
 
 UnsignedInt AssimpImporter::doImage2DLevelCount(const UnsignedInt id) {
@@ -2277,7 +2277,7 @@ Containers::Optional<AnimationData> AssimpImporter::doAnimation(UnsignedInt id) 
     if(hadToRenormalize && !(flags() & ImporterFlag::Quiet))
         Warning{} << "Trade::AssimpImporter::animation(): quaternions in some rotation tracks were renormalized";
 
-    return AnimationData{std::move(data), std::move(tracks),
+    return AnimationData{Utility::move(data), Utility::move(tracks),
         mergeAnimationClips ? nullptr : _f->scene->mAnimations[id]};
 }
 
@@ -2337,7 +2337,7 @@ Containers::Optional<SkinData3D> AssimpImporter::doSkin3D(const UnsignedInt id) 
             reinterpret_cast<const float*>(&bone->mOffsetMatrix)).transposed();
     }
 
-    return SkinData3D{std::move(joints), std::move(inverseBindMatrices), mesh};
+    return SkinData3D{Utility::move(joints), Utility::move(inverseBindMatrices), mesh};
 }
 
 const void* AssimpImporter::doImporterState() const {

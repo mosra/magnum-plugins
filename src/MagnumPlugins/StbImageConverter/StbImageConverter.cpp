@@ -183,7 +183,7 @@ Containers::Optional<Containers::Array<char>> StbImageConverter::doConvertToData
     arrayShrink(data);
 
     /* GCC 4.8 needs extra help here */
-    return Containers::optional(std::move(data));
+    return Containers::optional(Utility::move(data));
 }
 
 bool StbImageConverter::doConvertToFile(const ImageView2D& image, const Containers::StringView filename) {

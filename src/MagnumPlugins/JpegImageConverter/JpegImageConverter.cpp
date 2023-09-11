@@ -63,7 +63,7 @@ JpegImageConverter::JpegImageConverter() {
     configuration().setValue("jpegQuality", 0.8f);
 }
 
-JpegImageConverter::JpegImageConverter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin): AbstractImageConverter(manager, std::move(plugin)) {}
+JpegImageConverter::JpegImageConverter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin): AbstractImageConverter(manager, Utility::move(plugin)) {}
 
 ImageConverterFeatures JpegImageConverter::doFeatures() const { return ImageConverterFeature::Convert2DToData; }
 
@@ -197,7 +197,7 @@ Containers::Optional<Containers::Array<char>> JpegImageConverter::doConvertToDat
     arrayShrink(destinationManager.output);
 
     /* GCC 4.8 needs extra help here */
-    return Containers::optional(std::move(destinationManager.output));
+    return Containers::optional(Utility::move(destinationManager.output));
 }
 
 }}

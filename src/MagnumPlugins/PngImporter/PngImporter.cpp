@@ -75,7 +75,7 @@ void PngImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFlags
 
     /* Take over the existing array or copy the data if we can't */
     if(dataFlags & (DataFlag::Owned|DataFlag::ExternallyOwned)) {
-        _in = std::move(data);
+        _in = Utility::move(data);
     } else {
         _in = Containers::Array<char>{NoInit, data.size()};
         Utility::copy(data, _in);
@@ -276,7 +276,7 @@ Containers::Optional<ImageData2D> PngImporter::doImage2D(UnsignedInt, UnsignedIn
     } else CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
 
     /* Always using the default 4-byte alignment */
-    return Trade::ImageData2D{format, size, std::move(data)};
+    return Trade::ImageData2D{format, size, Utility::move(data)};
 }
 
 }}

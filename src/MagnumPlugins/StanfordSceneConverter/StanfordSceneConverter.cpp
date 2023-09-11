@@ -49,7 +49,7 @@ Containers::Optional<Containers::Array<char>> StanfordSceneConverter::doConvertT
     MeshData triangles{MeshPrimitive::Triangles, 0};
     if(mesh.primitive() == MeshPrimitive::TriangleStrip ||
        mesh.primitive() == MeshPrimitive::TriangleFan) {
-        triangles = MeshTools::generateIndices(std::move(mesh));
+        triangles = MeshTools::generateIndices(Utility::move(mesh));
 
     /* If it's triangles already, make a non-owning reference to the original */
     } else if(mesh.primitive() == MeshPrimitive::Triangles) {
@@ -357,7 +357,7 @@ Containers::Optional<Containers::Array<char>> StanfordSceneConverter::doConvertT
     }
 
     /* GCC 4.8 needs extra help here */
-    return Containers::optional(std::move(out));
+    return Containers::optional(Utility::move(out));
 }
 
 }}

@@ -61,7 +61,7 @@ void SpngImporter::doOpenData(Containers::Array<char>&& data, const DataFlags da
 
     /* Take over the existing array or copy the data if we can't */
     if(dataFlags & (DataFlag::Owned|DataFlag::ExternallyOwned)) {
-        _in = std::move(data);
+        _in = Utility::move(data);
     } else {
         _in = Containers::Array<char>{NoInit, data.size()};
         Utility::copy(data, _in);
@@ -239,7 +239,7 @@ Containers::Optional<ImageData2D> SpngImporter::doImage2D(UnsignedInt, UnsignedI
         https://libspng.org/docs/decode/#error-handling
        Possibly related: https://github.com/randy408/libspng/issues/119 */
 
-    return ImageData2D{format, Vector2i{Int(ihdr.width), Int(ihdr.height)}, std::move(out)};
+    return ImageData2D{format, Vector2i{Int(ihdr.width), Int(ihdr.height)}, Utility::move(out)};
 }
 
 }}

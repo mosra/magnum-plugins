@@ -163,7 +163,7 @@ void FreeTypeFont::doFillGlyphCache(AbstractGlyphCache& cache, const std::u32str
     }
 
     /* Set cache image */
-    Image2D image(PixelFormat::R8Unorm, cache.textureSize(), std::move(pixmap));
+    Image2D image(PixelFormat::R8Unorm, cache.textureSize(), Utility::move(pixmap));
     cache.setImage({}, image);
 }
 
@@ -177,12 +177,12 @@ Containers::Pointer<AbstractLayouter> FreeTypeFont::doLayout(const AbstractGlyph
         glyphs.push_back(FT_Get_Char_Index(ftFont, codepoint));
     }
 
-    return Containers::pointer(new FreeTypeLayouter(ftFont, cache, this->size(), size, std::move(glyphs)));
+    return Containers::pointer(new FreeTypeLayouter(ftFont, cache, this->size(), size, Utility::move(glyphs)));
 }
 
 namespace {
 
-FreeTypeLayouter::FreeTypeLayouter(FT_Face font, const AbstractGlyphCache& cache, const Float fontSize, const Float layoutSize, std::vector<FT_UInt>&& glyphs): AbstractLayouter(glyphs.size()), _font(font), _cache(cache), _fontSize(fontSize), _layoutSize(layoutSize), _glyphs(std::move(glyphs)) {}
+FreeTypeLayouter::FreeTypeLayouter(FT_Face font, const AbstractGlyphCache& cache, const Float fontSize, const Float layoutSize, std::vector<FT_UInt>&& glyphs): AbstractLayouter(glyphs.size()), _font(font), _cache(cache), _fontSize(fontSize), _layoutSize(layoutSize), _glyphs(Utility::move(glyphs)) {}
 
 std::tuple<Range2D, Range2D, Vector2> FreeTypeLayouter::doRenderGlyph(const UnsignedInt i) {
     /* Position of the texture in the resulting glyph, texture coordinates */

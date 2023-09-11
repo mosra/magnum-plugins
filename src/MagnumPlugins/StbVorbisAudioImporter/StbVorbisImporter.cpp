@@ -94,7 +94,7 @@ void StbVorbisImporter::doOpenData(Containers::ArrayView<const char> data) {
         return;
     }
 
-    _data = std::move(tempData);
+    _data = Utility::move(tempData);
 }
 
 void StbVorbisImporter::doClose() { _data = nullptr; }

@@ -221,7 +221,7 @@ Containers::Pair<bool, Containers::String> SpirvToolsConverter::doValidateData(S
        the error messages aren't based on stale information. This is done as
        early as possible so the early exits don't leave it in inconsistent
        state. */
-    const Containers::String inputFilename = std::move(_state->inputFilename);
+    const Containers::String inputFilename = Utility::move(_state->inputFilename);
     _state->inputFilename = {};
     /* If this happens, we messed up real bad (it's only set in doConvert*()) */
     CORRADE_INTERNAL_ASSERT(_state->outputFilename.isEmpty());
@@ -309,8 +309,8 @@ Containers::Optional<Containers::Array<char>> SpirvToolsConverter::doConvertData
        so next time plain data is converted the error messages / output format
        aren't based on stale information. This is done as early as possible so
        the early exits don't leave it in inconsistent state. */
-    const Containers::String inputFilename = std::move(_state->inputFilename);
-    const Containers::String outputFilename = std::move(_state->outputFilename);
+    const Containers::String inputFilename = Utility::move(_state->inputFilename);
+    const Containers::String outputFilename = Utility::move(_state->outputFilename);
     _state->inputFilename = {};
     _state->outputFilename = {};
 
@@ -504,7 +504,7 @@ Containers::Optional<Containers::Array<char>> SpirvToolsConverter::doConvertData
     }
 
     /* GCC 4.8 needs extra help here */
-    return Containers::optional(std::move(out));
+    return Containers::optional(Utility::move(out));
 }
 
 }}

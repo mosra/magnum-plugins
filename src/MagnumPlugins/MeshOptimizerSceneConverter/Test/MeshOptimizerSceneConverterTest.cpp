@@ -233,7 +233,7 @@ void MeshOptimizerSceneConverterTest::implementationSpecificIndexType() {
     Containers::Array<char> indexData{3};
     Containers::StridedArrayView1D<UnsignedByte> indices = Containers::arrayCast<UnsignedByte>(indexData);
     MeshData mesh{MeshPrimitive::Triangles,
-        std::move(indexData), MeshIndexData{meshIndexTypeWrap(0xcaca), indices}, 1};
+        Utility::move(indexData), MeshIndexData{meshIndexTypeWrap(0xcaca), indices}, 1};
 
     std::ostringstream out;
     Error redirectError{&out};
@@ -273,7 +273,7 @@ void MeshOptimizerSceneConverterTest::inPlaceOptimizeVertexFetchImmutableVertexD
     MeshIndexData indices{MeshIndexType::UnsignedByte, indexData};
     constexpr UnsignedByte vertices[3]{};
     MeshData mesh{MeshPrimitive::Triangles,
-        std::move(indexData), indices,
+        Utility::move(indexData), indices,
         {}, vertices, {}, 1};
 
     CORRADE_VERIFY(converter->convert(mesh)); /* Here it's not a problem */
@@ -295,8 +295,8 @@ void MeshOptimizerSceneConverterTest::inPlaceOptimizeVertexFetchNotInterleaved()
     MeshIndexData indices{MeshIndexType::UnsignedByte, indexData};
     Containers::Array<char> vertexData{6};
     MeshData mesh{MeshPrimitive::Triangles,
-        std::move(indexData), indices,
-        std::move(vertexData), {
+        Utility::move(indexData), indices,
+        Utility::move(vertexData), {
             MeshAttributeData{meshAttributeCustom(0), VertexFormat::Byte,
                 0, 3, 1},
             MeshAttributeData{meshAttributeCustom(1), VertexFormat::Byte,
@@ -321,7 +321,7 @@ void MeshOptimizerSceneConverterTest::inPlaceOptimizeOverdrawNoPositions() {
     Containers::Array<char> indexData{3};
     MeshIndexData indices{MeshIndexType::UnsignedByte, indexData};
     MeshData mesh{MeshPrimitive::Triangles,
-        std::move(indexData), indices,
+        Utility::move(indexData), indices,
         nullptr, {}, 1};
     std::ostringstream out;
     Error redirectError{&out};
@@ -634,7 +634,7 @@ void MeshOptimizerSceneConverterTest::verboseCustomAttribute() {
     });
     MeshData icosphereCustom{icosphere.primitive(),
         icosphere.releaseIndexData(), indices,
-        icosphere.releaseVertexData(), std::move(attributes)};
+        icosphere.releaseVertexData(), Utility::move(attributes)};
 
     std::ostringstream out;
     {
@@ -690,7 +690,7 @@ void MeshOptimizerSceneConverterTest::verboseImplementationSpecificAttribute() {
     });
     MeshData icosphereExtra{icosphere.primitive(),
         icosphere.releaseIndexData(), indices,
-        icosphere.releaseVertexData(), std::move(attributes)};
+        icosphere.releaseVertexData(), Utility::move(attributes)};
 
     std::ostringstream out;
     {

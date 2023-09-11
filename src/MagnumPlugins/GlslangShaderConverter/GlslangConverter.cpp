@@ -409,7 +409,7 @@ std::pair<bool, bool> compileAndLinkShader(glslang::TShader& shader, glslang::TP
                 Containers::Optional<Containers::Array<char>> file = Utility::Path::read(filename);
                 if(!file) return {};
 
-                found = files.emplace(filename, *std::move(file)).first;
+                found = files.emplace(filename, *Utility::move(file)).first;
             }
 
             return Containers::ArrayView<const char>{found->second};
@@ -710,7 +710,7 @@ Containers::Pair<bool, Containers::String> GlslangConverter::doValidateData(cons
        the error messages aren't based on stale information. This is done as
        early as possible so the early exits don't leave it in inconsistent
        state. */
-    const Containers::String inputFilename = std::move(_state->inputFilename);
+    const Containers::String inputFilename = Utility::move(_state->inputFilename);
     _state->inputFilename = {};
 
     /* Check input/output format validity */
@@ -826,7 +826,7 @@ Containers::Optional<Containers::Array<char>> GlslangConverter::doConvertDataToD
        the error messages aren't based on stale information. This is done as
        early as possible so the early exits don't leave it in inconsistent
        state. */
-    const Containers::String inputFilename = std::move(_state->inputFilename);
+    const Containers::String inputFilename = Utility::move(_state->inputFilename);
     _state->inputFilename = {};
 
     /** @todo implement this, should also have EShMsgOnlyPreprocessor set (or
@@ -997,7 +997,7 @@ Containers::Optional<Containers::Array<char>> GlslangConverter::doConvertDataToD
     Utility::copy(spirvBytes, out);
 
     /* GCC 4.8 needs extra help here */
-    return Containers::optional(std::move(out));
+    return Containers::optional(Utility::move(out));
 }
 
 }}

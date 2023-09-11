@@ -203,7 +203,7 @@ Containers::Optional<ImageData2D> DevIlImageImporter::doImage2D(UnsignedInt id, 
     if((size.x()*components)%4 != 0)
         storage.setAlignment(1);
 
-    return Trade::ImageData2D{storage, format, size, std::move(imageData)};
+    return Trade::ImageData2D{storage, format, size, Utility::move(imageData)};
 }
 
 }}

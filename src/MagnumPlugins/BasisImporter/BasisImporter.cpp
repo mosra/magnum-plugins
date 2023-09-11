@@ -254,7 +254,7 @@ void BasisImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFla
        the future and ktx2_transcoder already does. */
     Containers::Pointer<State> state{InPlaceInit};
     if(dataFlags & (DataFlag::Owned|DataFlag::ExternallyOwned)) {
-        state->in = std::move(data);
+        state->in = Utility::move(data);
     } else {
         state->in = Containers::Array<char>{NoInit, data.size()};
         Utility::copy(data, state->in);
@@ -490,7 +490,7 @@ void BasisImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFla
             Debug{} << "Trade::BasisImporter::openData(): file contains video frames, images must be transcoded sequentially";
     }
 
-    _state = std::move(state);
+    _state = Utility::move(state);
 }
 
 template<UnsignedInt dimensions> Containers::Optional<ImageData<dimensions>> BasisImporter::doImage(const UnsignedInt id, const UnsignedInt level) {
@@ -643,14 +643,14 @@ template<UnsignedInt dimensions> Containers::Optional<ImageData<dimensions>> Bas
     }
 
     if(isUncompressed) {
-        Trade::ImageData<dimensions> out{pixelFormat(*targetFormat, _state->isSrgb), Math::Vector<dimensions, Int>::pad(Vector3i{size}), std::move(dest), ImageFlag<dimensions>(UnsignedShort(_state->imageFlags))};
+        Trade::ImageData<dimensions> out{pixelFormat(*targetFormat, _state->isSrgb), Math::Vector<dimensions, Int>::pad(Vector3i{size}), Utility::move(dest), ImageFlag<dimensions>(UnsignedShort(_state->imageFlags))};
 
         /* Flip if needed */
         if(!_state->isYFlipped)
             Utility::flipInPlace<dimensions - 2>(out.mutablePixels());
 
         /* GCC 4.8 needs extra help here */
-        return Containers::optional(std::move(out));
+        return Containers::optional(Utility::move(out));
     } else {
         const CompressedPixelFormat format = compressedPixelFormat(*targetFormat, _state->isSrgb);
 
@@ -710,7 +710,7 @@ template<UnsignedInt dimensions> Containers::Optional<ImageData<dimensions>> Bas
                 Warning{} << prefix << "Y-flipping a compressed image that's not whole blocks, the result will be shifted by" << (blockSize.y() - (size.y() % blockSize.y())) << "pixels";
         }
 
-        return Trade::ImageData<dimensions>{format, Math::Vector<dimensions, Int>::pad(Vector3i{size}), std::move(dest), ImageFlag<dimensions>(UnsignedShort(_state->imageFlags))};
+        return Trade::ImageData<dimensions>{format, Math::Vector<dimensions, Int>::pad(Vector3i{size}), Utility::move(dest), ImageFlag<dimensions>(UnsignedShort(_state->imageFlags))};
     }
 }
 

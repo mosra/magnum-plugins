@@ -487,7 +487,7 @@ void UfbxImporterTest::fileCallback() {
     CORRADE_VERIFY(fbx);
 
     std::unordered_map<std::string, Containers::Array<char>> files;
-    files["not/a/path/blender-default.fbx"] = *std::move(fbx);
+    files["not/a/path/blender-default.fbx"] = *Utility::move(fbx);
     importer->setFileCallback([](const std::string& filename, InputFileCallbackPolicy,
         std::unordered_map<std::string, Containers::Array<char>>& files) {
             return Containers::optional(Containers::ArrayView<const char>(files.at(filename)));
@@ -3256,7 +3256,7 @@ Containers::Optional<Animation::Player<Float>> createAnimationPlayer(const Anima
     }
 
     /* GCC 4.8 needs extra help here */
-    return Containers::optional(std::move(player));
+    return Containers::optional(Utility::move(player));
 }
 
 void UfbxImporterTest::animationStacks() {

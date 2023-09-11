@@ -83,7 +83,7 @@ void StlImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dat
 
     /* Take over the existing array or copy the data if we can't */
     if(dataFlags & (DataFlag::Owned|DataFlag::ExternallyOwned)) {
-        _in = std::move(data);
+        _in = Utility::move(data);
     } else {
         _in = Containers::Array<char>{NoInit, data.size()};
         Utility::copy(data, *_in);
@@ -180,7 +180,7 @@ Containers::Optional<MeshData> StlImporter::doMesh(UnsignedInt, UnsignedInt leve
     CORRADE_INTERNAL_ASSERT(attributeIndex == attributeCount);
 
     return MeshData{level == 0 ? MeshPrimitive::Triangles : MeshPrimitive::Faces,
-        std::move(vertexData), std::move(attributeData)};
+        Utility::move(vertexData), Utility::move(attributeData)};
 }
 
 }}

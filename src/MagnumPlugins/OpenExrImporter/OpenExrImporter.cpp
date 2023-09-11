@@ -110,7 +110,7 @@ class MemoryIStream: public Imf::IStream {
 }
 
 struct OpenExrImporter::State {
-    explicit State(Containers::Array<char>&& data): data{std::move(data)}, stream{this->data} {}
+    explicit State(Containers::Array<char>&& data): data{Utility::move(data)}, stream{this->data} {}
 
     Containers::Array<char> data;
     MemoryIStream stream;
@@ -137,14 +137,14 @@ void OpenExrImporter::doOpenData(Containers::Array<char>&& data, const DataFlags
     /* Take over the existing array or copy the data if we can't */
     Containers::Array<char> dataCopy;
     if(dataFlags & (DataFlag::Owned|DataFlag::ExternallyOwned)) {
-        dataCopy = std::move(data);
+        dataCopy = Utility::move(data);
     } else {
         dataCopy = Containers::Array<char>{NoInit, data.size()};
         Utility::copy(data, dataCopy);
     }
 
     /* Set up the input stream using the MemoryIStream class above */
-    Containers::Pointer<State> state{InPlaceInit, std::move(dataCopy)};
+    Containers::Pointer<State> state{InPlaceInit, Utility::move(dataCopy)};
 
     /* Increase global thread count if it's not enough. Value of 0 means single
        thread, while we use 1 for the same (consistent with BasisImageConverter and potential other plugins). */
@@ -288,7 +288,7 @@ void OpenExrImporter::doOpenData(Containers::Array<char>&& data, const DataFlags
     }
 
     /* All good, save the state */
-    _state = std::move(state);
+    _state = Utility::move(state);
 }
 
 namespace {
@@ -525,7 +525,7 @@ Containers::Optional<ImageData2D> imageInternal(const Utility::ConfigurationGrou
         actual.readTiles(0, actual.numXTiles(level) - 1, 0, actual.numYTiles(level) - 1, level);
     }
 
-    return Trade::ImageData2D{format, size, std::move(out)};
+    return Trade::ImageData2D{format, size, Utility::move(out)};
 
 /* Good thing there are function try blocks, otherwise I would have to indent
    the whole thing. That would be awful. */

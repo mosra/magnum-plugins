@@ -196,7 +196,7 @@ Containers::Optional<ImageData2D> BcDecImageConverter::doConvert(const Compresse
     }
 
     /* GCC 4.8 needs extra help here */
-    return Containers::optional(std::move(out));
+    return Containers::optional(Utility::move(out));
 }
 
 }}

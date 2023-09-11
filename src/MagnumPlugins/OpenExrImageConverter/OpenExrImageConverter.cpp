@@ -361,7 +361,7 @@ Containers::Optional<Containers::Array<char>> convertToDataInternal(const Utilit
     arrayShrink(data);
 
     /* GCC 4.8 needs extra help here */
-    return Containers::optional(std::move(data));
+    return Containers::optional(Utility::move(data));
 
 /* Good thing there are function try blocks, otherwise I would have to indent
    the whole thing. That would be awful. */

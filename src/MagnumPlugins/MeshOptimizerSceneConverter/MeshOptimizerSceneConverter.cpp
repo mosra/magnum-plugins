@@ -307,7 +307,7 @@ Containers::Optional<MeshData> MeshOptimizerSceneConverter::doConvert(const Mesh
     /* Convert to an indexed triangle mesh if we have a strip or a fan */
     if(out.primitive() == MeshPrimitive::TriangleStrip ||
        out.primitive() == MeshPrimitive::TriangleFan)
-        out = MeshTools::generateIndices(std::move(out));
+        out = MeshTools::generateIndices(Utility::move(out));
 
     meshopt_VertexCacheStatistics vertexCacheStatsBefore;
     meshopt_VertexFetchStatistics vertexFetchStatsBefore;
@@ -389,7 +389,7 @@ Containers::Optional<MeshData> MeshOptimizerSceneConverter::doConvert(const Mesh
             vertex buffer for LODs */
         MeshIndexData indices{outputIndices};
         out = Trade::MeshData{out.primitive(),
-            Containers::arrayAllocatorCast<char, Trade::ArrayAllocator>(std::move(outputIndices)), indices,
+            Containers::arrayAllocatorCast<char, Trade::ArrayAllocator>(Utility::move(outputIndices)), indices,
             out.releaseVertexData(), out.releaseAttributeData()};
         out = MeshTools::combineIndexedAttributes({out});
 
@@ -405,7 +405,7 @@ Containers::Optional<MeshData> MeshOptimizerSceneConverter::doConvert(const Mesh
 
     /* GCC 4.8 needs an explicit conversion, otherwise it tries to copy the
        thing and fails */
-    return Containers::optional(std::move(out));
+    return Containers::optional(Utility::move(out));
 }
 
 }}

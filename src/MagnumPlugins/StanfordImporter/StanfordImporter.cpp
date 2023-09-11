@@ -188,7 +188,7 @@ void StanfordImporter::doOpenData(Containers::Array<char>&& data, const DataFlag
     /* Take over the existing array or copy the data if we can't */
     Containers::Array<char> dataCopy;
     if(dataFlags & (DataFlag::Owned|DataFlag::ExternallyOwned)) {
-        dataCopy = std::move(data);
+        dataCopy = Utility::move(data);
     } else {
         dataCopy = Containers::Array<char>{NoInit, data.size()};
         Utility::copy(data, dataCopy);
@@ -644,9 +644,9 @@ void StanfordImporter::doOpenData(Containers::Array<char>&& data, const DataFlag
 
     /* All good, move the data to the state struct and save it. Remember header
        size so we can directly access the binary data in doMesh(). */
-    state->data = std::move(dataCopy);
+    state->data = Utility::move(dataCopy);
     state->headerSize = state->data.size() - in.size();
-    _state = std::move(state);
+    _state = Utility::move(state);
 }
 
 UnsignedInt StanfordImporter::doMeshCount() const { return 1; }
@@ -860,21 +860,21 @@ Containers::Optional<MeshData> StanfordImporter::doMesh(UnsignedInt, const Unsig
             for it at runtime somehow */
         MeshIndexData indices{_state->faceIndexType, indexData};
         MeshData perVertex{MeshPrimitive::Triangles,
-            std::move(indexData), indices,
-            std::move(vertexData), std::move(vertexAttributeData)};
+            Utility::move(indexData), indices,
+            Utility::move(vertexData), Utility::move(vertexAttributeData)};
         MeshData perFace{MeshPrimitive::Faces,
-            std::move(faceData), std::move(faceAttributeData), triangleFaceCount};
+            Utility::move(faceData), Utility::move(faceAttributeData), triangleFaceCount};
         return MeshTools::combineFaceAttributes(perVertex, perFace);
     }
 
     if(level == 0) {
         MeshIndexData indices{_state->faceIndexType, indexData};
         return MeshData{MeshPrimitive::Triangles,
-            std::move(indexData), indices,
-            std::move(vertexData), std::move(vertexAttributeData)};
+            Utility::move(indexData), indices,
+            Utility::move(vertexData), Utility::move(vertexAttributeData)};
     } else {
         return MeshData{MeshPrimitive::Faces,
-            std::move(faceData), std::move(faceAttributeData), triangleFaceCount};
+            Utility::move(faceData), Utility::move(faceAttributeData), triangleFaceCount};
     }
 }
 

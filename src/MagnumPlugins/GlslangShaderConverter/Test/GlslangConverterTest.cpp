@@ -457,7 +457,7 @@ void GlslangConverterTest::validateIncludesCallback() {
             Containers::Optional<Containers::Array<char>> file = Utility::Path::read(Utility::Path::join(GLSLANGSHADERCONVERTER_TEST_DIR, filename));
             CORRADE_VERIFY(file);
 
-            found = files.emplace(filename, *std::move(file)).first;
+            found = files.emplace(filename, *Utility::move(file)).first;
         }
 
         return Containers::ArrayView<const char>{found->second};

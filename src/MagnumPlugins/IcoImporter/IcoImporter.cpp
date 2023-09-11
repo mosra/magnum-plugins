@@ -101,7 +101,7 @@ void IcoImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dat
 
     /* Take over the existing array or copy the data if we can't */
     if(dataFlags & (DataFlag::Owned|DataFlag::ExternallyOwned)) {
-        state->data = std::move(data);
+        state->data = Utility::move(data);
     } else {
         state->data = Containers::Array<char>{NoInit, data.size()};
         Utility::copy(data, state->data);
@@ -131,7 +131,7 @@ void IcoImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dat
     }
 
     /* All good, save the state */
-    _state = std::move(state);
+    _state = Utility::move(state);
 }
 
 UnsignedInt IcoImporter::doImage2DCount() const { return 1; }

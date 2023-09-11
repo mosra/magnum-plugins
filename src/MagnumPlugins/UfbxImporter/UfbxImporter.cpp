@@ -716,7 +716,7 @@ Containers::Optional<SceneData> UfbxImporter::doScene(UnsignedInt) {
        pointer issues when unloading the plugin */
     arrayShrink(fields, DefaultInit);
 
-    return SceneData{SceneMappingType::UnsignedInt, nodeCount, std::move(data), std::move(fields)};
+    return SceneData{SceneMappingType::UnsignedInt, nodeCount, Utility::move(data), Utility::move(fields)};
 }
 
 SceneField UfbxImporter::doSceneFieldForName(Containers::StringView name) {
@@ -1098,7 +1098,7 @@ Containers::Optional<MeshData> UfbxImporter::doMesh(UnsignedInt id, UnsignedInt 
     }
 
     MeshData meshData{chunk.primitive,
-        std::move(vertexData), std::move(attributeData),
+        Utility::move(vertexData), Utility::move(attributeData),
         UnsignedInt(indexCount)};
 
     /* Deduplicate the data into an indexed mesh if desired */
@@ -1106,7 +1106,7 @@ Containers::Optional<MeshData> UfbxImporter::doMesh(UnsignedInt id, UnsignedInt 
         meshData = MeshTools::removeDuplicates(meshData);
 
     /* GCC 4.8 needs extra help here */
-    return Containers::optional(std::move(meshData));
+    return Containers::optional(Utility::move(meshData));
 }
 
 UnsignedInt UfbxImporter::doMaterialCount() const {
@@ -1395,7 +1395,7 @@ Containers::Optional<MaterialData> UfbxImporter::doMaterial(UnsignedInt id) {
     arrayShrink(flatAttributes, DefaultInit);
     arrayShrink(layerSizes, DefaultInit);
 
-    return MaterialData{types, std::move(flatAttributes), std::move(layerSizes)};
+    return MaterialData{types, Utility::move(flatAttributes), Utility::move(layerSizes)};
 }
 
 UnsignedInt UfbxImporter::doTextureCount() const {
@@ -1478,7 +1478,7 @@ AbstractImporter* UfbxImporter::setupOrReuseImporterForImage(UnsignedInt id, con
         return nullptr;
     }
 
-    return &_state->imageImporter.emplace(std::move(importer));
+    return &_state->imageImporter.emplace(Utility::move(importer));
 }
 
 UnsignedInt UfbxImporter::doImage2DCount() const {
@@ -1919,9 +1919,9 @@ Containers::Optional<AnimationData> UfbxImporter::doAnimation(UnsignedInt id) {
 
     /* Use explicit duration if it's valid */
     if(anim->time_begin < anim->time_end) {
-        return AnimationData{std::move(data), std::move(tracks), Range1D{Float(anim->time_begin), Float(anim->time_end)}};
+        return AnimationData{Utility::move(data), Utility::move(tracks), Range1D{Float(anim->time_begin), Float(anim->time_end)}};
     } else {
-        return AnimationData{std::move(data), std::move(tracks)};
+        return AnimationData{Utility::move(data), Utility::move(tracks)};
     }
 }
 
@@ -1963,7 +1963,7 @@ Containers::Optional<SkinData3D> UfbxImporter::doSkin3D(UnsignedInt id) {
         inverseBindMatrices[i] = Matrix4(Matrix4x3(Matrix4x3d(cluster->geometry_to_bone)));
     }
 
-    return SkinData3D{std::move(joints), std::move(inverseBindMatrices)};
+    return SkinData3D{Utility::move(joints), Utility::move(inverseBindMatrices)};
 }
 
 }}

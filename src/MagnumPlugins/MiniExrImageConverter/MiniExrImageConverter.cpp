@@ -98,7 +98,7 @@ Containers::Optional<Containers::Array<char>> MiniExrImageConverter::doConvertTo
     std::free(data);
 
     /* GCC 4.8 needs extra help here */
-    return Containers::optional(std::move(fileData));
+    return Containers::optional(Utility::move(fileData));
 }
 
 }}

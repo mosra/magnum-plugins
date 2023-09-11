@@ -91,7 +91,7 @@ void DrMp3Importer::doOpenData(Containers::ArrayView<const char> data) {
     CORRADE_INTERNAL_ASSERT(_format != BufferFormat{});
 
     /* All good, save the data */
-    _data = std::move(decodedData);
+    _data = Utility::move(decodedData);
 }
 
 void DrMp3Importer::doClose() { _data = Containers::NullOpt; }

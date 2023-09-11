@@ -4148,7 +4148,7 @@ void AssimpImporterTest::fileCallback() {
     CORRADE_VERIFY(dae);
 
     std::unordered_map<std::string, Containers::Array<char>> files;
-    files["not/a/path/mesh.dae"] = *std::move(dae);
+    files["not/a/path/mesh.dae"] = *Utility::move(dae);
     importer->setFileCallback([](const std::string& filename, InputFileCallbackPolicy policy,
         std::unordered_map<std::string, Containers::Array<char>>& files) {
             Debug{} << "Loading" << filename << "with" << policy;
@@ -4265,8 +4265,8 @@ void AssimpImporterTest::fileCallbackImage() {
     CORRADE_VERIFY(png);
 
     std::unordered_map<std::string, Containers::Array<char>> files;
-    files["not/a/path/texture.dae"] = *std::move(dae);
-    files["not/a/path/diffuse_texture.png"] = *std::move(png);
+    files["not/a/path/texture.dae"] = *Utility::move(dae);
+    files["not/a/path/diffuse_texture.png"] = *Utility::move(png);
     importer->setFileCallback([](const std::string& filename, InputFileCallbackPolicy policy,
         std::unordered_map<std::string, Containers::Array<char>>& files) {
             Debug{} << "Loading" << filename << "with" << policy;

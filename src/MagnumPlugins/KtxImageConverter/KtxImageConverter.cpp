@@ -930,7 +930,7 @@ template<UnsignedInt dimensions, template<UnsignedInt, typename> class View> Con
         header.kvdByteOffset, header.kvdByteLength);
 
     /* GCC 4.8 needs extra help here */
-    return Containers::optional(std::move(data));
+    return Containers::optional(Utility::move(data));
 }
 
 }

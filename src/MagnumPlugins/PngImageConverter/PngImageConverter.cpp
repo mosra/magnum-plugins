@@ -174,7 +174,7 @@ Containers::Optional<Containers::Array<char>> PngImageConverter::doConvertToData
     arrayShrink(output);
 
     /* GCC 4.8 needs extra help here */
-    return Containers::optional(std::move(output));
+    return Containers::optional(Utility::move(output));
 }
 
 }}

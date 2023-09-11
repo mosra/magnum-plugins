@@ -141,7 +141,7 @@ void StbImageImporter::doOpenData(Containers::Array<char>&& data, const DataFlag
     /* Take over the existing array or copy the data if we can't */
     _in.emplace();
     if(dataFlags & (DataFlag::Owned|DataFlag::ExternallyOwned)) {
-        _in->data = std::move(data);
+        _in->data = Utility::move(data);
     } else {
         _in->data = Containers::Array<char>{NoInit, data.size()};
         Utility::copy(data, _in->data);
@@ -164,7 +164,7 @@ Containers::Optional<ImageData2D> StbImageImporter::doImage2D(const UnsignedInt 
         Utility::copy(Containers::arrayCast<char>(
             _in->data.slice(id*_in->gifFrameStride, (id + 1)*_in->gifFrameStride)),
             imageData);
-        return Trade::ImageData2D{PixelFormat::RGBA8Unorm, _in->gifSize.xy(), std::move(imageData)};
+        return Trade::ImageData2D{PixelFormat::RGBA8Unorm, _in->gifSize.xy(), Utility::move(imageData)};
     }
 
     Vector2i size;
@@ -250,7 +250,7 @@ Containers::Optional<ImageData2D> StbImageImporter::doImage2D(const UnsignedInt 
     if((size.x()*components*channelSize)%4 != 0)
         storage.setAlignment(1);
 
-    return Trade::ImageData2D{storage, format, size, std::move(imageData)};
+    return Trade::ImageData2D{storage, format, size, Utility::move(imageData)};
 }
 
 }}

@@ -97,7 +97,7 @@ void Faad2Importer::doOpenData(Containers::ArrayView<const char> data) {
         pos += info.bytesconsumed;
     }
 
-    _samples = std::move(samples);
+    _samples = Utility::move(samples);
 }
 
 void Faad2Importer::doClose() { _samples = nullptr; }

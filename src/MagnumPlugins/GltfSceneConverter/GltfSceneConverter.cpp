@@ -565,7 +565,7 @@ Containers::Optional<Containers::Array<char>> GltfSceneConverter::doEndData() {
     }
 
     /* GCC 4.8 and Clang 3.8 need extra help here */
-    return Containers::optional(std::move(out));
+    return Containers::optional(Utility::move(out));
 }
 
 void GltfSceneConverter::doAbort() {
@@ -1765,7 +1765,7 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const MeshData& mesh, const
             }
 
             arrayAppend(gltfAttributes, InPlaceInit,
-                std::move(gltfAttributeName),
+                Utility::move(gltfAttributeName),
                 gltfAccessorType,
                 gltfAccessorComponentType,
                 i, 0u);

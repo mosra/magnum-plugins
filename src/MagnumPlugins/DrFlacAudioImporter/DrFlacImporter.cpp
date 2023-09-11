@@ -144,7 +144,7 @@ void DrFlacImporter::doOpenData(Containers::ArrayView<const char> data) {
             floats[i] = Math::unpack<Float>(intData);
         }
 
-        _data = std::move(floatData);
+        _data = Utility::move(floatData);
     }
 }
 

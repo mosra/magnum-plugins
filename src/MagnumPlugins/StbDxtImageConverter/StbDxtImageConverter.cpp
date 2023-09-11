@@ -138,7 +138,7 @@ Containers::Optional<ImageData3D> convertInternal(const ImageView3D& image, Util
         }
     }
 
-    return ImageData3D{outputFormat, image.size(), std::move(outputData), image.flags()};
+    return ImageData3D{outputFormat, image.size(), Utility::move(outputData), image.flags()};
 }
 
 }

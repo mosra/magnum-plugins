@@ -495,7 +495,7 @@ void KtxImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFlags
         if(!basisImporter->openData(data)) return;
 
         /* Success, save the instance */
-        _basisImporter = std::move(basisImporter);
+        _basisImporter = Utility::move(basisImporter);
         return;
     }
 
@@ -545,7 +545,7 @@ void KtxImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFlags
 
     /* Take over the existing array or copy the data if we can't */
     if(dataFlags & (DataFlag::Owned|DataFlag::ExternallyOwned)) {
-        f->in = std::move(data);
+        f->in = Utility::move(data);
     } else {
         f->in = Containers::Array<char>{NoInit, data.size()};
         Utility::copy(data, f->in);
@@ -854,7 +854,7 @@ void KtxImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFlags
 
     /** @todo Read KTXanimData and expose frame time between images */
 
-    _f = std::move(f);
+    _f = Utility::move(f);
 }
 
 template<UnsignedInt dimensions> ImageData<dimensions> KtxImporter::doImage(const char* messagePrefix, UnsignedInt id, UnsignedInt level) {
@@ -910,7 +910,7 @@ template<UnsignedInt dimensions> ImageData<dimensions> KtxImporter::doImage(cons
         if(_f->flip[2])
             Utility::flipInPlace<0>(blocks);
 
-        return ImageData<dimensions>{_f->pixelFormat.compressed, size, std::move(data), ImageFlag<dimensions>(UnsignedShort(_f->imageFlags))};
+        return ImageData<dimensions>{_f->pixelFormat.compressed, size, Utility::move(data), ImageFlag<dimensions>(UnsignedShort(_f->imageFlags))};
     }
 
     /* Uncompressed image */
@@ -945,7 +945,7 @@ template<UnsignedInt dimensions> ImageData<dimensions> KtxImporter::doImage(cons
     /** @todo the DFD block has KHR_DF_FLAG_ALPHA_PREMULTIPLIED, pass it
         through ImageFlags once such flag exists:
         https://github.khronos.org/KTX-Specification/#_providing_additional_information */
-    return ImageData<dimensions>{storage, _f->pixelFormat.uncompressed, size, std::move(data), ImageFlag<dimensions>(UnsignedShort(_f->imageFlags))};
+    return ImageData<dimensions>{storage, _f->pixelFormat.uncompressed, size, Utility::move(data), ImageFlag<dimensions>(UnsignedShort(_f->imageFlags))};
 }
 
 UnsignedInt KtxImporter::doImage1DCount() const {

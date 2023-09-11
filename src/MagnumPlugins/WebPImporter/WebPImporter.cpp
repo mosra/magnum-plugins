@@ -63,7 +63,7 @@ void WebPImporter::doOpenData(Containers::Array<char>&& data, const DataFlags da
 
     /* Take over the existing array or copy the data if we can't */
     if(dataFlags & (DataFlag::Owned|DataFlag::ExternallyOwned)) {
-        _in = std::move(data);
+        _in = Utility::move(data);
     } else {
         _in = Containers::Array<char>{NoInit, data.size()};
         Utility::copy(data, _in);
@@ -147,7 +147,7 @@ Containers::Optional<ImageData2D> WebPImporter::doImage2D(UnsignedInt, UnsignedI
         return {};
     }
 
-    return Trade::ImageData2D{pixelFormat, {bitstream.width, bitstream.height}, std::move(outData)};
+    return Trade::ImageData2D{pixelFormat, {bitstream.width, bitstream.height}, Utility::move(outData)};
 }
 
 }}

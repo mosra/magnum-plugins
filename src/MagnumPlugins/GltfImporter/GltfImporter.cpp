@@ -801,7 +801,7 @@ void GltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags da
        can't. We need to keep the data around as JSON tokens are views onto it
        and also for the GLB binary chunk. */
     if(dataFlags & (DataFlag::Owned|DataFlag::ExternallyOwned)) {
-        _d->fileData = std::move(data);
+        _d->fileData = Utility::move(data);
     } else {
         _d->fileData = Containers::Array<char>{NoInit, data.size()};
         Utility::copy(data, _d->fileData);
@@ -1514,7 +1514,7 @@ void GltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags da
     }
 
     /* All good, save the parsed state */
-    _d->gltf = std::move(gltf);
+    _d->gltf = Utility::move(gltf);
 
     /* Allocate storage for parsed buffers, buffer views and accessors */
     _d->buffers = Containers::Array<Containers::Optional<Containers::Array<char>>>{_d->gltfBuffers.size()};
@@ -1966,7 +1966,7 @@ Containers::Optional<AnimationData> GltfImporter::doAnimation(UnsignedInt id) {
     if(hadToRenormalize && !(flags() & ImporterFlag::Quiet))
         Warning{} << "Trade::GltfImporter::animation(): quaternions in some rotation tracks were renormalized";
 
-    return AnimationData{std::move(data), std::move(tracks),
+    return AnimationData{Utility::move(data), Utility::move(tracks),
         configuration().value<bool>("mergeAnimationClips") ? nullptr :
         &*_d->gltfAnimations[id].first()};
 }
@@ -3101,7 +3101,7 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
     /* Even though SceneData is capable of holding more than 4 billion objects,
        we realistically don't expect glTF to have that many -- the text file
        would be *terabytes* then */
-    return SceneData{SceneMappingType::UnsignedInt, maxObjectIndexPlusOne, std::move(data), std::move(fields), &gltfScene};
+    return SceneData{SceneMappingType::UnsignedInt, maxObjectIndexPlusOne, Utility::move(data), Utility::move(fields), &gltfScene};
 }
 
 SceneField GltfImporter::doSceneFieldForName(const Containers::StringView name) {
@@ -3208,7 +3208,7 @@ Containers::Optional<SkinData3D> GltfImporter::doSkin3D(const UnsignedInt id) {
         Utility::copy(matrices, inverseBindMatrices);
     }
 
-    return SkinData3D{std::move(joints), std::move(inverseBindMatrices), &gltfSkin};
+    return SkinData3D{Utility::move(joints), Utility::move(inverseBindMatrices), &gltfSkin};
 }
 
 UnsignedInt GltfImporter::doMeshCount() const {
@@ -3722,8 +3722,8 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
         return MeshData{primitive, 0};
 
     return MeshData{primitive,
-        std::move(indexData), indices,
-        std::move(vertexData), std::move(attributeData),
+        Utility::move(indexData), indices,
+        Utility::move(vertexData), Utility::move(attributeData),
         vertexCount, &gltfPrimitive};
 }
 
@@ -4726,7 +4726,7 @@ Containers::Optional<MaterialData> GltfImporter::doMaterial(const UnsignedInt id
        deleter */
     arrayShrink(layers);
     arrayShrink(attributes, DefaultInit);
-    return MaterialData{types, std::move(attributes), std::move(layers), &gltfMaterial};
+    return MaterialData{types, Utility::move(attributes), Utility::move(layers), &gltfMaterial};
 }
 
 UnsignedInt GltfImporter::doTextureCount() const {
@@ -5016,7 +5016,7 @@ AbstractImporter* GltfImporter::setupOrReuseImporterForImage(const char* const e
 
         if(!importer.openData(imageView))
             return nullptr;
-        return &_d->imageImporter.emplace(std::move(importer));
+        return &_d->imageImporter.emplace(Utility::move(importer));
     }
 
     /* Load external image */
@@ -5045,7 +5045,7 @@ AbstractImporter* GltfImporter::setupOrReuseImporterForImage(const char* const e
         return nullptr;
     }
 
-    return &_d->imageImporter.emplace(std::move(importer));
+    return &_d->imageImporter.emplace(Utility::move(importer));
 }
 
 UnsignedInt GltfImporter::doImage2DCount() const {
@@ -5089,7 +5089,7 @@ Containers::Optional<ImageData2D> GltfImporter::doImage2D(const UnsignedInt id, 
     /* Include a pointer to the glTF image in the result */
     Containers::Optional<ImageData2D> imageData = importer->image2D(0, level);
     if(!imageData) return Containers::NullOpt;
-    return ImageData2D{std::move(*imageData), &*_d->gltfImages[id].first()};
+    return ImageData2D{Utility::move(*imageData), &*_d->gltfImages[id].first()};
 }
 
 UnsignedInt GltfImporter::doImage3DCount() const {

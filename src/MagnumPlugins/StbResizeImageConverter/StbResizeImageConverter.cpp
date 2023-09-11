@@ -156,7 +156,7 @@ Containers::Optional<ImageData3D> convertInternal(const ImageView3D& image, Util
        copy the data over to avoid needless work and undesired artifacts */
     if(image.size().xy() == targetSize || (!configuration.value<bool>("upsample") && (image.size().xy() <= targetSize).all())) {
         Utility::copy(srcPixels, dstPixels);
-        return Containers::optional(std::move(out));
+        return Containers::optional(Utility::move(out));
     }
 
     /* Apart from wrong input (which we check here), the only way this function
@@ -174,7 +174,7 @@ Containers::Optional<ImageData3D> convertInternal(const ImageView3D& image, Util
     }
 
     /* GCC 4.8 needs extra help here */
-    return Containers::optional(std::move(out));
+    return Containers::optional(Utility::move(out));
 }
 
 }

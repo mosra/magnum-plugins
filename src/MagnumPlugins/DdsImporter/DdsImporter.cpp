@@ -310,7 +310,7 @@ void DdsImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dat
 
     /* Take over the existing array or copy the data if we can't */
     if(dataFlags & (DataFlag::Owned|DataFlag::ExternallyOwned)) {
-        f->in = std::move(data);
+        f->in = Utility::move(data);
     } else {
         f->in = Containers::Array<char>{NoInit, data.size()};
         Utility::copy(data, f->in);
@@ -714,7 +714,7 @@ void DdsImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dat
     }
 
     /* Everything okay, save the file for later use */
-    _f = std::move(f);
+    _f = Utility::move(f);
 }
 
 namespace {
@@ -806,7 +806,7 @@ template<UnsignedInt dimensions> ImageData<dimensions> DdsImporter::doImage(cons
     if(_f->compressed) {
         flipBlocks(imageSize, flags(), messagePrefix, _f->yzFlip, _f->properties.compressed.format, _f->properties.compressed.blockSize, _f->properties.compressed.blockDataSize, data);
 
-        return ImageData<dimensions>{_f->properties.compressed.format, Math::Vector<dimensions, Int>::pad(imageSize), std::move(data), ImageFlag<dimensions>(UnsignedShort(_f->imageFlags))};
+        return ImageData<dimensions>{_f->properties.compressed.format, Math::Vector<dimensions, Int>::pad(imageSize), Utility::move(data), ImageFlag<dimensions>(UnsignedShort(_f->imageFlags))};
     }
 
     /* Uncompressed. Swizzle and flip if needed. */
@@ -821,7 +821,7 @@ template<UnsignedInt dimensions> ImageData<dimensions> DdsImporter::doImage(cons
 
     /** @todo expose DdsAlphaMode::Premultiplied through ImageFlags once it has
         such flag */
-    return ImageData<dimensions>{storage, _f->properties.uncompressed.format, Math::Vector<dimensions, Int>::pad(imageSize), std::move(data), ImageFlag<dimensions>(UnsignedShort(_f->imageFlags))};
+    return ImageData<dimensions>{storage, _f->properties.uncompressed.format, Math::Vector<dimensions, Int>::pad(imageSize), Utility::move(data), ImageFlag<dimensions>(UnsignedShort(_f->imageFlags))};
 }
 
 UnsignedInt DdsImporter::doImage1DCount() const {

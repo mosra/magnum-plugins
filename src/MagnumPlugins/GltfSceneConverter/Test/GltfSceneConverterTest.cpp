@@ -3190,7 +3190,7 @@ void GltfSceneConverterTest::addMeshSkinningAttributes() {
         converter->setMeshAttributeName(meshAttributeCustom(776), "WEIGHTS");
     }
 
-    CORRADE_VERIFY(converter->add(MeshData{MeshPrimitive::Lines, {}, vertices, std::move(attributes)}));
+    CORRADE_VERIFY(converter->add(MeshData{MeshPrimitive::Lines, {}, vertices, Utility::move(attributes)}));
     CORRADE_VERIFY(converter->endFile());
     CORRADE_COMPARE_AS(filename,
         Utility::Path::join(GLTFSCENECONVERTER_TEST_DIR, "mesh-skinning-attributes.gltf"),
@@ -4609,7 +4609,7 @@ MaterialData filterMaterialAttributes(const MaterialData& material, Containers::
 
     Containers::Optional<MaterialData> out = MaterialTools::merge(filtered, *add);
     CORRADE_VERIFY(out);
-    return *std::move(out);
+    return *Utility::move(out);
 }
 
 }
@@ -4919,7 +4919,7 @@ template<SceneConverterFlag flag> void GltfSceneConverterTest::addMaterialCustom
     if(data.expectedAdd) {
         Containers::Optional<MaterialData> out = MaterialTools::merge(filtered, *data.expectedAdd);
         CORRADE_VERIFY(out);
-        filtered = *std::move(out);
+        filtered = *Utility::move(out);
     }
 
     /* There should be exactly one material, looking exactly the same as the
