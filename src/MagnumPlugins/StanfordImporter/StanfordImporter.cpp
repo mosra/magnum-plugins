@@ -856,7 +856,7 @@ Containers::Optional<MeshData> StanfordImporter::doMesh(UnsignedInt, const Unsig
         if(flags() & ImporterFlag::Verbose)
             Debug{} << "Trade::StanfordImporter::mesh(): converting" << faceAttributeData.size() << "per-face attributes to per-vertex";
 
-        /** @todo in this case it'll assert if indices are out of bounds, check
+        /** @todo in this case it'll assert if indices are out of range, check
             for it at runtime somehow */
         MeshIndexData indices{_state->faceIndexType, indexData};
         MeshData perVertex{MeshPrimitive::Triangles,

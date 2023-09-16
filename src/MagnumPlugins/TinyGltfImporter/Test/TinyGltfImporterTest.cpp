@@ -116,7 +116,7 @@ struct TinyGltfImporterTest: TestSuite::Tester {
     void sceneInvalidHierarchy();
     void sceneDefaultNoScenes();
     void sceneDefaultNoDefault();
-    void sceneDefaultOutOfBounds();
+    void sceneDefaultOutOfRange();
     void sceneTransformation();
     void sceneTransformationQuaternionNormalizationEnabled();
     void sceneTransformationQuaternionNormalizationDisabled();
@@ -140,7 +140,7 @@ struct TinyGltfImporterTest: TestSuite::Tester {
     /* This is THE ONE AND ONLY OOB check done by tinygltf, so it fails right
        at openData() and thus has to be separate. Everything else is not done
        by it. */
-    void meshIndexAccessorOutOfBounds();
+    void meshIndexAccessorOutOfRange();
     void meshInvalid();
 
     void materialPbrMetallicRoughness();
@@ -229,10 +229,10 @@ constexpr struct {
     {"unsupported path", "unsupported track target color"},
     {"invalid input accessor", "accessor 3 needs 40 bytes but bufferView 0 has only 0"},
     {"invalid output accessor", "accessor 4 needs 120 bytes but bufferView 0 has only 0"},
-    {"sampler index out of bounds", "sampler 1 out of bounds for 1 samplers"},
-    {"node index out of bounds", "target node 2 out of bounds for 2 nodes"},
-    {"sampler input accessor index out of bounds", "accessor 5 out of bounds for 5 accessors"},
-    {"sampler output accessor index out of bounds", "accessor 6 out of bounds for 5 accessors"}
+    {"sampler index out of range", "sampler 1 out of range for 1 samplers"},
+    {"node index out of range", "target node 2 out of range for 2 nodes"},
+    {"sampler input accessor index out of range", "accessor 5 out of range for 5 accessors"},
+    {"sampler output accessor index out of range", "accessor 6 out of range for 5 accessors"}
 };
 
 constexpr struct {
@@ -254,8 +254,8 @@ constexpr struct {
     const char* message;
 } SkinInvalidData[]{
     {"no joints", "skin has no joints"},
-    {"joint out of bounds", "target node 2 out of bounds for 2 nodes"},
-    {"accessor out of bounds", "accessor 4 out of bounds for 4 accessors"},
+    {"joint out of range", "target node 2 out of range for 2 nodes"},
+    {"accessor out of range", "accessor 4 out of range for 4 accessors"},
     {"wrong accessor type", "inverse bind matrices have unexpected type 35/5126"},
     {"wrong accessor component type", "inverse bind matrices have unexpected type 36/5123"},
     {"wrong accessor count", "invalid inverse bind matrix count, expected 2 but got 3"},
@@ -356,11 +356,11 @@ const struct {
     {"non-normalized byte matrix", "mesh-invalid.gltf", "unsupported matrix component type unnormalized 5120"},
     {"sparse accessor", "mesh-invalid.gltf", "accessor 14 is using sparse storage, which is unsupported"},
     {"no bufferview", "mesh-invalid.gltf", "accessor 15 has no bufferView"},
-    {"accessor range out of bounds", "mesh-invalid.gltf", "accessor 18 needs 48 bytes but bufferView 0 has only 36"},
-    {"buffer view range out of bounds", "mesh-invalid.gltf", "bufferView 3 needs 60 bytes but buffer 1 has only 59"},
-    {"buffer index out of bounds", "mesh-invalid.gltf", "buffer 2 out of bounds for 2 buffers"},
-    {"buffer view index out of bounds", "mesh-invalid.gltf", "bufferView 5 out of bounds for 5 views"},
-    {"accessor index out of bounds", "mesh-invalid-accessor-oob.gltf", "accessor 2 out of bounds for 2 accessors"},
+    {"accessor range out of range", "mesh-invalid.gltf", "accessor 18 needs 48 bytes but bufferView 0 has only 36"},
+    {"buffer view range out of range", "mesh-invalid.gltf", "bufferView 3 needs 60 bytes but buffer 1 has only 59"},
+    {"buffer index out of range", "mesh-invalid.gltf", "buffer 2 out of range for 2 buffers"},
+    {"buffer view index out of range", "mesh-invalid.gltf", "bufferView 5 out of range for 5 views"},
+    {"accessor index out of range", "mesh-invalid-accessor-oob.gltf", "accessor 2 out of range for 2 accessors"},
     {"multiple buffers", "mesh-invalid.gltf", "meshes spanning multiple buffers are not supported"},
     {"invalid index accessor", "mesh-invalid.gltf", "accessor 17 needs 40 bytes but bufferView 0 has only 36"}
 };
@@ -370,31 +370,31 @@ constexpr struct {
     const char* message;
 } MaterialInvalidData[]{
     {"unknown alpha mode", "unknown alpha mode WAT"},
-    {"invalid texture index pbrMetallicRoughness base color", "baseColorTexture index 2 out of bounds for 2 textures"},
-    {"invalid texture index pbrMetallicRoughness metallic/roughness", "metallicRoughnessTexture index 2 out of bounds for 2 textures"},
-    {"invalid texture index pbrSpecularGlossiness diffuse", "diffuseTexture index 2 out of bounds for 2 textures"},
-    {"invalid texture index pbrSpecularGlossiness specular", "specularGlossinessTexture index 2 out of bounds for 2 textures"},
-    {"invalid texture index normal", "normalTexture index 2 out of bounds for 2 textures"},
-    {"invalid texture index occlusion", "occlusionTexture index 2 out of bounds for 2 textures"},
-    {"invalid texture index emissive", "emissiveTexture index 2 out of bounds for 2 textures"},
-    {"invalid texture index clearcoat factor", "clearcoatTexture index 2 out of bounds for 2 textures"},
-    {"invalid texture index clearcoat roughness", "clearcoatRoughnessTexture index 2 out of bounds for 2 textures"},
-    {"invalid texture index clearcoat normal", "clearcoatNormalTexture index 2 out of bounds for 2 textures"}
+    {"invalid texture index pbrMetallicRoughness base color", "baseColorTexture index 2 out of range for 2 textures"},
+    {"invalid texture index pbrMetallicRoughness metallic/roughness", "metallicRoughnessTexture index 2 out of range for 2 textures"},
+    {"invalid texture index pbrSpecularGlossiness diffuse", "diffuseTexture index 2 out of range for 2 textures"},
+    {"invalid texture index pbrSpecularGlossiness specular", "specularGlossinessTexture index 2 out of range for 2 textures"},
+    {"invalid texture index normal", "normalTexture index 2 out of range for 2 textures"},
+    {"invalid texture index occlusion", "occlusionTexture index 2 out of range for 2 textures"},
+    {"invalid texture index emissive", "emissiveTexture index 2 out of range for 2 textures"},
+    {"invalid texture index clearcoat factor", "clearcoatTexture index 2 out of range for 2 textures"},
+    {"invalid texture index clearcoat roughness", "clearcoatRoughnessTexture index 2 out of range for 2 textures"},
+    {"invalid texture index clearcoat normal", "clearcoatNormalTexture index 2 out of range for 2 textures"}
 };
 
 constexpr struct {
     const char* name;
     const char* message;
 } SceneInvalidData[]{
-    {"camera out of bounds", "camera index 1 in node 3 out of bounds for 1 cameras"},
-    {"child out of bounds", "child index 11 in node 10 out of bounds for 11 nodes"},
-    {"light out of bounds", "light index 2 in node 4 out of bounds for 2 lights"},
-    {"material out of bounds", "material index 4 in node 5 out of bounds for 4 materials"},
-    {"material in a multi-primitive mesh out of bounds", "material index 5 in node 6 out of bounds for 4 materials"},
-    {"mesh out of bounds", "mesh index 4 in node 7 out of bounds for 4 meshes"},
-    {"node out of bounds", "node index 11 out of bounds for 11 nodes"},
-    {"skin out of bounds", "skin index 3 in node 8 out of bounds for 3 skins"},
-    {"skin for a multi-primitive mesh out of bounds", "skin index 3 in node 9 out of bounds for 3 skins"}
+    {"camera out of range", "camera index 1 in node 3 out of range for 1 cameras"},
+    {"child out of range", "child index 11 in node 10 out of range for 11 nodes"},
+    {"light out of range", "light index 2 in node 4 out of range for 2 lights"},
+    {"material out of range", "material index 4 in node 5 out of range for 4 materials"},
+    {"material in a multi-primitive mesh out of range", "material index 5 in node 6 out of range for 4 materials"},
+    {"mesh out of range", "mesh index 4 in node 7 out of range for 4 meshes"},
+    {"node out of range", "node index 11 out of range for 11 nodes"},
+    {"skin out of range", "skin index 3 in node 8 out of range for 3 skins"},
+    {"skin for a multi-primitive mesh out of range", "skin index 3 in node 9 out of range for 3 skins"}
 };
 
 constexpr struct {
@@ -475,11 +475,11 @@ constexpr struct {
     {"invalid sampler magFilter", "invalid magFilter 2"},
     {"invalid sampler wrapS", "invalid wrap mode 3"},
     {"invalid sampler wrapT", "invalid wrap mode 4"},
-    {"sampler out of bounds", "sampler 5 out of bounds for 5 samplers"},
-    {"image out of bounds", "image 1 out of bounds for 1 images"},
+    {"sampler out of range", "sampler 5 out of range for 5 samplers"},
+    {"image out of range", "image 1 out of range for 1 images"},
     {"missing source", "no image source found"},
-    {"out of bounds GOOGLE_texture_basis", "GOOGLE_texture_basis image 3 out of bounds for 1 images"},
-    {"out of bounds KHR_texture_basisu", "KHR_texture_basisu image 4 out of bounds for 1 images"},
+    {"out of range GOOGLE_texture_basis", "GOOGLE_texture_basis image 3 out of range for 1 images"},
+    {"out of range KHR_texture_basisu", "KHR_texture_basisu image 4 out of range for 1 images"},
     {"unknown extension, no fallback", "no image source found"}
 };
 
@@ -583,7 +583,7 @@ TinyGltfImporterTest::TinyGltfImporterTest() {
 
     addTests({&TinyGltfImporterTest::sceneDefaultNoScenes,
               &TinyGltfImporterTest::sceneDefaultNoDefault,
-              &TinyGltfImporterTest::sceneDefaultOutOfBounds,
+              &TinyGltfImporterTest::sceneDefaultOutOfRange,
               &TinyGltfImporterTest::sceneTransformation,
               &TinyGltfImporterTest::sceneTransformationQuaternionNormalizationEnabled,
               &TinyGltfImporterTest::sceneTransformationQuaternionNormalizationDisabled});
@@ -613,7 +613,7 @@ TinyGltfImporterTest::TinyGltfImporterTest() {
     addInstancedTests({&TinyGltfImporterTest::meshPrimitivesTypes},
         Containers::arraySize(MeshPrimitivesTypesData));
 
-    addTests({&TinyGltfImporterTest::meshIndexAccessorOutOfBounds});
+    addTests({&TinyGltfImporterTest::meshIndexAccessorOutOfRange});
 
     addInstancedTests({&TinyGltfImporterTest::meshInvalid},
         Containers::arraySize(MeshInvalidData));
@@ -1742,13 +1742,13 @@ void TinyGltfImporterTest::sceneDefaultNoDefault() {
     CORRADE_COMPARE(importer->sceneCount(), 1);
 }
 
-void TinyGltfImporterTest::sceneDefaultOutOfBounds() {
+void TinyGltfImporterTest::sceneDefaultOutOfRange() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
 
     std::ostringstream out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "scene-default-oob.gltf")));
-    CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::openData(): scene index 0 out of bounds for 0 scenes\n");
+    CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::openData(): scene index 0 out of range for 0 scenes\n");
 }
 
 void TinyGltfImporterTest::sceneTransformation() {
@@ -2793,7 +2793,7 @@ void TinyGltfImporterTest::meshPrimitivesTypes() {
     } else CORRADE_VERIFY(!mesh->hasAttribute(MeshAttribute::ObjectId));
 }
 
-void TinyGltfImporterTest::meshIndexAccessorOutOfBounds() {
+void TinyGltfImporterTest::meshIndexAccessorOutOfRange() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
 
     std::ostringstream out;

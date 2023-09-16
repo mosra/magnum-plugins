@@ -743,7 +743,7 @@ void StanfordImporterTest::customAttributes() {
     CORRADE_COMPARE(idAttribute, meshAttributeCustom(3));
     CORRADE_COMPARE(importer->meshAttributeName(idAttribute), "id");
 
-    /* Asking for attribute name that's out of bounds should be handled
+    /* Asking for attribute name that's out of range should be handled
        gracefully */
     CORRADE_COMPARE(importer->meshAttributeName(meshAttributeCustom(1000)), "");
 

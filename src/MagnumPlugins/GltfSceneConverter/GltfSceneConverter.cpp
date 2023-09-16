@@ -641,7 +641,7 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const SceneData& scene, con
         /* Create a mask containing only objects that have a parent field */
         for(const UnsignedInt object: parentMapping) {
             if(object >= scene.mappingBound()) {
-                Error{} << "Trade::GltfSceneConverter::add(): scene parent mapping" << object << "out of bounds for" << scene.mappingBound() << "objects";
+                Error{} << "Trade::GltfSceneConverter::add(): scene parent mapping" << object << "out of range for" << scene.mappingBound() << "objects";
                 return {};
             }
 
@@ -661,7 +661,7 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const SceneData& scene, con
             for(std::size_t i = 0; i != parentMapping.size(); ++i) {
                 const Int parent = parents[i];
                 if(parent != -1 && UnsignedInt(parent) >= scene.mappingBound()) {
-                    Error{} << "Trade::GltfSceneConverter::add(): scene parent reference" << parent << "out of bounds for" << scene.mappingBound() << "objects";
+                    Error{} << "Trade::GltfSceneConverter::add(): scene parent reference" << parent << "out of range for" << scene.mappingBound() << "objects";
                     return {};
                 }
 
@@ -783,7 +783,7 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const SceneData& scene, con
         scene.mappingInto(i, mapping);
         for(const UnsignedInt object: mapping) {
             if(object >= scene.mappingBound()) {
-                Error{} << "Trade::GltfSceneConverter::add():" << scene.fieldName(i) << "mapping" << object << "out of bounds for" << scene.mappingBound() << "objects";
+                Error{} << "Trade::GltfSceneConverter::add():" << scene.fieldName(i) << "mapping" << object << "out of range for" << scene.mappingBound() << "objects";
                 return {};
             }
 

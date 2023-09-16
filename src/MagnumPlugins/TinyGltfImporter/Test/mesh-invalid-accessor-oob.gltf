@@ -4,7 +4,7 @@
     },
     "meshes": [
         {
-            "name": "accessor index out of bounds",
+            "name": "accessor index out of range",
             "primitives": [
                 {
                     "note": "for indices tinygltf handles this, for attributes not. HEH. Using TEXCOORD so the initial check for texture coordinate types is verified for bounds checks also.",

@@ -317,7 +317,7 @@ const struct {
         "unsupported format DXGI_FORMAT_AYUV"},
     {"DXT10 format unknown", "dxt10-format136.dds", {},
         "unknown DXGI format ID 136"},
-    {"DXT10 format out of bounds", "dxt10-format189.dds", {},
+    {"DXT10 format out of range", "dxt10-format189.dds", {},
         "unknown DXGI format ID 189"},
     {"cube map flag set for a 3D texture", "cube-flag-set-for-3d.dds", {},
         "cube map flag set for a 3D texture"},

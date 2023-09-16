@@ -300,7 +300,7 @@
             ]
         },
         {
-            "name": "accessor range out of bounds",
+            "name": "accessor range out of range",
             "primitives": [
                 {
                     "attributes": {
@@ -310,7 +310,7 @@
             ]
         },
         {
-            "name": "buffer view range out of bounds",
+            "name": "buffer view range out of range",
             "primitives": [
                 {
                     "attributes": {},
@@ -329,7 +329,7 @@
             ]
         },
         {
-            "name": "buffer index out of bounds",
+            "name": "buffer index out of range",
             "primitives": [
                 {
                     "attributes": {
@@ -339,7 +339,7 @@
             ]
         },
         {
-            "name": "buffer view index out of bounds",
+            "name": "buffer view index out of range",
             "primitives": [
                 {
                     "attributes": {
@@ -349,7 +349,7 @@
             ]
         },
         {
-            "name": "accessor index out of bounds",
+            "name": "accessor index out of range",
             "primitives": [
                 {
                     "attributes": {

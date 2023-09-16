@@ -13,11 +13,11 @@
             "comment": "see also skin-no-joints.gltf"
         },
         {
-            "name": "joint out of bounds",
+            "name": "joint out of range",
             "joints": [1, 0, 2]
         },
         {
-            "name": "accessor out of bounds",
+            "name": "accessor out of range",
             "inverseBindMatrices": 4,
             "joints": [0, 1]
         },

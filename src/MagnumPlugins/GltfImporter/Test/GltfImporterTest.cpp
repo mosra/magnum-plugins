@@ -124,7 +124,7 @@ struct GltfImporterTest: TestSuite::Tester {
     void sceneInvalidWholeFile();
     void sceneInvalid();
     void sceneDefaultNoDefault();
-    void sceneDefaultOutOfBounds();
+    void sceneDefaultOutOfRange();
     void sceneTransformation();
     void sceneTransformationQuaternionNormalizationEnabled();
     void sceneTransformationQuaternionNormalizationDisabled();
@@ -169,7 +169,7 @@ struct GltfImporterTest: TestSuite::Tester {
     void materialRawTransmission();
     void materialRawVolume();
     void materialRawSheen();
-    void materialRawOutOfBounds();
+    void materialRawOutOfRange();
 
     void materialInvalid();
 
@@ -525,13 +525,13 @@ constexpr struct {
         "accessor 4 needs 120 bytes but buffer view 0 has only 0"},
     {"unsupported interpolation type",
         "unrecognized sampler 0 interpolation QUADRATIC"},
-    {"sampler index out of bounds",
+    {"sampler index out of range",
         "sampler index 1 in channel 0 out of range for 1 samplers"},
-    {"node index out of bounds",
+    {"node index out of range",
         "target node index 2 in channel 0 out of range for 2 nodes"},
-    {"sampler input accessor index out of bounds",
+    {"sampler input accessor index out of range",
         "accessor index 8 out of range for 8 accessors"},
-    {"sampler output accessor index out of bounds",
+    {"sampler output accessor index out of range",
         "accessor index 9 out of range for 8 accessors"},
     {"track size mismatch",
         "channel 0 target track size doesn't match time track size, expected 3 but got 2"},
@@ -724,9 +724,9 @@ constexpr struct {
 } SkinInvalidData[]{
     {"no joints",
         "skin has no joints"},
-    {"joint out of bounds",
+    {"joint out of range",
         "joint index 2 out of range for 2 nodes"},
-    {"accessor out of bounds",
+    {"accessor out of range",
         "accessor index 4 out of range for 4 accessors"},
     {"wrong accessor type",
         "inverse bind matrices have unexpected type Matrix3x3"},
@@ -928,7 +928,7 @@ const struct {
         "mesh-invalid-texcoord-flip-morph-target-attribute.gltf",
         "Utility::Json::parseUnsignedInt(): expected a number, got Utility::JsonToken::Type::String at {}:18:29\n"
         "Trade::GltfImporter::openData(): invalid attribute TEXCOORD_3 in morph target 2 in mesh 1\n"},
-    {"texcoord flip attribute out of bounds",
+    {"texcoord flip attribute out of range",
         "mesh-invalid-texcoord-flip-attribute-oob.gltf",
         "accessor index 2 out of range for 2 accessors"},
     {"texcoord flip attribute accessor missing componentType",
@@ -980,17 +980,17 @@ const struct {
         "meshes spanning multiple buffers are not supported"},
     {"invalid index accessor",
         "accessor 13 needs 40 bytes but buffer view 0 has only 36"},
-    {"accessor range out of bounds",
+    {"accessor range out of range",
         "accessor 14 needs 48 bytes but buffer view 0 has only 36"},
-    {"buffer view range out of bounds",
+    {"buffer view range out of range",
         "buffer view 3 needs 60 bytes but buffer 1 has only 59"},
-    {"buffer index out of bounds",
+    {"buffer index out of range",
         "buffer index 7 out of range for 7 buffers"},
-    {"buffer view index out of bounds",
+    {"buffer view index out of range",
         "buffer view index 16 out of range for 16 buffer views"},
-    {"accessor index out of bounds",
+    {"accessor index out of range",
         "accessor index 42 out of range for 42 accessors"},
-    {"mesh index accessor out of bounds",
+    {"mesh index accessor out of range",
         "accessor index 42 out of range for 42 accessors"},
     {"buffer with missing uri property",
         "buffer 2 has missing uri property"},
@@ -1223,10 +1223,10 @@ const struct {
     {"great-grandchild is self",
         "scene-invalid-cycle-deep.gltf",
         "node tree contains cycle starting at node 0"},
-    {"child out of bounds",
+    {"child out of range",
         "scene-invalid-child-oob.gltf",
         "child index 7 in node 4 out of range for 7 nodes"},
-    {"node out of bounds",
+    {"node out of range",
         "scene-invalid-node-oob.gltf",
         "node index 7 in scene 0 out of range for 7 nodes"},
     {"invalid nodes property",
@@ -1251,19 +1251,19 @@ constexpr struct {
     const char* name;
     const char* message;
 } SceneInvalidData[]{
-    {"camera out of bounds",
+    {"camera out of range",
         "camera index 1 in node 3 out of range for 1 cameras"},
-    {"light out of bounds",
+    {"light out of range",
         "light index 2 in node 4 out of range for 2 lights"},
-    {"material out of bounds",
+    {"material out of range",
         "material index 4 in mesh 0 primitive 0 out of range for 4 materials"},
-    {"material in a multi-primitive mesh out of bounds",
+    {"material in a multi-primitive mesh out of range",
         "material index 5 in mesh 1 primitive 1 out of range for 4 materials"},
-    {"mesh out of bounds",
+    {"mesh out of range",
         "mesh index 5 in node 7 out of range for 5 meshes"},
-    {"skin out of bounds",
+    {"skin out of range",
         "skin index 3 in node 8 out of range for 3 skins"},
-    {"skin for a multi-primitive mesh out of bounds",
+    {"skin for a multi-primitive mesh out of range",
         "skin index 3 in node 9 out of range for 3 skins"},
     {"invalid mesh property",
         "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:132:15\n"
@@ -1396,13 +1396,13 @@ constexpr struct {
         "unrecognized wrapS 3"},
     {"invalid sampler wrapT",
         "unrecognized wrapT 4"},
-    {"sampler out of bounds",
+    {"sampler out of range",
         "index 9 out of range for 9 samplers"},
-    {"source out of bounds",
+    {"source out of range",
         "index 1 out of range for 1 images"},
-    {"out of bounds GOOGLE_texture_basis",
+    {"out of range GOOGLE_texture_basis",
         "index 3 out of range for 1 images"},
-    {"out of bounds KHR_texture_basisu",
+    {"out of range KHR_texture_basisu",
         "index 4 out of range for 1 images"},
     {"unknown extension, no fallback",
         "missing or invalid source property"},
@@ -1522,7 +1522,7 @@ const struct {
         "texture-invalid-ktx-extension-source-property.gltf",
         "Utility::Json::parseUnsignedInt(): too large integer literal -2 at {}:25:21\n"
         "Trade::GltfImporter::openData(): missing or invalid MSFT_texture_dds source property in texture 2\n"},
-    {"extension source out of bounds",
+    {"extension source out of range",
         "texture-invalid-ktx-extension-source-oob.gltf",
         "index 2 in texture 0 out of range for 2 images"},
     {"missing source property",
@@ -1532,7 +1532,7 @@ const struct {
         "texture-invalid-ktx-source-property.gltf",
         "Utility::Json::parseUnsignedInt(): too large integer literal -2 at {}:22:17\n"
         "Trade::GltfImporter::openData(): missing or invalid source property in texture 2\n"},
-    {"source out of bounds",
+    {"source out of range",
         "texture-invalid-ktx-source-oob.gltf",
         "index 2 in texture 0 out of range for 2 images"},
     {"referenced with a layer, then with no extension",
@@ -1673,7 +1673,7 @@ GltfImporterTest::GltfImporterTest() {
         Containers::arraySize(SceneInvalidData));
 
     addTests({&GltfImporterTest::sceneDefaultNoDefault,
-              &GltfImporterTest::sceneDefaultOutOfBounds,
+              &GltfImporterTest::sceneDefaultOutOfRange,
               &GltfImporterTest::sceneTransformation});
 
     addInstancedTests({&GltfImporterTest::sceneTransformationQuaternionNormalizationEnabled},
@@ -1766,7 +1766,7 @@ GltfImporterTest::GltfImporterTest() {
               &GltfImporterTest::materialRawVolume,
               &GltfImporterTest::materialRawSheen});
 
-    addInstancedTests({&GltfImporterTest::materialRawOutOfBounds},
+    addInstancedTests({&GltfImporterTest::materialRawOutOfRange},
         Containers::arraySize(QuietData));
 
     addInstancedTests({&GltfImporterTest::materialInvalid},
@@ -3149,7 +3149,7 @@ void GltfImporterTest::sceneDefaultNoDefault() {
     CORRADE_COMPARE(importer->sceneCount(), 1);
 }
 
-void GltfImporterTest::sceneDefaultOutOfBounds() {
+void GltfImporterTest::sceneDefaultOutOfRange() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
 
     std::ostringstream out;
@@ -6256,7 +6256,7 @@ void GltfImporterTest::materialRawSheen() {
         "Trade::GltfImporter::material(): property sheenRoughnessTextureMatrix is too large with 63 bytes, skipping\n");
 }
 
-void GltfImporterTest::materialRawOutOfBounds() {
+void GltfImporterTest::materialRawOutOfRange() {
     auto&& data = QuietData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 

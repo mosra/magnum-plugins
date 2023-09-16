@@ -116,7 +116,7 @@ static_assert(sizeof(KtxFileIdentifier) == sizeof(KtxHeader::identifier),
 constexpr std::size_t KtxFileVersionOffset = 5;
 constexpr std::size_t KtxFileVersionLength = 2;
 static_assert(KtxFileVersionOffset + KtxFileVersionLength <= sizeof(KtxFileIdentifier),
-    "KtxFileVersion(Offset|Length) out of bounds");
+    "KtxFileVersion(Offset|Length) out of range");
 
 /* Khronos Data Format: basic block header */
 struct KdfBasicBlockHeader {

@@ -110,39 +110,39 @@
     ],
     "scenes": [
         {
-            "name": "camera out of bounds",
+            "name": "camera out of range",
             "nodes": [3]
         },
         {
-            "name": "light out of bounds",
+            "name": "light out of range",
             "nodes": [4]
         },
         {
-            "name": "material out of bounds",
+            "name": "material out of range",
             "nodes": [5]
         },
         {
-            "name": "material in a multi-primitive mesh out of bounds",
+            "name": "material in a multi-primitive mesh out of range",
             "nodes": [6]
         },
         {
-            "name": "mesh out of bounds",
+            "name": "mesh out of range",
             "nodes": [7]
         },
         {
-            "name": "skin out of bounds",
+            "name": "skin out of range",
             "nodes": [8]
         },
         {
-            "name": "skin for a multi-primitive mesh out of bounds",
+            "name": "skin for a multi-primitive mesh out of range",
             "nodes": [9]
         },
         {
-            "name": "child out of bounds",
+            "name": "child out of range",
             "nodes": [10]
         },
         {
-            "name": "node out of bounds",
+            "name": "node out of range",
             "nodes": [11]
         }
     ]

@@ -126,7 +126,7 @@ struct GltfSceneConverterTest: TestSuite::Tester {
     template<SceneConverterFlag flag = SceneConverterFlag{}> void addMaterialCustom();
     void addMaterialMultiple();
     void addMaterialInvalid();
-    void addMaterial2DArrayTextureLayerOutOfBounds();
+    void addMaterial2DArrayTextureLayerOutOfRange();
 
     void textureCoordinateYFlip();
 
@@ -1631,38 +1631,38 @@ const struct {
     MaterialData material;
     const char* message;
 } AddMaterialInvalidData[]{
-    {"texture out of bounds",
+    {"texture out of range",
         MaterialData{{}, {
             {MaterialAttribute::OcclusionTexture, 1u},
         }}, "material attribute OcclusionTexture references texture 1 but only 1 were added so far"},
-    {"texture in a layer out of bounds",
+    {"texture in a layer out of range",
         MaterialData{{}, {
             {MaterialLayer::ClearCoat},
             {MaterialAttribute::NormalTexture, 2u}
         }, {0, 2}}, "material attribute NormalTexture in layer ClearCoat references texture 2 but only 1 were added so far"},
-    {"2D texture layer out of bounds",
+    {"2D texture layer out of range",
         MaterialData{{}, {
             {MaterialAttribute::EmissiveTexture, 0u},
             {MaterialAttribute::EmissiveTextureLayer, 1u},
         }}, "material attribute EmissiveTextureLayer value 1 out of range for 1 layers in texture 0"},
-    {"2D texture global layer out of bounds",
+    {"2D texture global layer out of range",
         MaterialData{{}, {
             {MaterialAttribute::EmissiveTexture, 0u},
             {MaterialAttribute::TextureLayer, 1u},
         }}, "material attribute TextureLayer value 1 out of range for 1 layers in texture 0"},
-    {"2D texture layer in a layer out of bounds",
+    {"2D texture layer in a layer out of range",
         MaterialData{{}, {
             {MaterialLayer::ClearCoat},
             {MaterialAttribute::LayerFactorTexture, 0u},
             {MaterialAttribute::LayerFactorTextureLayer, 1u},
         }, {0, 3}}, "material attribute LayerFactorTextureLayer in layer ClearCoat value 1 out of range for 1 layers in texture 0"},
-    {"2D texture material-layer-local layer in a layer out of bounds",
+    {"2D texture material-layer-local layer in a layer out of range",
         MaterialData{{}, {
             {MaterialLayer::ClearCoat},
             {MaterialAttribute::LayerFactorTexture, 0u},
             {MaterialAttribute::TextureLayer, 1u},
         }, {0, 3}}, "material attribute TextureLayer in layer ClearCoat value 1 out of range for 1 layers in texture 0"},
-    {"2D texture global layer in a layer out of bounds",
+    {"2D texture global layer in a layer out of range",
         MaterialData{{}, {
             {MaterialAttribute::TextureLayer, 1u},
             {MaterialLayer::ClearCoat},
@@ -1872,13 +1872,13 @@ const struct {
     {"object ID with an offset", {}, {}, 350, "scene.gltf", false}
 };
 
-const Containers::Pair<UnsignedInt, Int> SceneInvalidParentMappingOutOfBounds[]{
+const Containers::Pair<UnsignedInt, Int> SceneInvalidParentMappingOutOfRange[]{
     {0, -1}, {15, 14}, {37, 36}, {1, -1}
 };
-const Containers::Pair<UnsignedInt, Int> SceneInvalidParentIndexOutOfBounds[]{
+const Containers::Pair<UnsignedInt, Int> SceneInvalidParentIndexOutOfRange[]{
     {0, -1}, {36, 37}, {1, -1}
 };
-const Containers::Pair<UnsignedInt, UnsignedInt> SceneInvalidMappingOutOfBounds[]{
+const Containers::Pair<UnsignedInt, UnsignedInt> SceneInvalidMappingOutOfRange[]{
     {0, 0}, {36, 1}, {37, 1}, {1, 1}
 };
 const Containers::Pair<UnsignedInt, Int> SceneInvalidTwoParents[]{
@@ -1890,10 +1890,10 @@ const Containers::Pair<UnsignedInt, Int> SceneInvalidParentIsSelf[]{
 const Containers::Pair<UnsignedInt, Int> SceneInvalidParentIsChild[]{
     {0, 3}, {3, 2}, {2, 0}
 };
-const Containers::Pair<UnsignedInt, UnsignedInt> SceneInvalidMeshOutOfBounds[]{
+const Containers::Pair<UnsignedInt, UnsignedInt> SceneInvalidMeshOutOfRange[]{
     {0, 0}, {17, 1}, {2, 2}, {1, 1}
 };
-const Containers::Triple<UnsignedInt, UnsignedInt, Int> SceneInvalidMaterialOutOfBounds[]{
+const Containers::Triple<UnsignedInt, UnsignedInt, Int> SceneInvalidMaterialOutOfRange[]{
     {0, 0, -1}, {17, 1, 2}, {2, 1, 1}
 };
 
@@ -1904,24 +1904,24 @@ const struct {
 } AddSceneInvalidData[]{
     {"not 3D", SceneData{SceneMappingType::UnsignedInt, 1, nullptr, {}},
         "expected a 3D scene"},
-    {"parent mapping out of bounds", SceneData{SceneMappingType::UnsignedInt, 37, {}, SceneInvalidParentMappingOutOfBounds, {
+    {"parent mapping out of range", SceneData{SceneMappingType::UnsignedInt, 37, {}, SceneInvalidParentMappingOutOfRange, {
         /* To mark the scene as 3D */
         SceneFieldData{SceneField::Transformation,
             SceneMappingType::UnsignedInt, nullptr,
             SceneFieldType::Matrix4x4, nullptr},
         SceneFieldData{SceneField::Parent,
-            Containers::stridedArrayView(SceneInvalidParentMappingOutOfBounds).slice(&Containers::Pair<UnsignedInt, Int>::first),
-            Containers::stridedArrayView(SceneInvalidParentMappingOutOfBounds).slice(&Containers::Pair<UnsignedInt, Int>::second)},
-    }}, "scene parent mapping 37 out of bounds for 37 objects"},
-    {"parent index out of bounds", SceneData{SceneMappingType::UnsignedInt, 37,{}, SceneInvalidParentIndexOutOfBounds, {
+            Containers::stridedArrayView(SceneInvalidParentMappingOutOfRange).slice(&Containers::Pair<UnsignedInt, Int>::first),
+            Containers::stridedArrayView(SceneInvalidParentMappingOutOfRange).slice(&Containers::Pair<UnsignedInt, Int>::second)},
+    }}, "scene parent mapping 37 out of range for 37 objects"},
+    {"parent index out of range", SceneData{SceneMappingType::UnsignedInt, 37,{}, SceneInvalidParentIndexOutOfRange, {
         /* To mark the scene as 3D */
         SceneFieldData{SceneField::Transformation,
             SceneMappingType::UnsignedInt, nullptr,
             SceneFieldType::Matrix4x4, nullptr},
         SceneFieldData{SceneField::Parent,
-            Containers::stridedArrayView(SceneInvalidParentIndexOutOfBounds).slice(&Containers::Pair<UnsignedInt, Int>::first),
-            Containers::stridedArrayView(SceneInvalidParentIndexOutOfBounds).slice(&Containers::Pair<UnsignedInt, Int>::second)},
-    }}, "scene parent reference 37 out of bounds for 37 objects"},
+            Containers::stridedArrayView(SceneInvalidParentIndexOutOfRange).slice(&Containers::Pair<UnsignedInt, Int>::first),
+            Containers::stridedArrayView(SceneInvalidParentIndexOutOfRange).slice(&Containers::Pair<UnsignedInt, Int>::second)},
+    }}, "scene parent reference 37 out of range for 37 objects"},
     {"two parents", SceneData{SceneMappingType::UnsignedInt, 37,{}, SceneInvalidTwoParents, {
         /* To mark the scene as 3D */
         SceneFieldData{SceneField::Transformation,
@@ -1949,36 +1949,36 @@ const struct {
             Containers::stridedArrayView(SceneInvalidParentIsChild).slice(&Containers::Pair<UnsignedInt, Int>::first),
             Containers::stridedArrayView(SceneInvalidParentIsChild).slice(&Containers::Pair<UnsignedInt, Int>::second)},
     }}, "scene hierarchy contains a cycle starting at object 0"},
-    /* Different code path from "parent mapping out of bounds" */
-    {"mapping out of bounds", SceneData{SceneMappingType::UnsignedInt, 37,{}, SceneInvalidMappingOutOfBounds, {
+    /* Different code path from "parent mapping out of range" */
+    {"mapping out of range", SceneData{SceneMappingType::UnsignedInt, 37,{}, SceneInvalidMappingOutOfRange, {
         /* To mark the scene as 3D */
         SceneFieldData{SceneField::Transformation,
             SceneMappingType::UnsignedInt, nullptr,
             SceneFieldType::Matrix4x4, nullptr},
         SceneFieldData{SceneField::Light,
-            Containers::stridedArrayView(SceneInvalidMappingOutOfBounds).slice(&Containers::Pair<UnsignedInt, UnsignedInt>::first),
-            Containers::stridedArrayView(SceneInvalidMappingOutOfBounds).slice(&Containers::Pair<UnsignedInt, UnsignedInt>::second)},
-    }}, "Trade::SceneField::Light mapping 37 out of bounds for 37 objects"},
-    {"mesh out of bounds", SceneData{SceneMappingType::UnsignedInt, 37,{}, SceneInvalidMeshOutOfBounds, {
+            Containers::stridedArrayView(SceneInvalidMappingOutOfRange).slice(&Containers::Pair<UnsignedInt, UnsignedInt>::first),
+            Containers::stridedArrayView(SceneInvalidMappingOutOfRange).slice(&Containers::Pair<UnsignedInt, UnsignedInt>::second)},
+    }}, "Trade::SceneField::Light mapping 37 out of range for 37 objects"},
+    {"mesh out of range", SceneData{SceneMappingType::UnsignedInt, 37,{}, SceneInvalidMeshOutOfRange, {
         /* To mark the scene as 3D */
         SceneFieldData{SceneField::Transformation,
             SceneMappingType::UnsignedInt, nullptr,
             SceneFieldType::Matrix4x4, nullptr},
         SceneFieldData{SceneField::Mesh,
-            Containers::stridedArrayView(SceneInvalidMeshOutOfBounds).slice(&Containers::Pair<UnsignedInt, UnsignedInt>::first),
-            Containers::stridedArrayView(SceneInvalidMeshOutOfBounds).slice(&Containers::Pair<UnsignedInt, UnsignedInt>::second)},
+            Containers::stridedArrayView(SceneInvalidMeshOutOfRange).slice(&Containers::Pair<UnsignedInt, UnsignedInt>::first),
+            Containers::stridedArrayView(SceneInvalidMeshOutOfRange).slice(&Containers::Pair<UnsignedInt, UnsignedInt>::second)},
     }}, "scene references mesh 2 but only 2 were added so far"},
-    {"material out of bounds", SceneData{SceneMappingType::UnsignedInt, 37,{}, SceneInvalidMaterialOutOfBounds, {
+    {"material out of range", SceneData{SceneMappingType::UnsignedInt, 37,{}, SceneInvalidMaterialOutOfRange, {
         /* To mark the scene as 3D */
         SceneFieldData{SceneField::Transformation,
             SceneMappingType::UnsignedInt, nullptr,
             SceneFieldType::Matrix4x4, nullptr},
         SceneFieldData{SceneField::Mesh,
-            Containers::stridedArrayView(SceneInvalidMaterialOutOfBounds).slice(&Containers::Triple<UnsignedInt, UnsignedInt, Int>::first),
-            Containers::stridedArrayView(SceneInvalidMaterialOutOfBounds).slice(&Containers::Triple<UnsignedInt, UnsignedInt, Int>::second)},
+            Containers::stridedArrayView(SceneInvalidMaterialOutOfRange).slice(&Containers::Triple<UnsignedInt, UnsignedInt, Int>::first),
+            Containers::stridedArrayView(SceneInvalidMaterialOutOfRange).slice(&Containers::Triple<UnsignedInt, UnsignedInt, Int>::second)},
         SceneFieldData{SceneField::MeshMaterial,
-            Containers::stridedArrayView(SceneInvalidMaterialOutOfBounds).slice(&Containers::Triple<UnsignedInt, UnsignedInt, Int>::first),
-            Containers::stridedArrayView(SceneInvalidMaterialOutOfBounds).slice(&Containers::Triple<UnsignedInt, UnsignedInt, Int>::third)},
+            Containers::stridedArrayView(SceneInvalidMaterialOutOfRange).slice(&Containers::Triple<UnsignedInt, UnsignedInt, Int>::first),
+            Containers::stridedArrayView(SceneInvalidMaterialOutOfRange).slice(&Containers::Triple<UnsignedInt, UnsignedInt, Int>::third)},
     }}, "scene references material 2 but only 2 were added so far"},
 };
 
@@ -2100,7 +2100,7 @@ GltfSceneConverterTest::GltfSceneConverterTest() {
     addInstancedTests({&GltfSceneConverterTest::addMaterialInvalid},
         Containers::arraySize(AddMaterialInvalidData));
 
-    addTests({&GltfSceneConverterTest::addMaterial2DArrayTextureLayerOutOfBounds});
+    addTests({&GltfSceneConverterTest::addMaterial2DArrayTextureLayerOutOfRange});
 
     addInstancedTests({&GltfSceneConverterTest::textureCoordinateYFlip},
         Containers::arraySize(TextureCoordinateYFlipData));
@@ -5044,7 +5044,7 @@ void GltfSceneConverterTest::addMaterialInvalid() {
         TestSuite::Compare::File);
 }
 
-void GltfSceneConverterTest::addMaterial2DArrayTextureLayerOutOfBounds() {
+void GltfSceneConverterTest::addMaterial2DArrayTextureLayerOutOfRange() {
     /* Same as addMaterial2DArrayTextures() except for the error case at the
        end */
 

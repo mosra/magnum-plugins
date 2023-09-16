@@ -465,7 +465,7 @@ const struct {
     Containers::StringView data;
 } IgnoredInvalidKeyValueData[]{
     /* Length extends beyond key/value data */
-    {"length out of bounds", "\xff\x00\x00\x00k\x00\x00\x00"_s},
+    {"length out of range", "\xff\x00\x00\x00k\x00\x00\x00"_s},
     /* Importer shouldn't care about order of keys */
     {"unsorted keys", "\x02\x00\x00\x00b\x00\x00\x00\x02\x00\x00\x00a\x00\x00\x00"_s}
 };

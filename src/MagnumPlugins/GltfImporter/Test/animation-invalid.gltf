@@ -160,7 +160,7 @@
       ]
     },
     {
-      "name": "sampler index out of bounds",
+      "name": "sampler index out of range",
       "channels": [
         {
           "sampler": 1,
@@ -179,7 +179,7 @@
       ]
     },
     {
-      "name": "node index out of bounds",
+      "name": "node index out of range",
       "channels": [
         {
           "sampler": 0,
@@ -198,7 +198,7 @@
       ]
     },
     {
-      "name": "sampler input accessor index out of bounds",
+      "name": "sampler input accessor index out of range",
       "channels": [
         {
           "sampler": 0,
@@ -217,7 +217,7 @@
       ]
     },
     {
-      "name": "sampler output accessor index out of bounds",
+      "name": "sampler output accessor index out of range",
       "channels": [
         {
           "sampler": 0,

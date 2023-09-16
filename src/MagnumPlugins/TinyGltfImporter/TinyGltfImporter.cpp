@@ -118,7 +118,7 @@ std::size_t elementSize(const tinygltf::Accessor& accessor) {
 
 const tinygltf::Accessor* checkedAccessor(const tinygltf::Model& model, const char* function, Int id) {
     if(std::size_t(id) >= model.accessors.size()) {
-        Error{} << "Trade::TinyGltfImporter::" << Debug::nospace << function << Debug::nospace << "(): accessor" << id << "out of bounds for" << model.accessors.size() << "accessors";
+        Error{} << "Trade::TinyGltfImporter::" << Debug::nospace << function << Debug::nospace << "(): accessor" << id << "out of range for" << model.accessors.size() << "accessors";
         return nullptr;
     }
 
@@ -134,7 +134,7 @@ const tinygltf::Accessor* checkedAccessor(const tinygltf::Model& model, const ch
         return nullptr;
     }
     if(std::size_t(accessor.bufferView) >= model.bufferViews.size()) {
-        Error{} << "Trade::TinyGltfImporter::" << Debug::nospace << function << Debug::nospace << "(): bufferView" << accessor.bufferView << "out of bounds for" << model.bufferViews.size() << "views";
+        Error{} << "Trade::TinyGltfImporter::" << Debug::nospace << function << Debug::nospace << "(): bufferView" << accessor.bufferView << "out of range for" << model.bufferViews.size() << "views";
         return nullptr;
     }
 
@@ -150,7 +150,7 @@ const tinygltf::Accessor* checkedAccessor(const tinygltf::Model& model, const ch
         return nullptr;
     }
     if(std::size_t(bufferView.buffer) >= model.buffers.size()) {
-        Error{} << "Trade::TinyGltfImporter::" << Debug::nospace << function << Debug::nospace << "(): buffer" << bufferView.buffer << "out of bounds for" << model.buffers.size() << "buffers";
+        Error{} << "Trade::TinyGltfImporter::" << Debug::nospace << function << Debug::nospace << "(): buffer" << bufferView.buffer << "out of range for" << model.buffers.size() << "buffers";
         return nullptr;
     }
 
@@ -373,7 +373,7 @@ void TinyGltfImporter::doOpenData(Containers::Array<char>&& data, DataFlags) {
     /* Bounds checks that can't be deferred to later. No, tinygltf doesn't
        check for this. */
     if(_d->model.defaultScene != -1 && UnsignedInt(_d->model.defaultScene) >= _d->model.scenes.size()) {
-        Error{} << "Trade::TinyGltfImporter::openData(): scene index" << _d->model.defaultScene << "out of bounds for" << _d->model.scenes.size() << "scenes";
+        Error{} << "Trade::TinyGltfImporter::openData(): scene index" << _d->model.defaultScene << "out of range for" << _d->model.scenes.size() << "scenes";
         doClose();
         return;
     }
@@ -456,7 +456,7 @@ void TinyGltfImporter::doOpenData(Containers::Array<char>&& data, DataFlags) {
                 const Containers::StringView semantic = attributeSemantic(attribute.first);
                 if(semantic == "TEXCOORD") {
                     if(!_d->textureCoordinateYFlipInMaterial) {
-                        /* Ignore accessor is out of bounds, this will fail
+                        /* Ignore accessor is out of range, this will fail
                            later during mesh import */
                         if(std::size_t(attribute.second) >= _d->model.accessors.size())
                             continue;
@@ -647,7 +647,7 @@ Containers::Optional<AnimationData> TinyGltfImporter::doAnimation(UnsignedInt id
         for(std::size_t i = 0; i != animation.channels.size(); ++i) {
             const tinygltf::AnimationChannel& channel = animation.channels[i];
             if(std::size_t(channel.sampler) >= animation.samplers.size()) {
-                Error{} << "Trade::TinyGltfImporter::animation(): sampler" << channel.sampler << "out of bounds for" << animation.samplers.size() << "samplers";
+                Error{} << "Trade::TinyGltfImporter::animation(): sampler" << channel.sampler << "out of range for" << animation.samplers.size() << "samplers";
                 return Containers::NullOpt;
             }
 
@@ -832,7 +832,7 @@ Containers::Optional<AnimationData> TinyGltfImporter::doAnimation(UnsignedInt id
             }
 
             if(std::size_t(channel.target_node) >= _d->model.nodes.size()) {
-                Error{} << "Trade::TinyGltfImporter::animation(): target node" << channel.target_node << "out of bounds for" << _d->model.nodes.size() << "nodes";
+                Error{} << "Trade::TinyGltfImporter::animation(): target node" << channel.target_node << "out of range for" << _d->model.nodes.size() << "nodes";
                 return Containers::NullOpt;
             }
 
@@ -1011,7 +1011,7 @@ Containers::Optional<SceneData> TinyGltfImporter::doScene(UnsignedInt id) {
     arrayReserve(objects, _d->model.nodes.size());
     for(const UnsignedInt i: scene.nodes) {
         if(i >= _d->model.nodes.size()) {
-            Error{} << "Trade::TinyGltfImporter::scene(): node index" << i << "out of bounds for" << _d->model.nodes.size() << "nodes";
+            Error{} << "Trade::TinyGltfImporter::scene(): node index" << i << "out of range for" << _d->model.nodes.size() << "nodes";
             return {};
         }
 
@@ -1027,7 +1027,7 @@ Containers::Optional<SceneData> TinyGltfImporter::doScene(UnsignedInt id) {
             arrayAppend(children, InPlaceInit, UnsignedInt(objects.size()), UnsignedInt(objects.size() + _d->model.nodes[objects[j]].children.size()));
             for(const UnsignedInt k: _d->model.nodes[objects[j]].children) {
                 if(k >= _d->model.nodes.size()) {
-                    Error{} << "Trade::TinyGltfImporter::scene(): child index" << k << "in node" << objects[j] << "out of bounds for" << _d->model.nodes.size() << "nodes";
+                    Error{} << "Trade::TinyGltfImporter::scene(): child index" << k << "in node" << objects[j] << "out of range for" << _d->model.nodes.size() << "nodes";
                     return {};
                 }
 
@@ -1072,7 +1072,7 @@ Containers::Optional<SceneData> TinyGltfImporter::doScene(UnsignedInt id) {
         if(node.scale.size() != 0) hasScalings = true;
         if(node.mesh != -1) {
             if(UnsignedInt(node.mesh) >= _d->model.meshes.size()) {
-                Error{} << "Trade::TinyGltfImporter::scene(): mesh index" << node.mesh << "in node" << i << "out of bounds for" << _d->model.meshes.size() << "meshes";
+                Error{} << "Trade::TinyGltfImporter::scene(): mesh index" << node.mesh << "in node" << i << "out of range for" << _d->model.meshes.size() << "meshes";
                 return {};
             }
 
@@ -1230,7 +1230,7 @@ Containers::Optional<SceneData> TinyGltfImporter::doScene(UnsignedInt id) {
                 if(hasMeshMaterials) {
                     const Int material = mesh.primitives[j].material;
                     if(material != -1 && UnsignedInt(material) >= _d->model.materials.size()) {
-                        Error{} << "Trade::TinyGltfImporter::scene(): material index" << material << "in node" << objects[i] << "out of bounds for" << _d->model.materials.size() << "materials";
+                        Error{} << "Trade::TinyGltfImporter::scene(): material index" << material << "in node" << objects[i] << "out of range for" << _d->model.materials.size() << "materials";
                         return {};
                     }
                     meshMaterials[meshMaterialOffset] = mesh.primitives[j].material;
@@ -1244,7 +1244,7 @@ Containers::Optional<SceneData> TinyGltfImporter::doScene(UnsignedInt id) {
             const UnsignedInt light = node.extensions.at("KHR_lights_punctual").Get("light").Get<int>();
 
             if(light >= _d->model.lights.size()) {
-                Error{} << "Trade::TinyGltfImporter::scene(): light index" << light << "in node" << objects[i] << "out of bounds for" << _d->model.lights.size() << "lights";
+                Error{} << "Trade::TinyGltfImporter::scene(): light index" << light << "in node" << objects[i] << "out of range for" << _d->model.lights.size() << "lights";
                 return {};
             }
 
@@ -1256,7 +1256,7 @@ Containers::Optional<SceneData> TinyGltfImporter::doScene(UnsignedInt id) {
         /* Populate camera references */
         if(node.camera != -1) {
             if(UnsignedInt(node.camera) >= _d->model.cameras.size()) {
-                Error{} << "Trade::TinyGltfImporter::scene(): camera index" << node.camera << "in node" << objects[i] << "out of bounds for" << _d->model.cameras.size() << "cameras";
+                Error{} << "Trade::TinyGltfImporter::scene(): camera index" << node.camera << "in node" << objects[i] << "out of range for" << _d->model.cameras.size() << "cameras";
                 return {};
             }
 
@@ -1268,7 +1268,7 @@ Containers::Optional<SceneData> TinyGltfImporter::doScene(UnsignedInt id) {
         /* Populate skin references */
         if(node.skin != -1) {
             if(UnsignedInt(node.skin) >= _d->model.skins.size()) {
-                Error{} << "Trade::TinyGltfImporter::scene(): skin index" << node.skin << "in node" << objects[i] << "out of bounds for" << _d->model.skins.size() << "skins";
+                Error{} << "Trade::TinyGltfImporter::scene(): skin index" << node.skin << "in node" << objects[i] << "out of range for" << _d->model.skins.size() << "skins";
                 return {};
             }
 
@@ -1391,7 +1391,7 @@ Containers::Optional<SkinData3D> TinyGltfImporter::doSkin3D(const UnsignedInt id
     Containers::Array<UnsignedInt> joints{NoInit, skin.joints.size()};
     for(std::size_t i = 0; i != joints.size(); ++i) {
         if(std::size_t(skin.joints[i]) >= _d->model.nodes.size()) {
-            Error{} << "Trade::TinyGltfImporter::skin3D(): target node" << skin.joints[i] << "out of bounds for" << _d->model.nodes.size() << "nodes";
+            Error{} << "Trade::TinyGltfImporter::skin3D(): target node" << skin.joints[i] << "out of range for" << _d->model.nodes.size() << "nodes";
             return Containers::NullOpt;
         }
 
@@ -1885,7 +1885,7 @@ Containers::String TinyGltfImporter::doMaterialName(const UnsignedInt id) {
 
 bool TinyGltfImporter::materialTexture(const char* name, const UnsignedInt texture, UnsignedInt texCoord, const tinygltf::Value& extensions, Containers::Array<MaterialAttributeData>& attributes, const MaterialAttribute attribute, const MaterialAttribute matrixAttribute, const MaterialAttribute coordinateAttribute) const {
     if(texture >= _d->model.textures.size()) {
-        Error{} << "Trade::TinyGltfImporter::material():" << name << "index" << texture << "out of bounds for" << _d->model.textures.size() << "textures";
+        Error{} << "Trade::TinyGltfImporter::material():" << name << "index" << texture << "out of range for" << _d->model.textures.size() << "textures";
         return false;
     }
 
@@ -2406,7 +2406,7 @@ Containers::Optional<TextureData> TinyGltfImporter::doTexture(const UnsignedInt 
         if(found != tex.extensions.end()) {
             const int source = found->second.Get("source").Get<int>();
             if(UnsignedInt(source) >= _d->model.images.size()) {
-                Error{} << "Trade::TinyGltfImporter::texture():" << ext << "image" << source << "out of bounds for" << _d->model.images.size() << "images";
+                Error{} << "Trade::TinyGltfImporter::texture():" << ext << "image" << source << "out of range for" << _d->model.images.size() << "images";
                 return Containers::NullOpt;
             }
             imageId = source;
@@ -2419,7 +2419,7 @@ Containers::Optional<TextureData> TinyGltfImporter::doTexture(const UnsignedInt 
            attribute. It's not mandatory, so this can still fail. */
         if(tex.source != -1) {
             if(UnsignedInt(tex.source) >= _d->model.images.size()) {
-                Error{} << "Trade::TinyGltfImporter::texture(): image" << tex.source << "out of bounds for" << _d->model.images.size() << "images";
+                Error{} << "Trade::TinyGltfImporter::texture(): image" << tex.source << "out of range for" << _d->model.images.size() << "images";
                 return Containers::NullOpt;
             }
 
@@ -2441,7 +2441,7 @@ Containers::Optional<TextureData> TinyGltfImporter::doTexture(const UnsignedInt 
     }
 
     if(UnsignedInt(tex.sampler) >= _d->model.samplers.size()) {
-        Error{} << "Trade::TinyGltfImporter::texture(): sampler" << tex.sampler << "out of bounds for" << _d->model.samplers.size() << "samplers";
+        Error{} << "Trade::TinyGltfImporter::texture(): sampler" << tex.sampler << "out of range for" << _d->model.samplers.size() << "samplers";
         return Containers::NullOpt;
     }
 

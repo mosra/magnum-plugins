@@ -66,16 +66,16 @@
       "source": 0
     },
     {
-      "name": "sampler out of bounds",
+      "name": "sampler out of range",
       "sampler": 9,
       "source": 0
     },
     {
-      "name": "source out of bounds",
+      "name": "source out of range",
       "source": 1
     },
     {
-      "name": "out of bounds GOOGLE_texture_basis",
+      "name": "out of range GOOGLE_texture_basis",
       "extensions": {
         "GOOGLE_texture_basis": {
           "source": 3
@@ -83,7 +83,7 @@
       }
     },
     {
-      "name": "out of bounds KHR_texture_basisu",
+      "name": "out of range KHR_texture_basisu",
       "extensions": {
         "KHR_texture_basisu": {
           "source": 4
