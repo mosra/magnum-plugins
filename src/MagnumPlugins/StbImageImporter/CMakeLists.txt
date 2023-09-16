@@ -49,14 +49,13 @@ target_include_directories(StbImageImporter PUBLIC
 # Include the stb_*.h files as a system directory to supress warnings
 target_include_directories(StbImageImporter SYSTEM PRIVATE ${PROJECT_SOURCE_DIR}/src/external/stb)
 target_link_libraries(StbImageImporter PUBLIC Magnum::Trade)
-# On Emscripten 3.1.42+ with LTO enabled, linking fails with with the following
-# due to ldexp() used by stb_image (which then calls into scalbnf() in musl).
+# On Emscripten 3.1.42 to 3.1.45 with LTO enabled, linking fails with with the
+# following due to ldexp() used by stb_vorbis (which then calls into scalbnf()
+# in musl). Fixed in 3.1.46.
 #   wasm-ld: error: /path/to/.emscripten_cache/sysroot/lib/wasm32-emscripten/lto/libc.a(scalbnf.o): attempt to add bitcode file after LTO.
 # Workaround from https://github.com/emscripten-core/emscripten/issues/16836,
-# same code is in FindMagnumPlugins. TODO add an upper version guard to both
-# once the fix is released (3.1.46 probably?)
-#   https://github.com/emscripten-core/emscripten/issues/19781
-if(CORRADE_TARGET_EMSCRIPTEN AND NOT EMSCRIPTEN_VERSION VERSION_LESS 3.1.42)
+# same code is in FindMagnumPlugins.
+if(CORRADE_TARGET_EMSCRIPTEN AND NOT EMSCRIPTEN_VERSION VERSION_LESS 3.1.42 AND EMSCRIPTEN_VERSION VERSION_LESS 3.1.46)
     if(CMAKE_VERSION VERSION_LESS 3.13)
         message(FATAL_ERROR "CMake 3.13+ is required in order to specify Emscripten linker options")
     endif()

@@ -520,7 +520,7 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
         elseif(_component STREQUAL StbImageImporter)
             # To solve a LTO-specific linker error. See StbImageImporter's
             # CMakeLists.txt for details.
-            if(CORRADE_TARGET_EMSCRIPTEN AND NOT EMSCRIPTEN_VERSION VERSION_LESS 3.1.42)
+            if(CORRADE_TARGET_EMSCRIPTEN AND NOT EMSCRIPTEN_VERSION VERSION_LESS 3.1.42 AND EMSCRIPTEN_VERSION VERSION_LESS 3.1.46)
                 if(CMAKE_VERSION VERSION_LESS 3.13)
                     message(FATAL_ERROR "CMake 3.13+ is required in order to specify Emscripten linker options")
                 endif()
@@ -534,7 +534,7 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
         elseif(_component STREQUAL StbVorbisAudioImporter)
             # To solve a LTO-specific linker error. See StbVorbisAudioImporter's
             # CMakeLists.txt for details.
-            if(CORRADE_TARGET_EMSCRIPTEN AND NOT EMSCRIPTEN_VERSION VERSION_LESS 3.1.42)
+            if(CORRADE_TARGET_EMSCRIPTEN AND NOT EMSCRIPTEN_VERSION VERSION_LESS 3.1.42 AND EMSCRIPTEN_VERSION VERSION_LESS 3.1.46)
                 if(CMAKE_VERSION VERSION_LESS 3.13)
                     message(FATAL_ERROR "CMake 3.13+ is required in order to specify Emscripten linker options")
                 endif()
