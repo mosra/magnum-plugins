@@ -13,6 +13,9 @@ provides=('magnum-plugins-git')
 
 _rootdir=$startdir/../../
 
+_buildtype=Release
+# _buildtype=RelWithDebInfo
+
 build() {
     mkdir -p "$_rootdir/build"
     cd "$_rootdir/build"
@@ -80,18 +83,24 @@ build() {
         -DMAGNUM_WITH_UFBXIMPORTER=ON \
         -DMAGNUM_WITH_WEBPIMPORTER=ON \
         -G "Ninja Multi-Config"
-    ninja all:all
+    ninja all:Debug all:$_buildtype
 }
 
 check() {
     cd "$_rootdir/build"
 
-    for config in Debug Release; do
+    for config in Debug $_buildtype; do
         CORRADE_TEST_COLOR=ON ctest -C $config --output-on-failure -j
     done
 }
 
 package() {
     cd "$_rootdir/build"
-    DESTDIR="$pkgdir/" ninja install:Debug install/strip:Release
+    DESTDIR="$pkgdir/" ninja install:Debug
+
+    if [ "$_buildtype" = RelWithDebInfo ]; then
+        DESTDIR="$pkgdir/" ninja install:$_buildtype
+    else
+        DESTDIR="$pkgdir/" ninja install/strip:$_buildtype
+    fi
 }
