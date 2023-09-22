@@ -28,9 +28,9 @@
 set(CMAKE_FOLDER "MagnumPlugins/HarfBuzzFont/Test")
 
 if(CORRADE_TARGET_EMSCRIPTEN OR CORRADE_TARGET_ANDROID)
-    set(TTF_FILE Oxygen.ttf)
+    set(FREETYPEFONT_TEST_DIR .)
 else()
-    set(TTF_FILE ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/FreeTypeFont/Test/Oxygen.ttf)
+    set(FREETYPEFONT_TEST_DIR ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/FreeTypeFont/Test)
 endif()
 
 if(NOT MAGNUM_HARFBUZZFONT_BUILD_STATIC)

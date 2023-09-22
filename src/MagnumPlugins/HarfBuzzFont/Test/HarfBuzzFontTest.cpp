@@ -23,9 +23,10 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-#include <Corrade/Containers/StringView.h>
+#include <Corrade/Containers/String.h>
 #include <Corrade/PluginManager/Manager.h>
 #include <Corrade/TestSuite/Tester.h>
+#include <Corrade/Utility/Path.h>
 #include <Magnum/Text/AbstractFont.h>
 #include <Magnum/Text/AbstractGlyphCache.h>
 #include <hb.h>
@@ -56,7 +57,7 @@ HarfBuzzFontTest::HarfBuzzFontTest() {
 
 void HarfBuzzFontTest::layout() {
     Containers::Pointer<AbstractFont> font = _manager.instantiate("HarfBuzzFont");
-    CORRADE_VERIFY(font->openFile(TTF_FILE, 16.0f));
+    CORRADE_VERIFY(font->openFile(Utility::Path::join(FREETYPEFONT_TEST_DIR, "Oxygen.ttf"), 16.0f));
 
     /* Fill the cache with some fake glyphs */
     struct: AbstractGlyphCache {

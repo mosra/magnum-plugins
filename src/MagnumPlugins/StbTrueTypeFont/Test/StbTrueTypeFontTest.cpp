@@ -24,10 +24,11 @@
 */
 
 #include <sstream>
-#include <Corrade/Containers/StringView.h>
+#include <Corrade/Containers/String.h>
 #include <Corrade/PluginManager/Manager.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/Utility/DebugStl.h> /** @todo remove once Debug is stream-free */
+#include <Corrade/Utility/Path.h>
 #include <Magnum/Text/AbstractFont.h>
 #include <Magnum/Text/AbstractGlyphCache.h>
 
@@ -86,7 +87,7 @@ void StbTrueTypeFontTest::invalid() {
 
 void StbTrueTypeFontTest::properties() {
     Containers::Pointer<AbstractFont> font = _manager.instantiate("StbTrueTypeFont");
-    CORRADE_VERIFY(font->openFile(TTF_FILE, 16.0f));
+    CORRADE_VERIFY(font->openFile(Utility::Path::join(FREETYPEFONT_TEST_DIR, "Oxygen.ttf"), 16.0f));
 
     CORRADE_COMPARE(font->size(), 16.0f);
     CORRADE_COMPARE(font->glyphId(U'W'), 58);
@@ -115,7 +116,7 @@ struct DummyGlyphCache: AbstractGlyphCache {
 
 void StbTrueTypeFontTest::layout() {
     Containers::Pointer<AbstractFont> font = _manager.instantiate("StbTrueTypeFont");
-    CORRADE_VERIFY(font->openFile(TTF_FILE, 16.0f));
+    CORRADE_VERIFY(font->openFile(Utility::Path::join(FREETYPEFONT_TEST_DIR, "Oxygen.ttf"), 16.0f));
 
     /* Fill the cache with some fake glyphs */
     DummyGlyphCache cache{Vector2i{256}};
@@ -180,7 +181,7 @@ void StbTrueTypeFontTest::layout() {
 
 void StbTrueTypeFontTest::fillGlyphCache() {
     Containers::Pointer<AbstractFont> font = _manager.instantiate("StbTrueTypeFont");
-    CORRADE_VERIFY(font->openFile(TTF_FILE, 16.0f));
+    CORRADE_VERIFY(font->openFile(Utility::Path::join(FREETYPEFONT_TEST_DIR, "Oxygen.ttf"), 16.0f));
 
     /* Just testing that nothing crashes, asserts or errors */
     DummyGlyphCache cache{Vector2i{256}};

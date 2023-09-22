@@ -24,10 +24,11 @@
 */
 
 #include <sstream>
-#include <Corrade/Containers/StringView.h>
+#include <Corrade/Containers/String.h>
 #include <Corrade/PluginManager/Manager.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/Utility/DebugStl.h> /** @todo remove once Debug is stream-free */
+#include <Corrade/Utility/Path.h>
 #include <Magnum/Text/AbstractFont.h>
 #include <Magnum/Text/AbstractGlyphCache.h>
 
@@ -93,7 +94,7 @@ void FreeTypeFontTest::invalid() {
 
 void FreeTypeFontTest::properties() {
     Containers::Pointer<AbstractFont> font = _manager.instantiate("FreeTypeFont");
-    CORRADE_VERIFY(font->openFile(TTF_FILE, 16.0f));
+    CORRADE_VERIFY(font->openFile(Utility::Path::join(FREETYPEFONT_TEST_DIR, "Oxygen.ttf"), 16.0f));
     CORRADE_COMPARE(font->size(), 16.0f);
     CORRADE_COMPARE(font->ascent(), 15.0f);
     CORRADE_COMPARE(font->descent(), -4.0f);
@@ -104,7 +105,7 @@ void FreeTypeFontTest::properties() {
 
 void FreeTypeFontTest::layout() {
     Containers::Pointer<AbstractFont> font = _manager.instantiate("FreeTypeFont");
-    CORRADE_VERIFY(font->openFile(TTF_FILE, 16.0f));
+    CORRADE_VERIFY(font->openFile(Utility::Path::join(FREETYPEFONT_TEST_DIR, "Oxygen.ttf"), 16.0f));
 
     /* Fill the cache with some fake glyphs */
     DummyGlyphCache cache{Vector2i{256}};
@@ -145,7 +146,7 @@ void FreeTypeFontTest::layout() {
 
 void FreeTypeFontTest::fillGlyphCache() {
     Containers::Pointer<AbstractFont> font = _manager.instantiate("FreeTypeFont");
-    CORRADE_VERIFY(font->openFile(TTF_FILE, 16.0f));
+    CORRADE_VERIFY(font->openFile(Utility::Path::join(FREETYPEFONT_TEST_DIR, "Oxygen.ttf"), 16.0f));
 
     /* Just testing that nothing crashes, asserts or errors */
     DummyGlyphCache cache{Vector2i{256}};
