@@ -547,7 +547,7 @@ void UfbxImporterTest::fileCallbackEmptyVerbose() {
     std::ostringstream out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->openFile("some-file.fbx"));
-    std::vector<std::string> lines = Utility::String::splitWithoutEmptyParts(out.str(), '\n');
+    Containers::Array<Containers::StringView> lines = Containers::StringView{out.str()}.splitWithoutEmptyParts('\n');
 
     /* Output should contain a stack trace on debug */
     #if !defined(CORRADE_IS_DEBUG_BUILD) && defined(NDEBUG)
