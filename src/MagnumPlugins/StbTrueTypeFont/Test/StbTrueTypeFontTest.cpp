@@ -92,19 +92,16 @@ void StbTrueTypeFontTest::properties() {
     CORRADE_COMPARE(font->size(), 16.0f);
     CORRADE_COMPARE(font->glyphId(U'W'), 58);
 
-    {
-        CORRADE_EXPECT_FAIL("Font properties don't match FreeType with the same font size.");
-        CORRADE_COMPARE(font->ascent(), 15.0f);
-        CORRADE_COMPARE(font->descent(), -4.0f);
-        CORRADE_COMPARE(font->lineHeight(), 19.0f);
-        CORRADE_COMPARE(font->glyphAdvance(58), Vector2(17.0f, 0.0f));
-    } {
-        /* Test that we are at least consistently wrong */
-        CORRADE_COMPARE(font->ascent(), 17.0112f);
-        CORRADE_COMPARE(font->descent(), -4.32215f);
-        CORRADE_COMPARE(font->lineHeight(), 21.3333f);
-        CORRADE_COMPARE(font->glyphAdvance(58), Vector2(19.0694f, 0.0f));
-    }
+    /* Compared to FreeType, StbTrueType has slightly larger glyphs which makes
+       the test values quite different but the actual visual output isn't that
+       different. I suppose this is due to a lack of hinting in the
+       implementation. Best visible it is in the glyph cache output -- the
+       characters look mostly the same but occupy more space. */
+
+    CORRADE_COMPARE(font->ascent(), 17.0112f);
+    CORRADE_COMPARE(font->descent(), -4.32215f);
+    CORRADE_COMPARE(font->lineHeight(), 21.3333f);
+    CORRADE_COMPARE(font->glyphAdvance(58), Vector2(19.0694f, 0.0f));
 }
 
 struct DummyGlyphCache: AbstractGlyphCache {
@@ -130,53 +127,35 @@ void StbTrueTypeFontTest::layout() {
     Vector2 cursorPosition;
     Range2D rectangle, position, textureCoordinates;
 
+    /* Compared to FreeType, StbTrueType has slightly larger glyphs which makes
+       the test values quite different but the actual visual output isn't that
+       different. I suppose this is due to a lack of hinting in the
+       implementation. Best visible it is in the glyph cache output -- the
+       characters look mostly the same but occupy more space. */
+
     /* 'W' */
     std::tie(position, textureCoordinates) = layouter->renderGlyph(0, cursorPosition = {}, rectangle);
     CORRADE_COMPARE(position, Range2D({0.78125f, 1.0625f}, {1.28125f, 4.8125f}));
     CORRADE_COMPARE(textureCoordinates, Range2D({0, 0.03125f}, {0.0625f, 0.5f}));
-    {
-        CORRADE_EXPECT_FAIL("Font properties don't match FreeType with the same font size.");
-        CORRADE_COMPARE(cursorPosition, Vector2(0.53125f, 0.0f));
-    } {
-        /* Test that we are at least consistently wrong */
-        CORRADE_COMPARE(cursorPosition, Vector2(0.595917f, 0.0f));
-    }
+    CORRADE_COMPARE(cursorPosition, Vector2(0.595917f, 0.0f));
 
     /* 'a' (not in cache) */
     std::tie(position, textureCoordinates) = layouter->renderGlyph(1, cursorPosition = {}, rectangle);
     CORRADE_COMPARE(position, Range2D());
     CORRADE_COMPARE(textureCoordinates, Range2D());
-    {
-        CORRADE_EXPECT_FAIL("Font properties don't match FreeType with the same font size.");
-        CORRADE_COMPARE(cursorPosition, Vector2(0.25f, 0.0f));
-    } {
-        /* Test that we are at least consistently wrong */
-        CORRADE_COMPARE(cursorPosition, Vector2(0.295582f, 0.0f));
-    }
+    CORRADE_COMPARE(cursorPosition, Vector2(0.295582f, 0.0f));
 
     /* 'v' (not in cache) */
     std::tie(position, textureCoordinates) = layouter->renderGlyph(2, cursorPosition = {}, rectangle);
     CORRADE_COMPARE(position, Range2D());
     CORRADE_COMPARE(textureCoordinates, Range2D());
-    {
-        CORRADE_EXPECT_FAIL("Font properties don't match FreeType with the same font size.");
-        CORRADE_COMPARE(cursorPosition, Vector2(0.25f, 0.0f));
-    } {
-        /* Test that we are at least consistently wrong */
-        CORRADE_COMPARE(cursorPosition, Vector2(0.289709f, 0.0f));
-    }
+    CORRADE_COMPARE(cursorPosition, Vector2(0.289709f, 0.0f));
 
     /* 'e' */
     std::tie(position, textureCoordinates) = layouter->renderGlyph(3, cursorPosition = {}, rectangle);
     CORRADE_COMPARE(position, Range2D({0.78125f, 0.375f}, {2.28125f, 1.25f}));
     CORRADE_COMPARE(textureCoordinates, Range2D({0.0625f, 0.015625f}, {0.25f, 0.125f}));
-    {
-        CORRADE_EXPECT_FAIL("Font properties don't match FreeType with the same font size.");
-        CORRADE_COMPARE(cursorPosition, Vector2(0.28125f, 0.0f));
-    } {
-        /* Test that we are at least consistently wrong */
-        CORRADE_COMPARE(cursorPosition, Vector2(0.298658f, 0.0f));
-    }
+    CORRADE_COMPARE(cursorPosition, Vector2(0.298658f, 0.0f));
 }
 
 void StbTrueTypeFontTest::fillGlyphCache() {
