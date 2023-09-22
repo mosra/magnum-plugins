@@ -475,9 +475,9 @@ importer state methods:
     -   @ref SkinData::importerState() returns `aiMesh`, or `nullptr` if the
         @cb{.ini} mergeSkins @ce option is enabled
     -   @ref TextureData::importerState() returns
-        @cpp std::pair<const aiMaterial*, aiTextureType> @ce,
-        in which the first texture of given type in given material is referred
-        to.
+        @cpp Containers::Pair<const aiMaterial*, UnsignedInt, UnsignedInt> @ce,
+        with the second element being property index inside the material and
+        third the same as @ref TextureData::image()
 -   @ref openState() expects a pointer to an Assimp scene (i.e., `const aiScene*`)
     and optionally a path (in order to be able to load textures, if needed)
 
