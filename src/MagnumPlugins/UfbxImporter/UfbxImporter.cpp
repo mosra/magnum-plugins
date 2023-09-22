@@ -1437,6 +1437,18 @@ Containers::Optional<TextureData> UfbxImporter::doTexture(UnsignedInt id) {
         fileTexture.fileTextureIndex};
 }
 
+namespace {
+
+Containers::String fromWindowsSeparators(Containers::String path)
+{
+    /* Windows implementation of Utility::Path::fromNativeSeparators() */
+    if(!path.isSmall() && path.deleter()) path = Containers::String{path};
+    for(char& c: path) if(c == '\\') c = '/';
+    return path;
+}
+
+}
+
 AbstractImporter* UfbxImporter::setupOrReuseImporterForImage(UnsignedInt id, const char* errorPrefix) {
     const ufbx_texture_file& file = _state->scene->texture_files[id];
 
@@ -1472,15 +1484,15 @@ AbstractImporter* UfbxImporter::setupOrReuseImporterForImage(UnsignedInt id, con
         const UnsignedInt imageSearchDepth = unboundedIfNegative(configuration().value<Int>("imageSearchDepth"));
         if(imageSearchDepth > 0) {
             bool found = false;
-            Containers::String path = Utility::Path::fromNativeSeparators(filename);
+            Containers::String path = fromWindowsSeparators(filename);
             if (!path.isEmpty() && Utility::Path::exists(path)) {
                 found = true;
             } else {
-                const Containers::String root = Utility::Path::fromNativeSeparators(_state->scene->metadata.relative_root);
+                const Containers::String root = fromWindowsSeparators(_state->scene->metadata.relative_root);
                 /* Resolve path manually from either relative or absolute filename,
                    do not use filename here as it already includes the relative
                    path of the FBX file. */
-                path = Utility::Path::fromNativeSeparators(file.relative_filename.length > 0 ? file.relative_filename : file.absolute_filename);
+                path = fromWindowsSeparators(file.relative_filename.length > 0 ? file.relative_filename : file.absolute_filename);
 
                 /* Try to find files with increasing amount of directories,
                    for /root/sub/dir/file.png we would try in order:
