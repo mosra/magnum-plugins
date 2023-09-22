@@ -1468,9 +1468,60 @@ AbstractImporter* UfbxImporter::setupOrReuseImporterForImage(UnsignedInt id, con
             return nullptr;
         }
 
-        ufbx_string filename = file.filename.length > 0 ? file.filename : file.absolute_filename;
-        if(!importer.openFile(filename))
-            return nullptr;
+        const ufbx_string filename = file.filename.length > 0 ? file.filename : file.absolute_filename;
+        const UnsignedInt imageSearchDepth = unboundedIfNegative(configuration().value<Int>("imageSearchDepth"));
+        if(imageSearchDepth > 0) {
+            bool found = false;
+            Containers::String path = Utility::Path::fromNativeSeparators(filename);
+            if (!path.isEmpty() && Utility::Path::exists(path)) {
+                found = true;
+            } else {
+                const Containers::String root = Utility::Path::fromNativeSeparators(_state->scene->metadata.relative_root);
+                /* Resolve path manually from either relative or absolute filename,
+                   do not use filename here as it already includes the relative
+                   path of the FBX file. */
+                path = Utility::Path::fromNativeSeparators(file.relative_filename.length > 0 ? file.relative_filename : file.absolute_filename);
+
+                /* Try to find files with increasing amount of directories,
+                   for /root/sub/dir/file.png we would try in order:
+                   file.png, dir/file.png, sub/dir/file.png */
+                size_t relativeBegin = path.size();
+                for(UnsignedInt depth = 0; depth < imageSearchDepth && relativeBegin > 0; depth++) {
+                    /* Trim all consecutive parent separators */
+                    while(relativeBegin > 0 && path[relativeBegin - 1] == '/')
+                        relativeBegin -= 1;
+
+                    const Containers::StringView parent = path.prefix(relativeBegin).findLastOr('/', path.begin());
+                    relativeBegin = size_t(parent.end() - path.begin());
+
+                    const Containers::StringView relativeSuffix = path.exceptPrefix(relativeBegin);
+
+                    /* Do not allow searching from parent or absolute directories.
+                       Note that Windows-style C:/ paths are considered absolute on
+                       all platforms as many FBX files contain Windows absolute
+                       paths, even in the RelativeFilename field */
+                    if(relativeSuffix.hasPrefix("../"_s) || relativeSuffix.hasPrefix("/"_s)
+                        || (relativeSuffix.size() >= 3 && relativeSuffix[1] == ':' && relativeSuffix[2] == '/'))
+                        break;
+
+                    const Containers::String relativePath = Utility::Path::join(root, path.exceptPrefix(relativeBegin));
+                    if (Utility::Path::exists(relativePath)) {
+                        found = true;
+                        path = relativePath;
+                        break;
+                    }
+                }
+            }
+            if (!found) {
+                Error{} << errorPrefix << "could not resolve image:" << path;
+                return nullptr;
+            }
+            if(!importer.openFile(path))
+                return nullptr;
+        } else {
+            if(!importer.openFile(filename))
+                return nullptr;
+        }
     }
 
     if(importer.image2DCount() != 1) {
