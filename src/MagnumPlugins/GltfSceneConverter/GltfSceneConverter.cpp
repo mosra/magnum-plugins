@@ -2050,33 +2050,22 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const MeshData& mesh, const
                POSITION accessors */
             if(attributeName == MeshAttribute::Position) {
                 /* Cast to a float type for all cases, no precision loss should
-                   happen with the packed types. Have to do it in such a shitty
-                   way because GCC 4.8 can't cast the type with
-                   std::pair<Vector3, Vector3>{Math::minmax(...)}. */
-                /** @todo clean up once Math::minmax() is STL-free */
-                std::pair<Vector3, Vector3> minmax;
+                   happen with the packed types */
+                Containers::Pair<Vector3, Vector3> minmax;
                 if(format == VertexFormat::Vector3) {
                     minmax = Math::minmax(mesh.attribute<Vector3>(gltfAttribute.originalId));
                 } else if(format == VertexFormat::Vector3b ||
                           format == VertexFormat::Vector3bNormalized) {
-                    const std::pair<Vector3b, Vector3b> minmaxI = Math::minmax(mesh.attribute<Vector3b>(gltfAttribute.originalId));
-                    minmax.first = Vector3{minmaxI.first};
-                    minmax.second = Vector3{minmaxI.second};
+                    minmax = Containers::Pair<Vector3, Vector3>{Math::minmax(mesh.attribute<Vector3b>(gltfAttribute.originalId))};
                 } else if(format == VertexFormat::Vector3ub ||
                           format == VertexFormat::Vector3ubNormalized) {
-                    const std::pair<Vector3ub, Vector3ub> minmaxI = Math::minmax(mesh.attribute<Vector3ub>(gltfAttribute.originalId));
-                    minmax.first = Vector3{minmaxI.first};
-                    minmax.second = Vector3{minmaxI.second};
+                    minmax = Containers::Pair<Vector3, Vector3>{Math::minmax(mesh.attribute<Vector3ub>(gltfAttribute.originalId))};
                 } else if(format == VertexFormat::Vector3s ||
                           format == VertexFormat::Vector3sNormalized) {
-                    const std::pair<Vector3s, Vector3s> minmaxI = Math::minmax(mesh.attribute<Vector3s>(gltfAttribute.originalId));
-                    minmax.first = Vector3{minmaxI.first};
-                    minmax.second = Vector3{minmaxI.second};
+                    minmax = Containers::Pair<Vector3, Vector3>{Math::minmax(mesh.attribute<Vector3s>(gltfAttribute.originalId))};
                 } else if(format == VertexFormat::Vector3us ||
                           format == VertexFormat::Vector3usNormalized) {
-                    const std::pair<Vector3us, Vector3us> minmaxI = Math::minmax(mesh.attribute<Vector3us>(gltfAttribute.originalId));
-                    minmax.first = Vector3{minmaxI.first};
-                    minmax.second = Vector3{minmaxI.second};
+                    minmax = Containers::Pair<Vector3, Vector3>{Math::minmax(mesh.attribute<Vector3us>(gltfAttribute.originalId))};
                 } else CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
 
                 /* A sane validator implementation would have some tolerance
@@ -2096,8 +2085,8 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const MeshData& mesh, const
                    doubles avoids most of these, yet there's still random
                    corner cases as described in the above issues. */
                 _state->gltfAccessors
-                    .writeKey("min"_s).writeArray(Vector3d{minmax.first}.data())
-                    .writeKey("max"_s).writeArray(Vector3d{minmax.second}.data());
+                    .writeKey("min"_s).writeArray(Vector3d{minmax.first()}.data())
+                    .writeKey("max"_s).writeArray(Vector3d{minmax.second()}.data());
             }
 
             if(configuration().value<bool>("accessorNames"))
