@@ -197,7 +197,7 @@ EShLanguage translateStage(const Stage stage) {
 }
 
 /* This tries to match the CRAZY logic in https://github.com/KhronosGroup/glslang/blob/f4f1d8a352ca1908943aea2ad8c54b39b4879080/glslang/MachineIndependent/ShaderLang.cpp#L511-L567 */
-std::pair<Int, EProfile> parseInputVersion(const char* const prefix, const Containers::StringView version) {
+Containers::Pair<Int, EProfile> parseInputVersion(const char* const prefix, const Containers::StringView version) {
     /* Default to desktop GL 2.1 */
     if(version.isEmpty() || version == "110"_s) return {110, ENoProfile};
 
@@ -325,24 +325,24 @@ struct Includer: glslang::TShader::Includer {
            the filename entry is kept in _references with a zero refcount, so
            we check for that as well. */
         auto referenceFound = _references.find(fullPath);
-        if(referenceFound == _references.end() || !referenceFound->second.second) {
+        if(referenceFound == _references.end() || !referenceFound->second.second()) {
             const Containers::Optional<Containers::ArrayView<const char>> data = _callback(fullPath, InputFileCallbackPolicy::LoadTemporary, _userData);
             if(!data)
                 return nullptr;
 
             if(referenceFound == _references.end())
-                referenceFound = _references.emplace(fullPath, std::make_pair(*data, 0)).first;
+                referenceFound = _references.emplace(fullPath, Containers::pair(*data, std::size_t{0})).first;
             else
-                referenceFound->second.first = *data;
+                referenceFound->second.first() = *data;
         }
 
-        ++referenceFound->second.second;
+        ++referenceFound->second.second();
 
         /* "After parsing that source, Glslang will release the IncludeResult
            object." That doesn't mean it'll delete the returned instance, but
            instead passes it to releaseInclude() -- and there we have to
            delete it ourselved. */
-        return new IncludeResult{fullPath, referenceFound->second.first.data(), referenceFound->second.first.size(), &referenceFound->second};
+        return new IncludeResult{fullPath, referenceFound->second.first().data(), referenceFound->second.first().size(), &referenceFound->second};
     }
 
     void releaseInclude(IncludeResult* const result) override {
@@ -351,13 +351,13 @@ struct Includer: glslang::TShader::Includer {
         if(!result) return;
 
         /* Decrease the reference counter, if it goes to zero, close the data */
-        auto& reference = *static_cast<std::pair<Containers::ArrayView<const char>, std::size_t>*>(result->userData);
-        CORRADE_INTERNAL_ASSERT(reference.second);
+        auto& reference = *static_cast<Containers::Pair<Containers::ArrayView<const char>, std::size_t>*>(result->userData);
+        CORRADE_INTERNAL_ASSERT(reference.second());
         /* We're not erasing the item from the view as that would mean
            searching by filename again (as we can't store the whole iterator in
            userData). Instead, next time the same file is encountered, we check
            the refcount and load the file again if it's 0. */
-        if(--reference.second == 0)
+        if(--reference.second() == 0)
             _callback(result->headerName, InputFileCallbackPolicy::Close, _userData);
 
         delete result;
@@ -367,10 +367,10 @@ struct Includer: glslang::TShader::Includer {
         Containers::Optional<Containers::ArrayView<const char>>(*_callback)(const std::string&, InputFileCallbackPolicy, void*);
         void* _userData;
 
-        std::unordered_map<std::string, std::pair<Containers::ArrayView<const char>, std::size_t>> _references;
+        std::unordered_map<std::string, Containers::Pair<Containers::ArrayView<const char>, std::size_t>> _references;
 };
 
-std::pair<bool, bool> compileAndLinkShader(glslang::TShader& shader, glslang::TProgram& program, const Utility::ConfigurationGroup& configuration, const ConverterFlags flags, const std::pair<int, EProfile> inputVersion, const OutputVersion outputVersion, const bool versionExplicitlySpecified, const Containers::StringView definitions, const Containers::StringView filename, Containers::Optional<Containers::ArrayView<const char>>(*const fileCallback)(const std::string&, InputFileCallbackPolicy, void*), void* const fileCallbackUserData, const Containers::ArrayView<const char> data, Int messages) {
+Containers::Pair<bool, bool> compileAndLinkShader(glslang::TShader& shader, glslang::TProgram& program, const Utility::ConfigurationGroup& configuration, const ConverterFlags flags, const Containers::Pair<int, EProfile> inputVersion, const OutputVersion outputVersion, const bool versionExplicitlySpecified, const Containers::StringView definitions, const Containers::StringView filename, Containers::Optional<Containers::ArrayView<const char>>(*const fileCallback)(const std::string&, InputFileCallbackPolicy, void*), void* const fileCallbackUserData, const Containers::ArrayView<const char> data, Int messages) {
     /* Add preprocessor definitions */
     shader.setPreamble(definitions.data());
 
@@ -639,7 +639,7 @@ std::pair<bool, bool> compileAndLinkShader(glslang::TShader& shader, glslang::TP
        bother going further if compilation didn't succeed. */
     glslang::TShader::ForbidIncluder whyTheHellIsThisNotAPointer;
     const bool compilingSucceeded = shader.parse(&resources,
-        inputVersion.first, inputVersion.second,
+        inputVersion.first(), inputVersion.second(),
         /* Force version and profile. If the input version is specified by the
            user, assume that yes the user wants to override that. If it's not,
            use it only if the source itself doesn't have it. */
@@ -732,7 +732,7 @@ Containers::Pair<bool, Containers::String> GlslangConverter::doValidateData(cons
        (translateStage() asserts, parseInputVersion() prints an error message
        on its own) */
     const EShLanguage translatedStage = translateStage(stage);
-    const std::pair<int, EProfile> inputVersion = parseInputVersion("ShaderTools::GlslangConverter::validateData():", _state->inputVersion);
+    const Containers::Pair<int, EProfile> inputVersion = parseInputVersion("ShaderTools::GlslangConverter::validateData():", _state->inputVersion);
     OutputVersion outputVersion;
     /* Shorthand for validating generic GL without SPIR-V */
     if(_state->outputVersion == "opengl"_s) {
@@ -742,7 +742,7 @@ Containers::Pair<bool, Containers::String> GlslangConverter::doValidateData(cons
         }
         outputVersion = {glslang::EShTargetOpenGL_450, glslang::EShTargetSpv_1_0, Format::Unspecified};
     } else outputVersion = parseOutputVersion("ShaderTools::GlslangConverter::validateData():", _state->outputFormat, _state->outputVersion);
-    if(!inputVersion.first || !outputVersion.client) return {};
+    if(!inputVersion.first() || !outputVersion.client) return {};
 
     /* Amazing, why a part of the API has the glslang:: namespace and some
        doesn't? Why can't you just be consistent, FFS? Do you ever C++?! */
@@ -785,17 +785,17 @@ Containers::Pair<bool, Containers::String> GlslangConverter::doValidateData(cons
        function is shared between doValidateData() and doConvertDataToData()
        and does the same in both. Here we use just the output log. */
     glslang::TProgram program;
-    const std::pair<bool, bool> success = compileAndLinkShader(shader, program, configuration(), flags(), inputVersion, outputVersion, !_state->inputVersion.isEmpty(), _state->definitions, inputFilename, inputFileCallback(), inputFileCallbackUserData(), data, 0);
+    const Containers::Pair<bool, bool> success = compileAndLinkShader(shader, program, configuration(), flags(), inputVersion, outputVersion, !_state->inputVersion.isEmpty(), _state->definitions, inputFilename, inputFileCallback(), inputFileCallbackUserData(), data, 0);
 
     /* Trim excessive newlines and spaces from the output. What the fuck, did
        nobody ever verify what mess it spits out?! */
     const auto shaderLog = Containers::StringView{shader.getInfoLog()}.trimmedSuffix();
     /** @todo clean up also trailing newlines inside, ffs */
-    if(!success.first) return {false, shaderLog};
+    if(!success.first()) return {false, shaderLog};
 
     /* Trim excessive newlines and spaces here as well */
     const auto programLog = Containers::StringView{program.getInfoLog()}.trimmedSuffix();
-    return {success.second, "\n"_s.joinWithoutEmptyParts({shaderLog, programLog})};
+    return {success.second(), "\n"_s.joinWithoutEmptyParts({shaderLog, programLog})};
 }
 
 Containers::Optional<Containers::Array<char>> GlslangConverter::doConvertFileToData(const Stage stage, const Containers::StringView filename) {
@@ -853,9 +853,9 @@ Containers::Optional<Containers::Array<char>> GlslangConverter::doConvertDataToD
        (translateStage() asserts, parseInputVersion() and parseOutputVersion()
        prints an error message on its own) */
     const EShLanguage translatedStage = translateStage(stage);
-    const std::pair<int, EProfile> inputVersion = parseInputVersion("ShaderTools::GlslangConverter::convertDataToData():", _state->inputVersion);
+    const Containers::Pair<int, EProfile> inputVersion = parseInputVersion("ShaderTools::GlslangConverter::convertDataToData():", _state->inputVersion);
     const OutputVersion outputVersion = parseOutputVersion("ShaderTools::GlslangConverter::convertDataToData():", Format::Spirv, _state->outputVersion);
-    if(!inputVersion.first || !outputVersion.client) return {};
+    if(!inputVersion.first() || !outputVersion.client) return {};
 
     /* Compilation and SPIR-V options */
     Int messages = 0;
@@ -951,13 +951,13 @@ Containers::Optional<Containers::Array<char>> GlslangConverter::doConvertDataToD
        enforcing SPIR-V specific rules such as presence of explicit locations
        and bindings. */
     glslang::TProgram program;
-    std::pair<bool, bool> success = compileAndLinkShader(shader, program, configuration(), flags(), inputVersion, outputVersion, !_state->inputVersion.isEmpty(), _state->definitions, inputFilename, inputFileCallback(), inputFileCallbackUserData(), data, messages);
+    Containers::Pair<bool, bool> success = compileAndLinkShader(shader, program, configuration(), flags(), inputVersion, outputVersion, !_state->inputVersion.isEmpty(), _state->definitions, inputFilename, inputFileCallback(), inputFileCallbackUserData(), data, messages);
 
     /* Trim excessive newlines and spaces from the output. What the fuck, did
        nobody ever verify what mess it spits out?! */
     /** @todo clean up also trailing newlines inside, ffs */
     const auto shaderLog = Containers::StringView{shader.getInfoLog()}.trimmedSuffix();
-    if(!success.first) {
+    if(!success.first()) {
         Error{} << "ShaderTools::GlslangConverter::convertDataToData(): compilation failed:" << Debug::newline << shaderLog;
         return {};
     }
@@ -969,7 +969,7 @@ Containers::Optional<Containers::Array<char>> GlslangConverter::doConvertDataToD
 
     /* Trim excessive newlines and spaces here as well */
     const auto programLog =  Containers::StringView{program.getInfoLog()}.trimmedSuffix();
-    if(!success.second) {
+    if(!success.second()) {
         Error{} << "ShaderTools::GlslangConverter::convertDataToData(): linking failed:" << Debug::newline << programLog;
         return {};
     }
