@@ -29,8 +29,11 @@
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/Utility/DebugStl.h> /** @todo remove once Debug is stream-free */
 #include <Corrade/Utility/Path.h>
+#include <Corrade/Utility/Unicode.h>
+#include <Magnum/DebugTools/CompareImage.h>
 #include <Magnum/Text/AbstractFont.h>
 #include <Magnum/Text/AbstractGlyphCache.h>
+#include <Magnum/Trade/AbstractImporter.h>
 
 #include "configure.h"
 
@@ -48,13 +51,26 @@ struct FreeTypeFontTest: TestSuite::Tester {
 
     /* Explicitly forbid system-wide plugin dependencies */
     PluginManager::Manager<AbstractFont> _manager{"nonexistent"};
+
+    /* Needs to load AnyImageImporter from system-wide location */
+    PluginManager::Manager<Trade::AbstractImporter> _importerManager;
 };
 
-struct DummyGlyphCache: AbstractGlyphCache {
-    using AbstractGlyphCache::AbstractGlyphCache;
-
-    GlyphCacheFeatures doFeatures() const override { return {}; }
-    void doSetImage(const Vector2i&, const ImageView2D&) override {}
+const struct {
+    const char* name;
+    const char* characters;
+} FillGlyphCacheData[]{
+    {"",
+        /* Including also UTF-8 characters to be sure they're handled
+           properly */
+        "abcdefghijklmnopqrstuvwxyzěšč"},
+    {"shuffled order",
+        "mvxěipbryzdhfnqlčjšswutokeacg"},
+    {"duplicates",
+        "mvexěipbbrzzyčbjzdgšhhfnqljswutokeakcg"},
+    {"characters not in font",
+        /* ☃ */
+        "abcdefghijkl\xe2\x98\x83mnopqrstuvwxyzěšč"},
 };
 
 FreeTypeFontTest::FreeTypeFontTest() {
@@ -62,13 +78,28 @@ FreeTypeFontTest::FreeTypeFontTest() {
               &FreeTypeFontTest::invalid,
 
               &FreeTypeFontTest::properties,
-              &FreeTypeFontTest::layout,
-              &FreeTypeFontTest::fillGlyphCache});
+              &FreeTypeFontTest::layout});
+
+    addInstancedTests({&FreeTypeFontTest::fillGlyphCache},
+        Containers::arraySize(FillGlyphCacheData));
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. */
     #ifdef FREETYPEFONT_PLUGIN_FILENAME
     CORRADE_INTERNAL_ASSERT_OUTPUT(_manager.load(FREETYPEFONT_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
+    #endif
+    /* Pull in the AnyImageImporter dependency for image comparison */
+    _importerManager.load("AnyImageImporter");
+    /* Reset the plugin dir after so it doesn't load anything else from the
+       filesystem. Do this also in case of static plugins (no _FILENAME
+       defined) so it doesn't attempt to load dynamic system-wide plugins. */
+    #ifndef CORRADE_PLUGINMANAGER_NO_DYNAMIC_PLUGIN_SUPPORT
+    _importerManager.setPluginDirectory({});
+    #endif
+    /* Load StbImageImporter from the build tree, if defined. Otherwise it's
+       static and already loaded. */
+    #ifdef STBIMAGEIMPORTER_PLUGIN_FILENAME
+    CORRADE_INTERNAL_ASSERT_OUTPUT(_importerManager.load(STBIMAGEIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
     #endif
 }
 
@@ -108,7 +139,12 @@ void FreeTypeFontTest::layout() {
     CORRADE_VERIFY(font->openFile(Utility::Path::join(FREETYPEFONT_TEST_DIR, "Oxygen.ttf"), 16.0f));
 
     /* Fill the cache with some fake glyphs */
-    DummyGlyphCache cache{Vector2i{256}};
+    struct: AbstractGlyphCache {
+        using AbstractGlyphCache::AbstractGlyphCache;
+
+        GlyphCacheFeatures doFeatures() const override { return {}; }
+        void doSetImage(const Vector2i&, const ImageView2D&) override {}
+    } cache{Vector2i{256}};
     cache.insert(font->glyphId(U'W'), {25, 34}, {{0, 8}, {16, 128}});
     cache.insert(font->glyphId(U'e'), {25, 12}, {{16, 4}, {64, 32}});
 
@@ -145,17 +181,58 @@ void FreeTypeFontTest::layout() {
 }
 
 void FreeTypeFontTest::fillGlyphCache() {
+    auto&& data = FillGlyphCacheData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    /* Ideally this would be tested at least partially without the image, but
+       adding extra logic for that would risk that the image might accidentally
+       not get checked at all */
+    if(_importerManager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("PngImporter plugin not found, cannot test");
+
     Containers::Pointer<AbstractFont> font = _manager.instantiate("FreeTypeFont");
     CORRADE_VERIFY(font->openFile(Utility::Path::join(FREETYPEFONT_TEST_DIR, "Oxygen.ttf"), 16.0f));
 
-    /* Just testing that nothing crashes, asserts or errors */
-    DummyGlyphCache cache{Vector2i{256}};
-    font->fillGlyphCache(cache, "abcdefghijklmnopqrstuvwxyz");
+    struct GlyphCache: AbstractGlyphCache {
+        explicit GlyphCache(PluginManager::Manager<Trade::AbstractImporter>& importerManager, const Vector2i& size): AbstractGlyphCache{size}, importerManager(importerManager) {}
 
-    /* All characters + one "not found" glyph */
-    CORRADE_COMPARE(cache.glyphCount(), 27);
+        GlyphCacheFeatures doFeatures() const override { return {}; }
+        void doSetImage(const Vector2i& offset, const ImageView2D& image) override {
+            CORRADE_COMPARE(offset, Vector2i{});
+            CORRADE_COMPARE_WITH(image,
+                Utility::Path::join(FREETYPEFONT_TEST_DIR, "glyph-cache.png"),
+                DebugTools::CompareImageToFile{importerManager});
+            called = true;
+        }
 
-    /** @todo properly test contents */
+        bool called = false;
+        PluginManager::Manager<Trade::AbstractImporter>& importerManager;
+    } cache{_importerManager, Vector2i{96}};
+
+    /* Should call doSetImage() above, which then performs image comparison */
+    font->fillGlyphCache(cache, data.characters);
+    CORRADE_VERIFY(cache.called);
+
+    /* 26 ASCII characters, 3 UTF-8 ones + one "not found" glyph. The could
+       should be the same in all cases as the input is deduplicated and
+       characters not present in the font get substituted for glyph 0. */
+    CORRADE_COMPARE(cache.glyphCount(), 26 + 3 + 1);
+
+    /* Check positions of a few select glyphs. They should all retain the same
+       position regardless of how the input is shuffled. */
+
+    /* Invalid glyph */
+    CORRADE_COMPARE(cache[0], std::make_pair(
+        Vector2i{}, Range2Di{{}, {5, 11}}));
+    /* Above the baseline */
+    CORRADE_COMPARE(cache[font->glyphId('k')], std::make_pair(
+        Vector2i{}, Range2Di{{70, 16}, {78, 29}}));
+    /* Below the baseline */
+    CORRADE_COMPARE(cache[font->glyphId('g')], std::make_pair(
+        Vector2i{0, -4}, Range2Di{{14, 16}, {23, 29}}));
+    /* UTF-8 */
+    CORRADE_COMPARE(cache[font->glyphId(Utility::Unicode::nextChar("š", 0).first)], std::make_pair(
+        Vector2i{}, Range2Di{{70, 64}, {78, 78}}));
 }
 
 }}}}

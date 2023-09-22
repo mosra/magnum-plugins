@@ -27,14 +27,24 @@
 # property that would have to be set on each target separately.
 set(CMAKE_FOLDER "MagnumPlugins/StbTrueTypeFont/Test")
 
+find_package(Magnum REQUIRED DebugTools)
+
+# Not required
+find_package(Magnum COMPONENTS AnyImageImporter)
+
 if(CORRADE_TARGET_EMSCRIPTEN OR CORRADE_TARGET_ANDROID)
+    set(STBTRUETYPEFONT_TEST_DIR .)
     set(FREETYPEFONT_TEST_DIR .)
 else()
+    set(STBTRUETYPEFONT_TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR})
     set(FREETYPEFONT_TEST_DIR ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/FreeTypeFont/Test)
 endif()
 
 if(NOT MAGNUM_STBTRUETYPEFONT_BUILD_STATIC)
     set(STBTRUETYPEFONT_PLUGIN_FILENAME $<TARGET_FILE:StbTrueTypeFont>)
+    if(MAGNUM_WITH_STBIMAGEIMPORTER)
+        set(STBIMAGEIMPORTER_PLUGIN_FILENAME $<TARGET_FILE:StbImageImporter>)
+    endif()
 endif()
 
 # First replace ${} variables, then $<> generator expressions
@@ -44,14 +54,27 @@ file(GENERATE OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/configure.h
     INPUT ${CMAKE_CURRENT_BINARY_DIR}/configure.h.in)
 
 corrade_add_test(StbTrueTypeFontTest StbTrueTypeFontTest.cpp
-    LIBRARIES Magnum::Text
-    FILES ../../FreeTypeFont/Test/Oxygen.ttf)
+    LIBRARIES
+        Magnum::DebugTools
+        Magnum::Text
+    FILES
+        ../../FreeTypeFont/Test/Oxygen.ttf
+        glyph-cache.png)
 target_include_directories(StbTrueTypeFontTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>)
 if(MAGNUM_STBTRUETYPEFONT_BUILD_STATIC)
     target_link_libraries(StbTrueTypeFontTest PRIVATE StbTrueTypeFont)
+    if(Magnum_AnyImageImporter_FOUND)
+        target_link_libraries(StbTrueTypeFontTest PRIVATE Magnum::AnyImageImporter)
+    endif()
+    if(MAGNUM_WITH_STBIMAGEIMPORTER)
+        target_link_libraries(StbTrueTypeFontTest PRIVATE StbImageImporter)
+    endif()
 else()
     # So the plugins get properly built when building the test
     add_dependencies(StbTrueTypeFontTest StbTrueTypeFont)
+    if(MAGNUM_WITH_STBIMAGEIMPORTER)
+        add_dependencies(StbTrueTypeFontTest StbImageImporter)
+    endif()
 endif()
 if(CORRADE_BUILD_STATIC AND NOT MAGNUM_STBTRUETYPEFONT_BUILD_STATIC)
     # CMake < 3.4 does this implicitly, but 3.4+ not anymore (see CMP0065).

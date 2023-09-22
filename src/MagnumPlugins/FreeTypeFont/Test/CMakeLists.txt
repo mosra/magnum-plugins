@@ -27,6 +27,11 @@
 # property that would have to be set on each target separately.
 set(CMAKE_FOLDER "MagnumPlugins/FreeTypeFont/Test")
 
+find_package(Magnum REQUIRED DebugTools)
+
+# Not required
+find_package(Magnum COMPONENTS AnyImageImporter)
+
 if(CORRADE_TARGET_EMSCRIPTEN OR CORRADE_TARGET_ANDROID)
     set(FREETYPEFONT_TEST_DIR .)
 else()
@@ -35,6 +40,9 @@ endif()
 
 if(NOT MAGNUM_FREETYPEFONT_BUILD_STATIC)
     set(FREETYPEFONT_PLUGIN_FILENAME $<TARGET_FILE:FreeTypeFont>)
+    if(MAGNUM_WITH_STBIMAGEIMPORTER)
+        set(STBIMAGEIMPORTER_PLUGIN_FILENAME $<TARGET_FILE:StbImageImporter>)
+    endif()
 endif()
 
 # First replace ${} variables, then $<> generator expressions
@@ -44,14 +52,27 @@ file(GENERATE OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/configure.h
     INPUT ${CMAKE_CURRENT_BINARY_DIR}/configure.h.in)
 
 corrade_add_test(FreeTypeFontTest FreeTypeFontTest.cpp
-    LIBRARIES Magnum::Text
-    FILES Oxygen.ttf)
+    LIBRARIES
+        Magnum::DebugTools
+        Magnum::Text
+    FILES
+        Oxygen.ttf
+        glyph-cache.png)
 target_include_directories(FreeTypeFontTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>)
 if(MAGNUM_FREETYPEFONT_BUILD_STATIC)
     target_link_libraries(FreeTypeFontTest PRIVATE FreeTypeFont)
+    if(Magnum_AnyImageImporter_FOUND)
+        target_link_libraries(FreeTypeFontTest PRIVATE Magnum::AnyImageImporter)
+    endif()
+    if(MAGNUM_WITH_STBIMAGEIMPORTER)
+        target_link_libraries(FreeTypeFontTest PRIVATE StbImageImporter)
+    endif()
 else()
     # So the plugins get properly built when building the test
     add_dependencies(FreeTypeFontTest FreeTypeFont)
+    if(MAGNUM_WITH_STBIMAGEIMPORTER)
+        add_dependencies(FreeTypeFontTest StbImageImporter)
+    endif()
 endif()
 if(CORRADE_BUILD_STATIC AND NOT MAGNUM_FREETYPEFONT_BUILD_STATIC)
     # CMake < 3.4 does this implicitly, but 3.4+ not anymore (see CMP0065).
