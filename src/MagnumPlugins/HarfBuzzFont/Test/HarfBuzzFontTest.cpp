@@ -74,30 +74,27 @@ void HarfBuzzFontTest::layout() {
     CORRADE_COMPARE(layouter->glyphCount(), 4);
 
     Vector2 cursorPosition;
-    Range2D rectangle, position, textureCoordinates;
+    Range2D rectangle;
 
     /* Difference between this and FreeTypeFont should be _only_ in advances */
 
     /* 'W' */
-    std::tie(position, textureCoordinates) = layouter->renderGlyph(0, cursorPosition = {}, rectangle);
-    CORRADE_COMPARE(position, Range2D({0.78125f, 1.0625f}, {1.28125f, 4.8125f}));
-    CORRADE_COMPARE(textureCoordinates, Range2D({0, 0.03125f}, {0.0625f, 0.5f}));
+    CORRADE_COMPARE(layouter->renderGlyph(0, cursorPosition = {}, rectangle),
+        Containers::pair(Range2D{{0.78125f, 1.0625f}, {1.28125f, 4.8125f}},
+                         Range2D{{0, 0.03125f}, {0.0625f, 0.5f}}));
     /* Versions 3.3.0 and 3.3.1 reported {0.515625f, 0.0f} here, but the change
        is reverted in 3.3.2 again "as it proved problematic". */
     CORRADE_COMPARE(cursorPosition, Vector2(0.51123f, 0.0f));
 
     /* 'a' (not in cache) */
-    std::tie(position, textureCoordinates) = layouter->renderGlyph(1, cursorPosition = {}, rectangle);
-    CORRADE_COMPARE(position, Range2D());
-    CORRADE_COMPARE(textureCoordinates, Range2D());
+    CORRADE_COMPARE(layouter->renderGlyph(1, cursorPosition = {}, rectangle),
+        Containers::pair(Range2D{}, Range2D{}));
     CORRADE_COMPARE(cursorPosition, Vector2(0.258301f, 0.0f));
 
-    /* 'v' (not in cache) */
-    std::tie(position, textureCoordinates) = layouter->renderGlyph(2, cursorPosition = {}, rectangle);
-    CORRADE_COMPARE(position, Range2D());
-    CORRADE_COMPARE(textureCoordinates, Range2D());
-
-    /* HarfBuzz before 1.7 and after 3.1 give 0.25, versions between the other */
+    /* 'v' (not in cache). HarfBuzz before 1.7 and after 3.1 give 0.25,
+       versions between the other. */
+    CORRADE_COMPARE(layouter->renderGlyph(2, cursorPosition = {}, rectangle),
+        Containers::pair(Range2D{}, Range2D{}));
     if((HB_VERSION_MAJOR*100 + HB_VERSION_MINOR < 107) ||
        (HB_VERSION_MAJOR*100 + HB_VERSION_MINOR >= 301))
         CORRADE_COMPARE(cursorPosition, Vector2(0.25f, 0.0f));
@@ -105,9 +102,9 @@ void HarfBuzzFontTest::layout() {
         CORRADE_COMPARE(cursorPosition, Vector2(0.249512f, 0.0f));
 
     /* 'e' */
-    std::tie(position, textureCoordinates) = layouter->renderGlyph(3, cursorPosition = {}, rectangle);
-    CORRADE_COMPARE(position, Range2D({0.78125f, 0.375f}, {2.28125f, 1.25f}));
-    CORRADE_COMPARE(textureCoordinates, Range2D({0.0625f, 0.015625f}, {0.25f, 0.125f}));
+    CORRADE_COMPARE(layouter->renderGlyph(3, cursorPosition = {}, rectangle),
+        Containers::pair(Range2D{{0.78125f, 0.375f}, {2.28125f, 1.25f}},
+                         Range2D{{0.0625f, 0.015625f}, {0.25f, 0.125f}}));
     CORRADE_COMPARE(cursorPosition, Vector2(0.260742f, 0.0f));
 }
 

@@ -26,6 +26,8 @@
 #include "HarfBuzzFont.h"
 
 #include <hb-ft.h>
+#include <Corrade/Containers/StringView.h>
+#include <Corrade/Containers/Triple.h>
 #include <Corrade/PluginManager/AbstractManager.h>
 #include <Magnum/Text/AbstractGlyphCache.h>
 
@@ -40,7 +42,7 @@ class HarfBuzzLayouter: public AbstractLayouter {
         ~HarfBuzzLayouter();
 
     private:
-        std::tuple<Range2D, Range2D, Vector2> doRenderGlyph(UnsignedInt i) override;
+        Containers::Triple<Range2D, Range2D, Vector2> doRenderGlyph(UnsignedInt i) override;
 
         const AbstractGlyphCache& cache;
         const Float fontSize, textSize;
@@ -80,7 +82,7 @@ void HarfBuzzFont::doClose() {
     FreeTypeFont::doClose();
 }
 
-Containers::Pointer<AbstractLayouter> HarfBuzzFont::doLayout(const AbstractGlyphCache& cache, const Float size, const std::string& text) {
+Containers::Pointer<AbstractLayouter> HarfBuzzFont::doLayout(const AbstractGlyphCache& cache, const Float size, const Containers::StringView text) {
     /* Prepare HarfBuzz buffer */
     hb_buffer_t* const buffer = hb_buffer_create();
     hb_buffer_set_direction(buffer, HB_DIRECTION_LTR);
@@ -107,7 +109,7 @@ HarfBuzzLayouter::~HarfBuzzLayouter() {
     hb_buffer_destroy(buffer);
 }
 
-std::tuple<Range2D, Range2D, Vector2> HarfBuzzLayouter::doRenderGlyph(const UnsignedInt i) {
+Containers::Triple<Range2D, Range2D, Vector2> HarfBuzzLayouter::doRenderGlyph(const UnsignedInt i) {
     /* Position of the texture in the resulting glyph, texture coordinates */
     Vector2i position;
     Range2Di rectangle;
@@ -129,7 +131,7 @@ std::tuple<Range2D, Range2D, Vector2> HarfBuzzLayouter::doRenderGlyph(const Unsi
     const Vector2 advance = Vector2(glyphPositions[i].x_advance,
                                     glyphPositions[i].y_advance)*(textSize/(64.0f*fontSize));
 
-    return std::make_tuple(quadRectangle, textureCoordinates, advance);
+    return {quadRectangle, textureCoordinates, advance};
 }
 
 }

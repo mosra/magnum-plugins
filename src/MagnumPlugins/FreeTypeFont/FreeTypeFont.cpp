@@ -28,6 +28,8 @@
 #include <algorithm> /* std::transform(), std::sort(), std::unique() */
 #include <ft2build.h>
 #include FT_FREETYPE_H
+#include <Corrade/Containers/StringView.h>
+#include <Corrade/Containers/Triple.h>
 #include <Corrade/PluginManager/AbstractManager.h>
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/Unicode.h>
@@ -42,15 +44,15 @@ namespace {
 
 class FreeTypeLayouter: public AbstractLayouter {
     public:
-        explicit FreeTypeLayouter(FT_Face font, const AbstractGlyphCache& cache, const Float fontSize, const Float textSize, std::vector<FT_UInt>&& glyphs);
+        explicit FreeTypeLayouter(FT_Face font, const AbstractGlyphCache& cache, const Float fontSize, const Float textSize, Containers::Array<FT_UInt>&& glyphs);
 
     private:
-        std::tuple<Range2D, Range2D, Vector2> doRenderGlyph(const UnsignedInt i) override;
+        Containers::Triple<Range2D, Range2D, Vector2> doRenderGlyph(const UnsignedInt i) override;
 
         FT_Face _font;
         const AbstractGlyphCache& _cache;
         const Float _fontSize, _layoutSize;
-        const std::vector<FT_UInt> _glyphs;
+        const Containers::Array<FT_UInt> _glyphs;
 };
 
 }
@@ -114,26 +116,25 @@ Vector2 FreeTypeFont::doGlyphAdvance(const UnsignedInt glyph) {
     return Vector2(ftFont->glyph->advance.x, ftFont->glyph->advance.y)/64.0f;
 }
 
-void FreeTypeFont::doFillGlyphCache(AbstractGlyphCache& cache, const std::u32string& characters) {
+void FreeTypeFont::doFillGlyphCache(AbstractGlyphCache& cache, const Containers::ArrayView<const char32_t> characters) {
     /** @bug Crash when atlas is too small */
 
     /* Get glyph codes from characters */
-    std::vector<FT_UInt> glyphIndices;
-    glyphIndices.resize(characters.size()+1);
+    Containers::Array<FT_UInt> glyphIndices{NoInit, characters.size() + 1};
     glyphIndices[0] = 0;
-    std::transform(characters.begin(), characters.end(), glyphIndices.begin()+1,
-        [this](const char32_t c) { return FT_Get_Char_Index(ftFont, c); });
+    for(std::size_t i = 0; i != characters.size(); ++i)
+        glyphIndices[i + 1] = FT_Get_Char_Index(ftFont, characters[i]);
 
     /* Remove duplicates (e.g. uppercase and lowercase mapped to same glyph) */
+    /** @todo deduplicate via a BitArray instead */
     std::sort(glyphIndices.begin(), glyphIndices.end());
-    glyphIndices.erase(std::unique(glyphIndices.begin(), glyphIndices.end()), glyphIndices.end());
+    const std::size_t uniqueCount = std::unique(glyphIndices.begin(), glyphIndices.end()) - glyphIndices.begin();
 
-    /* Sizes of all characters */
-    std::vector<Vector2i> glyphSizes;
-    glyphSizes.reserve(glyphIndices.size());
-    for(FT_UInt c: glyphIndices) {
-        CORRADE_INTERNAL_ASSERT_OUTPUT(FT_Load_Glyph(ftFont, c, FT_LOAD_DEFAULT) == 0);
-            glyphSizes.push_back(Vector2i(ftFont->glyph->metrics.width, ftFont->glyph->metrics.height)/64);
+    /* Sizes of all glyphs */
+    std::vector<Vector2i> glyphSizes(uniqueCount);
+    for(std::size_t i = 0; i != uniqueCount; ++i) {
+        CORRADE_INTERNAL_ASSERT_OUTPUT(FT_Load_Glyph(ftFont, glyphIndices[i], FT_LOAD_DEFAULT) == 0);
+            glyphSizes[i] = Vector2i{Int(ftFont->glyph->metrics.width), Int(ftFont->glyph->metrics.height)}/64;
     }
 
     /* Create texture atlas */
@@ -167,24 +168,23 @@ void FreeTypeFont::doFillGlyphCache(AbstractGlyphCache& cache, const std::u32str
     cache.setImage({}, image);
 }
 
-Containers::Pointer<AbstractLayouter> FreeTypeFont::doLayout(const AbstractGlyphCache& cache, const Float size, const std::string& text) {
+Containers::Pointer<AbstractLayouter> FreeTypeFont::doLayout(const AbstractGlyphCache& cache, const Float size, const Containers::StringView text) {
     /* Get glyph codes from characters */
-    std::vector<UnsignedInt> glyphs;
-    glyphs.reserve(text.size());
+    Containers::Array<UnsignedInt> glyphs{NoInit, text.size()};
     for(std::size_t i = 0; i != text.size(); ) {
-        UnsignedInt codepoint;
-        std::tie(codepoint, i) = Utility::Unicode::nextChar(text, i);
-        glyphs.push_back(FT_Get_Char_Index(ftFont, codepoint));
+        const Containers::Pair<char32_t, std::size_t> codepointNext = Utility::Unicode::nextChar(text, i);
+        glyphs[i] = FT_Get_Char_Index(ftFont, codepointNext.first());
+        i = codepointNext.second();
     }
 
-    return Containers::pointer(new FreeTypeLayouter(ftFont, cache, this->size(), size, Utility::move(glyphs)));
+    return Containers::pointer<FreeTypeLayouter>(ftFont, cache, this->size(), size, Utility::move(glyphs));
 }
 
 namespace {
 
-FreeTypeLayouter::FreeTypeLayouter(FT_Face font, const AbstractGlyphCache& cache, const Float fontSize, const Float layoutSize, std::vector<FT_UInt>&& glyphs): AbstractLayouter(glyphs.size()), _font(font), _cache(cache), _fontSize(fontSize), _layoutSize(layoutSize), _glyphs(Utility::move(glyphs)) {}
+FreeTypeLayouter::FreeTypeLayouter(FT_Face font, const AbstractGlyphCache& cache, const Float fontSize, const Float layoutSize, Containers::Array<FT_UInt>&& glyphs): AbstractLayouter{UnsignedInt(glyphs.size())}, _font{font}, _cache(cache), _fontSize{fontSize}, _layoutSize{layoutSize}, _glyphs{Utility::move(glyphs)} {}
 
-std::tuple<Range2D, Range2D, Vector2> FreeTypeLayouter::doRenderGlyph(const UnsignedInt i) {
+Containers::Triple<Range2D, Range2D, Vector2> FreeTypeLayouter::doRenderGlyph(const UnsignedInt i) {
     /* Position of the texture in the resulting glyph, texture coordinates */
     Vector2i position;
     Range2Di rectangle;
@@ -204,7 +204,7 @@ std::tuple<Range2D, Range2D, Vector2> FreeTypeLayouter::doRenderGlyph(const Unsi
     /* Glyph advance, denormalized to requested text size */
     const Vector2 advance = Vector2{Float(slot->advance.x), Float(slot->advance.y)}*(_layoutSize/(64.0f*_fontSize));
 
-    return std::make_tuple(quadRectangle, textureCoordinates, advance);
+    return {quadRectangle, textureCoordinates, advance};
 }
 
 }

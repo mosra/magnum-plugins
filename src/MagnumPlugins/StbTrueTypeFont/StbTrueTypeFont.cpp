@@ -26,6 +26,8 @@
 #include "StbTrueTypeFont.h"
 
 #include <algorithm> /* std::transform(), std::sort(), std::unique() */
+#include <Corrade/Containers/StringView.h>
+#include <Corrade/Containers/Triple.h>
 #include <Corrade/PluginManager/AbstractManager.h>
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/Unicode.h>
@@ -64,7 +66,7 @@ class StbTrueTypeFont::Layouter: public AbstractLayouter {
         explicit Layouter(Font& _font, const AbstractGlyphCache& cache, const Float fontSize, const Float textSize, std::vector<Int>&& glyphs);
 
     private:
-        std::tuple<Range2D, Range2D, Vector2> doRenderGlyph(const UnsignedInt i) override;
+        Containers::Triple<Range2D, Range2D, Vector2> doRenderGlyph(const UnsignedInt i) override;
 
         Font& _font;
         const AbstractGlyphCache& _cache;
@@ -135,25 +137,24 @@ Vector2 StbTrueTypeFont::doGlyphAdvance(const UnsignedInt glyph) {
     return Vector2::xAxis(advance*_font->scale);
 }
 
-void StbTrueTypeFont::doFillGlyphCache(AbstractGlyphCache& cache, const std::u32string& characters) {
+void StbTrueTypeFont::doFillGlyphCache(AbstractGlyphCache& cache, const Containers::ArrayView<const char32_t> characters) {
     /* Get glyph codes from characters */
     Containers::Array<Int> glyphIndices{NoInit, characters.size() + 1};
     glyphIndices[0] = 0;
-    std::transform(characters.begin(), characters.end(), glyphIndices.begin()+1,
-        [this](const char32_t c) { return stbtt_FindGlyphIndex(&_font->info, c); });
+    for(std::size_t i = 0; i != characters.size(); ++i)
+        glyphIndices[i + 1] = stbtt_FindGlyphIndex(&_font->info, characters[i]);
 
     /* Remove duplicates (e.g. uppercase and lowercase mapped to same glyph) */
+    /** @todo deduplicate via a BitArray instead */
     std::sort(glyphIndices.begin(), glyphIndices.end());
-    Containers::ArrayView<const int> glyphIndicesUnique{glyphIndices.begin(),
-        std::size_t(std::unique(glyphIndices.begin(), glyphIndices.end()) - glyphIndices.begin())};
+    const std::size_t uniqueCount = std::unique(glyphIndices.begin(), glyphIndices.end()) - glyphIndices.begin();
 
     /* Properties of all glyphs to reserve the cache */
-    std::vector<Vector2i> glyphSizes;
-    glyphSizes.reserve(glyphIndicesUnique.size());
-    for(Int c: glyphIndicesUnique) {
+    std::vector<Vector2i> glyphSizes(uniqueCount);
+    for(std::size_t i = 0; i != uniqueCount; ++i) {
         Range2Di box;
-        stbtt_GetGlyphBitmapBox(&_font->info, c, _font->scale, _font->scale, &box.min().x(), &box.min().y(), &box.max().x(), &box.max().y());
-        glyphSizes.push_back(box.size());
+        stbtt_GetGlyphBitmapBox(&_font->info, glyphIndices[i], _font->scale, _font->scale, &box.min().x(), &box.min().y(), &box.max().x(), &box.max().y());
+        glyphSizes[i] = box.size();
     }
 
     /* Create texture atlas */
@@ -191,14 +192,14 @@ void StbTrueTypeFont::doFillGlyphCache(AbstractGlyphCache& cache, const std::u32
     cache.setImage({}, image);
 }
 
-Containers::Pointer<AbstractLayouter> StbTrueTypeFont::doLayout(const AbstractGlyphCache& cache, const Float size, const std::string& text) {
+Containers::Pointer<AbstractLayouter> StbTrueTypeFont::doLayout(const AbstractGlyphCache& cache, const Float size, const Containers::StringView text) {
     /* Get glyph codes from characters */
     std::vector<Int> glyphs;
     glyphs.reserve(text.size());
     for(std::size_t i = 0; i != text.size(); ) {
-        UnsignedInt codepoint;
-        std::tie(codepoint, i) = Utility::Unicode::nextChar(text, i);
-        glyphs.push_back(stbtt_FindGlyphIndex(&_font->info, codepoint));
+        const Containers::Pair<char32_t, std::size_t> codepointNext = Utility::Unicode::nextChar(text, i);
+        glyphs.push_back(stbtt_FindGlyphIndex(&_font->info, codepointNext.first()));
+        i = codepointNext.second();
     }
 
     return Containers::pointer(new Layouter{*_font, cache, this->size(), size, Utility::move(glyphs)});
@@ -206,7 +207,7 @@ Containers::Pointer<AbstractLayouter> StbTrueTypeFont::doLayout(const AbstractGl
 
 StbTrueTypeFont::Layouter::Layouter(Font& font, const AbstractGlyphCache& cache, const Float fontSize, const Float textSize, std::vector<Int>&& glyphs): AbstractLayouter(glyphs.size()), _font(font), _cache(cache), _fontSize{fontSize}, _textSize{textSize}, _glyphs{Utility::move(glyphs)} {}
 
-std::tuple<Range2D, Range2D, Vector2> StbTrueTypeFont::Layouter::doRenderGlyph(const UnsignedInt i) {
+Containers::Triple<Range2D, Range2D, Vector2> StbTrueTypeFont::Layouter::doRenderGlyph(const UnsignedInt i) {
     /* Position of the texture in the resulting glyph, texture coordinates */
     Vector2i position;
     Range2Di rectangle;
@@ -222,7 +223,7 @@ std::tuple<Range2D, Range2D, Vector2> StbTrueTypeFont::Layouter::doRenderGlyph(c
     /* Glyph advance, denormalized to requested text size */
     Vector2i advance;
     stbtt_GetGlyphHMetrics(&_font.info, _glyphs[i], &advance.x(), nullptr);
-    return std::make_tuple(quadRectangle, textureCoordinates, Vector2(advance)*(_font.scale*_textSize/_fontSize));
+    return {quadRectangle, textureCoordinates, Vector2(advance)*(_font.scale*_textSize/_fontSize)};
 }
 
 }}

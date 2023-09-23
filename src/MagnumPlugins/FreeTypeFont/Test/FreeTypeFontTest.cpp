@@ -153,30 +153,28 @@ void FreeTypeFontTest::layout() {
     CORRADE_COMPARE(layouter->glyphCount(), 4);
 
     Vector2 cursorPosition;
-    Range2D rectangle, position, textureCoordinates;
+    Range2D rectangle;
 
     /* 'W' */
-    std::tie(position, textureCoordinates) = layouter->renderGlyph(0, cursorPosition = {}, rectangle);
-    CORRADE_COMPARE(position, Range2D({0.78125f, 1.0625f}, {1.28125f, 4.8125f}));
-    CORRADE_COMPARE(textureCoordinates, Range2D({0, 0.03125f}, {0.0625f, 0.5f}));
+    CORRADE_COMPARE(layouter->renderGlyph(0, cursorPosition = {}, rectangle),
+        Containers::pair(Range2D{{0.78125f, 1.0625f}, {1.28125f, 4.8125f}},
+                         Range2D{{0, 0.03125f}, {0.0625f, 0.5f}}));
     CORRADE_COMPARE(cursorPosition, Vector2(0.53125f, 0.0f));
 
     /* 'a' (not in cache) */
-    std::tie(position, textureCoordinates) = layouter->renderGlyph(1, cursorPosition = {}, rectangle);
-    CORRADE_COMPARE(position, Range2D());
-    CORRADE_COMPARE(textureCoordinates, Range2D());
+    CORRADE_COMPARE(layouter->renderGlyph(1, cursorPosition = {}, rectangle),
+        Containers::pair(Range2D{}, Range2D{}));
     CORRADE_COMPARE(cursorPosition, Vector2(0.25f, 0.0f));
 
     /* 'v' (not in cache) */
-    std::tie(position, textureCoordinates) = layouter->renderGlyph(2, cursorPosition = {}, rectangle);
-    CORRADE_COMPARE(position, Range2D());
-    CORRADE_COMPARE(textureCoordinates, Range2D());
+    CORRADE_COMPARE(layouter->renderGlyph(2, cursorPosition = {}, rectangle),
+        Containers::pair(Range2D{}, Range2D{}));
     CORRADE_COMPARE(cursorPosition, Vector2(0.25f, 0.0f));
 
     /* 'e' */
-    std::tie(position, textureCoordinates) = layouter->renderGlyph(3, cursorPosition = {}, rectangle);
-    CORRADE_COMPARE(position, Range2D({0.78125f, 0.375f}, {2.28125f, 1.25f}));
-    CORRADE_COMPARE(textureCoordinates, Range2D({0.0625f, 0.015625f}, {0.25f, 0.125f}));
+    CORRADE_COMPARE(layouter->renderGlyph(3, cursorPosition = {}, rectangle),
+        Containers::pair(Range2D{{0.78125f, 0.375f}, {2.28125f, 1.25f}},
+                         Range2D{{0.0625f, 0.015625f}, {0.25f, 0.125f}}));
     CORRADE_COMPARE(cursorPosition, Vector2(0.28125f, 0.0f));
 }
 
@@ -231,7 +229,7 @@ void FreeTypeFontTest::fillGlyphCache() {
     CORRADE_COMPARE(cache[font->glyphId('g')], std::make_pair(
         Vector2i{0, -4}, Range2Di{{14, 16}, {23, 29}}));
     /* UTF-8 */
-    CORRADE_COMPARE(cache[font->glyphId(Utility::Unicode::nextChar("š", 0).first)], std::make_pair(
+    CORRADE_COMPARE(cache[font->glyphId(Utility::Unicode::nextChar("š", 0).first())], std::make_pair(
         Vector2i{}, Range2Di{{70, 64}, {78, 78}}));
 }
 
