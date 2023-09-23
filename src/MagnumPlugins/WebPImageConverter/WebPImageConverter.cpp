@@ -152,6 +152,9 @@ Containers::Optional<Containers::Array<char>> WebPImageConverter::doConvertToDat
 
     // Encode image to WebP format.
     int result = WebPEncode(&config, &pic);
+    Containers::ScopeGuard e{&pic, [](WebPPicture *p) {
+        WebPPictureFree(p);
+    }};
     if (!result) {
         Containers::ScopeGuard w{&writer, [](WebPMemoryWriter *w) {
             WebPMemoryWriterClear(w);
@@ -162,10 +165,6 @@ Containers::Optional<Containers::Array<char>> WebPImageConverter::doConvertToDat
 
     Containers::Array<char> fileData{NoInit, writer.size};
     std::copy(writer.mem, writer.mem+writer.size, fileData.begin());
-
-    Containers::ScopeGuard e{&pic, [](WebPPicture *p) {
-        WebPPictureFree(p);
-    }};
 
     Containers::ScopeGuard w{&writer, [](WebPMemoryWriter *w) {
         WebPMemoryWriterClear(w);
