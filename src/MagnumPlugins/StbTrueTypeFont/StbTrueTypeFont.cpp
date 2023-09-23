@@ -167,7 +167,7 @@ void StbTrueTypeFont::doFillGlyphCache(AbstractGlyphCache& cache, const std::u32
     Containers::Array<UnsignedByte> glyphPixmap{NoInit,
         std::size_t(maxBox.size().product())};
 
-    /* Render all characters to the atlas and create character map */
+    /* Render all glyphs to the atlas and create a glyph map */
     Containers::Array<char> pixmap{ValueInit, std::size_t(cache.textureSize().product())};
     for(std::size_t i = 0; i != glyphPositions.size(); ++i) {
         /* Render glyph */
@@ -180,10 +180,10 @@ void StbTrueTypeFont::doFillGlyphCache(AbstractGlyphCache& cache, const std::u32
             for(Int xin = 0, xout = glyphPositions[i].left(), xmax = glyphSizes[i].x(); xin != xmax; ++xin, ++xout)
                 pixmap[yout*cache.textureSize().x() + xout] = glyphPixmap[(glyphSizes[i].y() - yin - 1)*maxBox.sizeX() + xin];
 
-        /* Insert glyph parameters into cache */
+        /* Insert glyph parameters into the cache */
         cache.insert(glyphIndices[i],
-            Vector2i(box.min().x(), -box.max().y()),
-                     glyphPositions[i]);
+            Vector2i{box.min().x(), -box.max().y()},
+            glyphPositions[i]);
     }
 
     /* Set cache image */

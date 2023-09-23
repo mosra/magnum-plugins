@@ -118,48 +118,48 @@ void FreeTypeFont::doFillGlyphCache(AbstractGlyphCache& cache, const std::u32str
     /** @bug Crash when atlas is too small */
 
     /* Get glyph codes from characters */
-    std::vector<FT_UInt> charIndices;
-    charIndices.resize(characters.size()+1);
-    charIndices[0] = 0;
-    std::transform(characters.begin(), characters.end(), charIndices.begin()+1,
+    std::vector<FT_UInt> glyphIndices;
+    glyphIndices.resize(characters.size()+1);
+    glyphIndices[0] = 0;
+    std::transform(characters.begin(), characters.end(), glyphIndices.begin()+1,
         [this](const char32_t c) { return FT_Get_Char_Index(ftFont, c); });
 
     /* Remove duplicates (e.g. uppercase and lowercase mapped to same glyph) */
-    std::sort(charIndices.begin(), charIndices.end());
-    charIndices.erase(std::unique(charIndices.begin(), charIndices.end()), charIndices.end());
+    std::sort(glyphIndices.begin(), glyphIndices.end());
+    glyphIndices.erase(std::unique(glyphIndices.begin(), glyphIndices.end()), glyphIndices.end());
 
     /* Sizes of all characters */
-    std::vector<Vector2i> charSizes;
-    charSizes.reserve(charIndices.size());
-    for(FT_UInt c: charIndices) {
+    std::vector<Vector2i> glyphSizes;
+    glyphSizes.reserve(glyphIndices.size());
+    for(FT_UInt c: glyphIndices) {
         CORRADE_INTERNAL_ASSERT_OUTPUT(FT_Load_Glyph(ftFont, c, FT_LOAD_DEFAULT) == 0);
-        charSizes.push_back(Vector2i(ftFont->glyph->metrics.width, ftFont->glyph->metrics.height)/64);
+            glyphSizes.push_back(Vector2i(ftFont->glyph->metrics.width, ftFont->glyph->metrics.height)/64);
     }
 
     /* Create texture atlas */
-    const std::vector<Range2Di> charPositions = cache.reserve(charSizes);
+    const std::vector<Range2Di> glyphPositions = cache.reserve(glyphSizes);
 
-    /* Render all characters to the atlas and create character map */
+    /* Render all glyphs to the atlas and create a glyph map */
     Containers::Array<char> pixmap{ValueInit, std::size_t(cache.textureSize().product())};
-    for(std::size_t i = 0; i != charPositions.size(); ++i) {
+    for(std::size_t i = 0; i != glyphPositions.size(); ++i) {
         /* Load and render glyph */
         /** @todo B&W only if radius != 0 */
         FT_GlyphSlot glyph = ftFont->glyph;
-        CORRADE_INTERNAL_ASSERT_OUTPUT(FT_Load_Glyph(ftFont, charIndices[i], FT_LOAD_DEFAULT) == 0);
+        CORRADE_INTERNAL_ASSERT_OUTPUT(FT_Load_Glyph(ftFont, glyphIndices[i], FT_LOAD_DEFAULT) == 0);
         CORRADE_INTERNAL_ASSERT_OUTPUT(FT_Render_Glyph(glyph, FT_RENDER_MODE_NORMAL) == 0);
 
         /* Copy rendered bitmap to texture image */
         const FT_Bitmap& bitmap = glyph->bitmap;
-        CORRADE_INTERNAL_ASSERT(std::abs(Int(bitmap.width)-charPositions[i].sizeX()) <= 2);
-        CORRADE_INTERNAL_ASSERT(std::abs(Int(bitmap.rows)-charPositions[i].sizeY()) <= 2);
-        for(Int yin = 0, yout = charPositions[i].bottom(), ymax = bitmap.rows; yin != ymax; ++yin, ++yout)
-            for(Int xin = 0, xout = charPositions[i].left(), xmax = bitmap.width; xin != xmax; ++xin, ++xout)
+        CORRADE_INTERNAL_ASSERT(std::abs(Int(bitmap.width)-glyphPositions[i].sizeX()) <= 2);
+        CORRADE_INTERNAL_ASSERT(std::abs(Int(bitmap.rows)-glyphPositions[i].sizeY()) <= 2);
+        for(Int yin = 0, yout = glyphPositions[i].bottom(), ymax = bitmap.rows; yin != ymax; ++yin, ++yout)
+            for(Int xin = 0, xout = glyphPositions[i].left(), xmax = bitmap.width; xin != xmax; ++xin, ++xout)
                 pixmap[yout*cache.textureSize().x() + xout] = bitmap.buffer[(bitmap.rows-yin-1)*bitmap.width + xin];
 
-        /* Insert glyph parameters into cache */
-        cache.insert(charIndices[i],
-            Vector2i(glyph->bitmap_left, glyph->bitmap_top-charPositions[i].sizeY()),
-            charPositions[i]);
+        /* Insert glyph parameters into the cache */
+        cache.insert(glyphIndices[i],
+            Vector2i{glyph->bitmap_left, glyph->bitmap_top- glyphPositions[i].sizeY()},
+            glyphPositions[i]);
     }
 
     /* Set cache image */
