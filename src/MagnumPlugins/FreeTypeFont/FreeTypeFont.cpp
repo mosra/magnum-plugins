@@ -149,22 +149,27 @@ void FreeTypeFont::doFillGlyphCache(AbstractGlyphCache& cache, const Containers:
     /* Create texture atlas */
     const std::vector<Range2Di> glyphPositions = cache.reserve(glyphSizes);
 
+    /* Glyph cache image */
+    Containers::Array<char> dstData{ValueInit, std::size_t(cache.textureSize().product())};
+    const MutableImageView2D dstImage{PixelFormat::R8Unorm, cache.textureSize(), dstData};
+    const Containers::StridedArrayView2D<char> dst = dstImage.pixels<char>();
+
     /* Render all glyphs to the atlas and create a glyph map */
-    Containers::Array<char> pixmap{ValueInit, std::size_t(cache.textureSize().product())};
     for(std::size_t i = 0; i != glyphPositions.size(); ++i) {
         /* Load and render glyph */
+        const FT_GlyphSlot glyph = ftFont->glyph;
         /** @todo B&W only if radius != 0 */
-        FT_GlyphSlot glyph = ftFont->glyph;
         CORRADE_INTERNAL_ASSERT_OUTPUT(FT_Load_Glyph(ftFont, glyphIndices[i], FT_LOAD_DEFAULT) == 0);
         CORRADE_INTERNAL_ASSERT_OUTPUT(FT_Render_Glyph(glyph, FT_RENDER_MODE_NORMAL) == 0);
 
-        /* Copy rendered bitmap to texture image */
+        /* Copy the rendered glyph Y-flipped to the destination image */
         const FT_Bitmap& bitmap = glyph->bitmap;
-        CORRADE_INTERNAL_ASSERT(std::abs(Int(bitmap.width)-glyphPositions[i].sizeX()) <= 2);
-        CORRADE_INTERNAL_ASSERT(std::abs(Int(bitmap.rows)-glyphPositions[i].sizeY()) <= 2);
-        for(Int yin = 0, yout = glyphPositions[i].bottom(), ymax = bitmap.rows; yin != ymax; ++yin, ++yout)
-            for(Int xin = 0, xout = glyphPositions[i].left(), xmax = bitmap.width; xin != xmax; ++xin, ++xout)
-                pixmap[yout*cache.textureSize().x() + xout] = bitmap.buffer[(bitmap.rows-yin-1)*bitmap.width + xin];
+        Utility::copy(
+            Containers::StridedArrayView2D<const char>{{reinterpret_cast<const char*>(bitmap.buffer), ~std::size_t{}}, {bitmap.rows, bitmap.width}}.flipped<0>(),
+            dst.slice({std::size_t(glyphPositions[i].bottom()),
+                       std::size_t(glyphPositions[i].left())},
+                      {std::size_t(glyphPositions[i].top()),
+                       std::size_t(glyphPositions[i].right())}));
 
         /* Insert glyph parameters into the cache */
         cache.insert(glyphIndices[i],
@@ -173,8 +178,7 @@ void FreeTypeFont::doFillGlyphCache(AbstractGlyphCache& cache, const Containers:
     }
 
     /* Set cache image */
-    Image2D image(PixelFormat::R8Unorm, cache.textureSize(), Utility::move(pixmap));
-    cache.setImage({}, image);
+    cache.setImage({}, dstImage);
 }
 
 Containers::Pointer<AbstractLayouter> FreeTypeFont::doLayout(const AbstractGlyphCache& cache, const Float size, const Containers::StringView text) {

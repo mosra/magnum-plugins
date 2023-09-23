@@ -32,7 +32,6 @@
 #include <Corrade/PluginManager/AbstractManager.h>
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/Unicode.h>
-#include <Magnum/Image.h>
 #include <Magnum/ImageView.h>
 #include <Magnum/PixelFormat.h>
 #include <Magnum/Math/Range.h>
@@ -170,25 +169,34 @@ void StbTrueTypeFont::doFillGlyphCache(AbstractGlyphCache& cache, const Containe
     /** @todo use Containers::Array for this */
     const std::vector<Range2Di> glyphPositions = cache.reserve(glyphSizes);
 
-    /* Pixmap for a single glyph. We need to flip Y, so it can't be rendered
-       directly into the texture. What a pity. */
+    /* Memory for stb_truetype to render into.  We need to flip Y, so it can't
+       be rendered directly into the glyph cache memory. */
     Range2Di maxBox;
     stbtt_GetFontBoundingBox(&_font->info, &maxBox.min().x(), &maxBox.min().y(), &maxBox.max().x(), &maxBox.max().y());
-    Containers::Array<UnsignedByte> glyphPixmap{NoInit,
-        std::size_t(maxBox.size().product())};
+    Containers::Array<char> srcData{NoInit, std::size_t(maxBox.size().product())};
+    const Containers::StridedArrayView2D<const char> src{srcData, {
+        std::size_t(maxBox.sizeY()),
+        std::size_t(maxBox.sizeX())
+    }};
+
+    /* Glyph cache image */
+    Containers::Array<char> dstData{ValueInit, std::size_t(cache.textureSize().product())};
+    const MutableImageView2D dstImage{PixelFormat::R8Unorm, cache.textureSize(), dstData};
+    const Containers::StridedArrayView2D<char> dst = dstImage.pixels<char>();
 
     /* Render all glyphs to the atlas and create a glyph map */
-    Containers::Array<char> pixmap{ValueInit, std::size_t(cache.textureSize().product())};
     for(std::size_t i = 0; i != glyphPositions.size(); ++i) {
         /* Render glyph */
         Range2Di box;
         stbtt_GetGlyphBitmapBox(&_font->info, glyphIndices[i], _font->scale, _font->scale, &box.min().x(), &box.min().y(), &box.max().x(), &box.max().y());
-        stbtt_MakeGlyphBitmap(&_font->info, glyphPixmap, maxBox.sizeX(), maxBox.sizeY(), maxBox.sizeX(), _font->scale, _font->scale, glyphIndices[i]);
+        stbtt_MakeGlyphBitmap(&_font->info, reinterpret_cast<unsigned char*>(srcData.data()), maxBox.sizeX(), maxBox.sizeY(), maxBox.sizeX(), _font->scale, _font->scale, glyphIndices[i]);
 
-        /* Copy rendered bitmap to texture image */
-        for(Int yin = 0, yout = glyphPositions[i].bottom(), ymax = glyphSizes[i].y(); yin != ymax; ++yin, ++yout)
-            for(Int xin = 0, xout = glyphPositions[i].left(), xmax = glyphSizes[i].x(); xin != xmax; ++xin, ++xout)
-                pixmap[yout*cache.textureSize().x() + xout] = glyphPixmap[(glyphSizes[i].y() - yin - 1)*maxBox.sizeX() + xin];
+        /* Copy the rendered glyph Y-flipped to the destination image */
+        Containers::Size2D glyphSize{std::size_t(glyphSizes[i].y()),
+                                     std::size_t(glyphSizes[i].x())};
+        Utility::copy(src.prefix(glyphSize).flipped<0>(),
+            dst.sliceSize({std::size_t(glyphPositions[i].bottom()),
+                           std::size_t(glyphPositions[i].left())}, glyphSize));
 
         /* Insert glyph parameters into the cache */
         cache.insert(glyphIndices[i],
@@ -197,8 +205,7 @@ void StbTrueTypeFont::doFillGlyphCache(AbstractGlyphCache& cache, const Containe
     }
 
     /* Set cache image */
-    Image2D image(PixelFormat::R8Unorm, cache.textureSize(), Utility::move(pixmap));
-    cache.setImage({}, image);
+    cache.setImage({}, dstImage);
 }
 
 Containers::Pointer<AbstractLayouter> StbTrueTypeFont::doLayout(const AbstractGlyphCache& cache, const Float size, const Containers::StringView text) {
