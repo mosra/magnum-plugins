@@ -25,26 +25,19 @@
 
 #include "WebPImageConverter.h"
 
-//??
-#include <iostream>
-#include <cstring>
-
-#include <cstring>
 #include <algorithm> /* std::copy() */ /** @todo remove */
-#include <string> /** @todo replace with a growable array */
 #include <webp/types.h>
 #include <webp/encode.h>
-#include <webp/decode.h>
-#include <webp/mux.h>
-#include <webp/demux.h>
 #include <webp/mux_types.h>
 
-#include <csetjmp>
 #include <Corrade/Containers/Array.h>
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/String.h>
+#include <Corrade/Utility/Debug.h>
 #include <Magnum/ImageView.h>
 #include <Magnum/PixelFormat.h>
+#include <Corrade/Containers/StridedArrayView.h>
+#include <Corrade/Containers/ScopeGuard.h>
 
 namespace Magnum { namespace Trade {
 
@@ -92,25 +85,38 @@ Containers::Optional<Containers::Array<char>> WebPImageConverter::doConvertToDat
         Warning{} << "Trade::WebPImageConverter::convertToData(): 1D array images are unrepresentable in WebP, saving as a regular 2D image";
     }
 
-    const std::pair<Math::Vector2<std::size_t>, Math::Vector2<std::size_t>> dataProperties = image.dataProperties();
-    auto inputData = Containers::arrayCast<const unsigned char>(image.data()).exceptPrefix(dataProperties.first.sum());
-
-    int width = image.size().x();
-    int height = image.size().y();
-    UnsignedInt channel_count = pixelFormatChannelCount(image.format());
-    const std::size_t stride = width * channel_count;  // in pixels units, not bytes.
-
     // Set up WebP configuration for encoding
     WebPConfig config;
     if(!WebPConfigInit(&config)) {
         Error() << "Trade::WebPImageConverter::convertToData(): couldn't initialize config: version mismatch";
         return {};
     }
+
+    UnsignedInt channelCount;
+    switch(image.format()) {
+        case PixelFormat::RGB8Unorm:
+            channelCount = 3;
+            config.alpha_quality = 0;
+            break;
+        case PixelFormat::RGBA8Unorm:
+            channelCount = 4;
+            config.alpha_quality = 100;
+            break;
+        default:
+            Error{} << "Trade::WebPImageConverter::convertToData(): unsupported pixel format";
+            return {};
+    }
+
+    // Flip the order of the pixel rows.
+    const Containers::StridedArrayView3D<const char> pixels = image.pixels();
+    const Containers::StridedArrayView3D<const char> pixelsFlipped = pixels.flipped<0>();
+    auto inputData = reinterpret_cast<uint8_t*>(const_cast<void*>(pixelsFlipped.data()));
+
     config.lossless = 1;
     config.exact = 1;
     config.quality = 100;
-    if(channel_count ==4) config.alpha_quality = 100;
     config.method = 6;
+
     if (!WebPValidateConfig(&config)) {
         Error() << "Trade::WebPImageConverter::convertToData(): invalid configuration";
         return {};
@@ -126,25 +132,19 @@ Containers::Optional<Containers::Array<char>> WebPImageConverter::doConvertToDat
         Error() << "Trade::WebPImageConverter::convertToData(): couldn't initialize picture structure: version mismatch";
         return {};
     }
-
-    pic.use_argb = (channel_count == 4) ? 1 : 0;
-    pic.width = width;
-    pic.height = height;
-
-    if(pic.width > WEBP_MAX_DIMENSION || pic.height > WEBP_MAX_DIMENSION) {
-        if(flags() & ImageConverterFlag::Quiet)
-            Error() << "Trade::WebPImageConverter::convertToData(): invalid WebPPicture size";
-        else
-            Warning{} << "Trade::WebPImageConverter::convertToData(): width or height of WebPPicture structure exceeds the maximum allowed:" << WEBP_MAX_DIMENSION;
-
-        return {};
-    }
-
+    pic.use_argb = 1;
+    pic.width = image.size().x();
+    pic.height = image.size().y();
     pic.writer = WebPMemoryWrite;
     pic.custom_ptr = &writer;
 
-    int success = (channel_count == 4) ? WebPPictureImportRGBA(&pic, inputData.data(), stride)
-           : WebPPictureImportRGB(&pic, inputData.data(), stride);
+    if (!WebPPictureAlloc(&pic)) {
+        Error() << "Memory error: couldn't allocate memory buffer\n";
+        return {};
+    }
+
+    const int success = (channelCount == 4) ? WebPPictureImportRGBA(&pic, inputData, -pixels.stride()[0])
+                                             : WebPPictureImportRGB(&pic, inputData, -pixels.stride()[0]);
     if(!success) {
         Error() << "Buffer error: picture too big, %d\n" << vp8EncodingStatus(pic.error_code);
         return {};
@@ -153,17 +153,20 @@ Containers::Optional<Containers::Array<char>> WebPImageConverter::doConvertToDat
     // Encode image to WebP format.
     int result = WebPEncode(&config, &pic);
     if (!result) {
-        WebPMemoryWriterClear(&writer);
-        Error() << "Encoding error: %d\n" << vp8EncodingStatus(pic.error_code);
+        Containers::ScopeGuard e{&writer, [](WebPMemoryWriter *w) {
+            WebPMemoryWriterClear(w);
+        }};
+        Error() << "Encoding error:" << vp8EncodingStatus(pic.error_code);
         return {};
     }
 
-    auto output = writer.mem;
-    Containers::Array<char> fileData{reinterpret_cast<char *>(output), writer.max_size};
+    Containers::Array<char> fileData{NoInit, writer.size};
+    std::copy(writer.mem, writer.mem+writer.size, fileData.begin());
 
-    WebPPictureFree(&pic);
+    Containers::ScopeGuard e{&pic, [](WebPPicture *p) {
+        WebPPictureFree(p);
+    }};
 
-    /* GCC 4.8 needs extra help here */
     return Containers::optional(std::move(fileData));
 }
 
