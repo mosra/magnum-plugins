@@ -59,15 +59,6 @@ struct WebPImageConverterTest: TestSuite::Tester {
 
 const struct {
     const char* name;
-    ImageConverterFlags flags;
-    bool quiet;
-} QuietData[]{
-    {"", {}, false},
-    {"quiet", ImageConverterFlag::Quiet, true}
-};
-
-const struct {
-    const char* name;
     ImageConverterFlags converterFlags;
     ImageFlags2D imageFlags;
     const char* message;
@@ -81,8 +72,7 @@ const struct {
 WebPImageConverterTest::WebPImageConverterTest() {
     addTests({&WebPImageConverterTest::bitDepthAndFormat});
 
-    addInstancedTests({&WebPImageConverterTest::sizeError},
-        Containers::arraySize(QuietData));
+    addTests({&WebPImageConverterTest::sizeError});
 
     addTests({&WebPImageConverterTest::rgb,
               &WebPImageConverterTest::rgba});
@@ -137,11 +127,7 @@ void WebPImageConverterTest::bitDepthAndFormat() {
 }
 
 void WebPImageConverterTest::sizeError() {
-    auto&& data = QuietData[testCaseInstanceId()];
-    setTestCaseDescription(data.name);
-
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("WebPImageConverter");
-    converter->addFlags(data.flags);
 
     /* Since WEBP image width/height is limited to 16383 pixels, we do the test with a bigger image. */
     const char imageData[49152]{};
