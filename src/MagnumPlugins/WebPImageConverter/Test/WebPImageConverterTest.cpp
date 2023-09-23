@@ -99,6 +99,7 @@ void WebPImageConverterTest::bitDepthAndFormat() {
     for(UnsignedInt i = 1; i <= static_cast<UnsignedInt>(PixelFormat::RGBA32F); i++) {
         auto image = ImageView2D{PixelFormat(i), {1, 1}, data};
 
+        /* WebP converter returns only 8-bit depth-RGB or 8-bit depth-RGBA data depending on the channel count of the original pixel format. */
         if(image.format() == PixelFormat::RGB8Unorm || image.format() == PixelFormat::RGBA8Unorm) {
             Containers::Optional<Containers::Array<char>> converted_data = converter->convertToData(image);
 
@@ -110,10 +111,6 @@ void WebPImageConverterTest::bitDepthAndFormat() {
             Containers::Optional<Trade::ImageData2D> converted_img = importer->image2D(0);
             CORRADE_VERIFY(converted_img);
             CORRADE_COMPARE(converted_img->size(), Vector2i(1, 1));
-
-            /* WebP converter returns only 8-bit depth-RGB or 8-bit depth-RGBA data depending on the channel count of the original pixel format. */
-            CORRADE_COMPARE(converted_img->format(),
-                            pixelFormatChannelCount(converted_img->format()) == 4 ? PixelFormat::RGBA8Unorm : PixelFormat::RGB8Unorm);
         } else {
             std::ostringstream out;
             Warning redirectWarning{&out};

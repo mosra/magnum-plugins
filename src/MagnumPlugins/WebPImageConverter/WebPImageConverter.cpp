@@ -153,7 +153,7 @@ Containers::Optional<Containers::Array<char>> WebPImageConverter::doConvertToDat
     // Encode image to WebP format.
     int result = WebPEncode(&config, &pic);
     if (!result) {
-        Containers::ScopeGuard e{&writer, [](WebPMemoryWriter *w) {
+        Containers::ScopeGuard w{&writer, [](WebPMemoryWriter *w) {
             WebPMemoryWriterClear(w);
         }};
         Error() << "Encoding error:" << vp8EncodingStatus(pic.error_code);
@@ -165,6 +165,10 @@ Containers::Optional<Containers::Array<char>> WebPImageConverter::doConvertToDat
 
     Containers::ScopeGuard e{&pic, [](WebPPicture *p) {
         WebPPictureFree(p);
+    }};
+
+    Containers::ScopeGuard w{&writer, [](WebPMemoryWriter *w) {
+        WebPMemoryWriterClear(w);
     }};
 
     return Containers::optional(std::move(fileData));
