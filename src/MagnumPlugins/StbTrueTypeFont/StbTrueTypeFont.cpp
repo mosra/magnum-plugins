@@ -84,7 +84,7 @@ FontFeatures StbTrueTypeFont::doFeatures() const { return FontFeature::OpenData;
 
 bool StbTrueTypeFont::doIsOpened() const { return !!_font; }
 
-auto StbTrueTypeFont::doOpenData(const Containers::ArrayView<const char> data, const Float size) -> Metrics {
+auto StbTrueTypeFont::doOpenData(const Containers::ArrayView<const char> data, const Float size) -> Properties {
     /* stbtt_GetFontOffsetForIndex() fails hard when passed it an empty file
        (because of course it doesn't take a size, ffs), check explicitly */
     if(data.isEmpty()) {
@@ -120,7 +120,8 @@ auto StbTrueTypeFont::doOpenData(const Containers::ArrayView<const char> data, c
     return {size,
             _font->scale*ascent,
             _font->scale*descent,
-            _font->scale*(ascent - descent + lineGap)};
+            _font->scale*(ascent - descent + lineGap),
+            UnsignedInt(_font->info.numGlyphs)};
 }
 
 void StbTrueTypeFont::doClose() {
@@ -129,6 +130,12 @@ void StbTrueTypeFont::doClose() {
 
 UnsignedInt StbTrueTypeFont::doGlyphId(const char32_t character) {
     return stbtt_FindGlyphIndex(&_font->info, character);
+}
+
+Vector2 StbTrueTypeFont::doGlyphSize(const UnsignedInt glyph) {
+    Range2Di box;
+    stbtt_GetGlyphBitmapBox(&_font->info, glyph, _font->scale, _font->scale, &box.min().x(), &box.min().y(), &box.max().x(), &box.max().y());
+    return Vector2{box.size()};
 }
 
 Vector2 StbTrueTypeFont::doGlyphAdvance(const UnsignedInt glyph) {

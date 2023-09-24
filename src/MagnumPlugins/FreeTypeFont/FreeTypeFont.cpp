@@ -83,7 +83,7 @@ FontFeatures FreeTypeFont::doFeatures() const { return FontFeature::OpenData; }
 
 bool FreeTypeFont::doIsOpened() const { return ftFont; }
 
-auto FreeTypeFont::doOpenData(const Containers::ArrayView<const char> data, const Float size) -> Metrics {
+auto FreeTypeFont::doOpenData(const Containers::ArrayView<const char> data, const Float size) -> Properties {
     /* We need to preserve the data for whole FT_Face lifetime */
     _data = Containers::Array<unsigned char>{NoInit, data.size()};
     Utility::copy(Containers::arrayCast<const unsigned char>(data), _data);
@@ -98,7 +98,8 @@ auto FreeTypeFont::doOpenData(const Containers::ArrayView<const char> data, cons
     return {size,
             ftFont->size->metrics.ascender/64.0f,
             ftFont->size->metrics.descender/64.0f,
-            ftFont->size->metrics.height/64.0f};
+            ftFont->size->metrics.height/64.0f,
+            UnsignedInt(ftFont->num_glyphs)};
 }
 
 void FreeTypeFont::doClose() {
@@ -109,6 +110,12 @@ void FreeTypeFont::doClose() {
 
 UnsignedInt FreeTypeFont::doGlyphId(const char32_t character) {
     return FT_Get_Char_Index(ftFont, character);
+}
+
+Vector2 FreeTypeFont::doGlyphSize(const UnsignedInt glyph) {
+    CORRADE_INTERNAL_ASSERT_OUTPUT(FT_Load_Glyph(ftFont, glyph, FT_LOAD_DEFAULT) == 0);
+    return Vector2{Float(ftFont->glyph->metrics.width),
+                   Float(ftFont->glyph->metrics.height)}/64.0f;
 }
 
 Vector2 FreeTypeFont::doGlyphAdvance(const UnsignedInt glyph) {

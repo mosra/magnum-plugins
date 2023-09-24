@@ -128,6 +128,7 @@ void StbTrueTypeFontTest::properties() {
     CORRADE_VERIFY(font->openFile(Utility::Path::join(FREETYPEFONT_TEST_DIR, "Oxygen.ttf"), 16.0f));
 
     CORRADE_COMPARE(font->size(), 16.0f);
+    CORRADE_COMPARE(font->glyphCount(), 671);
     CORRADE_COMPARE(font->glyphId(U'W'), 58);
 
     /* Compared to FreeType, StbTrueType has slightly larger glyphs which makes
@@ -139,6 +140,7 @@ void StbTrueTypeFontTest::properties() {
     CORRADE_COMPARE(font->ascent(), 17.0112f);
     CORRADE_COMPARE(font->descent(), -4.32215f);
     CORRADE_COMPARE(font->lineHeight(), 21.3333f);
+    CORRADE_COMPARE(font->glyphSize(58), Vector2(21.0f, 14.0f));
     CORRADE_COMPARE(font->glyphAdvance(58), Vector2(19.0694f, 0.0f));
 }
 

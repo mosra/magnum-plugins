@@ -66,7 +66,7 @@ bool HarfBuzzFont::doIsOpened() const {
     return FreeTypeFont::doIsOpened();
 }
 
-auto HarfBuzzFont::doOpenData(const Containers::ArrayView<const char> data, const Float size) -> Metrics {
+auto HarfBuzzFont::doOpenData(const Containers::ArrayView<const char> data, const Float size) -> Properties {
     /* Open FreeType font */
     auto ret = FreeTypeFont::doOpenData(data, size);
 

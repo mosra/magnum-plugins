@@ -147,7 +147,7 @@ class MAGNUM_FREETYPEFONT_EXPORT FreeTypeFont: public AbstractFont {
         FT_Face ftFont;
 
         bool doIsOpened() const override;
-        Metrics doOpenData(Containers::ArrayView<const char> data, Float size) override;
+        Properties doOpenData(Containers::ArrayView<const char> data, Float size) override;
         void doClose() override;
 
     private:
@@ -163,6 +163,7 @@ class MAGNUM_FREETYPEFONT_EXPORT FreeTypeFont: public AbstractFont {
 
         UnsignedInt doGlyphId(char32_t character) override;
 
+        Vector2 doGlyphSize(UnsignedInt glyph) override;
         Vector2 doGlyphAdvance(UnsignedInt glyph) override;
 
         /** @todo Why this can't be defined as local? */

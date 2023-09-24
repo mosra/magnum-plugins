@@ -130,7 +130,9 @@ void FreeTypeFontTest::properties() {
     CORRADE_COMPARE(font->ascent(), 15.0f);
     CORRADE_COMPARE(font->descent(), -4.0f);
     CORRADE_COMPARE(font->lineHeight(), 19.0f);
+    CORRADE_COMPARE(font->glyphCount(), 671);
     CORRADE_COMPARE(font->glyphId(U'W'), 58);
+    CORRADE_COMPARE(font->glyphSize(58), Vector2(18.0f, 12.0f));
     CORRADE_COMPARE(font->glyphAdvance(58), Vector2(17.0f, 0.0f));
 }
 
