@@ -221,7 +221,7 @@ void StbTrueTypeFontTest::fillGlyphCache() {
 
         bool called = false;
         PluginManager::Manager<Trade::AbstractImporter>& importerManager;
-    } cache{_importerManager, Vector2i{96}};
+    } cache{_importerManager, Vector2i{64}};
 
     /* Should call doSetImage() above, which then performs image comparison */
     font->fillGlyphCache(cache, data.characters);
@@ -239,16 +239,16 @@ void StbTrueTypeFontTest::fillGlyphCache() {
 
     /* Invalid glyph */
     CORRADE_COMPARE(cache[0], std::make_pair(
-        Vector2i{}, Range2Di{{}, {6, 13}}));
+        Vector2i{}, Range2Di{{56, 31}, {62, 44}}));
     /* Above the baseline */
     CORRADE_COMPARE(cache[font->glyphId('k')], std::make_pair(
-        Vector2i{1, 0}, Range2Di{{75, 19}, {84, 33}}));
+        Vector2i{1, 0}, Range2Di{{13, 16}, {22, 30}}));
     /* Below the baseline */
     CORRADE_COMPARE(cache[font->glyphId('g')], std::make_pair(
-        Vector2i{0, -5}, Range2Di{{15, 19}, {25, 35}}));
+        Vector2i{0, -5}, Range2Di{{4, 0}, {14, 16}}));
     /* UTF-8 */
     CORRADE_COMPARE(cache[font->glyphId(Utility::Unicode::nextChar("š", 0).first())], std::make_pair(
-        Vector2i{0, -1}, Range2Di{{75, 76}, {83, 92}}));
+        Vector2i{0, -1}, Range2Di{{52, 0}, {60, 16}}));
 }
 
 }}}}
