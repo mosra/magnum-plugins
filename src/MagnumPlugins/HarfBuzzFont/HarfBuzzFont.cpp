@@ -26,9 +26,11 @@
 #include "HarfBuzzFont.h"
 
 #include <hb-ft.h>
+#include <tuple> /* std::tie() :( */
 #include <Corrade/Containers/StringView.h>
 #include <Corrade/Containers/Triple.h>
 #include <Corrade/PluginManager/AbstractManager.h>
+#include <Magnum/Math/Range.h>
 #include <Magnum/Text/AbstractGlyphCache.h>
 
 namespace Magnum { namespace Text {

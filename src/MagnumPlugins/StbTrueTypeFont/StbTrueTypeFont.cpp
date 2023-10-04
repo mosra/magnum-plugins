@@ -26,6 +26,7 @@
 #include "StbTrueTypeFont.h"
 
 #include <algorithm> /* std::transform(), std::sort(), std::unique() */
+#include <tuple> /* std::tie() :( */
 #include <Corrade/Containers/StringView.h>
 #include <Corrade/Containers/Triple.h>
 #include <Corrade/PluginManager/AbstractManager.h>
@@ -34,6 +35,7 @@
 #include <Magnum/Image.h>
 #include <Magnum/ImageView.h>
 #include <Magnum/PixelFormat.h>
+#include <Magnum/Math/Range.h>
 #include <Magnum/Text/AbstractGlyphCache.h>
 
 #define STB_TRUETYPE_IMPLEMENTATION

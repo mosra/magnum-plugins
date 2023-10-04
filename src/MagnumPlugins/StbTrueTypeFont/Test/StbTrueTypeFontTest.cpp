@@ -31,6 +31,7 @@
 #include <Corrade/Utility/Path.h>
 #include <Corrade/Utility/Unicode.h>
 #include <Magnum/DebugTools/CompareImage.h>
+#include <Magnum/Math/Range.h>
 #include <Magnum/Text/AbstractFont.h>
 #include <Magnum/Text/AbstractGlyphCache.h>
 #include <Magnum/Trade/AbstractImporter.h>
