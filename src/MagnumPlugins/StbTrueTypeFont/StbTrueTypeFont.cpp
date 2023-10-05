@@ -218,7 +218,7 @@ Containers::Pointer<AbstractLayouter> StbTrueTypeFont::doLayout(const AbstractGl
         i = codepointNext.second();
     }
 
-    return Containers::pointer(new Layouter{*_font, cache, this->size(), size, Utility::move(glyphs)});
+    return Containers::pointer<Layouter>(*_font, cache, this->size(), size, Utility::move(glyphs));
 }
 
 StbTrueTypeFont::Layouter::Layouter(Font& font, const AbstractGlyphCache& cache, const Float fontSize, const Float textSize, std::vector<Int>&& glyphs): AbstractLayouter(glyphs.size()), _font(font), _cache(cache), _fontSize{fontSize}, _textSize{textSize}, _glyphs{Utility::move(glyphs)} {}

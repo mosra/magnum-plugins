@@ -99,7 +99,7 @@ Containers::Pointer<AbstractLayouter> HarfBuzzFont::doLayout(const AbstractGlyph
     hb_glyph_info_t* const glyphInfo = hb_buffer_get_glyph_infos(buffer, &glyphCount);
     hb_glyph_position_t* const glyphPositions = hb_buffer_get_glyph_positions(buffer, &glyphCount);
 
-    return Containers::pointer(new HarfBuzzLayouter(cache, this->size(), size, buffer, glyphInfo, glyphPositions, glyphCount));
+    return Containers::pointer<HarfBuzzLayouter>(cache, this->size(), size, buffer, glyphInfo, glyphPositions, glyphCount);
 }
 
 namespace {
