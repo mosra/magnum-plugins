@@ -144,7 +144,7 @@ class MAGNUM_FREETYPEFONT_EXPORT FreeTypeFont: public AbstractFont {
     protected:
     #endif
         Containers::Array<unsigned char> _data;
-        FT_Face ftFont;
+        FT_Face _ftFont;
 
         bool doIsOpened() const override;
         Properties doOpenData(Containers::ArrayView<const char> data, Float size) override;
@@ -157,7 +157,7 @@ class MAGNUM_FREETYPEFONT_EXPORT FreeTypeFont: public AbstractFont {
         #if defined(CORRADE_BUILD_MULTITHREADED) && !defined(CORRADE_TARGET_WINDOWS)
         CORRADE_THREAD_LOCAL
         #endif
-        MAGNUM_FREETYPEFONT_LOCAL FT_Library library;
+        MAGNUM_FREETYPEFONT_LOCAL FT_Library _library;
 
         FontFeatures MAGNUM_FREETYPEFONT_LOCAL doFeatures() const override;
 

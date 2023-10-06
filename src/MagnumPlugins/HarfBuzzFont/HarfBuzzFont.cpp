@@ -46,25 +46,25 @@ class HarfBuzzLayouter: public AbstractLayouter {
     private:
         Containers::Triple<Range2D, Range2D, Vector2> doRenderGlyph(UnsignedInt i) override;
 
-        const AbstractGlyphCache& cache;
-        const Float fontSize, textSize;
-        hb_buffer_t* const buffer;
-        hb_glyph_info_t* const glyphInfo;
-        hb_glyph_position_t* const glyphPositions;
+        const AbstractGlyphCache& _cache;
+        const Float _fontSize, _textSize;
+        hb_buffer_t* const _buffer;
+        hb_glyph_info_t* const _glyphInfo;
+        hb_glyph_position_t* const _glyphPositions;
 };
 
 }
 
-HarfBuzzFont::HarfBuzzFont(): hbFont(nullptr) {}
+HarfBuzzFont::HarfBuzzFont(): _hbFont(nullptr) {}
 
-HarfBuzzFont::HarfBuzzFont(PluginManager::AbstractManager& manager, const Containers::StringView& plugin): FreeTypeFont{manager, plugin}, hbFont(nullptr) {}
+HarfBuzzFont::HarfBuzzFont(PluginManager::AbstractManager& manager, const Containers::StringView& plugin): FreeTypeFont{manager, plugin}, _hbFont(nullptr) {}
 
 HarfBuzzFont::~HarfBuzzFont() { close(); }
 
 FontFeatures HarfBuzzFont::doFeatures() const { return FontFeature::OpenData; }
 
 bool HarfBuzzFont::doIsOpened() const {
-    CORRADE_INTERNAL_ASSERT(FreeTypeFont::doIsOpened() == !!hbFont);
+    CORRADE_INTERNAL_ASSERT(FreeTypeFont::doIsOpened() == !!_hbFont);
     return FreeTypeFont::doIsOpened();
 }
 
@@ -73,14 +73,14 @@ auto HarfBuzzFont::doOpenData(const Containers::ArrayView<const char> data, cons
     auto ret = FreeTypeFont::doOpenData(data, size);
 
     /* Create Harfbuzz font */
-    if(FreeTypeFont::doIsOpened()) hbFont = hb_ft_font_create(ftFont, nullptr);
+    if(FreeTypeFont::doIsOpened()) _hbFont = hb_ft_font_create(_ftFont, nullptr);
 
     return ret;
 }
 
 void HarfBuzzFont::doClose() {
-    hb_font_destroy(hbFont);
-    hbFont = nullptr;
+    hb_font_destroy(_hbFont);
+    _hbFont = nullptr;
     FreeTypeFont::doClose();
 }
 
@@ -93,7 +93,7 @@ Containers::Pointer<AbstractLayouter> HarfBuzzFont::doLayout(const AbstractGlyph
 
     /* Layout the text */
     hb_buffer_add_utf8(buffer, text.data(), text.size(), 0, -1);
-    hb_shape(hbFont, buffer, nullptr, 0);
+    hb_shape(_hbFont, buffer, nullptr, 0);
 
     UnsignedInt glyphCount;
     hb_glyph_info_t* const glyphInfo = hb_buffer_get_glyph_infos(buffer, &glyphCount);
@@ -104,34 +104,34 @@ Containers::Pointer<AbstractLayouter> HarfBuzzFont::doLayout(const AbstractGlyph
 
 namespace {
 
-HarfBuzzLayouter::HarfBuzzLayouter(const AbstractGlyphCache& cache, const Float fontSize, const Float textSize, hb_buffer_t* const buffer, hb_glyph_info_t* const glyphInfo, hb_glyph_position_t* const glyphPositions, const UnsignedInt glyphCount): AbstractLayouter(glyphCount), cache(cache), fontSize(fontSize), textSize(textSize), buffer(buffer), glyphInfo(glyphInfo), glyphPositions(glyphPositions) {}
+HarfBuzzLayouter::HarfBuzzLayouter(const AbstractGlyphCache& cache, const Float fontSize, const Float textSize, hb_buffer_t* const buffer, hb_glyph_info_t* const glyphInfo, hb_glyph_position_t* const glyphPositions, const UnsignedInt glyphCount): AbstractLayouter(glyphCount), _cache(cache), _fontSize(fontSize), _textSize(textSize), _buffer(buffer), _glyphInfo(glyphInfo), _glyphPositions(glyphPositions) {}
 
 HarfBuzzLayouter::~HarfBuzzLayouter() {
     /* Destroy HarfBuzz buffer */
-    hb_buffer_destroy(buffer);
+    hb_buffer_destroy(_buffer);
 }
 
 Containers::Triple<Range2D, Range2D, Vector2> HarfBuzzLayouter::doRenderGlyph(const UnsignedInt i) {
     /* Position of the texture in the resulting glyph, texture coordinates */
     Vector2i position;
     Range2Di rectangle;
-    std::tie(position, rectangle) = cache[glyphInfo[i].codepoint];
+    std::tie(position, rectangle) = _cache[_glyphInfo[i].codepoint];
 
     /* Normalized texture coordinates */
-    const auto textureCoordinates = Range2D(rectangle).scaled(1.0f/Vector2(cache.textureSize()));
+    const auto textureCoordinates = Range2D(rectangle).scaled(1.0f/Vector2(_cache.textureSize()));
 
     /* Glyph offset in normalized coordinates */
-    const Vector2 offset = Vector2(glyphPositions[i].x_offset,
-                                   glyphPositions[i].y_offset)/64.0f;
+    const Vector2 offset = Vector2(_glyphPositions[i].x_offset,
+                                   _glyphPositions[i].y_offset)/64.0f;
 
     /* Quad rectangle, computed from glyph offset and texture rectangle,
        denormalized to requested text size */
     const auto quadRectangle = Range2D(Range2Di::fromSize(position, rectangle.size()))
-        .translated(offset).scaled(Vector2(textSize/fontSize));
+        .translated(offset).scaled(Vector2(_textSize/_fontSize));
 
     /* Glyph advance, denormalized to requested text size */
-    const Vector2 advance = Vector2(glyphPositions[i].x_advance,
-                                    glyphPositions[i].y_advance)*(textSize/(64.0f*fontSize));
+    const Vector2 advance = Vector2(_glyphPositions[i].x_advance,
+                                    _glyphPositions[i].y_advance)*(_textSize/(64.0f*_fontSize));
 
     return {quadRectangle, textureCoordinates, advance};
 }

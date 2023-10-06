@@ -152,7 +152,7 @@ class MAGNUM_HARFBUZZFONT_EXPORT HarfBuzzFont: public FreeTypeFont {
         MAGNUM_HARFBUZZFONT_LOCAL void doClose() override;
         MAGNUM_HARFBUZZFONT_LOCAL Containers::Pointer<AbstractLayouter> doLayout(const AbstractGlyphCache& cache, Float size, Containers::StringView text) override;
 
-        hb_font_t* hbFont;
+        hb_font_t* _hbFont;
 };
 
 }}

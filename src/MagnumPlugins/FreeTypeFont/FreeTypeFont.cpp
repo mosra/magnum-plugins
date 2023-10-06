@@ -63,67 +63,67 @@ class FreeTypeLayouter: public AbstractLayouter {
 #if defined(CORRADE_BUILD_MULTITHREADED) && !defined(CORRADE_TARGET_WINDOWS)
 CORRADE_THREAD_LOCAL
 #endif
-FT_Library FreeTypeFont::library = nullptr;
+FT_Library FreeTypeFont::_library = nullptr;
 
 void FreeTypeFont::initialize() {
-    CORRADE_INTERNAL_ASSERT(!library);
-    CORRADE_INTERNAL_ASSERT_OUTPUT(FT_Init_FreeType(&library) == 0);
+    CORRADE_INTERNAL_ASSERT(!_library);
+    CORRADE_INTERNAL_ASSERT_OUTPUT(FT_Init_FreeType(&_library) == 0);
 }
 
 void FreeTypeFont::finalize() {
-    CORRADE_INTERNAL_ASSERT(library);
-    CORRADE_INTERNAL_ASSERT_OUTPUT(FT_Done_FreeType(library) == 0);
-    library = nullptr;
+    CORRADE_INTERNAL_ASSERT(_library);
+    CORRADE_INTERNAL_ASSERT_OUTPUT(FT_Done_FreeType(_library) == 0);
+    _library = nullptr;
 }
 
-FreeTypeFont::FreeTypeFont(): ftFont(nullptr) {}
+FreeTypeFont::FreeTypeFont(): _ftFont(nullptr) {}
 
-FreeTypeFont::FreeTypeFont(PluginManager::AbstractManager& manager, const Containers::StringView& plugin): AbstractFont{manager, plugin}, ftFont(nullptr) {}
+FreeTypeFont::FreeTypeFont(PluginManager::AbstractManager& manager, const Containers::StringView& plugin): AbstractFont{manager, plugin}, _ftFont(nullptr) {}
 
 FreeTypeFont::~FreeTypeFont() { close(); }
 
 FontFeatures FreeTypeFont::doFeatures() const { return FontFeature::OpenData; }
 
-bool FreeTypeFont::doIsOpened() const { return ftFont; }
+bool FreeTypeFont::doIsOpened() const { return _ftFont; }
 
 auto FreeTypeFont::doOpenData(const Containers::ArrayView<const char> data, const Float size) -> Properties {
     /* We need to preserve the data for whole FT_Face lifetime */
     _data = Containers::Array<unsigned char>{NoInit, data.size()};
     Utility::copy(Containers::arrayCast<const unsigned char>(data), _data);
 
-    CORRADE_ASSERT(library, "Text::FreeTypeFont::openSingleData(): initialize() was not called", {});
+    CORRADE_ASSERT(_library, "Text::FreeTypeFont::openSingleData(): initialize() was not called", {});
     /** @todo ability to specify different font in TTC collection */
-    if(FT_Error error = FT_New_Memory_Face(library, _data.begin(), _data.size(), 0, &ftFont)) {
+    if(FT_Error error = FT_New_Memory_Face(_library, _data.begin(), _data.size(), 0, &_ftFont)) {
         Error{} << "Text::FreeTypeFont::openData(): failed to open the font:" << error;
         return {};
     }
-    CORRADE_INTERNAL_ASSERT_OUTPUT(FT_Set_Char_Size(ftFont, 0, size*64, 0, 0) == 0);
+    CORRADE_INTERNAL_ASSERT_OUTPUT(FT_Set_Char_Size(_ftFont, 0, size*64, 0, 0) == 0);
     return {size,
-            ftFont->size->metrics.ascender/64.0f,
-            ftFont->size->metrics.descender/64.0f,
-            ftFont->size->metrics.height/64.0f,
-            UnsignedInt(ftFont->num_glyphs)};
+            _ftFont->size->metrics.ascender/64.0f,
+            _ftFont->size->metrics.descender/64.0f,
+            _ftFont->size->metrics.height/64.0f,
+            UnsignedInt(_ftFont->num_glyphs)};
 }
 
 void FreeTypeFont::doClose() {
-    CORRADE_INTERNAL_ASSERT_OUTPUT(FT_Done_Face(ftFont) == 0);
+    CORRADE_INTERNAL_ASSERT_OUTPUT(FT_Done_Face(_ftFont) == 0);
     _data = nullptr;
-    ftFont = nullptr;
+    _ftFont = nullptr;
 }
 
 UnsignedInt FreeTypeFont::doGlyphId(const char32_t character) {
-    return FT_Get_Char_Index(ftFont, character);
+    return FT_Get_Char_Index(_ftFont, character);
 }
 
 Vector2 FreeTypeFont::doGlyphSize(const UnsignedInt glyph) {
-    CORRADE_INTERNAL_ASSERT_OUTPUT(FT_Load_Glyph(ftFont, glyph, FT_LOAD_DEFAULT) == 0);
-    return Vector2{Float(ftFont->glyph->metrics.width),
-                   Float(ftFont->glyph->metrics.height)}/64.0f;
+    CORRADE_INTERNAL_ASSERT_OUTPUT(FT_Load_Glyph(_ftFont, glyph, FT_LOAD_DEFAULT) == 0);
+    return Vector2{Float(_ftFont->glyph->metrics.width),
+                   Float(_ftFont->glyph->metrics.height)}/64.0f;
 }
 
 Vector2 FreeTypeFont::doGlyphAdvance(const UnsignedInt glyph) {
-    CORRADE_INTERNAL_ASSERT_OUTPUT(FT_Load_Glyph(ftFont, glyph, FT_LOAD_DEFAULT) == 0);
-    return Vector2(ftFont->glyph->advance.x, ftFont->glyph->advance.y)/64.0f;
+    CORRADE_INTERNAL_ASSERT_OUTPUT(FT_Load_Glyph(_ftFont, glyph, FT_LOAD_DEFAULT) == 0);
+    return Vector2(_ftFont->glyph->advance.x, _ftFont->glyph->advance.y)/64.0f;
 }
 
 void FreeTypeFont::doFillGlyphCache(AbstractGlyphCache& cache, const Containers::ArrayView<const char32_t> characters) {
@@ -133,7 +133,7 @@ void FreeTypeFont::doFillGlyphCache(AbstractGlyphCache& cache, const Containers:
     Containers::Array<FT_UInt> glyphIndices{NoInit, characters.size() + 1};
     glyphIndices[0] = 0;
     for(std::size_t i = 0; i != characters.size(); ++i)
-        glyphIndices[i + 1] = FT_Get_Char_Index(ftFont, characters[i]);
+        glyphIndices[i + 1] = FT_Get_Char_Index(_ftFont, characters[i]);
 
     /* Remove duplicates (e.g. uppercase and lowercase mapped to same glyph) */
     /** @todo deduplicate via a BitArray instead */
@@ -143,8 +143,8 @@ void FreeTypeFont::doFillGlyphCache(AbstractGlyphCache& cache, const Containers:
     /* Sizes of all glyphs */
     std::vector<Vector2i> glyphSizes(uniqueCount);
     for(std::size_t i = 0; i != uniqueCount; ++i) {
-        CORRADE_INTERNAL_ASSERT_OUTPUT(FT_Load_Glyph(ftFont, glyphIndices[i], FT_LOAD_DEFAULT) == 0);
-            glyphSizes[i] = Vector2i{Int(ftFont->glyph->metrics.width), Int(ftFont->glyph->metrics.height)}/64;
+        CORRADE_INTERNAL_ASSERT_OUTPUT(FT_Load_Glyph(_ftFont, glyphIndices[i], FT_LOAD_DEFAULT) == 0);
+        glyphSizes[i] = Vector2i{Int(_ftFont->glyph->metrics.width), Int(_ftFont->glyph->metrics.height)}/64;
     }
 
     /* Create texture atlas */
@@ -158,9 +158,9 @@ void FreeTypeFont::doFillGlyphCache(AbstractGlyphCache& cache, const Containers:
     /* Render all glyphs to the atlas and create a glyph map */
     for(std::size_t i = 0; i != glyphPositions.size(); ++i) {
         /* Load and render glyph */
-        const FT_GlyphSlot glyph = ftFont->glyph;
+        const FT_GlyphSlot glyph = _ftFont->glyph;
         /** @todo B&W only if radius != 0 */
-        CORRADE_INTERNAL_ASSERT_OUTPUT(FT_Load_Glyph(ftFont, glyphIndices[i], FT_LOAD_DEFAULT) == 0);
+        CORRADE_INTERNAL_ASSERT_OUTPUT(FT_Load_Glyph(_ftFont, glyphIndices[i], FT_LOAD_DEFAULT) == 0);
         CORRADE_INTERNAL_ASSERT_OUTPUT(FT_Render_Glyph(glyph, FT_RENDER_MODE_NORMAL) == 0);
 
         /* Copy the rendered glyph Y-flipped to the destination image */
@@ -188,11 +188,11 @@ Containers::Pointer<AbstractLayouter> FreeTypeFont::doLayout(const AbstractGlyph
     arrayReserve(glyphs, text.size());
     for(std::size_t i = 0; i != text.size(); ) {
         const Containers::Pair<char32_t, std::size_t> codepointNext = Utility::Unicode::nextChar(text, i);
-        arrayAppend(glyphs, FT_Get_Char_Index(ftFont, codepointNext.first()));
+        arrayAppend(glyphs, FT_Get_Char_Index(_ftFont, codepointNext.first()));
         i = codepointNext.second();
     }
 
-    return Containers::pointer<FreeTypeLayouter>(ftFont, cache, this->size(), size, Utility::move(glyphs));
+    return Containers::pointer<FreeTypeLayouter>(_ftFont, cache, this->size(), size, Utility::move(glyphs));
 }
 
 namespace {
