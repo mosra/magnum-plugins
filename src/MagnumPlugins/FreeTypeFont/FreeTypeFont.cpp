@@ -29,6 +29,7 @@
 #include <tuple> /* std::tie() :( */
 #include <ft2build.h>
 #include FT_FREETYPE_H
+#include <Corrade/Containers/GrowableArray.h>
 #include <Corrade/Containers/StringView.h>
 #include <Corrade/Containers/Triple.h>
 #include <Corrade/PluginManager/AbstractManager.h>
@@ -183,10 +184,11 @@ void FreeTypeFont::doFillGlyphCache(AbstractGlyphCache& cache, const Containers:
 
 Containers::Pointer<AbstractLayouter> FreeTypeFont::doLayout(const AbstractGlyphCache& cache, const Float size, const Containers::StringView text) {
     /* Get glyph codes from characters */
-    Containers::Array<UnsignedInt> glyphs{NoInit, text.size()};
+    Containers::Array<UnsignedInt> glyphs;
+    arrayReserve(glyphs, text.size());
     for(std::size_t i = 0; i != text.size(); ) {
         const Containers::Pair<char32_t, std::size_t> codepointNext = Utility::Unicode::nextChar(text, i);
-        glyphs[i] = FT_Get_Char_Index(ftFont, codepointNext.first());
+        arrayAppend(glyphs, FT_Get_Char_Index(ftFont, codepointNext.first()));
         i = codepointNext.second();
     }
 

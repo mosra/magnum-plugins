@@ -45,8 +45,18 @@ struct HarfBuzzFontTest: TestSuite::Tester {
     PluginManager::Manager<AbstractFont> _manager{"nonexistent"};
 };
 
+const struct {
+    const char* name;
+    const char* string;
+    Float advanceAfterV, advanceAfterVWeird;
+} LayoutData[]{
+    {"", "Wave", 0.25f, 0.249512f},
+    {"UTF-8", "Wavě", 0.25293f, 0.25293f},
+};
+
 HarfBuzzFontTest::HarfBuzzFontTest() {
-    addTests({&HarfBuzzFontTest::layout});
+    addInstancedTests({&HarfBuzzFontTest::layout},
+        Containers::arraySize(LayoutData));
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. */
@@ -57,6 +67,9 @@ HarfBuzzFontTest::HarfBuzzFontTest() {
 }
 
 void HarfBuzzFontTest::layout() {
+    auto&& data = LayoutData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     Containers::Pointer<AbstractFont> font = _manager.instantiate("HarfBuzzFont");
     CORRADE_VERIFY(font->openFile(Utility::Path::join(FREETYPEFONT_TEST_DIR, "Oxygen.ttf"), 16.0f));
 
@@ -69,8 +82,20 @@ void HarfBuzzFontTest::layout() {
     } cache{Vector2i{256}};
     cache.insert(font->glyphId(U'W'), {25, 34}, {{0, 8}, {16, 128}});
     cache.insert(font->glyphId(U'e'), {25, 12}, {{16, 4}, {64, 32}});
+    /* ě has deliberately the same glyph data as e */
+    cache.insert(font->glyphId(
+        /* MSVC (but not clang-cl) doesn't support UTF-8 in char32_t literals
+           but it does it regular strings. Still a problem in MSVC 2022, what a
+           trash fire, can't you just give up on those codepage insanities
+           already, ffs?! */
+        #if defined(CORRADE_TARGET_MSVC) && !defined(CORRADE_TARGET_CLANG)
+        U'\u011B'
+        #else
+        U'ě'
+        #endif
+    ), {25, 12}, {{16, 4}, {64, 32}});
 
-    Containers::Pointer<AbstractLayouter> layouter = font->layout(cache, 0.5f, "Wave");
+    Containers::Pointer<AbstractLayouter> layouter = font->layout(cache, 0.5f, data.string);
     CORRADE_VERIFY(layouter);
     CORRADE_COMPARE(layouter->glyphCount(), 4);
 
@@ -93,16 +118,17 @@ void HarfBuzzFontTest::layout() {
     CORRADE_COMPARE(cursorPosition, Vector2(0.258301f, 0.0f));
 
     /* 'v' (not in cache). HarfBuzz before 1.7 and after 3.1 give 0.25,
-       versions between the other. */
+       versions between the other; additionally vě has slightly different
+       spacing than ve. */
     CORRADE_COMPARE(layouter->renderGlyph(2, cursorPosition = {}, rectangle),
         Containers::pair(Range2D{}, Range2D{}));
     if((HB_VERSION_MAJOR*100 + HB_VERSION_MINOR < 107) ||
        (HB_VERSION_MAJOR*100 + HB_VERSION_MINOR >= 301))
-        CORRADE_COMPARE(cursorPosition, Vector2(0.25f, 0.0f));
+        CORRADE_COMPARE(cursorPosition, Vector2(data.advanceAfterV, 0.0f));
     else
-        CORRADE_COMPARE(cursorPosition, Vector2(0.249512f, 0.0f));
+        CORRADE_COMPARE(cursorPosition, Vector2(data.advanceAfterVWeird, 0.0f));
 
-    /* 'e' */
+    /* 'e' or 'ě' */
     CORRADE_COMPARE(layouter->renderGlyph(3, cursorPosition = {}, rectangle),
         Containers::pair(Range2D{{0.78125f, 0.375f}, {2.28125f, 1.25f}},
                          Range2D{{0.0625f, 0.015625f}, {0.25f, 0.125f}}));

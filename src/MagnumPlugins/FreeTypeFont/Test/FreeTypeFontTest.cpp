@@ -59,6 +59,14 @@ struct FreeTypeFontTest: TestSuite::Tester {
 
 const struct {
     const char* name;
+    const char* string;
+} LayoutData[]{
+    {"", "Wave"},
+    {"UTF-8", "Wavě"},
+};
+
+const struct {
+    const char* name;
     const char* characters;
 } FillGlyphCacheData[]{
     {"",
@@ -78,8 +86,10 @@ FreeTypeFontTest::FreeTypeFontTest() {
     addTests({&FreeTypeFontTest::empty,
               &FreeTypeFontTest::invalid,
 
-              &FreeTypeFontTest::properties,
-              &FreeTypeFontTest::layout});
+              &FreeTypeFontTest::properties});
+
+    addInstancedTests({&FreeTypeFontTest::layout},
+        Containers::arraySize(LayoutData));
 
     addInstancedTests({&FreeTypeFontTest::fillGlyphCache},
         Containers::arraySize(FillGlyphCacheData));
@@ -138,6 +148,9 @@ void FreeTypeFontTest::properties() {
 }
 
 void FreeTypeFontTest::layout() {
+    auto&& data = LayoutData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     Containers::Pointer<AbstractFont> font = _manager.instantiate("FreeTypeFont");
     CORRADE_VERIFY(font->openFile(Utility::Path::join(FREETYPEFONT_TEST_DIR, "Oxygen.ttf"), 16.0f));
 
@@ -150,8 +163,20 @@ void FreeTypeFontTest::layout() {
     } cache{Vector2i{256}};
     cache.insert(font->glyphId(U'W'), {25, 34}, {{0, 8}, {16, 128}});
     cache.insert(font->glyphId(U'e'), {25, 12}, {{16, 4}, {64, 32}});
+    /* ě has deliberately the same glyph data as e */
+    cache.insert(font->glyphId(
+        /* MSVC (but not clang-cl) doesn't support UTF-8 in char32_t literals
+           but it does it regular strings. Still a problem in MSVC 2022, what a
+           trash fire, can't you just give up on those codepage insanities
+           already, ffs?! */
+        #if defined(CORRADE_TARGET_MSVC) && !defined(CORRADE_TARGET_CLANG)
+        U'\u011B'
+        #else
+        U'ě'
+        #endif
+    ), {25, 12}, {{16, 4}, {64, 32}});
 
-    Containers::Pointer<AbstractLayouter> layouter = font->layout(cache, 0.5f, "Wave");
+    Containers::Pointer<AbstractLayouter> layouter = font->layout(cache, 0.5f, data.string);
     CORRADE_VERIFY(layouter);
     CORRADE_COMPARE(layouter->glyphCount(), 4);
 
@@ -174,7 +199,7 @@ void FreeTypeFontTest::layout() {
         Containers::pair(Range2D{}, Range2D{}));
     CORRADE_COMPARE(cursorPosition, Vector2(0.25f, 0.0f));
 
-    /* 'e' */
+    /* 'e' or 'ě' */
     CORRADE_COMPARE(layouter->renderGlyph(3, cursorPosition = {}, rectangle),
         Containers::pair(Range2D{{0.78125f, 0.375f}, {2.28125f, 1.25f}},
                          Range2D{{0.0625f, 0.015625f}, {0.25f, 0.125f}}));
