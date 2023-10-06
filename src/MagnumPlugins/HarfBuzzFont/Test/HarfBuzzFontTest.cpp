@@ -23,10 +23,13 @@
     DEALINGS IN THE SOFTWARE.
 */
 
+#include <sstream>
 #include <Corrade/Containers/String.h>
 #include <Corrade/PluginManager/Manager.h>
 #include <Corrade/TestSuite/Tester.h>
+#include <Corrade/Utility/DebugStl.h> /** @todo remove once Debug is stream-free */
 #include <Corrade/Utility/Path.h>
+#include <Magnum/PixelFormat.h>
 #include <Magnum/Math/Range.h>
 #include <Magnum/Text/AbstractFont.h>
 #include <Magnum/Text/AbstractGlyphCache.h>
@@ -40,6 +43,9 @@ struct HarfBuzzFontTest: TestSuite::Tester {
     explicit HarfBuzzFontTest();
 
     void layout();
+    void layoutNoGlyphsInCache();
+    void layoutNoFontInCache();
+    void layoutArrayCache();
 
     /* Explicitly forbid system-wide plugin dependencies */
     PluginManager::Manager<AbstractFont> _manager{"nonexistent"};
@@ -57,6 +63,10 @@ const struct {
 HarfBuzzFontTest::HarfBuzzFontTest() {
     addInstancedTests({&HarfBuzzFontTest::layout},
         Containers::arraySize(LayoutData));
+
+    addTests({&HarfBuzzFontTest::layoutNoGlyphsInCache,
+              &HarfBuzzFontTest::layoutNoFontInCache,
+              &HarfBuzzFontTest::layoutArrayCache});
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. */
@@ -79,11 +89,12 @@ void HarfBuzzFontTest::layout() {
 
         GlyphCacheFeatures doFeatures() const override { return {}; }
         void doSetImage(const Vector2i&, const ImageView2D&) override {}
-    } cache{Vector2i{256}};
-    cache.insert(font->glyphId(U'W'), {25, 34}, {{0, 8}, {16, 128}});
-    cache.insert(font->glyphId(U'e'), {25, 12}, {{16, 4}, {64, 32}});
+    } cache{PixelFormat::R8Unorm, Vector2i{256}};
+    UnsignedInt fontId = cache.addFont(font->glyphCount(), font.get());
+    cache.addGlyph(fontId, font->glyphId(U'W'), {25, 34}, {{0, 8}, {16, 128}});
+    cache.addGlyph(fontId, font->glyphId(U'e'), {25, 12}, {{16, 4}, {64, 32}});
     /* ě has deliberately the same glyph data as e */
-    cache.insert(font->glyphId(
+    cache.addGlyph(fontId, font->glyphId(
         /* MSVC (but not clang-cl) doesn't support UTF-8 in char32_t literals
            but it does it regular strings. Still a problem in MSVC 2022, what a
            trash fire, can't you just give up on those codepage insanities
@@ -133,6 +144,92 @@ void HarfBuzzFontTest::layout() {
         Containers::pair(Range2D{{0.78125f, 0.375f}, {2.28125f, 1.25f}},
                          Range2D{{0.0625f, 0.015625f}, {0.25f, 0.125f}}));
     CORRADE_COMPARE(cursorPosition, Vector2(0.260742f, 0.0f));
+}
+
+void HarfBuzzFontTest::layoutNoGlyphsInCache() {
+    Containers::Pointer<AbstractFont> font = _manager.instantiate("HarfBuzzFont");
+    CORRADE_VERIFY(font->openFile(Utility::Path::join(FREETYPEFONT_TEST_DIR, "Oxygen.ttf"), 16.0f));
+
+    /* Fill the cache with some fake glyphs */
+    struct: AbstractGlyphCache {
+        using AbstractGlyphCache::AbstractGlyphCache;
+
+        GlyphCacheFeatures doFeatures() const override { return {}; }
+        void doSetImage(const Vector2i&, const ImageView2D&) override {}
+    } cache{PixelFormat::R8Unorm, Vector2i{256}};
+
+    /* Add a font that is associated with this one but fillGlyphCache() was
+       actually not called for it */
+    cache.addFont(font->glyphCount(), font.get());
+
+    Containers::Pointer<AbstractLayouter> layouter = font->layout(cache, 0.5f, "Wave");
+    CORRADE_VERIFY(layouter);
+    CORRADE_COMPARE(layouter->glyphCount(), 4);
+
+    Vector2 cursorPosition;
+    Range2D rectangle;
+
+    /* Compared to layout(), only the cursor position gets updated, everything
+       else falls back to the invalid glyph */
+
+    CORRADE_COMPARE(layouter->renderGlyph(0, cursorPosition = {}, rectangle),
+        Containers::pair(Range2D{}, Range2D{}));
+    /* Versions 3.3.0 and 3.3.1 reported {0.515625f, 0.0f} here, but the change
+       is reverted in 3.3.2 again "as it proved problematic". */
+    CORRADE_COMPARE(cursorPosition, Vector2(0.51123f, 0.0f));
+
+    CORRADE_COMPARE(layouter->renderGlyph(1, cursorPosition = {}, rectangle),
+        Containers::pair(Range2D{}, Range2D{}));
+    CORRADE_COMPARE(cursorPosition, Vector2(0.258301f, 0.0f));
+
+    CORRADE_COMPARE(layouter->renderGlyph(2, cursorPosition = {}, rectangle),
+        Containers::pair(Range2D{}, Range2D{}));
+    if((HB_VERSION_MAJOR*100 + HB_VERSION_MINOR < 107) ||
+       (HB_VERSION_MAJOR*100 + HB_VERSION_MINOR >= 301))
+        CORRADE_COMPARE(cursorPosition, Vector2(0.25f, 0.0f));
+    else
+        CORRADE_COMPARE(cursorPosition, Vector2(0.249512f, 0.0f));
+
+    CORRADE_COMPARE(layouter->renderGlyph(3, cursorPosition = {}, rectangle),
+        Containers::pair(Range2D{}, Range2D{}));
+    CORRADE_COMPARE(cursorPosition, Vector2(0.260742f, 0.0f));
+}
+
+void HarfBuzzFontTest::layoutNoFontInCache() {
+    Containers::Pointer<AbstractFont> font = _manager.instantiate("HarfBuzzFont");
+    CORRADE_VERIFY(font->openFile(Utility::Path::join(FREETYPEFONT_TEST_DIR, "Oxygen.ttf"), 16.0f));
+
+    struct: AbstractGlyphCache {
+        using AbstractGlyphCache::AbstractGlyphCache;
+
+        GlyphCacheFeatures doFeatures() const override { return {}; }
+        void doSetImage(const Vector2i&, const ImageView2D&) override {}
+    } cache{PixelFormat::R8Unorm, Vector2i{256}};
+
+    /* Add a font that isn't associated with this one */
+    cache.addFont(15);
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!font->layout(cache, 0.5f, "Wave"));
+    CORRADE_COMPARE(out.str(), "Text::HarfBuzzFont::layout(): font not found among 1 fonts in passed glyph cache\n");
+}
+
+void HarfBuzzFontTest::layoutArrayCache() {
+    Containers::Pointer<AbstractFont> font = _manager.instantiate("HarfBuzzFont");
+    CORRADE_VERIFY(font->openFile(Utility::Path::join(FREETYPEFONT_TEST_DIR, "Oxygen.ttf"), 16.0f));
+
+    struct: AbstractGlyphCache {
+        using AbstractGlyphCache::AbstractGlyphCache;
+
+        GlyphCacheFeatures doFeatures() const override { return {}; }
+        void doSetImage(const Vector2i&, const ImageView2D&) override {}
+    } cache{PixelFormat::R8Unorm, {256, 128, 3}};
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!font->layout(cache, 0.5f, "Wave"));
+    CORRADE_COMPARE(out.str(), "Text::HarfBuzzFont::layout(): array glyph caches are not supported\n");
 }
 
 }}}}

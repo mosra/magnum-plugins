@@ -59,7 +59,9 @@ corrade_add_test(StbTrueTypeFontTest StbTrueTypeFontTest.cpp
         Magnum::Text
     FILES
         ../../FreeTypeFont/Test/Oxygen.ttf
-        glyph-cache.png)
+        glyph-cache.png
+        glyph-cache-array0.png
+        glyph-cache-array1.png)
 target_include_directories(StbTrueTypeFontTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>)
 if(MAGNUM_STBTRUETYPEFONT_BUILD_STATIC)
     target_link_libraries(StbTrueTypeFontTest PRIVATE StbTrueTypeFont)

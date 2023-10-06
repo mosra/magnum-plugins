@@ -24,12 +24,15 @@
 */
 
 #include <sstream>
+#include <Corrade/Containers/Optional.h>
+#include <Corrade/Containers/StridedArrayView.h>
 #include <Corrade/Containers/String.h>
+#include <Corrade/Containers/Triple.h>
 #include <Corrade/PluginManager/Manager.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/Utility/DebugStl.h> /** @todo remove once Debug is stream-free */
 #include <Corrade/Utility/Path.h>
-#include <Corrade/Utility/Unicode.h>
+#include <Magnum/ImageView.h>
 #include <Magnum/DebugTools/CompareImage.h>
 #include <Magnum/Math/Range.h>
 #include <Magnum/Text/AbstractFont.h>
@@ -48,7 +51,13 @@ struct StbTrueTypeFontTest: TestSuite::Tester {
 
     void properties();
     void layout();
+    void layoutNoGlyphsInCache();
+    void layoutNoFontInCache();
+    void layoutArrayCache();
+
     void fillGlyphCache();
+    void fillGlyphCacheIncremental();
+    void fillGlyphCacheArray();
 
     /* Explicitly forbid system-wide plugin dependencies */
     PluginManager::Manager<AbstractFont> _manager{"nonexistent"};
@@ -91,8 +100,15 @@ StbTrueTypeFontTest::StbTrueTypeFontTest() {
     addInstancedTests({&StbTrueTypeFontTest::layout},
         Containers::arraySize(LayoutData));
 
+    addTests({&StbTrueTypeFontTest::layoutNoGlyphsInCache,
+              &StbTrueTypeFontTest::layoutNoFontInCache,
+              &StbTrueTypeFontTest::layoutArrayCache});
+
     addInstancedTests({&StbTrueTypeFontTest::fillGlyphCache},
         Containers::arraySize(FillGlyphCacheData));
+
+    addTests({&StbTrueTypeFontTest::fillGlyphCacheIncremental,
+              &StbTrueTypeFontTest::fillGlyphCacheArray});
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. */
@@ -168,11 +184,12 @@ void StbTrueTypeFontTest::layout() {
 
         GlyphCacheFeatures doFeatures() const override { return {}; }
         void doSetImage(const Vector2i&, const ImageView2D&) override {}
-    } cache{Vector2i{256}};
-    cache.insert(font->glyphId(U'W'), {25, 34}, {{0, 8}, {16, 128}});
-    cache.insert(font->glyphId(U'e'), {25, 12}, {{16, 4}, {64, 32}});
+    } cache{PixelFormat::R8Unorm, Vector2i{256}};
+    UnsignedInt fontId = cache.addFont(font->glyphCount(), font.get());
+    cache.addGlyph(fontId, font->glyphId(U'W'), {25, 34}, {{0, 8}, {16, 128}});
+    cache.addGlyph(fontId, font->glyphId(U'e'), {25, 12}, {{16, 4}, {64, 32}});
     /* ě has deliberately the same glyph data as e */
-    cache.insert(font->glyphId(
+    cache.addGlyph(fontId, font->glyphId(
         /* MSVC (but not clang-cl) doesn't support UTF-8 in char32_t literals
            but it does it regular strings. Still a problem in MSVC 2022, what a
            trash fire, can't you just give up on those codepage insanities
@@ -220,6 +237,86 @@ void StbTrueTypeFontTest::layout() {
     CORRADE_COMPARE(cursorPosition, Vector2(0.298658f, 0.0f));
 }
 
+void StbTrueTypeFontTest::layoutNoGlyphsInCache() {
+    Containers::Pointer<AbstractFont> font = _manager.instantiate("StbTrueTypeFont");
+    CORRADE_VERIFY(font->openFile(Utility::Path::join(FREETYPEFONT_TEST_DIR, "Oxygen.ttf"), 16.0f));
+
+    /* Fill the cache with some fake glyphs */
+    struct: AbstractGlyphCache {
+        using AbstractGlyphCache::AbstractGlyphCache;
+
+        GlyphCacheFeatures doFeatures() const override { return {}; }
+        void doSetImage(const Vector2i&, const ImageView2D&) override {}
+    } cache{PixelFormat::R8Unorm, Vector2i{256}};
+
+    /* Add a font that is associated with this one but fillGlyphCache() was
+       actually not called for it */
+    cache.addFont(font->glyphCount(), font.get());
+
+    Containers::Pointer<AbstractLayouter> layouter = font->layout(cache, 0.5f, "Wave");
+    CORRADE_VERIFY(layouter);
+    CORRADE_COMPARE(layouter->glyphCount(), 4);
+
+    Vector2 cursorPosition;
+    Range2D rectangle;
+
+    /* Compared to layout(), only the cursor position gets updated, everything
+       else falls back to the invalid glyph */
+
+    CORRADE_COMPARE(layouter->renderGlyph(0, cursorPosition = {}, rectangle),
+        Containers::pair(Range2D{}, Range2D{}));
+    CORRADE_COMPARE(cursorPosition, Vector2(0.595917f, 0.0f));
+
+    CORRADE_COMPARE(layouter->renderGlyph(1, cursorPosition = {}, rectangle),
+        Containers::pair(Range2D{}, Range2D{}));
+    CORRADE_COMPARE(cursorPosition, Vector2(0.295582f, 0.0f));
+
+    CORRADE_COMPARE(layouter->renderGlyph(2, cursorPosition = {}, rectangle),
+        Containers::pair(Range2D{}, Range2D{}));
+    CORRADE_COMPARE(cursorPosition, Vector2(0.289709f, 0.0f));
+
+    CORRADE_COMPARE(layouter->renderGlyph(3, cursorPosition = {}, rectangle),
+        Containers::pair(Range2D{}, Range2D{}));
+    CORRADE_COMPARE(cursorPosition, Vector2(0.298658f, 0.0f));
+}
+
+void StbTrueTypeFontTest::layoutNoFontInCache() {
+    Containers::Pointer<AbstractFont> font = _manager.instantiate("StbTrueTypeFont");
+    CORRADE_VERIFY(font->openFile(Utility::Path::join(FREETYPEFONT_TEST_DIR, "Oxygen.ttf"), 16.0f));
+
+    struct: AbstractGlyphCache {
+        using AbstractGlyphCache::AbstractGlyphCache;
+
+        GlyphCacheFeatures doFeatures() const override { return {}; }
+        void doSetImage(const Vector2i&, const ImageView2D&) override {}
+    } cache{PixelFormat::R8Unorm, Vector2i{256}};
+
+    /* Add a font that isn't associated with this one */
+    cache.addFont(15);
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!font->layout(cache, 0.5f, "Wave"));
+    CORRADE_COMPARE(out.str(), "Text::StbTrueTypeFont::layout(): font not found among 1 fonts in passed glyph cache\n");
+}
+
+void StbTrueTypeFontTest::layoutArrayCache() {
+    Containers::Pointer<AbstractFont> font = _manager.instantiate("StbTrueTypeFont");
+    CORRADE_VERIFY(font->openFile(Utility::Path::join(FREETYPEFONT_TEST_DIR, "Oxygen.ttf"), 16.0f));
+
+    struct: AbstractGlyphCache {
+        using AbstractGlyphCache::AbstractGlyphCache;
+
+        GlyphCacheFeatures doFeatures() const override { return {}; }
+        void doSetImage(const Vector2i&, const ImageView2D&) override {}
+    } cache{PixelFormat::R8Unorm, {256, 128, 3}};
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!font->layout(cache, 0.5f, "Wave"));
+    CORRADE_COMPARE(out.str(), "Text::StbTrueTypeFont::layout(): array glyph caches are not supported\n");
+}
+
 void StbTrueTypeFontTest::fillGlyphCache() {
     auto&& data = FillGlyphCacheData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
@@ -234,12 +331,15 @@ void StbTrueTypeFontTest::fillGlyphCache() {
     CORRADE_VERIFY(font->openFile(Utility::Path::join(FREETYPEFONT_TEST_DIR, "Oxygen.ttf"), 16.0f));
 
     struct GlyphCache: AbstractGlyphCache {
-        explicit GlyphCache(PluginManager::Manager<Trade::AbstractImporter>& importerManager, const Vector2i& size): AbstractGlyphCache{size}, importerManager(importerManager) {}
+        explicit GlyphCache(PluginManager::Manager<Trade::AbstractImporter>& importerManager, PixelFormat format, const Vector2i& size): AbstractGlyphCache{format, size}, importerManager(importerManager) {}
 
         GlyphCacheFeatures doFeatures() const override { return {}; }
         void doSetImage(const Vector2i& offset, const ImageView2D& image) override {
+            /* The passed image is just the filled subset, compare the whole
+               thing for more predictable results */
             CORRADE_COMPARE(offset, Vector2i{});
-            CORRADE_COMPARE_WITH(image,
+            CORRADE_COMPARE(image.size(), (Vector2i{64, 63}));
+            CORRADE_COMPARE_WITH(this->image().pixels<UnsignedByte>()[0],
                 Utility::Path::join(STBTRUETYPEFONT_TEST_DIR, "glyph-cache.png"),
                 DebugTools::CompareImageToFile{importerManager});
             called = true;
@@ -247,34 +347,219 @@ void StbTrueTypeFontTest::fillGlyphCache() {
 
         bool called = false;
         PluginManager::Manager<Trade::AbstractImporter>& importerManager;
-    } cache{_importerManager, Vector2i{64}};
+    } cache{_importerManager, PixelFormat::R8Unorm, Vector2i{64}};
 
     /* Should call doSetImage() above, which then performs image comparison */
     font->fillGlyphCache(cache, data.characters);
     CORRADE_VERIFY(cache.called);
 
-    /* 26 ASCII characters, 3 UTF-8 ones + one "not found" glyph. The could
-       should be the same in all cases as the input is deduplicated and
-       characters not present in the font get substituted for glyph 0. */
-    CORRADE_COMPARE(cache.glyphCount(), 26 + 3 + 1);
+    /* The font should associate itself with the cache */
+    CORRADE_COMPARE(cache.fontCount(), 1);
+    CORRADE_COMPARE(cache.findFont(font.get()), 0);
+
+    /* 26 ASCII characters, 3 UTF-8 ones + one "not found" glyph, and one
+       invalid glyph from the cache itself. The count should be the same in all
+       cases as the input is deduplicated and characters not present in the
+       font get substituted for glyph 0. */
+    CORRADE_COMPARE(cache.glyphCount(), 26 + 3 + 1 + 1);
 
     /* Check positions of a few select glyphs. They should all retain the same
        position regardless of how the input is shuffled. Again, this is
        different from FreeType, most probably due to stb_truetype not
        implementing hinting. */
 
+    /* Invalid glyph in the cache is deliberately not changed as that'd cause
+       a mess if multiple fonts would each want to set its own */
+    CORRADE_COMPARE(cache.glyph(0), Containers::triple(
+        Vector2i{},
+        0,
+        Range2Di{}));
     /* Invalid glyph */
-    CORRADE_COMPARE(cache[0], std::make_pair(
-        Vector2i{}, Range2Di{{56, 31}, {62, 44}}));
+    CORRADE_COMPARE(cache.glyph(0, 0), Containers::triple(
+        Vector2i{},
+        0,
+        Range2Di{{56, 31}, {62, 44}}));
     /* Above the baseline */
-    CORRADE_COMPARE(cache[font->glyphId('k')], std::make_pair(
-        Vector2i{1, 0}, Range2Di{{13, 16}, {22, 30}}));
+    CORRADE_COMPARE(cache.glyph(0, font->glyphId('k')), Containers::triple(
+        Vector2i{1, 0},
+        0,
+        Range2Di{{13, 16}, {22, 30}}));
     /* Below the baseline */
-    CORRADE_COMPARE(cache[font->glyphId('g')], std::make_pair(
-        Vector2i{0, -5}, Range2Di{{4, 0}, {14, 16}}));
+    CORRADE_COMPARE(cache.glyph(0, font->glyphId('g')), Containers::triple(
+        Vector2i{0, -5},
+        0,
+        Range2Di{{4, 0}, {14, 16}}));
     /* UTF-8 */
-    CORRADE_COMPARE(cache[font->glyphId(Utility::Unicode::nextChar("š", 0).first())], std::make_pair(
-        Vector2i{0, -1}, Range2Di{{52, 0}, {60, 16}}));
+    UnsignedInt sId = font->glyphId(
+        /* MSVC (but not clang-cl) doesn't support UTF-8 in char32_t literals
+           but it does it regular strings. Still a problem in MSVC 2022, what a
+           trash fire, can't you just give up on those codepage insanities
+           already, ffs?! */
+        #if defined(CORRADE_TARGET_MSVC) && !defined(CORRADE_TARGET_CLANG)
+        U'\u0161'
+        #else
+        U'š'
+        #endif
+    );
+    CORRADE_COMPARE(cache.glyph(0, sId), Containers::triple(
+        Vector2i{0, -1},
+        0,
+        Range2Di{{52, 0}, {60, 16}}));
+}
+
+void StbTrueTypeFontTest::fillGlyphCacheIncremental() {
+    /* Ideally this would be tested at least partially without the image, but
+       adding extra logic for that would risk that the image might accidentally
+       not get checked at all */
+    if(_importerManager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("PngImporter plugin not found, cannot test");
+
+    Containers::Pointer<AbstractFont> font = _manager.instantiate("StbTrueTypeFont");
+    CORRADE_VERIFY(font->openFile(Utility::Path::join(FREETYPEFONT_TEST_DIR, "Oxygen.ttf"), 16.0f));
+
+    struct GlyphCache: AbstractGlyphCache {
+        explicit GlyphCache(PluginManager::Manager<Trade::AbstractImporter>& importerManager, PixelFormat format, const Vector2i& size): AbstractGlyphCache{format, size}, importerManager(importerManager) {}
+
+        GlyphCacheFeatures doFeatures() const override { return {}; }
+        void doSetImage(const Vector2i& offset, const ImageView2D& image) override {
+            /* The passed image is just the filled subset, compare the whole
+               thing for more predictable results */
+            if(called == 0) {
+                CORRADE_COMPARE(offset, Vector2i{});
+                CORRADE_COMPARE(image.size(), (Vector2i{64, 45}));
+            } else if(called == 1) {
+                CORRADE_COMPARE(offset, (Vector2i{0, 30}));
+                CORRADE_COMPARE(image.size(), (Vector2i{60, 33}));
+                CORRADE_COMPARE_WITH(this->image().pixels<UnsignedByte>()[0],
+                    Utility::Path::join(STBTRUETYPEFONT_TEST_DIR, "glyph-cache.png"),
+                    DebugTools::CompareImageToFile{importerManager});
+            } else CORRADE_FAIL("This shouldn't get called more than twice");
+            ++called;
+        }
+
+        Int called = 0;
+        PluginManager::Manager<Trade::AbstractImporter>& importerManager;
+    } cache{_importerManager, PixelFormat::R8Unorm, Vector2i{64}};
+
+    /* First call with the bottom half of the glyph cache until the invalid
+       glyph */
+    font->fillGlyphCache(cache, "jgpqčěšdbylhktfi");
+    CORRADE_COMPARE(cache.called, 1);
+
+    /* The font should associate itself with the cache now */
+    CORRADE_COMPARE(cache.fontCount(), 1);
+    CORRADE_COMPARE(cache.findFont(font.get()), 0);
+
+    /* 17 characters + one global invalid glyph */
+    CORRADE_COMPARE(cache.glyphCount(), 17 + 1);
+
+    /* Second call with the rest */
+    font->fillGlyphCache(cache, "oacesmnuwvxzr");
+    CORRADE_COMPARE(cache.called, 2);
+
+    /* The font should not be added again */
+    CORRADE_COMPARE(cache.fontCount(), 1);
+
+    /* There's now all glyphs like in fillGlyphCache() */
+    CORRADE_COMPARE(cache.glyphCount(), 26 + 3 + 1 + 1);
+
+    /* Positions of the glyphs should be the same as in fillGlyphCache() */
+    CORRADE_COMPARE(cache.glyph(0), Containers::triple(
+        Vector2i{},
+        0,
+        Range2Di{}));
+    CORRADE_COMPARE(cache.glyph(0, 0), Containers::triple(
+        Vector2i{},
+        0,
+        Range2Di{{56, 31}, {62, 44}}));
+    CORRADE_COMPARE(cache.glyph(0, font->glyphId('k')), Containers::triple(
+        Vector2i{1, 0},
+        0,
+        Range2Di{{13, 16}, {22, 30}}));
+    CORRADE_COMPARE(cache.glyph(0, font->glyphId('g')), Containers::triple(
+        Vector2i{0, -5},
+        0,
+        Range2Di{{4, 0}, {14, 16}}));
+    UnsignedInt sId = font->glyphId(
+        /* MSVC (but not clang-cl) doesn't support UTF-8 in char32_t literals
+           but it does it regular strings. Still a problem in MSVC 2022, what a
+           trash fire, can't you just give up on those codepage insanities
+           already, ffs?! */
+        #if defined(CORRADE_TARGET_MSVC) && !defined(CORRADE_TARGET_CLANG)
+        U'\u0161'
+        #else
+        U'š'
+        #endif
+    );
+    CORRADE_COMPARE(cache.glyph(0, sId), Containers::triple(
+        Vector2i{0, -1},
+        0,
+        Range2Di{{52, 0}, {60, 16}}));
+}
+
+void StbTrueTypeFontTest::fillGlyphCacheArray() {
+    /* Ideally this would be tested at least partially without the image, but
+       adding extra logic for that would risk that the image might accidentally
+       not get checked at all */
+    if(_importerManager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("PngImporter plugin not found, cannot test");
+
+    Containers::Pointer<AbstractFont> font = _manager.instantiate("StbTrueTypeFont");
+    CORRADE_VERIFY(font->openFile(Utility::Path::join(FREETYPEFONT_TEST_DIR, "Oxygen.ttf"), 16.0f));
+
+    struct GlyphCache: AbstractGlyphCache {
+        explicit GlyphCache(PluginManager::Manager<Trade::AbstractImporter>& importerManager, PixelFormat format, const Vector3i& size): AbstractGlyphCache{format, size}, importerManager(importerManager) {}
+
+        GlyphCacheFeatures doFeatures() const override { return {}; }
+        void doSetImage(const Vector3i& offset, const ImageView3D& image) override {
+            /* The passed image is just the filled subset, compare the whole
+               thing for more predictable results */
+            CORRADE_COMPARE(offset, Vector3i{});
+            CORRADE_COMPARE(image.size(), (Vector3i{48, 48, 2}));
+            CORRADE_COMPARE_WITH(this->image().pixels<UnsignedByte>()[0],
+                Utility::Path::join(STBTRUETYPEFONT_TEST_DIR, "glyph-cache-array0.png"),
+                DebugTools::CompareImageToFile{importerManager});
+            CORRADE_COMPARE_WITH(this->image().pixels<UnsignedByte>()[1],
+                Utility::Path::join(STBTRUETYPEFONT_TEST_DIR, "glyph-cache-array1.png"),
+                DebugTools::CompareImageToFile{importerManager});
+            called = true;
+        }
+
+        bool called = false;
+        PluginManager::Manager<Trade::AbstractImporter>& importerManager;
+    } cache{_importerManager, PixelFormat::R8Unorm, {48, 48, 2}};
+
+    /* Should call doSetImage() above, which then performs image comparison */
+    font->fillGlyphCache(cache, "abcdefghijklmnopqrstuvwxyzěšč");
+    CORRADE_VERIFY(cache.called);
+
+    /* The font should associate itself with the cache */
+    CORRADE_COMPARE(cache.fontCount(), 1);
+    CORRADE_COMPARE(cache.findFont(font.get()), 0);
+
+    /* Same as in fillGlyphCache() */
+    CORRADE_COMPARE(cache.glyphCount(), 26 + 3 + 1 + 1);
+
+    /* Positions are spread across two layers now */
+    CORRADE_COMPARE(cache.glyph(0), Containers::triple(
+        Vector2i{},
+        0,
+        Range2Di{}));
+    /* Invalid glyph */
+    CORRADE_COMPARE(cache.glyph(0, 0), Containers::triple(
+        Vector2i{},
+        0,
+        Range2Di{{4, 34}, {10, 47}}));
+    /* First layer */
+    CORRADE_COMPARE(cache.glyph(0, font->glyphId('g')), Containers::triple(
+        Vector2i{0, -5},
+        0,
+        Range2Di{{4, 0}, {14, 16}}));
+    /* Second layer */
+    CORRADE_COMPARE(cache.glyph(0, font->glyphId('n')), Containers::triple(
+        Vector2i{0, 0},
+        1,
+        Range2Di{{23, 12}, {33, 23}}));
 }
 
 }}}}

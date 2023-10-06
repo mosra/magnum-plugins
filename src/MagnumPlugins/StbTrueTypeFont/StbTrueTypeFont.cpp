@@ -26,7 +26,8 @@
 #include "StbTrueTypeFont.h"
 
 #include <algorithm> /* std::transform(), std::sort(), std::unique() */
-#include <tuple> /* std::tie() :( */
+#include <Corrade/Containers/GrowableArray.h>
+#include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/StringView.h>
 #include <Corrade/Containers/Triple.h>
 #include <Corrade/PluginManager/AbstractManager.h>
@@ -36,6 +37,7 @@
 #include <Magnum/PixelFormat.h>
 #include <Magnum/Math/Range.h>
 #include <Magnum/Text/AbstractGlyphCache.h>
+#include <Magnum/TextureTools/Atlas.h>
 
 #define STB_TRUETYPE_IMPLEMENTATION
 #define STBTT_STATIC
@@ -64,15 +66,16 @@ struct StbTrueTypeFont::Font {
 
 class StbTrueTypeFont::Layouter: public AbstractLayouter {
     public:
-        explicit Layouter(Font& _font, const AbstractGlyphCache& cache, const Float fontSize, const Float textSize, std::vector<Int>&& glyphs);
+        explicit Layouter(Font& font, const AbstractGlyphCache& cache, UnsignedInt fontId, Float fontSize, Float textSize, Containers::Array<Int>&& glyphs);
 
     private:
         Containers::Triple<Range2D, Range2D, Vector2> doRenderGlyph(const UnsignedInt i) override;
 
         Font& _font;
         const AbstractGlyphCache& _cache;
+        const UnsignedInt _fontId;
         const Float _fontSize, _textSize;
-        const std::vector<Int> _glyphs;
+        const Containers::Array<Int> _glyphs;
 };
 
 StbTrueTypeFont::StbTrueTypeFont() = default;
@@ -146,28 +149,47 @@ Vector2 StbTrueTypeFont::doGlyphAdvance(const UnsignedInt glyph) {
 }
 
 void StbTrueTypeFont::doFillGlyphCache(AbstractGlyphCache& cache, const Containers::ArrayView<const char32_t> characters) {
-    /* Get glyph codes from characters */
-    Containers::Array<Int> glyphIndices{NoInit, characters.size() + 1};
-    glyphIndices[0] = 0;
+    /** @todo fix the fillGlyphCache API to make it failable */
+    CORRADE_INTERNAL_ASSERT(cache.format() == PixelFormat::R8Unorm);
+
+    /* Register this font, if not in the cache yet */
+    Containers::Optional<UnsignedInt> fontId = cache.findFont(this);
+    const bool firstFill = !fontId;
+    if(!fontId)
+        fontId = cache.addFont(_font->info.numGlyphs, this);
+
+    /* Get glyph codes from characters. If this is the first fill, include also
+       the invalid glyph. */
+    /** @todo leave that on the user, maybe? or do it only in the convenience
+        "characters" overload and not the "glyph IDs" one */
+    Containers::Array<Int> glyphIndices{NoInit, characters.size() + (firstFill ? 1 : 0)};
     for(std::size_t i = 0; i != characters.size(); ++i)
-        glyphIndices[i + 1] = stbtt_FindGlyphIndex(&_font->info, characters[i]);
+        glyphIndices[i] = stbtt_FindGlyphIndex(&_font->info, characters[i]);
+    if(firstFill)
+        glyphIndices.back() = 0;
 
     /* Remove duplicates (e.g. uppercase and lowercase mapped to same glyph) */
     /** @todo deduplicate via a BitArray instead */
     std::sort(glyphIndices.begin(), glyphIndices.end());
     const std::size_t uniqueCount = std::unique(glyphIndices.begin(), glyphIndices.end()) - glyphIndices.begin();
 
-    /* Properties of all glyphs to reserve the cache */
-    std::vector<Vector2i> glyphSizes(uniqueCount);
+    /* Get sizes of all glyphs to pack into the cache */
+    struct Glyph {
+        Vector2i size;
+        Vector3i offset;
+    };
+    Containers::Array<Glyph> glyphs{NoInit, uniqueCount};
     for(std::size_t i = 0; i != uniqueCount; ++i) {
         Range2Di box;
         stbtt_GetGlyphBitmapBox(&_font->info, glyphIndices[i], _font->scale, _font->scale, &box.min().x(), &box.min().y(), &box.max().x(), &box.max().y());
-        glyphSizes[i] = box.size();
+        glyphs[i].size = box.size();
     }
 
-    /* Create texture atlas */
-    /** @todo use Containers::Array for this */
-    const std::vector<Range2Di> glyphPositions = cache.reserve(glyphSizes);
+    /* Pack the cache */
+    /** @todo fix the fillGlyphCache API to make it failable */
+    CORRADE_INTERNAL_ASSERT_OUTPUT(cache.atlas().add(
+        stridedArrayView(glyphs).slice(&Glyph::size),
+        stridedArrayView(glyphs).slice(&Glyph::offset)));
 
     /* Memory for stb_truetype to render into.  We need to flip Y, so it can't
        be rendered directly into the glyph cache memory. */
@@ -179,62 +201,82 @@ void StbTrueTypeFont::doFillGlyphCache(AbstractGlyphCache& cache, const Containe
         std::size_t(maxBox.sizeX())
     }};
 
-    /* Glyph cache image */
-    Containers::Array<char> dstData{ValueInit, std::size_t(cache.textureSize().product())};
-    const MutableImageView2D dstImage{PixelFormat::R8Unorm, cache.textureSize(), dstData};
-    const Containers::StridedArrayView2D<char> dst = dstImage.pixels<char>();
-
     /* Render all glyphs to the atlas and create a glyph map */
-    for(std::size_t i = 0; i != glyphPositions.size(); ++i) {
-        /* Render glyph */
+    const Containers::StridedArrayView3D<char> dst = cache.image().pixels<char>();
+    Range3Di flushRange;
+    for(std::size_t i = 0; i != glyphs.size(); ++i) {
+        /* Render the glyph */
         Range2Di box;
         stbtt_GetGlyphBitmapBox(&_font->info, glyphIndices[i], _font->scale, _font->scale, &box.min().x(), &box.min().y(), &box.max().x(), &box.max().y());
         stbtt_MakeGlyphBitmap(&_font->info, reinterpret_cast<unsigned char*>(srcData.data()), maxBox.sizeX(), maxBox.sizeY(), maxBox.sizeX(), _font->scale, _font->scale, glyphIndices[i]);
 
         /* Copy the rendered glyph Y-flipped to the destination image */
-        Containers::Size2D glyphSize{std::size_t(glyphSizes[i].y()),
-                                     std::size_t(glyphSizes[i].x())};
-        Utility::copy(src.prefix(glyphSize).flipped<0>(),
-            dst.sliceSize({std::size_t(glyphPositions[i].bottom()),
-                           std::size_t(glyphPositions[i].left())}, glyphSize));
+        const Containers::Size2D glyphSize{std::size_t(glyphs[i].size.y()),
+                                           std::size_t(glyphs[i].size.x())};
+        Utility::copy(
+            src
+                .prefix(glyphSize).flipped<0>(),
+            dst[glyphs[i].offset.z()]
+                .sliceSize({std::size_t(glyphs[i].offset.y()),
+                            std::size_t(glyphs[i].offset.x())}, glyphSize));
 
         /* Insert glyph parameters into the cache */
-        cache.insert(glyphIndices[i],
+        cache.addGlyph(*fontId, glyphIndices[i],
             Vector2i{box.min().x(), -box.max().y()},
-            glyphPositions[i]);
+            glyphs[i].offset.z(),
+            Range2Di::fromSize(glyphs[i].offset.xy(), glyphs[i].size));
+
+        /* Maintain an union spanning all added glyphs to flush */
+        /** @todo might span too much if mutliple slices are covered in a
+            disjoint fashion, what to do? */
+        flushRange = Math::join(flushRange, Range3Di::fromSize(glyphs[i].offset, Vector3i{glyphs[i].size, 1}));
     }
 
-    /* Set cache image */
-    cache.setImage({}, dstImage);
+    /* Flush the updated cache image */
+    cache.flushImage(flushRange);
 }
 
 Containers::Pointer<AbstractLayouter> StbTrueTypeFont::doLayout(const AbstractGlyphCache& cache, const Float size, const Containers::StringView text) {
+    /* Not yet, at least */
+    if(cache.size().z() != 1) {
+        Error{} << "Text::StbTrueTypeFont::layout(): array glyph caches are not supported";
+        return {};
+    }
+
+    /* Find this font in the cache */
+    Containers::Optional<UnsignedInt> fontId = cache.findFont(this);
+    if(!fontId) {
+        Error{} << "Text::StbTrueTypeFont::layout(): font not found among" << cache.fontCount() << "fonts in passed glyph cache";
+        return {};
+    }
+
     /* Get glyph codes from characters */
-    std::vector<Int> glyphs;
-    glyphs.reserve(text.size());
+    Containers::Array<Int> glyphs;
+    arrayReserve(glyphs, text.size());
     for(std::size_t i = 0; i != text.size(); ) {
         const Containers::Pair<char32_t, std::size_t> codepointNext = Utility::Unicode::nextChar(text, i);
-        glyphs.push_back(stbtt_FindGlyphIndex(&_font->info, codepointNext.first()));
+        arrayAppend(glyphs, stbtt_FindGlyphIndex(&_font->info, codepointNext.first()));
         i = codepointNext.second();
     }
 
-    return Containers::pointer<Layouter>(*_font, cache, this->size(), size, Utility::move(glyphs));
+    return Containers::pointer<Layouter>(*_font, cache, *fontId, this->size(), size, Utility::move(glyphs));
 }
 
-StbTrueTypeFont::Layouter::Layouter(Font& font, const AbstractGlyphCache& cache, const Float fontSize, const Float textSize, std::vector<Int>&& glyphs): AbstractLayouter(glyphs.size()), _font(font), _cache(cache), _fontSize{fontSize}, _textSize{textSize}, _glyphs{Utility::move(glyphs)} {}
+StbTrueTypeFont::Layouter::Layouter(Font& font, const AbstractGlyphCache& cache, const UnsignedInt fontId, const Float fontSize, const Float textSize, Containers::Array<Int>&& glyphs): AbstractLayouter{UnsignedInt(glyphs.size())}, _font(font), _cache(cache), _fontId{fontId}, _fontSize{fontSize}, _textSize{textSize}, _glyphs{Utility::move(glyphs)} {}
 
 Containers::Triple<Range2D, Range2D, Vector2> StbTrueTypeFont::Layouter::doRenderGlyph(const UnsignedInt i) {
-    /* Position of the texture in the resulting glyph, texture coordinates */
-    Vector2i position;
-    Range2Di rectangle;
-    std::tie(position, rectangle) = _cache[_glyphs[i]];
+    /* Offset of the glyph rectangle relative to the cursor, layer, texture
+       coordinates. We checked that the glyph cache is 2D in doLayout() so the
+       layer can be ignored. */
+    const Containers::Triple<Vector2i, Int, Range2Di> glyph = _cache.glyph(_fontId, _glyphs[i]);
+    CORRADE_INTERNAL_ASSERT(glyph.second() == 0);
 
     /* Normalized texture coordinates */
-    const auto textureCoordinates = Range2D(rectangle).scaled(1.0f/Vector2(_cache.textureSize()));
+    const auto textureCoordinates = Range2D{glyph.third()}.scaled(1.0f/Vector2{_cache.size().xy()});
 
     /* Quad rectangle, computed from texture rectangle, denormalized to
        requested text size */
-    const auto quadRectangle = Range2D(Range2Di::fromSize(position, rectangle.size())).scaled(Vector2(_textSize/_fontSize));
+    const auto quadRectangle = Range2D{Range2Di::fromSize(glyph.first(), glyph.third().size())}.scaled(Vector2{_textSize/_fontSize});
 
     /* Glyph advance, denormalized to requested text size */
     Vector2i advance;

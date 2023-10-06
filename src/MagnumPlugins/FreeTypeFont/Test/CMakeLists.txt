@@ -57,7 +57,9 @@ corrade_add_test(FreeTypeFontTest FreeTypeFontTest.cpp
         Magnum::Text
     FILES
         Oxygen.ttf
-        glyph-cache.png)
+        glyph-cache.png
+        glyph-cache-array0.png
+        glyph-cache-array1.png)
 target_include_directories(FreeTypeFontTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>)
 if(MAGNUM_FREETYPEFONT_BUILD_STATIC)
     target_link_libraries(FreeTypeFontTest PRIVATE FreeTypeFont)

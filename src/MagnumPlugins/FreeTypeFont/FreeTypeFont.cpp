@@ -26,10 +26,10 @@
 #include "FreeTypeFont.h"
 
 #include <algorithm> /* std::transform(), std::sort(), std::unique() */
-#include <tuple> /* std::tie() :( */
 #include <ft2build.h>
 #include FT_FREETYPE_H
 #include <Corrade/Containers/GrowableArray.h>
+#include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/StringView.h>
 #include <Corrade/Containers/Triple.h>
 #include <Corrade/PluginManager/AbstractManager.h>
@@ -40,6 +40,7 @@
 #include <Magnum/PixelFormat.h>
 #include <Magnum/Math/Range.h>
 #include <Magnum/Text/AbstractGlyphCache.h>
+#include <Magnum/TextureTools/Atlas.h>
 
 namespace Magnum { namespace Text {
 
@@ -47,13 +48,14 @@ namespace {
 
 class FreeTypeLayouter: public AbstractLayouter {
     public:
-        explicit FreeTypeLayouter(FT_Face font, const AbstractGlyphCache& cache, const Float fontSize, const Float textSize, Containers::Array<FT_UInt>&& glyphs);
+        explicit FreeTypeLayouter(FT_Face font, const AbstractGlyphCache& cache, UnsignedInt fontId, Float fontSize, Float textSize, Containers::Array<FT_UInt>&& glyphs);
 
     private:
         Containers::Triple<Range2D, Range2D, Vector2> doRenderGlyph(const UnsignedInt i) override;
 
         FT_Face _font;
         const AbstractGlyphCache& _cache;
+        const UnsignedInt _fontId;
         const Float _fontSize, _layoutSize;
         const Containers::Array<FT_UInt> _glyphs;
 };
@@ -127,37 +129,52 @@ Vector2 FreeTypeFont::doGlyphAdvance(const UnsignedInt glyph) {
 }
 
 void FreeTypeFont::doFillGlyphCache(AbstractGlyphCache& cache, const Containers::ArrayView<const char32_t> characters) {
-    /** @bug Crash when atlas is too small */
+    /** @todo fix the fillGlyphCache API to make it failable */
+    CORRADE_INTERNAL_ASSERT(cache.format() == PixelFormat::R8Unorm);
 
-    /* Get glyph codes from characters */
-    Containers::Array<FT_UInt> glyphIndices{NoInit, characters.size() + 1};
-    glyphIndices[0] = 0;
+    /* Register this font, if not in the cache yet */
+    Containers::Optional<UnsignedInt> fontId = cache.findFont(this);
+    const bool firstFill = !fontId;
+    if(!fontId)
+        fontId = cache.addFont(_ftFont->num_glyphs, this);
+
+    /* Get glyph codes from characters. If this is the first fill, include also
+       the invalid glyph. */
+    /** @todo leave that on the user, maybe? or do it only in the convenience
+        "characters" overload and not the "glyph IDs" one */
+    Containers::Array<FT_UInt> glyphIndices{NoInit, characters.size() + (firstFill ? 1 : 0)};
     for(std::size_t i = 0; i != characters.size(); ++i)
-        glyphIndices[i + 1] = FT_Get_Char_Index(_ftFont, characters[i]);
+        glyphIndices[i] = FT_Get_Char_Index(_ftFont, characters[i]);
+    if(firstFill)
+        glyphIndices.back() = 0;
 
     /* Remove duplicates (e.g. uppercase and lowercase mapped to same glyph) */
     /** @todo deduplicate via a BitArray instead */
     std::sort(glyphIndices.begin(), glyphIndices.end());
     const std::size_t uniqueCount = std::unique(glyphIndices.begin(), glyphIndices.end()) - glyphIndices.begin();
 
-    /* Sizes of all glyphs */
-    std::vector<Vector2i> glyphSizes(uniqueCount);
+    /* Get sizes of all glyphs to pack into the cache */
+    struct Glyph {
+        Vector2i size;
+        Vector3i offset;
+    };
+    Containers::Array<Glyph> glyphs{NoInit, uniqueCount};
     for(std::size_t i = 0; i != uniqueCount; ++i) {
         CORRADE_INTERNAL_ASSERT_OUTPUT(FT_Load_Glyph(_ftFont, glyphIndices[i], FT_LOAD_DEFAULT) == 0);
-        glyphSizes[i] = Vector2i{Int(_ftFont->glyph->metrics.width), Int(_ftFont->glyph->metrics.height)}/64;
+        glyphs[i].size = Vector2i{Int(_ftFont->glyph->metrics.width), Int(_ftFont->glyph->metrics.height)}/64;
     }
 
-    /* Create texture atlas */
-    const std::vector<Range2Di> glyphPositions = cache.reserve(glyphSizes);
-
-    /* Glyph cache image */
-    Containers::Array<char> dstData{ValueInit, std::size_t(cache.textureSize().product())};
-    const MutableImageView2D dstImage{PixelFormat::R8Unorm, cache.textureSize(), dstData};
-    const Containers::StridedArrayView2D<char> dst = dstImage.pixels<char>();
+    /* Pack the cache */
+    /** @todo fix the fillGlyphCache API to make it failable */
+    CORRADE_INTERNAL_ASSERT_OUTPUT(cache.atlas().add(
+        stridedArrayView(glyphs).slice(&Glyph::size),
+        stridedArrayView(glyphs).slice(&Glyph::offset)));
 
     /* Render all glyphs to the atlas and create a glyph map */
-    for(std::size_t i = 0; i != glyphPositions.size(); ++i) {
-        /* Load and render glyph */
+    const Containers::StridedArrayView3D<char> dst = cache.image().pixels<char>();
+    Range3Di flushRange;
+    for(std::size_t i = 0; i != glyphs.size(); ++i) {
+        /* Load and render the glyph */
         const FT_GlyphSlot glyph = _ftFont->glyph;
         /** @todo B&W only if radius != 0 */
         CORRADE_INTERNAL_ASSERT_OUTPUT(FT_Load_Glyph(_ftFont, glyphIndices[i], FT_LOAD_DEFAULT) == 0);
@@ -165,24 +182,43 @@ void FreeTypeFont::doFillGlyphCache(AbstractGlyphCache& cache, const Containers:
 
         /* Copy the rendered glyph Y-flipped to the destination image */
         const FT_Bitmap& bitmap = glyph->bitmap;
+        const Containers::Size2D glyphSize{bitmap.rows, bitmap.width};
         Utility::copy(
-            Containers::StridedArrayView2D<const char>{{reinterpret_cast<const char*>(bitmap.buffer), ~std::size_t{}}, {bitmap.rows, bitmap.width}}.flipped<0>(),
-            dst.slice({std::size_t(glyphPositions[i].bottom()),
-                       std::size_t(glyphPositions[i].left())},
-                      {std::size_t(glyphPositions[i].top()),
-                       std::size_t(glyphPositions[i].right())}));
+            Containers::StridedArrayView2D<const char>{{reinterpret_cast<const char*>(bitmap.buffer), ~std::size_t{}}, glyphSize}.flipped<0>(),
+            dst[glyphs[i].offset.z()]
+                .sliceSize({std::size_t(glyphs[i].offset.y()),
+                            std::size_t(glyphs[i].offset.x())}, glyphSize));
 
         /* Insert glyph parameters into the cache */
-        cache.insert(glyphIndices[i],
-            Vector2i{glyph->bitmap_left, glyph->bitmap_top- glyphPositions[i].sizeY()},
-            glyphPositions[i]);
+        cache.addGlyph(*fontId, glyphIndices[i],
+            Vector2i{glyph->bitmap_left, glyph->bitmap_top - glyphs[i].size.y()},
+            glyphs[i].offset.z(),
+            Range2Di::fromSize(glyphs[i].offset.xy(), glyphs[i].size));
+
+        /* Maintain an union spanning all added glyphs to flush */
+        /** @todo might span too much if mutliple slices are covered in a
+            disjoint fashion, what to do? */
+        flushRange = Math::join(flushRange, Range3Di::fromSize(glyphs[i].offset, Vector3i{glyphs[i].size, 1}));
     }
 
-    /* Set cache image */
-    cache.setImage({}, dstImage);
+    /* Flush the updated cache image */
+    cache.flushImage(flushRange);
 }
 
 Containers::Pointer<AbstractLayouter> FreeTypeFont::doLayout(const AbstractGlyphCache& cache, const Float size, const Containers::StringView text) {
+    /* Not yet, at least */
+    if(cache.size().z() != 1) {
+        Error{} << "Text::FreeTypeFont::layout(): array glyph caches are not supported";
+        return {};
+    }
+
+    /* Find this font in the cache */
+    Containers::Optional<UnsignedInt> fontId = cache.findFont(this);
+    if(!fontId) {
+        Error{} << "Text::FreeTypeFont::layout(): font not found among" << cache.fontCount() << "fonts in passed glyph cache";
+        return {};
+    }
+
     /* Get glyph codes from characters */
     Containers::Array<UnsignedInt> glyphs;
     arrayReserve(glyphs, text.size());
@@ -192,25 +228,26 @@ Containers::Pointer<AbstractLayouter> FreeTypeFont::doLayout(const AbstractGlyph
         i = codepointNext.second();
     }
 
-    return Containers::pointer<FreeTypeLayouter>(_ftFont, cache, this->size(), size, Utility::move(glyphs));
+    return Containers::pointer<FreeTypeLayouter>(_ftFont, cache, *fontId, this->size(), size, Utility::move(glyphs));
 }
 
 namespace {
 
-FreeTypeLayouter::FreeTypeLayouter(FT_Face font, const AbstractGlyphCache& cache, const Float fontSize, const Float layoutSize, Containers::Array<FT_UInt>&& glyphs): AbstractLayouter{UnsignedInt(glyphs.size())}, _font{font}, _cache(cache), _fontSize{fontSize}, _layoutSize{layoutSize}, _glyphs{Utility::move(glyphs)} {}
+FreeTypeLayouter::FreeTypeLayouter(FT_Face font, const AbstractGlyphCache& cache, const UnsignedInt fontId, const Float fontSize, const Float layoutSize, Containers::Array<FT_UInt>&& glyphs): AbstractLayouter{UnsignedInt(glyphs.size())}, _font{font}, _cache(cache), _fontId{fontId}, _fontSize{fontSize}, _layoutSize{layoutSize}, _glyphs{Utility::move(glyphs)} {}
 
 Containers::Triple<Range2D, Range2D, Vector2> FreeTypeLayouter::doRenderGlyph(const UnsignedInt i) {
-    /* Position of the texture in the resulting glyph, texture coordinates */
-    Vector2i position;
-    Range2Di rectangle;
-    std::tie(position, rectangle) = _cache[_glyphs[i]];
+    /* Offset of the glyph rectangle relative to the cursor, layer, texture
+       coordinates. We checked that the glyph cache is 2D in doLayout() so the
+       layer can be ignored. */
+    const Containers::Triple<Vector2i, Int, Range2Di> glyph = _cache.glyph(_fontId, _glyphs[i]);
+    CORRADE_INTERNAL_ASSERT(glyph.second() == 0);
 
     /* Normalized texture coordinates */
-    const auto textureCoordinates = Range2D{rectangle}.scaled(1.0f/Vector2{_cache.textureSize()});
+    const auto textureCoordinates = Range2D{glyph.third()}.scaled(1.0f/Vector2{_cache.size().xy()});
 
     /* Quad rectangle, computed from texture rectangle, denormalized to
        requested text size */
-    const auto quadRectangle = Range2D(Range2Di::fromSize(position, rectangle.size())).scaled(Vector2{_layoutSize/_fontSize});
+    const auto quadRectangle = Range2D{Range2Di::fromSize(glyph.first(), glyph.third().size())}.scaled(Vector2{_layoutSize/_fontSize});
 
     /* Load glyph */
     CORRADE_INTERNAL_ASSERT_OUTPUT(FT_Load_Glyph(_font, _glyphs[i], FT_LOAD_DEFAULT) == 0);
