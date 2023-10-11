@@ -34,6 +34,7 @@
 #include <Magnum/Math/ConfigurationValue.h>
 #include <Magnum/Trade/ImageData.h>
 
+#define STBIR_ASSERT CORRADE_INTERNAL_DEBUG_ASSERT
 #define STB_IMAGE_RESIZE_IMPLEMENTATION
 #include "stb_image_resize2.h"
 
