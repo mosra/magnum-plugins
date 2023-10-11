@@ -229,7 +229,7 @@ void StbResizeImageConverterTest::invalidFilter() {
     std::ostringstream out;
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->convert(image));
-    CORRADE_COMPARE(out.str(), "Trade::StbResizeImageConverter::convert(): expected filter to be empty or one of box, triangle, cubicpline, catmullrom, mitchell or point, got trilinear\n");
+    CORRADE_COMPARE(out.str(), "Trade::StbResizeImageConverter::convert(): expected filter to be empty or one of box, triangle, cubicspline, catmullrom, mitchell or point, got trilinear\n");
 }
 
 void StbResizeImageConverterTest::invalidEdge() {
