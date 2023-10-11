@@ -35,8 +35,7 @@
 #include <Magnum/Trade/ImageData.h>
 
 #define STB_IMAGE_RESIZE_IMPLEMENTATION
-#define STBIR_MAX_CHANNELS 4 /* 64 is the default, no need for that many */
-#include "stb_image_resize.h"
+#include "stb_image_resize2.h"
 
 namespace Magnum { namespace Trade {
 
@@ -79,8 +78,11 @@ Containers::Optional<ImageData3D> convertInternal(const ImageView3D& image, Util
     stbir_datatype type;
     switch(isPixelFormatDepthOrStencil(image.format()) ? image.format() : pixelFormatChannelFormat(image.format())) {
         case PixelFormat::R8Unorm:
-        case PixelFormat::R8Srgb:
             type = STBIR_TYPE_UINT8;
+            break;
+        case PixelFormat::R8Srgb:
+            type = configuration.value<bool>("alphaUsesSrgb") ?
+                STBIR_TYPE_UINT8_SRGB_ALPHA : STBIR_TYPE_UINT8_SRGB;
             break;
         case PixelFormat::R16Unorm:
             type = STBIR_TYPE_UINT16;
@@ -88,21 +90,30 @@ Containers::Optional<ImageData3D> convertInternal(const ImageView3D& image, Util
         case PixelFormat::R32F:
             type = STBIR_TYPE_FLOAT;
             break;
-        /** @todo STBIR_TYPE_UINT32 possibly for resampling depth? */
         default:
             Error{} << "Trade::StbResizeImageConverter::convert(): unsupported format" << image.format();
             return {};
     }
-    const Int channelCount = pixelFormatChannelCount(image.format());
-    const Int alphaChannelIndex = channelCount == 4 ? 3 : -1;
-    const stbir_colorspace colorspace = isPixelFormatSrgb(image.format()) ? STBIR_COLORSPACE_SRGB : STBIR_COLORSPACE_LINEAR;
 
-    /* Flags */
-    Int flags{};
-    if(configuration.value<bool>("alphaPremultiplied"))
-        flags |= STBIR_FLAG_ALPHA_PREMULTIPLIED;
-    if(configuration.value<bool>("alphaUsesSrgb"))
-        flags |= STBIR_FLAG_ALPHA_USES_COLORSPACE;
+    /* Channel layout */
+    stbir_pixel_layout layout;
+    switch(pixelFormatChannelCount(image.format())) {
+        case 1:
+            layout = STBIR_1CHANNEL;
+            break;
+        case 2:
+            layout = STBIR_2CHANNEL;
+            break;
+        case 3:
+            layout = STBIR_RGB;
+            break;
+        case 4:
+            layout = configuration.value<bool>("alphaPremultiplied") ?
+                STBIR_RGBA_PM : STBIR_RGBA;
+            break;
+        default:
+            CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+    }
 
     /* Edge mode */
     const Containers::StringView edgeString = configuration.value<Containers::StringView>("edge");
@@ -169,8 +180,7 @@ Containers::Optional<ImageData3D> convertInternal(const ImageView3D& image, Util
         CORRADE_INTERNAL_ASSERT_OUTPUT(stbir_resize(
             srcPixelLayer.data(), srcPixelLayer.size()[1], srcPixelLayer.size()[0], srcPixelLayer.stride()[0],
             dstPixelLayer.data(), dstPixelLayer.size()[1], dstPixelLayer.size()[0], dstPixelLayer.stride()[0],
-            /** @todo option for separate horizontal and vertical filters */
-            type, channelCount, alphaChannelIndex, flags, edge, edge, filter, filter, colorspace, nullptr));
+            layout, type, edge, filter));
     }
 
     /* GCC 4.8 needs extra help here */

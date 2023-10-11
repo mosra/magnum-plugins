@@ -100,7 +100,7 @@ const struct {
     {"edge wrap", PixelFormat::RGBA8Unorm, {}, {}, "wrap", {},
         {0xc05b8890_rgba, 0x9d9ba76f_rgba}},
     {"box filter", PixelFormat::RGBA8Unorm, {}, {}, {}, "box",
-        {0xc64f8299_rgba, 0x91b3b366_rgba}},
+        {0xc64f8299_rgba, 0x91b2b266_rgba}},
 };
 
 const struct {
