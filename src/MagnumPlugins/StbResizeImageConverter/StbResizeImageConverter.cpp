@@ -87,6 +87,9 @@ Containers::Optional<ImageData3D> convertInternal(const ImageView3D& image, Util
         case PixelFormat::R16Unorm:
             type = STBIR_TYPE_UINT16;
             break;
+        case PixelFormat::R16F:
+            type = STBIR_TYPE_HALF_FLOAT;
+            break;
         case PixelFormat::R32F:
             type = STBIR_TYPE_FLOAT;
             break;

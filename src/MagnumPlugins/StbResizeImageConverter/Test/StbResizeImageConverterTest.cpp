@@ -57,6 +57,7 @@ struct StbResizeImageConverterTest: TestSuite::Tester {
     void rgb8Padded();
     void rgba8();
     void rg16();
+    void rg16f();
     void r32f();
 
     void threeDimensions();
@@ -150,6 +151,7 @@ StbResizeImageConverterTest::StbResizeImageConverterTest() {
         Containers::arraySize(Rgba8Data));
 
     addTests({&StbResizeImageConverterTest::rg16,
+              &StbResizeImageConverterTest::rg16f,
               &StbResizeImageConverterTest::r32f,
 
               &StbResizeImageConverterTest::threeDimensions,
@@ -335,6 +337,43 @@ void StbResizeImageConverterTest::rg16() {
     CORRADE_COMPARE_AS(*out,
         (ImageView2D{PixelStorage{}.setAlignment(1), PixelFormat::RG16Unorm, {2, 1}, expected}),
         DebugTools::CompareImage);
+}
+
+void StbResizeImageConverterTest::rg16f() {
+    /* Like rgb8Padded(), but converted to half-float and dropping the B
+       channel */
+    const UnsignedShort input[][2]{
+        {Math::packHalf(Math::unpack<Float, UnsignedByte>(0xff)),
+            Math::packHalf(Math::unpack<Float, UnsignedByte>(0x33))},
+        {Math::packHalf(Math::unpack<Float, UnsignedByte>(0xff)),
+            Math::packHalf(Math::unpack<Float, UnsignedByte>(0x66))},
+        {Math::packHalf(Math::unpack<Float, UnsignedByte>(0x66)),
+            Math::packHalf(Math::unpack<Float, UnsignedByte>(0xff))},
+        {Math::packHalf(Math::unpack<Float, UnsignedByte>(0x99)),
+            Math::packHalf(Math::unpack<Float, UnsignedByte>(0x33))},
+        {Math::packHalf(Math::unpack<Float, UnsignedByte>(0x33)),
+            Math::packHalf(Math::unpack<Float, UnsignedByte>(0x99))},
+        {Math::packHalf(Math::unpack<Float, UnsignedByte>(0xcc)),
+            Math::packHalf(Math::unpack<Float, UnsignedByte>(0xcc))}
+    };
+    const UnsignedShort expected[][2]{
+        /* 0xba4d (0.729412, 0.301961), 0x99c3 (0.6, 0.764706) was in the 8-bit
+           case */
+        {Math::packHalf(0.7305f), Math::packHalf(0.3005f)},
+        {Math::packHalf(0.5981f), Math::packHalf(0.7637f)}
+    };
+
+    Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("StbResizeImageConverter");
+    converter->configuration().setValue("size", (Vector2i{2, 1}));
+
+    Containers::Optional<ImageData2D> out = converter->convert(ImageView2D{
+        PixelFormat::RG16F, {3, 2}, input});
+    CORRADE_VERIFY(out);
+    /* The image should have a four-byte alignment always */
+    CORRADE_COMPARE(out->storage().alignment(), 4);
+    CORRADE_COMPARE_WITH(*out,
+        (ImageView2D{PixelFormat::RG16F, {2, 1}, expected}),
+        (DebugTools::CompareImage{1.0e-6f, 1.0e-6f}));
 }
 
 void StbResizeImageConverterTest::r32f() {
