@@ -149,9 +149,11 @@ Containers::Optional<ImageData3D> convertInternal(const ImageView3D& image, Util
         filter = STBIR_FILTER_CATMULLROM;
     else if(filterString == "mitchell"_s)
         filter = STBIR_FILTER_MITCHELL;
+    else if(filterString == "point"_s)
+        filter = STBIR_FILTER_POINT_SAMPLE;
     /* LCOV_EXCL_STOP */
     else {
-        Error{} << "Trade::StbResizeImageConverter::convert(): expected filter to be empty or one of box, triangle, cubicpline, catmullrom or mitchell, got" << filterString;
+        Error{} << "Trade::StbResizeImageConverter::convert(): expected filter to be empty or one of box, triangle, cubicpline, catmullrom, mitchell or point, got" << filterString;
         return {};
     }
 
