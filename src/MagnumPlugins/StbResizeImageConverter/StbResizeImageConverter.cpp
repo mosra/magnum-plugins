@@ -58,7 +58,7 @@ Containers::Optional<ImageData3D> convertInternal(const ImageView3D& image, Util
         return {};
     }
 
-    /* Target output size. The final output size depends on wheter upscaling is
+    /* Target output size. The final output size depends on whether upscaling is
        disabled. */
     if(!configuration.value<Containers::StringView>("size")) {
         Error{} << "Trade::StbResizeImageConverter::convert(): output size was not specified";
@@ -156,7 +156,7 @@ Containers::Optional<ImageData3D> convertInternal(const ImageView3D& image, Util
         filter = STBIR_FILTER_POINT_SAMPLE;
     /* LCOV_EXCL_STOP */
     else {
-        Error{} << "Trade::StbResizeImageConverter::convert(): expected filter to be empty or one of box, triangle, cubicpline, catmullrom, mitchell or point, got" << filterString;
+        Error{} << "Trade::StbResizeImageConverter::convert(): expected filter to be empty or one of box, triangle, cubicspline, catmullrom, mitchell or point, got" << filterString;
         return {};
     }
 
