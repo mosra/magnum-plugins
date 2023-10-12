@@ -118,6 +118,30 @@ target_link_libraries(your-app PRIVATE MagnumPlugins::HarfBuzzFont)
 
 See @ref building-plugins, @ref cmake-plugins and @ref plugins for more
 information.
+
+@section Text-HarfBuzzFont-behavior Behavior and limitations
+
+This plugin implements @ref AbstractShaper::setScript(),
+@relativeref{AbstractShaper,setLanguage()} and
+@relativeref{AbstractShaper,setDirection()}. With HarfBuzz 5.2+ all
+@ref Script values are supported, with older versions the function will return
+@cpp false @ce if given script value is not supported. See documentation of the
+@m_class{m-doc-external} [hb_script_t](https://harfbuzz.github.io/harfbuzz-hb-common.html#hb-script-t)
+enum for more information about which scripts are supported on which version.
+
+If @ref AbstractShaper::setScript(), @relativeref{AbstractShaper,setLanguage()}
+or @relativeref{AbstractShaper,setDirection()} isn't called or it's explicitly
+set to unspecified values, the library will attempt to guess the properties.
+Script and direction is guessed from the input text passed to
+@ref AbstractShaper::shape(), the language HarfBuzz currently detects from
+system locale. The actual properties used for shaping are then exposed through
+@ref AbstractShaper::script(), @relativeref{AbstractShaper,language()} and
+@relativeref{AbstractShaper,direction()}.
+
+Reusing an @ref AbstractShaper instance that has the script, language or
+direction left unspecified will attempt to guess these properties anew for
+every new shaped text. On the other hand, if a concrete script, language or
+direction value is set, it stays used for subsequent shaped text.
 */
 class MAGNUM_HARFBUZZFONT_EXPORT HarfBuzzFont: public FreeTypeFont {
     public:

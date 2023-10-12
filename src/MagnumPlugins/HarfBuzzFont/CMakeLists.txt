@@ -41,7 +41,8 @@ add_plugin(HarfBuzzFont
     "${MAGNUM_PLUGINS_FONT_RELEASE_BINARY_INSTALL_DIR};${MAGNUM_PLUGINS_FONT_RELEASE_LIBRARY_INSTALL_DIR}"
     HarfBuzzFont.conf
     HarfBuzzFont.cpp
-    HarfBuzzFont.h)
+    HarfBuzzFont.h
+    scriptMapping.h)
 # Avoid warning spam with old-style casts
 target_include_directories(HarfBuzzFont SYSTEM PRIVATE ${FREETYPE_INCLUDE_DIRS})
 target_include_directories(HarfBuzzFont PUBLIC

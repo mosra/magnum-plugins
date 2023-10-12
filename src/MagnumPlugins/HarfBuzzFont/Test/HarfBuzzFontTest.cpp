@@ -30,10 +30,12 @@
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
 #include <Corrade/Utility/DebugStl.h> /** @todo remove once Debug is stream-free */
+#include <Corrade/Utility/Endianness.h>
 #include <Corrade/Utility/Path.h>
 #include <Magnum/Math/Vector2.h>
 #include <Magnum/Text/AbstractFont.h>
 #include <Magnum/Text/AbstractShaper.h>
+#include <Magnum/Text/Script.h>
 #include <hb.h>
 
 #include "configure.h"
@@ -43,9 +45,16 @@ namespace Magnum { namespace Text { namespace Test { namespace {
 struct HarfBuzzFontTest: TestSuite::Tester {
     explicit HarfBuzzFontTest();
 
+    void scriptMapping();
+
     void shape();
+    void shapeDifferentScriptLanguageDirection();
+    void shapeAutodetectScriptLanguageDirection();
+    void shapeUnsupportedScript();
     void shapeEmpty();
+
     void shaperReuse();
+    void shaperReuseAutodetection();
 
     /* Explicitly forbid system-wide plugin dependencies */
     PluginManager::Manager<AbstractFont> _manager{"nonexistent"};
@@ -82,12 +91,42 @@ const struct {
     {"UTF-8 substring", "haWavěfefe", 220, 2, 7, 8.09376f},
 };
 
+const struct {
+    const char* name;
+    Direction direction;
+    bool flip;
+} ShapeDifferentScriptLanguageDirectionData[]{
+    {"left to right", Direction::LeftToRight, false},
+    {"right to left", Direction::RightToLeft, true},
+    {"top to bottom", Direction::TopToBottom, false},
+    {"bottom to top", Direction::BottomToTop, true},
+};
+
+const struct {
+    const char* name;
+    bool explicitlySetUnspecified;
+} ShapeAutodetectScriptLanguageDirectionData[]{
+    {"", false},
+    {"explicitly set unspecified values", true}
+};
+
 HarfBuzzFontTest::HarfBuzzFontTest() {
+    addTests({&HarfBuzzFontTest::scriptMapping});
+
     addInstancedTests({&HarfBuzzFontTest::shape},
         Containers::arraySize(ShapeData));
 
-    addTests({&HarfBuzzFontTest::shapeEmpty,
-              &HarfBuzzFontTest::shaperReuse});
+    addInstancedTests({&HarfBuzzFontTest::shapeDifferentScriptLanguageDirection},
+        Containers::arraySize(ShapeDifferentScriptLanguageDirectionData));
+
+    addInstancedTests({&HarfBuzzFontTest::shapeAutodetectScriptLanguageDirection},
+        Containers::arraySize(ShapeAutodetectScriptLanguageDirectionData));
+
+    addTests({&HarfBuzzFontTest::shapeUnsupportedScript,
+              &HarfBuzzFontTest::shapeEmpty,
+
+              &HarfBuzzFontTest::shaperReuse,
+              &HarfBuzzFontTest::shaperReuseAutodetection});
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. */
@@ -95,6 +134,57 @@ HarfBuzzFontTest::HarfBuzzFontTest() {
     CORRADE_INTERNAL_ASSERT_OUTPUT(_manager.load(FREETYPEFONT_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
     CORRADE_INTERNAL_ASSERT_OUTPUT(_manager.load(HARFBUZZFONT_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
     #endif
+}
+
+void HarfBuzzFontTest::scriptMapping() {
+    /* The FourCC values should match between the Script enum and HarfBuzz to
+       not need expensive mapping. Eh, actually, they don't match, as HB_TAG()
+       creates an Endian-dependent value, so ntaL instead of Latn on Little
+       Endian. I couldn't find any documentation or a bug report on why this
+       differs from what OpenType fonts actually have (where it's Big-Endian
+       always, i.e. Latn), apart from one "oops" in this old commit:
+        https://github.com/harfbuzz/harfbuzz/commit/fcd6f5326166e993b8f5222efbaffe916da98f0a */
+    CORRADE_COMPARE(UnsignedInt(Script::Unspecified), HB_SCRIPT_INVALID);
+    #define _c(name, hb) CORRADE_COMPARE(UnsignedInt(Script::name), Utility::Endianness::bigEndian(HB_SCRIPT_ ## hb));
+    #define _c_include_unsupported 0
+    #include "../scriptMapping.h"
+    #undef _c_include_unsupported
+    #undef _c
+
+    /* Verify the header indeed contains cases for all Script values. It's not
+       guarded with -Werror=switch as that would mean a Magnum update adding a
+       new Script value would break a build of HarfBuzzFont tests, which is
+       undesirable. So it's just a warning. */
+    Script script = Script::Unknown;
+    switch(script) {
+        case Script::Unspecified:
+        #define _c(name, hb) case Script::name:
+        #define _c_include_all 1
+        #include "../scriptMapping.h"
+        #undef _c_include_all
+        #undef _c
+            CORRADE_VERIFY(UnsignedInt(script));
+    }
+
+    /* Also verify that the header contains all hb_script_t values supported by
+       this HarfBuzz version. Also not -Werror=switch as this could break on a
+       HarfBuzz update. */
+    hb_script_t hbScript = HB_SCRIPT_UNKNOWN;
+    switch(hbScript) {
+        case HB_SCRIPT_INVALID:
+        #define _c(name, hb) case HB_SCRIPT_ ## hb:
+        #define _c_include_supported 1
+        #include "../scriptMapping.h"
+        #undef _c_include_supported
+        #undef _c
+        case _HB_SCRIPT_MAX_VALUE:
+        /* These two values used to be different before 2.0.0, not anymore:
+            https://github.com/harfbuzz/harfbuzz/commit/90dd255e570bf8ea3436e2f29242068845256e55 */
+        #if !HB_VERSION_ATLEAST(2, 0, 0)
+        case _HB_SCRIPT_MAX_VALUE_SIGNED:
+        #endif
+            CORRADE_VERIFY(UnsignedInt(hbScript));
+    }
 }
 
 void HarfBuzzFontTest::shape() {
@@ -106,7 +196,22 @@ void HarfBuzzFontTest::shape() {
 
     Containers::Pointer<AbstractShaper> shaper = font->createShaper();
 
+    /* There's no script / language / direction set by default */
+    CORRADE_COMPARE(shaper->script(), Script::Unspecified);
+    CORRADE_COMPARE(shaper->language(), "");
+    CORRADE_COMPARE(shaper->direction(), Direction::Unspecified);
+
+    /* Shape a text */
+    CORRADE_VERIFY(shaper->setScript(Script::Latin));
+    CORRADE_VERIFY(shaper->setLanguage("en"));
+    CORRADE_VERIFY(shaper->setDirection(Direction::LeftToRight));
     CORRADE_COMPARE(shaper->shape(data.string, data.begin, data.end), 4);
+
+    /* The script / language / direction set above should get used for
+       shaping */
+    CORRADE_COMPARE(shaper->script(), Script::Latin);
+    CORRADE_COMPARE(shaper->language(), "en");
+    CORRADE_COMPARE(shaper->direction(), Direction::LeftToRight);
 
     UnsignedInt ids[4];
     Vector2 offsets[4];
@@ -132,6 +237,105 @@ void HarfBuzzFontTest::shape() {
     }), TestSuite::Compare::Container);
 }
 
+void HarfBuzzFontTest::shapeDifferentScriptLanguageDirection() {
+    auto&& data = ShapeDifferentScriptLanguageDirectionData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    Containers::Pointer<AbstractFont> font = _manager.instantiate("HarfBuzzFont");
+    CORRADE_VERIFY(font->openFile(Utility::Path::join(FREETYPEFONT_TEST_DIR, "Oxygen.ttf"), 16.0f));
+
+    Containers::Pointer<AbstractShaper> shaper = font->createShaper();
+
+    CORRADE_VERIFY(shaper->setScript(Script::Greek));
+    CORRADE_VERIFY(shaper->setLanguage("el"));
+    CORRADE_VERIFY(shaper->setDirection(data.direction));
+    CORRADE_COMPARE(shaper->shape("Ελλάδα"), 6);
+    CORRADE_COMPARE(shaper->script(), Script::Greek);
+    CORRADE_COMPARE(shaper->language(), "el");
+    CORRADE_COMPARE(shaper->direction(), data.direction);
+
+    UnsignedInt ids[6];
+    Vector2 offsets[6];
+    Vector2 advances[6];
+    shaper->glyphsInto(ids, offsets, advances);
+
+    UnsignedInt expectedIds[]{
+        450,    /* 'Ε' */
+        487,    /* 'λ' */
+        487,    /* 'λ' again */
+        472,    /* 'ά' */
+        480,    /* 'δ' */
+        477,    /* 'α' */
+    };
+    CORRADE_COMPARE_AS(Containers::arrayView(ids),
+        data.flip ?
+            Containers::stridedArrayView(expectedIds).flipped<0>() :
+            Containers::stridedArrayView(expectedIds),
+        TestSuite::Compare::Container);
+
+    /* Advances and offsets aren't really important here */
+}
+
+void HarfBuzzFontTest::shapeAutodetectScriptLanguageDirection() {
+    auto&& data = ShapeAutodetectScriptLanguageDirectionData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    Containers::Pointer<AbstractFont> font = _manager.instantiate("HarfBuzzFont");
+    CORRADE_VERIFY(font->openFile(Utility::Path::join(FREETYPEFONT_TEST_DIR, "Oxygen.ttf"), 16.0f));
+
+    Containers::Pointer<AbstractShaper> shaper = font->createShaper();
+
+    if(data.explicitlySetUnspecified) {
+        CORRADE_VERIFY(shaper->setScript(Script::Unspecified));
+        CORRADE_VERIFY(shaper->setLanguage(""));
+        CORRADE_VERIFY(shaper->setDirection(Direction::Unspecified));
+    }
+
+    CORRADE_COMPARE(shaper->shape("	العربية"), 8);
+    CORRADE_COMPARE(shaper->script(), Script::Arabic);
+    {
+        CORRADE_EXPECT_FAIL("HarfBuzz uses current locale for language autodetection, not the actual text");
+        CORRADE_COMPARE(shaper->language(), "ar");
+    }
+    CORRADE_COMPARE(shaper->language(), "c");
+    CORRADE_COMPARE(shaper->direction(), Direction::RightToLeft);
+
+    /* The font doesn't have Arabic glyphs, so this is all invalid */
+    UnsignedInt ids[8];
+    Vector2 offsets[8];
+    Vector2 advances[8];
+    shaper->glyphsInto(ids, offsets, advances);
+    CORRADE_COMPARE_AS(Containers::arrayView(ids), Containers::arrayView({
+        0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u
+    }), TestSuite::Compare::Container);
+}
+
+void HarfBuzzFontTest::shapeUnsupportedScript() {
+    Containers::Pointer<AbstractFont> font = _manager.instantiate("HarfBuzzFont");
+    CORRADE_VERIFY(font->openFile(Utility::Path::join(FREETYPEFONT_TEST_DIR, "Oxygen.ttf"), 16.0f));
+
+    Containers::Pointer<AbstractShaper> shaper = font->createShaper();
+
+    /* Passing an unknown Script value will pass, as the check is
+       blacklist-based to not have to switch through all possible values on
+       HarfBuzz versions that support everything. Plus that also allows to
+       pass values that new HarfBuzz supports but Script doesn't list yet, a
+       whitelist would reject that. */
+    CORRADE_VERIFY(shaper->setScript(script("Yolo")));
+
+    /* Added in 3.0 */
+    CORRADE_COMPARE(shaper->setScript(Script::OldUyghur),
+                    HB_VERSION_ATLEAST(3, 0, 0));
+    /* Added in 3.4 */
+    CORRADE_COMPARE(shaper->setScript(Script::Math),
+                    HB_VERSION_ATLEAST(3, 4, 0));
+    /* Added in 5.2 */
+    #if HB_VERSION_ATLEAST(5, 2, 0)
+    CORRADE_SKIP("Can only test on HarfBuzz before 5.2.0");
+    #endif
+    CORRADE_VERIFY(!shaper->setScript(Script::Kawi));
+}
+
 void HarfBuzzFontTest::shapeEmpty() {
     Containers::Pointer<AbstractFont> font = _manager.instantiate("HarfBuzzFont");
     CORRADE_VERIFY(font->openFile(Utility::Path::join(FREETYPEFONT_TEST_DIR, "Oxygen.ttf"), 16.0f));
@@ -140,6 +344,12 @@ void HarfBuzzFontTest::shapeEmpty() {
 
     /* Shouldn't crash or do anything rogue */
     CORRADE_COMPARE(shaper->shape("Wave", 2, 2), 0);
+
+    /* Interestingly enough it doesn't detect the script even though it has
+       the surrounding context to guess from */
+    CORRADE_COMPARE(shaper->script(), Script::Unspecified);
+    CORRADE_COMPARE(shaper->language(), "c");
+    CORRADE_COMPARE(shaper->direction(), Direction::LeftToRight);
 }
 
 void HarfBuzzFontTest::shaperReuse() {
@@ -214,6 +424,49 @@ void HarfBuzzFontTest::shaperReuse() {
         CORRADE_COMPARE_AS(Containers::arrayView(advances), Containers::arrayView<Vector2>({
             {8.26562f, 0.0f}
         }), TestSuite::Compare::Container);
+    }
+}
+
+void HarfBuzzFontTest::shaperReuseAutodetection() {
+    Containers::Pointer<AbstractFont> font = _manager.instantiate("HarfBuzzFont");
+    CORRADE_VERIFY(font->openFile(Utility::Path::join(FREETYPEFONT_TEST_DIR, "Oxygen.ttf"), 16.0f));
+
+    Containers::Pointer<AbstractShaper> shaper = font->createShaper();
+
+    /* There's no script / language / direction set by default */
+    CORRADE_COMPARE(shaper->script(), Script::Unspecified);
+    CORRADE_COMPARE(shaper->language(), "");
+    CORRADE_COMPARE(shaper->direction(), Direction::Unspecified);
+
+    /* Arabic text gets detected as such */
+    {
+        CORRADE_COMPARE(shaper->shape("	العربية"), 8);
+        CORRADE_COMPARE(shaper->script(), Script::Arabic);
+        {
+            CORRADE_EXPECT_FAIL("HarfBuzz uses current locale for language autodetection, not the actual text");
+            CORRADE_COMPARE(shaper->language(), "ar");
+        }
+        CORRADE_COMPARE(shaper->language(), "c");
+        CORRADE_COMPARE(shaper->direction(), Direction::RightToLeft);
+
+    /* Greek text should then not be treated as RTL and such */
+    } {
+        CORRADE_COMPARE(shaper->shape("Ελλάδα"), 6);
+        CORRADE_COMPARE(shaper->script(), Script::Greek);
+        {
+            CORRADE_EXPECT_FAIL("HarfBuzz uses current locale for language autodetection, not the actual text");
+            CORRADE_COMPARE(shaper->language(), "el");
+        }
+        CORRADE_COMPARE(shaper->language(), "c");
+        CORRADE_COMPARE(shaper->direction(), Direction::LeftToRight);
+
+    /* Empty text shouldn't inherit anything from before either and produce a
+       result consistent with shapeEmpty() */
+    } {
+        CORRADE_COMPARE(shaper->shape("Wave", 2, 2), 0);
+        CORRADE_COMPARE(shaper->script(), Script::Unspecified);
+        CORRADE_COMPARE(shaper->language(), "c");
+        CORRADE_COMPARE(shaper->direction(), Direction::LeftToRight);
     }
 }
 
