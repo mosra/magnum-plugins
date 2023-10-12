@@ -52,9 +52,9 @@ struct FreeTypeFontTest: TestSuite::Tester {
     void invalid();
 
     void properties();
-    void layout();
-    void layoutNoGlyphsInCache();
 
+    void shape();
+    void shapeEmpty();
     void shaperReuse();
 
     void fillGlyphCache();
@@ -71,9 +71,13 @@ struct FreeTypeFontTest: TestSuite::Tester {
 const struct {
     const char* name;
     const char* string;
-} LayoutData[]{
-    {"", "Wave"},
-    {"UTF-8", "Wavě"},
+    UnsignedInt eGlyphId;
+    UnsignedInt begin, end;
+} ShapeData[]{
+    {"", "Wave", 72, 0, ~UnsignedInt{}},
+    {"substring", "haWavefefe", 72, 2, 6},
+    {"UTF-8", "Wavě", 220, 0, ~UnsignedInt{}},
+    {"UTF-8 substring", "haWavěfefe", 220, 2, 7},
 };
 
 const struct {
@@ -99,11 +103,10 @@ FreeTypeFontTest::FreeTypeFontTest() {
 
               &FreeTypeFontTest::properties});
 
-    addInstancedTests({&FreeTypeFontTest::layout},
-        Containers::arraySize(LayoutData));
+    addInstancedTests({&FreeTypeFontTest::shape},
+        Containers::arraySize(ShapeData));
 
-    addTests({&FreeTypeFontTest::layoutNoGlyphsInCache,
-
+    addTests({&FreeTypeFontTest::shapeEmpty,
               &FreeTypeFontTest::shaperReuse});
 
     addInstancedTests({&FreeTypeFontTest::fillGlyphCache},
@@ -165,107 +168,47 @@ void FreeTypeFontTest::properties() {
     CORRADE_COMPARE(font->glyphAdvance(58), Vector2(17.0f, 0.0f));
 }
 
-void FreeTypeFontTest::layout() {
-    auto&& data = LayoutData[testCaseInstanceId()];
+void FreeTypeFontTest::shape() {
+    auto&& data = ShapeData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractFont> font = _manager.instantiate("FreeTypeFont");
     CORRADE_VERIFY(font->openFile(Utility::Path::join(FREETYPEFONT_TEST_DIR, "Oxygen.ttf"), 16.0f));
 
-    /* Fill the cache with some fake glyphs */
-    struct: AbstractGlyphCache {
-        using AbstractGlyphCache::AbstractGlyphCache;
+    Containers::Pointer<AbstractShaper> shaper = font->createShaper();
 
-        GlyphCacheFeatures doFeatures() const override { return {}; }
-        void doSetImage(const Vector2i&, const ImageView2D&) override {}
-    } cache{PixelFormat::R8Unorm, Vector2i{256}};
-    UnsignedInt fontId = cache.addFont(font->glyphCount(), font.get());
-    cache.addGlyph(fontId, font->glyphId(U'W'), {25, 34}, {{0, 8}, {16, 128}});
-    cache.addGlyph(fontId, font->glyphId(U'e'), {25, 12}, {{16, 4}, {64, 32}});
-    /* ě has deliberately the same glyph data as e */
-    cache.addGlyph(fontId, font->glyphId(
-        /* MSVC (but not clang-cl) doesn't support UTF-8 in char32_t literals
-           but it does it regular strings. Still a problem in MSVC 2022, what a
-           trash fire, can't you just give up on those codepage insanities
-           already, ffs?! */
-        #if defined(CORRADE_TARGET_MSVC) && !defined(CORRADE_TARGET_CLANG)
-        U'\u011B'
-        #else
-        U'ě'
-        #endif
-    ), {25, 12}, {{16, 4}, {64, 32}});
+    CORRADE_COMPARE(shaper->shape(data.string, data.begin, data.end), 4);
 
-    Containers::Pointer<AbstractLayouter> layouter = font->layout(cache, 0.5f, data.string);
-    CORRADE_VERIFY(layouter);
-    CORRADE_COMPARE(layouter->glyphCount(), 4);
-
-    Vector2 cursorPosition;
-    Range2D rectangle;
-
-    /* 'W' */
-    CORRADE_COMPARE(layouter->renderGlyph(0, cursorPosition = {}, rectangle),
-        Containers::pair(Range2D{{0.78125f, 1.0625f}, {1.28125f, 4.8125f}},
-                         Range2D{{0, 0.03125f}, {0.0625f, 0.5f}}));
-    CORRADE_COMPARE(cursorPosition, Vector2(0.53125f, 0.0f));
-
-    /* 'a' (not in cache) */
-    CORRADE_COMPARE(layouter->renderGlyph(1, cursorPosition = {}, rectangle),
-        Containers::pair(Range2D{}, Range2D{}));
-    CORRADE_COMPARE(cursorPosition, Vector2(0.25f, 0.0f));
-
-    /* 'v' (not in cache) */
-    CORRADE_COMPARE(layouter->renderGlyph(2, cursorPosition = {}, rectangle),
-        Containers::pair(Range2D{}, Range2D{}));
-    CORRADE_COMPARE(cursorPosition, Vector2(0.25f, 0.0f));
-
-    /* 'e' or 'ě' */
-    CORRADE_COMPARE(layouter->renderGlyph(3, cursorPosition = {}, rectangle),
-        Containers::pair(Range2D{{0.78125f, 0.375f}, {2.28125f, 1.25f}},
-                         Range2D{{0.0625f, 0.015625f}, {0.25f, 0.125f}}));
-    CORRADE_COMPARE(cursorPosition, Vector2(0.28125f, 0.0f));
+    UnsignedInt ids[4];
+    Vector2 offsets[4];
+    Vector2 advances[4];
+    shaper->glyphsInto(ids, offsets, advances);
+    CORRADE_COMPARE_AS(Containers::arrayView(ids), Containers::arrayView({
+        58u,            /* 'W' */
+        68u,            /* 'a' */
+        89u,            /* 'v' */
+        data.eGlyphId   /* 'e' or 'ě' */
+    }), TestSuite::Compare::Container);
+    /* There are no glyph-specific offsets here */
+    CORRADE_COMPARE_AS(Containers::arrayView(offsets), Containers::arrayView<Vector2>({
+        {}, {}, {}, {}
+    }), TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(Containers::arrayView(advances), Containers::arrayView<Vector2>({
+        {17.0f, 0.0f},
+        {8.0f, 0.0f},
+        {8.0f, 0.0f},
+        {9.0f, 0.0f}
+    }), TestSuite::Compare::Container);
 }
 
-void FreeTypeFontTest::layoutNoGlyphsInCache() {
+void FreeTypeFontTest::shapeEmpty() {
     Containers::Pointer<AbstractFont> font = _manager.instantiate("FreeTypeFont");
     CORRADE_VERIFY(font->openFile(Utility::Path::join(FREETYPEFONT_TEST_DIR, "Oxygen.ttf"), 16.0f));
 
-    /* Fill the cache with some fake glyphs */
-    struct: AbstractGlyphCache {
-        using AbstractGlyphCache::AbstractGlyphCache;
+    Containers::Pointer<AbstractShaper> shaper = font->createShaper();
 
-        GlyphCacheFeatures doFeatures() const override { return {}; }
-        void doSetImage(const Vector2i&, const ImageView2D&) override {}
-    } cache{PixelFormat::R8Unorm, Vector2i{256}};
-
-    /* Add a font that is associated with this one but fillGlyphCache() was
-       actually not called for it */
-    cache.addFont(font->glyphCount(), font.get());
-
-    Containers::Pointer<AbstractLayouter> layouter = font->layout(cache, 0.5f, "Wave");
-    CORRADE_VERIFY(layouter);
-    CORRADE_COMPARE(layouter->glyphCount(), 4);
-
-    Vector2 cursorPosition;
-    Range2D rectangle;
-
-    /* Compared to layout(), only the cursor position gets updated, everything
-       else falls back to the invalid glyph */
-
-    CORRADE_COMPARE(layouter->renderGlyph(0, cursorPosition = {}, rectangle),
-        Containers::pair(Range2D{}, Range2D{}));
-    CORRADE_COMPARE(cursorPosition, Vector2(0.53125f, 0.0f));
-
-    CORRADE_COMPARE(layouter->renderGlyph(1, cursorPosition = {}, rectangle),
-        Containers::pair(Range2D{}, Range2D{}));
-    CORRADE_COMPARE(cursorPosition, Vector2(0.25f, 0.0f));
-
-    CORRADE_COMPARE(layouter->renderGlyph(2, cursorPosition = {}, rectangle),
-        Containers::pair(Range2D{}, Range2D{}));
-    CORRADE_COMPARE(cursorPosition, Vector2(0.25f, 0.0f));
-
-    CORRADE_COMPARE(layouter->renderGlyph(3, cursorPosition = {}, rectangle),
-        Containers::pair(Range2D{}, Range2D{}));
-    CORRADE_COMPARE(cursorPosition, Vector2(0.28125f, 0.0f));
+    /* Shouldn't crash or do anything rogue */
+    CORRADE_COMPARE(shaper->shape("Wave", 2, 2), 0);
 }
 
 void FreeTypeFontTest::shaperReuse() {
