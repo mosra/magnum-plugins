@@ -213,6 +213,8 @@ Containers::Pointer<AbstractShaper> FreeTypeFont::doCreateShaper() {
             Utility::copy(_glyphs, ids);
             for(std::size_t i = 0; i != _glyphs.size(); ++i) {
                 /* There's no glyph offsets in addition to advances */
+                /** @todo there's horiBearingX and horiBearingY in
+                    FT_Glyph_Metrics, isn't that the offset? */
                 offsets[i] = {};
 
                 /* Load the glyph to get its advance */

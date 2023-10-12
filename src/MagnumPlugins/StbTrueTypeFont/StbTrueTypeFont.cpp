@@ -248,6 +248,8 @@ Containers::Pointer<AbstractShaper> StbTrueTypeFont::doCreateShaper() {
             Utility::copy(_glyphs, ids);
             for(std::size_t i = 0; i != _glyphs.size(); ++i) {
                 /* There's no glyph offsets in addition to advances */
+                /** @todo the last argument of stbtt_GetGlyphHMetrics is
+                   leftSideBearing, isn't that the offset? */
                 offsets[i] = {};
 
                 /* Get glyph advance, scale it to actual used font size */
