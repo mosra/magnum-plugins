@@ -35,6 +35,7 @@
 #include <Magnum/DebugTools/CompareImage.h>
 #include <Magnum/Math/Color.h>
 #include <Magnum/Math/ConfigurationValue.h>
+#include <Magnum/Math/Half.h>
 #include <Magnum/Trade/AbstractImageConverter.h>
 #include <Magnum/Trade/ImageData.h>
 
@@ -343,25 +344,25 @@ void StbResizeImageConverterTest::rg16() {
 void StbResizeImageConverterTest::rg16f() {
     /* Like rgb8Padded(), but converted to half-float and dropping the B
        channel */
-    const UnsignedShort input[][2]{
-        {Math::packHalf(Math::unpack<Float, UnsignedByte>(0xff)),
-            Math::packHalf(Math::unpack<Float, UnsignedByte>(0x33))},
-        {Math::packHalf(Math::unpack<Float, UnsignedByte>(0xff)),
-            Math::packHalf(Math::unpack<Float, UnsignedByte>(0x66))},
-        {Math::packHalf(Math::unpack<Float, UnsignedByte>(0x66)),
-            Math::packHalf(Math::unpack<Float, UnsignedByte>(0xff))},
-        {Math::packHalf(Math::unpack<Float, UnsignedByte>(0x99)),
-            Math::packHalf(Math::unpack<Float, UnsignedByte>(0x33))},
-        {Math::packHalf(Math::unpack<Float, UnsignedByte>(0x33)),
-            Math::packHalf(Math::unpack<Float, UnsignedByte>(0x99))},
-        {Math::packHalf(Math::unpack<Float, UnsignedByte>(0xcc)),
-            Math::packHalf(Math::unpack<Float, UnsignedByte>(0xcc))}
+    const Vector2h input[]{
+        {Half{Math::unpack<Float, UnsignedByte>(0xff)},
+            Half{Math::unpack<Float, UnsignedByte>(0x33)}},
+        {Half{Math::unpack<Float, UnsignedByte>(0xff)},
+            Half{Math::unpack<Float, UnsignedByte>(0x66)}},
+        {Half{Math::unpack<Float, UnsignedByte>(0x66)},
+            Half{Math::unpack<Float, UnsignedByte>(0xff)}},
+        {Half{Math::unpack<Float, UnsignedByte>(0x99)},
+            Half{Math::unpack<Float, UnsignedByte>(0x33)}},
+        {Half{Math::unpack<Float, UnsignedByte>(0x33)},
+            Half{Math::unpack<Float, UnsignedByte>(0x99)}},
+        {Half{Math::unpack<Float, UnsignedByte>(0xcc)},
+            Half{Math::unpack<Float, UnsignedByte>(0xcc)}}
     };
-    const UnsignedShort expected[][2]{
+    const Vector2h expected[]{
         /* 0xba4d (0.729412, 0.301961), 0x99c3 (0.6, 0.764706) was in the 8-bit
            case */
-        {Math::packHalf(0.7305f), Math::packHalf(0.3005f)},
-        {Math::packHalf(0.5981f), Math::packHalf(0.7637f)}
+        {0.7305_h, 0.3005_h},
+        {0.5981_h, 0.7637_h}
     };
 
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("StbResizeImageConverter");
