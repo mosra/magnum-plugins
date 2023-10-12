@@ -30,6 +30,7 @@
 #include <Corrade/Containers/Triple.h>
 #include <Corrade/PluginManager/Manager.h>
 #include <Corrade/TestSuite/Tester.h>
+#include <Corrade/TestSuite/Compare/Container.h>
 #include <Corrade/Utility/DebugStl.h> /** @todo remove once Debug is stream-free */
 #include <Corrade/Utility/Path.h>
 #include <Magnum/ImageView.h>
@@ -37,6 +38,7 @@
 #include <Magnum/DebugTools/CompareImage.h>
 #include <Magnum/Text/AbstractFont.h>
 #include <Magnum/Text/AbstractGlyphCache.h>
+#include <Magnum/Text/AbstractShaper.h>
 #include <Magnum/Trade/AbstractImporter.h>
 
 #include "configure.h"
@@ -52,8 +54,8 @@ struct FreeTypeFontTest: TestSuite::Tester {
     void properties();
     void layout();
     void layoutNoGlyphsInCache();
-    void layoutNoFontInCache();
-    void layoutArrayCache();
+
+    void shaperReuse();
 
     void fillGlyphCache();
     void fillGlyphCacheIncremental();
@@ -101,8 +103,8 @@ FreeTypeFontTest::FreeTypeFontTest() {
         Containers::arraySize(LayoutData));
 
     addTests({&FreeTypeFontTest::layoutNoGlyphsInCache,
-              &FreeTypeFontTest::layoutNoFontInCache,
-              &FreeTypeFontTest::layoutArrayCache});
+
+              &FreeTypeFontTest::shaperReuse});
 
     addInstancedTests({&FreeTypeFontTest::fillGlyphCache},
         Containers::arraySize(FillGlyphCacheData));
@@ -266,41 +268,75 @@ void FreeTypeFontTest::layoutNoGlyphsInCache() {
     CORRADE_COMPARE(cursorPosition, Vector2(0.28125f, 0.0f));
 }
 
-void FreeTypeFontTest::layoutNoFontInCache() {
+void FreeTypeFontTest::shaperReuse() {
     Containers::Pointer<AbstractFont> font = _manager.instantiate("FreeTypeFont");
     CORRADE_VERIFY(font->openFile(Utility::Path::join(FREETYPEFONT_TEST_DIR, "Oxygen.ttf"), 16.0f));
 
-    struct: AbstractGlyphCache {
-        using AbstractGlyphCache::AbstractGlyphCache;
+    Containers::Pointer<AbstractShaper> shaper = font->createShaper();
 
-        GlyphCacheFeatures doFeatures() const override { return {}; }
-        void doSetImage(const Vector2i&, const ImageView2D&) override {}
-    } cache{PixelFormat::R8Unorm, Vector2i{256}};
+    /* Empty text */
+    {
+        CORRADE_COMPARE(shaper->shape("Wave", 2, 2), 0);
 
-    /* Add a font that isn't associated with this one */
-    cache.addFont(15);
+    /* Short text. Empty shape shouldn't have caused any broken state. */
+    } {
+        CORRADE_COMPARE(shaper->shape("We"), 2);
+        UnsignedInt ids[2];
+        Vector2 offsets[2];
+        Vector2 advances[2];
+        shaper->glyphsInto(ids, offsets, advances);
+        CORRADE_COMPARE_AS(Containers::arrayView(ids), Containers::arrayView({
+            58u, /* 'W' */
+            72u  /* 'e' */
+        }), TestSuite::Compare::Container);
+        CORRADE_COMPARE_AS(Containers::arrayView(offsets), Containers::arrayView<Vector2>({
+            {}, {},
+        }), TestSuite::Compare::Container);
+        CORRADE_COMPARE_AS(Containers::arrayView(advances), Containers::arrayView<Vector2>({
+            {17.0f, 0.0f},
+            {9.0f, 0.0f}
+        }), TestSuite::Compare::Container);
 
-    std::ostringstream out;
-    Error redirectError{&out};
-    CORRADE_VERIFY(!font->layout(cache, 0.5f, "Wave"));
-    CORRADE_COMPARE(out.str(), "Text::FreeTypeFont::layout(): font not found among 1 fonts in passed glyph cache\n");
-}
+    /* Long text, same as in shape(), should enlarge the array for it */
+    } {
+        CORRADE_COMPARE(shaper->shape("Wave"), 4);
+        UnsignedInt ids[4];
+        Vector2 offsets[4];
+        Vector2 advances[4];
+        shaper->glyphsInto(ids, offsets, advances);
+        CORRADE_COMPARE_AS(Containers::arrayView(ids), Containers::arrayView({
+            58u, /* 'W' */
+            68u, /* 'a' */
+            89u, /* 'v' */
+            72u  /* 'e' or 'ě' */
+        }), TestSuite::Compare::Container);
+        CORRADE_COMPARE_AS(Containers::arrayView(offsets), Containers::arrayView<Vector2>({
+            {}, {}, {}, {}
+        }), TestSuite::Compare::Container);
+        CORRADE_COMPARE_AS(Containers::arrayView(advances), Containers::arrayView<Vector2>({
+            {17.0f, 0.0f},
+            {8.0f, 0.0f},
+            {8.0f, 0.0f},
+            {9.0f, 0.0f}
+        }), TestSuite::Compare::Container);
 
-void FreeTypeFontTest::layoutArrayCache() {
-    Containers::Pointer<AbstractFont> font = _manager.instantiate("FreeTypeFont");
-    CORRADE_VERIFY(font->openFile(Utility::Path::join(FREETYPEFONT_TEST_DIR, "Oxygen.ttf"), 16.0f));
-
-    struct: AbstractGlyphCache {
-        using AbstractGlyphCache::AbstractGlyphCache;
-
-        GlyphCacheFeatures doFeatures() const override { return {}; }
-        void doSetImage(const Vector2i&, const ImageView2D&) override {}
-    } cache{PixelFormat::R8Unorm, {256, 128, 3}};
-
-    std::ostringstream out;
-    Error redirectError{&out};
-    CORRADE_VERIFY(!font->layout(cache, 0.5f, "Wave"));
-    CORRADE_COMPARE(out.str(), "Text::FreeTypeFont::layout(): array glyph caches are not supported\n");
+    /* Short text again, should not leave the extra glyphs there */
+    } {
+        CORRADE_COMPARE(shaper->shape("a"), 1);
+        UnsignedInt ids[1];
+        Vector2 offsets[1];
+        Vector2 advances[1];
+        shaper->glyphsInto(ids, offsets, advances);
+        CORRADE_COMPARE_AS(Containers::arrayView(ids), Containers::arrayView({
+            68u,
+        }), TestSuite::Compare::Container);
+        CORRADE_COMPARE_AS(Containers::arrayView(offsets), Containers::arrayView<Vector2>({
+            {},
+        }), TestSuite::Compare::Container);
+        CORRADE_COMPARE_AS(Containers::arrayView(advances), Containers::arrayView<Vector2>({
+            {8.0f, 0.0f}
+        }), TestSuite::Compare::Container);
+    }
 }
 
 void FreeTypeFontTest::fillGlyphCache() {

@@ -169,7 +169,7 @@ class MAGNUM_FREETYPEFONT_EXPORT FreeTypeFont: public AbstractFont {
         /** @todo Why this can't be defined as local? */
         void doFillGlyphCache(AbstractGlyphCache& cache, Containers::ArrayView<const char32_t> characters) override;
 
-        Containers::Pointer<AbstractLayouter> MAGNUM_FREETYPEFONT_LOCAL doLayout(const AbstractGlyphCache& cache, Float size, Containers::StringView text) override;
+        MAGNUM_FREETYPEFONT_LOCAL Containers::Pointer<AbstractShaper> doCreateShaper() override;
 };
 
 }}

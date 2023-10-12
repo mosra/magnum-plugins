@@ -31,7 +31,6 @@
 #include <Corrade/Containers/GrowableArray.h>
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/StringView.h>
-#include <Corrade/Containers/Triple.h>
 #include <Corrade/PluginManager/AbstractManager.h>
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/Unicode.h>
@@ -40,27 +39,10 @@
 #include <Magnum/PixelFormat.h>
 #include <Magnum/Math/Range.h>
 #include <Magnum/Text/AbstractGlyphCache.h>
+#include <Magnum/Text/AbstractShaper.h>
 #include <Magnum/TextureTools/Atlas.h>
 
 namespace Magnum { namespace Text {
-
-namespace {
-
-class FreeTypeLayouter: public AbstractLayouter {
-    public:
-        explicit FreeTypeLayouter(FT_Face font, const AbstractGlyphCache& cache, UnsignedInt fontId, Float fontSize, Float textSize, Containers::Array<FT_UInt>&& glyphs);
-
-    private:
-        Containers::Triple<Range2D, Range2D, Vector2> doRenderGlyph(const UnsignedInt i) override;
-
-        FT_Face _font;
-        const AbstractGlyphCache& _cache;
-        const UnsignedInt _fontId;
-        const Float _fontSize, _layoutSize;
-        const Containers::Array<FT_UInt> _glyphs;
-};
-
-}
 
 #if defined(CORRADE_BUILD_MULTITHREADED) && !defined(CORRADE_TARGET_WINDOWS)
 CORRADE_THREAD_LOCAL
@@ -205,60 +187,46 @@ void FreeTypeFont::doFillGlyphCache(AbstractGlyphCache& cache, const Containers:
     cache.flushImage(flushRange);
 }
 
-Containers::Pointer<AbstractLayouter> FreeTypeFont::doLayout(const AbstractGlyphCache& cache, const Float size, const Containers::StringView text) {
-    /* Not yet, at least */
-    if(cache.size().z() != 1) {
-        Error{} << "Text::FreeTypeFont::layout(): array glyph caches are not supported";
-        return {};
-    }
+Containers::Pointer<AbstractShaper> FreeTypeFont::doCreateShaper() {
+    struct Shaper: AbstractShaper {
+        using AbstractShaper::AbstractShaper;
 
-    /* Find this font in the cache */
-    Containers::Optional<UnsignedInt> fontId = cache.findFont(this);
-    if(!fontId) {
-        Error{} << "Text::FreeTypeFont::layout(): font not found among" << cache.fontCount() << "fonts in passed glyph cache";
-        return {};
-    }
+        UnsignedInt doShape(const Containers::StringView textFull, const UnsignedInt begin, const UnsignedInt end, Containers::ArrayView<const FeatureRange>) override {
+            const FT_Face ftFont = static_cast<const FreeTypeFont&>(font())._ftFont;
+            const Containers::StringView text = textFull.slice(begin, end == ~UnsignedInt{} ? textFull.size() : end);
 
-    /* Get glyph codes from characters */
-    Containers::Array<UnsignedInt> glyphs;
-    arrayReserve(glyphs, text.size());
-    for(std::size_t i = 0; i != text.size(); ) {
-        const Containers::Pair<char32_t, std::size_t> codepointNext = Utility::Unicode::nextChar(text, i);
-        arrayAppend(glyphs, FT_Get_Char_Index(_ftFont, codepointNext.first()));
-        i = codepointNext.second();
-    }
+            /* Get glyph codes from characters */
+            arrayResize(_glyphs, 0);
+            arrayReserve(_glyphs, text.size());
+            for(std::size_t i = 0; i != text.size(); ) {
+                const Containers::Pair<char32_t, std::size_t> codepointNext = Utility::Unicode::nextChar(text, i);
+                arrayAppend(_glyphs, FT_Get_Char_Index(ftFont, codepointNext.first()));
+                i = codepointNext.second();
+            }
 
-    return Containers::pointer<FreeTypeLayouter>(_ftFont, cache, *fontId, this->size(), size, Utility::move(glyphs));
-}
+            return _glyphs.size();
+        }
 
-namespace {
+        void doGlyphsInto(const Containers::StridedArrayView1D<UnsignedInt>& ids, const Containers::StridedArrayView1D<Vector2>& offsets, const Containers::StridedArrayView1D<Vector2>& advances) const override {
+            const FT_Face ftFont = static_cast<const FreeTypeFont&>(font())._ftFont;
 
-FreeTypeLayouter::FreeTypeLayouter(FT_Face font, const AbstractGlyphCache& cache, const UnsignedInt fontId, const Float fontSize, const Float layoutSize, Containers::Array<FT_UInt>&& glyphs): AbstractLayouter{UnsignedInt(glyphs.size())}, _font{font}, _cache(cache), _fontId{fontId}, _fontSize{fontSize}, _layoutSize{layoutSize}, _glyphs{Utility::move(glyphs)} {}
+            Utility::copy(_glyphs, ids);
+            for(std::size_t i = 0; i != _glyphs.size(); ++i) {
+                /* There's no glyph offsets in addition to advances */
+                offsets[i] = {};
 
-Containers::Triple<Range2D, Range2D, Vector2> FreeTypeLayouter::doRenderGlyph(const UnsignedInt i) {
-    /* Offset of the glyph rectangle relative to the cursor, layer, texture
-       coordinates. We checked that the glyph cache is 2D in doLayout() so the
-       layer can be ignored. */
-    const Containers::Triple<Vector2i, Int, Range2Di> glyph = _cache.glyph(_fontId, _glyphs[i]);
-    CORRADE_INTERNAL_ASSERT(glyph.second() == 0);
+                /* Load the glyph to get its advance */
+                CORRADE_INTERNAL_ASSERT_OUTPUT(FT_Load_Glyph(ftFont, _glyphs[i], FT_LOAD_DEFAULT) == 0);
+                const FT_GlyphSlot slot = ftFont->glyph;
+                advances[i] = Vector2{Float(slot->advance.x),
+                                      Float(slot->advance.y)}/64.0f;
+            }
+        }
 
-    /* Normalized texture coordinates */
-    const auto textureCoordinates = Range2D{glyph.third()}.scaled(1.0f/Vector2{_cache.size().xy()});
+        Containers::Array<UnsignedInt> _glyphs;
+    };
 
-    /* Quad rectangle, computed from texture rectangle, denormalized to
-       requested text size */
-    const auto quadRectangle = Range2D{Range2Di::fromSize(glyph.first(), glyph.third().size())}.scaled(Vector2{_layoutSize/_fontSize});
-
-    /* Load glyph */
-    CORRADE_INTERNAL_ASSERT_OUTPUT(FT_Load_Glyph(_font, _glyphs[i], FT_LOAD_DEFAULT) == 0);
-    const FT_GlyphSlot slot = _font->glyph;
-
-    /* Glyph advance, denormalized to requested text size */
-    const Vector2 advance = Vector2{Float(slot->advance.x), Float(slot->advance.y)}*(_layoutSize/(64.0f*_fontSize));
-
-    return {quadRectangle, textureCoordinates, advance};
-}
-
+    return Containers::pointer<Shaper>(*this);
 }
 
 }}

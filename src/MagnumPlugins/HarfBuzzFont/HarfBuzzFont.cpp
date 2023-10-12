@@ -27,34 +27,14 @@
 
 #include <hb-ft.h>
 #include <Corrade/Containers/Optional.h>
+#include <Corrade/Containers/StridedArrayView.h>
 #include <Corrade/Containers/StringView.h>
-#include <Corrade/Containers/Triple.h>
 #include <Corrade/PluginManager/AbstractManager.h>
 #include <Magnum/Math/Range.h>
 #include <Magnum/Text/AbstractGlyphCache.h>
+#include <Magnum/Text/AbstractShaper.h>
 
 namespace Magnum { namespace Text {
-
-namespace {
-
-class HarfBuzzLayouter: public AbstractLayouter {
-    public:
-        explicit HarfBuzzLayouter(const AbstractGlyphCache& cache, UnsignedInt fontId, Float fontSize, Float textSize, hb_buffer_t* buffer, hb_glyph_info_t* glyphInfo, hb_glyph_position_t* glyphPositions, UnsignedInt glyphCount);
-
-        ~HarfBuzzLayouter();
-
-    private:
-        Containers::Triple<Range2D, Range2D, Vector2> doRenderGlyph(UnsignedInt i) override;
-
-        const AbstractGlyphCache& _cache;
-        const UnsignedInt _fontId;
-        const Float _fontSize, _textSize;
-        hb_buffer_t* const _buffer;
-        hb_glyph_info_t* const _glyphInfo;
-        hb_glyph_position_t* const _glyphPositions;
-};
-
-}
 
 HarfBuzzFont::HarfBuzzFont(): _hbFont(nullptr) {}
 
@@ -85,73 +65,59 @@ void HarfBuzzFont::doClose() {
     FreeTypeFont::doClose();
 }
 
-Containers::Pointer<AbstractLayouter> HarfBuzzFont::doLayout(const AbstractGlyphCache& cache, const Float size, const Containers::StringView text) {
-    /* Not yet, at least */
-    if(cache.size().z() != 1) {
-        Error{} << "Text::HarfBuzzFont::layout(): array glyph caches are not supported";
-        return {};
-    }
+Containers::Pointer<AbstractShaper> HarfBuzzFont::doCreateShaper() {
+    struct Shaper: AbstractShaper {
+        explicit Shaper(AbstractFont& font): AbstractShaper{font} {
+            _buffer = hb_buffer_create();
+        }
 
-    /* Find this font in the cache */
-    Containers::Optional<UnsignedInt> fontId = cache.findFont(this);
-    if(!fontId) {
-        Error{} << "Text::HarfBuzzFont::layout(): font not found among" << cache.fontCount() << "fonts in passed glyph cache";
-        return {};
-    }
+        /* Probably don't need moves for anything here, so disable them as well
+           instead of implementing them or risking that a buffer gets destroyed
+           twice */
+        Shaper(const Shaper&) = delete;
+        Shaper(Shaper&&) = delete;
 
-    /* Prepare HarfBuzz buffer */
-    hb_buffer_t* const buffer = hb_buffer_create();
-    hb_buffer_set_direction(buffer, HB_DIRECTION_LTR);
-    hb_buffer_set_script(buffer, HB_SCRIPT_LATIN);
-    hb_buffer_set_language(buffer, hb_language_from_string("en", 2));
+        ~Shaper() {
+            hb_buffer_destroy(_buffer);
+        }
 
-    /* Layout the text */
-    hb_buffer_add_utf8(buffer, text.data(), text.size(), 0, -1);
-    hb_shape(_hbFont, buffer, nullptr, 0);
+        Shaper& operator=(const Shaper&) = delete;
+        Shaper& operator=(Shaper&&) = delete;
 
-    UnsignedInt glyphCount;
-    hb_glyph_info_t* const glyphInfo = hb_buffer_get_glyph_infos(buffer, &glyphCount);
-    hb_glyph_position_t* const glyphPositions = hb_buffer_get_glyph_positions(buffer, &glyphCount);
+        UnsignedInt doShape(const Containers::StringView text, const UnsignedInt begin, const UnsignedInt end, Containers::ArrayView<const FeatureRange>) override {
+            /* If shaping was performed already, the buffer type is
+               HB_BUFFER_CONTENT_TYPE_GLYPHS, need to reset it to accept
+               Unicode input again. */
+            hb_buffer_reset(_buffer);
+            hb_buffer_set_direction(_buffer, HB_DIRECTION_LTR);
+            hb_buffer_set_script(_buffer, HB_SCRIPT_LATIN);
+            hb_buffer_set_language(_buffer, hb_language_from_string("en", 2));
 
-    return Containers::pointer<HarfBuzzLayouter>(cache, *fontId, this->size(), size, buffer, glyphInfo, glyphPositions, glyphCount);
-}
+            hb_buffer_add_utf8(_buffer, text.data(), text.size(), begin, end - begin);
+            hb_shape(static_cast<const HarfBuzzFont&>(font())._hbFont, _buffer, nullptr, 0);
 
-namespace {
+            return hb_buffer_get_length(_buffer);
+        }
 
-HarfBuzzLayouter::HarfBuzzLayouter(const AbstractGlyphCache& cache, const UnsignedInt fontId, const Float fontSize, const Float textSize, hb_buffer_t* const buffer, hb_glyph_info_t* const glyphInfo, hb_glyph_position_t* const glyphPositions, const UnsignedInt glyphCount): AbstractLayouter(glyphCount), _cache(cache), _fontId{fontId}, _fontSize{fontSize}, _textSize{textSize}, _buffer{buffer}, _glyphInfo{glyphInfo}, _glyphPositions{glyphPositions} {}
+        void doGlyphsInto(const Containers::StridedArrayView1D<UnsignedInt>& ids, const Containers::StridedArrayView1D<Vector2>& offsets, const Containers::StridedArrayView1D<Vector2>& advances) const override {
+            UnsignedInt glyphCount;
+            hb_glyph_info_t* const glyphInfos = hb_buffer_get_glyph_infos(_buffer, &glyphCount);
+            hb_glyph_position_t* const glyphPositions = hb_buffer_get_glyph_positions(_buffer, &glyphCount);
+            CORRADE_INTERNAL_ASSERT(glyphCount == this->glyphCount());
 
-HarfBuzzLayouter::~HarfBuzzLayouter() {
-    /* Destroy HarfBuzz buffer */
-    hb_buffer_destroy(_buffer);
-}
+            for(std::size_t i = 0; i != glyphCount; ++i) {
+                ids[i] = glyphInfos[i].codepoint;
+                offsets[i] = Vector2{Float(glyphPositions[i].x_offset),
+                                     Float(glyphPositions[i].y_offset)}/64.0f;
+                advances[i] = Vector2{Float(glyphPositions[i].x_advance),
+                                      Float(glyphPositions[i].y_advance)}/64.0f;
+            }
+        }
 
-Containers::Triple<Range2D, Range2D, Vector2> HarfBuzzLayouter::doRenderGlyph(const UnsignedInt i) {
-    /* Position of the texture in the resulting glyph, texture coordinates */
-    /* Offset of the glyph rectangle relative to the cursor, layer, texture
-       coordinates. We checked that the glyph cache is 2D in doLayout() so the
-       layer can be ignored. */
-    const Containers::Triple<Vector2i, Int, Range2Di> glyph = _cache.glyph(_fontId, _glyphInfo[i].codepoint);
-    CORRADE_INTERNAL_ASSERT(glyph.second() == 0);
+        hb_buffer_t* _buffer;
+    };
 
-    /* Normalized texture coordinates */
-    const auto textureCoordinates = Range2D{glyph.third()}.scaled(1.0f/Vector2{_cache.size().xy()});
-
-    /* Glyph offset in normalized coordinates */
-    const Vector2 offset = Vector2(_glyphPositions[i].x_offset,
-                                   _glyphPositions[i].y_offset)/64.0f;
-
-    /* Quad rectangle, computed from glyph offset and texture rectangle,
-       denormalized to requested text size */
-    const auto quadRectangle = Range2D{Range2Di::fromSize(glyph.first(), glyph.third().size())}
-        .translated(offset).scaled(Vector2{_textSize/_fontSize});
-
-    /* Glyph advance, denormalized to requested text size */
-    const Vector2 advance = Vector2(_glyphPositions[i].x_advance,
-                                    _glyphPositions[i].y_advance)*(_textSize/(64.0f*_fontSize));
-
-    return {quadRectangle, textureCoordinates, advance};
-}
-
+    return Containers::pointer<Shaper>(*this);
 }
 
 }}
