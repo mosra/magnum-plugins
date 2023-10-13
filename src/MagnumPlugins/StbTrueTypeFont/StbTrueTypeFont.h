@@ -120,6 +120,22 @@ target_link_libraries(your-app PRIVATE MagnumPlugins::StbTrueTypeFont)
 
 See @ref building-plugins, @ref cmake-plugins and @ref plugins for more
 information.
+
+@section Text-StbTrueTypeFont-behavior Behavior and limitations
+
+The stb_truetype library doesn't provide any advanced shaping capabilities,
+thus @ref AbstractShaper::setScript(),
+@relativeref{AbstractShaper,setLanguage()} and
+@relativeref{AbstractShaper,setDirection()} are a no-op and return
+@cpp false @ce. You're encouraged to use the @ref HarfBuzzFont plugin if you
+need these.
+
+Hinting is not implemented in stb_truetype. Compared to @ref FreeTypeFont or
+@ref HarfBuzzFont you get larger glyphs with a more blurry look.
+
+While stb_truetype provides access to font kerning tables, the plugin doesn't
+use them at the moment. The feature list passed to @ref AbstractShaper::shape()
+is ignored.
 */
 class MAGNUM_STBTRUETYPEFONT_EXPORT StbTrueTypeFont: public AbstractFont {
     public:

@@ -129,6 +129,19 @@ target_link_libraries(your-app PRIVATE MagnumPlugins::FreeTypeFont)
 
 See @ref building-plugins, @ref cmake-plugins and @ref plugins for more
 information.
+
+@section Text-FreeTypeFont-behavior Behavior and limitations
+
+The FreeType library alone doesn't provide any advanced shaping capabilities,
+thus @ref AbstractShaper::setScript(),
+@relativeref{AbstractShaper,setLanguage()} and
+@relativeref{AbstractShaper,setDirection()} are a no-op and return
+@cpp false @ce. You're encouraged to use the @ref HarfBuzzFont plugin if you
+need these.
+
+While FreeType provides access to font kerning tables, the plugin doesn't use
+them at the moment. The feature list passed to @ref AbstractShaper::shape() is
+ignored.
 */
 class MAGNUM_FREETYPEFONT_EXPORT FreeTypeFont: public AbstractFont {
     public:
