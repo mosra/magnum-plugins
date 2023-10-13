@@ -57,7 +57,7 @@ namespace Magnum { namespace Trade {
 @brief ASTC importer plugin
 @m_since_latest_{plugins}
 
-Loads 2D and 3D ASTC (`*.astc`) files produced by
+Imports 2D and 3D ASTC (`*.astc`) files produced by
 [ARM ASTC encoder](https://github.com/ARM-software/astc-encoder) and other
 texture compression tools.
 

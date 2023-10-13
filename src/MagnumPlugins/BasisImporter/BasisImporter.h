@@ -64,7 +64,7 @@ namespace Magnum { namespace Trade {
 @m_keywords{BasisImporterPvrtc1RGB4bpp BasisImporterPvrtc1RGBA4bpp}
 @m_keywords{BasisImporterAstc4x4RGBA BasisImporterRGBA8}
 
-Supports [Basis Universal](https://github.com/binomialLLC/basis_universal)
+Imports [Basis Universal](https://github.com/binomialLLC/basis_universal)
 compressed images (`*.basis` or `*.ktx2`) by parsing and transcoding files into
 an explicitly specified GPU format (see @ref Trade-BasisImporter-target-format).
 You can use @ref BasisImageConverter to transcode images into this format.

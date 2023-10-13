@@ -58,8 +58,9 @@ namespace Magnum { namespace Trade {
 @brief WebP importer plugin
 @m_since_latest_{plugins}
 
-Supports [WebP](https://en.wikipedia.org/wiki/WebP) (`*.webp`) RGB and RGBA
-images.
+Imports [WebP](https://en.wikipedia.org/wiki/WebP) (`*.webp`) RGB and RGBA
+images using the [libwebp](https://chromium.googlesource.com/webm/libwebp/)
+library.
 
 @m_class{m-block m-success}
 

@@ -57,9 +57,8 @@ namespace Magnum { namespace Trade {
 @brief KTX2 image converter plugin
 @m_since_latest_{plugins}
 
-Creates Khronos Texture 2.0 (`*.ktx2`) files from 1D, 2D and 3D images with
-optional mip levels. You can use @ref KtxImporter to import images in this
-format.
+Creates Khronos Texture 2.0 (`*.ktx2`) files. You can use @ref KtxImporter to
+import images in this format.
 
 @section Trade-KtxImageConverter-usage Usage
 
@@ -104,21 +103,16 @@ See @ref building-plugins, @ref cmake-plugins, @ref plugins and
 
 @section Trade-KtxImageConverter-behavior Behavior and limitations
 
-The plugin recognizes @ref ImageConverterFlag::Quiet, which will cause all
-conversion warnings to be suppressed.
-
-@subsection Trade-KtxImageConverter-behavior-formats Supported formats
-
-The following formats can be written:
+Accepts 1D, 1D array, 2D, 2D array, cube map and cube map array
+images, recognizing @ref ImageFlag2D::Array, @ref ImageFlag3D::Array and/or
+@ref ImageFlag3D::CubeMap in passed images. The following formats can be
+written:
 
 -   all formats in @ref PixelFormat
 -   all formats in @ref CompressedPixelFormat
 
-@subsection Trade-KtxImageConverter-behavior-types Image types
-
-The exporter can save 1D, 1D array, 2D, 2D array, cube map and cube map array
-images, recognizing @ref ImageFlag2D::Array, @ref ImageFlag3D::Array and/or
-@ref ImageFlag3D::CubeMap in passed images.
+The plugin recognizes @ref ImageConverterFlag::Quiet, which will cause all
+conversion warnings to be suppressed.
 
 @subsection Trade-KtxImageConverter-behavior-multilevel Multilevel images
 

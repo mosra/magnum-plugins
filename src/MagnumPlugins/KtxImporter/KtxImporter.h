@@ -57,7 +57,7 @@ namespace Magnum { namespace Trade {
 @brief KTX2 image importer plugin
 @m_since_latest_{plugins}
 
-Supports Khronos Texture 2.0 images (`*.ktx2`). You can use
+Imports Khronos Texture 2.0 images (`*.ktx2`). You can use
 @ref KtxImageConverter to encode images into this format.
 
 @section Trade-KtxImporter-usage Usage

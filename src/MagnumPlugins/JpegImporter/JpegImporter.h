@@ -55,10 +55,8 @@ namespace Magnum { namespace Trade {
 /**
 @brief JPEG importer plugin
 
-Supports RGB or grayscale images with 8 bits per channel. The images are
-imported with @ref PixelFormat::RGB8Unorm or @ref PixelFormat::R8Unorm. All
-imported images use default @ref PixelStorage parameters. You can use
-@ref JpegImageConverter to encode images into this format.
+Imports JPEG (`*.jpg`, `*.jpe`, `*.jpeg`) using the [libJPEG](https://ijg.org)
+library. You can use @ref JpegImageConverter to encode images into this format.
 
 @m_class{m-block m-success}
 
@@ -111,7 +109,13 @@ target_link_libraries(your-app PRIVATE MagnumPlugins::JpegImporter)
 See @ref building-plugins, @ref cmake-plugins, @ref plugins and
 @ref file-formats for more information.
 
-@section Trade-JpegImporter-implementations libJPEG implementations
+@section Trade-JpegImporter-behavior Behavior and limitations
+
+The images are imported with @ref PixelFormat::RGB8Unorm or
+@ref PixelFormat::R8Unorm. All imported images use default @ref PixelStorage
+parameters.
+
+@subsection Trade-JpegImporter-behavior-implementations libJPEG implementations
 
 While some systems (such as macOS) still ship only with the vanilla libJPEG,
 you can get a much better decoding performance by using

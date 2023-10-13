@@ -55,7 +55,7 @@ namespace Magnum { namespace Trade {
 /**
 @brief DDS image importer plugin
 
-Supports DirectDraw Surface images (`*.dds`).
+Imports DirectDraw Surface images (`*.dds`).
 
 @section Trade-DdsImporter-usage Usage
 

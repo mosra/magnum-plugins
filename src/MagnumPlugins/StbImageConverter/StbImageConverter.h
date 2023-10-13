@@ -127,7 +127,7 @@ See @ref building-plugins, @ref cmake-plugins, @ref plugins and
 
 @section Trade-StbImageConverter-behavior Behavior and limitations
 
-Supports the following input and output format combinations:
+Accepts 2D images and the following input and output format combinations:
 
 -   Windows Bitmap (`*.bmp`) if the plugin was loaded as `StbBmpImageConverter`
     / `BmpImageConverter`, if @ref convertToFile() was called with the

@@ -56,8 +56,7 @@ namespace Magnum { namespace Trade {
 
 @m_keywords{OpenExrImageConverter}
 
-Creates OpenEXR (`*.exr`) files from images with format
-@ref PixelFormat::RGB16F or @ref PixelFormat::RGBA16F using the
+Creates OpenEXR (`*.exr`) files using the
 [miniexr](https://github.com/aras-p/miniexr) library.
 
 This plugins provides the `OpenExrImageConverter` plugin, but note that this
@@ -115,7 +114,8 @@ See @ref building-plugins, @ref cmake-plugins, @ref plugins and
 
 @section Trade-MiniExrImageConverter-behavior Behavior and limitations
 
-The output is always uncompressed, only half-float RGB and RGBA is supported.
+Accepts 2D images in @ref PixelFormat::RGB16F and @ref PixelFormat::RGBA16F.
+The output is always uncompressed.
 
 The OpenEXR file format doesn't have a way to distinguish between 2D and 1D
 array images. If an image has @ref ImageFlag2D::Array set, a warning is printed

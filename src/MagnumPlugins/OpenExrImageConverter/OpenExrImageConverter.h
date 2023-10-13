@@ -56,15 +56,8 @@ namespace Magnum { namespace Trade {
 @brief OpenEXR image converter plugin
 @m_since_latest_{plugins}
 
-Creates OpenEXR (`*.exr`) files from 2D and cubemap images with optional mip
-levels and @ref PixelFormat::R16F / @relativeref{PixelFormat,RG16F} /
-@relativeref{PixelFormat,RGB16F} / @relativeref{PixelFormat,RGBA16F},
-@ref PixelFormat::R32F / @relativeref{PixelFormat,RG32F} /
-@relativeref{PixelFormat,RGB32F} / @relativeref{PixelFormat,RGBA32F} or
-@ref PixelFormat::R32UI / @relativeref{PixelFormat,RG32UI} /
-@relativeref{PixelFormat,RGB32UI} / @relativeref{PixelFormat,RGBA32UI} and
-@ref PixelFormat::Depth32F. You can use @ref OpenExrImporter to import images
-in this format.
+Creates OpenEXR (`*.exr`) files using the [OpenEXR](https://www.openexr.com)
+library. You can use @ref OpenExrImporter to import images in this format.
 
 @m_class{m-block m-success}
 
@@ -125,6 +118,15 @@ See @ref building-plugins, @ref cmake-plugins, @ref plugins and
 @ref file-formats for more information.
 
 @section Trade-OpenExrImageConverter-behavior Behavior and limitations
+
+Accepts 2D and cubemap images with optional mip levels in
+@ref PixelFormat::R16F / @relativeref{PixelFormat,RG16F} /
+@relativeref{PixelFormat,RGB16F} / @relativeref{PixelFormat,RGBA16F},
+@ref PixelFormat::R32F / @relativeref{PixelFormat,RG32F} /
+@relativeref{PixelFormat,RGB32F} / @relativeref{PixelFormat,RGBA32F} or
+@ref PixelFormat::R32UI / @relativeref{PixelFormat,RG32UI} /
+@relativeref{PixelFormat,RGB32UI} / @relativeref{PixelFormat,RGBA32UI} and
+@ref PixelFormat::Depth32F.
 
 As OpenEXR doesn't have a registered MIME type, @ref mimeType() returns
 @cpp "image/x-exr" @ce.

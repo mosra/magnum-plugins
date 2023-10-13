@@ -61,8 +61,8 @@ namespace Magnum { namespace Trade {
 @m_keywords{PgmImporter PicImporter PngImporter PnmImporter PpmImporter}
 @m_keywords{PsdImporter SgiImporter TgaImporter TiffImporter}
 
-Supports a large variety of image file types using the
-[DevIL](http://openil.sourceforge.net/) library, including (note that the list
+Imports a large variety of image file types using the
+[DevIL](https://openil.sourceforge.net) library, including (note that the list
 is incomplete):
 
 -   Windows Bitmap (`*.bmp`)

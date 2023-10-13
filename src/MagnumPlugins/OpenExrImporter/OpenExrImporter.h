@@ -57,9 +57,8 @@ namespace Magnum { namespace Trade {
 @brief OpenEXR importer plugin
 @m_since_latest_{plugins}
 
-Supports single-part scanline and tile-based OpenEXR (`*.exr`) 2D and cubemap
-images with optional mip levels and half-float, float and unsigned integer
-channels. You can use @ref OpenExrImageConverter to encode images into this
+Imports OpenEXR (`*.exr`) images using the [OpenEXR](https://www.openexr.com)
+library. You can use @ref OpenExrImageConverter to encode images into this
 format.
 
 @m_class{m-block m-success}
@@ -197,6 +196,9 @@ compress DWA or B44 images with it will cause a crash, but other compression
 schemes will continue to work.
 
 @section Trade-OpenExrImporter-behavior Behavior and limitations
+
+Supports single-part scanline and tile-based 2D and cubemap images with
+optional mip levels and half-float, float and unsigned integer channels.
 
 The plugin recognizes @ref ImporterFlag::Quiet, which will cause all import
 warnings to be suppressed.

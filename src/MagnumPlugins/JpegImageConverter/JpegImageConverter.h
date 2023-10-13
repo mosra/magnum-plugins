@@ -54,14 +54,9 @@ namespace Magnum { namespace Trade {
 /**
 @brief JPEG image converter plugin
 
-Creates JPEG (`*.jpg`, `*.jpe`, `*.jpeg`) files from images with format
-@ref PixelFormat::R8Unorm or @ref PixelFormat::RGB8Unorm. Images in
-@ref PixelFormat::RGBA8Unorm are supported only if you use libJPEG Turbo
-instead of vanilla libJPEG and the alpha channel gets ignored (with a warning
-printed to the console). @ref PixelFormat::RG8Unorm can't be easily supported,
-see @ref StbImageConverter for an alternative with a possibility to export RG
-images as a grayscale JPEG. You can use @ref JpegImporter to import images in
-this format.
+Creates JPEG (`*.jpg`, `*.jpe`, `*.jpeg`) files using the
+[libJPEG](https://ijg.org) library. You can use @ref JpegImporter to import
+images in this format.
 
 @m_class{m-block m-success}
 
@@ -117,6 +112,13 @@ See @ref building-plugins, @ref cmake-plugins, @ref plugins and
 @ref file-formats for more information.
 
 @section Trade-JpegImageConverter-behavior Behavior and limitations
+
+Accepts 2D images in @ref PixelFormat::R8Unorm or @ref PixelFormat::RGB8Unorm.
+Images in @ref PixelFormat::RGBA8Unorm are supported only if you use libJPEG
+Turbo instead of vanilla libJPEG and the alpha channel gets ignored (with a
+warning printed to @relativeref{Magnum,Error}). @ref PixelFormat::RG8Unorm
+can't be easily supported, see @ref StbImageConverter for an alternative with a
+possibility to export RG images as a grayscale JPEG.
 
 The JPEG file format doesn't have a way to distinguish between 2D and 1D array
 images. If an image has @ref ImageFlag2D::Array set, a warning is printed and

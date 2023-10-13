@@ -58,7 +58,7 @@ namespace Magnum { namespace Trade {
 @m_keywords{BmpImporter GifImporter HdrImporter JpegImporter PgmImporter}
 @m_keywords{PicImporter PngImporter PpmImporter PsdImporter TgaImporter}
 
-Supports the following formats using the
+Imports the following formats using the
 [stb_image](https://github.com/nothings/stb) library:
 
 -   Windows Bitmap (`*.bmp`), @ref Trade-StbImageImporter-behavior-bmp "details"
@@ -72,8 +72,8 @@ Supports the following formats using the
 -   Adobe Photoshop (`*.psd`), @ref Trade-StbImageImporter-behavior-psd "details"
 -   Truevision TGA (`*.tga`, `*.vda`, `*.icb`, `*.vst`)
 
-Creates RGB, RGBA, grayscale or grayscale + alpha images with 8, 16 or float 32
-bits per channel. Paletted images are automatically converted to RGB(A).
+You can use @ref StbImageConverter to encode images into a subset of the above
+formats.
 
 This plugin provides the `BmpImporter`, `GifImporter`, `HdrImporter`,
 `JpegImporter`, `PgmImporter`, `PicImporter`, `PngImporter`, `PpmImporter`,
@@ -142,9 +142,10 @@ LDR images are imported as @ref PixelFormat::RGB8Unorm /
 @ref PixelFormat::R16Unorm for grayscale or @ref PixelFormat::RG8Unorm /
 @ref PixelFormat::RG16Unorm for grayscale + alpha, HDR images as
 @ref PixelFormat::RGB32F, @ref PixelFormat::RGBA32F, @ref PixelFormat::R32F or
-@ref PixelFormat::RG32F. Certain formats support only some channel counts (for
-example Radiance HDR can only be three-component), however it's possible to
-override the desired channel count using the @cb{.ini} forceChannelCount @ce
+@ref PixelFormat::RG32F. Paletted images are automatically converted to RGB(A).
+Certain formats support only some channel counts (for example Radiance HDR can
+only be three-component), however it's possible to override the desired channel
+count using the @cb{.ini} forceChannelCount @ce
 @ref Trade-StbImageImporter-configuration "configuration option". The
 @cb{.ini} forceBitDepth @ce option makes it possible to convert the images to a
 different bit depth.
