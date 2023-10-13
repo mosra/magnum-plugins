@@ -58,11 +58,8 @@ namespace Magnum { namespace Text {
 
 @m_keywords{TrueTypeFont OpenTypeFont}
 
-Supports opening fonts of the following formats either from file or from memory
-location using the [stb_truetype](https://github.com/nothings/stb) library:
-
--   TrueType fonts (`*.ttf`)
--   OpenType / Type 2 fonts (`*.otf`)
+Uses the [stb_truetype](https://github.com/nothings/stb) library to load
+OpenType (`*.otf`) and TrueType (`*.ttf`) fonts.
 
 This plugin provides the `TrueTypeFont` and `OpenTypeFont` plugins, but please
 note that this plugin trades the simplicity and portability for various

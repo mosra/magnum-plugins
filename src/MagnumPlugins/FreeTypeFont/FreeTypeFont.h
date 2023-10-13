@@ -64,18 +64,26 @@ namespace Magnum { namespace Text {
 
 @m_keywords{TrueTypeFont OpenTypeFont}
 
-The font can be created either from file or from memory location of format
-supported by [FreeType](http://www.freetype.org/) library.
+Uses the [FreeType](https://freetype.org) library to load fonts of the
+following formats:
+
+-   OpenType (`*.otf`)
+-   TrueType (`*.ttf`)
+-   WOFF and WOFF2 (`*.woff`, `*.woff2`)
+-   Type 1 (`*.pfb`, `*.pfm`, `*.afm`, `*.ofm`...)
+-   Windows Font (`*.fon`, `*.fnt`)
+-   X11 PCF (`*.pcf`)
+-   CID, CFF
 
 This plugin provides the `TrueTypeFont` and `OpenTypeFont` plugins.
 
 @m_class{m-block m-success}
 
-@thirdparty This plugin makes use of the [FreeType](http://freetype.org/)
+@thirdparty This plugin makes use of the [FreeType](https://freetype.org/)
     library, released under the @m_class{m-label m-success} **FreeType license**
-    ([license text](http://git.savannah.gnu.org/cgit/freetype/freetype2.git/tree/docs/FTL.TXT))
+    ([license text](https://gitlab.freedesktop.org/freetype/freetype/-/blob/master/docs/FTL.TXT))
     or @m_class{m-label m-danger} **GPLv2**
-    ([license text](http://www.gnu.org/licenses/gpl-2.0.html),
+    ([license text](https://gitlab.freedesktop.org/freetype/freetype/-/blob/master/docs/GPLv2.TXT),
     [choosealicense.com](https://choosealicense.com/licenses/gpl-2.0)). It
     requires attribution for public use.
 
@@ -88,7 +96,7 @@ This plugin provides the `TrueTypeFont` and `OpenTypeFont` plugins.
     through the base @ref AbstractFont interface. See its documentation for
     introduction and usage examples.
 
-This plugin depends on the @ref Text and [FreeType](http://www.freetype.org)
+This plugin depends on the @ref Text and [FreeType](https://freetype.org/)
 libraries and is built if `MAGNUM_WITH_FREETYPEFONT` is enabled when building
 Magnum Plugins. To use as a dynamic plugin, load @cpp "FreeTypeFont" @ce via
 @ref Corrade::PluginManager::Manager.

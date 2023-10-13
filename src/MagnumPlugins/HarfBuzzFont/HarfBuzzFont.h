@@ -60,16 +60,16 @@ namespace Magnum { namespace Text {
 
 @m_keywords{TrueTypeFont OpenTypeFont}
 
-Improves @ref FreeTypeFont with [HarfBuzz](http://www.freedesktop.org/wiki/Software/HarfBuzz)
-text layouting capabilities, such as kerning, ligatures etc.
+Improves @ref FreeTypeFont with text shaping capabilities provided by the
+[HarfBuzz](https://harfbuzz.github.io) library.
 
 This plugin provides the `TrueTypeFont` and `OpenTypeFont` plugins.
 
 @m_class{m-block m-success}
 
-@thirdparty This plugin makes use of the [HarfBuzz](http://harfbuzz.org/)
+@thirdparty This plugin makes use of the [HarfBuzz](https://harfbuzz.github.io)
     library, licensed under @m_class{m-label m-success} **MIT**
-    ([license text](https://raw.githubusercontent.com/behdad/harfbuzz/master/COPYING),
+    ([license text](https://raw.githubusercontent.com/harfbuzz/harfbuzz/main/COPYING),
     [choosealicense.com](https://choosealicense.com/licenses/mit/)). It
     requires attribution for public use. In turn it depends on @ref FreeTypeFont
     and thus FreeType, see its documentation for further license info.
@@ -83,11 +83,11 @@ This plugin provides the `TrueTypeFont` and `OpenTypeFont` plugins.
     through the base @ref AbstractFont interface. See its documentation for
     introduction and usage examples.
 
-This plugin depends on the @ref Text and
-[HarfBuzz](http://www.freedesktop.org/wiki/Software/HarfBuzz) libraries and the
-@ref FreeTypeFont plugin. It is built if `MAGNUM_WITH_HARFBUZZFONT` is enabled
-when building Magnum Plugins. To use as a dynamic plugin, load
-@cpp "HarfBuzzFont" @ce via @ref Corrade::PluginManager::Manager.
+This plugin depends on the @ref Text and [HarfBuzz](https://harfbuzz.github.io)
+libraries and the @ref FreeTypeFont plugin. It is built if
+`MAGNUM_WITH_HARFBUZZFONT` is enabled when building Magnum Plugins. To use as a
+dynamic plugin, load @cpp "HarfBuzzFont" @ce via
+@ref Corrade::PluginManager::Manager.
 
 Additionally, if you're using Magnum as a CMake subproject, bundle the
 [magnum-plugins repository](https://github.com/mosra/magnum-plugins) and do the
