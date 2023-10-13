@@ -142,6 +142,42 @@ Reusing an @ref AbstractShaper instance that has the script, language or
 direction left unspecified will attempt to guess these properties anew for
 every new shaped text. On the other hand, if a concrete script, language or
 direction value is set, it stays used for subsequent shaped text.
+
+@subsection Text-HarfBuzzFont-behavior-features Typographic features
+
+HarfBuzz [enables the following features by default](https://harfbuzz.github.io/shaping-opentype-features.html):
+
+-   @ref Feature::AboveBaseForms
+-   @ref Feature::BelowBaseForms
+-   @ref Feature::GlyphCompositionDecomposition
+-   @ref Feature::LocalizedForms
+-   @ref Feature::MarkPositioning
+-   @ref Feature::MarkToMarkPositioning
+-   @ref Feature::RequiredLigatures
+
+Additionally, for @ref Direction::LeftToRight or @ref Direction::RightToLeft,
+HarfBuzz enables the following by default:
+
+-   @ref Feature::ContextualAlternates
+-   @ref Feature::ContextualLigatures
+-   @ref Feature::CursivePositioning
+-   @ref Feature::Distances
+-   @ref Feature::Kerning
+-   @ref Feature::StandardLigatures
+-   @ref Feature::RequiredContextualAlternates
+
+Additionally, when HarfBuzz encounters a fraction slash (`⁄`, U+2044), it looks
+backward and forward for decimal digits, enables @ref Feature::Numerators on
+the sequence before the slash, @ref Feature::Denominators on the sequence after
+the slash and @ref Feature::Fractions on the whole sequence including the
+slash.
+
+For @ref Direction::TopToBottom or @ref Direction::BottomToTop, HarfBuzz
+enables @ref Feature::VerticalWriting by default.
+
+For @ref Script::Hangul, HarfBuzz disables @ref Feature::ContextualAlternates
+by default. For Indic scripts and @ref Script::Khmer, HarfBuzz disables
+@ref Feature::StandardLigatures by default.
 */
 class MAGNUM_HARFBUZZFONT_EXPORT HarfBuzzFont: public FreeTypeFont {
     public:

@@ -24,6 +24,7 @@
 */
 
 #include <sstream>
+#include <Corrade/Containers/Array.h>
 #include <Corrade/Containers/String.h>
 #include <Corrade/Containers/StridedArrayView.h>
 #include <Corrade/PluginManager/Manager.h>
@@ -35,6 +36,7 @@
 #include <Magnum/Math/Vector2.h>
 #include <Magnum/Text/AbstractFont.h>
 #include <Magnum/Text/AbstractShaper.h>
+#include <Magnum/Text/Feature.h>
 #include <Magnum/Text/Script.h>
 #include <hb.h>
 
@@ -55,6 +57,8 @@ struct HarfBuzzFontTest: TestSuite::Tester {
 
     void shaperReuse();
     void shaperReuseAutodetection();
+
+    void shapeFeatures();
 
     /* Explicitly forbid system-wide plugin dependencies */
     PluginManager::Manager<AbstractFont> _manager{"nonexistent"};
@@ -110,6 +114,73 @@ const struct {
     {"explicitly set unspecified values", true}
 };
 
+const struct {
+    const char* name;
+    Containers::Array<FeatureRange> features;
+    Float advances[4];
+} ShapeFeaturesData[]{
+    {"none", {}, {
+        /* Versions 3.3.0 and 3.3.1 reported {16.5f, 0.0f} here, but the
+           change is reverted in 3.3.2 again "as it proved problematic". */
+        16.3594f,
+        8.26562f,
+        /* HarfBuzz before 1.7 and after 3.1 gives 8.0, versions between the
+           other */
+        #if HB_VERSION_MAJOR*100 + HB_VERSION_MINOR < 107 || \
+            HB_VERSION_MAJOR*100 + HB_VERSION_MINOR >= 301
+        8.0f,
+        #else
+        7.984384f,
+        #endif
+        8.34375f
+    }},
+    {"no-op", {InPlaceInit, {
+        /* These are enabled by HarfBuzz by default */
+        Feature::Kerning,
+        Feature::StandardLigatures
+    }}, {
+        /* Same as above, as kerning is enabled by default */
+        16.3594f,
+        8.26562f,
+        #if HB_VERSION_MAJOR*100 + HB_VERSION_MINOR < 107 || \
+            HB_VERSION_MAJOR*100 + HB_VERSION_MINOR >= 301
+        8.0f,
+        #else
+        7.984384f,
+        #endif
+        8.34375f
+    }},
+    {"kerning disabled", {InPlaceInit, {
+        {Feature::Kerning, false}
+    }}, {
+        /* Not quite the same as what FreeTypeFont gives back, but different
+           from above at least */
+        16.6562f,
+        8.26562f, /* same as with kerning */
+        8.09375f,
+        8.34375f  /* same as with kerning */
+    }},
+    {"kerning enabled and disabled for a part", {InPlaceInit, {
+        {Feature::Kerning, 0, 2, true},
+        {Feature::Kerning, 2, 4, false},
+    }}, {
+        16.3594f, /* same as with kerning */
+        8.26562f, /* same as with kerning */
+        8.09375f,
+        8.34375f  /* same as with kerning */
+    }},
+    {"kerning disabled and enabled for a part", {InPlaceInit, {
+        /* Just different order from above, should result in the same */
+        {Feature::Kerning, 2, 4, false},
+        {Feature::Kerning, 0, 2, true},
+    }}, {
+        16.3594f,
+        8.26562f,
+        8.09375f,
+        8.34375f
+    }},
+};
+
 HarfBuzzFontTest::HarfBuzzFontTest() {
     addTests({&HarfBuzzFontTest::scriptMapping});
 
@@ -127,6 +198,9 @@ HarfBuzzFontTest::HarfBuzzFontTest() {
 
               &HarfBuzzFontTest::shaperReuse,
               &HarfBuzzFontTest::shaperReuseAutodetection});
+
+    addInstancedTests({&HarfBuzzFontTest::shapeFeatures},
+        Containers::arraySize(ShapeFeaturesData));
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. */
@@ -468,6 +542,40 @@ void HarfBuzzFontTest::shaperReuseAutodetection() {
         CORRADE_COMPARE(shaper->language(), "c");
         CORRADE_COMPARE(shaper->direction(), Direction::LeftToRight);
     }
+}
+
+void HarfBuzzFontTest::shapeFeatures() {
+    auto&& data = ShapeFeaturesData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    Containers::Pointer<AbstractFont> font = _manager.instantiate("HarfBuzzFont");
+    CORRADE_VERIFY(font->openFile(Utility::Path::join(FREETYPEFONT_TEST_DIR, "Oxygen.ttf"), 16.0f));
+
+    Containers::Pointer<AbstractShaper> shaper = font->createShaper();
+
+    /* Shape a text */
+    CORRADE_VERIFY(shaper->setScript(Script::Latin));
+    CORRADE_VERIFY(shaper->setLanguage("en"));
+    CORRADE_VERIFY(shaper->setDirection(Direction::LeftToRight));
+    CORRADE_COMPARE(shaper->shape("Wave", data.features), 4);
+
+    /* Verify the shaped glyph IDs match expectations, other IDs would have
+       vastly different advances */
+    UnsignedInt ids[4];
+    Vector2 offsets[4];
+    Vector2 advances[4];
+    shaper->glyphsInto(ids, offsets, advances);
+    CORRADE_COMPARE_AS(Containers::arrayView(ids), Containers::arrayView({
+        58u,    /* 'W' */
+        68u,    /* 'a' */
+        89u,    /* 'v' */
+        72u,    /* 'e' */
+    }), TestSuite::Compare::Container);
+
+    /* Assuming Y advance is always 0 */
+    CORRADE_COMPARE_AS(Containers::stridedArrayView(advances).slice(&Vector2::x),
+        Containers::stridedArrayView(data.advances),
+        TestSuite::Compare::Container);
 }
 
 }}}}

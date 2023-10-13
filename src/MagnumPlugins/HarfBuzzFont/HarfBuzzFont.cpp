@@ -184,7 +184,7 @@ Containers::Pointer<AbstractShaper> HarfBuzzFont::doCreateShaper() {
             CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
         }
 
-        UnsignedInt doShape(const Containers::StringView text, const UnsignedInt begin, const UnsignedInt end, Containers::ArrayView<const FeatureRange>) override {
+        UnsignedInt doShape(const Containers::StringView text, const UnsignedInt begin, const UnsignedInt end, const Containers::ArrayView<const FeatureRange> features) override {
             /* If shaping was performed already, the buffer type is
                HB_BUFFER_CONTENT_TYPE_GLYPHS, need to reset it to accept
                Unicode input again. */
@@ -203,7 +203,21 @@ Containers::Pointer<AbstractShaper> HarfBuzzFont::doCreateShaper() {
                _direction == HB_DIRECTION_INVALID)
                 hb_buffer_guess_segment_properties(_buffer);
 
-            hb_shape(static_cast<const HarfBuzzFont&>(font())._hbFont, _buffer, nullptr, 0);
+            /* Allocate a temporary array for hb_feature_t entries. The
+               FeatureRange has the same layout, but unfortunately like with
+               script values, the feature tags are endian-dependent in HarfBuzz
+               so we have to modify them. Sigh. */
+            /** @todo use some stack allocator or DynamicArray when that's a
+                thing to avoid the allocation */
+            Containers::Array<hb_feature_t> hbFeatures{NoInit, features.size()};
+            for(std::size_t i = 0; i != features.size(); ++i) {
+                hbFeatures[i].tag = UnsignedInt(Utility::Endianness::bigEndian(features[i].feature()));
+                hbFeatures[i].value = features[i].value();
+                hbFeatures[i].start = features[i].begin();
+                hbFeatures[i].end = features[i].end();
+            }
+
+            hb_shape(static_cast<const HarfBuzzFont&>(font())._hbFont, _buffer, hbFeatures.data(), hbFeatures.size());
 
             return hb_buffer_get_length(_buffer);
         }
