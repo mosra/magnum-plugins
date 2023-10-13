@@ -298,6 +298,7 @@ void HarfBuzzFontTest::shape() {
         data.eGlyphId   /* 'e' or 'ě' */
     }), TestSuite::Compare::Container);
     /* There are no glyph-specific offsets here */
+    /** @todo test this with something, Zalgo or other combining diacritics */
     CORRADE_COMPARE_AS(Containers::arrayView(offsets), Containers::arrayView<Vector2>({
         {}, {}, {}, {}
     }), TestSuite::Compare::Container);
