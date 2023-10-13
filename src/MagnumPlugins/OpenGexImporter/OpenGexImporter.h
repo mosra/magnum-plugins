@@ -56,7 +56,7 @@ namespace Magnum { namespace Trade {
 /**
 @brief OpenGEX importer
 
-Imports the [OpenDDL](http://openddl.org)-based [OpenGEX](http://opengex.org)
+Imports the [OpenDDL](https://openddl.org)-based [OpenGEX](https://opengex.org)
 format.
 
 Supports importing of scene, object, camera, mesh, texture and image data.

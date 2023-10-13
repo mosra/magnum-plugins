@@ -101,7 +101,8 @@ auto StbTrueTypeFont::doOpenData(const Containers::ArrayView<const char> data, c
     /* All right, let's move in */
     _font = Utility::move(font);
 
-    /* Set font size, 1 px = 0.75 pt (http://www.w3.org/TR/CSS21/syndata.html#x39) */
+    /* Set font size, 1 px = 0.75 pt
+       (https://www.w3.org/TR/CSS21/syndata.html#x39) */
     _font->scale = stbtt_ScaleForPixelHeight(&_font->info, size/0.75f);
 
     /* Return font metrics */

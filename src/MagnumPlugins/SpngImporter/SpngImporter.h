@@ -150,8 +150,8 @@ for more information.
 @subsection Trade-SpngImporter-behavior-cgbi Apple CgBI PNGs
 
 CgBI is a proprietary Apple-specific extension to PNG
-([details here](http://iphonedevwiki.net/index.php/CgBI_file_format)),
-unfortunately libspng [doesn't plan to support it](https://github.com/randy408/libspng/issues/16).
+([details here](https://iphonedev.wiki/CgBI_file_format)), unfortunately
+libspng [doesn't plan to support it](https://github.com/randy408/libspng/issues/16).
 To import such files use either @ref StbImageImporter or
 @ref Trade-PngImporter-behavior-cgbi "PngImporter with a patched libpng".
 */

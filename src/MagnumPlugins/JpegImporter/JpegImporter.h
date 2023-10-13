@@ -60,7 +60,7 @@ library. You can use @ref JpegImageConverter to encode images into this format.
 
 @m_class{m-block m-success}
 
-@thirdparty This plugin makes use of the [libJPEG](http://ijg.org/) library,
+@thirdparty This plugin makes use of the [libJPEG](https://ijg.org) library,
     released under a custom @m_class{m-label m-success} **Libjpeg license**
     ([license text](https://jpegclub.org/reference/libjpeg-license/)). It
     requires attribution for public use. Note that this plugin can be built
@@ -76,8 +76,9 @@ library. You can use @ref JpegImageConverter to encode images into this format.
     through the base @ref AbstractImporter interface. See its documentation for
     introduction and usage examples.
 
-This plugin depends on the @ref Trade and [libJPEG](http://libjpeg.sourceforge.net/) libraries and is built if `MAGNUM_WITH_JPEGIMPORTER` is enabled when building
-Magnum Plugins. To use as a dynamic plugin, load @cpp "JpegImporter" @ce
+This plugin depends on the @ref Trade and [libJPEG](https://ijg.org) libraries
+and is built if `MAGNUM_WITH_JPEGIMPORTER` is enabled when building Magnum
+Plugins. To use as a dynamic plugin, load @cpp "JpegImporter" @ce
 via @ref Corrade::PluginManager::Manager.
 
 Additionally, if you're using Magnum as a CMake subproject, bundle the

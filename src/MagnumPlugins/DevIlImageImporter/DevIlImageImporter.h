@@ -119,9 +119,9 @@ This plugins provides `BmpImporter`, `DdsImporter`, `OpenExrImporter`,
 
 @m_class{m-block m-warning}
 
-@thirdparty This plugin makes use of the [DevIL](http://openil.sourceforge.net/)
+@thirdparty This plugin makes use of the [DevIL](https://openil.sourceforge.net)
     library, licensed under @m_class{m-label m-warning} **LGPLv2.1**
-    ([license text](http://openil.sourceforge.net/lgpl.txt),
+    ([license text](https://openil.sourceforge.net/lgpl.txt),
     [choosealicense.com](https://choosealicense.com/licenses/lgpl-2.1/)). It
     requires attribution and either dynamic linking or source disclosure for
     public use.
@@ -135,7 +135,7 @@ This plugins provides `BmpImporter`, `DdsImporter`, `OpenExrImporter`,
     through the base @ref AbstractImporter interface. See its documentation for
     introduction and usage examples.
 
-This plugin depends on the @ref Trade and [DevIL](http://openil.sourceforge.net/)
+This plugin depends on the @ref Trade and [DevIL](https://openil.sourceforge.net)
 libraries and is built if `MAGNUM_WITH_DEVILIMAGEIMPORTER` is enabled when
 building Magnum Plugins. To use as a dynamic plugin, load
 @cpp "DevIlImageImporter" @ce via @ref Corrade::PluginManager::Manager.
@@ -215,8 +215,8 @@ reported as separate images instead of image levels.
 @subsection Trade-DevIlImageImporter-behavior-cgbi Apple CgBI PNGs
 
 CgBI is a proprietary Apple-specific extension to PNG
-([details here](http://iphonedevwiki.net/index.php/CgBI_file_format)). DevIL
-doesn't support these, use @ref StbImageImporter for loading these instead.
+([details here](https://iphonedev.wiki/CgBI_file_format)). DevIL doesn't
+support these, use @ref StbImageImporter for loading these instead.
 
 @subsection Trade-DevIlImageImporter-behavior-psd PSD files
 

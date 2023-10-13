@@ -258,7 +258,7 @@ for a high-level overview.
 
 @subsection changelog-plugins-2018-02-documentation Documentation
 
--   New documentation theme powered by [m.css](http://mcss.mosra.cz) and
+-   New documentation theme powered by [m.css](https://mcss.mosra.cz) and
     related massive updates of *everything*
 -   The @ref building-examples documentation now prefers package installation
     instead of manual build

@@ -70,7 +70,7 @@ namespace Validation {
 /**
 @brief OpenDDL document
 
-Parser for the [OpenDDL](http://www.openddl.org) file format.
+Parser for the [OpenDDL](https://www.openddl.org) file format.
 
 The parser loads the file into an in-memory structure, which is just a set of
 flat arrays. When traversing the parsed document, all @ref Structure and
@@ -85,7 +85,7 @@ To avoid needless allocations and string comparisons when using the parsed
 document, all structure and property names are represented as integer IDs. To
 parse a file, you first need to build a list of string names with their
 corresponding IDs for both structure and property names. The following example
-is a subset of the [OpenGEX](http://www.opengex.org) file format:
+is a subset of the [OpenGEX](https://www.opengex.org) file format:
 
 @code{.cpp}
 namespace OpenGex {

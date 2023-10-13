@@ -340,7 +340,7 @@ By default no plugins are built and you need to select them manually:
 
 -   `MAGNUM_WITH_ASSIMPIMPORTER` --- Build the
     @ref Trade::AssimpImporter "AssimpImporter" plugin. Depends on
-    [Assimp](http://assimp.org/).
+    [Assimp](https://assimp.org/).
 -   `MAGNUM_WITH_ASTCIMPORTER` --- Build the @relativeref{Trade,AstcImporter}
     plugin.
 -   `MAGNUM_WITH_BASISIMAGECONVERTER` --- Build the
@@ -360,7 +360,7 @@ By default no plugins are built and you need to select them manually:
     plugin.
 -   `MAGNUM_WITH_DEVILIMAGEIMPORTER` --- Build the
     @ref Trade::DevIlImageImporter "DevIlImageImporter" plugin. Depends on
-    [DevIL](http://openil.sourceforge.net/).
+    [DevIL](https://openil.sourceforge.net/).
 -   `MAGNUM_WITH_DRFLACAUDIOIMPORTER` --- Build the
     @ref Audio::DrFlacImporter "DrFlacAudioImporter" plugin.
 -   `MAGNUM_WITH_DRMP3AUDIOIMPORTER` --- Build the
@@ -374,7 +374,7 @@ By default no plugins are built and you need to select them manually:
     [FAAD2](https://www.audiocoding.com/faad2.html).
 -   `MAGNUM_WITH_FREETYPEFONT` --- Build the
     @ref Text::FreeTypeFont "FreeTypeFont" plugin. Depends on
-    [FreeType](http://www.freetype.org/).
+    [FreeType](https://freetype.org).
 -   `MAGNUM_WITH_GLSLANGSHADERCONVERTER` --- Build the
     @ref ShaderTools::GlslangConverter "GlslangShaderConverter" plugin. Depends
     on [Glslang](https://github.com/KhronosGroup/glslang).
@@ -385,13 +385,13 @@ By default no plugins are built and you need to select them manually:
 -   `MAGNUM_WITH_HARFBUZZFONT` --- Build the
     @ref Text::HarfBuzzFont "HarfBuzzFont" plugin. Enables also building of the
     @ref Text::FreeTypeFont "FreeTypeFont" plugin. Depends on
-    [HarfBuzz](http://www.freedesktop.org/wiki/Software/HarfBuzz).
+    [HarfBuzz](https://harfbuzz.github.io).
 -   `MAGNUM_WITH_ICOIMPORTER` --- Build the @ref Trade::IcoImporter "IcoImporter"
     plugin.
 -   `MAGNUM_WITH_JPEGIMAGECONVERTER` --- Build the
     @ref Trade::JpegImageConverter "JpegImageConverter" plugin.
 -   `MAGNUM_WITH_JPEGIMPORTER` --- Build the @ref Trade::JpegImporter "JpegImporter"
-    plugin. Depends on [libJPEG](http://libjpeg.sourceforge.net/).
+    plugin. Depends on [libJPEG](https://ijg.org.
 -   `MAGNUM_WITH_KTXIMAGECONVERTER` --- Build the
     @relativeref{Trade,KtxImageConverter} plugin.
 -   `MAGNUM_WITH_KTXIMPORTER` --- Build the

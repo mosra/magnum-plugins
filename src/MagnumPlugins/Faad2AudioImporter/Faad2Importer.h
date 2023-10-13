@@ -67,7 +67,7 @@ This plugins provides `AacAudioImporter`.
 
 @thirdparty This plugin makes use of the [FAAD2](https://www.audiocoding.com/faad2.html)
     library, licensed under @m_class{m-label m-danger} **GPLv2**
-    ([license text](http://www.opensource.org/licenses/gpl-license.php),
+    ([license text](https://opensource.org/license/gpl-2-0/),
     [choosealicense.com](https://choosealicense.com/licenses/gpl-2.0/)). It
     requires attribution and source disclosure for public use. It's subject to
     patent licensing for commercial use.

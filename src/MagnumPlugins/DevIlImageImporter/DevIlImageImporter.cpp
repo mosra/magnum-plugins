@@ -44,7 +44,7 @@ namespace Magnum { namespace Trade {
 
 void DevIlImageImporter::initialize() {
     /* You are a funny devil, DevIL. No tutorials or docs mention this function
-       (except for a tiny note at http://openil.sourceforge.net/tuts/tut_step/)
+       (except for a tiny note at https://openil.sourceforge.net/tuts/tut_step/)
        AND YET when I call ilLoadImage() without this, everything explodes. */
     ilInit();
 }

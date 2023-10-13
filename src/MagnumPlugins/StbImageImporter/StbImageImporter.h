@@ -187,8 +187,8 @@ Both 8- and 16-bit images are supported, lower bit counts and paletted images
 are expanded to 8-bit.
 
 CgBI is a proprietary Apple-specific extension to PNG
-([details here](http://iphonedevwiki.net/index.php/CgBI_file_format)). The
-importer detects those files and converts BGRA channels back to RGBA.
+([details here](https://iphonedev.wiki/CgBI_file_format)). The importer detects
+those files and converts BGRA channels back to RGBA.
 
 @subsection Trade-StbImageImporter-behavior-psd PSD files
 

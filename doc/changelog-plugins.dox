@@ -736,10 +736,9 @@ Released 2018-10-23, tagged as
 -   @ref Text::HarfBuzzFont "HarfBuzzFont" is now providing `TrueTypeFont`,
     similarly to other plugins supporting TTF fonts
 -   @ref Trade::StbImageImporter "StbImageImporter" now properly supports Apple
-    proprietary [CgBI PNGs](http://iphonedevwiki.net/index.php/CgBI_file_format).
-    Stock `libPNG` doesn't support that but there are forks that can do it,
-    updated documentation of @ref Trade::PngImporter "PngImporter" to mention
-    that.
+    proprietary [CgBI PNGs](https://iphonedev.wiki/CgBI_file_format). Stock
+    `libPNG` doesn't support that but there are forks that can do it, updated
+    documentation of @ref Trade::PngImporter "PngImporter" to mention that.
 -   @ref Trade::StbImageConverter "StbImageConverter" no longer requires input
     data to be tightly packed, allowing to export image subrectangles
 -   @ref Trade::StbImageConverter "StbImageConverter" now prints warnings when

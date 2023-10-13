@@ -128,12 +128,12 @@ constexpr struct {
 } GrayAlphaData[]{
     /* magnum-imageconverter ga-trns.png --converter StbPngImageConverter ga.png
        because imagemagick is STUPID and doesn't let me override the rRNS from
-       http://www.imagemagick.org/Usage/formats/#png_quality -- the suggested
+       https://www.imagemagick.org/Usage/formats/#png_quality -- the suggested
        -type TruecolorMatte doesn't do anything and PNG32: gives me a RGBA
        (yes, the source file is the one from below) */
     {"8bit", "ga.png"},
     /* convert rgba.png -colorspace gray ga-trns.png
-       According to http://www.imagemagick.org/Usage/formats/#png_quality,
+       According to https://www.imagemagick.org/Usage/formats/#png_quality,
        ImageMagick creates a tRNS chunk if the original image has binary (00
        or FF) alpha. */
     {"tRNS alpha mask", "ga-trns.png"},
@@ -156,7 +156,7 @@ constexpr struct {
     /* See README.md for details on how this file was produced */
     {"CgBI BGRA", "rgba-iphone.png"},
     /* convert rgba.png -define png:exclude-chunks=date rgba-trns.png
-       According to http://www.imagemagick.org/Usage/formats/#png_quality,
+       According to https://www.imagemagick.org/Usage/formats/#png_quality,
        ImageMagick creates a tRNS chunk if the original image has binary (00
        or FF) alpha. */
     {"tRNS alpha mask", "rgba-trns.png"},

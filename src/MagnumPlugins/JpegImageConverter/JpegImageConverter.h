@@ -76,9 +76,9 @@ images in this format.
     via the base @ref AbstractImageConverter interface. See its documentation
     for introduction and usage examples.
 
-This plugin depends on the @ref Trade and [libJPEG](http://libjpeg.sourceforge.net/)
-libraries and is built if `MAGNUM_WITH_JPEGIMAGECONVERTER` is enabled when
-building Magnum Plugins. To use as a dynamic plugin, load
+This plugin depends on the @ref Trade and [libJPEG](http://ijg.org/) libraries
+and is built if `MAGNUM_WITH_JPEGIMAGECONVERTER` is enabled when building
+Magnum Plugins. To use as a dynamic plugin, load
 @cpp "JpegImageConverter" @ce via @ref Corrade::PluginManager::Manager.
 
 Additionally, if you're using Magnum as a CMake subproject, bundle the

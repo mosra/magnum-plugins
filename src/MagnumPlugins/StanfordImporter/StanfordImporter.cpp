@@ -373,7 +373,8 @@ void StanfordImporter::doOpenData(Containers::Array<char>&& data, const DataFlag
                 } else if(propertyType == PropertyType::Face) {
                     /* Face vertex indices. The vertex_indices name is usual,
                        Assimp exports with vertex_index, reference from
-                       http://paulbourke.net/dataformats/ply/ mentions both. */
+                       https://paulbourke.net/dataformats/ply/ mentions
+                       both. */
                     if(tokens.size() == 5 && tokens[1] == "list" && (tokens[4] == "vertex_indices" || tokens[4] == "vertex_index")) {
                         state->faceIndicesOffset = state->faceSkip;
                         state->faceSkip = 0;

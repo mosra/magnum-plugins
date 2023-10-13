@@ -133,10 +133,10 @@ be suppressed.
 @subsection Trade-PngImporter-behavior-cgbi Apple CgBI PNGs
 
 CgBI is a proprietary Apple-specific extension to PNG
-([details here](http://iphonedevwiki.net/index.php/CgBI_file_format)). Stock
-`libPNG` doesn't support these, you might want to use some fork that supports
-it, for example https://github.com/jongwook/libpng. Or use @ref StbImageImporter,
-which has the support.
+([details here](https://iphonedev.wiki/CgBI_file_format)). Stock `libPNG`
+doesn't support these, you might want to use some fork that supports it, for
+example https://github.com/jongwook/libpng. Or use @ref StbImageImporter, which
+has the support.
 
 The test for this plugin contains a file that can be used for verifying CgBI
 support.

@@ -195,7 +195,7 @@
 /** @namespace Magnum::OpenDdl
 @brief OpenDDL parser
 
-Parser for [OpenDDL](http://openddl.org) file format. See
+Parser for [OpenDDL](https://openddl.org) file format. See
 @ref OpenDdl::Document for more information.
 
 This library is built if `MAGNUM_WITH_OPENDDL` is enabled when building Magnum

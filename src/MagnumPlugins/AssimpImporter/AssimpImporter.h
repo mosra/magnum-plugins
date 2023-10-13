@@ -70,7 +70,7 @@ namespace Magnum { namespace Trade {
 @m_keywords{OpenGexImporter StanfordImporter StlImporter TrueSpaceImporter}
 @m_keywords{UnrealImporter ValveImporter XglImporter}
 
-Imports various formats using [Assimp](http://assimp.org), in particular:
+Imports various formats using [Assimp](https://assimp.org), in particular:
 
 -   Autodesk FBX (`*.fbx`)
 -   COLLADA (`*.dae`)
@@ -126,9 +126,9 @@ This plugin provides `3dsImporter`, `3mfImporter`, `Ac3dImporter`,
 
 @m_class{m-block m-success}
 
-@thirdparty This plugin makes use of the [Assimp](http://assimp.org) library,
+@thirdparty This plugin makes use of the [Assimp](https://assimp.org) library,
     licensed under @m_class{m-label m-success} **BSD 3-clause**
-    ([license text](http://assimp.org/index.php/license),
+    ([license text](https://raw.githubusercontent.com/assimp/assimp/master/LICENSE),
     [choosealicense.com](https://choosealicense.com/licenses/bsd-3-clause/)).
     It requires attribution for public use.
 
@@ -141,7 +141,7 @@ This plugin provides `3dsImporter`, `3mfImporter`, `Ac3dImporter`,
     through the base @ref AbstractImporter interface. See its documentation for
     introduction and usage examples.
 
-This plugin depends on the @ref Trade and [Assimp](http://assimp.org) libraries
+This plugin depends on the @ref Trade and [Assimp](https://assimp.org) libraries
 and the @ref AnyImageImporter plugin and is built if `MAGNUM_WITH_ASSIMPIMPORTER`
 is enabled when building Magnum Plugins. To use as a dynamic plugin, load
 @cpp "AssimpImporter" @ce via @ref Corrade::PluginManager::Manager.
@@ -438,12 +438,12 @@ texture coordinates are optional.
 Assimp has a versatile set of configuration options and processing operations
 applied on imported scenes. A subset of these is exposed via
 @ref configuration(), the full form shown below. The first group of options
-matches the [AI_CONFIG_*](http://assimp.sourceforge.net/lib_html/config_8h.html)
+matches the [AI_CONFIG_*](https://assimp.sourceforge.net/lib_html/config_8h.html)
 macros and has to be applied before opening first file with given plugin
 instance; to change them again you need to create a new importer instance.
 
 The @cb{.conf} [postprocess] @ce subgroup contains boolean toggles that
-correspond to the [aiPostProcessSteps](http://assimp.sourceforge.net/lib_html/postprocess_8h.html#a64795260b95f5a4b3f3dc1be4f52e410)
+correspond to the [aiPostProcessSteps](https://assimp.sourceforge.net/lib_html/postprocess_8h.html#a64795260b95f5a4b3f3dc1be4f52e410)
 enum. Some of them are enabled by default, some not; options for not yet
 supported features are omitted. These are passed to Assimp when opening a file,
 meaning a change in these will be always applied to the next opened file.
@@ -481,7 +481,7 @@ importer state methods:
 -   @ref openState() expects a pointer to an Assimp scene (i.e., `const aiScene*`)
     and optionally a path (in order to be able to load textures, if needed)
 
-@todo There are more formats mentioned at http://assimp.sourceforge.net/main_features_formats.html, add aliases for them?
+@todo There are more formats mentioned at https://assimp.sourceforge.net/main_features_formats.html, add aliases for them?
 */
 class MAGNUM_ASSIMPIMPORTER_EXPORT AssimpImporter: public AbstractImporter {
     public:
