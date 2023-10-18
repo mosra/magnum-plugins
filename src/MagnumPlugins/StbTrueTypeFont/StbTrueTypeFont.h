@@ -59,7 +59,8 @@ namespace Magnum { namespace Text {
 @m_keywords{TrueTypeFont OpenTypeFont}
 
 Uses the [stb_truetype](https://github.com/nothings/stb) library to load
-OpenType (`*.otf`) and TrueType (`*.ttf`) fonts.
+[OpenType](https://en.wikipedia.org/wiki/OpenType) (`*.otf`) and
+[TrueType](https://en.wikipedia.org/wiki/TrueType) (`*.ttf`) fonts.
 
 This plugin provides the `TrueTypeFont` and `OpenTypeFont` plugins, but please
 note that this plugin trades the simplicity and portability for various
@@ -118,8 +119,8 @@ find_package(MagnumPlugins REQUIRED StbTrueTypeFont)
 target_link_libraries(your-app PRIVATE MagnumPlugins::StbTrueTypeFont)
 @endcode
 
-See @ref building-plugins, @ref cmake-plugins and @ref plugins for more
-information.
+See @ref building-plugins, @ref cmake-plugins, @ref plugins and
+@ref file-formats for more information.
 
 @section Text-StbTrueTypeFont-behavior Behavior and limitations
 

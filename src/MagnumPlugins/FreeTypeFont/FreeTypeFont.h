@@ -67,12 +67,16 @@ namespace Magnum { namespace Text {
 Uses the [FreeType](https://freetype.org) library to load fonts of the
 following formats:
 
--   OpenType (`*.otf`)
--   TrueType (`*.ttf`)
--   WOFF and WOFF2 (`*.woff`, `*.woff2`)
--   Type 1 (`*.pfb`, `*.pfm`, `*.afm`, `*.ofm`...)
+-   [OpenType](https://en.wikipedia.org/wiki/OpenType) (`*.otf`)
+-   [TrueType](https://en.wikipedia.org/wiki/TrueType) (`*.ttf`)
+-   [WOFF and WOFF2](https://en.wikipedia.org/wiki/Web_Open_Font_Format)
+    (`*.woff`, `*.woff2`)
+-   [Type 1](https://en.wikipedia.org/wiki/PostScript_fonts) (`*.pfb`, `*.pfm`,
+    `*.afm`, `*.ofm`...)
 -   Windows Font (`*.fon`, `*.fnt`)
--   X11 PCF (`*.pcf`)
+-   [X11 PCF](https://en.wikipedia.org/wiki/Portable_Compiled_Format) (`*.pcf`)
+-   [BDF](https://en.wikipedia.org/wiki/Glyph_Bitmap_Distribution_Format)
+    (`*.bdf`)
 -   CID, CFF
 
 This plugin provides the `TrueTypeFont` and `OpenTypeFont` plugins.
@@ -127,8 +131,8 @@ find_package(MagnumPlugins REQUIRED FreeTypeFont)
 target_link_libraries(your-app PRIVATE MagnumPlugins::FreeTypeFont)
 @endcode
 
-See @ref building-plugins, @ref cmake-plugins and @ref plugins for more
-information.
+See @ref building-plugins, @ref cmake-plugins, @ref plugins and
+@ref file-formats for more information.
 
 @section Text-FreeTypeFont-behavior Behavior and limitations
 
