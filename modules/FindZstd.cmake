@@ -62,16 +62,6 @@ elseif(TARGET zstd::libzstd_static)
     set(_ZSTD_TARGET zstd::libzstd_static)
 endif()
 if(_ZSTD_TARGET)
-    if(NOT TARGET Zstd::Zstd)
-        # Aliases of (global) targets are only supported in CMake 3.11, so we
-        # work around it by this. This is easier than fetching all possible
-        # properties (which are impossible to track of) and then attempting to
-        # rebuild them into a new target.
-        add_library(Zstd::Zstd INTERFACE IMPORTED)
-        set_target_properties(Zstd::Zstd PROPERTIES
-            INTERFACE_LINK_LIBRARIES ${_ZSTD_TARGET})
-    endif()
-
     if(_ZSTD_SUBPROJECT)
         # The target is defined in build/cmake/lib/, includes are in lib/
         get_target_property(_ZSTD_INTERFACE_INCLUDE_DIRECTORIES ${_ZSTD_TARGET} SOURCE_DIR)
@@ -81,6 +71,21 @@ if(_ZSTD_TARGET)
         set(_ZSTD_INTERFACE_INCLUDE_DIRECTORIES ${_ZSTD_INTERFACE_INCLUDE_DIRECTORIES}/lib)
     else()
         get_target_property(_ZSTD_INTERFACE_INCLUDE_DIRECTORIES ${_ZSTD_TARGET} INTERFACE_INCLUDE_DIRECTORIES)
+    endif()
+
+    if(NOT TARGET Zstd::Zstd)
+        # Aliases of (global) targets are only supported in CMake 3.11, so we
+        # work around it by this. This is easier than fetching all possible
+        # properties (which are impossible to track of) and then attempting to
+        # rebuild them into a new target.
+        add_library(Zstd::Zstd INTERFACE IMPORTED)
+        set_target_properties(Zstd::Zstd PROPERTIES
+            INTERFACE_LINK_LIBRARIES ${_ZSTD_TARGET})
+        # The subproject target doesn't put lib/ on include path, do that here
+        if(_ZSTD_SUBPROJECT)
+            set_target_properties(Zstd::Zstd PROPERTIES
+                INTERFACE_INCLUDE_DIRECTORIES ${_ZSTD_INTERFACE_INCLUDE_DIRECTORIES})
+        endif()
     endif()
 
     # Just to make FPHSA print some meaningful location, nothing else
