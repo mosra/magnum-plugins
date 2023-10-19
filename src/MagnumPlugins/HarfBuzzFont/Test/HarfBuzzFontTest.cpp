@@ -36,6 +36,7 @@
 #include <Magnum/Math/Vector2.h>
 #include <Magnum/Text/AbstractFont.h>
 #include <Magnum/Text/AbstractShaper.h>
+#include <Magnum/Text/Direction.h>
 #include <Magnum/Text/Feature.h>
 #include <Magnum/Text/Script.h>
 #include <hb.h>
@@ -97,13 +98,13 @@ const struct {
 
 const struct {
     const char* name;
-    Direction direction;
+    ShapeDirection direction;
     bool flip;
 } ShapeDifferentScriptLanguageDirectionData[]{
-    {"left to right", Direction::LeftToRight, false},
-    {"right to left", Direction::RightToLeft, true},
-    {"top to bottom", Direction::TopToBottom, false},
-    {"bottom to top", Direction::BottomToTop, true},
+    {"left to right", ShapeDirection::LeftToRight, false},
+    {"right to left", ShapeDirection::RightToLeft, true},
+    {"top to bottom", ShapeDirection::TopToBottom, false},
+    {"bottom to top", ShapeDirection::BottomToTop, true},
 };
 
 const struct {
@@ -273,19 +274,19 @@ void HarfBuzzFontTest::shape() {
     /* There's no script / language / direction set by default */
     CORRADE_COMPARE(shaper->script(), Script::Unspecified);
     CORRADE_COMPARE(shaper->language(), "");
-    CORRADE_COMPARE(shaper->direction(), Direction::Unspecified);
+    CORRADE_COMPARE(shaper->direction(), ShapeDirection::Unspecified);
 
     /* Shape a text */
     CORRADE_VERIFY(shaper->setScript(Script::Latin));
     CORRADE_VERIFY(shaper->setLanguage("en"));
-    CORRADE_VERIFY(shaper->setDirection(Direction::LeftToRight));
+    CORRADE_VERIFY(shaper->setDirection(ShapeDirection::LeftToRight));
     CORRADE_COMPARE(shaper->shape(data.string, data.begin, data.end), 4);
 
     /* The script / language / direction set above should get used for
        shaping */
     CORRADE_COMPARE(shaper->script(), Script::Latin);
     CORRADE_COMPARE(shaper->language(), "en");
-    CORRADE_COMPARE(shaper->direction(), Direction::LeftToRight);
+    CORRADE_COMPARE(shaper->direction(), ShapeDirection::LeftToRight);
 
     UnsignedInt ids[4];
     Vector2 offsets[4];
@@ -363,7 +364,7 @@ void HarfBuzzFontTest::shapeAutodetectScriptLanguageDirection() {
     if(data.explicitlySetUnspecified) {
         CORRADE_VERIFY(shaper->setScript(Script::Unspecified));
         CORRADE_VERIFY(shaper->setLanguage(""));
-        CORRADE_VERIFY(shaper->setDirection(Direction::Unspecified));
+        CORRADE_VERIFY(shaper->setDirection(ShapeDirection::Unspecified));
     }
 
     CORRADE_COMPARE(shaper->shape("	العربية"), 8);
@@ -373,7 +374,7 @@ void HarfBuzzFontTest::shapeAutodetectScriptLanguageDirection() {
         CORRADE_COMPARE(shaper->language(), "ar");
     }
     CORRADE_COMPARE(shaper->language(), "c");
-    CORRADE_COMPARE(shaper->direction(), Direction::RightToLeft);
+    CORRADE_COMPARE(shaper->direction(), ShapeDirection::RightToLeft);
 
     /* The font doesn't have Arabic glyphs, so this is all invalid */
     UnsignedInt ids[8];
@@ -424,7 +425,7 @@ void HarfBuzzFontTest::shapeEmpty() {
        the surrounding context to guess from */
     CORRADE_COMPARE(shaper->script(), Script::Unspecified);
     CORRADE_COMPARE(shaper->language(), "c");
-    CORRADE_COMPARE(shaper->direction(), Direction::LeftToRight);
+    CORRADE_COMPARE(shaper->direction(), ShapeDirection::LeftToRight);
 }
 
 void HarfBuzzFontTest::shaperReuse() {
@@ -511,7 +512,7 @@ void HarfBuzzFontTest::shaperReuseAutodetection() {
     /* There's no script / language / direction set by default */
     CORRADE_COMPARE(shaper->script(), Script::Unspecified);
     CORRADE_COMPARE(shaper->language(), "");
-    CORRADE_COMPARE(shaper->direction(), Direction::Unspecified);
+    CORRADE_COMPARE(shaper->direction(), ShapeDirection::Unspecified);
 
     /* Arabic text gets detected as such */
     {
@@ -522,7 +523,7 @@ void HarfBuzzFontTest::shaperReuseAutodetection() {
             CORRADE_COMPARE(shaper->language(), "ar");
         }
         CORRADE_COMPARE(shaper->language(), "c");
-        CORRADE_COMPARE(shaper->direction(), Direction::RightToLeft);
+        CORRADE_COMPARE(shaper->direction(), ShapeDirection::RightToLeft);
 
     /* Greek text should then not be treated as RTL and such */
     } {
@@ -533,7 +534,7 @@ void HarfBuzzFontTest::shaperReuseAutodetection() {
             CORRADE_COMPARE(shaper->language(), "el");
         }
         CORRADE_COMPARE(shaper->language(), "c");
-        CORRADE_COMPARE(shaper->direction(), Direction::LeftToRight);
+        CORRADE_COMPARE(shaper->direction(), ShapeDirection::LeftToRight);
 
     /* Empty text shouldn't inherit anything from before either and produce a
        result consistent with shapeEmpty() */
@@ -541,7 +542,7 @@ void HarfBuzzFontTest::shaperReuseAutodetection() {
         CORRADE_COMPARE(shaper->shape("Wave", 2, 2), 0);
         CORRADE_COMPARE(shaper->script(), Script::Unspecified);
         CORRADE_COMPARE(shaper->language(), "c");
-        CORRADE_COMPARE(shaper->direction(), Direction::LeftToRight);
+        CORRADE_COMPARE(shaper->direction(), ShapeDirection::LeftToRight);
     }
 }
 
@@ -557,7 +558,7 @@ void HarfBuzzFontTest::shapeFeatures() {
     /* Shape a text */
     CORRADE_VERIFY(shaper->setScript(Script::Latin));
     CORRADE_VERIFY(shaper->setLanguage("en"));
-    CORRADE_VERIFY(shaper->setDirection(Direction::LeftToRight));
+    CORRADE_VERIFY(shaper->setDirection(ShapeDirection::LeftToRight));
     CORRADE_COMPARE(shaper->shape("Wave", data.features), 4);
 
     /* Verify the shaped glyph IDs match expectations, other IDs would have

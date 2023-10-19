@@ -34,6 +34,7 @@
 #include <Magnum/Math/Range.h>
 #include <Magnum/Text/AbstractGlyphCache.h>
 #include <Magnum/Text/AbstractShaper.h>
+#include <Magnum/Text/Direction.h>
 #include <Magnum/Text/Script.h>
 
 namespace Magnum { namespace Text {
@@ -162,21 +163,21 @@ Containers::Pointer<AbstractShaper> HarfBuzzFont::doCreateShaper() {
             return true;
         }
 
-        bool doSetDirection(Direction direction) override {
+        bool doSetDirection(ShapeDirection direction) override {
             switch(direction) {
-                case Direction::LeftToRight:
+                case ShapeDirection::LeftToRight:
                     _direction = HB_DIRECTION_LTR;
                     return true;
-                case Direction::RightToLeft:
+                case ShapeDirection::RightToLeft:
                     _direction = HB_DIRECTION_RTL;
                     return true;
-                case Direction::TopToBottom:
+                case ShapeDirection::TopToBottom:
                     _direction = HB_DIRECTION_TTB;
                     return true;
-                case Direction::BottomToTop:
+                case ShapeDirection::BottomToTop:
                     _direction = HB_DIRECTION_BTT;
                     return true;
-                case Direction::Unspecified:
+                case ShapeDirection::Unspecified:
                     _direction = HB_DIRECTION_INVALID;
                     return true;
             }
@@ -238,16 +239,16 @@ Containers::Pointer<AbstractShaper> HarfBuzzFont::doCreateShaper() {
             return hb_language_to_string(props.language);
         }
 
-        Direction doDirection() const override {
+        ShapeDirection doDirection() const override {
             hb_segment_properties_t props;
             hb_buffer_get_segment_properties(_buffer, &props);
 
             switch(props.direction) {
-                case HB_DIRECTION_LTR: return Direction::LeftToRight;
-                case HB_DIRECTION_RTL: return Direction::RightToLeft;
-                case HB_DIRECTION_TTB: return Direction::TopToBottom;
-                case HB_DIRECTION_BTT: return Direction::BottomToTop;
-                case HB_DIRECTION_INVALID: return Direction::Unspecified;
+                case HB_DIRECTION_LTR: return ShapeDirection::LeftToRight;
+                case HB_DIRECTION_RTL: return ShapeDirection::RightToLeft;
+                case HB_DIRECTION_TTB: return ShapeDirection::TopToBottom;
+                case HB_DIRECTION_BTT: return ShapeDirection::BottomToTop;
+                case HB_DIRECTION_INVALID: return ShapeDirection::Unspecified;
             }
 
             CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */

@@ -155,8 +155,8 @@ HarfBuzz [enables the following features by default](https://harfbuzz.github.io/
 -   @ref Feature::MarkToMarkPositioning
 -   @ref Feature::RequiredLigatures
 
-Additionally, for @ref Direction::LeftToRight or @ref Direction::RightToLeft,
-HarfBuzz enables the following by default:
+Additionally, for @ref ShapeDirection::LeftToRight or
+@ref ShapeDirection::RightToLeft, HarfBuzz enables the following by default:
 
 -   @ref Feature::ContextualAlternates
 -   @ref Feature::ContextualLigatures
@@ -172,8 +172,8 @@ the sequence before the slash, @ref Feature::Denominators on the sequence after
 the slash and @ref Feature::Fractions on the whole sequence including the
 slash.
 
-For @ref Direction::TopToBottom or @ref Direction::BottomToTop, HarfBuzz
-enables @ref Feature::VerticalWriting by default.
+For @ref ShapeDirection::TopToBottom or @ref ShapeDirection::BottomToTop,
+HarfBuzz enables @ref Feature::VerticalWriting by default.
 
 For @ref Script::Hangul, HarfBuzz disables @ref Feature::ContextualAlternates
 by default. For Indic scripts and @ref Script::Khmer, HarfBuzz disables
