@@ -254,14 +254,20 @@ Containers::Pointer<AbstractShaper> HarfBuzzFont::doCreateShaper() {
             CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
         }
 
-        void doGlyphsInto(const Containers::StridedArrayView1D<UnsignedInt>& ids, const Containers::StridedArrayView1D<Vector2>& offsets, const Containers::StridedArrayView1D<Vector2>& advances) const override {
+        void doGlyphIdsInto(const Containers::StridedArrayView1D<UnsignedInt>& ids) const override {
             UnsignedInt glyphCount;
             hb_glyph_info_t* const glyphInfos = hb_buffer_get_glyph_infos(_buffer, &glyphCount);
+            CORRADE_INTERNAL_ASSERT(glyphCount == this->glyphCount());
+
+            for(std::size_t i = 0; i != glyphCount; ++i)
+                ids[i] = glyphInfos[i].codepoint;
+        }
+        void doGlyphOffsetsAdvancesInto(const Containers::StridedArrayView1D<Vector2>& offsets, const Containers::StridedArrayView1D<Vector2>& advances) const override {
+            UnsignedInt glyphCount;
             hb_glyph_position_t* const glyphPositions = hb_buffer_get_glyph_positions(_buffer, &glyphCount);
             CORRADE_INTERNAL_ASSERT(glyphCount == this->glyphCount());
 
             for(std::size_t i = 0; i != glyphCount; ++i) {
-                ids[i] = glyphInfos[i].codepoint;
                 offsets[i] = Vector2{Float(glyphPositions[i].x_offset),
                                      Float(glyphPositions[i].y_offset)}/64.0f;
                 advances[i] = Vector2{Float(glyphPositions[i].x_advance),

@@ -207,10 +207,12 @@ Containers::Pointer<AbstractShaper> FreeTypeFont::doCreateShaper() {
             return _glyphs.size();
         }
 
-        void doGlyphsInto(const Containers::StridedArrayView1D<UnsignedInt>& ids, const Containers::StridedArrayView1D<Vector2>& offsets, const Containers::StridedArrayView1D<Vector2>& advances) const override {
+        void doGlyphIdsInto(const Containers::StridedArrayView1D<UnsignedInt>& ids) const override {
+            Utility::copy(_glyphs, ids);
+        }
+        void doGlyphOffsetsAdvancesInto(const Containers::StridedArrayView1D<Vector2>& offsets, const Containers::StridedArrayView1D<Vector2>& advances) const override {
             const FT_Face ftFont = static_cast<const FreeTypeFont&>(font())._ftFont;
 
-            Utility::copy(_glyphs, ids);
             for(std::size_t i = 0; i != _glyphs.size(); ++i) {
                 /* There's no glyph offsets in addition to advances */
                 /** @todo there's horiBearingX and horiBearingY in

@@ -291,7 +291,8 @@ void HarfBuzzFontTest::shape() {
     UnsignedInt ids[4];
     Vector2 offsets[4];
     Vector2 advances[4];
-    shaper->glyphsInto(ids, offsets, advances);
+    shaper->glyphIdsInto(ids);
+    shaper->glyphOffsetsAdvancesInto(offsets, advances);
     CORRADE_COMPARE_AS(Containers::arrayView(ids), Containers::arrayView({
         58u,            /* 'W' */
         68u,            /* 'a' */
@@ -331,9 +332,7 @@ void HarfBuzzFontTest::shapeDifferentScriptLanguageDirection() {
     CORRADE_COMPARE(shaper->direction(), data.direction);
 
     UnsignedInt ids[6];
-    Vector2 offsets[6];
-    Vector2 advances[6];
-    shaper->glyphsInto(ids, offsets, advances);
+    shaper->glyphIdsInto(ids);
 
     UnsignedInt expectedIds[]{
         450,    /* 'Ε' */
@@ -378,9 +377,7 @@ void HarfBuzzFontTest::shapeAutodetectScriptLanguageDirection() {
 
     /* The font doesn't have Arabic glyphs, so this is all invalid */
     UnsignedInt ids[8];
-    Vector2 offsets[8];
-    Vector2 advances[8];
-    shaper->glyphsInto(ids, offsets, advances);
+    shaper->glyphIdsInto(ids);
     CORRADE_COMPARE_AS(Containers::arrayView(ids), Containers::arrayView({
         0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u
     }), TestSuite::Compare::Container);
@@ -444,7 +441,8 @@ void HarfBuzzFontTest::shaperReuse() {
         UnsignedInt ids[2];
         Vector2 offsets[2];
         Vector2 advances[2];
-        shaper->glyphsInto(ids, offsets, advances);
+        shaper->glyphIdsInto(ids);
+        shaper->glyphOffsetsAdvancesInto(offsets, advances);
         CORRADE_COMPARE_AS(Containers::arrayView(ids), Containers::arrayView({
             58u, /* 'W' */
             72u  /* 'e' */
@@ -465,7 +463,8 @@ void HarfBuzzFontTest::shaperReuse() {
         UnsignedInt ids[4];
         Vector2 offsets[4];
         Vector2 advances[4];
-        shaper->glyphsInto(ids, offsets, advances);
+        shaper->glyphIdsInto(ids);
+        shaper->glyphOffsetsAdvancesInto(offsets, advances);
         CORRADE_COMPARE_AS(Containers::arrayView(ids), Containers::arrayView({
             58u, /* 'W' */
             68u, /* 'a' */
@@ -490,7 +489,8 @@ void HarfBuzzFontTest::shaperReuse() {
         UnsignedInt ids[1];
         Vector2 offsets[1];
         Vector2 advances[1];
-        shaper->glyphsInto(ids, offsets, advances);
+        shaper->glyphIdsInto(ids);
+        shaper->glyphOffsetsAdvancesInto(offsets, advances);
         CORRADE_COMPARE_AS(Containers::arrayView(ids), Containers::arrayView({
             68u,
         }), TestSuite::Compare::Container);
@@ -566,7 +566,8 @@ void HarfBuzzFontTest::shapeFeatures() {
     UnsignedInt ids[4];
     Vector2 offsets[4];
     Vector2 advances[4];
-    shaper->glyphsInto(ids, offsets, advances);
+    shaper->glyphIdsInto(ids);
+    shaper->glyphOffsetsAdvancesInto(offsets, advances);
     CORRADE_COMPARE_AS(Containers::arrayView(ids), Containers::arrayView({
         58u,    /* 'W' */
         68u,    /* 'a' */
