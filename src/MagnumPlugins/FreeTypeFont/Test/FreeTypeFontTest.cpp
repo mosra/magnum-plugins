@@ -324,7 +324,7 @@ void FreeTypeFontTest::fillGlyphCache() {
 
     /* The font should associate itself with the cache */
     CORRADE_COMPARE(cache.fontCount(), 1);
-    CORRADE_COMPARE(cache.findFont(font.get()), 0);
+    CORRADE_COMPARE(cache.findFont(*font), 0);
 
     /* 26 ASCII characters, 3 UTF-8 ones + one "not found" glyph, and one
        invalid glyph from the cache itself. The count should be the same in all
@@ -415,7 +415,7 @@ void FreeTypeFontTest::fillGlyphCacheIncremental() {
 
     /* The font should associate itself with the cache now */
     CORRADE_COMPARE(cache.fontCount(), 1);
-    CORRADE_COMPARE(cache.findFont(font.get()), 0);
+    CORRADE_COMPARE(cache.findFont(*font), 0);
 
     /* 17 characters + one global invalid glyph */
     CORRADE_COMPARE(cache.glyphCount(), 17 + 1);
@@ -502,7 +502,7 @@ void FreeTypeFontTest::fillGlyphCacheArray() {
 
     /* The font should associate itself with the cache */
     CORRADE_COMPARE(cache.fontCount(), 1);
-    CORRADE_COMPARE(cache.findFont(font.get()), 0);
+    CORRADE_COMPARE(cache.findFont(*font), 0);
 
     /* Same as in fillGlyphCache() */
     CORRADE_COMPARE(cache.glyphCount(), 26 + 3 + 1 + 1);

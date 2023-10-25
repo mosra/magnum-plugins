@@ -140,7 +140,7 @@ void StbTrueTypeFont::doFillGlyphCache(AbstractGlyphCache& cache, const Containe
     CORRADE_INTERNAL_ASSERT(cache.format() == PixelFormat::R8Unorm);
 
     /* Register this font, if not in the cache yet */
-    Containers::Optional<UnsignedInt> fontId = cache.findFont(this);
+    Containers::Optional<UnsignedInt> fontId = cache.findFont(*this);
     const bool firstFill = !fontId;
     if(!fontId)
         fontId = cache.addFont(_font->info.numGlyphs, this);
