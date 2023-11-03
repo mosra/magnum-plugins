@@ -782,14 +782,15 @@ void GlslangConverterTest::convert() {
     #pragma GCC diagnostic push
     #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
     #endif
-    /* glslang 7.13 / 8.13 differs from 10 only in the generator version, patch
-       that to have the same output */
+    /* glslang 7.13 / 8.13 / 10 differs from 11+ only in the generator version,
+       patch that to have the same output. Interestingly enough even version 13
+       still says 11 in this field. It's a WILD release management here, lol */
     auto words = Containers::arrayCast<UnsignedInt>(*output);
     #if defined(CORRADE_TARGET_GCC) && !defined(CORRADE_TARGET_CLANG) && __GNUC__ == 12
     #pragma GCC diagnostic pop
     #endif
-    if(words.size() >= 3 && (words[2] == 524295 || words[2] == 524296))
-        words[2] = 524298;
+    if(words.size() >= 3 && words[2] >= 524295 && words[2] < 524299)
+        words[2] = 524299;
 
     CORRADE_COMPARE_AS(Containers::StringView{*output},
         Utility::Path::join(GLSLANGSHADERCONVERTER_TEST_DIR, data.output),
