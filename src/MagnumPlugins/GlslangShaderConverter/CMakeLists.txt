@@ -33,6 +33,23 @@ endif()
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
                ${CMAKE_CURRENT_BINARY_DIR}/configure.h)
 
+# Of course it's always the shittiest but somehow ireplaceable libraries that
+# opt into requiring C++17 and up even for their users, instead of just their
+# own compilation, while meshoptimizer, libjpeg etc. still works with C++03. I
+# am not interested in enabling C++17 always because of old compiler support
+# and because of compile times, so instead I'm detecting version 13.1.0+ that
+# contains the following ABSOLUTELY UTTERLY USELESS change that puts a
+# std::variant member in a public API, getting absolutely no advantage
+# whatsoever because the type index in there is still making that field two
+# pointers large due to padding, or possibly worse, depending on how bad the
+# STL is:
+#   https://github.com/KhronosGroup/glslang/pull/3328
+# The compilation *fails* if glslang doesn't require C++17, since the check is
+# simpler that way. See the source file for details.
+try_compile(_glslang_requires_cpp17 ${CMAKE_CURRENT_BINARY_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/checkGlslangRequiresCpp17.cpp
+    LINK_LIBRARIES Glslang::Glslang)
+
 # GlslangShaderConverter plugin
 add_plugin(GlslangShaderConverter
     shaderconverters
@@ -43,6 +60,11 @@ add_plugin(GlslangShaderConverter
     GlslangConverter.h)
 if(MAGNUM_GLSLANGSHADERCONVERTER_BUILD_STATIC AND MAGNUM_BUILD_STATIC_PIC)
     set_target_properties(GlslangShaderConverter PROPERTIES POSITION_INDEPENDENT_CODE ON)
+endif()
+if(_glslang_requires_cpp17)
+    set_target_properties(GlslangShaderConverter PROPERTIES CORRADE_CXX_STANDARD 17)
+else()
+
 endif()
 target_include_directories(GlslangShaderConverter PUBLIC
     ${PROJECT_SOURCE_DIR}/src

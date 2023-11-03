@@ -50,10 +50,11 @@
 
 /* In version 11-10 (yes, a dash!!) there's a new header containing sane build
    info -- GLSLANG_VERSION_MAJOR, GLSLANG_VERSION_MINOR etc. To avoid CMake
-   try_compile() insanities like with SPIR-V Tools, assume that when we have
-   new glslang we also have a sufficiently recent compiler supporting
-   __has_include() -- and, conversely, if we have a compiler without
-   __has_include(), glslang is the old one. */
+   try_compile()-in-a-loop insanities like with SPIR-V Tools (apart from the
+   check for whether C++17 is needed), assume that when we have new glslang we
+   also have a sufficiently recent compiler supporting __has_include() -- and,
+   conversely, if we have a compiler without __has_include(), glslang is the
+   old one. */
 #ifdef __has_include
 #if __has_include(<glslang/build_info.h>)
 #include <glslang/build_info.h>
