@@ -22,8 +22,8 @@ class MagnumPlugins < Formula
   depends_on "jpeg" => :recommended
   depends_on "openexr" => :recommended
   depends_on "spirv-tools" => :recommended
-  # For Basis Universal. If found, Basis will use it, if not, it'll use a
-  # bundled copy.
+  # For Basis Universal. If found, Basis will use it, if not, it'll be without
+  # UASTC support.
   depends_on "zstd" => :recommended
   # No idea why WebP has to depend on libpng, libjpeg, libtiff and giflib BY
   # DEFAULT but whatever. BLOAT BLOAT
