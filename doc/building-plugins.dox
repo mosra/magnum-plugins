@@ -317,10 +317,34 @@ brew upgrade --fetch-HEAD mosra/magnum/magnum-plugins
 
 When installing from the `*.rb` files you need to install the
 @ref building-corrade-packages-brew "Corrade"
-and @ref building-packages-brew "Magnum" Homebrew packages first. If you want
-to pass additional flags to CMake or
-@ref building-plugins-features "enable / disable additional features", edit the
-`*.rb` file.
+and @ref building-packages-brew "Magnum" Homebrew packages first. As the
+plugins depend on a variety of 3rd party libraries, it's possible to control a
+subset that gets built and installed:
+
+-   `--with-devil`, `--with-faad2` and `--with-harfbuzz` enable building of
+    @relativeref{Trade,DevIlImageImporter},
+    @ref Audio::Faad2Importer "Faad2AudioImporter" and
+    @relativeref{Text,HarfBuzzFont}, respectively. None of these plugins are
+    built by default.
+-   `--without-assimp`, `--without-freetype`, `--without-glslang`,
+    `--without-libpng`, `--without-libspng`, `--without-jpeg`,
+    `--without-openexr`, `--without-spirv-tools`, `--without-zstd` and
+    `--without-webp` disable building of @relativeref{Trade,AssimpImporter},
+    @relativeref{Text,FreeTypeFont},
+    @ref ShaderTools::GlslangConverter "GlslangShaderConverter",
+    @relativeref{Trade,PngImporter} and @relativeref{Trade,PngImageConverter},
+    @relativeref{Trade,JpegImporter} and
+    @relativeref{Trade,JpegImageConverter}, @relativeref{Trade,OpenExrImporter}
+    and @relativeref{Trade,OpenExrImageConverter},
+    @ref ShaderTools::SpirvToolsConverter "SpirvToolsShaderConverter", zstd
+    support in @relativeref{Trade,BasisImporter} and
+    @relativeref{Trade,BasisImageConverter}, and
+    @relativeref{Trade,WebPImporter}, respectively. These plugins are all
+    implicitly built otherwise.
+
+Plugins not listed above are built always. If you want to pass additional flags
+to CMake or @ref building-plugins-features "enable / disable other features",
+edit the `*.rb` file.
 
 There are also Homebrew packages for
 @ref building-integration-packages-brew "Magnum Integration",
