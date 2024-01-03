@@ -53,22 +53,70 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
-# Actually, it's 2020 and none of this should be needed, but apparently Magnum
-# is the first project ever to use this thing from Khronos as an actual library
-# instead of the CLI tool. Their CMake system installs a ton of
-# ``glslangTargets.cmake`` files, but no actual ``glslangConfig.cmake``, so I
-# have to look for it myself. Scroll below for a continuation of this angry
-# rant.
+# It's 2024 and none of this should be needed, but apparently Magnum is (still)
+# the first project ever to use this thing from Khronos as an actual library
+# instead of the CLI tool. Back in 2020, when the first version of this Find
+# module was written, their CMake system installed a ton of
+# `glslangTargets.cmake` files, but no actual `glslangConfig.cmake`. That got
+# fixed in 11.11 (https://github.com/KhronosGroup/glslang/commit/fb64704060ffbd7048f25a07518c55639726c025,
+# released August 2022), from there on there's both `glslangTargets.cmake` and
+# `glslang/glslang-targets.cmake` (amazing, innit). HOWEVER, while the
+# `glslang::glslang` target works, attempting to use `glslang::SPIRV` results
+# in `<prefix>/include/External` being added into
+# INTERFACE_INCLUDE_DIRECTORIES, which just doesn't exist, so the target as a
+# whole is useless and one has to manually extract everything except the
+# INTERFACE_INCLUDE_DIRECTORIES into a new target in order to make it work.
+# That's still the case in version 14, last checked on January 3rd 2024.
+#
+# To add even more salt into the wound, version 14.0 removed the HLSL and
+# OGLCompiler libraries (https://github.com/KhronosGroup/glslang/commit/6be56e45e574b375d759b89dad35f780bbd4792f)
+# which apparently were just stubs since 11.0 already, and OF FUCKING COURSE
+# version 11.0 is neither a proper release on GitHub (it's just a tag), nor
+# the CHANGES.md mention anything about these libraries being stubs since 11.0
+# (it's a major new release, and all it mentions is removal of MSVC 2013
+# support, HAHA). To account for this, the file-by-file finding code would need
+# to parse some version header first, regexps and other nasty brittle stuff.
+# Not nice at all.
+#
+# Thus, both the variant with attempting to use the config file and the variant
+# with attempting to not use the config file is a total nightmare, but I
+# _think_ the former is more future-proof, even with the extra nastiness given
+# by property extraction.
+#
+# Scroll further for a continuation of this angry rant.
 
-# If we have a CMake subproject, the glslang target should be defined. In that
-# case we just alias Glslang::Glslang to it and exit.
-if(TARGET glslang)
-    # The glslang target doesn't define any usable
-    # INTERFACE_INCLUDE_DIRECTORIES for some reason (the $<BUILD_INTERFACE:> in
-    # there doesn't get expanded), so let's extract that from the SOURCE_DIR
-    # property instead.
-    get_target_property(_GLSLANG_INTERFACE_INCLUDE_DIRECTORIES glslang SOURCE_DIR)
-    get_filename_component(_GLSLANG_INTERFACE_INCLUDE_DIRECTORIES ${_GLSLANG_INTERFACE_INCLUDE_DIRECTORIES} DIRECTORY)
+# In case we have glslang as a CMake subproject, the glslang target should be
+# defined. If it's not, try to find the installed config file (which exists
+# only since 11.11, and is still semi-useless even in version 14, as described
+# above).
+if(NOT TARGET glslang)
+    find_package(glslang CONFIG QUIET)
+endif()
+
+# We have a CMake subproject or a package where the (semi-useless) config files
+# exist and were installed, point Glslang::Glslang there and exit.
+if(TARGET glslang OR TARGET glslang::glslang)
+    if(TARGET glslang)
+        set(_GLSLANG_TARGET_PREFIX )
+    else()
+        set(_GLSLANG_TARGET_PREFIX glslang::)
+    endif()
+
+    get_target_property(_GLSLANG_INTERFACE_INCLUDE_DIRECTORIES ${_GLSLANG_TARGET_PREFIX}glslang INTERFACE_INCLUDE_DIRECTORIES)
+    # In case of a CMake subproject (which always has the glslang target, not
+    # glslang::glslang, so we don't need to use ${_GLSLANG_TARGET_PREFIX}),
+    # the target doesn't define any usable INTERFACE_INCLUDE_DIRECTORIES for
+    # some reason (the $<BUILD_INTERFACE:> in there doesn't get expanded), so
+    # let's extract that from the SOURCE_DIR property instead.
+    #
+    # TODO this could be probably fixable by using target_link_libraries()
+    # instead of set_target_properties() because it evaluates generator
+    # expressions, but that needs CMake 3.10+, before that
+    # target_link_libraries() can't be called on INTERFACE targets.
+    if(_GLSLANG_INTERFACE_INCLUDE_DIRECTORIES MATCHES "<BUILD_INTERFACE:")
+        get_target_property(_GLSLANG_INTERFACE_INCLUDE_DIRECTORIES glslang SOURCE_DIR)
+        get_filename_component(_GLSLANG_INTERFACE_INCLUDE_DIRECTORIES ${_GLSLANG_INTERFACE_INCLUDE_DIRECTORIES} DIRECTORY)
+    endif()
 
     if(NOT TARGET Glslang::Glslang)
         # Aliases of (global) targets are only supported in CMake 3.11, so
@@ -77,16 +125,62 @@ if(TARGET glslang)
         # attempting to rebuild them into a new target.
         add_library(Glslang::Glslang INTERFACE IMPORTED)
         set_target_properties(Glslang::Glslang PROPERTIES
-            INTERFACE_LINK_LIBRARIES glslang
-            INTERFACE_INCLUDE_DIRECTORIES ${_GLSLANG_INTERFACE_INCLUDE_DIRECTORIES})
+            INTERFACE_LINK_LIBRARIES ${_GLSLANG_TARGET_PREFIX}glslang)
+        # In case of a CMake subproject, explicitly add the include path as
+        # well. It doesn't make sense to do this for the imported case, there
+        # the glslang::glslang target does the right thing (and OTOH the
+        # glslang::SPIRV target DOES NOT, so it needs a custom step anyway).
+        if(TARGET glslang)
+            set_target_properties(Glslang::Glslang PROPERTIES
+                INTERFACE_INCLUDE_DIRECTORIES ${_GLSLANG_INTERFACE_INCLUDE_DIRECTORIES})
+        endif()
     endif()
     if(NOT TARGET Glslang::SPIRV)
         # Aliases of (global) targets [..] CMake 3.11 [...], as above
         add_library(Glslang::SPIRV INTERFACE IMPORTED)
-        set_target_properties(Glslang::SPIRV PROPERTIES
-            # Make this depend on the Glslang::Glslang target to get the
-            # include path along
-            INTERFACE_LINK_LIBRARIES "SPIRV;Glslang::Glslang")
+        # In case of a CMake subproject, simply link to the SPIRV target, and
+        # make it depend on the Glslang::Glslang target as well to get the
+        # include path along
+        if(TARGET glslang)
+            if(NOT TARGET SPIV)
+                message(FATAL_ERROR "Expecting a SPIRV target to exist if a glslang exists, but it does not")
+            endif()
+            set_target_properties(Glslang::SPIRV PROPERTIES
+                INTERFACE_LINK_LIBRARIES "SPIRV;Glslang::Glslang")
+        # Otherwise extract everything except INTERFACE_INCLUDE_DIRECTORIES
+        # (which are broken, as explained on the very top) out of
+        # glslang::SPIRV and use that. Let's hope they fix this crap before
+        # there's additional target properties added apart from
+        # INTERFACE_LINK_LIBRARIES and IMPORTED_LOCATION_<CONFIG>.
+        else()
+            # INTERFACE_LINK_LIBRARIES link to MachineIndependent, OSDependent
+            # and other loose crap in static builds, important to have. Can't
+            # use set_target_properties(... $<TARGET_PROPERTY:...>) because the
+            # INTERFACE_LINK_LIBRARIES contain \$<LINK_ONLY: (yes, escaped),
+            # causing CMake to complain that the (unevaluated) generator
+            # expression isn't a target.
+            get_target_property(_GLSLANG_SPIRV_INTERFACE_LINK_LIBRARIES glslang::SPIRV INTERFACE_LINK_LIBRARIES)
+            set_target_properties(Glslang::SPIRV PROPERTIES INTERFACE_LINK_LIBRARIES "${_GLSLANG_SPIRV_INTERFACE_LINK_LIBRARIES}")
+
+            # Correct INTERFACE_INCLUDE_DIRECTORIES. Can't just transitively
+            # use the onle from Glslang::Glslang because the code needs to
+            # use <SPIRV/GlslangToSpirv.h> instead of
+            # <glslang/SPIRV/GlslangToSpirv.h> in order to work correctly both
+            # with the library installed and the with the library being a
+            # subproject (the latter doesn't have SPIRV/ inside glslang/).
+            # Thus, appending glslang/ to the include dir Glslang::Glslang
+            # uses.
+            set_target_properties(Glslang::SPIRV PROPERTIES INTERFACE_INCLUDE_DIRECTORIES ${_GLSLANG_INTERFACE_INCLUDE_DIRECTORIES}/glslang)
+
+            # Imported locations, which can be many. Assuming
+            # IMPORTED_CONFIGURATIONS contains the names uppercase, as
+            # IMPORTED_LOCATION_<CONFIG> is uppercase. The case is not
+            # explicitly documented anywhere in the CMake manual.
+            get_target_property(_GLSLANG_SPIRV_IMPORTED_CONFIGURATIONS glslang::SPIRV IMPORTED_CONFIGURATIONS)
+            foreach(config ${_GLSLANG_SPIRV_IMPORTED_CONFIGURATIONS})
+                set_property(TARGET Glslang::SPIRV APPEND PROPERTY INTERFACE_LINK_LIBRARIES $<TARGET_PROPERTY:glslang::SPIRV,IMPORTED_LOCATION_${config}>)
+            endforeach()
+        endif()
     endif()
 
     # Just to make FPHSA print some meaningful location, nothing else. Luckily
