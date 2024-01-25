@@ -66,8 +66,8 @@ corrade_add_test(StbImageImporterTest StbImageImporterTest.cpp
         ../../PngImporter/Test/gray16.png
         ../../PngImporter/Test/rgb.png
         ../../PngImporter/Test/rgb16.png
-        ../../PngImporter/Test/rgba.png
-        ../../PngImporter/Test/rgba-iphone.png
+        ../../PngImporter/Test/rgba-binary-alpha.png
+        ../../PngImporter/Test/rgba-binary-alpha-iphone.png
         ../../JpegImporter/Test/gray.jpg
         ../../JpegImporter/Test/rgb.jpg
         rgb.hdr

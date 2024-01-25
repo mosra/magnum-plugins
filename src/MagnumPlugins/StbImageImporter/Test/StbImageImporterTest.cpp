@@ -95,8 +95,8 @@ const struct {
     const char* name;
     const char* filename;
 } RgbaPngTestData[]{
-    {"RGBA", "rgba.png"},
-    {"CgBI BGRA", "rgba-iphone.png"}
+    {"RGBA", "rgba-binary-alpha.png"},
+    {"CgBI BGRA", "rgba-binary-alpha-iphone.png"}
 };
 
 const struct {
@@ -214,21 +214,20 @@ const struct {
         0.0f, 0.5f, 1.0f, 4.5f, 5.0f, 5.5f,
     }}, true, nullptr},
     {"8-bit RG PNG", Utility::Path::join(PNGIMPORTER_TEST_DIR, "ga.png"), PixelFormat::RG32F, {3, 2}, {InPlaceInit, {
-        /* Yes, those pixels are zero in the original as well. Huh. */
-        0.487765f, 1.0f,
-        0.819964f, 1.0f,
-        0.0f, 0.0f,
-        0.819964f, 1.0f,
-        0.0f, 0.0f,
-        0.487765f, 1.0f
+        0.133209f, 0.6f,
+        0.612066f, 0.0f,
+        0.325037f, 0.4f,
+        0.0f, 0.2f,
+        0.0289912f, 1.0f,
+        1.0f, 0.8f,
     }}, false, nullptr},
     {"8-bit RG PNG, verbose", Utility::Path::join(PNGIMPORTER_TEST_DIR, "ga.png"), PixelFormat::RG32F, {3, 2}, {InPlaceInit, {
-        0.487765f, 1.0f,
-        0.819964f, 1.0f,
-        0.0f, 0.0f,
-        0.819964f, 1.0f,
-        0.0f, 0.0f,
-        0.487765f, 1.0f
+        0.133209f, 0.6f,
+        0.612066f, 0.0f,
+        0.325037f, 0.4f,
+        0.0f, 0.2f,
+        0.0289912f, 1.0f,
+        1.0f, 0.8f,
     }}, true, "Trade::StbImageImporter::image2D(): expanding 8-bit channels to 32-bit float\n"},
     {"16-bit RGB PNG", Utility::Path::join(PNGIMPORTER_TEST_DIR, "rgb16.png"), PixelFormat::RGB32F, {2, 3}, {InPlaceInit, {
         0.0000569f, 0.0003671f, 0.0009924f,
@@ -757,7 +756,7 @@ void StbImageImporterTest::forceBitDepthInvalid() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("PngImporter");
     importer->configuration().setValue("forceBitDepth", 4);
 
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(PNGIMPORTER_TEST_DIR, "rgba.png")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(PNGIMPORTER_TEST_DIR, "rgba-binary-alpha.png")));
 
     std::ostringstream out;
     Error redirectError{&out};

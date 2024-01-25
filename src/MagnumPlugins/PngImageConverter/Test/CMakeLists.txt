@@ -49,6 +49,8 @@ corrade_add_test(PngImageConverterTest PngImageConverterTest.cpp
     FILES
         gray.png
         rgb.png
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/PngImporter/Test/rgba.png
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/PngImporter/Test/ga.png
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/PngImporter/Test/gray16.png
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/PngImporter/Test/rgb16.png)
 target_include_directories(PngImageConverterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>)

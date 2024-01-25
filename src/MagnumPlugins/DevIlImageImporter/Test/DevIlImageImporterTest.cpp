@@ -230,12 +230,12 @@ void DevIlImageImporterTest::rgbaPng() {
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
     CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Unorm);
     CORRADE_COMPARE_AS(image->data(), Containers::arrayView<char>({
-        '\xde', '\xad', '\xb5', '\xff',
-        '\xca', '\xfe', '\x77', '\xff',
-        '\x00', '\x00', '\x00', '\x00',
-        '\xca', '\xfe', '\x77', '\xff',
-        '\x00', '\x00', '\x00', '\x00',
-        '\xde', '\xad', '\xb5', '\xff'
+        '\x66', '\x33', '\xff', '\x99',
+        '\xcc', '\x33', '\xff', '\x00',
+        '\x99', '\x33', '\xff', '\x66',
+        '\x00', '\xcc', '\xff', '\x33',
+        '\x33', '\x66', '\x99', '\xff',
+        '\xff', '\x00', '\x33', '\xcc'
     }), TestSuite::Compare::Container);
 }
 
@@ -420,12 +420,12 @@ void DevIlImageImporterTest::importTwice() {
         Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
         CORRADE_VERIFY(image);
         CORRADE_COMPARE(image->size(), (Vector2i{3, 2}));
-        CORRADE_COMPARE(image->pixels<Color4ub>()[0][0], 0xdeadb5ff_rgba);
+        CORRADE_COMPARE(image->pixels<Color4ub>()[0][0], 0x6633ff99_rgba);
     } {
         Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
         CORRADE_VERIFY(image);
         CORRADE_COMPARE(image->size(), (Vector2i{3, 2}));
-        CORRADE_COMPARE(image->pixels<Color4ub>()[0][0], 0xdeadb5ff_rgba);
+        CORRADE_COMPARE(image->pixels<Color4ub>()[0][0], 0x6633ff99_rgba);
     }
 }
 

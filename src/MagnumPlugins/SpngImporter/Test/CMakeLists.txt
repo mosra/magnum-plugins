@@ -46,8 +46,8 @@ file(GENERATE OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/configure.h
 corrade_add_test(SpngImporterTest SpngImporterTest.cpp
     LIBRARIES Magnum::Trade
     FILES
-        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/PngImporter/Test/ga.png
-        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/PngImporter/Test/ga-trns.png
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/PngImporter/Test/ga-binary-alpha.png
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/PngImporter/Test/ga-binary-alpha-trns.png
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/PngImporter/Test/gray.png
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/PngImporter/Test/gray4.png
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/PngImporter/Test/gray16.png
@@ -55,9 +55,9 @@ corrade_add_test(SpngImporterTest SpngImporterTest.cpp
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/PngImporter/Test/rgb16.png
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/PngImporter/Test/rgb-palette.png
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/PngImporter/Test/rgb-palette1.png
-        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/PngImporter/Test/rgba.png
-        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/PngImporter/Test/rgba-iphone.png
-        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/PngImporter/Test/rgba-trns.png)
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/PngImporter/Test/rgba-binary-alpha.png
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/PngImporter/Test/rgba-binary-alpha-iphone.png
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/PngImporter/Test/rgba-binary-alpha-trns.png)
 target_include_directories(SpngImporterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>)
 if(MAGNUM_SPNGIMPORTER_BUILD_STATIC)
     target_link_libraries(SpngImporterTest PRIVATE SpngImporter)

@@ -54,10 +54,12 @@ struct PngImporterTest: TestSuite::Tester {
     void gray();
     void gray16();
     void grayAlpha();
+    void grayAlphaBinaryAlpha();
     void rgb();
     void rgb16();
     void rgbPalette1bit();
     void rgba();
+    void rgbaBinaryAlpha();
 
     void forceBitDepth8();
     void forceBitDepth16();
@@ -125,18 +127,18 @@ constexpr struct {
 constexpr struct {
     const char* name;
     const char* filename;
-} GrayAlphaData[]{
-    /* magnum-imageconverter ga-trns.png --converter StbPngImageConverter ga.png
+} GrayAlphaBinaryAlphaData[]{
+    /* magnum-imageconverter ga-binary-alpha-trns.png --converter StbPngImageConverter ga-binary-alpha.png
        because imagemagick is STUPID and doesn't let me override the rRNS from
        https://www.imagemagick.org/Usage/formats/#png_quality -- the suggested
        -type TruecolorMatte doesn't do anything and PNG32: gives me a RGBA
        (yes, the source file is the one from below) */
-    {"8bit", "ga.png"},
-    /* convert rgba.png -colorspace gray ga-trns.png
+    {"", "ga-binary-alpha.png"},
+    /* convert rgba-binary-alpha.png -colorspace gray ga-binary-alpha-trns.png
        According to https://www.imagemagick.org/Usage/formats/#png_quality,
        ImageMagick creates a tRNS chunk if the original image has binary (00
        or FF) alpha. */
-    {"tRNS alpha mask", "ga-trns.png"},
+    {"tRNS alpha mask", "ga-binary-alpha-trns.png"},
 };
 
 constexpr struct {
@@ -154,12 +156,19 @@ constexpr struct {
 } RgbaData[]{
     {"RGBA", "rgba.png"},
     /* See README.md for details on how this file was produced */
-    {"CgBI BGRA", "rgba-iphone.png"},
-    /* convert rgba.png -define png:exclude-chunks=date rgba-trns.png
+    {"CgBI BGRA", "rgba-binary-alpha-iphone.png"},
+};
+
+const struct {
+    const char* name;
+    const char* filename;
+} RgbaBinaryAlphaData[]{
+    {"", "rgba-binary-alpha.png"},
+    /* convert rgba-binary-alpha.png -define png:exclude-chunks=date rgba-binary-alpha-trns.png
        According to https://www.imagemagick.org/Usage/formats/#png_quality,
        ImageMagick creates a tRNS chunk if the original image has binary (00
        or FF) alpha. */
-    {"tRNS alpha mask", "rgba-trns.png"},
+    {"tRNS alpha mask", "rgba-binary-alpha-trns.png"},
 };
 
 const struct {
@@ -173,12 +182,12 @@ const struct {
 } ForceBitDepth8Data[]{
     {"already 8-bit", "rgba.png", PixelFormat::RGBA8Unorm, {3, 2}, {InPlaceInit, {
         /* Same as in rgba() */
-        '\xde', '\xad', '\xb5', '\xff',
-        '\xca', '\xfe', '\x77', '\xff',
-        '\x00', '\x00', '\x00', '\x00',
-        '\xca', '\xfe', '\x77', '\xff',
-        '\x00', '\x00', '\x00', '\x00',
-        '\xde', '\xad', '\xb5', '\xff'
+        '\x66', '\x33', '\xff', '\x99',
+        '\xcc', '\x33', '\xff', '\x00',
+        '\x99', '\x33', '\xff', '\x66',
+        '\x00', '\xcc', '\xff', '\x33',
+        '\x33', '\x66', '\x99', '\xff',
+        '\xff', '\x00', '\x33', '\xcc'
     }}, true, nullptr},
     {"RGB", "rgb16.png", PixelFormat::RGB8Unorm, {2, 3}, {InPlaceInit, {
         '\x04', '\x08', '\x0c',
@@ -219,21 +228,20 @@ const struct {
         5000, 6000
     }}, true, nullptr},
     {"RGBA", "rgba.png", PixelFormat::RGBA16Unorm, {3, 2}, {InPlaceInit, {
-        /* Yes, those pixels are zero in the original as well. Huh. */
-        57054, 44461, 46517, 65535,
-        51914, 65278, 30583, 65535,
-        0, 0, 0, 0,
-        51914, 65278, 30583, 65535,
-        0, 0, 0, 0,
-        57054, 44461, 46517, 65535,
+        26214, 13107, 65535, 39321,
+        52428, 13107, 65535, 0,
+        39321, 13107, 65535, 26214,
+        0, 52428, 65535, 13107,
+        13107, 26214, 39321, 65535,
+        65535, 0, 13107, 52428,
     }}, false, nullptr},
     {"RGBA, verbose", "rgba.png", PixelFormat::RGBA16Unorm, {3, 2}, {InPlaceInit, {
-        57054, 44461, 46517, 65535,
-        51914, 65278, 30583, 65535,
-        0, 0, 0, 0,
-        51914, 65278, 30583, 65535,
-        0, 0, 0, 0,
-        57054, 44461, 46517, 65535,
+        26214, 13107, 65535, 39321,
+        52428, 13107, 65535, 0,
+        39321, 13107, 65535, 26214,
+        0, 52428, 65535, 13107,
+        13107, 26214, 39321, 65535,
+        65535, 0, 13107, 52428,
     }}, true, "Trade::PngImporter::image2D(): expanding 8-bit channels to 16-bit\n"},
     {"gray", "gray.png", PixelFormat::R16Unorm, {3, 2}, {InPlaceInit, {
         65535, 34952, 0,
@@ -266,10 +274,11 @@ PngImporterTest::PngImporterTest() {
     addInstancedTests({&PngImporterTest::gray},
         Containers::arraySize(GrayData));
 
-    addTests({&PngImporterTest::gray16});
+    addTests({&PngImporterTest::gray16,
+              &PngImporterTest::grayAlpha});
 
-    addInstancedTests({&PngImporterTest::grayAlpha},
-        Containers::arraySize(GrayAlphaData));
+    addInstancedTests({&PngImporterTest::grayAlphaBinaryAlpha},
+        Containers::arraySize(GrayAlphaBinaryAlphaData));
 
     addInstancedTests({&PngImporterTest::rgb},
         Containers::arraySize(RgbData));
@@ -279,6 +288,9 @@ PngImporterTest::PngImporterTest() {
 
     addInstancedTests({&PngImporterTest::rgba},
         Containers::arraySize(RgbaData));
+
+    addInstancedTests({&PngImporterTest::rgbaBinaryAlpha},
+        Containers::arraySize(RgbaBinaryAlphaData));
 
     addInstancedTests({&PngImporterTest::forceBitDepth8},
         Containers::arraySize(ForceBitDepth8Data));
@@ -376,7 +388,30 @@ void PngImporterTest::gray16() {
 }
 
 void PngImporterTest::grayAlpha() {
-    auto&& data = GrayAlphaData[testCaseInstanceId()];
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("PngImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(PNGIMPORTER_TEST_DIR, "ga.png")));
+
+    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
+    CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->flags(), ImageFlags2D{});
+    CORRADE_COMPARE(image->size(), Vector2i(3, 2));
+    CORRADE_COMPARE(image->format(), PixelFormat::RG8Unorm);
+
+    /* The image has four-byte aligned rows, clear the padding to deterministic
+       values */
+    CORRADE_COMPARE(image->data().size(), 16);
+    image->mutableData()[6] = image->mutableData()[7] =
+        image->mutableData()[14] = image->mutableData()[15] = 0;
+
+    CORRADE_COMPARE_AS(image->data(), Containers::arrayView<char>({
+        /* Matches PngImageConverterTest::grayscaleAlpha() */
+        '\x66', '\x99', '\xcc', '\x00', '\x99', '\x66', 0, 0,
+        '\x00', '\x33', '\x33', '\xff', '\xff', '\xcc', 0, 0
+    }), TestSuite::Compare::Container);
+}
+
+void PngImporterTest::grayAlphaBinaryAlpha() {
+    auto&& data = GrayAlphaBinaryAlphaData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("PngImporter");
@@ -467,6 +502,35 @@ void PngImporterTest::rgbPalette1bit() {
 
 void PngImporterTest::rgba() {
     auto&& data = RgbaData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("PngImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(PNGIMPORTER_TEST_DIR, data.filename)));
+
+    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
+    {
+        CORRADE_EXPECT_FAIL_IF(Containers::StringView{data.name}.contains("CgBI"),
+            "Stock libPNG can't handle CgBI.");
+        CORRADE_VERIFY(image);
+    }
+
+    if(!image) CORRADE_SKIP("Loading failed, skipping the rest.");
+
+    CORRADE_COMPARE(image->size(), Vector2i(3, 2));
+    CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Unorm);
+    CORRADE_COMPARE_AS(image->data(),  Containers::arrayView<char>({
+        /* Matches PngImageConverterTest::grayscaleAlpha() */
+        '\x66', '\x33', '\xff', '\x99',
+        '\xcc', '\x33', '\xff', '\x00',
+        '\x99', '\x33', '\xff', '\x66',
+        '\x00', '\xcc', '\xff', '\x33',
+        '\x33', '\x66', '\x99', '\xff',
+        '\xff', '\x00', '\x33', '\xcc'
+    }), TestSuite::Compare::Container);
+}
+
+void PngImporterTest::rgbaBinaryAlpha() {
+    auto&& data = RgbaBinaryAlphaData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("PngImporter");

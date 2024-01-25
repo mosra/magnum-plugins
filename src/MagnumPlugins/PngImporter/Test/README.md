@@ -1,9 +1,9 @@
 Creating input PNG files
 ========================
 
-`bgra-iphone.png` is `rgba.png` converted to a CgBI format (an Apple-specific
-extension to PNG, using BGRA and premultiplied alpha). Details here:
-http://iphonedevwiki.net/index.php/CgBI_file_format
+`rgba-binary-alpha-iphone.png` is `rgba-binary-alpha.png` converted to a CgBI
+format (an Apple-specific extension to PNG, using BGRA and premultiplied
+alpha). Details here: http://iphonedevwiki.net/index.php/CgBI_file_format
 
 It's converted using [pincrush](https://github.com/DHowett/pincrush),
 unfortunately the current version (2f61dfc85d84c89da6f6d943d3192c71077fd3cd)

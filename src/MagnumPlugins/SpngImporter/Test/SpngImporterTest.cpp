@@ -81,9 +81,9 @@ const struct {
         "failed to read the header: end of stream"},
     {"corrupted header chunk", "gray.png", 0x0f, 'Z', /* IHDR -> IHDZ */
         "failed to read the header: missing IHDR chunk"},
-    {"can't read tRNS chunk", "ga.png", 0x27, 'O', /* IDAT -> iDOT */
+    {"can't read tRNS chunk", "ga-binary-alpha.png", 0x27, 'O', /* IDAT -> iDOT */
         "failed to get the tRNS chunk: unknown critical chunk"},
-    {"corrupted data chunk", "ga.png", 0x29, 0,
+    {"corrupted data chunk", "ga-binary-alpha.png", 0x29, 0,
         "failed to start decoding: IDAT stream error"},
     {"corrupted data", "gray.png", 0x34, '\xff', /* 0 byte -> 255 */
         "failed to decode a row: IDAT stream error"},
@@ -110,8 +110,8 @@ const struct {
     const char* name;
     const char* filename;
 } GrayAlphaData[]{
-    {"8bit", "ga.png"},
-    {"tRNS alpha mask", "ga-trns.png"},
+    {"8bit", "ga-binary-alpha.png"},
+    {"tRNS alpha mask", "ga-binary-alpha-trns.png"},
 };
 
 const struct {
@@ -126,9 +126,9 @@ const struct {
     const char* name;
     const char* filename;
 } RgbaData[]{
-    {"RGBA", "rgba.png"},
-    {"CgBI BGRA", "rgba-iphone.png"},
-    {"tRNS alpha mask", "rgba-trns.png"},
+    {"RGBA", "rgba-binary-alpha.png"},
+    {"CgBI BGRA", "rgba-binary-alpha-iphone.png"},
+    {"tRNS alpha mask", "rgba-binary-alpha-trns.png"},
 };
 
 /* Shared among all plugins that implement data copying optimizations */

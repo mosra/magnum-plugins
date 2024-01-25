@@ -36,6 +36,7 @@
 #include <Magnum/ImageView.h>
 #include <Magnum/PixelFormat.h>
 #include <Magnum/DebugTools/CompareImage.h>
+#include <Magnum/Math/Color.h>
 #include <Magnum/Trade/AbstractImageConverter.h>
 #include <Magnum/Trade/AbstractImporter.h>
 #include <Magnum/Trade/ImageData.h>
@@ -53,8 +54,12 @@ struct PngImageConverterTest: TestSuite::Tester {
     void rgb();
     void rgb16();
 
+    void rgba();
+
     void grayscale();
     void grayscale16();
+
+    void grayscaleAlpha();
 
     void unsupportedMetadata();
 
@@ -62,6 +67,8 @@ struct PngImageConverterTest: TestSuite::Tester {
     PluginManager::Manager<AbstractImageConverter> _converterManager{"nonexistent"};
     PluginManager::Manager<AbstractImporter> _importerManager{"nonexistent"};
 };
+
+using namespace Math::Literals;
 
 const struct {
     const char* name;
@@ -93,8 +100,12 @@ PngImageConverterTest::PngImageConverterTest() {
     addTests({&PngImageConverterTest::rgb,
               &PngImageConverterTest::rgb16,
 
+              &PngImageConverterTest::rgba,
+
               &PngImageConverterTest::grayscale,
-              &PngImageConverterTest::grayscale16});
+              &PngImageConverterTest::grayscale16,
+
+              &PngImageConverterTest::grayscaleAlpha});
 
     addInstancedTests({&PngImageConverterTest::unsupportedMetadata},
         Containers::arraySize(UnsupportedMetadataData));
@@ -227,6 +238,44 @@ void PngImageConverterTest::rgb16() {
         DebugTools::CompareImage);
 }
 
+void PngImageConverterTest::rgba() {
+    const Color4ub original[]{
+        /* Skip */
+        {}, {}, {},
+
+        /* Making sure the alpha is non-trivial, i.e. not all 00 or FF but also
+           other values, to verify alpha premultiplication on import */
+        0x6633ff99_rgba, 0xcc33ff00_rgba, 0x9933ff66_rgba,
+        0x00ccff33_rgba, 0x336699ff_rgba, 0xff0033cc_rgba
+    };
+
+    const Color4ub expected[]{
+        0x6633ff99_rgba, 0xcc33ff00_rgba, 0x9933ff66_rgba,
+        0x00ccff33_rgba, 0x336699ff_rgba, 0xff0033cc_rgba
+    };
+
+    Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("PngImageConverter");
+    Containers::Optional<Containers::Array<char>> data = converter->convertToData(ImageView2D{
+        PixelStorage{}
+            .setSkip({0, 1, 0}),
+        PixelFormat::RGBA8Unorm, {3, 2}, original});
+    CORRADE_VERIFY(data);
+    CORRADE_COMPARE_AS(*data,
+        Utility::Path::join(PNGIMPORTER_TEST_DIR, "rgba.png"),
+        TestSuite::Compare::StringToFile);
+
+    if(_importerManager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("PngImporter plugin not found, cannot test");
+
+    Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("PngImporter");
+    CORRADE_VERIFY(importer->openData(*data));
+    Containers::Optional<Trade::ImageData2D> converted = importer->image2D(0);
+    CORRADE_VERIFY(converted);
+    CORRADE_COMPARE_AS(*converted,
+        (ImageView2D{PixelFormat::RGBA8Unorm, {3, 2}, expected}),
+        DebugTools::CompareImage);
+}
+
 void PngImageConverterTest::grayscale() {
     const char original[]{
         /* Skip */
@@ -301,6 +350,44 @@ void PngImageConverterTest::grayscale16() {
     CORRADE_VERIFY(converted);
     CORRADE_COMPARE_AS(*converted,
         (ImageView2D{PixelFormat::R16Unorm, {2, 3}, expected}),
+        DebugTools::CompareImage);
+}
+
+void PngImageConverterTest::grayscaleAlpha() {
+    const Vector2ub original[]{
+        /* Skip */
+        {}, {}, {}, {},
+
+        /* Making sure the alpha is non-trivial, i.e. not all 00 or FF but also
+           other values, to verify alpha premultiplication on import */
+        {0x66, 0x99}, {0xcc, 0x00}, {0x99, 0x66}, {},
+        {0x00, 0x33}, {0x33, 0xff}, {0xff, 0xcc}, {}
+    };
+
+    const Vector2ub expected[]{
+        {0x66, 0x99}, {0xcc, 0x00}, {0x99, 0x66}, {},
+        {0x00, 0x33}, {0x33, 0xff}, {0xff, 0xcc}, {}
+    };
+
+    Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("PngImageConverter");
+    Containers::Optional<Containers::Array<char>> data = converter->convertToData(ImageView2D{
+        PixelStorage{}
+            .setSkip({0, 1, 0}),
+        PixelFormat::RG8Unorm, {3, 2}, original});
+    CORRADE_VERIFY(data);
+    CORRADE_COMPARE_AS(*data,
+        Utility::Path::join(PNGIMPORTER_TEST_DIR, "ga.png"),
+        TestSuite::Compare::StringToFile);
+
+    if(_importerManager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("PngImporter plugin not found, cannot test");
+
+    Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("PngImporter");
+    CORRADE_VERIFY(importer->openData(*data));
+    Containers::Optional<Trade::ImageData2D> converted = importer->image2D(0);
+    CORRADE_VERIFY(converted);
+    CORRADE_COMPARE_AS(*converted,
+        (ImageView2D{PixelFormat::RG8Unorm, {3, 2}, expected}),
         DebugTools::CompareImage);
 }
 
