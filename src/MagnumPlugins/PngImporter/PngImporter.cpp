@@ -48,6 +48,8 @@
 
 namespace Magnum { namespace Trade {
 
+using namespace Containers::Literals;
+
 PngImporter::PngImporter() = default;
 
 PngImporter::PngImporter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin): AbstractImporter{manager, plugin} {}
@@ -205,6 +207,69 @@ Containers::Optional<ImageData2D> PngImporter::doImage2D(UnsignedInt, UnsignedIn
         bits = 8;
     }
 
+    /* Premultiply alpha, if desired */
+    if(const Containers::StringView alphaMode = configuration().value<Containers::StringView>("alphaMode")) {
+        if(alphaMode != "premultiplied"_s) {
+            Error{} << "Trade::PngImporter::image2D(): expected alphaMode to be either empty or premultiplied but got" << alphaMode;
+            return {};
+        }
+
+        /* Everything would be *a lot* simpler if there was a direct option to
+           JUST GIVE ME THE PIXEL VALUES PREMULTIPLIED, SATISFYING WHATEVER
+           GAMMA VALUE WAS THERE, TRUST ME, I KNOW WHAT TO DO WITH THE OUTPUT.
+           But that's not the case, it seems -- there's a complicated
+           png_set_gamma() API to make the imported values match the screen
+           gamma or whatnot (who needs that nowadays, with various GPU
+           operations and compositors being in the way?!), and then a
+           png_set_alpha_mode() which seems to be meant to replace
+           png_set_gamma(), but seems like both of them have to be used in
+           order to satisfy all of below:
+
+            1.  If the file doesn't contain an alpha channel or the alpha
+                channel is opaque, the imported values should be the same
+                regardless of whether I touched any of png_set_alpha_mode() /
+                png_set_gamma().
+            2.  If the file contains an alpha channel and I don't enable
+                premultiplication, the imported values shouldn't get changed in
+                any way compared to just a raw import without
+                png_set_alpha_mode() / png_set_gamma(), or compared to
+                stb_image, libspng etc. This is achieved by simply not touching
+                those functions in that case (which I assume also avoids any
+                potential overhead of thise)
+            3.  If the file contains an alpha channel and there's a gAMA chunk
+                that says it's sRGB, premultiply the alpha accordingly, i.e.
+                first perform a sRGB decode, then scale, then encode back. This
+                is verified by manually scaling the sRGB-decoded pixel values
+                in PngImporterTest::rgba().
+            4.  If the file contains an alpha channel and there's a gAMA chunk
+                that says it's linear, premultiply the alpha without a sRGB
+                decode. This is again verified manually in
+                PngImporterTest::rgba().
+            5.  If the file contains an alpha channel and there's no gAMA
+                chunk, continue as if there was a gAMA chunk saying it's sRGB
+                (which is what PNG_DEFAULT_sRGB alone was meant to handle, I
+                think?)
+
+           The code below is the only combination I found that passes all
+           tests. It's possible that there's a more efficient way to do that
+           (scaling with an arbitrary gamma value sounds anything but
+           performant), I just didn't find it in a reasonable timespan. */
+        png_set_alpha_mode(file, PNG_ALPHA_PREMULTIPLIED, PNG_DEFAULT_sRGB);
+        Double gamma;
+        if(png_get_gAMA(file, info, &gamma) && Math::equal(gamma, 1.0)) {
+            png_set_gamma(file, PNG_GAMMA_LINEAR, PNG_GAMMA_LINEAR);
+        } else {
+            /** @todo some constants for this?! */
+            png_set_gamma(file, 1.0/0.45455, 0.45455);
+        }
+
+        /** @todo there doesn't seem to be a metadata specifying if the PNG
+            file is already premultiplied (apart from the Apple CgBI
+            extension), however some tools do that ... do detection based on
+            what tool exported the image? such as blender producing
+            premultiplied PNGs https://developer.blender.org/T24764 */
+    }
+
     /* Enable 8-to-16 or 16-to-8 conversion if desired */
     if(const Int forceBitDepth = configuration().value<Int>("forceBitDepth")) {
         if(forceBitDepth == 8 && bits != 8) {
@@ -224,13 +289,6 @@ Containers::Optional<ImageData2D> PngImporter::doImage2D(UnsignedInt, UnsignedIn
             return {};
         }
     }
-
-    /** @todo there's an option to convert alpha to premultiplied on load:
-        https://github.com/glennrp/libpng/blob/a37d4836519517bdce6cb9d956092321eca3e73b/png.h#L1096-L1135
-        but there doesn't seem to be a way to check if the PNG file is already
-        premultiplied (which is disallowed by the PNG spec, but ... tools)
-        or do detection based on what tool exported the image? such as blender
-        producing premultiplied PNGs https://developer.blender.org/T24764 */
 
     /* Initialize data array, align rows to four bytes */
     CORRADE_INTERNAL_ASSERT(bits >= 8);

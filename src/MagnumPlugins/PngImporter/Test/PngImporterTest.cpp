@@ -29,6 +29,7 @@
 #include <Corrade/Containers/String.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
+#include <Corrade/TestSuite/Compare/Numeric.h>
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/DebugStl.h> /** @todo remove once Debug is stream-free */
@@ -60,6 +61,8 @@ struct PngImporterTest: TestSuite::Tester {
     void rgbPalette1bit();
     void rgba();
     void rgbaBinaryAlpha();
+
+    void alphaModeInvalid();
 
     void forceBitDepth8();
     void forceBitDepth16();
@@ -118,57 +121,97 @@ const struct {
 constexpr struct {
     const char* name;
     const char* filename;
+    bool premultipliedAlpha;
 } GrayData[]{
-    {"8bit", "gray.png"},
+    {"8bit", "gray.png", false},
+    /* Enabling the premultiplied alpha shouldn't change the output at all for
+       non-alpha formats */
+    {"8bit, premultiplied alpha", "gray.png", true},
     /* convert gray.png -depth 4 -colorspace gray -define png:bit-depth=4 -define png:exclude-chunks=date gray-4bit.png */
-    {"4bit", "gray4.png"},
+    {"4bit", "gray4.png", false},
 };
 
 constexpr struct {
     const char* name;
     const char* filename;
+    bool premultipliedAlpha;
+} GrayAlphaData[]{
+    {"8bit", "ga.png", false},
+    {"8bit, premultiplied alpha", "ga.png", true},
+};
+
+const struct {
+    const char* name;
+    const char* filename;
+    bool premultipliedAlpha;
 } GrayAlphaBinaryAlphaData[]{
     /* magnum-imageconverter ga-binary-alpha-trns.png --converter StbPngImageConverter ga-binary-alpha.png
        because imagemagick is STUPID and doesn't let me override the rRNS from
        https://www.imagemagick.org/Usage/formats/#png_quality -- the suggested
        -type TruecolorMatte doesn't do anything and PNG32: gives me a RGBA
        (yes, the source file is the one from below) */
-    {"", "ga-binary-alpha.png"},
+    {"", "ga-binary-alpha.png", false},
+    /* The alpha is either all FF or 00 with color channels also 00 so this
+       changes nothing */
+    {"premultiplied alpha", "ga-binary-alpha.png", true},
     /* convert rgba-binary-alpha.png -colorspace gray ga-binary-alpha-trns.png
        According to https://www.imagemagick.org/Usage/formats/#png_quality,
        ImageMagick creates a tRNS chunk if the original image has binary (00
        or FF) alpha. */
-    {"tRNS alpha mask", "ga-binary-alpha-trns.png"},
+    {"tRNS alpha mask", "ga-binary-alpha-trns.png", false},
+    /* The alpha is either all FF or 00 with color channels also 00 so this
+       changes nothing */
+    {"tRNS alpha mask, premultiplied alpha", "ga-binary-alpha-trns.png", true},
 };
 
 constexpr struct {
     const char* name;
     const char* filename;
+    bool premultipliedAlpha;
 } RgbData[]{
-    {"RGB", "rgb.png"},
+    {"RGB", "rgb.png", false},
+    /* Enabling the premultiplied alpha shouldn't change the output at all for
+       non-alpha formats */
+    {"RGB, premultiplied alpha", "rgb.png", true},
     /* convert rgb.png -define png:exclude-chunks=date png8:palette.png */
-    {"palette", "rgb-palette.png"},
+    {"palette", "rgb-palette.png", false},
 };
 
 constexpr struct {
     const char* name;
     const char* filename;
+    bool premultipliedAlpha;
+    bool premultipliedAlphaUsesSrgb;
 } RgbaData[]{
-    {"RGBA", "rgba.png"},
+    {"RGBA, no gAMA chunk", "rgba.png", false, false},
+    /* pngcrush -g 0.45455 rgba.png rgba-srgb.png */
+    {"RGBA, sRGB gAMA chunk", "rgba-srgb.png", false, false},
+    /* pngcrush -g 1.0 rgba.png rgba-linear.png */
+    {"RGBA, linear gAMA chunk", "rgba-linear.png", false, false},
+    {"RGBA, premultiplied alpha, no gAMA chunk", "rgba.png", true, true},
+    {"RGBA, premultiplied alpha, sRGB gAMA chunk", "rgba-srgb.png", true, true},
+    {"RGBA, premultiplied alpha, linear gAMA chunk", "rgba-linear.png", true, false},
     /* See README.md for details on how this file was produced */
-    {"CgBI BGRA", "rgba-binary-alpha-iphone.png"},
+    {"CgBI BGRA", "rgba-binary-alpha-iphone.png", false, false},
 };
 
 const struct {
     const char* name;
     const char* filename;
+    bool premultipliedAlpha;
 } RgbaBinaryAlphaData[]{
-    {"", "rgba-binary-alpha.png"},
+    {"", "rgba-binary-alpha.png", false},
+    /* The alpha is either all FF or 00 with color channels also 00 so this
+       changes nothing */
+    {"premultiplied alpha", "rgba-binary-alpha.png", true},
     /* convert rgba-binary-alpha.png -define png:exclude-chunks=date rgba-binary-alpha-trns.png
        According to https://www.imagemagick.org/Usage/formats/#png_quality,
        ImageMagick creates a tRNS chunk if the original image has binary (00
        or FF) alpha. */
-    {"tRNS alpha mask", "rgba-binary-alpha-trns.png"},
+    {"tRNS alpha mask", "rgba-binary-alpha-trns.png", false},
+    /* The alpha is either all FF or 00 with color channels also 00 so this
+       changes nothing */
+    {"tRNS alpha mask, premultiplied alpha", "rgba-binary-alpha-trns.png", true},
 };
 
 const struct {
@@ -274,8 +317,10 @@ PngImporterTest::PngImporterTest() {
     addInstancedTests({&PngImporterTest::gray},
         Containers::arraySize(GrayData));
 
-    addTests({&PngImporterTest::gray16,
-              &PngImporterTest::grayAlpha});
+    addTests({&PngImporterTest::gray16});
+
+    addInstancedTests({&PngImporterTest::grayAlpha},
+        Containers::arraySize(GrayAlphaData));
 
     addInstancedTests({&PngImporterTest::grayAlphaBinaryAlpha},
         Containers::arraySize(GrayAlphaBinaryAlphaData));
@@ -291,6 +336,8 @@ PngImporterTest::PngImporterTest() {
 
     addInstancedTests({&PngImporterTest::rgbaBinaryAlpha},
         Containers::arraySize(RgbaBinaryAlphaData));
+
+    addTests({&PngImporterTest::alphaModeInvalid});
 
     addInstancedTests({&PngImporterTest::forceBitDepth8},
         Containers::arraySize(ForceBitDepth8Data));
@@ -353,6 +400,9 @@ void PngImporterTest::gray() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("PngImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(PNGIMPORTER_TEST_DIR, data.filename)));
 
+    if(data.premultipliedAlpha)
+        importer->configuration().setValue("alphaMode", "premultiplied");
+
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(image->flags(), ImageFlags2D{});
@@ -364,6 +414,7 @@ void PngImporterTest::gray() {
     CORRADE_COMPARE(image->data().size(), 8);
     image->mutableData()[3] = image->mutableData()[7] = 0;
 
+    /* Premultiplied alpha should have no effect on this */
     CORRADE_COMPARE_AS(image->data(), Containers::arrayView<char>({
         '\xff', '\x88', '\x00', 0,
         '\x88', '\x00', '\xff', 0
@@ -388,8 +439,14 @@ void PngImporterTest::gray16() {
 }
 
 void PngImporterTest::grayAlpha() {
+    auto&& data = GrayAlphaData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("PngImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(PNGIMPORTER_TEST_DIR, "ga.png")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(PNGIMPORTER_TEST_DIR, data.filename)));
+
+    if(data.premultipliedAlpha)
+        importer->configuration().setValue("alphaMode", "premultiplied");
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
@@ -403,11 +460,22 @@ void PngImporterTest::grayAlpha() {
     image->mutableData()[6] = image->mutableData()[7] =
         image->mutableData()[14] = image->mutableData()[15] = 0;
 
-    CORRADE_COMPARE_AS(image->data(), Containers::arrayView<char>({
-        /* Matches PngImageConverterTest::grayscaleAlpha() */
-        '\x66', '\x99', '\xcc', '\x00', '\x99', '\x66', 0, 0,
-        '\x00', '\x33', '\x33', '\xff', '\xff', '\xcc', 0, 0
-    }), TestSuite::Compare::Container);
+    if(data.premultipliedAlpha)
+        CORRADE_COMPARE_AS(image->data(), Containers::arrayView<char>({
+            /* Values get decoded from sRGB, scaled and then encoded back, so
+               it's not just a linear multiplication. Alpha values stay the
+               same tho, and pixels with 00 or FF alpha also. See rgba() for a
+               more thorough check of sRGB vs linear data depending on what's
+               actually present in the file metadata, the RG values here should
+               match RA values in rgba(). */
+            '\x50', '\x99', '\x00', '\x00', '\x65', '\x66', '\x00', '\x00', '\x00', '\x33', '\x33', '\xff', '\xe6', '\xcc', '\x00', '\x00'
+        }), TestSuite::Compare::Container);
+    else
+        CORRADE_COMPARE_AS(image->data(), Containers::arrayView<char>({
+            /* Matches PngImageConverterTest::grayscaleAlpha() */
+            '\x66', '\x99', '\xcc', '\x00', '\x99', '\x66', 0, 0,
+            '\x00', '\x33', '\x33', '\xff', '\xff', '\xcc', 0, 0
+        }), TestSuite::Compare::Container);
 }
 
 void PngImporterTest::grayAlphaBinaryAlpha() {
@@ -417,6 +485,9 @@ void PngImporterTest::grayAlphaBinaryAlpha() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("PngImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(PNGIMPORTER_TEST_DIR, data.filename)));
 
+    if(data.premultipliedAlpha)
+        importer->configuration().setValue("alphaMode", "premultiplied");
+
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(image->flags(), ImageFlags2D{});
@@ -429,6 +500,9 @@ void PngImporterTest::grayAlphaBinaryAlpha() {
     image->mutableData()[6] = image->mutableData()[7] =
         image->mutableData()[14] = image->mutableData()[15] = 0;
 
+    /* If premultiplied alpha is enabled, the result should be the same as
+       pixels with full alpha stay unchanged and pixels with zero alpha are
+       zero already */
     CORRADE_COMPARE_AS(image->data(), Containers::arrayView<char>({
         '\xb8', '\xff', '\xe9', '\xff', '\x00', '\x00', 0, 0,
         '\xe9', '\xff', '\x00', '\x00', '\xb8', '\xff', 0, 0
@@ -441,6 +515,9 @@ void PngImporterTest::rgb() {
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("PngImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(PNGIMPORTER_TEST_DIR, data.filename)));
+
+    if(data.premultipliedAlpha)
+        importer->configuration().setValue("alphaMode", "premultiplied");
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
@@ -455,6 +532,7 @@ void PngImporterTest::rgb() {
         image->mutableData()[11] = image->mutableData()[21] =
             image->mutableData()[22] = image->mutableData()[23] = 0;
 
+    /* Premultiplied alpha should have no effect on this */
     CORRADE_COMPARE_AS(image->data(), Containers::arrayView<char>({
         '\xca', '\xfe', '\x77',
         '\xde', '\xad', '\xb5',
@@ -507,6 +585,9 @@ void PngImporterTest::rgba() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("PngImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(PNGIMPORTER_TEST_DIR, data.filename)));
 
+    if(data.premultipliedAlpha)
+        importer->configuration().setValue("alphaMode", "premultiplied");
+
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     {
         CORRADE_EXPECT_FAIL_IF(Containers::StringView{data.name}.contains("CgBI"),
@@ -518,8 +599,54 @@ void PngImporterTest::rgba() {
 
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
     CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Unorm);
-    CORRADE_COMPARE_AS(image->data(),  Containers::arrayView<char>({
-        /* Matches PngImageConverterTest::grayscaleAlpha() */
+    if(data.premultipliedAlpha) {
+        if(data.premultipliedAlphaUsesSrgb) {
+            CORRADE_COMPARE_AS(image->data(),  Containers::arrayView<char>({
+                /* Values get decoded from sRGB, scaled and then encoded back,
+                   so it's not just a linear multiplication. Alpha values stay
+                   the same tho, and pixels with 00 or FF alpha also. */
+                /** @todo expand this test once there's an option to encode
+                    either linear or sRGB into metadata */
+                '\x50', '\x27', '\xca', '\x99',
+                '\x00', '\x00', '\x00', '\x00',
+                '\x65', '\x22', '\xa8', '\x66',
+                '\x00', '\x62', '\x7b', '\x33',
+                '\x33', '\x66', '\x99', '\xff',
+                '\xe6', '\x00', '\x2e', '\xcc'
+            }), TestSuite::Compare::Container);
+            /* Check that this is indeed a sRGB conversion. The _srgbaf literal
+               converts the sRGB pixel value (which matches the
+               non-premultiplied pixel value below) to linear floats and
+               premultiplies it accordingly, the Color4::fromSrgbAlpha()
+               extracts an actual premultiplied sRGB value from the imported
+               image. */
+            CORRADE_COMPARE_WITH(
+                Color4::fromSrgbAlpha(image->pixels<Color4ub>()[0][0]),
+                0x6633ffff_srgbaf*(0x99/255.0f),
+                TestSuite::Compare::around(Color4{0.0125f, 0.002f}));
+        } else {
+            CORRADE_COMPARE_AS(image->data(),  Containers::arrayView<char>({
+                /* Values get simply unpacked, scaled and then packed back,
+                   with no sRGB (de/en)coding. */
+                '\x3d', '\x1f', '\x99', '\x99',
+                '\x00', '\x00', '\x00', '\x00',
+                '\x3d', '\x14', '\x66', '\x66',
+                '\x00', '\x29', '\x33', '\x33',
+                '\x33', '\x66', '\x99', '\xff',
+                '\xcc', '\x00', '\x29', '\xcc'
+            }), TestSuite::Compare::Container);
+            /* Check that this is indeed a linear conversion. The _rgbaf
+               literal converts the (linear) pixel value (which matches the
+               non-premultiplied pixel value below) to floats and premultiplies
+               it accordingly, the Math::unpack() extracts an actual
+               premultiplied (linear) value from the imported image. */
+            CORRADE_COMPARE_WITH(
+                Math::unpack<Color4>(image->pixels<Color4ub>()[0][0]),
+                0x6633ffff_rgbaf*(0x99/255.0f),
+                TestSuite::Compare::around(Color4{0.002f, 0.002f}));
+        }
+    } else CORRADE_COMPARE_AS(image->data(),  Containers::arrayView<char>({
+        /* Matches PngImageConverterTest::rgba() */
         '\x66', '\x33', '\xff', '\x99',
         '\xcc', '\x33', '\xff', '\x00',
         '\x99', '\x33', '\xff', '\x66',
@@ -536,6 +663,9 @@ void PngImporterTest::rgbaBinaryAlpha() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("PngImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(PNGIMPORTER_TEST_DIR, data.filename)));
 
+    if(data.premultipliedAlpha)
+        importer->configuration().setValue("alphaMode", "premultiplied");
+
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     {
         CORRADE_EXPECT_FAIL_IF(Containers::StringView{data.name}.contains("CgBI"),
@@ -547,6 +677,9 @@ void PngImporterTest::rgbaBinaryAlpha() {
 
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
     CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Unorm);
+    /* If premultiplied alpha is enabled, the result should be the same as
+       pixels with full alpha stay unchanged and pixels with zero alpha are
+       zero already */
     CORRADE_COMPARE_AS(image->data(),  Containers::arrayView<char>({
         '\xde', '\xad', '\xb5', '\xff',
         '\xca', '\xfe', '\x77', '\xff',
@@ -555,6 +688,18 @@ void PngImporterTest::rgbaBinaryAlpha() {
         '\x00', '\x00', '\x00', '\x00',
         '\xde', '\xad', '\xb5', '\xff'
     }), TestSuite::Compare::Container);
+}
+
+void PngImporterTest::alphaModeInvalid() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("PngImporter");
+    importer->configuration().setValue("alphaMode", "premultipliedSrgb");
+
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(PNGIMPORTER_TEST_DIR, "rgba.png")));
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!importer->image2D(0));
+    CORRADE_COMPARE(out.str(), "Trade::PngImporter::image2D(): expected alphaMode to be either empty or premultiplied but got premultipliedSrgb\n");
 }
 
 void PngImporterTest::forceBitDepth8() {
