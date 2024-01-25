@@ -146,32 +146,31 @@ void PngImageConverterTest::conversionError() {
             "Trade::PngImageConverter::convertToData(): error: Invalid IHDR data\n");
 }
 
-constexpr const char OriginalRgbData[] = {
-    /* Skip */
-    0, 0, 0, 0, 0, 0, 0, 0,
-
-    1, 2, 3, 2, 3, 4, 0, 0,
-    3, 4, 5, 4, 5, 6, 0, 0,
-    5, 6, 7, 6, 7, 8, 0, 0
-};
-
-const ImageView2D OriginalRgb{PixelStorage{}.setSkip({0, 1, 0}),
-    PixelFormat::RGB8Unorm, {2, 3}, OriginalRgbData};
-
-constexpr const char ConvertedRgbData[] = {
-    1, 2, 3, 2, 3, 4, 0, 0,
-    3, 4, 5, 4, 5, 6, 0, 0,
-    5, 6, 7, 6, 7, 8, 0, 0
-};
-
-const ImageView2D ConvertedRgb{PixelFormat::RGB8Unorm, {2, 3}, ConvertedRgbData};
-
 void PngImageConverterTest::rgb() {
+    const char original[]{
+        /* Skip */
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+
+        0, 0, 0, 1, 2, 3, 2, 3, 4, 0, 0, 0,
+        0, 0, 0, 3, 4, 5, 4, 5, 6, 0, 0, 0,
+        0, 0, 0, 5, 6, 7, 6, 7, 8, 0, 0, 0
+    };
+
+    const char expected[]{
+        1, 2, 3, 2, 3, 4, 0, 0,
+        3, 4, 5, 4, 5, 6, 0, 0,
+        5, 6, 7, 6, 7, 8, 0, 0
+    };
+
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("PngImageConverter");
     CORRADE_COMPARE(converter->extension(), "png");
     CORRADE_COMPARE(converter->mimeType(), "image/png");
 
-    Containers::Optional<Containers::Array<char>> data = converter->convertToData(OriginalRgb);
+    Containers::Optional<Containers::Array<char>> data = converter->convertToData(ImageView2D{
+        PixelStorage{}
+            .setRowLength(3)
+            .setSkip({1, 1, 0}),
+        PixelFormat::RGB8Unorm, {2, 3}, original});
     CORRADE_VERIFY(data);
     CORRADE_COMPARE_AS(*data,
         Utility::Path::join(PNGIMAGECONVERTER_TEST_DIR, "rgb.png"),
@@ -184,32 +183,33 @@ void PngImageConverterTest::rgb() {
     CORRADE_VERIFY(importer->openData(*data));
     Containers::Optional<Trade::ImageData2D> converted = importer->image2D(0);
     CORRADE_VERIFY(converted);
-    CORRADE_COMPARE_AS(*converted, ConvertedRgb,
+    CORRADE_COMPARE_AS(*converted,
+        (ImageView2D{PixelFormat::RGB8Unorm, {2, 3}, expected}),
         DebugTools::CompareImage);
 }
 
-constexpr const UnsignedShort OriginalRgbData16[] = {
-    /* Skip */
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-
-    1000, 2000, 3000, 2000, 3000, 4000, 0, 0, 0, 0,
-    3000, 4000, 5000, 4000, 5000, 6000, 0, 0, 0, 0,
-    5000, 6000, 7000, 6000, 7000, 8000, 0, 0, 0, 0
-};
-
-const ImageView2D OriginalRgb16{PixelStorage{}.setSkip({0, 1, 0}).setRowLength(3),
-    PixelFormat::RGB16Unorm, {2, 3}, OriginalRgbData16};
-
-constexpr const UnsignedShort ConvertedRgbData16[] = {
-    1000, 2000, 3000, 2000, 3000, 4000,
-    3000, 4000, 5000, 4000, 5000, 6000,
-    5000, 6000, 7000, 6000, 7000, 8000
-};
-
-const ImageView2D ConvertedRgb16{PixelFormat::RGB16Unorm, {2, 3}, ConvertedRgbData16};
-
 void PngImageConverterTest::rgb16() {
-    Containers::Optional<Containers::Array<char>> data = _converterManager.instantiate("PngImageConverter")->convertToData(OriginalRgb16);
+    const UnsignedShort original[]{
+        /* Skip */
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+
+        1000, 2000, 3000, 2000, 3000, 4000, 0, 0, 0, 0,
+        3000, 4000, 5000, 4000, 5000, 6000, 0, 0, 0, 0,
+        5000, 6000, 7000, 6000, 7000, 8000, 0, 0, 0, 0
+    };
+
+    const UnsignedShort expected[]{
+        1000, 2000, 3000, 2000, 3000, 4000,
+        3000, 4000, 5000, 4000, 5000, 6000,
+        5000, 6000, 7000, 6000, 7000, 8000
+    };
+
+    Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("PngImageConverter");
+    Containers::Optional<Containers::Array<char>> data = converter->convertToData(ImageView2D{
+        PixelStorage{}
+            .setSkip({0, 1, 0})
+            .setRowLength(3),
+        PixelFormat::RGB16Unorm, {2, 3}, original});
     CORRADE_VERIFY(data);
     CORRADE_COMPARE_AS(*data,
         Utility::Path::join(PNGIMPORTER_TEST_DIR, "rgb16.png"),
@@ -222,32 +222,32 @@ void PngImageConverterTest::rgb16() {
     CORRADE_VERIFY(importer->openData(*data));
     Containers::Optional<Trade::ImageData2D> converted = importer->image2D(0);
     CORRADE_VERIFY(converted);
-    CORRADE_COMPARE_AS(*converted, ConvertedRgb16,
+    CORRADE_COMPARE_AS(*converted,
+        (ImageView2D{PixelFormat::RGB16Unorm, {2, 3}, expected}),
         DebugTools::CompareImage);
 }
 
-constexpr const char OriginalGrayscaleData[] = {
-    /* Skip */
-    0, 0, 0, 0,
-
-    1, 2, 0, 0,
-    3, 4, 0, 0,
-    5, 6, 0, 0
-};
-
-const ImageView2D OriginalGrayscale{PixelStorage{}.setSkip({0, 1, 0}),
-    PixelFormat::R8Unorm, {2, 3}, OriginalGrayscaleData};
-
-constexpr const char ConvertedGrayscaleData[] = {
-    1, 2, 0, 0,
-    3, 4, 0, 0,
-    5, 6, 0, 0
-};
-
-const ImageView2D ConvertedGrayscale{PixelFormat::R8Unorm, {2, 3}, ConvertedGrayscaleData};
-
 void PngImageConverterTest::grayscale() {
-    Containers::Optional<Containers::Array<char>> data = _converterManager.instantiate("PngImageConverter")->convertToData(OriginalGrayscale);
+    const char original[]{
+        /* Skip */
+        0, 0, 0, 0,
+
+        1, 2, 0, 0,
+        3, 4, 0, 0,
+        5, 6, 0, 0
+    };
+
+    const char expected[]{
+        1, 2, 0, 0,
+        3, 4, 0, 0,
+        5, 6, 0, 0
+    };
+
+    Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("PngImageConverter");
+    Containers::Optional<Containers::Array<char>> data = converter->convertToData(ImageView2D{
+        PixelStorage{}
+            .setSkip({0, 1, 0}),
+        PixelFormat::R8Unorm, {2, 3}, original});
     CORRADE_VERIFY(data);
     CORRADE_COMPARE_AS(*data,
         Utility::Path::join(PNGIMAGECONVERTER_TEST_DIR, "gray.png"),
@@ -260,32 +260,33 @@ void PngImageConverterTest::grayscale() {
     CORRADE_VERIFY(importer->openData(*data));
     Containers::Optional<Trade::ImageData2D> converted = importer->image2D(0);
     CORRADE_VERIFY(converted);
-    CORRADE_COMPARE_AS(*converted, ConvertedGrayscale,
+    CORRADE_COMPARE_AS(*converted,
+        (ImageView2D{PixelFormat::R8Unorm, {2, 3}, expected}),
         DebugTools::CompareImage);
 }
 
-constexpr const UnsignedShort OriginalGrayscaleData16[] = {
-    /* Skip */
-    0, 0, 0, 0,
-
-    1000, 2000, 0, 0,
-    3000, 4000, 0, 0,
-    5000, 6000, 0, 0
-};
-
-const ImageView2D OriginalGrayscale16{PixelStorage{}.setSkip({0, 1, 0}).setRowLength(3),
-    PixelFormat::R16Unorm, {2, 3}, OriginalGrayscaleData16};
-
-constexpr const UnsignedShort ConvertedGrayscaleData16[] = {
-    1000, 2000,
-    3000, 4000,
-    5000, 6000
-};
-
-const ImageView2D ConvertedGrayscale16{PixelFormat::R16Unorm, {2, 3}, ConvertedGrayscaleData16};
-
 void PngImageConverterTest::grayscale16() {
-    Containers::Optional<Containers::Array<char>> data = _converterManager.instantiate("PngImageConverter")->convertToData(OriginalGrayscale16);
+    const UnsignedShort original[]{
+        /* Skip */
+        0, 0, 0, 0,
+
+        1000, 2000, 0, 0,
+        3000, 4000, 0, 0,
+        5000, 6000, 0, 0
+    };
+
+    const UnsignedShort expected[]{
+        1000, 2000,
+        3000, 4000,
+        5000, 6000
+    };
+
+    Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("PngImageConverter");
+    Containers::Optional<Containers::Array<char>> data = converter->convertToData(ImageView2D{
+        PixelStorage{}
+            .setSkip({0, 1, 0})
+            .setRowLength(3),
+        PixelFormat::R16Unorm, {2, 3}, original});
     CORRADE_VERIFY(data);
     CORRADE_COMPARE_AS(*data,
         Utility::Path::join(PNGIMPORTER_TEST_DIR, "gray16.png"),
@@ -298,7 +299,8 @@ void PngImageConverterTest::grayscale16() {
     CORRADE_VERIFY(importer->openData(*data));
     Containers::Optional<Trade::ImageData2D> converted = importer->image2D(0);
     CORRADE_VERIFY(converted);
-    CORRADE_COMPARE_AS(*converted, ConvertedGrayscale16,
+    CORRADE_COMPARE_AS(*converted,
+        (ImageView2D{PixelFormat::R16Unorm, {2, 3}, expected}),
         DebugTools::CompareImage);
 }
 
