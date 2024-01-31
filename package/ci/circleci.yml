@@ -201,9 +201,9 @@ commands:
     steps:
     - run:
         name: Install libspng
-        # 0.7.3 suffers from https://github.com/randy408/libspng/pull/245
-        # which makes the static-only build impossible, using 0.7.2 until a new
-        # version is tagged.
+        # 0.7.4 requires CMake 3.12 to build, 0.7.3 suffers from
+        # https://github.com/randy408/libspng/pull/245 which makes the
+        # static-only build impossible.
         command: |
           export LIBSPNG_VERSION=0.7.2
           mkdir -p $HOME/libspng && cd $HOME/libspng
