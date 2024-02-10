@@ -117,9 +117,10 @@ information.
 @section Trade-StbResizeImageConverter-behavior Behavior and limitations
 
 Accepts @ref PixelFormat::RGBA8Unorm, @relativeref{PixelFormat,RGBA8Srgb},
-@relativeref{PixelFormat,RGBA16Unorm}, @relativeref{PixelFormat,RGBA32F} and
-their 1-, 2- and 3-component variants. In order to perform a conversion, you
-have to set the @cb{.ini} size @ce @ref Trade-StbResizeImageConverter-configuration "configuration option".
+@relativeref{PixelFormat,RGBA16Unorm}, @relativeref{PixelFormat,RGBA16F},
+@relativeref{PixelFormat,RGBA32F} and their 1-, 2- and 3-component variants. In
+order to perform a conversion, you have to set the @cb{.ini} size @ce
+@ref Trade-StbResizeImageConverter-configuration "configuration option".
 
 Image flags are passed through unchanged. As the resizing operation operates in
 two dimensions, the @cb{.ini} size @ce option always takes a 2D size. 1D images
