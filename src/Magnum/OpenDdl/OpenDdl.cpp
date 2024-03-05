@@ -764,8 +764,11 @@ const char* Document::parseStructureList(const std::size_t parent, const Contain
        resulting in `last` being filled from its return value. FUCK OFF, I'm
        not going to zero-initialize all my variables just because something
        thinks so, because doing THAT may hide ACTUAL bugs that would otherwise
-       get caught by the non-deterministic value of said variable. */
-    #if defined(CORRADE_TARGET_GCC) && !defined(CORRADE_TARGET_CLANG) && __GNUC__ >= 12
+       get caught by the non-deterministic value of said variable.
+
+       MSVC warns too, but that one I forgive. Can't expect much from such a
+       pile of poo. */
+    #if (defined(CORRADE_TARGET_GCC) && !defined(CORRADE_TARGET_CLANG) && __GNUC__ >= 12) || defined(CORRADE_TARGET_MSVC)
     std::size_t last{};
     #else
     std::size_t last;

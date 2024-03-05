@@ -177,7 +177,15 @@ Containers::Optional<ImageData2D> StbImageImporter::doImage2D(const UnsignedInt 
 
     stbi_uc* data;
     std::size_t channelSize;
+    /* MSVC says "warning C4701: potentially uninitialized local variable
+       'format' used" if this isn't initialized, even though it gets set in all
+       non-failure code paths. The zero value is invalid, so it won't alias a
+       valid format by accident. */
+    #ifdef CORRADE_TARGET_MSVC
+    PixelFormat format{};
+    #else
     PixelFormat format;
+    #endif
     if((isHdr && !forceBitDepth) || forceBitDepth == 32) {
         if(!isHdr && (flags() & ImporterFlag::Verbose))
             Debug{} << "Trade::StbImageImporter::image2D(): expanding" << (is16bit ? "16-bit" : "8-bit") << "channels to 32-bit float";
