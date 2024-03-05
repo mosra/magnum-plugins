@@ -5754,7 +5754,9 @@ void GltfSceneConverterTest::addSceneCustomFields() {
          {3, Vector3{}}}, /* Trivial, omitted */
         {{0, 176},
          {1, 4294967295}},
-        {{1, Int(-2147483648)},
+         /* W.T.F., C, why can't I just say -2147483648 without having to cast
+            back from an unsigned type or suppress warnings?! */
+        {{1, -2147483647 - 1},
          {2, 25}},
         {{0, true},
          {3, false},
@@ -5780,7 +5782,9 @@ void GltfSceneConverterTest::addSceneCustomFields() {
         {{0, 1234},
          {0, 4294967295}},
         {{1, -15},
-         {0, Int(-2147483648)},
+        /* W.T.F., C, why can't I just say -2147483648 without having to cast
+           back from an unsigned type or suppress warnings?! */
+         {0, -2147483647 - 1},
          {1, 2147483647}},
         {{2, false},
          {0, false},
@@ -5922,7 +5926,9 @@ void GltfSceneConverterTest::addSceneCustomFields() {
         Containers::arrayView({1u, 2u}),
         TestSuite::Compare::Container);
     CORRADE_COMPARE_AS(imported->field<Int>(importedSceneFieldInt),
-        Containers::arrayView({Int(-2147483648), 25}),
+        /* W.T.F., C, why can't I just say -2147483648 without having to cast
+           back from an unsigned type or suppress warnings?! */
+        Containers::arrayView({-2147483647 - 1, 25}),
         TestSuite::Compare::Container);
 
     CORRADE_VERIFY(imported->hasField(importedSceneFieldFloat));
@@ -5979,7 +5985,9 @@ void GltfSceneConverterTest::addSceneCustomFields() {
         Containers::arrayView({0u, 1u, 1u}),
         TestSuite::Compare::Container);
     CORRADE_COMPARE_AS(imported->field<Int>(importedSceneFieldIntArray),
-        Containers::arrayView({Int(-2147483648), -15,2147483647}),
+        /* W.T.F., C, why can't I just say -2147483648 without having to cast
+           back from an unsigned type or suppress warnings?! */
+        Containers::arrayView({-2147483647 - 1, -15, 2147483647}),
         TestSuite::Compare::Container);
 
     CORRADE_VERIFY(imported->hasField(importedSceneFieldBitArray));

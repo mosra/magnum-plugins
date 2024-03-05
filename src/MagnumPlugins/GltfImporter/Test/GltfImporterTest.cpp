@@ -3605,8 +3605,9 @@ void GltfImporterTest::sceneCustomFields() {
             Containers::arrayView({5u, 5u, 11u}),
             TestSuite::Compare::Container);
         CORRADE_COMPARE_AS(scene->field<Int>(sceneFieldOffset), Containers::arrayView({
-            /* W.T.F., C, why do I need a cast for this?! */
-            17, -22, Int(-2147483648)
+            /* W.T.F., C, why can't I just say -2147483648 without having to
+               cast back from an unsigned type or suppress warnings?! */
+            17, -22, -2147483647 - 1
         }), TestSuite::Compare::Container);
 
         CORRADE_VERIFY(scene->hasField(sceneFieldVisible));
@@ -3697,8 +3698,9 @@ void GltfImporterTest::sceneCustomFields() {
             Containers::arrayView({6u, 11u, 11u}),
             TestSuite::Compare::Container);
         CORRADE_COMPARE_AS(scene->field<Int>(sceneFieldIntArray), Containers::arrayView({
-            /* W.T.F., C, why do I need a cast for this?! */
-            -5, Int(-2147483648), 2147483647
+            /* W.T.F., C, why can't I just say -2147483648 without having to
+               cast back from an unsigned type or suppress warnings?! */
+            -5, -2147483647 - 1, 2147483647
         }), TestSuite::Compare::Container);
 
         CORRADE_VERIFY(scene->hasField(sceneFieldBoolArray));

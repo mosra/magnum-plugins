@@ -60,7 +60,8 @@ const BufferFormat flacFormatTable[8][3] = {
 Containers::Array<char> convert32PCM(const Containers::Array<char>& container, const UnsignedInt samples, const UnsignedInt size) {
     Containers::Array<char> convertData{NoInit, samples*size};
 
-    UnsignedInt skip = -1, index = 0;
+    /* Incrementing `skip` for the first time makes it 0 */
+    UnsignedInt skip = ~UnsignedInt{}, index = 0;
     for(char item: container) {
         ++skip;
 
