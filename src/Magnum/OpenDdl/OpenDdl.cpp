@@ -63,7 +63,7 @@ Debug& operator<<(Debug& debug, const Type value) {
         /* LCOV_EXCL_STOP */
     }
 
-    return debug << "OpenDdl::Type(" << Debug::nospace << reinterpret_cast<void*>(UnsignedInt(value)) << Debug::nospace << ")";
+    return debug << "OpenDdl::Type(" << Debug::nospace << Debug::hex << UnsignedInt(value) << Debug::nospace << ")";
 }
 
 Debug& operator<<(Debug& debug, const PropertyType value) {
@@ -91,7 +91,7 @@ Debug& operator<<(Debug& debug, const PropertyType value) {
         /* LCOV_EXCL_STOP */
     }
 
-    return debug << "OpenDdl::PropertyType(" << Debug::nospace << reinterpret_cast<void*>(UnsignedByte(value)) << Debug::nospace << ")";
+    return debug << "OpenDdl::PropertyType(" << Debug::nospace << Debug::hex << UnsignedByte(value) << Debug::nospace << ")";
 }
 
 namespace Implementation {
@@ -111,7 +111,7 @@ namespace Implementation {
             /* LCOV_EXCL_STOP */
         }
 
-        return debug << "OpenDdl::Implementation::InternalPropertyType(" << Debug::nospace << reinterpret_cast<void*>(UnsignedByte(value)) << Debug::nospace << ")";
+        return debug << "OpenDdl::Implementation::InternalPropertyType(" << Debug::nospace << Debug::hex << UnsignedByte(value) << Debug::nospace << ")";
     }
 }
 

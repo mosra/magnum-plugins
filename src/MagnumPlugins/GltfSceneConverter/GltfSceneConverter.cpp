@@ -1450,7 +1450,7 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const MeshData& mesh, const
 
         const VertexFormat format = mesh.attributeFormat(i);
         if(isVertexFormatImplementationSpecific(format)) {
-            Error{} << "Trade::GltfSceneConverter::add(): implementation-specific vertex format" << reinterpret_cast<void*>(vertexFormatUnwrap(format)) << "can't be exported";
+            Error{} << "Trade::GltfSceneConverter::add(): implementation-specific vertex format" << Debug::hex << vertexFormatUnwrap(format) << "can't be exported";
             return {};
         }
 

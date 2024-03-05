@@ -55,7 +55,7 @@ void VersionTest::test() {
         << Debug::newline <<
         "        MAGNUMPLUGINS_VERSION_COMMIT:" << MAGNUMPLUGINS_VERSION_COMMIT
         << Debug::newline <<
-        "        MAGNUMPLUGINS_VERSION_HASH:" << reinterpret_cast<void*>(MAGNUMPLUGINS_VERSION_HASH)
+        "        MAGNUMPLUGINS_VERSION_HASH:" << Debug::hex << MAGNUMPLUGINS_VERSION_HASH
         << Debug::newline <<
         "        MAGNUMPLUGINS_VERSION_STRING:" << MAGNUMPLUGINS_VERSION_STRING);
     #else

@@ -577,8 +577,8 @@ void DdsImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dat
         else if(header.ddspf.flags == DdsPixelFormatFlag::RGB)
             err << "a RGB";
         else
-            err << "flags" << reinterpret_cast<void*>(reinterpret_cast<const UnsignedInt&>(header.ddspf.flags)) << "and a";
-        err << "mask" << Debug::packed << Math::Vector4<void*>{reinterpret_cast<void*>(header.ddspf.rBitMask), reinterpret_cast<void*>(header.ddspf.gBitMask), reinterpret_cast<void*>(header.ddspf.bBitMask), reinterpret_cast<void*>(header.ddspf.aBitMask)};
+            err << "flags" << Debug::hex << reinterpret_cast<const UnsignedInt&>(header.ddspf.flags) << "and a";
+        err << "mask" << Debug::packed << Debug::hex << Vector4ui{header.ddspf.rBitMask, header.ddspf.gBitMask, header.ddspf.bBitMask, header.ddspf.aBitMask};
         return;
     }
 

@@ -75,7 +75,7 @@ void DevIlImageImporter::doOpenData(Containers::Array<char>&& data, DataFlags) {
     if(!ilLoadL(configuration().value<ILenum>("type", Utility::ConfigurationValueFlag::Hex), data.begin(), data.size())) {
         /* iluGetString() returns empty string for 0x512, which is even more
            useless than just returning the error ID */
-        Error() << "Trade::DevIlImageImporter::openData(): cannot open the image:" << reinterpret_cast<void*>(ilGetError());
+        Error() << "Trade::DevIlImageImporter::openData(): cannot open the image:" << Debug::hex << ilGetError();
         return;
     }
 
@@ -97,7 +97,7 @@ void DevIlImageImporter::doOpenFile(const Containers::StringView filename) {
     )) {
         /* iluGetString() returns empty string for 0x512, which is even more
            useless than just returning the error ID */
-        Error() << "Trade::DevIlImageImporter::openFile(): cannot open the image:" << reinterpret_cast<void*>(ilGetError());
+        Error() << "Trade::DevIlImageImporter::openFile(): cannot open the image:" << Debug::hex << ilGetError();
         return;
     }
 
@@ -175,7 +175,7 @@ Containers::Optional<ImageData2D> DevIlImageImporter::doImage2D(UnsignedInt id, 
     if(rgbaNeeded && !ilConvertImage(components == 3 ? IL_RGB : IL_RGBA, IL_UNSIGNED_BYTE)) {
         /* iluGetString() returns empty string for 0x512, which is even
            more useless than just returning the error ID */
-        Error() << "Trade::DevIlImageImporter::image2D(): cannot convert image:" << reinterpret_cast<void*>(ilGetError());
+        Error() << "Trade::DevIlImageImporter::image2D(): cannot convert image:" << Debug::hex << ilGetError();
         return Containers::NullOpt;
     }
 

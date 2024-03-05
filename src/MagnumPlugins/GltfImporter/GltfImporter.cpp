@@ -831,7 +831,7 @@ void GltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags da
         if(Containers::StringView{header.json.magic, 4} != "JSON"_s) {
             /** @todo use Debug::str (escaping non-printable characters)
                 instead of the hex once it exists */
-            Error{} << "Trade::GltfImporter::openData(): expected a JSON chunk, got" << reinterpret_cast<void*>(header.json.id);
+            Error{} << "Trade::GltfImporter::openData(): expected a JSON chunk, got" << Debug::hex << header.json.id;
             return;
         }
 
@@ -872,7 +872,7 @@ void GltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags da
             else if(!(flags() & ImporterFlag::Quiet))
                 /** @todo use Debug::str (escaping non-printable characters)
                     instead of the hex once it exists */
-                Warning{} << "Trade::GltfImporter::openData(): ignoring chunk" << reinterpret_cast<void*>(chunkHeader.id) << "at" << chunk - _d->fileData.begin();
+                Warning{} << "Trade::GltfImporter::openData(): ignoring chunk" << Debug::hex << chunkHeader.id << "at" << chunk - _d->fileData.begin();
             chunk = chunkDataEnd;
         }
     }

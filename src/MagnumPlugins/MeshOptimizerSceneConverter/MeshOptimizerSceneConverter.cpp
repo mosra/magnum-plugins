@@ -262,7 +262,7 @@ bool MeshOptimizerSceneConverter::doConvertInPlace(MeshData& mesh) {
        are printed directly in convertInPlaceInternal() */
     if(mesh.isIndexed()) {
         if(isMeshIndexTypeImplementationSpecific(mesh.indexType())) {
-            Error{} << "Trade::MeshOptimizerSceneConverter::convertInPlace(): can't perform any operation on an implementation-specific index type" << reinterpret_cast<void*>(meshIndexTypeUnwrap(mesh.indexType()));
+            Error{} << "Trade::MeshOptimizerSceneConverter::convertInPlace(): can't perform any operation on an implementation-specific index type" << Debug::hex << meshIndexTypeUnwrap(mesh.indexType());
             return false;
         }
 
@@ -294,7 +294,7 @@ Containers::Optional<MeshData> MeshOptimizerSceneConverter::doConvert(const Mesh
        to be indexed though -- it could be e.g. a triangle strip which we turn
        into an indexed mesh right after. */
     if(mesh.isIndexed() && isMeshIndexTypeImplementationSpecific(mesh.indexType())) {
-        Error{} << "Trade::MeshOptimizerSceneConverter::convert(): can't perform any operation on an implementation-specific index type" << reinterpret_cast<void*>(meshIndexTypeUnwrap(mesh.indexType()));
+        Error{} << "Trade::MeshOptimizerSceneConverter::convert(): can't perform any operation on an implementation-specific index type" << Debug::hex << meshIndexTypeUnwrap(mesh.indexType());
         return {};
     }
 
