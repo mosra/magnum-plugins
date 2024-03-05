@@ -737,27 +737,27 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const SceneData& scene, con
        by two values, `objectFieldOffsets[i + 2]` is the count of fields for
        object `i`. */
     for(UnsignedInt i = 0, iMax = scene.fieldCount(); i != iMax; ++i) {
-        const SceneField name = scene.fieldName(i);
+        const SceneField fieldName = scene.fieldName(i);
 
         /* Skip fields that are treated differently */
         if(
             /* Parents are converted to a child list instead -- a presence of
                a parent field doesn't say anything about given object having
                any children */
-            name == SceneField::Parent ||
+            fieldName == SceneField::Parent ||
             /* Materials are tied to the Mesh field -- if Mesh exists,
                Materials have the exact same mapping, thus there's no point in
                counting them separately */
-            name == SceneField::MeshMaterial
+            fieldName == SceneField::MeshMaterial
         ) continue;
 
         /* Custom fields */
-        if(isSceneFieldCustom(name)) {
+        if(isSceneFieldCustom(fieldName)) {
             /* Skip ones for which we don't have a name */
-            const auto found = _state->sceneFieldNames.find(sceneFieldCustom(name));
+            const auto found = _state->sceneFieldNames.find(sceneFieldCustom(fieldName));
             if(found == _state->sceneFieldNames.end()) {
                 if(!(flags() & SceneConverterFlag::Quiet))
-                    Warning{} << "Trade::GltfSceneConverter::add(): custom scene field" << sceneFieldCustom(name) << "has no name assigned, skipping";
+                    Warning{} << "Trade::GltfSceneConverter::add(): custom scene field" << sceneFieldCustom(fieldName) << "has no name assigned, skipping";
                 continue;
             }
 
@@ -1042,13 +1042,13 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const SceneData& scene, con
             } else if(type == SceneFieldType::Bit) {
                 /** @todo Utility::copy() for bits, *finally* */
                 const Containers::StridedBitArrayView1D bits = scene.fieldBits(i);
-                for(std::size_t i = 0; i != bits.size(); ++i)
-                    customFieldsBit.set(bitOffset + i, bits[i]);
+                for(std::size_t j = 0; j != bits.size(); ++j)
+                    customFieldsBit.set(bitOffset + j, bits[j]);
                 bitOffset += size;
             } else if(Implementation::isSceneFieldTypeString(type)) {
                 const Containers::StringIterable strings = scene.fieldStrings(i);
-                for(std::size_t i = 0; i != strings.size(); ++i)
-                    customFieldsString[stringOffset + i] = strings[i];
+                for(std::size_t j = 0; j != strings.size(); ++j)
+                    customFieldsString[stringOffset + j] = strings[j];
                 stringOffset += size;
             } else CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
         }

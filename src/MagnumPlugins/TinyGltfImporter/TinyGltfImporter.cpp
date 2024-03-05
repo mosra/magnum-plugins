@@ -757,9 +757,9 @@ Containers::Optional<AnimationData> TinyGltfImporter::doAnimation(UnsignedInt id
                     const auto values = Containers::arrayCast<Quaternion>(outputData);
                     if(configuration().value<bool>("optimizeQuaternionShortestPath")) {
                         Float flip = 1.0f;
-                        for(std::size_t i = 0; i + 1 < values.size(); ++i) {
-                            if(Math::dot(values[i], values[i + 1]*flip) < 0) flip = -flip;
-                            values[i + 1] *= flip;
+                        for(std::size_t j = 0; j + 1 < values.size(); ++j) {
+                            if(Math::dot(values[j], values[j + 1]*flip) < 0) flip = -flip;
+                            values[j + 1] *= flip;
                         }
                     }
 
@@ -769,8 +769,8 @@ Containers::Optional<AnimationData> TinyGltfImporter::doAnimation(UnsignedInt id
                        this for splines as it would cause things to go
                        haywire. */
                     if(configuration().value<bool>("normalizeQuaternions")) {
-                        for(auto& i: values) if(!i.isNormalized()) {
-                            i = i.normalized();
+                        for(auto& j: values) if(!j.isNormalized()) {
+                            j = j.normalized();
                             hadToRenormalize = true;
                         }
                     }

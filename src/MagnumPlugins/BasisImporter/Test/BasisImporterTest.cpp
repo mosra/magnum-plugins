@@ -781,16 +781,16 @@ void BasisImporterTest::texture() {
         CORRADE_COMPARE(counts.max(), total);
         CORRADE_COMPARE(importer->textureCount(), total);
 
-        for(UnsignedInt i = 0; i != total; ++i) {
-            CORRADE_ITERATION(i);
+        for(UnsignedInt j = 0; j != total; ++j) {
+            CORRADE_ITERATION(j);
 
-            Containers::Optional<Trade::TextureData> texture = importer->texture(i);
+            Containers::Optional<Trade::TextureData> texture = importer->texture(j);
             CORRADE_VERIFY(texture);
             CORRADE_COMPARE(texture->minificationFilter(), SamplerFilter::Linear);
             CORRADE_COMPARE(texture->magnificationFilter(), SamplerFilter::Linear);
             CORRADE_COMPARE(texture->mipmapFilter(), SamplerMipmap::Linear);
             CORRADE_COMPARE(texture->wrapping(), Math::Vector3<SamplerWrapping>{SamplerWrapping::Repeat});
-            CORRADE_COMPARE(texture->image(), i);
+            CORRADE_COMPARE(texture->image(), j);
             CORRADE_COMPARE(texture->importerState(), nullptr);
             {
                 CORRADE_EXPECT_FAIL_IF(data.xfailType,

@@ -652,7 +652,7 @@ template<UnsignedInt dimensions> Containers::Optional<ImageData<dimensions>> Bas
         /* GCC 4.8 needs extra help here */
         return Containers::optional(Utility::move(out));
     } else {
-        const CompressedPixelFormat format = compressedPixelFormat(*targetFormat, _state->isSrgb);
+        const CompressedPixelFormat compressedFormat = compressedPixelFormat(*targetFormat, _state->isSrgb);
 
         /* Flip if needed */
         /** @todo In 2019, I submitted a PR to Basis that would flip the image
@@ -666,9 +666,9 @@ template<UnsignedInt dimensions> Containers::Optional<ImageData<dimensions>> Bas
             formats instead. */
         if(!_state->isYFlipped) {
             /** @todo clean this up once blocks() is a thing */
-            const Vector3i blockSize = compressedPixelFormatBlockSize(format);
+            const Vector3i blockSize = compressedPixelFormatBlockSize(compressedFormat);
             const Vector3i sizeInBlocks = (Vector3i{size} + blockSize - Vector3i{1})/blockSize;
-            const UnsignedInt blockDataSize = compressedPixelFormatBlockDataSize(format);
+            const UnsignedInt blockDataSize = compressedPixelFormatBlockDataSize(compressedFormat);
             const Containers::StridedArrayView4D<char> blocks{dest, {
                 std::size_t(sizeInBlocks.z()),
                 std::size_t(sizeInBlocks.y()),
@@ -698,7 +698,7 @@ template<UnsignedInt dimensions> Containers::Optional<ImageData<dimensions>> Bas
                 case TargetFormat::EacR:
                 case TargetFormat::EacRG:
                     if(!(flags() & ImporterFlag::Quiet) && !_state->yFlipNotPossibleWarningPrinted)
-                        Warning{} << prefix << "Y flip is not yet implemented for" << format << Debug::nospace << ", imported data will have wrong orientation. Enable assumeYUp to suppress this warning.";
+                        Warning{} << prefix << "Y flip is not yet implemented for" << compressedFormat << Debug::nospace << ", imported data will have wrong orientation. Enable assumeYUp to suppress this warning.";
                     _state->yFlipNotPossibleWarningPrinted = true;
                     flipped = false;
                     break;
@@ -710,7 +710,7 @@ template<UnsignedInt dimensions> Containers::Optional<ImageData<dimensions>> Bas
                 Warning{} << prefix << "Y-flipping a compressed image that's not whole blocks, the result will be shifted by" << (blockSize.y() - (size.y() % blockSize.y())) << "pixels";
         }
 
-        return Trade::ImageData<dimensions>{format, Math::Vector<dimensions, Int>::pad(Vector3i{size}), Utility::move(dest), ImageFlag<dimensions>(UnsignedShort(_state->imageFlags))};
+        return Trade::ImageData<dimensions>{compressedFormat, Math::Vector<dimensions, Int>::pad(Vector3i{size}), Utility::move(dest), ImageFlag<dimensions>(UnsignedShort(_state->imageFlags))};
     }
 }
 

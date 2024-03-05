@@ -645,7 +645,7 @@ Hierarchic %node821 {}
 void Test::documentChildren() {
     Document d;
     /* GCC < 4.9 cannot handle multiline raw string literals inside macros */
-    auto s = CharacterLiteral{R"oddl(
+    auto data = CharacterLiteral{R"oddl(
 Root %root1 {}
 Hierarchic %hierarchic1 {
     Root %root2 {}
@@ -655,7 +655,7 @@ Hierarchic %hierarchic3 {}
 Unknown %unknown {}
 Root %root3 {}
     )oddl"};
-    CORRADE_VERIFY(d.parse(s, structureIdentifiers, propertyIdentifiers));
+    CORRADE_VERIFY(d.parse(data, structureIdentifiers, propertyIdentifiers));
 
     {
         std::vector<std::string> names;
@@ -691,7 +691,7 @@ Root %root3 {}
 void Test::structureChildren() {
     Document d;
     /* GCC < 4.9 cannot handle multiline raw string literals inside macros */
-    auto s = CharacterLiteral{R"oddl(
+    auto data = CharacterLiteral{R"oddl(
 Root %root1 {}
 Hierarchic %hierarchic1 {
     Root %root2 {}
@@ -703,7 +703,7 @@ Hierarchic %hierarchic1 {
 }
 Hierarchic %hierarchic3 {}
     )oddl"};
-    CORRADE_VERIFY(d.parse(s, structureIdentifiers, propertyIdentifiers));
+    CORRADE_VERIFY(d.parse(data, structureIdentifiers, propertyIdentifiers));
 
     {
         std::vector<std::string> names;

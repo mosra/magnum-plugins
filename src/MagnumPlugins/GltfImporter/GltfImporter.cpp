@@ -4515,8 +4515,8 @@ Containers::Optional<MaterialData> GltfImporter::doMaterial(const UnsignedInt id
                 arrayReserve(attributes, attributes.size() + uniqueCount);
                 /** @todo use suffix() once it takes suffix size and not prefix size */
                 for(const Utility::JsonToken& gltfKey: gltfExtraKeys.exceptPrefix(gltfExtraKeys.size() - uniqueCount)) {
-                    if(const Containers::Optional<MaterialAttributeData> parsed = parseMaterialAttribute(*_d->gltf, gltfKey, flags()))
-                        arrayAppend(attributes, *parsed);
+                    if(const Containers::Optional<MaterialAttributeData> parsedAttribute = parseMaterialAttribute(*_d->gltf, gltfKey, flags()))
+                        arrayAppend(attributes, *parsedAttribute);
                 }
 
             } else if(!(flags() & ImporterFlag::Quiet))
@@ -5101,8 +5101,8 @@ Int GltfImporter::doImage3DForName(const Containers::StringView name) {
         _d->images3DForName.emplace();
         _d->images3DForName->reserve(_d->imagesByDimension.size() - _d->image2DCount);
         for(std::size_t i = _d->image2DCount; i != _d->imagesByDimension.size(); ++i)
-            if(const Containers::StringView name = _d->gltfImages[_d->imagesByDimension[i]].second())
-                _d->images3DForName->emplace(name, i - _d->image2DCount);
+            if(const Containers::StringView imageName = _d->gltfImages[_d->imagesByDimension[i]].second())
+                _d->images3DForName->emplace(imageName, i - _d->image2DCount);
     }
 
     const auto found = _d->images3DForName->find(name);

@@ -372,30 +372,30 @@ Containers::Optional<SceneData> OpenGexImporter::doScene(UnsignedInt) {
 
             /* 4x4 matrix */
             if(t.identifier() == OpenGex::Transform) {
-                const OpenDdl::Structure data = t.firstChild();
-                if(data.subArraySize() != 16) {
+                const OpenDdl::Structure structure = t.firstChild();
+                if(structure.subArraySize() != 16) {
                     Error{} << "Trade::OpenGexImporter::scene(): invalid transformation in node" << i;
                     return {};
                 }
 
-                const Matrix4 m = fixMatrixTranslation(Matrix4::from(data.asArray<Float>()), _d->distanceMultiplier);
+                const Matrix4 m = fixMatrixTranslation(Matrix4::from(structure.asArray<Float>()), _d->distanceMultiplier);
                 matrix = _d->yUp ? m : fixMatrixZUp(m);
 
             /* Translation */
             } else if(t.identifier() == OpenGex::Translation) {
-                const OpenDdl::Structure data = t.firstChild();
+                const OpenDdl::Structure structure = t.firstChild();
 
                 /* "xyz" is the default if no kind property is specified */
                 Vector3 v;
                 const auto kind = t.findPropertyOf(OpenGex::kind);
-                if((!kind || kind->as<std::string>() == "xyz") && data.subArraySize() == 3)
-                    v = Vector3::from(data.asArray<Float>())*_d->distanceMultiplier;
-                else if(kind && kind->as<std::string>() == "x" && data.subArraySize() == 0)
-                    v = Vector3::xAxis(data.as<Float>()*_d->distanceMultiplier);
-                else if(kind && kind->as<std::string>() == "y" && data.subArraySize() == 0)
-                    v = Vector3::yAxis(data.as<Float>()*_d->distanceMultiplier);
-                else if(kind && kind->as<std::string>() == "z" && data.subArraySize() == 0)
-                    v = Vector3::zAxis(data.as<Float>()*_d->distanceMultiplier);
+                if((!kind || kind->as<std::string>() == "xyz") && structure.subArraySize() == 3)
+                    v = Vector3::from(structure.asArray<Float>())*_d->distanceMultiplier;
+                else if(kind && kind->as<std::string>() == "x" && structure.subArraySize() == 0)
+                    v = Vector3::xAxis(structure.as<Float>()*_d->distanceMultiplier);
+                else if(kind && kind->as<std::string>() == "y" && structure.subArraySize() == 0)
+                    v = Vector3::yAxis(structure.as<Float>()*_d->distanceMultiplier);
+                else if(kind && kind->as<std::string>() == "z" && structure.subArraySize() == 0)
+                    v = Vector3::zAxis(structure.as<Float>()*_d->distanceMultiplier);
                 else {
                     Error{} << "Trade::OpenGexImporter::scene(): invalid translation in node" << i;
                     return {};
@@ -405,27 +405,27 @@ Containers::Optional<SceneData> OpenGexImporter::doScene(UnsignedInt) {
 
             /* Rotation */
             } else if(t.identifier() == OpenGex::Rotation) {
-                const OpenDdl::Structure data = t.firstChild();
+                const OpenDdl::Structure structure = t.firstChild();
 
                 /* "axis" is the default if no kind property is specified */
                 Matrix4 m;
                 const auto kind = t.findPropertyOf(OpenGex::kind);
-                if((!kind || kind->as<std::string>() == "axis") && data.subArraySize() == 4) {
-                    const auto angle = data.asArray<Float>()[0]*_d->angleMultiplier;
-                    const auto axis = Vector3::from(data.asArray<Float>() + 1).normalized();
+                if((!kind || kind->as<std::string>() == "axis") && structure.subArraySize() == 4) {
+                    const auto angle = structure.asArray<Float>()[0]*_d->angleMultiplier;
+                    const auto axis = Vector3::from(structure.asArray<Float>() + 1).normalized();
                     m = Matrix4::rotation(angle, axis);
-                } else if(kind && kind->as<std::string>() == "x" && data.subArraySize() == 0) {
-                    const auto angle = data.as<Float>()*_d->angleMultiplier;
+                } else if(kind && kind->as<std::string>() == "x" && structure.subArraySize() == 0) {
+                    const auto angle = structure.as<Float>()*_d->angleMultiplier;
                     m = Matrix4::rotationX(angle);
-                } else if(kind && kind->as<std::string>() == "y" && data.subArraySize() == 0) {
-                    const auto angle = data.as<Float>()*_d->angleMultiplier;
+                } else if(kind && kind->as<std::string>() == "y" && structure.subArraySize() == 0) {
+                    const auto angle = structure.as<Float>()*_d->angleMultiplier;
                     m = Matrix4::rotationY(angle);
-                } else if(kind && kind->as<std::string>() == "z" && data.subArraySize() == 0) {
-                    const auto angle = data.as<Float>()*_d->angleMultiplier;
+                } else if(kind && kind->as<std::string>() == "z" && structure.subArraySize() == 0) {
+                    const auto angle = structure.as<Float>()*_d->angleMultiplier;
                     m = Matrix4::rotationZ(angle);
-                } else if(kind && kind->as<std::string>() == "quaternion" && data.subArraySize() == 4) {
-                    const auto vector = Vector3::from(data.asArray<Float>());
-                    const auto scalar = data.asArray<Float>()[3];
+                } else if(kind && kind->as<std::string>() == "quaternion" && structure.subArraySize() == 4) {
+                    const auto vector = Vector3::from(structure.asArray<Float>());
+                    const auto scalar = structure.asArray<Float>()[3];
                     m = Matrix4::from(Quaternion(vector, scalar).normalized().toMatrix(), {});
                 } else {
                     Error{} << "Trade::OpenGexImporter::scene(): invalid rotation in node" << i;
@@ -436,19 +436,19 @@ Containers::Optional<SceneData> OpenGexImporter::doScene(UnsignedInt) {
 
             /* Scaling */
             } else if(t.identifier() == OpenGex::Scale) {
-                const OpenDdl::Structure data = t.firstChild();
+                const OpenDdl::Structure structure = t.firstChild();
 
                 /* "xyz" is the default if no kind property is specified */
                 Vector3 v;
                 const auto kind = t.findPropertyOf(OpenGex::kind);
-                if((!kind || kind->as<std::string>() == "xyz") && data.subArraySize() == 3)
-                    v = Vector3::from(data.asArray<Float>());
-                else if(kind && kind->as<std::string>() == "x" && data.subArraySize() == 0)
-                    v = Vector3::xScale(data.as<Float>());
-                else if(kind && kind->as<std::string>() == "y" && data.subArraySize() == 0)
-                    v = Vector3::yScale(data.as<Float>());
-                else if(kind && kind->as<std::string>() == "z" && data.subArraySize() == 0)
-                    v = Vector3::zScale(data.as<Float>());
+                if((!kind || kind->as<std::string>() == "xyz") && structure.subArraySize() == 3)
+                    v = Vector3::from(structure.asArray<Float>());
+                else if(kind && kind->as<std::string>() == "x" && structure.subArraySize() == 0)
+                    v = Vector3::xScale(structure.as<Float>());
+                else if(kind && kind->as<std::string>() == "y" && structure.subArraySize() == 0)
+                    v = Vector3::yScale(structure.as<Float>());
+                else if(kind && kind->as<std::string>() == "z" && structure.subArraySize() == 0)
+                    v = Vector3::zScale(structure.as<Float>());
                 else {
                     Error{} << "Trade::OpenGexImporter::scene(): invalid scaling in node" << i;
                     return {};
