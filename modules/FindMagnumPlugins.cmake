@@ -155,8 +155,14 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
 endforeach()
 find_package(Magnum REQUIRED ${_MAGNUMPLUGINS_DEPENDENCIES})
 
-# Global plugin include dir
-find_path(MAGNUMPLUGINS_INCLUDE_DIR MagnumPlugins
+# Global include dir that's unique to Magnum Plugins. Often they will be
+# installed alongside Magnum, which is why the hint, but if not, it shouldn't
+# just pick MAGNUM_INCLUDE_DIR because then _MAGNUMPLUGINS_*_INCLUDE_DIR will
+# fail to be found. In case of CMake subprojects the versionPlugins.h is
+# generated inside the build dir so this won't find it, instead
+# src/CMakeLists.txt forcibly sets MAGNUMPLUGINS_INCLUDE_DIR as an internal
+# cache value to make that work.
+find_path(MAGNUMPLUGINS_INCLUDE_DIR Magnum/versionPlugins.h
     HINTS ${MAGNUM_INCLUDE_DIR})
 mark_as_advanced(MAGNUMPLUGINS_INCLUDE_DIR)
 

@@ -254,6 +254,9 @@ namespace Magnum {
 -   Fixed most remaining warnings on MSVC, in particular those related to
     "conversion from T to void * of greater size" (see
     [mosra/magnum#544](https://github.com/mosra/magnum/issues/544)).
+-   Fixed `FindMagnumPlugins.cmake` to correctly find the Magnum Plugins
+    include directory when it's installed to a different directory than Magnum
+    itself (see [mosra/magnum-integration#105](https://github.com/mosra/magnum-integration/issues/105))
 
 @subsection changelog-plugins-latest-bugfixes Bug fixes
 
