@@ -111,6 +111,7 @@ cmake .. ^
     -DMAGNUM_WITH_TINYGLTFIMPORTER=ON ^
     -DMAGNUM_WITH_UFBXIMPORTER=ON ^
     -DMAGNUM_WITH_WEBPIMPORTER=OFF ^
+    -DMAGNUM_WITH_WEBPIMAGECONVERTER=OFF ^
     -DMAGNUM_BUILD_STATIC=ON ^
     -G "%GENERATOR%" -A x64 || exit /b
 cmake --build . --config Release -- /m /v:m || exit /b
