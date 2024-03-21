@@ -225,6 +225,10 @@ if(MAGNUM_WITH_UFBXIMPORTER)
     add_subdirectory(UfbxImporter)
 endif()
 
+if(MAGNUM_WITH_URDFIMPORTER)
+    add_subdirectory(UrdfImporter)
+endif()
+
 if(MAGNUM_WITH_WEBPIMPORTER)
     add_subdirectory(WebPImporter)
 endif()
