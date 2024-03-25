@@ -308,7 +308,7 @@ void StbTrueTypeFontTest::fillGlyphCache() {
     CORRADE_VERIFY(font->openFile(Utility::Path::join(FREETYPEFONT_TEST_DIR, "Oxygen.ttf"), 16.0f));
 
     struct GlyphCache: AbstractGlyphCache {
-        explicit GlyphCache(PluginManager::Manager<Trade::AbstractImporter>& importerManager, PixelFormat format, const Vector2i& size): AbstractGlyphCache{format, size}, importerManager(importerManager) {}
+        explicit GlyphCache(PluginManager::Manager<Trade::AbstractImporter>& importerManager, PixelFormat format, const Vector2i& size, const Vector2i& padding): AbstractGlyphCache{format, size, padding}, importerManager(importerManager) {}
 
         GlyphCacheFeatures doFeatures() const override { return {}; }
         void doSetImage(const Vector2i& offset, const ImageView2D& image) override {
@@ -324,7 +324,9 @@ void StbTrueTypeFontTest::fillGlyphCache() {
 
         bool called = false;
         PluginManager::Manager<Trade::AbstractImporter>& importerManager;
-    } cache{_importerManager, PixelFormat::R8Unorm, Vector2i{64}};
+    /* Default padding is 1, set back to 0 to verify it's not overwriting
+       neighbors by accident */
+    } cache{_importerManager, PixelFormat::R8Unorm, Vector2i{64}, {}};
 
     /* Should call doSetImage() above, which then performs image comparison */
     font->fillGlyphCache(cache, data.characters);
@@ -395,7 +397,7 @@ void StbTrueTypeFontTest::fillGlyphCacheIncremental() {
     CORRADE_VERIFY(font->openFile(Utility::Path::join(FREETYPEFONT_TEST_DIR, "Oxygen.ttf"), 16.0f));
 
     struct GlyphCache: AbstractGlyphCache {
-        explicit GlyphCache(PluginManager::Manager<Trade::AbstractImporter>& importerManager, PixelFormat format, const Vector2i& size): AbstractGlyphCache{format, size}, importerManager(importerManager) {}
+        explicit GlyphCache(PluginManager::Manager<Trade::AbstractImporter>& importerManager, PixelFormat format, const Vector2i& size, const Vector2i& padding): AbstractGlyphCache{format, size, padding}, importerManager(importerManager) {}
 
         GlyphCacheFeatures doFeatures() const override { return {}; }
         void doSetImage(const Vector2i& offset, const ImageView2D& image) override {
@@ -416,7 +418,9 @@ void StbTrueTypeFontTest::fillGlyphCacheIncremental() {
 
         Int called = 0;
         PluginManager::Manager<Trade::AbstractImporter>& importerManager;
-    } cache{_importerManager, PixelFormat::R8Unorm, Vector2i{64}};
+    /* Default padding is 1, set back to 0 to verify it's not overwriting
+       neighbors by accident */
+    } cache{_importerManager, PixelFormat::R8Unorm, Vector2i{64}, {}};
 
     /* First call with the bottom half of the glyph cache until the invalid
        glyph */
@@ -485,7 +489,7 @@ void StbTrueTypeFontTest::fillGlyphCacheArray() {
     CORRADE_VERIFY(font->openFile(Utility::Path::join(FREETYPEFONT_TEST_DIR, "Oxygen.ttf"), 16.0f));
 
     struct GlyphCache: AbstractGlyphCache {
-        explicit GlyphCache(PluginManager::Manager<Trade::AbstractImporter>& importerManager, PixelFormat format, const Vector3i& size): AbstractGlyphCache{format, size}, importerManager(importerManager) {}
+        explicit GlyphCache(PluginManager::Manager<Trade::AbstractImporter>& importerManager, PixelFormat format, const Vector3i& size, const Vector2i& padding): AbstractGlyphCache{format, size, padding}, importerManager(importerManager) {}
 
         GlyphCacheFeatures doFeatures() const override { return {}; }
         void doSetImage(const Vector3i& offset, const ImageView3D& image) override {
@@ -504,7 +508,9 @@ void StbTrueTypeFontTest::fillGlyphCacheArray() {
 
         bool called = false;
         PluginManager::Manager<Trade::AbstractImporter>& importerManager;
-    } cache{_importerManager, PixelFormat::R8Unorm, {48, 48, 2}};
+    /* Default padding is 1, set back to 0 to verify it's not overwriting
+       neighbors by accident */
+    } cache{_importerManager, PixelFormat::R8Unorm, {48, 48, 2}, {}};
 
     /* Should call doSetImage() above, which then performs image comparison */
     font->fillGlyphCache(cache, "abcdefghijklmnopqrstuvwxyzěšč");
