@@ -114,6 +114,7 @@ class MagnumPlugins < Formula
         "-D#{option_prefix}WITH_STLIMPORTER=ON",
         "-D#{option_prefix}WITH_TINYGLTFIMPORTER=ON",
         "-DMAGNUM_WITH_UFBXIMPORTER=ON",
+        "-DMAGNUM_WITH_WEBPIMAGECONVERTER=#{(build.with? 'webp') ? 'ON' : 'OFF'}",
         "-DMAGNUM_WITH_WEBPIMPORTER=#{(build.with? 'webp') ? 'ON' : 'OFF'}",
         ".."
       system "cmake", "--build", "."

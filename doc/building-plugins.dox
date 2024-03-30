@@ -467,6 +467,8 @@ By default no plugins are built and you need to select them manually:
     --- Build the @ref Trade::TinyGltfImporter "TinyGltfImporter" plugin.
 -   `MAGNUM_WITH_UFBXIMPORTER` --- Build the
     @ref Trade::UfbxImporter "UfbxImporter" plugin.
+-   `MAGNUM_WITH_WEBPIMAGECONVERTER` --- Build the
+    @relativeref{Trade,WebPImageConverter} plugin.
 -   `MAGNUM_WITH_WEBPIMPORTER` --- Build the @relativeref{Trade,WebPImporter}
     plugin.
 

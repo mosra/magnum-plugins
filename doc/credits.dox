@@ -78,7 +78,8 @@ namespace Magnum {
     improvements in @ref Trade::JpegImporter "JpegImporter", expanding
     robustness and capabilities of @ref Trade::AssimpImporter "AssimpImporter"
 -   **Melike Batihan** ([\@melikebatihan](https://github.com/melikebatihan))
-    --- @relativeref{Trade,WebPImporter} plugin
+    --- @relativeref{Trade,WebPImporter} and
+    @relativeref{Trade,WebPImageConverter} plugins
 -   **Nathan Ollerenshaw** ([\@matjam](https://github.com/matjam)) --- Ubuntu
     package updates, a PPA repository for stable versions
 -   **Nicholas "LB" Branden** ([\@LB--](https://github.com/LB--)) ---

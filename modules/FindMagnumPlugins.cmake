@@ -52,6 +52,7 @@
 #  StbVorbisAudioImporter       - OGG audio importer using stb_vorbis
 #  StlImporter                  - STL importer
 #  UfbxImporter                 - FBX and OBJ importer using ufbx
+#  WebPImageConverter           - WebP image converter
 #  WebPImporter                 - WebP importer
 #
 # If Magnum is built with MAGNUM_BUILD_DEPRECATED enabled, these additional
@@ -181,7 +182,8 @@ set(_MAGNUMPLUGINS_PLUGIN_COMPONENTS
     SpirvToolsShaderConverter SpngImporter StanfordImporter
     StanfordSceneConverter StbDxtImageConverter StbImageConverter
     StbImageImporter StbResizeImageConverter StbTrueTypeFont
-    StbVorbisAudioImporter StlImporter UfbxImporter WebPImporter)
+    StbVorbisAudioImporter StlImporter UfbxImporter WebPImageConverter
+    WebPImporter)
 # Nothing is enabled by default right now
 set(_MAGNUMPLUGINS_IMPLICITLY_ENABLED_COMPONENTS )
 
@@ -551,8 +553,8 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
         # UfbxImporter has no dependencies
         # TinyGltfImporter has no dependencies
 
-        # WebPImporter plugin dependencies
-        elseif(_component STREQUAL WebPImporter)
+        # WebPImageConverter / WebPImporter plugin dependencies
+        elseif(_component STREQUAL WebPImageConverter OR _component STREQUAL WebPImporter)
             find_package(WebP REQUIRED)
             set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
                 INTERFACE_LINK_LIBRARIES WebP::WebP)

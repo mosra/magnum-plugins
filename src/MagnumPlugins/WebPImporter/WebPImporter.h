@@ -60,7 +60,7 @@ namespace Magnum { namespace Trade {
 
 Imports [WebP](https://en.wikipedia.org/wiki/WebP) (`*.webp`) RGB and RGBA
 images using the [libwebp](https://chromium.googlesource.com/webm/libwebp/)
-library.
+library. You can use @ref WebPImageConverter to encode images into this format.
 
 @m_class{m-block m-success}
 

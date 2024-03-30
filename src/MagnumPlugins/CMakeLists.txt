@@ -225,6 +225,10 @@ if(MAGNUM_WITH_UFBXIMPORTER)
     add_subdirectory(UfbxImporter)
 endif()
 
+if(MAGNUM_WITH_WEBPIMAGECONVERTER)
+    add_subdirectory(WebPImageConverter)
+endif()
+
 if(MAGNUM_WITH_WEBPIMPORTER)
     add_subdirectory(WebPImporter)
 endif()
