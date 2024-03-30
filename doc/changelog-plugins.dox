@@ -167,9 +167,9 @@ namespace Magnum {
 -   @ref Trade::StanfordImporter "StanfordImporter" now supports also indices
     specified as `vertex_index`, which is what Assimp uses for export (see
     [mosra/magnum-plugins#94](https://github.com/mosra/magnum-plugins/pull/94))
--   @relativeref{Trade,StanfordImporter} now delegates parsing of ASCII files
-    to @relativeref{Trade,AssimpImporter} if available instead of failing the
-    import.
+-   @relativeref{Trade,StanfordImporter} and @relativeref{Trade,StlImporter}
+    now delegate parsing of ASCII files to @relativeref{Trade,AssimpImporter}
+    if available instead of failing the import.
 -   @relativeref{Trade,StanfordSceneConverter} now requires the input mesh to
     always have a position attribute. This was not enforced before, leading to
     files that couldn't be opened with @relativeref{Trade,StanfordImporter} nor

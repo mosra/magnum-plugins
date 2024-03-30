@@ -35,6 +35,9 @@ endif()
 
 if(NOT MAGNUM_STLIMPORTER_BUILD_STATIC)
     set(STLIMPORTER_PLUGIN_FILENAME $<TARGET_FILE:StlImporter>)
+    if(MAGNUM_WITH_ASSIMPIMPORTER)
+        set(ASSIMPIMPORTER_PLUGIN_FILENAME $<TARGET_FILE:AssimpImporter>)
+    endif()
 endif()
 
 # First replace ${} variables, then $<> generator expressions
@@ -51,9 +54,15 @@ corrade_add_test(StlImporterTest StlImporterTest.cpp
 target_include_directories(StlImporterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>)
 if(MAGNUM_STLIMPORTER_BUILD_STATIC)
     target_link_libraries(StlImporterTest PRIVATE StlImporter)
+    if(MAGNUM_WITH_ASSIMPIMPORTER)
+        target_link_libraries(StlImporterTest PRIVATE AssimpImporter)
+    endif()
 else()
     # So the plugins get properly built when building the test
     add_dependencies(StlImporterTest StlImporter)
+    if(MAGNUM_WITH_ASSIMPIMPORTER)
+        add_dependencies(StlImporterTest AssimpImporter)
+    endif()
 endif()
 if(CORRADE_BUILD_STATIC AND NOT MAGNUM_STLIMPORTER_BUILD_STATIC)
     # CMake < 3.4 does this implicitly, but 3.4+ not anymore (see CMP0065).

@@ -58,8 +58,7 @@ namespace Magnum { namespace Trade {
 @brief STL importer plugin
 @m_since_{plugins,2020,06}
 
-Imports normal and vertex information from binary
-[Stereolitography STL](https://en.wikipedia.org/wiki/STL_(file_format))
+Imports [Stereolitography STL](https://en.wikipedia.org/wiki/STL_(file_format))
 (`*.stl`) files.
 
 @section Trade-StlImporter-usage Usage
@@ -106,17 +105,27 @@ See @ref building-plugins, @ref cmake-plugins, @ref plugins and
 
 @section Trade-StlImporter-behavior Behavior and limitations
 
-The file is always imported as a non-indexed triangle mesh with per-face
-normals (i.e., same normal for all vertices in the triangle). Both positions
-and normals are imported as @ref VertexFormat::Vector3. Using the
+A binary STL file is always imported as a non-indexed triangle mesh with
+per-face normals (i.e., same normal for all vertices in the triangle). Both
+positions and normals are imported as @ref VertexFormat::Vector3. Using the
 @cb{.ini} perFaceToPerVertex @ce @ref Trade-StanfordImporter-configuration "configuration option"
 it's possible to import per-face normals separately without duplicating them
 for each vertex --- useful for example when you want to deduplicate the
 positions and generate smooth normals from these.
 
-Similarly to @ref StanfordImporter, ASCII files are not supported, only binary.
 The [non-standard extensions for vertex colors](https://en.wikipedia.org/wiki/STL_(file_format)#Color_in_binary_STL)
-are also not supported due to a lack of generally available files for testing.
+are not supported due to a lack of generally available files for testing.
+
+@subsection Trade-StlImporter-behavior-ascii ASCII files
+
+The plugin implements parsing of binary files only. If an ASCII file is
+detected, it's forwarded to the @ref AssimpImporter plugin, if available. Calls
+to @ref meshCount(), @ref meshLevelCount() and @ref mesh() are then proxied to
+@ref AssimpImporter. The @ref close() function closes and discards the
+internally instantiated plugin; @ref isOpened() works as usual.
+
+Note that @ref AssimpImporter will import the meshes as indexed and may do
+other changes to the data such as vertex deduplication or normal smoothing.
 
 @section Trade-StlImporter-configuration Plugin-specific configuration
 
@@ -150,6 +159,7 @@ class MAGNUM_STLIMPORTER_EXPORT StlImporter: public AbstractImporter {
         MAGNUM_STLIMPORTER_LOCAL Containers::Optional<MeshData> doMesh(UnsignedInt id, UnsignedInt level) override;
 
         Containers::Optional<Containers::Array<char>> _in;
+        Containers::Pointer<AbstractImporter> _assimpImporter;
 };
 
 }}

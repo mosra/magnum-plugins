@@ -38,6 +38,8 @@
 
 namespace Magnum { namespace Trade {
 
+using namespace Containers::Literals;
+
 StlImporter::StlImporter() = default;
 
 StlImporter::StlImporter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin): AbstractImporter{manager, plugin} {}
@@ -46,9 +48,17 @@ StlImporter::~StlImporter() = default;
 
 ImporterFeatures StlImporter::doFeatures() const { return ImporterFeature::OpenData; }
 
-bool StlImporter::doIsOpened() const { return !!_in; }
+bool StlImporter::doIsOpened() const {
+    /* Only one of these can be populated at a time; if Assimp is present it's
+       also opened */
+    CORRADE_INTERNAL_ASSERT(!_in || !_assimpImporter || _assimpImporter->isOpened());
+    return _in || _assimpImporter;
+}
 
-void StlImporter::doClose() { _in = Containers::NullOpt; }
+void StlImporter::doClose() {
+    _in = Containers::NullOpt;
+    _assimpImporter = nullptr;
+}
 
 namespace {
     /* In the input file, the triangle is represented by 12 floats (3D normal
@@ -65,7 +75,30 @@ void StlImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dat
     }
 
     if(std::memcmp(data, "solid", 5) == 0) {
-        Error{} << "Trade::StlImporter::openData(): ASCII STL files are not supported, sorry";
+        constexpr Containers::StringView plugin = "AssimpImporter"_s;
+        /** @todo remove the !manager() once manager-less instantiation is
+            removed */
+        if(!manager() || !(manager()->load(plugin) & PluginManager::LoadState::Loaded)) {
+            Error{} << "Trade::StlImporter::openData(): can't forward an ASCII file to AssimpImporter";
+            return;
+        }
+
+        if(flags() & ImporterFlag::Verbose)
+            Debug{} << "Trade::StlImporter::openData(): forwarding an ASCII file to AssimpImporter";
+
+        /* Instantiate the plugin, propagate flags. STLs can't reference
+           external data so file callbacks don't need to be propagated. */
+        Containers::Pointer<AbstractImporter> assimpImporter = static_cast<PluginManager::Manager<AbstractImporter>*>(manager())->instantiate(plugin);
+        assimpImporter->setFlags(flags());
+
+        /* Try to open the data with AssimpImporter (error output should be
+           printed by the plugin itself). All other functions transparently
+           forward to that importer instance if it's populated. */
+        if(!assimpImporter->openData(data))
+            return;
+
+        /* Success, save the instance */
+        _assimpImporter = Utility::move(assimpImporter);
         return;
     }
 
@@ -90,13 +123,24 @@ void StlImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dat
     }
 }
 
-UnsignedInt StlImporter::doMeshCount() const { return 1; }
+UnsignedInt StlImporter::doMeshCount() const {
+    if(_assimpImporter)
+        return _assimpImporter->meshCount();
 
-UnsignedInt StlImporter::doMeshLevelCount(UnsignedInt) {
+    return 1;
+}
+
+UnsignedInt StlImporter::doMeshLevelCount(UnsignedInt id) {
+    if(_assimpImporter)
+        return _assimpImporter->meshLevelCount(id);
+
     return configuration().value<bool>("perFaceToPerVertex") ? 1 : 2;
 }
 
-Containers::Optional<MeshData> StlImporter::doMesh(UnsignedInt, UnsignedInt level) {
+Containers::Optional<MeshData> StlImporter::doMesh(UnsignedInt id, UnsignedInt level) {
+    if(_assimpImporter)
+        return _assimpImporter->mesh(id, level);
+
     /* We either have per-face in the second level or we convert them to
        per-vertex, never both */
     const bool perFaceToPerVertex = configuration().value<bool>("perFaceToPerVertex");
