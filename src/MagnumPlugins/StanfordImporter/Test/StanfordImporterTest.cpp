@@ -95,6 +95,9 @@ constexpr struct {
     {"invalid-face-size-type", "invalid face size type float", true},
     {"invalid-face-index-type", "invalid face index type float", true},
 
+    /* This also verifies a case where the file has no newline at the end, i.e.
+       there's just end_header at the end. Make sure the file has the trailing
+       newline not added back when editing. */
     {"incomplete-face-specification", "incomplete face specification", true},
 
     {"positions-missing", "no position components present", true},

@@ -146,6 +146,9 @@ std::string extractLine(Containers::ArrayView<const char>& in) {
         return {out.begin(), out.end()};
     }
 
+    /* This gets hit only if the file is incomplete. Otherwise there's always
+       end_header followed by a newline, after which extractLine() isn't called
+       anymore. */
     auto out = in;
     in = in.suffix(in.end());
     return {out.begin(), out.end()};
