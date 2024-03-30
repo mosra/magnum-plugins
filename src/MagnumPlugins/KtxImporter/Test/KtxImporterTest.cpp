@@ -1958,6 +1958,10 @@ void KtxImporterTest::forwardBasis() {
         } else
             CORRADE_INTERNAL_ASSERT_UNREACHABLE();
     }
+
+    /* Verify that closing works as intended as well */
+    importer->close();
+    CORRADE_VERIFY(!importer->isOpened());
 }
 
 void KtxImporterTest::forwardBasisFormat() {
