@@ -544,6 +544,10 @@ const struct {
         {}, false, {}, {}, {}, {},
         "image-jpeg.glb", nullptr, false,
         nullptr},
+    {"WebP", "WebPImageConverter", "WebPImporter",
+        {}, false, {}, {}, {}, {},
+        "image-webp.glb", nullptr, true,
+        nullptr},
     {"KTX2+Basis", "BasisKtxImageConverter", "BasisImporter",
         {}, false, {}, {}, {}, {},
         "image-basis.glb", nullptr, true,
@@ -704,6 +708,9 @@ const struct {
     {"JPEG", "JpegImageConverter",
         {}, {}, {},
         "texture-jpeg.gltf"},
+    {"WebP", "WebPImageConverter",
+        {}, {}, {},
+        "texture-webp.gltf"},
     {"KTX2+Basis", "BasisKtxImageConverter",
         {}, {}, {},
         "texture-basis.gltf"},
@@ -2169,6 +2176,12 @@ GltfSceneConverterTest::GltfSceneConverterTest() {
     #endif
     #ifdef STBIMAGEIMPORTER_PLUGIN_FILENAME
     CORRADE_INTERNAL_ASSERT_OUTPUT(_importerManager.load(STBIMAGEIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
+    #endif
+    #ifdef WEBPIMAGECONVERTER_PLUGIN_FILENAME
+    CORRADE_INTERNAL_ASSERT_OUTPUT(_imageConverterManager.load(WEBPIMAGECONVERTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
+    #endif
+    #ifdef WEBPIMPORTER_PLUGIN_FILENAME
+    CORRADE_INTERNAL_ASSERT_OUTPUT(_importerManager.load(WEBPIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
     #endif
 
     /* Try to load Magnum's own TgaImageConverter plugin, if it exists. Do it

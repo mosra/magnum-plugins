@@ -278,18 +278,20 @@ converter delegates to.
     overriden using the @cb{.ini} bundleImages @ce
     @ref Trade-GltfSceneConverter-configuration "configuration option" on a
     per-image basis.
--   Core glTF supports only JPEG and PNG file formats. Basis-encoded KTX2 files
-    can be saved with the [KHR_texture_basisu](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_texture_basisu/README.md) extension by
-    setting @cb{.ini} imageConverter=BasisKtxImageConverter @ce. The
-    [MSFT_texture_dds](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Vendor/MSFT_texture_dds/README.md)
-    and [EXT_texture_webp](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Vendor/EXT_texture_webp/README.md)
-    extensions are not exported because there's currently no image converter
-    capable of saving DDS and WebP files. Other formats (such as TGA,
-    OpenEXR...) are not supported by the spec but @ref GltfImporter supports
-    them and they can be exported if the @cb{.ini} strict
-    @ce @ref Trade-GltfSceneConverter-configuration "configuration option"
-    is disabled. Such images are then referenced directly without any
-    extension.
+-   Core glTF supports only JPEG and PNG file formats, other formats are
+    available via extensions:
+    -   WebP can be saved with the [EXT_texture_webp](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Vendor/EXT_texture_webp/README.md)
+        extension
+    -   Basis-encoded KTX2 files can be saved with the
+        [KHR_texture_basisu](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_texture_basisu/README.md)
+        extension by setting @cb{.ini} imageConverter=BasisKtxImageConverter @ce
+    The [MSFT_texture_dds](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Vendor/MSFT_texture_dds/README.md)
+    extension is not exported because there's currently no image converter
+    capable of saving DDS files. Other formats (such as TGA, OpenEXR...) are
+    not supported by the spec but @ref GltfImporter supports them and they can
+    be exported if the @cb{.ini} strict @ce
+    @ref Trade-GltfSceneConverter-configuration "configuration option" is
+    disabled. Such images are then referenced directly without any extension.
 -   If the @cb{.ini} experimentalKhrTextureKtx @ce
     @ref Trade-GltfSceneConverter-configuration "configuration option" is
     enabled, generic KTX2 images can be saved with the proposed

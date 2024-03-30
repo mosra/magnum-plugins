@@ -66,6 +66,12 @@ if(NOT MAGNUM_GLTFSCENECONVERTER_BUILD_STATIC)
     if(MAGNUM_WITH_STBIMAGEIMPORTER)
         set(STBIMAGEIMPORTER_PLUGIN_FILENAME $<TARGET_FILE:StbImageImporter>)
     endif()
+    if(MAGNUM_WITH_WEBPIMAGECONVERTER)
+        set(WEBPIMAGECONVERTER_PLUGIN_FILENAME $<TARGET_FILE:WebPImageConverter>)
+    endif()
+    if(MAGNUM_WITH_WEBPIMPORTER)
+        set(WEBPIMPORTER_PLUGIN_FILENAME $<TARGET_FILE:WebPImporter>)
+    endif()
 endif()
 
 # First replace ${} variables, then $<> generator expressions
@@ -106,6 +112,7 @@ corrade_add_test(GltfSceneConverterTest GltfSceneConverterTest.cpp
         image-name.gltf
         image-not-bundled.glb image-not-bundled.0.png
         image-tga.glb
+        image-webp.glb
         material-2d-array-textures.gltf
         material-alpha-mask-defaults-kept.gltf
         material-alpha-mask-defaults-omitted.gltf
@@ -203,7 +210,8 @@ corrade_add_test(GltfSceneConverterTest GltfSceneConverterTest.cpp
         texture-ktx-no-extension.gltf
         texture-multiple.gltf
         texture-name.gltf
-        texture-tga.gltf)
+        texture-tga.gltf
+        texture-webp.gltf)
 target_include_directories(GltfSceneConverterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>)
 if(MAGNUM_GLTFSCENECONVERTER_BUILD_STATIC)
     target_link_libraries(GltfSceneConverterTest PRIVATE GltfSceneConverter)
@@ -234,6 +242,12 @@ if(MAGNUM_GLTFSCENECONVERTER_BUILD_STATIC)
     if(MAGNUM_WITH_STBIMAGEIMPORTER)
         target_link_libraries(GltfSceneConverterTest PRIVATE StbImageImporter)
     endif()
+    if(MAGNUM_WITH_WEBPIMAGECONVERTER)
+        target_link_libraries(GltfSceneConverterTest PRIVATE WebPImageConverter)
+    endif()
+    if(MAGNUM_WITH_WEBPIMPORTER)
+        target_link_libraries(GltfSceneConverterTest PRIVATE WebPImporter)
+    endif()
 else()
     # So the plugins get properly built when building the test
     add_dependencies(GltfSceneConverterTest GltfSceneConverter)
@@ -263,6 +277,12 @@ else()
     endif()
     if(MAGNUM_WITH_STBIMAGEIMPORTER)
         add_dependencies(GltfSceneConverterTest StbImageImporter)
+    endif()
+    if(MAGNUM_WITH_WEBPIMAGECONVERTER)
+        add_dependencies(GltfSceneConverterTest WebPImageConverter)
+    endif()
+    if(MAGNUM_WITH_WEBPIMPORTER)
+        add_dependencies(GltfSceneConverterTest WebPImporter)
     endif()
 endif()
 

@@ -77,14 +77,17 @@ namespace Magnum { namespace Trade {
 namespace {
 
 /* Each value here needs a corresponding entry in extensionStrings inside
-   doEndData(). Values sorted by name. */
+   doEndData(), texture format extensions then detection based on MIME type in
+   doAdd() for images and conversion to an extension name in doAdd() for
+   textures. Values sorted by name. */
 enum class GltfExtension {
-    KhrMaterialsClearCoat = 1 << 0,
-    KhrMaterialsUnlit = 1 << 1,
-    KhrMeshQuantization = 1 << 2,
-    KhrTextureBasisu = 1 << 3,
-    KhrTextureKtx = 1 << 4,
-    KhrTextureTransform = 1 << 5,
+    ExtTextureWebP = 1 << 0,
+    KhrMaterialsClearCoat = 1 << 1,
+    KhrMaterialsUnlit = 1 << 2,
+    KhrMeshQuantization = 1 << 3,
+    KhrTextureBasisu = 1 << 4,
+    KhrTextureKtx = 1 << 5,
+    KhrTextureTransform = 1 << 6,
 };
 typedef Containers::EnumSet<GltfExtension> GltfExtensions;
 #ifdef CORRADE_TARGET_CLANG
@@ -323,6 +326,7 @@ Containers::Optional<Containers::Array<char>> GltfSceneConverter::doEndData() {
            the loop */
         GltfExtensions usedExtensions = _state->usedExtensions|_state->requiredExtensions;
         const Containers::Pair<GltfExtension, Containers::StringView> extensionStrings[]{
+            {GltfExtension::ExtTextureWebP, "EXT_texture_webp"_s},
             {GltfExtension::KhrMaterialsClearCoat, "KHR_materials_clearcoat"_s},
             {GltfExtension::KhrMaterialsUnlit, "KHR_materials_unlit"_s},
             {GltfExtension::KhrMeshQuantization, "KHR_mesh_quantization"_s},
@@ -3222,6 +3226,9 @@ bool GltfSceneConverter::doAdd(CORRADE_UNUSED const UnsignedInt id, const Textur
 
             Containers::StringView textureExtensionString;
             switch(textureExtension) {
+                case GltfExtension::ExtTextureWebP:
+                    textureExtensionString = "EXT_texture_webp"_s;
+                    break;
                 case GltfExtension::KhrTextureBasisu:
                     textureExtensionString = "KHR_texture_basisu"_s;
                     break;
@@ -3432,6 +3439,8 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const ImageData2D& image, c
     if(mimeType == "image/jpeg"_s ||
        mimeType == "image/png"_s) {
         extension = GltfExtension{};
+    } else if(mimeType == "image/webp"_s) {
+        extension = GltfExtension::ExtTextureWebP;
     /** @todo some more robust way to detect if Basis-encoded KTX image is
         produced? waiting until the image is produced and then parsing the
         header is insanely complicated :( */
@@ -3439,7 +3448,7 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const ImageData2D& image, c
         extension = GltfExtension::KhrTextureBasisu;
     } else if(mimeType == "image/ktx2"_s && configuration().value<bool>("experimentalKhrTextureKtx")) {
         extension = GltfExtension::KhrTextureKtx;
-    /** @todo EXT_texture_webp and MSFT_texture_dds, once we have converters */
+    /** @todo MSFT_texture_dds, once we have converters */
     } else {
         if(!mimeType) {
             Error{} << "Trade::GltfSceneConverter::add():" << imageConverterPluginName << "doesn't specify any MIME type, can't save an image";
