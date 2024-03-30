@@ -147,7 +147,7 @@ std::string extractLine(Containers::ArrayView<const char>& in) {
     }
 
     auto out = in;
-    in = {};
+    in = in.suffix(in.end());
     return {out.begin(), out.end()};
 }
 
@@ -210,7 +210,7 @@ void StanfordImporter::doOpenData(Containers::Array<char>&& data, const DataFlag
     /* Parse format line */
     Containers::Optional<bool> fileFormatNeedsEndianSwapping;
     {
-        while(in) {
+        while(!in.isEmpty()) {
             const std::string line = extractLine(in);
             std::vector<std::string> tokens = Utility::String::splitWithoutEmptyParts(line);
 
@@ -267,7 +267,7 @@ void StanfordImporter::doOpenData(Containers::Array<char>&& data, const DataFlag
     {
         std::size_t vertexComponentOffset{};
         PropertyType propertyType{};
-        while(in) {
+        while(!in.isEmpty()) {
             const std::string line = extractLine(in);
             std::vector<std::string> tokens = Utility::String::splitWithoutEmptyParts(line);
 
