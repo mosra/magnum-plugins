@@ -291,9 +291,10 @@ KtxImporter::~KtxImporter() = default;
 ImporterFeatures KtxImporter::doFeatures() const { return ImporterFeature::OpenData; }
 
 bool KtxImporter::doIsOpened() const {
-    /* Only one of these can be populated at a time */
-    CORRADE_INTERNAL_ASSERT(!_f || !_basisImporter);
-    return _f || (_basisImporter && _basisImporter->isOpened());
+    /* Only one of these can be populated at a time; if Basis is present it's
+       also opened */
+    CORRADE_INTERNAL_ASSERT(!_f || !_basisImporter || _basisImporter->isOpened());
+    return _f || _basisImporter;
 }
 
 void KtxImporter::doClose() {
