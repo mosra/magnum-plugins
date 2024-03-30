@@ -1,2 +1,2 @@
 ply
-format ascii 1.0
+format binary_mixed_endian 1.0

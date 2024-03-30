@@ -35,6 +35,9 @@ endif()
 
 if(NOT MAGNUM_STANFORDIMPORTER_BUILD_STATIC)
     set(STANFORDIMPORTER_PLUGIN_FILENAME $<TARGET_FILE:StanfordImporter>)
+    if(MAGNUM_WITH_ASSIMPIMPORTER)
+        set(ASSIMPIMPORTER_PLUGIN_FILENAME $<TARGET_FILE:AssimpImporter>)
+    endif()
 endif()
 
 # First replace ${} variables, then $<> generator expressions
@@ -46,6 +49,7 @@ file(GENERATE OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/configure.h
 corrade_add_test(StanfordImporterTest StanfordImporterTest.cpp
     LIBRARIES Magnum::Trade
     FILES
+        ascii.ply
         colors-not-same-type.ply
         colors-not-all.ply
         colors-not-tightly-packed.ply
@@ -102,9 +106,15 @@ corrade_add_test(StanfordImporterTest StanfordImporterTest.cpp
 target_include_directories(StanfordImporterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>)
 if(MAGNUM_STANFORDIMPORTER_BUILD_STATIC)
     target_link_libraries(StanfordImporterTest PRIVATE StanfordImporter)
+    if(MAGNUM_WITH_ASSIMPIMPORTER)
+        target_link_libraries(StanfordImporterTest PRIVATE AssimpImporter)
+    endif()
 else()
     # So the plugins get properly built when building the test
     add_dependencies(StanfordImporterTest StanfordImporter)
+    if(MAGNUM_WITH_ASSIMPIMPORTER)
+        add_dependencies(StanfordImporterTest AssimpImporter)
+    endif()
 endif()
 if(CORRADE_BUILD_STATIC AND NOT MAGNUM_STANFORDIMPORTER_BUILD_STATIC)
     # CMake < 3.4 does this implicitly, but 3.4+ not anymore (see CMP0065).

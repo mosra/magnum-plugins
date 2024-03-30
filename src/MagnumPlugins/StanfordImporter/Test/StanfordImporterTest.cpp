@@ -29,6 +29,7 @@
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
 #include <Corrade/TestSuite/Compare/Numeric.h>
+#include <Corrade/TestSuite/Compare/String.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/DebugStl.h> /** @todo remove once Debug is stream-free */
@@ -64,13 +65,23 @@ struct StanfordImporterTest: TestSuite::Tester {
     void triangleFastPath();
     void triangleFastPathPerFaceToPerVertex();
 
+    void asciiDelegateAssimp();
+    void asciiDelegateAssimpNoPlugin();
+    void asciiDelegateAssimpFailed();
+
     void openMemory();
     void openTwice();
     void importTwice();
 
     /* Explicitly forbid system-wide plugin dependencies */
     PluginManager::Manager<AbstractImporter> _manager{"nonexistent"};
+    /* A dedicated manager that has AssimpImporter loaded as well in order to
+       test both with and without AssimpImporter present. It needs to load
+       AnyImageImporter from a system-wide location. */
+    PluginManager::Manager<AbstractImporter> _managerWithAssimpImporter;
 };
+
+using namespace Containers::Literals;
 
 constexpr struct {
     const char* filename;
@@ -80,7 +91,7 @@ constexpr struct {
     {"invalid-signature", "invalid file signature bla", true},
 
     {"format-invalid", "invalid format line format binary_big_endian 1.0 extradata", true},
-    {"format-unsupported", "unsupported file format ascii 1.0", true},
+    {"format-unsupported", "unsupported file format binary_mixed_endian 1.0", true},
     {"format-missing", "missing format line", true},
     {"format-too-late", "expected format line, got element face 1", true},
 
@@ -256,6 +267,14 @@ constexpr struct {
     {"disabled", false}
 };
 
+const struct {
+    const char* name;
+    ImporterFlags flags;
+} AsciiDelegateAssimpData[]{
+    {"", {}},
+    {"verbose", ImporterFlag::Verbose},
+};
+
 /* Shared among all plugins that implement data copying optimizations */
 const struct {
     const char* name;
@@ -302,16 +321,34 @@ StanfordImporterTest::StanfordImporterTest() {
                        &StanfordImporterTest::triangleFastPathPerFaceToPerVertex},
         Containers::arraySize(FastTrianglePathData));
 
+    addInstancedTests({&StanfordImporterTest::asciiDelegateAssimp},
+        Containers::arraySize(AsciiDelegateAssimpData));
+
+    addTests({&StanfordImporterTest::asciiDelegateAssimpNoPlugin,
+              &StanfordImporterTest::asciiDelegateAssimpFailed});
+
     addInstancedTests({&StanfordImporterTest::openMemory},
         Containers::arraySize(OpenMemoryData));
 
     addTests({&StanfordImporterTest::openTwice,
               &StanfordImporterTest::importTwice});
 
+    /* Load AssimpImporter and reset the plugin dir after so it doesn't load
+       anything else from the filesystem. Do this also in case of static
+       plugins (no _FILENAME defined) so it doesn't attempt to load dynamic
+       system-wide plugins. */
+    #ifdef ASSIMPIMPORTER_PLUGIN_FILENAME
+    CORRADE_INTERNAL_ASSERT_OUTPUT(_managerWithAssimpImporter.load(ASSIMPIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
+    #endif
+    #ifndef CORRADE_PLUGINMANAGER_NO_DYNAMIC_PLUGIN_SUPPORT
+    _managerWithAssimpImporter.setPluginDirectory({});
+    #endif
+
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. */
     #ifdef STANFORDIMPORTER_PLUGIN_FILENAME
     CORRADE_INTERNAL_ASSERT_OUTPUT(_manager.load(STANFORDIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
+    CORRADE_INTERNAL_ASSERT_OUTPUT(_managerWithAssimpImporter.load(STANFORDIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
     #endif
 }
 
@@ -1022,6 +1059,104 @@ void StanfordImporterTest::triangleFastPathPerFaceToPerVertex() {
             0xabaa, 0xabaa, 0xabaa, 0xabaa,
             0xbbab, 0xbbab, 0xbbab
         }), TestSuite::Compare::Container);
+}
+
+void StanfordImporterTest::asciiDelegateAssimp() {
+    auto&& data = AsciiDelegateAssimpData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    if(_managerWithAssimpImporter.loadState("AssimpImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("AssimpImporter plugin not found, cannot test");
+
+    Containers::Pointer<AbstractImporter> importer = _managerWithAssimpImporter.instantiate("StanfordImporter");
+
+    /* Set flags to see if they get propagated */
+    importer->setFlags(data.flags);
+
+    std::ostringstream out;
+    {
+        Debug redirectDebug{&out};
+        CORRADE_VERIFY(importer->openFile(Utility::Path::join(STANFORDIMPORTER_TEST_DIR, "ascii.ply")));
+    }
+    if(data.flags & ImporterFlag::Verbose)
+        CORRADE_COMPARE_AS(out.str(),
+            "Trade::StanfordImporter::openData(): forwarding an ASCII file to AssimpImporter\n"
+            "Trade::AssimpImporter: Info,  ",
+            TestSuite::Compare::StringHasPrefix);
+    else
+        CORRADE_COMPARE(out.str(), "");
+
+    /* All of these should forward to the correct instance and not crash */
+    CORRADE_COMPARE(importer->meshCount(), 1);
+    CORRADE_COMPARE(importer->meshLevelCount(0), 1);
+
+    /* The ASCII file has extra custom attributes but Assimp doesn't support
+       those and ignores them, so it gives back nothing */
+    CORRADE_COMPARE(importer->meshAttributeName(meshAttributeCustom(2)), "");
+    CORRADE_COMPARE(importer->meshAttributeForName("id"), MeshAttribute{});
+
+    Containers::Optional<Trade::MeshData> mesh = importer->mesh(0);
+    CORRADE_VERIFY(mesh);
+    CORRADE_COMPARE(mesh->attributeCount(), 1);
+
+    CORRADE_VERIFY(mesh->isIndexed());
+    CORRADE_COMPARE(mesh->indexType(), MeshIndexType::UnsignedInt);
+    CORRADE_COMPARE_AS(mesh->indices<UnsignedInt>(), Containers::arrayView({
+        1u, 2u, 0u
+    }), TestSuite::Compare::Container);
+
+    CORRADE_VERIFY(mesh->hasAttribute(MeshAttribute::Position));
+    CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::Position), VertexFormat::Vector3);
+    CORRADE_COMPARE_AS(mesh->attribute<Vector3>(MeshAttribute::Position), Containers::arrayView({
+        Vector3{-0.5f, -0.5f, 0.0f},
+        Vector3{+0.5f, -0.5f, 0.0f},
+        Vector3{ 0.0f, +0.5f, 0.0f}
+    }), TestSuite::Compare::Container);
+
+    /* Verify that closing works as intended as well */
+    importer->close();
+    CORRADE_VERIFY(!importer->isOpened());
+}
+
+void StanfordImporterTest::asciiDelegateAssimpNoPlugin() {
+    /* Happens on builds with static plugins. Can't really do much there. */
+    if(_manager.loadState("AssimpImporter") != PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("AssimpImporter plugin loaded, cannot test");
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!importer->openFile(Utility::Path::join(STANFORDIMPORTER_TEST_DIR, "ascii.ply")));
+    #ifndef CORRADE_PLUGINMANAGER_NO_DYNAMIC_PLUGIN_SUPPORT
+    CORRADE_COMPARE(out.str(),
+        "PluginManager::Manager::load(): plugin AssimpImporter is not static and was not found in nonexistent\n"
+        "Trade::StanfordImporter::openData(): can't forward an ASCII file to AssimpImporter\n");
+    #else
+    CORRADE_COMPARE(out.str(),
+        "PluginManager::Manager::load(): plugin AssimpImporter was not found\n"
+        "Trade::StanfordImporter::openData(): can't forward an ASCII file to AssimpImporter\n");
+    #endif
+}
+
+void StanfordImporterTest::asciiDelegateAssimpFailed() {
+    if(_managerWithAssimpImporter.loadState("AssimpImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("AssimpImporter plugin not found, cannot test");
+
+    Containers::Pointer<AbstractImporter> importer = _managerWithAssimpImporter.instantiate("StanfordImporter");
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!importer->openData(
+        "ply\n"
+        "format ascii 1.0\n"
+        "ehehe blebleble\n"
+        /* Note: if end_header isn't present, Assimp enters an infinite loop of
+           some sort. Top notch codebase, as usual. */
+        "end_header\n"_s));
+    CORRADE_COMPARE_AS(out.str(),
+        "Trade::AssimpImporter::openData(): loading failed: ",
+        TestSuite::Compare::StringHasPrefix);
 }
 
 void StanfordImporterTest::openMemory() {

@@ -57,8 +57,8 @@ namespace Magnum { namespace Trade {
 
 @m_keywords{PLY}
 
-Imports Little- and Big-Endian binary PLY (`*.ply`) files. You can use
-@ref StanfordSceneConverter to encode meshes into this format.
+Imports PLY (`*.ply`) files. You can use @ref StanfordSceneConverter to encode
+meshes into this format.
 
 @section Trade-StanfordImporter-usage Usage
 
@@ -108,8 +108,7 @@ In order to optimize for fast import, the importer supports a restricted subset
 of PLY features, which however shouldn't affect any real-world models.
 
 -   Both Little- and Big-Endian binary files are supported, with bytes swapped
-    to match platform endianness. ASCII files are not supported due to the
-    storage size overhead and inherent inefficiency of float literal parsing.
+    to match platform endianness.
 -   Position coordinates (`x`/`y`/`z`) are expected to have the same type, be
     tightly packed in a XYZ order and be either 32-bit floats or (signed) bytes
     or shorts. Resulting position type is then
@@ -189,6 +188,20 @@ using @ref meshAttributeName() and @ref meshAttributeForName(). Attributes with
 unknown types cause the import to fail, as the format relies on knowing the
 type size.
 
+@subsection Trade-StanfordImporter-behavior-ascii ASCII files
+
+The plugin implements parsing of binary files only. If an ASCII file is
+detected, it's forwarded to the @ref AssimpImporter plugin, if available. Calls
+to @ref meshCount(), @ref meshLevelCount(), @ref meshAttributeName(),
+@ref meshAttributeForName() and @ref mesh() are then proxied to
+@ref AssimpImporter. The @ref close() function closes and discards the
+internally instantiated plugin; @ref isOpened() works as usual.
+
+Note that @ref AssimpImporter implements only a subset of features provided by
+this plugin. In particular, ASCII files with custom mesh attributes or per-face
+attributes will be imported as if they didn't have them, and both index and
+vertex data will be always in the full 32-bit type.
+
 @section Trade-StanfordImporter-configuration Plugin-specific configuration
 
 It's possible to tune various import options through @ref configuration(). See
@@ -224,6 +237,7 @@ class MAGNUM_STANFORDIMPORTER_EXPORT StanfordImporter: public AbstractImporter {
 
         struct State;
         Containers::Pointer<State> _state;
+        Containers::Pointer<AbstractImporter> _assimpImporter;
 };
 
 }}

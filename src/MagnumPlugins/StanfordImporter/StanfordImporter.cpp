@@ -43,6 +43,8 @@
 
 namespace Magnum { namespace Trade {
 
+using namespace Containers::Literals;
+
 struct StanfordImporter::State {
     Containers::Array<char> data;
     std::size_t headerSize;
@@ -69,9 +71,17 @@ StanfordImporter::~StanfordImporter() = default;
 
 ImporterFeatures StanfordImporter::doFeatures() const { return ImporterFeature::OpenData; }
 
-bool StanfordImporter::doIsOpened() const { return !!_state; }
+bool StanfordImporter::doIsOpened() const {
+    /* Only one of these can be populated at a time; if Assimp is present it's
+       also opened */
+    CORRADE_INTERNAL_ASSERT(!_state || !_assimpImporter || _assimpImporter->isOpened());
+    return _state || _assimpImporter;
+}
 
-void StanfordImporter::doClose() { _state = nullptr; }
+void StanfordImporter::doClose() {
+    _state = nullptr;
+    _assimpImporter = nullptr;
+}
 
 namespace {
 
@@ -188,22 +198,12 @@ void StanfordImporter::doOpenData(Containers::Array<char>&& data, const DataFlag
         return;
     }
 
-    /* Take over the existing array or copy the data if we can't */
-    Containers::Array<char> dataCopy;
-    if(dataFlags & (DataFlag::Owned|DataFlag::ExternallyOwned)) {
-        dataCopy = Utility::move(data);
-    } else {
-        dataCopy = Containers::Array<char>{NoInit, data.size()};
-        Utility::copy(data, dataCopy);
-    }
-
-    /* Initialize the state */
-    auto state = Containers::pointer<State>();
-    Containers::ArrayView<const char> in = dataCopy;
+    /* View containing to-be-parsed lines of the initial header */
+    Containers::ArrayView<const char> inHeader = data;
 
     /* Check file signature */
     {
-        std::string header = Utility::String::rtrim(extractLine(in));
+        std::string header = Utility::String::rtrim(extractLine(inHeader));
         if(header != "ply") {
             Error{} << "Trade::StanfordImporter::openData(): invalid file signature" << header;
             return;
@@ -213,8 +213,8 @@ void StanfordImporter::doOpenData(Containers::Array<char>&& data, const DataFlag
     /* Parse format line */
     Containers::Optional<bool> fileFormatNeedsEndianSwapping;
     {
-        while(!in.isEmpty()) {
-            const std::string line = extractLine(in);
+        while(!inHeader.isEmpty()) {
+            const std::string line = extractLine(inHeader);
             std::vector<std::string> tokens = Utility::String::splitWithoutEmptyParts(line);
 
             /* Skip empty lines and comments */
@@ -238,6 +238,34 @@ void StanfordImporter::doOpenData(Containers::Array<char>&& data, const DataFlag
                 } else if(tokens[1] == "binary_big_endian") {
                     fileFormatNeedsEndianSwapping = !Utility::Endianness::isBigEndian();
                     break;
+                } else if(tokens[1] == "ascii") {
+                    constexpr Containers::StringView plugin = "AssimpImporter"_s;
+                    /** @todo remove the !manager() once manager-less
+                        instantiation is removed */
+                    if(!manager() || !(manager()->load(plugin) & PluginManager::LoadState::Loaded)) {
+                        Error{} << "Trade::StanfordImporter::openData(): can't forward an ASCII file to AssimpImporter";
+                        return;
+                    }
+
+                    if(flags() & ImporterFlag::Verbose)
+                        Debug{} << "Trade::StanfordImporter::openData(): forwarding an ASCII file to AssimpImporter";
+
+                    /* Instantiate the plugin, propagate flags. PLYs can't
+                       reference external data so file callbacks don't need to
+                       be propagated. */
+                    Containers::Pointer<AbstractImporter> assimpImporter = static_cast<PluginManager::Manager<AbstractImporter>*>(manager())->instantiate(plugin);
+                    assimpImporter->setFlags(flags());
+
+                    /* Try to open the data with AssimpImporter (error output
+                       should be printed by the plugin itself). All other
+                       functions transparently forward to that importer
+                       instance if it's populated. */
+                    if(!assimpImporter->openData(data))
+                        return;
+
+                    /* Success, save the instance */
+                    _assimpImporter = Utility::move(assimpImporter);
+                    return;
                 }
             }
 
@@ -245,6 +273,23 @@ void StanfordImporter::doOpenData(Containers::Array<char>&& data, const DataFlag
             return;
         }
     }
+
+    /* Header checks passed and we're not delegating to Assimp, take over the
+       existing array or copy the data if we can't. Remeber the already parsed
+       size of the header while the input data is still there. */
+    const std::size_t parsedHeaderSize = inHeader.begin() - data.begin();
+    Containers::Array<char> dataCopy;
+    if(dataFlags & (DataFlag::Owned|DataFlag::ExternallyOwned)) {
+        dataCopy = Utility::move(data);
+    } else {
+        dataCopy = Containers::Array<char>{NoInit, data.size()};
+        Utility::copy(data, dataCopy);
+    }
+
+    /* Initialize the state, skip the already parsed header prefix in the input
+       view */
+    Containers::ArrayView<const char> in = dataCopy.exceptPrefix(parsedHeaderSize);
+    Containers::Pointer<State> state{InPlaceInit};
 
     /* Check format line consistency */
     if(!fileFormatNeedsEndianSwapping) {
@@ -653,13 +698,24 @@ void StanfordImporter::doOpenData(Containers::Array<char>&& data, const DataFlag
     _state = Utility::move(state);
 }
 
-UnsignedInt StanfordImporter::doMeshCount() const { return 1; }
+UnsignedInt StanfordImporter::doMeshCount() const {
+    if(_assimpImporter)
+        return _assimpImporter->meshCount();
 
-UnsignedInt StanfordImporter::doMeshLevelCount(UnsignedInt) {
+    return 1;
+}
+
+UnsignedInt StanfordImporter::doMeshLevelCount(UnsignedInt id) {
+    if(_assimpImporter)
+        return _assimpImporter->meshLevelCount(id);
+
     return configuration().value<bool>("perFaceToPerVertex") ? 1 : 2;
 }
 
-Containers::Optional<MeshData> StanfordImporter::doMesh(UnsignedInt, const UnsignedInt level) {
+Containers::Optional<MeshData> StanfordImporter::doMesh(UnsignedInt id, const UnsignedInt level) {
+    if(_assimpImporter)
+        return _assimpImporter->mesh(id, level);
+
     /* We either have per-face in the second level or we convert them to
        per-vertex, never both */
     CORRADE_INTERNAL_ASSERT(!(level == 1 && configuration().value<bool>("perFaceToPerVertex")));
@@ -883,10 +939,16 @@ Containers::Optional<MeshData> StanfordImporter::doMesh(UnsignedInt, const Unsig
 }
 
 MeshAttribute StanfordImporter::doMeshAttributeForName(const Containers::StringView name) {
+    if(_assimpImporter)
+        return _assimpImporter->meshAttributeForName(name);
+
     return _state ? _state->attributeNameMap[name] : MeshAttribute{};
 }
 
 Containers::String StanfordImporter::doMeshAttributeName(MeshAttribute name) {
+    if(_assimpImporter)
+        return _assimpImporter->meshAttributeName(name);
+
     return _state && meshAttributeCustom(name) < _state->attributeNames.size() ?
         _state->attributeNames[meshAttributeCustom(name)] : "";
 }

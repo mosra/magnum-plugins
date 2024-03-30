@@ -1,0 +1,14 @@
+ply
+format ascii 1.0
+element vertex 3
+property float x
+property float y
+property float z
+property int id
+element face 1
+property list int int vertex_index
+end_header
+-0.5 -0.5 0.0 3
++0.5 -0.5 0.0 2
+ 0.0 +0.5 0.0 176
+3 1 2 0
