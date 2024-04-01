@@ -37,6 +37,10 @@
 #define STB_IMAGE_IMPLEMENTATION
 #define STB_IMAGE_STATIC
 #define STBI_ASSERT CORRADE_INTERNAL_ASSERT
+/* SSE2 is enabled implicitly, NEON has to be enabled explicitly */
+#ifdef CORRADE_TARGET_NEON
+#define STBI_NEON
+#endif
 
 /* Use our own thread-local, and only if CORRADE_BUILD_MULTITHREADED is set.
    Verified in StbImageImporterTest::multithreaded(). */

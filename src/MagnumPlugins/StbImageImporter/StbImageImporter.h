@@ -204,8 +204,6 @@ For some formats, it's possible to tune various output options through
 
 See @ref plugins-configuration for more information and an example showing how
 to edit the configuration values.
-
-@todo Enable ARM NEON when I'm able to test that
 */
 class MAGNUM_STBIMAGEIMPORTER_EXPORT StbImageImporter: public AbstractImporter {
     public:
