@@ -121,6 +121,16 @@ information.
 
 @section Audio-StbVorbisImporter-behavior Behavior and limitations
 
+@m_class{m-note m-warning}
+
+@par Security note
+    As the [stb repository README](https://github.com/nothings/stb/blob/master/README.md)
+    itself says, the `stb_*` libraries are developed with a goal of simplicity
+    and ease of use. As such, they may crash or pose a security risk on broken
+    or malicious input, and they may likely be slower or have less features
+    than canonical implementations of given format. Consider using alternatives
+    listed in @ref file-formats if your project is dealing with untrusted data.
+
 The files are imported with @ref BufferFormat::Mono16,
 @ref BufferFormat::Stereo16, @ref BufferFormat::Quad16,
 @ref BufferFormat::Surround51Channel16, @ref BufferFormat::Surround61Channel16

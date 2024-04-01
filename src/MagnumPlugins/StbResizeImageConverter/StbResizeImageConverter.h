@@ -116,6 +116,16 @@ information.
 
 @section Trade-StbResizeImageConverter-behavior Behavior and limitations
 
+@m_class{m-note m-warning}
+
+@par Security note
+    As the [stb repository README](https://github.com/nothings/stb/blob/master/README.md)
+    itself says, the `stb_*` libraries are developed with a goal of simplicity
+    and ease of use. As such, they may crash or pose a security risk on broken
+    or malicious input, and they may likely be slower or have less features
+    than other implementations. Consider using alternatives if your project is
+    dealing with untrusted data.
+
 Accepts @ref PixelFormat::RGBA8Unorm, @relativeref{PixelFormat,RGBA8Srgb},
 @relativeref{PixelFormat,RGBA16Unorm}, @relativeref{PixelFormat,RGBA16F},
 @relativeref{PixelFormat,RGBA32F} and their 1-, 2- and 3-component variants. In
