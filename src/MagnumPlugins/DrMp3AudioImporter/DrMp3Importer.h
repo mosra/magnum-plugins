@@ -61,13 +61,8 @@ namespace Magnum { namespace Audio {
 
 @m_keywords{DrMp3AudioImporter Mp3AudioImporter}
 
-Supports mono, stereo and surround sound files of the following formats using
-the [dr_mp3](https://github.com/mackron/dr_libs) library:
-
--   16 bit-per-channel, imported as @ref BufferFormat::Mono16,
-    @ref BufferFormat::Stereo16, @ref BufferFormat::Quad16,
-    @ref BufferFormat::Surround51Channel16, @ref BufferFormat::Surround61Channel16
-    or @ref BufferFormat::Surround71Channel16
+Imports 16-bit-per-channel mono, stereo and surround sound files using the
+[dr_mp3](https://github.com/mackron/dr_libs) library.
 
 This plugins provides `Mp3AudioImporter`.
 
@@ -123,6 +118,13 @@ target_link_libraries(your-app PRIVATE MagnumPlugins::DrMp3AudioImporter)
 
 See @ref building-plugins, @ref cmake-plugins and @ref plugins for more
 information.
+
+@section Audio-DrMp3Importer-behavior Behavior and limitations
+
+The files are imported as @ref BufferFormat::Mono16,
+@ref BufferFormat::Stereo16, @ref BufferFormat::Quad16,
+@ref BufferFormat::Surround51Channel16, @ref BufferFormat::Surround61Channel16
+or @ref BufferFormat::Surround71Channel16.
 */
 class MAGNUM_DRMP3AUDIOIMPORTER_EXPORT DrMp3Importer: public AbstractImporter {
     public:

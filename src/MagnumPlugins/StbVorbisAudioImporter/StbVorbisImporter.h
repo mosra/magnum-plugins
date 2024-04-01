@@ -59,12 +59,8 @@ namespace Magnum { namespace Audio {
 
 @m_keywords{StbVorbisAudioImporter VorbisAudioImporter}
 
-Supports mono, stereo and surround sound files with 16 bits per channel using
-the [stb_vorbis](https://github.com/nothings/stb) library. The files are
-imported with @ref BufferFormat::Mono16, @ref BufferFormat::Stereo16,
-@ref BufferFormat::Quad16, @ref BufferFormat::Surround51Channel16,
-@ref BufferFormat::Surround61Channel16 and @ref BufferFormat::Surround71Channel16,
-respectively.
+Imports mono, stereo and surround sound files with 16 bits per channel using
+the [stb_vorbis](https://github.com/nothings/stb) library.
 
 This plugins provides `VorbisAudioImporter`, but note that this plugin doesn't
 have complete support for all format quirks and the performance might be worse
@@ -122,6 +118,13 @@ target_link_libraries(your-app PRIVATE MagnumPlugins::StbVorbisAudioImporter)
 
 See @ref building-plugins, @ref cmake-plugins and @ref plugins for more
 information.
+
+@section Audio-StbVorbisImporter-behavior Behavior and limitations
+
+The files are imported with @ref BufferFormat::Mono16,
+@ref BufferFormat::Stereo16, @ref BufferFormat::Quad16,
+@ref BufferFormat::Surround51Channel16, @ref BufferFormat::Surround61Channel16
+and @ref BufferFormat::Surround71Channel16.
 */
 class MAGNUM_STBVORBISAUDIOIMPORTER_EXPORT StbVorbisImporter: public AbstractImporter {
     public:

@@ -59,27 +59,8 @@ namespace Magnum { namespace Audio {
 
 @m_keywords{DrWavAudioImporter WavAudioImporter}
 
-Supports mono, stereo and surround sound files of the following formats using
-the [dr_wav](https://github.com/mackron/dr_libs) library:
-
--   8 bit-per-channel PCM, imported as @ref BufferFormat::Mono8,
-    @ref BufferFormat::Stereo8, @ref BufferFormat::Quad8,
-    @ref BufferFormat::Surround51Channel8, @ref BufferFormat::Surround61Channel8
-    or @ref BufferFormat::Surround71Channel8
--   12 and 16 bit-per-channel PCM, imported as @ref BufferFormat::Mono16,
-    @ref BufferFormat::Stereo16, @ref BufferFormat::Quad16,
-    @ref BufferFormat::Surround51Channel16, @ref BufferFormat::Surround61Channel16
-    or @ref BufferFormat::Surround71Channel16
--   24 and 32 bit-per-channel PCM and 32-bit IEEE Float, imported as
-    @ref BufferFormat::MonoFloat, @ref BufferFormat::StereoFloat,
-    @ref BufferFormat::Quad32, @ref BufferFormat::Surround51Channel32,
-    @ref BufferFormat::Surround61Channel32 or @ref BufferFormat::Surround71Channel32
--   64-bit IEEE Float, imported as @ref BufferFormat::MonoDouble,
-    @ref BufferFormat::StereoDouble, @ref BufferFormat::Quad32,
-    @ref BufferFormat::Surround51Channel32, @ref BufferFormat::Surround61Channel32
-    or @ref BufferFormat::Surround71Channel32
--   A-Law, imported as @ref BufferFormat::MonoALaw / @ref BufferFormat::StereoALaw
--   μ-Law, imported as @ref BufferFormat::MonoMuLaw / @ref BufferFormat::StereoMuLaw
+Imports mono, stereo and surround sound files using the
+[dr_wav](https://github.com/mackron/dr_libs) library.
 
 This plugins provides `WavAudioImporter`, but note that this plugin doesn't
 handle some errata such as JUNK blocks in strange places.
@@ -133,6 +114,31 @@ target_link_libraries(your-app PRIVATE MagnumPlugins::DrWavAudioImporter)
 
 See @ref building-plugins, @ref cmake-plugins and @ref plugins for more
 information.
+
+@section Audio-DrWavImporter-behavior Behavior and limitations
+
+The files are imported in the following formats:
+
+-   8 bit-per-channel PCM is imported as @ref BufferFormat::Mono8,
+    @ref BufferFormat::Stereo8, @ref BufferFormat::Quad8,
+    @ref BufferFormat::Surround51Channel8, @ref BufferFormat::Surround61Channel8
+    or @ref BufferFormat::Surround71Channel8
+-   12 and 16 bit-per-channel PCM is imported as @ref BufferFormat::Mono16,
+    @ref BufferFormat::Stereo16, @ref BufferFormat::Quad16,
+    @ref BufferFormat::Surround51Channel16, @ref BufferFormat::Surround61Channel16
+    or @ref BufferFormat::Surround71Channel16
+-   24 and 32 bit-per-channel PCM and 32-bit IEEE Float is imported as
+    @ref BufferFormat::MonoFloat, @ref BufferFormat::StereoFloat,
+    @ref BufferFormat::Quad32, @ref BufferFormat::Surround51Channel32,
+    @ref BufferFormat::Surround61Channel32 or @ref BufferFormat::Surround71Channel32
+-   64-bit IEEE Float is imported as @ref BufferFormat::MonoDouble,
+    @ref BufferFormat::StereoDouble, @ref BufferFormat::Quad32,
+    @ref BufferFormat::Surround51Channel32, @ref BufferFormat::Surround61Channel32
+    or @ref BufferFormat::Surround71Channel32
+-   A-Law is imported as @ref BufferFormat::MonoALaw /
+    @ref BufferFormat::StereoALaw
+-   μ-Law is imported as @ref BufferFormat::MonoMuLaw /
+    @ref BufferFormat::StereoMuLaw
 */
 class MAGNUM_DRWAVAUDIOIMPORTER_EXPORT DrWavImporter: public AbstractImporter {
     public:

@@ -59,26 +59,8 @@ namespace Magnum { namespace Audio {
 
 @m_keywords{DrFlacAudioImporter FlacAudioImporter}
 
-Supports mono, stereo and surround sound files of the following formats using
-the [dr_flac](https://github.com/mackron/dr_libs) library:
-
--   8 bit-per-channel, imported as @ref BufferFormat::Mono8,
-    @ref BufferFormat::Stereo8, @ref BufferFormat::Quad8,
-    @ref BufferFormat::Surround51Channel8, @ref BufferFormat::Surround61Channel8
-    or @ref BufferFormat::Surround71Channel8
--   16 bit-per-channel, imported as @ref BufferFormat::Mono16,
-    @ref BufferFormat::Stereo16, @ref BufferFormat::Quad16,
-    @ref BufferFormat::Surround51Channel16, @ref BufferFormat::Surround61Channel16
-    or @ref BufferFormat::Surround71Channel16
--   24 bit-per-channel, imported as
-    @ref BufferFormat::MonoFloat, @ref BufferFormat::StereoFloat,
-    @ref BufferFormat::Quad32, @ref BufferFormat::Surround51Channel32,
-    @ref BufferFormat::Surround61Channel32 or @ref BufferFormat::Surround71Channel32
-
-Although technically FLAC supports 32 bits per channel as well,
-[not even the reference encoder supports that](https://xiph.org/flac/format.html#metadata_block_streaminfo),
-which makes it impossible to verify whether dr_flac is capable of importing
-such files, and thus handling of such files is not implemented.
+Imports mono, stereo and surround sound files using the
+[dr_flac](https://github.com/mackron/dr_libs) library.
 
 This plugins provides `FlacAudioImporter`, but note that this plugin doesn't
 handle CRC checks, corrupt or perverse FLAC streams, or broadcast streams.
@@ -132,6 +114,28 @@ target_link_libraries(your-app PRIVATE MagnumPlugins::DrFlacAudioImporter)
 
 See @ref building-plugins, @ref cmake-plugins and @ref plugins for more
 information.
+
+@section Audio-DrFlacImporter-behavior Behavior and limitations
+
+The files are imported in the following formats
+
+-   8 bit-per-channel files are imported as @ref BufferFormat::Mono8,
+    @ref BufferFormat::Stereo8, @ref BufferFormat::Quad8,
+    @ref BufferFormat::Surround51Channel8, @ref BufferFormat::Surround61Channel8
+    or @ref BufferFormat::Surround71Channel8
+-   16 bit-per-channel files are imported as @ref BufferFormat::Mono16,
+    @ref BufferFormat::Stereo16, @ref BufferFormat::Quad16,
+    @ref BufferFormat::Surround51Channel16, @ref BufferFormat::Surround61Channel16
+    or @ref BufferFormat::Surround71Channel16
+-   24 bit-per-channel files are imported as
+    @ref BufferFormat::MonoFloat, @ref BufferFormat::StereoFloat,
+    @ref BufferFormat::Quad32, @ref BufferFormat::Surround51Channel32,
+    @ref BufferFormat::Surround61Channel32 or @ref BufferFormat::Surround71Channel32
+
+Although technically FLAC supports 32 bits per channel as well,
+[not even the reference encoder supports that](https://xiph.org/flac/format.html#metadata_block_streaminfo),
+which makes it impossible to verify whether dr_flac is capable of importing
+such files, and thus handling of such files is not implemented.
 */
 class MAGNUM_DRFLACAUDIOIMPORTER_EXPORT DrFlacImporter: public AbstractImporter {
     public:

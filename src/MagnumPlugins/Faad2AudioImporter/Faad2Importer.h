@@ -57,9 +57,8 @@ namespace Magnum { namespace Audio {
 
 @m_keywords{Faad2AudioImporter AacAudioImporter}
 
-Supports mono and stereo AAC files with 16 bits per channel using the
-[FAAD2](https://www.audiocoding.com) library. The files are always imported
-with @ref BufferFormat::Stereo16.
+Imports mono and stereo AAC files with 16 bits per channel using the
+[FAAD2](https://www.audiocoding.com) library.
 
 This plugins provides `AacAudioImporter`.
 
@@ -116,6 +115,10 @@ target_link_libraries(your-app PRIVATE MagnumPlugins::Faad2AudioImporter)
 
 See @ref building-plugins, @ref cmake-plugins and @ref plugins for more
 information.
+
+@section Audio-Faad2Importer-behavior Behavior and limitations
+
+The files are always imported with @ref BufferFormat::Stereo16.
 */
 class MAGNUM_FAAD2AUDIOIMPORTER_EXPORT Faad2Importer: public AbstractImporter {
     public:
