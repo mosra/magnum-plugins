@@ -184,6 +184,9 @@ class MAGNUM_FREETYPEFONT_EXPORT FreeTypeFont: public AbstractFont {
         #endif
         MAGNUM_FREETYPEFONT_LOCAL FT_Library _library;
 
+        /* Only the interfaces that HarfBuzzFont replaces with its own can be
+           MAGNUM_FREETYPEFONT_LOCAL here */
+
         FontFeatures MAGNUM_FREETYPEFONT_LOCAL doFeatures() const override;
 
         UnsignedInt doGlyphId(char32_t character) override;
@@ -191,7 +194,6 @@ class MAGNUM_FREETYPEFONT_EXPORT FreeTypeFont: public AbstractFont {
         Vector2 doGlyphSize(UnsignedInt glyph) override;
         Vector2 doGlyphAdvance(UnsignedInt glyph) override;
 
-        /** @todo Why this can't be defined as local? */
         void doFillGlyphCache(AbstractGlyphCache& cache, Containers::ArrayView<const char32_t> characters) override;
 
         MAGNUM_FREETYPEFONT_LOCAL Containers::Pointer<AbstractShaper> doCreateShaper() override;
