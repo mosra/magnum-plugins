@@ -119,8 +119,9 @@ void StbTrueTypeFont::doClose() {
     _font = nullptr;
 }
 
-UnsignedInt StbTrueTypeFont::doGlyphId(const char32_t character) {
-    return stbtt_FindGlyphIndex(&_font->info, character);
+void StbTrueTypeFont::doGlyphIdsInto(const Containers::StridedArrayView1D<const char32_t>& characters, const Containers::StridedArrayView1D<UnsignedInt>& glyphs) {
+    for(std::size_t i = 0; i != characters.size(); ++i)
+        glyphs[i] = stbtt_FindGlyphIndex(&_font->info, characters[i]);
 }
 
 Vector2 StbTrueTypeFont::doGlyphSize(const UnsignedInt glyph) {

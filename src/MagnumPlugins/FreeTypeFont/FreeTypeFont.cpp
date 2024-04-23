@@ -130,8 +130,9 @@ void FreeTypeFont::doClose() {
     _ftFont = nullptr;
 }
 
-UnsignedInt FreeTypeFont::doGlyphId(const char32_t character) {
-    return FT_Get_Char_Index(_ftFont, character);
+void FreeTypeFont::doGlyphIdsInto(const Containers::StridedArrayView1D<const char32_t>& characters, const Containers::StridedArrayView1D<UnsignedInt>& glyphs) {
+    for(std::size_t i = 0; i != characters.size(); ++i)
+        glyphs[i] = FT_Get_Char_Index(_ftFont, characters[i]);
 }
 
 Vector2 FreeTypeFont::doGlyphSize(const UnsignedInt glyph) {

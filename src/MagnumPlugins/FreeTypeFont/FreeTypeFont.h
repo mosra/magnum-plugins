@@ -193,8 +193,7 @@ class MAGNUM_FREETYPEFONT_EXPORT FreeTypeFont: public AbstractFont {
 
         FontFeatures MAGNUM_FREETYPEFONT_LOCAL doFeatures() const override;
 
-        UnsignedInt doGlyphId(char32_t character) override;
-
+        void doGlyphIdsInto(const Containers::StridedArrayView1D<const char32_t>& characters, const Containers::StridedArrayView1D<UnsignedInt>& glyphs) override;
         Vector2 doGlyphSize(UnsignedInt glyph) override;
         Vector2 doGlyphAdvance(UnsignedInt glyph) override;
 
