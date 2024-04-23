@@ -136,6 +136,10 @@ See @ref building-plugins, @ref cmake-plugins, @ref plugins and
 
 @section Text-FreeTypeFont-behavior Behavior and limitations
 
+The @ref fillGlyphCache() function expects a @ref PixelFormat::R8Unorm glyph
+cache. If the format doesn't match or the glyphs can't fit, it prints a message
+to @relativeref{Magnum,Error} and returns @cpp false @ce.
+
 The FreeType library alone doesn't provide any advanced shaping capabilities,
 thus @ref AbstractShaper::setScript(),
 @relativeref{AbstractShaper,setLanguage()} and
@@ -194,7 +198,7 @@ class MAGNUM_FREETYPEFONT_EXPORT FreeTypeFont: public AbstractFont {
         Vector2 doGlyphSize(UnsignedInt glyph) override;
         Vector2 doGlyphAdvance(UnsignedInt glyph) override;
 
-        void doFillGlyphCache(AbstractGlyphCache& cache, Containers::ArrayView<const char32_t> characters) override;
+        bool doFillGlyphCache(AbstractGlyphCache& cache, Containers::ArrayView<const char32_t> characters) override;
 
         MAGNUM_FREETYPEFONT_LOCAL Containers::Pointer<AbstractShaper> doCreateShaper() override;
 };

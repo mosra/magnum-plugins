@@ -135,9 +135,11 @@ Vector2 StbTrueTypeFont::doGlyphAdvance(const UnsignedInt glyph) {
     return Vector2::xAxis(advance*_font->scale);
 }
 
-void StbTrueTypeFont::doFillGlyphCache(AbstractGlyphCache& cache, const Containers::ArrayView<const char32_t> characters) {
-    /** @todo fix the fillGlyphCache API to make it failable */
-    CORRADE_INTERNAL_ASSERT(cache.format() == PixelFormat::R8Unorm);
+bool StbTrueTypeFont::doFillGlyphCache(AbstractGlyphCache& cache, const Containers::ArrayView<const char32_t> characters) {
+    if(cache.format() != PixelFormat::R8Unorm) {
+        Error{} << "Text::StbTrueTypeFont::fillGlyphCache(): expected a" << PixelFormat::R8Unorm << "glyph cache but got" << cache.format();
+        return {};
+    }
 
     /* Register this font, if not in the cache yet */
     Containers::Optional<UnsignedInt> fontId = cache.findFont(*this);
@@ -173,10 +175,19 @@ void StbTrueTypeFont::doFillGlyphCache(AbstractGlyphCache& cache, const Containe
     }
 
     /* Pack the cache */
-    /** @todo fix the fillGlyphCache API to make it failable */
-    CORRADE_INTERNAL_ASSERT_OUTPUT(cache.atlas().add(
+    const Vector3i cacheFilledSize = cache.atlas().filledSize();
+    if(!cache.atlas().add(
         stridedArrayView(glyphs).slice(&Glyph::size),
-        stridedArrayView(glyphs).slice(&Glyph::offset)));
+        stridedArrayView(glyphs).slice(&Glyph::offset)))
+    {
+        /* Calculate the total area for a more useful report */
+        std::size_t totalArea = 0;
+        for(const Glyph& glyph: glyphs)
+            totalArea += glyph.size.product();
+
+        Error{} << "Text::StbTrueTypeFont::fillGlyphCache(): cannot fit" << glyphs.size() << "glyphs with a total area of" << totalArea << "pixels into a cache of size" << cache.size() << "and" << cacheFilledSize << "filled so far";
+        return {};
+    }
 
     /* Memory for stb_truetype to render into.  We need to flip Y, so it can't
        be rendered directly into the glyph cache memory. */
@@ -221,6 +232,8 @@ void StbTrueTypeFont::doFillGlyphCache(AbstractGlyphCache& cache, const Containe
 
     /* Flush the updated cache image */
     cache.flushImage(flushRange);
+
+    return true;
 }
 
 Containers::Pointer<AbstractShaper> StbTrueTypeFont::doCreateShaper() {

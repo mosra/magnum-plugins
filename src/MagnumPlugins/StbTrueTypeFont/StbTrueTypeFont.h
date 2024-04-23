@@ -134,6 +134,10 @@ See @ref building-plugins, @ref cmake-plugins, @ref plugins and
     than canonical implementations of given format. Consider using alternatives
     listed in @ref file-formats if your project is dealing with untrusted data.
 
+The @ref fillGlyphCache() function expects a @ref PixelFormat::R8Unorm glyph
+cache. If the format doesn't match or the glyphs can't fit, it prints a message
+to @relativeref{Magnum,Error} and returns @cpp false @ce.
+
 The stb_truetype library doesn't provide any advanced shaping capabilities,
 thus @ref AbstractShaper::setScript(),
 @relativeref{AbstractShaper,setLanguage()} and
@@ -169,7 +173,7 @@ class MAGNUM_STBTRUETYPEFONT_EXPORT StbTrueTypeFont: public AbstractFont {
         MAGNUM_STBTRUETYPEFONT_LOCAL UnsignedInt doGlyphId(char32_t character) override;
         MAGNUM_STBTRUETYPEFONT_LOCAL Vector2 doGlyphSize(UnsignedInt glyph) override;
         MAGNUM_STBTRUETYPEFONT_LOCAL Vector2 doGlyphAdvance(UnsignedInt glyph) override;
-        MAGNUM_STBTRUETYPEFONT_LOCAL void doFillGlyphCache(AbstractGlyphCache& cache, Containers::ArrayView<const char32_t> characters) override;
+        MAGNUM_STBTRUETYPEFONT_LOCAL bool doFillGlyphCache(AbstractGlyphCache& cache, Containers::ArrayView<const char32_t> characters) override;
         MAGNUM_STBTRUETYPEFONT_LOCAL Containers::Pointer<AbstractShaper> doCreateShaper() override;
 
         Containers::Pointer<Font> _font;

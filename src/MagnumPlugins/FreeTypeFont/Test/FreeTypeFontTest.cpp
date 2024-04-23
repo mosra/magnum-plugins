@@ -60,6 +60,8 @@ struct FreeTypeFontTest: TestSuite::Tester {
     void fillGlyphCache();
     void fillGlyphCacheIncremental();
     void fillGlyphCacheArray();
+    void fillGlyphCacheInvalidFormat();
+    void fillGlyphCacheCannotFit();
 
     /* Explicitly forbid system-wide plugin dependencies */
     PluginManager::Manager<AbstractFont> _manager{"nonexistent"};
@@ -113,7 +115,9 @@ FreeTypeFontTest::FreeTypeFontTest() {
         Containers::arraySize(FillGlyphCacheData));
 
     addTests({&FreeTypeFontTest::fillGlyphCacheIncremental,
-              &FreeTypeFontTest::fillGlyphCacheArray});
+              &FreeTypeFontTest::fillGlyphCacheArray,
+              &FreeTypeFontTest::fillGlyphCacheInvalidFormat,
+              &FreeTypeFontTest::fillGlyphCacheCannotFit});
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. */
@@ -533,6 +537,44 @@ void FreeTypeFontTest::fillGlyphCacheArray() {
         Vector2i{0, 0},
         1,
         Range2Di{{0, 0}, {9, 9}}));
+}
+
+void FreeTypeFontTest::fillGlyphCacheInvalidFormat() {
+    Containers::Pointer<AbstractFont> font = _manager.instantiate("FreeTypeFont");
+    CORRADE_VERIFY(font->openFile(Utility::Path::join(FREETYPEFONT_TEST_DIR, "Oxygen.ttf"), 16.0f));
+
+    struct GlyphCache: AbstractGlyphCache {
+        explicit GlyphCache(PixelFormat format, const Vector2i& size, const Vector2i& padding): AbstractGlyphCache{format, size, padding} {}
+
+        GlyphCacheFeatures doFeatures() const override { return {}; }
+        void doSetImage(const Vector3i&, const ImageView3D&) override {
+            CORRADE_FAIL("This shouldn't be called.");
+        }
+    } cache{PixelFormat::R8Srgb, {16, 16}, {}};
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    font->fillGlyphCache(cache, "");
+    CORRADE_COMPARE(out.str(), "Text::FreeTypeFont::fillGlyphCache(): expected a PixelFormat::R8Unorm glyph cache but got PixelFormat::R8Srgb\n");
+}
+
+void FreeTypeFontTest::fillGlyphCacheCannotFit() {
+    Containers::Pointer<AbstractFont> font = _manager.instantiate("FreeTypeFont");
+    CORRADE_VERIFY(font->openFile(Utility::Path::join(FREETYPEFONT_TEST_DIR, "Oxygen.ttf"), 16.0f));
+
+    struct GlyphCache: AbstractGlyphCache {
+        explicit GlyphCache(PixelFormat format, const Vector2i& size, const Vector2i& padding): AbstractGlyphCache{format, size, padding} {}
+
+        GlyphCacheFeatures doFeatures() const override { return {}; }
+        void doSetImage(const Vector3i&, const ImageView3D&) override {
+            CORRADE_FAIL("This shouldn't be called.");
+        }
+    } cache{PixelFormat::R8Unorm, {16, 32}, {}};
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    font->fillGlyphCache(cache, "HELLO");
+    CORRADE_COMPARE(out.str(), "Text::FreeTypeFont::fillGlyphCache(): cannot fit 5 glyphs with a total area of 535 pixels into a cache of size Vector(16, 32, 1) and Vector(16, 0, 1) filled so far\n");
 }
 
 }}}}
