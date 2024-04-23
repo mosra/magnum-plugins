@@ -44,6 +44,24 @@
 
 namespace Magnum { namespace Text {
 
+#ifndef FT_CONFIG_OPTION_ERROR_STRINGS
+namespace {
+
+const char* ftErrorString(const FT_Error error) {
+    switch(error) {
+        #define FT_ERRORDEF_(name, index, string) case FT_Err_ ## name: return string;
+        #define FT_NOERRORDEF_ FT_ERRORDEF_
+        #include <freetype/fterrdef.h>
+        #undef FT_NOERRORDEF_
+        #undef FT_ERRORDEF_
+    }
+
+    return {};
+}
+
+}
+#endif
+
 #if defined(CORRADE_BUILD_MULTITHREADED) && !defined(CORRADE_TARGET_WINDOWS)
 CORRADE_THREAD_LOCAL
 #endif
@@ -78,7 +96,24 @@ auto FreeTypeFont::doOpenData(const Containers::ArrayView<const char> data, cons
     CORRADE_ASSERT(_library, "Text::FreeTypeFont::openSingleData(): initialize() was not called", {});
     /** @todo ability to specify different font in TTC collection */
     if(FT_Error error = FT_New_Memory_Face(_library, _data.begin(), _data.size(), 0, &_ftFont)) {
-        Error{} << "Text::FreeTypeFont::openData(): failed to open the font:" << error;
+        Error e;
+        e << "Text::FreeTypeFont::openData(): failed to open the font:";
+        if(const char* string =
+            /* FreeType can be compiled without error strings, in which case
+               the returned string will be always null. In that case we do our
+               own string conversion. */
+            #ifndef FT_CONFIG_OPTION_ERROR_STRINGS
+            ftErrorString(error)
+            #else
+            FT_Error_String(error)
+            #endif
+        )
+            e << string;
+        /* Even if it *is* compiled with error strings, there still can be
+           garbage error codes, for which it should return at least the
+           number. */
+        else
+            e << error;
         return {};
     }
     CORRADE_INTERNAL_ASSERT_OUTPUT(FT_Set_Char_Size(_ftFont, 0, size*64, 0, 0) == 0);

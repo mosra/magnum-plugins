@@ -147,7 +147,7 @@ void FreeTypeFontTest::empty() {
     char a{};
     /* Explicitly checking non-null but empty view */
     CORRADE_VERIFY(!font->openData({&a, 0}, 16.0f));
-    CORRADE_COMPARE(out.str(), "Text::FreeTypeFont::openData(): failed to open the font: 6\n");
+    CORRADE_COMPARE(out.str(), "Text::FreeTypeFont::openData(): failed to open the font: invalid argument\n");
 }
 
 void FreeTypeFontTest::invalid() {
@@ -156,7 +156,7 @@ void FreeTypeFontTest::invalid() {
     std::ostringstream out;
     Error redirectError{&out};
     CORRADE_VERIFY(!font->openData("Oxygen.ttf", 16.0f));
-    CORRADE_COMPARE(out.str(), "Text::FreeTypeFont::openData(): failed to open the font: 85\n");
+    CORRADE_COMPARE(out.str(), "Text::FreeTypeFont::openData(): failed to open the font: invalid stream operation\n");
 }
 
 void FreeTypeFontTest::properties() {
