@@ -92,7 +92,7 @@ check() {
     cd "$_rootdir/build"
 
     for config in Debug $_buildtype; do
-        CORRADE_TEST_COLOR=ON ctest -C $config --output-on-failure -j
+        CORRADE_TEST_COLOR=ON ctest -C $config --output-on-failure -j9
     done
 }
 
