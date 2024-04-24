@@ -173,7 +173,7 @@ class MAGNUM_STBTRUETYPEFONT_EXPORT StbTrueTypeFont: public AbstractFont {
         MAGNUM_STBTRUETYPEFONT_LOCAL void doGlyphIdsInto(const Containers::StridedArrayView1D<const char32_t>& characters, const Containers::StridedArrayView1D<UnsignedInt>& glyphs) override;
         MAGNUM_STBTRUETYPEFONT_LOCAL Vector2 doGlyphSize(UnsignedInt glyph) override;
         MAGNUM_STBTRUETYPEFONT_LOCAL Vector2 doGlyphAdvance(UnsignedInt glyph) override;
-        MAGNUM_STBTRUETYPEFONT_LOCAL bool doFillGlyphCache(AbstractGlyphCache& cache, Containers::ArrayView<const char32_t> characters) override;
+        MAGNUM_STBTRUETYPEFONT_LOCAL bool doFillGlyphCache(AbstractGlyphCache& cache, const Containers::StridedArrayView1D<const UnsignedInt>& glyphs) override;
         MAGNUM_STBTRUETYPEFONT_LOCAL Containers::Pointer<AbstractShaper> doCreateShaper() override;
 
         Containers::Pointer<Font> _font;

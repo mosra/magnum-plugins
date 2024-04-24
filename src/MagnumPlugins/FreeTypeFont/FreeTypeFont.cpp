@@ -25,7 +25,6 @@
 
 #include "FreeTypeFont.h"
 
-#include <algorithm> /* std::transform(), std::sort(), std::unique() */
 #include <ft2build.h>
 #include FT_FREETYPE_H
 #include <Corrade/Containers/GrowableArray.h>
@@ -146,7 +145,7 @@ Vector2 FreeTypeFont::doGlyphAdvance(const UnsignedInt glyph) {
     return Vector2(_ftFont->glyph->advance.x, _ftFont->glyph->advance.y)/64.0f;
 }
 
-bool FreeTypeFont::doFillGlyphCache(AbstractGlyphCache& cache, const Containers::ArrayView<const char32_t> characters) {
+bool FreeTypeFont::doFillGlyphCache(AbstractGlyphCache& cache, const Containers::StridedArrayView1D<const UnsignedInt>& glyphIndices) {
     if(cache.format() != PixelFormat::R8Unorm) {
         Error{} << "Text::FreeTypeFont::fillGlyphCache(): expected a" << PixelFormat::R8Unorm << "glyph cache but got" << cache.format();
         return {};
@@ -154,32 +153,16 @@ bool FreeTypeFont::doFillGlyphCache(AbstractGlyphCache& cache, const Containers:
 
     /* Register this font, if not in the cache yet */
     Containers::Optional<UnsignedInt> fontId = cache.findFont(*this);
-    const bool firstFill = !fontId;
     if(!fontId)
         fontId = cache.addFont(_ftFont->num_glyphs, this);
-
-    /* Get glyph codes from characters. If this is the first fill, include also
-       the invalid glyph. */
-    /** @todo leave that on the user, maybe? or do it only in the convenience
-        "characters" overload and not the "glyph IDs" one */
-    Containers::Array<FT_UInt> glyphIndices{NoInit, characters.size() + (firstFill ? 1 : 0)};
-    for(std::size_t i = 0; i != characters.size(); ++i)
-        glyphIndices[i] = FT_Get_Char_Index(_ftFont, characters[i]);
-    if(firstFill)
-        glyphIndices.back() = 0;
-
-    /* Remove duplicates (e.g. uppercase and lowercase mapped to same glyph) */
-    /** @todo deduplicate via a BitArray instead */
-    std::sort(glyphIndices.begin(), glyphIndices.end());
-    const std::size_t uniqueCount = std::unique(glyphIndices.begin(), glyphIndices.end()) - glyphIndices.begin();
 
     /* Get sizes of all glyphs to pack into the cache */
     struct Glyph {
         Vector2i size;
         Vector3i offset;
     };
-    Containers::Array<Glyph> glyphs{NoInit, uniqueCount};
-    for(std::size_t i = 0; i != uniqueCount; ++i) {
+    Containers::Array<Glyph> glyphs{NoInit, glyphIndices.size()};
+    for(std::size_t i = 0; i != glyphIndices.size(); ++i) {
         CORRADE_INTERNAL_ASSERT_OUTPUT(FT_Load_Glyph(_ftFont, glyphIndices[i], FT_LOAD_DEFAULT) == 0);
         glyphs[i].size = Vector2i{Int(_ftFont->glyph->metrics.width), Int(_ftFont->glyph->metrics.height)}/64;
     }
