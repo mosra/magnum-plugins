@@ -140,6 +140,9 @@ The @ref fillGlyphCache() function expects a @ref PixelFormat::R8Unorm glyph
 cache. If the format doesn't match or the glyphs can't fit, it prints a message
 to @relativeref{Magnum,Error} and returns @cpp false @ce.
 
+For font formats that support it, @ref glyphName() and @ref glyphForName()
+provides mapping between glyph IDs and names.
+
 The FreeType library alone doesn't provide any advanced shaping capabilities,
 thus @ref AbstractShaper::setScript(),
 @relativeref{AbstractShaper,setLanguage()} and
@@ -194,6 +197,8 @@ class MAGNUM_FREETYPEFONT_EXPORT FreeTypeFont: public AbstractFont {
         FontFeatures MAGNUM_FREETYPEFONT_LOCAL doFeatures() const override;
 
         void doGlyphIdsInto(const Containers::StridedArrayView1D<const char32_t>& characters, const Containers::StridedArrayView1D<UnsignedInt>& glyphs) override;
+        Containers::String doGlyphName(UnsignedInt glyph) override;
+        UnsignedInt doGlyphForName(Containers::StringView name) override;
         Vector2 doGlyphSize(UnsignedInt glyph) override;
         Vector2 doGlyphAdvance(UnsignedInt glyph) override;
 

@@ -52,6 +52,7 @@ struct FreeTypeFontTest: TestSuite::Tester {
     void invalid();
 
     void properties();
+    void glyphNames();
 
     void shape();
     void shapeEmpty();
@@ -69,6 +70,8 @@ struct FreeTypeFontTest: TestSuite::Tester {
     /* Needs to load AnyImageImporter from system-wide location */
     PluginManager::Manager<Trade::AbstractImporter> _importerManager;
 };
+
+using namespace Containers::Literals;
 
 const struct {
     const char* name;
@@ -103,7 +106,8 @@ FreeTypeFontTest::FreeTypeFontTest() {
     addTests({&FreeTypeFontTest::empty,
               &FreeTypeFontTest::invalid,
 
-              &FreeTypeFontTest::properties});
+              &FreeTypeFontTest::properties,
+              &FreeTypeFontTest::glyphNames});
 
     addInstancedTests({&FreeTypeFontTest::shape},
         Containers::arraySize(ShapeData));
@@ -170,6 +174,20 @@ void FreeTypeFontTest::properties() {
     CORRADE_COMPARE(font->glyphId(U'W'), 58);
     CORRADE_COMPARE(font->glyphSize(58), Vector2(18.0f, 12.0f));
     CORRADE_COMPARE(font->glyphAdvance(58), Vector2(17.0f, 0.0f));
+}
+
+void FreeTypeFontTest::glyphNames() {
+    /* TTF doesn't name glyphs, have to use a specially crafted file. Details
+       on how it was produced in CMakeLists.txt */
+    Containers::Pointer<AbstractFont> font = _manager.instantiate("FreeTypeFont");
+    CORRADE_VERIFY(font->openFile(Utility::Path::join(FREETYPEFONT_TEST_DIR, "SourceSansPro-Regular-subset.otf"), 16.0f));
+    CORRADE_COMPARE(font->glyphName(0), ".notdef");
+    CORRADE_COMPARE(font->glyphForName("not found"), 0);
+    CORRADE_COMPARE(font->glyphName(1), "one.t");
+    CORRADE_COMPARE(font->glyphName(2), "seveneighths");
+    CORRADE_COMPARE(font->glyphForName("seveneighths"), 2);
+    /* Non-null-terminated views should be converted to null-terminated */
+    CORRADE_COMPARE(font->glyphForName("one.t!"_s.exceptSuffix(1)), 1);
 }
 
 void FreeTypeFontTest::shape() {

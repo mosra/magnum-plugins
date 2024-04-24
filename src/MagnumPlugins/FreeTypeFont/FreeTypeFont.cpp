@@ -29,7 +29,7 @@
 #include FT_FREETYPE_H
 #include <Corrade/Containers/GrowableArray.h>
 #include <Corrade/Containers/Optional.h>
-#include <Corrade/Containers/StringView.h>
+#include <Corrade/Containers/String.h>
 #include <Corrade/PluginManager/AbstractManager.h>
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/Unicode.h>
@@ -132,6 +132,24 @@ void FreeTypeFont::doClose() {
 void FreeTypeFont::doGlyphIdsInto(const Containers::StridedArrayView1D<const char32_t>& characters, const Containers::StridedArrayView1D<UnsignedInt>& glyphs) {
     for(std::size_t i = 0; i != characters.size(); ++i)
         glyphs[i] = FT_Get_Char_Index(_ftFont, characters[i]);
+}
+
+Containers::String FreeTypeFont::doGlyphName(const UnsignedInt glyph) {
+    /* The FT_Get_Glyph_Name() function doesn't really have a nice way to
+       give me size of the actual string, and calling it in a while loop seems
+       like something that's hard to test and prone to errors. Looking at
+       https://github.com/adobe-type-tools/agl-specification there's a limit of
+       63 characters for a name, so 256 Should Be Enough™. */
+    char glyphName[256];
+    /* Not really bothering with the error case here, it'd be too spammy to
+       print that on every name lookup I think. */
+    if(FT_Get_Glyph_Name(_ftFont, glyph, glyphName, Containers::arraySize(glyphName)) != 0)
+        return {};
+    return glyphName;
+}
+
+UnsignedInt FreeTypeFont::doGlyphForName(const Containers::StringView name) {
+    return FT_Get_Name_Index(_ftFont, Containers::String::nullTerminatedGlobalView(name).data());
 }
 
 Vector2 FreeTypeFont::doGlyphSize(const UnsignedInt glyph) {
