@@ -143,7 +143,9 @@ thus @ref AbstractShaper::setScript(),
 @relativeref{AbstractShaper,setLanguage()} and
 @relativeref{AbstractShaper,setDirection()} are a no-op and return
 @cpp false @ce. You're encouraged to use the @ref HarfBuzzFont plugin if you
-need these.
+need these. The stb_truetype doesn't implement support for glyph name mapping,
+you're encouraged to use the @ref FreeTypeFont plugin if you need to query
+names or look up glyphs by name.
 
 Hinting is not implemented in stb_truetype. Compared to @ref FreeTypeFont or
 @ref HarfBuzzFont you get larger glyphs with a more blurry look.
