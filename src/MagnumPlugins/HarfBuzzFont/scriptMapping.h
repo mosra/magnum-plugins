@@ -28,7 +28,7 @@
    matching the hb_script_t enum to have additions in a certain version grouped
    together.
 
-   Apart from HB_SCRIPT_INVALID There's 165 entries in HarfBuzz 8.2.1, the
+   Apart from HB_SCRIPT_INVALID there's 165 entries in HarfBuzz 8.2.1, the
    count of _c() values should match here too, guarded by the both-directional
    switch cases in the test. */
 #if defined(_c) && (defined(_c_include_supported) || defined(_c_include_all))
