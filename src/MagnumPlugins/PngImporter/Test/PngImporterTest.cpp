@@ -180,19 +180,30 @@ constexpr struct {
 constexpr struct {
     const char* name;
     const char* filename;
-    bool premultipliedAlpha;
+    const char* alphaMode;
     bool premultipliedAlphaUsesSrgb;
 } RgbaData[]{
-    {"RGBA, no gAMA chunk", "rgba.png", false, false},
+    {"RGBA, no gAMA chunk", "rgba.png",
+        nullptr, false},
     /* pngcrush -g 0.45455 rgba.png rgba-srgb.png */
-    {"RGBA, sRGB gAMA chunk", "rgba-srgb.png", false, false},
+    {"RGBA, sRGB gAMA chunk", "rgba-srgb.png",
+        nullptr, false},
     /* pngcrush -g 1.0 rgba.png rgba-linear.png */
-    {"RGBA, linear gAMA chunk", "rgba-linear.png", false, false},
-    {"RGBA, premultiplied alpha, no gAMA chunk", "rgba.png", true, true},
-    {"RGBA, premultiplied alpha, sRGB gAMA chunk", "rgba-srgb.png", true, true},
-    {"RGBA, premultiplied alpha, linear gAMA chunk", "rgba-linear.png", true, false},
+    {"RGBA, linear gAMA chunk", "rgba-linear.png",
+        nullptr, false},
+    {"RGBA, premultiplied alpha, no gAMA chunk", "rgba.png",
+        "premultiplied", true},
+    {"RGBA, premultiplied alpha, sRGB gAMA chunk", "rgba-srgb.png",
+        "premultiplied", true},
+    {"RGBA, premultiplied alpha, linear gAMA chunk", "rgba-linear.png",
+        "premultiplied", false},
+    {"RGBA, premultiplied alpha, no gAMA chunk, forced linear", "rgba.png",
+        "premultipliedLinear", false},
+    {"RGBA, premultiplied alpha, sRGB gAMA chunk, forced linear", "rgba-srgb.png",
+        "premultipliedLinear", false},
     /* See README.md for details on how this file was produced */
-    {"CgBI BGRA", "rgba-binary-alpha-iphone.png", false, false},
+    {"CgBI BGRA", "rgba-binary-alpha-iphone.png",
+        nullptr, false},
 };
 
 const struct {
@@ -585,8 +596,8 @@ void PngImporterTest::rgba() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("PngImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(PNGIMPORTER_TEST_DIR, data.filename)));
 
-    if(data.premultipliedAlpha)
-        importer->configuration().setValue("alphaMode", "premultiplied");
+    if(data.alphaMode)
+        importer->configuration().setValue("alphaMode", data.alphaMode);
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     {
@@ -599,7 +610,7 @@ void PngImporterTest::rgba() {
 
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
     CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Unorm);
-    if(data.premultipliedAlpha) {
+    if(data.alphaMode) {
         if(data.premultipliedAlphaUsesSrgb) {
             CORRADE_COMPARE_AS(image->data(),  Containers::arrayView<char>({
                 /* Values get decoded from sRGB, scaled and then encoded back,
@@ -699,7 +710,7 @@ void PngImporterTest::alphaModeInvalid() {
     std::ostringstream out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->image2D(0));
-    CORRADE_COMPARE(out.str(), "Trade::PngImporter::image2D(): expected alphaMode to be either empty or premultiplied but got premultipliedSrgb\n");
+    CORRADE_COMPARE(out.str(), "Trade::PngImporter::image2D(): expected alphaMode to be either empty, premultiplied or premultipliedLinear but got premultipliedSrgb\n");
 }
 
 void PngImporterTest::forceBitDepth8() {

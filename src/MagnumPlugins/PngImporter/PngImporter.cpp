@@ -209,8 +209,9 @@ Containers::Optional<ImageData2D> PngImporter::doImage2D(UnsignedInt, UnsignedIn
 
     /* Premultiply alpha, if desired */
     if(const Containers::StringView alphaMode = configuration().value<Containers::StringView>("alphaMode")) {
-        if(alphaMode != "premultiplied"_s) {
-            Error{} << "Trade::PngImporter::image2D(): expected alphaMode to be either empty or premultiplied but got" << alphaMode;
+        if(alphaMode != "premultiplied"_s &&
+           alphaMode != "premultipliedLinear"_s) {
+            Error{} << "Trade::PngImporter::image2D(): expected alphaMode to be either empty, premultiplied or premultipliedLinear but got" << alphaMode;
             return {};
         }
 
@@ -256,7 +257,7 @@ Containers::Optional<ImageData2D> PngImporter::doImage2D(UnsignedInt, UnsignedIn
            performant), I just didn't find it in a reasonable timespan. */
         png_set_alpha_mode(file, PNG_ALPHA_PREMULTIPLIED, PNG_DEFAULT_sRGB);
         Double gamma;
-        if(png_get_gAMA(file, info, &gamma) && Math::equal(gamma, 1.0)) {
+        if(alphaMode == "premultipliedLinear"_s || (png_get_gAMA(file, info, &gamma) && Math::equal(gamma, 1.0))) {
             png_set_gamma(file, PNG_GAMMA_LINEAR, PNG_GAMMA_LINEAR);
         } else {
             /** @todo some constants for this?! */
