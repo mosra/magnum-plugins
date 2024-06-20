@@ -35,6 +35,7 @@
 #include <Magnum/Text/AbstractGlyphCache.h>
 #include <Magnum/Text/AbstractShaper.h>
 #include <Magnum/Text/Direction.h>
+#include <Magnum/Text/Feature.h>
 #include <Magnum/Text/Script.h>
 
 namespace Magnum { namespace Text {
