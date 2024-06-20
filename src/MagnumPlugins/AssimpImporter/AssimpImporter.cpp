@@ -1628,6 +1628,15 @@ Containers::Optional<MaterialData> AssimpImporter::doMaterial(const UnsignedInt 
                             case aiTextureType_NORMALS:
                                 attribute = MaterialAttribute::NormalTextureMatrix;
                                 break;
+                            case aiTextureType_METALNESS:
+                                attribute = MaterialAttribute::MetalnessTextureMatrix;
+                                break;
+                            case aiTextureType_BASE_COLOR:
+                                attribute = MaterialAttribute::BaseColorTextureMatrix;
+                                break;
+                            case aiTextureType_DIFFUSE_ROUGHNESS:
+                                attribute = MaterialAttribute::RoughnessTextureMatrix;
+                                break;
                         }
 
                         /* Save only if the name is recognized (and let it
@@ -1668,7 +1677,23 @@ Containers::Optional<MaterialData> AssimpImporter::doMaterial(const UnsignedInt 
                             case aiTextureType_NORMALS:
                                 attribute = MaterialAttribute::NormalTextureCoordinates;
                                 break;
+                            case aiTextureType_METALNESS:
+                                attribute = MaterialAttribute::MetalnessTextureCoordinates;
+                                break;
+                            case aiTextureType_BASE_COLOR:
+                                attribute = MaterialAttribute::BaseColorTextureCoordinates;
+                                break;
+                            case aiTextureType_DIFFUSE_ROUGHNESS:
+                                attribute = MaterialAttribute::RoughnessTextureCoordinates;
+                                break;
                         }
+                    } else if(property.mType == aiPTI_Integer) {
+                        if(key == AI_MATKEY_USE_COLOR_MAP && property.mSemantic == aiTextureType_BASE_COLOR)
+                            attribute = MaterialAttribute::BaseColorTexture;
+                        if(key == AI_MATKEY_USE_METALLIC_MAP && property.mSemantic == aiTextureType_METALNESS)
+                            attribute = MaterialAttribute::MetalnessTexture;
+                        if(key == AI_MATKEY_USE_ROUGHNESS_MAP && property.mSemantic == aiTextureType_DIFFUSE_ROUGHNESS)
+                            attribute = MaterialAttribute::RoughnessTexture;
                     }
                 }
 
