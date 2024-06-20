@@ -151,6 +151,21 @@ const struct {
         #endif
         8.34375f
     }},
+    {"kerning disabled and then enabled again", {InPlaceInit, {
+        {Feature::Kerning, false},
+        {Feature::Kerning, true}
+    }}, {
+        /* Should be the same as "none" */
+        16.3594f,
+        8.26562f,
+        #if HB_VERSION_MAJOR*100 + HB_VERSION_MINOR < 107 || \
+            HB_VERSION_MAJOR*100 + HB_VERSION_MINOR >= 301
+        8.0f,
+        #else
+        7.984384f,
+        #endif
+        8.34375f
+    }},
     {"kerning disabled", {InPlaceInit, {
         {Feature::Kerning, false}
     }}, {
@@ -160,6 +175,16 @@ const struct {
         8.26562f, /* same as with kerning */
         8.09375f,
         8.34375f  /* same as with kerning */
+    }},
+    {"kerning enabled and then disabled again", {InPlaceInit, {
+        {Feature::Kerning, true},
+        {Feature::Kerning, false},
+    }}, {
+        /* Should be the same as "kerning disabled" */
+        16.6562f,
+        8.26562f,
+        8.09375f,
+        8.34375f
     }},
     {"kerning enabled and disabled for a part", {InPlaceInit, {
         {Feature::Kerning, 0, 2, true},
