@@ -90,6 +90,22 @@
 # only since 11.11, and is still semi-useless even in version 14, as described
 # above).
 if(NOT TARGET glslang)
+    # CMake config files produced by glslang 12.1 link to Threads::Threads but
+    # there's no corresponding find_package(Threads), leading to any use of the
+    # glslang target dying with
+    #
+    #  The link interface of target "glslang::OSDependent" contains:
+    #
+    #    Threads::Threads
+    #
+    #  but the target was not found
+    #
+    # It's fixed in 12.2 with https://github.com/KhronosGroup/glslang/commit/1db9cd28549831d7b884a12dc700bf88e21fb4b8
+    # and then subsequently patched in 14.1 with https://github.com/KhronosGroup/glslang/commit/82e0d00b32d2245efd9da8196f139bc0564765d1
+    # so it's likely still broken for years to come. Finding the Threads
+    # package before attempting to find the glslang module fixes that.
+    find_package(Threads REQUIRED QUIET)
+
     find_package(glslang CONFIG QUIET)
 endif()
 
