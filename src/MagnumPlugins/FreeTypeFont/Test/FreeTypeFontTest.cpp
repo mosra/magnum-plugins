@@ -79,10 +79,10 @@ const struct {
     UnsignedInt eGlyphId;
     UnsignedInt begin, end;
 } ShapeData[]{
-    {"", "Wave", 72, 0, ~UnsignedInt{}},
-    {"substring", "haWavefefe", 72, 2, 6},
-    {"UTF-8", "Wavě", 220, 0, ~UnsignedInt{}},
-    {"UTF-8 substring", "haWavěfefe", 220, 2, 7},
+    {"", "Weave", 72, 0, ~UnsignedInt{}},
+    {"substring", "haWeavefefe", 72, 2, 7},
+    {"UTF-8", "Wěave", 220, 0, ~UnsignedInt{}},
+    {"UTF-8 substring", "haWěavefefe", 220, 2, 8},
 };
 
 const struct {
@@ -199,25 +199,27 @@ void FreeTypeFontTest::shape() {
 
     Containers::Pointer<AbstractShaper> shaper = font->createShaper();
 
-    CORRADE_COMPARE(shaper->shape(data.string, data.begin, data.end), 4);
+    CORRADE_COMPARE(shaper->shape(data.string, data.begin, data.end), 5);
 
-    UnsignedInt ids[4];
-    Vector2 offsets[4];
-    Vector2 advances[4];
+    UnsignedInt ids[5];
+    Vector2 offsets[5];
+    Vector2 advances[5];
     shaper->glyphIdsInto(ids);
     shaper->glyphOffsetsAdvancesInto(offsets, advances);
     CORRADE_COMPARE_AS(Containers::arrayView(ids), Containers::arrayView({
         58u,            /* 'W' */
+        data.eGlyphId,  /* 'e' or 'ě' */
         68u,            /* 'a' */
         89u,            /* 'v' */
-        data.eGlyphId   /* 'e' or 'ě' */
+        72u             /* 'e' */
     }), TestSuite::Compare::Container);
     /* There are no glyph-specific offsets here */
     CORRADE_COMPARE_AS(Containers::arrayView(offsets), Containers::arrayView<Vector2>({
-        {}, {}, {}, {}
+        {}, {}, {}, {}, {}
     }), TestSuite::Compare::Container);
     CORRADE_COMPARE_AS(Containers::arrayView(advances), Containers::arrayView<Vector2>({
         {17.0f, 0.0f},
+        {9.0f, 0.0f},
         {8.0f, 0.0f},
         {8.0f, 0.0f},
         {9.0f, 0.0f}
@@ -266,23 +268,25 @@ void FreeTypeFontTest::shaperReuse() {
 
     /* Long text, same as in shape(), should enlarge the array for it */
     } {
-        CORRADE_COMPARE(shaper->shape("Wave"), 4);
-        UnsignedInt ids[4];
-        Vector2 offsets[4];
-        Vector2 advances[4];
+        CORRADE_COMPARE(shaper->shape("Wěave"), 5);
+        UnsignedInt ids[5];
+        Vector2 offsets[5];
+        Vector2 advances[5];
         shaper->glyphIdsInto(ids);
         shaper->glyphOffsetsAdvancesInto(offsets, advances);
         CORRADE_COMPARE_AS(Containers::arrayView(ids), Containers::arrayView({
-            58u, /* 'W' */
-            68u, /* 'a' */
-            89u, /* 'v' */
-            72u  /* 'e' */
+            58u,  /* 'W' */
+            220u, /* 'ě' */
+            68u,  /* 'a' */
+            89u,  /* 'v' */
+            72u   /* 'e' */
         }), TestSuite::Compare::Container);
         CORRADE_COMPARE_AS(Containers::arrayView(offsets), Containers::arrayView<Vector2>({
-            {}, {}, {}, {}
+            {}, {}, {}, {}, {}
         }), TestSuite::Compare::Container);
         CORRADE_COMPARE_AS(Containers::arrayView(advances), Containers::arrayView<Vector2>({
             {17.0f, 0.0f},
+            {9.0f, 0.0f},
             {8.0f, 0.0f},
             {8.0f, 0.0f},
             {9.0f, 0.0f}
@@ -290,20 +294,24 @@ void FreeTypeFontTest::shaperReuse() {
 
     /* Short text again, should not leave the extra glyphs there */
     } {
-        CORRADE_COMPARE(shaper->shape("a"), 1);
-        UnsignedInt ids[1];
-        Vector2 offsets[1];
-        Vector2 advances[1];
+        CORRADE_COMPARE(shaper->shape("ave"), 3);
+        UnsignedInt ids[3];
+        Vector2 offsets[3];
+        Vector2 advances[3];
         shaper->glyphIdsInto(ids);
         shaper->glyphOffsetsAdvancesInto(offsets, advances);
         CORRADE_COMPARE_AS(Containers::arrayView(ids), Containers::arrayView({
             68u,
+            89u,
+            72u
         }), TestSuite::Compare::Container);
         CORRADE_COMPARE_AS(Containers::arrayView(offsets), Containers::arrayView<Vector2>({
-            {},
+            {}, {}, {}
         }), TestSuite::Compare::Container);
         CORRADE_COMPARE_AS(Containers::arrayView(advances), Containers::arrayView<Vector2>({
-            {8.0f, 0.0f}
+            {8.0f, 0.0f},
+            {8.0f, 0.0f},
+            {9.0f, 0.0f}
         }), TestSuite::Compare::Container);
     }
 }

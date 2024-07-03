@@ -70,30 +70,30 @@ const struct {
     const char* string;
     UnsignedInt eGlyphId;
     UnsignedInt begin, end;
-    Float advanceAfterV;
+    Float advanceAfterW, advanceAfterE;
 } ShapeData[]{
-    {"", "Wave", 72, 0, ~UnsignedInt{},
-        /* HarfBuzz before 1.7 and after 3.1 gives 8.0, versions between the
-           other */
+    {"", "Weave", 72, 0, ~UnsignedInt{},
+        /* HarfBuzz between 1.7 and 3.1 gives a slightly different value */
         #if HB_VERSION_MAJOR*100 + HB_VERSION_MINOR < 107 || \
             HB_VERSION_MAJOR*100 + HB_VERSION_MINOR >= 301
-        8.0f,
+        16.3125f,
         #else
-        7.984384f
+        16.2969f,
         #endif
-    },
-    {"substring", "haWavefefe", 72, 2, 6,
+        8.25f},
+    {"substring", "haWeavefefe", 72, 2, 7,
+        /* HarfBuzz between 1.7 and 3.1 gives a slightly different value */
         #if HB_VERSION_MAJOR*100 + HB_VERSION_MINOR < 107 || \
             HB_VERSION_MAJOR*100 + HB_VERSION_MINOR >= 301
-        8.0f,
+        16.3125f,
         #else
-        7.984384f
+        16.2969f,
         #endif
-    },
-    /* `vě` has slightly different spacing than `ve` but there it doesn't get
+        8.25f},
+    /* `Wě` has slightly different spacing than `We` but there it doesn't get
        different between versions at least */
-    {"UTF-8", "Wavě", 220, 0, ~UnsignedInt{}, 8.09376f},
-    {"UTF-8 substring", "haWavěfefe", 220, 2, 7, 8.09376f},
+    {"UTF-8", "Wěave", 220, 0, ~UnsignedInt{}, 16.6562f, 8.34375f},
+    {"UTF-8 substring", "haWěavefefe", 220, 2, 8, 16.6562f, 8.34375f},
 };
 
 const struct {
@@ -305,7 +305,7 @@ void HarfBuzzFontTest::shape() {
     CORRADE_VERIFY(shaper->setScript(Script::Latin));
     CORRADE_VERIFY(shaper->setLanguage("en"));
     CORRADE_VERIFY(shaper->setDirection(ShapeDirection::LeftToRight));
-    CORRADE_COMPARE(shaper->shape(data.string, data.begin, data.end), 4);
+    CORRADE_COMPARE(shaper->shape(data.string, data.begin, data.end), 5);
 
     /* The script / language / direction set above should get used for
        shaping */
@@ -313,28 +313,30 @@ void HarfBuzzFontTest::shape() {
     CORRADE_COMPARE(shaper->language(), "en");
     CORRADE_COMPARE(shaper->direction(), ShapeDirection::LeftToRight);
 
-    UnsignedInt ids[4];
-    Vector2 offsets[4];
-    Vector2 advances[4];
+    UnsignedInt ids[5];
+    Vector2 offsets[5];
+    Vector2 advances[5];
     shaper->glyphIdsInto(ids);
     shaper->glyphOffsetsAdvancesInto(offsets, advances);
     CORRADE_COMPARE_AS(Containers::arrayView(ids), Containers::arrayView({
         58u,            /* 'W' */
+        data.eGlyphId,  /* 'e' or 'ě' */
         68u,            /* 'a' */
         89u,            /* 'v' */
-        data.eGlyphId   /* 'e' or 'ě' */
+        72u             /* 'e' */
     }), TestSuite::Compare::Container);
     /* There are no glyph-specific offsets here */
     /** @todo test this with something, Zalgo or other combining diacritics */
     CORRADE_COMPARE_AS(Containers::arrayView(offsets), Containers::arrayView<Vector2>({
-        {}, {}, {}, {}
+        {}, {}, {}, {}, {}
     }), TestSuite::Compare::Container);
     CORRADE_COMPARE_AS(Containers::arrayView(advances), Containers::arrayView<Vector2>({
-        /* Versions 3.3.0 and 3.3.1 reported {16.5f, 0.0f} here, but the
-           change is reverted in 3.3.2 again "as it proved problematic". */
-        {16.3594f, 0.0f},
+        {data.advanceAfterW, 0.0f},
+        {data.advanceAfterE, 0.0f},
         {8.26562f, 0.0f},
-        {data.advanceAfterV, 0.0f},
+        {HB_VERSION_MAJOR*100 + HB_VERSION_MINOR < 107 ||
+         HB_VERSION_MAJOR*100 + HB_VERSION_MINOR >= 301 ? 8.0f : 7.984384f,
+         0.0f},
         {8.34375f, 0.0f}
     }), TestSuite::Compare::Container);
 }
@@ -484,23 +486,25 @@ void HarfBuzzFontTest::shaperReuse() {
 
     /* Long text, same as in shape(), should enlarge the array for it */
     } {
-        CORRADE_COMPARE(shaper->shape("Wave"), 4);
-        UnsignedInt ids[4];
-        Vector2 offsets[4];
-        Vector2 advances[4];
+        CORRADE_COMPARE(shaper->shape("Wěave"), 5);
+        UnsignedInt ids[5];
+        Vector2 offsets[5];
+        Vector2 advances[5];
         shaper->glyphIdsInto(ids);
         shaper->glyphOffsetsAdvancesInto(offsets, advances);
         CORRADE_COMPARE_AS(Containers::arrayView(ids), Containers::arrayView({
-            58u, /* 'W' */
-            68u, /* 'a' */
-            89u, /* 'v' */
-            72u  /* 'e' */
+            58u,  /* 'W' */
+            220u, /* 'ě' */
+            68u,  /* 'a' */
+            89u,  /* 'v' */
+            72u   /* 'e' */
         }), TestSuite::Compare::Container);
         CORRADE_COMPARE_AS(Containers::arrayView(offsets), Containers::arrayView<Vector2>({
-            {}, {}, {}, {}
+            {}, {}, {}, {}, {}
         }), TestSuite::Compare::Container);
         CORRADE_COMPARE_AS(Containers::arrayView(advances), Containers::arrayView<Vector2>({
-            {16.3594f, 0.0f},
+            {16.6562f, 0.0f},
+            {8.34375f, 0.0f},
             {8.26562f, 0.0f},
             {HB_VERSION_MAJOR*100 + HB_VERSION_MINOR < 107 ||
              HB_VERSION_MAJOR*100 + HB_VERSION_MINOR >= 301 ? 8.0f : 7.984384f,
@@ -510,20 +514,24 @@ void HarfBuzzFontTest::shaperReuse() {
 
     /* Short text again, should not leave the extra glyphs there */
     } {
-        CORRADE_COMPARE(shaper->shape("a"), 1);
-        UnsignedInt ids[1];
-        Vector2 offsets[1];
-        Vector2 advances[1];
+        CORRADE_COMPARE(shaper->shape("ave"), 3);
+        UnsignedInt ids[3];
+        Vector2 offsets[3];
+        Vector2 advances[3];
         shaper->glyphIdsInto(ids);
         shaper->glyphOffsetsAdvancesInto(offsets, advances);
         CORRADE_COMPARE_AS(Containers::arrayView(ids), Containers::arrayView({
-            68u,
+            68u, 89u, 72u
         }), TestSuite::Compare::Container);
         CORRADE_COMPARE_AS(Containers::arrayView(offsets), Containers::arrayView<Vector2>({
-            {},
+            {}, {}, {}
         }), TestSuite::Compare::Container);
         CORRADE_COMPARE_AS(Containers::arrayView(advances), Containers::arrayView<Vector2>({
-            {8.26562f, 0.0f}
+            {8.26562f, 0.0f},
+            {HB_VERSION_MAJOR*100 + HB_VERSION_MINOR < 107 ||
+             HB_VERSION_MAJOR*100 + HB_VERSION_MINOR >= 301 ? 8.0f : 7.984384f,
+             0.0f},
+            {8.34375f, 0.0f}
         }), TestSuite::Compare::Container);
     }
 }
