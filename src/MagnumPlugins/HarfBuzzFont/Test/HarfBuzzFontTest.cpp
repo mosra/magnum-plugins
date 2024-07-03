@@ -494,7 +494,7 @@ void HarfBuzzFontTest::shaperReuse() {
             58u, /* 'W' */
             68u, /* 'a' */
             89u, /* 'v' */
-            72u  /* 'e' or 'ě' */
+            72u  /* 'e' */
         }), TestSuite::Compare::Container);
         CORRADE_COMPARE_AS(Containers::arrayView(offsets), Containers::arrayView<Vector2>({
             {}, {}, {}, {}

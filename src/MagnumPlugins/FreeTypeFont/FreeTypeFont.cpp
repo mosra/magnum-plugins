@@ -270,6 +270,9 @@ Containers::Pointer<AbstractShaper> FreeTypeFont::doCreateShaper() {
                 offsets[i] = {};
 
                 /* Load the glyph to get its advance */
+                /** @todo HarfBuzz uses Ft_Get_Advance instead of
+                    FT_Load_Glyph, might be faster and with less allocations?
+                    https://freetype.org/freetype2/docs/reference/ft2-quick_advance.html */
                 CORRADE_INTERNAL_ASSERT_OUTPUT(FT_Load_Glyph(ftFont, _glyphs[i], FT_LOAD_DEFAULT) == 0);
                 const FT_GlyphSlot slot = ftFont->glyph;
                 advances[i] = Vector2{Float(slot->advance.x),
