@@ -73,13 +73,13 @@ struct StbTrueTypeFontTest: TestSuite::Tester {
 const struct {
     const char* name;
     const char* string;
-    UnsignedInt eGlyphId;
+    UnsignedInt eGlyphId, eGlyphClusterExtraSize;
     UnsignedInt begin, end;
 } ShapeData[]{
-    {"", "Weave", 72, 0, ~UnsignedInt{}},
-    {"substring", "haWeavefefe", 72, 2, 7},
-    {"UTF-8", "Wěave", 220, 0, ~UnsignedInt{}},
-    {"UTF-8 substring", "haWěavefefe", 220, 2, 8},
+    {"", "Weave", 72, 0, 0, ~UnsignedInt{}},
+    {"substring", "haWeavefefe", 72, 0, 2, 7},
+    {"UTF-8", "Wěave", 220, 1, 0, ~UnsignedInt{}},
+    {"UTF-8 substring", "haWěavefefe", 220, 1, 2, 8},
 };
 
 const struct {
@@ -194,8 +194,10 @@ void StbTrueTypeFontTest::shape() {
     UnsignedInt ids[5];
     Vector2 offsets[5];
     Vector2 advances[5];
+    UnsignedInt clusters[5];
     shaper->glyphIdsInto(ids);
     shaper->glyphOffsetsAdvancesInto(offsets, advances);
+    shaper->glyphClustersInto(clusters);
     CORRADE_COMPARE_AS(Containers::arrayView(ids), Containers::arrayView({
         58u,            /* 'W' */
         data.eGlyphId,  /* 'e' or 'ě' */
@@ -213,6 +215,13 @@ void StbTrueTypeFontTest::shape() {
         {9.45861f, 0.0f},
         {9.27069f, 0.0f},
         {9.55705f, 0.0f}
+    }), TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(Containers::arrayView(clusters), Containers::arrayView({
+        data.begin + 0u,
+        data.begin + 1u,
+        data.begin + 2u + data.eGlyphClusterExtraSize,
+        data.begin + 3u + data.eGlyphClusterExtraSize,
+        data.begin + 4u + data.eGlyphClusterExtraSize,
     }), TestSuite::Compare::Container);
 }
 
@@ -242,8 +251,10 @@ void StbTrueTypeFontTest::shaperReuse() {
         UnsignedInt ids[2];
         Vector2 offsets[2];
         Vector2 advances[2];
+        UnsignedInt clusters[2];
         shaper->glyphIdsInto(ids);
         shaper->glyphOffsetsAdvancesInto(offsets, advances);
+        shaper->glyphClustersInto(clusters);
         CORRADE_COMPARE_AS(Containers::arrayView(ids), Containers::arrayView({
             58u, /* 'W' */
             72u  /* 'e' */
@@ -255,6 +266,10 @@ void StbTrueTypeFontTest::shaperReuse() {
             {19.0694f, 0.0f},
             {9.55705f, 0.0f}
         }), TestSuite::Compare::Container);
+        CORRADE_COMPARE_AS(Containers::arrayView(clusters), Containers::arrayView({
+            0u,
+            1u
+        }), TestSuite::Compare::Container);
 
     /* Long text, same as in shape(), should enlarge the array for it */
     } {
@@ -262,8 +277,10 @@ void StbTrueTypeFontTest::shaperReuse() {
         UnsignedInt ids[5];
         Vector2 offsets[5];
         Vector2 advances[5];
+        UnsignedInt clusters[5];
         shaper->glyphIdsInto(ids);
         shaper->glyphOffsetsAdvancesInto(offsets, advances);
+        shaper->glyphClustersInto(clusters);
         CORRADE_COMPARE_AS(Containers::arrayView(ids), Containers::arrayView({
             58u,  /* 'W' */
             220u, /* 'ě' */
@@ -281,6 +298,13 @@ void StbTrueTypeFontTest::shaperReuse() {
             {9.27069f, 0.0f},
             {9.55705f, 0.0f}
         }), TestSuite::Compare::Container);
+        CORRADE_COMPARE_AS(Containers::arrayView(clusters), Containers::arrayView({
+            0u,
+            1u,
+            3u,
+            4u,
+            5u
+        }), TestSuite::Compare::Container);
 
     /* Short text again, should not leave the extra glyphs there */
     } {
@@ -288,8 +312,10 @@ void StbTrueTypeFontTest::shaperReuse() {
         UnsignedInt ids[3];
         Vector2 offsets[3];
         Vector2 advances[3];
+        UnsignedInt clusters[3];
         shaper->glyphIdsInto(ids);
         shaper->glyphOffsetsAdvancesInto(offsets, advances);
+        shaper->glyphClustersInto(clusters);
         CORRADE_COMPARE_AS(Containers::arrayView(ids), Containers::arrayView({
             68u,
             89u,
@@ -302,6 +328,9 @@ void StbTrueTypeFontTest::shaperReuse() {
             {9.45861f, 0.0f},
             {9.27069f, 0.0f},
             {9.55705f, 0.0f}
+        }), TestSuite::Compare::Container);
+        CORRADE_COMPARE_AS(Containers::arrayView(clusters), Containers::arrayView({
+            0u, 1u, 2u
         }), TestSuite::Compare::Container);
     }
 }

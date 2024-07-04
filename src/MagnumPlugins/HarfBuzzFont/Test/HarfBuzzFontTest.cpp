@@ -68,11 +68,11 @@ struct HarfBuzzFontTest: TestSuite::Tester {
 const struct {
     const char* name;
     const char* string;
-    UnsignedInt eGlyphId;
+    UnsignedInt eGlyphId, eGlyphClusterExtraSize;
     UnsignedInt begin, end;
     Float advanceAfterW, advanceAfterE;
 } ShapeData[]{
-    {"", "Weave", 72, 0, ~UnsignedInt{},
+    {"", "Weave", 72, 0, 0, ~UnsignedInt{},
         /* HarfBuzz between 1.7 and 3.1 gives a slightly different value */
         #if HB_VERSION_MAJOR*100 + HB_VERSION_MINOR < 107 || \
             HB_VERSION_MAJOR*100 + HB_VERSION_MINOR >= 301
@@ -81,7 +81,7 @@ const struct {
         16.2969f,
         #endif
         8.25f},
-    {"substring", "haWeavefefe", 72, 2, 7,
+    {"substring", "haWeavefefe", 72, 0, 2, 7,
         /* HarfBuzz between 1.7 and 3.1 gives a slightly different value */
         #if HB_VERSION_MAJOR*100 + HB_VERSION_MINOR < 107 || \
             HB_VERSION_MAJOR*100 + HB_VERSION_MINOR >= 301
@@ -92,8 +92,8 @@ const struct {
         8.25f},
     /* `Wě` has slightly different spacing than `We` but there it doesn't get
        different between versions at least */
-    {"UTF-8", "Wěave", 220, 0, ~UnsignedInt{}, 16.6562f, 8.34375f},
-    {"UTF-8 substring", "haWěavefefe", 220, 2, 8, 16.6562f, 8.34375f},
+    {"UTF-8", "Wěave", 220, 1, 0, ~UnsignedInt{}, 16.6562f, 8.34375f},
+    {"UTF-8 substring", "haWěavefefe", 220, 1, 2, 8, 16.6562f, 8.34375f},
 };
 
 const struct {
@@ -316,8 +316,10 @@ void HarfBuzzFontTest::shape() {
     UnsignedInt ids[5];
     Vector2 offsets[5];
     Vector2 advances[5];
+    UnsignedInt clusters[5];
     shaper->glyphIdsInto(ids);
     shaper->glyphOffsetsAdvancesInto(offsets, advances);
+    shaper->glyphClustersInto(clusters);
     CORRADE_COMPARE_AS(Containers::arrayView(ids), Containers::arrayView({
         58u,            /* 'W' */
         data.eGlyphId,  /* 'e' or 'ě' */
@@ -339,6 +341,13 @@ void HarfBuzzFontTest::shape() {
          0.0f},
         {8.34375f, 0.0f}
     }), TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(Containers::arrayView(clusters), Containers::arrayView({
+        data.begin + 0u,
+        data.begin + 1u,
+        data.begin + 2u + data.eGlyphClusterExtraSize,
+        data.begin + 3u + data.eGlyphClusterExtraSize,
+        data.begin + 4u + data.eGlyphClusterExtraSize,
+    }), TestSuite::Compare::Container);
 }
 
 void HarfBuzzFontTest::shapeDifferentScriptLanguageDirection() {
@@ -358,9 +367,10 @@ void HarfBuzzFontTest::shapeDifferentScriptLanguageDirection() {
     CORRADE_COMPARE(shaper->language(), "el");
     CORRADE_COMPARE(shaper->direction(), data.direction);
 
+    /* HarfBuzz always shapes from left to right and top to bottom, so if the
+       direction is opposite, the glyph IDs are in reverse direction */
     UnsignedInt ids[6];
     shaper->glyphIdsInto(ids);
-
     UnsignedInt expectedIds[]{
         450,    /* 'Ε' */
         487,    /* 'λ' */
@@ -376,6 +386,17 @@ void HarfBuzzFontTest::shapeDifferentScriptLanguageDirection() {
         TestSuite::Compare::Container);
 
     /* Advances and offsets aren't really important here */
+
+    /* All characters are two-byte. Due to the glyph IDs being reversed for
+       opposite direction, the clusters get as well. */
+    UnsignedInt clusters[6];
+    shaper->glyphClustersInto(clusters);
+    UnsignedInt expectedClusters[]{0, 2, 4, 6, 8, 10};
+    CORRADE_COMPARE_AS(Containers::arrayView(clusters),
+        data.flip ?
+            Containers::stridedArrayView(expectedClusters).flipped<0>() :
+            Containers::stridedArrayView(expectedClusters),
+        TestSuite::Compare::Container);
 }
 
 void HarfBuzzFontTest::shapeAutodetectScriptLanguageDirection() {
@@ -468,8 +489,10 @@ void HarfBuzzFontTest::shaperReuse() {
         UnsignedInt ids[2];
         Vector2 offsets[2];
         Vector2 advances[2];
+        UnsignedInt clusters[2];
         shaper->glyphIdsInto(ids);
         shaper->glyphOffsetsAdvancesInto(offsets, advances);
+        shaper->glyphClustersInto(clusters);
         CORRADE_COMPARE_AS(Containers::arrayView(ids), Containers::arrayView({
             58u, /* 'W' */
             72u  /* 'e' */
@@ -483,6 +506,10 @@ void HarfBuzzFontTest::shaperReuse() {
              0.0f},
             {8.34375f, 0.0f}
         }), TestSuite::Compare::Container);
+        CORRADE_COMPARE_AS(Containers::arrayView(clusters), Containers::arrayView({
+            0u,
+            1u
+        }), TestSuite::Compare::Container);
 
     /* Long text, same as in shape(), should enlarge the array for it */
     } {
@@ -490,8 +517,10 @@ void HarfBuzzFontTest::shaperReuse() {
         UnsignedInt ids[5];
         Vector2 offsets[5];
         Vector2 advances[5];
+        UnsignedInt clusters[5];
         shaper->glyphIdsInto(ids);
         shaper->glyphOffsetsAdvancesInto(offsets, advances);
+        shaper->glyphClustersInto(clusters);
         CORRADE_COMPARE_AS(Containers::arrayView(ids), Containers::arrayView({
             58u,  /* 'W' */
             220u, /* 'ě' */
@@ -511,6 +540,13 @@ void HarfBuzzFontTest::shaperReuse() {
              0.0f},
             {8.34375f, 0.0f}
         }), TestSuite::Compare::Container);
+        CORRADE_COMPARE_AS(Containers::arrayView(clusters), Containers::arrayView({
+            0u,
+            1u,
+            3u,
+            4u,
+            5u
+        }), TestSuite::Compare::Container);
 
     /* Short text again, should not leave the extra glyphs there */
     } {
@@ -518,8 +554,10 @@ void HarfBuzzFontTest::shaperReuse() {
         UnsignedInt ids[3];
         Vector2 offsets[3];
         Vector2 advances[3];
+        UnsignedInt clusters[3];
         shaper->glyphIdsInto(ids);
         shaper->glyphOffsetsAdvancesInto(offsets, advances);
+        shaper->glyphClustersInto(clusters);
         CORRADE_COMPARE_AS(Containers::arrayView(ids), Containers::arrayView({
             68u, 89u, 72u
         }), TestSuite::Compare::Container);
@@ -532,6 +570,9 @@ void HarfBuzzFontTest::shaperReuse() {
              HB_VERSION_MAJOR*100 + HB_VERSION_MINOR >= 301 ? 8.0f : 7.984384f,
              0.0f},
             {8.34375f, 0.0f}
+        }), TestSuite::Compare::Container);
+        CORRADE_COMPARE_AS(Containers::arrayView(clusters), Containers::arrayView({
+            0u, 1u, 2u
         }), TestSuite::Compare::Container);
     }
 }

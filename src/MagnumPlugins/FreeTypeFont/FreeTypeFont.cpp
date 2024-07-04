@@ -250,7 +250,9 @@ Containers::Pointer<AbstractShaper> FreeTypeFont::doCreateShaper() {
             arrayReserve(_glyphs, text.size());
             for(std::size_t i = 0; i != text.size(); ) {
                 const Containers::Pair<char32_t, std::size_t> codepointNext = Utility::Unicode::nextChar(text, i);
-                arrayAppend(_glyphs, FT_Get_Char_Index(ftFont, codepointNext.first()));
+                arrayAppend(_glyphs, InPlaceInit,
+                    FT_Get_Char_Index(ftFont, codepointNext.first()),
+                    begin + UnsignedInt(i));
                 i = codepointNext.second();
             }
 
@@ -258,7 +260,7 @@ Containers::Pointer<AbstractShaper> FreeTypeFont::doCreateShaper() {
         }
 
         void doGlyphIdsInto(const Containers::StridedArrayView1D<UnsignedInt>& ids) const override {
-            Utility::copy(_glyphs, ids);
+            Utility::copy(stridedArrayView(_glyphs).slice(&Containers::Pair<UnsignedInt, UnsignedInt>::first), ids);
         }
         void doGlyphOffsetsAdvancesInto(const Containers::StridedArrayView1D<Vector2>& offsets, const Containers::StridedArrayView1D<Vector2>& advances) const override {
             const FT_Face ftFont = static_cast<const FreeTypeFont&>(font())._ftFont;
@@ -273,14 +275,17 @@ Containers::Pointer<AbstractShaper> FreeTypeFont::doCreateShaper() {
                 /** @todo HarfBuzz uses Ft_Get_Advance instead of
                     FT_Load_Glyph, might be faster and with less allocations?
                     https://freetype.org/freetype2/docs/reference/ft2-quick_advance.html */
-                CORRADE_INTERNAL_ASSERT_OUTPUT(FT_Load_Glyph(ftFont, _glyphs[i], FT_LOAD_DEFAULT) == 0);
+                CORRADE_INTERNAL_ASSERT_OUTPUT(FT_Load_Glyph(ftFont, _glyphs[i].first(), FT_LOAD_DEFAULT) == 0);
                 const FT_GlyphSlot slot = ftFont->glyph;
                 advances[i] = Vector2{Float(slot->advance.x),
                                       Float(slot->advance.y)}/64.0f;
             }
         }
+        void doGlyphClustersInto(const Containers::StridedArrayView1D<UnsignedInt>& clusters) const override {
+            Utility::copy(stridedArrayView(_glyphs).slice(&Containers::Pair<UnsignedInt, UnsignedInt>::second), clusters);
+        }
 
-        Containers::Array<UnsignedInt> _glyphs;
+        Containers::Array<Containers::Pair<UnsignedInt, UnsignedInt>> _glyphs;
     };
 
     return Containers::pointer<Shaper>(*this);

@@ -275,6 +275,14 @@ Containers::Pointer<AbstractShaper> HarfBuzzFont::doCreateShaper() {
                                       Float(glyphPositions[i].y_advance)}/64.0f;
             }
         }
+        void doGlyphClustersInto(const Containers::StridedArrayView1D<UnsignedInt>& clusters) const override {
+            UnsignedInt glyphCount;
+            hb_glyph_info_t* const glyphInfos = hb_buffer_get_glyph_infos(_buffer, &glyphCount);
+            CORRADE_INTERNAL_ASSERT(glyphCount == this->glyphCount());
+
+            for(std::size_t i = 0; i != glyphCount; ++i)
+                clusters[i] = glyphInfos[i].cluster;
+        }
 
         hb_buffer_t* _buffer;
         /* These are stored because they're re-set to the buffer before each

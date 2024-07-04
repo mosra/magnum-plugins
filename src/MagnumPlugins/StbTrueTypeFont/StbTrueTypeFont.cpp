@@ -233,7 +233,9 @@ Containers::Pointer<AbstractShaper> StbTrueTypeFont::doCreateShaper() {
             arrayReserve(_glyphs, text.size());
             for(std::size_t i = 0; i != text.size(); ) {
                 const Containers::Pair<char32_t, std::size_t> codepointNext = Utility::Unicode::nextChar(text, i);
-                arrayAppend(_glyphs, stbtt_FindGlyphIndex(&stbFont, codepointNext.first()));
+                arrayAppend(_glyphs, InPlaceInit,
+                    UnsignedInt(stbtt_FindGlyphIndex(&stbFont, codepointNext.first())),
+                    begin + UnsignedInt(i));
                 i = codepointNext.second();
             }
 
@@ -241,7 +243,7 @@ Containers::Pointer<AbstractShaper> StbTrueTypeFont::doCreateShaper() {
         }
 
         void doGlyphIdsInto(const Containers::StridedArrayView1D<UnsignedInt>& ids) const override {
-            Utility::copy(_glyphs, ids);
+            Utility::copy(stridedArrayView(_glyphs).slice(&Containers::Pair<UnsignedInt, UnsignedInt>::first), ids);
         }
         void doGlyphOffsetsAdvancesInto(const Containers::StridedArrayView1D<Vector2>& offsets, const Containers::StridedArrayView1D<Vector2>& advances) const override {
             const Font& fontData = *static_cast<const StbTrueTypeFont&>(font())._font;
@@ -254,12 +256,15 @@ Containers::Pointer<AbstractShaper> StbTrueTypeFont::doCreateShaper() {
 
                 /* Get glyph advance, scale it to actual used font size */
                 Int advance;
-                stbtt_GetGlyphHMetrics(&fontData.info, _glyphs[i], &advance, nullptr);
+                stbtt_GetGlyphHMetrics(&fontData.info, _glyphs[i].first(), &advance, nullptr);
                 advances[i] = {advance*fontData.scale, 0.0f};
             }
         }
+        void doGlyphClustersInto(const Containers::StridedArrayView1D<UnsignedInt>& clusters) const override {
+            Utility::copy(stridedArrayView(_glyphs).slice(&Containers::Pair<UnsignedInt, UnsignedInt>::second), clusters);
+        }
 
-        Containers::Array<UnsignedInt> _glyphs;
+        Containers::Array<Containers::Pair<UnsignedInt, UnsignedInt>> _glyphs;
     };
 
     return Containers::pointer<Shaper>(*this);
