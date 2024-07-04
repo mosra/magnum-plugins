@@ -94,6 +94,17 @@ const struct {
        different between versions at least */
     {"UTF-8", "Wěave", 220, 1, 0, ~UnsignedInt{}, 16.6562f, 8.34375f},
     {"UTF-8 substring", "haWěavefefe", 220, 1, 2, 8, 16.6562f, 8.34375f},
+    /* Without the literal split it says "Unicode sequence out of range". Wow,
+       who designed this mess?! That's even worse than octal literals. */
+    {"UTF-8, decomposed", "We\xcc\x8c" "ave", 220, 2, 0, ~UnsignedInt{}, 16.6562f, 8.34375f},
+    /** @todo if the font supported decomposed diacritics,
+        "We\xcd\x8f\xcc\x8c" "ave" (with U+034 inside to prevent them from
+        being combined, https://stackoverflow.com/a/47979890), should shape as
+        6 glyphs, and then the cluster value would be either different for the
+        diacritics or same, depending on hb_buffer_set_cluster_level() being
+        set to 0 or 1. Same should probably happen with `ccmp` /
+        Feature::GlyphCompositionDecomposition turned off, but I suppose in
+        this case it's not done because Oxygen.ttf cannot render that? */
 };
 
 const struct {
