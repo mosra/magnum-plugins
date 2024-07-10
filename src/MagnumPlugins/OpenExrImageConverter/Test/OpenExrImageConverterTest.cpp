@@ -198,7 +198,7 @@ const struct {
     /* For consistency with versions before 3.1.3 (where it's hardcoded to
        6 instead of 4 and can't be changed) */
     #if OPENEXR_VERSION_MAJOR*10000 + OPENEXR_VERSION_MINOR*100 + OPENEXR_VERSION_PATCH >= 30200
-    {"ZIP level 6", "zip", 6, {}, 391, 407},
+    {"ZIP level 6", "zip", 6, {}, 391, 404},
     #else
     {"ZIP level 6", "zip", 6, {}, 391, 402},
     #endif

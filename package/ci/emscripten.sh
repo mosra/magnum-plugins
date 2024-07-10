@@ -116,6 +116,9 @@ cmake .. \
     -DOPENEXR_INSTALL_PKG_CONFIG=OFF \
     -DOPENEXR_FORCE_INTERNAL_IMATH=ON \
     -DOPENEXR_FORCE_INTERNAL_DEFLATE=ON \
+    `# v1.18 (which is the default) has different output and the test files` \
+    `# are made against v1.19 now` \
+    -DOPENEXR_DEFLATE_TAG=v1.19 \
     -DIMATH_INSTALL_PKG_CONFIG=OFF \
     -DIMATH_HALF_USE_LOOKUP_TABLE=OFF \
     -G Ninja
