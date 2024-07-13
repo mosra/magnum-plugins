@@ -171,11 +171,11 @@ Containers::Optional<Containers::Array<char>> decodeBase64(const char* const err
         n =  UnsignedInt(Base64Values[in[sizeFullBlocks + 0]]) << 18 |
              UnsignedInt(Base64Values[in[sizeFullBlocks + 1]]) << 12;
     if(pad2) {
-        /* Without the CORRADE_ASSUME() GCC 11, 12, 13 in Release says
-           "warning: ‘n’ may be used uninitialized" with the |= expression
+        /* Without the CORRADE_ASSUME() GCC 9, 10(?), 11, 12, 13 in Release
+           says "warning: ‘n’ may be used uninitialized" with the |= expression
            below. The pad2 variable is only non-zero if pad1 is as well, but
            the compiler can't figure that out on its own, gotta help it. */
-        #if defined(CORRADE_TARGET_GCC) && !defined(CORRADE_TARGET_CLANG) && __GNUC__ >= 11
+        #if defined(CORRADE_TARGET_GCC) && !defined(CORRADE_TARGET_CLANG) && __GNUC__ >= 9
         CORRADE_ASSUME(pad1);
         #endif
         n |= UnsignedInt(Base64Values[in[sizeFullBlocks + 2]]) <<  6;
