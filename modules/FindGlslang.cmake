@@ -152,8 +152,6 @@ if(TARGET glslang OR TARGET glslang::glslang)
         endif()
     endif()
     if(NOT TARGET Glslang::SPIRV)
-        # Aliases of (global) targets [..] CMake 3.11 [...], as above
-        add_library(Glslang::SPIRV INTERFACE IMPORTED)
         # In case of a CMake subproject, simply link to the SPIRV target, and
         # make it depend on the Glslang::Glslang target as well to get the
         # include path along
@@ -161,6 +159,8 @@ if(TARGET glslang OR TARGET glslang::glslang)
             if(NOT TARGET SPIV)
                 message(FATAL_ERROR "Expecting a SPIRV target to exist if a glslang exists, but it does not")
             endif()
+            # Aliases of (global) targets [..] CMake 3.11 [...], as above
+            add_library(Glslang::SPIRV INTERFACE IMPORTED)
             set_target_properties(Glslang::SPIRV PROPERTIES
                 INTERFACE_LINK_LIBRARIES "SPIRV;Glslang::Glslang")
         # Otherwise extract everything except INTERFACE_INCLUDE_DIRECTORIES
@@ -169,6 +169,10 @@ if(TARGET glslang OR TARGET glslang::glslang)
         # there's additional target properties added apart from
         # INTERFACE_LINK_LIBRARIES and IMPORTED_LOCATION_<CONFIG>.
         else()
+            # We're setting IMPORTED_LOCATION_* below, which means the library
+            # can't be INTERFACE like above.
+            add_library(Glslang::SPIRV UNKNOWN IMPORTED)
+
             # INTERFACE_LINK_LIBRARIES link to MachineIndependent, OSDependent
             # and other loose crap in static builds, important to have. Can't
             # use set_target_properties(... $<TARGET_PROPERTY:...>) because the
@@ -191,10 +195,16 @@ if(TARGET glslang OR TARGET glslang::glslang)
             # Imported locations, which can be many. Assuming
             # IMPORTED_CONFIGURATIONS contains the names uppercase, as
             # IMPORTED_LOCATION_<CONFIG> is uppercase. The case is not
-            # explicitly documented anywhere in the CMake manual.
+            # explicitly documented anywhere in the CMake manual. Can't just
+            # put them all into INTERFACE_LINK_LIBRARIES because it'd mean that
+            # both Debug and Release gets linked at the same time, have to
+            # replicate both the IMPORTED_CONFIGURATIONS and
+            # IMPORTED_LOCATION_* properties exactly
             get_target_property(_GLSLANG_SPIRV_IMPORTED_CONFIGURATIONS glslang::SPIRV IMPORTED_CONFIGURATIONS)
+            set_property(TARGET Glslang::SPIRV PROPERTY IMPORTED_CONFIGURATIONS ${_GLSLANG_SPIRV_IMPORTED_CONFIGURATIONS})
             foreach(config ${_GLSLANG_SPIRV_IMPORTED_CONFIGURATIONS})
-                set_property(TARGET Glslang::SPIRV APPEND PROPERTY INTERFACE_LINK_LIBRARIES $<TARGET_PROPERTY:glslang::SPIRV,IMPORTED_LOCATION_${config}>)
+                get_target_property(_GLSLANG_SPIRV_IMPORTED_LOCATION_${config} glslang::SPIRV IMPORTED_LOCATION_${config})
+                set_property(TARGET Glslang::SPIRV PROPERTY IMPORTED_LOCATION_${config} ${_GLSLANG_SPIRV_IMPORTED_LOCATION_${config}})
             endforeach()
         endif()
     endif()
