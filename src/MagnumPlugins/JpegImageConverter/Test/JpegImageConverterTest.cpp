@@ -42,10 +42,12 @@
 #include "configure.h"
 
 /* jpeglib.h is needed to query if RGBA output is supported (JCS_EXTENSIONS).
-   See JpegImageConverter.cpp for details why the define below is needed. */
+   See JpegImageConverter.cpp for details why the define below, and the
+   <cstdio> include, are needed. */
 #ifdef CORRADE_TARGET_WINDOWS
 #define XMD_H
 #endif
+#include <cstdio>
 #include <jpeglib.h>
 
 namespace Magnum { namespace Trade { namespace Test { namespace {

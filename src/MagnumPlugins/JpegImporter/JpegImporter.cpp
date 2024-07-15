@@ -50,6 +50,13 @@
 #endif
 #endif
 
+/* "Applications using the JPEG library should include the header file
+   jpeglib.h to obtain declarations of data types and routines." In other
+   words, in certain cases, without the <cstdio> include the build may die with
+    jpeglib.h:952:57: error: unknown type name 'FILE'
+   See https://github.com/libjpeg-turbo/libjpeg-turbo/issues/17 for details. */
+#include <cstdio>
+
 #include <jpeglib.h>
 
 namespace Magnum { namespace Trade {
