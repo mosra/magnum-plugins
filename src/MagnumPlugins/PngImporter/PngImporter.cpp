@@ -207,6 +207,7 @@ Containers::Optional<ImageData2D> PngImporter::doImage2D(UnsignedInt, UnsignedIn
         bits = 8;
     }
 
+    #if defined(PNG_READ_ALPHA_MODE_SUPPORTED) && defined(PNG_READ_GAMMA_SUPPORTED)
     /* Premultiply alpha, if desired */
     if(const Containers::StringView alphaMode = configuration().value<Containers::StringView>("alphaMode")) {
         if(alphaMode != "premultiplied"_s &&
@@ -270,7 +271,13 @@ Containers::Optional<ImageData2D> PngImporter::doImage2D(UnsignedInt, UnsignedIn
             what tool exported the image? such as blender producing
             premultiplied PNGs https://developer.blender.org/T24764 */
     }
+    #else
+    /* png_set_alpha_mode() is since 1.5.3, png_set_gamma() since forever?
+       https://github.com/pnggroup/libpng/commit/d273ad2d0f183ee27fc2be043ff1d2f890cf0162 */
+    #error libpng built without PNG_READ_ALPHA_MODE_SUPPORTED or PNG_READ_GAMMA_SUPPORTED, or is older than 1.5.3
+    #endif
 
+    #if defined(PNG_READ_SCALE_16_TO_8_SUPPORTED) && defined(PNG_READ_EXPAND_16_SUPPORTED)
     /* Enable 8-to-16 or 16-to-8 conversion if desired */
     if(const Int forceBitDepth = configuration().value<Int>("forceBitDepth")) {
         if(forceBitDepth == 8 && bits != 8) {
@@ -290,6 +297,11 @@ Containers::Optional<ImageData2D> PngImporter::doImage2D(UnsignedInt, UnsignedIn
             return {};
         }
     }
+    #else
+    /* png_set_expand_16() is since 1.5.2, png_set_scale_16() since 1.5.4,
+       https://github.com/pnggroup/libpng/commit/fb29e51dbd835c4135802e63cc192e06c01ce2a6 */
+    #error libpng built without PNG_READ_SCALE_16_TO_8_SUPPORTED or PNG_READ_EXPAND_16_SUPPORTED, or is older than 1.5.4
+    #endif
 
     /* Initialize data array, align rows to four bytes */
     CORRADE_INTERNAL_ASSERT(bits >= 8);
