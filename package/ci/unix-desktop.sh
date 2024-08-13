@@ -120,8 +120,17 @@ ninja $NINJA_JOBS
 # to fix it. May want to revisit once https://reviews.llvm.org/D147459 lands in
 # a public release and that public release becomes Magnum's "min spec" target.
 # So around 2030 I'd say.
-ASAN_OPTIONS="color=always" LSAN_OPTIONS="color=always" TSAN_OPTIONS="color=always" CORRADE_TEST_COLOR=ON ctest -V -E UfbxImporter
-ASAN_OPTIONS="color=always intercept_tls_get_addr=0" LSAN_OPTIONS="color=always" TSAN_OPTIONS="color=always" CORRADE_TEST_COLOR=ON ctest -V -R UfbxImporter
+#
+# Same now happens for BasisImporter as of
+# https://github.com/mosra/corrade/commit/157a43bb0084cd89ce020b1f871e8cd20856cc80
+# or possibly some of the earlier cleanup commits, the smallest repro case is
+# with passing `--only -14` to it (via corrade_add_test() ARGUMENTS). Not any
+# less cases, and the order has to be exactly this (i.e., `--shuffle` makes it
+# crash only if `unconfigured()` is the last case). LSAN_OPTIONS=use_tls=0
+# avoids the crash, but then the damn thing reports leaks in `ld-linux.so` any
+# time a plugin gets loaded.
+ASAN_OPTIONS="color=always" LSAN_OPTIONS="color=always" TSAN_OPTIONS="color=always" CORRADE_TEST_COLOR=ON ctest -V -E "BasisImporter|UfbxImporter"
+ASAN_OPTIONS="color=always intercept_tls_get_addr=0" LSAN_OPTIONS="color=always" TSAN_OPTIONS="color=always" CORRADE_TEST_COLOR=ON ctest -V -R "BasisImporter|UfbxImporter"
 
 # Test install, after running the tests as for them it shouldn't be needed
 ninja install
