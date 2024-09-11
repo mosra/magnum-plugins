@@ -274,7 +274,11 @@ template<UnsignedInt dimensions> Containers::Optional<Containers::Array<char>> c
     /* If these are enabled, the library reads BMPs/JPGs/PNGs/TGAs from the
        filesystem and then writes basis files there also. DO NOT WANT. */
     params.m_read_source_images = false;
+    #if BASISU_LIB_VERSION >= 150
+    params.m_write_output_basis_or_ktx2_files = false;
+    #else
     params.m_write_output_basis_files = false;
+    #endif
     /* One image per slice. The base mip is in m_source_images, mip 1 and
        higher go into m_source_mipmap_images. */
     const UnsignedInt numImages = Vector3i::pad(baseSize, 1).z();
