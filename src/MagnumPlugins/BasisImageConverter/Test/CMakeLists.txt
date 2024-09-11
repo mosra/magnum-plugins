@@ -74,6 +74,9 @@ if(NOT MAGNUM_BASISIMAGECONVERTER_BUILD_STATIC)
     if(MAGNUM_WITH_STBIMAGEIMPORTER)
         set(STBIMAGEIMPORTER_PLUGIN_FILENAME $<TARGET_FILE:StbImageImporter>)
     endif()
+    if(MAGNUM_WITH_OPENEXRIMPORTER)
+        set(OPENEXRIMPORTER_PLUGIN_FILENAME $<TARGET_FILE:OpenExrImporter>)
+    endif()
 endif()
 
 # On Mac OpenCL can be found but the runtime implementation could fail, listing
@@ -97,7 +100,13 @@ corrade_add_test(BasisImageConverterTest BasisImageConverterTest.cpp
         Threads::Threads
     FILES
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/BasisImporter/Test/rgb-63x27.png
-        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/BasisImporter/Test/rgba-63x27.png)
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/BasisImporter/Test/rgba-27x27.png
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/BasisImporter/Test/rgba-63x27.png
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/BasisImporter/Test/rgba-31x13.png
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/BasisImporter/Test/rgba-15x6.png
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/BasisImporter/Test/rgba-63x27.exr
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/BasisImporter/Test/rgba-31x13.exr
+        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/BasisImporter/Test/rgba-15x6.exr)
 target_include_directories(BasisImageConverterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>)
 # The test needs BASISU_LIB_VERSION from basisu_comp.h
 target_include_directories(BasisImageConverterTest SYSTEM PRIVATE ${BasisUniversalEncoder_INCLUDE_DIR})
@@ -118,6 +127,9 @@ if(MAGNUM_BASISIMAGECONVERTER_BUILD_STATIC)
     if(MAGNUM_WITH_STBIMAGEIMPORTER)
         target_link_libraries(BasisImageConverterTest PRIVATE StbImageImporter)
     endif()
+    if(MAGNUM_WITH_OPENEXRIMPORTER)
+        target_link_libraries(BasisImageConverterTest PRIVATE OpenExrImporter)
+    endif()
 else()
     # So the plugins get properly built when building the test
     add_dependencies(BasisImageConverterTest BasisImageConverter)
@@ -126,6 +138,9 @@ else()
     endif()
     if(MAGNUM_WITH_STBIMAGEIMPORTER)
         add_dependencies(BasisImageConverterTest StbImageImporter)
+    endif()
+    if(MAGNUM_WITH_OPENEXRIMPORTER)
+        add_dependencies(BasisImageConverterTest OpenExrImporter)
     endif()
 endif()
 if(CORRADE_BUILD_STATIC AND NOT MAGNUM_BASISIMAGECONVERTER_BUILD_STATIC)

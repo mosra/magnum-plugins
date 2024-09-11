@@ -43,6 +43,7 @@
 #include <Magnum/Image.h>
 #include <Magnum/ImageView.h>
 #include <Magnum/Math/Color.h>
+#include <Magnum/Math/Half.h>
 #include <Magnum/Math/Swizzle.h>
 #include <Magnum/PixelFormat.h>
 #include <Magnum/Trade/AbstractImageConverter.h>
@@ -77,6 +78,7 @@ struct BasisImageConverterTest: TestSuite::Tester {
     void convert2DRgb();
     void convert2DRgba();
     void convert2DMipmaps();
+    void convert2DMipmapsHdr();
 
     void convertUastcPatchAwaySrgb();
 
@@ -121,6 +123,14 @@ constexpr struct {
     {"2D", {{4, 5, 0}, {2, 1, 0}}, "expected size Vector(2, 2) for level 1 but got Vector(2, 1)"},
     /* 3D images are treated like and exported as 2D array images */
     {"2D array", {{4, 5, 3}, {2, 2, 1}}, "expected size Vector(2, 2, 3) for level 1 but got Vector(2, 2, 1)"}
+};
+
+constexpr struct {
+    const char* name;
+    const PixelFormat format;
+} MipGenData[]{
+    {"", PixelFormat::RGBA8Unorm},
+    {"hdr", PixelFormat::RGBA32F}
 };
 
 enum TransferFunction: std::size_t {
@@ -186,6 +196,9 @@ const struct {
     {"Srgb UASTC Basis, perceptual=false", "BasisImageConverter",
         PixelFormat::RGBA8Srgb, "false", true, true, PixelFormat::RGBA8Unorm,
         "Trade::BasisImageConverter::convertToData(): patching away an incorrect sRGB flag in the output Basis file\n"},
+    {"HDR Basis", "BasisImageConverter",
+        PixelFormat::RGBA32F, "", false, true, PixelFormat::RGBA16F,
+        "Trade::BasisImageConverter::convertToData(): patching away an incorrect sRGB flag in the output Basis file\n"},
 
     /* The KTX container doesn't suffer from this problem */
     {"Unorm UASTC KTX2", "BasisKtxImageConverter",
@@ -193,6 +206,9 @@ const struct {
         ""},
     {"Srgb UASTC KTX2, perceptual=false", "BasisKtxImageConverter",
         PixelFormat::RGBA8Srgb, "false", true, true, PixelFormat::RGBA8Unorm,
+        ""},
+    {"HDR KTX2", "BasisKtxImageConverter",
+        PixelFormat::RGBA32F, "", false, true, PixelFormat::RGBA16F,
         ""},
 };
 
@@ -303,11 +319,12 @@ BasisImageConverterTest::BasisImageConverterTest() {
         Containers::arraySize(LevelWrongSizeData));
 
     addTests({&BasisImageConverterTest::processError,
+              &BasisImageConverterTest::configPerceptual});
 
-              &BasisImageConverterTest::configPerceptual,
-              &BasisImageConverterTest::configMipGen,
+    addInstancedTests({&BasisImageConverterTest::configMipGen},
+        Containers::arraySize(MipGenData));
 
-              &BasisImageConverterTest::convert1DArray});
+    addTests({&BasisImageConverterTest::convert1DArray});
 
     addInstancedTests({&BasisImageConverterTest::convert2DR,
                        &BasisImageConverterTest::convert2DRg,
@@ -320,6 +337,8 @@ BasisImageConverterTest::BasisImageConverterTest() {
 
     addInstancedTests({&BasisImageConverterTest::convert2DMipmaps},
         Containers::arraySize(QuietData));
+
+    addTests({&BasisImageConverterTest::convert2DMipmapsHdr});
 
     addInstancedTests({&BasisImageConverterTest::convert2DArray},
         Containers::arraySize(Convert2DArrayData));
@@ -357,18 +376,21 @@ BasisImageConverterTest::BasisImageConverterTest() {
     #ifndef CORRADE_PLUGINMANAGER_NO_DYNAMIC_PLUGIN_SUPPORT
     _manager.setPluginDirectory({});
     #endif
-    /* Load StbImageImporter from the build tree, if defined. Otherwise it's
+    /* Load optional plugins from the build tree, if defined. Otherwise they're
        static and already loaded. */
     #ifdef STBIMAGEIMPORTER_PLUGIN_FILENAME
     CORRADE_INTERNAL_ASSERT_OUTPUT(_manager.load(STBIMAGEIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
+    #endif
+    #ifdef BASISIMPORTER_PLUGIN_FILENAME
+    CORRADE_INTERNAL_ASSERT_OUTPUT(_manager.load(BASISIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
+    #endif
+    #ifdef OPENEXRIMPORTER_PLUGIN_FILENAME
+    CORRADE_INTERNAL_ASSERT_OUTPUT(_manager.load(OPENEXRIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
     #endif
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. */
     #ifdef BASISIMAGECONVERTER_PLUGIN_FILENAME
     CORRADE_INTERNAL_ASSERT_OUTPUT(_converterManager.load(BASISIMAGECONVERTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
-    #endif
-    #ifdef BASISIMPORTER_PLUGIN_FILENAME
-    CORRADE_INTERNAL_ASSERT_OUTPUT(_manager.load(BASISIMPORTER_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
     #endif
 
     /* Create the output directory if it doesn't exist yet */
@@ -381,8 +403,8 @@ void BasisImageConverterTest::wrongFormat() {
     const char data[8]{};
     std::ostringstream out;
     Error redirectError{&out};
-    CORRADE_VERIFY(!converter->convertToData(ImageView2D{PixelFormat::RG32F, {1, 1}, data}));
-    CORRADE_COMPARE(out.str(), "Trade::BasisImageConverter::convertToData(): unsupported format PixelFormat::RG32F\n");
+    CORRADE_VERIFY(!converter->convertToData(ImageView2D{PixelFormat::R32I, {1, 1}, data}));
+    CORRADE_COMPARE(out.str(), "Trade::BasisImageConverter::convertToData(): unsupported format PixelFormat::R32I\n");
 }
 
 void BasisImageConverterTest::unknownOutputFormatData() {
@@ -553,9 +575,17 @@ void BasisImageConverterTest::configPerceptual() {
 }
 
 void BasisImageConverterTest::configMipGen() {
-    const char bytes[16*16*4]{};
-    ImageView2D originalLevel0{PixelFormat::RGBA8Unorm, Vector2i{16}, bytes};
-    ImageView2D originalLevel1{PixelFormat::RGBA8Unorm, Vector2i{8}, bytes};
+    auto&& data = MipGenData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    #if BASISU_LIB_VERSION < 150
+    if(isPixelFormatFloatingPoint(data.format))
+        CORRADE_SKIP("Current version of Basis doesn't support HDR.");
+    #endif
+
+    Containers::Array<char> bytes{ValueInit, pixelFormatSize(data.format)*16*16};
+    ImageView2D originalLevel0{data.format, Vector2i{16}, bytes};
+    ImageView2D originalLevel1{data.format, Vector2i{8}, bytes};
 
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("BasisImageConverter");
     /* Empty by default */
@@ -571,7 +601,9 @@ void BasisImageConverterTest::configMipGen() {
     if(_manager.loadState("BasisImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("BasisImporter plugin not found, cannot test");
 
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporterRGBA8");
+    const Containers::StringView importerName = isPixelFormatFloatingPoint(data.format)
+        ? "BasisImporterRGBA16F"_s : "BasisImporterRGBA8"_s;
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate(importerName);
 
     /* Empty mip_gen config means to use the level count to determine if mip
        levels should be generated */
@@ -589,7 +621,7 @@ Image<dimensions> copyImageWithSkip(const BasicImageView<dimensions>& image, Mat
         format = image.format();
     /* Width includes row alignment to 4 bytes */
     const UnsignedInt formatSize = pixelFormatSize(format);
-    const UnsignedInt widthWithSkip = ((size[0] + skip[0])*DestinationType::Size + 3)/formatSize*formatSize;
+    const UnsignedInt widthWithSkip = ((size[0] + skip[0])*sizeof(DestinationType) + 3)/formatSize*formatSize;
     const UnsignedInt dataSize = widthWithSkip*(size + skip).product()/(size[0] + skip[0]);
     Image<dimensions> imageWithSkip{PixelStorage{}.setSkip(Vector3i::pad(skip)), format,
         size, Containers::Array<char>{ValueInit, dataSize}, image.flags()};
@@ -789,6 +821,11 @@ void BasisImageConverterTest::convertUastcPatchAwaySrgb() {
     auto&& data = ConvertUastcPatchAwaySrgbData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
+    #if BASISU_LIB_VERSION < 150
+    if(isPixelFormatFloatingPoint(data.format))
+        CORRADE_SKIP("Current version of Basis doesn't support HDR.");
+    #endif
+
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate(data.pluginName);
     /* Yes, the damn thing prints output to stdout without any possibility to
        redirect anywhere. But we need the verbose output enabled in many cases
@@ -797,20 +834,22 @@ void BasisImageConverterTest::convertUastcPatchAwaySrgb() {
     converter->configuration().setValue("uastc", data.uastc);
     converter->configuration().setValue("perceptual", data.perceptual);
 
-    const char imageData[4*4*4]{};
+    Containers::Array<char> imageData{ValueInit, pixelFormatSize(data.format)*4*4};
 
     std::ostringstream out;
     Containers::Optional<Containers::Array<char>> compressedData;
     {
         Debug redirectOutput{&out};
-        compressedData = converter->convertToData(ImageView2D{data.format, {4, 4}, Containers::arrayView(imageData)});
+        compressedData = converter->convertToData(ImageView2D{data.format, {4, 4}, imageData});
         CORRADE_VERIFY(compressedData);
     }
 
     if(_manager.loadState("BasisImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("BasisImporter plugin not found, cannot test");
 
-    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporterRGBA8");
+    const Containers::StringView importerName = isPixelFormatFloatingPoint(data.format)
+        ? "BasisImporterRGBA16F"_s : "BasisImporterRGBA8"_s;
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate(importerName);
     CORRADE_VERIFY(importer->openData(*compressedData));
     Containers::Optional<ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
@@ -831,11 +870,12 @@ void BasisImageConverterTest::convert2DMipmaps() {
     struct Level {
         const char* file;
         Containers::Optional<Image2D> imageWithSkip;
-        Containers::Optional<ImageData2D> result;
+        float maxThreshold;
+        float meanThreshold;
     } levels[3] {
-        {"rgba-63x27.png", {}, {}},
-        {"rgba-31x13.png", {}, {}},
-        {"rgba-15x6.png", {}, {}}
+        {"rgba-63x27.png", {}, 97.25f, 7.882f},
+        {"rgba-31x13.png", {}, 81.0f, 14.33f},
+        {"rgba-15x6.png", {}, 76.25f, 24.5f}
     };
 
     for(Level& level: levels) {
@@ -878,22 +918,101 @@ void BasisImageConverterTest::convert2DMipmaps() {
 
     for(std::size_t i = 0; i != Containers::arraySize(levels); ++i) {
         CORRADE_ITERATION("level" << i);
-        levels[i].result = importer->image2D(0, i);
-        CORRADE_VERIFY(levels[i].result);
+        const auto result = importer->image2D(0, i);
+        CORRADE_VERIFY(result);
+        CORRADE_COMPARE_WITH(*result,
+            Utility::Path::join(BASISIMPORTER_TEST_DIR, levels[i].file),
+            /* There are moderately significant compression artifacts */
+            (DebugTools::CompareImageToFile{_manager, levels[i].maxThreshold, levels[i].meanThreshold}));
+    }
+}
+
+void BasisImageConverterTest::convert2DMipmapsHdr() {
+    #if BASISU_LIB_VERSION < 150
+    CORRADE_SKIP("Current version of Basis doesn't support HDR.");
+    #endif
+
+    if(_manager.loadState("OpenExrImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("OpenExrImporter plugin not found, cannot test contents");
+
+    /* BasisImageConverter only reads 32-bit floats, but the test files are
+       half float images. Let openexr do the conversion for us. */
+    Containers::Pointer<AbstractImporter> imageRGBA32FImporter = _manager.instantiate("OpenExrImporter");
+    imageRGBA32FImporter->configuration().setValue("forceChannelType", "FLOAT");
+
+    struct Level {
+        const char* file;
+        Containers::Optional<Image2D> imageWithSkip;
+        float maxThreshold;
+        float meanThreshold;
+    } levels[3] {
+        {"rgba-63x27.exr", {}, 0.491f, 0.009f},
+        {"rgba-31x13.exr", {}, 0.339f, 0.018f},
+        {"rgba-15x6.exr", {}, 0.562f, 0.029f}
+    };
+
+    for(Level& level: levels) {
+        CORRADE_ITERATION(level.file);
+        CORRADE_VERIFY(imageRGBA32FImporter->openFile(Utility::Path::join(BASISIMPORTER_TEST_DIR, level.file)));
+        Containers::Optional<Trade::ImageData2D> originalImage = imageRGBA32FImporter->image2D(0);
+        CORRADE_VERIFY(originalImage);
+        /* Use the original images and add a skip to ensure the converter reads
+           the image data properly */
+        level.imageWithSkip = copyImageWithSkip<Vector4>(ImageView2D(*originalImage), {7, 8});
     }
 
-    CORRADE_COMPARE_WITH(*levels[0].result,
-        Utility::Path::join(BASISIMPORTER_TEST_DIR, "rgba-63x27.png"),
-        /* There are moderately significant compression artifacts */
-        (DebugTools::CompareImageToFile{_manager, 97.25f, 7.882f}));
-    CORRADE_COMPARE_WITH(*levels[1].result,
-        Utility::Path::join(BASISIMPORTER_TEST_DIR, "rgba-31x13.png"),
-        /* There are moderately significant compression artifacts */
-        (DebugTools::CompareImageToFile{_manager, 81.0f, 14.33f}));
-    CORRADE_COMPARE_WITH(*levels[2].result,
-        Utility::Path::join(BASISIMPORTER_TEST_DIR, "rgba-15x6.png"),
-        /* There are moderately significant compression artifacts */
-        (DebugTools::CompareImageToFile{_manager, 76.25f, 24.5f}));
+    Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("BasisImageConverter");
+
+    /* HDR is encoded using UASTC HDR, but shouldn't require uastc to be
+       explicitly enabled */
+    CORRADE_COMPARE(converter->configuration().value<bool>("uastc"), false);
+
+    Containers::Optional<Containers::Array<char>> compressedData = converter->convertToData({*levels[0].imageWithSkip, *levels[1].imageWithSkip, *levels[2].imageWithSkip});
+    CORRADE_VERIFY(compressedData);
+
+    if(_manager.loadState("BasisImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("BasisImporter plugin not found, cannot test");
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporterRGBA16F");
+    CORRADE_VERIFY(importer->openData(*compressedData));
+    CORRADE_COMPARE(importer->image2DCount(), 1);
+    CORRADE_COMPARE(importer->image2DLevelCount(0), Containers::arraySize(levels));
+
+    /* For HDR images alpha is always transcoded to 1. Import source .exr files
+       again as half float RGB for easier comparison against transcoded RGB. */
+    Containers::Pointer<AbstractImporter> imageRGB16FImporter = _manager.instantiate("OpenExrImporter");
+    /* Drop the alpha channel */
+    imageRGB16FImporter->configuration().setValue("a", "");
+
+    for(std::size_t i = 0; i != Containers::arraySize(levels); ++i) {
+        CORRADE_ITERATION("level" << i);
+        auto result = importer->image2D(0, i);
+        CORRADE_VERIFY(result);
+
+        const auto pixels = result->pixels<Color4h>();
+
+        /* Can't use a StridedArrayView with broadcasted size since
+           CompareImage only accepts StridedArrayView for the actual image, not
+           the expected. */
+        using namespace Math::Literals;
+        Containers::Array<Half> ones{DirectInit, size_t(result->size().product()), 1.0_h};
+
+        CORRADE_COMPARE_WITH(pixels.slice(&Color4h::a),
+            (ImageView2D{PixelStorage{}.setAlignment(1), PixelFormat::R16F, result->size(), ones}),
+            /* No errors, always exactly 1.0 */
+            (DebugTools::CompareImage{0.0f, 0.0f}));
+
+        /* Not using CompareImageToFile to avoid overwriting the 4-channel
+           expected .exr with a 3-channel actual image when --save-diagnostic
+           is specified */
+        CORRADE_VERIFY(imageRGB16FImporter->openFile(Utility::Path::join(BASISIMPORTER_TEST_DIR, levels[i].file)));
+        const auto expected = imageRGB16FImporter->image2D(0);
+        CORRADE_VERIFY(expected);
+
+        CORRADE_COMPARE_WITH(Containers::arrayCast<const Color3h>(pixels), *expected,
+            /* There are moderately significant compression artifacts */
+            (DebugTools::CompareImage{levels[i].maxThreshold, levels[i].meanThreshold}));
+    }
 }
 
 ImageView2D imageViewSlice(const ImageView3D& image, Int slice) {
