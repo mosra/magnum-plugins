@@ -56,23 +56,90 @@ using namespace Containers::Literals;
 
 namespace {
 
+template<typename T> void copySlice(const ImageView3D& image3D, UnsignedInt slice, Containers::StridedArrayView2D<Math::Color4<T>>& dst, bool yFlip, bool hasCustomSwizzle) {
+    const UnsignedInt channelCount = pixelFormatChannelCount(image3D.format());
+
+    if(yFlip)
+        dst = dst.template flipped<0>();
+
+    /* basis image is always RGBA, fill in alpha if necessary */
+    if(channelCount == 4) {
+        const auto src = image3D.pixels<Math::Vector<4, T>>()[slice];
+        for(std::size_t y = 0; y != src.size()[0]; ++y)
+            for(std::size_t x = 0; x != src.size()[1]; ++x)
+                dst[y][x] = src[y][x];
+
+    } else if(channelCount == 3) {
+        const auto src = image3D.pixels<Math::Vector<3, T>>()[slice];
+        for(std::size_t y = 0; y != src.size()[0]; ++y)
+            for(std::size_t x = 0; x != src.size()[1]; ++x)
+                dst[y][x] = Math::Vector3<T>{src[y][x]}; /* Alpha implicitly opaque */
+
+    } else if(channelCount == 2) {
+        const auto src = image3D.pixels<Math::Vector<2, T>>()[slice];
+        /* If the user didn't specify a custom swizzle, assume they want
+           the two channels compressed in separate slices, R in RGB and G
+           in Alpha. This significantly improves quality. */
+        if(!hasCustomSwizzle)
+            for(std::size_t y = 0; y != src.size()[0]; ++y)
+                for(std::size_t x = 0; x != src.size()[1]; ++x)
+                    dst[y][x] = Math::gather<'r', 'r', 'r', 'g'>(src[y][x]);
+        else
+            for(std::size_t y = 0; y != src.size()[0]; ++y)
+                for(std::size_t x = 0; x != src.size()[1]; ++x)
+                    dst[y][x] = Math::Vector3<T>::pad(src[y][x]); /* Alpha implicitly opaque */
+
+    } else if(channelCount == 1) {
+        const auto src = image3D.pixels<Math::Vector<1, T>>()[slice];
+        /* If the user didn't specify a custom swizzle, assume they want
+           a gray-scale image. Alpha is always implicitly opaque. */
+        if(!hasCustomSwizzle)
+            for(std::size_t y = 0; y != src.size()[0]; ++y)
+                for(std::size_t x = 0; x != src.size()[1]; ++x)
+                    dst[y][x] = Math::gather<'r', 'r', 'r'>(src[y][x]);
+        else
+            for(std::size_t y = 0; y != src.size()[0]; ++y)
+                for(std::size_t x = 0; x != src.size()[1]; ++x)
+                    dst[y][x] = Math::Vector3<T>::pad(src[y][x]); /* Alpha implicitly opaque */
+
+    } else CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+}
+
 template<UnsignedInt dimensions> Containers::Optional<Containers::Array<char>> convertLevelsToData(Containers::ArrayView<const BasicImageView<dimensions>> imageLevels, const Utility::ConfigurationGroup& configuration, ImageConverterFlags flags, BasisImageConverter::Format fileFormat) {
     /* Check input */
     const PixelFormat pixelFormat = imageLevels.front().format();
     bool isSrgb;
+    #if BASISU_LIB_VERSION >= 150
+    bool isHdr;
+    #endif
     switch(pixelFormat) {
         case PixelFormat::RGBA8Unorm:
         case PixelFormat::RGB8Unorm:
         case PixelFormat::RG8Unorm:
         case PixelFormat::R8Unorm:
             isSrgb = false;
+            #if BASISU_LIB_VERSION >= 150
+            isHdr = false;
+            #endif
             break;
         case PixelFormat::RGBA8Srgb:
         case PixelFormat::RGB8Srgb:
         case PixelFormat::RG8Srgb:
         case PixelFormat::R8Srgb:
             isSrgb = true;
+            #if BASISU_LIB_VERSION >= 150
+            isHdr = false;
+            #endif
             break;
+        #if BASISU_LIB_VERSION >= 150
+        case PixelFormat::R32F:
+        case PixelFormat::RG32F:
+        case PixelFormat::RGB32F:
+        case PixelFormat::RGBA32F:
+            isSrgb = false;
+            isHdr = true;
+            break;
+        #endif
         default:
             Error{} << "Trade::BasisImageConverter::convertToData(): unsupported format" << pixelFormat;
             return {};
@@ -260,6 +327,15 @@ template<UnsignedInt dimensions> Containers::Optional<Containers::Array<char>> c
     }
     #endif
 
+    /* HDR */
+    #if BASISU_LIB_VERSION >= 150
+    params.m_hdr = isHdr;
+
+    params.m_uastc_hdr_options.init();
+    params.m_uastc_hdr_options.set_quality_level(configuration.value<int>("hdr_quality_level"));
+    PARAM_CONFIG(hdr_favor_astc, bool);
+    #endif
+
     /* Set various fields in the Basis file header */
     PARAM_CONFIG(userdata0, int);
     PARAM_CONFIG(userdata1, int);
@@ -279,17 +355,29 @@ template<UnsignedInt dimensions> Containers::Optional<Containers::Array<char>> c
     #else
     params.m_write_output_basis_files = false;
     #endif
+
     /* One image per slice. The base mip is in m_source_images, mip 1 and
        higher go into m_source_mipmap_images. */
     const UnsignedInt numImages = Vector3i::pad(baseSize, 1).z();
-    params.m_source_images.resize(numImages);
-    if(numMipmaps > 1) {
-        params.m_source_mipmap_images.resize(numImages);
-        for(auto& slice: params.m_source_mipmap_images)
-            slice.resize(numMipmaps - 1);
+    #if BASISU_LIB_VERSION >= 150
+    if(isHdr) {
+        params.m_source_images_hdr.resize(numImages);
+        if(numMipmaps > 1) {
+            params.m_source_mipmap_images_hdr.resize(numImages);
+            for(auto& slice: params.m_source_mipmap_images_hdr)
+                slice.resize(numMipmaps - 1);
+        }
+    } else
+    #endif
+    {
+        params.m_source_images.resize(numImages);
+        if(numMipmaps > 1) {
+            params.m_source_mipmap_images.resize(numImages);
+            for(auto& slice: params.m_source_mipmap_images)
+                slice.resize(numMipmaps - 1);
+        }
     }
 
-    const UnsignedInt channelCount = pixelFormatChannelCount(pixelFormat);
     for(UnsignedInt level = 0; level != numMipmaps; ++level) {
         const auto mipSize = Math::max(baseSize >> level, 1)*mipMask + baseSize*(Math::Vector<dimensions, Int>{1} - mipMask);
         const auto& image = imageLevels[level];
@@ -306,57 +394,27 @@ template<UnsignedInt dimensions> Containers::Optional<Containers::Array<char>> c
             /* Copy image data into the basis image. There is no way to construct a
                basis image from existing data as it is based on basisu::vector,
                moreover we need to tightly pack it and flip Y. */
-            basisu::image& basisImage = level > 0 ? params.m_source_mipmap_images[slice][level - 1] : params.m_source_images[slice];
-            basisImage.resize(mipSize[0], mipSize[1]);
-            auto dst = Containers::arrayCast<Color4ub>(Containers::StridedArrayView2D<basisu::color_rgba>({basisImage.get_ptr(), basisImage.get_total_pixels()}, {std::size_t(mipSize[1]), std::size_t(mipSize[0])}));
-            /* Y-flip the view to make the following loops simpler. basisu doesn't
-               apply m_y_flip to user-supplied mipmaps, so only do this for the
-               base image:
+            /* basisu doesn't apply m_y_flip to user-supplied mipmaps, so only
+               do this for the base image:
                https://github.com/BinomialLLC/basis_universal/issues/257 */
-            if(!params.m_y_flip || level == 0)
-                dst = dst.flipped<0>();
+            const bool yFlip = !params.m_y_flip || level == 0;
+            const bool hasCustomSwizzle = !swizzle.isEmpty();
+            #if BASISU_LIB_VERSION >= 150
+            if(isHdr) {
+                basisu::imagef& basisImage = level > 0 ? params.m_source_mipmap_images_hdr[slice][level - 1] : params.m_source_images_hdr[slice];
+                basisImage.resize(mipSize[0], mipSize[1]);
+                auto dst = Containers::arrayCast<Color4>(Containers::StridedArrayView2D<basisu::vec4F>({basisImage.get_ptr(), basisImage.get_total_pixels()}, {std::size_t(mipSize[1]), std::size_t(mipSize[0])}));
 
-            /* basis image is always RGBA, fill in alpha if necessary */
-            if(channelCount == 4) {
-                const auto src = image3D.pixels<Math::Vector<4, UnsignedByte>>()[slice];
-                for(std::size_t y = 0; y != src.size()[0]; ++y)
-                    for(std::size_t x = 0; x != src.size()[1]; ++x)
-                        dst[y][x] = src[y][x];
-
-            } else if(channelCount == 3) {
-                const auto src = image3D.pixels<Math::Vector<3, UnsignedByte>>()[slice];
-                for(std::size_t y = 0; y != src.size()[0]; ++y)
-                    for(std::size_t x = 0; x != src.size()[1]; ++x)
-                        dst[y][x] = Vector3ub{src[y][x]}; /* Alpha implicitly 255 */
-
-            } else if(channelCount == 2) {
-                const auto src = image3D.pixels<Math::Vector<2, UnsignedByte>>()[slice];
-                /* If the user didn't specify a custom swizzle, assume they want
-                   the two channels compressed in separate slices, R in RGB and G
-                   in Alpha. This significantly improves quality. */
-                if(!swizzle)
-                    for(std::size_t y = 0; y != src.size()[0]; ++y)
-                        for(std::size_t x = 0; x != src.size()[1]; ++x)
-                            dst[y][x] = Math::gather<'r', 'r', 'r', 'g'>(src[y][x]);
-                else
-                    for(std::size_t y = 0; y != src.size()[0]; ++y)
-                        for(std::size_t x = 0; x != src.size()[1]; ++x)
-                            dst[y][x] = Vector3ub::pad(src[y][x]); /* Alpha implicitly 255 */
-
-            } else if(channelCount == 1) {
-                const auto src = image3D.pixels<Math::Vector<1, UnsignedByte>>()[slice];
-                /* If the user didn't specify a custom swizzle, assume they want
-                   a gray-scale image. Alpha is always implicitly 255. */
-                if(!swizzle)
-                    for(std::size_t y = 0; y != src.size()[0]; ++y)
-                        for(std::size_t x = 0; x != src.size()[1]; ++x)
-                            dst[y][x] = Math::gather<'r', 'r', 'r'>(src[y][x]);
-                else
-                    for(std::size_t y = 0; y != src.size()[0]; ++y)
-                        for(std::size_t x = 0; x != src.size()[1]; ++x)
-                            dst[y][x] = Vector3ub::pad(src[y][x]);
-
-            } else CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+                copySlice(image3D, slice, dst, yFlip, hasCustomSwizzle);
+            } else
+            #endif
+            {
+                basisu::image& basisImage = level > 0 ? params.m_source_mipmap_images[slice][level - 1] : params.m_source_images[slice];
+                basisImage.resize(mipSize[0], mipSize[1]);
+                auto dst = Containers::arrayCast<Color4ub>(Containers::StridedArrayView2D<basisu::color_rgba>({basisImage.get_ptr(), basisImage.get_total_pixels()}, {std::size_t(mipSize[1]), std::size_t(mipSize[0])}));
+            
+                copySlice(image3D, slice, dst, yFlip, hasCustomSwizzle);
+            }
         }
     }
 

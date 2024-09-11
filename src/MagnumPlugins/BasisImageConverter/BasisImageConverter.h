@@ -154,8 +154,15 @@ Accepts 2D, 2D array, cube map and cube map array images, recognizing
 The @ref PixelFormat::R8Unorm, @relativeref{PixelFormat,R8Srgb},
 @relativeref{PixelFormat,RG8Unorm}, @relativeref{PixelFormat,RG8Srgb},
 @relativeref{PixelFormat,RGB8Unorm}, @relativeref{PixelFormat,RGB8Srgb},
-@relativeref{PixelFormat,RGBA8Unorm} and @relativeref{PixelFormat,RGBA8Srgb}
+@relativeref{PixelFormat,RGBA8Unorm}, @relativeref{PixelFormat,RGBA8Srgb},
+@relativeref{PixelFormat,R32F} and @relativeref{PixelFormat,RG32F},
+@relativeref{PixelFormat,RGB32F} and @relativeref{PixelFormat,RGBA32F}
 formats are supported.
+
+HDR floating point formats require at least version 1.50 of Basis.
+
+The alpha channel of @relativeref{PixelFormat,RGBA32F} will be dropped and
+transcoded to 1 because Basis UASTC HDR doesn't support alpha channels.
 
 Even though the KTX container format supports 1D, 1D array and 3D images, Basis
 Universal doesn't. In particular, if a 2D image with @ref ImageFlag2D::Array is
@@ -184,12 +191,14 @@ If no user-specified channel mapping is supplied through the
 @cb{.ini} swizzle @ce @ref Trade-BasisImageConverter-configuration "configuration option",
 the converter swizzles 1- and 2-channel formats before compression as follows:
 
--   1-channel formats (@ref PixelFormat::R8Unorm / @ref PixelFormat::R8Srgb)
-    are remapped as RRR, producing an opaque gray-scale image
--   2-channel formats (@ref PixelFormat::RG8Unorm / @ref PixelFormat::RG8Srgb)
-    are remapped as RRRG, ie. G becomes the alpha channel. This significantly
-    improves compressed image quality because RGB and alpha get separate slices
-    instead of the two channels being compressed into a single slice.
+-   1-channel formats (@ref PixelFormat::R8Unorm / @ref PixelFormat::R8Srgb /
+    @ref PixelFormat::R32F) are remapped as RRR, producing an opaque gray-scale
+    image
+-   2-channel formats (@ref PixelFormat::RG8Unorm / @ref PixelFormat::RG8Srgb /
+    @ref PixelFormat::RG32F) are remapped as RRRG, ie. G becomes the alpha
+    channel. This significantly improves compressed image quality because RGB
+    and alpha get separate slices instead of the two channels being compressed
+    into a single slice.
 
 Setting the @cb{.ini} swizzle @ce option to any value disables this behavior.
 To keep the original channel order, set @cb{.ini} swizzle=rgba @ce.
