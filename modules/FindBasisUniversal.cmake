@@ -189,7 +189,11 @@ foreach(_component ${BasisUniversal_FIND_COMPONENTS})
                     lodepng.cpp
                     # Added in 1.16
                     basisu_opencl.cpp
-                    pvpngreader.cpp)
+                    pvpngreader.cpp
+                    # Added in 1.50
+                    basisu_astc_hdr_enc.cpp
+                    3rdparty/android_astc_decomp.cpp
+                    3rdparty/tinyexr.cpp)
                     # Disable the find root path here, it overrides the
                     # CMAKE_FIND_ROOT_PATH_MODE_INCLUDE setting potentially set in
                     # toolchains.
