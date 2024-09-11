@@ -54,6 +54,10 @@ PixelFormat pixelFormat(BasisImporter::TargetFormat type, bool isSrgb) {
     switch(type) {
         case BasisImporter::TargetFormat::RGBA8:
             return isSrgb ? PixelFormat::RGBA8Srgb : PixelFormat::RGBA8Unorm;
+        case BasisImporter::TargetFormat::RGB16F:
+            return PixelFormat::RGB16F;
+        case BasisImporter::TargetFormat::RGBA16F:
+            return PixelFormat::RGBA16F;
         default: CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
     }
 }
@@ -74,6 +78,8 @@ CompressedPixelFormat compressedPixelFormat(BasisImporter::TargetFormat type, bo
             return CompressedPixelFormat::Bc4RUnorm;
         case BasisImporter::TargetFormat::Bc5RG:
             return CompressedPixelFormat::Bc5RGUnorm;
+        case BasisImporter::TargetFormat::Bc6hRGB:
+            return CompressedPixelFormat::Bc6hRGBUfloat;
         case BasisImporter::TargetFormat::Bc7RGBA:
             return isSrgb ? CompressedPixelFormat::Bc7RGBASrgb : CompressedPixelFormat::Bc7RGBAUnorm;
         case BasisImporter::TargetFormat::PvrtcRGB4bpp:
@@ -82,6 +88,8 @@ CompressedPixelFormat compressedPixelFormat(BasisImporter::TargetFormat type, bo
             return isSrgb ? CompressedPixelFormat::PvrtcRGBA4bppSrgb : CompressedPixelFormat::PvrtcRGBA4bppUnorm;
         case BasisImporter::TargetFormat::Astc4x4RGBA:
             return isSrgb ? CompressedPixelFormat::Astc4x4RGBASrgb : CompressedPixelFormat::Astc4x4RGBAUnorm;
+        case BasisImporter::TargetFormat::Astc4x4RGBAF:
+            return CompressedPixelFormat::Astc4x4RGBAF;
         /** @todo use etc2/eacR/eacRG based on channel count? needs a bit from
             https://github.com/BinomialLLC/basis_universal/issues/66 */
         case BasisImporter::TargetFormat::EacR:
@@ -100,11 +108,13 @@ constexpr const char* FormatNames[]{
     nullptr, nullptr, /* ATC formats */
     "RGBA8", nullptr, nullptr, nullptr, /* RGB565 / BGR565 / RGBA4444 */
     nullptr, nullptr, nullptr,
-    "EacR", "EacRG"
+    "EacR", "EacRG",
+    "Bc6hRGB", "Astc4x4RGBAF",
+    "RGB16F", "RGBA16F",
 };
 
 /* Last element has to be on the same index as last enum value */
-static_assert(Containers::arraySize(FormatNames) - 1 == Int(BasisImporter::TargetFormat::EacRG), "bad string format mapping");
+static_assert(Containers::arraySize(FormatNames) - 1 == Int(BasisImporter::TargetFormat::RGBA16F), "bad string format mapping");
 
 }
 
@@ -518,7 +528,7 @@ template<UnsignedInt dimensions> Containers::Optional<ImageData<dimensions>> Bas
         targetFormat = configuration().value<TargetFormat>("format");
         if(UnsignedInt(*targetFormat) == ~UnsignedInt{}) {
             Error{} << prefix << "invalid transcoding target format" << targetFormatStr << Debug::nospace
-                << ", expected to be one of Etc1RGB, Etc2RGBA, EacR, EacRG, Bc1RGB, Bc3RGBA, Bc4R, Bc5RG, Bc7RGBA, Pvrtc1RGB4bpp, Pvrtc1RGBA4bpp, Astc4x4RGBA or RGBA8";
+                << ", expected to be one of Etc1RGB, Etc2RGBA, EacR, EacRG, Bc1RGB, Bc3RGBA, Bc4R, Bc5RG, Bc6hRGB, Bc7RGBA, Pvrtc1RGB4bpp, Pvrtc1RGBA4bpp, Astc4x4RGBA, Astc4x4RGBAF, RGBA8, RGB16F or RGBA16F";
             return Containers::NullOpt;
         }
     }
@@ -531,19 +541,36 @@ template<UnsignedInt dimensions> Containers::Optional<ImageData<dimensions>> Bas
         _state->yFlipNotPossibleWarningPrinted = false;
     }
 
+    #if BASISD_LIB_VERSION >= 150
+    const bool isHdr = _state->compressionType == basist::basis_tex_format::cUASTC_HDR_4x4;
+    #else
+    constexpr bool isHdr = false;
+    #endif
+
     /* If no target format was specified, print a warning and fall back to
-       RGBA8. Don't save it to _state->lastTargetFormat because then we
-       wouldn't be able to distinguish the case of explicit RGBA8 and no
+       RGBA. Don't save it to _state->lastTargetFormat because then we
+       wouldn't be able to distinguish the case of explicit RGBA and no
        format set */
     if(!targetFormat) {
         if(!(flags() & ImporterFlag::Quiet) && !_state->noTranscodeFormatWarningPrinted)
-            Warning{} << prefix << "no format to transcode to was specified, falling back to uncompressed RGBA8. To get rid of this warning, either explicitly set the format option to one of Etc1RGB, Etc2RGBA, EacR, EacRG, Bc1RGB, Bc3RGBA, Bc4R, Bc5RG, Bc7RGBA, PvrtcRGB4bpp, PvrtcRGBA4bpp, Astc4x4RGBA or RGBA8, or load the plugin via one of its BasisImporterEtc1RGB, ... aliases.";
-        targetFormat = TargetFormat::RGBA8;
+            Warning{} << prefix << "no format to transcode to was specified, falling back to uncompressed" << (isHdr ? "RGBA16F" : "RGBA8") << Debug::nospace << "."
+                << "To get rid of this warning, either explicitly set the format option to one of Etc1RGB, Etc2RGBA, EacR, EacRG, Bc1RGB, Bc3RGBA, Bc4R, Bc5RG, Bc6hRGB, Bc7RGBA, Pvrtc1RGB4bpp, Pvrtc1RGBA4bpp, Astc4x4RGBA, Astc4x4RGBAF, RGBA8, RGB16F or RGBA16F, or load the plugin via one of its BasisImporterEtc1RGB, ... aliases.";
+        targetFormat = isHdr ? TargetFormat::RGBA16F : TargetFormat::RGBA8;
         _state->noTranscodeFormatWarningPrinted = true;
     }
 
     const auto format = basist::transcoder_texture_format(Int(*targetFormat));
-    const bool isUncompressed = basist::basis_transcoder_format_is_uncompressed(format);
+
+    #if BASISD_LIB_VERSION >= 150
+    const bool wantHdr = basist::basis_transcoder_format_is_hdr(format);
+
+    /* Basis doesn't support transcoding from LDR to HDR or vice versa */
+    if(isHdr != wantHdr) {
+        Error{} << prefix << "Can't transcode" << (isHdr ? "HDR" : "LDR") << "image to"
+            << (wantHdr ? "HDR" : "LDR") << "format" << targetFormatStr;
+        return Containers::NullOpt;
+    }
+    #endif
 
     /* Some target formats may be unsupported, either because support wasn't
        compiled in or UASTC doesn't support a certain format. All of the
@@ -609,6 +636,8 @@ template<UnsignedInt dimensions> Containers::Optional<ImageData<dimensions>> Bas
         }
         _state->lastTranscodedImageId = id;
     }
+
+    const bool isUncompressed = basist::basis_transcoder_format_is_uncompressed(format);
 
     const Vector3ui size{origWidth, origHeight, _state->numSlices};
     UnsignedInt rowStride, outputRowsInPixels, outputSizeInBlocksOrPixels;
@@ -705,10 +734,12 @@ template<UnsignedInt dimensions> Containers::Optional<ImageData<dimensions>> Bas
                     break;
                 case TargetFormat::Etc1RGB:
                 case TargetFormat::Etc2RGBA:
+                case TargetFormat::Bc6hRGB:
                 case TargetFormat::Bc7RGBA:
                 case TargetFormat::PvrtcRGB4bpp:
                 case TargetFormat::PvrtcRGBA4bpp:
                 case TargetFormat::Astc4x4RGBA:
+                case TargetFormat::Astc4x4RGBAF:
                 case TargetFormat::EacR:
                 case TargetFormat::EacRG:
                     if(!(flags() & ImporterFlag::Quiet) && !_state->yFlipNotPossibleWarningPrinted)
@@ -717,7 +748,12 @@ template<UnsignedInt dimensions> Containers::Optional<ImageData<dimensions>> Bas
                     flipped = false;
                     break;
                 /* We'd be in the isUncompressed branch above for this */
-                case TargetFormat::RGBA8: CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+                /* LCOV_EXCL_START */
+                case TargetFormat::RGBA8:
+                case TargetFormat::RGB16F:
+                case TargetFormat::RGBA16F:
+                    CORRADE_INTERNAL_ASSERT_UNREACHABLE();
+                /* LCOV_EXCL_STOP */
             }
 
             if(flipped && !(flags() & ImporterFlag::Quiet) && size.y() % blockSize.y() != 0)

@@ -47,6 +47,9 @@ if(NOT MAGNUM_BASISIMPORTER_BUILD_STATIC)
     if(MAGNUM_WITH_STBIMAGEIMPORTER)
         set(STBIMAGEIMPORTER_PLUGIN_FILENAME $<TARGET_FILE:StbImageImporter>)
     endif()
+    if(MAGNUM_WITH_OPENEXRIMPORTER)
+        set(OPENEXRIMPORTER_PLUGIN_FILENAME $<TARGET_FILE:OpenExrImporter>)
+    endif()
     if(MAGNUM_WITH_BCDECIMAGECONVERTER)
         set(BCDECIMAGECONVERTER_PLUGIN_FILENAME $<TARGET_FILE:BcDecImageConverter>)
     endif()
@@ -68,6 +71,8 @@ corrade_add_test(BasisImporterTest BasisImporterTest.cpp
         invalid-cube-face-size.basis
         rgb.basis
         rgb.ktx2
+        rgbf.basis
+        rgbf.ktx2
         rgb-pow2.basis
         rgb-pow2.ktx2
         rgb-linear.basis
@@ -79,6 +84,8 @@ corrade_add_test(BasisImporterTest BasisImporterTest.cpp
         rgb-noflip-pow2.ktx2
         rgba.basis
         rgba.ktx2
+        rgbaf.basis
+        rgbaf.ktx2
         rgba-pow2.basis
         rgba-pow2.ktx2
         rgba-uastc.basis
@@ -102,7 +109,9 @@ corrade_add_test(BasisImporterTest BasisImporterTest.cpp
         rgba-video-uastc.basis
         rgba-video-uastc.ktx2
         rgb-63x27.png
+        rgb-63x27.exr
         rgba-63x27.png
+        rgba-63x27.exr
         rgba-63x27-slice1.png
         rgba-63x27-slice2.png
         rgba-31x13.png
@@ -114,6 +123,14 @@ corrade_add_test(BasisImporterTest BasisImporterTest.cpp
         rgba-27x27-slice2.png
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/KtxImporter/Test/2d-rgba.ktx2)
 target_include_directories(BasisImporterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>)
+# The test needs BASISD_LIB_VERSION from basisu_transcoder.h
+target_include_directories(BasisImporterTest SYSTEM PRIVATE ${BasisUniversalTranscoder_INCLUDE_DIR})
+# BasisUniversalTranscoder_DEFINITIONS isn't exported by find_package, so we
+# need to grab it from the target
+get_target_property(BasisUniversalTranscoder_DEFINITIONS BasisUniversal::Transcoder
+    INTERFACE_COMPILE_DEFINITIONS)
+set_property(TARGET BasisImporterTest APPEND PROPERTY
+    COMPILE_DEFINITIONS ${BasisUniversalTranscoder_DEFINITIONS})
 if(MAGNUM_BASISIMPORTER_BUILD_STATIC)
     target_link_libraries(BasisImporterTest PRIVATE BasisImporter)
     if(Magnum_AnyImageImporter_FOUND)
@@ -121,6 +138,9 @@ if(MAGNUM_BASISIMPORTER_BUILD_STATIC)
     endif()
     if(MAGNUM_WITH_STBIMAGEIMPORTER)
         target_link_libraries(BasisImporterTest PRIVATE StbImageImporter)
+    endif()
+    if(MAGNUM_WITH_OPENEXRIMPORTER)
+        target_link_libraries(BasisImporterTest PRIVATE OpenExrImporter)
     endif()
     if(MAGNUM_WITH_BCDECIMAGECONVERTER)
         target_link_libraries(BasisImporterTest PRIVATE BcDecImageConverter)
@@ -133,6 +153,9 @@ else()
     add_dependencies(BasisImporterTest BasisImporter)
     if(MAGNUM_WITH_STBIMAGEIMPORTER)
         add_dependencies(BasisImporterTest StbImageImporter)
+    endif()
+    if(MAGNUM_WITH_OPENEXRIMPORTER)
+        add_dependencies(BasisImporterTest OpenExrImporter)
     endif()
     if(MAGNUM_WITH_BCDECIMAGECONVERTER)
         add_dependencies(BasisImporterTest BcDecImageConverter)

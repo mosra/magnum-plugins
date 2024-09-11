@@ -88,3 +88,11 @@ basisu rgb-64x32.png -output_file rgb-linear-pow2.basis -y_flip -linear
 basisu rgb-64x32.png -output_file rgb-linear-pow2.ktx2  -y_flip -linear -ktx2
 basisu rgba-64x32.png -output_file rgba-pow2.basis -force_alpha -y_flip
 basisu rgba-64x32.png -output_file rgba-pow2.ktx2  -force_alpha -y_flip -ktx2
+
+# HDR images
+# Requires v1_50_0_2 tag
+# This version switched the default from -basis to -ktx2
+basisu rgb-63x27.exr -output_file rgbf.basis -y_flip -basis
+basisu rgb-63x27.exr -output_file rgbf.ktx2 -y_flip
+basisu rgba-63x27.exr -output_file rgbaf.basis -y_flip -basis
+basisu rgba-63x27.exr -output_file rgbaf.ktx2 -y_flip

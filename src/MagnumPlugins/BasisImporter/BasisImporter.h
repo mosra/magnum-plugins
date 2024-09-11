@@ -72,8 +72,10 @@ You can use @ref BasisImageConverter to transcode images into this format.
 This plugin provides `BasisImporterEacR`, `BasisImporterEacRG`,
 `BasisImporterEtc1RGB`, `BasisImporterEtc2RGBA`, `BasisImporterBc1RGB`,
 `BasisImporterBc3RGBA`, `BasisImporterBc4R`, `BasisImporterBc5RG`,
-`BasisImporterBc7RGBA`, `BasisImporterPvrtc1RGB4bpp`,
-`BasisImporterPvrtc1RGBA4bpp`, `BasisImporterAstc4x4RGBA`, `BasisImporterRGBA8`.
+`BasisImporterBc6hRGB`,, `BasisImporterBc7RGBA`, `BasisImporterPvrtc1RGB4bpp`,
+`BasisImporterPvrtc1RGBA4bpp`, `BasisImporterAstc4x4RGBA`,
+`BasisImporterAstc4x4RGBAF`, `BasisImporterRGBA8`, `BasisImporterRGB16F`,
+`BasisImporterRGBA16F`.
 
 @m_class{m-block m-success}
 
@@ -254,6 +256,10 @@ you may also use @ref setTargetFormat().
 
 @snippet BasisImporter.cpp target-format-config
 
+HDR images can only be transcoded to one of the HDR formats (`Bc6hRGB` /
+`Astc4x4RGBAF` / `RGB16F` / `RGBA16F`). Likewise, LDR images can only be
+transcoded to non-HDR formats.
+
 There are many options and you should generally be striving for the
 highest-quality format available on a given platform. A detailed description of
 the choices can be found in the [Basis Universal Wiki](https://github.com/BinomialLLC/basis_universal/wiki/How-to-Deploy-ETC1S-Texture-Content-Using-Basis-Universal).
@@ -389,6 +395,30 @@ class MAGNUM_BASISIMPORTER_EXPORT BasisImporter: public AbstractImporter {
              * @ref CompressedPixelFormat::EacRG11Unorm.
              */
             EacRG = 21,
+
+            /**
+             * BC6 RGB unsigned HDR. Loaded as
+             * @ref CompressedPixelFormat::Bc6hRGBUfloat.
+             */
+            Bc6hRGB = 22,
+
+            /**
+             * ASTC 4x4 RGBA HDR. The alpha channel is always set to opaque.
+             * Loaded as @ref CompressedPixelFormat::Astc4x4RGBAF.
+             */
+            Astc4x4RGBAF = 23,
+
+            /**
+             * Uncompressed half float RGB HDR. Loaded as
+             * @ref PixelFormat::RGB16F.
+             */
+            RGB16F = 24,
+
+            /**
+             * Uncompressed half float RGBA HDR. The alpha channel is always
+             * set to opaque. Loaded as @ref PixelFormat::RGBA16F.
+             */
+            RGBA16F = 25,
         };
 
         /**
