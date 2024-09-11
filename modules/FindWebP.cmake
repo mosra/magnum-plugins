@@ -38,6 +38,60 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
+# In case we have WebP as a CMake subproject, a webp target should be present.
+# If not, try to find it via the installed config file, as that is useful to
+# know additional libraries to link to in case of a static build.
+if(NOT TARGET webp)
+    find_package(WebP CONFIG QUIET)
+endif()
+
+# Unfortunately the CMake project itself doesn't provide namespaced ALIAS
+# targets so we have to do this insane branching here.
+set(_WEBP_TARGET )
+set(_WEBP_SUBPROJECT )
+if(TARGET webp)
+    set(_WEBP_TARGET webp)
+    set(_WEBP_SUBPROJECT ON)
+elseif(TARGET WebP::webp)
+    set(_WEBP_TARGET WebP::webp)
+endif()
+if(_WEBP_TARGET)
+    # The webp target doesn't define any usable INTERFACE_INCLUDE_DIRECTORIES
+    # for some reason (apparently the $<BUILD_INTERFACE:> in there doesn't work
+    # or whatever), so let's do that ourselves.
+    #
+    # TODO this could be probably fixable by using target_link_libraries()
+    # instead of set_target_properties() because it evaluates generator
+    # expressions, but that needs CMake 3.10+, before that
+    # target_link_libraries() can't be called on INTERFACE targets.
+    if(_WEBP_SUBPROJECT)
+        # The target is defined in the root, includes are in src/
+        get_target_property(_WEBP_INTERFACE_INCLUDE_DIRECTORIES ${_WEBP_TARGET} SOURCE_DIR)
+        set(_WEBP_INTERFACE_INCLUDE_DIRECTORIES ${_WEBP_INTERFACE_INCLUDE_DIRECTORIES}/src)
+    else()
+        get_target_property(_WEBP_INTERFACE_INCLUDE_DIRECTORIES ${_WEBP_TARGET} INTERFACE_INCLUDE_DIRECTORIES)
+    endif()
+
+    if(NOT TARGET WebP::WebP)
+        # Aliases of (global) targets are only supported in CMake 3.11, so we
+        # work around it by this. This is easier than fetching all possible
+        # properties (which are impossible to track of) and then attempting to
+        # rebuild them into a new target.
+        add_library(WebP::WebP INTERFACE IMPORTED)
+        set_target_properties(WebP::WebP PROPERTIES
+            # TODO the WebP::webp target additionally depends on the sharpyuv
+            #   (static) library. The subproject target doesn't but it doesn't
+            #   seem to cause any problems, right now at least.
+            INTERFACE_LINK_LIBRARIES ${_WEBP_TARGET})
+    endif()
+
+    # Just to make FPHSA print some meaningful location, nothing else
+    include(FindPackageHandleStandardArgs)
+    find_package_handle_standard_args(WebP DEFAULT_MSG
+        _WEBP_INTERFACE_INCLUDE_DIRECTORIES)
+    return()
+endif()
+
 # Library
 find_library(WebP_LIBRARY NAMES webp
     # Prebuilt Windows binaries have a `lib` prefix as well, even though they

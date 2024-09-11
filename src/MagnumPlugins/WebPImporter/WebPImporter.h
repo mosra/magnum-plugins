@@ -86,12 +86,27 @@ Magnum Plugins. To use as a dynamic plugin, load @cpp "WebPImporter" @ce via
 @ref Corrade::PluginManager::Manager.
 
 Additionally, if you're using Magnum as a CMake subproject, bundle the
-[magnum-plugins repository](https://github.com/mosra/magnum-plugins) and do the
-following. Using libwebp itself as a CMake subproject isn't tested at the
-moment, so you need to provide it as a system dependency and point
-`CMAKE_PREFIX_PATH` to its installation dir if necessary.
+[magnum-plugins](https://github.com/mosra/magnum-plugins) and
+[libwebp](https://chromium.googlesource.com/webm/libwebp/) repositories and do
+the following. If you want to use system-installed libwebp, omit the first part
+and point `CMAKE_PREFIX_PATH` to its installation dir if necessary.
 
 @code{.cmake}
+# Build libwebp as static to have the plugin self-contained
+set(WEBP_LINK_STATIC ON CACHE BOOL "" FORCE)
+# Disable unneeded functionality
+set(WEBP_BUILD_ANIM_UTILS OFF CACHE BOOL "" FORCE)
+set(WEBP_BUILD_CWEBP OFF CACHE BOOL "" FORCE)
+set(WEBP_BUILD_DWEBP OFF CACHE BOOL "" FORCE)
+set(WEBP_BUILD_GIF2WEBP OFF CACHE BOOL "" FORCE)
+set(WEBP_BUILD_IMG2WEBP OFF CACHE BOOL "" FORCE)
+set(WEBP_BUILD_VWEBP OFF CACHE BOOL "" FORCE)
+set(WEBP_BUILD_WEBPINFO OFF CACHE BOOL "" FORCE)
+set(WEBP_BUILD_LIBWEBPMUX OFF CACHE BOOL "" FORCE)
+set(WEBP_BUILD_WEBPMUX OFF CACHE BOOL "" FORCE)
+set(WEBP_BUILD_EXTRAS OFF CACHE BOOL "" FORCE)
+add_subdirectory(libwebp EXCLUDE_FROM_ALL)
+
 set(MAGNUM_WITH_WEBPIMPORTER ON CACHE BOOL "" FORCE)
 add_subdirectory(magnum-plugins EXCLUDE_FROM_ALL)
 
