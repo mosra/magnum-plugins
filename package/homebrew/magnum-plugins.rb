@@ -30,13 +30,13 @@ class MagnumPlugins < Formula
   depends_on "webp" => :recommended
 
   def install
-    # Bundle Basis Universal, v1_15_update2 for HEAD builds, a commit that's
+    # Bundle Basis Universal, v1_50_0_2 for HEAD builds, a commit that's
     # before the UASTC support (which was not implemented yet) on 2020.06.
     # The repo has massive useless files in its history, so we're downloading
     # just a snapshot instead of a git clone. Also, WHY THE FUCK curl needs -L
     # and -o?! why can't it just work?!
     if build.head?
-      system "curl", "-L", "https://github.com/BinomialLLC/basis_universal/archive/v1_15_update2.tar.gz", "-o", "src/external/basis-universal.tar.gz"
+      system "curl", "-L", "https://github.com/BinomialLLC/basis_universal/archive/v1_50_0_2.tar.gz", "-o", "src/external/basis-universal.tar.gz"
     else
       system "curl", "-L", "https://github.com/BinomialLLC/basis_universal/archive/2f43afcc97d0a5dafdb73b4e24e123cf9687a418.tar.gz", "-o", "src/external/basis-universal.tar.gz"
     end
