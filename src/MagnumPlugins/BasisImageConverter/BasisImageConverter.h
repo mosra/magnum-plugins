@@ -90,8 +90,9 @@ libraries and is built if `MAGNUM_WITH_BASISIMAGECONVERTER` is enabled when
 building Magnum Plugins. To use as a dynamic plugin, load
 @cpp "BasisImageConverter" @ce via @ref Corrade::PluginManager::Manager.
 Current version of the plugin is tested against the
-[`v1_15_update2` tag](https://github.com/BinomialLLC/basis_universal/tree/v1_15_update2),
-but could possibly compile against newer versions as well.
+[`v1_50_0_2`](https://github.com/BinomialLLC/basis_universal/tree/v1_50_0_2)
+`1.16.4` and `v1_15_update2` tags, but could possibly compile against newer
+versions as well.
 
 Additionally, if you're using Magnum as a CMake subproject, bundle the
 [magnum-plugins](https://github.com/mosra/magnum-plugins),
@@ -239,7 +240,7 @@ loaded while being already used from another thread.
 Basis compression can be configured to produce better quality or reduce
 encoding time. Configuration options are equivalent to parameters of the C++
 encoder API in `basis_compressor`. The `basisu` tool options mostly match the
-encoder API parameters and its [help text](https://github.com/BinomialLLC/basis_universal/blob/v1_15_update2/basisu_tool.cpp#L76)
+encoder API parameters and its [help text](https://github.com/BinomialLLC/basis_universal/blob/v1_50_0_2/basisu_tool.cpp#L100)
 provides useful descriptions of most of the parameters, their ranges and the
 impact on quality/speed. The full form of the configuration is shown below:
 

@@ -226,10 +226,11 @@ thus the Magnum Plugins package doesn't have it enabled by default. In order to
 enable them, do the following:
 
 -   For @ref Trade::BasisImporter "BasisImporter" or
-    @ref Trade::BasisImageConverter "BasisImageConverter", [download the
-    `v1_15_update2` tag of the Basis Universal repo](https://github.com/BinomialLLC/basis_universal/archive/v1_15_update2.tar.gz),
-    extract it into `src/external/basis-universal` (note the dash instead of an
-    underscore) and set `MAGNUM_WITH_BASISIMPORTER` /
+    @ref Trade::BasisImageConverter "BasisImageConverter", download the
+    [`v1_50_0_2`](https://github.com/BinomialLLC/basis_universal/archive/v1_50_0_2.tar.gz)
+    `1.16.4` or `v1_15_update2` tag of the Basis Universal repo, extract it
+    into `src/external/basis-universal` (note the dash instead of an
+    underscore) set `MAGNUM_WITH_BASISIMPORTER` /
     `MAGNUM_WITH_BASISIMAGECONVERTER` to `ON` in `package/debian/rules`
 -   For @ref Trade::MeshOptimizerSceneConverter "MeshOptimizerSceneConverter",
     [clone the MeshOptimizer repo](https://github.com/zeux/meshoptimizer) to
