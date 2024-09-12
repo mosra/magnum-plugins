@@ -228,7 +228,7 @@ commands:
     - run:
         name: Install Basis Universal
         command: |
-          export BASIS_VERSION=v1_15_update2
+          export BASIS_VERSION=v1_50_0_2
           mkdir -p $HOME/basis_universal && cd $HOME/basis_universal
           wget -nc https://github.com/BinomialLLC/basis_universal/archive/$BASIS_VERSION.tar.gz
           tar --strip-components 1 -xzf $BASIS_VERSION.tar.gz
