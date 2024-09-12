@@ -224,14 +224,17 @@ commands:
           ninja install
 
   install-basis:
+    parameters:
+      tag:
+        type: string
+        default: "v1_50_0_2"
     steps:
     - run:
-        name: Install Basis Universal
+        name: Install Basis Universal << parameters.tag >>
         command: |
-          export BASIS_VERSION=v1_15_update2
           mkdir -p $HOME/basis_universal && cd $HOME/basis_universal
-          wget -nc https://github.com/BinomialLLC/basis_universal/archive/$BASIS_VERSION.tar.gz
-          tar --strip-components 1 -xzf $BASIS_VERSION.tar.gz
+          wget -nc https://github.com/BinomialLLC/basis_universal/archive/<< parameters.tag >>.tar.gz
+          tar --strip-components 1 -xzf << parameters.tag >>.tar.gz
           # We want to use the external Zstd instead of this
           rm -r zstd
 
@@ -338,9 +341,14 @@ jobs:
       CMAKE_CXX_FLAGS: --coverage
       LCOV_EXTRA_OPTS: --gcov-tool /usr/bin/gcov-4.8
       CONFIGURATION: Debug
+      # Testing building BasisImageConverter with OpenCL present on the system,
+      # but explicitly turned off via CMAKE_DISABLE_FIND_PACKAGE_OpenCL
+      DISABLE_OPENCL: "ON"
     steps:
     - install-base-linux:
-        extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng-dev libdevil-dev libharfbuzz-dev libassimp-dev libwebp-dev libzstd-dev wget
+        # We want the OpenCL headers and ICD loader libraries to test disabling
+        # find_package(), but don't need the actual ICD
+        extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng-dev libdevil-dev libharfbuzz-dev libassimp-dev libwebp-dev libzstd-dev ocl-icd-opencl-dev wget
     # Crashes or gets stuck with the default setting, only on GCC. 24 is not
     # enough, probably due to compatibility includes.
     - cap-ninja-jobs:
@@ -348,7 +356,8 @@ jobs:
     - install-gcc-4_8
     - install-cmake:
         version: "3.5.2"
-    - install-basis
+    - install-basis:
+        tag: "1.16.4"
     - install-meshoptimizer
     - install-libspng
     # In repos only since 20.04, but even then would probably hit the GCC 4.8 /
@@ -374,8 +383,9 @@ jobs:
     # speed up. These are tested more than enough on other jobs, plus here we
     # have a fresher Ubuntu so we can take them directly from the repos.
     - install-base-linux-arm64:
-        extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng-dev libdevil-dev libharfbuzz-dev libassimp-dev libzstd-dev glslang-dev libopenexr-dev libwebp-dev spirv-tools
-    - install-basis
+        extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng-dev libdevil-dev libharfbuzz-dev libassimp-dev libzstd-dev ocl-icd-opencl-dev pocl-opencl-icd glslang-dev libopenexr-dev libwebp-dev spirv-tools
+    - install-basis:
+        tag: "1.16.4"
     - install-meshoptimizer
     - install-libspng
     - build:
@@ -392,6 +402,7 @@ jobs:
       CONFIGURATION: Debug
     steps:
     - install-base-linux:
+        # Basis 1.15 doesn't support OpenCL, so those packages aren't needed
         extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng-dev libdevil-dev libharfbuzz-dev libassimp-dev libwebp-dev libzstd-dev wget
     # Crashes or gets stuck with the default setting, only on GCC. 24 is not
     # enough.
@@ -400,7 +411,8 @@ jobs:
     - install-gcc-4_8
     - install-cmake:
         version: "3.5.2"
-    - install-basis
+    - install-basis:
+        tag: "v1_15_update2"
     - install-meshoptimizer
     - install-libspng
     # These two are in repos only since 20.04, but even then would probably hit
@@ -425,7 +437,7 @@ jobs:
       CONFIGURATION: Release
     steps:
     - install-base-linux:
-        extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng-dev libdevil-dev libharfbuzz-dev libassimp-dev libwebp-dev libzstd-dev wget
+        extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng-dev libdevil-dev libharfbuzz-dev libassimp-dev libwebp-dev libzstd-dev ocl-icd-opencl-dev pocl-opencl-icd wget
     # Crashes or gets stuck with the default setting, only on GCC
     - cap-ninja-jobs
     - install-gcc-4_8
@@ -457,7 +469,7 @@ jobs:
       CONFIGURATION: Debug
     steps:
     - install-base-linux:
-        extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng-dev libdevil-dev libharfbuzz-dev libassimp-dev libwebp-dev libzstd-dev wget
+        extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng-dev libdevil-dev libharfbuzz-dev libassimp-dev libwebp-dev libzstd-dev ocl-icd-opencl-dev pocl-opencl-icd wget
     - install-clang
     - install-cmake:
         version: "3.5.2"
@@ -490,7 +502,7 @@ jobs:
       CONFIGURATION: Debug
     steps:
     - install-base-linux:
-        extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng-dev libdevil-dev libharfbuzz-dev libassimp-dev libopenexr-dev libwebp-dev libzstd-dev wget
+        extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng-dev libdevil-dev libharfbuzz-dev libassimp-dev libopenexr-dev libwebp-dev libzstd-dev ocl-icd-opencl-dev pocl-opencl-icd wget
     - install-clang
     - install-cmake:
         version: "3.5.2"
@@ -510,9 +522,10 @@ jobs:
     environment:
       CMAKE_CXX_FLAGS: --coverage
       CONFIGURATION: Debug
+      DISABLE_OPENCL: "ON"
     steps:
     - install-base-macos:
-        extra: faad2 harfbuzz assimp devil spirv-tools glslang openexr webp wget zstd libspng
+        extra: faad2 harfbuzz assimp devil spirv-tools glslang openexr webp wget zstd libspng opencl-icd-loader pocl
     - install-basis
     - install-meshoptimizer
     - build:
@@ -528,8 +541,9 @@ jobs:
       CONFIGURATION: Debug
     steps:
     - install-base-macos:
-        extra: faad2 harfbuzz assimp devil spirv-tools glslang openexr webp wget zstd libspng
-    - install-basis
+        extra: faad2 harfbuzz assimp devil spirv-tools glslang openexr webp wget zstd libspng opencl-icd-loader pocl
+    - install-basis:
+        tag: "1.16.4"
     - install-meshoptimizer
     - build:
         script: unix-desktop.sh

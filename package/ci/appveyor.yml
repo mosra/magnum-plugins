@@ -121,10 +121,20 @@ install:
 - IF "%TARGET%" == "desktop" IF "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2019" IF "%COMPILER:~0,4%" == "msvc" appveyor DownloadFile https://ci.magnum.graphics/freetype-2.10.4-windows-2019.zip && 7z x freetype-2.10.4-windows-2019.zip -o%APPVEYOR_BUILD_FOLDER%\deps
 - IF "%TARGET%" == "desktop" IF "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2017" IF "%COMPILER:~0,4%" == "msvc" appveyor DownloadFile https://ci.magnum.graphics/freetype-2.10.4-windows-2016.zip && 7z x freetype-2.10.4-windows-2016.zip -o%APPVEYOR_BUILD_FOLDER%\deps
 
-# Basis Universal
-- set BASIS_VERSION=1_15_update2
-- IF NOT EXIST %APPVEYOR_BUILD_FOLDER%\v%BASIS_VERSION%.zip appveyor DownloadFile https://github.com/BinomialLLC/basis_universal/archive/v%BASIS_VERSION%.zip
-- 7z x v%BASIS_VERSION%.zip && ren basis_universal-%BASIS_VERSION% basis_universal
+# Basis Universal, all the recent supported versions. Default to latest and
+# use a few older versions on 2017 and 2019.
+- set BASIS_VERSION=v1_50_0_2
+- IF "%TARGET%" == "desktop" IF "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2019" IF "%COMPILER%" == "msvc" set BASIS_VERSION=1.16.4
+- IF "%TARGET%" == "desktop" IF "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2017" IF "%COMPILER%" == "msvc" set BASIS_VERSION=v1_15_update2
+# Basis plugins aren't built on MSVC 2015
+- IF "%TARGET%" == "rt" set BASIS_VERSION=1.16.4
+- IF NOT EXIST %APPVEYOR_BUILD_FOLDER%\%BASIS_VERSION%.zip appveyor DownloadFile https://github.com/BinomialLLC/basis_universal/archive/%BASIS_VERSION%.zip
+# Github removes the v prefix in the folder name. 7zip has no way to skip the
+# topmost folder so strip it manually.
+- set BASIS_FOLDER=%BASIS_VERSION%
+- IF "%BASIS_FOLDER:~0,1%" == "v" set BASIS_FOLDER=%BASIS_FOLDER:~1%
+- set BASIS_FOLDER=basis_universal-%BASIS_FOLDER%
+- 7z x %BASIS_VERSION%.zip && ren %BASIS_FOLDER% basis_universal
 # We want to use the external Zstd instead of this
 - rmdir /s /q basis_universal\zstd
 

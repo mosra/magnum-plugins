@@ -20,6 +20,9 @@ IF "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2015" set EXCEPT_MSVC2015=O
 IF "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2015" set EXCEPT_MSVC2017=OFF
 IF "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2017" set EXCEPT_MSVC2017=OFF
 
+set ONLY_MSVC2019=OFF
+IF "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2019" set ONLY_MSVC2019=ON
+
 rem Build Corrade
 git clone --depth 1 https://github.com/mosra/corrade.git || exit /b
 cd corrade || exit /b
@@ -65,6 +68,8 @@ cd .. && cd ..
 
 rem Build. MAGNUM_BUILD_GL_TESTS is enabled just to be sure, it should not be
 rem needed by any plugin.
+rem OpenCL is disabled on MSVC 2019 to get some test coverage for
+rem BasisImageConverter without OpenCL support compiled in.
 mkdir build && cd build || exit /b
 cmake .. ^
     -DCMAKE_BUILD_TYPE=Debug ^
@@ -72,6 +77,7 @@ cmake .. ^
     -DCMAKE_PREFIX_PATH=%APPVEYOR_BUILD_FOLDER%/openal;%APPVEYOR_BUILD_FOLDER%/libwebp;%APPVEYOR_BUILD_FOLDER%/devil;C:/Tools/vcpkg/installed/x64-windows ^
     -DMAGNUM_WITH_ASSIMPIMPORTER=%EXCEPT_MSVC2015% ^
     -DMAGNUM_WITH_ASTCIMPORTER=ON ^
+    -DCMAKE_DISABLE_FIND_PACKAGE_OpenCL=%ONLY_MSVC2019% ^
     -DMAGNUM_WITH_BASISIMAGECONVERTER=%EXCEPT_MSVC2015% ^
     -DMAGNUM_WITH_BASISIMPORTER=%EXCEPT_MSVC2015% -DBASIS_UNIVERSAL_DIR=%APPVEYOR_BUILD_FOLDER%/basis_universal ^
     -DMAGNUM_WITH_BCDECIMAGECONVERTER=ON ^
