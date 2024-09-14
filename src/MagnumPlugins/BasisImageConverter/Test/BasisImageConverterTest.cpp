@@ -1456,6 +1456,7 @@ void BasisImageConverterTest::openCL() {
     #else
     CORRADE_COMPARE(out.str(), "");
     #endif
+    CORRADE_VERIFY(compressedData);
 
     if(_manager.loadState("BasisImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("BasisImporter plugin not found, cannot test");
