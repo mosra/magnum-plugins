@@ -201,7 +201,7 @@ foreach(_component ${BasisUniversal_FIND_COMPONENTS})
 
                 # Source files for image file loading are not added here.
                 # BasisImageConverter provides stubs for all used functions.
-                # See src/external/basis-image-loading-stubs for more info.
+                # See src/external/basis-uncrapifier for more info.
 
                 foreach(_file ${BasisUniversalEncoder_SOURCES})
                     _basis_setup_source_file(${_file})

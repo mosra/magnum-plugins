@@ -63,11 +63,11 @@ target_include_directories(BasisImageConverter PUBLIC
     ${PROJECT_BINARY_DIR}/src
     # Turns #include "../zstd/zstd.h" into an actual external zstd.h include.
     # See the README in that directory for details.
-    ${PROJECT_SOURCE_DIR}/src/external/basis-zstd-include-uncrapifier/put-this-on-include-path)
+    ${PROJECT_SOURCE_DIR}/src/external/basis-uncrapifier/put-this-on-include-path)
 # Adds empty definitions for unused image loading library functions.
 # See the README in that directory for details.
 target_sources(BasisImageConverter PRIVATE
-    ${PROJECT_SOURCE_DIR}/src/external/basis-image-loading-stubs/stubs.cpp)
+    ${PROJECT_SOURCE_DIR}/src/external/basis-uncrapifier/image-loading-stubs.cpp)
 target_link_libraries(BasisImageConverter
     PUBLIC Magnum::Trade
     PRIVATE BasisUniversal::Encoder)

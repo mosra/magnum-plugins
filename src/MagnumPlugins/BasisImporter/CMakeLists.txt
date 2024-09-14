@@ -65,7 +65,7 @@ target_include_directories(BasisImporter
     ${PROJECT_BINARY_DIR}/src
     # Turns #include "../zstd/zstd.h" into an actual external zstd.h include.
     # See the README in that directory for details.
-    ${PROJECT_SOURCE_DIR}/src/external/basis-zstd-include-uncrapifier/put-this-on-include-path)
+    ${PROJECT_SOURCE_DIR}/src/external/basis-uncrapifier/put-this-on-include-path)
 target_link_libraries(BasisImporter
     PUBLIC Magnum::Trade
     PRIVATE BasisUniversal::Transcoder)
