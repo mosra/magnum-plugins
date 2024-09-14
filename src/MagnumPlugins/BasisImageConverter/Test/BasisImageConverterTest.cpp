@@ -1452,8 +1452,10 @@ void BasisImageConverterTest::openCL() {
 
     /* If built without OpenCL, converting falls back to CPU and still succeeds */
     #ifndef OpenCL_FOUND
+    CORRADE_WARN("OpenCL is not available.");
     CORRADE_COMPARE(out.str(), "Trade::BasisImageConverter::convertToData(): OpenCL not supported, falling back to CPU encoding\n");
     #else
+    CORRADE_INFO("OpenCL is available.");
     CORRADE_COMPARE(out.str(), "");
     #endif
     CORRADE_VERIFY(compressedData);
