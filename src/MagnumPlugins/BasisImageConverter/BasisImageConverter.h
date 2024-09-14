@@ -90,8 +90,9 @@ libraries and is built if `MAGNUM_WITH_BASISIMAGECONVERTER` is enabled when
 building Magnum Plugins. To use as a dynamic plugin, load
 @cpp "BasisImageConverter" @ce via @ref Corrade::PluginManager::Manager.
 Current version of the plugin is tested against the
-[`v1_50_0_2` tag](https://github.com/BinomialLLC/basis_universal/tree/v1_50_0_2),
-but could possibly compile against newer versions as well.
+[`v1_50_0_2`](https://github.com/BinomialLLC/basis_universal/tree/v1_50_0_2)
+`1.16.4` and `v1_15_update2` tags, but could possibly compile against newer
+versions as well.
 
 Additionally, if you're using Magnum as a CMake subproject, bundle the
 [magnum-plugins](https://github.com/mosra/magnum-plugins),
