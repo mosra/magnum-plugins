@@ -90,6 +90,8 @@ struct BasisImageConverterTest: TestSuite::Tester {
     void ktx();
     void swizzle();
 
+    void openCL();
+
     /* Explicitly forbid system-wide plugin dependencies */
     PluginManager::Manager<AbstractImageConverter> _converterManager{"nonexistent"};
 
@@ -342,6 +344,8 @@ BasisImageConverterTest::BasisImageConverterTest() {
 
     addInstancedTests({&BasisImageConverterTest::swizzle},
         Containers::arraySize(SwizzleData));
+
+    addTests({&BasisImageConverterTest::openCL});
 
     /* Pull in the AnyImageImporter dependency for image comparison */
     _manager.load("AnyImageImporter");
@@ -1423,6 +1427,58 @@ void BasisImageConverterTest::swizzle() {
         Vector4i{image->pixels<Vector4ub>()[0][0]},
         Vector4i{data.output},
         TestSuite::Compare::around(Vector4i{2}));
+}
+
+void BasisImageConverterTest::openCL() {
+    if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("PngImporter plugin not found, cannot test contents");
+
+    Containers::Pointer<AbstractImporter> pngImporter = _manager.instantiate("PngImporter");
+    CORRADE_VERIFY(pngImporter->openFile(Utility::Path::join(BASISIMPORTER_TEST_DIR, "rgba-31x13.png")));
+    Containers::Optional<Trade::ImageData2D> original = pngImporter->image2D(0);
+    CORRADE_VERIFY(original);
+
+    Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("BasisImageConverter");
+    /* Default is off */
+    CORRADE_COMPARE(converter->configuration().value<bool>("use_opencl"), false);
+    converter->configuration().setValue("use_opencl", true);
+
+    std::ostringstream out;
+    Containers::Optional<Containers::Array<char>> compressedData;
+    {
+        Warning redirectWarning{&out};
+        compressedData = converter->convertToData(*original);
+    }
+
+    /* If built without OpenCL, converting falls back to CPU and still succeeds */
+    #ifndef OpenCL_FOUND
+    CORRADE_COMPARE(out.str(), "Trade::BasisImageConverter::convertToData(): OpenCL not supported, falling back to CPU encoding\n");
+    #else
+    CORRADE_COMPARE(out.str(), "");
+    #endif
+
+    if(_manager.loadState("BasisImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("BasisImporter plugin not found, cannot test");
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporterRGBA8");
+    CORRADE_VERIFY(importer->openData(*compressedData));
+    CORRADE_COMPARE(importer->image2DCount(), 1);
+
+    /* There are moderately significant compression artifacts. With OpenCL
+       slightly higher so. */
+    #ifndef OpenCL_FOUND
+    constexpr Float MaxThreshold = 81.0f;
+    constexpr Float MeanThreshold = 14.31f;
+    #else
+    constexpr Float MaxThreshold = 82.0f;
+    constexpr Float MeanThreshold = 14.709f;
+    #endif
+
+    const auto result = importer->image2D(0);
+    CORRADE_VERIFY(result);
+    CORRADE_COMPARE_WITH(*result,
+        Utility::Path::join(BASISIMPORTER_TEST_DIR, "rgba-31x13.png"),
+        (DebugTools::CompareImageToFile{_manager, MaxThreshold, MeanThreshold}));
 }
 
 }}}}

@@ -47,6 +47,11 @@ find_package(Magnum COMPONENTS AnyImageImporter)
 set(THREADS_PREFER_PTHREAD_FLAG TRUE)
 find_package(Threads REQUIRED)
 
+# FindBasisUniversal, when building from source with BASIS_UNIVERSAL_DIR,
+# builds with OpenCL support if it finds the package. Pass OpenCL_FOUND to
+# configure.h so the test knows if OpenCL is supported.
+find_package(OpenCL QUIET)
+
 if(CORRADE_TARGET_EMSCRIPTEN OR CORRADE_TARGET_ANDROID)
     set(BASISIMAGECONVERTER_TEST_OUTPUT_DIR "write")
 else()
