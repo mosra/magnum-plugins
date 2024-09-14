@@ -211,6 +211,15 @@ foreach(_component ${BasisUniversal_FIND_COMPONENTS})
 
                 set(BasisUniversalEncoder_DEFINITIONS "BASISU_NO_ITERATOR_DEBUG_LEVEL")
 
+                # Basis already checks for GCC < 5 to work around missing
+                # std::is_trivially_copyable but then uses the wrong built-in.
+                # So close, yet so far.
+                # Needs to be transitive because it's used in a header file.
+                if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS "5.0")
+                    list(APPEND BasisUniversalEncoder_DEFINITIONS
+                        "__is_trivially_copyable=__has_trivial_copy")
+                endif()
+
                 # Try to find an external OpenCL library and enable support for
                 # it in basis if found.
                 find_package(OpenCL)
@@ -312,6 +321,11 @@ foreach(_component ${BasisUniversal_FIND_COMPONENTS})
                     ${BasisUniversalTranscoder_DIR}/basisu_transcoder.cpp)
 
                 set(BasisUniversalTranscoder_DEFINITIONS "BASISU_NO_ITERATOR_DEBUG_LEVEL")
+
+                if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS "5.0")
+                    list(APPEND BasisUniversalTranscoder_DEFINITIONS
+                        "__is_trivially_copyable=__has_trivial_copy")
+                endif()
 
                 # Try to find an external Zstandard library because that's the
                 # sanest and most flexible option.
