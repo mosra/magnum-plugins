@@ -87,6 +87,8 @@ macro(_basis_setup_source_file source)
 
     # Basis shouldn't override the MSVC iterator debug level as it would make
     # it inconsistent with the rest of the code
+    # Only needed until 1.15, in later versions this doesn't do
+    # anything anymore.
     if(CORRADE_TARGET_WINDOWS)
         set_property(SOURCE ${source} APPEND PROPERTY COMPILE_DEFINITIONS
             BASISU_NO_ITERATOR_DEBUG_LEVEL)
