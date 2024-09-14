@@ -176,24 +176,19 @@ foreach(_component ${BasisUniversal_FIND_COMPONENTS})
                     ${BasisUniversalEncoder_DIR}/basisu_resampler.cpp
                     ${BasisUniversalEncoder_DIR}/basisu_resample_filters.cpp
                     ${BasisUniversalEncoder_DIR}/basisu_ssim.cpp
-                    ${BasisUniversalEncoder_DIR}/basisu_uastc_enc.cpp
-                    ${BasisUniversalEncoder_DIR}/jpgd.cpp)
+                    ${BasisUniversalEncoder_DIR}/basisu_uastc_enc.cpp)
 
                 # Files not present in all supported basis versions, treat them
                 # as optional and do nothing if not found.
                 foreach(_file
                     # Removed in 1.16
-                    apg_bmp.c
                     basisu_astc_decomp.cpp
                     basisu_global_selector_palette_helpers.cpp
-                    lodepng.cpp
                     # Added in 1.16
                     basisu_opencl.cpp
-                    pvpngreader.cpp
                     # Added in 1.50
                     basisu_astc_hdr_enc.cpp
-                    3rdparty/android_astc_decomp.cpp
-                    3rdparty/tinyexr.cpp)
+                    3rdparty/android_astc_decomp.cpp)
                     # Disable the find root path here, it overrides the
                     # CMAKE_FIND_ROOT_PATH_MODE_INCLUDE setting potentially set in
                     # toolchains.
@@ -205,6 +200,10 @@ foreach(_component ${BasisUniversal_FIND_COMPONENTS})
                             ${BasisUniversalEncoder_${_file}_SOURCE})
                     endif()
                 endforeach()
+
+                # Source files for image file loading are not added here.
+                # BasisImageConverter provides stubs for all used functions.
+                # See src/external/basis-uncrapifier for more info.
 
                 foreach(_file ${BasisUniversalEncoder_SOURCES})
                     _basis_setup_source_file(${_file})
