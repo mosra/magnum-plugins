@@ -548,8 +548,11 @@ const struct {
         {}, false, {}, {}, {}, {},
         "image-webp.glb", nullptr, true,
         nullptr},
+    /* Basis has different output across versions, machines and possibly even
+       across runs, thus making the image not bundled and *not* comparing the
+       *.ktx2 file, relying only on verifying that the image imports back. */
     {"KTX2+Basis", "BasisKtxImageConverter", "BasisImporter",
-        {}, false, {}, {}, {}, {},
+        {}, false, {}, {}, {}, false, /* not bundled */
         "image-basis.glb", nullptr, true,
         nullptr},
     {"KTX2 with extension", "KtxImageConverter", "KtxImporter",
