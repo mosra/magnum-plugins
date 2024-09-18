@@ -520,7 +520,7 @@ jobs:
       DISABLE_OPENCL: "ON"
     steps:
     - install-base-macos:
-        extra: faad2 harfbuzz assimp devil spirv-tools glslang openexr webp wget zstd libspng opencl-icd-loader pocl
+        extra: faad2 harfbuzz assimp devil spirv-tools glslang openexr webp wget zstd libspng
     - install-basis
     - install-meshoptimizer
     - build:
@@ -536,7 +536,7 @@ jobs:
       CONFIGURATION: Debug
     steps:
     - install-base-macos:
-        extra: faad2 harfbuzz assimp devil spirv-tools glslang openexr webp wget zstd libspng opencl-icd-loader pocl
+        extra: faad2 harfbuzz assimp devil spirv-tools glslang openexr webp wget zstd libspng
     - install-basis:
         tag: "1.16.4"
     - install-meshoptimizer
