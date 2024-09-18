@@ -91,7 +91,10 @@ corrade_add_test(BasisImageConverterTest BasisImageConverterTest.cpp
     FILES
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/BasisImporter/Test/rgb-63x27.png
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/BasisImporter/Test/rgba-63x27.png)
-target_include_directories(BasisImageConverterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>)
+target_include_directories(BasisImageConverterTest PRIVATE
+    ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>
+    # The test needs BASISU_LIB_VERSION from basisu_comp.h
+    ${BasisUniversalEncoder_INCLUDE_DIR})
 if(MAGNUM_BASISIMAGECONVERTER_BUILD_STATIC)
     target_link_libraries(BasisImageConverterTest PRIVATE BasisImageConverter)
     if(Magnum_AnyImageImporter_FOUND)

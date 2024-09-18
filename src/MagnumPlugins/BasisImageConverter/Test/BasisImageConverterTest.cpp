@@ -50,6 +50,8 @@
 #include <Magnum/Trade/ImageData.h>
 #include <Magnum/Trade/TextureData.h>
 
+#include <basisu_comp.h> /* BASISU_LIB_VERSION */
+
 #include "configure.h"
 
 namespace Magnum { namespace Trade { namespace Test { namespace {
@@ -1430,6 +1432,10 @@ void BasisImageConverterTest::swizzle() {
 }
 
 void BasisImageConverterTest::openCL() {
+    #if BASISU_LIB_VERSION < 116
+    CORRADE_SKIP("OpenCL not used in version 1.15 yet.");
+    #endif
+
     if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("PngImporter plugin not found, cannot test contents");
 
