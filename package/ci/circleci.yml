@@ -224,14 +224,17 @@ commands:
           ninja install
 
   install-basis:
+    parameters:
+      tag:
+        type: string
+        default: "v1_50_0_2"
     steps:
     - run:
-        name: Install Basis Universal
+        name: Install Basis Universal << parameters.tag >>
         command: |
-          export BASIS_VERSION=v1_50_0_2
           mkdir -p $HOME/basis_universal && cd $HOME/basis_universal
-          wget -nc https://github.com/BinomialLLC/basis_universal/archive/$BASIS_VERSION.tar.gz
-          tar --strip-components 1 -xzf $BASIS_VERSION.tar.gz
+          wget -nc https://github.com/BinomialLLC/basis_universal/archive/<< parameters.tag >>.tar.gz
+          tar --strip-components 1 -xzf << parameters.tag >>.tar.gz
           # We want to use the external Zstd instead of this
           rm -r zstd
 
@@ -348,7 +351,8 @@ jobs:
     - install-gcc-4_8
     - install-cmake:
         version: "3.5.2"
-    - install-basis
+    - install-basis:
+        tag: "1.16.4"
     - install-meshoptimizer
     - install-libspng
     # In repos only since 20.04, but even then would probably hit the GCC 4.8 /
@@ -375,7 +379,8 @@ jobs:
     # have a fresher Ubuntu so we can take them directly from the repos.
     - install-base-linux-arm64:
         extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng-dev libdevil-dev libharfbuzz-dev libassimp-dev libzstd-dev glslang-dev libopenexr-dev libwebp-dev spirv-tools
-    - install-basis
+    - install-basis:
+        tag: "1.16.4"
     - install-meshoptimizer
     - install-libspng
     - build:
@@ -400,7 +405,8 @@ jobs:
     - install-gcc-4_8
     - install-cmake:
         version: "3.5.2"
-    - install-basis
+    - install-basis:
+        tag: "v1_15_update2"
     - install-meshoptimizer
     - install-libspng
     # These two are in repos only since 20.04, but even then would probably hit
@@ -529,7 +535,8 @@ jobs:
     steps:
     - install-base-macos:
         extra: faad2 harfbuzz assimp devil spirv-tools glslang openexr webp wget zstd libspng
-    - install-basis
+    - install-basis:
+        tag: "1.16.4"
     - install-meshoptimizer
     - build:
         script: unix-desktop.sh
