@@ -222,7 +222,7 @@ foreach(_component ${BasisUniversal_FIND_COMPONENTS})
 
                 # Try to find an external OpenCL library and enable support for
                 # it in basis if found.
-                find_package(OpenCL QUIET)
+                find_package(OpenCL)
                 if(OpenCL_FOUND)
                     list(APPEND BasisUniversalEncoder_DEFINITIONS
                         "BASISU_SUPPORT_OPENCL=1")
