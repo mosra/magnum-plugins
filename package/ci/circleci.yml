@@ -341,6 +341,7 @@ jobs:
       CMAKE_CXX_FLAGS: --coverage
       LCOV_EXTRA_OPTS: --gcov-tool /usr/bin/gcov-4.8
       CONFIGURATION: Debug
+      DISABLE_OPENCL: "ON"
     steps:
     - install-base-linux:
         extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng-dev libdevil-dev libharfbuzz-dev libassimp-dev libwebp-dev libzstd-dev ocl-icd-opencl-dev pocl wget
@@ -516,6 +517,7 @@ jobs:
     environment:
       CMAKE_CXX_FLAGS: --coverage
       CONFIGURATION: Debug
+      DISABLE_OPENCL: "ON"
     steps:
     - install-base-macos:
         extra: faad2 harfbuzz assimp devil spirv-tools glslang openexr webp wget zstd libspng opencl-icd-loader pocl
