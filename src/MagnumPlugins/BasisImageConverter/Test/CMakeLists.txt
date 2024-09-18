@@ -95,6 +95,12 @@ target_include_directories(BasisImageConverterTest PRIVATE
     ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>
     # The test needs BASISU_LIB_VERSION from basisu_comp.h
     ${BasisUniversalEncoder_INCLUDE_DIR})
+# BasisUniversalEncoder_DEFINITIONS isn't exported by find_package, so we need
+# to grab it from the target
+get_target_property(BasisUniversalEncoder_DEFINITIONS BasisUniversal::Encoder
+    INTERFACE_COMPILE_DEFINITIONS)
+set_property(TARGET BasisImageConverterTest APPEND PROPERTY
+    COMPILE_DEFINITIONS ${BasisUniversalEncoder_DEFINITIONS})
 if(MAGNUM_BASISIMAGECONVERTER_BUILD_STATIC)
     target_link_libraries(BasisImageConverterTest PRIVATE BasisImageConverter)
     if(Magnum_AnyImageImporter_FOUND)
