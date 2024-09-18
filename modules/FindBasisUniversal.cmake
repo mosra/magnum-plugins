@@ -201,6 +201,16 @@ foreach(_component ${BasisUniversal_FIND_COMPONENTS})
                     endif()
                 endforeach()
 
+                # The encoder unconditionally calls assert() for all OpenCL
+                # errors, including a non-fatal error when falling back to a
+                # CPU device: https://github.com/BinomialLLC/basis_universal/issues/378
+                # To allow testing on CPU OpenCL implementations, disable
+                # asserts in this specific file.
+                if(BasisUniversalEncoder_basisu_opencl.cpp_SOURCE)
+                    set_property(SOURCE ${BasisUniversalEncoder_basisu_opencl.cpp_SOURCE}
+                        APPEND PROPERTY COMPILE_DEFINITIONS NDEBUG)
+                endif()
+
                 # Source files for image file loading are not added here.
                 # BasisImageConverter provides stubs for all used functions.
                 # See src/external/basis-uncrapifier for more info.
