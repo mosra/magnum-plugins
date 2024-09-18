@@ -343,7 +343,7 @@ jobs:
       CONFIGURATION: Debug
     steps:
     - install-base-linux:
-        extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng-dev libdevil-dev libharfbuzz-dev libassimp-dev libwebp-dev libzstd-dev wget
+        extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng-dev libdevil-dev libharfbuzz-dev libassimp-dev libwebp-dev libzstd-dev ocl-icd-opencl-dev pocl wget
     # Crashes or gets stuck with the default setting, only on GCC. 24 is not
     # enough, probably due to compatibility includes.
     - cap-ninja-jobs:
@@ -378,7 +378,7 @@ jobs:
     # speed up. These are tested more than enough on other jobs, plus here we
     # have a fresher Ubuntu so we can take them directly from the repos.
     - install-base-linux-arm64:
-        extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng-dev libdevil-dev libharfbuzz-dev libassimp-dev libzstd-dev glslang-dev libopenexr-dev libwebp-dev spirv-tools
+        extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng-dev libdevil-dev libharfbuzz-dev libassimp-dev libzstd-dev ocl-icd-opencl-dev pocl glslang-dev libopenexr-dev libwebp-dev spirv-tools
     - install-basis:
         tag: "1.16.4"
     - install-meshoptimizer
@@ -397,7 +397,7 @@ jobs:
       CONFIGURATION: Debug
     steps:
     - install-base-linux:
-        extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng-dev libdevil-dev libharfbuzz-dev libassimp-dev libwebp-dev libzstd-dev wget
+        extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng-dev libdevil-dev libharfbuzz-dev libassimp-dev libwebp-dev libzstd-dev ocl-icd-opencl-dev pocl wget
     # Crashes or gets stuck with the default setting, only on GCC. 24 is not
     # enough.
     - cap-ninja-jobs:
@@ -431,7 +431,7 @@ jobs:
       CONFIGURATION: Release
     steps:
     - install-base-linux:
-        extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng-dev libdevil-dev libharfbuzz-dev libassimp-dev libwebp-dev libzstd-dev wget
+        extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng-dev libdevil-dev libharfbuzz-dev libassimp-dev libwebp-dev libzstd-dev ocl-icd-opencl-dev pocl wget
     # Crashes or gets stuck with the default setting, only on GCC
     - cap-ninja-jobs
     - install-gcc-4_8
@@ -463,7 +463,7 @@ jobs:
       CONFIGURATION: Debug
     steps:
     - install-base-linux:
-        extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng-dev libdevil-dev libharfbuzz-dev libassimp-dev libwebp-dev libzstd-dev wget
+        extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng-dev libdevil-dev libharfbuzz-dev libassimp-dev libwebp-dev libzstd-dev ocl-icd-opencl-dev pocl wget
     - install-clang
     - install-cmake:
         version: "3.5.2"
@@ -496,7 +496,7 @@ jobs:
       CONFIGURATION: Debug
     steps:
     - install-base-linux:
-        extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng-dev libdevil-dev libharfbuzz-dev libassimp-dev libopenexr-dev libwebp-dev libzstd-dev wget
+        extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng-dev libdevil-dev libharfbuzz-dev libassimp-dev libopenexr-dev libwebp-dev libzstd-dev ocl-icd-opencl-dev pocl wget
     - install-clang
     - install-cmake:
         version: "3.5.2"
@@ -518,7 +518,7 @@ jobs:
       CONFIGURATION: Debug
     steps:
     - install-base-macos:
-        extra: faad2 harfbuzz assimp devil spirv-tools glslang openexr webp wget zstd libspng
+        extra: faad2 harfbuzz assimp devil spirv-tools glslang openexr webp wget zstd libspng opencl-icd-loader pocl
     - install-basis
     - install-meshoptimizer
     - build:
@@ -534,7 +534,7 @@ jobs:
       CONFIGURATION: Debug
     steps:
     - install-base-macos:
-        extra: faad2 harfbuzz assimp devil spirv-tools glslang openexr webp wget zstd libspng
+        extra: faad2 harfbuzz assimp devil spirv-tools glslang openexr webp wget zstd libspng opencl-icd-loader pocl
     - install-basis:
         tag: "1.16.4"
     - install-meshoptimizer
