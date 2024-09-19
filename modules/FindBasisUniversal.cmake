@@ -203,8 +203,9 @@ foreach(_component ${BasisUniversal_FIND_COMPONENTS})
 
                 # The encoder unconditionally calls assert() for all OpenCL
                 # errors, including a non-fatal error when falling back to a
-                # CPU device. To allow testing on CPU OpenCL implementations,
-                # disable asserts in this specific file.
+                # CPU device: https://github.com/BinomialLLC/basis_universal/issues/378
+                # To allow testing on CPU OpenCL implementations, disable
+                # asserts in this specific file.
                 if(BasisUniversalEncoder_basisu_opencl.cpp_SOURCE)
                     set_property(SOURCE ${BasisUniversalEncoder_basisu_opencl.cpp_SOURCE}
                         APPEND PROPERTY COMPILE_DEFINITIONS NDEBUG)
