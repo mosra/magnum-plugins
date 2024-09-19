@@ -467,9 +467,13 @@ jobs:
       BUILD_APPLICATIONS: "OFF"
       CMAKE_CXX_FLAGS: -fsanitize=address
       CONFIGURATION: Debug
+      # Basis, or the OpenCL ICD loader, or PoCL cause sanitizer errors when
+      # encoding with OpenCL. We're not installing any OpenCL packages, but
+      # better to be sure in case the image comes with it.
+      DISABLE_OPENCL: "ON"
     steps:
     - install-base-linux:
-        extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng-dev libdevil-dev libharfbuzz-dev libassimp-dev libwebp-dev libzstd-dev ocl-icd-opencl-dev pocl-opencl-icd wget
+        extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng-dev libdevil-dev libharfbuzz-dev libassimp-dev libwebp-dev libzstd-dev wget
     - install-clang
     - install-cmake:
         version: "3.5.2"
@@ -500,9 +504,11 @@ jobs:
       BUILD_APPLICATIONS: "OFF"
       CMAKE_CXX_FLAGS: -fsanitize=thread
       CONFIGURATION: Debug
+      # See linux-sanitizers for why this is necessary
+      DISABLE_OPENCL: "ON"
     steps:
     - install-base-linux:
-        extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng-dev libdevil-dev libharfbuzz-dev libassimp-dev libopenexr-dev libwebp-dev libzstd-dev ocl-icd-opencl-dev pocl-opencl-icd wget
+        extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng-dev libdevil-dev libharfbuzz-dev libassimp-dev libopenexr-dev libwebp-dev libzstd-dev wget
     - install-clang
     - install-cmake:
         version: "3.5.2"
