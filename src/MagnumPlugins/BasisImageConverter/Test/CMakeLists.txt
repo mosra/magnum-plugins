@@ -76,6 +76,13 @@ if(NOT MAGNUM_BASISIMAGECONVERTER_BUILD_STATIC)
     endif()
 endif()
 
+# On Mac OpenCL can be found but the runtime implementation could fail, listing
+# zero usable devices. The test assumes that OpenCL being found means encoding
+# with OpenCL succeeds, let it know to expect failure in this case.
+if(CORRADE_TARGET_APPLE AND OpenCL_LIBRARY MATCHES "System/Library/Frameworks/OpenCL\\.framework")
+    set(_BASISIMAGECONVERTER_EXPECT_OPENCL_FRAMEWORK_FAILURE ON)
+endif()
+
 # First replace ${} variables, then $<> generator expressions
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
                ${CMAKE_CURRENT_BINARY_DIR}/configure.h.in)
