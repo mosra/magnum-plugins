@@ -341,10 +341,14 @@ jobs:
       CMAKE_CXX_FLAGS: --coverage
       LCOV_EXTRA_OPTS: --gcov-tool /usr/bin/gcov-4.8
       CONFIGURATION: Debug
+      # Testing building BasisImageConverter with OpenCL present on the system,
+      # but explicitly turned off via CMAKE_DISABLE_FIND_PACKAGE_OpenCL
       DISABLE_OPENCL: "ON"
     steps:
     - install-base-linux:
-        extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng-dev libdevil-dev libharfbuzz-dev libassimp-dev libwebp-dev libzstd-dev ocl-icd-opencl-dev pocl-opencl-icd wget
+        # We want the OpenCL headers and ICD loader libraries to test disabling
+        # find_package(), but don't need the actual ICD
+        extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng-dev libdevil-dev libharfbuzz-dev libassimp-dev libwebp-dev libzstd-dev ocl-icd-opencl-dev wget
     # Crashes or gets stuck with the default setting, only on GCC. 24 is not
     # enough, probably due to compatibility includes.
     - cap-ninja-jobs:
@@ -398,7 +402,8 @@ jobs:
       CONFIGURATION: Debug
     steps:
     - install-base-linux:
-        extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng-dev libdevil-dev libharfbuzz-dev libassimp-dev libwebp-dev libzstd-dev ocl-icd-opencl-dev pocl-opencl-icd wget
+        # Basis 1.15 doesn't support OpenCL, so those packages aren't needed
+        extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng-dev libdevil-dev libharfbuzz-dev libassimp-dev libwebp-dev libzstd-dev wget
     # Crashes or gets stuck with the default setting, only on GCC. 24 is not
     # enough.
     - cap-ninja-jobs:
