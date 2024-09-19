@@ -1462,6 +1462,9 @@ void BasisImageConverterTest::openCL() {
     CORRADE_COMPARE(out.str(), "Trade::BasisImageConverter::convertToData(): OpenCL not supported, falling back to CPU encoding\n");
     #else
     CORRADE_INFO("OpenCL is available.");
+    #ifdef _BASISIMAGECONVERTER_EXPECT_OPENCL_FRAMEWORK_FAILURE
+    CORRADE_EXPECT_FAIL("Apple OpenCL implementation is used, which likely doesn't work anymore.");
+    #endif
     CORRADE_COMPARE(out.str(), "");
     #endif
     CORRADE_VERIFY(compressedData);
