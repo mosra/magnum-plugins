@@ -98,10 +98,9 @@ corrade_add_test(BasisImageConverterTest BasisImageConverterTest.cpp
     FILES
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/BasisImporter/Test/rgb-63x27.png
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/BasisImporter/Test/rgba-63x27.png)
-target_include_directories(BasisImageConverterTest PRIVATE
-    ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>
-    # The test needs BASISU_LIB_VERSION from basisu_comp.h
-    ${BasisUniversalEncoder_INCLUDE_DIR})
+target_include_directories(BasisImageConverterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>)
+# The test needs BASISU_LIB_VERSION from basisu_comp.h
+target_include_directories(BasisImageConverterTest SYSTEM PRIVATE ${BasisUniversalEncoder_INCLUDE_DIR})
 # BasisUniversalEncoder_DEFINITIONS isn't exported by find_package, so we need
 # to grab it from the target
 get_target_property(BasisUniversalEncoder_DEFINITIONS BasisUniversal::Encoder
