@@ -76,13 +76,16 @@ namespace lodepng {
 
 class State {
     public:
-        State() {
-            CORRADE_INTERNAL_ASSERT_UNREACHABLE();
-        }
-        virtual ~State() {
-            CORRADE_INTERNAL_ASSERT_UNREACHABLE();
-        }
+        State();
+        virtual ~State();
 };
+/* These have to be non-inline otherwise MSVC doesn't compile them at all */
+State::State() {
+    CORRADE_INTERNAL_ASSERT_UNREACHABLE();
+}
+State::~State() {
+    CORRADE_INTERNAL_ASSERT_UNREACHABLE();
+}
 
 unsigned decode(std::vector<unsigned char>&, unsigned&, unsigned&, const unsigned char*, size_t, LodePNGColorType, unsigned);
 unsigned decode(std::vector<unsigned char>&, unsigned&, unsigned&, const unsigned char*, size_t, LodePNGColorType, unsigned) {
