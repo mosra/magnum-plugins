@@ -82,8 +82,7 @@ namespace Magnum {
     @relativeref{Trade,WebPImageConverter} plugins
 -   **Nathan Ollerenshaw** ([\@matjam](https://github.com/matjam)) --- Ubuntu
     package updates, a PPA repository for stable versions
--   **Nicholas "LB" Branden** ([\@LB--](https://github.com/LB--)) ---
-    buildsystem improvements
+-   **[\@LB--](https://github.com/LB--)** --- buildsystem improvements
 -   **Noeri Huisman** ([\@mrxz](https://github.com/mrxz)) --- Morph target
     attribute import in @relativeref{Trade,GltfImporter}
 -   **Olga Turanksaya** ([\@olga-python](https://github.com/olga-python)) ---
