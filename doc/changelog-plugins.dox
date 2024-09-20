@@ -127,13 +127,14 @@ namespace Magnum {
     [mosra/magnum-plugins#99](https://github.com/mosra/magnum-plugins/pull/99)
     and [mosra/magnum-plugins#100](https://github.com/mosra/magnum-plugins/pull/100))
 -   @relativeref{Trade,BasisImporter} and @relativeref{Trade,BasisImageConverter}
-    plugins were updated to Basis 1.15 with UASTC and KTX2 support, in addition
+    plugins were updated to Basis 1.50 with UASTC and KTX2 support, in addition
     it's now also possible to supply custom mip levels, sRGB formats get
     properly recognized both on import and during conversion, and array and
     cubemap images are supported as well (see
     [mosra/magnum-plugins#86](https://github.com/mosra/magnum-plugins/issues/86),
     [mosra/magnum-plugins#112](https://github.com/mosra/magnum-plugins/pull/112),
-    [mosra/magnum-plugins#118](https://github.com/mosra/magnum-plugins/pull/118))
+    [mosra/magnum-plugins#118](https://github.com/mosra/magnum-plugins/pull/118),
+    [mosra/magnum-plugins#119](https://github.com/mosra/magnum-plugins/pull/119))
 
 @subsection changelog-plugins-latest-changes Changes and improvements
 
