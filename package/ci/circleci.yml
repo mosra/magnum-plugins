@@ -438,8 +438,10 @@ jobs:
     steps:
     - install-base-linux:
         extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng-dev libdevil-dev libharfbuzz-dev libassimp-dev libwebp-dev libzstd-dev ocl-icd-opencl-dev pocl-opencl-icd wget
-    # Crashes or gets stuck with the default setting, only on GCC
-    - cap-ninja-jobs
+    # Crashes or gets stuck with the default setting, only on GCC. 24 is not
+    # enough.
+    - cap-ninja-jobs:
+        count: 20
     - install-gcc-4_8
     - install-cmake:
         version: "3.5.2"
