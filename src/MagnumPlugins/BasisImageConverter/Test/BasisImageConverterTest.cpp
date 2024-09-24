@@ -127,10 +127,10 @@ constexpr struct {
 
 constexpr struct {
     const char* name;
-    const bool isHdr;
+    const PixelFormat format;
 } MipGenData[]{
-    {"", false},
-    {"hdr", true}
+    {"", PixelFormat::RGBA8Unorm},
+    {"hdr", PixelFormat::RGBA32F}
 };
 
 enum TransferFunction: std::size_t {
@@ -583,10 +583,9 @@ void BasisImageConverterTest::configMipGen() {
         CORRADE_SKIP("Current version of Basis doesn't support HDR.");
     #endif
 
-    const PixelFormat format = data.isHdr ? PixelFormat::RGBA32F : PixelFormat::RGBA8Unorm;
-    Containers::Array<char> bytes{ValueInit, 16*16*pixelFormatSize(format)};
-    ImageView2D originalLevel0{format, Vector2i{16}, bytes};
-    ImageView2D originalLevel1{format, Vector2i{8}, bytes};
+    Containers::Array<char> bytes{ValueInit, pixelFormatSize(data.format)*16*16};
+    ImageView2D originalLevel0{data.format, Vector2i{16}, bytes};
+    ImageView2D originalLevel1{data.format, Vector2i{8}, bytes};
 
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("BasisImageConverter");
     /* Empty by default */
@@ -602,7 +601,8 @@ void BasisImageConverterTest::configMipGen() {
     if(_manager.loadState("BasisImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("BasisImporter plugin not found, cannot test");
 
-    const Containers::StringView importerName = data.isHdr ? "BasisImporterRGBA16F"_s : "BasisImporterRGBA8"_s;
+    const Containers::StringView importerName = isPixelFormatFloatingPoint(data.format)
+        ? "BasisImporterRGBA16F"_s : "BasisImporterRGBA8"_s;
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate(importerName);
 
     /* Empty mip_gen config means to use the level count to determine if mip
