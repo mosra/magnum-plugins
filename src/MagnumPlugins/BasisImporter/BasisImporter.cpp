@@ -638,20 +638,21 @@ template<UnsignedInt dimensions> Containers::Optional<ImageData<dimensions>> Bas
     }
 
     const bool isUncompressed = basist::basis_transcoder_format_is_uncompressed(format);
+    const UnsignedInt formatSize = basis_get_bytes_per_block_or_pixel(format);
 
     const Vector3ui size{origWidth, origHeight, _state->numSlices};
-    UnsignedInt rowStride, outputRowsInPixels, outputSizeInBlocksOrPixels;
+    UnsignedInt rowStrideInBlocksOrPixels, outputRowsInPixels, outputSizeInBlocksOrPixels;
     if(isUncompressed) {
-        rowStride = size.x();
+        rowStrideInBlocksOrPixels = size.x();
         outputRowsInPixels = size.y();
         outputSizeInBlocksOrPixels = size.x()*size.y();
     } else {
-        rowStride = 0; /* left up to Basis to calculate */
+        rowStrideInBlocksOrPixels = 0; /* left up to Basis to calculate */
         outputRowsInPixels = 0; /* not used for compressed data */
         outputSizeInBlocksOrPixels = totalBlocks;
     }
 
-    const UnsignedInt sliceSize = basis_get_bytes_per_block_or_pixel(format)*outputSizeInBlocksOrPixels;
+    const UnsignedInt sliceSize = formatSize*outputSizeInBlocksOrPixels;
     const UnsignedInt dataSize = sliceSize*size.z();
     Containers::Array<char> dest{DefaultInit, dataSize};
 
@@ -669,7 +670,7 @@ template<UnsignedInt dimensions> Containers::Optional<ImageData<dimensions>> Bas
             #if BASISD_SUPPORT_KTX2
             if(_state->ktx2Transcoder) {
                 const UnsignedInt currentLayer = id + l;
-                if(!_state->ktx2Transcoder->transcode_image_level(level, currentLayer, f, dest.data() + offset, outputSizeInBlocksOrPixels, format, 0, rowStride, outputRowsInPixels)) {
+                if(!_state->ktx2Transcoder->transcode_image_level(level, currentLayer, f, dest.data() + offset, outputSizeInBlocksOrPixels, format, 0, rowStrideInBlocksOrPixels, outputRowsInPixels)) {
                     Error{} << prefix << "transcoding failed";
                     return Containers::NullOpt;
                 }
@@ -677,7 +678,7 @@ template<UnsignedInt dimensions> Containers::Optional<ImageData<dimensions>> Bas
             #endif
             {
                 const UnsignedInt currentId = id + (l*numFaces + f);
-                if(!_state->basisTranscoder->transcode_image_level(_state->in.data(), _state->in.size(), currentId, level, dest.data() + offset, outputSizeInBlocksOrPixels, format, 0, rowStride, nullptr, outputRowsInPixels)) {
+                if(!_state->basisTranscoder->transcode_image_level(_state->in.data(), _state->in.size(), currentId, level, dest.data() + offset, outputSizeInBlocksOrPixels, format, 0, rowStrideInBlocksOrPixels, nullptr, outputRowsInPixels)) {
                     Error{} << prefix << "transcoding failed";
                     return Containers::NullOpt;
                 }
@@ -686,7 +687,12 @@ template<UnsignedInt dimensions> Containers::Optional<ImageData<dimensions>> Bas
     }
 
     if(isUncompressed) {
-        Trade::ImageData<dimensions> out{pixelFormat(*targetFormat, _state->isSrgb), Math::Vector<dimensions, Int>::pad(Vector3i{size}), Utility::move(dest), ImageFlag<dimensions>(UnsignedShort(_state->imageFlags))};
+        /* Adjust pixel storage if row size is not four byte aligned */
+        PixelStorage storage;
+        if((formatSize*size.x())%4 != 0)
+            storage.setAlignment(1);
+
+        Trade::ImageData<dimensions> out{storage, pixelFormat(*targetFormat, _state->isSrgb), Math::Vector<dimensions, Int>::pad(Vector3i{size}), Utility::move(dest), ImageFlag<dimensions>(UnsignedShort(_state->imageFlags))};
 
         /* Flip if needed */
         if(!_state->isYFlipped)
