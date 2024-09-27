@@ -32,6 +32,7 @@
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/ConfigurationValue.h>
 #include <Corrade/Utility/Debug.h>
+#include <Magnum/ImageView.h>
 #include <Magnum/PixelFormat.h>
 #include <Magnum/Math/ColorBatch.h>
 #include <Magnum/Trade/ImageData.h>
@@ -638,20 +639,24 @@ template<UnsignedInt dimensions> Containers::Optional<ImageData<dimensions>> Bas
     }
 
     const bool isUncompressed = basist::basis_transcoder_format_is_uncompressed(format);
+    const UnsignedInt formatSize = basis_get_bytes_per_block_or_pixel(format);
 
     const Vector3ui size{origWidth, origHeight, _state->numSlices};
-    UnsignedInt rowStride, outputRowsInPixels, outputSizeInBlocksOrPixels;
+    UnsignedInt rowStrideInBlocksOrPixels, outputRowsInPixels, outputSizeInBlocksOrPixels;
     if(isUncompressed) {
-        rowStride = size.x();
+        rowStrideInBlocksOrPixels = size.x();
         outputRowsInPixels = size.y();
         outputSizeInBlocksOrPixels = size.x()*size.y();
     } else {
-        rowStride = 0; /* left up to Basis to calculate */
+        rowStrideInBlocksOrPixels = 0; /* left up to Basis to calculate */
         outputRowsInPixels = 0; /* not used for compressed data */
         outputSizeInBlocksOrPixels = totalBlocks;
+        /* All compressed formats have a size that matches the default 4-byte
+           alignment of CompressedPixelStorage */
+        CORRADE_INTERNAL_ASSERT(formatSize % 4 == 0);
     }
 
-    const UnsignedInt sliceSize = basis_get_bytes_per_block_or_pixel(format)*outputSizeInBlocksOrPixels;
+    const UnsignedInt sliceSize = formatSize*outputSizeInBlocksOrPixels;
     const UnsignedInt dataSize = sliceSize*size.z();
     Containers::Array<char> dest{DefaultInit, dataSize};
 
@@ -669,7 +674,7 @@ template<UnsignedInt dimensions> Containers::Optional<ImageData<dimensions>> Bas
             #if BASISD_SUPPORT_KTX2
             if(_state->ktx2Transcoder) {
                 const UnsignedInt currentLayer = id + l;
-                if(!_state->ktx2Transcoder->transcode_image_level(level, currentLayer, f, dest.data() + offset, outputSizeInBlocksOrPixels, format, 0, rowStride, outputRowsInPixels)) {
+                if(!_state->ktx2Transcoder->transcode_image_level(level, currentLayer, f, dest.data() + offset, outputSizeInBlocksOrPixels, format, 0, rowStrideInBlocksOrPixels, outputRowsInPixels)) {
                     Error{} << prefix << "transcoding failed";
                     return Containers::NullOpt;
                 }
@@ -677,7 +682,7 @@ template<UnsignedInt dimensions> Containers::Optional<ImageData<dimensions>> Bas
             #endif
             {
                 const UnsignedInt currentId = id + (l*numFaces + f);
-                if(!_state->basisTranscoder->transcode_image_level(_state->in.data(), _state->in.size(), currentId, level, dest.data() + offset, outputSizeInBlocksOrPixels, format, 0, rowStride, nullptr, outputRowsInPixels)) {
+                if(!_state->basisTranscoder->transcode_image_level(_state->in.data(), _state->in.size(), currentId, level, dest.data() + offset, outputSizeInBlocksOrPixels, format, 0, rowStrideInBlocksOrPixels, nullptr, outputRowsInPixels)) {
                     Error{} << prefix << "transcoding failed";
                     return Containers::NullOpt;
                 }
@@ -686,7 +691,30 @@ template<UnsignedInt dimensions> Containers::Optional<ImageData<dimensions>> Bas
     }
 
     if(isUncompressed) {
-        Trade::ImageData<dimensions> out{pixelFormat(*targetFormat, _state->isSrgb), Math::Vector<dimensions, Int>::pad(Vector3i{size}), Utility::move(dest), ImageFlag<dimensions>(UnsignedShort(_state->imageFlags))};
+        const Magnum::PixelFormat outFormat = pixelFormat(*targetFormat, _state->isSrgb);
+        const Math::Vector<dimensions, Int> outSize = Math::Vector<dimensions, Int>::pad(Vector3i{size});
+        /* All (compressed or uncompressed) formats have a block/pixel size
+           that's a multiple of 4, matching the PixelStorage default alignment
+           of 4. *Except* for RGB16F. Basis transcoding functions only take row
+           stride in pixels, not bytes, so we need to manually copy to a
+           correctly aligned image. */
+        const UnsignedInt rowWidthInBytes = formatSize*size.x();
+        if(rowWidthInBytes % 4 != 0) {
+            const UnsignedInt rowStrideInBytes = (rowWidthInBytes + 3)/4*4;
+            const UnsignedInt alignedDataSize = rowStrideInBytes*size.y()*size.z();
+            Containers::Array<char> alignedDest{DefaultInit, alignedDataSize};
+
+            PixelStorage unalignedStorage;
+            unalignedStorage.setAlignment(1);
+            const BasicImageView<dimensions> src{unalignedStorage, outFormat, outSize, dest};
+            const BasicMutableImageView<dimensions> dst{outFormat, outSize, alignedDest};
+
+            Utility::copy(src.pixels(), dst.pixels());
+
+            dest = Utility::move(alignedDest);
+        }
+
+        Trade::ImageData<dimensions> out{outFormat, outSize, Utility::move(dest), ImageFlag<dimensions>(UnsignedShort(_state->imageFlags))};
 
         /* Flip if needed */
         if(!_state->isYFlipped)
