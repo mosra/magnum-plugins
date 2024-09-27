@@ -679,8 +679,8 @@ const struct {
     /* Also tests that an extension isn't accidentally added even after a
        failure */
     {"conversion to file failed", "BasisKtxImageConverter", ".gltf",
-        ImageData3D{PixelFormat::R32F, {1, 1, 1}, DataFlags{}, "abc", ImageFlag3D::Array},
-        "Trade::BasisImageConverter::convertToData(): unsupported format PixelFormat::R32F\n"
+        ImageData3D{PixelFormat::R32I, {1, 1, 1}, DataFlags{}, "abc", ImageFlag3D::Array},
+        "Trade::BasisImageConverter::convertToData(): unsupported format PixelFormat::R32I\n"
         "Trade::GltfSceneConverter::add(): can't convert an image file\n"},
     /* Not testing failed conversion to data as that's the same code path as in
        the 2D case and the same failure return as the file check above */
