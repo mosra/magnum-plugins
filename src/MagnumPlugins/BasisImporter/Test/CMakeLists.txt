@@ -71,6 +71,8 @@ corrade_add_test(BasisImporterTest BasisImporterTest.cpp
         invalid-cube-face-size.basis
         rgb.basis
         rgb.ktx2
+        rgbf.basis
+        rgbf.ktx2
         rgb-pow2.basis
         rgb-pow2.ktx2
         rgb-linear.basis
@@ -82,6 +84,8 @@ corrade_add_test(BasisImporterTest BasisImporterTest.cpp
         rgb-noflip-pow2.ktx2
         rgba.basis
         rgba.ktx2
+        rgbaf.basis
+        rgbaf.ktx2
         rgba-pow2.basis
         rgba-pow2.ktx2
         rgba-uastc.basis
@@ -105,7 +109,9 @@ corrade_add_test(BasisImporterTest BasisImporterTest.cpp
         rgba-video-uastc.basis
         rgba-video-uastc.ktx2
         rgb-63x27.png
+        rgb-63x27.exr
         rgba-63x27.png
+        rgba-63x27.exr
         rgba-63x27-slice1.png
         rgba-63x27-slice2.png
         rgba-31x13.png
