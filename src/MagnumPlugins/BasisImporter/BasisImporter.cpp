@@ -755,10 +755,12 @@ template<UnsignedInt dimensions> Containers::Optional<ImageData<dimensions>> Bas
                     flipped = false;
                     break;
                 /* We'd be in the isUncompressed branch above for this */
+                /* LCOV_EXCL_START */
                 case TargetFormat::RGBA8:
                 case TargetFormat::RGB16F:
                 case TargetFormat::RGBA16F:
-                    CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+                    CORRADE_INTERNAL_ASSERT_UNREACHABLE();
+                /* LCOV_EXCL_STOP */
             }
 
             if(flipped && !(flags() & ImporterFlag::Quiet) && size.y() % blockSize.y() != 0)
