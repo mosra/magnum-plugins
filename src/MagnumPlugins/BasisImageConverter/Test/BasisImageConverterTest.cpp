@@ -935,11 +935,10 @@ void BasisImageConverterTest::convert2DMipmapsHdr() {
     if(_manager.loadState("OpenExrImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("OpenExrImporter plugin not found, cannot test contents");
 
-    Containers::Pointer<AbstractImporter> imageImporter = _manager.instantiate("OpenExrImporter");
-
     /* BasisImageConverter only reads 32-bit floats, but the test files are
        half float images. Let openexr do the conversion for us. */
-    imageImporter->configuration().setValue("forceChannelType", "FLOAT");
+    Containers::Pointer<AbstractImporter> imageRGBA32FImporter = _manager.instantiate("OpenExrImporter");
+    imageRGBA32FImporter->configuration().setValue("forceChannelType", "FLOAT");
 
     struct Level {
         const char* file;
@@ -954,18 +953,13 @@ void BasisImageConverterTest::convert2DMipmapsHdr() {
 
     for(Level& level: levels) {
         CORRADE_ITERATION(level.file);
-        CORRADE_VERIFY(imageImporter->openFile(Utility::Path::join(BASISIMPORTER_TEST_DIR, level.file)));
-        Containers::Optional<Trade::ImageData2D> originalImage = imageImporter->image2D(0);
+        CORRADE_VERIFY(imageRGBA32FImporter->openFile(Utility::Path::join(BASISIMPORTER_TEST_DIR, level.file)));
+        Containers::Optional<Trade::ImageData2D> originalImage = imageRGBA32FImporter->image2D(0);
         CORRADE_VERIFY(originalImage);
         /* Use the original images and add a skip to ensure the converter reads
            the image data properly */
         level.imageWithSkip = copyImageWithSkip<Vector4>(ImageView2D(*originalImage), {7, 8});
     }
-
-    /* Revert back to loading the actual format. BasisImporter can't transcode
-       to 32-bit float, which is fine since the test files are half float as
-       well. */
-    imageImporter->configuration().setValue("forceChannelType", "");
 
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("BasisImageConverter");
 
@@ -984,6 +978,12 @@ void BasisImageConverterTest::convert2DMipmapsHdr() {
     CORRADE_COMPARE(importer->image2DCount(), 1);
     CORRADE_COMPARE(importer->image2DLevelCount(0), Containers::arraySize(levels));
 
+    /* For HDR images alpha is always transcoded to 1. Import source .exr files
+       again as half float RGB for easier comparison against transcoded RGB. */
+    Containers::Pointer<AbstractImporter> imageRGB16FImporter = _manager.instantiate("OpenExrImporter");
+    /* Drop the alpha channel */
+    imageRGB16FImporter->configuration().setValue("a", "");
+
     for(std::size_t i = 0; i != Containers::arraySize(levels); ++i) {
         CORRADE_ITERATION("level" << i);
         auto result = importer->image2D(0, i);
@@ -991,9 +991,9 @@ void BasisImageConverterTest::convert2DMipmapsHdr() {
 
         const auto pixels = result->pixels<Color4h>();
 
-        /* For HDR images alpha is always transcoded to 1. Can't use a
-           StridedArrayView with broadcasted size since CompareImage only
-           accepts StridedArrayView for the actual image, not the expected. */
+        /* Can't use a StridedArrayView with broadcasted size since
+           CompareImage only accepts StridedArrayView for the actual image, not
+           the expected. */
         using namespace Math::Literals;
         Containers::Array<Half> ones{DirectInit, size_t(result->size().product()), 1.0_h};
 
@@ -1005,16 +1005,12 @@ void BasisImageConverterTest::convert2DMipmapsHdr() {
             /* No errors, always exactly 1.0 */
             (DebugTools::CompareImage{0.0f, 0.0f}));
 
-        /* Drop alpha channel to only test RGB. Not using CompareImageToFile to
-           avoid overwriting the 4-channel expected .exr with a 3-channel
-           actual image when --save-diagnostic is specified. */
-        imageImporter->configuration().setValue("a", "");
-        
-        CORRADE_VERIFY(imageImporter->openFile(Utility::Path::join(BASISIMPORTER_TEST_DIR, levels[i].file)));
-        const auto expected = imageImporter->image2D(0);
+        /* Not using CompareImageToFile to avoid overwriting the 4-channel
+           expected .exr with a 3-channel actual image when --save-diagnostic
+           is specified */
+        CORRADE_VERIFY(imageRGB16FImporter->openFile(Utility::Path::join(BASISIMPORTER_TEST_DIR, levels[i].file)));
+        const auto expected = imageRGB16FImporter->image2D(0);
         CORRADE_VERIFY(expected);
-
-        imageImporter->configuration().setValue("a", "A");
 
         CORRADE_COMPARE_WITH(Containers::arrayCast<const Color3h>(pixels), *expected,
             /* There are moderately significant compression artifacts */
