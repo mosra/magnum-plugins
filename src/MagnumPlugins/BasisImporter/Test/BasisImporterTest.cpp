@@ -764,9 +764,7 @@ void BasisImporterTest::unconfiguredHdr() {
     if(_manager.loadState("OpenExrImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("OpenExrImporter plugin not found, cannot test contents");
 
-    /* mutablePixels() so we can use the convenient slice syntax. Const
-       overload of rgb() returns by value which makes it not work. */
-    CORRADE_COMPARE_WITH(image->mutablePixels<Color4h>().slice(&Color4h::rgb),
+    CORRADE_COMPARE_WITH(Containers::arrayCast<const Color3h>(image->pixels<Color4h>()),
         Utility::Path::join(BASISIMPORTER_TEST_DIR, "rgb-63x27.exr"),
         /* There are moderately significant compression artifacts */
         (DebugTools::CompareImageToFile{_manager, 0.052f, 0.004f}));
@@ -1096,9 +1094,7 @@ void BasisImporterTest::rgbaUncompressedHdr() {
     CORRADE_COMPARE(image->format(), PixelFormat::RGBA16F);
     CORRADE_COMPARE(image->size(), (Vector2i{63, 27}));
 
-    /* mutablePixels() so we can use the convenient slice syntax. Const
-       overloads of a()/rgb() return by value which makes it not work. */
-    const auto pixels = image->mutablePixels<Color4h>();
+    const auto pixels = image->pixels<Color4h>();
 
     /* For HDR images alpha is always transcoded to 1. Can't use a
        StridedArrayView with broadcasted size since CompareImage only
@@ -1106,7 +1102,10 @@ void BasisImporterTest::rgbaUncompressedHdr() {
     using namespace Math::Literals;
     Containers::Array<Half> ones{DirectInit, size_t(image->size().product()), 1.0_h};
 
-    CORRADE_COMPARE_WITH(pixels.slice(&Color4h::a),
+    /* Using this monstrosity to slice to the alpha channel since the slice()
+       overload taking a member function requires that getter to return by
+       reference, and the const overload of Color4::a() doesn't */
+    CORRADE_COMPARE_WITH((Containers::arrayCast<2, const Half>(pixels).exceptPrefix({0, 3}).every({1, 4})),
         (ImageView2D{PixelStorage{}.setAlignment(1), PixelFormat::R16F, image->size(), ones}),
         /* No errors, always exactly 1.0 */
         (DebugTools::CompareImage{0.0f, 0.0f}));
@@ -1129,7 +1128,7 @@ void BasisImporterTest::rgbaUncompressedHdr() {
 
     imageImporter->configuration().setValue("a", "A");
 
-    CORRADE_COMPARE_WITH(pixels.slice(&Color4h::rgb), *expected,
+    CORRADE_COMPARE_WITH(Containers::arrayCast<const Color3h>(pixels), *expected,
         /* There are moderately significant compression artifacts */
         (DebugTools::CompareImage{0.637f, 0.009f}));
 }

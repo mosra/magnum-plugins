@@ -989,9 +989,7 @@ void BasisImageConverterTest::convert2DMipmapsHdr() {
         auto result = importer->image2D(0, i);
         CORRADE_VERIFY(result);
 
-        /* mutablePixels() so we can use the convenient slice syntax. Const
-           overloads of a()/rgb() return by value which makes it not work. */
-        const auto pixels = result->mutablePixels<Color4h>();
+        const auto pixels = result->pixels<Color4h>();
 
         /* For HDR images alpha is always transcoded to 1. Can't use a
            StridedArrayView with broadcasted size since CompareImage only
@@ -999,7 +997,10 @@ void BasisImageConverterTest::convert2DMipmapsHdr() {
         using namespace Math::Literals;
         Containers::Array<Half> ones{DirectInit, size_t(result->size().product()), 1.0_h};
 
-        CORRADE_COMPARE_WITH(pixels.slice(&Color4h::a),
+        /* Using this monstrosity to slice to the alpha channel since the
+           slice() overload taking a member function requires that getter to
+           return by reference, and the const overload of Color4::a() doesn't */
+        CORRADE_COMPARE_WITH((Containers::arrayCast<2, const Half>(pixels).exceptPrefix({0, 3}).every({1, 4})),
             (ImageView2D{PixelStorage{}.setAlignment(1), PixelFormat::R16F, result->size(), ones}),
             /* No errors, always exactly 1.0 */
             (DebugTools::CompareImage{0.0f, 0.0f}));
@@ -1015,7 +1016,7 @@ void BasisImageConverterTest::convert2DMipmapsHdr() {
 
         imageImporter->configuration().setValue("a", "A");
 
-        CORRADE_COMPARE_WITH(pixels.slice(&Color4h::rgb), *expected,
+        CORRADE_COMPARE_WITH(Containers::arrayCast<const Color3h>(pixels), *expected,
             /* There are moderately significant compression artifacts */
             (DebugTools::CompareImage{levels[i].maxThreshold, levels[i].meanThreshold}));
     }
