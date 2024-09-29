@@ -651,9 +651,6 @@ template<UnsignedInt dimensions> Containers::Optional<ImageData<dimensions>> Bas
         rowStrideInBlocksOrPixels = 0; /* left up to Basis to calculate */
         outputRowsInPixels = 0; /* not used for compressed data */
         outputSizeInBlocksOrPixels = totalBlocks;
-        /* All compressed formats have a size that matches the default 4-byte
-           alignment of CompressedPixelStorage */
-        CORRADE_INTERNAL_ASSERT(formatSize % 4 == 0);
     }
 
     const UnsignedInt sliceSize = formatSize*outputSizeInBlocksOrPixels;
@@ -691,30 +688,12 @@ template<UnsignedInt dimensions> Containers::Optional<ImageData<dimensions>> Bas
     }
 
     if(isUncompressed) {
-        const Magnum::PixelFormat outFormat = pixelFormat(*targetFormat, _state->isSrgb);
-        const Math::Vector<dimensions, Int> outSize = Math::Vector<dimensions, Int>::pad(Vector3i{size});
-        /* All (compressed or uncompressed) formats have a block/pixel size
-           that's a multiple of 4, matching the PixelStorage default alignment
-           of 4. *Except* for RGB16F. Basis transcoding functions only take row
-           stride in pixels, not bytes, so we need to manually copy to a
-           correctly aligned image. */
-        const UnsignedInt rowWidthInBytes = formatSize*size.x();
-        if(rowWidthInBytes % 4 != 0) {
-            const UnsignedInt rowStrideInBytes = (rowWidthInBytes + 3)/4*4;
-            const UnsignedInt alignedDataSize = rowStrideInBytes*size.y()*size.z();
-            Containers::Array<char> alignedDest{DefaultInit, alignedDataSize};
+        /* Adjust pixel storage if row size is not four byte aligned */
+        PixelStorage storage;
+        if((formatSize*size.x())%4 != 0)
+            storage.setAlignment(1);
 
-            PixelStorage unalignedStorage;
-            unalignedStorage.setAlignment(1);
-            const BasicImageView<dimensions> src{unalignedStorage, outFormat, outSize, dest};
-            const BasicMutableImageView<dimensions> dst{outFormat, outSize, alignedDest};
-
-            Utility::copy(src.pixels(), dst.pixels());
-
-            dest = Utility::move(alignedDest);
-        }
-
-        Trade::ImageData<dimensions> out{outFormat, outSize, Utility::move(dest), ImageFlag<dimensions>(UnsignedShort(_state->imageFlags))};
+        Trade::ImageData<dimensions> out{storage, pixelFormat(*targetFormat, _state->isSrgb), Math::Vector<dimensions, Int>::pad(Vector3i{size}), Utility::move(dest), ImageFlag<dimensions>(UnsignedShort(_state->imageFlags))};
 
         /* Flip if needed */
         if(!_state->isYFlipped)
