@@ -220,23 +220,15 @@ indentation has to be done using tabs, not spaces.
 
 @m_class{m-block m-warning}
 
-@par Enabling Basis Universal and MeshOptimizer plugins
+@par Enabling Basis Universal plugins
 @parblock
-Neither Basis Universal nor MeshOptimizer provide any packages for Debian and
-thus the Magnum Plugins package doesn't have it enabled by default. In order to
-enable them, do the following:
-
--   For @ref Trade::BasisImporter "BasisImporter" or
-    @ref Trade::BasisImageConverter "BasisImageConverter", download the
-    [`v1_50_0_2`](https://github.com/BinomialLLC/basis_universal/archive/v1_50_0_2.tar.gz)
-    `1.16.4` or `v1_15_update2` tag of the Basis Universal repo, extract it
-    into `src/external/basis-universal` (note the dash instead of an
-    underscore) set `MAGNUM_WITH_BASISIMPORTER` /
-    `MAGNUM_WITH_BASISIMAGECONVERTER` to `ON` in `package/debian/rules`
--   For @ref Trade::MeshOptimizerSceneConverter "MeshOptimizerSceneConverter",
-    [clone the MeshOptimizer repo](https://github.com/zeux/meshoptimizer) to
-    `src/external/meshoptimizer` and set `MAGNUM_WITH_MESHOPTIMIZERSCENECONVERTER`
-    to `ON` in `package/debian/rules`.
+Basis Universal does not provide any packages for Debian and thus the Magnum
+Plugins package doesn't have the plugins enabled by default. In order to enable
+them, download the [`v1_50_0_2`](https://github.com/BinomialLLC/basis_universal/archive/v1_50_0_2.tar.gz),
+`1.16.4` or `v1_15_update2` tag of the Basis Universal repo, extract it into
+`src/external/basis-universal` (note the dash instead of an underscore) and set
+`MAGNUM_WITH_BASISIMPORTER` / `MAGNUM_WITH_BASISIMAGECONVERTER` to `ON` in
+`package/debian/rules`.
 
 With the above, when you run `dpkg-buildpackage`, CMake will automatically
 discover the sources and link them as static libraries to corresponding
@@ -245,24 +237,18 @@ plugins.
 
 @m_class{m-block m-success}
 
-@par Enabling Glslang and SPIRV-Tools plugins
+@par Enabling the MeshOptimizer plugin
 @parblock
-Glslang and SPIRV-Tools packages are available only since Ubuntu 20.04 and thus
-are not enabled in the Magnum Plugins package by default. In order to enable
-them, do the following:
-
--   For @ref ShaderTools::GlslangConverter "GlslangShaderConverter", add
-    `glslang-dev` to the `Build-Depends:` line in `package/debian/control` and
-    set `MAGNUM_WITH_GLSLANGSHADERCONVERTER` to `ON` in `package/debian/rules`.
--   For @ref ShaderTools::SpirvToolsConverter "SpirvToolsShaderConverter",
-    add `spirv-tools` to the `Build-Depends:` line in `package/debian/control`
-    and set `MAGNUM_WITH_SPIRVTOOLSSHADERCONVERTER` to `ON` in
-    `package/debian/rules`.
+The MeshOptimizer package is available only since Ubuntu 22.04 and thus is not
+enabled in the Magnum Plugins package by default. In order to enable it, add
+`libmeshoptimizer-dev` to the `Build-Depends:` line in `package/debian/control`
+and set `MAGNUM_WITH_MESHOPTIMIZERSCENECONVERTER` to `ON` in
+`package/debian/rules`.
 
 With the above, when you run `dpkg-buildpackage`, it should correctly find the
-dependencies (or ask for them to be installed) and build the corresponding
-plugins. The workflow is equivalent for vanilla Debian, as the packages are
-named the same.
+dependency (or ask for it to be installed) and build the corresponding plugin.
+The workflow is equivalent for vanilla Debian, as the packages are named the
+same.
 @endparblock
 
 There are also Debian packages for
