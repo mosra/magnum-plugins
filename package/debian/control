@@ -1,7 +1,9 @@
 Source: magnum-plugins
 Priority: optional
 Maintainer: Vladimír Vondruš <mosra@centrum.cz>
-Build-Depends: debhelper (>= 9), cmake (>= 3.4), magnum-dev, libdevil-dev, libjpeg-dev, libpng-dev|libpng16-dev, libfaad-dev, libfreetype6-dev, libassimp-dev, libopenexr-dev, libwebp-dev, glslang-dev, spirv-tools
+# glslang-tools isn't needed by Magnum, but the glslang CMake configs rely on
+# /usr/bin/glslang being present. So it's just a build dependency.
+Build-Depends: debhelper (>= 9), cmake (>= 3.4), magnum-dev, libdevil-dev, libjpeg-dev, libpng-dev|libpng16-dev, libfaad-dev, libfreetype6-dev, libassimp-dev, libopenexr-dev, libwebp-dev, glslang-dev, glslang-tools, spirv-tools
 Standards-Version: 3.9.2
 Section: libs
 Homepage: https://magnum.graphics
