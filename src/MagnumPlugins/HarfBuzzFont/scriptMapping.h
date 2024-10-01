@@ -28,7 +28,7 @@
    matching the hb_script_t enum to have additions in a certain version grouped
    together.
 
-   Apart from HB_SCRIPT_INVALID there's 165 entries in HarfBuzz 8.2.1, the
+   Apart from HB_SCRIPT_INVALID there's 172 entries in HarfBuzz 10.0.0, the
    count of _c() values should match here too, guarded by the both-directional
    switch cases in the test. */
 #if defined(_c) && (defined(_c_include_supported) || defined(_c_include_all))
@@ -220,6 +220,17 @@ _c(Math, MATH)
 _c(Kawi, KAWI)
 _c(NagMundari, NAG_MUNDARI)
 #endif
-/* When adding more scripts, be sure to update the HB_VERSION_ATLEAST() macro
-   in doSetScript() to the latest value here so the switch  */
+#if _c_include_all || _c_include_supported == HB_VERSION_ATLEAST(10, 0, 0)
+_c(Garay, GARAY)
+_c(GurungKhema, GURUNG_KHEMA)
+_c(KiratRai, KIRAT_RAI)
+_c(OlOnal, OL_ONAL)
+_c(Sunuwar, SUNUWAR)
+_c(Todhri, TODHRI)
+_c(TuluTigalari, TULU_TIGALARI)
+#endif
+/* !IMPORTANT! When adding more scripts, be sure to update the
+   HB_VERSION_ATLEAST() macro in doSetScript() to the latest value here so the
+   switch doesn§t end with a case right before the end, failing compilation
+   with older HarfBuzz versions! */
 #endif

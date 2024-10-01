@@ -150,7 +150,7 @@ Containers::Pointer<AbstractShaper> HarfBuzzFont::doCreateShaper() {
                 #undef _c
                     /* This version needs to be kept in sync with the last
                        version in scriptMapping.h */
-                    #if !HB_VERSION_ATLEAST(5, 2, 0)
+                    #if !HB_VERSION_ATLEAST(10, 0, 0)
                     _script = HB_SCRIPT_INVALID;
                     return false;
                     #endif
