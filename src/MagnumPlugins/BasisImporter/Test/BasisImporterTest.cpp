@@ -1241,9 +1241,7 @@ void BasisImporterTest::rgba() {
     setTestCaseDescription(formatData.suffix);
 
     #if BASISD_LIB_VERSION < 150
-    /* Iff there is no linear version, this is an HDR format */
-    const bool isHdr = formatData.fileBaseLinear == nullptr;
-    if(isHdr)
+    if(isCompressedPixelFormatFloatingPoint(formatData.expectedFormat))
         CORRADE_SKIP("Current version of Basis doesn't support HDR.");
     #endif
 
