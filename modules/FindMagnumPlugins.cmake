@@ -220,6 +220,10 @@ if(MagnumPlugins_FIND_COMPONENTS)
     list(REMOVE_DUPLICATES MagnumPlugins_FIND_COMPONENTS)
 endif()
 
+# Special cases of include paths. Libraries not listed here have a path suffix
+# and include name derived from the library name in the loop below. (So far no
+# special cases.)
+
 # Find all components
 foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
     string(TOUPPER ${_component} _COMPONENT)
@@ -234,9 +238,13 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
         if(_component IN_LIST _MAGNUMPLUGINS_LIBRARY_COMPONENTS)
             add_library(MagnumPlugins::${_component} UNKNOWN IMPORTED)
 
-            # Set library defaults, find the library
-            set(_MAGNUMPLUGINS_${_COMPONENT}_INCLUDE_PATH_SUFFIX Magnum/${_component})
-            set(_MAGNUMPLUGINS_${_COMPONENT}_INCLUDE_PATH_NAMES ${_component}.h)
+            # Include path names to find, unless specified above already
+            if(NOT _MAGNUMPLUGINS_${_COMPONENT}_INCLUDE_PATH_SUFFIX)
+                set(_MAGNUMPLUGINS_${_COMPONENT}_INCLUDE_PATH_SUFFIX Magnum/${_component})
+            endif()
+            if(NOT _MAGNUMPLUGINS_${_COMPONENT}_INCLUDE_PATH_NAMES)
+                set(_MAGNUMPLUGINS_${_COMPONENT}_INCLUDE_PATH_NAMES ${_component}.h)
+            endif()
 
             # Try to find both debug and release version
             find_library(MAGNUMPLUGINS_${_COMPONENT}_LIBRARY_DEBUG Magnum${_component}-d)
@@ -279,8 +287,10 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
                 set(_MAGNUMPLUGINS_${_COMPONENT}_PATH_SUFFIX fontconverters)
             endif()
 
-            # Don't override the exception for *AudioImporter plugins
-            set(_MAGNUMPLUGINS_${_COMPONENT}_INCLUDE_PATH_SUFFIX MagnumPlugins/${_component})
+            # Include path names to find, unless specified above already
+            if(NOT _MAGNUMPLUGINS_${_COMPONENT}_INCLUDE_PATH_SUFFIX)
+                set(_MAGNUMPLUGINS_${_COMPONENT}_INCLUDE_PATH_SUFFIX MagnumPlugins/${_component})
+            endif()
             if(NOT _MAGNUMPLUGINS_${_COMPONENT}_INCLUDE_PATH_NAMES)
                 set(_MAGNUMPLUGINS_${_COMPONENT}_INCLUDE_PATH_NAMES ${_component}.h)
             endif()
@@ -310,6 +320,23 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
 
             # Reset back
             set(CMAKE_FIND_LIBRARY_PREFIXES "${_tmp_prefixes}")
+        endif()
+
+        # Find plugin/library includes
+        if(_component IN_LIST _MAGNUMPLUGINS_PLUGIN_COMPONENTS OR _component IN_LIST _MAGNUMPLUGINS_LIBRARY_COMPONENTS)
+            find_path(_MAGNUMPLUGINS_${_COMPONENT}_INCLUDE_DIR
+                NAMES ${_MAGNUMPLUGINS_${_COMPONENT}_INCLUDE_PATH_NAMES}
+                HINTS ${MAGNUMPLUGINS_INCLUDE_DIR}/${_MAGNUMPLUGINS_${_COMPONENT}_INCLUDE_PATH_SUFFIX})
+            mark_as_advanced(_MAGNUMPLUGINS_${_COMPONENT}_INCLUDE_DIR)
+        endif()
+
+        # Decide if the plugin/library was found. If not, skip the rest, which
+        # populates the target properties and finds additional dependencies.
+        if((_component IN_LIST _MAGNUMPLUGINS_PLUGIN_COMPONENTS OR _component IN_LIST _MAGNUMPLUGINS_LIBRARY_COMPONENTS) AND _MAGNUMPLUGINS_${_COMPONENT}_INCLUDE_DIR AND (MAGNUMPLUGINS_${_COMPONENT}_LIBRARY_DEBUG OR MAGNUMPLUGINS_${_COMPONENT}_LIBRARY_RELEASE))
+            set(MagnumPlugins_${_component}_FOUND TRUE)
+        else()
+            set(MagnumPlugins_${_component}_FOUND FALSE)
+            continue()
         endif()
 
         # Library location for plugins/libraries
@@ -562,14 +589,6 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
 
         endif()
 
-        # Find plugin/library includes
-        if(_component IN_LIST _MAGNUMPLUGINS_PLUGIN_COMPONENTS OR _component IN_LIST _MAGNUMPLUGINS_LIBRARY_COMPONENTS)
-            find_path(_MAGNUMPLUGINS_${_COMPONENT}_INCLUDE_DIR
-                NAMES ${_MAGNUMPLUGINS_${_COMPONENT}_INCLUDE_PATH_NAMES}
-                HINTS ${MAGNUMPLUGINS_INCLUDE_DIR}/${_MAGNUMPLUGINS_${_COMPONENT}_INCLUDE_PATH_SUFFIX})
-            mark_as_advanced(_MAGNUMPLUGINS_${_COMPONENT}_INCLUDE_DIR)
-        endif()
-
         # Automatic import of static plugins. Skip in case the include dir was
         # not found -- that'll fail later with a proper message. Skip it also
         # if the include dir doesn't contain the generated configure.h, which
@@ -600,13 +619,6 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
                 set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
                     INTERFACE_LINK_LIBRARIES MagnumPlugins::${_dependency})
             endforeach()
-        endif()
-
-        # Decide if the plugin/library was found
-        if((_component IN_LIST _MAGNUMPLUGINS_PLUGIN_COMPONENTS OR _component IN_LIST _MAGNUMPLUGINS_LIBRARY_COMPONENTS) AND _MAGNUMPLUGINS_${_COMPONENT}_INCLUDE_DIR AND (MAGNUMPLUGINS_${_COMPONENT}_LIBRARY_DEBUG OR MAGNUMPLUGINS_${_COMPONENT}_LIBRARY_RELEASE))
-            set(MagnumPlugins_${_component}_FOUND TRUE)
-        else()
-            set(MagnumPlugins_${_component}_FOUND FALSE)
         endif()
     endif()
 endforeach()
