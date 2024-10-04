@@ -59,11 +59,9 @@ set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/modules/" ${CMAKE_MODULE_PATH})
 @endcode
 
 Otherwise, if CMake won't be able to find this file in predefined locations, it
-will error out even if Magnum Plugins might be installed on the system. There
-are other Find modules that you might need for particular features or
-platforms, see the @ref cmake-plugins-modules "list below". Note that the
-module files are updated as the library evolves, you are encouraged to update
-your copies from time to time to avoid strange building issues.
+will error out even if Magnum Plugins might be installed on the system. Note
+that the module files are updated as the library evolves, you are encouraged to
+update your copies from time to time to avoid strange building issues.
 
 If you installed the library or its dependencies to non-standard location
 (other than `/usr`, e.g. `/home/xyz/projects`), set `CMAKE_PREFIX_PATH` to that
@@ -214,61 +212,5 @@ is linked to debug plugins, `Release` build to release plugins). See @ref cmake
 for more information about autodetection of `MAGNUM_PLUGINS_DIR`.
 
 See also @ref cmake "Magnum usage with CMake" for more information.
-
-@section cmake-plugins-modules Other CMake modules
-
-The `modules/` directory of Magnum Plugins sources contains more useful CMake
-modules. If a plugin requires presence of any of these, it mentions them in its
-usage documentation.
-
--   [FindAssimp.cmake](https://github.com/mosra/magnum-plugins/blob/master/modules/FindAssimp.cmake)
-    --- CMake module for finding Assimp. Copy this to your module directory if
-    you want to find and link to the @ref Trade::AssimpImporter "AssimpImporter"
-    plugin.
--   [FindBasisUniversal.cmake](https://github.com/mosra/magnum-plugins/blob/master/modules/FindBasisUniversal.cmake)
-    --- CMake module for finding Basis Universal sources. Needed only for
-    compiling the @relativeref{Trade,BasisImporter} and
-    @relativeref{Trade,BasisImageConverter} plugins themselves, you don't need
-    to bundle this file if you link to these.
--   [FindDevIL.cmake](https://github.com/mosra/magnum-plugins/blob/master/modules/FindDevIL.cmake)
-    --- CMake module for finding DevIL. This is a forked version of the upstream
-    module that doesn't attempt to find the often not distributed ILUT library.
-    Copy this to your module directory if you want to find and link to the
-    @ref Trade::DevIlImageImporter "DevIlImageImporter" plugin.
--   [FindFAAD2.cmake](https://github.com/mosra/magnum-plugins/blob/master/modules/FindFAAD2.cmake)
-    --- CMake module for finding FAAD2. Copy this to your module directory if
-    you want to find and link to the
-    @ref Audio::Faad2Importer "Faad2AudioImporter" plugin.
--   [FindGlslang.cmake](https://github.com/mosra/magnum-plugins/blob/master/modules/FindGlslang.cmake)
-    --- CMake module for finding Glslang. Copy this to your module directory if
-    you want to find and link to the
-    @ref ShaderTools::GlslangConverter "GlslangShaderConverter" plugin.
--   [FindHarfBuzz.cmake](https://github.com/mosra/magnum-plugins/blob/master/modules/FindHarfBuzz.cmake)
-    --- CMake module for finding HarfBuzz. Copy this to your module directory
-    if you want to find and link to the @ref Text::HarfBuzzFont "HarfBuzzFont"
-    plugin.
--   [FindOpenEXR.cmake](https://github.com/mosra/magnum-plugins/blob/master/modules/FindOpenEXR.cmake)
-    --- CMake module for finding OpenEXR. Copy this to your module directory if
-    you want to find and link to the
-    @ref Trade::OpenExrImporter "OpenExrImporter" or
-    @ref Trade::OpenExrImageConverter "OpenExrImageConverter" plugin.
--   [FindSpirvTools.cmake](https://github.com/mosra/magnum-plugins/blob/master/modules/FindSpirvTools.cmake)
-    --- CMake module for finding SPIRV-Tools. Copy this to your module
-    directory if you want to find and link to the
-    @ref ShaderTools::SpirvToolsConverter "SpirvToolsShaderConverter" plugin.
--   [FindSpng.cmake](https://github.com/mosra/magnum-plugins/blob/master/modules/FindSpng.cmake)
-    --- CMake module for finding libspng. Copy this to your module directory
-    if you want to find and link to the @relativeref{Trade,SpngImporter}
-    plugin.
--   [FindWebP.cmake](https://github.com/mosra/magnum-plugins/blob/master/modules/FindWebP.cmake)
-    --- CMake module for finding WebP. Copy this to your module directory
-    if you want to find and link to the @relativeref{Trade,WebPImporter}
-    plugin.
--   [FindZstd.cmake](https://github.com/mosra/magnum-plugins/blob/master/modules/FindZstd.cmake)
-    --- CMake module for finding Zstd. Needed only for compiling the
-    @relativeref{Trade,BasisImporter} and @relativeref{Trade,BasisImageConverter}
-    plugins, you don't need to bundle this file if you link to these.
-
-See also @ref cmake-modules "relevant section for the main Magnum project".
 */
 }

@@ -100,12 +100,9 @@ add_subdirectory(magnum-plugins EXCLUDE_FROM_ALL)
 add_dependencies(your-app MagnumPlugins::Faad2AudioImporter)
 @endcode
 
-To use as a static plugin or as a dependency of another plugin with CMake, put
-[FindMagnumPlugins.cmake](https://github.com/mosra/magnum-plugins/blob/master/modules/FindMagnumPlugins.cmake)
-and [FindFAAD2.cmake](https://github.com/mosra/magnum-plugins/blob/master/modules/FindFAAD2.cmake)
-into your `modules/` directory, request the `Faad2AudioImporter` component of
-the `MagnumPlugins` package and link to the `MagnumPlugins::Faad2AudioImporter`
-target:
+To use as a static plugin or as a dependency of another plugin with CMake,
+request the `Faad2AudioImporter` component of the `MagnumPlugins` package and
+link to the `MagnumPlugins::Faad2AudioImporter` target:
 
 @code{.cmake}
 find_package(MagnumPlugins REQUIRED Faad2AudioImporter)

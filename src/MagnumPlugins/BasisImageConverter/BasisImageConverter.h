@@ -131,12 +131,9 @@ is found. To build Basis without a hard dependency on OpenCL, pass
 before the @cmake add_subdirectory() @ce call if  using Magnum Plugins as a
 subproject.
 
-To use as a static plugin or as a dependency of another plugin with CMake, put
-[FindMagnumPlugins.cmake](https://github.com/mosra/magnum-plugins/blob/master/modules/FindMagnumPlugins.cmake)
-and [FindBasisUniversal.cmake](https://github.com/mosra/magnum-plugins/blob/master/modules/FindBasisUniversal.cmake)
-into your `modules/` directory, request the `BasisImageConverter` component of
-the `MagnumPlugins` package and link to the `MagnumPlugins::BasisImageConverter`
-target:
+To use as a static plugin or as a dependency of another plugin with CMake,
+request the `BasisImageConverter` component of the `MagnumPlugins` package and
+link to the `MagnumPlugins::BasisImageConverter` target:
 
 @code{.cmake}
 find_package(MagnumPlugins REQUIRED BasisImageConverter)

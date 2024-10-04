@@ -265,6 +265,10 @@ namespace Magnum {
 -   Fixed `FindMagnumPlugins.cmake` to correctly find the Magnum Plugins
     include directory when it's installed to a different directory than Magnum
     itself (see [mosra/magnum-integration#105](https://github.com/mosra/magnum-integration/issues/105))
+-   Magnum Plugins now automatically install and use Find modules for their
+    dependencies in a way that doesn't clash with modules of the same name
+    potentially installed by other software, meaning the user doesn't need to
+    copy and carry them along anymore (see [mosra/magnum#436](https://github.com/mosra/magnum/issues/436))
 
 @subsection changelog-plugins-latest-bugfixes Bug fixes
 

@@ -168,6 +168,33 @@ find_path(MAGNUMPLUGINS_INCLUDE_DIR Magnum/versionPlugins.h
     HINTS ${MAGNUM_INCLUDE_DIR})
 mark_as_advanced(MAGNUMPLUGINS_INCLUDE_DIR)
 
+# CMake module dir for dependencies. It might not be present at all if no
+# feature that needs them is enabled, in which case it'll be left at NOTFOUND.
+# But in that case it should also not be subsequently needed for any
+# find_package(). If this is called from a superproject, the
+# _MAGNUMPLUGINS_DEPENDENCY_MODULE_DIR is already set by
+# modules/CMakeLists.txt.
+find_path(_MAGNUMPLUGINS_DEPENDENCY_MODULE_DIR
+    NAMES
+        FindAssimp.cmake FindBasisUniversal.cmake FindDevIL.cmake
+        FindFAAD2.cmake FindGlslang.cmake FindHarfBuzz.cmake
+        FindOpenEXR.cmake FindSpirvTools.cmake FindSpng.cmake FindWebP.cmake
+        FindZstd.cmake
+    PATH_SUFFIXES share/cmake/MagnumPlugins/dependencies)
+mark_as_advanced(_MAGNUMPLUGINS_DEPENDENCY_MODULE_DIR)
+
+# If the module dir is found and is not present in CMAKE_MODULE_PATH already
+# (such as when someone explicitly added it, or if it's the Magnum's modules/
+# dir in case of a superproject), add it as the first before all other. Set a
+# flag to remove it again at the end, so the modules don't clash with Find
+# modules of the same name from other projects.
+if(_MAGNUMPLUGINS_DEPENDENCY_MODULE_DIR AND NOT _MAGNUMPLUGINS_DEPENDENCY_MODULE_DIR IN_LIST CMAKE_MODULE_PATH)
+    set(CMAKE_MODULE_PATH ${_MAGNUMPLUGINS_DEPENDENCY_MODULE_DIR} ${CMAKE_MODULE_PATH})
+    set(_MAGNUMPLUGINS_REMOVE_DEPENDENCY_MODULE_DIR_FROM_CMAKE_PATH ON)
+else()
+    unset(_MAGNUMPLUGINS_REMOVE_DEPENDENCY_MODULE_DIR_FROM_CMAKE_PATH)
+endif()
+
 # Component distinction (listing them explicitly to avoid mistakes with finding
 # components from other repositories)
 set(_MAGNUMPLUGINS_LIBRARY_COMPONENTS OpenDdl)
@@ -332,6 +359,10 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
 
         # Decide if the plugin/library was found. If not, skip the rest, which
         # populates the target properties and finds additional dependencies.
+        # This means that the rest can also rely on that e.g. FindZstd.cmake is
+        # present in _MAGNUMPLUGINS_DEPENDENCY_MODULE_DIR -- given that the
+        # library needing Zstd was found, it likely also installed FindZstd for
+        # itself.
         if((_component IN_LIST _MAGNUMPLUGINS_PLUGIN_COMPONENTS OR _component IN_LIST _MAGNUMPLUGINS_LIBRARY_COMPONENTS) AND _MAGNUMPLUGINS_${_COMPONENT}_INCLUDE_DIR AND (MAGNUMPLUGINS_${_COMPONENT}_LIBRARY_DEBUG OR MAGNUMPLUGINS_${_COMPONENT}_LIBRARY_RELEASE))
             set(MagnumPlugins_${_component}_FOUND TRUE)
         else()
@@ -654,6 +685,13 @@ if(NOT CMAKE_VERSION VERSION_LESS 3.16)
 
     string(REPLACE ";" " " _MAGNUMPLUGINS_REASON_FAILURE_MESSAGE "${_MAGNUMPLUGINS_REASON_FAILURE_MESSAGE}")
     set(_MAGNUMPLUGINS_REASON_FAILURE_MESSAGE REASON_FAILURE_MESSAGE "${_MAGNUMPLUGINS_REASON_FAILURE_MESSAGE}")
+endif()
+
+# Remove Magnum Plugins dependency module dir from CMAKE_MODULE_PATH again. Do
+# it before the FPHSA call which may exit early in case of a failure.
+if(_MAGNUMPLUGINS_REMOVE_DEPENDENCY_MODULE_DIR_FROM_CMAKE_PATH)
+    list(REMOVE_ITEM CMAKE_MODULE_PATH ${_MAGNUMPLUGINS_DEPENDENCY_MODULE_DIR})
+    unset(_MAGNUMPLUGINS_REMOVE_DEPENDENCY_MODULE_DIR_FROM_CMAKE_PATH)
 endif()
 
 include(FindPackageHandleStandardArgs)

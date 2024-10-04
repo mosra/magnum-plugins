@@ -28,4 +28,53 @@ set(MagnumPlugins_MODULES
     FindMagnumPlugins.cmake
     MagnumPluginsConfig.cmake)
 
+# IMPORTANT: When adding a new module here, be sure to update the
+# find_path(_MAGNUMPLUGINS_DEPENDENCY_MODULE_DIR ...) list in
+# FindMagnumPlugins.cmake to avoid breakages when the directory contains only
+# that new module.
+set(MagnumPlugins_DEPENDENCY_MODULES )
+if(MAGNUM_WITH_ASSIMPIMPORTER)
+    list(APPEND MagnumPlugins_DEPENDENCY_MODULES
+        FindAssimp.cmake)
+endif()
+if(MAGNUM_WITH_BASISIMPORTER OR MAGNUM_WITH_BASISIMAGECONVERTER)
+    list(APPEND MagnumPlugins_DEPENDENCY_MODULES
+        # FindBasisUniversal only needed for compiling the plugins themselves
+        FindZstd.cmake)
+endif()
+if(MAGNUM_WITH_DEVILIMAGEIMPORTER)
+    list(APPEND MagnumPlugins_DEPENDENCY_MODULES
+        FindDevIL.cmake)
+endif()
+if(MAGNUM_WITH_GLSLANGSHADERCONVERTER)
+    list(APPEND MagnumPlugins_DEPENDENCY_MODULES
+        FindGlslang.cmake)
+endif()
+if(MAGNUM_WITH_HARFBUZZFONT)
+    list(APPEND MagnumPlugins_DEPENDENCY_MODULES
+        FindHarfBuzz.cmake)
+endif()
+if(MAGNUM_WITH_OPENEXRIMPORTER OR MAGNUM_WITH_OPENEXRIMAGECONVERTER)
+    list(APPEND MagnumPlugins_DEPENDENCY_MODULES
+        FindOpenEXR.cmake)
+endif()
+if(MAGNUM_WITH_SPIRVTOOLSSHADERCONVERTER)
+    list(APPEND MagnumPlugins_DEPENDENCY_MODULES
+        FindSpirvTools.cmake)
+endif()
+if(MAGNUM_WITH_SPNGIMPORTER)
+    list(APPEND MagnumPlugins_DEPENDENCY_MODULES
+        FindSpng.cmake)
+endif()
+if(MAGNUM_WITH_WEBPIMPORTER OR MAGNUM_WITH_WEBPIMAGECONVERTER)
+    list(APPEND MagnumPlugins_DEPENDENCY_MODULES
+        FindWebP.cmake)
+endif()
+
 install(FILES ${MagnumPlugins_MODULES} DESTINATION ${MAGNUMPLUGINS_CMAKE_MODULE_INSTALL_DIR})
+if(MagnumPlugins_DEPENDENCY_MODULES)
+    install(FILES ${MagnumPlugins_DEPENDENCY_MODULES} DESTINATION ${MAGNUMPLUGINS_CMAKE_MODULE_INSTALL_DIR}/dependencies)
+endif()
+
+# Magnum Plugins dependency module dir for superprojects
+set(_MAGNUMPLUGINS_DEPENDENCY_MODULE_DIR ${CMAKE_CURRENT_SOURCE_DIR} CACHE INTERNAL "")

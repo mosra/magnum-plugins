@@ -132,12 +132,9 @@ add_subdirectory(magnum-plugins EXCLUDE_FROM_ALL)
 add_dependencies(your-app MagnumPlugins::OpenExrImporter)
 @endcode
 
-To use as a static plugin or as a dependency of another plugin with CMake, put
-[FindMagnumPlugins.cmake](https://github.com/mosra/magnum-plugins/blob/master/modules/FindMagnumPlugins.cmake)
-and [FindOpenEXR.cmake](https://github.com/mosra/magnum-plugins/blob/master/modules/FindOpenEXR.cmake)
-into your `modules/` directory, request the `OpenExrImporter` component of the
-`MagnumPlugins` package in CMake and link to the
-`MagnumPlugins::OpenExrImporter` target:
+To use as a static plugin or as a dependency of another plugin with CMake,
+request the `OpenExrImporter` component of the `MagnumPlugins` package in CMake
+and link to the `MagnumPlugins::OpenExrImporter` target:
 
 @code{.cmake}
 find_package(MagnumPlugins REQUIRED OpenExrImporter)

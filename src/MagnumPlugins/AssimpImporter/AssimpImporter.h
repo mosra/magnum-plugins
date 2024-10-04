@@ -178,11 +178,9 @@ add_subdirectory(magnum-plugins EXCLUDE_FROM_ALL)
 add_dependencies(your-app MagnumPlugins::AssimpImporter)
 @endcode
 
-To use as a static plugin or as a dependency of another plugin with CMake, put
-[FindMagnumPlugins.cmake](https://github.com/mosra/magnum-plugins/blob/master/modules/FindMagnumPlugins.cmake)
-and [FindAssimp.cmake](https://github.com/mosra/magnum-plugins/blob/master/modules/FindAssimp.cmake)
-into your `modules/` directory, request the `AssimpImporter` component of the
-`MagnumPlugins` package and link to the `MagnumPlugins::AssimpImporter` target:
+To use as a static plugin or as a dependency of another plugin with CMake,
+request the `AssimpImporter` component of the `MagnumPlugins` package and link
+to the `MagnumPlugins::AssimpImporter` target:
 
 @code{.cmake}
 find_package(MagnumPlugins REQUIRED AssimpImporter)
