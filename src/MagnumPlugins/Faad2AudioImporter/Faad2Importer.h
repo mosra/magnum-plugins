@@ -120,8 +120,15 @@ The files are always imported with @ref BufferFormat::Stereo16.
 */
 class MAGNUM_FAAD2AUDIOIMPORTER_EXPORT Faad2Importer: public AbstractImporter {
     public:
-        /** @brief Default constructor */
-        explicit Faad2Importer();
+        #ifdef MAGNUM_BUILD_DEPRECATED
+        /**
+         * @brief Default constructor
+         * @m_deprecated_since_latest Direct plugin instantiation isn't a
+         *      supported use case anymore, instantiate through the plugin
+         *      manager instead.
+         */
+        CORRADE_DEPRECATED("instantiate through the plugin manager instead") explicit Faad2Importer();
+        #endif
 
         /** @brief Plugin manager constructor */
         explicit Faad2Importer(PluginManager::AbstractManager& manager, const Containers::StringView& plugin);

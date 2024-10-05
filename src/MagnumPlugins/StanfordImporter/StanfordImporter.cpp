@@ -59,12 +59,13 @@ struct StanfordImporter::State {
     Containers::Array<std::string> attributeNames;
 };
 
+#ifdef MAGNUM_BUILD_DEPRECATED /* LCOV_EXCL_START */
 StanfordImporter::StanfordImporter() {
-    /** @todo horrible workaround, fix this properly */
     configuration().setValue("perFaceToPerVertex", true);
     configuration().setValue("triangleFastPath", true);
     configuration().setValue("objectIdAttribute", "object_id");
 }
+#endif /* LCOV_EXCL_STOP */
 
 StanfordImporter::StanfordImporter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin): AbstractImporter{manager, plugin} {}
 

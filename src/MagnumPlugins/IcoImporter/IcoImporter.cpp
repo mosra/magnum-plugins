@@ -70,7 +70,9 @@ struct IcoImporter::State {
     Containers::Array<Containers::ArrayView<const char>> levels;
 };
 
-IcoImporter::IcoImporter() = default;
+#ifdef MAGNUM_BUILD_DEPRECATED
+IcoImporter::IcoImporter() = default; /* LCOV_EXCL_LINE */
+#endif
 
 IcoImporter::IcoImporter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin) : AbstractImporter{manager, plugin} {}
 

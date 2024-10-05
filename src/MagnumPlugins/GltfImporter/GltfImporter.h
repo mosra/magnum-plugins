@@ -550,21 +550,23 @@ extension on a glTF mesh primitive object:
 */
 class MAGNUM_GLTFIMPORTER_EXPORT GltfImporter: public AbstractImporter {
     public:
+        #ifdef MAGNUM_BUILD_DEPRECATED
         /**
          * @brief Default constructor
-         *
-         * In case you want to open images, use
-         * @ref GltfImporter(PluginManager::Manager<AbstractImporter>&)
-         * instead.
+         * @m_deprecated_since_latest Direct plugin instantiation isn't a
+         *      supported use case anymore, instantiate through the plugin
+         *      manager instead.
          */
-        explicit GltfImporter();
+        CORRADE_DEPRECATED("instantiate through the plugin manager instead") explicit GltfImporter();
 
         /**
          * @brief Constructor
-         *
-         * The plugin needs access to plugin manager for importing images.
+         * @m_deprecated_since_latest Direct plugin instantiation isn't a
+         *      supported use case anymore, instantiate through the plugin
+         *      manager instead.
          */
-        explicit GltfImporter(PluginManager::Manager<AbstractImporter>& manager);
+        CORRADE_DEPRECATED("instantiate through the plugin manager instead") explicit GltfImporter(PluginManager::Manager<AbstractImporter>& manager);
+        #endif
 
         /** @brief Plugin manager constructor */
         explicit GltfImporter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin);

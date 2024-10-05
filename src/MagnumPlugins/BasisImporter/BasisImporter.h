@@ -249,9 +249,7 @@ With @ref BasisImporter, this format can be chosen in different ways:
 
 The list of valid suffixes is equivalent to enum value names in
 @ref TargetFormat. If you want to be able to change the target format
-dynamically, you may want to set the `format` configuration of the plugin, as
-shown below. If you instantiate this class directly without a plugin manager,
-you may also use @ref setTargetFormat().
+dynamically, set the @cb{.ini} format @ce @ref Trade-BasisImporter-configuration "configuration option".
 
 @snippet BasisImporter.cpp target-format-config
 
@@ -289,12 +287,17 @@ add_subdirectory(magnum-plugins EXCLUDE_FROM_ALL)
 class MAGNUM_BASISIMPORTER_EXPORT BasisImporter: public AbstractImporter {
     public:
         /**
-         * @brief Type to transcode to
+         * @brief Format to transcode to
+         *
+         * Exposed for documentation purposes only. Pick the format either by
+         * loading the plugin under one of the above-listed aliases with the
+         * values as suffix, or by setting the @cb{.ini} format @ce
+         * @ref Trade-BasisImporter-configuration "configuration option".
          *
          * If the image does not contain an alpha channel and the target format
          * has it, alpha will be set to opaque. Conversely, for output formats
          * without alpha the channel will be dropped.
-         * @see @ref Trade-BasisImporter-target-format, @ref setTargetFormat()
+         * @see @ref Trade-BasisImporter-target-format
          */
         enum class TargetFormat: UnsignedInt {
             /* ID kept the same as in Basis itself to make the mapping easy */
@@ -429,23 +432,43 @@ class MAGNUM_BASISIMPORTER_EXPORT BasisImporter: public AbstractImporter {
          */
         static void initialize();
 
-        /** @brief Default constructor */
-        explicit BasisImporter();
+        #ifdef MAGNUM_BUILD_DEPRECATED
+        /**
+         * @brief Default constructor
+         * @m_deprecated_since_latest Direct plugin instantiation isn't a
+         *      supported use case anymore, instantiate through the plugin
+         *      manager instead.
+         */
+        CORRADE_DEPRECATED("instantiate through the plugin manager instead") explicit BasisImporter();
+        #endif
 
         /** @brief Plugin manager constructor */
         explicit BasisImporter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin);
 
         ~BasisImporter();
 
-        /** @brief Target format */
-        TargetFormat targetFormat() const;
+        #ifdef MAGNUM_BUILD_DEPRECATED
+        /**
+         * @brief Target format
+         * @m_deprecated_since_latest Direct plugin instantiation isn't a
+         *      supported use case anymore and thus it isn't possible to query
+         *      the current format with an API. Either check the
+         *      @cb{.ini} format @ce @ref Trade-BasisImporter-configuration "configuration option"
+         *      or compare the name under which was the plugin loaded in
+         *      @ref plugin() against the aliases listed above.
+         */
+        CORRADE_DEPRECATED("instantiate through the plugin manager instead") TargetFormat targetFormat() const;
 
         /**
-        * @brief Set the target format
-        *
-        * See @ref Trade-BasisImporter-target-format for more information.
+         * @brief Set the target format
+         * @m_deprecated_since_latest Direct plugin instantiation isn't a
+         *      supported use case anymore and thus it isn't possible to query
+         *      the current format with an API. Set the
+         *      @cb{.ini} format @ce @ref Trade-BasisImporter-configuration "configuration option"
+         *      instead.
         */
-        void setTargetFormat(TargetFormat format);
+        CORRADE_DEPRECATED("instantiate through the plugin manager instead") void setTargetFormat(TargetFormat format);
+        #endif
 
     private:
         MAGNUM_BASISIMPORTER_LOCAL ImporterFeatures doFeatures() const override;

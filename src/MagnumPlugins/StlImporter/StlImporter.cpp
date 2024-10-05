@@ -41,7 +41,9 @@ namespace Magnum { namespace Trade {
 
 using namespace Containers::Literals;
 
-StlImporter::StlImporter() = default;
+#ifdef MAGNUM_BUILD_DEPRECATED
+StlImporter::StlImporter() = default; /* LCOV_EXCL_LINE */
+#endif
 
 StlImporter::StlImporter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin): AbstractImporter{manager, plugin} {}
 

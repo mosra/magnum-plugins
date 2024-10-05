@@ -48,13 +48,23 @@ namespace Magnum { namespace Trade {
 
 using namespace Containers::Literals;
 
+#ifdef MAGNUM_BUILD_DEPRECATED /* LCOV_EXCL_START */
 StbImageConverter::StbImageConverter(Format format): _format{format} {
     /* Passing an invalid Format enum is user error, we'll assert on that in
        the convertToData() function */
-
-    /** @todo horrible workaround, fix this properly */
     configuration().setValue("jpegQuality", 0.8f);
 }
+#else /* LCOV_EXCL_STOP */
+enum class StbImageConverter::Format: Int {
+        /* 0 used for invalid value */
+
+        Bmp = 1,    /* Output BMP images */
+        Jpeg,       /* Output JPEG images */
+        Hdr,        /* Output HDR images */
+        Png,        /* Output PNG images */
+        Tga         /* Output TGA images */
+    };
+#endif
 
 StbImageConverter::StbImageConverter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin): AbstractImageConverter{manager, plugin} {
     if(plugin == "StbBmpImageConverter"_s || plugin == "BmpImageConverter"_s)

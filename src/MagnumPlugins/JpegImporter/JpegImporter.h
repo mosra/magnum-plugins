@@ -125,8 +125,15 @@ you can get a much better decoding performance by using
 */
 class MAGNUM_JPEGIMPORTER_EXPORT JpegImporter: public AbstractImporter {
     public:
-        /** @brief Default constructor */
-        explicit JpegImporter();
+        #ifdef MAGNUM_BUILD_DEPRECATED
+        /**
+         * @brief Default constructor
+         * @m_deprecated_since_latest Direct plugin instantiation isn't a
+         *      supported use case anymore, instantiate through the plugin
+         *      manager instead.
+         */
+        CORRADE_DEPRECATED("instantiate through the plugin manager instead") explicit JpegImporter();
+        #endif
 
         /** @brief Plugin manager constructor */
         explicit JpegImporter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin);

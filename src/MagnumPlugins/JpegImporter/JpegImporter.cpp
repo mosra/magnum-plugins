@@ -62,7 +62,9 @@
 
 namespace Magnum { namespace Trade {
 
-JpegImporter::JpegImporter() = default;
+#ifdef MAGNUM_BUILD_DEPRECATED
+JpegImporter::JpegImporter() = default; /* LCOV_EXCL_LINE */
+#endif
 
 JpegImporter::JpegImporter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin): AbstractImporter{manager, plugin} {}
 

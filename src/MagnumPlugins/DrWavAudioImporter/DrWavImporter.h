@@ -143,8 +143,15 @@ The files are imported in the following formats:
 */
 class MAGNUM_DRWAVAUDIOIMPORTER_EXPORT DrWavImporter: public AbstractImporter {
     public:
-        /** @brief Default constructor */
-        explicit DrWavImporter();
+        #ifdef MAGNUM_BUILD_DEPRECATED
+        /**
+         * @brief Default constructor
+         * @m_deprecated_since_latest Direct plugin instantiation isn't a
+         *      supported use case anymore, instantiate through the plugin
+         *      manager instead.
+         */
+        CORRADE_DEPRECATED("instantiate through the plugin manager instead") explicit DrWavImporter();
+        #endif
 
         /** @brief Plugin manager constructor */
         explicit DrWavImporter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin);

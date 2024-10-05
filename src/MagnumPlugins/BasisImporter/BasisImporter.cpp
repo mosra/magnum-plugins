@@ -125,12 +125,14 @@ namespace Corrade { namespace Utility {
 
 /* Configuration value implementation for BasisImporter::TargetFormat */
 template<> struct ConfigurationValue<Magnum::Trade::BasisImporter::TargetFormat> {
+    #ifdef MAGNUM_BUILD_DEPRECATED /* LCOV_EXCL_START */
     static std::string toString(Magnum::Trade::BasisImporter::TargetFormat value, ConfigurationValueFlags) {
         if(Magnum::UnsignedInt(value) < Containers::arraySize(Magnum::Trade::FormatNames))
             return Magnum::Trade::FormatNames[Magnum::UnsignedInt(value)];
 
         return "<invalid>";
     }
+    #endif /* LCOV_EXCL_STOP */
 
     static Magnum::Trade::BasisImporter::TargetFormat fromString(const std::string& value, ConfigurationValueFlags) {
         Magnum::Int i = 0;
@@ -197,11 +199,12 @@ void BasisImporter::initialize() {
     basist::basisu_transcoder_init();
 }
 
+#ifdef MAGNUM_BUILD_DEPRECATED /* LCOV_EXCL_START */
 BasisImporter::BasisImporter(): _state{InPlaceInit} {
     /* Initialize default configuration values */
-    /** @todo horrible workaround, fix this properly */
     configuration().setValue("format", "");
 }
+#endif /* LCOV_EXCL_STOP */
 
 BasisImporter::BasisImporter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin): AbstractImporter{manager, plugin} {
     /* Initializes codebook */
@@ -816,6 +819,7 @@ Containers::Optional<TextureData> BasisImporter::doTexture(UnsignedInt id) {
 }
 #endif
 
+#ifdef MAGNUM_BUILD_DEPRECATED /* LCOV_EXCL_START */
 void BasisImporter::setTargetFormat(TargetFormat format) {
     configuration().setValue("format", format);
 }
@@ -823,6 +827,7 @@ void BasisImporter::setTargetFormat(TargetFormat format) {
 BasisImporter::TargetFormat BasisImporter::targetFormat() const {
     return configuration().value<TargetFormat>("format");
 }
+#endif /* LCOV_EXCL_STOP */
 
 }}
 

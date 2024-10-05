@@ -345,6 +345,10 @@ namespace Magnum {
     @ref ImageFlag3D::Array "ImageFlag*D::Array", retrieving their type via
     @ref Trade::TextureData::type() is deprecated and available only for
     backwards compatibility unless @ref MAGNUM_BUILD_DEPRECATED is disabled.
+-   Direct plugin instantiation through the constructors isn't a supported use
+    case anymore, as such a code path is not easy to test in common setups and
+    requires significant code duplication in order to preserve plugin-specific
+    configuration options. Instantiate though the plugin manager instead.
 
 @subsection changelog-plugins-latest-compatibility Potential compatibility breakages, removed APIs
 

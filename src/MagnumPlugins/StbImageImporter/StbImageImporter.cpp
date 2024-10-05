@@ -65,10 +65,11 @@ struct StbImageImporter::State {
     Containers::Array<int> gifDelays;
 };
 
+#ifdef MAGNUM_BUILD_DEPRECATED /* LCOV_EXCL_START */
 StbImageImporter::StbImageImporter() {
-    /** @todo horrible workaround, fix this properly */
     configuration().setValue("forceChannelCount", 0);
 }
+#endif /* LCOV_EXCL_STOP */
 
 StbImageImporter::StbImageImporter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin): AbstractImporter{manager, plugin} {}
 

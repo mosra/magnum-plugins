@@ -196,8 +196,15 @@ class MAGNUM_HARFBUZZFONT_EXPORT HarfBuzzFont: public FreeTypeFont {
          */
         static void finalize() {}
 
-        /** @brief Default constructor */
-        explicit HarfBuzzFont();
+        #ifdef MAGNUM_BUILD_DEPRECATED
+        /**
+         * @brief Default constructor
+         * @m_deprecated_since_latest Direct plugin instantiation isn't a
+         *      supported use case anymore, instantiate through the plugin
+         *      manager instead.
+         */
+        CORRADE_DEPRECATED("instantiate through the plugin manager instead") explicit HarfBuzzFont();
+        #endif
 
         /** @brief Plugin manager constructor */
         explicit HarfBuzzFont(PluginManager::AbstractManager& manager, const Containers::StringView& plugin);

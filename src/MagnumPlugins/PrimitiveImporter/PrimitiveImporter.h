@@ -143,9 +143,6 @@ to edit the configuration values.
 */
 class MAGNUM_PRIMITIVEIMPORTER_EXPORT PrimitiveImporter: public AbstractImporter {
     public:
-        /* Default constructor not provided as I would need to replicate the
-           whole configuration in it (ugh) */
-
         /** @brief Plugin manager constructor */
         explicit PrimitiveImporter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin);
 

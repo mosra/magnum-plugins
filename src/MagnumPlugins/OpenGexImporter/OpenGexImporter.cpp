@@ -105,9 +105,11 @@ UnsignedInt structureId(const std::vector<OpenDdl::Structure>& structures, OpenD
 
 }
 
+#ifdef MAGNUM_BUILD_DEPRECATED /* LCOV_EXCL_START */
 OpenGexImporter::OpenGexImporter() = default;
 
 OpenGexImporter::OpenGexImporter(PluginManager::Manager<AbstractImporter>& manager): AbstractImporter(manager) {}
+#endif /* LCOV_EXCL_STOP */
 
 OpenGexImporter::OpenGexImporter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin): AbstractImporter(manager, plugin) {}
 

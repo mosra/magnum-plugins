@@ -204,16 +204,14 @@ To keep the original channel order, set @cb{.ini} swizzle=rgba @ce.
 @subsection Trade-BasisImageConverter-behavior-ktx Converting to KTX2
 
 To create Khronos Texture 2.0 (`*.ktx2`) files, either load the plugin as
-`BasisKtxImageConverter`, call @ref convertToFile() with the `.ktx2` extension
-or pass @ref Format::Ktx to the constructor. In all other cases, a Basis
-Universal (`*.basis`) file is created.
+`BasisKtxImageConverter` or call @ref convertToFile() with the `.ktx2`
+extension. In all other cases, a Basis Universal (`*.basis`) file is created.
 
 The @ref extension() is @cpp "ktx2" @ce and @ref mimeType() @cpp "image/ktx2" @ce
-if the plugin is loaded as `BasisKtxImageConverter` or @ref Format::Ktx is
-passed to the constructor. In all other cases (and independently of what
-file extension is used in a call to @ref convertToFile()), @ref extension is
-@cpp "basis" @ce and @ref mimeType() is an empty string as the Basis Universal
-file format doesn't have a registered MIME type.
+if the plugin is loaded as `BasisKtxImageConverter`. In all other cases (and
+independently of what file extension is used in a call to @ref convertToFile()),
+@ref extension is @cpp "basis" @ce and @ref mimeType() is an empty string as
+the Basis Universal file format doesn't have a registered MIME type.
 
 @subsection Trade-BasisImageConverter-behavior-loading Loading the plugin fails with undefined symbol: pthread_create
 
@@ -237,8 +235,7 @@ target_link_libraries(your-application PRIVATE Threads::Threads)
 
 While the encoder library *should* behave in a way that doesn't modify any
 global state, in versions before 1.16 the library initialization done at plugin
-load time (or using @ref initialize() when using the class witout a plugin
-manager) is populating global safe in a non-thread-safe way. Thus you have to
+load time is populating global safe in a non-thread-safe way. Thus you have to
 ensure that the plugin isn't loaded from multiple threads at the same time, or
 loaded while being already used from another thread.
 
@@ -258,11 +255,18 @@ to edit the configuration values.
 */
 class MAGNUM_BASISIMAGECONVERTER_EXPORT BasisImageConverter: public AbstractImageConverter {
     public:
+        #ifdef MAGNUM_BUILD_DEPRECATED
         /**
          * @brief Output file format
-         *
-         * @see @ref BasisImageConverter(Format)
+         * @m_deprecated_since_latest Direct plugin instantiation isn't a
+         *      supported use case anymore and thus it isn't possible to pass
+         *      the format to @ref BasisImageConverter(Format). Instantiate
+         *      through the plugin manager as `BasisImageConverter` or
+         *      `BasisKtxImageConverter` or specify a `*.basis` or `*.ktx2`
+         *      extension to choose between the formats.
          */
+        /* Not marked with CORRADE_DEPRECATED() as the enum values are used
+           internally */
         enum class Format: Int {
             /* 0 used for default value, Basis unless overridden by
                convertToFile */
@@ -270,35 +274,32 @@ class MAGNUM_BASISIMAGECONVERTER_EXPORT BasisImageConverter: public AbstractImag
             Basis = 1,    /**< Output Basis images */
             Ktx,          /**< Output KTX2 images */
         };
+        #endif
 
         /**
          * @brief Initialize Basis encoder
          * @m_since_latest
-         *
-         * If the class is instantiated directly (not through a plugin
-         * manager), this function has to be called explicitly before using
-         * any instance.
-         *
-         * @see @ref Trade-BasisImageConverter-behavior-multithreading
          */
         static void initialize();
 
         /**
          * @brief Finalize Basis encoder
          * @m_since_latest
-         *
-         * If the class is instantiated directly (not through a plugin
-         * manager), this function has to be called explicitly after
-         * destroying the last instance.
          */
         static void finalize();
 
+        #ifdef MAGNUM_BUILD_DEPRECATED
         /**
          * @brief Default constructor
-         *
-         * The converter outputs files in format defined by @ref Format.
+         * @m_deprecated_since_latest Direct plugin instantiation isn't a
+         *      supported use case anymore and thus it isn't possible to pass
+         *      the format to the constructor. Instantiate through the plugin
+         *      manager as `BasisImageConverter` or `BasisKtxImageConverter` or
+         *      specify a `*.basis` or `*.ktx2` extension to choose between the
+         *      formats.
          */
-        explicit BasisImageConverter(Format format = Format{});
+        CORRADE_DEPRECATED("instantiate through the plugin manager instead") explicit BasisImageConverter(Format format = Format{});
+        #endif
 
         /** @brief Plugin manager constructor */
         explicit BasisImageConverter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin);
@@ -316,6 +317,9 @@ class MAGNUM_BASISIMAGECONVERTER_EXPORT BasisImageConverter: public AbstractImag
         MAGNUM_BASISIMAGECONVERTER_LOCAL bool doConvertToFile(const Containers::ArrayView<const ImageView2D> imageLevels, const Containers::StringView filename) override;
         MAGNUM_BASISIMAGECONVERTER_LOCAL bool doConvertToFile(const Containers::ArrayView<const ImageView3D> imageLevels, const Containers::StringView filename) override;
 
+        #ifndef MAGNUM_BUILD_DEPRECATED
+        enum class Format: Int;
+        #endif
         Format _format;
 };
 

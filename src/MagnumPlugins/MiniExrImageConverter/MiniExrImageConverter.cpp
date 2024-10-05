@@ -47,7 +47,9 @@ namespace Magnum { namespace Trade {
 
 using namespace Containers::Literals;
 
-MiniExrImageConverter::MiniExrImageConverter() = default;
+#ifdef MAGNUM_BUILD_DEPRECATED
+MiniExrImageConverter::MiniExrImageConverter() = default; /* LCOV_EXCL_LINE */
+#endif
 
 MiniExrImageConverter::MiniExrImageConverter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin): AbstractImageConverter{manager, plugin} {}
 

@@ -64,7 +64,9 @@ struct StbTrueTypeFont::Font {
     Float scale;
 };
 
-StbTrueTypeFont::StbTrueTypeFont() = default;
+#ifdef MAGNUM_BUILD_DEPRECATED
+StbTrueTypeFont::StbTrueTypeFont() = default; /* LCOV_EXCL_LINE */
+#endif
 
 StbTrueTypeFont::StbTrueTypeFont(PluginManager::AbstractManager& manager, const Containers::StringView& plugin): AbstractFont{manager, plugin} {}
 

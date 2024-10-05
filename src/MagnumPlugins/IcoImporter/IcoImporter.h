@@ -113,8 +113,15 @@ instead, but please @ref Trade-DevIlImageImporter-behavior-ico "be aware of its 
 */
 class MAGNUM_ICOIMPORTER_EXPORT IcoImporter: public AbstractImporter {
     public:
-        /** @brief Default constructor */
-        explicit IcoImporter();
+        #ifdef MAGNUM_BUILD_DEPRECATED
+        /**
+         * @brief Default constructor
+         * @m_deprecated_since_latest Direct plugin instantiation isn't a
+         *      supported use case anymore, instantiate through the plugin
+         *      manager instead.
+         */
+        CORRADE_DEPRECATED("instantiate through the plugin manager instead") explicit IcoImporter();
+        #endif
 
         /** @brief Plugin manager constructor */
         explicit IcoImporter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin);

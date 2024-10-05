@@ -66,10 +66,11 @@ namespace Magnum { namespace Trade {
 
 using namespace Containers::Literals;
 
+#ifdef MAGNUM_BUILD_DEPRECATED /* LCOV_EXCL_START */
 JpegImageConverter::JpegImageConverter() {
-    /** @todo horrible workaround, fix this properly */
     configuration().setValue("jpegQuality", 0.8f);
 }
+#endif /* LCOV_EXCL_STOP */
 
 JpegImageConverter::JpegImageConverter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin): AbstractImageConverter(manager, Utility::move(plugin)) {}
 

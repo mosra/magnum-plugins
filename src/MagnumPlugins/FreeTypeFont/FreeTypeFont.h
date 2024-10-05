@@ -163,8 +163,15 @@ class MAGNUM_FREETYPEFONT_EXPORT FreeTypeFont: public AbstractFont {
         /** @brief Finalize FreeType library */
         static void finalize();
 
-        /** @brief Default constructor */
-        explicit FreeTypeFont();
+        #ifdef MAGNUM_BUILD_DEPRECATED
+        /**
+         * @brief Default constructor
+         * @m_deprecated_since_latest Direct plugin instantiation isn't a
+         *      supported use case anymore, instantiate through the plugin
+         *      manager instead.
+         */
+        CORRADE_DEPRECATED("instantiate through the plugin manager instead") explicit FreeTypeFont();
+        #endif
 
         /** @brief Plugin manager constructor */
         explicit FreeTypeFont(PluginManager::AbstractManager& manager, const Containers::StringView& plugin);

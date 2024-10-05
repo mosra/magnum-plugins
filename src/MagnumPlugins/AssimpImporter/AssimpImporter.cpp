@@ -174,11 +174,10 @@ namespace {
 /* Joint ids and weights are the only custom attributes in this importer */
 constexpr MeshAttribute JointsAttribute = meshAttributeCustom(0);
 constexpr MeshAttribute WeightsAttribute = meshAttributeCustom(1);
-#endif
 
+/* Only used by the deprecated constructors now */
+/* LCOV_EXCL_START */
 void fillDefaultConfiguration(Utility::ConfigurationGroup& conf) {
-    /** @todo horrible workaround, fix this properly */
-
     conf.setValue("forceWhiteAmbientToBlack", true);
 
     conf.setValue("optimizeQuaternionShortestPath", true);
@@ -197,6 +196,8 @@ void fillDefaultConfiguration(Utility::ConfigurationGroup& conf) {
     postprocess.setValue("Triangulate", true);
     postprocess.setValue("SortByPType", true);
 }
+/* LCOV_EXCL_STOP */
+#endif
 
 Containers::Pointer<Assimp::Importer> createImporter(Utility::ConfigurationGroup& conf) {
     Containers::Pointer<Assimp::Importer> importer{InPlaceInit};
@@ -232,15 +233,15 @@ bool isDummyBone(const aiBone* bone) {
 
 }
 
+#ifdef MAGNUM_BUILD_DEPRECATED /* LCOV_EXCL_START */
 AssimpImporter::AssimpImporter() {
-    /** @todo horrible workaround, fix this properly */
     fillDefaultConfiguration(configuration());
 }
 
 AssimpImporter::AssimpImporter(PluginManager::Manager<AbstractImporter>& manager): AbstractImporter(manager) {
-    /** @todo horrible workaround, fix this properly */
     fillDefaultConfiguration(configuration());
 }
+#endif /* LCOV_EXCL_STOP */
 
 AssimpImporter::AssimpImporter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin): AbstractImporter(manager, plugin) {}
 

@@ -78,7 +78,9 @@ Containers::Array<char> convert32PCM(const Containers::Array<char>& container, c
 
 }
 
-DrFlacImporter::DrFlacImporter() = default;
+#ifdef MAGNUM_BUILD_DEPRECATED
+DrFlacImporter::DrFlacImporter() = default; /* LCOV_EXCL_LINE */
+#endif
 
 DrFlacImporter::DrFlacImporter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin): AbstractImporter{manager, plugin} {}
 

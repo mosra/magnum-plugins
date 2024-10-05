@@ -49,7 +49,9 @@
 
 namespace Magnum { namespace Audio {
 
-StbVorbisImporter::StbVorbisImporter() = default;
+#ifdef MAGNUM_BUILD_DEPRECATED
+StbVorbisImporter::StbVorbisImporter() = default; /* LCOV_EXCL_LINE */
+#endif
 
 StbVorbisImporter::StbVorbisImporter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin): AbstractImporter{manager, plugin} {}
 

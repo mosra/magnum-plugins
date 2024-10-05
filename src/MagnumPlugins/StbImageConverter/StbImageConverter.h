@@ -141,40 +141,35 @@ See @ref building-plugins, @ref cmake-plugins, @ref plugins and
 Accepts 2D images and the following input and output format combinations:
 
 -   Windows Bitmap (`*.bmp`) if the plugin was loaded as `StbBmpImageConverter`
-    / `BmpImageConverter`, if @ref convertToFile() was called with the
-    corresponding extension or if @ref Format::Bmp was passed to the
-    constructor. Accepts @ref PixelFormat::R8Unorm, @ref PixelFormat::RG8Unorm,
-    @ref PixelFormat::RGB8Unorm and @ref PixelFormat::RGBA8Unorm. Single- and
-    two-channel inputs are converted to three-channel with the the first
-    channel repeated three times (and second ignored), four-channel input
-    loses alpha.
--   Radiance HDR (`*.hdr`) if the plugin was loaded as `StbHdrImageConverter`
-    / `HdrImageConverter`, if @ref convertToFile() was called with the
-    corresponding extension or if @ref Format::Hdr was passed to the
-    constructor. Accepts @ref PixelFormat::R32F, @ref PixelFormat::RG32F,
-    @ref PixelFormat::RGB32F or @ref PixelFormat::RGBA32F. R and RG inputs are
-    converted to three-channel RRR with G ignored, four-channel input loses
-    alpha.
--   JPEG (`*.jpg`, `*.jpe`, `*.jpeg`) if the plugin was loaded as
-    `StbJpegImageConverter` / `JpegImageConverter`, if @ref convertToFile() was
-    called with one of the corresponding extensions or if @ref Format::Jpeg was
-    passed to the constructor. Accepts @ref PixelFormat::R8Unorm,
+    / `BmpImageConverter` or if @ref convertToFile() was called with the
+    corresponding extension. Accepts @ref PixelFormat::R8Unorm,
     @ref PixelFormat::RG8Unorm, @ref PixelFormat::RGB8Unorm and
     @ref PixelFormat::RGBA8Unorm. Single- and two-channel inputs are converted
-    to three-channel with the first channel repeated three times (and second
-    ignored), four-channel input loses alpha.
+    to three-channel with the the first channel repeated three times (and
+    second ignored), four-channel input loses alpha.
+-   Radiance HDR (`*.hdr`) if the plugin was loaded as `StbHdrImageConverter`
+    / `HdrImageConverter` or if @ref convertToFile() was called with the
+    corresponding extension. Accepts @ref PixelFormat::R32F,
+    @ref PixelFormat::RG32F, @ref PixelFormat::RGB32F or
+    @ref PixelFormat::RGBA32F. R and RG inputs are converted to three-channel
+    RRR with G ignored, four-channel input loses alpha.
+-   JPEG (`*.jpg`, `*.jpe`, `*.jpeg`) if the plugin was loaded as
+    `StbJpegImageConverter` / `JpegImageConverter` or if @ref convertToFile()
+    was called with one of the corresponding extensions. Accepts
+    @ref PixelFormat::R8Unorm, @ref PixelFormat::RG8Unorm,
+    @ref PixelFormat::RGB8Unorm and @ref PixelFormat::RGBA8Unorm. Single- and
+    two-channel inputs are converted to three-channel with the first channel
+    repeated three times (and second ignored), four-channel input loses alpha.
 -   Portable Network Graphics (`*.png`) if the plugin was loaded as
-    `StbPngImageConverter` / `PngImageConverter`, if @ref convertToFile() was
-    called with the corresponding extension or if @ref Format::Png was passed
-    to the constructor. Accepts @ref PixelFormat::R8Unorm,
+    `StbPngImageConverter` / `PngImageConverter` or if @ref convertToFile() was
+    called with the corresponding extension. Accepts @ref PixelFormat::R8Unorm,
     @ref PixelFormat::RG8Unorm, @ref PixelFormat::RGB8Unorm and
     @ref PixelFormat::RGBA8Unorm, output has the same amount of channels as
     input.
 -   Truevision TGA (`*.tga`, `*.vda`, `*.icb`, `*.vst`) if the plugin was
-    loaded as `StbTgaImageConverter` / `TgaImageConverter`, if
-    @ref convertToFile() was called with one of the corresponding extensions or
-    if @ref Format::Tga was passed to the constructor. Accepts
-    @ref PixelFormat::R8Unorm, @ref PixelFormat::RG8Unorm,
+    loaded as `StbTgaImageConverter` / `TgaImageConverter` or if
+    @ref convertToFile() was called with one of the corresponding extensions.
+    Accepts @ref PixelFormat::R8Unorm, @ref PixelFormat::RG8Unorm,
     @ref PixelFormat::RGB8Unorm and @ref PixelFormat::RGBA8Unorm, output has
     the same amount of channels as input.
 
@@ -235,11 +230,18 @@ to edit the configuration values.
 */
 class MAGNUM_STBIMAGECONVERTER_EXPORT StbImageConverter: public AbstractImageConverter {
     public:
+        #ifdef MAGNUM_BUILD_DEPRECATED
         /**
          * @brief Output file format
-         *
-         * @see @ref StbImageConverter(Format)
+         * @m_deprecated_since_latest Direct plugin instantiation isn't a
+         *      supported use case anymore and thus it isn't possible to pass
+         *      the format to @ref StbImageConverter(Format). Instantiate
+         *      through the plugin manager through one of the aliases mentioned
+         *      above or specify an appropriate extension to choose among the
+         *      formats.
          */
+        /* Not marked with CORRADE_DEPRECATED() as the enum values are used
+           internally */
         enum class Format: Int {
             /* 0 used for invalid value */
 
@@ -252,10 +254,14 @@ class MAGNUM_STBIMAGECONVERTER_EXPORT StbImageConverter: public AbstractImageCon
 
         /**
          * @brief Default constructor
-         *
-         * The converter outputs files in format defined by @ref Format.
+         * @m_deprecated_since_latest Direct plugin instantiation isn't a
+         *      supported use case anymore and thus it isn't possible to pass
+         *      the format to the constructor. Instantiate through the plugin
+         *      manager through one of the aliases mentioned above or specify
+         *      an appropriate extension to choose among the formats.
          */
-        explicit StbImageConverter(Format format);
+        CORRADE_DEPRECATED("instantiate through the plugin manager instead") explicit StbImageConverter(Format format);
+        #endif
 
         /**
          * @brief Plugin manager constructor
@@ -273,6 +279,9 @@ class MAGNUM_STBIMAGECONVERTER_EXPORT StbImageConverter: public AbstractImageCon
         MAGNUM_STBIMAGECONVERTER_LOCAL Containers::Optional<Containers::Array<char>> doConvertToData(const ImageView2D& image) override;
         MAGNUM_STBIMAGECONVERTER_LOCAL bool doConvertToFile(const ImageView2D& image, Containers::StringView filename) override;
 
+        #ifndef MAGNUM_BUILD_DEPRECATED
+        enum class Format: Int;
+        #endif
         Format _format;
 };
 

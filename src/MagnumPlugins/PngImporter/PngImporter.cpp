@@ -51,7 +51,9 @@ namespace Magnum { namespace Trade {
 
 using namespace Containers::Literals;
 
-PngImporter::PngImporter() = default;
+#ifdef MAGNUM_BUILD_DEPRECATED
+PngImporter::PngImporter() = default; /* LCOV_EXCL_LINE */
+#endif
 
 PngImporter::PngImporter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin): AbstractImporter{manager, plugin} {}
 

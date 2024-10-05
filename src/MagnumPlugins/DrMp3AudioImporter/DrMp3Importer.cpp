@@ -57,7 +57,9 @@ constexpr BufferFormat Mp3FormatTable[8]{
 
 }
 
-DrMp3Importer::DrMp3Importer() = default;
+#ifdef MAGNUM_BUILD_DEPRECATED
+DrMp3Importer::DrMp3Importer() = default; /* LCOV_EXCL_LINE */
+#endif
 
 DrMp3Importer::DrMp3Importer(PluginManager::AbstractManager& manager, const Containers::StringView& plugin): AbstractImporter{manager, plugin} {}
 

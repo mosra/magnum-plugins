@@ -117,7 +117,9 @@ Containers::Array<char> readRaw(drwav* const handle, const UnsignedInt samples, 
 
 }
 
-DrWavImporter::DrWavImporter() = default;
+#ifdef MAGNUM_BUILD_DEPRECATED
+DrWavImporter::DrWavImporter() = default; /* LCOV_EXCL_LINE */
+#endif
 
 DrWavImporter::DrWavImporter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin): AbstractImporter{manager, plugin} {}
 

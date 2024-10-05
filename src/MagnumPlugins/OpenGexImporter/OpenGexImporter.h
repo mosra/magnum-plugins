@@ -246,21 +246,23 @@ importer-specific data accessors:
 */
 class MAGNUM_OPENGEXIMPORTER_EXPORT OpenGexImporter: public AbstractImporter {
     public:
+        #ifdef MAGNUM_BUILD_DEPRECATED
         /**
          * @brief Default constructor
-         *
-         * In case you want to open images, use
-         * @ref OpenGexImporter(PluginManager::Manager<AbstractImporter>&)
-         * instead.
+         * @m_deprecated_since_latest Direct plugin instantiation isn't a
+         *      supported use case anymore, instantiate through the plugin
+         *      manager instead.
          */
-        explicit OpenGexImporter();
+        CORRADE_DEPRECATED("instantiate through the plugin manager instead") explicit OpenGexImporter();
 
         /**
          * @brief Constructor
-         *
-         * The plugin needs access to plugin manager for importing images.
+         * @m_deprecated_since_latest Direct plugin instantiation isn't a
+         *      supported use case anymore, instantiate through the plugin
+         *      manager instead.
          */
-        explicit OpenGexImporter(PluginManager::Manager<AbstractImporter>& manager);
+        CORRADE_DEPRECATED("instantiate through the plugin manager instead") explicit OpenGexImporter(PluginManager::Manager<AbstractImporter>& manager);
+        #endif
 
         /** @brief Plugin manager constructor */
         explicit OpenGexImporter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin);

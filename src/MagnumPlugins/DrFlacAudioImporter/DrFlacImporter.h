@@ -140,8 +140,15 @@ such files, and thus handling of such files is not implemented.
 */
 class MAGNUM_DRFLACAUDIOIMPORTER_EXPORT DrFlacImporter: public AbstractImporter {
     public:
-        /** @brief Default constructor */
-        explicit DrFlacImporter();
+        #ifdef MAGNUM_BUILD_DEPRECATED
+        /**
+         * @brief Default constructor
+         * @m_deprecated_since_latest Direct plugin instantiation isn't a
+         *      supported use case anymore, instantiate through the plugin
+         *      manager instead.
+         */
+        CORRADE_DEPRECATED("instantiate through the plugin manager instead") explicit DrFlacImporter();
+        #endif
 
         /** @brief Plugin manager constructor */
         explicit DrFlacImporter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin);

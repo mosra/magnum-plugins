@@ -139,8 +139,15 @@ and @ref BufferFormat::Surround71Channel16.
 */
 class MAGNUM_STBVORBISAUDIOIMPORTER_EXPORT StbVorbisImporter: public AbstractImporter {
     public:
-        /** @brief Default constructor */
-        explicit StbVorbisImporter();
+        #ifdef MAGNUM_BUILD_DEPRECATED
+        /**
+         * @brief Default constructor
+         * @m_deprecated_since_latest Direct plugin instantiation isn't a
+         *      supported use case anymore, instantiate through the plugin
+         *      manager instead.
+         */
+        CORRADE_DEPRECATED("instantiate through the plugin manager instead") explicit StbVorbisImporter();
+        #endif
 
         /** @brief Plugin manager constructor */
         explicit StbVorbisImporter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin);

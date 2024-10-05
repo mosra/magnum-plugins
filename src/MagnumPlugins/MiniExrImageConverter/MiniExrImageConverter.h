@@ -130,8 +130,15 @@ conversion warnings to be suppressed.
 */
 class MAGNUM_MINIEXRIMAGECONVERTER_EXPORT MiniExrImageConverter: public AbstractImageConverter {
     public:
-        /** @brief Default constructor */
-        explicit MiniExrImageConverter();
+        #ifdef MAGNUM_BUILD_DEPRECATED
+        /**
+         * @brief Default constructor
+         * @m_deprecated_since_latest Direct plugin instantiation isn't a
+         *      supported use case anymore, instantiate through the plugin
+         *      manager instead.
+         */
+        CORRADE_DEPRECATED("instantiate through the plugin manager instead") explicit MiniExrImageConverter();
+        #endif
 
         /** @brief Plugin manager constructor */
         explicit MiniExrImageConverter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin);

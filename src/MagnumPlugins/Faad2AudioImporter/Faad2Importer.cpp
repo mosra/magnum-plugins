@@ -37,7 +37,9 @@
 
 namespace Magnum { namespace Audio {
 
-Faad2Importer::Faad2Importer() = default;
+#ifdef MAGNUM_BUILD_DEPRECATED
+Faad2Importer::Faad2Importer() = default; /* LCOV_EXCL_LINE */
+#endif
 
 Faad2Importer::Faad2Importer(PluginManager::AbstractManager& manager, const Containers::StringView& plugin): AbstractImporter{manager, plugin} {}
 

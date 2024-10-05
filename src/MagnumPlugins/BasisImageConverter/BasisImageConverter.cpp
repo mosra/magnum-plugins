@@ -55,6 +55,15 @@ namespace Magnum { namespace Trade {
 
 using namespace Containers::Literals;
 
+#ifndef MAGNUM_BUILD_DEPRECATED
+enum class BasisImageConverter::Format: Int {
+    /* 0 used for default value, Basis unless overridden by
+       convertToFile */
+    Basis = 1,    /* Output Basis images */
+    Ktx,          /* Output KTX2 images */
+};
+#endif
+
 namespace {
 
 template<typename T> void copySlice(const ImageView3D& image3D, UnsignedInt slice, Containers::StridedArrayView2D<Math::Color4<T>>& dst, bool yFlip, bool hasCustomSwizzle) {
@@ -516,10 +525,12 @@ void BasisImageConverter::finalize() {
     #endif
 }
 
+#ifdef MAGNUM_BUILD_DEPRECATED /* LCOV_EXCL_START */
 BasisImageConverter::BasisImageConverter(Format format): _format{format} {
     /* Passing an invalid Format enum is user error, we'll assert on that in
        the convertToData() function */
 }
+#endif /* LCOV_EXCL_STOP */
 
 BasisImageConverter::BasisImageConverter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin): AbstractImageConverter{manager, plugin} {
     if(plugin == "BasisKtxImageConverter"_s)

@@ -157,8 +157,15 @@ is ignored.
 */
 class MAGNUM_STBTRUETYPEFONT_EXPORT StbTrueTypeFont: public AbstractFont {
     public:
-        /** @brief Default constructor */
-        explicit StbTrueTypeFont();
+        #ifdef MAGNUM_BUILD_DEPRECATED
+        /**
+         * @brief Default constructor
+         * @m_deprecated_since_latest Direct plugin instantiation isn't a
+         *      supported use case anymore, instantiate through the plugin
+         *      manager instead.
+         */
+        CORRADE_DEPRECATED("instantiate through the plugin manager instead") explicit StbTrueTypeFont();
+        #endif
 
         /** @brief Plugin manager constructor */
         explicit StbTrueTypeFont(PluginManager::AbstractManager& manager, const Containers::StringView& plugin);

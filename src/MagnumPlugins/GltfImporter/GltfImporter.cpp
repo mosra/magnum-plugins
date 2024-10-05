@@ -635,10 +635,11 @@ Containers::Optional<Containers::Triple<Containers::StridedArrayView2D<const cha
     return storage;
 }
 
+#ifdef MAGNUM_BUILD_DEPRECATED /* LCOV_EXCL_START */
 namespace {
 
+/* Only used by the deprecated constructors now */
 void fillDefaultConfiguration(Utility::ConfigurationGroup& conf) {
-    /** @todo horrible workaround, fix this properly */
     conf.setValue("ignoreRequiredExtensions", false);
     conf.setValue("optimizeQuaternionShortestPath", true);
     conf.setValue("normalizeQuaternions", true);
@@ -650,16 +651,15 @@ void fillDefaultConfiguration(Utility::ConfigurationGroup& conf) {
 }
 
 GltfImporter::GltfImporter() {
-    /** @todo horrible workaround, fix this properly */
     fillDefaultConfiguration(configuration());
 }
-
-GltfImporter::GltfImporter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin): AbstractImporter{manager, plugin} {}
 
 GltfImporter::GltfImporter(PluginManager::Manager<AbstractImporter>& manager): AbstractImporter{manager} {
-    /** @todo horrible workaround, fix this properly */
     fillDefaultConfiguration(configuration());
 }
+#endif /* LCOV_EXCL_STOP */
+
+GltfImporter::GltfImporter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin): AbstractImporter{manager, plugin} {}
 
 GltfImporter::~GltfImporter() = default;
 

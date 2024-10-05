@@ -41,7 +41,12 @@
 
 namespace Magnum { namespace Text {
 
-HarfBuzzFont::HarfBuzzFont(): _hbFont(nullptr) {}
+#ifdef MAGNUM_BUILD_DEPRECATED
+/* Tt warns also for the deprecated FreeTypeFont constructor otherwise */
+CORRADE_IGNORE_DEPRECATED_PUSH
+HarfBuzzFont::HarfBuzzFont(): _hbFont(nullptr) {} /* LCOV_EXCL_LINE */
+CORRADE_IGNORE_DEPRECATED_POP
+#endif
 
 HarfBuzzFont::HarfBuzzFont(PluginManager::AbstractManager& manager, const Containers::StringView& plugin): FreeTypeFont{manager, plugin}, _hbFont(nullptr) {}
 

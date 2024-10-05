@@ -78,7 +78,9 @@ void FreeTypeFont::finalize() {
     _library = nullptr;
 }
 
-FreeTypeFont::FreeTypeFont(): _ftFont(nullptr) {}
+#ifdef MAGNUM_BUILD_DEPRECATED
+FreeTypeFont::FreeTypeFont(): _ftFont(nullptr) {} /* LCOV_EXCL_LINE */
+#endif
 
 FreeTypeFont::FreeTypeFont(PluginManager::AbstractManager& manager, const Containers::StringView& plugin): AbstractFont{manager, plugin}, _ftFont(nullptr) {}
 
