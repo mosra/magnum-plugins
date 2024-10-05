@@ -45,14 +45,13 @@ add_plugin(JpegImageConverter
 if(MAGNUM_JPEGIMAGECONVERTER_BUILD_STATIC AND MAGNUM_BUILD_STATIC_PIC)
     set_target_properties(JpegImageConverter PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
-target_include_directories(JpegImageConverter
-    PUBLIC
-        ${PROJECT_SOURCE_DIR}/src
-        ${PROJECT_BINARY_DIR}/src
-    PRIVATE
-        # JPEG_INCLUDE_DIRS is only since 3.12 (and there we should use the
-        # imported target instead anyway)
-        ${JPEG_INCLUDE_DIR})
+target_include_directories(JpegImageConverter SYSTEM PRIVATE
+    # JPEG_INCLUDE_DIRS is only since 3.12 (and there we should use the
+    # imported target instead anyway)
+    ${JPEG_INCLUDE_DIR})
+target_include_directories(JpegImageConverter PUBLIC
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_BINARY_DIR}/src)
 target_link_libraries(JpegImageConverter PUBLIC
     Magnum::Trade
     ${JPEG_LIBRARIES})
