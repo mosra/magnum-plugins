@@ -269,6 +269,8 @@ namespace Magnum {
     dependencies in a way that doesn't clash with modules of the same name
     potentially installed by other software, meaning the user doesn't need to
     copy and carry them along anymore (see [mosra/magnum#436](https://github.com/mosra/magnum/issues/436))
+-   Fixed remaining warnings related to `-fvisibility-inlines-hidden` on Mac
+    (see [mosra/magnum#551](https://github.com/mosra/magnum/issues/551))
 
 @subsection changelog-plugins-latest-bugfixes Bug fixes
 
