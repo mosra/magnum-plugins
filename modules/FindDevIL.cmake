@@ -106,6 +106,12 @@ find_library(ILU_LIBRARIES
   DOC "The file that corresponds to the il utility library."
 )
 
+mark_as_advanced(
+    IL_INCLUDE_DIR
+    IL_LIBRARIES
+    ILUT_LIBRARIES
+    ILU_LIBRARIES)
+
 #message("ILU_LIBRARIES is ${ILU_LIBRARIES}")
 
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(DevIL DEFAULT_MSG

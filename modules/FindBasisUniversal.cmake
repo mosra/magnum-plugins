@@ -122,9 +122,13 @@ foreach(_component ${BasisUniversal_FIND_COMPONENTS})
             if(NOT BASIS_UNIVERSAL_DIR)
                 find_library(BasisUniversalEncoder_LIBRARY_RELEASE basisu_encoder)
                 find_library(BasisUniversalEncoder_LIBRARY_DEBUG basisu_encoder HINTS "debug")
+                mark_as_advanced(
+                    BasisUniversalEncoder_LIBRARY_RELEASE
+                    BasisUniversalEncoder_LIBRARY_DEBUG)
             endif()
             if(NOT BASIS_UNIVERSAL_DIR AND (BasisUniversalEncoder_LIBRARY_DEBUG OR BasisUniversalEncoder_LIBRARY_RELEASE))
                 find_path(BasisUniversalEncoder_INCLUDE_DIR basisu_enc.h PATH_SUFFIXES "basisu/encoder")
+                mark_as_advanced(BasisUniversalEncoder_INCLUDE_DIR)
 
                 add_library(BasisUniversal::Encoder UNKNOWN IMPORTED)
                 if(BasisUniversalEncoder_LIBRARY_DEBUG)
@@ -195,6 +199,7 @@ foreach(_component ${BasisUniversal_FIND_COMPONENTS})
                     # toolchains.
                     find_file(BasisUniversalEncoder_${_file}_SOURCE NAMES ${_file}
                         HINTS ${BasisUniversalEncoder_DIR} NO_CMAKE_FIND_ROOT_PATH)
+                    mark_as_advanced(BasisUniversalEncoder_${_file}_SOURCE)
 
                     if(BasisUniversalEncoder_${_file}_SOURCE)
                         list(APPEND BasisUniversalEncoder_SOURCES
@@ -289,12 +294,16 @@ foreach(_component ${BasisUniversal_FIND_COMPONENTS})
             if(NOT BASIS_UNIVERSAL_DIR)
                 find_library(BasisUniversalTranscoder_LIBRARY_RELEASE basisu_transcoder)
                 find_library(BasisUniversalTranscoder_LIBRARY_DEBUG basisu_transcoder HINTS "debug")
+                mark_as_advanced(
+                    BasisUniversalTranscoder_LIBRARY_RELEASE
+                    BasisUniversalTranscoder_LIBRARY_DEBUG)
             endif()
             if(NOT BASIS_UNIVERSAL_DIR AND (BasisUniversalTranscoder_LIBRARY_DEBUG OR BasisUniversalTranscoder_LIBRARY_RELEASE))
                 # Encoder includes expect the basis includes to be prefixed
                 # with transcoder/ as in the original basis_universal
                 # repository.
                 find_path(BasisUniversalTranscoder_INCLUDE_DIR transcoder/basisu_transcoder.h PATH_SUFFIXES "basisu")
+                mark_as_advanced(BasisUniversalTranscoder_INCLUDE_DIR)
 
                 add_library(BasisUniversal::Transcoder UNKNOWN IMPORTED)
                 if(BasisUniversalTranscoder_LIBRARY_DEBUG)
