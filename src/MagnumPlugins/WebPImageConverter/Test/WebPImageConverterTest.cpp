@@ -55,7 +55,6 @@ struct WebPImageConverterTest: TestSuite::Tester {
 
     void rgb();
     void rgba();
-    void rgbaZeroAlpha();
     void importFailed();
     void encodingFailed();
 
