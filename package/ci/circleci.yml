@@ -189,7 +189,10 @@ commands:
     steps:
     - run:
         name: Install meshoptimizer
-        # few commits after 0.14 with a fix for old Apple Clang
+        # few commits after 0.14 with a fix for old Apple Clang. The
+        # -fvisibility-inlines-hidden is needed to prevent "direct access in
+        # function ... means the weak symbol cannot be overridden at runtime."
+        # errors with Mac Clang.
         command: |
           export MESHOPTIMIZER_VERSION=97c52415c6d29f297a76482ddde22f739292446d
           mkdir -p $HOME/meshoptimizer && cd $HOME/meshoptimizer
@@ -199,6 +202,7 @@ commands:
           cmake .. -DCMAKE_BUILD_TYPE=Debug \
             -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
             -DCMAKE_INSTALL_PREFIX=$HOME/deps \
+            -DCMAKE_CXX_FLAGS="-fvisibility=hidden -fvisibility-inlines-hidden" \
             -G Ninja
           ninja install
 
