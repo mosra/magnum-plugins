@@ -490,7 +490,11 @@ foreach(_component ${Corrade_FIND_COMPONENTS})
                     set(CORRADE_${_COMPONENT}_EXECUTABLE_EMULATOR ${CMAKE_CROSSCOMPILING_EMULATOR} CACHE PATH "Emulator for running a cross-compiled corrade-${_component} executable")
                     mark_as_advanced(CORRADE_${_COMPONENT}_EXECUTABLE_EMULATOR)
                 endif()
+                message(STATUS "uhhhhhhhhhhhhhhhhhhhhhhhhh ${CORRADE_${_COMPONENT}_EXECUTABLE}")
+            else()
+                message(STATUS "found as UHHHH ${CORRADE_${_COMPONENT}_EXECUTABLE}")
             endif()
+            message(WARNING "AHHHH ${CMAKE_CROSSCOMPILING} e ${CMAKE_CROSSCOMPILING_EMULATOR}")
 
             if(CORRADE_${_COMPONENT}_EXECUTABLE)
                 set_property(TARGET Corrade::${_component} PROPERTY
