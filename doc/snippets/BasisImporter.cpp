@@ -46,11 +46,11 @@ PluginManager::Manager<Trade::AbstractImporter> manager;
 /* [target-format-suffix] */
 /* Choose ETC2 target format */
 Containers::Pointer<Trade::AbstractImporter> importerEtc2 =
-    manager.instantiate("BasisImporterEtc2");
+    manager.instantiate("BasisImporterEtc2RGBA");
 
 /* Choose BC5 target format */
 Containers::Pointer<Trade::AbstractImporter> importerBc5 =
-    manager.instantiate("BasisImporterBc5");
+    manager.instantiate("BasisImporterBc5RG");
 /* [target-format-suffix] */
 }
 
@@ -65,12 +65,12 @@ Containers::Pointer<Trade::AbstractImporter> importer =
 importer->openFile("mytexture.basis");
 
 /* Transcode the image to BC5 */
-importer->configuration().setValue("format", "Bc5");
+importer->configuration().setValue("format", "Bc5RG");
 image = importer->image2D(0);
 // ...
 
 /* Transcode the same image, but to ETC2 now */
-importer->configuration().setValue("format", "Etc2");
+importer->configuration().setValue("format", "Etc2RGBA");
 image = importer->image2D(0);
 // ...
 /* [target-format-config] */
