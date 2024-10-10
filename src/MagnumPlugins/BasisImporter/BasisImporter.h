@@ -266,6 +266,10 @@ OpenGL, OpenGL ES and WebGL extensions, in its full ugly glory:
 
 @snippet BasisImporter.cpp gl-extension-checks
 
+Selecting an HDR format is a bit simpler:
+
+@snippet BasisImporter.cpp gl-extension-checks-hdr
+
 @subsection Trade-BasisImporter-binary-size Reducing binary size
 
 To reduce the binary size of the transcoder, Basis Universal supports a set of

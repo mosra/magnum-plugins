@@ -92,7 +92,9 @@ if(PluginManager::PluginMetadata* metadata = manager.metadata("BasisImporter")) 
     GL::Context& context = GL::Context::current();
     using namespace GL::Extensions;
     #ifdef MAGNUM_TARGET_WEBGL
-    if(context.isExtensionSupported<WEBGL::compressed_texture_astc>())
+    /* Pseudo-extension that checks for WEBGL_compressed_texture_astc plus the
+       presence of the LDR profile */
+    if(context.isExtensionSupported<MAGNUM::compressed_texture_astc_ldr>())
     #else
     if(context.isExtensionSupported<KHR::texture_compression_astc_ldr>())
     #endif
@@ -150,6 +152,38 @@ if(PluginManager::PluginMetadata* metadata = manager.metadata("BasisImporter")) 
     #endif
 }
 /* [gl-extension-checks] */
+
+/* [gl-extension-checks-hdr] */
+if(PluginManager::PluginMetadata* metadata = manager.metadata("BasisImporter")) {
+    GL::Context& context = GL::Context::current();
+    using namespace GL::Extensions;
+    #ifdef MAGNUM_TARGET_WEBGL
+    /* Pseudo-extension that checks for WEBGL_compressed_texture_astc plus the
+       presence of the HDR profile */
+    if(context.isExtensionSupported<MAGNUM::compressed_texture_astc_hdr>())
+    #else
+    if(context.isExtensionSupported<KHR::texture_compression_astc_hdr>())
+    #endif
+    {
+        metadata->configuration().setValue("formatHdr", "Astc4x4RGBAF");
+    }
+    /* BC6 extension is available on WebGL 1 and 2, but not ES2 */
+    #if !defined(MAGNUM_TARGET_GLES2) || defined(MAGNUM_TARGET_WEBGL)
+    #ifdef MAGNUM_TARGET_GLES
+    else if(context.isExtensionSupported<EXT::texture_compression_bptc>())
+    #else
+    else if(context.isExtensionSupported<ARB::texture_compression_bptc>())
+    #endif
+    {
+        metadata->configuration().setValue("formatHdr", "Bc6hRGB");
+    }
+    #endif
+    else {
+        /* Fall back to uncompressed if nothing else is supported */
+        metadata->configuration().setValue("formatHdr", "RGBA16F");
+    }
+}
+/* [gl-extension-checks-hdr] */
 }
 #endif
 
