@@ -44,13 +44,19 @@ int main() {
 {
 PluginManager::Manager<Trade::AbstractImporter> manager;
 /* [target-format-suffix] */
-/* Choose ETC2 target format */
+/* Choose ETC2 target format. Sets the format configuration option and leaves
+   formatHdr at its default. */
 Containers::Pointer<Trade::AbstractImporter> importerEtc2 =
-    manager.instantiate("BasisImporterEtc2");
+    manager.instantiate("BasisImporterEtc2RGBA");
 
 /* Choose BC5 target format */
 Containers::Pointer<Trade::AbstractImporter> importerBc5 =
-    manager.instantiate("BasisImporterBc5");
+    manager.instantiate("BasisImporterBc5RG");
+
+/* Choose BC6 target format. This is an HDR format, so sets the formatHdr
+   configuration option and leaves format at its default. */
+Containers::Pointer<Trade::AbstractImporter> importerBc6 =
+    manager.instantiate("BasisImporterBc6hRGB");
 /* [target-format-suffix] */
 }
 
@@ -59,18 +65,20 @@ PluginManager::Manager<Trade::AbstractImporter> manager;
 Containers::Optional<Trade::ImageData2D> image;
 /* [target-format-config] */
 /* Instantiate the plugin under its default name. At this point, the plugin
-   would decompress to full RGBA8, which is usually not what you want. */
+   would decompress to full RGBA8/RGBA16F, which is usually not what you want. */
 Containers::Pointer<Trade::AbstractImporter> importer =
     manager.instantiate("BasisImporter");
 importer->openFile("mytexture.basis");
 
-/* Transcode the image to BC5 */
-importer->configuration().setValue("format", "Bc5");
+/* Transcode LDR images to BC5, and HDR images to ASTC4x4F */
+importer->configuration().setValue("format", "Bc5RG");
+importer->configuration().setValue("formatHdr", "Astc4x4RGBAF");
 image = importer->image2D(0);
 // ...
 
-/* Transcode the same image, but to ETC2 now */
-importer->configuration().setValue("format", "Etc2");
+/* Transcode the same image, but to ETC2/BC6 now */
+importer->configuration().setValue("format", "Etc2RGBA");
+importer->configuration().setValue("formatHdr", "Bc6hRGB");
 image = importer->image2D(0);
 // ...
 /* [target-format-config] */
@@ -84,7 +92,9 @@ if(PluginManager::PluginMetadata* metadata = manager.metadata("BasisImporter")) 
     GL::Context& context = GL::Context::current();
     using namespace GL::Extensions;
     #ifdef MAGNUM_TARGET_WEBGL
-    if(context.isExtensionSupported<WEBGL::compressed_texture_astc>())
+    /* Pseudo-extension that checks for WEBGL_compressed_texture_astc plus the
+       presence of the LDR profile */
+    if(context.isExtensionSupported<MAGNUM::compressed_texture_astc_ldr>())
     #else
     if(context.isExtensionSupported<KHR::texture_compression_astc_ldr>())
     #endif
@@ -142,6 +152,38 @@ if(PluginManager::PluginMetadata* metadata = manager.metadata("BasisImporter")) 
     #endif
 }
 /* [gl-extension-checks] */
+
+/* [gl-extension-checks-hdr] */
+if(PluginManager::PluginMetadata* metadata = manager.metadata("BasisImporter")) {
+    GL::Context& context = GL::Context::current();
+    using namespace GL::Extensions;
+    #ifdef MAGNUM_TARGET_WEBGL
+    /* Pseudo-extension that checks for WEBGL_compressed_texture_astc plus the
+       presence of the HDR profile */
+    if(context.isExtensionSupported<MAGNUM::compressed_texture_astc_hdr>())
+    #else
+    if(context.isExtensionSupported<KHR::texture_compression_astc_hdr>())
+    #endif
+    {
+        metadata->configuration().setValue("formatHdr", "Astc4x4RGBAF");
+    }
+    /* BC6 extension is available on WebGL 1 and 2, but not ES2 */
+    #if !defined(MAGNUM_TARGET_GLES2) || defined(MAGNUM_TARGET_WEBGL)
+    #ifdef MAGNUM_TARGET_GLES
+    else if(context.isExtensionSupported<EXT::texture_compression_bptc>())
+    #else
+    else if(context.isExtensionSupported<ARB::texture_compression_bptc>())
+    #endif
+    {
+        metadata->configuration().setValue("formatHdr", "Bc6hRGB");
+    }
+    #endif
+    else {
+        /* Fall back to uncompressed if nothing else is supported */
+        metadata->configuration().setValue("formatHdr", "RGBA16F");
+    }
+}
+/* [gl-extension-checks-hdr] */
 }
 #endif
 

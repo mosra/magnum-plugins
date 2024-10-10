@@ -61,9 +61,11 @@ namespace Magnum { namespace Trade {
 
 @m_keywords{BasisImporterEacR BasisImporterEacRG BasisImporterEtc1RGB}
 @m_keywords{BasisImporterEtc2RGBA BasisImporterBc1RGB BasisImporterBc3RGBA}
-@m_keywords{BasisImporterBc4R BasisImporterBc5RG BasisImporterBc7RGBA}
-@m_keywords{BasisImporterPvrtc1RGB4bpp BasisImporterPvrtc1RGBA4bpp}
-@m_keywords{BasisImporterAstc4x4RGBA BasisImporterRGBA8}
+@m_keywords{BasisImporterBc4R BasisImporterBc5RG BasisImporterBc6hRGB}
+@m_keywords{BasisImporterBc7RGBA BasisImporterPvrtc1RGB4bpp}
+@m_keywords{BasisImporterPvrtc1RGBA4bpp BasisImporterAstc4x4RGBA}
+@m_keywords{BasisImporterAstc4x4RGBAF BasisImporterRGBA8 BasisImporterRGB16F}
+@m_keywords{BasisImporterRGBA16F}
 
 Imports [Basis Universal](https://github.com/binomialLLC/basis_universal)
 compressed images (`*.basis` or `*.ktx2`) by parsing and transcoding files into
@@ -243,19 +245,17 @@ to edit the configuration values.
 @subsection Trade-BasisImporter-target-format Target format
 
 Basis is a compressed format that is *transcoded* into a compressed GPU format.
-With @ref BasisImporter, this format can be chosen in different ways:
+When loading an HDR image, it will be transcoded to an HDR target format.
+Conversely, non-HDR images can only be transcoded to non-HDR formats.
+With @ref BasisImporter, these formats can be chosen in different ways:
 
 @snippet BasisImporter.cpp target-format-suffix
 
 The list of valid suffixes is equivalent to enum value names in
 @ref TargetFormat. If you want to be able to change the target format
-dynamically, set the @cb{.ini} format @ce @ref Trade-BasisImporter-configuration "configuration option".
+dynamically, set the @cb{.ini} format @ce and @cb{.ini} formatHdr @ce @ref Trade-BasisImporter-configuration "configuration options".
 
 @snippet BasisImporter.cpp target-format-config
-
-HDR images can only be transcoded to one of the HDR formats (`Bc6hRGB` /
-`Astc4x4RGBAF` / `RGB16F` / `RGBA16F`). Likewise, LDR images can only be
-transcoded to non-HDR formats.
 
 There are many options and you should generally be striving for the
 highest-quality format available on a given platform. A detailed description of
@@ -265,6 +265,10 @@ As an example, the following code is a decision making used by
 OpenGL, OpenGL ES and WebGL extensions, in its full ugly glory:
 
 @snippet BasisImporter.cpp gl-extension-checks
+
+Selecting an HDR format is a bit simpler:
+
+@snippet BasisImporter.cpp gl-extension-checks-hdr
 
 @subsection Trade-BasisImporter-binary-size Reducing binary size
 
@@ -291,8 +295,8 @@ class MAGNUM_BASISIMPORTER_EXPORT BasisImporter: public AbstractImporter {
          *
          * Exposed for documentation purposes only. Pick the format either by
          * loading the plugin under one of the above-listed aliases with the
-         * values as suffix, or by setting the @cb{.ini} format @ce
-         * @ref Trade-BasisImporter-configuration "configuration option".
+         * values as suffix, or by setting the @cb{.ini} format @ce and
+         * @cb{.ini} formatHdr @ce @ref Trade-BasisImporter-configuration "configuration options".
          *
          * If the image does not contain an alpha channel and the target format
          * has it, alpha will be set to opaque. Conversely, for output formats
