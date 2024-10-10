@@ -61,9 +61,11 @@ namespace Magnum { namespace Trade {
 
 @m_keywords{BasisImporterEacR BasisImporterEacRG BasisImporterEtc1RGB}
 @m_keywords{BasisImporterEtc2RGBA BasisImporterBc1RGB BasisImporterBc3RGBA}
-@m_keywords{BasisImporterBc4R BasisImporterBc5RG BasisImporterBc7RGBA}
-@m_keywords{BasisImporterPvrtc1RGB4bpp BasisImporterPvrtc1RGBA4bpp}
-@m_keywords{BasisImporterAstc4x4RGBA BasisImporterRGBA8}
+@m_keywords{BasisImporterBc4R BasisImporterBc5RG BasisImporterBc6hRGB}
+@m_keywords{BasisImporterBc7RGBA BasisImporterPvrtc1RGB4bpp}
+@m_keywords{BasisImporterPvrtc1RGBA4bpp BasisImporterAstc4x4RGBA}
+@m_keywords{BasisImporterAstc4x4RGBAF BasisImporterRGBA8 BasisImporterRGB16F}
+@m_keywords{BasisImporterRGBA16F}
 
 Imports [Basis Universal](https://github.com/binomialLLC/basis_universal)
 compressed images (`*.basis` or `*.ktx2`) by parsing and transcoding files into
