@@ -245,19 +245,17 @@ to edit the configuration values.
 @subsection Trade-BasisImporter-target-format Target format
 
 Basis is a compressed format that is *transcoded* into a compressed GPU format.
-With @ref BasisImporter, this format can be chosen in different ways:
+When loading an HDR image, it will be transcoded to an HDR target format.
+Conversely, non-HDR images can only be transcoded to non-HDR formats.
+With @ref BasisImporter, these formats can be chosen in different ways:
 
 @snippet BasisImporter.cpp target-format-suffix
 
 The list of valid suffixes is equivalent to enum value names in
 @ref TargetFormat. If you want to be able to change the target format
-dynamically, set the @cb{.ini} format @ce @ref Trade-BasisImporter-configuration "configuration option".
+dynamically, set the @cb{.ini} format @ce and @cb{.ini} formatHdr @ce @ref Trade-BasisImporter-configuration "configuration options".
 
 @snippet BasisImporter.cpp target-format-config
-
-HDR images can only be transcoded to one of the HDR formats (`Bc6hRGB` /
-`Astc4x4RGBAF` / `RGB16F` / `RGBA16F`). Likewise, LDR images can only be
-transcoded to non-HDR formats.
 
 There are many options and you should generally be striving for the
 highest-quality format available on a given platform. A detailed description of
@@ -293,8 +291,8 @@ class MAGNUM_BASISIMPORTER_EXPORT BasisImporter: public AbstractImporter {
          *
          * Exposed for documentation purposes only. Pick the format either by
          * loading the plugin under one of the above-listed aliases with the
-         * values as suffix, or by setting the @cb{.ini} format @ce
-         * @ref Trade-BasisImporter-configuration "configuration option".
+         * values as suffix, or by setting the @cb{.ini} format @ce and
+         * @cb{.ini} formatHdr @ce @ref Trade-BasisImporter-configuration "configuration options".
          *
          * If the image does not contain an alpha channel and the target format
          * has it, alpha will be set to opaque. Conversely, for output formats

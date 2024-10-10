@@ -187,16 +187,15 @@ const struct {
 
 const struct {
     const char* name;
-    const bool requiresHdr;
     const char* file;
     const char* format;
+    const char* formatHdr;
     const char* message;
 } InvalidConfiguredFormatData[]{
-    {"unknown", false, "rgba.basis", "Banana", "Trade::BasisImporter::image2D(): invalid transcoding target format Banana, expected to be one of Etc1RGB, Etc2RGBA, EacR, EacRG, Bc1RGB, Bc3RGBA, Bc4R, Bc5RG, Bc6hRGB, Bc7RGBA, Pvrtc1RGB4bpp, Pvrtc1RGBA4bpp, Astc4x4RGBA, Astc4x4RGBAF, RGBA8, RGB16F or RGBA16F\n"},
-    {"hdr to ldr", true, "rgbaf.basis", "RGBA8", "Trade::BasisImporter::image2D(): Can't transcode HDR image to LDR format RGBA8\n"},
-    {"hdr to compressed ldr", true, "rgbaf.basis", "Bc3RGBA", "Trade::BasisImporter::image2D(): Can't transcode HDR image to LDR format Bc3RGBA\n"},
-    {"ldr to hdr", true, "rgba.basis", "RGBA16F", "Trade::BasisImporter::image2D(): Can't transcode LDR image to HDR format RGBA16F\n"},
-    {"ldr to compressed hdr", true, "rgba.basis", "Astc4x4RGBAF", "Trade::BasisImporter::image2D(): Can't transcode LDR image to HDR format Astc4x4RGBAF\n"},
+    {"unknown ldr", "rgba.basis", "Banana", "", "Trade::BasisImporter::image2D(): invalid transcoding target format Banana for the format option, expected to be one of Etc1RGB, Etc2RGBA, EacR, EacRG, Bc1RGB, Bc3RGBA, Bc4R, Bc5RG, Bc7RGBA, Pvrtc1RGB4bpp, Pvrtc1RGBA4bpp, Astc4x4RGBA or RGBA8\n"},
+    {"hdr for ldr", "rgba.basis", "Astc4x4RGBAF", "", "Trade::BasisImporter::image2D(): invalid transcoding target format Astc4x4RGBAF for the format option, expected to be one of Etc1RGB, Etc2RGBA, EacR, EacRG, Bc1RGB, Bc3RGBA, Bc4R, Bc5RG, Bc7RGBA, Pvrtc1RGB4bpp, Pvrtc1RGBA4bpp, Astc4x4RGBA or RGBA8\n"},
+    {"unknown hdr", "rgbaf.basis", "", "Binini", "Trade::BasisImporter::image2D(): invalid transcoding target format Binini for the formatHdr option, expected to be one of Bc6hRGB, Astc4x4RGBAF, RGB16F or RGBA16F\n"},
+    {"ldr for hdr", "rgbaf.basis", "", "Bc1RGB", "Trade::BasisImporter::image2D(): invalid transcoding target format Bc1RGB for the formatHdr option, expected to be one of Bc6hRGB, Astc4x4RGBAF, RGB16F or RGBA16F\n"},
 };
 
 #ifdef MAGNUM_BUILD_DEPRECATED
@@ -721,7 +720,7 @@ void BasisImporterTest::unconfigured() {
     if(data.quiet)
         CORRADE_COMPARE(out.str(), "");
     else
-        CORRADE_COMPARE(out.str(), "Trade::BasisImporter::image2D(): no format to transcode to was specified, falling back to uncompressed RGBA8. To get rid of this warning, either explicitly set the format option to one of Etc1RGB, Etc2RGBA, EacR, EacRG, Bc1RGB, Bc3RGBA, Bc4R, Bc5RG, Bc6hRGB, Bc7RGBA, Pvrtc1RGB4bpp, Pvrtc1RGBA4bpp, Astc4x4RGBA, Astc4x4RGBAF, RGBA8, RGB16F or RGBA16F, or load the plugin via one of its BasisImporterEtc1RGB, ... aliases.\n");
+        CORRADE_COMPARE(out.str(), "Trade::BasisImporter::image2D(): no format to transcode to was specified, falling back to uncompressed RGBA8. To get rid of this warning, either explicitly set the format option to one of Etc1RGB, Etc2RGBA, EacR, EacRG, Bc1RGB, Bc3RGBA, Bc4R, Bc5RG, Bc7RGBA, Pvrtc1RGB4bpp, Pvrtc1RGBA4bpp, Astc4x4RGBA or RGBA8, or load the plugin via one of its BasisImporterEtc1RGB, ... aliases.\n");
 
     if(_manager.loadState("AnyImageImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("AnyImageImporter plugin not found, cannot test contents");
@@ -758,7 +757,7 @@ void BasisImporterTest::unconfiguredHdr() {
     CORRADE_COMPARE(image->format(), PixelFormat::RGBA16F);
     CORRADE_COMPARE(image->size(), (Vector2i{63, 27}));
 
-    CORRADE_COMPARE(out.str(), "Trade::BasisImporter::image2D(): no format to transcode to was specified, falling back to uncompressed RGBA16F. To get rid of this warning, either explicitly set the format option to one of Etc1RGB, Etc2RGBA, EacR, EacRG, Bc1RGB, Bc3RGBA, Bc4R, Bc5RG, Bc6hRGB, Bc7RGBA, Pvrtc1RGB4bpp, Pvrtc1RGBA4bpp, Astc4x4RGBA, Astc4x4RGBAF, RGBA8, RGB16F or RGBA16F, or load the plugin via one of its BasisImporterEtc1RGB, ... aliases.\n");
+    CORRADE_COMPARE(out.str(), "Trade::BasisImporter::image2D(): no format to transcode to was specified, falling back to uncompressed RGBA16F. To get rid of this warning, either explicitly set the formatHdr option to one of Bc6hRGB, Astc4x4RGBAF, RGB16F or RGBA16F, or load the plugin via one of its BasisImporterBc6hRGB, ... aliases.\n");
 
     if(_manager.loadState("AnyImageImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("AnyImageImporter plugin not found, cannot test contents");
@@ -776,7 +775,7 @@ void BasisImporterTest::invalidConfiguredFormat() {
     setTestCaseDescription(data.name);
 
     #if BASISD_LIB_VERSION < 150
-    if(data.requiresHdr)
+    if(data.formatHdr != ""_s)
         CORRADE_SKIP("Current version of Basis doesn't support HDR.");
     #endif
 
@@ -786,6 +785,7 @@ void BasisImporterTest::invalidConfiguredFormat() {
     std::ostringstream out;
     Error redirectError{&out};
     importer->configuration().setValue("format", data.format);
+    importer->configuration().setValue("formatHdr", data.formatHdr);
     CORRADE_VERIFY(!importer->image2D(0));
 
     CORRADE_COMPARE(out.str(), data.message);
@@ -905,7 +905,11 @@ void BasisImporterTest::rgbUncompressed() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporterRGBA8");
+    /* LDR format plugin suffix only sets the format configuration value */
     CORRADE_COMPARE(importer->configuration().value("format"), "RGBA8");
+    CORRADE_COMPARE(importer->configuration().value("formatHdr"), "");
+    /* formatHdr is not checked for validity at all for LDR images */
+    importer->configuration().setValue("formatHdr", "Binini");
     std::ostringstream out;
     {
         Warning redirectWarning{&out};
@@ -977,7 +981,11 @@ void BasisImporterTest::rgbUncompressedHdr() {
     #endif
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporterRGB16F");
-    CORRADE_COMPARE(importer->configuration().value("format"), "RGB16F");
+    /* HDR format plugin suffix only sets the formatHdr configuration value */
+    CORRADE_COMPARE(importer->configuration().value("formatHdr"), "RGB16F");
+    CORRADE_COMPARE(importer->configuration().value("format"), "");
+    /* format is not checked for validity at all for HDR images */
+    importer->configuration().setValue("format", "Banana");
     /* See the comment above this variable for more details. The
        rgbf.{basis,ktx2} are both encoded with Y up in convert.sh but the KTX
        files are missing the KTXorientation metadata, causing a warning. */
@@ -1193,8 +1201,9 @@ void BasisImporterTest::rgb() {
     auto& formatData = FormatData[testCaseInstanceId()];
     setTestCaseDescription(formatData.suffix);
 
+    const bool isHdr = isCompressedPixelFormatFloatingPoint(formatData.expectedFormat);
     #if BASISD_LIB_VERSION < 150
-    if(isCompressedPixelFormatFloatingPoint(formatData.expectedFormat))
+    if(isHdr)
         CORRADE_SKIP("Current version of Basis doesn't support HDR.");
     #endif
 
@@ -1211,7 +1220,8 @@ void BasisImporterTest::rgb() {
         CORRADE_ITERATION(fileType.name);
 
         Containers::Pointer<AbstractImporter> importer = _manager.instantiate(pluginName);
-        CORRADE_COMPARE(importer->configuration().value("format"), formatData.suffix);
+        CORRADE_COMPARE(importer->configuration().value("format"), isHdr ? "" : formatData.suffix);
+        CORRADE_COMPARE(importer->configuration().value("formatHdr"), isHdr ? formatData.suffix : "");
         /* See the comment above this variable for more details. The files used
            by this function are all encoded with Y up in convert.sh, but
            except for rgb.ktx2 (which has it patched in) the KTX files are
@@ -1239,8 +1249,9 @@ void BasisImporterTest::rgba() {
     auto& formatData = FormatData[testCaseInstanceId()];
     setTestCaseDescription(formatData.suffix);
 
+    const bool isHdr = isCompressedPixelFormatFloatingPoint(formatData.expectedFormat);
     #if BASISD_LIB_VERSION < 150
-    if(isCompressedPixelFormatFloatingPoint(formatData.expectedFormat))
+    if(isHdr)
         CORRADE_SKIP("Current version of Basis doesn't support HDR.");
     #endif
 
@@ -1257,7 +1268,8 @@ void BasisImporterTest::rgba() {
         CORRADE_ITERATION(fileType.name);
 
         Containers::Pointer<AbstractImporter> importer = _manager.instantiate(pluginName);
-        CORRADE_COMPARE(importer->configuration().value("format"), formatData.suffix);
+        CORRADE_COMPARE(importer->configuration().value("format"), isHdr ? "" : formatData.suffix);
+        CORRADE_COMPARE(importer->configuration().value("formatHdr"), isHdr ? formatData.suffix : "");
         /* See the comment above this variable for more details. The files used
            by this function are all encoded with Y up in convert.sh, but
            the KTX files are missing the KTXorientation metadata, causing a
@@ -2083,7 +2095,7 @@ void BasisImporterTest::importMultipleFormats() {
         CORRADE_VERIFY(image);
         CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Srgb);
         CORRADE_COMPARE(image->size(), (Vector2i{63, 27}));
-        CORRADE_COMPARE(out.str(), "Trade::BasisImporter::image2D(): no format to transcode to was specified, falling back to uncompressed RGBA8. To get rid of this warning, either explicitly set the format option to one of Etc1RGB, Etc2RGBA, EacR, EacRG, Bc1RGB, Bc3RGBA, Bc4R, Bc5RG, Bc6hRGB, Bc7RGBA, Pvrtc1RGB4bpp, Pvrtc1RGBA4bpp, Astc4x4RGBA, Astc4x4RGBAF, RGBA8, RGB16F or RGBA16F, or load the plugin via one of its BasisImporterEtc1RGB, ... aliases.\n");
+        CORRADE_COMPARE(out.str(), "Trade::BasisImporter::image2D(): no format to transcode to was specified, falling back to uncompressed RGBA8. To get rid of this warning, either explicitly set the format option to one of Etc1RGB, Etc2RGBA, EacR, EacRG, Bc1RGB, Bc3RGBA, Bc4R, Bc5RG, Bc7RGBA, Pvrtc1RGB4bpp, Pvrtc1RGBA4bpp, Astc4x4RGBA or RGBA8, or load the plugin via one of its BasisImporterEtc1RGB, ... aliases.\n");
 
     /* Second time without a format change it shouldn't repeat the same
        warning */
@@ -2156,7 +2168,7 @@ void BasisImporterTest::importMultipleFormats() {
         CORRADE_VERIFY(image);
         CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Srgb);
         CORRADE_COMPARE(image->size(), (Vector2i{63, 27}));
-        CORRADE_COMPARE(out.str(), "Trade::BasisImporter::image2D(): no format to transcode to was specified, falling back to uncompressed RGBA8. To get rid of this warning, either explicitly set the format option to one of Etc1RGB, Etc2RGBA, EacR, EacRG, Bc1RGB, Bc3RGBA, Bc4R, Bc5RG, Bc6hRGB, Bc7RGBA, Pvrtc1RGB4bpp, Pvrtc1RGBA4bpp, Astc4x4RGBA, Astc4x4RGBAF, RGBA8, RGB16F or RGBA16F, or load the plugin via one of its BasisImporterEtc1RGB, ... aliases.\n");
+        CORRADE_COMPARE(out.str(), "Trade::BasisImporter::image2D(): no format to transcode to was specified, falling back to uncompressed RGBA8. To get rid of this warning, either explicitly set the format option to one of Etc1RGB, Etc2RGBA, EacR, EacRG, Bc1RGB, Bc3RGBA, Bc4R, Bc5RG, Bc7RGBA, Pvrtc1RGB4bpp, Pvrtc1RGBA4bpp, Astc4x4RGBA or RGBA8, or load the plugin via one of its BasisImporterEtc1RGB, ... aliases.\n");
     }
 }
 

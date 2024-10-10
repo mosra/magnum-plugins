@@ -102,6 +102,7 @@ CompressedPixelFormat compressedPixelFormat(BasisImporter::TargetFormat type, bo
 }
 
 constexpr const char* FormatNames[]{
+    /* LDR formats */
     "Etc1RGB", "Etc2RGBA",
     "Bc1RGB", "Bc3RGBA", "Bc4R", "Bc5RG", "Bc7RGBA", nullptr, /* BC7_ALT */
     "PvrtcRGB4bpp", "PvrtcRGBA4bpp",
@@ -110,9 +111,13 @@ constexpr const char* FormatNames[]{
     "RGBA8", nullptr, nullptr, nullptr, /* RGB565 / BGR565 / RGBA4444 */
     nullptr, nullptr, nullptr,
     "EacR", "EacRG",
-    "Bc6hRGB", "Astc4x4RGBAF",
+    /* HDR formats */
+    "Bc6hRGB",
+    "Astc4x4RGBAF",
     "RGB16F", "RGBA16F",
 };
+
+constexpr Int FormatHdrStart = Int(BasisImporter::TargetFormat::Bc6hRGB);
 
 /* Last element has to be on the same index as last enum value */
 static_assert(Containers::arraySize(FormatNames) - 1 == Int(BasisImporter::TargetFormat::RGBA16F), "bad string format mapping");
@@ -211,10 +216,19 @@ BasisImporter::BasisImporter(PluginManager::AbstractManager& manager, const Cont
     _state.reset(new State);
 
     /* Set format configuration from plugin alias */
-    if(plugin.hasPrefix("BasisImporter"_s)) {
-        /* Has type prefix. We can assume the substring results in a valid
-           value as the plugin conf limits it to known suffixes */
-        if(plugin.size() > 13) configuration().setValue("format", plugin.exceptPrefix("BasisImporter"));
+    constexpr Containers::StringView PluginPrefix = "BasisImporter"_s;
+    if(plugin.hasPrefix(PluginPrefix)) {
+        /* Has type suffix. We can assume the substring results in a valid
+           value as the plugin conf limits it to known suffixes. */
+        if(const Containers::StringView suffix = plugin.exceptPrefix(PluginPrefix)) {
+            Int i = 0;
+            for(const char* name: FormatNames) {
+                if(name && suffix == name) break;
+                ++i;
+            }
+            CORRADE_INTERNAL_ASSERT(i < Containers::arraySize(FormatNames));
+            configuration().setValue(i < FormatHdrStart ? "format" : "formatHdr", suffix);
+        }
     }
 }
 
@@ -526,13 +540,24 @@ template<UnsignedInt dimensions> Containers::Optional<ImageData<dimensions>> Bas
     constexpr const char* prefixes[2]{"Trade::BasisImporter::image2D():", "Trade::BasisImporter::image3D():"};
     constexpr const char* prefix = prefixes[dimensions - 2];
 
-    const auto targetFormatStr = configuration().value<Containers::StringView>("format");
+    #if BASISD_LIB_VERSION >= 150
+    const bool isHdr = _state->compressionType == basist::basis_tex_format::cUASTC_HDR_4x4;
+    #else
+    constexpr bool isHdr = false;
+    #endif
+
+    constexpr auto expectedFormatsLdr = "Etc1RGB, Etc2RGBA, EacR, EacRG, Bc1RGB, Bc3RGBA, Bc4R, Bc5RG, Bc7RGBA, Pvrtc1RGB4bpp, Pvrtc1RGBA4bpp, Astc4x4RGBA or RGBA8"_s;
+    constexpr auto expectedFormatsHdr = "Bc6hRGB, Astc4x4RGBAF, RGB16F or RGBA16F"_s;
+    const Containers::StringView expectedFormats = isHdr ? expectedFormatsHdr : expectedFormatsLdr;
+
+    const char* formatConfigName = isHdr ? "formatHdr" : "format";
+    const auto targetFormatStr = configuration().value<Containers::StringView>(formatConfigName);
     Containers::Optional<TargetFormat> targetFormat;
     if(targetFormatStr) {
-        targetFormat = configuration().value<TargetFormat>("format");
-        if(UnsignedInt(*targetFormat) == ~UnsignedInt{}) {
-            Error{} << prefix << "invalid transcoding target format" << targetFormatStr << Debug::nospace
-                << ", expected to be one of Etc1RGB, Etc2RGBA, EacR, EacRG, Bc1RGB, Bc3RGBA, Bc4R, Bc5RG, Bc6hRGB, Bc7RGBA, Pvrtc1RGB4bpp, Pvrtc1RGBA4bpp, Astc4x4RGBA, Astc4x4RGBAF, RGBA8, RGB16F or RGBA16F";
+        targetFormat = configuration().value<TargetFormat>(formatConfigName);
+        if(UnsignedInt(*targetFormat) == ~UnsignedInt{} || (isHdr && Int(*targetFormat) < FormatHdrStart) || (!isHdr && Int(*targetFormat) >= FormatHdrStart)) {
+            Error{} << prefix << "invalid transcoding target format" << targetFormatStr << "for the"
+                << formatConfigName << "option, expected to be one of" << expectedFormats;
             return Containers::NullOpt;
         }
     }
@@ -545,36 +570,20 @@ template<UnsignedInt dimensions> Containers::Optional<ImageData<dimensions>> Bas
         _state->yFlipNotPossibleWarningPrinted = false;
     }
 
-    #if BASISD_LIB_VERSION >= 150
-    const bool isHdr = _state->compressionType == basist::basis_tex_format::cUASTC_HDR_4x4;
-    #else
-    constexpr bool isHdr = false;
-    #endif
-
     /* If no target format was specified, print a warning and fall back to
        RGBA. Don't save it to _state->lastTargetFormat because then we
        wouldn't be able to distinguish the case of explicit RGBA and no
        format set */
     if(!targetFormat) {
-        if(!(flags() & ImporterFlag::Quiet) && !_state->noTranscodeFormatWarningPrinted)
-            Warning{} << prefix << "no format to transcode to was specified, falling back to uncompressed" << (isHdr ? "RGBA16F" : "RGBA8") << Debug::nospace << "."
-                << "To get rid of this warning, either explicitly set the format option to one of Etc1RGB, Etc2RGBA, EacR, EacRG, Bc1RGB, Bc3RGBA, Bc4R, Bc5RG, Bc6hRGB, Bc7RGBA, Pvrtc1RGB4bpp, Pvrtc1RGBA4bpp, Astc4x4RGBA, Astc4x4RGBAF, RGBA8, RGB16F or RGBA16F, or load the plugin via one of its BasisImporterEtc1RGB, ... aliases.";
         targetFormat = isHdr ? TargetFormat::RGBA16F : TargetFormat::RGBA8;
+        if(!(flags() & ImporterFlag::Quiet) && !_state->noTranscodeFormatWarningPrinted)
+            Warning{} << prefix << "no format to transcode to was specified, falling back to uncompressed" << FormatNames[Int(*targetFormat)] << Debug::nospace << "."
+                << "To get rid of this warning, either explicitly set the" << formatConfigName << "option to one of" << expectedFormats << Debug::nospace
+                << ", or load the plugin via one of its BasisImporter" << Debug::nospace << expectedFormats.prefix(expectedFormats.find(',').data()) << Debug::nospace << ", ... aliases.";
         _state->noTranscodeFormatWarningPrinted = true;
     }
 
     const auto format = basist::transcoder_texture_format(Int(*targetFormat));
-
-    #if BASISD_LIB_VERSION >= 150
-    const bool wantHdr = basist::basis_transcoder_format_is_hdr(format);
-
-    /* Basis doesn't support transcoding from LDR to HDR or vice versa */
-    if(isHdr != wantHdr) {
-        Error{} << prefix << "Can't transcode" << (isHdr ? "HDR" : "LDR") << "image to"
-            << (wantHdr ? "HDR" : "LDR") << "format" << targetFormatStr;
-        return Containers::NullOpt;
-    }
-    #endif
 
     /* Some target formats may be unsupported, either because support wasn't
        compiled in or UASTC doesn't support a certain format. All of the
