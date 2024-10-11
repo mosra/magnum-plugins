@@ -430,13 +430,7 @@ class MAGNUM_BASISIMPORTER_EXPORT BasisImporter: public AbstractImporter {
             RGBA16F = 25,
         };
 
-        /**
-         * @brief Initialize Basis transcoder
-         *
-         * If the class is instantiated directly (not through a plugin
-         * manager), this function has to be called explicitly before using
-         * any instance.
-         */
+        /** @brief Initialize Basis transcoder */
         static void initialize();
 
         #ifdef MAGNUM_BUILD_DEPRECATED
