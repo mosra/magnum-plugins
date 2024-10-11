@@ -7,11 +7,14 @@ rem here we need to do that ourselves as we don't have Magnum's build dir in
 rem PATH
 set PATH=%APPVEYOR_BUILD_FOLDER%/openal/bin/Win64;%APPVEYOR_BUILD_FOLDER%\deps\bin;%APPVEYOR_BUILD_FOLDER%\devil\unicode;C:\Tools\vcpkg\installed\x64-windows\bin;%PATH%
 
-rem need to explicitly specify a 64-bit target, otherwise CMake+Ninja can't
-rem figure that out -- https://gitlab.kitware.com/cmake/cmake/issues/16259
-rem for TestSuite we need to enable exceptions explicitly with /EH as these are
-rem currently disabled -- https://github.com/catchorg/Catch2/issues/1113
-if "%COMPILER%" == "msvc-clang" if "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2022" set COMPILER_EXTRA=-DCMAKE_C_COMPILER="C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/Llvm/bin/clang-cl.exe" -DCMAKE_CXX_COMPILER="C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/Llvm/bin/clang-cl.exe" -DCMAKE_LINKER="C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/Llvm/bin/lld-link.exe" -DCMAKE_C_FLAGS="-m64 /EHsc" -DCMAKE_CXX_FLAGS="-m64 /EHsc"
+rem - Need to explicitly specify a 64-bit target, otherwise CMake+Ninja can't
+rem   figure that out -- https://gitlab.kitware.com/cmake/cmake/issues/16259
+rem - For TestSuite we need to enable exceptions explicitly with /EH as these
+rem   are currently disabled -- https://github.com/catchorg/Catch2/issues/1113
+rem - The MSVC 2022 build has coverage enabled, for which the profile library
+rem   has to be explicitly linked -- https://bugs.llvm.org/show_bug.cgi?id=40877,
+rem   https://gitlab.kitware.com/cmake/cmake/-/issues/23437
+if "%COMPILER%" == "msvc-clang" if "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2022" set COMPILER_EXTRA=-DCMAKE_C_COMPILER="C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/Llvm/bin/clang-cl.exe" -DCMAKE_CXX_COMPILER="C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/Llvm/bin/clang-cl.exe" -DCMAKE_LINKER="C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/Llvm/bin/lld-link.exe" -DCMAKE_C_FLAGS="-m64 /EHsc --coverage" -DCMAKE_CXX_FLAGS="-m64 /EHsc --coverage" -DCMAKE_EXE_LINKER_FLAGS="-libpath:\"C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/Llvm/x64/lib/clang/17/lib/windows\" \"C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/Llvm/x64/lib/clang/17/lib/windows/clang_rt.profile-x86_64.lib\"" -DCMAKE_SHARED_LINKER_FLAGS="-libpath:\"C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/Llvm/x64/lib/clang/17/lib/windows\" \"C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/Llvm/x64/lib/clang/17/lib/windows/clang_rt.profile-x86_64.lib\""
 if "%COMPILER%" == "msvc-clang" if "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2019" set COMPILER_EXTRA=-DCMAKE_C_COMPILER="C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Tools/Llvm/bin/clang-cl.exe" -DCMAKE_CXX_COMPILER="C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Tools/Llvm/bin/clang-cl.exe" -DCMAKE_LINKER="C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Tools/Llvm/bin/lld-link.exe" -DCMAKE_C_FLAGS="-m64 /EHsc" -DCMAKE_CXX_FLAGS="-m64 /EHsc"
 
 set EXCEPT_MSVC2015=ON
@@ -140,3 +143,10 @@ ctest -V --timeout 60 || exit /b
 
 rem Test install, after running the tests as for them it shouldn't be needed
 cmake --build . --target install || exit /b
+
+cd %APPVEYOR_BUILD_FOLDER%
+
+rem Gather and upload coverage on the clang-cl MSVC 2022 build. Keep in sync
+rem with circleci.yml, appveyor-lcov.sh and PKBUILD-coverage, please.
+if "%COMPILER%" == "msvc-clang" if "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2022" grcov build -t lcov --keep-only "*/src/Magnum*/*" --ignore "*/src/MagnumExternal/*" --ignore "*/Test/*" --ignore "*/build/src/*" --ignore "*/ui-gallery.cpp" -o coverage.info --excl-line LCOV_EXCL_LINE --excl-start LCOV_EXCL_START --excl-stop LCOV_EXCL_STOP || exit /b
+if "%COMPILER%" == "msvc-clang" if "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2022" codecov -f ./coverage.info -t ca42fc68-8e0a-4338-b9ff-7d602b7febc2 -X gcov || exit /b

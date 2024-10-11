@@ -67,8 +67,9 @@ install:
 - 7z x ninja-win.zip -oC:/tools
 - set PATH=C:/Sys/bin;C:/tools;%PATH%
 
-# Codecov uploader
-- IF "%TARGET%" == "desktop" IF "%COMPILER%" == "mingw" appveyor DownloadFile https://uploader.codecov.io/latest/windows/codecov.exe -FileName C:/tools/codecov.exe
+# Codecov uploader and grcov. Used for MinGW and clang-cl.
+- IF "%TARGET%" == "desktop" IF NOT "%COMPILER%" == "msvc" appveyor DownloadFile https://github.com/mozilla/grcov/releases/download/v0.8.19/grcov-x86_64-pc-windows-msvc.zip && 7z x grcov-x86_64-pc-windows-msvc.zip -oC:/tools
+- IF "%TARGET%" == "desktop" IF NOT "%COMPILER%" == "msvc" appveyor DownloadFile https://uploader.codecov.io/latest/windows/codecov.exe -FileName C:/tools/codecov.exe
 
 # assimp, for MSVC 2022, 2019, 2017, clang-cl and MinGW
 - IF "%TARGET%" == "desktop" IF "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2022" IF "%COMPILER:~0,4%" == "msvc" appveyor DownloadFile https://ci.magnum.graphics/assimp-5.3.1-windows-2019-debug.zip && 7z x assimp-5.3.1-windows-2019-debug.zip -o%APPVEYOR_BUILD_FOLDER%\deps
