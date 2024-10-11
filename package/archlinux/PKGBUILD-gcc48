@@ -15,7 +15,7 @@ _rootdir=$startdir/../../
 
 build() {
     # Disable flags unknown to GCC 4.8
-    newcxxflags=$(echo $CXXFLAGS | sed s/-fstack-protector-strong.//g | sed s/.-fno-plt//g)
+    newcxxflags=$(echo $CXXFLAGS | sed s/-fstack-protector-strong.//g | sed s/.-fno-plt//g | sed s/.-fstack-clash-protection//g | sed s/.-fcf-protection//g | sed "s#.-ffile-prefix-map=${srcdir}=/usr/src/debug/${pkgname}##g")
     export CXXFLAGS="$newcxxflags"
 
     if [ ! -d "$_rootdir/build-gcc48" ] ; then
@@ -29,13 +29,14 @@ build() {
 
     cd "$_rootdir/build-gcc48"
 
+    # TODO re-enable AudioImporter plugins once they're not depending on OpenAL
     cmake .. \
         -DCMAKE_BUILD_TYPE=Debug \
         -DCMAKE_INSTALL_PREFIX=/usr \
         -DBASIS_UNIVERSAL_DIR=/opt/basis-universal \
         -DMAGNUM_BUILD_TESTS=ON \
         -DMAGNUM_BUILD_GL_TESTS=ON \
-        -DMAGNUM_WITH_ASSIMPIMPORTER=ON \
+        -DMAGNUM_WITH_ASSIMPIMPORTER=OFF \
         -DMAGNUM_WITH_ASTCIMPORTER=ON \
         -DMAGNUM_WITH_BASISIMPORTER=ON \
         -DMAGNUM_WITH_BASISIMAGECONVERTER=ON \
@@ -43,11 +44,11 @@ build() {
         -DMAGNUM_WITH_CGLTFIMPORTER=ON \
         -DMAGNUM_WITH_DDSIMPORTER=ON \
         -DMAGNUM_WITH_DEVILIMAGEIMPORTER=ON \
-        -DMAGNUM_WITH_DRFLACAUDIOIMPORTER=ON \
-        -DMAGNUM_WITH_DRMP3AUDIOIMPORTER=ON \
-        -DMAGNUM_WITH_DWAVAUDIOIMPORTER=ON \
+        -DMAGNUM_WITH_DRFLACAUDIOIMPORTER=OFF \
+        -DMAGNUM_WITH_DRMP3AUDIOIMPORTER=OFF \
+        -DMAGNUM_WITH_DWAVAUDIOIMPORTER=OFF \
         -DMAGNUM_WITH_ETCDECIMAGECONVERTER=ON \
-        -DMAGNUM_WITH_FAAD2AUDIOIMPORTER=ON \
+        -DMAGNUM_WITH_FAAD2AUDIOIMPORTER=OFF \
         -DMAGNUM_WITH_FREETYPEFONT=ON \
         -DMAGNUM_WITH_GLSLANGSHADERCONVERTER=ON \
         -DMAGNUM_WITH_GLTFIMPORTER=ON \
@@ -66,7 +67,7 @@ build() {
         -DMAGNUM_WITH_PNGIMAGECONVERTER=ON \
         -DMAGNUM_WITH_PNGIMPORTER=ON \
         -DMAGNUM_WITH_PRIMITIVEIMPORTER=ON \
-        -DMAGNUM_WITH_SPIRVTOOLSSHADERCONVERTER=ON \
+        -DMAGNUM_WITH_SPIRVTOOLSSHADERCONVERTER=OFF \
         -DMAGNUM_WITH_SPNGIMPORTER=ON \
         -DMAGNUM_WITH_STANFORDIMPORTER=ON \
         -DMAGNUM_WITH_STANFORDSCENECONVERTER=ON \
@@ -75,7 +76,7 @@ build() {
         -DMAGNUM_WITH_STBIMAGEIMPORTER=ON \
         -DMAGNUM_WITH_STBRESIZEIMAGECONVERTER=ON \
         -DMAGNUM_WITH_STBTRUETYPEFONT=ON \
-        -DMAGNUM_WITH_STBVORBISAUDIOIMPORTER=ON \
+        -DMAGNUM_WITH_STBVORBISAUDIOIMPORTER=OFF \
         -DMAGNUM_WITH_STLIMPORTER=ON \
         -DMAGNUM_WITH_TINYGLTFIMPORTER=ON \
         -DMAGNUM_WITH_UFBXIMPORTER=ON \
