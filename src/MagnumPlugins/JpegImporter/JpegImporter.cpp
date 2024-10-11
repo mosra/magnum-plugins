@@ -156,6 +156,8 @@ Containers::Optional<ImageData2D> JpegImporter::doImage2D(UnsignedInt, UnsignedI
 
         default:
             Error() << "Trade::JpegImporter::image2D(): unsupported color space" << file.out_color_space;
+            jpeg_abort_decompress(&file);
+            jpeg_destroy_decompress(&file);
             return Containers::NullOpt;
     }
 
