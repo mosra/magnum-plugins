@@ -226,7 +226,7 @@ BasisImporter::BasisImporter(PluginManager::AbstractManager& manager, const Cont
                 if(name && suffix == name) break;
                 ++i;
             }
-            CORRADE_INTERNAL_ASSERT(i < Containers::arraySize(FormatNames));
+            CORRADE_INTERNAL_ASSERT(UnsignedInt(i) < Containers::arraySize(FormatNames));
             configuration().setValue(i < FormatHdrStart ? "format" : "formatHdr", suffix);
         }
     }
