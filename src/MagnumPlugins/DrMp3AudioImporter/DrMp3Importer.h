@@ -122,10 +122,8 @@ information.
 
 @section Audio-DrMp3Importer-behavior Behavior and limitations
 
-The files are imported as @ref BufferFormat::Mono16,
-@ref BufferFormat::Stereo16, @ref BufferFormat::Quad16,
-@ref BufferFormat::Surround51Channel16, @ref BufferFormat::Surround61Channel16
-or @ref BufferFormat::Surround71Channel16.
+The files are imported as @ref BufferFormat::Mono16 or
+@ref BufferFormat::Stereo16.
 */
 class MAGNUM_DRMP3AUDIOIMPORTER_EXPORT DrMp3Importer: public AbstractImporter {
     public:
