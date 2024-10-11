@@ -117,8 +117,7 @@ Containers::Optional<ImageData3D> convertInternal(const ImageView3D& image, Util
             layout = configuration.value<bool>("alphaPremultiplied") ?
                 STBIR_RGBA_PM : STBIR_RGBA;
             break;
-        default:
-            CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+        default: CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
     }
 
     /* Edge mode */

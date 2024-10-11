@@ -243,10 +243,12 @@ struct TinyGltfImporter::Document {
     Containers::Optional<AnyImageImporter> imageImporter;
 };
 
+/* LCOV_EXCL_START, the whole plugin is deprecated but direct construction in
+   particular as well as it's impossible to cover with tests, so don't have it
+   contribute against uncovered lines */
 namespace {
 
 void fillDefaultConfiguration(Utility::ConfigurationGroup& conf) {
-    /** @todo horrible workaround, fix this properly */
     conf.setValue("optimizeQuaternionShortestPath", true);
     conf.setValue("normalizeQuaternions", true);
     conf.setValue("mergeAnimationClips", false);
@@ -257,16 +259,15 @@ void fillDefaultConfiguration(Utility::ConfigurationGroup& conf) {
 }
 
 TinyGltfImporter::TinyGltfImporter() {
-    /** @todo horrible workaround, fix this properly */
     fillDefaultConfiguration(configuration());
 }
-
-TinyGltfImporter::TinyGltfImporter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin): AbstractImporter{manager, plugin} {}
 
 TinyGltfImporter::TinyGltfImporter(PluginManager::Manager<AbstractImporter>& manager): AbstractImporter{manager} {
-    /** @todo horrible workaround, fix this properly */
     fillDefaultConfiguration(configuration());
 }
+/* LCOV_EXCL_STOP */
+
+TinyGltfImporter::TinyGltfImporter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin): AbstractImporter{manager, plugin} {}
 
 TinyGltfImporter::~TinyGltfImporter() = default;
 
