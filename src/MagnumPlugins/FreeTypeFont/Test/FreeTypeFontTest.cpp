@@ -57,7 +57,7 @@ struct FreeTypeFontTest: TestSuite::Tester {
 
     void shape();
     void shapeEmpty();
-    void shaperReuse();
+    void shapeMultiple();
 
     void fillGlyphCache();
     void fillGlyphCacheIncremental();
@@ -88,6 +88,14 @@ const struct {
 
 const struct {
     const char* name;
+    bool reuse;
+} ShapeMultipleData[]{
+    {"new shaper every time", false},
+    {"reuse previous shaper", false},
+};
+
+const struct {
+    const char* name;
     const char* characters;
 } FillGlyphCacheData[]{
     {"",
@@ -113,8 +121,10 @@ FreeTypeFontTest::FreeTypeFontTest() {
     addInstancedTests({&FreeTypeFontTest::shape},
         Containers::arraySize(ShapeData));
 
-    addTests({&FreeTypeFontTest::shapeEmpty,
-              &FreeTypeFontTest::shaperReuse});
+    addTests({&FreeTypeFontTest::shapeEmpty});
+
+    addInstancedTests({&FreeTypeFontTest::shapeMultiple},
+        Containers::arraySize(ShapeMultipleData));
 
     addInstancedTests({&FreeTypeFontTest::fillGlyphCache},
         Containers::arraySize(FillGlyphCacheData));
@@ -246,7 +256,10 @@ void FreeTypeFontTest::shapeEmpty() {
     CORRADE_COMPARE(shaper->shape("Wave", 2, 2), 0);
 }
 
-void FreeTypeFontTest::shaperReuse() {
+void FreeTypeFontTest::shapeMultiple() {
+    auto&& data = ShapeMultipleData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     Containers::Pointer<AbstractFont> font = _manager.instantiate("FreeTypeFont");
     CORRADE_VERIFY(font->openFile(Utility::Path::join(FREETYPEFONT_TEST_DIR, "Oxygen.ttf"), 16.0f));
 
@@ -258,6 +271,9 @@ void FreeTypeFontTest::shaperReuse() {
 
     /* Short text. Empty shape shouldn't have caused any broken state. */
     } {
+        if(!data.reuse)
+            shaper = font->createShaper();
+
         CORRADE_COMPARE(shaper->shape("We"), 2);
         UnsignedInt ids[2];
         Vector2 offsets[2];
@@ -284,6 +300,9 @@ void FreeTypeFontTest::shaperReuse() {
 
     /* Long text, same as in shape(), should enlarge the array for it */
     } {
+        if(!data.reuse)
+            shaper = font->createShaper();
+
         CORRADE_COMPARE(shaper->shape("Wěave"), 5);
         UnsignedInt ids[5];
         Vector2 offsets[5];
@@ -319,6 +338,9 @@ void FreeTypeFontTest::shaperReuse() {
 
     /* Short text again, should not leave the extra glyphs there */
     } {
+        if(!data.reuse)
+            shaper = font->createShaper();
+
         CORRADE_COMPARE(shaper->shape("ave"), 3);
         UnsignedInt ids[3];
         Vector2 offsets[3];

@@ -56,7 +56,7 @@ struct StbTrueTypeFontTest: TestSuite::Tester {
 
     void shape();
     void shapeEmpty();
-    void shaperReuse();
+    void shapeMultiple();
 
     void fillGlyphCache();
     void fillGlyphCacheIncremental();
@@ -85,6 +85,14 @@ const struct {
 
 const struct {
     const char* name;
+    bool reuse;
+} ShapeMultipleData[]{
+    {"new shaper every time", false},
+    {"reuse previous shaper", false},
+};
+
+const struct {
+    const char* name;
     const char* characters;
 } FillGlyphCacheData[]{
     {"",
@@ -109,8 +117,10 @@ StbTrueTypeFontTest::StbTrueTypeFontTest() {
     addInstancedTests({&StbTrueTypeFontTest::shape},
         Containers::arraySize(ShapeData));
 
-    addTests({&StbTrueTypeFontTest::shapeEmpty,
-              &StbTrueTypeFontTest::shaperReuse});
+    addTests({&StbTrueTypeFontTest::shapeEmpty});
+
+    addInstancedTests({&StbTrueTypeFontTest::shapeMultiple},
+        Containers::arraySize(ShapeMultipleData));
 
     addInstancedTests({&StbTrueTypeFontTest::fillGlyphCache},
         Containers::arraySize(FillGlyphCacheData));
@@ -236,7 +246,10 @@ void StbTrueTypeFontTest::shapeEmpty() {
     CORRADE_COMPARE(shaper->shape("Wave", 2, 2), 0);
 }
 
-void StbTrueTypeFontTest::shaperReuse() {
+void StbTrueTypeFontTest::shapeMultiple() {
+    auto&& data = ShapeMultipleData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     Containers::Pointer<AbstractFont> font = _manager.instantiate("StbTrueTypeFont");
     CORRADE_VERIFY(font->openFile(Utility::Path::join(FREETYPEFONT_TEST_DIR, "Oxygen.ttf"), 16.0f));
 
@@ -248,6 +261,9 @@ void StbTrueTypeFontTest::shaperReuse() {
 
     /* Short text. Empty shape shouldn't have caused any broken state. */
     } {
+        if(!data.reuse)
+            shaper = font->createShaper();
+
         CORRADE_COMPARE(shaper->shape("We"), 2);
         UnsignedInt ids[2];
         Vector2 offsets[2];
@@ -274,6 +290,9 @@ void StbTrueTypeFontTest::shaperReuse() {
 
     /* Long text, same as in shape(), should enlarge the array for it */
     } {
+        if(!data.reuse)
+            shaper = font->createShaper();
+
         CORRADE_COMPARE(shaper->shape("Wěave"), 5);
         UnsignedInt ids[5];
         Vector2 offsets[5];
@@ -309,6 +328,9 @@ void StbTrueTypeFontTest::shaperReuse() {
 
     /* Short text again, should not leave the extra glyphs there */
     } {
+        if(!data.reuse)
+            shaper = font->createShaper();
+
         CORRADE_COMPARE(shaper->shape("ave"), 3);
         UnsignedInt ids[3];
         Vector2 offsets[3];

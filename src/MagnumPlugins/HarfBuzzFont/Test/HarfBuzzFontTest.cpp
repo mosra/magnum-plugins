@@ -57,8 +57,8 @@ struct HarfBuzzFontTest: TestSuite::Tester {
     void shapeUnsupportedScript();
     void shapeEmpty();
 
-    void shaperReuse();
-    void shaperReuseAutodetection();
+    void shapeMultiple();
+    void shapeMultipleAutodetection();
 
     void shapeFeatures();
 
@@ -125,6 +125,14 @@ const struct {
 } ShapeAutodetectScriptLanguageDirectionData[]{
     {"", false},
     {"explicitly set unspecified values", true}
+};
+
+const struct {
+    const char* name;
+    bool reuse;
+} ShapeMultipleData[]{
+    {"new shaper every time", false},
+    {"reuse previous shaper", false},
 };
 
 const struct {
@@ -232,10 +240,11 @@ HarfBuzzFontTest::HarfBuzzFontTest() {
         Containers::arraySize(ShapeAutodetectScriptLanguageDirectionData));
 
     addTests({&HarfBuzzFontTest::shapeUnsupportedScript,
-              &HarfBuzzFontTest::shapeEmpty,
+              &HarfBuzzFontTest::shapeEmpty});
 
-              &HarfBuzzFontTest::shaperReuse,
-              &HarfBuzzFontTest::shaperReuseAutodetection});
+    addInstancedTests({&HarfBuzzFontTest::shapeMultiple,
+                       &HarfBuzzFontTest::shapeMultipleAutodetection},
+        Containers::arraySize(ShapeMultipleData));
 
     addInstancedTests({&HarfBuzzFontTest::shapeFeatures},
         Containers::arraySize(ShapeFeaturesData));
@@ -485,7 +494,10 @@ void HarfBuzzFontTest::shapeEmpty() {
     CORRADE_COMPARE(shaper->direction(), ShapeDirection::LeftToRight);
 }
 
-void HarfBuzzFontTest::shaperReuse() {
+void HarfBuzzFontTest::shapeMultiple() {
+    auto&& data = ShapeMultipleData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     Containers::Pointer<AbstractFont> font = _manager.instantiate("HarfBuzzFont");
     CORRADE_VERIFY(font->openFile(Utility::Path::join(FREETYPEFONT_TEST_DIR, "Oxygen.ttf"), 16.0f));
 
@@ -497,6 +509,9 @@ void HarfBuzzFontTest::shaperReuse() {
 
     /* Short text. Empty shape shouldn't have caused any broken state. */
     } {
+        if(!data.reuse)
+            shaper = font->createShaper();
+
         CORRADE_COMPARE(shaper->shape("We"), 2);
         UnsignedInt ids[2];
         Vector2 offsets[2];
@@ -525,6 +540,9 @@ void HarfBuzzFontTest::shaperReuse() {
 
     /* Long text, same as in shape(), should enlarge the array for it */
     } {
+        if(!data.reuse)
+            shaper = font->createShaper();
+
         CORRADE_COMPARE(shaper->shape("Wěave"), 5);
         UnsignedInt ids[5];
         Vector2 offsets[5];
@@ -562,6 +580,9 @@ void HarfBuzzFontTest::shaperReuse() {
 
     /* Short text again, should not leave the extra glyphs there */
     } {
+        if(!data.reuse)
+            shaper = font->createShaper();
+
         CORRADE_COMPARE(shaper->shape("ave"), 3);
         UnsignedInt ids[3];
         Vector2 offsets[3];
@@ -589,7 +610,10 @@ void HarfBuzzFontTest::shaperReuse() {
     }
 }
 
-void HarfBuzzFontTest::shaperReuseAutodetection() {
+void HarfBuzzFontTest::shapeMultipleAutodetection() {
+    auto&& data = ShapeMultipleData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     Containers::Pointer<AbstractFont> font = _manager.instantiate("HarfBuzzFont");
     CORRADE_VERIFY(font->openFile(Utility::Path::join(FREETYPEFONT_TEST_DIR, "Oxygen.ttf"), 16.0f));
 
@@ -602,6 +626,9 @@ void HarfBuzzFontTest::shaperReuseAutodetection() {
 
     /* Arabic text gets detected as such */
     {
+        if(!data.reuse)
+            shaper = font->createShaper();
+
         CORRADE_COMPARE(shaper->shape("	العربية"), 8);
         CORRADE_COMPARE(shaper->script(), Script::Arabic);
         {
@@ -613,6 +640,9 @@ void HarfBuzzFontTest::shaperReuseAutodetection() {
 
     /* Greek text should then not be treated as RTL and such */
     } {
+        if(!data.reuse)
+            shaper = font->createShaper();
+
         CORRADE_COMPARE(shaper->shape("Ελλάδα"), 6);
         CORRADE_COMPARE(shaper->script(), Script::Greek);
         {
@@ -625,6 +655,9 @@ void HarfBuzzFontTest::shaperReuseAutodetection() {
     /* Empty text shouldn't inherit anything from before either and produce a
        result consistent with shapeEmpty() */
     } {
+        if(!data.reuse)
+            shaper = font->createShaper();
+
         CORRADE_COMPARE(shaper->shape("Wave", 2, 2), 0);
         CORRADE_COMPARE(shaper->script(), Script::Unspecified);
         CORRADE_COMPARE(shaper->language(), "c");
