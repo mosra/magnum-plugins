@@ -49,6 +49,9 @@ struct Faad2ImporterTest: TestSuite::Tester {
     void mono();
     void stereo();
 
+    void openTwice();
+    void importTwice();
+
     /* Explicitly forbid system-wide plugin dependencies */
     PluginManager::Manager<AbstractImporter> _manager{"nonexistent"};
 };
@@ -58,7 +61,10 @@ Faad2ImporterTest::Faad2ImporterTest() {
 
               &Faad2ImporterTest::error,
               &Faad2ImporterTest::mono,
-              &Faad2ImporterTest::stereo});
+              &Faad2ImporterTest::stereo,
+
+              &Faad2ImporterTest::openTwice,
+              &Faad2ImporterTest::importTwice});
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. */
@@ -101,19 +107,18 @@ void Faad2ImporterTest::mono() {
     CORRADE_COMPARE(importer->frequency(), 96000);
 
     Containers::Array<char> data = importer->data();
-    auto dataShort = Containers::arrayCast<UnsignedShort>(data);
-    CORRADE_COMPARE(dataShort.size(), 1024*2); /* Two channels, 1024 samples each */
+    /* Two channels, 16 bits, 1024 samples each */
+    CORRADE_COMPARE(data.size(), 1024*2*2);
 
     /* Testing via CompareImage because there's off-by-one difference in some
        older versions. */
-
     constexpr UnsignedShort expected[]{
         2663, 2663, 2668, 2668, 1663, 1663, 514, 514, 0, 0, 188, 188, 541, 541,
         552, 552, 225, 225, 65483, 65483, 2, 2, 267, 267, 400, 400, 241, 241,
         65506, 65506, 65404, 65404
     };
     CORRADE_COMPARE_WITH(
-        (ImageView2D{PixelFormat::R16UI, {8, 4}, dataShort.prefix(32)}),
+        (ImageView2D{PixelFormat::R16UI, {8, 4}, data.prefix(32*2)}),
         (ImageView2D{PixelFormat::R16UI, {8, 4}, expected}),
         (DebugTools::CompareImage{1.0f, 0.5625f}));
 }
@@ -126,21 +131,66 @@ void Faad2ImporterTest::stereo() {
     CORRADE_COMPARE(importer->frequency(), 44100);
 
     Containers::Array<char> data = importer->data();
-    auto dataShort = Containers::arrayCast<UnsignedShort>(data);
-    CORRADE_COMPARE(dataShort.size(), 1024*2); /* Two channels, 1024 samples each */
+    /* Two channels, 16 bits, 1024 samples each */
+    CORRADE_COMPARE(data.size(), 1024*2*2);
 
     /* Testing via CompareImage because there's off-by-one difference in some
        older versions. */
-
     constexpr UnsignedShort expected[]{
         16518, 16518, 3364, 3364, 59935, 59935, 421, 421, 63882, 63882, 64205,
         64205, 2501, 2501, 65266, 65266, 186, 186, 1051, 1051, 64651, 64651,
         401, 401, 182, 182, 64756, 64756, 61, 61, 65122, 65122
     };
     CORRADE_COMPARE_WITH(
-        (ImageView2D{PixelFormat::R16UI, {8, 4}, dataShort.prefix(32)}),
+        (ImageView2D{PixelFormat::R16UI, {8, 4}, data.prefix(32*2)}),
         (ImageView2D{PixelFormat::R16UI, {8, 4}, expected}),
         (DebugTools::CompareImage{1.0f, 0.625f}));
+}
+
+void Faad2ImporterTest::openTwice() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("Faad2AudioImporter");
+
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(FAAD2AUDIOIMPORTER_TEST_DIR, "mono.aac")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(FAAD2AUDIOIMPORTER_TEST_DIR, "mono.aac")));
+
+    /* Shouldn't crash, leak or anything */
+}
+
+void Faad2ImporterTest::importTwice() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("Faad2AudioImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(FAAD2AUDIOIMPORTER_TEST_DIR, "mono.aac")));
+
+    {
+        CORRADE_EXPECT_FAIL("Even though `file` reports mono.aac as mono, FAAD2 decodes it as stereo.");
+        CORRADE_COMPARE(importer->format(), BufferFormat::Mono16);
+    }
+    CORRADE_COMPARE(importer->format(), BufferFormat::Stereo16);
+    CORRADE_COMPARE(importer->frequency(), 96000);
+
+    /* Testing via CompareImage because there's off-by-one difference in some
+       older versions. */
+    constexpr UnsignedShort expected[]{
+        2663, 2663, 2668, 2668, 1663, 1663, 514, 514, 0, 0, 188, 188, 541, 541,
+        552, 552, 225, 225, 65483, 65483, 2, 2, 267, 267, 400, 400, 241, 241,
+        65506, 65506, 65404, 65404
+    };
+
+    /* Verify that everything is working the same way on second use */
+    {
+        Containers::Array<char> data = importer->data();
+        CORRADE_COMPARE(data.size(), 1024*2*2);
+        CORRADE_COMPARE_WITH(
+            (ImageView2D{PixelFormat::R16UI, {8, 4}, data.prefix(32*2)}),
+            (ImageView2D{PixelFormat::R16UI, {8, 4}, expected}),
+            (DebugTools::CompareImage{1.0f, 0.5625f}));
+    } {
+        Containers::Array<char> data = importer->data();
+        CORRADE_COMPARE(data.size(), 1024*2*2);
+        CORRADE_COMPARE_WITH(
+            (ImageView2D{PixelFormat::R16UI, {8, 4}, data.prefix(32*2)}),
+            (ImageView2D{PixelFormat::R16UI, {8, 4}, expected}),
+            (DebugTools::CompareImage{1.0f, 0.5625f}));
+    }
 }
 
 }}}}

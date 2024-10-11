@@ -51,6 +51,9 @@ struct StbVorbisImporterTest: TestSuite::Tester {
     void mono16();
     void stereo8();
 
+    void openTwice();
+    void importTwice();
+
     /* Explicitly forbid system-wide plugin dependencies */
     PluginManager::Manager<AbstractImporter> _manager{"nonexistent"};
 };
@@ -63,7 +66,10 @@ StbVorbisImporterTest::StbVorbisImporterTest() {
               &StbVorbisImporterTest::zeroSamples,
 
               &StbVorbisImporterTest::mono16,
-              &StbVorbisImporterTest::stereo8});
+              &StbVorbisImporterTest::stereo8,
+
+              &StbVorbisImporterTest::openTwice,
+              &StbVorbisImporterTest::importTwice});
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. */
@@ -117,10 +123,11 @@ void StbVorbisImporterTest::mono16() {
 
     CORRADE_COMPARE(importer->format(), BufferFormat::Mono16);
     CORRADE_COMPARE(importer->frequency(), 96000);
-    CORRADE_COMPARE_AS(importer->data(),
-        Containers::arrayView<char>({
-            '\xcd', '\x0a', '\x2b', '\x0a'
-        }), TestSuite::Compare::Container);
+
+    Containers::Array<char> data = importer->data();
+    CORRADE_COMPARE_AS(data, Containers::arrayView<char>({
+        '\xcd', '\x0a', '\x2b', '\x0a'
+    }), TestSuite::Compare::Container);
 }
 
 void StbVorbisImporterTest::stereo8() {
@@ -129,10 +136,41 @@ void StbVorbisImporterTest::stereo8() {
 
     CORRADE_COMPARE(importer->format(), BufferFormat::Stereo16);
     CORRADE_COMPARE(importer->frequency(), 96000);
-    CORRADE_COMPARE_AS(importer->data(),
-        Containers::arrayView<char>({
-            '\x3e', '\x19', '\x1d', '\x17'
+
+    Containers::Array<char> data = importer->data();
+    CORRADE_COMPARE_AS(data, Containers::arrayView<char>({
+        '\x3e', '\x19', '\x1d', '\x17'
+    }), TestSuite::Compare::Container);
+}
+
+void StbVorbisImporterTest::openTwice() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StbVorbisAudioImporter");
+
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(STBVORBISAUDIOIMPORTER_TEST_DIR, "mono16.ogg")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(STBVORBISAUDIOIMPORTER_TEST_DIR, "mono16.ogg")));
+
+    /* Shouldn't crash, leak or anything */
+}
+
+void StbVorbisImporterTest::importTwice() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StbVorbisAudioImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(STBVORBISAUDIOIMPORTER_TEST_DIR, "mono16.ogg")));
+
+    CORRADE_COMPARE(importer->format(), BufferFormat::Mono16);
+    CORRADE_COMPARE(importer->frequency(), 96000);
+
+    /* Verify that everything is working the same way on second use */
+    {
+        Containers::Array<char> data = importer->data();
+        CORRADE_COMPARE_AS(data, Containers::arrayView<char>({
+            '\xcd', '\x0a', '\x2b', '\x0a'
         }), TestSuite::Compare::Container);
+    } {
+        Containers::Array<char> data = importer->data();
+        CORRADE_COMPARE_AS(data, Containers::arrayView<char>({
+            '\xcd', '\x0a', '\x2b', '\x0a'
+        }), TestSuite::Compare::Container);
+    }
 }
 
 }}}}

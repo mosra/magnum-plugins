@@ -50,6 +50,9 @@ struct DrMp3ImporterTest: TestSuite::Tester {
     void mono16();
     void stereo16();
 
+    void openTwice();
+    void importTwice();
+
     /* Explicitly forbid system-wide plugin dependencies */
     PluginManager::Manager<AbstractImporter> _manager{"nonexistent"};
 };
@@ -60,7 +63,10 @@ DrMp3ImporterTest::DrMp3ImporterTest() {
               &DrMp3ImporterTest::zeroSamples,
 
               &DrMp3ImporterTest::mono16,
-              &DrMp3ImporterTest::stereo16});
+              &DrMp3ImporterTest::stereo16,
+
+              &DrMp3ImporterTest::openTwice,
+              &DrMp3ImporterTest::importTwice});
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. */
@@ -100,8 +106,10 @@ void DrMp3ImporterTest::mono16() {
 
     CORRADE_COMPARE(importer->format(), BufferFormat::Mono16);
     CORRADE_COMPARE(importer->frequency(), 44100);
-    CORRADE_COMPARE(importer->data().size(), 13824);
-    CORRADE_COMPARE_AS(Containers::arrayCast<UnsignedShort>(importer->data().slice(6720, 6724)),
+
+    Containers::Array<char> data = importer->data();
+    CORRADE_COMPARE(data.size(), 13824);
+    CORRADE_COMPARE_AS(Containers::arrayCast<UnsignedShort>(data.slice(6720, 6724)),
         Containers::arrayView<UnsignedShort>({
             0x0332, 0x099c
         }), TestSuite::Compare::Container);
@@ -113,11 +121,47 @@ void DrMp3ImporterTest::stereo16() {
 
     CORRADE_COMPARE(importer->format(), BufferFormat::Stereo16);
     CORRADE_COMPARE(importer->frequency(), 44100);
-    CORRADE_COMPARE(importer->data().size(), 13824*2);
-    CORRADE_COMPARE_AS(Containers::arrayCast<UnsignedShort>(importer->data().slice(9730, 9734)),
+
+    Containers::Array<char> data = importer->data();
+    CORRADE_COMPARE(data.size(), 13824*2);
+    CORRADE_COMPARE_AS(Containers::arrayCast<UnsignedShort>(data.slice(9730, 9734)),
         Containers::arrayView<UnsignedShort>({
             0x99a6, 0x99b1
         }), TestSuite::Compare::Container);
+}
+
+void DrMp3ImporterTest::openTwice() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DrMp3AudioImporter");
+
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(DRMP3AUDIOIMPORTER_TEST_DIR, "mono16.mp3")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(DRMP3AUDIOIMPORTER_TEST_DIR, "mono16.mp3")));
+
+    /* Shouldn't crash, leak or anything */
+}
+
+void DrMp3ImporterTest::importTwice() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DrMp3AudioImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(DRMP3AUDIOIMPORTER_TEST_DIR, "mono16.mp3")));
+
+    CORRADE_COMPARE(importer->format(), BufferFormat::Mono16);
+    CORRADE_COMPARE(importer->frequency(), 44100);
+
+    /* Verify that everything is working the same way on second use */
+    {
+        Containers::Array<char> data = importer->data();
+        CORRADE_COMPARE(data.size(), 13824);
+        CORRADE_COMPARE_AS(Containers::arrayCast<UnsignedShort>(data.slice(6720, 6724)),
+            Containers::arrayView<UnsignedShort>({
+                0x0332, 0x099c
+            }), TestSuite::Compare::Container);
+    } {
+        Containers::Array<char> data = importer->data();
+        CORRADE_COMPARE(data.size(), 13824);
+        CORRADE_COMPARE_AS(Containers::arrayCast<UnsignedShort>(data.slice(6720, 6724)),
+            Containers::arrayView<UnsignedShort>({
+                0x0332, 0x099c
+            }), TestSuite::Compare::Container);
+    }
 }
 
 }}}}

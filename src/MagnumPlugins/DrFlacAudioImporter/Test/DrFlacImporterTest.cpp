@@ -63,6 +63,9 @@ struct DrFlacImporterTest: TestSuite::Tester {
 
     void surround71Channel24();
 
+    void openTwice();
+    void importTwice();
+
     /* Explicitly forbid system-wide plugin dependencies */
     PluginManager::Manager<AbstractImporter> _manager{"nonexistent"};
 };
@@ -87,7 +90,10 @@ DrFlacImporterTest::DrFlacImporterTest() {
               &DrFlacImporterTest::surround51Channel16,
               &DrFlacImporterTest::surround51Channel24,
 
-              &DrFlacImporterTest::surround71Channel24});
+              &DrFlacImporterTest::surround71Channel24,
+
+              &DrFlacImporterTest::openTwice,
+              &DrFlacImporterTest::importTwice});
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. */
@@ -124,8 +130,9 @@ void DrFlacImporterTest::mono8() {
     CORRADE_COMPARE(importer->format(), BufferFormat::Mono8);
     CORRADE_COMPARE(importer->frequency(), 22050);
 
-    CORRADE_COMPARE(importer->data().size(), 2136);
-    CORRADE_COMPARE_AS(Containers::arrayCast<UnsignedByte>(importer->data()).prefix(4),
+    Containers::Array<char> data = importer->data();
+    CORRADE_COMPARE(data.size(), 2136);
+    CORRADE_COMPARE_AS(Containers::arrayCast<UnsignedByte>(data).prefix(4),
         Containers::arrayView<UnsignedByte>({
             127, 127, 127, 127
         }), TestSuite::Compare::Container);
@@ -138,7 +145,8 @@ void DrFlacImporterTest::mono16() {
     CORRADE_COMPARE(importer->format(), BufferFormat::Mono16);
     CORRADE_COMPARE(importer->frequency(), 44000);
 
-    CORRADE_COMPARE_AS(Containers::arrayCast<Short>(importer->data()),
+    Containers::Array<char> data = importer->data();
+    CORRADE_COMPARE_AS(Containers::arrayCast<Short>(data),
         Containers::arrayView<Short>({
             4125, -14991
         }), TestSuite::Compare::Container);
@@ -151,11 +159,12 @@ void DrFlacImporterTest::mono24() {
     CORRADE_COMPARE(importer->format(), BufferFormat::MonoFloat);
     CORRADE_COMPARE(importer->frequency(), 48000);
 
-    CORRADE_COMPARE(importer->data().size(), 3696);
+    Containers::Array<char> data = importer->data();
+    CORRADE_COMPARE(data.size(), 3696);
     #if defined(CORRADE_TARGET_ARM) && !defined(CORRADE_TARGET_APPLE)
     CORRADE_EXPECT_FAIL("Gives a wrong result on ARM, but only on Linux and not on Mac.");
     #endif
-    CORRADE_COMPARE_AS(Containers::arrayCast<Float>(importer->data()).prefix(4),
+    CORRADE_COMPARE_AS(Containers::arrayCast<Float>(data).prefix(4),
         Containers::arrayView<Float>({
             -0.000548482f, -3.45707e-06f, -0.00179672f, 0.000154614f
         }), TestSuite::Compare::Container);
@@ -177,7 +186,8 @@ void DrFlacImporterTest::stereo8() {
     CORRADE_COMPARE(importer->format(), BufferFormat::Stereo8);
     CORRADE_COMPARE(importer->frequency(), 96000);
 
-    CORRADE_COMPARE_AS(Containers::arrayCast<UnsignedByte>(importer->data()),
+    Containers::Array<char> data = importer->data();
+    CORRADE_COMPARE_AS(Containers::arrayCast<UnsignedByte>(data),
         Containers::arrayView<UnsignedByte>({
             0xde, 0xfe, 0xca, 0x7e
         }), TestSuite::Compare::Container);
@@ -190,7 +200,8 @@ void DrFlacImporterTest::stereo16() {
     CORRADE_COMPARE(importer->format(), BufferFormat::Stereo16);
     CORRADE_COMPARE(importer->frequency(), 44100);
 
-    CORRADE_COMPARE_AS(Containers::arrayCast<Short>(importer->data()),
+    Containers::Array<char> data = importer->data();
+    CORRADE_COMPARE_AS(Containers::arrayCast<Short>(data),
         Containers::arrayView<Short>({
             20263, 20263
         }), TestSuite::Compare::Container);
@@ -203,9 +214,10 @@ void DrFlacImporterTest::stereo24() {
     CORRADE_COMPARE(importer->format(), BufferFormat::StereoFloat);
     CORRADE_COMPARE(importer->frequency(), 8000);
 
-    CORRADE_COMPARE(importer->data().size(), 187944);
+    Containers::Array<char> data = importer->data();
+    CORRADE_COMPARE(data.size(), 187944);
     /** @todo find some range that isn't mostly zeros */
-    CORRADE_COMPARE_AS(importer->data().prefix(32), Containers::arrayView({
+    CORRADE_COMPARE_AS(data.prefix(32), Containers::arrayView({
         '\x00', '\x00', '\x00', '\x00', '\x00', '\x00', '\x00', '\x00',
         '\x00', '\x00', '\x00', '\x00', '\x00', '\x00', '\x00', '\x00',
         '\x00', '\x00', '\x00', '\x38', '\x00', '\x00', '\x80', '\x38',
@@ -251,6 +263,40 @@ void DrFlacImporterTest::surround71Channel24() {
 
     CORRADE_COMPARE(importer->format(), BufferFormat::Surround71Channel32);
     CORRADE_COMPARE(importer->frequency(), 48000);
+}
+
+void DrFlacImporterTest::openTwice() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DrFlacAudioImporter");
+
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(DRFLACAUDIOIMPORTER_TEST_DIR, "mono8.flac")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(DRFLACAUDIOIMPORTER_TEST_DIR, "mono8.flac")));
+
+    /* Shouldn't crash, leak or anything */
+}
+
+void DrFlacImporterTest::importTwice() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DrFlacAudioImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(DRFLACAUDIOIMPORTER_TEST_DIR, "mono8.flac")));
+
+    CORRADE_COMPARE(importer->format(), BufferFormat::Mono8);
+    CORRADE_COMPARE(importer->frequency(), 22050);
+
+    /* Verify that everything is working the same way on second use */
+    {
+        Containers::Array<char> data = importer->data();
+        CORRADE_COMPARE(data.size(), 2136);
+        CORRADE_COMPARE_AS(Containers::arrayCast<UnsignedByte>(data).prefix(4),
+            Containers::arrayView<UnsignedByte>({
+                127, 127, 127, 127
+            }), TestSuite::Compare::Container);
+    } {
+        Containers::Array<char> data = importer->data();
+        CORRADE_COMPARE(data.size(), 2136);
+        CORRADE_COMPARE_AS(Containers::arrayCast<UnsignedByte>(data).prefix(4),
+            Containers::arrayView<UnsignedByte>({
+                127, 127, 127, 127
+            }), TestSuite::Compare::Container);
+    }
 }
 
 }}}}
