@@ -74,6 +74,7 @@ struct StbImageConverterTest: TestSuite::Tester {
     void tgaRgba();
 
     void convertToFile();
+    void convertToFileHdr();
 
     void unsupportedMetadata();
 
@@ -98,12 +99,21 @@ const struct {
     const char* pluginName;
     const char* filename;
     Containers::StringView prefix;
+    Float maxThreshold, meanThreshold;
 } ConvertToFileData[] {
-    {"bmp", "StbImageConverter", "image.bmp", "BM"_s},
-    {"png", "StbImageConverter", "image.png", "\x89PNG\x0d\x0a\x1a\x0a"_s},
-    /* TGAs are too annoying to detect, skip */
-    {"tga", "StbImageConverter", "image.tga", nullptr},
-    {"bmp with explicit plugin name", "StbBmpImageConverter", "image.foo", "BM"_s}
+    {"bmp", "StbImageConverter", "image.bmp",
+        "BM"_s, 0.0f, 0.0f},
+    {"png", "StbImageConverter", "image.png",
+        "\x89PNG\x0d\x0a\x1a\x0a"_s, 0.0f, 0.0f},
+    {"jpeg", "StbImageConverter", "image.jpg",
+        "\xff\xd8\xff"_s, 1.34f, 0.834f},
+    {"jpeg, weird extension", "StbImageConverter", "image.jpe",
+        "\xff\xd8\xff"_s, 1.34f, 0.834f},
+    /* TGAs are too annoying to detect, skip. Thus also not testing the other
+       extension variants */
+    {"tga", "StbImageConverter", "image.tga", nullptr, 0.0f, 0.0f},
+    {"bmp with explicit plugin name", "StbBmpImageConverter", "image.foo",
+        "BM"_s, 0.0f, 0.0f}
 };
 
 const struct {
@@ -152,6 +162,8 @@ StbImageConverterTest::StbImageConverterTest() {
 
     addInstancedTests({&StbImageConverterTest::convertToFile},
         Containers::arraySize(ConvertToFileData));
+
+    addTests({&StbImageConverterTest::convertToFileHdr});
 
     addInstancedTests({&StbImageConverterTest::unsupportedMetadata},
         Containers::arraySize(UnsupportedMetadataData));
@@ -803,7 +815,8 @@ void StbImageConverterTest::convertToFile() {
     CORRADE_VERIFY(importer->openFile(filename));
     Containers::Optional<Trade::ImageData2D> converted = importer->image2D(0);
     CORRADE_VERIFY(converted);
-    CORRADE_COMPARE_AS(*converted, image, DebugTools::CompareImage);
+    CORRADE_COMPARE_WITH(*converted, image,
+        (DebugTools::CompareImage{data.maxThreshold, data.meanThreshold}));
 
     /* The format should get reset again after so convertToData() isn't left
        with some random format after */
@@ -813,6 +826,43 @@ void StbImageConverterTest::convertToFile() {
         CORRADE_VERIFY(!converter->convertToData(image));
         CORRADE_COMPARE(out.str(), "Trade::StbImageConverter::convertToData(): cannot determine output format (plugin loaded as StbImageConverter, use one of the Stb{Bmp,Hdr,Jpeg,Png,Tga}ImageConverter aliases)\n");
     }
+}
+
+void StbImageConverterTest::convertToFileHdr() {
+    /* Like convertToFile(), but specialized for *.hdr output where it only
+       works with a floating-point pixel format */
+
+    const Float RgbData[]{
+        1.0f, 2.0f, 3.0f, 2.0f, 3.0f, 4.0f,
+        3.0f, 4.0f, 5.0f, 4.0f, 5.0f, 6.0f,
+        5.0f, 6.0f, 7.0f, 6.0f, 7.0f, 8.0f
+    };
+    ImageView2D image{PixelStorage{}.setAlignment(1), PixelFormat::RGB32F, {2, 3}, RgbData};
+
+    Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("StbImageConverter");
+    Containers::String filename = Utility::Path::join(STBIMAGECONVERTER_TEST_OUTPUT_DIR, "image.hdr");
+    CORRADE_VERIFY(converter->convertToFile(image, filename));
+
+    /* Verify it's actually the right format */
+    Containers::Optional<Containers::String> data = Utility::Path::readString(filename);
+    CORRADE_VERIFY(data);
+    CORRADE_COMPARE_AS(*data, "#?RADIANCE"_s, TestSuite::Compare::StringHasPrefix);
+
+    if(_importerManager.loadState("StbImageImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("StbImageImporter plugin not found, cannot test");
+
+    Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("StbImageImporter");
+    CORRADE_VERIFY(importer->openFile(filename));
+    Containers::Optional<Trade::ImageData2D> converted = importer->image2D(0);
+    CORRADE_VERIFY(converted);
+    CORRADE_COMPARE_AS(*converted, image, DebugTools::CompareImage);
+
+    /* The format should get reset again after so convertToData() isn't left
+       with some random format after */
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!converter->convertToData(image));
+    CORRADE_COMPARE(out.str(), "Trade::StbImageConverter::convertToData(): cannot determine output format (plugin loaded as StbImageConverter, use one of the Stb{Bmp,Hdr,Jpeg,Png,Tga}ImageConverter aliases)\n");
 }
 
 void StbImageConverterTest::unsupportedMetadata() {
