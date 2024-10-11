@@ -65,7 +65,8 @@ PluginManager::Manager<Trade::AbstractImporter> manager;
 Containers::Optional<Trade::ImageData2D> image;
 /* [target-format-config] */
 /* Instantiate the plugin under its default name. At this point, the plugin
-   would decompress to full RGBA8/RGBA16F, which is usually not what you want. */
+   would decompress to full RGBA8/RGBA16F, which is usually not what you
+   want. */
 Containers::Pointer<Trade::AbstractImporter> importer =
     manager.instantiate("BasisImporter");
 importer->openFile("mytexture.basis");

@@ -253,7 +253,8 @@ With @ref BasisImporter, these formats can be chosen in different ways:
 
 The list of valid suffixes is equivalent to enum value names in
 @ref TargetFormat. If you want to be able to change the target format
-dynamically, set the @cb{.ini} format @ce and @cb{.ini} formatHdr @ce @ref Trade-BasisImporter-configuration "configuration options".
+dynamically, set the @cb{.ini} format @ce and @cb{.ini} formatHdr @ce
+@ref Trade-BasisImporter-configuration "configuration options".
 
 @snippet BasisImporter.cpp target-format-config
 
@@ -263,6 +264,8 @@ the choices can be found in the [Basis Universal Wiki](https://github.com/Binomi
 As an example, the following code is a decision making used by
 @ref magnum-player "magnum-player" based on availability of corresponding
 OpenGL, OpenGL ES and WebGL extensions, in its full ugly glory:
+
+@m_class{m-console-wrap}
 
 @snippet BasisImporter.cpp gl-extension-checks
 
