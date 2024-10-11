@@ -115,7 +115,7 @@ template<typename T> void copySlice(const ImageView3D& image3D, UnsignedInt slic
     } else CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
 }
 
-template<UnsignedInt dimensions> Containers::Optional<Containers::Array<char>> convertLevelsToData(Containers::ArrayView<const BasicImageView<dimensions>> imageLevels, const Utility::ConfigurationGroup& configuration, ImageConverterFlags flags, BasisImageConverter::Format fileFormat) {
+template<UnsignedInt dimensions> Containers::Optional<Containers::Array<char>> convertLevelsToData(const Containers::ArrayView<const BasicImageView<dimensions>> imageLevels, const Utility::ConfigurationGroup& configuration, const ImageConverterFlags flags, const bool isKtx) {
     /* Check input */
     const PixelFormat pixelFormat = imageLevels.front().format();
     bool isSrgb;
@@ -198,10 +198,7 @@ template<UnsignedInt dimensions> Containers::Optional<Containers::Array<char>> c
         return {};
     }
 
-    if(fileFormat == BasisImageConverter::Format::Ktx)
-        params.m_create_ktx2_file = true;
-    else
-        CORRADE_INTERNAL_ASSERT(fileFormat == BasisImageConverter::Format{} || fileFormat == BasisImageConverter::Format::Basis);
+    params.m_create_ktx2_file = isKtx;
 
     /* Options deduced from input data. Config values that are not emptied out
        override these below. */
@@ -558,11 +555,15 @@ Containers::String BasisImageConverter::doMimeType() const {
 }
 
 Containers::Optional<Containers::Array<char>> BasisImageConverter::doConvertToData(Containers::ArrayView<const ImageView2D> imageLevels) {
-    return convertLevelsToData(imageLevels, configuration(), flags(), _format);
+    /* Use KTX if explicitly set, fall back to Basis if explicitly set or not
+       specified at all */
+    return convertLevelsToData(imageLevels, configuration(), flags(), _format == Format::Ktx);
 }
 
 Containers::Optional<Containers::Array<char>> BasisImageConverter::doConvertToData(Containers::ArrayView<const ImageView3D> imageLevels) {
-    return convertLevelsToData(imageLevels, configuration(), flags(), _format);
+    /* Use KTX if explicitly set, fall back to Basis if explicitly set or not
+       specified at all */
+    return convertLevelsToData(imageLevels, configuration(), flags(), _format == Format::Ktx);
 }
 
 template<UnsignedInt dimensions> bool BasisImageConverter::convertLevelsToFile(const Containers::ArrayView<const BasicImageView<dimensions>> imageLevels, const Containers::StringView filename) {
