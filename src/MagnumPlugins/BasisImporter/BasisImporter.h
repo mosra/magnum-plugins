@@ -457,7 +457,7 @@ class MAGNUM_BASISIMPORTER_EXPORT BasisImporter: public AbstractImporter {
          * @m_deprecated_since_latest Direct plugin instantiation isn't a
          *      supported use case anymore and thus it isn't possible to query
          *      the current format with an API. Either check the
-         *      @cb{.ini} format @ce @ref Trade-BasisImporter-configuration "configuration option"
+         *      `format` @ref Trade-BasisImporter-configuration "configuration option"
          *      or compare the name under which was the plugin loaded in
          *      @ref plugin() against the aliases listed above.
          */
@@ -468,7 +468,7 @@ class MAGNUM_BASISIMPORTER_EXPORT BasisImporter: public AbstractImporter {
          * @m_deprecated_since_latest Direct plugin instantiation isn't a
          *      supported use case anymore and thus it isn't possible to query
          *      the current format with an API. Set the
-         *      @cb{.ini} format @ce @ref Trade-BasisImporter-configuration "configuration option"
+         *      `format` @ref Trade-BasisImporter-configuration "configuration option"
          *      instead.
         */
         CORRADE_DEPRECATED("instantiate through the plugin manager instead") void setTargetFormat(TargetFormat format);
