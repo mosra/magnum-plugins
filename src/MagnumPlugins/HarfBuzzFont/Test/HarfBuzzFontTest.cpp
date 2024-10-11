@@ -62,6 +62,8 @@ struct HarfBuzzFontTest: TestSuite::Tester {
 
     void shapeFeatures();
 
+    void openTwice();
+
     /* Explicitly forbid system-wide plugin dependencies */
     PluginManager::Manager<AbstractFont> _manager{"nonexistent"};
 };
@@ -248,6 +250,8 @@ HarfBuzzFontTest::HarfBuzzFontTest() {
 
     addInstancedTests({&HarfBuzzFontTest::shapeFeatures},
         Containers::arraySize(ShapeFeaturesData));
+
+    addTests({&HarfBuzzFontTest::openTwice});
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. */
@@ -698,6 +702,15 @@ void HarfBuzzFontTest::shapeFeatures() {
     CORRADE_COMPARE_AS(Containers::stridedArrayView(advances).slice(&Vector2::x),
         Containers::stridedArrayView(data.advances),
         TestSuite::Compare::Container);
+}
+
+void HarfBuzzFontTest::openTwice() {
+    Containers::Pointer<AbstractFont> font = _manager.instantiate("HarfBuzzFont");
+
+    CORRADE_VERIFY(font->openFile(Utility::Path::join(FREETYPEFONT_TEST_DIR, "Oxygen.ttf"), 16.0f));
+    CORRADE_VERIFY(font->openFile(Utility::Path::join(FREETYPEFONT_TEST_DIR, "Oxygen.ttf"), 16.0f));
+
+    /* Shouldn't crash, leak or anything */
 }
 
 }}}}

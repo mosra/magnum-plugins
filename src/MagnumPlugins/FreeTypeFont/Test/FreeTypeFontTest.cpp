@@ -65,6 +65,8 @@ struct FreeTypeFontTest: TestSuite::Tester {
     void fillGlyphCacheInvalidFormat();
     void fillGlyphCacheCannotFit();
 
+    void openTwice();
+
     /* Explicitly forbid system-wide plugin dependencies */
     PluginManager::Manager<AbstractFont> _manager{"nonexistent"};
 
@@ -132,7 +134,9 @@ FreeTypeFontTest::FreeTypeFontTest() {
     addTests({&FreeTypeFontTest::fillGlyphCacheIncremental,
               &FreeTypeFontTest::fillGlyphCacheArray,
               &FreeTypeFontTest::fillGlyphCacheInvalidFormat,
-              &FreeTypeFontTest::fillGlyphCacheCannotFit});
+              &FreeTypeFontTest::fillGlyphCacheCannotFit,
+
+              &FreeTypeFontTest::openTwice});
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. */
@@ -653,6 +657,15 @@ void FreeTypeFontTest::fillGlyphCacheCannotFit() {
     Error redirectError{&out};
     font->fillGlyphCache(cache, "HELLO");
     CORRADE_COMPARE(out.str(), "Text::FreeTypeFont::fillGlyphCache(): cannot fit 5 glyphs with a total area of 535 pixels into a cache of size Vector(16, 32, 1) and Vector(16, 0, 1) filled so far\n");
+}
+
+void FreeTypeFontTest::openTwice() {
+    Containers::Pointer<AbstractFont> font = _manager.instantiate("FreeTypeFont");
+
+    CORRADE_VERIFY(font->openFile(Utility::Path::join(FREETYPEFONT_TEST_DIR, "Oxygen.ttf"), 16.0f));
+    CORRADE_VERIFY(font->openFile(Utility::Path::join(FREETYPEFONT_TEST_DIR, "Oxygen.ttf"), 16.0f));
+
+    /* Shouldn't crash, leak or anything */
 }
 
 }}}}

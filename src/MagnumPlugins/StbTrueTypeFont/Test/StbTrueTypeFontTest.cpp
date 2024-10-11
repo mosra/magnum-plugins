@@ -64,6 +64,8 @@ struct StbTrueTypeFontTest: TestSuite::Tester {
     void fillGlyphCacheInvalidFormat();
     void fillGlyphCacheCannotFit();
 
+    void openTwice();
+
     /* Explicitly forbid system-wide plugin dependencies */
     PluginManager::Manager<AbstractFont> _manager{"nonexistent"};
 
@@ -128,7 +130,9 @@ StbTrueTypeFontTest::StbTrueTypeFontTest() {
     addTests({&StbTrueTypeFontTest::fillGlyphCacheIncremental,
               &StbTrueTypeFontTest::fillGlyphCacheArray,
               &StbTrueTypeFontTest::fillGlyphCacheInvalidFormat,
-              &StbTrueTypeFontTest::fillGlyphCacheCannotFit});
+              &StbTrueTypeFontTest::fillGlyphCacheCannotFit,
+
+              &StbTrueTypeFontTest::openTwice});
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. */
@@ -645,6 +649,15 @@ void StbTrueTypeFontTest::fillGlyphCacheCannotFit() {
     Error redirectError{&out};
     font->fillGlyphCache(cache, "HELLO");
     CORRADE_COMPARE(out.str(), "Text::StbTrueTypeFont::fillGlyphCache(): cannot fit 5 glyphs with a total area of 680 pixels into a cache of size Vector(16, 32, 1) and Vector(16, 0, 1) filled so far\n");
+}
+
+void StbTrueTypeFontTest::openTwice() {
+    Containers::Pointer<AbstractFont> font = _manager.instantiate("StbTrueTypeFont");
+
+    CORRADE_VERIFY(font->openFile(Utility::Path::join(FREETYPEFONT_TEST_DIR, "Oxygen.ttf"), 16.0f));
+    CORRADE_VERIFY(font->openFile(Utility::Path::join(FREETYPEFONT_TEST_DIR, "Oxygen.ttf"), 16.0f));
+
+    /* Shouldn't crash, leak or anything */
 }
 
 }}}}
