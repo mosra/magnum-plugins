@@ -63,6 +63,8 @@ struct KtxImageConverterTest: TestSuite::Tester {
 
     void supportedFormat();
     void supportedCompressedFormat();
+    void unsupportedFormat();
+    void unsupportedCompressedFormat();
     void implementationSpecificFormat();
     void implementationSpecificCompressedFormat();
 
@@ -367,6 +369,8 @@ Containers::String readKeyValueData(Containers::ArrayView<const char> fileData) 
 KtxImageConverterTest::KtxImageConverterTest() {
     addTests({&KtxImageConverterTest::supportedFormat,
               &KtxImageConverterTest::supportedCompressedFormat,
+              &KtxImageConverterTest::unsupportedFormat,
+              &KtxImageConverterTest::unsupportedCompressedFormat,
               &KtxImageConverterTest::implementationSpecificFormat,
               &KtxImageConverterTest::implementationSpecificCompressedFormat,
 
@@ -516,6 +520,28 @@ void KtxImageConverterTest::supportedCompressedFormat() {
         CORRADE_VERIFY(Containers::arraySize(bytes) >= compressedPixelFormatBlockDataSize(CompressedPixelFormat(format)));
         CORRADE_VERIFY(converter->convertToData(CompressedImageView2D{CompressedPixelFormat(format), {1, 1}, bytes}));
     }
+}
+
+void KtxImageConverterTest::unsupportedFormat() {
+    Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("KtxImageConverter");
+
+    /* And implementation-specific formats have a different failure path,
+       tested in implementationSpecificFormat() below */
+    CORRADE_SKIP("No PixelFormat values that wouldn't be supported by KTX exist.");
+}
+
+void KtxImageConverterTest::unsupportedCompressedFormat() {
+    Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("KtxImageConverter");
+
+    /* Compared to unsupportedFormat(), here we can abuse the fact that
+       CompressedImageView so far doesn't rely on CompressedPixelFormat being
+       valid to fetch block size properties for it. Once that's implemented,
+       we won't be able, and then the failure should probably become an
+       unreachable assert instead. */
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!converter->convertToData(CompressedImageView2D{CompressedPixelFormat(0xffff), {1, 1}, "hello"}));
+    CORRADE_COMPARE(out.str(), "Trade::KtxImageConverter::convertToData(): unsupported format CompressedPixelFormat(0xffff)\n");
 }
 
 void KtxImageConverterTest::implementationSpecificFormat() {
