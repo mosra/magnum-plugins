@@ -136,7 +136,8 @@ namespace Magnum {
     [mosra/magnum-plugins#112](https://github.com/mosra/magnum-plugins/pull/112),
     [mosra/magnum-plugins#118](https://github.com/mosra/magnum-plugins/pull/118),
     [mosra/magnum-plugins#119](https://github.com/mosra/magnum-plugins/pull/119),
-    [mosra/magnum-plugins#145](https://github.com/mosra/magnum-plugins/pull/145))
+    [mosra/magnum-plugins#145](https://github.com/mosra/magnum-plugins/pull/145),
+    [mosra/magnum-plugins#146](https://github.com/mosra/magnum-plugins/pull/146))
 
 @subsection changelog-plugins-latest-changes Changes and improvements
 
