@@ -136,10 +136,17 @@ void PrimitiveImporterTest::test() {
     CORRADE_COMPARE(Containers::arraySize(Data), importer->meshCount());
 
     /* Name mapping should work both ways */
-    Int icosphere = importer->meshForName("icosphereSolid");
-    CORRADE_COMPARE_AS(icosphere, 0, TestSuite::Compare::GreaterOrEqual);
-    CORRADE_COMPARE(importer->meshName(icosphere), "icosphereSolid");
-    CORRADE_COMPARE(importer->meshForName("bla"), -1);
+    {
+        Int icosphere = importer->meshForName("icosphereSolid");
+        CORRADE_COMPARE_AS(icosphere, 0, TestSuite::Compare::GreaterOrEqual);
+        CORRADE_COMPARE(importer->meshName(icosphere), "icosphereSolid");
+        CORRADE_COMPARE(importer->meshForName("bla"), -1);
+    } {
+        Int icosphere = importer->objectForName("icosphereSolid");
+        CORRADE_COMPARE_AS(icosphere, 0, TestSuite::Compare::GreaterOrEqual);
+        CORRADE_COMPARE(importer->objectName(icosphere), "icosphereSolid");
+        CORRADE_COMPARE(importer->objectForName("bla"), -1);
+    }
 
     /* This should work too */
     importer->close();
