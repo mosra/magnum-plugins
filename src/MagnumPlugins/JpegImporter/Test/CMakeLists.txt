@@ -42,7 +42,9 @@ corrade_add_test(JpegImporterTest JpegImporterTest.cpp
     LIBRARIES Magnum::Trade
     FILES
         gray.jpg
-        rgb.jpg)
+        rgb.jpg
+        # convert rgb.jpg -colorspace CMYK cmyk.jpg
+        cmyk.jpg)
 target_include_directories(JpegImporterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>)
 if(MAGNUM_JPEGIMPORTER_BUILD_STATIC)
     target_link_libraries(JpegImporterTest PRIVATE JpegImporter)

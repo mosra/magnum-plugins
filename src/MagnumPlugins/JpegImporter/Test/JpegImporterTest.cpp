@@ -48,6 +48,7 @@ struct JpegImporterTest: TestSuite::Tester {
 
     void gray();
     void rgb();
+    void cmyk();
 
     void openMemory();
     void openTwice();
@@ -78,7 +79,8 @@ JpegImporterTest::JpegImporterTest() {
               &JpegImporterTest::invalid,
 
               &JpegImporterTest::gray,
-              &JpegImporterTest::rgb});
+              &JpegImporterTest::rgb,
+              &JpegImporterTest::cmyk});
 
     addInstancedTests({&JpegImporterTest::openMemory},
         Containers::arraySize(OpenMemoryData));
@@ -169,6 +171,17 @@ void JpegImporterTest::rgb() {
         '\xc9', '\xff', '\x76',
         '\xdf', '\xad', '\xb6', 0, 0, 0
     }), TestSuite::Compare::Container);
+}
+
+void JpegImporterTest::cmyk() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("JpegImporter");
+
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(JPEGIMPORTER_TEST_DIR, "cmyk.jpg")));
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!importer->image2D(0));
+    CORRADE_COMPARE(out.str(), "Trade::JpegImporter::image2D(): unsupported color space 4\n");
 }
 
 void JpegImporterTest::openMemory() {
