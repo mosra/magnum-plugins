@@ -482,7 +482,13 @@ void AssimpImporterTest::openFileFailed() {
     Error redirectError{&out};
 
     CORRADE_VERIFY(!importer->openFile("i-do-not-exist.foo"));
-    CORRADE_COMPARE(out.str(), "Trade::AssimpImporter::openFile(): failed to open i-do-not-exist.foo: Unable to open file \"i-do-not-exist.foo\".\n");
+    /* Happens in 5.4.2, but so randomly that it's maybe 5.4.0 as well. How can
+       you even write code to behave like that. */
+    if(_assimpVersion >= 540 && out.str() == "Trade::AssimpImporter::openFile(): failed to open i-do-not-exist.foo: No suitable reader found for the file format of file \"i-do-not-exist.foo\".\n") {
+        CORRADE_WARN("Assimp randomly reports a different error message than usual.");
+    } else {
+        CORRADE_COMPARE(out.str(), "Trade::AssimpImporter::openFile(): failed to open i-do-not-exist.foo: Unable to open file \"i-do-not-exist.foo\".\n");
+    }
 }
 
 void AssimpImporterTest::openData() {
@@ -1524,7 +1530,11 @@ void AssimpImporterTest::skin() {
         Containers::Optional<Matrix4> meshTransform = scene->transformation3DFor(meshObject);
         CORRADE_VERIFY(meshTransform);
         for(UnsignedInt j = 0; j != joints.size(); ++j) {
+            CORRADE_ITERATION(j);
             const Matrix4 invertedTransform = globalTransforms[joints[j] + 1].inverted() * *meshTransform * correction;
+            /* https://github.com/assimp/assimp/issues/5719 */
+            CORRADE_EXPECT_FAIL_IF(data.name == "FBX"_s && _assimpVersion >= 540,
+                "Assimp 5.4.0+ suffers from FBX ANIMATION DETERIORATION.");
             CORRADE_COMPARE(bindMatrices[j], invertedTransform);
         }
     }
@@ -3782,7 +3792,16 @@ void AssimpImporterTest::imageEmbeddedWithPath() {
        cause any problems even when no file callbacks are set */
     Containers::Optional<Containers::Array<char>> data = Utility::Path::read(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "image-embedded.fbx"));
     CORRADE_VERIFY(data);
-    CORRADE_VERIFY(importer->openData(*data));
+
+    {
+        /* https://github.com/assimp/assimp/issues/5585#issuecomment-2154729798,
+           the line which changed "fbx" to " \n\r\n " in particular. LOL. */
+        CORRADE_EXPECT_FAIL_IF(_assimpVersion >= 540,
+            "Assimp 5.4.0+ fails to open embedded FBX files.");
+        CORRADE_VERIFY(importer->openData(*data));
+        if(_assimpVersion >= 540)
+            return;
+    }
 
     CORRADE_COMPARE(importer->image2DCount(), 1);
     Containers::Optional<ImageData2D> image = importer->image2D(0);
