@@ -12,6 +12,7 @@ cmake .. \
     -DCMAKE_BUILD_TYPE=Debug \
     -DCMAKE_INSTALL_PREFIX=$HOME/deps \
     -DCORRADE_WITH_INTERCONNECT=OFF \
+    $EXTRA_OPTS \
     -G Ninja
 ninja install
 cd ../..
@@ -39,6 +40,7 @@ cmake .. \
     -DMAGNUM_WITH_TEXTURETOOLS=ON \
     -DMAGNUM_WITH_ANYIMAGEIMPORTER=ON \
     -DMAGNUM_WITH_TGAIMAGECONVERTER=ON \
+    $EXTRA_OPTS \
     -G Ninja
 ninja install
 cd ../..
@@ -74,6 +76,7 @@ cmake ../build/cmake \
     -DZSTD_BUILD_STATIC=ON \
     -DZSTD_MULTITHREAD_SUPPORT=OFF \
     -DCMAKE_INSTALL_PREFIX=$HOME/deps \
+    $EXTRA_OPTS \
     -G Ninja
 ninja install
 cd ../..
@@ -103,6 +106,7 @@ cmake .. \
     -DOPENEXR_DEFLATE_TAG=v1.19 \
     -DIMATH_INSTALL_PKG_CONFIG=OFF \
     -DIMATH_HALF_USE_LOOKUP_TABLE=OFF \
+    $EXTRA_OPTS \
     -G Ninja
 ninja install
 cd ../..
@@ -164,6 +168,7 @@ cmake .. \
     -DMAGNUM_WITH_WEBPIMPORTER=OFF \
     -DMAGNUM_BUILD_TESTS=ON \
     -DMAGNUM_BUILD_GL_TESTS=ON \
+    $EXTRA_OPTS \
     -G Ninja
 ninja $NINJA_JOBS
 
