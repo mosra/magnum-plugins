@@ -104,7 +104,7 @@ rm -rf %{_builddir}/basis_universal-1_50_0_2
 %{_libdir}/*.so*
 %{_libdir}/magnum/*/*
 
-#%doc COPYING
+%doc %{name}-%{version}/COPYING
 
 %files devel
 %defattr(-,root,root,-)
