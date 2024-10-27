@@ -54,7 +54,7 @@ echo "** building package version: ${version_hash}"
 sudo dnf builddep -y ${package_name}.spec
 
 # Build package
-rpmbuild --define "debug_package %{nil}" --undefine "_disable_source_fetch" --clean -ba ${package_name}.spec
+rpmbuild --define "debug_package %{nil}" --undefine "_disable_source_fetch" --clean -bb ${package_name}.spec
 
 echo "** packages for ${package_name}-${version_hash} complete:"
 ls ~/rpmbuild/RPMS/$(uname -m)/${package_name}-*${version_hash}*.rpm | cat
