@@ -103,8 +103,8 @@ vcpkg install magnum-plugins[*]
 @endcode
 
 There are also Vcpkg packages for
-@ref building-integration-packages-vcpkg "Magnum Integration" and
-@ref building-extras-packages-vcpkg "Magnum Extras".
+@ref building-extras-packages-vcpkg "Magnum Extras" and
+@ref building-integration-packages-vcpkg "Magnum Integration".
 
 @subsection building-plugins-packages-arch ArchLinux packages
 
@@ -152,8 +152,8 @@ Edit the PKGBUILDs if you want to pass additional flags to CMake or
 @ref building-plugins-features "enable / disable additional features".
 
 There are also ArchLinux packages for
-@ref building-integration-packages-arch "Magnum Integration",
-@ref building-extras-packages-arch "Magnum Extras" and
+@ref building-extras-packages-arch "Magnum Extras",
+@ref building-integration-packages-arch "Magnum Integration" and
 @ref building-examples-packages-arch "Magnum Examples".
 
 @subsection building-plugins-packages-msys MSYS2 packages
@@ -255,8 +255,8 @@ same.
 @endparblock
 
 There are also Debian packages for
-@ref building-integration-packages-deb "Magnum Integration",
-@ref building-extras-packages-deb "Magnum Extras" and
+@ref building-extras-packages-deb "Magnum Extras",
+@ref building-integration-packages-deb "Magnum Integration" and
 @ref building-examples-packages-deb "Magnum Examples".
 
 @subsection building-plugins-packages-gentoo Gentoo Linux ebuilds
@@ -277,8 +277,8 @@ If you want to pass additional flags to CMake or
 to `mycmakeargs` in the `*.ebuild` file.
 
 There are also Gentoo packages for
-@ref building-integration-packages-gentoo "Magnum Integration",
-@ref building-extras-packages-gentoo "Magnum Extras" and
+@ref building-extras-packages-gentoo "Magnum Extras",
+@ref building-integration-packages-gentoo "Magnum Integration" and
 @ref building-examples-packages-gentoo "Magnum Examples".
 
 @subsection building-plugins-packages-rpm Packages for Fedora, openSUSE and other RPM-based Linux distributions
@@ -391,8 +391,8 @@ to CMake or @ref building-plugins-features "enable / disable other features",
 edit the `*.rb` file.
 
 There are also Homebrew packages for
-@ref building-integration-packages-brew "Magnum Integration",
-@ref building-extras-packages-brew "Magnum Extras" and
+@ref building-extras-packages-brew "Magnum Extras",
+@ref building-integration-packages-brew "Magnum Integration" and
 @ref building-examples-packages-brew "Magnum Examples".
 
 @section building-plugins-manual Manual build
