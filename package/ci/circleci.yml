@@ -565,6 +565,8 @@ jobs:
     executor: emscripten
     steps:
     - install-base-linux
+    # With a Debug build, 38 is causing OOMs. Release was fine with that.
+    - cap-ninja-jobs
     # Zstd built inside emscripten.sh
     - install-basis
     - build:

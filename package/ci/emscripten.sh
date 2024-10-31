@@ -9,9 +9,7 @@ cd corrade
 mkdir build-emscripten && cd build-emscripten
 cmake .. \
     -DCMAKE_TOOLCHAIN_FILE="../../toolchains/generic/Emscripten-wasm.cmake" \
-    -DCMAKE_BUILD_TYPE=Release \
-    -DCMAKE_CXX_FLAGS_RELEASE="-DNDEBUG -O1" \
-    -DCMAKE_EXE_LINKER_FLAGS_RELEASE="-O1" \
+    -DCMAKE_BUILD_TYPE=Debug \
     -DCMAKE_INSTALL_PREFIX=$HOME/deps \
     -DCORRADE_WITH_INTERCONNECT=OFF \
     -G Ninja
@@ -24,9 +22,7 @@ cd magnum
 mkdir build-emscripten && cd build-emscripten
 cmake .. \
     -DCMAKE_TOOLCHAIN_FILE="../../toolchains/generic/Emscripten-wasm.cmake" \
-    -DCMAKE_BUILD_TYPE=Release \
-    -DCMAKE_CXX_FLAGS_RELEASE="-DNDEBUG -O1" \
-    -DCMAKE_EXE_LINKER_FLAGS_RELEASE="-O1" \
+    -DCMAKE_BUILD_TYPE=Debug \
     -DCMAKE_INSTALL_PREFIX=$HOME/deps \
     -DCMAKE_FIND_ROOT_PATH=$HOME/deps \
     -DMAGNUM_WITH_AUDIO=ON \
@@ -90,6 +86,8 @@ cd openexr-$OPENEXR_VERSION
 mkdir build && cd build
 cmake .. \
     -DCMAKE_TOOLCHAIN_FILE="../../toolchains/generic/Emscripten-wasm.cmake" \
+    -DCMAKE_CXX_FLAGS="-s DISABLE_EXCEPTION_CATCHING=0" \
+    -DCMAKE_BUILD_TYPE=Debug \
     -DCMAKE_INSTALL_PREFIX=$HOME/deps \
     -DOPENEXR_BUILD_TOOLS=OFF \
     -DOPENEXR_ENABLE_THREADING=OFF \
@@ -115,9 +113,7 @@ cd ../..
 mkdir build-emscripten && cd build-emscripten
 cmake .. \
     -DCMAKE_TOOLCHAIN_FILE="../toolchains/generic/Emscripten-wasm.cmake" \
-    -DCMAKE_BUILD_TYPE=Release \
-    -DCMAKE_CXX_FLAGS_RELEASE="-DNDEBUG -O1" \
-    -DCMAKE_EXE_LINKER_FLAGS_RELEASE="-O1" \
+    -DCMAKE_BUILD_TYPE=Debug \
     -DCMAKE_INSTALL_PREFIX=$HOME/deps \
     -DCMAKE_FIND_ROOT_PATH=$HOME/deps \
     -DMAGNUM_WITH_ASSIMPIMPORTER=OFF \
