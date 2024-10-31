@@ -30,6 +30,7 @@ namespace Magnum {
 
 @section credits-contributors-plugins Magnum Plugins
 
+-   **[\@1b00](https://github.com/1b00)** --- RPM package
 -   **Alice Margatroid** ([\@Alicemargatroid](https://github.com/Alicemargatroid))
     --- @ref Trade::DevIlImageImporter "DevIlImageImporter",
     @ref Audio::DrFlacImporter "DrFlacAudioImporter" and
@@ -56,6 +57,7 @@ namespace Magnum {
     improvements
 -   **[\@hunt978](https://github.com/hunt978)** --- fixing
     @ref Trade::JpegImporter "JpegImporter" build on older CMake versions
+-   **Igal Alkon** ([\@alkavan](https://github.com/alkavan)) --- RPM package
 -   **Igor Kalevatykh** ([\@ikalevatykh](https://github.com/ikalevatykh)) ---
     fixes for @ref Trade::AssimpImporter "AssimpImporter" workarounds and bugs
 -   **John Laxson** ([\@jlaxson](https://github.com/jlaxson)) ---

@@ -272,6 +272,9 @@ namespace Magnum {
     copy and carry them along anymore (see [mosra/magnum#436](https://github.com/mosra/magnum/issues/436))
 -   Fixed remaining warnings related to `-fvisibility-inlines-hidden` on Mac
     (see [mosra/magnum#551](https://github.com/mosra/magnum/issues/551))
+-   Created a RPM package with a helper script for building (see
+    [mosra/magnum-plugins#111](https://github.com/mosra/magnum-plugins/pull/111)
+    and [mosra/magnum-plugins#147](https://github.com/mosra/magnum-plugins/pull/147))
 
 @subsection changelog-plugins-latest-bugfixes Bug fixes
 
