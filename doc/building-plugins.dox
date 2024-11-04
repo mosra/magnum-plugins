@@ -47,64 +47,13 @@ packages for your platform of choice. See @ref building-plugins-manual if you
 want to have more control. Cross-compiling is very similar to
 @ref building-cross "cross-compiling of Magnum itself".
 
--   @ref building-plugins-packages-vcpkg
 -   @ref building-plugins-packages-arch
 -   @ref building-plugins-packages-msys
 -   @ref building-plugins-packages-deb
 -   @ref building-plugins-packages-gentoo
 -   @ref building-plugins-packages-rpm
 -   @ref building-plugins-packages-brew
-
-@subsection building-plugins-packages-vcpkg Vcpkg package
-
-Magnum Plugins are available as a [Vcpkg](https://github.com/Microsoft/vcpkg)
-package. See @ref building-packages-vcpkg "the Magnum Vcpkg documentation" for
-a more detailed introduction and a troubleshooting guide. Installing latest
-stable version of Magnum Plugins with all its dependencies is done like this:
-
-@code{.bat}
-vcpkg install magnum-plugins
-@endcode
-
-@m_class{m-block m-success}
-
-@par Installing latest master
-    The `master` is considered stable for production use and often you may want
-    to prefer it over a potentially outdated tagged release. To do so, use
-    the `--head` option on `magnum-plugins` as well as its dependencies:
-@par
-    @code{.bat}
-    vcpkg install --head corrade magnum magnum-plugins
-    @endcode
-@par
-    Note that `vcpkg upgrade` doesn't work well with `--head` packages (it will
-    go back to latest tagged version instead of updated master), you have to
-    remove `magnum-plugins` as well as their dependencies and install `--head`
-    again:
-@par
-    @code{.bat}
-    vcpkg remove magnum-plugins --recurse
-    vcpkg install --head corrade magnum magnum-plugins
-    @endcode
-
-Note that just a subset of plugins is installed by default. To opt-in or
-opt-out of additional features, you can use the following syntax; feature names
-are simply names of CMake `MAGNUM_WITH_*` options from the
-@ref building-plugins-features section but lowercase, e.g.:
-
-@code{.bat}
-vcpkg install magnum-plugins[assimpimporter,ddsimporter]
-@endcode
-
-To install all features of a package, use `*`, e.g.:
-
-@code{.bat}
-vcpkg install magnum-plugins[*]
-@endcode
-
-There are also Vcpkg packages for
-@ref building-extras-packages-vcpkg "Magnum Extras" and
-@ref building-integration-packages-vcpkg "Magnum Integration".
+-   @ref building-plugins-packages-vcpkg
 
 @subsection building-plugins-packages-arch ArchLinux packages
 
@@ -394,6 +343,57 @@ There are also Homebrew packages for
 @ref building-extras-packages-brew "Magnum Extras",
 @ref building-integration-packages-brew "Magnum Integration" and
 @ref building-examples-packages-brew "Magnum Examples".
+
+@subsection building-plugins-packages-vcpkg Vcpkg package
+
+Magnum Plugins are available as a [Vcpkg](https://github.com/Microsoft/vcpkg)
+package. See @ref building-packages-vcpkg "the Magnum Vcpkg documentation" for
+a more detailed introduction and a troubleshooting guide. Installing latest
+stable version of Magnum Plugins with all its dependencies is done like this:
+
+@code{.bat}
+vcpkg install magnum-plugins
+@endcode
+
+@m_class{m-block m-success}
+
+@par Installing latest master
+    The `master` is considered stable for production use and often you may want
+    to prefer it over a potentially outdated tagged release. To do so, use
+    the `--head` option on `magnum-plugins` as well as its dependencies:
+@par
+    @code{.bat}
+    vcpkg install --head corrade magnum magnum-plugins
+    @endcode
+@par
+    Note that `vcpkg upgrade` doesn't work well with `--head` packages (it will
+    go back to latest tagged version instead of updated master), you have to
+    remove `magnum-plugins` as well as their dependencies and install `--head`
+    again:
+@par
+    @code{.bat}
+    vcpkg remove magnum-plugins --recurse
+    vcpkg install --head corrade magnum magnum-plugins
+    @endcode
+
+Note that just a subset of plugins is installed by default. To opt-in or
+opt-out of additional features, you can use the following syntax; feature names
+are simply names of CMake `MAGNUM_WITH_*` options from the
+@ref building-plugins-features section but lowercase, e.g.:
+
+@code{.bat}
+vcpkg install magnum-plugins[assimpimporter,ddsimporter]
+@endcode
+
+To install all features of a package, use `*`, e.g.:
+
+@code{.bat}
+vcpkg install magnum-plugins[*]
+@endcode
+
+There are also Vcpkg packages for
+@ref building-extras-packages-vcpkg "Magnum Extras" and
+@ref building-integration-packages-vcpkg "Magnum Integration".
 
 @section building-plugins-manual Manual build
 
