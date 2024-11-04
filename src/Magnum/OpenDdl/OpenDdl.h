@@ -32,6 +32,7 @@
 
 #include <Magnum/Types.h>
 
+#ifndef DOXYGEN_GENERATING_OUTPUT
 namespace Magnum { namespace OpenDdl {
 
 struct CharacterLiteral;
@@ -43,5 +44,6 @@ enum class Type: UnsignedInt;
 /* Stuff from Validation namespace is used directly */
 
 }}
+#endif
 
 #endif
