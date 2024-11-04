@@ -310,10 +310,10 @@ brew upgrade --fetch-HEAD mosra/magnum/magnum-plugins
 @endcode
 
 When installing from the `*.rb` files you need to install the
-@ref building-corrade-packages-brew "Corrade"
-and @ref building-packages-brew "Magnum" Homebrew packages first. As the
-plugins depend on a variety of 3rd party libraries, it's possible to control a
-subset that gets built and installed:
+@ref building-corrade-packages-brew "Corrade" and
+@ref building-packages-brew "Magnum" Homebrew packages first. As the plugins
+depend on a variety of 3rd party libraries, it's possible to control a subset
+that gets built and installed:
 
 -   `--with-devil`, `--with-faad2` and `--with-harfbuzz` enable building of
     @relativeref{Trade,DevIlImageImporter},
