@@ -405,12 +405,14 @@ void UfbxImporter::openInternal(void* opaqueScene, const void* opaqueOpts, bool 
     const ufbx_load_opts& opts = *static_cast<const ufbx_load_opts*>(opaqueOpts);
 
     if(!(flags() & ImporterFlag::Quiet)) {
-        const Containers::StringView warningPrefix = fromFile ? "Trade::UfbxImporter::openFile(): "_s : "Trade::UfbxImporter::openData(): "_s;
         for(const ufbx_warning& warning: scene->metadata.warnings) {
+            Warning w;
+            w << (fromFile ? "Trade::UfbxImporter::openFile():" : "Trade::UfbxImporter::openData():");
             if(warning.count > 1)
-                Warning{Utility::Debug::Flag::NoSpace} << warningPrefix << Containers::StringView(warning.description) << " (x" << warning.count << ")";
+                w << "warning (" << Debug::nospace << warning.count << "occurences):";
             else
-                Warning{Utility::Debug::Flag::NoSpace} << warningPrefix << Containers::StringView(warning.description);
+                w << "warning:";
+            w << Containers::StringView{warning.description};
         }
     }
 

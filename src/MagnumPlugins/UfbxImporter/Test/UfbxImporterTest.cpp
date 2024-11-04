@@ -2461,7 +2461,7 @@ void UfbxImporterTest::objMissingMtl() {
     if(data.quiet)
         CORRADE_COMPARE(out.str(), "");
     else {
-        CORRADE_COMPARE_AS(out.str(), "Trade::UfbxImporter::openFile(): Could not open .mtl file:", TestSuite::Compare::StringHasPrefix);
+        CORRADE_COMPARE_AS(out.str(), "Trade::UfbxImporter::openFile(): warning: Could not open .mtl file:", TestSuite::Compare::StringHasPrefix);
         CORRADE_COMPARE_AS(out.str(), "missing-mtl.mtl", TestSuite::Compare::StringContains);
     }
 
@@ -2499,7 +2499,7 @@ void UfbxImporterTest::objMissingMtlFileCallback() {
     if(data.quiet)
         CORRADE_COMPARE(out.str(), "");
     else
-        CORRADE_COMPARE(out.str(), "Trade::UfbxImporter::openFile(): Could not open .mtl file: missing-mtl.mtl\n");
+        CORRADE_COMPARE(out.str(), "Trade::UfbxImporter::openFile(): warning: Could not open .mtl file: missing-mtl.mtl\n");
 
     CORRADE_COMPARE(files.size(), 2);
     CORRADE_VERIFY(files.find("missing-mtl.obj") != files.end());
@@ -2678,8 +2678,8 @@ void UfbxImporterTest::multiWarning() {
         CORRADE_COMPARE(out.str(), "");
     else
         CORRADE_COMPARE(out.str(),
-            "Trade::UfbxImporter::openFile(): Clamped index (x4)\n"
-            "Trade::UfbxImporter::openFile(): Bad UTF-8 string\n");
+            "Trade::UfbxImporter::openFile(): warning (4 occurences): Clamped index\n"
+            "Trade::UfbxImporter::openFile(): warning: Bad UTF-8 string\n");
 }
 
 void UfbxImporterTest::multiWarningData() {
@@ -2701,8 +2701,8 @@ void UfbxImporterTest::multiWarningData() {
         CORRADE_COMPARE(out.str(), "");
     else
         CORRADE_COMPARE(out.str(),
-            "Trade::UfbxImporter::openData(): Clamped index (x4)\n"
-            "Trade::UfbxImporter::openData(): Bad UTF-8 string\n");
+            "Trade::UfbxImporter::openData(): warning (4 occurences): Clamped index\n"
+            "Trade::UfbxImporter::openData(): warning: Bad UTF-8 string\n");
 }
 
 template<class V, class R = Animation::ResultOf<V>> inline const Animation::TrackView<const Float, const V, R> trackByTarget(const AnimationData &animation, UnsignedInt target, AnimationTrackTarget targetType) {
