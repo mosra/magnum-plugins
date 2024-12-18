@@ -263,8 +263,6 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
     else()
         # Library components
         if(_component IN_LIST _MAGNUMPLUGINS_LIBRARY_COMPONENTS)
-            add_library(MagnumPlugins::${_component} UNKNOWN IMPORTED)
-
             # Include path names to find, unless specified above already
             if(NOT _MAGNUMPLUGINS_${_COMPONENT}_INCLUDE_PATH_SUFFIX)
                 set(_MAGNUMPLUGINS_${_COMPONENT}_INCLUDE_PATH_SUFFIX Magnum/${_component})
@@ -282,8 +280,6 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
 
         # Plugin components
         if(_component IN_LIST _MAGNUMPLUGINS_PLUGIN_COMPONENTS)
-            add_library(MagnumPlugins::${_component} UNKNOWN IMPORTED)
-
             # AudioImporter plugin specific name suffixes
             if(_component MATCHES ".+AudioImporter$")
                 set(_MAGNUMPLUGINS_${_COMPONENT}_PATH_SUFFIX audioimporters)
@@ -370,8 +366,10 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
             continue()
         endif()
 
-        # Library location for plugins/libraries
+        # Target and location for plugins/libraries
         if(_component IN_LIST _MAGNUMPLUGINS_PLUGIN_COMPONENTS OR _component IN_LIST _MAGNUMPLUGINS_LIBRARY_COMPONENTS)
+            add_library(MagnumPlugins::${_component} UNKNOWN IMPORTED)
+
             if(MAGNUMPLUGINS_${_COMPONENT}_LIBRARY_RELEASE)
                 set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
                     IMPORTED_CONFIGURATIONS RELEASE)
