@@ -294,15 +294,19 @@ void OpenExrImporter::doOpenData(Containers::Array<char>&& data, const DataFlags
 
 namespace {
 
-/* level = -1 means file is InputFile, non-negative value is TiledInputFile */
-Containers::Optional<ImageData2D> imageInternal(const Utility::ConfigurationGroup& configuration, Imf::GenericInputFile& file, const Int level, const char* const messagePrefix, const ImporterFlags flags) try {
+/* level = -1 means file is InputFile, non-negative value is TiledInputFile.
+   In OpenEXR 3.2 and before there was a Imf::GenericInputFile base class, now
+   there's not anymore so the file is a void*. The base class only acted as a
+   type safety crutch and it was empty anyway, so the new code isn't any
+   worse. */
+Containers::Optional<ImageData2D> imageInternal(const Utility::ConfigurationGroup& configuration, void* file, const Int level, const char* const messagePrefix, const ImporterFlags flags) try {
     const Imf::Header* header;
     Imath::Box2i dataWindow;
     if(level == -1) {
-        header = &static_cast<Imf::InputFile&>(file).header();
+        header = &static_cast<Imf::InputFile*>(file)->header();
         dataWindow = header->dataWindow();
     } else {
-        auto& actual = static_cast<Imf::TiledInputFile&>(file);
+        auto& actual = *static_cast<Imf::TiledInputFile*>(file);
         header = &actual.header();
         dataWindow = actual.dataWindowForLevel(level);
     }
@@ -517,11 +521,11 @@ Containers::Optional<ImageData2D> imageInternal(const Utility::ConfigurationGrou
     CORRADE_INTERNAL_ASSERT(framebuffer.begin() != framebuffer.end());
 
     if(level == -1) {
-        auto& actual = static_cast<Imf::InputFile&>(file);
+        auto& actual = *static_cast<Imf::InputFile*>(file);
         actual.setFrameBuffer(framebuffer);
         actual.readPixels(dataWindow.min.y, dataWindow.max.y);
     } else {
-        auto& actual = static_cast<Imf::TiledInputFile&>(file);
+        auto& actual = *static_cast<Imf::TiledInputFile*>(file);
         actual.setFrameBuffer(framebuffer);
         actual.readTiles(0, actual.numXTiles(level) - 1, 0, actual.numYTiles(level) - 1, level);
     }
@@ -551,9 +555,9 @@ UnsignedInt OpenExrImporter::doImage2DLevelCount(UnsignedInt) {
 Containers::Optional<ImageData2D> OpenExrImporter::doImage2D(UnsignedInt, const UnsignedInt level) {
     Containers::Optional<ImageData2D> image;
     if(_state->file) {
-        image = imageInternal(configuration(), *_state->file, -1, "Trade::OpenExrImporter::image2D():", flags());
+        image = imageInternal(configuration(), &*_state->file, -1, "Trade::OpenExrImporter::image2D():", flags());
     } else {
-        image = imageInternal(configuration(), *_state->tiledFile, level, "Trade::OpenExrImporter::image2D():", flags());
+        image = imageInternal(configuration(), &*_state->tiledFile, level, "Trade::OpenExrImporter::image2D():", flags());
     }
 
     /* Let's stop here for a bit and contemplate on all the missed
@@ -610,9 +614,9 @@ UnsignedInt OpenExrImporter::doImage3DLevelCount(UnsignedInt) {
 Containers::Optional<ImageData3D> OpenExrImporter::doImage3D(UnsignedInt, const UnsignedInt level) {
     Containers::Optional<ImageData2D> image2D;
     if(_state->file) {
-        image2D = imageInternal(configuration(), *_state->file, -1, "Trade::OpenExrImporter::image3D():", flags());
+        image2D = imageInternal(configuration(), &*_state->file, -1, "Trade::OpenExrImporter::image3D():", flags());
     } else {
-        image2D = imageInternal(configuration(), *_state->tiledFile, level, "Trade::OpenExrImporter::image3D():", flags());
+        image2D = imageInternal(configuration(), &*_state->tiledFile, level, "Trade::OpenExrImporter::image3D():", flags());
     }
     if(!image2D) return {};
 
