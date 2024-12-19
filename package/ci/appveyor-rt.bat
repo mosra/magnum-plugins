@@ -8,7 +8,7 @@ rem hell breaks loose. Thus also not passing CORRADE_RC_EXECUTABLE anywhere
 rem below to ensure this doesn't regress.
 set PATH=%APPVEYOR_BUILD_FOLDER%\deps-native\bin;%PATH%
 
-git clone --depth 1 https://github.com/mosra/corrade.git || exit /b
+git clone --depth 1 --branch next https://github.com/mosra/corrade.git || exit /b
 cd corrade || exit /b
 
 rem Build native corrade-rc
@@ -38,7 +38,7 @@ cmake --build . --config Release --target install -- /m /v:m || exit /b
 cd .. && cd ..
 
 rem Crosscompile Magnum
-git clone --depth 1 https://github.com/mosra/magnum.git || exit /b
+git clone --depth 1 --branch next https://github.com/mosra/magnum.git || exit /b
 cd magnum || exit /b
 mkdir build-rt && cd build-rt || exit /b
 cmake .. ^
