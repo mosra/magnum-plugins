@@ -1874,7 +1874,10 @@ Containers::Optional<AnimationData> UfbxImporter::doAnimation(UnsignedInt id) {
                     values[i] = Vector3(t.scale);
                 }
             } break;
-            #ifdef CORRADE_TARGET_MSVC
+            #ifdef CORRADE_TARGET_GCC
+            #pragma GCC diagnostic push
+            #pragma GCC diagnostic ignored "-Wswitch"
+            #elif defined(CORRADE_TARGET_MSVC)
             #pragma warning(push)
             /* case '32768' is not a valid value for switch of enum
             'Magnum::Trade::AnimationTrackTarget' */
@@ -1887,7 +1890,9 @@ Containers::Optional<AnimationData> UfbxImporter::doAnimation(UnsignedInt id) {
                     values[i] = p.value_int != 0;
                 }
             } break;
-            #ifdef CORRADE_TARGET_MSVC
+            #ifdef CORRADE_TARGET_GCC
+            #pragma GCC diagnostic pop
+            #elif defined(CORRADE_TARGET_MSVC)
             #pragma warning(pop)
             #endif
             default: CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
