@@ -164,8 +164,10 @@ rem Test install, after running the tests as for them it shouldn't be needed
 cmake --build . --target install || exit /b
 
 rem Coverage upload
-set PATH=C:\msys64\usr\bin;%PATH%
-bash %APPVEYOR_BUILD_FOLDER%\package\ci\appveyor-lcov.sh || exit /b
+rem  set PATH=C:\msys64\usr\bin;%PATH%
+rem  bash %APPVEYOR_BUILD_FOLDER%\package\ci\appveyor-lcov.sh || exit /b
+set GCOV=C:/mingw-w64/x86_64-7.2.0-posix-seh-rt_v5-rev1/mingw64/bin/gcov.exe
+%APPVEYOR_BUILD_FOLDER%\grcov . -t lcov --keep-only "*/src/Magnum*/*" --ignore "*/src/MagnumExternal/*" --ignore "*/Test/*" --ignore "*/build/src/*" -o coverage.info --excl-line LCOV_EXCL_LINE --excl-start LCOV_EXCL_START --excl-stop LCOV_EXCL_STOP  || exit /b
 rem The damn new codecov binary is apparently unable to work with
 rem subdirectories on Windows. Nobody cares.
 rem https://github.com/codecov/codecov-action/issues/862
