@@ -94,7 +94,7 @@ check() {
 
     rm -rf coverage
     mkdir coverage
-    # Keep in sync with circleci.yml and appveyor-lcov.sh, please
+    # Keep in sync with circleci.yml and appveyor-desktop{,-mingw}.bat, please
     # TODO figure out a way to avoid adding --ignore-errors mismatch
     lcov --ignore-errors mismatch,inconsistent --directory . --capture --output-file coverage.info
     lcov --extract coverage.info "*/src/*" --output-file coverage.info
