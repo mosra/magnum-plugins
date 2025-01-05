@@ -38,6 +38,7 @@
 #include <Corrade/Containers/StridedBitArrayView.h>
 #include <Corrade/Containers/String.h>
 #include <Corrade/Containers/StringStl.h>
+#include <Corrade/Containers/StringStlHash.h>
 #include <Corrade/Containers/StringView.h>
 #include <Corrade/Containers/Triple.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
@@ -1320,7 +1321,9 @@ void UfbxImporterTest::materialMapping() {
         Containers::arrayView(materialMappingPbrFactor),
     };
 
-    Containers::StaticArray<UfbxMaterialLayerCount, std::unordered_map<std::string, MaterialExclusionGroup>> usedAttributeNames;
+    /* Texture attributes may be runtime-generated strings, so store an owning
+       string */
+    Containers::StaticArray<UfbxMaterialLayerCount, std::unordered_map<Containers::String, MaterialExclusionGroup>> usedAttributeNames;
 
     Containers::BitArray usedUfbxMaps[]{
         Containers::BitArray{ValueInit, UFBX_MATERIAL_FBX_MAP_COUNT},
@@ -1346,13 +1349,10 @@ void UfbxImporterTest::materialMapping() {
                 usedFactorMaps[type].set(std::size_t(mapping.factorMap));
             }
 
-            /* Copy to std::string so we don't do unnecessary conversions on
-               lookups, also this is far from performance critical */
-            std::string attribute = mapping.attribute;
-            std::string textureAttribute = mapping.textureAttribute;
+            Containers::String textureAttribute = mapping.textureAttribute;
 
-            if(!attribute.empty()) {
-                CORRADE_ITERATION(attribute);
+            if(mapping.attribute) {
+                CORRADE_ITERATION(mapping.attribute);
 
                 CORRADE_COMPARE_AS(mapping.attributeType, MaterialAttributeType{}, TestSuite::Compare::NotEqual);
 
@@ -1368,21 +1368,21 @@ void UfbxImporterTest::materialMapping() {
                         break;
                 }
 
-                auto found = usedAttributeNames[layer].find(attribute);
+                auto found = usedAttributeNames[layer].find(mapping.attribute);
                 if(found != usedAttributeNames[layer].end()) {
                     /* If we have a duplicate material attribute name it must
                        be defined under the same exclusion group */
                     CORRADE_VERIFY(mapping.exclusionGroup != MaterialExclusionGroup{});
                     CORRADE_COMPARE(UnsignedInt(mapping.exclusionGroup), UnsignedInt(found->second));
                 } else {
-                    usedAttributeNames[layer].emplace(attribute, mapping.exclusionGroup);
+                    usedAttributeNames[layer].emplace(mapping.attribute, mapping.exclusionGroup);
                 }
 
-                if(textureAttribute.empty())
-                    textureAttribute = attribute + "Texture";
+                if(!textureAttribute)
+                    textureAttribute = mapping.attribute + "Texture";
             }
 
-            if(!textureAttribute.empty() && textureAttribute != MaterialMapping::DisallowTexture) {
+            if(textureAttribute && textureAttribute != MaterialMapping::DisallowTexture) {
                 CORRADE_ITERATION(textureAttribute);
 
                 auto found = usedAttributeNames[layer].find(textureAttribute);
