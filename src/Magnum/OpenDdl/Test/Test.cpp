@@ -24,10 +24,10 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-#include <sstream>
+#include <Corrade/Containers/String.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
-#include <Corrade/Utility/DebugStl.h>
+#include <Corrade/Utility/DebugStl.h> /* for std::string */
 
 #include "Magnum/OpenDdl/Document.h"
 #include "Magnum/OpenDdl/Property.h"
@@ -215,39 +215,39 @@ void Test::primitiveName() {
 }
 
 void Test::primitiveExpectedListStart() {
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
 
     Document d;
     CORRADE_VERIFY(!d.parse(CharacterLiteral{"float 35"}, {}, {}));
-    CORRADE_COMPARE(out.str(), "OpenDdl::Document::parse(): expected { character on line 1\n");
+    CORRADE_COMPARE(out, "OpenDdl::Document::parse(): expected { character on line 1\n");
 }
 
 void Test::primitiveExpectedListEnd() {
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
 
     Document d;
     CORRADE_VERIFY(!d.parse(CharacterLiteral{"float { 35"}, {}, {}));
-    CORRADE_COMPARE(out.str(), "OpenDdl::Document::parse(): expected } character on line 1\n");
+    CORRADE_COMPARE(out, "OpenDdl::Document::parse(): expected } character on line 1\n");
 }
 
 void Test::primitiveExpectedSeparator() {
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
 
     Document d;
     CORRADE_VERIFY(!d.parse(CharacterLiteral{"float { 35 45"}, {}, {}));
-    CORRADE_COMPARE(out.str(), "OpenDdl::Document::parse(): expected , character on line 1\n");
+    CORRADE_COMPARE(out, "OpenDdl::Document::parse(): expected , character on line 1\n");
 }
 
 void Test::primitiveExpectedNext() {
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
 
     Document d;
     CORRADE_VERIFY(!d.parse(CharacterLiteral{"float { 35,"}, {}, {}));
-    CORRADE_COMPARE(out.str(), "OpenDdl::Document::parse(): expected float literal on line 1\n");
+    CORRADE_COMPARE(out, "OpenDdl::Document::parse(): expected float literal on line 1\n");
 }
 
 void Test::primitiveSubArray() {
@@ -287,61 +287,61 @@ void Test::primitiveSubArrayName() {
 }
 
 void Test::primitiveSubArrayInvalidSize() {
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
 
     Document d;
     CORRADE_VERIFY(!d.parse(CharacterLiteral{"unsigned_int8[0] {}"}, {}, {}));
-    CORRADE_COMPARE(out.str(), "OpenDdl::Document::parse(): invalid subarray size on line 1\n");
+    CORRADE_COMPARE(out, "OpenDdl::Document::parse(): invalid subarray size on line 1\n");
 }
 
 void Test::primitiveSubArrayExpectedArraySizeEnd() {
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
 
     Document d;
     CORRADE_VERIFY(!d.parse(CharacterLiteral{"unsigned_int8[2 {"}, {}, {}));
-    CORRADE_COMPARE(out.str(), "OpenDdl::Document::parse(): expected ] character on line 1\n");
+    CORRADE_COMPARE(out, "OpenDdl::Document::parse(): expected ] character on line 1\n");
 }
 
 void Test::primitiveSubArrayExpectedSubSeparator() {
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
 
     Document d;
     CORRADE_VERIFY(!d.parse(CharacterLiteral{"unsigned_int8[2] { {0xca, 0xfe} {0xba"}, {}, {}));
-    CORRADE_COMPARE(out.str(), "OpenDdl::Document::parse(): expected , character on line 1\n");
+    CORRADE_COMPARE(out, "OpenDdl::Document::parse(): expected , character on line 1\n");
 }
 
 void Test::primitiveSubArrayExpectedSubNext() {
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
 
     Document d;
     CORRADE_VERIFY(!d.parse(CharacterLiteral{"unsigned_int8[3] { {0xca, 0xfe,"}, {}, {}));
-    CORRADE_COMPARE(out.str(), "OpenDdl::Document::parse(): expected unsigned_int8 literal on line 1\n");
+    CORRADE_COMPARE(out, "OpenDdl::Document::parse(): expected unsigned_int8 literal on line 1\n");
 }
 
 void Test::primitiveSubArrayExpectedNext() {
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
 
     Document d;
     CORRADE_VERIFY(!d.parse(CharacterLiteral{"unsigned_int8[2] { {0xca, 0xfe},"}, {}, {}));
-    CORRADE_COMPARE(out.str(), "OpenDdl::Document::parse(): expected { character on line 1\n");
+    CORRADE_COMPARE(out, "OpenDdl::Document::parse(): expected { character on line 1\n");
 }
 
 void Test::primitiveSubArrayExpectedSubListEnd() {
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
 
     Document d;
     CORRADE_VERIFY(!d.parse(CharacterLiteral{"int32[2] { {0xca, 0xfe, 0xba"}, {}, {}));
-    CORRADE_COMPARE(out.str(), "OpenDdl::Document::parse(): expected } character on line 1\n");
+    CORRADE_COMPARE(out, "OpenDdl::Document::parse(): expected } character on line 1\n");
 }
 
 void Test::primitiveSubArrayExpectedSeparator() {
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
 
     Document d;
@@ -350,7 +350,7 @@ void Test::primitiveSubArrayExpectedSeparator() {
     #else
     CORRADE_VERIFY(!d.parse(CharacterLiteral{"float[2] { {35 45"}, {}, {}));
     #endif
-    CORRADE_COMPARE(out.str(), "OpenDdl::Document::parse(): expected , character on line 1\n");
+    CORRADE_COMPARE(out, "OpenDdl::Document::parse(): expected , character on line 1\n");
 }
 
 enum: Int {
@@ -426,30 +426,30 @@ void Test::customName() {
 }
 
 void Test::customInvalidIdentifier() {
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
 
     Document d;
     CORRADE_VERIFY(!d.parse(CharacterLiteral{"%name { string"}, {}, {}));
-    CORRADE_COMPARE(out.str(), "OpenDdl::Document::parse(): invalid identifier on line 1\n");
+    CORRADE_COMPARE(out, "OpenDdl::Document::parse(): invalid identifier on line 1\n");
 }
 
 void Test::customExpectedListStart() {
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
 
     Document d;
     CORRADE_VERIFY(!d.parse(CharacterLiteral{"Root string"}, {}, {}));
-    CORRADE_COMPARE(out.str(), "OpenDdl::Document::parse(): expected { character on line 1\n");
+    CORRADE_COMPARE(out, "OpenDdl::Document::parse(): expected { character on line 1\n");
 }
 
 void Test::customExpectedListEnd() {
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
 
     Document d;
     CORRADE_VERIFY(!d.parse(CharacterLiteral{"Root { "}, {}, {}));
-    CORRADE_COMPARE(out.str(), "OpenDdl::Document::parse(): expected } character on line 1\n");
+    CORRADE_COMPARE(out, "OpenDdl::Document::parse(): expected } character on line 1\n");
 }
 
 void Test::customProperty() {
@@ -503,48 +503,48 @@ void Test::customPropertyUnknown() {
 }
 
 void Test::customPropertyExpectedSeparator() {
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
 
     Document d;
     CORRADE_VERIFY(!d.parse(CharacterLiteral{"Root (some = 15.3 boolean"}, structureIdentifiers, propertyIdentifiers));
-    CORRADE_COMPARE(out.str(), "OpenDdl::Document::parse(): expected , character on line 1\n");
+    CORRADE_COMPARE(out, "OpenDdl::Document::parse(): expected , character on line 1\n");
 }
 
 void Test::customPropertyExpectedValueAssignment() {
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
 
     Document d;
     CORRADE_VERIFY(!d.parse(CharacterLiteral{"Root (some 15.3"}, structureIdentifiers, propertyIdentifiers));
-    CORRADE_COMPARE(out.str(), "OpenDdl::Document::parse(): expected = character on line 1\n");
+    CORRADE_COMPARE(out, "OpenDdl::Document::parse(): expected = character on line 1\n");
 }
 
 void Test::customPropertyExpectedListEnd() {
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
 
     Document d;
     CORRADE_VERIFY(!d.parse(CharacterLiteral{"Root (some = 15.3 "}, structureIdentifiers, propertyIdentifiers));
-    CORRADE_COMPARE(out.str(), "OpenDdl::Document::parse(): expected ) character on line 1\n");
+    CORRADE_COMPARE(out, "OpenDdl::Document::parse(): expected ) character on line 1\n");
 }
 
 void Test::customPropertyInvalidIdentifier() {
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
 
     Document d;
     CORRADE_VERIFY(!d.parse(CharacterLiteral{"Root (%some = 15.3"}, structureIdentifiers, propertyIdentifiers));
-    CORRADE_COMPARE(out.str(), "OpenDdl::Document::parse(): invalid identifier on line 1\n");
+    CORRADE_COMPARE(out, "OpenDdl::Document::parse(): invalid identifier on line 1\n");
 }
 
 void Test::customPropertyInvalidValue() {
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
 
     Document d;
     CORRADE_VERIFY(!d.parse(CharacterLiteral{"Root (some = Fail"}, structureIdentifiers, propertyIdentifiers));
-    CORRADE_COMPARE(out.str(), "OpenDdl::Document::parse(): invalid property value on line 1\n");
+    CORRADE_COMPARE(out, "OpenDdl::Document::parse(): invalid property value on line 1\n");
 }
 
 void Test::hierarchy() {
@@ -828,10 +828,10 @@ string { "hello" }
     )oddl"};
     CORRADE_VERIFY(d.parse(s, structureIdentifiers, propertyIdentifiers));
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!d.validate({}, {}));
-    CORRADE_COMPARE(out.str(), "OpenDdl::Document::validate(): unexpected primitive structure in root\n");
+    CORRADE_COMPARE(out, "OpenDdl::Document::validate(): unexpected primitive structure in root\n");
 }
 
 void Test::validateTooManyPrimitives() {
@@ -848,7 +848,7 @@ Root {
     )oddl"};
     CORRADE_VERIFY(d.parse(s, structureIdentifiers, propertyIdentifiers));
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!d.validate(
         Structures{{RootStructure, {1, 1}}},
@@ -857,7 +857,7 @@ Root {
                 Primitives{Type::String}, 1, 1,
                 Structures{{HierarchicStructure, {1, 1}}}},
         }));
-    CORRADE_COMPARE(out.str(), "OpenDdl::Document::validate(): expected exactly 1 primitive sub-structures in structure Root\n");
+    CORRADE_COMPARE(out, "OpenDdl::Document::validate(): expected exactly 1 primitive sub-structures in structure Root\n");
 }
 
 void Test::validateTooLittlePrimitives() {
@@ -873,7 +873,7 @@ Root {
     )oddl"};
     CORRADE_VERIFY(d.parse(s, structureIdentifiers, propertyIdentifiers));
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!d.validate(
         Structures{{RootStructure, {1, 1}}},
@@ -882,7 +882,7 @@ Root {
                 Primitives{Type::String}, 2, 1,
                 Structures{{HierarchicStructure, {1, 1}}}},
         }));
-    CORRADE_COMPARE(out.str(), "OpenDdl::Document::validate(): expected exactly 2 primitive sub-structures in structure Root\n");
+    CORRADE_COMPARE(out, "OpenDdl::Document::validate(): expected exactly 2 primitive sub-structures in structure Root\n");
 }
 
 void Test::validateUnexpectedPrimitiveArraySize() {
@@ -897,14 +897,14 @@ Root {
     )oddl"};
     CORRADE_VERIFY(d.parse(s, structureIdentifiers, propertyIdentifiers));
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!d.validate(
         Structures{{RootStructure, {1, 1}}},
         {
             {RootStructure, Primitives{Type::String}, 1, 2},
         }));
-    CORRADE_COMPARE(out.str(), "OpenDdl::Document::validate(): expected exactly 2 values in Root sub-structure\n");
+    CORRADE_COMPARE(out, "OpenDdl::Document::validate(): expected exactly 2 values in Root sub-structure\n");
 }
 
 void Test::validateWrongPrimitiveType() {
@@ -917,14 +917,14 @@ Root { int32 {} }
     )oddl"};
     CORRADE_VERIFY(d.parse(s, structureIdentifiers, propertyIdentifiers));
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!d.validate(
         Structures{{RootStructure, {1, 1}}},
         {
             {RootStructure, Primitives{Type::String}, 1, 0},
         }));
-    CORRADE_COMPARE(out.str(), "OpenDdl::Document::validate(): unexpected sub-structure of type OpenDdl::Type::Int in structure Root\n");
+    CORRADE_COMPARE(out, "OpenDdl::Document::validate(): unexpected sub-structure of type OpenDdl::Type::Int in structure Root\n");
 }
 
 void Test::validateUnexpectedStructure() {
@@ -938,7 +938,7 @@ Hierarchic {  }
     )oddl"};
     CORRADE_VERIFY(d.parse(s, structureIdentifiers, propertyIdentifiers));
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!d.validate(
         Structures{{RootStructure, {1, 2}}},
@@ -946,7 +946,7 @@ Hierarchic {  }
             {RootStructure},
             {HierarchicStructure},
         }));
-    CORRADE_COMPARE(out.str(), "OpenDdl::Document::validate(): unexpected structure Hierarchic\n");
+    CORRADE_COMPARE(out, "OpenDdl::Document::validate(): unexpected structure Hierarchic\n");
 }
 
 void Test::validateTooManyStructures() {
@@ -961,14 +961,14 @@ Root { }
     )oddl"};
     CORRADE_VERIFY(d.parse(s, structureIdentifiers, propertyIdentifiers));
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!d.validate(
         Structures{{RootStructure, {1, 2}}},
         {
             {RootStructure, Structures{}},
         }));
-    CORRADE_COMPARE(out.str(), "OpenDdl::Document::validate(): too many Root structures, got 3 but expected max 2\n");
+    CORRADE_COMPARE(out, "OpenDdl::Document::validate(): too many Root structures, got 3 but expected max 2\n");
 }
 
 void Test::validateTooLittleStructures() {
@@ -981,14 +981,14 @@ Root { }
     )oddl"};
     CORRADE_VERIFY(d.parse(s, structureIdentifiers, propertyIdentifiers));
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!d.validate(
         Structures{{RootStructure, {2, 3}}},
         {
             {RootStructure, Structures{}},
         }));
-    CORRADE_COMPARE(out.str(), "OpenDdl::Document::validate(): too little Root structures, got 1 but expected min 2\n");
+    CORRADE_COMPARE(out, "OpenDdl::Document::validate(): too little Root structures, got 1 but expected min 2\n");
 }
 
 void Test::validateUnknownStructure() {
@@ -1023,7 +1023,7 @@ Root () {}
     )oddl"};
     CORRADE_VERIFY(d.parse(s, structureIdentifiers, propertyIdentifiers));
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!d.validate(
         Structures{{RootStructure, {1, 1}}},
@@ -1032,7 +1032,7 @@ Root () {}
                  Properties{{SomeProperty, PropertyType::Float, RequiredProperty},
                             {BooleanProperty, PropertyType::Bool, OptionalProperty}}}
         }));
-    CORRADE_COMPARE(out.str(), "OpenDdl::Document::validate(): expected property some in structure Root\n");
+    CORRADE_COMPARE(out, "OpenDdl::Document::validate(): expected property some in structure Root\n");
 }
 
 void Test::validateUnexpectedProperty() {
@@ -1046,14 +1046,14 @@ Root (some = 15.0, boolean = true) {}
     )oddl"};
     CORRADE_VERIFY(d.parse(s, structureIdentifiers, propertyIdentifiers));
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!d.validate(
         Structures{{RootStructure, {1, 1}}},
         {
             {RootStructure, Properties{{SomeProperty, PropertyType::Float, RequiredProperty}}}
         }));
-    CORRADE_COMPARE(out.str(), "OpenDdl::Document::validate(): unexpected property boolean in structure Root\n");
+    CORRADE_COMPARE(out, "OpenDdl::Document::validate(): unexpected property boolean in structure Root\n");
 }
 
 void Test::validateWrongPropertyType() {
@@ -1067,14 +1067,14 @@ Root (some = false) {}
     )oddl"};
     CORRADE_VERIFY(d.parse(s, structureIdentifiers, propertyIdentifiers));
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!d.validate(
         Structures{{RootStructure, {1, 1}}},
         {
             {RootStructure, Properties{{SomeProperty, PropertyType::Float, RequiredProperty}}}
         }));
-    CORRADE_COMPARE(out.str(), "OpenDdl::Document::validate(): unexpected type of property some , expected OpenDdl::PropertyType::Float\n");
+    CORRADE_COMPARE(out, "OpenDdl::Document::validate(): unexpected type of property some , expected OpenDdl::PropertyType::Float\n");
 }
 
 void Test::validateUnknownProperty() {
@@ -1242,7 +1242,7 @@ bool %local4 {}
 
 void Test::referenceInvalid() {
     Document d;
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
 
     /* Single name not found */
@@ -1267,7 +1267,7 @@ Root %root {
     )oddl"};
     CORRADE_VERIFY(!d.parse(s2, structureIdentifiers, propertyIdentifiers));
 
-    CORRADE_COMPARE(out.str(),
+    CORRADE_COMPARE(out,
         "OpenDdl::Document::parse(): reference %local1 was not found\n"
         "OpenDdl::Document::parse(): reference %local1%local2 was not found\n");
 }

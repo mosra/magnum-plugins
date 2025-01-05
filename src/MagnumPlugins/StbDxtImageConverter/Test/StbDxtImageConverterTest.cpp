@@ -24,12 +24,10 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-#include <sstream>
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/StringToFile.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
-#include <Corrade/Utility/DebugStl.h> /** @todo remove once Debug is stream-free */
 #include <Corrade/Utility/Path.h>
 #include <Magnum/ImageView.h>
 #include <Magnum/PixelFormat.h>
@@ -114,19 +112,19 @@ StbDxtImageConverterTest::StbDxtImageConverterTest() {
 void StbDxtImageConverterTest::unsupportedFormat() {
     ImageView2D image{PixelFormat::RG8Unorm, {}, nullptr};
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!_converterManager.instantiate("StbDxtImageConverter")->convert(image));
-    CORRADE_COMPARE(out.str(), "Trade::StbDxtImageConverter::convert(): unsupported format PixelFormat::RG8Unorm\n");
+    CORRADE_COMPARE(out, "Trade::StbDxtImageConverter::convert(): unsupported format PixelFormat::RG8Unorm\n");
 }
 
 void StbDxtImageConverterTest::unsupportedSize() {
     ImageView2D image{PixelFormat::RGBA8Unorm, {15, 17}};
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!_converterManager.instantiate("StbDxtImageConverter")->convert(image));
-    CORRADE_COMPARE(out.str(), "Trade::StbDxtImageConverter::convert(): expected size to be divisible by 4, got Vector(15, 17)\n");
+    CORRADE_COMPARE(out, "Trade::StbDxtImageConverter::convert(): expected size to be divisible by 4, got Vector(15, 17)\n");
 }
 
 void StbDxtImageConverterTest::emptyImage() {
@@ -143,10 +141,10 @@ void StbDxtImageConverterTest::emptyImage() {
 void StbDxtImageConverterTest::array1D() {
     ImageView2D image{PixelFormat::RGBA8Unorm, {4, 4}, ImageFlag2D::Array};
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!_converterManager.instantiate("StbDxtImageConverter")->convert(image));
-    CORRADE_COMPARE(out.str(), "Trade::StbDxtImageConverter::convert(): 1D array images are not supported\n");
+    CORRADE_COMPARE(out, "Trade::StbDxtImageConverter::convert(): 1D array images are not supported\n");
 }
 
 void StbDxtImageConverterTest::rgba() {

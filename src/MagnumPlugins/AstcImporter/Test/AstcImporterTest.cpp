@@ -24,15 +24,14 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-#include <sstream>
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/String.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
-#include <Corrade/Utility/DebugStl.h> /** @todo remove once Debug is stream-free */
-#include <Corrade/Utility/FormatStl.h> /** @todo remove once Debug is stream-free */
+#include <Corrade/Utility/DebugStl.h> /** @todo remove once Configuration is std::string-free */
+#include <Corrade/Utility/Format.h>
 #include <Corrade/Utility/Path.h>
 #include <Magnum/PixelFormat.h>
 #include <Magnum/Trade/AbstractImporter.h>
@@ -331,20 +330,20 @@ void AstcImporterTest::invalid() {
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AstcImporter");
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->openData(data.data));
-    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::AstcImporter::openData(): {}\n", data.message));
+    CORRADE_COMPARE(out, Utility::format("Trade::AstcImporter::openData(): {}\n", data.message));
 }
 
 void AstcImporterTest::invalidFormatConfiguration() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AstcImporter");
     importer->configuration().setValue("format", "sRGB");
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->openFile(Utility::Path::join(ASTCIMPORTER_TEST_DIR, "8x8.astc")));
-    CORRADE_COMPARE(out.str(),
+    CORRADE_COMPARE(out,
         "Trade::AstcImporter::openData(): invalid format sRGB, expected linear, srgb or float\n");
 }
 
@@ -363,12 +362,12 @@ void AstcImporterTest::twoDimensions() {
     else
         CORRADE_COMPARE(importer->configuration().value("assumeYUpZBackward"), "false");
 
-    std::ostringstream out;
+    Containers::String out;
     {
         Warning redirectWarning{&out};
         CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASTCIMPORTER_TEST_DIR, "8x8.astc")));
     }
-    CORRADE_COMPARE(out.str(), data.message);
+    CORRADE_COMPARE(out, data.message);
     CORRADE_COMPARE(importer->image2DCount(), 1);
 
     Containers::Optional<ImageData2D> image = importer->image2D(0);
@@ -449,12 +448,12 @@ void AstcImporterTest::threeDimensions() {
     else
         CORRADE_COMPARE(importer->configuration().value("assumeYUpZBackward"), "false");
 
-    std::ostringstream out;
+    Containers::String out;
     {
         Warning redirectWarning{&out};
         CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASTCIMPORTER_TEST_DIR, "3x3x3.astc")));
     }
-    CORRADE_COMPARE(out.str(), data.message);
+    CORRADE_COMPARE(out, data.message);
     CORRADE_COMPARE(importer->image3DCount(), 1);
 
     Containers::Optional<ImageData3D> image = importer->image3D(0);
@@ -486,15 +485,15 @@ void AstcImporterTest::fileTooLong2D() {
     /* Add some extra stuff at the end of the file */
     Containers::Optional<Containers::String> fileData = Utility::Path::readString(Utility::Path::join(ASTCIMPORTER_TEST_DIR, "8x8.astc"));
     CORRADE_VERIFY(fileData);
-    std::ostringstream out;
+    Containers::String out;
     {
         Warning redirectWarning{&out};
         CORRADE_VERIFY(importer->openData(*fileData + "HAHA"));
     }
     if(data.quiet)
-        CORRADE_COMPARE(out.str(), "");
+        CORRADE_COMPARE(out, "");
     else
-        CORRADE_COMPARE(out.str(), "Trade::AstcImporter::openData(): ignoring 4 extra bytes at the end of file\n");
+        CORRADE_COMPARE(out, "Trade::AstcImporter::openData(): ignoring 4 extra bytes at the end of file\n");
     CORRADE_COMPARE(importer->image2DCount(), 1);
 
     Containers::Optional<ImageData2D> image = importer->image2D(0);
@@ -520,15 +519,15 @@ void AstcImporterTest::fileTooLong3D() {
     /* Add some extra stuff at the end of the file */
     Containers::Optional<Containers::String> fileData = Utility::Path::readString(Utility::Path::join(ASTCIMPORTER_TEST_DIR, "3x3x3.astc"));
     CORRADE_VERIFY(fileData);
-    std::ostringstream out;
+    Containers::String out;
     {
         Warning redirectWarning{&out};
         CORRADE_VERIFY(importer->openData(*fileData + "HAHA"));
     }
     if(data.quiet)
-        CORRADE_COMPARE(out.str(), "");
+        CORRADE_COMPARE(out, "");
     else
-        CORRADE_COMPARE(out.str(), "Trade::AstcImporter::openData(): ignoring 4 extra bytes at the end of file\n");
+        CORRADE_COMPARE(out, "Trade::AstcImporter::openData(): ignoring 4 extra bytes at the end of file\n");
     CORRADE_COMPARE(importer->image3DCount(), 1);
 
     Containers::Optional<ImageData3D> image = importer->image3D(0);

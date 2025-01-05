@@ -24,15 +24,13 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-#include <sstream>
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/String.h>
 #include <Corrade/Containers/StridedArrayView.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
 #include <Corrade/TestSuite/Compare/StringToFile.h>
-#include <Corrade/Utility/DebugStl.h> /** @todo remove once Debug is stream-free */
-#include <Corrade/Utility/FormatStl.h>
+#include <Corrade/Utility/Format.h>
 #include <Corrade/Utility/Path.h>
 #include <Magnum/ImageView.h>
 #include <Magnum/PixelFormat.h>
@@ -126,10 +124,10 @@ void PngImageConverterTest::wrongFormat() {
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("PngImageConverter");
 
     const char data[8]{};
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->convertToData(ImageView2D{PixelFormat::RG32F, {1, 1}, data}));
-    CORRADE_COMPARE(out.str(), "Trade::PngImageConverter::convertToData(): unsupported pixel format PixelFormat::RG32F\n");
+    CORRADE_COMPARE(out, "Trade::PngImageConverter::convertToData(): unsupported pixel format PixelFormat::RG32F\n");
 }
 
 void PngImageConverterTest::conversionError() {
@@ -146,14 +144,14 @@ void PngImageConverterTest::conversionError() {
        width/height is limited to 31 bits, so let's pretend we have a 2 GB
        image. Hope this won't trigger sanitizers. */
     const char imageData[1]{};
-    std::ostringstream out;
+    Containers::String out;
     Warning redirectWarning{&out};
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->convertToData(ImageView2D{PixelFormat::R8Unorm, {0x7fffffff, 1}, {imageData, 1u << 31}}));
     if(data.quiet)
-        CORRADE_COMPARE(out.str(),
+        CORRADE_COMPARE(out,
             "Trade::PngImageConverter::convertToData(): error: Invalid IHDR data\n");
-    else CORRADE_COMPARE(out.str(),
+    else CORRADE_COMPARE(out,
             "Trade::PngImageConverter::convertToData(): warning: Image width exceeds user limit in IHDR\n"
             "Trade::PngImageConverter::convertToData(): error: Invalid IHDR data\n");
 }
@@ -402,13 +400,13 @@ void PngImageConverterTest::unsupportedMetadata() {
     const char imageData[4]{};
     ImageView2D image{PixelFormat::RGBA8Unorm, {1, 1}, imageData, data.imageFlags};
 
-    std::ostringstream out;
+    Containers::String out;
     Warning redirectWarning{&out};
     CORRADE_VERIFY(converter->convertToData(image));
     if(!data.message)
-        CORRADE_COMPARE(out.str(), "");
+        CORRADE_COMPARE(out, "");
     else
-        CORRADE_COMPARE(out.str(), Utility::formatString("Trade::PngImageConverter::convertToData(): {}\n", data.message));
+        CORRADE_COMPARE(out, Utility::format("Trade::PngImageConverter::convertToData(): {}\n", data.message));
 }
 
 }}}}

@@ -24,7 +24,6 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-#include <sstream>
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/ArrayView.h>
 #include <Corrade/TestSuite/Tester.h>
@@ -32,8 +31,7 @@
 #include <Corrade/TestSuite/Compare/String.h>
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
-#include <Corrade/Utility/DebugStl.h> /** @todo remove once Debug is stream-free */
-#include <Corrade/Utility/FormatStl.h> /** @todo remove once Debug is stream-free */
+#include <Corrade/Utility/Format.h>
 #include <Corrade/Utility/Path.h>
 #include <Magnum/Math/Vector3.h>
 #include <Magnum/Trade/AbstractImporter.h>
@@ -198,11 +196,11 @@ void StlImporterTest::invalid() {
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StlImporter");
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->openData(data.data));
-    CORRADE_COMPARE(out.str(),
-        Utility::formatString("Trade::StlImporter::openData(): {}\n", data.message));
+    CORRADE_COMPARE(out,
+        Utility::format("Trade::StlImporter::openData(): {}\n", data.message));
 }
 
 void StlImporterTest::almostAsciiButNotActually() {
@@ -322,18 +320,18 @@ void StlImporterTest::asciiDelegateAssimp() {
     /* Set flags to see if they get propagated */
     importer->setFlags(data.flags);
 
-    std::ostringstream out;
+    Containers::String out;
     {
         Debug redirectDebug{&out};
         CORRADE_VERIFY(importer->openFile(Utility::Path::join(STLIMPORTER_TEST_DIR, "ascii.stl")));
     }
     if(data.flags & ImporterFlag::Verbose)
-        CORRADE_COMPARE_AS(out.str(),
+        CORRADE_COMPARE_AS(out,
             "Trade::StlImporter::openData(): forwarding an ASCII file to AssimpImporter\n"
             "Trade::AssimpImporter: Info,  ",
             TestSuite::Compare::StringHasPrefix);
     else
-        CORRADE_COMPARE(out.str(), "");
+        CORRADE_COMPARE(out, "");
 
     /* All of these should forward to the correct instance and not crash */
     CORRADE_COMPARE(importer->meshCount(), 1);
@@ -383,15 +381,15 @@ void StlImporterTest::asciiDelegateAssimpNoPlugin() {
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StlImporter");
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->openFile(Utility::Path::join(STLIMPORTER_TEST_DIR, "ascii.stl")));
     #ifndef CORRADE_PLUGINMANAGER_NO_DYNAMIC_PLUGIN_SUPPORT
-    CORRADE_COMPARE(out.str(),
+    CORRADE_COMPARE(out,
         "PluginManager::Manager::load(): plugin AssimpImporter is not static and was not found in nonexistent\n"
         "Trade::StlImporter::openData(): can't forward an ASCII file to AssimpImporter\n");
     #else
-    CORRADE_COMPARE(out.str(),
+    CORRADE_COMPARE(out,
         "PluginManager::Manager::load(): plugin AssimpImporter was not found\n"
         "Trade::StlImporter::openData(): can't forward an ASCII file to AssimpImporter\n");
     #endif
@@ -416,7 +414,7 @@ void StlImporterTest::asciiDelegateAssimpFailed() {
 
     Containers::Pointer<AbstractImporter> importer = _managerWithAssimpImporter.instantiate("StlImporter");
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->openData(
         /* A zoo of Assimp bugs:
@@ -432,7 +430,7 @@ void StlImporterTest::asciiDelegateAssimpFailed() {
            staying with the former but skipping this test when sanitizers are
            enabled. */
         "solid broken\nfacet normal"_s));
-    CORRADE_COMPARE_AS(out.str(),
+    CORRADE_COMPARE_AS(out,
         "Trade::AssimpImporter::openData(): loading failed: ",
         TestSuite::Compare::StringHasPrefix);
 }

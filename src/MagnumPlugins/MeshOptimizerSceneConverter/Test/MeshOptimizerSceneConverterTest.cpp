@@ -24,14 +24,12 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-#include <sstream>
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
 #include <Corrade/TestSuite/Compare/String.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
-#include <Corrade/Utility/DebugStl.h> /** @todo remove once Debug is stream-free */
-#include <Corrade/Utility/FormatStl.h> /** @todo remove once Debug is stream-free */
+#include <Corrade/Utility/Format.h>
 #include <Magnum/Math/Vector3.h>
 #include <Magnum/MeshTools/CompressIndices.h>
 #include <Magnum/MeshTools/GenerateIndices.h>
@@ -206,11 +204,11 @@ void MeshOptimizerSceneConverterTest::notTriangles() {
     Containers::Pointer<AbstractSceneConverter> converter = _manager.instantiate("MeshOptimizerSceneConverter");
 
     MeshData mesh{MeshPrimitive::Instances, 3};
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->convert(mesh));
     CORRADE_VERIFY(!converter->convertInPlace(mesh));
-    CORRADE_COMPARE(out.str(),
+    CORRADE_COMPARE(out,
         "Trade::MeshOptimizerSceneConverter::convert(): expected a triangle mesh, got MeshPrimitive::Instances\n"
         "Trade::MeshOptimizerSceneConverter::convertInPlace(): expected a triangle mesh, got MeshPrimitive::Instances\n");
 }
@@ -219,11 +217,11 @@ void MeshOptimizerSceneConverterTest::notIndexed() {
     Containers::Pointer<AbstractSceneConverter> converter = _manager.instantiate("MeshOptimizerSceneConverter");
 
     MeshData mesh{MeshPrimitive::Triangles, 3};
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->convert(mesh));
     CORRADE_VERIFY(!converter->convertInPlace(mesh));
-    CORRADE_COMPARE(out.str(),
+    CORRADE_COMPARE(out,
         "Trade::MeshOptimizerSceneConverter::convert(): expected an indexed mesh\n"
         "Trade::MeshOptimizerSceneConverter::convertInPlace(): expected an indexed mesh\n");
 }
@@ -236,11 +234,11 @@ void MeshOptimizerSceneConverterTest::implementationSpecificIndexType() {
     MeshData mesh{MeshPrimitive::Triangles,
         Utility::move(indexData), MeshIndexData{meshIndexTypeWrap(0xcaca), indices}, 1};
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->convert(mesh));
     CORRADE_VERIFY(!converter->convertInPlace(mesh));
-    CORRADE_COMPARE(out.str(),
+    CORRADE_COMPARE(out,
         "Trade::MeshOptimizerSceneConverter::convert(): can't perform any operation on an implementation-specific index type 0xcaca\n"
         "Trade::MeshOptimizerSceneConverter::convertInPlace(): can't perform any operation on an implementation-specific index type 0xcaca\n");
 }
@@ -257,10 +255,10 @@ void MeshOptimizerSceneConverterTest::immutableIndexData() {
 
     CORRADE_VERIFY(converter->convert(mesh)); /* Here it's not a problem */
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->convertInPlace(mesh));
-    CORRADE_COMPARE(out.str(),
+    CORRADE_COMPARE(out,
         "Trade::MeshOptimizerSceneConverter::convertInPlace(): optimizeVertexCache, optimizeOverdraw and optimizeVertexFetch require index data to be mutable\n");
 }
 
@@ -279,10 +277,10 @@ void MeshOptimizerSceneConverterTest::inPlaceOptimizeVertexFetchImmutableVertexD
 
     CORRADE_VERIFY(converter->convert(mesh)); /* Here it's not a problem */
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->convertInPlace(mesh));
-    CORRADE_COMPARE(out.str(),
+    CORRADE_COMPARE(out,
         "Trade::MeshOptimizerSceneConverter::convertInPlace(): optimizeVertexFetch requires vertex data to be mutable\n");
 }
 
@@ -306,10 +304,10 @@ void MeshOptimizerSceneConverterTest::inPlaceOptimizeVertexFetchNotInterleaved()
 
     CORRADE_VERIFY(converter->convert(mesh)); /* Here it's not a problem */
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->convertInPlace(mesh));
-    CORRADE_COMPARE(out.str(),
+    CORRADE_COMPARE(out,
         "Trade::MeshOptimizerSceneConverter::convertInPlace(): optimizeVertexFetch requires the mesh to be interleaved\n");
 }
 
@@ -324,11 +322,11 @@ void MeshOptimizerSceneConverterTest::inPlaceOptimizeOverdrawNoPositions() {
     MeshData mesh{MeshPrimitive::Triangles,
         Utility::move(indexData), indices,
         nullptr, {}, 1};
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->convert(mesh));
     CORRADE_VERIFY(!converter->convertInPlace(mesh));
-    CORRADE_COMPARE(out.str(),
+    CORRADE_COMPARE(out,
         "Trade::MeshOptimizerSceneConverter::convert(): optimizeOverdraw and simplify require the mesh to have positions\n"
         "Trade::MeshOptimizerSceneConverter::convertInPlace(): optimizeOverdraw and simplify require the mesh to have positions\n");
 }
@@ -345,10 +343,10 @@ void MeshOptimizerSceneConverterTest::inPlaceNonContiguousIndexBuffer() {
     MeshData mesh{MeshPrimitive::Triangles,
         {}, indices, MeshIndexData{Containers::stridedArrayView(indices).flipped<0>()}, 1};
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->convertInPlace(mesh));
-    CORRADE_COMPARE(out.str(),
+    CORRADE_COMPARE(out,
         "Trade::MeshOptimizerSceneConverter::convertInPlace(): in-place conversion is possible only with contiguous index buffers\n");
 }
 
@@ -570,7 +568,7 @@ template<class T> void MeshOptimizerSceneConverterTest::verbose() {
         Implementation::meshIndexTypeFor<T>());
     CORRADE_COMPARE(icosphere.indexType(), Implementation::meshIndexTypeFor<T>());
 
-    std::ostringstream out;
+    Containers::String out;
     {
         Debug redirectDebug{&out};
         CORRADE_VERIFY(converter->convert(icosphere));
@@ -614,7 +612,7 @@ Trade::MeshOptimizerSceneConverter::convertInPlace(): processing stats:
     308748 -> 308748 covered pixels
     overdraw 1.00002 -> 1.00001
 )";
-    CORRADE_COMPARE(out.str(), Utility::formatString(expected, acmr));
+    CORRADE_COMPARE(out, Utility::format(expected, acmr));
 }
 
 void MeshOptimizerSceneConverterTest::verboseCustomAttribute() {
@@ -637,7 +635,7 @@ void MeshOptimizerSceneConverterTest::verboseCustomAttribute() {
         icosphere.releaseIndexData(), indices,
         icosphere.releaseVertexData(), Utility::move(attributes)};
 
-    std::ostringstream out;
+    Containers::String out;
     {
         Debug redirectDebug{&out};
         CORRADE_VERIFY(converter->convertInPlace(icosphereCustom));
@@ -667,7 +665,7 @@ void MeshOptimizerSceneConverterTest::verboseCustomAttribute() {
     308748 -> 308748 covered pixels
     overdraw 1.00002 -> 1.00001
 )";
-    CORRADE_COMPARE(out.str(), Utility::formatString(expected, acmr));
+    CORRADE_COMPARE(out, Utility::format(expected, acmr));
 }
 
 void MeshOptimizerSceneConverterTest::verboseImplementationSpecificAttribute() {
@@ -693,7 +691,7 @@ void MeshOptimizerSceneConverterTest::verboseImplementationSpecificAttribute() {
         icosphere.releaseIndexData(), indices,
         icosphere.releaseVertexData(), Utility::move(attributes)};
 
-    std::ostringstream out;
+    Containers::String out;
     {
         Debug redirectDebug{&out};
         Warning redirectWarning{&out};
@@ -707,7 +705,7 @@ void MeshOptimizerSceneConverterTest::verboseImplementationSpecificAttribute() {
             0, 1, 2, 2, 1, 3, 3, 1, 4, 2, 3, 5, 6, 3, 4, 3
         }), TestSuite::Compare::Container);
     if(data.quiet)
-        CORRADE_COMPARE_AS(out.str(),
+        CORRADE_COMPARE_AS(out,
             "Trade::MeshOptimizerSceneConverter::convertInPlace(): processing stats:\n"
             "  vertex cache:\n"
             "    136 -> 49 transformed vertices\n"
@@ -720,7 +718,7 @@ void MeshOptimizerSceneConverterTest::verboseImplementationSpecificAttribute() {
             "    overdraw 1 -> 1\n",
             TestSuite::Compare::String);
     else
-        CORRADE_COMPARE_AS(out.str(),
+        CORRADE_COMPARE_AS(out,
             "Trade::MeshOptimizerSceneConverter::convertInPlace(): can't analyze vertex fetch for VertexFormat::ImplementationSpecific(0x1234)\n"
             "Trade::MeshOptimizerSceneConverter::convertInPlace(): processing stats:\n"
             "  vertex cache:\n"
@@ -750,7 +748,7 @@ template<class T> void MeshOptimizerSceneConverterTest::inPlaceOptimizeEmpty() {
     CORRADE_COMPARE(icosphere.attributeCount(), 2);
 
     /* It should simply do nothing (and it should especially not crash) */
-    std::ostringstream out;
+    Containers::String out;
     {
         Debug redirectDebug{&out};
         CORRADE_VERIFY(converter->convertInPlace(icosphere));
@@ -770,7 +768,7 @@ template<class T> void MeshOptimizerSceneConverterTest::inPlaceOptimizeEmpty() {
     0 -> 0 covered pixels
     overdraw 0 -> 0
 )";
-    CORRADE_COMPARE(out.str(), expected);
+    CORRADE_COMPARE(out, expected);
 }
 
 void MeshOptimizerSceneConverterTest::copy() {
@@ -981,10 +979,10 @@ void MeshOptimizerSceneConverterTest::simplifyInPlace() {
     MeshData mesh{MeshPrimitive::Triangles,
         {}, indexData, MeshIndexData{indexData},
         nullptr, {}, 1};
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->convertInPlace(mesh));
-    CORRADE_COMPARE(out.str(),
+    CORRADE_COMPARE(out,
         "Trade::MeshOptimizerSceneConverter::convertInPlace(): mesh simplification can't be performed in-place, use convert() instead\n");
 }
 
@@ -1002,10 +1000,10 @@ void MeshOptimizerSceneConverterTest::simplifyNoPositions() {
     MeshData mesh{MeshPrimitive::Triangles,
         {}, indexData, MeshIndexData{indexData},
         nullptr, {}, 1};
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->convert(mesh));
-    CORRADE_COMPARE(out.str(),
+    CORRADE_COMPARE(out,
         "Trade::MeshOptimizerSceneConverter::convert(): optimizeOverdraw and simplify require the mesh to have positions\n");
 }
 
@@ -1185,7 +1183,7 @@ void MeshOptimizerSceneConverterTest::simplifyVerbose() {
     /* The default 1.0e-2 is too little for this */
     converter->configuration().setValue("simplifyTargetError", 0.25f);
 
-    std::ostringstream out;
+    Containers::String out;
     Containers::Optional<MeshData> simplified;
     {
         Debug redirectDebug{&out};
@@ -1210,7 +1208,7 @@ void MeshOptimizerSceneConverterTest::simplifyVerbose() {
     127149 -> 131437 covered pixels
     overdraw 1 -> 1
 )";
-    CORRADE_COMPARE(out.str(), expected);
+    CORRADE_COMPARE(out, expected);
 }
 
 void MeshOptimizerSceneConverterTest::simplifyEmpty() {
@@ -1232,7 +1230,7 @@ void MeshOptimizerSceneConverterTest::simplifyEmpty() {
     if(data.failEmpty)
         converter->configuration().setValue("simplifyFailEmpty", *data.failEmpty);
 
-    std::ostringstream out;
+    Containers::String out;
     Containers::Optional<MeshData> simplified;
     {
         Error redirectError{&out};
@@ -1241,11 +1239,11 @@ void MeshOptimizerSceneConverterTest::simplifyEmpty() {
 
     if(data.message) {
         CORRADE_VERIFY(!simplified);
-        CORRADE_COMPARE(out.str(), data.message);
+        CORRADE_COMPARE(out, data.message);
     } else {
         CORRADE_VERIFY(simplified);
         CORRADE_COMPARE(simplified->indexCount(), 0);
-        CORRADE_COMPARE(out.str(), "");
+        CORRADE_COMPARE(out, "");
     }
 }
 

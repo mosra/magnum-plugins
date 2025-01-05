@@ -25,7 +25,6 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-#include <sstream>
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/StridedArrayView.h>
 #include <Corrade/Containers/String.h>
@@ -33,8 +32,7 @@
 #include <Corrade/TestSuite/Compare/Container.h>
 #include <Corrade/TestSuite/Compare/Numeric.h>
 #include <Corrade/Utility/Algorithms.h>
-#include <Corrade/Utility/DebugStl.h> /** @todo remove once Debug is stream-free */
-#include <Corrade/Utility/FormatStl.h> /** @todo remove once Debug is stream-free */
+#include <Corrade/Utility/Format.h>
 #include <Corrade/Utility/Path.h>
 #include <Magnum/PixelFormat.h>
 #include <Magnum/Math/Color.h>
@@ -130,10 +128,10 @@ void IcoImporterTest::tooShort() {
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("IcoImporter");
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->openData(file->prefix(data.prefix)));
-    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::IcoImporter::openData(): {}\n", data.message));
+    CORRADE_COMPARE(out, Utility::format("Trade::IcoImporter::openData(): {}\n", data.message));
 }
 
 void IcoImporterTest::pngImporterNotFound() {
@@ -147,10 +145,10 @@ void IcoImporterTest::pngImporterNotFound() {
     Containers::Pointer<AbstractImporter> importer = manager.instantiate("IcoImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(ICOIMPORTER_TEST_DIR, "pngs.ico")));
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->image2D(0));
-    CORRADE_COMPARE(out.str(),
+    CORRADE_COMPARE(out,
         "PluginManager::Manager::load(): plugin PngImporter is not static and was not found in nonexistent\n"
         "Trade::IcoImporter::image2D(): PngImporter is not available\n");
 }
@@ -166,10 +164,10 @@ void IcoImporterTest::pngLoadFailed() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("IcoImporter");
     CORRADE_VERIFY(importer->openData(*file));
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->image2D(0));
-    CORRADE_COMPARE(out.str(), "Trade::StbImageImporter::image2D(): cannot open the image: bad IHDR len\n");
+    CORRADE_COMPARE(out, "Trade::StbImageImporter::image2D(): cannot open the image: bad IHDR len\n");
 }
 
 void IcoImporterTest::bmp() {
@@ -183,13 +181,13 @@ void IcoImporterTest::bmp() {
 
     /* First is a BMP, should fail */
     {
-        std::ostringstream out;
+        Containers::String out;
         {
             Error redirectError{&out};
             CORRADE_EXPECT_FAIL("IcoImporter does not support BMPs yet.");
             CORRADE_VERIFY(importer->image2D(0, 0));
         }
-        CORRADE_COMPARE(out.str(), "Trade::IcoImporter::image2D(): only files with embedded PNGs are supported\n");
+        CORRADE_COMPARE(out, "Trade::IcoImporter::image2D(): only files with embedded PNGs are supported\n");
 
     /* Second is a PNG, should succeed */
     } {

@@ -25,13 +25,12 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-#include <sstream>
+#include <string> /** @todo remove once AbstractImporter is <string>-free */
 #include <Corrade/Containers/Array.h>
 #include <Corrade/Containers/String.h>
 #include <Corrade/Containers/StringStl.h> /** @todo remove once AbstractImporter is <string>-free */
 #include <Corrade/TestSuite/Compare/Container.h>
 #include <Corrade/TestSuite/Tester.h>
-#include <Corrade/Utility/DebugStl.h> /** @todo remove once Debug is stream-free */
 #include <Corrade/Utility/Path.h>
 #include <Magnum/Audio/AbstractImporter.h>
 
@@ -105,12 +104,12 @@ DrFlacImporterTest::DrFlacImporterTest() {
 void DrFlacImporterTest::empty() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DrFlacAudioImporter");
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     char a{};
     /* Explicitly checking non-null but empty view */
     CORRADE_VERIFY(!importer->openData({&a, 0}));
-    CORRADE_COMPARE(out.str(), "Audio::DrFlacImporter::openData(): failed to open and decode FLAC data\n");
+    CORRADE_COMPARE(out, "Audio::DrFlacImporter::openData(): failed to open and decode FLAC data\n");
 }
 
 void DrFlacImporterTest::zeroSamples() {
@@ -173,10 +172,10 @@ void DrFlacImporterTest::mono24() {
 void DrFlacImporterTest::mono32() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DrFlacAudioImporter");
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->openFile(Utility::Path::join(DRFLACAUDIOIMPORTER_TEST_DIR, "mono32.flac")));
-    CORRADE_COMPARE(out.str(), "Audio::DrFlacImporter::openData(): unsupported channel count 1 with 32 bits per sample\n");
+    CORRADE_COMPARE(out, "Audio::DrFlacImporter::openData(): unsupported channel count 1 with 32 bits per sample\n");
 }
 
 void DrFlacImporterTest::stereo8() {

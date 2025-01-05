@@ -26,15 +26,14 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-#include <sstream>
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/StridedArrayView.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Numeric.h>
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
-#include <Corrade/Utility/DebugStl.h> /** @todo remove once Debug is stream-free */
-#include <Corrade/Utility/FormatStl.h>
+#include <Corrade/Utility/DebugStl.h> /** @todo remove once Configuration is std::string-free */
+#include <Corrade/Utility/Format.h>
 #include <Corrade/Utility/Path.h>
 #include <Magnum/ImageView.h>
 #include <Magnum/PixelFormat.h>
@@ -635,12 +634,12 @@ BasisImporterTest::BasisImporterTest() {
 void BasisImporterTest::empty() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporter");
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     char a{};
     /* Explicitly checking non-null but empty view */
     CORRADE_VERIFY(!importer->openData({&a, 0}));
-    CORRADE_COMPARE(out.str(), "Trade::BasisImporter::openData(): the file is empty\n");
+    CORRADE_COMPARE(out, "Trade::BasisImporter::openData(): the file is empty\n");
 }
 
 void BasisImporterTest::invalidHeader() {
@@ -649,11 +648,11 @@ void BasisImporterTest::invalidHeader() {
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporter");
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
 
     CORRADE_VERIFY(!importer->openData(data.data));
-    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::BasisImporter::openData(): {}\n", data.message));
+    CORRADE_COMPARE(out, Utility::format("Trade::BasisImporter::openData(): {}\n", data.message));
 }
 
 void BasisImporterTest::invalidFile() {
@@ -670,11 +669,11 @@ void BasisImporterTest::invalidFile() {
         (*basisData)[data.offset] = data.value;
     }
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
 
     CORRADE_VERIFY(!importer->openData(*basisData));
-    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::BasisImporter::openData(): {}\n", data.message));
+    CORRADE_COMPARE(out, Utility::format("Trade::BasisImporter::openData(): {}\n", data.message));
 }
 
 void BasisImporterTest::fileTooShort() {
@@ -686,13 +685,13 @@ void BasisImporterTest::fileTooShort() {
     Containers::Optional<Containers::Array<char>> basisData = Utility::Path::read(Utility::Path::join(BASISIMPORTER_TEST_DIR, data.file));
     CORRADE_VERIFY(basisData);
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
 
     /* Shorten the data */
     CORRADE_COMPARE_AS(data.size, basisData->size(), TestSuite::Compare::Less);
     CORRADE_VERIFY(!importer->openData(basisData->prefix(data.size)));
-    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::BasisImporter::openData(): {}\n", data.message));
+    CORRADE_COMPARE(out, Utility::format("Trade::BasisImporter::openData(): {}\n", data.message));
 }
 
 void BasisImporterTest::unconfigured() {
@@ -704,7 +703,7 @@ void BasisImporterTest::unconfigured() {
 
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(BASISIMPORTER_TEST_DIR, "rgb.basis")));
 
-    std::ostringstream out;
+    Containers::String out;
     Containers::Optional<Trade::ImageData2D> image;
     {
         Warning redirectWarning{&out};
@@ -718,9 +717,9 @@ void BasisImporterTest::unconfigured() {
     CORRADE_COMPARE(image->size(), (Vector2i{63, 27}));
 
     if(data.quiet)
-        CORRADE_COMPARE(out.str(), "");
+        CORRADE_COMPARE(out, "");
     else
-        CORRADE_COMPARE(out.str(), "Trade::BasisImporter::image2D(): no format to transcode to was specified, falling back to uncompressed RGBA8. To get rid of this warning, either explicitly set the format option to one of Etc1RGB, Etc2RGBA, EacR, EacRG, Bc1RGB, Bc3RGBA, Bc4R, Bc5RG, Bc7RGBA, Pvrtc1RGB4bpp, Pvrtc1RGBA4bpp, Astc4x4RGBA or RGBA8, or load the plugin via one of its BasisImporterEtc1RGB, ... aliases.\n");
+        CORRADE_COMPARE(out, "Trade::BasisImporter::image2D(): no format to transcode to was specified, falling back to uncompressed RGBA8. To get rid of this warning, either explicitly set the format option to one of Etc1RGB, Etc2RGBA, EacR, EacRG, Bc1RGB, Bc3RGBA, Bc4R, Bc5RG, Bc7RGBA, Pvrtc1RGB4bpp, Pvrtc1RGBA4bpp, Astc4x4RGBA or RGBA8, or load the plugin via one of its BasisImporterEtc1RGB, ... aliases.\n");
 
     if(_manager.loadState("AnyImageImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("AnyImageImporter plugin not found, cannot test contents");
@@ -744,7 +743,7 @@ void BasisImporterTest::unconfiguredHdr() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(BASISIMPORTER_TEST_DIR, "rgbf.basis")));
 
-    std::ostringstream out;
+    Containers::String out;
     Containers::Optional<Trade::ImageData2D> image;
     {
         Warning redirectWarning{&out};
@@ -757,7 +756,7 @@ void BasisImporterTest::unconfiguredHdr() {
     CORRADE_COMPARE(image->format(), PixelFormat::RGBA16F);
     CORRADE_COMPARE(image->size(), (Vector2i{63, 27}));
 
-    CORRADE_COMPARE(out.str(), "Trade::BasisImporter::image2D(): no format to transcode to was specified, falling back to uncompressed RGBA16F. To get rid of this warning, either explicitly set the formatHdr option to one of Bc6hRGB, Astc4x4RGBAF, RGB16F or RGBA16F, or load the plugin via one of its BasisImporterBc6hRGB, ... aliases.\n");
+    CORRADE_COMPARE(out, "Trade::BasisImporter::image2D(): no format to transcode to was specified, falling back to uncompressed RGBA16F. To get rid of this warning, either explicitly set the formatHdr option to one of Bc6hRGB, Astc4x4RGBAF, RGB16F or RGBA16F, or load the plugin via one of its BasisImporterBc6hRGB, ... aliases.\n");
 
     if(_manager.loadState("AnyImageImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("AnyImageImporter plugin not found, cannot test contents");
@@ -782,13 +781,13 @@ void BasisImporterTest::invalidConfiguredFormat() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(BASISIMPORTER_TEST_DIR, data.file)));
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     importer->configuration().setValue("format", data.format);
     importer->configuration().setValue("formatHdr", data.formatHdr);
     CORRADE_VERIFY(!importer->image2D(0));
 
-    CORRADE_COMPARE(out.str(), data.message);
+    CORRADE_COMPARE(out, data.message);
 }
 
 void BasisImporterTest::unsupportedFormat() {
@@ -801,34 +800,34 @@ void BasisImporterTest::unsupportedFormat() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(BASISIMPORTER_TEST_DIR, "rgb.basis")));
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     importer->configuration().setValue("format", "Bc7RGBA");
     CORRADE_VERIFY(!importer->image2D(0));
 
-    CORRADE_COMPARE(out.str(), "Trade::BasisImporter::image2D(): Basis Universal was compiled without support for Bc7RGBA\n");
+    CORRADE_COMPARE(out, "Trade::BasisImporter::image2D(): Basis Universal was compiled without support for Bc7RGBA\n");
 }
 
 void BasisImporterTest::transcodingFailure() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporterPvrtcRGB4bpp");
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(BASISIMPORTER_TEST_DIR, "rgb.basis")));
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
 
     /* PVRTC1 requires power of 2 image dimensions, but rgb.basis is 63x27,
        hence basis will fail during transcoding */
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(!image);
-    CORRADE_COMPARE(out.str(), "Trade::BasisImporter::image2D(): transcoding failed\n");
+    CORRADE_COMPARE(out, "Trade::BasisImporter::image2D(): transcoding failed\n");
 }
 
 void BasisImporterTest::nonBasisKtx() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporter");
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->openFile(Utility::Path::join(KTXIMPORTER_TEST_DIR, "2d-rgba.ktx2")));
-    CORRADE_COMPARE(out.str(), "Trade::BasisImporter::openData(): invalid KTX2 header, or not Basis compressed; might want to use KtxImporter instead\n");
+    CORRADE_COMPARE(out, "Trade::BasisImporter::openData(): invalid KTX2 header, or not Basis compressed; might want to use KtxImporter instead\n");
 }
 
 #ifdef MAGNUM_BUILD_DEPRECATED
@@ -842,14 +841,14 @@ void BasisImporterTest::texture() {
         const auto fileType = FileTypeData[i];
         CORRADE_ITERATION(fileType.name);
 
-        std::ostringstream out;
+        Containers::String out;
         {
             Warning redirectWarning{&out};
             CORRADE_VERIFY(importer->openFile(Utility::Path::join(BASISIMPORTER_TEST_DIR, Containers::StringView{data.fileBase} + fileType.extension)));
         }
         /* Not testing ImporterFlag::Quiet here as this functionality is
            deprecated */
-        CORRADE_COMPARE(out.str(), data.warning[i]);
+        CORRADE_COMPARE(out, data.warning[i]);
 
         const Vector3ui counts{
             importer->image1DCount(),
@@ -910,7 +909,7 @@ void BasisImporterTest::rgbUncompressed() {
     CORRADE_COMPARE(importer->configuration().value("formatHdr"), "");
     /* formatHdr is not checked for validity at all for LDR images */
     importer->configuration().setValue("formatHdr", "Binini");
-    std::ostringstream out;
+    Containers::String out;
     {
         Warning redirectWarning{&out};
         CORRADE_VERIFY(importer->openFile(Utility::Path::join(BASISIMPORTER_TEST_DIR,
@@ -918,7 +917,7 @@ void BasisImporterTest::rgbUncompressed() {
     }
     /* There should be no Y-flip warning as the image is pre-flipped (and
        KTXorientation is patched into rgb.ktx2, see convert.sh) */
-    CORRADE_COMPARE(out.str(), "");
+    CORRADE_COMPARE(out, "");
     CORRADE_COMPARE(importer->image2DCount(), 1);
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
@@ -1483,13 +1482,13 @@ void BasisImporterTest::image3D() {
     if(data.assumeYUp)
         importer->configuration().setValue("assumeYUp", *data.assumeYUp);
 
-    std::ostringstream out;
+    Containers::String out;
     {
         Warning redirectWarning{&out};
         CORRADE_VERIFY(importer->openFile(Utility::Path::join(BASISIMPORTER_TEST_DIR, "rgba-3d"_s + data.extension)));
     }
     CORRADE_COMPARE(importer->image3DCount(), 1);
-    CORRADE_COMPARE(out.str(), data.message);
+    CORRADE_COMPARE(out, data.message);
 
     Containers::Optional<Trade::ImageData3D> image = importer->image3D(0);
     CORRADE_VERIFY(image);
@@ -1527,12 +1526,12 @@ void BasisImporterTest::image3DMipmaps() {
         importer->configuration().setValue("assumeYUp", *data.assumeYUp);
     importer->addFlags(data.flags);
 
-    std::ostringstream out;
+    Containers::String out;
     {
         Warning redirectWarning{&out};
         CORRADE_VERIFY(importer->openFile(Utility::Path::join(BASISIMPORTER_TEST_DIR, "rgba-3d-mips"_s + data.extension)));
     }
-    CORRADE_COMPARE(out.str(), data.message);
+    CORRADE_COMPARE(out, data.message);
 
     Containers::Optional<Trade::ImageData3D> levels[3];
 
@@ -1705,7 +1704,7 @@ void BasisImporterTest::videoSeeking() {
 
     CORRADE_COMPARE(importer->image2DCount(), 3);
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
 
     CORRADE_VERIFY(!importer->image2D(2));
@@ -1715,7 +1714,7 @@ void BasisImporterTest::videoSeeking() {
     CORRADE_VERIFY(importer->image2D(2));
     CORRADE_VERIFY(importer->image2D(0));
 
-    CORRADE_COMPARE(out.str(),
+    CORRADE_COMPARE(out,
         "Trade::BasisImporter::image2D(): video frames must be transcoded sequentially, expected frame 0 but got 2\n"
         "Trade::BasisImporter::image2D(): video frames must be transcoded sequentially, expected frame 1 or 0 but got 2\n");
 }
@@ -1723,17 +1722,17 @@ void BasisImporterTest::videoSeeking() {
 void BasisImporterTest::videoVerbose() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("BasisImporterRGBA8");
 
-    std::ostringstream out;
+    Containers::String out;
     Debug redirectDebug{&out};
 
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(BASISIMPORTER_TEST_DIR, "rgba-video.basis")));
-    CORRADE_COMPARE(out.str(), "");
+    CORRADE_COMPARE(out, "");
 
     importer->close();
     importer->setFlags(ImporterFlag::Verbose);
 
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(BASISIMPORTER_TEST_DIR, "rgba-video.basis")));
-    CORRADE_COMPARE(out.str(), "Trade::BasisImporter::openData(): file contains video frames, images must be transcoded sequentially\n");
+    CORRADE_COMPARE(out, "Trade::BasisImporter::openData(): file contains video frames, images must be transcoded sequentially\n");
 }
 
 void BasisImporterTest::flipUncompressed() {
@@ -1756,7 +1755,7 @@ void BasisImporterTest::flipUncompressed() {
         importer->configuration().setValue("assumeYUp", *data.assumeYUp);
 
     Containers::Optional<ImageData2D> image;
-    std::ostringstream out;
+    Containers::String out;
     {
         Debug redirectOutput{&out};
         Warning redirectWarning{&out};
@@ -1766,9 +1765,9 @@ void BasisImporterTest::flipUncompressed() {
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(image->format(), data.expectedFormat);
     if(data.message)
-        CORRADE_COMPARE(out.str(), data.message);
+        CORRADE_COMPARE(out, data.message);
     else
-        CORRADE_COMPARE(out.str(), "");
+        CORRADE_COMPARE(out, "");
 
     /* The images should then be flipped compared to each other, or if flip was
        not made, identical */
@@ -1814,7 +1813,7 @@ void BasisImporterTest::flipUncompressed3D() {
     importer->addFlags(ImporterFlag::Verbose);
 
     Containers::Optional<ImageData3D> image;
-    std::ostringstream out;
+    Containers::String out;
     {
         Debug redirectOutput{&out};
         Warning redirectWarning{&out};
@@ -1823,7 +1822,7 @@ void BasisImporterTest::flipUncompressed3D() {
     }
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Srgb);
-    CORRADE_COMPARE(out.str(),
+    CORRADE_COMPARE(out,
         "Trade::BasisImporter::openData(): missing orientation metadata, assuming Y down. Set the assumeYUp option to suppress this warning.\n"
         "Trade::BasisImporter::openData(): image will be flipped along Y\n");
 
@@ -1883,7 +1882,7 @@ void BasisImporterTest::flip() {
         importer->configuration().setValue("assumeYUp", *data.assumeYUp);
 
     Containers::Optional<ImageData2D> image;
-    std::ostringstream out;
+    Containers::String out;
     {
         Debug redirectOutput{&out};
         Warning redirectWarning{&out};
@@ -1893,9 +1892,9 @@ void BasisImporterTest::flip() {
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(image->compressedFormat(), data.expectedFormat);
     if(data.message)
-        CORRADE_COMPARE(out.str(), data.message);
+        CORRADE_COMPARE(out, data.message);
     else
-        CORRADE_COMPARE(out.str(), "");
+        CORRADE_COMPARE(out, "");
 
     /* The images, once decoded, should then be flipped compared to each other,
        or if flip was not possible, identical */
@@ -1971,7 +1970,7 @@ void BasisImporterTest::flip3D() {
     importer->addFlags(ImporterFlag::Verbose);
 
     Containers::Optional<ImageData3D> image;
-    std::ostringstream out;
+    Containers::String out;
     {
         Debug redirectOutput{&out};
         Warning redirectWarning{&out};
@@ -1980,7 +1979,7 @@ void BasisImporterTest::flip3D() {
     }
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(image->compressedFormat(), CompressedPixelFormat::Bc1RGBSrgb);
-    CORRADE_COMPARE(out.str(),
+    CORRADE_COMPARE(out,
         "Trade::BasisImporter::openData(): missing orientation metadata, assuming Y down. Set the assumeYUp option to suppress this warning.\n"
         "Trade::BasisImporter::openData(): image will be flipped along Y\n"
         "Trade::BasisImporter::image3D(): Y-flipping a compressed image that's not whole blocks, the result will be shifted by 1 pixels\n");
@@ -2086,7 +2085,7 @@ void BasisImporterTest::importMultipleFormats() {
 
     /* Verify that everything is working properly with reused transcoder */
     {
-        std::ostringstream out;
+        Containers::String out;
         Containers::Optional<Trade::ImageData2D> image;
         {
             Warning redirectWarning{&out};
@@ -2095,12 +2094,12 @@ void BasisImporterTest::importMultipleFormats() {
         CORRADE_VERIFY(image);
         CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Srgb);
         CORRADE_COMPARE(image->size(), (Vector2i{63, 27}));
-        CORRADE_COMPARE(out.str(), "Trade::BasisImporter::image2D(): no format to transcode to was specified, falling back to uncompressed RGBA8. To get rid of this warning, either explicitly set the format option to one of Etc1RGB, Etc2RGBA, EacR, EacRG, Bc1RGB, Bc3RGBA, Bc4R, Bc5RG, Bc7RGBA, Pvrtc1RGB4bpp, Pvrtc1RGBA4bpp, Astc4x4RGBA or RGBA8, or load the plugin via one of its BasisImporterEtc1RGB, ... aliases.\n");
+        CORRADE_COMPARE(out, "Trade::BasisImporter::image2D(): no format to transcode to was specified, falling back to uncompressed RGBA8. To get rid of this warning, either explicitly set the format option to one of Etc1RGB, Etc2RGBA, EacR, EacRG, Bc1RGB, Bc3RGBA, Bc4R, Bc5RG, Bc7RGBA, Pvrtc1RGB4bpp, Pvrtc1RGBA4bpp, Astc4x4RGBA or RGBA8, or load the plugin via one of its BasisImporterEtc1RGB, ... aliases.\n");
 
     /* Second time without a format change it shouldn't repeat the same
        warning */
     } {
-        std::ostringstream out;
+        Containers::String out;
         Containers::Optional<Trade::ImageData2D> image;
         {
             Warning redirectWarning{&out};
@@ -2110,13 +2109,13 @@ void BasisImporterTest::importMultipleFormats() {
         CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Srgb);
         CORRADE_COMPARE(image->size(), (Vector2i{63, 27}));
         /* Warning printed above already, not printed second time */
-        CORRADE_COMPARE(out.str(), "");
+        CORRADE_COMPARE(out, "");
 
     /* Format changed, now it should print that it's not implemented */
     } {
         importer->configuration().setValue("format", "Etc2RGBA");
 
-        std::ostringstream out;
+        Containers::String out;
         Containers::Optional<Trade::ImageData2D> image;
         {
             Warning redirectWarning{&out};
@@ -2125,11 +2124,11 @@ void BasisImporterTest::importMultipleFormats() {
         CORRADE_VERIFY(image);
         CORRADE_COMPARE(image->compressedFormat(), CompressedPixelFormat::Etc2RGBA8Srgb);
         CORRADE_COMPARE(image->size(), (Vector2i{63, 27}));
-        CORRADE_COMPARE(out.str(), "Trade::BasisImporter::image2D(): Y flip is not yet implemented for CompressedPixelFormat::Etc2RGBA8Srgb, imported data will have wrong orientation. Enable assumeYUp to suppress this warning.\n");
+        CORRADE_COMPARE(out, "Trade::BasisImporter::image2D(): Y flip is not yet implemented for CompressedPixelFormat::Etc2RGBA8Srgb, imported data will have wrong orientation. Enable assumeYUp to suppress this warning.\n");
 
     /* Second time it again shouldn't */
     } {
-        std::ostringstream out;
+        Containers::String out;
         Containers::Optional<Trade::ImageData2D> image;
         {
             Warning redirectWarning{&out};
@@ -2138,13 +2137,13 @@ void BasisImporterTest::importMultipleFormats() {
         CORRADE_VERIFY(image);
         CORRADE_COMPARE(image->compressedFormat(), CompressedPixelFormat::Etc2RGBA8Srgb);
         CORRADE_COMPARE(image->size(), (Vector2i{63, 27}));
-        CORRADE_COMPARE(out.str(), "");
+        CORRADE_COMPARE(out, "");
 
     /* For a new format it should again */
     } {
         importer->configuration().setValue("format", "Astc4x4RGBA");
 
-        std::ostringstream out;
+        Containers::String out;
         Containers::Optional<Trade::ImageData2D> image;
         {
             Warning redirectWarning{&out};
@@ -2153,13 +2152,13 @@ void BasisImporterTest::importMultipleFormats() {
         CORRADE_VERIFY(image);
         CORRADE_COMPARE(image->compressedFormat(), CompressedPixelFormat::Astc4x4RGBASrgb);
         CORRADE_COMPARE(image->size(), (Vector2i{63, 27}));
-        CORRADE_COMPARE(out.str(), "Trade::BasisImporter::image2D(): Y flip is not yet implemented for CompressedPixelFormat::Astc4x4RGBASrgb, imported data will have wrong orientation. Enable assumeYUp to suppress this warning.\n");
+        CORRADE_COMPARE(out, "Trade::BasisImporter::image2D(): Y flip is not yet implemented for CompressedPixelFormat::Astc4x4RGBASrgb, imported data will have wrong orientation. Enable assumeYUp to suppress this warning.\n");
 
     /* For an empty format it should again say that no format is set */
     } {
         importer->configuration().setValue("format", "");
 
-        std::ostringstream out;
+        Containers::String out;
         Containers::Optional<Trade::ImageData2D> image;
         {
             Warning redirectWarning{&out};
@@ -2168,7 +2167,7 @@ void BasisImporterTest::importMultipleFormats() {
         CORRADE_VERIFY(image);
         CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Srgb);
         CORRADE_COMPARE(image->size(), (Vector2i{63, 27}));
-        CORRADE_COMPARE(out.str(), "Trade::BasisImporter::image2D(): no format to transcode to was specified, falling back to uncompressed RGBA8. To get rid of this warning, either explicitly set the format option to one of Etc1RGB, Etc2RGBA, EacR, EacRG, Bc1RGB, Bc3RGBA, Bc4R, Bc5RG, Bc7RGBA, Pvrtc1RGB4bpp, Pvrtc1RGBA4bpp, Astc4x4RGBA or RGBA8, or load the plugin via one of its BasisImporterEtc1RGB, ... aliases.\n");
+        CORRADE_COMPARE(out, "Trade::BasisImporter::image2D(): no format to transcode to was specified, falling back to uncompressed RGBA8. To get rid of this warning, either explicitly set the format option to one of Etc1RGB, Etc2RGBA, EacR, EacRG, Bc1RGB, Bc3RGBA, Bc4R, Bc5RG, Bc7RGBA, Pvrtc1RGB4bpp, Pvrtc1RGBA4bpp, Astc4x4RGBA or RGBA8, or load the plugin via one of its BasisImporterEtc1RGB, ... aliases.\n");
     }
 }
 

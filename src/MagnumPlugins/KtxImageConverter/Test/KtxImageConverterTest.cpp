@@ -26,7 +26,6 @@
 */
 
 #include <algorithm> /* std::find() */
-#include <sstream>
 #include <unordered_map>
 #include <Corrade/Containers/Array.h>
 #include <Corrade/Containers/Optional.h>
@@ -38,9 +37,9 @@
 #include <Corrade/TestSuite/Compare/StringToFile.h>
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
-#include <Corrade/Utility/DebugStl.h> /** @todo remove once Debug is stream-free */
+#include <Corrade/Utility/DebugStl.h> /** @todo remove once Configuration is std::string-free */
 #include <Corrade/Utility/Endianness.h>
-#include <Corrade/Utility/FormatStl.h> /** @todo remove once Debug is stream-free */
+#include <Corrade/Utility/Format.h>
 #include <Corrade/Utility/Path.h>
 
 #include <Magnum/ImageView.h>
@@ -538,10 +537,10 @@ void KtxImageConverterTest::unsupportedCompressedFormat() {
        valid to fetch block size properties for it. Once that's implemented,
        we won't be able, and then the failure should probably become an
        unreachable assert instead. */
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->convertToData(CompressedImageView2D{CompressedPixelFormat(0xffff), {1, 1}, "hello"}));
-    CORRADE_COMPARE(out.str(), "Trade::KtxImageConverter::convertToData(): unsupported format CompressedPixelFormat(0xffff)\n");
+    CORRADE_COMPARE(out, "Trade::KtxImageConverter::convertToData(): unsupported format CompressedPixelFormat(0xffff)\n");
 }
 
 void KtxImageConverterTest::implementationSpecificFormat() {
@@ -549,13 +548,13 @@ void KtxImageConverterTest::implementationSpecificFormat() {
 
     const UnsignedByte bytes[1]{};
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
 
     PixelStorage storage;
     storage.setAlignment(1);
     CORRADE_VERIFY(!converter->convertToData(ImageView2D{storage, 0, 0, 1, {1, 1}, bytes}));
-    CORRADE_COMPARE(out.str(),
+    CORRADE_COMPARE(out,
         "Trade::KtxImageConverter::convertToData(): implementation-specific formats are not supported\n");
 }
 
@@ -564,12 +563,12 @@ void KtxImageConverterTest::implementationSpecificCompressedFormat() {
 
     const UnsignedByte bytes[1]{};
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
 
     CompressedPixelStorage storage;
     CORRADE_VERIFY(!converter->convertToData(CompressedImageView2D{storage, 0, {1, 1}, bytes}));
-    CORRADE_COMPARE(out.str(),
+    CORRADE_COMPARE(out,
         "Trade::KtxImageConverter::convertToData(): implementation-specific formats are not supported\n");
 }
 
@@ -658,7 +657,7 @@ void KtxImageConverterTest::tooManyLevels() {
 
     const UnsignedInt dimensions = Math::min(Vector3ui{data.size}, 1u).sum();
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     if(dimensions == 1) {
         CORRADE_VERIFY(!converter->convertToData({
@@ -677,7 +676,7 @@ void KtxImageConverterTest::tooManyLevels() {
         }));
     }
 
-    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::KtxImageConverter::convertToData(): {}\n", data.message));
+    CORRADE_COMPARE(out, Utility::format("Trade::KtxImageConverter::convertToData(): {}\n", data.message));
 }
 
 void KtxImageConverterTest::levelWrongSize() {
@@ -691,7 +690,7 @@ void KtxImageConverterTest::levelWrongSize() {
 
     const UnsignedInt dimensions = Math::min(Vector3ui{data.sizes[0]}, 1u).sum();
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     if(dimensions == 1) {
         CORRADE_VERIFY(!converter->convertToData({
@@ -710,7 +709,7 @@ void KtxImageConverterTest::levelWrongSize() {
         }));
     }
 
-    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::KtxImageConverter::convertToData(): {}\n", data.message));
+    CORRADE_COMPARE(out, Utility::format("Trade::KtxImageConverter::convertToData(): {}\n", data.message));
 }
 
 void KtxImageConverterTest::convert1D() {
@@ -1293,7 +1292,7 @@ void KtxImageConverterTest::configurationOrientationEmpty() {
 
     const UnsignedByte bytes[4]{};
 
-    std::ostringstream out;
+    Containers::String out;
     Containers::Optional<Containers::Array<char>> imageData;
     {
         Warning redirectWarning{&out};
@@ -1301,9 +1300,9 @@ void KtxImageConverterTest::configurationOrientationEmpty() {
     }
     CORRADE_VERIFY(imageData);
     if(data.quiet)
-        CORRADE_COMPARE(out.str(), "");
+        CORRADE_COMPARE(out, "");
     else
-        CORRADE_COMPARE(out.str(), "Trade::KtxImageConverter::convertToData(): empty orientation string, assuming right, down\n");
+        CORRADE_COMPARE(out, "Trade::KtxImageConverter::convertToData(): empty orientation string, assuming right, down\n");
 
     /* Empty orientation isn't written to key/value data at all */
     Containers::String keyValueData = readKeyValueData(*imageData);
@@ -1319,10 +1318,10 @@ void KtxImageConverterTest::configurationOrientationInvalid() {
 
     const UnsignedByte bytes[4]{};
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->convertToData(ImageView3D{PixelFormat::RGBA8Unorm, {1, 1, 1}, bytes, data.imageFlags}));
-    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::KtxImageConverter::convertToData(): {}\n", data.message));
+    CORRADE_COMPARE(out, Utility::format("Trade::KtxImageConverter::convertToData(): {}\n", data.message));
 }
 
 void KtxImageConverterTest::configurationSwizzle() {
@@ -1359,12 +1358,12 @@ void KtxImageConverterTest::configurationSwizzleInvalid() {
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("KtxImageConverter");
     CORRADE_VERIFY(converter->configuration().setValue("swizzle", data.value));
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
 
     const UnsignedByte bytes[4]{};
     CORRADE_VERIFY(!converter->convertToData(ImageView2D{PixelFormat::RGBA8Unorm, {1, 1}, bytes}));
-    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::KtxImageConverter::convertToData(): {}\n", data.message));
+    CORRADE_COMPARE(out, Utility::format("Trade::KtxImageConverter::convertToData(): {}\n", data.message));
 }
 
 void KtxImageConverterTest::configurationGenerator() {
@@ -1425,7 +1424,7 @@ void KtxImageConverterTest::configurationEmpty() {
 
     const UnsignedByte bytes[4]{};
 
-    std::ostringstream out;
+    Containers::String out;
     Containers::Optional<Containers::Array<char>> imageData;
     {
         Warning redirectWarning{&out};
@@ -1433,9 +1432,9 @@ void KtxImageConverterTest::configurationEmpty() {
     }
     CORRADE_VERIFY(imageData);
     if(data.quiet)
-        CORRADE_COMPARE(out.str(), "");
+        CORRADE_COMPARE(out, "");
     else
-        CORRADE_COMPARE(out.str(), "Trade::KtxImageConverter::convertToData(): empty orientation string, assuming right, down, forward\n");
+        CORRADE_COMPARE(out, "Trade::KtxImageConverter::convertToData(): empty orientation string, assuming right, down, forward\n");
 
     /* Key/value data should not be written if it only contains empty values */
 

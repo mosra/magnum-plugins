@@ -24,9 +24,8 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-#include <sstream>
+#include <Corrade/Containers/String.h>
 #include <Corrade/TestSuite/Tester.h>
-#include <Corrade/Utility/DebugStl.h>
 
 #include "Magnum/OpenDdl/Type.h"
 
@@ -47,21 +46,21 @@ TypeTest::TypeTest() {
 }
 
 void TypeTest::debugType() {
-    std::ostringstream out;
+    Containers::String out;
     Debug{&out} << Type::Bool << Type(0xdeadbabe);
-    CORRADE_COMPARE(out.str(), "OpenDdl::Type::Bool OpenDdl::Type(0xdeadbabe)\n");
+    CORRADE_COMPARE(out, "OpenDdl::Type::Bool OpenDdl::Type(0xdeadbabe)\n");
 }
 
 void TypeTest::debugPropertyType() {
-    std::ostringstream out;
+    Containers::String out;
     Debug{&out} << PropertyType::Bool << PropertyType(0xbe);
-    CORRADE_COMPARE(out.str(), "OpenDdl::PropertyType::Bool OpenDdl::PropertyType(0xbe)\n");
+    CORRADE_COMPARE(out, "OpenDdl::PropertyType::Bool OpenDdl::PropertyType(0xbe)\n");
 }
 
 void TypeTest::debugInternalPropertyType() {
-    std::ostringstream out;
+    Containers::String out;
     Debug{&out} << Implementation::InternalPropertyType::Bool << Implementation::InternalPropertyType(0xbe);
-    CORRADE_COMPARE(out.str(), "OpenDdl::Implementation::InternalPropertyType::Bool OpenDdl::Implementation::InternalPropertyType(0xbe)\n");
+    CORRADE_COMPARE(out, "OpenDdl::Implementation::InternalPropertyType::Bool OpenDdl::Implementation::InternalPropertyType(0xbe)\n");
 }
 
 }}}}

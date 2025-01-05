@@ -25,13 +25,11 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-#include <sstream>
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/StridedArrayView.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
-#include <Corrade/Utility/DebugStl.h> /** @todo remove once Debug is stream-free */
 #include <Corrade/Utility/Path.h>
 #include <Magnum/PixelFormat.h>
 #include <Magnum/Math/Color.h>
@@ -126,30 +124,30 @@ DevIlImageImporterTest::DevIlImageImporterTest() {
 void DevIlImageImporterTest::fileNotFound() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DevIlImageImporter");
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->openFile("nonexistent"));
-    CORRADE_COMPARE(out.str(), "Trade::DevIlImageImporter::openFile(): cannot open the image: 0x50b\n");
+    CORRADE_COMPARE(out, "Trade::DevIlImageImporter::openFile(): cannot open the image: 0x50b\n");
 }
 
 void DevIlImageImporterTest::empty() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DevIlImageImporter");
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     char a{};
     /* Explicitly checking non-null but empty view */
     CORRADE_VERIFY(!importer->openData({&a, 0}));
-    CORRADE_COMPARE(out.str(), "Trade::DevIlImageImporter::openData(): cannot open the image: 0x509\n");
+    CORRADE_COMPARE(out, "Trade::DevIlImageImporter::openData(): cannot open the image: 0x509\n");
 }
 
 void DevIlImageImporterTest::invalid() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DevIlImageImporter");
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->openData("invalid"));
-    CORRADE_COMPARE(out.str(), "Trade::DevIlImageImporter::openData(): cannot open the image: 0x512\n");
+    CORRADE_COMPARE(out, "Trade::DevIlImageImporter::openData(): cannot open the image: 0x512\n");
 }
 
 void DevIlImageImporterTest::grayPng() {

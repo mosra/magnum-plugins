@@ -28,8 +28,7 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-#include <cctype>
-#include <sstream>
+#include <cctype> /* std::isalnum() */
 #include <unordered_map>
 #include <Corrade/Containers/Array.h>
 #include <Corrade/Containers/ArrayView.h>
@@ -42,7 +41,7 @@
 #include <Corrade/TestSuite/Compare/Container.h>
 #include <Corrade/TestSuite/Compare/String.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
-#include <Corrade/Utility/DebugStl.h> /** @todo remove once Debug is stream-free */
+#include <Corrade/Utility/DebugStl.h> /** @todo remove once file callbacks are std::string-free */
 #include <Corrade/Utility/Format.h>
 #include <Corrade/Utility/Path.h>
 #include <Magnum/FileCallback.h>
@@ -454,7 +453,7 @@ void AssimpImporterTest::openFile() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
     importer->setFlags(data.flags);
 
-    std::ostringstream out;
+    Containers::String out;
     {
         Debug redirectOutput{&out};
 
@@ -471,23 +470,23 @@ void AssimpImporterTest::openFile() {
     }
 
     /* It should be noisy if and only if verbose output is enabled */
-    Debug{Debug::Flag::NoNewlineAtTheEnd} << out.str();
-    CORRADE_COMPARE(!out.str().empty(), data.flags >= ImporterFlag::Verbose);
+    Debug{Debug::Flag::NoNewlineAtTheEnd} << out;
+    CORRADE_COMPARE(!out.isEmpty(), data.flags >= ImporterFlag::Verbose);
 }
 
 void AssimpImporterTest::openFileFailed() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
 
     CORRADE_VERIFY(!importer->openFile("i-do-not-exist.foo"));
     /* Happens in 5.4.2, but so randomly that it's maybe 5.4.0 as well. How can
        you even write code to behave like that. */
-    if(_assimpVersion >= 540 && out.str() == "Trade::AssimpImporter::openFile(): failed to open i-do-not-exist.foo: No suitable reader found for the file format of file \"i-do-not-exist.foo\".\n") {
+    if(_assimpVersion >= 540 && out == "Trade::AssimpImporter::openFile(): failed to open i-do-not-exist.foo: No suitable reader found for the file format of file \"i-do-not-exist.foo\".\n") {
         CORRADE_WARN("Assimp randomly reports a different error message than usual.");
     } else {
-        CORRADE_COMPARE(out.str(), "Trade::AssimpImporter::openFile(): failed to open i-do-not-exist.foo: Unable to open file \"i-do-not-exist.foo\".\n");
+        CORRADE_COMPARE(out, "Trade::AssimpImporter::openFile(): failed to open i-do-not-exist.foo: Unable to open file \"i-do-not-exist.foo\".\n");
     }
 }
 
@@ -515,12 +514,12 @@ void AssimpImporterTest::openDataFailed() {
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
 
     constexpr const char data[] = "what";
     CORRADE_VERIFY(!importer->openData({data, sizeof(data)}));
-    CORRADE_COMPARE(out.str(), "Trade::AssimpImporter::openData(): loading failed: No suitable reader found for the file format of file \"$$$___magic___$$$.\".\n");
+    CORRADE_COMPARE(out, "Trade::AssimpImporter::openData(): loading failed: No suitable reader found for the file format of file \"$$$___magic___$$$.\".\n");
 }
 
 /* This does not indicate general assimp animation support, only used to skip
@@ -739,7 +738,7 @@ void AssimpImporterTest::animationGltf() {
 
     /* Translation/rotation/scaling animation */
     } {
-        std::ostringstream out;
+        Containers::String out;
         Debug redirectDebug{&out};
 
         Containers::Optional<Trade::AnimationData> animation = importer->animation("TRS animation");
@@ -861,15 +860,15 @@ void AssimpImporterTest::animationGltfBrokenSplineWarning() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
     importer->addFlags(data.flags);
 
-    std::ostringstream out;
+    Containers::String out;
     {
         Warning redirectWarning{&out};
         CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "animation.gltf")));
     }
     if(data.quiet)
-        CORRADE_COMPARE(out.str(), "");
+        CORRADE_COMPARE(out, "");
     else
-        CORRADE_COMPARE(out.str(), "Trade::AssimpImporter::openData(): spline-interpolated animations imported from this file are most likely broken using this version of Assimp. Consult the importer documentation for more information.\n");
+        CORRADE_COMPARE(out, "Trade::AssimpImporter::openData(): spline-interpolated animations imported from this file are most likely broken using this version of Assimp. Consult the importer documentation for more information.\n");
     #endif
 }
 
@@ -996,18 +995,18 @@ void AssimpImporterTest::animationGltfTicksPerSecondPatching() {
     importer->setFlags(data.flags);
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "animation.gltf")));
 
-    std::ostringstream out;
+    Containers::String out;
     {
         Debug redirectDebug{&out};
         CORRADE_VERIFY(importer->animation(1));
     }
 
     if(data.flags >= ImporterFlag::Verbose) {
-        CORRADE_COMPARE_AS(out.str(),
+        CORRADE_COMPARE_AS(out,
             " ticks per second is incorrect for glTF, patching to 1000\n",
             TestSuite::Compare::StringHasSuffix);
     } else
-        CORRADE_COMPARE(out.str(), "");
+        CORRADE_COMPARE(out, "");
 }
 
 void AssimpImporterTest::animationDummyTracksRemovalEnabled() {
@@ -1027,7 +1026,7 @@ void AssimpImporterTest::animationDummyTracksRemovalEnabled() {
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "animation.gltf")));
 
     Containers::Optional<AnimationData> animation;
-    std::ostringstream out;
+    Containers::String out;
     {
         Debug redirectDebug{&out};
         animation = importer->animation(1);
@@ -1049,23 +1048,23 @@ void AssimpImporterTest::animationDummyTracksRemovalEnabled() {
     }
 
     if(data.flags >= ImporterFlag::Verbose) {
-        CORRADE_COMPARE_AS(out.str(), Utility::format(
+        CORRADE_COMPARE_AS(out, Utility::format(
             "Trade::AssimpImporter::animation(): ignoring dummy translation track in animation 1, channel {}\n"
             "Trade::AssimpImporter::animation(): ignoring dummy scaling track in animation 1, channel {}\n",
             targets[0].channel, targets[0].channel),
             TestSuite::Compare::StringContains);
-        CORRADE_COMPARE_AS(out.str(), Utility::format(
+        CORRADE_COMPARE_AS(out, Utility::format(
             "Trade::AssimpImporter::animation(): ignoring dummy rotation track in animation 1, channel {}\n"
             "Trade::AssimpImporter::animation(): ignoring dummy scaling track in animation 1, channel {}\n",
             targets[1].channel, targets[1].channel),
             TestSuite::Compare::StringContains);
-        CORRADE_COMPARE_AS(out.str(), Utility::format(
+        CORRADE_COMPARE_AS(out, Utility::format(
             "Trade::AssimpImporter::animation(): ignoring dummy translation track in animation 1, channel {}\n"
             "Trade::AssimpImporter::animation(): ignoring dummy rotation track in animation 1, channel {}\n",
             targets[2].channel, targets[2].channel),
             TestSuite::Compare::StringContains);
     } else
-        CORRADE_COMPARE(out.str(), "");
+        CORRADE_COMPARE(out, "");
 }
 
 void AssimpImporterTest::animationDummyTracksRemovalDisabled() {
@@ -1082,7 +1081,7 @@ void AssimpImporterTest::animationDummyTracksRemovalDisabled() {
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "animation.gltf")));
 
     Containers::Optional<AnimationData> animation;
-    std::ostringstream out;
+    Containers::String out;
     {
         Debug redirectDebug{&out};
         animation = importer->animation(1);
@@ -1117,13 +1116,13 @@ void AssimpImporterTest::animationDummyTracksRemovalDisabled() {
         CORRADE_COMPARE(animation->track(i).size(), keyCount);
     }
 
-    CORRADE_COMPARE_AS(out.str(),
+    CORRADE_COMPARE_AS(out,
         "Trade::AssimpImporter::animation(): ignoring dummy translation track in animation",
         TestSuite::Compare::StringNotContains);
-    CORRADE_COMPARE_AS(out.str(),
+    CORRADE_COMPARE_AS(out,
         "Trade::AssimpImporter::animation(): ignoring dummy rotation track in animation",
         TestSuite::Compare::StringNotContains);
-    CORRADE_COMPARE_AS(out.str(),
+    CORRADE_COMPARE_AS(out,
         "Trade::AssimpImporter::animation(): ignoring dummy scaling track in animation",
         TestSuite::Compare::StringNotContains);
 }
@@ -1259,16 +1258,16 @@ void AssimpImporterTest::animationQuaternionNormalizationEnabled() {
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "animation-patching.gltf")));
 
     Containers::Optional<AnimationData> animation;
-    std::ostringstream out;
+    Containers::String out;
     {
         Warning redirectWarning{&out};
         animation = importer->animation("Quaternion normalization patching");
     }
     CORRADE_VERIFY(animation);
     if(data.quiet)
-        CORRADE_COMPARE(out.str(), "");
+        CORRADE_COMPARE(out, "");
     else
-        CORRADE_COMPARE_AS(out.str(),
+        CORRADE_COMPARE_AS(out,
             "Trade::AssimpImporter::animation(): quaternions in some rotation tracks were renormalized\n",
             TestSuite::Compare::StringContains);
     CORRADE_COMPARE(animation->trackCount(), 1);
@@ -1843,7 +1842,7 @@ void AssimpImporterTest::lightDirectionalBlender() {
     /* While COLLADA files (the light() test above) have the attenuation as
        expected, Assimp's Blender importer encodes max distance into it, which
        has to be patched away */
-    std::ostringstream out;
+    Containers::String out;
     Warning redirectWarning{&out};
     Containers::Optional<LightData> light = importer->light("Sun");
     CORRADE_VERIFY(light);
@@ -1852,9 +1851,9 @@ void AssimpImporterTest::lightDirectionalBlender() {
     CORRADE_COMPARE(light->intensity(), 1.0f);
     CORRADE_COMPARE(light->attenuation(), (Vector3{1.0f, 0.0f, 0.0f}));
     if(data.quiet)
-        CORRADE_COMPARE(out.str(), "");
+        CORRADE_COMPARE(out, "");
     else
-        CORRADE_COMPARE(out.str(), "Trade::AssimpImporter::light(): patching attenuation Vector(1, 0.16, 0.0064) to Vector(1, 0, 0) for Trade::LightType::Directional\n");
+        CORRADE_COMPARE(out, "Trade::AssimpImporter::light(): patching attenuation Vector(1, 0.16, 0.0064) to Vector(1, 0, 0) for Trade::LightType::Directional\n");
 }
 
 void AssimpImporterTest::lightUnsupported() {
@@ -1868,10 +1867,10 @@ void AssimpImporterTest::lightUnsupported() {
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "light-area.fbx")));
     CORRADE_COMPARE(importer->lightCount(), 1);
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->light(0));
-    CORRADE_COMPARE(out.str(), "Trade::AssimpImporter::light(): light type 0 is not supported\n");
+    CORRADE_COMPARE(out, "Trade::AssimpImporter::light(): light type 0 is not supported\n");
 }
 
 void AssimpImporterTest::cameraLightReferencedByTwoNodes() {
@@ -2091,7 +2090,7 @@ void AssimpImporterTest::materialStlWhiteAmbientPatch() {
     CORRADE_COMPARE(importer->materialCount(), 1);
 
     Containers::Optional<MaterialData> material;
-    std::ostringstream out;
+    Containers::String out;
     {
         Warning redirectWarning{&out};
         material = importer->material(0);
@@ -2100,11 +2099,11 @@ void AssimpImporterTest::materialStlWhiteAmbientPatch() {
     CORRADE_VERIFY(material);
     CORRADE_COMPARE(material->types(), MaterialType::Phong);
     if(data.quiet)
-        CORRADE_COMPARE(out.str(), "");
+        CORRADE_COMPARE(out, "");
     else {
         CORRADE_EXPECT_FAIL_IF(_assimpVersion < 410 || _assimpVersion >= 500,
             "Assimp < 4.1 and >= 5.0 behaves properly regarding STL material ambient");
-        CORRADE_COMPARE(out.str(), "Trade::AssimpImporter::material(): white ambient detected, forcing back to black\n");
+        CORRADE_COMPARE(out, "Trade::AssimpImporter::material(): white ambient detected, forcing back to black\n");
     }
 
     const auto& phong = material->as<PhongMaterialData>();
@@ -2137,7 +2136,7 @@ void AssimpImporterTest::materialWhiteAmbientTexture() {
     }
 
     Containers::Optional<MaterialData> material;
-    std::ostringstream out;
+    Containers::String out;
     {
         Warning redirectWarning{&out};
         material = importer->material(1);
@@ -2148,7 +2147,7 @@ void AssimpImporterTest::materialWhiteAmbientTexture() {
     CORRADE_COMPARE(importer->textureCount(), 1);
     CORRADE_VERIFY(material->hasAttribute(MaterialAttribute::AmbientTexture));
     /* It shouldn't be complaining about white ambient in this case */
-    CORRADE_COMPARE(out.str(), "");
+    CORRADE_COMPARE(out, "");
 }
 
 void AssimpImporterTest::materialMultipleTextures() {
@@ -2446,7 +2445,7 @@ void AssimpImporterTest::materialRaw() {
     CORRADE_COMPARE(importer->materialCount(), 2);
 
     Containers::Optional<MaterialData> material;
-    std::ostringstream out;
+    Containers::String out;
     {
         Warning redirectWarning{&out};
         material = importer->material("Custom_Types");
@@ -2488,7 +2487,7 @@ void AssimpImporterTest::materialRaw() {
     if(_assimpVersion < 500) {
         CORRADE_WARN("This version of Assimp doesn't import raw FBX material properties.");
 
-        CORRADE_COMPARE(out.str(), "");
+        CORRADE_COMPARE(out, "");
     } else {
         /* Raw attributes taken directly from the FBX file, prefixed with "$raw.".
            Seems to be the only importer that supports that. */
@@ -2503,9 +2502,9 @@ void AssimpImporterTest::materialRaw() {
         }
 
         if(data.quiet)
-            CORRADE_COMPARE(out.str(), "");
+            CORRADE_COMPARE(out, "");
         else
-            CORRADE_COMPARE(out.str(),
+            CORRADE_COMPARE(out,
                 "Trade::AssimpImporter::material(): property $raw.LongNameLongNameLongNameLongNameLongNameLongNameLongName is too large with 67 bytes, skipping\n"
                 "Trade::AssimpImporter::material(): property $raw.LongValue is too large with 70 bytes, skipping\n");
     }
@@ -2524,7 +2523,7 @@ void AssimpImporterTest::materialRaw() {
     }
 
     {
-        out.str({});
+        out = {};
         Warning redirectWarning{&out};
         material = importer->material("raw");
     }
@@ -2537,9 +2536,9 @@ void AssimpImporterTest::materialRaw() {
     }
     /* Versions before Assimp 5.1.0 don't import AI_MATKEY_UVTRANSFORM */
     if(_assimpVersion < 510 || data.quiet)
-        CORRADE_COMPARE(out.str(), "");
+        CORRADE_COMPARE(out, "");
     else
-        CORRADE_COMPARE(out.str(), "Trade::AssimpImporter::material(): property $tex.uvtrafo is a float array of 20 bytes, saving as a typeless buffer\n");
+        CORRADE_COMPARE(out, "Trade::AssimpImporter::material(): property $tex.uvtrafo is a float array of 20 bytes, saving as a typeless buffer\n");
 
     /* Attributes that would normally be recognized */
     CORRADE_VERIFY(!material->hasAttribute(MaterialAttribute::DiffuseColor));
@@ -2968,13 +2967,13 @@ void AssimpImporterTest::meshSkinningAttributes() {
 
     for(Containers::StringView meshName: meshNames) {
         Containers::Optional<MeshData> mesh;
-        std::ostringstream out;
+        Containers::String out;
         {
             Warning redirectWarning{&out};
             mesh = importer->mesh(meshName);
         }
         /* No warning about glTF dropping sets of weights */
-        CORRADE_COMPARE(out.str(), "");
+        CORRADE_COMPARE(out, "");
         CORRADE_VERIFY(mesh);
 
         /* Position, maybe normal + one pair of joints & weights */
@@ -3158,7 +3157,7 @@ void AssimpImporterTest::meshSkinningAttributesMultipleGltf() {
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "skin-multiple-sets.gltf")));
 
     Containers::Optional<MeshData> mesh;
-    std::ostringstream out;
+    Containers::String out;
     {
         Warning redirectWarning{&out};
         mesh = importer->mesh("Mesh");
@@ -3180,10 +3179,10 @@ void AssimpImporterTest::meshSkinningAttributesMultipleGltf() {
     }
 
     if(_assimpVersion < 524 && !data.quiet)
-        CORRADE_COMPARE(out.str(),
+        CORRADE_COMPARE(out,
             "Trade::AssimpImporter::mesh(): found non-normalized joint weights, possibly a result of Assimp reading joint weights incorrectly. Consult the importer documentation for more information\n");
     else
-        CORRADE_COMPARE(out.str(), "");
+        CORRADE_COMPARE(out, "");
 
     const UnsignedInt importedArraySize = Utility::min(UnsignedShort{8}, mesh->attributeArraySize(MeshAttribute::JointIds));
 
@@ -3841,23 +3840,23 @@ void AssimpImporterTest::imageExternalNotFound() {
     CORRADE_COMPARE(importer->image2DCount(), 1);
 
     {
-        std::ostringstream out;
+        Containers::String out;
         Error redirectError{&out};
         CORRADE_VERIFY(!importer->image2D(0));
         /* image2DLevelCount() can't fail, but should not crash either */
         CORRADE_COMPARE(importer->image2DLevelCount(0), 1);
         /* There's an error from Path::read() before */
-        CORRADE_COMPARE_AS(out.str(),
+        CORRADE_COMPARE_AS(out,
             "\nTrade::AbstractImporter::openFile(): cannot open file /not-found.png\n",
             TestSuite::Compare::StringHasSuffix);
 
     /* The importer should get cached even in case of failure, so the message
        should get printed just once */
     } {
-        std::ostringstream out;
+        Containers::String out;
         Error redirectError{&out};
         CORRADE_VERIFY(!importer->image2D(0));
-        CORRADE_COMPARE(out.str(), "");
+        CORRADE_COMPARE(out, "");
     }
 }
 
@@ -3869,10 +3868,10 @@ void AssimpImporterTest::imageExternalNoPathNoCallback() {
     CORRADE_VERIFY(importer->openData(*data));
     CORRADE_COMPARE(importer->image2DCount(), 2);
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->image2D(0));
-    CORRADE_COMPARE(out.str(), "Trade::AssimpImporter::image2D(): external images can be imported only when opening files from the filesystem or if a file callback is present\n");
+    CORRADE_COMPARE(out, "Trade::AssimpImporter::image2D(): external images can be imported only when opening files from the filesystem or if a file callback is present\n");
 }
 
 void AssimpImporterTest::imageNot2D() {
@@ -3884,10 +3883,10 @@ void AssimpImporterTest::imageNot2D() {
 
     CORRADE_COMPARE(importer->image2DCount(), 1);
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->image2D(0));
-    CORRADE_COMPARE(out.str(), "Trade::AssimpImporter::image2D(): expected exactly one 2D image in an image file but got 0\n");
+    CORRADE_COMPARE(out, "Trade::AssimpImporter::image2D(): expected exactly one 2D image in an image file but got 0\n");
 }
 
 void AssimpImporterTest::imagePathMtlSpaceAtTheEnd() {
@@ -3972,12 +3971,12 @@ void AssimpImporterTest::imagePropagateImporterFlags() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
     importer->setFlags(ImporterFlag::Verbose);
 
-    std::ostringstream out;
+    Containers::String out;
     Debug redirectOutput{&out};
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "material-texture.dae")));
     CORRADE_COMPARE(importer->image2DCount(), 2);
     CORRADE_VERIFY(importer->image2D(0));
-    CORRADE_COMPARE_AS(out.str(),
+    CORRADE_COMPARE_AS(out,
         /* There's LOUD output from Assimp before */
         "\nTrade::AnyImageImporter::openFile(): using PngImporter (provided by StbImageImporter)\n",
         TestSuite::Compare::StringHasSuffix);
@@ -4213,7 +4212,7 @@ void AssimpImporterTest::fileCallbackNotFound() {
             return Containers::Optional<Containers::ArrayView<const char>>{};
         });
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->openFile("some-file.dae"));
 
@@ -4221,9 +4220,9 @@ void AssimpImporterTest::fileCallbackNotFound() {
        assimp 5, FFS, so we have to check differently. See CMakeLists.txt for
        details. */
     if(_assimpVersion >= 500)
-        CORRADE_COMPARE(out.str(), "Trade::AssimpImporter::openFile(): failed to open some-file.dae: Failed to open file 'some-file.dae'.\n");
+        CORRADE_COMPARE(out, "Trade::AssimpImporter::openFile(): failed to open some-file.dae: Failed to open file 'some-file.dae'.\n");
     else
-        CORRADE_COMPARE(out.str(), "Trade::AssimpImporter::openFile(): failed to open some-file.dae: Failed to open file some-file.dae.\n");
+        CORRADE_COMPARE(out, "Trade::AssimpImporter::openFile(): failed to open some-file.dae: Failed to open file some-file.dae.\n");
 }
 
 void AssimpImporterTest::fileCallbackEmptyFile() {
@@ -4243,7 +4242,7 @@ void AssimpImporterTest::fileCallbackEmptyFile() {
             return Containers::Optional<Containers::ArrayView<const char>>{InPlaceInit};
         });
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->openFile("some-file.dae"));
     /* INTERESTINGLY ENOUGH, a completely different message altogether,
@@ -4252,9 +4251,9 @@ void AssimpImporterTest::fileCallbackEmptyFile() {
        in 5.1 due to a change from IrrXML to PugiXML:
        https://github.com/assimp/assimp/pull/2966 */
     if(_assimpVersion < 510)
-        CORRADE_COMPARE(out.str(), "Trade::AssimpImporter::openFile(): failed to open some-file.dae: File is too small\n");
+        CORRADE_COMPARE(out, "Trade::AssimpImporter::openFile(): failed to open some-file.dae: File is too small\n");
     else
-        CORRADE_COMPARE(out.str(), "Trade::AssimpImporter::openFile(): failed to open some-file.dae: Unable to read file, malformed XML\n");
+        CORRADE_COMPARE(out, "Trade::AssimpImporter::openFile(): failed to open some-file.dae: Unable to read file, malformed XML\n");
 }
 
 void AssimpImporterTest::fileCallbackReset() {
@@ -4318,10 +4317,10 @@ void AssimpImporterTest::fileCallbackImageNotFound() {
     CORRADE_VERIFY(importer->openData(*data));
     CORRADE_COMPARE(importer->image2DCount(), 2);
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->image2D(1));
-    CORRADE_COMPARE(out.str(), "Trade::AbstractImporter::openFile(): cannot open file diffuse_texture.png\n");
+    CORRADE_COMPARE(out, "Trade::AbstractImporter::openFile(): cannot open file diffuse_texture.png\n");
 }
 
 void AssimpImporterTest::openTwice() {

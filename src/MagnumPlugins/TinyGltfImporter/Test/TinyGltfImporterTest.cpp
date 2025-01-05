@@ -26,7 +26,6 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-#include <sstream>
 #include <Corrade/Containers/Array.h>
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/Triple.h>
@@ -36,8 +35,8 @@
 #include <Corrade/TestSuite/Compare/Numeric.h>
 #include <Corrade/TestSuite/Compare/String.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
-#include <Corrade/Utility/DebugStl.h> /** @todo remove once Debug is stream-free */
-#include <Corrade/Utility/FormatStl.h> /** @todo remove once Debug is stream-free */
+#include <Corrade/Utility/DebugStl.h> /** @todo remove once Configuration is std::string-free */
+#include <Corrade/Utility/Format.h>
 #include <Corrade/Utility/Path.h>
 #include <Corrade/Utility/Resource.h>
 #include <Magnum/FileCallback.h>
@@ -716,12 +715,12 @@ void TinyGltfImporterTest::openError() {
     auto&& data = OpenErrorData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
     CORRADE_VERIFY(!importer->openData(data.shortData));
-    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::TinyGltfImporter::openData(): error opening file: {}\n", data.shortDataError));
+    CORRADE_COMPARE(out, Utility::format("Trade::TinyGltfImporter::openData(): error opening file: {}\n", data.shortDataError));
 }
 
 void TinyGltfImporterTest::openExternalDataNotFound() {
@@ -730,11 +729,11 @@ void TinyGltfImporterTest::openExternalDataNotFound() {
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->openFile(Utility::Path::join(TINYGLTFIMPORTER_TEST_DIR, "buffer-invalid-notfound"_s + data.suffix)));
     /* There's an error from Path::read() before */
-    CORRADE_COMPARE_AS(out.str(),
+    CORRADE_COMPARE_AS(out,
         "\nTrade::TinyGltfImporter::openData(): error opening file: File read error : /nonexistent.bin : file reading failed\n",
         TestSuite::Compare::StringHasSuffix);
 }
@@ -748,10 +747,10 @@ void TinyGltfImporterTest::openExternalDataNoPathNoCallback() {
     Containers::Optional<Containers::Array<char>> file = Utility::Path::read(Utility::Path::join(TINYGLTFIMPORTER_TEST_DIR, "buffer-invalid-notfound"_s + data.suffix));
     CORRADE_VERIFY(file);
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->openData(*file));
-    CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::openData(): error opening file: File read error : /nonexistent.bin : external buffers can be imported only when opening files from the filesystem or if a file callback is present\n");
+    CORRADE_COMPARE(out, "Trade::TinyGltfImporter::openData(): error opening file: File read error : /nonexistent.bin : external buffers can be imported only when opening files from the filesystem or if a file callback is present\n");
 }
 
 void TinyGltfImporterTest::openExternalDataWrongSize() {
@@ -760,7 +759,7 @@ void TinyGltfImporterTest::openExternalDataWrongSize() {
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     {
         /* These files are actually valid, but it's tinygltf we're using here,
@@ -768,7 +767,7 @@ void TinyGltfImporterTest::openExternalDataWrongSize() {
         CORRADE_EXPECT_FAIL_IF(data.suffix == std::string{".glb"},
             "tinygltf doesn't check for correct buffer size in GLBs.");
         CORRADE_VERIFY(!importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "buffer-long-size"_s + data.suffix)));
-        CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::openData(): error opening file: File size mismatch : external-data.bin, requestedBytes 6, but got 12\n");
+        CORRADE_COMPARE(out, "Trade::TinyGltfImporter::openData(): error opening file: File size mismatch : external-data.bin, requestedBytes 6, but got 12\n");
     }
 }
 
@@ -778,14 +777,14 @@ void TinyGltfImporterTest::openExternalDataNoUri() {
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
 
     CORRADE_VERIFY(!importer->openFile(Utility::Path::join(TINYGLTFIMPORTER_TEST_DIR, "buffer-invalid-no-uri"_s + data.suffix)));
     {
         CORRADE_EXPECT_FAIL_IF(data.suffix == ".glb"_s,
             "tinygltf incorrectly detects all buffers without URI as GLB BIN buffer.");
-        CORRADE_COMPARE(out.str(),
+        CORRADE_COMPARE(out,
             "Trade::TinyGltfImporter::openData(): error opening file: 'uri' is missing from non binary glTF file buffer.\n"
             "File not found :\n" /* tinygltf seems to continue to try to load a file from an empty URI */);
     }
@@ -942,10 +941,10 @@ void TinyGltfImporterTest::animationInvalid() {
     /* Check we didn't forget to test anything */
     CORRADE_COMPARE(Containers::arraySize(AnimationInvalidData), importer->animationCount());
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->animation(data.name));
-    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::TinyGltfImporter::animation(): {}\n", data.message));
+    CORRADE_COMPARE(out, Utility::format("Trade::TinyGltfImporter::animation(): {}\n", data.message));
 }
 
 void TinyGltfImporterTest::animationTrackSizeMismatch() {
@@ -955,10 +954,10 @@ void TinyGltfImporterTest::animationTrackSizeMismatch() {
 
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(TINYGLTFIMPORTER_TEST_DIR, "animation-invalid-track-size-mismatch.gltf")));
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->animation(0));
-    CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::animation(): target track size doesn't match time track size, expected 3 but got 2\n");
+    CORRADE_COMPARE(out, "Trade::TinyGltfImporter::animation(): target track size doesn't match time track size, expected 3 but got 2\n");
 }
 
 void TinyGltfImporterTest::animationMissingTargetNode() {
@@ -1133,10 +1132,10 @@ void TinyGltfImporterTest::animationSplineSharedWithDifferentTimeTrack() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "animation-splines-sharing.gltf")));
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->animation("TRS animation, splines, sharing data with different time track"));
-    CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::animation(): spline track is shared with different time tracks, we don't support that, sorry\n");
+    CORRADE_COMPARE(out, "Trade::TinyGltfImporter::animation(): spline track is shared with different time tracks, we don't support that, sorry\n");
 }
 
 void TinyGltfImporterTest::animationShortestPathOptimizationEnabled() {
@@ -1257,13 +1256,13 @@ void TinyGltfImporterTest::animationQuaternionNormalizationEnabled() {
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "animation-patching.gltf")));
 
     Containers::Optional<AnimationData> animation;
-    std::ostringstream out;
+    Containers::String out;
     {
         Warning warningRedirection{&out};
         animation = importer->animation("Quaternion normalization patching");
     }
     CORRADE_VERIFY(animation);
-    CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::animation(): quaternions in some rotation tracks were renormalized\n");
+    CORRADE_COMPARE(out, "Trade::TinyGltfImporter::animation(): quaternions in some rotation tracks were renormalized\n");
     CORRADE_COMPARE(animation->trackCount(), 1);
     CORRADE_COMPARE(animation->trackType(0), AnimationTrackType::Quaternion);
 
@@ -1464,10 +1463,10 @@ void TinyGltfImporterTest::camera() {
 void TinyGltfImporterTest::cameraInvalidType() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->openFile(Utility::Path::join(TINYGLTFIMPORTER_TEST_DIR, "camera-invalid-type.gltf")));
-    CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::openData(): error opening file: Invalid camera type: \"oblique\". Must be \"perspective\" or \"orthographic\"\n");
+    CORRADE_COMPARE(out, "Trade::TinyGltfImporter::openData(): error opening file: Invalid camera type: \"oblique\". Must be \"perspective\" or \"orthographic\"\n");
 }
 
 void TinyGltfImporterTest::light() {
@@ -1524,30 +1523,30 @@ void TinyGltfImporterTest::lightInvalid() {
     /* Check we didn't forget to test anything */
     CORRADE_COMPARE(importer->lightCount(), Containers::arraySize(LightInvalidData));
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->light(data.name));
-    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::TinyGltfImporter::light(): {}\n", data.message));
+    CORRADE_COMPARE(out, Utility::format("Trade::TinyGltfImporter::light(): {}\n", data.message));
 }
 
 void TinyGltfImporterTest::lightMissingType() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->openFile(Utility::Path::join(TINYGLTFIMPORTER_TEST_DIR, "light-invalid-missing-type.gltf")));
     /* This error is extremely shitty, but well that's tinygltf, so. */
-    CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::openData(): error opening file: 'type' property is missing.\n");
+    CORRADE_COMPARE(out, "Trade::TinyGltfImporter::openData(): error opening file: 'type' property is missing.\n");
 }
 
 void TinyGltfImporterTest::lightMissingSpot() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->openFile(Utility::Path::join(TINYGLTFIMPORTER_TEST_DIR, "light-invalid-missing-spot.gltf")));
     /* This error is extremely shitty, but well that's tinygltf, so. */
-    CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::openData(): error opening file: Spot light description not found.\n");
+    CORRADE_COMPARE(out, "Trade::TinyGltfImporter::openData(): error opening file: Spot light description not found.\n");
 }
 
 void TinyGltfImporterTest::scene() {
@@ -1706,10 +1705,10 @@ void TinyGltfImporterTest::sceneInvalid() {
     /* Check we didn't forget to test anything */
     CORRADE_COMPARE(Containers::arraySize(SceneInvalidData), importer->sceneCount());
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->scene(data.name));
-    CORRADE_COMPARE(out.str(), Utility::formatString(
+    CORRADE_COMPARE(out, Utility::format(
         "Trade::TinyGltfImporter::scene(): {}\n", data.message));
 }
 
@@ -1719,10 +1718,10 @@ void TinyGltfImporterTest::sceneInvalidHierarchy() {
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, data.file)));
-    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::TinyGltfImporter::openData(): {}\n", data.message));
+    CORRADE_COMPARE(out, Utility::format("Trade::TinyGltfImporter::openData(): {}\n", data.message));
 }
 
 void TinyGltfImporterTest::sceneDefaultNoScenes() {
@@ -1746,10 +1745,10 @@ void TinyGltfImporterTest::sceneDefaultNoDefault() {
 void TinyGltfImporterTest::sceneDefaultOutOfRange() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "scene-default-oob.gltf")));
-    CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::openData(): scene index 0 out of range for 0 scenes\n");
+    CORRADE_COMPARE(out, "Trade::TinyGltfImporter::openData(): scene index 0 out of range for 0 scenes\n");
 }
 
 void TinyGltfImporterTest::sceneTransformation() {
@@ -1980,13 +1979,13 @@ void TinyGltfImporterTest::sceneTransformationQuaternionNormalizationEnabled() {
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "scene-transformation-patching.gltf")));
 
     Containers::Optional<SceneData> scene;
-    std::ostringstream out;
+    Containers::String out;
     {
         Warning redirectWarning{&out};
         scene = importer->scene(0);
     }
     CORRADE_VERIFY(scene);
-    CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::scene(): rotation quaternion of node 3 was renormalized\n");
+    CORRADE_COMPARE(out, "Trade::TinyGltfImporter::scene(): rotation quaternion of node 3 was renormalized\n");
 
     Containers::Optional<Containers::Triple<Vector3, Quaternion, Vector3>> trs = scene->translationRotationScaling3DFor(3);
     CORRADE_VERIFY(trs);
@@ -2000,13 +1999,13 @@ void TinyGltfImporterTest::sceneTransformationQuaternionNormalizationDisabled() 
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "scene-transformation-patching.gltf")));
 
     Containers::Optional<SceneData> scene;
-    std::ostringstream out;
+    Containers::String out;
     {
         Warning redirectWarning{&out};
         scene = importer->scene(0);
     }
     CORRADE_VERIFY(scene);
-    CORRADE_COMPARE(out.str(), "");
+    CORRADE_COMPARE(out, "");
 
     Containers::Optional<Containers::Triple<Vector3, Quaternion, Vector3>> trs = scene->translationRotationScaling3DFor(3);
     CORRADE_VERIFY(trs);
@@ -2061,16 +2060,16 @@ void TinyGltfImporterTest::skinInvalid() {
     /* Check we didn't forget to test anything */
     CORRADE_COMPARE(Containers::arraySize(SkinInvalidData), importer->skin3DCount());
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->skin3D(data.name));
-    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::TinyGltfImporter::skin3D(): {}\n", data.message));
+    CORRADE_COMPARE(out, Utility::format("Trade::TinyGltfImporter::skin3D(): {}\n", data.message));
 }
 
 void TinyGltfImporterTest::skinNoJointsProperty() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->openFile(Utility::Path::join(TINYGLTFIMPORTER_TEST_DIR, "skin-invalid-no-joints.gltf")));
     {
@@ -2078,7 +2077,7 @@ void TinyGltfImporterTest::skinNoJointsProperty() {
         CORRADE_VERIFY(false);
     }
 
-    CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::openData(): error opening file: \n");
+    CORRADE_COMPARE(out, "Trade::TinyGltfImporter::openData(): error opening file: \n");
 }
 
 void TinyGltfImporterTest::mesh() {
@@ -2453,7 +2452,7 @@ void TinyGltfImporterTest::meshUnorderedAttributes() {
     /* Custom attributes are sorted in alphabetical order */
     CORRADE_VERIFY(customAttribute1 < customAttribute4);
 
-    std::ostringstream out;
+    Containers::String out;
     Warning redirectWarning{&out};
 
     Containers::Optional<Trade::MeshData> mesh = importer->mesh(0);
@@ -2461,7 +2460,7 @@ void TinyGltfImporterTest::meshUnorderedAttributes() {
     CORRADE_COMPARE(mesh->attributeCount(), 7);
 
     /* No warning about _CUSTOM_4 and _CUSTOM_1 */
-    CORRADE_COMPARE(out.str(),
+    CORRADE_COMPARE(out,
         "Trade::TinyGltfImporter::mesh(): found attribute COLOR_3 but expected COLOR_0\n"
         "Trade::TinyGltfImporter::mesh(): found attribute COLOR_9 but expected COLOR_4\n"
     );
@@ -2797,10 +2796,10 @@ void TinyGltfImporterTest::meshPrimitivesTypes() {
 void TinyGltfImporterTest::meshIndexAccessorOutOfRange() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->openFile(Utility::Path::join(TINYGLTFIMPORTER_TEST_DIR, "mesh-invalid-index-accessor-oob.gltf")));
-    CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::openData(): error opening file: primitive indices accessor out of bounds\n");
+    CORRADE_COMPARE(out, "Trade::TinyGltfImporter::openData(): error opening file: primitive indices accessor out of bounds\n");
 }
 
 void TinyGltfImporterTest::meshInvalid() {
@@ -2813,10 +2812,10 @@ void TinyGltfImporterTest::meshInvalid() {
     /* Check we didn't forget to test anything */
     CORRADE_VERIFY(Containers::arraySize(MeshInvalidData) >= importer->meshCount());
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->mesh(data.name));
-    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::TinyGltfImporter::mesh(): {}\n", data.message));
+    CORRADE_COMPARE(out, Utility::format("Trade::TinyGltfImporter::mesh(): {}\n", data.message));
 }
 
 void TinyGltfImporterTest::materialPbrMetallicRoughness() {
@@ -3490,15 +3489,15 @@ void TinyGltfImporterTest::materialInvalid() {
     /* Check we didn't forget to test anything */
     CORRADE_COMPARE(Containers::arraySize(MaterialInvalidData), importer->materialCount());
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->material(data.name));
-    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::TinyGltfImporter::material(): {}\n", data.message));
+    CORRADE_COMPARE(out, Utility::format("Trade::TinyGltfImporter::material(): {}\n", data.message));
 }
 
 void TinyGltfImporterTest::textureCoordinateYFlip() {
     auto&& data = TextureCoordinateYFlipData[testCaseInstanceId()];
-    setTestCaseDescription(Utility::formatString("{}{}", data.materialName, data.flipInMaterial ? ", textureCoordinateYFlipInMaterial" : ""));
+    setTestCaseDescription(Utility::format("{}{}", data.materialName, data.flipInMaterial ? ", textureCoordinateYFlipInMaterial" : ""));
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
 
@@ -3607,10 +3606,10 @@ void TinyGltfImporterTest::textureInvalid() {
     /* Check we didn't forget to test anything */
     CORRADE_COMPARE(Containers::arraySize(TextureInvalidData), importer->textureCount());
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->texture(data.name));
-    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::TinyGltfImporter::texture(): {}\n", data.message));
+    CORRADE_COMPARE(out, Utility::format("Trade::TinyGltfImporter::texture(): {}\n", data.message));
 }
 
 constexpr char ExpectedImageData[] =
@@ -3673,11 +3672,11 @@ void TinyGltfImporterTest::imageExternalNotFound() {
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(TINYGLTFIMPORTER_TEST_DIR, "image-invalid-notfound.gltf")));
     CORRADE_COMPARE(importer->image2DCount(), 1);
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->image2D(0));
     /* There's an error from Path:.read() first */
-    CORRADE_COMPARE_AS(out.str(),
+    CORRADE_COMPARE_AS(out,
         "\nTrade::AbstractImporter::openFile(): cannot open file /nonexistent.png\n",
         TestSuite::Compare::StringHasSuffix);
 }
@@ -3689,10 +3688,10 @@ void TinyGltfImporterTest::imageExternalNoPathNoCallback() {
     CORRADE_VERIFY(importer->openData(*data));
     CORRADE_COMPARE(importer->image2DCount(), 2);
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->image2D(0));
-    CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::image2D(): external images can be imported only when opening files from the filesystem or if a file callback is present\n");
+    CORRADE_COMPARE(out, "Trade::TinyGltfImporter::image2D(): external images can be imported only when opening files from the filesystem or if a file callback is present\n");
 }
 
 void TinyGltfImporterTest::imageBasis() {
@@ -3824,12 +3823,12 @@ void TinyGltfImporterTest::fileCallbackBufferNotFound() {
     importer->setFileCallback([](const std::string&, InputFileCallbackPolicy, void*)
         -> Containers::Optional<Containers::ArrayView<const char>> { return {}; });
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
 
     Utility::Resource rs{"data"};
     CORRADE_VERIFY(!importer->openData(rs.getRaw("some/path/data" + std::string{data.suffix})));
-    CORRADE_COMPARE(out.str(), "Trade::TinyGltfImporter::openData(): error opening file: File read error : data.bin : file callback failed\n");
+    CORRADE_COMPARE(out, "Trade::TinyGltfImporter::openData(): error opening file: File read error : data.bin : file callback failed\n");
 }
 
 void TinyGltfImporterTest::fileCallbackImage() {
@@ -3882,11 +3881,11 @@ void TinyGltfImporterTest::fileCallbackImageNotFound() {
     CORRADE_VERIFY(importer->openData(rs.getRaw("some/path/data" + std::string{data.suffix})));
     CORRADE_COMPARE(importer->image2DCount(), 1);
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
 
     CORRADE_VERIFY(!importer->image2D(0));
-    CORRADE_COMPARE(out.str(), "Trade::AbstractImporter::openFile(): cannot open file data.png\n");
+    CORRADE_COMPARE(out, "Trade::AbstractImporter::openFile(): cannot open file data.png\n");
 }
 
 void TinyGltfImporterTest::utf8filenames() {
@@ -4049,10 +4048,10 @@ void TinyGltfImporterTest::versionUnsupported() {
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, data.file)));
-    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::TinyGltfImporter::openData(): {}\n", data.message));
+    CORRADE_COMPARE(out, Utility::format("Trade::TinyGltfImporter::openData(): {}\n", data.message));
 }
 
 void TinyGltfImporterTest::openTwice() {

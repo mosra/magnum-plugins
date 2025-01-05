@@ -24,7 +24,6 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-#include <sstream>
 #include <thread> /* std::thread::hardware_concurrency(), sigh */
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/StridedArrayView.h>
@@ -33,8 +32,7 @@
 #include <Corrade/TestSuite/Compare/Container.h>
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
-#include <Corrade/Utility/DebugStl.h> /** @todo remove once Debug is stream-free */
-#include <Corrade/Utility/FormatStl.h> /** @todo remove once Debug is stream-free */
+#include <Corrade/Utility/Format.h>
 #include <Corrade/Utility/Path.h>
 #include <Magnum/PixelFormat.h>
 #include <Magnum/Math/Half.h>
@@ -283,10 +281,10 @@ OpenExrImporterTest::OpenExrImporterTest() {
 void OpenExrImporterTest::emptyFile() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenExrImporter");
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->openData({}));
-    CORRADE_COMPARE(out.str(), "Trade::OpenExrImporter::openData(): import error: Cannot read image file \"\". Reading past end of file.\n");
+    CORRADE_COMPARE(out, "Trade::OpenExrImporter::openData(): import error: Cannot read image file \"\". Reading past end of file.\n");
 }
 
 void OpenExrImporterTest::shortFile() {
@@ -295,10 +293,10 @@ void OpenExrImporterTest::shortFile() {
     Containers::Optional<Containers::Array<char>> data = Utility::Path::read(Utility::Path::join(OPENEXRIMPORTER_TEST_DIR, "rgba32f.exr"));
     CORRADE_VERIFY(importer->openData(data->exceptSuffix(1)));
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->image2D(0));
-    CORRADE_COMPARE(out.str(), "Trade::OpenExrImporter::image2D(): import error: Error reading pixel data from image file \"\". Reading past end of file.\n");
+    CORRADE_COMPARE(out, "Trade::OpenExrImporter::image2D(): import error: Error reading pixel data from image file \"\". Reading past end of file.\n");
 }
 
 void OpenExrImporterTest::inconsistentFormat() {
@@ -306,20 +304,20 @@ void OpenExrImporterTest::inconsistentFormat() {
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(OPENEXRIMPORTER_TEST_DIR, "rgb32fa32ui.exr")));
 
     /* Opening succeeds, but the image import won't */
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->image2D(0));
-    CORRADE_COMPARE(out.str(), "Trade::OpenExrImporter::image2D(): channel A expected to be a FLOAT but got UINT\n");
+    CORRADE_COMPARE(out, "Trade::OpenExrImporter::image2D(): channel A expected to be a FLOAT but got UINT\n");
 }
 
 void OpenExrImporterTest::inconsistentDepthFormat() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenExrImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(OPENEXRIMPORTER_TEST_DIR, "depth32ui.exr")));
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->image2D(0));
-    CORRADE_COMPARE(out.str(), "Trade::OpenExrImporter::image2D(): channel Z expected to be a FLOAT but got UINT\n");
+    CORRADE_COMPARE(out, "Trade::OpenExrImporter::image2D(): channel Z expected to be a FLOAT but got UINT\n");
 }
 
 void OpenExrImporterTest::rgb16f() {
@@ -329,7 +327,7 @@ void OpenExrImporterTest::rgb16f() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenExrImporter");
     importer->addFlags(data.flags);
 
-    std::ostringstream out;
+    Containers::String out;
     {
         Warning redirectWarning{&out};
         CORRADE_VERIFY(importer->openFile(Utility::Path::join(OPENEXRIMPORTER_TEST_DIR, data.filename)));
@@ -337,7 +335,7 @@ void OpenExrImporterTest::rgb16f() {
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
-    CORRADE_COMPARE(out.str(), data.message);
+    CORRADE_COMPARE(out, data.message);
     CORRADE_COMPARE(image->flags(), ImageFlags2D{});
     CORRADE_COMPARE(image->size(), Vector2i(1, 3));
     CORRADE_COMPARE(image->format(), PixelFormat::RGB16F);
@@ -486,10 +484,10 @@ void OpenExrImporterTest::forceChannelCountWrong() {
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(OPENEXRIMPORTER_TEST_DIR, "rgba32f.exr")));
 
     importer->configuration().setValue("forceChannelCount", 5);
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->image2D(0));
-    CORRADE_COMPARE(out.str(), "Trade::OpenExrImporter::image2D(): forceChannelCount is expected to be 0-4, got 5\n");
+    CORRADE_COMPARE(out, "Trade::OpenExrImporter::image2D(): forceChannelCount is expected to be 0-4, got 5\n");
 }
 
 void OpenExrImporterTest::forceChannelTypeFloat() {
@@ -501,7 +499,7 @@ void OpenExrImporterTest::forceChannelTypeFloat() {
     importer->configuration().setValue("forceChannelType", "FLOAT");
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(OPENEXRIMPORTER_TEST_DIR, "rgb16f.exr")));
 
-    std::ostringstream out;
+    Containers::String out;
     Containers::Optional<Trade::ImageData2D> image;
     {
         Debug redirectOutput{&out};
@@ -512,9 +510,9 @@ void OpenExrImporterTest::forceChannelTypeFloat() {
     CORRADE_COMPARE(image->size(), Vector2i(1, 3));
     CORRADE_COMPARE(image->format(), PixelFormat::RGB32F);
     if(data.verbose)
-        CORRADE_COMPARE(out.str(), "Trade::OpenExrImporter::image2D(): converting HALF channels to FLOAT\n");
+        CORRADE_COMPARE(out, "Trade::OpenExrImporter::image2D(): converting HALF channels to FLOAT\n");
     else
-        CORRADE_COMPARE(out.str(), "");
+        CORRADE_COMPARE(out, "");
 
     CORRADE_COMPARE_AS(Containers::arrayCast<const Float>(image->data()), Containers::arrayView({
         0.0f, 1.0f, 2.0f,
@@ -532,7 +530,7 @@ void OpenExrImporterTest::forceChannelTypeHalf() {
     importer->configuration().setValue("forceChannelType", "HALF");
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(OPENEXRIMPORTER_TEST_DIR, "rgba32f.exr")));
 
-    std::ostringstream out;
+    Containers::String out;
     Containers::Optional<Trade::ImageData2D> image;
     {
         Debug redirectOutput{&out};
@@ -543,9 +541,9 @@ void OpenExrImporterTest::forceChannelTypeHalf() {
     CORRADE_COMPARE(image->size(), Vector2i(1, 3));
     CORRADE_COMPARE(image->format(), PixelFormat::RGBA16F);
     if(data.verbose)
-        CORRADE_COMPARE(out.str(), "Trade::OpenExrImporter::image2D(): converting FLOAT channels to HALF\n");
+        CORRADE_COMPARE(out, "Trade::OpenExrImporter::image2D(): converting FLOAT channels to HALF\n");
     else
-        CORRADE_COMPARE(out.str(), "");
+        CORRADE_COMPARE(out, "");
 
     CORRADE_COMPARE_AS(Containers::arrayCast<const Half>(image->data()), Containers::arrayView({
         0.0_h, 1.0_h, 2.0_h, 3.0_h,
@@ -565,7 +563,7 @@ void OpenExrImporterTest::forceChannelTypeUInt() {
        isn't accidentally used further */
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(OPENEXRIMPORTER_TEST_DIR, "rgb16f.exr")));
 
-    std::ostringstream out;
+    Containers::String out;
     Containers::Optional<Trade::ImageData2D> image;
     {
         Debug redirectOutput{&out};
@@ -576,9 +574,9 @@ void OpenExrImporterTest::forceChannelTypeUInt() {
     CORRADE_COMPARE(image->size(), Vector2i(1, 3));
     CORRADE_COMPARE(image->format(), PixelFormat::RGB32UI);
     if(data.verbose)
-        CORRADE_COMPARE(out.str(), "Trade::OpenExrImporter::image2D(): converting HALF channels to UINT\n");
+        CORRADE_COMPARE(out, "Trade::OpenExrImporter::image2D(): converting HALF channels to UINT\n");
     else
-        CORRADE_COMPARE(out.str(), "");
+        CORRADE_COMPARE(out, "");
 
     CORRADE_COMPARE_AS(Containers::arrayCast<const UnsignedInt>(image->data()), Containers::arrayView<UnsignedInt>({
         0, 1, 2,
@@ -593,7 +591,7 @@ void OpenExrImporterTest::forceChannelTypeNoOp() {
     importer->configuration().setValue("forceChannelType", "FLOAT");
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(OPENEXRIMPORTER_TEST_DIR, "rgba32f.exr")));
 
-    std::ostringstream out;
+    Containers::String out;
     Containers::Optional<Trade::ImageData2D> image;
     {
         Debug redirectOutput{&out};
@@ -605,7 +603,7 @@ void OpenExrImporterTest::forceChannelTypeNoOp() {
     CORRADE_COMPARE(image->format(), PixelFormat::RGBA32F);
     /* No message should be printed even with verbose output as no conversion
        is being done */
-    CORRADE_COMPARE(out.str(), "");
+    CORRADE_COMPARE(out, "");
 
     CORRADE_COMPARE_AS(Containers::arrayCast<const Float>(image->data()), Containers::arrayView<Float>({
         0.0f, 1.0f, 2.0f, 3.0f,
@@ -619,10 +617,10 @@ void OpenExrImporterTest::forceChannelTypeWrong() {
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(OPENEXRIMPORTER_TEST_DIR, "rgba32f.exr")));
 
     importer->configuration().setValue("forceChannelType", "RGBA8");
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->image2D(0));
-    CORRADE_COMPARE(out.str(), "Trade::OpenExrImporter::image2D(): forceChannelType is expected to be FLOAT, HALF or UINT, got RGBA8\n");
+    CORRADE_COMPARE(out, "Trade::OpenExrImporter::image2D(): forceChannelType is expected to be FLOAT, HALF or UINT, got RGBA8\n");
 }
 
 void OpenExrImporterTest::customChannels() {
@@ -654,10 +652,10 @@ void OpenExrImporterTest::customChannelsDuplicated() {
     importer->configuration().setValue("a", "G");
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(OPENEXRIMPORTER_TEST_DIR, "rgba32f.exr")));
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->image2D(0));
-    CORRADE_COMPARE(out.str(), "Trade::OpenExrImporter::image2D(): duplicate mapping for channel G\n");
+    CORRADE_COMPARE(out, "Trade::OpenExrImporter::image2D(): duplicate mapping for channel G\n");
 }
 
 void OpenExrImporterTest::customChannelsSomeUnassinged() {
@@ -697,12 +695,12 @@ void OpenExrImporterTest::customChannelsAllUnassinged() {
     importer->configuration().setValue("b", "");
     importer->configuration().setValue("a", "");
     importer->configuration().setValue("forceChannelCount", 4);
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->image2D(0));
     /* The order is only because std::map orders keys and string orders
        alphabetically */
-    CORRADE_COMPARE(out.str(), "Trade::OpenExrImporter::image2D(): can't perform automatic mapping for channels named {A, B, G, R}, to either {, , , } or Z, provide desired layer and/or channel names in plugin configuration\n");
+    CORRADE_COMPARE(out, "Trade::OpenExrImporter::image2D(): can't perform automatic mapping for channels named {A, B, G, R}, to either {, , , } or Z, provide desired layer and/or channel names in plugin configuration\n");
 }
 
 void OpenExrImporterTest::customChannelsFilled() {
@@ -757,12 +755,12 @@ void OpenExrImporterTest::customChannelsDepthUnassigned() {
     /* This will fail the same way as customChannelsAllUnassinged(), as there's
        no reason to not import anything */
     importer->configuration().setValue("depth", "");
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->image2D(0));
     /* The order is only because std::map orders keys and string orders
        alphabetically */
-    CORRADE_COMPARE(out.str(), "Trade::OpenExrImporter::image2D(): can't perform automatic mapping for channels named {Z}, to either {R, G, B, A} or , provide desired layer and/or channel names in plugin configuration\n");
+    CORRADE_COMPARE(out, "Trade::OpenExrImporter::image2D(): can't perform automatic mapping for channels named {Z}, to either {R, G, B, A} or , provide desired layer and/or channel names in plugin configuration\n");
 }
 
 void OpenExrImporterTest::customChannelsNoMatch() {
@@ -771,12 +769,12 @@ void OpenExrImporterTest::customChannelsNoMatch() {
 
     /* Even just setting a layer should make it fail */
     importer->configuration().setValue("layer", "left");
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->image2D(0));
     /* The order is only because std::map orders keys and string orders
        alphabetically */
-    CORRADE_COMPARE(out.str(), "Trade::OpenExrImporter::image2D(): can't perform automatic mapping for channels named {A, B, G, R}, to either {left.R, left.G, left.B, left.A} or left.Z, provide desired layer and/or channel names in plugin configuration\n");
+    CORRADE_COMPARE(out, "Trade::OpenExrImporter::image2D(): can't perform automatic mapping for channels named {A, B, G, R}, to either {left.R, left.G, left.B, left.A} or left.Z, provide desired layer and/or channel names in plugin configuration\n");
 }
 
 void OpenExrImporterTest::levels2D() {
@@ -844,7 +842,7 @@ void OpenExrImporterTest::levels2DIncomplete() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenExrImporter");
     if(data.verbose) importer->addFlags(ImporterFlag::Verbose);
 
-    std::ostringstream out;
+    Containers::String out;
     {
         Debug redirectDebug{&out};
         CORRADE_VERIFY(importer->openFile(Utility::Path::join(OPENEXRIMPORTER_TEST_DIR, data.filename)));
@@ -852,7 +850,7 @@ void OpenExrImporterTest::levels2DIncomplete() {
 
     CORRADE_COMPARE(importer->image2DCount(), 1);
     CORRADE_COMPARE(importer->image2DLevelCount(0), data.levelCount);
-    CORRADE_COMPARE(out.str(), data.message);
+    CORRADE_COMPARE(out, data.message);
 
     /* The first two level should be the same as with levels2D() */
     {
@@ -983,7 +981,7 @@ void OpenExrImporterTest::levelsCubeMapIncomplete() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenExrImporter");
     if(data.verbose) importer->addFlags(ImporterFlag::Verbose);
 
-    std::ostringstream out;
+    Containers::String out;
     {
         Debug redirectDebug{&out};
         CORRADE_VERIFY(importer->openFile(Utility::Path::join(OPENEXRIMPORTER_TEST_DIR, data.filename)));
@@ -991,7 +989,7 @@ void OpenExrImporterTest::levelsCubeMapIncomplete() {
 
     CORRADE_COMPARE(importer->image3DCount(), 1);
     CORRADE_COMPARE(importer->image3DLevelCount(0), data.levelCount);
-    CORRADE_COMPARE(out.str(), data.message);
+    CORRADE_COMPARE(out, data.message);
 
     /* The first two level should be the same as with levelsCubeMap() */
     {
@@ -1070,7 +1068,7 @@ void OpenExrImporterTest::threads() {
     if(data.verbose)
         importer->addFlags(ImporterFlag::Verbose);
 
-    std::ostringstream out;
+    Containers::String out;
     {
         Debug redirectOutput{&out};
         CORRADE_VERIFY(importer->openFile(Utility::Path::join(OPENEXRIMPORTER_TEST_DIR, "rgb16f.exr")));
@@ -1078,7 +1076,7 @@ void OpenExrImporterTest::threads() {
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image);
-    CORRADE_COMPARE(out.str(), Utility::formatString(data.message,
+    CORRADE_COMPARE(out, Utility::format(data.message,
         std::thread::hardware_concurrency(),
         std::thread::hardware_concurrency() - 1));
     CORRADE_COMPARE(image->size(), Vector2i(1, 3));

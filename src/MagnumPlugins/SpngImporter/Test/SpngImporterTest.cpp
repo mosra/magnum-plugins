@@ -24,15 +24,13 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-#include <sstream>
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/StridedArrayView.h>
 #include <Corrade/Containers/String.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
 #include <Corrade/Utility/Algorithms.h>
-#include <Corrade/Utility/DebugStl.h> /** @todo remove once Debug is stream-free */
-#include <Corrade/Utility/FormatStl.h> /** @todo remove once Debug is stream-free */
+#include <Corrade/Utility/Format.h>
 #include <Corrade/Utility/Path.h>
 #include <Magnum/PixelFormat.h>
 #include <Magnum/Math/Color.h>
@@ -187,12 +185,12 @@ SpngImporterTest::SpngImporterTest() {
 void SpngImporterTest::empty() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("SpngImporter");
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     char a{};
     /* Explicitly checking non-null but empty view */
     CORRADE_VERIFY(!importer->openData({&a, 0}));
-    CORRADE_COMPARE(out.str(), "Trade::SpngImporter::openData(): the file is empty\n");
+    CORRADE_COMPARE(out, "Trade::SpngImporter::openData(): the file is empty\n");
 }
 
 void SpngImporterTest::invalid() {
@@ -213,13 +211,13 @@ void SpngImporterTest::invalid() {
         CORRADE_VERIFY(importer->openData(file->prefix(data.sizeOrOffset)));
     }
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     {
         CORRADE_EXPECT_FAIL_IF(!data.error, "libspng doesn't treat this as an error.");
         CORRADE_VERIFY(!importer->image2D(0));
     }
-    if(data.error) CORRADE_COMPARE(out.str(), Utility::formatString("Trade::SpngImporter::image2D(): {}\n", data.error));
+    if(data.error) CORRADE_COMPARE(out, Utility::format("Trade::SpngImporter::image2D(): {}\n", data.error));
 }
 
 void SpngImporterTest::gray() {

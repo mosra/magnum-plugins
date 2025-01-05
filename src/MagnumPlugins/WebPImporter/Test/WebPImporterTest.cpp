@@ -25,15 +25,13 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-#include <sstream>
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/StridedArrayView.h>
 #include <Corrade/Containers/String.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
 #include <Corrade/Utility/Algorithms.h>
-#include <Corrade/Utility/DebugStl.h> /** @todo remove once Debug is stream-free */
-#include <Corrade/Utility/FormatStl.h> /** @todo remove once Debug is stream-free */
+#include <Corrade/Utility/Format.h>
 #include <Corrade/Utility/Path.h>
 #include <Magnum/ImageView.h>
 #include <Magnum/PixelFormat.h>
@@ -147,12 +145,12 @@ WebPImporterTest::WebPImporterTest() {
 void WebPImporterTest::empty() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("WebPImporter");
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     char a{};
     /* Explicitly checking non-null but empty view */
     CORRADE_VERIFY(!importer->openData({&a, 0}));
-    CORRADE_COMPARE(out.str(), "Trade::WebPImporter::openData(): the file is empty\n");
+    CORRADE_COMPARE(out, "Trade::WebPImporter::openData(): the file is empty\n");
 }
 
 void WebPImporterTest::invalid() {
@@ -167,10 +165,10 @@ void WebPImporterTest::invalid() {
     /* The open does just a memory copy, so it doesn't fail */
     CORRADE_VERIFY(importer->openData(data.size ? in->prefix(*data.size) : *in));
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->image2D(0));
-    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::WebPImporter::image2D(): {}", data.error));
+    CORRADE_COMPARE(out, Utility::format("Trade::WebPImporter::image2D(): {}", data.error));
 }
 
 void WebPImporterTest::rgb() {

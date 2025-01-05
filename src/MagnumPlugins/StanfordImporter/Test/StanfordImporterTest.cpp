@@ -24,7 +24,6 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-#include <sstream>
 #include <Corrade/Containers/Array.h>
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/TestSuite/Tester.h>
@@ -33,8 +32,7 @@
 #include <Corrade/TestSuite/Compare/String.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/Algorithms.h>
-#include <Corrade/Utility/DebugStl.h> /** @todo remove once Debug is stream-free */
-#include <Corrade/Utility/FormatStl.h> /** @todo remove once Debug is stream-free */
+#include <Corrade/Utility/Format.h>
 #include <Corrade/Utility/Path.h>
 #include <Corrade/Utility/String.h>
 #include <Magnum/Math/Color.h>
@@ -359,14 +357,14 @@ void StanfordImporterTest::invalid() {
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     const bool failed = !importer->openFile(Utility::Path::join(STANFORDIMPORTER_TEST_DIR, Utility::format("{}.ply", data.filename)));
     CORRADE_VERIFY(failed == data.duringOpen);
     if(!failed) {
         CORRADE_VERIFY(!importer->mesh(0));
     }
-    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::StanfordImporter::{}(): {}\n",
+    CORRADE_COMPARE(out, Utility::format("Trade::StanfordImporter::{}(): {}\n",
         data.duringOpen ? "openData" : "mesh",
         data.message));
 }
@@ -374,10 +372,10 @@ void StanfordImporterTest::invalid() {
 void StanfordImporterTest::fileEmpty() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->openData(nullptr));
-    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::StanfordImporter::openData(): the file is empty\n"));
+    CORRADE_COMPARE(out, Utility::format("Trade::StanfordImporter::openData(): the file is empty\n"));
 }
 
 void StanfordImporterTest::fileTooShort() {
@@ -390,14 +388,14 @@ void StanfordImporterTest::fileTooShort() {
     CORRADE_VERIFY(file);
     CORRADE_COMPARE_AS(file->size(), data.prefix, TestSuite::Compare::Greater);
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     const bool failed = !importer->openData(file->prefix(data.prefix));
     CORRADE_VERIFY(failed == data.duringOpen);
     if(!failed) {
         CORRADE_VERIFY(!importer->mesh(0));
     }
-    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::StanfordImporter::{}(): {}\n",
+    CORRADE_COMPARE(out, Utility::format("Trade::StanfordImporter::{}(): {}\n",
         data.duringOpen ? "openData" : "mesh",
         data.message));
 }
@@ -636,7 +634,7 @@ void StanfordImporterTest::parsePerFaceToPerVertex() {
     CORRADE_COMPARE(importer->meshCount(), 1);
     CORRADE_COMPARE(importer->meshLevelCount(0), 1);
 
-    std::ostringstream out;
+    Containers::String out;
     Containers::Optional<MeshData> mesh;
     {
         Debug redirectOutput{&out};
@@ -716,7 +714,7 @@ void StanfordImporterTest::parsePerFaceToPerVertex() {
     }
 
     /* Verbose message, if any */
-    CORRADE_COMPARE(out.str(), data.message);
+    CORRADE_COMPARE(out, data.message);
 }
 
 void StanfordImporterTest::empty() {
@@ -1074,18 +1072,18 @@ void StanfordImporterTest::asciiDelegateAssimp() {
     /* Set flags to see if they get propagated */
     importer->setFlags(data.flags);
 
-    std::ostringstream out;
+    Containers::String out;
     {
         Debug redirectDebug{&out};
         CORRADE_VERIFY(importer->openFile(Utility::Path::join(STANFORDIMPORTER_TEST_DIR, "ascii.ply")));
     }
     if(data.flags & ImporterFlag::Verbose)
-        CORRADE_COMPARE_AS(out.str(),
+        CORRADE_COMPARE_AS(out,
             "Trade::StanfordImporter::openData(): forwarding an ASCII file to AssimpImporter\n"
             "Trade::AssimpImporter: Info,  ",
             TestSuite::Compare::StringHasPrefix);
     else
-        CORRADE_COMPARE(out.str(), "");
+        CORRADE_COMPARE(out, "");
 
     /* All of these should forward to the correct instance and not crash */
     CORRADE_COMPARE(importer->meshCount(), 1);
@@ -1126,15 +1124,15 @@ void StanfordImporterTest::asciiDelegateAssimpNoPlugin() {
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->openFile(Utility::Path::join(STANFORDIMPORTER_TEST_DIR, "ascii.ply")));
     #ifndef CORRADE_PLUGINMANAGER_NO_DYNAMIC_PLUGIN_SUPPORT
-    CORRADE_COMPARE(out.str(),
+    CORRADE_COMPARE(out,
         "PluginManager::Manager::load(): plugin AssimpImporter is not static and was not found in nonexistent\n"
         "Trade::StanfordImporter::openData(): can't forward an ASCII file to AssimpImporter\n");
     #else
-    CORRADE_COMPARE(out.str(),
+    CORRADE_COMPARE(out,
         "PluginManager::Manager::load(): plugin AssimpImporter was not found\n"
         "Trade::StanfordImporter::openData(): can't forward an ASCII file to AssimpImporter\n");
     #endif
@@ -1146,7 +1144,7 @@ void StanfordImporterTest::asciiDelegateAssimpFailed() {
 
     Containers::Pointer<AbstractImporter> importer = _managerWithAssimpImporter.instantiate("StanfordImporter");
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->openData(
         "ply\n"
@@ -1155,7 +1153,7 @@ void StanfordImporterTest::asciiDelegateAssimpFailed() {
         /* Note: if end_header isn't present, Assimp enters an infinite loop of
            some sort. Top notch codebase, as usual. */
         "end_header\n"_s));
-    CORRADE_COMPARE_AS(out.str(),
+    CORRADE_COMPARE_AS(out,
         "Trade::AssimpImporter::openData(): loading failed: ",
         TestSuite::Compare::StringHasPrefix);
 }

@@ -24,14 +24,12 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-#include <sstream>
 #include <Corrade/Containers/Array.h>
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/String.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/StringToFile.h>
-#include <Corrade/Utility/DebugStl.h> /** @todo remove once Debug is stream-free */
-#include <Corrade/Utility/FormatStl.h>
+#include <Corrade/Utility/Format.h>
 #include <Corrade/Utility/Path.h>
 #include <Magnum/ImageView.h>
 #include <Magnum/PixelFormat.h>
@@ -88,10 +86,10 @@ void MiniExrImageConverterTest::wrongFormat() {
     Containers::Pointer<AbstractImageConverter> converter = _manager.instantiate("MiniExrImageConverter");
 
     const char data[4]{};
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->convertToData(ImageView2D{PixelFormat::R16F, {1, 1}, data}));
-    CORRADE_COMPARE(out.str(), "Trade::MiniExrImageConverter::convertToData(): unsupported format PixelFormat::R16F\n");
+    CORRADE_COMPARE(out, "Trade::MiniExrImageConverter::convertToData(): unsupported format PixelFormat::R16F\n");
 }
 
 using namespace Math::Literals;
@@ -147,13 +145,13 @@ void MiniExrImageConverterTest::unsupportedMetadata() {
     const char imageData[8]{};
     ImageView2D image{PixelFormat::RGBA16F, {1, 1}, imageData, data.imageFlags};
 
-    std::ostringstream out;
+    Containers::String out;
     Warning redirectWarning{&out};
     CORRADE_VERIFY(converter->convertToData(image));
     if(!data.message)
-        CORRADE_COMPARE(out.str(), "");
+        CORRADE_COMPARE(out, "");
     else
-        CORRADE_COMPARE(out.str(), Utility::formatString("Trade::MiniExrImageConverter::convertToData(): {}\n", data.message));
+        CORRADE_COMPARE(out, Utility::format("Trade::MiniExrImageConverter::convertToData(): {}\n", data.message));
 }
 
 }}}}

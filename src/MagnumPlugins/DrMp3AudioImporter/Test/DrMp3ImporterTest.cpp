@@ -25,14 +25,13 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-#include <sstream>
+#include <string> /** @todo remove once AbstractImporter is <string>-free */
 #include <Corrade/Containers/Array.h>
 #include <Corrade/Containers/String.h>
 #include <Corrade/Containers/StringStl.h> /** @todo remove once AbstractImporter is <string>-free */
 #include <Corrade/TestSuite/Compare/Container.h>
 #include <Corrade/TestSuite/Compare/Numeric.h>
 #include <Corrade/TestSuite/Tester.h>
-#include <Corrade/Utility/DebugStl.h> /** @todo remove once Debug is stream-free */
 #include <Corrade/Utility/Path.h>
 #include <Magnum/Audio/AbstractImporter.h>
 
@@ -78,12 +77,12 @@ DrMp3ImporterTest::DrMp3ImporterTest() {
 void DrMp3ImporterTest::empty() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DrMp3AudioImporter");
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     char a{};
     /* Explicitly checking non-null but empty view */
     CORRADE_VERIFY(!importer->openData({&a, 0}));
-    CORRADE_COMPARE(out.str(), "Audio::DrMp3Importer::openData(): failed to open and decode MP3 data\n");
+    CORRADE_COMPARE(out, "Audio::DrMp3Importer::openData(): failed to open and decode MP3 data\n");
 }
 
 void DrMp3ImporterTest::zeroSamples() {

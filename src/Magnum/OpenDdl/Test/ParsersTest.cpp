@@ -26,7 +26,7 @@
 
 #include <tuple>
 #include <Corrade/TestSuite/Tester.h>
-#include <Corrade/Utility/DebugStl.h>
+#include <Corrade/Utility/DebugStl.h> /* for std::string */
 
 #include "Magnum/OpenDdl/Document.h"
 #include "Magnum/OpenDdl/Property.h"

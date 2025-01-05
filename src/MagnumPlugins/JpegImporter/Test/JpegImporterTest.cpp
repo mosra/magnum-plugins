@@ -24,13 +24,11 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-#include <sstream>
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/String.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
 #include <Corrade/Utility/Algorithms.h>
-#include <Corrade/Utility/DebugStl.h> /** @todo remove once Debug is stream-free */
 #include <Corrade/Utility/Path.h>
 #include <Magnum/PixelFormat.h>
 #include <Magnum/Trade/AbstractImporter.h>
@@ -98,12 +96,12 @@ JpegImporterTest::JpegImporterTest() {
 void JpegImporterTest::empty() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("JpegImporter");
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     char a{};
     /* Explicitly checking non-null but empty view */
     CORRADE_VERIFY(!importer->openData({&a, 0}));
-    CORRADE_COMPARE(out.str(), "Trade::JpegImporter::openData(): the file is empty\n");
+    CORRADE_COMPARE(out, "Trade::JpegImporter::openData(): the file is empty\n");
 }
 
 void JpegImporterTest::invalid() {
@@ -117,10 +115,10 @@ void JpegImporterTest::invalid() {
     return;
     #endif
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->image2D(0));
-    CORRADE_COMPARE(out.str(), "Trade::JpegImporter::image2D(): error: Not a JPEG file: starts with 0x69 0x6e\n");
+    CORRADE_COMPARE(out, "Trade::JpegImporter::image2D(): error: Not a JPEG file: starts with 0x69 0x6e\n");
 }
 
 void JpegImporterTest::gray() {
@@ -178,10 +176,10 @@ void JpegImporterTest::cmyk() {
 
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(JPEGIMPORTER_TEST_DIR, "cmyk.jpg")));
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->image2D(0));
-    CORRADE_COMPARE(out.str(), "Trade::JpegImporter::image2D(): unsupported color space 4\n");
+    CORRADE_COMPARE(out, "Trade::JpegImporter::image2D(): unsupported color space 4\n");
 }
 
 void JpegImporterTest::openMemory() {

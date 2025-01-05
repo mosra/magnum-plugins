@@ -26,7 +26,6 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-#include <sstream>
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/Array.h>
 #include <Corrade/Containers/StridedArrayView.h>
@@ -37,8 +36,8 @@
 #include <Corrade/TestSuite/Compare/String.h>
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
-#include <Corrade/Utility/DebugStl.h> /** @todo remove once Debug is stream-free */
-#include <Corrade/Utility/FormatStl.h>
+#include <Corrade/Utility/DebugStl.h> /** @todo remove once Configuration is std::string-free */
+#include <Corrade/Utility/Format.h>
 #include <Corrade/Utility/Path.h>
 #include <Magnum/DebugTools/CompareImage.h>
 #include <Magnum/Image.h>
@@ -402,10 +401,10 @@ void BasisImageConverterTest::wrongFormat() {
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("BasisImageConverter");
 
     const char data[8]{};
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->convertToData(ImageView2D{PixelFormat::R32I, {1, 1}, data}));
-    CORRADE_COMPARE(out.str(), "Trade::BasisImageConverter::convertToData(): unsupported format PixelFormat::R32I\n");
+    CORRADE_COMPARE(out, "Trade::BasisImageConverter::convertToData(): unsupported format PixelFormat::R32I\n");
 }
 
 void BasisImageConverterTest::unknownOutputFormatData() {
@@ -445,7 +444,7 @@ void BasisImageConverterTest::invalidSwizzle() {
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("BasisImageConverter");
 
     const char data[8]{};
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
 
     converter->configuration().setValue("swizzle", "gbgbg");
@@ -454,7 +453,7 @@ void BasisImageConverterTest::invalidSwizzle() {
     converter->configuration().setValue("swizzle", "xaaa");
     CORRADE_VERIFY(!converter->convertToData(ImageView2D{PixelFormat::RGBA8Unorm, {1, 1}, data}));
 
-    CORRADE_COMPARE(out.str(),
+    CORRADE_COMPARE(out,
         "Trade::BasisImageConverter::convertToData(): invalid swizzle length, expected 4 but got 5\n"
         "Trade::BasisImageConverter::convertToData(): invalid characters in swizzle xaaa\n");
 }
@@ -470,7 +469,7 @@ void BasisImageConverterTest::tooManyLevels() {
 
     const UnsignedInt dimensions = Math::min(Vector3ui{data.size}, 1u).sum();
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     if(dimensions == 1) {
         CORRADE_VERIFY(!converter->convertToData({
@@ -489,7 +488,7 @@ void BasisImageConverterTest::tooManyLevels() {
         }));
     }
 
-    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::BasisImageConverter::convertToData(): {}\n", data.message));
+    CORRADE_COMPARE(out, Utility::format("Trade::BasisImageConverter::convertToData(): {}\n", data.message));
 }
 
 void BasisImageConverterTest::levelWrongSize() {
@@ -503,7 +502,7 @@ void BasisImageConverterTest::levelWrongSize() {
 
     const UnsignedInt dimensions = Math::min(Vector3ui{data.sizes[0]}, 1u).sum();
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     if(dimensions == 1) {
         CORRADE_VERIFY(!converter->convertToData({
@@ -522,7 +521,7 @@ void BasisImageConverterTest::levelWrongSize() {
         }));
     }
 
-    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::BasisImageConverter::convertToData(): {}\n", data.message));
+    CORRADE_COMPARE(out, Utility::format("Trade::BasisImageConverter::convertToData(): {}\n", data.message));
 }
 
 void BasisImageConverterTest::processError() {
@@ -533,10 +532,10 @@ void BasisImageConverterTest::processError() {
     const char bytes[4]{};
     ImageView2D image{PixelFormat::RGBA8Unorm, Vector2i{1}, bytes};
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->convertToData(image));
-    CORRADE_COMPARE(out.str(),
+    CORRADE_COMPARE(out,
         "Trade::BasisImageConverter::convertToData(): frontend processing failed\n");
 }
 
@@ -636,10 +635,10 @@ void BasisImageConverterTest::convert1DArray() {
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("BasisImageConverter");
 
     const char data[8]{};
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->convertToData(ImageView2D{PixelFormat::RGBA8Unorm, {1, 1}, data, ImageFlag2D::Array}));
-    CORRADE_COMPARE(out.str(),
+    CORRADE_COMPARE(out,
         "Trade::BasisImageConverter::convertToData(): 1D array images are not supported by Basis Universal\n");
 }
 
@@ -837,7 +836,7 @@ void BasisImageConverterTest::convertUastcPatchAwaySrgb() {
 
     Containers::Array<char> imageData{ValueInit, pixelFormatSize(data.format)*4*4};
 
-    std::ostringstream out;
+    Containers::String out;
     Containers::Optional<Containers::Array<char>> compressedData;
     {
         Debug redirectOutput{&out};
@@ -856,7 +855,7 @@ void BasisImageConverterTest::convertUastcPatchAwaySrgb() {
     CORRADE_VERIFY(image);
     CORRADE_VERIFY(!image->isCompressed());
     CORRADE_COMPARE(image->format(), data.expected);
-    CORRADE_COMPARE(out.str(), data.message);
+    CORRADE_COMPARE(out, data.message);
 }
 
 void BasisImageConverterTest::convert2DMipmaps() {
@@ -899,15 +898,15 @@ void BasisImageConverterTest::convert2DMipmaps() {
        basis generated any extra levels beyond that. */
     converter->configuration().setValue("mip_gen", true);
 
-    std::ostringstream out;
+    Containers::String out;
     Warning redirectWarning{&out};
 
     Containers::Optional<Containers::Array<char>> compressedData = converter->convertToData({*levels[0].imageWithSkip, *levels[1].imageWithSkip, *levels[2].imageWithSkip});
     CORRADE_VERIFY(compressedData);
     if(data.quiet)
-        CORRADE_COMPARE(out.str(), "");
+        CORRADE_COMPARE(out, "");
     else
-        CORRADE_COMPARE(out.str(), "Trade::BasisImageConverter::convertToData(): found user-supplied mip levels, ignoring mip_gen config value\n");
+        CORRADE_COMPARE(out, "Trade::BasisImageConverter::convertToData(): found user-supplied mip levels, ignoring mip_gen config value\n");
 
     if(_manager.loadState("BasisImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("BasisImporter plugin not found, cannot test");
@@ -1054,14 +1053,14 @@ void BasisImageConverterTest::convert2DArray() {
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("BasisImageConverter");
     converter->addFlags(data.converterFlags);
 
-    std::ostringstream out;
+    Containers::String out;
     Containers::Optional<Containers::Array<char>> compressedData;
     {
         Warning redirectWarning{&out};
         compressedData = converter->convertToData(imageWithSkip);
     }
     CORRADE_VERIFY(compressedData);
-    CORRADE_COMPARE(out.str(), data.message);
+    CORRADE_COMPARE(out, data.message);
 
     if(_manager.loadState("BasisImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("BasisImporter plugin not found, cannot test");
@@ -1569,7 +1568,7 @@ void BasisImageConverterTest::openCL() {
     CORRADE_COMPARE(converter->configuration().value<bool>("use_opencl"), false);
     converter->configuration().setValue("use_opencl", true);
 
-    std::ostringstream out;
+    Containers::String out;
     Containers::Optional<Containers::Array<char>> compressedData;
     {
         Warning redirectWarning{&out};
@@ -1579,14 +1578,14 @@ void BasisImageConverterTest::openCL() {
     /* If built without OpenCL, converting falls back to CPU and still succeeds */
     #ifndef OpenCL_FOUND
     CORRADE_WARN("OpenCL is not available.");
-    CORRADE_COMPARE(out.str(), "Trade::BasisImageConverter::convertToData(): OpenCL not supported, falling back to CPU encoding\n");
+    CORRADE_COMPARE(out, "Trade::BasisImageConverter::convertToData(): OpenCL not supported, falling back to CPU encoding\n");
     #else
     CORRADE_INFO("OpenCL is available.");
     {
         #ifdef _BASISIMAGECONVERTER_EXPECT_OPENCL_FRAMEWORK_FAILURE
         CORRADE_EXPECT_FAIL("Apple OpenCL implementation is used, which likely doesn't work anymore.");
         #endif
-        CORRADE_COMPARE(out.str(), "");
+        CORRADE_COMPARE(out, "");
     }
     #endif
     CORRADE_VERIFY(compressedData);

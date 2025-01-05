@@ -25,7 +25,6 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-#include <sstream>
 #include <webp/encode.h> /* for version info in importFailed() */
 #include <Corrade/Containers/Array.h>
 #include <Corrade/Containers/Optional.h>
@@ -33,8 +32,7 @@
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Numeric.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
-#include <Corrade/Utility/DebugStl.h> /** @todo remove once Debug is stream-free */
-#include <Corrade/Utility/FormatStl.h>
+#include <Corrade/Utility/Format.h>
 #include <Corrade/Utility/Path.h>
 #include <Magnum/ImageView.h>
 #include <Magnum/PixelFormat.h>
@@ -198,19 +196,19 @@ void WebPImageConverterTest::invalidConfiguration() {
     if(data.alphaQuality)
         converter->configuration().setValue("alphaQuality", *data.alphaQuality);
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->convertToData(ImageView2D{PixelFormat::RGBA8Unorm, {1, 1}, "hah"}));
-    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::WebPImageConverter::convertToData(): {}\n", data.expectedError));
+    CORRADE_COMPARE(out, Utility::format("Trade::WebPImageConverter::convertToData(): {}\n", data.expectedError));
 }
 
 void WebPImageConverterTest::invalidFormat() {
     Containers::Pointer<AbstractImageConverter> converter = _manager.instantiate("WebPImageConverter");
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->convertToData(ImageView2D{PixelFormat::RG8Unorm, {1, 1}, "hah"}));
-    CORRADE_COMPARE(out.str(), "Trade::WebPImageConverter::convertToData(): unsupported format PixelFormat::RG8Unorm\n");
+    CORRADE_COMPARE(out, "Trade::WebPImageConverter::convertToData(): unsupported format PixelFormat::RG8Unorm\n");
 }
 
 constexpr const char OriginalRgbData[] = {
@@ -345,10 +343,10 @@ void WebPImageConverterTest::importFailed() {
         PixelStorage{}.setRowLength(1),
         PixelFormat::RGB8Unorm, {2, 1}, "hello"};
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->convertToData(image));
-    CORRADE_COMPARE(out.str(), "Trade::WebPImageConverter::convertToData(): importing an image failed\n");
+    CORRADE_COMPARE(out, "Trade::WebPImageConverter::convertToData(): importing an image failed\n");
 }
 
 void WebPImageConverterTest::encodingFailed()   {
@@ -358,10 +356,10 @@ void WebPImageConverterTest::encodingFailed()   {
     const char imageData[16384*3]{};
     ImageView2D image{PixelFormat::RGB8Unorm, {16384, 1}, imageData};
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->convertToData(image));
-    CORRADE_COMPARE(out.str(), "Trade::WebPImageConverter::convertToData(): encoding an image failed: invalid picture size\n");
+    CORRADE_COMPARE(out, "Trade::WebPImageConverter::convertToData(): encoding an image failed: invalid picture size\n");
 }
 
 void WebPImageConverterTest::unsupportedMetadata() {
@@ -371,13 +369,13 @@ void WebPImageConverterTest::unsupportedMetadata() {
     Containers::Pointer<AbstractImageConverter> converter = _manager.instantiate("WebPImageConverter");
     converter->addFlags(data.converterFlags);
 
-    std::ostringstream out;
+    Containers::String out;
     Warning redirectWarning{&out};
     CORRADE_VERIFY(converter->convertToData(ImageView2D{PixelFormat::RGBA8Unorm, {1, 1}, "hey", data.imageFlags}));
     if(!data.message)
-        CORRADE_COMPARE(out.str(), "");
+        CORRADE_COMPARE(out, "");
     else
-        CORRADE_COMPARE(out.str(), Utility::formatString("Trade::WebPImageConverter::convertToData(): {}\n", data.message));
+        CORRADE_COMPARE(out, Utility::format("Trade::WebPImageConverter::convertToData(): {}\n", data.message));
 }
 
 }}}}

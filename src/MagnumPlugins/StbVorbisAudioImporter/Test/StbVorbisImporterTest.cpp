@@ -25,13 +25,12 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-#include <sstream>
+#include <string> /** @todo remove once AbstractImporter is <string>-free */
 #include <Corrade/Containers/Array.h>
 #include <Corrade/Containers/String.h>
 #include <Corrade/Containers/StringStl.h> /** @todo remove when AbstractImporter is <string>-free */
 #include <Corrade/TestSuite/Compare/Container.h>
 #include <Corrade/TestSuite/Tester.h>
-#include <Corrade/Utility/DebugStl.h> /** @todo remove once Debug is stream-free */
 #include <Corrade/Utility/Path.h>
 #include <Magnum/Audio/AbstractImporter.h>
 
@@ -81,30 +80,30 @@ StbVorbisImporterTest::StbVorbisImporterTest() {
 void StbVorbisImporterTest::empty() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StbVorbisAudioImporter");
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     char a{};
     /* Explicitly checking non-null but empty view */
     CORRADE_VERIFY(!importer->openData({&a, 0}));
-    CORRADE_COMPARE(out.str(), "Audio::StbVorbisImporter::openData(): the file signature is invalid\n");
+    CORRADE_COMPARE(out, "Audio::StbVorbisImporter::openData(): the file signature is invalid\n");
 }
 
 void StbVorbisImporterTest::wrongSignature() {
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StbVorbisAudioImporter");
     CORRADE_VERIFY(!importer->openFile(Utility::Path::join(STBVORBISAUDIOIMPORTER_TEST_DIR, "wrongSignature.ogg")));
-    CORRADE_COMPARE(out.str(), "Audio::StbVorbisImporter::openData(): the file signature is invalid\n");
+    CORRADE_COMPARE(out, "Audio::StbVorbisImporter::openData(): the file signature is invalid\n");
 }
 
 void StbVorbisImporterTest::unsupportedChannelCount() {
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StbVorbisAudioImporter");
     CORRADE_VERIFY(!importer->openFile(Utility::Path::join(STBVORBISAUDIOIMPORTER_TEST_DIR, "unsupportedChannelCount.ogg")));
-    CORRADE_COMPARE(out.str(), "Audio::StbVorbisImporter::openData(): unsupported channel count 5 with 16 bits per sample\n");
+    CORRADE_COMPARE(out, "Audio::StbVorbisImporter::openData(): unsupported channel count 5 with 16 bits per sample\n");
 }
 
 void StbVorbisImporterTest::zeroSamples() {

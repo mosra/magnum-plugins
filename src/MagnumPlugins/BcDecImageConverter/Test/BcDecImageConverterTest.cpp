@@ -24,13 +24,11 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-#include <sstream>
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/String.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
-#include <Corrade/Utility/DebugStl.h> /** @todo remove once Debug is stream-free */
 #include <Corrade/Utility/Path.h>
 #include <Magnum/ImageView.h>
 #include <Magnum/DebugTools/CompareImage.h>
@@ -272,19 +270,19 @@ void BcDecImageConverterTest::preserveFlags() {
 void BcDecImageConverterTest::unsupportedFormat() {
     Containers::Pointer<AbstractImageConverter> converter = _manager.instantiate("BcDecImageConverter");
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->convert(CompressedImageView2D{CompressedPixelFormat::Etc2RGB8Srgb, {1, 1}, "yey"}));
-    CORRADE_COMPARE(out.str(), "Trade::BcDecImageConverter::convert(): unsupported format CompressedPixelFormat::Etc2RGB8Srgb\n");
+    CORRADE_COMPARE(out, "Trade::BcDecImageConverter::convert(): unsupported format CompressedPixelFormat::Etc2RGB8Srgb\n");
 }
 
 void BcDecImageConverterTest::unsupportedStorage() {
     Containers::Pointer<AbstractImageConverter> converter = _manager.instantiate("BcDecImageConverter");
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->convert(CompressedImageView2D{CompressedPixelStorage{}.setCompressedBlockDataSize(16), CompressedPixelFormat::Bc3RGBASrgb, {1, 1}, "yey"}));
-    CORRADE_COMPARE(out.str(), "Trade::BcDecImageConverter::convert(): non-default compressed storage is not supported\n");
+    CORRADE_COMPARE(out, "Trade::BcDecImageConverter::convert(): non-default compressed storage is not supported\n");
 }
 
 }}}}

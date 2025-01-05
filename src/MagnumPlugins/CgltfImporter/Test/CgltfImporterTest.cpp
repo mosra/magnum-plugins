@@ -24,11 +24,10 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-#include <sstream>
 #include <Corrade/PluginManager/PluginMetadata.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
-#include <Corrade/Utility/DebugStl.h>
+#include <Corrade/Utility/DebugStl.h> /** @todo remove once Configuration is std::string-free */
 #include <Corrade/Utility/Path.h>
 #include <Magnum/Trade/AbstractImporter.h>
 
@@ -78,20 +77,20 @@ void CgltfImporterTest::requiredExtensionsUnsupported() {
     /* The option should be present and disabled by default */
     CORRADE_COMPARE(importer->configuration().value("ignoreRequiredExtensions"), "false");
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "required-extensions-unsupported.gltf")));
-    CORRADE_COMPARE(out.str(), "Trade::GltfImporter::openData(): required extension EXT_lights_image_based not supported, enable ignoreRequiredExtensions to ignore\n");
+    CORRADE_COMPARE(out, "Trade::GltfImporter::openData(): required extension EXT_lights_image_based not supported, enable ignoreRequiredExtensions to ignore\n");
 }
 
 void CgltfImporterTest::requiredExtensionsUnsupportedDisabled() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("CgltfImporter");
     CORRADE_VERIFY(importer->configuration().setValue("ignoreRequiredExtensions", true));
 
-    std::ostringstream out;
+    Containers::String out;
     Warning redirectError{&out};
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(CGLTFIMPORTER_TEST_DIR, "required-extensions-unsupported.gltf")));
-    CORRADE_COMPARE(out.str(), "Trade::GltfImporter::openData(): required extension EXT_lights_image_based not supported, ignoring\n");
+    CORRADE_COMPARE(out, "Trade::GltfImporter::openData(): required extension EXT_lights_image_based not supported, ignoring\n");
 }
 
 void CgltfImporterTest::setPreferredPlugins() {

@@ -24,7 +24,6 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-#include <sstream>
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/StridedArrayView.h>
 #include <Corrade/Containers/String.h>
@@ -33,8 +32,7 @@
 #include <Corrade/TestSuite/Compare/Numeric.h>
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
-#include <Corrade/Utility/DebugStl.h> /** @todo remove once Debug is stream-free */
-#include <Corrade/Utility/FormatStl.h> /** @todo remove once Debug is stream-free */
+#include <Corrade/Utility/Format.h>
 #include <Corrade/Utility/Path.h>
 #include <Magnum/ImageView.h>
 #include <Magnum/PixelFormat.h>
@@ -375,12 +373,12 @@ PngImporterTest::PngImporterTest() {
 void PngImporterTest::empty() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("PngImporter");
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     char a{};
     /* Explicitly checking non-null but empty view */
     CORRADE_VERIFY(!importer->openData({&a, 0}));
-    CORRADE_COMPARE(out.str(), "Trade::PngImporter::openData(): the file is empty\n");
+    CORRADE_COMPARE(out, "Trade::PngImporter::openData(): the file is empty\n");
 }
 
 void PngImporterTest::invalid() {
@@ -393,16 +391,16 @@ void PngImporterTest::invalid() {
     /* The open does just a memory copy, so it doesn't fail */
     CORRADE_VERIFY(importer->openData(data.data));
 
-    std::ostringstream out;
+    Containers::String out;
     Warning redirectWarning{&out};
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->image2D(0));
     /* Sometimes there's also a warning, in that case take the message
        verbatim */
     if(Containers::StringView{data.message}.hasSuffix('\n'))
-        CORRADE_COMPARE(out.str(), data.message);
+        CORRADE_COMPARE(out, data.message);
     else
-        CORRADE_COMPARE(out.str(), Utility::formatString("Trade::PngImporter::image2D(): {}\n", data.message));
+        CORRADE_COMPARE(out, Utility::format("Trade::PngImporter::image2D(): {}\n", data.message));
 }
 
 void PngImporterTest::gray() {
@@ -708,10 +706,10 @@ void PngImporterTest::alphaModeInvalid() {
 
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(PNGIMPORTER_TEST_DIR, "rgba.png")));
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->image2D(0));
-    CORRADE_COMPARE(out.str(), "Trade::PngImporter::image2D(): expected alphaMode to be either empty, premultiplied or premultipliedLinear but got premultipliedSrgb\n");
+    CORRADE_COMPARE(out, "Trade::PngImporter::image2D(): expected alphaMode to be either empty, premultiplied or premultipliedLinear but got premultipliedSrgb\n");
 }
 
 void PngImporterTest::forceBitDepth8() {
@@ -724,7 +722,7 @@ void PngImporterTest::forceBitDepth8() {
 
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(PNGIMPORTER_TEST_DIR, data.filename)));
 
-    std::ostringstream out;
+    Containers::String out;
     Containers::Optional<ImageData2D> image;
     {
         Debug redirectOutput{&out};
@@ -735,9 +733,9 @@ void PngImporterTest::forceBitDepth8() {
         (ImageView2D{PixelStorage{}.setAlignment(1), data.format, data.size, data.data}),
         DebugTools::CompareImage);
     if(data.message)
-        CORRADE_COMPARE(out.str(), data.message);
+        CORRADE_COMPARE(out, data.message);
     else
-        CORRADE_COMPARE(out.str(), "");
+        CORRADE_COMPARE(out, "");
 }
 
 void PngImporterTest::forceBitDepth16() {
@@ -750,7 +748,7 @@ void PngImporterTest::forceBitDepth16() {
 
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(PNGIMPORTER_TEST_DIR, data.filename)));
 
-    std::ostringstream out;
+    Containers::String out;
     Containers::Optional<ImageData2D> image;
     {
         Debug redirectOutput{&out};
@@ -761,9 +759,9 @@ void PngImporterTest::forceBitDepth16() {
         (ImageView2D{PixelStorage{}.setAlignment(1), data.format, data.size, data.data}),
         DebugTools::CompareImage);
     if(data.message)
-        CORRADE_COMPARE(out.str(), data.message);
+        CORRADE_COMPARE(out, data.message);
     else
-        CORRADE_COMPARE(out.str(), "");
+        CORRADE_COMPARE(out, "");
 }
 
 void PngImporterTest::forceBitDepthInvalid() {
@@ -772,10 +770,10 @@ void PngImporterTest::forceBitDepthInvalid() {
 
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(PNGIMPORTER_TEST_DIR, "rgba.png")));
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->image2D(0));
-    CORRADE_COMPARE(out.str(), "Trade::PngImporter::image2D(): expected forceBitDepth to be 0, 8 or 16 but got 4\n");
+    CORRADE_COMPARE(out, "Trade::PngImporter::image2D(): expected forceBitDepth to be 0, 8 or 16 but got 4\n");
 }
 
 void PngImporterTest::openMemory() {

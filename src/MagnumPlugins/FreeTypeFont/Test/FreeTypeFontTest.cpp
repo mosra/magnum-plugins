@@ -24,7 +24,6 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-#include <sstream>
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/StridedArrayView.h>
 #include <Corrade/Containers/String.h>
@@ -32,7 +31,6 @@
 #include <Corrade/PluginManager/Manager.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
-#include <Corrade/Utility/DebugStl.h> /** @todo remove once Debug is stream-free */
 #include <Corrade/Utility/Path.h>
 #include <Magnum/ImageView.h>
 #include <Magnum/Math/Range.h>
@@ -161,21 +159,21 @@ FreeTypeFontTest::FreeTypeFontTest() {
 void FreeTypeFontTest::empty() {
     Containers::Pointer<AbstractFont> font = _manager.instantiate("FreeTypeFont");
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     char a{};
     /* Explicitly checking non-null but empty view */
     CORRADE_VERIFY(!font->openData({&a, 0}, 16.0f));
-    CORRADE_COMPARE(out.str(), "Text::FreeTypeFont::openData(): failed to open the font: invalid argument\n");
+    CORRADE_COMPARE(out, "Text::FreeTypeFont::openData(): failed to open the font: invalid argument\n");
 }
 
 void FreeTypeFontTest::invalid() {
     Containers::Pointer<AbstractFont> font = _manager.instantiate("FreeTypeFont");
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!font->openData("Oxygen.ttf", 16.0f));
-    CORRADE_COMPARE(out.str(), "Text::FreeTypeFont::openData(): failed to open the font: invalid stream operation\n");
+    CORRADE_COMPARE(out, "Text::FreeTypeFont::openData(): failed to open the font: invalid stream operation\n");
 }
 
 void FreeTypeFontTest::properties() {
@@ -634,10 +632,10 @@ void FreeTypeFontTest::fillGlyphCacheInvalidFormat() {
         }
     } cache{PixelFormat::R8Srgb, {16, 16}, {}};
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     font->fillGlyphCache(cache, "");
-    CORRADE_COMPARE(out.str(), "Text::FreeTypeFont::fillGlyphCache(): expected a PixelFormat::R8Unorm glyph cache but got PixelFormat::R8Srgb\n");
+    CORRADE_COMPARE(out, "Text::FreeTypeFont::fillGlyphCache(): expected a PixelFormat::R8Unorm glyph cache but got PixelFormat::R8Srgb\n");
 }
 
 void FreeTypeFontTest::fillGlyphCacheCannotFit() {
@@ -653,10 +651,10 @@ void FreeTypeFontTest::fillGlyphCacheCannotFit() {
         }
     } cache{PixelFormat::R8Unorm, {16, 32}, {}};
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     font->fillGlyphCache(cache, "HELLO");
-    CORRADE_COMPARE(out.str(), "Text::FreeTypeFont::fillGlyphCache(): cannot fit 5 glyphs with a total area of 535 pixels into a cache of size Vector(16, 32, 1) and Vector(16, 0, 1) filled so far\n");
+    CORRADE_COMPARE(out, "Text::FreeTypeFont::fillGlyphCache(): cannot fit 5 glyphs with a total area of 535 pixels into a cache of size Vector(16, 32, 1) and Vector(16, 0, 1) filled so far\n");
 }
 
 void FreeTypeFontTest::openTwice() {

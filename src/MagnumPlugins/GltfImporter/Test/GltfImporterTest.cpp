@@ -26,7 +26,6 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-#include <sstream>
 #include <Corrade/Containers/Array.h>
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/Pair.h>
@@ -41,8 +40,8 @@
 #include <Corrade/TestSuite/Compare/String.h>
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
-#include <Corrade/Utility/DebugStl.h> /** @todo remove once Debug is stream-free */
-#include <Corrade/Utility/FormatStl.h>
+#include <Corrade/Utility/DebugStl.h> /** @todo remove once Configuration and file callbacks are std::string-free */
+#include <Corrade/Utility/Format.h>
 #include <Corrade/Utility/Json.h>
 #include <Corrade/Utility/Path.h>
 #include <Corrade/Utility/Resource.h>
@@ -1897,15 +1896,15 @@ void GltfImporterTest::openError() {
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->openData(data.data));
     /* If the message ends with a newline, it's the whole output, otherwise
        just the sentence */
     if(Containers::StringView{data.message}.hasSuffix('\n'))
-        CORRADE_COMPARE(out.str(), data.message);
+        CORRADE_COMPARE(out, data.message);
     else
-        CORRADE_COMPARE(out.str(), Utility::formatString("Trade::GltfImporter::openData(): {}\n", data.message));
+        CORRADE_COMPARE(out, Utility::format("Trade::GltfImporter::openData(): {}\n", data.message));
 }
 
 void GltfImporterTest::openFileError() {
@@ -1915,10 +1914,10 @@ void GltfImporterTest::openFileError() {
 
     Containers::String filename = Utility::Path::join(GLTFIMPORTER_TEST_DIR, "error.gltf");
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->openFile(filename));
-    CORRADE_COMPARE(out.str(), Utility::formatString(
+    CORRADE_COMPARE(out, Utility::format(
         "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Array at {}:2:12\n"
         "Trade::GltfImporter::openData(): missing or invalid asset property\n", filename));
 }
@@ -1930,7 +1929,7 @@ void GltfImporterTest::openIgnoreUnknownChunk() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
     importer->addFlags(data.flags);
 
-    std::ostringstream out;
+    Containers::String out;
     Warning redirectWarning{&out};
     CORRADE_VERIFY(importer->openData(
         "glTF\x02\x00\x00\x00\x5d\x00\x00\x00"
@@ -1940,9 +1939,9 @@ void GltfImporterTest::openIgnoreUnknownChunk() {
         "\x03\x00\x00\0BIG\0\xef\xff\xff"
         "\x05\x00\x00\0BIN\0\x01\x23\x45\x67\x89"_s)); /* duplicate BIN ignored */
     if(data.quiet)
-        CORRADE_COMPARE(out.str(), "");
+        CORRADE_COMPARE(out, "");
     else
-        CORRADE_COMPARE(out.str(),
+        CORRADE_COMPARE(out,
         "Trade::GltfImporter::openData(): ignoring chunk 0x424942 at 47\n"
         "Trade::GltfImporter::openData(): ignoring chunk 0x474942 at 69\n"
         "Trade::GltfImporter::openData(): ignoring chunk 0x4e4942 at 80\n");
@@ -2053,10 +2052,10 @@ void GltfImporterTest::openExternalDataNoPathNoCallback() {
     CORRADE_VERIFY(importer->openData(*file));
     CORRADE_COMPARE(importer->meshCount(), 1);
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->mesh(0));
-    CORRADE_COMPARE(out.str(), "Trade::GltfImporter::mesh(): external buffers can be imported only when opening files from the filesystem or if a file callback is present\n");
+    CORRADE_COMPARE(out, "Trade::GltfImporter::mesh(): external buffers can be imported only when opening files from the filesystem or if a file callback is present\n");
 }
 
 void GltfImporterTest::openExternalDataTooLong() {
@@ -2080,10 +2079,10 @@ void GltfImporterTest::openExternalDataTooShort() {
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "buffer-invalid-short-size"_s + data.suffix)));
     CORRADE_COMPARE(importer->meshCount(), 1);
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->mesh(0));
-    CORRADE_COMPARE(out.str(), "Trade::GltfImporter::mesh(): buffer 0 is too short, expected 24 bytes but got 12\n");
+    CORRADE_COMPARE(out, "Trade::GltfImporter::mesh(): buffer 0 is too short, expected 24 bytes but got 12\n");
 }
 
 void GltfImporterTest::openExternalDataInvalidUri() {
@@ -2097,10 +2096,10 @@ void GltfImporterTest::openExternalDataInvalidUri() {
     /* Check we didn't forget to test anything */
     CORRADE_COMPARE(importer->image2DCount(), Containers::arraySize(InvalidUriData));
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->image2D(data.name));
-    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::GltfImporter::image2D(): {}\n", data.message));
+    CORRADE_COMPARE(out, Utility::format("Trade::GltfImporter::image2D(): {}\n", data.message));
 }
 
 void GltfImporterTest::requiredExtensions() {
@@ -2113,10 +2112,10 @@ void GltfImporterTest::requiredExtensionsUnsupported() {
     /* Disabled by default */
     CORRADE_VERIFY(!importer->configuration().value<bool>("ignoreRequiredExtensions"));
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "required-extensions-unsupported.gltf")));
-    CORRADE_COMPARE(out.str(), "Trade::GltfImporter::openData(): required extension EXT_lights_image_based not supported, enable ignoreRequiredExtensions to ignore\n");
+    CORRADE_COMPARE(out, "Trade::GltfImporter::openData(): required extension EXT_lights_image_based not supported, enable ignoreRequiredExtensions to ignore\n");
 }
 
 void GltfImporterTest::requiredExtensionsUnsupportedDisabled() {
@@ -2127,13 +2126,13 @@ void GltfImporterTest::requiredExtensionsUnsupportedDisabled() {
     importer->addFlags(data.flags);
     CORRADE_VERIFY(importer->configuration().setValue("ignoreRequiredExtensions", true));
 
-    std::ostringstream out;
+    Containers::String out;
     Warning redirectWarning{&out};
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "required-extensions-unsupported.gltf")));
     if(data.quiet)
-        CORRADE_COMPARE(out.str(), "");
+        CORRADE_COMPARE(out, "");
     else
-        CORRADE_COMPARE(out.str(), "Trade::GltfImporter::openData(): required extension EXT_lights_image_based not supported, ignoring\n");
+        CORRADE_COMPARE(out, "Trade::GltfImporter::openData(): required extension EXT_lights_image_based not supported, ignoring\n");
 }
 
 void GltfImporterTest::animation() {
@@ -2278,16 +2277,16 @@ void GltfImporterTest::animationInvalid() {
     /* Check we didn't forget to test anything */
     CORRADE_COMPARE(importer->animationCount(), Containers::arraySize(AnimationInvalidData));
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->animation(data.name));
     /* If the message ends with a newline, it's the whole output including a
        potential placeholder for the filename, otherwise just the sentence
        without any placeholder */
     if(Containers::StringView{data.message}.hasSuffix('\n'))
-        CORRADE_COMPARE(out.str(), Utility::formatString(data.message, filename));
+        CORRADE_COMPARE(out, Utility::format(data.message, filename));
     else
-        CORRADE_COMPARE(out.str(), Utility::formatString("Trade::GltfImporter::animation(): {}\n", data.message));
+        CORRADE_COMPARE(out, Utility::format("Trade::GltfImporter::animation(): {}\n", data.message));
 }
 
 void GltfImporterTest::animationInvalidBufferNotFound() {
@@ -2301,11 +2300,11 @@ void GltfImporterTest::animationInvalidBufferNotFound() {
     /* Check we didn't forget to test anything */
     CORRADE_COMPARE(importer->animationCount(), Containers::arraySize(AnimationInvalidBufferNotFoundData));
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->animation(data.name));
     /* There's an error from Path::read() before */
-    CORRADE_COMPARE_AS(out.str(),
+    CORRADE_COMPARE_AS(out,
         Utility::format("\nTrade::GltfImporter::animation(): {}\n", data.message),
         TestSuite::Compare::StringHasSuffix);
 }
@@ -2480,10 +2479,10 @@ void GltfImporterTest::animationSplineSharedWithDifferentTimeTrack() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "animation-splines-sharing.gltf")));
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->animation("TRS animation, splines, sharing data with different time track"));
-    CORRADE_COMPARE(out.str(), "Trade::GltfImporter::animation(): spline track is shared with different time tracks, we don't support that, sorry\n");
+    CORRADE_COMPARE(out, "Trade::GltfImporter::animation(): spline track is shared with different time tracks, we don't support that, sorry\n");
 }
 
 void GltfImporterTest::animationShortestPathOptimizationEnabled() {
@@ -2608,16 +2607,16 @@ void GltfImporterTest::animationQuaternionNormalizationEnabled() {
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "animation-patching.gltf")));
 
     Containers::Optional<AnimationData> animation;
-    std::ostringstream out;
+    Containers::String out;
     {
         Warning redirectWarning{&out};
         animation = importer->animation("Quaternion normalization patching");
     }
     CORRADE_VERIFY(animation);
     if(data.quiet)
-        CORRADE_COMPARE(out.str(), "");
+        CORRADE_COMPARE(out, "");
     else
-        CORRADE_COMPARE(out.str(), "Trade::GltfImporter::animation(): quaternions in some rotation tracks were renormalized\n");
+        CORRADE_COMPARE(out, "Trade::GltfImporter::animation(): quaternions in some rotation tracks were renormalized\n");
     CORRADE_COMPARE(animation->trackCount(), 1);
     CORRADE_COMPARE(animation->trackType(0), AnimationTrackType::Quaternion);
 
@@ -2840,16 +2839,16 @@ void GltfImporterTest::cameraInvalid() {
     /* Check we didn't forget to test anything */
     CORRADE_COMPARE(Containers::arraySize(CameraInvalidData), importer->cameraCount());
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->camera(data.name));
     /* If the message ends with a newline, it's the whole output including a
        potential placeholder for the filename, otherwise just the sentence
        without any placeholder */
     if(Containers::StringView{data.message}.hasSuffix('\n'))
-        CORRADE_COMPARE(out.str(), Utility::formatString(data.message, filename));
+        CORRADE_COMPARE(out, Utility::format(data.message, filename));
     else
-        CORRADE_COMPARE(out.str(), Utility::formatString("Trade::GltfImporter::camera(): {}\n", data.message));
+        CORRADE_COMPARE(out, Utility::format("Trade::GltfImporter::camera(): {}\n", data.message));
 }
 
 void GltfImporterTest::light() {
@@ -2921,19 +2920,19 @@ void GltfImporterTest::lightInvalid() {
     /* Check we didn't forget to test anything */
     CORRADE_COMPARE(importer->lightCount(), Containers::arraySize(LightInvalidData));
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->light(data.name));
     /* If the message ends with a newline, it's the whole output including a
        potential placeholder for the filename, otherwise just the sentence
        without any placeholder */
     if(Containers::StringView{data.message}.hasSuffix('\n'))
-        CORRADE_COMPARE_AS(out.str(),
-            Utility::formatString(data.message, filename),
+        CORRADE_COMPARE_AS(out,
+            Utility::format(data.message, filename),
             TestSuite::Compare::String);
     else
-        CORRADE_COMPARE_AS(out.str(),
-            Utility::formatString("Trade::GltfImporter::light(): {}\n", data.message),
+        CORRADE_COMPARE_AS(out,
+            Utility::format("Trade::GltfImporter::light(): {}\n", data.message),
             TestSuite::Compare::String);
 }
 
@@ -3100,19 +3099,19 @@ void GltfImporterTest::sceneInvalidWholeFile() {
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->openFile(filename));
     /* If the message ends with a newline, it's the whole output including a
        potential placeholder for the filename, otherwise just the sentence
        without any placeholder */
     if(Containers::StringView{data.message}.hasSuffix('\n'))
-        CORRADE_COMPARE_AS(out.str(),
-            Utility::formatString(data.message, filename),
+        CORRADE_COMPARE_AS(out,
+            Utility::format(data.message, filename),
             TestSuite::Compare::String);
     else
-        CORRADE_COMPARE_AS(out.str(),
-            Utility::formatString("Trade::GltfImporter::openData(): {}\n", data.message),
+        CORRADE_COMPARE_AS(out,
+            Utility::format("Trade::GltfImporter::openData(): {}\n", data.message),
             TestSuite::Compare::String);
 }
 
@@ -3128,16 +3127,16 @@ void GltfImporterTest::sceneInvalid() {
     /* Check we didn't forget to test anything */
     CORRADE_COMPARE(Containers::arraySize(SceneInvalidData), importer->sceneCount());
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->scene(data.name));
     /* If the message ends with a newline, it's the whole output including a
        potential placeholder for the filename, otherwise just the sentence
        without any placeholder */
     if(Containers::StringView{data.message}.hasSuffix('\n'))
-        CORRADE_COMPARE(out.str(), Utility::formatString(data.message, filename));
+        CORRADE_COMPARE(out, Utility::format(data.message, filename));
     else
-        CORRADE_COMPARE(out.str(), Utility::formatString("Trade::GltfImporter::scene(): {}\n", data.message));
+        CORRADE_COMPARE(out, Utility::format("Trade::GltfImporter::scene(): {}\n", data.message));
 }
 
 void GltfImporterTest::sceneDefaultNoDefault() {
@@ -3153,10 +3152,10 @@ void GltfImporterTest::sceneDefaultNoDefault() {
 void GltfImporterTest::sceneDefaultOutOfRange() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "scene-default-oob.gltf")));
-    CORRADE_COMPARE(out.str(), "Trade::GltfImporter::openData(): scene index 0 out of range for 0 scenes\n");
+    CORRADE_COMPARE(out, "Trade::GltfImporter::openData(): scene index 0 out of range for 0 scenes\n");
 }
 
 void GltfImporterTest::sceneTransformation() {
@@ -3386,16 +3385,16 @@ void GltfImporterTest::sceneTransformationQuaternionNormalizationEnabled() {
     CORRADE_COMPARE(importer->sceneCount(), 1);
 
     Containers::Optional<SceneData> scene;
-    std::ostringstream out;
+    Containers::String out;
     {
         Warning redirectWarning{&out};
         scene = importer->scene(0);
     }
     CORRADE_VERIFY(scene);
     if(data.quiet)
-        CORRADE_COMPARE(out.str(), "");
+        CORRADE_COMPARE(out, "");
     else
-        CORRADE_COMPARE(out.str(), "Trade::GltfImporter::scene(): rotation quaternion of node 3 was renormalized\n");
+        CORRADE_COMPARE(out, "Trade::GltfImporter::scene(): rotation quaternion of node 3 was renormalized\n");
 
     Containers::Optional<Containers::Triple<Vector3, Quaternion, Vector3>> trs = scene->translationRotationScaling3DFor(3);
     CORRADE_VERIFY(trs);
@@ -3410,13 +3409,13 @@ void GltfImporterTest::sceneTransformationQuaternionNormalizationDisabled() {
     CORRADE_COMPARE(importer->sceneCount(), 1);
 
     Containers::Optional<SceneData> scene;
-    std::ostringstream out;
+    Containers::String out;
     {
         Warning redirectWarning{&out};
         scene = importer->scene(0);
     }
     CORRADE_VERIFY(scene);
-    CORRADE_COMPARE(out.str(), "");
+    CORRADE_COMPARE(out, "");
 
     Containers::Optional<Containers::Triple<Vector3, Quaternion, Vector3>> trs = scene->translationRotationScaling3DFor(3);
     CORRADE_VERIFY(trs);
@@ -3532,7 +3531,7 @@ void GltfImporterTest::sceneCustomFields() {
 
     {
         Containers::Optional<Trade::SceneData> scene;
-        std::ostringstream outWarning, outError;
+        Containers::String outWarning, outError;
         {
             Warning redirectWarning{&outWarning};
             Error redirectError{&outError};
@@ -3540,10 +3539,10 @@ void GltfImporterTest::sceneCustomFields() {
         }
         CORRADE_VERIFY(scene);
         /* As these are all non-fatal messages, all should be warnings */
-        CORRADE_COMPARE(outError.str(), "");
+        CORRADE_COMPARE(outError, "");
         if(data.quiet)
-            CORRADE_COMPARE(outWarning.str(), "");
-        else CORRADE_COMPARE_AS(outWarning.str(), Utility::formatString(
+            CORRADE_COMPARE(outWarning, "");
+        else CORRADE_COMPARE_AS(outWarning, Utility::format(
             "Trade::GltfImporter::scene(): node 2 extras property is Utility::JsonToken::Type::Array, skipping\n"
             "Trade::GltfImporter::scene(): node 3 extras invalidNullField property is Utility::JsonToken::Type::Null, skipping\n"
             "Trade::GltfImporter::scene(): node 3 extras invalidHeterogeneousArrayField property is a heterogeneous array, skipping\n"
@@ -3755,7 +3754,7 @@ void GltfImporterTest::sceneCustomFields() {
         }), TestSuite::Compare::Container);
     } {
         Containers::Optional<Trade::SceneData> scene;
-        std::ostringstream out;
+        Containers::String out;
         {
             Warning redirectWarning{&out};
             scene = importer->scene(1);
@@ -3763,7 +3762,7 @@ void GltfImporterTest::sceneCustomFields() {
         CORRADE_VERIFY(scene);
         /* No warnings should be for the second scene, as the warning nodes are
            not part of it */
-        CORRADE_COMPARE(out.str(), "");
+        CORRADE_COMPARE(out, "");
 
         /* Parent, ImporterState and Transformation (for marking the scene as
            3D) is there always, plus `radius`, `flags`, `visible`, `category`,
@@ -3852,10 +3851,10 @@ void GltfImporterTest::sceneCustomFieldsInvalidConfiguration() {
 
     importer->configuration().group("customSceneFieldTypes")->addValue("offset", "Vector2ui");
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "scene-custom-fields.gltf")));
-    CORRADE_COMPARE(out.str(), "Trade::GltfImporter::openData(): invalid type Vector2ui specified for custom scene field offset\n");
+    CORRADE_COMPARE(out, "Trade::GltfImporter::openData(): invalid type Vector2ui specified for custom scene field offset\n");
 }
 
 void GltfImporterTest::skin() {
@@ -3912,16 +3911,16 @@ void GltfImporterTest::skinInvalid() {
     /* Check we didn't forget to test anything */
     CORRADE_COMPARE(Containers::arraySize(SkinInvalidData), importer->skin3DCount());
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->skin3D(data.name));
     /* If the message ends with a newline, it's the whole output including a
        potential placeholder for the filename, otherwise just the sentence
        without any placeholder */
     if(Containers::StringView{data.message}.hasSuffix('\n'))
-        CORRADE_COMPARE(out.str(), Utility::formatString(data.message, filename));
+        CORRADE_COMPARE(out, Utility::format(data.message, filename));
     else
-        CORRADE_COMPARE(out.str(), Utility::formatString("Trade::GltfImporter::skin3D(): {}\n", data.message));
+        CORRADE_COMPARE(out, Utility::format("Trade::GltfImporter::skin3D(): {}\n", data.message));
 }
 
 void GltfImporterTest::skinInvalidBufferNotFound() {
@@ -3931,11 +3930,11 @@ void GltfImporterTest::skinInvalidBufferNotFound() {
 
     CORRADE_COMPARE(importer->skin3DCount(), 1);
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->skin3D("buffer not found"));
     /* There's an error from Path::read() before */
-    CORRADE_COMPARE_AS(out.str(),
+    CORRADE_COMPARE_AS(out,
         "\nTrade::GltfImporter::skin3D(): error opening /nonexistent.bin\n",
         TestSuite::Compare::StringHasSuffix);
 }
@@ -4052,12 +4051,12 @@ void GltfImporterTest::meshNoAttributes() {
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "mesh.gltf")));
 
     Containers::Optional<Trade::MeshData> mesh;
-    std::ostringstream out;
+    Containers::String out;
     {
         Error redirectError{&out};
         mesh = importer->mesh("Attribute-less indexed mesh");
     }
-    CORRADE_COMPARE(!!mesh, !data.strict || !*data.strict); CORRADE_COMPARE(out.str(), data.message);
+    CORRADE_COMPARE(!!mesh, !data.strict || !*data.strict); CORRADE_COMPARE(out, data.message);
 
     if(mesh) {
         CORRADE_COMPARE(mesh->primitive(), MeshPrimitive::Triangles);
@@ -4104,13 +4103,13 @@ void GltfImporterTest::meshNoIndicesNoAttributes() {
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "mesh.gltf")));
 
     Containers::Optional<Trade::MeshData> mesh;
-    std::ostringstream out;
+    Containers::String out;
     {
         Error redirectError{&out};
         mesh = importer->mesh("Attribute-less mesh");
     }
 
-    CORRADE_COMPARE(!!mesh, !data.strict || !*data.strict); CORRADE_COMPARE(out.str(), data.message);
+    CORRADE_COMPARE(!!mesh, !data.strict || !*data.strict); CORRADE_COMPARE(out, data.message);
 
     if(mesh) {
         CORRADE_COMPARE(mesh->primitive(), MeshPrimitive::Triangles);
@@ -4132,13 +4131,13 @@ void GltfImporterTest::meshNoIndicesNoVerticesNoBufferUri() {
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "mesh-no-indices-no-vertices-no-buffer-uri"_s + data.suffix)));
 
     Containers::Optional<Trade::MeshData> mesh;
-    std::ostringstream out;
+    Containers::String out;
     {
         Error redirectError{&out};
         mesh = importer->mesh(0);
     }
 
-    CORRADE_COMPARE(!!mesh, !data.strict || !*data.strict); CORRADE_COMPARE(out.str(), data.message);
+    CORRADE_COMPARE(!!mesh, !data.strict || !*data.strict); CORRADE_COMPARE(out, data.message);
 
     if(mesh) {
         CORRADE_COMPARE(mesh->primitive(), MeshPrimitive::Triangles);
@@ -4368,16 +4367,16 @@ void GltfImporterTest::meshCustomAttributes() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
     importer->addFlags(data.flags);
 
-    std::ostringstream out;
+    Containers::String out;
     {
         Warning redirectWarning{&out};
         CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "mesh-custom-attributes.gltf")));
     }
     CORRADE_COMPARE(importer->meshCount(), 2);
     if(data.quiet)
-        CORRADE_COMPARE(out.str(), "");
+        CORRADE_COMPARE(out, "");
     else
-        CORRADE_COMPARE(out.str(),
+        CORRADE_COMPARE(out,
             "Trade::GltfImporter::openData(): unknown attribute OBJECT_ID3, importing as custom attribute\n"
             "Trade::GltfImporter::openData(): unknown attribute NOT_AN_IDENTITY, importing as custom attribute\n");
 
@@ -4519,7 +4518,7 @@ void GltfImporterTest::meshUnorderedAttributes() {
     /* Custom attributes are sorted in declaration order */
     CORRADE_VERIFY(customAttribute4 < customAttribute1);
 
-    std::ostringstream out;
+    Containers::String out;
     Warning redirectWarning{&out};
 
     Containers::Optional<Trade::MeshData> mesh = importer->mesh(0);
@@ -4528,9 +4527,9 @@ void GltfImporterTest::meshUnorderedAttributes() {
 
     /* No warning about _CUSTOM_4 and _CUSTOM_1 */
     if(data.quiet)
-        CORRADE_COMPARE(out.str(), "");
+        CORRADE_COMPARE(out, "");
     else
-        CORRADE_COMPARE(out.str(),
+        CORRADE_COMPARE(out,
             "Trade::GltfImporter::mesh(): found attribute COLOR_3 but expected COLOR_0\n"
             "Trade::GltfImporter::mesh(): found attribute COLOR_9 but expected COLOR_4\n");
 
@@ -4708,7 +4707,7 @@ void GltfImporterTest::meshUnsignedIntVertexFormats() {
     Containers::Optional<Trade::MeshData> mesh0;
     Containers::Optional<Trade::MeshData> mesh1;
     Containers::Optional<Trade::MeshData> mesh2;
-    std::ostringstream out;
+    Containers::String out;
     {
         Error redirectError{&out};
         mesh0 = importer->mesh(0);
@@ -4719,7 +4718,7 @@ void GltfImporterTest::meshUnsignedIntVertexFormats() {
     CORRADE_COMPARE(!!mesh0, !data.strict || !*data.strict);
     CORRADE_COMPARE(!!mesh1, !data.strict || !*data.strict);
     CORRADE_COMPARE(!!mesh2, !data.strict || !*data.strict);
-    CORRADE_COMPARE(out.str(), data.message);
+    CORRADE_COMPARE(out, data.message);
 
     if(mesh0) {
         CORRADE_COMPARE(mesh0->attributeCount(), 1);
@@ -4772,7 +4771,7 @@ void GltfImporterTest::meshUnsupportedVertexFormats() {
     Containers::Optional<Trade::MeshData> mesh1;
     Containers::Optional<Trade::MeshData> mesh2;
     Containers::Optional<Trade::MeshData> mesh3;
-    std::ostringstream out;
+    Containers::String out;
     {
         Error redirectError{&out};
         Warning redirectWarning{&out};
@@ -4785,7 +4784,7 @@ void GltfImporterTest::meshUnsupportedVertexFormats() {
     CORRADE_COMPARE(!!mesh1, !data.strict || !*data.strict);
     CORRADE_COMPARE(!!mesh2, !data.strict || !*data.strict);
     CORRADE_COMPARE(!!mesh3, !data.strict || !*data.strict);
-    CORRADE_COMPARE_AS(out.str(),
+    CORRADE_COMPARE_AS(out,
         data.message,
         TestSuite::Compare::String);
 
@@ -5112,19 +5111,19 @@ void GltfImporterTest::meshInvalidWholeFile() {
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->openFile(filename));
     /* If the message ends with a newline, it's the whole output including a
        potential placeholder for the filename, otherwise just the sentence
        without any placeholder */
     if(Containers::StringView{data.message}.hasSuffix('\n'))
-        CORRADE_COMPARE_AS(out.str(),
-            Utility::formatString(data.message, filename),
+        CORRADE_COMPARE_AS(out,
+            Utility::format(data.message, filename),
             TestSuite::Compare::String);
     else
-        CORRADE_COMPARE_AS(out.str(),
-            Utility::formatString("Trade::GltfImporter::openData(): {}\n", data.message),
+        CORRADE_COMPARE_AS(out,
+            Utility::format("Trade::GltfImporter::openData(): {}\n", data.message),
             TestSuite::Compare::String);
 }
 
@@ -5140,19 +5139,19 @@ void GltfImporterTest::meshInvalid() {
     /* Check we didn't forget to test anything */
     CORRADE_COMPARE(Containers::arraySize(MeshInvalidData), importer->meshCount());
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->mesh(data.name));
     /* If the message ends with a newline, it's the whole output including a
        potential placeholder for the filename, otherwise just the sentence
        without any placeholder */
     if(Containers::StringView{data.message}.hasSuffix('\n'))
-        CORRADE_COMPARE_AS(out.str(),
-            Utility::formatString(data.message, filename),
+        CORRADE_COMPARE_AS(out,
+            Utility::format(data.message, filename),
             TestSuite::Compare::String);
     else
-        CORRADE_COMPARE_AS(out.str(),
-            Utility::formatString("Trade::GltfImporter::mesh(): {}\n", data.message),
+        CORRADE_COMPARE_AS(out,
+            Utility::format("Trade::GltfImporter::mesh(): {}\n", data.message),
             TestSuite::Compare::String);
 }
 
@@ -5166,11 +5165,11 @@ void GltfImporterTest::meshInvalidBufferNotFound() {
     /* Check we didn't forget to test anything */
     CORRADE_COMPARE(importer->meshCount(), Containers::arraySize(MeshInvalidBufferNotFoundData));
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->mesh(data.name));
     /* There's an error from Path::read() before */
-    CORRADE_COMPARE_AS(out.str(),
+    CORRADE_COMPARE_AS(out,
         Utility::format("\nTrade::GltfImporter::mesh(): {}\n", data.message),
         TestSuite::Compare::StringHasSuffix);
 }
@@ -5523,7 +5522,7 @@ void GltfImporterTest::materialExtras() {
         for(const char* name: {"primitive", "string", "array"}) {
             CORRADE_ITERATION(name);
             Containers::Optional<MaterialData> material;
-            std::ostringstream outWarning, outError;
+            Containers::String outWarning, outError;
             {
                 Warning redirectWarning{&outWarning};
                 Error redirectError{&outError};
@@ -5533,11 +5532,11 @@ void GltfImporterTest::materialExtras() {
             CORRADE_COMPARE(material->layerCount(), 1);
             CORRADE_COMPARE(material->attributeCount(), 0);
             /* As these are all non-fatal messages, all should be warnings */
-            CORRADE_COMPARE(outError.str(), "");
+            CORRADE_COMPARE(outError, "");
             if(data.quiet)
-                CORRADE_COMPARE(outWarning.str(), "");
+                CORRADE_COMPARE(outWarning, "");
             else
-                CORRADE_COMPARE(outWarning.str(), "Trade::GltfImporter::material(): extras property is not an object, skipping\n");
+                CORRADE_COMPARE(outWarning, "Trade::GltfImporter::material(): extras property is not an object, skipping\n");
         }
     } {
         const char* name = "empty";
@@ -5550,7 +5549,7 @@ void GltfImporterTest::materialExtras() {
         const char* name = "invalid keys";
         CORRADE_ITERATION(name);
         Containers::Optional<MaterialData> material;
-        std::ostringstream outWarning, outError;
+        Containers::String outWarning, outError;
         {
             Warning redirectWarning{&outWarning};
             Error redirectError{&outError};
@@ -5561,17 +5560,17 @@ void GltfImporterTest::materialExtras() {
         CORRADE_COMPARE(material->attributeCount(), 0);
 
         /* As these are all non-fatal messages, all should be warnings */
-        CORRADE_COMPARE(outError.str(), "");
+        CORRADE_COMPARE(outError, "");
         if(data.quiet)
-            CORRADE_COMPARE(outWarning.str(), "");
-        else CORRADE_COMPARE(outWarning.str(), Utility::formatString(
+            CORRADE_COMPARE(outWarning, "");
+        else CORRADE_COMPARE(outWarning, Utility::format(
             "Utility::Json::parseObject(): invalid unicode escape sequence \\uhhhh at {0}:25:10\n"
             "Trade::GltfImporter::material(): extras object has invalid keys, skipping\n", filename));
     } {
         const char* name = "invalid";
         CORRADE_ITERATION(name);
         Containers::Optional<MaterialData> material;
-        std::ostringstream outWarning, outError;
+        Containers::String outWarning, outError;
         {
             Warning redirectWarning{&outWarning};
             Error redirectError{&outError};
@@ -5585,10 +5584,10 @@ void GltfImporterTest::materialExtras() {
         /** @todo maybe reduce the variants since there's a catch-all error for
             most of them now? */
         /* As these are all non-fatal messages, all should be warnings */
-        CORRADE_COMPARE(outError.str(), "");
+        CORRADE_COMPARE(outError, "");
         if(data.quiet)
-            CORRADE_COMPARE(outWarning.str(), "");
-        else CORRADE_COMPARE(outWarning.str(),
+            CORRADE_COMPARE(outWarning, "");
+        else CORRADE_COMPARE(outWarning,
             "Trade::GltfImporter::material(): property with an empty name, skipping\n"
             "Trade::GltfImporter::material(): property aValueThatWontFit is too large with 84 bytes, skipping\n"
             "Trade::GltfImporter::material(): property anIncrediblyLongNameThatSadlyWontFitPaddingPaddingPadding!! is too large with 63 bytes, skipping\n"
@@ -5606,7 +5605,7 @@ void GltfImporterTest::materialExtras() {
         const char* name = "extras";
         CORRADE_ITERATION(name);
         Containers::Optional<MaterialData> material;
-        std::ostringstream outWarning, outError;
+        Containers::String outWarning, outError;
         {
             Warning redirectWarning{&outWarning};
             Error redirectError{&outError};
@@ -5641,11 +5640,11 @@ void GltfImporterTest::materialExtras() {
         }, {17, 20}}), DebugTools::CompareMaterial);
 
         /* As these are all non-fatal messages, all should be warnings */
-        CORRADE_COMPARE(outError.str(), "");
+        CORRADE_COMPARE(outError, "");
         if(data.quiet)
-            CORRADE_COMPARE(outWarning.str(), "");
+            CORRADE_COMPARE(outWarning, "");
         else
-            CORRADE_COMPARE(outWarning.str(), "Trade::GltfImporter::material(): property invalid is not a numeric array, skipping\n");
+            CORRADE_COMPARE(outWarning, "Trade::GltfImporter::material(): property invalid is not a numeric array, skipping\n");
     }
 }
 
@@ -5875,7 +5874,7 @@ void GltfImporterTest::materialRaw() {
     CORRADE_VERIFY(importer->openFile(filename));
 
     Containers::Optional<MaterialData> material;
-    std::ostringstream outWarning, outError;
+    Containers::String outWarning, outError;
     {
         Warning redirectWarning{&outWarning};
         Error redirectError{&outError};
@@ -5937,10 +5936,10 @@ void GltfImporterTest::materialRaw() {
     /** @todo maybe reduce the variants since there's a catch-all error for
         most of them now? */
     /* As these are all non-fatal messages, all should be warnings */
-    CORRADE_COMPARE(outError.str(), "");
+    CORRADE_COMPARE(outError, "");
     if(data.quiet)
-        CORRADE_COMPARE(outWarning.str(), "");
-    else CORRADE_COMPARE_AS(outWarning.str(), Utility::formatString(
+        CORRADE_COMPARE(outWarning, "");
+    else CORRADE_COMPARE_AS(outWarning, Utility::format(
         /* MAGNUM_material_forbidden_types. Attributes are sorted by name. */
         "Trade::GltfImporter::material(): extension with an empty name, skipping\n"
         "Trade::GltfImporter::material(): property with an empty name, skipping\n"
@@ -6242,7 +6241,7 @@ void GltfImporterTest::materialRawSheen() {
 
     CORRADE_COMPARE(importer->materialCount(), Containers::arraySize(materials));
 
-    std::ostringstream out;
+    Containers::String out;
     Warning redirectWarning{&out};
 
     for(const auto& expected: materials) {
@@ -6254,7 +6253,7 @@ void GltfImporterTest::materialRawSheen() {
             DebugTools::CompareMaterial);
     }
 
-    CORRADE_COMPARE(out.str(),
+    CORRADE_COMPARE(out,
         "Trade::GltfImporter::material(): property sheenRoughnessTextureMatrix is too large with 63 bytes, skipping\n"
         "Trade::GltfImporter::material(): property sheenRoughnessTextureMatrix is too large with 63 bytes, skipping\n");
 }
@@ -6271,7 +6270,7 @@ void GltfImporterTest::materialRawOutOfRange() {
 
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "material-raw.gltf")));
 
-    std::ostringstream out;
+    Containers::String out;
     Containers::Optional<MaterialData> material;
     {
         Error redirectError{&out};
@@ -6290,9 +6289,9 @@ void GltfImporterTest::materialRawOutOfRange() {
     /** @todo merge with materialRaw()? since the same error is if the texture
         has no index property */
     if(data.quiet)
-        CORRADE_COMPARE(out.str(), "");
+        CORRADE_COMPARE(out, "");
     else
-        CORRADE_COMPARE(out.str(),
+        CORRADE_COMPARE(out,
             "Trade::GltfImporter::material(): snakeTexture index 2 out of range for 2 textures\n"
             "Trade::GltfImporter::material(): property snakeTexture has an invalid texture object, skipping\n");
 }
@@ -6309,21 +6308,21 @@ void GltfImporterTest::materialInvalid() {
     /* Check we didn't forget to test anything */
     CORRADE_COMPARE(Containers::arraySize(MaterialInvalidData), importer->materialCount());
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->material(data.name));
     /* If the message ends with a newline, it's the whole output including a
        potential placeholder for the filename, otherwise just the sentence
        without any placeholder */
     if(Containers::StringView{data.message}.hasSuffix('\n'))
-        CORRADE_COMPARE(out.str(), Utility::formatString(data.message, filename));
+        CORRADE_COMPARE(out, Utility::format(data.message, filename));
     else
-        CORRADE_COMPARE(out.str(), Utility::formatString("Trade::GltfImporter::material(): {}\n", data.message));
+        CORRADE_COMPARE(out, Utility::format("Trade::GltfImporter::material(): {}\n", data.message));
 }
 
 void GltfImporterTest::textureCoordinateYFlip() {
     auto&& data = TextureCoordinateYFlipData[testCaseInstanceId()];
-    setTestCaseDescription(Utility::formatString("{}{}{}",
+    setTestCaseDescription(Utility::format("{}{}{}",
         data.materialName,
         data.morphTargetId == -1 ? "" : ", in a morph target",
         data.flipInMaterial ? ", textureCoordinateYFlipInMaterial" : ""));
@@ -6459,16 +6458,16 @@ void GltfImporterTest::textureInvalid() {
     /* Check we didn't forget to test anything */
     CORRADE_COMPARE(importer->textureCount(), Containers::arraySize(TextureInvalidData));
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->texture(data.name));
     /* If the message ends with a newline, it's the whole output including a
        potential placeholder for the filename, otherwise just the sentence
        without any placeholder */
     if(Containers::StringView{data.message}.hasSuffix('\n'))
-        CORRADE_COMPARE(out.str(), Utility::formatString(data.message, filename));
+        CORRADE_COMPARE(out, Utility::format(data.message, filename));
     else
-        CORRADE_COMPARE(out.str(), Utility::formatString("Trade::GltfImporter::texture(): {}\n", data.message));
+        CORRADE_COMPARE(out, Utility::format("Trade::GltfImporter::texture(): {}\n", data.message));
 }
 
 constexpr char ExpectedImageData[] =
@@ -6536,10 +6535,10 @@ void GltfImporterTest::imageExternalNoPathNoCallback() {
     CORRADE_VERIFY(importer->openData(*file));
     CORRADE_COMPARE(importer->image2DCount(), 2);
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->image2D(0));
-    CORRADE_COMPARE(out.str(), "Trade::GltfImporter::image2D(): external images can be imported only when opening files from the filesystem or if a file callback is present\n");
+    CORRADE_COMPARE(out, "Trade::GltfImporter::image2D(): external images can be imported only when opening files from the filesystem or if a file callback is present\n");
 }
 
 void GltfImporterTest::imageBasis() {
@@ -6643,16 +6642,16 @@ void GltfImporterTest::imageInvalid() {
     /* Check we didn't forget to test anything */
     CORRADE_COMPARE(importer->image2DCount(), Containers::arraySize(ImageInvalidData));
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->image2D(data.name));
     /* If the message ends with a newline, it's the whole output including a
        potential placeholder for the filename, otherwise just the sentence
        without any placeholder */
     if(Containers::StringView{data.message}.hasSuffix('\n'))
-        CORRADE_COMPARE(out.str(), Utility::formatString(data.message, filename));
+        CORRADE_COMPARE(out, Utility::format(data.message, filename));
     else
-        CORRADE_COMPARE(out.str(), Utility::formatString("Trade::GltfImporter::image2D(): {}\n", data.message));
+        CORRADE_COMPARE(out, Utility::format("Trade::GltfImporter::image2D(): {}\n", data.message));
 }
 
 void GltfImporterTest::imageInvalidNotFound() {
@@ -6669,23 +6668,23 @@ void GltfImporterTest::imageInvalidNotFound() {
     CORRADE_VERIFY(id != -1);
 
     {
-        std::ostringstream out;
+        Containers::String out;
         Error redirectError{&out};
         CORRADE_VERIFY(!importer->image2D(id));
         /* image2DLevelCount() can't fail, but should not crash either */
         CORRADE_COMPARE(importer->image2DLevelCount(id), 1);
         /* There's an error from Path::read() before */
-        CORRADE_COMPARE_AS(out.str(),
-            Utility::formatString("\n{}\n", data.message),
+        CORRADE_COMPARE_AS(out,
+            Utility::format("\n{}\n", data.message),
             TestSuite::Compare::StringHasSuffix);
 
     /* The importer should get cached even in case of failure, so the message
        should get printed just once */
     } {
-        std::ostringstream out;
+        Containers::String out;
         Error redirectError{&out};
         CORRADE_VERIFY(!importer->image2D(data.name));
-        CORRADE_COMPARE(out.str(), "");
+        CORRADE_COMPARE(out, "");
     }
 }
 
@@ -6696,14 +6695,14 @@ void GltfImporterTest::imagePropagateImporterFlags() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
     importer->setFlags(ImporterFlag::Verbose);
 
-    std::ostringstream out;
+    Containers::String out;
     Debug redirectOutput{&out};
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "image.gltf")));
     CORRADE_COMPARE(importer->image2DCount(), 2);
     CORRADE_VERIFY(importer->image2D(0));
     /* If this starts to fail (possibly due to verbose output from openFile()),
        add \n at the front and change to Compare::StringHasSuffix */
-    CORRADE_COMPARE(out.str(),
+    CORRADE_COMPARE(out,
         "Trade::AnyImageImporter::openFile(): using PngImporter (provided by StbImageImporter)\n");
 }
 
@@ -6982,16 +6981,16 @@ void GltfImporterTest::experimentalKhrTextureKtxNotEnabled() {
     importer->addFlags(data.flags);
     CORRADE_COMPARE(importer->configuration().value("experimentalKhrTextureKtx"), "false");
 
-    std::ostringstream out;
+    Containers::String out;
     Warning redirectWarning{&out};
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "texture-ktx.gltf")));
 
     if(data.quiet)
-        CORRADE_COMPARE(out.str(),
+        CORRADE_COMPARE(out,
             "Trade::GltfImporter::openData(): required extension KHR_texture_ktx not supported, enable ignoreRequiredExtensions to ignore\n");
     else
-        CORRADE_COMPARE(out.str(),
+        CORRADE_COMPARE(out,
             "Trade::GltfImporter::openData(): used extension KHR_texture_ktx is experimental, enable experimentalKhrTextureKtx to use it\n"
             "Trade::GltfImporter::openData(): required extension KHR_texture_ktx not supported, enable ignoreRequiredExtensions to ignore\n");
 }
@@ -7005,16 +7004,16 @@ void GltfImporterTest::experimentalKhrTextureKtxInvalidWholeFile() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
     importer->configuration().setValue("experimentalKhrTextureKtx", true);
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->openFile(filename));
     /* If the message ends with a newline, it's the whole output including a
        potential placeholder for the filename, otherwise just the sentence
        without any placeholder */
     if(Containers::StringView{data.message}.hasSuffix('\n'))
-        CORRADE_COMPARE(out.str(), Utility::formatString(data.message, filename));
+        CORRADE_COMPARE(out, Utility::format(data.message, filename));
     else
-        CORRADE_COMPARE(out.str(), Utility::formatString("Trade::GltfImporter::openData(): {}\n", data.message));
+        CORRADE_COMPARE(out, Utility::format("Trade::GltfImporter::openData(): {}\n", data.message));
 }
 
 void GltfImporterTest::experimentalKhrTextureKtxInvalidMaterial() {
@@ -7031,16 +7030,16 @@ void GltfImporterTest::experimentalKhrTextureKtxInvalidMaterial() {
     /* Check we didn't forget to test anything */
     CORRADE_COMPARE(importer->materialCount(), Containers::arraySize(ExperimentalTextureKtxInvalidMaterialData));
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->material(data.name));
     /* If the message ends with a newline, it's the whole output including a
        potential placeholder for the filename, otherwise just the sentence
        without any placeholder */
     if(Containers::StringView{data.message}.hasSuffix('\n'))
-        CORRADE_COMPARE(out.str(), Utility::formatString(data.message, filename));
+        CORRADE_COMPARE(out, Utility::format(data.message, filename));
     else
-        CORRADE_COMPARE(out.str(), Utility::formatString("Trade::GltfImporter::material(): {}\n", data.message));
+        CORRADE_COMPARE(out, Utility::format("Trade::GltfImporter::material(): {}\n", data.message));
 }
 
 void GltfImporterTest::experimentalKhrTextureKtxInvalidImage() {
@@ -7058,14 +7057,14 @@ void GltfImporterTest::experimentalKhrTextureKtxInvalidImage() {
     /* Check we didn't forget to test anything */
     CORRADE_COMPARE(importer->image1DCount() + importer->image2DCount() + importer->image3DCount(), Containers::arraySize(ExperimentalTextureKtxInvalidImageData));
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     if(data.dimensions == 2)
         CORRADE_VERIFY(!importer->image2D(data.name));
     else if(data.dimensions == 3)
         CORRADE_VERIFY(!importer->image3D(data.name));
     else CORRADE_INTERNAL_ASSERT_UNREACHABLE();
-    CORRADE_COMPARE(out.str(), Utility::formatString(
+    CORRADE_COMPARE(out, Utility::format(
         "Trade::GltfImporter::image{}D(): {}\n", data.dimensions, data.message));
 }
 
@@ -7112,11 +7111,11 @@ void GltfImporterTest::fileCallbackBufferNotFound() {
     CORRADE_VERIFY(importer->openData(rs.getRaw("some/path/data" + std::string{data.suffix})));
     CORRADE_COMPARE(importer->meshCount(), 1);
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
 
     CORRADE_VERIFY(!importer->mesh(0));
-    CORRADE_COMPARE(out.str(), "Trade::GltfImporter::mesh(): error opening data.bin through a file callback\n");
+    CORRADE_COMPARE(out, "Trade::GltfImporter::mesh(): error opening data.bin through a file callback\n");
 }
 
 void GltfImporterTest::fileCallbackImage() {
@@ -7169,11 +7168,11 @@ void GltfImporterTest::fileCallbackImageNotFound() {
     CORRADE_VERIFY(importer->openData(rs.getRaw("some/path/data" + std::string{data.suffix})));
     CORRADE_COMPARE(importer->image2DCount(), 1);
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
 
     CORRADE_VERIFY(!importer->image2D(0));
-    CORRADE_COMPARE(out.str(), "Trade::AbstractImporter::openFile(): cannot open file data.png\n");
+    CORRADE_COMPARE(out, "Trade::AbstractImporter::openFile(): cannot open file data.png\n");
 }
 
 void GltfImporterTest::utf8filenames() {
@@ -7331,10 +7330,10 @@ void GltfImporterTest::versionUnsupported() {
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, data.file)));
-    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::GltfImporter::openData(): {}\n", data.message));
+    CORRADE_COMPARE(out, Utility::format("Trade::GltfImporter::openData(): {}\n", data.message));
 }
 
 void GltfImporterTest::openMemory() {

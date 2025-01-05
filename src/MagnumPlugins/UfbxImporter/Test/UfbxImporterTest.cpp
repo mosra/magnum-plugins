@@ -25,8 +25,7 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-#include <sstream>
-#include <string>
+#include <string> /** @todo remove once file callbacks are std::string-free */
 #include <unordered_map>
 
 #include <Corrade/Containers/ArrayView.h>
@@ -37,12 +36,11 @@
 #include <Corrade/Containers/StaticArray.h>
 #include <Corrade/Containers/StridedBitArrayView.h>
 #include <Corrade/Containers/String.h>
-#include <Corrade/Containers/StringStl.h>
+#include <Corrade/Containers/StringStl.h> /** @todo remove once file callbacks are std::string-free */
 #include <Corrade/Containers/StringStlHash.h>
 #include <Corrade/Containers/StringView.h>
 #include <Corrade/Containers/Triple.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
-#include <Corrade/Utility/DebugStl.h>
 #include <Corrade/Utility/Format.h>
 #include <Corrade/Utility/Path.h>
 #include <Corrade/Utility/String.h>
@@ -427,22 +425,22 @@ void UfbxImporterTest::openData() {
 void UfbxImporterTest::openFileFailed() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
 
     CORRADE_VERIFY(!importer->openFile("i-do-not-exist.foo"));
-    CORRADE_COMPARE(out.str(), "Trade::UfbxImporter::openFile(): loading failed: File not found: i-do-not-exist.foo\n");
+    CORRADE_COMPARE(out, "Trade::UfbxImporter::openFile(): loading failed: File not found: i-do-not-exist.foo\n");
 }
 
 void UfbxImporterTest::openDataFailed() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
 
     constexpr const char data[] = "what";
     CORRADE_VERIFY(!importer->openData({data, sizeof(data)}));
-    CORRADE_COMPARE(out.str(), "Trade::UfbxImporter::openData(): loading failed: Unrecognized file format\n");
+    CORRADE_COMPARE(out, "Trade::UfbxImporter::openData(): loading failed: Unrecognized file format\n");
 }
 
 void UfbxImporterTest::maxTemporaryMemory() {
@@ -453,13 +451,13 @@ void UfbxImporterTest::maxTemporaryMemory() {
 
     importer->configuration().setValue<Long>("maxTemporaryMemory", data.maxMemory);
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_COMPARE(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "blender-default.fbx")), data.shouldLoad);
     if(data.shouldLoad) {
-        CORRADE_COMPARE(out.str(), "");
+        CORRADE_COMPARE(out, "");
     } else {
-        CORRADE_COMPARE(out.str(), "Trade::UfbxImporter::openFile(): loading failed: Memory limit exceeded: temp\n");
+        CORRADE_COMPARE(out, "Trade::UfbxImporter::openFile(): loading failed: Memory limit exceeded: temp\n");
     }
 }
 
@@ -471,13 +469,13 @@ void UfbxImporterTest::maxResultMemory() {
 
     importer->configuration().setValue<Long>("maxResultMemory", data.maxMemory);
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_COMPARE(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "blender-default.fbx")), data.shouldLoad);
     if(data.shouldLoad) {
-        CORRADE_COMPARE(out.str(), "");
+        CORRADE_COMPARE(out, "");
     } else {
-        CORRADE_COMPARE(out.str(), "Trade::UfbxImporter::openFile(): loading failed: Memory limit exceeded: result\n");
+        CORRADE_COMPARE(out, "Trade::UfbxImporter::openFile(): loading failed: Memory limit exceeded: result\n");
     }
 }
 
@@ -517,10 +515,10 @@ void UfbxImporterTest::fileCallbackNotFound() {
             return Containers::Optional<Containers::ArrayView<const char>>{};
         });
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->openFile("some-file.fbx"));
-    CORRADE_COMPARE(out.str(), "Trade::UfbxImporter::openFile(): loading failed: File not found: some-file.fbx\n");
+    CORRADE_COMPARE(out, "Trade::UfbxImporter::openFile(): loading failed: File not found: some-file.fbx\n");
 }
 
 void UfbxImporterTest::fileCallbackEmpty() {
@@ -531,10 +529,10 @@ void UfbxImporterTest::fileCallbackEmpty() {
             return Containers::Optional<Containers::ArrayView<const char>>{InPlaceInit};
         });
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->openFile("some-file.fbx"));
-    CORRADE_COMPARE(out.str(), "Trade::UfbxImporter::openFile(): loading failed: Failed to load\n");
+    CORRADE_COMPARE(out, "Trade::UfbxImporter::openFile(): loading failed: Failed to load\n");
 }
 
 void UfbxImporterTest::fileCallbackEmptyVerbose() {
@@ -546,10 +544,14 @@ void UfbxImporterTest::fileCallbackEmptyVerbose() {
             return Containers::Optional<Containers::ArrayView<const char>>{InPlaceInit};
         });
 
-    std::ostringstream out;
-    Error redirectError{&out};
-    CORRADE_VERIFY(!importer->openFile("some-file.fbx"));
-    Containers::Array<Containers::StringView> lines = Containers::StringView{out.str()}.splitWithoutEmptyParts('\n');
+    /* The string gets fully written only on destruction or with a newline at
+       the end */
+    Containers::String out;
+    {
+        Error redirectError{&out};
+        CORRADE_VERIFY(!importer->openFile("some-file.fbx"));
+    }
+    Containers::Array<Containers::MutableStringView> lines = out.splitWithoutEmptyParts('\n');
 
     /* Output should contain a stack trace on debug */
     #if !defined(CORRADE_IS_DEBUG_BUILD) && defined(NDEBUG)
@@ -886,7 +888,7 @@ void UfbxImporterTest::cameraOrientation() {
 }
 
 void UfbxImporterTest::light() {
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
@@ -1007,7 +1009,7 @@ void UfbxImporterTest::light() {
         CORRADE_VERIFY(!light);
     }
 
-    CORRADE_COMPARE(out.str(),
+    CORRADE_COMPARE(out,
         "Trade::UfbxImporter::light(): light type 3 is not supported\n"
         "Trade::UfbxImporter::light(): light type 4 is not supported\n");
 }
@@ -1047,7 +1049,7 @@ void UfbxImporterTest::lightBadDecay() {
         Containers::Array<UnsignedInt> lights = scene->lightsFor(UnsignedLong(objectId));
         CORRADE_COMPARE(lights.size(), 1);
 
-        std::ostringstream out;
+        Containers::String out;
         Containers::Optional<LightData> light;
         {
             Warning redirectWarning{&out};
@@ -1057,9 +1059,9 @@ void UfbxImporterTest::lightBadDecay() {
         CORRADE_COMPARE(light->type(), LightType::Point);
         CORRADE_COMPARE(light->attenuation(), (Vector3{0.0f, 0.0f, 1.0f}));
         if(data.quiet)
-            CORRADE_COMPARE(out.str(), "");
+            CORRADE_COMPARE(out, "");
         else
-            CORRADE_COMPARE(out.str(), "Trade::UfbxImporter::light(): cubic attenuation not supported, patching to quadratic\n");
+            CORRADE_COMPARE(out, "Trade::UfbxImporter::light(): cubic attenuation not supported, patching to quadratic\n");
     } {
         Long objectId = importer->objectForName("directionalDecay");
         CORRADE_COMPARE_AS(objectId, 0, TestSuite::Compare::GreaterOrEqual);
@@ -1067,7 +1069,7 @@ void UfbxImporterTest::lightBadDecay() {
         Containers::Array<UnsignedInt> lights = scene->lightsFor(UnsignedLong(objectId));
         CORRADE_COMPARE(lights.size(), 1);
 
-        std::ostringstream out;
+        Containers::String out;
         Containers::Optional<LightData> light;
         {
             Warning redirectWarning{&out};
@@ -1077,9 +1079,9 @@ void UfbxImporterTest::lightBadDecay() {
         CORRADE_COMPARE(light->type(), LightType::Directional);
         CORRADE_COMPARE(light->attenuation(), (Vector3{1.0f, 0.0f, 0.0f}));
         if(data.quiet)
-            CORRADE_COMPARE(out.str(), "");
+            CORRADE_COMPARE(out, "");
         else
-            CORRADE_COMPARE(out.str(), "Trade::UfbxImporter::light(): patching attenuation Vector(0, 0, 1) to Vector(1, 0, 0) for Trade::LightType::Directional\n");
+            CORRADE_COMPARE(out, "Trade::UfbxImporter::light(): patching attenuation Vector(0, 0, 1) to Vector(1, 0, 0) for Trade::LightType::Directional\n");
     }
 }
 
@@ -1303,11 +1305,11 @@ void UfbxImporterTest::geometricTransformInvalidHandling() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
     importer->configuration().setValue("geometryTransformHandling", "invalidGeometryHandling");
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
 
     CORRADE_VERIFY(!importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "geometric-transform.fbx")));
-    CORRADE_COMPARE(out.str(), "Trade::UfbxImporter::openFile(): Unsupported geometryTransformHandling configuration: invalidGeometryHandling\n");
+    CORRADE_COMPARE(out, "Trade::UfbxImporter::openFile(): Unsupported geometryTransformHandling configuration: invalidGeometryHandling\n");
 }
 
 void UfbxImporterTest::materialMapping() {
@@ -2206,10 +2208,10 @@ void UfbxImporterTest::imageExternalFromData() {
 
     CORRADE_COMPARE(importer->image2DCount(), 8);
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->image2D(0));
-    CORRADE_COMPARE(out.str(), "Trade::UfbxImporter::image2D(): external images can be imported only when opening files from the filesystem or if a file callback is present\n");
+    CORRADE_COMPARE(out, "Trade::UfbxImporter::image2D(): external images can be imported only when opening files from the filesystem or if a file callback is present\n");
 }
 
 void UfbxImporterTest::imageFileCallback() {
@@ -2267,10 +2269,10 @@ void UfbxImporterTest::imageFileCallbackNotFound() {
     CORRADE_VERIFY(importer->openData(*data));
     CORRADE_COMPARE(importer->image2DCount(), 8);
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->image2D(0));
-    CORRADE_COMPARE(out.str(), "Trade::AbstractImporter::openFile(): cannot open file tex-red.png\n");
+    CORRADE_COMPARE(out, "Trade::AbstractImporter::openFile(): cannot open file tex-red.png\n");
     CORRADE_COMPARE(callCount, 1);
 }
 
@@ -2329,11 +2331,11 @@ void UfbxImporterTest::imageAbsolutePath() {
 
     CORRADE_COMPARE(importer->image2DCount(), 1);
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
 
     CORRADE_VERIFY(!importer->image2D(0));
-    CORRADE_COMPARE_AS(out.str(), "Trade::AbstractImporter::openFile(): cannot open file /absolute/path/to/tex-red.png", TestSuite::Compare::StringContains);
+    CORRADE_COMPARE_AS(out, "Trade::AbstractImporter::openFile(): cannot open file /absolute/path/to/tex-red.png", TestSuite::Compare::StringContains);
 }
 
 void UfbxImporterTest::imageNot2D() {
@@ -2345,10 +2347,10 @@ void UfbxImporterTest::imageNot2D() {
 
     CORRADE_COMPARE(importer->image2DCount(), 1);
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->image2D(0));
-    CORRADE_COMPARE(out.str(), "Trade::UfbxImporter::image2D(): expected exactly one 2D image in an image file but got 0\n");
+    CORRADE_COMPARE(out, "Trade::UfbxImporter::image2D(): expected exactly one 2D image in an image file but got 0\n");
 }
 
 void UfbxImporterTest::imageBrokenExternal() {
@@ -2360,11 +2362,11 @@ void UfbxImporterTest::imageBrokenExternal() {
 
     CORRADE_COMPARE(importer->image2DCount(), 1);
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->image2D(0));
 
-    CORRADE_COMPARE_AS(out.str(),
+    CORRADE_COMPARE_AS(out,
         "Trade::StbImageImporter::image2D(): cannot open the image: ",
         TestSuite::Compare::StringHasPrefix);
 }
@@ -2378,11 +2380,11 @@ void UfbxImporterTest::imageBrokenEmbedded() {
 
     CORRADE_COMPARE(importer->image2DCount(), 1);
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->image2D(0));
 
-    CORRADE_COMPARE(out.str(),
+    CORRADE_COMPARE(out,
         "Trade::AnyImageImporter::openData(): cannot determine the format from signature 0xbadbadfb\n");
 }
 
@@ -2453,16 +2455,16 @@ void UfbxImporterTest::objMissingMtl() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
     importer->addFlags(data.flags);
 
-    std::ostringstream out;
+    Containers::String out;
     {
         Warning redirectWarning{&out};
         CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "missing-mtl.obj")));
     }
     if(data.quiet)
-        CORRADE_COMPARE(out.str(), "");
+        CORRADE_COMPARE(out, "");
     else {
-        CORRADE_COMPARE_AS(out.str(), "Trade::UfbxImporter::openFile(): warning: Could not open .mtl file:", TestSuite::Compare::StringHasPrefix);
-        CORRADE_COMPARE_AS(out.str(), "missing-mtl.mtl", TestSuite::Compare::StringContains);
+        CORRADE_COMPARE_AS(out, "Trade::UfbxImporter::openFile(): warning: Could not open .mtl file:", TestSuite::Compare::StringHasPrefix);
+        CORRADE_COMPARE_AS(out, "missing-mtl.mtl", TestSuite::Compare::StringContains);
     }
 
     CORRADE_COMPARE(importer->sceneCount(), 1);
@@ -2491,15 +2493,15 @@ void UfbxImporterTest::objMissingMtlFileCallback() {
     FileCallbackFiles files;
     importer->setFileCallback(&fileCallbackFunc, &files);
 
-    std::ostringstream out;
+    Containers::String out;
     {
         Warning redirectWarning{&out};
         CORRADE_VERIFY(importer->openFile("missing-mtl.obj"));
     }
     if(data.quiet)
-        CORRADE_COMPARE(out.str(), "");
+        CORRADE_COMPARE(out, "");
     else
-        CORRADE_COMPARE(out.str(), "Trade::UfbxImporter::openFile(): warning: Could not open .mtl file: missing-mtl.mtl\n");
+        CORRADE_COMPARE(out, "Trade::UfbxImporter::openFile(): warning: Could not open .mtl file: missing-mtl.mtl\n");
 
     CORRADE_COMPARE(files.size(), 2);
     CORRADE_VERIFY(files.find("missing-mtl.obj") != files.end());
@@ -2605,11 +2607,11 @@ void UfbxImporterTest::normalizeUnitsInvalidHandling() {
     importer->configuration().setValue("normalizeUnits", true);
     importer->configuration().setValue("unitNormalizationHandling", "invalidUnitHandling");
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
 
     CORRADE_VERIFY(!importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "units-cm-z-up.fbx")));
-    CORRADE_COMPARE(out.str(), "Trade::UfbxImporter::openFile(): Unsupported unitNormalizationHandling configuration: invalidUnitHandling\n");
+    CORRADE_COMPARE(out, "Trade::UfbxImporter::openFile(): Unsupported unitNormalizationHandling configuration: invalidUnitHandling\n");
 }
 
 void UfbxImporterTest::geometryCache() {
@@ -2669,15 +2671,15 @@ void UfbxImporterTest::multiWarning() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
     importer->addFlags(data.flags);
 
-    std::ostringstream out;
+    Containers::String out;
     {
         Warning redirectWarning{&out};
         CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "warning-cube.fbx")));
     }
     if(data.quiet)
-        CORRADE_COMPARE(out.str(), "");
+        CORRADE_COMPARE(out, "");
     else
-        CORRADE_COMPARE(out.str(),
+        CORRADE_COMPARE(out,
             "Trade::UfbxImporter::openFile(): warning (4 occurences): Clamped index\n"
             "Trade::UfbxImporter::openFile(): warning: Bad UTF-8 string\n");
 }
@@ -2692,15 +2694,15 @@ void UfbxImporterTest::multiWarningData() {
     Containers::Optional<Containers::Array<char>> fileData = Utility::Path::read(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "warning-cube.fbx"));
     CORRADE_VERIFY(fileData);
 
-    std::ostringstream out;
+    Containers::String out;
     {
         Warning redirectWarning{&out};
         CORRADE_VERIFY(importer->openData(*fileData));
     }
     if(data.quiet)
-        CORRADE_COMPARE(out.str(), "");
+        CORRADE_COMPARE(out, "");
     else
-        CORRADE_COMPARE(out.str(),
+        CORRADE_COMPARE(out,
             "Trade::UfbxImporter::openData(): warning (4 occurences): Clamped index\n"
             "Trade::UfbxImporter::openData(): warning: Bad UTF-8 string\n");
 }

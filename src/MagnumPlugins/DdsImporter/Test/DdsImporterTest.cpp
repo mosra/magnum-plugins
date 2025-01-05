@@ -25,7 +25,6 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-#include <sstream>
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/Pair.h>
 #include <Corrade/Containers/String.h>
@@ -34,8 +33,8 @@
 #include <Corrade/TestSuite/Compare/Numeric.h>
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
-#include <Corrade/Utility/DebugStl.h> /** @todo remove once Debug is stream-free */
-#include <Corrade/Utility/FormatStl.h> /** @todo remove once Debug is stream-free */
+#include <Corrade/Utility/DebugStl.h> /** @todo remove once Configuration is std::string-free */
+#include <Corrade/Utility/Format.h>
 #include <Corrade/Utility/Path.h>
 #include <Magnum/ImageView.h>
 #include <Magnum/PixelFormat.h>
@@ -638,10 +637,10 @@ void DdsImporterTest::invalid() {
     Containers::Optional<Containers::Array<char>> in = Utility::Path::read(Utility::Path::join(DDSIMPORTER_TEST_DIR, data.filename));
     CORRADE_VERIFY(in);
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->openData(data.size ? in->prefix(*data.size) : *in));
-    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::DdsImporter::openData(): {}\n", data.message));
+    CORRADE_COMPARE(out, Utility::format("Trade::DdsImporter::openData(): {}\n", data.message));
 }
 
 void DdsImporterTest::r() {
@@ -683,12 +682,12 @@ void DdsImporterTest::rgb() {
         importer->configuration().setValue("assumeYUpZBackward", *data.assumeYUp);
     else
         CORRADE_COMPARE(importer->configuration().value("assumeYUpZBackward"), "false");
-    std::ostringstream out;
+    Containers::String out;
     {
         Debug redirectOutput{&out};
         CORRADE_VERIFY(importer->openFile(Utility::Path::join(DDSIMPORTER_TEST_DIR, data.filename)));
     }
-    CORRADE_COMPARE(out.str(), data.message);
+    CORRADE_COMPARE(out, data.message);
     CORRADE_COMPARE(importer->image1DCount(), 0);
     CORRADE_COMPARE(importer->image2DCount(), 1);
     CORRADE_COMPARE(importer->image2DLevelCount(0), 1);
@@ -1187,12 +1186,12 @@ void DdsImporterTest::rgba3D() {
         importer->configuration().setValue("assumeYUpZBackward", *data.assumeYUpZBackward);
     else
         CORRADE_COMPARE(importer->configuration().value("assumeYUpZBackward"), "false");
-    std::ostringstream out;
+    Containers::String out;
     {
         Debug redirectOutput{&out};
         CORRADE_VERIFY(importer->openFile(Utility::Path::join(DDSIMPORTER_TEST_DIR, data.filename)));
     }
-    CORRADE_COMPARE(out.str(), data.message);
+    CORRADE_COMPARE(out, data.message);
     CORRADE_COMPARE(importer->image1DCount(), 0);
     CORRADE_COMPARE(importer->image2DCount(), 0);
     CORRADE_COMPARE(importer->image3DCount(), 1);
@@ -1388,15 +1387,15 @@ void DdsImporterTest::extraDataAtTheEnd() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
     importer->addFlags(data.flags);
 
-    std::stringstream out;
+    Containers::String out;
     {
         Warning redirectWarning{&out};
         CORRADE_VERIFY(importer->openData(fileData));
     }
     if(data.quiet)
-        CORRADE_COMPARE(out.str(), "");
+        CORRADE_COMPARE(out, "");
     else
-        CORRADE_COMPARE(out.str(), "Trade::DdsImporter::openData(): ignoring 26 extra bytes at the end of file\n");
+        CORRADE_COMPARE(out, "Trade::DdsImporter::openData(): ignoring 26 extra bytes at the end of file\n");
     CORRADE_COMPARE(importer->image1DCount(), 0);
     CORRADE_COMPARE(importer->image2DCount(), 1);
     CORRADE_COMPARE(importer->image2DLevelCount(0), 1);
@@ -1430,15 +1429,15 @@ void DdsImporterTest::incompleteCubeMap() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DdsImporter");
     importer->addFlags(data.flags);
 
-    std::stringstream out;
+    Containers::String out;
     {
         Warning redirectWarning{&out};
         CORRADE_VERIFY(importer->openFile(Utility::Path::join(DDSIMPORTER_TEST_DIR, "rgba8unorm-cube-incomplete.dds")));
     }
     if(data.quiet)
-        CORRADE_COMPARE(out.str(), "");
+        CORRADE_COMPARE(out, "");
     else
-        CORRADE_COMPARE(out.str(), "Trade::DdsImporter::openData(): the image is an incomplete cubemap, importing faces as 5 array layers\n");
+        CORRADE_COMPARE(out, "Trade::DdsImporter::openData(): the image is an incomplete cubemap, importing faces as 5 array layers\n");
     CORRADE_COMPARE(importer->image1DCount(), 0);
     CORRADE_COMPARE(importer->image2DCount(), 0);
     CORRADE_COMPARE(importer->image3DCount(), 1);
@@ -1545,7 +1544,7 @@ void DdsImporterTest::compressedFormatFlip() {
     if(data.assumeYUp)
         importer->configuration().setValue("assumeYUpZBackward", *data.assumeYUp);
     Containers::Optional<ImageData2D> image;
-    std::ostringstream out;
+    Containers::String out;
     {
         Debug redirectOutput{&out};
         Warning redirectWarning{&out};
@@ -1554,9 +1553,9 @@ void DdsImporterTest::compressedFormatFlip() {
         CORRADE_VERIFY(image);
     }
     if(data.message)
-        CORRADE_COMPARE(out.str(), data.message);
+        CORRADE_COMPARE(out, data.message);
     else
-        CORRADE_COMPARE(out.str(), "");
+        CORRADE_COMPARE(out, "");
 
     /* The images, once decoded, should then be flipped compared to each other,
        or if flip was not made or not possible, identical */
@@ -1614,7 +1613,7 @@ void DdsImporterTest::compressedFormatFlip3D() {
     if(data.assumeYUpZBackward)
         importer->configuration().setValue("assumeYUpZBackward", *data.assumeYUpZBackward);
     Containers::Optional<ImageData3D> image;
-    std::ostringstream out;
+    Containers::String out;
     {
         Debug redirectOutput{&out};
         Warning redirectWarning{&out};
@@ -1623,9 +1622,9 @@ void DdsImporterTest::compressedFormatFlip3D() {
         CORRADE_VERIFY(image);
     }
     if(data.message)
-        CORRADE_COMPARE(out.str(), data.message);
+        CORRADE_COMPARE(out, data.message);
     else
-        CORRADE_COMPARE(out.str(), "");
+        CORRADE_COMPARE(out, "");
 
     /* The images, once decoded, should then be flipped compared to each other,
        or if flip was not made or not possible, identical */

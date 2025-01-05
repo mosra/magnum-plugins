@@ -24,11 +24,8 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-#include <sstream>
 #include <Corrade/TestSuite/Tester.h>
-#include <Corrade/Utility/DebugStl.h> /** @todo drop when Debug is stream-free */
 #include <Corrade/Utility/Format.h>
-#include <Corrade/Utility/FormatStl.h> /** @todo drop when Debug is stream-free */
 
 #include "MagnumPlugins/GltfImporter/decode.h"
 
@@ -181,10 +178,10 @@ void GltfImporterDecodeTest::uriInvalid() {
     auto&& data = UriInvalidData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_COMPARE(decodeUri("foo():", data.input), Containers::NullOpt);
-    CORRADE_COMPARE(out.str(), Utility::formatString("foo(): {}\n", data.message));
+    CORRADE_COMPARE(out, Utility::format("foo(): {}\n", data.message));
 }
 
 void GltfImporterDecodeTest::base64() {
@@ -231,10 +228,10 @@ void GltfImporterDecodeTest::base64Invalid() {
     auto&& data = Base64InvalidData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!decodeBase64("foo():", data.input));
-    CORRADE_COMPARE(out.str(), Utility::formatString("foo(): {}\n", data.message));
+    CORRADE_COMPARE(out, Utility::format("foo(): {}\n", data.message));
 }
 
 }}}}

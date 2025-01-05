@@ -24,7 +24,6 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-#include <sstream>
 #include <Corrade/Containers/Array.h>
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/Pair.h>
@@ -35,8 +34,7 @@
 #include <Corrade/TestSuite/Compare/Container.h>
 #include <Corrade/TestSuite/Compare/Numeric.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
-#include <Corrade/Utility/DebugStl.h> /** @todo remove once Debug is stream-free */
-#include <Corrade/Utility/FormatStl.h> /** @todo remove once Debug is stream-free */
+#include <Corrade/Utility/Format.h>
 #include <Corrade/Utility/Path.h>
 #include <Magnum/ShaderTools/AbstractConverter.h>
 
@@ -264,11 +262,11 @@ void SpirvToolsConverterTest::validateWrongInputFormat() {
 
     converter->setInputFormat(Format::Glsl);
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_COMPARE(converter->validateData({}, {}),
         Containers::pair(false, Containers::String{}));
-    CORRADE_COMPARE(out.str(),
+    CORRADE_COMPARE(out,
         "ShaderTools::SpirvToolsConverter::validateData(): input format should be Spirv, SpirvAssembly or Unspecified but got ShaderTools::Format::Glsl\n");
 }
 
@@ -277,11 +275,11 @@ void SpirvToolsConverterTest::validateWrongInputVersion() {
 
     converter->setInputFormat(Format::Spirv, "vulkan1.1");
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_COMPARE(converter->validateData({}, {}),
         Containers::pair(false, Containers::String{}));
-    CORRADE_COMPARE(out.str(),
+    CORRADE_COMPARE(out,
         "ShaderTools::SpirvToolsConverter::validateData(): input format version should be empty but got vulkan1.1\n");
 }
 
@@ -290,11 +288,11 @@ void SpirvToolsConverterTest::validateWrongOutputFormat() {
 
     converter->setOutputFormat(Format::Spirv);
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_COMPARE(converter->validateData({}, {}),
         Containers::pair(false, Containers::String{}));
-    CORRADE_COMPARE(out.str(),
+    CORRADE_COMPARE(out,
         "ShaderTools::SpirvToolsConverter::validateData(): output format should be Unspecified but got ShaderTools::Format::Spirv\n");
 }
 
@@ -303,11 +301,11 @@ void SpirvToolsConverterTest::validateWrongOutputVersion() {
 
     converter->setOutputFormat(Format::Unspecified, "vulkan2.1");
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_COMPARE(converter->validateData({}, {}),
         Containers::pair(false, Containers::String{}));
-    CORRADE_COMPARE(out.str(),
+    CORRADE_COMPARE(out,
         "ShaderTools::SpirvToolsConverter::validateData(): unrecognized output format version vulkan2.1\n");
 }
 
@@ -419,11 +417,11 @@ void SpirvToolsConverterTest::validateFailAssemble() {
         OpDeadFool
 )";
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_COMPARE(converter->validateData({}, data),
         Containers::pair(false, Containers::String{}));
-    CORRADE_COMPARE(out.str(),
+    CORRADE_COMPARE(out,
         "ShaderTools::SpirvToolsConverter::validateData(): assembly failed: <data>:4:9: Invalid Opcode name 'OpDeadFool'\n");
 }
 
@@ -444,14 +442,14 @@ void SpirvToolsConverterTest::validateFailAssembleFile() {
         return data;
     }, dataView);
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_COMPARE(converter->validateFile({}, "deadfool.spvasm"),
         Containers::pair(false, Containers::String{}));
     /* Validating data again should not be using the stale filename */
     CORRADE_COMPARE(converter->validateData({}, data),
         Containers::pair(false, Containers::String{}));
-    CORRADE_COMPARE(out.str(),
+    CORRADE_COMPARE(out,
         "ShaderTools::SpirvToolsConverter::validateData(): assembly failed: deadfool.spvasm:4:9: Invalid Opcode name 'OpDeadFool'\n"
         "ShaderTools::SpirvToolsConverter::validateData(): assembly failed: <data>:4:9: Invalid Opcode name 'OpDeadFool'\n");
 }
@@ -464,11 +462,11 @@ void SpirvToolsConverterTest::validateBinarySizeNotDivisbleByFour() {
     converter->setInputFormat(Format::Spirv);
     const char data[37]{};
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_COMPARE(converter->validateData({}, data),
         Containers::pair(false, Containers::String{}));
-    CORRADE_COMPARE(out.str(),
+    CORRADE_COMPARE(out,
         "ShaderTools::SpirvToolsConverter::convertDataToData(): SPIR-V binary size not divisible by four: 37 bytes\n");
 }
 
@@ -613,10 +611,10 @@ void SpirvToolsConverterTest::convertWrongInputFormat() {
 
     converter->setInputFormat(Format::Glsl);
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->convertDataToData({}, {}));
-    CORRADE_COMPARE(out.str(),
+    CORRADE_COMPARE(out,
         "ShaderTools::SpirvToolsConverter::convertDataToData(): input format should be Spirv, SpirvAssembly or Unspecified but got ShaderTools::Format::Glsl\n");
 }
 
@@ -625,10 +623,10 @@ void SpirvToolsConverterTest::convertWrongInputVersion() {
 
     converter->setInputFormat(Format::Spirv, "vulkan1.1");
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->convertDataToData({}, {}));
-    CORRADE_COMPARE(out.str(),
+    CORRADE_COMPARE(out,
         "ShaderTools::SpirvToolsConverter::convertDataToData(): input format version should be empty but got vulkan1.1\n");
 }
 
@@ -637,10 +635,10 @@ void SpirvToolsConverterTest::convertWrongOutputFormat() {
 
     converter->setOutputFormat(Format::Glsl);
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->convertDataToData({}, {}));
-    CORRADE_COMPARE(out.str(),
+    CORRADE_COMPARE(out,
         "ShaderTools::SpirvToolsConverter::convertDataToData(): output format should be Spirv, SpirvAssembly or Unspecified but got ShaderTools::Format::Glsl\n");
 }
 
@@ -649,10 +647,10 @@ void SpirvToolsConverterTest::convertWrongOutputVersion() {
 
     converter->setOutputFormat(Format::Spirv, "vulkan2.1");
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->convertDataToData({}, {}));
-    CORRADE_COMPARE(out.str(),
+    CORRADE_COMPARE(out,
         "ShaderTools::SpirvToolsConverter::convertDataToData(): unrecognized output format version vulkan2.1\n");
 }
 
@@ -664,10 +662,10 @@ void SpirvToolsConverterTest::convertWrongOptimizationLevel() {
        fail on that) */
     converter->setInputFormat(Format::Spirv);
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->convertDataToData({}, {}));
-    CORRADE_COMPARE(out.str(),
+    CORRADE_COMPARE(out,
         "ShaderTools::SpirvToolsConverter::convertDataToData(): optimization level should be 0, 1, s, legalizeHlsl or empty but got 2\n");
 }
 
@@ -676,11 +674,11 @@ void SpirvToolsConverterTest::convertDisassembleExplicitFormatEmptyData() {
     converter->setInputFormat(Format::Spirv);
     converter->setOutputFormat(Format::SpirvAssembly);
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->convertDataToData({}, {}));
     /* No instruction index printed here */
-    CORRADE_COMPARE(out.str(),
+    CORRADE_COMPARE(out,
         "ShaderTools::SpirvToolsConverter::convertDataToData(): disassembly failed: <data>: Missing module.\n");
 }
 
@@ -701,10 +699,10 @@ void SpirvToolsConverterTest::convertDisassembleFail() {
     converter->setInputFormat(Format::Spirv);
     converter->setOutputFormat(Format::SpirvAssembly);
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->convertDataToData({}, InvalidInstructionData));
-    CORRADE_COMPARE(out.str(),
+    CORRADE_COMPARE(out,
         "ShaderTools::SpirvToolsConverter::convertDataToData(): disassembly failed: <data>:3: Invalid opcode: 57088\n");
 }
 
@@ -721,14 +719,14 @@ void SpirvToolsConverterTest::convertDisassembleFailFile() {
         return Containers::arrayCast<const char>(data);
     }, dataView);
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->convertFileToData({}, "deadfool.spv"));
     /* Test the doConvertFileToFile() intercept too */
     CORRADE_VERIFY(!converter->convertFileToFile({}, "another.spv", ""));
     /* Converting data again should not be using the stale filename */
     CORRADE_VERIFY(!converter->convertDataToData({}, InvalidInstructionData));
-    CORRADE_COMPARE(out.str(),
+    CORRADE_COMPARE(out,
         "ShaderTools::SpirvToolsConverter::convertDataToData(): disassembly failed: deadfool.spv:3: Invalid opcode: 57088\n"
         "ShaderTools::SpirvToolsConverter::convertDataToData(): disassembly failed: another.spv:3: Invalid opcode: 57088\n"
         "ShaderTools::SpirvToolsConverter::convertDataToData(): disassembly failed: <data>:3: Invalid opcode: 57088\n");
@@ -739,10 +737,10 @@ void SpirvToolsConverterTest::convertAssembleExplicitFormatEmptyData() {
     converter->setInputFormat(Format::SpirvAssembly);
     converter->setOutputFormat(Format::Spirv);
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->convertDataToData({}, {}));
-    CORRADE_COMPARE(out.str(),
+    CORRADE_COMPARE(out,
         "ShaderTools::SpirvToolsConverter::convertDataToData(): assembly failed: <data>:1:1: Missing assembly text.\n");
 }
 
@@ -757,10 +755,10 @@ void SpirvToolsConverterTest::convertAssembleFail() {
         OpDeadFool
 )";
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->convertDataToData({}, data));
-    CORRADE_COMPARE(out.str(),
+    CORRADE_COMPARE(out,
         "ShaderTools::SpirvToolsConverter::convertDataToData(): assembly failed: <data>:4:9: Invalid Opcode name 'OpDeadFool'\n");
 }
 
@@ -782,14 +780,14 @@ void SpirvToolsConverterTest::convertAssembleFailFile() {
         return data;
     }, dataView);
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->convertFileToData({}, "deadfool.spvasm"));
     /* Test the doConvertFileToFile() intercept too */
     CORRADE_VERIFY(!converter->convertFileToFile({}, "another.spvasm", ""));
     /* Converting data again should not be using the stale filename */
     CORRADE_VERIFY(!converter->convertDataToData({}, data));
-    CORRADE_COMPARE(out.str(),
+    CORRADE_COMPARE(out,
         "ShaderTools::SpirvToolsConverter::convertDataToData(): assembly failed: deadfool.spvasm:4:9: Invalid Opcode name 'OpDeadFool'\n"
         "ShaderTools::SpirvToolsConverter::convertDataToData(): assembly failed: another.spvasm:4:9: Invalid Opcode name 'OpDeadFool'\n"
         "ShaderTools::SpirvToolsConverter::convertDataToData(): assembly failed: <data>:4:9: Invalid Opcode name 'OpDeadFool'\n");
@@ -803,10 +801,10 @@ void SpirvToolsConverterTest::convertBinarySizeNotDivisibleByFour() {
     converter->setInputFormat(Format::Spirv);
     const char data[37]{};
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->convertDataToData({}, data));
-    CORRADE_COMPARE(out.str(),
+    CORRADE_COMPARE(out,
         "ShaderTools::SpirvToolsConverter::convertDataToData(): SPIR-V binary size not divisible by four: 37 bytes\n");
 }
 
@@ -859,7 +857,7 @@ void SpirvToolsConverterTest::convertOptimizeFail() {
        in validateFailInstruction()) */
     converter->setOutputFormat({}, "vulkan1.1");
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->convertFileToData({},
         Utility::Path::join(SPIRVTOOLSSHADERCONVERTER_TEST_DIR, "triangle-shaders.noopt.spv")));
@@ -871,7 +869,7 @@ void SpirvToolsConverterTest::convertOptimizeFail() {
         "In the Vulkan environment, the OriginLowerLeft execution mode must not be used.\n  OpExecutionMode %2 OriginLowerLeft"
         #endif
         ;
-    CORRADE_COMPARE(out.str(), Utility::formatString(
+    CORRADE_COMPARE(out, Utility::format(
         "ShaderTools::SpirvToolsConverter::convertDataToData(): optimization error:\n"
         "<data>:5: {}\n", expected));
 }

@@ -26,13 +26,12 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-#include <sstream>
+#include <string> /** @todo remove once AbstractImporter is <string>-free */
 #include <Corrade/Containers/Array.h>
 #include <Corrade/Containers/String.h>
 #include <Corrade/Containers/StringStl.h> /** @todo remove once AbstractImporter is <string>-free */
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
-#include <Corrade/Utility/DebugStl.h> /** @todo remove once Debug is stream-free */
 #include <Corrade/Utility/Path.h>
 #include <Magnum/Audio/AbstractImporter.h>
 
@@ -151,39 +150,39 @@ DrWavImporterTest::DrWavImporterTest() {
 void DrWavImporterTest::empty() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DrWavAudioImporter");
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     char a{};
     /* Explicitly checking non-null but empty view */
     CORRADE_VERIFY(!importer->openData({&a, 0}));
-    CORRADE_COMPARE(out.str(), "Audio::DrWavImporter::openData(): failed to open and decode WAV data\n");
+    CORRADE_COMPARE(out, "Audio::DrWavImporter::openData(): failed to open and decode WAV data\n");
 }
 
 void DrWavImporterTest::wrongSignature() {
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DrWavAudioImporter");
     CORRADE_VERIFY(!importer->openFile(Utility::Path::join(DRWAVAUDIOIMPORTER_TEST_DIR, "wrongSignature.wav")));
-    CORRADE_COMPARE(out.str(), "Audio::DrWavImporter::openData(): failed to open and decode WAV data\n");
+    CORRADE_COMPARE(out, "Audio::DrWavImporter::openData(): failed to open and decode WAV data\n");
 }
 
 void DrWavImporterTest::unsupportedChannelCount() {
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DrWavAudioImporter");
     CORRADE_VERIFY(!importer->openFile(Utility::Path::join(DRWAVAUDIOIMPORTER_TEST_DIR, "unsupportedChannelCount.wav")));
-    CORRADE_COMPARE(out.str(), "Audio::DrWavImporter::openData(): unsupported channel count 3 with 8 bits per sample\n");
+    CORRADE_COMPARE(out, "Audio::DrWavImporter::openData(): unsupported channel count 3 with 8 bits per sample\n");
 }
 
 void DrWavImporterTest::unsupportedBitRate() {
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("DrWavAudioImporter");
     CORRADE_VERIFY(!importer->openFile(Utility::Path::join(DRWAVAUDIOIMPORTER_TEST_DIR, "unsupportedBitRate.wav")));
-    CORRADE_COMPARE(out.str(), "Audio::DrWavImporter::openData(): unsupported channel count 1 with 80 bits per sample\n");
+    CORRADE_COMPARE(out, "Audio::DrWavImporter::openData(): unsupported channel count 1 with 80 bits per sample\n");
 }
 
 void DrWavImporterTest::invalidPadding() {

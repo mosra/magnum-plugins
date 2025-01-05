@@ -25,7 +25,6 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-#include <sstream>
 #include <Corrade/Containers/Array.h>
 #include <Corrade/Containers/ArrayView.h>
 #include <Corrade/Containers/Optional.h>
@@ -42,9 +41,8 @@
 #include <Corrade/TestSuite/Compare/StringToFile.h>
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
-#include <Corrade/Utility/DebugStl.h> /** @todo remove once Debug is stream-free */
 #include <Corrade/Utility/Endianness.h>
-#include <Corrade/Utility/FormatStl.h> /** @todo remove once Debug is stream-free */
+#include <Corrade/Utility/Format.h>
 #include <Corrade/Utility/Path.h>
 #include <Magnum/ImageView.h>
 #include <Magnum/PixelFormat.h>
@@ -852,11 +850,11 @@ void KtxImporterTest::openShort() {
     CORRADE_VERIFY(fileData);
     CORRADE_COMPARE_AS(data.length, fileData->size(), TestSuite::Compare::Less);
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
 
     CORRADE_VERIFY(!importer->openData(fileData->prefix(data.length)));
-    CORRADE_COMPARE(out.str(), Utility::formatString("Trade::KtxImporter::openData(): {}\n", data.message));
+    CORRADE_COMPARE(out, Utility::format("Trade::KtxImporter::openData(): {}\n", data.message));
 }
 
 void KtxImporterTest::invalid() {
@@ -871,7 +869,7 @@ void KtxImporterTest::invalid() {
 
     (*fileData)[data.offset] = data.value;
 
-    std::ostringstream out;
+    Containers::String out;
     {
         Error redirectError{&out};
         Warning redirectWarning{&out};
@@ -880,23 +878,23 @@ void KtxImporterTest::invalid() {
     /* Sometimes there's also a warning, in that case take the message
        verbatim */
     if(Containers::StringView{data.message}.hasSuffix('\n'))
-        CORRADE_COMPARE_AS(out.str(),
+        CORRADE_COMPARE_AS(out,
             data.message,
             TestSuite::Compare::String);
     else
-        CORRADE_COMPARE_AS(out.str(),
-            Utility::formatString("Trade::KtxImporter::openData(): {}\n", data.message),
+        CORRADE_COMPARE_AS(out,
+            Utility::format("Trade::KtxImporter::openData(): {}\n", data.message),
             TestSuite::Compare::String);
 }
 
 void KtxImporterTest::invalidVersion() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
 
     CORRADE_VERIFY(!importer->openFile(Utility::Path::join(KTXIMPORTER_TEST_DIR, "version1.ktx")));
-    CORRADE_COMPARE(out.str(), "Trade::KtxImporter::openData(): unsupported KTX version, expected 20 but got 11\n");
+    CORRADE_COMPARE(out, "Trade::KtxImporter::openData(): unsupported KTX version, expected 20 but got 11\n");
 }
 
 void KtxImporterTest::invalidFormat() {
@@ -947,10 +945,10 @@ void KtxImporterTest::invalidFormat() {
         CORRADE_ITERATION(i);
         header.vkFormat = Utility::Endianness::littleEndian(formats[i]);
 
-        std::ostringstream out;
+        Containers::String out;
         Error redirectError{&out};
         CORRADE_VERIFY(!importer->openData(*fileData));
-        CORRADE_COMPARE(out.str(), Utility::formatString("Trade::KtxImporter::openData(): unsupported format {}\n", UnsignedInt(formats[i])));
+        CORRADE_COMPARE(out, Utility::format("Trade::KtxImporter::openData(): unsupported format {}\n", UnsignedInt(formats[i])));
     }
 }
 
@@ -1605,13 +1603,13 @@ void KtxImporterTest::imageCubeMapIncomplete() {
     header.layerCount = Utility::Endianness::littleEndian(6u);
     header.faceCount = Utility::Endianness::littleEndian(1u);
 
-    std::ostringstream out;
+    Containers::String out;
     Warning redirectWarning{&out};
     CORRADE_VERIFY(importer->openData(*fileData));
     if(data.quiet)
-        CORRADE_COMPARE(out.str(), "");
+        CORRADE_COMPARE(out, "");
     else
-        CORRADE_COMPARE(out.str(),
+        CORRADE_COMPARE(out,
             "Trade::KtxImporter::openData(): missing or invalid orientation, assuming right, down. Set the assumeOrientation option to suppress this warning.\n"
             "Trade::KtxImporter::openData(): image contains incomplete cube map faces, importing faces as array layers\n");
 
@@ -1914,12 +1912,12 @@ void KtxImporterTest::forwardBasis() {
     importer->setFlags(data.flags);
     importer->configuration().group("basis")->setValue("format", "Etc2RGBA");
 
-    std::ostringstream out;
+    Containers::String out;
     {
         Debug redirectDebug{&out};
         CORRADE_VERIFY(importer->openFile(Utility::Path::join(BASISIMPORTER_TEST_DIR, data.file)));
     }
-    CORRADE_COMPARE(out.str(), data.verboseMessage);
+    CORRADE_COMPARE(out, data.verboseMessage);
 
     /* Basis has no 1D image support, only 2D or 2D array */
     const UnsignedInt dimensions = data.size[2] == 0 ? 2 : 3;
@@ -1986,11 +1984,11 @@ void KtxImporterTest::forwardBasisFormat() {
     if(data.basisFormat)
         _managerWithBasisImporter.metadata("BasisImporter")->configuration().setValue("format", data.basisFormat);
 
-    std::ostringstream out;
+    Containers::String out;
     Warning redirectWarning{&out};
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(BASISIMPORTER_TEST_DIR, "rgba.ktx2")));
     CORRADE_COMPARE(importer->image2DCount(), 1);
-    CORRADE_COMPARE(out.str(), data.expectedWarning);
+    CORRADE_COMPARE(out, data.expectedWarning);
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
     CORRADE_VERIFY(image->isCompressed());
@@ -2014,10 +2012,10 @@ void KtxImporterTest::forwardBasisInvalid() {
     CORRADE_COMPARE_AS(fileData->size(), data.offset, TestSuite::Compare::Greater);
     (*fileData)[data.offset] = data.value;
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->openData(*fileData));
-    CORRADE_COMPARE(out.str(), data.message);
+    CORRADE_COMPARE(out, data.message);
 }
 
 void KtxImporterTest::forwardBasisPluginNotFound() {
@@ -2027,15 +2025,15 @@ void KtxImporterTest::forwardBasisPluginNotFound() {
     if(_manager.loadState("BasisImporter") != PluginManager::LoadState::NotFound)
         CORRADE_SKIP("BasisImporter plugin loaded, cannot test");
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->openFile(Utility::Path::join(BASISIMPORTER_TEST_DIR, "rgba.ktx2")));
     #ifndef CORRADE_PLUGINMANAGER_NO_DYNAMIC_PLUGIN_SUPPORT
-    CORRADE_COMPARE(out.str(),
+    CORRADE_COMPARE(out,
         "PluginManager::Manager::load(): plugin BasisImporter is not static and was not found in nonexistent\n"
         "Trade::KtxImporter::openData(): can't forward a Basis Universal image to BasisImporter\n");
     #else
-    CORRADE_COMPARE(out.str(),
+    CORRADE_COMPARE(out,
         "PluginManager::Manager::load(): plugin BasisImporter was not found\n"
         "Trade::KtxImporter::openData(): can't forward a Basis Universal image to BasisImporter\n");
     #endif
@@ -2057,16 +2055,16 @@ void KtxImporterTest::keyValueDataEmpty() {
     Implementation::KtxHeader& header = *reinterpret_cast<Implementation::KtxHeader*>(fileData->data());
     header.kvdByteLength = Utility::Endianness::littleEndian(0u);
 
-    std::ostringstream out;
+    Containers::String out;
     {
         Warning redirectWarning{&out};
         CORRADE_VERIFY(importer->openData(*fileData));
     }
     /* No warning besides missing orientation */
     if(data.quiet)
-        CORRADE_COMPARE(out.str(), "");
+        CORRADE_COMPARE(out, "");
     else
-        CORRADE_COMPARE(out.str(), "Trade::KtxImporter::openData(): missing or invalid orientation, assuming right, down. Set the assumeOrientation option to suppress this warning.\n");
+        CORRADE_COMPARE(out, "Trade::KtxImporter::openData(): missing or invalid orientation, assuming right, down. Set the assumeOrientation option to suppress this warning.\n");
 }
 
 template<ImporterFlag flag> void KtxImporterTest::keyValueDataInvalid() {
@@ -2086,16 +2084,16 @@ template<ImporterFlag flag> void KtxImporterTest::keyValueDataInvalid() {
 
     patchKeyValueData(data.data, *fileData);
 
-    std::ostringstream out;
+    Containers::String out;
     {
         Warning redirectWarning{&out};
         CORRADE_VERIFY(importer->openData(*fileData));
     }
     /* Import succeeds with a warning */
     if(flag == ImporterFlag::Quiet)
-        CORRADE_COMPARE(out.str(), "");
+        CORRADE_COMPARE(out, "");
     else
-        CORRADE_COMPARE(out.str(), Utility::formatString(
+        CORRADE_COMPARE(out, Utility::format(
             "Trade::KtxImporter::openData(): {}\n"
             "Trade::KtxImporter::openData(): missing or invalid orientation, assuming right, down. Set the assumeOrientation option to suppress this warning.\n",
         data.message));
@@ -2118,16 +2116,16 @@ template<ImporterFlag flag> void KtxImporterTest::keyValueDataInvalidIgnored() {
 
     patchKeyValueData(data.data, *fileData);
 
-    std::ostringstream out;
+    Containers::String out;
     {
         Warning redirectWarning{&out};
         CORRADE_VERIFY(importer->openData(*fileData));
     }
     /* No warning besides missing orientation */
     if(flag == ImporterFlag::Quiet)
-        CORRADE_COMPARE(out.str(), "");
+        CORRADE_COMPARE(out, "");
     else
-        CORRADE_COMPARE(out.str(), "Trade::KtxImporter::openData(): missing or invalid orientation, assuming right, down. Set the assumeOrientation option to suppress this warning.\n");
+        CORRADE_COMPARE(out, "Trade::KtxImporter::openData(): missing or invalid orientation, assuming right, down. Set the assumeOrientation option to suppress this warning.\n");
 }
 
 template<ImporterFlag flag> void KtxImporterTest::orientationInvalid() {
@@ -2148,7 +2146,7 @@ template<ImporterFlag flag> void KtxImporterTest::orientationInvalid() {
     else
         patchKeyValueData(createKeyValueData("KTXorientation"_s, data.orientation), *fileData);
 
-    std::ostringstream out;
+    Containers::String out;
     {
         Warning redirectWarning{&out};
         CORRADE_VERIFY(importer->openData(*fileData));
@@ -2158,11 +2156,11 @@ template<ImporterFlag flag> void KtxImporterTest::orientationInvalid() {
     Containers::StringView orientations[]{"right"_s, "down"_s, "forward"_s};
     const Containers::String orientationString = ", "_s.join(Containers::arrayView(orientations).prefix(data.dimensions));
     if(flag == ImporterFlag::Quiet)
-        CORRADE_COMPARE(out.str(), "");
+        CORRADE_COMPARE(out, "");
     else if(data.assume)
-        CORRADE_COMPARE(out.str(), Utility::formatString("Trade::KtxImporter::openData(): invalid assumeOrientation option, falling back to {}\n", orientationString));
+        CORRADE_COMPARE(out, Utility::format("Trade::KtxImporter::openData(): invalid assumeOrientation option, falling back to {}\n", orientationString));
     else
-        CORRADE_COMPARE(out.str(), Utility::formatString("Trade::KtxImporter::openData(): missing or invalid orientation, assuming {}. Set the assumeOrientation option to suppress this warning.\n", orientationString));
+        CORRADE_COMPARE(out, Utility::format("Trade::KtxImporter::openData(): missing or invalid orientation, assuming {}. Set the assumeOrientation option to suppress this warning.\n", orientationString));
 }
 
 void KtxImporterTest::orientationFlip() {
@@ -2180,7 +2178,7 @@ void KtxImporterTest::orientationFlip() {
     else
         patchKeyValueData(createKeyValueData("KTXorientation"_s, data.orientation), *fileData);
 
-    std::ostringstream out;
+    Containers::String out;
     {
         Debug redirectOutput{&out};
         CORRADE_VERIFY(importer->openData(*fileData));
@@ -2232,9 +2230,9 @@ void KtxImporterTest::orientationFlip() {
 
     CORRADE_COMPARE_AS(data.data, flippedData, TestSuite::Compare::Container);
     if(!data.message)
-        CORRADE_COMPARE(out.str(), "");
+        CORRADE_COMPARE(out, "");
     else
-        CORRADE_COMPARE(out.str(), data.message);
+        CORRADE_COMPARE(out, data.message);
 }
 
 void KtxImporterTest::orientationFlipCompressed() {
@@ -2255,7 +2253,7 @@ void KtxImporterTest::orientationFlipCompressed() {
     if(data.assumeOrientation)
         importer->configuration().setValue("assumeOrientation", data.assumeOrientation);
     Containers::Optional<ImageData2D> image;
-    std::ostringstream out;
+    Containers::String out;
     {
         Debug redirectOutput{&out};
         Warning redirectWarning{&out};
@@ -2264,9 +2262,9 @@ void KtxImporterTest::orientationFlipCompressed() {
         CORRADE_VERIFY(image);
     }
     if(data.message)
-        CORRADE_COMPARE(out.str(), data.message);
+        CORRADE_COMPARE(out, data.message);
     else
-        CORRADE_COMPARE(out.str(), "");
+        CORRADE_COMPARE(out, "");
 
     /* The images, once decoded, should then be flipped compared to each other,
        or if flip was not made or not possible, identical */
@@ -2333,7 +2331,7 @@ void KtxImporterTest::orientationFlipCompressed3D() {
     if(data.assumeOrientation)
         importer->configuration().setValue("assumeOrientation", data.assumeOrientation);
     Containers::Optional<ImageData3D> image;
-    std::ostringstream out;
+    Containers::String out;
     {
         Debug redirectOutput{&out};
         Warning redirectWarning{&out};
@@ -2342,9 +2340,9 @@ void KtxImporterTest::orientationFlipCompressed3D() {
         CORRADE_VERIFY(image);
     }
     if(data.message)
-        CORRADE_COMPARE(out.str(), data.message);
+        CORRADE_COMPARE(out, data.message);
     else
-        CORRADE_COMPARE(out.str(), "");
+        CORRADE_COMPARE(out, "");
 
     /* The images, once decoded, should then be flipped compared to each other,
        or if flip was not made or not possible, identical */
@@ -2428,7 +2426,7 @@ void KtxImporterTest::swizzle() {
         header.vkFormat = Utility::Endianness::littleEndian(data.vkFormat);
     }
 
-    std::ostringstream out;
+    Containers::String out;
     {
         Debug redirectDebug{&out};
         CORRADE_VERIFY(importer->openData(*fileData));
@@ -2437,7 +2435,7 @@ void KtxImporterTest::swizzle() {
     Containers::String expectedMessage = "Trade::KtxImporter::openData(): image will be flipped along Y\n";
     if(data.message)
         expectedMessage = expectedMessage + Utility::format("Trade::KtxImporter::openData(): {}\n", data.message);
-    CORRADE_COMPARE(out.str(), expectedMessage);
+    CORRADE_COMPARE(out, expectedMessage);
 
     CORRADE_COMPARE(importer->image2DCount(), 1);
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
@@ -2451,13 +2449,13 @@ void KtxImporterTest::swizzleMultipleBytes() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
     importer->addFlags(ImporterFlag::Verbose);
 
-    std::ostringstream out;
+    Containers::String out;
     {
         Debug redirectDebug{&out};
         CORRADE_VERIFY(importer->openFile(Utility::Path::join(KTXIMPORTER_TEST_DIR, "bgr-swizzle-bgr-16bit.ktx2")));
     }
 
-    CORRADE_COMPARE(out.str(),
+    CORRADE_COMPARE(out,
         "Trade::KtxImporter::openData(): image will be flipped along Y\n"
         "Trade::KtxImporter::openData(): format requires conversion from BGR to RGB\n");
 
@@ -2487,7 +2485,7 @@ void KtxImporterTest::swizzleIdentity() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
     importer->addFlags(ImporterFlag::Verbose);
 
-    std::ostringstream out;
+    Containers::String out;
     Debug redirectError{&out};
 
     /* RGB1 swizzle. This also checks that the correct prefix based on channel
@@ -2495,20 +2493,20 @@ void KtxImporterTest::swizzleIdentity() {
        key/value data. */
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(KTXIMPORTER_TEST_DIR, "swizzle-identity.ktx2")));
     /* No message about format requiring conversion */
-    CORRADE_COMPARE(out.str(), "Trade::KtxImporter::openData(): image will be flipped along Y\n");
+    CORRADE_COMPARE(out, "Trade::KtxImporter::openData(): image will be flipped along Y\n");
 }
 
 void KtxImporterTest::swizzleUnsupported() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("KtxImporter");
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
 
     /* Only identity (RG?B?A?), BGR and BGRA swizzle supported. This is the same
        swizzle string as in swizzle-identity.ktx2, but this file is RGBA instead
        of RGB, so the 1 shouldn't be ignored. */
     CORRADE_VERIFY(!importer->openFile(Utility::Path::join(KTXIMPORTER_TEST_DIR, "swizzle-unsupported.ktx2")));
-    CORRADE_COMPARE(out.str(), "Trade::KtxImporter::openData(): unsupported channel mapping rgb1\n");
+    CORRADE_COMPARE(out, "Trade::KtxImporter::openData(): unsupported channel mapping rgb1\n");
 }
 
 void KtxImporterTest::swizzleCompressed() {
@@ -2518,10 +2516,10 @@ void KtxImporterTest::swizzleCompressed() {
     CORRADE_VERIFY(fileData);
     patchKeyValueData(createKeyValueData("KTXswizzle"_s, "bgra"_s), *fileData);
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->openData(*fileData));
-    CORRADE_COMPARE(out.str(), "Trade::KtxImporter::openData(): unsupported channel mapping bgra\n");
+    CORRADE_COMPARE(out, "Trade::KtxImporter::openData(): unsupported channel mapping bgra\n");
 }
 
 void KtxImporterTest::openMemory() {

@@ -24,7 +24,6 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-#include <sstream>
 #include <thread> /* std::thread::hardware_concurrency(), sigh */
 #include <Corrade/Containers/Array.h>
 #include <Corrade/Containers/Optional.h>
@@ -32,8 +31,7 @@
 #include <Corrade/TestSuite/Compare/StringToFile.h>
 #include <Corrade/TestSuite/Compare/Container.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
-#include <Corrade/Utility/DebugStl.h> /** @todo remove once Debug is stream-free */
-#include <Corrade/Utility/FormatStl.h> /** @todo remove once Debug is stream-free */
+#include <Corrade/Utility/Format.h>
 #include <Corrade/Utility/Path.h>
 #include <Magnum/ImageView.h>
 #include <Magnum/PixelFormat.h>
@@ -335,10 +333,10 @@ void OpenExrImageConverterTest::wrongFormat() {
     Containers::Pointer<AbstractImageConverter> converter = _manager.instantiate("OpenExrImageConverter");
 
     const char data[4]{};
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->convertToData(ImageView2D{PixelFormat::RGBA8Unorm, {1, 1}, data}));
-    CORRADE_COMPARE(out.str(), "Trade::OpenExrImageConverter::convertToData(): unsupported format PixelFormat::RGBA8Unorm, only *16F, *32F, *32UI and Depth32F formats supported\n");
+    CORRADE_COMPARE(out, "Trade::OpenExrImageConverter::convertToData(): unsupported format PixelFormat::RGBA8Unorm, only *16F, *32F, *32UI and Depth32F formats supported\n");
 }
 
 void OpenExrImageConverterTest::conversionError() {
@@ -350,11 +348,11 @@ void OpenExrImageConverterTest::conversionError() {
     converter->configuration().setValue("displayWindow", Vector4i{1, 1, 0, 0});
 
     const char data[8]{};
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->convertToData(ImageView2D{PixelFormat::RGBA16F, {1, 1}, data}));
 
-    CORRADE_COMPARE(out.str(), "Trade::OpenExrImageConverter::convertToData(): conversion error: Cannot open image file \"\". Invalid display window in image header.\n");
+    CORRADE_COMPARE(out, "Trade::OpenExrImageConverter::convertToData(): conversion error: Cannot open image file \"\". Invalid display window in image header.\n");
 }
 
 void OpenExrImageConverterTest::rgb16f() {
@@ -501,30 +499,30 @@ void OpenExrImageConverterTest::envmap2DLatLongWrongSize() {
     Containers::Pointer<AbstractImageConverter> converter = _manager.instantiate("OpenExrImageConverter");
     converter->configuration().setValue("envmap", "latlong");
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->convertToData(Rg32ui));
-    CORRADE_COMPARE(out.str(), "Trade::OpenExrImageConverter::convertToData(): a lat/long environment map has to have a 2:1 aspect ratio, got Vector(2, 2)\n");
+    CORRADE_COMPARE(out, "Trade::OpenExrImageConverter::convertToData(): a lat/long environment map has to have a 2:1 aspect ratio, got Vector(2, 2)\n");
 }
 
 void OpenExrImageConverterTest::envmap2DInvalid() {
     Containers::Pointer<AbstractImageConverter> converter = _manager.instantiate("OpenExrImageConverter");
     converter->configuration().setValue("envmap", "cube");
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->convertToData(Rg32ui));
-    CORRADE_COMPARE(out.str(), "Trade::OpenExrImageConverter::convertToData(): unknown envmap option cube for a 2D image, expected either empty or latlong for 2D images and empty for 3D images\n");
+    CORRADE_COMPARE(out, "Trade::OpenExrImageConverter::convertToData(): unknown envmap option cube for a 2D image, expected either empty or latlong for 2D images and empty for 3D images\n");
 }
 
 void OpenExrImageConverterTest::envmap3DInvalid() {
     Containers::Pointer<AbstractImageConverter> converter = _manager.instantiate("OpenExrImageConverter");
     converter->configuration().setValue("envmap", "cube");
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->convertToData(CubeRg16f));
-    CORRADE_COMPARE(out.str(), "Trade::OpenExrImageConverter::convertToData(): unknown envmap option cube for a 3D image, expected either empty or latlong for 2D images and empty for 3D images\n");
+    CORRADE_COMPARE(out, "Trade::OpenExrImageConverter::convertToData(): unknown envmap option cube for a 3D image, expected either empty or latlong for 2D images and empty for 3D images\n");
 }
 
 void OpenExrImageConverterTest::cubeMap3D() {
@@ -593,10 +591,10 @@ void OpenExrImageConverterTest::cubeMap3DArray() {
     ImageView3D image{PixelStorage{}.setSkip({0, 0, 1}).setImageHeight(3),
     PixelFormat::RG16F, {2, 2, 6}, CubeRg16fData, ImageFlag3D::CubeMap|ImageFlag3D::Array};
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->convertToData(image));
-    CORRADE_COMPARE(out.str(), "Trade::OpenExrImageConverter::convertToData(): cube map arrays are not supported by OpenEXR, save each cube map separately\n");
+    CORRADE_COMPARE(out, "Trade::OpenExrImageConverter::convertToData(): cube map arrays are not supported by OpenEXR, save each cube map separately\n");
 }
 
 void OpenExrImageConverterTest::arbitrary3D() {
@@ -606,10 +604,10 @@ void OpenExrImageConverterTest::arbitrary3D() {
     ImageView3D image{PixelStorage{}.setSkip({0, 0, 1}).setImageHeight(3),
     PixelFormat::RG16F, {2, 2, 6}, CubeRg16fData};
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->convertToData(image));
-    CORRADE_COMPARE(out.str(), "Trade::OpenExrImageConverter::convertToData(): arbitrary 3D image saving not implemented yet, only ImageFlag3D::CubeMap images can be saved\n");
+    CORRADE_COMPARE(out, "Trade::OpenExrImageConverter::convertToData(): arbitrary 3D image saving not implemented yet, only ImageFlag3D::CubeMap images can be saved\n");
 }
 
 void OpenExrImageConverterTest::customChannels() {
@@ -662,10 +660,10 @@ void OpenExrImageConverterTest::customChannelsDuplicated() {
     Containers::Pointer<AbstractImageConverter> converter = _manager.instantiate("OpenExrImageConverter");
     converter->configuration().setValue("a", "G");
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->convertToData(Rgba32f));
-    CORRADE_COMPARE(out.str(), "Trade::OpenExrImageConverter::convertToData(): duplicate mapping for channel G\n");
+    CORRADE_COMPARE(out, "Trade::OpenExrImageConverter::convertToData(): duplicate mapping for channel G\n");
 }
 
 void OpenExrImageConverterTest::customChannelsSomeUnassigned() {
@@ -709,10 +707,10 @@ void OpenExrImageConverterTest::customChannelsAllUnassigned() {
     converter->configuration().setValue("b", "");
     converter->configuration().setValue("a", "");
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->convertToData(Rgba32f));
-    CORRADE_COMPARE(out.str(), "Trade::OpenExrImageConverter::convertToData(): no channels assigned in plugin configuration\n");
+    CORRADE_COMPARE(out, "Trade::OpenExrImageConverter::convertToData(): no channels assigned in plugin configuration\n");
 }
 
 void OpenExrImageConverterTest::customChannelsDepth() {
@@ -747,10 +745,10 @@ void OpenExrImageConverterTest::customChannelsDepthUnassigned() {
     converter->configuration().setValue("layer", "normal");
     converter->configuration().setValue("depth", "");
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->convertToData(Depth32f));
-    CORRADE_COMPARE(out.str(), "Trade::OpenExrImageConverter::convertToData(): no channels assigned in plugin configuration\n");
+    CORRADE_COMPARE(out, "Trade::OpenExrImageConverter::convertToData(): no channels assigned in plugin configuration\n");
 }
 
 void OpenExrImageConverterTest::customWindows() {
@@ -924,10 +922,10 @@ void OpenExrImageConverterTest::compressionInvalid() {
     Containers::Pointer<AbstractImageConverter> converter = _manager.instantiate("OpenExrImageConverter");
     converter->configuration().setValue("compression", "zstd");
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->convertToData(Rgba32f));
-    CORRADE_COMPARE(out.str(), "Trade::OpenExrImageConverter::convertToData(): unknown compression zstd, allowed values are rle, zip, zips, piz, pxr24, b44, b44a, dwaa, dwab or empty for uncompressed output\n");
+    CORRADE_COMPARE(out, "Trade::OpenExrImageConverter::convertToData(): unknown compression zstd, allowed values are rle, zip, zips, piz, pxr24, b44, b44a, dwaa, dwab or empty for uncompressed output\n");
 }
 
 void OpenExrImageConverterTest::levels2D() {
@@ -1039,7 +1037,7 @@ void OpenExrImageConverterTest::levels2DInvalidLevelSize() {
 
     const Half data[16];
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->convertToData({
         ImageView2D{PixelStorage{}.setAlignment(1), PixelFormat::R16F, {5, 3}, data},
@@ -1056,7 +1054,7 @@ void OpenExrImageConverterTest::levels2DInvalidLevelSize() {
         ImageView2D{PixelStorage{}.setAlignment(1), PixelFormat::R16F, {1, 1}, data},
         ImageView2D{PixelStorage{}.setAlignment(1), PixelFormat::R16F, {1, 1}, data},
     }));
-    CORRADE_COMPARE(out.str(),
+    CORRADE_COMPARE(out,
         "Trade::OpenExrImageConverter::convertToData(): size of image at level 1 expected to be Vector(2, 1) but got Vector(3, 2)\n"
         "Trade::OpenExrImageConverter::convertToData(): size of image at level 2 expected to be Vector(2, 1) but got Vector(1, 1)\n"
         "Trade::OpenExrImageConverter::convertToData(): there can be only 2 levels with base image size Vector(2, 2) but got 3\n");
@@ -1068,10 +1066,10 @@ void OpenExrImageConverterTest::levels2DInvalidTileSize() {
     converter->configuration().setValue("forceTiledOutput", true);
     converter->configuration().setValue("tileSize", Vector2i{});
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->convertToData(Rgb16f));
-    CORRADE_COMPARE(out.str(),
+    CORRADE_COMPARE(out,
         "Trade::OpenExrImageConverter::convertToData(): conversion error: Cannot open image file \"\". Invalid tile size in image header.\n");
 }
 
@@ -1297,7 +1295,7 @@ void OpenExrImageConverterTest::levelsCubeMapInvalidLevelSize() {
 
     const Half data[150];
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->convertToData({
         ImageView3D{PixelStorage{}.setAlignment(1), PixelFormat::R16F, {5, 5, 6}, data, ImageFlag3D::CubeMap},
@@ -1311,7 +1309,7 @@ void OpenExrImageConverterTest::levelsCubeMapInvalidLevelSize() {
         ImageView3D{PixelStorage{}.setAlignment(1), PixelFormat::R16F, {1, 1, 6}, data, ImageFlag3D::CubeMap},
         ImageView3D{PixelStorage{}.setAlignment(1), PixelFormat::R16F, {1, 1, 6}, data, ImageFlag3D::CubeMap},
     }));
-    CORRADE_COMPARE(out.str(),
+    CORRADE_COMPARE(out,
         "Trade::OpenExrImageConverter::convertToData(): size of cubemap image at level 1 expected to be Vector(2, 2, 6) but got Vector(3, 3, 6)\n"
         "Trade::OpenExrImageConverter::convertToData(): there can be only 2 levels with base cubemap image size Vector(2, 2, 6) but got 3\n");
 }
@@ -1326,13 +1324,13 @@ void OpenExrImageConverterTest::unsupportedMetadata() {
     const char imageData[4]{};
     ImageView2D image{PixelFormat::RG16F, {1, 1}, imageData, data.imageFlags};
 
-    std::ostringstream out;
+    Containers::String out;
     Warning redirectWarning{&out};
     CORRADE_VERIFY(converter->convertToData(image));
     if(!data.message)
-        CORRADE_COMPARE(out.str(), "");
+        CORRADE_COMPARE(out, "");
     else
-        CORRADE_COMPARE(out.str(), Utility::formatString("Trade::OpenExrImageConverter::convertToData(): {}\n", data.message));
+        CORRADE_COMPARE(out, Utility::format("Trade::OpenExrImageConverter::convertToData(): {}\n", data.message));
 }
 
 void OpenExrImageConverterTest::threads() {
@@ -1355,7 +1353,7 @@ void OpenExrImageConverterTest::threads() {
     if(data.verbose)
         converter->addFlags(ImageConverterFlag::Verbose);
 
-    std::ostringstream out;
+    Containers::String out;
     Debug redirectOutput{&out};
     Containers::Optional<Containers::Array<char>> outData = converter->convertToData(Rgb16f);
     CORRADE_VERIFY(outData);
@@ -1364,7 +1362,7 @@ void OpenExrImageConverterTest::threads() {
     CORRADE_COMPARE_AS(Containers::StringView{*outData},
         Utility::Path::join(OPENEXRIMPORTER_TEST_DIR, "rgb16f.exr"),
         TestSuite::Compare::StringToFile);
-    CORRADE_COMPARE(out.str(), Utility::formatString(data.message,
+    CORRADE_COMPARE(out, Utility::format(data.message,
         std::thread::hardware_concurrency(),
         std::thread::hardware_concurrency() - 1));
 }

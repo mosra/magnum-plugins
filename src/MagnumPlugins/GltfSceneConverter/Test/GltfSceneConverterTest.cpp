@@ -25,7 +25,6 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-#include <sstream>
 #include <Corrade/Containers/BitArray.h>
 #include <Corrade/Containers/BitArrayView.h>
 #include <Corrade/Containers/GrowableArray.h>
@@ -44,8 +43,7 @@
 #include <Corrade/TestSuite/Compare/StringToFile.h>
 #include <Corrade/TestSuite/Compare/String.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
-#include <Corrade/Utility/DebugStl.h>
-#include <Corrade/Utility/FormatStl.h> /** @todo remove once Debug is stream-free */
+#include <Corrade/Utility/Format.h>
 #include <Corrade/Utility/Path.h>
 #include <Magnum/PixelFormat.h>
 #include <Magnum/ImageView.h>
@@ -2657,15 +2655,15 @@ void GltfSceneConverterTest::addMeshBufferViewsInterleavedPaddingBeginEnd() {
     const Containers::String filename = Utility::Path::join(GLTFSCENECONVERTER_TEST_OUTPUT_DIR, "mesh-buffer-views-interleaved-padding-begin-end.gltf");
 
     CORRADE_VERIFY(converter->beginFile(filename));
-    std::ostringstream out;
+    Containers::String out;
     {
         Debug redirectOutput{&out};
         CORRADE_VERIFY(converter->add(mesh));
     }
     if(data.verbose)
-        CORRADE_COMPARE(out.str(), "Trade::GltfSceneConverter::add(): vertex buffer was padded by 4 bytes to satisfy glTF buffer view requirements\n");
+        CORRADE_COMPARE(out, "Trade::GltfSceneConverter::add(): vertex buffer was padded by 4 bytes to satisfy glTF buffer view requirements\n");
     else
-        CORRADE_COMPARE(out.str(), "");
+        CORRADE_COMPARE(out, "");
     CORRADE_VERIFY(converter->endFile());
 
     /* There should be one buffer view starting at offset 0, the position
@@ -2866,10 +2864,10 @@ void GltfSceneConverterTest::addMeshNoAttributes() {
     CORRADE_VERIFY(converter->beginFile(filename));
 
     {
-        std::ostringstream out;
+        Containers::String out;
         Warning redirectWarning{&out};
         CORRADE_VERIFY(converter->add(mesh));
-        CORRADE_COMPARE(out.str(), "Trade::GltfSceneConverter::add(): strict mode disabled, allowing an attribute-less mesh\n");
+        CORRADE_COMPARE(out, "Trade::GltfSceneConverter::add(): strict mode disabled, allowing an attribute-less mesh\n");
     }
 
     CORRADE_VERIFY(converter->endFile());
@@ -2979,15 +2977,15 @@ void GltfSceneConverterTest::addMeshNoIndicesNoAttributes() {
     Containers::String filename = Utility::Path::join(GLTFSCENECONVERTER_TEST_OUTPUT_DIR, "mesh-no-indices-no-attributes" + data.suffix);
     CORRADE_VERIFY(converter->beginFile(filename));
 
-    std::ostringstream out;
+    Containers::String out;
     {
         Warning redirectWarning{&out};
         CORRADE_VERIFY(converter->add(MeshData{MeshPrimitive::TriangleFan, 0}));
     }
     if(data.quiet)
-        CORRADE_COMPARE(out.str(), "");
+        CORRADE_COMPARE(out, "");
     else
-        CORRADE_COMPARE(out.str(), "Trade::GltfSceneConverter::add(): strict mode disabled, allowing an attribute-less mesh\n");
+        CORRADE_COMPARE(out, "Trade::GltfSceneConverter::add(): strict mode disabled, allowing an attribute-less mesh\n");
 
     CORRADE_VERIFY(converter->endFile());
     CORRADE_COMPARE_AS(filename,
@@ -3039,15 +3037,15 @@ void GltfSceneConverterTest::addMeshNoIndicesNoVertices() {
     Containers::String filename = Utility::Path::join(GLTFSCENECONVERTER_TEST_OUTPUT_DIR, "mesh-no-indices-no-vertices" + data.suffix);
     CORRADE_VERIFY(converter->beginFile(filename));
 
-    std::ostringstream out;
+    Containers::String out;
     {
         Warning redirectWarning{&out};
         CORRADE_VERIFY(converter->add(mesh));
     }
     if(data.quiet)
-        CORRADE_COMPARE(out.str(), "");
+        CORRADE_COMPARE(out, "");
     else
-        CORRADE_COMPARE(out.str(), "Trade::GltfSceneConverter::add(): strict mode disabled, allowing a mesh with zero vertices\n");
+        CORRADE_COMPARE(out, "Trade::GltfSceneConverter::add(): strict mode disabled, allowing a mesh with zero vertices\n");
 
     CORRADE_VERIFY(converter->endFile());
     CORRADE_COMPARE_AS(filename,
@@ -3098,12 +3096,12 @@ void GltfSceneConverterTest::addMeshAttribute() {
         converter->configuration().setValue("textureCoordinateYFlipInMaterial", *data.textureCoordinateYFlipInMaterial);
 
     {
-        std::ostringstream out;
+        Containers::String out;
         Warning redirectWarning{&out};
         CORRADE_VERIFY(converter->add(mesh));
         if(data.expectedWarning)
-            CORRADE_COMPARE(out.str(), Utility::format("Trade::GltfSceneConverter::add(): {}\n", data.expectedWarning));
-        else CORRADE_COMPARE(out.str(), "");
+            CORRADE_COMPARE(out, Utility::format("Trade::GltfSceneConverter::add(): {}\n", data.expectedWarning));
+        else CORRADE_COMPARE(out, "");
     }
 
     CORRADE_VERIFY(converter->endFile());
@@ -3314,17 +3312,17 @@ void GltfSceneConverterTest::addMeshSkinningAttributesUnsignedInt() {
 
     const Containers::String filename = Utility::Path::join(GLTFSCENECONVERTER_TEST_OUTPUT_DIR, "mesh-skinning-attributes-ui.gltf");
     CORRADE_VERIFY(converter->beginFile(filename));
-    std::ostringstream out;
+    Containers::String out;
     {
         Warning redirectWarning{&out};
         CORRADE_VERIFY(converter->add(mesh));
     }
     if(data.quiet)
-        CORRADE_COMPARE(out.str(), "");
+        CORRADE_COMPARE(out, "");
     else
         /* It's not JOINTS_0 because the warning happens before the final
            attribute name is composed but that should be fine */
-        CORRADE_COMPARE(out.str(), "Trade::GltfSceneConverter::add(): strict mode disabled, allowing a 32-bit integer attribute JOINTS\n");
+        CORRADE_COMPARE(out, "Trade::GltfSceneConverter::add(): strict mode disabled, allowing a 32-bit integer attribute JOINTS\n");
 
     CORRADE_VERIFY(converter->endFile());
     CORRADE_COMPARE_AS(filename,
@@ -3521,15 +3519,15 @@ void GltfSceneConverterTest::addMeshCustomAttributeNoName() {
     converter->setMeshAttributeName(meshAttributeCustom(30560), "_YOLO");
     converter->setMeshAttributeName(meshAttributeCustom(31995), "_MEH");
 
-    std::ostringstream out;
+    Containers::String out;
     {
         Warning redirectWarning{&out};
         CORRADE_VERIFY(converter->add(mesh));
     }
     if(data.quiet)
-        CORRADE_COMPARE(out.str(), "");
+        CORRADE_COMPARE(out, "");
     else
-        CORRADE_COMPARE(out.str(), "Trade::GltfSceneConverter::add(): no name set for Trade::MeshAttribute::Custom(31434), exporting as _31434\n");
+        CORRADE_COMPARE(out, "Trade::GltfSceneConverter::add(): no name set for Trade::MeshAttribute::Custom(31434), exporting as _31434\n");
 
     CORRADE_VERIFY(converter->endFile());
     CORRADE_COMPARE_AS(filename,
@@ -3747,10 +3745,10 @@ void GltfSceneConverterTest::addMeshInvalid() {
     converter->setMeshAttributeName(meshAttributeCustom(31434), "_YOLO");
 
     {
-        std::ostringstream out;
+        Containers::String out;
         Error redirectError{&out};
         CORRADE_VERIFY(!converter->add(data.mesh));
-        CORRADE_COMPARE(out.str(), Utility::format("Trade::GltfSceneConverter::add(): {}\n", data.message));
+        CORRADE_COMPARE(out, Utility::format("Trade::GltfSceneConverter::add(): {}\n", data.message));
     }
 
     /* The file should not get corrupted by this error */
@@ -3795,13 +3793,13 @@ void GltfSceneConverterTest::addImage2D() {
     {
         Color4ub imageData[]{0xff3366_rgb};
 
-        std::ostringstream out;
+        Containers::String out;
         Warning redirectWarning{&out};
         CORRADE_VERIFY(converter->add(ImageView2D{PixelFormat::RGB8Unorm, {1, 1}, imageData}, data.dataName));
         if(data.expectedWarning)
-            CORRADE_COMPARE(out.str(), data.expectedWarning);
+            CORRADE_COMPARE(out, data.expectedWarning);
         else
-            CORRADE_COMPARE(out.str(), "");
+            CORRADE_COMPARE(out, "");
     }
 
     CORRADE_VERIFY(converter->endFile());
@@ -4040,13 +4038,13 @@ void GltfSceneConverterTest::addImagePropagateFlags() {
 
     CORRADE_VERIFY(converter->beginData());
 
-    std::ostringstream out;
+    Containers::String out;
     {
         Debug redirectOutput{&out};
         Warning redirectWarning{&out};
         CORRADE_VERIFY(converter->add(ImageView2D{PixelFormat::RGB8Unorm, {1, 1}, "yey", data.imageFlags}));
     }
-    CORRADE_COMPARE(out.str(), data.message);
+    CORRADE_COMPARE(out, data.message);
 
     CORRADE_VERIFY(converter->endData());
 
@@ -4097,13 +4095,13 @@ void GltfSceneConverterTest::addImagePropagateConfigurationUnknown() {
 
     CORRADE_VERIFY(converter->beginData());
 
-    std::ostringstream out;
+    Containers::String out;
     Warning redirectWarning{&out};
     CORRADE_VERIFY(converter->add(ImageView2D{PixelFormat::RGB8Unorm, {1, 1}, "yey"}));
     if(data.quiet)
-        CORRADE_COMPARE(out.str(), "");
+        CORRADE_COMPARE(out, "");
     else
-        CORRADE_COMPARE(out.str(), "Trade::GltfSceneConverter::add(): option quality not recognized by PngImageConverter\n");
+        CORRADE_COMPARE(out, "Trade::GltfSceneConverter::add(): option quality not recognized by PngImageConverter\n");
 
     /* No need to test anything apart from the message above */
     CORRADE_VERIFY(converter->endData());
@@ -4125,13 +4123,13 @@ void GltfSceneConverterTest::addImagePropagateConfigurationGroup() {
 
     CORRADE_VERIFY(converter->beginData());
 
-    std::ostringstream out;
+    Containers::String out;
     Warning redirectWarning{&out};
     CORRADE_VERIFY(converter->add(ImageView2D{PixelFormat::RGB8Unorm, {1, 1}, "yey"}));
     if(data.quiet)
-        CORRADE_COMPARE(out.str(), "");
+        CORRADE_COMPARE(out, "");
     else
-        CORRADE_COMPARE(out.str(), "Trade::GltfSceneConverter::add(): image converter configuration group propagation not implemented yet, ignoring\n");
+        CORRADE_COMPARE(out, "Trade::GltfSceneConverter::add(): image converter configuration group propagation not implemented yet, ignoring\n");
 
     /* No need to test anything apart from the message above */
     CORRADE_VERIFY(converter->endData());
@@ -4231,10 +4229,10 @@ void GltfSceneConverterTest::addImageNoConverterManager() {
     CORRADE_VERIFY(converter->beginData());
 
     {
-        std::ostringstream out;
+        Containers::String out;
         Error redirectError{&out};
         CORRADE_VERIFY(!converter->add(ImageView2D{PixelFormat::RGBA8Unorm, {1, 1}, "yey"}));
-        CORRADE_COMPARE(out.str(), "Trade::GltfSceneConverter::add(): the plugin must be instantiated with access to plugin manager that has a registered image converter manager in order to convert images\n");
+        CORRADE_COMPARE(out, "Trade::GltfSceneConverter::add(): the plugin must be instantiated with access to plugin manager that has a registered image converter manager in order to convert images\n");
     }
 
     /* The file should not get corrupted by this error */
@@ -4258,10 +4256,10 @@ void GltfSceneConverterTest::addImageExternalToData() {
     CORRADE_VERIFY(converter->beginData());
 
     {
-        std::ostringstream out;
+        Containers::String out;
         Error redirectError{&out};
         CORRADE_VERIFY(!converter->add(ImageView2D{PixelFormat::RGBA8Unorm, {1, 1}, "yey"}));
-        CORRADE_COMPARE(out.str(), "Trade::GltfSceneConverter::add(): can only write a glTF with external images if converting to a file\n");
+        CORRADE_COMPARE(out, "Trade::GltfSceneConverter::add(): can only write a glTF with external images if converting to a file\n");
     }
 
     /* The file should not get corrupted by this error */
@@ -4286,15 +4284,15 @@ void GltfSceneConverterTest::addImageInvalid2D() {
     CORRADE_VERIFY(converter->beginFile(filename));
 
     {
-        std::ostringstream out;
+        Containers::String out;
         Error redirectError{&out};
         CORRADE_VERIFY(!converter->add(data.image));
         /* If the message ends with a newline, it's the whole output, otherwise
            just the sentence without any placeholder */
         if(Containers::StringView{data.message}.hasSuffix('\n'))
-            CORRADE_COMPARE(out.str(), Utility::formatString(data.message, filename));
+            CORRADE_COMPARE(out, Utility::format(data.message, filename));
         else
-            CORRADE_COMPARE(out.str(), Utility::formatString("Trade::GltfSceneConverter::add(): {}\n", data.message));
+            CORRADE_COMPARE(out, Utility::format("Trade::GltfSceneConverter::add(): {}\n", data.message));
     }
 
     /* Try adding the same image again, to catch assertions due to potential
@@ -4326,15 +4324,15 @@ void GltfSceneConverterTest::addImageInvalid3D() {
     CORRADE_VERIFY(converter->beginFile(filename));
 
     {
-        std::ostringstream out;
+        Containers::String out;
         Error redirectError{&out};
         CORRADE_VERIFY(!converter->add(data.image));
         /* If the message ends with a newline, it's the whole output, otherwise
            just the sentence without any placeholder */
         if(Containers::StringView{data.message}.hasSuffix('\n'))
-            CORRADE_COMPARE(out.str(), Utility::formatString(data.message, filename));
+            CORRADE_COMPARE(out, Utility::format(data.message, filename));
         else
-            CORRADE_COMPARE(out.str(), Utility::formatString("Trade::GltfSceneConverter::add(): {}\n", data.message));
+            CORRADE_COMPARE(out, Utility::format("Trade::GltfSceneConverter::add(): {}\n", data.message));
     }
 
     /* Try adding the same image again, to catch assertions due to potential
@@ -4599,10 +4597,10 @@ void GltfSceneConverterTest::addTextureInvalid() {
         converter->configuration().setValue("experimentalKhrTextureKtx", *data.experimentalKhrTextureKtx);
 
     {
-        std::ostringstream out;
+        Containers::String out;
         Error redirectError{&out};
         CORRADE_VERIFY(!converter->add(data.texture));
-        CORRADE_COMPARE(out.str(), Utility::formatString("Trade::GltfSceneConverter::add(): {}\n", data.message));
+        CORRADE_COMPARE(out, Utility::format("Trade::GltfSceneConverter::add(): {}\n", data.message));
     }
 
     /* The file should not get corrupted by this error, thus the same as if
@@ -4663,10 +4661,10 @@ void GltfSceneConverterTest::addMaterial() {
     /* There should be no warning about unused attributes, actual warnings are
        tested in addMaterialUnusedAttributes() instead */
     {
-        std::ostringstream out;
+        Containers::String out;
         Warning redirectWarning{&out};
         CORRADE_VERIFY(converter->add(data.material, data.dataName));
-        CORRADE_COMPARE(out.str(), "");
+        CORRADE_COMPARE(out, "");
     }
 
     CORRADE_VERIFY(converter->endFile());
@@ -4832,13 +4830,13 @@ template<SceneConverterFlag flag> void GltfSceneConverterTest::addMaterialUnused
     }
 
     {
-        std::ostringstream out;
+        Containers::String out;
         Warning redirectWarning{&out};
         CORRADE_VERIFY(converter->add(data.material));
         if(flag == SceneConverterFlag::Quiet)
-            CORRADE_COMPARE(out.str(), "");
+            CORRADE_COMPARE(out, "");
         else
-            CORRADE_COMPARE(out.str(), data.expectedWarning);
+            CORRADE_COMPARE(out, data.expectedWarning);
     }
 
     /* Testing the contents would be too time-consuming, the file itself has to
@@ -4899,13 +4897,13 @@ template<SceneConverterFlag flag> void GltfSceneConverterTest::addMaterialCustom
         converter->configuration().addValue("extensionUsed", i);
 
     {
-        std::ostringstream out;
+        Containers::String out;
         Warning redirectWarning{&out};
         CORRADE_VERIFY(converter->add(data.material));
         if(flag == SceneConverterFlag::Quiet)
-            CORRADE_COMPARE(out.str(), "");
+            CORRADE_COMPARE(out, "");
         else
-            CORRADE_COMPARE(out.str(), data.expectedWarning);
+            CORRADE_COMPARE(out, data.expectedWarning);
     }
 
     CORRADE_VERIFY(converter->endFile());
@@ -5048,10 +5046,10 @@ void GltfSceneConverterTest::addMaterialInvalid() {
         0}));
 
     {
-        std::ostringstream out;
+        Containers::String out;
         Error redirectError{&out};
         CORRADE_VERIFY(!converter->add(data.material));
-        CORRADE_COMPARE(out.str(), Utility::format("Trade::GltfSceneConverter::add(): {}\n", data.message));
+        CORRADE_COMPARE(out, Utility::format("Trade::GltfSceneConverter::add(): {}\n", data.message));
     }
 
     /* The file should not get corrupted by this error, thus the same as if
@@ -5122,7 +5120,7 @@ void GltfSceneConverterTest::addMaterial2DArrayTextureLayerOutOfRange() {
 
     /* Second material has the second texture OOB */
     {
-        std::ostringstream out;
+        Containers::String out;
         Error redirectError{&out};
         CORRADE_VERIFY(!converter->add(MaterialData{{}, {
             {MaterialAttribute::NormalTexture, 0u},
@@ -5130,7 +5128,7 @@ void GltfSceneConverterTest::addMaterial2DArrayTextureLayerOutOfRange() {
             {MaterialAttribute::OcclusionTexture, 1u},
             {MaterialAttribute::OcclusionTextureLayer, 4u},
         }}));
-        CORRADE_COMPARE(out.str(), "Trade::GltfSceneConverter::add(): material attribute OcclusionTextureLayer value 4 out of range for 4 layers in texture 1\n");
+        CORRADE_COMPARE(out, "Trade::GltfSceneConverter::add(): material attribute OcclusionTextureLayer value 4 out of range for 4 layers in texture 1\n");
     }
 
     /* The file should not get corrupted by this error, thus the same as if
@@ -5380,15 +5378,15 @@ void GltfSceneConverterTest::addScene() {
             Containers::stridedArrayView(sceneData->trs).slice(&Scene::Trs::scaling)},
     }};
 
-    std::ostringstream out;
+    Containers::String out;
     {
         Warning redirectWarning{&out};
         CORRADE_VERIFY(converter->add(scene, data.dataName));
     }
     if(data.quiet)
-        CORRADE_COMPARE(out.str(), "");
+        CORRADE_COMPARE(out, "");
     else
-        CORRADE_COMPARE(out.str(), Utility::formatString(
+        CORRADE_COMPARE(out, Utility::format(
             "Trade::GltfSceneConverter::add(): Trade::SceneField::Light was not used\n"
             "Trade::GltfSceneConverter::add(): parentless object {} was not used\n"
             "Trade::GltfSceneConverter::add(): ignoring duplicate field Trade::SceneField::Transformation for object {}\n",
@@ -5598,16 +5596,16 @@ void GltfSceneConverterTest::addSceneMeshesMaterials() {
             Containers::stridedArrayView(sceneData->meshesMaterials).slice(&Containers::Triple<UnsignedInt, UnsignedInt, Int>::third)},
     }};
 
-    std::ostringstream out;
+    Containers::String out;
     {
         Warning redirectWarning{&out};
         CORRADE_VERIFY(converter->add(scene));
     }
     if(data.quiet)
-        CORRADE_COMPARE(out.str(), "");
+        CORRADE_COMPARE(out, "");
     else
         /* Shouldn't warn about any duplicate fields */
-        CORRADE_COMPARE(out.str(),
+        CORRADE_COMPARE(out,
             "Trade::GltfSceneConverter::add(): parentless object 30 was not used\n");
 
     CORRADE_VERIFY(converter->endFile());
@@ -5872,15 +5870,15 @@ void GltfSceneConverterTest::addSceneCustomFields() {
             SceneFieldFlag::MultiEntry},
     }};
 
-    std::ostringstream out;
+    Containers::String out;
     {
         Warning redirectWarning{&out};
         CORRADE_VERIFY(converter->add(scene));
     }
     if(data.quiet)
-        CORRADE_COMPARE(out.str(), "");
+        CORRADE_COMPARE(out, "");
     else
-        CORRADE_COMPARE_AS(out.str(),
+        CORRADE_COMPARE_AS(out,
             "Trade::GltfSceneConverter::add(): custom scene field 5318008 has no name assigned, skipping\n"
             "Trade::GltfSceneConverter::add(): custom scene field customVector2 has unsupported type Trade::SceneFieldType::Vector2, skipping\n"
             "Trade::GltfSceneConverter::add(): ignoring duplicate field customFloat for object 2\n",
@@ -6050,15 +6048,15 @@ void GltfSceneConverterTest::addSceneNoParentField() {
             Containers::stridedArrayView(translations).slice(&Containers::Pair<UnsignedInt, Vector3>::second)}
     }};
 
-    std::ostringstream out;
+    Containers::String out;
     {
         Warning redirectWarning{&out};
         CORRADE_VERIFY(converter->add(scene));
     }
     if(data.quiet)
-        CORRADE_COMPARE(out.str(), "");
+        CORRADE_COMPARE(out, "");
     else
-        CORRADE_COMPARE(out.str(),
+        CORRADE_COMPARE(out,
             "Trade::GltfSceneConverter::add(): parentless object 0 was not used\n"
             "Trade::GltfSceneConverter::add(): parentless object 1 was not used\n");
 
@@ -6083,10 +6081,10 @@ void GltfSceneConverterTest::addSceneMultiple() {
     CORRADE_VERIFY(converter->add(scene));
 
     {
-        std::ostringstream out;
+        Containers::String out;
         Error redirectError{&out};
         CORRADE_VERIFY(!converter->add(scene));
-        CORRADE_COMPARE(out.str(), "Trade::GltfSceneConverter::add(): only one scene is supported at the moment\n");
+        CORRADE_COMPARE(out, "Trade::GltfSceneConverter::add(): only one scene is supported at the moment\n");
     }
 
     /* The file should not get corrupted by this error, thus the same as if
@@ -6124,10 +6122,10 @@ void GltfSceneConverterTest::addSceneInvalid() {
     }
 
     {
-        std::ostringstream out;
+        Containers::String out;
         Error redirectError{&out};
         CORRADE_VERIFY(!converter->add(data.scene));
-        CORRADE_COMPARE(out.str(), Utility::format("Trade::GltfSceneConverter::add(): {}\n", data.message));
+        CORRADE_COMPARE(out, Utility::format("Trade::GltfSceneConverter::add(): {}\n", data.message));
     }
 
     /* Add the data if not referenced to have a consistent output file */
@@ -6194,10 +6192,10 @@ void GltfSceneConverterTest::toDataButExternalBuffer() {
     CORRADE_VERIFY(converter->beginData());
     CORRADE_VERIFY(converter->add(mesh));
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->endData());
-    CORRADE_COMPARE(out.str(), "Trade::GltfSceneConverter::endData(): can only write a glTF with external buffers if converting to a file\n");
+    CORRADE_COMPARE(out, "Trade::GltfSceneConverter::endData(): can only write a glTF with external buffers if converting to a file\n");
 }
 
 }}}}

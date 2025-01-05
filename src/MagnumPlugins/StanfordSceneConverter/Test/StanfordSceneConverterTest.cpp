@@ -24,14 +24,12 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-#include <sstream>
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
 #include <Corrade/TestSuite/Compare/StringToFile.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
-#include <Corrade/Utility/DebugStl.h> /** @todo remove once Debug is stream-free */
-#include <Corrade/Utility/FormatStl.h> /** @todo remove once Debug is stream-free */
+#include <Corrade/Utility/Format.h>
 #include <Corrade/Utility/Path.h>
 #include <Magnum/Math/Color.h>
 #include <Magnum/Trade/AbstractImporter.h>
@@ -308,7 +306,7 @@ template<class T> void StanfordSceneConverterTest::indexed() {
     /** @todo Compare::DataToFile */
     CORRADE_COMPARE_AS(Containers::StringView{*out},
         Utility::Path::join(STANFORDSCENECONVERTER_TEST_DIR,
-            Utility::formatString(IndexTypeData<T>::file(), data.fileSuffix)),
+            Utility::format(IndexTypeData<T>::file(), data.fileSuffix)),
         TestSuite::Compare::StringToFile);
 
     if(_importerManager.loadState("StanfordImporter") == PluginManager::LoadState::NotFound)
@@ -516,20 +514,20 @@ void StanfordSceneConverterTest::empty() {
 void StanfordSceneConverterTest::lines() {
     Containers::Pointer<AbstractSceneConverter> converter =  _converterManager.instantiate("StanfordSceneConverter");
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->convertToData(MeshData{MeshPrimitive::Lines, 0}));
-    CORRADE_COMPARE(out.str(),
+    CORRADE_COMPARE(out,
         "Trade::StanfordSceneConverter::convertToData(): expected a triangle mesh, got MeshPrimitive::Lines\n");
 }
 
 void StanfordSceneConverterTest::positionsMissing() {
     Containers::Pointer<AbstractSceneConverter> converter =  _converterManager.instantiate("StanfordSceneConverter");
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->convertToData(MeshData{MeshPrimitive::Triangles, 0}));
-    CORRADE_COMPARE(out.str(),
+    CORRADE_COMPARE(out,
         "Trade::StanfordSceneConverter::convertToData(): the mesh has no positions\n");
 }
 
@@ -543,10 +541,10 @@ void StanfordSceneConverterTest::twoComponentPositions() {
 
     Containers::Pointer<AbstractSceneConverter> converter =  _converterManager.instantiate("StanfordSceneConverter");
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->convertToData(mesh));
-    CORRADE_COMPARE(out.str(),
+    CORRADE_COMPARE(out,
         "Trade::StanfordSceneConverter::convertToData(): two-component positions are not supported\n");
 }
 
@@ -554,10 +552,10 @@ void StanfordSceneConverterTest::invalidEndianness() {
     Containers::Pointer<AbstractSceneConverter> converter =  _converterManager.instantiate("StanfordSceneConverter");
     converter->configuration().setValue("endianness", "wrong");
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->convertToData(MeshData{MeshPrimitive::Triangles, 0}));
-    CORRADE_COMPARE(out.str(),
+    CORRADE_COMPARE(out,
         "Trade::StanfordSceneConverter::convertToData(): invalid option endianness=wrong\n");
 }
 
@@ -595,15 +593,15 @@ template<SceneConverterFlag flag> void StanfordSceneConverterTest::ignoredAttrib
     converter->configuration().setValue("endianness", "little");
 
     Containers::Optional<Containers::Array<char>> out;
-    std::ostringstream wout;
+    Containers::String wout;
     {
         Warning redirectWarning{&wout};
         out = converter->convertToData(mesh);
     }
     if(flag == SceneConverterFlag::Quiet)
-        CORRADE_COMPARE(wout.str(), "");
+        CORRADE_COMPARE(wout, "");
     else
-        CORRADE_COMPARE(wout.str(), Utility::formatString("Trade::StanfordSceneConverter::convertToData(): {}\n", data.message));
+        CORRADE_COMPARE(wout, Utility::format("Trade::StanfordSceneConverter::convertToData(): {}\n", data.message));
     CORRADE_VERIFY(out);
     /** @todo Compare::DataToFile */
     CORRADE_COMPARE_AS(Containers::StringView{*out},

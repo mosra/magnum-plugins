@@ -24,14 +24,12 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-#include <sstream>
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
 #include <Corrade/TestSuite/Compare/StringToFile.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
-#include <Corrade/Utility/DebugStl.h> /** @todo remove once Debug is stream-free */
-#include <Corrade/Utility/FormatStl.h>
+#include <Corrade/Utility/Format.h>
 #include <Corrade/Utility/Path.h>
 #include <Magnum/ImageView.h>
 #include <Magnum/PixelFormat.h>
@@ -126,10 +124,10 @@ void JpegImageConverterTest::wrongFormat() {
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("JpegImageConverter");
 
     const char data[4]{};
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->convertToData(ImageView2D{PixelFormat::R16F, {1, 1}, data}));
-    CORRADE_COMPARE(out.str(), "Trade::JpegImageConverter::convertToData(): unsupported pixel format PixelFormat::R16F\n");
+    CORRADE_COMPARE(out, "Trade::JpegImageConverter::convertToData(): unsupported pixel format PixelFormat::R16F\n");
 }
 
 void JpegImageConverterTest::conversionError() {
@@ -140,10 +138,10 @@ void JpegImageConverterTest::conversionError() {
        width/height is limited to 24 bits, so let's pretend we have a 16 MB
        image. Hope this won't trigger sanitizers. */
     const char data[1]{};
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->convertToData(ImageView2D{PixelFormat::R8Unorm, {16*1024*1024, 1}, {data, 16*1024*1024}}));
-    CORRADE_COMPARE(out.str(), "Trade::JpegImageConverter::convertToData(): error: Maximum supported image dimension is 65500 pixels\n");
+    CORRADE_COMPARE(out, "Trade::JpegImageConverter::convertToData(): error: Maximum supported image dimension is 65500 pixels\n");
 }
 
 constexpr const char OriginalRgbData[] = {
@@ -309,10 +307,10 @@ void JpegImageConverterTest::rgba80Percent() {
     /* If we don't have libjpeg-turbo, exporting RGBA will fail */
     #ifndef JCS_EXTENSIONS
     {
-        std::ostringstream out;
+        Containers::String out;
         Error redirectError{&out};
         CORRADE_VERIFY(!converter->convertToData(OriginalRgba));
-        CORRADE_COMPARE(out.str(), "Trade::JpegImageConverter::convertToData(): RGBA input (with alpha ignored) requires libjpeg-turbo\n");
+        CORRADE_COMPARE(out, "Trade::JpegImageConverter::convertToData(): RGBA input (with alpha ignored) requires libjpeg-turbo\n");
     }
 
     CORRADE_SKIP("libjpeg-turbo is required for RGBA support.");
@@ -320,7 +318,7 @@ void JpegImageConverterTest::rgba80Percent() {
 
     /* RGBA should be exported as RGB, with the alpha channel ignored (and a
        warning about that printed) */
-    std::ostringstream out;
+    Containers::String out;
     Containers::Optional<Containers::Array<char>> imageData;
     {
         Warning redirectWarning{&out};
@@ -328,9 +326,9 @@ void JpegImageConverterTest::rgba80Percent() {
     }
     CORRADE_VERIFY(imageData);
     if(data.quiet)
-        CORRADE_COMPARE(out.str(), "");
+        CORRADE_COMPARE(out, "");
     else
-        CORRADE_COMPARE(out.str(), "Trade::JpegImageConverter::convertToData(): ignoring alpha channel\n");
+        CORRADE_COMPARE(out, "Trade::JpegImageConverter::convertToData(): ignoring alpha channel\n");
     /* The output should be exactly the same as when exporting RGB, bit to bit,
        to ensure we don't produce anything that would cause problems for
        traditional non-turbo libjpeg */
@@ -416,13 +414,13 @@ void JpegImageConverterTest::unsupportedMetadata() {
     const char imageData[4]{};
     ImageView2D image{PixelFormat::RGB8Unorm, {1, 1}, imageData, data.imageFlags};
 
-    std::ostringstream out;
+    Containers::String out;
     Warning redirectWarning{&out};
     CORRADE_VERIFY(converter->convertToData(image));
     if(!data.message)
-        CORRADE_COMPARE(out.str(), "");
+        CORRADE_COMPARE(out, "");
     else
-        CORRADE_COMPARE(out.str(), Utility::formatString("Trade::JpegImageConverter::convertToData(): {}\n", data.message));
+        CORRADE_COMPARE(out, Utility::format("Trade::JpegImageConverter::convertToData(): {}\n", data.message));
 }
 
 }}}}

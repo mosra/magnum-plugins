@@ -24,14 +24,12 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-#include <sstream>
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/StridedArrayView.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
-#include <Corrade/Utility/DebugStl.h> /** @todo remove once Debug is stream-free */
 #include <Corrade/Utility/Path.h>
 #include <Magnum/ImageView.h>
 #include <Magnum/PixelFormat.h>
@@ -312,12 +310,12 @@ StbImageImporterTest::StbImageImporterTest() {
 void StbImageImporterTest::empty() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("PngImporter");
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     char a{};
     /* Explicitly checking non-null but empty view */
     CORRADE_VERIFY(!importer->openData({&a, 0}));
-    CORRADE_COMPARE(out.str(), "Trade::StbImageImporter::openData(): the file is empty\n");
+    CORRADE_COMPARE(out, "Trade::StbImageImporter::openData(): the file is empty\n");
 }
 
 void StbImageImporterTest::invalid() {
@@ -325,10 +323,10 @@ void StbImageImporterTest::invalid() {
     /* The open does just a memory copy, so it doesn't fail */
     CORRADE_VERIFY(importer->openData("invalid"));
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->image2D(0));
-    CORRADE_COMPARE(out.str(), "Trade::StbImageImporter::image2D(): cannot open the image: unknown image type\n");
+    CORRADE_COMPARE(out, "Trade::StbImageImporter::image2D(): cannot open the image: unknown image type\n");
 }
 
 void StbImageImporterTest::grayPng() {
@@ -376,10 +374,10 @@ void StbImageImporterTest::grayPngFiveChannel() {
 
     importer->configuration().setValue("forceChannelCount", 5);
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->image2D(0));
-    CORRADE_COMPARE(out.str(), "Trade::StbImageImporter::image2D(): cannot open the image: bad req_comp\n");
+    CORRADE_COMPARE(out, "Trade::StbImageImporter::image2D(): cannot open the image: bad req_comp\n");
 }
 
 void StbImageImporterTest::grayPng16() {
@@ -604,10 +602,10 @@ void StbImageImporterTest::rgbHdrInvalid() {
        header so the HDR detection succeeds, but the subsequent import fails. */
     CORRADE_VERIFY(importer->openData("#?RADIANCE\n"));
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->image2D(0));
-    CORRADE_COMPARE(out.str(), "Trade::StbImageImporter::image2D(): cannot open the image: unsupported format\n");
+    CORRADE_COMPARE(out, "Trade::StbImageImporter::image2D(): cannot open the image: unsupported format\n");
 }
 
 void StbImageImporterTest::rgbaPng() {
@@ -683,7 +681,7 @@ void StbImageImporterTest::forceBitDepth8() {
 
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(PNGIMPORTER_TEST_DIR, data.filename)));
 
-    std::ostringstream out;
+    Containers::String out;
     Containers::Optional<ImageData2D> image;
     {
         Debug redirectOutput{&out};
@@ -695,9 +693,9 @@ void StbImageImporterTest::forceBitDepth8() {
         /* To account for rounding differences between stb_image and libpng */
         (DebugTools::CompareImage{1.0f, 0.67f}));
     if(data.message)
-        CORRADE_COMPARE(out.str(), data.message);
+        CORRADE_COMPARE(out, data.message);
     else
-        CORRADE_COMPARE(out.str(), "");
+        CORRADE_COMPARE(out, "");
 }
 
 void StbImageImporterTest::forceBitDepth16() {
@@ -710,7 +708,7 @@ void StbImageImporterTest::forceBitDepth16() {
 
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(PNGIMPORTER_TEST_DIR, data.filename)));
 
-    std::ostringstream out;
+    Containers::String out;
     Containers::Optional<ImageData2D> image;
     {
         Debug redirectOutput{&out};
@@ -721,9 +719,9 @@ void StbImageImporterTest::forceBitDepth16() {
         (ImageView2D{PixelStorage{}.setAlignment(1), data.format, data.size, data.data}),
         DebugTools::CompareImage);
     if(data.message)
-        CORRADE_COMPARE(out.str(), data.message);
+        CORRADE_COMPARE(out, data.message);
     else
-        CORRADE_COMPARE(out.str(), "");
+        CORRADE_COMPARE(out, "");
 }
 
 void StbImageImporterTest::forceBitDepth32() {
@@ -736,7 +734,7 @@ void StbImageImporterTest::forceBitDepth32() {
 
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(PNGIMPORTER_TEST_DIR, data.filename)));
 
-    std::ostringstream out;
+    Containers::String out;
     Containers::Optional<ImageData2D> image;
     {
         Debug redirectOutput{&out};
@@ -748,9 +746,9 @@ void StbImageImporterTest::forceBitDepth32() {
         /* Fuzzy comparison for floats */
         (DebugTools::CompareImage{1.0e-6f, 1.0e-6f}));
     if(data.message)
-        CORRADE_COMPARE(out.str(), data.message);
+        CORRADE_COMPARE(out, data.message);
     else
-        CORRADE_COMPARE(out.str(), "");
+        CORRADE_COMPARE(out, "");
 }
 
 void StbImageImporterTest::forceBitDepthInvalid() {
@@ -759,10 +757,10 @@ void StbImageImporterTest::forceBitDepthInvalid() {
 
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(PNGIMPORTER_TEST_DIR, "rgba-binary-alpha.png")));
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->image2D(0));
-    CORRADE_COMPARE(out.str(), "Trade::StbImageImporter::image2D(): expected forceBitDepth to be 0, 8, 16 or 32 but got 4\n");
+    CORRADE_COMPARE(out, "Trade::StbImageImporter::image2D(): expected forceBitDepth to be 0, 8, 16 or 32 but got 4\n");
 }
 
 void StbImageImporterTest::openMemory() {

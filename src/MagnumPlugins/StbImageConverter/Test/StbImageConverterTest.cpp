@@ -24,15 +24,13 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-#include <sstream>
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
 #include <Corrade/TestSuite/Compare/StringToFile.h>
 #include <Corrade/TestSuite/Compare/String.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
-#include <Corrade/Utility/DebugStl.h> /** @todo remove once Debug is stream-free */
-#include <Corrade/Utility/FormatStl.h> /** @todo remove once Debug is stream-free */
+#include <Corrade/Utility/Format.h>
 #include <Corrade/Utility/Path.h>
 #include <Magnum/ImageView.h>
 #include <Magnum/PixelFormat.h>
@@ -186,20 +184,20 @@ void StbImageConverterTest::wrongFormat() {
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("StbTgaImageConverter");
 
     const char data[16]{};
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->convertToData(ImageView2D{PixelFormat::RGBA32F, {1, 1}, data}));
-    CORRADE_COMPARE(out.str(), "Trade::StbImageConverter::convertToData(): PixelFormat::RGBA32F is not supported for BMP/JPEG/PNG/TGA output\n");
+    CORRADE_COMPARE(out, "Trade::StbImageConverter::convertToData(): PixelFormat::RGBA32F is not supported for BMP/JPEG/PNG/TGA output\n");
 }
 
 void StbImageConverterTest::wrongFormatHdr() {
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("StbHdrImageConverter");
 
     const char data[4]{};
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->convertToData(ImageView2D{PixelFormat::RGB8Unorm, {1, 1}, data}));
-    CORRADE_COMPARE(out.str(), "Trade::StbImageConverter::convertToData(): PixelFormat::RGB8Unorm is not supported for HDR output\n");
+    CORRADE_COMPARE(out, "Trade::StbImageConverter::convertToData(): PixelFormat::RGB8Unorm is not supported for HDR output\n");
 }
 
 void StbImageConverterTest::unknownOutputFormatData() {
@@ -208,10 +206,10 @@ void StbImageConverterTest::unknownOutputFormatData() {
     CORRADE_COMPARE(converter->mimeType(), "");
 
     const char data[4]{};
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->convertToData(ImageView2D{PixelFormat::RGB8Unorm, {1, 1}, data}));
-    CORRADE_COMPARE(out.str(), "Trade::StbImageConverter::convertToData(): cannot determine output format (plugin loaded as StbImageConverter, use one of the Stb{Bmp,Hdr,Jpeg,Png,Tga}ImageConverter aliases)\n");
+    CORRADE_COMPARE(out, "Trade::StbImageConverter::convertToData(): cannot determine output format (plugin loaded as StbImageConverter, use one of the Stb{Bmp,Hdr,Jpeg,Png,Tga}ImageConverter aliases)\n");
 }
 
 void StbImageConverterTest::unknownOutputFormatFile() {
@@ -222,10 +220,10 @@ void StbImageConverterTest::unknownOutputFormatFile() {
     const char data[4]{};
     Containers::String filename = Utility::Path::join(STBIMAGECONVERTER_TEST_OUTPUT_DIR, "file.foo");
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->convertToFile(ImageView2D{PixelFormat::RGB8Unorm, {1, 1}, data}, filename));
-    CORRADE_COMPARE(out.str(), "Trade::StbImageConverter::convertToFile(): cannot determine output format for file.foo (plugin loaded as StbImageConverter, use one of the Stb{Bmp,Hdr,Jpeg,Png,Tga}ImageConverter aliases or a corresponding file extension)\n");
+    CORRADE_COMPARE(out, "Trade::StbImageConverter::convertToFile(): cannot determine output format for file.foo (plugin loaded as StbImageConverter, use one of the Stb{Bmp,Hdr,Jpeg,Png,Tga}ImageConverter aliases or a corresponding file extension)\n");
 }
 
 constexpr const char OriginalRgData[] = {
@@ -257,7 +255,7 @@ void StbImageConverterTest::bmpRg() {
 
     /* RGBA should be exported as RGB, with the alpha channel ignored (and a
        warning about that printed) */
-    std::ostringstream out;
+    Containers::String out;
     Containers::Optional<Containers::Array<char>> fileData;
     {
         Warning redirectWarning{&out};
@@ -265,9 +263,9 @@ void StbImageConverterTest::bmpRg() {
     }
     CORRADE_VERIFY(fileData);
     if(data.quiet)
-        CORRADE_COMPARE(out.str(), "");
+        CORRADE_COMPARE(out, "");
     else
-        CORRADE_COMPARE(out.str(), "Trade::StbImageConverter::convertToData(): ignoring green channel for BMP/JPEG output\n");
+        CORRADE_COMPARE(out, "Trade::StbImageConverter::convertToData(): ignoring green channel for BMP/JPEG output\n");
 
     if(_importerManager.loadState("StbImageImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("StbImageImporter plugin not found, cannot test");
@@ -340,7 +338,7 @@ void StbImageConverterTest::hdrRg() {
     CORRADE_COMPARE(converter->mimeType(), "image/vnd.radiance");
 
     /* RG should be exported as RRR, with the green channel ignored */
-    std::ostringstream out;
+    Containers::String out;
     Containers::Optional<Containers::Array<char>> fileData;
     {
         Warning redirectWarning{&out};
@@ -351,9 +349,9 @@ void StbImageConverterTest::hdrRg() {
         Utility::Path::join(STBIMAGEIMPORTER_TEST_DIR, "rrr.hdr"),
         TestSuite::Compare::StringToFile);
     if(data.quiet)
-        CORRADE_COMPARE(out.str(), "");
+        CORRADE_COMPARE(out, "");
     else
-        CORRADE_COMPARE(out.str(), "Trade::StbImageConverter::convertToData(): ignoring green channel for HDR output\n");
+        CORRADE_COMPARE(out, "Trade::StbImageConverter::convertToData(): ignoring green channel for HDR output\n");
 
     if(_importerManager.loadState("StbImageImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("StbImageImporter plugin not found, cannot test");
@@ -422,7 +420,7 @@ void StbImageConverterTest::hdrRgba() {
     CORRADE_COMPARE(converter->mimeType(), "image/vnd.radiance");
 
     /* RGBA should be exported as RGB, with the alpha channel ignored */
-    std::ostringstream out;
+    Containers::String out;
     Containers::Optional<Containers::Array<char>> fileData;
     {
         Warning redirectWarning{&out};
@@ -433,9 +431,9 @@ void StbImageConverterTest::hdrRgba() {
         Utility::Path::join(STBIMAGEIMPORTER_TEST_DIR, "rgb.hdr"),
         TestSuite::Compare::StringToFile);
     if(data.quiet)
-        CORRADE_COMPARE(out.str(), "");
+        CORRADE_COMPARE(out, "");
     else
-        CORRADE_COMPARE(out.str(), "Trade::StbImageConverter::convertToData(): ignoring alpha channel for HDR output\n");
+        CORRADE_COMPARE(out, "Trade::StbImageConverter::convertToData(): ignoring alpha channel for HDR output\n");
 
     if(_importerManager.loadState("StbImageImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("StbImageImporter plugin not found, cannot test");
@@ -582,7 +580,7 @@ void StbImageConverterTest::jpegRgba80Percent() {
 
     /* RGBA should be exported as RGB, with the alpha channel ignored (and a
        warning about that printed) */
-    std::ostringstream out;
+    Containers::String out;
     Containers::Optional<Containers::Array<char>> fileData;
     {
         Warning redirectWarning{&out};
@@ -590,9 +588,9 @@ void StbImageConverterTest::jpegRgba80Percent() {
     }
     CORRADE_VERIFY(fileData);
     if(data.quiet)
-        CORRADE_COMPARE(out.str(), "");
+        CORRADE_COMPARE(out, "");
     else
-        CORRADE_COMPARE(out.str(), "Trade::StbImageConverter::convertToData(): ignoring alpha channel for BMP/JPEG output\n");
+        CORRADE_COMPARE(out, "Trade::StbImageConverter::convertToData(): ignoring alpha channel for BMP/JPEG output\n");
 
     if(_importerManager.loadState("StbImageImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("StbImageImporter plugin not found, cannot test");
@@ -821,10 +819,10 @@ void StbImageConverterTest::convertToFile() {
     /* The format should get reset again after so convertToData() isn't left
        with some random format after */
     if(data.pluginName == "StbImageConverter"_s) {
-        std::ostringstream out;
+        Containers::String out;
         Error redirectError{&out};
         CORRADE_VERIFY(!converter->convertToData(image));
-        CORRADE_COMPARE(out.str(), "Trade::StbImageConverter::convertToData(): cannot determine output format (plugin loaded as StbImageConverter, use one of the Stb{Bmp,Hdr,Jpeg,Png,Tga}ImageConverter aliases)\n");
+        CORRADE_COMPARE(out, "Trade::StbImageConverter::convertToData(): cannot determine output format (plugin loaded as StbImageConverter, use one of the Stb{Bmp,Hdr,Jpeg,Png,Tga}ImageConverter aliases)\n");
     }
 }
 
@@ -859,10 +857,10 @@ void StbImageConverterTest::convertToFileHdr() {
 
     /* The format should get reset again after so convertToData() isn't left
        with some random format after */
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->convertToData(image));
-    CORRADE_COMPARE(out.str(), "Trade::StbImageConverter::convertToData(): cannot determine output format (plugin loaded as StbImageConverter, use one of the Stb{Bmp,Hdr,Jpeg,Png,Tga}ImageConverter aliases)\n");
+    CORRADE_COMPARE(out, "Trade::StbImageConverter::convertToData(): cannot determine output format (plugin loaded as StbImageConverter, use one of the Stb{Bmp,Hdr,Jpeg,Png,Tga}ImageConverter aliases)\n");
 }
 
 void StbImageConverterTest::unsupportedMetadata() {
@@ -875,13 +873,13 @@ void StbImageConverterTest::unsupportedMetadata() {
     const char imageData[4]{};
     ImageView2D image{PixelFormat::RGBA8Unorm, {1, 1}, imageData, data.imageFlags};
 
-    std::ostringstream out;
+    Containers::String out;
     Warning redirectWarning{&out};
     CORRADE_VERIFY(converter->convertToData(image));
     if(!data.message)
-        CORRADE_COMPARE(out.str(), "");
+        CORRADE_COMPARE(out, "");
     else
-        CORRADE_COMPARE(out.str(), Utility::formatString("Trade::StbImageConverter::convertToData(): {}\n", data.message));
+        CORRADE_COMPARE(out, Utility::format("Trade::StbImageConverter::convertToData(): {}\n", data.message));
 }
 
 }}}}

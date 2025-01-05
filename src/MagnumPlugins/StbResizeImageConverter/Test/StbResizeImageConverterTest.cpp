@@ -25,12 +25,10 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-#include <sstream>
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/StridedArrayView.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
-#include <Corrade/Utility/DebugStl.h> /** @todo remove once Debug is stream-free */
 #include <Magnum/ImageView.h>
 #include <Magnum/PixelFormat.h>
 #include <Magnum/DebugTools/CompareImage.h>
@@ -176,10 +174,10 @@ void StbResizeImageConverterTest::emptySize() {
 
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("StbResizeImageConverter");
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->convert(image));
-    CORRADE_COMPARE(out.str(), "Trade::StbResizeImageConverter::convert(): output size was not specified\n");
+    CORRADE_COMPARE(out, "Trade::StbResizeImageConverter::convert(): output size was not specified\n");
 }
 
 void StbResizeImageConverterTest::emptyInputImage() {
@@ -188,10 +186,10 @@ void StbResizeImageConverterTest::emptyInputImage() {
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("StbResizeImageConverter");
     converter->configuration().setValue("size", Vector2i{1, 1});
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->convert(image));
-    CORRADE_COMPARE(out.str(), "Trade::StbResizeImageConverter::convert(): invalid input image size {0, 1}\n");
+    CORRADE_COMPARE(out, "Trade::StbResizeImageConverter::convert(): invalid input image size {0, 1}\n");
 }
 
 void StbResizeImageConverterTest::emptyOutputImage() {
@@ -201,10 +199,10 @@ void StbResizeImageConverterTest::emptyOutputImage() {
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("StbResizeImageConverter");
     converter->configuration().setValue("size", (Vector2i{1, 0}));
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->convert(image));
-    CORRADE_COMPARE(out.str(), "Trade::StbResizeImageConverter::convert(): invalid output image size {1, 0}\n");
+    CORRADE_COMPARE(out, "Trade::StbResizeImageConverter::convert(): invalid output image size {1, 0}\n");
 }
 
 void StbResizeImageConverterTest::unsupportedFormat() {
@@ -214,10 +212,10 @@ void StbResizeImageConverterTest::unsupportedFormat() {
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("StbResizeImageConverter");
     converter->configuration().setValue("size", Vector2i{1, 1});
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->convert(image));
-    CORRADE_COMPARE(out.str(), "Trade::StbResizeImageConverter::convert(): unsupported format PixelFormat::RGBA8UI\n");
+    CORRADE_COMPARE(out, "Trade::StbResizeImageConverter::convert(): unsupported format PixelFormat::RGBA8UI\n");
 }
 
 void StbResizeImageConverterTest::invalidFilter() {
@@ -228,10 +226,10 @@ void StbResizeImageConverterTest::invalidFilter() {
     converter->configuration().setValue("size", Vector2i{1, 1});
     converter->configuration().setValue("filter", "trilinear");
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->convert(image));
-    CORRADE_COMPARE(out.str(), "Trade::StbResizeImageConverter::convert(): expected filter to be empty or one of box, triangle, cubicspline, catmullrom, mitchell or point, got trilinear\n");
+    CORRADE_COMPARE(out, "Trade::StbResizeImageConverter::convert(): expected filter to be empty or one of box, triangle, cubicspline, catmullrom, mitchell or point, got trilinear\n");
 }
 
 void StbResizeImageConverterTest::invalidEdge() {
@@ -242,10 +240,10 @@ void StbResizeImageConverterTest::invalidEdge() {
     converter->configuration().setValue("size", Vector2i{1, 1});
     converter->configuration().setValue("edge", "cramp");
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->convert(image));
-    CORRADE_COMPARE(out.str(), "Trade::StbResizeImageConverter::convert(): expected edge mode to be one of clamp, reflect, wrap or zero, got cramp\n");
+    CORRADE_COMPARE(out, "Trade::StbResizeImageConverter::convert(): expected edge mode to be one of clamp, reflect, wrap or zero, got cramp\n");
 }
 
 void StbResizeImageConverterTest::array1D() {
@@ -255,10 +253,10 @@ void StbResizeImageConverterTest::array1D() {
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("StbResizeImageConverter");
     converter->configuration().setValue("size", Vector2i{1, 1});
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->convert(image));
-    CORRADE_COMPARE(out.str(), "Trade::StbResizeImageConverter::convert(): 1D array images are not supported\n");
+    CORRADE_COMPARE(out, "Trade::StbResizeImageConverter::convert(): 1D array images are not supported\n");
 }
 
 void StbResizeImageConverterTest::rgb8Padded() {
@@ -414,10 +412,10 @@ void StbResizeImageConverterTest::threeDimensions() {
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("StbResizeImageConverter");
     converter->configuration().setValue("size", Vector2i{1, 1});
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->convert(image));
-    CORRADE_COMPARE(out.str(), "Trade::StbResizeImageConverter::convert(): 3D images are not supported\n");
+    CORRADE_COMPARE(out, "Trade::StbResizeImageConverter::convert(): 3D images are not supported\n");
 }
 
 void StbResizeImageConverterTest::array2D() {

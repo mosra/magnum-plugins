@@ -24,12 +24,11 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-#include <sstream>
+#include <string> /** @todo remove once AbstractImporter is <string>-free */
 #include <Corrade/Containers/Array.h>
 #include <Corrade/Containers/String.h>
 #include <Corrade/Containers/StringStl.h> /** @todo remove once AbstractImporter is <string>-free */
 #include <Corrade/TestSuite/Tester.h>
-#include <Corrade/Utility/DebugStl.h> /** @todo remove once Debug is stream-free */
 #include <Corrade/Utility/Path.h>
 #include <Magnum/ImageView.h>
 #include <Magnum/PixelFormat.h>
@@ -76,23 +75,23 @@ Faad2ImporterTest::Faad2ImporterTest() {
 void Faad2ImporterTest::empty() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("Faad2AudioImporter");
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     char a{};
     /* Explicitly checking non-null but empty view */
     CORRADE_VERIFY(!importer->openData({&a, 0}));
-    CORRADE_COMPARE(out.str(), "Audio::Faad2Importer::openData(): can't read file header\n");
+    CORRADE_COMPARE(out, "Audio::Faad2Importer::openData(): can't read file header\n");
 }
 
 /* AAC files with zero samples have 0 bytes, so it's the same as above */
 
 void Faad2ImporterTest::error() {
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("Faad2AudioImporter");
     CORRADE_VERIFY(!importer->openFile(Utility::Path::join(FAAD2AUDIOIMPORTER_TEST_DIR, "error.aac")));
-    CORRADE_COMPARE(out.str(), "Audio::Faad2Importer::openData(): decoding error\n");
+    CORRADE_COMPARE(out, "Audio::Faad2Importer::openData(): decoding error\n");
 }
 
 void Faad2ImporterTest::mono() {

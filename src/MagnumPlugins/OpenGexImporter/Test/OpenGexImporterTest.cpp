@@ -25,17 +25,15 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-#include <sstream>
 #include <unordered_map>
 #include <Corrade/Containers/ArrayView.h>
 #include <Corrade/Containers/String.h>
-#include <Corrade/Containers/StringStl.h> /** @todo remove once Debug is stream-free */
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
 #include <Corrade/TestSuite/Compare/Numeric.h>
 #include <Corrade/TestSuite/Compare/String.h>
-#include <Corrade/Utility/DebugStl.h> /** @todo remove once Debug is stream-free */
-#include <Corrade/Utility/FormatStl.h> /** @todo remove once Debug is stream-free */
+#include <Corrade/Utility/DebugStl.h> /** @todo remove once file callbacks are std::string-free */
+#include <Corrade/Utility/Format.h>
 #include <Corrade/Utility/Path.h>
 #include <Corrade/Utility/String.h>
 #include <Magnum/FileCallback.h>
@@ -245,40 +243,40 @@ Metric (key = "up") { string { "z" } }
 void OpenGexImporterTest::openParseError() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     /* GCC < 4.9 cannot handle multiline raw string literals inside macros */
     auto s = OpenDdl::CharacterLiteral{R"oddl(
 <collada>THIS IS COLLADA XML</collada>
     )oddl"};
     CORRADE_VERIFY(!importer->openData(s));
-    CORRADE_COMPARE(out.str(), "OpenDdl::Document::parse(): invalid identifier on line 2\n");
+    CORRADE_COMPARE(out, "OpenDdl::Document::parse(): invalid identifier on line 2\n");
 }
 
 void OpenGexImporterTest::openValidationError() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     /* GCC < 4.9 cannot handle multiline raw string literals inside macros */
     auto s = OpenDdl::CharacterLiteral{R"oddl(
 Metric (key = "distance") { int32 { 1 } }
     )oddl"};
     CORRADE_VERIFY(!importer->openData(s));
-    CORRADE_COMPARE(out.str(), "OpenDdl::Document::validate(): unexpected sub-structure of type OpenDdl::Type::Int in structure Metric\n");
+    CORRADE_COMPARE(out, "OpenDdl::Document::validate(): unexpected sub-structure of type OpenDdl::Type::Int in structure Metric\n");
 }
 
 void OpenGexImporterTest::openInvalidMetric() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     /* GCC < 4.9 cannot handle multiline raw string literals inside macros */
     auto s = OpenDdl::CharacterLiteral{R"oddl(
 Metric (key = "distance") { string { "0.5" } }
     )oddl"};
     CORRADE_VERIFY(!importer->openData(s));
-    CORRADE_COMPARE(out.str(), "Trade::OpenGexImporter::openData(): invalid value for distance metric\n");
+    CORRADE_COMPARE(out, "Trade::OpenGexImporter::openData(): invalid value for distance metric\n");
 }
 
 void OpenGexImporterTest::camera() {
@@ -321,10 +319,10 @@ void OpenGexImporterTest::cameraInvalid() {
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(OPENGEXIMPORTER_TEST_DIR, "camera-invalid.ogex")));
     CORRADE_COMPARE(importer->cameraCount(), 1);
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->camera(0));
-    CORRADE_COMPARE(out.str(), "Trade::OpenGexImporter::camera(): invalid parameter\n");
+    CORRADE_COMPARE(out, "Trade::OpenGexImporter::camera(): invalid parameter\n");
 }
 
 void OpenGexImporterTest::scene() {
@@ -674,10 +672,10 @@ void OpenGexImporterTest::sceneInvalid() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(OPENGEXIMPORTER_TEST_DIR, Utility::format("scene-invalid-{}.ogex", Utility::String::replaceAll(data.name, " ", "-")))));
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->scene(0));
-    CORRADE_COMPARE(out.str(), Utility::formatString(
+    CORRADE_COMPARE(out, Utility::format(
         "Trade::OpenGexImporter::scene(): {}\n", data.message));
 }
 
@@ -718,25 +716,25 @@ void OpenGexImporterTest::lightInvalid() {
     CORRADE_COMPARE(importer->lightCount(), 4);
 
     {
-        std::ostringstream out;
+        Containers::String out;
         Error redirectError{&out};
         CORRADE_VERIFY(!importer->light(0));
-        CORRADE_COMPARE(out.str(), "Trade::OpenGexImporter::light(): invalid type\n");
+        CORRADE_COMPARE(out, "Trade::OpenGexImporter::light(): invalid type\n");
     } {
-        std::ostringstream out;
+        Containers::String out;
         Error redirectError{&out};
         CORRADE_VERIFY(!importer->light(1));
-        CORRADE_COMPARE(out.str(), "Trade::OpenGexImporter::light(): invalid parameter\n");
+        CORRADE_COMPARE(out, "Trade::OpenGexImporter::light(): invalid parameter\n");
     } {
-        std::ostringstream out;
+        Containers::String out;
         Error redirectError{&out};
         CORRADE_VERIFY(!importer->light(2));
-        CORRADE_COMPARE(out.str(), "Trade::OpenGexImporter::light(): invalid color\n");
+        CORRADE_COMPARE(out, "Trade::OpenGexImporter::light(): invalid color\n");
     } {
-        std::ostringstream out;
+        Containers::String out;
         Error redirectError{&out};
         CORRADE_VERIFY(!importer->light(3));
-        CORRADE_COMPARE(out.str(), "Trade::OpenGexImporter::light(): invalid color structure\n");
+        CORRADE_COMPARE(out, "Trade::OpenGexImporter::light(): invalid color structure\n");
     }
 }
 
@@ -833,10 +831,10 @@ void OpenGexImporterTest::meshInvalidPrimitive() {
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(OPENGEXIMPORTER_TEST_DIR, "mesh-invalid.ogex")));
     CORRADE_COMPARE(importer->meshCount(), 6);
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->mesh(0));
-    CORRADE_COMPARE(out.str(), "Trade::OpenGexImporter::mesh(): unsupported primitive quads\n");
+    CORRADE_COMPARE(out, "Trade::OpenGexImporter::mesh(): unsupported primitive quads\n");
 }
 
 void OpenGexImporterTest::meshUnsupportedSize() {
@@ -844,12 +842,12 @@ void OpenGexImporterTest::meshUnsupportedSize() {
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(OPENGEXIMPORTER_TEST_DIR, "mesh-invalid.ogex")));
     CORRADE_COMPARE(importer->meshCount(), 6);
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->mesh(1));
     CORRADE_VERIFY(!importer->mesh(2));
     CORRADE_VERIFY(!importer->mesh(3));
-    CORRADE_COMPARE(out.str(),
+    CORRADE_COMPARE(out,
         "Trade::OpenGexImporter::mesh(): unsupported position vector size 4\n"
         "Trade::OpenGexImporter::mesh(): unsupported normal vector size 2\n"
         "Trade::OpenGexImporter::mesh(): unsupported texture coordinate vector size 3\n");
@@ -860,10 +858,10 @@ void OpenGexImporterTest::meshMismatchedSizes() {
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(OPENGEXIMPORTER_TEST_DIR, "mesh-invalid.ogex")));
     CORRADE_COMPARE(importer->meshCount(), 6);
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->mesh(4));
-    CORRADE_COMPARE(out.str(), "Trade::OpenGexImporter::mesh(): mismatched vertex count for attribute normal, expected 2 but got 1\n");
+    CORRADE_COMPARE(out, "Trade::OpenGexImporter::mesh(): mismatched vertex count for attribute normal, expected 2 but got 1\n");
 }
 
 void OpenGexImporterTest::meshInvalidIndexArraySubArraySize() {
@@ -871,10 +869,10 @@ void OpenGexImporterTest::meshInvalidIndexArraySubArraySize() {
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(OPENGEXIMPORTER_TEST_DIR, "mesh-invalid.ogex")));
     CORRADE_COMPARE(importer->meshCount(), 6);
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->mesh(5));
-    CORRADE_COMPARE(out.str(), "Trade::OpenGexImporter::mesh(): invalid index array subarray size 3 for MeshPrimitive::Lines\n");
+    CORRADE_COMPARE(out, "Trade::OpenGexImporter::mesh(): invalid index array subarray size 3 for MeshPrimitive::Lines\n");
 }
 
 #ifndef CORRADE_TARGET_EMSCRIPTEN
@@ -883,10 +881,10 @@ void OpenGexImporterTest::meshUnsupportedIndexType() {
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(OPENGEXIMPORTER_TEST_DIR, "mesh-invalid-int64.ogex")));
     CORRADE_COMPARE(importer->meshCount(), 1);
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->mesh(0));
-    CORRADE_COMPARE(out.str(), "Trade::OpenGexImporter::mesh(): 64bit indices are not supported\n");
+    CORRADE_COMPARE(out, "Trade::OpenGexImporter::mesh(): 64bit indices are not supported\n");
 }
 #endif
 
@@ -964,10 +962,10 @@ void OpenGexImporterTest::materialInvalidColor() {
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(OPENGEXIMPORTER_TEST_DIR, "material-invalid.ogex")));
     CORRADE_COMPARE(importer->materialCount(), 1);
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->material(0));
-    CORRADE_COMPARE(out.str(), "Trade::OpenGexImporter::material(): invalid color structure\n");
+    CORRADE_COMPARE(out, "Trade::OpenGexImporter::material(): invalid color structure\n");
 }
 
 void OpenGexImporterTest::texture() {
@@ -989,10 +987,10 @@ void OpenGexImporterTest::textureInvalidCoordinateSet() {
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(OPENGEXIMPORTER_TEST_DIR, "texture-invalid.ogex")));
     CORRADE_COMPARE(importer->textureCount(), 2);
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->texture(0));
-    CORRADE_COMPARE(out.str(), "Trade::OpenGexImporter::texture(): unsupported texture coordinate set\n");
+    CORRADE_COMPARE(out, "Trade::OpenGexImporter::texture(): unsupported texture coordinate set\n");
 }
 
 void OpenGexImporterTest::image() {
@@ -1018,23 +1016,23 @@ void OpenGexImporterTest::imageNotFound() {
     CORRADE_COMPARE(importer->image2DCount(), 2);
 
     {
-        std::ostringstream out;
+        Containers::String out;
         Error redirectError{&out};
         CORRADE_VERIFY(!importer->image2D(1));
         /* image2DLevelCount() can't fail, but should not crash either */
         CORRADE_COMPARE(importer->image2DLevelCount(1), 1);
         /* There's an error from Path::read() before */
-        CORRADE_COMPARE_AS(out.str(),
+        CORRADE_COMPARE_AS(out,
             "\nTrade::AbstractImporter::openFile(): cannot open file /nonexistent.tga\n",
             TestSuite::Compare::StringHasSuffix);
 
     /* The (failed) importer should get cached even in case of failure, so
        the message should get printed just once */
     } {
-        std::ostringstream out;
+        Containers::String out;
         Error redirectError{&out};
         CORRADE_VERIFY(!importer->image2D(1));
-        CORRADE_COMPARE(out.str(), "");
+        CORRADE_COMPARE(out, "");
     }
 }
 
@@ -1046,10 +1044,10 @@ void OpenGexImporterTest::imageNot2D() {
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(OPENGEXIMPORTER_TEST_DIR, "texture-3d.ogex")));
     CORRADE_COMPARE(importer->image2DCount(), 1);
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->image2D(0));
-    CORRADE_COMPARE(out.str(), "Trade::OpenGexImporter::image2D(): expected exactly one 2D image in an image file but got 0\n");
+    CORRADE_COMPARE(out, "Trade::OpenGexImporter::image2D(): expected exactly one 2D image in an image file but got 0\n");
 }
 
 void OpenGexImporterTest::imageUnique() {
@@ -1071,11 +1069,11 @@ void OpenGexImporterTest::imageUnique() {
         CORRADE_VERIFY(texture4);
         CORRADE_COMPARE(texture4->image(), texture0->image());
 
-        std::ostringstream out;
+        Containers::String out;
         Error redirectError{&out};
         CORRADE_VERIFY(!importer->image2D(texture0->image()));
         /* There's an error from Path::read() before */
-        CORRADE_COMPARE_AS(out.str(),
+        CORRADE_COMPARE_AS(out,
             "\nTrade::AbstractImporter::openFile(): cannot open file /tex1.tga\n",
             TestSuite::Compare::StringHasSuffix);
     } {
@@ -1087,11 +1085,11 @@ void OpenGexImporterTest::imageUnique() {
         CORRADE_VERIFY(texture3);
         CORRADE_COMPARE(texture3->image(), texture1->image());
 
-        std::ostringstream out;
+        Containers::String out;
         Error redirectError{&out};
         CORRADE_VERIFY(!importer->image2D(texture1->image()));
         /* There's an error from Path::read() before */
-        CORRADE_COMPARE_AS(out.str(),
+        CORRADE_COMPARE_AS(out,
             "\nTrade::AbstractImporter::openFile(): cannot open file /tex2.tga\n",
             TestSuite::Compare::StringHasSuffix);
     } {
@@ -1099,11 +1097,11 @@ void OpenGexImporterTest::imageUnique() {
         CORRADE_VERIFY(texture2);
         CORRADE_COMPARE_AS(texture2->image(), 2, TestSuite::Compare::LessOrEqual);
 
-        std::ostringstream out;
+        Containers::String out;
         Error redirectError{&out};
         CORRADE_VERIFY(!importer->image2D(texture2->image()));
         /* There's an error from Path::read() before */
-        CORRADE_COMPARE_AS(out.str(),
+        CORRADE_COMPARE_AS(out,
             "\nTrade::AbstractImporter::openFile(): cannot open file /tex3.tga\n",
             TestSuite::Compare::StringHasSuffix);
     }
@@ -1163,10 +1161,10 @@ void OpenGexImporterTest::imageNoPathNoCallback() {
     CORRADE_VERIFY(importer->openData(*data));
     CORRADE_COMPARE(importer->image2DCount(), 2);
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->image2D(0));
-    CORRADE_COMPARE(out.str(), "Trade::OpenGexImporter::image2D(): images can be imported only when opening files from the filesystem or if a file callback is present\n");
+    CORRADE_COMPARE(out, "Trade::OpenGexImporter::image2D(): images can be imported only when opening files from the filesystem or if a file callback is present\n");
 }
 
 void OpenGexImporterTest::imagePropagateImporterFlags() {
@@ -1176,14 +1174,14 @@ void OpenGexImporterTest::imagePropagateImporterFlags() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
     importer->setFlags(ImporterFlag::Verbose);
 
-    std::ostringstream out;
+    Containers::String out;
     Debug redirectOutput{&out};
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(OPENGEXIMPORTER_TEST_DIR, "texture.ogex")));
     CORRADE_COMPARE(importer->image2DCount(), 2);
     CORRADE_VERIFY(importer->image2D(1));
     /* If this starts to fail (possibly due to verbose output from openFile()),
        add \n at the front and change to Compare::StringHasSuffix */
-    CORRADE_COMPARE(out.str(),
+    CORRADE_COMPARE(out,
         "Trade::AnyImageImporter::openFile(): using TgaImporter (provided by StbImageImporter)\n");
 }
 
@@ -1284,10 +1282,10 @@ void OpenGexImporterTest::fileCallbackImageNotFound() {
     CORRADE_VERIFY(importer->openData(*data));
     CORRADE_COMPARE(importer->image2DCount(), 2);
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->image2D(1));
-    CORRADE_COMPARE(out.str(), "Trade::AbstractImporter::openFile(): cannot open file image.tga\n");
+    CORRADE_COMPARE(out, "Trade::AbstractImporter::openFile(): cannot open file image.tga\n");
 }
 
 }}}}

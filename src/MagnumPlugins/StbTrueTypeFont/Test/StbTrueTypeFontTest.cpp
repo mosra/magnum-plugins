@@ -24,7 +24,6 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-#include <sstream>
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/StridedArrayView.h>
 #include <Corrade/Containers/String.h>
@@ -32,7 +31,6 @@
 #include <Corrade/PluginManager/Manager.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
-#include <Corrade/Utility/DebugStl.h> /** @todo remove once Debug is stream-free */
 #include <Corrade/Utility/Path.h>
 #include <Magnum/ImageView.h>
 #include <Magnum/DebugTools/CompareImage.h>
@@ -157,21 +155,21 @@ StbTrueTypeFontTest::StbTrueTypeFontTest() {
 void StbTrueTypeFontTest::empty() {
     Containers::Pointer<AbstractFont> font = _manager.instantiate("StbTrueTypeFont");
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     char a{};
     /* Explicitly checking non-null but empty view */
     CORRADE_VERIFY(!font->openData({&a, 0}, 16.0f));
-    CORRADE_COMPARE(out.str(), "Text::StbTrueTypeFont::openData(): the file is empty\n");
+    CORRADE_COMPARE(out, "Text::StbTrueTypeFont::openData(): the file is empty\n");
 }
 
 void StbTrueTypeFontTest::invalid() {
     Containers::Pointer<AbstractFont> font = _manager.instantiate("StbTrueTypeFont");
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!font->openData("Oxygen.ttf", 16.0f));
-    CORRADE_COMPARE(out.str(), "Text::StbTrueTypeFont::openData(): can't get offset of the first font\n");
+    CORRADE_COMPARE(out, "Text::StbTrueTypeFont::openData(): can't get offset of the first font\n");
 }
 
 void StbTrueTypeFontTest::properties() {
@@ -626,10 +624,10 @@ void StbTrueTypeFontTest::fillGlyphCacheInvalidFormat() {
         }
     } cache{PixelFormat::R8Srgb, {16, 16}, {}};
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     font->fillGlyphCache(cache, "");
-    CORRADE_COMPARE(out.str(), "Text::StbTrueTypeFont::fillGlyphCache(): expected a PixelFormat::R8Unorm glyph cache but got PixelFormat::R8Srgb\n");
+    CORRADE_COMPARE(out, "Text::StbTrueTypeFont::fillGlyphCache(): expected a PixelFormat::R8Unorm glyph cache but got PixelFormat::R8Srgb\n");
 }
 
 void StbTrueTypeFontTest::fillGlyphCacheCannotFit() {
@@ -645,10 +643,10 @@ void StbTrueTypeFontTest::fillGlyphCacheCannotFit() {
         }
     } cache{PixelFormat::R8Unorm, {16, 32}, {}};
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     font->fillGlyphCache(cache, "HELLO");
-    CORRADE_COMPARE(out.str(), "Text::StbTrueTypeFont::fillGlyphCache(): cannot fit 5 glyphs with a total area of 680 pixels into a cache of size Vector(16, 32, 1) and Vector(16, 0, 1) filled so far\n");
+    CORRADE_COMPARE(out, "Text::StbTrueTypeFont::fillGlyphCache(): cannot fit 5 glyphs with a total area of 680 pixels into a cache of size Vector(16, 32, 1) and Vector(16, 0, 1) filled so far\n");
 }
 
 void StbTrueTypeFontTest::openTwice() {

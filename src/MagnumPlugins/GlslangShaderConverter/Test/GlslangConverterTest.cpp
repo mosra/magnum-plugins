@@ -24,7 +24,6 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-#include <sstream>
 #include <unordered_map>
 #include <Corrade/Containers/Array.h>
 #include <Corrade/Containers/GrowableArray.h>
@@ -35,8 +34,8 @@
 #include <Corrade/TestSuite/Compare/StringToFile.h>
 #include <Corrade/TestSuite/Compare/String.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
-#include <Corrade/Utility/DebugStl.h> /** @todo remove once Debug is stream-free and file callbacks are <string>-free */
-#include <Corrade/Utility/FormatStl.h>
+#include <Corrade/Utility/DebugStl.h> /** @todo remove once file callbacks are <string>-free */
+#include <Corrade/Utility/Format.h>
 #include <Corrade/Utility/Path.h>
 #include <Magnum/FileCallback.h>
 #include <Magnum/ShaderTools/AbstractConverter.h>
@@ -464,11 +463,11 @@ void GlslangConverterTest::validateIncludesCallback() {
         return Containers::ArrayView<const char>{found->second};
     }, files);
 
-    std::ostringstream out;
+    Containers::String out;
     Debug redirectOutput{&out};
     CORRADE_COMPARE(converter->validateFile({}, "includes.vert"),
         Containers::pair(true, Containers::String{}));
-    CORRADE_COMPARE(out.str(),
+    CORRADE_COMPARE(out,
         "Loading includes.vert\n"
         "Loading sub/directory/basics.glsl\n"
 
@@ -497,11 +496,11 @@ void GlslangConverterTest::validateWrongInputFormat() {
 
     converter->setInputFormat(Format::Hlsl);
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_COMPARE(converter->validateData({}, {}),
         Containers::pair(false, Containers::String{}));
-    CORRADE_COMPARE(out.str(),
+    CORRADE_COMPARE(out,
         "ShaderTools::GlslangConverter::validateData(): input format should be Glsl or Unspecified but got ShaderTools::Format::Hlsl\n");
 }
 
@@ -510,11 +509,11 @@ void GlslangConverterTest::validateWrongInputVersion() {
 
     converter->setInputFormat(Format::Glsl, "100");
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_COMPARE(converter->validateData({}, {}),
         Containers::pair(false, Containers::String{}));
-    CORRADE_COMPARE(out.str(),
+    CORRADE_COMPARE(out,
         /* Yep, it's silly as 100 is a valid GLSL version. But this way we know
            it's silly. */
         "ShaderTools::GlslangConverter::validateData(): input format version should be one of supported GLSL #version strings but got 100\n");
@@ -525,11 +524,11 @@ void GlslangConverterTest::validateWrongOutputFormat() {
 
     converter->setOutputFormat(Format::Glsl);
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_COMPARE(converter->validateData({}, {}),
         Containers::pair(false, Containers::String{}));
-    CORRADE_COMPARE(out.str(),
+    CORRADE_COMPARE(out,
         "ShaderTools::GlslangConverter::validateData(): output format should be Spirv or Unspecified but got ShaderTools::Format::Glsl\n");
 }
 
@@ -538,11 +537,11 @@ void GlslangConverterTest::validateWrongOutputVersionTarget() {
 
     converter->setOutputFormat(Format::Unspecified, "vulkan2.0");
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_COMPARE(converter->validateData({}, {}),
         Containers::pair(false, Containers::String{}));
-    CORRADE_COMPARE(out.str(),
+    CORRADE_COMPARE(out,
         /* Yep, it's silly. But this way we know it's silly. */
         "ShaderTools::GlslangConverter::validateData(): output format version target should be opengl4.5 or vulkanX.Y but got vulkan2.0\n");
 }
@@ -552,11 +551,11 @@ void GlslangConverterTest::validateWrongOutputVersionLanguage() {
 
     converter->setOutputFormat(Format::Unspecified, "vulkan1.1 spv2.1");
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_COMPARE(converter->validateData({}, {}),
         Containers::pair(false, Containers::String{}));
-    CORRADE_COMPARE(out.str(),
+    CORRADE_COMPARE(out,
         /* Yep, it's silly. But this way we know it's silly. */
         "ShaderTools::GlslangConverter::validateData(): output format version language should be spvX.Y but got spv2.1\n");
 }
@@ -566,11 +565,11 @@ void GlslangConverterTest::validateWrongOutputFormatForGenericOpenGL() {
 
     converter->setOutputFormat(Format::Spirv, "opengl");
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_COMPARE(converter->validateData({}, {}),
         Containers::pair(false, Containers::String{}));
-    CORRADE_COMPARE(out.str(),
+    CORRADE_COMPARE(out,
         "ShaderTools::GlslangConverter::validateData(): generic OpenGL can't be validated with SPIR-V rules\n");
 }
 
@@ -724,14 +723,14 @@ void GlslangConverterTest::validateFailIncludeNotFound() {
        condition in there or what? */
     converter->configuration().setValue("cascadingErrors", true);
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_COMPARE(converter->validateFile({}, Utility::Path::join(GLSLANGSHADERCONVERTER_TEST_DIR, "includes.vert")),
         Containers::pair(false, Utility::format(
             "ERROR: {0}:10: '#include' : Could not process include directive for header name: ../notfound.glsl\n"
             "ERROR: 1 compilation errors.  No code generated.", Utility::Path::join(GLSLANGSHADERCONVERTER_TEST_DIR, "includes.vert"))));
     /* Verify just the prefix, the actual message is OS-specific */
-    CORRADE_COMPARE_AS(out.str(),
+    CORRADE_COMPARE_AS(out,
         Utility::format("Utility::Path::read(): can't open {}: error ", Utility::Path::join(GLSLANGSHADERCONVERTER_TEST_DIR, "../notfound.glsl")),
         TestSuite::Compare::StringHasPrefix);
 }
@@ -812,10 +811,10 @@ void GlslangConverterTest::convertPreprocessOnlyNotImplemented() {
 
     converter->setFlags(ConverterFlag::PreprocessOnly);
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->convertDataToData({}, {}));
-    CORRADE_COMPARE(out.str(),
+    CORRADE_COMPARE(out,
         "ShaderTools::GlslangConverter::convertDataToData(): PreprocessOnly is not implemented yet, sorry\n");
 }
 
@@ -824,10 +823,10 @@ void GlslangConverterTest::convertWrongInputFormat() {
 
     converter->setInputFormat(Format::Hlsl);
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->convertDataToData({}, {}));
-    CORRADE_COMPARE(out.str(),
+    CORRADE_COMPARE(out,
         "ShaderTools::GlslangConverter::convertDataToData(): input format should be Glsl or Unspecified but got ShaderTools::Format::Hlsl\n");
 }
 
@@ -836,10 +835,10 @@ void GlslangConverterTest::convertWrongInputVersion() {
 
     converter->setInputFormat(Format::Glsl, "100");
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->convertDataToData({}, {}));
-    CORRADE_COMPARE(out.str(),
+    CORRADE_COMPARE(out,
         /* Yep, it's silly as 100 is a valid GLSL version. But this way we know
            it's silly. */
         "ShaderTools::GlslangConverter::convertDataToData(): input format version should be one of supported GLSL #version strings but got 100\n");
@@ -850,10 +849,10 @@ void GlslangConverterTest::convertWrongOutputFormat() {
 
     converter->setOutputFormat(Format::Glsl);
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->convertDataToData({}, {}));
-    CORRADE_COMPARE(out.str(),
+    CORRADE_COMPARE(out,
         "ShaderTools::GlslangConverter::convertDataToData(): output format should be Spirv or Unspecified but got ShaderTools::Format::Glsl\n");
 }
 
@@ -862,10 +861,10 @@ void GlslangConverterTest::convertWrongOutputVersionTarget() {
 
     converter->setOutputFormat(Format::Unspecified, "opengl");
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->convertDataToData({}, {}));
-    CORRADE_COMPARE(out.str(),
+    CORRADE_COMPARE(out,
         "ShaderTools::GlslangConverter::convertDataToData(): output format version target should be opengl4.5 or vulkanX.Y but got opengl\n");
 }
 
@@ -874,10 +873,10 @@ void GlslangConverterTest::convertWrongOutputVersionLanguage() {
 
     converter->setOutputFormat(Format::Unspecified, "vulkan1.1 spv2.1");
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->convertDataToData({}, {}));
-    CORRADE_COMPARE(out.str(),
+    CORRADE_COMPARE(out,
         /* Yep, it's silly. But this way we know it's silly. */
         "ShaderTools::GlslangConverter::convertDataToData(): output format version language should be spvX.Y but got spv2.1\n");
 }
@@ -887,10 +886,10 @@ void GlslangConverterTest::convertWrongDebugInfoLevel() {
 
     converter->setDebugInfoLevel("2");
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->convertDataToData({}, {}));
-    CORRADE_COMPARE(out.str(),
+    CORRADE_COMPARE(out,
         "ShaderTools::GlslangConverter::convertDataToData(): debug info level should be 0, 1 or empty but got 2\n");
 }
 
@@ -916,11 +915,11 @@ void main() {
 #endif
 )";
 
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     Warning redirectWarning{&out};
     CORRADE_COMPARE(!!converter->convertDataToData({}, file), data.success);
-    CORRADE_COMPARE(out.str(), data.message);
+    CORRADE_COMPARE(out, data.message);
 }
 
 void GlslangConverterTest::convertFailWrongStage() {
@@ -939,10 +938,10 @@ void GlslangConverterTest::convertFailWrongStage() {
 
     /* Don't specify the stage -- vertex will be assumed, which doesn't have
        gl_FragCoord */
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->convertDataToData(Stage::Unspecified, *data));
-    CORRADE_COMPARE(out.str(), /* Yes, trailing whitespace. Fuck me. */
+    CORRADE_COMPARE(out, /* Yes, trailing whitespace. Fuck me. */
         "ShaderTools::GlslangConverter::convertDataToData(): compilation failed:\n"
         "ERROR: 0:35: 'gl_FragCoord' : undeclared identifier \n"
         "ERROR: 0:35: '' : compilation terminated \n"
@@ -970,10 +969,10 @@ void GlslangConverterTest::convertFailFileWrongStage() {
 
     /* And supply a generic filename to cause the stage to be not detected. The
        filename should be also shown in the output. */
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->convertFileToFile(Stage::Unspecified, "shader.glsl", ""));
-    CORRADE_COMPARE(out.str(), /* Yes, trailing whitespace. Fuck me. */
+    CORRADE_COMPARE(out, /* Yes, trailing whitespace. Fuck me. */
         "ShaderTools::GlslangConverter::convertDataToData(): compilation failed:\n"
         "ERROR: shader.glsl:35: 'gl_FragCoord' : undeclared identifier \n"
         "ERROR: shader.glsl:35: '' : compilation terminated \n"
@@ -1004,10 +1003,10 @@ void GlslangConverterTest::vulkanNoExplicitLayout() {
     CORRADE_COMPARE(result, Containers::pair(false, Containers::String{data.error}));
 
     /* Conversion should result in exactly the same */
-    std::ostringstream out;
+    Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->convertDataToData(Stage::Fragment, *file));
-    CORRADE_COMPARE(out.str(), Utility::formatString("ShaderTools::GlslangConverter::convertDataToData(): compilation failed:\n{}\n", data.error));
+    CORRADE_COMPARE(out, Utility::format("ShaderTools::GlslangConverter::convertDataToData(): compilation failed:\n{}\n", data.error));
 }
 
 }}}}
