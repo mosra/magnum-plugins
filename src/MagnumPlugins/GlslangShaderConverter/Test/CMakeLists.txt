@@ -41,10 +41,17 @@ file(GENERATE OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/configure.h
 corrade_add_test(GlslangShaderConverterTest GlslangConverterTest.cpp
     LIBRARIES Magnum::ShaderTools
     FILES
-        shader.gl.frag shader.gl.spv
+        shader.gl.frag
+        shader.gl.spv
         shader.oldgl.frag
-        shader.vk.frag shader.vk.spv
-        shader.vk.debug.spv shader.vk.debug-glslang11.spv shader.vk.debug-glslang8.spv
+
+        shader.vk.frag
+        shader.vk.spv
+        shader.vk-glslang14.spv
+        shader.vk.debug.spv
+        shader.vk.debug-glslang14.spv
+        shader.vk.debug-glslang11.spv
+        shader.vk.debug-glslang8.spv
 
         includes.vert
         sub/directory/basics.glsl

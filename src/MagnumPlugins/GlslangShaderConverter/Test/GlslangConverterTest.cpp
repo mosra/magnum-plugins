@@ -234,14 +234,27 @@ const struct {
         Stage::Fragment, "shader.gl.frag", "shader.glsl", "shader.gl.spv",
         "opengl4.5", nullptr},
     {"Vulkan shader, default",
-        Stage{}, "shader.vk.frag", nullptr, "shader.vk.spv",
+        Stage{}, "shader.vk.frag", nullptr,
+        /* Version 15 orders OpDecorate and OpMemberDecorate differently than
+           versions before, as is visible in a disassembly. No actual codegen
+           change beyond that. */
+        #if GLSLANG_VERSION_MAJOR >= 15
+        "shader.vk.spv",
+        #else
+        "shader.vk-glslang14.spv",
+        #endif
         "", nullptr},
     /* Vulkan 1.0 target puts OpModuleProcessed into the shader source which
        looks strange in the disassembly, but that's all */
     {"Vulkan 1.1 shader with debug info",
         Stage{}, "shader.vk.frag", nullptr,
-        #if defined(GLSLANG_VERSION_MAJOR) && GLSLANG_VERSION_MAJOR*1000 + GLSLANG_VERSION_MINOR >= 11011
+        /* Version 15 orders OpDecorate and OpMemberDecorate differently than
+           versions before, as is visible in a disassembly. No actual codegen
+           change beyond that. */
+        #if GLSLANG_VERSION_MAJOR >= 15
         "shader.vk.debug.spv",
+        #elif GLSLANG_VERSION_MAJOR*1000 + GLSLANG_VERSION_MINOR >= 11011
+        "shader.vk.debug-glslang14.spv",
         /* Versions before 11.11 (11.4 at least) don't emit OpLine %1 34 11
            before the main OpFunction */
         #elif defined(GLSLANG_VERSION_MAJOR)
