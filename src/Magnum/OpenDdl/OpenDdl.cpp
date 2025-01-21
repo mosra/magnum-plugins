@@ -933,7 +933,6 @@ const char* Document::propertyName(const Int identifier) const {
     return *(_propertyIdentifiers.begin() + identifier);
 }
 
-#ifndef DOXYGEN_GENERATING_OUTPUT
 Document::StructureData::StructureData(const Type type, const std::size_t name, const std::size_t subArraySize, const std::size_t dataBegin, const std::size_t dataSize, const std::size_t parent, const std::size_t next) noexcept: name{name}, primitive{type, subArraySize, dataBegin, dataSize}, parent{parent}, next{next} {
     CORRADE_INTERNAL_ASSERT(type < Type::Custom);
 }
@@ -941,7 +940,6 @@ Document::StructureData::StructureData(const Type type, const std::size_t name, 
 Document::StructureData::StructureData(const Int type, const std::size_t name, const std::size_t propertyBegin, const std::size_t propertySize, const std::size_t firstChild, const std::size_t parent, const std::size_t next) noexcept: name{name}, custom{type, propertyBegin, propertySize, firstChild}, parent{parent}, next{next} {
     CORRADE_INTERNAL_ASSERT(type >= 0);
 }
-#endif
 
 Containers::Optional<Structure> Document::findFirstChild() const {
     return _structures.empty() ? Containers::NullOpt : Containers::optional(Structure{*this, _structures.front()});
