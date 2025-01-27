@@ -272,7 +272,7 @@ void BcDecImageConverterTest::unsupportedFormat() {
 
     Containers::String out;
     Error redirectError{&out};
-    CORRADE_VERIFY(!converter->convert(CompressedImageView2D{CompressedPixelFormat::Etc2RGB8Srgb, {1, 1}, "yey"}));
+    CORRADE_VERIFY(!converter->convert(CompressedImageView2D{CompressedPixelFormat::Etc2RGB8Srgb, {1, 1}, "1234567"}));
     CORRADE_COMPARE(out, "Trade::BcDecImageConverter::convert(): unsupported format CompressedPixelFormat::Etc2RGB8Srgb\n");
 }
 
@@ -281,7 +281,7 @@ void BcDecImageConverterTest::unsupportedStorage() {
 
     Containers::String out;
     Error redirectError{&out};
-    CORRADE_VERIFY(!converter->convert(CompressedImageView2D{CompressedPixelStorage{}.setCompressedBlockDataSize(16), CompressedPixelFormat::Bc3RGBASrgb, {1, 1}, "yey"}));
+    CORRADE_VERIFY(!converter->convert(CompressedImageView2D{CompressedPixelStorage{}.setCompressedBlockDataSize(8), CompressedPixelFormat::Bc1RGBASrgb, {1, 1}, "1234567"}));
     CORRADE_COMPARE(out, "Trade::BcDecImageConverter::convert(): non-default compressed storage is not supported\n");
 }
 
