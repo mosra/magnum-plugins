@@ -483,10 +483,6 @@ jobs:
   linux-sanitizers:
     executor: ubuntu-18_04
     environment:
-      # STUPID yml interprets unquoted OFF as a boolean. Applications don't
-      # have any automated tests, so building them for sanitizers doesn't make
-      # sense.
-      BUILD_APPLICATIONS: "OFF"
       CMAKE_CXX_FLAGS: -fsanitize=address
       CONFIGURATION: Debug
       # Basis, or the OpenCL ICD loader, or PoCL cause sanitizer errors when
@@ -521,10 +517,6 @@ jobs:
   linux-threadsanitizer:
     executor: ubuntu-18_04
     environment:
-      # STUPID yml interprets unquoted OFF as a boolean. Applications don't
-      # have any automated tests, so building them for sanitizers doesn't make
-      # sense.
-      BUILD_APPLICATIONS: "OFF"
       CMAKE_CXX_FLAGS: -fsanitize=thread
       CONFIGURATION: Debug
       # See linux-sanitizers for why this is necessary
