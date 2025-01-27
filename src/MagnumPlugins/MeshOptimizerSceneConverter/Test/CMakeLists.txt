@@ -53,7 +53,9 @@ corrade_add_test(MeshOptimizerSceneConverterTest MeshOptimizerSceneConverterTest
         Magnum::MeshTools
         Magnum::Primitives
         Magnum::Trade)
-target_include_directories(MeshOptimizerSceneConverterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>)
+target_include_directories(MeshOptimizerSceneConverterTest PRIVATE
+    ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>
+    $<TARGET_PROPERTY:meshoptimizer::meshoptimizer,INTERFACE_INCLUDE_DIRECTORIES>)
 if(MAGNUM_MESHOPTIMIZERSCENECONVERTER_BUILD_STATIC)
     target_link_libraries(MeshOptimizerSceneConverterTest PRIVATE MeshOptimizerSceneConverter)
 else()
