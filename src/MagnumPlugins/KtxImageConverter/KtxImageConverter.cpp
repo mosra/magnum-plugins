@@ -440,7 +440,7 @@ Containers::Pair<Implementation::KdfBasicBlockHeader::ColorModel, Containers::Ar
             return {Implementation::KdfBasicBlockHeader::ColorModel::Pvrtc, SamplesPvrtc};
     }
 
-    CORRADE_ASSERT_UNREACHABLE("samples(): unsupported format" << format, {}); /* LCOV_EXCL_LINE */
+    CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
 }
 
 UnsignedByte channelFormat(Implementation::VkFormatSuffix suffix) {
@@ -462,7 +462,7 @@ UnsignedByte channelFormat(Implementation::VkFormatSuffix suffix) {
             return {};
     }
 
-    CORRADE_ASSERT_UNREACHABLE("channelFormat(): invalid format suffix" << UnsignedInt(suffix), {}); /* LCOV_EXCL_LINE */
+    CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
 }
 
 Containers::Pair<UnsignedInt, UnsignedInt> channelMapping(Implementation::VkFormatSuffix suffix, UnsignedInt bitLength, bool isCompressed) {
@@ -502,7 +502,7 @@ Containers::Pair<UnsignedInt, UnsignedInt> channelMapping(Implementation::VkForm
             return {Utility::bitCast<UnsignedInt>(-1.0f), Utility::bitCast<UnsignedInt>(1.0f)};
     }
 
-    CORRADE_ASSERT_UNREACHABLE("channelMapping(): invalid format suffix" << UnsignedInt(suffix), {}); /* LCOV_EXCL_LINE */
+    CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
 }
 
 template<typename Format> Containers::Array<char> fillDataFormatDescriptor(Format format, Implementation::VkFormatSuffix suffix) {
