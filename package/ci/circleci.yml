@@ -50,6 +50,9 @@ commands:
       extra:
         type: string
         default: ""
+      sudo:
+        type: string
+        default: ""
     steps:
     - run:
         # TODO when switching to the new codecov uploader, gpg and git needs to
@@ -57,24 +60,9 @@ commands:
         name: Update apt and install base packages
         # Git is needed always for cloning Corrade and Magnum
         command: |
-          apt update
+          << parameters.sudo >> apt update
           if [[ "$CMAKE_CXX_FLAGS" == *"--coverage"* ]]; then export LCOV_PACKAGES="lcov curl"; fi
-          # libidn11 needed by CMake
-          apt install -y git ninja-build libidn11 $LCOV_PACKAGES << parameters.extra >>
-
-  install-base-linux-arm64:
-    parameters:
-      extra:
-        type: string
-        default: ""
-    steps:
-    - run:
-        name: Update apt and install base packages
-        # Compared to Docker images this needs sudo
-        command: |
-          sudo apt update
-          if [[ "$CMAKE_CXX_FLAGS" == *"--coverage"* ]]; then export LCOV_PACKAGES="lcov curl"; fi
-          sudo apt install -y ninja-build gcc cmake $LCOV_PACKAGES << parameters.extra >>
+          << parameters.sudo >> apt install -y git ninja-build $LCOV_PACKAGES << parameters.extra >>
 
   cap-ninja-jobs:
     parameters:
@@ -278,7 +266,6 @@ commands:
         # self-hosted because GH Actions would make it too simple for people if
         # you could just download the artifacts directly, right? RIGHT?
         command: |
-          apt install -y wget unzip
           mkdir -p $HOME/deps && cd $HOME/deps
           wget https://ci.magnum.graphics/openexr-2.5.5-<< parameters.build >>.zip
           unzip openexr-2.5.5-<< parameters.build >>.zip
@@ -294,7 +281,6 @@ commands:
         # self-hosted because GH Actions would make it too simple for people if
         # you could just download the artifacts directly, right? RIGHT?
         command: |
-          apt install -y wget unzip
           mkdir -p $HOME/deps && cd $HOME/deps
           wget https://ci.magnum.graphics/glslang-8.13.3743-<< parameters.build >>.zip
           unzip glslang-8.13.3743-<< parameters.build >>.zip
@@ -310,7 +296,6 @@ commands:
         # self-hosted because GH Actions would make it too simple for people if
         # you could just download the artifacts directly, right? RIGHT?
         command: |
-          apt install -y wget unzip
           mkdir -p $HOME/deps && cd $HOME/deps
           wget https://ci.magnum.graphics/spirv-tools-2020.4-<< parameters.build >>.zip
           unzip spirv-tools-2020.4-<< parameters.build >>.zip
@@ -376,9 +361,10 @@ jobs:
       DISABLE_OPENCL: "ON"
     steps:
     - install-base-linux:
-        # We want the OpenCL headers and ICD loader libraries to test disabling
-        # find_package(), but don't need the actual ICD
-        extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng-dev libdevil-dev libharfbuzz-dev libassimp-dev libwebp-dev libzstd-dev ocl-icd-opencl-dev wget
+        # libidn11 needed by CMake. We want the OpenCL headers and ICD loader
+        # libraries to test disabling find_package(), but don't need the actual
+        # ICD
+        extra: libidn11 libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng-dev libdevil-dev libharfbuzz-dev libassimp-dev libwebp-dev libzstd-dev ocl-icd-opencl-dev wget unzip
     # Crashes or gets stuck with the default setting, only on GCC. 20 is not
     # enough.
     - cap-ninja-jobs:
@@ -412,8 +398,10 @@ jobs:
     # Not installing the old GCC 4.8, CMake 3.5 and other ancient stuff to
     # speed up. These are tested more than enough on other jobs, plus here we
     # have a fresher Ubuntu so we can take them directly from the repos.
-    - install-base-linux-arm64:
-        extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng-dev libdevil-dev libharfbuzz-dev libassimp-dev libzstd-dev ocl-icd-opencl-dev pocl-opencl-icd glslang-dev libopenexr-dev libwebp-dev spirv-tools
+    # Machine executors need sudo.
+    - install-base-linux:
+        extra: gcc cmake libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng-dev libdevil-dev libharfbuzz-dev libassimp-dev libzstd-dev ocl-icd-opencl-dev pocl-opencl-icd glslang-dev libopenexr-dev libwebp-dev spirv-tools
+        sudo: sudo
     - install-basis:
         tag: "1.16.4"
     - install-meshoptimizer
@@ -432,8 +420,9 @@ jobs:
       CONFIGURATION: Debug
     steps:
     - install-base-linux:
-        # Basis 1.15 doesn't support OpenCL, so those packages aren't needed
-        extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng-dev libdevil-dev libharfbuzz-dev libassimp-dev libwebp-dev libzstd-dev wget
+        # libidn11 needed by CMake. Basis 1.15 doesn't support OpenCL, so those
+        # packages aren't needed
+        extra: libidn11 libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng-dev libdevil-dev libharfbuzz-dev libassimp-dev libwebp-dev libzstd-dev wget unzip
     # Crashes or gets stuck with the default setting, only on GCC. 24 is not
     # enough.
     - cap-ninja-jobs:
@@ -466,8 +455,9 @@ jobs:
       CMAKE_CXX_FLAGS: -DCORRADE_NO_ASSERT
       CONFIGURATION: Release
     steps:
+    # libidn11 needed by CMake
     - install-base-linux:
-        extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng-dev libdevil-dev libharfbuzz-dev libassimp-dev libwebp-dev libzstd-dev ocl-icd-opencl-dev pocl-opencl-icd wget
+        extra: libidn11 libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng-dev libdevil-dev libharfbuzz-dev libassimp-dev libwebp-dev libzstd-dev ocl-icd-opencl-dev pocl-opencl-icd wget unzip
     # Crashes or gets stuck with the default setting, only on GCC. 24 is not
     # enough.
     - cap-ninja-jobs:
@@ -504,8 +494,9 @@ jobs:
       # better to be sure in case the image comes with it.
       DISABLE_OPENCL: "ON"
     steps:
+    # libidn11 needed by CMake
     - install-base-linux:
-        extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng-dev libdevil-dev libharfbuzz-dev libassimp-dev libwebp-dev libzstd-dev wget
+        extra: libidn11 libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng-dev libdevil-dev libharfbuzz-dev libassimp-dev libwebp-dev libzstd-dev wget unzip
     - install-clang
     - install-cmake:
         version: "3.5.2"
@@ -539,8 +530,9 @@ jobs:
       # See linux-sanitizers for why this is necessary
       DISABLE_OPENCL: "ON"
     steps:
+    # libidn11 needed by CMake
     - install-base-linux:
-        extra: libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng-dev libdevil-dev libharfbuzz-dev libassimp-dev libopenexr-dev libwebp-dev libzstd-dev wget
+        extra: libidn11 libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng-dev libdevil-dev libharfbuzz-dev libassimp-dev libopenexr-dev libwebp-dev libzstd-dev wget unzip
     - install-clang
     - install-cmake:
         version: "3.5.2"
