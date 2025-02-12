@@ -380,7 +380,7 @@ Containers::Optional<Containers::Array<char>> GltfSceneConverter::doEndData() {
 
             /* Writing just the filename as the two files are expected to be
                next to each other */
-            json.writeKey("uri"_s).write(Utility::Path::split(bufferFilename).second());
+            json.writeKey("uri"_s).write(Utility::Path::filename(bufferFilename));
         }
 
         json.writeKey("byteLength"_s).write(_state->buffer.size());
@@ -3393,7 +3393,7 @@ template<UnsignedInt dimensions> bool GltfSceneConverter::convertAndWriteImage(c
         /* Reference the file from the image. Writing just the filename as the
            two files are expected to be next to each other. */
         _state->gltfImages
-            .writeKey("uri"_s).write(Utility::Path::split(imageFilename).second());
+            .writeKey("uri"_s).write(Utility::Path::filename(imageFilename));
     }
 
     if(name)

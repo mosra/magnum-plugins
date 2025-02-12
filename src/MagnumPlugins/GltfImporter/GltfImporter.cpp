@@ -313,7 +313,7 @@ Containers::Optional<Containers::Array<char>> GltfImporter::loadUri(const char* 
         return {};
 
     if(fileCallback()) {
-        const Containers::String fullPath = Utility::Path::join(_d->filename ? Utility::Path::split(*_d->filename).first() : Containers::StringView{}, *decodedUri);
+        const Containers::String fullPath = Utility::Path::join(_d->filename ? Utility::Path::path(*_d->filename) : Containers::StringView{}, *decodedUri);
         if(Containers::Optional<Containers::ArrayView<const char>> view = fileCallback()(fullPath, InputFileCallbackPolicy::LoadPermanent, fileCallbackUserData()))
             /* Return a non-owning view */
             return Containers::Array<char>{const_cast<char*>(view->data()), view->size(), [](char*, std::size_t){}};
@@ -327,7 +327,7 @@ Containers::Optional<Containers::Array<char>> GltfImporter::loadUri(const char* 
             return Containers::NullOpt;
         }
 
-        const Containers::String fullPath = Utility::Path::join(Utility::Path::split(*_d->filename).first(), *decodedUri);
+        const Containers::String fullPath = Utility::Path::join(Utility::Path::path(*_d->filename), *decodedUri);
 
         if(Containers::Optional<Containers::Array<char>> data = Utility::Path::read(fullPath))
             return data;
@@ -5029,7 +5029,7 @@ AbstractImporter* GltfImporter::setupOrReuseImporterForImage(const char* const e
     const Containers::Optional<Containers::String> decodedUri = decodeUri(errorPrefix, gltfUri->asString());
     if(!decodedUri)
         return nullptr;
-    if(!importer.openFile(Utility::Path::join(_d->filename ? Utility::Path::split(*_d->filename).first() : ""_s, *decodedUri)))
+    if(!importer.openFile(Utility::Path::join(_d->filename ? Utility::Path::path(*_d->filename) : Containers::StringView{}, *decodedUri)))
         return nullptr;
 
     UnsignedInt expectedDimensionsImageCount;

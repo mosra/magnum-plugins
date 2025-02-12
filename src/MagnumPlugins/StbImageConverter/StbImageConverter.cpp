@@ -223,7 +223,7 @@ bool StbImageConverter::doConvertToFile(const ImageView2D& image, const Containe
                 normalizedExtension == ".vst"_s)
             _format = Format::Tga;
         else {
-            Error{} << "Trade::StbImageConverter::convertToFile(): cannot determine output format for" << Utility::Path::split(filename).second() << "(plugin loaded as" << plugin() << Error::nospace << ", use one of the Stb{Bmp,Hdr,Jpeg,Png,Tga}ImageConverter aliases or a corresponding file extension)";
+            Error{} << "Trade::StbImageConverter::convertToFile(): cannot determine output format for" << Utility::Path::filename(filename) << "(plugin loaded as" << plugin() << Error::nospace << ", use one of the Stb{Bmp,Hdr,Jpeg,Png,Tga}ImageConverter aliases or a corresponding file extension)";
             return false;
         }
     }

@@ -310,7 +310,7 @@ struct Includer: glslang::TShader::Includer {
     IncludeResult* includeLocal(const char* const headerName, const char* const includerName, std::size_t) override {
         /* If path/to/shader.glsl includes ../definitions.glsl, it should
            resolves to path/to/../definitions.glsl */
-        const Containers::String fullPath = Utility::Path::join(Utility::Path::split(includerName).first(), headerName);
+        const Containers::String fullPath = Utility::Path::join(Utility::Path::path(includerName), headerName);
 
         /* If one header is included recursively (for whatever reason), glslang
            calls the includer multiple times, followed by calling

@@ -238,7 +238,7 @@ void OpenGexImporter::doOpenFile(const Containers::StringView filename) {
     AbstractImporter::doOpenFile(filename);
 
     /* If succeeded, save file path for later */
-    if(_d) _d->filePath.emplace(Utility::Path::split(filename).first());
+    if(_d) _d->filePath.emplace(Utility::Path::path(filename));
 }
 
 void OpenGexImporter::doClose() { _d = nullptr; }

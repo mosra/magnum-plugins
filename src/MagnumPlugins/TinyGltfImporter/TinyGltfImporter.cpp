@@ -281,7 +281,7 @@ void TinyGltfImporter::doOpenFile(const Containers::StringView filename) {
     _d.reset(new Document);
     /* Since the slice won't be null terminated, nullTerminatedGlobalView()
        won't help anything here */
-    _d->filePath.emplace(Utility::Path::split(filename).first());
+    _d->filePath.emplace(Utility::Path::path(filename));
     AbstractImporter::doOpenFile(filename);
 }
 

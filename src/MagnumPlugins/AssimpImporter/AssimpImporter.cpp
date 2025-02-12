@@ -638,7 +638,7 @@ void AssimpImporter::doOpenFile(const Containers::StringView filename) {
     _f.reset(new File);
     /* Since the slice won't be null terminated, nullTerminatedGlobalView()
        won't help anything here */
-    _f->filePath.emplace(Utility::Path::split(filename).first());
+    _f->filePath.emplace(Utility::Path::path(filename));
 
     /* File callbacks are set up in doSetFileCallback() */
     if(!(_f->scene = _importer->ReadFile(filename, flagsFromConfiguration(configuration())))) {
