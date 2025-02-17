@@ -190,10 +190,10 @@ bool FreeTypeFont::doFillGlyphCache(AbstractGlyphCache& cache, const Containers:
 
     /* Pack the cache */
     const Vector3i cacheFilledSize = cache.atlas().filledSize();
-    if(!cache.atlas().add(
+    const Containers::Optional<Range3Di> flushRange = cache.atlas().add(
         stridedArrayView(glyphs).slice(&Glyph::size),
-        stridedArrayView(glyphs).slice(&Glyph::offset)))
-    {
+        stridedArrayView(glyphs).slice(&Glyph::offset));
+    if(!flushRange) {
         /* Calculate the total area for a more useful report */
         std::size_t totalArea = 0;
         for(const Glyph& glyph: glyphs)
@@ -205,7 +205,6 @@ bool FreeTypeFont::doFillGlyphCache(AbstractGlyphCache& cache, const Containers:
 
     /* Render all glyphs to the atlas and create a glyph map */
     const Containers::StridedArrayView3D<char> dst = cache.image().pixels<char>();
-    Range3Di flushRange;
     for(std::size_t i = 0; i != glyphs.size(); ++i) {
         /* Load and render the glyph */
         const FT_GlyphSlot glyph = _ftFont->glyph;
@@ -227,15 +226,10 @@ bool FreeTypeFont::doFillGlyphCache(AbstractGlyphCache& cache, const Containers:
             Vector2i{glyph->bitmap_left, glyph->bitmap_top - glyphs[i].size.y()},
             glyphs[i].offset.z(),
             Range2Di::fromSize(glyphs[i].offset.xy(), glyphs[i].size));
-
-        /* Maintain an union spanning all added glyphs to flush */
-        /** @todo might span too much if mutliple slices are covered in a
-            disjoint fashion, what to do? */
-        flushRange = Math::join(flushRange, Range3Di::fromSize(glyphs[i].offset, Vector3i{glyphs[i].size, 1}));
     }
 
     /* Flush the updated cache image */
-    cache.flushImage(flushRange);
+    cache.flushImage(*flushRange);
 
     return true;
 }
