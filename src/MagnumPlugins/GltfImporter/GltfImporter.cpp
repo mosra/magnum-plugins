@@ -4481,6 +4481,15 @@ Containers::Optional<MaterialData> GltfImporter::doMaterial(const UnsignedInt id
             arrayAppend(attributes, InPlaceInit, MaterialAttribute::DiffuseTextureLayer, *diffuseTextureLayer);
     }
 
+    /* Used by three stableSortRemoveDuplicatesToPrefix() calls below for
+       extras / extensions */
+    const auto extraOrExtensionKeyCompare = [](const Utility::JsonToken& a, const Utility::JsonToken& b) {
+        return a.asString() < b.asString();
+    };
+    const auto extraOrExtensionKeyEqual = [](const Utility::JsonToken& a, const Utility::JsonToken& b) {
+        return a.asString() == b.asString();
+    };
+
     /* Extras -- application-specific data, added to the base layer */
     if(const Utility::JsonToken* const gltfExtras = gltfMaterial.find("extras"_s)) {
         /* Theoretically extras can be any token type but the glTF spec
@@ -4505,13 +4514,7 @@ Containers::Optional<MaterialData> GltfImporter::doMaterial(const UnsignedInt id
                    need to cross-check for duplicates in the base layer because
                    those are all internal uppercase names and we make all names
                    lowercase. */
-                const std::size_t uniqueCount = stableSortRemoveDuplicatesToPrefix(arrayView(gltfExtraKeys),
-                    [](const Utility::JsonToken& a, const Utility::JsonToken& b) {
-                        return a.asString() < b.asString();
-                    },
-                    [](const Utility::JsonToken& a, const Utility::JsonToken& b) {
-                        return a.asString() == b.asString();
-                    });
+                const std::size_t uniqueCount = stableSortRemoveDuplicatesToPrefix(arrayView(gltfExtraKeys), extraOrExtensionKeyCompare, extraOrExtensionKeyEqual);
 
                 arrayReserve(attributes, attributes.size() + uniqueCount);
                 /** @todo use suffix() once it takes suffix size and not prefix size */
@@ -4605,13 +4608,7 @@ Containers::Optional<MaterialData> GltfImporter::doMaterial(const UnsignedInt id
     }
 
     /* Sort and remove duplicates in remaining extensions */
-    const std::size_t uniqueExtensionCount = stableSortRemoveDuplicatesToPrefix(arrayView(gltfExtensionsKeys),
-        [](const Utility::JsonToken& a, const Utility::JsonToken& b) {
-            return a.asString() < b.asString();
-        },
-        [](const Utility::JsonToken& a, const Utility::JsonToken& b) {
-            return a.asString() == b.asString();
-        });
+    const std::size_t uniqueExtensionCount = stableSortRemoveDuplicatesToPrefix(arrayView(gltfExtensionsKeys), extraOrExtensionKeyCompare, extraOrExtensionKeyEqual);
 
     /* Import unrecognized extension attributes as custom attributes, one
        layer per extension */
@@ -4641,13 +4638,7 @@ Containers::Optional<MaterialData> GltfImporter::doMaterial(const UnsignedInt id
             arrayAppend(gltfExtensionKeys, InPlaceInit, i);
 
         /* Sort and remove duplicates */
-        const std::size_t uniqueCount = stableSortRemoveDuplicatesToPrefix(arrayView(gltfExtensionKeys),
-            [](const Utility::JsonToken& a, const Utility::JsonToken& b) {
-                return a.asString() < b.asString();
-            },
-            [](const Utility::JsonToken& a, const Utility::JsonToken& b) {
-                return a.asString() == b.asString();
-            });
+        const std::size_t uniqueCount = stableSortRemoveDuplicatesToPrefix(arrayView(gltfExtensionKeys), extraOrExtensionKeyCompare, extraOrExtensionKeyEqual);
 
         arrayAppend(layers, attributes.size());
         arrayReserve(attributes, attributes.size() + uniqueCount + 1);
