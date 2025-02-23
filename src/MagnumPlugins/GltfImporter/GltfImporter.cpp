@@ -3361,9 +3361,6 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
     Containers::Array<MeshAttributeData> attributeData{uniqueAttributeCount};
     /** @todo use suffix() once it takes suffix size and not prefix size */
     for(const Containers::Triple<Containers::StringView, UnsignedInt, Int>& attribute: attributeOrder.exceptPrefix(attributeOrder.size() - uniqueAttributeCount)) {
-        /* Duplicate attribute, skip */
-        if(attribute.second() == ~0u) continue;
-
         const Int morphTargetId = attribute.third();
 
         /* Extract base name and number from builtin glTF numbered attributes,
