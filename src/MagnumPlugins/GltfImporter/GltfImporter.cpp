@@ -3648,8 +3648,8 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
     Containers::Array<char> vertexData{NoInit, bufferRange.size()};
     Utility::copy(inputVertexData, vertexData);
 
-    /* Convert the attributes from relative to absolute, copy them to a
-       non-growable array and do additional patching */
+    /* Convert the attributes from relative to absolute and do additional
+       patching */
     for(std::size_t i = 0; i != attributeData.size(); ++i) {
         /* glTF only requires buffer views to be large enough to fit the actual
            data, not to have the size large enough to fit `count*stride`
