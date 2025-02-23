@@ -4475,12 +4475,19 @@ void GltfImporterTest::meshDuplicateAttributes() {
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "mesh-duplicate-attributes.gltf")));
     CORRADE_COMPARE(importer->meshCount(), 1);
 
-    const MeshAttribute thingAttribute = importer->meshAttributeForName("_THING");
+    /* The custom attributes contain also a character that's optionally
+       escapeable, to verify the deduplication works with those and is stable
+       with regards to those as well. _THING/ has the escaped occurence first,
+       _THING2/ second, in both cases the second should be picked, in both
+       cases it's the same accessor. */
+    const MeshAttribute thingAttribute = importer->meshAttributeForName("_THING/");
+    const MeshAttribute thing2Attribute = importer->meshAttributeForName("_THING2/");
     CORRADE_VERIFY(thingAttribute != MeshAttribute{});
+    CORRADE_VERIFY(thing2Attribute != MeshAttribute{});
 
     Containers::Optional<Trade::MeshData> mesh = importer->mesh(0);
     CORRADE_VERIFY(mesh);
-    CORRADE_COMPARE(mesh->attributeCount(), 4);
+    CORRADE_COMPARE(mesh->attributeCount(), 5);
 
     /* Duplicate attributes replace previously declared attributes with the
        same name. Checking the formats should be enough to test the right
@@ -4491,8 +4498,11 @@ void GltfImporterTest::meshDuplicateAttributes() {
     CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::Color, 1), VertexFormat::Vector3);
 
     CORRADE_VERIFY(mesh->hasAttribute(thingAttribute));
+    CORRADE_VERIFY(mesh->hasAttribute(thing2Attribute));
     CORRADE_COMPARE(mesh->attributeCount(thingAttribute), 1);
+    CORRADE_COMPARE(mesh->attributeCount(thing2Attribute), 1);
     CORRADE_COMPARE(mesh->attributeFormat(thingAttribute), VertexFormat::Vector2);
+    CORRADE_COMPARE(mesh->attributeFormat(thing2Attribute), VertexFormat::Vector2);
 
     /* Duplicate morph target attribute also replace previously
        declared attributes within their respective morph target. */
@@ -5632,12 +5642,18 @@ void GltfImporterTest::materialExtras() {
             {"vec2"_s, Vector2{9.0f, 8.0f}},
             {"vec3"_s, Vector3{9.0f, 0.08f, 7.3141f}},
             {"vec4"_s, Vector4{-9.0f, 8.0f, 7.0f, -6.0f}},
-            {"duplicate"_s, true},
+            /* These contain also a character that's optionally escapeable, to
+               verify the deduplication works with those and is stable with
+               regards to those as well. duplicate/ has the escaped occurence
+               second, duplicate2/ first, in both cases the second should be
+               picked. */
+            {"duplicate/"_s, true},
+            {"duplicate2/"_s, 0.2f},
 
             {Trade::MaterialAttribute::LayerName, "ClearCoat"_s},
             {MaterialAttribute::LayerFactor, 0.5f},
             {MaterialAttribute::Roughness, 0.0f}
-        }, {17, 20}}), DebugTools::CompareMaterial);
+        }, {18, 21}}), DebugTools::CompareMaterial);
 
         /* As these are all non-fatal messages, all should be warnings */
         CORRADE_COMPARE(outError, "");
@@ -5897,8 +5913,13 @@ void GltfImporterTest::materialRaw() {
            large, and hence are skipped */
         {Trade::MaterialAttribute::LayerName, "#MAGNUM_material_forbidden_types"_s},
 
-        /* Unknown extension with a textureInfo object */
-        {Trade::MaterialAttribute::LayerName, "#MAGNUM_material_snake"_s},
+        /* Unknown extension with a textureInfo object. It's name contains also
+           a character that's optionally escapeable and there's a second copy
+           with it escaped to verify the deduplication works with those and is
+           stable with regards to those as well. MAGNUM_material_snake/ has the
+           escaped occurence second, MAGNUM_material_type_zoo/ below first, in
+           both cases the second should be picked. */
+        {Trade::MaterialAttribute::LayerName, "#MAGNUM_material_snake/"_s},
         {"snakeFactor"_s, 6.6f},
         {"snakeTexture"_s, 1u},
         {"snakeTextureMatrix"_s, Matrix3{
@@ -5911,7 +5932,7 @@ void GltfImporterTest::materialRaw() {
         {"scaleIsAStringTexture"_s, 1u},
 
         /* Unknown extension with all other supported types */
-        {Trade::MaterialAttribute::LayerName, "#MAGNUM_material_type_zoo"_s},
+        {Trade::MaterialAttribute::LayerName, "#MAGNUM_material_type_zoo/"_s},
         {"boolTrue"_s, true},
         {"boolFalse"_s, false},
         {"int"_s, -7992835.0f},
@@ -5925,13 +5946,18 @@ void GltfImporterTest::materialRaw() {
         {"vec2"_s, Vector2{9.0f, 8.0f}},
         {"vec3"_s, Vector3{9.0f, 0.08f, 7.3141f}},
         {"vec4"_s, Vector4{-9.0f, 8.0f, 7.0f, -6.0f}},
-        {"duplicate"_s, true},
+        /* These contain also a character that's optionally escapeable, to
+           verify the deduplication works with those and is stable with regards
+           to those as well. duplicate/ has the escaped occurence second,
+           duplicate2/ first, in both cases the second should be picked. */
+        {"duplicate/"_s, true},
+        {"duplicate2/"_s, 0.2f},
 
         /* Empty extensions are preserved -- this is mainly for use cases like
            KHR_materials_unlit, where just the presence of the extension alone
            affects material properties */
         {Trade::MaterialAttribute::LayerName, "#VENDOR_empty_extension_object"_s},
-    }, {3, 6, 7, 14, 29, 30}}), DebugTools::CompareMaterial);
+    }, {3, 6, 7, 14, 30, 31}}), DebugTools::CompareMaterial);
 
     /** @todo maybe reduce the variants since there's a catch-all error for
         most of them now? */
@@ -5954,11 +5980,11 @@ void GltfImporterTest::materialRaw() {
         "Trade::GltfImporter::material(): property anIncrediblyLongNameThatSadlyWontFitPaddingPaddingPadding!! is too large with 63 bytes, skipping\n"
         "Trade::GltfImporter::material(): property boolArray is not a numeric array, skipping\n"
         "Trade::GltfImporter::material(): property emptyArray is an invalid or unrepresentable numeric vector, skipping\n"
-        "Utility::Json::parseBool(): invalid bool literal fail at {0}:119:36\n"
+        "Utility::Json::parseBool(): invalid bool literal fail at {0}:123:36\n"
         "Trade::GltfImporter::material(): property invalidBool is invalid, skipping\n"
-        "Utility::Json::parseFloat(): invalid floating-point literal 0f at {0}:120:37\n"
+        "Utility::Json::parseFloat(): invalid floating-point literal 0f at {0}:124:37\n"
         "Trade::GltfImporter::material(): property invalidFloat is invalid, skipping\n"
-        "Utility::Json::parseString(): invalid unicode escape sequence \\uhhhh at {0}:121:39\n"
+        "Utility::Json::parseString(): invalid unicode escape sequence \\uhhhh at {0}:125:39\n"
         "Trade::GltfImporter::material(): property invalidString is invalid, skipping\n"
         "Trade::GltfImporter::material(): missing or invalid invalidTexture index property\n"
         "Trade::GltfImporter::material(): property invalidTexture has an invalid texture object, skipping\n"
@@ -5970,7 +5996,7 @@ void GltfImporterTest::materialRaw() {
         "Trade::GltfImporter::material(): property oversizedArray is an invalid or unrepresentable numeric vector, skipping\n"
         "Trade::GltfImporter::material(): property stringArray is not a numeric array, skipping\n"
         "Utility::Json::parseFloat(): expected a number, got Utility::JsonToken::Type::String at {0}:60:34\n"
-        "Trade::GltfImporter::material(): invalid MAGNUM_material_snake scaleIsAStringTexture scale property, skipping\n"
+        "Trade::GltfImporter::material(): invalid MAGNUM_material_snake/ scaleIsAStringTexture scale property, skipping\n"
         /* MAGNUM_material_type_zoo */
         "Trade::GltfImporter::material(): property invalid is not a numeric array, skipping\n"
         "Trade::GltfImporter::material(): extension name VENDOR_material_thisnameiswaytoolongforalayername! is too long with 50 characters, skipping\n", filename),

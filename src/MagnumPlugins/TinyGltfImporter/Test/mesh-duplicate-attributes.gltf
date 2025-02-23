@@ -8,13 +8,11 @@
         {
           "note": "duplicate attributes should override previously declared attributes with the same name",
           "attributes": {
-            "_THING\/": 0,
-            "_THING/": 2,
+            "_THING": 0,
+            "_THING": 2,
             "COLOR_0": 1,
             "COLOR_1": 1,
-            "COLOR_0": 3,
-            "_THING2/": 0,
-            "_THING2\/": 2
+            "COLOR_0": 3
           },
           "targets": [
             {
@@ -70,7 +68,7 @@
   "buffers": [
     {
       "byteLength": 154,
-      "uri": "mesh.bin"
+      "uri": "mesh-duplicate-attributes.bin"
     }
   ]
 }

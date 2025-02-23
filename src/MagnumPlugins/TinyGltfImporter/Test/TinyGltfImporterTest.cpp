@@ -2415,7 +2415,7 @@ void TinyGltfImporterTest::meshCustomAttributesNoFileOpened() {
 void TinyGltfImporterTest::meshDuplicateAttributes() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
 
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "mesh-duplicate-attributes.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(TINYGLTFIMPORTER_TEST_DIR, "mesh-duplicate-attributes.gltf")));
     CORRADE_COMPARE(importer->meshCount(), 1);
 
     const MeshAttribute thingAttribute = importer->meshAttributeForName("_THING");
