@@ -3781,17 +3781,14 @@ bool checkMaterialAttributeSize(const Containers::StringView name, const Materia
     return true;
 }
 
-Containers::Optional<MaterialAttributeData> parseMaterialAttribute(Utility::Json& gltf, const Utility::JsonToken& gltfKey, const ImporterFlags flags) {
-    /* Not const, gets modified if the first letter isn't lowercase */
-    Containers::StringView name = gltfKey.asString();
+Containers::Optional<MaterialAttributeData> parseMaterialAttribute(Utility::Json& gltf, /*mutable*/ Containers::StringView name, const Utility::JsonToken& gltfValue, const ImporterFlags flags) {
+    /* The `name` is not const, gets modified if the first letter isn't
+       lowercase */
     if(!name) {
         if(!(flags & ImporterFlag::Quiet))
             Warning{} << "Trade::GltfImporter::material(): property with an empty name, skipping";
         return {};
     }
-
-    CORRADE_INTERNAL_ASSERT(gltfKey.firstChild());
-    const Utility::JsonToken& gltfValue = *gltfKey.firstChild();
 
     /* We only need temporary storage for parsing primitive (arrays) as bool/
        Float/Vector[2/3/4]. Other types/sizes are either converted or ignored,
@@ -4266,14 +4263,16 @@ Containers::Optional<MaterialData> GltfImporter::doMaterial(const UnsignedInt id
     const Utility::JsonToken* gltfPbrSpecularGlossiness = nullptr;
     const Utility::JsonToken* gltfUnlit = nullptr;
     const Utility::JsonToken* gltfClearcoat = nullptr;
-    Containers::Array<Containers::Reference<const Utility::JsonToken>> gltfExtensionsKeys;
-    if(const Utility::JsonToken* const gltfExtensions = gltfMaterial.find("extensions"_s)) {
-        if(!_d->gltf->parseObject(*gltfExtensions)) {
+    /* Saving the key name separately to not need to repeatedly call
+       token.asString() during sort below */
+    Containers::Array<Containers::Pair<Containers::StringView, Containers::Reference<const Utility::JsonToken>>> gltfExtensions;
+    if(const Utility::JsonToken* const gltfExtensionList = gltfMaterial.find("extensions"_s)) {
+        if(!_d->gltf->parseObject(*gltfExtensionList)) {
             Error{} << "Trade::GltfImporter::material(): invalid extensions property";
             return {};
         }
 
-        for(Utility::JsonObjectItem gltfExtension: gltfExtensions->asObject()) {
+        for(Utility::JsonObjectItem gltfExtension: gltfExtensionList->asObject()) {
             const Containers::StringView extensionName = gltfExtension.key();
             if(!_d->gltf->parseObject(gltfExtension.value())) {
                 Error{} << "Trade::GltfImporter::material(): invalid" << extensionName << "extension property";
@@ -4287,7 +4286,7 @@ Containers::Optional<MaterialData> GltfImporter::doMaterial(const UnsignedInt id
             else if(extensionName == "KHR_materials_clearcoat"_s)
                 gltfClearcoat = &gltfExtension.value();
             else
-                arrayAppend(gltfExtensionsKeys, InPlaceInit, gltfExtension);
+                arrayAppend(gltfExtensions, InPlaceInit, extensionName, gltfExtension.value());
         }
     }
 
@@ -4483,11 +4482,11 @@ Containers::Optional<MaterialData> GltfImporter::doMaterial(const UnsignedInt id
 
     /* Used by three stableSortRemoveDuplicatesToPrefix() calls below for
        extras / extensions */
-    const auto extraOrExtensionKeyCompare = [](const Utility::JsonToken& a, const Utility::JsonToken& b) {
-        return a.asString() < b.asString();
+    const auto extraOrExtensionKeyCompare = [](const Containers::Pair<Containers::StringView, Containers::Reference<const Utility::JsonToken>>& a, const Containers::Pair<Containers::StringView, Containers::Reference<const Utility::JsonToken>>& b) {
+        return a.first() < b.first();
     };
-    const auto extraOrExtensionKeyEqual = [](const Utility::JsonToken& a, const Utility::JsonToken& b) {
-        return a.asString() == b.asString();
+    const auto extraOrExtensionKeyEqual = [](const Containers::Pair<Containers::StringView, Containers::Reference<const Utility::JsonToken>>& a, const Containers::Pair<Containers::StringView, Containers::Reference<const Utility::JsonToken>>& b) {
+        return a.first() == b.first();
     };
 
     /* Extras -- application-specific data, added to the base layer */
@@ -4506,20 +4505,22 @@ Containers::Optional<MaterialData> GltfImporter::doMaterial(const UnsignedInt id
                 parsed = !!_d->gltf->parseObject(*gltfExtras);
             }
             if(parsed) {
-                Containers::Array<Containers::Reference<const Utility::JsonToken>> gltfExtraKeys;
-                for(const Utility::JsonToken& i: gltfExtras->asObject())
-                    arrayAppend(gltfExtraKeys, InPlaceInit, i);
+                /* Saving the key name separately to not need to repeatedly
+                   call token.asString() during sort below */
+                Containers::Array<Containers::Pair<Containers::StringView, Containers::Reference<const Utility::JsonToken>>> gltfExtraItems;
+                for(const Utility::JsonObjectItem i: gltfExtras->asObject())
+                    arrayAppend(gltfExtraItems, InPlaceInit, i.key(), i.value());
 
                 /* Sort and remove duplicates except the last one. We don't
                    need to cross-check for duplicates in the base layer because
                    those are all internal uppercase names and we make all names
                    lowercase. */
-                const std::size_t uniqueCount = stableSortRemoveDuplicatesToPrefix(arrayView(gltfExtraKeys), extraOrExtensionKeyCompare, extraOrExtensionKeyEqual);
+                const std::size_t uniqueCount = stableSortRemoveDuplicatesToPrefix(arrayView(gltfExtraItems), extraOrExtensionKeyCompare, extraOrExtensionKeyEqual);
 
                 arrayReserve(attributes, attributes.size() + uniqueCount);
                 /** @todo use suffix() once it takes suffix size and not prefix size */
-                for(const Utility::JsonToken& gltfKey: gltfExtraKeys.exceptPrefix(gltfExtraKeys.size() - uniqueCount)) {
-                    if(const Containers::Optional<MaterialAttributeData> parsedAttribute = parseMaterialAttribute(*_d->gltf, gltfKey, flags()))
+                for(const Containers::Pair<Containers::StringView, Containers::Reference<const Utility::JsonToken>>& gltfExtraItem: gltfExtraItems.exceptPrefix(gltfExtraItems.size() - uniqueCount)) {
+                    if(const Containers::Optional<MaterialAttributeData> parsedAttribute = parseMaterialAttribute(*_d->gltf, gltfExtraItem.first(), gltfExtraItem.second(), flags()))
                         arrayAppend(attributes, *parsedAttribute);
                 }
 
@@ -4608,68 +4609,61 @@ Containers::Optional<MaterialData> GltfImporter::doMaterial(const UnsignedInt id
     }
 
     /* Sort and remove duplicates in remaining extensions */
-    const std::size_t uniqueExtensionCount = stableSortRemoveDuplicatesToPrefix(arrayView(gltfExtensionsKeys), extraOrExtensionKeyCompare, extraOrExtensionKeyEqual);
+    const std::size_t uniqueExtensionCount = stableSortRemoveDuplicatesToPrefix(arrayView(gltfExtensions), extraOrExtensionKeyCompare, extraOrExtensionKeyEqual);
 
     /* Import unrecognized extension attributes as custom attributes, one
        layer per extension */
     /** @todo use suffix() once it takes suffix size and not prefix size */
-    for(const Utility::JsonToken& gltfExtensionKey: gltfExtensionsKeys.exceptPrefix(gltfExtensionsKeys.size() - uniqueExtensionCount)) {
-        const Containers::StringView extensionName = gltfExtensionKey.asString();
-        if(!extensionName) {
+    for(const Containers::Pair<Containers::StringView, Containers::Reference<const Utility::JsonToken>>& gltfExtension: gltfExtensions.exceptPrefix(gltfExtensions.size() - uniqueExtensionCount)) {
+        if(!gltfExtension.first()) {
             if(!(flags() & ImporterFlag::Quiet))
                 Warning{} << "Trade::GltfImporter::material(): extension with an empty name, skipping";
             continue;
         }
 
-        CORRADE_INTERNAL_ASSERT(gltfExtensionKey.firstChild());
-        const Utility::JsonToken& gltfExtension = *gltfExtensionKey.firstChild();
-        /* Token checked for object type already when added to the list */
-
         /* +1 is the key null byte. +3 are the '#' layer prefix, the layer null
            byte and the length. */
-        if(" LayerName"_s.size() + 1 + extensionName.size() + 3 + sizeof(MaterialAttributeType) > sizeof(MaterialAttributeData)) {
+        if(" LayerName"_s.size() + 1 + gltfExtension.first().size() + 3 + sizeof(MaterialAttributeType) > sizeof(MaterialAttributeData)) {
             if(!(flags() & ImporterFlag::Quiet))
-                Warning{} << "Trade::GltfImporter::material(): extension name" << extensionName << "is too long with" << extensionName.size() << "characters, skipping";
+                Warning{} << "Trade::GltfImporter::material(): extension name" << gltfExtension.first() << "is too long with" << gltfExtension.first().size() << "characters, skipping";
             continue;
         }
 
-        Containers::Array<Containers::Reference<const Utility::JsonToken>> gltfExtensionKeys;
-        for(const Utility::JsonToken& i: gltfExtension.asObject())
-            arrayAppend(gltfExtensionKeys, InPlaceInit, i);
+        /* Saving the key name separately to not need to repeatedly call
+           token.asString() during sort below */
+        Containers::Array<Containers::Pair<Containers::StringView, Containers::Reference<const Utility::JsonToken>>> gltfExtensionItems;
+        for(const Utility::JsonObjectItem i: gltfExtension.second()->asObject())
+            arrayAppend(gltfExtensionItems, InPlaceInit, i.key(), i.value());
 
         /* Sort and remove duplicates */
-        const std::size_t uniqueCount = stableSortRemoveDuplicatesToPrefix(arrayView(gltfExtensionKeys), extraOrExtensionKeyCompare, extraOrExtensionKeyEqual);
+        const std::size_t uniqueCount = stableSortRemoveDuplicatesToPrefix(arrayView(gltfExtensionItems), extraOrExtensionKeyCompare, extraOrExtensionKeyEqual);
 
         arrayAppend(layers, attributes.size());
         arrayReserve(attributes, attributes.size() + uniqueCount + 1);
         /* Uppercase layer names are reserved. Since all extension names start
            with an uppercase vendor identifier, making the first character
            lowercase seems silly, so we use a unique prefix. */
-        arrayAppend(attributes, InPlaceInit, MaterialAttribute::LayerName, Utility::format("#{}", extensionName));
+        arrayAppend(attributes, InPlaceInit, MaterialAttribute::LayerName, Utility::format("#{}", gltfExtension.first()));
         /** @todo use suffix() once it takes suffix size and not prefix size */
-        for(const Utility::JsonToken& gltfKey: gltfExtensionKeys.exceptPrefix(gltfExtensionKeys.size() - uniqueCount)) {
-            const Containers::StringView name = gltfKey.asString();
-            if(!name) {
+        for(const Containers::Pair<Containers::StringView, Containers::Reference<const Utility::JsonToken>>& gltfExtensionItem: gltfExtensionItems.exceptPrefix(gltfExtensionItems.size() - uniqueCount)) {
+            if(!gltfExtensionItem.first()) {
                 if(!(flags() & ImporterFlag::Quiet))
                     Warning{} << "Trade::GltfImporter::material(): property with an empty name, skipping";
                 continue;
             }
 
-            CORRADE_INTERNAL_ASSERT(gltfKey.firstChild());
-            const Utility::JsonToken& gltfValue = *gltfKey.firstChild();
-
             /* Parse glTF textureInfo objects. Any objects without the correct
                suffix and type are ignored. */
-            if(gltfValue.type() == Utility::JsonToken::Type::Object) {
-                if(name.size() < 8 || !name.hasSuffix("Texture"_s)) {
+            if(gltfExtensionItem.second()->type() == Utility::JsonToken::Type::Object) {
+                if(gltfExtensionItem.first().size() < 8 || !gltfExtensionItem.first().hasSuffix("Texture"_s)) {
                     if(!(flags() & ImporterFlag::Quiet))
-                        Warning{} << "Trade::GltfImporter::material(): property" << name << "has a non-texture object type, skipping";
+                        Warning{} << "Trade::GltfImporter::material(): property" << gltfExtensionItem.first() << "has a non-texture object type, skipping";
                     continue;
                 }
 
-                if(!materialTexture(gltfValue, attributes, name, /* warningOnly */ true)) {
+                if(!materialTexture(gltfExtensionItem.second(), attributes, gltfExtensionItem.first(), /* warningOnly */ true)) {
                     if(!(flags() & ImporterFlag::Quiet))
-                        Warning{} << "Trade::GltfImporter::material(): property" << name << "has an invalid texture object, skipping";
+                        Warning{} << "Trade::GltfImporter::material(): property" << gltfExtensionItem.first() << "has an invalid texture object, skipping";
                     continue;
                 }
 
@@ -4678,7 +4672,7 @@ Containers::Optional<MaterialData> GltfImporter::doMaterial(const UnsignedInt id
                     should instead loop through the texture properties, filter
                     out what's handled by materialTexture() and add the rest,
                     basically same as done for extras */
-                if(const Utility::JsonToken* const gltfTextureScale = gltfValue.find("scale"_s)) {
+                if(const Utility::JsonToken* const gltfTextureScale = gltfExtensionItem.second()->find("scale"_s)) {
                     bool parsed;
                     {
                         /* Redirect error messages from Json::parse*() to the
@@ -4690,14 +4684,14 @@ Containers::Optional<MaterialData> GltfImporter::doMaterial(const UnsignedInt id
                     }
                     if(!parsed) {
                         if(!(flags() & ImporterFlag::Quiet))
-                            Warning{} << "Trade::GltfImporter::material(): invalid" << extensionName << name << "scale property, skipping";
+                            Warning{} << "Trade::GltfImporter::material(): invalid" << gltfExtension.first() << gltfExtensionItem.first() << "scale property, skipping";
                         continue;
                     }
 
                     /** @todo avoid allocations when it's doable in a less
                         error-prone way than formatInto() + slice() (ArrayTuple
                         string support?), best with a statically-sized buffer */
-                    const Containers::String scaleName = name + "Scale"_s;
+                    const Containers::String scaleName = gltfExtensionItem.first() + "Scale"_s;
                     if(checkMaterialAttributeSize(scaleName, MaterialAttributeType::Float, flags()))
                         arrayAppend(attributes, InPlaceInit,
                             scaleName, gltfTextureScale->asFloat());
@@ -4705,7 +4699,7 @@ Containers::Optional<MaterialData> GltfImporter::doMaterial(const UnsignedInt id
 
             } else {
                 /* All other attribute types: bool, numbers, strings */
-                if(const Containers::Optional<MaterialAttributeData> parsed = parseMaterialAttribute(*_d->gltf, gltfKey, flags()))
+                if(const Containers::Optional<MaterialAttributeData> parsed = parseMaterialAttribute(*_d->gltf, gltfExtensionItem.first(), gltfExtensionItem.second(), flags()))
                     arrayAppend(attributes, *parsed);
             }
         }
