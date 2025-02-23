@@ -3296,7 +3296,12 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
     }
 
     /* Attributes */
-    Containers::Array<Containers::Triple<Containers::StringView, UnsignedInt, Int>> attributeOrder;
+    struct Attribute {
+        Containers::StringView name;
+        UnsignedInt accessorId;
+        Int morphTargetId;
+    };
+    Containers::Array<Attribute> attributeOrder;
     if(const Utility::JsonToken* gltfAttributes = gltfPrimitive.find("attributes"_s)) {
         /* Primitive attributes object parsed in doOpenData() already, for
            custom attribute discovery, so we just use it directly. */
@@ -3342,11 +3347,11 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
        name (per morph target) so that we add attribute sets in the correct
        order and can warn if indices are not contiguous. */
     const std::size_t uniqueAttributeCount = stableSortRemoveDuplicatesToPrefix(arrayView(attributeOrder),
-        [](const Containers::Triple<Containers::StringView, UnsignedInt, Int>& a, const Containers::Triple<Containers::StringView, UnsignedInt, Int>& b) {
-            return a.third() != b.third() ? a.third() < b.third() : a.first() < b.first();
+        [](const Attribute& a, const Attribute& b) {
+            return a.morphTargetId != b.morphTargetId ? a.morphTargetId < b.morphTargetId : a.name < b.name;
         },
-        [](const Containers::Triple<Containers::StringView, UnsignedInt, Int>& a, const Containers::Triple<Containers::StringView, UnsignedInt, Int>& b) {
-            return a.third() == b.third() && a.first() == b.first();
+        [](const Attribute& a, const Attribute& b) {
+            return a.morphTargetId == b.morphTargetId && a.name == b.name;
         });
 
     /* Gather all (whitelisted) attributes and the total buffer range spanning
@@ -3360,14 +3365,12 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
     Math::Range1D<std::size_t> bufferRange;
     Containers::Array<MeshAttributeData> attributeData{uniqueAttributeCount};
     /** @todo use suffix() once it takes suffix size and not prefix size */
-    for(const Containers::Triple<Containers::StringView, UnsignedInt, Int>& attribute: attributeOrder.exceptPrefix(attributeOrder.size() - uniqueAttributeCount)) {
-        const Int morphTargetId = attribute.third();
-
+    for(const Attribute& attribute: attributeOrder.exceptPrefix(attributeOrder.size() - uniqueAttributeCount)) {
         /* Extract base name and number from builtin glTF numbered attributes,
            use the whole name otherwise */
         Containers::StringView baseAttributeName;
-        if(isBuiltinNumberedMeshAttribute(attribute.first())) {
-            const Containers::Array3<Containers::StringView> attributeNameNumber = attribute.first().partition('_');
+        if(isBuiltinNumberedMeshAttribute(attribute.name)) {
+            const Containers::Array3<Containers::StringView> attributeNameNumber = attribute.name.partition('_');
             /* Numbered attributes are expected to be contiguous (COLORS_0,
                COLORS_1...). If not, print a warning, because in the MeshData
                they will appear as contiguous. */
@@ -3375,7 +3378,7 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
                 lastNumberedAttribute.second() = -1;
             const Int index = attributeNameNumber[2][0] - '0';
             if(index != lastNumberedAttribute.second() + 1 && !(flags() & ImporterFlag::Quiet)) {
-                Warning{} << "Trade::GltfImporter::mesh(): found attribute" << attribute.first() << "but expected" << attributeNameNumber[0] << Debug::nospace << "_" << Debug::nospace << lastNumberedAttribute.second() + 1;
+                Warning{} << "Trade::GltfImporter::mesh(): found attribute" << attribute.name << "but expected" << attributeNameNumber[0] << Debug::nospace << "_" << Debug::nospace << lastNumberedAttribute.second() + 1;
             }
 
             baseAttributeName = attributeNameNumber[0];
@@ -3385,12 +3388,12 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
            such as TEXCOORD alone, TEXCOORD_SECOND, or currently also
            TEXCOORD_10, use the full attribute string. */
         } else {
-            baseAttributeName = attribute.first();
+            baseAttributeName = attribute.name;
             lastNumberedAttribute = {};
         }
 
         /* Get the accessor view */
-        Containers::Optional<Containers::Triple<Containers::StridedArrayView2D<const char>, VertexFormat, UnsignedInt>> accessor = parseAccessor("Trade::GltfImporter::mesh():", attribute.second());
+        Containers::Optional<Containers::Triple<Containers::StridedArrayView2D<const char>, VertexFormat, UnsignedInt>> accessor = parseAccessor("Trade::GltfImporter::mesh():", attribute.accessorId);
         if(!accessor) return {};
 
         /* From the builtin attributes can fire either for ObjectId or for
@@ -3398,7 +3401,7 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
         if(configuration().value<bool>("strict") && vertexFormatComponentFormat(accessor->second()) == VertexFormat::UnsignedInt) {
             /** @todo for JOINTS this prints Vector4ui while the actual
                 imported attribute is then UnsignedInt[], fix this somehow? */
-            Error{} << "Trade::GltfImporter::mesh(): strict mode enabled, disallowing" << attribute.first() << "with a 32-bit integer vertex format" << Debug::packed << accessor->second();
+            Error{} << "Trade::GltfImporter::mesh(): strict mode enabled, disallowing" << attribute.name << "with a 32-bit integer vertex format" << Debug::packed << accessor->second();
             return {};
         }
 
@@ -3411,16 +3414,16 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
            (those aren't restricted), worst case this code gets changed to
            import them as custom, like is done for example with non-normalized
            integer colors. */
-        if(morphTargetId != -1 &&
+        if(attribute.morphTargetId != -1 &&
           (baseAttributeName == "JOINTS"_s ||
            baseAttributeName == "WEIGHTS"_s ||
-           attribute.first() == configuration().value<Containers::StringView>("objectIdAttribute"))
+           attribute.name == configuration().value<Containers::StringView>("objectIdAttribute"))
         ) {
             Error e;
             e << "Trade::GltfImporter::mesh():";
-            if(attribute.first() == configuration().value<Containers::StringView>("objectIdAttribute"))
+            if(attribute.name == configuration().value<Containers::StringView>("objectIdAttribute"))
                 e << "object ID attribute";
-            e << attribute.first() << "is not allowed to be a morph target";
+            e << attribute.name << "is not allowed to be a morph target";
             return {};
         }
 
@@ -3499,7 +3502,7 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
             }
         /* Object ID, name custom. To avoid confusion, print the error together
            with saying it's an object ID attribute */
-        } else if(attribute.first() == configuration().value<Containers::StringView>("objectIdAttribute")) {
+        } else if(attribute.name == configuration().value<Containers::StringView>("objectIdAttribute")) {
             if(accessor->second() == VertexFormat::UnsignedInt ||
                accessor->second() == VertexFormat::UnsignedShort ||
                accessor->second() == VertexFormat::UnsignedByte)
@@ -3510,7 +3513,7 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
         /* Custom or unrecognized attributes, map to an ID. Any type is
            allowed. */
         } else {
-            name = _d->meshAttributesForName.at(attribute.first());
+            name = _d->meshAttributesForName.at(attribute.name);
         }
 
         /* A type that's not valid for given builtin attribute */
@@ -3523,16 +3526,16 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
 
                 /* If the attribute is meant to be recognized as an object ID,
                    mention it as such to avoid confusion */
-                if(attribute.first() == configuration().value<Containers::StringView>("objectIdAttribute"))
+                if(attribute.name == configuration().value<Containers::StringView>("objectIdAttribute"))
                     e << "object ID attribute";
 
                 /* Here the VertexFormat prefix would not be confusing but
                    print it without to be consistent with other messages */
-                e << attribute.first() << "format" << Debug::packed << accessor->second();
+                e << attribute.name << "format" << Debug::packed << accessor->second();
 
                 /* Indicate it's invalid for a morph target */
-                if(morphTargetId != -1)
-                    e << "in morph target" << morphTargetId;
+                if(attribute.morphTargetId != -1)
+                    e << "in morph target" << attribute.morphTargetId;
 
                 if(configuration().value<bool>("strict"))
                     e << Debug::nospace << ", set strict=false to import as a custom attribute";
@@ -3547,7 +3550,7 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
             if(configuration().value<bool>("strict"))
                 return {};
             else
-                name = _d->meshAttributesForName.at(attribute.first());
+                name = _d->meshAttributesForName.at(attribute.name);
         }
 
         /* Remember which buffer the attribute is in and the range, for
@@ -3568,9 +3571,9 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
 
             if(accessor->first().size()[0] != vertexCount) {
                 Error e;
-                e << "Trade::GltfImporter::mesh(): mismatched vertex count for attribute" << attribute.first();
-                if(morphTargetId != -1)
-                    e << "in morph target" << morphTargetId;
+                e << "Trade::GltfImporter::mesh(): mismatched vertex count for attribute" << attribute.name;
+                if(attribute.morphTargetId != -1)
+                    e << "in morph target" << attribute.morphTargetId;
                 e << Debug::nospace << ", expected" << vertexCount << "but got" << accessor->first().size()[0];
                 return {};
             }
@@ -3580,7 +3583,7 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
 
         /* Fill in an attribute. Points to the input data, will be patched to
            the output data once we know where it's allocated. */
-        attributeData[attributeId++] = MeshAttributeData{name, accessor->second(), accessor->first(), arraySize, morphTargetId};
+        attributeData[attributeId++] = MeshAttributeData{name, accessor->second(), accessor->first(), arraySize, attribute.morphTargetId};
 
         /* For backwards compatibility insert also a custom "JOINTS" /
            "WEIGHTS" attribute which is a Vector4<T> instead of T[4] */
