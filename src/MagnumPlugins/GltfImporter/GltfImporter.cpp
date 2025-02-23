@@ -28,7 +28,7 @@
 
 #include "GltfImporter.h"
 
-#include <algorithm> /* std::stable_sort() */
+#include <algorithm> /* std::sort() */
 #include <cctype>
 #include <unordered_map>
 #include <Corrade/Containers/Array.h>
@@ -3243,14 +3243,20 @@ Containers::String GltfImporter::doMeshName(const UnsignedInt id) {
 namespace {
 
 /* Used in doMesh() and doMaterial() to remove duplicate keys from a JSON
-   object. For consistent behavior across all STL implementation it uses a
-   stable sort, thus preserving the order of duplicates. Then, all duplicates
-   except the last one are removed, consistently with what cgltf or json.hpp
-   does. */
+   object. It doesn't use std::stable_sort() to preserve the order of
+   duplicates but rather requires the comparator to be written in a way that no
+   two values compare equal. Given that the things we're sorting are pointing
+   back to the input JSON string this is easily achievable and avoids a nasty
+   extra allocation somewhere deep inside STL. Then, all duplicates except the
+   last one are removed, consistently with what cgltf or json.hpp does. */
 /** @todo drop "all except last" and use only the first, as that's what the
     Utility::JsonToken::find() do */
-template<class T, class F, class G> std::size_t stableSortRemoveDuplicatesToPrefix(Containers::ArrayView<T> container, F lessThanComparator, G equalComparator) {
-    std::stable_sort(container.begin(), container.end(), lessThanComparator);
+template<class T, class F, class G> std::size_t stableSortRemoveDuplicatesToPrefix(const Containers::ArrayView<T> container, F lessThanComparator, G equalComparator) {
+    std::sort(container.begin(), container.end(), lessThanComparator);
+    #ifndef CORRADE_NO_DEBUG_ASSERT
+    for(std::size_t i = 0; i + 1 < container.size(); ++i)
+        CORRADE_INTERNAL_DEBUG_ASSERT(lessThanComparator(container[i], container[i + 1]));
+    #endif
     const auto reversed = stridedArrayView(container).template flipped<0>();
     return std::unique(reversed.begin(), reversed.end(), equalComparator) - reversed.begin();
 }
@@ -3298,7 +3304,7 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
     /* Attributes */
     struct Attribute {
         Containers::StringView name;
-        UnsignedInt accessorId;
+        Containers::Reference<const Utility::JsonToken> value;
         Int morphTargetId;
     };
     Containers::Array<Attribute> attributeOrder;
@@ -3312,8 +3318,7 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
             }
             /* Bounds check is done in parseAccessor() later, no need to do it
                here again */
-
-            arrayAppend(attributeOrder, InPlaceInit, gltfAttribute.key(), gltfAttribute.value().asUnsignedInt(), -1);
+            arrayAppend(attributeOrder, InPlaceInit, gltfAttribute.key(), gltfAttribute.value(), -1);
         }
     }
 
@@ -3338,7 +3343,7 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
                     return {};
                 }
 
-                arrayAppend(attributeOrder, InPlaceInit, gltfMorphAttribute.key(), gltfMorphAttribute.value().asUnsignedInt(), Int(gltfTarget.index()));
+                arrayAppend(attributeOrder, InPlaceInit, gltfMorphAttribute.key(), gltfMorphAttribute.value(), Int(gltfTarget.index()));
             }
         }
     }
@@ -3348,7 +3353,21 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
        order and can warn if indices are not contiguous. */
     const std::size_t uniqueAttributeCount = stableSortRemoveDuplicatesToPrefix(arrayView(attributeOrder),
         [](const Attribute& a, const Attribute& b) {
-            return a.morphTargetId != b.morphTargetId ? a.morphTargetId < b.morphTargetId : a.name < b.name;
+            /* If the morph targets are different, sort by those */
+            if(a.morphTargetId != b.morphTargetId)
+                return a.morphTargetId < b.morphTargetId;
+            /* Otherwise, if the names are different, sort by those */
+            if(a.name != b.name)
+                return a.name < b.name;
+            /* Otherwise, sort the earlier occurence first. Cannot use
+               {a,b}.name.data() since the key can contain an escape character,
+               which would then cause the string to be allocated elsewhere
+               instead of pointing to the JSON input, making the order random
+               again. The token data string view data pointer however *is*
+               pointing to the JSON input always. The token address itself
+               could also since they're stored in a contiguous array, but this
+               is more robust. */
+            return a.value->data().data() < b.value->data().data();
         },
         [](const Attribute& a, const Attribute& b) {
             return a.morphTargetId == b.morphTargetId && a.name == b.name;
@@ -3393,7 +3412,7 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
         }
 
         /* Get the accessor view */
-        Containers::Optional<Containers::Triple<Containers::StridedArrayView2D<const char>, VertexFormat, UnsignedInt>> accessor = parseAccessor("Trade::GltfImporter::mesh():", attribute.accessorId);
+        Containers::Optional<Containers::Triple<Containers::StridedArrayView2D<const char>, VertexFormat, UnsignedInt>> accessor = parseAccessor("Trade::GltfImporter::mesh():", attribute.value->asUnsignedInt());
         if(!accessor) return {};
 
         /* From the builtin attributes can fire either for ObjectId or for
@@ -4483,7 +4502,17 @@ Containers::Optional<MaterialData> GltfImporter::doMaterial(const UnsignedInt id
     /* Used by three stableSortRemoveDuplicatesToPrefix() calls below for
        extras / extensions */
     const auto extraOrExtensionKeyCompare = [](const Containers::Pair<Containers::StringView, Containers::Reference<const Utility::JsonToken>>& a, const Containers::Pair<Containers::StringView, Containers::Reference<const Utility::JsonToken>>& b) {
-        return a.first() < b.first();
+        /* If the names are different, sort by those */
+        if(a.first() != b.first())
+            return a.first() < b.first();
+        /* Otherwise, sort the earlier occurence first. Cannot use
+           {a,b}.first().data() since the key can contain an escape character,
+           which would then cause the string to be allocated elsewhere instead
+           of pointing to the JSON input, making the order random again. The
+           token data string view data pointer however *is* pointing to the
+           JSON input always. The token address itself could also since they're
+           stored in a contiguous array, but this is more robust. */
+        return a.second()->data().data() < b.second()->data().data();
     };
     const auto extraOrExtensionKeyEqual = [](const Containers::Pair<Containers::StringView, Containers::Reference<const Utility::JsonToken>>& a, const Containers::Pair<Containers::StringView, Containers::Reference<const Utility::JsonToken>>& b) {
         return a.first() == b.first();
