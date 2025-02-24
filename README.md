@@ -1,5 +1,5 @@
-Here are various plugins for the Magnum C++11/C++14 graphics engine — asset
-import and conversion, text rendering and more.
+Here are various plugins for the Magnum C++11 graphics engine — asset import
+and conversion, text rendering and more.
 
 [![Join the chat at https://gitter.im/mosra/magnum](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/mosra/magnum?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 [![Build Status](https://circleci.com/gh/mosra/magnum-plugins.svg?style=shield)](https://circleci.com/gh/mosra/magnum-plugins)
