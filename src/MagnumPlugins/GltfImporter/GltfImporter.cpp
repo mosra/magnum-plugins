@@ -3382,6 +3382,9 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
     UnsignedInt weightAttributeCount = 0;
     Containers::Pair<Containers::StringView, Int> lastNumberedAttribute;
     Math::Range1D<std::size_t> bufferRange;
+    /* Cannot be NoInit because that would use a custom deleter which is
+       disallowed to avoid dangling function pointer call after the plugin is
+       unloaded :( */
     Containers::Array<MeshAttributeData> attributeData{uniqueAttributeCount};
     /** @todo use suffix() once it takes suffix size and not prefix size */
     for(const Attribute& attribute: attributeOrder.exceptPrefix(attributeOrder.size() - uniqueAttributeCount)) {
