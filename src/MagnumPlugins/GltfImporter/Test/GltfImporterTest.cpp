@@ -4309,6 +4309,7 @@ void GltfImporterTest::meshSkinAttributes() {
     if(!data.compatibilitySkinningAttributes || *data.compatibilitySkinningAttributes) {
         CORRADE_COMPARE(mesh->attributeCount(jointsAttribute), 3);
         CORRADE_COMPARE(mesh->attributeFormat(jointsAttribute, 0), VertexFormat::Vector4ub);
+        CORRADE_COMPARE(mesh->attributeArraySize(jointsAttribute, 0), 0);
         CORRADE_COMPARE_AS(mesh->attribute<Vector4ub>(jointsAttribute),
             Containers::arrayView<Vector4ub>({
                 {1,  2,  3,  4},
@@ -4316,6 +4317,7 @@ void GltfImporterTest::meshSkinAttributes() {
                 {9, 10, 11, 12}
             }), TestSuite::Compare::Container);
         CORRADE_COMPARE(mesh->attributeFormat(jointsAttribute, 1), VertexFormat::Vector4us);
+        CORRADE_COMPARE(mesh->attributeArraySize(jointsAttribute, 1), 0);
         CORRADE_COMPARE_AS(mesh->attribute<Vector4us>(jointsAttribute, 1),
             Containers::arrayView<Vector4us>({
                 {13, 14, 15, 16},
@@ -4323,6 +4325,7 @@ void GltfImporterTest::meshSkinAttributes() {
                 {21, 22, 23, 24}
             }), TestSuite::Compare::Container);
         CORRADE_COMPARE(mesh->attributeFormat(jointsAttribute, 2), VertexFormat::Vector4ui);
+        CORRADE_COMPARE(mesh->attributeArraySize(jointsAttribute, 2), 0);
         CORRADE_COMPARE_AS(mesh->attribute<Vector4ui>(jointsAttribute, 2),
             Containers::arrayView<Vector4ui>({
                 {25, 26, 27, 28},
@@ -4331,6 +4334,7 @@ void GltfImporterTest::meshSkinAttributes() {
             }), TestSuite::Compare::Container);
         CORRADE_COMPARE(mesh->attributeCount(weightsAttribute), 3);
         CORRADE_COMPARE(mesh->attributeFormat(weightsAttribute, 0), VertexFormat::Vector4);
+        CORRADE_COMPARE(mesh->attributeArraySize(weightsAttribute, 0), 0);
         CORRADE_COMPARE_AS(mesh->attribute<Vector4>(weightsAttribute),
             Containers::arrayView<Vector4>({
                 {0.125f, 0.25f, 0.375f, 0.0f},
@@ -4338,6 +4342,7 @@ void GltfImporterTest::meshSkinAttributes() {
                 {0.2f,   0.0f,  0.3f,   0.0f}
             }), TestSuite::Compare::Container);
         CORRADE_COMPARE(mesh->attributeFormat(weightsAttribute, 1), VertexFormat::Vector4usNormalized);
+        CORRADE_COMPARE(mesh->attributeArraySize(weightsAttribute, 1), 0);
         CORRADE_COMPARE_AS(mesh->attribute<Vector4us>(weightsAttribute, 1),
             Containers::arrayView<Vector4us>({
                 {       0, 0xffff/8,         0, 0xffff/8},
@@ -4345,6 +4350,7 @@ void GltfImporterTest::meshSkinAttributes() {
                 {       0, 0xffff/4, 0xffff/4,  0}
             }), TestSuite::Compare::Container);
         CORRADE_COMPARE(mesh->attributeFormat(weightsAttribute, 2), VertexFormat::Vector4ubNormalized);
+        CORRADE_COMPARE(mesh->attributeArraySize(weightsAttribute, 2), 0);
         CORRADE_COMPARE_AS(mesh->attribute<Vector4ub>(weightsAttribute, 2),
             Containers::arrayView<Vector4ub>({
                 {0xff/2, 0xff/8, 0xff/16, 0xff/16},
