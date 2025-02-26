@@ -3386,6 +3386,9 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
        disallowed to avoid dangling function pointer call after the plugin is
        unloaded :( */
     Containers::Array<MeshAttributeData> attributeData{uniqueAttributeCount};
+    #ifdef MAGNUM_BUILD_DEPRECATED
+    UnsignedInt compatibilitySkinningAttributeCount = 0;
+    #endif
     /** @todo use suffix() once it takes suffix size and not prefix size */
     for(const Attribute& attribute: attributeOrder.exceptPrefix(attributeOrder.size() - uniqueAttributeCount)) {
         /* Extract base name and number from builtin glTF numbered attributes,
@@ -3607,26 +3610,48 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
            the output data once we know where it's allocated. */
         attributeData[attributeId++] = MeshAttributeData{name, accessor->second(), accessor->first(), arraySize, attribute.morphTargetId};
 
-        /* For backwards compatibility insert also a custom "JOINTS" /
-           "WEIGHTS" attribute which is a Vector4<T> instead of T[4] */
+        /* For backwards compatibility we'll insert also a custom "JOINTS" /
+           "WEIGHTS" attributes below, count how many of them we'll need */
         #ifdef MAGNUM_BUILD_DEPRECATED
-        if((name == MeshAttribute::JointIds || name == MeshAttribute::Weights) && configuration().value<bool>("compatibilitySkinningAttributes")) {
-            arrayInsert(attributeData, attributeId++, InPlaceInit, _d->meshAttributesForName.at(baseAttributeName), vertexFormat(accessor->second(), arraySize, isVertexFormatNormalized(accessor->second())), accessor->first());
-        }
+        if((name == MeshAttribute::JointIds || name == MeshAttribute::Weights) && configuration().value<bool>("compatibilitySkinningAttributes"))
+            ++compatibilitySkinningAttributeCount;
         #endif
     }
 
-    /* Verify we really filled all attributes */
-    CORRADE_INTERNAL_ASSERT(attributeId == attributeData.size());
-
-    /* If the deprecated "JOINTS" and "WEIGHTS" attributes were added, the
-       array was turned into a growable one (for simplicity). Convert it back
-       to a regular one to avoid assertions in AbstractImporter due to
-       potentially-dangling deleter pointers */
+    /* For backwards compatibility insert custom "JOINTS" and "WEIGHTS"
+       attributes which are a Vector4<T> instead of T[4]. The attribute array
+       has to remain with the default deleter, so allocate a new one with extra
+       space and then put them at the end. */
     #ifdef MAGNUM_BUILD_DEPRECATED
-    if(configuration().value<bool>("compatibilitySkinningAttributes"))
-        arrayShrink(attributeData, DefaultInit);
+    if(compatibilitySkinningAttributeCount) {
+        /* Again cannot be NoInit because that would use a custom deleter which
+           is disallowed to avoid dangling function pointer call after the
+           plugin is unloaded */
+        Containers::Array<MeshAttributeData> compatibilityAttributeData{attributeData.size() + compatibilitySkinningAttributeCount};
+        Utility::copy(attributeData, compatibilityAttributeData.prefix(attributeData.size()));
+
+        for(const MeshAttributeData& attribute: attributeData) {
+            MeshAttribute name;
+            if(attribute.name() == MeshAttribute::JointIds)
+                name = _d->meshAttributesForName.at("JOINTS"_s);
+            else if(attribute.name() == MeshAttribute::Weights)
+                name = _d->meshAttributesForName.at("WEIGHTS"_s);
+            else continue;
+
+            /* The builtin attribute name is replaced with a custom one, format
+               array size becomes number of vector components */
+            compatibilityAttributeData[attributeId++] = MeshAttributeData{name, vertexFormat(attribute.format(), attribute.arraySize(), isVertexFormatNormalized(attribute.format())), attribute.data(), 0, attribute.morphTargetId()};
+        }
+
+        /* Replace the attribute data array with the new one containing also
+           the compatibility attributes */
+        Utility::swap(attributeData, compatibilityAttributeData);
+    }
     #endif
+
+    /* Verify we really filled all attributes, including the compatibility ones
+       at the end */
+    CORRADE_INTERNAL_ASSERT(attributeId == attributeData.size());
 
     /* 3.7.2.1 (Geometry § Meshes § Overview) says "[count] MUST be non-zero",
        but we allow also none unless the strict option is enabled. Not printing
