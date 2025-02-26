@@ -166,9 +166,12 @@ struct GltfImporter::Document {
     /* Storage for buffer content. If a buffer is fetched from a file callback,
        it's a non-owning view. These are filled on demand. We don't check for
        duplicate URIs since that's incredibly unlikely and hard to get right,
-       so the buffer id is used as the index. If a buffer failed to load, it'll
-       stay a NullOpt, meaning the same failure message will be printed next
-       time it's accessed. */
+       so the buffer id is used as the index.
+
+       If a buffer failed to load, it'll stay a NullOpt, meaning the same
+       failure message will be printed next time it's accessed. If the buffer
+       is empty and has no URI or it's the implicit buffer of a *.glb, it's
+       NullOpt as well. */
     Containers::Array<Containers::Optional<Containers::Array<char>>> buffers;
     /* Parsed and validated buffer views, second element is stride (or 0 if not
        strided), third is buffer ID. Same as with buffers, if any of these
