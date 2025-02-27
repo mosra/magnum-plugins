@@ -9,6 +9,13 @@
       "componentType": 5126,
       "count": 2,
       "type": "VEC3"
+    },
+    {
+      "bufferView": 0,
+      "byteOffset": 16,
+      "componentType": 5126,
+      "count": 2,
+      "type": "VEC2"
     }
   ],
   "bufferViews": [
@@ -30,6 +37,16 @@
         {
           "attributes": {
             "POSITION": 0
+          },
+          "mode": 0
+        }
+      ]
+    },
+    {
+      "primitives": [
+        {
+          "attributes": {
+            "TEXCOORD_0": 1
           },
           "mode": 0
         }

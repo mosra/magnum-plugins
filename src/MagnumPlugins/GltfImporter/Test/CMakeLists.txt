@@ -156,6 +156,10 @@ corrade_add_test(GltfImporterTest
         mesh.gltf
         mesh.bin
         mesh.glb
+        mesh-buffers.gltf
+        mesh-buffers.0.bin
+        mesh-buffers.1.bin
+        mesh-buffers.2.bin
         mesh-colors.gltf
         mesh-colors.bin
         mesh-custom-attributes.bin

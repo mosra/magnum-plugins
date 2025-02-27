@@ -1,0 +1,331 @@
+{
+  "asset": {
+    "version": "2.0"
+  },
+  "meshes": [
+    {
+      "name": "Import to allocate buffer 0",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 1
+          }
+        }
+      ]
+    },
+    {
+      "name": "Import to allocate buffer 1",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 9
+          }
+        }
+      ]
+    },
+    {
+      "name": "Import to allocate buffer 2",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 10
+          }
+        }
+      ]
+    },
+    {
+      "name": "Scattered buffer views",
+      "note": "Attributes sorted alphabetically to have the import order match the file order",
+      "primitives": [
+        {
+          "attributes": {
+            "COLOR_0": 0,
+            "NORMAL": 1,
+            "POSITION": 2
+          }
+        }
+      ]
+    },
+    {
+      "name": "Scattered buffer views, different order",
+      "primitives": [
+        {
+          "attributes": {
+            "COLOR_0": 2,
+            "NORMAL": 1,
+            "POSITION": 0
+          }
+        }
+      ]
+    },
+    {
+      "name": "Scattered accessors",
+      "primitives": [
+        {
+          "attributes": {
+            "COLOR_0": 3,
+            "NORMAL": 4,
+            "POSITION": 5
+          }
+        }
+      ]
+    },
+    {
+      "name": "Scattered accessors, different order",
+      "primitives": [
+        {
+          "attributes": {
+            "COLOR_0": 5,
+            "NORMAL": 4,
+            "POSITION": 3
+          }
+        }
+      ]
+    },
+    {
+      "name": "First attribute overlapping the next two but not the last",
+      "note": "All other attributes are custom because there's no other way to preserve the alphabetical order",
+      "primitives": [
+        {
+          "attributes": {
+            "TEXCOORD_0": 6,
+            "_CUSTOM2": 0,
+            "_CUSTOM3": 2,
+            "_CUSTOM4": 1
+          }
+        }
+      ]
+    },
+    {
+      "name": "Last attribute overlapping the first two but not the previous",
+      "primitives": [
+        {
+          "attributes": {
+            "COLOR_0": 0,
+            "COLOR_1": 2,
+            "POSITION": 1,
+            "TEXCOORD_0": 6
+          }
+        }
+      ]
+    },
+    {
+      "name": "Empty attributes scattered around a buffer",
+      "primitives": [
+        {
+          "attributes": {
+            "NORMAL": 7,
+            "POSITION": 8
+          }
+        }
+      ]
+    },
+    {
+      "name": "Attributes aliasing each other",
+      "primitives": [
+        {
+          "attributes": {
+            "COLOR_0": 2,
+            "COLOR_1": 1,
+            "NORMAL": 1,
+            "POSITION": 2
+          }
+        }
+      ]
+    },
+    {
+      "name": "Multiple buffers",
+      "primitives": [
+        {
+          "attributes": {
+            "COLOR_0": 0,
+            "NORMAL": 9,
+            "POSITION": 10
+          }
+        }
+      ]
+    },
+    {
+      "name": "Multiple buffers, different order",
+      "primitives": [
+        {
+          "attributes": {
+            "COLOR_0": 10,
+            "NORMAL": 9,
+            "POSITION": 0
+          }
+        }
+      ]
+    }
+  ],
+  "accessors": [
+    {
+      "name": "0",
+      "bufferView": 0,
+      "componentType": 5121,
+      "normalized": true,
+      "count": 3,
+      "type": "VEC3"
+    },
+    {
+      "name": "1",
+      "bufferView": 1,
+      "componentType": 5126,
+      "count": 3,
+      "type": "VEC3"
+    },
+    {
+      "name": "2",
+      "bufferView": 2,
+      "componentType": 5123,
+      "normalized": true,
+      "count": 3,
+      "type": "VEC3"
+    },
+    {
+      "name": "3",
+      "bufferView": 3,
+      "byteOffset": 10,
+      "componentType": 5121,
+      "normalized": true,
+      "count": 3,
+      "type": "VEC3"
+    },
+    {
+      "name": "4",
+      "bufferView": 3,
+      "byteOffset": 100,
+      "componentType": 5126,
+      "count": 3,
+      "type": "VEC3"
+    },
+    {
+      "name": "5",
+      "bufferView": 4,
+      "byteOffset": 50,
+      "componentType": 5123,
+      "normalized": true,
+      "count": 3,
+      "type": "VEC3"
+    },
+    {
+      "name": "6",
+      "bufferView": 5,
+      "componentType": 5123,
+      "normalized": true,
+      "count": 3,
+      "type": "VEC2"
+    },
+    {
+      "name": "7",
+      "bufferView": 6,
+      "componentType": 5126,
+      "count": 0,
+      "type": "VEC3"
+    },
+    {
+      "name": "8",
+      "bufferView": 7,
+      "componentType": 5123,
+      "normalized": true,
+      "count": 0,
+      "type": "VEC3"
+    },
+    {
+      "name": "9",
+      "bufferView": 8,
+      "componentType": 5126,
+      "count": 3,
+      "type": "VEC3"
+    },
+    {
+      "name": "10",
+      "bufferView": 9,
+      "componentType": 5123,
+      "normalized": true,
+      "count": 3,
+      "type": "VEC3"
+    }
+  ],
+  "bufferViews": [
+    {
+      "name": "0",
+      "buffer": 0,
+      "byteOffset": 10,
+      "byteLength": 9
+    },
+    {
+      "name": "1",
+      "buffer": 0,
+      "byteOffset": 100,
+      "byteLength": 36
+    },
+    {
+      "name": "2",
+      "buffer": 0,
+      "byteOffset": 50,
+      "byteLength": 22,
+      "byteStride": 8
+    },
+    {
+      "name": "3",
+      "buffer": 0,
+      "byteOffset": 0,
+      "byteLength": 136
+    },
+    {
+      "name": "4",
+      "buffer": 0,
+      "byteOffset": 0,
+      "byteLength": 136,
+      "byteStride": 8
+    },
+    {
+      "name": "5",
+      "buffer": 0,
+      "byteOffset": 2,
+      "byteLength": 76,
+      "byteStride": 36
+    },
+    {
+      "name": "6",
+      "buffer": 0,
+      "byteOffset": 136,
+      "byteLength": 0
+    },
+    {
+      "name": "7",
+      "buffer": 0,
+      "byteOffset": 10,
+      "byteLength": 16,
+      "byteStride": 8
+    },
+    {
+      "name": "8",
+      "buffer": 2,
+      "byteOffset": 12,
+      "byteLength": 36
+    },
+    {
+      "name": "9",
+      "buffer": 1,
+      "byteOffset": 0,
+      "byteLength": 24,
+      "byteStride": 8
+    }
+  ],
+  "buffers": [
+    {
+      "byteLength": 136,
+      "uri": "mesh-buffers.0.bin"
+    },
+    {
+      "byteLength": 24,
+      "uri": "mesh-buffers.1.bin"
+    },
+    {
+      "byteLength": 48,
+      "uri": "mesh-buffers.2.bin"
+    }
+  ]
+}

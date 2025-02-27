@@ -331,6 +331,13 @@ imported meshes as well. Their mapping to/from a string can be queried using
 unsupported types (such as non-normalized integer matrices) cause the import to
 fail.
 
+As glTF vertex data may span any buffer subranges, the importer copies just the
+actually used buffer ranges, aligning each to four bytes. Other than that, the
+vertex data isn't repacked in any way and interleaved attributes keep their
+layout even if it contains gaps with an assumption that such layout was done
+for a reason. You can use @ref MeshTools::interleave() and other @ref MeshTools
+algorithms to perform layout optimizations post import, if needed.
+
 @subsection Trade-GltfImporter-behavior-materials Material import
 
 -   If present, builtin [metallic/roughness](https://www.khronos.org/registry/glTF/specs/2.0/glTF-2.0.html#metallic-roughness-material) material is imported,

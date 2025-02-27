@@ -1,0 +1,18 @@
+#           +--- offset 2 + 0*36 = 2, texcoords
+#           |     +--- offset 10, colors
+#           |     |      +--- offset 2 + 1*36 = 38, texcoords
+#           |     |      |      +--- offset 50, normals
+#           |     |      |      |             +--- offset 2 + 2*36 = 74, texcoords
+#           v     v      v      v             v      v--- offset 100, positions
+type = "<2x 2H 4x 9B 19x 2H 8x 3Hxx3Hxx3H 2x 2H 22x 3f3f3f"
+input = [
+    0xaaaa, 0xbbbb,                                         # first texcoords
+    1, 1, 1, 2, 2, 2, 3, 3, 3,                              # colors
+    0xcccc, 0xdddd,                                         # second texcoords
+    0x1111, 0x2222, 0x3333, 0x4444, 0x5555, 0x6666, 0x7777, 0x8888, 0x9999,
+                                                            # normals
+    0xeeee, 0xffff,                                         # third texcoords
+    1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0             # positions
+]
+
+# kate: hl python

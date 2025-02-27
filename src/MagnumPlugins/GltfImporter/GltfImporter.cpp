@@ -5,6 +5,7 @@
                 2020, 2021, 2022, 2023, 2024, 2025
               Vladimír Vondruš <mosra@centrum.cz>
     Copyright © 2021 Pablo Escobar <mail@rvrs.in>
+    Copyright © 2022 Hugo Amiard <hugo.amiard@wonderlandengine.com>
     Copyright © 2023 Noeri Huisman <mrxz@users.noreply.github.com>
 
     Permission is hereby granted, free of charge, to any person obtaining a
@@ -3377,15 +3378,28 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
             return a.morphTargetId == b.morphTargetId && a.name == b.name;
         });
 
+    /* Buffer ranges spanning all attributes. After collecting them for all
+       attributes they get sorted by `buffer` and `begin` to allow overlapping
+       ranges to be merged together. While it would be *theoretically* enough
+       to sort by just `begin` to discover overlapping ranges, the buffers can
+       get allocated in arbitrary order, causing the output to not be
+       deterministic. By sorting by the `buffer` index first we ensure
+       consistent ordering regardless of allocator used or the level of memory
+       fragmentation. */
+    struct BufferRange {
+        UnsignedInt attribute;
+        UnsignedInt buffer;
+        const char *begin, *end;
+    };
+    Containers::Array<BufferRange> bufferRanges{NoInit, uniqueAttributeCount};
+
     /* Gather all (whitelisted) attributes and the total buffer range spanning
        them */
-    UnsignedInt bufferId = 0;
     UnsignedInt vertexCount = 0;
     UnsignedInt attributeId = 0;
     UnsignedInt jointIdAttributeCount = 0;
     UnsignedInt weightAttributeCount = 0;
     Containers::Pair<Containers::StringView, Int> lastNumberedAttribute;
-    Math::Range1D<std::size_t> bufferRange;
     /* Cannot be NoInit because that would use a custom deleter which is
        disallowed to avoid dangling function pointer call after the plugin is
        unloaded :( */
@@ -3582,37 +3596,39 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
                 name = _d->meshAttributesForName.at(attribute.name);
         }
 
-        /* Remember which buffer the attribute is in and the range, for
-           consecutive attribs expand the range */
-        const Containers::Triple<Containers::ArrayView<const char>, UnsignedInt, UnsignedInt> bufferView = *_d->bufferViews[accessor->third()];
+        /* Remember vertex count and ensure all accessors have the same */
         if(attributeId == 0) {
-            bufferId = bufferView.third();
-            bufferRange = Math::Range1D<std::size_t>::fromSize(reinterpret_cast<std::size_t>(bufferView.first().data()), bufferView.first().size());
             vertexCount = accessor->first().size()[0];
-        } else {
-            /* ... and probably never will be */
-            if(bufferView.third() != bufferId) {
-                Error{} << "Trade::GltfImporter::mesh(): meshes spanning multiple buffers are not supported";
-                return {};
-            }
-
-            bufferRange = Math::join(bufferRange, Math::Range1D<std::size_t>::fromSize(reinterpret_cast<std::size_t>(bufferView.first().data()), bufferView.first().size()));
-
-            if(accessor->first().size()[0] != vertexCount) {
-                Error e;
-                e << "Trade::GltfImporter::mesh(): mismatched vertex count for attribute" << attribute.name;
-                if(attribute.morphTargetId != -1)
-                    e << "in morph target" << attribute.morphTargetId;
-                e << Debug::nospace << ", expected" << vertexCount << "but got" << accessor->first().size()[0];
-                return {};
-            }
+        } else if(accessor->first().size()[0] != vertexCount) {
+            Error e;
+            e << "Trade::GltfImporter::mesh(): mismatched vertex count for attribute" << attribute.name;
+            if(attribute.morphTargetId != -1)
+                e << "in morph target" << attribute.morphTargetId;
+            e << Debug::nospace << ", expected" << vertexCount << "but got" << accessor->first().size()[0];
+            return {};
         }
+
+        /* Remember the buffer index and memory range the attribute is in.
+           Cannot take just the buffer view range because the accessor could be
+           a tiny slice of that (which is the case for example with the Buggy
+           model in glTF Sample Assets), thus have to take exactly the range
+           the accessor spans. */
+        const char* const attributeDataBegin = static_cast<const char*>(accessor->first().data());
+        bufferRanges[attributeId] = {
+            attributeId,
+            _d->bufferViews[accessor->third()]->third(), /* buffer ID */
+            attributeDataBegin,
+            /* Unless there are no vertices, from the last vertex we take just
+               the size the actual format spans, including array size such as
+               for skinning attributes */
+            attributeDataBegin + (vertexCount ? (vertexCount - 1)*accessor->first().stride()[0] + vertexFormatSize(accessor->second())*(arraySize ? arraySize : 1) : 0),
+        };
 
         /** @todo Check that accessor stride >= vertexFormatSize(format)? */
 
         /* Fill in an attribute. Points to the input data, will be patched to
            the output data once we know where it's allocated. */
-        attributeData[attributeId++] = MeshAttributeData{name, accessor->second(), accessor->first(), arraySize, attribute.morphTargetId};
+        attributeData[attributeId] = MeshAttributeData{name, accessor->second(), accessor->first(), arraySize, attribute.morphTargetId};
 
         /* For backwards compatibility we'll insert also a custom "JOINTS" /
            "WEIGHTS" attributes below, count how many of them we'll need */
@@ -3620,41 +3636,11 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
         if((name == MeshAttribute::JointIds || name == MeshAttribute::Weights) && configuration().value<bool>("compatibilitySkinningAttributes"))
             ++compatibilitySkinningAttributeCount;
         #endif
+
+        ++attributeId;
     }
 
-    /* For backwards compatibility insert custom "JOINTS" and "WEIGHTS"
-       attributes which are a Vector4<T> instead of T[4]. The attribute array
-       has to remain with the default deleter, so allocate a new one with extra
-       space and then put them at the end. */
-    #ifdef MAGNUM_BUILD_DEPRECATED
-    if(compatibilitySkinningAttributeCount) {
-        /* Again cannot be NoInit because that would use a custom deleter which
-           is disallowed to avoid dangling function pointer call after the
-           plugin is unloaded */
-        Containers::Array<MeshAttributeData> compatibilityAttributeData{attributeData.size() + compatibilitySkinningAttributeCount};
-        Utility::copy(attributeData, compatibilityAttributeData.prefix(attributeData.size()));
-
-        for(const MeshAttributeData& attribute: attributeData) {
-            MeshAttribute name;
-            if(attribute.name() == MeshAttribute::JointIds)
-                name = _d->meshAttributesForName.at("JOINTS"_s);
-            else if(attribute.name() == MeshAttribute::Weights)
-                name = _d->meshAttributesForName.at("WEIGHTS"_s);
-            else continue;
-
-            /* The builtin attribute name is replaced with a custom one, format
-               array size becomes number of vector components */
-            compatibilityAttributeData[attributeId++] = MeshAttributeData{name, vertexFormat(attribute.format(), attribute.arraySize(), isVertexFormatNormalized(attribute.format())), attribute.data(), 0, attribute.morphTargetId()};
-        }
-
-        /* Replace the attribute data array with the new one containing also
-           the compatibility attributes */
-        Utility::swap(attributeData, compatibilityAttributeData);
-    }
-    #endif
-
-    /* Verify we really filled all attributes, including the compatibility ones
-       at the end */
+    /* Verify we really filled all attributes */
     CORRADE_INTERNAL_ASSERT(attributeId == attributeData.size());
 
     /* 3.7.2.1 (Geometry § Meshes § Overview) says "[count] MUST be non-zero",
@@ -3675,58 +3661,196 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
         return {};
     }
 
-    /* Allocate & copy vertex data, if any */
-    Containers::ArrayView<const char> inputVertexData{reinterpret_cast<const char*>(bufferRange.min()), bufferRange.size()};
-    Containers::Array<char> vertexData{NoInit, bufferRange.size()};
-    Utility::copy(inputVertexData, vertexData);
+    /* Sort buffer ranges by their begin pointer, which then allows merging
+       ones that overlap in a single pass afterwards. No need to use
+       std::stable_sort() because if two accessors begin at the same memory,
+       both will get the same offset in the output buffer, no matter the
+       order.
 
-    /* Convert the attributes from relative to absolute and do additional
-       patching */
-    for(std::size_t i = 0; i != attributeData.size(); ++i) {
-        /* glTF only requires buffer views to be large enough to fit the actual
-           data, not to have the size large enough to fit `count*stride`
-           elements. The StridedArrayView expects the latter, so we fake the
-           vertexData size to satisfy the assert. For simplicity we overextend
-           by the whole stride instead of `offset + typeSize`, relying on
-           parseAccessor() having checked the bounds already (and there is a
-           similar workaround when populating the output view). */
-        /** @todo instead of faking the size, split the offset into offset in
-            whole strides and the remainder (Math::div), then form the view
-            with offset in whole strides and then "shift" the view by the
-            remainder (once there's StridedArrayView::shift() or some such) */
-        Containers::StridedArrayView1D<char> data{{vertexData, vertexData.size() + attributeData[i].stride()},
-            vertexData + attributeData[i].offset(inputVertexData),
-            vertexCount, attributeData[i].stride()};
+       To avoid different results depending on where the individual buffers
+       were allocated in memory, sort by buffer IDs first. This is verified in
+       the meshBuffers() test by explicitly importing particular buffers in
+       different order, causing their mutual allocation order to differ. */
+    std::sort(bufferRanges.begin(), bufferRanges.end(), [](const BufferRange& a, const BufferRange& b) {
+        if(a.buffer != b.buffer)
+            return a.buffer < b.buffer;
+        return a.begin < b.begin;
+    });
 
-        attributeData[i] = MeshAttributeData{attributeData[i].name(),
-            attributeData[i].format(), data, attributeData[i].arraySize(), attributeData[i].morphTargetId()};
+    /* Go through the sorted ranges and merge ones that either just touch (for
+       example when one attribute is right after the one before) or overlap
+       (for example when two or more attributes are interleaved together). */
+    std::size_t inputRange = 0;
+    for(std::size_t i = 1; i < bufferRanges.size(); ++i) {
+        /* If the buffer is different (which means the two buffer ranges may be
+           in any order relative to each other) or the input range ends before
+           this one, nothing gets merged, and next iteration we'll compare to
+           this range instead */
+        if(bufferRanges[inputRange].buffer != bufferRanges[i].buffer ||
+           bufferRanges[inputRange].end < bufferRanges[i].begin) {
+            inputRange = i;
 
-        /* Flip Y axis of texture coordinates, unless it's done in the material
-           instead */
-        if(attributeData[i].name() == MeshAttribute::TextureCoordinates && !_d->textureCoordinateYFlipInMaterial) {
-           if(attributeData[i].format() == VertexFormat::Vector2)
-                for(auto& c: Containers::arrayCast<Vector2>(data))
-                    c.y() = 1.0f - c.y();
-            else if(attributeData[i].format() == VertexFormat::Vector2ubNormalized)
-                for(auto& c: Containers::arrayCast<Vector2ub>(data))
-                    c.y() = 255 - c.y();
-            else if(attributeData[i].format() == VertexFormat::Vector2usNormalized)
-                for(auto& c: Containers::arrayCast<Vector2us>(data))
-                    c.y() = 65535 - c.y();
-            /* For these it's always done in the material texture transform as
-               we can't do a 1 - y flip like above. These are allowed only by
-               the KHR_mesh_quantization formats and in that case the texture
-               transform should be always present. */
-            /* LCOV_EXCL_START */
-            else if(attributeData[i].format() != VertexFormat::Vector2bNormalized &&
-                    attributeData[i].format() != VertexFormat::Vector2sNormalized &&
-                    attributeData[i].format() != VertexFormat::Vector2ub &&
-                    attributeData[i].format() != VertexFormat::Vector2b &&
-                    attributeData[i].format() != VertexFormat::Vector2us &&
-                    attributeData[i].format() != VertexFormat::Vector2s)
-                CORRADE_INTERNAL_ASSERT_UNREACHABLE();
-            /* LCOV_EXCL_STOP */
+        /* If the input range end is exactly at this range begin or further,
+           merge the two. Mark this range as merged to the previous by setting
+           its `end` to nullptr. A max() is used because the original range may
+           still extend beyond this one, verified in one of the cases in the
+           meshBuffers() test. */
+        } else {
+            bufferRanges[inputRange].end = Utility::max(bufferRanges[inputRange].end, bufferRanges[i].end);
+            bufferRanges[i].end = nullptr;
         }
+    }
+
+    /* At this point, entries in bufferRanges that don't have end offset all 1s
+       are all unique & mutually non-overlapping. Calculate the total size,
+       with each range aligned to four bytes, allocate an array for them and
+       then copy the vertex data there in a second pass. */
+    std::size_t vertexDataSize = 0;
+    for(const BufferRange& i: bufferRanges) {
+        /* The second pass below checks also for `end == begin` in case `end`
+           is nullptr, but in that case the range is empty and wouldn't add
+           anything to vertexDataSize, so we can skip that too */
+        if(!i.end)
+            continue;
+        /* Align to four bytes */
+        vertexDataSize += 4*((i.end - i.begin + 3)/4);
+    }
+    Containers::Array<char> vertexData{NoInit, vertexDataSize};
+    std::size_t rangeToCopyFrom = ~std::size_t{};
+    std::size_t vertexDataOffset = 0;
+    for(std::size_t i = 0; i != bufferRanges.size(); ++i) {
+        /* If this range wasn't merged to an earlier one, signalized by `end`
+           being nullptr, copy its data. In case of empty meshes the `begin`
+           can be nullptr as well, that's not a merged range. */
+        if(bufferRanges[i].end || bufferRanges[i].end == bufferRanges[i].begin) {
+            if(i != 0)
+                /* Align to four bytes, matching the above */
+                vertexDataOffset += 4*((bufferRanges[rangeToCopyFrom].end - bufferRanges[rangeToCopyFrom].begin + 3)/4);
+            const std::size_t size = bufferRanges[i].end - bufferRanges[i].begin;
+            Utility::copy(
+                Containers::arrayView(bufferRanges[i].begin, size),
+                vertexData.sliceSize(vertexDataOffset, size));
+
+            /* Zero-fill the extra bytes in case the range will get padded.
+               Assuming large meshes consisting of rather few buffer ranges
+               this is faster than allocating `vertexData` with ValueInit. */
+            const std::size_t alignedSize = 4*((size + 3)/4);
+            for(std::size_t i = size; i != alignedSize; ++i)
+                vertexData[vertexDataOffset + i] = '\0';
+
+            rangeToCopyFrom = i;
+        }
+
+        /* The MeshAttributeData corresponding to this range was initialized
+           with a view directly on the input buffer. Redirect it to point to
+           the vertexData array. */
+        MeshAttributeData& attribute = attributeData[bufferRanges[i].attribute];
+        attribute = MeshAttributeData{
+            attribute.name(),
+            attribute.format(),
+            Containers::StridedArrayView1D<char>{
+                /* glTF only requires buffer views to be large enough to fit
+                   the actual data, not to have the size large enough to fit
+                   `count*stride` elements. The StridedArrayView expects the
+                   latter, so we fake the vertexData size to satisfy the
+                   assert. For simplicity we overextend by the whole stride
+                   instead of `offset + typeSize`, relying on parseAccessor()
+                   having checked the bounds already (and there is a similar
+                   workaround when populating the output view). */
+                /** @todo instead of faking the size, split the offset into
+                    offset in whole strides and the remainder (Math::div), then
+                    form the view with offset in whole strides and then "shift"
+                    the view by the remainder (once there's
+                    StridedArrayView::shift() or some such) */
+                {vertexData, vertexData.size() + attribute.stride()},
+                /* The input buffer range we is starting at
+                   vertexData[vertexDataOffset] ... */
+                vertexData + vertexDataOffset +
+                    /* ... the attribute is then at an offset that's a
+                       difference between beginning of the range we copied from
+                       and the actual attribute data pointer */
+                    (static_cast<const char*>(attribute.data().data()) - bufferRanges[rangeToCopyFrom].begin),
+                vertexCount, attribute.stride()},
+            attribute.arraySize(),
+            attribute.morphTargetId()};
+    }
+
+    /* Verify we copied everything to the correct offsets. The vertexDataOffset
+       should contain everything except the last range, which is contained in
+       rangeToCopyFrom */
+    CORRADE_INTERNAL_ASSERT(bufferRanges.isEmpty() || vertexDataOffset + 4*(std::size_t(bufferRanges[rangeToCopyFrom].end - bufferRanges[rangeToCopyFrom].begin + 3)/4) == vertexDataSize);
+
+    /* For backwards compatibility insert custom "JOINTS" and "WEIGHTS"
+       attributes which are a Vector4<T> instead of T[4]. The attribute array
+       has to remain with the default deleter, so allocate a new one with extra
+       space and then put them at the end.
+
+       This is done only after the attributes were patched to point to the
+       output `vertexData` above so we can just reuse that patched view instead
+       of having to patch it twice. */
+    #ifdef MAGNUM_BUILD_DEPRECATED
+    if(compatibilitySkinningAttributeCount) {
+        /* Again cannot be NoInit because that would use a custom deleter which
+           is disallowed to avoid dangling function pointer call after the
+           plugin is unloaded */
+        Containers::Array<MeshAttributeData> compatibilityAttributeData{attributeData.size() + compatibilitySkinningAttributeCount};
+        Utility::copy(attributeData, compatibilityAttributeData.prefix(attributeData.size()));
+
+        for(const MeshAttributeData& attribute: attributeData) {
+            MeshAttribute name;
+            if(attribute.name() == MeshAttribute::JointIds)
+                name = _d->meshAttributesForName.at("JOINTS"_s);
+            else if(attribute.name() == MeshAttribute::Weights)
+                name = _d->meshAttributesForName.at("WEIGHTS"_s);
+            else continue;
+
+            /* The builtin attribute name is replaced with a custom one, format
+               array size becomes number of vector components */
+            compatibilityAttributeData[attributeId] = MeshAttributeData{name, vertexFormat(attribute.format(), attribute.arraySize(), isVertexFormatNormalized(attribute.format())), attribute.data(), 0, attribute.morphTargetId()};
+            ++attributeId;
+        }
+
+        /* Replace the attribute data array with the new one containing also
+           the compatibility attributes */
+        Utility::swap(attributeData, compatibilityAttributeData);
+    }
+
+    /* Verify we really filled all attributes, including the compatibility ones
+       at the end */
+    CORRADE_INTERNAL_ASSERT(attributeId == attributeData.size());
+    #endif
+
+    /* Flip Y axis of texture coordinates, unless it's done in the material
+       instead */
+    for(std::size_t i = 0; i != attributeData.size(); ++i) if(attributeData[i].name() == MeshAttribute::TextureCoordinates && !_d->textureCoordinateYFlipInMaterial) {
+        /* See a similar case above for why the extra stride is added */
+        Containers::StridedArrayView1D<char> data{{vertexData, vertexData.size() + attributeData[i].stride()},
+            const_cast<char*>(static_cast<const char*>(attributeData[i].data().data())),
+            attributeData[i].data().size(),
+            attributeData[i].stride()};
+
+        if(attributeData[i].format() == VertexFormat::Vector2)
+            for(auto& c: Containers::arrayCast<Vector2>(data))
+                c.y() = 1.0f - c.y();
+        else if(attributeData[i].format() == VertexFormat::Vector2ubNormalized)
+            for(auto& c: Containers::arrayCast<Vector2ub>(data))
+                c.y() = 255 - c.y();
+        else if(attributeData[i].format() == VertexFormat::Vector2usNormalized)
+            for(auto& c: Containers::arrayCast<Vector2us>(data))
+                c.y() = 65535 - c.y();
+        /* For these it's always done in the material texture transform as
+           we can't do a 1 - y flip like above. These are allowed only by
+           the KHR_mesh_quantization formats and in that case the texture
+           transform should be always present. */
+        /* LCOV_EXCL_START */
+        else if(attributeData[i].format() != VertexFormat::Vector2bNormalized &&
+                attributeData[i].format() != VertexFormat::Vector2sNormalized &&
+                attributeData[i].format() != VertexFormat::Vector2ub &&
+                attributeData[i].format() != VertexFormat::Vector2b &&
+                attributeData[i].format() != VertexFormat::Vector2us &&
+                attributeData[i].format() != VertexFormat::Vector2s)
+            CORRADE_INTERNAL_ASSERT_UNREACHABLE();
+        /* LCOV_EXCL_STOP */
     }
 
     /* Indices */

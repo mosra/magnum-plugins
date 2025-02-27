@@ -83,7 +83,8 @@ namespace Magnum {
     difference is that @relativeref{Trade,GltfImporter} by default fails the
     import if the file requires an extension the importer is not aware of, but
     that can be overriden from the plugin-specific configuration. See also
-    [mosra/magnum-plugins#139](https://github.com/mosra/magnum-plugins/issues/139).
+    [mosra/magnum-plugins#139](https://github.com/mosra/magnum-plugins/issues/139)
+    and [mosra/magnum-plugins#124](https://github.com/mosra/magnum-plugins/pull/124).
     Additionally, these new features are added compared to `TinyGltfImporter`:
     -   [MSFT_texture_dds](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Vendor/MSFT_texture_dds/README.md)
     -   [EXT_texture_webp](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Vendor/EXT_texture_webp/README.md)

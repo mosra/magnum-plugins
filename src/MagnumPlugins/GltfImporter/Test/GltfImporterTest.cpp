@@ -153,6 +153,7 @@ struct GltfImporterTest: TestSuite::Tester {
     void meshPrimitivesTypes();
     void meshSizeNotMultipleOfStride();
     void meshInvalidWholeFile();
+    void meshBuffers();
     void meshInvalid();
     void meshInvalidBufferNotFound();
 
@@ -903,6 +904,15 @@ constexpr struct {
 };
 
 const struct {
+    const char* name;
+    UnsignedInt bufferImportOrder[3];
+} MeshBuffersData[]{
+    {"", {0, 1, 2}},
+    {"buffers allocated in reverse order", {2, 1, 0}},
+    {"buffers allocated in shuffled order", {0, 2, 1}},
+};
+
+const struct {
     TestSuite::TestCaseDescriptionSourceLocation name;
     const char* file;
     const char* message;
@@ -984,92 +994,90 @@ const struct {
     {"non-normalized byte matrix",
         "accessor 9 has an unsupported matrix component format Byte"},
     {"unknown type",
-        "accessor 18 has invalid type EEE"},
+        "accessor 17 has invalid type EEE"},
     {"unknown component type",
-        "accessor 19 has invalid componentType 9999"},
+        "accessor 18 has invalid componentType 9999"},
     {"sparse accessor",
         "accessor 10 is using sparse storage, which is unsupported"},
-    {"multiple buffers",
-        "meshes spanning multiple buffers are not supported"},
     {"invalid index accessor",
-        "accessor 13 needs 40 bytes but buffer view 0 has only 36"},
+        "accessor 12 needs 40 bytes but buffer view 0 has only 36"},
     {"accessor range out of range",
-        "accessor 14 needs 48 bytes but buffer view 0 has only 36"},
+        "accessor 13 needs 48 bytes but buffer view 0 has only 36"},
     {"buffer view range out of range",
-        "buffer view 3 needs 60 bytes but buffer 1 has only 59"},
+        "buffer view 2 needs 69 bytes but buffer 0 has only 68"},
     {"buffer index out of range",
-        "buffer index 7 out of range for 7 buffers"},
+        "buffer index 6 out of range for 6 buffers"},
     {"buffer view index out of range",
-        "buffer view index 16 out of range for 16 buffer views"},
+        "buffer view index 15 out of range for 15 buffer views"},
     {"accessor index out of range",
-        "accessor index 42 out of range for 42 accessors"},
+        "accessor index 41 out of range for 41 accessors"},
     {"mesh index accessor out of range",
-        "accessor index 42 out of range for 42 accessors"},
+        "accessor index 41 out of range for 41 accessors"},
     {"buffer with missing uri property",
-        "buffer 2 has missing uri property"},
+        "buffer 1 has missing uri property"},
     {"buffer with invalid uri property",
-        "Utility::Json::parseString(): expected a string, got Utility::JsonToken::Type::Array at {}:927:14\n"
-        "Trade::GltfImporter::mesh(): buffer 3 has invalid uri property\n"},
+        "Utility::Json::parseString(): expected a string, got Utility::JsonToken::Type::Array at {}:898:14\n"
+        "Trade::GltfImporter::mesh(): buffer 2 has invalid uri property\n"},
     {"buffer with invalid uri",
         "invalid URI escape sequence %%"},
     {"buffer with missing byteLength property",
-        "buffer 5 has missing or invalid byteLength property"},
+        "buffer 4 has missing or invalid byteLength property"},
     {"buffer with invalid byteLength property",
-        "Utility::Json::parseSize(): too large integer literal -3 at {}:941:21\n"
-        "Trade::GltfImporter::mesh(): buffer 6 has missing or invalid byteLength property\n"},
+        "Utility::Json::parseSize(): too large integer literal -3 at {}:912:21\n"
+        "Trade::GltfImporter::mesh(): buffer 5 has missing or invalid byteLength property\n"},
     {"buffer view with missing buffer property",
-        "buffer view 9 has missing or invalid buffer property"},
+        "buffer view 8 has missing or invalid buffer property"},
     {"buffer view with invalid buffer property",
-        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:877:17\n"
-        "Trade::GltfImporter::mesh(): buffer view 10 has missing or invalid buffer property\n"},
+        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:854:17\n"
+        "Trade::GltfImporter::mesh(): buffer view 9 has missing or invalid buffer property\n"},
     {"buffer view with invalid byteOffset property",
-        "Utility::Json::parseSize(): too large integer literal -1 at {}:883:21\n"
-        "Trade::GltfImporter::mesh(): buffer view 11 has invalid byteOffset property\n"},
+        "Utility::Json::parseSize(): too large integer literal -1 at {}:860:21\n"
+        "Trade::GltfImporter::mesh(): buffer view 10 has invalid byteOffset property\n"},
     {"buffer view with missing byteLength property",
-        "buffer view 12 has missing or invalid byteLength property"},
+        "buffer view 11 has missing or invalid byteLength property"},
     {"buffer view with invalid byteLength property",
-        "Utility::Json::parseSize(): too large integer literal -12 at {}:893:21\n"
-        "Trade::GltfImporter::mesh(): buffer view 13 has missing or invalid byteLength property\n"},
+        "Utility::Json::parseSize(): too large integer literal -12 at {}:870:21\n"
+        "Trade::GltfImporter::mesh(): buffer view 12 has missing or invalid byteLength property\n"},
     {"buffer view with invalid byteStride property",
-        "Utility::Json::parseUnsignedInt(): too large integer literal -4 at {}:899:21\n"
-        "Trade::GltfImporter::mesh(): buffer view 14 has invalid byteStride property\n"},
+        "Utility::Json::parseUnsignedInt(): too large integer literal -4 at {}:876:21\n"
+        "Trade::GltfImporter::mesh(): buffer view 13 has invalid byteStride property\n"},
     {"accessor with missing bufferView property",
         "accessor 11 has missing or invalid bufferView property"},
     {"accessor with invalid bufferView property",
-        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:739:21\n"
-        "Trade::GltfImporter::mesh(): accessor 30 has missing or invalid bufferView property\n"},
+        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:721:21\n"
+        "Trade::GltfImporter::mesh(): accessor 29 has missing or invalid bufferView property\n"},
     {"accessor with invalid byteOffset property",
-        "Utility::Json::parseSize(): too large integer literal -1 at {}:747:21\n"
-        "Trade::GltfImporter::mesh(): accessor 31 has invalid byteOffset property\n"},
+        "Utility::Json::parseSize(): too large integer literal -1 at {}:729:21\n"
+        "Trade::GltfImporter::mesh(): accessor 30 has invalid byteOffset property\n"},
     {"accessor with missing componentType property",
-        "accessor 32 has missing or invalid componentType property"},
+        "accessor 31 has missing or invalid componentType property"},
     {"accessor with invalid componentType property",
-        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:761:24\n"
-        "Trade::GltfImporter::mesh(): accessor 33 has missing or invalid componentType property\n"},
+        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:743:24\n"
+        "Trade::GltfImporter::mesh(): accessor 32 has missing or invalid componentType property\n"},
     {"accessor with missing count property",
-        "accessor 34 has missing or invalid count property"},
+        "accessor 33 has missing or invalid count property"},
     {"accessor with invalid count property",
-        "Utility::Json::parseSize(): too large integer literal -1 at {}:775:16\n"
-        "Trade::GltfImporter::mesh(): accessor 35 has missing or invalid count property\n"},
+        "Utility::Json::parseSize(): too large integer literal -1 at {}:757:16\n"
+        "Trade::GltfImporter::mesh(): accessor 34 has missing or invalid count property\n"},
     {"accessor with missing type property",
-        "accessor 36 has missing or invalid type property"},
+        "accessor 35 has missing or invalid type property"},
     {"accessor with invalid type property",
-        "Utility::Json::parseString(): expected a string, got Utility::JsonToken::Type::Number at {}:789:15\n"
-        "Trade::GltfImporter::mesh(): accessor 37 has missing or invalid type property\n"},
+        "Utility::Json::parseString(): expected a string, got Utility::JsonToken::Type::Number at {}:771:15\n"
+        "Trade::GltfImporter::mesh(): accessor 36 has missing or invalid type property\n"},
     {"accessor with invalid normalized property",
-        "Utility::Json::parseBool(): expected a bool, got Utility::JsonToken::Type::Null at {}:797:21\n"
-        "Trade::GltfImporter::mesh(): accessor 38 has invalid normalized property\n"},
+        "Utility::Json::parseBool(): expected a bool, got Utility::JsonToken::Type::Null at {}:779:21\n"
+        "Trade::GltfImporter::mesh(): accessor 37 has invalid normalized property\n"},
     {"invalid primitive property",
-        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:436:19\n"
+        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:425:19\n"
         "Trade::GltfImporter::mesh(): invalid primitive mode property\n"},
     {"invalid attribute property",
-        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:446:26\n"
+        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:435:26\n"
         "Trade::GltfImporter::mesh(): invalid attribute _WEIRD_EH\n"},
     {"invalid indices property",
-        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:456:22\n"
+        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:445:22\n"
         "Trade::GltfImporter::mesh(): invalid indices property\n"},
     {"invalid morph target attribute",
-        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:467:27\n"
+        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:456:27\n"
         "Trade::GltfImporter::mesh(): invalid morph target attribute POSITION\n"},
     {"different vertex count for morph target attribute",
         "Trade::GltfImporter::mesh(): mismatched vertex count for attribute TEXCOORD_0 in morph target 0, expected 3 but got 4\n"},
@@ -1749,6 +1757,9 @@ GltfImporterTest::GltfImporterTest() {
         Containers::arraySize(MeshPrimitivesTypesData));
 
     addTests({&GltfImporterTest::meshSizeNotMultipleOfStride});
+
+    addInstancedTests({&GltfImporterTest::meshBuffers},
+        Containers::arraySize(MeshBuffersData));
 
     addInstancedTests({&GltfImporterTest::meshInvalidWholeFile},
         Containers::arraySize(MeshInvalidWholeFileData));
@@ -5119,22 +5130,238 @@ void GltfImporterTest::meshPrimitivesTypes() {
 void GltfImporterTest::meshSizeNotMultipleOfStride() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "mesh-size-not-multiple-of-stride.gltf")));
-    CORRADE_COMPARE(importer->meshCount(), 1);
+    CORRADE_COMPARE(importer->meshCount(), 2);
 
     /* Verifies that mesh vertex data size not being multiple of stride doesn't
        cause an assertion when populating stridedArrayView internally (where it
        has to get extended by the stride) */
 
-    Containers::Optional<Trade::MeshData> mesh = importer->mesh(0);
-    CORRADE_VERIFY(mesh);
-    CORRADE_COMPARE(mesh->attributeCount(), 1);
-    CORRADE_VERIFY(mesh->hasAttribute(MeshAttribute::Position));
-    CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::Position), VertexFormat::Vector3);
-    CORRADE_COMPARE_AS(mesh->attribute<Vector3>(MeshAttribute::Position),
-        Containers::arrayView<Vector3>({
+    {
+        Containers::Optional<Trade::MeshData> mesh = importer->mesh(0);
+        CORRADE_VERIFY(mesh);
+        CORRADE_COMPARE(mesh->attributeCount(), 1);
+        CORRADE_VERIFY(mesh->hasAttribute(MeshAttribute::Position));
+        CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::Position), VertexFormat::Vector3);
+        CORRADE_COMPARE_AS(mesh->attribute<Vector3>(MeshAttribute::Position), Containers::arrayView<Vector3>({
             {1.0f, 2.0f, 3.0f},
             {4.0f, 5.0f, 6.0f}
         }), TestSuite::Compare::Container);
+
+    /* Another such case is with texture coordinate patching */
+    } {
+        /* Ensure the code path gets actually hit */
+        CORRADE_VERIFY(!importer->configuration().value<bool>("textureCoordinateYFlipInMaterial"));
+
+        Containers::Optional<Trade::MeshData> mesh = importer->mesh(1);
+        CORRADE_VERIFY(mesh);
+        CORRADE_COMPARE(mesh->attributeCount(), 1);
+        CORRADE_VERIFY(mesh->hasAttribute(MeshAttribute::TextureCoordinates));
+        CORRADE_COMPARE(mesh->attributeFormat(MeshAttribute::TextureCoordinates), VertexFormat::Vector2);
+        CORRADE_COMPARE_AS(mesh->attribute<Vector2>(MeshAttribute::TextureCoordinates), Containers::arrayView<Vector2>({
+            /* The coordinate is Y-flipped in the code path we're testing
+               here */
+            {2.0f, -2.0f},
+            {5.0f, -5.0f}
+        }), TestSuite::Compare::Container);
+    }
+}
+
+void GltfImporterTest::meshBuffers() {
+    auto&& data = MeshBuffersData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
+    /* Disable texture coordinate patching so we get exactly what's in the
+       file */
+    importer->configuration().setValue("textureCoordinateYFlipInMaterial", true);
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "mesh-buffers.gltf")));
+
+    /* First three meshes are to control buffer import order, ensure the
+       remaining are all imported and tested below */
+    CORRADE_COMPARE(importer->meshCount(), 3 + 6 + 2 + 1 + 1);
+
+    /* First import individual buffers in desired order, to verify that their
+       allocation order doesn't affect how the output is put together */
+    for(UnsignedInt i: data.bufferImportOrder)
+        CORRADE_VERIFY(importer->mesh(i));
+
+    /* For most cases there are two or more variants, each with different
+       attribute order but pointing to the same data, and the output data order
+       should be the same for all, sorted by the offset in the input buffer.
+
+       Attributes in the file are sorted alphabetically to match what the
+       importer does internally to deduplicate them. */
+    struct Mesh3 {
+        const char* name;
+        UnsignedInt order[3];
+    };
+
+    /* Scattered buffer views or accessors that don't overlap */
+    for(const Mesh3& i: {
+        Mesh3{"Scattered buffer views", {0, 1, 2}},
+        Mesh3{"Scattered buffer views, different order", {2, 1, 0}},
+        Mesh3{"Scattered accessors", {0, 1, 2}},
+        Mesh3{"Scattered accessors, different order", {2, 1, 0}},
+        Mesh3{"Multiple buffers", {0, 1, 2}},
+        Mesh3{"Multiple buffers, different order", {2, 1, 0}}
+    }) {
+        CORRADE_ITERATION(i.name);
+
+        Containers::Optional<Trade::MeshData> mesh = importer->mesh(i.name);
+        CORRADE_VERIFY(mesh);
+        CORRADE_COMPARE(mesh->attributeCount(), 3);
+
+        /* The ranges should be compacted together to just what's needed to
+           store the data, together with padding. The data aren't repacked tho,
+           so extra padding inside is kept. Extra padding is added here, and it
+           should be zero-filled:                        v               v */
+        CORRADE_COMPARE(mesh->vertexData().size(), 3*3 + 3 + (2*8 + 6) + 2 + 3*12);
+        CORRADE_COMPARE_AS(mesh->vertexData().sliceSize(3*3, 3),
+            Containers::arrayView({'\0', '\0', '\0'}),
+            TestSuite::Compare::Container);
+        CORRADE_COMPARE_AS(mesh->vertexData().sliceSize(3*3 + 3 + (2*8 + 6), 2),
+            Containers::arrayView({'\0', '\0'}),
+            TestSuite::Compare::Container);
+
+        CORRADE_COMPARE(mesh->attributeFormat(i.order[0]), VertexFormat::Vector3ubNormalized);
+        CORRADE_COMPARE(mesh->attributeOffset(i.order[0]), 0);
+        CORRADE_COMPARE(mesh->attributeStride(i.order[0]), 3);
+        CORRADE_COMPARE_AS(mesh->attribute<Vector3ub>(i.order[0]), Containers::arrayView<Vector3ub>({
+            {1, 1, 1},
+            {2, 2, 2},
+            {3, 3, 3},
+        }), TestSuite::Compare::Container);
+
+        CORRADE_COMPARE(mesh->attributeFormat(i.order[1]), VertexFormat::Vector3);
+        CORRADE_COMPARE(mesh->attributeOffset(i.order[1]), 36);
+        CORRADE_COMPARE(mesh->attributeStride(i.order[1]), 12);
+        CORRADE_COMPARE_AS(mesh->attribute<Vector3>(i.order[1]), Containers::arrayView<Vector3>({
+            {1.0f, 2.0f, 3.0f},
+            {4.0f, 5.0f, 6.0f},
+            {7.0f, 8.0f, 9.0f},
+        }), TestSuite::Compare::Container);
+
+        CORRADE_COMPARE(mesh->attributeFormat(i.order[2]), VertexFormat::Vector3usNormalized);
+        CORRADE_COMPARE(mesh->attributeOffset(i.order[2]), 12);
+        CORRADE_COMPARE(mesh->attributeStride(i.order[2]), 8);
+        CORRADE_COMPARE_AS(mesh->attribute<Vector3us>(i.order[2]), Containers::arrayView<Vector3us>({
+            {0x1111, 0x2222, 0x3333},
+            {0x4444, 0x5555, 0x6666},
+            {0x7777, 0x8888, 0x9999},
+        }), TestSuite::Compare::Container);
+    }
+
+    struct Mesh4 {
+        const char* name;
+        UnsignedInt order[4];
+    };
+
+    /* Single buffer, attribute that overlaps two other, causes them to be
+       imported as whole. The fourth attribute doesn't overlap the others and
+       thus is again picked alone without preserving padding before it. */
+    for(const Mesh4& i: {
+        Mesh4{"First attribute overlapping the next two but not the last", {0, 1, 2, 3}},
+        Mesh4{"Last attribute overlapping the first two but not the previous", {3, 0, 1, 2}},
+    }) {
+        CORRADE_ITERATION(i.name);
+
+        Containers::Optional<Trade::MeshData> mesh = importer->mesh(i.name);
+        CORRADE_VERIFY(mesh);
+        CORRADE_COMPARE(mesh->attributeCount(), 4);
+
+        /* The overlapping attribute spans 76 bytes, the remaining attribute is
+           placed right after. Both are aligned already so there's no padding
+           taking place. */
+        CORRADE_COMPARE(mesh->vertexData().size(), 76 + 3*12);
+
+        CORRADE_COMPARE(mesh->attributeFormat(i.order[0]), VertexFormat::Vector2usNormalized);
+        CORRADE_COMPARE(mesh->attributeOffset(i.order[0]), 0);
+        CORRADE_COMPARE(mesh->attributeStride(i.order[0]), 36);
+        CORRADE_COMPARE_AS(mesh->attribute<Vector2us>(i.order[0]), Containers::arrayView<Vector2us>({
+            {0xaaaa, 0xbbbb},
+            {0xcccc, 0xdddd},
+            {0xeeee, 0xffff},
+        }), TestSuite::Compare::Container);
+
+        CORRADE_COMPARE(mesh->attributeFormat(i.order[1]), VertexFormat::Vector3ubNormalized);
+        CORRADE_COMPARE(mesh->attributeOffset(i.order[1]), 8);
+        CORRADE_COMPARE(mesh->attributeStride(i.order[1]), 3);
+        CORRADE_COMPARE_AS(mesh->attribute<Vector3ub>(i.order[1]), Containers::arrayView<Vector3ub>({
+            {1, 1, 1},
+            {2, 2, 2},
+            {3, 3, 3},
+        }), TestSuite::Compare::Container);
+
+        CORRADE_COMPARE(mesh->attributeFormat(i.order[2]), VertexFormat::Vector3usNormalized);
+        CORRADE_COMPARE(mesh->attributeOffset(i.order[2]), 48);
+        CORRADE_COMPARE(mesh->attributeStride(i.order[2]), 8);
+        CORRADE_COMPARE_AS(mesh->attribute<Vector3us>(i.order[2]), Containers::arrayView<Vector3us>({
+            {0x1111, 0x2222, 0x3333},
+            {0x4444, 0x5555, 0x6666},
+            {0x7777, 0x8888, 0x9999},
+        }), TestSuite::Compare::Container);
+
+        CORRADE_COMPARE(mesh->attributeFormat(i.order[3]), VertexFormat::Vector3);
+        CORRADE_COMPARE(mesh->attributeOffset(i.order[3]), 76);
+        CORRADE_COMPARE(mesh->attributeStride(i.order[3]), 12);
+        CORRADE_COMPARE_AS(mesh->attribute<Vector3>(i.order[3]), Containers::arrayView<Vector3>({
+            {1.0f, 2.0f, 3.0f},
+            {4.0f, 5.0f, 6.0f},
+            {7.0f, 8.0f, 9.0f},
+        }), TestSuite::Compare::Container);
+    }
+
+    /* Empty attributes scattered around a buffer should still result in an
+       empty vertex buffer */
+    {
+        Containers::Optional<Trade::MeshData> mesh = importer->mesh("Empty attributes scattered around a buffer");
+        CORRADE_VERIFY(mesh);
+        CORRADE_COMPARE(mesh->attributeCount(), 2);
+
+        CORRADE_COMPARE(mesh->vertexData().size(), 0);
+
+        CORRADE_COMPARE(mesh->attributeFormat(0), VertexFormat::Vector3);
+        CORRADE_COMPARE(mesh->attributeOffset(0), 0);
+        CORRADE_COMPARE(mesh->attributeStride(0), 12);
+
+        CORRADE_COMPARE(mesh->attributeFormat(1), VertexFormat::Vector3usNormalized);
+        CORRADE_COMPARE(mesh->attributeOffset(1), 0);
+        CORRADE_COMPARE(mesh->attributeStride(1), 8);
+
+    /* Aliased attributes should appear just once in the output */
+    } {
+        Containers::Optional<Trade::MeshData> mesh = importer->mesh("Attributes aliasing each other");
+        CORRADE_VERIFY(mesh);
+        CORRADE_COMPARE(mesh->attributeCount(), 4);
+
+        /* Extra padding added here, it should be zero-filled in the vertex
+           data:                                               v */
+        CORRADE_COMPARE(mesh->vertexData().size(), (2*8 + 6) + 2 + 3*12);
+        CORRADE_COMPARE_AS(mesh->vertexData().sliceSize((2*8 + 6), 2),
+            Containers::arrayView({'\0', '\0'}),
+            TestSuite::Compare::Container);
+
+        for(UnsignedInt i: {0, 3}) {
+            CORRADE_COMPARE(mesh->attributeFormat(i), VertexFormat::Vector3usNormalized);
+            CORRADE_COMPARE(mesh->attributeOffset(i), 0);
+            CORRADE_COMPARE(mesh->attributeStride(i), 8);
+            CORRADE_COMPARE_AS(mesh->attribute<Vector3us>(i), Containers::arrayView<Vector3us>({
+                {0x1111, 0x2222, 0x3333},
+                {0x4444, 0x5555, 0x6666},
+                {0x7777, 0x8888, 0x9999},
+            }), TestSuite::Compare::Container);
+        }
+
+        for(UnsignedInt i: {1, 2}) {
+            CORRADE_COMPARE(mesh->attributeFormat(i), VertexFormat::Vector3);
+            CORRADE_COMPARE(mesh->attributeOffset(i), 24);
+            CORRADE_COMPARE(mesh->attributeStride(i), 12);
+            CORRADE_COMPARE_AS(mesh->attribute<Vector3>(i), Containers::arrayView<Vector3>({
+                {1.0f, 2.0f, 3.0f},
+                {4.0f, 5.0f, 6.0f},
+                {7.0f, 8.0f, 9.0f},
+            }), TestSuite::Compare::Container);
+        }
+    }
 }
 
 void GltfImporterTest::meshInvalidWholeFile() {
