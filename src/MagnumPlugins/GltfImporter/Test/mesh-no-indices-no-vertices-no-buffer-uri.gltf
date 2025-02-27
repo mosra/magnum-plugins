@@ -11,11 +11,22 @@
     {
       "buffer": 0,
       "byteLength": 0
+    },
+    {
+      "buffer": 0,
+      "byteLength": 0,
+      "byteStride": 16
     }
   ],
   "accessors": [
     {
       "bufferView": 0,
+      "componentType": 5126,
+      "count": 0,
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 1,
       "componentType": 5126,
       "count": 0,
       "type": "VEC3"
@@ -27,6 +38,15 @@
         {
           "attributes": {
             "POSITION": 0
+          }
+        }
+      ]
+    },
+    {
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 1
           }
         }
       ]

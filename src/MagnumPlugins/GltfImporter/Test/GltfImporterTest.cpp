@@ -761,12 +761,25 @@ const struct {
     const char* name;
     const char* suffix;
     Containers::Optional<bool> strict;
+    UnsignedInt mesh;
     const char* message;
 } MeshNoVerticesData[]{
-    {"ascii", ".gltf", {}, ""},
-    {"binary", ".glb", {}, ""},
-    {"strict, ascii", ".gltf", true, "Trade::GltfImporter::mesh(): strict mode enabled, disallowing a mesh with no vertices\n"},
-    {"strict, binary", ".glb", true, "Trade::GltfImporter::mesh(): strict mode enabled, disallowing a mesh with no vertices\n"}
+    {"ascii", ".gltf", {}, 0,
+        ""},
+    {"binary", ".glb", {}, 0,
+        ""},
+    {"explicit view stride, ascii", ".gltf", {}, 0,
+        ""},
+    {"explicit view stride, ascii", ".glb", {}, 0,
+        ""},
+    {"strict, ascii", ".gltf", true, 0,
+        "Trade::GltfImporter::mesh(): strict mode enabled, disallowing a mesh with no vertices\n"},
+    {"strict, binary", ".glb", true, 0,
+        "Trade::GltfImporter::mesh(): strict mode enabled, disallowing a mesh with no vertices\n"},
+    {"strict, explicit view stride, ascii", ".gltf", true, 1,
+        "Trade::GltfImporter::mesh(): strict mode enabled, disallowing a mesh with no vertices\n"},
+    {"strict, explicit view stride, binary", ".glb", true, 1,
+        "Trade::GltfImporter::mesh(): strict mode enabled, disallowing a mesh with no vertices\n"}
 };
 
 /** @todo remove once the compatibilitySkinningAttributes option is gone */
@@ -4134,10 +4147,11 @@ void GltfImporterTest::meshNoIndicesNoVerticesNoBufferUri() {
     Containers::String out;
     {
         Error redirectError{&out};
-        mesh = importer->mesh(0);
+        mesh = importer->mesh(data.mesh);
     }
 
-    CORRADE_COMPARE(!!mesh, !data.strict || !*data.strict); CORRADE_COMPARE(out, data.message);
+    CORRADE_COMPARE(!!mesh, !data.strict || !*data.strict);
+    CORRADE_COMPARE(out, data.message);
 
     if(mesh) {
         CORRADE_COMPARE(mesh->primitive(), MeshPrimitive::Triangles);
