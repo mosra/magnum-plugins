@@ -161,8 +161,8 @@ corrade_add_test(GltfSceneConverterTest GltfSceneConverterTest.cpp
         mesh-buffer-alignment.gltf
         mesh-buffer-views-interleaved-padding-begin-end.bin
         mesh-buffer-views-interleaved-padding-begin-end.gltf
-        mesh-buffer-views-interleaved-padding-begin.bin
-        mesh-buffer-views-interleaved-padding-begin.gltf
+        mesh-buffer-views-interleaved-padding-middle.bin
+        mesh-buffer-views-interleaved-padding-middle.gltf
         mesh-buffer-views-mixed.bin
         mesh-buffer-views-mixed.gltf
         mesh-buffer-views-noninterleaved.bin

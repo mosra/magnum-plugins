@@ -4,7 +4,7 @@
   },
   "buffers": [
     {
-      "uri": "mesh-buffer-views-interleaved-padding-begin.bin",
+      "uri": "mesh-buffer-views-interleaved-padding-middle.bin",
       "byteLength": 56
     }
   ],
@@ -34,7 +34,6 @@
     },
     {
       "bufferView": 1,
-      "byteOffset": 4,
       "componentType": 5126,
       "count": 2,
       "type": "VEC3",
@@ -43,7 +42,6 @@
     },
     {
       "bufferView": 1,
-      "byteOffset": 4,
       "componentType": 5126,
       "count": 2,
       "type": "VEC3"

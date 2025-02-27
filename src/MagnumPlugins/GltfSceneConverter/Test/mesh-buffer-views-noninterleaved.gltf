@@ -25,9 +25,9 @@
     },
     {
       "buffer": 0,
-      "byteOffset": 32,
-      "byteLength": 8,
-      "byteStride": 4,
+      "byteOffset": 24,
+      "byteLength": 16,
+      "byteStride": 8,
       "target": 34962
     }
   ],
@@ -49,6 +49,7 @@
     },
     {
       "bufferView": 2,
+      "byteOffset": 4,
       "componentType": 5121,
       "normalized": true,
       "count": 2,

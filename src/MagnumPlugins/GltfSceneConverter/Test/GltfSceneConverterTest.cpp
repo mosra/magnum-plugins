@@ -81,7 +81,7 @@ struct GltfSceneConverterTest: TestSuite::Tester {
 
     void addMesh();
     void addMeshBufferViewsNonInterleaved();
-    void addMeshBufferViewsInterleavedPaddingBegin();
+    void addMeshBufferViewsInterleavedPaddingMiddle();
     void addMeshBufferViewsInterleavedPaddingBeginEnd();
     void addMeshBufferViewsMixed();
     void addMeshNoAttributes();
@@ -2010,7 +2010,7 @@ GltfSceneConverterTest::GltfSceneConverterTest() {
         Containers::arraySize(FileVariantWithNamesData));
 
     addTests({&GltfSceneConverterTest::addMeshBufferViewsNonInterleaved,
-              &GltfSceneConverterTest::addMeshBufferViewsInterleavedPaddingBegin});
+              &GltfSceneConverterTest::addMeshBufferViewsInterleavedPaddingMiddle});
 
     addInstancedTests({&GltfSceneConverterTest::addMeshBufferViewsInterleavedPaddingBeginEnd},
         Containers::arraySize(VerboseData));
@@ -2453,20 +2453,26 @@ void GltfSceneConverterTest::addMeshBufferViewsNonInterleaved() {
     struct Vertices {
         Vector3 positions[2];
         Vector2ub textureCoordinates[2];
-        UnsignedInt padding;
-        Color4ub colors[2];
+        /* Padding that would be alone between attributes would get removed on
+           import by GltfImporter. If it's within an attribute, it won't,
+           except for the very first and very last occurence, which will. */
+        struct Color {
+            Color4ub color;
+            UnsignedInt padding;
+        } colors[2];
     } vertices[]{{
         {{1.0f, 2.0f, 3.0f}, {4.0f, 5.0f, 6.0f}},
         {{63, 127}, {191, 255}},
-        0xffeeffeeu,
-        {0x11223344_rgba, 0x55667788_rgba}
+        {{0x11223344_rgba, 0xffeeffeeu}, {0x55667788_rgba, 0xeeffeeffu}}
     }};
-    MeshData mesh{MeshPrimitive::Lines, {}, vertices, {
+    /* Omit the padding at the end, which isn't needed for anything and would
+       be stripped on import anyway */
+    MeshData mesh{MeshPrimitive::Lines, {}, Containers::arrayCast<const char>(Containers::arrayView(vertices)).exceptSuffix(4), {
         /* Even with mixed up order the buffer views should be written with the
            lowest offset first */
         MeshAttributeData{MeshAttribute::TextureCoordinates, VertexFormat::Vector2ubNormalized, Containers::arrayView(vertices->textureCoordinates)},
         MeshAttributeData{MeshAttribute::Position, Containers::arrayView(vertices->positions)},
-        MeshAttributeData{MeshAttribute::Color, Containers::arrayView(vertices->colors)},
+        MeshAttributeData{MeshAttribute::Color, Containers::stridedArrayView(vertices->colors).slice(&Vertices::Color::color)},
     }};
 
     Containers::Pointer<AbstractSceneConverter> converter =  _converterManager.instantiate("GltfSceneConverter");
@@ -2496,7 +2502,7 @@ void GltfSceneConverterTest::addMeshBufferViewsNonInterleaved() {
     CORRADE_COMPARE(importer->meshCount(), 1);
 
     /* The data should be exactly the same size, attributes with same offsets
-       and strides */
+       and strides. The importer however omits the final four-byte padding. */
     Containers::Optional<MeshData> imported = importer->mesh(0);
     CORRADE_VERIFY(imported);
     CORRADE_COMPARE(imported->attributeCount(), 3);
@@ -2520,29 +2526,33 @@ void GltfSceneConverterTest::addMeshBufferViewsNonInterleaved() {
     CORRADE_COMPARE(imported->attributeOffset(MeshAttribute::Color),
         offsetof(Vertices, colors));
     CORRADE_COMPARE(imported->attributeStride(MeshAttribute::Color),
-        sizeof(Color4ub));
+        sizeof(Vertices::Color));
     CORRADE_COMPARE_AS(imported->attribute<Color4ub>(MeshAttribute::Color),
-        Containers::arrayView(vertices->colors),
+        Containers::stridedArrayView(vertices->colors).slice(&Vertices::Color::color),
         TestSuite::Compare::Container);
 
-    /* And finally, this should match too */
+    /* And finally, this should match too. Except for the last four bytes,
+       which is just padding, and was thus omitted. */
     CORRADE_COMPARE_AS(imported->vertexData(),
-        Containers::arrayCast<const char>(Containers::arrayView(vertices)),
+        Containers::arrayCast<const char>(Containers::arrayView(vertices)).exceptSuffix(4),
         TestSuite::Compare::Container);
 }
 
-void GltfSceneConverterTest::addMeshBufferViewsInterleavedPaddingBegin() {
+void GltfSceneConverterTest::addMeshBufferViewsInterleavedPaddingMiddle() {
     struct Vertices {
         Color4ub colors[2];
+        /* Padding that would be alone between attributes would get removed on
+           import by GltfImporter. If it's within an attribute, it won't,
+           except for the very first and very last occurence, which will. */
         struct Interleaved {
-            UnsignedInt padding;
             Vector3 positionNormal;
+            UnsignedInt padding;
             Vector2 textureCoordinates;
         } interleaved[2];
     } vertices[]{{
         {0x11223344_rgba, 0x55667788_rgba},
-        {{0xffeeffeeu, {1.0f, 2.0f, 3.0f}, {0.25f, 0.75f}},
-         {0xddccddccu, {4.0f, 5.0f, 6.0f}, {0.5f, 1.0f}}},
+        {{{1.0f, 2.0f, 3.0f}, 0xffeeffeeu, {0.25f, 0.75f}},
+         {{4.0f, 5.0f, 6.0f}, 0xddccddccu, {0.5f, 1.0f}}},
     }};
     auto interleaved = Containers::stridedArrayView(vertices->interleaved);
     MeshData mesh{MeshPrimitive::LineStrip, {}, vertices, {
@@ -2561,7 +2571,7 @@ void GltfSceneConverterTest::addMeshBufferViewsInterleavedPaddingBegin() {
 
     Containers::Pointer<AbstractSceneConverter> converter =  _converterManager.instantiate("GltfSceneConverter");
 
-    const Containers::String filename = Utility::Path::join(GLTFSCENECONVERTER_TEST_OUTPUT_DIR, "mesh-buffer-views-interleaved-padding-begin.gltf");
+    const Containers::String filename = Utility::Path::join(GLTFSCENECONVERTER_TEST_OUTPUT_DIR, "mesh-buffer-views-interleaved-padding-middle.gltf");
 
     CORRADE_VERIFY(converter->beginFile(filename));
     CORRADE_VERIFY(converter->add(mesh));
@@ -2570,11 +2580,11 @@ void GltfSceneConverterTest::addMeshBufferViewsInterleavedPaddingBegin() {
     /* There should be two buffer views for four accessors, with positions and
        normals having a 4-byte offset */
     CORRADE_COMPARE_AS(filename,
-        Utility::Path::join(GLTFSCENECONVERTER_TEST_DIR, "mesh-buffer-views-interleaved-padding-begin.gltf"),
+        Utility::Path::join(GLTFSCENECONVERTER_TEST_DIR, "mesh-buffer-views-interleaved-padding-middle.gltf"),
         TestSuite::Compare::File);
     CORRADE_COMPARE_AS(
-        Utility::Path::join(GLTFSCENECONVERTER_TEST_OUTPUT_DIR, "mesh-buffer-views-interleaved-padding-begin.bin"),
-        Utility::Path::join(GLTFSCENECONVERTER_TEST_DIR, "mesh-buffer-views-interleaved-padding-begin.bin"),
+        Utility::Path::join(GLTFSCENECONVERTER_TEST_OUTPUT_DIR, "mesh-buffer-views-interleaved-padding-middle.bin"),
+        Utility::Path::join(GLTFSCENECONVERTER_TEST_DIR, "mesh-buffer-views-interleaved-padding-middle.bin"),
         TestSuite::Compare::File);
 
     if(_importerManager.loadState("GltfImporter") == PluginManager::LoadState::NotFound)
@@ -2632,6 +2642,9 @@ void GltfSceneConverterTest::addMeshBufferViewsInterleavedPaddingBeginEnd() {
     setTestCaseDescription(data.name);
 
     struct Vertex {
+        /* Padding that would be alone between attributes would get removed on
+           import by GltfImporter. If it's within an attribute, it won't,
+           except for the very first and very last occurence, which will. */
         UnsignedInt padding1;
         Vector3 position;
         Vector2 textureCoordinates;
@@ -2685,13 +2698,14 @@ void GltfSceneConverterTest::addMeshBufferViewsInterleavedPaddingBeginEnd() {
     CORRADE_COMPARE(importer->meshCount(), 1);
 
     /* The data should be exactly the same size, attributes with same offsets
-       and strides */
+       and strides. The importer however omits the initial and final four-byte
+       padding. */
     Containers::Optional<MeshData> imported = importer->mesh(0);
     CORRADE_VERIFY(imported);
     CORRADE_COMPARE(imported->attributeCount(), 2);
 
     CORRADE_COMPARE(imported->attributeOffset(MeshAttribute::Position),
-        offsetof(Vertex, position));
+        offsetof(Vertex, position) - 4);
     CORRADE_COMPARE(imported->attributeStride(MeshAttribute::Position),
         sizeof(Vertex));
     CORRADE_COMPARE_AS(imported->attribute<Vector3>(MeshAttribute::Position),
@@ -2699,22 +2713,18 @@ void GltfSceneConverterTest::addMeshBufferViewsInterleavedPaddingBeginEnd() {
         TestSuite::Compare::Container);
 
     CORRADE_COMPARE(imported->attributeOffset(MeshAttribute::TextureCoordinates),
-        offsetof(Vertex, textureCoordinates));
+        offsetof(Vertex, textureCoordinates) - 4);
     CORRADE_COMPARE(imported->attributeStride(MeshAttribute::TextureCoordinates),
         sizeof(Vertex));
     CORRADE_COMPARE_AS(imported->attribute<Vector2>(MeshAttribute::TextureCoordinates),
         view.slice(&Vertex::textureCoordinates),
         TestSuite::Compare::Container);
 
-    /* And finally, this should match too -- except for the padding, which is
-       zero-filled */
-    CORRADE_COMPARE(imported->vertexData().size(), mesh.vertexData().size() + 4);
-    CORRADE_COMPARE_AS(imported->vertexData().exceptSuffix(4),
-        Containers::arrayCast<const char>(Containers::arrayView(vertices)).exceptSuffix(4),
-        TestSuite::Compare::Container);
-    /** @todo use suffix() once it takes suffix length */
-    CORRADE_COMPARE_AS(imported->vertexData().exceptPrefix(imported->vertexData().size() - 4),
-        Containers::arrayView({'\0', '\0', '\0', '\0'}),
+    /* And finally, this should match too. Except for the first and last four
+       bytes, which is just padding, and was thus omitted. */
+    CORRADE_COMPARE(imported->vertexData().size(), sizeof(vertices) - 8);
+    CORRADE_COMPARE_AS(imported->vertexData(),
+        Containers::arrayCast<const char>(Containers::arrayView(vertices)).exceptPrefix(4).exceptSuffix(4),
         TestSuite::Compare::Container);
 }
 
