@@ -610,7 +610,8 @@ Containers::Optional<Containers::Triple<Containers::StridedArrayView2D<const cha
 
     const std::size_t offset = gltfAccessorByteOffset ? gltfAccessorByteOffset->asSize() : 0;
     const std::size_t stride = bufferView->second() ? bufferView->second() : typeSize;
-    const std::size_t requiredBufferViewSize = offset + stride*(gltfAccessorCount->asSize() - 1) + typeSize;
+    const std::size_t count = gltfAccessorCount->asSize();
+    const std::size_t requiredBufferViewSize = offset + (count ? stride*(count - 1) + typeSize : 0);
     if(bufferView->first().size() < requiredBufferViewSize) {
         Error{} << errorPrefix << "accessor" << accessorId << "needs" << requiredBufferViewSize << "bytes but buffer view" << gltfBufferViewId->asUnsignedInt() << "has only" << bufferView->first().size();
         return {};
@@ -630,7 +631,7 @@ Containers::Optional<Containers::Triple<Containers::StridedArrayView2D<const cha
             remainder (once there's StridedArrayView::shift() or some such) */
         Containers::StridedArrayView2D<const char>{{bufferView->first(), bufferView->first().size() + stride},
             static_cast<const char*>(bufferView->first().data()) + offset,
-            {gltfAccessorCount->asSize(), typeSize},
+            {count, typeSize},
             {std::ptrdiff_t(stride), 1}},
         format,
         gltfBufferViewId->asUnsignedInt());
