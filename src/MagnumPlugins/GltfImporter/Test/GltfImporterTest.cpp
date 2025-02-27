@@ -5121,6 +5121,10 @@ void GltfImporterTest::meshSizeNotMultipleOfStride() {
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "mesh-size-not-multiple-of-stride.gltf")));
     CORRADE_COMPARE(importer->meshCount(), 1);
 
+    /* Verifies that mesh vertex data size not being multiple of stride doesn't
+       cause an assertion when populating stridedArrayView internally (where it
+       has to get extended by the stride) */
+
     Containers::Optional<Trade::MeshData> mesh = importer->mesh(0);
     CORRADE_VERIFY(mesh);
     CORRADE_COMPARE(mesh->attributeCount(), 1);
