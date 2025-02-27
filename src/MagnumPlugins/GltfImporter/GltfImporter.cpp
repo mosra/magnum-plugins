@@ -3381,7 +3381,7 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
        them */
     UnsignedInt bufferId = 0;
     UnsignedInt vertexCount = 0;
-    std::size_t attributeId = 0;
+    UnsignedInt attributeId = 0;
     UnsignedInt jointIdAttributeCount = 0;
     UnsignedInt weightAttributeCount = 0;
     Containers::Pair<Containers::StringView, Int> lastNumberedAttribute;
