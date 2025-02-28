@@ -132,6 +132,15 @@ bool isBuiltinMeshAttribute(Utility::ConfigurationGroup& configuration, const Co
 
 }
 
+namespace {
+    struct Sampler {
+        SamplerFilter minificationFilter;
+        SamplerFilter magnificationFilter;
+        SamplerMipmap mipmap;
+        Math::Vector3<SamplerWrapping> wrapping;
+    };
+}
+
 struct GltfImporter::Document {
     /* Set only if fromFile() was used, passed to Utility::Json for nicer error
        messages and used as a base path for buffer and image opening */
@@ -196,12 +205,6 @@ struct GltfImporter::Document {
     Containers::Array<Containers::Optional<Containers::Triple<Containers::StridedArrayView2D<const char>, VertexFormat, UnsignedInt>>> accessors;
     /* Cached parsed samplers. Values left uninitialized, they will be set to
        appropriate default values inside doTexture(). */
-    struct Sampler {
-        SamplerFilter minificationFilter;
-        SamplerFilter magnificationFilter;
-        SamplerMipmap mipmap;
-        Math::Vector3<SamplerWrapping> wrapping;
-    };
     Containers::Array<Containers::Optional<Sampler>> samplers;
 
     /* Textures without duplicates from KHR_texture_ktx that point to the same
@@ -1526,7 +1529,7 @@ void GltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags da
     _d->buffers = Containers::Array<Containers::Optional<Containers::Array<char>>>{_d->gltfBuffers.size()};
     _d->bufferViews = Containers::Array<Containers::Optional<Containers::Triple<Containers::ArrayView<const char>, UnsignedInt, UnsignedInt>>>{_d->gltfBufferViews.size()};
     _d->accessors = Containers::Array<Containers::Optional<Containers::Triple<Containers::StridedArrayView2D<const char>, VertexFormat, UnsignedInt>>>{_d->gltfAccessors.size()};
-    _d->samplers = Containers::Array<Containers::Optional<Document::Sampler>>{_d->gltfSamplers.size()};
+    _d->samplers = Containers::Array<Containers::Optional<Sampler>>{_d->gltfSamplers.size()};
 
     /* Name maps are lazy-loaded because these might not be needed every time */
 }
@@ -5008,7 +5011,7 @@ Containers::Optional<TextureData> GltfImporter::doTexture(const UnsignedInt id) 
             return {};
         }
 
-        Containers::Optional<Document::Sampler>& storage = _d->samplers[gltfSamplerIndex->asUnsignedInt()];
+        Containers::Optional<Sampler>& storage = _d->samplers[gltfSamplerIndex->asUnsignedInt()];
         if(storage) {
             minificationFilter = storage->minificationFilter;
             magnificationFilter = storage->magnificationFilter;
