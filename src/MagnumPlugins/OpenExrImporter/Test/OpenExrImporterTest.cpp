@@ -63,6 +63,7 @@ struct OpenExrImporterTest: TestSuite::Tester {
     void depth32f();
 
     void cubeMap();
+    void cubeMapImportError();
 
     void forceChannelCountMore();
     void forceChannelCountLess();
@@ -239,7 +240,9 @@ OpenExrImporterTest::OpenExrImporterTest() {
     addInstancedTests({&OpenExrImporterTest::cubeMap},
         Containers::arraySize(CubeMapData));
 
-    addTests({&OpenExrImporterTest::forceChannelCountMore,
+    addTests({&OpenExrImporterTest::cubeMapImportError,
+
+              &OpenExrImporterTest::forceChannelCountMore,
               &OpenExrImporterTest::forceChannelCountLess,
               &OpenExrImporterTest::forceChannelCountWrong});
 
@@ -481,6 +484,17 @@ void OpenExrImporterTest::cubeMap() {
         50.0_h, 51.0_h, 52.0_h, 53.0_h,
         54.0_h, 55.0_h, 56.0_h, 57.0_h,
     }), TestSuite::Compare::Container);
+}
+
+void OpenExrImporterTest::cubeMapImportError() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenExrImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(OPENEXRIMPORTER_TEST_DIR, "envmap-cube.exr")));
+
+    importer->configuration().setValue("forceChannelCount", 5);
+    Containers::String out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!importer->image3D(0));
+    CORRADE_COMPARE(out, "Trade::OpenExrImporter::image3D(): forceChannelCount is expected to be 0-4, got 5\n");
 }
 
 void OpenExrImporterTest::forceChannelCountMore() {
