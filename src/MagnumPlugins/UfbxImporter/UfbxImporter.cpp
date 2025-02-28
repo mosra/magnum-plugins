@@ -273,11 +273,13 @@ struct FileOpener {
         CORRADE_INTERNAL_ASSERT(info->type != UFBX_OPEN_FILE_GEOMETRY_CACHE);
 
         /* If we don't have a callback just defer to ufbx file loading */
-        if(!_callback) return ufbx_open_file(stream, path, path_len);
+        if(!_callback)
+            return ufbx_open_file(stream, path, path_len);
 
         std::string file{path, path_len};
         const Containers::Optional<Containers::ArrayView<const char>> data = _callback(file, InputFileCallbackPolicy::LoadTemporary, _userData);
-        if(!data) return false;
+        if(!data)
+            return false;
 
         ufbx_open_memory_opts opts{};
         opts.allocator.allocator = info->temp_allocator;
@@ -458,7 +460,8 @@ void UfbxImporter::openInternal(void* opaqueScene, const void* opaqueOpts, bool 
     /* Filter out textures that don't have any file associated with them. */
     arrayResize(_state->textureRemap, scene->textures.count, -1);
     for(const ufbx_texture* texture: scene->textures) {
-        if(!texture->has_file) continue;
+        if(!texture->has_file)
+            continue;
 
         const UnsignedInt id = texture->typed_id;
         _state->textureRemap[id] = Int(_state->textures.size());
@@ -467,7 +470,8 @@ void UfbxImporter::openInternal(void* opaqueScene, const void* opaqueOpts, bool 
 
     for(UnsignedInt i = 0; i < scene->texture_files.count; ++i) {
         const ufbx_string name = scene->texture_files[i].relative_filename;
-        if(name.length == 0) continue;
+        if(name.length == 0)
+            continue;
 
         _state->imageNameMap.emplace(std::string(name.data, name.length), i);
     }
@@ -594,7 +598,8 @@ Containers::Optional<SceneData> UfbxImporter::doScene(UnsignedInt) {
     UnsignedInt cameraOffset = 0;
 
     for(const ufbx_node* node: scene->nodes) {
-        if(!_state->preserveRootNode && node->is_root) continue;
+        if(!_state->preserveRootNode && node->is_root)
+            continue;
 
         UnsignedInt nodeId = node->typed_id - nodeIdOffset;
         nodeObjects[nodeId] = nodeId;
@@ -723,9 +728,9 @@ Containers::Optional<SceneData> UfbxImporter::doScene(UnsignedInt) {
 }
 
 SceneField UfbxImporter::doSceneFieldForName(Containers::StringView name) {
-    for(UnsignedInt i = 0; i < Containers::arraySize(sceneFieldNames); ++i) {
-        if(name == sceneFieldNames[i]) return sceneFieldCustom(i);
-    }
+    for(UnsignedInt i = 0; i < Containers::arraySize(sceneFieldNames); ++i)
+        if(name == sceneFieldNames[i])
+            return sceneFieldCustom(i);
     return SceneField{};
 }
 
@@ -1228,19 +1233,23 @@ Containers::Optional<MaterialData> UfbxImporter::doMaterial(UnsignedInt id) {
     for(const auto& list: mappingLists) {
         /* Ignore implicitly derived PBR values and factors if we don't want to
            explicitly retain them */
-        if(list.pbr && !material->features.pbr.enabled) continue;
-        if(list.factor && !preserveMaterialFactors) continue;
+        if(list.pbr && !material->features.pbr.enabled)
+            continue;
+        if(list.factor && !preserveMaterialFactors)
+            continue;
 
         for(const MaterialMapping& mapping: list.mappings) {
             const ufbx_material_map& map = list.maps[mapping.valueMap];
 
             /* Ignore maps with no value or texture */
-            if(!map.has_value && !map.texture) continue;
+            if(!map.has_value && !map.texture)
+                continue;
 
             /* If the map has an exclusion group and we have seen one instance
                of it already, skip this one. */
             if(mapping.exclusionGroup != MaterialExclusionGroup{}) {
-                if(seenExclusionGroups & mapping.exclusionGroup) continue;
+                if(seenExclusionGroups & mapping.exclusionGroup)
+                    continue;
                 seenExclusionGroups |= mapping.exclusionGroup;
             }
 
@@ -1295,7 +1304,8 @@ Containers::Optional<MaterialData> UfbxImporter::doMaterial(UnsignedInt id) {
                 UnsignedInt layer = 0;
                 for(const ufbx_texture* texture: map.texture->file_textures) {
                     Int textureId = _state->textureRemap[texture->typed_id];
-                    if(textureId < 0) continue;
+                    if(textureId < 0)
+                        continue;
 
                     /* Make sure we have a layer to add the attribute to */
                     if(layer > 0 && layer - 1 >= attributesForLayer.extraLayers.size())
@@ -1358,7 +1368,8 @@ Containers::Optional<MaterialData> UfbxImporter::doMaterial(UnsignedInt id) {
         UfbxMaterialLayerAttributes& attributesForLayer = layerAttributes[UnsignedInt(layer)];
 
         /* Skip empty layers after the first one */
-        if(layer != 0 && attributesForLayer.defaultLayer.isEmpty()) continue;
+        if(layer != 0 && attributesForLayer.defaultLayer.isEmpty())
+            continue;
 
         /* Default layer within the named layer */
         {
@@ -1457,7 +1468,8 @@ AbstractImporter* UfbxImporter::setupOrReuseImporterForImage(UnsignedInt id, con
 
     AnyImageImporter importer{*manager()};
     importer.setFlags(flags());
-    if(fileCallback()) importer.setFileCallback(fileCallback(), fileCallbackUserData());
+    if(fileCallback())
+        importer.setFileCallback(fileCallback(), fileCallbackUserData());
 
     if(file.content.size > 0) {
         auto textureData = Containers::ArrayView<const char>(reinterpret_cast<const char*>(file.content.data), file.content.size);
@@ -1492,7 +1504,8 @@ UnsignedInt UfbxImporter::doImage2DLevelCount(UnsignedInt id) {
     AbstractImporter* importer = setupOrReuseImporterForImage(id, "Trade::UfbxImporter::image2DLevelCount():");
     /* image2DLevelCount() isn't supposed to fail (image2D() is, instead), so
        report 1 on failure and expect image2D() to fail later */
-    if(!importer) return 1;
+    if(!importer)
+        return 1;
 
     return importer->image2DLevelCount(0);
 }
@@ -1501,7 +1514,8 @@ Containers::Optional<ImageData2D> UfbxImporter::doImage2D(UnsignedInt id, Unsign
     CORRADE_ASSERT(manager(), "Trade::UfbxImporter::image2D(): the plugin must be instantiated with access to plugin manager in order to open image files", {});
 
     AbstractImporter* importer = setupOrReuseImporterForImage(id, "Trade::UfbxImporter::image2D():");
-    if(!importer) return Containers::NullOpt;
+    if(!importer)
+        return Containers::NullOpt;
 
     return importer->image2D(0, level);
 }
@@ -1540,9 +1554,12 @@ bool hasComplexTranslation(const ufbx_node* node) {
     /* These properties make scaling/rotation affect the final translation */
     for(const char* name: {UFBX_ScalingPivot, UFBX_RotationPivot, UFBX_RotationOffset, UFBX_ScalingOffset}) {
         ufbx_prop *prop = ufbx_find_prop(&node->props, name);
-        if(!prop) continue;
-        if(Vector3(prop->value_vec3) != Vector3{}) return true;
-        if((prop->flags & UFBX_PROP_FLAG_ANIMATED) != 0) return true;
+        if(!prop)
+            continue;
+        if(Vector3(prop->value_vec3) != Vector3{})
+            return true;
+        if((prop->flags & UFBX_PROP_FLAG_ANIMATED) != 0)
+            return true;
     }
     return false;
 }
@@ -1551,8 +1568,10 @@ bool hasComplexRotation(const ufbx_node* node) {
     /* These properties affect the rotation if animated */
     for(const char* name: {UFBX_PreRotation, UFBX_PostRotation}) {
         ufbx_prop *prop = ufbx_find_prop(&node->props, name);
-        if(!prop) continue;
-        if((prop->flags & UFBX_PROP_FLAG_ANIMATED) != 0) return true;
+        if(!prop)
+            continue;
+        if((prop->flags & UFBX_PROP_FLAG_ANIMATED) != 0)
+            return true;
     }
     return false;
 }
@@ -1563,13 +1582,16 @@ struct AnimProp {
     Containers::StringView name;
 
     bool operator==(const AnimProp& rhs) const {
-        if(nodeId != rhs.nodeId) return false;
-        if(name != rhs.name) return false;
+        if(nodeId != rhs.nodeId)
+            return false;
+        if(name != rhs.name)
+            return false;
         return true;
     }
 
     bool operator<(const AnimProp& rhs) const {
-        if(nodeId != rhs.nodeId) return nodeId < rhs.nodeId;
+        if(nodeId != rhs.nodeId)
+            return nodeId < rhs.nodeId;
         return name < rhs.name;
     }
 };
@@ -1595,7 +1617,8 @@ struct ResampleOptions {
 };
 
 void appendKeyTimes(const ResampleOptions &resampleOptions, Containers::Array<Double> &keyTimes, const ufbx_anim_curve* curve) {
-    if(!curve) return;
+    if(!curve)
+        return;
 
     for(std::size_t i = 0; i + 1 < curve->keyframes.count; ++i) {
         const ufbx_keyframe& prev = curve->keyframes[i];
@@ -1707,9 +1730,11 @@ Containers::Optional<AnimationData> UfbxImporter::doAnimation(UnsignedInt id) {
 
     for(const ufbx_anim_layer* layer: layers) {
         for(const ufbx_anim_prop& prop: layer->anim_props) {
-            if(prop.element->type != UFBX_ELEMENT_NODE) continue;
+            if(prop.element->type != UFBX_ELEMENT_NODE)
+                continue;
             ufbx_node* node = reinterpret_cast<ufbx_node*>(prop.element);
-            if(node->is_root) continue;
+            if(node->is_root)
+                continue;
             Containers::StringView name(prop.prop_name);
 
             if(animateFullTransform && (name == UFBX_Lcl_Translation || name == UFBX_Lcl_Rotation || name == UFBX_Lcl_Scaling)) {
@@ -1779,7 +1804,8 @@ Containers::Optional<AnimationData> UfbxImporter::doAnimation(UnsignedInt id) {
         for(const ufbx_anim_layer* layer: layers) {
             for(const Containers::StringView& source: keySources) {
                 const ufbx_anim_prop *aprop = ufbx_find_anim_prop_len(layer, &node->element, source.data(), source.size());
-                if(!aprop) continue;
+                if(!aprop)
+                    continue;
 
                 ResampleOptions curveOptions = resampleOptions;
 
@@ -1932,9 +1958,9 @@ Containers::Optional<AnimationData> UfbxImporter::doAnimation(UnsignedInt id) {
 }
 
 AnimationTrackTarget UfbxImporter::doAnimationTrackTargetForName(Containers::StringView name) {
-    for(UnsignedInt i = 0; i < Containers::arraySize(animationTrackTargetNames); ++i) {
-        if(name == animationTrackTargetNames[i]) return animationTrackTargetCustom(i);
-    }
+    for(UnsignedInt i = 0; i < Containers::arraySize(animationTrackTargetNames); ++i)
+        if(name == animationTrackTargetNames[i])
+            return animationTrackTargetCustom(i);
     return AnimationTrackTarget{};
 }
 
