@@ -1,0 +1,46 @@
+{
+  "asset": {
+    "version": "2.0"
+  },
+  "images": [
+    {
+      "name": "uri not found",
+      "uri": "/nonexistent.ktx2"
+    },
+    {
+      "name": "buffer not found",
+      "bufferView": 0,
+      "mimeType": "image/ktx2"
+    }
+  ],
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteLength": 68
+    }
+  ],
+  "buffers": [
+    {
+      "byteLength": 68,
+      "uri": "/nonexistent.bin"
+    }
+  ],
+  "textures": [
+    {
+      "extensions": {
+        "KHR_texture_ktx": {
+          "source": 0,
+          "layer": 0
+        }
+      }
+    },
+    {
+      "extensions": {
+        "KHR_texture_ktx": {
+          "source": 1,
+          "layer": 0
+        }
+      }
+    }
+  ]
+}

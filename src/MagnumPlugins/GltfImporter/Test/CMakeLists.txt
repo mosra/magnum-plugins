@@ -132,8 +132,9 @@ corrade_add_test(GltfImporterTest
         image-embedded.gltf
         image-embedded.glb
         image-invalid.gltf
-        image-invalid-ktx.gltf
         image-invalid-notfound.gltf
+        image-invalid-ktx.gltf
+        image-invalid-ktx-notfound.gltf
         invalid-uri.gltf
         light.gltf
         light-invalid.gltf

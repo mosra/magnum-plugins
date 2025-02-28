@@ -196,6 +196,7 @@ struct GltfImporterTest: TestSuite::Tester {
     void experimentalKhrTextureKtxInvalidWholeFile();
     void experimentalKhrTextureKtxInvalidMaterial();
     void experimentalKhrTextureKtxInvalidImage();
+    void experimentalKhrTextureKtxInvalidImageNotFound();
 
     void fileCallbackBuffer();
     void fileCallbackBufferNotFound();
@@ -1590,6 +1591,14 @@ const struct {
         "expected exactly one 2D image in an image file but got 0"}
 };
 
+const struct {
+    const char* name;
+    const char* message;
+} ExperimentalKhrTextureKtxInvalidImageNotFoundData[]{
+    {"uri not found", "Trade::AbstractImporter::openFile(): cannot open file /nonexistent.ktx2"},
+    {"buffer not found", "Trade::GltfImporter::image3D(): error opening /nonexistent.bin"}
+};
+
 constexpr struct {
     const char* name;
     const char* file;
@@ -1843,6 +1852,9 @@ GltfImporterTest::GltfImporterTest() {
 
     addInstancedTests({&GltfImporterTest::experimentalKhrTextureKtxInvalidImage},
         Containers::arraySize(ExperimentalKhrTextureKtxInvalidImageData));
+
+    addInstancedTests({&GltfImporterTest::experimentalKhrTextureKtxInvalidImageNotFound},
+        Containers::arraySize(ExperimentalKhrTextureKtxInvalidImageNotFoundData));
 
     addInstancedTests({&GltfImporterTest::fileCallbackBuffer,
                        &GltfImporterTest::fileCallbackBufferNotFound,
@@ -6960,7 +6972,7 @@ void GltfImporterTest::imageInvalidNotFound() {
     } {
         Containers::String out;
         Error redirectError{&out};
-        CORRADE_VERIFY(!importer->image2D(data.name));
+        CORRADE_VERIFY(!importer->image2D(id));
         CORRADE_COMPARE(out, "");
     }
 }
@@ -7343,6 +7355,47 @@ void GltfImporterTest::experimentalKhrTextureKtxInvalidImage() {
     else CORRADE_INTERNAL_ASSERT_UNREACHABLE();
     CORRADE_COMPARE(out, Utility::format(
         "Trade::GltfImporter::image{}D(): {}\n", data.dimensions, data.message));
+}
+
+void GltfImporterTest::experimentalKhrTextureKtxInvalidImageNotFound() {
+    auto&& data = ExperimentalKhrTextureKtxInvalidImageNotFoundData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    /* like imageInvalidNotFound(), but in 3D */
+
+    if(_manager.loadState("KtxImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("KtxImporter plugin not found, cannot test");
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
+    importer->configuration().setValue("experimentalKhrTextureKtx", true);
+
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "image-invalid-ktx-notfound.gltf")));
+
+    /* Check we didn't forget to test anything */
+    CORRADE_COMPARE(importer->image3DCount(), Containers::arraySize(ImageInvalidNotFoundData));
+
+    Int id = importer->image3DForName(data.name);
+    CORRADE_VERIFY(id != -1);
+
+    {
+        Containers::String out;
+        Error redirectError{&out};
+        CORRADE_VERIFY(!importer->image3D(id));
+        /* image3DLevelCount() can't fail, but should not crash either */
+        CORRADE_COMPARE(importer->image3DLevelCount(id), 1);
+        /* There's an error from Path::read() before */
+        CORRADE_COMPARE_AS(out,
+            Utility::format("\n{}\n", data.message),
+            TestSuite::Compare::StringHasSuffix);
+
+    /* The importer should get cached even in case of failure, so the message
+       should get printed just once */
+    } {
+        Containers::String out;
+        Error redirectError{&out};
+        CORRADE_VERIFY(!importer->image3D(id));
+        CORRADE_COMPARE(out, "");
+    }
 }
 
 void GltfImporterTest::fileCallbackBuffer() {
