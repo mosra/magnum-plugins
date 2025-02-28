@@ -39,6 +39,12 @@
 #include <Magnum/Trade/AbstractImporter.h>
 #include <Magnum/Trade/ImageData.h>
 
+/* OpenEXR as a CMake subproject adds the OpenEXR/ directory to include path
+   but not the parent directory, so we can't #include <OpenEXR/blah>. This
+   can't really be fixed from outside, so unfortunately we have to do the same
+   in case of an external OpenEXR. */
+#include <OpenEXRConfig.h> /* for version-dependent checks */
+
 #include "configure.h"
 
 namespace Magnum { namespace Trade { namespace Test { namespace {
@@ -196,16 +202,25 @@ const struct {
 const struct {
     const char* name;
     bool(*open)(AbstractImporter&, Containers::ArrayView<const void>);
+    std::size_t expandSize;
 } OpenMemoryData[]{
     {"data", [](AbstractImporter& importer, Containers::ArrayView<const void> data) {
         /* Copy to ensure the original memory isn't referenced */
         Containers::Array<char> copy{NoInit, data.size()};
         Utility::copy(Containers::arrayCast<const char>(data), copy);
         return importer.openData(copy);
-    }},
+    }, 0},
     {"memory", [](AbstractImporter& importer, Containers::ArrayView<const void> data) {
         return importer.openMemory(data);
-    }},
+    }, 0},
+    /* On 3.3 the memory is used directly only if it's above certain size to
+       work around the 4096-byte-at-a-time bug, test that the zero-copy
+       codepath works there as well */
+    #if OPENEXR_VERSION_MAJOR*10000 + OPENEXR_VERSION_MINOR*100 + OPENEXR_VERSION_PATCH >= 30300
+    {"memory, size expanded to 16k", [](AbstractImporter& importer, Containers::ArrayView<const void> data) {
+        return importer.openMemory(data);
+    }, 16384},
+    #endif
 };
 
 OpenExrImporterTest::OpenExrImporterTest() {
@@ -284,7 +299,18 @@ void OpenExrImporterTest::emptyFile() {
     Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->openData({}));
+    /* Version 3.3 has the core rewritten in C, and the C++ exceptions now get
+       a lot less info, with the actual log output being provided by callbacks
+       in a non-thread-safe way (which we thus don't use, so far). Sigh. */
+    #if OPENEXR_VERSION_MAJOR*10000 + OPENEXR_VERSION_MINOR*100 + OPENEXR_VERSION_PATCH >= 30302
+    CORRADE_COMPARE(out, "Trade::OpenExrImporter::openData(): import error: Unable to open '' for read\n");
+    /* Version 3.3.0 and 3.3.1 doesn't allow empty filenames (which is fixed
+       for 3.3.2 again), so the code uses a non-empty string as a workaround */
+    #elif OPENEXR_VERSION_MAJOR*10000 + OPENEXR_VERSION_MINOR*100 + OPENEXR_VERSION_PATCH >= 30300
+    CORRADE_COMPARE(out, "Trade::OpenExrImporter::openData(): import error: Unable to open '<memory>' for read\n");
+    #else
     CORRADE_COMPARE(out, "Trade::OpenExrImporter::openData(): import error: Cannot read image file \"\". Reading past end of file.\n");
+    #endif
 }
 
 void OpenExrImporterTest::shortFile() {
@@ -296,7 +322,20 @@ void OpenExrImporterTest::shortFile() {
     Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->image2D(0));
+    /* Version 3.3 has the core rewritten in C, and the C++ exceptions now get
+       a lot less info, with the actual log output being provided by callbacks
+       in a non-thread-safe way (which we thus don't use, so far). Sigh. In
+       this case the default hook kicks in, making those appear in stderr. That
+       isn't always the case, tho. SIGH.
+
+       Also until a (not yet released) 3.3.3 it generally fails with files
+       shorter than ~4 kB, which the plugin works around by making the file
+       longer so the real error message would be bogus anyway. */
+    #if OPENEXR_VERSION_MAJOR*10000 + OPENEXR_VERSION_MINOR*100 + OPENEXR_VERSION_PATCH >= 30300
+    CORRADE_COMPARE(out, "Trade::OpenExrImporter::image2D(): import error: Unable to run decoder\n");
+    #else
     CORRADE_COMPARE(out, "Trade::OpenExrImporter::image2D(): import error: Error reading pixel data from image file \"\". Reading past end of file.\n");
+    #endif
 }
 
 void OpenExrImporterTest::inconsistentFormat() {
@@ -1107,6 +1146,12 @@ void OpenExrImporterTest::openMemory() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenExrImporter");
     Containers::Optional<Containers::Array<char>> memory = Utility::Path::read(Utility::Path::join(OPENEXRIMPORTER_TEST_DIR, "rgba32f.exr"));
     CORRADE_VERIFY(memory);
+
+    if(data.expandSize) {
+        Containers::Array<char> expanded{NoInit, data.expandSize};
+        Utility::copy(*memory, expanded.prefix(memory->size()));
+        memory = Utility::move(expanded);
+    }
     CORRADE_VERIFY(data.open(*importer, *memory));
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);

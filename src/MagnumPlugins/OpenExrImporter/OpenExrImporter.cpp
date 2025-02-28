@@ -63,7 +63,16 @@ namespace {
 class MemoryIStream: public Imf::IStream {
     public:
         /** @todo propagate filename from input (only useful for error messages) */
-        explicit MemoryIStream(const Containers::ArrayView<const char> data): Imf::IStream{""}, _data{data}, _position{} {}
+        explicit MemoryIStream(const Containers::ArrayView<const char> data): Imf::IStream{
+            /* Versions 3.3.0 and 3.3.1 have a regression that doesn't allow
+               passing an empty filename for custom streams. Fixed for 3.3.2:
+               https://github.com/AcademySoftwareFoundation/openexr/issues/1894 */
+            #if OPENEXR_VERSION_MAJOR*10000 + OPENEXR_VERSION_MINOR*100 + OPENEXR_VERSION_PATCH >= 30300 && OPENEXR_VERSION_MAJOR*10000 + OPENEXR_VERSION_MINOR*100 + OPENEXR_VERSION_PATCH < 30302
+            "<memory>"
+            #else
+            ""
+            #endif
+        }, _data{data}, _position{} {}
 
         bool isMemoryMapped() const override { return true; }
         char* readMemoryMapped(const int n) override {
@@ -137,6 +146,35 @@ void OpenExrImporter::doClose() { _state = nullptr; }
 void OpenExrImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dataFlags) {
     /* Take over the existing array or copy the data if we can't */
     Containers::Array<char> dataCopy;
+    #if OPENEXR_VERSION_MAJOR*10000 + OPENEXR_VERSION_MINOR*100 + OPENEXR_VERSION_PATCH >= 30300
+    /** @todo make this enabled only for < 3.3.3 once that version is out */
+    /* Version 3.3.0+, which has the core rewritten in C, optimizes by always
+       reading 4096 bytes at a time when reading the header, unfortunately with
+       the limited backwards compatibility IStream interface it means it'll
+       inevitably read past the end of the file, causing an exception:
+        https://github.com/AcademySoftwareFoundation/openexr/issues/1984
+       And thus it'll fail for all files that are less than ~4096 bytes. This
+       should be fixed for 3.3.3(?) which is not released yet (Feb 2025):
+        https://github.com/AcademySoftwareFoundation/openexr/pull/1985
+
+       To work around this, allocate enough memory so it doesn't read past the
+       end. However, because it reads 4096 bytes *always*, even at random
+       offsets inside the header, allocating just 4K wouldn't be enough.
+       Assuming the file isn't truncated and contains the whole header at the
+       very least, allocate 4K *in addition* to the size if the size is less
+       than ~16K. That could still fail if the header is really large,
+       containing a lot of metadata, and the file isn't, but the probability of
+       that happening should be lower than the probability of 3.3.3(?) being
+       delayed for another year. Also don't do this if the file is empty,
+       because in that case it should fail due to the file being empty and not
+       due to something else. */
+    if(!data.isEmpty() && data.size() < 16384) {
+        /* Also use ValueInit instead of NoInit so in case it really reads past
+           the end for some reason, the failure reason is deterministic. */
+        dataCopy = Containers::Array<char>{ValueInit, data.size() + 4096};
+        Utility::copy(data, dataCopy.prefix(data.size()));
+    } else
+    #endif
     if(dataFlags & (DataFlag::Owned|DataFlag::ExternallyOwned)) {
         dataCopy = Utility::move(data);
     } else {
@@ -187,6 +225,28 @@ void OpenExrImporter::doOpenData(Containers::Array<char>&& data, const DataFlags
             }
         } else {
             state->file.emplace(state->stream, threadCount - 1);
+
+            /* Use this instead of the above (and the three other occurences)
+               to get more info on failures. The detailed failure messages
+               don't seem to be propagated to the exception what() for some
+               reason, but maybe they're just new since 3.3.0 and nobody
+               realized yet. Also this gets fired from random threads, meaning
+               I'd first have to make some thread-safe queue in order to
+               collect those in a place where the user can redirect the output
+               if needed. Which is why it's commented out like this. */
+            /** @todo well, actually, it seems that without this the error goes
+                to standard output SOMETIMES, ffs. What am I supposed to do
+                here?! */
+            #if 0
+            state->file.emplace("",
+                Imf::ContextInitializer{}
+                    .setErrorHandler([](exr_const_context_t, exr_result_t code, const char* msg) {
+                        Error{} << code << msg;
+                    })
+                    .setInputStream(&state->stream),
+                threadCount - 1);
+            #endif
+
             state->completeLevelCount = 1;
             header = &state->file->header();
         }
@@ -266,7 +326,18 @@ void OpenExrImporter::doOpenData(Containers::Array<char>&& data, const DataFlags
                     }
                 }
             }
-        } catch(const Iex::InputExc&) {
+        } catch(
+            /* In version 3.3 the core library is converted to C, which means
+               Iex::InputExc thrown by the IStream doesn't get propagated
+               anymore, and an ArgExc is thrown instead. I hope it now also has
+               a sane way to discover missing levels, once I'm able to drop
+               pre-3.3 support. */
+            #if OPENEXR_VERSION_MAJOR*10000 + OPENEXR_VERSION_MINOR*100 + OPENEXR_VERSION_PATCH >= 30300
+            const Iex::ArgExc&
+            #else
+            const Iex::InputExc&
+            #endif
+        ) {
             /* It gotta throw at some point, but we have nothing to do about
                that */
         }

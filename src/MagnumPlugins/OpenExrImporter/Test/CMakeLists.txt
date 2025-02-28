@@ -83,7 +83,9 @@ corrade_add_test(OpenExrImporterTest OpenExrImporterTest.cpp
         levels2D-incomplete.exr
         levels-cube.exr
         levels-cube-incomplete.exr)
-target_include_directories(OpenExrImporterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>)
+target_include_directories(OpenExrImporterTest PRIVATE
+    ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>
+    $<TARGET_PROPERTY:OpenEXR::OpenEXR,INTERFACE_INCLUDE_DIRECTORIES>)
 if(MAGNUM_OPENEXRIMPORTER_BUILD_STATIC)
     target_link_libraries(OpenExrImporterTest PRIVATE OpenExrImporter)
 else()
