@@ -132,6 +132,19 @@ bool isBuiltinMeshAttribute(Utility::ConfigurationGroup& configuration, const Co
 
 }
 
+struct GltfImporter::BufferView {
+    Containers::ArrayView<const char> data;
+    UnsignedInt stride; /* 0 if not strided */
+    UnsignedInt buffer; /* points into _d->buffers */
+};
+
+struct GltfImporter::Accessor {
+    /* As the type is known, it's always a 2D view with layout as expected */
+    Containers::StridedArrayView2D<const char> data;
+    VertexFormat format;
+    UnsignedInt bufferView; /* points into _d->bufferViews */
+};
+
 namespace {
     struct Sampler {
         SamplerFilter minificationFilter;
@@ -183,16 +196,13 @@ struct GltfImporter::Document {
        is empty and has no URI or it's the implicit buffer of a *.glb, it's
        NullOpt as well. */
     Containers::Array<Containers::Optional<Containers::Array<char>>> buffers;
-    /* Parsed and validated buffer views, second element is stride (or 0 if not
-       strided), third is buffer ID. Same as with buffers, if any of these
+    /* Parsed and validated buffer views. Same as with buffers, if any of these
        failed to validate, it'll stay a NullOpt, meaning the same failure
        message will be printed next time it's accessed. */
-    Containers::Array<Containers::Optional<Containers::Triple<Containers::ArrayView<const char>, UnsignedInt, UnsignedInt>>> bufferViews;
-    /* Parsed and validated buffer views, second element is the parsed type,
-       third is buffer view ID. As the type is known, it's always a 2D view
-       with layout as expected. Same as with buffers and buffer views, if any
-       of these failed to validate, it'll stay a NullOpt, meaning the same
-       failure message will be printed next time it's accessed.
+    Containers::Array<Containers::Optional<BufferView>> bufferViews;
+    /* Parsed and validated accessors. Same as with buffers and buffer views,
+       if any of these failed to validate, it'll stay a NullOpt, meaning the
+       same failure message will be printed next time it's accessed.
 
        We're abusing VertexFormat here because it can describe all types
        supported by glTF including aligned matrices and because there's a
@@ -202,7 +212,7 @@ struct GltfImporter::Document {
        something like "Vector3ubNormalized is not a supported normal format" is
        better than "normalized VEC3 of 5121 is not a supported normal format"
        no matter how well formatted. */
-    Containers::Array<Containers::Optional<Containers::Triple<Containers::StridedArrayView2D<const char>, VertexFormat, UnsignedInt>>> accessors;
+    Containers::Array<Containers::Optional<Accessor>> accessors;
     /* Cached parsed samplers. Values left uninitialized, they will be set to
        appropriate default values inside doTexture(). */
     Containers::Array<Containers::Optional<Sampler>> samplers;
@@ -399,14 +409,14 @@ Containers::Optional<Containers::ArrayView<const char>> GltfImporter::parseBuffe
     return view;
 }
 
-Containers::Optional<Containers::Triple<Containers::ArrayView<const char>, UnsignedInt, UnsignedInt>> GltfImporter::parseBufferView(const char* const errorPrefix, const UnsignedInt bufferViewId) {
+Containers::Optional<GltfImporter::BufferView> GltfImporter::parseBufferView(const char* const errorPrefix, const UnsignedInt bufferViewId) {
     if(bufferViewId >= _d->gltfBufferViews.size()) {
         Error{} << errorPrefix << "buffer view index" << bufferViewId << "out of range for" << _d->gltfBufferViews.size() << "buffer views";
         return {};
     }
 
     /* Return if the buffer view is already parsed */
-    Containers::Optional<Containers::Triple<Containers::ArrayView<const char>, UnsignedInt, UnsignedInt>>& storage = _d->bufferViews[bufferViewId];
+    Containers::Optional<BufferView>& storage = _d->bufferViews[bufferViewId];
     if(storage) return storage;
 
     const Utility::JsonToken& gltfBufferView = _d->gltfBufferViews[bufferViewId];
@@ -461,14 +471,14 @@ Containers::Optional<Containers::Triple<Containers::ArrayView<const char>, Unsig
     return storage;
 }
 
-Containers::Optional<Containers::Triple<Containers::StridedArrayView2D<const char>, VertexFormat, UnsignedInt>> GltfImporter::parseAccessor(const char* const errorPrefix, const UnsignedInt accessorId) {
+Containers::Optional<GltfImporter::Accessor> GltfImporter::parseAccessor(const char* const errorPrefix, const UnsignedInt accessorId) {
     if(accessorId >= _d->gltfAccessors.size()) {
         Error{} << errorPrefix << "accessor index" << accessorId << "out of range for" << _d->gltfAccessors.size() << "accessors";
         return {};
     }
 
     /* Return if the buffer view is already parsed */
-    Containers::Optional<Containers::Triple<Containers::StridedArrayView2D<const char>, VertexFormat, UnsignedInt>>& storage = _d->accessors[accessorId];
+    Containers::Optional<Accessor>& storage = _d->accessors[accessorId];
     if(storage) return storage;
 
     const Utility::JsonToken& gltfAccessor = _d->gltfAccessors[accessorId];
@@ -492,7 +502,7 @@ Containers::Optional<Containers::Triple<Containers::StridedArrayView2D<const cha
 
     /* Get the buffer view early and continue only if that doesn't fail. This
        also checks that the buffer view ID is in bounds. */
-    Containers::Optional<Containers::Triple<Containers::ArrayView<const char>, UnsignedInt, UnsignedInt>> bufferView = parseBufferView(errorPrefix, gltfBufferViewId->asUnsignedInt());
+    Containers::Optional<BufferView> bufferView = parseBufferView(errorPrefix, gltfBufferViewId->asUnsignedInt());
     if(!bufferView) return {};
 
     /* Byte offset is optional, defaulting to 0 */
@@ -607,17 +617,17 @@ Containers::Optional<Containers::Triple<Containers::StridedArrayView2D<const cha
         format = vertexFormat(componentFormat, vectorCount, componentCount, true);
 
     const std::size_t typeSize = vertexFormatSize(format);
-    if(bufferView->second() && bufferView->second() < typeSize) {
-        Error{} << errorPrefix << typeSize << Debug::nospace << "-byte type defined by accessor" << accessorId << "can't fit into buffer view" << gltfBufferViewId->asUnsignedInt() << "stride of" << bufferView->second();
+    if(bufferView->stride && bufferView->stride < typeSize) {
+        Error{} << errorPrefix << typeSize << Debug::nospace << "-byte type defined by accessor" << accessorId << "can't fit into buffer view" << gltfBufferViewId->asUnsignedInt() << "stride of" << bufferView->stride;
         return {};
     }
 
     const std::size_t offset = gltfAccessorByteOffset ? gltfAccessorByteOffset->asSize() : 0;
-    const std::size_t stride = bufferView->second() ? bufferView->second() : typeSize;
+    const std::size_t stride = bufferView->stride ? bufferView->stride : typeSize;
     const std::size_t count = gltfAccessorCount->asSize();
     const std::size_t requiredBufferViewSize = offset + (count ? stride*(count - 1) + typeSize : 0);
-    if(bufferView->first().size() < requiredBufferViewSize) {
-        Error{} << errorPrefix << "accessor" << accessorId << "needs" << requiredBufferViewSize << "bytes but buffer view" << gltfBufferViewId->asUnsignedInt() << "has only" << bufferView->first().size();
+    if(bufferView->data.size() < requiredBufferViewSize) {
+        Error{} << errorPrefix << "accessor" << accessorId << "needs" << requiredBufferViewSize << "bytes but buffer view" << gltfBufferViewId->asUnsignedInt() << "has only" << bufferView->data.size();
         return {};
     }
 
@@ -633,8 +643,8 @@ Containers::Optional<Containers::Triple<Containers::StridedArrayView2D<const cha
             whole strides and the remainder (Math::div), then form the view
             with offset in whole strides and then "shift" the view by the
             remainder (once there's StridedArrayView::shift() or some such) */
-        Containers::StridedArrayView2D<const char>{{bufferView->first(), bufferView->first().size() + stride},
-            static_cast<const char*>(bufferView->first().data()) + offset,
+        Containers::StridedArrayView2D<const char>{{bufferView->data, bufferView->data.size() + stride},
+            static_cast<const char*>(bufferView->data.data()) + offset,
             {count, typeSize},
             {std::ptrdiff_t(stride), 1}},
         format,
@@ -1527,8 +1537,8 @@ void GltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags da
 
     /* Allocate storage for parsed buffers, buffer views and accessors */
     _d->buffers = Containers::Array<Containers::Optional<Containers::Array<char>>>{_d->gltfBuffers.size()};
-    _d->bufferViews = Containers::Array<Containers::Optional<Containers::Triple<Containers::ArrayView<const char>, UnsignedInt, UnsignedInt>>>{_d->gltfBufferViews.size()};
-    _d->accessors = Containers::Array<Containers::Optional<Containers::Triple<Containers::StridedArrayView2D<const char>, VertexFormat, UnsignedInt>>>{_d->gltfAccessors.size()};
+    _d->bufferViews = Containers::Array<Containers::Optional<BufferView>>{_d->gltfBufferViews.size()};
+    _d->accessors = Containers::Array<Containers::Optional<Accessor>>{_d->gltfAccessors.size()};
     _d->samplers = Containers::Array<Containers::Optional<Sampler>>{_d->gltfSamplers.size()};
 
     /* Name maps are lazy-loaded because these might not be needed every time */
@@ -1676,23 +1686,23 @@ Containers::Optional<AnimationData> GltfImporter::doAnimation(UnsignedInt id) {
             /* If the input view is not yet present in the output data buffer,
                add it */
             if(samplerData.find(gltfAnimationSamplerInput->asUnsignedInt()) == samplerData.end()) {
-                const Containers::Optional<Containers::Triple<Containers::StridedArrayView2D<const char>, VertexFormat, UnsignedInt>> accessor = parseAccessor("Trade::GltfImporter::animation():", gltfAnimationSamplerInput->asUnsignedInt());
+                const Containers::Optional<Accessor> accessor = parseAccessor("Trade::GltfImporter::animation():", gltfAnimationSamplerInput->asUnsignedInt());
                 if(!accessor)
                     return {};
 
                 samplerData.emplace(gltfAnimationSamplerInput->asUnsignedInt(), SamplerData{dataSize, ~UnsignedInt{}});
-                dataSize += accessor->first().size()[0]*accessor->first().size()[1];
+                dataSize += accessor->data.size()[0]*accessor->data.size()[1];
             }
 
             /* If the output view is not yet present in the output data buffer,
                add it */
             if(samplerData.find(gltfAnimationSamplerOutput->asUnsignedInt()) == samplerData.end()) {
-                const Containers::Optional<Containers::Triple<Containers::StridedArrayView2D<const char>, VertexFormat, UnsignedInt>> accessor = parseAccessor("Trade::GltfImporter::animation():", gltfAnimationSamplerOutput->asUnsignedInt());
+                const Containers::Optional<Accessor> accessor = parseAccessor("Trade::GltfImporter::animation():", gltfAnimationSamplerOutput->asUnsignedInt());
                 if(!accessor)
                     return {};
 
                 samplerData.emplace(gltfAnimationSamplerOutput->asUnsignedInt(), SamplerData{dataSize, ~UnsignedInt{}});
-                dataSize += accessor->first().size()[0]*accessor->first().size()[1];
+                dataSize += accessor->data.size()[0]*accessor->data.size()[1];
             }
 
             arrayAppend(animationSamplerData, InPlaceInit,
@@ -1718,7 +1728,7 @@ Containers::Optional<AnimationData> GltfImporter::doAnimation(UnsignedInt id) {
         /* The accessor should be already parsed from above, so just retrieve
            its view instead of going through parseAccessor() again */
         const Containers::StridedArrayView2D<const char> src =
-            _d->accessors[view.first]->first();
+            _d->accessors[view.first]->data;
         const Containers::StridedArrayView2D<char> dst{
             data.exceptPrefix(view.second.outputOffset), src.size()};
         Utility::copy(src, dst);
@@ -1797,11 +1807,11 @@ Containers::Optional<AnimationData> GltfImporter::doAnimation(UnsignedInt id) {
             /* Key properties -- always float time. Again, the accessor should
                be already parsed from above, so just retrieve its view instead
                of going through parseAccessor() again. */
-            const Containers::Triple<Containers::StridedArrayView2D<const char>, VertexFormat, UnsignedInt>& input = *_d->accessors[sampler.input];
-            if(input.second() != VertexFormat::Float) {
+            const Accessor& input = *_d->accessors[sampler.input];
+            if(input.format != VertexFormat::Float) {
                 /* Since we're abusing VertexFormat for all formats, print just
                    the enum value without the prefix to avoid cofusion */
-                Error{} << "Trade::GltfImporter::animation(): channel" << gltfAnimationChannel.index() << "time track has unexpected type" << Debug::packed << input.second();
+                Error{} << "Trade::GltfImporter::animation(): channel" << gltfAnimationChannel.index() << "time track has unexpected type" << Debug::packed << input.format;
                 return {};
             }
 
@@ -1810,13 +1820,13 @@ Containers::Optional<AnimationData> GltfImporter::doAnimation(UnsignedInt id) {
             CORRADE_INTERNAL_ASSERT(inputDataFound != samplerData.end());
             const auto keys = Containers::arrayCast<Float>(data.sliceSize(
                 inputDataFound->second.outputOffset,
-                input.first().size()[0]*
-                input.first().size()[1]));
+                input.data.size()[0]*
+                input.data.size()[1]));
 
             /* Decide on value properties. Again, the accessor should be
                already parsed from above, so just retrieve its view instead of
                going through parseAccessor() again. */
-            const Containers::Triple<Containers::StridedArrayView2D<const char>, VertexFormat, UnsignedInt>& output = *_d->accessors[sampler.output];
+            const Accessor& output = *_d->accessors[sampler.output];
             AnimationTrackTarget target;
             AnimationTrackType type, resultType;
             Containers::StridedArrayView1D<const void> typeErasedValues;
@@ -1824,13 +1834,13 @@ Containers::Optional<AnimationData> GltfImporter::doAnimation(UnsignedInt id) {
             CORRADE_INTERNAL_ASSERT(outputDataFound != samplerData.end());
             const auto outputData = data.sliceSize(
                 outputDataFound->second.outputOffset,
-                output.first().size()[0]*
-                output.first().size()[1]);
+                output.data.size()[0]*
+                output.data.size()[1]);
             UnsignedInt& timeTrackUsed = outputDataFound->second.timeTrack;
 
             const std::size_t valuesPerKey = sampler.interpolation == Animation::Interpolation::Spline ? 3 : 1;
-            if(input.first().size()[0]*valuesPerKey != output.first().size()[0]) {
-                Error{} << "Trade::GltfImporter::animation(): channel" << gltfAnimationChannel.index() << "target track size doesn't match time track size, expected" << output.first().size()[0] << "but got" << input.first().size()[0]*valuesPerKey;
+            if(input.data.size()[0]*valuesPerKey != output.data.size()[0]) {
+                Error{} << "Trade::GltfImporter::animation(): channel" << gltfAnimationChannel.index() << "target track size doesn't match time track size, expected" << output.data.size()[0] << "but got" << input.data.size()[0]*valuesPerKey;
                 return {};
             }
 
@@ -1842,11 +1852,11 @@ Containers::Optional<AnimationData> GltfImporter::doAnimation(UnsignedInt id) {
 
             /* Translation */
             if(gltfTargetPath->asString() == "translation"_s) {
-                if(output.second() != VertexFormat::Vector3) {
+                if(output.format != VertexFormat::Vector3) {
                     /* Since we're abusing VertexFormat for all formats, print
                        just the enum value without the prefix to avoid
                        cofusion */
-                    Error{} << "Trade::GltfImporter::animation(): translation track has unexpected type" << Debug::packed << output.second();
+                    Error{} << "Trade::GltfImporter::animation(): translation track has unexpected type" << Debug::packed << output.format;
                     return {};
                 }
 
@@ -1871,11 +1881,11 @@ Containers::Optional<AnimationData> GltfImporter::doAnimation(UnsignedInt id) {
             } else if(gltfTargetPath->asString() == "rotation"_s) {
                 /** @todo rotation can be also normalized (?!) to a vector of 8/16bit (signed?!) integers */
 
-                if(output.second() != VertexFormat::Vector4) {
+                if(output.format != VertexFormat::Vector4) {
                     /* Since we're abusing VertexFormat for all formats, print
                        just the enum value without the prefix to avoid
                        cofusion */
-                    Error{} << "Trade::GltfImporter::animation(): rotation track has unexpected type" << Debug::packed << output.second();
+                    Error{} << "Trade::GltfImporter::animation(): rotation track has unexpected type" << Debug::packed << output.format;
                     return {};
                 }
 
@@ -1922,11 +1932,11 @@ Containers::Optional<AnimationData> GltfImporter::doAnimation(UnsignedInt id) {
 
             /* Scale */
             } else if(gltfTargetPath->asString() == "scale"_s) {
-                if(output.second() != VertexFormat::Vector3) {
+                if(output.format != VertexFormat::Vector3) {
                     /* Since we're abusing VertexFormat for all formats, print
                        just the enum value without the prefix to avoid
                        cofusion */
-                    Error{} << "Trade::GltfImporter::animation(): scaling track has unexpected type" << Debug::packed << output.second();
+                    Error{} << "Trade::GltfImporter::animation(): scaling track has unexpected type" << Debug::packed << output.format;
                     return {};
                 }
 
@@ -3198,17 +3208,17 @@ Containers::Optional<SkinData3D> GltfImporter::doSkin3D(const UnsignedInt id) {
             return {};
         }
 
-        const Containers::Optional<Containers::Triple<Containers::StridedArrayView2D<const char>, VertexFormat, UnsignedInt>> accessor = parseAccessor("Trade::GltfImporter::skin3D():", gltfInverseBindMatrices->asUnsignedInt());
+        const Containers::Optional<Accessor> accessor = parseAccessor("Trade::GltfImporter::skin3D():", gltfInverseBindMatrices->asUnsignedInt());
         if(!accessor)
             return {};
-        if(accessor->second() != VertexFormat::Matrix4x4) {
+        if(accessor->format != VertexFormat::Matrix4x4) {
             /* Since we're abusing VertexFormat for all formats, print just the
                enum value without the prefix to avoid cofusion */
-            Error{} << "Trade::GltfImporter::skin3D(): inverse bind matrices have unexpected type" << Debug::packed << accessor->second();
+            Error{} << "Trade::GltfImporter::skin3D(): inverse bind matrices have unexpected type" << Debug::packed << accessor->format;
             return {};
         }
 
-        Containers::StridedArrayView1D<const Matrix4> matrices = Containers::arrayCast<1, const Matrix4>(accessor->first());
+        Containers::StridedArrayView1D<const Matrix4> matrices = Containers::arrayCast<1, const Matrix4>(accessor->data);
         if(matrices.size() != inverseBindMatrices.size()) {
             Error{} << "Trade::GltfImporter::skin3D(): invalid inverse bind matrix count, expected" << inverseBindMatrices.size() << "but got" << matrices.size();
             return {};
@@ -3439,15 +3449,15 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
         }
 
         /* Get the accessor view */
-        Containers::Optional<Containers::Triple<Containers::StridedArrayView2D<const char>, VertexFormat, UnsignedInt>> accessor = parseAccessor("Trade::GltfImporter::mesh():", attribute.value->asUnsignedInt());
+        Containers::Optional<Accessor> accessor = parseAccessor("Trade::GltfImporter::mesh():", attribute.value->asUnsignedInt());
         if(!accessor) return {};
 
         /* From the builtin attributes can fire either for ObjectId or for
            JointIds */
-        if(configuration().value<bool>("strict") && vertexFormatComponentFormat(accessor->second()) == VertexFormat::UnsignedInt) {
+        if(configuration().value<bool>("strict") && vertexFormatComponentFormat(accessor->format) == VertexFormat::UnsignedInt) {
             /** @todo for JOINTS this prints Vector4ui while the actual
                 imported attribute is then UnsignedInt[], fix this somehow? */
-            Error{} << "Trade::GltfImporter::mesh(): strict mode enabled, disallowing" << attribute.name << "with a 32-bit integer vertex format" << Debug::packed << accessor->second();
+            Error{} << "Trade::GltfImporter::mesh(): strict mode enabled, disallowing" << attribute.name << "with a 32-bit integer vertex format" << Debug::packed << accessor->format;
             return {};
         }
 
@@ -3479,44 +3489,44 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
         MeshAttribute name{};
         UnsignedShort arraySize = 0;
         if(baseAttributeName == "POSITION"_s) {
-            if(accessor->second() == VertexFormat::Vector3 ||
-               accessor->second() == VertexFormat::Vector3b ||
-               accessor->second() == VertexFormat::Vector3bNormalized ||
-               accessor->second() == VertexFormat::Vector3ub ||
-               accessor->second() == VertexFormat::Vector3ubNormalized ||
-               accessor->second() == VertexFormat::Vector3s ||
-               accessor->second() == VertexFormat::Vector3sNormalized ||
-               accessor->second() == VertexFormat::Vector3us ||
-               accessor->second() == VertexFormat::Vector3usNormalized)
+            if(accessor->format == VertexFormat::Vector3 ||
+               accessor->format == VertexFormat::Vector3b ||
+               accessor->format == VertexFormat::Vector3bNormalized ||
+               accessor->format == VertexFormat::Vector3ub ||
+               accessor->format == VertexFormat::Vector3ubNormalized ||
+               accessor->format == VertexFormat::Vector3s ||
+               accessor->format == VertexFormat::Vector3sNormalized ||
+               accessor->format == VertexFormat::Vector3us ||
+               accessor->format == VertexFormat::Vector3usNormalized)
                 name = MeshAttribute::Position;
         } else if(baseAttributeName == "NORMAL"_s) {
-            if(accessor->second() == VertexFormat::Vector3 ||
-               accessor->second() == VertexFormat::Vector3bNormalized ||
-               accessor->second() == VertexFormat::Vector3sNormalized)
+            if(accessor->format == VertexFormat::Vector3 ||
+               accessor->format == VertexFormat::Vector3bNormalized ||
+               accessor->format == VertexFormat::Vector3sNormalized)
                 name = MeshAttribute::Normal;
         } else if(baseAttributeName == "TANGENT"_s) {
-            if(accessor->second() == VertexFormat::Vector4 ||
-               accessor->second() == VertexFormat::Vector4bNormalized ||
-               accessor->second() == VertexFormat::Vector4sNormalized)
+            if(accessor->format == VertexFormat::Vector4 ||
+               accessor->format == VertexFormat::Vector4bNormalized ||
+               accessor->format == VertexFormat::Vector4sNormalized)
                 name = MeshAttribute::Tangent;
         } else if(baseAttributeName == "TEXCOORD"_s) {
-            if(accessor->second() == VertexFormat::Vector2 ||
-               accessor->second() == VertexFormat::Vector2b ||
-               accessor->second() == VertexFormat::Vector2bNormalized ||
-               accessor->second() == VertexFormat::Vector2ub ||
-               accessor->second() == VertexFormat::Vector2ubNormalized ||
-               accessor->second() == VertexFormat::Vector2s ||
-               accessor->second() == VertexFormat::Vector2sNormalized ||
-               accessor->second() == VertexFormat::Vector2us ||
-               accessor->second() == VertexFormat::Vector2usNormalized)
+            if(accessor->format == VertexFormat::Vector2 ||
+               accessor->format == VertexFormat::Vector2b ||
+               accessor->format == VertexFormat::Vector2bNormalized ||
+               accessor->format == VertexFormat::Vector2ub ||
+               accessor->format == VertexFormat::Vector2ubNormalized ||
+               accessor->format == VertexFormat::Vector2s ||
+               accessor->format == VertexFormat::Vector2sNormalized ||
+               accessor->format == VertexFormat::Vector2us ||
+               accessor->format == VertexFormat::Vector2usNormalized)
                 name = MeshAttribute::TextureCoordinates;
         } else if(baseAttributeName == "COLOR"_s) {
-            if(accessor->second() == VertexFormat::Vector3 ||
-               accessor->second() == VertexFormat::Vector4 ||
-               accessor->second() == VertexFormat::Vector3ubNormalized ||
-               accessor->second() == VertexFormat::Vector4ubNormalized ||
-               accessor->second() == VertexFormat::Vector3usNormalized ||
-               accessor->second() == VertexFormat::Vector4usNormalized)
+            if(accessor->format == VertexFormat::Vector3 ||
+               accessor->format == VertexFormat::Vector4 ||
+               accessor->format == VertexFormat::Vector3ubNormalized ||
+               accessor->format == VertexFormat::Vector4ubNormalized ||
+               accessor->format == VertexFormat::Vector3usNormalized ||
+               accessor->format == VertexFormat::Vector4usNormalized)
                 name = MeshAttribute::Color;
         /* Joints and weights are represented as an array attribute, so the
            vertex format gets changed to a component format and the component
@@ -3524,34 +3534,34 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
         /** @todo consider merging JOINTS_0, JOINTS_1 etc if they follow each
             other and have the same type */
         } else if(baseAttributeName == "JOINTS"_s) {
-            if(accessor->second() == VertexFormat::Vector4ui ||
-               accessor->second() == VertexFormat::Vector4us ||
-               accessor->second() == VertexFormat::Vector4ub)
+            if(accessor->format == VertexFormat::Vector4ui ||
+               accessor->format == VertexFormat::Vector4us ||
+               accessor->format == VertexFormat::Vector4ub)
             {
                 ++jointIdAttributeCount;
                 name = MeshAttribute::JointIds;
-                arraySize = vertexFormatComponentCount(accessor->second());
-                accessor->second() = vertexFormatComponentFormat(accessor->second());
+                arraySize = vertexFormatComponentCount(accessor->format);
+                accessor->format = vertexFormatComponentFormat(accessor->format);
             }
         } else if(baseAttributeName == "WEIGHTS"_s) {
-            if(accessor->second() == VertexFormat::Vector4 ||
-               accessor->second() == VertexFormat::Vector4ubNormalized ||
-               accessor->second() == VertexFormat::Vector4usNormalized)
+            if(accessor->format == VertexFormat::Vector4 ||
+               accessor->format == VertexFormat::Vector4ubNormalized ||
+               accessor->format == VertexFormat::Vector4usNormalized)
             {
                 ++weightAttributeCount;
                 name = MeshAttribute::Weights;
-                arraySize = vertexFormatComponentCount(accessor->second());
+                arraySize = vertexFormatComponentCount(accessor->format);
                 /* vertexFormatComponentFormat() strips the normalized bit from
                    the format, need to go through the full vertexFormat()
                    composer instead */
-                accessor->second() = vertexFormat(accessor->second(), 1, isVertexFormatNormalized(accessor->second()));
+                accessor->format = vertexFormat(accessor->format, 1, isVertexFormatNormalized(accessor->format));
             }
         /* Object ID, name custom. To avoid confusion, print the error together
            with saying it's an object ID attribute */
         } else if(attribute.name == configuration().value<Containers::StringView>("objectIdAttribute")) {
-            if(accessor->second() == VertexFormat::UnsignedInt ||
-               accessor->second() == VertexFormat::UnsignedShort ||
-               accessor->second() == VertexFormat::UnsignedByte)
+            if(accessor->format == VertexFormat::UnsignedInt ||
+               accessor->format == VertexFormat::UnsignedShort ||
+               accessor->format == VertexFormat::UnsignedByte)
             {
                 name = MeshAttribute::ObjectId;
             }
@@ -3577,7 +3587,7 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
 
                 /* Here the VertexFormat prefix would not be confusing but
                    print it without to be consistent with other messages */
-                e << attribute.name << "format" << Debug::packed << accessor->second();
+                e << attribute.name << "format" << Debug::packed << accessor->format;
 
                 /* Indicate it's invalid for a morph target */
                 if(attribute.morphTargetId != -1)
@@ -3601,13 +3611,13 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
 
         /* Remember vertex count and ensure all accessors have the same */
         if(attributeId == 0) {
-            vertexCount = accessor->first().size()[0];
-        } else if(accessor->first().size()[0] != vertexCount) {
+            vertexCount = accessor->data.size()[0];
+        } else if(accessor->data.size()[0] != vertexCount) {
             Error e;
             e << "Trade::GltfImporter::mesh(): mismatched vertex count for attribute" << attribute.name;
             if(attribute.morphTargetId != -1)
                 e << "in morph target" << attribute.morphTargetId;
-            e << Debug::nospace << ", expected" << vertexCount << "but got" << accessor->first().size()[0];
+            e << Debug::nospace << ", expected" << vertexCount << "but got" << accessor->data.size()[0];
             return {};
         }
 
@@ -3616,22 +3626,22 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
            a tiny slice of that (which is the case for example with the Buggy
            model in glTF Sample Assets), thus have to take exactly the range
            the accessor spans. */
-        const char* const attributeDataBegin = static_cast<const char*>(accessor->first().data());
+        const char* const attributeDataBegin = static_cast<const char*>(accessor->data.data());
         bufferRanges[attributeId] = {
             attributeId,
-            _d->bufferViews[accessor->third()]->third(), /* buffer ID */
+            _d->bufferViews[accessor->bufferView]->buffer,
             attributeDataBegin,
             /* Unless there are no vertices, from the last vertex we take just
                the size the actual format spans, which is provided in the
                second dimension of the data view */
-            attributeDataBegin + (vertexCount ? (vertexCount - 1)*accessor->first().stride()[0] + accessor->first().size()[1] : 0),
+            attributeDataBegin + (vertexCount ? (vertexCount - 1)*accessor->data.stride()[0] + accessor->data.size()[1] : 0),
         };
 
         /** @todo Check that accessor stride >= vertexFormatSize(format)? */
 
         /* Fill in an attribute. Points to the input data, will be patched to
            the output data once we know where it's allocated. */
-        attributeData[attributeId] = MeshAttributeData{name, accessor->second(), accessor->first(), arraySize, attribute.morphTargetId};
+        attributeData[attributeId] = MeshAttributeData{name, accessor->format, accessor->data, arraySize, attribute.morphTargetId};
 
         /* For backwards compatibility we'll insert also a custom "JOINTS" /
            "WEIGHTS" attributes below, count how many of them we'll need */
@@ -3867,29 +3877,29 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
         /* Bounds check is done in parseAccessor() below, no need to do it
            here again */
 
-        Containers::Optional<Containers::Triple<Containers::StridedArrayView2D<const char>, VertexFormat, UnsignedInt>> accessor = parseAccessor("Trade::GltfImporter::mesh():", gltfIndices->asUnsignedInt());
+        Containers::Optional<Accessor> accessor = parseAccessor("Trade::GltfImporter::mesh():", gltfIndices->asUnsignedInt());
         if(!accessor) return {};
 
         MeshIndexType type;
-        if(accessor->second() == VertexFormat::UnsignedByte)
+        if(accessor->format == VertexFormat::UnsignedByte)
             type = MeshIndexType::UnsignedByte;
-        else if(accessor->second() == VertexFormat::UnsignedShort)
+        else if(accessor->format == VertexFormat::UnsignedShort)
             type = MeshIndexType::UnsignedShort;
-        else if(accessor->second() == VertexFormat::UnsignedInt)
+        else if(accessor->format == VertexFormat::UnsignedInt)
             type = MeshIndexType::UnsignedInt;
         else {
             /* Since we're abusing VertexFormat for all formats, print just the
                enum value without the prefix to avoid cofusion */
-            Error{} << "Trade::GltfImporter::mesh(): unsupported index type" << Debug::packed << accessor->second();
+            Error{} << "Trade::GltfImporter::mesh(): unsupported index type" << Debug::packed << accessor->format;
             return {};
         }
 
-        if(!accessor->first().isContiguous()) {
+        if(!accessor->data.isContiguous()) {
             Error{} << "Trade::GltfImporter::mesh(): index buffer view is not contiguous";
             return {};
         }
 
-        Containers::ArrayView<const char> srcContiguous = accessor->first().asContiguous();
+        Containers::ArrayView<const char> srcContiguous = accessor->data.asContiguous();
         indexData = Containers::Array<char>{NoInit, srcContiguous.size()};
         Utility::copy(srcContiguous, indexData);
         indices = MeshIndexData{type, indexData};
@@ -5173,18 +5183,18 @@ AbstractImporter* GltfImporter::setupOrReuseImporterForImage(const char* const e
             imageView = *imageData;
 
         } else if(gltfBufferView) {
-            const Containers::Optional<Containers::Triple<Containers::ArrayView<const char>, UnsignedInt, UnsignedInt>> bufferView = parseBufferView(errorPrefix, gltfBufferView->asUnsignedInt());
+            const Containers::Optional<BufferView> bufferView = parseBufferView(errorPrefix, gltfBufferView->asUnsignedInt());
             if(!bufferView) return {};
 
             /* 3.6.1.1. (Binary Data Storage § Buffers and Buffer Views §
                Overview) says "Buffer views with [non-vertex] types of data
                MUST NOT not define byteStride", which makes sense */
-            if(bufferView->second()) {
+            if(bufferView->stride) {
                 Error{} << errorPrefix << "buffer view" << gltfBufferView->asUnsignedInt() << "is strided";
                 return {};
             }
 
-            imageView = bufferView->first();
+            imageView = bufferView->data;
 
         } else CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
 
