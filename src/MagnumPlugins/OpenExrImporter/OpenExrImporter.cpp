@@ -278,7 +278,8 @@ void OpenExrImporter::doOpenData(Containers::Array<char>&& data, const DataFlags
         if(state->tiledFile) {
             for(Int i = 0; i != state->tiledFile->numLevels(); ++i) {
                 if(state->tiledFile->levelHeight(i) < 6) {
-                    if(flags() >= ImporterFlag::Verbose) Debug{} << "Trade::OpenExrImporter::openData(): last" << state->tiledFile->numLevels() - i << "levels are too small to represent six cubemap faces (" << Debug::nospace << Vector2i{state->tiledFile->levelWidth(i), state->tiledFile->levelHeight(i)} << Debug::nospace <<"), capping at" << i << "levels";
+                    if(flags() >= ImporterFlag::Verbose)
+                        Debug{} << "Trade::OpenExrImporter::openData(): last" << state->tiledFile->numLevels() - i << "levels are too small to represent six cubemap faces (" << Debug::nospace << Vector2i{state->tiledFile->levelWidth(i), state->tiledFile->levelHeight(i)} << Debug::nospace <<"), capping at" << i << "levels";
                     state->completeLevelCount = i;
                     break;
                 }
@@ -408,7 +409,8 @@ Containers::Optional<ImageData2D> imageInternal(const Utility::ConfigurationGrou
     if(!layerPrefix.empty()) {
         layerPrefix += '.';
         for(std::string* i: {mapping, mapping + 1, mapping + 2, mapping + 3, &depthMapping})
-            if(!i->empty()) *i = layerPrefix + *i;
+            if(!i->empty())
+                *i = layerPrefix + *i;
     }
 
     /* Pixel type. For RGBA it's queried from the channels, for depth it's
@@ -469,8 +471,9 @@ Containers::Optional<ImageData2D> imageInternal(const Utility::ConfigurationGrou
         channelCount = i + 1;
 
         CORRADE_INTERNAL_ASSERT(UnsignedInt(channels[mapping[i]].type) < Imf::NUM_PIXELTYPES);
-        if(!type) type = channels[mapping[i]].type;
-        else if(*type != channels[mapping[i]].type) {
+        if(!type) {
+            type = channels[mapping[i]].type;
+        } else if(*type != channels[mapping[i]].type) {
             /* For depth, the type is already set to FLOAT above, so this will
                double as a consistency check there as well */
             Error{} << messagePrefix << "channel" << mapping[i] << "expected to be a" << PixelTypeName[*type] << "but got" << PixelTypeName[channels[mapping[i]].type];
@@ -567,7 +570,8 @@ Containers::Optional<ImageData2D> imageInternal(const Utility::ConfigurationGrou
         "rFill", "gFill", "bFill", "aFill"
     };
     for(std::size_t i = 0; i != channelCount; ++i) {
-        if(mapping[i].empty()) continue;
+        if(mapping[i].empty())
+            continue;
 
         /* OpenEXR uses a std::map inside the Imf::FrameBuffer, but doesn't
            actually do any error checking on top, which means if we
@@ -675,7 +679,8 @@ Containers::Optional<ImageData2D> OpenExrImporter::doImage2D(UnsignedInt, const 
        deleted all that. For my sanity I'm doing a flip on the resulting data
        instead, which is also consistent with what needs to be done for
        cubemaps below. */
-    if(image) Utility::flipInPlace<0>(image->mutablePixels());
+    if(image)
+        Utility::flipInPlace<0>(image->mutablePixels());
 
     return image;
 }
@@ -697,7 +702,8 @@ Containers::Optional<ImageData3D> OpenExrImporter::doImage3D(UnsignedInt, const 
     } else {
         image2D = imageInternal(configuration(), &*_state->tiledFile, level, "Trade::OpenExrImporter::image3D():", flags());
     }
-    if(!image2D) return {};
+    if(!image2D)
+        return {};
 
     /* Compared to the (simple) 2D case, the cube map case is a lot more
        complex -- either GL or EXR is insane and so I have to flip differently
