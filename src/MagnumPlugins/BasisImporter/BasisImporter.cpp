@@ -142,7 +142,8 @@ template<> struct ConfigurationValue<Magnum::Trade::BasisImporter::TargetFormat>
     static Magnum::Trade::BasisImporter::TargetFormat fromString(const std::string& value, ConfigurationValueFlags) {
         Magnum::Int i = 0;
         for(const char* name: Magnum::Trade::FormatNames) {
-            if(name && value == name) return Magnum::Trade::BasisImporter::TargetFormat(i);
+            if(name && value == name)
+                return Magnum::Trade::BasisImporter::TargetFormat(i);
             ++i;
         }
 
@@ -223,7 +224,8 @@ BasisImporter::BasisImporter(PluginManager::AbstractManager& manager, const Cont
         if(const Containers::StringView suffix = plugin.exceptPrefix(PluginPrefix)) {
             Int i = 0;
             for(const char* name: FormatNames) {
-                if(name && suffix == name) break;
+                if(name && suffix == name)
+                    break;
                 ++i;
             }
             CORRADE_INTERNAL_ASSERT(UnsignedInt(i) < Containers::arraySize(FormatNames));

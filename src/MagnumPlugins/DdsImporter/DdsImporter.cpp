@@ -737,8 +737,10 @@ void flipPixels(const BitVector2 yzFlip, const UnsignedInt pixelSize, const Vect
         std::size_t(size.x()),
         pixelSize
     }};
-    if(yzFlip[0]) Utility::flipInPlace<1>(view);
-    if(yzFlip[1]) Utility::flipInPlace<0>(view);
+    if(yzFlip[0])
+        Utility::flipInPlace<1>(view);
+    if(yzFlip[1])
+        Utility::flipInPlace<0>(view);
 }
 
 void flipBlocks(const Vector3i& size, const ImporterFlags flags, const char* messagePrefix, const BitVector2 yzFlip, const CompressedPixelFormat format, const Vector3i& blockSize, const UnsignedInt blockDataSize, const Containers::ArrayView<char> data) {

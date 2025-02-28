@@ -113,7 +113,8 @@ Containers::Optional<ImageData2D> PngImporter::doImage2D(UnsignedInt, UnsignedIn
     /* Error handling routine. Since we're replacing the png_default_error()
        function, we need to call std::longjmp() ourselves -- otherwise the
        default error handling with stderr printing kicks in. */
-    if(setjmp(png_jmpbuf(file))) return Containers::NullOpt;
+    if(setjmp(png_jmpbuf(file)))
+        return Containers::NullOpt;
     png_set_error_fn(file, nullptr, [](const png_structp file, const png_const_charp message) {
         Error{} << "Trade::PngImporter::image2D(): error:" << message;
         std::longjmp(png_jmpbuf(file), 1);
@@ -134,7 +135,8 @@ Containers::Optional<ImageData2D> PngImporter::doImage2D(UnsignedInt, UnsignedIn
     Containers::ArrayView<char> input = _in;
     png_set_read_fn(file, &input, [](const png_structp file, const png_bytep data, const png_size_t length) {
         auto&& input = *reinterpret_cast<Containers::ArrayView<char>*>(png_get_io_ptr(file));
-        if(input.size() < length) png_error(file, "file too short");
+        if(input.size() < length)
+            png_error(file, "file too short");
         std::memcpy(data, input.begin(), length);
         input = input.exceptPrefix(length);
     });
@@ -313,7 +315,8 @@ Containers::Optional<ImageData2D> PngImporter::doImage2D(UnsignedInt, UnsignedIn
 
     /* Endianness correction for 16 bit depth */
     #ifndef CORRADE_TARGET_BIG_ENDIAN
-    if(bits == 16) png_set_swap(file);
+    if(bits == 16)
+        png_set_swap(file);
     #endif
 
     /* Read image row by row */

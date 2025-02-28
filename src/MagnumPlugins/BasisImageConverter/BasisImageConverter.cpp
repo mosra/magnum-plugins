@@ -262,7 +262,8 @@ template<UnsignedInt dimensions> Containers::Optional<Containers::Array<char>> c
     PARAM_CONFIG(resample_factor, float);
 
     UnsignedInt threadCount = configuration.value<Int>("threads");
-    if(threadCount == 0) threadCount = std::thread::hardware_concurrency();
+    if(threadCount == 0)
+        threadCount = std::thread::hardware_concurrency();
     const bool multithreading = threadCount > 1;
     params.m_multithreading = multithreading;
     basisu::job_pool jpool{threadCount};

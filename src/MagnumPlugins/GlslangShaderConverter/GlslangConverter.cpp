@@ -351,7 +351,8 @@ struct Includer: glslang::TShader::Includer {
     void releaseInclude(IncludeResult* const result) override {
         /* For some reason, it calls releaseInclude() even if we return nullptr
            from Includer. That's not great. */
-        if(!result) return;
+        if(!result)
+            return;
 
         /* Decrease the reference counter, if it goes to zero, close the data */
         auto& reference = *static_cast<Containers::Pair<Containers::ArrayView<const char>, std::size_t>*>(result->userData);
@@ -410,7 +411,8 @@ Containers::Pair<bool, bool> compileAndLinkShader(glslang::TShader& shader, glsl
             /* Read if not there yet */
             if(found == files.end()) {
                 Containers::Optional<Containers::Array<char>> file = Utility::Path::read(filename);
-                if(!file) return {};
+                if(!file)
+                    return {};
 
                 found = files.emplace(filename, *Utility::move(file)).first;
             }
@@ -745,7 +747,8 @@ Containers::Pair<bool, Containers::String> GlslangConverter::doValidateData(cons
         }
         outputVersion = {glslang::EShTargetOpenGL_450, glslang::EShTargetSpv_1_0, Format::Unspecified};
     } else outputVersion = parseOutputVersion("ShaderTools::GlslangConverter::validateData():", _state->outputFormat, _state->outputVersion);
-    if(!inputVersion.first() || !outputVersion.client) return {};
+    if(!inputVersion.first() || !outputVersion.client)
+        return {};
 
     /* Amazing, why a part of the API has the glslang:: namespace and some
        doesn't? Why can't you just be consistent, FFS? Do you ever C++?! */
@@ -794,7 +797,8 @@ Containers::Pair<bool, Containers::String> GlslangConverter::doValidateData(cons
        nobody ever verify what mess it spits out?! */
     const auto shaderLog = Containers::StringView{shader.getInfoLog()}.trimmedSuffix();
     /** @todo clean up also trailing newlines inside, ffs */
-    if(!success.first()) return {false, shaderLog};
+    if(!success.first())
+        return {false, shaderLog};
 
     /* Trim excessive newlines and spaces here as well */
     const auto programLog = Containers::StringView{program.getInfoLog()}.trimmedSuffix();
@@ -858,7 +862,8 @@ Containers::Optional<Containers::Array<char>> GlslangConverter::doConvertDataToD
     const EShLanguage translatedStage = translateStage(stage);
     const Containers::Pair<int, EProfile> inputVersion = parseInputVersion("ShaderTools::GlslangConverter::convertDataToData():", _state->inputVersion);
     const OutputVersion outputVersion = parseOutputVersion("ShaderTools::GlslangConverter::convertDataToData():", Format::Spirv, _state->outputVersion);
-    if(!inputVersion.first() || !outputVersion.client) return {};
+    if(!inputVersion.first() || !outputVersion.client)
+        return {};
 
     /* Compilation and SPIR-V options */
     Int messages = 0;

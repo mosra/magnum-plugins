@@ -238,13 +238,15 @@ Int PrimitiveImporter::doDefaultScene() const { return 1; }
 UnsignedInt PrimitiveImporter::doSceneCount() const { return 2; }
 
 Containers::Optional<SceneData> PrimitiveImporter::doScene(const UnsignedInt id) {
-    if(id == 0) return SceneData{SceneMappingType::UnsignedInt,
-        Containers::arraySize(Names),
-        DataFlag::Global, Scene2D, sceneFieldDataNonOwningArray(SceneFields2D)};
+    if(id == 0)
+        return SceneData{SceneMappingType::UnsignedInt,
+            Containers::arraySize(Names), DataFlag::Global, Scene2D,
+            sceneFieldDataNonOwningArray(SceneFields2D)};
 
-    if(id == 1) return SceneData{SceneMappingType::UnsignedInt,
-        Containers::arraySize(Names),
-        DataFlag::Global, Scene3D, sceneFieldDataNonOwningArray(SceneFields3D)};
+    if(id == 1)
+        return SceneData{SceneMappingType::UnsignedInt,
+            Containers::arraySize(Names), DataFlag::Global, Scene3D,
+            sceneFieldDataNonOwningArray(SceneFields3D)};
 
     CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
 }
@@ -257,7 +259,8 @@ Long PrimitiveImporter::doObjectForName(const Containers::StringView name) {
     /** @todo it's sorted, a reusable binary search utility would be handy
         (not that hard-to-use-correctly STL lower_bound crap) */
     for(std::size_t i = 0; i != Containers::arraySize(Names); ++i)
-        if(name == Names[i]) return i;
+        if(name == Names[i])
+            return i;
     return -1;
 }
 
@@ -273,7 +276,8 @@ Int PrimitiveImporter::doMeshForName(const Containers::StringView name) {
     /** @todo it's sorted, a reusable binary search utility would be handy
         (not that hard-to-use-correctly STL lower_bound crap) */
     for(std::size_t i = 0; i != Containers::arraySize(Names); ++i)
-        if(name == Names[i]) return i;
+        if(name == Names[i])
+            return i;
     return -1;
 }
 

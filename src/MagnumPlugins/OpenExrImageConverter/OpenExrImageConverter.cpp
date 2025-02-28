@@ -240,7 +240,8 @@ Containers::Optional<Containers::Array<char>> convertToDataInternal(const Utilit
 
     /* If a layer is specified, prefix all channels with it */
     std::string layerPrefix = configuration.value("layer");
-    if(!layerPrefix.empty()) layerPrefix += '.';
+    if(!layerPrefix.empty())
+        layerPrefix += '.';
 
     /* Write all channels that have assigned names */
     const char* const ChannelOptions[] {
@@ -256,7 +257,8 @@ Containers::Optional<Containers::Array<char>> convertToDataInternal(const Utilit
     Imf::FrameBuffer framebuffer;
     for(std::size_t i = 0; i != channelCount; ++i) {
         std::string name = configuration.value(ChannelOptions[i]);
-        if(name.empty()) continue;
+        if(name.empty())
+            continue;
 
         name = layerPrefix + name;
 

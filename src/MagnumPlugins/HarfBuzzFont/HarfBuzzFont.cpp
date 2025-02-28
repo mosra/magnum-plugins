@@ -64,7 +64,8 @@ auto HarfBuzzFont::doOpenData(const Containers::ArrayView<const char> data, cons
     auto ret = FreeTypeFont::doOpenData(data, size);
 
     /* Create Harfbuzz font */
-    if(FreeTypeFont::doIsOpened()) _hbFont = hb_ft_font_create(_ftFont, nullptr);
+    if(FreeTypeFont::doIsOpened())
+        _hbFont = hb_ft_font_create(_ftFont, nullptr);
 
     return ret;
 }

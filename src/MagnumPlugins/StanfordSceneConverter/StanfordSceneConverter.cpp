@@ -265,7 +265,8 @@ Containers::Optional<Containers::Array<char>> StanfordSceneConverter::doConvertT
     /* Copy the vertices */
     Containers::ArrayView<char> vertexData = out.sliceSize(header.size(), vertexDataSize);
     for(UnsignedInt i = 0; i != triangles.attributeCount(); ++i) {
-        if(offsets[i] == ~std::size_t{}) continue;
+        if(offsets[i] == ~std::size_t{})
+            continue;
 
         const Containers::StridedArrayView2D<const char> src = triangles.attribute(i);
         const Containers::StridedArrayView2D<char> dst{vertexData,
@@ -277,7 +278,8 @@ Containers::Optional<Containers::Array<char>> StanfordSceneConverter::doConvertT
         if(endianSwapNeeded) {
             const VertexFormat format = triangles.attributeFormat(i);
             const UnsignedInt componentSize = vertexFormatSize(vertexFormatComponentFormat(format));
-            if(componentSize == 1) continue;
+            if(componentSize == 1)
+                continue;
 
             /* Can't reuse the dst array as it has no information about the
                component layout. Build a sparse view from scratch instead. */

@@ -151,7 +151,8 @@ Containers::Optional<ImageData2D> StbDxtImageConverter::doConvert(const ImageVie
     }
 
     Containers::Optional<ImageData3D> out = convertInternal(image, configuration());
-    if(!out) return {};
+    if(!out)
+        return {};
 
     CORRADE_INTERNAL_ASSERT(out->size().z() == 1);
     const Vector2i size = out->size().xy();

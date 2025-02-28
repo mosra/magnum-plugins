@@ -200,7 +200,8 @@ Containers::Optional<ImageData2D> StbImageImporter::doImage2D(const UnsignedInt 
         channelSize = 4;
         /* stb_image still returns the original component count in components,
            which we don't want/need */
-        if(forceChannelCount) components = forceChannelCount;
+        if(forceChannelCount)
+            components = forceChannelCount;
         if(data) switch(components) {
             case 1: format = PixelFormat::R32F;         break;
             case 2: format = PixelFormat::RG32F;        break;
@@ -216,7 +217,8 @@ Containers::Optional<ImageData2D> StbImageImporter::doImage2D(const UnsignedInt 
         channelSize = 2;
         /* stb_image still returns the original component count in components,
            which we don't want/need */
-        if(forceChannelCount) components = forceChannelCount;
+        if(forceChannelCount)
+            components = forceChannelCount;
         if(data) switch(components) {
             case 1: format = PixelFormat::R16Unorm;     break;
             case 2: format = PixelFormat::RG16Unorm;    break;
@@ -237,7 +239,8 @@ Containers::Optional<ImageData2D> StbImageImporter::doImage2D(const UnsignedInt 
         channelSize = 1;
         /* stb_image still returns the original component count in components,
            which we don't want/need */
-        if(forceChannelCount) components = forceChannelCount;
+        if(forceChannelCount)
+            components = forceChannelCount;
         if(data) switch(components) {
             case 1: format = PixelFormat::R8Unorm;      break;
             case 2: format = PixelFormat::RG8Unorm;     break;

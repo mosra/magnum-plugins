@@ -132,7 +132,8 @@ template<class T, class U> inline T extractValue(const char* buffer, const bool 
        unaligned loads as well */
     U dest;
     std::memcpy(&dest, buffer, sizeof(U));
-    if(endianSwap) Utility::Endianness::swapInPlace(dest);
+    if(endianSwap)
+        Utility::Endianness::swapInPlace(dest);
     return T(dest);
 }
 
@@ -881,7 +882,8 @@ Containers::Optional<MeshData> StanfordImporter::doMesh(UnsignedInt id, const Un
             for(const MeshAttributeData& attribute: attributeData) {
                 const UnsignedInt formatSize =
                     vertexFormatSize(vertexFormatComponentFormat(attribute.format()));
-                if(formatSize == 1) continue;
+                if(formatSize == 1)
+                    continue;
                 const UnsignedInt componentCount =
                     vertexFormatComponentCount(attribute.format());
                 const Containers::StridedArrayView1D<const void> data =

@@ -66,8 +66,10 @@ Containers::Array<char> convert32PCM(const Containers::Array<char>& container, c
     for(char item: container) {
         ++skip;
 
-        if(skip > 3) skip = 0;
-        if(skip < 4 - size) continue;
+        if(skip > 3)
+            skip = 0;
+        if(skip < 4 - size)
+            continue;
 
         convertData[index] = item;
         ++index;

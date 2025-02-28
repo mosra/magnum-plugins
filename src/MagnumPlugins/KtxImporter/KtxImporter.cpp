@@ -369,15 +369,18 @@ void KtxImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFlags
             f->numDimensions = 3;
         } else {
             f->numDimensions = 2;
-            if(isCubeMap) f->imageFlags |= ImageFlag3D::CubeMap;
-            if(isLayered) f->imageFlags |= ImageFlag3D::Array;
+            if(isCubeMap)
+                f->imageFlags |= ImageFlag3D::CubeMap;
+            if(isLayered)
+                f->imageFlags |= ImageFlag3D::Array;
         }
     } else if(header.imageSize.z() > 0) {
         Error{} << "Trade::KtxImporter::openData(): invalid image size, depth is" << header.imageSize.z() << "but height is 0";
         return;
     } else {
         f->numDimensions = 1;
-        if(isLayered) f->imageFlags |= ImageFlag3D::Array;
+        if(isLayered)
+            f->imageFlags |= ImageFlag3D::Array;
     }
 
     f->numDataDimensions = Math::min<UnsignedByte>(f->numDimensions + UnsignedByte(isLayered || isCubeMap), 3);
@@ -493,7 +496,8 @@ void KtxImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFlags
         /* Try to open the data with BasisImporter (error output should be
            printed by the plugin itself). All other functions transparently
            forward to that importer instance if it's populated. */
-        if(!basisImporter->openData(data)) return;
+        if(!basisImporter->openData(data))
+            return;
 
         /* Success, save the instance */
         _basisImporter = Utility::move(basisImporter);
@@ -714,7 +718,8 @@ void KtxImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFlags
             constexpr Containers::StringView validOrientations[3]{"rl"_s, "du"_s, "io"_s};
             for(UnsignedByte i = 0; i != f->numDimensions; ++i) {
                 useDefaultOrientation = !validOrientations[i].contains(orientation[i]);
-                if(useDefaultOrientation) break;
+                if(useDefaultOrientation)
+                    break;
                 f->flip.set(i, orientation[i] != targetOrientation[i]);
             }
         }
@@ -926,9 +931,12 @@ template<UnsignedInt dimensions> ImageData<dimensions> KtxImporter::doImage(cons
     }};
     Containers::StridedArrayView4D<char> dst{data, src.size()};
 
-    if(_f->flip[2]) src = src.flipped<0>();
-    if(_f->flip[1]) src = src.flipped<1>();
-    if(_f->flip[0]) src = src.flipped<2>();
+    if(_f->flip[2])
+        src = src.flipped<0>();
+    if(_f->flip[1])
+        src = src.flipped<1>();
+    if(_f->flip[0])
+        src = src.flipped<2>();
 
     /* Without flipped dimensions this becomes a single memcpy */
     Utility::copy(src, dst);
