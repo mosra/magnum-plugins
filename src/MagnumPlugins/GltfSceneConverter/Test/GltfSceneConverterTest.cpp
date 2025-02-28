@@ -2751,6 +2751,9 @@ void GltfSceneConverterTest::addMeshBufferViewsMixed() {
         UnsignedShort lastSecondaryWeight;
         /* Buffer view 5 */
         UnsignedShort objectIds[2];
+        /* Padding to 96 bytes. Need to fill it to prevent the output getting
+           two random bytes. */
+        char padding[2];
     } vertices[]{{
         {{1.0f, 2.0f, 3.0f}, {4.0f, 5.0f, 6.0f}},
         {{{1, 2, 3, 4}, {100, 200, 300, 400}},
@@ -2759,7 +2762,8 @@ void GltfSceneConverterTest::addMeshBufferViewsMixed() {
         {{0xaabbccdd_rgba, {1000, 2000, 3000, 4000}},
          {0xeeff0011_rgba, {5000, 6000, 7000, 8000}}},
         9000,
-        {123, 213}
+        {123, 213},
+        {'\xca', '\xfe'}
     }};
     auto interleaved1 = Containers::stridedArrayView(vertices->interleaved1);
     auto interleaved2 = Containers::stridedArrayView(vertices->interleaved2);
