@@ -110,6 +110,14 @@ class MemoryIStream: public Imf::IStream {
         std::uint64_t tellg() override { return _position; }
         void seekg(const std::uint64_t pos) override { _position = pos; }
 
+        #if OPENEXR_VERSION_MAJOR*10000 + OPENEXR_VERSION_MINOR*100 + OPENEXR_VERSION_PATCH >= 30300
+        /* This helps with header reading on 3.3.3(?)+, otherwise it reads
+           byte-by-byte. See also the related 4096-byte workaround below.
+            https://github.com/AcademySoftwareFoundation/openexr/pull/1985
+           There is no such virtual interface before 3.3. */
+        std::int64_t size() override { return _data.size(); }
+        #endif
+
     private:
         Containers::ArrayView<const char> _data;
         /* 32-bit on 32-bit systems because yeah there's no way to fit 6 GB of
