@@ -49,6 +49,7 @@ struct StbTrueTypeFontTest: TestSuite::Tester {
 
     void empty();
     void invalid();
+    void invalidMissingTables();
 
     void properties();
 
@@ -111,6 +112,7 @@ const struct {
 StbTrueTypeFontTest::StbTrueTypeFontTest() {
     addTests({&StbTrueTypeFontTest::empty,
               &StbTrueTypeFontTest::invalid,
+              &StbTrueTypeFontTest::invalidMissingTables,
 
               &StbTrueTypeFontTest::properties});
 
@@ -170,6 +172,26 @@ void StbTrueTypeFontTest::invalid() {
     Error redirectError{&out};
     CORRADE_VERIFY(!font->openData("Oxygen.ttf", 16.0f));
     CORRADE_COMPARE(out, "Text::StbTrueTypeFont::openData(): can't get offset of the first font\n");
+}
+
+void StbTrueTypeFontTest::invalidMissingTables() {
+    Containers::Pointer<AbstractFont> font = _manager.instantiate("StbTrueTypeFont");
+
+    /* This tests stbtt_InitFont() failing, which happens only if some of the
+       required tables are missing. So can't really fake it with bogus data
+       like with invalid() above, as it could randomly crash. Instead rename
+       one of the fourCC table identifiers to something else. */
+    Containers::Optional<Containers::String> file = Utility::Path::readString(Utility::Path::join(FREETYPEFONT_TEST_DIR, "Oxygen.ttf"));
+    CORRADE_VERIFY(file);
+
+    Containers::MutableStringView found = file->find("cmap");
+    CORRADE_VERIFY(found);
+    found[0] = 'C';
+
+    Containers::String out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!font->openData(*file, 16.0f));
+    CORRADE_COMPARE(out, "Text::StbTrueTypeFont::openData(): font initialization failed\n");
 }
 
 void StbTrueTypeFontTest::properties() {

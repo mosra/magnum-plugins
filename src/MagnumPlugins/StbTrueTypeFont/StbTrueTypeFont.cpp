@@ -98,7 +98,10 @@ auto StbTrueTypeFont::doOpenData(const Containers::ArrayView<const char> data, c
         return {};
     }
 
-    if(!stbtt_InitFont(&font->info, font->data, offset)) return {};
+    if(!stbtt_InitFont(&font->info, font->data, offset)) {
+        Error{} << "Text::StbTrueTypeFont::openData(): font initialization failed";
+        return {};
+    }
 
     /* All right, let's move in */
     _font = Utility::move(font);
