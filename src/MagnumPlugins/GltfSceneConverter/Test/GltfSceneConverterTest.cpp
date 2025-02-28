@@ -5761,7 +5761,7 @@ void GltfSceneConverterTest::addSceneCustomFields() {
         UnsignedInt parentMapping[5];
         Int parent[1];
         Containers::Pair<UnsignedInt, Vector3> translations[3];
-        Containers::Pair<UnsignedInt, UnsignedInt> customUnsignedInt[2];
+        Containers::Pair<UnsignedInt, UnsignedInt> customUnsignedInt[3];
         Containers::Pair<UnsignedInt, Int> customInt[2];
         Containers::Pair<UnsignedInt, bool> customBit[3];
         char customStringData[11];
@@ -5783,7 +5783,8 @@ void GltfSceneConverterTest::addSceneCustomFields() {
          {2, Vector3{4.0f, 5.0f, 6.0f}},
          {3, Vector3{}}}, /* Trivial, omitted */
         {{0, 176},
-         {1, 4294967295}},
+         {1, 4294967295},
+         {5, 1337}}, /* assigned to object 5, which has no parent, gets ignored */
          /* W.T.F., C, why can't I just say -2147483648 without having to cast
             back from an unsigned type or suppress warnings?! */
         {{1, -2147483647 - 1},
@@ -5827,7 +5828,7 @@ void GltfSceneConverterTest::addSceneCustomFields() {
          {3, 17}},
     }};
 
-    SceneData scene{SceneMappingType::UnsignedInt, 5, {}, sceneData, {
+    SceneData scene{SceneMappingType::UnsignedInt, 6, {}, sceneData, {
         SceneFieldData{SceneField::Parent,
             Containers::stridedArrayView(sceneData->parentMapping),
             Containers::stridedArrayView(sceneData->parent).broadcasted<0>(5)},
@@ -5895,7 +5896,8 @@ void GltfSceneConverterTest::addSceneCustomFields() {
         CORRADE_COMPARE_AS(out,
             "Trade::GltfSceneConverter::add(): custom scene field 5318008 has no name assigned, skipping\n"
             "Trade::GltfSceneConverter::add(): custom scene field customVector2 has unsupported type Trade::SceneFieldType::Vector2, skipping\n"
-            "Trade::GltfSceneConverter::add(): ignoring duplicate field customFloat for object 2\n",
+            "Trade::GltfSceneConverter::add(): ignoring duplicate field customFloat for object 2\n"
+            "Trade::GltfSceneConverter::add(): parentless object 5 was not used\n",
             TestSuite::Compare::String);
 
     CORRADE_VERIFY(converter->endFile());
