@@ -1499,8 +1499,6 @@ UnsignedInt UfbxImporter::doImage2DCount() const {
 }
 
 UnsignedInt UfbxImporter::doImage2DLevelCount(UnsignedInt id) {
-    CORRADE_ASSERT(manager(), "Trade::UfbxImporter::image2DLevelCount(): the plugin must be instantiated with access to plugin manager in order to open image files", {});
-
     AbstractImporter* importer = setupOrReuseImporterForImage(id, "Trade::UfbxImporter::image2DLevelCount():");
     /* image2DLevelCount() isn't supposed to fail (image2D() is, instead), so
        report 1 on failure and expect image2D() to fail later */
@@ -1511,8 +1509,6 @@ UnsignedInt UfbxImporter::doImage2DLevelCount(UnsignedInt id) {
 }
 
 Containers::Optional<ImageData2D> UfbxImporter::doImage2D(UnsignedInt id, UnsignedInt level) {
-    CORRADE_ASSERT(manager(), "Trade::UfbxImporter::image2D(): the plugin must be instantiated with access to plugin manager in order to open image files", {});
-
     AbstractImporter* importer = setupOrReuseImporterForImage(id, "Trade::UfbxImporter::image2D():");
     if(!importer)
         return Containers::NullOpt;

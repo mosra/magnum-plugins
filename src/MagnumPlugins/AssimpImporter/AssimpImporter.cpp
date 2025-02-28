@@ -1964,7 +1964,10 @@ AbstractImporter* AssimpImporter::setupOrReuseImporterForImage(const UnsignedInt
 }
 
 UnsignedInt AssimpImporter::doImage2DLevelCount(const UnsignedInt id) {
+    /** @todo remove once the manager-less constructor is gone */
+    #ifdef MAGNUM_BUILD_DEPRECATED
     CORRADE_ASSERT(manager(), "Trade::AssimpImporter::image2DLevelCount(): the plugin must be instantiated with access to plugin manager in order to open image files", {});
+    #endif
 
     AbstractImporter* importer = setupOrReuseImporterForImage(id, "Trade::AssimpImporter::image2DLevelCount():");
     /* image2DLevelCount() isn't supposed to fail (image2D() is, instead), so
@@ -1976,7 +1979,10 @@ UnsignedInt AssimpImporter::doImage2DLevelCount(const UnsignedInt id) {
 }
 
 Containers::Optional<ImageData2D> AssimpImporter::doImage2D(const UnsignedInt id, const UnsignedInt level) {
+    /** @todo remove once the manager-less constructor is gone */
+    #ifdef MAGNUM_BUILD_DEPRECATED
     CORRADE_ASSERT(manager(), "Trade::AssimpImporter::image2D(): the plugin must be instantiated with access to plugin manager in order to open image files", {});
+    #endif
 
     AbstractImporter* importer = setupOrReuseImporterForImage(id, "Trade::AssimpImporter::image2D():");
     if(!importer)

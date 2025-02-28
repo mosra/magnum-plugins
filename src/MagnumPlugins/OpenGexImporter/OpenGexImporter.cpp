@@ -969,7 +969,10 @@ AbstractImporter* OpenGexImporter::setupOrReuseImporterForImage(const UnsignedIn
 }
 
 UnsignedInt OpenGexImporter::doImage2DLevelCount(const UnsignedInt id) {
+    /** @todo remove once the manager-less constructor is gone */
+    #ifdef MAGNUM_BUILD_DEPRECATED
     CORRADE_ASSERT(manager(), "Trade::OpenGexImporter::image2DLevelCount(): the plugin must be instantiated with access to plugin manager in order to open image files", {});
+    #endif
 
     AbstractImporter* importer = setupOrReuseImporterForImage(id, "Trade::OpenGexImporter::image2DLevelCount():");
     /* image2DLevelCount() isn't supposed to fail (image2D() is, instead), so
@@ -980,7 +983,10 @@ UnsignedInt OpenGexImporter::doImage2DLevelCount(const UnsignedInt id) {
 }
 
 Containers::Optional<ImageData2D> OpenGexImporter::doImage2D(const UnsignedInt id, const UnsignedInt level) {
+    /** @todo remove once the manager-less constructor is gone */
+    #ifdef MAGNUM_BUILD_DEPRECATED
     CORRADE_ASSERT(manager(), "Trade::OpenGexImporter::image2D(): the plugin must be instantiated with access to plugin manager in order to open image files", {});
+    #endif
 
     AbstractImporter* importer = setupOrReuseImporterForImage(id, "Trade::OpenGexImporter::image2D():");
     if(!importer) return Containers::NullOpt;

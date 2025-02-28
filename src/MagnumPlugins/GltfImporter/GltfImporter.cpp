@@ -5282,7 +5282,10 @@ Containers::String GltfImporter::doImage2DName(const UnsignedInt id) {
 }
 
 UnsignedInt GltfImporter::doImage2DLevelCount(const UnsignedInt id) {
+    /** @todo remove once the manager-less constructor is gone */
+    #ifdef MAGNUM_BUILD_DEPRECATED
     CORRADE_ASSERT(manager(), "Trade::GltfImporter::image2DLevelCount(): the plugin must be instantiated with access to plugin manager in order to open image files", {});
+    #endif
 
     AbstractImporter* importer = setupOrReuseImporterForImage("Trade::GltfImporter::image2DLevelCount():", _d->imagesByDimension[id], 2);
     /* image2DLevelCount() isn't supposed to fail (image2D() is, instead), so
@@ -5294,7 +5297,10 @@ UnsignedInt GltfImporter::doImage2DLevelCount(const UnsignedInt id) {
 }
 
 Containers::Optional<ImageData2D> GltfImporter::doImage2D(const UnsignedInt id, const UnsignedInt level) {
+    /** @todo remove once the manager-less constructor is gone */
+    #ifdef MAGNUM_BUILD_DEPRECATED
     CORRADE_ASSERT(manager(), "Trade::GltfImporter::image2D(): the plugin must be instantiated with access to plugin manager in order to load images", {});
+    #endif
 
     AbstractImporter* importer = setupOrReuseImporterForImage("Trade::GltfImporter::image2D():", _d->imagesByDimension[id], 2);
     if(!importer)
@@ -5329,7 +5335,10 @@ Containers::String GltfImporter::doImage3DName(const UnsignedInt id) {
 }
 
 UnsignedInt GltfImporter::doImage3DLevelCount(const UnsignedInt id) {
+    /** @todo remove once the manager-less constructor is gone */
+    #ifdef MAGNUM_BUILD_DEPRECATED
     CORRADE_ASSERT(manager(), "Trade::GltfImporter::image3DLevelCount(): the plugin must be instantiated with access to plugin manager in order to open image files", {});
+    #endif
 
     AbstractImporter* importer = setupOrReuseImporterForImage("Trade::GltfImporter::image3DLevelCount():", _d->imagesByDimension[_d->image2DCount + id], 3);
     /* image3DLevelCount() isn't supposed to fail (image3D() is, instead), so
@@ -5341,7 +5350,10 @@ UnsignedInt GltfImporter::doImage3DLevelCount(const UnsignedInt id) {
 }
 
 Containers::Optional<ImageData3D> GltfImporter::doImage3D(const UnsignedInt id, const UnsignedInt level) {
+    /** @todo remove once the manager-less constructor is gone */
+    #ifdef MAGNUM_BUILD_DEPRECATED
     CORRADE_ASSERT(manager(), "Trade::GltfImporter::image3D(): the plugin must be instantiated with access to plugin manager in order to load images", {});
+    #endif
 
     AbstractImporter* importer = setupOrReuseImporterForImage("Trade::GltfImporter::image3D():", _d->imagesByDimension[_d->image2DCount + id], 3);
     if(!importer)
