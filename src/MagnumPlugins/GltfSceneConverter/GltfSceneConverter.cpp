@@ -307,7 +307,8 @@ Containers::Optional<Containers::Array<char>> GltfSceneConverter::doEndData() {
             doesn't allocate like mad */
         const auto contains = [](Containers::ArrayView<const Containers::StringView> extensions, Containers::StringView extension) {
             for(const Containers::StringView i: extensions)
-                if(i == extension) return true;
+                if(i == extension)
+                    return true;
             return false;
         };
 
@@ -439,8 +440,9 @@ Containers::Optional<Containers::Array<char>> GltfSceneConverter::doEndData() {
             Containers::Optional<Containers::StringView> nameToUse;
             for(const Containers::Pair<UnsignedInt, Int> meshMaterialAssignment: meshMaterialAssignments) {
                 const Containers::StringView name = meshProperties[meshMaterialAssignment.first()].gltfName;
-                if(!nameToUse) nameToUse = name;
-                else if(nameToUse != name) {
+                if(!nameToUse) {
+                    nameToUse = name;
+                } else if(nameToUse != name) {
                     nameToUse = {};
                     break;
                 }
@@ -465,7 +467,8 @@ Containers::Optional<Containers::Array<char>> GltfSceneConverter::doEndData() {
         }
 
         for(UnsignedInt i = 0; i != _state->meshes.size(); ++i) {
-            if(referencedMeshes[i]) continue;
+            if(referencedMeshes[i])
+                continue;
 
             const Containers::Pair<UnsignedInt, Int> meshMaterial[]{{i, -1}};
             writeMesh(json, _state->meshes, meshMaterial);
@@ -692,7 +695,8 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const SceneData& scene, con
         /* Create a contiguous mapping for only objects with a parent field */
         UnsignedInt outputMappingOffset = 0;
         for(std::size_t i = 0; i != scene.mappingBound(); ++i) {
-            if(!hasParent[i]) continue;
+            if(!hasParent[i])
+                continue;
             outputMapping[i] = outputMappingOffset++;
         }
 
@@ -754,7 +758,8 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const SceneData& scene, con
                Materials have the exact same mapping, thus there's no point in
                counting them separately */
             fieldName == SceneField::MeshMaterial
-        ) continue;
+        )
+            continue;
 
         /* Custom fields */
         if(isSceneFieldCustom(fieldName)) {
@@ -799,7 +804,8 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const SceneData& scene, con
 
             /* Objects that have no parent field are not exported thus their
                fields don't need to be counted either */
-            if(!hasParent[object]) continue;
+            if(!hasParent[object])
+                continue;
 
             ++objectFieldOffsets[object + 2];
         }
@@ -826,7 +832,8 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const SceneData& scene, con
     std::size_t customBitFieldCount = 0;
     std::size_t customStringFieldCount = 0;
     for(UnsignedInt i = 0; i != scene.fieldCount(); ++i) {
-        if(!usedFields[i]) continue;
+        if(!usedFields[i])
+            continue;
 
         const std::size_t size = scene.fieldSize(i);
         const SceneField fieldName = scene.fieldName(i);
@@ -934,7 +941,8 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const SceneData& scene, con
 
             /* Objects that have no parent field are not exported thus their
                fields don't need to be counted either */
-            if(!hasParent[object]) continue;
+            if(!hasParent[object])
+                continue;
 
             std::size_t& objectFieldOffset = objectFieldOffsets[object + 1];
             fieldIds[objectFieldOffset] = i;
@@ -969,7 +977,8 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const SceneData& scene, con
 
                 /* Objects that have no parent field are not exported thus
                    their fields don't need to be counted either */
-                if(!hasParent[object]) continue;
+                if(!hasParent[object])
+                    continue;
 
                 std::size_t& objectFieldOffset = objectFieldOffsets[object + 1];
                 fieldIds[objectFieldOffset] = i;
@@ -1284,7 +1293,8 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const SceneData& scene, con
             } else continue;
         }
 
-        if(extrasOpen) _state->gltfNodes.endObject();
+        if(extrasOpen)
+            _state->gltfNodes.endObject();
 
         if(_state->objectNames.size() > object && _state->objectNames[object])
             _state->gltfNodes.writeKey("name"_s).write(_state->objectNames[object]);
@@ -2106,10 +2116,12 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const MeshData& mesh, const
         }
 
         /* Triangles are a default */
-        if(gltfMode != 4) meshProperties.gltfMode = gltfMode;
+        if(gltfMode != 4)
+            meshProperties.gltfMode = gltfMode;
     }
 
-    if(name) meshProperties.gltfName = name;
+    if(name)
+        meshProperties.gltfName = name;
 
     return true;
 }
@@ -2123,7 +2135,8 @@ struct MaskedMaterial {
 
     Containers::Optional<UnsignedInt> findId(Containers::StringView name) {
         const Containers::Optional<UnsignedInt> found = material.findAttributeId(layer, name);
-        if(!found) return {};
+        if(!found)
+            return {};
 
         mask.set(material.attributeDataOffset(layer) + *found);
         return found;
@@ -2131,7 +2144,8 @@ struct MaskedMaterial {
 
     Containers::Optional<UnsignedInt> findId(MaterialAttribute name) {
         const Containers::Optional<UnsignedInt> found = material.findAttributeId(layer, name);
-        if(!found) return {};
+        if(!found)
+            return {};
 
         mask.set(material.attributeDataOffset(layer) + *found);
         return found;
@@ -2139,7 +2153,8 @@ struct MaskedMaterial {
 
     template<class T> Containers::Optional<T> find(Containers::StringView name) {
         const Containers::Optional<UnsignedInt> found = material.findAttributeId(layer, name);
-        if(!found) return {};
+        if(!found)
+            return {};
 
         mask.set(material.attributeDataOffset(layer) + *found);
         return material.attribute<T>(layer, *found);
@@ -2147,7 +2162,8 @@ struct MaskedMaterial {
 
     template<class T> Containers::Optional<T> find(MaterialAttribute name) {
         const Containers::Optional<UnsignedInt> found = material.findAttributeId(layer, name);
-        if(!found) return {};
+        if(!found)
+            return {};
 
         mask.set(material.attributeDataOffset(layer) + *found);
         return material.attribute<T>(layer, *found);
@@ -2155,7 +2171,8 @@ struct MaskedMaterial {
 
     template<class T> Containers::Optional<T> findBaseLayer(MaterialAttribute name) {
         const Containers::Optional<UnsignedInt> found = material.findAttributeId(0, name);
-        if(!found) return {};
+        if(!found)
+            return {};
 
         mask.set(*found);
         return material.attribute<T>(0, *found);
@@ -2354,7 +2371,8 @@ bool GltfSceneConverter::doAdd(UnsignedInt, const MaterialData& material, const 
         }
     };
     const auto writeTextureContents = [this, keepDefaults, &writeTextureMatrix](MaskedMaterial& maskedMaterial, const UnsignedInt layer, const UnsignedInt textureAttributeId, Containers::StringView prefix) {
-        if(!prefix) prefix = maskedMaterial.material.attributeName(layer, textureAttributeId);
+        if(!prefix)
+            prefix = maskedMaterial.material.attributeName(layer, textureAttributeId);
 
         /* Bounds of all textures should have been verified at the very top */
         const UnsignedInt texture = maskedMaterial.material.attribute<UnsignedInt>(layer, textureAttributeId);
@@ -2760,7 +2778,8 @@ bool GltfSceneConverter::doAdd(UnsignedInt, const MaterialData& material, const 
                parsed them. */
             if(hasCustomExtensions) for(UnsignedInt layer = 0; layer != material.layerCount(); ++layer) {
                 const Containers::StringView layerName = material.layerName(layer);
-                if(!layerName.hasPrefix('#')) continue;
+                if(!layerName.hasPrefix('#'))
+                    continue;
 
                 const Containers::StringView extensionName = layerName.exceptPrefix("#"_s);
                 arrayAppend(_state->usedCustomExtensions, Containers::String::nullTerminatedGlobalView(extensionName));
@@ -2959,7 +2978,8 @@ bool GltfSceneConverter::doAdd(UnsignedInt, const MaterialData& material, const 
 
             for(UnsignedInt attribute = 0; attribute != material.attributeCount(); ++attribute) {
                 const Containers::StringView attributeName = material.attributeName(attribute);
-                if(std::isupper(attributeName.front())) continue;
+                if(std::isupper(attributeName.front()))
+                    continue;
 
                 writeMaterialAttribute(maskedBaseMaterial, attributeName, 0, attribute);
             }
@@ -3429,7 +3449,8 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const ImageData2D& image, c
        printed a message already, so just return. */
     const Containers::StringView imageConverterPluginName = configuration().value<Containers::StringView>("imageConverter");
     Containers::Pointer<AbstractImageConverter> imageConverter = loadAndInstantiateImageConverter(manager(), imageConverterPluginName, flags(), configuration(), expectedFeatures);
-    if(!imageConverter) return {};
+    if(!imageConverter)
+        return {};
 
     /* Use a MIME type to decide what glTF extension (if any) to use to
        reference the image from a texture. Could also use the file extension,
@@ -3519,7 +3540,8 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const ImageData3D& image, c
        printed a message already, so just return. */
     const Containers::StringView imageConverterPluginName = configuration().value<Containers::StringView>("imageConverter");
     Containers::Pointer<AbstractImageConverter> imageConverter = loadAndInstantiateImageConverter(manager(), imageConverterPluginName, flags(), configuration(), expectedFeatures);
-    if(!imageConverter) return {};
+    if(!imageConverter)
+        return {};
 
     /* Use a MIME type to decide what glTF extension (if any) to use to
        reference the image from a texture. Could also use the file extension,
