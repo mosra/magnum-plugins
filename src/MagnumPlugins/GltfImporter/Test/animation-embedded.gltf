@@ -35,19 +35,19 @@
       ],
       "samplers": [
         {
-          "input": 10,
+          "input": 9,
           "interpolation": "LINEAR",
-          "output": 12
+          "output": 11
         },
         {
-          "input": 10,
+          "input": 9,
           "interpolation": "STEP",
-          "output": 11
+          "output": 10
         },
         {
-          "input": 10,
+          "input": 9,
           "interpolation": "LINEAR",
-          "output": 11
+          "output": 10
         }
       ]
     },
@@ -123,23 +123,24 @@
         {
           "input": 5,
           "interpolation": "CUBICSPLINE",
+          "output": 6
+        },
+        {
+          "input": 5,
+          "interpolation": "CUBICSPLINE",
           "output": 7
         },
         {
           "input": 5,
           "interpolation": "CUBICSPLINE",
           "output": 8
-        },
-        {
-          "input": 5,
-          "interpolation": "CUBICSPLINE",
-          "output": 9
         }
       ]
     }
   ],
   "accessors": [
     {
+      "name": "0",
       "bufferView": 0,
       "byteOffset": 0,
       "componentType": 5126,
@@ -147,6 +148,7 @@
       "type": "SCALAR"
     },
     {
+      "name": "1",
       "bufferView": 1,
       "byteOffset": 0,
       "componentType": 5126,
@@ -154,6 +156,7 @@
       "type": "VEC4"
     },
     {
+      "name": "2",
       "bufferView": 0,
       "byteOffset": 8,
       "componentType": 5126,
@@ -161,6 +164,7 @@
       "type": "SCALAR"
     },
     {
+      "name": "3",
       "bufferView": 2,
       "byteOffset": 0,
       "componentType": 5126,
@@ -168,6 +172,7 @@
       "type": "VEC3"
     },
     {
+      "name": "4",
       "bufferView": 2,
       "byteOffset": 12,
       "componentType": 5126,
@@ -175,6 +180,7 @@
       "type": "VEC3"
     },
     {
+      "name": "5",
       "bufferView": 3,
       "byteOffset": 0,
       "componentType": 5126,
@@ -182,13 +188,7 @@
       "type": "SCALAR"
     },
     {
-      "bufferView": 3,
-      "byteOffset": 16,
-      "componentType": 5126,
-      "count": 4,
-      "type": "SCALAR"
-    },
-    {
+      "name": "6",
       "bufferView": 4,
       "byteOffset": 0,
       "componentType": 5126,
@@ -196,6 +196,7 @@
       "type": "VEC4"
     },
     {
+      "name": "7",
       "bufferView": 5,
       "byteOffset": 0,
       "componentType": 5126,
@@ -203,6 +204,7 @@
       "type": "VEC3"
     },
     {
+      "name": "8",
       "bufferView": 6,
       "byteOffset": 0,
       "componentType": 5126,
@@ -210,6 +212,7 @@
       "type": "VEC3"
     },
     {
+      "name": "9",
       "bufferView": 0,
       "byteOffset": 0,
       "componentType": 5126,
@@ -217,6 +220,7 @@
       "type": "SCALAR"
     },
     {
+      "name": "10",
       "bufferView": 0,
       "byteOffset": 0,
       "componentType": 5126,
@@ -224,6 +228,7 @@
       "type": "VEC3"
     },
     {
+      "name": "11",
       "bufferView": 0,
       "byteOffset": 0,
       "componentType": 5126,
@@ -249,6 +254,7 @@
       "byteStride": 24
     },
     {
+      "note": "Only the first 16 bytes get used, by accessor 3. The second 16 bytes are used only by animation-splines-sharing.gltf.",
       "buffer": 0,
       "byteOffset": 152,
       "byteLength": 32
