@@ -95,6 +95,7 @@ corrade_add_test(GltfImporterTest
         animation-patching.bin
         animation-patching.gltf
         animation-splines-sharing.gltf
+        animation-splines-single-or-no-keyframes.gltf
         buffer-invalid-short-size.glb
         buffer-invalid-short-size.gltf
         buffer-invalid-short-size-embedded.glb

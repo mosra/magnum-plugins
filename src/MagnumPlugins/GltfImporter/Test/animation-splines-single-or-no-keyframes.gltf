@@ -1,0 +1,188 @@
+{
+  "asset": {
+    "version": "2.0",
+    "note": "subset of animation.gltf to not affect other tests relying on the same file"
+  },
+  "animations": [
+    {
+      "name": "TRS animation, splines, no keyframes",
+      "channels": [
+        {
+          "sampler": 0,
+          "target": {
+            "node": 3,
+            "path": "rotation"
+          }
+        },
+        {
+          "sampler": 1,
+          "target": {
+            "node": 4,
+            "path": "translation"
+          }
+        },
+        {
+          "sampler": 2,
+          "target": {
+            "node": 5,
+            "path": "scale"
+          }
+        }
+      ],
+      "samplers": [
+        {
+          "input": 0,
+          "interpolation": "CUBICSPLINE",
+          "output": 2
+        },
+        {
+          "input": 0,
+          "interpolation": "CUBICSPLINE",
+          "output": 1
+        },
+        {
+          "input": 0,
+          "interpolation": "CUBICSPLINE",
+          "output": 1
+        }
+      ]
+    },
+    {
+      "name": "TRS animation, splines, single keyframe",
+      "channels": [
+        {
+          "sampler": 0,
+          "target": {
+            "node": 3,
+            "path": "rotation"
+          }
+        },
+        {
+          "sampler": 1,
+          "target": {
+            "node": 4,
+            "path": "translation"
+          }
+        },
+        {
+          "sampler": 2,
+          "target": {
+            "node": 5,
+            "path": "scale"
+          }
+        }
+      ],
+      "samplers": [
+        {
+          "input": 3,
+          "interpolation": "CUBICSPLINE",
+          "output": 4
+        },
+        {
+          "input": 3,
+          "interpolation": "CUBICSPLINE",
+          "output": 5
+        },
+        {
+          "input": 3,
+          "interpolation": "CUBICSPLINE",
+          "output": 6
+        }
+      ]
+    }
+  ],
+  "accessors": [
+    {
+      "name": "0",
+      "bufferView": 0,
+      "byteOffset": 0,
+      "componentType": 5126,
+      "count": 0,
+      "type": "SCALAR"
+    },
+    {
+      "name": "1",
+      "bufferView": 0,
+      "byteOffset": 0,
+      "componentType": 5126,
+      "count": 0,
+      "type": "VEC3"
+    },
+    {
+      "name": "2",
+      "bufferView": 0,
+      "byteOffset": 0,
+      "componentType": 5126,
+      "count": 0,
+      "type": "VEC4"
+    },
+    {
+      "name": "3, like 5 from animation.gltf but with just one item",
+      "bufferView": 0,
+      "byteOffset": 0,
+      "componentType": 5126,
+      "count": 1,
+      "type": "SCALAR"
+    },
+    {
+      "name": "4, like 6 from animation.gltf but with just one spline item",
+      "bufferView": 1,
+      "byteOffset": 0,
+      "componentType": 5126,
+      "count": 3,
+      "type": "VEC4"
+    },
+    {
+      "name": "5, like 7 from animation.gltf but with just one spline item",
+      "bufferView": 2,
+      "byteOffset": 0,
+      "componentType": 5126,
+      "count": 3,
+      "type": "VEC3"
+    },
+    {
+      "name": "6, like 8 from animation.gltf but with just one spline item",
+      "bufferView": 3,
+      "byteOffset": 0,
+      "componentType": 5126,
+      "count": 3,
+      "type": "VEC3"
+    }
+  ],
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteOffset": 152,
+      "byteLength": 32
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 184,
+      "byteLength": 192
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 376,
+      "byteLength": 144
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 520,
+      "byteLength": 144
+    }
+  ],
+  "buffers": [
+    {
+      "byteLength": 664,
+      "uri": "animation.bin"
+    }
+  ],
+  "nodes": [
+    {},
+    {},
+    {},
+    {},
+    {},
+    {}
+  ]
+}

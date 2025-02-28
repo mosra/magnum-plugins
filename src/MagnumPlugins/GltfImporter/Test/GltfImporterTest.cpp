@@ -106,6 +106,7 @@ struct GltfImporterTest: TestSuite::Tester {
     void animationSpline();
     void animationSplineSharedWithSameTimeTrack();
     void animationSplineSharedWithDifferentTimeTrack();
+    void animationSplineSingleOrNoKeyframes();
 
     void animationShortestPathOptimizationEnabled();
     void animationShortestPathOptimizationDisabled();
@@ -1673,6 +1674,7 @@ GltfImporterTest::GltfImporterTest() {
 
     addTests({&GltfImporterTest::animationSplineSharedWithSameTimeTrack,
               &GltfImporterTest::animationSplineSharedWithDifferentTimeTrack,
+              &GltfImporterTest::animationSplineSingleOrNoKeyframes,
 
               &GltfImporterTest::animationShortestPathOptimizationEnabled,
               &GltfImporterTest::animationShortestPathOptimizationDisabled});
@@ -2203,7 +2205,8 @@ void GltfImporterTest::animation() {
         CORRADE_COMPARE(animation->trackCount(), 3);
 
         /* Not really checking much here, just making sure that this is handled
-           gracefully */
+           gracefully. A variant with splines (which have to be processed) is
+           tested in animationSplineSingleOrNoKeyframes(). */
 
         CORRADE_COMPARE(animation->trackTargetName(0), AnimationTrackTarget::Rotation3D);
         const Animation::TrackViewStorage<const Float>& rotation = animation->track(0);
@@ -2298,7 +2301,7 @@ void GltfImporterTest::animation() {
         CORRADE_COMPARE(scaling.at(1.5f), Vector3::zScale(5.2f));
     }
 
-    /* Fourth animation tested in animationSpline() */
+    /* Fourth tested in animationSpline() */
 }
 
 void GltfImporterTest::animationInvalid() {
@@ -2464,6 +2467,79 @@ void GltfImporterTest::animationSpline() {
     CORRADE_COMPARE_AS(scaling.values(), Containers::stridedArrayView(scalingData), TestSuite::Compare::Container);
     CORRADE_COMPARE(scaling.at(0.5f + 0.35f*3),
         (Vector3{0.118725f, 0.8228f, -2.711f}));
+}
+
+void GltfImporterTest::animationSplineSingleOrNoKeyframes() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "animation-splines-single-or-no-keyframes.gltf")));
+
+    /* No keyframes. Should behave the same as the empty case in animation()
+       above. */
+    {
+        Containers::Optional<Trade::AnimationData> animation = importer->animation("TRS animation, splines, no keyframes");
+        CORRADE_VERIFY(animation);
+        CORRADE_COMPARE(animation->data().size(), 0);
+        CORRADE_COMPARE(animation->trackCount(), 3);
+
+        CORRADE_COMPARE(animation->trackTargetName(0), AnimationTrackTarget::Rotation3D);
+        const Animation::TrackViewStorage<const Float>& rotation = animation->track(0);
+        CORRADE_VERIFY(rotation.keys().isEmpty());
+        CORRADE_VERIFY(rotation.values().isEmpty());
+
+        CORRADE_COMPARE(animation->trackTargetName(1), AnimationTrackTarget::Translation3D);
+        const Animation::TrackViewStorage<const Float>& translation = animation->track(1);
+        CORRADE_VERIFY(translation.keys().isEmpty());
+        CORRADE_VERIFY(translation.values().isEmpty());
+
+        CORRADE_COMPARE(animation->trackTargetName(2), AnimationTrackTarget::Scaling3D);
+        const Animation::TrackViewStorage<const Float>& scaling = animation->track(2);
+        CORRADE_VERIFY(scaling.keys().isEmpty());
+        CORRADE_VERIFY(scaling.values().isEmpty());
+
+    /* Single keyframe. There is no time difference to patch anything with so
+       the data stay unpatched, not like what's in animationSpline() above.
+       Testing just the actual values, the rest is sufficiently verified
+       above. */
+    } {
+        Containers::Optional<Trade::AnimationData> animation = importer->animation("TRS animation, splines, single keyframe");
+        CORRADE_VERIFY(animation);
+
+        /* Rotation */
+        CORRADE_COMPARE(animation->trackType(0), AnimationTrackType::CubicHermiteQuaternion);
+        Animation::TrackView<const Float, const CubicHermiteQuaternion> rotation = animation->track<CubicHermiteQuaternion>(0);
+        CORRADE_COMPARE_AS(rotation.keys(), Containers::arrayView({
+            0.5f
+        }), TestSuite::Compare::Container);
+        CORRADE_COMPARE_AS(rotation.values(), Containers::arrayView<CubicHermiteQuaternion>({
+            {{{0.0f, 0.0f, 0.0f}, 0.0f},
+             {{0.780076f, 0.0260025f, 0.598059f}, 0.182018f},
+             {{-0.3333333f, 0.0f, 0.1f}, 0.1333333f}}, /* not divided by 3 */
+        }), TestSuite::Compare::Container);
+
+        /* Translation */
+        CORRADE_COMPARE(animation->trackType(1), AnimationTrackType::CubicHermite3D);
+        Animation::TrackView<const Float, const CubicHermite3D> translation = animation->track<CubicHermite3D>(1);
+        CORRADE_COMPARE_AS(translation.keys(), Containers::arrayView({
+            0.5f
+        }), TestSuite::Compare::Container);
+        CORRADE_COMPARE_AS(translation.values(), Containers::arrayView<CubicHermite3D>({
+            {{0.0f, 0.0f, 0.0f},
+             {3.0f, 0.1f, 2.5f},
+             {-0.3333333f, 0.0f, 0.1f}}, /* not divided by 3 */
+        }), TestSuite::Compare::Container);
+
+        /* Scaling */
+        CORRADE_COMPARE(animation->trackType(2), AnimationTrackType::CubicHermite3D);
+        Animation::TrackView<const Float, const CubicHermite3D> scaling = animation->track<CubicHermite3D>(2);
+        CORRADE_COMPARE_AS(scaling.keys(), Containers::arrayView({
+            0.5f
+        }), TestSuite::Compare::Container);
+        CORRADE_COMPARE_AS(scaling.values(), Containers::stridedArrayView<CubicHermite3D>({
+            {{0.0f, 0.0f, 0.0f},
+             {-2.0f, 1.1f, -4.3f},
+             {0.5f, 0.1f, 5.6666667f}}, /* not divided by 3 */
+        }), TestSuite::Compare::Container);
+    }
 }
 
 void GltfImporterTest::animationSplineSharedWithSameTimeTrack() {
