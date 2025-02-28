@@ -1527,7 +1527,7 @@ const struct {
     const char* name;
     const char* file;
     const char* message;
-} ExperimentalTextureKtxInvalidWholeFileData[]{
+} ExperimentalKhrTextureKtxInvalidWholeFileData[]{
     {"invalid extensions property",
         "texture-invalid-ktx-extensions-property.gltf",
         "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Array at {}:13:21\n"
@@ -1573,7 +1573,7 @@ const struct {
 const struct {
     const char* name;
     const char* message;
-} ExperimentalTextureKtxInvalidMaterialData[]{
+} ExperimentalKhrTextureKtxInvalidMaterialData[]{
     {"invalid layer",
         "Utility::Json::parseUnsignedInt(): too large integer literal -3 at {}:19:20\n"
         "Trade::GltfImporter::material(): invalid KHR_texture_ktx layer property\n"}
@@ -1583,7 +1583,7 @@ const struct {
     const char* name;
     Int dimensions;
     const char* message;
-} ExperimentalTextureKtxInvalidImageData[]{
+} ExperimentalKhrTextureKtxInvalidImageData[]{
     {"not a 3D image", 3,
         "expected exactly one 3D image in an image file but got 0"},
     {"not a 2D image", 2,
@@ -1836,13 +1836,13 @@ GltfImporterTest::GltfImporterTest() {
         Containers::arraySize(QuietData));
 
     addInstancedTests({&GltfImporterTest::experimentalKhrTextureKtxInvalidWholeFile},
-        Containers::arraySize(ExperimentalTextureKtxInvalidWholeFileData));
+        Containers::arraySize(ExperimentalKhrTextureKtxInvalidWholeFileData));
 
     addInstancedTests({&GltfImporterTest::experimentalKhrTextureKtxInvalidMaterial},
-        Containers::arraySize(ExperimentalTextureKtxInvalidMaterialData));
+        Containers::arraySize(ExperimentalKhrTextureKtxInvalidMaterialData));
 
     addInstancedTests({&GltfImporterTest::experimentalKhrTextureKtxInvalidImage},
-        Containers::arraySize(ExperimentalTextureKtxInvalidImageData));
+        Containers::arraySize(ExperimentalKhrTextureKtxInvalidImageData));
 
     addInstancedTests({&GltfImporterTest::fileCallbackBuffer,
                        &GltfImporterTest::fileCallbackBufferNotFound,
@@ -7273,7 +7273,7 @@ void GltfImporterTest::experimentalKhrTextureKtxNotEnabled() {
 }
 
 void GltfImporterTest::experimentalKhrTextureKtxInvalidWholeFile() {
-    auto&& data = ExperimentalTextureKtxInvalidWholeFileData[testCaseInstanceId()];
+    auto&& data = ExperimentalKhrTextureKtxInvalidWholeFileData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
     Containers::String filename = Utility::Path::join(GLTFIMPORTER_TEST_DIR, data.file);
@@ -7294,7 +7294,7 @@ void GltfImporterTest::experimentalKhrTextureKtxInvalidWholeFile() {
 }
 
 void GltfImporterTest::experimentalKhrTextureKtxInvalidMaterial() {
-    auto&& data = ExperimentalTextureKtxInvalidMaterialData[testCaseInstanceId()];
+    auto&& data = ExperimentalKhrTextureKtxInvalidMaterialData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
     Containers::String filename = Utility::Path::join(GLTFIMPORTER_TEST_DIR, "material-invalid-ktx.gltf");
@@ -7305,7 +7305,7 @@ void GltfImporterTest::experimentalKhrTextureKtxInvalidMaterial() {
     CORRADE_VERIFY(importer->openFile(filename));
 
     /* Check we didn't forget to test anything */
-    CORRADE_COMPARE(importer->materialCount(), Containers::arraySize(ExperimentalTextureKtxInvalidMaterialData));
+    CORRADE_COMPARE(importer->materialCount(), Containers::arraySize(ExperimentalKhrTextureKtxInvalidMaterialData));
 
     Containers::String out;
     Error redirectError{&out};
@@ -7320,7 +7320,7 @@ void GltfImporterTest::experimentalKhrTextureKtxInvalidMaterial() {
 }
 
 void GltfImporterTest::experimentalKhrTextureKtxInvalidImage() {
-    auto&& data = ExperimentalTextureKtxInvalidImageData[testCaseInstanceId()];
+    auto&& data = ExperimentalKhrTextureKtxInvalidImageData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
     if(_manager.loadState("KtxImporter") == PluginManager::LoadState::NotFound)
@@ -7332,7 +7332,7 @@ void GltfImporterTest::experimentalKhrTextureKtxInvalidImage() {
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "image-invalid-ktx.gltf")));
 
     /* Check we didn't forget to test anything */
-    CORRADE_COMPARE(importer->image1DCount() + importer->image2DCount() + importer->image3DCount(), Containers::arraySize(ExperimentalTextureKtxInvalidImageData));
+    CORRADE_COMPARE(importer->image1DCount() + importer->image2DCount() + importer->image3DCount(), Containers::arraySize(ExperimentalKhrTextureKtxInvalidImageData));
 
     Containers::String out;
     Error redirectError{&out};
