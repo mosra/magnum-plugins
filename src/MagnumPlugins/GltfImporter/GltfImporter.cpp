@@ -361,7 +361,8 @@ Containers::Optional<Containers::ArrayView<const char>> GltfImporter::parseBuffe
     }
 
     Containers::Optional<Containers::Array<char>>& storage = _d->buffers[bufferId];
-    if(storage) return Containers::ArrayView<const char>{*storage};
+    if(storage)
+        return Containers::ArrayView<const char>{*storage};
 
     const Utility::JsonToken& gltfBuffer = _d->gltfBuffers[bufferId];
 
@@ -417,7 +418,8 @@ Containers::Optional<GltfImporter::BufferView> GltfImporter::parseBufferView(con
 
     /* Return if the buffer view is already parsed */
     Containers::Optional<BufferView>& storage = _d->bufferViews[bufferViewId];
-    if(storage) return storage;
+    if(storage)
+        return storage;
 
     const Utility::JsonToken& gltfBufferView = _d->gltfBufferViews[bufferViewId];
     const Utility::JsonToken* const gltfBufferId = gltfBufferView.find("buffer"_s);
@@ -430,7 +432,8 @@ Containers::Optional<GltfImporter::BufferView> GltfImporter::parseBufferView(con
     /* Get the buffer early and continue only if that doesn't fail. This also
        checks that the buffer ID is in bounds. */
     Containers::Optional<Containers::ArrayView<const char>> buffer = parseBuffer(errorPrefix, gltfBufferId->asUnsignedInt());
-    if(!buffer) return {};
+    if(!buffer)
+        return {};
 
     /* Byte offset is optional, defaulting to 0 */
     const Utility::JsonToken* const gltfByteOffset = gltfBufferView.find("byteOffset"_s);
@@ -479,7 +482,8 @@ Containers::Optional<GltfImporter::Accessor> GltfImporter::parseAccessor(const c
 
     /* Return if the buffer view is already parsed */
     Containers::Optional<Accessor>& storage = _d->accessors[accessorId];
-    if(storage) return storage;
+    if(storage)
+        return storage;
 
     const Utility::JsonToken& gltfAccessor = _d->gltfAccessors[accessorId];
 
@@ -503,7 +507,8 @@ Containers::Optional<GltfImporter::Accessor> GltfImporter::parseAccessor(const c
     /* Get the buffer view early and continue only if that doesn't fail. This
        also checks that the buffer view ID is in bounds. */
     Containers::Optional<BufferView> bufferView = parseBufferView(errorPrefix, gltfBufferViewId->asUnsignedInt());
-    if(!bufferView) return {};
+    if(!bufferView)
+        return {};
 
     /* Byte offset is optional, defaulting to 0 */
     const Utility::JsonToken* const gltfAccessorByteOffset = gltfAccessor.find("byteOffset"_s);
@@ -814,7 +819,8 @@ bool discoverSceneExtraFields(Utility::Json& gltf, std::unordered_map<Containers
 }
 
 void GltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dataFlags) {
-    if(!_d) _d.reset(new Document);
+    if(!_d)
+        _d.reset(new Document);
 
     /* Copy file content. Take over the existing array or copy the data if we
        can't. We need to keep the data around as JSON tokens are views onto it
@@ -1096,7 +1102,8 @@ void GltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags da
        !populateWithName(*gltf, gltf->root(), _d->gltfTextures, "textures"_s, "texture") ||
        !populateWithName(*gltf, gltf->root(), _d->gltfMaterials, "materials"_s, "material") ||
        !populateWithName(*gltf, gltf->root(), _d->gltfScenes, "scenes"_s, "scene")
-    ) return;
+    )
+        return;
 
     /* Extensions */
     if(const Utility::JsonToken* const gltfExtensions = gltf->root().find("extensions"_s)) {
@@ -1130,7 +1137,8 @@ void GltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags da
         /* Mark all nodes referenced by a scene as root nodes (-1) */
         for(std::size_t i = 0; i != _d->gltfScenes.size(); ++i) {
             const Utility::JsonToken* const gltfSceneNodes = _d->gltfScenes[i].first()->find("nodes"_s);
-            if(!gltfSceneNodes) continue;
+            if(!gltfSceneNodes)
+                continue;
 
             const Containers::Optional<Containers::StridedArrayView1D<const UnsignedInt>> sceneNodes = gltf->parseUnsignedIntArray(*gltfSceneNodes);
             if(!sceneNodes) {
@@ -1154,7 +1162,8 @@ void GltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags da
            potential conflicting parent nodes */
         for(std::size_t i = 0; i != _d->gltfNodes.size(); ++i) {
             const Utility::JsonToken* const gltfNodeChildren = _d->gltfNodes[i].first()->find("children"_s);
-            if(!gltfNodeChildren) continue;
+            if(!gltfNodeChildren)
+                continue;
 
             const Containers::Optional<Containers::StridedArrayView1D<const UnsignedInt>> nodeChildren = gltf->parseUnsignedIntArray(*gltfNodeChildren);
             if(!nodeChildren) {
@@ -1270,7 +1279,8 @@ void GltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags da
                 /* Decide about texture coordinate Y flipping if not set
                    already */
                 if(gltfAttribute.key().hasPrefix("TEXCOORD_"_s) && isBuiltinNumberedMeshAttribute(gltfAttribute.key())) {
-                    if(_d->textureCoordinateYFlipInMaterial) continue;
+                    if(_d->textureCoordinateYFlipInMaterial)
+                        continue;
 
                     /* Perform a subset of parsing and validation done in
                        doMesh() and parseAccessor(). Not calling
@@ -1554,7 +1564,8 @@ UnsignedInt GltfImporter::doAnimationCount() const {
 
 Int GltfImporter::doAnimationForName(const Containers::StringView name) {
     /* If the animations are merged, don't report any names */
-    if(configuration().value<bool>("mergeAnimationClips")) return -1;
+    if(configuration().value<bool>("mergeAnimationClips"))
+        return -1;
 
     if(!_d->animationsForName) {
         _d->animationsForName.emplace();
@@ -1570,7 +1581,8 @@ Int GltfImporter::doAnimationForName(const Containers::StringView name) {
 
 Containers::String GltfImporter::doAnimationName(const UnsignedInt id) {
     /* If the animations are merged, don't report any names */
-    if(configuration().value<bool>("mergeAnimationClips")) return {};
+    if(configuration().value<bool>("mergeAnimationClips"))
+        return {};
     return _d->gltfAnimations[id].second();
 }
 
@@ -1578,10 +1590,12 @@ namespace {
 
 template<class V> void postprocessSplineTrack(const UnsignedInt timeTrackUsed, const Containers::ArrayView<const Float> keys, const Containers::ArrayView<Math::CubicHermite<V>> values) {
     /* Already processed, don't do that again */
-    if(timeTrackUsed != ~UnsignedInt{}) return;
+    if(timeTrackUsed != ~UnsignedInt{})
+        return;
 
     CORRADE_INTERNAL_ASSERT(keys.size() == values.size());
-    if(keys.size() < 2) return;
+    if(keys.size() < 2)
+        return;
 
     /* Convert the `a` values to `n` and the `b` values to `m` as described in
        https://github.com/KhronosGroup/glTF/tree/master/specification/2.0#appendix-c-spline-interpolation
@@ -1909,7 +1923,8 @@ Containers::Optional<AnimationData> GltfImporter::doAnimation(UnsignedInt id) {
                     if(configuration().value<bool>("optimizeQuaternionShortestPath")) {
                         Float flip = 1.0f;
                         for(std::size_t j = 0; j + 1 < values.size(); ++j) {
-                            if(Math::dot(values[j], values[j + 1]*flip) < 0) flip = -flip;
+                            if(Math::dot(values[j], values[j + 1]*flip) < 0)
+                                flip = -flip;
                             values[j + 1] *= flip;
                         }
                     }
@@ -2657,16 +2672,18 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
         /* Everything that has a TRS should have a transformation matrix as
            well. OTOH there can be a transformation matrix but no TRS, and
            there can also be objects without any transformation. */
-        if(hasTranslation ||
-           hasRotation ||
-           hasScaling) {
+        if(hasTranslation || hasRotation || hasScaling) {
             ++trsCount;
             ++transformationCount;
-        } else if(gltfNode.find("matrix"_s)) ++transformationCount;
+        } else if(gltfNode.find("matrix"_s))
+            ++transformationCount;
 
-        if(hasTranslation) hasTranslations = true;
-        if(hasRotation) hasRotations = true;
-        if(hasScaling) hasScalings = true;
+        if(hasTranslation)
+            hasTranslations = true;
+        if(hasRotation)
+            hasRotations = true;
+        if(hasScaling)
+            hasScalings = true;
 
         /* Mesh reference */
         if(const Utility::JsonToken* const gltfMesh = gltfNode.find("mesh"_s)) {
@@ -2807,7 +2824,8 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
 
     /* If all objects that have transformations have TRS as well, no need to
        store the combined transform field */
-    if(trsCount == transformationCount) transformationCount = 0;
+    if(trsCount == transformationCount)
+        transformationCount = 0;
 
     /* Allocate the output array */
     Containers::ArrayView<UnsignedInt> parentImporterStateObjects;
@@ -2961,13 +2979,13 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
 
         /* Store the TRS information and object mapping only if there was
            something */
-        if(gltfTranslation ||
-           gltfRotation ||
-           gltfScale)
-        {
-            if(hasTranslations) translations[trsOffset] = translation;
-            if(hasRotations) rotations[trsOffset] = rotation;
-            if(hasScalings) scalings[trsOffset] = scaling;
+        if(gltfTranslation || gltfRotation || gltfScale) {
+            if(hasTranslations)
+                translations[trsOffset] = translation;
+            if(hasRotations)
+                rotations[trsOffset] = rotation;
+            if(hasScalings)
+                scalings[trsOffset] = scaling;
             trsObjects[trsOffset] = nodeI;
             ++trsOffset;
         }
@@ -3450,7 +3468,8 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
 
         /* Get the accessor view */
         Containers::Optional<Accessor> accessor = parseAccessor("Trade::GltfImporter::mesh():", attribute.value->asUnsignedInt());
-        if(!accessor) return {};
+        if(!accessor)
+            return {};
 
         /* From the builtin attributes can fire either for ObjectId or for
            JointIds */
@@ -3878,7 +3897,8 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
            here again */
 
         Containers::Optional<Accessor> accessor = parseAccessor("Trade::GltfImporter::mesh():", gltfIndices->asUnsignedInt());
-        if(!accessor) return {};
+        if(!accessor)
+            return {};
 
         MeshIndexType type;
         if(accessor->format == VertexFormat::UnsignedByte)
@@ -4429,7 +4449,9 @@ Containers::Optional<MaterialData> GltfImporter::doMaterial(const UnsignedInt id
         if(const Utility::JsonToken* const gltfMetallicRoughnessTexture = gltfPbrMetallicRoughness->find("metallicRoughnessTexture"_s)) {
             if(!materialTexture(*gltfMetallicRoughnessTexture, attributes,
                 "NoneRoughnessMetallicTexture"_s,
-                "MetalnessTexture"_s)) return {};
+                "MetalnessTexture"_s)
+            )
+                return {};
 
             /* Add the matrix/coordinates attributes also for the roughness
                texture, but skip adding the texture ID again. If the above
@@ -4535,9 +4557,11 @@ Containers::Optional<MaterialData> GltfImporter::doMaterial(const UnsignedInt id
         }
 
         if(const Utility::JsonToken* const gltfSpecularGlossinessTexture = gltfPbrSpecularGlossiness->find("specularGlossinessTexture"_s)) {
-           if(!materialTexture(*gltfSpecularGlossinessTexture, attributes,
+            if(!materialTexture(*gltfSpecularGlossinessTexture, attributes,
                 "SpecularGlossinessTexture"_s,
-                "SpecularTexture"_s)) return {};
+                "SpecularTexture"_s)
+            )
+                return {};
 
             /* Add the matrix/coordinates attributes also for the glossiness
                texture, but skip adding the texture ID again. If the above
@@ -4960,7 +4984,9 @@ Containers::Optional<TextureData> GltfImporter::doTexture(const UnsignedInt id) 
             const Containers::StringView extensionName = i.key();
 
             if(!(extensionName == "KHR_texture_ktx"_s && configuration().value<bool>("experimentalKhrTextureKtx")) &&
-               !isRecognized2DTextureExtension(extensionName)) continue;
+               !isRecognized2DTextureExtension(extensionName)
+            )
+                continue;
 
             if(!_d->gltf->parseObject(i.value())) {
                 Error{} << "Trade::GltfImporter::texture(): invalid" << extensionName << "extension";
@@ -5148,7 +5174,8 @@ AbstractImporter* GltfImporter::setupOrReuseImporterForImage(const char* const e
 
     AnyImageImporter importer{*manager()};
     importer.setFlags(flags());
-    if(fileCallback()) importer.setFileCallback(fileCallback(), fileCallbackUserData());
+    if(fileCallback())
+        importer.setFileCallback(fileCallback(), fileCallbackUserData());
 
     const Utility::JsonToken& gltfImage = _d->gltfImages[id].first();
 
@@ -5184,7 +5211,8 @@ AbstractImporter* GltfImporter::setupOrReuseImporterForImage(const char* const e
 
         } else if(gltfBufferView) {
             const Containers::Optional<BufferView> bufferView = parseBufferView(errorPrefix, gltfBufferView->asUnsignedInt());
-            if(!bufferView) return {};
+            if(!bufferView)
+                return {};
 
             /* 3.6.1.1. (Binary Data Storage § Buffers and Buffer Views §
                Overview) says "Buffer views with [non-vertex] types of data
@@ -5259,7 +5287,8 @@ UnsignedInt GltfImporter::doImage2DLevelCount(const UnsignedInt id) {
     AbstractImporter* importer = setupOrReuseImporterForImage("Trade::GltfImporter::image2DLevelCount():", _d->imagesByDimension[id], 2);
     /* image2DLevelCount() isn't supposed to fail (image2D() is, instead), so
        report 1 on failure and expect image2D() to fail later */
-    if(!importer) return 1;
+    if(!importer)
+        return 1;
 
     return importer->image2DLevelCount(0);
 }
@@ -5268,11 +5297,13 @@ Containers::Optional<ImageData2D> GltfImporter::doImage2D(const UnsignedInt id, 
     CORRADE_ASSERT(manager(), "Trade::GltfImporter::image2D(): the plugin must be instantiated with access to plugin manager in order to load images", {});
 
     AbstractImporter* importer = setupOrReuseImporterForImage("Trade::GltfImporter::image2D():", _d->imagesByDimension[id], 2);
-    if(!importer) return {};
+    if(!importer)
+        return {};
 
     /* Include a pointer to the glTF image in the result */
     Containers::Optional<ImageData2D> imageData = importer->image2D(0, level);
-    if(!imageData) return Containers::NullOpt;
+    if(!imageData)
+        return Containers::NullOpt;
     return ImageData2D{Utility::move(*imageData), &*_d->gltfImages[id].first()};
 }
 
@@ -5303,7 +5334,8 @@ UnsignedInt GltfImporter::doImage3DLevelCount(const UnsignedInt id) {
     AbstractImporter* importer = setupOrReuseImporterForImage("Trade::GltfImporter::image3DLevelCount():", _d->imagesByDimension[_d->image2DCount + id], 3);
     /* image3DLevelCount() isn't supposed to fail (image3D() is, instead), so
        report 1 on failure and expect image3D() to fail later */
-    if(!importer) return 1;
+    if(!importer)
+        return 1;
 
     return importer->image3DLevelCount(0);
 }
@@ -5312,7 +5344,8 @@ Containers::Optional<ImageData3D> GltfImporter::doImage3D(const UnsignedInt id, 
     CORRADE_ASSERT(manager(), "Trade::GltfImporter::image3D(): the plugin must be instantiated with access to plugin manager in order to load images", {});
 
     AbstractImporter* importer = setupOrReuseImporterForImage("Trade::GltfImporter::image3D():", _d->imagesByDimension[_d->image2DCount + id], 3);
-    if(!importer) return {};
+    if(!importer)
+        return {};
 
     return importer->image3D(0, level);
 }

@@ -55,9 +55,12 @@ Containers::Optional<Containers::String> decodeUri(const char* const errorPrefix
             c = 0;
             for(const char j: {uri[i + 1], uri[i + 2]}) {
                 c <<= 4;
-                if(j >= '0' && j <= '9') c |= j - '0';
-                else if(j >= 'A' && j <= 'F') c |= 10 + j - 'A';
-                else if(j >= 'a' && j <= 'f') c |= 10 + j - 'a';
+                if(j >= '0' && j <= '9')
+                    c |= j - '0';
+                else if(j >= 'A' && j <= 'F')
+                    c |= 10 + j - 'A';
+                else if(j >= 'a' && j <= 'f')
+                    c |= 10 + j - 'a';
                 else {
                     Error{} << errorPrefix << "invalid URI escape sequence" << uri.slice(i, i + 3);
                     return {};
