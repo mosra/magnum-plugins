@@ -856,9 +856,7 @@ inline UnsignedInt unboundedIfNegative(Int value) {
 
 }
 
-Containers::Optional<MeshData> UfbxImporter::doMesh(UnsignedInt id, UnsignedInt level) {
-    if(level != 0) return {};
-
+Containers::Optional<MeshData> UfbxImporter::doMesh(UnsignedInt id, UnsignedInt) {
     const MeshChunk chunk = _state->meshChunks[id];
     const ufbx_mesh* mesh = _state->scene->meshes[chunk.meshId];
     const ufbx_mesh_material mat = mesh->materials[chunk.meshMaterialIndex];
