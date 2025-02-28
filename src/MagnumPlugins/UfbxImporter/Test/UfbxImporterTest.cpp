@@ -2365,7 +2365,9 @@ void UfbxImporterTest::imageBrokenExternal() {
     Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->image2D(0));
-
+    /* image2DLevelCount() can't fail, but should not crash either */
+    CORRADE_COMPARE(importer->image2DLevelCount(0), 1);
+    /* There's an error from Path::read() before */
     CORRADE_COMPARE_AS(out,
         "Trade::StbImageImporter::image2D(): cannot open the image: ",
         TestSuite::Compare::StringHasPrefix);
@@ -2383,7 +2385,8 @@ void UfbxImporterTest::imageBrokenEmbedded() {
     Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->image2D(0));
-
+    /* image2DLevelCount() can't fail, but should not crash either */
+    CORRADE_COMPARE(importer->image2DLevelCount(0), 1);
     CORRADE_COMPARE(out,
         "Trade::AnyImageImporter::openData(): cannot determine the format from signature 0xbadbadfb\n");
 }
