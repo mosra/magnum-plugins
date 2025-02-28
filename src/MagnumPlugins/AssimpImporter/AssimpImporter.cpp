@@ -249,7 +249,8 @@ AssimpImporter::~AssimpImporter() {
     /* Because we are dealing with a crappy singleton here, we need to make
        sure to clean up everything that might have been set earlier */
     /** @todo wait how does this work with multiple simultaenous instances?! */
-    if(flags() & ImporterFlag::Verbose) Assimp::DefaultLogger::kill();
+    if(flags() & ImporterFlag::Verbose)
+        Assimp::DefaultLogger::kill();
 }
 
 ImporterFeatures AssimpImporter::doFeatures() const { return ImporterFeature::OpenData|ImporterFeature::OpenState|ImporterFeature::FileCallback; }
@@ -265,7 +266,8 @@ struct IoStream: Assimp::IOStream {
     std::size_t Read(void* buffer, std::size_t size, std::size_t count) override {
         /* For some zero-sized files, Assimp passes zero size. Ensure we don't
            crash on a division-by-zero. */
-        if(!size) return 0;
+        if(!size)
+            return 0;
 
         const Containers::ArrayView<const char> slice = _data.exceptPrefix(_pos);
         const std::size_t maxCount = Math::min(slice.size()/size, count);
@@ -317,7 +319,8 @@ struct IoSystem: Assimp::IOSystem {
         static_cast<void>(mode);
         #endif
         const Containers::Optional<Containers::ArrayView<const char>> data = _callback(file, InputFileCallbackPolicy::LoadTemporary, _userData);
-        if(!data) return {};
+        if(!data)
+            return {};
         return new IoStream{file, *data};
     }
 
@@ -351,7 +354,8 @@ void AssimpImporter::doSetFlags(const ImporterFlags flags) {
 }
 
 void AssimpImporter::doSetFileCallback(Containers::Optional<Containers::ArrayView<const char>>(*callback)(const std::string&, InputFileCallbackPolicy, void*), void* userData) {
-    if(!_importer) _importer = createImporter(configuration());
+    if(!_importer)
+        _importer = createImporter(configuration());
 
     if(callback) {
         _importer->SetIOHandler(_ourFileCallback = new IoSystem{callback, userData});
@@ -425,7 +429,8 @@ void AssimpImporter::doOpenData(Containers::Array<char>&& data, DataFlags) {
        doOpenState(). If we got called from doOpenState(), we don't even have
        the _importer. No need to create it. */
     if(!_f) {
-        if(!_importer) _importer = createImporter(configuration());
+        if(!_importer)
+            _importer = createImporter(configuration());
 
         _f.reset(new File);
         /* File callbacks are set up in doSetFileCallbacks() */
@@ -495,14 +500,16 @@ void AssimpImporter::doOpenData(Containers::Array<char>&& data, DataFlags) {
         for(UnsignedInt j = 0; j != mat->mNumProperties; ++j) {
             /* We're only interested in AI_MATKEY_TEXTURE_* properties */
             const aiMaterialProperty& property = *mat->mProperties[j];
-            if(Containers::StringView{property.mKey} != _AI_MATKEY_TEXTURE_BASE) continue;
+            if(Containers::StringView{property.mKey} != _AI_MATKEY_TEXTURE_BASE)
+                continue;
 
             /* For images ensure we have an unique path so each file isn't
                imported more than once. Each image then points to j-th property
                of the material, which is then used to retrieve its path again. */
             const Containers::StringView texturePath = materialPropertyString(property);
             auto uniqueImage = uniqueImages.emplace(texturePath, _f->images.size());
-            if(uniqueImage.second) arrayAppend(_f->images, InPlaceInit, mat, j);
+            if(uniqueImage.second)
+                arrayAppend(_f->images, InPlaceInit, mat, j);
 
             /* Each texture points to j-th property of the material, which is
                then used to retrieve related info, plus an index into the
@@ -633,7 +640,8 @@ void AssimpImporter::doOpenState(const void* state, const Containers::StringView
 }
 
 void AssimpImporter::doOpenFile(const Containers::StringView filename) {
-    if(!_importer) _importer = createImporter(configuration());
+    if(!_importer)
+        _importer = createImporter(configuration());
 
     _f.reset(new File);
     /* Since the slice won't be null terminated, nullTerminatedGlobalView()
@@ -652,7 +660,8 @@ void AssimpImporter::doOpenFile(const Containers::StringView filename) {
 void AssimpImporter::doClose() {
     /* In case of doOpenState(), the _importer isn't populated at all and
        the scene is owned by the caller */
-    if(_importer) _importer->FreeScene();
+    if(_importer)
+        _importer->FreeScene();
     _f.reset();
 }
 
@@ -802,7 +811,8 @@ Containers::Optional<SceneData> AssimpImporter::doScene(UnsignedInt) {
 
             Int skin = _f->meshSkins[mesh];
             if(skin != -1) {
-                if(_f->mergeSkins) skin = 0;
+                if(_f->mergeSkins)
+                    skin = 0;
                 skinObjects[skinOffset] = i;
                 skins[skinOffset] = skin;
                 ++skinOffset;
@@ -1169,7 +1179,8 @@ Containers::Optional<MeshData> AssimpImporter::doMesh(const UnsignedInt id, Unsi
     /** @todo only first uv layer (or "channel") supported) */
     for(std::size_t layer = 0; layer < mesh->GetNumUVChannels(); ++layer) {
         /* Warning already printed above */
-        if(mesh->mNumUVComponents[layer] != 2) continue;
+        if(mesh->mNumUVComponents[layer] != 2)
+            continue;
 
         Containers::StridedArrayView1D<Vector2> textureCoordinates{vertexData,
             reinterpret_cast<Vector2*>(vertexData + attributeOffset),
@@ -1491,7 +1502,8 @@ Containers::Optional<MaterialData> AssimpImporter::doMaterial(const UnsignedInt 
        are consecutive in the array */
     for(UnsignedInt layer = 0; layer <= maxLayer; ++layer) {
         /* Save offset of this layer */
-        if(layer != 0) layers[layer - 1] = attributes.size();
+        if(layer != 0)
+            layers[layer - 1] = attributes.size();
 
         /* Texture indices are consecutive for all textures in the material,
            starting at the offset we saved at the beginning. Because we're
@@ -1885,7 +1897,8 @@ AbstractImporter* AssimpImporter::setupOrReuseImporterForImage(const UnsignedInt
 
     AnyImageImporter importer{*manager()};
     importer.setFlags(flags());
-    if(fileCallback()) importer.setFileCallback(fileCallback(), fileCallbackUserData());
+    if(fileCallback())
+        importer.setFileCallback(fileCallback(), fileCallbackUserData());
 
     const Containers::StringView path = texturePath;
 
@@ -1956,7 +1969,8 @@ UnsignedInt AssimpImporter::doImage2DLevelCount(const UnsignedInt id) {
     AbstractImporter* importer = setupOrReuseImporterForImage(id, "Trade::AssimpImporter::image2DLevelCount():");
     /* image2DLevelCount() isn't supposed to fail (image2D() is, instead), so
        report 1 on failure and expect image2D() to fail later */
-    if(!importer) return 1;
+    if(!importer)
+        return 1;
 
     return importer->image2DLevelCount(0);
 }
@@ -1965,7 +1979,8 @@ Containers::Optional<ImageData2D> AssimpImporter::doImage2D(const UnsignedInt id
     CORRADE_ASSERT(manager(), "Trade::AssimpImporter::image2D(): the plugin must be instantiated with access to plugin manager in order to open image files", {});
 
     AbstractImporter* importer = setupOrReuseImporterForImage(id, "Trade::AssimpImporter::image2D():");
-    if(!importer) return Containers::NullOpt;
+    if(!importer)
+        return Containers::NullOpt;
 
     return importer->image2D(0, level);
 }
@@ -1980,7 +1995,8 @@ UnsignedInt AssimpImporter::doAnimationCount() const {
 
 Int AssimpImporter::doAnimationForName(const Containers::StringView name) {
     /* If the animations are merged, don't report any names */
-    if(configuration().value<bool>("mergeAnimationClips")) return -1;
+    if(configuration().value<bool>("mergeAnimationClips"))
+        return -1;
 
     if(!_f->animationsForName) {
         _f->animationsForName.emplace();
@@ -1995,7 +2011,8 @@ Int AssimpImporter::doAnimationForName(const Containers::StringView name) {
 
 Containers::String AssimpImporter::doAnimationName(UnsignedInt id) {
     /* If the animations are merged, don't report any names */
-    if(configuration().value<bool>("mergeAnimationClips")) return {};
+    if(configuration().value<bool>("mergeAnimationClips"))
+        return {};
     return _f->scene->mAnimations[id]->mName;
 }
 
@@ -2232,7 +2249,8 @@ Containers::Optional<AnimationData> AssimpImporter::doAnimation(UnsignedInt id) 
                 if(optimizeQuaternionShortestPath) {
                     Float flip = 1.0f;
                     for(std::size_t i = 0; i + 1 < values.size(); ++i) {
-                        if(Math::dot(values[i], values[i + 1]*flip) < 0.0f) flip = -flip;
+                        if(Math::dot(values[i], values[i + 1]*flip) < 0.0f)
+                            flip = -flip;
                         values[i + 1] *= flip;
                     }
                 }
@@ -2293,7 +2311,8 @@ UnsignedInt AssimpImporter::doSkin3DCount() const {
 
 Int AssimpImporter::doSkin3DForName(const Containers::StringView name) {
     /* If the skins are merged, don't report any names */
-    if(_f->mergeSkins) return -1;
+    if(_f->mergeSkins)
+        return -1;
 
     if(!_f->skinsForName) {
         _f->skinsForName.emplace();
@@ -2309,7 +2328,8 @@ Int AssimpImporter::doSkin3DForName(const Containers::StringView name) {
 
 Containers::String AssimpImporter::doSkin3DName(const UnsignedInt id) {
     /* If the skins are merged, don't report any names */
-    if(_f->mergeSkins) return {};
+    if(_f->mergeSkins)
+        return {};
     return _f->scene->mMeshes[_f->meshesWithBones[id]]->mName;
 }
 
