@@ -3619,9 +3619,9 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
             _d->bufferViews[accessor->third()]->third(), /* buffer ID */
             attributeDataBegin,
             /* Unless there are no vertices, from the last vertex we take just
-               the size the actual format spans, including array size such as
-               for skinning attributes */
-            attributeDataBegin + (vertexCount ? (vertexCount - 1)*accessor->first().stride()[0] + vertexFormatSize(accessor->second())*(arraySize ? arraySize : 1) : 0),
+               the size the actual format spans, which is provided in the
+               second dimension of the data view */
+            attributeDataBegin + (vertexCount ? (vertexCount - 1)*accessor->first().stride()[0] + accessor->first().size()[1] : 0),
         };
 
         /** @todo Check that accessor stride >= vertexFormatSize(format)? */
