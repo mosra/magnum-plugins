@@ -142,7 +142,7 @@
       ]
     },
     {
-      "name": "invalid index accessor",
+      "name": "index accessor range out of buffer view range",
       "primitives": [
         {
           "attributes": {},
@@ -151,7 +151,7 @@
       ]
     },
     {
-      "name": "accessor range out of range",
+      "name": "attribute accessor range out of buffer view range",
       "primitives": [
         {
           "attributes": {
@@ -161,7 +161,7 @@
       ]
     },
     {
-      "name": "buffer view range out of range",
+      "name": "buffer view range out of buffer range",
       "primitives": [
         {
           "attributes": {},
@@ -190,7 +190,7 @@
       ]
     },
     {
-      "name": "accessor index out of range",
+      "name": "attribute accessor index out of range",
       "primitives": [
         {
           "attributes": {
@@ -200,7 +200,7 @@
       ]
     },
     {
-      "name": "mesh index accessor out of range",
+      "name": "index accessor out of range",
       "primitives": [
         {
           "attributes": {},
