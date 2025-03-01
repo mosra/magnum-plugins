@@ -4265,7 +4265,7 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
         }
 
         if(!accessor->data.isContiguous()) {
-            Error{} << "Trade::GltfImporter::mesh(): index buffer view is not contiguous";
+            Error{} << "Trade::GltfImporter::mesh(): index buffer view" << accessor->bufferView << "is not contiguous";
             return {};
         }
 

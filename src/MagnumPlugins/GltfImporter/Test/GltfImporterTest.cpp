@@ -1009,7 +1009,7 @@ const struct {
     {"normalized index type",
         "accessor 4 with component format UnsignedInt can't be normalized"},
     {"strided index view",
-        "index buffer view is not contiguous"},
+        "index buffer view 15 is not contiguous"},
     {"accessor with no buffer view used for indices",
         "index accessor 10 has no buffer view, which is unsupported"},
     {"sparse accessor used for indices",

@@ -776,7 +776,7 @@
     },
     {
       "name": "5",
-      "bufferView": 0,
+      "bufferView": 15,
       "componentType": 5125,
       "count": 3,
       "type": "SCALAR"
