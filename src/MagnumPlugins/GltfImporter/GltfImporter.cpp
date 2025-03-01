@@ -649,7 +649,7 @@ Containers::Optional<GltfImporter::Accessor> GltfImporter::parseAccessor(const c
             with offset in whole strides and then "shift" the view by the
             remainder (once there's StridedArrayView::shift() or some such) */
         Containers::StridedArrayView2D<const char>{{bufferView->data, bufferView->data.size() + stride},
-            static_cast<const char*>(bufferView->data.data()) + offset,
+            bufferView->data.data() + offset,
             {count, typeSize},
             {std::ptrdiff_t(stride), 1}},
         format,
