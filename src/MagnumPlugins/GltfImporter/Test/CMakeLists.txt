@@ -178,6 +178,8 @@ corrade_add_test(GltfImporterTest
         mesh-invalid-primitive-targets-property.gltf
         mesh-invalid-primitive.gltf
         mesh-invalid-primitives-property.gltf
+        mesh-invalid-sparse-indices.gltf
+        mesh-invalid-sparse-indices.bin
         mesh-invalid-texcoord-flip-attribute-accessor-invalid-component-type.gltf
         mesh-invalid-texcoord-flip-attribute-accessor-invalid-normalized.gltf
         mesh-invalid-texcoord-flip-attribute-accessor-missing-component-type.gltf
@@ -195,6 +197,8 @@ corrade_add_test(GltfImporterTest
         mesh-size-not-multiple-of-stride.bin
         mesh-skin-attributes.gltf
         mesh-skin-attributes.bin
+        mesh-sparse.gltf
+        mesh-sparse.bin
         mesh-unordered-attributes.gltf
         mesh-unsigned-int-vertex-formats.gltf
         mesh-unsigned-int-vertex-formats.bin

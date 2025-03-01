@@ -142,7 +142,18 @@ struct GltfImporter::Accessor {
     /* As the type is known, it's always a 2D view with layout as expected */
     Containers::StridedArrayView2D<const char> data;
     VertexFormat format;
-    UnsignedInt bufferView; /* points into _d->bufferViews */
+    /* Points into _d->bufferViews. Can be ~UnsignedInt{}, which indicates that
+       the accessor has no backing view or is sparse. The `data` then is a null
+       view with just stride and size set to denote that it's meant to become a
+       contiguous zero-initialized array of given element count and type
+       size. */
+    UnsignedInt bufferView;
+    /* If non-empty, the accessor is sparse. Second dimension is index type
+       size. */
+    Containers::StridedArrayView2D<const char> sparseIndices;
+    /* If non-empty, the accessor is sparse. Second dimension is the same size
+       as `data` second dimension. */
+    Containers::StridedArrayView2D<const char> sparseValues;
 };
 
 namespace {
@@ -490,33 +501,6 @@ Containers::Optional<GltfImporter::Accessor> GltfImporter::parseAccessor(const c
     /** @todo Validate alignment rules, calculate correct stride in accessorView():
         https://www.khronos.org/registry/glTF/specs/2.0/glTF-2.0.html#data-alignment */
 
-    if(gltfAccessor.find("sparse"_s)) {
-        Error{} << errorPrefix << "accessor" << accessorId << "is using sparse storage, which is unsupported";
-        return {};
-    }
-
-    /* Buffer views are optional in accessors, we're supposed to fill the view
-       with zeros. Only makes sense with sparse data and we don't support
-       that, so we require the bufferViewId to be present. */
-    const Utility::JsonToken* const gltfBufferViewId = gltfAccessor.find("bufferView"_s);
-    if(!gltfBufferViewId || !_d->gltf->parseUnsignedInt(*gltfBufferViewId)) {
-        Error{} << errorPrefix << "accessor" << accessorId << "has missing or invalid bufferView property";
-        return {};
-    }
-
-    /* Get the buffer view early and continue only if that doesn't fail. This
-       also checks that the buffer view ID is in bounds. */
-    Containers::Optional<BufferView> bufferView = parseBufferView(errorPrefix, gltfBufferViewId->asUnsignedInt());
-    if(!bufferView)
-        return {};
-
-    /* Byte offset is optional, defaulting to 0 */
-    const Utility::JsonToken* const gltfAccessorByteOffset = gltfAccessor.find("byteOffset"_s);
-    if(gltfAccessorByteOffset && !_d->gltf->parseSize(*gltfAccessorByteOffset)) {
-        Error{} << errorPrefix << "accessor" << accessorId << "has invalid byteOffset property";
-        return {};
-    }
-
     const Utility::JsonToken* const gltfAccessorComponentType = gltfAccessor.find("componentType"_s);
     if(!gltfAccessorComponentType || !_d->gltf->parseUnsignedInt(*gltfAccessorComponentType)) {
         Error{} << errorPrefix << "accessor" << accessorId << "has missing or invalid componentType property";
@@ -553,6 +537,7 @@ Containers::Optional<GltfImporter::Accessor> GltfImporter::parseAccessor(const c
         Error{} << errorPrefix << "accessor" << accessorId << "has missing or invalid count property";
         return {};
     }
+    const std::size_t count = gltfAccessorCount->asSize();
 
     const Utility::JsonToken* const gltfAccessorType = gltfAccessor.find("type"_s);
     if(!gltfAccessorType || !_d->gltf->parseString(*gltfAccessorType)) {
@@ -620,23 +605,48 @@ Containers::Optional<GltfImporter::Accessor> GltfImporter::parseAccessor(const c
         format = vertexFormat(componentFormat, componentCount, gltfAccessorNormalized && gltfAccessorNormalized->asBool());
     else
         format = vertexFormat(componentFormat, vectorCount, componentCount, true);
-
     const std::size_t typeSize = vertexFormatSize(format);
-    if(bufferView->stride && bufferView->stride < typeSize) {
-        Error{} << errorPrefix << typeSize << Debug::nospace << "-byte type defined by accessor" << accessorId << "can't fit into buffer view" << gltfBufferViewId->asUnsignedInt() << "stride of" << bufferView->stride;
-        return {};
-    }
 
-    const std::size_t offset = gltfAccessorByteOffset ? gltfAccessorByteOffset->asSize() : 0;
-    const std::size_t stride = bufferView->stride ? bufferView->stride : typeSize;
-    const std::size_t count = gltfAccessorCount->asSize();
-    const std::size_t requiredBufferViewSize = offset + (count ? stride*(count - 1) + typeSize : 0);
-    if(bufferView->data.size() < requiredBufferViewSize) {
-        Error{} << errorPrefix << "accessor" << accessorId << "needs" << requiredBufferViewSize << "bytes but buffer view" << gltfBufferViewId->asUnsignedInt() << "has only" << bufferView->data.size();
-        return {};
-    }
+    /* Buffer views are optional in accessors, we're supposed to fill the view
+       with zeros if they're missing */
+    Containers::StridedArrayView2D<const char> data;
+    const Utility::JsonToken* const gltfBufferViewId = gltfAccessor.find("bufferView"_s);
+    if(gltfBufferViewId) {
+        if(!_d->gltf->parseUnsignedInt(*gltfBufferViewId)) {
+            Error{} << errorPrefix << "accessor" << accessorId << "has invalid bufferView property";
+            return {};
+        }
 
-    storage.emplace(
+        /* Get the buffer view and continue only if that doesn't fail. This
+           also checks that the buffer view ID is in bounds. */
+        Containers::Optional<BufferView> bufferView = parseBufferView(errorPrefix, gltfBufferViewId->asUnsignedInt());
+        if(!bufferView)
+            return {};
+
+        if(bufferView->stride && bufferView->stride < typeSize) {
+            Error{} << errorPrefix << typeSize << Debug::nospace << "-byte type defined by accessor" << accessorId << "can't fit into buffer view" << gltfBufferViewId->asUnsignedInt() << "stride of" << bufferView->stride;
+            return {};
+        }
+
+        /* Byte offset is optional, defaulting to 0. The spec says this can
+           only be defined if bufferView is also, which means the code should
+           ideally parse & check it always, not just when bufferView is
+           present. But this is a loader, not validator, so I don't see a
+           practical reason for doing that. */
+        const Utility::JsonToken* const gltfAccessorByteOffset = gltfAccessor.find("byteOffset"_s);
+        if(gltfAccessorByteOffset && !_d->gltf->parseSize(*gltfAccessorByteOffset)) {
+            Error{} << errorPrefix << "accessor" << accessorId << "has invalid byteOffset property";
+            return {};
+        }
+
+        const std::size_t offset = gltfAccessorByteOffset ? gltfAccessorByteOffset->asSize() : 0;
+        const std::size_t stride = bufferView->stride ? bufferView->stride : typeSize;
+        const std::size_t requiredBufferViewSize = offset + (count ? stride*(count - 1) + typeSize : 0);
+        if(bufferView->data.size() < requiredBufferViewSize) {
+            Error{} << errorPrefix << "accessor" << accessorId << "needs" << requiredBufferViewSize << "bytes but buffer view" << gltfBufferViewId->asUnsignedInt() << "has only" << bufferView->data.size();
+            return {};
+        }
+
         /* glTF only requires buffer views to be large enough to fit the actual
            data, not to have the size large enough to fit `count*stride`
            elements. The StridedArrayView expects the latter, so we fake the
@@ -648,14 +658,187 @@ Containers::Optional<GltfImporter::Accessor> GltfImporter::parseAccessor(const c
             whole strides and the remainder (Math::div), then form the view
             with offset in whole strides and then "shift" the view by the
             remainder (once there's StridedArrayView::shift() or some such) */
-        Containers::StridedArrayView2D<const char>{{bufferView->data, bufferView->data.size() + stride},
+        data = Containers::StridedArrayView2D<const char>{
+            {bufferView->data, bufferView->data.size() + stride},
             bufferView->data.data() + offset,
             {count, typeSize},
-            {std::ptrdiff_t(stride), 1}},
+            {std::ptrdiff_t(stride), 1}};
+
+    /* If there's no buffer view, make a null data view but with its size
+       describing the element count and type size. In the output it will become
+       zero-initialized, possibly with sparse data put on top. */
+    } else data = Containers::StridedArrayView2D<const char>{
+        {nullptr, count*typeSize},
+        {count, typeSize}};
+
+    /* Sparse accessor, if any */
+    Containers::StridedArrayView2D<const char> sparseIndices, sparseValues;
+    if(const Utility::JsonToken* const gltfSparse = gltfAccessor.find("sparse"_s)) {
+        if(!_d->gltf->parseObject(*gltfSparse)) {
+            Error{} << errorPrefix << "accessor" << accessorId << "has invalid sparse property";
+            return {};
+        }
+
+        /* Count of sparse values */
+        const Utility::JsonToken* const gltfSparseCount = gltfSparse->find("count"_s);
+        if(!gltfSparseCount || !_d->gltf->parseSize(*gltfSparseCount)) {
+            Error{} << errorPrefix << "accessor" << accessorId << "has missing or invalid sparse count property";
+            return {};
+        }
+
+        const std::size_t sparseCount = gltfSparseCount->asSize();
+        if(!sparseCount || sparseCount > count) {
+            Error{} << errorPrefix << "accessor" << accessorId << "sparse count" << sparseCount << "out of range for" << count << "elements";
+            return {};
+        }
+
+        /* Sparse indices */
+        const Utility::JsonToken* const gltfSparseIndices = gltfSparse->find("indices");
+        if(!gltfSparseIndices || !_d->gltf->parseObject(*gltfSparseIndices)) {
+            Error{} << errorPrefix << "accessor" << accessorId << "has missing or invalid sparse indices property";
+            return {};
+        }
+
+        const Utility::JsonToken* const gltfSparseIndicesBufferViewId = gltfSparseIndices->find("bufferView");
+        if(!gltfSparseIndicesBufferViewId || !_d->gltf->parseUnsignedInt(*gltfSparseIndicesBufferViewId)) {
+            Error{} << errorPrefix << "accessor" << accessorId << "has missing or invalid sparse indices bufferView property";
+            return {};
+        }
+
+        /* Get the buffer view and continue only if that doesn't fail. This
+           also checks that the buffer view ID is in bounds. */
+        Containers::Optional<BufferView> sparseIndicesBufferView = parseBufferView(errorPrefix, gltfSparseIndicesBufferViewId->asUnsignedInt());
+        if(!sparseIndicesBufferView)
+            return {};
+
+        /* 5.3 (Accessor Sparse Indices) says strided buffer views aren't
+           allowed for sparse indices, even if the stride would equal type
+           size. Doesn't matter much as I can use a StridedArrayView anyway but
+           it definitely makes certain things simpler. */
+        if(sparseIndicesBufferView->stride) {
+            Error{} << errorPrefix << "accessor" << accessorId << "sparse indices bufferView" << gltfSparseIndicesBufferViewId->asUnsignedInt() << "is strided";
+            return {};
+        }
+
+        /* Byte offset is optional, defaulting to 0 */
+        const Utility::JsonToken* const gltfSparseIndicesByteOffset = gltfSparseIndices->find("byteOffset"_s);
+        if(gltfSparseIndicesByteOffset && !_d->gltf->parseSize(*gltfSparseIndicesByteOffset)) {
+            Error{} << errorPrefix << "accessor" << accessorId << "has invalid sparse indices byteOffset property";
+            return {};
+        }
+
+        const Utility::JsonToken* const gltfSparseIndicesComponentType = gltfSparseIndices->find("componentType"_s);
+        if(!gltfSparseIndicesComponentType || !_d->gltf->parseUnsignedInt(*gltfSparseIndicesComponentType)) {
+            Error{} << errorPrefix << "accessor" << accessorId << "has missing or invalid sparse indices componentType property";
+            return {};
+        }
+        UnsignedInt sparseIndicesTypeSize;
+        switch(gltfSparseIndicesComponentType->asUnsignedInt()) {
+            case Implementation::GltfTypeUnsignedByte:
+                sparseIndicesTypeSize = 1;
+                break;
+            case Implementation::GltfTypeUnsignedShort:
+                sparseIndicesTypeSize = 2;
+                break;
+            case Implementation::GltfTypeUnsignedInt:
+                sparseIndicesTypeSize = 4;
+                break;
+            default:
+                Error{} << errorPrefix << "accessor" << accessorId << "has invalid sparse indices componentType" << gltfSparseIndicesComponentType->asUnsignedInt();
+                return {};
+        }
+
+        const std::size_t sparseIndicesOffset = gltfSparseIndicesByteOffset ? gltfSparseIndicesByteOffset->asSize() : 0;
+        const std::size_t requiredSparseIndicesBufferViewSize = sparseIndicesOffset + sparseCount*sparseIndicesTypeSize;
+        if(sparseIndicesBufferView->data.size() < requiredSparseIndicesBufferViewSize) {
+            Error{} << errorPrefix << "accessor" << accessorId << "needs" << requiredSparseIndicesBufferViewSize << "bytes for sparse indices but buffer view" << gltfSparseIndicesBufferViewId->asUnsignedInt() << "has only" << sparseIndicesBufferView->data.size();
+            return {};
+        }
+
+        /* Sparse values */
+        const Utility::JsonToken* const gltfSparseValues = gltfSparse->find("values");
+        if(!gltfSparseValues || !_d->gltf->parseObject(*gltfSparseValues)) {
+            Error{} << errorPrefix << "accessor" << accessorId << "has missing or invalid sparse values property";
+            return {};
+        }
+
+        const Utility::JsonToken* const gltfSparseValuesBufferViewId = gltfSparseValues->find("bufferView");
+        if(!gltfSparseValuesBufferViewId || !_d->gltf->parseUnsignedInt(*gltfSparseValuesBufferViewId)) {
+            Error{} << errorPrefix << "accessor" << accessorId << "has missing or invalid sparse values bufferView property";
+            return {};
+        }
+
+        /* Get the buffer view and continue only if that doesn't fail. This
+           also checks that the buffer view ID is in bounds. */
+        Containers::Optional<BufferView> sparseValuesBufferView = parseBufferView(errorPrefix, gltfSparseValuesBufferViewId->asUnsignedInt());
+        if(!sparseValuesBufferView)
+            return {};
+
+        /* 5.4 (Accessor Sparse Indices) similarly says strided buffer views
+           aren't allowed for sparse values either. Again doesn't matter but
+           makes things simpler. */
+        if(sparseValuesBufferView->stride) {
+            Error{} << errorPrefix << "accessor" << accessorId << "sparse values bufferView" << gltfSparseValuesBufferViewId->asUnsignedInt() << "is strided";
+            return {};
+        }
+
+        /* Byte offset is optional, defaulting to 0 */
+        const Utility::JsonToken* const gltfSparseValuesByteOffset = gltfSparseValues->find("byteOffset"_s);
+        if(gltfSparseValuesByteOffset && !_d->gltf->parseSize(*gltfSparseValuesByteOffset)) {
+            Error{} << errorPrefix << "accessor" << accessorId << "has invalid sparse values byteOffset property";
+            return {};
+        }
+
+        const std::size_t sparseValuesOffset = gltfSparseValuesByteOffset ? gltfSparseValuesByteOffset->asSize() : 0;
+        const std::size_t requiredSparseValuesBufferViewSize = sparseValuesOffset + sparseCount*typeSize;
+        if(sparseValuesBufferView->data.size() < requiredSparseValuesBufferViewSize) {
+            Error{} << errorPrefix << "accessor" << accessorId << "needs" << requiredSparseValuesBufferViewSize << "bytes for sparse indices but buffer view" << gltfSparseValuesBufferViewId->asUnsignedInt() << "has only" << sparseValuesBufferView->data.size();
+            return {};
+        }
+
+        /* All good, form the views for storing below */
+        sparseIndices = Containers::StridedArrayView2D<const char>{
+            sparseIndicesBufferView->data.sliceSize(sparseIndicesOffset, sparseCount*sparseIndicesTypeSize),
+            {sparseCount, sparseIndicesTypeSize}};
+        sparseValues = Containers::StridedArrayView2D<const char>{
+            sparseValuesBufferView->data.sliceSize(sparseValuesOffset, sparseCount*typeSize),
+            {sparseCount, typeSize}};
+    }
+
+    storage.emplace(
+        data,
         format,
-        gltfBufferViewId->asUnsignedInt());
+        /* Use all 1s to denote the accessor has no buffer assigned */
+        gltfBufferViewId ? gltfBufferViewId->asUnsignedInt() : ~UnsignedInt{},
+        sparseIndices,
+        sparseValues);
 
     return storage;
+}
+
+namespace {
+
+/* A variant of MeshTools::duplicateIntoImplementation(), just modified to have
+   the indices point to the output instead of input and user-facing assertions
+   turned internal */
+template<class T> bool applySparseAccessor(const char* const errorPrefix, UnsignedInt accessorId, const Containers::StridedArrayView1D<const T>& indices, const Containers::StridedArrayView2D<const char>& data, const Containers::StridedArrayView2D<char>& out) {
+    CORRADE_INTERNAL_ASSERT(
+        indices.size() == data.size()[0] &&
+        data.isContiguous<1>() &&
+        out.isContiguous<1>() &&
+        data.size()[1] == out.size()[1]);
+    const std::size_t size = data.size()[1];
+    for(std::size_t i = 0; i != indices.size(); ++i) {
+        const std::size_t index = indices[i];
+        if(index >= out.size()[0]) {
+            Error{} << errorPrefix << "sparse accessor" << accessorId << "index" << index << "out of range for" << out.size()[0] << "elements";
+            return false;
+        }
+        std::memcpy(out[index].data(), data[i].data(), size);
+    }
+    return true;
+}
+
 }
 
 #ifdef MAGNUM_BUILD_DEPRECATED /* LCOV_EXCL_START */
@@ -1704,6 +1887,18 @@ Containers::Optional<AnimationData> GltfImporter::doAnimation(UnsignedInt id) {
                 if(!accessor)
                     return {};
 
+                /* There's no technical reason this couldn't work, it's just
+                   that I don't see any practical use case that would warrant
+                   the extra testing effort, so just fail for now */
+                if(accessor->bufferView == ~UnsignedInt{}) {
+                    Error{} << "Trade::GltfImporter::animation(): input accessor" << gltfAnimationSamplerInput->asUnsignedInt() << "has no buffer view, which is unsupported";
+                    return {};
+                }
+                if(accessor->sparseValues.data()) {
+                    Error{} << "Trade::GltfImporter::animation(): input accessor" << gltfAnimationSamplerInput->asUnsignedInt() << "is using sparse storage, which is unsupported";
+                    return {};
+                }
+
                 samplerData.emplace(gltfAnimationSamplerInput->asUnsignedInt(), SamplerData{dataSize, ~UnsignedInt{}});
                 dataSize += accessor->data.size()[0]*accessor->data.size()[1];
             }
@@ -1714,6 +1909,16 @@ Containers::Optional<AnimationData> GltfImporter::doAnimation(UnsignedInt id) {
                 const Containers::Optional<Accessor> accessor = parseAccessor("Trade::GltfImporter::animation():", gltfAnimationSamplerOutput->asUnsignedInt());
                 if(!accessor)
                     return {};
+
+                /* Same as above */
+                if(accessor->bufferView == ~UnsignedInt{}) {
+                    Error{} << "Trade::GltfImporter::animation(): output accessor" << gltfAnimationSamplerOutput->asUnsignedInt() << "has no buffer view, which is unsupported";
+                    return {};
+                }
+                if(accessor->sparseValues.data()) {
+                    Error{} << "Trade::GltfImporter::animation(): output accessor" << gltfAnimationSamplerOutput->asUnsignedInt() << "is using sparse storage, which is unsupported";
+                    return {};
+                }
 
                 samplerData.emplace(gltfAnimationSamplerOutput->asUnsignedInt(), SamplerData{dataSize, ~UnsignedInt{}});
                 dataSize += accessor->data.size()[0]*accessor->data.size()[1];
@@ -3229,6 +3434,19 @@ Containers::Optional<SkinData3D> GltfImporter::doSkin3D(const UnsignedInt id) {
         const Containers::Optional<Accessor> accessor = parseAccessor("Trade::GltfImporter::skin3D():", gltfInverseBindMatrices->asUnsignedInt());
         if(!accessor)
             return {};
+
+        /* There's no technical reason this couldn't work, it's just that I
+           don't see any practical use case that would warrant the extra
+           testing effort, so just fail for now */
+        if(accessor->bufferView == ~UnsignedInt{}) {
+            Error{} << "Trade::GltfImporter::skin3D(): accessor" << gltfInverseBindMatrices->asUnsignedInt() << "has no buffer view, which is unsupported";
+            return {};
+        }
+        if(accessor->sparseValues.data()) {
+            Error{} << "Trade::GltfImporter::skin3D(): accessor" << gltfInverseBindMatrices->asUnsignedInt() << "is using sparse storage, which is unsupported";
+            return {};
+        }
+
         if(accessor->format != VertexFormat::Matrix4x4) {
             /* Since we're abusing VertexFormat for all formats, print just the
                enum value without the prefix to avoid cofusion */
@@ -3408,6 +3626,8 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
         [](const Attribute& a, const Attribute& b) {
             return a.morphTargetId == b.morphTargetId && a.name == b.name;
         });
+    /** @todo use suffix() once it takes suffix size and not prefix size */
+    const Containers::ArrayView<const Attribute> uniqueAttributeOrder = attributeOrder.exceptPrefix(attributeOrder.size() - uniqueAttributeCount);
 
     /* Buffer ranges spanning all attributes. After collecting them for all
        attributes they get sorted by `buffer` and `begin` to allow overlapping
@@ -3438,8 +3658,7 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
     #ifdef MAGNUM_BUILD_DEPRECATED
     UnsignedInt compatibilitySkinningAttributeCount = 0;
     #endif
-    /** @todo use suffix() once it takes suffix size and not prefix size */
-    for(const Attribute& attribute: attributeOrder.exceptPrefix(attributeOrder.size() - uniqueAttributeCount)) {
+    for(const Attribute& attribute: uniqueAttributeOrder) {
         /* Extract base name and number from builtin glTF numbered attributes,
            use the whole name otherwise */
         Containers::StringView baseAttributeName;
@@ -3640,27 +3859,70 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
             return {};
         }
 
-        /* Remember the buffer index and memory range the attribute is in.
-           Cannot take just the buffer view range because the accessor could be
-           a tiny slice of that (which is the case for example with the Buggy
-           model in glTF Sample Assets), thus have to take exactly the range
-           the accessor spans. */
-        const char* const attributeDataBegin = static_cast<const char*>(accessor->data.data());
-        bufferRanges[attributeId] = {
-            attributeId,
-            _d->bufferViews[accessor->bufferView]->buffer,
-            attributeDataBegin,
-            /* Unless there are no vertices, from the last vertex we take just
-               the size the actual format spans, which is provided in the
-               second dimension of the data view */
-            attributeDataBegin + (vertexCount ? (vertexCount - 1)*accessor->data.stride()[0] + accessor->data.size()[1] : 0),
-        };
+        /* If the accessor has no backing view or is sparse, use a special
+           buffer ID that puts it at the very end when sorted below, i.e. not
+           overlapping with any other buffer range. Make the attribute view
+           contiguous and exactly matching the range because the range is going
+           to be either zero-filled or copied and then patched, or both.
+
+           Non-sparse zero-filled ranges could overlap each other to reduce
+           memory use (or even be just a single element with zero stride) but
+           I'm skeptical of practical value of all-zero attributes so they
+           don't -- if your mesh has them, you're going to pay for the extra
+           waste.
+
+           Similarly, it could happen that the same sparse accessor is used for
+           multiple attributes, and this duplicates it. Again I don't think
+           there's much practical value in that so no attempt at deduplicating
+           / overlapping those is made. Conversely, it could happen that a
+           sparse attribute uses is interleaved with others, and the original
+           non-sparse location isn't used by anything else. Which means the
+           original non-sparse location stays in the mesh, unused, with the
+           sparse attribute being copied next to it. *Again*, I don't think
+           that's a real-world use case, because likely there will be e.g. a
+           position and then a morph target position (or more of them),
+           changing some parts of the original, thus always with the original
+           used as well. And if not, feel free to use MeshTools::interleave()
+           to get rid of the unused data.  */
+        Containers::StridedArrayView2D<const char> data;
+        if(accessor->bufferView == ~UnsignedInt{} || accessor->sparseValues.data()) {
+            /* The pointer is nullptr to indicate there's no buffer view to
+               directly copy from -- even if there would be, it likely has to
+               get deinterleaved */
+            bufferRanges[attributeId] = {
+                attributeId,
+                ~UnsignedInt{},
+                nullptr,
+                reinterpret_cast<const char*>(vertexCount*accessor->data.size()[1])
+            };
+            /* The attribute data view then matches the buffer range exactly */
+            data = Containers::StridedArrayView2D<const char>{{nullptr, vertexCount*accessor->data.size()[1]}, {vertexCount, accessor->data.size()[1]}};
+
+        /* For non-sparse accessors backed by buffer views remember the buffer
+           index and memory range the attribute is in. Cannot take just the
+           whole buffer view range because the accessor could be a tiny slice
+           of that (which is the case for example with the Buggy model in glTF
+           Sample Assets), thus have to take exactly the range the accessor
+           spans.*/
+        } else {
+            const char* const attributeDataBegin = static_cast<const char*>(accessor->data.data());
+            bufferRanges[attributeId] = {
+                attributeId,
+                _d->bufferViews[accessor->bufferView]->buffer,
+                attributeDataBegin,
+                /* Unless there are no vertices, from the last vertex we take
+                   just the size the actual format spans, which is provided in
+                   the second dimension of the data view */
+                attributeDataBegin + (vertexCount ? (vertexCount - 1)*accessor->data.stride()[0] + accessor->data.size()[1] : 0),
+            };
+            data = accessor->data;
+        }
 
         /** @todo Check that accessor stride >= vertexFormatSize(format)? */
 
         /* Fill in an attribute. Points to the input data, will be patched to
            the output data once we know where it's allocated. */
-        attributeData[attributeId] = MeshAttributeData{name, accessor->format, accessor->data, arraySize, attribute.morphTargetId};
+        attributeData[attributeId] = MeshAttributeData{name, accessor->format, data, arraySize, attribute.morphTargetId};
 
         /* For backwards compatibility we'll insert also a custom "JOINTS" /
            "WEIGHTS" attributes below, count how many of them we'll need */
@@ -3704,9 +3966,20 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
        the meshBuffers() test by explicitly importing particular buffers in
        different order, causing their mutual allocation order to differ. */
     std::sort(bufferRanges.begin(), bufferRanges.end(), [](const BufferRange& a, const BufferRange& b) {
+        /* If the buffer differs, sort by that */
         if(a.buffer != b.buffer)
             return a.buffer < b.buffer;
-        return a.begin < b.begin;
+        /* If the base pointer differs within the buffer, sort by that */
+        if(a.begin != b.begin)
+            return a.begin < b.begin;
+        /* Otherwise, for accessors backed by buffer views, the order doesn't
+           matter -- they'll get merged together below so both will end up at
+           the same offset in the output vertexData, no matter how the
+           particular std::sort() implementation works. However, accessors not
+           backed by buffer views (i.e., all having `buffer` ~UnsignedInt{} and
+           `begin` nullptr) should still preserve some deterministic order, so
+           sort them by the attribute ID. */
+        return a.attribute < b.attribute;
     });
 
     /* Go through the sorted ranges and merge ones that either just touch (for
@@ -3714,6 +3987,12 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
        (for example when two or more attributes are interleaved together). */
     std::size_t inputRange = 0;
     for(std::size_t i = 1; i < bufferRanges.size(); ++i) {
+        /* Stop once we reach sparse or zero-filled buffer ranges, which are
+           sorted at the end. Those are not meant to be merged in any way as
+           their contents get runtime-generated, not copied from anywhere. */
+        if(bufferRanges[i].buffer == ~UnsignedInt{})
+            break;
+
         /* If the buffer is different (which means the two buffer ranges may be
            in any order relative to each other) or the input range ends before
            this one, nothing gets merged, and next iteration we'll compare to
@@ -3759,7 +4038,17 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
                 /* Align to four bytes, matching the above */
                 vertexDataOffset += 4*((bufferRanges[rangeToCopyFrom].end - bufferRanges[rangeToCopyFrom].begin + 3)/4);
             const std::size_t size = bufferRanges[i].end - bufferRanges[i].begin;
-            Utility::copy(
+
+            /* If the attribute has no backing buffer view, zero-init its
+               memory */
+            if(!_d->accessors[uniqueAttributeOrder[bufferRanges[i].attribute].value->asUnsignedInt()]->data.data())
+                std::memset(vertexData.sliceSize(vertexDataOffset, size), 0, size);
+
+            /* Otherwise, if it isn't sparse, signalled by `begin` being null,
+               copy its contents. Sparse attributes need to get their buffer
+               contents deinterleaved first, which is done together with sparse
+               patching below. */
+            else if(bufferRanges[i].begin) Utility::copy(
                 Containers::arrayView(bufferRanges[i].begin, size),
                 vertexData.sliceSize(vertexDataOffset, size));
 
@@ -3800,7 +4089,11 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
                 vertexData + vertexDataOffset +
                     /* ... the attribute is then at an offset that's a
                        difference between beginning of the range we copied from
-                       and the actual attribute data pointer */
+                       and the actual attribute data pointer. In case of
+                       accessors that are sparse or have no backing buffer
+                       views, both of these are nullptr so they don't change
+                       the offset in any way -- they always start at the range
+                       begin. */
                     (static_cast<const char*>(attribute.data().data()) - bufferRanges[rangeToCopyFrom].begin),
                 vertexCount, attribute.stride()},
             attribute.arraySize(),
@@ -3812,14 +4105,54 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
        rangeToCopyFrom */
     CORRADE_INTERNAL_ASSERT(bufferRanges.isEmpty() || vertexDataOffset + 4*(std::size_t(bufferRanges[rangeToCopyFrom].end - bufferRanges[rangeToCopyFrom].begin + 3)/4) == vertexDataSize);
 
+    /* Fill in sparse accessors. The original uniqueAttributeOrder contains
+       accessor IDs which we can use to decide whether the accessor is sparse
+       or not. */
+    CORRADE_INTERNAL_ASSERT(attributeData.size() == uniqueAttributeOrder.size());
+    for(std::size_t i = 0; i != attributeData.size(); ++i) {
+        const Accessor& accessor = *_d->accessors[uniqueAttributeOrder[i].value->asUnsignedInt()];
+        if(!accessor.sparseValues.data())
+            continue;
+
+        /* Turn the attribute view mutable. See a similar case above for why
+           the extra stride is added. */
+        /** @todo some arrayConstCast, ugh? */
+        Containers::StridedArrayView2D<char> data{{vertexData, vertexData.size() + attributeData[i].stride()},
+            const_cast<char*>(static_cast<const char*>(attributeData[i].data().data())),
+            /* Reuse type size info from the accessor to avoid a lookup in
+               vertexFormatSize() */
+            {attributeData[i].data().size(), accessor.data.size()[1]},
+            {attributeData[i].stride(), 1}};
+
+        /* Copy & deinterleave the original attribute data, if the accessor has
+           a backing buffer view. This wasn't done in the loop above because
+           there it only copies the contents without changing the layout. */
+        if(accessor.data.data())
+            Utility::copy(accessor.data, data);
+
+        /* The copy operation also checks the index values and prints a message
+           if they're out of range. Fail in that case. */
+        bool success;
+        if(accessor.sparseIndices.size()[1] == 4)
+            success = applySparseAccessor("Trade::GltfImporter::mesh():", uniqueAttributeOrder[i].value->asUnsignedInt(), Containers::arrayCast<1, const UnsignedInt>(accessor.sparseIndices), accessor.sparseValues, data);
+        else if(accessor.sparseIndices.size()[1] == 2)
+            success = applySparseAccessor("Trade::GltfImporter::mesh():", uniqueAttributeOrder[i].value->asUnsignedInt(), Containers::arrayCast<1, const UnsignedShort>(accessor.sparseIndices), accessor.sparseValues, data);
+        else if(accessor.sparseIndices.size()[1] == 1)
+            success = applySparseAccessor("Trade::GltfImporter::mesh():", uniqueAttributeOrder[i].value->asUnsignedInt(), Containers::arrayCast<1, const UnsignedByte>(accessor.sparseIndices), accessor.sparseValues, data);
+        else CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+        if(!success)
+            return {};
+    }
+
     /* For backwards compatibility insert custom "JOINTS" and "WEIGHTS"
        attributes which are a Vector4<T> instead of T[4]. The attribute array
        has to remain with the default deleter, so allocate a new one with extra
        space and then put them at the end.
 
        This is done only after the attributes were patched to point to the
-       output `vertexData` above so we can just reuse that patched view instead
-       of having to patch it twice. */
+       output `vertexData` above, and after sparse accessors were applied so we
+       can just reuse that patched view instead of having to patch it twice,
+       or have sparse accessors applied more than once for no reason. */
     #ifdef MAGNUM_BUILD_DEPRECATED
     if(compatibilitySkinningAttributeCount) {
         /* Again cannot be NoInit because that would use a custom deleter which
@@ -3904,6 +4237,18 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
         Containers::Optional<Accessor> accessor = parseAccessor("Trade::GltfImporter::mesh():", gltfIndices->asUnsignedInt());
         if(!accessor)
             return {};
+
+        /* There's no technical reason this couldn't work, it's just that I
+           don't see any practical use case that would warrant the extra
+           testing effort, so just fail for now */
+        if(accessor->bufferView == ~UnsignedInt{}) {
+            Error{} << "Trade::GltfImporter::mesh(): index accessor" << gltfIndices->asUnsignedInt() << "has no buffer view, which is unsupported";
+            return {};
+        }
+        if(accessor->sparseValues.data()) {
+            Error{} << "Trade::GltfImporter::mesh(): index accessor" << gltfIndices->asUnsignedInt() << "is using sparse storage, which is unsupported";
+            return {};
+        }
 
         MeshIndexType type;
         if(accessor->format == VertexFormat::UnsignedByte)

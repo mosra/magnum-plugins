@@ -1,0 +1,344 @@
+{
+  "asset": {
+    "version": "2.0"
+  },
+  "meshes": [
+    {
+      "name": "All sparse",
+      "note": "Will get put one after another, alphabetically, in contiguous ranges independently of whether the attributes were strided or not",
+      "primitives": [
+        {
+          "attributes": {
+            "COLOR_0": 4,
+            "NORMAL": 6,
+            "POSITION": 5,
+            "TEXCOORD_0": 7
+          }
+        }
+      ]
+    },
+    {
+      "name": "All sparse, different order",
+      "note": "Should result in the same output as above",
+      "primitives": [
+        {
+          "attributes": {
+            "TEXCOORD_0": 7,
+            "POSITION": 5,
+            "NORMAL": 6,
+            "COLOR_0": 4
+          }
+        }
+      ]
+    },
+    {
+      "name": "All sparse, duplicate attributes",
+      "note": "Should result in the same output as above again. The to-be-removed duplicates are non-sparse, to verify the patching is still correctly applied to all sparse attributes even with presence of these",
+      "primitives": [
+        {
+          "attributes": {
+            "COLOR_0": 0,
+            "NORMAL": 6,
+            "COLOR_0": 4,
+            "TEXCOORD_0": 7,
+            "POSITION": 0,
+            "POSITION": 2,
+            "POSITION": 5
+          }
+        }
+      ]
+    },
+    {
+      "name": "Sparse derived from non-interleaved regular",
+      "note": "The range of the regular attribute isn't present in the output",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 1,
+            "NORMAL": 8
+          }
+        }
+      ]
+    },
+    {
+      "name": "Sparse being a copy of non-interleaved regular",
+      "note": "The range of the regular attribute is present in the output unchanged, the patched sparse attribute is after",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 1,
+            "COLOR_0": 0,
+            "NORMAL": 8
+          }
+        }
+      ]
+    },
+    {
+      "name": "Sparse derived from interleaved regular",
+      "note": "The range of the regular attribute is present in the output, interleaved with the other, but unused and unchanged",
+      "primitives": [
+        {
+          "attributes": {
+            "COLOR_0": 2,
+            "POSITION": 9
+          }
+        }
+      ]
+    },
+    {
+      "name": "Sparse being a copy of interleaved regular",
+      "note": "The range of the regular attribute is present in the output, interleaved with the other, unchanged",
+      "primitives": [
+        {
+          "attributes": {
+            "COLOR_0": 2,
+            "NORMAL": 3,
+            "POSITION": 9
+          }
+        }
+      ]
+    },
+    {
+      "name": "Sparse being a copy of regular, twice",
+      "note": "The sparse is there twice, patched twice, not deduplicated",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 1,
+            "COLOR_0": 0,
+            "NORMAL": 8,
+            "COLOR_1": 8
+          }
+        }
+      ]
+    }
+  ],
+  "accessors": [
+    {
+      "name": "0, regular attribute",
+      "bufferView": 0,
+      "componentType": 5126,
+      "count": 4,
+      "type": "VEC3"
+    },
+    {
+      "name": "1, regular attribute",
+      "bufferView": 0,
+      "byteOffset": 48,
+      "componentType": 5126,
+      "count": 4,
+      "type": "VEC3"
+    },
+    {
+      "name": "2, regular interleaved attribute",
+      "bufferView": 1,
+      "componentType": 5123,
+      "normalized": true,
+      "count": 4,
+      "type": "VEC4"
+    },
+    {
+      "name": "3, regular interleaved attribute",
+      "bufferView": 1,
+      "byteOffset": 8,
+      "componentType": 5120,
+      "normalized": true,
+      "count": 4,
+      "type": "VEC3"
+    },
+    {
+      "name": "4, has a strided buffer view; 4-byte indices",
+      "bufferView": 1,
+      "componentType": 5123,
+      "normalized": true,
+      "count": 4,
+      "type": "VEC4",
+      "sparse": {
+        "count": 2,
+        "indices": {
+          "bufferView": 2,
+          "componentType": 5125
+        },
+        "values": {
+          "bufferView": 3
+        }
+      }
+    },
+    {
+      "name": "5. Has a contiguous buffer view, 1-byte indices, offsets for all three. Sparse count equal to count but with duplicate indices, which is invalid, but it verifies that the originating buffer view gets still copied even in this case.",
+      "bufferView": 4,
+      "byteOffset": 32,
+      "componentType": 5126,
+      "count": 4,
+      "type": "VEC3",
+      "sparse": {
+        "count": 4,
+        "indices": {
+          "bufferView": 2,
+          "byteOffset": 8,
+          "componentType": 5121
+        },
+        "values": {
+          "bufferView": 3,
+          "byteOffset": 16
+        }
+      }
+    },
+    {
+      "name": "6, has no buffer view, 2-byte indices",
+      "componentType": 5122,
+      "normalized": true,
+      "count": 4,
+      "type": "VEC3",
+      "sparse": {
+        "count": 3,
+        "indices": {
+          "bufferView": 5,
+          "componentType": 5123
+        },
+        "values": {
+          "bufferView": 6
+        }
+      }
+    },
+    {
+      "name": "7, has a contiguous buffer view, verifies that texture coordinates get flipped for sparse values as well",
+      "bufferView": 4,
+      "componentType": 5126,
+      "count": 4,
+      "type": "VEC2",
+      "sparse": {
+        "count": 2,
+        "indices": {
+          "bufferView": 7,
+          "componentType": 5123
+        },
+        "values": {
+          "bufferView": 8
+        }
+      }
+    },
+    {
+      "name": "8, patches data used by another contiguous attribute",
+      "bufferView": 0,
+      "componentType": 5126,
+      "count": 4,
+      "type": "VEC3",
+      "sparse": {
+        "count": 2,
+        "indices": {
+          "bufferView": 9,
+          "componentType": 5121
+        },
+        "values": {
+          "bufferView": 10
+        }
+      }
+    },
+    {
+      "name": "9, patches data used by another interleaved attribute",
+      "bufferView": 1,
+      "byteOffset": 8,
+      "componentType": 5120,
+      "normalized": true,
+      "count": 4,
+      "type": "VEC3",
+      "sparse": {
+        "count": 2,
+        "indices": {
+          "bufferView": 11,
+          "componentType": 5123
+        },
+        "values": {
+          "bufferView": 12
+        }
+      }
+    }
+  ],
+  "bufferViews": [
+    {
+      "name": "0",
+      "buffer": 0,
+      "byteLength": 96
+    },
+    {
+      "name": "1",
+      "buffer": 0,
+      "byteOffset": 96,
+      "byteLength": 64,
+      "byteStride": 16
+    },
+    {
+      "name": "2",
+      "buffer": 0,
+      "byteOffset": 160,
+      "byteLength": 12
+    },
+    {
+      "name": "3",
+      "buffer": 0,
+      "byteOffset": 172,
+      "byteLength": 64
+    },
+    {
+      "name": "4",
+      "buffer": 0,
+      "byteOffset": 236,
+      "byteLength": 80
+    },
+    {
+      "name": "5",
+      "buffer": 0,
+      "byteOffset": 316,
+      "byteLength": 6
+    },
+    {
+      "name": "6",
+      "buffer": 0,
+      "byteOffset": 322,
+      "byteLength": 18
+    },
+    {
+      "name": "7",
+      "buffer": 0,
+      "byteOffset": 340,
+      "byteLength": 4
+    },
+    {
+      "name": "8",
+      "buffer": 0,
+      "byteOffset": 344,
+      "byteLength": 16
+    },
+    {
+      "name": "9, two-byte padding after",
+      "buffer": 0,
+      "byteOffset": 360,
+      "byteLength": 2
+    },
+    {
+      "name": "10",
+      "buffer": 0,
+      "byteOffset": 364,
+      "byteLength": 24
+    },
+    {
+      "name": "11",
+      "buffer": 0,
+      "byteOffset": 388,
+      "byteLength": 4
+    },
+    {
+      "name": "12",
+      "buffer": 0,
+      "byteOffset": 392,
+      "byteLength": 6
+    }
+  ],
+  "buffers": [
+    {
+      "byteLength": 398,
+      "uri": "mesh-sparse.bin"
+    }
+  ]
+}

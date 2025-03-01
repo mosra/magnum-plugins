@@ -156,6 +156,44 @@
           }
         }
       ]
+    },
+    {
+      "name": "Accessors with no buffer view",
+      "primitives": [
+        {
+          "attributes": {
+            "COLOR_0": 11,
+            "COLOR_1": 0,
+            "POSITION": 2,
+            "_OBJECT_ID": 12
+          }
+        }
+      ]
+    },
+    {
+      "name": "Accessors with no buffer view, different order",
+      "note": "accessors with no buffer views are *not* sorted alphabetically, but they will be by the importer, resulting in 11 before 12 like above",
+      "primitives": [
+        {
+          "attributes": {
+            "COLOR_0": 2,
+            "_OBJECT_ID": 12,
+            "COLOR_1": 11,
+            "POSITION": 0
+          }
+        }
+      ]
+    },
+    {
+      "name": "Single accessor with no buffer view",
+      "note": "The count from the accessor shouldn't get lost in the process",
+      "primitives": [
+        {
+          "attributes": {
+            "COLOR_0": 11
+          }
+        }
+      ]
     }
   ],
   "accessors": [
@@ -245,6 +283,19 @@
       "normalized": true,
       "count": 3,
       "type": "VEC3"
+    },
+    {
+      "name": "11",
+      "componentType": 5123,
+      "normalized": true,
+      "count": 3,
+      "type": "VEC3"
+    },
+    {
+      "name": "12",
+      "componentType": 5121,
+      "count": 3,
+      "type": "SCALAR"
     }
   ],
   "bufferViews": [

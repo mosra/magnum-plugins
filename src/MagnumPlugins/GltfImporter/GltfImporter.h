@@ -228,6 +228,11 @@ importer plugins the importer delegates to.
     however, it can happen that multiple conflicting tracks affecting the same
     node are merged in the same clip, causing the animation to misbehave.
 
+While the glTF specification allows accessors for animation input and output
+and skin inverse bind matrices to be sparse or defined without a backing buffer
+view, it's not implemented with an assumption that this functionality is rarely
+used, and importing such an animation or skin will fail.
+
 @subsection Trade-GltfImporter-behavior-cameras Camera import
 
 -   Cameras in glTF are specified with vertical FoV and vertical:horizontal
@@ -317,7 +322,7 @@ importer plugins the importer delegates to.
     returned @ref Trade::MeshData::vertexCount() is set to @cpp 0 @ce
 -   Morph targets, if present, have their attributes imported with
     @ref Trade::MeshData::attributeMorphTargetId() set to index of the morph
-    target. Non-sparse buffers aren't supported for those at the moment.
+    target.
 
 By default, the mesh import silently allows certain features that aren't
 strictly valid according to the glTF specification, such as 32-bit integer
@@ -337,6 +342,21 @@ vertex data isn't repacked in any way and interleaved attributes keep their
 layout even if it contains gaps with an assumption that such layout was done
 for a reason. You can use @ref MeshTools::interleave() and other @ref MeshTools
 algorithms to perform layout optimizations post import, if needed.
+
+Accessors with no backing buffer views, which are meant to be zero-filled, and
+sparse accessors, are deinterleaved and put at the end of the vertex data,
+again aligning each to four bytes. Unlike with regular accessors, if there is
+more than one attribute using the same zero-filled or sparse accessor, no
+deduplication is performed. If a sparse accessor is based off data interleaved
+with other attributes in the same mesh, the original data may be left in the
+vertex data array even if not referenced. Again you can use
+@ref MeshTools::interleave(), @ref MeshTools::filterAttributes() and other
+@ref MeshTools to repack the data post import if needed.
+
+While the glTF specification allows accessors for indices -- as opposed to
+attributes --- to be sparse or defined without a backing buffer view, it's not
+implemented with an assumption that this functionality is rarely used, and
+importing such a mesh will fail.
 
 @subsection Trade-GltfImporter-behavior-materials Material import
 

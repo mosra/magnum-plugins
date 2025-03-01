@@ -210,7 +210,7 @@
       ],
       "samplers": [
         {
-          "input": 8,
+          "input": 12,
           "interpolation": "LINEAR",
           "output": 1
         }
@@ -231,7 +231,83 @@
         {
           "input": 0,
           "interpolation": "LINEAR",
+          "output": 12
+        }
+      ]
+    },
+    {
+      "name": "sampler input accessor with no buffer view",
+      "channels": [
+        {
+          "sampler": 0,
+          "target": {
+            "node": 0,
+            "path": "translation"
+          }
+        }
+      ],
+      "samplers": [
+        {
+          "input": 8,
+          "interpolation": "LINEAR",
+          "output": 1
+        }
+      ]
+    },
+    {
+      "name": "sampler output accessor with no buffer view",
+      "channels": [
+        {
+          "sampler": 0,
+          "target": {
+            "node": 0,
+            "path": "translation"
+          }
+        }
+      ],
+      "samplers": [
+        {
+          "input": 0,
+          "interpolation": "LINEAR",
           "output": 9
+        }
+      ]
+    },
+    {
+      "name": "sparse sampler input accessor",
+      "channels": [
+        {
+          "sampler": 0,
+          "target": {
+            "node": 0,
+            "path": "translation"
+          }
+        }
+      ],
+      "samplers": [
+        {
+          "input": 10,
+          "interpolation": "LINEAR",
+          "output": 1
+        }
+      ]
+    },
+    {
+      "name": "sparse sampler output accessor",
+      "channels": [
+        {
+          "sampler": 0,
+          "target": {
+            "node": 0,
+            "path": "translation"
+          }
+        }
+      ],
+      "samplers": [
+        {
+          "input": 0,
+          "interpolation": "LINEAR",
+          "output": 11
         }
       ]
     },
@@ -499,52 +575,106 @@
   "note": "full accessor checks are tested inside mesh-invalid.gltf, this only verifies the errors are propagated correctly",
   "accessors": [
     {
+      "name": "0",
       "bufferView": 0,
       "componentType": 5126,
       "count": 0,
       "type": "VEC4"
     },
     {
+      "name": "1",
       "bufferView": 0,
       "componentType": 5126,
       "count": 0,
       "type": "SCALAR"
     },
     {
+      "name": "2",
       "bufferView": 0,
       "componentType": 5126,
       "count": 0,
       "type": "VEC3"
     },
     {
+      "name": "3",
       "bufferView": 0,
       "componentType": 5126,
       "count": 10,
       "type": "SCALAR"
     },
     {
+      "name": "4",
       "bufferView": 0,
       "componentType": 5126,
       "count": 10,
       "type": "VEC3"
     },
     {
+      "name": "5",
       "bufferView": 1,
       "componentType": 5126,
       "count": 2,
       "type": "SCALAR"
     },
     {
+      "name": "6",
       "bufferView": 1,
       "componentType": 5126,
       "count": 3,
       "type": "VEC3"
     },
     {
+      "name": "7",
       "bufferView": 1,
       "componentType": 5126,
       "count": 2,
       "type": "VEC3"
+    },
+    {
+      "name": "8",
+      "componentType": 5126,
+      "count": 2,
+      "type": "SCALAR"
+    },
+    {
+      "name": "9",
+      "componentType": 5126,
+      "count": 2,
+      "type": "VEC3"
+    },
+    {
+      "name": "10",
+      "bufferView": 1,
+      "componentType": 5126,
+      "count": 2,
+      "type": "SCALAR",
+      "sparse": {
+        "count": 1,
+        "indices": {
+          "bufferView": 1,
+          "componentType": 5125
+        },
+        "values": {
+          "bufferView": 1
+        }
+      }
+    },
+    {
+      "name": "11",
+      "bufferView": 1,
+      "componentType": 5126,
+      "count": 2,
+      "type": "VEC3",
+      "sparse": {
+        "count": 1,
+        "indices": {
+          "bufferView": 1,
+          "componentType": 5125
+        },
+        "values": {
+          "bufferView": 1
+        }
+      }
     }
   ],
   "bufferViews": [

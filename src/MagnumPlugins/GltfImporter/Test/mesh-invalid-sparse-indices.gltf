@@ -1,0 +1,118 @@
+{
+  "asset": {
+    "version": "2.0"
+  },
+  "meshes": [
+    {
+      "name": "8-bit indices",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 0
+          }
+        }
+      ]
+    },
+    {
+      "name": "16-bit indices",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 1
+          }
+        }
+      ]
+    },
+    {
+      "name": "32-bit indices",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 2
+          }
+        }
+      ]
+    }
+  ],
+  "accessors": [
+    {
+      "name": "0",
+      "componentType": 5126,
+      "count": 130,
+      "type": "VEC3",
+      "sparse": {
+        "count": 8,
+        "indices": {
+          "bufferView": 0,
+          "componentType": 5121
+        },
+        "values": {
+          "bufferView": 3
+        }
+      }
+    },
+    {
+      "name": "1, count larger than 8 bits",
+      "componentType": 5126,
+      "count": 300,
+      "type": "VEC3",
+      "sparse": {
+        "count": 6,
+        "indices": {
+          "bufferView": 1,
+          "componentType": 5123
+        },
+        "values": {
+          "bufferView": 3
+        }
+      }
+    },
+    {
+      "name": "2, count larger than 16 bits",
+      "componentType": 5126,
+      "count": 67000,
+      "type": "VEC3",
+      "sparse": {
+        "count": 5,
+        "indices": {
+          "bufferView": 2,
+          "componentType": 5125
+        },
+        "values": {
+          "bufferView": 3
+        }
+      }
+    }
+  ],
+  "bufferViews": [
+    {
+      "name": "0",
+      "buffer": 0,
+      "byteLength": 8
+    },
+    {
+      "name": "1",
+      "buffer": 0,
+      "byteOffset": 8,
+      "byteLength": 12
+    },
+    {
+      "name": "2",
+      "buffer": 0,
+      "byteOffset": 20,
+      "byteLength": 20
+    },
+    {
+      "name": "3",
+      "buffer": 0,
+      "byteOffset": 40,
+      "byteLength": 96
+    }
+  ],
+  "buffers": [
+    {
+      "byteLength": 136,
+      "uri": "mesh-invalid-sparse-indices.bin"
+    }
+  ]
+}
