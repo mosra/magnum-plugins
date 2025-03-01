@@ -3854,8 +3854,13 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
 
     /* Flip Y axis of texture coordinates, unless it's done in the material
        instead */
-    for(std::size_t i = 0; i != attributeData.size(); ++i) if(attributeData[i].name() == MeshAttribute::TextureCoordinates && !_d->textureCoordinateYFlipInMaterial) {
-        /* See a similar case above for why the extra stride is added */
+    for(std::size_t i = 0; i != attributeData.size(); ++i) {
+        if(attributeData[i].name() != MeshAttribute::TextureCoordinates || _d->textureCoordinateYFlipInMaterial)
+            continue;
+
+        /* Turn the attribute view mutable. See a similar case above for why
+           the extra stride is added. */
+        /** @todo some arrayConstCast, ugh? */
         Containers::StridedArrayView1D<char> data{{vertexData, vertexData.size() + attributeData[i].stride()},
             const_cast<char*>(static_cast<const char*>(attributeData[i].data().data())),
             attributeData[i].data().size(),
