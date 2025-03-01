@@ -504,8 +504,8 @@ constexpr struct {
     {"invalid base64", "invalid Base64 padding bytes b?"}
 };
 
-constexpr struct {
-    const char* name;
+const struct {
+    TestSuite::TestCaseDescriptionSourceLocation name;
     const char* message;
 } AnimationInvalidData[]{
     {"unexpected time type",
@@ -721,8 +721,8 @@ const struct {
         "Trade::GltfImporter::light(): invalid spot outerConeAngle property\n"}
 };
 
-constexpr struct {
-    const char* name;
+const struct {
+    TestSuite::TestCaseDescriptionSourceLocation name;
     const char* message;
 } SkinInvalidData[]{
     {"no joints",
@@ -2323,9 +2323,13 @@ void GltfImporterTest::animationInvalid() {
        potential placeholder for the filename, otherwise just the sentence
        without any placeholder */
     if(Containers::StringView{data.message}.hasSuffix('\n'))
-        CORRADE_COMPARE(out, Utility::format(data.message, filename));
+        CORRADE_COMPARE_AS(out,
+            Utility::format(data.message, filename),
+            TestSuite::Compare::String);
     else
-        CORRADE_COMPARE(out, Utility::format("Trade::GltfImporter::animation(): {}\n", data.message));
+        CORRADE_COMPARE_AS(out,
+            Utility::format("Trade::GltfImporter::animation(): {}\n", data.message),
+            TestSuite::Compare::String);
 }
 
 void GltfImporterTest::animationInvalidBufferNotFound() {
@@ -4030,9 +4034,13 @@ void GltfImporterTest::skinInvalid() {
        potential placeholder for the filename, otherwise just the sentence
        without any placeholder */
     if(Containers::StringView{data.message}.hasSuffix('\n'))
-        CORRADE_COMPARE(out, Utility::format(data.message, filename));
+        CORRADE_COMPARE_AS(out,
+            Utility::format(data.message, filename),
+            TestSuite::Compare::String);
     else
-        CORRADE_COMPARE(out, Utility::format("Trade::GltfImporter::skin3D(): {}\n", data.message));
+        CORRADE_COMPARE_AS(out,
+            Utility::format("Trade::GltfImporter::skin3D(): {}\n", data.message),
+            TestSuite::Compare::String);
 }
 
 void GltfImporterTest::skinInvalidBufferNotFound() {
