@@ -153,8 +153,8 @@ struct GltfImporterTest: TestSuite::Tester {
     void meshUnsupportedVertexFormats();
     void meshPrimitivesTypes();
     void meshSizeNotMultipleOfStride();
-    void meshInvalidWholeFile();
     void meshBuffers();
+    void meshInvalidWholeFile();
     void meshInvalid();
     void meshInvalidBufferNotFound();
 
