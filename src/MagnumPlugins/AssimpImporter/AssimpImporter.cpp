@@ -525,23 +525,24 @@ void AssimpImporter::doOpenData(Containers::Array<char>&& data, DataFlags) {
        that's not the documented behavior. */
     aiNode* const root = _f->scene->mRootNode;
     if(root) {
-        /* If there is more than just a root node, extract children of the root
-           node, as we treat the root node as the scene here. In some cases
-           (for example for a COLLADA file with Z_UP defined) the root node can
-           contain a transformation, save it. This root transformation is then
-           applied to all direct children of mRootNode inside doObject3D().
-           Apart from that it shouldn't contain anything else. */
-        if(root->mNumChildren) {
-            /* In case of openState() (which is when _importer isn't populated)
-               it might happen that AI_CONFIG_IMPORT_NO_SKELETON_MESHES was not
-               enabled, in which case, and at least for COLLADA, if the file
-               has no meshes, it adds some bogus one, thinking it's a
-               skeleton-only file and trying to be helpful. Ugh.
-                https://github.com/assimp/assimp/blob/92078bc47c462d5b643aab3742a8864802263700/code/ColladaLoader.cpp#L225
-               Don't die on the assert in this case, but otherwise check that
-               we didn't miss anything in the root node. */
-            CORRADE_INTERNAL_ASSERT(!_importer || !root->mNumMeshes);
+        /* If there is more than just a root node and the root node has no
+           meshes, extract children of the root node, as we treat the root node
+           as the scene here. In some cases (for example for a COLLADA file
+           with Z_UP defined) the root node can contain a transformation, save
+           it. This root transformation is then applied to all direct children
+           of mRootNode inside doObject3D().
 
+           In case of openState() (which is when _importer isn't populated) it
+           might happen that AI_CONFIG_IMPORT_NO_SKELETON_MESHES was not
+           enabled, in which case, and at least for COLLADA, if the file has no
+           meshes, it adds some bogus one, thinking it's a skeleton-only file
+           and trying to be helpful. Ugh.
+            https://github.com/assimp/assimp/blob/92078bc47c462d5b643aab3742a8864802263700/code/ColladaLoader.cpp#L225
+           This used to be worked around in the importer, discarding the root
+           node always and asserting it has no meshes, but such assumption is
+           now broken with the USD importer that's new in 5.4.3. So now the
+           extra mesh is added always. */
+        if(root->mNumChildren && !root->mNumMeshes) {
             const std::size_t numDescendants = countNodeDescendants(root);
             arrayReserve(_f->nodes, numDescendants);
             arrayAppend(_f->nodes, Containers::arrayView(root->mChildren, root->mNumChildren));

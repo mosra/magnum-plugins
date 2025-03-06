@@ -4048,28 +4048,55 @@ void AssimpImporterTest::openState() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
     importer->openState(sc);
     CORRADE_VERIFY(importer->isOpened());
-    CORRADE_COMPARE(importer->objectCount(), 2);
-    CORRADE_COMPARE(importer->objectName(1), "Child");
-    CORRADE_COMPARE(importer->objectForName("Child"), 1);
+    {
+        /* At least for COLLADA, if the file has no meshes, it adds some bogus
+           one, thinking it's a skeleton-only file and trying to be helpful.
+           Ugh.
+            https://github.com/assimp/assimp/blob/92078bc47c462d5b643aab3742a8864802263700/code/ColladaLoader.cpp#L225
+           This used to be worked around in the importer, discarding the root
+           node always and asserting it has no meshes, but such assumption is
+           now broken with the USD importer that's new in 5.4.3. So now the
+           mesh is */
+        CORRADE_EXPECT_FAIL("Assimp adds an extra object to mesh-less COLLADA files if AI_CONFIG_IMPORT_NO_SKELETON_MESHES is not set.");
+        CORRADE_COMPARE(importer->objectCount(), 2);
+    }
+    CORRADE_COMPARE(importer->objectCount(), 3);
+    /* This object is extra. What a beautiful name, making it very clear what's
+       going on, very easy to filter away and all */
+    CORRADE_COMPARE(importer->objectName(0), "Scene");
+    CORRADE_COMPARE(importer->objectName(1), "Parent");
+    CORRADE_COMPARE(importer->objectName(2), "Child");
+    CORRADE_COMPARE(importer->objectForName("Child"), 2);
     CORRADE_COMPARE(importer->objectForName("Nonexistent"), -1);
 
     Containers::Optional<SceneData> scene = importer->scene(0);
     CORRADE_VERIFY(scene);
     CORRADE_VERIFY(scene->importerState());
     CORRADE_VERIFY(scene->is3D());
-    CORRADE_COMPARE(scene->mappingBound(), 2);
+    CORRADE_COMPARE(scene->mappingBound(), 3);
     CORRADE_COMPARE(scene->mappingType(), SceneMappingType::UnsignedInt);
-    CORRADE_COMPARE(scene->fieldCount(), 3);
+
+    {
+        CORRADE_EXPECT_FAIL("Assimp adds an extra object with a mesh and skin to mesh-less COLLADA files if AI_CONFIG_IMPORT_NO_SKELETON_MESHES is not set.");
+        CORRADE_COMPARE(scene->fieldCount(), 3);
+    }
+    CORRADE_COMPARE(scene->fieldCount(), 6);
+    /* These fields are extra, FFS */
+    CORRADE_VERIFY(scene->hasField(SceneField::Mesh));
+    CORRADE_VERIFY(scene->hasField(SceneField::MeshMaterial));
+    CORRADE_VERIFY(scene->hasField(SceneField::Skin));
 
     /* Parents */
     CORRADE_VERIFY(scene->hasField(SceneField::Parent));
     CORRADE_COMPARE(scene->fieldFlags(SceneField::Parent), SceneFieldFlag::ImplicitMapping);
     CORRADE_COMPARE_AS(scene->mapping<UnsignedInt>(SceneField::Parent), Containers::arrayView<UnsignedInt>({
-        0, 1
+        /* First is extra */
+        0, 1, 2
     }), TestSuite::Compare::Container);
     CORRADE_COMPARE(scene->fieldType(SceneField::Parent), SceneFieldType::Int);
     CORRADE_COMPARE_AS(scene->field<Int>(SceneField::Parent), Containers::arrayView<Int>({
-        -1, 0
+        /* First is extra */
+        -1, -1, 1
     }), TestSuite::Compare::Container);
 
     /* Importer state shares the same object mapping as parents and it's all
@@ -4093,6 +4120,7 @@ void AssimpImporterTest::openState() {
         TestSuite::Compare::Container);
     CORRADE_COMPARE(scene->fieldType(SceneField::Parent), SceneFieldType::Int);
     CORRADE_COMPARE_AS(scene->field<Matrix4>(SceneField::Transformation), Containers::arrayView({
+        Matrix4{}, /* First is extra */
         Matrix4::scaling({1.0f, 2.0f, 3.0f}),
         Matrix4{{0.813798f, 0.469846f, -0.34202f, 0.0f},
                 {-0.44097f, 0.882564f, 0.163176f, 0.0f},
