@@ -93,7 +93,7 @@ Imports various formats using [Assimp](https://assimp.org), in particular:
 -   TrueSpace (`*.cob`, `*.scn`)
 -   Biovision BVH (`*.bvh`)
 -   CharacterStudio Motion (`*.csm`)
--   Ogre XML (`*.xml`)
+-   OGRE (`*.mesh`, `*.mesh.xml`)
 -   Irrlicht Mesh and Scene (`*.irrmesh`, `*.irr`)
 -   Quake I (`*.mdl`)
 -   Quake II (`*.md2`)
