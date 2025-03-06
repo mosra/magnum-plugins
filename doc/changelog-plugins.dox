@@ -150,7 +150,9 @@ namespace Magnum {
     options @cb{.ini} CalcTangentSpace @ce, @cb{.ini} SplitByBoneCount @ce and
     @cb{.ini} Debone @ce
 -   @relativeref{Trade,AssimpImporter} now provides the `3mfImporter` alias
-    for convenient loading of `*.3mf` files
+    for convenient loading of `*.3mf` files, and `UsdImporter` for `*.usd`,
+    `*.usda`, `*.usdc` and `*.usdz` files, which are supported since version
+    5.4.3
 -   Adapted @relativeref{Trade,AssimpImporter} to changes in version 5.2.5 and
     cleaned up STL usage (see [mosra/magnum-plugins#130](https://github.com/mosra/magnum-plugins/pull/130))
 -   @relativeref{Trade,BasisImporter} has a new @cb{.ini} assumeYUp @ce option

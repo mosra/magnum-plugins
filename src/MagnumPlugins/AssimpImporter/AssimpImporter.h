@@ -69,7 +69,7 @@ namespace Magnum { namespace Trade {
 @m_keywords{GltfImporter IfcImporter IrrlichtImporter LightWaveImporter}
 @m_keywords{ModoImporter MilkshapeImporter ObjImporter OgreImporter}
 @m_keywords{OpenGexImporter StanfordImporter StlImporter TrueSpaceImporter}
-@m_keywords{UnrealImporter ValveImporter XglImporter}
+@m_keywords{UnrealImporter UsdImporter ValveImporter XglImporter}
 
 Imports various formats using [Assimp](https://assimp.org), in particular:
 
@@ -113,6 +113,8 @@ Imports various formats using [Assimp](https://assimp.org), in particular:
 -   Terragen Terrain (`*.ter`)
 -   3D GameStudio (3DGS), 3D GameStudio (3DGS) Terrain (`*.mdl`, `*.hmp`)
 -   Izware Nendo (`*.ndo`)
+-   [Universal Scene Description (USD)](https://en.wikipedia.org/wiki/Universal_Scene_Description)
+    (`*.usd`, `*.usda`, `*.usdc`, `*.usdz`), since Assimp 5.4.3
 
 Supports importing of scene, object, camera, mesh, texture, image, animation
 and skin data.
@@ -122,8 +124,8 @@ This plugin provides `3dsImporter`, `3mfImporter`, `Ac3dImporter`,
 `DirectXImporter`, `DxfImporter`, `FbxImporter`, `GltfImporter`, `IfcImporter`,
 `IrrlichtImporter`, `LightWaveImporter`, `ModoImporter`, `MilkshapeImporter`,
 `ObjImporter`, `OgreImporter`, `OpenGexImporter`, `StanfordImporter`,
-`StlImporter`, `TrueSpaceImporter`, `UnrealImporter`, `ValveImporter` and
-`XglImporter` plugins.
+`StlImporter`, `TrueSpaceImporter`, `UnrealImporter`, `UsdImporter`,
+`ValveImporter` and `XglImporter` plugins.
 
 @m_class{m-block m-success}
 
