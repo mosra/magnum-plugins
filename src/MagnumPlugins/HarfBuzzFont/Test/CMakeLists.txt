@@ -47,7 +47,9 @@ file(GENERATE OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/configure.h
 
 corrade_add_test(HarfBuzzFontTest HarfBuzzFontTest.cpp
     LIBRARIES Magnum::Text
-    FILES ../../FreeTypeFont/Test/Oxygen.ttf)
+    FILES
+        ../../FreeTypeFont/Test/Oxygen.ttf
+        ../../FreeTypeFont/Test/SourceSans3-Regular.subset.otf)
 target_include_directories(HarfBuzzFontTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>)
 if(MAGNUM_HARFBUZZFONT_BUILD_STATIC)
     target_link_libraries(HarfBuzzFontTest PRIVATE HarfBuzzFont)

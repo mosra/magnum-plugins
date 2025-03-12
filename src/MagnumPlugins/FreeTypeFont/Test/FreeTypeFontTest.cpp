@@ -31,6 +31,7 @@
 #include <Corrade/PluginManager/Manager.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
+#include <Corrade/TestSuite/Compare/Numeric.h>
 #include <Corrade/Utility/Path.h>
 #include <Magnum/ImageView.h>
 #include <Magnum/Math/Range.h>
@@ -55,6 +56,7 @@ struct FreeTypeFontTest: TestSuite::Tester {
 
     void shape();
     void shapeEmpty();
+    void shapeGlyphOffset();
     void shapeMultiple();
 
     void fillGlyphCache();
@@ -121,7 +123,8 @@ FreeTypeFontTest::FreeTypeFontTest() {
     addInstancedTests({&FreeTypeFontTest::shape},
         Containers::arraySize(ShapeData));
 
-    addTests({&FreeTypeFontTest::shapeEmpty});
+    addTests({&FreeTypeFontTest::shapeEmpty,
+              &FreeTypeFontTest::shapeGlyphOffset});
 
     addInstancedTests({&FreeTypeFontTest::shapeMultiple},
         Containers::arraySize(ShapeMultipleData));
@@ -190,17 +193,19 @@ void FreeTypeFontTest::properties() {
 }
 
 void FreeTypeFontTest::glyphNames() {
-    /* TTF doesn't name glyphs, have to use a specially crafted file. Details
-       on how it was produced in CMakeLists.txt */
+    /* See FreeTypeFont's test CMakeLists for details how this file was made.
+       In particular, it has to include glyphs for
+       HarfBuzzFontTest::shapeGlyphOffset() as well. */
     Containers::Pointer<AbstractFont> font = _manager.instantiate("FreeTypeFont");
-    CORRADE_VERIFY(font->openFile(Utility::Path::join(FREETYPEFONT_TEST_DIR, "SourceSansPro-Regular-subset.otf"), 16.0f));
+    CORRADE_VERIFY(font->openFile(Utility::Path::join(FREETYPEFONT_TEST_DIR, "SourceSans3-Regular.subset.otf"), 16.0f));
     CORRADE_COMPARE(font->glyphName(0), ".notdef");
     CORRADE_COMPARE(font->glyphForName("not found"), 0);
-    CORRADE_COMPARE(font->glyphName(1), "one.t");
-    CORRADE_COMPARE(font->glyphName(2), "seveneighths");
-    CORRADE_COMPARE(font->glyphForName("seveneighths"), 2);
+    CORRADE_COMPARE(font->glyphName(7), "one.t"); /* originally 1358 */
+    CORRADE_COMPARE(font->glyphForName("one.t"), 7);
+    CORRADE_COMPARE(font->glyphName(8), "seveneighths"); /* originally 2158 */
+    CORRADE_COMPARE(font->glyphForName("seveneighths"), 8);
     /* Non-null-terminated views should be converted to null-terminated */
-    CORRADE_COMPARE(font->glyphForName("one.t!"_s.exceptSuffix(1)), 1);
+    CORRADE_COMPARE(font->glyphForName("one.t!"_s.exceptSuffix(1)), 7);
 }
 
 void FreeTypeFontTest::shape() {
@@ -228,7 +233,8 @@ void FreeTypeFontTest::shape() {
         89u,            /* 'v' */
         72u             /* 'e' */
     }), TestSuite::Compare::Container);
-    /* There are no glyph-specific offsets here */
+    /* There are no glyph-specific offsets anywhere. See the glyphShapeOffset()
+       below for a dedicated verification of this lack of functionality. */
     CORRADE_COMPARE_AS(Containers::arrayView(offsets), Containers::arrayView<Vector2>({
         {}, {}, {}, {}, {}
     }), TestSuite::Compare::Container);
@@ -256,6 +262,87 @@ void FreeTypeFontTest::shapeEmpty() {
 
     /* Shouldn't crash or do anything rogue */
     CORRADE_COMPARE(shaper->shape("Wave", 2, 2), 0);
+}
+
+void FreeTypeFontTest::shapeGlyphOffset() {
+    /* Basically a copy of HarfBuzzFontTest::shapeGlyphOffset() to have a repro
+       case for the lack of features in this plugin */
+
+    Containers::Pointer<AbstractFont> font = _manager.instantiate("FreeTypeFont");
+    /* See the HarfBuzzFont test for how this file is generated */
+    CORRADE_VERIFY(font->openFile(Utility::Path::join(FREETYPEFONT_TEST_DIR, "SourceSans3-Regular.subset.otf"), 16.0f));
+
+    Containers::Pointer<AbstractShaper> shaper = font->createShaper();
+
+    /* Compared to the HarfBuzz test, the \xcd\x8f is missing here because it
+       resolves as glyph 0. The combining diacritics however resolve to the
+       same glyphs. */
+    CORRADE_COMPARE(shaper->shape("Ve\xcc\x8c\xcc\x8c\xcc\x8ctev"), 8);
+
+    UnsignedInt ids[8];
+    Vector2 offsets[8];
+    Vector2 advances[8];
+    UnsignedInt clusters[8];
+    shaper->glyphIdsInto(ids);
+    shaper->glyphOffsetsAdvancesInto(offsets, advances);
+    shaper->glyphClustersInto(clusters);
+    CORRADE_COMPARE_AS(Containers::arrayView(ids), Containers::arrayView({
+        font->glyphForName("V"),        /* 2, glyph 23 originally */
+        font->glyphForName("e"),        /* 3, glyph 32 originally */
+        font->glyphForName("uni030C"),  /* 9, glyph 2328 originally, 'ˇ' */
+        font->glyphForName("uni030C"),  /* 9, glyph 2328 originally, 'ˇ' */
+        font->glyphForName("uni030C"),  /* 9, glyph 2328 originally, 'ˇ' */
+        font->glyphForName("t"),        /* 4, glyph 47 originally */
+        font->glyphForName("e"),        /* 3, glyph 32 originally */
+        font->glyphForName("v")         /* 5, glyph 49 originally */
+    }), TestSuite::Compare::Container);
+    /* Just a list of known IDs to copy to the StbTrueTypeFont test, as
+       stb_truetype doesn't support glyph name queries */
+    CORRADE_COMPARE_AS(Containers::arrayView(ids), Containers::arrayView({
+        2u, 3u, 9u, 9u, 9u, 4u, 3u, 5u
+    }), TestSuite::Compare::Container);
+    {
+        CORRADE_EXPECT_FAIL("FreeType doesn't have advanced shaping capabilities that would position the combining diacritics on top of the previous character and one after another.");
+        CORRADE_COMPARE_AS(offsets[2], Vector2{},
+            TestSuite::Compare::NotEqual);
+    }
+    CORRADE_COMPARE_AS(Containers::arrayView(advances), Containers::arrayView<Vector2>({
+        {8.0f, 0.0f},   /* 'V' */
+        {8.0f, 0.0f},   /* 'e' */
+        /* The combining marks have no advance in addition to the base
+           character */
+        {0.0f, 0.0f},   /* 'ˇ' */
+        {0.0f, 0.0f},   /* 'ˇ' */
+        {0.0f, 0.0f},   /* 'ˇ' */
+        {5.0f, 0.0f},   /* 't' */
+        {8.0f, 0.0f},   /* 'e' */
+        {7.0f, 0.0f}    /* 'v' */
+    }), TestSuite::Compare::Container);
+    /* Yeah so they are all zero */
+    CORRADE_COMPARE_AS(Containers::arrayView(offsets), Containers::arrayView<Vector2>({
+        {},             /* 'V' */
+        {},             /* 'e' */
+        {},             /* 'ˇ' */
+        {},             /* 'ˇ' */
+        {},             /* 'ˇ' */
+        {},             /* 't' */
+        {},             /* 'e' */
+        {}              /* 'v' */
+    }), TestSuite::Compare::Container);
+    {
+        CORRADE_EXPECT_FAIL("FreeTypeFont doesn't merge combining diacritics into the same cluster as the preceding character.");
+        CORRADE_COMPARE(clusters[2], 1);
+    }
+    CORRADE_COMPARE_AS(Containers::arrayView(clusters), Containers::arrayView({
+        0u,             /* 'V' */
+        1u,             /* 'e' */
+        2u,             /* 'ˇ' */
+        4u,             /* 'ˇ' */
+        6u,             /* 'ˇ' */
+        8u,             /* 't' */
+        9u,             /* 'e' */
+        10u,            /* 'v' */
+    }), TestSuite::Compare::Container);
 }
 
 void FreeTypeFontTest::shapeMultiple() {

@@ -54,6 +54,7 @@ struct HarfBuzzFontTest: TestSuite::Tester {
     void shapeAutodetectScriptLanguageDirection();
     void shapeUnsupportedScript();
     void shapeEmpty();
+    void shapeGlyphOffset();
 
     void shapeMultiple();
     void shapeMultipleAutodetection();
@@ -98,14 +99,7 @@ const struct {
     /* Without the literal split it says "Unicode sequence out of range". Wow,
        who designed this mess?! That's even worse than octal literals. */
     {"UTF-8, decomposed", "We\xcc\x8c" "ave", 220, 2, 0, ~UnsignedInt{}, 16.6562f, 8.34375f},
-    /** @todo if the font supported decomposed diacritics,
-        "We\xcd\x8f\xcc\x8c" "ave" (with U+034 inside to prevent them from
-        being combined, https://stackoverflow.com/a/47979890), should shape as
-        6 glyphs, and then the cluster value would be either different for the
-        diacritics or same, depending on hb_buffer_set_cluster_level() being
-        set to 0 or 1. Same should probably happen with `ccmp` /
-        Feature::GlyphCompositionDecomposition turned off, but I suppose in
-        this case it's not done because Oxygen.ttf cannot render that? */
+    /* Decomposing to actual `e` and `ˇ` tested in shapeGlyphOffset() */
 };
 
 const struct {
@@ -240,7 +234,8 @@ HarfBuzzFontTest::HarfBuzzFontTest() {
         Containers::arraySize(ShapeAutodetectScriptLanguageDirectionData));
 
     addTests({&HarfBuzzFontTest::shapeUnsupportedScript,
-              &HarfBuzzFontTest::shapeEmpty});
+              &HarfBuzzFontTest::shapeEmpty,
+              &HarfBuzzFontTest::shapeGlyphOffset});
 
     addInstancedTests({&HarfBuzzFontTest::shapeMultiple,
                        &HarfBuzzFontTest::shapeMultipleAutodetection},
@@ -350,8 +345,8 @@ void HarfBuzzFontTest::shape() {
         89u,            /* 'v' */
         72u             /* 'e' */
     }), TestSuite::Compare::Container);
-    /* There are no glyph-specific offsets here */
-    /** @todo test this with something, Zalgo or other combining diacritics */
+    /* Offsets aren't usually set to anything. Shaping that produces glyph
+       offsets is tested in shapeGlyphOffset(). */
     CORRADE_COMPARE_AS(Containers::arrayView(offsets), Containers::arrayView<Vector2>({
         {}, {}, {}, {}, {}
     }), TestSuite::Compare::Container);
@@ -494,6 +489,133 @@ void HarfBuzzFontTest::shapeEmpty() {
     CORRADE_COMPARE(shaper->script(), Script::Unspecified);
     CORRADE_COMPARE(shaper->language(), "c");
     CORRADE_COMPARE(shaper->direction(), ShapeDirection::LeftToRight);
+}
+
+void HarfBuzzFontTest::shapeGlyphOffset() {
+    Containers::Pointer<AbstractFont> font = _manager.instantiate("HarfBuzzFont");
+    /* See FreeTypeFont's test CMakeLists for details how this file was made.
+       In particular, it has to include glyphs for
+       FreeTypeFontTest::glyphNames() as well. */
+    CORRADE_VERIFY(font->openFile(Utility::Path::join(FREETYPEFONT_TEST_DIR, "SourceSans3-Regular.subset.otf"), 16.0f));
+
+    Containers::Pointer<AbstractShaper> shaper = font->createShaper();
+
+    /* "Ve͏̌̌̌tev", with the diacritics being three times above e, and U+034 in
+       between (\xcd\x8f) to prevent them from being combined,
+       https://stackoverflow.com/a/47979890). Should result in non-zero X
+       offset and Y offset increasing for every subsequent diacritics mark.
+
+       In this particular case the \xcd\x8f doesn't need to be present and it
+       still works the same way, omitting the space character, but with just a
+       single combining diacritics and a non-subset font that contains `ě` as
+       well it could result in it being combined back to a single glyph. Then,
+       `ccmp` / Feature::GlyphCompositionDecomposition turned off could force
+       use of the combining glyphs again. */
+    CORRADE_COMPARE(shaper->shape("Ve\xcd\x8f\xcc\x8c\xcc\x8c\xcc\x8ctev"), 9);
+
+    UnsignedInt ids[9];
+    Vector2 offsets[9];
+    Vector2 advances[9];
+    UnsignedInt clusters[9];
+    shaper->glyphIdsInto(ids);
+    shaper->glyphOffsetsAdvancesInto(offsets, advances);
+    shaper->glyphClustersInto(clusters);
+    CORRADE_COMPARE_AS(Containers::arrayView(ids), Containers::arrayView({
+        font->glyphForName("V"),        /* glyph 23 originally */
+        font->glyphForName("e"),        /* glyph 32 originally */
+        font->glyphForName("space"),    /* glyph 1 originally */
+        font->glyphForName("uni030C"),  /* glyph 2328 originally, 'ˇ' */
+        font->glyphForName("uni030C"),  /* glyph 2328 originally, 'ˇ' */
+        font->glyphForName("uni030C"),  /* glyph 2328 originally, 'ˇ' */
+        font->glyphForName("t"),        /* glyph 47 originally */
+        font->glyphForName("e"),        /* glyph 32 originally */
+        font->glyphForName("v")         /* glyph 49 originally */
+    }), TestSuite::Compare::Container);
+    const Vector2 expectedAdvances[]{
+        /* HarfBuzz 2.6.4 gives different output than 1.7.2 and 11 */
+        #if HB_VERSION_MAJOR*100 + HB_VERSION_MINOR != 206
+        {8.0f, 0.0f},           /* 'V' */
+        /* HarfBuzz between 1.7 and 3.1 gives different output (broken? see
+           offsets below). Actually, I have no idea if it's those versions, but
+           version 11 (latest in Apr 2025) and version 1.7.2 (in Ubuntu 20.04
+           repos) give a different value and this version check was in other
+           places already so I'm betting it's related to the same
+           difference. */
+        #if HB_VERSION_MAJOR*100 + HB_VERSION_MINOR < 107 || \
+            HB_VERSION_MAJOR*100 + HB_VERSION_MINOR >= 301
+        {7.78125f, 0.0f},       /* 'e' */
+        #else
+        {7.9375f, 0.0f},        /* 'e' */
+        #endif
+        /* The combining marks have no advance in addition to the base
+           character */
+        {0.0f, 0.0f},           /* (space) */
+        {0.0f, 0.0f},           /* 'ˇ' */
+        {0.0f, 0.0f},           /* 'ˇ' */
+        {0.0f, 0.0f},           /* 'ˇ' */
+        {5.1875f, 0.0f},        /* 't' */
+        #else
+        {7.98438f, 0.0f},       /* 'V' */
+        {7.76562f, 0.0f},       /* 'e' */
+        {0.0f, 0.0f},           /* (space) */
+        {0.0f, 0.0f},           /* 'ˇ' */
+        {0.0f, 0.0f},           /* 'ˇ' */
+        {0.0f, 0.0f},           /* 'ˇ' */
+        {5.17188f, 0.0f},       /* 't' */
+        #endif
+        {8.01562f, 0.0f},       /* 'e' */
+        {7.46875f, 0.0f}        /* 'v' */
+    };
+    const Vector2 expectedOffsets[]{
+        {},                     /* 'V' */
+        {},                     /* 'e' */
+        {},                     /* (space) */
+        /* HarfBuzz 2.6.4 gives different output than 1.7.2 and 11 */
+        #if HB_VERSION_MAJOR*100 + HB_VERSION_MINOR != 206
+        /* See above */
+        #if HB_VERSION_MAJOR*100 + HB_VERSION_MINOR < 107 || \
+            HB_VERSION_MAJOR*100 + HB_VERSION_MINOR >= 301
+        /* Diacritics shifted to the left and then increasingly upwards */
+        {-3.5625f, 0.0f},       /* 'ˇ' */
+        {-3.5625f, 3.32812f},   /* 'ˇ' */
+        {-3.5625f, 6.65625f},   /* 'ˇ' */
+        #else
+        /* Here it's without shift left, so ... likely broken?! */
+        {0.0f, 0.0f},           /* 'ˇ' */
+        {0.0f, 3.32812f},       /* 'ˇ' */
+        {0.0f, 6.65625f},       /* 'ˇ' */
+        #endif
+        #else
+        {-3.54688f, 0.0f},      /* 'ˇ' */
+        {-3.54688f, 3.32812f},  /* 'ˇ' */
+        {-3.54688f, 6.65625f},  /* 'ˇ' */
+        #endif
+        {},                     /* 't' */
+        {},                     /* 'e' */
+        {}                      /* 'v' */
+    };
+    CORRADE_COMPARE_AS(Containers::arrayView(advances),
+        Containers::arrayView(expectedAdvances),
+        TestSuite::Compare::Container);
+    CORRADE_COMPARE_AS(Containers::arrayView(offsets),
+        Containers::arrayView(expectedOffsets),
+        TestSuite::Compare::Container);
+    /** @todo with `hb_buffer_set_cluster_level(_buffer,
+        HB_BUFFER_CLUSTER_LEVEL_MONOTONE_GRAPHEMES)` this would result in
+        `{0, 1, 2, 4, 6, 8, 10, 11, 12}` instead, expose that in some way? */
+    CORRADE_COMPARE_AS(Containers::arrayView(clusters), Containers::arrayView({
+        0u,                     /* 'V' */
+        /* The base character together with all combining marks is a single
+           cluster */
+        1u,                     /* 'e' */
+        1u,                     /* (space) */
+        1u,                     /* 'ˇ' */
+        1u,                     /* 'ˇ' */
+        1u,                     /* 'ˇ' */
+        10u,                    /* 't' */
+        11u,                    /* 'e' */
+        12u,                    /* 'v' */
+    }), TestSuite::Compare::Container);
 }
 
 void HarfBuzzFontTest::shapeMultiple() {

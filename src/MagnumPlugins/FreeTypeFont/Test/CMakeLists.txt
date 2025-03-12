@@ -61,10 +61,12 @@ corrade_add_test(FreeTypeFontTest FreeTypeFontTest.cpp
         glyph-cache.png
         glyph-cache-array0.png
         glyph-cache-array1.png
-        # Created from ArchLinux adobe-source-sans-fonts 3.052 with the
-        # following command:
-        #   hb-subset SourceSansPro-Regular.otf --glyphs="seveneighths,one.t,.notdef" -o SourceSansPro-Regular-subset.otf
-        SourceSansPro-Regular-subset.otf)
+        # Created from SourceSans3-Regular.otf that's bundled in magnum-extras:
+        #   hb-subset SourceSans3-Regular.otf --glyphs="seveneighths,one.t,.notdef,V,e,space,uni030C,t,v" -o SourceSans3-Regular.subset.otf
+        # Is used by both FreeTypeFontTest::glyphNames() and
+        # HarfBuzzFontTest::shapeGlyphOffsets(), so the glyph set has be a
+        # union of both.
+        SourceSans3-Regular.subset.otf)
 target_include_directories(FreeTypeFontTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>)
 if(MAGNUM_FREETYPEFONT_BUILD_STATIC)
     target_link_libraries(FreeTypeFontTest PRIVATE FreeTypeFont)

@@ -249,9 +249,11 @@ Containers::Pointer<AbstractShaper> StbTrueTypeFont::doCreateShaper() {
             const Font& fontData = *static_cast<const StbTrueTypeFont&>(font())._font;
 
             for(std::size_t i = 0; i != _glyphs.size(); ++i) {
-                /* There's no glyph offsets in addition to advances */
-                /** @todo the last argument of stbtt_GetGlyphHMetrics is
-                   leftSideBearing, isn't that the offset? */
+                /* There's no glyph offsets in addition to advances. The last
+                   argument of stbtt_GetGlyphHMetrics() is leftSideBearing, but
+                   that, once rounded, is returned from
+                   stbtt_GetGlyphBitmapBox() that's then saved into the glyph
+                   cache in doFillGlyphCache() above. */
                 offsets[i] = {};
 
                 /* Get glyph advance, scale it to actual used font size */

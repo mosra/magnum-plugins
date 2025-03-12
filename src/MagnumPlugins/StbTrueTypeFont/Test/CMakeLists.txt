@@ -60,6 +60,7 @@ corrade_add_test(StbTrueTypeFontTest StbTrueTypeFontTest.cpp
         Magnum::Text
     FILES
         ../../FreeTypeFont/Test/Oxygen.ttf
+        ../../FreeTypeFont/Test/SourceSans3-Regular.subset.otf
         glyph-cache.png
         glyph-cache-array0.png
         glyph-cache-array1.png)

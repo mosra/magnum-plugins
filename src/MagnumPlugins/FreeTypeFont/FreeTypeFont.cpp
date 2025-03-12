@@ -263,9 +263,11 @@ Containers::Pointer<AbstractShaper> FreeTypeFont::doCreateShaper() {
             const FT_Face ftFont = static_cast<const FreeTypeFont&>(font())._ftFont;
 
             for(std::size_t i = 0; i != _glyphs.size(); ++i) {
-                /* There's no glyph offsets in addition to advances */
-                /** @todo there's horiBearingX and horiBearingY in
-                    FT_Glyph_Metrics, isn't that the offset? */
+                /* There's no glyph offsets in addition to advances. There's
+                   horiBearingX and horiBearingY in FT_Glyph_Metrics, but
+                   that, once rounded, becomes the bitmap_left / bitmap_top
+                   value that's then saved into the glyph cache in
+                   doFillGlyphCache() above. */
                 offsets[i] = {};
 
                 /* Load the glyph to get its advance */

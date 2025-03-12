@@ -204,6 +204,9 @@ Containers::Pointer<AbstractShaper> HarfBuzzFont::doCreateShaper() {
             hb_buffer_set_language(_buffer, _language);
             hb_buffer_set_direction(_buffer, _direction);
             hb_buffer_add_utf8(_buffer, text.data(), text.size(), begin, end - begin);
+            /** @todo expose `hb_buffer_set_cluster_level(_buffer,
+                HB_BUFFER_CLUSTER_LEVEL_MONOTONE_GRAPHEMES)` to have diacritics
+                in separate clusters, is there any use case for that? see the  shapeGlyphOffset() test for details */
 
             /* If any of the properties were unspecified, try to guess them
                from the passed text */
