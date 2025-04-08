@@ -1223,8 +1223,7 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const SceneData& scene, con
             } else if(fieldName == SceneField::Mesh) {
                 /* Gather and sort all mesh assignments */
                 CORRADE_INTERNAL_ASSERT(multiEntryFieldSize >= 1);
-                /** @todo arrayClear(), *finally */
-                arrayResize(sortedMeshMaterialAssignments, 0);
+                arrayClear(sortedMeshMaterialAssignments);
                 for(std::size_t j = 0; j != multiEntryFieldSize; ++j)
                     arrayAppend(sortedMeshMaterialAssignments, meshesMaterials[fieldOffsets[i + j]]);
                 std::sort(sortedMeshMaterialAssignments.begin(), sortedMeshMaterialAssignments.end(), [](const Containers::Pair<UnsignedInt, Int> a, const Containers::Pair<UnsignedInt, Int> b) {
