@@ -72,8 +72,7 @@ target_include_directories(GlslangShaderConverter PUBLIC
     ${PROJECT_BINARY_DIR}/src)
 target_link_libraries(GlslangShaderConverter PUBLIC
     Magnum::ShaderTools
-    Glslang::Glslang
-    Glslang::SPIRV)
+    Glslang::Glslang)
 
 install(FILES GlslangConverter.h ${CMAKE_CURRENT_BINARY_DIR}/configure.h
     DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/GlslangShaderConverter)

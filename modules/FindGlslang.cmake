@@ -6,25 +6,14 @@
 #
 #  Glslang_FOUND        - True if the Glslang library is found
 #  Glslang::Glslang     - Glslang imported target.
-#  Glslang::SPIRV       - Glslang SPIRV imported target. Depends on
-#   Glslang::Glslang.
-#  Glslang::HLSL        - Glslang HLSL imported target, if found. Static
-#   dependency of Glslang::Glslang.
-#  Glslang::OSDependent - Glslang OSDependent imported target, if found. Static
-#   dependency of Glslang::Glslang.
-#  Glslang::OGLCompiler - Glslang OGLCompiler imported target, if found. Static
 #   dependency of Glslang::Glslang.
 #
-# Link to Glslang::Glslang and Glslang::SPIRV. The other dependencies, if
-# needed, will get linked transitively.
+# Link to Glslang::Glslang. The other dependencies, if needed, will get linked
+# transitively.
 #
 # Additionally these variables are defined for internal usage:
 #
-#  Glslang_LIBRARY_{DEBUG,RELEASE} - Glslang library
-#  Glslang_SPIRV_LIBRARY_{DEBUG,RELEASE} - Glslang SPIRV library
-#  Glslang_HLSL_LIBRARY_{DEBUG,RELEASE} - Glslang HLSL library
-#  Glslang_OSDependent_LIBRARY_{DEBUG,RELEASE} - Glslang OSDependent library
-#  Glslang_OGLCompiler_LIBRARY_{DEBUG,RELEASE} - Glslang OGLCompiler library
+#  Glslang_*_LIBRARY_{DEBUG,RELEASE} - Glslang libraries
 #  Glslang_INCLUDE_DIR  - Include dir
 #
 
@@ -54,9 +43,10 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
-# It's 2024 and none of this should be needed, but apparently Magnum is (still)
+# It's 2025 and none of this should be needed, but apparently Magnum is (still)
 # the first project ever to use this thing from Khronos as an actual library
-# instead of the CLI tool. Back in 2020, when the first version of this Find
+# instead of the CLI tool, or at least in a way that tries to make it work with
+# more than just one version. Back in 2020, when the first version of this Find
 # module was written, their CMake system installed a ton of
 # `glslangTargets.cmake` files, but no actual `glslangConfig.cmake`. That got
 # fixed in 11.11 (https://github.com/KhronosGroup/glslang/commit/fb64704060ffbd7048f25a07518c55639726c025,
@@ -67,7 +57,8 @@
 # INTERFACE_INCLUDE_DIRECTORIES, which just doesn't exist, so the target as a
 # whole is useless and one has to manually extract everything except the
 # INTERFACE_INCLUDE_DIRECTORIES into a new target in order to make it work.
-# That's still the case in version 14, last checked on January 3rd 2024.
+# That's fixed in version 14:
+#  https://github.com/KhronosGroup/glslang/pull/3420
 #
 # To add even more salt into the wound, version 14.0 removed the HLSL and
 # OGLCompiler libraries (https://github.com/KhronosGroup/glslang/commit/6be56e45e574b375d759b89dad35f780bbd4792f)
@@ -79,10 +70,21 @@
 # to parse some version header first, regexps and other nasty brittle stuff.
 # Not nice at all.
 #
-# Thus, both the variant with attempting to use the config file and the variant
-# with attempting to not use the config file is a total nightmare, but I
-# _think_ the former is more future-proof, even with the extra nastiness given
-# by property extraction.
+# Then! More salt! With version 15.0, the SPIRV target, which used to link to
+# glslang, is removed, and glslang is the top-level target instead. Which means
+# I have to make one or the other the top-level target, which OF COURSE DOES
+# NOT MAKE ANYTHING SIMPLER THAN BEFORE. And these people think it's about
+# JUST REMOVING THE REFERENCE!!!! JUST!!!! Like if I could afford to care only
+# about the last bug-ridden release that falls out of their hands, like if
+# there would be no LTS distros from five years ago!!!
+#  https://github.com/KhronosGroup/glslang/issues/3882#issuecomment-2692374048
+# Do you see that comment?!
+#
+# Thus, aside of the mess with randomly appearing and disappearing libraries,
+# both the variant with attempting to use the config file and the variant with
+# attempting to not use the config file is a total nightmare, but I _think_ the
+# former is more future-proof, even with the extra nastiness given by property
+# extraction.
 #
 # Scroll further for a continuation of this angry rant.
 
@@ -141,72 +143,80 @@ if(TARGET glslang OR TARGET glslang::glslang)
         # possible properties (which are impossible to track of) and then
         # attempting to rebuild them into a new target.
         add_library(Glslang::Glslang INTERFACE IMPORTED)
-        set_target_properties(Glslang::Glslang PROPERTIES
-            INTERFACE_LINK_LIBRARIES ${_GLSLANG_TARGET_PREFIX}glslang)
-        # In case of a CMake subproject, explicitly add the include path as
-        # well. It doesn't make sense to do this for the imported case, there
-        # the glslang::glslang target does the right thing (and OTOH the
-        # glslang::SPIRV target DOES NOT, so it needs a custom step anyway).
+        # Add the include path. In case of a CMake subproject, it's the one
+        # extracted from SOURCE_DIR above.
         if(TARGET glslang)
             set_target_properties(Glslang::Glslang PROPERTIES
                 INTERFACE_INCLUDE_DIRECTORIES ${_GLSLANG_INTERFACE_INCLUDE_DIRECTORIES})
-        endif()
-    endif()
-    if(NOT TARGET Glslang::SPIRV)
-        # In case of a CMake subproject, simply link to the SPIRV target, and
-        # make it depend on the Glslang::Glslang target as well to get the
-        # include path along
-        if(TARGET glslang)
-            if(NOT TARGET SPIV)
-                message(FATAL_ERROR "Expecting a SPIRV target to exist if a glslang exists, but it does not")
-            endif()
-            # Aliases of (global) targets [..] CMake 3.11 [...], as above
-            add_library(Glslang::SPIRV INTERFACE IMPORTED)
-            set_target_properties(Glslang::SPIRV PROPERTIES
-                INTERFACE_LINK_LIBRARIES "SPIRV;Glslang::Glslang")
-        # Otherwise extract everything except INTERFACE_INCLUDE_DIRECTORIES
-        # (which are broken, as explained on the very top) out of
-        # glslang::SPIRV and use that. Let's hope they fix this crap before
-        # there's additional target properties added apart from
-        # INTERFACE_LINK_LIBRARIES and IMPORTED_LOCATION_<CONFIG>.
+        # In case of an imported target, can't just transitively use the one
+        # from glslang::glslang because the code needs to use
+        # <SPIRV/GlslangToSpirv.h> instead of <glslang/SPIRV/GlslangToSpirv.h>
+        # in order to work correctly both with the library installed and the
+        # with the library being a subproject (the latter doesn't have SPIRV/
+        # inside glslang/). We however also need the top-level directory for
+        # <glslang/Public/ShaderLang.h> and such (yeah, WHAT THE FUCK this
+        # name, I know).
         else()
-            # We're setting IMPORTED_LOCATION_* below, which means the library
-            # can't be INTERFACE like above.
-            add_library(Glslang::SPIRV UNKNOWN IMPORTED)
+            set_target_properties(Glslang::Glslang PROPERTIES INTERFACE_INCLUDE_DIRECTORIES "${_GLSLANG_INTERFACE_INCLUDE_DIRECTORIES};${_GLSLANG_INTERFACE_INCLUDE_DIRECTORIES}/glslang")
+        endif()
 
-            # INTERFACE_LINK_LIBRARIES link to MachineIndependent, OSDependent
-            # and other loose crap in static builds, important to have. Can't
-            # use set_target_properties(... $<TARGET_PROPERTY:...>) because the
-            # INTERFACE_LINK_LIBRARIES contain \$<LINK_ONLY: (yes, escaped),
-            # causing CMake to complain that the (unevaluated) generator
-            # expression isn't a target.
-            get_target_property(_GLSLANG_SPIRV_INTERFACE_LINK_LIBRARIES glslang::SPIRV INTERFACE_LINK_LIBRARIES)
-            set_target_properties(Glslang::SPIRV PROPERTIES INTERFACE_LINK_LIBRARIES "${_GLSLANG_SPIRV_INTERFACE_LINK_LIBRARIES}")
+        # If the SPIRV target exists (on versions 14 and older), that's the
+        # top-level target to link to
+        if((TARGET glslang AND TARGET SPIRV) OR (TARGET glslang::glslang AND TARGET glslang::SPIRV))
+            set(_GLSLANG_TOP_LEVEL_TARGET SPIRV)
 
-            # Correct INTERFACE_INCLUDE_DIRECTORIES. Can't just transitively
-            # use the onle from Glslang::Glslang because the code needs to
-            # use <SPIRV/GlslangToSpirv.h> instead of
-            # <glslang/SPIRV/GlslangToSpirv.h> in order to work correctly both
-            # with the library installed and the with the library being a
-            # subproject (the latter doesn't have SPIRV/ inside glslang/).
-            # Thus, appending glslang/ to the include dir Glslang::Glslang
-            # uses.
-            set_target_properties(Glslang::SPIRV PROPERTIES INTERFACE_INCLUDE_DIRECTORIES ${_GLSLANG_INTERFACE_INCLUDE_DIRECTORIES}/glslang)
+            # In case of a CMake subproject, simply link Glslang::Glslang to
+            # the SPIRV target, without creating an intermediate Glslang::SPIRV
+            # target.
+            if(TARGET glslang)
+                # Aliases of (global) targets [..] CMake 3.11 [...], as above
+                set_target_properties(Glslang::Glslang PROPERTIES
+                    INTERFACE_LINK_LIBRARIES SPIRV)
+            # Otherwise extract everything except INTERFACE_INCLUDE_DIRECTORIES
+            # (which are broken, as explained on the very top) out of
+            # glslang::SPIRV into a new Glslang::SPIRV, and link
+            # Glslang::Glslang to it.
+            else()
+                # We're setting IMPORTED_LOCATION_* below, which means the
+                # library can't be INTERFACE like above.
+                add_library(Glslang::SPIRV UNKNOWN IMPORTED)
 
-            # Imported locations, which can be many. Assuming
-            # IMPORTED_CONFIGURATIONS contains the names uppercase, as
-            # IMPORTED_LOCATION_<CONFIG> is uppercase. The case is not
-            # explicitly documented anywhere in the CMake manual. Can't just
-            # put them all into INTERFACE_LINK_LIBRARIES because it'd mean that
-            # both Debug and Release gets linked at the same time, have to
-            # replicate both the IMPORTED_CONFIGURATIONS and
-            # IMPORTED_LOCATION_* properties exactly
-            get_target_property(_GLSLANG_SPIRV_IMPORTED_CONFIGURATIONS glslang::SPIRV IMPORTED_CONFIGURATIONS)
-            set_property(TARGET Glslang::SPIRV PROPERTY IMPORTED_CONFIGURATIONS ${_GLSLANG_SPIRV_IMPORTED_CONFIGURATIONS})
-            foreach(config ${_GLSLANG_SPIRV_IMPORTED_CONFIGURATIONS})
-                get_target_property(_GLSLANG_SPIRV_IMPORTED_LOCATION_${config} glslang::SPIRV IMPORTED_LOCATION_${config})
-                set_property(TARGET Glslang::SPIRV PROPERTY IMPORTED_LOCATION_${config} ${_GLSLANG_SPIRV_IMPORTED_LOCATION_${config}})
-            endforeach()
+                # INTERFACE_LINK_LIBRARIES link to MachineIndependent,
+                # OSDependent and other loose crap in static builds, important
+                # to have. Can't use
+                # set_target_properties(... $<TARGET_PROPERTY:...>) because the
+                # INTERFACE_LINK_LIBRARIES contain \$<LINK_ONLY: (yes,
+                # escaped), causing CMake to complain that the (unevaluated)
+                # generator expression isn't a target.
+                get_target_property(_GLSLANG_SPIRV_INTERFACE_LINK_LIBRARIES glslang::SPIRV INTERFACE_LINK_LIBRARIES)
+                set_target_properties(Glslang::SPIRV PROPERTIES INTERFACE_LINK_LIBRARIES "${_GLSLANG_SPIRV_INTERFACE_LINK_LIBRARIES}")
+
+                # Imported locations, which can be many. Assuming
+                # IMPORTED_CONFIGURATIONS contains the names uppercase, as
+                # IMPORTED_LOCATION_<CONFIG> is uppercase. The case is not
+                # explicitly documented anywhere in the CMake manual. Can't just
+                # put them all into INTERFACE_LINK_LIBRARIES because it'd mean that
+                # both Debug and Release gets linked at the same time, have to
+                # replicate both the IMPORTED_CONFIGURATIONS and
+                # IMPORTED_LOCATION_* properties exactly
+                get_target_property(_GLSLANG_SPIRV_IMPORTED_CONFIGURATIONS glslang::SPIRV IMPORTED_CONFIGURATIONS)
+                set_property(TARGET Glslang::SPIRV PROPERTY IMPORTED_CONFIGURATIONS ${_GLSLANG_SPIRV_IMPORTED_CONFIGURATIONS})
+                foreach(config ${_GLSLANG_SPIRV_IMPORTED_CONFIGURATIONS})
+                    get_target_property(_GLSLANG_SPIRV_IMPORTED_LOCATION_${config} glslang::SPIRV IMPORTED_LOCATION_${config})
+                    set_property(TARGET Glslang::SPIRV PROPERTY IMPORTED_LOCATION_${config} ${_GLSLANG_SPIRV_IMPORTED_LOCATION_${config}})
+                endforeach()
+
+                # Make the top-level target link to this recreated target
+                set_target_properties(Glslang::Glslang PROPERTIES
+                    INTERFACE_LINK_LIBRARIES Glslang::SPIRV)
+            endif()
+
+        # Otherwise, on version 15+, glslang is the top-level target. As the
+        # SPIRV target with broken include path is gone, no target patching is
+        # needed, so just directly link to it.
+        else()
+            set_target_properties(Glslang::Glslang PROPERTIES
+                INTERFACE_LINK_LIBRARIES ${_GLSLANG_TARGET_PREFIX}glslang)
         endif()
     endif()
 
@@ -224,19 +234,16 @@ endif()
 find_package(SpirvTools REQUIRED)
 
 # Libraries. The debug suffix is used only on Windows.
-find_library(Glslang_LIBRARY_RELEASE NAMES glslang)
-find_library(Glslang_LIBRARY_DEBUG NAMES glslangd)
-find_library(Glslang_SPIRV_LIBRARY_RELEASE NAMES SPIRV)
-find_library(Glslang_SPIRV_LIBRARY_DEBUG NAMES SPIRVd)
+find_library(Glslang_glslang_LIBRARY_RELEASE NAMES glslang)
+find_library(Glslang_glslang_LIBRARY_DEBUG NAMES glslangd)
 
 include(SelectLibraryConfigurations)
-select_library_configurations(Glslang)
-select_library_configurations(Glslang_SPIRV)
+select_library_configurations(Glslang_glslang)
 
-# These are needed only in a static build, search for them only in case the
-# main library is static (or on Windows, because there it's impossible to
-# know -- in which case we'll just treat them as optional).
-if(Glslang_LIBRARY MATCHES "${CMAKE_STATIC_LIBRARY_SUFFIX}$")
+# Some libraries are needed only in a static build, search for them only in
+# case the main library is static (or on Windows, because there it's impossible
+# to know -- in which case we'll just treat them as optional).
+if(Glslang_glslang_LIBRARY MATCHES "${CMAKE_STATIC_LIBRARY_SUFFIX}$")
     set(_GLSLANG_IS_STATIC ON)
 endif()
 if(CORRADE_TARGET_WINDOWS OR _GLSLANG_IS_STATIC)
@@ -246,22 +253,22 @@ if(CORRADE_TARGET_WINDOWS OR _GLSLANG_IS_STATIC)
     # libs?! https://github.com/KhronosGroup/glslang/pull/2301 Also, why such a
     # huge breaking change is not even hinted in the 11.0 changelog?!
     set(_GLSLANG_STATIC_LIBRARIES_11 GenericCodeGen MachineIndependent)
-    # For FPHSA, except the libraries that got added in glslang 11 -- we'll
-    # treat them as optional, if they are there, we link them, if not, we
-    # assume it's version 10 or older.
-    set(_GLSLANG_EXTRA_LIBRARIES )
-    foreach(_library ${_GLSLANG_STATIC_LIBRARIES} ${_GLSLANG_STATIC_LIBRARIES_11})
-        find_library(Glslang_${_library}_LIBRARY_DEBUG NAMES ${_library}d)
-        find_library(Glslang_${_library}_LIBRARY_RELEASE NAMES ${_library})
-        select_library_configurations(Glslang_${_library})
-        if(_library IN_LIST _GLSLANG_STATIC_LIBRARIES)
-            list(APPEND _GLSLANG_EXTRA_LIBRARIES Glslang_${_library}_LIBRARY)
-        endif()
-    endforeach()
 else()
     set(_GLSLANG_STATIC_LIBRARIES )
-    set(_GLSLANG_EXTRA_LIBRARIES )
+    set(_GLSLANG_STATIC_LIBRARIES_11 )
 endif()
+# For FPHSA, except the libraries that got added in glslang 11 / removed in
+# glslang 15 -- we'll treat them as optional, if they are there, we link them,
+# if not, we assume it's either version 10 or older or version 15+.
+set(_GLSLANG_EXTRA_LIBRARIES )
+foreach(_library SPIRV ${_GLSLANG_STATIC_LIBRARIES} ${_GLSLANG_STATIC_LIBRARIES_11})
+    find_library(Glslang_${_library}_LIBRARY_DEBUG NAMES ${_library}d)
+    find_library(Glslang_${_library}_LIBRARY_RELEASE NAMES ${_library})
+    select_library_configurations(Glslang_${_library})
+    if(_library IN_LIST _GLSLANG_STATIC_LIBRARIES)
+        list(APPEND _GLSLANG_EXTRA_LIBRARIES Glslang_${_library}_LIBRARY)
+    endif()
+endforeach()
 
 # Include dir
 find_path(Glslang_INCLUDE_DIR
@@ -272,16 +279,22 @@ find_path(Glslang_INCLUDE_DIR
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(Glslang DEFAULT_MSG
-    Glslang_LIBRARY Glslang_SPIRV_LIBRARY ${_GLSLANG_EXTRA_LIBRARIES}
+    Glslang_glslang_LIBRARY ${_GLSLANG_EXTRA_LIBRARIES}
     Glslang_INCLUDE_DIR)
 
 mark_as_advanced(FORCE Glslang_INCLUDE_DIR)
 
-# Except for SPIRV these are all optional because needed only in a static
-# build, which is impossible to detect (and some are present only in newer
-# versions, FFS). And SPIRV was checked to be present in the FPHSA above, so
-# it's guaranteed to be present.
-foreach(_library SPIRV ${_GLSLANG_STATIC_LIBRARIES} ${_GLSLANG_STATIC_LIBRARIES_11})
+# Except for glslang these are all optional either
+# -  because needed only in a static build, which is impossible to detect
+# -  because some are present only in newer versions, FFS
+# -  because some are no longer present in newer versions, GAH
+# Additionally, in versions 14 and before, SPIRV is the top-level target, which
+# then depends on glslang (and the linking order matters, yes), but in version
+# 15 SPIRV is removed and glslang is the top-level target. To fix this mess,
+# the glslang library is imported as a *lowercase* Glslang::glslang target so
+# then the Glslang::Glslang target can link to either Glslang::SPIRV or
+# Glslang::glslang.
+foreach(_library glslang SPIRV ${_GLSLANG_STATIC_LIBRARIES} ${_GLSLANG_STATIC_LIBRARIES_11})
     if(Glslang_${_library}_LIBRARY AND NOT TARGET Glslang::${_library})
         add_library(Glslang::${_library} UNKNOWN IMPORTED)
         if(Glslang_${_library}_LIBRARY_RELEASE)
@@ -297,10 +310,16 @@ foreach(_library SPIRV ${_GLSLANG_STATIC_LIBRARIES} ${_GLSLANG_STATIC_LIBRARIES_
                 IMPORTED_LOCATION_DEBUG ${Glslang_${_library}_LIBRARY_DEBUG})
         endif()
 
-        # SPIRV depends on SpirvTools and glslang (which is created later)
+        # SPIRV, if present, depends on SpirvTools and glslang. If not present,
+        # glslang is the top-level target that depends on SpirvTools. Link
+        # glslang to SpirvTools and SPIRV to glslang to cover both variants.
         if(_library STREQUAL SPIRV)
             set_property(TARGET Glslang::${_library} APPEND PROPERTY
-                INTERFACE_LINK_LIBRARIES SpirvTools::SpirvTools SpirvTools::Opt Glslang::Glslang)
+                INTERFACE_LINK_LIBRARIES Glslang::glslang)
+        endif()
+        if(_library STREQUAL glslang)
+            set_property(TARGET Glslang::${_library} APPEND PROPERTY
+                INTERFACE_LINK_LIBRARIES SpirvTools::SpirvTools SpirvTools::Opt)
         endif()
 
         # OGLCompiler needs pthread
@@ -314,19 +333,7 @@ endforeach()
 
 # Glslang::Glslang puts that all together
 if(NOT TARGET Glslang::Glslang)
-    add_library(Glslang::Glslang UNKNOWN IMPORTED)
-    if(Glslang_LIBRARY_RELEASE)
-        set_property(TARGET Glslang::Glslang APPEND PROPERTY
-            IMPORTED_CONFIGURATIONS RELEASE)
-        set_target_properties(Glslang::Glslang PROPERTIES
-            IMPORTED_LOCATION_RELEASE ${Glslang_LIBRARY_RELEASE})
-    endif()
-    if(Glslang_LIBRARY_DEBUG)
-        set_property(TARGET Glslang::Glslang APPEND PROPERTY
-            IMPORTED_CONFIGURATIONS DEBUG)
-        set_target_properties(Glslang::Glslang PROPERTIES
-            IMPORTED_LOCATION_DEBUG ${Glslang_LIBRARY_DEBUG})
-    endif()
+    add_library(Glslang::Glslang INTERFACE IMPORTED)
     set_target_properties(Glslang::Glslang PROPERTIES
         INTERFACE_INCLUDE_DIRECTORIES
             # Second entry to account for broken relative includes in version
@@ -335,6 +342,16 @@ if(NOT TARGET Glslang::Glslang)
             # and paths actually installed (in particular
             # <glslang/SPIRV/GlslangToSpirv.h> vs <SPIRV/GlslangToSpirv.h>)
             "${Glslang_INCLUDE_DIR};${Glslang_INCLUDE_DIR}/glslang")
+
+    # SPIRV is the top level target if exists, and depends on glslang. In
+    # version 15 it's removed and glslang is the top-level target instead.
+    if(TARGET Glslang::SPIRV)
+        set_property(TARGET Glslang::Glslang APPEND PROPERTY
+            INTERFACE_LINK_LIBRARIES Glslang::SPIRV)
+    else()
+        set_property(TARGET Glslang::Glslang APPEND PROPERTY
+            INTERFACE_LINK_LIBRARIES Glslang::glslang)
+    endif()
 
     # On Windows these are all optional because a static build is impossible to
     # detect there
