@@ -214,9 +214,10 @@ const struct {
     {"memory", [](AbstractImporter& importer, Containers::ArrayView<const void> data) {
         return importer.openMemory(data);
     }, 0},
-    /* On 3.3 the memory is used directly only if it's above certain size to
-       work around the 4096-byte-at-a-time bug, test that the zero-copy
-       codepath works there as well */
+    /* On 3.3.0 to 3.3.3 the memory is used directly only if it's above certain
+       size to work around the 4096-byte-at-a-time bug, test that the zero-copy
+       codepath works there as well. To avoid bugs accidentally creeping in,
+       test this even after 3.3.3 that fixes the 4096-byte bug. */
     #if OPENEXR_VERSION_MAJOR*10000 + OPENEXR_VERSION_MINOR*100 + OPENEXR_VERSION_PATCH >= 30300
     {"memory, size expanded to 16k", [](AbstractImporter& importer, Containers::ArrayView<const void> data) {
         return importer.openMemory(data);
@@ -331,9 +332,11 @@ void OpenExrImporterTest::shortFile() {
        this case the default hook kicks in, making those appear in stderr. That
        isn't always the case, tho. SIGH.
 
-       Also until a (not yet released) 3.3.3 it generally fails with files
-       shorter than ~4 kB, which the plugin works around by making the file
-       longer so the real error message would be bogus anyway. */
+       Also until 3.3.3 it generally fails with files shorter than ~4 kB, which
+       the plugin works around by making the file longer, so the real error
+       message would be bogus anyway. We however don't get that via the usual
+       exception interface, only printed to stderr, so there's no difference in
+       the message when the bug is fixed in 3.3.3. Sigh again. */
     #if OPENEXR_VERSION_MAJOR*10000 + OPENEXR_VERSION_MINOR*100 + OPENEXR_VERSION_PATCH >= 30300
     CORRADE_COMPARE(out, "Trade::OpenExrImporter::image2D(): import error: Unable to run decoder\n");
     #else

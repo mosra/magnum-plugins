@@ -111,11 +111,19 @@ class MemoryIStream: public Imf::IStream {
         void seekg(const std::uint64_t pos) override { _position = pos; }
 
         #if OPENEXR_VERSION_MAJOR*10000 + OPENEXR_VERSION_MINOR*100 + OPENEXR_VERSION_PATCH >= 30300
-        /* This helps with header reading on 3.3.3(?)+, otherwise it reads
+        /* This helps with header reading on 3.3.3+, otherwise it reads
            byte-by-byte. See also the related 4096-byte workaround below.
             https://github.com/AcademySoftwareFoundation/openexr/pull/1985
-           There is no such virtual interface before 3.3. */
-        std::int64_t size() override { return _data.size(); }
+           There is no such virtual interface before 3.3. Unfortunately,
+           enabling it on 3.3.3+ makes it crash in the levels2DIncomplete()
+           test if the 4096-byte workaround isn't present, so it likely needs
+           more fixing on their end. On *my* end I have two choices, either
+           exposing this API and keeping the nasty 4096-byte workaround to have
+           it *hopefully* not crash, or ditch the workaround but not expose
+           this API, causing it to read headers byte-by-byte. I'm picking the
+           "correct but slow" behavior over "fast but potentially crashy". */
+        /** @todo monitor the repo issues and try to enable this again */
+        //std::int64_t size() override { return _data.size(); }
         #endif
 
     private:
@@ -154,15 +162,14 @@ void OpenExrImporter::doClose() { _state = nullptr; }
 void OpenExrImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dataFlags) {
     /* Take over the existing array or copy the data if we can't */
     Containers::Array<char> dataCopy;
-    #if OPENEXR_VERSION_MAJOR*10000 + OPENEXR_VERSION_MINOR*100 + OPENEXR_VERSION_PATCH >= 30300
-    /** @todo make this enabled only for < 3.3.3 once that version is out */
+    #if OPENEXR_VERSION_MAJOR*10000 + OPENEXR_VERSION_MINOR*100 + OPENEXR_VERSION_PATCH >= 30300 && OPENEXR_VERSION_MAJOR*10000 + OPENEXR_VERSION_MINOR*100 + OPENEXR_VERSION_PATCH < 30303
     /* Version 3.3.0+, which has the core rewritten in C, optimizes by always
        reading 4096 bytes at a time when reading the header, unfortunately with
        the limited backwards compatibility IStream interface it means it'll
        inevitably read past the end of the file, causing an exception:
         https://github.com/AcademySoftwareFoundation/openexr/issues/1984
        And thus it'll fail for all files that are less than ~4096 bytes. This
-       should be fixed for 3.3.3(?) which is not released yet (Feb 2025):
+       is fixed in 3.3.3:
         https://github.com/AcademySoftwareFoundation/openexr/pull/1985
 
        To work around this, allocate enough memory so it doesn't read past the
@@ -172,10 +179,10 @@ void OpenExrImporter::doOpenData(Containers::Array<char>&& data, const DataFlags
        very least, allocate 4K *in addition* to the size if the size is less
        than ~16K. That could still fail if the header is really large,
        containing a lot of metadata, and the file isn't, but the probability of
-       that happening should be lower than the probability of 3.3.3(?) being
-       delayed for another year. Also don't do this if the file is empty,
-       because in that case it should fail due to the file being empty and not
-       due to something else. */
+       that happening should be rather low, even more so considering distros
+       will eventually update to a patch version that fixes it. Also don't do
+       this if the file is empty, because in that case it should fail due to
+       the file being empty and not due to something else. */
     if(!data.isEmpty() && data.size() < 16384) {
         /* Also use ValueInit instead of NoInit so in case it really reads past
            the end for some reason, the failure reason is deterministic. */
