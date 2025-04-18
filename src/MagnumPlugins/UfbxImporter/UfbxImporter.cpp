@@ -1648,7 +1648,7 @@ void appendKeyTimes(const ResampleOptions &resampleOptions, Containers::Array<Do
         if(resampleRate > 0.0) {
             /* Generate resampling times at a global interval so that we have
                mathcing times even if keyframes don't line up in each channel. */
-            Long step = Long(std::ceil((prev.time + resampleOptions.minimumResampleStep) * resampleRate));
+            Long step = Long(Math::ceil((prev.time + resampleOptions.minimumResampleStep) * resampleRate));
             for(;;) {
                 Double time = step / resampleRate;
                 if(time >= next.time - resampleOptions.minimumResampleStep)
