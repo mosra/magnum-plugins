@@ -189,7 +189,12 @@ if(TARGET glslang OR TARGET glslang::glslang)
                 # escaped), causing CMake to complain that the (unevaluated)
                 # generator expression isn't a target.
                 get_target_property(_GLSLANG_SPIRV_INTERFACE_LINK_LIBRARIES glslang::SPIRV INTERFACE_LINK_LIBRARIES)
-                set_target_properties(Glslang::SPIRV PROPERTIES INTERFACE_LINK_LIBRARIES "${_GLSLANG_SPIRV_INTERFACE_LINK_LIBRARIES}")
+                # In some cases (such as Homebrew's glslang 15.2.0 package)
+                # this property doesn't exist because the compatibility target
+                # doesn't actually link to anything. Skip it in that case.
+                if(_GLSLANG_SPIRV_INTERFACE_LINK_LIBRARIES)
+                    set_target_properties(Glslang::SPIRV PROPERTIES INTERFACE_LINK_LIBRARIES "${_GLSLANG_SPIRV_INTERFACE_LINK_LIBRARIES}")
+                endif()
 
                 # Imported locations, which can be many. Assuming
                 # IMPORTED_CONFIGURATIONS contains the names uppercase, as
