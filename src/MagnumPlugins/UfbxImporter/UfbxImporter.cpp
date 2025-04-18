@@ -34,6 +34,7 @@
 #include <Corrade/Containers/BitArray.h>
 #include <Corrade/Containers/StaticArray.h>
 #include <Corrade/Containers/StridedBitArrayView.h>
+#include <Corrade/Containers/StringStlHash.h>
 #include <Corrade/Containers/GrowableArray.h>
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Utility/Algorithms.h>
@@ -184,8 +185,8 @@ constexpr Containers::StringView sceneFieldNames[]{
 bool getLoadOptsFromConfiguration(ufbx_load_opts& opts, Utility::ConfigurationGroup& conf, const char* errorPrefix) {
     const Long maxTemporaryMemory = conf.value<Long>("maxTemporaryMemory");
     const Long maxResultMemory = conf.value<Long>("maxResultMemory");
-    const std::string geometryTransformHandling = conf.value("geometryTransformHandling");
-    const std::string unitNormalizationHandling = conf.value("unitNormalizationHandling");
+    const Containers::StringView geometryTransformHandling = conf.value<Containers::StringView>("geometryTransformHandling");
+    const Containers::StringView unitNormalizationHandling = conf.value<Containers::StringView>("unitNormalizationHandling");
     const bool normalizeUnits = conf.value<bool>("normalizeUnits");
 
     opts.generate_missing_normals = conf.value<bool>("generateMissingNormals");
@@ -214,23 +215,23 @@ bool getLoadOptsFromConfiguration(ufbx_load_opts& opts, Utility::ConfigurationGr
     /** @todo expose more of these as options? need to think of reasonable
         defaults anyways, feels like ignoring geometry transform is not
         great */
-    if(unitNormalizationHandling == "transformRoot") {
+    if(unitNormalizationHandling == "transformRoot"_s) {
         opts.space_conversion = UFBX_SPACE_CONVERSION_TRANSFORM_ROOT;
-    } else if(unitNormalizationHandling == "adjustTransforms") {
+    } else if(unitNormalizationHandling == "adjustTransforms"_s) {
         opts.space_conversion = UFBX_SPACE_CONVERSION_ADJUST_TRANSFORMS;
     } else {
-        Error{} << errorPrefix << "Unsupported unitNormalizationHandling configuration:" << Containers::StringView(unitNormalizationHandling);
+        Error{} << errorPrefix << "Unsupported unitNormalizationHandling configuration:" << unitNormalizationHandling;
         return false;
     }
 
-    if(geometryTransformHandling == "preserve") {
+    if(geometryTransformHandling == "preserve"_s) {
         opts.geometry_transform_handling = UFBX_GEOMETRY_TRANSFORM_HANDLING_PRESERVE;
-    } else if(geometryTransformHandling == "helperNodes") {
+    } else if(geometryTransformHandling == "helperNodes"_s) {
         opts.geometry_transform_handling = UFBX_GEOMETRY_TRANSFORM_HANDLING_HELPER_NODES;
-    } else if(geometryTransformHandling == "modifyGeometry") {
+    } else if(geometryTransformHandling == "modifyGeometry"_s) {
         opts.geometry_transform_handling = UFBX_GEOMETRY_TRANSFORM_HANDLING_MODIFY_GEOMETRY;
     } else {
-        Error{} << errorPrefix << "Unsupported geometryTransformHandling configuration:" << Containers::StringView(geometryTransformHandling);
+        Error{} << errorPrefix << "Unsupported geometryTransformHandling configuration:" << geometryTransformHandling;
         return false;
     }
 
@@ -336,7 +337,7 @@ struct UfbxImporter::State {
     bool fromFile = false;
 
     /* Name to ufbx_scene::texture_files[] */
-    std::unordered_map<std::string, UnsignedInt> imageNameMap;
+    std::unordered_map<Containers::StringView, UnsignedInt> imageNameMap;
 
     /* Textures that have actual files */
     Containers::Array<FileTexture> textures;
@@ -473,7 +474,7 @@ void UfbxImporter::openInternal(void* opaqueScene, const void* opaqueOpts, bool 
         if(name.length == 0)
             continue;
 
-        _state->imageNameMap.emplace(std::string(name.data, name.length), i);
+        _state->imageNameMap.emplace(Containers::StringView{name.data, name.length}, i);
     }
 }
 
