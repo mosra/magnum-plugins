@@ -529,7 +529,7 @@ Containers::Optional<SceneData> UfbxImporter::doScene(UnsignedInt) {
     for(const ufbx_mesh* mesh: scene->meshes) {
         UnsignedInt instanceCount = UnsignedInt(mesh->instances.count);
         UnsignedInt chunkCount = _state->meshChunkMapping[mesh->typed_id].count;
-        meshCount += instanceCount * chunkCount;
+        meshCount += instanceCount*chunkCount;
     }
 
     /* Skins are bound to meshes in FBX but nodes here, so count each node
@@ -939,7 +939,7 @@ Containers::Optional<MeshData> UfbxImporter::doMesh(UnsignedInt id, UnsignedInt)
     stride += jointWeightCount*sizeof(Float);
 
     /* Need space for maximum triangles or at least a single point/line */
-    Containers::Array<UnsignedInt> primitiveIndices{Utility::max(mesh->max_face_triangles * 3, std::size_t(2))};
+    Containers::Array<UnsignedInt> primitiveIndices{Utility::max(mesh->max_face_triangles*3, std::size_t{2})};
     Containers::Array<char> vertexData{NoInit, stride*indexCount};
 
     Containers::Array<MeshAttributeData> attributeData{attributeCount};
@@ -1055,7 +1055,7 @@ Containers::Optional<MeshData> UfbxImporter::doMesh(UnsignedInt id, UnsignedInt)
                 primitiveIndices[1] = face.index_begin + 1;
                 break;
             case MeshPrimitive::Triangles:
-                numIndices = ufbx_triangulate_face(primitiveIndices.data(), primitiveIndices.size(), mesh, face) * 3;
+                numIndices = ufbx_triangulate_face(primitiveIndices.data(), primitiveIndices.size(), mesh, face)*3;
                 break;
             default: CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
         }
@@ -1278,13 +1278,13 @@ Containers::Optional<MaterialData> UfbxImporter::doMaterial(UnsignedInt id) {
             if(attribute && map.has_value) {
                 Containers::Array<MaterialAttributeData>& attributes = attributesForLayer.defaultLayer;
                 if(mapping.attributeType == MaterialAttributeType::Float) {
-                    Float value = Float(map.value_real) * factor;
+                    Float value = Float(map.value_real)*factor;
                     arrayAppend(attributes, {attribute, value});
                 } else if(mapping.attributeType == MaterialAttributeType::Vector3) {
-                    Vector3 value = Vector3(map.value_vec3) * factor;
+                    Vector3 value = Vector3{map.value_vec3}*factor;
                     arrayAppend(attributes, {attribute, value});
                 } else if(mapping.attributeType == MaterialAttributeType::Vector4) {
-                    Vector4 value = Vector4(map.value_vec4) * Vector4{factor,factor,factor,opacity};
+                    Vector4 value = Vector4{map.value_vec4}*Vector4{factor,factor,factor,opacity};
                     arrayAppend(attributes, {attribute, value});
                 } else if(mapping.attributeType == MaterialAttributeType::Long) {
                     arrayAppend(attributes, {attribute, map.value_int});
@@ -1648,7 +1648,7 @@ void appendKeyTimes(const ResampleOptions &resampleOptions, Containers::Array<Do
         if(resampleRate > 0.0) {
             /* Generate resampling times at a global interval so that we have
                mathcing times even if keyframes don't line up in each channel. */
-            Long step = Long(Math::ceil((prev.time + resampleOptions.minimumResampleStep) * resampleRate));
+            Long step = Long(Math::ceil((prev.time + resampleOptions.minimumResampleStep)*resampleRate));
             for(;;) {
                 Double time = step / resampleRate;
                 if(time >= next.time - resampleOptions.minimumResampleStep)
