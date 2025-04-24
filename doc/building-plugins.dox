@@ -535,6 +535,8 @@ By default no plugins are built and you need to select them manually:
     plugin. Depends on [libPNG](http://www.libpng.org/pub/png/libpng.html).
 -   `MAGNUM_WITH_PRIMITIVEIMPORTER` --- Build the
     @ref Trade::PrimitiveImporter "PrimitiveImporter" plugin.
+-   `MAGNUM_WITH_RESVGIMPORTER` --- Build the @relativeref{Trade,ResvgImporter}
+    plugin. Depends on [resvg](https://github.com/linebender/resvg).
 -   `MAGNUM_WITH_SPIRVTOOLSSHADERCONVERTER` --- Build the
     @ref ShaderTools::SpirvToolsConverter "SpirvToolsShaderConverter" plugin.
     Depends on [SPIRV-Tools](https://github.com/KhronosGroup/SPIRV-Tools).

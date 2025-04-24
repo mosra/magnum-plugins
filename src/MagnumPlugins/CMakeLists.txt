@@ -174,6 +174,10 @@ if(MAGNUM_WITH_PRIMITIVEIMPORTER)
     add_subdirectory(PrimitiveImporter)
 endif()
 
+if(MAGNUM_WITH_RESVGIMPORTER)
+    add_subdirectory(ResvgImporter)
+endif()
+
 if(MAGNUM_WITH_SPIRVTOOLSSHADERCONVERTER)
     add_subdirectory(SpirvToolsShaderConverter)
 endif()

@@ -40,6 +40,7 @@
 #  PngImageConverter            - PNG image converter
 #  PngImporter                  - PNG importer
 #  PrimitiveImporter            - Primitive importer
+#  ResvgImporter                - SVG importer using resvg
 #  SpirvToolsShaderConverter    - SPIR-V Tools shader converter
 #  SpngImporter                 - PNG importer using libspng
 #  StanfordImporter             - Stanford PLY importer
@@ -178,8 +179,8 @@ find_path(_MAGNUMPLUGINS_DEPENDENCY_MODULE_DIR
     NAMES
         FindAssimp.cmake FindBasisUniversal.cmake FindDevIL.cmake
         FindFAAD2.cmake FindGlslang.cmake FindHarfBuzz.cmake
-        FindOpenEXR.cmake FindSpirvTools.cmake FindSpng.cmake FindWebP.cmake
-        FindZstd.cmake
+        FindOpenEXR.cmake FindResvg.cmake FindSpirvTools.cmake FindSpng.cmake
+        FindWebP.cmake FindZstd.cmake
     PATH_SUFFIXES share/cmake/MagnumPlugins/dependencies)
 mark_as_advanced(_MAGNUMPLUGINS_DEPENDENCY_MODULE_DIR)
 
@@ -207,7 +208,7 @@ set(_MAGNUMPLUGINS_PLUGIN_COMPONENTS
     KtxImageConverter KtxImporter MeshOptimizerSceneConverter
     MiniExrImageConverter OpenExrImageConverter OpenExrImporter
     OpenGexImporter PngImageConverter PngImporter PrimitiveImporter
-    SpirvToolsShaderConverter SpngImporter StanfordImporter
+    ResvgImporter SpirvToolsShaderConverter SpngImporter StanfordImporter
     StanfordSceneConverter StbDxtImageConverter StbImageConverter
     StbImageImporter StbResizeImageConverter StbTrueTypeFont
     StbVorbisAudioImporter StlImporter UfbxImporter WebPImageConverter
@@ -623,6 +624,12 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
             endif()
 
         # PrimitiveImporter has no dependencies
+
+        # ResvgImporter plugin dependencies
+        elseif(_component STREQUAL ResvgImporter)
+            find_package(Resvg REQUIRED)
+            set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
+                INTERFACE_LINK_LIBRARIES Resvg::Resvg)
 
         # SpirvToolsShaderConverter plugin dependencies
         elseif(_component STREQUAL SpirvToolsShaderConverter)

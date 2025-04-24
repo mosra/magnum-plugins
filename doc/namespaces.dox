@@ -138,6 +138,10 @@
  * @brief Plugin @ref Magnum::Trade::PrimitiveImporter
  * @m_since_{plugins,2020,06}
  */
+/** @dir MagnumPlugins/ResvgImporter
+ * @brief Plugin @ref Magnum::Trade::ResvgImporter
+ * @m_since_latest_{plugins}
+ */
 /** @dir MagnumPlugins/SpirvToolsShaderConverter
  * @brief Plugin @ref Magnum::ShaderTools::SpirvToolsConverter
  * @m_since_latest_{plugins}

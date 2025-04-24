@@ -87,6 +87,9 @@ cmake .. \
     -DMAGNUM_WITH_PNGIMAGECONVERTER=ON \
     -DMAGNUM_WITH_PNGIMPORTER=ON \
     -DMAGNUM_WITH_PRIMITIVEIMPORTER=ON \
+    `# Ubuntu 22.04+ has it in repos, but not the C API. Homebrew has it,` \
+    `# but only after update and then it wants to build llvm from scratch.` \
+    -DMAGNUM_WITH_RESVGIMPORTER=OFF \
     -DMAGNUM_WITH_SPIRVTOOLSSHADERCONVERTER=ON \
     -DMAGNUM_WITH_SPNGIMPORTER=ON \
     -DMAGNUM_WITH_STANFORDIMPORTER=ON \
