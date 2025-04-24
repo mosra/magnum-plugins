@@ -6,7 +6,7 @@ pkgdesc="Plugins for the Magnum C++11/C++14 graphics engine (built with Clang an
 arch=('i686' 'x86_64')
 url="https://magnum.graphics"
 license=('MIT')
-depends=('magnum=dev.clang.libc++' 'devil' 'faad2' 'freetype2' 'harfbuzz' 'libjpeg' 'libpng' 'assimp' 'meshoptimizer' 'openexr' 'spirv-tools' 'glslang' 'zstd' 'libwebp' 'libspng')
+depends=('magnum=dev.clang.libc++' 'devil' 'faad2' 'freetype2' 'harfbuzz' 'libjpeg' 'libpng' 'assimp' 'meshoptimizer' 'openexr' 'spirv-tools' 'glslang' 'zstd' 'libwebp' 'libspng' 'resvg')
 makedepends=('cmake' 'clang' 'ninja' 'basis-universal-src' 'libc++')
 options=(!strip)
 provides=('magnum-plugins-git')
@@ -64,6 +64,7 @@ build() {
         -DMAGNUM_WITH_PNGIMAGECONVERTER=ON \
         -DMAGNUM_WITH_PNGIMPORTER=ON \
         -DMAGNUM_WITH_PRIMITIVEIMPORTER=ON \
+        -DMAGNUM_WITH_RESVGIMPORTER=ON \
         -DMAGNUM_WITH_SPIRVTOOLSSHADERCONVERTER=ON \
         -DMAGNUM_WITH_SPNGIMPORTER=ON \
         -DMAGNUM_WITH_STANFORDIMPORTER=ON \

@@ -315,8 +315,9 @@ When installing from the `*.rb` files you need to install the
 depend on a variety of 3rd party libraries, it's possible to control a subset
 that gets built and installed:
 
--   `--with-devil`, `--with-faad2` and `--with-harfbuzz` enable building of
-    @relativeref{Trade,DevIlImageImporter},
+-   `--with-devil`, `--with-resvg`, `--with-faad2`, `--with-harfbuzz` enable
+    building of @relativeref{Trade,DevIlImageImporter},
+    @relativeref{Trade,ResvgImporter},
     @ref Audio::Faad2Importer "Faad2AudioImporter" and
     @relativeref{Text,HarfBuzzFont}, respectively. None of these plugins are
     built by default.
