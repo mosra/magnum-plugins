@@ -28,10 +28,9 @@
 # property that would have to be set on each target separately.
 set(CMAKE_FOLDER "MagnumPlugins/FreeTypeFont/Test")
 
-find_package(Magnum REQUIRED DebugTools)
-
-# Not required
-find_package(Magnum COMPONENTS AnyImageImporter)
+find_package(Magnum REQUIRED
+    COMPONENTS DebugTools
+    OPTIONAL_COMPONENTS AnyImageImporter)
 
 if(CORRADE_TARGET_EMSCRIPTEN OR CORRADE_TARGET_ANDROID)
     set(FREETYPEFONT_TEST_DIR .)

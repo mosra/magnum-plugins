@@ -30,10 +30,9 @@
 # property that would have to be set on each target separately.
 set(CMAKE_FOLDER "MagnumPlugins/BasisImageConverter/Test")
 
-find_package(Magnum REQUIRED DebugTools)
-
-# Not required
-find_package(Magnum COMPONENTS AnyImageImporter)
+find_package(Magnum REQUIRED
+    COMPONENTS DebugTools
+    OPTIONAL_COMPONENTS AnyImageImporter)
 
 # See BasisImageConverter.h for details -- the plugin itself can't be linked to
 # pthread, the app has to be instead. As of 2022-01-28, the CI nondeprecated
