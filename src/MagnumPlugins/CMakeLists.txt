@@ -142,6 +142,10 @@ if(MAGNUM_WITH_KTXIMPORTER)
     add_subdirectory(KtxImporter)
 endif()
 
+if(MAGNUM_WITH_LUNASVGIMPORTER)
+    add_subdirectory(LunaSvgImporter)
+endif()
+
 if(MAGNUM_WITH_MESHOPTIMIZERSCENECONVERTER)
     add_subdirectory(MeshOptimizerSceneConverter)
 endif()

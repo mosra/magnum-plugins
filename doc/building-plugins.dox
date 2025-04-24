@@ -515,6 +515,9 @@ By default no plugins are built and you need to select them manually:
     @relativeref{Trade,KtxImageConverter} plugin.
 -   `MAGNUM_WITH_KTXIMPORTER` --- Build the
     @relativeref{Trade,KtxImporter} plugin.
+-   `MAGNUM_WITH_LUNASVGIMPORTER` --- Build the
+    @relativeref{Trade,LunaSvgImporter} plugin. Depends on
+    [LunaSVG](https://github.com/sammycage/lunasvg).
 -   `MAGNUM_WITH_MESHOPTIMIZERSCENECONVERTER` --- Build the
     @ref Trade::MeshOptimizerSceneConverter "MeshOptimizerSceneConverter"
     plugin.

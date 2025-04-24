@@ -110,6 +110,10 @@
  * @brief Plugin @ref Magnum::Trade::KtxImporter
  * @m_since_latest_{plugins}
  */
+/** @dir MagnumPlugins/LunaSvgImporter
+ * @brief Plugin @ref Magnum::Trade::LunaSvgImporter
+ * @m_since_latest_{plugins}
+ */
 /** @dir MagnumPlugins/MeshOptimizerSceneConverter
  * @brief Plugin @ref Magnum::Trade::MeshOptimizerSceneConverter
  * @m_since_{plugins,2020,06}
