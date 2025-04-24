@@ -183,8 +183,9 @@ constexpr Containers::StringView sceneFieldNames[]{
 };
 
 bool getLoadOptsFromConfiguration(ufbx_load_opts& opts, Utility::ConfigurationGroup& conf, const char* errorPrefix) {
-    const std::size_t maxTemporaryMemory = conf.value<std::size_t>("maxTemporaryMemory");
-    const std::size_t maxResultMemory = conf.value<std::size_t>("maxResultMemory");
+    /* Negative values mean "unlimited", can't use std::size_t here */
+    const std::ptrdiff_t maxTemporaryMemory = conf.value<std::ptrdiff_t>("maxTemporaryMemory");
+    const std::ptrdiff_t maxResultMemory = conf.value<std::ptrdiff_t>("maxResultMemory");
     const Containers::StringView geometryTransformHandling = conf.value<Containers::StringView>("geometryTransformHandling");
     const Containers::StringView unitNormalizationHandling = conf.value<Containers::StringView>("unitNormalizationHandling");
     const bool normalizeUnits = conf.value<bool>("normalizeUnits");
@@ -203,9 +204,9 @@ bool getLoadOptsFromConfiguration(ufbx_load_opts& opts, Utility::ConfigurationGr
     /* Substitute zero maximum memory to one, so that if the user computes the
        maximum memory and ends up with zero it doesn't result in unlimited */
     if(maxTemporaryMemory >= 0)
-        opts.temp_allocator.memory_limit = Utility::max(maxTemporaryMemory, std::size_t{1});
+        opts.temp_allocator.memory_limit = Utility::max(maxTemporaryMemory, std::ptrdiff_t{1});
     if(maxResultMemory >= 0)
-        opts.result_allocator.memory_limit = Utility::max(maxResultMemory, std::size_t{1});
+        opts.result_allocator.memory_limit = Utility::max(maxResultMemory, std::ptrdiff_t{1});
 
     /* By default FBX has cameras pointing at +X and lights at -Y, let ufbx
        normalize those to what Magnum expects */
