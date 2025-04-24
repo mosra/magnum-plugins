@@ -101,6 +101,7 @@ class MagnumPlugins < Formula
         "-D#{option_prefix}WITH_JPEGIMPORTER=#{(build.with? 'jpeg') ? 'ON' : 'OFF'}",
         "-DMAGNUM_WITH_KTXIMAGECONVERTER=ON",
         "-DMAGNUM_WITH_KTXIMPORTER=ON",
+        "-DMAGNUM_WITH_LUNASVGIMPORTER=OFF",
         "-DMAGNUM_WITH_MESHOPTIMIZERSCENECONVERTER=ON",
         "-DMAGNUM_WITH_MINIEXRIMAGECONVERTER=ON",
         "-DMAGNUM_WITH_OPENEXRIMAGECONVERTER=#{(build.with? 'openexr') ? 'ON' : 'OFF'}",
