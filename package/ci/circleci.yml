@@ -278,6 +278,28 @@ commands:
             -G Ninja
           ninja install
 
+  install-plutosvg:
+    steps:
+    - run:
+        name: Install PlutoSVG
+        command: |
+          export PLUTOSVG_VERSION=v0.0.6
+          export PLUTOVG_VERSION=v1.0.0
+          mkdir -p $HOME/plutosvg && cd $HOME/plutosvg
+          wget -nc --no-check-certificate https://github.com/sammycage/plutosvg/archive/$PLUTOSVG_VERSION.tar.gz
+          tar --strip-components=1 -xzf $PLUTOSVG_VERSION.tar.gz
+          wget -nc --no-check-certificate https://github.com/sammycage/plutovg/archive/$PLUTOVG_VERSION.tar.gz
+          mkdir -p plutovg && cd plutovg
+          tar --strip-components=1 -xzf ../$PLUTOVG_VERSION.tar.gz
+          cd ..
+          mkdir build && cd build
+          cmake .. -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
+            -DCMAKE_INSTALL_PREFIX=$HOME/deps \
+            -DCMAKE_CXX_FLAGS="-fvisibility=hidden -fvisibility-inlines-hidden" \
+            -G Ninja
+          ninja install
+
   install-basis:
     parameters:
       tag:
@@ -397,7 +419,7 @@ jobs:
       # Testing building BasisImageConverter with OpenCL present on the system,
       # but explicitly turned off via CMAKE_DISABLE_FIND_PACKAGE_OpenCL
       DISABLE_OPENCL: "ON"
-      # Requires CMake 3.15, this job uses 3.5
+      # Requires CMake 3.15, this job uses 3.5. Applies to PlutoSVG too.
       WITH_LUNASVGIMPORTER: "OFF"
     steps:
     - install-base-linux:
@@ -434,7 +456,7 @@ jobs:
     environment:
       CMAKE_CXX_FLAGS: --coverage
       CONFIGURATION: Debug
-      # Requires CMake 3.15, this job has 3.16
+      # Requires CMake 3.15, this job has 3.16. Applies to PlutoSVG too.
       WITH_LUNASVGIMPORTER: "ON"
     steps:
     # Not installing the old GCC 4.8, CMake 3.5 and other ancient stuff to
@@ -449,6 +471,7 @@ jobs:
     - install-meshoptimizer
     - install-libspng
     - install-lunasvg
+    - install-plutosvg
     - build:
         script: unix-desktop.sh
     - lcov
@@ -461,7 +484,7 @@ jobs:
       CMAKE_CXX_FLAGS: --coverage
       LCOV_EXTRA_OPTS: --gcov-tool /usr/bin/gcov-4.8
       CONFIGURATION: Debug
-      # Requires CMake 3.15, this job uses 3.5
+      # Requires CMake 3.15, this job uses 3.5. Applies to PlutoSVG too.
       WITH_LUNASVGIMPORTER: "OFF"
     steps:
     - install-base-linux:
@@ -499,7 +522,7 @@ jobs:
       BUILD_DEPRECATED: "OFF"
       CMAKE_CXX_FLAGS: -DCORRADE_NO_ASSERT
       CONFIGURATION: Release
-      # Requires CMake 3.15, this job uses 3.5
+      # Requires CMake 3.15, this job uses 3.5. Applies to PlutoSVG too.
       WITH_LUNASVGIMPORTER: "OFF"
     steps:
     # libidn11 needed by CMake
@@ -536,7 +559,7 @@ jobs:
       # encoding with OpenCL. We're not installing any OpenCL packages, but
       # better to be sure in case the image comes with it.
       DISABLE_OPENCL: "ON"
-      # Requires CMake 3.15, this job uses 3.5
+      # Requires CMake 3.15, this job uses 3.5. Applies to PlutoSVG too.
       WITH_LUNASVGIMPORTER: "OFF"
     steps:
     # libidn11 needed by CMake
@@ -583,7 +606,7 @@ jobs:
       CONFIGURATION: Debug
       # See linux-sanitizers for why this is necessary
       DISABLE_OPENCL: "ON"
-      # Requires CMake 3.15, this job has 3.16
+      # Requires CMake 3.15, this job has 3.16. Applies to PlutoSVG too.
       WITH_LUNASVGIMPORTER: "ON"
     steps:
     - install-base-linux:
@@ -596,6 +619,7 @@ jobs:
     - install-meshoptimizer
     - install-libspng
     - install-lunasvg
+    - install-plutosvg
     # These two are in repos only since 20.04
     - install-glslang:
         build: ubuntu-16.04-gcc5
@@ -618,6 +642,7 @@ jobs:
       CMAKE_CXX_FLAGS: --coverage
       CONFIGURATION: Debug
       DISABLE_OPENCL: "ON"
+      # Applies to PlutoSVG too
       WITH_LUNASVGIMPORTER: "ON"
     steps:
     - install-base-macos:
@@ -625,6 +650,7 @@ jobs:
     - install-basis
     - install-meshoptimizer
     - install-lunasvg
+    - install-plutosvg
     - build:
         script: unix-desktop.sh
     - lcov
@@ -636,6 +662,7 @@ jobs:
       BUILD_STATIC: "ON"
       CMAKE_CXX_FLAGS: --coverage
       CONFIGURATION: Debug
+      # Applies to PlutoSVG too
       WITH_LUNASVGIMPORTER: "ON"
     steps:
     - install-base-macos:
@@ -644,6 +671,7 @@ jobs:
         tag: "1.16.4"
     - install-meshoptimizer
     - install-lunasvg
+    - install-plutosvg
     - build:
         script: unix-desktop.sh
     - lcov

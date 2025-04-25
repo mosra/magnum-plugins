@@ -532,6 +532,9 @@ By default no plugins are built and you need to select them manually:
 -   `MAGNUM_WITH_OPENGEXIMPORTER` --- Build the
     @ref Trade::OpenGexImporter "OpenGexImporter" plugin. Enables also building
     of the @ref OpenDdl library.
+-   `MAGNUM_WITH_PLUTOSVGIMPORTER` --- Build the
+    @relativeref{Trade,PlutoSvgImporter} plugin. Depends on
+    [PlutoSVG](https://github.com/sammycage/plutosvg).
 -   `MAGNUM_WITH_PNGIMAGECONVERTER` --- Build the
     @ref Trade::PngImageConverter "PngImageConverter" plugin. Depends on
     [libPNG](http://www.libpng.org/pub/png/libpng.html).

@@ -170,6 +170,10 @@ if(MAGNUM_WITH_PNGIMAGECONVERTER)
     add_subdirectory(PngImageConverter)
 endif()
 
+if(MAGNUM_WITH_PLUTOSVGIMPORTER)
+    add_subdirectory(PlutoSvgImporter)
+endif()
+
 if(MAGNUM_WITH_PNGIMPORTER)
     add_subdirectory(PngImporter)
 endif()

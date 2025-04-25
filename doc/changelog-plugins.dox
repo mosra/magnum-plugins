@@ -117,8 +117,8 @@ namespace Magnum {
 -   New @relativeref{Trade,BcDecImageConverter} and
     @relativeref{Trade,EtcDecImageConverter} plugins for decoding BCn and
     ETC/EAC compressed formats
--   New @relativeref{Trade,ResvgImporter} and
-    @relativeref{Trade,LunaSvgImporter} plugins for importing SVG files as
+-   New @relativeref{Trade,ResvgImporter}, @relativeref{Trade,LunaSvgImporter}
+    and @relativeref{Trade,PlutoSvgImporter} plugins for importing SVG files as
     raster images
 -   @ref Trade::AssimpImporter "AssimpImporter" now imports ambient lights,
     light attenuation and spotlight cone angle properties. See also

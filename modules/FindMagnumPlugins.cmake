@@ -38,6 +38,7 @@
 #  MeshOptimizerSceneConverter  - MeshOptimizer scene converter
 #  MiniExrImageConverter        - OpenEXR image converter using miniexr
 #  OpenGexImporter              - OpenGEX importer
+#  PlutoSvgImporter             - SVG importer using PlutoSVG
 #  PngImageConverter            - PNG image converter
 #  PngImporter                  - PNG importer
 #  PrimitiveImporter            - Primitive importer
@@ -208,10 +209,10 @@ set(_MAGNUMPLUGINS_PLUGIN_COMPONENTS
     GltfSceneConverter HarfBuzzFont IcoImporter JpegImageConverter JpegImporter
     KtxImageConverter KtxImporter LunaSvgImporter MeshOptimizerSceneConverter
     MiniExrImageConverter OpenExrImageConverter OpenExrImporter
-    OpenGexImporter PngImageConverter PngImporter PrimitiveImporter
-    ResvgImporter SpirvToolsShaderConverter SpngImporter StanfordImporter
-    StanfordSceneConverter StbDxtImageConverter StbImageConverter
-    StbImageImporter StbResizeImageConverter StbTrueTypeFont
+    OpenGexImporter PlutoSvgImporter PngImageConverter PngImporter
+    PrimitiveImporter ResvgImporter SpirvToolsShaderConverter SpngImporter
+    StanfordImporter StanfordSceneConverter StbDxtImageConverter
+    StbImageConverter StbImageImporter StbResizeImageConverter StbTrueTypeFont
     StbVorbisAudioImporter StlImporter UfbxImporter WebPImageConverter
     WebPImporter)
 # Nothing is enabled by default right now
@@ -611,6 +612,12 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
 
         # No special setup for the OpenDdl library
         # OpenGexImporter has no dependencies
+
+        # PlutoSvgImporter plugin dependencies
+        elseif(_component STREQUAL PlutoSvgImporter)
+            find_package(plutosvg CONFIG REQUIRED)
+            set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
+                INTERFACE_LINK_LIBRARIES plutosvg::plutosvg)
 
         # PngImageConverter / PngImporter plugin dependencies
         elseif(_component STREQUAL PngImageConverter OR _component STREQUAL PngImporter)

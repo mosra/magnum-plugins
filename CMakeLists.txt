@@ -170,6 +170,7 @@ cmake_dependent_option(MAGNUM_WITH_OPENDDL "Build OpenDdl library" OFF "NOT MAGN
 option(MAGNUM_WITH_OPENEXRIMAGECONVERTER "Build OpenExrImageConverter plugin" OFF)
 option(MAGNUM_WITH_OPENEXRIMPORTER "Build OpenExrImporter plugin" OFF)
 option(MAGNUM_WITH_OPENGEXIMPORTER "Build OpenGexImporter plugin" OFF)
+option(MAGNUM_WITH_PLUTOSVGIMPORTER "Build PlutoSvgImporter plugin" OFF)
 option(MAGNUM_WITH_PNGIMAGECONVERTER "Build PngImageConverter plugin" OFF)
 option(MAGNUM_WITH_PNGIMPORTER "Build PngImporter plugin" OFF)
 option(MAGNUM_WITH_PRIMITIVEIMPORTER "Build PrimitiveImporter plugin" OFF)

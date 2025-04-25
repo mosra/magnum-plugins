@@ -132,6 +132,10 @@
 /** @dir MagnumPlugins/OpenGexImporter
  * @brief Plugin @ref Magnum::Trade::OpenGexImporter
  */
+/** @dir MagnumPlugins/PlutoSvgImporter
+ * @brief Plugin @ref Magnum::Trade::PlutoSvgImporter
+ * @m_since_latest_{plugins}
+ */
 /** @dir MagnumPlugins/PngImageConverter
  * @brief Plugin @ref Magnum::Trade::PngImageConverter
  */
