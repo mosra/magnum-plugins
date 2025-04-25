@@ -107,6 +107,7 @@ class MagnumPlugins < Formula
         "-DMAGNUM_WITH_OPENEXRIMAGECONVERTER=#{(build.with? 'openexr') ? 'ON' : 'OFF'}",
         "-DMAGNUM_WITH_OPENEXRIMPORTER=#{(build.with? 'openexr') ? 'ON' : 'OFF'}",
         "-D#{option_prefix}WITH_OPENGEXIMPORTER=ON",
+        "-DMAGNUM_WITH_PLUTOSVGIMPORTER=OFF",
         "-D#{option_prefix}WITH_PNGIMAGECONVERTER=#{(build.with? 'libpng') ? 'ON' : 'OFF'}",
         "-D#{option_prefix}WITH_PNGIMPORTER=#{(build.with? 'libpng') ? 'ON' : 'OFF'}",
         "-D#{option_prefix}WITH_PRIMITIVEIMPORTER=ON",
