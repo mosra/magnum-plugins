@@ -163,7 +163,7 @@ void StanfordSceneConverterTest::nonIndexedAllAttributes() {
        file. Four triangles in total. */
     const Vertex vertices[] {
         {{15, 33}, {1.5f, 0.4f, 9.2f}, 0xdeadbeef_rgba, 163247, {15, -100, 0}},
-        {{2762, 90}, {0.3f, -1.1f, 0.1f}, 0xbadcafe_rgba, 13543154, {12, 52, -44}},
+        {{2762, 90}, {0.3f, -1.1f, 0.1f}, 0xbadc0ffe_rgba, 13543154, {12, 52, -44}},
         {{}, {}, {}, 0, {}},
         {{}, {}, {}, 0, {}},
         {{}, {}, {}, 0, {}},
