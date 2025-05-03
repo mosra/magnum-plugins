@@ -3597,6 +3597,15 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
                     return {};
                 }
 
+                /* Another option would be importing just the first 128, for
+                   example, but if a file has this many it's likely not going
+                   to render properly anyway. Without this check, it'd blow up
+                   on an assert in MeshAttributeData later. */
+                if(gltfTarget.index() >= 128) {
+                    Error{} << "Trade::GltfImporter::mesh(): only 128 morph targets are supported at most";
+                    return {};
+                }
+
                 arrayAppend(attributeOrder, InPlaceInit, gltfMorphAttribute.key(), gltfMorphAttribute.value(), Int(gltfTarget.index()));
             }
         }

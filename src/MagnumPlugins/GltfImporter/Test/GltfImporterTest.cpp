@@ -1043,54 +1043,54 @@ const struct {
     {"buffer with missing uri property",
         "buffer 1 has missing uri property"},
     {"buffer with invalid uri property",
-        "Utility::Json::parseString(): expected a string, got Utility::JsonToken::Type::Array at {}:1504:14\n"
+        "Utility::Json::parseString(): expected a string, got Utility::JsonToken::Type::Array at {}:1528:14\n"
         "Trade::GltfImporter::mesh(): buffer 2 has invalid uri property\n"},
     {"buffer with invalid uri",
         "invalid URI escape sequence %%"},
     {"buffer with missing byteLength property",
         "buffer 4 has missing or invalid byteLength property"},
     {"buffer with invalid byteLength property",
-        "Utility::Json::parseSize(): too large integer literal -3 at {}:1518:21\n"
+        "Utility::Json::parseSize(): too large integer literal -3 at {}:1542:21\n"
         "Trade::GltfImporter::mesh(): buffer 5 has missing or invalid byteLength property\n"},
     {"buffer view with missing buffer property",
         "buffer view 8 has missing or invalid buffer property"},
     {"buffer view with invalid buffer property",
-        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:1454:17\n"
+        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:1478:17\n"
         "Trade::GltfImporter::mesh(): buffer view 9 has missing or invalid buffer property\n"},
     {"buffer view with invalid byteOffset property",
-        "Utility::Json::parseSize(): too large integer literal -1 at {}:1460:21\n"
+        "Utility::Json::parseSize(): too large integer literal -1 at {}:1484:21\n"
         "Trade::GltfImporter::mesh(): buffer view 10 has invalid byteOffset property\n"},
     {"buffer view with missing byteLength property",
         "buffer view 11 has missing or invalid byteLength property"},
     {"buffer view with invalid byteLength property",
-        "Utility::Json::parseSize(): too large integer literal -12 at {}:1470:21\n"
+        "Utility::Json::parseSize(): too large integer literal -12 at {}:1494:21\n"
         "Trade::GltfImporter::mesh(): buffer view 12 has missing or invalid byteLength property\n"},
     {"buffer view with invalid byteStride property",
-        "Utility::Json::parseUnsignedInt(): too large integer literal -4 at {}:1476:21\n"
+        "Utility::Json::parseUnsignedInt(): too large integer literal -4 at {}:1500:21\n"
         "Trade::GltfImporter::mesh(): buffer view 13 has invalid byteStride property\n"},
     {"accessor with invalid bufferView property",
-        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:959:21\n"
+        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:983:21\n"
         "Trade::GltfImporter::mesh(): accessor 29 has invalid bufferView property\n"},
     {"accessor with invalid byteOffset property",
-        "Utility::Json::parseSize(): too large integer literal -1 at {}:967:21\n"
+        "Utility::Json::parseSize(): too large integer literal -1 at {}:991:21\n"
         "Trade::GltfImporter::mesh(): accessor 30 has invalid byteOffset property\n"},
     {"accessor with missing componentType property",
         "accessor 31 has missing or invalid componentType property"},
     {"accessor with invalid componentType property",
-        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:981:24\n"
+        "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:1005:24\n"
         "Trade::GltfImporter::mesh(): accessor 32 has missing or invalid componentType property\n"},
     {"accessor with missing count property",
         "accessor 33 has missing or invalid count property"},
     {"accessor with invalid count property",
-        "Utility::Json::parseSize(): too large integer literal -1 at {}:995:16\n"
+        "Utility::Json::parseSize(): too large integer literal -1 at {}:1019:16\n"
         "Trade::GltfImporter::mesh(): accessor 34 has missing or invalid count property\n"},
     {"accessor with missing type property",
         "accessor 35 has missing or invalid type property"},
     {"accessor with invalid type property",
-        "Utility::Json::parseString(): expected a string, got Utility::JsonToken::Type::Number at {}:1009:15\n"
+        "Utility::Json::parseString(): expected a string, got Utility::JsonToken::Type::Number at {}:1033:15\n"
         "Trade::GltfImporter::mesh(): accessor 36 has missing or invalid type property\n"},
     {"accessor with invalid normalized property",
-        "Utility::Json::parseBool(): expected a bool, got Utility::JsonToken::Type::Null at {}:1017:21\n"
+        "Utility::Json::parseBool(): expected a bool, got Utility::JsonToken::Type::Null at {}:1041:21\n"
         "Trade::GltfImporter::mesh(): accessor 37 has invalid normalized property\n"},
     {"invalid primitive property",
         "Utility::Json::parseUnsignedInt(): too large integer literal -1 at {}:423:19\n"
@@ -1110,13 +1110,15 @@ const struct {
         "JOINTS_0 is not allowed to be a morph target"},
     {"disallowed object ID morph target attribute",
         "object ID attribute _OBJECT_ID is not allowed to be a morph target"},
+    {"too many morph targets",
+        "only 128 morph targets are supported at most"},
     {"invalid sparse property",
-        "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Bool at {}:1045:17\n"
+        "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Bool at {}:1069:17\n"
         "Trade::GltfImporter::mesh(): accessor 41 has invalid sparse property\n"},
     {"missing sparse count property",
         "accessor 42 has missing or invalid sparse count property"},
     {"invalid sparse count property",
-        "Utility::Json::parseSize(): too large integer literal -3 at {}:1068:18\n"
+        "Utility::Json::parseSize(): too large integer literal -3 at {}:1092:18\n"
         "Trade::GltfImporter::mesh(): accessor 43 has missing or invalid sparse count property\n"},
     {"zero sparse count property",
         "accessor 44 sparse count 0 out of range for 3 elements"},
@@ -1125,45 +1127,45 @@ const struct {
     {"missing sparse indices property",
         "accessor 46 has missing or invalid sparse indices property"},
     {"invalid sparse indices property",
-        "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Array at {}:1129:20\n"
+        "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Array at {}:1153:20\n"
         "Trade::GltfImporter::mesh(): accessor 47 has missing or invalid sparse indices property\n"},
     {"missing sparse indices bufferView property",
         "accessor 48 has missing or invalid sparse indices bufferView property"},
     {"invalid sparse indices bufferView property",
-        "Utility::Json::parseUnsignedInt(): too large integer literal -9 at {}:1158:25\n"
+        "Utility::Json::parseUnsignedInt(): too large integer literal -9 at {}:1182:25\n"
         "Trade::GltfImporter::mesh(): accessor 49 has missing or invalid sparse indices bufferView property\n"},
     {"sparse indices buffer view out of range",
         "buffer view index 16 out of range for 16 buffer views"},
     {"strided sparse indices buffer view",
         "accessor 51 sparse indices bufferView 15 is strided"},
     {"invalid sparse indices byteOffset property",
-        "Utility::Json::parseSize(): too large integer literal -1 at {}:1208:25\n"
+        "Utility::Json::parseSize(): too large integer literal -1 at {}:1232:25\n"
         "Trade::GltfImporter::mesh(): accessor 52 has invalid sparse indices byteOffset property\n"},
     {"sparse indices accessor range out of buffer view range",
         "accessor 53 needs 33 bytes for sparse indices but buffer view 1 has only 32"},
     {"missing sparse indices componentType property",
         "accessor 54 has missing or invalid sparse indices componentType property"},
     {"invalid sparse indices componentType property",
-        "Utility::Json::parseUnsignedInt(): expected a number, got Utility::JsonToken::Type::String at {}:1256:28\n"
+        "Utility::Json::parseUnsignedInt(): expected a number, got Utility::JsonToken::Type::String at {}:1280:28\n"
         "Trade::GltfImporter::mesh(): accessor 55 has missing or invalid sparse indices componentType property\n"},
     {"invalid sparse indices componentType",
         "accessor 56 has invalid sparse indices componentType 5122"},
     {"missing sparse values property",
         "accessor 57 has missing or invalid sparse values property"},
     {"invalid sparse values property",
-        "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Array at {}:1303:19\n"
+        "Utility::Json::parseObject(): expected an object, got Utility::JsonToken::Type::Array at {}:1327:19\n"
         "Trade::GltfImporter::mesh(): accessor 58 has missing or invalid sparse values property\n"},
     {"missing sparse values bufferView property",
         "accessor 59 has missing or invalid sparse values bufferView property"},
     {"invalid sparse values bufferView property",
-        "Utility::Json::parseUnsignedInt(): too large integer literal -17 at {}:1332:25\n"
+        "Utility::Json::parseUnsignedInt(): too large integer literal -17 at {}:1356:25\n"
         "Trade::GltfImporter::mesh(): accessor 60 has missing or invalid sparse values bufferView property\n"},
     {"sparse values buffer view out of range",
         "buffer view index 16 out of range for 16 buffer views"},
     {"strided sparse values buffer view",
         "accessor 62 sparse values bufferView 15 is strided"},
     {"invalid sparse values byteOffset property",
-        "Utility::Json::parseSize(): too large integer literal -3 at {}:1381:25\n"
+        "Utility::Json::parseSize(): too large integer literal -3 at {}:1405:25\n"
         "Trade::GltfImporter::mesh(): accessor 63 has invalid sparse values byteOffset property\n"},
     {"sparse values accessor range out of buffer view range",
         "accessor 64 needs 33 bytes for sparse indices but buffer view 1 has only 32"},

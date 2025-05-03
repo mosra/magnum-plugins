@@ -322,7 +322,7 @@ used, and importing such an animation or skin will fail.
     returned @ref Trade::MeshData::vertexCount() is set to @cpp 0 @ce
 -   Morph targets, if present, have their attributes imported with
     @ref Trade::MeshData::attributeMorphTargetId() set to index of the morph
-    target.
+    target. Only 128 morph targets is supported at most.
 
 By default, the mesh import silently allows certain features that aren't
 strictly valid according to the glTF specification, such as 32-bit integer
