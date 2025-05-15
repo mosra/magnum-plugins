@@ -48,7 +48,7 @@ int main() {
 Containers::Pointer<Trade::AbstractImporter> importer = DOXYGEN_ELLIPSIS({});
 Containers::Optional<Trade::MeshData> mesh = importer->mesh(DOXYGEN_ELLIPSIS(0));
 
-/* Get a mutable reference to the Json instance so we can parse using it */
+/* Get a mutable reference to the Json instance so we can use it to parse */
 Utility::Json& gltf = *static_cast<Utility::Json*>(
     const_cast<void*>(importer->importerState())
 );
@@ -56,11 +56,13 @@ Utility::Json& gltf = *static_cast<Utility::Json*>(
 /* Get the outline indices accessor, if present. Can't assume anything is
    parsed, so call parseObject() and parseUnsignedInt() before accessing every
    value. */
+Utility::JsonToken gltfMesh{gltf,
+    *static_cast<const Utility::JsonTokenData*>(mesh->importerState())};
 Containers::Optional<UnsignedInt> indices;
-if(const Utility::JsonToken* gltfExtensions = gltf.parseObject(
-    *static_cast<const Utility::JsonToken*>(mesh->importerState()))->find("extensions"))
+if(Utility::JsonIterator gltfExtensions =
+    gltf.parseObject(gltfMesh)->find("extensions"))
 {
-    if(const Utility::JsonToken* gltfCesiumPrimitiveOutline =
+    if(Utility::JsonIterator gltfCesiumPrimitiveOutline =
         gltf.parseObject(*gltfExtensions)->find("CESIUM_primitive_outline"))
     {
         indices = gltf.parseUnsignedInt((

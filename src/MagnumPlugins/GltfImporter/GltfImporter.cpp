@@ -180,12 +180,12 @@ struct GltfImporter::Document {
        to be object tokens during the initial import. Buffers, buffer views,
        accessors and samplers have names defined as well but we don't provide
        access to those, so no point in saving them. */
-    Containers::Array<Containers::Reference<const Utility::JsonToken>>
+    Containers::Array<Containers::Reference<const Utility::JsonTokenData>>
         gltfBuffers,
         gltfBufferViews,
         gltfAccessors,
         gltfSamplers;
-    Containers::Array<Containers::Pair<Containers::Reference<const Utility::JsonToken>, Containers::StringView>>
+    Containers::Array<Containers::Pair<Containers::Reference<const Utility::JsonTokenData>, Containers::StringView>>
         gltfNodes,
         gltfMeshes, /* plus gltfMeshPrimitiveMap below */
         gltfCameras,
@@ -302,7 +302,7 @@ struct GltfImporter::Document {
         -   meshSizeOffsets[j + 1] - meshSizeOffsets[j] is count of meshes for
             original mesh ID `j` (or number of primitives in given mesh)
     */
-    Containers::Array<Containers::Pair<std::size_t, Containers::Reference<const Utility::JsonToken>>> gltfMeshPrimitiveMap;
+    Containers::Array<Containers::Pair<std::size_t, Containers::Reference<const Utility::JsonTokenData>>> gltfMeshPrimitiveMap;
     Containers::Array<std::size_t> meshSizeOffsets;
 
     /* If a file contains texture coordinates that are not floats or normalized
@@ -375,11 +375,11 @@ Containers::Optional<Containers::ArrayView<const char>> GltfImporter::parseBuffe
     if(storage)
         return Containers::ArrayView<const char>{*storage};
 
-    const Utility::JsonToken& gltfBuffer = _d->gltfBuffers[bufferId];
+    const Utility::JsonToken gltfBuffer{*_d->gltf, _d->gltfBuffers[bufferId]};
 
     /* Each buffer object is accessed only once so it doesn't make sense to
        cache the parsed size */
-    const Utility::JsonToken* const gltfBufferByteLength = gltfBuffer.find("byteLength"_s);
+    const Utility::JsonIterator gltfBufferByteLength = gltfBuffer.find("byteLength"_s);
     if(!gltfBufferByteLength || !_d->gltf->parseSize(*gltfBufferByteLength)) {
         Error{} << errorPrefix << "buffer" << bufferId
             << "has missing or invalid byteLength property";
@@ -387,7 +387,7 @@ Containers::Optional<Containers::ArrayView<const char>> GltfImporter::parseBuffe
     }
 
     Containers::ArrayView<const char> view;
-    if(const Utility::JsonToken* gltfBufferUri = gltfBuffer.find("uri"_s)) {
+    if(const Utility::JsonIterator gltfBufferUri = gltfBuffer.find("uri"_s)) {
         if(!_d->gltf->parseString(*gltfBufferUri)) {
             Error{} << errorPrefix << "buffer" << bufferId << "has invalid uri property";
             return {};
@@ -432,8 +432,8 @@ Containers::Optional<GltfImporter::BufferView> GltfImporter::parseBufferView(con
     if(storage)
         return storage;
 
-    const Utility::JsonToken& gltfBufferView = _d->gltfBufferViews[bufferViewId];
-    const Utility::JsonToken* const gltfBufferId = gltfBufferView.find("buffer"_s);
+    const Utility::JsonToken gltfBufferView{*_d->gltf, _d->gltfBufferViews[bufferViewId]};
+    const Utility::JsonIterator gltfBufferId = gltfBufferView.find("buffer"_s);
     if(!gltfBufferId || !(_d->gltf->parseUnsignedInt(*gltfBufferId))) {
         Error{} << errorPrefix << "buffer view" << bufferViewId
             << "has missing or invalid buffer property";
@@ -447,13 +447,13 @@ Containers::Optional<GltfImporter::BufferView> GltfImporter::parseBufferView(con
         return {};
 
     /* Byte offset is optional, defaulting to 0 */
-    const Utility::JsonToken* const gltfByteOffset = gltfBufferView.find("byteOffset"_s);
+    const Utility::JsonIterator gltfByteOffset = gltfBufferView.find("byteOffset"_s);
     if(gltfByteOffset && !_d->gltf->parseSize(*gltfByteOffset)) {
         Error{} << errorPrefix << "buffer view" << bufferViewId << "has invalid byteOffset property";
         return {};
     }
 
-    const Utility::JsonToken* const gltfByteLength = gltfBufferView.find("byteLength"_s);
+    const Utility::JsonIterator gltfByteLength = gltfBufferView.find("byteLength"_s);
     if(!gltfByteLength || !_d->gltf->parseSize(*gltfByteLength)) {
         Error{} << errorPrefix << "buffer view" << bufferViewId << "has missing or invalid byteLength property";
         return {};
@@ -462,7 +462,7 @@ Containers::Optional<GltfImporter::BufferView> GltfImporter::parseBufferView(con
     /* Byte stride is optional, if not set it's tightly packed. Assuming it's
        not larger than 4 GB -- glTF itself has the limit much lower (252, heh),
        but we don't really need to go that low. */
-    const Utility::JsonToken* const gltfByteStride = gltfBufferView.find("byteStride"_s);
+    const Utility::JsonIterator gltfByteStride = gltfBufferView.find("byteStride"_s);
     if(gltfByteStride && !_d->gltf->parseUnsignedInt(*gltfByteStride)) {
         Error{} << errorPrefix << "buffer view" << bufferViewId << "has invalid byteStride property";
         return {};
@@ -496,12 +496,12 @@ Containers::Optional<GltfImporter::Accessor> GltfImporter::parseAccessor(const c
     if(storage)
         return storage;
 
-    const Utility::JsonToken& gltfAccessor = _d->gltfAccessors[accessorId];
+    const Utility::JsonToken gltfAccessor{*_d->gltf, _d->gltfAccessors[accessorId]};
 
     /** @todo Validate alignment rules, calculate correct stride in accessorView():
         https://www.khronos.org/registry/glTF/specs/2.0/glTF-2.0.html#data-alignment */
 
-    const Utility::JsonToken* const gltfAccessorComponentType = gltfAccessor.find("componentType"_s);
+    const Utility::JsonIterator gltfAccessorComponentType = gltfAccessor.find("componentType"_s);
     if(!gltfAccessorComponentType || !_d->gltf->parseUnsignedInt(*gltfAccessorComponentType)) {
         Error{} << errorPrefix << "accessor" << accessorId << "has missing or invalid componentType property";
         return {};
@@ -532,14 +532,14 @@ Containers::Optional<GltfImporter::Accessor> GltfImporter::parseAccessor(const c
             return {};
     }
 
-    const Utility::JsonToken* const gltfAccessorCount = gltfAccessor.find("count"_s);
+    const Utility::JsonIterator gltfAccessorCount = gltfAccessor.find("count"_s);
     if(!gltfAccessorCount || !_d->gltf->parseSize(*gltfAccessorCount)) {
         Error{} << errorPrefix << "accessor" << accessorId << "has missing or invalid count property";
         return {};
     }
     const std::size_t count = gltfAccessorCount->asSize();
 
-    const Utility::JsonToken* const gltfAccessorType = gltfAccessor.find("type"_s);
+    const Utility::JsonIterator gltfAccessorType = gltfAccessor.find("type"_s);
     if(!gltfAccessorType || !_d->gltf->parseString(*gltfAccessorType)) {
         Error{} << errorPrefix << "accessor" << accessorId << "has missing or invalid type property";
         return {};
@@ -570,7 +570,7 @@ Containers::Optional<GltfImporter::Accessor> GltfImporter::parseAccessor(const c
     }
 
     /* Normalized is optional, defaulting to false */
-    const Utility::JsonToken* const gltfAccessorNormalized = gltfAccessor.find("normalized"_s);
+    const Utility::JsonIterator gltfAccessorNormalized = gltfAccessor.find("normalized"_s);
     if(gltfAccessorNormalized && !_d->gltf->parseBool(*gltfAccessorNormalized)) {
         Error{} << errorPrefix << "accessor" << accessorId << "has invalid normalized property";
         return {};
@@ -610,7 +610,7 @@ Containers::Optional<GltfImporter::Accessor> GltfImporter::parseAccessor(const c
     /* Buffer views are optional in accessors, we're supposed to fill the view
        with zeros if they're missing */
     Containers::StridedArrayView2D<const char> data;
-    const Utility::JsonToken* const gltfBufferViewId = gltfAccessor.find("bufferView"_s);
+    const Utility::JsonIterator gltfBufferViewId = gltfAccessor.find("bufferView"_s);
     if(gltfBufferViewId) {
         if(!_d->gltf->parseUnsignedInt(*gltfBufferViewId)) {
             Error{} << errorPrefix << "accessor" << accessorId << "has invalid bufferView property";
@@ -633,7 +633,7 @@ Containers::Optional<GltfImporter::Accessor> GltfImporter::parseAccessor(const c
            ideally parse & check it always, not just when bufferView is
            present. But this is a loader, not validator, so I don't see a
            practical reason for doing that. */
-        const Utility::JsonToken* const gltfAccessorByteOffset = gltfAccessor.find("byteOffset"_s);
+        const Utility::JsonIterator gltfAccessorByteOffset = gltfAccessor.find("byteOffset"_s);
         if(gltfAccessorByteOffset && !_d->gltf->parseSize(*gltfAccessorByteOffset)) {
             Error{} << errorPrefix << "accessor" << accessorId << "has invalid byteOffset property";
             return {};
@@ -673,14 +673,14 @@ Containers::Optional<GltfImporter::Accessor> GltfImporter::parseAccessor(const c
 
     /* Sparse accessor, if any */
     Containers::StridedArrayView2D<const char> sparseIndices, sparseValues;
-    if(const Utility::JsonToken* const gltfSparse = gltfAccessor.find("sparse"_s)) {
+    if(const Utility::JsonIterator gltfSparse = gltfAccessor.find("sparse"_s)) {
         if(!_d->gltf->parseObject(*gltfSparse)) {
             Error{} << errorPrefix << "accessor" << accessorId << "has invalid sparse property";
             return {};
         }
 
         /* Count of sparse values */
-        const Utility::JsonToken* const gltfSparseCount = gltfSparse->find("count"_s);
+        const Utility::JsonIterator gltfSparseCount = gltfSparse->find("count"_s);
         if(!gltfSparseCount || !_d->gltf->parseSize(*gltfSparseCount)) {
             Error{} << errorPrefix << "accessor" << accessorId << "has missing or invalid sparse count property";
             return {};
@@ -693,13 +693,13 @@ Containers::Optional<GltfImporter::Accessor> GltfImporter::parseAccessor(const c
         }
 
         /* Sparse indices */
-        const Utility::JsonToken* const gltfSparseIndices = gltfSparse->find("indices");
+        const Utility::JsonIterator gltfSparseIndices = gltfSparse->find("indices");
         if(!gltfSparseIndices || !_d->gltf->parseObject(*gltfSparseIndices)) {
             Error{} << errorPrefix << "accessor" << accessorId << "has missing or invalid sparse indices property";
             return {};
         }
 
-        const Utility::JsonToken* const gltfSparseIndicesBufferViewId = gltfSparseIndices->find("bufferView");
+        const Utility::JsonIterator gltfSparseIndicesBufferViewId = gltfSparseIndices->find("bufferView");
         if(!gltfSparseIndicesBufferViewId || !_d->gltf->parseUnsignedInt(*gltfSparseIndicesBufferViewId)) {
             Error{} << errorPrefix << "accessor" << accessorId << "has missing or invalid sparse indices bufferView property";
             return {};
@@ -721,13 +721,13 @@ Containers::Optional<GltfImporter::Accessor> GltfImporter::parseAccessor(const c
         }
 
         /* Byte offset is optional, defaulting to 0 */
-        const Utility::JsonToken* const gltfSparseIndicesByteOffset = gltfSparseIndices->find("byteOffset"_s);
+        const Utility::JsonIterator gltfSparseIndicesByteOffset = gltfSparseIndices->find("byteOffset"_s);
         if(gltfSparseIndicesByteOffset && !_d->gltf->parseSize(*gltfSparseIndicesByteOffset)) {
             Error{} << errorPrefix << "accessor" << accessorId << "has invalid sparse indices byteOffset property";
             return {};
         }
 
-        const Utility::JsonToken* const gltfSparseIndicesComponentType = gltfSparseIndices->find("componentType"_s);
+        const Utility::JsonIterator gltfSparseIndicesComponentType = gltfSparseIndices->find("componentType"_s);
         if(!gltfSparseIndicesComponentType || !_d->gltf->parseUnsignedInt(*gltfSparseIndicesComponentType)) {
             Error{} << errorPrefix << "accessor" << accessorId << "has missing or invalid sparse indices componentType property";
             return {};
@@ -756,13 +756,13 @@ Containers::Optional<GltfImporter::Accessor> GltfImporter::parseAccessor(const c
         }
 
         /* Sparse values */
-        const Utility::JsonToken* const gltfSparseValues = gltfSparse->find("values");
+        const Utility::JsonIterator gltfSparseValues = gltfSparse->find("values");
         if(!gltfSparseValues || !_d->gltf->parseObject(*gltfSparseValues)) {
             Error{} << errorPrefix << "accessor" << accessorId << "has missing or invalid sparse values property";
             return {};
         }
 
-        const Utility::JsonToken* const gltfSparseValuesBufferViewId = gltfSparseValues->find("bufferView");
+        const Utility::JsonIterator gltfSparseValuesBufferViewId = gltfSparseValues->find("bufferView");
         if(!gltfSparseValuesBufferViewId || !_d->gltf->parseUnsignedInt(*gltfSparseValuesBufferViewId)) {
             Error{} << errorPrefix << "accessor" << accessorId << "has missing or invalid sparse values bufferView property";
             return {};
@@ -783,7 +783,7 @@ Containers::Optional<GltfImporter::Accessor> GltfImporter::parseAccessor(const c
         }
 
         /* Byte offset is optional, defaulting to 0 */
-        const Utility::JsonToken* const gltfSparseValuesByteOffset = gltfSparseValues->find("byteOffset"_s);
+        const Utility::JsonIterator gltfSparseValuesByteOffset = gltfSparseValues->find("byteOffset"_s);
         if(gltfSparseValuesByteOffset && !_d->gltf->parseSize(*gltfSparseValuesByteOffset)) {
             Error{} << errorPrefix << "accessor" << accessorId << "has invalid sparse values byteOffset property";
             return {};
@@ -901,7 +901,7 @@ bool isRecognized2DTextureExtension(Containers::StringView name) {
 }
 
 /* Used by doOpenData() but it's recursive and so it can't be a local lambda */
-bool discoverSceneExtraFields(Utility::Json& gltf, std::unordered_map<Containers::String, SceneField>& sceneFieldsForName, Containers::Array<Containers::Triple<Containers::StringView, SceneFieldType, SceneFieldFlags>>& sceneFieldNamesTypesFlags, const Utility::ConfigurationGroup* const customSceneFieldTypeConfiguration, UnsignedInt nodeI, const Containers::StringView key, const Utility::JsonToken& gltfExtraValue) {
+bool discoverSceneExtraFields(Utility::Json& gltf, std::unordered_map<Containers::String, SceneField>& sceneFieldsForName, Containers::Array<Containers::Triple<Containers::StringView, SceneFieldType, SceneFieldFlags>>& sceneFieldNamesTypesFlags, const Utility::ConfigurationGroup* const customSceneFieldTypeConfiguration, UnsignedInt nodeI, const Containers::StringView key, Utility::JsonToken gltfExtraValue) {
     /* If the value is an object, recurse into it. The field name will then be
        all object keys concatenated with dots. */
     if(gltfExtraValue.type() == Utility::JsonToken::Type::Object) {
@@ -1092,18 +1092,18 @@ void GltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags da
     }
 
     /* Check version */
-    const Utility::JsonToken* const gltfAsset = gltf->root().find("asset"_s);
+    const Utility::JsonIterator gltfAsset = gltf->root().find("asset"_s);
     if(!gltfAsset || !gltf->parseObject(*gltfAsset)) {
         Error{} << "Trade::GltfImporter::openData(): missing or invalid asset property";
         return;
     }
-    const Utility::JsonToken* const gltfAssetVersion = gltfAsset->find("version"_s);
+    const Utility::JsonIterator gltfAssetVersion = gltfAsset->find("version"_s);
     if(!gltfAssetVersion || !gltf->parseString(*gltfAssetVersion)) {
         Error{} << "Trade::GltfImporter::openData(): missing or invalid asset version property";
         return;
     }
     /* Min version is optional */
-    const Utility::JsonToken* const gltfAssetMinVersion = gltfAsset->find("minVersion"_s);
+    const Utility::JsonIterator gltfAssetMinVersion = gltfAsset->find("minVersion"_s);
     if(gltfAssetMinVersion && !gltf->parseString(*gltfAssetMinVersion)) {
         Error{} << "Trade::GltfImporter::openData(): invalid asset minVersion property";
         return;
@@ -1123,7 +1123,7 @@ void GltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags da
 
     /* Check used extensions for any experimental feature that's off by
        default and hint at it */
-    if(const Utility::JsonToken* gltfExtensionsUsed = gltf->root().find("extensionsUsed"_s)) {
+    if(const Utility::JsonIterator gltfExtensionsUsed = gltf->root().find("extensionsUsed"_s)) {
         if(!gltf->parseArray(*gltfExtensionsUsed)) {
             Error{} << "Trade::GltfImporter::openData(): invalid extensionsUsed property";
             return;
@@ -1142,7 +1142,7 @@ void GltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags da
 
     /* Check required extensions. Every extension in extensionsRequired is
        required to "load and/or render an asset". */
-    if(const Utility::JsonToken* gltfExtensionsRequired = gltf->root().find("extensionsRequired"_s)) {
+    if(const Utility::JsonIterator gltfExtensionsRequired = gltf->root().find("extensionsRequired"_s)) {
         if(!gltf->parseArray(*gltfExtensionsRequired)) {
             Error{} << "Trade::GltfImporter::openData(): invalid extensionsRequired property";
             return;
@@ -1199,8 +1199,8 @@ void GltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags da
     }
 
     /* Populate arrays of glTF objects */
-    const auto populate = [](Utility::Json& gltf, Containers::Array<Containers::Reference<const Utility::JsonToken>>& out, Containers::StringView key, const char* item) {
-        if(const Utility::JsonToken* const gltfObjects = gltf.root().find(key)) {
+    const auto populate = [](Utility::Json& gltf, Containers::Array<Containers::Reference<const Utility::JsonTokenData>>& out, Containers::StringView key, const char* item) {
+        if(const Utility::JsonIterator gltfObjects = gltf.root().find(key)) {
             if(!gltf.parseArray(*gltfObjects)) {
                 Error{} << "Trade::GltfImporter::openData(): invalid" << key << "property";
                 return false;
@@ -1211,14 +1211,14 @@ void GltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags da
                     return false;
                 }
 
-                arrayAppend(out, gltfObject.value());
+                arrayAppend(out, gltfObject.value().token());
             }
         }
 
         return true;
     };
-    const auto populateWithName = [](Utility::Json& gltf, const Utility::JsonToken& root, Containers::Array<Containers::Pair<Containers::Reference<const Utility::JsonToken>, Containers::StringView>>& out, Containers::StringView key, const char* item) {
-        if(const Utility::JsonToken* const gltfObjects = root.find(key)) {
+    const auto populateWithName = [](Utility::Json& gltf, Utility::JsonToken root, Containers::Array<Containers::Pair<Containers::Reference<const Utility::JsonTokenData>, Containers::StringView>>& out, Containers::StringView key, const char* item) {
+        if(const Utility::JsonIterator gltfObjects = root.find(key)) {
             if(!gltf.parseArray(*gltfObjects)) {
                 Error{} << "Trade::GltfImporter::openData(): invalid" << key << "property";
                 return false;
@@ -1229,25 +1229,25 @@ void GltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags da
                     return false;
                 }
 
-                const Utility::JsonToken* const gltfName = gltfObject.value().find("name"_s);
+                const Utility::JsonIterator gltfName = gltfObject.value().find("name"_s);
                 if(gltfName && !gltf.parseString(*gltfName)) {
                     Error{} << "Trade::GltfImporter::openData(): invalid" << item << gltfObject.index() << "name property";
                     return false;
                 }
 
-                arrayAppend(out, InPlaceInit, gltfObject.value(), gltfName ? gltfName->asString() : Containers::StringView{});
+                arrayAppend(out, InPlaceInit, gltfObject.value().token(), gltfName ? gltfName->asString() : Containers::StringView{});
             }
         }
 
         return true;
     };
-    const auto populateExtensionWithName = [](Utility::Json& gltf, const Utility::JsonToken& extension, Containers::Array<Containers::Pair<Containers::Reference<const Utility::JsonToken>, Containers::StringView>>& out, Containers::StringView key, const char* item) {
+    const auto populateExtensionWithName = [](Utility::Json& gltf, Utility::JsonToken extension, Containers::Array<Containers::Pair<Containers::Reference<const Utility::JsonTokenData>, Containers::StringView>>& out, Containers::StringView key, const char* item) {
         if(!gltf.parseObject(extension)) {
             Error{} << "Trade::GltfImporter::openData(): invalid" << extension.parent()->asString() << "extension";
             return false;
         }
 
-        if(const Utility::JsonToken* const gltfObjects = extension.find(key)) {
+        if(const Utility::JsonIterator gltfObjects = extension.find(key)) {
             if(!gltf.parseArray(*gltfObjects)) {
                 Error{} << "Trade::GltfImporter::openData(): invalid" << extension.parent()->asString() << key << "property";
                 return false;
@@ -1258,13 +1258,13 @@ void GltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags da
                     return false;
                 }
 
-                const Utility::JsonToken* const gltfName = gltfObject.value().find("name"_s);
+                const Utility::JsonIterator gltfName = gltfObject.value().find("name"_s);
                 if(gltfName && !gltf.parseString(*gltfName)) {
                     Error{} << "Trade::GltfImporter::openData(): invalid" << extension.parent()->asString() << item << gltfObject.index() << "name property";
                     return false;
                 }
 
-                arrayAppend(out, InPlaceInit, gltfObject.value(), gltfName ? gltfName->asString() : Containers::StringView{});
+                arrayAppend(out, InPlaceInit, gltfObject.value().token(), gltfName ? gltfName->asString() : Containers::StringView{});
             }
         }
 
@@ -1289,14 +1289,14 @@ void GltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags da
         return;
 
     /* Extensions */
-    if(const Utility::JsonToken* const gltfExtensions = gltf->root().find("extensions"_s)) {
+    if(const Utility::JsonIterator gltfExtensions = gltf->root().find("extensions"_s)) {
         if(!gltf->parseObject(*gltfExtensions)) {
             Error{} << "Trade::GltfImporter::openData(): invalid extensions property";
             return;
         }
 
         /* Lights */
-        if(const Utility::JsonToken* const gltfKhrLightsPunctual = gltfExtensions->find("KHR_lights_punctual"_s)) {
+        if(const Utility::JsonIterator gltfKhrLightsPunctual = gltfExtensions->find("KHR_lights_punctual"_s)) {
             /* This doesn't check that the lights property is actually there
                (which is required by the spec), but that's fine -- if it'd ever
                get to core glTF, it would become optional */
@@ -1319,7 +1319,7 @@ void GltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags da
 
         /* Mark all nodes referenced by a scene as root nodes (-1) */
         for(std::size_t i = 0; i != _d->gltfScenes.size(); ++i) {
-            const Utility::JsonToken* const gltfSceneNodes = _d->gltfScenes[i].first()->find("nodes"_s);
+            const Utility::JsonIterator gltfSceneNodes = Utility::JsonToken{*gltf, _d->gltfScenes[i].first()}.find("nodes"_s);
             if(!gltfSceneNodes)
                 continue;
 
@@ -1344,7 +1344,7 @@ void GltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags da
         /* Go through the node hierarchy and mark nested children, discovering
            potential conflicting parent nodes */
         for(std::size_t i = 0; i != _d->gltfNodes.size(); ++i) {
-            const Utility::JsonToken* const gltfNodeChildren = _d->gltfNodes[i].first()->find("children"_s);
+            const Utility::JsonIterator gltfNodeChildren = Utility::JsonToken{*gltf, _d->gltfNodes[i].first()}.find("children"_s);
             if(!gltfNodeChildren)
                 continue;
 
@@ -1394,8 +1394,8 @@ void GltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags da
     /* Go through all nodes and collect names of extra properties for custom
        scene fields */
     for(std::size_t i = 0; i != _d->gltfNodes.size(); ++i) {
-        const Utility::JsonToken& gltfNode = _d->gltfNodes[i].first();
-        const Utility::JsonToken* const gltfExtras = gltfNode.find("extras"_s);
+        const Utility::JsonToken gltfNode{*gltf, _d->gltfNodes[i].first()};
+        const Utility::JsonIterator gltfExtras = gltfNode.find("extras"_s);
         /* Silently skip also if extras isn't an object -- the error will be
            printed when importing the actual scene containing this node */
         if(!gltfExtras || gltfExtras->type() != Utility::JsonToken::Type::Object)
@@ -1425,7 +1425,7 @@ void GltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags da
     _d->meshSizeOffsets = Containers::Array<std::size_t>{_d->gltfMeshes.size() + 1};
     _d->meshSizeOffsets[0] = 0;
     for(std::size_t i = 0; i != _d->gltfMeshes.size(); ++i) {
-        const Utility::JsonToken* gltfMeshPrimitives = _d->gltfMeshes[i].first()->find("primitives"_s);
+        const Utility::JsonIterator gltfMeshPrimitives = Utility::JsonToken{*gltf, *_d->gltfMeshes[i].first()}.find("primitives"_s);
         if(!gltfMeshPrimitives || !gltf->parseArray(*gltfMeshPrimitives)) {
             Error{} << "Trade::GltfImporter::openData(): missing or invalid primitives property in mesh" << i;
             return;
@@ -1444,7 +1444,7 @@ void GltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags da
                 return;
             }
 
-            arrayAppend(_d->gltfMeshPrimitiveMap, InPlaceInit, i, gltfPrimitive.value());
+            arrayAppend(_d->gltfMeshPrimitiveMap, InPlaceInit, i, gltfPrimitive.value().token());
         }
 
         _d->meshSizeOffsets[i + 1] = _d->gltfMeshPrimitiveMap.size();
@@ -1457,7 +1457,7 @@ void GltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags da
     if(configuration().value<bool>("textureCoordinateYFlipInMaterial"))
         _d->textureCoordinateYFlipInMaterial = true;
     for(std::size_t i = 0; i != _d->gltfMeshPrimitiveMap.size(); ++i) {
-        const auto collectCustomAttributesDecideTextureCoordinateYFlip = [this, i](Utility::Json& gltf, const Utility::JsonToken& gltfAttributes, Int morphTargetId) {
+        const auto collectCustomAttributesDecideTextureCoordinateYFlip = [this, i](Utility::Json& gltf, Utility::JsonToken gltfAttributes, Int morphTargetId) {
             for(Utility::JsonObjectItem gltfAttribute: gltfAttributes.asObject()) {
                 /* Decide about texture coordinate Y flipping if not set
                    already */
@@ -1491,16 +1491,16 @@ void GltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags da
                         return false;
                     }
 
-                    const Utility::JsonToken& gltfAccessor = _d->gltfAccessors[gltfAttribute.value().asUnsignedInt()];
+                    const Utility::JsonToken gltfAccessor{gltf, _d->gltfAccessors[gltfAttribute.value().asUnsignedInt()]};
 
-                    const Utility::JsonToken* const gltfAccessorComponentType = gltfAccessor.find("componentType"_s);
+                    const Utility::JsonIterator gltfAccessorComponentType = gltfAccessor.find("componentType"_s);
                     if(!gltfAccessorComponentType || !gltf.parseUnsignedInt(*gltfAccessorComponentType)) {
                         Error{} << "Trade::GltfImporter::openData(): accessor" << gltfAttribute.value().asUnsignedInt() << "has missing or invalid componentType property";
                         return false;
                     }
 
                     /* Normalized is optional, defaulting to false */
-                    const Utility::JsonToken* const gltfAccessorNormalized = gltfAccessor.find("normalized"_s);
+                    const Utility::JsonIterator gltfAccessorNormalized = gltfAccessor.find("normalized"_s);
                     if(gltfAccessorNormalized && !gltf.parseBool(*gltfAccessorNormalized)) {
                         Error{} << "Trade::GltfImporter::openData(): accessor" << gltfAttribute.value().asUnsignedInt() << "has invalid normalized property";
                         return false;
@@ -1537,12 +1537,12 @@ void GltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags da
             return true;
         };
 
-        const Utility::JsonToken& gltfPrimitive = _d->gltfMeshPrimitiveMap[i].second();
+        const Utility::JsonToken gltfPrimitive{*gltf, _d->gltfMeshPrimitiveMap[i].second()};
 
         /* The glTF spec requires a primitive to define an attribute property
            with at least one attribute, but we're fine without here. Stricter
            checks, if any, are done in doMesh(). */
-        if(const Utility::JsonToken* gltfAttributes = gltfPrimitive.find("attributes"_s)) {
+        if(const Utility::JsonIterator gltfAttributes = gltfPrimitive.find("attributes"_s)) {
             if(!gltf->parseObject(*gltfAttributes)) {
                 Error{} << "Trade::GltfImporter::openData(): invalid primitive attributes property in mesh" << _d->gltfMeshPrimitiveMap[i].first();
                 return;
@@ -1554,7 +1554,7 @@ void GltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags da
 
         /* Go through any morph targets, collecting custom attributes and
            deciding about texture coordinate Y-flip for those as well */
-        if(const Utility::JsonToken* gltfTargets = gltfPrimitive.find("targets"_s)) {
+        if(const Utility::JsonIterator gltfTargets = gltfPrimitive.find("targets"_s)) {
             if(!gltf->parseArray(*gltfTargets)) {
                 Error{} << "Trade::GltfImporter::openData(): invalid primitive targets property in mesh" << _d->gltfMeshPrimitiveMap[i].first();
                 return;
@@ -1583,9 +1583,9 @@ void GltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags da
         Containers::Array<Containers::Pair<UnsignedInt, UnsignedInt>> imageDimensionsAssociatedArrayTextures{ValueInit, _d->gltfImages.size()};
         _d->uniqueTextureForGltfTexture = Containers::Array<UnsignedInt>{NoInit, _d->gltfTextures.size()};
         for(UnsignedInt i = 0; i != _d->gltfTextures.size(); ++i) {
-            const Utility::JsonToken& gltfTexture = _d->gltfTextures[i].first();
+            const Utility::JsonToken gltfTexture{*gltf, _d->gltfTextures[i].first()};
 
-            const Utility::JsonToken* gltfSource = nullptr;
+            Utility::JsonIterator gltfSource;
             bool is2DArrayLayer = false;
 
             /* If the experimentalKhrTextureKtx option is disabled, there's
@@ -1594,7 +1594,7 @@ void GltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags da
             if(configuration().value<bool>("experimentalKhrTextureKtx")) {
                 /* As in doTexture(), pick the first available image, assuming
                    that extension order indicates a preference... */
-                if(const Utility::JsonToken* const gltfTextureExtensions = gltfTexture.find("extensions"_s)) {
+                if(const Utility::JsonIterator gltfTextureExtensions = gltfTexture.find("extensions"_s)) {
                     if(!gltf->parseObject(*gltfTextureExtensions)) {
                         Error{} << "Trade::GltfImporter::openData(): invalid extensions property in texture" << i;
                         return;
@@ -1714,7 +1714,7 @@ void GltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags da
     }
 
     /* Parse default scene, as we can't fail in doDefaultScene() */
-    if(const Utility::JsonToken* gltfScene = gltf->root().find("scene"_s)) {
+    if(const Utility::JsonIterator gltfScene = gltf->root().find("scene"_s)) {
         if(!gltf->parseUnsignedInt(*gltfScene)) {
             Error{} << "Trade::GltfImporter::openData(): invalid scene property";
             return;
@@ -1805,7 +1805,7 @@ Containers::Optional<AnimationData> GltfImporter::doAnimation(UnsignedInt id) {
     const std::size_t animationEnd =
         configuration().value<bool>("mergeAnimationClips") ? _d->gltfAnimations.size() : id + 1;
 
-    const Containers::StridedArrayView1D<Containers::Reference<const Utility::JsonToken>> gltfAnimations = stridedArrayView(_d->gltfAnimations.slice(animationBegin, animationEnd)).slice(&decltype(_d->gltfAnimations)::Type::first);
+    const Containers::StridedArrayView1D<Containers::Reference<const Utility::JsonTokenData>> gltfAnimations = stridedArrayView(_d->gltfAnimations.slice(animationBegin, animationEnd)).slice(&decltype(_d->gltfAnimations)::Type::first);
 
     /* Parsed data for samplers in each processed animation. Stored in a
        contiguous array, data for sampler `j` of animation `i` is at
@@ -1831,8 +1831,8 @@ Containers::Optional<AnimationData> GltfImporter::doAnimation(UnsignedInt id) {
     std::unordered_map<UnsignedInt, SamplerData> samplerData;
     std::size_t dataSize = 0;
     for(std::size_t i = 0; i != gltfAnimations.size(); ++i) {
-        const Utility::JsonToken& gltfAnimation = gltfAnimations[i];
-        const Utility::JsonToken* const gltfAnimationSamplers = gltfAnimation.find("samplers"_s);
+        const Utility::JsonToken gltfAnimation{*_d->gltf, gltfAnimations[i]};
+        const Utility::JsonIterator gltfAnimationSamplers = gltfAnimation.find("samplers"_s);
         if(!gltfAnimationSamplers || !_d->gltf->parseArray(*gltfAnimationSamplers)) {
             Error{} << "Trade::GltfImporter::animation(): missing or invalid samplers property";
             return {};
@@ -1847,20 +1847,20 @@ Containers::Optional<AnimationData> GltfImporter::doAnimation(UnsignedInt id) {
                 return {};
             }
 
-            const Utility::JsonToken* const gltfAnimationSamplerInput = gltfAnimationSampler.value().find("input"_s);
+            const Utility::JsonIterator gltfAnimationSamplerInput = gltfAnimationSampler.value().find("input"_s);
             if(!gltfAnimationSamplerInput || !_d->gltf->parseUnsignedInt(*gltfAnimationSamplerInput)) {
                 Error{} << "Trade::GltfImporter::animation(): missing or invalid sampler" << gltfAnimationSampler.index() << "input property";
                 return {};
             }
 
-            const Utility::JsonToken* const gltfAnimationSamplerOutput = gltfAnimationSampler.value().find("output"_s);
+            const Utility::JsonIterator gltfAnimationSamplerOutput = gltfAnimationSampler.value().find("output"_s);
             if(!gltfAnimationSamplerOutput || !_d->gltf->parseUnsignedInt(*gltfAnimationSamplerOutput)) {
                 Error{} << "Trade::GltfImporter::animation(): missing or invalid sampler" << gltfAnimationSampler.index() << "output property";
                 return {};
             }
 
             /* Interpolation is optional, LINEAR if not present */
-            const Utility::JsonToken* const gltfAnimationSamplerInterpolation = gltfAnimationSampler.value().find("interpolation"_s);
+            const Utility::JsonIterator gltfAnimationSamplerInterpolation = gltfAnimationSampler.value().find("interpolation"_s);
             if(gltfAnimationSamplerInterpolation &&  !_d->gltf->parseString(*gltfAnimationSamplerInterpolation)) {
                 Error{} << "Trade::GltfImporter::animation(): invalid sampler" << gltfAnimationSampler.index() << "interpolation property";
                 return {};
@@ -1956,8 +1956,9 @@ Containers::Optional<AnimationData> GltfImporter::doAnimation(UnsignedInt id) {
     /* Calculate total track count. If merging all animations together, this is
        the sum of all clip track counts. */
     std::size_t trackCount = 0;
-    for(const Utility::JsonToken& gltfAnimation: gltfAnimations) {
-        const Utility::JsonToken* const gltfAnimationChannels = gltfAnimation.find("channels"_s);
+    for(const Utility::JsonTokenData& gltfAnimationData: gltfAnimations) {
+        const Utility::JsonToken gltfAnimation{*_d->gltf, gltfAnimationData};
+        const Utility::JsonIterator gltfAnimationChannels = gltfAnimation.find("channels"_s);
         if(!gltfAnimationChannels || !_d->gltf->parseArray(*gltfAnimationChannels)) {
             Error{} << "Trade::GltfImporter::animation(): missing or invalid channels property";
             return {};
@@ -1969,7 +1970,7 @@ Containers::Optional<AnimationData> GltfImporter::doAnimation(UnsignedInt id) {
                 return {};
             }
 
-            const Utility::JsonToken* const gltfAnimationChannelTarget = gltfAnimationChannel.value().find("target"_s);
+            const Utility::JsonIterator gltfAnimationChannelTarget = gltfAnimationChannel.value().find("target"_s);
             if(!gltfAnimationChannelTarget || !_d->gltf->parseObject(*gltfAnimationChannelTarget)) {
                 Error{} << "Trade::GltfImporter::animation(): missing or invalid channel" << gltfAnimationChannel.index() << "target property";
                 return {};
@@ -1988,10 +1989,10 @@ Containers::Optional<AnimationData> GltfImporter::doAnimation(UnsignedInt id) {
     std::size_t trackId = 0;
     Containers::Array<Trade::AnimationTrackData> tracks{trackCount};
     for(std::size_t i = 0; i != gltfAnimations.size(); ++i) {
-        const Utility::JsonToken& gltfAnimation = gltfAnimations[i];
+        const Utility::JsonToken gltfAnimation{*_d->gltf, gltfAnimations[i]};
         /* Channels parsed and checked above already, so can go directly here */
         for(const Utility::JsonArrayItem gltfAnimationChannel: gltfAnimation["channels"_s].asArray()) {
-            const Utility::JsonToken* const gltfSampler = gltfAnimationChannel.value().find("sampler"_s);
+            const Utility::JsonIterator gltfSampler = gltfAnimationChannel.value().find("sampler"_s);
             if(!gltfSampler || !_d->gltf->parseUnsignedInt(*gltfSampler)) {
                 Error{} << "Trade::GltfImporter::animation(): missing or invalid channel" << gltfAnimationChannel.index() << "sampler property";
                 return {};
@@ -2007,8 +2008,8 @@ Containers::Optional<AnimationData> GltfImporter::doAnimation(UnsignedInt id) {
                tinygltf's behavior, currently there are no extensions for
                animating materials or anything else so there's no point in
                importing such animations. */
-            const Utility::JsonToken& gltfTarget = gltfAnimationChannel.value()["target"_s];
-            const Utility::JsonToken* gltfTargetNode = gltfTarget.find("node"_s);
+            const Utility::JsonToken gltfTarget = gltfAnimationChannel.value()["target"_s];
+            const Utility::JsonIterator gltfTargetNode = gltfTarget.find("node"_s);
             /** @todo revisit once KHR_animation2 is a thing:
                 https://github.com/KhronosGroup/glTF/pull/2033 */
             if(!gltfTargetNode)
@@ -2063,7 +2064,7 @@ Containers::Optional<AnimationData> GltfImporter::doAnimation(UnsignedInt id) {
                 return {};
             }
 
-            const Utility::JsonToken* const gltfTargetPath = gltfTarget.find("path"_s);
+            const Utility::JsonIterator gltfTargetPath = gltfTarget.find("path"_s);
             if(!gltfTargetPath || !_d->gltf->parseString(*gltfTargetPath)) {
                 Error{} << "Trade::GltfImporter::animation(): missing or invalid channel" << gltfAnimationChannel.index() << "target path property";
                 return {};
@@ -2232,9 +2233,9 @@ Containers::String GltfImporter::doCameraName(const UnsignedInt id) {
 }
 
 Containers::Optional<CameraData> GltfImporter::doCamera(const UnsignedInt id) {
-    const Utility::JsonToken& gltfCamera = _d->gltfCameras[id].first();
+    const Utility::JsonToken gltfCamera{*_d->gltf, _d->gltfCameras[id].first()};
 
-    const Utility::JsonToken* const gltfType = gltfCamera.find("type"_s);
+    const Utility::JsonIterator gltfType = gltfCamera.find("type"_s);
     if(!gltfType || !_d->gltf->parseString(*gltfType)) {
         Error{} << "Trade::GltfImporter::camera(): missing or invalid type property";
         return {};
@@ -2244,7 +2245,7 @@ Containers::Optional<CameraData> GltfImporter::doCamera(const UnsignedInt id) {
 
     /* Perspective camera */
     if(gltfType->asString() == "perspective"_s) {
-        const Utility::JsonToken* const gltfPerspectiveCamera = gltfCamera.find("perspective"_s);
+        const Utility::JsonIterator gltfPerspectiveCamera = gltfCamera.find("perspective"_s);
         if(!gltfPerspectiveCamera || !_d->gltf->parseObject(*gltfPerspectiveCamera)) {
             Error{} << "Trade::GltfImporter::camera(): missing or invalid perspective property";
             return {};
@@ -2253,7 +2254,7 @@ Containers::Optional<CameraData> GltfImporter::doCamera(const UnsignedInt id) {
         /* Aspect ratio is optional, use 1:1 if not set */
         /** @todo spec says "if not set "aspect ratio of the rendering viewport
             MUST be used", heh, how am I supposed to know that here? */
-        const Utility::JsonToken* const gltfAspectRatio = gltfPerspectiveCamera->find("aspectRatio"_s);
+        const Utility::JsonIterator gltfAspectRatio = gltfPerspectiveCamera->find("aspectRatio"_s);
         if(gltfAspectRatio) {
             if(!_d->gltf->parseFloat(*gltfAspectRatio)) {
                 Error{} << "Trade::GltfImporter::camera(): invalid perspective aspectRatio property";
@@ -2265,7 +2266,7 @@ Containers::Optional<CameraData> GltfImporter::doCamera(const UnsignedInt id) {
             }
         }
 
-        const Utility::JsonToken* const gltfYfov = gltfPerspectiveCamera->find("yfov"_s);
+        const Utility::JsonIterator gltfYfov = gltfPerspectiveCamera->find("yfov"_s);
         if(!gltfYfov || !_d->gltf->parseFloat(*gltfYfov)) {
             Error{} << "Trade::GltfImporter::camera(): missing or invalid perspective yfov property";
             return {};
@@ -2275,7 +2276,7 @@ Containers::Optional<CameraData> GltfImporter::doCamera(const UnsignedInt id) {
             return {};
         }
 
-        const Utility::JsonToken* const gltfZnear = gltfPerspectiveCamera->find("znear"_s);
+        const Utility::JsonIterator gltfZnear = gltfPerspectiveCamera->find("znear"_s);
         if(!gltfZnear || !_d->gltf->parseFloat(*gltfZnear)) {
             Error{} << "Trade::GltfImporter::camera(): missing or invalid perspective znear property";
             return {};
@@ -2287,7 +2288,7 @@ Containers::Optional<CameraData> GltfImporter::doCamera(const UnsignedInt id) {
 
         /* Z far is optional, if not set it's infinity (and yes, JSON has no
            way to represent an infinity, FFS) */
-        const Utility::JsonToken* const gltfZfar = gltfPerspectiveCamera->find("zfar"_s);
+        const Utility::JsonIterator gltfZfar = gltfPerspectiveCamera->find("zfar"_s);
         if(gltfZfar) {
             if(!_d->gltf->parseFloat(*gltfZfar)) {
                 Error{} << "Trade::GltfImporter::camera(): invalid perspective zfar property";
@@ -2305,18 +2306,18 @@ Containers::Optional<CameraData> GltfImporter::doCamera(const UnsignedInt id) {
            create the camera data (instead of passing it the horizontal FoV) */
         const Vector2 size = 2.0f*gltfZnear->asFloat()*Math::tan(gltfYfov->asFloat()*0.5_radf)*Vector2::xScale(aspectRatio);
         const Float far = gltfZfar ? gltfZfar->asFloat() : Constants::inf();
-        return CameraData{CameraType::Perspective3D, size, gltfZnear->asFloat(), far, &gltfCamera};
+        return CameraData{CameraType::Perspective3D, size, gltfZnear->asFloat(), far, &gltfCamera.token()};
     }
 
     /* Orthographic camera */
     if(gltfType->asString() == "orthographic"_s) {
-        const Utility::JsonToken* const gltfOrthographicCamera = gltfCamera.find("orthographic"_s);
+        const Utility::JsonIterator gltfOrthographicCamera = gltfCamera.find("orthographic"_s);
         if(!gltfOrthographicCamera || !_d->gltf->parseObject(*gltfOrthographicCamera)) {
             Error{} << "Trade::GltfImporter::camera(): missing or invalid orthographic property";
             return {};
         }
 
-        const Utility::JsonToken* const gltfXmag = gltfOrthographicCamera->find("xmag"_s);
+        const Utility::JsonIterator gltfXmag = gltfOrthographicCamera->find("xmag"_s);
         if(!gltfXmag || !_d->gltf->parseFloat(*gltfXmag)) {
             Error{} << "Trade::GltfImporter::camera(): missing or invalid orthographic xmag property";
             return {};
@@ -2326,7 +2327,7 @@ Containers::Optional<CameraData> GltfImporter::doCamera(const UnsignedInt id) {
             return {};
         }
 
-        const Utility::JsonToken* const gltfYmag = gltfOrthographicCamera->find("ymag"_s);
+        const Utility::JsonIterator gltfYmag = gltfOrthographicCamera->find("ymag"_s);
         if(!gltfYmag || !_d->gltf->parseFloat(*gltfYmag)) {
             Error{} << "Trade::GltfImporter::camera(): missing or invalid orthographic ymag property";
             return {};
@@ -2336,7 +2337,7 @@ Containers::Optional<CameraData> GltfImporter::doCamera(const UnsignedInt id) {
             return {};
         }
 
-        const Utility::JsonToken* const gltfZnear = gltfOrthographicCamera->find("znear"_s);
+        const Utility::JsonIterator gltfZnear = gltfOrthographicCamera->find("znear"_s);
         if(!gltfZnear || !_d->gltf->parseFloat(*gltfZnear)) {
             Error{} << "Trade::GltfImporter::camera(): missing or invalid orthographic znear property";
             return {};
@@ -2346,7 +2347,7 @@ Containers::Optional<CameraData> GltfImporter::doCamera(const UnsignedInt id) {
             return {};
         }
 
-        const Utility::JsonToken* const gltfZfar = gltfOrthographicCamera->find("zfar"_s);
+        const Utility::JsonIterator gltfZfar = gltfOrthographicCamera->find("zfar"_s);
         if(!gltfZfar || !_d->gltf->parseFloat(*gltfZfar)) {
             Error{} << "Trade::GltfImporter::camera(): missing or invalid orthographic zfar property";
             return {};
@@ -2360,7 +2361,7 @@ Containers::Optional<CameraData> GltfImporter::doCamera(const UnsignedInt id) {
             /* glTF uses a "scale" instead of "size", which means we have to
                double */
             Vector2{gltfXmag->asFloat(), gltfYmag->asFloat()}*2.0f,
-            gltfZnear->asFloat(), gltfZfar->asFloat(), &gltfCamera};
+            gltfZnear->asFloat(), gltfZfar->asFloat(), &gltfCamera.token()};
     }
 
     Error{} << "Trade::GltfImporter::camera(): unrecognized type" << gltfType->asString();
@@ -2389,11 +2390,11 @@ Containers::String GltfImporter::doLightName(const UnsignedInt id) {
 }
 
 Containers::Optional<LightData> GltfImporter::doLight(const UnsignedInt id) {
-    const Utility::JsonToken& gltfLight = _d->gltfLights[id].first();
+    const Utility::JsonToken gltfLight{*_d->gltf, _d->gltfLights[id].first()};
 
     /* Color is optional, vector of 1.0 is a default if not set */
     Color3 color{1.0f};
-    if(const Utility::JsonToken* const gltfColor = gltfLight.find("color"_s)) {
+    if(const Utility::JsonIterator gltfColor = gltfLight.find("color"_s)) {
         const Containers::Optional<Containers::StridedArrayView1D<const float>> colorArray = _d->gltf->parseFloatArray(*gltfColor, 3);
         if(!colorArray) {
             Error{} << "Trade::GltfImporter::light(): invalid color property";
@@ -2404,7 +2405,7 @@ Containers::Optional<LightData> GltfImporter::doLight(const UnsignedInt id) {
     }
 
     /* Intensity is optional, 1.0 is a default if not set */
-    const Utility::JsonToken* const gltfIntensity = gltfLight.find("intensity"_s);
+    const Utility::JsonIterator gltfIntensity = gltfLight.find("intensity"_s);
     if(gltfIntensity && !_d->gltf->parseFloat(*gltfIntensity)) {
         Error{} << "Trade::GltfImporter::light(): invalid intensity property";
         return {};
@@ -2412,7 +2413,7 @@ Containers::Optional<LightData> GltfImporter::doLight(const UnsignedInt id) {
 
     /* Range is optional, infinity is a default if not set (and yes, JSON has
        no way to represent an infinity, FFS) */
-    const Utility::JsonToken* const gltfRange = gltfLight.find("range"_s);
+    const Utility::JsonIterator gltfRange = gltfLight.find("range"_s);
     if(gltfRange) {
         if(!_d->gltf->parseFloat(*gltfRange)) {
             Error{} << "Trade::GltfImporter::light(): invalid range property";
@@ -2424,7 +2425,7 @@ Containers::Optional<LightData> GltfImporter::doLight(const UnsignedInt id) {
         }
     }
 
-    const Utility::JsonToken* const gltfType = gltfLight.find("type"_s);
+    const Utility::JsonIterator gltfType = gltfLight.find("type"_s);
     if(!gltfType || !_d->gltf->parseString(*gltfType)) {
         Error{} << "Trade::GltfImporter::light(): missing or invalid type property";
         return {};
@@ -2452,13 +2453,13 @@ Containers::Optional<LightData> GltfImporter::doLight(const UnsignedInt id) {
         innerConeAngle = 0.0_degf;
         outerConeAngle = 45.0_degf;
 
-        const Utility::JsonToken* const gltfSpot = gltfLight.find("spot"_s);
+        const Utility::JsonIterator gltfSpot = gltfLight.find("spot"_s);
         if(!gltfSpot || !_d->gltf->parseObject(*gltfSpot)) {
             Error{} << "Trade::GltfImporter::light(): missing or invalid spot property";
             return {};
         }
 
-        if(const Utility::JsonToken* const gltfInnerConeAngle = gltfSpot->find("innerConeAngle"_s)) {
+        if(const Utility::JsonIterator gltfInnerConeAngle = gltfSpot->find("innerConeAngle"_s)) {
             const Containers::Optional<Float> angle = _d->gltf->parseFloat(*gltfInnerConeAngle);
             if(!angle) {
                 Error{} << "Trade::GltfImporter::light(): invalid spot innerConeAngle property";
@@ -2468,7 +2469,7 @@ Containers::Optional<LightData> GltfImporter::doLight(const UnsignedInt id) {
             innerConeAngle = Rad{*angle};
         }
 
-        if(const Utility::JsonToken* const gltfOuterConeAngle = gltfSpot->find("outerConeAngle"_s)) {
+        if(const Utility::JsonIterator gltfOuterConeAngle = gltfSpot->find("outerConeAngle"_s)) {
             const Containers::Optional<Float> angle = _d->gltf->parseFloat(*gltfOuterConeAngle);
             if(!angle) {
                 Error{} << "Trade::GltfImporter::light(): invalid spot outerConeAngle property";
@@ -2497,11 +2498,11 @@ Containers::Optional<LightData> GltfImporter::doLight(const UnsignedInt id) {
     return LightData{type, color,
         gltfIntensity ? gltfIntensity->asFloat() : 1.0f,
         gltfRange ? gltfRange->asFloat() : Constants::inf(),
-        innerConeAngle*2.0f, outerConeAngle*2.0f, &gltfLight};
+        innerConeAngle*2.0f, outerConeAngle*2.0f, &gltfLight.token()};
 }
 
 Int GltfImporter::doDefaultScene() const {
-    if(const Utility::JsonToken* gltfScene = _d->gltf->root().find("scene"_s)) {
+    if(const Utility::JsonIterator gltfScene = _d->gltf->root().find("scene"_s)) {
         /* All checking and parsing was done in doOpenData() already, as this
            function is not allowed to fail */
         return gltfScene->asUnsignedInt();
@@ -2542,7 +2543,7 @@ Containers::String GltfImporter::doSceneName(const UnsignedInt id) {
 namespace {
 
 /* Used by doScene() but it's recursive and so it can't be a local lambda */
-void parseSceneExtraFields(Utility::Json& gltf, const ImporterFlags flags, const std::unordered_map<Containers::String, SceneField>& sceneFieldsForName, const Containers::ArrayView<const Containers::Triple<Containers::StringView, SceneFieldType, SceneFieldFlags>> sceneFieldNamesTypesFlags, const Containers::ArrayView<UnsignedInt> extraMappingOffsets, const Containers::ArrayView<UnsignedInt> extraDataOffsets, const Containers::ArrayView<UnsignedInt> extraBitOffsets, const Containers::ArrayView<UnsignedInt> extraStringOffsets, const UnsignedInt nodeI, const Containers::StringView key, const Utility::JsonToken& gltfExtraValue) {
+void parseSceneExtraFields(Utility::Json& gltf, const ImporterFlags flags, const std::unordered_map<Containers::String, SceneField>& sceneFieldsForName, const Containers::ArrayView<const Containers::Triple<Containers::StringView, SceneFieldType, SceneFieldFlags>> sceneFieldNamesTypesFlags, const Containers::ArrayView<UnsignedInt> extraMappingOffsets, const Containers::ArrayView<UnsignedInt> extraDataOffsets, const Containers::ArrayView<UnsignedInt> extraBitOffsets, const Containers::ArrayView<UnsignedInt> extraStringOffsets, const UnsignedInt nodeI, const Containers::StringView key, const Utility::JsonToken gltfExtraValue) {
     /* If the value is an object, recurse into it. The field name will then be
        all object keys concatenated with dots. */
     if(gltfExtraValue.type() == Utility::JsonToken::Type::Object) for(const Utility::JsonObjectItem gltfNestedExtra: gltfExtraValue.asObject()) {
@@ -2677,7 +2678,7 @@ void parseSceneExtraFields(Utility::Json& gltf, const ImporterFlags flags, const
         Warning{} << "Trade::GltfImporter::scene(): node" << nodeI << "extras" << key << "property is" << gltfExtraValue.type() << Debug::nospace << ", skipping";
 }
 
-void collectSceneExtraFields(const std::unordered_map<Containers::String, SceneField>& sceneFieldsForName, const Containers::ArrayView<const Containers::Triple<Containers::StringView, SceneFieldType, SceneFieldFlags>> sceneFieldNamesTypesFlags, const Containers::ArrayView<UnsignedInt> extraMappingOffsets, const Containers::ArrayView<UnsignedInt> extraMappings, const Containers::ArrayView<UnsignedInt> extraDataOffsets, const Containers::ArrayView<UnsignedInt> extrasUnsignedInt, const Containers::ArrayView<Int> extrasInt, const Containers::ArrayView<Float> extrasFloat, const Containers::ArrayView<UnsignedInt> extraBitOffsets, const Containers::MutableBitArrayView extrasBits, const Containers::ArrayView<UnsignedInt> extraStringOffsets, const Containers::ArrayView<UnsignedInt> baseStringOffsets, const Containers::MutableStringView extrasStrings, const UnsignedInt nodeI, const Containers::StringView key, const Utility::JsonToken& gltfExtraValue) {
+void collectSceneExtraFields(const std::unordered_map<Containers::String, SceneField>& sceneFieldsForName, const Containers::ArrayView<const Containers::Triple<Containers::StringView, SceneFieldType, SceneFieldFlags>> sceneFieldNamesTypesFlags, const Containers::ArrayView<UnsignedInt> extraMappingOffsets, const Containers::ArrayView<UnsignedInt> extraMappings, const Containers::ArrayView<UnsignedInt> extraDataOffsets, const Containers::ArrayView<UnsignedInt> extrasUnsignedInt, const Containers::ArrayView<Int> extrasInt, const Containers::ArrayView<Float> extrasFloat, const Containers::ArrayView<UnsignedInt> extraBitOffsets, const Containers::MutableBitArrayView extrasBits, const Containers::ArrayView<UnsignedInt> extraStringOffsets, const Containers::ArrayView<UnsignedInt> baseStringOffsets, const Containers::MutableStringView extrasStrings, const UnsignedInt nodeI, const Containers::StringView key, const Utility::JsonToken gltfExtraValue) {
     /* If the value is an object, recurse into it. The field name will then be
        all object keys concatenated with dots. */
     if(gltfExtraValue.type() == Utility::JsonToken::Type::Object) for(const Utility::JsonObjectItem gltfNestedExtra: gltfExtraValue.asObject()) {
@@ -2787,7 +2788,7 @@ void collectSceneExtraFields(const std::unordered_map<Containers::String, SceneF
 }
 
 Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
-    const Utility::JsonToken& gltfScene = _d->gltfScenes[id].first();
+    const Utility::JsonToken gltfScene{*_d->gltf, _d->gltfScenes[id].first()};
 
     /* Gather all top-level nodes belonging to a scene and recursively populate
        the children ranges. Optimistically assume the glTF has just a single
@@ -2798,7 +2799,7 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
         fields */
     Containers::Array<UnsignedInt> objects;
     arrayReserve(objects, _d->gltfNodes.size());
-    if(const Utility::JsonToken* const gltfSceneNodes = gltfScene.find("nodes"_s)) {
+    if(const Utility::JsonIterator gltfSceneNodes = gltfScene.find("nodes"_s)) {
         /* Scene node array parsed in doOpenData() already, for cycle
            detection. Bounds checked there as well, so we can just directly
            copy the contents. */
@@ -2815,8 +2816,8 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
     arrayAppend(children, {0u, UnsignedInt(objects.size())});
     for(std::size_t i = 0; i != children.size() - 1; ++i) {
         for(std::size_t j = children[i], jMax = children[i + 1]; j != jMax; ++j) {
-            const Utility::JsonToken& gltfNode = _d->gltfNodes[objects[j]].first();
-            if(const Utility::JsonToken* const gltfNodeChildren = gltfNode.find("children"_s)) {
+            const Utility::JsonToken gltfNode{*_d->gltf, _d->gltfNodes[objects[j]].first()};
+            if(const Utility::JsonIterator gltfNodeChildren = gltfNode.find("children"_s)) {
                 /* Node children array parsed in doOpenData() already, for
                    cycle detection. Bounds checked there as well, so we can
                    just directly copy the contents. */
@@ -2867,12 +2868,12 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
         {ValueInit, _d->sceneFieldNamesTypesFlags.size(), baseStringOffsets}
     };
     for(const UnsignedInt i: objects) {
-        const Utility::JsonToken& gltfNode = _d->gltfNodes[i].first();
+        const Utility::JsonToken gltfNode{*_d->gltf, _d->gltfNodes[i].first()};
 
         /* Cache repeated queries to not suffer from the O(n) lookup too much */
-        const bool hasTranslation = gltfNode.find("translation"_s);
-        const bool hasRotation = gltfNode.find("rotation"_s);
-        const bool hasScaling = gltfNode.find("scale"_s);
+        const bool hasTranslation = !!gltfNode.find("translation"_s);
+        const bool hasRotation = !!gltfNode.find("rotation"_s);
+        const bool hasScaling = !!gltfNode.find("scale"_s);
 
         /* Everything that has a TRS should have a transformation matrix as
            well. OTOH there can be a transformation matrix but no TRS, and
@@ -2891,7 +2892,7 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
             hasScalings = true;
 
         /* Mesh reference */
-        if(const Utility::JsonToken* const gltfMesh = gltfNode.find("mesh"_s)) {
+        if(const Utility::JsonIterator gltfMesh = gltfNode.find("mesh"_s)) {
             if(!_d->gltf->parseUnsignedInt(*gltfMesh)) {
                 Error{} << "Trade::GltfImporter::scene(): invalid mesh property of node" << i;
                 return {};
@@ -2904,7 +2905,7 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
 
             meshCount += _d->meshSizeOffsets[mesh + 1] - _d->meshSizeOffsets[mesh];
             for(std::size_t j = _d->meshSizeOffsets[mesh], jMax = _d->meshSizeOffsets[mesh + 1]; j != jMax; ++j) {
-                if(const Utility::JsonToken* gltfPrimitiveMaterial = _d->gltfMeshPrimitiveMap[j].second()->find("material"_s)) {
+                if(const Utility::JsonIterator gltfPrimitiveMaterial = Utility::JsonToken{*_d->gltf, _d->gltfMeshPrimitiveMap[j].second()}.find("material"_s)) {
                     if(!_d->gltf->parseUnsignedInt(*gltfPrimitiveMaterial)) {
                         Error{} << "Trade::GltfImporter::scene(): invalid material property of mesh" << mesh << "primitive" << j - _d->meshSizeOffsets[mesh];
                         return {};
@@ -2922,7 +2923,7 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
         }
 
         /* Camera reference */
-        if(const Utility::JsonToken* const gltfCamera = gltfNode.find("camera"_s)) {
+        if(const Utility::JsonIterator gltfCamera = gltfNode.find("camera"_s)) {
             if(!_d->gltf->parseUnsignedInt(*gltfCamera)) {
                 Error{} << "Trade::GltfImporter::scene(): invalid camera property of node" << i;
                 return {};
@@ -2936,7 +2937,7 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
         }
 
         /* Skin reference */
-        if(const Utility::JsonToken* const gltfSkin = gltfNode.find("skin"_s)) {
+        if(const Utility::JsonIterator gltfSkin = gltfNode.find("skin"_s)) {
             if(!_d->gltf->parseUnsignedInt(*gltfSkin)) {
                 Error{} << "Trade::GltfImporter::scene(): invalid skin property of node" << i;
                 return {};
@@ -2950,20 +2951,20 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
         }
 
         /* Extensions */
-        if(const Utility::JsonToken* const gltfExtensions = gltfNode.find("extensions"_s)) {
+        if(const Utility::JsonIterator gltfExtensions = gltfNode.find("extensions"_s)) {
             if(!_d->gltf->parseObject(*gltfExtensions)) {
                 Error{} << "Trade::GltfImporter::scene(): invalid node" << i << "extensions property";
                 return {};
             }
 
             /* Light reference */
-            if(const Utility::JsonToken* const gltfKhrLightsPunctual = gltfExtensions->find("KHR_lights_punctual"_s)) {
+            if(const Utility::JsonIterator gltfKhrLightsPunctual = gltfExtensions->find("KHR_lights_punctual"_s)) {
                 if(!_d->gltf->parseObject(*gltfKhrLightsPunctual)) {
                     Error{} << "Trade::GltfImporter::scene(): invalid node" << i << "KHR_lights_punctual extension";
                     return {};
                 }
 
-                const Utility::JsonToken* gltfLight = gltfKhrLightsPunctual->find("light"_s);
+                const Utility::JsonIterator gltfLight = gltfKhrLightsPunctual->find("light"_s);
                 if(!gltfLight || !_d->gltf->parseUnsignedInt(*gltfLight)) {
                     Error{} << "Trade::GltfImporter::scene(): missing or invalid KHR_lights_punctual light property of node" << i;
                     return {};
@@ -2979,7 +2980,7 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
 
         /* Extras. If it's an object, it was already parsed during initial
            import */
-        if(const Utility::JsonToken* const gltfExtras = gltfNode.find("extras"_s)) {
+        if(const Utility::JsonIterator gltfExtras = gltfNode.find("extras"_s)) {
             /* The process is recursive so it has to be an external function */
             if(gltfExtras->type() == Utility::JsonToken::Type::Object) for(const Utility::JsonObjectItem gltfExtra: gltfExtras->asObject()) {
                 parseSceneExtraFields(*_d->gltf, flags(), _d->sceneFieldsForName, _d->sceneFieldNamesTypesFlags, extraMappingOffsets, extraDataOffsets, extraBitOffsets, extraStringOffsets, i, gltfExtra.key(), gltfExtra.value());
@@ -3035,7 +3036,7 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
     /* Allocate the output array */
     Containers::ArrayView<UnsignedInt> parentImporterStateObjects;
     Containers::ArrayView<Int> parents;
-    Containers::ArrayView<const Utility::JsonToken*> importerState;
+    Containers::ArrayView<const Utility::JsonTokenData*> importerState;
     Containers::ArrayView<UnsignedInt> transformationObjects;
     Containers::ArrayView<Matrix4> transformations;
     Containers::ArrayView<UnsignedInt> trsObjects;
@@ -3105,14 +3106,14 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
     std::size_t skinOffset = 0;
     for(std::size_t i = 0; i != objects.size(); ++i) {
         const UnsignedInt nodeI = objects[i];
-        const Utility::JsonToken& gltfNode = _d->gltfNodes[nodeI].first();
+        const Utility::JsonToken gltfNode{*_d->gltf, _d->gltfNodes[nodeI].first()};
 
         /* Populate importer state */
-        importerState[i] = &gltfNode;
+        importerState[i] = &gltfNode.token();
 
         /* Parse TRS */
         Vector3 translation;
-        const Utility::JsonToken* const gltfTranslation = gltfNode.find("translation"_s);
+        const Utility::JsonIterator gltfTranslation = gltfNode.find("translation"_s);
         if(gltfTranslation) {
             const Containers::Optional<Containers::StridedArrayView1D<const float>> translationArray = _d->gltf->parseFloatArray(*gltfTranslation, 3);
             if(!translationArray) {
@@ -3124,7 +3125,7 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
         }
 
         Quaternion rotation;
-        const Utility::JsonToken* const gltfRotation = gltfNode.find("rotation"_s);
+        const Utility::JsonIterator gltfRotation = gltfNode.find("rotation"_s);
         if(gltfRotation) {
             const Containers::Optional<Containers::StridedArrayView1D<const float>> rotationArray = _d->gltf->parseFloatArray(*gltfRotation, 4);
             if(!rotationArray) {
@@ -3142,7 +3143,7 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
         }
 
         Vector3 scaling{1.0f};
-        const Utility::JsonToken* const gltfScale = gltfNode.find("scale"_s);
+        const Utility::JsonIterator gltfScale = gltfNode.find("scale"_s);
         if(gltfScale) {
             const Containers::Optional<Containers::StridedArrayView1D<const float>> scalingArray = _d->gltf->parseFloatArray(*gltfScale, 3);
             if(!scalingArray) {
@@ -3155,7 +3156,7 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
 
         /* Parse transformation, or combine it from TRS if not present */
         Matrix4 transformation;
-        const Utility::JsonToken* const gltfMatrix = gltfNode.find("matrix"_s);
+        const Utility::JsonIterator gltfMatrix = gltfNode.find("matrix"_s);
         if(gltfMatrix) {
             const Containers::Optional<Containers::StridedArrayView1D<const float>> transformationArray = _d->gltf->parseFloatArray(*gltfMatrix, 16);
             if(!transformationArray) {
@@ -3197,12 +3198,12 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
 
         /* Populate mesh references. All parsing and bounds checks done in the
            previous pass already. */
-        if(const Utility::JsonToken* const gltfMesh = gltfNode.find("mesh"_s)) {
+        if(const Utility::JsonIterator gltfMesh = gltfNode.find("mesh"_s)) {
             const UnsignedInt mesh = gltfMesh->asUnsignedInt();
             for(std::size_t j = _d->meshSizeOffsets[mesh], jMax = _d->meshSizeOffsets[mesh + 1]; j != jMax; ++j) {
                 meshMaterialObjects[meshMaterialOffset] = nodeI;
                 meshes[meshMaterialOffset] = j;
-                if(const Utility::JsonToken* gltfPrimitiveMaterial = _d->gltfMeshPrimitiveMap[j].second()->find("material"_s)) {
+                if(const Utility::JsonIterator gltfPrimitiveMaterial = Utility::JsonToken{*_d->gltf, _d->gltfMeshPrimitiveMap[j].second()}.find("material"_s)) {
                     meshMaterials[meshMaterialOffset] = gltfPrimitiveMaterial->asUnsignedInt();
                 } else if(hasMeshMaterials)
                     meshMaterials[meshMaterialOffset] = -1;
@@ -3212,7 +3213,7 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
 
         /* Populate camera references. Parsing and bounds check done in the
            previous pass already. */
-        if(const Utility::JsonToken* const gltfCamera = gltfNode.find("camera"_s)) {
+        if(const Utility::JsonIterator gltfCamera = gltfNode.find("camera"_s)) {
             cameraObjects[cameraOffset] = nodeI;
             cameras[cameraOffset] = gltfCamera->asUnsignedInt();
             ++cameraOffset;
@@ -3220,7 +3221,7 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
 
         /* Populate skin references. Parsing and bounds check done in the
            previous pass already. */
-        if(const Utility::JsonToken* const gltfSkin = gltfNode.find("skin"_s)) {
+        if(const Utility::JsonIterator gltfSkin = gltfNode.find("skin"_s)) {
             skinObjects[skinOffset] = nodeI;
             skins[skinOffset] = gltfSkin->asUnsignedInt();
             ++skinOffset;
@@ -3228,10 +3229,10 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
 
         /* Extensions. Type of the property checked in the previous pass
            already. */
-        if(const Utility::JsonToken* const gltfExtensions = gltfNode.find("extensions"_s)) {
+        if(const Utility::JsonIterator gltfExtensions = gltfNode.find("extensions"_s)) {
             /* Populate light references. Property type, parsing and bounds
                check done in the previous pass already. */
-            if(const Utility::JsonToken* const gltfKhrLightsPunctual = gltfExtensions->find("KHR_lights_punctual"_s)) {
+            if(const Utility::JsonIterator gltfKhrLightsPunctual = gltfExtensions->find("KHR_lights_punctual"_s)) {
                 lightObjects[lightOffset] = nodeI;
                 lights[lightOffset] = (*gltfKhrLightsPunctual)["light"_s].asUnsignedInt();
                 ++lightOffset;
@@ -3241,7 +3242,7 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
         /* Extras. Types were checked in the previous pass already, so just
            skip if it's not an object or if the number is not parsed (i.e.,
            an invalid literal). */
-        if(const Utility::JsonToken* const gltfExtras = gltfNode.find("extras"_s)) {
+        if(const Utility::JsonIterator gltfExtras = gltfNode.find("extras"_s)) {
             /* The process is recursive so it has to be an external function */
             if(gltfExtras->type() == Utility::JsonToken::Type::Object) for(const Utility::JsonObjectItem gltfExtra: gltfExtras->asObject()) {
                 collectSceneExtraFields(_d->sceneFieldsForName, _d->sceneFieldNamesTypesFlags, extraMappingOffsets, extraMappings, extraDataOffsets, extrasUnsignedInt, extrasInt, extrasFloat, extraBitOffsets, extrasBits, extraStringOffsets, baseStringOffsets, extrasStrings, nodeI, gltfExtra.key(), gltfExtra.value());
@@ -3343,7 +3344,7 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
     /* Even though SceneData is capable of holding more than 4 billion objects,
        we realistically don't expect glTF to have that many -- the text file
        would be *terabytes* then */
-    return SceneData{SceneMappingType::UnsignedInt, maxObjectIndexPlusOne, Utility::move(data), Utility::move(fields), &gltfScene};
+    return SceneData{SceneMappingType::UnsignedInt, maxObjectIndexPlusOne, Utility::move(data), Utility::move(fields), &gltfScene.token()};
 }
 
 SceneField GltfImporter::doSceneFieldForName(const Containers::StringView name) {
@@ -3399,10 +3400,10 @@ Containers::String GltfImporter::doSkin3DName(const UnsignedInt id) {
 }
 
 Containers::Optional<SkinData3D> GltfImporter::doSkin3D(const UnsignedInt id) {
-    const Utility::JsonToken& gltfSkin = _d->gltfSkins[id].first();
+    const Utility::JsonToken gltfSkin{*_d->gltf, _d->gltfSkins[id].first()};
 
     /* Joint IDs */
-    const Utility::JsonToken* const gltfJoints = gltfSkin.find("joints"_s);
+    const Utility::JsonIterator gltfJoints = gltfSkin.find("joints"_s);
     Containers::Optional<Containers::StridedArrayView1D<const UnsignedInt>> jointsArray;
     if(!gltfJoints || !(jointsArray = _d->gltf->parseUnsignedIntArray(*gltfJoints))) {
         Error{} << "Trade::GltfImporter::skin3D(): missing or invalid joints property";
@@ -3425,7 +3426,7 @@ Containers::Optional<SkinData3D> GltfImporter::doSkin3D(const UnsignedInt id) {
 
     /* Inverse bind matrices. If there are none, default is identities */
     Containers::Array<Matrix4> inverseBindMatrices{ValueInit, joints.size()};
-    if(const Utility::JsonToken* const gltfInverseBindMatrices = gltfSkin.find("inverseBindMatrices"_s)) {
+    if(const Utility::JsonIterator gltfInverseBindMatrices = gltfSkin.find("inverseBindMatrices"_s)) {
         if(!_d->gltf->parseUnsignedInt(*gltfInverseBindMatrices)) {
             Error{} << "Trade::GltfImporter::skin3D(): invalid inverseBindMatrices property";
             return {};
@@ -3463,7 +3464,7 @@ Containers::Optional<SkinData3D> GltfImporter::doSkin3D(const UnsignedInt id) {
         Utility::copy(matrices, inverseBindMatrices);
     }
 
-    return SkinData3D{Utility::move(joints), Utility::move(inverseBindMatrices), &gltfSkin};
+    return SkinData3D{Utility::move(joints), Utility::move(inverseBindMatrices), &gltfSkin.token()};
 }
 
 UnsignedInt GltfImporter::doMeshCount() const {
@@ -3518,11 +3519,11 @@ template<class T, class F, class G> std::size_t stableSortRemoveDuplicatesToPref
 }
 
 Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, UnsignedInt) {
-    const Utility::JsonToken& gltfPrimitive = _d->gltfMeshPrimitiveMap[id].second();
+    const Utility::JsonToken gltfPrimitive{*_d->gltf, _d->gltfMeshPrimitiveMap[id].second()};
 
     /* Primitive is optional, defaulting to triangles */
     MeshPrimitive primitive = MeshPrimitive::Triangles;
-    if(const Utility::JsonToken* gltfMode = gltfPrimitive.find("mode"_s)) {
+    if(const Utility::JsonIterator gltfMode = gltfPrimitive.find("mode"_s)) {
         if(!_d->gltf->parseUnsignedInt(*gltfMode)) {
             Error{} << "Trade::GltfImporter::mesh(): invalid primitive mode property";
             return {};
@@ -3555,14 +3556,17 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
         }
     }
 
-    /* Attributes */
+    /* Attributes. Not storing Utility::JsonTokenData& as this is just a
+       temporary container so twice the size doesn't matter and creating a
+       JsonToken on-the-fly in the hot std::sort() loop doesn't make sense
+       perf-wise. */
     struct Attribute {
         Containers::StringView name;
-        Containers::Reference<const Utility::JsonToken> value;
+        Utility::JsonToken value;
         Int morphTargetId;
     };
     Containers::Array<Attribute> attributeOrder;
-    if(const Utility::JsonToken* gltfAttributes = gltfPrimitive.find("attributes"_s)) {
+    if(const Utility::JsonIterator gltfAttributes = gltfPrimitive.find("attributes"_s)) {
         /* Primitive attributes object parsed in doOpenData() already, for
            custom attribute discovery, so we just use it directly. */
         for(Utility::JsonObjectItem gltfAttribute: gltfAttributes->asObject()) {
@@ -3586,7 +3590,7 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
     }
 
     /* Morph target attributes */
-    if(const Utility::JsonToken* gltfTargets = gltfPrimitive.find("targets"_s)) {
+    if(const Utility::JsonIterator gltfTargets = gltfPrimitive.find("targets"_s)) {
         /* Morph targets array and target attribute objects parsed in
            doOpenData() already, for custom attribute discovery, so we just use
            it directly. */
@@ -3630,7 +3634,7 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
                pointing to the JSON input always. The token address itself
                could also since they're stored in a contiguous array, but this
                is more robust. */
-            return a.value->data().data() < b.value->data().data();
+            return a.value.data().data() < b.value.data().data();
         },
         [](const Attribute& a, const Attribute& b) {
             return a.morphTargetId == b.morphTargetId && a.name == b.name;
@@ -3695,7 +3699,7 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
         }
 
         /* Get the accessor view */
-        Containers::Optional<Accessor> accessor = parseAccessor("Trade::GltfImporter::mesh():", attribute.value->asUnsignedInt());
+        Containers::Optional<Accessor> accessor = parseAccessor("Trade::GltfImporter::mesh():", attribute.value.asUnsignedInt());
         if(!accessor)
             return {};
 
@@ -4050,7 +4054,7 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
 
             /* If the attribute has no backing buffer view, zero-init its
                memory */
-            if(!_d->accessors[uniqueAttributeOrder[bufferRanges[i].attribute].value->asUnsignedInt()]->data.data())
+            if(!_d->accessors[uniqueAttributeOrder[bufferRanges[i].attribute].value.asUnsignedInt()]->data.data())
                 std::memset(vertexData.sliceSize(vertexDataOffset, size), 0, size);
 
             /* Otherwise, if it isn't sparse, signalled by `begin` being null,
@@ -4119,7 +4123,7 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
        or not. */
     CORRADE_INTERNAL_ASSERT(attributeData.size() == uniqueAttributeOrder.size());
     for(std::size_t i = 0; i != attributeData.size(); ++i) {
-        const Accessor& accessor = *_d->accessors[uniqueAttributeOrder[i].value->asUnsignedInt()];
+        const Accessor& accessor = *_d->accessors[uniqueAttributeOrder[i].value.asUnsignedInt()];
         if(!accessor.sparseValues.data())
             continue;
 
@@ -4143,11 +4147,11 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
            if they're out of range. Fail in that case. */
         bool success;
         if(accessor.sparseIndices.size()[1] == 4)
-            success = applySparseAccessor("Trade::GltfImporter::mesh():", uniqueAttributeOrder[i].value->asUnsignedInt(), Containers::arrayCast<1, const UnsignedInt>(accessor.sparseIndices), accessor.sparseValues, data);
+            success = applySparseAccessor("Trade::GltfImporter::mesh():", uniqueAttributeOrder[i].value.asUnsignedInt(), Containers::arrayCast<1, const UnsignedInt>(accessor.sparseIndices), accessor.sparseValues, data);
         else if(accessor.sparseIndices.size()[1] == 2)
-            success = applySparseAccessor("Trade::GltfImporter::mesh():", uniqueAttributeOrder[i].value->asUnsignedInt(), Containers::arrayCast<1, const UnsignedShort>(accessor.sparseIndices), accessor.sparseValues, data);
+            success = applySparseAccessor("Trade::GltfImporter::mesh():", uniqueAttributeOrder[i].value.asUnsignedInt(), Containers::arrayCast<1, const UnsignedShort>(accessor.sparseIndices), accessor.sparseValues, data);
         else if(accessor.sparseIndices.size()[1] == 1)
-            success = applySparseAccessor("Trade::GltfImporter::mesh():", uniqueAttributeOrder[i].value->asUnsignedInt(), Containers::arrayCast<1, const UnsignedByte>(accessor.sparseIndices), accessor.sparseValues, data);
+            success = applySparseAccessor("Trade::GltfImporter::mesh():", uniqueAttributeOrder[i].value.asUnsignedInt(), Containers::arrayCast<1, const UnsignedByte>(accessor.sparseIndices), accessor.sparseValues, data);
         else CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
         if(!success)
             return {};
@@ -4235,7 +4239,7 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
     /* Indices */
     MeshIndexData indices;
     Containers::Array<char> indexData;
-    if(const Utility::JsonToken* gltfIndices = gltfPrimitive.find("indices"_s)) {
+    if(const Utility::JsonIterator gltfIndices = gltfPrimitive.find("indices"_s)) {
         if(!_d->gltf->parseUnsignedInt(*gltfIndices)) {
             Error{} << "Trade::GltfImporter::mesh(): invalid indices property";
             return {};
@@ -4292,7 +4296,7 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
     return MeshData{primitive,
         Utility::move(indexData), indices,
         Utility::move(vertexData), Utility::move(attributeData),
-        vertexCount, &gltfPrimitive};
+        vertexCount, &gltfPrimitive.token()};
 }
 
 MeshAttribute GltfImporter::doMeshAttributeForName(const Containers::StringView name) {
@@ -4348,7 +4352,7 @@ bool checkMaterialAttributeSize(const Containers::StringView name, const Materia
     return true;
 }
 
-Containers::Optional<MaterialAttributeData> parseMaterialAttribute(Utility::Json& gltf, /*mutable*/ Containers::StringView name, const Utility::JsonToken& gltfValue, const ImporterFlags flags) {
+Containers::Optional<MaterialAttributeData> parseMaterialAttribute(Utility::Json& gltf, /*mutable*/ Containers::StringView name, const Utility::JsonToken gltfValue, const ImporterFlags flags) {
     /* The `name` is not const, gets modified if the first letter isn't
        lowercase */
     if(!name) {
@@ -4377,7 +4381,7 @@ Containers::Optional<MaterialAttributeData> parseMaterialAttribute(Utility::Json
 
     /* Array, hopefully numeric */
     } else if(gltfValue.type() == Utility::JsonToken::Type::Array) {
-        for(const Utility::JsonToken& i: *gltf.parseArray(gltfValue)) {
+        for(const Utility::JsonToken i: *gltf.parseArray(gltfValue)) {
             if(i.type() != Utility::JsonToken::Type::Number) {
                 if(!(flags & ImporterFlag::Quiet))
                     Warning{} << "Trade::GltfImporter::material(): property" << name << "is not a numeric array, skipping";
@@ -4506,7 +4510,7 @@ Containers::Optional<MaterialAttributeData> parseMaterialAttribute(Utility::Json
 
 /* In this case, extra attributes such as Matrix or Coordinates are prefixed
    with the attribute */
-bool GltfImporter::materialTexture(const Utility::JsonToken& gltfTexture, Containers::Array<MaterialAttributeData>& attributes, const Containers::StringView attribute, bool warningOnly) {
+bool GltfImporter::materialTexture(const Utility::JsonToken gltfTexture, Containers::Array<MaterialAttributeData>& attributes, const Containers::StringView attribute, bool warningOnly) {
     CORRADE_INTERNAL_ASSERT(attribute);
     return materialTexture(gltfTexture, attributes, attribute, attribute, warningOnly);
 }
@@ -4517,14 +4521,14 @@ bool GltfImporter::materialTexture(const Utility::JsonToken& gltfTexture, Contai
    `attribute=SpecularGlossinessTexture` and
    `extraAttributePrefix=SpecularTexture` and s second call is `attribute=` and
    `extraAttributePrefix=GlossinessTexture`. */
-bool GltfImporter::materialTexture(const Utility::JsonToken& gltfTexture, Containers::Array<MaterialAttributeData>& attributes, const Containers::StringView attribute, const Containers::StringView extraAttributePrefix, bool warningOnly) {
+bool GltfImporter::materialTexture(const Utility::JsonToken gltfTexture, Containers::Array<MaterialAttributeData>& attributes, const Containers::StringView attribute, const Containers::StringView extraAttributePrefix, bool warningOnly) {
     if(!_d->gltf->parseObject(gltfTexture)) {
         if(!warningOnly || !(flags() & ImporterFlag::Quiet))
             (warningOnly ? static_cast<Debug&&>(Warning{}) : static_cast<Debug&&>(Error{})) << "Trade::GltfImporter::material(): invalid" << gltfTexture.parent()->asString() << "property";
         return false;
     }
 
-    const Utility::JsonToken* const gltfIndex = gltfTexture.find("index"_s);
+    const Utility::JsonIterator gltfIndex = gltfTexture.find("index"_s);
     if(!gltfIndex || !_d->gltf->parseUnsignedInt(*gltfIndex)) {
         if(!warningOnly || !(flags() & ImporterFlag::Quiet))
             (warningOnly ? static_cast<Debug&&>(Warning{}) : static_cast<Debug&&>(Error{})) << "Trade::GltfImporter::material(): missing or invalid" << gltfTexture.parent()->asString() << "index property";
@@ -4550,10 +4554,10 @@ bool GltfImporter::materialTexture(const Utility::JsonToken& gltfTexture, Contai
     const Containers::String layerAttribute = extraAttributePrefix + "Layer"_s;
 
     if(configuration().value<bool>("experimentalKhrTextureKtx")) {
-        const Utility::JsonToken* gltfTextureExtensions;
-        const Utility::JsonToken* gltfKhrTextureKtx;
-        const Utility::JsonToken* gltfTextureLayer;
-        if((gltfTextureExtensions = _d->gltfTextures[gltfIndex->asUnsignedInt()].first()->find("extensions"_s)) &&
+        const Utility::JsonIterator gltfTextureExtensions = Utility::JsonToken{*_d->gltf, _d->gltfTextures[gltfIndex->asUnsignedInt()].first()}.find("extensions"_s);
+        Utility::JsonIterator gltfKhrTextureKtx;
+        Utility::JsonIterator gltfTextureLayer;
+        if(gltfTextureExtensions &&
            (gltfKhrTextureKtx = gltfTextureExtensions->find("KHR_texture_ktx"_s)) &&
            (gltfTextureLayer = gltfKhrTextureKtx->find("layer"_s)))
         {
@@ -4572,7 +4576,7 @@ bool GltfImporter::materialTexture(const Utility::JsonToken& gltfTexture, Contai
        the file regardless of whether it's default nor not, consistently with
        other material attributes. */
     Containers::Optional<UnsignedInt> texCoord;
-    if(const Utility::JsonToken* const gltfTexCoord = gltfTexture.find("texCoord"_s)) {
+    if(const Utility::JsonIterator gltfTexCoord = gltfTexture.find("texCoord"_s)) {
         if(!_d->gltf->parseUnsignedInt(*gltfTexCoord)) {
             if(!warningOnly || !(flags() & ImporterFlag::Quiet))
                 (warningOnly ? static_cast<Debug&&>(Warning{}) : static_cast<Debug&&>(Error{})) << "Trade::GltfImporter::material(): invalid" << gltfTexture.parent()->asString() << "texcoord property";
@@ -4583,8 +4587,8 @@ bool GltfImporter::materialTexture(const Utility::JsonToken& gltfTexture, Contai
     }
 
     /* Extensions */
-    const Utility::JsonToken* gltfKhrTextureTransform = nullptr;
-    if(const Utility::JsonToken* const gltfExtensions = gltfTexture.find("extensions"_s)) {
+    Utility::JsonIterator gltfKhrTextureTransform;
+    if(const Utility::JsonIterator gltfExtensions = gltfTexture.find("extensions"_s)) {
         if(!_d->gltf->parseObject(*gltfExtensions)) {
             if(!warningOnly || !(flags() & ImporterFlag::Quiet))
                 (warningOnly ? static_cast<Debug&&>(Warning{}) : static_cast<Debug&&>(Error{})) << "Trade::GltfImporter::material(): invalid" << gltfTexture.parent()->asString() << "extensions property";
@@ -4614,7 +4618,7 @@ bool GltfImporter::materialTexture(const Utility::JsonToken& gltfTexture, Contai
             /* The extension can override texture coordinate index (for example
                to have the unextended coordinates already transformed, and
                applying transformation to a different set) */
-            if(const Utility::JsonToken* const gltfTexCoord = gltfKhrTextureTransform->find("texCoord"_s)) {
+            if(const Utility::JsonIterator gltfTexCoord = gltfKhrTextureTransform->find("texCoord"_s)) {
                 if(!_d->gltf->parseUnsignedInt(*gltfTexCoord)) {
                     if(!warningOnly || !(flags() & ImporterFlag::Quiet))
                         (warningOnly ? static_cast<Debug&&>(Warning{}) : static_cast<Debug&&>(Error{})) << "Trade::GltfImporter::material(): invalid" << gltfTexture.parent()->asString() << "KHR_texture_transform texcoord property";
@@ -4625,7 +4629,7 @@ bool GltfImporter::materialTexture(const Utility::JsonToken& gltfTexture, Contai
             }
 
             Vector2 scaling{1.0f};
-            if(const Utility::JsonToken* const gltfScale = gltfKhrTextureTransform->find("scale"_s)) {
+            if(const Utility::JsonIterator gltfScale = gltfKhrTextureTransform->find("scale"_s)) {
                 const Containers::Optional<Containers::StridedArrayView1D<const float>> scalingArray = _d->gltf->parseFloatArray(*gltfScale, 2);
                 if(!scalingArray) {
                     if(!warningOnly || !(flags() & ImporterFlag::Quiet))
@@ -4638,7 +4642,7 @@ bool GltfImporter::materialTexture(const Utility::JsonToken& gltfTexture, Contai
             matrix = Matrix3::scaling(scaling)*matrix;
 
             Rad rotation;
-            if(const Utility::JsonToken* const gltfRotation = gltfKhrTextureTransform->find("rotation"_s)) {
+            if(const Utility::JsonIterator gltfRotation = gltfKhrTextureTransform->find("rotation"_s)) {
                 if(!_d->gltf->parseFloat(*gltfRotation)) {
                     if(!warningOnly || !(flags() & ImporterFlag::Quiet))
                         (warningOnly ? static_cast<Debug&&>(Warning{}) : static_cast<Debug&&>(Error{})) << "Trade::GltfImporter::material(): invalid" << gltfTexture.parent()->asString() << "KHR_texture_transform rotation property";
@@ -4653,7 +4657,7 @@ bool GltfImporter::materialTexture(const Utility::JsonToken& gltfTexture, Contai
             matrix = Matrix3::rotation(-rotation)*matrix;
 
             Vector2 offset;
-            if(const Utility::JsonToken* const gltfOffset = gltfKhrTextureTransform->find("offset"_s)) {
+            if(const Utility::JsonIterator gltfOffset = gltfKhrTextureTransform->find("offset"_s)) {
                 const Containers::Optional<Containers::StridedArrayView1D<const Float>> offsetArray = _d->gltf->parseFloatArray(*gltfOffset, 2);
                 if(!offsetArray) {
                     if(!warningOnly || !(flags() & ImporterFlag::Quiet))
@@ -4699,7 +4703,7 @@ bool GltfImporter::materialTexture(const Utility::JsonToken& gltfTexture, Contai
 }
 
 Containers::Optional<MaterialData> GltfImporter::doMaterial(const UnsignedInt id) {
-    const Utility::JsonToken& gltfMaterial = _d->gltfMaterials[id].first();
+    const Utility::JsonToken gltfMaterial{*_d->gltf, _d->gltfMaterials[id].first()};
 
     Containers::Array<UnsignedInt> layers;
     Containers::Array<MaterialAttributeData> attributes;
@@ -4707,7 +4711,7 @@ Containers::Optional<MaterialData> GltfImporter::doMaterial(const UnsignedInt id
 
     /* Alpha mode and mask. Opaque is default in both Magnum's MaterialData and
        glTF, no need to add anything if not present. */
-    if(const Utility::JsonToken* const gltfAlphaMode = gltfMaterial.find("alphaMode"_s)) {
+    if(const Utility::JsonIterator gltfAlphaMode = gltfMaterial.find("alphaMode"_s)) {
         if(!_d->gltf->parseString(*gltfAlphaMode)) {
             Error{} << "Trade::GltfImporter::material(): invalid alphaMode property";
             return {};
@@ -4720,7 +4724,7 @@ Containers::Optional<MaterialData> GltfImporter::doMaterial(const UnsignedInt id
         } else if(mode == "MASK"_s) {
             /* Cutoff is optional, defaults to 0.5 */
             Float mask = 0.5f;
-            if(const Utility::JsonToken* const gltfAlphaCutoff = gltfMaterial.find("alphaCutoff"_s)) {
+            if(const Utility::JsonIterator gltfAlphaCutoff = gltfMaterial.find("alphaCutoff"_s)) {
                 if(!_d->gltf->parseFloat(*gltfAlphaCutoff)) {
                     Error{} << "Trade::GltfImporter::material(): invalid alphaCutoff property";
                     return {};
@@ -4743,7 +4747,7 @@ Containers::Optional<MaterialData> GltfImporter::doMaterial(const UnsignedInt id
 
     /* Double sided. False is default in both Magnum's MaterialData and glTF,
        no need to add anything if not present. */
-    if(const Utility::JsonToken* const gltfDoubleSided = gltfMaterial.find("doubleSided"_s)) {
+    if(const Utility::JsonIterator gltfDoubleSided = gltfMaterial.find("doubleSided"_s)) {
         if(!_d->gltf->parseBool(*gltfDoubleSided)) {
             Error{} << "Trade::GltfImporter::material(): invalid doubleSided property";
             return {};
@@ -4753,7 +4757,7 @@ Containers::Optional<MaterialData> GltfImporter::doMaterial(const UnsignedInt id
     }
 
     /* Core metallic/roughness material */
-    if(const Utility::JsonToken* const gltfPbrMetallicRoughness = gltfMaterial.find("pbrMetallicRoughness"_s)) {
+    if(const Utility::JsonIterator gltfPbrMetallicRoughness = gltfMaterial.find("pbrMetallicRoughness"_s)) {
         if(!_d->gltf->parseObject(*gltfPbrMetallicRoughness)) {
             Error{} << "Trade::GltfImporter::material(): invalid pbrMetallicRoughness property";
             return {};
@@ -4763,7 +4767,7 @@ Containers::Optional<MaterialData> GltfImporter::doMaterial(const UnsignedInt id
 
         /* Base color factor. Vector of 1.0 is default in both Magnum's
            MaterialData and glTF, no need to add anything if not present. */
-        if(const Utility::JsonToken* const gltfBaseColorFactor = gltfPbrMetallicRoughness->find("baseColorFactor"_s)) {
+        if(const Utility::JsonIterator gltfBaseColorFactor = gltfPbrMetallicRoughness->find("baseColorFactor"_s)) {
             const Containers::Optional<Containers::StridedArrayView1D<const float>> baseColorArray = _d->gltf->parseFloatArray(*gltfBaseColorFactor, 4);
             if(!baseColorArray) {
                 Error{} << "Trade::GltfImporter::material(): invalid pbrMetallicRoughness baseColorFactor property";
@@ -4778,7 +4782,7 @@ Containers::Optional<MaterialData> GltfImporter::doMaterial(const UnsignedInt id
 
         /* Metallic factor. 1.0 is default in both Magnum's MaterialData and
            glTF, no need to add anything if not present. */
-        if(const Utility::JsonToken* const gltfMetallicFactor = gltfPbrMetallicRoughness->find("metallicFactor"_s)) {
+        if(const Utility::JsonIterator gltfMetallicFactor = gltfPbrMetallicRoughness->find("metallicFactor"_s)) {
             if(!_d->gltf->parseFloat(*gltfMetallicFactor)) {
                 Error{} << "Trade::GltfImporter::material(): invalid pbrMetallicRoughness metallicFactor property";
                 return {};
@@ -4790,7 +4794,7 @@ Containers::Optional<MaterialData> GltfImporter::doMaterial(const UnsignedInt id
 
         /* Roughness factor. 1.0 is default in both Magnum's MaterialData and
            glTF, no need to add anything if not present. */
-        if(const Utility::JsonToken* const gltfRoughnessFactor = gltfPbrMetallicRoughness->find("roughnessFactor"_s)) {
+        if(const Utility::JsonIterator gltfRoughnessFactor = gltfPbrMetallicRoughness->find("roughnessFactor"_s)) {
             if(!_d->gltf->parseFloat(*gltfRoughnessFactor)) {
                 Error{} << "Trade::GltfImporter::material(): invalid pbrMetallicRoughness roughnessFactor property";
                 return {};
@@ -4800,12 +4804,12 @@ Containers::Optional<MaterialData> GltfImporter::doMaterial(const UnsignedInt id
                 MaterialAttribute::Roughness, gltfRoughnessFactor->asFloat());
         }
 
-        if(const Utility::JsonToken* const gltfBaseColorTexture = gltfPbrMetallicRoughness->find("baseColorTexture"_s)) {
+        if(const Utility::JsonIterator gltfBaseColorTexture = gltfPbrMetallicRoughness->find("baseColorTexture"_s)) {
             if(!materialTexture(*gltfBaseColorTexture, attributes, "BaseColorTexture"_s))
                 return {};
         }
 
-        if(const Utility::JsonToken* const gltfMetallicRoughnessTexture = gltfPbrMetallicRoughness->find("metallicRoughnessTexture"_s)) {
+        if(const Utility::JsonIterator gltfMetallicRoughnessTexture = gltfPbrMetallicRoughness->find("metallicRoughnessTexture"_s)) {
             if(!materialTexture(*gltfMetallicRoughnessTexture, attributes,
                 "NoneRoughnessMetallicTexture"_s,
                 "MetalnessTexture"_s)
@@ -4829,13 +4833,16 @@ Containers::Optional<MaterialData> GltfImporter::doMaterial(const UnsignedInt id
 
     /* Extensions. Go through the object, filter out what's supported directly
        and put the rest into a list to be processed later. */
-    const Utility::JsonToken* gltfPbrSpecularGlossiness = nullptr;
-    const Utility::JsonToken* gltfUnlit = nullptr;
-    const Utility::JsonToken* gltfClearcoat = nullptr;
+    Utility::JsonIterator gltfPbrSpecularGlossiness;
+    Utility::JsonIterator gltfUnlit;
+    Utility::JsonIterator gltfClearcoat;
     /* Saving the key name separately to not need to repeatedly call
-       token.asString() during sort below */
-    Containers::Array<Containers::Pair<Containers::StringView, Containers::Reference<const Utility::JsonToken>>> gltfExtensions;
-    if(const Utility::JsonToken* const gltfExtensionList = gltfMaterial.find("extensions"_s)) {
+       token.asString() during sort below. Similarly not storing
+       Utility::JsonTokenData& as this is just a temporary container so twice
+       the size doesn't matter and creating a JsonToken on-the-fly in the hot
+       std::sort() loop doesn't make sense perf-wise either. */
+    Containers::Array<Containers::Pair<Containers::StringView, Utility::JsonToken>> gltfExtensions;
+    if(const Utility::JsonIterator gltfExtensionList = gltfMaterial.find("extensions"_s)) {
         if(!_d->gltf->parseObject(*gltfExtensionList)) {
             Error{} << "Trade::GltfImporter::material(): invalid extensions property";
             return {};
@@ -4849,11 +4856,11 @@ Containers::Optional<MaterialData> GltfImporter::doMaterial(const UnsignedInt id
             }
 
             if(extensionName == "KHR_materials_pbrSpecularGlossiness"_s)
-                gltfPbrSpecularGlossiness = &gltfExtension.value();
+                gltfPbrSpecularGlossiness = gltfExtension.value();
             else if(extensionName == "KHR_materials_unlit"_s)
-                gltfUnlit = &gltfExtension.value();
+                gltfUnlit = gltfExtension.value();
             else if(extensionName == "KHR_materials_clearcoat"_s)
-                gltfClearcoat = &gltfExtension.value();
+                gltfClearcoat = gltfExtension.value();
             else
                 arrayAppend(gltfExtensions, InPlaceInit, extensionName, gltfExtension.value());
         }
@@ -4867,7 +4874,7 @@ Containers::Optional<MaterialData> GltfImporter::doMaterial(const UnsignedInt id
 
         /* Diffuse factor. Vector of 1.0 is default in both Magnum's
            MaterialData and glTF, no need to add anything if not present. */
-        if(const Utility::JsonToken* const gltfDiffuseFactor = gltfPbrSpecularGlossiness->find("diffuseFactor"_s)) {
+        if(const Utility::JsonIterator gltfDiffuseFactor = gltfPbrSpecularGlossiness->find("diffuseFactor"_s)) {
             const Containers::Optional<Containers::StridedArrayView1D<const float>> diffuseFactorArray = _d->gltf->parseFloatArray(*gltfDiffuseFactor, 4);
             if(!diffuseFactorArray) {
                 Error{} << "Trade::GltfImporter::material(): invalid KHR_materials_pbrSpecularGlossiness diffuseFactor property";
@@ -4882,7 +4889,7 @@ Containers::Optional<MaterialData> GltfImporter::doMaterial(const UnsignedInt id
 
         /* Specular factor. Vector of 1.0 is default in both Magnum's
            MaterialData and glTF, no need to add anything if not present. */
-        if(const Utility::JsonToken* const gltfSpecularFactor = gltfPbrSpecularGlossiness->find("specularFactor"_s)) {
+        if(const Utility::JsonIterator gltfSpecularFactor = gltfPbrSpecularGlossiness->find("specularFactor"_s)) {
             const Containers::Optional<Containers::StridedArrayView1D<const float>> specularFactorArray = _d->gltf->parseFloatArray(*gltfSpecularFactor, 3);
             if(!specularFactorArray) {
                 Error{} << "Trade::GltfImporter::material(): invalid KHR_materials_pbrSpecularGlossiness specularFactor property";
@@ -4900,7 +4907,7 @@ Containers::Optional<MaterialData> GltfImporter::doMaterial(const UnsignedInt id
 
         /* Glossiness factor. 1.0 is default in both Magnum's MaterialData and
            glTF, no need to add anything if not present. */
-        if(const Utility::JsonToken* const gltfGlossinessFactor = gltfPbrSpecularGlossiness->find("glossinessFactor"_s)) {
+        if(const Utility::JsonIterator gltfGlossinessFactor = gltfPbrSpecularGlossiness->find("glossinessFactor"_s)) {
             if(!_d->gltf->parseFloat(*gltfGlossinessFactor)) {
                 Error{} << "Trade::GltfImporter::material(): invalid KHR_materials_pbrSpecularGlossiness glossinessFactor property";
                 return {};
@@ -4910,12 +4917,12 @@ Containers::Optional<MaterialData> GltfImporter::doMaterial(const UnsignedInt id
                 MaterialAttribute::Glossiness, gltfGlossinessFactor->asFloat());
         }
 
-        if(const Utility::JsonToken* const gltfBaseColorTexture = gltfPbrSpecularGlossiness->find("diffuseTexture"_s)) {
+        if(const Utility::JsonIterator gltfBaseColorTexture = gltfPbrSpecularGlossiness->find("diffuseTexture"_s)) {
             if(!materialTexture(*gltfBaseColorTexture, attributes, "DiffuseTexture"_s))
                 return {};
         }
 
-        if(const Utility::JsonToken* const gltfSpecularGlossinessTexture = gltfPbrSpecularGlossiness->find("specularGlossinessTexture"_s)) {
+        if(const Utility::JsonIterator gltfSpecularGlossinessTexture = gltfPbrSpecularGlossiness->find("specularGlossinessTexture"_s)) {
             if(!materialTexture(*gltfSpecularGlossinessTexture, attributes,
                 "SpecularGlossinessTexture"_s,
                 "SpecularTexture"_s)
@@ -4940,13 +4947,13 @@ Containers::Optional<MaterialData> GltfImporter::doMaterial(const UnsignedInt id
     }
 
     /* Normal texture */
-    if(const Utility::JsonToken* const gltfNormalTexture = gltfMaterial.find("normalTexture"_s)) {
+    if(const Utility::JsonIterator gltfNormalTexture = gltfMaterial.find("normalTexture"_s)) {
         if(!materialTexture(*gltfNormalTexture, attributes, "NormalTexture"_s))
             return {};
 
         /* Scale. 1.0 is default in both Magnum's MaterialData and glTF, no
            need to add anything if not present. */
-        if(const Utility::JsonToken* const gltfNormalTextureScale = gltfNormalTexture->find("scale"_s)) {
+        if(const Utility::JsonIterator gltfNormalTextureScale = gltfNormalTexture->find("scale"_s)) {
             if(!_d->gltf->parseFloat(*gltfNormalTextureScale)) {
                 Error{} << "Trade::GltfImporter::material(): invalid normalTexture scale property";
                 return {};
@@ -4959,13 +4966,13 @@ Containers::Optional<MaterialData> GltfImporter::doMaterial(const UnsignedInt id
     }
 
     /* Occlusion texture */
-    if(const Utility::JsonToken* const gltfOcclusionTexture = gltfMaterial.find("occlusionTexture"_s)) {
+    if(const Utility::JsonIterator gltfOcclusionTexture = gltfMaterial.find("occlusionTexture"_s)) {
         if(!materialTexture(*gltfOcclusionTexture, attributes, "OcclusionTexture"_s))
             return {};
 
         /* Strength. 1.0 is default in both Magnum's MaterialData and glTF, no
            need to add anything if not present. */
-        if(const Utility::JsonToken* const gltfOcclusionTextureStrength = gltfOcclusionTexture->find("strength"_s)) {
+        if(const Utility::JsonIterator gltfOcclusionTextureStrength = gltfOcclusionTexture->find("strength"_s)) {
             if(!_d->gltf->parseFloat(*gltfOcclusionTextureStrength)) {
                 Error{} << "Trade::GltfImporter::material(): invalid occlusionTexture strength property";
                 return {};
@@ -4979,7 +4986,7 @@ Containers::Optional<MaterialData> GltfImporter::doMaterial(const UnsignedInt id
 
     /* Emissive factor. Vector of 1.0 is default in both Magnum's MaterialData
        and glTF, no need to add anything if not present. */
-    if(const Utility::JsonToken* const gltfEmissiveFactor = gltfMaterial.find("emissiveFactor"_s)) {
+    if(const Utility::JsonIterator gltfEmissiveFactor = gltfMaterial.find("emissiveFactor"_s)) {
         const Containers::Optional<Containers::StridedArrayView1D<const float>> emissiveFactorArray = _d->gltf->parseFloatArray(*gltfEmissiveFactor, 3);
         if(!emissiveFactorArray) {
             Error{} << "Trade::GltfImporter::material(): invalid emissiveFactor property";
@@ -4993,7 +5000,7 @@ Containers::Optional<MaterialData> GltfImporter::doMaterial(const UnsignedInt id
     }
 
     /* Emissive texture */
-    if(const Utility::JsonToken* const gltfEmissiveTexture = gltfMaterial.find("emissiveTexture"_s)) {
+    if(const Utility::JsonIterator gltfEmissiveTexture = gltfMaterial.find("emissiveTexture"_s)) {
         if(!materialTexture(*gltfEmissiveTexture, attributes, "EmissiveTexture"_s))
             return {};
     }
@@ -5053,7 +5060,7 @@ Containers::Optional<MaterialData> GltfImporter::doMaterial(const UnsignedInt id
 
     /* Used by three stableSortRemoveDuplicatesToPrefix() calls below for
        extras / extensions */
-    const auto extraOrExtensionKeyCompare = [](const Containers::Pair<Containers::StringView, Containers::Reference<const Utility::JsonToken>>& a, const Containers::Pair<Containers::StringView, Containers::Reference<const Utility::JsonToken>>& b) {
+    const auto extraOrExtensionKeyCompare = [](const Containers::Pair<Containers::StringView, Utility::JsonToken>& a, const Containers::Pair<Containers::StringView, Utility::JsonToken>& b) {
         /* If the names are different, sort by those */
         if(a.first() != b.first())
             return a.first() < b.first();
@@ -5064,14 +5071,14 @@ Containers::Optional<MaterialData> GltfImporter::doMaterial(const UnsignedInt id
            token data string view data pointer however *is* pointing to the
            JSON input always. The token address itself could also since they're
            stored in a contiguous array, but this is more robust. */
-        return a.second()->data().data() < b.second()->data().data();
+        return a.second().data().data() < b.second().data().data();
     };
-    const auto extraOrExtensionKeyEqual = [](const Containers::Pair<Containers::StringView, Containers::Reference<const Utility::JsonToken>>& a, const Containers::Pair<Containers::StringView, Containers::Reference<const Utility::JsonToken>>& b) {
+    const auto extraOrExtensionKeyEqual = [](const Containers::Pair<Containers::StringView, Utility::JsonToken>& a, const Containers::Pair<Containers::StringView, Utility::JsonToken>& b) {
         return a.first() == b.first();
     };
 
     /* Extras -- application-specific data, added to the base layer */
-    if(const Utility::JsonToken* const gltfExtras = gltfMaterial.find("extras"_s)) {
+    if(const Utility::JsonIterator gltfExtras = gltfMaterial.find("extras"_s)) {
         /* Theoretically extras can be any token type but the glTF spec
            recommends objects for interoperability, makes our life easier, too:
            https://www.khronos.org/registry/glTF/specs/2.0/glTF-2.0.html#reference-extras */
@@ -5088,7 +5095,7 @@ Containers::Optional<MaterialData> GltfImporter::doMaterial(const UnsignedInt id
             if(parsed) {
                 /* Saving the key name separately to not need to repeatedly
                    call token.asString() during sort below */
-                Containers::Array<Containers::Pair<Containers::StringView, Containers::Reference<const Utility::JsonToken>>> gltfExtraItems;
+                Containers::Array<Containers::Pair<Containers::StringView, Utility::JsonToken>> gltfExtraItems;
                 for(const Utility::JsonObjectItem i: gltfExtras->asObject())
                     arrayAppend(gltfExtraItems, InPlaceInit, i.key(), i.value());
 
@@ -5100,7 +5107,7 @@ Containers::Optional<MaterialData> GltfImporter::doMaterial(const UnsignedInt id
 
                 arrayReserve(attributes, attributes.size() + uniqueCount);
                 /** @todo use suffix() once it takes suffix size and not prefix size */
-                for(const Containers::Pair<Containers::StringView, Containers::Reference<const Utility::JsonToken>>& gltfExtraItem: gltfExtraItems.exceptPrefix(gltfExtraItems.size() - uniqueCount)) {
+                for(const Containers::Pair<Containers::StringView, Utility::JsonToken>& gltfExtraItem: gltfExtraItems.exceptPrefix(gltfExtraItems.size() - uniqueCount)) {
                     if(const Containers::Optional<MaterialAttributeData> parsedAttribute = parseMaterialAttribute(*_d->gltf, gltfExtraItem.first(), gltfExtraItem.second(), flags()))
                         arrayAppend(attributes, *parsedAttribute);
                 }
@@ -5128,7 +5135,7 @@ Containers::Optional<MaterialData> GltfImporter::doMaterial(const UnsignedInt id
            to be present to not have the texture canceled out. Magnum has 1.0
            as a default, so we add an explicit 0.0 if the factor is not
            present. */
-        if(const Utility::JsonToken* const gltfClearcoatFactor = gltfClearcoat->find("clearcoatFactor"_s)) {
+        if(const Utility::JsonIterator gltfClearcoatFactor = gltfClearcoat->find("clearcoatFactor"_s)) {
             if(!_d->gltf->parseFloat(*gltfClearcoatFactor)) {
                 Error{} << "Trade::GltfImporter::material(): invalid KHR_materials_clearcoat clearcoatFactor property";
                 return {};
@@ -5139,7 +5146,7 @@ Containers::Optional<MaterialData> GltfImporter::doMaterial(const UnsignedInt id
         } else arrayAppend(attributes, InPlaceInit,
             MaterialAttribute::LayerFactor, 0.0f);
 
-        if(const Utility::JsonToken* const gltfClearcoatTexture = gltfClearcoat->find("clearcoatTexture"_s)) {
+        if(const Utility::JsonIterator gltfClearcoatTexture = gltfClearcoat->find("clearcoatTexture"_s)) {
             if(!materialTexture(*gltfClearcoatTexture, attributes, "LayerFactorTexture"_s))
                 return {};
         }
@@ -5147,7 +5154,7 @@ Containers::Optional<MaterialData> GltfImporter::doMaterial(const UnsignedInt id
         /* Same as with gltfClearcoatFactor -- Magnum's default is 1.0 to not
            have to specify both if a texture is present, so add an explicit 0.0
            if the factor is not present. */
-        if(const Utility::JsonToken* const gltfRoughnessFactor = gltfClearcoat->find("clearcoatRoughnessFactor"_s)) {
+        if(const Utility::JsonIterator gltfRoughnessFactor = gltfClearcoat->find("clearcoatRoughnessFactor"_s)) {
             if(!_d->gltf->parseFloat(*gltfRoughnessFactor)) {
                 Error{} << "Trade::GltfImporter::material(): invalid KHR_materials_clearcoat roughnessFactor property";
                 return {};
@@ -5158,7 +5165,7 @@ Containers::Optional<MaterialData> GltfImporter::doMaterial(const UnsignedInt id
         } else arrayAppend(attributes, InPlaceInit,
             MaterialAttribute::Roughness, 0.0f);
 
-        if(const Utility::JsonToken* const gltfRoughnessTexture = gltfClearcoat->find("clearcoatRoughnessTexture"_s)) {
+        if(const Utility::JsonIterator gltfRoughnessTexture = gltfClearcoat->find("clearcoatRoughnessTexture"_s)) {
             if(!materialTexture(*gltfRoughnessTexture, attributes, "RoughnessTexture"_s))
                 return {};
 
@@ -5170,13 +5177,13 @@ Containers::Optional<MaterialData> GltfImporter::doMaterial(const UnsignedInt id
                 MaterialTextureSwizzle::G);
         }
 
-        if(const Utility::JsonToken* const gltfNormalTexture = gltfClearcoat->find("clearcoatNormalTexture"_s)) {
+        if(const Utility::JsonIterator gltfNormalTexture = gltfClearcoat->find("clearcoatNormalTexture"_s)) {
             if(!materialTexture(*gltfNormalTexture, attributes, "NormalTexture"_s))
                 return {};
 
             /* Scale. 1.0 is default in both Magnum's MaterialData and glTF, no
                need to add anything if not present. */
-            if(const Utility::JsonToken* const gltfNormalTextureScale = gltfNormalTexture->find("scale"_s)) {
+            if(const Utility::JsonIterator gltfNormalTextureScale = gltfNormalTexture->find("scale"_s)) {
                 if(!_d->gltf->parseFloat(*gltfNormalTextureScale)) {
                     Error{} << "Trade::GltfImporter::material(): invalid KHR_materials_clearcoat normalTexture scale property";
                     return {};
@@ -5195,7 +5202,7 @@ Containers::Optional<MaterialData> GltfImporter::doMaterial(const UnsignedInt id
     /* Import unrecognized extension attributes as custom attributes, one
        layer per extension */
     /** @todo use suffix() once it takes suffix size and not prefix size */
-    for(const Containers::Pair<Containers::StringView, Containers::Reference<const Utility::JsonToken>>& gltfExtension: gltfExtensions.exceptPrefix(gltfExtensions.size() - uniqueExtensionCount)) {
+    for(const Containers::Pair<Containers::StringView, Utility::JsonToken>& gltfExtension: gltfExtensions.exceptPrefix(gltfExtensions.size() - uniqueExtensionCount)) {
         if(!gltfExtension.first()) {
             if(!(flags() & ImporterFlag::Quiet))
                 Warning{} << "Trade::GltfImporter::material(): extension with an empty name, skipping";
@@ -5212,8 +5219,8 @@ Containers::Optional<MaterialData> GltfImporter::doMaterial(const UnsignedInt id
 
         /* Saving the key name separately to not need to repeatedly call
            token.asString() during sort below */
-        Containers::Array<Containers::Pair<Containers::StringView, Containers::Reference<const Utility::JsonToken>>> gltfExtensionItems;
-        for(const Utility::JsonObjectItem i: gltfExtension.second()->asObject())
+        Containers::Array<Containers::Pair<Containers::StringView, Utility::JsonToken>> gltfExtensionItems;
+        for(const Utility::JsonObjectItem i: gltfExtension.second().asObject())
             arrayAppend(gltfExtensionItems, InPlaceInit, i.key(), i.value());
 
         /* Sort and remove duplicates */
@@ -5226,7 +5233,7 @@ Containers::Optional<MaterialData> GltfImporter::doMaterial(const UnsignedInt id
            lowercase seems silly, so we use a unique prefix. */
         arrayAppend(attributes, InPlaceInit, MaterialAttribute::LayerName, Utility::format("#{}", gltfExtension.first()));
         /** @todo use suffix() once it takes suffix size and not prefix size */
-        for(const Containers::Pair<Containers::StringView, Containers::Reference<const Utility::JsonToken>>& gltfExtensionItem: gltfExtensionItems.exceptPrefix(gltfExtensionItems.size() - uniqueCount)) {
+        for(const Containers::Pair<Containers::StringView, Utility::JsonToken>& gltfExtensionItem: gltfExtensionItems.exceptPrefix(gltfExtensionItems.size() - uniqueCount)) {
             if(!gltfExtensionItem.first()) {
                 if(!(flags() & ImporterFlag::Quiet))
                     Warning{} << "Trade::GltfImporter::material(): property with an empty name, skipping";
@@ -5235,7 +5242,7 @@ Containers::Optional<MaterialData> GltfImporter::doMaterial(const UnsignedInt id
 
             /* Parse glTF textureInfo objects. Any objects without the correct
                suffix and type are ignored. */
-            if(gltfExtensionItem.second()->type() == Utility::JsonToken::Type::Object) {
+            if(gltfExtensionItem.second().type() == Utility::JsonToken::Type::Object) {
                 if(gltfExtensionItem.first().size() < 8 || !gltfExtensionItem.first().hasSuffix("Texture"_s)) {
                     if(!(flags() & ImporterFlag::Quiet))
                         Warning{} << "Trade::GltfImporter::material(): property" << gltfExtensionItem.first() << "has a non-texture object type, skipping";
@@ -5253,7 +5260,7 @@ Containers::Optional<MaterialData> GltfImporter::doMaterial(const UnsignedInt id
                     should instead loop through the texture properties, filter
                     out what's handled by materialTexture() and add the rest,
                     basically same as done for extras */
-                if(const Utility::JsonToken* const gltfTextureScale = gltfExtensionItem.second()->find("scale"_s)) {
+                if(const Utility::JsonIterator gltfTextureScale = gltfExtensionItem.second().find("scale"_s)) {
                     bool parsed;
                     {
                         /* Redirect error messages from Json::parse*() to the
@@ -5293,7 +5300,7 @@ Containers::Optional<MaterialData> GltfImporter::doMaterial(const UnsignedInt id
        deleter */
     arrayShrink(layers);
     arrayShrink(attributes, DefaultInit);
-    return MaterialData{types, Utility::move(attributes), Utility::move(layers), &gltfMaterial};
+    return MaterialData{types, Utility::move(attributes), Utility::move(layers), &gltfMaterial.token()};
 }
 
 UnsignedInt GltfImporter::doTextureCount() const {
@@ -5318,9 +5325,9 @@ Containers::String GltfImporter::doTextureName(const UnsignedInt id) {
 }
 
 Containers::Optional<TextureData> GltfImporter::doTexture(const UnsignedInt id) {
-    const Utility::JsonToken& gltfTexture = _d->gltfTextures[_d->uniqueTextures[id]].first();
+    const Utility::JsonToken gltfTexture{*_d->gltf, _d->gltfTextures[_d->uniqueTextures[id]].first()};
 
-    const Utility::JsonToken* gltfSource = nullptr;
+    Utility::JsonIterator gltfSource;
 
     /* Various extensions, they override the standard image. The core glTF spec
        only allows image/jpeg and image/png and these extend for other MIME
@@ -5332,7 +5339,7 @@ Containers::Optional<TextureData> GltfImporter::doTexture(const UnsignedInt id) 
         - extensionsRequired?
         - image importers available via manager()->aliasList()?
         - are there even files out there with more than one extension? */
-    if(const Utility::JsonToken* const gltfExtensions = gltfTexture.find("extensions"_s)) {
+    if(const Utility::JsonIterator gltfExtensions = gltfTexture.find("extensions"_s)) {
         if(!_d->gltf->parseObject(*gltfExtensions)) {
             Error{} << "Trade::GltfImporter::texture(): invalid extensions property";
             return {};
@@ -5396,7 +5403,7 @@ Containers::Optional<TextureData> GltfImporter::doTexture(const UnsignedInt id) 
     SamplerFilter magnificationFilter = SamplerFilter::Linear;
     SamplerMipmap mipmap = SamplerMipmap::Linear;
     Math::Vector3<SamplerWrapping> wrapping{SamplerWrapping::Repeat};
-    if(const Utility::JsonToken* const gltfSamplerIndex = gltfTexture.find("sampler"_s)) {
+    if(const Utility::JsonIterator gltfSamplerIndex = gltfTexture.find("sampler"_s)) {
         if(!_d->gltf->parseUnsignedInt(*gltfSamplerIndex)) {
             Error{} << "Trade::GltfImporter::texture(): invalid sampler property";
             return {};
@@ -5413,10 +5420,10 @@ Containers::Optional<TextureData> GltfImporter::doTexture(const UnsignedInt id) 
             mipmap = storage->mipmap;
             wrapping = storage->wrapping;
         } else {
-            const Utility::JsonToken& gltfSampler = _d->gltfSamplers[gltfSamplerIndex->asUnsignedInt()];
+            const Utility::JsonToken gltfSampler{*_d->gltf, _d->gltfSamplers[gltfSamplerIndex->asUnsignedInt()]};
 
             /* Magnification filter */
-            if(const Utility::JsonToken* const gltfMagFilter = gltfSampler.find("magFilter"_s)) {
+            if(const Utility::JsonIterator gltfMagFilter = gltfSampler.find("magFilter"_s)) {
                 if(!_d->gltf->parseUnsignedInt(*gltfMagFilter)) {
                     Error{} << "Trade::GltfImporter::texture(): invalid magFilter property";
                     return {};
@@ -5435,7 +5442,7 @@ Containers::Optional<TextureData> GltfImporter::doTexture(const UnsignedInt id) 
             }
 
             /* Minification filter */
-            if(const Utility::JsonToken* const gltfMinFilter = gltfSampler.find("minFilter"_s)) {
+            if(const Utility::JsonIterator gltfMinFilter = gltfSampler.find("minFilter"_s)) {
                 if(!_d->gltf->parseUnsignedInt(*gltfMinFilter)) {
                     Error{} << "Trade::GltfImporter::texture(): invalid minFilter property";
                     return {};
@@ -5477,7 +5484,7 @@ Containers::Optional<TextureData> GltfImporter::doTexture(const UnsignedInt id) 
             for(const char coordinate: {0, 1}) {
                 /* No, I'm definitely not overdoing anything here */
                 const char name[]{'w', 'r', 'a', 'p', char('S' + coordinate)};
-                if(const Utility::JsonToken* const gltfWrap = gltfSampler.find({name, sizeof(name)})) {
+                if(const Utility::JsonIterator gltfWrap = gltfSampler.find({name, sizeof(name)})) {
                     if(!_d->gltf->parseUnsignedInt(*gltfWrap)) {
                         Error{} << "Trade::GltfImporter::texture(): invalid" << Containers::StringView{name, sizeof(name)} << "property";
                         return {};
@@ -5513,7 +5520,7 @@ Containers::Optional<TextureData> GltfImporter::doTexture(const UnsignedInt id) 
         /* In case of KHR_texture_ktx deduplication, this returns the first
            texture in the chain */
         /** @todo when we have arbirary key/value storage, store all there? */
-        mipmap, wrapping, image, &gltfTexture};
+        mipmap, wrapping, image, &gltfTexture.token()};
 }
 
 AbstractImporter* GltfImporter::setupOrReuseImporterForImage(const char* const errorPrefix, const UnsignedInt id, const UnsignedInt expectedDimensions) {
@@ -5536,15 +5543,15 @@ AbstractImporter* GltfImporter::setupOrReuseImporterForImage(const char* const e
     if(fileCallback())
         importer.setFileCallback(fileCallback(), fileCallbackUserData());
 
-    const Utility::JsonToken& gltfImage = _d->gltfImages[id].first();
+    const Utility::JsonToken gltfImage{*_d->gltf, _d->gltfImages[id].first()};
 
-    const Utility::JsonToken* gltfUri = gltfImage.find("uri"_s);
+    const Utility::JsonIterator gltfUri = gltfImage.find("uri"_s);
     if(gltfUri && !_d->gltf->parseString(*gltfUri)) {
         Error{} << errorPrefix << "invalid uri property";
         return {};
     }
 
-    const Utility::JsonToken* gltfBufferView = gltfImage.find("bufferView"_s);
+    const Utility::JsonIterator gltfBufferView = gltfImage.find("bufferView"_s);
     if(gltfBufferView && !_d->gltf->parseUnsignedInt(*gltfBufferView)) {
         Error{} << errorPrefix << "invalid bufferView property";
         return {};

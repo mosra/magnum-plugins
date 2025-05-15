@@ -2276,6 +2276,8 @@ void GltfImporterTest::animation() {
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "animation"_s + data.suffix)));
+    const Utility::Json* json = static_cast<const Utility::Json*>(importer->importerState());
+    CORRADE_VERIFY(json);
 
     CORRADE_COMPARE(importer->animationCount(), 4);
     CORRADE_COMPARE(importer->animationName(2), "TRS animation");
@@ -2290,9 +2292,9 @@ void GltfImporterTest::animation() {
         CORRADE_COMPARE(animation->trackCount(), 0);
 
         /* Importer state should give the glTF animation object */
-        const auto* state = static_cast<const Utility::JsonToken*>(animation->importerState());
+        const auto* state = static_cast<const Utility::JsonTokenData*>(animation->importerState());
         CORRADE_VERIFY(state);
-        CORRADE_COMPARE((*state)["name"].asString(), "empty");
+        CORRADE_COMPARE((Utility::JsonToken{*json, *state})["name"].asString(), "empty");
 
     /* Empty translation/rotation/scaling animation */
     } {
@@ -2988,6 +2990,8 @@ void GltfImporterTest::animationMerge() {
 void GltfImporterTest::camera() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "camera.gltf")));
+    const Utility::Json* json = static_cast<const Utility::Json*>(importer->importerState());
+    CORRADE_VERIFY(json);
 
     CORRADE_COMPARE(importer->cameraCount(), 4);
     CORRADE_COMPARE(importer->cameraName(2), "Perspective 4:3 75° hFoV");
@@ -3004,9 +3008,9 @@ void GltfImporterTest::camera() {
         CORRADE_COMPARE(cam->far(), 100.0f);
 
         /* Importer state should give the glTF camera object */
-        const auto* state = static_cast<const Utility::JsonToken*>(cam->importerState());
+        const auto* state = static_cast<const Utility::JsonTokenData*>(cam->importerState());
         CORRADE_VERIFY(state);
-        CORRADE_COMPARE((*state)["name"].asString(), "Orthographic 4:3");
+        CORRADE_COMPARE((Utility::JsonToken{*json, *state})["name"].asString(), "Orthographic 4:3");
     } {
         Containers::Optional<Trade::CameraData> cam = importer->camera("Perspective 1:1 75° hFoV");
         CORRADE_VERIFY(cam);
@@ -3018,9 +3022,9 @@ void GltfImporterTest::camera() {
 
         /* Importer state should give the glTF camera object (orthographic and
            perspective cameras are handled separately) */
-        const auto* state = static_cast<const Utility::JsonToken*>(cam->importerState());
+        const auto* state = static_cast<const Utility::JsonTokenData*>(cam->importerState());
         CORRADE_VERIFY(state);
-        CORRADE_COMPARE((*state)["name"].asString(), "Perspective 1:1 75° hFoV");
+        CORRADE_COMPARE((Utility::JsonToken{*json, *state})["name"].asString(), "Perspective 1:1 75° hFoV");
     } {
         Containers::Optional<Trade::CameraData> cam = importer->camera("Perspective 4:3 75° hFoV");
         CORRADE_VERIFY(cam);
@@ -3067,6 +3071,8 @@ void GltfImporterTest::cameraInvalid() {
 void GltfImporterTest::light() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "light.gltf")));
+    const Utility::Json* json = static_cast<const Utility::Json*>(importer->importerState());
+    CORRADE_VERIFY(json);
 
     CORRADE_COMPARE(importer->lightCount(), 5);
     CORRADE_COMPARE(importer->lightName(1), "Spot");
@@ -3083,9 +3089,9 @@ void GltfImporterTest::light() {
         CORRADE_COMPARE(light->range(), Constants::inf());
 
         /* Importer state should give the glTF light object */
-        const auto* state = static_cast<const Utility::JsonToken*>(light->importerState());
+        const auto* state = static_cast<const Utility::JsonTokenData*>(light->importerState());
         CORRADE_VERIFY(state);
-        CORRADE_COMPARE((*state)["name"].asString(), "Point with everything implicit");
+        CORRADE_COMPARE((Utility::JsonToken{*json, *state})["name"].asString(), "Point with everything implicit");
 
     } {
         Containers::Optional<Trade::LightData> light = importer->light("Spot");
@@ -3152,6 +3158,8 @@ void GltfImporterTest::lightInvalid() {
 void GltfImporterTest::scene() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "scene.gltf")));
+    const Utility::Json* json = static_cast<const Utility::Json*>(importer->importerState());
+    CORRADE_VERIFY(json);
 
     /* Explicit default scene */
     CORRADE_COMPARE(importer->defaultScene(), 1);
@@ -3197,9 +3205,9 @@ void GltfImporterTest::scene() {
         CORRADE_COMPARE(scene->fieldCount(), 7 + 1 /* ImporterState */);
 
         /* Importer state should give the glTF scene object */
-        const auto* state = static_cast<const Utility::JsonToken*>(scene->importerState());
+        const auto* state = static_cast<const Utility::JsonTokenData*>(scene->importerState());
         CORRADE_VERIFY(state);
-        CORRADE_COMPARE((*state)["name"].asString(), "Scene");
+        CORRADE_COMPARE((Utility::JsonToken{*json, *state})["name"].asString(), "Scene");
 
         /* Parents */
         CORRADE_VERIFY(scene->hasField(SceneField::Parent));
@@ -3273,7 +3281,7 @@ void GltfImporterTest::scene() {
             TestSuite::Compare::Container);
         Containers::Optional<const void*> objectState = scene->importerStateFor(4);
         CORRADE_VERIFY(objectState && *objectState);
-        CORRADE_COMPARE((*static_cast<const Utility::JsonToken*>(*objectState))["name"].asString(), "Light");
+        CORRADE_COMPARE((Utility::JsonToken{*json, *static_cast<const Utility::JsonTokenData*>(*objectState)})["name"].asString(), "Light");
 
     /* Another scene, with no material assignments, so there should be no
        material field. It also references an object that's not in scene 1,
@@ -4076,6 +4084,8 @@ void GltfImporterTest::skin() {
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "skin"_s + data.suffix)));
+    const Utility::Json* json = static_cast<const Utility::Json*>(importer->importerState());
+    CORRADE_VERIFY(json);
 
     CORRADE_COMPARE(importer->skin3DCount(), 2);
     CORRADE_COMPARE(importer->skin3DName(1), "explicit inverse bind matrices");
@@ -4093,9 +4103,9 @@ void GltfImporterTest::skin() {
             TestSuite::Compare::Container);
 
         /* Importer state should give the glTF skin object */
-        const auto* state = static_cast<const Utility::JsonToken*>(skin->importerState());
+        const auto* state = static_cast<const Utility::JsonTokenData*>(skin->importerState());
         CORRADE_VERIFY(state);
-        CORRADE_COMPARE((*state)["name"].asString(), "implicit inverse bind matrices");
+        CORRADE_COMPARE((Utility::JsonToken{*json, *state})["name"].asString(), "implicit inverse bind matrices");
 
     } {
         Containers::Optional<Trade::SkinData3D> skin = importer->skin3D("explicit inverse bind matrices");
@@ -4162,6 +4172,8 @@ void GltfImporterTest::mesh() {
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "mesh"_s + data.suffix)));
+    const Utility::Json* json = static_cast<const Utility::Json*>(importer->importerState());
+    CORRADE_VERIFY(json);
 
     CORRADE_COMPARE(importer->meshName(0), "Indexed mesh");
     CORRADE_COMPARE(importer->meshForName("Indexed mesh"), 0);
@@ -4251,9 +4263,9 @@ void GltfImporterTest::mesh() {
     /* Importer state should give the glTF mesh primitive object (i.e., not
        the enclosing mesh). Parent is the primitive array, its parent is the
        "primitives" key, and its parent is the mesh object. */
-    const auto* state = static_cast<const Utility::JsonToken*>(mesh->importerState());
+    const auto* state = static_cast<const Utility::JsonTokenData*>(mesh->importerState());
     CORRADE_VERIFY(state);
-    CORRADE_COMPARE((*state->parent()->parent()->parent())["name"].asString(), "Indexed mesh");
+    CORRADE_COMPARE((*(Utility::JsonToken{*json, *state}).parent()->parent()->parent())["name"].asString(), "Indexed mesh");
 }
 
 void GltfImporterTest::meshNoAttributes() {
@@ -6053,6 +6065,8 @@ void GltfImporterTest::materialPbrMetallicRoughness() {
     CORRADE_COMPARE(importer->materialName(2), "textures");
     CORRADE_COMPARE(importer->materialForName("textures"), 2);
     CORRADE_COMPARE(importer->materialForName("Nonexistent"), -1);
+    const Utility::Json* json = static_cast<const Utility::Json*>(importer->importerState());
+    CORRADE_VERIFY(json);
 
     {
         const char* name = "defaults";
@@ -6072,9 +6086,9 @@ void GltfImporterTest::materialPbrMetallicRoughness() {
         CORRADE_COMPARE(pbr.roughness(), 1.0f);
 
         /* Importer state should give the glTF material object */
-        const auto* state = static_cast<const Utility::JsonToken*>(material->importerState());
+        const auto* state = static_cast<const Utility::JsonTokenData*>(material->importerState());
         CORRADE_VERIFY(state);
-        CORRADE_COMPARE((*state)["name"].asString(), "defaults");
+        CORRADE_COMPARE((Utility::JsonToken{*json, *state})["name"].asString(), "defaults");
     }
 
     const Containers::Pair<Containers::StringView, MaterialData> materials[]{
@@ -7246,6 +7260,8 @@ void GltfImporterTest::texture() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
 
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "texture.gltf")));
+    const Utility::Json* json = static_cast<const Utility::Json*>(importer->importerState());
+    CORRADE_VERIFY(json);
 
     CORRADE_COMPARE(importer->textureCount(), 5);
     CORRADE_COMPARE(importer->textureName(1), "another variant");
@@ -7276,9 +7292,9 @@ void GltfImporterTest::texture() {
         CORRADE_COMPARE(texture->wrapping(), Math::Vector3<SamplerWrapping>(SamplerWrapping::Repeat, SamplerWrapping::ClampToEdge, SamplerWrapping::Repeat));
 
         /* Importer state should give the glTF texture object */
-        const auto* state = static_cast<const Utility::JsonToken*>(texture->importerState());
+        const auto* state = static_cast<const Utility::JsonTokenData*>(texture->importerState());
         CORRADE_VERIFY(state);
-        CORRADE_COMPARE((*state)["name"].asString(), "another variant");
+        CORRADE_COMPARE((Utility::JsonToken{*json, *state})["name"].asString(), "another variant");
     } {
         Containers::Optional<Trade::TextureData> texture = importer->texture("shared sampler");
         CORRADE_VERIFY(texture);
@@ -7371,6 +7387,8 @@ void GltfImporterTest::imageEmbedded() {
     Containers::Optional<Containers::Array<char>> file = Utility::Path::read(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "image"_s + data.suffix));
     CORRADE_VERIFY(file);
     CORRADE_VERIFY(importer->openData(*file));
+    const Utility::Json* json = static_cast<const Utility::Json*>(importer->importerState());
+    CORRADE_VERIFY(json);
 
     CORRADE_COMPARE(importer->image2DCount(), 2);
     CORRADE_COMPARE(importer->image2DName(1), "Image");
@@ -7384,9 +7402,9 @@ void GltfImporterTest::imageEmbedded() {
     CORRADE_COMPARE_AS(image->data(), Containers::arrayView(ExpectedImageData).prefix(60), TestSuite::Compare::Container);
 
     /* Importer state should give the glTF image object */
-    const auto* state = static_cast<const Utility::JsonToken*>(image->importerState());
+    const auto* state = static_cast<const Utility::JsonTokenData*>(image->importerState());
     CORRADE_VERIFY(state);
-    CORRADE_COMPARE((*state)["name"].asString(), "Image");
+    CORRADE_COMPARE((Utility::JsonToken{*json, *state})["name"].asString(), "Image");
 }
 
 void GltfImporterTest::imageExternal() {

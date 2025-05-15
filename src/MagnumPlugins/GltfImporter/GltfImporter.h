@@ -545,7 +545,7 @@ and you can access the parsed content through importer-specific data accessors.
     allowed to cast away the @cpp const @ce on a mutable importer instance to
     access the parsing APIs.
 -   Importer state on data class instances returned from this importer return
-    pointers to @relativeref{Corrade,Utility::JsonToken} of particular glTF
+    pointers to @relativeref{Corrade,Utility::JsonTokenData} of particular glTF
     objects:
     -   @ref AnimationData::importerState() returns a glTF animation object, or
         `nullptr` if the @cb{.ini} mergeAnimationClips @ce option is enabled
@@ -696,8 +696,8 @@ class MAGNUM_GLTFIMPORTER_EXPORT GltfImporter: public AbstractImporter {
         MAGNUM_GLTFIMPORTER_LOCAL Containers::Optional<Containers::ArrayView<const char>> parseBuffer(const char* const errorPrefix, UnsignedInt id);
         MAGNUM_GLTFIMPORTER_LOCAL Containers::Optional<BufferView> parseBufferView(const char* errorPrefix, UnsignedInt bufferViewId);
         MAGNUM_GLTFIMPORTER_LOCAL Containers::Optional<Accessor> parseAccessor(const char* const errorPrefix, UnsignedInt accessorId);
-        MAGNUM_GLTFIMPORTER_LOCAL bool materialTexture(const Utility::JsonToken& gltfTexture, Containers::Array<MaterialAttributeData>& attributes, Containers::StringView attribute, Containers::StringView extraAttributePrefix, bool warningOnly = false);
-        MAGNUM_GLTFIMPORTER_LOCAL bool materialTexture(const Utility::JsonToken& gltfTexture, Containers::Array<MaterialAttributeData>& attributes, Containers::StringView attribute, bool warningOnly = false);
+        MAGNUM_GLTFIMPORTER_LOCAL bool materialTexture(Utility::JsonToken gltfTexture, Containers::Array<MaterialAttributeData>& attributes, Containers::StringView attribute, Containers::StringView extraAttributePrefix, bool warningOnly = false);
+        MAGNUM_GLTFIMPORTER_LOCAL bool materialTexture(Utility::JsonToken gltfTexture, Containers::Array<MaterialAttributeData>& attributes, Containers::StringView attribute, bool warningOnly = false);
 
         MAGNUM_GLTFIMPORTER_LOCAL const void* doImporterState() const override;
 
