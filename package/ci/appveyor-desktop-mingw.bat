@@ -51,7 +51,7 @@ rem __security_cookie. It wasn't built before, so I won't bother building it
 rem now either. TODO for later.
 
 rem Build Corrade
-git clone --depth 1 https://github.com/mosra/corrade.git || exit /b
+git clone --depth 1 --branch next https://github.com/mosra/corrade.git || exit /b
 cd corrade || exit /b
 mkdir build && cd build || exit /b
 cmake .. ^

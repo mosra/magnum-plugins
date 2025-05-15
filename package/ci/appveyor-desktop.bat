@@ -27,7 +27,7 @@ set ONLY_MSVC2019=OFF
 IF "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2019" set ONLY_MSVC2019=ON
 
 rem Build Corrade
-git clone --depth 1 https://github.com/mosra/corrade.git || exit /b
+git clone --depth 1 --branch next https://github.com/mosra/corrade.git || exit /b
 cd corrade || exit /b
 mkdir build && cd build || exit /b
 cmake .. ^
