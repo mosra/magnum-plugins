@@ -168,6 +168,10 @@ set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 # 5.0.1 this option is prefixed with ASSIMP_, so better set both variants.
 set(INJECT_DEBUG_POSTFIX OFF CACHE BOOL "" FORCE)
 set(ASSIMP_INJECT_DEBUG_POSTFIX OFF CACHE BOOL "" FORCE)
+# Since 5.2.0, Assimp unconditionally enables -Werror which likely will cause
+# the compilation to fail due to warnings introduced in new compiler versions.
+# This option, new since 5.2.4, disables that.
+set(ASSIMP_WARNINGS_AS_ERRORS OFF CACHE BOOL "" FORCE)
 add_subdirectory(assimp EXCLUDE_FROM_ALL)
 
 set(MAGNUM_WITH_ANYIMAGEIMPORTER ON CACHE BOOL "" FORCE)
