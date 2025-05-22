@@ -469,8 +469,38 @@ Containers::Optional<MeshData> PrimitiveImporter::doMesh(UnsignedInt id, Unsigne
     if(Names[id] == "crosshair3D"_s)
         return Primitives::crosshair3D();
 
-    if(Names[id] == "cubeSolid"_s)
-        return Primitives::cubeSolid();
+    if(Names[id] == "cubeSolid"_s) {
+        Utility::ConfigurationGroup* conf;
+        CORRADE_INTERNAL_ASSERT_OUTPUT(conf = configuration().group("cubeSolid"));
+
+        Containers::StringView textureCoordinates = conf->value<Containers::StringView>("textureCoordinates");
+        Primitives::CubeFlags flags;
+        #define _c(u,l,value)                                               \
+            if(textureCoordinates == #l #value)                             \
+                flags |= Primitives::CubeFlag::TextureCoordinates ## u ## value;
+        _c(A,a,llSame)
+        else _c(P,p,ositiveUpNegativeDown)
+        else _c(N,n,egativeXUpNegativeXDown)
+        else _c(N,n,egativeXUpPositiveZDown)
+        else _c(N,n,egativeXUpPositiveXDown)
+        else _c(N,n,egativeXUpNegativeZDown)
+        else _c(P,p,ositiveZUpPositiveZDown)
+        else _c(P,p,ositiveZUpPositiveXDown)
+        else if(textureCoordinates) {
+            Error{} << "Trade::PrimitiveImporter::mesh(): unrecognized textureCoordinates value" << textureCoordinates << "for cubeSolid";
+            return {};
+        }
+        #undef _c
+        if(conf->value<bool>("tangents")) {
+            if(!flags) {
+                Error{} << "Trade::PrimitiveImporter::mesh(): cannot enable cubeSolid tangents with no textureCoordinates";
+                return {};
+            }
+            flags |= Primitives::CubeFlag::Tangents;
+        }
+
+        return Primitives::cubeSolid(flags);
+    }
 
     if(Names[id] == "cubeSolidStrip"_s)
         return Primitives::cubeSolidStrip();
