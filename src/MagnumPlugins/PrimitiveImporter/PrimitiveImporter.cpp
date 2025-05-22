@@ -296,15 +296,30 @@ Containers::Optional<MeshData> PrimitiveImporter::doMesh(UnsignedInt id, Unsigne
         Utility::ConfigurationGroup* conf;
         CORRADE_INTERNAL_ASSERT_OUTPUT(conf = configuration().group("capsule2DWireframe"));
 
+        const UnsignedInt hemisphereRings = conf->value<UnsignedInt>("hemisphereRings");
+        const UnsignedInt cylinderRings = conf->value<UnsignedInt>("cylinderRings");
+        if(hemisphereRings < 1 || cylinderRings < 1) {
+            Error{} << "Trade::PrimitiveImporter::mesh(): expected hemisphereRings and cylinderRings to be at least 1 for capsule2DWireframe but got" << hemisphereRings << "and" << cylinderRings;
+            return {};
+        }
+
         return Primitives::capsule2DWireframe(
-            conf->value<UnsignedInt>("hemisphereRings"),
-            conf->value<UnsignedInt>("cylinderRings"),
+            hemisphereRings,
+            cylinderRings,
             conf->value<Float>("halfLength"));
     }
 
     if(Names[id] == "capsule3DSolid"_s) {
         Utility::ConfigurationGroup* conf;
         CORRADE_INTERNAL_ASSERT_OUTPUT(conf = configuration().group("capsule3DSolid"));
+
+        const UnsignedInt hemisphereRings = conf->value<UnsignedInt>("hemisphereRings");
+        const UnsignedInt cylinderRings = conf->value<UnsignedInt>("cylinderRings");
+        const UnsignedInt segments = conf->value<UnsignedInt>("segments");
+        if(hemisphereRings < 1 || cylinderRings < 1 || segments < 3) {
+            Error{} << "Trade::PrimitiveImporter::mesh(): expected hemisphereRings and cylinderRings to be at least 1 and segments at least 3 for capsule3DSolid but got" << hemisphereRings << Debug::nospace << "," << cylinderRings << "and" << segments;
+            return {};
+        }
 
         Primitives::CapsuleFlags flags;
         if(conf->value<bool>("textureCoordinates"))
@@ -313,9 +328,9 @@ Containers::Optional<MeshData> PrimitiveImporter::doMesh(UnsignedInt id, Unsigne
             flags |= Primitives::CapsuleFlag::Tangents;
 
         return Primitives::capsule3DSolid(
-            conf->value<UnsignedInt>("hemisphereRings"),
-            conf->value<UnsignedInt>("cylinderRings"),
-            conf->value<UnsignedInt>("segments"),
+            hemisphereRings,
+            cylinderRings,
+            segments,
             conf->value<Float>("halfLength"),
             flags);
     }
@@ -324,10 +339,18 @@ Containers::Optional<MeshData> PrimitiveImporter::doMesh(UnsignedInt id, Unsigne
         Utility::ConfigurationGroup* conf;
         CORRADE_INTERNAL_ASSERT_OUTPUT(conf = configuration().group("capsule3DWireframe"));
 
+        const UnsignedInt hemisphereRings = conf->value<UnsignedInt>("hemisphereRings");
+        const UnsignedInt cylinderRings = conf->value<UnsignedInt>("cylinderRings");
+        const UnsignedInt segments = conf->value<UnsignedInt>("segments");
+        if(hemisphereRings < 1 || cylinderRings < 1 || segments % 4 != 0 || !segments) {
+            Error{} << "Trade::PrimitiveImporter::mesh(): expected hemisphereRings and cylinderRings to be at least 1 and segments to be multiples of 4 for capsule3DWireframe but got" << hemisphereRings << Debug::nospace << "," << cylinderRings << "and" << segments;
+            return {};
+        }
+
         return Primitives::capsule3DWireframe(
-            conf->value<UnsignedInt>("hemisphereRings"),
-            conf->value<UnsignedInt>("cylinderRings"),
-            conf->value<UnsignedInt>("segments"),
+            hemisphereRings,
+            cylinderRings,
+            segments,
             conf->value<Float>("halfLength"));
     }
 
@@ -335,12 +358,18 @@ Containers::Optional<MeshData> PrimitiveImporter::doMesh(UnsignedInt id, Unsigne
         Utility::ConfigurationGroup* conf;
         CORRADE_INTERNAL_ASSERT_OUTPUT(conf = configuration().group("circle2DSolid"));
 
+        const UnsignedInt segments = conf->value<UnsignedInt>("segments");
+        if(segments < 3) {
+            Error{} << "Trade::PrimitiveImporter::mesh(): expected segments to be at least 3 for circle2DSolid but got" << segments;
+            return {};
+        }
+
         Primitives::Circle2DFlags flags;
         if(conf->value<bool>("textureCoordinates"))
             flags |= Primitives::Circle2DFlag::TextureCoordinates;
 
         return Primitives::circle2DSolid(
-            conf->value<UnsignedInt>("segments"),
+            segments,
             flags);
     }
 
@@ -348,13 +377,25 @@ Containers::Optional<MeshData> PrimitiveImporter::doMesh(UnsignedInt id, Unsigne
         Utility::ConfigurationGroup* conf;
         CORRADE_INTERNAL_ASSERT_OUTPUT(conf = configuration().group("circle2DWireframe"));
 
+        const UnsignedInt segments = conf->value<UnsignedInt>("segments");
+        if(segments < 3) {
+            Error{} << "Trade::PrimitiveImporter::mesh(): expected segments to be at least 3 for circle2DWireframe but got" << segments;
+            return {};
+        }
+
         return Primitives::circle2DWireframe(
-            conf->value<UnsignedInt>("segments"));
+            segments);
     }
 
     if(Names[id] == "circle3DSolid"_s) {
         Utility::ConfigurationGroup* conf;
         CORRADE_INTERNAL_ASSERT_OUTPUT(conf = configuration().group("circle3DSolid"));
+
+        const UnsignedInt segments = conf->value<UnsignedInt>("segments");
+        if(segments < 3) {
+            Error{} << "Trade::PrimitiveImporter::mesh(): expected segments to be at least 3 for circle3DSolid but got" << segments;
+            return {};
+        }
 
         Primitives::Circle3DFlags flags;
         if(conf->value<bool>("textureCoordinates"))
@@ -363,7 +404,7 @@ Containers::Optional<MeshData> PrimitiveImporter::doMesh(UnsignedInt id, Unsigne
             flags |= Primitives::Circle3DFlag::Tangents;
 
         return Primitives::circle3DSolid(
-            conf->value<UnsignedInt>("segments"),
+            segments,
             flags);
     }
 
@@ -371,13 +412,26 @@ Containers::Optional<MeshData> PrimitiveImporter::doMesh(UnsignedInt id, Unsigne
         Utility::ConfigurationGroup* conf;
         CORRADE_INTERNAL_ASSERT_OUTPUT(conf = configuration().group("circle3DWireframe"));
 
+        const UnsignedInt segments = conf->value<UnsignedInt>("segments");
+        if(segments < 3) {
+            Error{} << "Trade::PrimitiveImporter::mesh(): expected segments to be at least 3 for circle3DWireframe but got" << segments;
+            return {};
+        }
+
         return Primitives::circle3DWireframe(
-            conf->value<UnsignedInt>("segments"));
+            segments);
     }
 
     if(Names[id] == "coneSolid"_s) {
         Utility::ConfigurationGroup* conf;
         CORRADE_INTERNAL_ASSERT_OUTPUT(conf = configuration().group("coneSolid"));
+
+        const UnsignedInt rings = conf->value<UnsignedInt>("rings");
+        const UnsignedInt segments = conf->value<UnsignedInt>("segments");
+        if(rings < 1 || segments < 3) {
+            Error{} << "Trade::PrimitiveImporter::mesh(): expected rings to be at least 1 and segments at least 3 for coneSolid but got" << rings << "and" << segments;
+            return {};
+        }
 
         Primitives::ConeFlags flags;
         if(conf->value<bool>("textureCoordinates"))
@@ -388,8 +442,8 @@ Containers::Optional<MeshData> PrimitiveImporter::doMesh(UnsignedInt id, Unsigne
             flags |= Primitives::ConeFlag::CapEnd;
 
         return Primitives::coneSolid(
-            conf->value<UnsignedInt>("rings"),
-            conf->value<UnsignedInt>("segments"),
+            rings,
+            segments,
             conf->value<Float>("halfLength"),
             flags);
     }
@@ -398,8 +452,14 @@ Containers::Optional<MeshData> PrimitiveImporter::doMesh(UnsignedInt id, Unsigne
         Utility::ConfigurationGroup* conf;
         CORRADE_INTERNAL_ASSERT_OUTPUT(conf = configuration().group("coneWireframe"));
 
+        const UnsignedInt segments = conf->value<UnsignedInt>("segments");
+        if(segments % 4 != 0 || !segments) {
+            Error{} << "Trade::PrimitiveImporter::mesh(): expected segments to be multiples of 4 for coneWireframe but got" << segments;
+            return {};
+        }
+
         return Primitives::coneWireframe(
-            conf->value<UnsignedInt>("segments"),
+            segments,
             conf->value<Float>("halfLength"));
     }
 
@@ -422,6 +482,13 @@ Containers::Optional<MeshData> PrimitiveImporter::doMesh(UnsignedInt id, Unsigne
         Utility::ConfigurationGroup* conf;
         CORRADE_INTERNAL_ASSERT_OUTPUT(conf = configuration().group("cylinderSolid"));
 
+        const UnsignedInt rings = conf->value<UnsignedInt>("rings");
+        const UnsignedInt segments = conf->value<UnsignedInt>("segments");
+        if(rings < 1 || segments < 3) {
+            Error{} << "Trade::PrimitiveImporter::mesh(): expected rings to be at least 1 and segments at least 3 for cylinderSolid but got" << rings << "and" << segments;
+            return {};
+        }
+
         Primitives::CylinderFlags flags;
         if(conf->value<bool>("textureCoordinates"))
             flags |= Primitives::CylinderFlag::TextureCoordinates;
@@ -431,8 +498,8 @@ Containers::Optional<MeshData> PrimitiveImporter::doMesh(UnsignedInt id, Unsigne
             flags |= Primitives::CylinderFlag::CapEnds;
 
         return Primitives::cylinderSolid(
-            conf->value<UnsignedInt>("rings"),
-            conf->value<UnsignedInt>("segments"),
+            rings,
+            segments,
             conf->value<Float>("halfLength"),
             flags);
     }
@@ -441,9 +508,16 @@ Containers::Optional<MeshData> PrimitiveImporter::doMesh(UnsignedInt id, Unsigne
         Utility::ConfigurationGroup* conf;
         CORRADE_INTERNAL_ASSERT_OUTPUT(conf = configuration().group("cylinderWireframe"));
 
+        const UnsignedInt rings = conf->value<UnsignedInt>("rings");
+        const UnsignedInt segments = conf->value<UnsignedInt>("segments");
+        if(rings < 1 || segments % 4 != 0 || !segments) {
+            Error{} << "Trade::PrimitiveImporter::mesh(): expected rings to be at least 1 and segments to be multiples of 4 for cylinderWireframe but got" << rings << "and" << segments;
+            return {};
+        }
+
         return Primitives::cylinderWireframe(
-            conf->value<UnsignedInt>("rings"),
-            conf->value<UnsignedInt>("segments"),
+            rings,
+            segments,
             conf->value<Float>("halfLength"));
     }
 
@@ -597,6 +671,13 @@ Containers::Optional<MeshData> PrimitiveImporter::doMesh(UnsignedInt id, Unsigne
         Utility::ConfigurationGroup* conf;
         CORRADE_INTERNAL_ASSERT_OUTPUT(conf = configuration().group("uvSphereSolid"));
 
+        const UnsignedInt rings = conf->value<UnsignedInt>("rings");
+        const UnsignedInt segments = conf->value<UnsignedInt>("segments");
+        if(rings < 2 || segments < 3) {
+            Error{} << "Trade::PrimitiveImporter::mesh(): expected rings to be at least 2 and segments at least 3 for uvSphereSolid but got" << rings << "and" << segments;
+            return {};
+        }
+
         Primitives::UVSphereFlags flags;
         if(conf->value<bool>("textureCoordinates"))
             flags |= Primitives::UVSphereFlag::TextureCoordinates;
@@ -604,8 +685,8 @@ Containers::Optional<MeshData> PrimitiveImporter::doMesh(UnsignedInt id, Unsigne
             flags |= Primitives::UVSphereFlag::Tangents;
 
         return Primitives::uvSphereSolid(
-            conf->value<UnsignedInt>("rings"),
-            conf->value<UnsignedInt>("segments"),
+            rings,
+            segments,
             flags);
     }
 
@@ -613,9 +694,16 @@ Containers::Optional<MeshData> PrimitiveImporter::doMesh(UnsignedInt id, Unsigne
         Utility::ConfigurationGroup* conf;
         CORRADE_INTERNAL_ASSERT_OUTPUT(conf = configuration().group("uvSphereWireframe"));
 
+        const UnsignedInt rings = conf->value<UnsignedInt>("rings");
+        const UnsignedInt segments = conf->value<UnsignedInt>("segments");
+        if(rings % 2 != 0 || !rings || segments % 4 != 0 || !segments) {
+            Error{} << "Trade::PrimitiveImporter::mesh(): expected rings to be multiples of 2 and segments multiples of 4 for uvSphereWireframe but got" << rings << "and" << segments;
+            return {};
+        }
+
         return Primitives::uvSphereWireframe(
-            conf->value<UnsignedInt>("rings"),
-            conf->value<UnsignedInt>("segments"));
+            rings,
+            segments);
     }
 
     CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */

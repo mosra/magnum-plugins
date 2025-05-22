@@ -29,6 +29,9 @@
 #include <Corrade/Containers/String.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Numeric.h>
+#include <Corrade/TestSuite/Compare/String.h>
+#include <Corrade/Utility/ConfigurationGroup.h>
+#include <Corrade/Utility/Format.h>
 #include <Magnum/Math/Matrix3.h>
 #include <Magnum/Math/Matrix4.h>
 #include <Magnum/Trade/AbstractImporter.h>
@@ -44,6 +47,7 @@ struct PrimitiveImporterTest: TestSuite::Tester {
 
     void test();
     void mesh();
+    void meshInvalid();
 
     void scene2D();
     void scene3D();
@@ -108,11 +112,108 @@ constexpr struct {
     {"uvSphereWireframe", 90, 192}
 };
 
+const struct {
+    const char* mesh;
+    const char* name;
+    const char* option;
+    const char* validValue;
+    const char* value;
+    const char* expected;
+} MeshInvalidData[]{
+    {"capsule2DWireframe", "zero hemisphereRings",
+        "hemisphereRings", "1", "0",
+        "expected hemisphereRings and cylinderRings to be at least 1 for {} but got 0 and 1"},
+    {"capsule2DWireframe", "zero cylinderRings",
+        "cylinderRings", "1", "0",
+        "expected hemisphereRings and cylinderRings to be at least 1 for {} but got 8 and 0"},
+    {"capsule3DSolid", "zero hemisphereRings",
+        "hemisphereRings", "1", "0",
+        "expected hemisphereRings and cylinderRings to be at least 1 and segments at least 3 for {} but got 0, 1 and 12"},
+    {"capsule3DSolid", "zero cylinderRings",
+        "cylinderRings", "1", "0",
+        "expected hemisphereRings and cylinderRings to be at least 1 and segments at least 3 for {} but got 4, 0 and 12"},
+    {"capsule3DSolid", "too little segments",
+        "segments", "3", "2",
+        "expected hemisphereRings and cylinderRings to be at least 1 and segments at least 3 for {} but got 4, 1 and 2"},
+    {"capsule3DWireframe", "zero hemisphereRings",
+        "hemisphereRings", "1", "0",
+        "expected hemisphereRings and cylinderRings to be at least 1 and segments to be multiples of 4 for {} but got 0, 1 and 16"},
+    {"capsule3DWireframe", "zero cylinderRings",
+        "cylinderRings", "1", "0",
+        "expected hemisphereRings and cylinderRings to be at least 1 and segments to be multiples of 4 for {} but got 8, 0 and 16"},
+    {"capsule3DWireframe", "non-multiple-of-four segments",
+        "segments", "8", "9",
+        "expected hemisphereRings and cylinderRings to be at least 1 and segments to be multiples of 4 for {} but got 8, 1 and 9"},
+    {"capsule3DWireframe", "zero segments",
+        "segments", "4", "0",
+        "expected hemisphereRings and cylinderRings to be at least 1 and segments to be multiples of 4 for {} but got 8, 1 and 0"},
+    {"circle2DSolid", "too little segments",
+        "segments", "3", "2",
+        "expected segments to be at least 3 for {} but got 2"},
+    {"circle2DWireframe", "too little segments",
+        "segments", "3", "2",
+        "expected segments to be at least 3 for {} but got 2"},
+    {"circle3DSolid", "too little segments",
+        "segments", "3", "2",
+        "expected segments to be at least 3 for {} but got 2"},
+    {"circle3DWireframe", "too little segments",
+        "segments", "3", "2",
+        "expected segments to be at least 3 for {} but got 2"},
+    {"coneSolid", "zero rings",
+        "rings", "1", "0",
+        "expected rings to be at least 1 and segments at least 3 for {} but got 0 and 12"},
+    {"coneSolid", "too little segments",
+        "segments", "3", "2",
+        "expected rings to be at least 1 and segments at least 3 for {} but got 1 and 2"},
+    {"coneWireframe", "non-multiple-of-four segments",
+        "segments", "8", "9",
+        "expected segments to be multiples of 4 for {} but got 9"},
+    {"coneWireframe", "zero segments",
+        "segments", "4", "0",
+        "expected segments to be multiples of 4 for {} but got 0"},
+    {"cylinderSolid", "zero rings",
+        "rings", "1", "0",
+        "expected rings to be at least 1 and segments at least 3 for {} but got 0 and 12"},
+    {"cylinderSolid", "too little segments",
+        "segments", "3", "2",
+        "expected rings to be at least 1 and segments at least 3 for {} but got 1 and 2"},
+    {"cylinderWireframe", "zero rings",
+        "rings", "1", "0",
+        "expected rings to be at least 1 and segments to be multiples of 4 for {} but got 0 and 32"},
+    {"cylinderWireframe", "non-multiple-of-four segments",
+        "segments", "8", "9",
+        "expected rings to be at least 1 and segments to be multiples of 4 for {} but got 1 and 9"},
+    {"cylinderWireframe", "zero segments",
+        "segments", "4", "0",
+        "expected rings to be at least 1 and segments to be multiples of 4 for {} but got 1 and 0"},
+    {"uvSphereSolid", "too little rings",
+        "rings", "2", "1",
+        "expected rings to be at least 2 and segments at least 3 for {} but got 1 and 16"},
+    {"uvSphereSolid", "too little segments",
+        "segments", "3", "2",
+        "expected rings to be at least 2 and segments at least 3 for {} but got 8 and 2"},
+    {"uvSphereWireframe", "non-multiple-of-two rings",
+        "rings", "4", "5",
+        "expected rings to be multiples of 2 and segments multiples of 4 for {} but got 5 and 32"},
+    {"uvSphereWireframe", "zero rings",
+        "rings", "2", "0",
+        "expected rings to be multiples of 2 and segments multiples of 4 for {} but got 0 and 32"},
+    {"uvSphereWireframe", "non-multiple-of-four segments",
+        "segments", "8", "9",
+        "expected rings to be multiples of 2 and segments multiples of 4 for {} but got 16 and 9"},
+    {"uvSphereWireframe", "zero segments",
+        "segments", "4", "0",
+        "expected rings to be multiples of 2 and segments multiples of 4 for {} but got 16 and 0"},
+};
+
 PrimitiveImporterTest::PrimitiveImporterTest() {
     addTests({&PrimitiveImporterTest::test});
 
     addInstancedTests({&PrimitiveImporterTest::mesh},
         Containers::arraySize(Data));
+
+    addInstancedTests({&PrimitiveImporterTest::meshInvalid},
+        Containers::arraySize(MeshInvalidData));
 
     addTests({&PrimitiveImporterTest::scene2D,
               &PrimitiveImporterTest::scene3D});
@@ -166,6 +267,29 @@ void PrimitiveImporterTest::mesh() {
         CORRADE_VERIFY(mesh->isIndexed());
         CORRADE_COMPARE(mesh->indexCount(), data.indexCount);
     } else CORRADE_VERIFY(!mesh->isIndexed());
+}
+
+void PrimitiveImporterTest::meshInvalid() {
+    auto&& data = MeshInvalidData[testCaseInstanceId()];
+    setTestCaseDescription(Utility::format("{}, {}", data.mesh, data.name));
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("PrimitiveImporter");
+    CORRADE_VERIFY(importer->openData({}));
+
+    Utility::ConfigurationGroup* group = importer->configuration().group(data.mesh);
+    CORRADE_VERIFY(group);
+
+    /* Try a value that should work to catch off-by-one errors */
+    group->setValue(data.option, data.validValue);
+    CORRADE_VERIFY(importer->mesh(data.mesh));
+    group->setValue(data.option, data.value);
+
+    Containers::String out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!importer->mesh(data.mesh));
+    CORRADE_COMPARE_AS(out,
+        Utility::format("Trade::PrimitiveImporter::mesh(): {}\n", Utility::format(data.expected, data.mesh)),
+        TestSuite::Compare::String);
 }
 
 void PrimitiveImporterTest::scene2D() {

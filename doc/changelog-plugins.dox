@@ -214,6 +214,9 @@ namespace Magnum {
     @relativeref{Trade,MeshOptimizerSceneConverter} that makes the
     simplification fail if it would result in an empty mesh instead of just
     returning it
+-   @relativeref{Trade,PrimitiveImporter} now handles configuration errors such
+    as invalid circle segment count gracefully instead of passing the value
+    through and causing an assertion inside the @ref Primitives library
 
 @subsection changelog-plugins-latest-buildsystem Build system
 
