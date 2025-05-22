@@ -119,12 +119,22 @@ constexpr Containers::StringView Names[]{
     /* 35 */ "uvSphereWireframe"_s
 };
 
-constexpr Vector2 translation2DForIndex(UnsignedInt id) {
-    /** @todo use constexpr vector multiplication here once C++14 is used */
-    return {3.0f*(-1.5f + Float(id % 4)), 3.0f*(-1.0f + Float(id / 4))};
+#ifndef CORRADE_MSVC2015_COMPATIBILITY /* Do I care? Nah. */
+constexpr
+#else
+const
+#endif
+Vector2 translation2DForIndex(UnsignedInt id) {
+    return 3.0f*Vector2{-1.5f + Float(id % 4),
+                        -1.0f + Float(id / 4)};
 }
 
-constexpr struct {
+#ifndef CORRADE_MSVC2015_COMPATIBILITY /* Consequence of the above */
+constexpr
+#else
+const
+#endif
+struct {
     Int parent[1]; /* same for all */
     struct {
         Vector2 translation;
@@ -144,12 +154,22 @@ constexpr struct {
     {translation2DForIndex(10), 33}, /* squareWireframe */
 }}};
 
-constexpr Vector3 translation3DForIndex(UnsignedInt id) {
-    /** @todo use constexpr vector multiplication here once C++14 is used */
-    return {3.0f*(-1.5f + Float(id % 5)), 3.0f*(-1.0f + Float(id / 5)), 0.0f};
+#ifndef CORRADE_MSVC2015_COMPATIBILITY /* Do I care? Nah. */
+constexpr
+#else
+const
+#endif
+Vector3 translation3DForIndex(UnsignedInt id) {
+    return 3.0f*Vector3{-1.5f + Float(id % 5),
+                        -1.0f + Float(id / 5), 0.0f};
 }
 
-constexpr struct {
+#ifndef CORRADE_MSVC2015_COMPATIBILITY /* Consequence of the above */
+constexpr
+#else
+const
+#endif
+struct {
     Int parent[1]; /* same for all */
     struct {
         Vector3 translation;
