@@ -94,9 +94,7 @@ void Faad2Importer::doOpenData(Containers::ArrayView<const char> data) {
             return;
         }
 
-        Utility::copy(
-            {reinterpret_cast<UnsignedShort*>(sampleBuffer), info.samples},
-            arrayAppend(samples, NoInit, info.samples));
+        arrayAppend(samples, Containers::arrayView(reinterpret_cast<UnsignedShort*>(sampleBuffer), info.samples));
         pos += info.bytesconsumed;
     }
 
