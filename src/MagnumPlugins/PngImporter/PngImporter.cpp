@@ -40,7 +40,7 @@
 #include <csetjmp> /* setjmp(), libpng why are you still insane */
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/ScopeGuard.h>
-#include <Corrade/Utility/Configuration.h>
+#include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/Debug.h>
 #include <Magnum/PixelFormat.h>
 #include <Magnum/Math/Functions.h>
