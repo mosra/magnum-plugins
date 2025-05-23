@@ -166,11 +166,7 @@ Containers::Optional<ImageData2D> StbImageImporter::doImage2D(const UnsignedInt 
     /* This is a GIF that was loaded already during data opening. Return Nth
        image */
     if(!_in->gifSize.isZero()) {
-        Containers::Array<char> imageData{_in->gifFrameStride};
-        Utility::copy(Containers::arrayCast<char>(
-            _in->data.slice(id*_in->gifFrameStride, (id + 1)*_in->gifFrameStride)),
-            imageData);
-        return Trade::ImageData2D{PixelFormat::RGBA8Unorm, _in->gifSize.xy(), Utility::move(imageData)};
+        return Trade::ImageData2D{PixelFormat::RGBA8Unorm, _in->gifSize.xy(), Containers::Array<char>{InPlaceInit, Containers::arrayCast<char>(_in->data.sliceSize(id*_in->gifFrameStride, _in->gifFrameStride))}};
     }
 
     Vector2i size;
@@ -258,8 +254,7 @@ Containers::Optional<ImageData2D> StbImageImporter::doImage2D(const UnsignedInt 
     /* Copy the data into array with default deleter and free the original (we
        can't use custom deleter to avoid dangling function pointer call when
        the plugin is unloaded sooner than the array is deleted) */
-    Containers::Array<char> imageData{std::size_t(size.product()*components*channelSize)};
-    Utility::copy(Containers::arrayView(reinterpret_cast<char*>(data), imageData.size()), imageData);
+    Containers::Array<char> imageData{InPlaceInit, Containers::arrayView(reinterpret_cast<char*>(data), size.product()*components*channelSize)};
     stbi_image_free(data);
 
     /* Adjust pixel storage if row size is not four byte aligned */
