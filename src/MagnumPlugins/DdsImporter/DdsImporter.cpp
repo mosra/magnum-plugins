@@ -310,12 +310,10 @@ void DdsImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dat
     Containers::Pointer<File> f{new File};
 
     /* Take over the existing array or copy the data if we can't */
-    if(dataFlags & (DataFlag::Owned|DataFlag::ExternallyOwned)) {
+    if(dataFlags & (DataFlag::Owned|DataFlag::ExternallyOwned))
         f->in = Utility::move(data);
-    } else {
-        f->in = Containers::Array<char>{NoInit, data.size()};
-        Utility::copy(data, f->in);
-    }
+    else
+        f->in = Containers::Array<char>{InPlaceInit, data};
 
     /* Read in DDS header */
     if(f->in.size() < sizeof(DdsHeader)) {

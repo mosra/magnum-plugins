@@ -282,12 +282,10 @@ void StanfordImporter::doOpenData(Containers::Array<char>&& data, const DataFlag
        size of the header while the input data is still there. */
     const std::size_t parsedHeaderSize = inHeader.begin() - data.begin();
     Containers::Array<char> dataCopy;
-    if(dataFlags & (DataFlag::Owned|DataFlag::ExternallyOwned)) {
+    if(dataFlags & (DataFlag::Owned|DataFlag::ExternallyOwned))
         dataCopy = Utility::move(data);
-    } else {
-        dataCopy = Containers::Array<char>{NoInit, data.size()};
-        Utility::copy(data, dataCopy);
-    }
+    else
+        dataCopy = Containers::Array<char>{InPlaceInit, data};
 
     /* Initialize the state, skip the already parsed header prefix in the input
        view */
@@ -729,11 +727,8 @@ Containers::Optional<MeshData> StanfordImporter::doMesh(UnsignedInt id, const Un
 
     /* Copy all vertex data */
     Containers::Array<char> vertexData;
-    if(level == 0) {
-        vertexData = Containers::Array<char>{NoInit,
-        _state->vertexStride*_state->vertexCount};
-        Utility::copy(in.prefix(vertexData.size()), vertexData);
-    }
+    if(level == 0)
+        vertexData = Containers::Array<char>{InPlaceInit, in.prefix(_state->vertexStride*_state->vertexCount)};
     in = in.exceptPrefix(_state->vertexStride*_state->vertexCount);
 
     /* Parse faces, keeping the original index type */

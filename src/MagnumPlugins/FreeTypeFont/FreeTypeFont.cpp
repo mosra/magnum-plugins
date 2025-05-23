@@ -92,8 +92,7 @@ bool FreeTypeFont::doIsOpened() const { return _ftFont; }
 
 auto FreeTypeFont::doOpenData(const Containers::ArrayView<const char> data, const Float size) -> Properties {
     /* We need to preserve the data for whole FT_Face lifetime */
-    _data = Containers::Array<unsigned char>{NoInit, data.size()};
-    Utility::copy(Containers::arrayCast<const unsigned char>(data), _data);
+    _data = Containers::Array<unsigned char>{InPlaceInit, Containers::arrayCast<const unsigned char>(data)};
 
     CORRADE_ASSERT(_library, "Text::FreeTypeFont::openSingleData(): initialize() was not called", {});
     /** @todo ability to specify different font in TTC collection */

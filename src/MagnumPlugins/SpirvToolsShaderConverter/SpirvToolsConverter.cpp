@@ -30,7 +30,6 @@
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/Pair.h>
 #include <Corrade/Containers/ScopeGuard.h>
-#include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/Format.h>
 
@@ -492,17 +491,12 @@ Containers::Optional<Containers::Array<char>> SpirvToolsConverter::doConvertData
            because it *might* have a different deleter (in reality it uses a
            plain delete[], but I don't want to depend on such an implementation
            detail, this is not a perf-critical code path). */
-        out = Containers::Array<char>{NoInit, text->length};
-        Utility::copy(Containers::arrayView(text->str, text->length), out);
+        out = Containers::Array<char>{InPlaceInit, Containers::arrayView(text->str, text->length)};
 
     /* Otherwise simply copy the binary to the output. We can't take ownership
        of the array here either because in addition to the case above the
        binary could also point right at the input `data`. */
-    } else {
-        Containers::ArrayView<const char> in(reinterpret_cast<const char*>(binary->code), 4*binary->wordCount);
-        out = Containers::Array<char>{NoInit, in.size()};
-        Utility::copy(in, out);
-    }
+    } else out = Containers::Array<char>{InPlaceInit, Containers::arrayView(reinterpret_cast<const char*>(binary->code), 4*binary->wordCount)};
 
     /* GCC 4.8 needs extra help here */
     return Containers::optional(Utility::move(out));

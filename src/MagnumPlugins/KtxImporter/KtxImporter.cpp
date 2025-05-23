@@ -549,12 +549,10 @@ void KtxImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFlags
     f->pixelFormat.typeSize = header.typeSize;
 
     /* Take over the existing array or copy the data if we can't */
-    if(dataFlags & (DataFlag::Owned|DataFlag::ExternallyOwned)) {
+    if(dataFlags & (DataFlag::Owned|DataFlag::ExternallyOwned))
         f->in = Utility::move(data);
-    } else {
-        f->in = Containers::Array<char>{NoInit, data.size()};
-        Utility::copy(data, f->in);
-    }
+    else
+        f->in = Containers::Array<char>{InPlaceInit, data};
 
     /* The level index contains byte ranges for each mipmap, from largest to
        smallest. Each mipmap contains tightly packed images ordered by

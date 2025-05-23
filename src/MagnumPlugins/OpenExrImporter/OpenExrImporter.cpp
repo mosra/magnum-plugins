@@ -52,6 +52,10 @@
 #include <ImfTiledOutputFile.h>
 #include <ImfTestFile.h>
 
+#if OPENEXR_VERSION_MAJOR*10000 + OPENEXR_VERSION_MINOR*100 + OPENEXR_VERSION_PATCH >= 30300 && OPENEXR_VERSION_MAJOR*10000 + OPENEXR_VERSION_MINOR*100 + OPENEXR_VERSION_PATCH < 30303
+#include <Corrade/Utility/Algorithms.h> /* Utility::copy() */
+#endif
+
 namespace Magnum { namespace Trade {
 
 using namespace Containers::Literals;
@@ -190,12 +194,10 @@ void OpenExrImporter::doOpenData(Containers::Array<char>&& data, const DataFlags
         Utility::copy(data, dataCopy.prefix(data.size()));
     } else
     #endif
-    if(dataFlags & (DataFlag::Owned|DataFlag::ExternallyOwned)) {
+    if(dataFlags & (DataFlag::Owned|DataFlag::ExternallyOwned))
         dataCopy = Utility::move(data);
-    } else {
-        dataCopy = Containers::Array<char>{NoInit, data.size()};
-        Utility::copy(data, dataCopy);
-    }
+    else
+        dataCopy = Containers::Array<char>{InPlaceInit, data};
 
     /* Set up the input stream using the MemoryIStream class above */
     Containers::Pointer<State> state{InPlaceInit, Utility::move(dataCopy)};

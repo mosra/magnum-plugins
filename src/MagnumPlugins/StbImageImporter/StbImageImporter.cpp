@@ -28,7 +28,6 @@
 
 #include <Corrade/Containers/Array.h>
 #include <Corrade/Containers/Optional.h>
-#include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/Debug.h>
 #include <Magnum/PixelFormat.h>
@@ -146,12 +145,10 @@ void StbImageImporter::doOpenData(Containers::Array<char>&& data, const DataFlag
 
     /* Take over the existing array or copy the data if we can't */
     _in.emplace();
-    if(dataFlags & (DataFlag::Owned|DataFlag::ExternallyOwned)) {
+    if(dataFlags & (DataFlag::Owned|DataFlag::ExternallyOwned))
         _in->data = Utility::move(data);
-    } else {
-        _in->data = Containers::Array<char>{NoInit, data.size()};
-        Utility::copy(data, _in->data);
-    }
+    else
+        _in->data = Containers::Array<char>{InPlaceInit, data};
 }
 
 const void* StbImageImporter::doImporterState() const {

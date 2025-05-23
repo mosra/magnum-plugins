@@ -289,12 +289,10 @@ void BasisImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFla
        basis_transcoder currently doesn't keep the pointer around, it might in
        the future and ktx2_transcoder already does. */
     Containers::Pointer<State> state{InPlaceInit};
-    if(dataFlags & (DataFlag::Owned|DataFlag::ExternallyOwned)) {
+    if(dataFlags & (DataFlag::Owned|DataFlag::ExternallyOwned))
         state->in = Utility::move(data);
-    } else {
-        state->in = Containers::Array<char>{NoInit, data.size()};
-        Utility::copy(data, state->in);
-    }
+    else
+        state->in = Containers::Array<char>{InPlaceInit, data};
 
     /* In case of KTX2, if KTXorientation is missing in the file and this
        option isn't set, a warning is printed below to hint at an exporter

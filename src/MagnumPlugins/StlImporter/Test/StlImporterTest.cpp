@@ -29,7 +29,6 @@
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
 #include <Corrade/TestSuite/Compare/String.h>
-#include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/Format.h>
 #include <Corrade/Utility/Path.h>
@@ -140,8 +139,7 @@ const struct {
 } OpenMemoryData[]{
     {"data", [](AbstractImporter& importer, Containers::ArrayView<const void> data) {
         /* Copy to ensure the original memory isn't referenced */
-        Containers::Array<char> copy{NoInit, data.size()};
-        Utility::copy(Containers::arrayCast<const char>(data), copy);
+        Containers::Array<char> copy{InPlaceInit, Containers::arrayCast<const char>(data)};
         return importer.openData(copy);
     }},
     {"memory", [](AbstractImporter& importer, Containers::ArrayView<const void> data) {

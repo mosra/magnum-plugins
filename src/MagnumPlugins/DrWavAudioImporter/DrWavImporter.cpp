@@ -28,7 +28,6 @@
 #include "DrWavImporter.h"
 
 #include <Corrade/Containers/ScopeGuard.h>
-#include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/Assert.h>
 #include <Corrade/Utility/Debug.h>
 #include <Corrade/Utility/Endianness.h>
@@ -225,9 +224,7 @@ BufferFormat DrWavImporter::doFormat() const { return _format; }
 UnsignedInt DrWavImporter::doFrequency() const { return _frequency; }
 
 Containers::Array<char> DrWavImporter::doData() {
-    Containers::Array<char> copy{NoInit, _data->size()};
-    Utility::copy(*_data, copy);
-    return copy;
+    return Containers::Array<char>{InPlaceInit, *_data};
 }
 
 }}

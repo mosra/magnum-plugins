@@ -96,8 +96,7 @@ Containers::Optional<Containers::Array<char>> MiniExrImageConverter::doConvertTo
 
     /* miniexr uses malloc to allocate and since we can't use custom deleters,
        copy the result into a new-allocated array instead */
-    Containers::Array<char> fileData{NoInit, size};
-    Utility::copy(Containers::arrayView(reinterpret_cast<const char*>(data), size), fileData);
+    Containers::Array<char> fileData{InPlaceInit, Containers::arrayView(reinterpret_cast<const char*>(data), size)};
     std::free(data);
 
     /* GCC 4.8 needs extra help here */

@@ -28,7 +28,6 @@
 
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/StringView.h>
-#include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/Debug.h>
 #include <Corrade/Utility/Format.h>
@@ -206,12 +205,10 @@ void AstcImporter::doOpenData(Containers::Array<char>&& data, const DataFlags da
        simplicity we copy it including the tiny header so we don't need to have
        different handling based on whether the data was taken over or copied
        later. */
-    if(dataFlags & (DataFlag::Owned|DataFlag::ExternallyOwned)) {
+    if(dataFlags & (DataFlag::Owned|DataFlag::ExternallyOwned))
         _state->data = Utility::move(data);
-    } else {
-        _state->data = Containers::Array<char>{NoInit, data.size()};
-        Utility::copy(data, _state->data);
-    }
+    else
+        _state->data = Containers::Array<char>{InPlaceInit, data};
 }
 
 UnsignedInt AstcImporter::doImage2DCount() const {
@@ -219,8 +216,7 @@ UnsignedInt AstcImporter::doImage2DCount() const {
 }
 
 Containers::Optional<ImageData2D> AstcImporter::doImage2D(UnsignedInt, UnsignedInt) {
-    Containers::Array<char> data{NoInit, _state->dataSize};
-    Utility::copy(_state->data.slice(sizeof(AstcHeader), sizeof(AstcHeader) + _state->dataSize), data);
+    Containers::Array<char> data{InPlaceInit, _state->data.sliceSize(sizeof(AstcHeader), _state->dataSize)};
     return ImageData2D{_state->format, _state->size.xy(), Utility::move(data), ImageFlag2D(UnsignedShort(_state->flags))};
 }
 
@@ -229,8 +225,7 @@ UnsignedInt AstcImporter::doImage3DCount() const {
 }
 
 Containers::Optional<ImageData3D> AstcImporter::doImage3D(UnsignedInt, UnsignedInt) {
-    Containers::Array<char> data{NoInit, _state->dataSize};
-    Utility::copy(_state->data.slice(sizeof(AstcHeader), sizeof(AstcHeader) + _state->dataSize), data);
+    Containers::Array<char> data{InPlaceInit, _state->data.sliceSize(sizeof(AstcHeader), _state->dataSize)};
     return ImageData3D{_state->format, _state->size, Utility::move(data), _state->flags};
 }
 

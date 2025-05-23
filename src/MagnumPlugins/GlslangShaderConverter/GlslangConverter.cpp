@@ -35,7 +35,6 @@
 #include <Corrade/Containers/StaticArray.h>
 #include <Corrade/Containers/String.h>
 #include <Corrade/Containers/StringIterable.h>
-#include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/FormatStl.h>
 #include <Corrade/Utility/Path.h>
@@ -1000,9 +999,7 @@ Containers::Optional<Containers::Array<char>> GlslangConverter::doConvertDataToD
     glslang::GlslangToSpv(*ir, spirv, &logger, &spvOptions);
 
     /* Copy the vector into something sane */
-    Containers::ArrayView<const char> spirvBytes = Containers::arrayCast<const char>(Containers::arrayView(spirv));
-    Containers::Array<char> out{NoInit, spirvBytes.size()};
-    Utility::copy(spirvBytes, out);
+    Containers::Array<char> out{InPlaceInit, Containers::arrayCast<const char>(Containers::arrayView(spirv))};
 
     /* GCC 4.8 needs extra help here */
     return Containers::optional(Utility::move(out));

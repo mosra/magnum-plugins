@@ -1008,12 +1008,10 @@ void GltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags da
     /* Copy file content. Take over the existing array or copy the data if we
        can't. We need to keep the data around as JSON tokens are views onto it
        and also for the GLB binary chunk. */
-    if(dataFlags & (DataFlag::Owned|DataFlag::ExternallyOwned)) {
+    if(dataFlags & (DataFlag::Owned|DataFlag::ExternallyOwned))
         _d->fileData = Utility::move(data);
-    } else {
-        _d->fileData = Containers::Array<char>{NoInit, data.size()};
-        Utility::copy(data, _d->fileData);
-    }
+    else
+        _d->fileData = Containers::Array<char>{InPlaceInit, data};
 
     /* Since we just made a owning copy of the file data above, mark the JSON
        string view as global to avoid Utility::Json making its own owned copy

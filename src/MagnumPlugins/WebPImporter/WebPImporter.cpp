@@ -28,7 +28,6 @@
 #include "WebPImporter.h"
 
 #include <Corrade/Containers/Optional.h>
-#include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/Debug.h>
 #include <Magnum/PixelFormat.h>
 #include <Magnum/Trade/ImageData.h>
@@ -63,12 +62,10 @@ void WebPImporter::doOpenData(Containers::Array<char>&& data, const DataFlags da
     }
 
     /* Take over the existing array or copy the data if we can't */
-    if(dataFlags & (DataFlag::Owned|DataFlag::ExternallyOwned)) {
+    if(dataFlags & (DataFlag::Owned|DataFlag::ExternallyOwned))
         _in = Utility::move(data);
-    } else {
-        _in = Containers::Array<char>{NoInit, data.size()};
-        Utility::copy(data, _in);
-    }
+    else
+        _in = Containers::Array<char>{InPlaceInit, data};
 }
 
 namespace {

@@ -88,8 +88,7 @@ auto StbTrueTypeFont::doOpenData(const Containers::ArrayView<const char> data, c
 
     /* TrueType fonts are memory-mapped, thus we need to preserve the data for
        the whole plugin lifetime */
-    font->data = Containers::Array<unsigned char>(NoInit, data.size());
-    Utility::copy(Containers::arrayCast<const unsigned char>(data), font->data);
+    font->data = Containers::Array<unsigned char>(InPlaceInit, Containers::arrayCast<const unsigned char>(data));
 
     /** @todo ability to specify different font index in TTC collection */
     const int offset = stbtt_GetFontOffsetForIndex(font->data, 0);

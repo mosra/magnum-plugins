@@ -29,7 +29,6 @@
 
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/StringView.h>
-#include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/Debug.h>
 #include <Corrade/Utility/Endianness.h>
 #include <Magnum/Trade/ImageData.h>
@@ -103,12 +102,10 @@ void IcoImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dat
     state->levels = Containers::Array<Containers::ArrayView<const char>>{header.imageCount};
 
     /* Take over the existing array or copy the data if we can't */
-    if(dataFlags & (DataFlag::Owned|DataFlag::ExternallyOwned)) {
+    if(dataFlags & (DataFlag::Owned|DataFlag::ExternallyOwned))
         state->data = Utility::move(data);
-    } else {
-        state->data = Containers::Array<char>{NoInit, data.size()};
-        Utility::copy(data, state->data);
-    }
+    else
+        state->data = Containers::Array<char>{InPlaceInit, data};
 
     for(UnsignedInt i = 0; i != header.imageCount; ++i) {
         std::size_t iconDirEntryOffset = sizeof(IconDir) + sizeof(IconDirEntry)*i;

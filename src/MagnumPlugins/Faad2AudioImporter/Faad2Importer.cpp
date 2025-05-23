@@ -29,7 +29,6 @@
 #include <Corrade/Containers/Array.h>
 #include <Corrade/Containers/GrowableArray.h>
 #include <Corrade/Containers/ScopeGuard.h>
-#include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/Assert.h>
 #include <Corrade/Utility/Debug.h>
 
@@ -108,9 +107,7 @@ BufferFormat Faad2Importer::doFormat() const { return _format; }
 UnsignedInt Faad2Importer::doFrequency() const { return _frequency; }
 
 Containers::Array<char> Faad2Importer::doData() {
-    Containers::Array<char> copy{NoInit, _samples.size()*2};
-    Utility::copy(Containers::arrayCast<char>(_samples), copy);
-    return copy;
+    return Containers::Array<char>{InPlaceInit, Containers::arrayCast<char>(_samples)};
 }
 
 }}

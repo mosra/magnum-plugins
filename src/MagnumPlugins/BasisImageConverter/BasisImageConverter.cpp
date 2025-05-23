@@ -35,7 +35,6 @@
 #include <Corrade/Containers/Pair.h>
 #include <Corrade/Containers/StridedArrayView.h>
 #include <Corrade/Containers/String.h>
-#include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/Path.h>
 #include <Corrade/Utility/String.h>
@@ -487,8 +486,7 @@ template<UnsignedInt dimensions> Containers::Optional<Containers::Array<char>> c
 
     const basisu::uint8_vec& out = params.m_create_ktx2_file ? basis.get_output_ktx2_file() : basis.get_output_basis_file();
 
-    Containers::Array<char> fileData{NoInit, out.size()};
-    Utility::copy(Containers::arrayCast<const char>(Containers::arrayView(out.data(), out.size())), fileData);
+    Containers::Array<char> fileData{InPlaceInit, Containers::arrayCast<const char>(Containers::arrayView(out.data(), out.size()))};
 
     /* UASTC output in a Basis container has the sRGB flag set always, patch it
        away if the data is not sRGB. Doesn't happen with ETC1S and doesn't

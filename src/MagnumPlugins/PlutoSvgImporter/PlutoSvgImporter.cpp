@@ -29,7 +29,6 @@
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/ScopeGuard.h>
 #include <Corrade/Containers/StringView.h>
-#include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/Path.h>
 #include <Magnum/PixelFormat.h>
@@ -77,12 +76,10 @@ void PlutoSvgImporter::doOpenData(Containers::Array<char>&& data, const DataFlag
     /* PlutoSVG doesn't make a copy of the memory (which is admirable!) so take
        over the existing array or copy the data if we can't */
     Containers::Array<char> copy;
-    if(dataFlags & (DataFlag::Owned|DataFlag::ExternallyOwned)) {
+    if(dataFlags & (DataFlag::Owned|DataFlag::ExternallyOwned))
         copy = Utility::move(data);
-    } else {
-        copy = Containers::Array<char>{NoInit, data.size()};
-        Utility::copy(data, copy);
-    }
+    else
+        copy = Containers::Array<char>{InPlaceInit, data};
 
     /* Uh, but, where do I get to access some failure state? */
     plutosvg_document* const document = plutosvg_document_load_from_data(copy.data(), copy.size(), -1.0f, -1.0f, nullptr, nullptr);

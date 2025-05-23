@@ -40,7 +40,6 @@
 #include <csetjmp> /* setjmp(), libpng why are you still insane */
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/ScopeGuard.h>
-#include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/Configuration.h>
 #include <Corrade/Utility/Debug.h>
 #include <Magnum/PixelFormat.h>
@@ -79,12 +78,10 @@ void PngImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFlags
     }
 
     /* Take over the existing array or copy the data if we can't */
-    if(dataFlags & (DataFlag::Owned|DataFlag::ExternallyOwned)) {
+    if(dataFlags & (DataFlag::Owned|DataFlag::ExternallyOwned))
         _in = Utility::move(data);
-    } else {
-        _in = Containers::Array<char>{NoInit, data.size()};
-        Utility::copy(data, _in);
-    }
+    else
+        _in = Containers::Array<char>{InPlaceInit, data};
 }
 
 UnsignedInt PngImporter::doImage2DCount() const { return 1; }

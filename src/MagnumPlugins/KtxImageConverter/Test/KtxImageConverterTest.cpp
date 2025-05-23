@@ -35,7 +35,6 @@
 #include <Corrade/TestSuite/Compare/Container.h>
 #include <Corrade/TestSuite/Compare/String.h>
 #include <Corrade/TestSuite/Compare/StringToFile.h>
-#include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/DebugStl.h> /** @todo remove once Configuration is std::string-free */
 #include <Corrade/Utility/Endianness.h>
@@ -347,10 +346,8 @@ Containers::Array<char> readDataFormatDescriptor(Containers::ArrayView<const cha
 
     const UnsignedInt offset = Utility::Endianness::littleEndian(header.dfdByteOffset);
     const UnsignedInt length = Utility::Endianness::littleEndian(header.dfdByteLength);
-    Containers::Array<char> data{ValueInit, length};
-    Utility::copy(fileData.sliceSize(offset, length), data);
 
-    return data;
+    return Containers::Array<char>{InPlaceInit, fileData.sliceSize(offset, length)};
 }
 
 Containers::String readKeyValueData(Containers::ArrayView<const char> fileData) {
@@ -359,10 +356,8 @@ Containers::String readKeyValueData(Containers::ArrayView<const char> fileData) 
 
     const UnsignedInt offset = Utility::Endianness::littleEndian(header.kvdByteOffset);
     const UnsignedInt length = Utility::Endianness::littleEndian(header.kvdByteLength);
-    Containers::String data{ValueInit, length};
-    Utility::copy(fileData.sliceSize(offset, length), data);
 
-    return data;
+    return fileData.sliceSize(offset, length);
 }
 
 KtxImageConverterTest::KtxImageConverterTest() {
