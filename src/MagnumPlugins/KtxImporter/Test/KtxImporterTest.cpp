@@ -2191,22 +2191,19 @@ void KtxImporterTest::orientationFlip() {
         case 1: {
             Containers::Optional<Trade::ImageData1D> image = importer->image1D(0);
             CORRADE_VERIFY(image);
-            imageData = Containers::Array<char>{image->data().size()};
-            Utility::copy(image->data(), imageData);
+            imageData = Containers::Array<char>{InPlaceInit, image->data()};
             break;
         }
         case 2: {
             Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
             CORRADE_VERIFY(image);
-            imageData = Containers::Array<char>{image->data().size()};
-            Utility::copy(image->data(), imageData);
+            imageData = Containers::Array<char>{InPlaceInit, image->data()};
             break;
         }
         case 3: {
             Containers::Optional<Trade::ImageData3D> image = importer->image3D(0);
             CORRADE_VERIFY(image);
-            imageData = Containers::Array<char>{image->data().size()};
-            Utility::copy(image->data(), imageData);
+            imageData = Containers::Array<char>{InPlaceInit, image->data()};
             break;
         }
         default: CORRADE_INTERNAL_ASSERT_UNREACHABLE();

@@ -826,26 +826,20 @@ Containers::Optional<MeshData> OpenGexImporter::doMesh(const UnsignedInt id, Uns
             case OpenDdl::Type::UnsignedByte: {
                 Containers::ArrayView<const UnsignedByte> src =
                     indexArrayData.asArray<UnsignedByte>();
-                indexData = Containers::Array<char>{src.size()};
-                auto indexData8 = Containers::arrayCast<UnsignedByte>(indexData);
-                Utility::copy(src, indexData8);
-                indices = MeshIndexData{indexData8};
+                indexData = Containers::Array<char>{InPlaceInit, Containers::arrayCast<const char>(src)};
+                indices = MeshIndexData{Containers::arrayCast<UnsignedByte>(indexData)};
             } break;
             case OpenDdl::Type::UnsignedShort: {
                 Containers::ArrayView<const UnsignedShort> src =
                     indexArrayData.asArray<UnsignedShort>();
-                indexData = Containers::Array<char>{src.size()*2};
-                auto indexData16 = Containers::arrayCast<UnsignedShort>(indexData);
-                Utility::copy(src, indexData16);
-                indices = MeshIndexData{indexData16};
+                indexData = Containers::Array<char>{InPlaceInit, Containers::arrayCast<const char>(src)};
+                indices = MeshIndexData{Containers::arrayCast<UnsignedShort>(indexData)};
             } break;
             case OpenDdl::Type::UnsignedInt: {
                 Containers::ArrayView<const UnsignedInt> src =
                     indexArrayData.asArray<UnsignedInt>();
-                indexData = Containers::Array<char>{src.size()*4};
-                auto indexData32 = Containers::arrayCast<UnsignedInt>(indexData);
-                Utility::copy(src, indexData32);
-                indices = MeshIndexData{indexData32};
+                indexData = Containers::Array<char>{InPlaceInit, Containers::arrayCast<const char>(src)};
+                indices = MeshIndexData{Containers::arrayCast<UnsignedInt>(indexData)};
             } break;
             #ifndef CORRADE_TARGET_EMSCRIPTEN
             case OpenDdl::Type::UnsignedLong:
