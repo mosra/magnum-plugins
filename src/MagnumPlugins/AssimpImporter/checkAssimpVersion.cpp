@@ -43,6 +43,13 @@
 int main() {
     int ret = 0;
 
+    /* Version 5.4.3 which is the first to support USD. From 5.4.2 it differs
+       by having this new enum as of https://github.com/assimp/assimp/commit/da281b7f482618c1d7c580b5e0c778c3f004f79d */
+    #if CHECK_VERSION >= 20240717
+    aiAnimInterpolation interpolation = aiAnimInterpolation_Spherical_Linear;
+    static_cast<void>(interpolation);
+    #endif
+
     /* Version that breaks skinning vertex attribute import:
        https://github.com/assimp/assimp/commit/c8dafe0d2887242285c0080c6cbbea8c1f1c8094
        Check for aiTextureTypeToString() that got renamed from

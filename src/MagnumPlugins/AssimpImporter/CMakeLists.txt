@@ -89,7 +89,7 @@ file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/checkAssimpVersionLanguageOverride.cmake 
 enable_language(C)
 
 # Go through all versions of interest and pick the highest one that compiles
-foreach(_version 20220502 20210102 20201123 20200225 20191122 20190915 20160716 20151031)
+foreach(_version 20240717 20220502 20210102 20201123 20200225 20191122 20190915 20160716 20151031)
     try_compile(_works ${CMAKE_CURRENT_BINARY_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/checkAssimpVersion.cpp
         ${_ASSIMP_TRY_COMPILE_LINK_OR_INCLUDE}
@@ -114,12 +114,22 @@ endif()
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configureInternal.h.cmake
                ${CMAKE_CURRENT_BINARY_DIR}/configureInternal.h)
 
+# On versions less than 5.4.3 (which is checked with 20240717 above) the
+# UsdImporter alias gets commented out
+if(ASSIMP_VERSION LESS 20240717)
+    set(ASSIMP_USD_SUPPORT "#")
+else()
+    set(ASSIMP_USD_SUPPORT "")
+endif()
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/AssimpImporter.conf.cmake
+               ${CMAKE_CURRENT_BINARY_DIR}/AssimpImporter.conf)
+
 # AssimpImporter plugin
 add_plugin(AssimpImporter
     importers
     "${MAGNUM_PLUGINS_IMPORTER_DEBUG_BINARY_INSTALL_DIR};${MAGNUM_PLUGINS_IMPORTER_DEBUG_LIBRARY_INSTALL_DIR}"
     "${MAGNUM_PLUGINS_IMPORTER_RELEASE_BINARY_INSTALL_DIR};${MAGNUM_PLUGINS_IMPORTER_RELEASE_LIBRARY_INSTALL_DIR}"
-    AssimpImporter.conf
+    ${CMAKE_CURRENT_BINARY_DIR}/AssimpImporter.conf
     AssimpImporter.cpp
     AssimpImporter.h)
 target_include_directories(AssimpImporter PRIVATE ${CMAKE_CURRENT_BINARY_DIR})

@@ -22,7 +22,8 @@ provides=StanfordImporter
 provides=StlImporter
 provides=TrueSpaceImporter
 provides=UnrealImporter
-provides=UsdImporter
+# USD import is since 5.4.3, this gets commented out on older versions
+${ASSIMP_USD_SUPPORT}provides=UsdImporter
 provides=ValveImporter
 provides=XglImporter
 

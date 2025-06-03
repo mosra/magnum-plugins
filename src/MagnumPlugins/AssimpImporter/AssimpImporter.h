@@ -124,8 +124,10 @@ This plugin provides `3dsImporter`, `3mfImporter`, `Ac3dImporter`,
 `DirectXImporter`, `DxfImporter`, `FbxImporter`, `GltfImporter`, `IfcImporter`,
 `IrrlichtImporter`, `LightWaveImporter`, `ModoImporter`, `MilkshapeImporter`,
 `ObjImporter`, `OgreImporter`, `OpenGexImporter`, `StanfordImporter`,
-`StlImporter`, `TrueSpaceImporter`, `UnrealImporter`, `UsdImporter`,
-`ValveImporter` and `XglImporter` plugins.
+`StlImporter`, `TrueSpaceImporter`, `UnrealImporter`, `ValveImporter` and
+`XglImporter` plugins. On Assimp version 5.4.3+ it provides also the
+`UsdImporter` plugin, although note that Assimp may be compiled with USD
+support not enabled, which is unfortunately impossible to detect.
 
 @m_class{m-block m-success}
 
