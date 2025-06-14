@@ -455,7 +455,7 @@ enum. Some of them are enabled by default, some not; options for not yet
 supported features are omitted. These are passed to Assimp when opening a file,
 meaning a change in these will be always applied to the next opened file.
 
-@snippet MagnumPlugins/AssimpImporter/AssimpImporter.conf configuration_
+@snippet MagnumPlugins/AssimpImporter/AssimpImporter.conf.cmake configuration_
 
 See @ref plugins-configuration for more information and an example showing how
 to edit the configuration values.
