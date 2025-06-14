@@ -724,7 +724,7 @@ Containers::Optional<SceneData> UfbxImporter::doScene(UnsignedInt) {
 
     /* Convert back to the default deleter to avoid dangling deleter function
        pointer issues when unloading the plugin */
-    arrayShrink(fields, DefaultInit);
+    arrayShrink(fields, ValueInit);
 
     return SceneData{SceneMappingType::UnsignedInt, nodeCount, Utility::move(data), Utility::move(fields)};
 }
@@ -1406,8 +1406,8 @@ Containers::Optional<MaterialData> UfbxImporter::doMaterial(UnsignedInt id) {
 
     /* Convert back to the default deleter to avoid dangling deleter function
        pointer issues when unloading the plugin */
-    arrayShrink(flatAttributes, DefaultInit);
-    arrayShrink(layerSizes, DefaultInit);
+    arrayShrink(flatAttributes, ValueInit);
+    arrayShrink(layerSizes);
 
     return MaterialData{types, Utility::move(flatAttributes), Utility::move(layerSizes)};
 }
@@ -1859,7 +1859,7 @@ Containers::Optional<AnimationData> UfbxImporter::doAnimation(UnsignedInt id) {
         });
     }
 
-    Containers::Array<AnimationTrackData> tracks{DefaultInit, animTracks.size()};
+    Containers::Array<AnimationTrackData> tracks{ValueInit, animTracks.size()};
 
     Containers::Array<char> data = Containers::ArrayTuple{animDataItems};
 

@@ -667,7 +667,7 @@ template<UnsignedInt dimensions> Containers::Optional<ImageData<dimensions>> Bas
 
     const UnsignedInt sliceSize = formatSize*outputSizeInBlocksOrPixels;
     const UnsignedInt dataSize = sliceSize*size.z();
-    Containers::Array<char> dest{DefaultInit, dataSize};
+    Containers::Array<char> dest{NoInit, dataSize};
 
     /* There's no function for transcoding the entire level, so loop over all
        layers and faces and transcode each one. This matches the image layout

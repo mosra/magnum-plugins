@@ -547,7 +547,7 @@ Containers::Optional<SceneData> OpenGexImporter::doScene(UnsignedInt) {
 
     /* Convert back to the default deleter to avoid dangling deleter function
        pointer issues when unloading the plugin */
-    arrayShrink(fields, DefaultInit);
+    arrayShrink(fields, ValueInit);
     return SceneData{SceneMappingType::UnsignedInt, _d->nodes.size(), std::move(data), std::move(fields)};
 }
 
@@ -905,7 +905,7 @@ Containers::Optional<MaterialData> OpenGexImporter::doMaterial(const UnsignedInt
             arrayAppend(attributes, InPlaceInit, MaterialAttribute::Shininess, param.firstChild().as<Float>());
     }
 
-    arrayShrink(attributes, DefaultInit);
+    arrayShrink(attributes, ValueInit);
     return MaterialData{MaterialType::Phong, std::move(attributes), &material};
 }
 

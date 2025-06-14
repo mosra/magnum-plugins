@@ -1336,7 +1336,7 @@ Containers::Optional<SceneData> TinyGltfImporter::doScene(UnsignedInt id) {
 
     /* Convert back to the default deleter to avoid dangling deleter function
        pointer issues when unloading the plugin */
-    arrayShrink(fields, DefaultInit);
+    arrayShrink(fields, ValueInit);
     return SceneData{SceneMappingType::UnsignedInt, maxObjectIndex + 1, std::move(data), std::move(fields), &scene};
 }
 
@@ -2354,7 +2354,7 @@ Containers::Optional<MaterialData> TinyGltfImporter::doMaterial(const UnsignedIn
     /* Can't use growable deleters in a plugin, convert back to the default
        deleter */
     arrayShrink(layers);
-    arrayShrink(attributes, DefaultInit);
+    arrayShrink(attributes, ValueInit);
     return MaterialData{types, std::move(attributes), std::move(layers), &material};
 }
 

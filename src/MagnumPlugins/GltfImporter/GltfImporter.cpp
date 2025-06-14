@@ -3338,7 +3338,7 @@ Containers::Optional<SceneData> GltfImporter::doScene(UnsignedInt id) {
 
     /* Convert back to the default deleter to avoid dangling deleter function
        pointer issues when unloading the plugin */
-    arrayShrink(fields, DefaultInit);
+    arrayShrink(fields, ValueInit);
     /* Even though SceneData is capable of holding more than 4 billion objects,
        we realistically don't expect glTF to have that many -- the text file
        would be *terabytes* then */
@@ -5297,7 +5297,7 @@ Containers::Optional<MaterialData> GltfImporter::doMaterial(const UnsignedInt id
     /* Can't use growable deleters in a plugin, convert back to the default
        deleter */
     arrayShrink(layers);
-    arrayShrink(attributes, DefaultInit);
+    arrayShrink(attributes, ValueInit);
     return MaterialData{types, Utility::move(attributes), Utility::move(layers), &gltfMaterial.token()};
 }
 

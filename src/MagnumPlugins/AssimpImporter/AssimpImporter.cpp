@@ -877,7 +877,7 @@ Containers::Optional<SceneData> AssimpImporter::doScene(UnsignedInt) {
 
     /* Convert back to the default deleter to avoid dangling deleter function
        pointer issues when unloading the plugin */
-    arrayShrink(fields, DefaultInit);
+    arrayShrink(fields, ValueInit);
     return SceneData{SceneMappingType::UnsignedInt, _f->nodes.size(), Utility::move(data), Utility::move(fields), _f->scene->mRootNode};
 }
 
@@ -1821,7 +1821,7 @@ Containers::Optional<MaterialData> AssimpImporter::doMaterial(const UnsignedInt 
 
     /* Can't use growable deleters in a plugin, convert back to the default
        deleter */
-    arrayShrink(attributes, DefaultInit);
+    arrayShrink(attributes, ValueInit);
 
     /** @todo detect PBR properties and add relevant types accordingly */
     const MaterialType materialType = forceRaw ? MaterialType{} : MaterialType::Phong;
