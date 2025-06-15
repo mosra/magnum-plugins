@@ -586,6 +586,14 @@ template<class T> void MeshOptimizerSceneConverterTest::verbose() {
         "2.01562"
         #endif
         ;
+    /* On version 0.24 the overdraw increases instead of decreasing */
+    #if MESHOPTIMIZER_VERSION >= 240
+    const char* shaded = "308756";
+    const char* overdraw = "1.00003";
+    #else
+    const char* shaded = "308750";
+    const char* overdraw = "1.00001";
+    #endif
     const char* expected = R"(Trade::MeshOptimizerSceneConverter::convert(): processing stats:
   vertex cache:
     165120 -> 58521 transformed vertices
@@ -596,9 +604,9 @@ template<class T> void MeshOptimizerSceneConverterTest::verbose() {
     3891008 -> 1582144 bytes fetched
     overfetch 3.95794 -> 1.60936
   overdraw:
-    308753 -> 308750 shaded pixels
+    308753 -> {1} shaded pixels
     308748 -> 308748 covered pixels
-    overdraw 1.00002 -> 1.00001
+    overdraw 1.00002 -> {2}
 Trade::MeshOptimizerSceneConverter::convertInPlace(): processing stats:
   vertex cache:
     165120 -> 58521 transformed vertices
@@ -609,11 +617,13 @@ Trade::MeshOptimizerSceneConverter::convertInPlace(): processing stats:
     3891008 -> 1582144 bytes fetched
     overfetch 3.95794 -> 1.60936
   overdraw:
-    308753 -> 308750 shaded pixels
+    308753 -> {1} shaded pixels
     308748 -> 308748 covered pixels
-    overdraw 1.00002 -> 1.00001
+    overdraw 1.00002 -> {2}
 )";
-    CORRADE_COMPARE(out, Utility::format(expected, acmr));
+    CORRADE_COMPARE_AS(out,
+        Utility::format(expected, acmr, shaded, overdraw),
+        TestSuite::Compare::String);
 }
 
 void MeshOptimizerSceneConverterTest::verboseCustomAttribute() {
@@ -652,6 +662,14 @@ void MeshOptimizerSceneConverterTest::verboseCustomAttribute() {
         "2.01562"
         #endif
         ;
+    /* On version 0.24 the overdraw increases instead of decreasing */
+    #if MESHOPTIMIZER_VERSION >= 240
+    const char* shaded = "308756";
+    const char* overdraw = "1.00003";
+    #else
+    const char* shaded = "308750";
+    const char* overdraw = "1.00001";
+    #endif
     const char* expected = R"(Trade::MeshOptimizerSceneConverter::convertInPlace(): processing stats:
   vertex cache:
     165120 -> 58521 transformed vertices
@@ -662,11 +680,13 @@ void MeshOptimizerSceneConverterTest::verboseCustomAttribute() {
     3891008 -> 1582144 bytes fetched
     overfetch 3.95794 -> 1.60936
   overdraw:
-    308753 -> 308750 shaded pixels
+    308753 -> {} shaded pixels
     308748 -> 308748 covered pixels
-    overdraw 1.00002 -> 1.00001
+    overdraw 1.00002 -> {}
 )";
-    CORRADE_COMPARE(out, Utility::format(expected, acmr));
+    CORRADE_COMPARE_AS(out,
+        Utility::format(expected, acmr, shaded, overdraw),
+        TestSuite::Compare::String);
 }
 
 void MeshOptimizerSceneConverterTest::verboseImplementationSpecificAttribute() {
@@ -705,33 +725,28 @@ void MeshOptimizerSceneConverterTest::verboseImplementationSpecificAttribute() {
             /* Same as in inPlaceOptimizeVertexFetch() */
             0, 1, 2, 2, 1, 3, 3, 1, 4, 2, 3, 5, 6, 3, 4, 3
         }), TestSuite::Compare::Container);
-    if(data.quiet)
-        CORRADE_COMPARE_AS(out,
-            "Trade::MeshOptimizerSceneConverter::convertInPlace(): processing stats:\n"
-            "  vertex cache:\n"
-            "    136 -> 49 transformed vertices\n"
-            "    1 -> 1 executed warps\n"
-            "    ACMR 1.7 -> 0.6125\n"
-            "    ATVR 3.2381 -> 1.16667\n"
-            "  overdraw:\n"
-            "    149965 -> 149965 shaded pixels\n"
-            "    149965 -> 149965 covered pixels\n"
-            "    overdraw 1 -> 1\n",
-            TestSuite::Compare::String);
-    else
-        CORRADE_COMPARE_AS(out,
-            "Trade::MeshOptimizerSceneConverter::convertInPlace(): can't analyze vertex fetch for VertexFormat::ImplementationSpecific(0x1234)\n"
-            "Trade::MeshOptimizerSceneConverter::convertInPlace(): processing stats:\n"
-            "  vertex cache:\n"
-            "    136 -> 49 transformed vertices\n"
-            "    1 -> 1 executed warps\n"
-            "    ACMR 1.7 -> 0.6125\n"
-            "    ATVR 3.2381 -> 1.16667\n"
-            "  overdraw:\n"
-            "    149965 -> 149965 shaded pixels\n"
-            "    149965 -> 149965 covered pixels\n"
-            "    overdraw 1 -> 1\n",
-            TestSuite::Compare::String);
+    const char* warning = data.quiet ? "" : "Trade::MeshOptimizerSceneConverter::convertInPlace(): can't analyze vertex fetch for VertexFormat::ImplementationSpecific(0x1234)\n";
+    /* Not sure what's up with the overdraw calculation in 0.24 */
+    const char* overdraw =
+        #if MESHOPTIMIZER_VERSION >= 240
+        "    285312 -> 285312 shaded pixels\n"
+        "    285312 -> 285312 covered pixels\n"
+        #else
+        "    149965 -> 149965 shaded pixels\n"
+        "    149965 -> 149965 covered pixels\n"
+        #endif
+        ;
+    CORRADE_COMPARE_AS(out,
+        Utility::format("{}Trade::MeshOptimizerSceneConverter::convertInPlace(): processing stats:\n"
+        "  vertex cache:\n"
+        "    136 -> 49 transformed vertices\n"
+        "    1 -> 1 executed warps\n"
+        "    ACMR 1.7 -> 0.6125\n"
+        "    ATVR 3.2381 -> 1.16667\n"
+        "  overdraw:\n"
+        "{}"
+        "    overdraw 1 -> 1\n", warning, overdraw),
+        TestSuite::Compare::String);
 }
 
 template<class T> void MeshOptimizerSceneConverterTest::inPlaceOptimizeEmpty() {
