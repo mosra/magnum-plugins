@@ -562,7 +562,7 @@ void KtxImageConverterTest::implementationSpecificCompressedFormat() {
     Error redirectError{&out};
 
     CompressedPixelStorage storage;
-    CORRADE_VERIFY(!converter->convertToData(CompressedImageView2D{storage, 0, {1, 1}, bytes}));
+    CORRADE_VERIFY(!converter->convertToData(CompressedImageView2D{storage, 0, Vector3i{1}, 1, {1, 1}, bytes}));
     CORRADE_COMPARE(out,
         "Trade::KtxImageConverter::convertToData(): implementation-specific formats are not supported\n");
 }
