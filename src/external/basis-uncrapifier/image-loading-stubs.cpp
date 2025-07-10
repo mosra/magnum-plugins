@@ -84,9 +84,18 @@ class State {
 State::State() {
     CORRADE_INTERNAL_ASSERT_UNREACHABLE();
 }
+/* MSVC in a Release build complains that "destructor never returns, potential
+   memory leak". Well, yes, that's the point here. */
+#if defined(CORRADE_TARGET_MSVC) && !defined(CORRADE_TARGET_CLANG_CL)
+#pragma warning(push)
+#pragma warning(disable: 4722)
+#endif
 State::~State() {
     CORRADE_INTERNAL_ASSERT_UNREACHABLE();
 }
+#if defined(CORRADE_TARGET_MSVC) && !defined(CORRADE_TARGET_CLANG_CL)
+#pragma warning(pop)
+#endif
 
 unsigned decode(std::vector<unsigned char>&, unsigned&, unsigned&, const unsigned char*, size_t, LodePNGColorType, unsigned);
 unsigned decode(std::vector<unsigned char>&, unsigned&, unsigned&, const unsigned char*, size_t, LodePNGColorType, unsigned) {
