@@ -93,9 +93,9 @@ FormatPair vulkanFormat(PixelFormat format) {
             return {vulkan, Implementation::VkFormatSuffix::type};
         #include "MagnumPlugins/KtxImporter/formatMapping.hpp"
         #undef _c
-        default:
-            return {{}, {}};
     }
+
+    CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
 }
 
 FormatPair vulkanFormat(CompressedPixelFormat format) {
@@ -127,9 +127,18 @@ FormatPair vulkanFormat(CompressedPixelFormat format) {
             return {vulkan, Implementation::VkFormatSuffix::type};
         #include "MagnumPlugins/KtxImporter/compressedFormatMapping.hpp"
         #undef _c
-        default:
-            return {{}, {}};
+
+        /* LCOV_EXCL_START */
+        /* All these handled above */
+        case CompressedPixelFormat::PvrtcRGB2bppUnorm:
+        case CompressedPixelFormat::PvrtcRGB2bppSrgb:
+        case CompressedPixelFormat::PvrtcRGB4bppUnorm:
+        case CompressedPixelFormat::PvrtcRGB4bppSrgb:
+            CORRADE_INTERNAL_ASSERT_UNREACHABLE();
+        /* LCOV_EXCL_STOP */
     }
+
+    CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
 }
 
 Vector3i formatUnitSize(PixelFormat) {
@@ -705,10 +714,7 @@ template<UnsignedInt dimensions, template<UnsignedInt, typename> class View> Con
     }
 
     const auto vkFormat = vulkanFormat(format);
-    if(vkFormat.first() == Implementation::VK_FORMAT_UNDEFINED) {
-        Error{} << "Trade::KtxImageConverter::convertToData(): unsupported format" << format;
-        return {};
-    }
+    CORRADE_INTERNAL_ASSERT(vkFormat.first() != Implementation::VK_FORMAT_UNDEFINED);
 
     const Containers::Array<char> dataFormatDescriptor = fillDataFormatDescriptor(format, vkFormat.second());
 

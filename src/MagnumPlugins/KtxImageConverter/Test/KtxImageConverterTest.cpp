@@ -527,15 +527,9 @@ void KtxImageConverterTest::unsupportedFormat() {
 void KtxImageConverterTest::unsupportedCompressedFormat() {
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("KtxImageConverter");
 
-    /* Compared to unsupportedFormat(), here we can abuse the fact that
-       CompressedImageView so far doesn't rely on CompressedPixelFormat being
-       valid to fetch block size properties for it. Once that's implemented,
-       we won't be able, and then the failure should probably become an
-       unreachable assert instead. */
-    Containers::String out;
-    Error redirectError{&out};
-    CORRADE_VERIFY(!converter->convertToData(CompressedImageView2D{CompressedPixelFormat(0xffff), {1, 1}, "hello"}));
-    CORRADE_COMPARE(out, "Trade::KtxImageConverter::convertToData(): unsupported format CompressedPixelFormat(0xffff)\n");
+    /* And implementation-specific formats have a different failure path,
+       tested in implementationSpecificCompressedFormat() below */
+    CORRADE_SKIP("No CompressedPixelFormat values that wouldn't be supported by KTX exist.");
 }
 
 void KtxImageConverterTest::implementationSpecificFormat() {
