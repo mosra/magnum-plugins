@@ -32,6 +32,7 @@ environment:
     COMPILER: msvc-clang
     APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
     APPVEYOR_JOB_NAME: windows-msvc2019-clang
+  # This one collects code coverage using Clang's --coverage and grcov
   - TARGET: desktop
     COMPILER: msvc-clang
     APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2022
@@ -48,6 +49,7 @@ environment:
     COMPILER_EXTRA: -DCMAKE_CXX_FLAGS="/permissive- /EHsc" -DCORRADE_MSVC_COMPATIBILITY=OFF
     APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2022
     APPVEYOR_JOB_NAME: windows-conforming-msvc2022
+  # This one collects code coverage using GCC's --coverage and grcov
   - TARGET: desktop
     COMPILER: mingw
     APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
