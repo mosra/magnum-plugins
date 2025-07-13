@@ -449,8 +449,8 @@ following defaults have been chosen for this importer:
     [KHR_texture_basisu](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_texture_basisu/README.md)
     for Khronos Texture 2.0 images (`*.ktx2`) with [Basis Universal](https://github.com/binomialLLC/basis_universal)
     supercompression, as well as the original provisional `GOOGLE_texture_basis`
-    extension for referencing plain Basis Universal files (`*.basis`). There was
-    no formal specification of the extension but the use is like below,
+    extension for referencing plain Basis Universal files (`*.basis`). There
+    was no formal specification of the extension but the use is like below,
     [equivalently to Basis own glTF example](https://github.com/BinomialLLC/basis_universal/blob/1cae1d57266e2c95bc011b0bf1ccb9940988c184/webgl/gltf/assets/AgiHqSmall.gltf#L230-L240):
 
     @code{.json}

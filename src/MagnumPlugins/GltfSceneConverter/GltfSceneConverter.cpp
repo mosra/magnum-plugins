@@ -3252,8 +3252,8 @@ bool GltfSceneConverter::doAdd(CORRADE_UNUSED const UnsignedInt id, const Textur
                 case GltfExtension::KhrTextureBasisu:
                     textureExtensionString = "KHR_texture_basisu"_s;
                     break;
-                /* Not checking for experimentalKhrTextureKtx here, this is only
-                reachable if it was enabled when the image got added */
+                /* Not checking for experimentalKhrTextureKtx here, this is
+                   only reachable if it was enabled when the image got added */
                 case GltfExtension::KhrTextureKtx:
                     textureExtensionString = "KHR_texture_ktx"_s;
                     break;
