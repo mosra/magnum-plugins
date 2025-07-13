@@ -109,6 +109,7 @@ corrade_add_test(GltfSceneConverterTest GltfSceneConverterTest.cpp
         image-ktx-no-extension.glb
         image-ktx-compressed.glb
         image-ktx-compressed-no-extension.glb
+        image-ktx-astc.glb
         image-multiple.gltf image-multiple.bin image-multiple.1.png
         image-name-accessor-names.gltf
         image-name.gltf

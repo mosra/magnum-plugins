@@ -1490,6 +1490,7 @@ const struct {
     {"KHR_texture_basisu", 2, nullptr, 0},
     {"MSFT_texture_dds", 3, nullptr, 0},
     {"EXT_texture_webp", 5, nullptr, 0},
+    {"EXT_texture_astc", 6, nullptr, 0},
     /* declaration order decides preference */
     {"MSFT_texture_dds and GOOGLE_texture_basis", 3, nullptr, 0},
     {"GOOGLE_texture_basis and KHR_texture_basisu", 1, nullptr, 0},

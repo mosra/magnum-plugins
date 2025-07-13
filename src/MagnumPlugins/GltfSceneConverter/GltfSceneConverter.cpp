@@ -48,6 +48,7 @@
 #include <Corrade/Utility/Macros.h> /* CORRADE_UNUSED */
 #include <Corrade/Utility/Path.h>
 #include <Corrade/Utility/String.h>
+#include <Magnum/PixelFormat.h>
 #include <Magnum/Math/Color.h>
 #include <Magnum/Math/FunctionsBatch.h>
 #include <Magnum/Math/Matrix3.h>
@@ -82,13 +83,14 @@ namespace {
    doAdd() for images and conversion to an extension name in doAdd() for
    textures. Values sorted by name. */
 enum class GltfExtension {
-    ExtTextureWebP = 1 << 0,
-    KhrMaterialsClearCoat = 1 << 1,
-    KhrMaterialsUnlit = 1 << 2,
-    KhrMeshQuantization = 1 << 3,
-    KhrTextureBasisu = 1 << 4,
-    KhrTextureKtx = 1 << 5,
-    KhrTextureTransform = 1 << 6,
+    ExtTextureAstc = 1 << 0,
+    ExtTextureWebP = 1 << 1,
+    KhrMaterialsClearCoat = 1 << 2,
+    KhrMaterialsUnlit = 1 << 3,
+    KhrMeshQuantization = 1 << 4,
+    KhrTextureBasisu = 1 << 5,
+    KhrTextureKtx = 1 << 6,
+    KhrTextureTransform = 1 << 7,
 };
 typedef Containers::EnumSet<GltfExtension> GltfExtensions;
 #ifdef CORRADE_TARGET_CLANG
@@ -329,6 +331,7 @@ Containers::Optional<Containers::Array<char>> GltfSceneConverter::doEndData() {
         GltfExtensions usedExtensions = _state->usedExtensions|_state->requiredExtensions;
         const Containers::Pair<GltfExtension, Containers::StringView> extensionStrings[]{
             {GltfExtension::ExtTextureWebP, "EXT_texture_webp"_s},
+            {GltfExtension::ExtTextureAstc, "EXT_texture_astc"_s},
             {GltfExtension::KhrMaterialsClearCoat, "KHR_materials_clearcoat"_s},
             {GltfExtension::KhrMaterialsUnlit, "KHR_materials_unlit"_s},
             {GltfExtension::KhrMeshQuantization, "KHR_mesh_quantization"_s},
@@ -3249,6 +3252,9 @@ bool GltfSceneConverter::doAdd(CORRADE_UNUSED const UnsignedInt id, const Textur
                 case GltfExtension::ExtTextureWebP:
                     textureExtensionString = "EXT_texture_webp"_s;
                     break;
+                case GltfExtension::ExtTextureAstc:
+                    textureExtensionString = "EXT_texture_astc"_s;
+                    break;
                 case GltfExtension::KhrTextureBasisu:
                     textureExtensionString = "KHR_texture_basisu"_s;
                     break;
@@ -3467,6 +3473,36 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const ImageData2D& image, c
         header is insanely complicated :( */
     } else if(mimeType == "image/ktx2"_s && imageConverterPluginName == "BasisKtxImageConverter"_s) {
         extension = GltfExtension::KhrTextureBasisu;
+    } else if(mimeType == "image/ktx2"_s && image.isCompressed() &&
+        (image.compressedFormat() == CompressedPixelFormat::Astc4x4RGBAUnorm ||
+         image.compressedFormat() == CompressedPixelFormat::Astc4x4RGBASrgb ||
+         image.compressedFormat() == CompressedPixelFormat::Astc5x4RGBAUnorm ||
+         image.compressedFormat() == CompressedPixelFormat::Astc5x4RGBASrgb ||
+         image.compressedFormat() == CompressedPixelFormat::Astc5x5RGBAUnorm ||
+         image.compressedFormat() == CompressedPixelFormat::Astc5x5RGBASrgb ||
+         image.compressedFormat() == CompressedPixelFormat::Astc6x5RGBAUnorm ||
+         image.compressedFormat() == CompressedPixelFormat::Astc6x5RGBASrgb ||
+         image.compressedFormat() == CompressedPixelFormat::Astc6x6RGBAUnorm ||
+         image.compressedFormat() == CompressedPixelFormat::Astc6x6RGBASrgb ||
+         image.compressedFormat() == CompressedPixelFormat::Astc8x5RGBAUnorm ||
+         image.compressedFormat() == CompressedPixelFormat::Astc8x5RGBASrgb ||
+         image.compressedFormat() == CompressedPixelFormat::Astc8x6RGBAUnorm ||
+         image.compressedFormat() == CompressedPixelFormat::Astc8x6RGBASrgb ||
+         image.compressedFormat() == CompressedPixelFormat::Astc8x8RGBAUnorm ||
+         image.compressedFormat() == CompressedPixelFormat::Astc8x8RGBASrgb ||
+         image.compressedFormat() == CompressedPixelFormat::Astc10x5RGBAUnorm ||
+         image.compressedFormat() == CompressedPixelFormat::Astc10x5RGBASrgb ||
+         image.compressedFormat() == CompressedPixelFormat::Astc10x6RGBAUnorm ||
+         image.compressedFormat() == CompressedPixelFormat::Astc10x6RGBASrgb ||
+         image.compressedFormat() == CompressedPixelFormat::Astc10x8RGBAUnorm ||
+         image.compressedFormat() == CompressedPixelFormat::Astc10x8RGBASrgb ||
+         image.compressedFormat() == CompressedPixelFormat::Astc10x10RGBAUnorm ||
+         image.compressedFormat() == CompressedPixelFormat::Astc10x10RGBASrgb ||
+         image.compressedFormat() == CompressedPixelFormat::Astc12x10RGBAUnorm ||
+         image.compressedFormat() == CompressedPixelFormat::Astc12x10RGBASrgb ||
+         image.compressedFormat() == CompressedPixelFormat::Astc12x12RGBAUnorm ||
+         image.compressedFormat() == CompressedPixelFormat::Astc12x12RGBASrgb)) {
+        extension = GltfExtension::ExtTextureAstc;
     } else if(mimeType == "image/ktx2"_s && configuration().value<bool>("experimentalKhrTextureKtx")) {
         extension = GltfExtension::KhrTextureKtx;
     /** @todo MSFT_texture_dds, once we have converters */

@@ -283,6 +283,9 @@ converter delegates to.
     available via extensions:
     -   WebP can be saved with the [EXT_texture_webp](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Vendor/EXT_texture_webp/README.md)
         extension
+    -   KTX2 files with a LDR 2D ASTC block-compressed formats can be saved
+        with the [EXT_texture_astc](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Vendor/EXT_texture_astc/README.md)
+        extension by setting @cb{.ini} imageConverter=KtxImageConverter @ce
     -   Basis-encoded KTX2 files can be saved with the
         [KHR_texture_basisu](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_texture_basisu/README.md)
         extension by setting @cb{.ini} imageConverter=BasisKtxImageConverter @ce

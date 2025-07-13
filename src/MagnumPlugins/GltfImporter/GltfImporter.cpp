@@ -889,6 +889,10 @@ bool isRecognized2DTextureExtension(Containers::StringView name) {
            explicitly talks about KTX2 with Basis compression. We neither care
            nor check that. */
         name == "KHR_texture_basisu"_s  ||
+        /* Similarly, EXT_texture_astc allows the usage of mimeType image/ktx2
+           but only with the ASTC block-compressed format. Again, we don't
+           really care so the actual image can have any format inside. */
+        name == "EXT_texture_astc"_s  ||
         /* GOOGLE_texture_basis is not a registered extension but can be found
            in some of the early Basis Universal examples. Basis files don't
            have a registered mimetype either, but as explained above we don't

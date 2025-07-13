@@ -88,6 +88,7 @@ namespace Magnum {
     Additionally, these new features are added compared to `TinyGltfImporter`:
     -   [MSFT_texture_dds](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Vendor/MSFT_texture_dds/README.md)
     -   [EXT_texture_webp](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Vendor/EXT_texture_webp/README.md)
+    -   [EXT_texture_astc](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Vendor/EXT_texture_astc/README.md)
     -   [KHR_texture_basisu](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_texture_basisu/README.md)
     -   *Experimental* [KHR_texture_ktx](https://github.com/KhronosGroup/glTF/pull/1964)
     -   Importing arbitrary material extensions and `extras` as custom material

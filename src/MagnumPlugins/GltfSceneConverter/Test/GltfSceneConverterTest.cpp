@@ -605,6 +605,19 @@ const struct {
         SceneConverterFlag::Quiet, CompressedPixelFormat::Bc1RGBAUnorm, {}, /*strict*/ false,
         "image-ktx-compressed-no-extension.glb", nullptr,
         nullptr},
+    {"KTX2 ASTC", "KtxImageConverter", "KtxImporter",
+        /* I don't think it makes sense to test all possible values. Pick just
+           one. Exclusion of HDR and 3D formats is tested in
+           addImageInvalid2D(). */
+        {}, CompressedPixelFormat::Astc5x4RGBASrgb, {}, {},
+        "image-ktx-astc.glb", "EXT_texture_astc",
+        nullptr},
+    /* Enabling the experimental KHR_texture_ktx shouldn't cause it to pick
+       KHR_texture_ktx over EXT_texture_astc */
+    {"KTX2 ASTC with KHR_texture_ktx", "KtxImageConverter", "KtxImporter",
+        {}, CompressedPixelFormat::Astc5x4RGBASrgb, /*experimentalKhrTextureKtx*/ true, {},
+        "image-ktx-astc.glb", "EXT_texture_astc",
+        nullptr},
 };
 
 const struct {
@@ -666,6 +679,15 @@ const struct {
     {"TGA, strict", "TgaImageConverter", ".gltf",
         ImageData2D{PixelFormat::RGBA8Unorm, {1, 1}, DataFlags{}, "abc"},
         "image/x-tga is not a valid MIME type for a glTF image, set strict=false to allow it"},
+    /** @todo would probably be better to show also the format? since there's
+        now KHR_texture_basisu, KHR_texture_ktx and EXT_texture_astc that could
+        encode KTX files with various formats */
+    {"KTX2 ASTC HDR", "Ktx2ImageConverter", ".gltf",
+        ImageData2D{CompressedPixelFormat::Astc4x4RGBAF, {1, 1}, DataFlags{}, "123456789abcdef"},
+        "image/ktx2 is not a valid MIME type for a glTF image, set strict=false to allow it"},
+    {"KTX2 ASTC 3D", "Ktx2ImageConverter", ".gltf",
+        ImageData2D{CompressedPixelFormat::Astc3x3x3RGBAUnorm, {1, 1}, DataFlags{}, "123456789abcdef"},
+        "image/ktx2 is not a valid MIME type for a glTF image, set strict=false to allow it"},
     {"conversion to file failed", "PngImageConverter", ".gltf",
         ImageData2D{PixelFormat::R32F, {1, 1}, DataFlags{}, "abc"},
         "Trade::StbImageConverter::convertToData(): PixelFormat::R32F is not supported for BMP/JPEG/PNG/TGA output\n"

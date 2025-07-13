@@ -446,6 +446,8 @@ following defaults have been chosen for this importer:
     for DirectDraw Surface images (`*.dds`),
     [EXT_texture_webp](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Vendor/EXT_texture_webp/README.md)
     for WebP images (`*.webp`),
+    [EXT_texture_astc](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Vendor/EXT_texture_astc/README.md)
+    for Khronos Texture 2.0 images (`*.ktx2`) with ASTC block compression,
     [KHR_texture_basisu](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_texture_basisu/README.md)
     for Khronos Texture 2.0 images (`*.ktx2`) with [Basis Universal](https://github.com/binomialLLC/basis_universal)
     supercompression, as well as the original provisional `GOOGLE_texture_basis`
