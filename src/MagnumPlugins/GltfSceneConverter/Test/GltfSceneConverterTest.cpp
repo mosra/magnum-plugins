@@ -507,76 +507,103 @@ const struct {
     Containers::Optional<bool> bundle;
     const char* expected;
     const char* expectedOtherFile;
-    bool expectedExtension;
+    const char* expectedExtension;
     const char* expectedWarning;
 } AddImage2DData[]{
     {"*.gltf", "PngImageConverter", "PngImporter",
         {}, false, {}, {}, {}, {},
-        "image.gltf", "image.0.png", false,
+        "image.gltf", "image.0.png", nullptr,
         nullptr},
     /* The image (or the buffer) is the same as image.0.png in these three
        variants, not testing its contents */
     {"*.gltf, name", "PngImageConverter", "PngImporter",
         {}, false, "A very pingy image", {}, {}, {},
-        "image-name.gltf", nullptr, false,
+        "image-name.gltf", nullptr, nullptr,
         nullptr},
     {"*.gltf, bundled, accessor names", "PngImageConverter", "PngImporter",
-        {}, true, {}, {}, {}, true,
-        "image-accessor-names.gltf", nullptr, false,
+        {}, true, {}, {}, {}, /*bundle*/ true,
+        "image-accessor-names.gltf", nullptr, nullptr,
         nullptr},
     {"*.gltf, bundled, name, accessor names", "PngImageConverter", "PngImporter",
-        {}, true, "A rather pingy image", {}, {}, true,
-        "image-name-accessor-names.gltf", nullptr, false,
+        {}, true, "A rather pingy image", {}, {}, /*bundle*/ true,
+        "image-name-accessor-names.gltf", nullptr, nullptr,
         nullptr},
     {"*.glb", "PngImageConverter", "PngImporter",
         {}, false, {}, {}, {}, {},
-        "image.glb", nullptr, false,
+        "image.glb", nullptr, nullptr,
         nullptr},
     {"*.gltf, bundled", "PngImageConverter", "PngImporter",
-        {}, false, {}, {}, {}, true,
-        "image-bundled.gltf", "image-bundled.bin", false,
+        {}, false, {}, {}, {}, /*bundle*/ true,
+        "image-bundled.gltf", "image-bundled.bin", nullptr,
         nullptr},
     {"*.glb, not bundled", "PngImageConverter", "PngImporter",
-        {}, false, {}, {}, {}, false,
-        "image-not-bundled.glb", "image-not-bundled.0.png", false,
+        {}, false, {}, {}, {}, /*bundle*/ false,
+        "image-not-bundled.glb", "image-not-bundled.0.png", nullptr,
         nullptr},
     {"JPEG", "JpegImageConverter", "JpegImporter",
         {}, false, {}, {}, {}, {},
-        "image-jpeg.glb", nullptr, false,
+        "image-jpeg.glb", nullptr, nullptr,
         nullptr},
     {"WebP", "WebPImageConverter", "WebPImporter",
         {}, false, {}, {}, {}, {},
-        "image-webp.glb", nullptr, true,
+        "image-webp.glb", nullptr, "EXT_texture_webp",
         nullptr},
     /* Basis has different output across versions, machines and possibly even
        across runs, thus making the image not bundled and *not* comparing the
        *.ktx2 file, relying only on verifying that the image imports back. */
     {"KTX2+Basis", "BasisKtxImageConverter", "BasisImporter",
-        {}, false, {}, {}, {}, false, /* not bundled */
-        "image-basis.glb", nullptr, true,
+        {}, false, {}, {}, {}, /*bundle*/ false,
+        "image-basis.glb", nullptr, "KHR_texture_basisu",
         nullptr},
-    {"KTX2 with extension", "KtxImageConverter", "KtxImporter",
-        {}, false, {}, true, {}, {},
-        "image-ktx.glb", nullptr, true,
+    {"KTX2 with KHR_texture_ktx", "KtxImageConverter", "KtxImporter",
+        {}, false, {}, /*experimentalKhrTextureKtx*/ true, {}, {},
+        "image-ktx.glb", nullptr, "KHR_texture_ktx",
         nullptr},
-    {"KTX2 without extension", "KtxImageConverter", "KtxImporter",
-        {}, false, {}, {}, false, {},
-        "image-ktx-no-extension.glb", nullptr, false,
+    {"KTX2 without KHR_texture_ktx", "KtxImageConverter", "KtxImporter",
+        {}, false, {}, {}, /*strict*/ false, {},
+        "image-ktx-no-extension.glb", nullptr, nullptr,
         "Trade::GltfSceneConverter::add(): KTX2 images can be saved using the KHR_texture_ktx extension, enable experimentalKhrTextureKtx to use it\n"
         "Trade::GltfSceneConverter::add(): strict mode disabled, allowing image/ktx2 MIME type for an image\n"},
-    {"KTX2 without extension, quiet", "KtxImageConverter", "KtxImporter",
-        SceneConverterFlag::Quiet, false, {}, {}, false, {},
-        "image-ktx-no-extension.glb", nullptr, false,
+    {"KTX2 without KHR_texture_ktx, quiet", "KtxImageConverter", "KtxImporter",
+        SceneConverterFlag::Quiet, false, {}, {}, /*strict*/ false, {},
+        "image-ktx-no-extension.glb", nullptr, nullptr,
         nullptr},
     /* Explicitly using TGA converter from stb_image to avoid minor differences
        if Magnum's own TgaImageConverter is present as well */
     {"TGA", "StbTgaImageConverter", "TgaImporter",
-        {}, false, {}, {}, false, {},
-        "image-tga.glb", nullptr, false,
+        {}, false, {}, {}, /*strict*/ false, {},
+        "image-tga.glb", nullptr, nullptr,
         "Trade::GltfSceneConverter::add(): strict mode disabled, allowing image/x-tga MIME type for an image\n"},
     {"TGA, quiet", "StbTgaImageConverter", "TgaImporter",
-        SceneConverterFlag::Quiet, false, {}, {}, false, {},
-        "image-tga.glb", nullptr, false,
+        SceneConverterFlag::Quiet, false, {}, {}, /*strict*/ false, {},
+        "image-tga.glb", nullptr, nullptr,
+        nullptr},
+};
+
+const struct {
+    const char* name;
+    const char* converterPlugin;
+    const char* importerPlugin;
+    SceneConverterFlags flags;
+    CompressedPixelFormat format;
+    Containers::Optional<bool> experimentalKhrTextureKtx;
+    Containers::Optional<bool> strict;
+    const char* expected;
+    const char* expectedExtension;
+    const char* expectedWarning;
+} AddImageCompressed2DData[]{
+    {"KTX2 BC1 with KHR_texture_ktx", "KtxImageConverter", "KtxImporter",
+        {}, CompressedPixelFormat::Bc1RGBAUnorm, /*experimentalKhrTextureKtx*/ true, {},
+        "image-ktx-compressed.glb", "KHR_texture_ktx",
+        nullptr},
+    {"KTX2 BC1 without KHR_texture_ktx", "KtxImageConverter", "KtxImporter",
+        {}, CompressedPixelFormat::Bc1RGBAUnorm, {}, /*strict*/ false,
+        "image-ktx-compressed-no-extension.glb", nullptr,
+        "Trade::GltfSceneConverter::add(): KTX2 images can be saved using the KHR_texture_ktx extension, enable experimentalKhrTextureKtx to use it\n"
+        "Trade::GltfSceneConverter::add(): strict mode disabled, allowing image/ktx2 MIME type for an image\n"},
+    {"KTX2 BC1 without KHR_texture_ktx, quiet", "KtxImageConverter", "KtxImporter",
+        SceneConverterFlag::Quiet, CompressedPixelFormat::Bc1RGBAUnorm, {}, /*strict*/ false,
+        "image-ktx-compressed-no-extension.glb", nullptr,
         nullptr},
 };
 
@@ -2052,7 +2079,8 @@ GltfSceneConverterTest::GltfSceneConverterTest() {
     addInstancedTests({&GltfSceneConverterTest::addImage2D},
         Containers::arraySize(AddImage2DData));
 
-    addTests({&GltfSceneConverterTest::addImageCompressed2D});
+    addInstancedTests({&GltfSceneConverterTest::addImageCompressed2D},
+        Containers::arraySize(AddImageCompressed2DData));
 
     addInstancedTests({&GltfSceneConverterTest::addImage3D},
         Containers::arraySize(AddImage3DData));
@@ -3834,7 +3862,9 @@ void GltfSceneConverterTest::addImage2D() {
 
     /* For images alone, extensions should be recorded only as used -- they get
        recorded as required only once a texture references the image */
-    CORRADE_COMPARE(gltf->contains("extensionsUsed"), data.expectedExtension);
+    CORRADE_COMPARE(gltf->contains("extensionsUsed"), !!data.expectedExtension);
+    if(data.expectedExtension)
+        CORRADE_VERIFY(gltf->contains(Utility::format("\"{}\"", data.expectedExtension)));
     CORRADE_VERIFY(!gltf->contains("extensionsRequired"));
 
     if(_importerManager.loadState("GltfImporter") == PluginManager::LoadState::NotFound)
@@ -3855,29 +3885,60 @@ void GltfSceneConverterTest::addImage2D() {
 }
 
 void GltfSceneConverterTest::addImageCompressed2D() {
-    if(_imageConverterManager.loadState("KtxImageConverter") == PluginManager::LoadState::NotFound)
-        CORRADE_SKIP("KtxImageConverter plugin not found, cannot test");
+    auto&& data = AddImageCompressed2DData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    if(_imageConverterManager.loadState(data.converterPlugin) == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP(data.converterPlugin << "plugin not found, cannot test");
 
     Containers::Pointer<AbstractSceneConverter> converter =  _converterManager.instantiate("GltfSceneConverter");
+    converter->addFlags(data.flags);
 
-    converter->configuration().setValue("imageConverter", "KtxImageConverter");
-    converter->configuration().setValue("experimentalKhrTextureKtx", true);
+    converter->configuration().setValue("imageConverter", data.converterPlugin);
+    if(data.experimentalKhrTextureKtx)
+        converter->configuration().setValue("experimentalKhrTextureKtx", *data.experimentalKhrTextureKtx);
+    if(data.strict)
+        converter->configuration().setValue("strict", *data.strict);
 
-    Containers::String filename = Utility::Path::join(GLTFSCENECONVERTER_TEST_OUTPUT_DIR, "image-ktx-compressed.glb");
+    Containers::String filename = Utility::Path::join(GLTFSCENECONVERTER_TEST_OUTPUT_DIR, data.expected);
     CORRADE_VERIFY(converter->beginFile(filename));
 
-    char imageData[16]{};
-    CORRADE_VERIFY(converter->add(CompressedImageView2D{CompressedPixelFormat::Bc1RGBAUnorm, {4, 4}, imageData}));
+    {
+        char imageData[16]{};
+
+        Containers::String out;
+        Warning redirectWarning{&out};
+        CORRADE_VERIFY(converter->add(CompressedImageView2D{data.format, {4, 4}, imageData}));
+        if(data.expectedWarning)
+            CORRADE_COMPARE(out, data.expectedWarning);
+        else
+            CORRADE_COMPARE(out, "");
+    }
 
     CORRADE_VERIFY(converter->endFile());
     CORRADE_COMPARE_AS(filename,
-        Utility::Path::join(GLTFSCENECONVERTER_TEST_DIR, "image-ktx-compressed.glb"),
+        Utility::Path::join(GLTFSCENECONVERTER_TEST_DIR, data.expected),
         TestSuite::Compare::File);
+
+    /* There shouldn't be any *.bin written */
+    CORRADE_VERIFY(!Utility::Path::exists(Utility::Path::splitExtension(Utility::Path::join(GLTFSCENECONVERTER_TEST_DIR, data.expected)).first() + ".bin"));
+
+    /* Verify various expectations that might be missed when just looking at
+       the file */
+    const Containers::Optional<Containers::String> gltf = Utility::Path::readString(filename);
+    CORRADE_VERIFY(gltf);
+
+    /* For images alone, extensions should be recorded only as used -- they get
+       recorded as required only once a texture references the image */
+    CORRADE_COMPARE(gltf->contains("extensionsUsed"), !!data.expectedExtension);
+    if(data.expectedExtension)
+        CORRADE_VERIFY(gltf->contains(Utility::format("\"{}\"", data.expectedExtension)));
+    CORRADE_VERIFY(!gltf->contains("extensionsRequired"));
 
     if(_importerManager.loadState("GltfImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("GltfImporter plugin not found, cannot test a roundtrip");
-    if(_importerManager.loadState("KtxImporter") == PluginManager::LoadState::NotFound)
-        CORRADE_SKIP("KtxImporter plugin not found, cannot test a roundtrip");
+    if(_importerManager.loadState(data.importerPlugin) == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP(data.importerPlugin << "plugin not found, cannot test a roundtrip");
 
     Containers::Pointer<AbstractImporter> importer = _importerManager.instantiate("GltfImporter");
 
@@ -3890,7 +3951,7 @@ void GltfSceneConverterTest::addImageCompressed2D() {
     Containers::Optional<ImageData2D> imported = importer->image2D(0);
     CORRADE_VERIFY(imported);
     CORRADE_VERIFY(imported->isCompressed());
-    CORRADE_COMPARE(imported->compressedFormat(), CompressedPixelFormat::Bc1RGBAUnorm);
+    CORRADE_COMPARE(imported->compressedFormat(), data.format);
     CORRADE_COMPARE(imported->size(), (Vector2i{4, 4}));
 }
 
