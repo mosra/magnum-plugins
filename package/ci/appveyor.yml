@@ -102,8 +102,8 @@ install:
 - IF "%TARGET%" == "desktop" IF "%COMPILER:~0,4%" == "msvc" appveyor DownloadFile https://ci.magnum.graphics/libpng-1.6.42-windows-2019.zip && 7z x libpng-1.6.42-windows-2019.zip -o%APPVEYOR_BUILD_FOLDER%\deps
 
 # OpenAL
-- IF NOT "%TARGET%" == "rt" IF NOT EXIST %APPVEYOR_BUILD_FOLDER%\openal-soft-1.19.1-bin.zip appveyor DownloadFile https://openal-soft.org/openal-binaries/openal-soft-1.19.1-bin.zip
-- IF NOT "%TARGET%" == "rt" 7z x openal-soft-1.19.1-bin.zip && ren openal-soft-1.19.1-bin openal && echo [General] > %APPDATA%/alsoft.ini & echo drivers=null >> %APPDATA%/alsoft.ini
+- IF NOT "%TARGET%" == "rt" IF NOT EXIST %APPVEYOR_BUILD_FOLDER%\openal-soft-1.22.2-bin.zip appveyor DownloadFile https://github.com/kcat/openal-soft/releases/download/1.22.2/openal-soft-1.22.2-bin.zip
+- IF NOT "%TARGET%" == "rt" 7z x openal-soft-1.22.2-bin.zip && ren openal-soft-1.22.2-bin openal && echo [General] > %APPDATA%/alsoft.ini & echo drivers=null >> %APPDATA%/alsoft.ini
 # Unlike with Magnum itself which copies OpenAL DLL to its output directory,
 # here we need to do that ourselves as we don't have Magnum's build dir in PATH
 - IF "%TARGET%" == "desktop" ren openal\bin\Win64\soft_oal.dll OpenAL32.dll
@@ -183,7 +183,6 @@ build_script:
 
 cache:
 - ninja-win.zip -> package/ci/appveyor-cache-reset.txt
-- openal-soft-1.19.1-bin.zip -> package/ci/appveyor-cache-reset.txt
 - libjpeg-turbo-1.5.0.tar.gz -> package/ci/appveyor-cache-reset.txt
 - DevIL-SDK-x64-1.7.8.zip -> package/ci/appveyor-cache-reset.txt
 - basis_universal-%BASIS_VERSION%.zip -> package/ci/appveyor-cache-reset.txt
