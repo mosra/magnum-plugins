@@ -214,12 +214,8 @@ commands:
     steps:
     - run:
         name: Install meshoptimizer
-        # few commits after 0.14 with a fix for old Apple Clang. The
-        # -fvisibility-inlines-hidden is needed to prevent "direct access in
-        # function ... means the weak symbol cannot be overridden at runtime."
-        # errors with Mac Clang.
         command: |
-          export MESHOPTIMIZER_VERSION=97c52415c6d29f297a76482ddde22f739292446d
+          export MESHOPTIMIZER_VERSION=v0.21
           mkdir -p $HOME/meshoptimizer && cd $HOME/meshoptimizer
           wget -nc --no-check-certificate https://github.com/zeux/meshoptimizer/archive/$MESHOPTIMIZER_VERSION.tar.gz
           tar --strip-components=1 -xzf $MESHOPTIMIZER_VERSION.tar.gz
