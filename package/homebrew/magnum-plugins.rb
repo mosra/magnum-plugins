@@ -1,5 +1,5 @@
 class MagnumPlugins < Formula
-  desc "Plugins for the Magnum C++11/C++14 graphics engine"
+  desc "Plugins for the Magnum C++11 graphics engine"
   homepage "https://magnum.graphics"
   # git describe origin/master, except the `v` prefix
   version "2020.06-1658-gb77a583aa"
