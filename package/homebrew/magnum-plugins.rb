@@ -44,7 +44,7 @@ class MagnumPlugins < Formula
     end
 
     # Bundle meshoptimizer
-    system "curl", "-L", "https://github.com/zeux/meshoptimizer/archive/refs/tags/v0.20.tar.gz", "-o", "src/external/meshoptimizer.tar.gz"
+    system "curl", "-L", "https://github.com/zeux/meshoptimizer/archive/refs/tags/v0.25.tar.gz", "-o", "src/external/meshoptimizer.tar.gz"
     cd "src/external" do
       system "mkdir", "meshoptimizer"
       system "tar", "xzvf", "meshoptimizer.tar.gz", "-C", "meshoptimizer", "--strip-components=1"
