@@ -586,7 +586,9 @@ template<class T> void MeshOptimizerSceneConverterTest::verbose() {
         "2.01562"
         #endif
         ;
-    /* On version 0.24 the overdraw increases instead of decreasing */
+    /* On version 0.24 the overdraw increases instead of decreasing. On 0.25
+       other things change as well, due to the transformed vertex count being
+       different. */
     #if MESHOPTIMIZER_VERSION >= 240
     const char* shaded = "308756";
     const char* overdraw = "1.00003";
@@ -594,35 +596,55 @@ template<class T> void MeshOptimizerSceneConverterTest::verbose() {
     const char* shaded = "308750";
     const char* overdraw = "1.00001";
     #endif
+    #if MESHOPTIMIZER_VERSION >= 250
+    const char* transformedOut = "58525";
+    const char* acmrOut = "0.714417";
+    const char* atvrOut = "1.42876";
+    const char* bytesOut = "1585472";
+    const char* overfetchOut = "1.61275";
+    #else
+    const char* transformedOut = "58521";
+    const char* acmrOut = "0.714368";
+    const char* atvrOut = "1.42867";
+    const char* bytesOut = "1582144";
+    const char* overfetchOut = "1.60936";
+    #endif
     const char* expected = R"(Trade::MeshOptimizerSceneConverter::convert(): processing stats:
   vertex cache:
-    165120 -> 58521 transformed vertices
+    165120 -> {0} transformed vertices
     1 -> 1 executed warps
-    ACMR {0} -> 0.714368
-    ATVR 4.03105 -> 1.42867
+    ACMR {1} -> {2}
+    ATVR 4.03105 -> {3}
   vertex fetch:
-    3891008 -> 1582144 bytes fetched
-    overfetch 3.95794 -> 1.60936
+    3891008 -> {4} bytes fetched
+    overfetch 3.95794 -> {5}
   overdraw:
-    308753 -> {1} shaded pixels
+    308753 -> {6} shaded pixels
     308748 -> 308748 covered pixels
-    overdraw 1.00002 -> {2}
+    overdraw 1.00002 -> {7}
 Trade::MeshOptimizerSceneConverter::convertInPlace(): processing stats:
   vertex cache:
-    165120 -> 58521 transformed vertices
+    165120 -> {0} transformed vertices
     1 -> 1 executed warps
-    ACMR {0} -> 0.714368
-    ATVR 4.03105 -> 1.42867
+    ACMR {1} -> {2}
+    ATVR 4.03105 -> {3}
   vertex fetch:
-    3891008 -> 1582144 bytes fetched
-    overfetch 3.95794 -> 1.60936
+    3891008 -> {4} bytes fetched
+    overfetch 3.95794 -> {5}
   overdraw:
-    308753 -> {1} shaded pixels
+    308753 -> {6} shaded pixels
     308748 -> 308748 covered pixels
-    overdraw 1.00002 -> {2}
+    overdraw 1.00002 -> {7}
 )";
     CORRADE_COMPARE_AS(out,
-        Utility::format(expected, acmr, shaded, overdraw),
+        Utility::format(expected,
+            transformedOut,
+            acmr, acmrOut,
+            atvrOut,
+            bytesOut,
+            overfetchOut,
+            shaded,
+            overdraw),
         TestSuite::Compare::String);
 }
 
@@ -662,7 +684,9 @@ void MeshOptimizerSceneConverterTest::verboseCustomAttribute() {
         "2.01562"
         #endif
         ;
-    /* On version 0.24 the overdraw increases instead of decreasing */
+    /* On version 0.24 the overdraw increases instead of decreasing. On 0.25
+       other things change as well, due to the transformed vertex count being
+       different. */
     #if MESHOPTIMIZER_VERSION >= 240
     const char* shaded = "308756";
     const char* overdraw = "1.00003";
@@ -670,22 +694,42 @@ void MeshOptimizerSceneConverterTest::verboseCustomAttribute() {
     const char* shaded = "308750";
     const char* overdraw = "1.00001";
     #endif
+    #if MESHOPTIMIZER_VERSION >= 250
+    const char* transformedOut = "58525";
+    const char* acmrOut = "0.714417";
+    const char* atvrOut = "1.42876";
+    const char* bytesOut = "1585472";
+    const char* overfetchOut = "1.61275";
+    #else
+    const char* transformedOut = "58521";
+    const char* acmrOut = "0.714368";
+    const char* atvrOut = "1.42867";
+    const char* bytesOut = "1582144";
+    const char* overfetchOut = "1.60936";
+    #endif
     const char* expected = R"(Trade::MeshOptimizerSceneConverter::convertInPlace(): processing stats:
   vertex cache:
-    165120 -> 58521 transformed vertices
+    165120 -> {0} transformed vertices
     1 -> 1 executed warps
-    ACMR {} -> 0.714368
-    ATVR 4.03105 -> 1.42867
+    ACMR {1} -> {2}
+    ATVR 4.03105 -> {3}
   vertex fetch:
-    3891008 -> 1582144 bytes fetched
-    overfetch 3.95794 -> 1.60936
+    3891008 -> {4} bytes fetched
+    overfetch 3.95794 -> {5}
   overdraw:
-    308753 -> {} shaded pixels
+    308753 -> {6} shaded pixels
     308748 -> 308748 covered pixels
-    overdraw 1.00002 -> {}
+    overdraw 1.00002 -> {7}
 )";
     CORRADE_COMPARE_AS(out,
-        Utility::format(expected, acmr, shaded, overdraw),
+        Utility::format(expected,
+            transformedOut,
+            acmr, acmrOut,
+            atvrOut,
+            bytesOut,
+            overfetchOut,
+            shaded,
+            overdraw),
         TestSuite::Compare::String);
 }
 
