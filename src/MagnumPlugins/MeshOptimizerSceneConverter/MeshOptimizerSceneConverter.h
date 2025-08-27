@@ -168,7 +168,8 @@ The simplification can result in the whole mesh being removed if either the
 @cb{.ini} simplifyTargetError @ce is set too high or the input consists of just
 degenerate triangles. By default a mesh with zero vertices is returned in that
 case, enable the @cb{.ini} simplifyFailEmpty @ce option to make the process
-fail in that case instead.
+fail in that case instead. There are also other
+@ref Trade-MeshOptimizerSceneConverter-configuration "simplification options".
 
 @section Trade-MeshOptimizerSceneConverter-configuration Plugin-specific configuration
 

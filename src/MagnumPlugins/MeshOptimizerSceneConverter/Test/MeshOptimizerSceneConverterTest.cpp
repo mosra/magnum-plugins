@@ -87,6 +87,9 @@ struct MeshOptimizerSceneConverterTest: TestSuite::Tester {
     template<class T> void simplifySloppy();
     void simplifyEmptyIndexBuffer();
     void simplifyVerbose();
+    #if MESHOPTIMIZER_VERSION >= 180
+    void simplifyOptions();
+    #endif
     void simplifyEmpty();
 
     /* Explicitly forbid system-wide plugin dependencies */
@@ -112,6 +115,27 @@ const struct {
     {"", "simplify"},
     {"sloppy", "simplifySloppy"}
 };
+
+#if MESHOPTIMIZER_VERSION >= 180
+const struct {
+    const char* name;
+    const char* option;
+    UnsignedInt expectedVertexCount;
+} SimplifyOptionsData[]{
+    {"lock border", "simplifyLockBorder", 54},
+    #if MESHOPTIMIZER_VERSION >= 210
+    {"sparse", "simplifySparse", 54},
+    {"absolute error", "simplifyErrorAbsolute", 108},
+    #endif
+    #if MESHOPTIMIZER_VERSION >= 220
+    {"prune", "simplifyPrune", 54},
+    #endif
+    #if MESHOPTIMIZER_VERSION >= 250
+    {"regularize", "simplifyRegularize", 54},
+    {"permissive", "simplifyPermissive", 54},
+    #endif
+};
+#endif
 
 const struct {
     const char* name;
@@ -190,6 +214,11 @@ MeshOptimizerSceneConverterTest::MeshOptimizerSceneConverterTest() {
         &MeshOptimizerSceneConverterTest::simplifySloppy<UnsignedInt>,
         &MeshOptimizerSceneConverterTest::simplifyEmptyIndexBuffer,
         &MeshOptimizerSceneConverterTest::simplifyVerbose});
+
+    #if MESHOPTIMIZER_VERSION >= 180
+    addInstancedTests({&MeshOptimizerSceneConverterTest::simplifyOptions},
+        Containers::arraySize(SimplifyOptionsData));
+    #endif
 
     addInstancedTests({&MeshOptimizerSceneConverterTest::simplifyEmpty},
         Containers::arraySize(SimplifyEmptyData));
@@ -1284,6 +1313,33 @@ void MeshOptimizerSceneConverterTest::simplifyVerbose() {
 )";
     CORRADE_COMPARE(out, expected);
 }
+
+#if MESHOPTIMIZER_VERSION >= 180
+void MeshOptimizerSceneConverterTest::simplifyOptions() {
+    auto&& data = SimplifyOptionsData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    /* Same base options as in simplify() above */
+    Containers::Pointer<AbstractSceneConverter> converter = _manager.instantiate("MeshOptimizerSceneConverter");
+    converter->configuration().setValue("optimizeVertexCache", false);
+    converter->configuration().setValue("optimizeOverdraw", false);
+    converter->configuration().setValue("optimizeVertexFetch", false);
+    converter->configuration().setValue("simplify", true);
+    converter->configuration().setValue("simplifyTargetIndexCountThreshold", 0.5f);
+    /* The default 1.0e-2 is too little for this */
+    converter->configuration().setValue("simplifyTargetError", 0.25f);
+
+    /* The option should exist and be disabled by default */
+    CORRADE_COMPARE(converter->configuration().value<Containers::StringView>(data.option), "false");
+    converter->configuration().setValue(data.option, true);
+
+    Containers::Optional<MeshData> simplified = converter->convert(Primitives::uvSphereSolid(4, 6, Primitives::UVSphereFlag::TextureCoordinates));
+    CORRADE_VERIFY(simplified);
+    /** @todo have some better way to test these, this produces the same value
+        for all options except simplifyErrorAbsolute */
+    CORRADE_COMPARE(simplified->indexCount(), data.expectedVertexCount);
+}
+#endif
 
 void MeshOptimizerSceneConverterTest::simplifyEmpty() {
     auto&& data = SimplifyEmptyData[testCaseInstanceId()];

@@ -361,6 +361,25 @@ Containers::Optional<MeshData> MeshOptimizerSceneConverter::doConvert(const Mesh
                 #endif
             );
         } else {
+            #if MESHOPTIMIZER_VERSION >= 180
+            Int flags = 0;
+            #define _c(option)                                              \
+                if(configuration().value<bool>("simplify" #option))         \
+                    flags |= meshopt_Simplify ## option;
+            _c(LockBorder)
+            #if MESHOPTIMIZER_VERSION >= 210
+            _c(Sparse)
+            _c(ErrorAbsolute)
+            #endif
+            #if MESHOPTIMIZER_VERSION >= 220
+            _c(Prune)
+            #endif
+            #if MESHOPTIMIZER_VERSION >= 250
+            _c(Regularize)
+            _c(Permissive)
+            #endif
+            #undef _c
+            #endif
             vertexCount = meshopt_simplify(
                 outputIndices.data(),
                 inputIndices.data(),
@@ -371,7 +390,7 @@ Containers::Optional<MeshData> MeshOptimizerSceneConverter::doConvert(const Mesh
                 targetIndexCount,
                 targetError
                 #if MESHOPTIMIZER_VERSION >= 180
-                , configuration().value<bool>("simplifyLockBorder") ? meshopt_SimplifyLockBorder : 0
+                , flags
                 #endif
                 #if MESHOPTIMIZER_VERSION >= 160
                 , nullptr
