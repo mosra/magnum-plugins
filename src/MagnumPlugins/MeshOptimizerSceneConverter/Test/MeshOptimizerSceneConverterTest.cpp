@@ -125,7 +125,13 @@ const struct {
     {"lock border", "simplifyLockBorder", 54},
     #if MESHOPTIMIZER_VERSION >= 210
     {"sparse", "simplifySparse", 54},
-    {"absolute error", "simplifyErrorAbsolute", 108},
+    {"absolute error", "simplifyErrorAbsolute",
+        #if MESHOPTIMIZER_VERSION >= 250
+        108
+        #else
+        96
+        #endif
+    },
     #endif
     #if MESHOPTIMIZER_VERSION >= 220
     {"prune", "simplifyPrune", 54},
