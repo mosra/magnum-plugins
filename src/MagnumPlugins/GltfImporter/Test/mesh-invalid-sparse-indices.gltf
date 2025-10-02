@@ -4,7 +4,7 @@
   },
   "meshes": [
     {
-      "name": "8-bit indices",
+      "name": "attribute, 8-bit sparse indices",
       "primitives": [
         {
           "attributes": {
@@ -14,17 +14,15 @@
       ]
     },
     {
-      "name": "16-bit indices",
+      "name": "indices, 8-bit sparse indices",
       "primitives": [
         {
-          "attributes": {
-            "POSITION": 1
-          }
+          "indices": 1
         }
       ]
     },
     {
-      "name": "32-bit indices",
+      "name": "attribute, 16-bit sparse indices",
       "primitives": [
         {
           "attributes": {
@@ -32,11 +30,37 @@
           }
         }
       ]
+    },
+    {
+      "name": "indices, 16-bit sparse indices",
+      "primitives": [
+        {
+          "indices": 3
+        }
+      ]
+    },
+    {
+      "name": "attribute, 32-bit sparse indices",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 4
+          }
+        }
+      ]
+    },
+    {
+      "name": "indices, 32-bit sparse indices",
+      "primitives": [
+        {
+          "indices": 5
+        }
+      ]
     }
   ],
   "accessors": [
     {
-      "name": "0",
+      "name": "0, attribute",
       "componentType": 5126,
       "count": 130,
       "type": "VEC3",
@@ -52,7 +76,23 @@
       }
     },
     {
-      "name": "1, count larger than 8 bits",
+      "name": "1, indices",
+      "componentType": 5125,
+      "count": 130,
+      "type": "SCALAR",
+      "sparse": {
+        "count": 8,
+        "indices": {
+          "bufferView": 0,
+          "componentType": 5121
+        },
+        "values": {
+          "bufferView": 3
+        }
+      }
+    },
+    {
+      "name": "2, attribute, count larger than 8 bits",
       "componentType": 5126,
       "count": 300,
       "type": "VEC3",
@@ -68,10 +108,42 @@
       }
     },
     {
-      "name": "2, count larger than 16 bits",
+      "name": "3, indices, count larger than 8 bits",
+      "componentType": 5125,
+      "count": 300,
+      "type": "SCALAR",
+      "sparse": {
+        "count": 6,
+        "indices": {
+          "bufferView": 1,
+          "componentType": 5123
+        },
+        "values": {
+          "bufferView": 3
+        }
+      }
+    },
+    {
+      "name": "4, attribute, count larger than 16 bits",
       "componentType": 5126,
       "count": 67000,
       "type": "VEC3",
+      "sparse": {
+        "count": 5,
+        "indices": {
+          "bufferView": 2,
+          "componentType": 5125
+        },
+        "values": {
+          "bufferView": 3
+        }
+      }
+    },
+    {
+      "name": "5, indices, count larger than 16 bits",
+      "componentType": 5125,
+      "count": 67000,
+      "type": "SCALAR",
       "sparse": {
         "count": 5,
         "indices": {

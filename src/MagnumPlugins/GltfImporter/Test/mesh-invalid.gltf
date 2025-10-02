@@ -28,9 +28,9 @@
       "primitives": [
         {
           "attributes": {
-            "JOINTS_0": 39,
-            "WEIGHTS_0": 40,
-            "JOINTS_1": 39
+            "JOINTS_0": 38,
+            "WEIGHTS_0": 39,
+            "JOINTS_1": 38
           }
         }
       ]
@@ -72,20 +72,11 @@
       ]
     },
     {
-      "name": "accessor with no buffer view used for indices",
+      "name": "strided sparse index view",
       "primitives": [
         {
           "attributes": {},
           "indices": 10
-        }
-      ]
-    },
-    {
-      "name": "sparse accessor used for indices",
-      "primitives": [
-        {
-          "attributes": {},
-          "indices": 11
         }
       ]
     },
@@ -134,7 +125,7 @@
       "primitives": [
         {
           "attributes": {
-            "_THING": 17
+            "_THING": 16
           }
         }
       ]
@@ -144,7 +135,7 @@
       "primitives": [
         {
           "attributes": {
-            "_THING": 18
+            "_THING": 17
           }
         }
       ]
@@ -154,7 +145,7 @@
       "primitives": [
         {
           "attributes": {},
-          "indices": 12
+          "indices": 11
         }
       ]
     },
@@ -163,7 +154,7 @@
       "primitives": [
         {
           "attributes": {
-            "POSITION": 13
+            "POSITION": 12
           }
         }
       ]
@@ -173,7 +164,7 @@
       "primitives": [
         {
           "attributes": {},
-          "indices": 14
+          "indices": 13
         }
       ]
     },
@@ -182,7 +173,7 @@
       "primitives": [
         {
           "attributes": {
-            "POSITION": 15
+            "POSITION": 14
           }
         }
       ]
@@ -192,7 +183,7 @@
       "primitives": [
         {
           "attributes": {
-            "POSITION": 16
+            "POSITION": 15
           }
         }
       ]
@@ -202,7 +193,7 @@
       "primitives": [
         {
           "attributes": {
-            "NORMAL": 65
+            "NORMAL": 64
           }
         }
       ]
@@ -212,7 +203,7 @@
       "primitives": [
         {
           "attributes": {},
-          "indices": 65
+          "indices": 64
         }
       ]
     },
@@ -221,7 +212,7 @@
       "primitives": [
         {
           "attributes": {
-            "POSITION": 19
+            "POSITION": 18
           }
         }
       ]
@@ -231,7 +222,7 @@
       "primitives": [
         {
           "attributes": {
-            "POSITION": 20
+            "POSITION": 19
           }
         }
       ]
@@ -241,7 +232,7 @@
       "primitives": [
         {
           "attributes": {
-            "POSITION": 38
+            "POSITION": 37
           }
         }
       ]
@@ -251,7 +242,7 @@
       "primitives": [
         {
           "attributes": {
-            "POSITION": 21
+            "POSITION": 20
           }
         }
       ]
@@ -261,7 +252,7 @@
       "primitives": [
         {
           "attributes": {
-            "POSITION": 22
+            "POSITION": 21
           }
         }
       ]
@@ -271,7 +262,7 @@
       "primitives": [
         {
           "attributes": {
-            "POSITION": 23
+            "POSITION": 22
           }
         }
       ]
@@ -281,7 +272,7 @@
       "primitives": [
         {
           "attributes": {
-            "POSITION": 24
+            "POSITION": 23
           }
         }
       ]
@@ -291,7 +282,7 @@
       "primitives": [
         {
           "attributes": {
-            "POSITION": 25
+            "POSITION": 24
           }
         }
       ]
@@ -301,7 +292,7 @@
       "primitives": [
         {
           "attributes": {
-            "POSITION": 26
+            "POSITION": 25
           }
         }
       ]
@@ -311,7 +302,7 @@
       "primitives": [
         {
           "attributes": {
-            "POSITION": 27
+            "POSITION": 26
           }
         }
       ]
@@ -321,7 +312,7 @@
       "primitives": [
         {
           "attributes": {
-            "POSITION": 28
+            "POSITION": 27
           }
         }
       ]
@@ -331,7 +322,7 @@
       "primitives": [
         {
           "attributes": {
-            "POSITION": 29
+            "POSITION": 28
           }
         }
       ]
@@ -341,7 +332,7 @@
       "primitives": [
         {
           "attributes": {
-            "POSITION": 30
+            "POSITION": 29
           }
         }
       ]
@@ -351,7 +342,7 @@
       "primitives": [
         {
           "attributes": {
-            "POSITION": 31
+            "POSITION": 30
           }
         }
       ]
@@ -361,7 +352,7 @@
       "primitives": [
         {
           "attributes": {
-            "POSITION": 32
+            "POSITION": 31
           }
         }
       ]
@@ -371,7 +362,7 @@
       "primitives": [
         {
           "attributes": {
-            "POSITION": 33
+            "POSITION": 32
           }
         }
       ]
@@ -381,7 +372,7 @@
       "primitives": [
         {
           "attributes": {
-            "POSITION": 34
+            "POSITION": 33
           }
         }
       ]
@@ -391,7 +382,7 @@
       "primitives": [
         {
           "attributes": {
-            "POSITION": 35
+            "POSITION": 34
           }
         }
       ]
@@ -401,7 +392,7 @@
       "primitives": [
         {
           "attributes": {
-            "POSITION": 36
+            "POSITION": 35
           }
         }
       ]
@@ -411,7 +402,7 @@
       "primitives": [
         {
           "attributes": {
-            "POSITION": 37
+            "POSITION": 36
           }
         }
       ]
@@ -521,7 +512,25 @@
       ]
     },
     {
-      "name": "invalid sparse property",
+      "name": "invalid attribute sparse property",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 40
+          }
+        }
+      ]
+    },
+    {
+      "name": "invalid indices sparse property",
+      "primitives": [
+        {
+          "indices": 40
+        }
+      ]
+    },
+    {
+      "name": "missing sparse count property",
       "primitives": [
         {
           "attributes": {
@@ -531,7 +540,7 @@
       ]
     },
     {
-      "name": "missing sparse count property",
+      "name": "invalid sparse count property",
       "primitives": [
         {
           "attributes": {
@@ -541,7 +550,7 @@
       ]
     },
     {
-      "name": "invalid sparse count property",
+      "name": "zero sparse count property",
       "primitives": [
         {
           "attributes": {
@@ -551,7 +560,7 @@
       ]
     },
     {
-      "name": "zero sparse count property",
+      "name": "sparse count property larger than vertex count",
       "primitives": [
         {
           "attributes": {
@@ -561,7 +570,7 @@
       ]
     },
     {
-      "name": "sparse count property larger than vertex count",
+      "name": "missing sparse indices property",
       "primitives": [
         {
           "attributes": {
@@ -571,7 +580,7 @@
       ]
     },
     {
-      "name": "missing sparse indices property",
+      "name": "invalid sparse indices property",
       "primitives": [
         {
           "attributes": {
@@ -581,7 +590,7 @@
       ]
     },
     {
-      "name": "invalid sparse indices property",
+      "name": "missing sparse indices bufferView property",
       "primitives": [
         {
           "attributes": {
@@ -591,7 +600,7 @@
       ]
     },
     {
-      "name": "missing sparse indices bufferView property",
+      "name": "invalid sparse indices bufferView property",
       "primitives": [
         {
           "attributes": {
@@ -601,7 +610,7 @@
       ]
     },
     {
-      "name": "invalid sparse indices bufferView property",
+      "name": "sparse indices buffer view out of range",
       "primitives": [
         {
           "attributes": {
@@ -611,7 +620,7 @@
       ]
     },
     {
-      "name": "sparse indices buffer view out of range",
+      "name": "strided sparse indices buffer view",
       "primitives": [
         {
           "attributes": {
@@ -621,7 +630,7 @@
       ]
     },
     {
-      "name": "strided sparse indices buffer view",
+      "name": "invalid sparse indices byteOffset property",
       "primitives": [
         {
           "attributes": {
@@ -631,7 +640,7 @@
       ]
     },
     {
-      "name": "invalid sparse indices byteOffset property",
+      "name": "sparse indices accessor range out of buffer view range",
       "primitives": [
         {
           "attributes": {
@@ -641,7 +650,7 @@
       ]
     },
     {
-      "name": "sparse indices accessor range out of buffer view range",
+      "name": "missing sparse indices componentType property",
       "primitives": [
         {
           "attributes": {
@@ -651,7 +660,7 @@
       ]
     },
     {
-      "name": "missing sparse indices componentType property",
+      "name": "invalid sparse indices componentType property",
       "primitives": [
         {
           "attributes": {
@@ -661,7 +670,7 @@
       ]
     },
     {
-      "name": "invalid sparse indices componentType property",
+      "name": "invalid sparse indices componentType",
       "primitives": [
         {
           "attributes": {
@@ -671,7 +680,7 @@
       ]
     },
     {
-      "name": "invalid sparse indices componentType",
+      "name": "missing sparse values property",
       "primitives": [
         {
           "attributes": {
@@ -681,7 +690,7 @@
       ]
     },
     {
-      "name": "missing sparse values property",
+      "name": "invalid sparse values property",
       "primitives": [
         {
           "attributes": {
@@ -691,7 +700,7 @@
       ]
     },
     {
-      "name": "invalid sparse values property",
+      "name": "missing sparse values bufferView property",
       "primitives": [
         {
           "attributes": {
@@ -701,7 +710,7 @@
       ]
     },
     {
-      "name": "missing sparse values bufferView property",
+      "name": "invalid sparse values bufferView property",
       "primitives": [
         {
           "attributes": {
@@ -711,7 +720,7 @@
       ]
     },
     {
-      "name": "invalid sparse values bufferView property",
+      "name": "sparse values buffer view out of range",
       "primitives": [
         {
           "attributes": {
@@ -721,7 +730,7 @@
       ]
     },
     {
-      "name": "sparse values buffer view out of range",
+      "name": "strided sparse values buffer view",
       "primitives": [
         {
           "attributes": {
@@ -731,7 +740,7 @@
       ]
     },
     {
-      "name": "strided sparse values buffer view",
+      "name": "invalid sparse values byteOffset property",
       "primitives": [
         {
           "attributes": {
@@ -741,21 +750,11 @@
       ]
     },
     {
-      "name": "invalid sparse values byteOffset property",
-      "primitives": [
-        {
-          "attributes": {
-            "POSITION": 63
-          }
-        }
-      ]
-    },
-    {
       "name": "sparse values accessor range out of buffer view range",
       "primitives": [
         {
           "attributes": {
-            "POSITION": 64
+            "POSITION": 63
           }
         }
       ]
@@ -838,15 +837,9 @@
     },
     {
       "name": "10",
+      "bufferView": 15,
       "componentType": 5125,
-      "count": 1,
-      "type": "SCALAR"
-    },
-    {
-      "name": "11",
-      "bufferView": 1,
-      "componentType": 5125,
-      "count": 1,
+      "count": 3,
       "type": "SCALAR",
       "sparse": {
         "count": 1,
@@ -860,133 +853,133 @@
       }
     },
     {
-      "name": "12",
+      "name": "11",
       "bufferView": 0,
       "componentType": 5125,
       "count": 4,
       "type": "SCALAR"
     },
     {
-      "name": "13",
+      "name": "12",
       "bufferView": 0,
       "componentType": 5126,
       "count": 4,
       "type": "VEC3"
     },
     {
-      "name": "14",
+      "name": "13",
       "bufferView": 2,
       "componentType": 5126,
       "count": 3,
       "type": "VEC3"
     },
     {
-      "name": "15",
+      "name": "14",
       "bufferView": 3,
       "componentType": 5126,
       "count": 3,
       "type": "VEC3"
     },
     {
-      "name": "16",
+      "name": "15",
       "bufferView": 16,
       "componentType": 5126,
       "count": 9,
       "type": "VEC3"
     },
     {
-      "name": "17",
+      "name": "16",
       "bufferView": 0,
       "componentType": 5126,
       "count": 0,
       "type": "EEE"
     },
     {
-      "name": "18",
+      "name": "17",
       "bufferView": 0,
       "componentType": 9999,
       "count": 0,
       "type": "SCALAR"
     },
     {
-      "name": "19",
+      "name": "18",
       "bufferView": 4,
       "componentType": 5126,
       "count": 0,
       "type": "VEC3"
     },
     {
-      "name": "20",
+      "name": "19",
       "bufferView": 5,
       "componentType": 5126,
       "count": 0,
       "type": "VEC3"
     },
     {
-      "name": "21",
+      "name": "20",
       "bufferView": 6,
       "componentType": 5126,
       "count": 0,
       "type": "VEC3"
     },
     {
-      "name": "22",
+      "name": "21",
       "bufferView": 7,
       "componentType": 5126,
       "count": 0,
       "type": "VEC3"
     },
     {
-      "name": "23",
+      "name": "22",
       "bufferView": 8,
       "componentType": 5126,
       "count": 0,
       "type": "VEC3"
     },
     {
-      "name": "24",
+      "name": "23",
       "bufferView": 9,
       "componentType": 5126,
       "count": 0,
       "type": "VEC3"
     },
     {
-      "name": "25",
+      "name": "24",
       "bufferView": 10,
       "componentType": 5126,
       "count": 0,
       "type": "VEC3"
     },
     {
-      "name": "26",
+      "name": "25",
       "bufferView": 11,
       "componentType": 5126,
       "count": 0,
       "type": "VEC3"
     },
     {
-      "name": "27",
+      "name": "26",
       "bufferView": 12,
       "componentType": 5126,
       "count": 0,
       "type": "VEC3"
     },
     {
-      "name": "28",
+      "name": "27",
       "bufferView": 13,
       "componentType": 5126,
       "count": 0,
       "type": "VEC3"
     },
     {
-      "name": "29",
+      "name": "28",
       "bufferView": -1,
       "componentType": 5126,
       "count": 0,
       "type": "VEC3"
     },
     {
-      "name": "30",
+      "name": "29",
       "bufferView": 0,
       "byteOffset": -1,
       "componentType": 5126,
@@ -994,46 +987,46 @@
       "type": "VEC3"
     },
     {
-      "name": "31",
+      "name": "30",
       "bufferView": 0,
       "count": 0,
       "type": "VEC3"
     },
     {
-      "name": "32",
+      "name": "31",
       "bufferView": 0,
       "componentType": -1,
       "count": 0,
       "type": "VEC3"
     },
     {
-      "name": "33",
+      "name": "32",
       "bufferView": 0,
       "componentType": 5126,
       "type": "VEC3"
     },
     {
-      "name": "34",
+      "name": "33",
       "bufferView": 0,
       "componentType": 5126,
       "count": -1,
       "type": "VEC3"
     },
     {
-      "name": "35",
+      "name": "34",
       "bufferView": 0,
       "componentType": 5126,
       "count": 0
     },
     {
-      "name": "36",
+      "name": "35",
       "bufferView": 0,
       "componentType": 5126,
       "count": 0,
       "type": 3034
     },
     {
-      "name": "37",
+      "name": "36",
       "bufferView": 0,
       "componentType": 5126,
       "count": 0,
@@ -1041,35 +1034,35 @@
       "normalized": null
     },
     {
-      "name": "38",
+      "name": "37",
       "bufferView": 14,
       "componentType": 5126,
       "count": 0,
       "type": "VEC3"
     },
     {
-      "name": "39",
+      "name": "38",
       "bufferView": 1,
       "componentType": 5123,
       "count": 2,
       "type": "VEC4"
     },
     {
-      "name": "40",
+      "name": "39",
       "bufferView": 1,
       "componentType": 5126,
       "count": 2,
       "type": "VEC4"
     },
     {
-      "name": "41",
+      "name": "40",
       "componentType": 5126,
       "count": 3,
       "type": "VEC3",
       "sparse": false
     },
     {
-      "name": "42",
+      "name": "41",
       "componentType": 5126,
       "count": 3,
       "type": "VEC3",
@@ -1084,7 +1077,7 @@
       }
     },
     {
-      "name": "43",
+      "name": "42",
       "componentType": 5126,
       "count": 3,
       "type": "VEC3",
@@ -1100,7 +1093,7 @@
       }
     },
     {
-      "name": "44",
+      "name": "43",
       "componentType": 5126,
       "count": 3,
       "type": "VEC3",
@@ -1116,7 +1109,7 @@
       }
     },
     {
-      "name": "45",
+      "name": "44",
       "componentType": 5126,
       "count": 3,
       "type": "VEC3",
@@ -1132,7 +1125,7 @@
       }
     },
     {
-      "name": "46",
+      "name": "45",
       "componentType": 5126,
       "count": 3,
       "type": "VEC3",
@@ -1144,7 +1137,7 @@
       }
     },
     {
-      "name": "47",
+      "name": "46",
       "componentType": 5126,
       "count": 3,
       "type": "VEC3",
@@ -1157,7 +1150,7 @@
       }
     },
     {
-      "name": "48",
+      "name": "47",
       "componentType": 5126,
       "count": 3,
       "type": "VEC3",
@@ -1172,7 +1165,7 @@
       }
     },
     {
-      "name": "49",
+      "name": "48",
       "componentType": 5126,
       "count": 3,
       "type": "VEC3",
@@ -1188,7 +1181,7 @@
       }
     },
     {
-      "name": "50",
+      "name": "49",
       "componentType": 5126,
       "count": 3,
       "type": "VEC3",
@@ -1204,7 +1197,7 @@
       }
     },
     {
-      "name": "51",
+      "name": "50",
       "componentType": 5126,
       "count": 3,
       "type": "VEC3",
@@ -1220,7 +1213,7 @@
       }
     },
     {
-      "name": "52",
+      "name": "51",
       "componentType": 5126,
       "count": 3,
       "type": "VEC3",
@@ -1237,7 +1230,7 @@
       }
     },
     {
-      "name": "53",
+      "name": "52",
       "componentType": 5126,
       "count": 3,
       "type": "VEC3",
@@ -1254,7 +1247,7 @@
       }
     },
     {
-      "name": "54",
+      "name": "53",
       "componentType": 5126,
       "count": 3,
       "type": "VEC3",
@@ -1269,7 +1262,7 @@
       }
     },
     {
-      "name": "55",
+      "name": "54",
       "componentType": 5126,
       "count": 3,
       "type": "VEC3",
@@ -1285,7 +1278,7 @@
       }
     },
     {
-      "name": "56",
+      "name": "55",
       "componentType": 5126,
       "count": 3,
       "type": "VEC3",
@@ -1301,7 +1294,7 @@
       }
     },
     {
-      "name": "57",
+      "name": "56",
       "componentType": 5126,
       "count": 3,
       "type": "VEC3",
@@ -1314,7 +1307,7 @@
       }
     },
     {
-      "name": "58",
+      "name": "57",
       "componentType": 5126,
       "count": 3,
       "type": "VEC3",
@@ -1328,7 +1321,7 @@
       }
     },
     {
-      "name": "59",
+      "name": "58",
       "componentType": 5126,
       "count": 3,
       "type": "VEC3",
@@ -1342,7 +1335,7 @@
       }
     },
     {
-      "name": "60",
+      "name": "59",
       "componentType": 5126,
       "count": 3,
       "type": "VEC3",
@@ -1358,7 +1351,7 @@
       }
     },
     {
-      "name": "61",
+      "name": "60",
       "componentType": 5126,
       "count": 3,
       "type": "VEC3",
@@ -1374,7 +1367,7 @@
       }
     },
     {
-      "name": "62",
+      "name": "61",
       "componentType": 5126,
       "count": 3,
       "type": "VEC3",
@@ -1390,7 +1383,7 @@
       }
     },
     {
-      "name": "63",
+      "name": "62",
       "componentType": 5126,
       "count": 3,
       "type": "VEC3",
@@ -1407,7 +1400,7 @@
       }
     },
     {
-      "name": "64",
+      "name": "63",
       "componentType": 5122,
       "count": 3,
       "type": "VEC3",

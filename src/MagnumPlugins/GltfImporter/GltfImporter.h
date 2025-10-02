@@ -343,20 +343,18 @@ layout even if it contains gaps with an assumption that such layout was done
 for a reason. You can use @ref MeshTools::interleave() and other @ref MeshTools
 algorithms to perform layout optimizations post import, if needed.
 
-Accessors with no backing buffer views, which are meant to be zero-filled, and
-sparse accessors, are deinterleaved and put at the end of the vertex data,
-again aligning each to four bytes. Unlike with regular accessors, if there is
-more than one attribute using the same zero-filled or sparse accessor, no
-deduplication is performed. If a sparse accessor is based off data interleaved
-with other attributes in the same mesh, the original data may be left in the
-vertex data array even if not referenced. Again you can use
+Attribute accessors with no backing buffer views, which are meant to be
+zero-filled, and sparse accessors, are deinterleaved and put at the end of the
+vertex data, again aligning each to four bytes. Unlike with regular accessors,
+if there is more than one attribute using the same zero-filled or sparse
+accessor, no deduplication is performed. If a sparse accessor is based off data
+interleaved with other attributes in the same mesh, the original data may be
+left in the vertex data array even if not referenced. Again you can use
 @ref MeshTools::interleave(), @ref MeshTools::filterAttributes() and other
 @ref MeshTools to repack the data post import if needed.
 
-While the glTF specification allows accessors for indices -- as opposed to
-attributes --- to be sparse or defined without a backing buffer view, it's not
-implemented with an assumption that this functionality is rarely used, and
-importing such a mesh will fail.
+Index accessors with no backing buffer views and sparse index accessors are
+supported as well.
 
 @subsection Trade-GltfImporter-behavior-materials Material import
 

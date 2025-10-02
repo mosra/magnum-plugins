@@ -194,6 +194,15 @@
           }
         }
       ]
+    },
+    {
+      "name": "Index accessor with no buffer view",
+      "note": "The count from the accessor shouldn't get lost in the process. Not using accessor 12 which has UnsignedByte data to verify that element size is correctly used for sizing the memset() call.",
+      "primitives": [
+        {
+          "indices": 13
+        }
+      ]
     }
   ],
   "accessors": [
@@ -294,6 +303,12 @@
     {
       "name": "12",
       "componentType": 5121,
+      "count": 3,
+      "type": "SCALAR"
+    },
+    {
+      "name": "13",
+      "componentType": 5123,
       "count": 3,
       "type": "SCALAR"
     }

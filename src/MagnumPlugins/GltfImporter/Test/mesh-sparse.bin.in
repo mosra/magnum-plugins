@@ -17,6 +17,12 @@ type = ("<"
     "2Bxx 3f3f"
     # 9 sparse indices + values
     "2H 3b3b"
+    # 10 mesh indices, sparse values, sparse indices
+    "2H 2B 3H"
+    # 11 sparse indices + values
+    "3H 3I"
+    # 12 sparse indices + values
+    "3I 3B"
 )
 input = [
     # 0, 1 regular attribute
@@ -79,7 +85,20 @@ input = [
     # 9 sparse indices + values
     1, 3,
     0x55, 0x50, 0x05,
-    0x06, 0x66, 0x60
+    0x06, 0x66, 0x60,
+
+    # 10 mesh indices, sparse values, sparse indices
+    37626, 12334,
+    2, 1,
+    7673, 65535, 65535, # last two get replaced with 12334 and 37626
+
+    # 11 sparse indices + values
+    0, 5, 3,
+    100003, 300009, 200006,
+
+    # 12 sparse indices + values
+    4, 1, 3,
+    67, 255, 11 # index 0 and 2 stay 0
 ]
 
 # kate: hl python

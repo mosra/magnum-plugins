@@ -4254,18 +4254,6 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
         if(!accessor)
             return {};
 
-        /* There's no technical reason this couldn't work, it's just that I
-           don't see any practical use case that would warrant the extra
-           testing effort, so just fail for now */
-        if(accessor->bufferView == ~UnsignedInt{}) {
-            Error{} << "Trade::GltfImporter::mesh(): index accessor" << gltfIndices->asUnsignedInt() << "has no buffer view, which is unsupported";
-            return {};
-        }
-        if(accessor->sparseValues.data()) {
-            Error{} << "Trade::GltfImporter::mesh(): index accessor" << gltfIndices->asUnsignedInt() << "is using sparse storage, which is unsupported";
-            return {};
-        }
-
         MeshIndexType type;
         if(accessor->format == VertexFormat::UnsignedByte)
             type = MeshIndexType::UnsignedByte;
@@ -4280,12 +4268,39 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
             return {};
         }
 
-        if(!accessor->data.isContiguous()) {
-            Error{} << "Trade::GltfImporter::mesh(): index buffer view" << accessor->bufferView << "is not contiguous";
-            return {};
+        /* If the indices have no backing buffer view, zero-init the memory.
+           Like with attributes, the accessor should have index count and index
+           type size encoded in the (nullptr) data view. */
+        if(accessor->bufferView == ~UnsignedInt{}) {
+            indexData = Containers::Array<char>{ValueInit, accessor->data.size()[0]*accessor->data.size()[1]};
+
+        /* Otherwise it's expected to be contiguous, copy the data over */
+        } else {
+            if(!accessor->data.isContiguous()) {
+                Error{} << "Trade::GltfImporter::mesh(): index buffer view" << accessor->bufferView << "is not contiguous";
+                return {};
+            }
+
+            indexData = Containers::Array<char>{InPlaceInit, accessor->data.asContiguous()};
         }
 
-        indexData = Containers::Array<char>{InPlaceInit, accessor->data.asContiguous()};
+        /* If the accessor is sparse, fill it in. Like with attributes, the
+           copy operation also checks the index values and prints a message if
+           they're out of range. Fail in that case. */
+        if(accessor->sparseValues.data()) {
+            bool success;
+            const Containers::StridedArrayView2D<char> indexData2D{indexData, accessor->data.size()};
+            if(accessor->sparseIndices.size()[1] == 4)
+                success = applySparseAccessor("Trade::GltfImporter::mesh():", gltfIndices->asUnsignedInt(), Containers::arrayCast<1, const UnsignedInt>(accessor->sparseIndices), accessor->sparseValues, indexData2D);
+            else if(accessor->sparseIndices.size()[1] == 2)
+                success = applySparseAccessor("Trade::GltfImporter::mesh():", gltfIndices->asUnsignedInt(), Containers::arrayCast<1, const UnsignedShort>(accessor->sparseIndices), accessor->sparseValues, indexData2D);
+            else if(accessor->sparseIndices.size()[1] == 1)
+                success = applySparseAccessor("Trade::GltfImporter::mesh():", gltfIndices->asUnsignedInt(), Containers::arrayCast<1, const UnsignedByte>(accessor->sparseIndices), accessor->sparseValues, indexData2D);
+            else CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+            if(!success)
+                return {};
+        }
+
         indices = MeshIndexData{type, indexData};
     }
 
