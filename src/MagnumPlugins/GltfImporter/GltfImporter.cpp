@@ -4285,9 +4285,7 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
             return {};
         }
 
-        Containers::ArrayView<const char> srcContiguous = accessor->data.asContiguous();
-        indexData = Containers::Array<char>{NoInit, srcContiguous.size()};
-        Utility::copy(srcContiguous, indexData);
+        indexData = Containers::Array<char>{InPlaceInit, accessor->data.asContiguous()};
         indices = MeshIndexData{type, indexData};
     }
 
