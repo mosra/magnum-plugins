@@ -1165,6 +1165,7 @@ void GltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags da
             "KHR_texture_transform"_s,
             "GOOGLE_texture_basis"_s,
             "MSFT_texture_dds"_s,
+            "EXT_texture_astc"_s,
             "EXT_texture_webp"_s
         });
         if(configuration().value<bool>("experimentalKhrTextureKtx"))
