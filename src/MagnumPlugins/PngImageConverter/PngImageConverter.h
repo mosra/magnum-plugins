@@ -56,15 +56,15 @@ namespace Magnum { namespace Trade {
 @brief PNG image converter plugin
 
 Creates Portable Network Graphics (`*.png`) files using the
-[libPNG](http://www.libpng.org/pub/png/libpng.html) library. You can use
+[libPNG](https://www.libpng.org/pub/png/libpng.html) library. You can use
 @ref PngImporter to import images in this format.
 
 @m_class{m-block m-success}
 
 @thirdparty This plugin makes use of the
-    [libPNG](http://www.libpng.org/pub/png/libpng.html) library, released under
-    the @m_class{m-label m-success} **libPNG** license
-    ([license text](http://libpng.org/pub/png/src/libpng-LICENSE.txt)). It
+    [libPNG](https://www.libpng.org/pub/png/libpng.html) library, released
+    under the @m_class{m-label m-success} **libPNG** license
+    ([license text](https://libpng.org/pub/png/src/libpng-LICENSE.txt)). It
     requires attribution for public use.
 
 @section Trade-PngImageConverter-usage Usage
@@ -76,7 +76,7 @@ Creates Portable Network Graphics (`*.png`) files using the
     via the base @ref AbstractImageConverter interface. See its documentation
     for introduction and usage examples.
 
-This plugin depends on the @ref Trade and [libPNG](http://www.libpng.org/pub/png/libpng.html)
+This plugin depends on the @ref Trade and [libPNG](https://www.libpng.org/pub/png/libpng.html)
 libraries and is built if `MAGNUM_WITH_PNGIMAGECONVERTER` is enabled when
 building Magnum Plugins. To use as a dynamic plugin, load @cpp "PngImageConverter" @ce
 via @ref Corrade::PluginManager::Manager.

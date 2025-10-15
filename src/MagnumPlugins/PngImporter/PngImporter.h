@@ -57,15 +57,15 @@ namespace Magnum { namespace Trade {
 @brief PNG importer plugin
 
 Imports Portable Network Graphics (`*.png`) images using the
-[libPNG](http://www.libpng.org/pub/png/libpng.html) library. You can use
+[libPNG](https://www.libpng.org/pub/png/libpng.html) library. You can use
 @ref PngImageConverter to encode images into this format.
 
 @m_class{m-block m-success}
 
 @thirdparty This plugin makes use of the
-    [libPNG](http://www.libpng.org/pub/png/libpng.html) library, released under
-    the @m_class{m-label m-success} **libPNG** license
-    ([license text](http://libpng.org/pub/png/src/libpng-LICENSE.txt)). It
+    [libPNG](https://www.libpng.org/pub/png/libpng.html) library, released
+    under the @m_class{m-label m-success} **libPNG** license
+    ([license text](https://libpng.org/pub/png/src/libpng-LICENSE.txt)). It
     requires attribution for public use.
 
 @section Trade-PngImporter-usage Usage
@@ -78,7 +78,7 @@ Imports Portable Network Graphics (`*.png`) images using the
     introduction and usage examples.
 
 This plugin depends on the @ref Trade library and
-[libPNG](http://www.libpng.org/pub/png/libpng.html) version 1.5.4 and newer.
+[libPNG](https://www.libpng.org/pub/png/libpng.html) version 1.5.4 and newer.
 It is built if `MAGNUM_WITH_PNGIMPORTER` is enabled when building Magnum
 Plugins. To use as a dynamic plugin, load @cpp "PngImporter" @ce via
 @ref Corrade::PluginManager::Manager.

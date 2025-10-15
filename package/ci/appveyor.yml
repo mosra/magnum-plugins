@@ -116,7 +116,7 @@ install:
 - IF "%TARGET%" == "desktop" IF "%COMPILER%" == "mingw" appveyor DownloadFile https://ci.magnum.graphics/openexr-2.5.5-windows-mingw.zip && 7z x openexr-2.5.5-windows-mingw.zip -o%APPVEYOR_BUILD_FOLDER%\deps
 
 # DevIL
-- IF NOT "%TARGET%" == "rt" IF NOT EXIST %APPVEYOR_BUILD_FOLDER%\DevIL-SDK-x64-1.7.8.zip appveyor DownloadFile http://downloads.sourceforge.net/openil/DevIL-SDK-x64-1.7.8.zip
+- IF NOT "%TARGET%" == "rt" IF NOT EXIST %APPVEYOR_BUILD_FOLDER%\DevIL-SDK-x64-1.7.8.zip appveyor DownloadFile https://downloads.sourceforge.net/openil/DevIL-SDK-x64-1.7.8.zip
 - IF NOT "%TARGET%" == "rt" mkdir devil && cd devil && 7z x ..\DevIL-SDK-x64-1.7.8.zip && mkdir lib && move unicode\*.lib lib\ && cd ..
 
 # FreeType, for MSVC 2022, 2019, 2017 and clang-cl only

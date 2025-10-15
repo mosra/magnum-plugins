@@ -193,7 +193,7 @@ delegates to.
 -   Supports both legacy FBX Phong material model and more modern PBR
     materials, in some cases both are defined as PBR materials may have a
     legacy Phong material filled as a fallback.
--   [PBR material properties in OBJ files](http://exocortex.com/blog/extending_wavefront_mtl_to_support_pbr)
+-   [PBR material properties in OBJ files](https://web.archive.org/web/20230210121526/http://exocortex.com/blog/extending_wavefront_mtl_to_support_pbr)
     are supported as well.
 -   The legacy FBX material model and most PBR material models have factors for
     various attributes, by default these are premultiplied into the value but

@@ -61,7 +61,7 @@ images in this format.
 
 @m_class{m-block m-success}
 
-@thirdparty This plugin makes use of the [libJPEG](http://ijg.org/) library,
+@thirdparty This plugin makes use of the [libJPEG](https://ijg.org) library,
     released under a custom @m_class{m-label m-success} **Libjpeg license**
     ([license text](https://jpegclub.org/reference/libjpeg-license/)). It
     requires attribution for public use. Note that this plugin can be built
@@ -77,7 +77,7 @@ images in this format.
     via the base @ref AbstractImageConverter interface. See its documentation
     for introduction and usage examples.
 
-This plugin depends on the @ref Trade and [libJPEG](http://ijg.org/) libraries
+This plugin depends on the @ref Trade and [libJPEG](https://ijg.org) libraries
 and is built if `MAGNUM_WITH_JPEGIMAGECONVERTER` is enabled when building
 Magnum Plugins. To use as a dynamic plugin, load
 @cpp "JpegImageConverter" @ce via @ref Corrade::PluginManager::Manager.

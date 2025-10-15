@@ -30,7 +30,7 @@ rem
 rem So I'm just downloading and building by hand here. Every damn time.
 rem Fortunately at least, Assimp MinGW build from GH Actions works, so we don't
 rem need to build ALL THE STUFF, just some. FFS.
-IF NOT EXIST %APPVEYOR_BUILD_FOLDER%\libjpeg-turbo-1.5.0.tar.gz appveyor DownloadFile http://downloads.sourceforge.net/project/libjpeg-turbo/1.5.0/libjpeg-turbo-1.5.0.tar.gz || exit /b
+IF NOT EXIST %APPVEYOR_BUILD_FOLDER%\libjpeg-turbo-1.5.0.tar.gz appveyor DownloadFile https://downloads.sourceforge.net/project/libjpeg-turbo/1.5.0/libjpeg-turbo-1.5.0.tar.gz || exit /b
 7z x libjpeg-turbo-1.5.0.tar.gz || exit /b
 7z x libjpeg-turbo-1.5.0.tar || exit /b
 ren libjpeg-turbo-1.5.0 libjpeg-turbo || exit /b

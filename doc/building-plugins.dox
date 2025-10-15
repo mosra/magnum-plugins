@@ -537,9 +537,9 @@ By default no plugins are built and you need to select them manually:
     [PlutoSVG](https://github.com/sammycage/plutosvg).
 -   `MAGNUM_WITH_PNGIMAGECONVERTER` --- Build the
     @ref Trade::PngImageConverter "PngImageConverter" plugin. Depends on
-    [libPNG](http://www.libpng.org/pub/png/libpng.html).
+    [libPNG](https://www.libpng.org/pub/png/libpng.html).
 -   `MAGNUM_WITH_PNGIMPORTER` --- Build the @ref Trade::PngImporter "PngImporter"
-    plugin. Depends on [libPNG](http://www.libpng.org/pub/png/libpng.html).
+    plugin. Depends on [libPNG](https://www.libpng.org/pub/png/libpng.html).
 -   `MAGNUM_WITH_PRIMITIVEIMPORTER` --- Build the
     @ref Trade::PrimitiveImporter "PrimitiveImporter" plugin.
 -   `MAGNUM_WITH_RESVGIMPORTER` --- Build the @relativeref{Trade,ResvgImporter}
