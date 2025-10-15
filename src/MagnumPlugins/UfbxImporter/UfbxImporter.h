@@ -29,7 +29,7 @@
 
 /** @file
  * @brief Class @ref Magnum::Trade::UfbxImporter
- * @m_since_latest
+ * @m_since_latest_{plugins}
  */
 
 #include <Corrade/Containers/Pointer.h>
@@ -57,7 +57,7 @@ namespace Magnum { namespace Trade {
 
 /**
 @brief FBX and OBJ importer using ufbx
-@m_since_latest
+@m_since_latest_{plugins}
 
 @m_keywords{FbxImporter ObjImporter}
 

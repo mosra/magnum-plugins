@@ -278,13 +278,13 @@ class MAGNUM_BASISIMAGECONVERTER_EXPORT BasisImageConverter: public AbstractImag
 
         /**
          * @brief Initialize Basis encoder
-         * @m_since_latest
+         * @m_since_latest_{plugins}
          */
         static void initialize();
 
         /**
          * @brief Finalize Basis encoder
-         * @m_since_latest
+         * @m_since_latest_{plugins}
          */
         static void finalize();
 
