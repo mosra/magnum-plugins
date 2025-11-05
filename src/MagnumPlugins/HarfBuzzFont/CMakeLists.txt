@@ -25,7 +25,7 @@
 #
 
 find_package(Magnum REQUIRED Text)
-find_package(Freetype REQUIRED)
+find_package(Freetype REQUIRED) # just FREETYPE_INCLUDE_DIRS
 find_package(HarfBuzz REQUIRED)
 
 if(MAGNUM_BUILD_PLUGINS_STATIC AND NOT DEFINED MAGNUM_HARFBUZZFONT_BUILD_STATIC)
@@ -44,18 +44,18 @@ add_plugin(HarfBuzzFont
     HarfBuzzFont.cpp
     HarfBuzzFont.h
     scriptMapping.h)
-# Avoid warning spam with old-style casts
+# Need only the include dir for dependencies of <hb-ft.h> which is not in
+# INTERFACE_INCLUDE_DIRECTORIES of HarfBuzzFont. Use SYSTEM to avoid warning
+# spam with old-style casts.
 target_include_directories(HarfBuzzFont SYSTEM PRIVATE ${FREETYPE_INCLUDE_DIRS})
 target_include_directories(HarfBuzzFont PUBLIC
     ${PROJECT_SOURCE_DIR}/src
-    ${PROJECT_BINARY_DIR}/src
-    $<TARGET_PROPERTY:FreeTypeFont,INTERFACE_INCLUDE_DIRECTORIES>)
+    ${PROJECT_BINARY_DIR}/src)
 if(MAGNUM_HARFBUZZFONT_BUILD_STATIC AND MAGNUM_BUILD_STATIC_PIC)
     set_target_properties(HarfBuzzFont PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
 target_link_libraries(HarfBuzzFont PUBLIC
     Magnum::Text
-    ${FREETYPE_LIBRARIES}
     HarfBuzz::HarfBuzz)
 if(CORRADE_TARGET_WINDOWS)
     target_link_libraries(HarfBuzzFont PUBLIC FreeTypeFont)

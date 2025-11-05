@@ -537,20 +537,11 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
         # GltfImporter has no dependencies
         # GltfSceneConverter has no dependencies
 
-        # HarfBuzzFont plugin dependencies
+        # HarfBuzzFont plugin dependencies. It additionally depends on FreeType
+        # but that one should be brought in transitively by the FreeTypeFont
+        # dependency.
         elseif(_component STREQUAL HarfBuzzFont)
-            find_package(Freetype)
             find_package(HarfBuzz)
-            # Need to handle special cases where both debug and release
-            # libraries are available (in form of debug;A;optimized;B in
-            # FREETYPE_LIBRARIES), thus appending them one by one
-            if(FREETYPE_LIBRARY_DEBUG AND FREETYPE_LIBRARY_RELEASE)
-                set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
-                    INTERFACE_LINK_LIBRARIES "$<$<NOT:$<CONFIG:Debug>>:${FREETYPE_LIBRARY_RELEASE}>;$<$<CONFIG:Debug>:${FREETYPE_LIBRARY_DEBUG}>")
-            else()
-                set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
-                    INTERFACE_LINK_LIBRARIES ${FREETYPE_LIBRARIES})
-            endif()
             set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
                 INTERFACE_LINK_LIBRARIES HarfBuzz::HarfBuzz)
 
