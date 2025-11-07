@@ -25,7 +25,9 @@
 #
 
 find_package(Magnum REQUIRED Trade)
-find_package(PNG REQUIRED)
+if(NOT MAGNUM_USE_EMSCRIPTEN_PORTS_LIBPNG)
+    find_package(PNG REQUIRED)
+endif()
 
 if(MAGNUM_BUILD_PLUGINS_STATIC AND NOT DEFINED MAGNUM_PNGIMAGECONVERTER_BUILD_STATIC)
     set(MAGNUM_PNGIMAGECONVERTER_BUILD_STATIC 1)
@@ -48,9 +50,16 @@ endif()
 target_include_directories(PngImageConverter PUBLIC
     ${PROJECT_SOURCE_DIR}/src
     ${PROJECT_BINARY_DIR}/src)
-target_link_libraries(PngImageConverter PUBLIC
-    Magnum::Trade
-    PNG::PNG)
+target_link_libraries(PngImageConverter PUBLIC Magnum::Trade)
+
+# If we use the Emscripten port, no find_package() was called and the targets
+# are not defined.
+if(MAGNUM_USE_EMSCRIPTEN_PORTS_LIBPNG)
+    target_compile_options(PngImageConverter PUBLIC "SHELL:-s USE_LIBPNG=1")
+    target_link_options(PngImageConverter PUBLIC "SHELL:-s USE_LIBPNG=1")
+else()
+    target_link_libraries(PngImageConverter PUBLIC PNG::PNG)
+endif()
 
 install(FILES PngImageConverter.h ${CMAKE_CURRENT_BINARY_DIR}/configure.h
     DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/PngImageConverter)

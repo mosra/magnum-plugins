@@ -193,6 +193,23 @@ option(MAGNUM_WITH_UFBXIMPORTER "Build UfbxImporter plugin" OFF)
 option(MAGNUM_WITH_WEBPIMAGECONVERTER "Build WebPImageConverter plugin" OFF)
 option(MAGNUM_WITH_WEBPIMPORTER "Build WebPImporter plugin" OFF)
 
+# Library-specific options. These use the `SHELL:` option from CMake 3.12 and
+# target_link_options() from 3.13 in order to pass `-s USE_FOO=1` to both the
+# compiler and linker without it being split into two parts and passed through
+# a unique filter.
+if(CORRADE_TARGET_EMSCRIPTEN AND NOT CMAKE_VERSION VERSION_LESS 3.13)
+    option(MAGNUM_USE_EMSCRIPTEN_PORTS_FREETYPE "Use FreeType from emscripten-ports instead of looking for it elsewhere (warning: likely an outdated version)" OFF)
+    option(MAGNUM_USE_EMSCRIPTEN_PORTS_HARFBUZZ "Use HarfBuzz from emscripten-ports instead of looking for it elsewhere (warning: likely an outdated version)" OFF)
+    option(MAGNUM_USE_EMSCRIPTEN_PORTS_LIBJPEG "Use libjpeg from emscripten-ports instead of looking for it elsewhere (warning: likely an outdated version)" OFF)
+    option(MAGNUM_USE_EMSCRIPTEN_PORTS_LIBPNG "Use libpng and zlib from emscripten-ports instead of looking for it elsewhere (warning: likely an outdated version)" OFF)
+else()
+    foreach(option FREETYPE HARFBUZZ LIBJPEG LIBPNG)
+        if(MAGNUM_USE_EMSCRIPTEN_PORTS_${option})
+            message(FATAL_ERROR "The MAGNUM_USE_EMSCRIPTEN_PORTS_${option} option is only for Emscripten builds and CMake 3.13+")
+        endif()
+    endforeach()
+endif()
+
 option(MAGNUM_BUILD_TESTS "Build unit tests" OFF)
 cmake_dependent_option(MAGNUM_BUILD_GL_TESTS "Build unit tests for OpenGL code" OFF "MAGNUM_BUILD_TESTS" OFF)
 

@@ -25,7 +25,9 @@
 #
 
 find_package(Magnum REQUIRED Trade)
-find_package(JPEG REQUIRED)
+if(NOT MAGNUM_USE_EMSCRIPTEN_PORTS_LIBJPEG)
+    find_package(JPEG REQUIRED)
+endif()
 
 if(MAGNUM_BUILD_PLUGINS_STATIC AND NOT DEFINED MAGNUM_JPEGIMPORTER_BUILD_STATIC)
     set(MAGNUM_JPEGIMPORTER_BUILD_STATIC 1)
@@ -45,17 +47,23 @@ add_plugin(JpegImporter
 if(MAGNUM_JPEGIMPORTER_BUILD_STATIC AND MAGNUM_BUILD_STATIC_PIC)
     set_target_properties(JpegImporter PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
-target_include_directories(JpegImporter SYSTEM PRIVATE
-    # JPEG_INCLUDE_DIRS is only since 3.12 (and there we should use the
-    # imported target instead anyway)
-    # TODO use imported target when 3.12+ is the minimum
-    ${JPEG_INCLUDE_DIR})
 target_include_directories(JpegImporter PUBLIC
     ${PROJECT_SOURCE_DIR}/src
     ${PROJECT_BINARY_DIR}/src)
-target_link_libraries(JpegImporter PUBLIC
-    Magnum::Trade
-    ${JPEG_LIBRARIES})
+target_link_libraries(JpegImporter PUBLIC Magnum::Trade)
+
+# If we use the Emscripten port, no find_package() was called and the variables
+# are not defined.
+if(MAGNUM_USE_EMSCRIPTEN_PORTS_LIBJPEG)
+    target_compile_options(JpegImporter PUBLIC "SHELL:-s USE_LIBJPEG=1")
+    target_link_options(JpegImporter PUBLIC "SHELL:-s USE_LIBJPEG=1")
+else()
+    target_link_libraries(JpegImporter PUBLIC ${JPEG_LIBRARIES})
+    # JPEG_INCLUDE_DIRS is only since 3.12 (and there we should use the
+    # imported target instead anyway)
+    # TODO use imported target when 3.12+ is the minimum
+    target_include_directories(JpegImporter SYSTEM PRIVATE ${JPEG_INCLUDE_DIR})
+endif()
 
 install(FILES JpegImporter.h ${CMAKE_CURRENT_BINARY_DIR}/configure.h
     DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/JpegImporter)

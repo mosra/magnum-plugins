@@ -25,8 +25,10 @@
 #
 
 find_package(Magnum REQUIRED Text)
-find_package(Freetype REQUIRED) # just FREETYPE_INCLUDE_DIRS
-find_package(HarfBuzz REQUIRED)
+if(NOT MAGNUM_USE_EMSCRIPTEN_PORTS_HARFBUZZ)
+    find_package(Freetype REQUIRED) # just FREETYPE_INCLUDE_DIRS
+    find_package(HarfBuzz REQUIRED)
+endif()
 
 if(MAGNUM_BUILD_PLUGINS_STATIC AND NOT DEFINED MAGNUM_HARFBUZZFONT_BUILD_STATIC)
     set(MAGNUM_HARFBUZZFONT_BUILD_STATIC 1)
@@ -44,25 +46,33 @@ add_plugin(HarfBuzzFont
     HarfBuzzFont.cpp
     HarfBuzzFont.h
     scriptMapping.h)
-# Need only the include dir for dependencies of <hb-ft.h> which is not in
-# INTERFACE_INCLUDE_DIRECTORIES of HarfBuzzFont. Use SYSTEM to avoid warning
-# spam with old-style casts.
-target_include_directories(HarfBuzzFont SYSTEM PRIVATE ${FREETYPE_INCLUDE_DIRS})
 target_include_directories(HarfBuzzFont PUBLIC
     ${PROJECT_SOURCE_DIR}/src
     ${PROJECT_BINARY_DIR}/src)
 if(MAGNUM_HARFBUZZFONT_BUILD_STATIC AND MAGNUM_BUILD_STATIC_PIC)
     set_target_properties(HarfBuzzFont PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
-target_link_libraries(HarfBuzzFont PUBLIC
-    Magnum::Text
-    HarfBuzz::HarfBuzz)
+target_link_libraries(HarfBuzzFont PUBLIC Magnum::Text)
 if(CORRADE_TARGET_WINDOWS)
     target_link_libraries(HarfBuzzFont PUBLIC FreeTypeFont)
 elseif(MAGNUM_HARFBUZZFONT_BUILD_STATIC)
     target_link_libraries(HarfBuzzFont INTERFACE FreeTypeFont)
 else()
     add_dependencies(HarfBuzzFont FreeTypeFont)
+endif()
+
+# If we use the Emscripten port, no find_package() was called and the targets /
+# variables are not defined. USE_HARFBUZZ additionally depends on USE_FREETYPE
+# so it'll bring in the includes as well.
+if(MAGNUM_USE_EMSCRIPTEN_PORTS_HARFBUZZ)
+    target_compile_options(HarfBuzzFont PUBLIC "SHELL:-s USE_HARFBUZZ=1")
+    target_link_options(HarfBuzzFont PUBLIC "SHELL:-s USE_HARFBUZZ=1")
+else()
+    # Need only the include dir for dependencies of <hb-ft.h> which is not in
+    # INTERFACE_INCLUDE_DIRECTORIES of HarfBuzzFont. Use SYSTEM to avoid
+    # warning spam with old-style casts.
+    target_include_directories(HarfBuzzFont SYSTEM PRIVATE ${FREETYPE_INCLUDE_DIRS})
+    target_link_libraries(HarfBuzzFont PUBLIC HarfBuzz::HarfBuzz)
 endif()
 
 install(FILES HarfBuzzFont.h ${CMAKE_CURRENT_BINARY_DIR}/configure.h

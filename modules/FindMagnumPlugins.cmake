@@ -516,17 +516,37 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
 
         # FreeTypeFont plugin dependencies
         elseif(_component STREQUAL FreeTypeFont)
-            find_package(Freetype)
-            # Need to handle special cases where both debug and release
-            # libraries are available (in form of debug;A;optimized;B in
-            # FREETYPE_LIBRARIES), thus appending them one by one
-            # TODO use imported target when 3.10+ is the minimum
-            if(FREETYPE_LIBRARY_DEBUG AND FREETYPE_LIBRARY_RELEASE)
+            # On Emscripten, FreeType could be taken from ports. If that's the
+            # case, propagate proper compiler flag.
+            if(CORRADE_TARGET_EMSCRIPTEN)
+                # The library-specific configure file was read above already
+                list(FIND _magnumPluginsConfigure "#define MAGNUM_USE_EMSCRIPTEN_PORTS_FREETYPE" _magnumPlugins${_component}_USE_EMSCRIPTEN_PORTS_FREETYPE)
+                if(NOT _magnumPlugins${_component}_USE_EMSCRIPTEN_PORTS_FREETYPE EQUAL -1)
+                    set(MAGNUM_USE_EMSCRIPTEN_PORTS_FREETYPE 1)
+                endif()
+            endif()
+
+            if(MAGNUM_USE_EMSCRIPTEN_PORTS_FREETYPE)
+                if(CMAKE_VERSION VERSION_LESS 3.13)
+                    message(FATAL_ERROR "${_component} was compiled against emscripten-ports version of FreeType but linking to it requires CMake 3.13 at least")
+                endif()
                 set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
-                    INTERFACE_LINK_LIBRARIES "$<$<NOT:$<CONFIG:Debug>>:${FREETYPE_LIBRARY_RELEASE}>;$<$<CONFIG:Debug>:${FREETYPE_LIBRARY_DEBUG}>")
+                    INTERFACE_COMPILE_OPTIONS "SHELL:-s USE_FREETYPE=1")
+                set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
+                    INTERFACE_LINK_OPTIONS "SHELL:-s USE_FREETYPE=1")
             else()
-                set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
-                    INTERFACE_LINK_LIBRARIES ${FREETYPE_LIBRARIES})
+                find_package(Freetype)
+                # Need to handle special cases where both debug and release
+                # libraries are available (in form of debug;A;optimized;B in
+                # FREETYPE_LIBRARIES), thus appending them one by one
+                # TODO use imported target when 3.10+ is the minimum
+                if(FREETYPE_LIBRARY_DEBUG AND FREETYPE_LIBRARY_RELEASE)
+                    set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
+                        INTERFACE_LINK_LIBRARIES "$<$<NOT:$<CONFIG:Debug>>:${FREETYPE_LIBRARY_RELEASE}>;$<$<CONFIG:Debug>:${FREETYPE_LIBRARY_DEBUG}>")
+                else()
+                    set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
+                        INTERFACE_LINK_LIBRARIES ${FREETYPE_LIBRARIES})
+                endif()
             endif()
 
         # GlslangShaderConverter plugin dependencies
@@ -542,25 +562,63 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
         # but that one should be brought in transitively by the FreeTypeFont
         # dependency.
         elseif(_component STREQUAL HarfBuzzFont)
-            find_package(HarfBuzz)
-            set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
-                INTERFACE_LINK_LIBRARIES HarfBuzz::HarfBuzz)
+            # On Emscripten, HarfBuzz could be taken from ports. If that's the
+            # case, propagate proper compiler flag.
+            if(CORRADE_TARGET_EMSCRIPTEN)
+                list(FIND _magnumPluginsConfigure "#define MAGNUM_USE_EMSCRIPTEN_PORTS_HARFBUZZ" _magnumPlugins${_component}_USE_EMSCRIPTEN_PORTS_HARFBUZZ)
+                if(NOT _magnumPlugins${_component}_USE_EMSCRIPTEN_PORTS_HARFBUZZ EQUAL -1)
+                    set(MAGNUM_USE_EMSCRIPTEN_PORTS_HARFBUZZ 1)
+                endif()
+            endif()
+
+            if(MAGNUM_USE_EMSCRIPTEN_PORTS_HARFBUZZ)
+                if(CMAKE_VERSION VERSION_LESS 3.13)
+                    message(FATAL_ERROR "${_component} was compiled against an emscripten-ports version of HarfBuzz but linking to it requires CMake 3.13 at least")
+                endif()
+                set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
+                    INTERFACE_COMPILE_OPTIONS "SHELL:-s USE_HARFBUZZ=1")
+                set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
+                    INTERFACE_LINK_OPTIONS "SHELL:-s USE_HARFBUZZ=1")
+            else()
+                find_package(HarfBuzz)
+                set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
+                    INTERFACE_LINK_LIBRARIES HarfBuzz::HarfBuzz)
+            endif()
 
         # IcoImporter has no dependencies
 
         # JpegImporter / JpegImageConverter plugin dependencies
         elseif(_component STREQUAL JpegImageConverter OR _component STREQUAL JpegImporter)
-            find_package(JPEG)
-            # Need to handle special cases where both debug and release
-            # libraries are available (in form of debug;A;optimized;B in
-            # JPEG_LIBRARIES), thus appending them one by one
-            # TODO use imported target when 3.12+ is the minimum
-            if(JPEG_LIBRARY_DEBUG AND JPEG_LIBRARY_RELEASE)
+            # On Emscripten, libjpeg could be taken from ports. If that's the
+            # case, propagate proper compiler flag.
+            if(CORRADE_TARGET_EMSCRIPTEN)
+                list(FIND _magnumPluginsConfigure "#define MAGNUM_USE_EMSCRIPTEN_PORTS_LIBJPEG" _magnumPlugins${_component}_USE_EMSCRIPTEN_PORTS_LIBJPEG)
+                if(NOT _magnumPlugins${_component}_USE_EMSCRIPTEN_PORTS_LIBJPEG EQUAL -1)
+                    set(MAGNUM_USE_EMSCRIPTEN_PORTS_LIBJPEG 1)
+                endif()
+            endif()
+
+            if(MAGNUM_USE_EMSCRIPTEN_PORTS_LIBJPEG)
+                if(CMAKE_VERSION VERSION_LESS 3.13)
+                    message(FATAL_ERROR "${_component} was compiled against an emscripten-ports version of libjpeg but linking to it requires CMake 3.13 at least")
+                endif()
                 set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
-                    INTERFACE_LINK_LIBRARIES "$<$<NOT:$<CONFIG:Debug>>:${JPEG_LIBRARY_RELEASE}>;$<$<CONFIG:Debug>:${JPEG_LIBRARY_DEBUG}>")
+                    INTERFACE_COMPILE_OPTIONS "SHELL:-s USE_LIBJPEG=1")
+                set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
+                    INTERFACE_LINK_OPTIONS "SHELL:-s USE_LIBJPEG=1")
             else()
-                set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
-                    INTERFACE_LINK_LIBRARIES ${JPEG_LIBRARIES})
+                find_package(JPEG)
+                # Need to handle special cases where both debug and release
+                # libraries are available (in form of debug;A;optimized;B in
+                # JPEG_LIBRARIES), thus appending them one by one
+                # TODO use imported target when 3.12+ is the minimum
+                if(JPEG_LIBRARY_DEBUG AND JPEG_LIBRARY_RELEASE)
+                    set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
+                        INTERFACE_LINK_LIBRARIES "$<$<NOT:$<CONFIG:Debug>>:${JPEG_LIBRARY_RELEASE}>;$<$<CONFIG:Debug>:${JPEG_LIBRARY_DEBUG}>")
+                else()
+                    set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
+                        INTERFACE_LINK_LIBRARIES ${JPEG_LIBRARIES})
+                endif()
             endif()
 
         # KtxImageConverter has no dependencies
@@ -614,9 +672,28 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
 
         # PngImageConverter / PngImporter plugin dependencies
         elseif(_component STREQUAL PngImageConverter OR _component STREQUAL PngImporter)
-            find_package(PNG)
-            set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
-                INTERFACE_LINK_LIBRARIES PNG::PNG)
+            # On Emscripten, libpng could be taken from ports. If that's the
+            # case, propagate proper compiler flag.
+            if(CORRADE_TARGET_EMSCRIPTEN)
+                list(FIND _magnumPluginsConfigure "#define MAGNUM_USE_EMSCRIPTEN_PORTS_LIBPNG" _magnumPlugins${_component}_USE_EMSCRIPTEN_PORTS_LIBPNG)
+                if(NOT _magnumPlugins${_component}_USE_EMSCRIPTEN_PORTS_LIBPNG EQUAL -1)
+                    set(MAGNUM_USE_EMSCRIPTEN_PORTS_LIBPNG 1)
+                endif()
+            endif()
+
+            if(MAGNUM_USE_EMSCRIPTEN_PORTS_LIBPNG)
+                if(CMAKE_VERSION VERSION_LESS 3.13)
+                    message(FATAL_ERROR "${_component} was compiled against an emscripten-ports version of libpng but linking to it requires CMake 3.13 at least")
+                endif()
+                set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
+                    INTERFACE_COMPILE_OPTIONS "SHELL:-s USE_LIBPNG=1")
+                set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
+                    INTERFACE_LINK_OPTIONS "SHELL:-s USE_LIBPNG=1")
+            else()
+                find_package(PNG)
+                set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
+                    INTERFACE_LINK_LIBRARIES PNG::PNG)
+            endif()
 
         # PrimitiveImporter has no dependencies
 

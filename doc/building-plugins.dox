@@ -613,6 +613,47 @@ Libraries and static plugins built in the `Debug` configuration (e.g. with
 `Debug` configuration are installed to the `magnum-d` subdirectory, similarly
 to what is done when @ref building "building Magnum itself".
 
+@subsubsection building-plugins-features-emscripten-ports Using dependencies from Emscripten Ports
+
+When building for Emscripten, by enabling the following options you can use
+dependencies from [Emscripten Ports](https://github.com/emscripten-ports). This
+requires CMake 3.13 and newer in order to pass appropriate compiler and linker
+flags.
+
+-   `MAGNUM_USE_EMSCRIPTEN_PORTS_FREETYPE` --- Build
+    @relativeref{Text,FreeTypeFont} using the version of FreeType from
+    Emscripten Ports. Causes `-s USE_FREETYPE=1` to be passed to the compiler
+    and linker instead of finding an installed library.
+-   `MAGNUM_USE_EMSCRIPTEN_PORTS_HARFBUZZ` --- Build
+    @relativeref{Text,HarfBuzzFont} using the version of HarfBuzz from
+    Emscripten Ports.  Causes `-s USE_HARFBUZZ=1` to be passed to the compiler
+    and linker instead of finding an installed library. Please note that
+    currently (November 2025), the version there is still the old 3.2 from
+    December 2021.
+-   `MAGNUM_USE_EMSCRIPTEN_PORTS_LIBJPEG` --- Build
+    @relativeref{Trade,JpegImporter} and @relativeref{Trade,JpegImageConverter}
+    using the version of libjpeg from Emscripten Ports. Causes `-s USE_LIBJPEG=1`
+    to be passed to the compiler and linker instead of finding an installed
+    library.
+-   `MAGNUM_USE_EMSCRIPTEN_PORTS_LIBPNG` --- Build
+    @relativeref{Trade,PngImporter} and @relativeref{Trade,PngImageConverter}
+    using the version of libpng (and zlib) from Emscripten Ports. Causes
+    `-s USE_LIBPNG=1` to be passed to the compiler and linker instead of
+    finding an installed library.
+
+If Emscripten doesn't have the ports cached yet, due to parallel compilation it
+might happen that while one job is downloading and building the port, another
+will fail due to headers not being installed yet. Restarting the compilation
+second time usually works, if you want a reliable way instead, you can do it
+via `embuilder.py`, for example:
+
+@code{.sh}
+embuilder.py build freetype # or harfbuzz, libpng, libjpeg
+@endcode
+
+The @ref building-integration-features-emscripten-ports "Magnum Integration"
+repository can make use of Emscripten ports as well.
+
 @section building-plugins-doc Building documentation
 
 The documentation for plugins is built as part of of the main Magnum

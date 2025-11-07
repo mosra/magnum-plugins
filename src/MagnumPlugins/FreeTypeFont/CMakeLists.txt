@@ -26,11 +26,13 @@
 
 find_package(Magnum REQUIRED Text)
 
-# On macOS avoid finding Freetype which is bundled with Mono
-set(PREV_CMAKE_FIND_FRAMEWORK ${CMAKE_FIND_FRAMEWORK})
-set(CMAKE_FIND_FRAMEWORK LAST)
-find_package(Freetype REQUIRED)
-set(CMAKE_FIND_FRAMEWORK ${PREV_CMAKE_FIND_FRAMEWORK})
+if(NOT MAGNUM_USE_EMSCRIPTEN_PORTS_FREETYPE)
+    # On macOS avoid finding Freetype which is bundled with Mono
+    set(PREV_CMAKE_FIND_FRAMEWORK ${CMAKE_FIND_FRAMEWORK})
+    set(CMAKE_FIND_FRAMEWORK LAST)
+    find_package(Freetype REQUIRED)
+    set(CMAKE_FIND_FRAMEWORK ${PREV_CMAKE_FIND_FRAMEWORK})
+endif()
 
 if(MAGNUM_BUILD_PLUGINS_STATIC AND NOT DEFINED MAGNUM_FREETYPEFONT_BUILD_STATIC)
     set(MAGNUM_FREETYPEFONT_BUILD_STATIC 1)
@@ -50,15 +52,22 @@ add_plugin(FreeTypeFont
 if(MAGNUM_FREETYPEFONT_BUILD_STATIC AND MAGNUM_BUILD_STATIC_PIC)
     set_target_properties(FreeTypeFont PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
-# Avoid warning spam with old-style casts
-# TODO use imported target when 3.10+ is the minimum
-target_include_directories(FreeTypeFont SYSTEM PRIVATE ${FREETYPE_INCLUDE_DIRS})
 target_include_directories(FreeTypeFont PUBLIC
     ${PROJECT_SOURCE_DIR}/src
     ${PROJECT_BINARY_DIR}/src)
-target_link_libraries(FreeTypeFont PUBLIC
-    Magnum::Text
-    ${FREETYPE_LIBRARIES})
+target_link_libraries(FreeTypeFont PUBLIC Magnum::Text)
+
+# If we use the Emscripten port, no find_package() was called and the variables
+# are not defined.
+if(MAGNUM_USE_EMSCRIPTEN_PORTS_FREETYPE)
+    target_compile_options(FreeTypeFont PUBLIC "SHELL:-s USE_FREETYPE=1")
+    target_link_options(FreeTypeFont PUBLIC "SHELL:-s USE_FREETYPE=1")
+else()
+    # Avoid warning spam with old-style casts
+    # TODO use imported target when 3.10+ is the minimum
+    target_include_directories(FreeTypeFont SYSTEM PRIVATE ${FREETYPE_INCLUDE_DIRS})
+    target_link_libraries(FreeTypeFont PUBLIC ${FREETYPE_LIBRARIES})
+endif()
 
 install(FILES FreeTypeFont.h ${CMAKE_CURRENT_BINARY_DIR}/configure.h
     DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/FreeTypeFont)

@@ -59,9 +59,13 @@ else()
 endif()
 # Older HB versions give slightly different results, so we need to check the
 # version in the test. Also use SYSTEM to avoid warning spam with old-style
-# casts.
-target_include_directories(HarfBuzzFontTest SYSTEM PRIVATE
-    $<TARGET_PROPERTY:HarfBuzz::HarfBuzz,INTERFACE_INCLUDE_DIRECTORIES>)
+# casts. If we use the Emscripten port, no find_package() was called, the
+# targets are not defined, and the plugin should transitively get the
+# -s USE_HARFBUZZ flag due to static linking.
+if(NOT MAGNUM_USE_EMSCRIPTEN_PORTS_HARFBUZZ)
+    target_include_directories(HarfBuzzFontTest SYSTEM PRIVATE
+        $<TARGET_PROPERTY:HarfBuzz::HarfBuzz,INTERFACE_INCLUDE_DIRECTORIES>)
+endif()
 if(CORRADE_BUILD_STATIC AND NOT MAGNUM_HARFBUZZFONT_BUILD_STATIC)
     # CMake < 3.4 does this implicitly, but 3.4+ not anymore (see CMP0065).
     # That's generally okay, *except if* the build is static, the executable
