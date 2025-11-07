@@ -48,6 +48,7 @@ endif()
 target_include_directories(JpegImporter SYSTEM PRIVATE
     # JPEG_INCLUDE_DIRS is only since 3.12 (and there we should use the
     # imported target instead anyway)
+    # TODO use imported target when 3.12+ is the minimum
     ${JPEG_INCLUDE_DIR})
 target_include_directories(JpegImporter PUBLIC
     ${PROJECT_SOURCE_DIR}/src

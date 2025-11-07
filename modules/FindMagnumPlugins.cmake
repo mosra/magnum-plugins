@@ -553,6 +553,7 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
             # Need to handle special cases where both debug and release
             # libraries are available (in form of debug;A;optimized;B in
             # JPEG_LIBRARIES), thus appending them one by one
+            # TODO use imported target when 3.12+ is the minimum
             if(JPEG_LIBRARY_DEBUG AND JPEG_LIBRARY_RELEASE)
                 set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
                     INTERFACE_LINK_LIBRARIES "$<$<NOT:$<CONFIG:Debug>>:${JPEG_LIBRARY_RELEASE}>;$<$<CONFIG:Debug>:${JPEG_LIBRARY_DEBUG}>")
