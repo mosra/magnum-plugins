@@ -28,6 +28,12 @@
 # property that would have to be set on each target separately.
 set(CMAKE_FOLDER "MagnumPlugins/JpegImporter/Test")
 
+if(CORRADE_TARGET_EMSCRIPTEN)
+    set(JPEGIMPORTER_TEST_DIR ".")
+else()
+    set(JPEGIMPORTER_TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+endif()
+
 if(NOT MAGNUM_JPEGIMPORTER_BUILD_STATIC)
     set(JPEGIMPORTER_PLUGIN_FILENAME $<TARGET_FILE:JpegImporter>)
 endif()

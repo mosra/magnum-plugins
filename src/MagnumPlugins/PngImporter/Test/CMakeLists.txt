@@ -30,6 +30,12 @@ set(CMAKE_FOLDER "MagnumPlugins/PngImporter/Test")
 
 find_package(Magnum REQUIRED DebugTools)
 
+if(CORRADE_TARGET_EMSCRIPTEN)
+    set(PNGIMPORTER_TEST_DIR ".")
+else()
+    set(PNGIMPORTER_TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+endif()
+
 if(NOT MAGNUM_PNGIMPORTER_BUILD_STATIC)
     set(PNGIMPORTER_PLUGIN_FILENAME $<TARGET_FILE:PngImporter>)
 endif()
