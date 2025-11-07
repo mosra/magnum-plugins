@@ -520,6 +520,7 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
             # Need to handle special cases where both debug and release
             # libraries are available (in form of debug;A;optimized;B in
             # FREETYPE_LIBRARIES), thus appending them one by one
+            # TODO use imported target when 3.10+ is the minimum
             if(FREETYPE_LIBRARY_DEBUG AND FREETYPE_LIBRARY_RELEASE)
                 set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
                     INTERFACE_LINK_LIBRARIES "$<$<NOT:$<CONFIG:Debug>>:${FREETYPE_LIBRARY_RELEASE}>;$<$<CONFIG:Debug>:${FREETYPE_LIBRARY_DEBUG}>")

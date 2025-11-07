@@ -51,6 +51,7 @@ if(MAGNUM_FREETYPEFONT_BUILD_STATIC AND MAGNUM_BUILD_STATIC_PIC)
     set_target_properties(FreeTypeFont PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
 # Avoid warning spam with old-style casts
+# TODO use imported target when 3.10+ is the minimum
 target_include_directories(FreeTypeFont SYSTEM PRIVATE ${FREETYPE_INCLUDE_DIRS})
 target_include_directories(FreeTypeFont PUBLIC
     ${PROJECT_SOURCE_DIR}/src
