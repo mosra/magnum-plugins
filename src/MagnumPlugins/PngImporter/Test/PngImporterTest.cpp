@@ -42,6 +42,8 @@
 
 #include "configure.h"
 
+#include <png.h> /* PNG_WARNINGS_SUPPORTED */
+
 namespace Magnum { namespace Trade { namespace Test { namespace {
 
 struct PngImporterTest: TestSuite::Tester {
@@ -103,7 +105,12 @@ const struct {
         "\x08\x04"              /* bit depth, color type */
         "\x00\x00\x00"          /* compression, filter, interlace method */
         "\xdc\x4a\x15\x92"_s,   /* hex(zlib.crc32(b'IHDR...')), big-endian */
+        /* The version in emscripten-ports for some reason has warnings
+           disabled, making only the error printed, not the warning:
+            https://github.com/emscripten-core/emscripten/blob/389b097d3c3e62ba1989593242496c232e922f0e/tools/ports/libpng/pnglibconf.h#L277 */
+        #ifdef PNG_WARNINGS_SUPPORTED
         "Trade::PngImporter::image2D(): warning: Image width is zero in IHDR\n"
+        #endif
         "Trade::PngImporter::image2D(): error: Invalid IHDR data\n"},
     {"zero width, quiet", ImporterFlag::Quiet,
         "\x89PNG\x0d\x0a\x1a\x0a"

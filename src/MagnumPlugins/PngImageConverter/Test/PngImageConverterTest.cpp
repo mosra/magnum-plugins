@@ -42,6 +42,8 @@
 
 #include "configure.h"
 
+#include <png.h> /* PNG_WARNINGS_SUPPORTED */
+
 namespace Magnum { namespace Trade { namespace Test { namespace {
 
 struct PngImageConverterTest: TestSuite::Tester {
@@ -151,9 +153,17 @@ void PngImageConverterTest::conversionError() {
     if(data.quiet)
         CORRADE_COMPARE(out,
             "Trade::PngImageConverter::convertToData(): error: Invalid IHDR data\n");
-    else CORRADE_COMPARE(out,
+    else {
+        const char* expected =
+            /* The version in emscripten-ports for some reason has warnings
+               disabled, making only the error printed, not the warning:
+                https://github.com/emscripten-core/emscripten/blob/389b097d3c3e62ba1989593242496c232e922f0e/tools/ports/libpng/pnglibconf.h#L277 */
+            #ifdef PNG_WARNINGS_SUPPORTED
             "Trade::PngImageConverter::convertToData(): warning: Image width exceeds user limit in IHDR\n"
-            "Trade::PngImageConverter::convertToData(): error: Invalid IHDR data\n");
+            #endif
+            "Trade::PngImageConverter::convertToData(): error: Invalid IHDR data\n";
+        CORRADE_COMPARE(out, expected);
+    }
 }
 
 void PngImageConverterTest::rgb() {

@@ -74,6 +74,14 @@ else()
     # So the plugins get properly built when building the test
     add_dependencies(PngImporterTest PngImporter)
 endif()
+# Need to include <png.h> to check for various config options. If we use the
+# Emscripten port, no find_package() was called, the targets are not defined,
+# and the plugin should transitively get the -s USE_LIBPNG flag due to static
+# linking.
+if(NOT MAGNUM_USE_EMSCRIPTEN_PORTS_LIBPNG)
+    target_include_directories(PngImporterTest SYSTEM PRIVATE
+        $<TARGET_PROPERTY:PNG::PNG,INTERFACE_INCLUDE_DIRECTORIES>)
+endif()
 if(CORRADE_BUILD_STATIC AND NOT MAGNUM_PNGIMPORTER_BUILD_STATIC)
     # CMake < 3.4 does this implicitly, but 3.4+ not anymore (see CMP0065).
     # That's generally okay, *except if* the build is static, the executable
