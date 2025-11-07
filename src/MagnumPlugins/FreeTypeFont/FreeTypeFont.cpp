@@ -51,7 +51,7 @@ const char* ftErrorString(const FT_Error error) {
     switch(error) {
         #define FT_ERRORDEF_(name, index, string) case FT_Err_ ## name: return string;
         #define FT_NOERRORDEF_ FT_ERRORDEF_
-        #include <freetype/fterrdef.h>
+        #include FT_ERROR_DEFINITIONS_H
         #undef FT_NOERRORDEF_
         #undef FT_ERRORDEF_
     }
