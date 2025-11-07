@@ -669,9 +669,11 @@ jobs:
 
   emscripten1:
     executor: emscripten2
-    # Deliberately *not* setting NODEJS_EXECUTABLE here to verify that the
-    # build correctly skips WASM SIMD tests for Node.js 14. WASM SIMD is then
-    # tested in the job below.
+    environment:
+      # Deliberately *not* setting NODEJS_EXECUTABLE here to verify that the
+      # build correctly skips WASM SIMD tests for Node.js 14. WASM SIMD is then
+      # tested in the job below.
+      USE_EMSCRIPTEN_PORTS: "OFF"
     steps:
     - install-base-linux:
         extra: curl
@@ -691,6 +693,10 @@ jobs:
       # be used by CMake.
       EXTRA_OPTS: >
         -DNODEJS_EXECUTABLE=/usr/bin/node
+      # Get FreeType, HarfBuzz, libjpeg and libpng from Emscripten Ports. Done
+      # only in one of the two builds to ensure there's nothing that would make
+      # the build without to fail.
+      USE_EMSCRIPTEN_PORTS: "ON"
     steps:
     - install-base-linux:
         extra: curl
