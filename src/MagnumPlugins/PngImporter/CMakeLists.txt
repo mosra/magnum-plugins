@@ -45,15 +45,12 @@ add_plugin(PngImporter
 if(MAGNUM_PNGIMPORTER_BUILD_STATIC AND MAGNUM_BUILD_STATIC_PIC)
     set_target_properties(PngImporter PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
-target_include_directories(PngImporter
-    PUBLIC
-        ${PROJECT_SOURCE_DIR}/src
-        ${PROJECT_BINARY_DIR}/src
-    PRIVATE
-        ${PNG_INCLUDE_DIRS})
+target_include_directories(PngImporter PUBLIC
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_BINARY_DIR}/src)
 target_link_libraries(PngImporter PUBLIC
     Magnum::Trade
-    ${PNG_LIBRARIES})
+    PNG::PNG)
 
 install(FILES PngImporter.h ${CMAKE_CURRENT_BINARY_DIR}/configure.h
     DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/PngImporter)

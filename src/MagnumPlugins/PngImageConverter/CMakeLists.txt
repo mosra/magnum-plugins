@@ -45,15 +45,12 @@ add_plugin(PngImageConverter
 if(MAGNUM_PNGIMAGECONVERTER_BUILD_STATIC AND MAGNUM_BUILD_STATIC_PIC)
     set_target_properties(PngImageConverter PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
-target_include_directories(PngImageConverter
-    PUBLIC
-        ${PROJECT_SOURCE_DIR}/src
-        ${PROJECT_BINARY_DIR}/src
-    PRIVATE
-        ${PNG_INCLUDE_DIRS})
+target_include_directories(PngImageConverter PUBLIC
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_BINARY_DIR}/src)
 target_link_libraries(PngImageConverter PUBLIC
     Magnum::Trade
-    ${PNG_LIBRARIES})
+    PNG::PNG)
 
 install(FILES PngImageConverter.h ${CMAKE_CURRENT_BINARY_DIR}/configure.h
     DESTINATION ${MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR}/PngImageConverter)
