@@ -227,15 +227,16 @@ void JpegImageConverterTest::rgb80Percent() {
 
     Containers::Optional<Containers::Array<char>> data = converter->convertToData(OriginalRgb);
     CORRADE_VERIFY(data);
-    /* Vanilla libjpeg 9e (i.e., not libjpeg-turbo which defines
+    /* Vanilla libjpeg 9f (i.e., not libjpeg-turbo which defines
        JCS_EXTENSIONS, and which has JPEG_LIB_VERSION set to 80 always) and
        older produce different results in this case. The minor version is 0
        for nothing, 1 for a, 2 for b, etc.  */
-    #if defined(JCS_EXTENSIONS) || JPEG_LIB_VERSION_MAJOR*100 + JPEG_LIB_VERSION_MINOR >= 906
+    #if defined(JCS_EXTENSIONS) || JPEG_LIB_VERSION_MAJOR*100 + JPEG_LIB_VERSION_MINOR >= 907
     CORRADE_COMPARE_AS(Containers::StringView{*data},
         Utility::Path::join(JPEGIMAGECONVERTER_TEST_DIR, "rgb-80.jpg"),
         TestSuite::Compare::StringToFile);
     #elif JPEG_LIB_VERSION_MAJOR*100 + JPEG_LIB_VERSION_MINOR >= 905
+    /* This matches also 9f */
     CORRADE_COMPARE_AS(Containers::StringView{*data},
         Utility::Path::join(JPEGIMAGECONVERTER_TEST_DIR, "rgb-80-jpeg9e.jpg"),
         TestSuite::Compare::StringToFile);
@@ -252,10 +253,11 @@ void JpegImageConverterTest::rgb80Percent() {
     CORRADE_VERIFY(importer->openData(*data));
     Containers::Optional<Trade::ImageData2D> converted = importer->image2D(0);
     CORRADE_VERIFY(converted);
-    #if defined(JCS_EXTENSIONS) || JPEG_LIB_VERSION_MAJOR*100 + JPEG_LIB_VERSION_MINOR >= 906
+    #if defined(JCS_EXTENSIONS) || JPEG_LIB_VERSION_MAJOR*100 + JPEG_LIB_VERSION_MINOR >= 907
     CORRADE_COMPARE_AS(*converted, ConvertedRgb,
         DebugTools::CompareImage);
     #elif JPEG_LIB_VERSION_MAJOR*100 + JPEG_LIB_VERSION_MINOR >= 905
+    /* This matches also 9f */
     CORRADE_COMPARE_WITH(*converted, ConvertedRgb,
         (DebugTools::CompareImage{3.67f, 2.21f}));
     #else
@@ -270,15 +272,16 @@ void JpegImageConverterTest::rgb100Percent() {
 
     Containers::Optional<Containers::Array<char>> data = converter->convertToData(OriginalRgb);
     CORRADE_VERIFY(data);
-    /* Vanilla libjpeg 9e (i.e., not libjpeg-turbo which defines
+    /* Vanilla libjpeg 9f (i.e., not libjpeg-turbo which defines
        JCS_EXTENSIONS, and which has JPEG_LIB_VERSION set to 80 always) and
        older produce a different result in this case. The minor version is 0
        for nothing, 1 for a, 2 for b, etc.  */
-    #if defined(JCS_EXTENSIONS) || JPEG_LIB_VERSION_MAJOR*100 + JPEG_LIB_VERSION_MINOR >= 906
+    #if defined(JCS_EXTENSIONS) || JPEG_LIB_VERSION_MAJOR*100 + JPEG_LIB_VERSION_MINOR >= 907
     CORRADE_COMPARE_AS(Containers::StringView{*data},
         Utility::Path::join(JPEGIMAGECONVERTER_TEST_DIR, "rgb-100.jpg"),
         TestSuite::Compare::StringToFile);
     #else
+    /* This matches also 9f */
     CORRADE_COMPARE_AS(Containers::StringView{*data},
         Utility::Path::join(JPEGIMAGECONVERTER_TEST_DIR, "rgb-100-jpeg9e.jpg"),
         TestSuite::Compare::StringToFile);
