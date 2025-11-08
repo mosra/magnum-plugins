@@ -435,7 +435,7 @@ void HarfBuzzFontTest::shapeAutodetectScriptLanguageDirection() {
     CORRADE_COMPARE(shaper->shape("	العربية"), 8);
     CORRADE_COMPARE(shaper->script(), Script::Arabic);
     {
-        CORRADE_EXPECT_FAIL("HarfBuzz uses current locale for language autodetection, not the actual text");
+        CORRADE_EXPECT_FAIL("HarfBuzz uses current locale for language autodetection, not the actual text.");
         CORRADE_COMPARE(shaper->language(), "ar");
     }
     CORRADE_COMPARE(shaper->language(), "c");
@@ -766,7 +766,7 @@ void HarfBuzzFontTest::shapeMultipleAutodetection() {
         CORRADE_COMPARE(shaper->shape("	العربية"), 8);
         CORRADE_COMPARE(shaper->script(), Script::Arabic);
         {
-            CORRADE_EXPECT_FAIL("HarfBuzz uses current locale for language autodetection, not the actual text");
+            CORRADE_EXPECT_FAIL("HarfBuzz uses current locale for language autodetection, not the actual text.");
             CORRADE_COMPARE(shaper->language(), "ar");
         }
         CORRADE_COMPARE(shaper->language(), "c");
@@ -780,7 +780,7 @@ void HarfBuzzFontTest::shapeMultipleAutodetection() {
         CORRADE_COMPARE(shaper->shape("Ελλάδα"), 6);
         CORRADE_COMPARE(shaper->script(), Script::Greek);
         {
-            CORRADE_EXPECT_FAIL("HarfBuzz uses current locale for language autodetection, not the actual text");
+            CORRADE_EXPECT_FAIL("HarfBuzz uses current locale for language autodetection, not the actual text.");
             CORRADE_COMPARE(shaper->language(), "el");
         }
         CORRADE_COMPARE(shaper->language(), "c");
