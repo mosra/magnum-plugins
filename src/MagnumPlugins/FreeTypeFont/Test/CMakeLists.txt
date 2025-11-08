@@ -67,6 +67,15 @@ corrade_add_test(FreeTypeFontTest FreeTypeFontTest.cpp
         # union of both.
         SourceSans3-Regular.subset.otf)
 target_include_directories(FreeTypeFontTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>)
+# Older FT versions have slightly different rasterization, so we need to check
+# the version in the test. Also use SYSTEM to avoid warning spam with old-style
+# casts. If we use the Emscripten port, no find_package() was called, the
+# targets are not defined, and the plugin should transitively get the
+# -s USE_FREETYPE flag due to static linking.
+if(NOT MAGNUM_USE_EMSCRIPTEN_PORTS_FREETYPE)
+    # TODO use imported target when 3.10+ is the minimum
+    target_include_directories(FreeTypeFontTest SYSTEM PRIVATE ${FREETYPE_INCLUDE_DIRS})
+endif()
 if(MAGNUM_FREETYPEFONT_BUILD_STATIC)
     target_link_libraries(FreeTypeFontTest PRIVATE FreeTypeFont)
     if(Magnum_AnyImageImporter_FOUND)

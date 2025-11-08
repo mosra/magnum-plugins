@@ -43,6 +43,9 @@
 
 #include "configure.h"
 
+#include <ft2build.h>
+#include FT_FREETYPE_H /* FREETYPE_MAJOR, FREETYPE_MINOR */
+
 namespace Magnum { namespace Text { namespace Test { namespace {
 
 struct FreeTypeFontTest: TestSuite::Tester {
@@ -479,9 +482,18 @@ void FreeTypeFontTest::fillGlyphCache() {
                thing for more predictable results */
             CORRADE_COMPARE(offset, Vector2i{});
             CORRADE_COMPARE(image.size(), (Vector2i{64, 46}));
+            /* The Emscripten Ports version used to be stuck on ancient 2.6
+               (from 2015) until Emscripten 3.1.68 (September 2024). Compared
+               to newer versions it has very slightly different rasterization
+               output. */
+            #if FREETYPE_MAJOR*100 + FREETYPE_MINOR <= 206
+            Float maxThreshold = 13.0f, meanThreshold = 0.0179f;
+            #else
+            Float maxThreshold = 0.0f, meanThreshold = 0.0f;
+            #endif
             CORRADE_COMPARE_WITH(this->image().pixels<UnsignedByte>()[0],
                 Utility::Path::join(FREETYPEFONT_TEST_DIR, "glyph-cache.png"),
-                DebugTools::CompareImageToFile{importerManager});
+                (DebugTools::CompareImageToFile{importerManager, maxThreshold, meanThreshold}));
             called = true;
         }
 
@@ -570,9 +582,18 @@ void FreeTypeFontTest::fillGlyphCacheIncremental() {
             } else if(called == 1) {
                 CORRADE_COMPARE(offset, (Vector2i{0, 26}));
                 CORRADE_COMPARE(image.size(), (Vector2i{61, 20}));
+            /* The Emscripten Ports version used to be stuck on ancient 2.6
+               (from 2015) until Emscripten 3.1.68 (September 2024). Compared
+               to newer versions it has very slightly different rasterization
+               output. */
+            #if FREETYPE_MAJOR*100 + FREETYPE_MINOR <= 206
+            Float maxThreshold = 13.0f, meanThreshold = 0.0179f;
+            #else
+            Float maxThreshold = 0.0f, meanThreshold = 0.0f;
+            #endif
                 CORRADE_COMPARE_WITH(this->image().pixels<UnsignedByte>()[0],
                     Utility::Path::join(FREETYPEFONT_TEST_DIR, "glyph-cache.png"),
-                    DebugTools::CompareImageToFile{importerManager});
+                (DebugTools::CompareImageToFile{importerManager, maxThreshold, meanThreshold}));
             } else CORRADE_FAIL("This shouldn't get called more than twice");
             ++called;
         }
@@ -658,12 +679,23 @@ void FreeTypeFontTest::fillGlyphCacheArray() {
                thing for more predictable results */
             CORRADE_COMPARE(offset, Vector3i{});
             CORRADE_COMPARE(image.size(), (Vector3i{48, 48, 2}));
+            /* The Emscripten Ports version used to be stuck on ancient 2.6
+               (from 2015) until Emscripten 3.1.68 (September 2024). Compared
+               to newer versions it has very slightly different rasterization
+               output. */
+            #if FREETYPE_MAJOR*100 + FREETYPE_MINOR <= 206
+            Float maxThreshold0 = 13.0f, meanThreshold0 = 0.0296f;
+            Float maxThreshold1 = 1.0f, meanThreshold1 = 0.0022f;
+            #else
+            Float maxThreshold0 = 0.0f, meanThreshold0 = 0.0f;
+            Float maxThreshold1 = 0.0f, meanThreshold1 = 0.0f;
+            #endif
             CORRADE_COMPARE_WITH(this->image().pixels<UnsignedByte>()[0],
                 Utility::Path::join(FREETYPEFONT_TEST_DIR, "glyph-cache-array0.png"),
-                DebugTools::CompareImageToFile{importerManager});
+                (DebugTools::CompareImageToFile{importerManager, maxThreshold0, meanThreshold0}));
             CORRADE_COMPARE_WITH(this->image().pixels<UnsignedByte>()[1],
                 Utility::Path::join(FREETYPEFONT_TEST_DIR, "glyph-cache-array1.png"),
-                DebugTools::CompareImageToFile{importerManager});
+                (DebugTools::CompareImageToFile{importerManager, maxThreshold1, meanThreshold1}));
             called = true;
         }
 
