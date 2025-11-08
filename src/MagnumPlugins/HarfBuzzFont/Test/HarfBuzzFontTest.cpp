@@ -532,8 +532,12 @@ void HarfBuzzFontTest::shapeGlyphOffset() {
         font->glyphForName("v")         /* glyph 49 originally */
     }), TestSuite::Compare::Container);
     const Vector2 expectedAdvances[]{
-        /* HarfBuzz 2.6.4 gives different output than 1.7.2 and 11 */
-        #if HB_VERSION_MAJOR*100 + HB_VERSION_MINOR != 206
+        /* HarfBuzz 2.6.4 and 2.8.1 (used by Emscripten Ports until 3.1.3)
+           gives different output than 1.7.2 and 11. Assuming that's a
+           temporary regression and treating the whole range in between the
+           two versions the same. */
+        #if HB_VERSION_MAJOR*100 + HB_VERSION_MINOR < 206 || \
+            HB_VERSION_MAJOR*100 + HB_VERSION_MINOR > 208
         {8.0f, 0.0f},           /* 'V' */
         /* HarfBuzz between 1.7 and 3.1 gives different output (broken? see
            offsets below). Actually, I have no idea if it's those versions, but
@@ -554,6 +558,7 @@ void HarfBuzzFontTest::shapeGlyphOffset() {
         {0.0f, 0.0f},           /* 'ˇ' */
         {0.0f, 0.0f},           /* 'ˇ' */
         {5.1875f, 0.0f},        /* 't' */
+        /* Below is what 2.6.4 and 2.8.1 produce */
         #else
         {7.98438f, 0.0f},       /* 'V' */
         {7.76562f, 0.0f},       /* 'e' */
@@ -570,8 +575,12 @@ void HarfBuzzFontTest::shapeGlyphOffset() {
         {},                     /* 'V' */
         {},                     /* 'e' */
         {},                     /* (space) */
-        /* HarfBuzz 2.6.4 gives different output than 1.7.2 and 11 */
-        #if HB_VERSION_MAJOR*100 + HB_VERSION_MINOR != 206
+        /* HarfBuzz 2.6.4 and 2.8.1 (used by Emscripten Ports until 3.1.3)
+           gives different output than 1.7.2 and 11. Assuming that's a
+           temporary regression and treating the whole range in between the
+           two versions the same. */
+        #if HB_VERSION_MAJOR*100 + HB_VERSION_MINOR < 206 || \
+            HB_VERSION_MAJOR*100 + HB_VERSION_MINOR > 208
         /* See above */
         #if HB_VERSION_MAJOR*100 + HB_VERSION_MINOR < 107 || \
             HB_VERSION_MAJOR*100 + HB_VERSION_MINOR >= 301
@@ -585,6 +594,7 @@ void HarfBuzzFontTest::shapeGlyphOffset() {
         {0.0f, 3.32812f},       /* 'ˇ' */
         {0.0f, 6.65625f},       /* 'ˇ' */
         #endif
+        /* Below is what 2.6.4 and 2.8.1 produce */
         #else
         {-3.54688f, 0.0f},      /* 'ˇ' */
         {-3.54688f, 3.32812f},  /* 'ˇ' */
