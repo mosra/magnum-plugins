@@ -700,8 +700,9 @@ jobs:
     steps:
     - install-base-linux:
         extra: curl
+    # Even 8 is causing OOMs, likely due to extra plugins using the ports?
     - cap-ninja-jobs:
-        count: 8
+        count: 6
     - install-nodejs
     # Zstd built inside emscripten.sh
     - install-basis
