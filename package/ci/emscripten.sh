@@ -117,6 +117,16 @@ cmake .. \
 ninja install
 cd ../..
 
+# Explicitly build Emscripten Ports. Doing that implicitly below likely causes
+# the same thing to start building twice (such as libjpeg for both JpegImporter
+# and JpegImageConverter), and then it OOMs and explodes.
+if [[ "$USE_EMSCRIPTEN_PORTS" == "ON" ]]; then
+    embuilder.py build freetype
+    embuilder.py build harfbuzz
+    embuilder.py build libpng
+    embuilder.py build libjpeg
+fi
+
 # Crosscompile. MAGNUM_BUILD_GL_TESTS is enabled just to be sure, it should not
 # be needed by any plugin.
 # MAGNUM_WITH_BASISIMAGECONVERTER is disabled as it requires pthreads.
