@@ -365,17 +365,21 @@ commands:
           ./package/ci/<< parameters.script >>
 
   lcov:
+    parameters:
+      extra:
+        type: string
+        default: ""
     steps:
     - run:
         name: Collect code coverage
         # Keep in sync with PKBUILD-coverage and appveyor-desktop{,-mingw}.bat,
         # please
         command: |
-          lcov $LCOV_EXTRA_OPTS --directory . --capture --output-file coverage.info > /dev/null
-          lcov $LCOV_EXTRA_OPTS --extract coverage.info "*/src/Magnum*/*" --output-file coverage.info > /dev/null
-          lcov $LCOV_EXTRA_OPTS --remove coverage.info "*/MagnumExternal/*" --output-file coverage.info > /dev/null
-          lcov $LCOV_EXTRA_OPTS --remove coverage.info "*/Test/*" --output-file coverage.info > /dev/null
-          lcov $LCOV_EXTRA_OPTS --remove coverage.info "*/build/src/*" --output-file coverage.info > /dev/null
+          lcov << parameters.extra >> --directory . --capture --output-file coverage.info > /dev/null
+          lcov << parameters.extra >> --extract coverage.info "*/src/Magnum*/*" --output-file coverage.info > /dev/null
+          lcov << parameters.extra >> --remove coverage.info "*/MagnumExternal/*" --output-file coverage.info > /dev/null
+          lcov << parameters.extra >> --remove coverage.info "*/Test/*" --output-file coverage.info > /dev/null
+          lcov << parameters.extra >> --remove coverage.info "*/build/src/*" --output-file coverage.info > /dev/null
     # Official docs say "token not needed for public repos", in reality not
     # using the token is "extremely flakey". What's best is that if the upload
     # fails, the damn thing exits with a success error code, and nobody cares:
@@ -405,7 +409,6 @@ jobs:
     executor: ubuntu-18_04
     environment:
       CMAKE_CXX_FLAGS: --coverage
-      LCOV_EXTRA_OPTS: --gcov-tool /usr/bin/gcov-4.8
       CONFIGURATION: Debug
       # Testing building BasisImageConverter with OpenCL present on the system,
       # but explicitly turned off via CMAKE_DISABLE_FIND_PACKAGE_OpenCL
@@ -440,7 +443,8 @@ jobs:
         build: ubuntu-16.04-gcc4.8
     - build:
         script: unix-desktop.sh
-    - lcov
+    - lcov:
+        extra: --gcov-tool /usr/bin/gcov-4.8
 
   linux-arm64:
     executor: arm64
@@ -473,7 +477,6 @@ jobs:
       # STUPID yml interprets unquoted ON as a boolean
       BUILD_STATIC: "ON"
       CMAKE_CXX_FLAGS: --coverage
-      LCOV_EXTRA_OPTS: --gcov-tool /usr/bin/gcov-4.8
       CONFIGURATION: Debug
       # Requires CMake 3.15, this job uses 3.5. Applies to PlutoSVG too.
       WITH_LUNASVGIMPORTER: "OFF"
@@ -504,7 +507,8 @@ jobs:
         build: ubuntu-16.04-gcc4.8
     - build:
         script: unix-desktop.sh
-    - lcov
+    - lcov:
+        extra: --gcov-tool /usr/bin/gcov-4.8
 
   linux-nondeprecated:
     executor: ubuntu-18_04
