@@ -150,5 +150,5 @@ cd %APPVEYOR_BUILD_FOLDER%
 
 rem Gather and upload coverage on the clang-cl MSVC 2022 build. Keep in sync
 rem with circleci.yml, appveyor-desktop-mingw.bat and PKBUILD-coverage, please.
-if "%COMPILER%" == "msvc-clang" if "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2022" grcov build -t lcov --keep-only "*/src/Magnum*/*" --ignore "*/src/MagnumExternal/*" --ignore "*/Test/*" --ignore "*/build/src/*" --ignore "*/ui-gallery.cpp" -o coverage.info --excl-line LCOV_EXCL_LINE --excl-start LCOV_EXCL_START --excl-stop LCOV_EXCL_STOP || exit /b
+if "%COMPILER%" == "msvc-clang" if "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2022" grcov build -t lcov --keep-only "*/src/Magnum*/*" --ignore "*/src/MagnumExternal/*" --ignore "*/Test/*" --ignore "*/ui-gallery.cpp" -o coverage.info --excl-line LCOV_EXCL_LINE --excl-start LCOV_EXCL_START --excl-stop LCOV_EXCL_STOP || exit /b
 if "%COMPILER%" == "msvc-clang" if "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2022" codecov -f ./coverage.info -t ca42fc68-8e0a-4338-b9ff-7d602b7febc2 -X gcov || exit /b

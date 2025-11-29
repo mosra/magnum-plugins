@@ -173,7 +173,7 @@ rem please. The --source-dir needs to be present in order to circumvent
 rem     Warning: "../foo" cannot be normalized because of "..", so skip it.
 rem that happens with CMake before 3.21 that doesn't yet pass full paths to
 rem Ninja: https://github.com/mozilla/grcov/issues/1182
-grcov build -t lcov --source-dir %APPVEYOR_BUILD_FOLDER%/build --keep-only "*/src/Magnum*/*" --ignore "*/src/MagnumExternal/*" --ignore "*/Test/*" --ignore "*/build/src/*" -o coverage.info --excl-line LCOV_EXCL_LINE --excl-start LCOV_EXCL_START --excl-stop LCOV_EXCL_STOP  || exit /b
+grcov build -t lcov --source-dir %APPVEYOR_BUILD_FOLDER%/build --keep-only "*/src/Magnum*/*" --ignore "*/src/MagnumExternal/*" --ignore "*/Test/*" -o coverage.info --excl-line LCOV_EXCL_LINE --excl-start LCOV_EXCL_START --excl-stop LCOV_EXCL_STOP  || exit /b
 rem Official docs say "not needed for public repos", in reality not using the
 rem token is "extremely flakey". What's best is that if the upload fails, the
 rem damn thing exits with a success error code, and nobody cares:
