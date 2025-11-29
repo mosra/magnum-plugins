@@ -149,49 +149,27 @@ See @ref building-plugins, @ref cmake-plugins, @ref plugins and
 @subsection Trade-OpenExrImporter-usage-emscripten Building for Emscripten
 
 Since version 3.2, the library can compile for Emscripten as well with the
-following additionally set before @cpp add_subdirectory(openexr) @ce. OpenEXR
-uses exceptions, so the plugin internally also enables them for itself and
-all code that links to it.
+following additionally set before @cb{.cmake} add_subdirectory(openexr) @ce.
+OpenEXR uses exceptions, so the plugin internally also enables them for itself
+and all code that links to it. It's recommended to use version 3.4.4 at least,
+which [significantly reduces the size of the output binary by removing several lookup tables](https://github.com/AcademySoftwareFoundation/openexr/releases/tag/v3.4.4).
 
 @code{.cmake}
-# Force bundled Imath and libdeflate so Emscripten doesn't try to find them
-# among native libraries
+# Force bundled libraries so Emscripten doesn't try to find them among native
+# libraries
 set(OPENEXR_FORCE_INTERNAL_IMATH ON CACHE BOOL "" FORCE)
 set(OPENEXR_FORCE_INTERNAL_DEFLATE ON CACHE BOOL "" FORCE)
+set(OPENEXR_FORCE_INTERNAL_OPENJPH ON CACHE BOOL "" FORCE)
 # May want to keep enabled if you already use pthreads in Emscripten
 set(OPENEXR_ENABLE_THREADING OFF CACHE BOOL "" FORCE)
 # The table is literally all half-floats, so 256 kB of data
 set(IMATH_HALF_USE_LOOKUP_TABLE OFF CACHE BOOL "" FORCE)
 @endcode
 
-In addition to the above-disabled half-float conversion lookup table, there's
-1.4 MB + 256 kB of tables used for DWA compression and decompression, and
-another 128 + 128 kB of tables used for B44 (de)compression, of which none can
-be easily controlled with a CMake option. If you know you won't need DWA or B44
-compression with @ref OpenExrImageConverter, you can replace all tables except
-the first two `dwaCompressorNoOp` and `dwaCompressorToLinear` in
-`src/lib/OpenEXR/dwaLookups.h` with the following (or replace
-`dwaCompressorNoOp` and `dwaCompressorToLinear` with a null pointer too if you
-know you won't need DWA loading either):
-
-@code{.c}
-static const unsigned short* dwaCompressorToNonlinear = NULL;
-static const unsigned int* closestDataOffset = NULL;
-static const unsigned short* closestData = NULL;
-@endcode
-
-And similarly replace the `expTable` in `src/lib/OpenEXR/b44ExpLogTable` (or
-also the `logTable` if you know you won't need B44 loading either):
-
-@code{.c}
-const unsigned short* expTable = NULL;
-@endcode
-
-Together with the disabled half-float conversion table this reduces the
-@ref OpenExrImporter plugin size from 2.5 MB to ~800 kB. If
-@ref OpenExrImageConverter is built against such patched code, attempting to
-compress DWA or B44 images with it will cause a crash, but other compression
-schemes will continue to work.
+While OpenEXR 3.4+ adds a new dependency on OpenJPH, compared to earlier
+versions the size savings in 3.4.4 make the output binary still smaller than
+version 3.2 with the lookup tables manually patched away.
+[Further size savings are possible.](https://aras-p.info/blog/2025/11/22/OpenEXR-vs-tinyexr/)
 
 @section Trade-OpenExrImporter-behavior Behavior and limitations
 
