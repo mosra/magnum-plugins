@@ -86,6 +86,7 @@ struct OpenExrImageConverterTest: TestSuite::Tester {
     void compression();
     void compressionCubeMap();
     void compressionInvalid();
+    void compressionInvalidHtJ2k();
 
     void levels2D();
     void levels2DIncomplete();
@@ -216,7 +217,13 @@ const struct {
         #else
         429, 460
         #endif
-    }
+    },
+    /* HTJ2K is available since OpenEXR 3.4. Strangely produces also no size
+       difference. */
+    #if OPENEXR_VERSION_MAJOR*100 + OPENEXR_VERSION_MINOR >= 304
+    {"HTJ2K256", "htj2k256", {}, {}, 395, 426},
+    {"HTJ2K32", "htj2k32", {}, {}, 395, 426},
+    #endif
 };
 
 const struct {
@@ -295,7 +302,8 @@ OpenExrImageConverterTest::OpenExrImageConverterTest() {
                        &OpenExrImageConverterTest::compressionCubeMap},
         Containers::arraySize(CompressionData));
 
-    addTests({&OpenExrImageConverterTest::compressionInvalid});
+    addTests({&OpenExrImageConverterTest::compressionInvalid,
+              &OpenExrImageConverterTest::compressionInvalidHtJ2k});
 
     addInstancedTests({&OpenExrImageConverterTest::levels2D},
         Containers::arraySize(Levels2DData));
@@ -925,7 +933,28 @@ void OpenExrImageConverterTest::compressionInvalid() {
     Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!converter->convertToData(Rgba32f));
+    #if OPENEXR_VERSION_MAJOR*100 + OPENEXR_VERSION_MINOR >= 304
+    CORRADE_COMPARE(out, "Trade::OpenExrImageConverter::convertToData(): unknown compression zstd, allowed values are rle, zip, zips, piz, pxr24, b44, b44a, dwaa, dwab, htj2k256, htj2k32 or empty for uncompressed output\n");
+    #else
     CORRADE_COMPARE(out, "Trade::OpenExrImageConverter::convertToData(): unknown compression zstd, allowed values are rle, zip, zips, piz, pxr24, b44, b44a, dwaa, dwab or empty for uncompressed output\n");
+    #endif
+}
+
+void OpenExrImageConverterTest::compressionInvalidHtJ2k() {
+    #if OPENEXR_VERSION_MAJOR*100 + OPENEXR_VERSION_MINOR >= 304
+    CORRADE_SKIP("OpenEXR 3.4 supported, cannot test");
+    #endif
+
+    /** @todo eventually, if OpenJPH becomes disableable, this could be
+        extended to verify behavior in case it's not compiled in */
+
+    Containers::Pointer<AbstractImageConverter> converter = _manager.instantiate("OpenExrImageConverter");
+    converter->configuration().setValue("compression", "htj2k256");
+
+    Containers::String out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!converter->convertToData(Rgba32f));
+    CORRADE_COMPARE(out, "Trade::OpenExrImageConverter::convertToData(): unknown compression htj2k256, allowed values are rle, zip, zips, piz, pxr24, b44, b44a, dwaa, dwab or empty for uncompressed output\n");
 }
 
 void OpenExrImageConverterTest::levels2D() {

@@ -182,9 +182,19 @@ Containers::Optional<Containers::Array<char>> convertToDataInternal(const Utilit
         compression = Imf::DWAA_COMPRESSION;
     else if(compressionString == "dwab"_s)
         compression = Imf::DWAB_COMPRESSION;
+    #if OPENEXR_VERSION_MAJOR*100 + OPENEXR_VERSION_MINOR >= 304
+    else if(compressionString == "htj2k256"_s)
+        compression = Imf::HTJ2K256_COMPRESSION;
+    else if(compressionString == "htj2k32"_s)
+        compression = Imf::HTJ2K32_COMPRESSION;
+    #endif
     /* LCOV_EXCL_STOP */
     else {
-        Error{} << "Trade::OpenExrImageConverter::convertToData(): unknown compression" << compressionString << Debug::nospace << ", allowed values are rle, zip, zips, piz, pxr24, b44, b44a, dwaa, dwab or empty for uncompressed output";
+        Error{} << "Trade::OpenExrImageConverter::convertToData(): unknown compression" << compressionString << Debug::nospace << ", allowed values are rle, zip, zips, piz, pxr24, b44, b44a, dwaa, dwab"
+            #if OPENEXR_VERSION_MAJOR*100 + OPENEXR_VERSION_MINOR >= 304
+            ", htj2k256, htj2k32"
+            #endif
+            " or empty for uncompressed output";
         return {};
     }
 
