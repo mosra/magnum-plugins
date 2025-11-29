@@ -1531,9 +1531,9 @@ void AssimpImporterTest::skin() {
         for(UnsignedInt j = 0; j != joints.size(); ++j) {
             CORRADE_ITERATION(j);
             const Matrix4 invertedTransform = globalTransforms[joints[j] + 1].inverted() * *meshTransform * correction;
-            /* https://github.com/assimp/assimp/issues/5719 */
-            CORRADE_EXPECT_FAIL_IF(data.name == "FBX"_s && _assimpVersion >= 540,
-                "Assimp 5.4.0+ suffers from FBX ANIMATION DETERIORATION.");
+            /* https://github.com/assimp/assimp/issues/5719, fixed in 6.0 */
+            CORRADE_EXPECT_FAIL_IF(data.name == "FBX"_s && _assimpVersion >= 540 && _assimpVersion < 600,
+                "Assimp 5.4 suffers from FBX ANIMATION DETERIORATION.");
             CORRADE_COMPARE(bindMatrices[j], invertedTransform);
         }
     }
