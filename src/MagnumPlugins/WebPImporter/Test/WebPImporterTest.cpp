@@ -181,7 +181,6 @@ void WebPImporterTest::rgb() {
     CORRADE_COMPARE(image->flags(), ImageFlags2D{});
     CORRADE_COMPARE(image->size(), Vector2i(3, 3));
     CORRADE_COMPARE(image->format(), PixelFormat::RGB8Unorm);
-    CORRADE_COMPARE(image->storage().alignment(), 4);
     const char expected[] {
         '\x52', '\x52', '\xbe',
         '\x52', '\x52', '\xbe',

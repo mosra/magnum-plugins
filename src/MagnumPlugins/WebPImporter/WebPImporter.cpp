@@ -80,7 +80,7 @@ const char* vp8StatusCodeString(const VP8StatusCode status) {
         case VP8_STATUS_SUSPENDED: return "process suspended";
         case VP8_STATUS_USER_ABORT: return "process aborted";
         case VP8_STATUS_NOT_ENOUGH_DATA: return "not enough data";
-        case VP8_STATUS_OK: ;
+        case VP8_STATUS_OK: ; /* falls through to the unreachable below */
         /* LCOV_EXCL_STOP */
     }
 
@@ -92,6 +92,11 @@ const char* vp8StatusCodeString(const VP8StatusCode status) {
 UnsignedInt WebPImporter::doImage2DCount() const { return 1; }
 
 Containers::Optional<ImageData2D> WebPImporter::doImage2D(UnsignedInt, UnsignedInt) {
+    /* With 0 we can use if(VP8StatusCode error = WebPWhatever) in all cases
+       below */
+    static_assert(VP8_STATUS_OK == 0,
+        "cannot use VP8_STATUS_OK in shorthand branches");
+
     /* Decoder configuration */
     WebPDecoderConfig config;
     CORRADE_INTERNAL_ASSERT_OUTPUT(WebPInitDecoderConfig(&config));
@@ -100,10 +105,8 @@ Containers::Optional<ImageData2D> WebPImporter::doImage2D(UnsignedInt, UnsignedI
     /* Reading the file information into config.input. This also verifies the
        file is actually a WebP file. */
     WebPBitstreamFeatures bitstream;
-    const VP8StatusCode status = WebPGetFeatures(reinterpret_cast<std::uint8_t*>(_in.data()), _in.size(), &bitstream);
-    if(status != VP8_STATUS_OK) {
-        Error err;
-        err << "Trade::WebPImporter::image2D(): WebP image features not found:" << vp8StatusCodeString(status);
+    if(const VP8StatusCode error = WebPGetFeatures(reinterpret_cast<std::uint8_t*>(_in.data()), _in.size(), &bitstream)) {
+        Error{} << "Trade::WebPImporter::image2D(): WebP image features not found:" << vp8StatusCodeString(error);
         return {};
     }
 
@@ -126,22 +129,19 @@ Containers::Optional<ImageData2D> WebPImporter::doImage2D(UnsignedInt, UnsignedI
     }
 
     /* Structure and configuration for decoding */
-    WebPDecBuffer& outputBuffer = config.output;
     const std::size_t stride = 4*((bitstream.width*channels + 3)/4);
-    outputBuffer.u.RGBA.size = stride*bitstream.height;
-    outputBuffer.u.RGBA.stride = stride;
-    outputBuffer.colorspace = colourDepth;
+    config.output.u.RGBA.size = stride*bitstream.height;
+    config.output.u.RGBA.stride = stride;
+    config.output.colorspace = colourDepth;
 
-    /* Create external memory pointed by outputBuffer buffer */
-    Containers::Array<char> outData{NoInit, outputBuffer.u.RGBA.size};
-    outputBuffer.u.RGBA.rgba = reinterpret_cast<std::uint8_t*>(outData.data());
-    outputBuffer.is_external_memory = 1;
+    /* Create external memory pointed by config.output buffer */
+    Containers::Array<char> outData{NoInit, config.output.u.RGBA.size};
+    config.output.u.RGBA.rgba = reinterpret_cast<std::uint8_t*>(outData.data());
+    config.output.is_external_memory = 1;
 
     /* Decompression of the image */
-    const VP8StatusCode decodeStatus = WebPDecode(reinterpret_cast<std::uint8_t*>(_in.data()), _in.size(), &config);
-    if(decodeStatus != VP8_STATUS_OK) {
-        Error err;
-        err << "Trade::WebPImporter::image2D(): decoding error:" << vp8StatusCodeString(decodeStatus);
+    if(const VP8StatusCode error = WebPDecode(reinterpret_cast<std::uint8_t*>(_in.data()), _in.size(), &config)) {
+        Error{} << "Trade::WebPImporter::image2D(): decoding error:" << vp8StatusCodeString(error);
         return {};
     }
 
