@@ -100,8 +100,8 @@ add_dependencies(your-app MagnumPlugins::MeshOptimizerSceneConverter)
 
 To use as a static plugin or as a dependency of another plugin with CMake, put
 [FindMagnumPlugins.cmake](https://github.com/mosra/magnum-plugins/blob/master/modules/FindMagnumPlugins.cmake)
-into your `modules/` directory, request the `MeshOptimizerSceneConverter` component of
-the `MagnumPlugins` package and link to the
+into your `modules/` directory, request the `MeshOptimizerSceneConverter`
+component of the `MagnumPlugins` package and link to the
 `MagnumPlugins::MeshOptimizerSceneConverter` target:
 
 @code{.cmake}
