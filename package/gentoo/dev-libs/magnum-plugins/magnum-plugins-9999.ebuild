@@ -22,6 +22,7 @@ RDEPEND="
 	virtual/jpeg
 	media-libs/libpng
 	media-libs/libwebp
+	media-libs/libavif
 	media-libs/assimp
 	dev-util/glslang
 	dev-util/spirv-tools
@@ -35,6 +36,7 @@ src_configure() {
 		-DCMAKE_BUILD_TYPE=Release
 		-DMAGNUM_WITH_ASSIMPIMPORTER=ON
 		-DMAGNUM_WITH_ASTCIMPORTER=ON
+		-DMAGNUM_WITH_AVIFIMPORTER=ON
 		-DMAGNUM_WITH_BASISIMAGECONVERTER=OFF
 		-DMAGNUM_WITH_BASISIMPORTER=OFF
 		-DMAGNUM_WITH_BCDECIMAGECONVERTER=ON

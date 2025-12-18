@@ -32,6 +32,7 @@ class MagnumPlugins < Formula
   # Resvg is Rust, not sure what all it installs if enabled. So make it off by
   # default.
   depends_on "resvg" => :optional
+  depends_on "libavif" => :recommended
 
   def install
     # Bundle Basis Universal. The repo has massive useless files in its
@@ -61,6 +62,7 @@ class MagnumPlugins < Formula
         "-DCMAKE_INSTALL_NAME_DIR:STRING=#{lib}",
         "-DMAGNUM_WITH_ASSIMPIMPORTER=#{(build.with? 'assimp') ? 'ON' : 'OFF'}",
         "-DMAGNUM_WITH_ASTCIMPORTER=ON",
+        "-DMAGNUM_WITH_AVIFIMPORTER=#{(build.with? 'libavif') ? 'ON' : 'OFF'}",
         "-DMAGNUM_WITH_BASISIMAGECONVERTER=ON",
         "-DMAGNUM_WITH_BASISIMPORTER=ON",
         "-DMAGNUM_WITH_BCDECIMAGECONVERTER=ON",

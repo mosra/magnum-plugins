@@ -7,7 +7,7 @@ pkgdesc="Plugins for the Magnum C++11/C++14 graphics engine (Git version)"
 arch=('i686' 'x86_64')
 url="https://magnum.graphics"
 license=('MIT')
-depends=('magnum-git' 'devil' 'faad2' 'libpng' 'libjpeg' 'freetype2' 'assimp' 'meshoptimizer' 'openexr' 'spirv-tools' 'glslang' 'zstd' 'libwebp' 'libspng' 'lunasvg')
+depends=('magnum-git' 'devil' 'faad2' 'libpng' 'libjpeg' 'freetype2' 'assimp' 'meshoptimizer' 'openexr' 'spirv-tools' 'glslang' 'zstd' 'libwebp' 'libspng' 'lunasvg' 'libavif')
 makedepends=('cmake' 'git' 'ninja')
 provides=('magnum-plugins')
 conflicts=('magnum-plugins')
@@ -33,6 +33,7 @@ build() {
         -DCMAKE_INSTALL_PREFIX=/usr \
         -DMAGNUM_WITH_ASSIMPIMPORTER=ON \
         -DMAGNUM_WITH_ASTCIMPORTER=ON \
+        -DMAGNUM_WITH_AVIFIMPORTER=ON \
         -DMAGNUM_WITH_BASISIMAGECONVERTER=ON \
         -DMAGNUM_WITH_BASISIMPORTER=ON \
         -DMAGNUM_WITH_BCDECIMAGECONVERTER=ON \
