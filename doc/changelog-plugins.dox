@@ -74,6 +74,7 @@ namespace Magnum {
     WebP files (see [mosra/magnum-plugins#121](https://github.com/mosra/magnum-plugins/pull/121),
     [mosra/magnum-plugins#126](https://github.com/mosra/magnum-plugins/pull/126)
     and [mosra/magnum-plugins#140](https://github.com/mosra/magnum-plugins/pull/140))
+-   New @relativeref{Trade,AvifImporter} plugin for importing AVIF files
 -   New @relativeref{Trade,GltfImporter} plugin for importing glTF files, which
     is a smaller, faster-compiling, faster-importing and more memory-friendly
     drop-in replacement for now-deprecated `TinyGltfImporter`. Originally built

@@ -58,6 +58,10 @@ if(MAGNUM_WITH_ASTCIMPORTER)
     add_subdirectory(AstcImporter)
 endif()
 
+if(MAGNUM_WITH_AVIFIMPORTER)
+    add_subdirectory(AvifImporter)
+endif()
+
 if(MAGNUM_WITH_BASISIMAGECONVERTER)
     add_subdirectory(BasisImageConverter)
 endif()

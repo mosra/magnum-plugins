@@ -14,6 +14,7 @@
 #
 #  AssimpImporter               - Assimp importer
 #  AstcImporter                 - ASTC importer
+#  AvifImporter                 - AVIF importer
 #  BasisImageConverter          - Basis image converter
 #  BasisImporter                - Basis importer
 #  BcDecImageConverter          - BCn image decoder using bcdec
@@ -202,7 +203,7 @@ endif()
 # components from other repositories)
 set(_MAGNUMPLUGINS_LIBRARY_COMPONENTS OpenDdl)
 set(_MAGNUMPLUGINS_PLUGIN_COMPONENTS
-    AssimpImporter AstcImporter BasisImageConverter BasisImporter
+    AssimpImporter AstcImporter AvifImporter BasisImageConverter BasisImporter
     BcDecImageConverter DdsImporter DevIlImageImporter DrFlacAudioImporter
     DrMp3AudioImporter DrWavAudioImporter EtcDecImageConverter
     Faad2AudioImporter FreeTypeFont GlslangShaderConverter GltfImporter
@@ -455,6 +456,13 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
                 INTERFACE_LINK_LIBRARIES Assimp::Assimp)
 
         # AstcImporter has no dependencies
+
+        # AvifImporter plugin dependencies
+        elseif(_component STREQUAL AvifImporter)
+            find_package(libavif CONFIG)
+            set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
+                # ffs, can't you fools namespace the target, at least?!
+                INTERFACE_LINK_LIBRARIES avif)
 
         # BasisImageConverter / BasisImporter has only compiled-in
         # dependencies, except in case of vcpkg, then we need to link to a

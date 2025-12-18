@@ -462,6 +462,8 @@ By default no plugins are built and you need to select them manually:
     [Assimp](https://assimp.org/).
 -   `MAGNUM_WITH_ASTCIMPORTER` --- Build the @relativeref{Trade,AstcImporter}
     plugin.
+-   `MAGNUM_WITH_AVIFIMPORTER` --- Build the @relativeref{Trade,AvifImporter}
+    plugin. Depends on [libavif](https://github.com/AOMediaCodec/libavif).
 -   `MAGNUM_WITH_BASISIMAGECONVERTER` --- Build the
     @ref Trade::BasisImageConverter "BasisImageConverter" plugin. Depends on
     [Basis Universal](https://github.com/binomialLLC/basis_universal).

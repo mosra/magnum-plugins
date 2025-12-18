@@ -34,6 +34,10 @@
  * @brief Plugin @ref Magnum::Trade::AstcImporter
  * @m_since_latest_{plugins}
  */
+/** @dir MagnumPlugins/AvifImporter
+ * @brief Plugin @ref Magnum::Trade::AvifImporter
+ * @m_since_latest_{plugins}
+ */
 /** @dir MagnumPlugins/BasisImageConverter
  * @brief Plugin @ref Magnum::Trade::BasisImageConverter
  * @m_since_{plugins,2019,10}

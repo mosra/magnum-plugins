@@ -414,6 +414,8 @@ jobs:
       DISABLE_OPENCL: "ON"
       # Requires CMake 3.15, this job uses 3.5. Applies to PlutoSVG too.
       WITH_LUNASVGIMPORTER: "OFF"
+      # No packages until 22.04, can't be arsed to build this library here
+      WITH_AVIFIMPORTER: "OFF"
     steps:
     - install-base-linux:
         # libidn11 needed by CMake. We want the OpenCL headers and ICD loader
@@ -452,6 +454,8 @@ jobs:
       CONFIGURATION: Debug
       # Requires CMake 3.15, this job has 3.16. Applies to PlutoSVG too.
       WITH_LUNASVGIMPORTER: "ON"
+      # No packages until 22.04, can't be arsed to build this library here
+      WITH_AVIFIMPORTER: "OFF"
     steps:
     # Not installing the old GCC 4.8, CMake 3.5 and other ancient stuff to
     # speed up. These are tested more than enough on other jobs, plus here we
@@ -479,6 +483,8 @@ jobs:
       CONFIGURATION: Debug
       # Requires CMake 3.15, this job uses 3.5. Applies to PlutoSVG too.
       WITH_LUNASVGIMPORTER: "OFF"
+      # No packages until 22.04, can't be arsed to build this library here
+      WITH_AVIFIMPORTER: "OFF"
     steps:
     - install-base-linux:
         # libidn11 needed by CMake. Basis 1.15 doesn't support OpenCL, so those
@@ -518,6 +524,8 @@ jobs:
       CONFIGURATION: Release
       # Requires CMake 3.15, this job uses 3.5. Applies to PlutoSVG too.
       WITH_LUNASVGIMPORTER: "OFF"
+      # No packages until 22.04, can't be arsed to build this library here
+      WITH_AVIFIMPORTER: "OFF"
     steps:
     # libidn11 needed by CMake
     - install-base-linux:
@@ -555,6 +563,8 @@ jobs:
       DISABLE_OPENCL: "ON"
       # Requires CMake 3.15, this job uses 3.5. Applies to PlutoSVG too.
       WITH_LUNASVGIMPORTER: "OFF"
+      # No packages until 22.04, can't be arsed to build this library here
+      WITH_AVIFIMPORTER: "OFF"
     steps:
     # libidn11 needed by CMake
     - install-base-linux:
@@ -602,6 +612,8 @@ jobs:
       DISABLE_OPENCL: "ON"
       # Requires CMake 3.15, this job has 3.16. Applies to PlutoSVG too.
       WITH_LUNASVGIMPORTER: "ON"
+      # No packages until 22.04, can't be arsed to build this library here
+      WITH_AVIFIMPORTER: "OFF"
     steps:
     - install-base-linux:
         extra: cmake libfaad-dev libfreetype6-dev libjpeg-dev libopenal-dev libpng-dev libdevil-dev libharfbuzz-dev libassimp-dev libopenexr-dev libwebp-dev libzstd-dev wget unzip
@@ -638,9 +650,10 @@ jobs:
       DISABLE_OPENCL: "ON"
       # Applies to PlutoSVG too
       WITH_LUNASVGIMPORTER: "ON"
+      WITH_AVIFIMPORTER: "ON"
     steps:
     - install-base-macos:
-        extra: faad2 harfbuzz assimp devil spirv-tools glslang openexr webp wget zstd libspng
+        extra: faad2 harfbuzz assimp devil spirv-tools glslang openexr webp wget zstd libspng libavif
     - install-basis
     - install-meshoptimizer
     - install-lunasvg
@@ -661,9 +674,10 @@ jobs:
       CONFIGURATION: Debug
       # Applies to PlutoSVG too
       WITH_LUNASVGIMPORTER: "ON"
+      WITH_AVIFIMPORTER: "ON"
     steps:
     - install-base-macos:
-        extra: faad2 harfbuzz assimp devil spirv-tools glslang openexr webp wget zstd libspng
+        extra: faad2 harfbuzz assimp devil spirv-tools glslang openexr webp wget zstd libspng libavif
     - install-basis:
         tag: "1.16.4"
     - install-meshoptimizer

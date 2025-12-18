@@ -139,6 +139,7 @@ endif()
 # Plugins to build
 option(MAGNUM_WITH_ASSIMPIMPORTER "Build AssimpImporter plugin" OFF)
 option(MAGNUM_WITH_ASTCIMPORTER "Build AstcImporter plugin" OFF)
+option(MAGNUM_WITH_AVIFIMPORTER "Build AvifImporter plugin" OFF)
 option(MAGNUM_WITH_BASISIMAGECONVERTER "Build BasisImageConverter plugin" OFF)
 option(MAGNUM_WITH_BASISIMPORTER "Build BasisImporter plugin" OFF)
 option(MAGNUM_WITH_BCDECIMAGECONVERTER "Build BcDecImageConverter plugin" OFF)
