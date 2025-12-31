@@ -38,7 +38,7 @@
 #include <Magnum/configure.h>
 
 #ifdef MAGNUM_BUILD_DEPRECATED
-#include <Corrade/Utility/Macros.h>
+#include <Corrade/Utility/DeprecationMacros.h>
 #include <Magnum/Trade/AbstractImporter.h>
 #include <Magnum/Trade/PhongMaterialData.h>
 
