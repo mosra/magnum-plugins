@@ -28,6 +28,7 @@
 
 #ifdef MAGNUM_TINYGLTFIMPORTER_BUILD_STATIC
 #include <Corrade/PluginManager/AbstractManager.h>
+#include <Corrade/Utility/Macros.h>
 
 static int magnumTinyGltfImporterStaticImporter() {
     CORRADE_PLUGIN_IMPORT(TinyGltfImporter)
