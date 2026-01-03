@@ -4072,8 +4072,8 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
                Assuming large meshes consisting of rather few buffer ranges
                this is faster than allocating `vertexData` with ValueInit. */
             const std::size_t alignedSize = 4*((size + 3)/4);
-            for(std::size_t i = size; i != alignedSize; ++i)
-                vertexData[vertexDataOffset + i] = '\0';
+            for(std::size_t j = size; j != alignedSize; ++j)
+                vertexData[vertexDataOffset + j] = '\0';
 
             rangeToCopyFrom = i;
         }
