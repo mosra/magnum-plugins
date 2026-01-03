@@ -75,7 +75,7 @@ const struct {
         "expected preset to be one of lossless, default, picture, photo, drawing, icon or text but got portrait"},
     {"invalid lossless level", nullptr, 10, {}, {},
         "cannot apply a lossless preset with level 10"},
-    {"invalid lossy quality", "photo", {}, 100.1, {},
+    {"invalid lossy quality", "photo", {}, 100.1f, {},
         "cannot apply a photo preset with quality 100.1"},
     {"invalid alpha quality", nullptr, {}, {}, 101,
         "option validation failed, check the alphaQuality configuration option"},
