@@ -135,6 +135,13 @@ struct UfbxImporterTest: TestSuite::Tester {
     void imageDeduplication();
     void imageNonExistentName();
     void imageAbsolutePath();
+    void imageSearch();
+    void imageSearchSubdir();
+    void imageSearchSubdirTooDeep();
+    void imageSearchMissing();
+    void imageSearchMidRoot();
+    void imageSearchMultiSlash();
+    void imageSearchParentPath();
     void imageNot2D();
     void imageBrokenExternal();
     void imageBrokenEmbedded();
@@ -315,6 +322,13 @@ UfbxImporterTest::UfbxImporterTest() {
               &UfbxImporterTest::imageDeduplication,
               &UfbxImporterTest::imageNonExistentName,
               &UfbxImporterTest::imageAbsolutePath,
+              &UfbxImporterTest::imageSearch,
+              &UfbxImporterTest::imageSearchSubdir,
+              &UfbxImporterTest::imageSearchSubdirTooDeep,
+              &UfbxImporterTest::imageSearchMissing,
+              &UfbxImporterTest::imageSearchMidRoot,
+              &UfbxImporterTest::imageSearchMultiSlash,
+              &UfbxImporterTest::imageSearchParentPath,
               &UfbxImporterTest::imageNot2D,
               &UfbxImporterTest::imageBrokenExternal,
               &UfbxImporterTest::imageBrokenEmbedded,
@@ -2333,9 +2347,120 @@ void UfbxImporterTest::imageAbsolutePath() {
 
     Containers::String out;
     Error redirectError{&out};
-
     CORRADE_VERIFY(!importer->image2D(0));
     CORRADE_COMPARE_AS(out, "Trade::AbstractImporter::openFile(): cannot open file /absolute/path/to/tex-red.png", TestSuite::Compare::StringContains);
+}
+
+void UfbxImporterTest::imageSearch() {
+    if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("PngImporter plugin not found, cannot test");
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
+    importer->configuration().setValue("imageSearchDepth", -1);
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "image-absolute-path.fbx")));
+
+    CORRADE_COMPARE(importer->image2DCount(), 1);
+
+    Containers::Optional<ImageData2D> image = importer->image2D(0);
+    CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->size(), (Vector2i{1, 1}));
+    CORRADE_COMPARE(image->pixels<Color3ub>()[0][0], 0xff0000_rgb);
+}
+
+void UfbxImporterTest::imageSearchSubdir() {
+    if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("PngImporter plugin not found, cannot test");
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
+    importer->configuration().setValue("imageSearchDepth", -1);
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "external-absolute-texture.fbx")));
+
+    CORRADE_COMPARE(importer->image2DCount(), 1);
+
+    Containers::Optional<ImageData2D> image = importer->image2D(0);
+    CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->size(), (Vector2i{1, 1}));
+    CORRADE_COMPARE(image->pixels<Color3ub>()[0][0], 0xff0000_rgb);
+}
+
+void UfbxImporterTest::imageSearchSubdirTooDeep() {
+    if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("PngImporter plugin not found, cannot test");
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
+    importer->configuration().setValue("imageSearchDepth", 1);
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "external-absolute-texture.fbx")));
+
+    CORRADE_COMPARE(importer->image2DCount(), 1);
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!importer->image2D(0));
+    CORRADE_COMPARE_AS(out.str(), "Trade::UfbxImporter::image2D(): could not resolve image: W:/ExternalTextures/tex-red-external.png", TestSuite::Compare::StringContains);
+}
+
+void UfbxImporterTest::imageSearchMissing() {
+    if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("PngImporter plugin not found, cannot test");
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
+    importer->configuration().setValue("imageSearchDepth", -1);
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "external-absolute-texture-missing.fbx")));
+
+    CORRADE_COMPARE(importer->image2DCount(), 1);
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!importer->image2D(0));
+    CORRADE_COMPARE_AS(out.str(), "Trade::UfbxImporter::image2D(): could not resolve image: W:/ExternalTextures/tex-missing-file.png", TestSuite::Compare::StringContains);
+}
+
+void UfbxImporterTest::imageSearchMidRoot() {
+    if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("PngImporter plugin not found, cannot test");
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
+    importer->configuration().setValue("imageSearchDepth", -1);
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "image-absolute-path-mid-root.fbx")));
+
+    CORRADE_COMPARE(importer->image2DCount(), 1);
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!importer->image2D(0));
+    CORRADE_COMPARE_AS(out.str(), "Trade::UfbxImporter::image2D(): could not resolve image: /absolute/C:/to/tex-missing.png", TestSuite::Compare::StringContains);
+}
+
+void UfbxImporterTest::imageSearchMultiSlash() {
+    if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("PngImporter plugin not found, cannot test");
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
+    importer->configuration().setValue("imageSearchDepth", -1);
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "image-absolute-path-multi-slash.fbx")));
+
+    CORRADE_COMPARE(importer->image2DCount(), 1);
+
+    Containers::Optional<ImageData2D> image = importer->image2D(0);
+    CORRADE_VERIFY(image);
+    CORRADE_COMPARE(image->size(), (Vector2i{1, 1}));
+    CORRADE_COMPARE(image->pixels<Color3ub>()[0][0], 0xff0000_rgb);
+}
+
+void UfbxImporterTest::imageSearchParentPath() {
+    if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("PngImporter plugin not found, cannot test");
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("UfbxImporter");
+    importer->configuration().setValue("imageSearchDepth", -1);
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(UFBXIMPORTER_TEST_DIR, "image-parent-path.fbx")));
+
+    CORRADE_COMPARE(importer->image2DCount(), 1);
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!importer->image2D(0));
+    CORRADE_COMPARE_AS(out.str(), "Trade::UfbxImporter::image2D(): could not resolve image: path/../UfbxImporter.cpp", TestSuite::Compare::StringContains);
 }
 
 void UfbxImporterTest::imageNot2D() {
