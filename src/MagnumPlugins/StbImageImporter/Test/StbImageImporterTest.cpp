@@ -824,6 +824,9 @@ void StbImageImporterTest::multithreaded() {
         constexpr const char data[1]{};
         auto fn = [&](AbstractImporter& importer, int& counter) {
             for(std::size_t i = 0; i != 1000; ++i) {
+                /* This function should call stbi_convert_iphone_png_to_rgb()
+                   etc. internally, which accesses global (or thread-local)
+                   state. If that changes, the test needs to be updated. */
                 importer.openData(data);
                 ++counter;
             }
