@@ -38,8 +38,6 @@
 #include "MagnumPlugins/FreeTypeFont/configure.h"
 
 #ifndef DOXYGEN_GENERATING_OUTPUT
-struct FT_LibraryRec_;
-typedef FT_LibraryRec_* FT_Library;
 struct FT_FaceRec_;
 typedef FT_FaceRec_*  FT_Face;
 
@@ -191,14 +189,6 @@ class MAGNUM_FREETYPEFONT_EXPORT FreeTypeFont: public AbstractFont {
         void doClose() override;
 
     private:
-        static
-        /** @todo Windows don't support dllexported thread-local symbols, work
-            around that (access a local symbol through exported getter?) */
-        #if defined(CORRADE_BUILD_MULTITHREADED) && !defined(CORRADE_TARGET_WINDOWS)
-        CORRADE_THREAD_LOCAL
-        #endif
-        MAGNUM_FREETYPEFONT_LOCAL FT_Library _library;
-
         /* Only the interfaces that HarfBuzzFont replaces with its own can be
            MAGNUM_FREETYPEFONT_LOCAL here */
 

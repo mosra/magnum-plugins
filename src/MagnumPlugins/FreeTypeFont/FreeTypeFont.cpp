@@ -44,9 +44,9 @@
 
 namespace Magnum { namespace Text {
 
-#ifndef FT_CONFIG_OPTION_ERROR_STRINGS
 namespace {
 
+#ifndef FT_CONFIG_OPTION_ERROR_STRINGS
 const char* ftErrorString(const FT_Error error) {
     switch(error) {
         #define FT_ERRORDEF_(name, index, string) case FT_Err_ ## name: return string;
@@ -58,24 +58,24 @@ const char* ftErrorString(const FT_Error error) {
 
     return {};
 }
-
-}
 #endif
 
-#if defined(CORRADE_BUILD_MULTITHREADED) && !defined(CORRADE_TARGET_WINDOWS)
+#ifdef CORRADE_BUILD_MULTITHREADED
 CORRADE_THREAD_LOCAL
 #endif
-FT_Library FreeTypeFont::_library = nullptr;
+FT_Library freeTypeLibrary = nullptr;
+
+}
 
 void FreeTypeFont::initialize() {
-    CORRADE_INTERNAL_ASSERT(!_library);
-    CORRADE_INTERNAL_ASSERT_OUTPUT(FT_Init_FreeType(&_library) == 0);
+    CORRADE_INTERNAL_ASSERT(!freeTypeLibrary);
+    CORRADE_INTERNAL_ASSERT_OUTPUT(FT_Init_FreeType(&freeTypeLibrary) == 0);
 }
 
 void FreeTypeFont::finalize() {
-    CORRADE_INTERNAL_ASSERT(_library);
-    CORRADE_INTERNAL_ASSERT_OUTPUT(FT_Done_FreeType(_library) == 0);
-    _library = nullptr;
+    CORRADE_INTERNAL_ASSERT(freeTypeLibrary);
+    CORRADE_INTERNAL_ASSERT_OUTPUT(FT_Done_FreeType(freeTypeLibrary) == 0);
+    freeTypeLibrary = nullptr;
 }
 
 #ifdef MAGNUM_BUILD_DEPRECATED
@@ -94,9 +94,9 @@ auto FreeTypeFont::doOpenData(const Containers::ArrayView<const char> data, cons
     /* We need to preserve the data for whole FT_Face lifetime */
     _data = Containers::Array<unsigned char>{InPlaceInit, Containers::arrayCast<const unsigned char>(data)};
 
-    CORRADE_ASSERT(_library, "Text::FreeTypeFont::openSingleData(): initialize() was not called", {});
+    CORRADE_ASSERT(freeTypeLibrary, "Text::FreeTypeFont::openSingleData(): initialize() was not called", {});
     /** @todo ability to specify different font in TTC collection */
-    if(FT_Error error = FT_New_Memory_Face(_library, _data.begin(), _data.size(), 0, &_ftFont)) {
+    if(FT_Error error = FT_New_Memory_Face(freeTypeLibrary, _data.begin(), _data.size(), 0, &_ftFont)) {
         Error e;
         e << "Text::FreeTypeFont::openData(): failed to open the font:";
         if(const char* string =
