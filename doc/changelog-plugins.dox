@@ -348,6 +348,8 @@ namespace Magnum {
     no longer asserts if the patch version of libpng changed, such as when a
     system package was upgraded from 1.6.37 to 1.6.38. If the major or minor
     version changes, it's still an assert.
+-   Fixed an issue where @relativeref{Text,FreeTypeFont} would assert when
+    loaded with more than one plugin manager at the same time
 
 @subsection changelog-plugins-latest-deprecated Deprecated APIs
 
