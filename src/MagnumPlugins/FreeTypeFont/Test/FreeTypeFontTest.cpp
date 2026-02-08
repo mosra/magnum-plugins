@@ -74,6 +74,7 @@ struct FreeTypeFontTest: TestSuite::Tester {
 
     void openTwice();
 
+    void initializeFinalizeMultipleManagers();
     /* This probably could be enabled on Emscripten as well, but I'm too lazy
        to make a multi-threaded build to test with */
     #ifndef CORRADE_TARGET_EMSCRIPTEN
@@ -150,7 +151,9 @@ FreeTypeFontTest::FreeTypeFontTest() {
               &FreeTypeFontTest::fillGlyphCacheInvalidFormat,
               &FreeTypeFontTest::fillGlyphCacheCannotFit,
 
-              &FreeTypeFontTest::openTwice});
+              &FreeTypeFontTest::openTwice,
+
+              &FreeTypeFontTest::initializeFinalizeMultipleManagers});
 
     #ifndef CORRADE_TARGET_EMSCRIPTEN
     addTests({&FreeTypeFontTest::initializeFinalizeMultithreaded});
@@ -797,6 +800,21 @@ void FreeTypeFontTest::openTwice() {
     CORRADE_VERIFY(font->openFile(Utility::Path::join(FREETYPEFONT_TEST_DIR, "Oxygen.ttf"), 16.0f));
 
     /* Shouldn't crash, leak or anything */
+}
+
+void FreeTypeFontTest::initializeFinalizeMultipleManagers() {
+    /* There's already _manager, add another one. If done improperly, either
+       its construction will assert because the library is already initialized,
+       or its destruction will cause a too early finalization of the FreeType
+       library, causing an assert when the _manager gets used (or
+       destructed). */
+
+    PluginManager::Manager<AbstractFont> manager{"nonexistent"};
+    #ifdef FREETYPEFONT_PLUGIN_FILENAME
+    CORRADE_COMPARE(manager.load(FREETYPEFONT_PLUGIN_FILENAME), PluginManager::LoadState::Loaded);
+    #else
+    CORRADE_COMPARE(manager.loadState("FreeTypeFont"), PluginManager::LoadState::Static);
+    #endif
 }
 
 #ifndef CORRADE_TARGET_EMSCRIPTEN

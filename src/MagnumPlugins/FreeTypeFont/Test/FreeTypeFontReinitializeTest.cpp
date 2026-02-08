@@ -33,17 +33,32 @@ namespace Magnum { namespace Text { namespace Test { namespace {
 struct FreeTypeFontReinitializeTest: TestSuite::Tester {
     explicit FreeTypeFontReinitializeTest();
 
-    void test();
+    void sequential();
+    void nested();
 };
 
 FreeTypeFontReinitializeTest::FreeTypeFontReinitializeTest() {
-    addTests({&FreeTypeFontReinitializeTest::test});
+    addTests({&FreeTypeFontReinitializeTest::sequential,
+              &FreeTypeFontReinitializeTest::nested});
 }
 
-void FreeTypeFontReinitializeTest::test() {
+void FreeTypeFontReinitializeTest::sequential() {
     FreeTypeFont::initialize();
     FreeTypeFont::finalize();
     FreeTypeFont::initialize();
+    FreeTypeFont::finalize();
+
+    CORRADE_VERIFY(true); /* Yay, nothing crashed! */
+}
+
+void FreeTypeFontReinitializeTest::nested() {
+    FreeTypeFont::initialize();
+    FreeTypeFont::initialize();
+    FreeTypeFont::initialize();
+    FreeTypeFont::finalize();
+    FreeTypeFont::initialize();
+    FreeTypeFont::finalize();
+    FreeTypeFont::finalize();
     FreeTypeFont::finalize();
 
     CORRADE_VERIFY(true); /* Yay, nothing crashed! */
