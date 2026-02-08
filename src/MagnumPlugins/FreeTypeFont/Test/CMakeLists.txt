@@ -32,6 +32,11 @@ find_package(Magnum REQUIRED
     COMPONENTS DebugTools
     OPTIONAL_COMPONENTS AnyImageImporter)
 
+if(NOT CORRADE_TARGET_EMSCRIPTEN)
+    set(THREADS_PREFER_PTHREAD_FLAG TRUE)
+    find_package(Threads REQUIRED)
+endif()
+
 if(CORRADE_TARGET_EMSCRIPTEN OR CORRADE_TARGET_ANDROID)
     set(FREETYPEFONT_TEST_DIR .)
 else()
@@ -90,6 +95,10 @@ else()
     if(MAGNUM_WITH_STBIMAGEIMPORTER)
         add_dependencies(FreeTypeFontTest StbImageImporter)
     endif()
+endif()
+if(NOT CORRADE_TARGET_EMSCRIPTEN)
+    # Testing thread safety of the shared FreeType library use
+    target_link_libraries(FreeTypeFontTest PRIVATE Threads::Threads)
 endif()
 if(CORRADE_BUILD_STATIC AND NOT MAGNUM_FREETYPEFONT_BUILD_STATIC)
     # CMake < 3.4 does this implicitly, but 3.4+ not anymore (see CMP0065).

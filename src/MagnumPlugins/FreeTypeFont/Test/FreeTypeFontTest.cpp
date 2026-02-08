@@ -46,6 +46,10 @@
 #include <ft2build.h>
 #include FT_FREETYPE_H /* FREETYPE_MAJOR, FREETYPE_MINOR */
 
+#ifndef CORRADE_TARGET_EMSCRIPTEN
+#include <thread>
+#endif
+
 namespace Magnum { namespace Text { namespace Test { namespace {
 
 struct FreeTypeFontTest: TestSuite::Tester {
@@ -69,6 +73,12 @@ struct FreeTypeFontTest: TestSuite::Tester {
     void fillGlyphCacheCannotFit();
 
     void openTwice();
+
+    /* This probably could be enabled on Emscripten as well, but I'm too lazy
+       to make a multi-threaded build to test with */
+    #ifndef CORRADE_TARGET_EMSCRIPTEN
+    void initializeFinalizeMultithreaded();
+    #endif
 
     /* Explicitly forbid system-wide plugin dependencies */
     PluginManager::Manager<AbstractFont> _manager{"nonexistent"};
@@ -141,6 +151,10 @@ FreeTypeFontTest::FreeTypeFontTest() {
               &FreeTypeFontTest::fillGlyphCacheCannotFit,
 
               &FreeTypeFontTest::openTwice});
+
+    #ifndef CORRADE_TARGET_EMSCRIPTEN
+    addTests({&FreeTypeFontTest::initializeFinalizeMultithreaded});
+    #endif
 
     /* Load the plugin directly from the build tree. Otherwise it's static and
        already loaded. */
@@ -784,6 +798,52 @@ void FreeTypeFontTest::openTwice() {
 
     /* Shouldn't crash, leak or anything */
 }
+
+#ifndef CORRADE_TARGET_EMSCRIPTEN
+void FreeTypeFontTest::initializeFinalizeMultithreaded() {
+    #ifndef CORRADE_BUILD_MULTITHREADED
+    CORRADE_SKIP("CORRADE_BUILD_MULTITHREADED is not enabled.");
+    #endif
+
+    /* Verifies that the FreeType library instance is properly thread-local,
+       i.e. its initialization not clashing between multiple threads */
+
+    int counterA = 0, counterB = 0;
+    {
+        auto fn = [](int& counter) {
+            /* If the plugin is dynamic, initialization and finalization is
+               done during load() and unload() */
+            #ifdef FREETYPEFONT_PLUGIN_FILENAME
+            PluginManager::Manager<AbstractFont> manager{"nonexistent"};
+            for(std::size_t i = 0; i != 100; ++i) {
+                CORRADE_INTERNAL_ASSERT_OUTPUT(manager.load(FREETYPEFONT_PLUGIN_FILENAME) == PluginManager::LoadState::Loaded);
+                CORRADE_INTERNAL_ASSERT_OUTPUT(manager.unload("FreeTypeFont") == PluginManager::LoadState::NotLoaded);
+                ++counter;
+            }
+
+            /* If it's static, it's done at manager construction and
+               destruction time, so instead instantiate the manager several
+               times. */
+            #else
+            for(std::size_t i = 0; i != 100; ++i) {
+                PluginManager::Manager<AbstractFont> manager{"nonexistent"};
+                CORRADE_INTERNAL_ASSERT(manager.loadState("FreeTypeFont") == PluginManager::LoadState::Static);
+                ++counter;
+            }
+            #endif
+        };
+
+        std::thread threadA{fn, std::ref(counterA)};
+        std::thread threadB{fn, std::ref(counterB)};
+
+        threadA.join();
+        threadB.join();
+    }
+
+    CORRADE_COMPARE(counterA, 100);
+    CORRADE_COMPARE(counterB, 100);
+}
+#endif
 
 }}}}
 
