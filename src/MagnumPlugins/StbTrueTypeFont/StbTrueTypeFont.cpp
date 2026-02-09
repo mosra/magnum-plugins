@@ -202,7 +202,7 @@ bool StbTrueTypeFont::doFillGlyphCache(AbstractGlyphCache& cache, const Containe
         /* Render the glyph */
         Range2Di box;
         stbtt_GetGlyphBitmapBox(&_font->info, glyphIndices[i], _font->scale, _font->scale, &box.min().x(), &box.min().y(), &box.max().x(), &box.max().y());
-        stbtt_MakeGlyphBitmap(&_font->info, reinterpret_cast<unsigned char*>(srcData.data()), maxBox.sizeX(), maxBox.sizeY(), maxBox.sizeX(), _font->scale, _font->scale, glyphIndices[i]);
+        stbtt_MakeGlyphBitmap(&_font->info, reinterpret_cast<unsigned char*>(srcData.data()), box.sizeX(), box.sizeY(), maxBox.sizeX(), _font->scale, _font->scale, glyphIndices[i]);
 
         /* Copy the rendered glyph Y-flipped to the destination image */
         const Containers::Size2D glyphSize{std::size_t(glyphs[i].size.y()),

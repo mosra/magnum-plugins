@@ -350,6 +350,9 @@ namespace Magnum {
     version changes, it's still an assert.
 -   Fixed an issue where @relativeref{Text,FreeTypeFont} would assert when
     loaded with more than one plugin manager at the same time
+-   Fixed serious errors in the @relativeref{Text,StbTrueTypeFont} glyph
+    rasterization code that caused the operation to take extreme amounts of
+    time while also using needlessly large emounts of memory.
 
 @subsection changelog-plugins-latest-deprecated Deprecated APIs
 
