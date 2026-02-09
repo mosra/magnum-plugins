@@ -41,10 +41,16 @@
 
 #define STB_TRUETYPE_IMPLEMENTATION
 #define STBTT_STATIC
-#ifdef CORRADE_TARGET_MSVC
 #include <cmath>
-/* Using fabsf instead of fabs (double version) for 30% performance
-   improvement on MSVC Debug builds. The others are not so significant. */
+/* Using fabsf instead of fabs (double version) for 30% performance improvement
+   on Debug builds, measured on MSVC as well as on GCC. The others are not so
+   significant. Also, somehow, on GCC these cause -Wold-style-cast warnings to
+   be fired from within stb_truetype.h, I suppose because their implementation
+   is using a (float) cast internally or some such. */
+#ifdef CORRADE_TARGET_GCC
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wold-style-cast"
+#endif
 #define STBTT_ifloor(x) static_cast<int>(floorf(x))
 #define STBTT_iceil(x) static_cast<int>(ceilf(x))
 #define STBTT_sqrt(x) sqrtf(x)
@@ -53,8 +59,10 @@
 #define STBTT_cos(x) cosf(x)
 #define STBTT_acos(x) acosf(x)
 #define STBTT_fabs(x) fabsf(x)
-#endif
 #include "stb_truetype.h"
+#ifdef CORRADE_TARGET_GCC
+#pragma GCC diagnostic pop
+#endif
 
 namespace Magnum { namespace Text {
 
