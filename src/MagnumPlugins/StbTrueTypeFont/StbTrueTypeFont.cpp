@@ -159,16 +159,19 @@ bool StbTrueTypeFont::doFillGlyphCache(AbstractGlyphCache& cache, const Containe
     if(!fontId)
         fontId = cache.addFont(_font->info.numGlyphs, this);
 
-    /* Get sizes of all glyphs to pack into the cache */
+    /* Get sizes of all glyphs to pack into the cache, and calculate the max
+       glyph size along the way, which we'll use for sizing the memory to
+       render to. */
     struct Glyph {
         Vector2i size;
         Vector3i offset;
     };
     Containers::Array<Glyph> glyphs{NoInit, glyphIndices.size()};
+    Vector2i maxSize;
     for(std::size_t i = 0; i != glyphIndices.size(); ++i) {
         Range2Di box;
         stbtt_GetGlyphBitmapBox(&_font->info, glyphIndices[i], _font->scale, _font->scale, &box.min().x(), &box.min().y(), &box.max().x(), &box.max().y());
-        glyphs[i].size = box.size();
+        maxSize = Math::max(maxSize, (glyphs[i].size = box.size()));
     }
 
     /* Pack the cache */
@@ -186,14 +189,12 @@ bool StbTrueTypeFont::doFillGlyphCache(AbstractGlyphCache& cache, const Containe
         return {};
     }
 
-    /* Memory for stb_truetype to render into.  We need to flip Y, so it can't
+    /* Memory for stb_truetype to render into. We need to flip Y, so it can't
        be rendered directly into the glyph cache memory. */
-    Range2Di maxBox;
-    stbtt_GetFontBoundingBox(&_font->info, &maxBox.min().x(), &maxBox.min().y(), &maxBox.max().x(), &maxBox.max().y());
-    Containers::Array<char> srcData{NoInit, std::size_t(maxBox.size().product())};
+    Containers::Array<char> srcData{NoInit, std::size_t(maxSize.product())};
     const Containers::StridedArrayView2D<const char> src{srcData, {
-        std::size_t(maxBox.sizeY()),
-        std::size_t(maxBox.sizeX())
+        std::size_t(maxSize.y()),
+        std::size_t(maxSize.x())
     }};
 
     /* Render all glyphs to the atlas and create a glyph map */
@@ -202,7 +203,7 @@ bool StbTrueTypeFont::doFillGlyphCache(AbstractGlyphCache& cache, const Containe
         /* Render the glyph */
         Range2Di box;
         stbtt_GetGlyphBitmapBox(&_font->info, glyphIndices[i], _font->scale, _font->scale, &box.min().x(), &box.min().y(), &box.max().x(), &box.max().y());
-        stbtt_MakeGlyphBitmap(&_font->info, reinterpret_cast<unsigned char*>(srcData.data()), box.sizeX(), box.sizeY(), maxBox.sizeX(), _font->scale, _font->scale, glyphIndices[i]);
+        stbtt_MakeGlyphBitmap(&_font->info, reinterpret_cast<unsigned char*>(srcData.data()), box.sizeX(), box.sizeY(), maxSize.x(), _font->scale, _font->scale, glyphIndices[i]);
 
         /* Copy the rendered glyph Y-flipped to the destination image */
         const Containers::Size2D glyphSize{std::size_t(glyphs[i].size.y()),
