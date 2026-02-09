@@ -508,10 +508,51 @@ template<UnsignedInt dimensions> Containers::Optional<Containers::Array<char>> c
 }
 
 void BasisImageConverter::initialize() {
+    /* Since Basis version 1.50, basisu_encoder_init() spends half a century
+       populating tables for ASTC HDR encoding, especially on debug builds.
+       There's unfortunately no way to skip that operation if ASTC HDR isn't
+       used, and having that done in the plugin initialize() routine means
+       wasting time every time the plugin is loaded, even if it doesn't get
+       actually used (which is the case especially in static builds, but also
+       in various tests such as for GltfSceneConverter, where it's used only in
+       one or two cases out of 200+ tests.)
+
+       Instead, on version 1.50+, basisu_encoder_init() is called
+       unconditionally in the constructor below, i.e. the first time the plugin
+       gets actually instantiated. The basisu_encoder_init() internally has a
+       (mutex-guarded) global variable that returns early if the library is
+       already initialized, so calling it multiple times shouldn't cause any
+       inefficiencies. (And conversely, if I'd want to reference count the
+       initialization like is done in FreeTypeFont for example, I'd have to use
+       -- ugh -- a global variable and a mutex here as well, not just a
+       thread-local counter.)
+
+       On versions before 1.50, there's no time wasted during initialization,
+       and on versions before 1.16 the initialization isn't guarded by a mutex
+       and thus there it's better to do that in initialize() instead so users
+       only need to guard manager initialization / plugin loading with a lock
+       rather than every plugin instantiation. */
+    /** @todo Here is still an issue where using BasisImageConverter from
+        multiple plugin managers could lead to crashes, as finalize() called by
+        one manager could cause the global state used by other managers to be
+        deinitialized. This is less of a problem with 1.50+, as instantiating
+        the plugin next time would perform an initialization again because it's
+        done in the constructor, however it's still possible that a plugin
+        manager gets destructed by one thread while another thread uses it.
+
+        To fix this I'd have to really add a mutex-guarded global reference
+        counter. However, because I suspect the global state and multithreading
+        doesn't play well together if OpenCL is involved -- a single OpenCL
+        context likely doesn't allow itself to be used from multiple threads,
+        yet that's exactly what's done there -- I feel like making *my side*
+        thread-safe in all scenarios would be already caring a lot more than
+        the Basis authors themselves, and thus a waste of time. */
+    #if BASISU_LIB_VERSION < 150
     #if BASISU_LIB_VERSION >= 116
     basisu::basisu_encoder_init(true);
     #else
     basisu::basisu_encoder_init();
+    #endif
     #endif
 }
 
@@ -525,6 +566,11 @@ void BasisImageConverter::finalize() {
 BasisImageConverter::BasisImageConverter(Format format): _format{format} {
     /* Passing an invalid Format enum is user error, we'll assert on that in
        the convertToData() function */
+
+    /* See initialize() for an explanation of why this is done here */
+    #if BASISU_LIB_VERSION >= 150
+    basisu::basisu_encoder_init(true);
+    #endif
 }
 #endif /* LCOV_EXCL_STOP */
 
@@ -533,6 +579,11 @@ BasisImageConverter::BasisImageConverter(PluginManager::AbstractManager& manager
         _format = Format::Ktx;
     else
         _format = {}; /* Overridable by openFile() */
+
+    /* See initialize() for an explanation of why this is done here */
+    #if BASISU_LIB_VERSION >= 150
+    basisu::basisu_encoder_init(true);
+    #endif
 }
 
 ImageConverterFeatures BasisImageConverter::doFeatures() const {
