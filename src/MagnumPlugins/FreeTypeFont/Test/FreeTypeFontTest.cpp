@@ -47,6 +47,7 @@
 #include FT_FREETYPE_H /* FREETYPE_MAJOR, FREETYPE_MINOR */
 
 #ifndef CORRADE_TARGET_EMSCRIPTEN
+#include <functional> /* std::ref() */
 #include <thread>
 #endif
 
