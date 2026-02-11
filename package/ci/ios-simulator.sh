@@ -92,6 +92,13 @@ cmake .. \
     -DCMAKE_OSX_SYSROOT=/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator.sdk \
     -DCMAKE_OSX_ARCHITECTURES="x86_64" \
     -DCMAKE_INSTALL_PREFIX=$HOME/deps \
+    `# Make libc++ remove transitive includes, both for faster build times` \
+    `# and to detect if we're missing a transitive include. Works with` \
+    `# libc++ 16+, which is used by Xcode 15 (i.e., will get used on the` \
+    `# next CircleCI executor update). Not doing this for the Corrade,` \
+    `# Magnum etc. builds, as that'd only add extra friction with no` \
+    `# possibility of fixing from here.` \
+    -DCMAKE_CXX_FLAGS="-D_LIBCPP_REMOVE_TRANSITIVE_INCLUDES" \
     -DCORRADE_RC_EXECUTABLE=$HOME/deps-native/bin/corrade-rc \
     -DMAGNUM_WITH_ASSIMPIMPORTER=OFF \
     -DMAGNUM_WITH_ASTCIMPORTER=ON \

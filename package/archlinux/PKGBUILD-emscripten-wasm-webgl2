@@ -52,7 +52,10 @@ build() {
     cmake .. \
         -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_INSTALL_PREFIX=/usr/lib/emscripten/system \
-        -DCMAKE_CXX_FLAGS="-DBASISD_SUPPORT_BC7=0 -DBASISD_SUPPORT_ATC=0 -DBASISD_SUPPORT_FXT1=0 -DBASISD_SUPPORT_PVRTC2=0" \
+        `# Make libc++ remove transitive includes, both for faster build` \
+        `# times and to detect if we're missing a transitive include. Works` \
+        `# with libc++ 16+.` \
+        -DCMAKE_CXX_FLAGS="-DBASISD_SUPPORT_BC7=0 -DBASISD_SUPPORT_ATC=0 -DBASISD_SUPPORT_FXT1=0 -DBASISD_SUPPORT_PVRTC2=0 -D_LIBCPP_REMOVE_TRANSITIVE_INCLUDES" \
         -DCMAKE_COLOR_DIAGNOSTICS=ON \
         -DBASIS_UNIVERSAL_DIR=/opt/basis-universal \
         -DMAGNUM_WITH_ASTCIMPORTER=ON \
