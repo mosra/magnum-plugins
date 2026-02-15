@@ -242,15 +242,15 @@ ensure that the plugin isn't loaded from multiple threads at the same time, or
 loaded while being already used from another thread.
 
 In particular, in a multi-threaded setup with Basis Universal before 1.16,
-instead of using @ref PluginManager::Manager::loadAndInstantiate() to load and
-instantiate the plugin at once, it's recommended to first call
-@relativeref{PluginManager::Manager,load()} guarded by a lock, which performs
-all the non-thread-safe setup inside Basis. Then, you can freely call
-@relativeref{PluginManager::Manager,instantiate()} without any locking as that
-doesn't perform any mutable global state access anymore. With a static build of
-the @ref BasisImageConverter plugin, the @ref PluginManager::Manager
-construction has to be guarded instead of
-@relativeref{PluginManager::Manager,load()}.
+instead of using @relativeref{Corrade,PluginManager::Manager::loadAndInstantiate()}
+to load and instantiate the plugin at once, it's recommended to first call
+@relativeref{Corrade::PluginManager::Manager,load()} guarded by a lock, which
+performs all the non-thread-safe setup inside Basis. Then, you can freely call
+@relativeref{Corrade::PluginManager::Manager,instantiate()} without any locking
+as that doesn't perform any mutable global state access anymore. With a static
+build of the @ref BasisImageConverter plugin, the
+@relativeref{Corrade,PluginManager::Manager} construction has to be guarded
+instead of @relativeref{Corrade::PluginManager::Manager,load()}.
 
 A similar issue happens with plugin unloading (or manager destruction), you
 have to guard it in order to not have the global Basis state deinitialized
