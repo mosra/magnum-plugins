@@ -221,6 +221,8 @@ namespace Magnum {
 -   @relativeref{Trade,PrimitiveImporter} now handles configuration errors such
     as invalid circle segment count gracefully instead of passing the value
     through and causing an assertion inside the @ref Primitives library
+-   Updated @relativeref{Text,StbTrueTypeFont} to version 1.26 of
+    `stb_truetype` (see [mosra/magnum-plugins#149](https://github.com/mosra/magnum-plugins/pull/149))
 
 @subsection changelog-plugins-latest-buildsystem Build system
 
