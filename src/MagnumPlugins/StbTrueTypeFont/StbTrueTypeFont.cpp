@@ -37,6 +37,7 @@
 #include <Magnum/Math/Range.h>
 #include <Magnum/Text/AbstractGlyphCache.h>
 #include <Magnum/Text/AbstractShaper.h>
+#include <Magnum/Text/Feature.h>
 #include <Magnum/TextureTools/Atlas.h>
 
 #define STB_TRUETYPE_IMPLEMENTATION
@@ -232,7 +233,7 @@ Containers::Pointer<AbstractShaper> StbTrueTypeFont::doCreateShaper() {
     struct Shaper: AbstractShaper {
         using AbstractShaper::AbstractShaper;
 
-        UnsignedInt doShape(const Containers::StringView textFull, const UnsignedInt begin, const UnsignedInt end, Containers::ArrayView<const FeatureRange>) override {
+        UnsignedInt doShape(const Containers::StringView textFull, const UnsignedInt begin, const UnsignedInt end, const Containers::ArrayView<const FeatureRange> features) override {
             const stbtt_fontinfo stbFont = static_cast<const StbTrueTypeFont&>(font())._font->info;
             const Containers::StringView text = textFull.slice(begin, end == ~UnsignedInt{} ? textFull.size() : end);
 
@@ -247,6 +248,25 @@ Containers::Pointer<AbstractShaper> StbTrueTypeFont::doCreateShaper() {
                 i = codepointNext.second();
             }
 
+            /* Enable kerning by default, but allow it to be toggled for the
+               whole text. Take into account just features that toggle it for
+               the whole text, ignore the rest. */
+            /** @todo support enabling kerning just for parts by first filling
+                a mask of *bytes* where it's enabled, and then flagging each
+                *character* as "kern or not kern" depending on whether bytes in
+                it have it enabled or not; needs first checking what exactly
+                HarfBuzz does for consistency, in particular when kerning is
+                disabled for just some bytes of a UTF-8 character or what
+                should it do when it's enabled just for one character in a
+                pair */
+            _kern = true;
+            for(const FeatureRange& feature: features) {
+                /** @todo drop the Text:: prefix once the deprecated
+                    AbstractFont::Feature alias is gone */
+                if(feature.begin() == 0 && feature.end() == ~UnsignedInt{} && feature.feature() == Text::Feature::Kerning)
+                    _kern = feature.isEnabled();
+            }
+
             return _glyphs.size();
         }
 
@@ -257,6 +277,13 @@ Containers::Pointer<AbstractShaper> StbTrueTypeFont::doCreateShaper() {
             const Font& fontData = *static_cast<const StbTrueTypeFont&>(font())._font;
 
             for(std::size_t i = 0; i != _glyphs.size(); ++i) {
+                /* If kerning is enabled for the whole text and we're not at
+                   the first char, adjust advance for the previous character
+                   based on the previous and curent char */
+                /** @todo support enabling kerning just for parts, see above */
+                if(_kern && i != 0)
+                    advances[i - 1].x() += stbtt_GetGlyphKernAdvance(&fontData.info, _glyphs[i - 1].first(), _glyphs[i].first())*fontData.scale;
+
                 /* There's no glyph offsets in addition to advances. The last
                    argument of stbtt_GetGlyphHMetrics() is leftSideBearing, but
                    that, once rounded, is returned from
@@ -275,6 +302,7 @@ Containers::Pointer<AbstractShaper> StbTrueTypeFont::doCreateShaper() {
         }
 
         Containers::Array<Containers::Pair<UnsignedInt, UnsignedInt>> _glyphs;
+        bool _kern;
     };
 
     return Containers::pointer<Shaper>(*this);

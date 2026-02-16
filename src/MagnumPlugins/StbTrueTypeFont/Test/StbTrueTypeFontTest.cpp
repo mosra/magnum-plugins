@@ -24,6 +24,7 @@
     DEALINGS IN THE SOFTWARE.
 */
 
+#include <Corrade/Containers/Array.h>
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/StridedArrayView.h>
 #include <Corrade/Containers/String.h>
@@ -39,6 +40,7 @@
 #include <Magnum/Text/AbstractFont.h>
 #include <Magnum/Text/AbstractGlyphCache.h>
 #include <Magnum/Text/AbstractShaper.h>
+#include <Magnum/Text/Feature.h>
 #include <Magnum/Trade/AbstractImporter.h>
 
 #include "configure.h"
@@ -58,6 +60,8 @@ struct StbTrueTypeFontTest: TestSuite::Tester {
     void shapeEmpty();
     void shapeGlyphOffset();
     void shapeMultiple();
+
+    void kerning();
 
     void fillGlyphCache();
     void fillGlyphCacheIncremental();
@@ -79,11 +83,19 @@ const struct {
     const char* string;
     UnsignedInt eGlyphId, eGlyphClusterExtraSize;
     UnsignedInt begin, end;
+    Float advanceAfterW, advanceAfterE;
 } ShapeData[]{
-    {"", "Weave", 72, 0, 0, ~UnsignedInt{}},
-    {"substring", "haWeavefefe", 72, 0, 2, 7},
-    {"UTF-8", "Wěave", 220, 1, 0, ~UnsignedInt{}},
-    {"UTF-8 substring", "haWěavefefe", 220, 1, 2, 8},
+    {"", "Weave", 72, 0, 0, ~UnsignedInt{},
+        18.6667f, 9.44966f},
+    {"substring", "haWeavefefe", 72, 0, 2, 7,
+        18.6667f, 9.44966f},
+    /* Width of `ě` isn't really any different from `e`, but given that the
+       advance is the same as with the last `e`, it looks like the font only
+       provides kerning for basic Latin and not all characters */
+    {"UTF-8", "Wěave", 220, 1, 0, ~UnsignedInt{},
+        19.0694f, 9.55705f},
+    {"UTF-8 substring", "haWěavefefe", 220, 1, 2, 8,
+        19.0694f, 9.55705f},
 };
 
 const struct {
@@ -92,6 +104,74 @@ const struct {
 } ShapeMultipleData[]{
     {"new shaper every time", false},
     {"reuse previous shaper", false},
+};
+
+const struct {
+    const char* name;
+    Containers::Array<FeatureRange> features;
+    Float advances[4];
+} KerningData[]{
+    {"none", {}, {
+        18.7293f,
+        9.45861f,
+        9.15436f,
+        9.55705f
+    }},
+    {"no-op", {InPlaceInit, {
+        /* This one is enabled by default */
+        Feature::Kerning,
+        /* This one doesn't do anything */
+        {Feature::SmallCapitals, false},
+    }}, {
+        /* Same as above, as kerning is enabled by default */
+        18.7293f,
+        9.45861f,
+        9.15436f,
+        9.55705f
+    }},
+    {"kerning disabled and then enabled again", {InPlaceInit, {
+        {Feature::Kerning, false},
+        {Feature::Kerning, true}
+    }}, {
+        /* Should be the same as "none" */
+        18.7293f,
+        9.45861f,
+        9.15436f,
+        9.55705f
+    }},
+    {"kerning disabled", {InPlaceInit, {
+        {Feature::Kerning, false}
+    }}, {
+        19.0694f,
+        9.45861f, /* same as with kerning, HarfBuzz also does no adjustment here */
+        9.27069f,
+        9.55705f  /* same as with kerning, HarfBuzz also does no adjustment here */
+    }},
+    {"kerning enabled and then disabled again", {InPlaceInit, {
+        {Feature::Kerning, true},
+        {Feature::Kerning, false},
+    }}, {
+        /* Should be the same as "kerning disabled" */
+        19.0694f,
+        9.45861f,
+        9.27069f,
+        9.55705f
+    }},
+    /** @todo update once enabling kerning for parts of the string is supported
+        (needs to handle UTF-8 and needs to be consistent with HB, particularly
+        when kerning gets disabled for just some bytes of a UTF-8 character, or
+        what should it do when it's enabled just for one character in a
+        pair) */
+    {"kerning disabled for a part", {InPlaceInit, {
+        {Feature::Kerning, false, 2, 4}
+    }}, {
+        /* Currently is the same as "none", but shouldn't be when
+           implemented */
+        18.7293f,
+        9.45861f,
+        9.15436f,
+        9.55705f
+    }},
 };
 
 const struct {
@@ -126,6 +206,9 @@ StbTrueTypeFontTest::StbTrueTypeFontTest() {
 
     addInstancedTests({&StbTrueTypeFontTest::shapeMultiple},
         Containers::arraySize(ShapeMultipleData));
+
+    addInstancedTests({&StbTrueTypeFontTest::kerning},
+        Containers::arraySize(KerningData));
 
     addInstancedTests({&StbTrueTypeFontTest::fillGlyphCache},
         Containers::arraySize(FillGlyphCacheData));
@@ -249,10 +332,10 @@ void StbTrueTypeFontTest::shape() {
         {}, {}, {}, {}, {}
     }), TestSuite::Compare::Container);
     CORRADE_COMPARE_AS(Containers::arrayView(advances), Containers::arrayView<Vector2>({
-        {19.0694f, 0.0f},
-        {9.55705f, 0.0f},
+        {data.advanceAfterW, 0.0f},
+        {data.advanceAfterE, 0.0f},
         {9.45861f, 0.0f},
-        {9.27069f, 0.0f},
+        {9.15436f, 0.0f},
         {9.55705f, 0.0f}
     }), TestSuite::Compare::Container);
     CORRADE_COMPARE_AS(Containers::arrayView(clusters), Containers::arrayView({
@@ -380,7 +463,7 @@ void StbTrueTypeFontTest::shapeMultiple() {
             {}, {},
         }), TestSuite::Compare::Container);
         CORRADE_COMPARE_AS(Containers::arrayView(advances), Containers::arrayView<Vector2>({
-            {19.0694f, 0.0f},
+            {18.6667f, 0.0f},
             {9.55705f, 0.0f}
         }), TestSuite::Compare::Container);
         CORRADE_COMPARE_AS(Containers::arrayView(clusters), Containers::arrayView({
@@ -415,7 +498,7 @@ void StbTrueTypeFontTest::shapeMultiple() {
             {19.0694f, 0.0f},
             {9.55705f, 0.0f},
             {9.45861f, 0.0f},
-            {9.27069f, 0.0f},
+            {9.15436f, 0.0f},
             {9.55705f, 0.0f}
         }), TestSuite::Compare::Container);
         CORRADE_COMPARE_AS(Containers::arrayView(clusters), Containers::arrayView({
@@ -449,13 +532,44 @@ void StbTrueTypeFontTest::shapeMultiple() {
         }), TestSuite::Compare::Container);
         CORRADE_COMPARE_AS(Containers::arrayView(advances), Containers::arrayView<Vector2>({
             {9.45861f, 0.0f},
-            {9.27069f, 0.0f},
+            {9.15436f, 0.0f},
             {9.55705f, 0.0f}
         }), TestSuite::Compare::Container);
         CORRADE_COMPARE_AS(Containers::arrayView(clusters), Containers::arrayView({
             0u, 1u, 2u
         }), TestSuite::Compare::Container);
     }
+}
+
+void StbTrueTypeFontTest::kerning() {
+    auto&& data = KerningData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    Containers::Pointer<AbstractFont> font = _manager.instantiate("StbTrueTypeFont");
+    CORRADE_VERIFY(font->openFile(Utility::Path::join(FREETYPEFONT_TEST_DIR, "Oxygen.ttf"), 16.0f));
+
+    Containers::Pointer<AbstractShaper> shaper = font->createShaper();
+
+    CORRADE_COMPARE(shaper->shape("Wave", data.features), 4);
+
+    /* Verify the shaped glyph IDs match expectations, other IDs would have
+       vastly different advances */
+    UnsignedInt ids[4];
+    Vector2 offsets[4];
+    Vector2 advances[4];
+    shaper->glyphIdsInto(ids);
+    shaper->glyphOffsetsAdvancesInto(offsets, advances);
+    CORRADE_COMPARE_AS(Containers::arrayView(ids), Containers::arrayView({
+        58u,    /* 'W' */
+        68u,    /* 'a' */
+        89u,    /* 'v' */
+        72u,    /* 'e' */
+    }), TestSuite::Compare::Container);
+
+    /* Assuming Y advance is always 0 */
+    CORRADE_COMPARE_AS(Containers::stridedArrayView(advances).slice(&Vector2::x),
+        Containers::stridedArrayView(data.advances),
+        TestSuite::Compare::Container);
 }
 
 void StbTrueTypeFontTest::fillGlyphCache() {

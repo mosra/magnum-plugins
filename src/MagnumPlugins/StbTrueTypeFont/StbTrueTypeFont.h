@@ -151,9 +151,23 @@ names or look up glyphs by name.
 Hinting is not implemented in stb_truetype. Compared to @ref FreeTypeFont or
 @ref HarfBuzzFont you get larger glyphs with a more blurry look.
 
-While stb_truetype provides access to font kerning tables, the plugin doesn't
-use them at the moment. The feature list passed to @ref AbstractShaper::shape()
-is ignored.
+@subsection Text-StbTrueTypeFont-behavior-features Typographic features
+
+The stb_truetype library provides access to font kerning tables, and the plugin
+uses them by default. You can control whether kerning is used when shaping a
+particular piece of text by passing @ref Feature::Kerning to the feature list
+in @ref AbstractShaper::shape(). Currently it's only possible to toggle it for
+the whole text, i.e. by using the @ref FeatureRange::FeatureRange(Feature, UnsignedInt)
+constructor, not for individual characters.
+
+Note that, compared to TTF, stb_truetype support for OTF kerning tables is
+limited --- in particular, it only parses either the KERN table or the
+[GPOS table with lookup type 2, Pair Adjustment](https://learn.microsoft.com/en-us/typography/opentype/spec/gpos#PP).
+Anything else, such as files with [GPOS lookup type 9, Positioning Extension](https://learn.microsoft.com/en-us/typography/opentype/spec/gpos#EP),
+which is used instead of Pair Adjustment if the font has a lot of positioning
+information, will behave as if no kerning was enabled. In that case you may
+want to either switch to a TTF version of the file, if available, or use the
+@ref HarfBuzzFont plugin that supports the full OTF feature set.
 */
 class MAGNUM_STBTRUETYPEFONT_EXPORT StbTrueTypeFont: public AbstractFont {
     public:
