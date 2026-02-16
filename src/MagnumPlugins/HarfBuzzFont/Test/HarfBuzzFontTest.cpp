@@ -93,12 +93,18 @@ const struct {
         #endif
         8.25f},
     /* `Wě` has slightly different spacing than `We` but there it doesn't get
-       different between versions at least */
-    {"UTF-8", "Wěave", 220, 1, 0, ~UnsignedInt{}, 16.6562f, 8.34375f},
-    {"UTF-8 substring", "haWěavefefe", 220, 1, 2, 8, 16.6562f, 8.34375f},
+       different between versions at least. Width of `ě` isn't really any
+       different from `e`, but given that the advance is the same as with the
+       last `e`, it looks like the font only provides kerning for basic Latin
+       and not all characters */
+    {"UTF-8", "Wěave", 220, 1, 0, ~UnsignedInt{},
+        16.6562f, 8.34375f},
+    {"UTF-8 substring", "haWěavefefe", 220, 1, 2, 8,
+        16.6562f, 8.34375f},
     /* Without the literal split it says "Unicode sequence out of range". Wow,
        who designed this mess?! That's even worse than octal literals. */
-    {"UTF-8, decomposed", "We\xcc\x8c" "ave", 220, 2, 0, ~UnsignedInt{}, 16.6562f, 8.34375f},
+    {"UTF-8, decomposed", "We\xcc\x8c" "ave", 220, 2, 0, ~UnsignedInt{},
+        16.6562f, 8.34375f},
     /* Decomposing to actual `e` and `ˇ` tested in shapeGlyphOffset() */
 };
 
