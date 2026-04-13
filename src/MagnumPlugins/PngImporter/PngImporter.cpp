@@ -147,10 +147,9 @@ Containers::Optional<ImageData2D> PngImporter::doImage2D(UnsignedInt, UnsignedIn
     /* Image channels and bit depth */
     png_uint_32 bits = png_get_bit_depth(file, info);
     png_uint_32 channels = png_get_channels(file, info);
-    png_uint_32 colorType = png_get_color_type(file, info);
 
     /* Check image format, convert if necessary */
-    switch(colorType) {
+    switch(png_get_color_type(file, info)) {
         /* Types that can be used without conversion */
         case PNG_COLOR_TYPE_GRAY:
             CORRADE_INTERNAL_ASSERT(channels == 1);
@@ -182,7 +181,6 @@ Containers::Optional<ImageData2D> PngImporter::doImage2D(UnsignedInt, UnsignedIn
                here (which can be < 8), expecting the png_set_*() function to
                give back 8-bit channels */
             bits = 8;
-            colorType = PNG_COLOR_TYPE_RGB;
             channels = 3;
             break;
 
@@ -190,7 +188,7 @@ Containers::Optional<ImageData2D> PngImporter::doImage2D(UnsignedInt, UnsignedIn
         /* We have covered all cases above, but just in case this happens,
            provide a clear message */
         default:
-            CORRADE_ASSERT_UNREACHABLE("Trade::PngImporter::image2D(): unsupported color type" << colorType, );
+            CORRADE_ASSERT_UNREACHABLE("Trade::PngImporter::image2D(): unsupported color type" << png_get_color_type(file, info), );
         /* LCOV_EXCL_STOP */
     }
 
@@ -198,11 +196,6 @@ Containers::Optional<ImageData2D> PngImporter::doImage2D(UnsignedInt, UnsignedIn
     if(png_get_valid(file, info, PNG_INFO_tRNS)) {
         png_set_tRNS_to_alpha(file);
         channels += 1;
-        if(channels == 2)
-            colorType = PNG_COLOR_TYPE_GRAY_ALPHA;
-        else if(channels == 4)
-            colorType = PNG_COLOR_TYPE_RGBA;
-        else CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
         /* png_get_bit_depth(file, info); would return the original value
            here (which can be < 8), expecting the png_set_*() function to give
            back 8-bit channels */
@@ -325,23 +318,21 @@ Containers::Optional<ImageData2D> PngImporter::doImage2D(UnsignedInt, UnsignedIn
     /* 8-bit images */
     PixelFormat format;
     if(bits == 8) {
-        switch(colorType) {
-            case PNG_COLOR_TYPE_GRAY: format = PixelFormat::R8Unorm; break;
-            case PNG_COLOR_TYPE_GRAY_ALPHA:
-                                      format = PixelFormat::RG8Unorm; break;
-            case PNG_COLOR_TYPE_RGB:  format = PixelFormat::RGB8Unorm; break;
-            case PNG_COLOR_TYPE_RGBA: format = PixelFormat::RGBA8Unorm; break;
+        switch(channels) {
+            case 1: format = PixelFormat::R8Unorm; break;
+            case 2: format = PixelFormat::RG8Unorm; break;
+            case 3: format = PixelFormat::RGB8Unorm; break;
+            case 4: format = PixelFormat::RGBA8Unorm; break;
             default: CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
         }
 
     /* 16-bit images */
     } else if(bits == 16) {
-        switch(colorType) {
-            case PNG_COLOR_TYPE_GRAY: format = PixelFormat::R16Unorm; break;
-            case PNG_COLOR_TYPE_GRAY_ALPHA:
-                                      format = PixelFormat::RG16Unorm; break;
-            case PNG_COLOR_TYPE_RGB:  format = PixelFormat::RGB16Unorm; break;
-            case PNG_COLOR_TYPE_RGBA: format = PixelFormat::RGBA16Unorm; break;
+        switch(channels) {
+            case 1: format = PixelFormat::R16Unorm; break;
+            case 2: format = PixelFormat::RG16Unorm; break;
+            case 3: format = PixelFormat::RGB16Unorm; break;
+            case 4: format = PixelFormat::RGBA16Unorm; break;
             default: CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
         }
 
