@@ -1762,10 +1762,7 @@ void BasisImporterTest::flipUncompressed() {
     }
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(image->format(), data.expectedFormat);
-    if(data.message)
-        CORRADE_COMPARE(out, data.message);
-    else
-        CORRADE_COMPARE(out, "");
+    CORRADE_COMPARE(out, data.message);
 
     /* The images should then be flipped compared to each other, or if flip was
        not made, identical */
@@ -1889,10 +1886,7 @@ void BasisImporterTest::flip() {
     }
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(image->compressedFormat(), data.expectedFormat);
-    if(data.message)
-        CORRADE_COMPARE(out, data.message);
-    else
-        CORRADE_COMPARE(out, "");
+    CORRADE_COMPARE(out, data.message);
 
     /* The images, once decoded, should then be flipped compared to each other,
        or if flip was not possible, identical */

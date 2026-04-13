@@ -692,10 +692,7 @@ void StbImageImporterTest::forceBitDepth8() {
         (ImageView2D{PixelStorage{}.setAlignment(1), data.format, data.size, data.data}),
         /* To account for rounding differences between stb_image and libpng */
         (DebugTools::CompareImage{1.0f, 0.67f}));
-    if(data.message)
-        CORRADE_COMPARE(out, data.message);
-    else
-        CORRADE_COMPARE(out, "");
+    CORRADE_COMPARE(out, data.message);
 }
 
 void StbImageImporterTest::forceBitDepth16() {
@@ -722,10 +719,7 @@ void StbImageImporterTest::forceBitDepth16() {
     CORRADE_COMPARE_AS(*image,
         (ImageView2D{PixelStorage{}.setAlignment(1), data.format, data.size, data.data}),
         DebugTools::CompareImage);
-    if(data.message)
-        CORRADE_COMPARE(out, data.message);
-    else
-        CORRADE_COMPARE(out, "");
+    CORRADE_COMPARE(out, data.message);
 }
 
 void StbImageImporterTest::forceBitDepth32() {
@@ -753,10 +747,7 @@ void StbImageImporterTest::forceBitDepth32() {
         (ImageView2D{PixelStorage{}.setAlignment(1), data.format, data.size, data.data}),
         /* Fuzzy comparison for floats */
         (DebugTools::CompareImage{1.0e-6f, 1.0e-6f}));
-    if(data.message)
-        CORRADE_COMPARE(out, data.message);
-    else
-        CORRADE_COMPARE(out, "");
+    CORRADE_COMPARE(out, data.message);
 }
 
 void StbImageImporterTest::forceBitDepthInvalid() {

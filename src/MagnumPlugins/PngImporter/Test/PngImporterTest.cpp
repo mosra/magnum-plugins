@@ -734,10 +734,7 @@ void PngImporterTest::forceBitDepth8() {
     CORRADE_COMPARE_AS(*image,
         (ImageView2D{PixelStorage{}.setAlignment(1), data.format, data.size, data.data}),
         DebugTools::CompareImage);
-    if(data.message)
-        CORRADE_COMPARE(out, data.message);
-    else
-        CORRADE_COMPARE(out, "");
+    CORRADE_COMPARE(out, data.message);
 }
 
 void PngImporterTest::forceBitDepth16() {
@@ -764,10 +761,7 @@ void PngImporterTest::forceBitDepth16() {
     CORRADE_COMPARE_AS(*image,
         (ImageView2D{PixelStorage{}.setAlignment(1), data.format, data.size, data.data}),
         DebugTools::CompareImage);
-    if(data.message)
-        CORRADE_COMPARE(out, data.message);
-    else
-        CORRADE_COMPARE(out, "");
+    CORRADE_COMPARE(out, data.message);
 }
 
 void PngImporterTest::forceBitDepthInvalid() {

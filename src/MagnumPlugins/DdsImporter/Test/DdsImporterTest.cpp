@@ -1551,10 +1551,7 @@ void DdsImporterTest::compressedFormatFlip() {
         image = importer->image2D(0);
         CORRADE_VERIFY(image);
     }
-    if(data.message)
-        CORRADE_COMPARE(out, data.message);
-    else
-        CORRADE_COMPARE(out, "");
+    CORRADE_COMPARE(out, data.message);
 
     /* The images, once decoded, should then be flipped compared to each other,
        or if flip was not made or not possible, identical */
@@ -1620,10 +1617,7 @@ void DdsImporterTest::compressedFormatFlip3D() {
         image = importer->image3D(0);
         CORRADE_VERIFY(image);
     }
-    if(data.message)
-        CORRADE_COMPARE(out, data.message);
-    else
-        CORRADE_COMPARE(out, "");
+    CORRADE_COMPARE(out, data.message);
 
     /* The images, once decoded, should then be flipped compared to each other,
        or if flip was not made or not possible, identical */
