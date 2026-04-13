@@ -169,6 +169,9 @@ Containers::Optional<ImageData2D> StbImageImporter::doImage2D(const UnsignedInt 
     Vector2i size;
     Int components;
 
+    /* If forceChannelCount or forceBitDepth is outside of the allowed values,
+       stb_image itself produces an error (a rather cryptic one, tho) so we
+       don't have to do the same */
     const Int forceChannelCount = configuration().value<Int>("forceChannelCount");
     const Int forceBitDepth = configuration().value<Int>("forceBitDepth");
     const bool isHdr = stbi_is_hdr_from_memory(reinterpret_cast<const stbi_uc*>(_in->data.data()), _in->data.size());

@@ -181,11 +181,11 @@ void JpegImporterTest::cmyk() {
 }
 
 void JpegImporterTest::openMemory() {
-    /* same as gray() except that it uses openData() & openMemory() instead of
-       openFile() to test data copying on import */
-
     auto&& data = OpenMemoryData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
+
+    /* same as gray() except that it uses openData() & openMemory() instead of
+       openFile() to test data copying on import */
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("JpegImporter");
     Containers::Optional<Containers::Array<char>> memory = Utility::Path::read(Utility::Path::join(JPEGIMPORTER_TEST_DIR, "gray.jpg"));

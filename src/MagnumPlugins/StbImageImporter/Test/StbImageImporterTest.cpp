@@ -701,6 +701,9 @@ void StbImageImporterTest::forceBitDepth16() {
     auto&& data = ForceBitDepth16Data[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
+    /* Like forceBitDepth8(), just using a different type for the expected
+       data */
+
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("PngImporter");
     importer->configuration().setValue("forceBitDepth", 16);
     if(data.verbose) importer->addFlags(ImporterFlag::Verbose);
@@ -726,6 +729,9 @@ void StbImageImporterTest::forceBitDepth16() {
 void StbImageImporterTest::forceBitDepth32() {
     auto&& data = ForceBitDepth32Data[testCaseInstanceId()];
     setTestCaseDescription(data.name);
+
+    /* Like forceBitDepth8(), just using a different type for the expected
+       data */
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("PngImporter");
     importer->configuration().setValue("forceBitDepth", 32);
@@ -763,11 +769,11 @@ void StbImageImporterTest::forceBitDepthInvalid() {
 }
 
 void StbImageImporterTest::openMemory() {
-    /* Same as grayPng() except that it uses openData() & openMemory() instead
-       of openFile() to test data copying on import */
-
     auto&& data = OpenMemoryData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
+
+    /* Same as grayPng() except that it uses openData() & openMemory() instead
+       of openFile() to test data copying on import */
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StbImageImporter");
     Containers::Optional<Containers::Array<char>> memory = Utility::Path::read(Utility::Path::join(PNGIMPORTER_TEST_DIR, "gray.png"));

@@ -747,6 +747,9 @@ void PngImporterTest::forceBitDepth16() {
     auto&& data = ForceBitDepth16Data[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
+    /* Like forceBitDepth8(), just using a different type for the expected
+       data */
+
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("PngImporter");
     importer->configuration().setValue("forceBitDepth", 16);
     if(data.verbose) importer->addFlags(ImporterFlag::Verbose);
@@ -782,11 +785,11 @@ void PngImporterTest::forceBitDepthInvalid() {
 }
 
 void PngImporterTest::openMemory() {
-    /* Same as gray16() except that it uses openData() & openMemory() instead
-       of openFile() to test data copying on import */
-
     auto&& data = OpenMemoryData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
+
+    /* Same as gray16() except that it uses openData() & openMemory() instead
+       of openFile() to test data copying on import */
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("PngImporter");
     Containers::Optional<Containers::Array<char>> memory = Utility::Path::read(Utility::Path::join(PNGIMPORTER_TEST_DIR, "gray16.png"));
