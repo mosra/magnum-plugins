@@ -676,7 +676,8 @@ void StbImageImporterTest::forceBitDepth8() {
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("PngImporter");
     importer->configuration().setValue("forceBitDepth", 8);
-    if(data.verbose) importer->addFlags(ImporterFlag::Verbose);
+    if(data.verbose)
+        importer->addFlags(ImporterFlag::Verbose);
 
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(PNGIMPORTER_TEST_DIR, data.filename)));
 
@@ -706,7 +707,8 @@ void StbImageImporterTest::forceBitDepth16() {
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("PngImporter");
     importer->configuration().setValue("forceBitDepth", 16);
-    if(data.verbose) importer->addFlags(ImporterFlag::Verbose);
+    if(data.verbose)
+        importer->addFlags(ImporterFlag::Verbose);
 
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(PNGIMPORTER_TEST_DIR, data.filename)));
 
@@ -735,7 +737,8 @@ void StbImageImporterTest::forceBitDepth32() {
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("PngImporter");
     importer->configuration().setValue("forceBitDepth", 32);
-    if(data.verbose) importer->addFlags(ImporterFlag::Verbose);
+    if(data.verbose)
+        importer->addFlags(ImporterFlag::Verbose);
 
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(PNGIMPORTER_TEST_DIR, data.filename)));
 

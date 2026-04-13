@@ -610,7 +610,8 @@ void PngImporterTest::rgba() {
         CORRADE_VERIFY(image);
     }
 
-    if(!image) CORRADE_SKIP("Loading failed, skipping the rest.");
+    if(!image)
+        CORRADE_SKIP("Loading failed, skipping the rest.");
 
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
     CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Unorm);
@@ -688,7 +689,8 @@ void PngImporterTest::rgbaBinaryAlpha() {
         CORRADE_VERIFY(image);
     }
 
-    if(!image) CORRADE_SKIP("Loading failed, skipping the rest.");
+    if(!image)
+        CORRADE_SKIP("Loading failed, skipping the rest.");
 
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
     CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Unorm);
@@ -723,7 +725,8 @@ void PngImporterTest::forceBitDepth8() {
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("PngImporter");
     importer->configuration().setValue("forceBitDepth", 8);
-    if(data.verbose) importer->addFlags(ImporterFlag::Verbose);
+    if(data.verbose)
+        importer->addFlags(ImporterFlag::Verbose);
 
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(PNGIMPORTER_TEST_DIR, data.filename)));
 
@@ -752,7 +755,8 @@ void PngImporterTest::forceBitDepth16() {
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("PngImporter");
     importer->configuration().setValue("forceBitDepth", 16);
-    if(data.verbose) importer->addFlags(ImporterFlag::Verbose);
+    if(data.verbose)
+        importer->addFlags(ImporterFlag::Verbose);
 
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(PNGIMPORTER_TEST_DIR, data.filename)));
 
