@@ -194,8 +194,9 @@ namespace Magnum {
     with most other libraries.
 -   @ref Trade::StbImageImporter "StbImageImporter" now imports 16-bit PNG and
     PSD files as 16-bit instead of converting to 8 bit
--   @ref Trade::StbImageImporter "StbImageImporter" now makes it possible to
-    override imported image channel count using @cb{.ini} forceChannelCount @ce
+-   @relativeref{Trade,PngImporter} and @relativeref{Trade,StbImageImporter}
+    now make it possible to override imported image channel count using
+    @cb{.ini} forceChannelCount @ce
 -   @relativeref{Trade,StbImageConverter} can now detect output format from the
     file extension when calling
     @relativeref{Trade::AbstractImageConverter,convertToData()} without having

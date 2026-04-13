@@ -272,6 +272,117 @@ Containers::Optional<ImageData2D> PngImporter::doImage2D(UnsignedInt, UnsignedIn
     #error libpng built without PNG_READ_ALPHA_MODE_SUPPORTED or PNG_READ_GAMMA_SUPPORTED, or is older than 1.5.3
     #endif
 
+    if(const UnsignedInt forceChannelCount = configuration().value<UnsignedInt>("forceChannelCount")) {
+        if(forceChannelCount > 4) {
+            Error{} << "Trade::PngImporter::image2D(): expected forceChannelCount to be 0, 1, 2, 3 or 4 but got" << configuration().value<Containers::StringView>("forceChannelCount");
+            return {};
+        }
+
+        /* Grayscale or RGB. Using a switch to ensure there aren't duplicate
+           branches, there should be 4x4 combinations in total. */
+        #define _c(channels, forceChannelCount) (channels << 8)|forceChannelCount
+        Int rgbChannelAdjustment;
+        switch(_c(channels, forceChannelCount)) {
+            /* Grayscale -> RGBA */
+            case _c(1, 3):
+            case _c(1, 4):
+            case _c(2, 3):
+            case _c(2, 4):
+                png_set_gray_to_rgb(file);
+                rgbChannelAdjustment = 2;
+                break;
+
+            /* RGB -> grayscale */
+            case _c(3, 1):
+            case _c(3, 2):
+            case _c(4, 1):
+            case _c(4, 2):
+                png_set_rgb_to_gray(file, 1, -1, -1);
+                rgbChannelAdjustment = -2;
+                break;
+
+            /* All remaining cases don't involve a RGB / grayscale change */
+            case _c(1, 1):
+            case _c(1, 2):
+            case _c(2, 1):
+            case _c(2, 2):
+
+            case _c(3, 3):
+            case _c(3, 4):
+            case _c(4, 3):
+            case _c(4, 4):
+                rgbChannelAdjustment = 0;
+                break;
+            default:
+                CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+        }
+        #undef _c
+
+        /* Alpha or no alpha. Similarly as above. */
+        Int alphaChannelAdjustment;
+        #define _c(channels, forceChannelCount) (channels << 8)|forceChannelCount
+        switch(_c(channels, forceChannelCount)) {
+            /* Add an alpha channel */
+            case _c(1, 2):
+            case _c(1, 4):
+            case _c(3, 2):
+            case _c(3, 4):
+                png_set_add_alpha(file, 0xffff, PNG_FILLER_AFTER);
+                alphaChannelAdjustment = 1;
+                break;
+
+            /* Remove an alpha channel */
+            case _c(2, 1):
+            case _c(2, 3):
+            case _c(4, 1):
+            case _c(4, 3):
+                png_set_strip_alpha(file);
+                alphaChannelAdjustment = -1;
+                break;
+
+            /* All remaining cases don't involve an alpha channel change */
+            case _c(1, 1):
+            case _c(1, 3):
+            case _c(2, 2):
+            case _c(2, 4):
+
+            case _c(3, 1):
+            case _c(3, 3):
+            case _c(4, 2):
+            case _c(4, 4):
+                alphaChannelAdjustment = 0;
+                break;
+            default:
+                CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+        }
+        #undef _c
+
+        if((alphaChannelAdjustment || rgbChannelAdjustment) && flags() >= ImporterFlag::Verbose) {
+            Debug d;
+            d << "Trade::PngImporter::image2D(): converting" << channels << Debug::nospace << "-channel input to" << channels + alphaChannelAdjustment + rgbChannelAdjustment << Debug::nospace << "-channel by";
+            if(rgbChannelAdjustment < 0)
+                d << "converting RGB to grayscale";
+            else if(rgbChannelAdjustment > 0)
+                d << "expanding grayscale to RGB";
+            if(rgbChannelAdjustment && alphaChannelAdjustment)
+                d << "and";
+            if(alphaChannelAdjustment < 0)
+                d << "removing alpha";
+            else if(alphaChannelAdjustment > 0)
+                d << "adding opaque alpha";
+        }
+
+        /* Unfortunately we cannot just query png_get_channels() etc again at
+           this point to get the actual channel count after all transformations
+           internally, it'll return the file value again. Which means if any of
+           those transformations (or combinations thereof, such as with
+           8<->16 bit or tRNS conversion) would be unsupported by the library,
+           we have no way to detect that upfront and fail gracefully. In other
+           words, anything can happen, including libpng doing OOB writes
+           because it uses a larger format than we thought it'd be. Sigh. */
+        channels += alphaChannelAdjustment + rgbChannelAdjustment;
+    }
+
     #if defined(PNG_READ_SCALE_16_TO_8_SUPPORTED) && defined(PNG_READ_EXPAND_16_SUPPORTED)
     /* Enable 8-to-16 or 16-to-8 conversion if desired */
     if(const Int forceBitDepth = configuration().value<Int>("forceBitDepth")) {

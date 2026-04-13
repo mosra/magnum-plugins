@@ -68,6 +68,11 @@ struct PngImporterTest: TestSuite::Tester {
     void forceBitDepth16();
     void forceBitDepthInvalid();
 
+    /* These test also combination of forceBitDepth and forceChannelCount */
+    void forceChannelCount8();
+    void forceChannelCount16();
+    void forceChannelCountInvalid();
+
     void openMemory();
     void openTwice();
     void importTwice();
@@ -308,6 +313,229 @@ const struct {
     }}, false, nullptr}
 };
 
+const struct {
+    TestSuite::TestCaseDescriptionSourceLocation name;
+    const char* filename;
+    Int forceChannelCount;
+    bool forceBitDepth;
+    PixelFormat format;
+    Vector2i size;
+    Containers::Array<char> data;
+    bool verbose;
+    const char* message;
+} ForceChannelCount8Data[]{
+    /* Single-channel source to 1-4 channels */
+    {"already single-channel, verbose", "gray.png", 1, false, PixelFormat::R8Unorm, {3, 2}, {InPlaceInit, {
+        /* Same as in gray() */
+        '\xff', '\x88', '\x00',
+        '\x88', '\x00', '\xff'
+    }}, true, ""},
+    {"single-channel to two-channel", "gray.png", 2, false, PixelFormat::RG8Unorm, {3, 2}, {InPlaceInit, {
+        /* Opaque alpha */
+        '\xff', '\xff', '\x88', '\xff', '\x00', '\xff',
+        '\x88', '\xff', '\x00', '\xff', '\xff', '\xff'
+    }}, false, nullptr},
+    {"single-channel to RGB", "gray.png", 3, false, PixelFormat::RGB8Unorm, {3, 2}, {InPlaceInit, {
+        /* Copying the same channel three times */
+        '\xff', '\xff', '\xff',
+        '\x88', '\x88', '\x88',
+        '\x00', '\x00', '\x00',
+
+        '\x88', '\x88', '\x88',
+        '\x00', '\x00', '\x00',
+        '\xff', '\xff', '\xff'
+    }}, false, nullptr},
+    {"single-channel to RGBA, verbose", "gray.png", 4, false, PixelFormat::RGBA8Unorm, {3, 2}, {InPlaceInit, {
+        /* Copying the same channel three times, opaque alpha */
+        '\xff', '\xff', '\xff', '\xff',
+        '\x88', '\x88', '\x88', '\xff',
+        '\x00', '\x00', '\x00', '\xff',
+
+        '\x88', '\x88', '\x88', '\xff',
+        '\x00', '\x00', '\x00', '\xff',
+        '\xff', '\xff', '\xff', '\xff'
+    }}, true, "Trade::PngImporter::image2D(): converting 1-channel input to 4-channel by expanding grayscale to RGB and adding opaque alpha\n"},
+
+    /* Two-channel source to 1-4 channels */
+    {"already two-channel, verbose", "ga.png", 2, false, PixelFormat::RG8Unorm, {3, 2}, {InPlaceInit, {
+        /* Same as in grayAlpha() */
+        '\x66', '\x99', '\xcc', '\x00', '\x99', '\x66',
+        '\x00', '\x33', '\x33', '\xff', '\xff', '\xcc'
+    }}, true, ""},
+    {"two-channel to single-channel", "ga.png", 1, false, PixelFormat::R8Unorm, {3, 2}, {InPlaceInit, {
+        /* Just the first component */
+        '\x66', '\xcc', '\x99',
+        '\x00', '\x33', '\xff'
+    }}, false, nullptr},
+    {"two-channel to RGB", "ga.png", 3, false, PixelFormat::RGB8Unorm, {3, 2}, {InPlaceInit, {
+        /* First component expanded, alpha discarded */
+        '\x66', '\x66', '\x66',
+        '\xcc', '\xcc', '\xcc',
+        '\x99', '\x99', '\x99',
+
+        '\x00', '\x00', '\x00',
+        '\x33', '\x33', '\x33',
+        '\xff', '\xff', '\xff'
+    }}, false, nullptr},
+    {"two-channel to RGBA", "ga.png", 4, false, PixelFormat::RGBA8Unorm, {3, 2}, {InPlaceInit, {
+        /* First component expanded */
+        '\x66', '\x66', '\x66', '\x99',
+        '\xcc', '\xcc', '\xcc', '\x00',
+        '\x99', '\x99', '\x99', '\x66',
+
+        '\x00', '\x00', '\x00', '\x33',
+        '\x33', '\x33', '\x33', '\xff',
+        '\xff', '\xff', '\xff', '\xcc'
+    }}, false, nullptr},
+
+    /* Three-channel source to 1-4 channels */
+    {"already three-channel", "rgb.png", 3, false, PixelFormat::RGB8Unorm, {3, 2}, {InPlaceInit, {
+        /* Same as in rgb() */
+        '\xca', '\xfe', '\x77',
+        '\xde', '\xad', '\xb5',
+        '\xca', '\xfe', '\x77',
+
+        '\xde', '\xad', '\xb5',
+        '\xca', '\xfe', '\x77',
+        '\xde', '\xad', '\xb5'
+    }}, true, ""},
+    {"three-channel to single-channel", "rgb.png", 1, false, PixelFormat::R8Unorm, {3, 2}, {InPlaceInit, {
+        /* The RGB channels are converted to luminance, the output is however
+           *not* consistent with what stb_image produces in
+           StbImageImporterTest::rgbPngOneChannel(). Doesn't seem to be due to
+           sRGB vs linear, as the variant below also doesn't match. */
+        '\xe9', '\xb7', '\xe9',
+        '\xb7', '\xe9', '\xb7'
+    }}, true, "Trade::PngImporter::image2D(): converting 3-channel input to 1-channel by converting RGB to grayscale\n"},
+    {"three-channel to single-channel, sRGB gAMA chunk", "rgb-srgb.png", 1, false, PixelFormat::R8Unorm, {3, 2}, {InPlaceInit, {
+        /* Also doesn't match StbImageImporterTest::rgbPngOneChannel(). But is
+           different from the above, meaning sRGB is correctly taken into
+           account. */
+        '\xed', '\xba', '\xed',
+        '\xba', '\xed', '\xba'
+    }}, false, nullptr},
+    {"three-channel to two-channel", "rgb.png", 2, false, PixelFormat::RG8Unorm, {3, 2}, {InPlaceInit, {
+        /* Like above plus opaque alpha */
+        '\xe9', '\xff', '\xb7', '\xff', '\xe9', '\xff',
+        '\xb7', '\xff', '\xe9', '\xff', '\xb7', '\xff'
+    }}, false, nullptr},
+    {"three-channel to RGBA", "rgb.png", 4, false, PixelFormat::RGBA8Unorm, {3, 2}, {InPlaceInit, {
+        /* Opaque alpha */
+        '\xca', '\xfe', '\x77', '\xff',
+        '\xde', '\xad', '\xb5', '\xff',
+        '\xca', '\xfe', '\x77', '\xff',
+
+        '\xde', '\xad', '\xb5', '\xff',
+        '\xca', '\xfe', '\x77', '\xff',
+        '\xde', '\xad', '\xb5', '\xff'
+    }}, false, nullptr},
+
+    /* Four-channel source to 1-4 channels */
+    {"already four-channel, verbose", "rgba.png", 4, false, PixelFormat::RGBA8Unorm, {3, 2}, {InPlaceInit, {
+        /* Same as in rgba() */
+        '\x66', '\x33', '\xff', '\x99',
+        '\xcc', '\x33', '\xff', '\x00',
+        '\x99', '\x33', '\xff', '\x66',
+        '\x00', '\xcc', '\xff', '\x33',
+        '\x33', '\x66', '\x99', '\xff',
+        '\xff', '\x00', '\x33', '\xcc'
+    }}, true, ""},
+    {"four-channel to single-channel", "rgba.png", 1, false, PixelFormat::R8Unorm, {3, 2}, {InPlaceInit, {
+        /* The RGB channels are converted to luminance, alpha is discarded */
+        '\x4c', '\x62', '\x57',
+        '\xa4', '\x5e', '\x39'
+    }}, false, nullptr},
+    {"four-channel to two-channel", "rgba.png", 2, false, PixelFormat::RG8Unorm, {3, 2}, {InPlaceInit, {
+        /* The RGB channels are converted to luminance */
+        '\x4c', '\x99', '\x62', '\x00', '\x57', '\x66',
+        '\xa4', '\x33', '\x5e', '\xff', '\x39', '\xcc'
+    }}, false, nullptr},
+    {"four-channel to RGB, verbose", "rgba.png", 3, false, PixelFormat::RGB8Unorm, {3, 2}, {InPlaceInit, {
+        /* Alpha is discarded */
+        '\x66', '\x33', '\xff',
+        '\xcc', '\x33', '\xff',
+        '\x99', '\x33', '\xff',
+        '\x00', '\xcc', '\xff',
+        '\x33', '\x66', '\x99',
+        '\xff', '\x00', '\x33',
+    }}, true, "Trade::PngImporter::image2D(): converting 4-channel input to 3-channel by removing alpha\n"},
+
+    /* Special cases. Libpng has no way to signal that a particular
+       combination of transformations is unsupported so attempt to check as
+       many weird combinations as possible. */
+    {"4-bit gray to two-channel", "gray4.png", 2, false, PixelFormat::RG8Unorm, {3, 2}, {InPlaceInit, {
+        /* Same as in gray() + opaque alpha */
+        '\xff', '\xff', '\x88', '\xff', '\x00', '\xff',
+        '\x88', '\xff', '\x00', '\xff', '\xff', '\xff'
+    }}, false, nullptr},
+    {"four-channel sRGB to single-channel", "rgba-srgb.png", 1, false, PixelFormat::R8Unorm, {3, 2}, {InPlaceInit, {
+        /* Compared to above, the sRGB curve is applied */
+        '\x62', '\x81', '\x6f',
+        '\xbc', '\x63', '\x7f'
+    }}, false, nullptr},
+    {"GA binary alpha tRNS to four-channel", "ga-binary-alpha-trns.png", 4, false, PixelFormat::RGBA8Unorm, {3, 2}, {InPlaceInit, {
+        /* Like grayAlphaBinaryAlpha() but with the channels expanded */
+        '\xb8', '\xb8', '\xb8', '\xff',
+        '\xe9', '\xe9', '\xe9', '\xff',
+        '\x00', '\x00', '\x00', '\x00',
+        '\xe9', '\xe9', '\xe9', '\xff',
+        '\x00', '\x00', '\x00', '\x00',
+        '\xb8', '\xb8', '\xb8', '\xff',
+    }}, false, nullptr},
+    {"16-bit RGB to two-channel 8-bit, verbose", "rgb16.png", 2, true, PixelFormat::RG8Unorm, {2, 3}, {InPlaceInit, {
+        /* The original values are roughly 1/64 to 1/8 */
+        '\x07', '\xff',
+        '\x0b', '\xff',
+        '\x0f', '\xff',
+        '\x13', '\xff',
+        '\x17', '\xff',
+        '\x1b', '\xff',
+    }}, true,
+        "Trade::PngImporter::image2D(): converting 3-channel input to 2-channel by converting RGB to grayscale and adding opaque alpha\n"
+        "Trade::PngImporter::image2D(): stripping 16-bit channels to 8-bit\n"},
+};
+
+const struct {
+    TestSuite::TestCaseDescriptionSourceLocation name;
+    const char* filename;
+    Int forceChannelCount;
+    bool forceBitDepth;
+    PixelFormat format;
+    Vector2i size;
+    Containers::Array<UnsignedShort> data;
+    bool verbose;
+    const char* message;
+} ForceChannelCount16Data[]{
+    /* Compared to the 8-bit data above, this verifies just some cases to
+       ensure forcing channels works also with 16-bit */
+
+    {"already three-channel, verbose", "rgb16.png", 3, false, PixelFormat::RGB16Unorm, {2, 3}, {InPlaceInit, {
+        /* Like in rgb16() */
+        1000, 2000, 3000, 2000, 3000, 4000,
+        3000, 4000, 5000, 4000, 5000, 6000,
+        5000, 6000, 7000, 6000, 7000, 8000
+    }}, true, ""},
+    {"single-channel to RGBA", "gray16.png", 4, false, PixelFormat::RGBA16Unorm, {2, 3}, {InPlaceInit, {
+        /* Expanded, opaque alpha */
+        1000, 1000, 1000, 65535, 2000, 2000, 2000, 65535,
+        3000, 3000, 3000, 65535, 4000, 4000, 4000, 65535,
+        5000, 5000, 5000, 65535, 6000, 6000, 6000, 65535
+    }}, false, nullptr},
+    {"three-channel to single-channel", "rgb16.png", 1, false, PixelFormat::R16Unorm, {2, 3}, {InPlaceInit, {
+        /* Some kind of an average */
+        1860, 2860,
+        3860, 4860,
+        5860, 6860
+    }}, false, nullptr},
+    {"4-bit gray to 16-bit two-channel", "gray4.png", 2, true, PixelFormat::RG16Unorm, {3, 2}, {InPlaceInit, {
+        /* Same as in gray() + opaque alpha, expanded from 8 to 16 bits */
+        0xffff, 0xffff, 0x8888, 0xffff, 0x0000, 0xffff,
+        0x8888, 0xffff, 0x0000, 0xffff, 0xffff, 0xffff
+    }}, true,
+        "Trade::PngImporter::image2D(): converting 1-channel input to 2-channel by adding opaque alpha\n"
+        "Trade::PngImporter::image2D(): expanding 8-bit channels to 16-bit\n"},
+};
+
 /* Shared among all plugins that implement data copying optimizations */
 const struct {
     const char* name;
@@ -361,6 +589,14 @@ PngImporterTest::PngImporterTest() {
         Containers::arraySize(ForceBitDepth16Data));
 
     addTests({&PngImporterTest::forceBitDepthInvalid});
+
+    addInstancedTests({&PngImporterTest::forceChannelCount8},
+        Containers::arraySize(ForceChannelCount8Data));
+
+    addInstancedTests({&PngImporterTest::forceChannelCount16},
+        Containers::arraySize(ForceChannelCount16Data));
+
+    addTests({&PngImporterTest::forceChannelCountInvalid});
 
     addInstancedTests({&PngImporterTest::openMemory},
         Containers::arraySize(OpenMemoryData));
@@ -774,6 +1010,73 @@ void PngImporterTest::forceBitDepthInvalid() {
     Error redirectError{&out};
     CORRADE_VERIFY(!importer->image2D(0));
     CORRADE_COMPARE(out, "Trade::PngImporter::image2D(): expected forceBitDepth to be 0, 8 or 16 but got 4\n");
+}
+
+void PngImporterTest::forceChannelCount8() {
+    auto&& data = ForceChannelCount8Data[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("PngImporter");
+    importer->configuration().setValue("forceChannelCount", data.forceChannelCount);
+    if(data.forceBitDepth)
+        importer->configuration().setValue("forceBitDepth", 8);
+    if(data.verbose)
+        importer->addFlags(ImporterFlag::Verbose);
+
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(PNGIMPORTER_TEST_DIR, data.filename)));
+
+    Containers::String out;
+    Containers::Optional<ImageData2D> image;
+    {
+        Debug redirectOutput{&out};
+        image = importer->image2D(0);
+    }
+    CORRADE_VERIFY(image);
+    CORRADE_COMPARE_AS(*image,
+        (ImageView2D{PixelStorage{}.setAlignment(1), data.format, data.size, data.data}),
+        DebugTools::CompareImage);
+    CORRADE_COMPARE(out, data.message);
+}
+
+void PngImporterTest::forceChannelCount16() {
+    auto&& data = ForceChannelCount16Data[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    /* Like forceChannelCount8(), just using a different type for the expected
+       data */
+
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("PngImporter");
+    importer->configuration().setValue("forceChannelCount", data.forceChannelCount);
+    if(data.forceBitDepth)
+        importer->configuration().setValue("forceBitDepth", 16);
+    if(data.verbose)
+        importer->addFlags(ImporterFlag::Verbose);
+
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(PNGIMPORTER_TEST_DIR, data.filename)));
+
+    Containers::String out;
+    Containers::Optional<ImageData2D> image;
+    {
+        Debug redirectOutput{&out};
+        image = importer->image2D(0);
+    }
+    CORRADE_VERIFY(image);
+    CORRADE_COMPARE_AS(*image,
+        (ImageView2D{PixelStorage{}.setAlignment(1), data.format, data.size, data.data}),
+        DebugTools::CompareImage);
+    CORRADE_COMPARE(out, data.message);
+}
+
+void PngImporterTest::forceChannelCountInvalid() {
+    Containers::Pointer<AbstractImporter> importer = _manager.instantiate("PngImporter");
+    importer->configuration().setValue("forceChannelCount", 5);
+
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(PNGIMPORTER_TEST_DIR, "rgba.png")));
+
+    Containers::String out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!importer->image2D(0));
+    CORRADE_COMPARE(out, "Trade::PngImporter::image2D(): expected forceChannelCount to be 0, 1, 2, 3 or 4 but got 5\n");
 }
 
 void PngImporterTest::openMemory() {
