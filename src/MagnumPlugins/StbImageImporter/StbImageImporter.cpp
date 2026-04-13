@@ -188,6 +188,7 @@ Containers::Optional<ImageData2D> StbImageImporter::doImage2D(const UnsignedInt 
     #else
     PixelFormat format;
     #endif
+    Int changedChannelCount = 0;
     if((isHdr && !forceBitDepth) || forceBitDepth == 32) {
         if(!isHdr && (flags() & ImporterFlag::Verbose))
             Debug{} << "Trade::StbImageImporter::image2D(): expanding" << (is16bit ? "16-bit" : "8-bit") << "channels to 32-bit float";
@@ -195,9 +196,11 @@ Containers::Optional<ImageData2D> StbImageImporter::doImage2D(const UnsignedInt 
         data = reinterpret_cast<stbi_uc*>(stbi_loadf_from_memory(reinterpret_cast<const stbi_uc*>(_in->data.data()), _in->data.size(), &size.x(), &size.y(), &components, forceChannelCount));
         channelSize = 4;
         /* stb_image still returns the original component count in components,
-           which we don't want/need */
-        if(forceChannelCount)
+           which we only want for a verbose message */
+        if(forceChannelCount) {
+            changedChannelCount = components;
             components = forceChannelCount;
+        }
         if(data) switch(components) {
             case 1: format = PixelFormat::R32F;         break;
             case 2: format = PixelFormat::RG32F;        break;
@@ -212,9 +215,11 @@ Containers::Optional<ImageData2D> StbImageImporter::doImage2D(const UnsignedInt 
         data = reinterpret_cast<stbi_uc*>(stbi_load_16_from_memory(reinterpret_cast<const stbi_uc*>(_in->data.data()), _in->data.size(), &size.x(), &size.y(), &components, forceChannelCount));
         channelSize = 2;
         /* stb_image still returns the original component count in components,
-           which we don't want/need */
-        if(forceChannelCount)
+           which we only want for a verbose message */
+        if(forceChannelCount) {
+            changedChannelCount = components;
             components = forceChannelCount;
+        }
         if(data) switch(components) {
             case 1: format = PixelFormat::R16Unorm;     break;
             case 2: format = PixelFormat::RG16Unorm;    break;
@@ -234,9 +239,11 @@ Containers::Optional<ImageData2D> StbImageImporter::doImage2D(const UnsignedInt 
         data = stbi_load_from_memory(reinterpret_cast<const stbi_uc*>(_in->data.data()), _in->data.size(), &size.x(), &size.y(), &components, forceChannelCount);
         channelSize = 1;
         /* stb_image still returns the original component count in components,
-           which we don't want/need */
-        if(forceChannelCount)
+           which we only want for a verbose message */
+        if(forceChannelCount) {
+            changedChannelCount = components;
             components = forceChannelCount;
+        }
         if(data) switch(components) {
             case 1: format = PixelFormat::R8Unorm;      break;
             case 2: format = PixelFormat::RG8Unorm;     break;
@@ -245,6 +252,9 @@ Containers::Optional<ImageData2D> StbImageImporter::doImage2D(const UnsignedInt 
             default: CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
         }
     }
+
+    if(changedChannelCount && changedChannelCount != components && flags() >= ImporterFlag::Verbose)
+        Debug{} << "Trade::StbImageImporter::image2D(): converting" << changedChannelCount << Debug::nospace << "-channel input to" << components << Debug::nospace << "-channel";
 
     if(!data) {
         Error() << "Trade::StbImageImporter::image2D(): cannot open the image:" << stbi_failure_reason();

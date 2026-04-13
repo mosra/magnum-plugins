@@ -99,6 +99,15 @@ const struct {
 };
 
 const struct {
+    const char* name;
+    bool verbose;
+    const char* message;
+} GrayPng16FourChannelData[]{
+    {"", false, nullptr},
+    {"verbose", true, "Trade::StbImageImporter::image2D(): converting 1-channel input to 4-channel\n"}
+};
+
+const struct {
     TestSuite::TestCaseDescriptionSourceLocation name;
     Containers::String filename;
     PixelFormat format;
@@ -260,9 +269,12 @@ StbImageImporterTest::StbImageImporterTest() {
               &StbImageImporterTest::grayPng,
               &StbImageImporterTest::grayPngFourChannel,
               &StbImageImporterTest::grayPngFiveChannel,
-              &StbImageImporterTest::grayPng16,
-              &StbImageImporterTest::grayPng16FourChannel,
-              &StbImageImporterTest::grayJpeg,
+              &StbImageImporterTest::grayPng16});
+
+    addInstancedTests({&StbImageImporterTest::grayPng16FourChannel},
+        Containers::arraySize(GrayPng16FourChannelData));
+
+    addTests({&StbImageImporterTest::grayJpeg,
 
               &StbImageImporterTest::rgbPng,
               &StbImageImporterTest::rgbPngOneChannel,
@@ -398,12 +410,22 @@ void StbImageImporterTest::grayPng16() {
 }
 
 void StbImageImporterTest::grayPng16FourChannel() {
+    auto&& data = GrayPng16FourChannelData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StbImageImporter");
+    if(data.verbose)
+        importer->addFlags(ImporterFlag::Verbose);
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(PNGIMPORTER_TEST_DIR, "gray16.png")));
 
     importer->configuration().setValue("forceChannelCount", 4);
 
-    Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
+    Containers::String out;
+    Containers::Optional<ImageData2D> image;
+    {
+        Debug redirectOutput{&out};
+        image = importer->image2D(0);
+    }
     CORRADE_VERIFY(image);
     CORRADE_COMPARE(image->flags(), ImageFlags2D{});
     CORRADE_COMPARE(image->storage().alignment(), 4);
@@ -416,6 +438,7 @@ void StbImageImporterTest::grayPng16FourChannel() {
         3000, 3000, 3000, 65535, 4000, 4000, 4000, 65535,
         5000, 5000, 5000, 65535, 6000, 6000, 6000, 65535
     }), TestSuite::Compare::Container);
+    CORRADE_COMPARE(out, data.message);
 }
 
 void StbImageImporterTest::grayJpeg() {
