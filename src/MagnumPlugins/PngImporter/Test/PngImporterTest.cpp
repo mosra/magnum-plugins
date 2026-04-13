@@ -610,8 +610,9 @@ void PngImporterTest::rgba() {
         CORRADE_VERIFY(image);
     }
 
+    /* Skip the rest if loading the image failed */
     if(!image)
-        CORRADE_SKIP("Loading failed, skipping the rest.");
+        return;
 
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
     CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Unorm);
@@ -683,14 +684,7 @@ void PngImporterTest::rgbaBinaryAlpha() {
         importer->configuration().setValue("alphaMode", "premultiplied");
 
     Containers::Optional<Trade::ImageData2D> image = importer->image2D(0);
-    {
-        CORRADE_EXPECT_FAIL_IF(Containers::StringView{data.name}.contains("CgBI"),
-            "Stock libPNG can't handle CgBI.");
-        CORRADE_VERIFY(image);
-    }
-
-    if(!image)
-        CORRADE_SKIP("Loading failed, skipping the rest.");
+    CORRADE_VERIFY(image);
 
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
     CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Unorm);
