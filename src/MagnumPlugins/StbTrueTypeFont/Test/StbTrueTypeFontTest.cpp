@@ -33,6 +33,7 @@
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
 #include <Corrade/TestSuite/Compare/Numeric.h>
+#include <Corrade/TestSuite/Compare/String.h>
 #include <Corrade/Utility/Path.h>
 #include <Magnum/ImageView.h>
 #include <Magnum/DebugTools/CompareImage.h>
@@ -86,16 +87,16 @@ const struct {
     Float advanceAfterW, advanceAfterE;
 } ShapeData[]{
     {"", "Weave", 72, 0, 0, ~UnsignedInt{},
-        18.6667f, 9.44966f},
+        16.2969f, 8.25f},
     {"substring", "haWeavefefe", 72, 0, 2, 7,
-        18.6667f, 9.44966f},
+        16.2969f, 8.25f},
     /* Width of `ě` isn't really any different from `e`, but given that the
        advance is the same as with the last `e`, it looks like the font only
        provides kerning for basic Latin and not all characters */
     {"UTF-8", "Wěave", 220, 1, 0, ~UnsignedInt{},
-        19.0694f, 9.55705f},
+        16.6484f, 8.34375f},
     {"UTF-8 substring", "haWěavefefe", 220, 1, 2, 8,
-        19.0694f, 9.55705f},
+        16.6484f, 8.34375f},
 };
 
 const struct {
@@ -112,10 +113,10 @@ const struct {
     Float advances[4];
 } KerningData[]{
     {"none", {}, {
-        18.7293f,
-        9.45861f,
-        9.15436f,
-        9.55705f
+        16.3516f,
+        8.25781f,
+        7.99219f,
+        8.34375f
     }},
     {"no-op", {InPlaceInit, {
         /* This one is enabled by default */
@@ -124,38 +125,38 @@ const struct {
         {Feature::SmallCapitals, false},
     }}, {
         /* Same as above, as kerning is enabled by default */
-        18.7293f,
-        9.45861f,
-        9.15436f,
-        9.55705f
+        16.3516f,
+        8.25781f,
+        7.99219f,
+        8.34375f
     }},
     {"kerning disabled and then enabled again", {InPlaceInit, {
         {Feature::Kerning, false},
         {Feature::Kerning, true}
     }}, {
         /* Should be the same as "none" */
-        18.7293f,
-        9.45861f,
-        9.15436f,
-        9.55705f
+        16.3516f,
+        8.25781f,
+        7.99219f,
+        8.34375f
     }},
     {"kerning disabled", {InPlaceInit, {
         {Feature::Kerning, false}
     }}, {
-        19.0694f,
-        9.45861f, /* same as with kerning, HarfBuzz also does no adjustment here */
-        9.27069f,
-        9.55705f  /* same as with kerning, HarfBuzz also does no adjustment here */
+        16.6484f,
+        8.25781f, /* same as with kerning, HarfBuzz also does no adjustment here */
+        8.09375f,
+        8.34375f  /* same as with kerning, HarfBuzz also does no adjustment here */
     }},
     {"kerning enabled and then disabled again", {InPlaceInit, {
         {Feature::Kerning, true},
         {Feature::Kerning, false},
     }}, {
         /* Should be the same as "kerning disabled" */
-        19.0694f,
-        9.45861f,
-        9.27069f,
-        9.55705f
+        16.6484f,
+        8.25781f,
+        8.09375f,
+        8.34375f
     }},
     /** @todo update once enabling kerning for parts of the string is supported
         (needs to handle UTF-8 and needs to be consistent with HB, particularly
@@ -167,10 +168,10 @@ const struct {
     }}, {
         /* Currently is the same as "none", but shouldn't be when
            implemented */
-        18.7293f,
-        9.45861f,
-        9.15436f,
-        9.55705f
+        16.3516f,
+        8.25781f,
+        7.99219f,
+        8.34375f
     }},
 };
 
@@ -288,17 +289,14 @@ void StbTrueTypeFontTest::properties() {
     CORRADE_COMPARE(font->glyphCount(), 671);
     CORRADE_COMPARE(font->glyphId(U'W'), 58);
 
-    /* Compared to FreeType, StbTrueType has slightly larger glyphs which makes
-       the test values quite different but the actual visual output isn't that
-       different. I suppose this is due to a lack of hinting in the
-       implementation. Best visible it is in the glyph cache output -- the
-       characters look mostly the same but occupy more space. */
+    /* Compared to FreeType, StbTrueType does not round the metrics to whole
+       units, which is due to FreeType applying hinting and StbTrueType not */
 
-    CORRADE_COMPARE(font->ascent(), 17.0112f);
-    CORRADE_COMPARE(font->descent(), -4.32215f);
-    CORRADE_COMPARE(font->lineHeight(), 21.3333f);
-    CORRADE_COMPARE(font->glyphSize(58), Vector2(21.0f, 14.0f));
-    CORRADE_COMPARE(font->glyphAdvance(58), Vector2(19.0694f, 0.0f));
+    CORRADE_COMPARE(font->ascent(), 14.8516f);
+    CORRADE_COMPARE(font->descent(), -3.77344f);
+    CORRADE_COMPARE(font->lineHeight(), 18.625f);
+    CORRADE_COMPARE(font->glyphSize(58), (Vector2{18.0f, 12.0f}));
+    CORRADE_COMPARE(font->glyphAdvance(58), (Vector2{16.6484f, 0.0f}));
 }
 
 void StbTrueTypeFontTest::shape() {
@@ -334,9 +332,9 @@ void StbTrueTypeFontTest::shape() {
     CORRADE_COMPARE_AS(Containers::arrayView(advances), Containers::arrayView<Vector2>({
         {data.advanceAfterW, 0.0f},
         {data.advanceAfterE, 0.0f},
-        {9.45861f, 0.0f},
-        {9.15436f, 0.0f},
-        {9.55705f, 0.0f}
+        {8.25781f, 0.0f},
+        {7.99219f, 0.0f},
+        {8.34375f, 0.0f}
     }), TestSuite::Compare::Container);
     CORRADE_COMPARE_AS(Containers::arrayView(clusters), Containers::arrayView({
         data.begin + 0u,
@@ -391,16 +389,16 @@ void StbTrueTypeFontTest::shapeGlyphOffset() {
             TestSuite::Compare::NotEqual);
     }
     CORRADE_COMPARE_AS(Containers::arrayView(advances), Containers::arrayView<Vector2>({
-        {8.28557f, 0.0f},   /* 'V' */
-        {7.97989f, 0.0f},   /* 'e' */
+        {8.24f, 0.0f},  /* 'V' */
+        {7.936f, 0.0f}, /* 'e' */
         /* The combining marks have no advance in addition to the base
            character */
         {0.0f, 0.0f},   /* 'ˇ' */
         {0.0f, 0.0f},   /* 'ˇ' */
         {0.0f, 0.0f},   /* 'ˇ' */
-        {5.43791f, 0.0f},   /* 't' */
-        {7.97989f, 0.0f},   /* 'e' */
-        {7.51332f, 0.0f}    /* 'v' */
+        {5.408f, 0.0f}, /* 't' */
+        {7.936f, 0.0f}, /* 'e' */
+        {7.472f, 0.0f}  /* 'v' */
     }), TestSuite::Compare::Container);
     /* Yeah so they are all zero */
     CORRADE_COMPARE_AS(Containers::arrayView(offsets), Containers::arrayView<Vector2>({
@@ -463,8 +461,8 @@ void StbTrueTypeFontTest::shapeMultiple() {
             {}, {},
         }), TestSuite::Compare::Container);
         CORRADE_COMPARE_AS(Containers::arrayView(advances), Containers::arrayView<Vector2>({
-            {18.6667f, 0.0f},
-            {9.55705f, 0.0f}
+            {16.2969f, 0.0f},
+            {8.34375f, 0.0f}
         }), TestSuite::Compare::Container);
         CORRADE_COMPARE_AS(Containers::arrayView(clusters), Containers::arrayView({
             0u,
@@ -495,11 +493,11 @@ void StbTrueTypeFontTest::shapeMultiple() {
             {}, {}, {}, {}, {}
         }), TestSuite::Compare::Container);
         CORRADE_COMPARE_AS(Containers::arrayView(advances), Containers::arrayView<Vector2>({
-            {19.0694f, 0.0f},
-            {9.55705f, 0.0f},
-            {9.45861f, 0.0f},
-            {9.15436f, 0.0f},
-            {9.55705f, 0.0f}
+            {16.6484f, 0.0f},
+            {8.34375f, 0.0f},
+            {8.25781f, 0.0f},
+            {7.99219f, 0.0f},
+            {8.34375f, 0.0f}
         }), TestSuite::Compare::Container);
         CORRADE_COMPARE_AS(Containers::arrayView(clusters), Containers::arrayView({
             0u,
@@ -531,9 +529,9 @@ void StbTrueTypeFontTest::shapeMultiple() {
             {}, {}, {}
         }), TestSuite::Compare::Container);
         CORRADE_COMPARE_AS(Containers::arrayView(advances), Containers::arrayView<Vector2>({
-            {9.45861f, 0.0f},
-            {9.15436f, 0.0f},
-            {9.55705f, 0.0f}
+            {8.25781f, 0.0f},
+            {7.99219f, 0.0f},
+            {8.34375f, 0.0f}
         }), TestSuite::Compare::Container);
         CORRADE_COMPARE_AS(Containers::arrayView(clusters), Containers::arrayView({
             0u, 1u, 2u
@@ -593,7 +591,7 @@ void StbTrueTypeFontTest::fillGlyphCache() {
             /* The passed image is just the filled subset, compare the whole
                thing for more predictable results */
             CORRADE_COMPARE(offset, Vector2i{});
-            CORRADE_COMPARE(image.size(), (Vector2i{64, 63}));
+            CORRADE_COMPARE(image.size(), (Vector2i{64, 45}));
             CORRADE_COMPARE_WITH(this->image().pixels<UnsignedByte>()[0],
                 Utility::Path::join(STBTRUETYPEFONT_TEST_DIR, "glyph-cache.png"),
                 DebugTools::CompareImageToFile{importerManager});
@@ -635,17 +633,17 @@ void StbTrueTypeFontTest::fillGlyphCache() {
     CORRADE_COMPARE(cache.glyph(0, 0), Containers::triple(
         Vector2i{},
         0,
-        Range2Di{{56, 31}, {62, 44}}));
+        Range2Di{{7, 14}, {12, 25}}));
     /* Above the baseline */
     CORRADE_COMPARE(cache.glyph(0, font->glyphId('k')), Containers::triple(
-        Vector2i{1, 0},
+        Vector2i{},
         0,
-        Range2Di{{13, 16}, {22, 30}}));
+        Range2Di{{34, 13}, {43, 25}}));
     /* Below the baseline */
     CORRADE_COMPARE(cache.glyph(0, font->glyphId('g')), Containers::triple(
-        Vector2i{0, -5},
+        Vector2i{0, -4},
         0,
-        Range2Di{{4, 0}, {14, 16}}));
+        Range2Di{{45, 0}, {54, 13}}));
     /* UTF-8 */
     UnsignedInt sId = font->glyphId(
         /* MSVC (but not clang-cl) doesn't support UTF-8 in char32_t literals
@@ -661,7 +659,7 @@ void StbTrueTypeFontTest::fillGlyphCache() {
     CORRADE_COMPARE(cache.glyph(0, sId), Containers::triple(
         Vector2i{0, -1},
         0,
-        Range2Di{{52, 0}, {60, 16}}));
+        Range2Di{{20, 0}, {27, 14}}));
 }
 
 void StbTrueTypeFontTest::fillGlyphCacheIncremental() {
@@ -683,10 +681,10 @@ void StbTrueTypeFontTest::fillGlyphCacheIncremental() {
                thing for more predictable results */
             if(called == 0) {
                 CORRADE_COMPARE(offset, Vector2i{});
-                CORRADE_COMPARE(image.size(), (Vector2i{64, 45}));
+                CORRADE_COMPARE(image.size(), (Vector2i{64, 26}));
             } else if(called == 1) {
-                CORRADE_COMPARE(offset, (Vector2i{0, 30}));
-                CORRADE_COMPARE(image.size(), (Vector2i{60, 33}));
+                CORRADE_COMPARE(offset, (Vector2i{0, 25}));
+                CORRADE_COMPARE(image.size(), (Vector2i{64, 20}));
                 CORRADE_COMPARE_WITH(this->image().pixels<UnsignedByte>()[0],
                     Utility::Path::join(STBTRUETYPEFONT_TEST_DIR, "glyph-cache.png"),
                     DebugTools::CompareImageToFile{importerManager});
@@ -730,15 +728,15 @@ void StbTrueTypeFontTest::fillGlyphCacheIncremental() {
     CORRADE_COMPARE(cache.glyph(0, 0), Containers::triple(
         Vector2i{},
         0,
-        Range2Di{{56, 31}, {62, 44}}));
+        Range2Di{{7, 14}, {12, 25}}));
     CORRADE_COMPARE(cache.glyph(0, font->glyphId('k')), Containers::triple(
-        Vector2i{1, 0},
+        Vector2i{},
         0,
-        Range2Di{{13, 16}, {22, 30}}));
+        Range2Di{{34, 13}, {43, 25}}));
     CORRADE_COMPARE(cache.glyph(0, font->glyphId('g')), Containers::triple(
-        Vector2i{0, -5},
+        Vector2i{0, -4},
         0,
-        Range2Di{{4, 0}, {14, 16}}));
+        Range2Di{{45, 0}, {54, 13}}));
     UnsignedInt sId = font->glyphId(
         /* MSVC (but not clang-cl) doesn't support UTF-8 in char32_t literals
            but it does it regular strings. Still a problem in MSVC 2022, what a
@@ -753,7 +751,7 @@ void StbTrueTypeFontTest::fillGlyphCacheIncremental() {
     CORRADE_COMPARE(cache.glyph(0, sId), Containers::triple(
         Vector2i{0, -1},
         0,
-        Range2Di{{52, 0}, {60, 16}}));
+        Range2Di{{20, 0}, {27, 14}}));
 }
 
 void StbTrueTypeFontTest::fillGlyphCacheArray() {
@@ -810,17 +808,17 @@ void StbTrueTypeFontTest::fillGlyphCacheArray() {
     CORRADE_COMPARE(cache.glyph(0, 0), Containers::triple(
         Vector2i{},
         0,
-        Range2Di{{4, 34}, {10, 47}}));
+        Range2Di{{21, 27}, {26, 38}}));
     /* First layer */
     CORRADE_COMPARE(cache.glyph(0, font->glyphId('g')), Containers::triple(
-        Vector2i{0, -5},
+        Vector2i{0, -4},
         0,
-        Range2Di{{4, 0}, {14, 16}}));
+        Range2Di{{39, 13}, {48, 26}}));
     /* Second layer */
     CORRADE_COMPARE(cache.glyph(0, font->glyphId('n')), Containers::triple(
         Vector2i{0, 0},
         1,
-        Range2Di{{23, 12}, {33, 23}}));
+        Range2Di{{40, 9}, {48, 18}}));
 }
 
 void StbTrueTypeFontTest::fillGlyphCacheInvalidFormat() {
@@ -858,7 +856,9 @@ void StbTrueTypeFontTest::fillGlyphCacheCannotFit() {
     Containers::String out;
     Error redirectError{&out};
     font->fillGlyphCache(cache, "HELLO");
-    CORRADE_COMPARE(out, "Text::StbTrueTypeFont::fillGlyphCache(): cannot fit 5 glyphs with a total area of 680 pixels into a cache of size Vector(16, 32, 1) and Vector(16, 0, 1) filled so far\n");
+    CORRADE_COMPARE_AS(out,
+        "Text::StbTrueTypeFont::fillGlyphCache(): cannot fit 5 glyphs with a total area of 524 pixels into a cache of size Vector(16, 32, 1) and Vector(16, 0, 1) filled so far\n",
+        TestSuite::Compare::String);
 }
 
 void StbTrueTypeFontTest::openTwice() {

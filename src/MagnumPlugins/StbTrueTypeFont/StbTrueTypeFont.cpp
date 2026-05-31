@@ -115,9 +115,13 @@ auto StbTrueTypeFont::doOpenData(const Containers::ArrayView<const char> data, c
     /* All right, let's move in */
     _font = Utility::move(font);
 
-    /* Set font size, 1 px = 0.75 pt
-       (https://www.w3.org/TR/CSS21/syndata.html#x39) */
-    _font->scale = stbtt_ScaleForPixelHeight(&_font->info, size/0.75f);
+    /* Set font size. The API says "mapping em to pixels" but it's actually
+       points, as internally the size is used to multiply the "points per em".
+       FreeType gets the size argument the same way, and internally also
+       multiplies the "points per em" value with it. Furthermore, doing so
+       results in both implementations interpreting the size equivalently
+       (apart from minor differences due to hinting and such). */
+    _font->scale = stbtt_ScaleForMappingEmToPixels(&_font->info, size);
 
     /* Return font metrics */
     Int ascent, descent, lineGap;

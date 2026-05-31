@@ -357,6 +357,11 @@ namespace Magnum {
 -   Fixed serious errors in the @relativeref{Text,StbTrueTypeFont} glyph
     rasterization code that caused the operation to take extreme amounts of
     time while also using needlessly large emounts of memory.
+-   The @relativeref{Text,StbTrueTypeFont} used to interpret requested size as
+    distance between glyph ascent and descent, making it inconsistent with
+    @relativeref{Text,FreeTypeFont} and with certain fonts resulting in very
+    different output. This is now fixed and both font plugins interpret the
+    size the same way.
 
 @subsection changelog-plugins-latest-deprecated Deprecated APIs
 
