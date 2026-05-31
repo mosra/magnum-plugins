@@ -142,6 +142,11 @@ to @relativeref{Magnum,Error} and returns @cpp false @ce.
 For font formats that support it, @ref glyphName() and @ref glyphForName()
 provides mapping between glyph IDs and names.
 
+For TrueType Collection (`*.ttc`) fonts, use the
+@ref Text::AbstractFont::openFile(Containers::StringView, Float, UnsignedInt)
+or @ref Text::AbstractFont::openData(Containers::ArrayView<const void>, Float, UnsignedInt)
+overload to select which font from the collection is opened.
+
 The FreeType library alone doesn't provide any advanced shaping capabilities,
 thus @ref AbstractShaper::setScript(),
 @relativeref{AbstractShaper,setLanguage()} and

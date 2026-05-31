@@ -62,6 +62,11 @@ corrade_add_test(FreeTypeFontTest FreeTypeFontTest.cpp
         Magnum::Text
     FILES
         Oxygen.ttf
+        # A two-face TrueType collection made from Oxygen.ttf by
+        # generate-Oxygen-collection.py. Face 1 has a modified cmap that maps
+        # 'W' to glyph 72 instead of 58, allowing FreeTypeFontTest::fontIndex()
+        # to verify that the configured face is actually selected.
+        Oxygen.collection.ttc
         glyph-cache.png
         glyph-cache-array0.png
         glyph-cache-array1.png

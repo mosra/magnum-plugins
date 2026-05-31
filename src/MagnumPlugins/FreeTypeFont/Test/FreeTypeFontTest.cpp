@@ -60,6 +60,8 @@ struct FreeTypeFontTest: TestSuite::Tester {
     void invalid();
 
     void properties();
+    void fontIndex();
+    void fontIndexOutOfRange();
     void glyphNames();
 
     void shape();
@@ -133,6 +135,8 @@ FreeTypeFontTest::FreeTypeFontTest() {
               &FreeTypeFontTest::invalid,
 
               &FreeTypeFontTest::properties,
+              &FreeTypeFontTest::fontIndex,
+              &FreeTypeFontTest::fontIndexOutOfRange,
               &FreeTypeFontTest::glyphNames});
 
     addInstancedTests({&FreeTypeFontTest::shape},
@@ -211,6 +215,29 @@ void FreeTypeFontTest::properties() {
     CORRADE_COMPARE(font->glyphId(U'W'), 58);
     CORRADE_COMPARE(font->glyphSize(58), (Vector2{18.0f, 12.0f}));
     CORRADE_COMPARE(font->glyphAdvance(58), (Vector2{17.0f, 0.0f}));
+}
+
+void FreeTypeFontTest::fontIndex() {
+    Containers::Pointer<AbstractFont> first = _manager.instantiate("FreeTypeFont");
+    CORRADE_VERIFY(first->openFile(Utility::Path::join(FREETYPEFONT_TEST_DIR, "Oxygen.collection.ttc"), 16.0f));
+    CORRADE_COMPARE(first->fontIndex(), 0);
+    CORRADE_COMPARE(first->fontCount(), 2);
+    CORRADE_COMPARE(first->glyphId(U'W'), 58);
+
+    Containers::Pointer<AbstractFont> second = _manager.instantiate("FreeTypeFont");
+    CORRADE_VERIFY(second->openFile(Utility::Path::join(FREETYPEFONT_TEST_DIR, "Oxygen.collection.ttc"), 16.0f, 1));
+    CORRADE_COMPARE(second->fontIndex(), 1);
+    CORRADE_COMPARE(second->fontCount(), 2);
+    CORRADE_COMPARE(second->glyphId(U'W'), 72);
+}
+
+void FreeTypeFontTest::fontIndexOutOfRange() {
+    Containers::Pointer<AbstractFont> font = _manager.instantiate("FreeTypeFont");
+
+    Containers::String out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!font->openFile(Utility::Path::join(FREETYPEFONT_TEST_DIR, "Oxygen.ttf"), 16.0f, 1));
+    CORRADE_COMPARE(out, "Text::FreeTypeFont::openData(): failed to open the font: invalid argument\n");
 }
 
 void FreeTypeFontTest::glyphNames() {

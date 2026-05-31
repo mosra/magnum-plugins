@@ -100,10 +100,10 @@ auto StbTrueTypeFont::doOpenData(const Containers::ArrayView<const char> data, c
        the whole plugin lifetime */
     font->data = Containers::Array<unsigned char>(InPlaceInit, Containers::arrayCast<const unsigned char>(data));
 
-    /** @todo ability to specify different font index in TTC collection */
-    const int offset = stbtt_GetFontOffsetForIndex(font->data, 0);
+    const int index = fontIndex();
+    const int offset = stbtt_GetFontOffsetForIndex(font->data, index);
     if(offset < 0) {
-        Error{} << "Text::StbTrueTypeFont::openData(): can't get offset of the first font";
+        Error{} << "Text::StbTrueTypeFont::openData(): can't get offset of font" << index;
         return {};
     }
 
@@ -126,11 +126,14 @@ auto StbTrueTypeFont::doOpenData(const Containers::ArrayView<const char> data, c
     /* Return font metrics */
     Int ascent, descent, lineGap;
     stbtt_GetFontVMetrics(&_font->info, &ascent, &descent, &lineGap);
+    const int fontCount = stbtt_GetNumberOfFonts(_font->data);
+    CORRADE_INTERNAL_ASSERT(fontCount > 0);
     return {size,
             _font->scale*ascent,
             _font->scale*descent,
             _font->scale*(ascent - descent + lineGap),
-            UnsignedInt(_font->info.numGlyphs)};
+            UnsignedInt(_font->info.numGlyphs),
+            UnsignedInt(fontCount)};
 }
 
 void StbTrueTypeFont::doClose() {

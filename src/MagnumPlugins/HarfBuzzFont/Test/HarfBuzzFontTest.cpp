@@ -49,6 +49,8 @@ struct HarfBuzzFontTest: TestSuite::Tester {
 
     void scriptMapping();
 
+    void fontIndex();
+
     void shape();
     void shapeDifferentScriptLanguageDirection();
     void shapeAutodetectScriptLanguageDirection();
@@ -228,7 +230,8 @@ const struct {
 };
 
 HarfBuzzFontTest::HarfBuzzFontTest() {
-    addTests({&HarfBuzzFontTest::scriptMapping});
+    addTests({&HarfBuzzFontTest::scriptMapping,
+              &HarfBuzzFontTest::fontIndex});
 
     addInstancedTests({&HarfBuzzFontTest::shape},
         Containers::arraySize(ShapeData));
@@ -258,6 +261,20 @@ HarfBuzzFontTest::HarfBuzzFontTest() {
     CORRADE_INTERNAL_ASSERT_OUTPUT(_manager.load(FREETYPEFONT_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
     CORRADE_INTERNAL_ASSERT_OUTPUT(_manager.load(HARFBUZZFONT_PLUGIN_FILENAME) & PluginManager::LoadState::Loaded);
     #endif
+}
+
+void HarfBuzzFontTest::fontIndex() {
+    Containers::Pointer<AbstractFont> first = _manager.instantiate("HarfBuzzFont");
+    CORRADE_VERIFY(first->openFile(Utility::Path::join(FREETYPEFONT_TEST_DIR, "Oxygen.collection.ttc"), 16.0f));
+    CORRADE_COMPARE(first->fontIndex(), 0);
+    CORRADE_COMPARE(first->fontCount(), 2);
+    CORRADE_COMPARE(first->glyphId(U'W'), 58);
+
+    Containers::Pointer<AbstractFont> second = _manager.instantiate("HarfBuzzFont");
+    CORRADE_VERIFY(second->openFile(Utility::Path::join(FREETYPEFONT_TEST_DIR, "Oxygen.collection.ttc"), 16.0f, 1));
+    CORRADE_COMPARE(second->fontIndex(), 1);
+    CORRADE_COMPARE(second->fontCount(), 2);
+    CORRADE_COMPARE(second->glyphId(U'W'), 72);
 }
 
 void HarfBuzzFontTest::scriptMapping() {

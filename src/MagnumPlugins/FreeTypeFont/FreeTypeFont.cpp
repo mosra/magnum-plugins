@@ -106,8 +106,8 @@ auto FreeTypeFont::doOpenData(const Containers::ArrayView<const char> data, cons
     _data = Containers::Array<unsigned char>{InPlaceInit, Containers::arrayCast<const unsigned char>(data)};
 
     CORRADE_ASSERT(freeType.library, "Text::FreeTypeFont::openSingleData(): initialize() was not called", {});
-    /** @todo ability to specify different font in TTC collection */
-    if(FT_Error error = FT_New_Memory_Face(freeType.library, _data.begin(), _data.size(), 0, &_ftFont)) {
+    const FT_Long index = fontIndex();
+    if(FT_Error error = FT_New_Memory_Face(freeType.library, _data.begin(), _data.size(), index, &_ftFont)) {
         Error e;
         e << "Text::FreeTypeFont::openData(): failed to open the font:";
         if(const char* string =
@@ -133,7 +133,8 @@ auto FreeTypeFont::doOpenData(const Containers::ArrayView<const char> data, cons
             _ftFont->size->metrics.ascender/64.0f,
             _ftFont->size->metrics.descender/64.0f,
             _ftFont->size->metrics.height/64.0f,
-            UnsignedInt(_ftFont->num_glyphs)};
+            UnsignedInt(_ftFont->num_glyphs),
+            UnsignedInt(_ftFont->num_faces)};
 }
 
 void FreeTypeFont::doClose() {

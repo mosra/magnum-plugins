@@ -53,6 +53,8 @@ struct StbTrueTypeFontTest: TestSuite::Tester {
 
     void empty();
     void invalid();
+    void fontIndex();
+    void fontIndexOutOfRange();
     void invalidMissingTables();
 
     void properties();
@@ -195,6 +197,8 @@ const struct {
 StbTrueTypeFontTest::StbTrueTypeFontTest() {
     addTests({&StbTrueTypeFontTest::empty,
               &StbTrueTypeFontTest::invalid,
+              &StbTrueTypeFontTest::fontIndex,
+              &StbTrueTypeFontTest::fontIndexOutOfRange,
               &StbTrueTypeFontTest::invalidMissingTables,
 
               &StbTrueTypeFontTest::properties});
@@ -258,7 +262,30 @@ void StbTrueTypeFontTest::invalid() {
     Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!font->openData("Oxygen.ttf", 16.0f));
-    CORRADE_COMPARE(out, "Text::StbTrueTypeFont::openData(): can't get offset of the first font\n");
+    CORRADE_COMPARE(out, "Text::StbTrueTypeFont::openData(): can't get offset of font 0\n");
+}
+
+void StbTrueTypeFontTest::fontIndex() {
+    Containers::Pointer<AbstractFont> first = _manager.instantiate("StbTrueTypeFont");
+    CORRADE_VERIFY(first->openFile(Utility::Path::join(FREETYPEFONT_TEST_DIR, "Oxygen.collection.ttc"), 16.0f));
+    CORRADE_COMPARE(first->fontIndex(), 0);
+    CORRADE_COMPARE(first->fontCount(), 2);
+    CORRADE_COMPARE(first->glyphId(U'W'), 58);
+
+    Containers::Pointer<AbstractFont> second = _manager.instantiate("StbTrueTypeFont");
+    CORRADE_VERIFY(second->openFile(Utility::Path::join(FREETYPEFONT_TEST_DIR, "Oxygen.collection.ttc"), 16.0f, 1));
+    CORRADE_COMPARE(second->fontIndex(), 1);
+    CORRADE_COMPARE(second->fontCount(), 2);
+    CORRADE_COMPARE(second->glyphId(U'W'), 72);
+}
+
+void StbTrueTypeFontTest::fontIndexOutOfRange() {
+    Containers::Pointer<AbstractFont> font = _manager.instantiate("StbTrueTypeFont");
+
+    Containers::String out;
+    Error redirectError{&out};
+    CORRADE_VERIFY(!font->openFile(Utility::Path::join(FREETYPEFONT_TEST_DIR, "Oxygen.ttf"), 16.0f, 1));
+    CORRADE_COMPARE(out, "Text::StbTrueTypeFont::openData(): can't get offset of font 1\n");
 }
 
 void StbTrueTypeFontTest::invalidMissingTables() {
