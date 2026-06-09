@@ -29,7 +29,7 @@
 
 #include "GltfImporter.h"
 
-#include <algorithm> /* std::sort() */
+#include <algorithm> /* std::sort(), std::unique() */
 #include <cctype>
 #include <unordered_map>
 #include <Corrade/Containers/Array.h>
@@ -74,9 +74,11 @@
 #include "MagnumPlugins/GltfImporter/decode.h"
 #include "MagnumPlugins/GltfImporter/Gltf.h"
 
-/* Otherwise std::unique() fails to compile on MSVC 2015 and libc++ 15 (commit
-   https://github.com/llvm/llvm-project/commit/c9905b8cb0139f410ce63081989a328559e11374) */
-#if defined(CORRADE_MSVC2015_COMPATIBILITY) || (defined(CORRADE_TARGET_LIBCXX) && _LIBCPP_VERSION >= 15)
+/* Otherwise std::unique() fails to compile on MSVC 2015, libc++ 15 (commit
+   https://github.com/llvm/llvm-project/commit/c9905b8cb0139f410ce63081989a328559e11374),
+   and MSVC 2026 (as of https://github.com/microsoft/STL/pull/5092, which
+   accesses iterator_traits<T>::value_type and reference) */
+#if defined(CORRADE_MSVC2015_COMPATIBILITY) || (defined(CORRADE_TARGET_LIBCXX) && _LIBCPP_VERSION >= 15) || (defined(CORRADE_TARGET_MSVC) && _MSC_VER >= 1950)
 #include <Corrade/Containers/StridedArrayViewStl.h>
 #endif
 
