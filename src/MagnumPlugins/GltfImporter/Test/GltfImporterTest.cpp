@@ -7631,6 +7631,9 @@ void GltfImporterTest::imageInvalidNotFound() {
     auto&& data = ImageInvalidNotFoundData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
+    if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("PngImporter plugin not found, cannot test");
+
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("GltfImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "image-invalid-notfound.gltf")));
 
@@ -8314,19 +8317,23 @@ void GltfImporterTest::encodedUris() {
     CORRADE_VERIFY(importer->openData(*data));
 
     CORRADE_COMPARE(importer->meshCount(), 3);
-    /* We don't care about the result, only the callback being invoked */
-    importer->mesh(0);
-    importer->mesh(1);
-    importer->mesh(2);
-
-    CORRADE_COMPARE(importer->image2DCount(), 3);
-    importer->image2D(0);
-    importer->image2D(1);
-    importer->image2D(2);
+    /* We don't care about the contents, only the callback being invoked */
+    CORRADE_VERIFY(importer->mesh(0));
+    CORRADE_VERIFY(importer->mesh(1));
+    CORRADE_VERIFY(importer->mesh(2));
 
     CORRADE_COMPARE(strings[0], "buffer-unencoded/@file#.bin");
     CORRADE_COMPARE(strings[1], "buffer-encoded/@file#.bin");
     CORRADE_COMPARE(strings[2], "buffer-escaped/říční člun.bin");
+
+    if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("PngImporter plugin not found, cannot test image loading");
+
+    CORRADE_COMPARE(importer->image2DCount(), 3);
+    CORRADE_VERIFY(importer->image2D(0));
+    CORRADE_VERIFY(importer->image2D(1));
+    CORRADE_VERIFY(importer->image2D(2));
+
     CORRADE_COMPARE(strings[3], "image-unencoded/image #1.png");
     CORRADE_COMPARE(strings[4], "image-encoded/image #1.png");
     CORRADE_COMPARE(strings[5], "image-escaped/říční člun.png");

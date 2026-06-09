@@ -2232,6 +2232,9 @@ void AssimpImporterTest::materialMultipleTextures() {
         CORRADE_COMPARE(texture->image(), 0); /* g.png */
     }
 
+    if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("PngImporter plugin not found, cannot test image loading");
+
     /* Check that correct images are imported */
     {
         Containers::Optional<ImageData2D> image = importer->image2D(0);
