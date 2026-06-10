@@ -8330,9 +8330,11 @@ void GltfImporterTest::encodedUris() {
         CORRADE_SKIP("PngImporter plugin not found, cannot test image loading");
 
     CORRADE_COMPARE(importer->image2DCount(), 3);
-    CORRADE_VERIFY(importer->image2D(0));
-    CORRADE_VERIFY(importer->image2D(1));
-    CORRADE_VERIFY(importer->image2D(2));
+    /* These are expected to fail in the PNG importer because we're returning
+       invalid data from the callback */
+    CORRADE_VERIFY(!importer->image2D(0));
+    CORRADE_VERIFY(!importer->image2D(1));
+    CORRADE_VERIFY(!importer->image2D(2));
 
     CORRADE_COMPARE(strings[3], "image-unencoded/image #1.png");
     CORRADE_COMPARE(strings[4], "image-encoded/image #1.png");
