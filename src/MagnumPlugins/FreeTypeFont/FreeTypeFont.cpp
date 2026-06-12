@@ -105,7 +105,11 @@ auto FreeTypeFont::doOpenData(const Containers::ArrayView<const char> data, cons
     /* We need to preserve the data for whole FT_Face lifetime */
     _data = Containers::Array<unsigned char>{InPlaceInit, Containers::arrayCast<const unsigned char>(data)};
 
-    CORRADE_ASSERT(freeType.library, "Text::FreeTypeFont::openSingleData(): initialize() was not called", {});
+    /* The library should be created with initialize() at this point. The
+       plugin can only be created through the plugin manager or via a subclass,
+       so this should never be hit by an end user. */
+    CORRADE_INTERNAL_ASSERT(freeType.library);
+
     /** @todo ability to specify different font in TTC collection */
     if(FT_Error error = FT_New_Memory_Face(freeType.library, _data.begin(), _data.size(), 0, &_ftFont)) {
         Error e;
