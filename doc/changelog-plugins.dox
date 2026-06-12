@@ -225,6 +225,10 @@ namespace Magnum {
     through and causing an assertion inside the @ref Primitives library
 -   Updated @relativeref{Text,StbTrueTypeFont} to version 1.26 of
     `stb_truetype` (see [mosra/magnum-plugins#149](https://github.com/mosra/magnum-plugins/pull/149))
+-   @relativeref{Text,FreeTypeFont}, @relativeref{Text,HarfBuzzFont} and
+    @relativeref{Text,StbTrueTypeFont} can now avoid allocating extra copies of
+    the input font data when opening files or using
+    @ref Text::AbstractFont::openMemory()
 
 @subsection changelog-plugins-latest-buildsystem Build system
 

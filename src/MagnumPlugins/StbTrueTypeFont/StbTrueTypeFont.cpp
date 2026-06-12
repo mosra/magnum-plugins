@@ -69,7 +69,7 @@
 namespace Magnum { namespace Text {
 
 struct StbTrueTypeFont::Font {
-    Containers::Array<unsigned char> data;
+    Containers::Array<char> data;
     stbtt_fontinfo info;
     Float size, scale;
 };
@@ -86,7 +86,7 @@ FontFeatures StbTrueTypeFont::doFeatures() const { return FontFeature::OpenData;
 
 bool StbTrueTypeFont::doIsOpened() const { return !!_font; }
 
-void StbTrueTypeFont::doOpenData(Containers::Array<char>&& data, DataFlags, const Float size, UnsignedInt) {
+void StbTrueTypeFont::doOpenData(Containers::Array<char>&& data, const DataFlags dataFlags, const Float size, UnsignedInt) {
     /* stbtt_GetFontOffsetForIndex() fails hard when passed it an empty file
        (because of course it doesn't take a size, ffs), check explicitly */
     if(data.isEmpty()) {
@@ -96,18 +96,21 @@ void StbTrueTypeFont::doOpenData(Containers::Array<char>&& data, DataFlags, cons
 
     Containers::Pointer<Font> font{InPlaceInit};
 
-    /* TrueType fonts are memory-mapped, thus we need to preserve the data for
-       the whole plugin lifetime */
-    font->data = Containers::Array<unsigned char>(InPlaceInit, Containers::arrayCast<const unsigned char>(data));
+    /* We need to preserve the data for the whole stbtt_fontinfo lifetime. Take
+       over the existing array or copy the data if we can't. */
+    if(dataFlags & (Text::DataFlag::Owned|Text::DataFlag::ExternallyOwned))
+        font->data = Utility::move(data);
+    else
+        font->data = Containers::Array<char>{InPlaceInit, data};
 
     /** @todo ability to specify different font index in TTC collection */
-    const int offset = stbtt_GetFontOffsetForIndex(font->data, 0);
+    const int offset = stbtt_GetFontOffsetForIndex(reinterpret_cast<const unsigned char*>(font->data.begin()), 0);
     if(offset < 0) {
         Error{} << "Text::StbTrueTypeFont::openData(): can't get offset of the first font";
         return;
     }
 
-    if(!stbtt_InitFont(&font->info, font->data, offset)) {
+    if(!stbtt_InitFont(&font->info, reinterpret_cast<const unsigned char*>(font->data.begin()), offset)) {
         Error{} << "Text::StbTrueTypeFont::openData(): font initialization failed";
         return;
     }

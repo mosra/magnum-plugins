@@ -25,6 +25,7 @@
 */
 
 #include <Corrade/Containers/Array.h>
+#include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/String.h>
 #include <Corrade/Containers/StridedArrayView.h>
 #include <Corrade/PluginManager/Manager.h>
@@ -61,6 +62,7 @@ struct HarfBuzzFontTest: TestSuite::Tester {
 
     void shapeFeatures();
 
+    void openMemory();
     void openTwice();
 
     /* Explicitly forbid system-wide plugin dependencies */
@@ -227,6 +229,21 @@ const struct {
     }},
 };
 
+/* Shared among all plugins that implement data copying optimizations */
+const struct {
+    const char* name;
+    bool(*open)(AbstractFont&, Containers::ArrayView<const void>, Float);
+} OpenMemoryData[]{
+    {"data", [](AbstractFont& font, Containers::ArrayView<const void> data, Float size) {
+        /* Copy to ensure the original memory isn't referenced */
+        Containers::Array<char> copy{InPlaceInit, Containers::arrayCast<const char>(data)};
+        return font.openData(copy, size);
+    }},
+    {"memory", [](AbstractFont& font, Containers::ArrayView<const void> data, Float size) {
+        return font.openMemory(data, size);
+    }},
+};
+
 HarfBuzzFontTest::HarfBuzzFontTest() {
     addTests({&HarfBuzzFontTest::scriptMapping});
 
@@ -249,6 +266,9 @@ HarfBuzzFontTest::HarfBuzzFontTest() {
 
     addInstancedTests({&HarfBuzzFontTest::shapeFeatures},
         Containers::arraySize(ShapeFeaturesData));
+
+    addInstancedTests({&HarfBuzzFontTest::openMemory},
+        Containers::arraySize(OpenMemoryData));
 
     addTests({&HarfBuzzFontTest::openTwice});
 
@@ -838,6 +858,24 @@ void HarfBuzzFontTest::shapeFeatures() {
     CORRADE_COMPARE_AS(Containers::stridedArrayView(advances).slice(&Vector2::x),
         Containers::stridedArrayView(data.advances),
         TestSuite::Compare::Container);
+}
+
+void HarfBuzzFontTest::openMemory() {
+    auto&& data = OpenMemoryData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    /* Same as properties() except that it uses openData() & openMemory()
+       instead of openFile() to test data copying on import */
+
+    Containers::Pointer<AbstractFont> font = _manager.instantiate("HarfBuzzFont");
+
+    Containers::Optional<Containers::Array<char>> memory = Utility::Path::read(Utility::Path::join(FREETYPEFONT_TEST_DIR, "Oxygen.ttf"));
+    CORRADE_VERIFY(memory);
+    CORRADE_VERIFY(data.open(*font, *memory, 16.0f));
+
+    CORRADE_COMPARE(font->size(), 16.0f);
+    CORRADE_COMPARE(font->glyphCount(), 671);
+    CORRADE_COMPARE(font->glyphId(U'W'), 58);
 }
 
 void HarfBuzzFontTest::openTwice() {

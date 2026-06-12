@@ -24,6 +24,7 @@
     DEALINGS IN THE SOFTWARE.
 */
 
+#include <Corrade/Containers/Array.h>
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/StridedArrayView.h>
 #include <Corrade/Containers/String.h>
@@ -73,6 +74,7 @@ struct FreeTypeFontTest: TestSuite::Tester {
     void fillGlyphCacheInvalidFormat();
     void fillGlyphCacheCannotFit();
 
+    void openMemory();
     void openTwice();
 
     void initializeFinalizeMultipleManagers();
@@ -128,6 +130,21 @@ const struct {
         "abcdefghijkl\xe2\x98\x83mnopqrstuvwxyzěšč"},
 };
 
+/* Shared among all plugins that implement data copying optimizations */
+const struct {
+    const char* name;
+    bool(*open)(AbstractFont&, Containers::ArrayView<const void>, Float);
+} OpenMemoryData[]{
+    {"data", [](AbstractFont& font, Containers::ArrayView<const void> data, Float size) {
+        /* Copy to ensure the original memory isn't referenced */
+        Containers::Array<char> copy{InPlaceInit, Containers::arrayCast<const char>(data)};
+        return font.openData(copy, size);
+    }},
+    {"memory", [](AbstractFont& font, Containers::ArrayView<const void> data, Float size) {
+        return font.openMemory(data, size);
+    }},
+};
+
 FreeTypeFontTest::FreeTypeFontTest() {
     addTests({&FreeTypeFontTest::empty,
               &FreeTypeFontTest::invalid,
@@ -150,9 +167,12 @@ FreeTypeFontTest::FreeTypeFontTest() {
     addTests({&FreeTypeFontTest::fillGlyphCacheIncremental,
               &FreeTypeFontTest::fillGlyphCacheArray,
               &FreeTypeFontTest::fillGlyphCacheInvalidFormat,
-              &FreeTypeFontTest::fillGlyphCacheCannotFit,
+              &FreeTypeFontTest::fillGlyphCacheCannotFit});
 
-              &FreeTypeFontTest::openTwice,
+    addInstancedTests({&FreeTypeFontTest::openMemory},
+        Containers::arraySize(OpenMemoryData));
+
+    addTests({&FreeTypeFontTest::openTwice,
 
               &FreeTypeFontTest::initializeFinalizeMultipleManagers});
 
@@ -792,6 +812,24 @@ void FreeTypeFontTest::fillGlyphCacheCannotFit() {
     Error redirectError{&out};
     font->fillGlyphCache(cache, "HELLO");
     CORRADE_COMPARE(out, "Text::FreeTypeFont::fillGlyphCache(): cannot fit 5 glyphs with a total area of 535 pixels into a cache of size Vector(16, 32, 1) and Vector(16, 0, 1) filled so far\n");
+}
+
+void FreeTypeFontTest::openMemory() {
+    auto&& data = OpenMemoryData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
+    /* Same as properties() except that it uses openData() & openMemory()
+       instead of openFile() to test data copying on import */
+
+    Containers::Pointer<AbstractFont> font = _manager.instantiate("FreeTypeFont");
+
+    Containers::Optional<Containers::Array<char>> memory = Utility::Path::read(Utility::Path::join(FREETYPEFONT_TEST_DIR, "Oxygen.ttf"));
+    CORRADE_VERIFY(memory);
+    CORRADE_VERIFY(data.open(*font, *memory, 16.0f));
+
+    CORRADE_COMPARE(font->size(), 16.0f);
+    CORRADE_COMPARE(font->glyphCount(), 671);
+    CORRADE_COMPARE(font->glyphId(U'W'), 58);
 }
 
 void FreeTypeFontTest::openTwice() {

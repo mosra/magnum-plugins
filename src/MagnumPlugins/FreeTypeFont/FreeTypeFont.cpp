@@ -101,9 +101,13 @@ FontFeatures FreeTypeFont::doFeatures() const { return FontFeature::OpenData; }
 
 bool FreeTypeFont::doIsOpened() const { return _ftFont; }
 
-void FreeTypeFont::doOpenData(Containers::Array<char>&& data, DataFlags, const Float size, UnsignedInt) {
-    /* We need to preserve the data for whole FT_Face lifetime */
-    _data = Containers::Array<unsigned char>{InPlaceInit, Containers::arrayCast<const unsigned char>(data)};
+void FreeTypeFont::doOpenData(Containers::Array<char>&& data, const DataFlags dataFlags, const Float size, UnsignedInt) {
+    /* We need to preserve the data for the whole FT_Face lifetime. Take over
+       the existing array or copy the data if we can't. */
+    if(dataFlags & (Text::DataFlag::Owned|Text::DataFlag::ExternallyOwned))
+        _data = Utility::move(data);
+    else
+        _data = Containers::Array<char>{InPlaceInit, data};
 
     /* The library should be created with initialize() at this point. The
        plugin can only be created through the plugin manager or via a subclass,
@@ -111,7 +115,7 @@ void FreeTypeFont::doOpenData(Containers::Array<char>&& data, DataFlags, const F
     CORRADE_INTERNAL_ASSERT(freeType.library);
 
     /** @todo ability to specify different font in TTC collection */
-    if(FT_Error error = FT_New_Memory_Face(freeType.library, _data.begin(), _data.size(), 0, &_ftFont)) {
+    if(FT_Error error = FT_New_Memory_Face(freeType.library, reinterpret_cast<const unsigned char*>(_data.begin()), _data.size(), 0, &_ftFont)) {
         Error e;
         e << "Text::FreeTypeFont::openData(): failed to open the font:";
         if(const char* string =
