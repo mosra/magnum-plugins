@@ -181,7 +181,6 @@ class MAGNUM_FREETYPEFONT_EXPORT FreeTypeFont: public AbstractFont {
     #else
     protected:
     #endif
-        Containers::Array<unsigned char> _data;
         FT_Face _ftFont;
 
         bool doIsOpened() const override;
@@ -189,6 +188,8 @@ class MAGNUM_FREETYPEFONT_EXPORT FreeTypeFont: public AbstractFont {
         void doClose() override;
 
     private:
+        Containers::Array<unsigned char> _data;
+
         /* Only the interfaces that HarfBuzzFont replaces with its own can be
            MAGNUM_FREETYPEFONT_LOCAL here */
 
