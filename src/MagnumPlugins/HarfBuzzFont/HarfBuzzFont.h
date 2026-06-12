@@ -215,8 +215,9 @@ class MAGNUM_HARFBUZZFONT_EXPORT HarfBuzzFont: public FreeTypeFont {
     private:
         MAGNUM_HARFBUZZFONT_LOCAL FontFeatures doFeatures() const override;
         MAGNUM_HARFBUZZFONT_LOCAL bool doIsOpened() const override;
-        MAGNUM_HARFBUZZFONT_LOCAL Properties doOpenData(Containers::ArrayView<const char> data, Float size) override;
+        MAGNUM_HARFBUZZFONT_LOCAL void doOpenData(Containers::Array<char>&& data, DataFlags dataFlags, Float size, UnsignedInt fontId) override;
         MAGNUM_HARFBUZZFONT_LOCAL void doClose() override;
+        /* doProperties() provided by FreeTypeFont already */
         MAGNUM_HARFBUZZFONT_LOCAL Containers::Pointer<AbstractShaper> doCreateShaper() override;
 
         hb_font_t* _hbFont;

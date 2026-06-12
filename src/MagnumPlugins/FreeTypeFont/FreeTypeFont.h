@@ -184,17 +184,19 @@ class MAGNUM_FREETYPEFONT_EXPORT FreeTypeFont: public AbstractFont {
         FT_Face _ftFont;
 
         bool doIsOpened() const override;
-        Properties doOpenData(Containers::ArrayView<const char> data, Float size) override;
+        void doOpenData(Containers::Array<char>&& data, DataFlags dataFlags, Float size, UnsignedInt fontId) override;
         void doClose() override;
 
     private:
         Containers::Array<unsigned char> _data;
+        Float _size;
 
         /* Only the interfaces that HarfBuzzFont replaces with its own can be
            MAGNUM_FREETYPEFONT_LOCAL here */
 
         FontFeatures MAGNUM_FREETYPEFONT_LOCAL doFeatures() const override;
 
+        Properties doProperties() override;
         void doGlyphIdsInto(const Containers::StridedArrayView1D<const char32_t>& characters, const Containers::StridedArrayView1D<UnsignedInt>& glyphs) override;
         Containers::String doGlyphName(UnsignedInt glyph) override;
         UnsignedInt doGlyphForName(Containers::StringView name) override;

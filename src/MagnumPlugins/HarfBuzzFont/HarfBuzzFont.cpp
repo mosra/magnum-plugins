@@ -59,15 +59,13 @@ bool HarfBuzzFont::doIsOpened() const {
     return FreeTypeFont::doIsOpened();
 }
 
-auto HarfBuzzFont::doOpenData(const Containers::ArrayView<const char> data, const Float size) -> Properties {
+void HarfBuzzFont::doOpenData(Containers::Array<char>&& data, const DataFlags dataFlags, const Float size, const UnsignedInt fontId) {
     /* Open FreeType font */
-    auto ret = FreeTypeFont::doOpenData(data, size);
+    FreeTypeFont::doOpenData(Utility::move(data), dataFlags, size, fontId);
 
     /* Create Harfbuzz font */
     if(FreeTypeFont::doIsOpened())
         _hbFont = hb_ft_font_create(_ftFont, nullptr);
-
-    return ret;
 }
 
 void HarfBuzzFont::doClose() {

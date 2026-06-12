@@ -101,7 +101,7 @@ FontFeatures FreeTypeFont::doFeatures() const { return FontFeature::OpenData; }
 
 bool FreeTypeFont::doIsOpened() const { return _ftFont; }
 
-auto FreeTypeFont::doOpenData(const Containers::ArrayView<const char> data, const Float size) -> Properties {
+void FreeTypeFont::doOpenData(Containers::Array<char>&& data, DataFlags, const Float size, UnsignedInt) {
     /* We need to preserve the data for whole FT_Face lifetime */
     _data = Containers::Array<unsigned char>{InPlaceInit, Containers::arrayCast<const unsigned char>(data)};
 
@@ -130,10 +130,19 @@ auto FreeTypeFont::doOpenData(const Containers::ArrayView<const char> data, cons
            number. */
         else
             e << error;
-        return {};
+        return;
     }
+
+    /* The size may be rounded by the font for hinting and such, so save the
+       input size instead of querying it from metrics in doProperties() */
+    /** @todo finally understand what is going with all the hinting and fix
+        that properly instead of this hacky guesswork */
+    _size = size;
     CORRADE_INTERNAL_ASSERT_OUTPUT(FT_Set_Char_Size(_ftFont, 0, size*64, 0, 0) == 0);
-    return {size,
+}
+
+auto FreeTypeFont::doProperties() -> Properties {
+    return {_size,
             _ftFont->size->metrics.ascender/64.0f,
             _ftFont->size->metrics.descender/64.0f,
             _ftFont->size->metrics.height/64.0f,

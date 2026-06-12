@@ -71,7 +71,7 @@ namespace Magnum { namespace Text {
 struct StbTrueTypeFont::Font {
     Containers::Array<unsigned char> data;
     stbtt_fontinfo info;
-    Float scale;
+    Float size, scale;
 };
 
 #ifdef MAGNUM_BUILD_DEPRECATED
@@ -86,12 +86,12 @@ FontFeatures StbTrueTypeFont::doFeatures() const { return FontFeature::OpenData;
 
 bool StbTrueTypeFont::doIsOpened() const { return !!_font; }
 
-auto StbTrueTypeFont::doOpenData(const Containers::ArrayView<const char> data, const Float size) -> Properties {
+void StbTrueTypeFont::doOpenData(Containers::Array<char>&& data, DataFlags, const Float size, UnsignedInt) {
     /* stbtt_GetFontOffsetForIndex() fails hard when passed it an empty file
        (because of course it doesn't take a size, ffs), check explicitly */
     if(data.isEmpty()) {
         Error{} << "Text::StbTrueTypeFont::openData(): the file is empty";
-        return {};
+        return;
     }
 
     Containers::Pointer<Font> font{InPlaceInit};
@@ -104,12 +104,12 @@ auto StbTrueTypeFont::doOpenData(const Containers::ArrayView<const char> data, c
     const int offset = stbtt_GetFontOffsetForIndex(font->data, 0);
     if(offset < 0) {
         Error{} << "Text::StbTrueTypeFont::openData(): can't get offset of the first font";
-        return {};
+        return;
     }
 
     if(!stbtt_InitFont(&font->info, font->data, offset)) {
         Error{} << "Text::StbTrueTypeFont::openData(): font initialization failed";
-        return {};
+        return;
     }
 
     /* All right, let's move in */
@@ -121,12 +121,14 @@ auto StbTrueTypeFont::doOpenData(const Containers::ArrayView<const char> data, c
        multiplies the "points per em" value with it. Furthermore, doing so
        results in both implementations interpreting the size equivalently
        (apart from minor differences due to hinting and such). */
+    _font->size = size;
     _font->scale = stbtt_ScaleForMappingEmToPixels(&_font->info, size);
+}
 
-    /* Return font metrics */
+auto StbTrueTypeFont::doProperties() -> Properties {
     Int ascent, descent, lineGap;
     stbtt_GetFontVMetrics(&_font->info, &ascent, &descent, &lineGap);
-    return {size,
+    return {_font->size,
             _font->scale*ascent,
             _font->scale*descent,
             _font->scale*(ascent - descent + lineGap),
