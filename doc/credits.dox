@@ -42,6 +42,8 @@ namespace Magnum {
     @ref Trade::IcoImporter "IcoImporter"
 -   **Andrew ([\@sheerluck](https://github.com/sheerluck)) --- Gentoo package
     fixes
+-   **Andrew Snyder ([\@arsnyder16](https://github.com/arsnyder16))** ---
+    font count queries and font index selection for TrueType Collections
 -   **Andy Maloney** ([\@asmaloney](https://github.com/asmaloney)) --- updates
     to @relativeref{Text,StbTrueTypeFont}
 -   **Bill Robinson** ([\@wivlaro](https://github.com/wivlaro)) --- numerous

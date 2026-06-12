@@ -229,6 +229,11 @@ namespace Magnum {
     @relativeref{Text,StbTrueTypeFont} can now avoid allocating extra copies of
     the input font data when opening files or using
     @ref Text::AbstractFont::openMemory()
+-   @relativeref{Text,FreeTypeFont}, @relativeref{Text,HarfBuzzFont} and
+    @relativeref{Text,StbTrueTypeFont} now support querying font count in TTC
+    collections and selecting a particular font index (see
+    [mosra/magnum-plugins#152](https://github.com/mosra/magnum-plugins/pull/152)
+    and [mosra/magnum-plugins#153](https://github.com/mosra/magnum-plugins/pull/153))
 
 @subsection changelog-plugins-latest-buildsystem Build system
 
