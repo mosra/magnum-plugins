@@ -101,7 +101,34 @@ FontFeatures FreeTypeFont::doFeatures() const { return FontFeature::OpenData; }
 
 bool FreeTypeFont::doIsOpened() const { return _ftFont; }
 
-void FreeTypeFont::doOpenData(Containers::Array<char>&& data, const DataFlags dataFlags, const Float size, UnsignedInt) {
+Containers::Optional<UnsignedInt> FreeTypeFont::doDataFontCount(const Containers::ArrayView<const char> data) {
+    /* Same assertion logic as in doOpenData() below */
+    CORRADE_INTERNAL_ASSERT(freeType.library);
+
+    FT_Face font;
+    if(const FT_Error error = FT_New_Memory_Face(freeType.library, reinterpret_cast<const unsigned char*>(data.begin()), data.size(), -1, &font)) {
+        /* Same error handling logic as in doOpenData() below */
+        Error e;
+        e << "Text::FreeTypeFont::dataFontCount(): failed to open the font:";
+        if(const char* string =
+            #ifndef FT_CONFIG_OPTION_ERROR_STRINGS
+            ftErrorString(error)
+            #else
+            FT_Error_String(error)
+            #endif
+        )
+            e << string;
+        else
+            e << error;
+        return {};
+    }
+
+    const UnsignedInt count = font->num_faces;
+    FT_Done_Face(font);
+    return count;
+}
+
+void FreeTypeFont::doOpenData(Containers::Array<char>&& data, const DataFlags dataFlags, const Float size, const UnsignedInt fontId) {
     /* We need to preserve the data for the whole FT_Face lifetime. Take over
        the existing array or copy the data if we can't. */
     if(dataFlags & (Text::DataFlag::Owned|Text::DataFlag::ExternallyOwned))
@@ -114,10 +141,9 @@ void FreeTypeFont::doOpenData(Containers::Array<char>&& data, const DataFlags da
        so this should never be hit by an end user. */
     CORRADE_INTERNAL_ASSERT(freeType.library);
 
-    /** @todo ability to specify different font in TTC collection */
-    if(FT_Error error = FT_New_Memory_Face(freeType.library, reinterpret_cast<const unsigned char*>(_data.begin()), _data.size(), 0, &_ftFont)) {
+    if(const FT_Error error = FT_New_Memory_Face(freeType.library, reinterpret_cast<const unsigned char*>(_data.begin()), _data.size(), fontId, &_ftFont)) {
         Error e;
-        e << "Text::FreeTypeFont::openData(): failed to open the font:";
+        e << "Text::FreeTypeFont::openData(): failed to open font at index" << fontId << Debug::nospace << ":";
         if(const char* string =
             /* FreeType can be compiled without error strings, in which case
                the returned string will be always null. In that case we do our

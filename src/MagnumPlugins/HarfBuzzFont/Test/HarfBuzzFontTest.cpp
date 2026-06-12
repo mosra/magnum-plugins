@@ -31,6 +31,7 @@
 #include <Corrade/PluginManager/Manager.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
+#include <Corrade/TestSuite/Compare/String.h>
 #include <Corrade/Utility/Endianness.h>
 #include <Corrade/Utility/Path.h>
 #include <Magnum/Math/Vector2.h>
@@ -49,6 +50,9 @@ struct HarfBuzzFontTest: TestSuite::Tester {
     explicit HarfBuzzFontTest();
 
     void scriptMapping();
+
+    void fontCountId();
+    void fontIdFailed();
 
     void shape();
     void shapeDifferentScriptLanguageDirection();
@@ -245,7 +249,10 @@ const struct {
 };
 
 HarfBuzzFontTest::HarfBuzzFontTest() {
-    addTests({&HarfBuzzFontTest::scriptMapping});
+    addTests({&HarfBuzzFontTest::scriptMapping,
+
+              &HarfBuzzFontTest::fontCountId,
+              &HarfBuzzFontTest::fontIdFailed});
 
     addInstancedTests({&HarfBuzzFontTest::shape},
         Containers::arraySize(ShapeData));
@@ -329,6 +336,41 @@ void HarfBuzzFontTest::scriptMapping() {
         #endif
             CORRADE_VERIFY(UnsignedInt(hbScript));
     }
+}
+
+void HarfBuzzFontTest::fontCountId() {
+    /* The whole implementation is in FreeTypeFont, verify just that the
+       HarfBuzzFont subclass doesn't break it */
+
+    Containers::Pointer<AbstractFont> font = _manager.instantiate("HarfBuzzFont");
+
+    CORRADE_COMPARE(font->fileFontCount(Utility::Path::join(FREETYPEFONT_TEST_DIR, "Oxygen.ttf")), 1);
+    CORRADE_COMPARE(font->fileFontCount(Utility::Path::join(FREETYPEFONT_TEST_DIR, "Oxygen.ttc")), 2);
+
+    CORRADE_VERIFY(font->openFile(Utility::Path::join(FREETYPEFONT_TEST_DIR, "Oxygen.ttc"), 16.0f));
+    CORRADE_COMPARE(font->glyphId(U'W'), 1);
+
+    /* The second font is the same except for a different glyph mapping */
+    CORRADE_VERIFY(font->openFile(Utility::Path::join(FREETYPEFONT_TEST_DIR, "Oxygen.ttc"), 16.0f, 1));
+    CORRADE_COMPARE(font->glyphId(U'W'), 3);
+}
+
+void HarfBuzzFontTest::fontIdFailed() {
+    /* Again the whole implementation is in FreeTypeFont, so just verify that
+       the failure to open the font is handled correctly by the subclass */
+
+    Containers::Pointer<AbstractFont> font = _manager.instantiate("HarfBuzzFont");
+
+    Containers::String out;
+    Error redirectError{&out};
+    /* dataFontCount() failure tested in FreeTypeFontTest already, HarfBuzzFont
+       doesn't add anything to it */
+    CORRADE_VERIFY(!font->openFile(Utility::Path::join(FREETYPEFONT_TEST_DIR, "Oxygen.ttf"), 16.0f, 1));
+    CORRADE_VERIFY(!font->openFile(Utility::Path::join(FREETYPEFONT_TEST_DIR, "Oxygen.ttc"), 16.0f, 2));
+    CORRADE_COMPARE_AS(out,
+        "Text::FreeTypeFont::openData(): failed to open font at index 1: invalid argument\n"
+        "Text::FreeTypeFont::openData(): failed to open font at index 2: invalid argument\n",
+        TestSuite::Compare::String);
 }
 
 void HarfBuzzFontTest::shape() {

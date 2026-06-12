@@ -67,7 +67,7 @@ Uses the [FreeType](https://freetype.org) library to load fonts of the
 following formats:
 
 -   [OpenType](https://en.wikipedia.org/wiki/OpenType) (`*.otf`)
--   [TrueType](https://en.wikipedia.org/wiki/TrueType) (`*.ttf`)
+-   [TrueType](https://en.wikipedia.org/wiki/TrueType) (`*.ttf`, `*.ttc`)
 -   [WOFF and WOFF2](https://en.wikipedia.org/wiki/Web_Open_Font_Format)
     (`*.woff`, `*.woff2`)
 -   [Type 1](https://en.wikipedia.org/wiki/PostScript_fonts) (`*.pfb`, `*.pfm`,
@@ -140,7 +140,10 @@ cache. If the format doesn't match or the glyphs can't fit, it prints a message
 to @relativeref{Magnum,Error} and returns @cpp false @ce.
 
 For font formats that support it, @ref glyphName() and @ref glyphForName()
-provides mapping between glyph IDs and names.
+provides mapping between glyph IDs and names. TrueType Collections (`*.ttc`)
+can be queried for font count using @ref fileFontCount() / @ref dataFontCount()
+and a particular font index passed to @ref openFile() / @ref openData() as the
+optional last argument.
 
 The FreeType library alone doesn't provide any advanced shaping capabilities,
 thus @ref AbstractShaper::setScript(),
@@ -195,6 +198,7 @@ class MAGNUM_FREETYPEFONT_EXPORT FreeTypeFont: public AbstractFont {
            MAGNUM_FREETYPEFONT_LOCAL here */
 
         FontFeatures MAGNUM_FREETYPEFONT_LOCAL doFeatures() const override;
+        Containers::Optional<UnsignedInt> doDataFontCount(Containers::ArrayView<const char> data) override;
 
         Properties doProperties() override;
         void doGlyphIdsInto(const Containers::StridedArrayView1D<const char32_t>& characters, const Containers::StridedArrayView1D<UnsignedInt>& glyphs) override;

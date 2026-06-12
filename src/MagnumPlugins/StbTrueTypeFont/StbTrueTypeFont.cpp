@@ -86,7 +86,16 @@ FontFeatures StbTrueTypeFont::doFeatures() const { return FontFeature::OpenData;
 
 bool StbTrueTypeFont::doIsOpened() const { return !!_font; }
 
-void StbTrueTypeFont::doOpenData(Containers::Array<char>&& data, const DataFlags dataFlags, const Float size, UnsignedInt) {
+Containers::Optional<UnsignedInt> StbTrueTypeFont::doDataFontCount(const Containers::ArrayView<const char> data) {
+    /* The function returns 0 on failure, provide a message in that case at
+       least */
+    if(const int fontCount = stbtt_GetNumberOfFonts(reinterpret_cast<const unsigned char*>(data.begin())))
+        return fontCount;
+    Error{} << "Text::StbTrueTypeFont::dataFontCount(): font count query failed";
+    return {};
+}
+
+void StbTrueTypeFont::doOpenData(Containers::Array<char>&& data, const DataFlags dataFlags, const Float size, const UnsignedInt fontId) {
     /* stbtt_GetFontOffsetForIndex() fails hard when passed it an empty file
        (because of course it doesn't take a size, ffs), check explicitly */
     if(data.isEmpty()) {
@@ -103,10 +112,9 @@ void StbTrueTypeFont::doOpenData(Containers::Array<char>&& data, const DataFlags
     else
         font->data = Containers::Array<char>{InPlaceInit, data};
 
-    /** @todo ability to specify different font index in TTC collection */
-    const int offset = stbtt_GetFontOffsetForIndex(reinterpret_cast<const unsigned char*>(font->data.begin()), 0);
+    const int offset = stbtt_GetFontOffsetForIndex(reinterpret_cast<const unsigned char*>(font->data.begin()), fontId);
     if(offset < 0) {
-        Error{} << "Text::StbTrueTypeFont::openData(): can't get offset of the first font";
+        Error{} << "Text::StbTrueTypeFont::openData(): can't get offset of font" << fontId;
         return;
     }
 

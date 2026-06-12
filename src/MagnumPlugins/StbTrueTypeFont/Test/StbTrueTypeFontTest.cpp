@@ -55,6 +55,9 @@ struct StbTrueTypeFontTest: TestSuite::Tester {
     void invalid();
     void invalidMissingTables();
 
+    void fontCountId();
+    void fontCountIdFailed();
+
     void properties();
 
     void shape();
@@ -213,6 +216,9 @@ StbTrueTypeFontTest::StbTrueTypeFontTest() {
               &StbTrueTypeFontTest::invalid,
               &StbTrueTypeFontTest::invalidMissingTables,
 
+              &StbTrueTypeFontTest::fontCountId,
+              &StbTrueTypeFontTest::fontCountIdFailed,
+
               &StbTrueTypeFontTest::properties});
 
     addInstancedTests({&StbTrueTypeFontTest::shape},
@@ -277,7 +283,7 @@ void StbTrueTypeFontTest::invalid() {
     Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!font->openData("Oxygen.ttf", 16.0f));
-    CORRADE_COMPARE(out, "Text::StbTrueTypeFont::openData(): can't get offset of the first font\n");
+    CORRADE_COMPARE(out, "Text::StbTrueTypeFont::openData(): can't get offset of font 0\n");
 }
 
 void StbTrueTypeFontTest::invalidMissingTables() {
@@ -298,6 +304,36 @@ void StbTrueTypeFontTest::invalidMissingTables() {
     Error redirectError{&out};
     CORRADE_VERIFY(!font->openData(*file, 16.0f));
     CORRADE_COMPARE(out, "Text::StbTrueTypeFont::openData(): font initialization failed\n");
+}
+
+void StbTrueTypeFontTest::fontCountId() {
+    Containers::Pointer<AbstractFont> font = _manager.instantiate("StbTrueTypeFont");
+
+    CORRADE_COMPARE(font->fileFontCount(Utility::Path::join(FREETYPEFONT_TEST_DIR, "Oxygen.ttf")), 1);
+    CORRADE_COMPARE(font->fileFontCount(Utility::Path::join(FREETYPEFONT_TEST_DIR, "Oxygen.ttc")), 2);
+
+    CORRADE_VERIFY(font->openFile(Utility::Path::join(FREETYPEFONT_TEST_DIR, "Oxygen.ttc"), 16.0f));
+    CORRADE_COMPARE(font->glyphId(U'W'), 1);
+
+    /* The second font is the same except for a different glyph mapping */
+    CORRADE_VERIFY(font->openFile(Utility::Path::join(FREETYPEFONT_TEST_DIR, "Oxygen.ttc"), 16.0f, 1));
+    CORRADE_COMPARE(font->glyphId(U'W'), 3);
+}
+
+void StbTrueTypeFontTest::fontCountIdFailed() {
+    Containers::Pointer<AbstractFont> font = _manager.instantiate("StbTrueTypeFont");
+
+    Containers::String out;
+    Error redirectError{&out};
+    /* This is attempting to open a filename as data */
+    CORRADE_VERIFY(!font->dataFontCount("Oxygen.ttf"));
+    CORRADE_VERIFY(!font->openFile(Utility::Path::join(FREETYPEFONT_TEST_DIR, "Oxygen.ttf"), 16.0f, 1));
+    CORRADE_VERIFY(!font->openFile(Utility::Path::join(FREETYPEFONT_TEST_DIR, "Oxygen.ttc"), 16.0f, 2));
+    CORRADE_COMPARE_AS(out,
+        "Text::StbTrueTypeFont::dataFontCount(): font count query failed\n"
+        "Text::StbTrueTypeFont::openData(): can't get offset of font 1\n"
+        "Text::StbTrueTypeFont::openData(): can't get offset of font 2\n",
+        TestSuite::Compare::String);
 }
 
 void StbTrueTypeFontTest::properties() {
