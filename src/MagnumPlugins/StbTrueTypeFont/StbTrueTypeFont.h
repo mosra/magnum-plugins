@@ -61,7 +61,7 @@ namespace Magnum { namespace Text {
 
 Uses the [stb_truetype](https://github.com/nothings/stb) library to load
 [OpenType](https://en.wikipedia.org/wiki/OpenType) (`*.otf`) and
-[TrueType](https://en.wikipedia.org/wiki/TrueType) (`*.ttf`) fonts.
+[TrueType](https://en.wikipedia.org/wiki/TrueType) (`*.ttf`, `*.ttc`) fonts.
 
 This plugin provides the `TrueTypeFont` and `OpenTypeFont` plugins, but please
 note that this plugin trades the simplicity and portability for various
@@ -139,6 +139,10 @@ The @ref fillGlyphCache() function expects a @ref PixelFormat::R8Unorm glyph
 cache. If the format doesn't match or the glyphs can't fit, it prints a message
 to @relativeref{Magnum,Error} and returns @cpp false @ce.
 
+TrueType Collections (`*.ttc`) can be queried for font count using
+@ref fileFontCount() / @ref dataFontCount() and a particular font index passed
+to @ref openFile() / @ref openData() as the optional last argument.
+
 The stb_truetype library doesn't provide any advanced shaping capabilities,
 thus @ref AbstractShaper::setScript(),
 @relativeref{AbstractShaper,setLanguage()} and
@@ -191,6 +195,7 @@ class MAGNUM_STBTRUETYPEFONT_EXPORT StbTrueTypeFont: public AbstractFont {
         class Layouter;
 
         MAGNUM_STBTRUETYPEFONT_LOCAL FontFeatures doFeatures() const override;
+        MAGNUM_STBTRUETYPEFONT_LOCAL Containers::Optional<UnsignedInt> doDataFontCount(Containers::ArrayView<const char> data) override;
         MAGNUM_STBTRUETYPEFONT_LOCAL bool doIsOpened() const override;
         MAGNUM_STBTRUETYPEFONT_LOCAL void doOpenData(Containers::Array<char>&& data, DataFlags dataFlags, Float size, UnsignedInt fontId) override;
         MAGNUM_STBTRUETYPEFONT_LOCAL void doClose() override;

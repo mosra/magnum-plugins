@@ -33,6 +33,7 @@
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
 #include <Corrade/TestSuite/Compare/Numeric.h>
+#include <Corrade/TestSuite/Compare/String.h>
 #include <Corrade/Utility/Path.h>
 #include <Magnum/ImageView.h>
 #include <Magnum/Math/Range.h>
@@ -59,6 +60,9 @@ struct FreeTypeFontTest: TestSuite::Tester {
 
     void empty();
     void invalid();
+
+    void fontCountId();
+    void fontCountIdFailed();
 
     void properties();
     void glyphNames();
@@ -149,6 +153,9 @@ FreeTypeFontTest::FreeTypeFontTest() {
     addTests({&FreeTypeFontTest::empty,
               &FreeTypeFontTest::invalid,
 
+              &FreeTypeFontTest::fontCountId,
+              &FreeTypeFontTest::fontCountIdFailed,
+
               &FreeTypeFontTest::properties,
               &FreeTypeFontTest::glyphNames});
 
@@ -208,7 +215,7 @@ void FreeTypeFontTest::empty() {
     char a{};
     /* Explicitly checking non-null but empty view */
     CORRADE_VERIFY(!font->openData({&a, 0}, 16.0f));
-    CORRADE_COMPARE(out, "Text::FreeTypeFont::openData(): failed to open the font: invalid argument\n");
+    CORRADE_COMPARE(out, "Text::FreeTypeFont::openData(): failed to open font at index 0: invalid argument\n");
 }
 
 void FreeTypeFontTest::invalid() {
@@ -217,7 +224,37 @@ void FreeTypeFontTest::invalid() {
     Containers::String out;
     Error redirectError{&out};
     CORRADE_VERIFY(!font->openData("Oxygen.ttf", 16.0f));
-    CORRADE_COMPARE(out, "Text::FreeTypeFont::openData(): failed to open the font: invalid stream operation\n");
+    CORRADE_COMPARE(out, "Text::FreeTypeFont::openData(): failed to open font at index 0: invalid stream operation\n");
+}
+
+void FreeTypeFontTest::fontCountId() {
+    Containers::Pointer<AbstractFont> font = _manager.instantiate("FreeTypeFont");
+
+    CORRADE_COMPARE(font->fileFontCount(Utility::Path::join(FREETYPEFONT_TEST_DIR, "Oxygen.ttf")), 1);
+    CORRADE_COMPARE(font->fileFontCount(Utility::Path::join(FREETYPEFONT_TEST_DIR, "Oxygen.ttc")), 2);
+
+    CORRADE_VERIFY(font->openFile(Utility::Path::join(FREETYPEFONT_TEST_DIR, "Oxygen.ttc"), 16.0f));
+    CORRADE_COMPARE(font->glyphId(U'W'), 1);
+
+    /* The second font is the same except for a different glyph mapping */
+    CORRADE_VERIFY(font->openFile(Utility::Path::join(FREETYPEFONT_TEST_DIR, "Oxygen.ttc"), 16.0f, 1));
+    CORRADE_COMPARE(font->glyphId(U'W'), 3);
+}
+
+void FreeTypeFontTest::fontCountIdFailed() {
+    Containers::Pointer<AbstractFont> font = _manager.instantiate("FreeTypeFont");
+
+    Containers::String out;
+    Error redirectError{&out};
+    /* This is attempting to open a filename as data */
+    CORRADE_VERIFY(!font->dataFontCount("Oxygen.ttf"));
+    CORRADE_VERIFY(!font->openFile(Utility::Path::join(FREETYPEFONT_TEST_DIR, "Oxygen.ttf"), 16.0f, 1));
+    CORRADE_VERIFY(!font->openFile(Utility::Path::join(FREETYPEFONT_TEST_DIR, "Oxygen.ttc"), 16.0f, 2));
+    CORRADE_COMPARE_AS(out,
+        "Text::FreeTypeFont::dataFontCount(): failed to open the font: invalid stream operation\n"
+        "Text::FreeTypeFont::openData(): failed to open font at index 1: invalid argument\n"
+        "Text::FreeTypeFont::openData(): failed to open font at index 2: invalid argument\n",
+        TestSuite::Compare::String);
 }
 
 void FreeTypeFontTest::properties() {
