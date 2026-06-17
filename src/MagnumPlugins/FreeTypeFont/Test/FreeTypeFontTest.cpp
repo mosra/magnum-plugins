@@ -76,6 +76,8 @@ struct FreeTypeFontTest: TestSuite::Tester {
     void fillGlyphCache();
     void fillGlyphCacheIncremental();
     void fillGlyphCacheArray();
+    void fillGlyphCacheGray4Bitmap();
+    void fillGlyphCacheMonochromeBitmap();
     void fillGlyphCacheInvalidFormat();
     void fillGlyphCacheCannotFit();
 
@@ -174,6 +176,8 @@ FreeTypeFontTest::FreeTypeFontTest() {
 
     addTests({&FreeTypeFontTest::fillGlyphCacheIncremental,
               &FreeTypeFontTest::fillGlyphCacheArray,
+              &FreeTypeFontTest::fillGlyphCacheGray4Bitmap,
+              &FreeTypeFontTest::fillGlyphCacheMonochromeBitmap,
               &FreeTypeFontTest::fillGlyphCacheInvalidFormat,
               &FreeTypeFontTest::fillGlyphCacheCannotFit});
 
@@ -812,6 +816,123 @@ void FreeTypeFontTest::fillGlyphCacheArray() {
         Vector2i{0, 0},
         1,
         Range2Di{{0, 0}, {9, 9}}));
+}
+
+void FreeTypeFontTest::fillGlyphCacheMonochromeBitmap() {
+    Containers::Pointer<AbstractFont> font = _manager.instantiate("FreeTypeFont");
+    CORRADE_VERIFY(font->openFile(Utility::Path::join(FREETYPEFONT_TEST_DIR, "MonochromeBitmap.ttf"), 16.0f));
+
+    struct GlyphCache: AbstractGlyphCache {
+        explicit GlyphCache(PixelFormat format, const Vector2i& size, const Vector2i& padding): AbstractGlyphCache{format, size, padding} {}
+
+        GlyphCacheFeatures doFeatures() const override { return {}; }
+        void doSetImage(const Vector2i& offset, const ImageView2D& image) override {
+            CORRADE_COMPARE(offset, Vector2i{});
+            CORRADE_VERIFY(image.size().x() >= 16);
+            CORRADE_VERIFY(image.size().y() >= 16);
+            called = true;
+        }
+
+        bool called = false;
+    } cache{PixelFormat::R8Unorm, {32, 16}, {}};
+
+    const UnsignedInt glyphId = font->glyphId('X');
+    CORRADE_VERIFY(glyphId);
+    font->fillGlyphCache(cache, "X");
+    CORRADE_VERIFY(cache.called);
+
+    const Containers::Triple<Vector2i, Int, Range2Di> glyph = cache.glyph(0, glyphId);
+    CORRADE_COMPARE(glyph.first(), Vector2i{});
+    CORRADE_COMPARE(glyph.second(), 0);
+    CORRADE_COMPARE(glyph.third().size(), (Vector2i{16}));
+
+    constexpr const char Rows[][17]{
+        "#..............#",
+        ".#............#.",
+        "..#..........#..",
+        "...#........#...",
+        "....#......#....",
+        ".....#....#.....",
+        "......#..#......",
+        ".......##.......",
+        ".......##.......",
+        "......#..#......",
+        ".....#....#.....",
+        "....#......#....",
+        "...#........#...",
+        "..#..........#..",
+        ".#............#.",
+        "#..............#"
+    };
+    const Containers::StridedArrayView2D<const UnsignedByte> pixels =
+        cache.image().pixels<UnsignedByte>()[0].sliceSize(
+            {std::size_t(glyph.third().min().y()), std::size_t(glyph.third().min().x())},
+            {16, 16});
+    for(std::size_t y = 0; y != Containers::arraySize(Rows); ++y) {
+        for(std::size_t x = 0; x != 16; ++x) {
+            const UnsignedByte expected = Rows[y][x] == '#' ? 255 : 0;
+            CORRADE_COMPARE(pixels[y][x], expected);
+        }
+    }
+}
+
+void FreeTypeFontTest::fillGlyphCacheGray4Bitmap() {
+    Containers::Pointer<AbstractFont> font = _manager.instantiate("FreeTypeFont");
+    CORRADE_VERIFY(font->openFile(Utility::Path::join(FREETYPEFONT_TEST_DIR, "Gray4Bitmap.ttf"), 16.0f));
+
+    struct GlyphCache: AbstractGlyphCache {
+        explicit GlyphCache(PixelFormat format, const Vector2i& size, const Vector2i& padding): AbstractGlyphCache{format, size, padding} {}
+
+        GlyphCacheFeatures doFeatures() const override { return {}; }
+        void doSetImage(const Vector2i& offset, const ImageView2D& image) override {
+            CORRADE_COMPARE(offset, Vector2i{});
+            CORRADE_VERIFY(image.size().x() >= 16);
+            CORRADE_VERIFY(image.size().y() >= 16);
+            called = true;
+        }
+
+        bool called = false;
+    } cache{PixelFormat::R8Unorm, {32, 16}, {}};
+
+    const UnsignedInt glyphId = font->glyphId('X');
+    CORRADE_VERIFY(glyphId);
+    font->fillGlyphCache(cache, "X");
+    CORRADE_VERIFY(cache.called);
+
+    const Containers::Triple<Vector2i, Int, Range2Di> glyph = cache.glyph(0, glyphId);
+    CORRADE_COMPARE(glyph.first(), Vector2i{});
+    CORRADE_COMPARE(glyph.second(), 0);
+    CORRADE_COMPARE(glyph.third().size(), (Vector2i{16}));
+
+    constexpr const char Rows[][17]{
+        "1..............f",
+        ".2............e.",
+        "..3..........d..",
+        "...4........c...",
+        "....5......b....",
+        ".....6....a.....",
+        "......7..9......",
+        ".......88.......",
+        ".......88.......",
+        "......7..9......",
+        ".....6....a.....",
+        "....5......b....",
+        "...4........c...",
+        "..3..........d..",
+        ".2............e.",
+        "1..............f"
+    };
+    const Containers::StridedArrayView2D<const UnsignedByte> pixels =
+        cache.image().pixels<UnsignedByte>()[0].sliceSize(
+            {std::size_t(glyph.third().min().y()), std::size_t(glyph.third().min().x())},
+            {16, 16});
+    for(std::size_t y = 0; y != Containers::arraySize(Rows); ++y) {
+        for(std::size_t x = 0; x != 16; ++x) {
+            const char value = Rows[y][x];
+            const UnsignedByte expected = value == '.' ? 0 : UnsignedByte((value >= 'a' ? value - 'a' + 10 : value - '0')*17);
+            CORRADE_COMPARE(pixels[y][x], expected);
+        }
+    }
 }
 
 void FreeTypeFontTest::fillGlyphCacheInvalidFormat() {

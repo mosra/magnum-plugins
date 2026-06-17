@@ -62,6 +62,14 @@ corrade_add_test(FreeTypeFontTest FreeTypeFontTest.cpp
         Magnum::DebugTools
         Magnum::Text
     FILES
+        # A subset of Oxygen.ttf with an added 16x16 4bpp EBDT/EBLC strike for
+        # 'X', made with generate-embedded-bitmaps.py and exercising
+        # FT_PIXEL_MODE_GRAY4 bitmap glyph cache normalization.
+        Gray4Bitmap.ttf
+        # A subset of Oxygen.ttf with an added 16x16 1bpp EBDT/EBLC strike for
+        # 'X', made with generate-embedded-bitmaps.py and exercising
+        # FT_PIXEL_MODE_MONO bitmap glyph cache upload.
+        MonochromeBitmap.ttf
         Oxygen.ttf
         # A two-face TrueType Collection made with generate-ttc.py. Face 1 has
         # a modified cmap that maps 'W' to glyph 72 instead of 58, allowing
