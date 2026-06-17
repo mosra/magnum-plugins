@@ -270,34 +270,43 @@ bool FreeTypeFont::doFillGlyphCache(AbstractGlyphCache& cache, const Containers:
         /* Copy the rendered glyph Y-flipped to the destination image. FreeType
            can return embedded bitmap strikes in packed monochrome form, while
            the glyph cache expects 8-bit alpha. */
-        FT_Bitmap bitmap;
-        FT_Bitmap_Init(&bitmap);
-        CORRADE_INTERNAL_ASSERT_OUTPUT(FT_Bitmap_Convert(freeType.library, &glyph->bitmap, &bitmap, 1) == 0);
-        const Containers::Size2D glyphSize{bitmap.rows, bitmap.width};
+        FT_Bitmap convertedBitmap;
+        const FT_Bitmap* bitmap = &glyph->bitmap;
+        if(bitmap->pixel_mode != FT_PIXEL_MODE_GRAY) {
+            FT_Bitmap_Init(&convertedBitmap);
+            CORRADE_INTERNAL_ASSERT_OUTPUT(FT_Bitmap_Convert(freeType.library, bitmap, &convertedBitmap, 1) == 0);
+            bitmap = &convertedBitmap;
+        }
+
+        const Containers::Size2D glyphSize{bitmap->rows, bitmap->width};
         Containers::StridedArrayView2D<char> glyphDst = dst[glyphs[i].offset.z()]
             .sliceSize({std::size_t(glyphs[i].offset.y()),
                         std::size_t(glyphs[i].offset.x())}, glyphSize);
-        if(bitmap.pixel_mode != FT_PIXEL_MODE_GRAY || bitmap.num_grays <= 1) {
-            Error{} << "Text::FreeTypeFont::fillGlyphCache(): expected a converted FT_PIXEL_MODE_GRAY bitmap with at least two gray levels but got pixel mode" << bitmap.pixel_mode << "and" << bitmap.num_grays << "gray levels";
-            CORRADE_INTERNAL_ASSERT_OUTPUT(FT_Bitmap_Done(freeType.library, &bitmap) == 0);
+        if(bitmap->pixel_mode != FT_PIXEL_MODE_GRAY || bitmap->num_grays <= 1) {
+            Error{} << "Text::FreeTypeFont::fillGlyphCache(): expected an FT_PIXEL_MODE_GRAY bitmap with at least two gray levels but got pixel mode" << bitmap->pixel_mode << "and" << bitmap->num_grays << "gray levels";
+            if(bitmap == &convertedBitmap) {    
+                CORRADE_INTERNAL_ASSERT_OUTPUT(FT_Bitmap_Done(freeType.library, &convertedBitmap) == 0);
+            }
             return {};
-        } else if(bitmap.num_grays == 256) {
+        } else if(bitmap->num_grays == 256) {
             Utility::copy(
                 Containers::StridedArrayView2D<const char>{
-                    {reinterpret_cast<const char*>(bitmap.buffer), ~std::size_t{}},
+                    {reinterpret_cast<const char*>(bitmap->buffer), ~std::size_t{}},
                     glyphSize,
-                    {std::ptrdiff_t(bitmap.pitch), 1}}.flipped<0>(),
+                    {std::ptrdiff_t(bitmap->pitch), 1}}.flipped<0>(),
                 glyphDst);
         } else {
-            for(std::size_t y = 0; y != bitmap.rows; ++y) {
-                const unsigned char* const src = bitmap.buffer + y*bitmap.pitch;
-                char* const dst = &glyphDst[bitmap.rows - y - 1][0];
-                for(std::size_t x = 0; x != bitmap.width; ++x) {
-                    dst[x] = char((UnsignedInt(src[x])*255)/(bitmap.num_grays - 1));
+            for(std::size_t y = 0; y != bitmap->rows; ++y) {
+                const unsigned char* const src = bitmap->buffer + y*bitmap->pitch;
+                char* const dst = &glyphDst[bitmap->rows - y - 1][0];
+                for(std::size_t x = 0; x != bitmap->width; ++x) {
+                    dst[x] = char((UnsignedInt(src[x])*255)/(bitmap->num_grays - 1));
                 }
             }
         }
-        CORRADE_INTERNAL_ASSERT_OUTPUT(FT_Bitmap_Done(freeType.library, &bitmap) == 0);
+        if(bitmap == &convertedBitmap) {
+            CORRADE_INTERNAL_ASSERT_OUTPUT(FT_Bitmap_Done(freeType.library, &convertedBitmap) == 0);
+        }
 
         /* Insert glyph parameters into the cache */
         cache.addGlyph(*fontId, glyphIndices[i],
