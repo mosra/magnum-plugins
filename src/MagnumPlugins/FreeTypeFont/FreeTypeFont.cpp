@@ -267,9 +267,7 @@ bool FreeTypeFont::doFillGlyphCache(AbstractGlyphCache& cache, const Containers:
         CORRADE_INTERNAL_ASSERT_OUTPUT(FT_Load_Glyph(_ftFont, glyphIndices[i], FT_LOAD_DEFAULT) == 0);
         CORRADE_INTERNAL_ASSERT_OUTPUT(FT_Render_Glyph(glyph, FT_RENDER_MODE_NORMAL) == 0);
 
-        /* Copy the rendered glyph Y-flipped to the destination image. FreeType
-           can return embedded bitmap strikes in packed monochrome form, while
-           the glyph cache expects 8-bit alpha. */
+        /* Convert packed embedded bitmaps to the 8-bit glyph cache format. */
         FT_Bitmap convertedBitmap;
         const FT_Bitmap* bitmap = &glyph->bitmap;
         if(bitmap->pixel_mode != FT_PIXEL_MODE_GRAY) {
@@ -282,13 +280,9 @@ bool FreeTypeFont::doFillGlyphCache(AbstractGlyphCache& cache, const Containers:
         Containers::StridedArrayView2D<char> glyphDst = dst[glyphs[i].offset.z()]
             .sliceSize({std::size_t(glyphs[i].offset.y()),
                         std::size_t(glyphs[i].offset.x())}, glyphSize);
-        if(bitmap->pixel_mode != FT_PIXEL_MODE_GRAY || bitmap->num_grays <= 1) {
-            Error{} << "Text::FreeTypeFont::fillGlyphCache(): expected an FT_PIXEL_MODE_GRAY bitmap with at least two gray levels but got pixel mode" << bitmap->pixel_mode << "and" << bitmap->num_grays << "gray levels";
-            if(bitmap == &convertedBitmap) {    
-                CORRADE_INTERNAL_ASSERT_OUTPUT(FT_Bitmap_Done(freeType.library, &convertedBitmap) == 0);
-            }
-            return {};
-        } else if(bitmap->num_grays == 256) {
+        CORRADE_INTERNAL_ASSERT(bitmap->pixel_mode == FT_PIXEL_MODE_GRAY);
+        CORRADE_INTERNAL_ASSERT(bitmap->num_grays > 1);
+        if(bitmap->num_grays == 256) {
             Utility::copy(
                 Containers::StridedArrayView2D<const char>{
                     {reinterpret_cast<const char*>(bitmap->buffer), ~std::size_t{}},
