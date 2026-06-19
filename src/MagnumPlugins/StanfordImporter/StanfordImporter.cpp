@@ -319,6 +319,8 @@ void StanfordImporter::doOpenData(Containers::Array<char>&& data, const DataFlag
     bool perFaceColors = false;
     bool perFaceObjectIds = false;
     {
+        /* The property type affects parsing of the following lines so it has
+           to be outside of the per-line loop */
         PropertyType propertyType{};
         while(!in.isEmpty()) {
             const std::string line = extractLine(in);
