@@ -215,71 +215,69 @@ void StanfordImporter::doOpenData(Containers::Array<char>&& data, const DataFlag
 
     /* Parse format line */
     Containers::Optional<bool> fileFormatNeedsEndianSwapping;
-    {
-        while(!inHeader.isEmpty()) {
-            const std::string line = extractLine(inHeader);
-            std::vector<std::string> tokens = Utility::String::splitWithoutEmptyParts(line);
+    while(!inHeader.isEmpty()) {
+        const std::string line = extractLine(inHeader);
+        std::vector<std::string> tokens = Utility::String::splitWithoutEmptyParts(line);
 
-            /* Skip empty lines and comments */
-            if(tokens.empty() || tokens.front() == "comment")
-                continue;
+        /* Skip empty lines and comments */
+        if(tokens.empty() || tokens.front() == "comment")
+            continue;
 
-            if(tokens[0] != "format") {
-                Error{} << "Trade::StanfordImporter::openData(): expected format line, got" << line;
-                return;
-            }
-
-            if(tokens.size() != 3) {
-                Error() << "Trade::StanfordImporter::openData(): invalid format line" << line;
-                return;
-            }
-
-            if(tokens[2] == "1.0") {
-                if(tokens[1] == "binary_little_endian") {
-                    fileFormatNeedsEndianSwapping = Utility::Endianness::isBigEndian();
-                    break;
-                } else if(tokens[1] == "binary_big_endian") {
-                    fileFormatNeedsEndianSwapping = !Utility::Endianness::isBigEndian();
-                    break;
-                } else if(tokens[1] == "ascii") {
-                    constexpr Containers::StringView plugin = "AssimpImporter"_s;
-                    if(
-                        #ifdef MAGNUM_BUILD_DEPRECATED
-                        /** @todo remove the !manager() once deprecated
-                            manager-less instantiation is removed */
-                        !manager() ||
-                        #endif
-                        !(manager()->load(plugin) & PluginManager::LoadState::Loaded))
-                    {
-                        Error{} << "Trade::StanfordImporter::openData(): can't forward an ASCII file to AssimpImporter";
-                        return;
-                    }
-
-                    if(flags() & ImporterFlag::Verbose)
-                        Debug{} << "Trade::StanfordImporter::openData(): forwarding an ASCII file to AssimpImporter";
-
-                    /* Instantiate the plugin, propagate flags. PLYs can't
-                       reference external data so file callbacks don't need to
-                       be propagated. */
-                    Containers::Pointer<AbstractImporter> assimpImporter = static_cast<PluginManager::Manager<AbstractImporter>*>(manager())->instantiate(plugin);
-                    assimpImporter->setFlags(flags());
-
-                    /* Try to open the data with AssimpImporter (error output
-                       should be printed by the plugin itself). All other
-                       functions transparently forward to that importer
-                       instance if it's populated. */
-                    if(!assimpImporter->openData(data))
-                        return;
-
-                    /* Success, save the instance */
-                    _assimpImporter = Utility::move(assimpImporter);
-                    return;
-                }
-            }
-
-            Error{} << "Trade::StanfordImporter::openData(): unsupported file format" << tokens[1] << tokens[2];
+        if(tokens[0] != "format") {
+            Error{} << "Trade::StanfordImporter::openData(): expected format line, got" << line;
             return;
         }
+
+        if(tokens.size() != 3) {
+            Error() << "Trade::StanfordImporter::openData(): invalid format line" << line;
+            return;
+        }
+
+        if(tokens[2] == "1.0") {
+            if(tokens[1] == "binary_little_endian") {
+                fileFormatNeedsEndianSwapping = Utility::Endianness::isBigEndian();
+                break;
+            } else if(tokens[1] == "binary_big_endian") {
+                fileFormatNeedsEndianSwapping = !Utility::Endianness::isBigEndian();
+                break;
+            } else if(tokens[1] == "ascii") {
+                constexpr Containers::StringView plugin = "AssimpImporter"_s;
+                if(
+                    #ifdef MAGNUM_BUILD_DEPRECATED
+                    /** @todo remove the !manager() once deprecated
+                        manager-less instantiation is removed */
+                    !manager() ||
+                    #endif
+                    !(manager()->load(plugin) & PluginManager::LoadState::Loaded))
+                {
+                    Error{} << "Trade::StanfordImporter::openData(): can't forward an ASCII file to AssimpImporter";
+                    return;
+                }
+
+                if(flags() & ImporterFlag::Verbose)
+                    Debug{} << "Trade::StanfordImporter::openData(): forwarding an ASCII file to AssimpImporter";
+
+                /* Instantiate the plugin, propagate flags. PLYs can't
+                   reference external data so file callbacks don't need to be
+                   propagated. */
+                Containers::Pointer<AbstractImporter> assimpImporter = static_cast<PluginManager::Manager<AbstractImporter>*>(manager())->instantiate(plugin);
+                assimpImporter->setFlags(flags());
+
+                /* Try to open the data with AssimpImporter (error output
+                   should be printed by the plugin itself). All other functions
+                   transparently forward to that importer instance if it's
+                   populated. */
+                if(!assimpImporter->openData(data))
+                    return;
+
+                /* Success, save the instance */
+                _assimpImporter = Utility::move(assimpImporter);
+                return;
+            }
+        }
+
+        Error{} << "Trade::StanfordImporter::openData(): unsupported file format" << tokens[1] << tokens[2];
+        return;
     }
 
     /* Header checks passed and we're not delegating to Assimp, take over the
@@ -318,217 +316,213 @@ void StanfordImporter::doOpenData(Containers::Array<char>&& data, const DataFlag
     bool perFaceNormals = false;
     bool perFaceColors = false;
     bool perFaceObjectIds = false;
-    {
-        /* The property type affects parsing of the following lines so it has
-           to be outside of the per-line loop */
-        PropertyType propertyType{};
-        while(!in.isEmpty()) {
-            const std::string line = extractLine(in);
-            std::vector<std::string> tokens = Utility::String::splitWithoutEmptyParts(line);
+    /* The property type affects parsing of the following lines so it has to be
+       outside of the per-line loop */
+    PropertyType propertyType{};
+    while(!in.isEmpty()) {
+        const std::string line = extractLine(in);
+        std::vector<std::string> tokens = Utility::String::splitWithoutEmptyParts(line);
 
-            /* Skip empty lines and comments */
-            if(tokens.empty() || tokens.front() == "comment")
-                continue;
+        /* Skip empty lines and comments */
+        if(tokens.empty() || tokens.front() == "comment")
+            continue;
 
-            /* Elements */
-            if(tokens[0] == "element") {
-                /* Vertex elements */
-                if(tokens.size() == 3 && tokens[1] == "vertex") {
-                    state->vertexCount = std::stoi(tokens[2]);
-                    propertyType = PropertyType::Vertex;
+        /* Elements */
+        if(tokens[0] == "element") {
+            /* Vertex elements */
+            if(tokens.size() == 3 && tokens[1] == "vertex") {
+                state->vertexCount = std::stoi(tokens[2]);
+                propertyType = PropertyType::Vertex;
 
-                /* Face elements */
-                } else if(tokens.size() == 3 &&tokens[1] == "face") {
-                    state->faceCount = std::stoi(tokens[2]);
-                    propertyType = PropertyType::Face;
+            /* Face elements */
+            } else if(tokens.size() == 3 &&tokens[1] == "face") {
+                state->faceCount = std::stoi(tokens[2]);
+                propertyType = PropertyType::Face;
 
-                /* Something else */
-                } else {
-                    Error{} << "Trade::StanfordImporter::openData(): unknown element" << tokens[1];
+            /* Something else */
+            } else {
+                Error{} << "Trade::StanfordImporter::openData(): unknown element" << tokens[1];
+                return;
+            }
+
+        /* Element properties */
+        } else if(tokens[0] == "property") {
+            /* Vertex element properties */
+            if(propertyType == PropertyType::Vertex) {
+                if(tokens.size() != 3) {
+                    Error{} << "Trade::StanfordImporter::openData(): invalid vertex property line" << line;
                     return;
                 }
 
-            /* Element properties */
-            } else if(tokens[0] == "property") {
-                /* Vertex element properties */
-                if(propertyType == PropertyType::Vertex) {
-                    if(tokens.size() != 3) {
-                        Error{} << "Trade::StanfordImporter::openData(): invalid vertex property line" << line;
+                /* Component type */
+                const VertexFormat componentFormat = parseAttributeType(tokens[1]);
+                if(componentFormat == VertexFormat{}) {
+                    Error{} << "Trade::StanfordImporter::openData(): invalid vertex component type" << tokens[1];
+                    return;
+                }
+
+                /* Component */
+                if(tokens[2] == "x") {
+                    positionOffsets.x() = state->vertexStride;
+                    positionFormats.x() = componentFormat;
+                } else if(tokens[2] == "y") {
+                    positionOffsets.y() = state->vertexStride;
+                    positionFormats.y() = componentFormat;
+                } else if(tokens[2] == "z") {
+                    positionOffsets.z() = state->vertexStride;
+                    positionFormats.z() = componentFormat;
+                } else if(tokens[2] == "nx") {
+                    normalOffsets.x() = state->vertexStride;
+                    normalFormats.x() = componentFormat;
+                } else if(tokens[2] == "ny") {
+                    normalOffsets.y() = state->vertexStride;
+                    normalFormats.y() = componentFormat;
+                } else if(tokens[2] == "nz") {
+                    normalOffsets.z() = state->vertexStride;
+                    normalFormats.z() = componentFormat;
+                /* LuxBlend uses s/t, Mitsuba uses u/v */
+                } else if(tokens[2] == "u" || tokens[2] == "s") {
+                    textureCoordinateOffsets.x() = state->vertexStride;
+                    textureCoordinateFormats.x() = componentFormat;
+                } else if(tokens[2] == "v" || tokens[2] == "t") {
+                    textureCoordinateOffsets.y() = state->vertexStride;
+                    textureCoordinateFormats.y() = componentFormat;
+                } else if(tokens[2] == "red") {
+                    colorOffsets.x() = state->vertexStride;
+                    colorFormats.x() = componentFormat;
+                } else if(tokens[2] == "green") {
+                    colorOffsets.y() = state->vertexStride;
+                    colorFormats.y() = componentFormat;
+                } else if(tokens[2] == "blue") {
+                    colorOffsets.z() = state->vertexStride;
+                    colorFormats.z() = componentFormat;
+                /* Several people complain that Meshlab doesn't support alpha,
+                   so let's make sure we do :P
+                    https://github.com/cnr-isti-vclab/meshlab/issues/161 */
+                } else if(tokens[2] == "alpha") {
+                    colorOffsets.w() = state->vertexStride;
+                    colorFormats.w() = componentFormat;
+                } else if(tokens[2] == configuration().value("objectIdAttribute")) {
+                    objectIdOffset = state->vertexStride;
+                    objectIdFormat = componentFormat;
+
+                /* Unknown component, add to the attribute list. Stride is not
+                   known yet, using 0 until it's updated later. */
+                } else {
+                    auto inserted = state->attributeNameMap.emplace(tokens[2],
+                        meshAttributeCustom(state->attributeNames.size()));
+                    arrayAppend(state->attributeNames, tokens[2]);
+                    arrayAppend(state->attributeData, MeshAttributeData{
+                        inserted.first->second,
+                        componentFormat,
+                        state->vertexStride, state->vertexCount, 0});
+                }
+
+                /* Add size of current component to total stride */
+                state->vertexStride += vertexFormatSize(componentFormat);
+
+            /* Face element properties */
+            } else if(propertyType == PropertyType::Face) {
+                /* Face vertex indices. The vertex_indices name is usual,
+                   Assimp exports with vertex_index, reference from
+                    https://paulbourke.net/dataformats/ply/ mentions both. */
+                if(tokens.size() == 5 && tokens[1] == "list" && (tokens[4] == "vertex_indices" || tokens[4] == "vertex_index")) {
+                    state->faceIndicesOffset = state->faceSkip;
+                    state->faceSkip = 0;
+
+                    /* Face size type */
+                    if((state->faceSizeType = parseIndexType(tokens[2])) == MeshIndexType{}) {
+                        Error{} << "Trade::StanfordImporter::openData(): invalid face size type" << tokens[2];
                         return;
                     }
 
-                    /* Component type */
+                    /* Face index type */
+                    if((state->faceIndexType = parseIndexType(tokens[3])) == MeshIndexType{}) {
+                        Error{} << "Trade::StanfordImporter::openData(): invalid face index type" << tokens[3];
+                        return;
+                    }
+
+                /* Per-face component */
+                } else if(tokens.size() == 3) {
                     const VertexFormat componentFormat = parseAttributeType(tokens[1]);
                     if(componentFormat == VertexFormat{}) {
-                        Error{} << "Trade::StanfordImporter::openData(): invalid vertex component type" << tokens[1];
+                        Error{} << "Trade::StanfordImporter::openData(): invalid face component type" << tokens[1];
                         return;
                     }
 
-                    /* Component */
-                    if(tokens[2] == "x") {
-                        positionOffsets.x() = state->vertexStride;
-                        positionFormats.x() = componentFormat;
-                    } else if(tokens[2] == "y") {
-                        positionOffsets.y() = state->vertexStride;
-                        positionFormats.y() = componentFormat;
-                    } else if(tokens[2] == "z") {
-                        positionOffsets.z() = state->vertexStride;
-                        positionFormats.z() = componentFormat;
-                    } else if(tokens[2] == "nx") {
-                        normalOffsets.x() = state->vertexStride;
+                    /* Before indices are found, faceIndicesOffset is zero.
+                       After indices are found, faceIndicesOffset is set and
+                       faceSkip is zero again, thus the sum of the two is
+                       always offset from the beginning of the face, which is
+                       what we need. */
+                    const UnsignedInt faceComponentOffset =
+                        state->faceIndicesOffset + state->faceSkip;
+
+                    /* Per-face normals and colors make sense, OTOH positions
+                       or texture coordinates don't, so not handling those in
+                       any way (they would appear as custom attributes) */
+                    if(tokens[2] == "nx") {
+                        perFaceNormals = true;
+                        normalOffsets.x() = faceComponentOffset;
                         normalFormats.x() = componentFormat;
                     } else if(tokens[2] == "ny") {
-                        normalOffsets.y() = state->vertexStride;
+                        normalOffsets.y() = faceComponentOffset;
                         normalFormats.y() = componentFormat;
                     } else if(tokens[2] == "nz") {
-                        normalOffsets.z() = state->vertexStride;
+                        normalOffsets.z() = faceComponentOffset;
                         normalFormats.z() = componentFormat;
-                    /* LuxBlend uses s/t, Mitsuba uses u/v */
-                    } else if(tokens[2] == "u" || tokens[2] == "s") {
-                        textureCoordinateOffsets.x() = state->vertexStride;
-                        textureCoordinateFormats.x() = componentFormat;
-                    } else if(tokens[2] == "v" || tokens[2] == "t") {
-                        textureCoordinateOffsets.y() = state->vertexStride;
-                        textureCoordinateFormats.y() = componentFormat;
                     } else if(tokens[2] == "red") {
-                        colorOffsets.x() = state->vertexStride;
+                        perFaceColors = true;
+                        colorOffsets.x() = faceComponentOffset;
                         colorFormats.x() = componentFormat;
                     } else if(tokens[2] == "green") {
-                        colorOffsets.y() = state->vertexStride;
+                        colorOffsets.y() = faceComponentOffset;
                         colorFormats.y() = componentFormat;
                     } else if(tokens[2] == "blue") {
-                        colorOffsets.z() = state->vertexStride;
+                        colorOffsets.z() = faceComponentOffset;
                         colorFormats.z() = componentFormat;
-                    /* Several people complain that Meshlab doesn't support
-                       alpha, so let's make sure we do :P
-                       https://github.com/cnr-isti-vclab/meshlab/issues/161*/
                     } else if(tokens[2] == "alpha") {
-                        colorOffsets.w() = state->vertexStride;
+                        colorOffsets.w() = faceComponentOffset;
                         colorFormats.w() = componentFormat;
                     } else if(tokens[2] == configuration().value("objectIdAttribute")) {
-                        objectIdOffset = state->vertexStride;
+                        perFaceObjectIds = true;
+                        objectIdOffset = faceComponentOffset;
                         objectIdFormat = componentFormat;
 
-                    /* Unknown component, add to the attribute list. Stride is
-                       not known yet, using 0 until it's updated later. */
+                    /* Unknown component, add to the face attribute list.
+                       Stride and actual triangle face count is not known yet,
+                       using 0 until it's updated later. */
                     } else {
                         auto inserted = state->attributeNameMap.emplace(tokens[2],
                             meshAttributeCustom(state->attributeNames.size()));
                         arrayAppend(state->attributeNames, tokens[2]);
-                        arrayAppend(state->attributeData, MeshAttributeData{
+                        arrayAppend(state->faceAttributeData, MeshAttributeData{
                             inserted.first->second,
-                            componentFormat,
-                            state->vertexStride, state->vertexCount, 0});
+                            componentFormat, faceComponentOffset, 0, 0});
                     }
 
-                    /* Add size of current component to total stride */
-                    state->vertexStride += vertexFormatSize(componentFormat);
+                    state->faceSkip += vertexFormatSize(componentFormat);
 
-                /* Face element properties */
-                } else if(propertyType == PropertyType::Face) {
-                    /* Face vertex indices. The vertex_indices name is usual,
-                       Assimp exports with vertex_index, reference from
-                       https://paulbourke.net/dataformats/ply/ mentions
-                       both. */
-                    if(tokens.size() == 5 && tokens[1] == "list" && (tokens[4] == "vertex_indices" || tokens[4] == "vertex_index")) {
-                        state->faceIndicesOffset = state->faceSkip;
-                        state->faceSkip = 0;
-
-                        /* Face size type */
-                        if((state->faceSizeType = parseIndexType(tokens[2])) == MeshIndexType{}) {
-                            Error{} << "Trade::StanfordImporter::openData(): invalid face size type" << tokens[2];
-                            return;
-                        }
-
-                        /* Face index type */
-                        if((state->faceIndexType = parseIndexType(tokens[3])) == MeshIndexType{}) {
-                            Error{} << "Trade::StanfordImporter::openData(): invalid face index type" << tokens[3];
-                            return;
-                        }
-
-                    /* Per-face component */
-                    } else if(tokens.size() == 3) {
-                       const VertexFormat componentFormat = parseAttributeType(tokens[1]);
-                        if(componentFormat == VertexFormat{}) {
-                            Error{} << "Trade::StanfordImporter::openData(): invalid face component type" << tokens[1];
-                            return;
-                        }
-
-                        /* Before indices are found, faceIndicesOffset is zero.
-                           After indices are found, faceIndicesOffset is set
-                           and faceSkip is zero again, thus the sum of the two
-                           is always offset from the beginning of the face,
-                           which is what we need. */
-                        const UnsignedInt faceComponentOffset =
-                            state->faceIndicesOffset + state->faceSkip;
-
-                        /* Per-face normals and colors make sense, OTOH
-                           positions or texture coordinates don't, so not
-                           handling those in any way (they would appear as
-                           custom attributes) */
-                        if(tokens[2] == "nx") {
-                            perFaceNormals = true;
-                            normalOffsets.x() = faceComponentOffset;
-                            normalFormats.x() = componentFormat;
-                        } else if(tokens[2] == "ny") {
-                            normalOffsets.y() = faceComponentOffset;
-                            normalFormats.y() = componentFormat;
-                        } else if(tokens[2] == "nz") {
-                            normalOffsets.z() = faceComponentOffset;
-                            normalFormats.z() = componentFormat;
-                        } else if(tokens[2] == "red") {
-                            perFaceColors = true;
-                            colorOffsets.x() = faceComponentOffset;
-                            colorFormats.x() = componentFormat;
-                        } else if(tokens[2] == "green") {
-                            colorOffsets.y() = faceComponentOffset;
-                            colorFormats.y() = componentFormat;
-                        } else if(tokens[2] == "blue") {
-                            colorOffsets.z() = faceComponentOffset;
-                            colorFormats.z() = componentFormat;
-                        } else if(tokens[2] == "alpha") {
-                            colorOffsets.w() = faceComponentOffset;
-                            colorFormats.w() = componentFormat;
-                        } else if(tokens[2] == configuration().value("objectIdAttribute")) {
-                            perFaceObjectIds = true;
-                            objectIdOffset = faceComponentOffset;
-                            objectIdFormat = componentFormat;
-
-                        /* Unknown component, add to the face attribute list.
-                           Stride and actual triangle face count is not known yet,
-                           using 0 until it's updated later. */
-                        } else {
-                            auto inserted = state->attributeNameMap.emplace(tokens[2],
-                                meshAttributeCustom(state->attributeNames.size()));
-                            arrayAppend(state->attributeNames, tokens[2]);
-                            arrayAppend(state->faceAttributeData, MeshAttributeData{
-                                inserted.first->second,
-                                componentFormat, faceComponentOffset, 0, 0});
-                        }
-
-                        state->faceSkip += vertexFormatSize(componentFormat);
-
-                    /* Fail on unknown lines */
-                    } else {
-                        Error{} << "Trade::StanfordImporter::openData(): invalid face property line" << line;
-                        return;
-                    }
-
-                /* Unexpected property line */
-                } else if(propertyType == PropertyType{}) {
-                    Error{} << "Trade::StanfordImporter::openData(): unexpected property line";
+                /* Fail on unknown lines */
+                } else {
+                    Error{} << "Trade::StanfordImporter::openData(): invalid face property line" << line;
                     return;
                 }
 
-            /* Header end */
-            } else if(tokens[0] == "end_header") {
-                break;
-
-            /* Something else */
-            } else {
-                Error{} << "Trade::StanfordImporter::openData(): unknown line" << line;
+            /* Unexpected property line */
+            } else if(propertyType == PropertyType{}) {
+                Error{} << "Trade::StanfordImporter::openData(): unexpected property line";
                 return;
             }
+
+        /* Header end */
+        } else if(tokens[0] == "end_header") {
+            break;
+
+        /* Something else */
+        } else {
+            Error{} << "Trade::StanfordImporter::openData(): unknown line" << line;
+            return;
         }
     }
 
