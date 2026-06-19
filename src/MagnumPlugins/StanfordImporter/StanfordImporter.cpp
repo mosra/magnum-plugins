@@ -243,9 +243,14 @@ void StanfordImporter::doOpenData(Containers::Array<char>&& data, const DataFlag
                     break;
                 } else if(tokens[1] == "ascii") {
                     constexpr Containers::StringView plugin = "AssimpImporter"_s;
-                    /** @todo remove the !manager() once manager-less
-                        instantiation is removed */
-                    if(!manager() || !(manager()->load(plugin) & PluginManager::LoadState::Loaded)) {
+                    if(
+                        #ifdef MAGNUM_BUILD_DEPRECATED
+                        /** @todo remove the !manager() once deprecated
+                            manager-less instantiation is removed */
+                        !manager() ||
+                        #endif
+                        !(manager()->load(plugin) & PluginManager::LoadState::Loaded))
+                    {
                         Error{} << "Trade::StanfordImporter::openData(): can't forward an ASCII file to AssimpImporter";
                         return;
                     }
