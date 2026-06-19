@@ -25,6 +25,10 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
+if(NOT MAGNUM_BUILD_DEPRECATED)
+    message(SEND_ERROR "The TinyGltfImporter plugin is deprecated. Either remove MAGNUM_WITH_TINYGLTFIMPORTER from your options or rebuild Magnum with MAGNUM_BUILD_DEPRECATED enabled to keep using the plugin.")
+endif()
+
 find_package(Magnum REQUIRED Trade AnyImageImporter)
 
 if(MAGNUM_BUILD_PLUGINS_STATIC AND NOT DEFINED MAGNUM_TINYGLTFIMPORTER_BUILD_STATIC)

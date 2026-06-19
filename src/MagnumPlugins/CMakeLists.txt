@@ -74,7 +74,7 @@ if(MAGNUM_WITH_BCDECIMAGECONVERTER)
     add_subdirectory(BcDecImageConverter)
 endif()
 
-if(MAGNUM_BUILD_DEPRECATED AND MAGNUM_WITH_CGLTFIMPORTER)
+if(MAGNUM_WITH_CGLTFIMPORTER)
     add_subdirectory(CgltfImporter)
 endif()
 
@@ -234,7 +234,7 @@ if(MAGNUM_WITH_STLIMPORTER)
     add_subdirectory(StlImporter)
 endif()
 
-if(MAGNUM_BUILD_DEPRECATED AND MAGNUM_WITH_TINYGLTFIMPORTER)
+if(MAGNUM_WITH_TINYGLTFIMPORTER)
     add_subdirectory(TinyGltfImporter)
 endif()
 
