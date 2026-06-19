@@ -319,7 +319,6 @@ void StanfordImporter::doOpenData(Containers::Array<char>&& data, const DataFlag
     bool perFaceColors = false;
     bool perFaceObjectIds = false;
     {
-        std::size_t vertexComponentOffset{};
         PropertyType propertyType{};
         while(!in.isEmpty()) {
             const std::string line = extractLine(in);
@@ -365,47 +364,47 @@ void StanfordImporter::doOpenData(Containers::Array<char>&& data, const DataFlag
 
                     /* Component */
                     if(tokens[2] == "x") {
-                        positionOffsets.x() = vertexComponentOffset;
+                        positionOffsets.x() = state->vertexStride;
                         positionFormats.x() = componentFormat;
                     } else if(tokens[2] == "y") {
-                        positionOffsets.y() = vertexComponentOffset;
+                        positionOffsets.y() = state->vertexStride;
                         positionFormats.y() = componentFormat;
                     } else if(tokens[2] == "z") {
-                        positionOffsets.z() = vertexComponentOffset;
+                        positionOffsets.z() = state->vertexStride;
                         positionFormats.z() = componentFormat;
                     } else if(tokens[2] == "nx") {
-                        normalOffsets.x() = vertexComponentOffset;
+                        normalOffsets.x() = state->vertexStride;
                         normalFormats.x() = componentFormat;
                     } else if(tokens[2] == "ny") {
-                        normalOffsets.y() = vertexComponentOffset;
+                        normalOffsets.y() = state->vertexStride;
                         normalFormats.y() = componentFormat;
                     } else if(tokens[2] == "nz") {
-                        normalOffsets.z() = vertexComponentOffset;
+                        normalOffsets.z() = state->vertexStride;
                         normalFormats.z() = componentFormat;
                     /* LuxBlend uses s/t, Mitsuba uses u/v */
                     } else if(tokens[2] == "u" || tokens[2] == "s") {
-                        textureCoordinateOffsets.x() = vertexComponentOffset;
+                        textureCoordinateOffsets.x() = state->vertexStride;
                         textureCoordinateFormats.x() = componentFormat;
                     } else if(tokens[2] == "v" || tokens[2] == "t") {
-                        textureCoordinateOffsets.y() = vertexComponentOffset;
+                        textureCoordinateOffsets.y() = state->vertexStride;
                         textureCoordinateFormats.y() = componentFormat;
                     } else if(tokens[2] == "red") {
-                        colorOffsets.x() = vertexComponentOffset;
+                        colorOffsets.x() = state->vertexStride;
                         colorFormats.x() = componentFormat;
                     } else if(tokens[2] == "green") {
-                        colorOffsets.y() = vertexComponentOffset;
+                        colorOffsets.y() = state->vertexStride;
                         colorFormats.y() = componentFormat;
                     } else if(tokens[2] == "blue") {
-                        colorOffsets.z() = vertexComponentOffset;
+                        colorOffsets.z() = state->vertexStride;
                         colorFormats.z() = componentFormat;
                     /* Several people complain that Meshlab doesn't support
                        alpha, so let's make sure we do :P
                        https://github.com/cnr-isti-vclab/meshlab/issues/161*/
                     } else if(tokens[2] == "alpha") {
-                        colorOffsets.w() = vertexComponentOffset;
+                        colorOffsets.w() = state->vertexStride;
                         colorFormats.w() = componentFormat;
                     } else if(tokens[2] == configuration().value("objectIdAttribute")) {
-                        objectIdOffset = vertexComponentOffset;
+                        objectIdOffset = state->vertexStride;
                         objectIdFormat = componentFormat;
 
                     /* Unknown component, add to the attribute list. Stride is
@@ -417,11 +416,11 @@ void StanfordImporter::doOpenData(Containers::Array<char>&& data, const DataFlag
                         arrayAppend(state->attributeData, MeshAttributeData{
                             inserted.first->second,
                             componentFormat,
-                            vertexComponentOffset, state->vertexCount, 0});
+                            state->vertexStride, state->vertexCount, 0});
                     }
 
-                    /* Add size of current component to total offset */
-                    vertexComponentOffset += vertexFormatSize(componentFormat);
+                    /* Add size of current component to total stride */
+                    state->vertexStride += vertexFormatSize(componentFormat);
 
                 /* Face element properties */
                 } else if(propertyType == PropertyType::Face) {
@@ -529,8 +528,6 @@ void StanfordImporter::doOpenData(Containers::Array<char>&& data, const DataFlag
                 return;
             }
         }
-
-        state->vertexStride = vertexComponentOffset;
     }
 
     /* Check header consistency */
