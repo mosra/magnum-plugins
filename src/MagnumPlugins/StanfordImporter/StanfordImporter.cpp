@@ -202,11 +202,11 @@ void StanfordImporter::doOpenData(Containers::Array<char>&& data, const DataFlag
     }
 
     /* View containing to-be-parsed lines of the initial header */
-    Containers::ArrayView<const char> inHeader = data;
+    Containers::ArrayView<const char> in = data;
 
     /* Check file signature */
     {
-        std::string header = Utility::String::rtrim(extractLine(inHeader));
+        std::string header = Utility::String::rtrim(extractLine(in));
         if(header != "ply") {
             Error{} << "Trade::StanfordImporter::openData(): invalid file signature" << header;
             return;
@@ -215,8 +215,8 @@ void StanfordImporter::doOpenData(Containers::Array<char>&& data, const DataFlag
 
     /* Parse format line */
     Containers::Optional<bool> fileFormatNeedsEndianSwapping;
-    while(!inHeader.isEmpty()) {
-        const std::string line = extractLine(inHeader);
+    while(!in.isEmpty()) {
+        const std::string line = extractLine(in);
         std::vector<std::string> tokens = Utility::String::splitWithoutEmptyParts(line);
 
         /* Skip empty lines and comments */
@@ -281,18 +281,17 @@ void StanfordImporter::doOpenData(Containers::Array<char>&& data, const DataFlag
     }
 
     /* Header checks passed and we're not delegating to Assimp, take over the
-       existing array or copy the data if we can't. Remeber the already parsed
-       size of the header while the input data is still there. */
-    const std::size_t parsedHeaderSize = inHeader.begin() - data.begin();
+       existing array or copy the data if we can't. If copying, re-routed the
+       input view to the copied array. */
     Containers::Array<char> dataCopy;
     if(dataFlags & (DataFlag::Owned|DataFlag::ExternallyOwned))
         dataCopy = Utility::move(data);
-    else
+    else {
         dataCopy = Containers::Array<char>{InPlaceInit, data};
+        in = dataCopy.exceptPrefix(in.begin() - data.begin());
+    }
 
-    /* Initialize the state, skip the already parsed header prefix in the input
-       view */
-    Containers::ArrayView<const char> in = dataCopy.exceptPrefix(parsedHeaderSize);
+    /* Initialize the importer state */
     Containers::Pointer<State> state{InPlaceInit};
 
     /* Check format line consistency */
