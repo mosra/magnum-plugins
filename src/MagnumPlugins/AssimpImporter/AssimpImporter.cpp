@@ -1325,14 +1325,18 @@ Containers::Optional<MeshData> AssimpImporter::doMesh(const UnsignedInt id, Unsi
 
 #ifdef MAGNUM_BUILD_DEPRECATED
 MeshAttribute AssimpImporter::doMeshAttributeForName(const Containers::StringView name) {
-    if(name == "JOINTS"_s) return JointsAttribute;
-    if(name == "WEIGHTS"_s) return WeightsAttribute;
+    if(name == "JOINTS"_s)
+        return JointsAttribute;
+    if(name == "WEIGHTS"_s)
+        return WeightsAttribute;
     return {};
 }
 
 Containers::String AssimpImporter::doMeshAttributeName(MeshAttribute name) {
-    if(name == JointsAttribute) return "JOINTS"_s;
-    if(name == WeightsAttribute) return "WEIGHTS"_s;
+    if(name == JointsAttribute)
+        return "JOINTS"_s;
+    if(name == WeightsAttribute)
+        return "WEIGHTS"_s;
     return {};
 }
 #endif

@@ -698,7 +698,8 @@ void AssimpImporterTest::animation() {
             TestSuite::Compare::around(Epsilon));
 
         /* Don't spam the output, all following keys are broken */
-        if(fbxBroken) return;
+        if(fbxBroken)
+            return;
     }
 }
 
@@ -1437,7 +1438,8 @@ Containers::String fixMeshName(const Containers::StringView meshName, const Cont
     if(assimpVersion >= 510 && fileName.hasSuffix(".dae"_s)) {
         Containers::String fixed = meshName + "-mesh";
         for(char& c: fixed.prefix(meshName.size()))
-            if(c != '-' && !std::isalnum(static_cast<unsigned char>(c))) c = '_';
+            if(c != '-' && !std::isalnum(static_cast<unsigned char>(c)))
+                c = '_';
         return fixed;
     } else {
         return meshName;

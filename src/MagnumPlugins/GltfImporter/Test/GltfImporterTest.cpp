@@ -7414,7 +7414,8 @@ void GltfImporterTest::textureExtensions() {
     }
     /* If the original ID check is expected to fail, verify that the ID is
        correctly incorrect */
-    if(data.xfail) CORRADE_COMPARE(texture->image(), data.xfailId);
+    if(data.xfail)
+        CORRADE_COMPARE(texture->image(), data.xfailId);
 }
 
 void GltfImporterTest::textureInvalid() {

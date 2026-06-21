@@ -92,7 +92,8 @@ void DrMp3ImporterTest::zeroSamples() {
     {
         CORRADE_EXPECT_FAIL("dr_mp3 treats 0 frames as an error, because it returns 0 also for malloc failure and such.");
         CORRADE_VERIFY(importer->openFile(Utility::Path::join(DRMP3AUDIOIMPORTER_TEST_DIR, "zeroSamples.mp3")));
-        if(!importer->isOpened()) return;
+        if(!importer->isOpened())
+            return;
     }
     CORRADE_COMPARE(importer->format(), BufferFormat::Mono16);
     CORRADE_COMPARE(importer->frequency(), 44100);

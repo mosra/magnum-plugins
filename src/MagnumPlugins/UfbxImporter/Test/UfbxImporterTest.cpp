@@ -3528,7 +3528,8 @@ void UfbxImporterTest::skinning() {
             for(UnsignedInt j = 0; j < jointRef.size(); ++j) {
                 CORRADE_ITERATION(j);
                 const JointRef& ref = jointRef[j];
-                if(Math::abs(position.y() - ref.y) >= 0.001f) continue;
+                if(Math::abs(position.y() - ref.y) >= 0.001f)
+                    continue;
 
                 Containers::ArrayView<const UnsignedInt> refJoints = Containers::arrayView(ref.joints).slice(0u, jointWeightCount);
                 Containers::ArrayView<const Float> refWeights = Containers::arrayView(ref.weights).slice(0u, jointWeightCount);

@@ -133,7 +133,8 @@ void DrFlacImporter::doOpenData(Containers::ArrayView<const char> data) {
 
     /* 8-bit needs to become unsigned */
     if(normalizedBytesPerSample == 1) {
-        for(char& item: *_data) item = item - 128;
+        for(char& item: *_data)
+            item = item - 128;
 
     /* 24-bit needs to become float */
     } else if(normalizedBytesPerSample == 3) {

@@ -661,7 +661,8 @@ void BasisImageConverterTest::convert2DR() {
         ImageView2D(*originalImage), {7, 8}, TransferFunctionFormats[data.transferFunction][0]);
 
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("BasisImageConverter");
-    if(data.uastc) converter->configuration().setValue("uastc", true);
+    if(data.uastc)
+        converter->configuration().setValue("uastc", true);
     else CORRADE_VERIFY(!converter->configuration().value<bool>("uastc"));
     Containers::Optional<Containers::Array<char>> compressedData = converter->convertToData(imageWithSkip);
     CORRADE_VERIFY(compressedData);
@@ -710,7 +711,8 @@ void BasisImageConverterTest::convert2DRg() {
         ImageView2D(*originalImage), {7, 8}, TransferFunctionFormats[data.transferFunction][1]);
 
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("BasisImageConverter");
-    if(data.uastc) converter->configuration().setValue("uastc", true);
+    if(data.uastc)
+        converter->configuration().setValue("uastc", true);
     else CORRADE_VERIFY(!converter->configuration().value<bool>("uastc"));
     Containers::Optional<Containers::Array<char>> compressedData = converter->convertToData(imageWithSkip);
     CORRADE_VERIFY(compressedData);
@@ -757,7 +759,8 @@ void BasisImageConverterTest::convert2DRgb() {
         ImageView2D(*originalImage), {7, 8}, TransferFunctionFormats[data.transferFunction][2]);
 
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("BasisImageConverter");
-    if(data.uastc) converter->configuration().setValue("uastc", true);
+    if(data.uastc)
+        converter->configuration().setValue("uastc", true);
     else CORRADE_VERIFY(!converter->configuration().value<bool>("uastc"));
     Containers::Optional<Containers::Array<char>> compressedData = converter->convertToData(imageWithSkip);
     CORRADE_VERIFY(compressedData);
@@ -796,7 +799,8 @@ void BasisImageConverterTest::convert2DRgba() {
         ImageView2D(*originalImage), {7, 8}, TransferFunctionFormats[data.transferFunction][3]);
 
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("BasisImageConverter");
-    if(data.uastc) converter->configuration().setValue("uastc", true);
+    if(data.uastc)
+        converter->configuration().setValue("uastc", true);
     else CORRADE_VERIFY(!converter->configuration().value<bool>("uastc"));
     Containers::Optional<Containers::Array<char>> compressedData = converter->convertToData(imageWithSkip);
     CORRADE_VERIFY(compressedData);
@@ -830,7 +834,8 @@ void BasisImageConverterTest::convertUastcPatchAwaySrgb() {
     /* Yes, the damn thing prints output to stdout without any possibility to
        redirect anywhere. But we need the verbose output enabled in many cases
        to verify a message about the sRGB flag being patched away. */
-    if(data.verbose) converter->addFlags(ImageConverterFlag::Verbose);
+    if(data.verbose)
+        converter->addFlags(ImageConverterFlag::Verbose);
     converter->configuration().setValue("uastc", data.uastc);
     converter->configuration().setValue("perceptual", data.perceptual);
 
@@ -1452,7 +1457,8 @@ void BasisImageConverterTest::threads() {
     const Image2D imageWithSkip = copyImageWithSkip<Color4ub>(ImageView2D(*originalImage), {7, 8});
 
     Containers::Pointer<AbstractImageConverter> converter = _converterManager.instantiate("BasisImageConverter");
-    if(data.threads) converter->configuration().setValue("threads", data.threads);
+    if(data.threads)
+        converter->configuration().setValue("threads", data.threads);
     Containers::Optional<Containers::Array<char>> compressedData = converter->convertToData(imageWithSkip);
     CORRADE_VERIFY(compressedData);
 

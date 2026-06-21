@@ -2435,7 +2435,8 @@ void GltfSceneConverterTest::addMesh() {
 
     Containers::Pointer<AbstractSceneConverter> converter =  _converterManager.instantiate("GltfSceneConverter");
 
-    if(data.accessorNames) converter->configuration().setValue("accessorNames", true);
+    if(data.accessorNames)
+        converter->configuration().setValue("accessorNames", true);
     else CORRADE_VERIFY(!converter->configuration().value<bool>("accessorNames"));
 
     const Containers::String filename = Utility::Path::join(GLTFSCENECONVERTER_TEST_OUTPUT_DIR, "mesh" + data.suffix);
@@ -4718,7 +4719,8 @@ MaterialData filterMaterialAttributes(const MaterialData& material, Containers::
     /* Remove all original MaterialTypes from the input, if any are to be added
        they're in `add` */
     MaterialData filtered = MaterialTools::filterAttributes(material, attributesToKeep, {});
-    if(!add) return filtered;
+    if(!add)
+        return filtered;
 
     Containers::Optional<MaterialData> out = MaterialTools::merge(filtered, *add);
     CORRADE_VERIFY(out);

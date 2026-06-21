@@ -313,7 +313,8 @@ void DevIlImageImporterTest::icoBmp() {
         CORRADE_VERIFY(read);
         CORRADE_COMPARE(importer->openData(*read), data.succeeds);
     }
-    if(!data.succeeds) return;
+    if(!data.succeeds)
+        return;
 
     {
         CORRADE_EXPECT_FAIL("DevIL does not report ICO sizes as image levels, but instead as separate images.");

@@ -352,12 +352,14 @@ Containers::Optional<Containers::Array<char>> GltfSceneConverter::doEndData() {
         if(!extensionsUsed.empty()) {
             json.writeKey("extensionsUsed"_s);
             const Containers::ScopeGuard gltfExtensionsUsed = json.beginArrayScope();
-            for(const Containers::StringView i: extensionsUsed) json.write(i);
+            for(const Containers::StringView i: extensionsUsed)
+                json.write(i);
         }
         if(!extensionsRequired.empty()) {
             json.writeKey("extensionsRequired"_s);
             const Containers::ScopeGuard gltfExtensionsRequired = json.beginArrayScope();
-            for(const Containers::StringView i: extensionsRequired) json.write(i);
+            for(const Containers::StringView i: extensionsRequired)
+                json.write(i);
         }
     }
 

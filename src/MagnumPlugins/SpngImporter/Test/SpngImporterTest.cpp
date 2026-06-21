@@ -215,7 +215,8 @@ void SpngImporterTest::invalid() {
         CORRADE_EXPECT_FAIL_IF(!data.error, "libspng doesn't treat this as an error.");
         CORRADE_VERIFY(!importer->image2D(0));
     }
-    if(data.error) CORRADE_COMPARE(out, Utility::format("Trade::SpngImporter::image2D(): {}\n", data.error));
+    if(data.error)
+        CORRADE_COMPARE(out, Utility::format("Trade::SpngImporter::image2D(): {}\n", data.error));
 }
 
 void SpngImporterTest::gray() {
@@ -379,7 +380,8 @@ void SpngImporterTest::rgba() {
         CORRADE_VERIFY(image);
     }
 
-    if(!image) CORRADE_SKIP("Loading failed, skipping the rest.");
+    if(!image)
+        CORRADE_SKIP("Loading failed, skipping the rest.");
 
     CORRADE_COMPARE(image->size(), Vector2i(3, 2));
     CORRADE_COMPARE(image->format(), PixelFormat::RGBA8Unorm);

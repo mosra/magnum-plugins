@@ -875,7 +875,8 @@ void BasisImporterTest::texture() {
                     "Basis-exported data don't match texture type, so it's patched by us on import.");
                 CORRADE_COMPARE(texture->type(), data.type);
             }
-            if(data.xfailType) CORRADE_COMPARE(texture->type(), data.xfailType);
+            if(data.xfailType)
+                CORRADE_COMPARE(texture->type(), data.xfailType);
         }
 
         UnsignedInt dimensions;

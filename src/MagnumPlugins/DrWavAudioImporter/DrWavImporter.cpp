@@ -181,8 +181,8 @@ void DrWavImporter::doOpenData(const Containers::ArrayView<const char> data) {
             _data = convert32Pcm(tempData, samples, normalizedBytesPerSample);
 
             /* Convert 8 bit data to unsigned */
-            if(normalizedBytesPerSample == 1)
-                for(char& item: *_data) item = item - 128;
+            if(normalizedBytesPerSample == 1) for(char& item: *_data)
+                item = item - 128;
             return;
         }
 

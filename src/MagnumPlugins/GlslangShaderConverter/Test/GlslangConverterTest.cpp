@@ -458,7 +458,8 @@ void GlslangConverterTest::validateIncludesCallback() {
         if(policy == InputFileCallbackPolicy::Close) {
             Debug{} << "Closing" << filename;
 
-            if(found != files.end()) files.erase(found);
+            if(found != files.end())
+                files.erase(found);
             return {};
         }
 

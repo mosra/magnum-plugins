@@ -895,7 +895,8 @@ void OpenExrImporterTest::levels2DIncomplete() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenExrImporter");
-    if(data.verbose) importer->addFlags(ImporterFlag::Verbose);
+    if(data.verbose)
+        importer->addFlags(ImporterFlag::Verbose);
 
     Containers::String out;
     {
@@ -1034,7 +1035,8 @@ void OpenExrImporterTest::levelsCubeMapIncomplete() {
     setTestCaseDescription(data.name);
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenExrImporter");
-    if(data.verbose) importer->addFlags(ImporterFlag::Verbose);
+    if(data.verbose)
+        importer->addFlags(ImporterFlag::Verbose);
 
     Containers::String out;
     {
