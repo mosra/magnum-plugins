@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 
 # Generates MonochromeBitmap.ttf and Gray4Bitmap.ttf from Oxygen.ttf. Both are
-# subsets containing only the X glyph with a 16x16 embedded bitmap strike in
-# EBDT/EBLC. The first uses 1bpp bitmap data, the second uses 4bpp data.
+# subsets containing only the X glyph with its vector outline stripped and a
+# 16x16 embedded bitmap strike added in EBDT/EBLC. The first uses 1bpp bitmap
+# data, the second uses 4bpp data.
 
 from pathlib import Path
 import subprocess
@@ -10,6 +11,8 @@ import tempfile
 
 from fontTools.ttLib import TTFont, newTable
 from fontTools.ttLib.tables import E_B_D_T_, E_B_L_C_
+from fontTools.pens.ttGlyphPen import TTGlyphPen
+from PIL import Image
 
 
 Directory = Path(__file__).parent
@@ -118,8 +121,25 @@ def encode_gray4(rows):
     return bytes(data)
 
 
+def pixels_mono(rows):
+    return [[255 if pixel == "#" else 0 for pixel in row] for row in rows]
+
+
+def pixels_gray4(rows):
+    def value(pixel):
+        return 0 if pixel == "." else int(pixel, 16)*17
+    return [[value(pixel) for pixel in row] for row in rows]
+
+
+def save_png(path, pixels):
+    image = Image.new("L", (len(pixels[0]), len(pixels)))
+    image.putdata([pixel for row in pixels for pixel in row])
+    image.save(path)
+
+
 def add_bitmap_strike(font, bit_depth, image_data):
     glyph_name = font.getBestCmap()[ord("X")]
+    font["glyf"][glyph_name] = TTGlyphPen(None).glyph()
 
     bitmap = E_B_D_T_.ebdt_bitmap_format_2(b"", font)
     bitmap.metrics = small_metrics()
@@ -155,7 +175,8 @@ def add_bitmap_strike(font, bit_depth, image_data):
 
 
 def save_fixture(subset, destination, bit_depth, image_data):
-    font = TTFont(subset)
+    font = TTFont(subset, recalcTimestamp=False)
+    font["head"].modified = font["head"].created
     add_bitmap_strike(font, bit_depth, image_data)
     font.save(destination)
 
@@ -165,3 +186,5 @@ with tempfile.TemporaryDirectory() as tmp:
     subset_oxygen(subset)
     save_fixture(subset, Directory/"MonochromeBitmap.ttf", 1, encode_mono(MonoRows))
     save_fixture(subset, Directory/"Gray4Bitmap.ttf", 4, encode_gray4(Gray4Rows))
+    save_png(Directory/"glyph-cache-monochrome-bitmap.png", pixels_mono(MonoRows))
+    save_png(Directory/"glyph-cache-gray4-bitmap.png", pixels_gray4(Gray4Rows))
