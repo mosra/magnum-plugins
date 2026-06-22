@@ -270,12 +270,12 @@ bool FreeTypeFont::doFillGlyphCache(AbstractGlyphCache& cache, const Containers:
         /* Convert packed embedded bitmaps to the 8-bit glyph cache format. */
         FT_Bitmap convertedBitmap;
         const FT_Bitmap* bitmap = nullptr;
-        if(bitmap->pixel_mode == FT_PIXEL_MODE_GRAY) {
+        if(glyph->bitmap.pixel_mode == FT_PIXEL_MODE_GRAY) {
             bitmap = &glyph->bitmap;
         } else {
             FT_Bitmap_Init(&convertedBitmap);
+            CORRADE_INTERNAL_ASSERT_OUTPUT(FT_Bitmap_Convert(freeType.library, &glyph->bitmap, &convertedBitmap, 1) == 0);
             bitmap = &convertedBitmap;
-            CORRADE_INTERNAL_ASSERT_OUTPUT(FT_Bitmap_Convert(freeType.library, bitmap, &convertedBitmap, 1) == 0);
         }
 
         const Containers::Size2D glyphSize{bitmap->rows, bitmap->width};
