@@ -832,8 +832,7 @@ void FreeTypeFontTest::fillGlyphCacheBitmap() {
     auto&& data = FillGlyphCacheBitmapData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
-    if(_importerManager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
-        CORRADE_SKIP("PngImporter plugin not found, cannot test");
+    CORRADE_VERIFY(_importerManager.loadState("AnyImageImporter") & PluginManager::LoadState::Loaded);
 
     Containers::Pointer<AbstractFont> font = _manager.instantiate("FreeTypeFont");
     CORRADE_VERIFY(font->openFile(Utility::Path::join(FREETYPEFONT_TEST_DIR, data.font), 16.0f));
@@ -858,7 +857,7 @@ void FreeTypeFontTest::fillGlyphCacheBitmap() {
 
     const UnsignedInt glyphId = font->glyphId('X');
     CORRADE_VERIFY(glyphId);
-    font->fillGlyphCache(cache, {glyphId});
+    CORRADE_VERIFY(font->fillGlyphCache(cache, {glyphId}));
     CORRADE_VERIFY(cache.called);
 
     const Containers::Triple<Vector2i, Int, Range2Di> glyph = cache.glyph(0, glyphId);
