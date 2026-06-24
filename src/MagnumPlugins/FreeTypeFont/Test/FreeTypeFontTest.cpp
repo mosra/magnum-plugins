@@ -77,7 +77,7 @@ struct FreeTypeFontTest: TestSuite::Tester {
     void fillGlyphCache();
     void fillGlyphCacheIncremental();
     void fillGlyphCacheArray();
-    void fillGlyphCacheBitmap();
+    void fillGlyphCacheBitmapFont();
     void fillGlyphCacheInvalidFormat();
     void fillGlyphCacheCannotFit();
 
@@ -141,7 +141,7 @@ const struct {
     const char* name;
     const char* font;
     const char* image;
-} FillGlyphCacheBitmapData[]{
+} FillGlyphCacheBitmapFontData[]{
     {"monochrome", "MonochromeBitmap.ttf", "glyph-cache-monochrome-bitmap.png"},
     {"gray4", "Gray4Bitmap.ttf", "glyph-cache-gray4-bitmap.png"},
 };
@@ -186,8 +186,8 @@ FreeTypeFontTest::FreeTypeFontTest() {
     addTests({&FreeTypeFontTest::fillGlyphCacheIncremental,
               &FreeTypeFontTest::fillGlyphCacheArray});
 
-    addInstancedTests({&FreeTypeFontTest::fillGlyphCacheBitmap},
-        Containers::arraySize(FillGlyphCacheBitmapData));
+    addInstancedTests({&FreeTypeFontTest::fillGlyphCacheBitmapFont},
+        Containers::arraySize(FillGlyphCacheBitmapFontData));
 
     addTests({&FreeTypeFontTest::fillGlyphCacheInvalidFormat,
               &FreeTypeFontTest::fillGlyphCacheCannotFit});
@@ -829,8 +829,8 @@ void FreeTypeFontTest::fillGlyphCacheArray() {
         Range2Di{{0, 0}, {9, 9}}));
 }
 
-void FreeTypeFontTest::fillGlyphCacheBitmap() {
-    auto&& data = FillGlyphCacheBitmapData[testCaseInstanceId()];
+void FreeTypeFontTest::fillGlyphCacheBitmapFont() {
+    auto&& data = FillGlyphCacheBitmapFontData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
     if(_importerManager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
