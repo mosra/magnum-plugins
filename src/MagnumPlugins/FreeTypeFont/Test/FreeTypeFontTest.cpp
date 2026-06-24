@@ -37,6 +37,7 @@
 #include <Corrade/TestSuite/Compare/String.h>
 #include <Corrade/Utility/Path.h>
 #include <Magnum/ImageView.h>
+#include <Magnum/Math/FunctionsBatch.h>
 #include <Magnum/Math/Range.h>
 #include <Magnum/DebugTools/CompareImage.h>
 #include <Magnum/Text/AbstractFont.h>
@@ -844,7 +845,7 @@ void FreeTypeFontTest::fillGlyphCacheBitmap() {
         GlyphCacheFeatures doFeatures() const override { return {}; }
         void doSetImage(const Vector2i& offset, const ImageView2D& image) override {
             CORRADE_COMPARE(offset, Vector2i{});
-            CORRADE_COMPARE(image.size(), (Vector2i{16}));
+            CORRADE_COMPARE(image.size(), Vector2i{16});
             CORRADE_COMPARE_WITH(this->image().pixels<UnsignedByte>()[0],
                 Utility::Path::join(FREETYPEFONT_TEST_DIR, expectedImage),
                 (DebugTools::CompareImageToFile{importerManager, 0.0f, 0.0f}));
@@ -861,22 +862,20 @@ void FreeTypeFontTest::fillGlyphCacheBitmap() {
     font->fillGlyphCache(cache, {glyphId});
     CORRADE_VERIFY(cache.called);
 
-    const Containers::Triple<Vector2i, Int, Range2Di> glyph = cache.glyph(0, glyphId);
-    CORRADE_COMPARE(glyph.first(), Vector2i{});
-    CORRADE_COMPARE(glyph.second(), 0);
-    CORRADE_COMPARE(glyph.third().size(), (Vector2i{16}));
+    CORRADE_COMPARE(cache.glyph(0, glyphId), Containers::triple(
+        Vector2i{},
+        0,
+        Range2Di{{}, {16, 16}}));
 
     const Containers::StridedArrayView2D<const UnsignedByte> pixels =
-        cache.image().pixels<UnsignedByte>()[0].sliceSize(
-            {std::size_t(glyph.third().min().y()), std::size_t(glyph.third().min().x())},
-            {16, 16});
+        cache.image().pixels<UnsignedByte>()[0].slice({}, {16, 16});
     UnsignedByte min = 255;
     UnsignedByte max = 0;
-    for(std::size_t y = 0; y != 16; ++y) {
-        for(std::size_t x = 0; x != 16; ++x) {
-            min = Math::min(min, pixels[y][x]);
-            max = Math::max(max, pixels[y][x]);
-        }
+    /** @todo add a 2D/3D minmax() overload */
+    for(Containers::StridedArrayView1D<const UnsignedByte> row: pixels) {
+        Containers::Pair<UnsignedByte, UnsignedByte> minmax = Math::minmax(row);
+        min = Math::min(min, minmax.first());
+        max = Math::max(max, minmax.second());
     }
     CORRADE_COMPARE(min, 0);
     CORRADE_COMPARE(max, 255);
