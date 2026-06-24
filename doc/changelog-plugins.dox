@@ -234,6 +234,8 @@ namespace Magnum {
     collections and selecting a particular font index (see
     [mosra/magnum-plugins#152](https://github.com/mosra/magnum-plugins/pull/152)
     and [mosra/magnum-plugins#153](https://github.com/mosra/magnum-plugins/pull/153))
+-   @relativeref{Text,FreeTypeFont} now supports loading bitmap fonts with less
+    than 8 bits per pixel (see [mosra/magnum-plugins#155](https://github.com/mosra/magnum-plugins/pull/155))
 
 @subsection changelog-plugins-latest-buildsystem Build system
 
