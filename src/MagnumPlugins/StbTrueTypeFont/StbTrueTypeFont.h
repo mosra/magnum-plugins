@@ -153,9 +153,6 @@ need these. The stb_truetype doesn't implement support for glyph name mapping,
 you're encouraged to use the @ref FreeTypeFont plugin if you need to query
 names or look up glyphs by name.
 
-Hinting is not implemented in stb_truetype. Compared to @ref FreeTypeFont or
-@ref HarfBuzzFont you get larger glyphs with a more blurry look.
-
 @subsection Text-StbTrueTypeFont-behavior-features Typographic features
 
 The stb_truetype library provides access to font kerning tables, and the plugin
