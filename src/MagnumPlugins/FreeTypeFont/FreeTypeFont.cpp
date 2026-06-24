@@ -269,7 +269,7 @@ bool FreeTypeFont::doFillGlyphCache(AbstractGlyphCache& cache, const Containers:
 
         /* Convert packed embedded bitmaps to the 8-bit glyph cache format. */
         FT_Bitmap convertedBitmap;
-        const FT_Bitmap* bitmap = nullptr;
+        const FT_Bitmap* bitmap;
         if(glyph->bitmap.pixel_mode == FT_PIXEL_MODE_GRAY) {
             bitmap = &glyph->bitmap;
         } else {
