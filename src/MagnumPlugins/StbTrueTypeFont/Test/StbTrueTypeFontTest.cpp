@@ -71,6 +71,7 @@ struct StbTrueTypeFontTest: TestSuite::Tester {
     void fillGlyphCache();
     void fillGlyphCacheIncremental();
     void fillGlyphCacheArray();
+    void fillGlyphCacheBitmapFont();
     void fillGlyphCacheInvalidFormat();
     void fillGlyphCacheCannotFit();
 
@@ -240,6 +241,7 @@ StbTrueTypeFontTest::StbTrueTypeFontTest() {
 
     addTests({&StbTrueTypeFontTest::fillGlyphCacheIncremental,
               &StbTrueTypeFontTest::fillGlyphCacheArray,
+              &StbTrueTypeFontTest::fillGlyphCacheBitmapFont,
               &StbTrueTypeFontTest::fillGlyphCacheInvalidFormat,
               &StbTrueTypeFontTest::fillGlyphCacheCannotFit});
 
@@ -892,6 +894,32 @@ void StbTrueTypeFontTest::fillGlyphCacheArray() {
         Vector2i{},
         1,
         Range2Di{{20, 0}, {20, 0}}));
+}
+
+void StbTrueTypeFontTest::fillGlyphCacheBitmapFont() {
+    Containers::Pointer<AbstractFont> font = _manager.instantiate("StbTrueTypeFont");
+    CORRADE_VERIFY(font->openFile(Utility::Path::join(FREETYPEFONT_TEST_DIR, "MonochromeBitmap.ttf"), 16.0f));
+
+    struct GlyphCache: AbstractGlyphCache {
+        explicit GlyphCache(PixelFormat format, const Vector2i& size, const Vector2i& padding): AbstractGlyphCache{format, size, padding} {}
+
+        GlyphCacheFeatures doFeatures() const override { return {}; }
+        void doSetImage(const Vector2i&, const ImageView2D& image) override {
+            CORRADE_EXPECT_FAIL("Bitmap glyphs are not supported by stb_truetype, it's treating them the same as empty glyphs such as a space.");
+            CORRADE_VERIFY(image.size() != Vector2i{});
+            called = true;
+        }
+
+        bool called = false;
+    } cache{PixelFormat::R8Unorm, {16, 16}, {}};
+
+    const UnsignedInt glyphId = font->glyphId('X');
+    CORRADE_VERIFY(glyphId);
+    CORRADE_VERIFY(font->fillGlyphCache(cache, {glyphId}));
+    CORRADE_VERIFY(cache.called);
+
+    CORRADE_EXPECT_FAIL("Bitmap glyphs are not supported by stb_truetype, it's treating them the same as empty glyphs such as a space.");
+    CORRADE_VERIFY(cache.glyph(0, glyphId).third().size() != Vector2i{});
 }
 
 void StbTrueTypeFontTest::fillGlyphCacheInvalidFormat() {

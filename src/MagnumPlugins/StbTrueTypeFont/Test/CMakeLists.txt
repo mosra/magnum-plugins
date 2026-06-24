@@ -59,6 +59,7 @@ corrade_add_test(StbTrueTypeFontTest StbTrueTypeFontTest.cpp
         Magnum::DebugTools
         Magnum::Text
     FILES
+        ../../FreeTypeFont/Test/MonochromeBitmap.ttf
         ../../FreeTypeFont/Test/Oxygen.ttf
         ../../FreeTypeFont/Test/Oxygen.ttc
         ../../FreeTypeFont/Test/SourceSans3-Regular.subset.otf

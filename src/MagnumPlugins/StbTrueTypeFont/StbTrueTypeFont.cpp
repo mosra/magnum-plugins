@@ -220,7 +220,13 @@ bool StbTrueTypeFont::doFillGlyphCache(AbstractGlyphCache& cache, const Containe
     /* Render all glyphs to the atlas and create a glyph map */
     const Containers::StridedArrayView3D<char> dst = cache.image().pixels<char>();
     for(std::size_t i = 0; i != glyphs.size(); ++i) {
-        /* Render the glyph */
+        /* Render the glyph. This returns an empty rectangle (and
+           stbtt_GetGlyphBox() internally returns 0) for both empty glyphs like
+           a space and glyphs that only have bitmaps, i.e. there's no way to
+           distinguish a real empty glyph from an unsupported format. Support
+           for embedded bitmaps is likely never going to happen as per the
+           comment on https://github.com/nothings/stb/issues/512 (last checked
+           in June 2026). */
         Range2Di box;
         stbtt_GetGlyphBitmapBox(&_font->info, glyphIndices[i], _font->scale, _font->scale, &box.min().x(), &box.min().y(), &box.max().x(), &box.max().y());
         stbtt_MakeGlyphBitmap(&_font->info, reinterpret_cast<unsigned char*>(srcData.data()), box.sizeX(), box.sizeY(), maxSize.x(), _font->scale, _font->scale, glyphIndices[i]);

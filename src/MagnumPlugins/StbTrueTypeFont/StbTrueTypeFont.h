@@ -153,6 +153,12 @@ need these. The stb_truetype doesn't implement support for glyph name mapping,
 you're encouraged to use the @ref FreeTypeFont plugin if you need to query
 names or look up glyphs by name.
 
+Embedded glyph bitmaps [aren't supported by stb_truetype](https://github.com/nothings/stb/issues/512).
+Glyphs that only have an embedded bitmap and no vector stroke are treated the
+same ways as empty glyphs such as a space with no possibility to distinguish
+between them. Use @ref FreeTypeFont or @ref HarfBuzzFont for such fonts
+instead.
+
 @subsection Text-StbTrueTypeFont-behavior-features Typographic features
 
 The stb_truetype library provides access to font kerning tables, and the plugin
