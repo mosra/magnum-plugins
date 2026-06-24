@@ -186,15 +186,16 @@ const struct {
 } FillGlyphCacheData[]{
     {"",
         /* Including also UTF-8 characters to be sure they're handled
-           properly */
-        "abcdefghijklmnopqrstuvwxyzěšč"},
+           properly. Including also a space to verify behavior with empty
+           glyphs. */
+        "abcdefghijklmnopqrstuvwxyzěšč "},
     {"shuffled order",
-        "mvxěipbryzdhfnqlčjšswutokeacg"},
+        "mvxěipbryzdhf nqlčjšswutokeacg"},
     {"duplicates",
-        "mvexěipbbrzzyčbjzdgšhhfnqljswutokeakcg"},
+        "mvexěipbbrzzyč bj  zdgšhhfnqljswutokeakcg"},
     {"characters not in font",
         /* ☃ */
-        "abcdefghijkl\xe2\x98\x83mnopqrstuvwxyzěšč"},
+        "abcdefghijkl\xe2\x98\x83mnopqrstuvwxyzěšč "},
 };
 
 /* Shared among all plugins that implement data copying optimizations */
@@ -668,11 +669,11 @@ void StbTrueTypeFontTest::fillGlyphCache() {
     CORRADE_COMPARE(cache.fontCount(), 1);
     CORRADE_COMPARE(cache.findFont(*font), 0);
 
-    /* 26 ASCII characters, 3 UTF-8 ones + one "not found" glyph, and one
-       invalid glyph from the cache itself. The count should be the same in all
-       cases as the input is deduplicated and characters not present in the
+    /* 26 ASCII characters + space, 3 UTF-8 ones + one "not found" glyph, and
+       one invalid glyph from the cache itself. The count should be the same in
+       all cases as the input is deduplicated and characters not present in the
        font get substituted for glyph 0. */
-    CORRADE_COMPARE(cache.glyphCount(), 26 + 3 + 1 + 1);
+    CORRADE_COMPARE(cache.glyphCount(), 26 + 1 + 3 + 1 + 1);
 
     /* Check positions of a few select glyphs. They should all retain the same
        position regardless of how the input is shuffled. Again, this is
@@ -716,6 +717,11 @@ void StbTrueTypeFontTest::fillGlyphCache() {
         Vector2i{0, -1},
         0,
         Range2Di{{20, 0}, {27, 14}}));
+    /* Space is a zero-size rectangle */
+    CORRADE_COMPARE(cache.glyph(0, font->glyphId(' ')), Containers::triple(
+        Vector2i{},
+        0,
+        Range2Di{{13, 0}, {13, 0}}));
 }
 
 void StbTrueTypeFontTest::fillGlyphCacheIncremental() {
@@ -755,16 +761,18 @@ void StbTrueTypeFontTest::fillGlyphCacheIncremental() {
     } cache{_importerManager, PixelFormat::R8Unorm, Vector2i{64}, {}};
 
     /* First call with the bottom half of the glyph cache until the invalid
-       glyph */
-    CORRADE_VERIFY(font->fillGlyphCache(cache, "jgpqčěšdbylhktfi"));
+       glyph, and a space that fits somewhere in the cracks. Not adding the
+       space in the second call because that results in the offset in the
+       second call to be (0, 0), which could hide certain bugs. */
+    CORRADE_VERIFY(font->fillGlyphCache(cache, "jgpqčěšdbylhktfi "));
     CORRADE_COMPARE(cache.called, 1);
 
     /* The font should associate itself with the cache now */
     CORRADE_COMPARE(cache.fontCount(), 1);
     CORRADE_COMPARE(cache.findFont(*font), 0);
 
-    /* 17 characters + one global invalid glyph */
-    CORRADE_COMPARE(cache.glyphCount(), 17 + 1);
+    /* 17 characters + one global invalid glyph + a space */
+    CORRADE_COMPARE(cache.glyphCount(), 17 + 1 + 1);
 
     /* Second call with the rest */
     CORRADE_VERIFY(font->fillGlyphCache(cache, "oacesmnuwvxzr"));
@@ -774,9 +782,10 @@ void StbTrueTypeFontTest::fillGlyphCacheIncremental() {
     CORRADE_COMPARE(cache.fontCount(), 1);
 
     /* There's now all glyphs like in fillGlyphCache() */
-    CORRADE_COMPARE(cache.glyphCount(), 26 + 3 + 1 + 1);
+    CORRADE_COMPARE(cache.glyphCount(), 26 + 1 + 3 + 1 + 1);
 
-    /* Positions of the glyphs should be the same as in fillGlyphCache() */
+    /* Positions of the glyphs should be the same as in fillGlyphCache(),
+       except for the space which fits somewhere earlier */
     CORRADE_COMPARE(cache.glyph(0), Containers::triple(
         Vector2i{},
         0,
@@ -808,6 +817,10 @@ void StbTrueTypeFontTest::fillGlyphCacheIncremental() {
         Vector2i{0, -1},
         0,
         Range2Di{{20, 0}, {27, 14}}));
+    CORRADE_COMPARE(cache.glyph(0, font->glyphId(' ')), Containers::triple(
+        Vector2i{},
+        0,
+        Range2Di{{7, 0}, {7, 0}}));
 }
 
 void StbTrueTypeFontTest::fillGlyphCacheArray() {
@@ -845,7 +858,7 @@ void StbTrueTypeFontTest::fillGlyphCacheArray() {
     } cache{_importerManager, PixelFormat::R8Unorm, {48, 48, 2}, {}};
 
     /* Should call doSetImage() above, which then performs image comparison */
-    CORRADE_VERIFY(font->fillGlyphCache(cache, "abcdefghijklmnopqrstuvwxyzěšč"));
+    CORRADE_VERIFY(font->fillGlyphCache(cache, "abcdefghijklmnopqrstuvwxyzěšč "));
     CORRADE_VERIFY(cache.called);
 
     /* The font should associate itself with the cache */
@@ -853,7 +866,7 @@ void StbTrueTypeFontTest::fillGlyphCacheArray() {
     CORRADE_COMPARE(cache.findFont(*font), 0);
 
     /* Same as in fillGlyphCache() */
-    CORRADE_COMPARE(cache.glyphCount(), 26 + 3 + 1 + 1);
+    CORRADE_COMPARE(cache.glyphCount(), 26 + 1 + 3 + 1 + 1);
 
     /* Positions are spread across two layers now */
     CORRADE_COMPARE(cache.glyph(0), Containers::triple(
@@ -875,6 +888,10 @@ void StbTrueTypeFontTest::fillGlyphCacheArray() {
         Vector2i{0, 0},
         1,
         Range2Di{{40, 9}, {48, 18}}));
+    CORRADE_COMPARE(cache.glyph(0, font->glyphId(' ')), Containers::triple(
+        Vector2i{},
+        1,
+        Range2Di{{20, 0}, {20, 0}}));
 }
 
 void StbTrueTypeFontTest::fillGlyphCacheInvalidFormat() {
