@@ -661,7 +661,7 @@ void StbTrueTypeFontTest::fillGlyphCache() {
     } cache{_importerManager, PixelFormat::R8Unorm, Vector2i{64}, {}};
 
     /* Should call doSetImage() above, which then performs image comparison */
-    font->fillGlyphCache(cache, data.characters);
+    CORRADE_VERIFY(font->fillGlyphCache(cache, data.characters));
     CORRADE_VERIFY(cache.called);
 
     /* The font should associate itself with the cache */
@@ -756,7 +756,7 @@ void StbTrueTypeFontTest::fillGlyphCacheIncremental() {
 
     /* First call with the bottom half of the glyph cache until the invalid
        glyph */
-    font->fillGlyphCache(cache, "jgpqčěšdbylhktfi");
+    CORRADE_VERIFY(font->fillGlyphCache(cache, "jgpqčěšdbylhktfi"));
     CORRADE_COMPARE(cache.called, 1);
 
     /* The font should associate itself with the cache now */
@@ -767,7 +767,7 @@ void StbTrueTypeFontTest::fillGlyphCacheIncremental() {
     CORRADE_COMPARE(cache.glyphCount(), 17 + 1);
 
     /* Second call with the rest */
-    font->fillGlyphCache(cache, "oacesmnuwvxzr");
+    CORRADE_VERIFY(font->fillGlyphCache(cache, "oacesmnuwvxzr"));
     CORRADE_COMPARE(cache.called, 2);
 
     /* The font should not be added again */
@@ -845,7 +845,7 @@ void StbTrueTypeFontTest::fillGlyphCacheArray() {
     } cache{_importerManager, PixelFormat::R8Unorm, {48, 48, 2}, {}};
 
     /* Should call doSetImage() above, which then performs image comparison */
-    font->fillGlyphCache(cache, "abcdefghijklmnopqrstuvwxyzěšč");
+    CORRADE_VERIFY(font->fillGlyphCache(cache, "abcdefghijklmnopqrstuvwxyzěšč"));
     CORRADE_VERIFY(cache.called);
 
     /* The font should associate itself with the cache */
@@ -892,7 +892,7 @@ void StbTrueTypeFontTest::fillGlyphCacheInvalidFormat() {
 
     Containers::String out;
     Error redirectError{&out};
-    font->fillGlyphCache(cache, "");
+    CORRADE_VERIFY(!font->fillGlyphCache(cache, ""));
     CORRADE_COMPARE(out, "Text::StbTrueTypeFont::fillGlyphCache(): expected a PixelFormat::R8Unorm glyph cache but got PixelFormat::R8Srgb\n");
 }
 
@@ -911,7 +911,7 @@ void StbTrueTypeFontTest::fillGlyphCacheCannotFit() {
 
     Containers::String out;
     Error redirectError{&out};
-    font->fillGlyphCache(cache, "HELLO");
+    CORRADE_VERIFY(!font->fillGlyphCache(cache, "HELLO"));
     CORRADE_COMPARE_AS(out,
         "Text::StbTrueTypeFont::fillGlyphCache(): cannot fit 5 glyphs with a total area of 524 pixels into a cache of size Vector(16, 32, 1) and Vector(16, 0, 1) filled so far\n",
         TestSuite::Compare::String);

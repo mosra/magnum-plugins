@@ -595,7 +595,7 @@ void FreeTypeFontTest::fillGlyphCache() {
     } cache{_importerManager, PixelFormat::R8Unorm, Vector2i{64}, {}};
 
     /* Should call doSetImage() above, which then performs image comparison */
-    font->fillGlyphCache(cache, data.characters);
+    CORRADE_VERIFY(font->fillGlyphCache(cache, data.characters));
     CORRADE_VERIFY(cache.called);
 
     /* The font should associate itself with the cache */
@@ -697,7 +697,7 @@ void FreeTypeFontTest::fillGlyphCacheIncremental() {
 
     /* First call with the bottom half of the glyph cache until the invalid
        glyph */
-    font->fillGlyphCache(cache, "jěčšbdghpqkylfti");
+    CORRADE_VERIFY(font->fillGlyphCache(cache, "jěčšbdghpqkylfti"));
     CORRADE_COMPARE(cache.called, 1);
 
     /* The font should associate itself with the cache now */
@@ -708,7 +708,7 @@ void FreeTypeFontTest::fillGlyphCacheIncremental() {
     CORRADE_COMPARE(cache.glyphCount(), 17 + 1);
 
     /* Second call with the rest */
-    font->fillGlyphCache(cache, "mwovenuacsxzr");
+    CORRADE_VERIFY(font->fillGlyphCache(cache, "mwovenuacsxzr"));
     CORRADE_COMPARE(cache.called, 2);
 
     /* The font should not be added again */
@@ -797,7 +797,7 @@ void FreeTypeFontTest::fillGlyphCacheArray() {
     } cache{_importerManager, PixelFormat::R8Unorm, {48, 48, 2}, {}};
 
     /* Should call doSetImage() above, which then performs image comparison */
-    font->fillGlyphCache(cache, "abcdefghijklmnopqrstuvwxyzěšč");
+    CORRADE_VERIFY(font->fillGlyphCache(cache, "abcdefghijklmnopqrstuvwxyzěšč"));
     CORRADE_VERIFY(cache.called);
 
     /* The font should associate itself with the cache */
@@ -859,7 +859,7 @@ void FreeTypeFontTest::fillGlyphCacheBitmapFont() {
 
     const UnsignedInt glyphId = font->glyphId('X');
     CORRADE_VERIFY(glyphId);
-    font->fillGlyphCache(cache, {glyphId});
+    CORRADE_VERIFY(font->fillGlyphCache(cache, {glyphId}));
     CORRADE_VERIFY(cache.called);
 
     CORRADE_COMPARE(cache.glyph(0, glyphId), Containers::triple(
@@ -896,7 +896,7 @@ void FreeTypeFontTest::fillGlyphCacheInvalidFormat() {
 
     Containers::String out;
     Error redirectError{&out};
-    font->fillGlyphCache(cache, "");
+    CORRADE_VERIFY(!font->fillGlyphCache(cache, ""));
     CORRADE_COMPARE(out, "Text::FreeTypeFont::fillGlyphCache(): expected a PixelFormat::R8Unorm glyph cache but got PixelFormat::R8Srgb\n");
 }
 
@@ -915,7 +915,7 @@ void FreeTypeFontTest::fillGlyphCacheCannotFit() {
 
     Containers::String out;
     Error redirectError{&out};
-    font->fillGlyphCache(cache, "HELLO");
+    CORRADE_VERIFY(!font->fillGlyphCache(cache, "HELLO"));
     CORRADE_COMPARE(out, "Text::FreeTypeFont::fillGlyphCache(): cannot fit 5 glyphs with a total area of 535 pixels into a cache of size Vector(16, 32, 1) and Vector(16, 0, 1) filled so far\n");
 }
 
