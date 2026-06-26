@@ -153,62 +153,62 @@ constexpr struct {
     VertexFormat positionFormat, colorFormat, normalFormat, texcoordFormat,
         objectIdFormat;
     const char* objectIdAttribute;
-    UnsignedInt attributeCount, faceAttributeCount;
+    UnsignedInt attributeCount;
 } ParseData[]{
     /* GCC 4.8 doesn't like just {}, needs VertexFormat{} */
     {"positions-float-indices-uint", MeshIndexType::UnsignedInt,
         VertexFormat::Vector3, VertexFormat{},
         VertexFormat{}, VertexFormat{},
-        VertexFormat{}, nullptr, 1, 0},
+        VertexFormat{}, nullptr, 1},
     /* All supported attributes, in the canonical type */
     {"positions-colors-normals-texcoords-float-objectid-uint-indices-int",
         MeshIndexType::UnsignedInt,
         VertexFormat::Vector3, VertexFormat::Vector3,
         VertexFormat::Vector3, VertexFormat::Vector2,
-        VertexFormat::UnsignedInt, nullptr, 5, 0},
+        VertexFormat::UnsignedInt, nullptr, 5},
     /* Four-component colors */
     {"positions-colors4-float-indices-int", MeshIndexType::UnsignedInt,
         VertexFormat::Vector3, VertexFormat::Vector4,
         VertexFormat{}, VertexFormat{},
-        VertexFormat{}, nullptr, 2, 0},
+        VertexFormat{}, nullptr, 2},
     /* Testing endian flip */
     {"positions-colors-normals-texcoords-float-objectid-uint-indices-int-be",
         MeshIndexType::UnsignedInt,
         VertexFormat::Vector3, VertexFormat::Vector3,
         VertexFormat::Vector3, VertexFormat::Vector2,
-        VertexFormat::UnsignedInt, nullptr, 5, 0},
+        VertexFormat::UnsignedInt, nullptr, 5},
     /* Testing endian flip of unaligned data */
     {"positions-colors4-normals-texcoords-float-indices-int-be-unaligned",
         MeshIndexType::UnsignedInt,
         VertexFormat::Vector3, VertexFormat::Vector4,
         VertexFormat::Vector3, VertexFormat::Vector2,
-        VertexFormat{}, nullptr, 8, 1},
+        VertexFormat{}, nullptr, 8},
     /* Testing various packing variants (hopefully exhausting all combinations) */
     {"positions-uchar-normals-char-objectid-short-indices-ushort",
         MeshIndexType::UnsignedShort,
         VertexFormat::Vector3ub, VertexFormat{},
         VertexFormat::Vector3bNormalized, VertexFormat{},
-        VertexFormat::UnsignedShort, "OBJECTID", 3, 0},
+        VertexFormat::UnsignedShort, "OBJECTID", 3},
     {"positions-char-colors4-ushort-texcoords-uchar-indices-short-be",
         MeshIndexType::UnsignedShort,
         VertexFormat::Vector3b, VertexFormat::Vector4usNormalized,
         VertexFormat{}, VertexFormat::Vector2ubNormalized,
-        VertexFormat{}, nullptr, 3, 0},
+        VertexFormat{}, nullptr, 3},
     {"positions-ushort-normals-short-objectid-uchar-indices-uchar-be",
         MeshIndexType::UnsignedByte,
         VertexFormat::Vector3us, VertexFormat{},
         VertexFormat::Vector3sNormalized, VertexFormat{},
-        VertexFormat::UnsignedByte, "semantic", 3, 0},
+        VertexFormat::UnsignedByte, "semantic", 3},
     {"positions-short-colors-uchar-texcoords-ushort-indices-char",
         MeshIndexType::UnsignedByte,
         VertexFormat::Vector3s, VertexFormat::Vector3ubNormalized,
         VertexFormat{}, VertexFormat::Vector2usNormalized,
-        VertexFormat{}, nullptr, 3, 0},
+        VertexFormat{}, nullptr, 3},
     /* CR/LF instead of LF */
     {"crlf", MeshIndexType::UnsignedByte,
         VertexFormat::Vector3us, VertexFormat{},
         VertexFormat{}, VertexFormat{},
-        VertexFormat{}, nullptr, 1, 0}
+        VertexFormat{}, nullptr, 1},
 };
 
 constexpr struct {
