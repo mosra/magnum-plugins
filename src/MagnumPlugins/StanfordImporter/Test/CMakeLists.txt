@@ -103,7 +103,8 @@ corrade_add_test(StanfordImporterTest StanfordImporterTest.cpp
         unexpected-property.ply
         unknown-element.ply
         unknown-line.ply
-        unsupported-face-size.ply)
+        unsupported-face-size.ply
+        whitespace.ply)
 target_include_directories(StanfordImporterTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>)
 if(MAGNUM_STANFORDIMPORTER_BUILD_STATIC)
     target_link_libraries(StanfordImporterTest PRIVATE StanfordImporter)

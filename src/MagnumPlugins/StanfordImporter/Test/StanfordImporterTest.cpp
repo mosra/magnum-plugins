@@ -209,6 +209,14 @@ constexpr struct {
         VertexFormat::Vector3us, VertexFormat{},
         VertexFormat{}, VertexFormat{},
         VertexFormat{}, nullptr, 1},
+    /* Various extra whitespace in the header, other than that it's the same as
+       "positions-float-indices-uint" at the very top. The same file is
+       subsequently used also in parsePerFace*() to verify the per-face
+       attribute. See comments in the file for details. */
+    {"whitespace", MeshIndexType::UnsignedInt,
+        VertexFormat::Vector3, VertexFormat{},
+        VertexFormat{}, VertexFormat{},
+        VertexFormat{}, nullptr, 1},
 };
 
 constexpr struct {
@@ -239,7 +247,13 @@ constexpr struct {
     {"per-face normals, object ids, verbose", "per-face-normals-objectid.ply", 2,
         MeshIndexType::UnsignedByte,
         VertexFormat{}, VertexFormat::Vector3, VertexFormat::UnsignedShort,
-        ImporterFlag::Verbose, "Trade::StanfordImporter::mesh(): converting 2 per-face attributes to per-vertex\n"}
+        ImporterFlag::Verbose, "Trade::StanfordImporter::mesh(): converting 2 per-face attributes to per-vertex\n"},
+    /* Same as "whitespace" in ParseData above, but testing whitespace handling
+       in the per-face attribute */
+    {"whitespace", "whitespace.ply", 1,
+        MeshIndexType::UnsignedInt,
+        VertexFormat{}, VertexFormat{},
+        VertexFormat::UnsignedShort, {}, ""},
 };
 
 constexpr struct {

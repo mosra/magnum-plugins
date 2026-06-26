@@ -40,11 +40,19 @@ with open(fileIn) as input:
 
     with open(fileOut, 'wb') as output:
         output.write(b'ply\n')
-        if type[0] == '<':
-            output.write(b'format binary_little_endian 1.0\n')
-        elif type[0] == '>':
-            output.write(b'format binary_big_endian 1.0\n')
-        else: assert False
-        output.write(header.strip().encode('utf-8'))
-        output.write(b'\nend_header\n')
+        # whitespace.ply.in contains an explicit header as well, don't write
+        # another one in that case
+        if 'binary_little_endian' not in header:
+            if type[0] == '<':
+                output.write(b'format binary_little_endian 1.0\n')
+            elif type[0] == '>':
+                output.write(b'format binary_big_endian 1.0\n')
+            else: assert False
+        # Strip just the leading/trailing newline, leave any spaces intact
+        output.write(header.strip('\n').encode('utf-8'))
+        # whitespace.ply.in likewise has an explicit end_header
+        if 'end_header' not in header:
+            output.write(b'\nend_header')
+        # Final newline before the binary data
+        output.write(b'\n')
         output.write(struct.pack(type, *input))

@@ -1,0 +1,35 @@
+header = """
+ \t\t comment a comment or empty lines can be before the format line, and can have leading / trailing space too\t
+
+\t \t
+
+comment leading space in format line causes blender to crash, space inside format line causes Assimp to fail import
+ \t format   binary_little_endian \t\t1.0   \t
+
+comment verify space treatment for element, property and property list
+ element    vertex\t\t\t5\t
+  property float \t\t x
+\t\tproperty   float y\t
+property \t\t float       z
+   \t element \t\t face  \t2\t
+  property     list     int32    uint \t    vertex_indices\t\t\t
+   \t\t\t property  \t\t ushort \t objectid\t\t
+
+comment end_header can be surrounded by spaces as well, it's the final newline that matters
+\t \t \tend_header \t\t\t
+"""
+type = '<3f 3f 3f 3f 3f i4iH i3iH'
+input = [
+    1.0, 3.0, 2.0,
+    1.0, 1.0, 2.0,
+    3.0, 3.0, 2.0,
+    3.0, 1.0, 2.0,
+    5.0, 3.0, 9.0,
+
+    4, 0, 1, 2, 3,
+        117,
+    3, 3, 2, 4,
+        56
+]
+
+# kate: hl python; indent-width 4
