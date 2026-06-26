@@ -88,13 +88,19 @@ constexpr struct {
 } InvalidData[]{
     {"invalid-signature", "invalid file signature bla", true},
 
-    {"format-invalid", "invalid format line format binary_big_endian 1.0 extradata", true},
     {"format-unsupported", "unsupported file format binary_mixed_endian 1.0", true},
     {"format-missing", "missing format line", true},
     {"format-too-late", "expected format line, got element face 1", true},
 
     {"unknown-line", "unknown line heh", true},
-    {"unknown-element", "unknown element edge", true},
+    {"unknown-element", "invalid element line element edge 25", true},
+
+    /* Extra tokens at the end of a line */
+    {"extra-token-format", "invalid format line format binary_big_endian 1.0 extradata", true},
+    {"extra-token-element", "invalid element line element vertex 4 extradata", true},
+    {"extra-token-vertex-property", "invalid vertex property line property float x extradata", true},
+    {"extra-token-face-property", "invalid face property line property uint id extradata", true},
+    {"extra-token-face-property-list", "invalid face property line property list int32 uint vertex_indices extradata", true},
 
     {"unexpected-property", "unexpected property line", true},
     {"invalid-vertex-property", "invalid vertex property line property float x extradata", true},

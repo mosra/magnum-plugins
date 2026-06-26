@@ -62,7 +62,12 @@ corrade_add_test(StanfordImporterTest StanfordImporterTest.cpp
         custom-components-duplicate.ply
         crlf.ply
         empty.ply
-        format-invalid.ply
+        extra-token-face-element.ply
+        extra-token-face-property.ply
+        extra-token-face-property-list.ply
+        extra-token-format.ply
+        extra-token-vertex-element.ply
+        extra-token-vertex-property.ply
         format-missing.ply
         format-too-late.ply
         format-unsupported.ply

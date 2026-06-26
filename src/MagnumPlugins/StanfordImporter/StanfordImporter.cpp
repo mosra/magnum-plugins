@@ -340,7 +340,7 @@ void StanfordImporter::doOpenData(Containers::Array<char>&& data, const DataFlag
 
             /* Something else */
             } else {
-                Error{} << "Trade::StanfordImporter::openData(): unknown element" << tokens[1];
+                Error{} << "Trade::StanfordImporter::openData(): invalid element line" << line;
                 return;
             }
 

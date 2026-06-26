@@ -1,0 +1,4 @@
+ply
+format binary_big_endian 1.0
+element vertex 4
+property float x extradata
