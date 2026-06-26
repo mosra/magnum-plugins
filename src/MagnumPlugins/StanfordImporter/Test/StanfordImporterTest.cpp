@@ -33,7 +33,7 @@
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/Format.h>
 #include <Corrade/Utility/Path.h>
-#include <Corrade/Utility/String.h>
+#include <Corrade/Utility/String.h> /* replaceAll() */
 #include <Magnum/Math/Color.h>
 #include <Magnum/Math/Vector3.h>
 #include <Magnum/Trade/AbstractImporter.h>
@@ -97,10 +97,11 @@ constexpr struct {
 
     /* Extra tokens at the end of a line */
     {"extra-token-format", "invalid format line format binary_big_endian 1.0 extradata", true},
-    {"extra-token-element", "invalid element line element vertex 4 extradata", true},
+    {"extra-token-vertex-element", "invalid element line element vertex 4 extradata", true},
+    {"extra-token-face-element", "invalid element line element face 2 extradata", true},
     {"extra-token-vertex-property", "invalid vertex property line property float x extradata", true},
     {"extra-token-face-property", "invalid face property line property uint id extradata", true},
-    {"extra-token-face-property-list", "invalid face property line property list int32 uint vertex_indices extradata", true},
+    {"extra-token-face-property-list", "invalid face index list property line property list int32 uint vertex_indices extradata", true},
 
     {"unexpected-property", "unexpected property line", true},
     {"invalid-vertex-property", "invalid vertex property line property float x extradata", true},
@@ -109,6 +110,15 @@ constexpr struct {
     {"invalid-face-type", "invalid face component type float16", true},
     {"invalid-face-size-type", "invalid face size type float", true},
     {"invalid-face-index-type", "invalid face index type float", true},
+
+    /* Integer parsing */
+    /** @todo can throw away everything except the invalid literal case once a
+        reasonable integer parsing API is implemented */
+    {"integer-literal-at-file-end", "incomplete header", true},
+    /** @todo a reasonable parsing API would fail with +35 already */
+    {"integer-literal-invalid", "invalid integer literal 567+", true},
+    /* It should *not* fail with 4294967295, that still fits */
+    {"integer-literal-too-large", "too large integer literal 4294967296", true},
 
     /* This also verifies a case where the file has no newline at the end, i.e.
        there's just end_header at the end. Make sure the file has the trailing

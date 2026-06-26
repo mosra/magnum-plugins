@@ -72,6 +72,9 @@ corrade_add_test(StanfordImporterTest StanfordImporterTest.cpp
         format-too-late.ply
         format-unsupported.ply
         incomplete-face-specification.ply
+        integer-literal-at-file-end.ply
+        integer-literal-invalid.ply
+        integer-literal-too-large.ply
         invalid-face-index-type.ply
         invalid-face-property.ply
         invalid-face-size-type.ply

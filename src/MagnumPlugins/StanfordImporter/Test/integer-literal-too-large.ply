@@ -1,0 +1,5 @@
+ply
+format binary_little_endian 1.0
+comment it should fail only for the vertex, not for face, that fits
+element face 4294967295
+element vertex 4294967296

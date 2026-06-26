@@ -1,0 +1,6 @@
+ply
+format binary_little_endian 1.0
+comment strtoull() parses the first happily but PLY doesn't allow that (it'd
+comment parse also a leading -, producing nonsense, that's another thing)
+element face +35
+element vertex 567+

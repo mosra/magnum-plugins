@@ -1,0 +1,5 @@
+ply
+format binary_little_endian 1.0
+comment This file needs to end with the integer literal with no newline after
+comment kate: newline-at-eof off;
+element face 571
