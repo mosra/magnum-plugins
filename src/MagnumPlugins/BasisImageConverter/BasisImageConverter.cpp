@@ -37,7 +37,7 @@
 #include <Corrade/Containers/String.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/Path.h>
-#include <Corrade/Utility/String.h>
+#include <Corrade/Utility/String.h> /* lowercase() */
 #include <Magnum/ImageView.h>
 #include <Magnum/Math/Color.h>
 #include <Magnum/Math/Swizzle.h>

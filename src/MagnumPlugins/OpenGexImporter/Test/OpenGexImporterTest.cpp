@@ -35,7 +35,7 @@
 #include <Corrade/Utility/DebugStl.h> /** @todo remove once file callbacks are std::string-free */
 #include <Corrade/Utility/Format.h>
 #include <Corrade/Utility/Path.h>
-#include <Corrade/Utility/String.h>
+#include <Corrade/Utility/String.h> /* replaceAll() */
 #include <Magnum/FileCallback.h>
 #include <Magnum/Mesh.h>
 #include <Magnum/PixelFormat.h>

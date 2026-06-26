@@ -47,7 +47,7 @@
 #include <Corrade/Utility/JsonWriter.h>
 #include <Corrade/Utility/Macros.h> /* CORRADE_UNUSED */
 #include <Corrade/Utility/Path.h>
-#include <Corrade/Utility/String.h>
+#include <Corrade/Utility/String.h> /* lowercase() */
 #include <Magnum/PixelFormat.h>
 #include <Magnum/Math/Color.h>
 #include <Magnum/Math/FunctionsBatch.h>
