@@ -625,7 +625,7 @@ void StanfordImporterTest::parsePerFaceToPerVertex() {
     importer->setFlags(data.flags);
 
     /* Done by default */
-    //importer->configuration().setValue("perFaceToPerVertex", true);
+    CORRADE_COMPARE(importer->configuration().value<bool>("perFaceToPerVertex"), true);
     importer->configuration().setValue("objectIdAttribute", "objectid");
 
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(STANFORDIMPORTER_TEST_DIR, data.filename)));
@@ -839,7 +839,7 @@ void StanfordImporterTest::customAttributesPerFaceToPerVertex() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("StanfordImporter");
 
     /* Done by default */
-    //importer->configuration().setValue("perFaceToPerVertex", true);
+    CORRADE_COMPARE(importer->configuration().value<bool>("perFaceToPerVertex"), true);
 
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(STANFORDIMPORTER_TEST_DIR, Utility::format("{}.ply", data.filename))));
 
@@ -1020,7 +1020,7 @@ void StanfordImporterTest::triangleFastPathPerFaceToPerVertex() {
     importer->configuration().setValue("triangleFastPath", data.enabled);
 
     /* Done by default */
-    //importer->configuration().setValue("perFaceToPerVertex", true);
+    CORRADE_COMPARE(importer->configuration().value<bool>("perFaceToPerVertex"), true);
 
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(STANFORDIMPORTER_TEST_DIR, "triangle-fast-path-be.ply")));
 
