@@ -304,10 +304,10 @@ bool FreeTypeFont::doFillGlyphCache(AbstractGlyphCache& cache, const Containers:
             once that's a thing, FreeType sets num_grays only to 2, 4, 16, 256:
             https://github.com/freetype/freetype/blob/25a08f24cfc0da879d1938352d026532f280b77e/src/sfnt/ttsbit.c#L564-L599 */
         } else for(std::size_t y = 0; y != bitmap->rows; ++y) {
-            const unsigned char* const src = bitmap->buffer + y*bitmap->pitch;
-            char* const dst = &glyphDst[bitmap->rows - y - 1][0];
+            const unsigned char* const rowSrc = bitmap->buffer + y*bitmap->pitch;
+            char* const rowDst = &glyphDst[bitmap->rows - y - 1][0];
             for(std::size_t x = 0; x != bitmap->width; ++x) {
-                dst[x] = char((UnsignedInt(src[x])*255)/(bitmap->num_grays - 1));
+                rowDst[x] = char((UnsignedInt(rowSrc[x])*255)/(bitmap->num_grays - 1));
             }
         }
 
