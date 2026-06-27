@@ -38,7 +38,6 @@
 #  LunaSvgImporter              - SVG importer using LunaSVG
 #  MeshOptimizerSceneConverter  - MeshOptimizer scene converter
 #  MiniExrImageConverter        - OpenEXR image converter using miniexr
-#  OpenGexImporter              - OpenGEX importer
 #  PlutoSvgImporter             - SVG importer using PlutoSVG
 #  PngImageConverter            - PNG image converter
 #  PngImporter                  - PNG importer
@@ -60,14 +59,11 @@
 #  WebPImporter                 - WebP importer
 #
 # If Magnum is built with MAGNUM_BUILD_DEPRECATED enabled, these additional
-# plugins are available for backwards compatibility purposes:
+# plugins and libraries are available for backwards compatibility purposes:
 #
 #  CgltfImporter                - glTF importer using cgltf
+#  OpenGexImporter              - OpenGEX importer
 #  TinyGltfImporter             - GLTF importer using tiny_gltf
-#
-# Some plugins expose their internal state through separate libraries. The
-# libraries are:
-#
 #  OpenDdl                      - OpenDDL parser, used as a base for the
 #   OpenGexImporter plugin
 #
@@ -201,7 +197,6 @@ endif()
 
 # Component distinction (listing them explicitly to avoid mistakes with finding
 # components from other repositories)
-set(_MAGNUMPLUGINS_LIBRARY_COMPONENTS OpenDdl)
 set(_MAGNUMPLUGINS_PLUGIN_COMPONENTS
     AssimpImporter AstcImporter AvifImporter BasisImageConverter BasisImporter
     BcDecImageConverter DdsImporter DevIlImageImporter DrFlacAudioImporter
@@ -210,10 +205,10 @@ set(_MAGNUMPLUGINS_PLUGIN_COMPONENTS
     GltfSceneConverter HarfBuzzFont IcoImporter JpegImageConverter JpegImporter
     KtxImageConverter KtxImporter LunaSvgImporter MeshOptimizerSceneConverter
     MiniExrImageConverter OpenExrImageConverter OpenExrImporter
-    OpenGexImporter PlutoSvgImporter PngImageConverter PngImporter
-    PrimitiveImporter ResvgImporter SpirvToolsShaderConverter SpngImporter
-    StanfordImporter StanfordSceneConverter StbDxtImageConverter
-    StbImageConverter StbImageImporter StbResizeImageConverter StbTrueTypeFont
+    PlutoSvgImporter PngImageConverter PngImporter PrimitiveImporter
+    ResvgImporter SpirvToolsShaderConverter SpngImporter StanfordImporter
+    StanfordSceneConverter StbDxtImageConverter StbImageConverter
+    StbImageImporter StbResizeImageConverter StbTrueTypeFont
     StbVorbisAudioImporter StlImporter UfbxImporter WebPImageConverter
     WebPImporter)
 # Nothing is enabled by default right now
@@ -221,12 +216,14 @@ set(_MAGNUMPLUGINS_IMPLICITLY_ENABLED_COMPONENTS )
 
 # Inter-component dependencies
 set(_MAGNUMPLUGINS_HarfBuzzFont_DEPENDENCIES FreeTypeFont)
-set(_MAGNUMPLUGINS_OpenGexImporter_DEPENDENCIES OpenDdl)
 
-# CgltfImporter and TinyGltfImporter, available only on a deprecated build
+# CgltfImporter, OpenGexImporter, TinyGltfImporter and OpenDdl, available only
+# on a deprecated build
 if(MAGNUM_BUILD_DEPRECATED)
-    list(APPEND _MAGNUMPLUGINS_PLUGIN_COMPONENTS CgltfImporter TinyGltfImporter)
+    list(APPEND _MAGNUMPLUGINS_PLUGIN_COMPONENTS CgltfImporter OpenGexImporter TinyGltfImporter)
+    set(_MAGNUMPLUGINS_LIBRARY_COMPONENTS OpenDdl)
     set(_MAGNUMPLUGINS_CgltfImporter_DEPENDENCIES GltfImporter)
+    set(_MAGNUMPLUGINS_OpenGexImporter_DEPENDENCIES OpenDdl)
 endif()
 
 # Ensure that all inter-component dependencies are specified as well
@@ -267,6 +264,7 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
     else()
         # Find plugin/library includes. Each has a configure.h file so there
         # doesn't need to be any specialized per-library handling.
+        # TODO drop _MAGNUMPLUGINS_LIBRARY_COMPONENTS once OpenDdl is gone
         if(_component IN_LIST _MAGNUMPLUGINS_PLUGIN_COMPONENTS OR _component IN_LIST _MAGNUMPLUGINS_LIBRARY_COMPONENTS)
             if(_component IN_LIST _MAGNUMPLUGINS_LIBRARY_COMPONENTS)
                 set(_include_path_directory Magnum)
@@ -297,6 +295,7 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
         endif()
 
         # Library components
+        # TODO drop this once OpenDdl is gone
         if(_component IN_LIST _MAGNUMPLUGINS_LIBRARY_COMPONENTS)
             # Try to find both debug and release version
             find_library(MAGNUMPLUGINS_${_COMPONENT}_LIBRARY_DEBUG Magnum${_component}-d)
@@ -387,6 +386,7 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
         if(
             # If the component is a library or a plugin, it should have the
             # configure file
+            # TODO drop _MAGNUMPLUGINS_LIBRARY_COMPONENTS once OpenDdl is gone
             (_component IN_LIST _MAGNUMPLUGINS_PLUGIN_COMPONENTS OR _component IN_LIST _MAGNUMPLUGINS_LIBRARY_COMPONENTS) AND _MAGNUMPLUGINS_${_COMPONENT}_CONFIGURE_FILE AND (
                 # And it should have a debug library, and a DLL found if
                 # expected
@@ -405,6 +405,7 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
         endif()
 
         # Target and location for libraries
+        # TODO drop this once OpenDdl is gone
         if(_component IN_LIST _MAGNUMPLUGINS_LIBRARY_COMPONENTS)
             if(_MAGNUMPLUGINS_${_COMPONENT}_BUILD_STATIC)
                 add_library(MagnumPlugins::${_component} STATIC IMPORTED)
@@ -772,6 +773,7 @@ foreach(_component ${MagnumPlugins_FIND_COMPONENTS})
                 INTERFACE_SOURCES ${_MAGNUMPLUGINS_${_COMPONENT}_INCLUDE_DIR}/importStaticPlugin.cpp)
         endif()
 
+        # TODO drop _MAGNUMPLUGINS_LIBRARY_COMPONENTS once OpenDdl is gone
         if(_component IN_LIST _MAGNUMPLUGINS_PLUGIN_COMPONENTS OR _component IN_LIST _MAGNUMPLUGINS_LIBRARY_COMPONENTS)
             # Link to core Magnum library, add other Magnum dependencies
             set_property(TARGET MagnumPlugins::${_component} APPEND PROPERTY
@@ -803,6 +805,7 @@ if(NOT CMAKE_VERSION VERSION_LESS 3.16)
 
         # If it's not known at all, tell the user -- it might be a new library
         # and an old Find module, or something platform-specific.
+        # TODO drop _MAGNUMPLUGINS_LIBRARY_COMPONENTS once OpenDdl is gone
         if(NOT _component IN_LIST _MAGNUMPLUGINS_LIBRARY_COMPONENTS AND NOT _component IN_LIST _MAGNUMPLUGINS_PLUGIN_COMPONENTS)
             list(APPEND _MAGNUMPLUGINS_REASON_FAILURE_MESSAGE "${_component} is not a known component on this platform.")
         # Otherwise, if it's not among implicitly built components, hint that

@@ -24,6 +24,8 @@
     DEALINGS IN THE SOFTWARE.
 */
 
+#define _MAGNUM_NO_DEPRECATED_OPENDDL
+
 #include "Parsers.h"
 
 #include <cstring>
@@ -39,6 +41,7 @@
 
 namespace Magnum { namespace OpenDdl { namespace Implementation {
 
+CORRADE_IGNORE_DEPRECATED_PUSH
 Debug& operator<<(Debug& debug, const ParseErrorType value) {
     switch(value) {
         #define _c(value) case ParseErrorType::value: return debug << "OpenDdl::ParseErrorType::" #value;
@@ -806,5 +809,6 @@ std::pair<const char*, InternalPropertyType> propertyValue(const Containers::Arr
     error = {ParseErrorType::InvalidPropertyValue, data};
     return {};
 }
+CORRADE_IGNORE_DEPRECATED_POP
 
 }}}

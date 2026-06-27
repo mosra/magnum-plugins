@@ -26,35 +26,48 @@
     DEALINGS IN THE SOFTWARE.
 */
 
+#ifdef MAGNUM_BUILD_DEPRECATED
 /** @file
  * @brief Class @ref Magnum::OpenDdl::CharacterLiteral, @ref Magnum::OpenDdl::Document
+ * @m_deprecated_since_latest Use the @ref Magnum::Trade::AssimpImporter plugin
+ *      for parsing OpenDDL / OpenGEX files instead.
  */
+#endif
 
+#include <Magnum/configure.h>
+
+#ifdef MAGNUM_BUILD_DEPRECATED
 #include <string>
 #include <vector>
 #include <Corrade/Containers/ArrayView.h>
 #include <Corrade/Containers/Optional.h>
 
 #include "Magnum/OpenDdl/visibility.h"
-#include "Magnum/OpenDdl/OpenDdl.h"
+#include "Magnum/OpenDdl/OpenDdl.h" /* for file deprecation warning */
 #include "Magnum/OpenDdl/Type.h"
+
+/* File deprecation warning printed in OpenDdl.h */
 
 namespace Magnum { namespace OpenDdl {
 
 /**
 @brief Character literal
+@m_deprecated_since_latest Use the @ref Trade::AssimpImporter plugin for
+    parsing OpenDDL / OpenGEX files instead.
 
 Just a wrapper around @ref Corrade::Containers::ArrayView which ensures
 that character literals have proper size.
 */
-struct CharacterLiteral: Containers::ArrayView<const char> {
+struct CORRADE_DEPRECATED("use use the AssimpImporter plugin for parsing OpenDDL / OpenGEX files instead") CharacterLiteral: Containers::ArrayView<const char> {
     /** @brief Constructor */
     /* MSVC 2015 can't handle {} here */
     template<std::size_t size> constexpr CharacterLiteral(const char(&string)[size]): Containers::ArrayView<const char>(string, size - 1) {}
 };
 
 namespace Implementation {
+    CORRADE_IGNORE_DEPRECATED_PUSH
     template<Type> struct ExtractDataListItem;
+    CORRADE_IGNORE_DEPRECATED_POP
     template<class> struct ExtractIntegralDataListItem;
     template<class> struct ExtractFloatingPointDataListItem;
     enum class ParseErrorType: UnsignedInt;
@@ -70,6 +83,8 @@ namespace Validation {
 
 /**
 @brief OpenDDL document
+@m_deprecated_since_latest Use the @ref Trade::AssimpImporter plugin for
+    parsing OpenDDL / OpenGEX files instead.
 
 Parser for the [OpenDDL](https://www.openddl.org) file format.
 
@@ -275,10 +290,12 @@ Containers::ArrayView<const Float> data = vertexArray.firstChild().asArray<Float
 @requires_gles Due to JavaScript limitations, on WebGL the `unsigned_int64`
     and `int64` types are not recognized.
 */
-class MAGNUM_OPENDDL_EXPORT Document {
+class CORRADE_DEPRECATED("use the AssimpImporter plugin for parsing OpenDDL / OpenGEX files instead") MAGNUM_OPENDDL_EXPORT Document {
+    CORRADE_IGNORE_DEPRECATED_PUSH
     friend Property;
     friend Structure;
     template<Type> friend struct Implementation::ExtractDataListItem;
+    CORRADE_IGNORE_DEPRECATED_POP
     template<class> friend struct Implementation::ExtractIntegralDataListItem;
     template<class> friend struct Implementation::ExtractFloatingPointDataListItem;
 
@@ -291,18 +308,26 @@ class MAGNUM_OPENDDL_EXPORT Document {
         explicit Document();
 
         /** @brief Copying is disabled */
+        CORRADE_IGNORE_DEPRECATED_PUSH /* GCC 4.8 warns here */
         Document(const Document&) = delete;
+        CORRADE_IGNORE_DEPRECATED_POP
 
         /** @brief Moving is disabled */
+        CORRADE_IGNORE_DEPRECATED_PUSH /* GCC 4.8 warns here */
         Document(Document&&) = delete;
+        CORRADE_IGNORE_DEPRECATED_POP
 
         ~Document();
 
         /** @brief Copying is disabled */
+        CORRADE_IGNORE_DEPRECATED_PUSH /* GCC 4.8 warns here */
         Document& operator=(const Document&) = delete;
+        CORRADE_IGNORE_DEPRECATED_POP
 
         /** @brief Moving is disabled */
+        CORRADE_IGNORE_DEPRECATED_PUSH /* GCC 4.8 warns here */
         Document& operator=(Document&&) = delete;
+        CORRADE_IGNORE_DEPRECATED_POP
 
         /**
          * @brief Parse data
@@ -319,8 +344,9 @@ class MAGNUM_OPENDDL_EXPORT Document {
          * After parsing, all references to structure data are valid until next
          * parse call.
          */
-        /** @todo some sane way to ensure that the initializer lists are valid for whole Document lifetime */
+        CORRADE_IGNORE_DEPRECATED_PUSH
         bool parse(Containers::ArrayView<const char> data, std::initializer_list<CharacterLiteral> structureIdentifiers, std::initializer_list<CharacterLiteral> propertyIdentifiers);
+        CORRADE_IGNORE_DEPRECATED_POP
 
         /** @brief Whether the document is empty */
         bool isEmpty() { return _structures.empty(); }
@@ -332,7 +358,9 @@ class MAGNUM_OPENDDL_EXPORT Document {
          * @see @ref isEmpty(), @ref findFirstChildOf(), @ref firstChild(),
          *      @ref Structure::findFirstChild(), @ref Structure::findNext()
          */
+        CORRADE_IGNORE_DEPRECATED_PUSH
         Containers::Optional<Structure> findFirstChild() const;
+        CORRADE_IGNORE_DEPRECATED_POP
 
         /**
          * @brief First top-level structure in the document
@@ -341,7 +369,9 @@ class MAGNUM_OPENDDL_EXPORT Document {
          * @see @ref isEmpty(), @ref firstChildOf(), @ref findFirstChild(),
          *      @ref Structure::firstChild(), @ref Structure::findNext()
          */
+        CORRADE_IGNORE_DEPRECATED_PUSH
         Structure firstChild() const;
+        CORRADE_IGNORE_DEPRECATED_POP
 
         /**
          * @brief Top-level structures
@@ -356,7 +386,9 @@ class MAGNUM_OPENDDL_EXPORT Document {
          *
          * @see @ref childrenOf(), @ref Structure::children()
          */
+        CORRADE_IGNORE_DEPRECATED_PUSH
         Implementation::StructureList children() const;
+        CORRADE_IGNORE_DEPRECATED_POP
 
         /**
          * @brief Find first custom top-level structure of given type
@@ -366,7 +398,9 @@ class MAGNUM_OPENDDL_EXPORT Document {
          * @see @ref findFirstChild(), @ref firstChildOf(),
          *      @ref Structure::findFirstChildOf(), @ref Structure::findNextOf()
          */
+        CORRADE_IGNORE_DEPRECATED_PUSH
         Containers::Optional<Structure> findFirstChildOf(Type type) const;
+        CORRADE_IGNORE_DEPRECATED_POP
 
         /**
          * @brief Find first custom top-level structure of given identifier
@@ -376,11 +410,15 @@ class MAGNUM_OPENDDL_EXPORT Document {
          * @see @ref findFirstChild(), @ref firstChildOf(),
          *      @ref Structure::findFirstChildOf(), @ref Structure::findNextOf()
          */
+        CORRADE_IGNORE_DEPRECATED_PUSH
         Containers::Optional<Structure> findFirstChildOf(Int identifier) const;
+        CORRADE_IGNORE_DEPRECATED_POP
 
         /** @overload */
+        CORRADE_IGNORE_DEPRECATED_PUSH
         Containers::Optional<Structure> findFirstChildOf(std::initializer_list<Int> identifiers) const;
         Containers::Optional<Structure> findFirstChildOf(Containers::ArrayView<const Int> identifiers) const; /**< @overload */
+        CORRADE_IGNORE_DEPRECATED_POP
 
         /**
          * @brief First custom top-level structure of given type
@@ -389,7 +427,9 @@ class MAGNUM_OPENDDL_EXPORT Document {
          * @see @ref firstChild(), @ref findFirstChildOf(), @ref validate(),
          *      @ref Structure::firstChildOf()
          */
+        CORRADE_IGNORE_DEPRECATED_PUSH
         Structure firstChildOf(Type type) const;
+        CORRADE_IGNORE_DEPRECATED_POP
 
         /**
          * @brief First custom top-level structure of given identifier
@@ -398,7 +438,9 @@ class MAGNUM_OPENDDL_EXPORT Document {
          * @see @ref firstChild(), @ref findFirstChildOf(), @ref validate(),
          *      @ref Structure::firstChildOf()
          */
+        CORRADE_IGNORE_DEPRECATED_PUSH
         Structure firstChildOf(Int identifier) const;
+        CORRADE_IGNORE_DEPRECATED_POP
 
         /**
          * @brief Top-level structures of given identifier
@@ -412,9 +454,10 @@ class MAGNUM_OPENDDL_EXPORT Document {
          * @endcode
          *
          * @see @ref children(), @ref Structure::childrenOf()
-         * @todo This is ugly because it does not use { } like all the others
          */
+        CORRADE_IGNORE_DEPRECATED_PUSH
         template<class ...T> Implementation::StructureOfList<sizeof...(T)+1> childrenOf(Int identifier, T... identifiers) const;
+        CORRADE_IGNORE_DEPRECATED_POP
 
         /**
          * @brief Validate document
@@ -428,12 +471,15 @@ class MAGNUM_OPENDDL_EXPORT Document {
          * @ref Structure::firstChildOf(), @ref Structure::propertyOf() etc.
          * without additional validation.
          */
+        CORRADE_IGNORE_DEPRECATED_PUSH
         bool validate(Validation::Structures allowedRootStructures, std::initializer_list<Validation::Structure> structures) const;
+        CORRADE_IGNORE_DEPRECATED_POP
 
     private:
         struct PropertyData;
         struct StructureData;
 
+        CORRADE_IGNORE_DEPRECATED_PUSH
         MAGNUM_OPENDDL_LOCAL const char* parseProperty(Containers::ArrayView<const char> data, std::vector<std::pair<std::size_t, Containers::ArrayView<const char>>>& references, std::string& buffer, Int position, Implementation::ParseError& error);
         MAGNUM_OPENDDL_LOCAL std::pair<const char*, std::size_t> parseStructure(std::size_t parent, Containers::ArrayView<const char> data, std::vector<std::pair<std::size_t, Containers::ArrayView<const char>>>& references, std::string& buffer, Implementation::ParseError& error);
         MAGNUM_OPENDDL_LOCAL const char* parseStructureList(std::size_t parent, Containers::ArrayView<const char> data, std::vector<std::pair<std::size_t, Containers::ArrayView<const char>>>& references, std::string& buffer, Implementation::ParseError& error);
@@ -461,7 +507,6 @@ class MAGNUM_OPENDDL_EXPORT Document {
         std::vector<Long> _longs;
         std::vector<UnsignedLong> _unsignedLongs;
         #endif
-        /** @todo Half */
         std::vector<Float> _floats;
         std::vector<Double> _doubles;
         std::vector<std::string> _strings;
@@ -473,8 +518,10 @@ class MAGNUM_OPENDDL_EXPORT Document {
 
         Containers::ArrayView<const CharacterLiteral> _structureIdentifiers;
         Containers::ArrayView<const CharacterLiteral> _propertyIdentifiers;
+        CORRADE_IGNORE_DEPRECATED_POP
 };
 
+CORRADE_IGNORE_DEPRECATED_PUSH
 #ifndef DOXYGEN_GENERATING_OUTPUT
 #define _c(T, member) \
     template<> inline std::vector<T>& Document::data() { return member; } \
@@ -490,7 +537,6 @@ _c(Int, _ints)
 _c(UnsignedLong, _unsignedLongs)
 _c(Long, _longs)
 #endif
-/** @todo Half */
 _c(Float, _floats)
 _c(Double, _doubles)
 _c(std::string, _strings)
@@ -512,7 +558,6 @@ _c(Int, Int)
 _c(UnsignedLong, UnsignedLong)
 _c(Long, Long)
 #endif
-/** @todo Half */
 _c(Float, Float)
 _c(Double, Double)
 _c(String, std::string)
@@ -579,7 +624,11 @@ namespace Implementation {
 template<class ...T> inline Implementation::StructureOfList<sizeof...(T)+1> Document::childrenOf(Int identifier, T... identifiers) const {
     return Implementation::StructureOfList<sizeof...(T)+1>{findFirstChildOf({identifier, identifiers...}), identifier, identifiers...};
 }
+CORRADE_IGNORE_DEPRECATED_POP
 
 }}
+#else
+#error use the AssimpImporter plugin for parsing OpenDDL / OpenGEX files instead
+#endif
 
 #endif

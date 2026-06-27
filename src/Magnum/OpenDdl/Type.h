@@ -26,21 +26,36 @@
     DEALINGS IN THE SOFTWARE.
 */
 
+#ifdef MAGNUM_BUILD_DEPRECATED
 /** @file
  * @brief Enum @ref Magnum::OpenDdl::Type, @ref Magnum::OpenDdl::PropertyType, constant @ref Magnum::OpenDdl::UnknownIdentifier
+ * @m_deprecated_since_latest Use the @ref Magnum::Trade::AssimpImporter plugin
+ *      for parsing OpenDDL / OpenGEX files instead.
  */
+#endif
 
+#include <Magnum/configure.h>
+
+#ifdef MAGNUM_BUILD_DEPRECATED
 #include <Magnum/Magnum.h>
 
+#include "Magnum/OpenDdl/OpenDdl.h" /* for file deprecation warning */
 #include "Magnum/OpenDdl/visibility.h"
+
+/* File deprecation warning printed in OpenDdl.h */
 
 namespace Magnum { namespace OpenDdl {
 
 /**
 @brief OpenDDL type
+@m_deprecated_since_latest Use the @ref Trade::AssimpImporter plugin for
+    parsing OpenDDL / OpenGEX files instead.
 
 @see @ref Structure::type()
 */
+/* No CORRADE_DEPRECATED_ENUM() here, as it's already on the declaration in
+   OpenDdl.h and GCC stupidly warns that "type attributes ignored after type is
+   already defined" */
 enum class Type: UnsignedInt {
     /** Boolean. Stored in @cpp bool @ce type. */
     Bool,
@@ -110,18 +125,26 @@ enum class Type: UnsignedInt {
     Custom
 };
 
-/** @debugoperatorenum{Type} */
+/**
+@debugoperatorenum{Type}
+@m_deprecated_since_latest Use the @ref Trade::AssimpImporter plugin for
+    parsing OpenDDL / OpenGEX files instead.
+*/
+CORRADE_IGNORE_DEPRECATED_PUSH
 MAGNUM_OPENDDL_EXPORT Debug& operator<<(Debug& debug, Type value);
+CORRADE_IGNORE_DEPRECATED_POP
 
 /**
 @brief Property type
+@m_deprecated_since_latest Use the @ref Trade::AssimpImporter plugin for
+    parsing OpenDDL / OpenGEX files instead.
 
 Because of parsing ambiguity, the properties are internally stored only in a
 subset of types. The remaining types are just for use in
 @ref Property::isTypeCompatibleWith(). See documentation of particular values
 for more information.
 */
-enum class PropertyType: UnsignedByte {
+enum class CORRADE_DEPRECATED_ENUM("use use the AssimpImporter plugin for parsing OpenDDL / OpenGEX files instead") PropertyType: UnsignedByte {
     /** Boolean. Stored in @cpp bool @ce type. */
     Bool,
 
@@ -175,19 +198,30 @@ enum class PropertyType: UnsignedByte {
     Type
 };
 
-/** @debugoperatorenum{PropertyType} */
+/**
+@debugoperatorenum{PropertyType}
+@m_deprecated_since_latest Use the @ref Trade::AssimpImporter plugin for
+    parsing OpenDDL / OpenGEX files instead.
+*/
+CORRADE_IGNORE_DEPRECATED_PUSH
 MAGNUM_OPENDDL_EXPORT Debug& operator<<(Debug& debug, PropertyType value);
+CORRADE_IGNORE_DEPRECATED_POP
 
+CORRADE_IGNORE_DEPRECATED_PUSH
 enum: Int {
     /**
      * Identifier which was not in the identifier list passed to
      * @ref Document::parse().
+     * @m_deprecated_since_latest Use the @ref Trade::AssimpImporter plugin for
+     *      parsing OpenDDL / OpenGEX files instead.
      * @see @ref Structure::identifier(), @ref Property::identifier()
      */
-    UnknownIdentifier = INT16_MAX - Int(Type::Custom)
+    UnknownIdentifier CORRADE_DEPRECATED_ENUM("use use the AssimpImporter plugin for parsing OpenDDL / OpenGEX files instead") = INT16_MAX - Int(Type::Custom)
 };
+CORRADE_IGNORE_DEPRECATED_POP
 
 namespace Implementation {
+    CORRADE_IGNORE_DEPRECATED_PUSH
     enum class InternalPropertyType: UnsignedByte {
         Bool = UnsignedByte(PropertyType::Bool),
         Integral = UnsignedByte(PropertyType::Int),
@@ -198,9 +232,13 @@ namespace Implementation {
         Character = 254,
         Binary = 255
     };
+    CORRADE_IGNORE_DEPRECATED_POP
     MAGNUM_OPENDDL_EXPORT Debug& operator<<(Debug& debug, InternalPropertyType value);
 }
 
 }}
+#else
+#error use the AssimpImporter plugin for parsing OpenDDL / OpenGEX files instead
+#endif
 
 #endif

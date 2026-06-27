@@ -135,6 +135,8 @@
  */
 /** @dir MagnumPlugins/OpenGexImporter
  * @brief Plugin @ref Magnum::Trade::OpenGexImporter
+ * @m_deprecated_since_latest Use the @ref Magnum::Trade::AssimpImporter plugin
+ *      for parsing OpenDDL / OpenGEX files instead.
  */
 /** @dir MagnumPlugins/PlutoSvgImporter
  * @brief Plugin @ref Magnum::Trade::PlutoSvgImporter
@@ -208,9 +210,13 @@
  */
 /** @dir magnum-plugins/src/Magnum/OpenDdl
  * @brief Namespace @ref Magnum::OpenDdl, @ref Magnum::OpenDdl::Validation
+ * @m_deprecated_since_latest Use the @ref Magnum::Trade::AssimpImporter plugin
+ *      for parsing OpenDDL / OpenGEX files instead.
  */
 /** @namespace Magnum::OpenDdl
 @brief OpenDDL parser
+@m_deprecated_since_latest Use the @ref Trade::AssimpImporter plugin for
+    parsing OpenDDL / OpenGEX files instead.
 
 Parser for [OpenDDL](https://openddl.org) file format. See
 @ref OpenDdl::Document for more information.
@@ -237,6 +243,8 @@ add_subdirectory(magnum-plugins EXCLUDE_FROM_ALL)
 */
 /** @namespace Magnum::OpenDdl::Validation
 @brief OpenDDL document validation
+@m_deprecated_since_latest Use the @ref Trade::AssimpImporter plugin for
+    parsing OpenDDL / OpenGEX files instead.
 
 Validation of OpenDDL documents. See @ref OpenDdl::Document::validate() for
 more information.

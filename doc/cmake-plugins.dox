@@ -159,7 +159,8 @@ This command will not try to find any actual plugin. The plugins are:
 -   `OpenExrImageConverter` --- @ref Trade::OpenExrImageConverter "OpenExrImageConverter"
     plugin
 -   `OpenExrImporter` --- @ref Trade::OpenExrImporter "OpenExrImporter" plugin
--   `OpenGexImporter` --- @ref Trade::OpenGexImporter "OpenGexImporter" plugin
+-   `OpenGexImporter` @m_class{m-label m-danger} **deprecated** ---
+    @relativeref{Trade,OpenGexImporter} plugin
 -   `PlutoSvgImporter` --- @relativeref{Trade,PlutoSvgImporter} plugin
 -   `PngImageConverter` --- @ref Trade::PngImageConverter "PngImageConverter"
     plugin
@@ -192,7 +193,8 @@ This command will not try to find any actual plugin. The plugins are:
 Some plugins expose their internal state through separate libraries. The
 libraries are:
 
--   `OpenDdl` --- @ref OpenDdl library
+-   `OpenDdl` @m_class{m-label m-danger} **deprecated** --- @ref OpenDdl
+    library
 
 Note that each plugin class / library namespace contains more detailed
 information about dependencies, availability on particular platform and also

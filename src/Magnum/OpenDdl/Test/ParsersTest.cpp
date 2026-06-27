@@ -24,6 +24,8 @@
     DEALINGS IN THE SOFTWARE.
 */
 
+#define _MAGNUM_NO_DEPRECATED_OPENDDL
+
 #include <tuple>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/Utility/DebugStl.h> /* for std::string */
@@ -165,6 +167,7 @@ ParsersTest::ParsersTest() {
     CORRADE_VERIFY(i >= data.begin()); \
     CORRADE_COMPARE((std::string{data.begin(), std::size_t(i - data.begin())}), parsed);
 
+CORRADE_IGNORE_DEPRECATED_PUSH
 void ParsersTest::equals() {
     CharacterLiteral a{"HelloWorld"};
     CharacterLiteral b{"Hello"};
@@ -815,6 +818,7 @@ void ParsersTest::propertyValueType() {
     CORRADE_COMPARE(type, Implementation::InternalPropertyType::Type);
     CORRADE_COMPARE(typeValue, Type::Float);
 }
+CORRADE_IGNORE_DEPRECATED_POP
 
 }}}}
 

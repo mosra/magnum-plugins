@@ -24,6 +24,8 @@
     DEALINGS IN THE SOFTWARE.
 */
 
+#define _MAGNUM_NO_DEPRECATED_OPENDDL
+
 #include <algorithm> /* std::find(), std::find_if() */
 #include <tuple>
 #include <Corrade/Utility/Debug.h>
@@ -38,6 +40,7 @@
 
 namespace Magnum { namespace OpenDdl {
 
+CORRADE_IGNORE_DEPRECATED_PUSH
 Debug& operator<<(Debug& debug, const Type value) {
     switch(value) {
         /* LCOV_EXCL_START */
@@ -1188,5 +1191,6 @@ Structure::Structure(Int identifier, Properties properties, Primitives primitive
 {}
 
 }
+CORRADE_IGNORE_DEPRECATED_POP
 
 }}

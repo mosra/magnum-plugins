@@ -28,6 +28,7 @@
 #include "MagnumPlugins/OpenGexImporter/OpenGex.h"
 
 #ifndef DOXYGEN_GENERATING_OUTPUT
+CORRADE_IGNORE_DEPRECATED_PUSH
 namespace Magnum { namespace Trade { namespace OpenGex {
 
 /* Version 1.1.1 except for the following:
@@ -366,4 +367,5 @@ const std::initializer_list<Validation::Structure> structureInfo{
                         Structures{{Extension, {}}}}};
 
 }}}
+CORRADE_IGNORE_DEPRECATED_POP
 #endif

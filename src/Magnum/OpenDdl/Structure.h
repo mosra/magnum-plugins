@@ -26,15 +26,25 @@
     DEALINGS IN THE SOFTWARE.
 */
 
+#ifdef MAGNUM_BUILD_DEPRECATED
 /** @file
  * @brief Class @ref Magnum::OpenDdl::Structure, enum @ref Magnum::OpenDdl::Type
+ * @m_deprecated_since_latest Use the @ref Magnum::Trade::AssimpImporter plugin
+ *      for parsing OpenDDL / OpenGEX files instead.
  */
+#endif
 
+#include <Magnum/configure.h>
+
+#ifdef MAGNUM_BUILD_DEPRECATED
 #include <Corrade/Containers/Reference.h>
 #include <Corrade/Utility/Assert.h>
 #include <Corrade/Utility/Math.h>
 
 #include "Magnum/OpenDdl/Document.h"
+#include "Magnum/OpenDdl/OpenDdl.h" /* for file deprecation warning */
+
+/* File deprecation warning printed in OpenDdl.h */
 
 namespace Magnum { namespace OpenDdl {
 
@@ -46,6 +56,8 @@ namespace Implementation {
 
 /**
 @brief OpenDDL structure
+@m_deprecated_since_latest Use the @ref Trade::AssimpImporter plugin for
+    parsing OpenDDL / OpenGEX files instead.
 
 See @ref Document for more information.
 
@@ -54,7 +66,7 @@ See @ref Document for more information.
     for whole instance lifetime. On the other hand you can copy the instance
     however you like without worrying about performance.
 */
-class MAGNUM_OPENDDL_EXPORT Structure {
+class CORRADE_DEPRECATED("use use the AssimpImporter plugin for parsing OpenDDL / OpenGEX files instead") MAGNUM_OPENDDL_EXPORT Structure {
     public:
         /**
          * @brief Equality operator
@@ -62,27 +74,35 @@ class MAGNUM_OPENDDL_EXPORT Structure {
          * Returns @cpp true @ce if the two instances refer to the same
          * structure in the same document.
          */
+        CORRADE_IGNORE_DEPRECATED_PUSH
         bool operator==(const Structure& other) const {
             return &_document.get() == &other._document.get() &&
                    &_data.get() == &other._data.get();
         }
+        CORRADE_IGNORE_DEPRECATED_POP
 
         /** @brief Non-equality operator */
+        CORRADE_IGNORE_DEPRECATED_PUSH
         bool operator!=(const Structure& other) const { return !operator==(other); }
+        CORRADE_IGNORE_DEPRECATED_POP
 
         /**
          * @brief Whether the structure is custom
          *
          * @see @ref type(), @ref identifier()
          */
+        CORRADE_IGNORE_DEPRECATED_PUSH
         bool isCustom() const { return type() == Type::Custom; }
+        CORRADE_IGNORE_DEPRECATED_POP
 
         /**
          * @brief Structure type
          *
          * @see @ref isCustom(), @ref identifier()
          */
+        CORRADE_IGNORE_DEPRECATED_PUSH
         Type type() const { return Utility::min(Type::Custom, _data.get().primitive.type); }
+        CORRADE_IGNORE_DEPRECATED_POP
 
         /**
          * @brief Custom structure identifier
@@ -100,7 +120,11 @@ class MAGNUM_OPENDDL_EXPORT Structure {
          *
          * @see @ref hasName()
          */
-        const std::string& name() const { return _document.get()._strings[_data.get().name]; }
+        const std::string& name() const {
+            CORRADE_IGNORE_DEPRECATED_PUSH
+            return _document.get()._strings[_data.get().name];
+            CORRADE_IGNORE_DEPRECATED_POP
+        }
 
         /**
          * @brief Array size
@@ -144,7 +168,9 @@ class MAGNUM_OPENDDL_EXPORT Structure {
          * `null`.
          * @see @ref isCustom(), @ref type(), @ref arraySize()
          */
+        CORRADE_IGNORE_DEPRECATED_PUSH
         Containers::Optional<Structure> asReference() const;
+        CORRADE_IGNORE_DEPRECATED_POP
 
         /**
          * @brief Structure data array
@@ -162,7 +188,9 @@ class MAGNUM_OPENDDL_EXPORT Structure {
          * @ref Corrade::Containers::NullOpt if the reference is `null`.
          * @see @ref isCustom(), @ref type(), @ref arraySize()
          */
+        CORRADE_IGNORE_DEPRECATED_PUSH
         Containers::Array<Containers::Optional<Structure>> asReferenceArray() const;
+        CORRADE_IGNORE_DEPRECATED_POP
 
         /**
          * @brief Parent structure
@@ -170,7 +198,9 @@ class MAGNUM_OPENDDL_EXPORT Structure {
          * Returns @ref Corrade::Containers::NullOpt if the structure is
          * top-level.
          */
+        CORRADE_IGNORE_DEPRECATED_PUSH
         Containers::Optional<Structure> parent() const;
+        CORRADE_IGNORE_DEPRECATED_POP
 
         /**
          * @brief Find next sibling structure
@@ -179,9 +209,11 @@ class MAGNUM_OPENDDL_EXPORT Structure {
          * in given level.
          * @see @ref findNextOf(), @ref firstChild()
          */
+        CORRADE_IGNORE_DEPRECATED_PUSH
         Containers::Optional<Structure> findNext() const {
             return _data.get().next ? Containers::optional(Structure{_document, _document.get()._structures[_data.get().next]}) : Containers::NullOpt;
         }
+        CORRADE_IGNORE_DEPRECATED_POP
 
         /**
          * @brief Find next custom sibling structure of given identifier
@@ -190,13 +222,17 @@ class MAGNUM_OPENDDL_EXPORT Structure {
          * structure.
          * @see @ref findNext(), @ref findNextSame(), @ref findFirstChildOf()
          */
+        CORRADE_IGNORE_DEPRECATED_PUSH
         Containers::Optional<Structure> findNextOf(Int identifier) const;
+        CORRADE_IGNORE_DEPRECATED_POP
 
         /** @overload */
+        CORRADE_IGNORE_DEPRECATED_PUSH
         Containers::Optional<Structure> findNextOf(std::initializer_list<Int> identifiers) const {
             return findNextOf({identifiers.begin(), identifiers.size()});
         }
         Containers::Optional<Structure> findNextOf(Containers::ArrayView<const Int> identifiers) const; /**< @overload */
+        CORRADE_IGNORE_DEPRECATED_POP
 
         /**
          * @brief Find next custom sibling structure of the same identifier
@@ -206,7 +242,9 @@ class MAGNUM_OPENDDL_EXPORT Structure {
          * @ref Corrade::Containers::NullOpt if there is no such structure.
          * @see @ref isCustom(), @ref findNext(), @ref findNextOf()
          */
+        CORRADE_IGNORE_DEPRECATED_PUSH
         Containers::Optional<Structure> findNextSame() const { return findNextOf(identifier()); }
+        CORRADE_IGNORE_DEPRECATED_POP
 
         /**
          * @brief Whether the structure has properties
@@ -248,7 +286,9 @@ class MAGNUM_OPENDDL_EXPORT Structure {
          * any property of given identifier.
          * @see @ref isCustom(), @ref propertyOf()
          */
+        CORRADE_IGNORE_DEPRECATED_PUSH
         Containers::Optional<Property> findPropertyOf(Int identifier) const;
+        CORRADE_IGNORE_DEPRECATED_POP
 
         /**
          * @brief Custom structure property of given identifier
@@ -257,7 +297,9 @@ class MAGNUM_OPENDDL_EXPORT Structure {
          * @see @ref isCustom(), @ref Document::validate(),
          *      @ref findPropertyOf()
          */
+        CORRADE_IGNORE_DEPRECATED_PUSH
         Property propertyOf(Int identifier) const;
+        CORRADE_IGNORE_DEPRECATED_POP
 
         /**
          * @brief Whether the structure has children
@@ -275,7 +317,9 @@ class MAGNUM_OPENDDL_EXPORT Structure {
          * @see @ref isCustom(), @ref firstChild(), @ref findNext(),
          *      @ref findFirstChildOf(), @ref parent()
          */
+        CORRADE_IGNORE_DEPRECATED_PUSH
         Containers::Optional<Structure> findFirstChild() const;
+        CORRADE_IGNORE_DEPRECATED_POP
 
         /**
          * @brief First child structure
@@ -284,7 +328,9 @@ class MAGNUM_OPENDDL_EXPORT Structure {
          * @see @ref isCustom(), @ref hasChildren(), @ref findFirstChild(),
          *      @ref Document::validate(), @ref firstChildOf(), @ref parent()
          */
+        CORRADE_IGNORE_DEPRECATED_PUSH
         Structure firstChild() const;
+        CORRADE_IGNORE_DEPRECATED_POP
 
         /**
          * @brief Structure children
@@ -309,7 +355,9 @@ class MAGNUM_OPENDDL_EXPORT Structure {
          * @ref Corrade::Containers::NullOpt if there is no such structure.
          * @see @ref isCustom(), @ref firstChildOf()
          */
+        CORRADE_IGNORE_DEPRECATED_PUSH
         Containers::Optional<Structure> findFirstChildOf(Type type) const;
+        CORRADE_IGNORE_DEPRECATED_POP
 
         /**
          * @brief Find first custom child structure of given identifier
@@ -318,13 +366,17 @@ class MAGNUM_OPENDDL_EXPORT Structure {
          * @ref Corrade::Containers::NullOpt if there is no such structure.
          * @see @ref isCustom(), @ref firstChildOf(), @ref findNextOf()
          */
+        CORRADE_IGNORE_DEPRECATED_PUSH
         Containers::Optional<Structure> findFirstChildOf(Int identifier) const;
+        CORRADE_IGNORE_DEPRECATED_POP
 
         /** @overload */
+        CORRADE_IGNORE_DEPRECATED_PUSH
         Containers::Optional<Structure> findFirstChildOf(std::initializer_list<Int> identifiers) const {
             return findFirstChildOf({identifiers.begin(), identifiers.size()});
         }
         Containers::Optional<Structure> findFirstChildOf(Containers::ArrayView<const Int> identifiers) const; /**< @overload */
+        CORRADE_IGNORE_DEPRECATED_POP
 
         /**
          * @brief First custom child structure of given type
@@ -333,7 +385,9 @@ class MAGNUM_OPENDDL_EXPORT Structure {
          * @see @ref isCustom(), @ref Document::validate(),
          *      @ref findFirstChildOf()
          */
+        CORRADE_IGNORE_DEPRECATED_PUSH
         Structure firstChildOf(Type type) const;
+        CORRADE_IGNORE_DEPRECATED_POP
 
         /**
          * @brief First custom child structure of given identifier
@@ -342,7 +396,9 @@ class MAGNUM_OPENDDL_EXPORT Structure {
          * @see @ref isCustom(), @ref Document::validate(),
          *      @ref findFirstChildOf()
          */
+        CORRADE_IGNORE_DEPRECATED_PUSH
         Structure firstChildOf(Int identifier) const;
+        CORRADE_IGNORE_DEPRECATED_POP
 
         /**
          * @brief Structure children of given identifier
@@ -363,18 +419,23 @@ class MAGNUM_OPENDDL_EXPORT Structure {
 
     private:
         #ifndef DOXYGEN_GENERATING_OUTPUT /* https://bugzilla.gnome.org/show_bug.cgi?id=776986 */
+        CORRADE_IGNORE_DEPRECATED_PUSH
         friend Document;
         friend Property;
+        CORRADE_IGNORE_DEPRECATED_POP
         friend Implementation::StructureIterator;
         friend Implementation::StructureOfIterator;
         #endif
 
+        CORRADE_IGNORE_DEPRECATED_PUSH
         explicit Structure(const Document& document, const Document::StructureData& data) noexcept: _document{document}, _data{data} {}
 
         Containers::Reference<const Document> _document;
         Containers::Reference<const Document::StructureData> _data;
+        CORRADE_IGNORE_DEPRECATED_POP
 };
 
+CORRADE_IGNORE_DEPRECATED_PUSH
 namespace Implementation {
     template<class> bool isStructureType(Type);
     template<> inline bool isStructureType<bool>(Type type) { return type == Type::Bool; }
@@ -495,7 +556,11 @@ template<class ...T> inline Implementation::StructureOfList<sizeof...(T)+1> Stru
         (Implementation::StructureOfList<sizeof...(T)+1>{findFirstChildOf({identifier, identifiers...}), identifier, identifiers...}));
     return Implementation::StructureOfList<sizeof...(T)+1>{findFirstChildOf({identifier, identifiers...}), identifier, identifiers...};
 }
+CORRADE_IGNORE_DEPRECATED_POP
 
 }}
+#else
+#error use the AssimpImporter plugin for parsing OpenDDL / OpenGEX files instead
+#endif
 
 #endif

@@ -40,7 +40,7 @@ digraph "Magnum Plugins dependency order" {
 
     AnyImageImporter [style=solid class="m-success"]
 
-    MagnumOpenDdl [class="m-info"]
+    MagnumOpenDdl [class="m-dim"]
 
     AudioImporter [label="*AudioImporter" class="m-success"]
     ImageConverter [label="*ImageConverter" class="m-success"]
@@ -52,7 +52,7 @@ digraph "Magnum Plugins dependency order" {
     AssimpImporter [class="m-success"]
     FreeTypeFont [class="m-success"]
     HarfBuzzFont [class="m-success"]
-    OpenGexImporter [class="m-success"]
+    OpenGexImporter [class="m-dim"]
     GltfImporter [class="m-success"]
     CgltfImporter [class="m-dim"]
     TinyGltfImporter [class="m-dim"]
@@ -69,7 +69,7 @@ digraph "Magnum Plugins dependency order" {
 
     AnyImageImporter -> MagnumTrade [class="m-success"]
 
-    MagnumOpenDdl -> Magnum
+    MagnumOpenDdl -> Magnum [class="m-dim"]
 
     AudioImporter -> MagnumAudio
     ImageConverter -> MagnumTrade
@@ -82,9 +82,9 @@ digraph "Magnum Plugins dependency order" {
     AssimpImporter -> AnyImageImporter
     FreeTypeFont -> MagnumText
     HarfBuzzFont -> FreeTypeFont
-    OpenGexImporter -> MagnumTrade
-    OpenGexImporter -> AnyImageImporter
-    OpenGexImporter -> MagnumOpenDdl
+    OpenGexImporter -> MagnumTrade [class="m-dim"]
+    OpenGexImporter -> AnyImageImporter [class="m-dim"]
+    OpenGexImporter -> MagnumOpenDdl [class="m-dim"]
     GltfImporter -> MagnumTrade
     GltfImporter -> AnyImageImporter
     CgltfImporter -> MagnumTrade [class="m-dim"]

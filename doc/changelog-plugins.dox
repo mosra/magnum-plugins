@@ -327,8 +327,7 @@ namespace Magnum {
     with backslashes in image paths also on non-Windows platforms (see
     [mosra/magnum-plugins#101](https://github.com/mosra/magnum-plugins/issues/101)
     and [mosra/magnum-plugins#102](https://github.com/mosra/magnum-plugins/pull/102))
--   @relativeref{Trade,AssimpImporter},
-    @relativeref{Trade,OpenGexImporter} and
+-   @relativeref{Trade,AssimpImporter}, `OpenGexImporter` and
     @relativeref{Trade,GltfImporter} now correctly propagate
     @ref Trade::ImporterFlags to delegated image importer plugins, instead of
     the setting (such as verbose output) affecting only the top-level plugin
@@ -387,6 +386,11 @@ namespace Magnum {
     lightweight @relativeref{Trade,GltfImporter}. The `CgltfImporter` plugin,
     which is where the @relativeref{Trade,GltfImporter} originally comes from,
     is now just a deprecated alias to it as well.
+-   The `OpenGexImporter` plugin along with the `OpenDdl` library are
+    deprecated as the format is rarely used nowadays, was last updated in 2021
+    and the plugin implementation didn't receive any format updates since the
+    initial implementation in 2015. Use the @relativeref{Trade,AssimpImporter}
+    plugin to parse OpenDDL / OpenGEX files instead.
 -   Variables `ASSIMP_LIBRARY_{DEBUG,RELEASE}` and `ASSIMP_INCLUDE_DIR` that
     could be used to force Assimp location in `FindAssimp.cmake` are deprecated
     in favor of `Assimp_LIBRARY_{DEBUG,RELEASE}` and `Assimp_INCLUDE_DIR`
@@ -463,9 +467,8 @@ Released 2020-06-27, tagged as
 -   @ref Trade::DdsImporter "DdsImporter" and
     @ref Trade::BasisImporter "BasisImporter", now support loading image mip
     levels; @ref Trade::AssimpImporter "AssimpImporter",
-    @ref Trade::OpenGexImporter "OpenGexImporter" and `TinyGltfImporter` were
-    updated to proxy mip level loading to image importer plugins (see
-    [mosra/magnum#369](https://github.com/mosra/magnum/pull/369))
+    `OpenGexImporter` and `TinyGltfImporter` were updated to proxy mip level
+    loading to image importer plugins (see [mosra/magnum#369](https://github.com/mosra/magnum/pull/369))
 -   New @ref Trade::IcoImporter "IcoImporter" plugin for importing ICO files
     with embedded PNGs (see [mosra/magnum-plugins#79](https://github.com/mosra/magnum-plugins/pull/79))
 -   New @ref Trade::PrimitiveImporter "PrimitiveImporter" plugin for accessing
@@ -495,8 +498,8 @@ Released 2020-06-27, tagged as
     avoiding use of 64-bit floating-point operations (see
     [mosra/magnum-plugins#73](https://github.com/mosra/magnum-plugins/pull/73))
 -   `TinyGltfImporter` now supports interleaved animation and mesh attributes
--   `TinyGltfImporter` and @ref Trade::OpenGexImporter "OpenGexImporter" now
-    import both color and texture information instead of only one of them
+-   `TinyGltfImporter` and `OpenGexImporter` now import both color and texture
+    information instead of only one of them
 -   @ref Trade::AssimpImporter "AssimpImporter" inadvertently ignored base
     orientation for files that are defined with Z up instead of Y, this
     behavior is now also configurable (see [mosra/magnum-plugins#82](https://github.com/mosra/magnum-plugins/pull/82))
@@ -549,8 +552,8 @@ Released 2020-06-27, tagged as
 
 @subsection changelog-plugins-2020-06-compatibility Potential compatibility breakages, removed APIs
 
--   Removed @ref OpenDdl headers in `MagnumPlugins/OpenGexImporter/OpenDdl`
-    that were deprecated in 2018.04, include them from the `Magnum/OpenDdl`
+-   Removed `OpenDdl` headers in `MagnumPlugins/OpenGexImporter/OpenDdl` that
+    were deprecated in 2018.04, include them from the `Magnum/OpenDdl`
     directory instead.
 -   `TinyGltfImporter` translation of PBR materials into a Phong shading model
     left @ref Trade::PhongMaterialData::shininess() set at @cpp 1.0f @ce, which
@@ -605,8 +608,7 @@ Released 2019-10-24, tagged as
 @subsection changelog-plugins-2019-10-changes Changes and improvements
 
 -   Calling @ref Trade::AbstractImporter::image2D() "image2D()" in
-    @ref Trade::AssimpImporter "AssimpImporter",
-    @ref Trade::OpenGexImporter "OpenGexImporter" and
+    @ref Trade::AssimpImporter "AssimpImporter", `OpenGexImporter` and
     `TinyGltfImporter` now behaves consistently in regards to file loading
     callbacks --- failing with an error if and only if image is not embedded,
     the file is not opened from a filesystem and file loading callbacks are not
@@ -739,10 +741,9 @@ Released 2019-02-04, tagged as
 
 @subsection changelog-plugins-2019-01-changes Changes and improvements
 
--   Fixed compatibility of the @ref OpenDdl library with Emscripten 1.38.10
-    and newer, which defines @ref std::size_t as @cpp unsigned long @ce instead
-    of @cpp unsigned int @ce used previously (it's still a four-byte type,
-    though)
+-   Fixed compatibility of the `OpenDdl` library with Emscripten 1.38.10 and
+    newer, which defines @ref std::size_t as @cpp unsigned long @ce instead of
+    @cpp unsigned int @ce used previously (it's still a four-byte type, though)
 
 @subsection changelog-plugins-2019-01-buildsystem Build system
 
@@ -780,8 +781,8 @@ Released 2018-10-23, tagged as
     material properties
 -   `TinyGltfImporter` now imports all camera properties together with type and
     aspect ratio / projection size
--   @ref Trade::AssimpImporter "AssimpImporter", @ref Trade::OpenGexImporter "OpenGexImporter"
-    and `TinyGltfImporter` now support
+-   @ref Trade::AssimpImporter "AssimpImporter", `OpenGexImporter` and
+    `TinyGltfImporter` now support
     @cpp Trade::AbstractImporter::Feature::FileCallback @ce for specifying
     custom callbacks to load extra files (see
     [mosra/magnum-plugins#47](https://github.com/mosra/magnum-plugins/pull/47))
@@ -802,8 +803,7 @@ Released 2018-10-23, tagged as
     [mosra/magnum-plugins#43](https://github.com/mosra/magnum-plugins/pull/43))
 -   Mesh name and complete multi-primitive mesh loading in
     `TinyGltfImporter` (see [mosra/magnum-plugins#48](https://github.com/mosra/magnum-plugins/issues/48))
--   @ref Trade::OpenGexImporter "OpenGexImporter" and
-    `TinyGltfImporter` now properly import alpha for
+-   `OpenGexImporter` and `TinyGltfImporter` now properly import alpha for
     @ref Trade::PhongMaterialData
 -   `TinyGltfImporter` now exposes the translation/rotation/scaling properties
     of @cpp Trade::ObjectData3D @ce separately if they are separate in the
@@ -877,7 +877,7 @@ Released 2018-10-23, tagged as
     Please consider either using @ref Trade::AssimpImporter "AssimpImporter"
     for COLLADA import or switching to simpler and better supported formats
     such as glTF or OpenGEX using `TinyGltfImporter` or
-    @ref Trade::OpenGexImporter "OpenGexImporter". There's also the official
+    `OpenGexImporter`. There's also the official
     [COLLADA2GLTF](https://github.com/KhronosGroup/COLLADA2GLTF) converter.
 
 Changelogs for previous versions are available in

@@ -25,6 +25,8 @@
     DEALINGS IN THE SOFTWARE.
 */
 
+#define _MAGNUM_NO_DEPRECATED_OPENDDL
+
 #include <unordered_map>
 #include <Corrade/Containers/ArrayView.h>
 #include <Corrade/Containers/String.h>
@@ -231,12 +233,14 @@ void OpenGexImporterTest::open() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
 
     /* GCC < 4.9 cannot handle multiline raw string literals inside macros */
+    CORRADE_IGNORE_DEPRECATED_PUSH
     auto s = OpenDdl::CharacterLiteral{R"oddl(
 Metric (key = "distance") { float { 0.5 } }
 Metric (key = "angle") { float { 1.0 } }
 Metric (key = "time") { float { 1000 } }
 Metric (key = "up") { string { "z" } }
     )oddl"};
+    CORRADE_IGNORE_DEPRECATED_POP
     CORRADE_VERIFY(importer->openData(s));
 }
 
@@ -246,9 +250,11 @@ void OpenGexImporterTest::openParseError() {
     Containers::String out;
     Error redirectError{&out};
     /* GCC < 4.9 cannot handle multiline raw string literals inside macros */
+    CORRADE_IGNORE_DEPRECATED_PUSH
     auto s = OpenDdl::CharacterLiteral{R"oddl(
 <collada>THIS IS COLLADA XML</collada>
     )oddl"};
+    CORRADE_IGNORE_DEPRECATED_POP
     CORRADE_VERIFY(!importer->openData(s));
     CORRADE_COMPARE(out, "OpenDdl::Document::parse(): invalid identifier on line 2\n");
 }
@@ -259,9 +265,11 @@ void OpenGexImporterTest::openValidationError() {
     Containers::String out;
     Error redirectError{&out};
     /* GCC < 4.9 cannot handle multiline raw string literals inside macros */
+    CORRADE_IGNORE_DEPRECATED_PUSH
     auto s = OpenDdl::CharacterLiteral{R"oddl(
 Metric (key = "distance") { int32 { 1 } }
     )oddl"};
+    CORRADE_IGNORE_DEPRECATED_POP
     CORRADE_VERIFY(!importer->openData(s));
     CORRADE_COMPARE(out, "OpenDdl::Document::validate(): unexpected sub-structure of type OpenDdl::Type::Int in structure Metric\n");
 }
@@ -272,9 +280,11 @@ void OpenGexImporterTest::openInvalidMetric() {
     Containers::String out;
     Error redirectError{&out};
     /* GCC < 4.9 cannot handle multiline raw string literals inside macros */
+    CORRADE_IGNORE_DEPRECATED_PUSH
     auto s = OpenDdl::CharacterLiteral{R"oddl(
 Metric (key = "distance") { string { "0.5" } }
     )oddl"};
+    CORRADE_IGNORE_DEPRECATED_POP
     CORRADE_VERIFY(!importer->openData(s));
     CORRADE_COMPARE(out, "Trade::OpenGexImporter::openData(): invalid value for distance metric\n");
 }
@@ -1189,6 +1199,7 @@ void OpenGexImporterTest::extension() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("OpenGexImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(OPENGEXIMPORTER_TEST_DIR, "extension.ogex")));
 
+    CORRADE_IGNORE_DEPRECATED_PUSH
     /* Version info */
     {
         CORRADE_VERIFY(importer->importerState());
@@ -1235,6 +1246,7 @@ void OpenGexImporterTest::extension() {
         CORRADE_COMPARE(cameraObject->firstChild().type(), OpenDdl::Type::Float);
         CORRADE_COMPARE(cameraObject->firstChild().as<Float>(), 1.8f);
     }
+    CORRADE_IGNORE_DEPRECATED_POP
 }
 
 void OpenGexImporterTest::fileCallbackImage() {

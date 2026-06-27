@@ -25,6 +25,8 @@
     DEALINGS IN THE SOFTWARE.
 */
 
+#define _MAGNUM_NO_DEPRECATED_OPENDDL
+
 #include "OpenGexImporter.h"
 
 #include <algorithm> /* std::find() */
@@ -61,6 +63,7 @@ namespace Magnum { namespace Trade {
 
 using namespace Magnum::Math::Literals;
 
+CORRADE_IGNORE_DEPRECATED_PUSH
 struct OpenGexImporter::Document {
     /* Clang-CL otherwise complains that Document has no implicit constructor */
     OpenDdl::Document document{};
@@ -105,11 +108,11 @@ UnsignedInt structureId(const std::vector<OpenDdl::Structure>& structures, OpenD
 
 }
 
-#ifdef MAGNUM_BUILD_DEPRECATED /* LCOV_EXCL_START */
+/* LCOV_EXCL_START */
 OpenGexImporter::OpenGexImporter() = default;
 
 OpenGexImporter::OpenGexImporter(PluginManager::Manager<AbstractImporter>& manager): AbstractImporter(manager) {}
-#endif /* LCOV_EXCL_STOP */
+/* LCOV_EXCL_STOP */
 
 OpenGexImporter::OpenGexImporter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin): AbstractImporter(manager, plugin) {}
 
@@ -991,8 +994,11 @@ Containers::Optional<ImageData2D> OpenGexImporter::doImage2D(const UnsignedInt i
 const void* OpenGexImporter::doImporterState() const {
     return &_d->document;
 }
+CORRADE_IGNORE_DEPRECATED_POP
 
 }}
 
+CORRADE_IGNORE_DEPRECATED_PUSH
 CORRADE_PLUGIN_REGISTER(OpenGexImporter, Magnum::Trade::OpenGexImporter,
     MAGNUM_TRADE_ABSTRACTIMPORTER_PLUGIN_INTERFACE)
+CORRADE_IGNORE_DEPRECATED_POP

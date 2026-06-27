@@ -35,6 +35,7 @@
 
 namespace Magnum { namespace OpenDdl { namespace Implementation {
 
+CORRADE_IGNORE_DEPRECATED_PUSH
 enum class InternalPropertyType: UnsignedByte;
 
 enum class ParseErrorType: UnsignedInt {
@@ -99,6 +100,7 @@ std::pair<const char*, Type> possiblyTypeLiteral(Containers::ArrayView<const cha
 std::pair<const char*, Type> typeLiteral(Containers::ArrayView<const char> data, ParseError& error);
 
 std::pair<const char*, InternalPropertyType> propertyValue(Containers::ArrayView<const char> data, bool& boolValue, Int& integerValue, Float& floatingPointValue, std::string& stringValue, Containers::ArrayView<const char>& referenceValue, Type& typeValue, std::string& buffer, ParseError& error);
+CORRADE_IGNORE_DEPRECATED_POP
 
 }}}
 

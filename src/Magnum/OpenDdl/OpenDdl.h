@@ -26,24 +26,39 @@
     DEALINGS IN THE SOFTWARE.
 */
 
+#ifdef MAGNUM_BUILD_DEPRECATED
 /** @file
  * @brief Forward declarations for @ref Magnum::OpenDdl namespace
+ * @m_deprecated_since_latest Use the @ref Magnum::Trade::AssimpImporter plugin
+ *      for parsing OpenDDL / OpenGEX files instead.
  */
+#endif
 
+#include <Magnum/configure.h>
+
+#ifdef MAGNUM_BUILD_DEPRECATED
+#include <Corrade/Utility/DeprecationMacros.h>
 #include <Magnum/Types.h>
+
+#ifndef _MAGNUM_NO_DEPRECATED_OPENDDL
+CORRADE_DEPRECATED_FILE("use use the AssimpImporter plugin for parsing OpenDDL / OpenGEX files instead")
+#endif
 
 #ifndef DOXYGEN_GENERATING_OUTPUT
 namespace Magnum { namespace OpenDdl {
 
-struct CharacterLiteral;
-class Document;
-class Property;
-class Structure;
-enum class Type: UnsignedInt;
+struct CORRADE_DEPRECATED("use use the AssimpImporter plugin for parsing OpenDDL / OpenGEX files instead") CharacterLiteral;
+class CORRADE_DEPRECATED("use use the AssimpImporter plugin for parsing OpenDDL / OpenGEX files instead") Document;
+class CORRADE_DEPRECATED("use use the AssimpImporter plugin for parsing OpenDDL / OpenGEX files instead") Property;
+class CORRADE_DEPRECATED("use use the AssimpImporter plugin for parsing OpenDDL / OpenGEX files instead") Structure;
+enum class CORRADE_DEPRECATED_ENUM("use use the AssimpImporter plugin for parsing OpenDDL / OpenGEX files instead") Type: UnsignedInt;
 
 /* Stuff from Validation namespace is used directly */
 
 }}
+#endif
+#else
+#error use the AssimpImporter plugin for parsing OpenDDL / OpenGEX files instead
 #endif
 
 #endif

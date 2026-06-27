@@ -26,15 +26,25 @@
     DEALINGS IN THE SOFTWARE.
 */
 
+#ifdef MAGNUM_BUILD_DEPRECATED
 /** @file
  * @brief Class @ref Magnum::OpenDdl::Property
+ * @m_deprecated_since_latest Use the @ref Magnum::Trade::AssimpImporter plugin
+ *      for parsing OpenDDL / OpenGEX files instead.
  */
+#endif
 
+#include <Magnum/configure.h>
+
+#ifdef MAGNUM_BUILD_DEPRECATED
 #include <Corrade/Containers/Reference.h>
 #include <Corrade/Utility/Assert.h>
 #include <Magnum/Magnum.h>
 
 #include "Magnum/OpenDdl/Document.h"
+#include "Magnum/OpenDdl/OpenDdl.h" /* for file deprecation warning */
+
+/* File deprecation warning printed in OpenDdl.h */
 
 namespace Magnum { namespace OpenDdl {
 
@@ -42,6 +52,8 @@ namespace Implementation { class PropertyIterator; }
 
 /**
 @brief OpenDDL property
+@m_deprecated_since_latest Use the @ref Trade::AssimpImporter plugin for
+    parsing OpenDDL / OpenGEX files instead.
 
 See @ref Document for more information.
 
@@ -52,7 +64,7 @@ See @ref Document for more information.
 
 @see @ref Structure::properties()
 */
-class MAGNUM_OPENDDL_EXPORT Property {
+class CORRADE_DEPRECATED("use use the AssimpImporter plugin for parsing OpenDDL / OpenGEX files instead") MAGNUM_OPENDDL_EXPORT Property {
     public:
         /**
          * @brief Property identifier
@@ -62,7 +74,9 @@ class MAGNUM_OPENDDL_EXPORT Property {
         Int identifier() const { return _data.get().identifier; }
 
         /** @brief Whether property type is compatible with given type */
+        CORRADE_IGNORE_DEPRECATED_PUSH
         bool isTypeCompatibleWith(PropertyType type) const;
+        CORRADE_IGNORE_DEPRECATED_POP
 
         /**
          * @brief Property data
@@ -86,20 +100,27 @@ class MAGNUM_OPENDDL_EXPORT Property {
          * `null`.
          * @see @ref isTypeCompatibleWith()
          */
+        CORRADE_IGNORE_DEPRECATED_PUSH
         Containers::Optional<Structure> asReference() const;
+        CORRADE_IGNORE_DEPRECATED_POP
 
     private:
         #ifndef DOXYGEN_GENERATING_OUTPUT /* https://bugzilla.gnome.org/show_bug.cgi?id=776986 */
+        CORRADE_IGNORE_DEPRECATED_PUSH
         friend Structure;
+        CORRADE_IGNORE_DEPRECATED_POP
         friend Implementation::PropertyIterator;
         #endif
 
+        CORRADE_IGNORE_DEPRECATED_PUSH
         explicit Property(const Document& document, std::size_t i) noexcept: _document{document}, _data{document._properties[i]} {}
 
         Containers::Reference<const Document> _document;
         Containers::Reference<const Document::PropertyData> _data;
+        CORRADE_IGNORE_DEPRECATED_POP
 };
 
+CORRADE_IGNORE_DEPRECATED_PUSH
 namespace Implementation {
     template<class T> constexpr bool isPropertyType(InternalPropertyType) {
         static_assert(sizeof(T) == 0, "Invalid property type"); return false;
@@ -167,7 +188,11 @@ class PropertyList {
 };
 
 }
+CORRADE_IGNORE_DEPRECATED_POP
 
 }}
+#else
+#error use the AssimpImporter plugin for parsing OpenDDL / OpenGEX files instead
+#endif
 
 #endif

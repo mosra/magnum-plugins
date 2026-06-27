@@ -24,6 +24,8 @@
     DEALINGS IN THE SOFTWARE.
 */
 
+#define _MAGNUM_NO_DEPRECATED_OPENDDL
+
 #include <Corrade/Containers/String.h>
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/TestSuite/Compare/Container.h>
@@ -178,6 +180,7 @@ Test::Test() {
               &Test::referenceInvalid});
 }
 
+CORRADE_IGNORE_DEPRECATED_PUSH
 void Test::primitive() {
     Document d;
     CORRADE_VERIFY(d.parse(CharacterLiteral{"int16 { 35, -'\\x0c', 45 }"}, {}, {}));
@@ -1271,6 +1274,7 @@ Root %root {
         "OpenDdl::Document::parse(): reference %local1 was not found\n"
         "OpenDdl::Document::parse(): reference %local1%local2 was not found\n");
 }
+CORRADE_IGNORE_DEPRECATED_POP
 
 }}}}
 

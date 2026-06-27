@@ -24,6 +24,10 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
+if(NOT MAGNUM_BUILD_DEPRECATED)
+    message(SEND_ERROR "The OpenGexImporter plugin is deprecated. Either remove MAGNUM_WITH_OPENGEXIMPORTER from your options or rebuild Magnum with MAGNUM_BUILD_DEPRECATED enabled to keep using the plugin.")
+endif()
+
 find_package(Magnum REQUIRED Trade AnyImageImporter)
 
 if(MAGNUM_BUILD_PLUGINS_STATIC AND NOT DEFINED MAGNUM_OPENGEXIMPORTER_BUILD_STATIC)

@@ -24,11 +24,22 @@
     DEALINGS IN THE SOFTWARE.
 */
 
+#ifdef MAGNUM_BUILD_DEPRECATED
 /** @file
  * @brief Namespace @ref Magnum::Trade::OpenGex
+ * @m_deprecated_since_latest Use the @ref Magnum::Trade::AssimpImporter plugin
+ *      for parsing OpenDDL / OpenGEX files instead.
  */
+#endif
 
-#include "Magnum/Types.h"
+#include <Magnum/configure.h>
+
+#ifdef MAGNUM_BUILD_DEPRECATED
+#include <Magnum/Types.h>
+
+#include "Magnum/OpenDdl/OpenDdl.h" /* for file deprecation warning */
+
+/* File deprecation warning printed in OpenDdl.h */
 
 namespace Magnum { namespace Trade {
 
@@ -130,3 +141,6 @@ enum: Int {
 };
 
 }}}
+#else
+#error use the AssimpImporter plugin for opening OpenGEX files instead
+#endif

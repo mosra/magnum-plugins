@@ -24,6 +24,8 @@
     DEALINGS IN THE SOFTWARE.
 */
 
+#define _MAGNUM_NO_DEPRECATED_OPENDDL
+
 #include <Corrade/Containers/String.h>
 #include <Corrade/TestSuite/Tester.h>
 
@@ -45,6 +47,7 @@ TypeTest::TypeTest() {
               &TypeTest::debugInternalPropertyType});
 }
 
+CORRADE_IGNORE_DEPRECATED_PUSH
 void TypeTest::debugType() {
     Containers::String out;
     Debug{&out} << Type::Bool << Type(0xdeadbabe);
@@ -62,6 +65,7 @@ void TypeTest::debugInternalPropertyType() {
     Debug{&out} << Implementation::InternalPropertyType::Bool << Implementation::InternalPropertyType(0xbe);
     CORRADE_COMPARE(out, "OpenDdl::Implementation::InternalPropertyType::Bool OpenDdl::Implementation::InternalPropertyType(0xbe)\n");
 }
+CORRADE_IGNORE_DEPRECATED_POP
 
 }}}}
 

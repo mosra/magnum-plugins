@@ -26,9 +26,15 @@
     DEALINGS IN THE SOFTWARE.
 */
 
+#include <Magnum/configure.h>
+
+#ifdef MAGNUM_BUILD_DEPRECATED
 #include <Corrade/Utility/VisibilityMacros.h>
 
 #include "Magnum/OpenDdl/configure.h"
+#include "Magnum/OpenDdl/OpenDdl.h" /* for file deprecation warning */
+
+/* File deprecation warning printed in OpenDdl.h */
 
 #ifndef DOXYGEN_GENERATING_OUTPUT
 #ifndef MAGNUM_OPENDDL_BUILD_STATIC
@@ -44,6 +50,9 @@
 #else
 #define MAGNUM_OPENDDL_EXPORT
 #define MAGNUM_OPENDDL_LOCAL
+#endif
+#else
+#error use the AssimpImporter plugin for parsing OpenDDL / OpenGEX files instead
 #endif
 
 #endif

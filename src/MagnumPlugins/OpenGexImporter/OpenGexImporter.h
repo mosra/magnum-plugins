@@ -26,15 +26,24 @@
     DEALINGS IN THE SOFTWARE.
 */
 
+#ifdef MAGNUM_BUILD_DEPRECATED
 /** @file
  * @brief Class @ref Magnum::Trade::OpenGexImporter
+ * @m_deprecated_since_latest Use @ref MagnumPlugins/AssimpImporter/AssimpImporter.h
+ *      and the @relativeref{Magnum,Trade::AssimpImporter} plugin for opening
+ *      OpenGEX files instead.
  */
+#endif
 
+#include <Magnum/configure.h>
+
+#ifdef MAGNUM_BUILD_DEPRECATED
 #include <Magnum/Trade/AbstractImporter.h>
 
-#include "Magnum/OpenDdl/OpenDdl.h"
-
+#include "Magnum/OpenDdl/OpenDdl.h" /* for file deprecation warning */
 #include "MagnumPlugins/OpenGexImporter/configure.h"
+
+/* File deprecation warning printed in OpenDdl.h */
 
 #ifndef DOXYGEN_GENERATING_OUTPUT
 #ifndef MAGNUM_OPENGEXIMPORTER_BUILD_STATIC
@@ -56,6 +65,8 @@ namespace Magnum { namespace Trade {
 
 /**
 @brief OpenGEX importer
+@m_deprecated_since_latest Use the @ref AssimpImporter plugin for opening
+    OpenGEX files instead.
 
 Imports the [OpenDDL](https://openddl.org)-based [OpenGEX](https://opengex.org)
 format.
@@ -244,9 +255,8 @@ importer-specific data accessors:
         @ref OpenGex::GeometryNode, @ref OpenGex::CameraNode or
         @ref OpenGex::LightNode structure
 */
-class MAGNUM_OPENGEXIMPORTER_EXPORT OpenGexImporter: public AbstractImporter {
+class CORRADE_DEPRECATED("use the AssimpImporter plugin for opening OpenGEX files instead") MAGNUM_OPENGEXIMPORTER_EXPORT OpenGexImporter: public AbstractImporter {
     public:
-        #ifdef MAGNUM_BUILD_DEPRECATED
         /**
          * @brief Default constructor
          * @m_deprecated_since_latest Direct plugin instantiation isn't a
@@ -262,7 +272,6 @@ class MAGNUM_OPENGEXIMPORTER_EXPORT OpenGexImporter: public AbstractImporter {
          *      manager instead.
          */
         CORRADE_DEPRECATED("instantiate through the plugin manager instead") explicit OpenGexImporter(PluginManager::Manager<AbstractImporter>& manager);
-        #endif
 
         /** @brief Plugin manager constructor */
         explicit OpenGexImporter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin);
@@ -275,9 +284,11 @@ class MAGNUM_OPENGEXIMPORTER_EXPORT OpenGexImporter: public AbstractImporter {
          * Provides access to the parsed OpenDDL document. See class
          * documentation for more information.
          */
+        CORRADE_IGNORE_DEPRECATED_PUSH
         const OpenDdl::Document* importerState() const {
             return static_cast<const OpenDdl::Document*>(AbstractImporter::importerState());
         }
+        CORRADE_IGNORE_DEPRECATED_POP
 
     private:
         struct Document;
@@ -326,5 +337,8 @@ class MAGNUM_OPENGEXIMPORTER_EXPORT OpenGexImporter: public AbstractImporter {
 };
 
 }}
+#else
+#error use the AssimpImporter plugin for opening OpenGEX files instead
+#endif
 
 #endif
