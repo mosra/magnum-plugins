@@ -85,8 +85,6 @@
 #  WglContext                   - WGL context
 #  OpenGLTester                 - OpenGLTester class
 #  VulkanTester                 - VulkanTester class
-#  MagnumFont                   - Magnum bitmap font plugin
-#  MagnumFontConverter          - Magnum bitmap font converter plugin
 #  ObjImporter                  - OBJ importer plugin
 #  TgaImageConverter            - TGA image converter plugin
 #  TgaImporter                  - TGA importer plugin
@@ -99,6 +97,12 @@
 #  gl-info                      - magnum-gl-info executable
 #  vk-info                      - magnum-vk-info executable
 #  al-info                      - magnum-al-info executable
+#
+# If Magnum is built with MAGNUM_BUILD_DEPRECATED enabled, these additional
+# plugins are available for backwards compatibility purposes:
+#
+#  MagnumFont                   - Magnum bitmap font plugin
+#  MagnumFontConverter          - Magnum bitmap font converter plugin
 #
 # Example usage with specifying additional components is::
 #
@@ -406,8 +410,8 @@ set(_MAGNUM_LIBRARY_COMPONENTS_ALWAYS_STATIC
     OpenGLTester)
 set(_MAGNUM_PLUGIN_COMPONENTS
     AnyAudioImporter AnyImageConverter AnyImageImporter AnySceneConverter
-    AnySceneImporter MagnumFont MagnumFontConverter ObjImporter
-    TgaImageConverter TgaImporter WavAudioImporter)
+    AnySceneImporter ObjImporter TgaImageConverter TgaImporter
+    WavAudioImporter)
 set(_MAGNUM_EXECUTABLE_COMPONENTS
     imageconverter sceneconverter shaderconverter gl-info al-info)
 # Audio and Vk libs aren't enabled by default, and none of the Context,
@@ -455,16 +459,19 @@ set(_MAGNUM_Audio_DEPENDENCIES )
 # compiled at all.
 set(_MAGNUM_DebugTools_DEPENDENCIES Trade)
 set(_MAGNUM_DebugTools_Trade_DEPENDENCY_IS_OPTIONAL ON)
-# MeshTools, Primitives, SceneGraph and Shaders are used only for GL renderers
-# in DebugTools. All of this is optional, compiled in only if the base library
-# was selected.
 if(MAGNUM_TARGET_GL)
-    list(APPEND _MAGNUM_DebugTools_DEPENDENCIES MeshTools Primitives SceneGraph Shaders GL)
-    set(_MAGNUM_DebugTools_MeshTools_DEPENDENCY_IS_OPTIONAL ON)
-    set(_MAGNUM_DebugTools_Primitives_DEPENDENCY_IS_OPTIONAL ON)
-    set(_MAGNUM_DebugTools_SceneGraph_DEPENDENCY_IS_OPTIONAL ON)
-    set(_MAGNUM_DebugTools_Shaders_DEPENDENCY_IS_OPTIONAL ON)
+    list(APPEND _MAGNUM_DebugTools_DEPENDENCIES GL)
     set(_MAGNUM_DebugTools_GL_DEPENDENCY_IS_OPTIONAL ON)
+    # MeshTools, Primitives, SceneGraph and Shaders are used only for
+    # (deprecated) GL renderers in DebugTools. All of this is optional,
+    # compiled in only if the base library was selected.
+    if(MAGNUM_BUILD_DEPRECATED)
+        list(APPEND _MAGNUM_DebugTools_DEPENDENCIES MeshTools Primitives SceneGraph Shaders)
+        set(_MAGNUM_DebugTools_MeshTools_DEPENDENCY_IS_OPTIONAL ON)
+        set(_MAGNUM_DebugTools_Primitives_DEPENDENCY_IS_OPTIONAL ON)
+        set(_MAGNUM_DebugTools_SceneGraph_DEPENDENCY_IS_OPTIONAL ON)
+        set(_MAGNUM_DebugTools_Shaders_DEPENDENCY_IS_OPTIONAL ON)
+    endif()
 endif()
 
 set(_MAGNUM_MaterialTools_DEPENDENCIES Trade)
@@ -542,8 +549,6 @@ set(_MAGNUM_EglContext_DEPENDENCIES GL)
 set(_MAGNUM_GlxContext_DEPENDENCIES GL)
 set(_MAGNUM_WglContext_DEPENDENCIES GL)
 
-set(_MAGNUM_MagnumFont_DEPENDENCIES Trade TgaImporter GL) # and below
-set(_MAGNUM_MagnumFontConverter_DEPENDENCIES Trade TgaImageConverter) # and below
 set(_MAGNUM_ObjImporter_DEPENDENCIES MeshTools) # and below
 foreach(_component ${_MAGNUM_PLUGIN_COMPONENTS})
     if(_component MATCHES ".+AudioImporter")
@@ -556,6 +561,13 @@ foreach(_component ${_MAGNUM_PLUGIN_COMPONENTS})
         list(APPEND _MAGNUM_${_component}_DEPENDENCIES Text TextureTools)
     endif()
 endforeach()
+
+# MagnumFont and MagnumFontConverter, available only on a deprecated build
+if(MAGNUM_BUILD_DEPRECATED)
+    list(APPEND _MAGNUM_PLUGIN_COMPONENTS MagnumFont MagnumFontConverter)
+    set(_MAGNUM_MagnumFont_DEPENDENCIES Trade TgaImporter GL Text TextureTools)
+    set(_MAGNUM_MagnumFontConverter_DEPENDENCIES Trade TgaImageConverter Text TextureTools)
+endif()
 
 # Ensure that all inter-component dependencies are specified as well
 set(_MAGNUM_ADDITIONAL_COMPONENTS )
@@ -1092,8 +1104,6 @@ foreach(_component ${Magnum_FIND_COMPONENTS})
         # No special setup for AnyImageConverter plugin
         # No special setup for AnyImageImporter plugin
         # No special setup for AnySceneImporter plugin
-        # No special setup for MagnumFont plugin
-        # No special setup for MagnumFontConverter plugin
         # No special setup for ObjImporter plugin
         # No special setup for TgaImageConverter plugin
         # No special setup for TgaImporter plugin
