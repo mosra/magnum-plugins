@@ -2552,6 +2552,7 @@ Containers::String TinyGltfImporter::doImage2DName(const UnsignedInt id) {
     return _d->model.images[id].name;
 }
 
+CORRADE_IGNORE_DEPRECATED_PUSH /* MSVC 2019+ warns because why the fuck? */
 AbstractImporter* TinyGltfImporter::setupOrReuseImporterForImage(const UnsignedInt id, const char* const errorPrefix) {
     /* Looking for the same ID, so reuse an importer populated before. If the
        previous attempt failed, the importer is not set, so return nullptr in
@@ -2610,6 +2611,7 @@ AbstractImporter* TinyGltfImporter::setupOrReuseImporterForImage(const UnsignedI
         return nullptr;
     return &_d->imageImporter.emplace(std::move(importer));
 }
+CORRADE_IGNORE_DEPRECATED_POP
 
 UnsignedInt TinyGltfImporter::doImage2DLevelCount(const UnsignedInt id) {
     CORRADE_ASSERT(manager(), "Trade::TinyGltfImporter::image2DLevelCount(): the plugin must be instantiated with access to plugin manager in order to open image files", {});
@@ -2634,9 +2636,11 @@ Containers::Optional<ImageData2D> TinyGltfImporter::doImage2D(const UnsignedInt 
     return ImageData2D{std::move(*imageData), &_d->model.images[id]};
 }
 
+CORRADE_IGNORE_DEPRECATED_PUSH /* MSVC 2019+ warns because why the fuck? */
 const void* TinyGltfImporter::doImporterState() const {
     return &_d->model;
 }
+CORRADE_IGNORE_DEPRECATED_POP
 
 }}
 
