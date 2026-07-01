@@ -56,7 +56,6 @@ Debug& operator<<(Debug& debug, const Type value) {
         _c(UnsignedLong)
         _c(Long)
         #endif
-        /** @todo Half */
         _c(Float)
         _c(Double)
         _c(String)
@@ -85,7 +84,6 @@ Debug& operator<<(Debug& debug, const PropertyType value) {
         _c(UnsignedLong)
         _c(Long)
         #endif
-        /** @todo Half */
         _c(Float)
         _c(Double)
         _c(String)
@@ -276,7 +274,6 @@ bool Document::parse(Containers::ArrayView<const char> data, const std::initiali
                     _c(Long, int64)
                     _c(UnsignedLong, unsigned_int64)
                     #endif
-                    /** @todo Half */
                     _c(Float, float)
                     _c(Double, double)
                     _c(String, string)
@@ -417,7 +414,6 @@ template<class T> struct ExtractFloatingPointDataListItem {
 };
 #define _c(T) \
     template<> struct ExtractDataListItem<Type::T>: ExtractFloatingPointDataListItem<T> {};
-/** @todo Half */
 _c(Float)
 _c(Double)
 #undef _c
@@ -622,7 +618,6 @@ std::pair<const char*, std::size_t> Document::parseStructure(const std::size_t p
             _c(UnsignedLong)
             _c(Long)
             #endif
-            /** @todo Half */
             _c(Float)
             _c(Double)
             _c(String)
@@ -1157,10 +1152,8 @@ bool Property::isTypeCompatibleWith(PropertyType type) const {
                    _data.get().type == Implementation::InternalPropertyType::Binary ||
                    _data.get().type == Implementation::InternalPropertyType::Character;
 
-        /** @todo Half */
         case PropertyType::Float:
         case PropertyType::Double:
-            /** @todo Implement extracting float properties from binary */
             return _data.get().type == Implementation::InternalPropertyType::Float;
 
         case PropertyType::Bool:

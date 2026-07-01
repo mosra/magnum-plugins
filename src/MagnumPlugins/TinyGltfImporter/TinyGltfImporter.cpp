@@ -596,8 +596,6 @@ Containers::Optional<AnimationData> TinyGltfImporter::doAnimation(UnsignedInt id
             const tinygltf::Accessor* output = checkedAccessor(_d->model, "animation", sampler.output);
             if(!output) return Containers::NullOpt;
 
-            /** @todo handle alignment once we do more than just four-byte types */
-
             /* If the input view is not yet present in the output data buffer,
                add it */
             if(samplerData.find(sampler.input) == samplerData.end()) {
@@ -617,11 +615,6 @@ Containers::Optional<AnimationData> TinyGltfImporter::doAnimation(UnsignedInt id
     }
 
     /* Populate the data array */
-    /**
-     * @todo Once memory-mapped files are supported, this can all go away
-     *      except when spline tracks are present -- in that case we need to
-     *      postprocess them and can't just use the memory directly.
-     */
     Containers::Array<char> data{NoInit, dataSize};
     for(const std::pair<const int, std::tuple<Containers::StridedArrayView2D<const char>, std::size_t, std::size_t>>& view: samplerData) {
         Containers::StridedArrayView2D<const char> src;
@@ -729,8 +722,6 @@ Containers::Optional<AnimationData> TinyGltfImporter::doAnimation(UnsignedInt id
 
             /* Rotation */
             } else if(channel.target_path == "rotation") {
-                /** @todo rotation can be also normalized (?!) to a vector of 8/16/32bit (signed?!) integers */
-
                 if(output.type != TINYGLTF_TYPE_VEC4 || output.componentType != TINYGLTF_COMPONENT_TYPE_FLOAT) {
                     Error{} << "Trade::TinyGltfImporter::animation(): rotation track has unexpected type" << output.type << Debug::nospace << "/" << Debug::nospace << output.componentType;
                     return Containers::NullOpt;
@@ -1004,10 +995,6 @@ Containers::Optional<SceneData> TinyGltfImporter::doScene(UnsignedInt id) {
     /* Gather all top-level nodes belonging to a scene and recursively populate
        the children ranges. Optimistically assume the glTF has just a single
        scene and reserve for that. */
-    /** @todo once we have BitArrays use the objects array to mark nodes that
-        are present in the scene and then create a new array from those but
-        ordered so we can have OrderedMapping for parents and also all other
-        fields */
     Containers::Array<UnsignedInt> objects;
     arrayReserve(objects, _d->model.nodes.size());
     for(const UnsignedInt i: scene.nodes) {
@@ -1037,7 +1024,6 @@ Containers::Optional<SceneData> TinyGltfImporter::doScene(UnsignedInt id) {
         }
     }
 
-    /** @todo once there's SceneData::mappingRange(), calculate also min here */
     const UnsignedInt maxObjectIndex = Math::max(objects);
 
     /* Count how many objects have matrices, how many have separate TRS
@@ -1292,9 +1278,6 @@ Containers::Optional<SceneData> TinyGltfImporter::doScene(UnsignedInt id) {
        noise for asset introspection purposes. */
     Containers::Array<SceneFieldData> fields;
     arrayAppend(fields, {
-        /** @todo once there's a flag to annotate implicit fields, omit the
-            parent field if it's all -1s; or alternatively we could also have a
-            stride of 0 for this case */
         SceneFieldData{SceneField::Parent, parentImporterStateObjects, parents},
         SceneFieldData{SceneField::ImporterState, parentImporterStateObjects, importerState},
     });
@@ -1988,8 +1971,6 @@ Containers::Optional<MaterialData> TinyGltfImporter::doMaterial(const UnsignedIn
         arrayAppend(attributes, InPlaceInit, MaterialAttribute::DoubleSided, true);
 
     /* Core metallic/roughness material */
-    /** @todo is there ANY way to check if these properties are actually
-        present?! tinygltf FFS */
     {
         types |= MaterialType::PbrMetallicRoughness;
 

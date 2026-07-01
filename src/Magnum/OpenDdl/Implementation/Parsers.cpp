@@ -298,7 +298,6 @@ template<> struct IntegralType<Double> {
 template<class T> using IntegralTypeFor = typename IntegralType<T>::Type;
 
 template<class> struct ExtractToType;
-/** @todo isn't there something better for extracting to unsigned int on webgl? */
 #ifndef CORRADE_TARGET_EMSCRIPTEN
 template<> struct ExtractToType<UnsignedLong> {
     typedef UnsignedLong Type;
@@ -490,7 +489,6 @@ template<class T> std::tuple<const char*, T, Int> integralLiteral(const Containe
         std::tie(i, value) = baseNLiteral<10, T>(data.suffix(i), buffer, error);
     }
 
-    /** @todo C++14: use {} */
     return std::make_tuple(i, sign*value, base);
 }
 
@@ -593,8 +591,6 @@ template<class T> std::pair<const char*, T> floatingPointLiteral(const Container
 
     /* Propagate errors */
     if(!i) return {};
-
-    /** @todo verifying out-of-range */
 
     extractWithoutUnderscore(data.prefix(i), buffer);
     return {i, ExtractToType<T>::extract(buffer)};
@@ -708,7 +704,6 @@ std::pair<const char*, Type> possiblyTypeLiteral(const Containers::ArrayView<con
     _c(unsigned_int64, UnsignedLong)
     _c(int64, Long)
     #endif
-    /** @todo Half */
     _c(float, Float)
     _c(double, Double)
     _c(string, String)
