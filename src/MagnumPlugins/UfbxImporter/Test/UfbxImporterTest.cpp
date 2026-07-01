@@ -1272,9 +1272,9 @@ void UfbxImporterTest::geometricTransformPreserve() {
     Containers::StridedArrayView1D<const Vector3d> geometryScalings = scene->field<Vector3d>(sceneFieldGeometryScaling);
 
     /* Compare geometry transforms in 32-bit as the file is noisy */
-    Containers::Array<Vector3> geometryTranslationsFloat{geometryTranslations.size()};
-    Containers::Array<Quaternion> geometryRotationsFloat{geometryRotations.size()};
-    Containers::Array<Vector3> geometryScalingsFloat{geometryScalings.size()};
+    Containers::Array<Vector3> geometryTranslationsFloat{ValueInit, geometryTranslations.size()};
+    Containers::Array<Quaternion> geometryRotationsFloat{ValueInit, geometryRotations.size()};
+    Containers::Array<Vector3> geometryScalingsFloat{ValueInit, geometryScalings.size()};
     Math::castInto(Containers::arrayCast<2, const Double>(geometryTranslations), Containers::arrayCast<2, Float>(Containers::arrayView(geometryTranslationsFloat)));
     Math::castInto(Containers::arrayCast<2, const Double>(geometryRotations), Containers::arrayCast<2, Float>(Containers::arrayView(geometryRotationsFloat)));
     Math::castInto(Containers::arrayCast<2, const Double>(geometryScalings), Containers::arrayCast<2, Float>(Containers::arrayView(geometryScalingsFloat)));

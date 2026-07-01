@@ -85,7 +85,7 @@ class MemoryIStream: public Imf::IStream {
             if(_position + n > _data.size())
                 throw Iex::InputExc{"Reading past end of file."};
 
-            const char* const data = _data + _position;
+            const char* const data = _data.data() + _position;
             _position += n;
             return const_cast<char*>(data); /* sigh WHY */
         }
@@ -102,7 +102,7 @@ class MemoryIStream: public Imf::IStream {
                 if(_position + n > _data.size())
                     throw Iex::InputExc{"Reading past end of file."};
 
-                std::memcpy(c, _data + _position, n);
+                std::memcpy(c, _data.data() + _position, n);
             }
 
             _position += n;

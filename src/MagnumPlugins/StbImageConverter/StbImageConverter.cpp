@@ -178,15 +178,15 @@ Containers::Optional<Containers::Array<char>> StbImageConverter::doConvertToData
        that point anyway) all of them are checked by AbstractImageConverter
        already so it's fine to just assert here. */
     if(_format == Format::Bmp) {
-        CORRADE_INTERNAL_ASSERT_OUTPUT(stbi_write_bmp_to_func(writeFunc, &data, image.size().x(), image.size().y(), components, flippedPackedData));
+        CORRADE_INTERNAL_ASSERT_OUTPUT(stbi_write_bmp_to_func(writeFunc, &data, image.size().x(), image.size().y(), components, flippedPackedData.data()));
     } else if(_format == Format::Jpeg) {
-        CORRADE_INTERNAL_ASSERT_OUTPUT(stbi_write_jpg_to_func(writeFunc, &data, image.size().x(), image.size().y(), components, flippedPackedData, Int(configuration().value<Float>("jpegQuality")*100.0f)));
+        CORRADE_INTERNAL_ASSERT_OUTPUT(stbi_write_jpg_to_func(writeFunc, &data, image.size().x(), image.size().y(), components, flippedPackedData.data(), Int(configuration().value<Float>("jpegQuality")*100.0f)));
     } else if(_format == Format::Hdr) {
-        CORRADE_INTERNAL_ASSERT_OUTPUT(stbi_write_hdr_to_func(writeFunc, &data, image.size().x(), image.size().y(), components, reinterpret_cast<float*>(flippedPackedData.begin())));
+        CORRADE_INTERNAL_ASSERT_OUTPUT(stbi_write_hdr_to_func(writeFunc, &data, image.size().x(), image.size().y(), components, reinterpret_cast<float*>(flippedPackedData.data())));
     } else if(_format == Format::Png) {
-        CORRADE_INTERNAL_ASSERT_OUTPUT(stbi_write_png_to_func(writeFunc, &data, image.size().x(), image.size().y(), components, flippedPackedData, 0));
+        CORRADE_INTERNAL_ASSERT_OUTPUT(stbi_write_png_to_func(writeFunc, &data, image.size().x(), image.size().y(), components, flippedPackedData.data(), 0));
     } else if(_format == Format::Tga) {
-        CORRADE_INTERNAL_ASSERT_OUTPUT(stbi_write_tga_to_func(writeFunc, &data, image.size().x(), image.size().y(), components, flippedPackedData));
+        CORRADE_INTERNAL_ASSERT_OUTPUT(stbi_write_tga_to_func(writeFunc, &data, image.size().x(), image.size().y(), components, flippedPackedData.data()));
     } else CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
 
     /* Convert the growable array back to a non-growable with the default

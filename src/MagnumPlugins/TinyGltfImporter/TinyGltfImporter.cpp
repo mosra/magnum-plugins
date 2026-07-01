@@ -622,7 +622,7 @@ Containers::Optional<AnimationData> TinyGltfImporter::doAnimation(UnsignedInt id
      *      except when spline tracks are present -- in that case we need to
      *      postprocess them and can't just use the memory directly.
      */
-    Containers::Array<char> data{dataSize};
+    Containers::Array<char> data{NoInit, dataSize};
     for(const std::pair<const int, std::tuple<Containers::StridedArrayView2D<const char>, std::size_t, std::size_t>>& view: samplerData) {
         Containers::StridedArrayView2D<const char> src;
         std::size_t outputOffset;
@@ -642,7 +642,7 @@ Containers::Optional<AnimationData> TinyGltfImporter::doAnimation(UnsignedInt id
     /* Import all tracks */
     bool hadToRenormalize = false;
     std::size_t trackId = 0;
-    Containers::Array<Trade::AnimationTrackData> tracks{trackCount};
+    Containers::Array<Trade::AnimationTrackData> tracks{ValueInit, trackCount};
     for(std::size_t a = animationBegin; a != animationEnd; ++a) {
         const tinygltf::Animation& animation = _d->model.animations[a];
         for(std::size_t i = 0; i != animation.channels.size(); ++i) {
@@ -1400,7 +1400,7 @@ Containers::Optional<SkinData3D> TinyGltfImporter::doSkin3D(const UnsignedInt id
     }
 
     /* Inverse bind matrices. If there are none, default is identities */
-    Containers::Array<Matrix4> inverseBindMatrices{skin.joints.size()};
+    Containers::Array<Matrix4> inverseBindMatrices{ValueInit, skin.joints.size()};
     if(skin.inverseBindMatrices != -1) {
         const tinygltf::Accessor* accessor = checkedAccessor(_d->model, "skin3D", skin.inverseBindMatrices);
         if(!accessor) return Containers::NullOpt;
@@ -1480,7 +1480,7 @@ Containers::Optional<MeshData> TinyGltfImporter::doMesh(const UnsignedInt id, Un
     Containers::StringView lastAttributeSemantic;
     Int lastAttributeIndex = -1;
     Math::Range1D<std::size_t> bufferRange;
-    Containers::Array<MeshAttributeData> attributeData{primitive.attributes.size()};
+    Containers::Array<MeshAttributeData> attributeData{ValueInit, primitive.attributes.size()};
     for(auto& attribute: primitive.attributes) {
         auto* acessorPointer = checkedAccessor(_d->model, "mesh", attribute.second);
         if(!acessorPointer) return Containers::NullOpt;
@@ -1769,7 +1769,7 @@ Containers::Optional<MeshData> TinyGltfImporter::doMesh(const UnsignedInt id, Un
         Containers::StridedArrayView1D<char> data{vertexData,
             /* Offset is what with the range min subtracted, as we copied
                without the prefix */
-            vertexData + attributeData[i].offset(vertexData) - bufferRange.min(),
+            vertexData.data() + attributeData[i].offset(vertexData) - bufferRange.min(),
             vertexCount, attributeData[i].stride()};
 
         attributeData[i] = MeshAttributeData{attributeData[i].name(),
@@ -1838,9 +1838,7 @@ Containers::Optional<MeshData> TinyGltfImporter::doMesh(const UnsignedInt id, Un
             return Containers::NullOpt;
         }
 
-        Containers::ArrayView<const char> srcContiguous = src.asContiguous();
-        indexData = Containers::Array<char>{srcContiguous.size()};
-        Utility::copy(srcContiguous, indexData);
+        indexData = Containers::Array<char>{InPlaceInit, src.asContiguous()};
         indices = MeshIndexData{type, indexData};
     }
 

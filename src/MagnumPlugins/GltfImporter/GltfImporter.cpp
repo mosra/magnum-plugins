@@ -661,7 +661,7 @@ Containers::Optional<GltfImporter::Accessor> GltfImporter::parseAccessor(const c
             with offset in whole strides and then "shift" the view by the
             remainder (once there's StridedArrayView::shift() or some such) */
         data = Containers::StridedArrayView2D<const char>{
-            {bufferView->data, bufferView->data.size() + stride},
+            {bufferView->data.data(), bufferView->data.size() + stride},
             bufferView->data.data() + offset,
             {count, typeSize},
             {std::ptrdiff_t(stride), 1}};
@@ -1022,7 +1022,7 @@ void GltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags da
     /* Since we just made a owning copy of the file data above, mark the JSON
        string view as global to avoid Utility::Json making its own owned copy
        again */
-    Containers::StringView json{_d->fileData, _d->fileData.size(), Containers::StringViewFlag::Global};
+    Containers::StringView json{_d->fileData.data(), _d->fileData.size(), Containers::StringViewFlag::Global};
     std::size_t jsonByteOffset = 0;
 
     /* If the file looks like a GLB, extract the JSON and BIN chunk out of it */
@@ -1047,7 +1047,7 @@ void GltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags da
             return;
         }
 
-        const char* const jsonDataBegin = _d->fileData + sizeof(Implementation::GltfGlbHeader);
+        const char* const jsonDataBegin = _d->fileData.data() + sizeof(Implementation::GltfGlbHeader);
         const char* const jsonDataEnd = jsonDataBegin + header.json.length;
         if(jsonDataEnd > _d->fileData.end()) {
             Error{} << "Trade::GltfImporter::openData(): binary glTF size mismatch, expected" << header.json.length << "bytes for a JSON chunk but got only" << _d->fileData.end() - jsonDataBegin;
@@ -1057,7 +1057,7 @@ void GltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags da
         /* Update the JSON view to contain just the JSON data. Slicing so the
            global flag set above gets preserved. */
         json = json.slice(jsonDataBegin, jsonDataBegin + header.json.length);
-        jsonByteOffset = jsonDataBegin - _d->fileData;
+        jsonByteOffset = jsonDataBegin - _d->fileData.data();
 
         /* Other chunks. The spec defines just the BIN chunk, but there can be
            additional chunks defined by extensions that we're expected to
@@ -1427,7 +1427,7 @@ void GltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags da
        Conservatively reserve for exactly one primitive per mesh, as that's the
        most common case. */
     arrayReserve(_d->gltfMeshPrimitiveMap, _d->gltfMeshes.size());
-    _d->meshSizeOffsets = Containers::Array<std::size_t>{_d->gltfMeshes.size() + 1};
+    _d->meshSizeOffsets = Containers::Array<std::size_t>{NoInit, _d->gltfMeshes.size() + 1};
     _d->meshSizeOffsets[0] = 0;
     for(std::size_t i = 0; i != _d->gltfMeshes.size(); ++i) {
         const Utility::JsonIterator gltfMeshPrimitives = Utility::JsonToken{*gltf, *_d->gltfMeshes[i].first()}.find("primitives"_s);
@@ -1733,11 +1733,12 @@ void GltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags da
     /* All good, save the parsed state */
     _d->gltf = Utility::move(gltf);
 
+    // TODO goddamit, ArrayTuple?!
     /* Allocate storage for parsed buffers, buffer views and accessors */
-    _d->buffers = Containers::Array<Containers::Optional<Containers::Array<char>>>{_d->gltfBuffers.size()};
-    _d->bufferViews = Containers::Array<Containers::Optional<BufferView>>{_d->gltfBufferViews.size()};
-    _d->accessors = Containers::Array<Containers::Optional<Accessor>>{_d->gltfAccessors.size()};
-    _d->samplers = Containers::Array<Containers::Optional<Sampler>>{_d->gltfSamplers.size()};
+    _d->buffers = Containers::Array<Containers::Optional<Containers::Array<char>>>{ValueInit, _d->gltfBuffers.size()};
+    _d->bufferViews = Containers::Array<Containers::Optional<BufferView>>{ValueInit, _d->gltfBufferViews.size()};
+    _d->accessors = Containers::Array<Containers::Optional<Accessor>>{ValueInit, _d->gltfAccessors.size()};
+    _d->samplers = Containers::Array<Containers::Optional<Sampler>>{ValueInit, _d->gltfSamplers.size()};
 
     /* Name maps are lazy-loaded because these might not be needed every time */
 }
@@ -1947,7 +1948,7 @@ Containers::Optional<AnimationData> GltfImporter::doAnimation(UnsignedInt id) {
      *      except when spline tracks are present -- in that case we need to
      *      postprocess them and can't just use the memory directly.
      */
-    Containers::Array<char> data{dataSize};
+    Containers::Array<char> data{NoInit, dataSize};
     for(const std::pair<const UnsignedInt, SamplerData>& view: samplerData) {
         /* The accessor should be already parsed from above, so just retrieve
            its view instead of going through parseAccessor() again */
@@ -1992,7 +1993,7 @@ Containers::Optional<AnimationData> GltfImporter::doAnimation(UnsignedInt id) {
     /* Import all tracks */
     bool hadToRenormalize = false;
     std::size_t trackId = 0;
-    Containers::Array<Trade::AnimationTrackData> tracks{trackCount};
+    Containers::Array<Trade::AnimationTrackData> tracks{ValueInit, trackCount};
     for(std::size_t i = 0; i != gltfAnimations.size(); ++i) {
         const Utility::JsonToken gltfAnimation{*_d->gltf, gltfAnimations[i]};
         /* Channels parsed and checked above already, so can go directly here */
@@ -3672,7 +3673,7 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
     /* Cannot be NoInit because that would use a custom deleter which is
        disallowed to avoid dangling function pointer call after the plugin is
        unloaded :( */
-    Containers::Array<MeshAttributeData> attributeData{uniqueAttributeCount};
+    Containers::Array<MeshAttributeData> attributeData{ValueInit, uniqueAttributeCount};
     #ifdef MAGNUM_BUILD_DEPRECATED
     UnsignedInt compatibilitySkinningAttributeCount = 0;
     #endif
@@ -4060,7 +4061,7 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
             /* If the attribute has no backing buffer view, zero-init its
                memory */
             if(!_d->accessors[uniqueAttributeOrder[bufferRanges[i].attribute].value.asUnsignedInt()]->data.data())
-                std::memset(vertexData.sliceSize(vertexDataOffset, size), 0, size);
+                std::memset(vertexData.data() + vertexDataOffset, 0, size);
 
             /* Otherwise, if it isn't sparse, signalled by `begin` being null,
                copy its contents. Sparse attributes need to get their buffer
@@ -4101,10 +4102,10 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
                     form the view with offset in whole strides and then "shift"
                     the view by the remainder (once there's
                     StridedArrayView::shift() or some such) */
-                {vertexData, vertexData.size() + attribute.stride()},
+                {vertexData.data(), vertexData.size() + attribute.stride()},
                 /* The input buffer range we is starting at
                    vertexData[vertexDataOffset] ... */
-                vertexData + vertexDataOffset +
+                vertexData.data() + vertexDataOffset +
                     /* ... the attribute is then at an offset that's a
                        difference between beginning of the range we copied from
                        and the actual attribute data pointer. In case of
@@ -4135,7 +4136,7 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
         /* Turn the attribute view mutable. See a similar case above for why
            the extra stride is added. */
         /** @todo some arrayConstCast, ugh? */
-        Containers::StridedArrayView2D<char> data{{vertexData, vertexData.size() + attributeData[i].stride()},
+        Containers::StridedArrayView2D<char> data{{vertexData.data(), vertexData.size() + attributeData[i].stride()},
             const_cast<char*>(static_cast<const char*>(attributeData[i].data().data())),
             /* Reuse type size info from the accessor to avoid a lookup in
                vertexFormatSize() */
@@ -4176,7 +4177,7 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
         /* Again cannot be NoInit because that would use a custom deleter which
            is disallowed to avoid dangling function pointer call after the
            plugin is unloaded */
-        Containers::Array<MeshAttributeData> compatibilityAttributeData{attributeData.size() + compatibilitySkinningAttributeCount};
+        Containers::Array<MeshAttributeData> compatibilityAttributeData{ValueInit, attributeData.size() + compatibilitySkinningAttributeCount};
         Utility::copy(attributeData, compatibilityAttributeData.prefix(attributeData.size()));
 
         for(const MeshAttributeData& attribute: attributeData) {
@@ -4212,7 +4213,7 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
         /* Turn the attribute view mutable. See a similar case above for why
            the extra stride is added. */
         /** @todo some arrayConstCast, ugh? */
-        Containers::StridedArrayView1D<char> data{{vertexData, vertexData.size() + attributeData[i].stride()},
+        Containers::StridedArrayView1D<char> data{{vertexData.data(), vertexData.size() + attributeData[i].stride()},
             const_cast<char*>(static_cast<const char*>(attributeData[i].data().data())),
             attributeData[i].data().size(),
             attributeData[i].stride()};

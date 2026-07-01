@@ -71,7 +71,7 @@ JpegImporter::~JpegImporter() = default;
 
 ImporterFeatures JpegImporter::doFeatures() const { return ImporterFeature::OpenData; }
 
-bool JpegImporter::doIsOpened() const { return _in; }
+bool JpegImporter::doIsOpened() const { return !!_in; }
 
 void JpegImporter::doClose() { _in = nullptr; }
 
@@ -160,7 +160,7 @@ Containers::Optional<ImageData2D> JpegImporter::doImage2D(UnsignedInt, UnsignedI
 
     /* Initialize data array, align rows to four bytes */
     const std::size_t stride = ((size.x()*file.out_color_components*BITS_IN_JSAMPLE/8 + 3)/4)*4;
-    data = Containers::Array<char>{stride*std::size_t(size.y())};
+    data = Containers::Array<char>{NoInit, stride*std::size_t(size.y())};
 
     /* Read image row by row */
     while(file.output_scanline < file.output_height) {

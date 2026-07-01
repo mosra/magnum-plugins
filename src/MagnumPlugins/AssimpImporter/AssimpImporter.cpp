@@ -1126,14 +1126,14 @@ Containers::Optional<MeshData> AssimpImporter::doMesh(const UnsignedInt id, Unsi
 
     /* Allocate vertex data, fill in the attributes */
     Containers::Array<char> vertexData{NoInit, std::size_t(stride)*vertexCount};
-    Containers::Array<MeshAttributeData> attributeData{attributeCount};
+    Containers::Array<MeshAttributeData> attributeData{ValueInit, attributeCount};
     std::size_t attributeIndex = 0;
     std::size_t attributeOffset = 0;
 
     /* Positions */
     {
         Containers::StridedArrayView1D<Vector3> positions{vertexData,
-            reinterpret_cast<Vector3*>(vertexData + attributeOffset),
+            reinterpret_cast<Vector3*>(vertexData.data() + attributeOffset),
             vertexCount, stride};
         Utility::copy(Containers::arrayView(reinterpret_cast<Vector3*>(mesh->mVertices), mesh->mNumVertices), positions);
 
@@ -1145,7 +1145,7 @@ Containers::Optional<MeshData> AssimpImporter::doMesh(const UnsignedInt id, Unsi
     /* Normals, if any */
     if(mesh->HasNormals()) {
         Containers::StridedArrayView1D<Vector3> normals{vertexData,
-            reinterpret_cast<Vector3*>(vertexData + attributeOffset),
+            reinterpret_cast<Vector3*>(vertexData.data() + attributeOffset),
             vertexCount, stride};
         Utility::copy(Containers::arrayView(reinterpret_cast<Vector3*>(mesh->mNormals), mesh->mNumVertices), normals);
 
@@ -1158,7 +1158,7 @@ Containers::Optional<MeshData> AssimpImporter::doMesh(const UnsignedInt id, Unsi
        both, never just one of these. */
     if(mesh->HasTangentsAndBitangents()) {
         Containers::StridedArrayView1D<Vector3> tangents{vertexData,
-            reinterpret_cast<Vector3*>(vertexData + attributeOffset),
+            reinterpret_cast<Vector3*>(vertexData.data() + attributeOffset),
             vertexCount, stride};
         Utility::copy(Containers::arrayView(reinterpret_cast<Vector3*>(mesh->mTangents), mesh->mNumVertices), tangents);
 
@@ -1167,7 +1167,7 @@ Containers::Optional<MeshData> AssimpImporter::doMesh(const UnsignedInt id, Unsi
         attributeOffset += sizeof(Vector3);
 
         Containers::StridedArrayView1D<Vector3> bitangents{vertexData,
-            reinterpret_cast<Vector3*>(vertexData + attributeOffset),
+            reinterpret_cast<Vector3*>(vertexData.data() + attributeOffset),
             vertexCount, stride};
         Utility::copy(Containers::arrayView(reinterpret_cast<Vector3*>(mesh->mBitangents), mesh->mNumVertices), bitangents);
 
@@ -1184,7 +1184,7 @@ Containers::Optional<MeshData> AssimpImporter::doMesh(const UnsignedInt id, Unsi
             continue;
 
         Containers::StridedArrayView1D<Vector2> textureCoordinates{vertexData,
-            reinterpret_cast<Vector2*>(vertexData + attributeOffset),
+            reinterpret_cast<Vector2*>(vertexData.data() + attributeOffset),
             vertexCount, stride};
         Utility::copy(
             /* Converting to a strided array view to take just the first 2
@@ -1201,7 +1201,7 @@ Containers::Optional<MeshData> AssimpImporter::doMesh(const UnsignedInt id, Unsi
     /* Colors */
     for(std::size_t layer = 0; layer < mesh->GetNumColorChannels(); ++layer) {
         Containers::StridedArrayView1D<Color4> colors{vertexData,
-            reinterpret_cast<Color4*>(vertexData + attributeOffset),
+            reinterpret_cast<Color4*>(vertexData.data() + attributeOffset),
             vertexCount, stride};
         Utility::copy(Containers::arrayView(reinterpret_cast<Color4*>(mesh->mColors[layer]), mesh->mNumVertices), colors);
 
@@ -1213,7 +1213,7 @@ Containers::Optional<MeshData> AssimpImporter::doMesh(const UnsignedInt id, Unsi
     /* Joints and joint weights */
     if(mesh->HasBones()) {
         Containers::StridedArrayView2D<UnsignedInt> jointIds{vertexData,
-            reinterpret_cast<UnsignedInt*>(vertexData + attributeOffset),
+            reinterpret_cast<UnsignedInt*>(vertexData.data() + attributeOffset),
             {vertexCount, roundedJointCount}, {stride, sizeof(UnsignedInt)}};
         attributeData[attributeIndex++] = MeshAttributeData{MeshAttribute::JointIds,
             /** @todo drop the prefix() once roundedJointCount is gone */
@@ -1227,7 +1227,7 @@ Containers::Optional<MeshData> AssimpImporter::doMesh(const UnsignedInt id, Unsi
         #endif
 
         Containers::StridedArrayView2D<Float> weights{vertexData,
-            reinterpret_cast<Float*>(vertexData + attributeOffset),
+            reinterpret_cast<Float*>(vertexData.data() + attributeOffset),
             {vertexCount, roundedJointCount}, {stride, sizeof(Float)}};
         attributeData[attributeIndex++] = MeshAttributeData{MeshAttribute::Weights,
             /** @todo drop the prefix() once roundedJointCount is gone */
@@ -1501,7 +1501,7 @@ Containers::Optional<MaterialData> AssimpImporter::doMaterial(const UnsignedInt 
        attributes as we'll be skipping properties that don't fit. */
     Containers::Array<MaterialAttributeData> attributes;
     arrayReserve(attributes, mat->mNumProperties);
-    Containers::Array<UnsignedInt> layers{maxLayer + 1};
+    Containers::Array<UnsignedInt> layers{NoInit, maxLayer + 1};
 
     /* Go through each layer and then for each add all its properties so they
        are consecutive in the array */
@@ -2078,7 +2078,7 @@ Containers::Optional<AnimationData> AssimpImporter::doAnimation(UnsignedInt id) 
        and remember it for the actual loop that extracts the tracks. BigEnumSet
        because EnumSet requires binary-exclusive enum values. */
     typedef Containers::BigEnumSet<AnimationTrackTarget, 1> TargetTypes;
-    Containers::Array<TargetTypes> channelTargetTypes{channelCount};
+    Containers::Array<TargetTypes> channelTargetTypes{NoInit, channelCount};
 
     /* Calculate total data size and track count. If merging all animations
        together, this is the sum of all clip track counts. */
@@ -2169,7 +2169,7 @@ Containers::Optional<AnimationData> AssimpImporter::doAnimation(UnsignedInt id) 
     }
 
     /* Populate the data array */
-    Containers::Array<char> data{dataSize};
+    Containers::Array<char> data{NoInit, dataSize};
 
     const bool optimizeQuaternionShortestPath = configuration().value<bool>("optimizeQuaternionShortestPath");
     const bool normalizeQuaternions = configuration().value<bool>("normalizeQuaternions");
@@ -2179,7 +2179,7 @@ Containers::Optional<AnimationData> AssimpImporter::doAnimation(UnsignedInt id) 
     std::size_t dataOffset = 0;
     std::size_t trackId = 0;
     currentChannel = 0;
-    Containers::Array<Trade::AnimationTrackData> tracks{trackCount};
+    Containers::Array<Trade::AnimationTrackData> tracks{ValueInit, trackCount};
     for(std::size_t a = animationBegin; a != animationEnd; ++a) {
         const aiAnimation* animation = _f->scene->mAnimations[a];
         for(std::size_t c = 0; c != animation->mNumChannels; ++c) {

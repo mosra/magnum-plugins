@@ -2215,7 +2215,7 @@ void KtxImporterTest::orientationFlip() {
         pixelFormatSize(data.format)
     }};
 
-    Containers::Array<char> flippedData{imageData.size()};
+    Containers::Array<char> flippedData{NoInit, imageData.size()};
     Containers::StridedArrayView4D<char> dst{flippedData, src.size()};
 
     if(data.flipped[2])

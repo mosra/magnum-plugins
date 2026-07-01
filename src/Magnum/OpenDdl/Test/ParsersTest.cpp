@@ -189,7 +189,7 @@ void ParsersTest::findLastOf() {
     VERIFY_PARSED(Implementation::ParseError{}, b, bi, "%hello");
 
     Containers::ArrayView<const char> c{"%", 0};
-    auto ci = Implementation::findLastOf({c, 0}, "$%");
+    auto ci = Implementation::findLastOf({c.data(), 0}, "$%");
     VERIFY_PARSED(Implementation::ParseError{}, c, ci, "");
 }
 
@@ -606,7 +606,7 @@ void ParsersTest::referenceLiteral() {
     Containers::ArrayView<const char> value;
     std::tie(ai, value) = Implementation::referenceLiteral(a, error);
     VERIFY_PARSED(error, a, ai, "$my_mesh%my_array");
-    CORRADE_COMPARE((std::string{value, value.size()}), "$my_mesh%my_array");
+    CORRADE_COMPARE((std::string{value.data(), value.size()}), "$my_mesh%my_array");
 }
 
 void ParsersTest::typeLiteralInvalid() {
@@ -778,7 +778,7 @@ void ParsersTest::propertyValueReference() {
     std::tie(ai, type) = Implementation::propertyValue(a, boolValue, integerValue, floatingPointValue, stringValue, referenceValue, typeValue, buffer, error);
     VERIFY_PARSED(error, a, ai, "%my_array2");
     CORRADE_COMPARE(type, Implementation::InternalPropertyType::Reference);
-    CORRADE_COMPARE((std::string{referenceValue, referenceValue.size()}), "%my_array2");
+    CORRADE_COMPARE((std::string{referenceValue.data(), referenceValue.size()}), "%my_array2");
 }
 
 void ParsersTest::propertyValueReferenceNull() {

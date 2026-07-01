@@ -56,7 +56,7 @@ StbVorbisImporter::StbVorbisImporter(PluginManager::AbstractManager& manager, co
 
 ImporterFeatures StbVorbisImporter::doFeatures() const { return ImporterFeature::OpenData; }
 
-bool StbVorbisImporter::doIsOpened() const { return _data; }
+bool StbVorbisImporter::doIsOpened() const { return !!_data; }
 
 void StbVorbisImporter::doOpenData(Containers::ArrayView<const char> data) {
     Int numChannels, frequency;

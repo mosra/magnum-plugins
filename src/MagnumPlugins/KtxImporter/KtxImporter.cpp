@@ -566,9 +566,9 @@ void KtxImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFlags
        image per layer. */
     const bool is3DArrayImage = f->numDimensions == 3 && isLayered;
     const UnsignedInt numImages = is3DArrayImage ? numLayers : 1;
-    f->imageData = Containers::Array<Containers::Array<File::LevelData>>{numImages};
+    f->imageData = Containers::Array<Containers::Array<File::LevelData>>{ValueInit, numImages};
     for(UnsignedInt image = 0; image != numImages; ++image)
-        f->imageData[image] = Containers::Array<File::LevelData>{numMipmaps};
+        f->imageData[image] = Containers::Array<File::LevelData>{ValueInit, numMipmaps};
 
     Vector3i mipSize{size};
     for(UnsignedInt i = 0; i != numMipmaps; ++i) {

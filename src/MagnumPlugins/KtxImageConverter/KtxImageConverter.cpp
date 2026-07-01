@@ -827,7 +827,7 @@ template<UnsignedInt dimensions, template<UnsignedInt, typename> class View> Con
     }
 
     /* Fill level index */
-    Containers::Array<Implementation::KtxLevel> levelIndex{numMipmaps};
+    Containers::Array<Implementation::KtxLevel> levelIndex{ValueInit, numMipmaps};
 
     const std::size_t levelIndexSize = numMipmaps*sizeof(Implementation::KtxLevel);
     std::size_t levelOffset = sizeof(Implementation::KtxHeader) + levelIndexSize +

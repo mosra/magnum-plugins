@@ -102,7 +102,7 @@ Containers::Array<char> convert32Pcm(const Containers::ArrayView<const char> con
 Containers::Array<char> read32fPcm(drwav* const handle, const UnsignedInt samples, const UnsignedInt numChannels, BufferFormat& format) {
     format = IeeeFormatTable[numChannels-1][0];
 
-    Containers::Array<char> tempData(samples*sizeof(Float));
+    Containers::Array<char> tempData{NoInit, samples*sizeof(Float)};
     drwav_read_f32(handle, samples, reinterpret_cast<float*>(tempData.begin()));
 
     return tempData;
@@ -110,7 +110,7 @@ Containers::Array<char> read32fPcm(drwav* const handle, const UnsignedInt sample
 
 /* Reads raw data; be sure size is exact! */
 Containers::Array<char> readRaw(drwav* const handle, const UnsignedInt samples, const UnsignedInt size) {
-    Containers::Array<char> tempData(samples*size);
+    Containers::Array<char> tempData{NoInit, samples*size};
     drwav_read_raw(handle, samples*size, reinterpret_cast<void*>(tempData.begin()));
 
     return tempData;
@@ -174,7 +174,7 @@ void DrWavImporter::doOpenData(const Containers::ArrayView<const char> data) {
 
         /* If the data is close to 8 or 16 bits, we can convert it from 32-bit PCM */
         } else if(normalizedBytesPerSample == 1 || normalizedBytesPerSample == 2) {
-            Containers::Array<char> tempData(samples*sizeof(Int));
+            Containers::Array<char> tempData{NoInit, std::size_t(samples)*sizeof(Int)};
             drwav_read_s32(handle, samples, reinterpret_cast<Int*>(tempData.begin()));
 
             /* 32-bit PCM can be sliced down to 8 or 16 for direct reading */

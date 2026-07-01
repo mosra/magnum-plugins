@@ -77,7 +77,7 @@ Containers::Optional<ImageData2D> SpngImporter::doImage2D(UnsignedInt, UnsignedI
 
     /* Set an input buffer. Error reporting is largely undocumented, but in the
        source it fails only due to programmer error, not due to bad data. */
-    CORRADE_INTERNAL_ASSERT_OUTPUT(spng_set_png_buffer(ctx, _in, _in.size()) == SPNG_OK);
+    CORRADE_INTERNAL_ASSERT_OUTPUT(spng_set_png_buffer(ctx, _in.data(), _in.size()) == SPNG_OK);
 
     /* Get image header */
     spng_ihdr ihdr;

@@ -44,7 +44,7 @@ WebPImporter::~WebPImporter() = default;
 
 ImporterFeatures WebPImporter::doFeatures() const { return ImporterFeature::OpenData; }
 
-bool WebPImporter::doIsOpened() const { return _in; }
+bool WebPImporter::doIsOpened() const { return !!_in; }
 
 void WebPImporter::doClose() { _in = nullptr; }
 

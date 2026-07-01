@@ -265,7 +265,7 @@ void MeshOptimizerSceneConverterTest::notIndexed() {
 void MeshOptimizerSceneConverterTest::implementationSpecificIndexType() {
     Containers::Pointer<AbstractSceneConverter> converter = _manager.instantiate("MeshOptimizerSceneConverter");
 
-    Containers::Array<char> indexData{3};
+    Containers::Array<char> indexData{ValueInit, 3};
     Containers::StridedArrayView1D<UnsignedByte> indices = Containers::arrayCast<UnsignedByte>(indexData);
     MeshData mesh{MeshPrimitive::Triangles,
         Utility::move(indexData), MeshIndexData{meshIndexTypeWrap(0xcaca), indices}, 1};
@@ -304,7 +304,7 @@ void MeshOptimizerSceneConverterTest::inPlaceOptimizeVertexFetchImmutableVertexD
     converter->configuration().setValue("optimizeOverdraw", false);
     converter->configuration().setValue("optimizeVertexFetch", true);
 
-    Containers::Array<char> indexData{3};
+    Containers::Array<char> indexData{ValueInit, 3};
     MeshIndexData indices{MeshIndexType::UnsignedByte, indexData};
     constexpr UnsignedByte vertices[3]{};
     MeshData mesh{MeshPrimitive::Triangles,
@@ -326,9 +326,9 @@ void MeshOptimizerSceneConverterTest::inPlaceOptimizeVertexFetchNotInterleaved()
     converter->configuration().setValue("optimizeOverdraw", false);
     converter->configuration().setValue("optimizeVertexFetch", true);
 
-    Containers::Array<char> indexData{3};
+    Containers::Array<char> indexData{ValueInit, 3};
     MeshIndexData indices{MeshIndexType::UnsignedByte, indexData};
-    Containers::Array<char> vertexData{6};
+    Containers::Array<char> vertexData{ValueInit, 6};
     MeshData mesh{MeshPrimitive::Triangles,
         Utility::move(indexData), indices,
         Utility::move(vertexData), {
@@ -353,7 +353,7 @@ void MeshOptimizerSceneConverterTest::inPlaceOptimizeOverdrawNoPositions() {
     converter->configuration().setValue("optimizeOverdraw", true);
     converter->configuration().setValue("optimizeVertexFetch", false);
 
-    Containers::Array<char> indexData{3};
+    Containers::Array<char> indexData{ValueInit, 3};
     MeshIndexData indices{MeshIndexType::UnsignedByte, indexData};
     MeshData mesh{MeshPrimitive::Triangles,
         Utility::move(indexData), indices,

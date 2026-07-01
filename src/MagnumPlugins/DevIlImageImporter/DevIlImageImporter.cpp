@@ -182,7 +182,7 @@ Containers::Optional<ImageData2D> DevIlImageImporter::doImage2D(UnsignedInt id, 
 
     /* Copy the data into array that is owned by us and not by IL. Make a 2D
        view so we can flip the image to have the origin bottom left. */
-    Containers::Array<char> imageData{std::size_t(size.product()*components)};
+    Containers::Array<char> imageData{NoInit, std::size_t(size.product()*components)};
     Containers::StridedArrayView2D<const char> src{
         Containers::arrayView(reinterpret_cast<const char*>(ilGetData()), ilGetInteger(IL_IMAGE_SIZE_OF_DATA)),
         {std::size_t(size.y()), std::size_t(size.x()*components)}};

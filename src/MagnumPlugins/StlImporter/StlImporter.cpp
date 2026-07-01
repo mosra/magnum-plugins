@@ -77,7 +77,7 @@ void StlImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dat
         return;
     }
 
-    if(std::memcmp(data, "solid", 5) == 0) {
+    if(std::memcmp(data.data(), "solid", 5) == 0) {
         constexpr Containers::StringView plugin = "AssimpImporter"_s;
         /** @todo remove the !manager() once manager-less instantiation is
             removed */
@@ -110,7 +110,7 @@ void StlImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dat
         return;
     }
 
-    const UnsignedInt triangleCount = Utility::Endianness::littleEndian(*reinterpret_cast<const UnsignedInt*>(data + 80));
+    const UnsignedInt triangleCount = Utility::Endianness::littleEndian(*reinterpret_cast<const UnsignedInt*>(data.data() + 80));
     const std::size_t expectedSize = InputTriangleStride*triangleCount;
     if(data.size() != 84 + expectedSize) {
         Error{} << "Trade::StlImporter::openData(): file size doesn't match triangle count, expected" << 84 + expectedSize << "but got" << data.size() << "for" << triangleCount << "triangles";
@@ -172,7 +172,7 @@ Containers::Optional<MeshData> StlImporter::doMesh(UnsignedInt id, UnsignedInt l
 
     /* Allocate output data */
     Containers::Array<char> vertexData{NoInit, std::size_t(outputVertexStride*vertexCount)};
-    Containers::Array<MeshAttributeData> attributeData{attributeCount};
+    Containers::Array<MeshAttributeData> attributeData{ValueInit, attributeCount};
 
     /* Copy positions */
     std::size_t offset = 0;

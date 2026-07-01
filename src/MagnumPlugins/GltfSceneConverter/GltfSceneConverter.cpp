@@ -1931,7 +1931,7 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const MeshData& mesh, const
             _state->gltfBufferViews
                 .writeKey("buffer"_s).write(0)
                 /** @todo could be omitted if zero, is that useful for anything? */
-                .writeKey("byteOffset"_s).write(indexData - _state->buffer)
+                .writeKey("byteOffset"_s).write(indexData.data() - _state->buffer.data())
                 .writeKey("byteLength"_s).write(indexData.size())
                 .writeKey("target"_s).write(Implementation::GltfTargetHintElementArray);
             if(configuration().value<bool>("accessorNames"))
@@ -1995,7 +1995,7 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const MeshData& mesh, const
                    happens only for the very first view in a buffer and we
                    have always at most one buffer, the minimal savings are
                    not worth the inconsistency */
-                .writeKey("byteOffset"_s).write(vertexData - _state->buffer + bufferView.first())
+                .writeKey("byteOffset"_s).write(vertexData.data() - _state->buffer.data() + bufferView.first())
                 .writeKey("byteLength"_s).write(mesh.vertexCount()*bufferView.second())
                 /* Byte stride could be omitted if there would be just one
                    tightly packed accessor (in which case it'd be implicitly
@@ -2034,7 +2034,7 @@ bool GltfSceneConverter::doAdd(const UnsignedInt id, const MeshData& mesh, const
             if(attributeName == MeshAttribute::TextureCoordinates && !configuration().value<bool>("textureCoordinateYFlipInMaterial")) {
                 CORRADE_INTERNAL_ASSERT(gltfAttribute.offset == 0);
                 Containers::StridedArrayView1D<char> data{vertexData,
-                    vertexData + mesh.attributeOffset(gltfAttribute.originalId),
+                    vertexData.data() + mesh.attributeOffset(gltfAttribute.originalId),
                     mesh.vertexCount(), mesh.attributeStride(gltfAttribute.originalId)};
                 if(format == VertexFormat::Vector2)
                     for(auto& c: Containers::arrayCast<Vector2>(data))
@@ -3404,7 +3404,7 @@ template<UnsignedInt dimensions> bool GltfSceneConverter::convertAndWriteImage(c
         _state->gltfBufferViews
             .writeKey("buffer"_s).write(0)
             /** @todo could be omitted if zero, is that useful for anything? */
-            .writeKey("byteOffset"_s).write(imageData - _state->buffer)
+            .writeKey("byteOffset"_s).write(imageData.data() - _state->buffer.data())
             .writeKey("byteLength"_s).write(imageData.size());
         if(configuration().value<bool>("accessorNames"))
             _state->gltfBufferViews.writeKey("name"_s).write(Utility::format(

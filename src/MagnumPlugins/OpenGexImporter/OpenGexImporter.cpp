@@ -384,7 +384,7 @@ Containers::Optional<SceneData> OpenGexImporter::doScene(UnsignedInt) {
                     return {};
                 }
 
-                const Matrix4 m = fixMatrixTranslation(Matrix4::from(structure.asArray<Float>()), _d->distanceMultiplier);
+                const Matrix4 m = fixMatrixTranslation(Matrix4::from(structure.asArray<Float>().data()), _d->distanceMultiplier);
                 matrix = _d->yUp ? m : fixMatrixZUp(m);
 
             /* Translation */
@@ -395,7 +395,7 @@ Containers::Optional<SceneData> OpenGexImporter::doScene(UnsignedInt) {
                 Vector3 v;
                 const auto kind = t.findPropertyOf(OpenGex::kind);
                 if((!kind || kind->as<std::string>() == "xyz") && structure.subArraySize() == 3)
-                    v = Vector3::from(structure.asArray<Float>())*_d->distanceMultiplier;
+                    v = Vector3::from(structure.asArray<Float>().data())*_d->distanceMultiplier;
                 else if(kind && kind->as<std::string>() == "x" && structure.subArraySize() == 0)
                     v = Vector3::xAxis(structure.as<Float>()*_d->distanceMultiplier);
                 else if(kind && kind->as<std::string>() == "y" && structure.subArraySize() == 0)
@@ -418,7 +418,7 @@ Containers::Optional<SceneData> OpenGexImporter::doScene(UnsignedInt) {
                 const auto kind = t.findPropertyOf(OpenGex::kind);
                 if((!kind || kind->as<std::string>() == "axis") && structure.subArraySize() == 4) {
                     const auto angle = structure.asArray<Float>()[0]*_d->angleMultiplier;
-                    const auto axis = Vector3::from(structure.asArray<Float>() + 1).normalized();
+                    const auto axis = Vector3::from(structure.asArray<Float>().data() + 1).normalized();
                     m = Matrix4::rotation(angle, axis);
                 } else if(kind && kind->as<std::string>() == "x" && structure.subArraySize() == 0) {
                     const auto angle = structure.as<Float>()*_d->angleMultiplier;
@@ -430,7 +430,7 @@ Containers::Optional<SceneData> OpenGexImporter::doScene(UnsignedInt) {
                     const auto angle = structure.as<Float>()*_d->angleMultiplier;
                     m = Matrix4::rotationZ(angle);
                 } else if(kind && kind->as<std::string>() == "quaternion" && structure.subArraySize() == 4) {
-                    const auto vector = Vector3::from(structure.asArray<Float>());
+                    const auto vector = Vector3::from(structure.asArray<Float>().data());
                     const auto scalar = structure.asArray<Float>()[3];
                     m = Matrix4::from(Quaternion(vector, scalar).normalized().toMatrix(), {});
                 } else {
@@ -448,7 +448,7 @@ Containers::Optional<SceneData> OpenGexImporter::doScene(UnsignedInt) {
                 Vector3 v;
                 const auto kind = t.findPropertyOf(OpenGex::kind);
                 if((!kind || kind->as<std::string>() == "xyz") && structure.subArraySize() == 3)
-                    v = Vector3::from(structure.asArray<Float>());
+                    v = Vector3::from(structure.asArray<Float>().data());
                 else if(kind && kind->as<std::string>() == "x" && structure.subArraySize() == 0)
                     v = Vector3::xScale(structure.as<Float>());
                 else if(kind && kind->as<std::string>() == "y" && structure.subArraySize() == 0)
@@ -761,7 +761,7 @@ Containers::Optional<MeshData> OpenGexImporter::doMesh(const UnsignedInt id, Uns
 
     /* Allocate vertex data, fill attributes */
     Containers::Array<char> vertexData{NoInit, std::size_t(stride)*vertexCount};
-    Containers::Array<MeshAttributeData> attributeData{attributeCount};
+    Containers::Array<MeshAttributeData> attributeData{ValueInit, attributeCount};
     std::size_t attributeIndex = 0;
     std::size_t attributeOffset = 0;
 
@@ -773,7 +773,7 @@ Containers::Optional<MeshData> OpenGexImporter::doMesh(const UnsignedInt id, Uns
         auto&& attrib = vertexArray.propertyOf(OpenGex::attrib).as<std::string>();
         if(attrib == "position") {
             Containers::StridedArrayView1D<Vector3> positions{vertexData,
-                reinterpret_cast<Vector3*>(vertexData + attributeOffset),
+                reinterpret_cast<Vector3*>(vertexData.data() + attributeOffset),
                 vertexCount, stride};
             Utility::copy(Containers::arrayCast<const Vector3>(vertexArrayData.asArray<Float>()), positions);
             for(auto& i: positions) i *= _d->distanceMultiplier;
@@ -786,7 +786,7 @@ Containers::Optional<MeshData> OpenGexImporter::doMesh(const UnsignedInt id, Uns
         /* Normals */
         } else if(attrib == "normal") {
             Containers::StridedArrayView1D<Vector3> normals{vertexData,
-                reinterpret_cast<Vector3*>(vertexData + attributeOffset),
+                reinterpret_cast<Vector3*>(vertexData.data() + attributeOffset),
                 vertexCount, stride};
             Utility::copy(Containers::arrayCast<const Vector3>(vertexArrayData.asArray<Float>()), normals);
             if(!_d->yUp) for(auto& i: normals) i = fixVectorZUp(i);
@@ -798,7 +798,7 @@ Containers::Optional<MeshData> OpenGexImporter::doMesh(const UnsignedInt id, Uns
         /* 2D texture coordinates */
         } else if(attrib == "texcoord") {
             Containers::StridedArrayView1D<Vector2> textureCoordinates{vertexData,
-                reinterpret_cast<Vector2*>(vertexData + attributeOffset),
+                reinterpret_cast<Vector2*>(vertexData.data() + attributeOffset),
                 vertexCount, stride};
             Utility::copy(Containers::arrayCast<const Vector2>(vertexArrayData.asArray<Float>()), textureCoordinates);
 

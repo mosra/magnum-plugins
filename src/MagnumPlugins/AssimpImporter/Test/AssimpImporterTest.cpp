@@ -597,7 +597,7 @@ void AssimpImporterTest::animation() {
     CORRADE_VERIFY(importer->animationCount() > 0);
 
     Animation::Player<Float, Float> player;
-    Containers::Array<Containers::Array<char>> animationData{importer->animationCount()};
+    Containers::Array<Containers::Array<char>> animationData{ValueInit, importer->animationCount()};
 
     for(UnsignedInt i = 0; i < importer->animationCount(); i++) {
         Containers::Optional<Trade::AnimationData> animation = importer->animation(i);
@@ -1469,7 +1469,7 @@ void AssimpImporterTest::skin() {
     CORRADE_COMPARE(scene->fieldFlags(SceneField::Skin), SceneFieldFlag::OrderedMapping);
 
     /* Get global node transforms, needed for testing inverse bind matrices */
-    Containers::Array<Matrix4> globalTransforms{importer->objectCount() + 1};
+    Containers::Array<Matrix4> globalTransforms{ValueInit, importer->objectCount() + 1};
     Containers::Array<Containers::Pair<UnsignedInt, Int>> parents = scene->parentsAsArray();
     Containers::Array<Containers::Pair<UnsignedInt, Matrix4>> transforms = scene->transformations3DAsArray();
     for(std::size_t i = 0; i != globalTransforms.size() - 1; ++i) {
@@ -3367,7 +3367,7 @@ void AssimpImporterTest::meshSkinningAttributesMerge() {
     /* The first mesh (inside aiScene::mMeshes, order is arbitrary) has its
        bones added to the global bone list first, only the second one has
        shifted joint indices */
-    Containers::Array<Vector2ui> shiftedJointData{Containers::arraySize(MeshSkinningAttributesJointData)};
+    Containers::Array<Vector2ui> shiftedJointData{ValueInit, Containers::arraySize(MeshSkinningAttributesJointData)};
     for(UnsignedInt i = 0; i != shiftedJointData.size(); ++i) {
         /* Shift by 2 where weight is non-zero */
         const BitVector2 nonZero = Math::notEqual(MeshSkinningAttributesWeightData[i].xy(), Vector2{0.0f});

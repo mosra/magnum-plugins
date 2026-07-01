@@ -66,7 +66,7 @@ class MemoryOStream: public Imf::OStream {
             if(_position + n > _data.size())
                 arrayAppend(_data, NoInit, _position + n - _data.size());
 
-            std::memcpy(_data + _position, c, n);
+            std::memcpy(_data.data() + _position, c, n);
             _position += n;
         }
 

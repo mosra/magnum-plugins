@@ -108,7 +108,7 @@ template<class T> inline T parseHex(const char* data) {
 }
 
 inline bool equalsPrefix(const Containers::ArrayView<const char> data, const char* const prefix) {
-    return std::strncmp(data, prefix, data.size()) == 0;
+    return std::strncmp(data.data(), prefix, data.size()) == 0;
 }
 
 template<std::size_t n> inline const char* prefix(const Containers::ArrayView<const char> data, const char(&compare)[n]) {
@@ -117,7 +117,7 @@ template<std::size_t n> inline const char* prefix(const Containers::ArrayView<co
 
     if(data.size() < n - 1) return nullptr;
 
-    const char* const end = data + n - 1;
+    const char* const end = data.data() + n - 1;
     return equalsPrefix(data.prefix(end), compare) ? end : nullptr;
 }
 
@@ -129,14 +129,14 @@ void extractWithoutUnderscore(const Containers::ArrayView<const char> data, std:
 }
 
 bool equals(const Containers::ArrayView<const char> a, const Containers::ArrayView<const char> b) {
-    return a.size() == b.size() && equalsPrefix(a, b);
+    return a.size() == b.size() && equalsPrefix(a, b.data());
 }
 
 const char* whitespace(const Containers::ArrayView<const char> data) {
     /* Propagate error */
     if(!data) return nullptr;
 
-    const char* i = data;
+    const char* i = data.data();
     while(i != data.end()) {
         /* Whitespace */
         if(*i <= 32) ++i;
@@ -169,56 +169,56 @@ const char* whitespace(const Containers::ArrayView<const char> data) {
 
 std::pair<const char*, char> escapedChar(const Containers::ArrayView<const char> data, ParseError& error) {
     /* Escape sequence is not standalone, thus we can't expect it anywhere */
-    CORRADE_INTERNAL_ASSERT(!data.isEmpty() && *data == '\\');
+    CORRADE_INTERNAL_ASSERT(!data.isEmpty() && data.front() == '\\');
 
     if(data.size() < 2) {
-        error = {ParseErrorType::InvalidEscapeSequence, data};
+        error = {ParseErrorType::InvalidEscapeSequence, data.data()};
         return {};
     }
 
     /* Two-character escape */
     switch(data[1]) {
-        case '\\': return {data + 2, '\\'};
-        case '\'': return {data + 2, '\\'};
-        case 'a':  return {data + 2, '\a'};
-        case 'b':  return {data + 2, '\b'};
-        case 'f':  return {data + 2, '\f'};
-        case 'n':  return {data + 2, '\n'};
-        case 'r':  return {data + 2, '\r'};
-        case 't':  return {data + 2, '\t'};
-        case 'v':  return {data + 2, '\v'};
+        case '\\': return {data.data() + 2, '\\'};
+        case '\'': return {data.data() + 2, '\\'};
+        case 'a':  return {data.data() + 2, '\a'};
+        case 'b':  return {data.data() + 2, '\b'};
+        case 'f':  return {data.data() + 2, '\f'};
+        case 'n':  return {data.data() + 2, '\n'};
+        case 'r':  return {data.data() + 2, '\r'};
+        case 't':  return {data.data() + 2, '\t'};
+        case 'v':  return {data.data() + 2, '\v'};
         case '?':
         case '"':
-            return {data + 2, data[1]};
+            return {data.data() + 2, data[1]};
     }
 
     /* Four-character escape */
     if(data.size() >= 4 && data[1] == 'x' && isBaseN<16>(data[2]) && isBaseN<16>(data[3]))
-        return {data + 4, parseHex<char>(data + 2)};
+        return {data.data() + 4, parseHex<char>(data.data() + 2)};
 
-    error = {ParseErrorType::InvalidEscapeSequence, data};
+    error = {ParseErrorType::InvalidEscapeSequence, data.data()};
     return {};
 }
 
 const char* escapedUnicode(const Containers::ArrayView<const char> data, std::string& out, ParseError& error) {
     /* Escape sequence is not standalone, thus we can't expect it anywhere */
-    CORRADE_INTERNAL_ASSERT(!data.isEmpty() && *data == '\\');
+    CORRADE_INTERNAL_ASSERT(!data.isEmpty() && data.front() == '\\');
 
     if(data.size() < 2) {
-        error = {ParseErrorType::InvalidEscapeSequence, data};
+        error = {ParseErrorType::InvalidEscapeSequence, data.data()};
         return {};
     }
 
     if(data.size() >= 6 && data[1] == 'u') {
         Warning() << "Trade::OpenGexImporter::openData(): Unicode parsing not implemented";
         out += '?';
-        return data + 6;
+        return data.data() + 6;
     }
 
     if(data.size() >= 8 && data[1] == 'U') {
         Warning() << "Trade::OpenGexImporter::openData(): Unicode parsing not implemented";
         out += '?';
-        return data + 8;
+        return data.data() + 8;
     }
 
     char result;
@@ -237,12 +237,12 @@ const char* identifier(const Containers::ArrayView<const char> data, ParseError&
         return nullptr;
     }
 
-    if(!isAlpha(*data) && *data != '_') {
-        error = {ParseErrorType::InvalidIdentifier, data};
+    if(!isAlpha(data.front()) && data.front() != '_') {
+        error = {ParseErrorType::InvalidIdentifier, data.data()};
         return nullptr;
     }
 
-    const char* i = data + 1;
+    const char* i = data.data() + 1;
     for(; i != data.end(); ++i) {
         const char c = *i;
 
@@ -259,7 +259,7 @@ std::pair<const char*, bool> boolLiteral(const Containers::ArrayView<const char>
     if(const char* const end = prefix(data, "true")) return {end, true};
     if(const char* const end = prefix(data, "false")) return {end, false};
 
-    error = {ParseErrorType::InvalidLiteral, Type::Bool, data};
+    error = {ParseErrorType::InvalidLiteral, Type::Bool, data.data()};
     return {};
 }
 
@@ -269,7 +269,7 @@ std::pair<const char*, char> characterLiteral(const Containers::ArrayView<const 
         if(((data[1] >= 0x20 && data[1] < '\'') ||
             (data[1] > '\'' && data[1] < '\\') ||
             (data[1] > '\\' && data[1] <= 0x7e)) && data[2] == '\'')
-            return {data + 3, data[1]};
+            return {data.data() + 3, data[1]};
 
         /* Escaped char */
         if(data[1] == '\\') {
@@ -280,7 +280,7 @@ std::pair<const char*, char> characterLiteral(const Containers::ArrayView<const 
         }
     }
 
-    error = {ParseErrorType::InvalidCharacterLiteral, data};
+    error = {ParseErrorType::InvalidCharacterLiteral, data.data()};
     return {};
 }
 
@@ -388,8 +388,8 @@ template<Int base> const char* possiblyNumericCharacters(const Containers::Array
     /* Propagate errors */
     if(!data) return {};
 
-    const char* i = data;
-    while(i != data.end() && (isBaseN<base>(*i) || (i != data && *i == '_'))) ++i;
+    const char* i = data.data();
+    while(i != data.end() && (isBaseN<base>(*i) || (i != data.data() && *i == '_'))) ++i;
 
     return i;
 }
@@ -400,8 +400,8 @@ template<Int base, class T> const char* numericCharacters(const Containers::Arra
 
     const char* const i = possiblyNumericCharacters<base>(data);
 
-    if(i == data) {
-        error = {ParseErrorType::InvalidLiteral, typeFor<T>(), data};
+    if(i == data.data()) {
+        error = {ParseErrorType::InvalidLiteral, typeFor<T>(), data.data()};
         return {};
     }
 
@@ -420,7 +420,7 @@ template<Int base, class T> std::pair<const char*, T> baseNLiteral(const Contain
     extractWithoutUnderscore(data.prefix(i), buffer);
     const ExtractedType<T> out = ExtractToType<T>::extract(buffer, base);
     if(out > ExtractedType<T>(std::numeric_limits<T>::max())) {
-        error = {ParseErrorType::LiteralOutOfRange, typeFor<T>(), data};
+        error = {ParseErrorType::LiteralOutOfRange, typeFor<T>(), data.data()};
         return {};
     }
 
@@ -434,18 +434,18 @@ template<class T> std::tuple<const char*, T, Int> integralLiteral(const Containe
     if(!data) return {};
 
     if(data.isEmpty()) {
-        error = {ParseErrorType::ExpectedLiteral, typeFor<T>(), data};
+        error = {ParseErrorType::ExpectedLiteral, typeFor<T>(), data.data()};
         return {};
     }
 
-    const char* i = data;
+    const char* i = data.data();
 
     /* Sign */
     T sign = T(1);
     if(*i == '+') ++i;
     else if(*i == '-') {
         if(!std::is_signed<T>{}) {
-            error = {ParseErrorType::LiteralOutOfRange, typeFor<T>(), data};
+            error = {ParseErrorType::LiteralOutOfRange, typeFor<T>(), data.data()};
             return {};
         }
 
@@ -520,11 +520,11 @@ template<class T> std::pair<const char*, T> floatingPointLiteral(const Container
     if(!data) return {};
 
     if(data.isEmpty()) {
-        error = {ParseErrorType::ExpectedLiteral, Type::Float, data};
+        error = {ParseErrorType::ExpectedLiteral, Type::Float, data.data()};
         return {};
     }
 
-    const char* i = data;
+    const char* i = data.data();
 
     /* Sign */
     T sign = T(1);
@@ -571,13 +571,13 @@ template<class T> std::pair<const char*, T> floatingPointLiteral(const Container
 
         /* Expecting at least .0 or 0. */
         if(before + 1 == i) {
-            error = {ParseErrorType::InvalidLiteral, typeFor<T>(), data};
+            error = {ParseErrorType::InvalidLiteral, typeFor<T>(), data.data()};
             return {};
         }
 
     /* Expecting at least one numeric character */
     } else if(before == i) {
-        error = {ParseErrorType::InvalidLiteral, typeFor<T>(), data};
+        error = {ParseErrorType::InvalidLiteral, typeFor<T>(), data.data()};
         return {};
     }
 
@@ -607,14 +607,14 @@ std::pair<const char*, std::string> stringLiteral(const Containers::ArrayView<co
     /* Propagate errors */
     if(!data) return {};
 
-    if(data.isEmpty() || *data != '"') {
-        error = {ParseErrorType::ExpectedLiteral, Type::String, data};
+    if(data.isEmpty() || data.front() != '"') {
+        error = {ParseErrorType::ExpectedLiteral, Type::String, data.data()};
         return {};
     }
 
     std::string out;
 
-    for(const char* i = data + 1; i != data.end(); ) {
+    for(const char* i = data.begin() + 1; i != data.end(); ) {
         const char c = *i;
 
         if(UnsignedByte(c) < 0x20) {
@@ -652,18 +652,18 @@ std::pair<const char*, std::string> nameLiteral(const Containers::ArrayView<cons
     if(!data) return {};
 
     if(data.isEmpty()) {
-        error = {ParseErrorType::ExpectedName, data};
+        error = {ParseErrorType::ExpectedName, data.data()};
         return {};
     }
 
-    const char* i = data;
+    const char* i = data.data();
     if(*i != '$' && *i != '%') {
-        error = {ParseErrorType::InvalidName, data};
+        error = {ParseErrorType::InvalidName, data.data()};
         return {};
     }
 
-    i = identifier(data.suffix(data + 1), error);
-    return {i, i ? std::string{data, std::size_t(i - data)} : std::string{}};
+    i = identifier(data.suffix(data.data() + 1), error);
+    return {i, i ? std::string{data.data(), std::size_t(i - data.data())} : std::string{}};
 }
 
 std::pair<const char*, Containers::ArrayView<const char>> referenceLiteral(const Containers::ArrayView<const char> data, ParseError& error) {
@@ -678,9 +678,9 @@ std::pair<const char*, Containers::ArrayView<const char>> referenceLiteral(const
     if(const char* const end = prefix(data, "null"))
         return {end, nullptr};
 
-    const char* i = data;
+    const char* i = data.data();
     if(*i != '$' && *i != '%') {
-        error = {ParseErrorType::InvalidLiteral, Type::Reference, data};
+        error = {ParseErrorType::InvalidLiteral, Type::Reference, data.data()};
         return {};
     }
 
@@ -724,7 +724,7 @@ std::pair<const char*, Type> typeLiteral(const Containers::ArrayView<const char>
     if(!data) return {};
 
     if(data.isEmpty()) {
-        error = {ParseErrorType::ExpectedLiteral, Type::Type, data};
+        error = {ParseErrorType::ExpectedLiteral, Type::Type, data.data()};
         return {};
     }
 
@@ -733,7 +733,7 @@ std::pair<const char*, Type> typeLiteral(const Containers::ArrayView<const char>
     std::tie(i, type) = possiblyTypeLiteral(data);
     if(i) return {i, type};
 
-    error = {ParseErrorType::InvalidLiteral, Type::Type, data};
+    error = {ParseErrorType::InvalidLiteral, Type::Type, data.data()};
     return {};
 }
 
@@ -746,7 +746,7 @@ std::pair<const char*, InternalPropertyType> propertyValue(const Containers::Arr
         return {};
     }
 
-    const char* i = data;
+    const char* i = data.data();
 
     /* String literal */
     if(*i == '"') {
@@ -806,7 +806,7 @@ std::pair<const char*, InternalPropertyType> propertyValue(const Containers::Arr
     std::tie(i, typeValue) = possiblyTypeLiteral(data);
     if(i) return {i, InternalPropertyType::Type};
 
-    error = {ParseErrorType::InvalidPropertyValue, data};
+    error = {ParseErrorType::InvalidPropertyValue, data.data()};
     return {};
 }
 CORRADE_IGNORE_DEPRECATED_POP

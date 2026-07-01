@@ -311,7 +311,7 @@ bool Document::parse(Containers::ArrayView<const char> data, const std::initiali
         else {
             std::size_t r = dereference(reference.first, reference.second);
             if(r == NullReference) {
-                Error() << "OpenDdl::Document::parse(): reference" << std::string{reference.second, reference.second.size()} << "was not found";
+                Error() << "OpenDdl::Document::parse(): reference" << std::string{reference.second.data(), reference.second.size()} << "was not found";
                 return false;
             }
             _references.push_back(r);
@@ -459,7 +459,7 @@ template<> struct ExtractDataListItem<Type::Type> {
 namespace {
 
 template<Type type> std::pair<const char*, std::size_t> dataList(const Containers::ArrayView<const char> data, Document& document, std::vector<std::pair<std::size_t, Containers::ArrayView<const char>>>& references, std::string& buffer, Implementation::ParseError& error) {
-    const char* i = data;
+    const char* i = data.data();
     std::size_t j = 0;
     for(; i && i != data.end() && *i != '}'; ) {
         if(j) {
@@ -484,7 +484,7 @@ template<Type type> std::pair<const char*, std::size_t> dataList(const Container
 template<Type type> std::pair<const char*, std::size_t> dataArrayList(const Containers::ArrayView<const char> data, Document& document, std::vector<std::pair<std::size_t, Containers::ArrayView<const char>>>& references, std::string& buffer, const std::size_t subArraySize, Implementation::ParseError& error) {
     if(!subArraySize) return dataList<type>(data, document, references, buffer, error);
 
-    const char* i = data;
+    const char* i = data.data();
     std::size_t j = 0;
     for(; i && i != data.end() && *i != '}'; ) {
         if(j) {
@@ -760,7 +760,7 @@ const char* Document::parseStructureList(const std::size_t parent, const Contain
     const std::size_t listStart = _structures.size();
 
     /* Parse all structures in the list */
-    const char* i = data;
+    const char* i = data.data();
     /* GCC 12 and 13 in Release warns about this variable being "maybe
        uninitialized". HOW DARE YOU EVEN COMPLAIN? There's a call to
        parseStructure() below, which increases _structures.size() if it doesn't
@@ -927,13 +927,13 @@ bool Document::validateStructure(const Structure structure, const Validation::St
 const char* Document::structureName(const Int identifier) const {
     if(identifier == UnknownIdentifier) return "(unknown)";
     CORRADE_INTERNAL_ASSERT(std::size_t(identifier) < _structureIdentifiers.size());
-    return *(_structureIdentifiers.begin() + identifier);
+    return (_structureIdentifiers.begin() + identifier)->data();
 }
 
 const char* Document::propertyName(const Int identifier) const {
     if(identifier == UnknownIdentifier) return "(unknown)";
     CORRADE_INTERNAL_ASSERT(std::size_t(identifier) < _propertyIdentifiers.size());
-    return *(_propertyIdentifiers.begin() + identifier);
+    return (_propertyIdentifiers.begin() + identifier)->data();
 }
 
 Document::StructureData::StructureData(const Type type, const std::size_t name, const std::size_t subArraySize, const std::size_t dataBegin, const std::size_t dataSize, const std::size_t parent, const std::size_t next) noexcept: name{name}, primitive{type, subArraySize, dataBegin, dataSize}, parent{parent}, next{next} {
@@ -1021,7 +1021,7 @@ Containers::Optional<Structure> Structure::asReference() const {
 Containers::Array<Containers::Optional<Structure>> Structure::asReferenceArray() const {
     CORRADE_ASSERT(type() == Type::Reference, "OpenDdl::Structure::asReferenceArray(): not of reference type", nullptr);
 
-    Containers::Array<Containers::Optional<Structure>> out(_data.get().primitive.size);
+    Containers::Array<Containers::Optional<Structure>> out{ValueInit, _data.get().primitive.size};
     for(std::size_t i = 0; i != _data.get().primitive.size; ++i)
         if(const std::size_t reference = _document.get()._references[_data.get().primitive.begin + i])
             out[i] = Structure{_document, _document.get()._structures[reference]};

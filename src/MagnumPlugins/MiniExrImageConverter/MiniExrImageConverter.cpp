@@ -91,7 +91,7 @@ Containers::Optional<Containers::Array<char>> MiniExrImageConverter::doConvertTo
     }});
 
     std::size_t size;
-    unsigned char* const data = miniexr_write(image.size().x(), image.size().y(), components, flippedPackedData, &size);
+    unsigned char* const data = miniexr_write(image.size().x(), image.size().y(), components, flippedPackedData.data(), &size);
     CORRADE_INTERNAL_ASSERT(data);
 
     /* miniexr uses malloc to allocate and since we can't use custom deleters,

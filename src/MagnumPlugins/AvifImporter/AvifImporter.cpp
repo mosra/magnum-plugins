@@ -45,7 +45,7 @@ AvifImporter::~AvifImporter() = default;
 
 ImporterFeatures AvifImporter::doFeatures() const { return ImporterFeature::OpenData; }
 
-bool AvifImporter::doIsOpened() const { return _in; }
+bool AvifImporter::doIsOpened() const { return !!_in; }
 
 void AvifImporter::doClose() { _in = nullptr; }
 

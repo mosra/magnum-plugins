@@ -246,7 +246,7 @@ bool BasisImporter::doIsOpened() const {
     #else
     CORRADE_INTERNAL_ASSERT(!_state->basisTranscoder == !_state->in);
     #endif
-    return _state->in;
+    return !!_state->in;
 }
 
 void BasisImporter::doClose() {

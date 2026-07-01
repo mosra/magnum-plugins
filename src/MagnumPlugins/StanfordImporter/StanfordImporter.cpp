@@ -820,7 +820,7 @@ Containers::Optional<MeshData> StanfordImporter::doMesh(UnsignedInt id, const Un
             indexData = Containers::Array<char>{NoInit,
                 _state->faceCount*3*faceIndexTypeSize};
             Containers::StridedArrayView2D<const char> src{in,
-                in + _state->faceIndicesOffset + faceSizeTypeSize,
+                in.data() + _state->faceIndicesOffset + faceSizeTypeSize,
                 {_state->faceCount, 3*faceIndexTypeSize},
                 {std::ptrdiff_t(_state->faceIndicesOffset + faceSizeTypeSize + 3*faceIndexTypeSize + _state->faceSkip), 1}};
             Containers::StridedArrayView2D<char> dst{indexData,
@@ -868,7 +868,7 @@ Containers::Optional<MeshData> StanfordImporter::doMesh(UnsignedInt id, const Un
             /* Get face size */
             const Containers::ArrayView<const char> faceSizeData = in.prefix(faceSizeTypeSize);
             in = in.exceptPrefix(faceSizeTypeSize);
-            const UnsignedInt faceSize = extractIndexValue<UnsignedInt>(faceSizeData, _state->faceSizeType, _state->fileFormatNeedsEndianSwapping);
+            const UnsignedInt faceSize = extractIndexValue<UnsignedInt>(faceSizeData.data(), _state->faceSizeType, _state->fileFormatNeedsEndianSwapping);
             if(faceSize < 3 || faceSize > 4) {
                 Error() << "Trade::StanfordImporter::mesh(): unsupported face size" << faceSize;
                 return Containers::NullOpt;
@@ -921,7 +921,7 @@ Containers::Optional<MeshData> StanfordImporter::doMesh(UnsignedInt id, const Un
     Containers::Array<MeshAttributeData> vertexAttributeData;
     Containers::Array<MeshAttributeData> faceAttributeData;
     if(level == 0) {
-        vertexAttributeData = Containers::Array<MeshAttributeData>{_state->attributeData.size()};
+        vertexAttributeData = Containers::Array<MeshAttributeData>{ValueInit, _state->attributeData.size()};
         for(std::size_t i = 0; i != vertexAttributeData.size(); ++i) {
             vertexAttributeData[i] = MeshAttributeData{
                 _state->attributeData[i].name(),
@@ -931,7 +931,7 @@ Containers::Optional<MeshData> StanfordImporter::doMesh(UnsignedInt id, const Un
     }
 
     if(parsePerFaceAttributes) {
-        faceAttributeData = Containers::Array<MeshAttributeData>{_state->faceAttributeData.size()};
+        faceAttributeData = Containers::Array<MeshAttributeData>{ValueInit, _state->faceAttributeData.size()};
         for(std::size_t i = 0; i != faceAttributeData.size(); ++i) {
             faceAttributeData[i] = MeshAttributeData{
                 _state->faceAttributeData[i].name(),

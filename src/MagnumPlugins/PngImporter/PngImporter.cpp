@@ -60,7 +60,7 @@ PngImporter::~PngImporter() = default;
 
 ImporterFeatures PngImporter::doFeatures() const { return ImporterFeature::OpenData; }
 
-bool PngImporter::doIsOpened() const { return _in; }
+bool PngImporter::doIsOpened() const { return !!_in; }
 
 void PngImporter::doClose() { _in = nullptr; }
 
@@ -412,7 +412,7 @@ Containers::Optional<ImageData2D> PngImporter::doImage2D(UnsignedInt, UnsignedIn
     /* Initialize data array, align rows to four bytes */
     CORRADE_INTERNAL_ASSERT(bits == 8 || bits == 16);
     const std::size_t stride = ((size.x()*channels*bits/8 + 3)/4)*4;
-    data = Containers::Array<char>{stride*std::size_t(size.y())};
+    data = Containers::Array<char>{NoInit, stride*std::size_t(size.y())};
 
     /* Endianness correction for 16 bit depth */
     #ifndef CORRADE_TARGET_BIG_ENDIAN
@@ -421,10 +421,10 @@ Containers::Optional<ImageData2D> PngImporter::doImage2D(UnsignedInt, UnsignedIn
     #endif
 
     /* Read image row by row */
-    rows = Containers::Array<png_bytep>{std::size_t(size.y())};
+    rows = Containers::Array<png_bytep>{NoInit, std::size_t(size.y())};
     for(Int i = 0; i != size.y(); ++i)
         rows[i] = reinterpret_cast<unsigned char*>(data.data()) + (size.y() - i - 1)*stride;
-    png_read_image(file, rows);
+    png_read_image(file, rows.data());
 
     /* 8-bit images */
     PixelFormat format;

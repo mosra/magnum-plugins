@@ -940,25 +940,25 @@ Containers::Optional<MeshData> UfbxImporter::doMesh(UnsignedInt id, UnsignedInt)
     stride += jointWeightCount*sizeof(Float);
 
     /* Need space for maximum triangles or at least a single point/line */
-    Containers::Array<UnsignedInt> primitiveIndices{Utility::max(mesh->max_face_triangles*3, std::size_t{2})};
+    Containers::Array<UnsignedInt> primitiveIndices{NoInit, Utility::max(mesh->max_face_triangles*3, std::size_t{2})};
     Containers::Array<char> vertexData{NoInit, stride*indexCount};
 
-    Containers::Array<MeshAttributeData> attributeData{attributeCount};
+    Containers::Array<MeshAttributeData> attributeData{ValueInit, attributeCount};
     UnsignedInt attributeOffset = 0;
     UnsignedInt attributeIndex = 0;
 
     Containers::StridedArrayView1D<Vector3> positions;
     Containers::StridedArrayView1D<Vector3> normals;
-    Containers::Array<Containers::StridedArrayView1D<Vector2>> uvSets{uvSetCount};
-    Containers::Array<Containers::StridedArrayView1D<Vector3>> tangentSets{tangentSetCount};
-    Containers::Array<Containers::StridedArrayView1D<Vector3>> bitangentSets{bitangentSetCount};
-    Containers::Array<Containers::StridedArrayView1D<Color4>> colorSets{colorSetCount};
+    Containers::Array<Containers::StridedArrayView1D<Vector2>> uvSets{ValueInit, uvSetCount};
+    Containers::Array<Containers::StridedArrayView1D<Vector3>> tangentSets{ValueInit, tangentSetCount};
+    Containers::Array<Containers::StridedArrayView1D<Vector3>> bitangentSets{ValueInit, bitangentSetCount};
+    Containers::Array<Containers::StridedArrayView1D<Color4>> colorSets{ValueInit, colorSetCount};
     Containers::StridedArrayView2D<UnsignedInt> jointIds;
     Containers::StridedArrayView2D<Float> weights;
 
     {
         positions = {vertexData,
-            reinterpret_cast<Vector3*>(vertexData + attributeOffset),
+            reinterpret_cast<Vector3*>(vertexData.data() + attributeOffset),
             indexCount, stride};
 
         attributeData[attributeIndex++] = MeshAttributeData{
@@ -968,7 +968,7 @@ Containers::Optional<MeshData> UfbxImporter::doMesh(UnsignedInt id, UnsignedInt)
 
     if(mesh->vertex_normal.exists) {
         normals = {vertexData,
-            reinterpret_cast<Vector3*>(vertexData + attributeOffset),
+            reinterpret_cast<Vector3*>(vertexData.data() + attributeOffset),
             indexCount, stride};
 
         attributeData[attributeIndex++] = MeshAttributeData{
@@ -978,7 +978,7 @@ Containers::Optional<MeshData> UfbxImporter::doMesh(UnsignedInt id, UnsignedInt)
 
     for(UnsignedInt i = 0; i < uvSetCount; ++i) {
         uvSets[i] = {vertexData,
-            reinterpret_cast<Vector2*>(vertexData + attributeOffset),
+            reinterpret_cast<Vector2*>(vertexData.data() + attributeOffset),
             indexCount, stride};
 
         attributeData[attributeIndex++] = MeshAttributeData{
@@ -988,7 +988,7 @@ Containers::Optional<MeshData> UfbxImporter::doMesh(UnsignedInt id, UnsignedInt)
 
     for(UnsignedInt i = 0; i < tangentSetCount; ++i) {
         tangentSets[i] = {vertexData,
-            reinterpret_cast<Vector3*>(vertexData + attributeOffset),
+            reinterpret_cast<Vector3*>(vertexData.data() + attributeOffset),
             indexCount, stride};
 
         attributeData[attributeIndex++] = MeshAttributeData{
@@ -998,7 +998,7 @@ Containers::Optional<MeshData> UfbxImporter::doMesh(UnsignedInt id, UnsignedInt)
 
     for(UnsignedInt i = 0; i < bitangentSetCount; ++i) {
         bitangentSets[i] = {vertexData,
-            reinterpret_cast<Vector3*>(vertexData + attributeOffset),
+            reinterpret_cast<Vector3*>(vertexData.data() + attributeOffset),
             indexCount, stride};
 
         attributeData[attributeIndex++] = MeshAttributeData{
@@ -1008,7 +1008,7 @@ Containers::Optional<MeshData> UfbxImporter::doMesh(UnsignedInt id, UnsignedInt)
 
     for(UnsignedInt i = 0; i < colorSetCount; ++i) {
         colorSets[i] = {vertexData,
-            reinterpret_cast<Color4*>(vertexData + attributeOffset),
+            reinterpret_cast<Color4*>(vertexData.data() + attributeOffset),
             indexCount, stride};
 
         attributeData[attributeIndex++] = MeshAttributeData{
@@ -1018,7 +1018,7 @@ Containers::Optional<MeshData> UfbxImporter::doMesh(UnsignedInt id, UnsignedInt)
 
     if (jointWeightCount > 0) {
         jointIds = {vertexData,
-            reinterpret_cast<UnsignedInt*>(vertexData + attributeOffset),
+            reinterpret_cast<UnsignedInt*>(vertexData.data() + attributeOffset),
             {indexCount, jointWeightCount}, {Int(stride), sizeof(UnsignedInt)}};
 
         attributeData[attributeIndex++] = MeshAttributeData{
@@ -1028,7 +1028,7 @@ Containers::Optional<MeshData> UfbxImporter::doMesh(UnsignedInt id, UnsignedInt)
 
     if (jointWeightCount > 0) {
         weights = {vertexData,
-            reinterpret_cast<Float*>(vertexData + attributeOffset),
+            reinterpret_cast<Float*>(vertexData.data() + attributeOffset),
             {indexCount, jointWeightCount}, {Int(stride), sizeof(Float)}};
 
         attributeData[attributeIndex++] = MeshAttributeData{

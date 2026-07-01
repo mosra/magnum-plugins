@@ -99,7 +99,7 @@ void IcoImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dat
     Utility::Endianness::littleEndianInPlace(header.imageType, header.imageCount);
 
     Containers::Pointer<State> state{InPlaceInit};
-    state->levels = Containers::Array<Containers::ArrayView<const char>>{header.imageCount};
+    state->levels = Containers::Array<Containers::ArrayView<const char>>{ValueInit, header.imageCount};
 
     /* Take over the existing array or copy the data if we can't */
     if(dataFlags & (DataFlag::Owned|DataFlag::ExternallyOwned))

@@ -131,7 +131,7 @@ bool readData(const spv_context context, const Utility::ConfigurationGroup& conf
             options |= SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS;
 
         spv_diagnostic diagnostic;
-        const spv_result_t error = spvTextToBinaryWithOptions(context, data, data.size(), options, &binary, &diagnostic);
+        const spv_result_t error = spvTextToBinaryWithOptions(context, data.data(), data.size(), options, &binary, &diagnostic);
         Containers::ScopeGuard diagnosticDestroy{diagnostic, spvDiagnosticDestroy};
         binaryDestroy = Containers::ScopeGuard{binary, spvBinaryDestroy};
         if(error) {
