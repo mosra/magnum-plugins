@@ -2,7 +2,7 @@
 set -ev
 
 # Corrade
-git clone --depth 1 https://github.com/mosra/corrade.git
+git clone --depth 1 --branch next https://github.com/mosra/corrade.git
 cd corrade
 mkdir build && cd build
 cmake .. \
@@ -11,14 +11,14 @@ cmake .. \
     -DCMAKE_INSTALL_RPATH=$HOME/deps/lib \
     -DCMAKE_BUILD_TYPE=$CONFIGURATION \
     -DCORRADE_WITH_INTERCONNECT=OFF \
-    -DCORRADE_BUILD_DEPRECATED=$BUILD_DEPRECATED \
+    -DCORRADE_BUILD_DEPRECATED=OFF \
     -DCORRADE_BUILD_STATIC=$BUILD_STATIC \
     -G Ninja
 ninja install
 cd ../..
 
 # Magnum
-git clone --depth 1 https://github.com/mosra/magnum.git
+git clone --depth 1 --branch next https://github.com/mosra/magnum.git
 cd magnum
 mkdir build && cd build
 cmake .. \

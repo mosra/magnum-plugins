@@ -27,7 +27,7 @@ set ONLY_MSVC2019=OFF
 IF "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2019" set ONLY_MSVC2019=ON
 
 rem Build Corrade
-git clone --depth 1 https://github.com/mosra/corrade.git || exit /b
+git clone --depth 1 --branch next https://github.com/mosra/corrade.git || exit /b
 cd corrade || exit /b
 mkdir build && cd build || exit /b
 cmake .. ^
@@ -36,13 +36,14 @@ cmake .. ^
     -DCORRADE_WITH_INTERCONNECT=OFF ^
     -DCORRADE_UTILITY_USE_ANSI_COLORS=ON ^
     -DCORRADE_BUILD_STATIC=%BUILD_STATIC% ^
+    -DCORRADE_BUILD_DEPRECATED=OFF ^
     %COMPILER_EXTRA% -G Ninja || exit /b
 cmake --build . || exit /b
 cmake --build . --target install || exit /b
 cd .. && cd ..
 
 rem Build Magnum
-git clone --depth 1 https://github.com/mosra/magnum.git || exit /b
+git clone --depth 1 --branch next https://github.com/mosra/magnum.git || exit /b
 cd magnum || exit /b
 mkdir build && cd build || exit /b
 cmake .. ^

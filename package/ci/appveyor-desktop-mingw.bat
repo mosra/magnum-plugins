@@ -51,7 +51,7 @@ rem __security_cookie. It wasn't built before, so I won't bother building it
 rem now either. TODO for later.
 
 rem Build Corrade
-git clone --depth 1 https://github.com/mosra/corrade.git || exit /b
+git clone --depth 1 --branch next https://github.com/mosra/corrade.git || exit /b
 cd corrade || exit /b
 mkdir build && cd build || exit /b
 cmake .. ^
@@ -60,13 +60,14 @@ cmake .. ^
     -DCMAKE_INSTALL_PREFIX=%APPVEYOR_BUILD_FOLDER%/deps ^
     -DCORRADE_WITH_INTERCONNECT=OFF ^
     -DCORRADE_UTILITY_USE_ANSI_COLORS=ON ^
+    -DCORRADE_BUILD_DEPRECATED=OFF ^
     -G Ninja || exit /b
 cmake --build . || exit /b
 cmake --build . --target install || exit /b
 cd .. && cd ..
 
 rem Build Magnum
-git clone --depth 1 https://github.com/mosra/magnum.git || exit /b
+git clone --depth 1 --branch next https://github.com/mosra/magnum.git || exit /b
 cd magnum || exit /b
 mkdir build && cd build || exit /b
 cmake .. ^
