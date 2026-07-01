@@ -351,10 +351,7 @@ void TinyGltfImporter::doOpenData(Containers::Array<char>&& data, DataFlags) {
     }
 
     if(!_d->open) {
-        CORRADE_IGNORE_DEPRECATED_PUSH /* GCC 4.8 and MSVC warns */
-        Utility::String::rtrimInPlace(err);
-        CORRADE_IGNORE_DEPRECATED_POP
-        Error{} << "Trade::TinyGltfImporter::openData(): error opening file:" << err;
+        Error{} << "Trade::TinyGltfImporter::openData(): error opening file:" << Containers::StringView{err}.trimmedSuffix();
         doClose();
         return;
     }
