@@ -2,7 +2,7 @@
 pkgname=magnum-plugins
 pkgver=dev.clang.addresssanitizer
 pkgrel=1
-pkgdesc="Plugins for the Magnum C++11/C++14 graphics engine (clang-addresssanitizer build)"
+pkgdesc="Plugins for the Magnum C++11 graphics engine (clang-addresssanitizer build)"
 arch=('i686' 'x86_64')
 url="https://magnum.graphics"
 license=('MIT')

@@ -2,7 +2,7 @@
 pkgname=magnum-plugins
 pkgver=dev.gcc48
 pkgrel=1
-pkgdesc="Plugins for the Magnum C++11/C++14 graphics engine (built with GCC 4.8)"
+pkgdesc="Plugins for the Magnum C++11 graphics engine (built with GCC 4.8)"
 arch=('i686' 'x86_64')
 url="https://magnum.graphics"
 license=('MIT')
