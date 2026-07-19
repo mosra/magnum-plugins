@@ -2,7 +2,7 @@
 set -ev
 
 # Corrade
-git clone --depth 1 https://github.com/mosra/corrade.git
+git clone --depth 1 --branch next https://github.com/mosra/corrade.git
 cd corrade
 
 # Build native corrade-rc
@@ -35,7 +35,7 @@ ninja install
 cd ../..
 
 # Crosscompile Magnum
-git clone --depth 1 https://github.com/mosra/magnum.git
+git clone --depth 1 --branch next https://github.com/mosra/magnum.git
 cd magnum
 mkdir build-android-x86 && cd build-android-x86
 cmake .. \
