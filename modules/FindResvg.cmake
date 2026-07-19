@@ -44,7 +44,13 @@ find_library(Resvg_LIBRARY NAMES resvg)
 
 # Include dir
 find_path(Resvg_INCLUDE_DIR
-    NAMES resvg.h)
+    NAMES resvg.h
+    # ArchLinux package version 0.46 and older has the include directly in
+    # root, 0.47 and newer in the resvg/ subdirectory, which is apparently
+    # correct according to https://github.com/linebender/resvg/pull/812 .
+    # Support both, which means `#include <resvg.h>` in the plugin itself and
+    # the resvg/ suffix being optionally on the include path.
+    PATH_SUFFIXES resvg/)
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(Resvg DEFAULT_MSG
