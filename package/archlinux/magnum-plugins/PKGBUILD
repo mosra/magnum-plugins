@@ -13,7 +13,7 @@ pkgdesc='Plugins for the Magnum C++11 graphics engine'
 arch=(x86_64)
 url='https://magnum.graphics'
 license=(MIT)
-depends=(assimp devil faad2 freetype2 libjpeg libpng libwebp "magnum>=$pkgver" openexr spirv-tools glslang zstd libavif)
+depends=(assimp devil faad2 freetype2 libjpeg-turbo libpng libwebp "magnum>=$pkgver" openexr spirv-tools glslang zstd libavif)
 makedepends=(cmake git ninja)
 source=("git+https://github.com/mosra/magnum-plugins#tag=v$pkgver"
         # A commit that's before the UASTC support (which is not implemented
