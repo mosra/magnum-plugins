@@ -1,6 +1,6 @@
 Name: magnum-plugins
 Version: 2020.06.1514.gccdbe941
-Release: 1
+Release: 1%{?dist}
 Summary: Plugins for the Magnum C++11 graphics engine
 License: MIT
 Source: %{name}-%{version}.tar.gz
