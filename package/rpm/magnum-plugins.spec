@@ -5,8 +5,8 @@ Summary: Plugins for the Magnum C++11 graphics engine
 License: MIT
 Source: %{name}-%{version}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot
-Requires: magnum, DevIL, libpng, libjpeg-turbo, freetype, assimp, glslang, spirv-tools-libs, libwebp, libspng, openexr-libs, libavif
-BuildRequires: cmake, git, gcc-c++, DevIL-devel, libpng-devel, libjpeg-turbo-devel, freetype-devel, assimp-devel, harfbuzz-devel, glslang-devel, spirv-tools-devel, libwebp-devel, libspng-devel, openexr-devel, libavif-devel
+Requires: magnum, libpng, libjpeg-turbo, freetype, assimp, glslang, spirv-tools-libs, libwebp, openexr-libs, libavif
+BuildRequires: cmake, git, gcc-c++, libpng-devel, libjpeg-turbo-devel, freetype-devel, assimp-devel, harfbuzz-devel, glslang-devel, spirv-tools-devel, libwebp-devel, openexr-devel, libavif-devel
 Source1: https://github.com/BinomialLLC/basis_universal/archive/refs/tags/v1_50_0_2.zip
 Source2: https://github.com/zeux/meshoptimizer/archive/refs/tags/v0.22.zip
 
@@ -44,7 +44,7 @@ cmake ../%{name}-%{version} \
   -DMAGNUM_WITH_BASISIMPORTER=ON \
   -DMAGNUM_WITH_BCDECIMAGECONVERTER=ON \
   -DMAGNUM_WITH_DDSIMPORTER=ON \
-  -DMAGNUM_WITH_DEVILIMAGEIMPORTER=ON \
+  -DMAGNUM_WITH_DEVILIMAGEIMPORTER=OFF \
   -DMAGNUM_WITH_DRFLACAUDIOIMPORTER=ON \
   -DMAGNUM_WITH_DRMP3AUDIOIMPORTER=ON \
   -DMAGNUM_WITH_DRWAVAUDIOIMPORTER=ON \
@@ -72,7 +72,7 @@ cmake ../%{name}-%{version} \
   -DMAGNUM_WITH_PRIMITIVEIMPORTER=ON \
   -DMAGNUM_WITH_RESVGIMPORTER=OFF \
   -DMAGNUM_WITH_SPIRVTOOLSSHADERCONVERTER=ON \
-  -DMAGNUM_WITH_SPNGIMPORTER=ON \
+  -DMAGNUM_WITH_SPNGIMPORTER=OFF \
   -DMAGNUM_WITH_STANFORDIMPORTER=ON \
   -DMAGNUM_WITH_STANFORDSCENECONVERTER=ON \
   -DMAGNUM_WITH_STBDXTIMAGECONVERTER=ON \
