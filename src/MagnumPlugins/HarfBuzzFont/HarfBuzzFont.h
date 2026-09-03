@@ -88,7 +88,7 @@ This plugin depends on the @ref Text and [HarfBuzz](https://harfbuzz.github.io)
 libraries and the @ref FreeTypeFont plugin. It is built if
 `MAGNUM_WITH_HARFBUZZFONT` is enabled when building Magnum Plugins. To use as a
 dynamic plugin, load @cpp "HarfBuzzFont" @ce via
-@ref Corrade::PluginManager::Manager.
+@relativeref{Corrade,PluginManager::Manager}.
 
 Additionally, if you're using Magnum as a CMake subproject, bundle the
 [magnum-plugins repository](https://github.com/mosra/magnum-plugins) and do the

@@ -90,7 +90,7 @@ plugins.
 This plugin depends on the @ref ShaderTools and [SPIRV-Tools](https://github.com/KhronosGroup/SPIRV-Tools)
 libraries and is built if `MAGNUM_WITH_SPIRVTOOLSSHADERCONVERTER` is enabled
 when building Magnum Plugins. To use as a dynamic plugin, load
-@cpp "SpirvToolsShaderConverter" @ce via @ref Corrade::PluginManager::Manager.
+@cpp "SpirvToolsShaderConverter" @ce via @relativeref{Corrade,PluginManager::Manager}.
 
 Additionally, if you're using Magnum as a CMake subproject, bundle the
 [magnum-plugins](https://github.com/mosra/magnum-plugins),

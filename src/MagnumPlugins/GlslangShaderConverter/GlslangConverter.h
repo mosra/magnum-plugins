@@ -89,7 +89,7 @@ plugins.
 This plugin depends on the @ref ShaderTools and [Glslang](https://github.com/KhronosGroup/glslang)
 libraries and is built if `MAGNUM_WITH_GLSLANGSHADERCONVERTER` is enabled when
 building Magnum Plugins. To use as a dynamic plugin, load
-@cpp "GlslangShaderConverter" @ce via @ref Corrade::PluginManager::Manager.
+@cpp "GlslangShaderConverter" @ce via @relativeref{Corrade,PluginManager::Manager}.
 
 Additionally, if you're using Magnum as a CMake subproject, bundle the
 [magnum-plugins](https://github.com/mosra/magnum-plugins) and

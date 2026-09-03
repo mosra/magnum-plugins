@@ -73,7 +73,7 @@ meshes into this format.
 This plugin depends on the @ref Trade library and is built if
 `MAGNUM_WITH_STANFORDIMPORTER` is enabled when building Magnum Plugins. To use
 as a dynamic plugin, load @cpp "StanfordImporter" @ce via
-@ref Corrade::PluginManager::Manager.
+@relativeref{Corrade,PluginManager::Manager}.
 
 Additionally, if you're using Magnum as a CMake subproject, bundle the
 [magnum-plugins repository](https://github.com/mosra/magnum-plugins) and do the

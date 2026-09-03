@@ -139,7 +139,7 @@ This plugins provides `BmpImporter`, `DdsImporter`, `OpenExrImporter`,
 This plugin depends on the @ref Trade and [DevIL](https://openil.sourceforge.net)
 libraries and is built if `MAGNUM_WITH_DEVILIMAGEIMPORTER` is enabled when
 building Magnum Plugins. To use as a dynamic plugin, load
-@cpp "DevIlImageImporter" @ce via @ref Corrade::PluginManager::Manager.
+@cpp "DevIlImageImporter" @ce via @relativeref{Corrade,PluginManager::Manager}.
 
 Additionally, if you're using Magnum as a CMake subproject, bundle the
 [magnum-plugins repository](https://github.com/mosra/magnum-plugins) and do the

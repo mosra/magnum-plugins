@@ -149,7 +149,7 @@ support not enabled, which is unfortunately impossible to detect.
 This plugin depends on the @ref Trade and [Assimp](https://assimp.org) libraries
 and the @ref AnyImageImporter plugin and is built if `MAGNUM_WITH_ASSIMPIMPORTER`
 is enabled when building Magnum Plugins. To use as a dynamic plugin, load
-@cpp "AssimpImporter" @ce via @ref Corrade::PluginManager::Manager.
+@cpp "AssimpImporter" @ce via @relativeref{Corrade,PluginManager::Manager}.
 
 Additionally, if you're using Magnum as a CMake subproject, bundle the
 [magnum-plugins](https://github.com/mosra/magnum-plugins) and

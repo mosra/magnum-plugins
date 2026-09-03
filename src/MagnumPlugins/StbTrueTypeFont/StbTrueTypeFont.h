@@ -94,7 +94,7 @@ fonts opened with @ref FreeTypeFont using the same size.
 This plugin depends on the @ref Text library and is built if
 `MAGNUM_WITH_STBTRUETYPEFONT` is enabled when building Magnum Plugins and
 depends on the @ref Text library. To use as a dynamic plugin, load
-@cpp "StbTrueTypeFont" @ce via @ref Corrade::PluginManager::Manager.
+@cpp "StbTrueTypeFont" @ce via @relativeref{Corrade,PluginManager::Manager}.
 
 Additionally, if you're using Magnum as a CMake subproject, bundle the
 [magnum-plugins repository](https://github.com/mosra/magnum-plugins) and do the

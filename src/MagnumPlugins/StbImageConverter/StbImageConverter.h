@@ -94,7 +94,7 @@ This plugin depends on the @ref Trade library and is built if
 `MAGNUM_WITH_STBIMAGECONVERTER` is enabled when building Magnum Plugins. To use
 as a dynamic plugin, load one of the @cpp "StbBmpImageConverter" @ce,
 @cpp "StbHdrImageConverter" @ce, @cpp "StbPngImageConverter" @ce,
-@cpp "StbTgaImageConverter" @ce plugins via @ref Corrade::PluginManager::Manager.
+@cpp "StbTgaImageConverter" @ce plugins via @relativeref{Corrade,PluginManager::Manager}.
 If you would load the plugin as just @cpp "StbImageConverter" @ce, it won't be
 able to guess the desired output format.
 

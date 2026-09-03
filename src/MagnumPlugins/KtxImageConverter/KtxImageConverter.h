@@ -73,7 +73,7 @@ import images in this format.
 This plugin depends on the @ref Trade library and is built if
 `MAGNUM_WITH_KTXIMAGECONVERTER` is enabled when building Magnum Plugins. To use
 as a dynamic plugin, load @cpp "KtxImageConverter" @ce via
-@ref Corrade::PluginManager::Manager.
+@relativeref{Corrade,PluginManager::Manager}.
 
 Additionally, if you're using Magnum as a CMake subproject, bundle the
 [magnum-plugins](https://github.com/mosra/magnum-plugins) and do the following:

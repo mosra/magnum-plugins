@@ -86,7 +86,7 @@ handle CRC checks, corrupt or perverse FLAC streams, or broadcast streams.
 This plugin depends on the @ref Audio library and is built if
 `MAGNUM_WITH_DRFLACAUDIOIMPORTER` is enabled when building Magnum Plugins. To
 use as a dynamic plugin, load @cpp "DrFlacAudioImporter" @ce via
-@ref Corrade::PluginManager::Manager.
+@relativeref{Corrade,PluginManager::Manager}.
 
 Additionally, if you're using Magnum as a CMake subproject, bundle the
 [magnum-plugins repository](https://github.com/mosra/magnum-plugins) and do the

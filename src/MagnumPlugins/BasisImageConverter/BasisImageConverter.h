@@ -89,7 +89,7 @@ This plugin provides `BasisKtxImageConverter`.
 This plugin depends on the @ref Trade and [Basis Universal](https://github.com/binomialLLC/basis_universal)
 libraries and is built if `MAGNUM_WITH_BASISIMAGECONVERTER` is enabled when
 building Magnum Plugins. To use as a dynamic plugin, load
-@cpp "BasisImageConverter" @ce via @ref Corrade::PluginManager::Manager.
+@cpp "BasisImageConverter" @ce via @relativeref{Corrade,PluginManager::Manager}.
 Current version of the plugin is tested against the
 [`v1_50_0_2`](https://github.com/BinomialLLC/basis_universal/tree/v1_50_0_2),
 `1.16.4` and `v1_15_update2` tags, but could possibly compile against newer

@@ -84,7 +84,7 @@ library. You can use @ref WebPImageConverter to encode images into this format.
 This plugin depends on the @ref Trade and [libwebp](https://chromium.googlesource.com/webm/libwebp/)
 libraries and is built if `MAGNUM_WITH_WEBPIMPORTER` is enabled when building
 Magnum Plugins. To use as a dynamic plugin, load @cpp "WebPImporter" @ce via
-@ref Corrade::PluginManager::Manager.
+@relativeref{Corrade,PluginManager::Manager}.
 
 Additionally, if you're using Magnum as a CMake subproject, bundle the
 [magnum-plugins](https://github.com/mosra/magnum-plugins) and
