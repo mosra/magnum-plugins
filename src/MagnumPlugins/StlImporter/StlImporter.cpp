@@ -26,7 +26,6 @@
 
 #include "StlImporter.h"
 
-#include <cstring>
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
@@ -77,7 +76,7 @@ void StlImporter::doOpenData(Containers::Array<char>&& data, const DataFlags dat
         return;
     }
 
-    if(std::memcmp(data.data(), "solid", 5) == 0) {
+    if(Containers::StringView{data}.hasPrefix("solid"_s)) {
         constexpr Containers::StringView plugin = "AssimpImporter"_s;
         /** @todo remove the !manager() once manager-less instantiation is
             removed */
