@@ -31,6 +31,7 @@
 #include <Corrade/Containers/GrowableArray.h>
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/StringStlHash.h>
+#include <Corrade/Containers/Triple.h>
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/Debug.h>
@@ -56,13 +57,19 @@ struct Vertex {
 };
 
 struct Mesh {
-    // TODO store names also
+    // TODO store names also, test 'em
+    // Containers::String name;
 
     /* Points to State::vertices and indices. If the range is empty, there
        aren't any actual mesh data. */
     UnsignedInt vertexBegin = 0, vertexEnd = 0;
     UnsignedInt indexBegin = 0, indexEnd = 0;
     // TODO also color indices / vertices, eventually
+};
+
+struct Material {
+    Color4 color;
+    // TODO name maybe also, some other props like "rubber"
 };
 
 struct Object {
@@ -74,9 +81,11 @@ struct LdrawImporter::State {
     Containers::Array<Vertex> vertices;
     Containers::Array<UnsignedInt> indices;
     Containers::Array<Mesh> meshes;
+    Containers::Array<Material> materials;
 
     Containers::Array<Object> objects;
-    Containers::Array<Containers::Pair<UnsignedInt, UnsignedInt>> objectMeshes;
+    // TODO there's just ~300 materials at most, could use a Short ... or maybe a Byte as not all may get used anyway
+    Containers::Array<Containers::Triple<UnsignedInt, UnsignedInt, Int>> objectMeshesMaterials;
 };
 
 LdrawImporter::LdrawImporter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin): AbstractImporter{manager, plugin} {}
@@ -115,10 +124,13 @@ struct File {
 };
 
 struct SubFile {
-    Color4 color; // TODO some optional to only optionally override this?
     Matrix4 transformation;
     /* Points back to the files array */
     UnsignedInt fileId;
+    /* LDRaw-specific color index, *not* a concrete index into the
+       state.materials array. Is turned into a concrete index by a lookup in
+       the color map or by overriding a default inside populateScene(). */
+    UnsignedInt colorIndex;
 };
 
 Containers::Optional<File> parse(Containers::Array<Vertex>& vertices, Containers::Array<UnsignedInt>& indices, Containers::Array<Mesh>& meshes, Containers::Array<File>& files, std::unordered_map<Containers::String, UnsignedInt>& fileMap, Containers::Array<SubFile>& subFiles, Containers::StringView filePath, Containers::StringView ldrawDir, Containers::StringView pathPrefix, /*mutable*/ Containers::StringView in) {
@@ -163,7 +175,14 @@ Containers::Optional<File> parse(Containers::Array<Vertex>& vertices, Containers
                 .findAnyOr(" \t", line.end());
             const Containers::StringView color = line.prefix(colorEnd.begin());
             line = line.suffix(colorEnd.end());
-            // TODO parse the color
+            // TODO use just operator bool once implemented
+            UnsignedInt colorIndex;
+            if(Utility::String::parseDecimal(color, colorIndex) != Utility::String::ParseState::Success) {
+                // TODO need current filename + a begin pointer to produce file:line:column
+                // TODO maybe if it's empty have a different message, like "line too short"
+                Error{} << "LdrawImporter::openData(): invalid integer literal" << color << "at TODO";
+                return {};
+            }
 
             /* Translation and rotation */
             Float transformation[12];
@@ -277,15 +296,14 @@ Containers::Optional<File> parse(Containers::Array<Vertex>& vertices, Containers
                if any, are already in the list. */
             // TODO actually maybe don't if it has no subfiles or meshes (i.e., containing just lines or other stuff we don't support)
             arrayAppend(fileSubFiles, InPlaceInit,
-                Color4{}, // TODO
                 /* Translation is in the first three numbers, rotation in the
                    remaining 3x3 */
                 Matrix4{Matrix4x3{
                     Vector3{transformation[3], transformation[6], transformation[9]},
                     Vector3{transformation[4], transformation[7], transformation[10]},
                     Vector3{transformation[5], transformation[8], transformation[11]},
-                    Vector3{transformation[0], transformation[1], transformation[2]}}}, // TODO is correct?
-                *foundFile); // TODO
+                    Vector3{transformation[0], transformation[1], transformation[2]}}},
+                *foundFile, colorIndex);
 
         /* Line or optional line, skip for now */
         /** @todo implement these, creating a third (fourth?) mesh */
@@ -297,11 +315,12 @@ Containers::Optional<File> parse(Containers::Array<Vertex>& vertices, Containers
             /* Color */
             const Containers::StringView colorEnd = line
                 // TODO remove the trimmedPrefix once findAny consumes all
+                    // TODO oh wait but the extra spaces stay in the line and it's added to the `color` variable, right?
                 .trimmedPrefix(" \t"_s)
                 .findAnyOr(" \t", line.end());
-            const Containers::StringView color = line.prefix(colorEnd.begin());
+            // const Containers::StringView color = line.prefix(colorEnd.begin()); TODO
+            // TODO parse the color, if it's not the default color put the vertices into a separate vertex-colored mesh
             line = line.suffix(colorEnd.end());
-            // TODO parse the color
 
             /* Three or four points */
             Float coordinates[3*4];
@@ -309,6 +328,7 @@ Containers::Optional<File> parse(Containers::Array<Vertex>& vertices, Containers
             for(std::size_t i = 0; i != 3*pointCount; ++i) {
                 const Containers::StringView numberEnd = line
                     // TODO remove the trimmedPrefix once findAny consumes all
+                        // TODO oh wait but the extra spaces stay in the line and it's added to the `number` variable, right?
                     .trimmedPrefix(" \t"_s)
                     .findAnyOr(" \t", line.end());
                 const Containers::StringView number = line.prefix(numberEnd.begin());
@@ -378,7 +398,8 @@ Containers::Optional<File> parse(Containers::Array<Vertex>& vertices, Containers
         } else {
             // TODO file/line/column
             Error{} << "LdrawImporter::openData(): invalid command" << command << "at TODO";
-            return {};
+            // return {}; TODO
+            continue;
         }
     }
 
@@ -406,33 +427,164 @@ Containers::Optional<File> parse(Containers::Array<Vertex>& vertices, Containers
     return file;
 }
 
-void populateScene(const Containers::ArrayView<const File> files, const Containers::ArrayView<const SubFile> subFiles, Containers::Array<Object>& objects, Containers::Array<Containers::Pair<UnsignedInt, UnsignedInt>>& objectMeshes, const Int parent, const Matrix4& transformation, const File& file) {
+void populateScene(std::unordered_map<UnsignedInt, Containers::Pair<UnsignedInt, Material>>& colorMap, Containers::Array<Material>& materials, const Containers::ArrayView<const File> files, const Containers::ArrayView<const SubFile> subFiles, Containers::Array<Object>& objects, Containers::Array<Containers::Triple<UnsignedInt, UnsignedInt, Int>>& objectMeshesMaterials, const Int parent, const Matrix4& transformation, const UnsignedInt colorIndex, const File& file) {
     const UnsignedInt objectId = objects.size();
 
     Object object;
     object.parent = parent;
+    // TODO not all objects have a non-trivial transform, make a separate mapping?
     object.transformation = transformation;
     arrayAppend(objects, object);
 
-    if(file.meshId != ~UnsignedInt{})
-        arrayAppend(objectMeshes, InPlaceInit, objectId, file.meshId);
+    /* If the file has a mesh, add it to the mesh/material assignment list */
+    if(file.meshId != ~UnsignedInt{}) {
+        /* Resolve the color index */
+        auto found = colorMap.find(colorIndex);
+        if(found == colorMap.end())
+            found = colorMap.find(16); // TODO test this, warn
+
+        /* If the color isn't used yet, add it to the materials */
+        if(found->second.first() == ~UnsignedInt{}) {
+            found->second.first() = materials.size();
+            arrayAppend(materials, found->second.second());
+        }
+
+        arrayAppend(objectMeshesMaterials, InPlaceInit, objectId, file.meshId, Int(found->second.first()));
+    }
 
     for(UnsignedInt i = file.subFileBegin; i != file.subFileEnd; ++i)
         populateScene(
+            colorMap,
+            materials,
             files,
             subFiles,
             objects,
-            objectMeshes,
+            objectMeshesMaterials,
             objectId,
             subFiles[i].transformation,
+            /* If the subfile doesn't have a non-default color specified, use
+               the parent */
+            // TODO describe what this, maybe have a constant instead of hardcoding 16
+            subFiles[i].colorIndex == 16 ? colorIndex : subFiles[i].colorIndex,
             files[subFiles[i].fileId]);
 }
 
 }
 
 void LdrawImporter::doOpenData(Containers::Array<char>&& data, DataFlags) {
+    // TODO fail early if LDRAWDIR is not defined
     /* This gets eventually moved to _state if everything goes well */
     Containers::Pointer<State> state{InPlaceInit};
+
+    /* Parse colors from the main config file in LDRAWDIR. Theoretically it can
+       happen that every file opening uses a different LDRAWDIR, thus
+       potentially different colors, so just parse them every time to not use
+       stale ones. This also means out of the 300+ colors we can keep only the
+       entries that are actually used by the model and throw away the rest.
+
+       The value stores index into the state.materials array, which is
+       ~UnsignedInt{} initially and gets filled with a concrete index by
+       populateScene() as soon as the color is used in the file. */
+    std::unordered_map<UnsignedInt, Containers::Pair<UnsignedInt, Material>> colorMap;
+        // TODO uhh should only keep the materials that are actually used!
+    {
+        // TODO use a config value for LDRAWDIR, cache it
+        // TODO also maybe have some automatic fallback paths, like next to the opened file?
+            // TODO also maybe have a way to override the config filename, even to an absolute location
+        const Containers::Optional<Containers::String> config = Utility::Path::readString(Utility::Path::join(std::getenv("LDRAWDIR"), "LDConfig.ldr"));
+        if(!config) {
+            Error{} << "LdrawImporter::openData(): cannot parse default color values";
+            return;
+        }
+
+        /* Parse lines according to https://www.ldraw.org/article/299 */
+        Containers::StringView in = *config;
+        while(in) {
+            // TODO change to just find() when that's the default
+            const Containers::StringView lineEnd = in.findOr('\n', in.end());
+            /* Trim leading whitespace, it can be just a space or a tab. There
+               can be a CRLF after, get rid of it as well. */
+            Containers::StringView line = in.prefix(lineEnd.begin())
+                .trimmedPrefix(" \t"_s)
+                .trimmedSuffix("\r"_s);
+            in = in.suffix(lineEnd.end());
+
+            /* We're interested only in colors from the config file. The syntax
+               is `0 !COLOUR name CODE x VALUE v` with other keywords after for
+               edges, alpha, etc., right now we only parse RGB colors and their
+               codes. */
+            // TODO test the tab after too
+            if(!line.hasPrefix("0 !COLOUR "_s) && !line.hasPrefix("0 !COLOUR\t"_s))
+                continue;
+            line = line.exceptPrefix("0 !COLOUR"_s).trimmedPrefix(" \t"_s);
+
+            /* Extract the name. It's assumed to not have any spaces inside,
+               otherwise we'd have to check all the way until the CODE
+               keyword */
+            // TODO test names with spaces here
+            const Containers::StringView nameEnd = line
+                .findAnyOr(" \t", line.end());
+            const Containers::StringView name = line.prefix(nameEnd.begin());
+            // TODO remove the trimmedPrefix once findAny consumes all
+            line = line.suffix(nameEnd.end()).trimmedPrefix(" \t"_s);
+
+            if(!line.hasPrefix("CODE "_s) && !line.hasPrefix("CODE\t"_s)) {
+                // TODO file/line, maybe have some details why (expected CODE...?)
+                Error{} << "LdrawImporter::openData(): invalid color line at TODO";
+                return;
+            }
+            line = line.exceptPrefix("CODE"_s).trimmedPrefix(" \t"_s);
+
+            /* Extract the code */
+            // TODO test names with spaces here
+            const Containers::StringView codeEnd = line
+                .findAnyOr(" \t", line.end());
+            const Containers::StringView code = line.prefix(codeEnd.begin());
+            // TODO remove the trimmedPrefix once findAny consumes all
+            line = line.suffix(codeEnd.end()).trimmedPrefix(" \t"_s);
+            UnsignedInt index;
+            // TODO use just operator bool once implemented
+            if(Utility::String::parseDecimal(code, index) != Utility::String::ParseState::Success) {
+                // TODO need current filename + a begin pointer to produce file:line:column
+                // TODO maybe if it's empty have a different message, like "line too short"
+                Error{} << "LdrawImporter::openData(): invalid integer literal" << code << "at TODO";
+                return;
+            }
+
+            if(!line.hasPrefix("VALUE "_s) && !line.hasPrefix("VALUE\t"_s)) {
+                // TODO file/line, maybe have some details why (expected VALUE...?)
+                Error{} << "LdrawImporter::openData(): invalid color line at TODO";
+                return;
+            }
+            line = line.exceptPrefix("VALUE"_s).trimmedPrefix(" \t"_s);
+
+            /* Extract the value */
+            // TODO test names with spaces here
+            const Containers::StringView valueEnd = line
+                .findAnyOr(" \t", line.end());
+            const Containers::StringView value = line.prefix(valueEnd.begin());
+            UnsignedInt color;
+            // TODO use just operator bool once implemented
+                // TODO test both # and 0x
+                    // TODO this allows neither # or 0x, that should be disallowed, fix in the parser
+                    // TODO it also allow non-six-char values, what to do?
+            if(Utility::String::parseHexadecimal(value, color, Utility::String::ParseHexadecimalFlag::AllowBasePrefix| Utility::String::ParseHexadecimalFlag::AllowHashPrefix) != Utility::String::ParseState::Success) {
+                // TODO need current filename + a begin pointer to produce file:line:column
+                // TODO maybe if it's empty have a different message, like "line too short"
+                Error{} << "LdrawImporter::openData(): invalid color literal" << color << "at TODO";
+                return;
+            }
+
+            /* Add to the color map. The ~UnsignedInt{} gets updated to a
+               concrete index inside the state.materials array by
+               populateScene() once the color is used. */
+            if(colorMap.find(index) == colorMap.end())
+                colorMap.emplace(index, Containers::pair(~UnsignedInt{}, Material{Color3::fromLinearRgbInt(color)}));
+        }
+
+        // TODO check that the colormap has the default color (16) at least
+    }
+
     /* These is all just temporary. List of parsed files, with fileMap mapping
        them to filenames */
     Containers::Array<File> files;
@@ -468,6 +620,7 @@ void LdrawImporter::doOpenData(Containers::Array<char>&& data, DataFlags) {
                     .trimmedSuffix("\r"_s);
                 in = in.suffix(lineEnd.end());
 
+                // TODO test the tab after too!
                 if(line.hasPrefix("0 FILE "_s) || line.hasPrefix("0 FILE\t"_s)) {
                     /* The first file shouldn't be referenced by anything else
                        so it doesn't make sense to insert it into the map */
@@ -508,7 +661,7 @@ void LdrawImporter::doOpenData(Containers::Array<char>&& data, DataFlags) {
         fileMap,
         subFiles,
         {}, // TODO fill once we can open real files
-        std::getenv("LDRAWDIR"), // TODO fail if not present, use a config value too
+        std::getenv("LDRAWDIR"), // TODO fail if not present, use a config value, cache this too
         {}, /* No path prefix for the top-level file */
         topLevelFile);
     if(!parsedTopLevelFile)
@@ -517,12 +670,15 @@ void LdrawImporter::doOpenData(Containers::Array<char>&& data, DataFlags) {
     /* Recursively go through the parsed files, where each file can be
        referenced multiple times, and create a scene tree */
     populateScene(
+        colorMap,
+        state->materials,
         files,
         subFiles,
         state->objects,
-        state->objectMeshes,
+        state->objectMeshesMaterials,
         -1,
-        Matrix4::scaling(Vector3{0.01f}), // TODO uh
+        Matrix4::scaling(Vector3{0.01f})*Matrix4::rotationX(180.0_degf), // TODO uh also the axsi flip
+        16, // TODO er, "the default color", i guess; have a constant
         *parsedTopLevelFile);
 
     /* All done, move the state in */
@@ -554,14 +710,15 @@ Containers::Optional<MeshData> LdrawImporter::doMesh(const UnsignedInt id, Unsig
 }
 
 UnsignedInt LdrawImporter::doMaterialCount() const {
-    return 1;
+    return _state->materials.size();
 }
 
-Containers::Optional<MaterialData> LdrawImporter::doMaterial(UnsignedInt) {
+Containers::Optional<MaterialData> LdrawImporter::doMaterial(const UnsignedInt id) {
+    // TODO have a phong fallback toggle like GltfImporter
     return Trade::MaterialData{Trade::MaterialType::PbrMetallicRoughness|Trade::MaterialType::Phong, {
-        {Trade::MaterialAttribute::BaseColor, 0xffff80ff_rgbaf},
-        {Trade::MaterialAttribute::DiffuseColor, 0xffff80ff_rgbaf},
-        // TODO important!!! document
+        {Trade::MaterialAttribute::BaseColor, _state->materials[id].color},
+        {Trade::MaterialAttribute::DiffuseColor, _state->materials[id].color},
+        // TODO important!!! document why (same meshes used for inside and outside faces)
         {Trade::MaterialAttribute::DoubleSided, true},
         // TODO this also
         {Trade::MaterialAttribute::SpecularColor, 0x00000000_rgbaf},
@@ -581,13 +738,11 @@ Containers::Optional<SceneData> LdrawImporter::doScene(UnsignedInt) {
 
     Containers::ArrayView<UnsignedInt> objectIds;
     Containers::StridedArrayView1D<Object> objects;
-    Containers::StridedArrayView1D<Containers::Pair<UnsignedInt, UnsignedInt>> objectMeshes;
-    Containers::StridedArrayView1D<Int> materialIds;
+    Containers::StridedArrayView1D<Containers::Triple<UnsignedInt, UnsignedInt, Int>> objectMeshesMaterials;
     Containers::ArrayTuple data{
         {NoInit, state.objects.size(), objectIds},
         {NoInit, state.objects.size(), objects},
-        {NoInit, state.objectMeshes.size(), objectMeshes},
-        {NoInit, 1, materialIds},
+        {NoInit, state.objectMeshesMaterials.size(), objectMeshesMaterials},
     };
 
     /* Trivial mapping for everything in the Object struct */
@@ -596,10 +751,7 @@ Containers::Optional<SceneData> LdrawImporter::doScene(UnsignedInt) {
         i = id++;
 
     Utility::copy(state.objects, objects);
-    Utility::copy(state.objectMeshes, objectMeshes);
-
-    /* Trivial material mapping for now */
-    materialIds[0] = 0;
+    Utility::copy(state.objectMeshesMaterials, objectMeshesMaterials);
 
     return Trade::SceneData{
         Trade::SceneMappingType::UnsignedInt, state.objects.size(), Utility::move(data), {
@@ -610,11 +762,11 @@ Containers::Optional<SceneData> LdrawImporter::doScene(UnsignedInt) {
                 objectIds,
                 objects.slice(&Object::transformation)},
             Trade::SceneFieldData{Trade::SceneField::Mesh,
-                objectMeshes.slice(&decltype(objectMeshes)::Type::first),
-                objectMeshes.slice(&decltype(objectMeshes)::Type::second)},
+                objectMeshesMaterials.slice(&decltype(objectMeshesMaterials)::Type::first),
+                objectMeshesMaterials.slice(&decltype(objectMeshesMaterials)::Type::second)},
             Trade::SceneFieldData{Trade::SceneField::MeshMaterial,
-                objectMeshes.slice(&decltype(objectMeshes)::Type::first),
-                materialIds.broadcasted<0>(objectMeshes.size())},
+                objectMeshesMaterials.slice(&decltype(objectMeshesMaterials)::Type::first),
+                objectMeshesMaterials.slice(&decltype(objectMeshesMaterials)::Type::third)},
         }};
 }
 
