@@ -39,6 +39,8 @@
 #include <Magnum/ImageView.h>
 #include <Magnum/PixelFormat.h>
 
+#define STBI_WRITE_NO_STDIO
+#define STB_IMAGE_WRITE_STATIC
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #define STBI_ASSERT CORRADE_INTERNAL_ASSERT
 /* Not defining malloc/free, because there's no equivalent for realloc in C++ */
