@@ -58,14 +58,14 @@ StbImageConverter::StbImageConverter(Format format): _format{format} {
 }
 #else /* LCOV_EXCL_STOP */
 enum class StbImageConverter::Format: Int {
-        /* 0 used for invalid value */
+    /* 0 used for invalid value */
 
-        Bmp = 1,    /* Output BMP images */
-        Jpeg,       /* Output JPEG images */
-        Hdr,        /* Output HDR images */
-        Png,        /* Output PNG images */
-        Tga         /* Output TGA images */
-    };
+    Bmp = 1,
+    Jpeg,
+    Hdr,
+    Png,
+    Tga
+};
 #endif
 
 StbImageConverter::StbImageConverter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin): AbstractImageConverter{manager, plugin} {
