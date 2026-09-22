@@ -67,8 +67,15 @@ using namespace Containers::Literals;
 
 namespace {
 
-/* Assembled from pieces so errors list only what the plugin was built with */
-constexpr Containers::StringView FormatAliases = (
+/* Assembled from pieces so errors list only what the plugin was built with.
+   On MSVC 2015 this somehow becomes a completely empty string if it's marked
+   as constexpr. What a compiler. */
+#ifndef CORRADE_MSVC2015_COMPATIBILITY
+constexpr
+#else
+const
+#endif
+Containers::StringView FormatAliases = (
     #ifndef STBI_NO_BMP
     "Bmp,"
     #endif
