@@ -109,7 +109,8 @@ namespace Magnum {
 -   **[\@sigman78](https://github.com/sigman78)** --- initial MSVC 2017 port,
     Vcpkg package
 -   **Stanislaw Halik** ([\@sthalik](https://github.com/sthalik)) --- build
-    fixes
+    fixes, toggles for binary size reduction in the @relativeref{Trade,StbImageImporter} and
+    @relativeref{Trade,StbImageConverter} plugins
 -   **Tobias Stein** ([\@NussknackerXXL](https://github.com/NussknackerXXL)) ---
     the @ref Trade::TinyGltfImporter "TinyGltfImporter" plugin
 */
