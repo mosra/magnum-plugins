@@ -104,6 +104,7 @@ void StbImageImporter::doOpenData(Containers::Array<char>&& data, const DataFlag
     stbi_set_flip_vertically_on_load
     #endif
         (true);
+    #ifndef STBI_NO_PNG
     /* The docs say this is enabled by default, but it's *not*. Ugh. */
     /** @todo do BGR -> RGB processing here instead, this may get obsolete:
         https://github.com/nothings/stb/pull/950 */
@@ -113,7 +114,9 @@ void StbImageImporter::doOpenData(Containers::Array<char>&& data, const DataFlag
     stbi_convert_iphone_png_to_rgb
     #endif
         (true);
+    #endif
 
+    #ifndef STBI_NO_GIF
     /* Try to open as a gif. If that succeeds, great. If that fails, the actual
        opening (and error handling) is done in doImage2D(). */
     {
@@ -142,6 +145,7 @@ void StbImageImporter::doOpenData(Containers::Array<char>&& data, const DataFlag
             return;
         }
     }
+    #endif
 
     /* Take over the existing array or copy the data if we can't */
     _in.emplace();

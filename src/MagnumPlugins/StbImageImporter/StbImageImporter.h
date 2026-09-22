@@ -211,10 +211,25 @@ way to import individual layers.
 For some formats, it's possible to tune various output options through
 @ref configuration(). See below for all options and their default values:
 
-@snippet MagnumPlugins/StbImageImporter/StbImageImporter.conf configuration_
+@snippet MagnumPlugins/StbImageImporter/StbImageImporter.conf.cmake configuration_
 
 See @ref plugins-configuration for more information and an example showing how
 to edit the configuration values.
+
+@section Trade-StbImageImporter-binary-size Reducing binary size
+
+To reduce binary size of the plugin, stb_image supports a set of preprocessor
+defines to disable unused formats, in particular `STBI_NO_BMP`, `STBI_NO_GIF`,
+`STBI_NO_HDR`, `STBI_NO_JPEG`, `STBI_NO_PIC`, `STBI_NO_PNG`, `STBI_NO_PNM`, `STBI_NO_PSD` and `STBI_NO_TGA`. Besides compiling away the relevant format,
+the plugin then no longer provides the corresponding alias either --- so for
+example when passing `-DSTBI_NO_PNG` via `CMAKE_CXX_FLAGS` or adding it through
+@m_class{m-doc-external} [add_definitions()](https://cmake.org/cmake/help/latest/command/add_definitions.html) /
+@m_class{m-doc-external} [add_compile_definitions()](https://cmake.org/cmake/help/latest/command/add_compile_definitions.html),
+loading @cpp "PngImporter" @ce will not pick this plugin and opening a PNG file
+with @cpp "StbImageImporter" @ce will fail. `STBI_NO_PNM` covers both
+@cpp "PgmImporter" @ce and @cpp "PpmImporter" @ce. Note that @ref openData()
+succeeds for any input regardless of which formats are compiled in, as the
+format detection is deferred to @ref image2D().
 */
 class MAGNUM_STBIMAGEIMPORTER_EXPORT StbImageImporter: public AbstractImporter {
     public:

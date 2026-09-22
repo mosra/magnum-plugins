@@ -1,13 +1,14 @@
-provides=BmpImporter
-provides=GifImporter
-provides=HdrImporter
-provides=JpegImporter
-provides=PgmImporter
-provides=PicImporter
-provides=PngImporter
-provides=PpmImporter
-provides=PsdImporter
-provides=TgaImporter
+# Subset of these gets commented out depending on STBI_NO_* macros defined
+${STB_BMP_SUPPORT}provides=BmpImporter
+${STB_GIF_SUPPORT}provides=GifImporter
+${STB_HDR_SUPPORT}provides=HdrImporter
+${STB_JPEG_SUPPORT}provides=JpegImporter
+${STB_PNM_SUPPORT}provides=PgmImporter
+${STB_PIC_SUPPORT}provides=PicImporter
+${STB_PNG_SUPPORT}provides=PngImporter
+${STB_PNM_SUPPORT}provides=PpmImporter
+${STB_PSD_SUPPORT}provides=PsdImporter
+${STB_TGA_SUPPORT}provides=TgaImporter
 
 # [configuration_]
 [configuration]

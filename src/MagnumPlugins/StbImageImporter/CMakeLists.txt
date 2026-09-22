@@ -33,12 +33,25 @@ endif()
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.cmake
                ${CMAKE_CURRENT_BINARY_DIR}/configure.h)
 
+# If a STBI_NO_* define is set, support for given format is compiled out and it
+# also stops being advertised as a plugin alias in StbImageImporter.conf
+get_property(_DIRECTORY_DEFINITIONS DIRECTORY PROPERTY COMPILE_DEFINITIONS)
+foreach(_format BMP GIF HDR JPEG PIC PNG PNM PSD TGA)
+    if(CMAKE_CXX_FLAGS MATCHES "-DSTBI_NO_${_format}" OR "STBI_NO_${_format}" IN_LIST _DIRECTORY_DEFINITIONS)
+        set(STB_${_format}_SUPPORT "#")
+    else()
+        set(STB_${_format}_SUPPORT "")
+    endif()
+endforeach()
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/StbImageImporter.conf.cmake
+               ${CMAKE_CURRENT_BINARY_DIR}/StbImageImporter.conf)
+
 # StbImageImporter plugin
 add_plugin(StbImageImporter
     importers
     "${MAGNUM_PLUGINS_IMPORTER_DEBUG_BINARY_INSTALL_DIR};${MAGNUM_PLUGINS_IMPORTER_DEBUG_LIBRARY_INSTALL_DIR}"
     "${MAGNUM_PLUGINS_IMPORTER_RELEASE_BINARY_INSTALL_DIR};${MAGNUM_PLUGINS_IMPORTER_RELEASE_LIBRARY_INSTALL_DIR}"
-    StbImageImporter.conf
+    ${CMAKE_CURRENT_BINARY_DIR}/StbImageImporter.conf
     StbImageImporter.cpp
     StbImageImporter.h)
 if(MAGNUM_STBIMAGEIMPORTER_BUILD_STATIC AND MAGNUM_BUILD_STATIC_PIC)

@@ -223,10 +223,24 @@ unknown, could be some unhandled optimization corner case in both libraries.
 For some formats, it's possible to tune various output options through
 @ref configuration(). See below for all options and their default values:
 
-@snippet MagnumPlugins/StbImageConverter/StbImageConverter.conf configuration_
+@snippet MagnumPlugins/StbImageConverter/StbImageConverter.conf.cmake configuration_
 
 See @ref plugins-configuration for more information and an example showing how
 to edit the configuration values.
+
+@section Trade-StbImageConverter-binary-size Reducing binary size
+
+To reduce the binary size of the plugin, similarly to @ref StbImageImporter,
+one can use the `STBI_NO_BMP`, `STBI_NO_HDR`, `STBI_NO_JPEG`, `STBI_NO_PNG` and
+`STBI_NO_TGA` preprocessor defines to disable unused formats. Besides compiling
+away the relevant format, the plugin then no longer provides the corresponding
+alias either --- so for example when passing `-DSTBI_NO_PNG` via `CMAKE_CXX_FLAGS` or adding it through
+@m_class{m-doc-external} [add_definitions()](https://cmake.org/cmake/help/latest/command/add_definitions.html) /
+@m_class{m-doc-external} [add_compile_definitions()](https://cmake.org/cmake/help/latest/command/add_compile_definitions.html),
+loading @cpp "PngImageConverter" @ce will not pick this plugin and attempting
+to write a `*.png` file with @cpp "StbImageConverter" @ce will fail. Defining
+all `STBI_NO_*` macros is an error caught at build time, as it'd render the
+plugin useless.
 */
 class MAGNUM_STBIMAGECONVERTER_EXPORT StbImageConverter: public AbstractImageConverter {
     public:
@@ -243,13 +257,23 @@ class MAGNUM_STBIMAGECONVERTER_EXPORT StbImageConverter: public AbstractImageCon
         /* Not marked with CORRADE_DEPRECATED() as the enum values are used
            internally */
         enum class Format: Int {
-            /* 0 used for invalid value */
-
+            /* 0 used for invalid value. Values are spelled out so that
+               disabling a format doesn't renumber the ones after it. */
+            #ifndef STBI_NO_BMP
             Bmp = 1,    /**< Output BMP images */
-            Jpeg,       /**< Output JPEG images */
-            Hdr,        /**< Output HDR images */
-            Png,        /**< Output PNG images */
-            Tga         /**< Output TGA images */
+            #endif
+            #ifndef STBI_NO_JPEG
+            Jpeg = 2,   /**< Output JPEG images */
+            #endif
+            #ifndef STBI_NO_HDR
+            Hdr = 3,    /**< Output HDR images */
+            #endif
+            #ifndef STBI_NO_PNG
+            Png = 4,    /**< Output PNG images */
+            #endif
+            #ifndef STBI_NO_TGA
+            Tga = 5,    /**< Output TGA images */
+            #endif
         };
 
         /**

@@ -39,6 +39,20 @@
 #include <Magnum/ImageView.h>
 #include <Magnum/PixelFormat.h>
 
+/* Note that stb_image_write has no per-format macros the way stb_image does,
+   we're just reusing the STBI_NO_* defines for convenience, only the plugin
+   code uses them to not call the relevant APIs, which then causes them to be
+   DCEd when linking. */
+#if defined(STBI_NO_BMP) && defined(STBI_NO_HDR) && defined(STBI_NO_JPEG) && defined(STBI_NO_PNG) && defined(STBI_NO_TGA)
+#error cannot define all of STBI_NO_BMP, STBI_NO_HDR, STBI_NO_JPEG, STBI_NO_PNG and STBI_NO_TGA as the plugin has no format left to support
+#else
+/* These two are defined without STBIWDEF and aren't in the public API block,
+   so STB_IMAGE_WRITE_STATIC misses them and PNG stays linked in when
+   STBI_NO_PNG is defined. Declaring them static first gives the definitions in
+   stb_image_write.h below internal linkage. */
+static unsigned char* stbi_zlib_compress(unsigned char* data, int data_len, int* out_len, int quality);
+static unsigned char* stbi_write_png_to_mem(unsigned char* pixels, int stride_bytes, int x, int y, int n, int* out_len);
+
 #define STBI_WRITE_NO_STDIO
 #define STB_IMAGE_WRITE_STATIC
 #define STB_IMAGE_WRITE_IMPLEMENTATION
@@ -50,6 +64,29 @@ namespace Magnum { namespace Trade {
 
 using namespace Containers::Literals;
 
+namespace {
+
+/* Assembled from pieces so errors list only what the plugin was built with */
+constexpr Containers::StringView FormatAliases = (
+    #ifndef STBI_NO_BMP
+    "Bmp,"
+    #endif
+    #ifndef STBI_NO_HDR
+    "Hdr,"
+    #endif
+    #ifndef STBI_NO_JPEG
+    "Jpeg,"
+    #endif
+    #ifndef STBI_NO_PNG
+    "Png,"
+    #endif
+    #ifndef STBI_NO_TGA
+    "Tga,"
+    #endif
+    ""_s).exceptSuffix(1);
+
+}
+
 #ifdef MAGNUM_BUILD_DEPRECATED /* LCOV_EXCL_START */
 StbImageConverter::StbImageConverter(Format format): _format{format} {
     /* Passing an invalid Format enum is user error, we'll assert on that in
@@ -58,59 +95,105 @@ StbImageConverter::StbImageConverter(Format format): _format{format} {
 }
 #else /* LCOV_EXCL_STOP */
 enum class StbImageConverter::Format: Int {
-    /* 0 used for invalid value */
-
+    /* 0 used for invalid value. Values are spelled out so that disabling a
+       format doesn't renumber the ones after it. */
+    #ifndef STBI_NO_BMP
     Bmp = 1,
-    Jpeg,
-    Hdr,
-    Png,
-    Tga
+    #endif
+    #ifndef STBI_NO_JPEG
+    Jpeg = 2,
+    #endif
+    #ifndef STBI_NO_HDR
+    Hdr = 3,
+    #endif
+    #ifndef STBI_NO_PNG
+    Png = 4,
+    #endif
+    #ifndef STBI_NO_TGA
+    Tga = 5,
+    #endif
 };
 #endif
 
 StbImageConverter::StbImageConverter(PluginManager::AbstractManager& manager, const Containers::StringView& plugin): AbstractImageConverter{manager, plugin} {
+    #ifndef STBI_NO_BMP
     if(plugin == "StbBmpImageConverter"_s || plugin == "BmpImageConverter"_s)
         _format = Format::Bmp;
-    else if(plugin == "StbHdrImageConverter"_s || plugin == "HdrImageConverter"_s)
+    else
+    #endif
+    #ifndef STBI_NO_HDR
+    if(plugin == "StbHdrImageConverter"_s || plugin == "HdrImageConverter"_s)
         _format = Format::Hdr;
-    else if(plugin == "StbJpegImageConverter"_s || plugin == "JpegImageConverter"_s)
+    else
+    #endif
+    #ifndef STBI_NO_JPEG
+    if(plugin == "StbJpegImageConverter"_s || plugin == "JpegImageConverter"_s)
         _format = Format::Jpeg;
-    else if(plugin == "StbPngImageConverter"_s || plugin == "PngImageConverter"_s)
+    else
+    #endif
+    #ifndef STBI_NO_PNG
+    if(plugin == "StbPngImageConverter"_s || plugin == "PngImageConverter"_s)
         _format = Format::Png;
-    else if(plugin == "StbTgaImageConverter"_s || plugin == "TgaImageConverter"_s)
+    else
+    #endif
+    #ifndef STBI_NO_TGA
+    if(plugin == "StbTgaImageConverter"_s || plugin == "TgaImageConverter"_s)
         _format = Format::Tga;
     else
+    #endif
+    {
         _format = {}; /* Runtime error in doExportToData() */
+    }
 }
 
 ImageConverterFeatures StbImageConverter::doFeatures() const { return ImageConverterFeature::Convert2DToData; }
 
 Containers::String StbImageConverter::doExtension() const {
+    #ifndef STBI_NO_BMP
     if(_format == Format::Bmp) return "bmp"_s;
+    #endif
+    #ifndef STBI_NO_HDR
     if(_format == Format::Hdr) return "hdr"_s;
+    #endif
+    #ifndef STBI_NO_JPEG
     if(_format == Format::Jpeg) return "jpg"_s;
+    #endif
+    #ifndef STBI_NO_PNG
     if(_format == Format::Png) return "png"_s;
+    #endif
+    #ifndef STBI_NO_TGA
     if(_format == Format::Tga) return "tga"_s;
+    #endif
 
     return {};
 }
 
 Containers::String StbImageConverter::doMimeType() const {
+    #ifndef STBI_NO_BMP
     if(_format == Format::Bmp) return "image/bmp"_s;
+    #endif
+    #ifndef STBI_NO_HDR
     if(_format == Format::Hdr) return "image/vnd.radiance"_s;
+    #endif
+    #ifndef STBI_NO_JPEG
     if(_format == Format::Jpeg) return "image/jpeg"_s;
+    #endif
+    #ifndef STBI_NO_PNG
     if(_format == Format::Png) return "image/png"_s;
+    #endif
+    #ifndef STBI_NO_TGA
     /* https://en.wikipedia.org/wiki/Truevision_TGA says there's no registered
        MIME type. It probably never will be. Using `file --mime-type` on a TGA
        file returns image/x-tga, so using that here as well. */
     if(_format == Format::Tga) return "image/x-tga"_s;
+    #endif
 
     return {};
 }
 
 Containers::Optional<Containers::Array<char>> StbImageConverter::doConvertToData(const ImageView2D& image) {
     if(_format == Format{}) {
-        Error{} << "Trade::StbImageConverter::convertToData(): cannot determine output format (plugin loaded as" << plugin() << Error::nospace << ", use one of the Stb{Bmp,Hdr,Jpeg,Png,Tga}ImageConverter aliases)";
+        Error{} << "Trade::StbImageConverter::convertToData(): cannot determine output format (plugin loaded as" << plugin() << Debug::nospace << ", use one of the Stb{" << Debug::nospace << FormatAliases << Debug::nospace << "}ImageConverter aliases)";
         return {};
     }
 
@@ -120,25 +203,71 @@ Containers::Optional<Containers::Array<char>> StbImageConverter::doConvertToData
     }
 
     Int components;
-    if(_format == Format::Bmp || _format == Format::Jpeg || _format == Format::Png || _format == Format::Tga) {
+    #if !defined(STBI_NO_BMP) || !defined(STBI_NO_JPEG) || !defined(STBI_NO_PNG) || !defined(STBI_NO_TGA)
+    if(
+        #ifndef STBI_NO_BMP
+        _format == Format::Bmp ||
+        #endif
+        #ifndef STBI_NO_JPEG
+       _format == Format::Jpeg ||
+        #endif
+        #ifndef STBI_NO_PNG
+       _format == Format::Png ||
+        #endif
+        #ifndef STBI_NO_TGA
+       _format == Format::Tga ||
+        #endif
+        false
+    ) {
+        #if !defined(STBI_NO_BMP) || !defined(STBI_NO_JPEG)
+        const bool dropsChannels =
+            #ifndef STBI_NO_BMP
+            _format == Format::Bmp ||
+            #endif
+            #ifndef STBI_NO_JPEG
+            _format == Format::Jpeg ||
+            #endif
+            false;
+        #endif
+
         switch(image.format()) {
             case PixelFormat::R8Unorm:      components = 1; break;
             case PixelFormat::RG8Unorm:
-                if((_format == Format::Bmp || _format == Format::Jpeg) && !(flags() & ImageConverterFlag::Quiet))
+                #if !defined(STBI_NO_BMP) || !defined(STBI_NO_JPEG)
+                if(dropsChannels && !(flags() & ImageConverterFlag::Quiet))
                     Warning{} << "Trade::StbImageConverter::convertToData(): ignoring green channel for BMP/JPEG output";
+                #endif
                 components = 2;
                 break;
             case PixelFormat::RGB8Unorm:    components = 3; break;
             case PixelFormat::RGBA8Unorm:
-                if((_format == Format::Bmp || _format == Format::Jpeg) && !(flags() & ImageConverterFlag::Quiet))
+                #if !defined(STBI_NO_BMP) || !defined(STBI_NO_JPEG)
+                if(dropsChannels && !(flags() & ImageConverterFlag::Quiet))
                     Warning{} << "Trade::StbImageConverter::convertToData(): ignoring alpha channel for BMP/JPEG output";
+                #endif
                 components = 4;
                 break;
             default:
-                Error() << "Trade::StbImageConverter::convertToData():" << image.format() << "is not supported for BMP/JPEG/PNG/TGA output";
+                Error() << "Trade::StbImageConverter::convertToData():" << image.format() << "is not supported for" << (
+                    #ifndef STBI_NO_BMP
+                    "BMP/"
+                    #endif
+                    #ifndef STBI_NO_JPEG
+                    "JPEG/"
+                    #endif
+                    #ifndef STBI_NO_PNG
+                    "PNG/"
+                    #endif
+                    #ifndef STBI_NO_TGA
+                    "TGA/"
+                    #endif
+                    ""_s).exceptSuffix(1) << "output";
                 return {};
         }
-    } else if(_format == Format::Hdr) {
+    } else
+    #endif
+    #ifndef STBI_NO_HDR
+    if(_format == Format::Hdr) {
         switch(image.format()) {
             case PixelFormat::R32F:         components = 1; break;
             case PixelFormat::RG32F:
@@ -156,7 +285,9 @@ Containers::Optional<Containers::Array<char>> StbImageConverter::doConvertToData
                 Error() << "Trade::StbImageConverter::convertToData():" << image.format() << "is not supported for HDR output";
                 return {};
         }
-    } else CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+    } else
+    #endif
+    CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
 
     /* Copy image pixels to a tightly-packed array with rows reversed.
        Unfortunately there's no way to specify arbitrary strides, for Y
@@ -179,17 +310,32 @@ Containers::Optional<Containers::Array<char>> StbImageConverter::doConvertToData
        failure (which isn't really recoverable as the whole OS is a mess at
        that point anyway) all of them are checked by AbstractImageConverter
        already so it's fine to just assert here. */
+    #ifndef STBI_NO_BMP
     if(_format == Format::Bmp) {
         CORRADE_INTERNAL_ASSERT_OUTPUT(stbi_write_bmp_to_func(writeFunc, &data, image.size().x(), image.size().y(), components, flippedPackedData.data()));
-    } else if(_format == Format::Jpeg) {
+    } else
+    #endif
+    #ifndef STBI_NO_JPEG
+    if(_format == Format::Jpeg) {
         CORRADE_INTERNAL_ASSERT_OUTPUT(stbi_write_jpg_to_func(writeFunc, &data, image.size().x(), image.size().y(), components, flippedPackedData.data(), Int(configuration().value<Float>("jpegQuality")*100.0f)));
-    } else if(_format == Format::Hdr) {
+    } else
+    #endif
+    #ifndef STBI_NO_HDR
+    if(_format == Format::Hdr) {
         CORRADE_INTERNAL_ASSERT_OUTPUT(stbi_write_hdr_to_func(writeFunc, &data, image.size().x(), image.size().y(), components, reinterpret_cast<float*>(flippedPackedData.data())));
-    } else if(_format == Format::Png) {
+    } else
+    #endif
+    #ifndef STBI_NO_PNG
+    if(_format == Format::Png) {
         CORRADE_INTERNAL_ASSERT_OUTPUT(stbi_write_png_to_func(writeFunc, &data, image.size().x(), image.size().y(), components, flippedPackedData.data(), 0));
-    } else if(_format == Format::Tga) {
+    } else
+    #endif
+    #ifndef STBI_NO_TGA
+    if(_format == Format::Tga) {
         CORRADE_INTERNAL_ASSERT_OUTPUT(stbi_write_tga_to_func(writeFunc, &data, image.size().x(), image.size().y(), components, flippedPackedData.data()));
-    } else CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
+    } else
+    #endif
+    CORRADE_INTERNAL_ASSERT_UNREACHABLE(); /* LCOV_EXCL_LINE */
 
     /* Convert the growable array back to a non-growable with the default
        deleter so we can return it */
@@ -209,23 +355,38 @@ bool StbImageConverter::doConvertToFile(const ImageView2D& image, const Containe
        from extension if it's not supplied explicitly */
     const Format previousFormat = _format;
     if(_format == Format{}) {
+        #ifndef STBI_NO_BMP
         if(normalizedExtension == ".bmp"_s)
             _format = Format::Bmp;
-        else if(normalizedExtension == ".hdr"_s)
+        else
+        #endif
+        #ifndef STBI_NO_HDR
+        if(normalizedExtension == ".hdr"_s)
             _format = Format::Hdr;
-        else if(normalizedExtension == ".jpg"_s ||
-                normalizedExtension == ".jpeg"_s ||
-                normalizedExtension == ".jpe"_s)
+        else
+        #endif
+        #ifndef STBI_NO_JPEG
+        if(normalizedExtension == ".jpg"_s ||
+           normalizedExtension == ".jpeg"_s ||
+           normalizedExtension == ".jpe"_s)
             _format = Format::Jpeg;
-        else if(normalizedExtension == ".png"_s)
+        else
+        #endif
+        #ifndef STBI_NO_PNG
+        if(normalizedExtension == ".png"_s)
             _format = Format::Png;
-        else if(normalizedExtension == ".tga"_s ||
-                normalizedExtension == ".vda"_s ||
-                normalizedExtension == ".icb"_s ||
-                normalizedExtension == ".vst"_s)
+        else
+        #endif
+        #ifndef STBI_NO_TGA
+        if(normalizedExtension == ".tga"_s ||
+           normalizedExtension == ".vda"_s ||
+           normalizedExtension == ".icb"_s ||
+           normalizedExtension == ".vst"_s)
             _format = Format::Tga;
-        else {
-            Error{} << "Trade::StbImageConverter::convertToFile(): cannot determine output format for" << Utility::Path::filename(filename) << "(plugin loaded as" << plugin() << Error::nospace << ", use one of the Stb{Bmp,Hdr,Jpeg,Png,Tga}ImageConverter aliases or a corresponding file extension)";
+        else
+        #endif
+        {
+            Error{} << "Trade::StbImageConverter::convertToFile(): cannot determine output format for" << Utility::Path::filename(filename) << "(plugin loaded as" << plugin() << Error::nospace << ", use one of the Stb{" << Error::nospace << FormatAliases << Error::nospace << "}ImageConverter aliases or a corresponding file extension)";
             return false;
         }
     }
@@ -242,3 +403,4 @@ bool StbImageConverter::doConvertToFile(const ImageView2D& image, const Containe
 
 CORRADE_PLUGIN_REGISTER(StbImageConverter, Magnum::Trade::StbImageConverter,
     MAGNUM_TRADE_ABSTRACTIMAGECONVERTER_PLUGIN_INTERFACE)
+#endif
