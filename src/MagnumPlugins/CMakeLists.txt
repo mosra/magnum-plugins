@@ -138,6 +138,10 @@ if(MAGNUM_WITH_JPEGIMPORTER)
     add_subdirectory(JpegImporter)
 endif()
 
+if(MAGNUM_WITH_JTIMPORTER)
+    add_subdirectory(JtImporter)
+endif()
+
 if(MAGNUM_WITH_KTXIMAGECONVERTER)
     add_subdirectory(KtxImageConverter)
 endif()
