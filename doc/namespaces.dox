@@ -114,6 +114,10 @@
  * @brief Plugin @ref Magnum::Trade::KtxImporter
  * @m_since_latest_{plugins}
  */
+/** @dir MagnumPlugins/LdrawImporter
+ * @brief Plugin @ref Magnum::Trade::LdrawImporter
+ * @m_since_latest_{plugins}
+ */
 /** @dir MagnumPlugins/LunaSvgImporter
  * @brief Plugin @ref Magnum::Trade::LunaSvgImporter
  * @m_since_latest_{plugins}

@@ -146,6 +146,10 @@ if(MAGNUM_WITH_KTXIMPORTER)
     add_subdirectory(KtxImporter)
 endif()
 
+if(MAGNUM_WITH_LDRAWIMPORTER)
+    add_subdirectory(LdrawImporter)
+endif()
+
 if(MAGNUM_WITH_LUNASVGIMPORTER)
     add_subdirectory(LunaSvgImporter)
 endif()
