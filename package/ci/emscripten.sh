@@ -53,15 +53,12 @@ cd ../..
 
 # Crosscompile FAAD2. Basically a copy of the emscripten-faad2 PKGBUILD from
 # https://github.com/mosra/archlinux.
-# As of 2021-09-30, CircleCI fails with an "expired certificate" error, so we
-# explicitly disable the certificate check.
-wget --no-check-certificate https://downloads.sourceforge.net/sourceforge/faac/faad2-2.8.8.tar.gz
-tar -xzvf faad2-2.8.8.tar.gz
-cd faad2-2.8.8
+wget --no-check-certificate https://github.com/FreewareAdvancedAudio/faad2/archive/refs/tags/2_8_8.tar.gz
+tar -xzvf 2_8_8.tar.gz
+cd faad2-2_8_8
+./bootstrap
 emconfigure ./configure --prefix=$HOME/deps
 emmake make install
-mv $HOME/deps/lib/{libfaad.a,faad.bc}
-mv $HOME/deps/lib/{libfaad_drm.a,faad_drm.bc}
 cd ..
 
 # Crosscompile zstd. Version 1.5.1+ doesn't compile with this Emscripten

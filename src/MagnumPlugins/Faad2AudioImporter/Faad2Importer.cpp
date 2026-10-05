@@ -58,7 +58,7 @@ void Faad2Importer::doOpenData(Containers::ArrayView<const char> data) {
 
     /* Open the file. I expected anything but a need for a const_cast. Ugh. */
     /* For raw AAC files it returns always 0, not skipping any header:
-       https://github.com/knik0/faad2/blob/7da4a83b230d069a9d731b1e64f6e6b52802576a/libfaad/decoder.c#L327-L339 */
+       https://github.com/FreewareAdvancedAudio/faad2/blob/7da4a83b230d069a9d731b1e64f6e6b52802576a/libfaad/decoder.c#L327-L339 */
     unsigned long samplerate = 0;
     unsigned char channels = 0;
     long result = NeAACDecInit(decoder, const_cast<unsigned char*>(reinterpret_cast<const unsigned char*>(data.data())), data.size(), &samplerate, &channels);
@@ -74,7 +74,7 @@ void Faad2Importer::doOpenData(Containers::ArrayView<const char> data) {
     else {
         /* Mono files are always upgraded to stereo for some reason, so I
            always assume stereo anyway:
-           https://github.com/knik0/faad2/blob/7da4a83b230d069a9d731b1e64f6e6b52802576a/libfaad/decoder.c#L353-L358 */
+           https://github.com/FreewareAdvancedAudio/faad2/blob/7da4a83b230d069a9d731b1e64f6e6b52802576a/libfaad/decoder.c#L353-L358 */
         Error{} << "Audio::Faad2Importer::openData(): unsupported channel count"
                 << channels << "with" << 16 << "bits per sample";
         return;
@@ -82,7 +82,7 @@ void Faad2Importer::doOpenData(Containers::ArrayView<const char> data) {
 
     /** @todo s there any way to get the sample count beforehand? the faad
         fronted does it by manually parsing the headers and NO WAY IN HELL i
-        am doing that here: https://github.com/knik0/faad2/blob/7da4a83b230d069a9d731b1e64f6e6b52802576a/frontend/main.c#L613-L630 */
+        am doing that here: https://github.com/FreewareAdvancedAudio/faad2/blob/7da4a83b230d069a9d731b1e64f6e6b52802576a/frontend/main.c#L613-L630 */
     std::size_t pos = result;
     Containers::Array<UnsignedShort> samples;
     while(pos < data.size()) {

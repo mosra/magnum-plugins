@@ -59,13 +59,13 @@ namespace Magnum { namespace Audio {
 @m_keywords{Faad2AudioImporter AacAudioImporter}
 
 Imports mono and stereo AAC files with 16 bits per channel using the
-[FAAD2](https://www.audiocoding.com) library.
+[FAAD2](https://freewareadvancedaudio.github.io) library.
 
 This plugins provides `AacAudioImporter`.
 
 @m_class{m-block m-danger}
 
-@thirdparty This plugin makes use of the [FAAD2](https://www.audiocoding.com/faad2.html)
+@thirdparty This plugin makes use of the [FAAD2](https://freewareadvancedaudio.github.io)
     library, licensed under @m_class{m-label m-danger} **GPLv2**
     ([license text](https://opensource.org/license/gpl-2-0/),
     [choosealicense.com](https://choosealicense.com/licenses/gpl-2.0/)). It

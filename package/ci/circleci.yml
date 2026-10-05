@@ -705,8 +705,9 @@ jobs:
       # tested in the job below.
       USE_EMSCRIPTEN_PORTS: "OFF"
     steps:
+    # Automake and libtool needed for running ./bootstrap for the faad2 package
     - install-base-linux:
-        extra: curl
+        extra: curl automake libtool
     # With a Debug build, 16+ is causing OOMs. Release was fine with that.
     - cap-ninja-jobs:
         count: 8
@@ -728,8 +729,9 @@ jobs:
       # the build without to fail.
       USE_EMSCRIPTEN_PORTS: "ON"
     steps:
+    # Automake and libtool needed for running ./bootstrap for the faad2 package
     - install-base-linux:
-        extra: curl
+        extra: curl automake libtool
     # Even 8 is causing OOMs, likely due to extra plugins using the ports?
     - cap-ninja-jobs:
         count: 6

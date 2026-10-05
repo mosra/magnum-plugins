@@ -741,7 +741,7 @@ Released 2019-02-04, tagged as
 @subsection changelog-plugins-2019-01-new New features
 
 -   New @ref Audio::Faad2Importer "Faad2AudioImporter" plugin for importing
-    AAC files using [FAAD2](https://www.audiocoding.com/faad2.html)
+    AAC files using FAAD2
 
 @subsection changelog-plugins-2019-01-changes Changes and improvements
 
