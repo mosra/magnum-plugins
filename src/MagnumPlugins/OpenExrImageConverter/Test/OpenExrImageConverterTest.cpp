@@ -196,7 +196,9 @@ const struct {
     {"", "", {}, {}, 427, 602},
     {"RLE", "rle", {}, {}, 427, 602},
     /* For consistency with versions before 3.1.3 (where it's hardcoded to
-       6 instead of 4 and can't be changed) */
+       6 instead of 4 and can't be changed). Furthermore, versions 3.2+ use
+       libdeflate, which has a different output for version 1.18 and 1.19+,
+       which is handled in the compressionCubeMap() test case itself. */
     #if OPENEXR_VERSION_MAJOR*10000 + OPENEXR_VERSION_MINOR*100 + OPENEXR_VERSION_PATCH >= 30200
     {"ZIP level 6", "zip", 6, {}, 391, 404},
     #else
@@ -536,22 +538,20 @@ void OpenExrImageConverterTest::envmap3DInvalid() {
 void OpenExrImageConverterTest::cubeMap3D() {
     Containers::Pointer<AbstractImageConverter> converter = _manager.instantiate("OpenExrImageConverter");
 
-    /* Reset ZIP compression level to 6 for consistency with versions before
-       3.1.3 (on those it's the hardcoded default) */
-    converter->configuration().setValue("zipCompressionLevel", 6);
+    /* The default ZIP compression produces different output based on whether
+       zlib (OpenEXR 3.1.11 and below) or libdeflate (3.2+) is used, on older
+       versions the default ZIP compression level is different, and furthermore
+       the output is different for libdeflate 1.18 and 1.19+. Not worth the
+       pain, so just test an uncompressed output. Assuming a modicum of format
+       sanity doing so shouldn't cause bugs to get through undetected. */
+    converter->configuration().setValue("compression", "");
 
     Containers::Optional<Containers::Array<char>> data = converter->convertToData(CubeRg16f);
     CORRADE_VERIFY(data);
     /** @todo Compare::DataToFile */
-    #if OPENEXR_VERSION_MAJOR*10000 + OPENEXR_VERSION_MINOR*100 + OPENEXR_VERSION_PATCH >= 30200
     CORRADE_COMPARE_AS(Containers::StringView{*data},
         Utility::Path::join(OPENEXRIMPORTER_TEST_DIR, "envmap-cube.exr"),
         TestSuite::Compare::StringToFile);
-    #else
-    CORRADE_COMPARE_AS(Containers::StringView{*data},
-        Utility::Path::join(OPENEXRIMAGECONVERTER_TEST_DIR, "envmap-cube-31.exr"),
-        TestSuite::Compare::StringToFile);
-    #endif
 
     /* The metadata has no effect on the actual saved data, so no point in
        importing. Verifying the metadata has to be done using the `exrheader`
@@ -626,22 +626,20 @@ void OpenExrImageConverterTest::customChannels() {
     converter->configuration().setValue("b", "Z");
     converter->configuration().setValue("a", "handedness");
 
-    /* Reset ZIP compression level to 6 for consistency with versions before
-       3.1.3 (on those it's the hardcoded default) */
-    converter->configuration().setValue("zipCompressionLevel", 6);
+    /* The default ZIP compression produces different output based on whether
+       zlib (OpenEXR 3.1.11 and below) or libdeflate (3.2+) is used, on older
+       versions the default ZIP compression level is different, and furthermore
+       the output is different for libdeflate 1.18 and 1.19+. Not worth the
+       pain, so just test an uncompressed output. Assuming a modicum of format
+       sanity doing so shouldn't cause bugs to get through undetected. */
+    converter->configuration().setValue("compression", "");
 
     Containers::Optional<Containers::Array<char>> data = converter->convertToData(Rgba32f);
     CORRADE_VERIFY(data);
     /** @todo Compare::DataToFile */
-    #if OPENEXR_VERSION_MAJOR*10000 + OPENEXR_VERSION_MINOR*100 + OPENEXR_VERSION_PATCH >= 30200
     CORRADE_COMPARE_AS(Containers::StringView{*data},
         Utility::Path::join(OPENEXRIMPORTER_TEST_DIR, "rgba32f-custom-channels.exr"),
         TestSuite::Compare::StringToFile);
-    #else
-    CORRADE_COMPARE_AS(Containers::StringView{*data},
-        Utility::Path::join(OPENEXRIMAGECONVERTER_TEST_DIR, "rgba32f-custom-channels-31.exr"),
-        TestSuite::Compare::StringToFile);
-    #endif
 
     if(_importerManager.loadState("OpenExrImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("OpenExrImporter plugin not found, cannot test");
@@ -793,23 +791,20 @@ void OpenExrImageConverterTest::customWindowsCubeMap() {
     Containers::Pointer<AbstractImageConverter> converter = _manager.instantiate("OpenExrImageConverter");
     converter->configuration().setValue("displayWindow", Vector4i{38, 56, 47, 72});
     converter->configuration().setValue("dataOffset", Vector2i{375, 226});
-
-    /* Reset ZIP compression level to 6 for consistency with versions before
-       3.1.3 (on those it's the hardcoded default) */
-    converter->configuration().setValue("zipCompressionLevel", 6);
+    /* The default ZIP compression produces different output based on whether
+       zlib (OpenEXR 3.1.11 and below) or libdeflate (3.2+) is used, on older
+       versions the default ZIP compression level is different, and furthermore
+       the output is different for libdeflate 1.18 and 1.19+. Not worth the
+       pain, so just test an uncompressed output. Assuming a modicum of format
+       sanity doing so shouldn't cause bugs to get through undetected. */
+    converter->configuration().setValue("compression", "");
 
     Containers::Optional<Containers::Array<char>> data = converter->convertToData(CubeRg16f);
     CORRADE_VERIFY(data);
     /** @todo Compare::DataToFile */
-    #if OPENEXR_VERSION_MAJOR*10000 + OPENEXR_VERSION_MINOR*100 + OPENEXR_VERSION_PATCH >= 30200
     CORRADE_COMPARE_AS(Containers::StringView{*data},
         Utility::Path::join(OPENEXRIMPORTER_TEST_DIR, "envmap-cube-custom-windows.exr"),
         TestSuite::Compare::StringToFile);
-    #else
-    CORRADE_COMPARE_AS(Containers::StringView{*data},
-        Utility::Path::join(OPENEXRIMAGECONVERTER_TEST_DIR, "envmap-cube-custom-windows-31.exr"),
-        TestSuite::Compare::StringToFile);
-    #endif
 
     if(_importerManager.loadState("OpenExrImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("OpenExrImporter plugin not found, cannot test");
@@ -892,7 +887,19 @@ void OpenExrImageConverterTest::compressionCubeMap() {
 
     /* The sizes should slightly differ at the very least -- this checks that
        the setting isn't just plainly ignored */
-    CORRADE_COMPARE(out->size(), data.cubeSize);
+    #if OPENEXR_VERSION_MAJOR*10000 + OPENEXR_VERSION_MINOR*100 + OPENEXR_VERSION_PATCH >= 30200
+    /* OpenEXR 3.2+ uses libdeflate, which produces different output than zlib
+       used with 3.1.11 and older. Furthermove, libdeflate 1.18 produces
+       differently sized output than 1.19+, and coincidentally OpenEXR < 3.4
+       embeds libdeflate 1.18 unless one is found in the system, which means
+       there's no reliable way to figure out what is the version of libdeflate
+       used, especially when embedded as private symbols. So just special-case
+       that one single variant where it differs. */
+    if(data.name == "ZIP level 6"_s && out->size() != 407)
+    #endif
+    {
+        CORRADE_COMPARE(out->size(), data.cubeSize);
+    }
 
     if(_importerManager.loadState("OpenExrImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("OpenExrImporter plugin not found, cannot test");
@@ -1105,9 +1112,13 @@ void OpenExrImageConverterTest::levels2DInvalidTileSize() {
 void OpenExrImageConverterTest::levelsCubeMap() {
     Containers::Pointer<AbstractImageConverter> converter = _manager.instantiate("OpenExrImageConverter");
 
-    /* Reset ZIP compression level to 6 for consistency with versions before
-       3.1.3 (on those it's the hardcoded default) */
-    converter->configuration().setValue("zipCompressionLevel", 6);
+    /* The default ZIP compression produces different output based on whether
+       zlib (OpenEXR 3.1.11 and below) or libdeflate (3.2+) is used, on older
+       versions the default ZIP compression level is different, and furthermore
+       the output is different for libdeflate 1.18 and 1.19+. Not worth the
+       pain, so just test an uncompressed output. Assuming a modicum of format
+       sanity doing so shouldn't cause bugs to get through undetected. */
+    converter->configuration().setValue("compression", "");
 
     const Half data0[]{
          0.0_h,  1.0_h,  2.0_h,  3.0_h,
@@ -1162,15 +1173,9 @@ void OpenExrImageConverterTest::levelsCubeMap() {
     Containers::Optional<Containers::Array<char>> data = converter->convertToData({image0, image1, image2});
     CORRADE_VERIFY(data);
     /** @todo Compare::DataToFile */
-    #if OPENEXR_VERSION_MAJOR*10000 + OPENEXR_VERSION_MINOR*100 + OPENEXR_VERSION_PATCH >= 30200
     CORRADE_COMPARE_AS(Containers::StringView{*data},
         Utility::Path::join(OPENEXRIMPORTER_TEST_DIR, "levels-cube.exr"),
         TestSuite::Compare::StringToFile);
-    #else
-    CORRADE_COMPARE_AS(Containers::StringView{*data},
-        Utility::Path::join(OPENEXRIMAGECONVERTER_TEST_DIR, "levels-cube-31.exr"),
-        TestSuite::Compare::StringToFile);
-    #endif
 
     if(_importerManager.loadState("OpenExrImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("OpenExrImporter plugin not found, cannot test");
@@ -1224,9 +1229,13 @@ void OpenExrImageConverterTest::levelsCubeMap() {
 void OpenExrImageConverterTest::levelsCubeMapIncomplete() {
     Containers::Pointer<AbstractImageConverter> converter = _manager.instantiate("OpenExrImageConverter");
 
-    /* Reset ZIP compression level to 6 for consistency with versions before
-       3.1.3 (on those it's the hardcoded default) */
-    converter->configuration().setValue("zipCompressionLevel", 6);
+    /* The default ZIP compression produces different output based on whether
+       zlib (OpenEXR 3.1.11 and below) or libdeflate (3.2+) is used, on older
+       versions the default ZIP compression level is different, and furthermore
+       the output is different for libdeflate 1.18 and 1.19+. Not worth the
+       pain, so just test an uncompressed output. Assuming a modicum of format
+       sanity doing so shouldn't cause bugs to get through undetected. */
+    converter->configuration().setValue("compression", "");
 
     const Half data0[]{
          0.0_h,  1.0_h,  2.0_h,  3.0_h,
@@ -1272,15 +1281,9 @@ void OpenExrImageConverterTest::levelsCubeMapIncomplete() {
     Containers::Optional<Containers::Array<char>> out = converter->convertToData({image0, image1});
     CORRADE_VERIFY(out);
     /** @todo Compare::DataToFile */
-    #if OPENEXR_VERSION_MAJOR*10000 + OPENEXR_VERSION_MINOR*100 + OPENEXR_VERSION_PATCH >= 30200
     CORRADE_COMPARE_AS(Containers::StringView{*out},
         Utility::Path::join(OPENEXRIMPORTER_TEST_DIR, "levels-cube-incomplete.exr"),
         TestSuite::Compare::StringToFile);
-    #else
-    CORRADE_COMPARE_AS(Containers::StringView{*out},
-        Utility::Path::join(OPENEXRIMAGECONVERTER_TEST_DIR, "levels-cube-incomplete-31.exr"),
-        TestSuite::Compare::StringToFile);
-    #endif
 
     if(_importerManager.loadState("OpenExrImporter") == PluginManager::LoadState::NotFound)
         CORRADE_SKIP("OpenExrImporter plugin not found, cannot test");
