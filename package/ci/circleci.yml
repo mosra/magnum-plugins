@@ -662,7 +662,7 @@ jobs:
     - install-plutosvg
     - build:
         script: unix-desktop.sh
-    # The 14.3 images seem to have the new lcov, which is very picky and throws
+    # The 14.3 image seems to have the new lcov, which is very picky and throws
     # errors about a ton of little things, 14.0.1 and older didn't, 15+ even
     # more
     - lcov:
@@ -691,7 +691,7 @@ jobs:
     - install-plutosvg
     - build:
         script: unix-desktop.sh
-    # The 14.3 images seem to have the new lcov, which is very picky and throws
+    # The 14.3 image seems to have the new lcov, which is very picky and throws
     # errors about a ton of little things, 14.0.1 and older didn't, 15+ even
     # more
     - lcov:
