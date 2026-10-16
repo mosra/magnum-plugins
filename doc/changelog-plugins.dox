@@ -316,6 +316,9 @@ namespace Magnum {
     @relativeref{Trade,StbImageConverter} now recognize the `STBI_NO_*`
     preprocessor defines to compile away support for particular formats for
     binary size reduction
+-   Fixed detection of what top-level target to link to in FindGlslang.cmake to
+    make sure no transitive dependencies or include paths are lost with glslang
+    15 (see [mosra/magnum#698](https://github.com/mosra/magnum/issues/698))
 
 @subsection changelog-plugins-latest-bugfixes Bug fixes
 
