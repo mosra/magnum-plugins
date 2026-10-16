@@ -163,8 +163,6 @@ if(TARGET glslang OR TARGET glslang::glslang)
         # If the SPIRV target exists (on versions 14 and older), that's the
         # top-level target to link to
         if((TARGET glslang AND TARGET SPIRV) OR (TARGET glslang::glslang AND TARGET glslang::SPIRV))
-            set(_GLSLANG_TOP_LEVEL_TARGET SPIRV)
-
             # In case of a CMake subproject, simply link Glslang::Glslang to
             # the SPIRV target, without creating an intermediate Glslang::SPIRV
             # target.
