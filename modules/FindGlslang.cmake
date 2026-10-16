@@ -71,14 +71,17 @@
 # Not nice at all.
 #
 # Then! More salt! With version 15.0, the SPIRV target, which used to link to
-# glslang, is removed, and glslang is the top-level target instead. Which means
-# I have to make one or the other the top-level target, which OF COURSE DOES
-# NOT MAKE ANYTHING SIMPLER THAN BEFORE. And these people think it's about
-# JUST REMOVING THE REFERENCE!!!! JUST!!!! Like if I could afford to care only
-# about the last bug-ridden release that falls out of their hands, like if
-# there would be no LTS distros from five years ago!!!
-#  https://github.com/KhronosGroup/glslang/issues/3882#issuecomment-2692374048
-# Do you see that comment?!
+# glslang, is removed, and glslang is the top-level target instead, but only
+# briefly, eventually the SPIRV target is added back as a stub, but until
+#   https://github.com/KhronosGroup/glslang/commit/8ad28db18a601c43ff0d7e369533f5e8c450b39e
+# in 15.2.0 it links to glslang privately, which means I cannot just use it as
+# before as I lose transitive dependencies along w/ include paths, and until
+#   https://github.com/KhronosGroup/glslang/commit/0018771b46c492e28ca916b00eda96093381a3b2
+# in 15.3.0 the SPIRV target exists only in a CMake subproject setting but not
+# when installed. Which means not only I have to make one or the other the
+# top-level target, which OF COURSE DOES NOT MAKE ANYTHING SIMPLER THAN BEFORE,
+# I also have to specifically check for version 15 to avoid using the SPIRV
+# target there altogether.
 #
 # Thus, aside of the mess with randomly appearing and disappearing libraries,
 # both the variant with attempting to use the config file and the variant with
@@ -160,9 +163,33 @@ if(TARGET glslang OR TARGET glslang::glslang)
             set_target_properties(Glslang::Glslang PROPERTIES INTERFACE_INCLUDE_DIRECTORIES "${_GLSLANG_INTERFACE_INCLUDE_DIRECTORIES};${_GLSLANG_INTERFACE_INCLUDE_DIRECTORIES}/glslang")
         endif()
 
-        # If the SPIRV target exists (on versions 14 and older), that's the
-        # top-level target to link to
-        if((TARGET glslang AND TARGET SPIRV) OR (TARGET glslang::glslang AND TARGET glslang::SPIRV))
+        # On versions 14 and older, the SPIRV target is the top-level target to
+        # link to. On version 15+ the SPIRV target may or may not exist and may
+        # or may not be broken or useless (as explained in the rant at the
+        # top), so check both that the target exists and compare the version.
+        #
+        # If we have a CMake subproject, fortunately the version is exposed
+        # directly as a property so I don't need to hunt for a build_info.h
+        # header that might be just anywhere or in some cases not even
+        # generated yet.
+        if(TARGET glslang AND TARGET SPIRV)
+            get_target_property(_GLSLANG_VERSION glslang VERSION)
+            if(_GLSLANG_VERSION VERSION_LESS 15.0.0)
+                set(_GLSLANG_TOP_LEVEL_SPIRV_TARGET 1)
+            endif()
+        # If the target is imported, find_package() should have filled the
+        # glslang_VERSION variable, so check that instead. I'm not sure why
+        # CMake can't just propagate the VERSION target property to the config
+        # file??
+        elseif(TARGET glslang::glslang AND TARGET glslang::SPIRV)
+            if(glslang_VERSION VERSION_LESS 15.0.0)
+                set(_GLSLANG_TOP_LEVEL_SPIRV_TARGET 1)
+            endif()
+        endif()
+        # Finally, If the VERSION property or the glslang_VERSION variable
+        # aren't present, _GLSLANG_TOP_LEVEL_SPIRV_TARGET is set as well as an
+        # empty variable is less than 15.0.0.
+        if(_GLSLANG_TOP_LEVEL_SPIRV_TARGET)
             # In case of a CMake subproject, simply link Glslang::Glslang to
             # the SPIRV target, without creating an intermediate Glslang::SPIRV
             # target.
