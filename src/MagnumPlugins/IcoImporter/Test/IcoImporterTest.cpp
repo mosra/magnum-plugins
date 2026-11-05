@@ -152,6 +152,9 @@ void IcoImporterTest::pngImporterNotFound() {
 }
 
 void IcoImporterTest::pngLoadFailed() {
+    if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("PngImporter is available, can't test.");
+
     Containers::Optional<Containers::Array<char>> file = Utility::Path::read(Utility::Path::join(ICOIMPORTER_TEST_DIR, "pngs.ico"));
     CORRADE_VERIFY(file);
     CORRADE_COMPARE_AS(file->size(), 6 + 3*16 + 8, TestSuite::Compare::Greater);
@@ -169,6 +172,9 @@ void IcoImporterTest::pngLoadFailed() {
 }
 
 void IcoImporterTest::bmp() {
+    if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("PngImporter is available, can't test.");
+
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("IcoImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(ICOIMPORTER_TEST_DIR, "bmp+png.ico")));
 
@@ -199,6 +205,9 @@ void IcoImporterTest::bmp() {
 }
 
 void IcoImporterTest::png() {
+    if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("PngImporter is available, can't test.");
+
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("IcoImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(ICOIMPORTER_TEST_DIR, "pngs.ico")));
 
@@ -236,6 +245,9 @@ void IcoImporterTest::openMemory() {
     auto&& data = OpenMemoryData[testCaseInstanceId()];
     setTestCaseDescription(data.name);
 
+    if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("PngImporter is available, can't test.");
+
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("IcoImporter");
     Containers::Optional<Containers::Array<char>> memory = Utility::Path::read(Utility::Path::join(ICOIMPORTER_TEST_DIR, "pngs.ico"));
     CORRADE_VERIFY(memory);
@@ -251,6 +263,9 @@ void IcoImporterTest::openMemory() {
 }
 
 void IcoImporterTest::openTwice() {
+    if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("PngImporter is available, can't test.");
+
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("IcoImporter");
 
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(ICOIMPORTER_TEST_DIR, "pngs.ico")));
@@ -260,6 +275,9 @@ void IcoImporterTest::openTwice() {
 }
 
 void IcoImporterTest::importTwice() {
+    if(_manager.loadState("PngImporter") == PluginManager::LoadState::NotFound)
+        CORRADE_SKIP("PngImporter is available, can't test.");
+
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("IcoImporter");
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(ICOIMPORTER_TEST_DIR, "pngs.ico")));
 
