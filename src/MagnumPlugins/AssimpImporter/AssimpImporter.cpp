@@ -2228,7 +2228,7 @@ Containers::Optional<AnimationData> AssimpImporter::doAnimation(UnsignedInt id) 
                     data.sliceSize(dataOffset, keyCount*sizeof(Vector3)));
                 dataOffset += values.size()*sizeof(values[0]);
 
-                for(std::size_t k = 0; k < channel->mNumPositionKeys; ++k) {
+                for(std::size_t k = 0; k != keyCount; ++k) {
                     /* Convert double to float keys */
                     keys[k] = channel->mPositionKeys[k].mTime / ticksPerSecond;
                     values[k] = Vector3::from(&channel->mPositionKeys[k].mValue[0]);
@@ -2250,7 +2250,7 @@ Containers::Optional<AnimationData> AssimpImporter::doAnimation(UnsignedInt id) 
                     data.sliceSize(dataOffset, keyCount*sizeof(Quaternion)));
                 dataOffset += values.size()*sizeof(values[0]);
 
-                for(std::size_t k = 0; k < channel->mNumRotationKeys; ++k) {
+                for(std::size_t k = 0; k != keyCount; ++k) {
                     keys[k] = channel->mRotationKeys[k].mTime / ticksPerSecond;
                     const aiQuaternion& quat = channel->mRotationKeys[k].mValue;
                     values[k] = Quaternion{{quat.x, quat.y, quat.z}, quat.w};
@@ -2292,7 +2292,7 @@ Containers::Optional<AnimationData> AssimpImporter::doAnimation(UnsignedInt id) 
                     data.sliceSize(dataOffset, keyCount*sizeof(Vector3)));
                 dataOffset += values.size()*sizeof(values[0]);
 
-                for(std::size_t k = 0; k < channel->mNumScalingKeys; ++k) {
+                for(std::size_t k = 0; k != keyCount; ++k) {
                     keys[k] = channel->mScalingKeys[k].mTime / ticksPerSecond;
                     values[k] = Vector3::from(&channel->mScalingKeys[k].mValue[0]);
                 }
