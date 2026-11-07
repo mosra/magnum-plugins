@@ -2197,7 +2197,7 @@ Containers::Optional<AnimationData> AssimpImporter::doAnimation(UnsignedInt id) 
 
             /* Key times are given as ticks, convert to milliseconds. Default
                value of 25 is taken from the assimp_view tool. */
-            double ticksPerSecond = animation->mTicksPerSecond != 0.0 ? animation->mTicksPerSecond : 25.0;
+            Double ticksPerSecond = animation->mTicksPerSecond != 0.0 ? animation->mTicksPerSecond : 25.0;
 
             /* For glTF files mTicksPerSecond is completely useless before
                https://github.com/assimp/assimp/commit/09d80ff478d825a80bce6fb787e8b19df9f321a8
@@ -2220,7 +2220,7 @@ Containers::Optional<AnimationData> AssimpImporter::doAnimation(UnsignedInt id) 
 
             /* Translation */
             if(targetTypes & AnimationTrackTarget::Translation3D) {
-                const size_t keyCount = channel->mNumPositionKeys;
+                const std::size_t keyCount = channel->mNumPositionKeys;
                 const auto keys = Containers::arrayCast<Float>(
                     data.sliceSize(dataOffset, keyCount*sizeof(Float)));
                 dataOffset += keys.size()*sizeof(keys[0]);
@@ -2228,7 +2228,7 @@ Containers::Optional<AnimationData> AssimpImporter::doAnimation(UnsignedInt id) 
                     data.sliceSize(dataOffset, keyCount*sizeof(Vector3)));
                 dataOffset += values.size()*sizeof(values[0]);
 
-                for(size_t k = 0; k < channel->mNumPositionKeys; ++k) {
+                for(std::size_t k = 0; k < channel->mNumPositionKeys; ++k) {
                     /* Convert double to float keys */
                     keys[k] = channel->mPositionKeys[k].mTime / ticksPerSecond;
                     values[k] = Vector3::from(&channel->mPositionKeys[k].mValue[0]);
@@ -2242,7 +2242,7 @@ Containers::Optional<AnimationData> AssimpImporter::doAnimation(UnsignedInt id) 
 
             /* Rotation */
             if(targetTypes & AnimationTrackTarget::Rotation3D) {
-                const size_t keyCount = channel->mNumRotationKeys;
+                const std::size_t keyCount = channel->mNumRotationKeys;
                 const auto keys = Containers::arrayCast<Float>(
                     data.sliceSize(dataOffset, keyCount*sizeof(Float)));
                 dataOffset += keys.size()*sizeof(keys[0]);
@@ -2250,7 +2250,7 @@ Containers::Optional<AnimationData> AssimpImporter::doAnimation(UnsignedInt id) 
                     data.sliceSize(dataOffset, keyCount*sizeof(Quaternion)));
                 dataOffset += values.size()*sizeof(values[0]);
 
-                for(size_t k = 0; k < channel->mNumRotationKeys; ++k) {
+                for(std::size_t k = 0; k < channel->mNumRotationKeys; ++k) {
                     keys[k] = channel->mRotationKeys[k].mTime / ticksPerSecond;
                     const aiQuaternion& quat = channel->mRotationKeys[k].mValue;
                     values[k] = Quaternion{{quat.x, quat.y, quat.z}, quat.w};
