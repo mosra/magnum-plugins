@@ -457,33 +457,31 @@ cross-compiling and platform-specific issues.
 
 By default no plugins are built and you need to select them manually:
 
--   `MAGNUM_WITH_ASSIMPIMPORTER` --- Build the
-    @ref Trade::AssimpImporter "AssimpImporter" plugin. Depends on
-    [Assimp](https://assimp.org/).
+-   `MAGNUM_WITH_ASSIMPIMPORTER` --- Build the @relativeref{Trade,AssimpImporter}
+    plugin. Depends on [Assimp](https://assimp.org/).
 -   `MAGNUM_WITH_ASTCIMPORTER` --- Build the @relativeref{Trade,AstcImporter}
     plugin.
 -   `MAGNUM_WITH_AVIFIMPORTER` --- Build the @relativeref{Trade,AvifImporter}
     plugin. Depends on [libavif](https://github.com/AOMediaCodec/libavif).
 -   `MAGNUM_WITH_BASISIMAGECONVERTER` --- Build the
-    @ref Trade::BasisImageConverter "BasisImageConverter" plugin. Depends on
+    @relativeref{Trade,BasisImageConverter} plugin. Depends on
     [Basis Universal](https://github.com/binomialLLC/basis_universal) --- if
     you are on Vcpkg, it will "just work", otherwise you need to download the
     sources and point `BASIS_UNIVERSAL_DIR` to their directory so CMake can
     find them.
--   `MAGNUM_WITH_BASISIMPORTER` --- Build the
-    @ref Trade::BasisImporter "BasisImporter" plugin. Depends on
-    [Basis Universal](https://github.com/binomialLLC/basis_universal) --- if
-    you are on Vcpkg, it will "just work", otherwise you need to download the
-    sources and point `BASIS_UNIVERSAL_DIR` to their directory so CMake can
-    find them.
+-   `MAGNUM_WITH_BASISIMPORTER` --- Build the @relativeref{Trade,BasisImporter}
+    plugin. Depends on [Basis Universal](https://github.com/binomialLLC/basis_universal)
+    --- if you are on Vcpkg, it will "just work", otherwise you need to
+    download the sources and point `BASIS_UNIVERSAL_DIR` to their directory so
+    CMake can find them.
 -   `MAGNUM_WITH_BCDECIMAGECONVERTER` --- Build the
     @relativeref{Trade,BcDecImageConverter} plugin.
 -   `MAGNUM_WITH_CGLTFIMPORTER` @m_class{m-label m-danger} **deprecated** ---
-    Build the @ref Trade::CgltfImporter "CgltfImporter" plugin.
--   `MAGNUM_WITH_DDSIMPORTER` --- Build the @ref Trade::DdsImporter "DdsImporter"
+    Build the @relativeref{Trade,CgltfImporter} plugin.
+-   `MAGNUM_WITH_DDSIMPORTER` --- Build the @relativeref{Trade,DdsImporter}
     plugin.
 -   `MAGNUM_WITH_DEVILIMAGEIMPORTER` --- Build the
-    @ref Trade::DevIlImageImporter "DevIlImageImporter" plugin. Depends on
+    @relativeref{Trade,DevIlImageImporter} plugin. Depends on
     [DevIL](https://openil.sourceforge.net/).
 -   `MAGNUM_WITH_DRFLACAUDIOIMPORTER` --- Build the
     @ref Audio::DrFlacImporter "DrFlacAudioImporter" plugin.
@@ -496,9 +494,8 @@ By default no plugins are built and you need to select them manually:
 -   `MAGNUM_WITH_FAAD2AUDIOIMPORTER` --- Build the
     @ref Audio::Faad2Importer "Faad2AudioImporter" plugin. Depends on
     [FAAD2](https://www.audiocoding.com/faad2.html).
--   `MAGNUM_WITH_FREETYPEFONT` --- Build the
-    @ref Text::FreeTypeFont "FreeTypeFont" plugin. Depends on
-    [FreeType](https://freetype.org).
+-   `MAGNUM_WITH_FREETYPEFONT` --- Build the @relativeref{Text,FreeTypeFont}
+    plugin. Depends on [FreeType](https://freetype.org).
 -   `MAGNUM_WITH_GLSLANGSHADERCONVERTER` --- Build the
     @ref ShaderTools::GlslangConverter "GlslangShaderConverter" plugin. Depends
     on [Glslang](https://github.com/KhronosGroup/glslang).
@@ -506,16 +503,15 @@ By default no plugins are built and you need to select them manually:
     plugin.
 -   `MAGNUM_WITH_GLTFSCENECONVERTER` --- Build the
     @relativeref{Trade,GltfSceneConverter} plugin.
--   `MAGNUM_WITH_HARFBUZZFONT` --- Build the
-    @ref Text::HarfBuzzFont "HarfBuzzFont" plugin. Enables also building of the
-    @ref Text::FreeTypeFont "FreeTypeFont" plugin. Depends on
-    [HarfBuzz](https://harfbuzz.github.io).
--   `MAGNUM_WITH_ICOIMPORTER` --- Build the @ref Trade::IcoImporter "IcoImporter"
+-   `MAGNUM_WITH_HARFBUZZFONT` --- Build the @relativeref{Text,HarfBuzzFont}
+    plugin. Enables also building of the @relativeref{Text,FreeTypeFont}
+    plugin. Depends on [HarfBuzz](https://harfbuzz.github.io).
+-   `MAGNUM_WITH_ICOIMPORTER` --- Build the @relativeref{Trade,IcoImporter}
     plugin.
 -   `MAGNUM_WITH_JPEGIMAGECONVERTER` --- Build the
-    @ref Trade::JpegImageConverter "JpegImageConverter" plugin. Depends on
+    @relativeref{Trade,JpegImageConverter} plugin. Depends on
     [libJPEG](https://ijg.org).
--   `MAGNUM_WITH_JPEGIMPORTER` --- Build the @ref Trade::JpegImporter "JpegImporter"
+-   `MAGNUM_WITH_JPEGIMPORTER` --- Build the @relativeref{Trade,JpegImporter}
     plugin. Depends on [libJPEG](https://ijg.org).
 -   `MAGNUM_WITH_KTXIMAGECONVERTER` --- Build the
     @relativeref{Trade,KtxImageConverter} plugin.
@@ -525,30 +521,28 @@ By default no plugins are built and you need to select them manually:
     @relativeref{Trade,LunaSvgImporter} plugin. Depends on
     [LunaSVG](https://github.com/sammycage/lunasvg).
 -   `MAGNUM_WITH_MESHOPTIMIZERSCENECONVERTER` --- Build the
-    @ref Trade::MeshOptimizerSceneConverter "MeshOptimizerSceneConverter"
-    plugin.
+    @relativeref{Trade,MeshOptimizerSceneConverter} plugin.
 -   `MAGNUM_WITH_MINIEXRIMAGECONVERTER` --- Build the
-    @ref Trade::MiniExrImageConverter "MiniExrImageConverter" plugin.
+    @relativeref{Trade,MiniExrImageConverter} plugin.
 -   `MAGNUM_WITH_OPENEXRIMAGECONVERTER` --- Build the
-    @ref Trade::OpenExrImageConverter "OpenExrImageConverter" plugin. Depends
-    on [OpenEXR](https://www.openexr.com/).
+    @relativeref{Trade,OpenExrImageConverter} plugin. Depends on
+    [OpenEXR](https://www.openexr.com/).
 -   `MAGNUM_WITH_OPENEXRIMPORTER` --- Build the
-    @ref Trade::OpenExrImporter "OpenExrImporter" plugin. Depends on
+    @relativeref{Trade,OpenExrImporter} plugin. Depends on
     [OpenEXR](https://www.openexr.com/).
 -   `MAGNUM_WITH_OPENGEXIMPORTER` @m_class{m-label m-danger} **deprecated** ---
-    Build the @ref Trade::OpenGexImporter "OpenGexImporter" plugin. Enables
-    also building of the @ref OpenDdl @m_class{m-label m-danger} **deprecated**
-    library.
+    Build the @relativeref{Trade,OpenGexImporter} plugin. Enables also building
+    of the @ref OpenDdl @m_class{m-label m-danger} **deprecated** library.
 -   `MAGNUM_WITH_PLUTOSVGIMPORTER` --- Build the
     @relativeref{Trade,PlutoSvgImporter} plugin. Depends on
     [PlutoSVG](https://github.com/sammycage/plutosvg).
 -   `MAGNUM_WITH_PNGIMAGECONVERTER` --- Build the
-    @ref Trade::PngImageConverter "PngImageConverter" plugin. Depends on
+    @relativeref{Trade,PngImageConverter} plugin. Depends on
     [libPNG](https://www.libpng.org/pub/png/libpng.html).
--   `MAGNUM_WITH_PNGIMPORTER` --- Build the @ref Trade::PngImporter "PngImporter"
+-   `MAGNUM_WITH_PNGIMPORTER` --- Build the @relativeref{Trade,PngImporter}
     plugin. Depends on [libPNG](https://www.libpng.org/pub/png/libpng.html).
 -   `MAGNUM_WITH_PRIMITIVEIMPORTER` --- Build the
-    @ref Trade::PrimitiveImporter "PrimitiveImporter" plugin.
+    @relativeref{Trade,PrimitiveImporter} plugin.
 -   `MAGNUM_WITH_RESVGIMPORTER` --- Build the @relativeref{Trade,ResvgImporter}
     plugin. Depends on [resvg](https://github.com/linebender/resvg).
 -   `MAGNUM_WITH_SPIRVTOOLSSHADERCONVERTER` --- Build the
@@ -557,25 +551,25 @@ By default no plugins are built and you need to select them manually:
 -   `MAGNUM_WITH_SPNGIMPORTER` --- Build the @relativeref{Trade,SpngImporter}
     plugin. Depends on [libspng](https://libspng.org).
 -   `MAGNUM_WITH_STANFORDIMPORTER` --- Build the
-    @ref Trade::StanfordImporter "StanfordImporter" plugin.
+    @relativeref{Trade,StanfordImporter} plugin.
 -   `MAGNUM_WITH_STANFORDSCENECONVERTER` --- Build the
-    @ref Trade::StanfordSceneConverter "StanfordSceneConverter" plugin.
+    @relativeref{Trade,StanfordSceneConverter} plugin.
 -   `MAGNUM_WITH_STBDXTIMAGECONVERTER` --- Build the
     @relativeref{Trade,StbDxtImageConverter} plugin.
 -   `MAGNUM_WITH_STBIMAGECONVERTER` --- Build the
-    @ref Trade::StbImageConverter "StbImageConverter" plugin.
+    @relativeref{Trade,StbImageConverter} plugin.
 -   `MAGNUM_WITH_STBIMAGEIMPORTER` --- Build the
-    @ref Trade::StbImageImporter "StbImageImporter" plugin.
+    @relativeref{Trade,StbImageImporter} plugin.
 -   `MAGNUM_WITH_STBRESIZEIMAGECONVERTER` --- Build the
     @relativeref{Trade,StbResizeImageConverter} plugin.
 -   `MAGNUM_WITH_STBTRUETYPEFONT` --- Build the
-    @ref Text::StbTrueTypeFont "StbTrueTypeFont" plugin.
+    @relativeref{Text,StbTrueTypeFont} plugin.
 -   `MAGNUM_WITH_STBVORBISAUDIOIMPORTER` --- Build the
     @ref Audio::StbVorbisImporter "StbVorbisAudioImporter" plugin.
 -   `MAGNUM_WITH_TINYGLTFIMPORTER` @m_class{m-label m-danger} **deprecated**
-    --- Build the @ref Trade::TinyGltfImporter "TinyGltfImporter" plugin.
--   `MAGNUM_WITH_UFBXIMPORTER` --- Build the
-    @ref Trade::UfbxImporter "UfbxImporter" plugin.
+    --- Build the @relativeref{Trade,TinyGltfImporter} plugin.
+-   `MAGNUM_WITH_UFBXIMPORTER` --- Build the @relativeref{Trade,UfbxImporter}
+    plugin.
 -   `MAGNUM_WITH_WEBPIMAGECONVERTER` --- Build the
     @relativeref{Trade,WebPImageConverter} plugin. Depends on
     [libwebp](https://chromium.googlesource.com/webm/libwebp/).

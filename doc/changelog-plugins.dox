@@ -58,10 +58,9 @@ namespace Magnum {
     formats (see [mosra/magnum-plugins#103](https://github.com/mosra/magnum-plugins/pull/103); Basis-encoded KTX2 files are passed through to
     @relativeref{Trade,BasisImporter} (see [mosra/magnum-plugins#110](https://github.com/mosra/magnum-plugins/issues/110),
     [mosra/magnum-plugins#113](https://github.com/mosra/magnum-plugins/pull/113))
--   New @ref Trade::OpenExrImporter "OpenExrImporter" and
-    @ref Trade::OpenExrImageConverter "OpenExrImageConverter" plugins for
-    reading and writing OpenEXR files including cube maps and custom channel
-    support
+-   New @relativeref{Trade,OpenExrImporter} and
+    @relativeref{Trade,OpenExrImageConverter} plugins for reading and writing
+    OpenEXR files including cube maps and custom channel support
 -   Mew @relativeref{Trade,SpngImporter} for importing PNG images using
     libspng, which, in combination with zlib-ng, may be significantly faster
     than stock libpng
@@ -122,16 +121,16 @@ namespace Magnum {
 -   New @relativeref{Trade,ResvgImporter}, @relativeref{Trade,LunaSvgImporter}
     and @relativeref{Trade,PlutoSvgImporter} plugins for importing SVG files as
     raster images
--   @ref Trade::AssimpImporter "AssimpImporter" now imports ambient lights,
-    light attenuation and spotlight cone angle properties. See also
+-   @relativeref{Trade,AssimpImporter} now imports ambient lights, light
+    attenuation and spotlight cone angle properties. See also
     [mosra/magnum-plugins#120](https://github.com/mosra/magnum-plugins/issues/120).
--   @ref Trade::AssimpImporter "AssimpImporter" now imports camera, light and
-    scene names, orthographic camera properties and custom material properties
-    (see [mosra/magnum-plugins#116](https://github.com/mosra/magnum-plugins/pull/116))
+-   @relativeref{Trade,AssimpImporter} now imports camera, light and scene
+    names, orthographic camera properties and custom material properties (see
+    [mosra/magnum-plugins#116](https://github.com/mosra/magnum-plugins/pull/116))
 -   @relativeref{Trade,AssimpImporter} can now import material texture
     transformation attributes
--   @ref Trade::AssimpImporter "AssimpImporter" can now import animations and
-    skins (see [mosra/magnum-plugins#97](https://github.com/mosra/magnum-plugins/pull/97),
+-   @relativeref{Trade,AssimpImporter} can now import animations and skins (see
+    [mosra/magnum-plugins#97](https://github.com/mosra/magnum-plugins/pull/97),
     [mosra/magnum-plugins#99](https://github.com/mosra/magnum-plugins/pull/99)
     and [mosra/magnum-plugins#100](https://github.com/mosra/magnum-plugins/pull/100))
 -   @relativeref{Trade,BasisImporter} and @relativeref{Trade,BasisImageConverter}
@@ -150,10 +149,10 @@ namespace Magnum {
 @subsection changelog-plugins-latest-changes Changes and improvements
 
 -   The workaround for an Assimp 4.1 white ambient bug in
-    @ref Trade::AssimpImporter "AssimpImporter" can now be disabled using the
+    @relativeref{Trade,AssimpImporter} can now be disabled using the
     @cb{.ini} forceWhiteAmbientToBlack @ce @ref Trade-AssimpImporter-configuration "plugin-specific option".
--   Exposed missing @ref Trade::AssimpImporter "AssimpImporter" postprocess
-    options @cb{.ini} CalcTangentSpace @ce, @cb{.ini} SplitByBoneCount @ce and
+-   Exposed missing @relativeref{Trade,AssimpImporter} postprocess options
+    @cb{.ini} CalcTangentSpace @ce, @cb{.ini} SplitByBoneCount @ce and
     @cb{.ini} Debone @ce
 -   @relativeref{Trade,AssimpImporter} now provides the `3mfImporter` alias
     for convenient loading of `*.3mf` files, and `UsdImporter` for `*.usd`,
@@ -174,16 +173,16 @@ namespace Magnum {
     Additionally the plugin also imports non-standard ASTC formats produced by
     NVidia Texture Tools Exporter. See also
     [mosra/magnum-plugins#67](https://github.com/mosra/magnum-plugins/pull/67).
--   @ref Text::FreeTypeFont "FreeTypeFont" now treats its internal global
-    library handle as thread-local on all platforms, making it possible to be
-    used in multi-threaded environments
+-   @relativeref{Text,FreeTypeFont} now treats its internal global library
+    handle as thread-local on all platforms, making it possible to be used in
+    multi-threaded environments
 -   Adapted @relativeref{Trade,MeshOptimizerSceneConverter} to breaking changes
     in meshoptimizer 0.18+, implementing new @cb{.ini} simplifyLockBorder @ce,
     @cb{.ini} simplifySparse @ce, @cb{.ini} simplifyErrorAbsolute @ce,
     @cb{.ini} simplifyPrune @ce, @cb{.ini} simplifyRegularize @ce and
     @cb{.ini} simplifyPermissive @ce options
--   @ref Trade::StanfordImporter "StanfordImporter" now supports also indices
-    specified as `vertex_index`, which is what Assimp uses for export (see
+-   @relativeref{Trade,StanfordImporter} now supports also indices specified as
+    `vertex_index`, which is what Assimp uses for export (see
     [mosra/magnum-plugins#94](https://github.com/mosra/magnum-plugins/pull/94))
 -   @relativeref{Trade,StanfordImporter} and @relativeref{Trade,StlImporter}
     now delegate parsing of ASCII files to @relativeref{Trade,AssimpImporter}
@@ -192,8 +191,8 @@ namespace Magnum {
     always have a position attribute. This was not enforced before, leading to
     files that couldn't be opened with @relativeref{Trade,StanfordImporter} nor
     with most other libraries.
--   @ref Trade::StbImageImporter "StbImageImporter" now imports 16-bit PNG and
-    PSD files as 16-bit instead of converting to 8 bit
+-   @relativeref{Trade,StbImageImporter} now imports 16-bit PNG and PSD files
+    as 16-bit instead of converting to 8 bit
 -   @relativeref{Trade,PngImporter} and @relativeref{Trade,StbImageImporter}
     now make it possible to override imported image channel count using
     @cb{.ini} forceChannelCount @ce
@@ -325,13 +324,13 @@ namespace Magnum {
 -   Fixed @ref Audio::DrMp3Importer "DrMp3AudioImporter" to calculate proper
     buffer length for multi-channel files -- it was always taking just a single
     channel into account
--   @ref Trade::AssimpImporter "AssimpImporter" used to add a strange "skeleton
+-   @relativeref{Trade,AssimpImporter} used to add a strange "skeleton
     visualizer" meshes to files such as COLLADA even though the file had no
     skeletons in the first place. Turns out this was due to insane defaults and
     it was enough to just disable such misfeature. See also
     [mosra/magnum-plugins#99](https://github.com/mosra/magnum-plugins/pull/99).
--   @ref Trade::AssimpImporter "AssimpImporter" now correctly imports files
-    with backslashes in image paths also on non-Windows platforms (see
+-   @relativeref{Trade,AssimpImporter} now correctly imports files with
+    backslashes in image paths also on non-Windows platforms (see
     [mosra/magnum-plugins#101](https://github.com/mosra/magnum-plugins/issues/101)
     and [mosra/magnum-plugins#102](https://github.com/mosra/magnum-plugins/pull/102))
 -   @relativeref{Trade,AssimpImporter}, `OpenGexImporter` and
@@ -342,11 +341,10 @@ namespace Magnum {
     crash when encountering a premature end of file
 -   @relativeref{Trade,DdsImporter} now implicitly performs Y- and Z-flip on
     uncompressed images consistently with other importers
--   @ref Trade::JpegImageConverter "JpegImageConverter" was mistakenly using
-    the `MAGNUM_BUILD_STATIC` CMake option instead of
-    `MAGNUM_BUILD_PLUGINS_STATIC`
--   Fixed @ref Trade::BasisImporter "BasisImporter" to work with direct
-    instantiation without a plugin manager (see [mosra/magnum-plugins#96](https://github.com/mosra/magnum-plugins/pull/96))
+-   @relativeref{Trade,JpegImageConverter} was mistakenly using the
+    `MAGNUM_BUILD_STATIC` CMake option instead of `MAGNUM_BUILD_PLUGINS_STATIC`
+-   Fixed @relativeref{Trade,BasisImporter} to work with direct instantiation
+    without a plugin manager (see [mosra/magnum-plugins#96](https://github.com/mosra/magnum-plugins/pull/96))
 -   Assorted `Trade,TinyGltfImporter` robustness improvements (see
     [mosra/magnum-plugins#106](https://github.com/mosra/magnum-plugins/pull/106),
     [mosra/magnum-plugins#109](https://github.com/mosra/magnum-plugins/pull/109)):

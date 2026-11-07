@@ -32,14 +32,14 @@ namespace Magnum {
 
 -   **[\@1b00](https://github.com/1b00)** --- RPM package
 -   **Alice Margatroid** ([\@Alicemargatroid](https://github.com/Alicemargatroid))
-    --- @ref Trade::DevIlImageImporter "DevIlImageImporter",
+    --- @relativeref{Trade,DevIlImageImporter},
     @ref Audio::DrFlacImporter "DrFlacAudioImporter" and
     @ref Audio::DrWavImporter "DrWavAudioImporter" plugins, surround sound
     support in @ref Audio::StbVorbisImporter "StbVorbisAudioImporter"
 -   **Alexander F Rødseth** ([\@xyproto](https://github.com/xyproto)) ---
     packages in the ArchLinux community repository
 -   **Allie** ([\@bowling-allie](https://github.com/bowling-allie)) ---
-    @ref Trade::IcoImporter "IcoImporter"
+    @relativeref{Trade,IcoImporter}
 -   **Andrew ([\@sheerluck](https://github.com/sheerluck)) --- Gentoo package
     fixes
 -   **Andrew Snyder ([\@arsnyder16](https://github.com/arsnyder16))** ---
@@ -60,29 +60,25 @@ namespace Magnum {
 -   **Hugo Amnov** ([\@hugoam](https://github.com/hugoam)) --- buildsystem
     improvements, @relativeref{Trade,GltfImporter} mesh import optimization
 -   **[\@hunt978](https://github.com/hunt978)** --- fixing
-    @ref Trade::JpegImporter "JpegImporter" build on older CMake versions
+    @relativeref{Trade,JpegImporter} build on older CMake versions
 -   **Igal Alkon** ([\@alkavan](https://github.com/alkavan)) --- RPM package
 -   **Igor Kalevatykh** ([\@ikalevatykh](https://github.com/ikalevatykh)) ---
-    fixes for @ref Trade::AssimpImporter "AssimpImporter" workarounds and bugs
+    fixes for @relativeref{Trade,AssimpImporter} workarounds and bugs
 -   **John Laxson** ([\@jlaxson](https://github.com/jlaxson)) ---
-    @ref Trade::StanfordImporter "StanfordImporter" and Homebrew package
-    improvements
+    @relativeref{Trade,StanfordImporter} and Homebrew package improvements
 -   **Jonathan Hale** ([\@Squareys](https://github.com/Squareys)) ---
-    @ref Trade::AssimpImporter "AssimpImporter",
-    @ref Trade::BasisImageConverter "BasisImageConverter",
-    @ref Trade::BasisImporter "BasisImporter",
-    @ref Trade::DdsImporter "DdsImporter" and
+    @relativeref{Trade,AssimpImporter}, @relativeref{Trade,BasisImageConverter},
+    @relativeref{Trade,BasisImporter}, @relativeref{Trade,DdsImporter} and
     @ref Audio::StbVorbisImporter "StbVorbisAudioImporter" plugins,
-    improvements to @ref Trade::TinyGltfImporter "TinyGltfImporter" and
-    @ref Text::StbTrueTypeFont "StbTrueTypeFont"; Windows-specific updates and
-    fixes
+    improvements to @relativeref{Trade,TinyGltfImporter} and
+    @relativeref{Text,StbTrueTypeFont}; Windows-specific updates and fixes
 -   **Jonathan Mercier-Ganady** ([\@Jmgr](https://github.com/Jmgr)) --- build
     fixes
 -   **Konstantinos Chatzilygeroudis** ([\@costashatz](https://github.com/costashatz))
     --- Debian package
 -   **Max Schwarz** ([\@xqms](https://github.com/xqms)) --- error reporting
-    improvements in @ref Trade::JpegImporter "JpegImporter", expanding
-    robustness and capabilities of @ref Trade::AssimpImporter "AssimpImporter"
+    improvements in @relativeref{Trade,JpegImporter}, expanding robustness and
+    capabilities of @relativeref{Trade,AssimpImporter}
 -   **Melike Batihan** ([\@melikebatihan](https://github.com/melikebatihan))
     --- @relativeref{Trade,WebPImporter} and
     @relativeref{Trade,WebPImageConverter} plugins
@@ -98,9 +94,9 @@ namespace Magnum {
     @relativeref{Trade,GltfImporter}, upgrades to
     @relativeref{Trade,BasisImporter}, @relativeref{Trade,BasisImageConverter}
     and @relativeref{Trade,StbResizeImageConverter}, animation and skinning
-    support and general maintenance of
-    @ref Trade::AssimpImporter "AssimpImporter", improved
-    @relativeref{Trade,TinyGltfImporter} robustness, documentation updates
+    support and general maintenance of @relativeref{Trade,AssimpImporter},
+    improved @relativeref{Trade,TinyGltfImporter} robustness, documentation
+    updates
 -   **[\@playgroo](https://github.com/playgroo)** --- Debian package updates
 -   **Samuli Raivio** ([\@bqqbarbhg](https://github.com/bqqbarbhg)) ---
     @relativeref{Trade,UfbxImporter} plugin and the ufbx library itself
@@ -111,8 +107,8 @@ namespace Magnum {
 -   **Stanislaw Halik** ([\@sthalik](https://github.com/sthalik)) --- build
     fixes, toggles for binary size reduction in the @relativeref{Trade,StbImageImporter} and
     @relativeref{Trade,StbImageConverter} plugins
--   **Tobias Stein** ([\@NussknackerXXL](https://github.com/NussknackerXXL)) ---
-    the @ref Trade::TinyGltfImporter "TinyGltfImporter" plugin
+-   **Tobias Stein** ([\@NussknackerXXL](https://github.com/NussknackerXXL))
+    --- the @relativeref{Trade,TinyGltfImporter} plugin
 */
 
 }
