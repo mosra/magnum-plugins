@@ -510,9 +510,10 @@ By default no plugins are built and you need to select them manually:
 -   `MAGNUM_WITH_ICOIMPORTER` --- Build the @ref Trade::IcoImporter "IcoImporter"
     plugin.
 -   `MAGNUM_WITH_JPEGIMAGECONVERTER` --- Build the
-    @ref Trade::JpegImageConverter "JpegImageConverter" plugin.
+    @ref Trade::JpegImageConverter "JpegImageConverter" plugin. Depends on
+    [libJPEG](https://ijg.org).
 -   `MAGNUM_WITH_JPEGIMPORTER` --- Build the @ref Trade::JpegImporter "JpegImporter"
-    plugin. Depends on [libJPEG](https://ijg.org.
+    plugin. Depends on [libJPEG](https://ijg.org).
 -   `MAGNUM_WITH_KTXIMAGECONVERTER` --- Build the
     @relativeref{Trade,KtxImageConverter} plugin.
 -   `MAGNUM_WITH_KTXIMPORTER` --- Build the
