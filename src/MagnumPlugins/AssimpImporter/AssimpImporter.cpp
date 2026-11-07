@@ -2148,6 +2148,51 @@ Containers::Optional<AnimationData> AssimpImporter::doAnimation(UnsignedInt id) 
                 }
             }
 
+            /* Assimp 5.4.3 adds an animation interpolation type enum in
+                https://github.com/assimp/assimp/commit/da281b7f482618c1d7c580b5e0c778c3f004f79d
+               by putting that information *on the individual keys*, i.e.
+               technically allowing a different interpolation for every pair of
+               keyframes. Which is colossally stupid, who's going to deal with
+               that?! But wait, Assimp 6.0.5 then implements support for those
+               animations in glTF, and the support is basically that cubic
+               spline tangent values are *interleaved* with the original
+               points, resulting in 3 keyframes at the each time instead of 1:
+                https://github.com/assimp/assimp/commit/8ef1461cb899e273ec30ee680df7e840e7f62834
+               So, uh, like, if you don't even know there's a possibility for
+               non-linear interpolation (because both those *breaking* changes
+               happened in random patch versions), which is exactly what this
+               code did until now, you'll now get complete garbage because
+               suddenly you're linearly interpolating NaN and a position, or
+               position and a tangent, etc.
+
+               I have reasonable glTF, FBX... importers elsewhere, so I'm
+               not going to deal with any of this and just ignore the tangents
+               to match behavior of 6.0.4 and before. The version detection for
+               5.4.3 is explained in checkAssimpVersion.cpp, which is another
+               hot garbage */
+            /** @todo actually import those instead of discarding if anything
+                ever needs those (I hope not) */
+            #if ASSIMP_VERSION >= 20240717
+            if(translationKeyCount > 0 && channel->mPositionKeys[0].mInterpolation == aiAnimInterpolation_Cubic_Spline) {
+                if(verbose) Debug{}
+                    << "Trade::AssimpImporter::animation(): ignoring translation track cubic spline tangents in animation" << a << Debug::nospace << ", channel" << c;
+                CORRADE_INTERNAL_ASSERT(translationKeyCount % 3 == 0);
+                translationKeyCount /= 3;
+            }
+            if(rotationKeyCount > 0 && channel->mRotationKeys[0].mInterpolation == aiAnimInterpolation_Cubic_Spline) {
+                if(verbose) Debug{}
+                    << "Trade::AssimpImporter::animation(): ignoring rotation track cubic spline tangents in animation" << a << Debug::nospace << ", channel" << c;
+                CORRADE_INTERNAL_ASSERT(rotationKeyCount % 3 == 0);
+                rotationKeyCount /= 3;
+            }
+            if(scalingKeyCount > 0 && channel->mScalingKeys[0].mInterpolation == aiAnimInterpolation_Cubic_Spline) {
+                if(verbose) Debug{}
+                    << "Trade::AssimpImporter::animation(): ignoring scaling track cubic spline tangents in animation" << a << Debug::nospace << ", channel" << c;
+                CORRADE_INTERNAL_ASSERT(scalingKeyCount % 3 == 0);
+                scalingKeyCount /= 3;
+            }
+            #endif
+
             TargetTypes targetTypes;
             if(translationKeyCount > 0)
                 targetTypes |= AnimationTrackTarget::Translation3D;
@@ -2220,7 +2265,17 @@ Containers::Optional<AnimationData> AssimpImporter::doAnimation(UnsignedInt id) 
 
             /* Translation */
             if(targetTypes & AnimationTrackTarget::Translation3D) {
-                const std::size_t keyCount = channel->mNumPositionKeys;
+                /* Discarding cubic spline tangents because they're implemented
+                   stupidly and I don't care, see above */
+                std::size_t keyIndexOffset = 0;
+                std::size_t keyIndexMultiplier = 1;
+                #if ASSIMP_VERSION >= 20240717
+                if(channel->mNumPositionKeys > 0 && channel->mPositionKeys[0].mInterpolation == aiAnimInterpolation_Cubic_Spline) {
+                    keyIndexOffset = 1;
+                    keyIndexMultiplier = 3;
+                }
+                #endif
+                const std::size_t keyCount = channel->mNumPositionKeys/keyIndexMultiplier;
                 const auto keys = Containers::arrayCast<Float>(
                     data.sliceSize(dataOffset, keyCount*sizeof(Float)));
                 dataOffset += keys.size()*sizeof(keys[0]);
@@ -2230,8 +2285,8 @@ Containers::Optional<AnimationData> AssimpImporter::doAnimation(UnsignedInt id) 
 
                 for(std::size_t k = 0; k != keyCount; ++k) {
                     /* Convert double to float keys */
-                    keys[k] = channel->mPositionKeys[k].mTime / ticksPerSecond;
-                    values[k] = Vector3::from(&channel->mPositionKeys[k].mValue[0]);
+                    keys[k] = channel->mPositionKeys[keyIndexOffset + k*keyIndexMultiplier].mTime/ticksPerSecond;
+                    values[k] = Vector3::from(&channel->mPositionKeys[keyIndexOffset + k*keyIndexMultiplier].mValue[0]);
                 }
 
                 tracks[trackId++] = AnimationTrackData{
@@ -2242,7 +2297,17 @@ Containers::Optional<AnimationData> AssimpImporter::doAnimation(UnsignedInt id) 
 
             /* Rotation */
             if(targetTypes & AnimationTrackTarget::Rotation3D) {
-                const std::size_t keyCount = channel->mNumRotationKeys;
+                /* Discarding cubic spline tangents because they're implemented
+                   stupidly and I don't care, see above */
+                std::size_t keyIndexOffset = 0;
+                std::size_t keyIndexMultiplier = 1;
+                #if ASSIMP_VERSION >= 20240717
+                if(channel->mNumRotationKeys > 0 && channel->mRotationKeys[0].mInterpolation == aiAnimInterpolation_Cubic_Spline) {
+                    keyIndexOffset = 1;
+                    keyIndexMultiplier = 3;
+                }
+                #endif
+                const std::size_t keyCount = channel->mNumRotationKeys/keyIndexMultiplier;
                 const auto keys = Containers::arrayCast<Float>(
                     data.sliceSize(dataOffset, keyCount*sizeof(Float)));
                 dataOffset += keys.size()*sizeof(keys[0]);
@@ -2251,8 +2316,8 @@ Containers::Optional<AnimationData> AssimpImporter::doAnimation(UnsignedInt id) 
                 dataOffset += values.size()*sizeof(values[0]);
 
                 for(std::size_t k = 0; k != keyCount; ++k) {
-                    keys[k] = channel->mRotationKeys[k].mTime / ticksPerSecond;
-                    const aiQuaternion& quat = channel->mRotationKeys[k].mValue;
+                    keys[k] = channel->mRotationKeys[keyIndexOffset + k*keyIndexMultiplier].mTime/ticksPerSecond;
+                    const aiQuaternion& quat = channel->mRotationKeys[keyIndexOffset + k*keyIndexMultiplier].mValue;
                     values[k] = Quaternion{{quat.x, quat.y, quat.z}, quat.w};
                 }
 
@@ -2284,7 +2349,17 @@ Containers::Optional<AnimationData> AssimpImporter::doAnimation(UnsignedInt id) 
 
             /* Scale */
             if(targetTypes & AnimationTrackTarget::Scaling3D) {
-                const std::size_t keyCount = channel->mNumScalingKeys;
+                /* Discarding cubic spline tangents because they're implemented
+                   stupidly and I don't care, see above */
+                std::size_t keyIndexOffset = 0;
+                std::size_t keyIndexMultiplier = 1;
+                #if ASSIMP_VERSION >= 20240717
+                if(channel->mNumScalingKeys > 0 && channel->mScalingKeys[0].mInterpolation == aiAnimInterpolation_Cubic_Spline) {
+                    keyIndexOffset = 1;
+                    keyIndexMultiplier = 3;
+                }
+                #endif
+                const std::size_t keyCount = channel->mNumScalingKeys/keyIndexMultiplier;
                 const auto keys = Containers::arrayCast<Float>(
                     data.sliceSize(dataOffset, keyCount*sizeof(Float)));
                 dataOffset += keys.size()*sizeof(keys[0]);
@@ -2293,8 +2368,8 @@ Containers::Optional<AnimationData> AssimpImporter::doAnimation(UnsignedInt id) 
                 dataOffset += values.size()*sizeof(values[0]);
 
                 for(std::size_t k = 0; k != keyCount; ++k) {
-                    keys[k] = channel->mScalingKeys[k].mTime / ticksPerSecond;
-                    values[k] = Vector3::from(&channel->mScalingKeys[k].mValue[0]);
+                    keys[k] = channel->mScalingKeys[keyIndexOffset + k*keyIndexMultiplier].mTime/ticksPerSecond;
+                    values[k] = Vector3::from(&channel->mScalingKeys[keyIndexOffset + k*keyIndexMultiplier].mValue[0]);
                 }
 
                 tracks[trackId++] = AnimationTrackData{

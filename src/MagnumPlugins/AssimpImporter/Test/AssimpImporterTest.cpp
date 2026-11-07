@@ -297,7 +297,8 @@ AssimpImporterTest::AssimpImporterTest() {
     addInstancedTests({&AssimpImporterTest::animationGltfBrokenSplineWarning},
         Containers::arraySize(QuietData));
 
-    addTests({&AssimpImporterTest::animationGltfSpline});
+    addInstancedTests({&AssimpImporterTest::animationGltfSpline},
+        Containers::arraySize(VerboseData));
 
     addInstancedTests({&AssimpImporterTest::animationGltfTicksPerSecondPatching,
                        &AssimpImporterTest::animationDummyTracksRemovalEnabled,
@@ -874,10 +875,14 @@ void AssimpImporterTest::animationGltfBrokenSplineWarning() {
 }
 
 void AssimpImporterTest::animationGltfSpline() {
+    auto&& data = VerboseData[testCaseInstanceId()];
+    setTestCaseDescription(data.name);
+
     if(!supportsAnimation(".gltf"_s, _assimpVersion))
         CORRADE_SKIP("glTF 2 animation is not supported with the current version of Assimp");
 
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("AssimpImporter");
+    importer->addFlags(data.flags);
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(ASSIMPIMPORTER_TEST_DIR, "animation.gltf")));
 
     CORRADE_COMPARE(importer->animationCount(), 3);
@@ -885,7 +890,13 @@ void AssimpImporterTest::animationGltfSpline() {
 
     constexpr Float keys[]{ 0.5f, 3.5f, 4.0f, 5.0f };
 
-    Containers::Optional<Trade::AnimationData> animation = importer->animation(2);
+
+    Containers::Optional<Trade::AnimationData> animation;
+    Containers::String out;
+    {
+        Debug redirectOutput{&out};
+        animation = importer->animation(2);
+    }
     CORRADE_VERIFY(animation);
     CORRADE_VERIFY(animation->importerState());
     CORRADE_COMPARE(animation->trackCount(), 3);
@@ -982,6 +993,29 @@ void AssimpImporterTest::animationGltfSpline() {
     CORRADE_COMPARE(animation->data().size(),
         4*(sizeof(Float) + sizeof(Quaternion)) +
         2*4*(sizeof(Float) + sizeof(Vector3)));
+
+    /* With verbose output on Assimp 6.0.5+ it should also mention that it
+       discarded spline tangents (as, again, they're implemented stupidly and I
+       don't care). The order in which the animations are impored is arbitrary,
+       likely depending on how STL hashmap containers are implemented or
+       whatever, so instead of checking the full message I verify just that the
+       expected messages are there somewhere. On 6.0.4 and before it only
+       prints *the other* workaround about dummy tracks, and before 5.0.2 there
+       are other verbose messages about ticks being incorrect because yes it's
+       all horrible all the way down. */
+    if(data.flags >= ImporterFlag::Verbose) {
+        if(_assimpVersion >= 605) {
+            CORRADE_COMPARE_AS(out, Utility::format(
+                "Trade::AssimpImporter::animation(): ignoring translation track cubic spline tangents in animation 2, channel {}\n",
+                ch1), TestSuite::Compare::StringContains);
+            CORRADE_COMPARE_AS(out, Utility::format(
+                "Trade::AssimpImporter::animation(): ignoring rotation track cubic spline tangents in animation 2, channel {}\n",
+                ch0), TestSuite::Compare::StringContains);
+            CORRADE_COMPARE_AS(out, Utility::format(
+                "Trade::AssimpImporter::animation(): ignoring scaling track cubic spline tangents in animation 2, channel {}\n",
+                ch2), TestSuite::Compare::StringContains);
+        }
+    } else CORRADE_COMPARE(out, "");
 }
 
 void AssimpImporterTest::animationGltfTicksPerSecondPatching() {
