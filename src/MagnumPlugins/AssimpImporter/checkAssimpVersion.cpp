@@ -99,11 +99,12 @@ int main() {
     ret = static_cast<int>(aiGetVersionPatch());
     #endif
 
-    /* Assimp 5. Of all the things that could break, this version reports itself as
-       4.1. Since some of the insane awful bugs got fixed in version 5, the test has
-       to check against the version in order to adjust expectations. The only way I
-       could make this work is checking for the getEpsilon() function added in
-       https://github.com/assimp/assimp/commit/8b95479bb00b4bf8fb875f2c5b0605ddfd203b7f
+    /* Assimp 5. Of all the things that could break, this version reports
+       itself as 4.1. Since some of the insane awful bugs got fixed in version
+       5, the test has to check against the version in order to adjust
+       expectations. The only way I could make this work is checking for the
+       getEpsilon() function added in
+        https://github.com/assimp/assimp/commit/8b95479bb00b4bf8fb875f2c5b0605ddfd203b7f
        Related bug: https://github.com/assimp/assimp/issues/2693 */
     #if CHECK_VERSION >= 20190915
     ret = static_cast<int>(Assimp::Math::getEpsilon<float>());
