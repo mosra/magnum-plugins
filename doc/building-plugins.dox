@@ -562,8 +562,7 @@ By default no plugins are built and you need to select them manually:
 -   `MAGNUM_WITH_STBIMAGECONVERTER` --- Build the
     @ref Trade::StbImageConverter "StbImageConverter" plugin.
 -   `MAGNUM_WITH_STBIMAGEIMPORTER` --- Build the
-    @ref Trade::StbImageImporter "StbImageImporter" plugin. Enabled
-    automatically if `MAGNUM_WITH_TINYGLTFIMPORTER` is enabled.
+    @ref Trade::StbImageImporter "StbImageImporter" plugin.
 -   `MAGNUM_WITH_STBRESIZEIMAGECONVERTER` --- Build the
     @relativeref{Trade,StbResizeImageConverter} plugin.
 -   `MAGNUM_WITH_STBTRUETYPEFONT` --- Build the
