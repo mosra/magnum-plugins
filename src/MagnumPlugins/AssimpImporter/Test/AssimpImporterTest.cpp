@@ -3799,11 +3799,12 @@ void AssimpImporterTest::imageEmbeddedWithPath() {
 
     {
         /* https://github.com/assimp/assimp/issues/5585#issuecomment-2154729798,
-           the line which changed "fbx" to " \n\r\n " in particular. LOL. */
-        CORRADE_EXPECT_FAIL_IF(_assimpVersion >= 540,
-            "Assimp 5.4.0+ fails to open embedded FBX files.");
+           the line which changed "fbx" to " \n\r\n " in particular. Fix here:
+            https://github.com/assimp/assimp/commit/de771018665d324238915da99564164af90617fd */
+        CORRADE_EXPECT_FAIL_IF(_assimpVersion >= 540 && _assimpVersion < 605,
+            "Assimp 5.4.0 until 6.0.5 fails to open embedded FBX files.");
         CORRADE_VERIFY(importer->openData(*data));
-        if(_assimpVersion >= 540)
+        if(!importer->isOpened())
             return;
     }
 
