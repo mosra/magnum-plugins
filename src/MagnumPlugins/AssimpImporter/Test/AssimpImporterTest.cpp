@@ -888,10 +888,6 @@ void AssimpImporterTest::animationGltfSpline() {
     Containers::Optional<Trade::AnimationData> animation = importer->animation(2);
     CORRADE_VERIFY(animation);
     CORRADE_VERIFY(animation->importerState());
-    /* Four T/R/S keys */
-    CORRADE_COMPARE(animation->data().size(),
-        4*(sizeof(Float) + sizeof(Quaternion)) +
-        2*4*(sizeof(Float) + sizeof(Vector3)));
     CORRADE_COMPARE(animation->trackCount(), 3);
 
     /* Map from target to channel id */
@@ -980,6 +976,12 @@ void AssimpImporterTest::animationGltfSpline() {
         };
         CORRADE_COMPARE_AS(scaling.values(), Containers::stridedArrayView(scalingData), TestSuite::Compare::Container);
     }
+
+    /* Finally verify there's exactly four T/R/S keys in the data with no extra
+       garbage */
+    CORRADE_COMPARE(animation->data().size(),
+        4*(sizeof(Float) + sizeof(Quaternion)) +
+        2*4*(sizeof(Float) + sizeof(Vector3)));
 }
 
 void AssimpImporterTest::animationGltfTicksPerSecondPatching() {
@@ -1342,18 +1344,6 @@ void AssimpImporterTest::animationMerge() {
     Containers::Optional<Trade::AnimationData> animation = importer->animation(0);
     CORRADE_VERIFY(animation);
     CORRADE_VERIFY(!animation->importerState()); /* No particular clip */
-    /*
-        -   Nothing from the first animation
-        -   Two rotation keys, four translation and scaling keys
-            from the second animation
-        -   Four T/R/S keys from the third animation
-    */
-    CORRADE_COMPARE(animation->data().size(),
-        2*(sizeof(Float) + sizeof(Quaternion)) +
-        2*4*(sizeof(Float) + sizeof(Vector3)) +
-        4*(sizeof(Float) + sizeof(Quaternion)) +
-        2*4*(sizeof(Float) + sizeof(Vector3)));
-
     CORRADE_COMPARE(animation->trackCount(), 6);
 
     /* Map from target to channel id */
@@ -1381,6 +1371,7 @@ void AssimpImporterTest::animationMerge() {
     CORRADE_COMPARE(animation->trackTarget(ch0), 0);
     Animation::TrackView<const Float, const Quaternion> rotation = animation->track<Quaternion>(ch0);
     CORRADE_COMPARE(rotation.interpolation(), Animation::Interpolation::Linear);
+    CORRADE_COMPARE(rotation.size(), 2);
     CORRADE_COMPARE(rotation.at(1.875f), Quaternion::rotation(90.0_degf, Vector3::xAxis()));
 
     /* Translation, constant interpolated, sharing keys with scaling */
@@ -1390,6 +1381,7 @@ void AssimpImporterTest::animationMerge() {
     CORRADE_COMPARE(animation->trackTarget(ch1), 1);
     Animation::TrackView<const Float, const Vector3> translation = animation->track<Vector3>(ch1);
     CORRADE_COMPARE(translation.interpolation(), Animation::Interpolation::Linear);
+    CORRADE_COMPARE(translation.size(), 4);
     CORRADE_COMPARE(translation.at(1.5f), Vector3::yAxis(2.5f));
 
     /* Scaling, linearly interpolated, sharing keys with translation */
@@ -1399,6 +1391,7 @@ void AssimpImporterTest::animationMerge() {
     CORRADE_COMPARE(animation->trackTarget(ch2), 2);
     Animation::TrackView<const Float, const Vector3> scaling = animation->track<Vector3>(ch2);
     CORRADE_COMPARE(scaling.interpolation(), Animation::Interpolation::Linear);
+    CORRADE_COMPARE(scaling.size(), 4);
     CORRADE_COMPARE(scaling.at(1.5f), Vector3::zScale(5.2f));
 
     /* Rotation, spline interpolated */
@@ -1408,6 +1401,7 @@ void AssimpImporterTest::animationMerge() {
     CORRADE_COMPARE(animation->trackTarget(ch3), 3);
     Animation::TrackView<const Float, const Quaternion> rotation2 = animation->track<Quaternion>(ch3);
     CORRADE_COMPARE(rotation2.interpolation(), Animation::Interpolation::Linear);
+    CORRADE_COMPARE(rotation2.size(), 4);
 
     /* Translation, spline interpolated */
     const UnsignedInt ch4 = splineTargets[1].channel;
@@ -1416,6 +1410,7 @@ void AssimpImporterTest::animationMerge() {
     CORRADE_COMPARE(animation->trackTarget(ch4), 4);
     Animation::TrackView<const Float, const Vector3> translation2 = animation->track<Vector3>(ch4);
     CORRADE_COMPARE(translation2.interpolation(), Animation::Interpolation::Linear);
+    CORRADE_COMPARE(translation2.size(), 4);
 
     /* Scaling, spline interpolated */
     const UnsignedInt ch5 = splineTargets[2].channel;
@@ -1424,6 +1419,18 @@ void AssimpImporterTest::animationMerge() {
     CORRADE_COMPARE(animation->trackTarget(ch5), 5);
     Animation::TrackView<const Float, const Vector3> scaling2 = animation->track<Vector3>(ch5);
     CORRADE_COMPARE(scaling2.interpolation(), Animation::Interpolation::Linear);
+    CORRADE_COMPARE(scaling2.size(), 4);
+
+    /* Finally verify that there's no extra garbage in the data:
+        -   nothing from the first animation
+        -   two rotation keys, four translation and scaling keys
+            from the second animation
+        -   four T/R/S keys from the third animation */
+    CORRADE_COMPARE(animation->data().size(),
+        2*(sizeof(Float) + sizeof(Quaternion)) +
+        2*4*(sizeof(Float) + sizeof(Vector3)) +
+        4*(sizeof(Float) + sizeof(Quaternion)) +
+        2*4*(sizeof(Float) + sizeof(Vector3)));
 }
 
 /* The checks are identical to animation support so re-use that */
