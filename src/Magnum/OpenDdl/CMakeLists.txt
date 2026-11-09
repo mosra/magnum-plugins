@@ -47,9 +47,6 @@ target_include_directories(MagnumOpenDdlObjects PUBLIC
     $<TARGET_PROPERTY:Magnum::Magnum,INTERFACE_INCLUDE_DIRECTORIES>
     ${PROJECT_SOURCE_DIR}/src
     ${PROJECT_BINARY_DIR}/src)
-if(NOT MAGNUM_BUILD_STATIC)
-    target_compile_definitions(MagnumOpenDdlObjects PRIVATE "MagnumOpenDdlsObjects_EXPORTS")
-endif()
 if(NOT MAGNUM_BUILD_STATIC OR MAGNUM_BUILD_STATIC_PIC)
     set_target_properties(MagnumOpenDdlObjects PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()

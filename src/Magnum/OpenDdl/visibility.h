@@ -38,7 +38,7 @@
 
 #ifndef DOXYGEN_GENERATING_OUTPUT
 #ifndef MAGNUM_OPENDDL_BUILD_STATIC
-    #if defined(MagnumOpenDdl_EXPORTS) || defined(MagnumOpenDdlObjects_EXPORTS)
+    #ifdef MagnumOpenDdl_EXPORTS
         #define MAGNUM_OPENDDL_EXPORT CORRADE_VISIBILITY_EXPORT
     #else
         #define MAGNUM_OPENDDL_EXPORT CORRADE_VISIBILITY_IMPORT
