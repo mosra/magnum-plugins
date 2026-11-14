@@ -158,7 +158,7 @@ template<class T> T extractIndexValue(const char* buffer, const MeshIndexType ty
 constexpr Containers::StringView Whitespace = " \t\r"_s;
 
 Containers::StringView extractLine(Containers::StringView& in) {
-    const Containers::StringView lineEnd = in.findOr('\n', in.end());
+    const Containers::StringView lineEnd = in.find('\n');
     /* Code of get_words() at https://paulbourke.net/dataformats/ply/plyfile.c
        allows any amount of tabs and spaces at both start and end of a line.
        Assimp also allows spaces both at line start and end, so trim both.
@@ -171,7 +171,7 @@ Containers::StringView extractLine(Containers::StringView& in) {
 Containers::StringView extractToken(Containers::StringView& line) {
     /** @todo have some partitionOnAny() for this, or make findAny() consume
         all such characters, not just the first */
-    const Containers::StringView tokenEnd = line.findAnyOr(Whitespace, line.end());
+    const Containers::StringView tokenEnd = line.findAny(Whitespace);
     const Containers::StringView token = line.prefix(tokenEnd.begin());
     /* Code of get_words() at https://paulbourke.net/dataformats/ply/plyfile.c
        allows any amount of tabs and spaces between tokens and both Assimp and
