@@ -25,10 +25,11 @@
     DEALINGS IN THE SOFTWARE.
 */
 
+#include <cstddef>
 #include <cstdint>
-#include <vector>
-#include <string>
 #include <Corrade/Utility/Assert.h>
+#include <Corrade/Utility/StlForwardString.h>
+#include <Corrade/Utility/StlForwardVector.h>
 
 /* See README.md for more info. All functions additionally have a declaration
    to avoid -Wmissing-declaration warnings on GCC. */
