@@ -69,7 +69,9 @@ void Faad2Importer::doOpenData(Containers::ArrayView<const char> data) {
 
     _frequency = samplerate;
 
-    if(channels == 2)
+    if(channels == 1)
+        _format = BufferFormat::Mono16;
+    else if(channels == 2)
         _format = BufferFormat::Stereo16;
     else {
         /* Mono files are always upgraded to stereo for some reason, so I

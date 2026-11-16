@@ -27,6 +27,7 @@
 #include <Corrade/Containers/Array.h>
 #include <Corrade/Containers/String.h>
 #include <Corrade/TestSuite/Tester.h>
+#include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/Path.h>
 #include <Magnum/ImageView.h>
 #include <Magnum/PixelFormat.h>
@@ -97,27 +98,41 @@ void Faad2ImporterTest::mono() {
     CORRADE_VERIFY(importer->openFile(Utility::Path::join(FAAD2AUDIOIMPORTER_TEST_DIR, "mono.aac")));
 
     {
-        CORRADE_EXPECT_FAIL("Even though `file` reports mono.aac as mono, FAAD2 decodes it as stereo.");
+        CORRADE_EXPECT_FAIL_IF(importer->format() == BufferFormat::Stereo16,
+            "Even though `file` reports mono.aac as mono, FAAD2 2.11.3 and older decodes it as stereo.");
         CORRADE_COMPARE(importer->format(), BufferFormat::Mono16);
     }
-    CORRADE_COMPARE(importer->format(), BufferFormat::Stereo16);
     CORRADE_COMPARE(importer->frequency(), 96000);
 
     Containers::Array<char> data = importer->data();
-    /* Two channels, 16 bits, 1024 samples each */
-    CORRADE_COMPARE(data.size(), 1024*2*2);
 
     /* Testing via CompareImage because there's off-by-one difference in some
-       older versions. */
+       older versions. If imported as stereo on older versions, duplicate every
+       entry in the expected data. */
     constexpr UnsignedShort expected[]{
-        2663, 2663, 2668, 2668, 1663, 1663, 514, 514, 0, 0, 188, 188, 541, 541,
-        552, 552, 225, 225, 65483, 65483, 2, 2, 267, 267, 400, 400, 241, 241,
-        65506, 65506, 65404, 65404
+        2663, 2668, 1663, 514, 0, 188, 541, 552, 225, 65483, 2, 267, 400, 241,
+        65506, 65404
     };
-    CORRADE_COMPARE_WITH(
-        (ImageView2D{PixelFormat::R16UI, {8, 4}, data.prefix(32*2)}),
-        (ImageView2D{PixelFormat::R16UI, {8, 4}, expected}),
-        (DebugTools::CompareImage{1.0f, 0.5625f}));
+    if(importer->format() == BufferFormat::Stereo16) {
+        UnsignedShort expectedStereo[2*Containers::arraySize(expected)];
+        Utility::copy(
+            Containers::StridedArrayView2D<const UnsignedShort>{expected, {Containers::arraySize(expected), 1}}.broadcasted<1>(2),
+            Containers::StridedArrayView2D<UnsignedShort>{expectedStereo, {Containers::arraySize(expected), 2}});
+
+        /* Two channels, 16 bits, 1024 samples each */
+        CORRADE_COMPARE(data.size(), 1024*2*2);
+        CORRADE_COMPARE_WITH(
+            (ImageView2D{PixelFormat::RG16UI, {4, 4}, data.prefix(32*2)}),
+            (ImageView2D{PixelFormat::RG16UI, {4, 4}, expectedStereo}),
+            (DebugTools::CompareImage{1.0f, 0.5625f}));
+    } else {
+        /* One channel, 16 bits, 1024 samples each */
+        CORRADE_COMPARE(data.size(), 1024*2);
+        CORRADE_COMPARE_WITH(
+            (ImageView2D{PixelFormat::R16UI, {4, 4}, data.prefix(32)}),
+            (ImageView2D{PixelFormat::R16UI, {4, 4}, expected}),
+            (DebugTools::CompareImage{1.0f, 0.5625f}));
+    }
 }
 
 void Faad2ImporterTest::stereo() {

@@ -118,7 +118,9 @@ information.
 
 @section Audio-Faad2Importer-behavior Behavior and limitations
 
-The files are always imported with @ref BufferFormat::Stereo16.
+With version 2.11.4 and newer, the files are imported as either
+@ref BufferFormat::Mono16 or @ref BufferFormat::Stereo16. On older versions the
+files are always imported as @ref BufferFormat::Stereo16.
 */
 class MAGNUM_FAAD2AUDIOIMPORTER_EXPORT Faad2Importer: public AbstractImporter {
     public:
