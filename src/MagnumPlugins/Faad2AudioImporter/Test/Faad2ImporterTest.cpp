@@ -157,21 +157,17 @@ void Faad2ImporterTest::openTwice() {
 
 void Faad2ImporterTest::importTwice() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("Faad2AudioImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(FAAD2AUDIOIMPORTER_TEST_DIR, "mono.aac")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(FAAD2AUDIOIMPORTER_TEST_DIR, "stereo.aac")));
 
-    {
-        CORRADE_EXPECT_FAIL("Even though `file` reports mono.aac as mono, FAAD2 decodes it as stereo.");
-        CORRADE_COMPARE(importer->format(), BufferFormat::Mono16);
-    }
     CORRADE_COMPARE(importer->format(), BufferFormat::Stereo16);
-    CORRADE_COMPARE(importer->frequency(), 96000);
+    CORRADE_COMPARE(importer->frequency(), 44100);
 
     /* Testing via CompareImage because there's off-by-one difference in some
        older versions. */
     constexpr UnsignedShort expected[]{
-        2663, 2663, 2668, 2668, 1663, 1663, 514, 514, 0, 0, 188, 188, 541, 541,
-        552, 552, 225, 225, 65483, 65483, 2, 2, 267, 267, 400, 400, 241, 241,
-        65506, 65506, 65404, 65404
+        16518, 16518, 3364, 3364, 59935, 59935, 421, 421, 63882, 63882, 64205,
+        64205, 2501, 2501, 65266, 65266, 186, 186, 1051, 1051, 64651, 64651,
+        401, 401, 182, 182, 64756, 64756, 61, 61, 65122, 65122
     };
 
     /* Verify that everything is working the same way on second use */
