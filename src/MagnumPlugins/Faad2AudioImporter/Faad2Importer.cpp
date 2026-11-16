@@ -69,14 +69,13 @@ void Faad2Importer::doOpenData(Containers::ArrayView<const char> data) {
 
     _frequency = samplerate;
 
+    /* In versions before 2.11.4, mono files are always upgraded to stereo:
+        https://github.com/FreewareAdvancedAudio/faad2/blob/7da4a83b230d069a9d731b1e64f6e6b52802576a/libfaad/decoder.c#L353-L358 */
     if(channels == 1)
         _format = BufferFormat::Mono16;
     else if(channels == 2)
         _format = BufferFormat::Stereo16;
     else {
-        /* Mono files are always upgraded to stereo for some reason, so I
-           always assume stereo anyway:
-           https://github.com/FreewareAdvancedAudio/faad2/blob/7da4a83b230d069a9d731b1e64f6e6b52802576a/libfaad/decoder.c#L353-L358 */
         Error{} << "Audio::Faad2Importer::openData(): unsupported channel count"
                 << channels << "with" << 16 << "bits per sample";
         return;
