@@ -37,9 +37,9 @@
 #include <Corrade/Containers/GrowableArray.h>
 #include <Corrade/Containers/Pair.h>
 #include <Corrade/Containers/String.h>
-#include <Corrade/Containers/StringStl.h> /** @todo remove once OpenDdl is <string>-free */
+#include <Corrade/Containers/StringStl.h>
 #include <Corrade/Utility/Algorithms.h>
-#include <Corrade/Utility/DebugStl.h> /** @todo remove once OpenDdl is <string>-free */
+#include <Corrade/Utility/DebugStl.h>
 #include <Corrade/Utility/Path.h>
 #include <Magnum/Mesh.h>
 #include <Magnum/Math/Matrix4.h>
@@ -203,7 +203,6 @@ void OpenGexImporter::doOpenData(Containers::Array<char>&& data, DataFlags) {
         d->cameras.push_back(camera);
 
     /* Gather all meshes */
-    /** @todo Support for LOD */
     for(const OpenDdl::Structure geometry: d->document.childrenOf(OpenGex::GeometryObject))
         d->meshes.push_back(geometry);
 
@@ -314,10 +313,6 @@ Containers::Optional<SceneData> OpenGexImporter::doScene(UnsignedInt) {
        TRS transformations are not supported at the moment because this damn
        stack is not representable in a sane ECS-friendly way. <3 you,
        OpenGEX. */
-    /** @todo if (and only if) OpenGEX gets relevance again, we could import
-        TRS if there was exactly one occurence of each and they were in the
-        right order -- because I suppose any sane DCC tool would export them
-        this way, ignoring 96.7% of the flexibility this damn format allows */
     Containers::ArrayView<UnsignedInt> parentImporterStateTransformationObjects;
     Containers::ArrayView<Int> parents;
     Containers::ArrayView<const void*> importerState;
@@ -352,8 +347,6 @@ Containers::Optional<SceneData> OpenGexImporter::doScene(UnsignedInt) {
 
         /* (Implicit) object mapping for the parent, importer state and
            transformation field */
-        /** @todo drop this once SceneData supports implicit mapping without
-            having to provide the data */
         parentImporterStateTransformationObjects[i] = i;
 
         /* Populate importer state */
@@ -368,7 +361,6 @@ Containers::Optional<SceneData> OpenGexImporter::doScene(UnsignedInt) {
         /* Compute the transformation. What an overengineered POS, heh. */
         transformations[i] = Matrix4{};
         for(const OpenDdl::Structure t: node.childrenOf(OpenGex::Transform, OpenGex::Translation, OpenGex::Rotation, OpenGex::Scale)) {
-            /** @todo support object transformations */
             if(const auto object = t.findPropertyOf(OpenGex::object)) if(object->as<bool>()) {
                 Error{} << "Trade::OpenGexImporter::scene(): unsupported object-only transformation in node" << i;
                 return {};
@@ -479,7 +471,6 @@ Containers::Optional<SceneData> OpenGexImporter::doScene(UnsignedInt) {
             meshes[meshMaterialOffset] = structureId(_d->meshes, *mesh);
 
             /* Material ID, if present */
-            /** @todo support more materials per mesh */
             if(hasMeshMaterials) {
                 meshMaterials[meshMaterialOffset] = -1;
                 if(const auto materialRef = node.findFirstChildOf(OpenGex::MaterialRef))
@@ -513,8 +504,6 @@ Containers::Optional<SceneData> OpenGexImporter::doScene(UnsignedInt) {
             lights[lightOffset] = structureId(_d->lights, *light);
             ++lightOffset;
         }
-
-        /** @todo support for bone nodes */
     }
 
     CORRADE_INTERNAL_ASSERT(
@@ -527,9 +516,6 @@ Containers::Optional<SceneData> OpenGexImporter::doScene(UnsignedInt) {
        noise for asset introspection purposes. */
     Containers::Array<SceneFieldData> fields;
     arrayAppend(fields, {
-        /** @todo once there's a flag to annotate implicit fields, omit the
-            parent field if it's all -1s; or alternatively we could also have a
-            stride of 0 for this case */
         SceneFieldData{SceneField::Parent, parentImporterStateTransformationObjects, parents, SceneFieldFlag::ImplicitMapping},
         SceneFieldData{SceneField::ImporterState, parentImporterStateTransformationObjects, importerState, SceneFieldFlag::ImplicitMapping},
         SceneFieldData{SceneField::Transformation, parentImporterStateTransformationObjects, transformations, SceneFieldFlag::ImplicitMapping}
@@ -664,8 +650,6 @@ Containers::Optional<LightData> OpenGexImporter::doLight(UnsignedInt id) {
         }
     }
 
-    /** @todo parse the Atten structure */
-
     return LightData{lightType, lightColor, lightIntensity, &light};
 }
 
@@ -694,7 +678,6 @@ Containers::Optional<MeshData> OpenGexImporter::doMesh(const UnsignedInt id, Uns
             primitive = MeshPrimitive::TriangleStrip;
             indexArraySubArraySize = 1;
         } else if(primitiveString != "triangles") {
-            /** @todo quads */
             Error() << "Trade::OpenGexImporter::mesh(): unsupported primitive" << primitiveString;
             return Containers::NullOpt;
         }
@@ -922,8 +905,6 @@ Containers::Optional<TextureData> OpenGexImporter::doTexture(const UnsignedInt i
         return Containers::NullOpt;
     }
 
-    /** @todo texture coordinate transformations */
-
     return TextureData{TextureType::Texture2D, SamplerFilter::Linear, SamplerFilter::Linear, SamplerMipmap::Linear, SamplerWrapping::ClampToEdge, _d->imagesForName[texture.firstChildOf(OpenDdl::Type::String).as<std::string>()], &texture};
 }
 
@@ -966,10 +947,7 @@ AbstractImporter* OpenGexImporter::setupOrReuseImporterForImage(const UnsignedIn
 }
 
 UnsignedInt OpenGexImporter::doImage2DLevelCount(const UnsignedInt id) {
-    /** @todo remove once the manager-less constructor is gone */
-    #ifdef MAGNUM_BUILD_DEPRECATED
     CORRADE_ASSERT(manager(), "Trade::OpenGexImporter::image2DLevelCount(): the plugin must be instantiated with access to plugin manager in order to open image files", {});
-    #endif
 
     AbstractImporter* importer = setupOrReuseImporterForImage(id, "Trade::OpenGexImporter::image2DLevelCount():");
     /* image2DLevelCount() isn't supposed to fail (image2D() is, instead), so
@@ -980,10 +958,7 @@ UnsignedInt OpenGexImporter::doImage2DLevelCount(const UnsignedInt id) {
 }
 
 Containers::Optional<ImageData2D> OpenGexImporter::doImage2D(const UnsignedInt id, const UnsignedInt level) {
-    /** @todo remove once the manager-less constructor is gone */
-    #ifdef MAGNUM_BUILD_DEPRECATED
     CORRADE_ASSERT(manager(), "Trade::OpenGexImporter::image2D(): the plugin must be instantiated with access to plugin manager in order to open image files", {});
-    #endif
 
     AbstractImporter* importer = setupOrReuseImporterForImage(id, "Trade::OpenGexImporter::image2D():");
     if(!importer) return Containers::NullOpt;
