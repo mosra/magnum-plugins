@@ -1731,8 +1731,8 @@ void GltfImporter::doOpenData(Containers::Array<char>&& data, const DataFlags da
     /* All good, save the parsed state */
     _d->gltf = Utility::move(gltf);
 
-    // TODO goddamit, ArrayTuple?!
     /* Allocate storage for parsed buffers, buffer views and accessors */
+    /** @todo maybe turn those into an ArrayTuple? a bit many allocations */
     _d->buffers = Containers::Array<Containers::Optional<Containers::Array<char>>>{ValueInit, _d->gltfBuffers.size()};
     _d->bufferViews = Containers::Array<Containers::Optional<BufferView>>{ValueInit, _d->gltfBufferViews.size()};
     _d->accessors = Containers::Array<Containers::Optional<Accessor>>{ValueInit, _d->gltfAccessors.size()};
