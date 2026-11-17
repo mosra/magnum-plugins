@@ -455,6 +455,9 @@ const struct {
     {"zero length", "\x00\x00\x00\x00\x02\x00\x00\x00k\x00\x00\x00"_s, "invalid key/value entry, skipping"},
     /* Key has length 0, followed by padding + a valid entry */
     {"empty key", "\x02\x00\x00\x00\x00v\x00\x00\x02\x00\x00\x00k\x00\x00\x00"_s, "invalid key/value entry, skipping"},
+    /* There isn't any \0 separating the key and value, followed by padding + a
+       valid entry */
+    {"no delimiter", "\x02\x00\x00\x00kv\x00\x00\x02\x00\x00\x00k\x00\x00\x00"_s, "invalid key/value entry, skipping"},
     /* Duplicate key check only happens for specific keys used later */
     {"duplicate key", "\x10\x00\x00\x00KTXswizzle\x00rgba\x00\x10\x00\x00\x00KTXswizzle\x00rgba\x00"_s, "key KTXswizzle already set, skipping"},
 };

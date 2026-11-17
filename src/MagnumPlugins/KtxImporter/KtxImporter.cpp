@@ -667,7 +667,11 @@ void KtxImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFlags
                 const Containers::StringView key = entry.prefix(delimiter.begin());
                 const Containers::StringView value = entry.suffix(delimiter.end());
 
-                if(key.isEmpty()) {
+                /* The KTX spec doesn't say anything about empty keys and
+                   missing delimiters, only says that the minimal length has to
+                   be 2, i.e. one byte key and one byte for the \0 delimiter.
+                   Assume that means both of them are expected to be there. */
+                if(!delimiter || !key) {
                     if(!(flags() & ImporterFlag::Quiet))
                         Warning{} << "Trade::KtxImporter::openData(): invalid key/value entry, skipping";
                 } else {
