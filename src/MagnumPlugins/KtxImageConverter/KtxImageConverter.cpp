@@ -27,7 +27,6 @@
 
 #include "KtxImageConverter.h"
 
-#include <string>
 #include <Corrade/Containers/Array.h>
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/Pair.h>
@@ -757,9 +756,7 @@ template<UnsignedInt dimensions, template<UnsignedInt, typename> class View> Con
         Error{} << "Trade::KtxImageConverter::convertToData(): invalid swizzle length, expected 4 but got" << swizzle.size();
         return {};
     }
-
-    /** @todo clean up once StringView has findAnyNotOf() or some such */
-    if(std::string{swizzle}.find_first_not_of("rgba01") != std::string::npos) {
+    if(swizzle.findNotAny("rgba01"_s)) {
         Error{} << "Trade::KtxImageConverter::convertToData(): invalid characters in swizzle" << swizzle;
         return {};
     }
