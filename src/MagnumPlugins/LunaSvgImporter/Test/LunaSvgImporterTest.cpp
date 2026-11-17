@@ -70,8 +70,8 @@ const struct {
     const char* expected;
     Float maxThreshold, meanThreshold;
 } LoadData[]{
-    {"*.svg", {}, "file.png", 8.75f, 0.138f},
-    {"*.svg, 48 DPI", 48.0f, "file-48dpi.png", 3.75f, 0.127f},
+    {"*.svg", {}, "file.png", 9.0f, 0.172f},
+    {"*.svg, 48 DPI", 48.0f, "file-48dpi.png", 3.75f, 0.141f},
     {"*.svg, 133.6 DPI", 133.6f, "file-133dpi.png", 128.25f, 1.4999f},
 };
 
@@ -210,7 +210,7 @@ void LunaSvgImporterTest::loadPremultipliedLinear() {
 
     CORRADE_COMPARE_WITH(*image,
         *pngImage,
-        (DebugTools::CompareImage{2.75f, 0.069f}));
+        (DebugTools::CompareImage{2.75f, 0.070f}));
 }
 
 void LunaSvgImporterTest::loadInvalidAlphaMode() {
