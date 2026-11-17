@@ -108,8 +108,6 @@ bool isBuiltinNumberedMeshAttribute(const Containers::StringView name) {
     return
         (attributeNameNumber[0] == "TEXCOORD"_s ||
          attributeNameNumber[0] == "COLOR"_s ||
-         /* Not a builtin MeshAttribute yet, but expected to be used by
-            people until builtin support is added */
          attributeNameNumber[0] == "JOINTS"_s ||
          attributeNameNumber[0] == "WEIGHTS"_s) &&
         /* Assumes just a single number. glTF doesn't say anything about the
