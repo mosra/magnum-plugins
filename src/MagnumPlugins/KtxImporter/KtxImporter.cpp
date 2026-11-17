@@ -30,7 +30,6 @@
 #include <Corrade/Containers/Array.h>
 #include <Corrade/Containers/ArrayView.h>
 #include <Corrade/Containers/Optional.h>
-#include <Corrade/Containers/StaticArray.h>
 #include <Corrade/Containers/String.h>
 #include <Corrade/Containers/StringIterable.h>
 #include <Corrade/Containers/StringView.h>
@@ -664,9 +663,9 @@ void KtxImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFlags
 
             if(current + length <= keyValueData.size()) {
                 const Containers::StringView entry{keyValueData.sliceSize(current, length)};
-                const Containers::Array3<Containers::StringView> split = entry.partition('\0');
-                const auto key = split[0];
-                const auto value = split[2];
+                const Containers::StringView delimiter = entry.find('\0');
+                const Containers::StringView key = entry.prefix(delimiter.begin());
+                const Containers::StringView value = entry.suffix(delimiter.end());
 
                 if(key.isEmpty()) {
                     if(!(flags() & ImporterFlag::Quiet))
@@ -799,8 +798,9 @@ void KtxImporter::doOpenData(Containers::Array<char>&& data, DataFlags dataFlags
 
     /* Read swizzle information */
     if(!f->pixelFormat.isDepth) {
+        /*mutable*/ Containers::StringView swizzle = keyValueEntries[KeyValueType::Swizzle].value;
         /* Remove trailing zero and anything after it */
-        auto swizzle = Containers::StringView{keyValueEntries[KeyValueType::Swizzle].value}.partition('\0')[0];
+        swizzle = swizzle.prefix(swizzle.find('\0').begin());
         if(!swizzle.isEmpty()) {
             /* We don't know the channel count of block-compressed formats so
                comparing only the necessary prefix of the swizzle string can't

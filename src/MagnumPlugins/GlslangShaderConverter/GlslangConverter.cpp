@@ -32,7 +32,6 @@
 #include <Corrade/Containers/ArrayViewStl.h>
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/Pair.h>
-#include <Corrade/Containers/StaticArray.h>
 #include <Corrade/Containers/String.h>
 #include <Corrade/Containers/StringIterable.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
@@ -248,18 +247,20 @@ OutputVersion parseOutputVersion(const char* const prefix, Format format, const 
         return {glslang::EShTargetVulkan_1_0, glslang::EShTargetSpv_1_0, Format::Spirv};
 
     /* `<target> spv<major>.<minor>`, where the second part is optional. If
-       present, split[1] will contain a space, if not, split[1] is empty. */
-    Containers::Array3<Containers::StringView> split = version.partition(' ');
+       present, delimiter will be non-empty. */
+    const Containers::StringView delimiter = version.find(' ');
+    const Containers::StringView target = version.prefix(delimiter.begin());
+    const Containers::StringView spirvVersion = version.suffix(delimiter.end());
 
     glslang::EShTargetClientVersion client;
     glslang::EShTargetLanguageVersion language;
-    if(split[0] == "opengl4.5"_s) {
+    if(target == "opengl4.5"_s) {
         client = glslang::EShTargetOpenGL_450;
         language = glslang::EShTargetSpv_1_0;
-    } else if(split[0] == "vulkan1.0"_s) {
+    } else if(target == "vulkan1.0"_s) {
         client = glslang::EShTargetVulkan_1_0;
         language = glslang::EShTargetSpv_1_0;
-    } else if(split[0] == "vulkan1.1"_s) {
+    } else if(target == "vulkan1.1"_s) {
         client = glslang::EShTargetVulkan_1_1;
         language = glslang::EShTargetSpv_1_3;
     }
@@ -268,32 +269,32 @@ OutputVersion parseOutputVersion(const char* const prefix, Format format, const 
        new build_info.h), then it's version 11 at least. See
        #include <glslang/build_info.h> for a longer rant. */
     #if defined(GLSLANG_VERSION_MAJOR) || GLSLANG_PATCH_LEVEL >= 3743
-    else if(split[0] == "vulkan1.2"_s) {
+    else if(target == "vulkan1.2"_s) {
         client = glslang::EShTargetVulkan_1_2;
         language = glslang::EShTargetSpv_1_5;
     }
     #endif
     else {
-        Error{} << prefix << "output format version target should be opengl4.5 or vulkanX.Y but got" << split[0];
+        Error{} << prefix << "output format version target should be opengl4.5 or vulkanX.Y but got" << target;
         return {};
     }
 
     /* Override SPIR-V version, if specified as a second parameter */
-    if(!split[1].isEmpty()) {
-        if(split[2] == "spv1.0"_s) language = glslang::EShTargetSpv_1_0;
-        else if(split[2] == "spv1.1"_s) language = glslang::EShTargetSpv_1_1;
-        else if(split[2] == "spv1.2"_s) language = glslang::EShTargetSpv_1_2;
-        else if(split[2] == "spv1.3"_s) language = glslang::EShTargetSpv_1_3;
-        else if(split[2] == "spv1.4"_s) language = glslang::EShTargetSpv_1_4;
+    if(delimiter) {
+        if(spirvVersion == "spv1.0"_s) language = glslang::EShTargetSpv_1_0;
+        else if(spirvVersion == "spv1.1"_s) language = glslang::EShTargetSpv_1_1;
+        else if(spirvVersion == "spv1.2"_s) language = glslang::EShTargetSpv_1_2;
+        else if(spirvVersion == "spv1.3"_s) language = glslang::EShTargetSpv_1_3;
+        else if(spirvVersion == "spv1.4"_s) language = glslang::EShTargetSpv_1_4;
         /* Available since 7.13.3496, not in 7.12.3352 or older, and no, we
            can't compare minor versions either. If we have
            GLSLANG_VERSION_MAJOR (from the new build_info.h), then it's version
            11 at least. */
         #if defined(GLSLANG_VERSION_MAJOR) || GLSLANG_PATCH_LEVEL >= 3496
-        else if(split[2] == "spv1.5"_s) language = glslang::EShTargetSpv_1_5;
+        else if(spirvVersion == "spv1.5"_s) language = glslang::EShTargetSpv_1_5;
         #endif
         else {
-            Error{} << prefix << "output format version language should be spvX.Y but got" << split[2];
+            Error{} << prefix << "output format version language should be spvX.Y but got" << spirvVersion;
             return {};
         }
 

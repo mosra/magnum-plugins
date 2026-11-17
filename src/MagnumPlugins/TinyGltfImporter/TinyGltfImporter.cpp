@@ -39,7 +39,6 @@
 #include <Corrade/Containers/ArrayViewStl.h>
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/Pair.h>
-#include <Corrade/Containers/StaticArray.h>
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/DebugStl.h> /* for tinygltf errors, attribute names... */
@@ -181,13 +180,15 @@ Containers::StridedArrayView2D<const char> bufferView(const tinygltf::Model& mod
 
 Containers::StringView attributeSemantic(Containers::StringView attribute) {
     /* Get the semantic base name ([semantic]_[set_index]) */
-    const Containers::Array3<Containers::StringView> parts = attribute.partition('_');
-    const bool isNumbered = !parts.back().isEmpty() &&
-        std::all_of(parts.back().begin(), parts.back().end(), [](unsigned char c) { return std::isdigit(c); });
+    const Containers::StringView delimiter = attribute.find('_');
+    const Containers::StringView attributeName = attribute.prefix(delimiter.begin());
+    const Containers::StringView attributeNumber = attribute.suffix(delimiter.end());
+    const bool isNumbered = attributeNumber &&
+        std::all_of(attributeNumber.begin(), attributeNumber.end(), [](unsigned char c) { return std::isdigit(c); });
     /* Return empty semantic for invalid or non-numbered attribute names. This
        ensures they don't get recognized as one of the numbered attributes like
        TEXCOORD, etc. just because they share the prefix. */
-    return isNumbered ? parts.front() : Containers::StringView{};
+    return isNumbered ? attributeName : Containers::StringView{};
 }
 
 }

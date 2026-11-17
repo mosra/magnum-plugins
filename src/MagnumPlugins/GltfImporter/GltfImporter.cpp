@@ -39,7 +39,6 @@
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/Containers/Pair.h>
 #include <Corrade/Containers/Reference.h>
-#include <Corrade/Containers/StaticArray.h>
 #include <Corrade/Containers/StridedBitArrayView.h>
 #include <Corrade/Containers/String.h>
 #include <Corrade/Containers/StringIterable.h>
@@ -104,19 +103,21 @@ inline bool isDataUri(const Containers::StringView uri) {
 
 /* Used by doOpenData() and doMesh() */
 bool isBuiltinNumberedMeshAttribute(const Containers::StringView name) {
-    const Containers::Array3<Containers::StringView> attributeNameNumber = name.partition('_');
+    const Containers::StringView delimiter = name.find('_');
+    const Containers::StringView attributeName = name.prefix(delimiter.begin());
+    const Containers::StringView attributeNumber = name.suffix(delimiter.end());
     return
-        (attributeNameNumber[0] == "TEXCOORD"_s ||
-         attributeNameNumber[0] == "COLOR"_s ||
-         attributeNameNumber[0] == "JOINTS"_s ||
-         attributeNameNumber[0] == "WEIGHTS"_s) &&
+        (attributeName == "TEXCOORD"_s ||
+         attributeName == "COLOR"_s ||
+         attributeName == "JOINTS"_s ||
+         attributeName == "WEIGHTS"_s) &&
         /* Assumes just a single number. glTF doesn't say anything about the
            upper limit, but for now it should be fine to allow 10 attributes
            at most. Thus TEXCOORD, TEXCOORD_SECOND or TEXCOORD_10 would fail
            this check. */
         /** @todo a more flexible parsing once we have our number parsers
             that don't rely on null-terminated strings */
-        attributeNameNumber[2].size() == 1 && attributeNameNumber[2][0] >= '0' && attributeNameNumber[2][0] <= '9';
+        attributeNumber.size() == 1 && attributeNumber[0] >= '0' && attributeNumber[0] <= '9';
 }
 
 /* Used by doOpenData() */
@@ -319,13 +320,13 @@ Containers::Optional<Containers::Array<char>> GltfImporter::loadUri(const char* 
         /* Data URI with base64 payload according to RFC 2397:
            data:[<mediatype>][;base64],<data> */
         Containers::StringView base64;
-        const Containers::Array3<Containers::StringView> parts = uri.partition(',');
+        const Containers::StringView delimiter = uri.find(',');
 
         /* Non-base64 data URIs are allowed by RFC 2397, but make no sense for
            glTF */
-        if(parts.front().hasSuffix(";base64"_s)) {
+        if(uri.prefix(delimiter.begin()).hasSuffix(";base64"_s)) {
             /* This will be empty for both a missing comma and an empty payload */
-            base64 = parts.back();
+            base64 = uri.suffix(delimiter.end());
         }
 
         if(base64.isEmpty()) {
@@ -3680,18 +3681,20 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
            use the whole name otherwise */
         Containers::StringView baseAttributeName;
         if(isBuiltinNumberedMeshAttribute(attribute.name)) {
-            const Containers::Array3<Containers::StringView> attributeNameNumber = attribute.name.partition('_');
+            const Containers::StringView delimiter = attribute.name.find('_');
+            const Containers::StringView attributeName = attribute.name.prefix(delimiter.begin());
+            const Containers::StringView attributeNumber = attribute.name.suffix(delimiter.end());
             /* Numbered attributes are expected to be contiguous (COLORS_0,
                COLORS_1...). If not, print a warning, because in the MeshData
                they will appear as contiguous. */
-            if(lastNumberedAttribute.first() != attributeNameNumber[0])
+            if(lastNumberedAttribute.first() != attributeName)
                 lastNumberedAttribute.second() = -1;
-            const Int index = attributeNameNumber[2][0] - '0';
+            const Int index = attributeNumber[0] - '0';
             if(index != lastNumberedAttribute.second() + 1 && !(flags() & ImporterFlag::Quiet)) {
-                Warning{} << "Trade::GltfImporter::mesh(): found attribute" << attribute.name << "but expected" << attributeNameNumber[0] << Debug::nospace << "_" << Debug::nospace << lastNumberedAttribute.second() + 1;
+                Warning{} << "Trade::GltfImporter::mesh(): found attribute" << attribute.name << "but expected" << attributeName << Debug::nospace << "_" << Debug::nospace << lastNumberedAttribute.second() + 1;
             }
 
-            baseAttributeName = attributeNameNumber[0];
+            baseAttributeName = attributeName;
             lastNumberedAttribute = {baseAttributeName, index};
 
         /* If not a builtin glTF numbered attribute or it was something strange
