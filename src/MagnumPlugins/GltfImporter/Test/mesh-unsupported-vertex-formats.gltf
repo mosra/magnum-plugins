@@ -7,8 +7,10 @@
     {
       "primitives": [
         {
+          "note": "the COLOR_420 attribute should be parsed as a regular (not custom) attribute as well, there can be more than one digit",
           "attributes": {
             "COLOR_3": 0,
+            "COLOR_420": 1,
             "POSITION": 1
           },
           "mode": 0

@@ -133,8 +133,8 @@ corrade_add_test(TinyGltfImporterTest
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/GltfImporter/Test/mesh.glb
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/GltfImporter/Test/mesh-colors.gltf
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/GltfImporter/Test/mesh-colors.bin
-        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/GltfImporter/Test/mesh-custom-attributes.bin
-        ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/GltfImporter/Test/mesh-custom-attributes.gltf
+        mesh-custom-attributes.bin
+        mesh-custom-attributes.gltf
         mesh-duplicate-attributes.gltf
         mesh-duplicate-attributes.bin
         ${PROJECT_SOURCE_DIR}/src/MagnumPlugins/GltfImporter/Test/mesh-embedded.gltf

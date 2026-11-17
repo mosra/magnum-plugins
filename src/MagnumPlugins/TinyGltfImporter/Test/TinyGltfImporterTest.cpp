@@ -2299,7 +2299,7 @@ void TinyGltfImporterTest::meshSkinAttributes() {
 
 void TinyGltfImporterTest::meshCustomAttributes() {
     Containers::Pointer<AbstractImporter> importer = _manager.instantiate("TinyGltfImporter");
-    CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "mesh-custom-attributes.gltf")));
+    CORRADE_VERIFY(importer->openFile(Utility::Path::join(TINYGLTFIMPORTER_TEST_DIR, "mesh-custom-attributes.gltf")));
     CORRADE_COMPARE(importer->meshCount(), 2);
 
     /* The mapping should be available even before the mesh is imported.
@@ -2374,7 +2374,6 @@ void TinyGltfImporterTest::meshCustomAttributes() {
         CORRADE_COMPARE_AS(mesh->attribute<Vector2d>(doubleShotAttribute),
             Containers::arrayView<Vector2d>({{31.2, 28.8}}),
             TestSuite::Compare::Container);
-
 
         CORRADE_VERIFY(mesh->hasAttribute(negativePaddingAttribute));
         CORRADE_COMPARE(mesh->attributeFormat(negativePaddingAttribute), VertexFormat::Int);

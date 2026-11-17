@@ -1,0 +1,112 @@
+{
+  "asset": {
+    "version": "2.0"
+  },
+  "meshes": [
+    {
+      "name": "standard types",
+      "primitives": [
+        {
+          "attributes": {
+            "_TBN": 0,
+            "_UV_ROTATION": 1,
+            "_TBN_PRECISER": 2,
+            "OBJECT_ID3": 3
+          },
+          "targets": [
+            {
+              "_FANCY_PROPERTY3": 4
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "non-standard types",
+      "note": "attribute types not allowed by the spec but accepted by tinygltf",
+      "primitives": [
+        {
+          "attributes": {
+            "_NEGATIVE_PADDING": 5,
+            "NOT_AN_IDENTITY": 6,
+            "_DOUBLE_SHOT": 7
+          }
+        }
+      ]
+    }
+  ],
+  "accessors": [
+    {
+      "bufferView": 0,
+      "byteOffset": 0,
+      "componentType": 5120,
+      "normalized": true,
+      "count": 1,
+      "type": "MAT3"
+    },
+    {
+      "bufferView": 0,
+      "byteOffset": 12,
+      "componentType": 5120,
+      "normalized": true,
+      "count": 1,
+      "type": "MAT2"
+    },
+    {
+      "bufferView": 0,
+      "byteOffset": 20,
+      "componentType": 5122,
+      "normalized": true,
+      "count": 1,
+      "type": "MAT3"
+    },
+    {
+      "bufferView": 0,
+      "byteOffset": 44,
+      "componentType": 5125,
+      "count": 1,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 0,
+      "byteOffset": 200,
+      "componentType": 5126,
+      "count": 1,
+      "type": "VEC4"
+    },
+    {
+      "bufferView": 0,
+      "byteOffset": 64,
+      "componentType": 5124,
+      "count": 1,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 0,
+      "byteOffset": 72,
+      "componentType": 5130,
+      "count": 1,
+      "type": "MAT4"
+    },
+    {
+      "bufferView": 0,
+      "byteOffset": 48,
+      "componentType": 5130,
+      "count": 1,
+      "type": "VEC2"
+    }
+  ],
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteLength": 216,
+      "byteStride": 216
+    }
+  ],
+  "buffers": [
+    {
+      "byteLength": 216,
+      "uri": "mesh-custom-attributes.bin"
+    }
+  ]
+}

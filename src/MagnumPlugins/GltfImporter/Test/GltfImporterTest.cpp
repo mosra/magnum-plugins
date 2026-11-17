@@ -827,6 +827,7 @@ const struct {
     {"", {}, {},
         "Trade::GltfImporter::mesh(): found attribute COLOR_3 but expected COLOR_0\n"
         "Trade::GltfImporter::mesh(): unsupported COLOR_3 format Vector4us, importing as a custom attribute\n"
+        "Trade::GltfImporter::mesh(): found attribute COLOR_420 but expected COLOR_4\n"
         "Trade::GltfImporter::mesh(): unsupported object ID attribute _OBJECT_ID format Short, importing as a custom attribute\n"
         "Trade::GltfImporter::mesh(): found attribute JOINTS_7 but expected JOINTS_0\n"
         "Trade::GltfImporter::mesh(): unsupported JOINTS_7 format Vector3ub, importing as a custom attribute\n"
@@ -836,6 +837,8 @@ const struct {
     {"strict", {}, true,
         "Trade::GltfImporter::mesh(): found attribute COLOR_3 but expected COLOR_0\n"
         "Trade::GltfImporter::mesh(): unsupported COLOR_3 format Vector4us, set strict=false to import as a custom attribute\n"
+        /* Message about COLOR_420 not printed as mesh import fails right after
+           the above message */
         "Trade::GltfImporter::mesh(): unsupported object ID attribute _OBJECT_ID format Short, set strict=false to import as a custom attribute\n"
         "Trade::GltfImporter::mesh(): found attribute JOINTS_7 but expected JOINTS_0\n"
         "Trade::GltfImporter::mesh(): unsupported JOINTS_7 format Vector3ub, set strict=false to import as a custom attribute\n"
@@ -4601,13 +4604,19 @@ void GltfImporterTest::meshCustomAttributes() {
         Warning redirectWarning{&out};
         CORRADE_VERIFY(importer->openFile(Utility::Path::join(GLTFIMPORTER_TEST_DIR, "mesh-custom-attributes.gltf")));
     }
-    CORRADE_COMPARE(importer->meshCount(), 2);
+    CORRADE_COMPARE(importer->meshCount(), 1);
     if(data.quiet)
         CORRADE_COMPARE(out, "");
     else
-        CORRADE_COMPARE(out,
+        CORRADE_COMPARE_AS(out,
             "Trade::GltfImporter::openData(): unknown attribute OBJECT_ID3, importing as custom attribute\n"
-            "Trade::GltfImporter::openData(): unknown attribute NOT_AN_IDENTITY, importing as custom attribute\n");
+            /* These verify that the number parsing isn't silently picking up
+               invalid or out of bounds indices. Parsing of double-digit etc.
+               numbered attributes verified in meshUnsupportedVertexFormats()
+               below. */
+            "Trade::GltfImporter::openData(): unknown attribute COLOR_+0, importing as custom attribute\n"
+            "Trade::GltfImporter::openData(): unknown attribute COLOR_9999999999, importing as custom attribute\n",
+            TestSuite::Compare::String);
 
     /* On a deprecated build the first two attributes are hardcoded JOINTS and
        WEIGHTS */
@@ -4632,21 +4641,16 @@ void GltfImporterTest::meshCustomAttributes() {
 
     const MeshAttribute tbnPreciserAttribute = importer->meshAttributeForName("_TBN_PRECISER");
     const MeshAttribute objectIdAttribute = importer->meshAttributeForName("OBJECT_ID3");
+    const MeshAttribute colorPlus0Attribute = importer->meshAttributeForName("COLOR_+0");
+    const MeshAttribute color9999999999Attribute = importer->meshAttributeForName("COLOR_9999999999");
 
     const MeshAttribute fancyPropertyAttribute = importer->meshAttributeForName("_FANCY_PROPERTY3");
-    CORRADE_COMPARE(fancyPropertyAttribute, meshAttributeCustom(customAttributeOffset + 4));
+    CORRADE_COMPARE(fancyPropertyAttribute, meshAttributeCustom(customAttributeOffset + 6));
     CORRADE_COMPARE(importer->meshAttributeName(fancyPropertyAttribute), "_FANCY_PROPERTY3");
-
-    const MeshAttribute doubleShotAttribute = importer->meshAttributeForName("_DOUBLE_SHOT");
-    CORRADE_COMPARE(doubleShotAttribute, meshAttributeCustom(customAttributeOffset + 7));
-    const MeshAttribute negativePaddingAttribute = importer->meshAttributeForName("_NEGATIVE_PADDING");
-    CORRADE_COMPARE(negativePaddingAttribute, meshAttributeCustom(customAttributeOffset + 5));
-    const MeshAttribute notAnIdentityAttribute = importer->meshAttributeForName("NOT_AN_IDENTITY");
-    CORRADE_VERIFY(notAnIdentityAttribute != MeshAttribute{});
 
     Containers::Optional<Trade::MeshData> mesh = importer->mesh("standard types");
     CORRADE_VERIFY(mesh);
-    CORRADE_COMPARE(mesh->attributeCount(), 5);
+    CORRADE_COMPARE(mesh->attributeCount(), 7);
 
     CORRADE_VERIFY(mesh->hasAttribute(tbnAttribute));
     CORRADE_COMPARE(mesh->attributeFormat(tbnAttribute), VertexFormat::Matrix3x3bNormalizedAligned);
@@ -4680,14 +4684,23 @@ void GltfImporterTest::meshCustomAttributes() {
         Containers::arrayView<UnsignedInt>({5678125}),
         TestSuite::Compare::Container);
 
+    CORRADE_VERIFY(mesh->hasAttribute(colorPlus0Attribute));
+    CORRADE_COMPARE(mesh->attributeFormat(colorPlus0Attribute), VertexFormat::Vector4);
+    CORRADE_COMPARE_AS(mesh->attribute<Vector4>(colorPlus0Attribute),
+        Containers::arrayView<Vector4>({{0.1f, 0.2f, 0.3f, 0.4f}}),
+        TestSuite::Compare::Container);
+
+    CORRADE_VERIFY(mesh->hasAttribute(color9999999999Attribute));
+    CORRADE_COMPARE(mesh->attributeFormat(color9999999999Attribute), VertexFormat::Vector4);
+    CORRADE_COMPARE_AS(mesh->attribute<Vector4>(color9999999999Attribute),
+        Containers::arrayView<Vector4>({{0.1f, 0.2f, 0.3f, 0.4f}}),
+        TestSuite::Compare::Container);
+
     CORRADE_VERIFY(mesh->hasAttribute(fancyPropertyAttribute, 0));
     CORRADE_COMPARE(mesh->attributeFormat(fancyPropertyAttribute, 0, 0), VertexFormat::Vector4);
     CORRADE_COMPARE_AS(mesh->attribute<Vector4>(fancyPropertyAttribute, 0, 0),
         Containers::arrayView<Vector4>({{0.1f, 0.2f, 0.3f, 0.4f}}),
         TestSuite::Compare::Container);
-
-    /* Not testing import failure of non-core glTF attribute types, that's
-       already tested in meshInvalid() */
 }
 
 void GltfImporterTest::meshCustomAttributesNoFileOpened() {
@@ -5028,7 +5041,7 @@ void GltfImporterTest::meshUnsupportedVertexFormats() {
         TestSuite::Compare::String);
 
     if(mesh0) {
-        CORRADE_COMPARE(mesh0->attributeCount(), 2);
+        CORRADE_COMPARE(mesh0->attributeCount(), 3);
         CORRADE_VERIFY(isMeshAttributeCustom(mesh0->attributeName(0)));
         /* The numeric suffix should stay to fully preserve the input and make
            it possible to roundtrip the file with GltfSceneConverter */

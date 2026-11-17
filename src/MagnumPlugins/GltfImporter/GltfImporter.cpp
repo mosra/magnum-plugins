@@ -51,6 +51,7 @@
 #include <Corrade/Utility/Json.h>
 #include <Corrade/Utility/MurmurHash2.h>
 #include <Corrade/Utility/Path.h>
+#include <Corrade/Utility/String.h>
 #include <Magnum/FileCallback.h>
 #include <Magnum/Mesh.h>
 #include <Magnum/PixelFormat.h>
@@ -101,23 +102,23 @@ inline bool isDataUri(const Containers::StringView uri) {
     return uri.hasPrefix("data:"_s);
 }
 
-/* Used by doOpenData() and doMesh() */
-bool isBuiltinNumberedMeshAttribute(const Containers::StringView name) {
+/* Used by doOpenData() and doMesh(). Returns the actual parsed number on
+   success, NullOpt on failure. */
+Containers::Optional<UnsignedInt> isBuiltinNumberedMeshAttribute(const Containers::StringView name) {
     const Containers::StringView delimiter = name.find('_');
     const Containers::StringView attributeName = name.prefix(delimiter.begin());
     const Containers::StringView attributeNumber = name.suffix(delimiter.end());
-    return
-        (attributeName == "TEXCOORD"_s ||
-         attributeName == "COLOR"_s ||
-         attributeName == "JOINTS"_s ||
-         attributeName == "WEIGHTS"_s) &&
-        /* Assumes just a single number. glTF doesn't say anything about the
-           upper limit, but for now it should be fine to allow 10 attributes
-           at most. Thus TEXCOORD, TEXCOORD_SECOND or TEXCOORD_10 would fail
-           this check. */
-        /** @todo a more flexible parsing once we have our number parsers
-            that don't rely on null-terminated strings */
-        attributeNumber.size() == 1 && attributeNumber[0] >= '0' && attributeNumber[0] <= '9';
+    UnsignedInt parsed;
+    if((attributeName == "TEXCOORD"_s ||
+        attributeName == "COLOR"_s ||
+        attributeName == "JOINTS"_s ||
+        attributeName == "WEIGHTS"_s) &&
+        /* glTF doesn't say anything about the upper limit so just pick any
+           32-bit number. Stuff like COLOR_+3 obviously not allowed. */
+        Utility::String::parseDecimal(attributeNumber, parsed, Utility::String::ParseDecimalFlag::DisallowSign)
+    )
+        return parsed;
+    return {};
 }
 
 /* Used by doOpenData() */
@@ -3680,26 +3681,23 @@ Containers::Optional<MeshData> GltfImporter::doMesh(const UnsignedInt id, Unsign
         /* Extract base name and number from builtin glTF numbered attributes,
            use the whole name otherwise */
         Containers::StringView baseAttributeName;
-        if(isBuiltinNumberedMeshAttribute(attribute.name)) {
-            const Containers::StringView delimiter = attribute.name.find('_');
-            const Containers::StringView attributeName = attribute.name.prefix(delimiter.begin());
-            const Containers::StringView attributeNumber = attribute.name.suffix(delimiter.end());
+        if(const Containers::Optional<UnsignedInt> index = isBuiltinNumberedMeshAttribute(attribute.name)) {
+            const Containers::StringView attributeName = attribute.name.prefix(attribute.name.find('_').begin());
             /* Numbered attributes are expected to be contiguous (COLORS_0,
                COLORS_1...). If not, print a warning, because in the MeshData
                they will appear as contiguous. */
             if(lastNumberedAttribute.first() != attributeName)
                 lastNumberedAttribute.second() = -1;
-            const Int index = attributeNumber[0] - '0';
             if(index != lastNumberedAttribute.second() + 1 && !(flags() & ImporterFlag::Quiet)) {
                 Warning{} << "Trade::GltfImporter::mesh(): found attribute" << attribute.name << "but expected" << attributeName << Debug::nospace << "_" << Debug::nospace << lastNumberedAttribute.second() + 1;
             }
 
             baseAttributeName = attributeName;
-            lastNumberedAttribute = {baseAttributeName, index};
+            lastNumberedAttribute = {baseAttributeName, Int(*index)};
 
         /* If not a builtin glTF numbered attribute or it was something strange
-           such as TEXCOORD alone, TEXCOORD_SECOND, or currently also
-           TEXCOORD_10, use the full attribute string. */
+           such as TEXCOORD alone or TEXCOORD_SECOND, use the full attribute
+           string. */
         } else {
             baseAttributeName = attribute.name;
             lastNumberedAttribute = {};
