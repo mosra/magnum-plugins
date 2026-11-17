@@ -49,7 +49,6 @@
 #include <Corrade/Utility/ConfigurationGroup.h>
 #include <Corrade/Utility/Format.h>
 #include <Corrade/Utility/Json.h>
-#include <Corrade/Utility/MurmurHash2.h>
 #include <Corrade/Utility/Path.h>
 #include <Corrade/Utility/String.h>
 #include <Magnum/FileCallback.h>
